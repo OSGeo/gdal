@@ -19,7 +19,9 @@
 #include "geo_keyp.h"  /* private interface       */
 
 /* private local routines */
-static int ReadKey(GTIF* gt, KeyEntry* entptr,GeoKey* keyptr);
+static int ReadKey(GTIF* gt, TempKeyData* tempData,
+                   KeyEntry* entptr, GeoKey* keyptr);
+
 
 /**********************************************************************
  *
@@ -56,6 +58,7 @@ GTIF* GTIFNew(void *tif)
 	pinfo_t *data;
 	KeyEntry *entptr;
 	KeyHeader *header;
+    TempKeyData tempData;
 	
 	gt = (GTIF*)_GTIFcalloc( sizeof(GTIF));
 	if (!gt) goto failure;	
@@ -63,6 +66,10 @@ GTIF* GTIFNew(void *tif)
 	/* install TIFF file and I/O methods */
 	gt->gt_tif = (tiff_t *)tif;
 	_GTIFSetDefaultTIFF(&gt->gt_methods);
+
+    tempData.tk_asciiParams = 0;
+    tempData.tk_asciiParamsLength = 0;
+    tempData.tk_asciiParamsOffset = 0;
 	
 	/* since this is an array, GTIF will allocate the memory */
 	if (!(gt->gt_methods.get)(tif, GTIFF_GEOKEYDIRECTORY, &gt->gt_nshorts, &data ))
@@ -100,12 +107,17 @@ GTIF* GTIFNew(void *tif)
 		gt->gt_double=(double*)_GTIFcalloc(MAX_VALUES*sizeof(double));
 		if (!gt->gt_double) goto failure;	
 	}
-	if (!(gt->gt_methods.get)(tif, GTIFF_ASCIIPARAMS, &gt->gt_nascii, &gt->gt_ascii ))
+    if (!(gt->gt_methods.get)(tif, GTIFF_ASCIIPARAMS,
+        &tempData.tk_asciiParamsLength, &tempData.tk_asciiParams ))
 	{
-		gt->gt_ascii = (char*)_GTIFcalloc(MAX_VALUES*sizeof(char));
-		if (!gt->gt_ascii) goto failure;
+        tempData.tk_asciiParams         = 0;
+        tempData.tk_asciiParamsLength   = 0;
 	}
-	else  gt->gt_nascii--; /* last NULL doesn't count; "|" used for delimiter */
+	else
+    {
+        /* last NULL doesn't count; "|" used for delimiter */
+        --tempData.tk_asciiParamsLength;
+    }
 
 	/* allocate space for GeoKey array and its index */
 	gt->gt_keys = (GeoKey *)_GTIFcalloc( sizeof(GeoKey)*bufcount);
@@ -120,7 +132,7 @@ GTIF* GTIFNew(void *tif)
 	gt->gt_keymax = 0;
 	for (index=1; index<=count; index++,entptr++)
 	{
-		if (!ReadKey(gt, entptr, ++keyptr))
+		if (!ReadKey(gt, &tempData, entptr, ++keyptr))
 			goto failure;
 			
 		/* Set up the index (start at 1, since 0=unset) */
@@ -131,8 +143,8 @@ GTIF* GTIFNew(void *tif)
 	
 failure:
 	/* Notify of error */
-	if (gt) free(gt);
-	return (GTIF *)0;
+    GTIFFree (gt);
+    return (GTIF *)0;
 }
 
 /**********************************************************************
@@ -146,7 +158,8 @@ failure:
  *  the Key structure, returning 0 if failure.
  */
 
-static int ReadKey(GTIF* gt, KeyEntry* entptr,GeoKey* keyptr)
+static int ReadKey(GTIF* gt, TempKeyData* tempData,
+                   KeyEntry* entptr, GeoKey* keyptr)
 {
 	int offset,count;
 	
@@ -179,9 +192,14 @@ static int ReadKey(GTIF* gt, KeyEntry* entptr,GeoKey* keyptr)
 				gt->gt_ndoubles = offset+count;
 			break;
 		case GTIFF_ASCIIPARAMS:
-			keyptr->gk_data = (char *)(gt->gt_ascii+offset);
-			if (gt->gt_nascii < offset+count)
-				gt->gt_nascii = offset+count;
+            if (offset + count > tempData->tk_asciiParamsLength)
+            {
+                return (0);
+            }
+            keyptr->gk_data = (char *) _GTIFcalloc (count);
+            _GTIFmemcpy (keyptr->gk_data,
+                tempData->tk_asciiParams + offset, count);
+            keyptr->gk_data[count-1] = '\0';
 			break;
 		default:
 			return 0; /* failure */

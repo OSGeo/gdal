@@ -52,6 +52,17 @@ struct KeyHeader{
 };
 typedef struct KeyHeader KeyHeader;
 
+/*
+ * This structure holds temporary data while reading or writing
+ *  the tags.
+ */
+struct TempKeyData {
+    char   *tk_asciiParams;
+    int     tk_asciiParamsLength;
+    int     tk_asciiParamsOffset;
+};
+typedef struct TempKeyData TempKeyData;
+
 
 struct gtiff {
    tiff_t*    gt_tif;      /* TIFF file descriptor  */
@@ -70,10 +81,8 @@ struct gtiff {
    
    pinfo_t*   gt_short;    /* array of SHORT vals   */
    double*    gt_double;   /* array of DOUBLE vals  */
-   char*      gt_ascii;    /* array of ASCII string */
    int        gt_nshorts;  /* number of SHORT vals  */
    int        gt_ndoubles; /* number of DOUBLE vals */
-   int        gt_nascii;   /* number of ASCII chars */
 };  
 
 typedef enum {

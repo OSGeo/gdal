@@ -58,6 +58,12 @@ extern TIFF CPL_DLL * XTIFFOpen(const char* name, const char* mode);
 extern TIFF CPL_DLL * XTIFFFdOpen(int fd, const char* name, const char* mode);
 extern void CPL_DLL XTIFFClose(TIFF *tif);
 
+extern TIFF CPL_DLL * XTIFFClientOpen(const char* name, const char* mode, 
+                                      thandle_t thehandle,
+                                      TIFFReadWriteProc, TIFFReadWriteProc,
+                                      TIFFSeekProc, TIFFCloseProc,
+                                      TIFFSizeProc,
+                                      TIFFMapFileProc, TIFFUnmapFileProc);
 #if defined(__cplusplus)
 }
 #endif

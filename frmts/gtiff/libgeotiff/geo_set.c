@@ -10,6 +10,9 @@
  *  notice accompanies any products derived therefrom.
  *
  * $Log: geo_set.c,v $
+ * Revision 1.8  2002/09/27 13:05:33  warmerda
+ * allow dynamic set/delete of ASCII tags. ASCIIPARAMS now kept split
+ *
  * Revision 1.7  2001/05/02 16:48:22  warmerda
  * fixed a couple bugs in delete code
  *
@@ -95,114 +98,115 @@ the new values are just kept with the GTIF structure.<p>
 
 int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
 {
-	va_list ap;
-	int index = gtif->gt_keyindex[ keyID ];
-	int newvalues = 0;
-	GeoKey *key;
-	char *data;
-	char *val;
-	pinfo_t sval;
-	double dval;
+    va_list ap;
+    int index = gtif->gt_keyindex[ keyID ];
+    int newvalues = 0;
+    GeoKey *key;
+    char *data;
+    char *val;
+    pinfo_t sval;
+    double dval;
 
-	va_start(ap, count);
-	/* pass singleton keys by value */
-	if (count>1 && type!=TYPE_ASCII) 
+    va_start(ap, count);
+    /* pass singleton keys by value */
+    if (count>1 && type!=TYPE_ASCII) 
+    {
+        val = va_arg(ap, char*);
+    }
+    else if( count == -1 )
+    {
+        /* delete the indicated tag */
+        va_end(ap);
+
+        if( index < 1 )
+            return 0;
+
+        if (gtif->gt_keys[index].gk_type == TYPE_ASCII)
         {
-            val = va_arg(ap, char*);
+            _GTIFFree (gtif->gt_keys[index].gk_data);
         }
-        else if( count == -1 )
+
+        while( index < gtif->gt_num_keys )
         {
-            /* delete the indicated tag */
-            va_end(ap);
-
-            if( index < 1 )
-                return 0;
-
-            while( index < gtif->gt_num_keys )
-            {
-                _GTIFmemcpy( gtif->gt_keys + index, 
-                             gtif->gt_keys + index + 1, 
-                             sizeof(GeoKey) );
-                gtif->gt_keyindex[gtif->gt_keys[index].gk_key] = index;
-                index++;
-            }
-
-            gtif->gt_num_keys--;
-            gtif->gt_nshorts -= sizeof(KeyEntry)/sizeof(pinfo_t);
-            gtif->gt_keyindex[keyID] = 0;
-            gtif->gt_flags |= FLAG_FILE_MODIFIED;
-
-            return 1;
+            _GTIFmemcpy( gtif->gt_keys + index, 
+                         gtif->gt_keys + index + 1, 
+                         sizeof(GeoKey) );
+            gtif->gt_keyindex[gtif->gt_keys[index].gk_key] = index;
+            index++;
         }
-	else switch (type)
-	{
-	    case TYPE_SHORT:  sval=va_arg(ap, int); val=(char *)&sval;     break;
-	    case TYPE_DOUBLE: dval=va_arg(ap, dblparam_t); val=(char *)&dval;  break;
-	    case TYPE_ASCII: 
-			val=va_arg(ap, char*);
-			count = strlen(val) + 1; /* force = string length */
-			break;
-          default:
+
+        gtif->gt_num_keys--;
+        gtif->gt_nshorts -= sizeof(KeyEntry)/sizeof(pinfo_t);
+        gtif->gt_keyindex[keyID] = 0;
+        gtif->gt_flags |= FLAG_FILE_MODIFIED;
+
+        return 1;
+    }
+    else switch (type)
+    {
+        case TYPE_SHORT:  sval=va_arg(ap, int); val=(char *)&sval;     break;
+        case TYPE_DOUBLE: dval=va_arg(ap, dblparam_t); val=(char *)&dval;  break;
+        case TYPE_ASCII: 
+            val=va_arg(ap, char*);
+            count = strlen(val) + 1; /* force = string length */
+            break;
+        default:
             assert( FALSE );
             break;
-	}
-	va_end(ap);
-	
-	/* We assume here that there are no multi-valued SHORTS ! */
-	if (index)
-	{
-		/* Key already exists */
-		key = gtif->gt_keys+index;
-		if (type!=key->gk_type || count > key->gk_count)
-		{
-			/* need to reset data pointer */
-			key->gk_type = type;
-			key->gk_count = count;
-			key->gk_size = _gtiff_size[ type ];
-			newvalues = 1;
-		}
-	}
-	else
-	{
-		/* We need to create the key */
-		if (gtif->gt_num_keys == MAX_KEYS) return 0;
-		key = gtif->gt_keys + ++gtif->gt_num_keys;
-		index = gtif->gt_num_keys;
-		gtif->gt_keyindex[ keyID ] = index;
-		key->gk_key = keyID;
-		key->gk_type = type;
-		key->gk_count = count;
-		key->gk_size = _gtiff_size[ type ];
-		if (gtif->gt_keymin > keyID)  gtif->gt_keymin=keyID;
-		if (gtif->gt_keymax < keyID)  gtif->gt_keymax=keyID;
-		newvalues = 1;
-	}
+    }
+    va_end(ap);
+    
+    /* We assume here that there are no multi-valued SHORTS ! */
+    if (index)
+    {
+        /* Key already exists */
+        key = gtif->gt_keys+index;
+        if (type!=key->gk_type || count > key->gk_count)
+        {
+            /* need to reset data pointer */
+            key->gk_type = type;
+            key->gk_count = count;
+            key->gk_size = _gtiff_size[ type ];
+            newvalues = 1;
+        }
+    }
+    else
+    {
+        /* We need to create the key */
+        if (gtif->gt_num_keys == MAX_KEYS) return 0;
+        key = gtif->gt_keys + ++gtif->gt_num_keys;
+        index = gtif->gt_num_keys;
+        gtif->gt_keyindex[ keyID ] = index;
+        key->gk_key = keyID;
+        key->gk_type = type;
+        key->gk_count = count;
+        key->gk_size = _gtiff_size[ type ];
+        if (gtif->gt_keymin > keyID)  gtif->gt_keymin=keyID;
+        if (gtif->gt_keymax < keyID)  gtif->gt_keymax=keyID;
+        newvalues = 1;
+    }
 
-	if (newvalues)
-	{
-	   switch (type)
-	   {
-	    case TYPE_SHORT:  
-			if (count > 1) return 0;
-			data = (char *)&key->gk_data; /* store value *in* data */
-			break;
-	    case TYPE_DOUBLE:
-			key->gk_data = (char *)(gtif->gt_double + gtif->gt_ndoubles);
-			data = key->gk_data;
-			gtif->gt_ndoubles += count;
-			break;
-	    case TYPE_ASCII:
-			key->gk_data = (char *)(gtif->gt_ascii + gtif->gt_nascii);
-			data = key->gk_data;
-			gtif->gt_nascii += count;
-			data[--count] = '|'; /* replace NULL with '|' */
-			break;
-	    default:
-			va_end(ap);
-	    	return 0;
-	  }
-	   gtif->gt_nshorts += sizeof(KeyEntry)/sizeof(pinfo_t);
-	}
+    if (newvalues)
+    {
+        switch (type)
+        {
+        case TYPE_SHORT:  
+            if (count > 1) return 0;
+            data = (char *)&key->gk_data; /* store value *in* data */
+            break;
+        case TYPE_DOUBLE:
+            key->gk_data = (char *)(gtif->gt_double + gtif->gt_ndoubles);
+            data = key->gk_data;
+            gtif->gt_ndoubles += count;
+            break;
+        case TYPE_ASCII:
+            break;
+        default:
+            va_end(ap);
+            return 0;
+        }
+        gtif->gt_nshorts += sizeof(KeyEntry)/sizeof(pinfo_t);
+    }
 
         /* this fixes a bug where if a request is made to write a duplicate
            key, we must initialize the data to a valid value.
@@ -210,27 +214,40 @@ int GTIFKeySet(GTIF *gtif, geokey_t keyID, tagtype_t type, int count,...)
         
         else /* no new values, but still have something to write */
         {
-           switch (type)
-           {
+            switch (type)
+            {
             case TYPE_SHORT:  
-                        if (count > 1) return 0;
-                        data = (char *)&key->gk_data; /* store value *in* data */
-                        break;
+                if (count > 1) return 0;
+                data = (char *)&key->gk_data; /* store value *in* data */
+                break;
             case TYPE_DOUBLE:
-                        data = key->gk_data;
-                        break;
+                data = key->gk_data;
+                break;
             case TYPE_ASCII:
-                        data = key->gk_data;
-                        data[--count] = '|'; /* replace NULL with '|' */
-                        break;
+                break;
             default:
                 return 0;
-          }
-
+            }
         }
         
-	_GTIFmemcpy(data, val, count*key->gk_size);
-	
-	gtif->gt_flags |= FLAG_FILE_MODIFIED;
-	return 1;
+    switch (type)
+    {
+    case TYPE_ASCII:
+        /* throw away existing data and allocate room for new data */
+        if (key->gk_data != 0)
+        {
+            _GTIFFree(key->gk_data);
+        }
+        key->gk_data = (char *)_GTIFcalloc(count);
+        key->gk_count = count;
+        data = key->gk_data;
+        break;
+    default:
+        break;
+    }
+
+    _GTIFmemcpy(data, val, count*key->gk_size);
+    
+    gtif->gt_flags |= FLAG_FILE_MODIFIED;
+    return 1;
 }
