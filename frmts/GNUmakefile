@@ -7,7 +7,7 @@ OBJ	=	o/gdalallregister.o
 
 FRMT_FLAGS	=	$(foreach FRMT, $(GDAL_FORMATS), -DFRMT_$(FRMT))
 
-default:	$(OBJ) $(foreach d,$(GDAL_FORMATS),$(d)-target)
+default:	$(OBJ) $(foreach d,$(GDAL_FORMATS),$(d)-target-install-obj)
 
 clean:	$(foreach d,$(GDAL_FORMATS),$(d)-clean)
 	rm -f *.o o/*.o o/*.a
