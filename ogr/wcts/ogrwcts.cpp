@@ -27,6 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
+ * Independent Security Audit 2003/04/17 Andrey Kiselev:
+ *   Completed audit of this module and the same required items:
+ * 
+ *   - CSLTokenizeString*() and other functions from cpl_string.cpp;
+ *   - XMP parsing and serializing functions from cpl_minixml.cpp;
+ *   - GML Translation modules (gml2ogrgeometr.cpp, ogr2gmlgeometry.cpp);
+ *
  * Security Audit 2003/03/29 warmerda:
  *   Completed security audit.  I believe that *this* module may be safely used
  *   to handle arbitrary input.  It also requires the following to be safe:
@@ -45,6 +52,9 @@
  *   defined in the GNUmakefile (the default).
  *
  * $Log$
+ * Revision 1.15  2003/04/17 08:29:26  dron
+ * Security audit completed.
+ *
  * Revision 1.14  2003/04/01 13:13:12  dron
  * Few memory leaks fixed.
  *
