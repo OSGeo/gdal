@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/10/30 05:12:52  fwarmerdam
+ * fixed memory leaks
+ *
  * Revision 1.5  2004/08/20 21:43:12  warmerda
  * avoid doing alot of work in GetExtent() if we have no geometry
  *
@@ -72,6 +75,8 @@ OGRSQLiteLayer::OGRSQLiteLayer()
 
     poSRS = NULL;
     nSRSId = -2; // we haven't even queried the database for it yet. 
+
+    panFieldOrdinals = NULL;
 }
 
 /************************************************************************/
@@ -101,6 +106,9 @@ OGRSQLiteLayer::~OGRSQLiteLayer()
 
     if( poSRS != NULL )
         poSRS->Dereference();
+
+    CPLFree( pszFIDColumn );
+    CPLFree( panFieldOrdinals );
 }
 
 /************************************************************************/
