@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/06/25 18:17:25  kshih
+ * Changes to get datasource from session/rowset/command
+ *
  * Revision 1.2  1999/06/22 16:17:11  warmerda
  * added ogrcomdebug
  *
@@ -44,5 +47,6 @@
 void			SFGetFilenames(const char *,char **,char **);
 SHPHandle		SFGetSHPHandle(const char *);
 DBFHandle		SFGetDBFHandle(const char *);
+char			*SFGetInitDataSource(IUnknown *pIUnknownIn);
 
 void OGRComDebug( const char * pszDebugClass, const char * pszFormat, ... );

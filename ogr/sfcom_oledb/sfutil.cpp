@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/06/25 18:17:25  kshih
+ * Changes to get datasource from session/rowset/command
+ *
  * Revision 1.3  1999/06/22 16:59:55  kshih
  * Modified GetFilenames to return previous filename if NULL is provided.
  *
@@ -46,6 +49,8 @@
 #include <ctype.h>
 #include "cpl_conv.h"
 #include "shapefil.h"
+#include "sftraceback.h"
+#include "sfutil.h"
 
 
 static char szSFile[MAX_PATH] ="";
@@ -66,15 +71,6 @@ void	SFGetFilenames(const char *pszFileIn, char **ppszSHPFile,
 	char szExt[_MAX_EXT];
 
 
-	if (pszFileIn == NULL)
-	{
-		if (ppszSHPFile)
-			*ppszSHPFile = szSFile;
-
-		if (ppszDBFFile)
-			*ppszDBFFile = szDFile;
-		return;
-	}
 	_splitpath(pszFileIn,szDrive,szDir,szFname,szExt);
 
     // Shape file
@@ -130,11 +126,14 @@ void	SFGetFilenames(const char *pszFileIn, char **ppszSHPFile,
 /************************************************************************/
 /*                          SFGetSHPHandle()                            */
 /*                                                                      */
-/*      Get a shape file handle from any related name.			*/
+/*      Get a shape file handle from any related name.					*/
 /************************************************************************/
 SHPHandle	SFGetSHPHandle(const char *pszName)
 {
     char *pszSHPFile;
+
+	if (pszName == NULL)
+		return NULL;
 
     SFGetFilenames(pszName,&pszSHPFile, NULL);
 
@@ -144,94 +143,78 @@ SHPHandle	SFGetSHPHandle(const char *pszName)
 /************************************************************************/
 /*                          SFGetDBFHandle()                            */
 /*                                                                      */
-/*      Get a DBFFile handle from any related name.			*/
+/*      Get a DBFFile handle from any related name.						*/
 /************************************************************************/
 DBFHandle	SFGetDBFHandle(const char *pszName)
 {
     char *pszDBFFile;
 
-        SFGetFilenames(pszName,NULL,&pszDBFFile);
+	if (pszName == NULL)
+		return NULL;
+
+    SFGetFilenames(pszName,NULL,&pszDBFFile);
 
 	return DBFOpen(pszDBFFile,"r");
 }
 
-#ifdef NOTDEF
+
 /************************************************************************/
-/*                         GetInitDataSource()                          */
-/*  Returns char * to allocated string.  Caller responsible for freeing */
+/*							SFGetInitDataSource()						*/
+/*	Get the Data Source Filename from a session/rowset/command IUnknown */
+/*	pointer.  The interface passed in is freed automatically			*/
+/*  The returned name should be freed with free when done.				*/
 /************************************************************************/
-static char *GetInitDataSource(CSFRowset *pRowset)
+char *SFGetInitDataSource(IUnknown *pIUnknownIn)
 {
-	IRowsetInfo *pRInfo;
-	HRESULT		hr;
-	char		*pszDataSource = NULL;
+	IDBProperties	*pIDBProp;
+	char			*pszDataSource = NULL;
 
-// Temporary hack to allow Frank to continue.
-	return GetHackedInitDataSource();
+	if (pIUnknownIn == NULL)
+		return NULL;
 
-   OGRComDebug( "Info", "In GetInitDataSource\n" );
-
-	hr = pRowset->QueryInterface(IID_IRowsetInfo,(void **) &pRInfo);
-	if (SUCCEEDED(hr))
+	pIDBProp = SFGetDataSourceProperties(pIUnknownIn);
+	
+	if (pIDBProp)
 	{
-        OGRComDebug( "Info", "Got IRowsetInfo\n" );
-		IGetDataSource	*pIGetDataSource;
-		hr = pRInfo->GetSpecification(IID_IGetDataSource, (IUnknown **) &pIGetDataSource);
-		pRInfo->Release();
-
-		if (SUCCEEDED(hr))
+		DBPROPIDSET sPropIdSets[1];
+		DBPROPID	rgPropIds[1];
+		
+		ULONG		nPropSets;
+		DBPROPSET	*rgPropSets;
+		
+		OGRComDebug( "Info", "Got Properties\n" );
+		rgPropIds[0] = DBPROP_INIT_DATASOURCE;
+		
+		sPropIdSets[0].cPropertyIDs = 1;
+		sPropIdSets[0].guidPropertySet = DBPROPSET_DBINIT;
+		sPropIdSets[0].rgPropertyIDs = rgPropIds;
+		
+		pIDBProp->GetProperties(1,sPropIdSets,&nPropSets,&rgPropSets);
+		
+		if (rgPropSets)
 		{
-			IDBProperties *pIDBProp;
-
-            OGRComDebug( "Info", "Got IGetDataSource\n" );
-			hr = pIGetDataSource->GetDataSource(IID_IDBProperties, (IUnknown **) &pIDBProp);
-			pIGetDataSource->Release();
-
-			if (SUCCEEDED(hr))
-			{
-				DBPROPIDSET sPropIdSets[1];
-				DBPROPID	rgPropIds[1];
-
-				ULONG		nPropSets;
-				DBPROPSET	*rgPropSets;
-
-                                OGRComDebug( "Info", "Got Properties\n" );
-				rgPropIds[0] = DBPROP_INIT_DATASOURCE;
-
-				sPropIdSets[0].cPropertyIDs = 1;
-				sPropIdSets[0].guidPropertySet = DBPROPSET_DBINIT;
-				sPropIdSets[0].rgPropertyIDs = rgPropIds;
-
-				pIDBProp->GetProperties(1,sPropIdSets,&nPropSets,&rgPropSets);
-
-				if (rgPropSets)
-				{
-					USES_CONVERSION;
-					char *pszSource = (char *)  OLE2A(rgPropSets[0].rgProperties[0].vValue.bstrVal);
-					pszDataSource = (char *) malloc(1+strlen(pszSource));
-					strcpy(pszDataSource,pszSource);
-                                        OGRComDebug( "Info", 
-                                                     "Got rgPropSets\n" );
-				}
-
-				if (rgPropSets)
-				{
-					int i;
-					for (i=0; i < nPropSets; i++)
-					{
-						CoTaskMemFree(rgPropSets[i].rgProperties);
-					}
-					CoTaskMemFree(rgPropSets);
-				}
-
-				pIDBProp->Release();
-			}
+			USES_CONVERSION;
+			char *pszSource = (char *)  OLE2A(rgPropSets[0].rgProperties[0].vValue.bstrVal);
+			pszDataSource = (char *) malloc(1+strlen(pszSource));
+			strcpy(pszDataSource,pszSource);
+			OGRComDebug( "Info", 
+				"Got rgPropSets\n" );
 		}
+		
+		if (rgPropSets)
+		{
+			int i;
+			for (i=0; i < nPropSets; i++)
+			{
+				CoTaskMemFree(rgPropSets[i].rgProperties);
+			}
+			CoTaskMemFree(rgPropSets);
+		}
+		pIDBProp->Release();	
 	}
 
 	return pszDataSource;
 }
-#endif
 /************************************************************************/
 /*                            OGRComDebug()                             */
 /************************************************************************/
