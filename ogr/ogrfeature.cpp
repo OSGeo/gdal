@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  1999/11/14 20:11:33  danmo
+ * Use "%.16g" by default in double to string conversion to keep max. precision
+ *
  * Revision 1.9  1999/11/04 21:06:48  warmerda
  * Added the SetFrom() method.
  *
@@ -439,7 +442,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
                      poFDefn->GetWidth(), poFDefn->GetPrecision() );
         }
         else
-            strcpy( szFormat, "%g" );
+            strcpy( szFormat, "%.16g" );
         
         sprintf( szTempBuffer, szFormat, pauFields[iField].Real );
         
@@ -485,7 +488,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
                      poFDefn->GetWidth(), poFDefn->GetPrecision() );
         }
         else
-            strcpy( szFormat, "%g" );
+            strcpy( szFormat, "%.16g" );
         
         sprintf( szTempBuffer, "(%d:", nCount );
         for( i = 0; i < nCount; i++ )
@@ -743,7 +746,7 @@ void OGRFeature::SetField( int iField, double dfValue )
     {
         char	szTempBuffer[128];
 
-        sprintf( szTempBuffer, "%g", dfValue );
+        sprintf( szTempBuffer, "%.16g", dfValue );
 
         CPLFree( pauFields[iField].String );
         pauFields[iField].String = CPLStrdup( szTempBuffer );
