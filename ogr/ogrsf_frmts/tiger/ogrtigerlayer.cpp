@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/07/04 03:08:54  warmerda
+ * fixed bug in GetNextFeature
+ *
  * Revision 1.5  2001/06/19 15:50:23  warmerda
  * added feature attribute query support
  *
@@ -212,7 +215,7 @@ OGRFeature *OGRTigerLayer::GetNextFeature()
              || poFilterGeom->Intersect( poFeature->GetGeometryRef() ) )
             && (m_poAttrQuery == NULL
                 || m_poAttrQuery->Evaluate( poFeature )) )
-            break;
+            return poFeature;
 
         delete poFeature;
     }
