@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2004/04/27 08:45:59  dron
+ * Read strip height from image and use it as BlockYSize.
+ *
  * Revision 1.9  2004/04/23 09:49:38  dron
  * Added support for DSDK v.4.0.x; significant changes in the driver structure.
  *
@@ -1201,9 +1204,10 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 #include "lt_types.h"
 #include "lt_base.h"
 #include "lt_fileSpec.h"
-#include "lti_navigator.h"
+#include "lti_geoCoord.h"
 #include "lti_pixelProps.h"
 #include "lti_pixelData.h"
+#include "lti_scene.h"
 #include "lti_bufferProps.h"
 #include "lti_bufferData.h"
 #include "lti_metadataDatabase.h"
@@ -1270,10 +1274,6 @@ class MrSIDRasterBand : public GDALRasterBand
     int             bNoDataSet;
     double          dfNoDataValue;
 
-    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              int, int );
-
   public:
 
                 MrSIDRasterBand( MrSIDDataset *, int );
@@ -1298,14 +1298,14 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDS, int nBand )
 /*      Set the block sizes and buffer parameters.                      */
 /* -------------------------------------------------------------------- */
     nBlockXSize = poDS->GetRasterXSize();
-    nBlockYSize = ( nBlockXSize * poDS->GetRasterYSize() < 1000000 )?
-        poDS->GetRasterYSize():1000000/nBlockXSize + 1;
+    nBlockYSize = poDS->poImageReader->getStripHeight();
     nBlockSize = nBlockXSize * nBlockYSize;
     poPixelProps = new LTIPixelProps( poDS->eColorSpace, poDS->nBands,
-                                 poDS->eSampleType );
-    poBufferProps = 
-	new LTIBufferProps( *poPixelProps, nBlockXSize, nBlockYSize );
-    poBuffer = new LTIBufferData( *poBufferProps );
+                                      poDS->eSampleType );
+    poBufferProps = new LTIBufferProps( *poPixelProps,
+		                        nBlockXSize, nBlockYSize,
+					LTIBufferProps::LAYOUT_BSQ,
+					0, 0, 0, 0 );
 
 /* -------------------------------------------------------------------- */
 /*      Set NoData values.                                              */
@@ -1333,123 +1333,6 @@ MrSIDRasterBand::~MrSIDRasterBand()
         delete poPixelProps;
     if ( poBufferProps )
         delete poBufferProps;
-    if ( poBuffer )
-        delete poBuffer;
-}
-
-/************************************************************************/
-/*                             IRasterIO()                              */
-/************************************************************************/
-
-CPLErr MrSIDRasterBand::IRasterIO( GDALRWFlag eRWFlag,
-                                   int nXOff, int nYOff, int nXSize, int nYSize,
-                                   void * pData, int nBufXSize, int nBufYSize,
-                                   GDALDataType eBufType,
-                                   int nPixelSpace, int nLineSpace )
-    
-{
-    MrSIDDataset *poGDS = (MrSIDDataset *) poDS;
-
-/* -------------------------------------------------------------------- */
-/*      Fallback to default implementation if the whole scanline        */
-/*      without subsampling requested.                                  */
-/* -------------------------------------------------------------------- */
-    if ( nXSize == poGDS->GetRasterXSize()
-         && nXSize == nBufXSize
-         && nYSize == nBufYSize )
-    {
-        return GDALRasterBand::IRasterIO( eRWFlag, nXOff, nYOff,
-                                          nXSize, nYSize, pData,
-                                          nBufXSize, nBufYSize, eBufType,
-                                          nPixelSpace, nLineSpace );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Use MrSID (sub)sampling abilities otherwise.                    */
-/* -------------------------------------------------------------------- */
-    int         nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
-    int         iLine;
-    int         nNewXSize, nNewYSize, iSrcOffset;
-    double	dfXStretch = nBufXSize / nXSize;
-    double	dfYStretch = nBufYSize / nYSize;
-    double	dfMagnification =
-	(dfXStretch < dfYStretch) ? dfYStretch : dfYStretch;
-
-    const LTIScene  oScene( nXOff, nYOff, nBufXSize, nBufYSize, dfMagnification );
-
-    try
-    {
-        poGDS->poImageReader->read( oScene, *poBuffer );
-    }
-    catch ( ... )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "MrSIDRasterBand::IReadBlock(): Failed to load image." );
-        return CE_Failure;
-    }
-    /* Again, fallback to default if we can't zoom/pan */
-    /*if ( !LT_SUCCESS(poGDS->poNavigator->setSceneAsULWH_I( nXOff, nYOff, nBufXSize, nBufYSize, 1.0 )) )
-    {
-        return GDALRasterBand::IRasterIO( eRWFlag, nXOff, nYOff,
-                                          nXSize, nYSize, pData,
-                                          nBufXSize, nBufYSize, eBufType,
-                                          nPixelSpace, nLineSpace );
-    }*/
-
-    /*poImageBuf = new ImageBuffer( *poImageBufInfo );
-    try
-    {
-        poGDS->poMrSidNav->loadImage( *poImageBuf );
-    }
-    catch ( ... )
-    {
-        delete poImageBuf;
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "MrSIDRasterBand::IRasterIO(): Failed to load image." );
-        return CE_Failure;
-    }
-
-    nNewXSize = poImageBuf->getBounds().width();
-    nNewYSize = poImageBuf->getBounds().height();
-    iSrcOffset = (nBand - 1) * poImageBufInfo->bytesPerSample();
-
-    for ( iLine = 0; iLine < nBufYSize; iLine++ )
-    {
-        int     iDstLineOff = iLine * nLineSpace;
-
-        if ( nNewXSize == nBufXSize && nNewYSize == nBufYSize )
-        {
-            GDALCopyWords( (GByte *)poImageBuf->getData()
-                           + iSrcOffset + iLine * poImageBuf->getRowBytes(),
-                           eDataType, poImageBufInfo->pixelIncrement(),
-                           (GByte *)pData + iDstLineOff, eBufType, nPixelSpace,
-                           nBufXSize );
-        }
-        else
-        {
-            double  dfSrcXInc = (double)nNewXSize / nBufXSize;
-            double  dfSrcYInc = (double)nNewYSize / nBufYSize;
-
-            int     iSrcLineOff = iSrcOffset
-                + (int)(iLine * dfSrcYInc) * poImageBuf->getRowBytes();
-            int     iPixel;
-
-            for ( iPixel = 0; iPixel < nBufXSize; iPixel++ )
-            {
-                GDALCopyWords( (GByte *)poImageBuf->getData() + iSrcLineOff
-                               + (int)(iPixel * dfSrcXInc)
-                                      * poImageBufInfo->pixelIncrement(),
-                               eDataType, poImageBufInfo->pixelIncrement(),
-                               (GByte *)pData + iDstLineOff +
-                               iPixel * nBufDataSize,
-                               eBufType, nPixelSpace, 1 );
-            }
-        }
-    }
-
-    delete poImageBuf;*/
-
-    return CE_None;
 }
 
 /************************************************************************/
@@ -1464,47 +1347,24 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     const LTIScene  oScene( nBlockXOff * nBlockXSize,
 		            nBlockYOff * nBlockYSize,
 		            nBlockXSize, nBlockYSize, 1.0 );
+    poBuffer = new LTIBufferData( *poBufferProps );
 
-    try
+    try 
     {
-        poGDS->poImageReader->read( oScene, *poBuffer );
+	    poGDS->poImageReader->read( oScene, *poBuffer );
     }
     catch ( ... )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "MrSIDRasterBand::IReadBlock(): Failed to load image." );
+        delete poBuffer;
         return CE_Failure;
     }
 
-    for ( i = 0, j = nBand - 1; i < nBlockSize; i++, j+=poGDS->nBands )
-    {
-        switch( eDataType )
-        {
-            case GDT_UInt16:
-                ((GUInt16*)pImage)[i] = ((GUInt16*)poBuffer->getData())[j];
-            	break;
-            case GDT_Int16:
-                ((GInt16*)pImage)[i] = ((GInt16*)poBuffer->getData())[j];
-            	break;
-            case GDT_UInt32:
-                ((GUInt32*)pImage)[i] = ((GUInt32*)poBuffer->getData())[j];
-            	break;
-            case GDT_Int32:
-                ((GInt32*)pImage)[i] = ((GInt32*)poBuffer->getData())[j];
-            	break;
-            case GDT_Float32:
-                ((float*)pImage)[i] = ((float*)poBuffer->getData())[j];
-            	break;
-            case GDT_Float64:
-                ((double*)pImage)[i] = ((double*)poBuffer->getData())[j];
-            	break;
-            case GDT_Byte:
-            default:
-                ((GByte*)pImage)[i] = ((GByte*)poBuffer->getData())[j];
-            	break;
-            }
-    }
-    
+    memcpy( pImage, (GByte *)poBuffer->getData() + nBlockSize * (nBand - 1),
+	    nBlockSize );
+
+    delete poBuffer;
     return CE_None;
 }
 
@@ -1577,7 +1437,6 @@ double MrSIDRasterBand::GetNoDataValue( int * pbSuccess )
 MrSIDDataset::MrSIDDataset()
 {
     poImageReader = NULL;
-//    poNavigator = NULL;
     poMetadata = NULL;
     eSampleType = LTI_DATATYPE_UINT8;
     nBands = 0;
@@ -1599,8 +1458,6 @@ MrSIDDataset::MrSIDDataset()
 
 MrSIDDataset::~MrSIDDataset()
 {
-/*    if ( poNavigator )
-        delete poNavigator;*/
     if ( poImageReader )
         delete poImageReader;
     if ( poMetadata )
@@ -1816,17 +1673,6 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 	}
     }
     
-    /*try
-    {
-        poDS->poNavigator = new LTINavigator ( *poDS->poImageReader );
-    }
-    catch ( ... )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to create MrSIDNavigator object." );
-        return NULL;
-    }*/
-
 /* -------------------------------------------------------------------- */
 /*      Handle sample type and color space.                             */
 /* -------------------------------------------------------------------- */
