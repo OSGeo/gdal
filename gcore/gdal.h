@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2001/10/17 21:47:02  warmerda
+ * added SetGCPs() on GDALDataset
+ *
  * Revision 1.36  2001/07/05 13:13:40  warmerda
  * added UnitType from C support
  *
@@ -344,6 +347,8 @@ CPLErr CPL_DLL  GDALSetGeoTransform( GDALDatasetH, double * );
 int CPL_DLL     GDALGetGCPCount( GDALDatasetH );
 const char CPL_DLL *GDALGetGCPProjection( GDALDatasetH );
 const GDAL_GCP CPL_DLL *GDALGetGCPs( GDALDatasetH );
+CPLErr CPL_DLL  GDALSetGCPs( GDALDatasetH, int, const GDAL_GCP *,
+                             const char * );
 
 void CPL_DLL   *GDALGetInternalHandle( GDALDatasetH, const char * );
 int CPL_DLL     GDALReferenceDataset( GDALDatasetH );
