@@ -231,15 +231,23 @@ static HRESULT SFDumpGeomColumn( IOpenRowset* pIOpenRowset,
             VARIANT        oVarData;
             SAFEARRAYBOUND aoBounds[1];
             SAFEARRAY      *pArray;
+			void		   *pSafeData;
 
             aoBounds[0].lLbound = 0;
             aoBounds[0].cElements = nSize;
             
+            pArray = SafeArrayCreate(VT_UI1,1,aoBounds);
+
+			hr = SafeArrayAccessData( pArray, &pSafeData );
+			if( !FAILED(hr) )
+			{
+				memcpy( pSafeData, pabyData, nSize );
+				SafeArrayUnaccessData( pArray );
+			}
+
             VariantInit( &oVarData );
             oVarData.vt = VT_UI1 | VT_ARRAY;
-            pArray = SafeArrayCreate(VT_UI1,1,aoBounds);
-            pArray->pvData = pabyData;
-            oVarData.byref = pArray;
+            oVarData.pparray = &pArray;
 
             hr = pIGeometryFactory->CreateFromWKB( oVarData, NULL,
                                                    &pIGeometry );
