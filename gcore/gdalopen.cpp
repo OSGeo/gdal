@@ -26,6 +26,9 @@
  *
  * 
  * $Log$
+ * Revision 1.9  2001/01/03 05:32:20  warmerda
+ * avoid depending on VSIStatBuf file size for 2GB issues
+ *
  * Revision 1.8  2000/04/21 21:55:53  warmerda
  * set filename as description of GDALDatasets.
  *
@@ -85,20 +88,18 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn )
 
         if( VSI_ISREG( sStat.st_mode ) )
         {
-            nHeaderBytes = MIN(1024,sStat.st_size);
-            pabyHeader = (GByte *) CPLCalloc(nHeaderBytes+1,1);
+            pabyHeader = (GByte *) CPLCalloc(1025,1);
 
             fp = VSIFOpen( pszFilename, "rb" );
 
             if( fp != NULL )
             {
-                nHeaderBytes = VSIFRead( pabyHeader, 1, nHeaderBytes, fp );
+                nHeaderBytes = VSIFRead( pabyHeader, 1, 1024, fp );
 
                 VSIRewind( fp );
             }
         }
     }
-         
 }
 
 /************************************************************************/
