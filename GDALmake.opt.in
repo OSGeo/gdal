@@ -1,6 +1,5 @@
 CC	=	@CC@
 CXX	=	@CXX@
-LD_R	=	ld -r
 INSTALL = 	$(GDAL_ROOT)/install-sh -c
 INSTALL_DATA = 	$(GDAL_ROOT)/install-sh -c -m 0644
 INSTALL_DIR = 	$(GDAL_ROOT)/install-sh -d
@@ -74,7 +73,7 @@ else
 HAVE_LD_SHARED  =	yes
 endif
 
-GDAL_INCLUDE	=	-I$(GDAL_ROOT) -I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore\
+GDAL_INCLUDE	=	-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore \
 			-I$(GDAL_ROOT)/ogr
 
 GDAL_VER	=	1.1
