@@ -37,6 +37,8 @@
 
 vector<string> dods_extract_variable_names(const string &url);
 
+class DODSRasterBand;
+
 /** The GDAL Dataset class for DAP servers. Each instance of this class must
     be bound to a single array variable which can be read from a DAP server.
     The variable \e must be of at least rank two and exactly two of the
@@ -145,8 +147,21 @@ private:
     /// Extract projection info and build WKT string
     void get_geo_info(DAS &das, DDS &dds) throw(Error);
 
+    /// Build a constraint for the whole raster
+    string BuildConstraint(int iBandNum) throw(Error, InternalErr);
+    // Use this when GDALRasterBand::IRasterIO() is implemented for this
+    // driver. 11/06/03 jhrg
+    /// Build a sub-sampled constraint
+    string BuildConstraint(int iXOffset, int iYOffset, int iXSize, int iYSize,
+			   int iBandNum) throw(Error, InternalErr);
+
+    /// Get raw rater data
+    void GetRaster(int iXOffset, int iYOffset, int iXSize, int iYSize,
+		   int iBandNum, void *pImage) throw(Error, InternalErr);
+
     // Simplify testing, make the unit tests a friend class.
     friend class DODSDatasetTest;
+    friend class DODSRasterBand;
 
 public:
     /// Open is not a method in GDALDataset; it's the driver.
@@ -157,21 +172,23 @@ public:
 
     /// How many bands are there in this variable?
     int GetNumBands() { return d_iNumBands; }
-    /// Return the variable name
+    /// Return the OPeNDAP data source variable name
     string GetVarName() { return d_oVarName; }
     /// Return the data source URL
     string GetUrl() { return d_oURL; }
     /// Return the GDAL data type for the variable
     GDALDataType GetDatatype() { return d_eDatatype; }
 
-    /// Build a constraint for the whole raster
-    string BuildConstraint(int iBandNum) throw(Error, InternalErr);
-    // Use this when GDALRasterBand::IRasterIO() is implemented for this
-    // driver. 11/06/03 jhrg
-    /// Build a sub-sampled constraint
-    string BuildConstraint(int iXOffset, int iYOffset, int iXSize, int iYSize,
-			   int iBandNum) throw(Error, InternalErr);
-
+#if 0
+    /// Specialization; Read a raster.
+    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag,
+			     int nXOff, int nYOff, int nXSize, int nYSize,
+			     void * pData, int nBufXSize, int nBufYSize,
+			     GDALDataType eBufType, 
+			     int nBandCount, int *panBandMap,
+			     int nPixelSpace, int nLineSpace, int nBandSpace);
+#endif
+    
     /// Get the geographic transform info
     CPLErr GetGeoTransform(double *padfTransform);
     /// Return the OGC/WKT projection string
@@ -184,14 +201,33 @@ class DODSRasterBand : public GDALRasterBand {
 private:
     string d_oCE;		// Holds the CE
 
+    friend class DODSDatasetTest;
+    friend class DODSDataset;
+
 public:
     /// Build an instance
     DODSRasterBand(DODSDataset *, int);
+    /// Read a raster
+    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag,
+			     int nXOff, int nYOff, int nXSize, int nYSize,
+			     void * pData, int nBufXSize, int nBufYSize,
+			     GDALDataType eBufType,
+			     int nPixelSpace, int nLineSpace);
     /// Read the entire raster.
     virtual CPLErr IReadBlock(int, int, void *);
 };
 
 // $Log$
+// Revision 1.2  2004/01/20 16:36:15  jimg
+// This version of the OPeNDAP driver uses GDALRasterBand::IRasterIO() to read
+// from the remote servers. Using this protected method, it is possible to read
+// portions of an entire raster (the previous version used IReadBlock() which
+// could read only the entire raster). Note that both IRasterIO() and
+// IReadBlock() are specializations of the protected methods from in
+// GDALRasterBand. A better version of this driver would move the implementation
+// into the class DODSDataset so that it could read several bands with one
+// remote access.
+//
 // Revision 1.1  2003/12/12 23:28:17  jimg
 // Added.
 //
