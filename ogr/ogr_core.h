@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/07/09 20:47:35  warmerda
+ * added CPL_START/END
+ *
  * Revision 1.6  1999/11/18 19:02:19  warmerda
  * expanded tabs
  *
@@ -53,6 +56,8 @@
 
 #include "cpl_port.h"
 
+CPL_C_START
+
 void  *OGRMalloc( size_t );
 void  *OGRCalloc( size_t, size_t );
 void  *OGRRealloc( void *, size_t );
@@ -72,6 +77,7 @@ typedef int OGRErr;
 
 typedef int     OGRBoolean;
 
+CPL_C_END
 
 #endif /* ndef _OGR_CORE_H_INCLUDED */
 
