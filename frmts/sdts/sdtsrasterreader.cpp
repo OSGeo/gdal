@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/11/30 05:00:17  warmerda
+ * added error detection in GetBlock() to avoid infinite recursion
+ *
  * Revision 1.9  2001/09/10 19:27:36  warmerda
  * added GetMinMax() and raster data types
  *
@@ -357,7 +360,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
   @param pData pointer to GInt16 (signed short) buffer of data into which to
   read the raster.
 
-  @return 
+  @return TRUE on success and FALSE on error.
 
   */
 
@@ -382,6 +385,7 @@ int SDTSRasterReader::GetBlock( int nXOffset, int nYOffset, void * pData )
 /* -------------------------------------------------------------------- */
 /*      Read through till we find the desired record.                   */
 /* -------------------------------------------------------------------- */
+    CPLErrorReset();
     while( (poRecord = oDDFModule.ReadRecord()) != NULL )
     {
         if( poRecord->GetIntSubfield( "CELL", 0, "ROWI", 0 )
@@ -390,6 +394,9 @@ int SDTSRasterReader::GetBlock( int nXOffset, int nYOffset, void * pData )
             break;
         }
     }
+
+    if( CPLGetLastErrorType() == CE_Failure )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      If we didn't get what we needed just start over.                */
