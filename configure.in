@@ -815,6 +815,10 @@ if test "$PG_CONFIG" = "no" ; then
   AC_MSG_RESULT([no])
 
 else
+  if test -d $PG_CONFIG ; then
+      AC_MSG_RESULT([no])
+      AC_MSG_ERROR([--with-pg argument is a directory, but it should be the path to the pg_config script])
+  fi
 
   HAVE_PG=yes
   PG_LIB="-L`$PG_CONFIG --libdir` -lpq"
