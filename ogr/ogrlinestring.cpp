@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2002/08/19 03:24:51  warmerda
+ * Fixed serious bug with 3D points in setPoints() methods.
+ *
  * Revision 1.30  2002/07/15 13:31:07  warmerda
  * patch from Graeme for exportToWkb() with swapping code
  *
@@ -534,7 +537,7 @@ void OGRLineString::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
     else
     {
         Make3D();
-        memcpy( this->padfZ, padfZ, sizeof(double) * nPointsIn );
+        memcpy( this->padfZ, padfZIn, sizeof(double) * nPointsIn );
     }
 }
 
@@ -597,7 +600,7 @@ void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY,
     }
 
     if( padfZ != NULL )
-        memcpy( this->padfZ, padfZ, sizeof(double) * nPointsIn );
+        memcpy( this->padfZ, padfZIn, sizeof(double) * nPointsIn );
 }
 
 /************************************************************************/
