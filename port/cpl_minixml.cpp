@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.31  2004/08/11 18:42:00  warmerda
+ * fix quirks with CPLSetXMLValue()
+ *
  * Revision 1.30  2004/03/31 17:11:41  warmerda
  * fixed return value of CPLCreateXMLElementAndValue()
  *
@@ -1485,16 +1488,23 @@ int CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
     CSLDestroy( papszTokens );
 
 /* -------------------------------------------------------------------- */
+/*      Find the "text" child if there is one.                          */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psTextChild = psRoot->psChild;
+
+    while( psTextChild != NULL && psTextChild->eType != CXT_Text )
+        psTextChild = psTextChild->psNext;
+
+/* -------------------------------------------------------------------- */
 /*      Now set a value node under this node.                           */
 /* -------------------------------------------------------------------- */
-    if( psRoot->psChild == NULL )
+    
+    if( psTextChild == NULL )
         CPLCreateXMLNode( psRoot, CXT_Text, pszValue );
-    else if( psRoot->psChild->eType != CXT_Text )
-        return FALSE;
     else 
     {
-        CPLFree( psRoot->psChild->pszValue );
-        psRoot->psChild->pszValue = CPLStrdup( pszValue );
+        CPLFree( psTextChild->pszValue );
+        psTextChild->pszValue = CPLStrdup( pszValue );
     }
 
     return TRUE;
