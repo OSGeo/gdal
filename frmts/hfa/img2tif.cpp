@@ -28,8 +28,8 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.4  1999/02/11 18:36:47  warmerda
- * Added Overview Generation support.
+ * Revision 1.5  1999/02/15 19:33:05  warmerda
+ * Added reporting, and logic to -v 98 and -v 99.
  *
  * Revision 1.3  1999/01/28 16:25:46  warmerda
  * Added compression, usage message, error checking and other cleanup.
@@ -47,14 +47,17 @@
 #include "xtiffio.h"
 
 CPL_C_START
-static void ImagineToGeoTIFF( HFAHandle, HFABand *, HFABand *, HFABand *,
-                              const char *, int );
 CPLErr ImagineToGeoTIFFProjection( HFAHandle hHFA, TIFF * hTIFF );
 CPLErr CopyPyramidsToTiff( HFAHandle, HFABand *, TIFF *, int );
-static CPLErr RGBComboValidate( HFAHandle, int, int, int );
-static int    ValidateDataType( HFAHandle, int );
 void 	      TIFF_BuildOverviews( const char *, int, int * );
 CPL_C_END
+
+static void ImagineToGeoTIFF( HFAHandle, HFABand *, HFABand *, HFABand *,
+                              const char *, int, int );
+static CPLErr RGBComboValidate( HFAHandle, int, int, int );
+static int    ValidateDataType( HFAHandle, int );
+static void   ReportOnBand( HFABand * poBand );
+static void   ReportOnProjection( HFABand * poBand );
 
 int	gnReportOn = TRUE;
 
@@ -97,6 +100,7 @@ int main( int nArgc, char ** papszArgv )
     HFAHandle   hHFA;
     int		nCompressFlag = COMPRESSION_NONE;
     int		nOverviewCount=0, anOverviews[100];
+    int		bDictDump = FALSE, bTreeDump = FALSE;
         
 /* -------------------------------------------------------------------- */
 /*      Parse commandline options.                                      */
@@ -129,11 +133,23 @@ int main( int nArgc, char ** papszArgv )
         {
             gnReportOn = FALSE;
         }
+        else if( EQUAL(papszArgv[i],"-dd") )
+        {
+            bDictDump = TRUE;
+        }
+        else if( EQUAL(papszArgv[i],"-dt") )
+        {
+            bTreeDump = TRUE;
+        }
         else if( EQUAL(papszArgv[i],"-rgb") && i+3 < nArgc )
         {
             nRed = atoi(papszArgv[++i]);
             nGreen = atoi(papszArgv[++i]);
             nBlue = atoi(papszArgv[++i]);
+        }
+        else if( EQUAL(papszArgv[i],"-?") )
+        {
+            Usage();
         }
         else
         {
@@ -148,20 +164,88 @@ int main( int nArgc, char ** papszArgv )
         Usage();
     }
     
-    if( pszDstBasename == NULL )
-    {
-        printf( "No destination file provided.\n\n" );
-        Usage();
-    }
-    
 /* -------------------------------------------------------------------- */
 /*      Open the imagine file.                                          */
 /* -------------------------------------------------------------------- */
     hHFA = HFAOpen( pszSrcFilename, "r" );
 
     if( hHFA == NULL )
+    {
         exit( 100 );
+    }
 
+/* -------------------------------------------------------------------- */
+/*      Do we want to walk the tree dumping out general information?    */
+/* -------------------------------------------------------------------- */
+    if( bDictDump )
+    {
+        HFADumpDictionary( hHFA, stdout );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we want to walk the tree dumping out general information?    */
+/* -------------------------------------------------------------------- */
+    if( bTreeDump )
+    {
+        HFADumpTree( hHFA, stdout );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Report general information on the source file.                  */
+/* -------------------------------------------------------------------- */
+    if( gnReportOn )
+    {
+        printf( "Imagine file: %s  Raster Size: %dP x %dL x %dB\n",
+                pszSrcFilename, hHFA->nXSize, hHFA->nYSize, hHFA->nBands );
+    }
+
+/* -------------------------------------------------------------------- */
+/*	If the user has requested `98', or `99' for the overviews, 	*/
+/*	figure out how many that will be.				*/    
+/* -------------------------------------------------------------------- */
+    if( nOverviewCount == 1
+        && (anOverviews[0] == 98 || anOverviews[0] == 99) )
+    {
+        int		nXSize = hHFA->nXSize;
+        int		nYSize = hHFA->nYSize;
+        int		nRes = 2;
+
+        nOverviewCount = 0;
+        if( anOverviews[0] == 98 )
+        {
+            nXSize /= 2;
+            nYSize /= 2;
+            nRes = 4;
+        }
+        
+        while( nXSize > 30 || nYSize > 30 )
+        {
+            anOverviews[nOverviewCount++] = nRes;
+            nRes = nRes * 2;
+            nXSize = nXSize / 2;
+            nYSize = nYSize / 2;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If there is no specified destination file, then report a        */
+/*      report on the input file.                                       */
+/* -------------------------------------------------------------------- */
+    if( pszDstBasename == NULL )
+    {
+        if( !gnReportOn )
+            exit( 0 );
+        
+        for( i = 0; i < hHFA->nBands; i++ )
+        {
+            printf( "Band %d\n", i+1 );
+            ReportOnBand( hHFA->papoBand[i] );
+        }
+        ReportOnProjection( hHFA->papoBand[0] );
+        
+        exit( 0 );
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Loop over all bands, generating each TIFF file.                 */
 /* -------------------------------------------------------------------- */
@@ -173,7 +257,7 @@ int main( int nArgc, char ** papszArgv )
     if( nRed > 0 )
     {
         char	szFilename[512];
-        
+
         if( RGBComboValidate( hHFA, nRed, nGreen, nBlue ) == CE_Failure )
             exit( 1 );
 
@@ -182,12 +266,25 @@ int main( int nArgc, char ** papszArgv )
         else
             sprintf( szFilename, "%s", pszDstBasename );
 
+        if( gnReportOn )
+            printf( "Translating bands %d,%d,%d to an RGB TIFF file %s.\n",
+                    nRed, nGreen, nBlue, szFilename );
+        
         ImagineToGeoTIFF( hHFA,
                           hHFA->papoBand[nRed-1],
                           hHFA->papoBand[nGreen-1],
                           hHFA->papoBand[nBlue-1],
                           szFilename,
-                          nCompressFlag );
+                          nCompressFlag,
+                          nOverviewCount == 0 );
+
+        if( nOverviewCount > 0 )
+        {
+            if( gnReportOn )
+                printf( "  Building %d overviews.\n", nOverviewCount );
+            
+            TIFF_BuildOverviews( szFilename, nOverviewCount, anOverviews );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -209,11 +306,19 @@ int main( int nArgc, char ** papszArgv )
             else
                 sprintf( szFilename, "%s%d.tif", pszDstBasename, nBand );
         
+            if( gnReportOn )
+                printf( "Translating band %d to an TIFF file %s.\n",
+                        nBand, szFilename );
+        
             ImagineToGeoTIFF( hHFA, hHFA->papoBand[nBand-1], NULL, NULL,
-                              szFilename, nCompressFlag );
+                              szFilename, nCompressFlag,
+                              nOverviewCount == 0 );
 
             if( nOverviewCount > 0 )
             {
+                if( gnReportOn )
+                    printf( "  Building %d overviews.\n", nOverviewCount );
+            
                 TIFF_BuildOverviews( szFilename, nOverviewCount, anOverviews );
             }
         }
@@ -222,6 +327,82 @@ int main( int nArgc, char ** papszArgv )
     HFAClose( hHFA );
 
     return 0;
+}
+
+/************************************************************************/
+/*                            ReportOnBand()                            */
+/************************************************************************/
+
+static void ReportOnBand( HFABand * poBand )
+
+{
+    HFAEntry		*poBinInfo, *poSubNode;
+
+    printf( "  Data Type: %s   Raster Size: %dx%d\n",
+	    poBand->poNode->GetStringField( "pixelType" ),
+	    poBand->poNode->GetIntField( "width" ),
+	    poBand->poNode->GetIntField( "height" ) );
+
+/* -------------------------------------------------------------------- */
+/*      Report min/max                                                  */
+/* -------------------------------------------------------------------- */
+    poBinInfo = poBand->poNode->GetNamedChild("Statistics" );
+    if( poBinInfo != NULL )
+    {
+        printf( "  Pixel Values - Minimum=%g, Maximum=%g\n",
+                poBinInfo->GetDoubleField( "minimum" ),
+                poBinInfo->GetDoubleField( "maximum" ) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Report overviews.                                               */
+/* -------------------------------------------------------------------- */
+    for( poSubNode = poBand->poNode->GetChild();
+         poSubNode != NULL;
+         poSubNode = poSubNode->GetNext() )
+    {
+        if( !EQUAL(poSubNode->GetType(),"Eimg_Layer_SubSample") )
+            continue;
+
+        printf( "  Overview: %s\n", poSubNode->GetName() );
+    }
+}
+
+/************************************************************************/
+/*                         ReportOnProjection()                         */
+/*                                                                      */
+/*      Report on the projection of a given band.                       */
+/************************************************************************/
+
+static void ReportOnProjection( HFABand * poBand )
+
+{
+    HFAEntry		*poDatum, *poProParameters;
+
+    poProParameters = poBand->poNode->GetNamedChild( "Projection" );
+    if( poProParameters == NULL )
+        return;
+
+    printf( "\n" );
+    printf( "  ProjectionName = %s\n",
+            poProParameters->GetStringField( "proName" ) );
+    printf( "  ProjectionZone = %d\n", 
+            poProParameters->GetIntField( "proZone" ) );
+
+    printf( "  Spheroid = %s (major=%.2f, minor=%.2f)\n",
+            poProParameters->GetStringField( "proSpheroid.sphereName" ),
+            poProParameters->GetDoubleField( "proSpheroid.a" ),
+            poProParameters->GetDoubleField( "proSpheroid.b" ) );
+
+/* -------------------------------------------------------------------- */
+/*      Report on datum.                                                */
+/* -------------------------------------------------------------------- */
+    poDatum = poProParameters->GetNamedChild( "Datum" );
+    if( poDatum == NULL )
+        return;
+
+    printf( "  Datum Name = %s\n",
+            poDatum->GetStringField( "datumname" ) );
 }
 
 /************************************************************************/
@@ -417,7 +598,7 @@ static void ImagineToGeoTIFF( HFAHandle hHFA,
                               HFABand * poGreenBand,
                               HFABand * poBlueBand,
                               const char * pszDstFilename,
-                              int nCompressFlag )
+                              int nCompressFlag, int bCopyOverviews )
 
 {
     TIFF	*hTIFF;
@@ -526,7 +707,8 @@ static void ImagineToGeoTIFF( HFAHandle hHFA,
 /* -------------------------------------------------------------------- */
 /*      Write overviews                                                 */
 /* -------------------------------------------------------------------- */
-    CopyPyramidsToTiff( hHFA, poRedBand, hTIFF, nCompressFlag );
+    if( bCopyOverviews )
+        CopyPyramidsToTiff( hHFA, poRedBand, hTIFF, nCompressFlag );
 
     XTIFFClose( hTIFF );
 }
