@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/10/29 17:30:03  warmerda
+ * added documentation
+ *
  * Revision 1.1  1999/10/27 20:23:05  warmerda
  * New
  *
@@ -38,9 +41,38 @@
 
 /************************************************************************/
 /*                     GXFGetMapProjectionAsPROJ4()                     */
-/*                                                                      */
-/*      Return the map projection definition in PROJ.4 format.          */
 /************************************************************************/
+
+/**
+ * Return the GXF Projection in PROJ.4 format.
+ *
+ * The returned string becomes owned by the caller, and should be freed
+ * with CPLFree() or VSIFree().  The return value will be "unknown" if
+ * no projection information is passed.
+ *
+ * The mapping of GXF projections to PROJ.4 format is not complete.  Please
+ * see the gxf_proj4.c code to better understand limitations of this
+ * translation.  Noteable PROJ.4 knows little about datums.
+ *
+ * For example, the following GXF definitions:
+ * <pre>
+ * #UNIT_LENGTH                        
+ * m,1
+ * #MAP_PROJECTION
+ * "NAD83 / UTM zone 19N"
+ * "GRS 1980",6378137,0.081819191,0
+ * "Transverse Mercator",0,-69,0.9996,500000,0
+ * </pre>
+ *
+ * Would translate to:
+ * <pre>
+ * +proj=tmerc +lat_0=0 +lon_0=-69 +k=0.9996 +x_0=500000 +y_0=0 +ellps=GRS80
+ * </pre>
+ *
+ * @param hGXF handle to GXF file, as returned by GXFOpen().
+ *
+ * @return string containing PROJ.4 projection.
+ */
 
 char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
 
