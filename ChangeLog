@@ -1,3 +1,7 @@
+2004-08-01  Andrey Kiselev  <dron@remotesensing.org>
+
+	* frmts/gtiff/libtiff: Sincronized with the latest libtiff from CVS.
+
 2004-07-04  Andrey Kiselev  <dron@remotesensing.org>
 	
 	* frmts/mrsid/mrsiddataset.cpp: Added support for JPEG2000 format
