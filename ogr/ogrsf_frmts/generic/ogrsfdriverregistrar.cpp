@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/05/28 19:18:04  warmerda
+ * fixup argument names for docs
+ *
  * Revision 1.13  2003/05/20 19:07:03  warmerda
  * added GDAL_DATA support, use CPLGetConfigOption
  *
@@ -448,7 +451,7 @@ OGRDataSourceH OGRGetOpenDS( int iDS )
 /*                           RegisterDriver()                           */
 /************************************************************************/
 
-void OGRSFDriverRegistrar::RegisterDriver( OGRSFDriver * poNewDriver )
+void OGRSFDriverRegistrar::RegisterDriver( OGRSFDriver * poDriver )
 
 {
     int         iDriver;
@@ -458,7 +461,7 @@ void OGRSFDriverRegistrar::RegisterDriver( OGRSFDriver * poNewDriver )
 /* -------------------------------------------------------------------- */
     for( iDriver = 0; iDriver < nDrivers; iDriver++ )
     {
-        if( poNewDriver == papoDrivers[iDriver] )
+        if( poDriver == papoDrivers[iDriver] )
             return;
     }                                                   
 
@@ -468,7 +471,7 @@ void OGRSFDriverRegistrar::RegisterDriver( OGRSFDriver * poNewDriver )
     papoDrivers = (OGRSFDriver **)
         CPLRealloc( papoDrivers, (nDrivers+1) * sizeof(void*) );
 
-    papoDrivers[nDrivers++] = poNewDriver;
+    papoDrivers[nDrivers++] = poDriver;
 }
 
 /************************************************************************/
@@ -508,13 +511,13 @@ int OGRGetDriverCount()
 /*                             GetDriver()                              */
 /************************************************************************/
 
-OGRSFDriver *OGRSFDriverRegistrar::GetDriver( int i )
+OGRSFDriver *OGRSFDriverRegistrar::GetDriver( int iDriver )
 
 {
-    if( i < 0 || i >= nDrivers )
+    if( iDriver < 0 || iDriver >= nDrivers )
         return NULL;
     else
-        return papoDrivers[i];
+        return papoDrivers[iDriver];
 }
 
 /************************************************************************/

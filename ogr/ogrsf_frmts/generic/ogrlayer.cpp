@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/05/28 19:18:04  warmerda
+ * fixup argument names for docs
+ *
  * Revision 1.17  2003/05/21 04:54:29  warmerda
  * avoid warnings about unused formal parameters and possibly uninit variables
  *
@@ -322,7 +325,7 @@ OGRErr OGR_L_SetAttributeFilter( OGRLayerH hLayer, const char *pszQuery )
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRLayer::GetFeature( long nFeatureId )
+OGRFeature *OGRLayer::GetFeature( long nFID )
 
 {
     OGRFeature *poFeature;
@@ -330,7 +333,7 @@ OGRFeature *OGRLayer::GetFeature( long nFeatureId )
     ResetReading();
     while( (poFeature = GetNextFeature()) != NULL )
     {
-        if( poFeature->GetFID() == nFeatureId )
+        if( poFeature->GetFID() == nFID )
             return poFeature;
         else
             delete poFeature;

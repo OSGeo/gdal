@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2003/05/28 19:18:04  warmerda
+ * fixup argument names for docs
+ *
  * Revision 1.19  2003/05/21 04:54:29  warmerda
  * avoid warnings about unused formal parameters and possibly uninit variables
  *
@@ -224,13 +227,14 @@ int OGR_DS_GetSummaryRefCount( OGRDataSourceH hDataSource )
 
 OGRLayer *OGRDataSource::CreateLayer( const char * pszName,
                                       OGRSpatialReference * poSpatialRef,
-                                      OGRwkbGeometryType eType,
-                                      char ** )
+                                      OGRwkbGeometryType eGType,
+                                      char **papszOptions )
 
 {
-    (void) eType;
+    (void) eGType;
     (void) poSpatialRef;
     (void) pszName;
+    (void) papszOptions;
 
     CPLError( CE_Failure, CPLE_NotSupported,
               "CreateLayer() not supported by this data source." );
@@ -635,7 +639,7 @@ OGRErr OGRDataSource::ProcessSQLDropIndex( const char *pszSQLCommand )
 /*                             ExecuteSQL()                             */
 /************************************************************************/
 
-OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
+OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
                                       OGRGeometry *poSpatialFilter,
                                       const char *pszDialect )
 
@@ -648,25 +652,25 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Handle CREATE INDEX statements specially.                       */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"CREATE INDEX",12) )
+    if( EQUALN(pszStatement,"CREATE INDEX",12) )
     {
-        ProcessSQLCreateIndex( pszSQLCommand );
+        ProcessSQLCreateIndex( pszStatement );
         return NULL;
     }
     
 /* -------------------------------------------------------------------- */
 /*      Handle DROP INDEX statements specially.                         */
 /* -------------------------------------------------------------------- */
-    if( EQUALN(pszSQLCommand,"DROP INDEX",10) )
+    if( EQUALN(pszStatement,"DROP INDEX",10) )
     {
-        ProcessSQLDropIndex( pszSQLCommand );
+        ProcessSQLDropIndex( pszStatement );
         return NULL;
     }
     
 /* -------------------------------------------------------------------- */
 /*      Preparse the SQL statement.                                     */
 /* -------------------------------------------------------------------- */
-    pszError = swq_select_preparse( pszSQLCommand, &psSelectInfo );
+    pszError = swq_select_preparse( pszStatement, &psSelectInfo );
     if( pszError != NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -838,13 +842,13 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszSQLCommand,
 /************************************************************************/
 
 OGRLayerH OGR_DS_ExecuteSQL( OGRDataSourceH hDS, 
-                             const char *pszSQLCommand,
+                             const char *pszStatement,
                              OGRGeometryH hSpatialFilter,
                              const char *pszDialect )
 
 {
     return (OGRLayerH) 
-        ((OGRDataSource *)hDS)->ExecuteSQL( pszSQLCommand,
+        ((OGRDataSource *)hDS)->ExecuteSQL( pszStatement,
                                             (OGRGeometry *) hSpatialFilter,
                                             pszDialect );
 }
@@ -853,10 +857,10 @@ OGRLayerH OGR_DS_ExecuteSQL( OGRDataSourceH hDS,
 /*                          ReleaseResultSet()                          */
 /************************************************************************/
 
-void OGRDataSource::ReleaseResultSet( OGRLayer * poLayer )
+void OGRDataSource::ReleaseResultSet( OGRLayer * poResultsSet )
 
 {
-    delete poLayer;
+    delete poResultsSet;
 }
 
 /************************************************************************/
