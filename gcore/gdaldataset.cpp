@@ -25,6 +25,9 @@
  * The GDALDataset class.
  * 
  * $Log$
+ * Revision 1.7  1999/05/17 01:43:10  warmerda
+ * fixed GDALSetGeoTransform()
+ *
  * Revision 1.6  1999/05/16 20:04:58  warmerda
  * Don't emit an error message when SetProjection() is called for datasets
  * that don't implement the call.
@@ -354,7 +357,7 @@ CPLErr GDALDataset::SetGeoTransform( double * )
 CPLErr GDALSetGeoTransform( GDALDatasetH hDS, double * padfTransform )
 
 {
-    return( ((GDALDataset *) hDS)->GetGeoTransform(padfTransform) );
+    return( ((GDALDataset *) hDS)->SetGeoTransform(padfTransform) );
 }
 
 /************************************************************************/
