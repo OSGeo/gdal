@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2003/09/09 07:49:52  dron
+ * Added OSRExportToPCI().
+ *
  * Revision 1.36  2003/08/31 14:51:01  dron
  * Added OSRImportFromPCI().
  *
@@ -338,12 +341,14 @@ OGRErr CPL_DLL OSRImportFromEPSG( OGRSpatialReferenceH, int );
 OGRErr CPL_DLL OSRImportFromWkt( OGRSpatialReferenceH, char ** );
 OGRErr CPL_DLL OSRImportFromProj4( OGRSpatialReferenceH, const char *);
 OGRErr CPL_DLL OSRImportFromESRI( OGRSpatialReferenceH, char **);
-OGRErr OSRImportFromPCI( OGRSpatialReferenceH hSRS, const char *,
-                         const char *, double * );
+OGRErr CPL_DLL OSRImportFromPCI( OGRSpatialReferenceH hSRS, const char *,
+                                 const char *, double * );
 OGRErr CPL_DLL OSRImportFromXML( OGRSpatialReferenceH, const char * );
 OGRErr CPL_DLL OSRExportToWkt( OGRSpatialReferenceH, char ** );
 OGRErr CPL_DLL OSRExportToPrettyWkt( OGRSpatialReferenceH, char **, int);
 OGRErr CPL_DLL OSRExportToProj4( OGRSpatialReferenceH, char **);
+OGRErr CPL_DLL OSRExportToPCI( OGRSpatialReferenceH, char **, char **,
+                               double ** );
 OGRErr CPL_DLL OSRExportToXML( OGRSpatialReferenceH, char **, const char * );
 
 OGRErr CPL_DLL OSRMorphToESRI( OGRSpatialReferenceH );
