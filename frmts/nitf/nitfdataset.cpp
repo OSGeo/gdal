@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/05/06 14:58:06  warmerda
+ * added USE00A and STDIDC parsing and reporting as metadata
+ *
  * Revision 1.20  2004/04/28 15:19:00  warmerda
  * added geocentric to geodetic conversion
  *
@@ -721,6 +724,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Do we have metadata.                                            */
 /* -------------------------------------------------------------------- */
     char **papszMergedMD;
+    char **papszUSE00A_MD;
 
     papszMergedMD = CSLDuplicate( poDS->psFile->papszMetadata );
     papszMergedMD = CSLInsertStrings( papszMergedMD, 
@@ -731,6 +735,24 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         papszMergedMD = CSLSetNameValue( 
             papszMergedMD, "NITF_IMAGE_COMMENTS", psImage->pszComments );
 
+    papszUSE00A_MD = NITFReadUSE00A( psImage );
+    if( papszUSE00A_MD != NULL )
+    {
+        papszMergedMD = CSLInsertStrings( papszMergedMD, 
+                                          CSLCount( papszUSE00A_MD ),
+                                          papszUSE00A_MD );
+        CSLDestroy( papszUSE00A_MD );
+    }
+    
+    papszUSE00A_MD = NITFReadSTDIDC( psImage );
+    if( papszUSE00A_MD != NULL )
+    {
+        papszMergedMD = CSLInsertStrings( papszMergedMD, 
+                                          CSLCount( papszUSE00A_MD ),
+                                          papszUSE00A_MD );
+        CSLDestroy( papszUSE00A_MD );
+    }
+    
     poDS->SetMetadata( papszMergedMD );
     CSLDestroy( papszMergedMD );
     

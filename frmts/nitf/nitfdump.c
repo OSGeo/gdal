@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/05/06 14:58:06  warmerda
+ * added USE00A and STDIDC parsing and reporting as metadata
+ *
  * Revision 1.6  2003/05/29 19:50:10  warmerda
  * added RPC (and more general TRE) reporting
  *
@@ -49,10 +52,12 @@
  */
 
 #include "nitflib.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
 static void DumpRPC( NITFImage *psImage, NITFRPC00BInfo *psRPC );
+static void DumpMetadata( const char *, const char *, char ** );
 
 /************************************************************************/
 /*                                main()                                */
@@ -118,6 +123,11 @@ int main( int nArgc, char ** papszArgv )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Dump Metadata                                                   */
+/* -------------------------------------------------------------------- */
+    DumpMetadata( "File Metadata:", "  ", psFile->papszMetadata );
+
+/* -------------------------------------------------------------------- */
 /*      Dump general info about segments.                               */
 /* -------------------------------------------------------------------- */
     for( iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
@@ -144,6 +154,7 @@ int main( int nArgc, char ** papszArgv )
         NITFImage *psImage;
         NITFRPC00BInfo sRPCInfo;
         int iBand;
+        char **papszMD;
 
         if( !EQUAL(psSegInfo->szSegmentType,"IM") )
             continue;
@@ -210,6 +221,22 @@ int main( int nArgc, char ** papszArgv )
         {
             DumpRPC( psImage, &sRPCInfo );
         }
+
+        papszMD = NITFReadUSE00A( psImage );
+        if( papszMD != NULL )
+        {
+            DumpMetadata( "  USE00A TRE:", "    ", papszMD );
+            CSLDestroy( papszMD );
+        }
+
+        papszMD = NITFReadSTDIDC( psImage );
+        if( papszMD != NULL )
+        {
+            DumpMetadata( "  STDIDC TRE:", "    ", papszMD );
+            CSLDestroy( papszMD );
+        }
+
+        DumpMetadata( "  Image Metadata:", "    ", psImage->papszMetadata );
     }
 
 /* -------------------------------------------------------------------- */
@@ -220,6 +247,23 @@ int main( int nArgc, char ** papszArgv )
     exit( 0 );
 }
 
+/************************************************************************/
+/*                            DumpMetadata()                            */
+/************************************************************************/
+
+static void DumpMetadata( const char *pszTitle, const char *pszPrefix, 
+                          char ** papszMD )
+{
+    int i;
+
+    if( papszMD == NULL )
+        return;
+
+    printf( "%s\n", pszTitle );
+
+    for( i = 0; papszMD[i] != NULL; i++ )
+        printf( "%s%s\n", pszPrefix, papszMD[i] );
+}
 
 /************************************************************************/
 /*                              DumpRPC()                               */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/05/06 14:58:06  warmerda
+ * added USE00A and STDIDC parsing and reporting as metadata
+ *
  * Revision 1.12  2004/04/28 15:19:00  warmerda
  * added geocentric to geodetic conversion
  *
@@ -218,6 +221,8 @@ int       CPL_DLL  NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
                                     double dfURX, double dfURY,
                                     double dfLRX, double dfLRY,
                                     double dfLLX, double dfLLY );
+char      CPL_DLL **NITFReadUSE00A( NITFImage *psImage );
+char      CPL_DLL **NITFReadSTDIDC( NITFImage *psImage );
 
 
 #define BLKREAD_OK    0
