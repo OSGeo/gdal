@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/11/14 21:18:22  dron
+ * Initial support for MrSID Encoding SDK.
+ *
  * Revision 1.17  2004/09/09 19:20:18  dron
  * Use VSIFClose instead of VSIFCloseL in MrSIDDataset::Open().
  *
@@ -446,7 +449,7 @@ class MrSIDDataset : public GDALDataset
 
     int                 nCurrentZoomLevel;
 
-    int                 bHasGeoTransfom;
+    int                 bHasGeoTransform;
     double              adfGeoTransform[6];
     char                *pszProjection;
     GTIFDefn            *psDefn;
@@ -800,7 +803,7 @@ MrSIDDataset::MrSIDDataset()
     eSampleType = ImageBufferInfo::UINT8;
     eDataType = GDT_Byte;
     pszProjection = CPLStrdup( "" );
-    bHasGeoTransfom = FALSE;
+    bHasGeoTransform = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -853,7 +856,7 @@ CPLErr MrSIDDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(adfGeoTransform[0]) * 6 );
 
-    if ( !bHasGeoTransfom )
+    if ( !bHasGeoTransform )
         return CE_Failure;
 
     return CE_None;
@@ -1042,18 +1045,18 @@ CPLErr MrSIDDataset::OpenZoomLevel( int iZoom )
     switch ( eSampleType )
     {
         case ImageBufferInfo::UINT16:
-        eDataType = GDT_UInt16;
-        break;
+            eDataType = GDT_UInt16;
+            break;
         case ImageBufferInfo::UINT32:
-        eDataType = GDT_UInt32;
-        break;
+            eDataType = GDT_UInt32;
+            break;
         case ImageBufferInfo::FLOAT32:
-        eDataType = GDT_Float32;
-        break;
+            eDataType = GDT_Float32;
+            break;
         case ImageBufferInfo::UINT8:
         default:
-        eDataType = GDT_Byte;
-        break;
+            eDataType = GDT_Byte;
+            break;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1081,7 +1084,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( int iZoom )
         adfGeoTransform[5] = - adfGeoTransform[5];
         adfGeoTransform[0] = adfGeoTransform[0] - adfGeoTransform[1] / 2;
         adfGeoTransform[3] = adfGeoTransform[3] - adfGeoTransform[5] / 2;
-        bHasGeoTransfom = TRUE;
+        bHasGeoTransform = TRUE;
     }
 
     if ( iZoom != 0 )
@@ -1226,6 +1229,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 #include "lt_types.h"
 #include "lt_base.h"
 #include "lt_fileSpec.h"
+#include "lt_ioFileStream.h"
 #include "lti_geoCoord.h"
 #include "lti_pixel.h"
 #include "lti_navigator.h"
@@ -1235,6 +1239,11 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 #include "lti_utils.h"
 #include "MrSIDImageReader.h"
 #include "J2KImageReader.h"
+
+#ifdef MRSID_ESDK_VERSION_40
+# include "MG3ImageWriter.h"
+# include "MG3WriterParams.h"
+#endif /* MRSID_ESDK_VERSION_40 */
 
 LT_USE_NAMESPACE(LizardTech)
 
@@ -1249,9 +1258,13 @@ class MrSIDDataset : public GDALDataset
     friend class MrSIDRasterBand;
 
     LTIImageReader      *poImageReader;
+#ifdef MRSID_ESDK_VERSION_40
+    LTIMeteredImageWriter *poImageWriter;
+#endif /* MRSID_ESDK_VERSION_40 */
     LTINavigator        *poLTINav;
     LTIMetadataDatabase *poMetadata;
-    
+    const LTIPixel      *poNDPixel;
+
     LTISceneBuffer      *poBuffer;
     int                 nBlockXSize, nBlockYSize;
     int                 bPrevBlockRead;
@@ -1263,7 +1276,7 @@ class MrSIDDataset : public GDALDataset
 
     double              dfCurrentMag;
 
-    int                 bHasGeoTransfom;
+    int                 bHasGeoTransform;
     double              adfGeoTransform[6];
     char                *pszProjection;
     GTIFDefn            *psDefn;
@@ -1288,9 +1301,17 @@ class MrSIDDataset : public GDALDataset
                 ~MrSIDDataset();
 
     static GDALDataset  *Open( GDALOpenInfo * );
-
     virtual CPLErr      GetGeoTransform( double * padfTransform );
     const char          *GetProjectionRef();
+
+#ifdef MRSID_ESDK_VERSION_40
+    static GDALDataset  *Create( const char * pszFilename,
+                                 int nXSize, int nYSize, int nBands,
+                                 GDALDataType eType, char ** papszParmList );
+    virtual void        FlushCache( void );
+    /*virtual CPLErr      SetGeoTransform( double * );
+    virtual CPLErr      SetProjectionRef( const char * );*/
+#endif /* MRSID_ESDK_VERSION_40 */
 };
 
 /************************************************************************/
@@ -1320,6 +1341,10 @@ class MrSIDRasterBand : public GDALRasterBand
     virtual double	    GetNoDataValue( int * );
     virtual int             GetOverviewCount();
     virtual GDALRasterBand  *GetOverview( int );
+
+#ifdef MRSID_ESDK_VERSION_40
+    virtual CPLErr          IWriteBlock( int, int, void * );
+#endif /* MRSID_ESDK_VERSION_40 */
 };
 
 /************************************************************************/
@@ -1344,10 +1369,9 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDS, int nBand )
 /* -------------------------------------------------------------------- */
 /*      Set NoData values.                                              */
 /* -------------------------------------------------------------------- */
-     const LTIPixel *poNDPixel = poDS->poImageReader->getNoDataPixel();
-     if ( poNDPixel )
+     if ( poDS->poNDPixel )
      {
-	 dfNoDataValue = poNDPixel->getSampleValueFloat32( nBand - 1 );
+	 dfNoDataValue = poDS->poNDPixel->getSampleValueFloat32( nBand - 1 );
 	 bNoDataSet = TRUE;
      }
      else
@@ -1376,19 +1400,28 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     MrSIDDataset    *poGDS = (MrSIDDataset *)poDS;
 
-    
+#ifdef MRSID_ESDK_VERSION_40
+    if( poGDS->eAccess == GA_Update )
+    {
+        memset( pImage, 0, nBlockSize * GDALGetDataTypeSize(eDataType) / 8 );
+        return CE_None;
+    }
+#endif /* MRSID_ESDK_VERSION_40 */
+
     if ( !poGDS->bPrevBlockRead
          || poGDS->nPrevBlockXOff != nBlockXOff
          || poGDS->nPrevBlockYOff != nBlockYOff )
     {
-        GInt32          nLine = nBlockYOff * nBlockYSize;
+        GInt32      nLine = nBlockYOff * nBlockYSize;
+        GInt32      nCol = nBlockXOff * nBlockXSize;
 
         // XXX: The scene, passed to LTIImageStage::read() call must be
         // inside the image boundaries. So we should detect the last strip and
         // form the scene properly.
        if(!LT_SUCCESS( poGDS->poLTINav->setSceneAsULWH(
-                                nBlockXOff * nBlockXSize, nLine,
-                                nBlockXSize,
+                                nCol, nLine,
+                                (nCol+nBlockXSize>poGDS->GetRasterXSize())?
+                                (poGDS->GetRasterXSize()-nCol):nBlockXSize,
                                 (nLine+nBlockYSize>poGDS->GetRasterYSize())?
                                 (poGDS->GetRasterYSize()-nLine):nBlockYSize,
                                 poGDS->dfCurrentMag) ))
@@ -1402,8 +1435,7 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if ( !poGDS->poBuffer )
         {
             poGDS->poBuffer =
-                new LTISceneBuffer( *poPixel, poGDS->nBlockXSize,
-                                    poGDS->nBlockYSize, NULL );
+                new LTISceneBuffer( *poPixel, nBlockXSize, nBlockYSize, NULL );
         }
 
         if(!LT_SUCCESS(poGDS->poImageReader->read(poGDS->poLTINav->getScene(),
@@ -1423,6 +1455,59 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     return CE_None;
 }
+
+#ifdef MRSID_ESDK_VERSION_40
+
+/************************************************************************/
+/*                            IWriteBlock()                             */
+/************************************************************************/
+
+CPLErr MrSIDRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
+                                     void * pImage )
+{
+    MrSIDDataset    *poGDS = (MrSIDDataset *)poDS;
+
+    CPLAssert( poGDS != NULL
+               && nBlockXOff >= 0
+               && nBlockYOff >= 0
+               && pImage != NULL );
+
+#if DEBUG
+    CPLDebug( "MrSID", "IWriteBlock(): nBlockXOff=%d, nBlockYOff=%d",
+              nBlockXOff, nBlockYOff );
+#endif
+
+    LTIScene        oScene( nBlockXOff * nBlockXSize,
+                            nBlockYOff * nBlockYSize,
+                            nBlockXSize, nBlockYSize, 1.0);
+    LTISceneBuffer  oSceneBuf( *poPixel, poGDS->nBlockXSize,
+                               poGDS->nBlockYSize, &pImage );
+
+    if( !LT_SUCCESS(poGDS->poImageWriter->writeBegin(oScene)) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MrSIDRasterBand::IWriteBlock(): writeBegin failed." );
+        return CE_Failure;
+    }
+
+    if( !LT_SUCCESS(poGDS->poImageWriter->writeStrip(oSceneBuf, oScene)) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MrSIDRasterBand::IWriteBlock(): writeStrip failed." );
+        return CE_Failure;
+    }
+
+    if( !LT_SUCCESS(poGDS->poImageWriter->writeEnd()) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MrSIDRasterBand::IWriteBlock(): writeEnd failed." );
+        return CE_Failure;
+    }
+
+    return CE_None;
+}
+
+#endif /* MRSID_ESDK_VERSION_40 */
 
 /************************************************************************/
 /*                       GetColorInterpretation()                       */
@@ -1520,7 +1605,12 @@ GDALRasterBand *MrSIDRasterBand::GetOverview( int i )
 MrSIDDataset::MrSIDDataset()
 {
     poImageReader = NULL;
+#ifdef MRSID_ESDK_VERSION_40
+    poImageWriter = NULL;
+#endif /* MRSID_ESDK_VERSION_40 */
+    poLTINav = NULL;
     poMetadata = NULL;
+    poNDPixel = NULL;
     eSampleType = LTI_DATATYPE_UINT8;
     nBands = 0;
     eDataType = GDT_Byte;
@@ -1531,7 +1621,7 @@ MrSIDDataset::MrSIDDataset()
     nPrevBlockYOff = 0;
     
     pszProjection = CPLStrdup( "" );
-    bHasGeoTransfom = FALSE;
+    bHasGeoTransform = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -1552,6 +1642,13 @@ MrSIDDataset::MrSIDDataset()
 
 MrSIDDataset::~MrSIDDataset()
 {
+#ifdef MRSID_ESDK_VERSION_40
+    FlushCache();
+
+    if ( poImageWriter )
+        delete poImageWriter;
+#endif /* MRSID_ESDK_VERSION_40 */
+
     if ( poImageReader && !bIsOverview )
         delete poImageReader;
     if ( poLTINav )
@@ -1607,7 +1704,7 @@ CPLErr MrSIDDataset::GetGeoTransform( double * padfTransform )
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(adfGeoTransform[0]) * 6 );
 
-    if ( !bHasGeoTransfom )
+    if ( !bHasGeoTransform )
         return CE_Failure;
 
     return CE_None;
@@ -1747,7 +1844,7 @@ int MrSIDDataset::GetMetadataElement( const char *pszKey, void *pValue,
 CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
 {
 /* -------------------------------------------------------------------- */
-/*      Take image geometry.                                            */
+/*      Get image geometry.                                            */
 /* -------------------------------------------------------------------- */
     if ( iZoom != 0 )
     {
@@ -1784,7 +1881,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Handle sample type and color space.                             */
+/*  Handle sample type and color space.                                 */
 /* -------------------------------------------------------------------- */
     eColorSpace = poImageReader->getColorSpace();
     eSampleType = poImageReader->getDataType();
@@ -1816,7 +1913,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Take georeferencing.                                            */
+/*      Read georeferencing.                                            */
 /* -------------------------------------------------------------------- */
     if ( !poImageReader->isGeoCoordImplicit() )
     {
@@ -1827,8 +1924,13 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
         
         adfGeoTransform[0] = adfGeoTransform[0] - adfGeoTransform[1] / 2;
         adfGeoTransform[3] = adfGeoTransform[3] - adfGeoTransform[5] / 2;
-	bHasGeoTransfom = TRUE;
+	bHasGeoTransform = TRUE;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Read NoData value.                                              */
+/* -------------------------------------------------------------------- */
+     poNDPixel = poImageReader->getNoDataPixel();
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -1916,7 +2018,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->GetGTIFDefn();
     
 /* -------------------------------------------------------------------- */
-/*  Take number of resolution levels (we will use them as overviews).   */
+/*      Get number of resolution levels (we will use them as overviews).*/
 /* -------------------------------------------------------------------- */
     if ( bIsJP2 )
         poDS->nOverviewCount
@@ -1943,7 +2045,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*  Create object for the whole image.                                  */
+/*      Create object for the whole image.                              */
 /* -------------------------------------------------------------------- */
     poDS->OpenZoomLevel( 0 );
 
@@ -1953,6 +2055,370 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 
     return( poDS );
 }
+
+#ifdef MRSID_ESDK_VERSION_40
+
+/************************************************************************/
+/* ==================================================================== */
+/*                        MrSIDDummyImageReader                         */
+/*                                                                      */
+/*  This is a helper class to wrap GDAL calls in MrSID interface.       */
+/* ==================================================================== */
+/************************************************************************/
+
+class MrSIDDummyImageReader : public LTIImageReader
+{
+  public:
+
+    MrSIDDummyImageReader( GDALDataset *poSrcDS );
+    ~MrSIDDummyImageReader();
+    LT_STATUS           initialize();
+    lt_int64            getPhysicalFileSize(void) const { return 0; };
+
+  private:
+    GDALDataset         *poDS;
+    GDALDataType        eDataType;
+    LTIDataType         eSampleType;
+    const LTIPixel      *poPixel;
+    
+    double              adfGeoTransform[6];
+
+    virtual LT_STATUS   decodeStrip( LTISceneBuffer& stripBuffer,
+                                     const LTIScene& stripScene );
+    virtual LT_STATUS   decodeBegin( const LTIScene& scene )
+                            { return LT_STS_Success; };
+    virtual LT_STATUS   decodeEnd() { return LT_STS_Success; };
+};
+
+/************************************************************************/
+/*                        MrSIDDummyImageReader()                       */
+/************************************************************************/
+
+MrSIDDummyImageReader::MrSIDDummyImageReader( GDALDataset *poSrcDS ) :
+                                            LTIImageReader(), poDS(poSrcDS)
+{
+    poPixel = NULL;
+}
+
+/************************************************************************/
+/*                        ~MrSIDDummyImageReader()                      */
+/************************************************************************/
+
+MrSIDDummyImageReader::~MrSIDDummyImageReader()
+{
+    if ( poPixel )
+        delete poPixel;
+}
+
+/************************************************************************/
+/*                             initialize()                             */
+/************************************************************************/
+
+LT_STATUS MrSIDDummyImageReader::initialize()
+{
+    if ( !LT_SUCCESS(LTIImageReader::initialize()) )
+        return LT_STS_Failure;
+    
+    eDataType = poDS->GetRasterBand(1)->GetRasterDataType();
+    switch ( eDataType )
+    {
+        case GDT_UInt16:
+            eSampleType = LTI_DATATYPE_UINT16;
+            break;
+        case GDT_Int16:
+            eSampleType = LTI_DATATYPE_SINT16;
+            break;
+        case GDT_UInt32:
+            eSampleType = LTI_DATATYPE_UINT32;
+            break;
+        case GDT_Int32:
+            eSampleType = LTI_DATATYPE_SINT32;
+            break;
+        case GDT_Float32:
+            eSampleType = LTI_DATATYPE_FLOAT32;
+            break;
+        case GDT_Float64:
+            eSampleType = LTI_DATATYPE_FLOAT64;
+            break;
+        case GDT_Byte:
+        default:
+            eSampleType = LTI_DATATYPE_UINT8;
+            break;
+    }
+    poPixel = new LTIPixel( LTI_COLORSPACE_GRAYSCALE,
+                            (lt_uint16)poDS->GetRasterCount(), eSampleType );
+    if ( !LT_SUCCESS(setPixelProps(*poPixel)) )
+        return LT_STS_Failure;
+
+    if ( !LT_SUCCESS(setDimensions(poDS->GetRasterXSize(),
+                                   poDS->GetRasterYSize())) )
+        return LT_STS_Failure;
+
+    if ( poDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+    {
+        LTIGeoCoord oGeo( adfGeoTransform[0] + adfGeoTransform[1] / 2,
+                          adfGeoTransform[3] + adfGeoTransform[5] / 2,
+                          adfGeoTransform[1], adfGeoTransform[5],
+                          adfGeoTransform[2], adfGeoTransform[4] );
+        if ( !LT_SUCCESS(setGeoCoord( oGeo )) )
+            return LT_STS_Failure;
+    }
+
+    /*int     bSuccess;
+    double  dfNoDataValue = poDS->GetNoDataValue( &bSuccess );
+    if ( bSuccess )
+    {
+        LTIPixel    oNoDataPixel( *poPixel );
+        lt_uint16   iBand;
+
+        for (iBand = 0; iBand < (lt_uint16)poDS->GetRasterCount(); iBand++)
+            oNoDataPixel.setSampleValueFloat32( iBand, dfNoDataValue );
+        if ( !LT_SUCCESS(setNoDataPixel( &oNoDataPixel )) )
+            return LT_STS_Failure;
+    }*/
+
+    return LT_STS_Success;
+}
+
+/************************************************************************/
+/*                             decodeStrip()                            */
+/************************************************************************/
+
+LT_STATUS MrSIDDummyImageReader::decodeStrip(LTISceneBuffer& stripData,
+                                             const LTIScene& stripScene)
+{
+    const lt_int32  nXOff = stripScene.getUpperLeftCol();
+    const lt_int32  nYOff = stripScene.getUpperLeftRow();
+    const lt_int32  nBufXSize = stripScene.getNumCols();
+    const lt_int32  nBufYSize = stripScene.getNumRows();
+    const lt_uint16 nBands = poPixel->getNumBands();
+
+    void    *pData = CPLMalloc(nBufXSize * nBufYSize * poPixel->getNumBytes());
+    if ( !pData )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MrSIDDummyImageReader::decodeStrip(): "
+                  "Cannot allocate enough space for scene buffer" );
+        return LT_STS_Failure;
+    }
+
+    poDS->RasterIO( GF_Read, nXOff, nYOff, nBufXSize, nBufYSize, 
+                    pData, nBufXSize, nBufYSize, eDataType, nBands, NULL, 
+                    0, 0, 0 );
+    stripData.importDataBSQ( pData );
+
+    CPLFree( pData );
+
+    return LT_STS_Success;
+}
+
+
+/************************************************************************/
+/*                             FlushCache()                             */
+/************************************************************************/
+
+void MrSIDDataset::FlushCache()
+
+{
+    GDALDataset::FlushCache();
+}
+
+#if 0
+/************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
+
+GDALDataset *MrSIDDataset::Create( const char * pszFilename,
+                                   int nXSize, int nYSize, int nBands,
+                                   GDALDataType eType, char **papszOptions )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Create the dataset.                                             */
+/* -------------------------------------------------------------------- */
+    MrSIDDataset        *poDS = new MrSIDDataset();
+    const LTFileSpec    oFileSpec( pszFilename );
+    poDS->eColorSpace = LTI_COLORSPACE_GRAYSCALE ;
+    switch ( eType )
+    {
+        case GDT_UInt16:
+            poDS->eSampleType = LTI_DATATYPE_UINT16;
+            break;
+        case GDT_Int16:
+            poDS->eSampleType = LTI_DATATYPE_SINT16;
+            break;
+        case GDT_UInt32:
+            poDS->eSampleType = LTI_DATATYPE_UINT32;
+            break;
+        case GDT_Int32:
+            poDS->eSampleType = LTI_DATATYPE_SINT32;
+            break;
+        case GDT_Float32:
+            poDS->eSampleType = LTI_DATATYPE_FLOAT32;
+            break;
+        case GDT_Float64:
+            poDS->eSampleType = LTI_DATATYPE_FLOAT64;
+            break;
+        case GDT_Byte:
+        default:
+            poDS->eSampleType = LTI_DATATYPE_UINT8;
+            break;
+    }
+    const LTIPixel      oPixel( poDS->eColorSpace, (lt_uint16)nBands,
+                                poDS->eSampleType );
+    MrSIDDummyImageReader oImageReader( oPixel, nXSize, nYSize );
+    if ( !LT_SUCCESS( oImageReader.initialize() ) )
+    {
+        delete poDS;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "MrSIDDataset::Create(): Failed to initialize dummy reader");
+        return NULL;
+    }
+
+    /*if ( bIsJP2 )
+        poDS->poImageReader = new J2KImageReader( oFileSpec, true );
+    else*/
+        poDS->poImageWriter = new MG3ImageWriter( &oImageReader );
+    
+    if ( !LT_SUCCESS( poDS->poImageWriter->initialize() ) )
+    {
+        delete poDS;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "MrSIDDataset::Create(): Failed to initialize MG3ImageWriter");
+        return NULL;
+    }
+    poDS->poImageWriter->setUsageMeterEnabled(false);
+    if ( !LT_SUCCESS(poDS->poImageWriter->setOutputFileSpec(oFileSpec)) )
+    {
+        delete poDS;
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MrSIDDataset::Create(): Failed to set output file name %s",
+                  pszFilename );
+        return NULL;
+    }
+
+    poDS->nRasterXSize = nXSize;
+    poDS->nRasterYSize = nYSize;
+    poDS->eAccess = GA_Update;
+    poDS->nBands = nBands;
+    
+    poDS->nBlockXSize = nXSize;
+    poDS->nBlockYSize = 64;
+    if ( !LT_SUCCESS(poDS->poImageWriter->setStripHeight(poDS->nBlockYSize)) )
+    {
+        delete poDS;
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MrSIDDataset::Create(): Failed to set strip height" );
+        return NULL;
+    }
+ 
+/* -------------------------------------------------------------------- */
+/*      Create band information objects.                                */
+/* -------------------------------------------------------------------- */
+    int         iBand;
+
+    for( iBand = 1; iBand <= poDS->nBands; iBand++ )
+    {
+        poDS->SetBand( iBand, new MrSIDRasterBand( poDS, iBand ) );
+    }
+
+    return poDS;
+}
+#endif
+
+/************************************************************************/
+/*                             CreateCopy()                             */
+/************************************************************************/
+
+static GDALDataset *
+CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
+            int bStrict, char ** papszOptions, 
+            GDALProgressFunc pfnProgress, void * pProgressData )
+
+{
+    int		nXSize = poSrcDS->GetRasterXSize();
+    int		nYSize = poSrcDS->GetRasterYSize();
+    int		nBands = poSrcDS->GetRasterCount();
+    int         iBand;
+    GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
+        
+/* -------------------------------------------------------------------- */
+/*      Check, whether all bands in input dataset has the same type.    */
+/* -------------------------------------------------------------------- */
+    for ( iBand = 2; iBand <= nBands; iBand++ )
+    {
+        if ( eType != poSrcDS->GetRasterBand(iBand)->GetRasterDataType() )
+        {
+            if ( bStrict )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+            "Unable to export MrSID file with different datatypes per\n"
+            "different bands. All bands should have the same types in MrSID." );
+                return NULL;
+            }
+            else
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+            "Unable to export MrSID file with different datatypes per\n"
+            "different bands. All bands should have the same types in MrSID." );
+            }
+        }
+    }
+
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Create the file.                                                */
+/* -------------------------------------------------------------------- */
+    MrSIDDummyImageReader oImageReader( poSrcDS );
+    oImageReader.initialize();
+    MG3ImageWriter oImageWriter(&oImageReader);
+    oImageWriter.initialize();
+
+    // don't charge for this one
+    oImageWriter.setUsageMeterEnabled( false );
+   
+    // set up the output file
+    oImageWriter.setOutputFileSpec( pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*  Set up encoding parameters.                                         */
+/* -------------------------------------------------------------------- */
+    const char  *pszValue;
+
+    if( CSLFetchNameValue(papszOptions, "TWOPASS") != NULL )
+        oImageWriter.params().setTwoPassOptimizer( true );
+    
+    pszValue = CSLFetchNameValue(papszOptions, "STRIPHEIGHT");
+    if( pszValue != NULL )
+        oImageWriter.setStripHeight( atol(pszValue) );
+
+    pszValue = CSLFetchNameValue(papszOptions, "FILESIZE");
+    if( pszValue != NULL )
+        // FIXME: should use atoll() here.
+        oImageWriter.params().setTargetFilesize( atol(pszValue) );
+
+/* -------------------------------------------------------------------- */
+/*  Do actual writing.                                                  */
+/* -------------------------------------------------------------------- */
+    const LTIScene oScene( 0, 0, nXSize, nYSize, 1.0 );
+
+    // write the scene to the file   
+    oImageWriter.write( oScene );
+
+/* -------------------------------------------------------------------- */
+/*  Return pointer to created dataset.                                  */
+/* -------------------------------------------------------------------- */
+    GDALDataset *poDS;
+
+    poDS = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    if ( poDS == NULL )
+        poDS = (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+    
+    return poDS;
+}
+#endif /* MRSID_ESDK_VERSION_40 */
 
 #endif /* DSDK 4.0.x */
 
@@ -2938,9 +3404,23 @@ void GDALRegister_MrSID()
 
         poDriver->SetDescription( "MrSID" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Multi-resolution Seamless Image Database (MrSID)" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                                   "frmt_mrsid.html" );
+                        "Multi-resolution Seamless Image Database (MrSID)" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_mrsid.html" );
+
+#ifdef MRSID_ESDK_VERSION_40
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sid" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+"<CreationOptionList>"
+"   <Option name='STRIPHEIGHT' type='int' description='Set strip height'/>"
+"   <Option name='TWOPASS' type='int' description='Use twopass optimizer algorithm'/>"
+"   <Option name='FILESIZE' type='int' description='Set target file size (0 implies lossless compression)'/>"
+"   <Option name='WORLDFILE' type='boolean' description='Write out world file'/>"
+"</CreationOptionList>" );
+
+        //poDriver->pfnCreate = MrSIDDataset::Create;
+        poDriver->pfnCreateCopy = CreateCopy;
+#endif /* MRSID_ESDK_VERSION_40 */
 
         poDriver->pfnOpen = MrSIDDataset::Open;
 
