@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.89  2003/03/13 14:36:03  warmerda
+ * added support for CInt32 and CFloat64
+ *
  * Revision 1.88  2003/02/15 20:22:44  warmerda
  * fixed handling of GDALReadTabFile() return value
  *
@@ -327,6 +330,13 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
             eDataType = GDT_Float64;
         else if( nSampleFormat == SAMPLEFORMAT_COMPLEXIEEEFP )
             eDataType = GDT_CFloat32;
+        else if( nSampleFormat == SAMPLEFORMAT_COMPLEXINT )
+            eDataType = GDT_CInt32;
+    }
+    else if( poDS->nBitsPerSample == 128 )
+    {
+        if( nSampleFormat == SAMPLEFORMAT_IEEEFP )
+            eDataType = GDT_CFloat64;
     }
 
 /* -------------------------------------------------------------------- */
