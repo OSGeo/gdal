@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/04/30 15:14:19  warmerda
+ * Allow GEOMETRY3D in place of GEOMETRY in GetIndexedRecord().  This fixes
+ * problem reported by Jakob for OS of Ireland files.  Also removed broken
+ * handling of GEOM_ID for NRT_TEXTREC GetNextIndexedRecordGroup().  Fixes
+ * problem with placement of TEXT records in any indexed (generic) translations.
+ *
  * Revision 1.16  2001/01/19 20:31:12  warmerda
  * expand tabs
  *
@@ -1612,11 +1618,16 @@ void NTFFileReader::DestroyIndex()
 NTFRecord * NTFFileReader::GetIndexedRecord( int iType, int iId )
 
 {
-    if( iType < 0 || iType > 99 )
-        return NULL;
-
-    if( iId < 0 || iId >= anIndexSize[iType] )
-        return NULL;
+    if( (iType < 0 || iType > 99)
+        || (iId < 0 || iId >= anIndexSize[iType]) 
+        || (apapoRecordIndex[iType])[iId] == NULL )
+    {
+        /* If NRT_GEOMETRY3D is an acceptable alternative to 2D */
+        if( iType == NRT_GEOMETRY )
+            return GetIndexedRecord( NRT_GEOMETRY3D, iId );
+        else
+            return NULL;
+    }
 
     return (apapoRecordIndex[iType])[iId];
 }
@@ -1737,10 +1748,6 @@ NTFRecord **NTFFileReader::GetNextIndexedRecordGroup( NTFRecord **
     {
         int             nAttCount = 0;
         int             nSelCount = 0;
-        
-        AddToIndexGroup( apoCGroup,
-                         GetIndexedRecord( NRT_GEOMETRY,
-                                           atoi(poAnchor->GetField(9,14)) ) );
 
         // Add all the text position records.
         nSelCount = atoi(poAnchor->GetField(9,10));
