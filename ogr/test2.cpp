@@ -20,6 +20,9 @@ int main( int argc, char ** argv )
         OGRFeature	*poFeature;
 
         poLayer = poDS->GetLayer( iLayer );
+        
+        printf( "Layer Name: %s\n", poLayer->GetLayerDefn()->GetName() );
+        printf( "Feature Count: %d\n", poLayer->GetFeatureCount() );
 
         while( (poFeature = poLayer->GetNextFeature()) != NULL )
         {
