@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/03/20 14:59:35  warmerda
+ * added OGRCoordinateTransformation
+ *
  * Revision 1.13  2000/03/16 19:04:01  warmerda
  * added SetTMG, moved constants to ogr_srs_api.h
  *
@@ -162,6 +165,7 @@ class OGRSpatialReference
     int         GetReferenceCount() { return nRefCount; }
 
     OGRSpatialReference *Clone();
+    OGRSpatialReference *CloneGeogCS();
 
     OGRErr      importFromWkt( char ** );
     OGRErr      exportToWkt( char ** );
@@ -184,6 +188,10 @@ class OGRSpatialReference
     // Set/get geographic components
     OGRErr      SetLinearUnits( const char *pszName, double dfInMeters );
     double      GetLinearUnits( char ** = NULL );
+
+    int         IsGeographic();
+    int         IsProjected();
+    int         IsSameGeogCS( OGRSpatialReference * );
     
     OGRErr      SetProjection( const char * );
     OGRErr      SetGeogCS( const char * pszGeogName,
@@ -342,5 +350,33 @@ class OGRSpatialReference
     OGRErr      SetUTM( int nZone, int bNorth = TRUE );
     int		GetUTMZone( int *pbNorth = NULL );
 };
+
+/************************************************************************/
+/*                     OGRCoordinateTransformation                      */
+/*                                                                      */
+/*      This is really just used as a base class for a private          */
+/*      implementation.                                                 */
+/************************************************************************/
+
+class OGRCoordinateTransformation
+{
+public:
+    virtual ~OGRCoordinateTransformation();
+
+    // From CT_CoordinateTransformation
+
+    virtual OGRSpatialReference *GetSourceCS() = 0;
+    virtual OGRSpatialReference *GetTargetCS() = 0;
+
+    // From CT_MathTransform
+
+    virtual int Transform( int nCount, 
+                           double *x, double *y, double *z = NULL ) = 0;
+
+};
+
+OGRCoordinateTransformation*
+OGRCreateCoordinateTransformation( OGRSpatialReference *poSource, 
+                                   OGRSpatialReference *poTarget );
 
 #endif /* ndef _OGR_SPATIALREF_H_INCLUDED */
