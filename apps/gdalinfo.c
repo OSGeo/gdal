@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.2  1999/01/11 15:27:59  warmerda
+ * Add projection support
+ *
  * Revision 1.1  1998/12/03 18:35:06  warmerda
  * New
  *
@@ -39,10 +42,19 @@ int main( int argc, char ** argv )
     GDALDatasetH	hDataset;
     GDALRasterBandH	hBand;
     int			i;
+    double		adfGeoTransform[6];
+    GDALProjDefH	hProjDef;
+
+    if( argc < 2 )
+    {
+        printf( "Usage: gdalinfo datasetname\n" );
+        exit( 10 );
+    }
 
     GDALAllRegister();
 
-    hDataset = GDALOpen( "/usr/v700/demo/eltoro.tif", GA_ReadOnly );
+    hDataset = GDALOpen( argv[1], GA_ReadOnly );
+    
     if( hDataset == NULL )
     {
         fprintf( stderr,
@@ -54,6 +66,36 @@ int main( int argc, char ** argv )
     printf( "Size is %d, %d\n",
             GDALGetRasterXSize( hDataset ), 
             GDALGetRasterYSize( hDataset ) );
+
+    printf( "Projection is `%s'\n",
+            GDALGetProjectionRef( hDataset ) );
+
+    GDALGetGeoTransform( hDataset, adfGeoTransform );
+    printf( "Origin = (%g,%g)\n",
+            adfGeoTransform[0], adfGeoTransform[3] );
+    
+    GDALGetGeoTransform( hDataset, adfGeoTransform );
+    printf( "Pixel Size = (%g,%g)\n",
+            adfGeoTransform[1], adfGeoTransform[5] );
+
+    hProjDef = GDALCreateProjDef( GDALGetProjectionRef( hDataset ) );
+    if( hProjDef != NULL )
+    {
+        if( GDALReprojectToLongLat( hProjDef,
+                                    adfGeoTransform + 0,
+                                    adfGeoTransform + 3 ) == CE_None )
+        {
+            printf( "Origin (long/lat) = (%g,%g)\n",
+                    adfGeoTransform[0], adfGeoTransform[3] );
+        }
+        else
+        {
+            printf( "GDALReprojectToLongLat(): %s\n",
+                    CPLGetLastErrorMsg() );
+        }
+
+        GDALDestroyProjDef( hProjDef );
+    }
 
     for( i = 0; i < GDALGetRasterCount( hDataset ); i++ )
     {
