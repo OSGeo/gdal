@@ -46,11 +46,14 @@ Windows.
 Release Notes
 =============
 
-Release 1.9 (dev)
+Release 1.9
 -----------
 
  o Added DGNLoadTCB(), and fixed problem when writing new elements to an
    existing file without having already read the TCB. 
+
+ o Fixed serious bug in setting the index "offset" location.  Critical for
+   writing applications.
 
 
 Release 1.8
