@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2002/12/05 15:46:38  warmerda
+ * added GDALReadTabFile()
+ *
  * Revision 1.56  2002/11/23 18:07:41  warmerda
  * added DMD_CREATIONDATATYPES
  *
@@ -532,6 +535,9 @@ int CPL_DLL GDALReadWorldFile( const char *pszBaseFilename,
 int CPL_DLL GDALWriteWorldFile( const char *pszBaseFilename, 
                        const char *pszExtension, 
                        double * padfGeoTransform );
+int CPL_DLL GDALReadTabFile( const char *pszBaseFilename, 
+                             double *padfGeoTransform, char **ppszWKT,
+                             int *pnGCPCount, GDAL_GCP **ppasGCPs );
 
 const char CPL_DLL *GDALDecToDMS( double, const char *, int );
 
