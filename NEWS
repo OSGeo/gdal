@@ -1,6 +1,8 @@
 GDAL 1.1.6 - Overview of Changes
 --------------------------------
 
+ o Add > 2GB file support on Linux 2.4.
+
  o Implemented USGS DEM reading.
 
  o Implemented BSB Format (Nautical Chart Format) read support.
