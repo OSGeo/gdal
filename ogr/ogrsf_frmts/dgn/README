@@ -46,8 +46,8 @@ Windows.
 Release Notes
 =============
 
-Release 1.?
------------
+Release 1.10
+------------
 
  o Added DGNElemTypeHasDispHdr(), and use it in DGNParseCore() to avoid trying
    to read disp hdr, or attributes from inappropriate elements.
@@ -63,6 +63,10 @@ Release 1.?
 
  o DGNRad50ToAscii() reimplemented to correct a few problems.  New version
    provided by Armin Berg (iez.com). 
+
+ o Fixes to complex header and cell header creation to set the total group
+   size properly, and to set up complex header pad attributes properly.  Now
+   passed EDG validation.
 
 
 Release 1.9
