@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/07/23 14:40:41  warmerda
+ * disable compress support on Unix
+ *
  * Revision 1.7  2002/07/23 14:05:35  warmerda
  * Avoid warnings.
  *
@@ -63,6 +66,11 @@ CPL_CVSID("$Id$");
 static GDALDriver	*poECWDriver = NULL;
 
 #ifdef FRMT_ecw
+
+/* As of July 2002 only uncompress support is available on Unix */
+#ifdef WIN32
+#define HAVE_COMPRESS
+#endif
 
 typedef struct {
     int              bCancelled;
@@ -414,6 +422,7 @@ static BOOLEAN ECWCompressCancelCB( NCSEcwCompressClient *psClient )
     return psCompressInfo->bCancelled;
 }
 
+#ifdef HAVE_COMPRESS
 /************************************************************************/
 /*                           ECWCreateCopy()                            */
 /************************************************************************/
@@ -592,6 +601,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     
     return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 }
+#endif /* def HAVE_COMPRESS */
 #endif /* def FRMT_ecw */
 
 /************************************************************************/
@@ -616,7 +626,9 @@ void GDALRegister_ECW()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ecw" );
         
         poDriver->pfnOpen = ECWDataset::Open;
+#ifdef HAVE_COMPRESS
         poDriver->pfnCreateCopy = ECWCreateCopy;
+#endif
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
