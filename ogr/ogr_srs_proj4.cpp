@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2002/12/14 19:50:21  warmerda
+ * implement support for NZMG (New Zealand Map Grid)
+ *
  * Revision 1.36  2002/12/10 04:05:04  warmerda
  * fixed some translation problems with prime meridians
  *
@@ -334,6 +337,14 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                OSR_GDV( papszNV, "lon_0", 0.0 ), 
                OSR_GDV( papszNV, "x_0", 0.0 ), 
                OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"nzmg") )
+    {
+        SetNZMG( OSR_GDV( papszNV, "lat_0", -41.0 ), 
+                 OSR_GDV( papszNV, "lon_0", 173.0 ), 
+                 OSR_GDV( papszNV, "x_0", 2510000.0 ), 
+                 OSR_GDV( papszNV, "y_0", 6023150.0 ) );
     }
 
     else if( EQUAL(pszProj,"cea") )
@@ -858,6 +869,16 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         sprintf( szProj4+strlen(szProj4),
            "+proj=cass +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
+                 GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
+                 GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
+                 GetProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_NEW_ZEALAND_MAP_GRID) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=nzmg +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetProjParm(SRS_PP_FALSE_EASTING,0.0),
