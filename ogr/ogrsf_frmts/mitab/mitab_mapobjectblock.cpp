@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapobjectblock.cpp,v 1.7 2001/09/14 03:23:55 warmerda Exp $
+ * $Id: mitab_mapobjectblock.cpp,v 1.8 2001/09/19 19:19:11 warmerda Exp $
  *
  * Name:     mitab_mapobjectblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapobjectblock.cpp,v $
+ * Revision 1.8  2001/09/19 19:19:11  warmerda
+ * modified AdvanceToNextObject() to skip deleted objects
+ *
  * Revision 1.7  2001/09/14 03:23:55  warmerda
  * Substantial upgrade to support spatial queries using spatial indexes
  *
@@ -179,7 +182,18 @@ int TABMAPObjectBlock::AdvanceToNextObject( TABMAPHeaderBlock *poHeader )
         m_nCurObjectOffset = -1;
     }
     else
+    {
         m_nCurObjectId = ReadInt32();
+
+        // Is this object marked as deleted?  If so, skip it.
+        // I check both the top bits but I have only seen this occur
+        // with the second highest bit set (ie. in usa/states.tab). NFW.
+
+        if( (((GUInt32)m_nCurObjectId) & (GUInt32) 0xC0000000) != 0 )
+        {
+            m_nCurObjectId = AdvanceToNextObject( poHeader );
+        }
+    }
 
     return m_nCurObjectId;
 }
