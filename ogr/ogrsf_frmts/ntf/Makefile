@@ -1,0 +1,18 @@
+
+OBJ	=	ntf_estlayers.obj ntffilereader.obj ntfrecord.obj \
+		ogrntfdatasource.obj ogrntfdriver.obj ogrntflayer.obj \
+		ogrntffeatureclasslayer.obj 
+
+EXTRAFLAGS =	-I.. -I..\..
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	del *.obj *.pdb
+
+
+
