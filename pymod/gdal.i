@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2001/03/15 03:20:03  warmerda
+ * fixed return type for OGRErr to be in
+ *
  * Revision 1.27  2001/01/22 22:34:06  warmerda
  * added median cut, and dithering algorithms
  *
@@ -1020,15 +1023,15 @@ void    OSRDestroySpatialReference( OGRSpatialReferenceH );
 int     OSRReference( OGRSpatialReferenceH );
 int     OSRDereference( OGRSpatialReferenceH );
 
-OGRErr  OSRImportFromEPSG( OGRSpatialReferenceH, int );
+int     OSRImportFromEPSG( OGRSpatialReferenceH, int );
 OGRSpatialReferenceH OSRCloneGeogCS( OGRSpatialReferenceH );
 
-OGRErr  OSRSetAttrValue( OGRSpatialReferenceH hSRS, const char * pszNodePath,
+int     OSRSetAttrValue( OGRSpatialReferenceH hSRS, const char * pszNodePath,
                          const char * pszNewNodeValue );
 const char *OSRGetAttrValue( OGRSpatialReferenceH hSRS,
                              const char * pszName, int iChild /* = 0 */ );
 
-OGRErr  OSRSetLinearUnits( OGRSpatialReferenceH, const char *, double );
+int     OSRSetLinearUnits( OGRSpatialReferenceH, const char *, double );
 double  OSRGetLinearUnits( OGRSpatialReferenceH, char ** );
 
 int     OSRIsGeographic( OGRSpatialReferenceH );
@@ -1036,10 +1039,10 @@ int     OSRIsProjected( OGRSpatialReferenceH );
 int     OSRIsSameGeogCS( OGRSpatialReferenceH, OGRSpatialReferenceH );
 int     OSRIsSame( OGRSpatialReferenceH, OGRSpatialReferenceH );
 
-OGRErr  OSRSetProjCS( OGRSpatialReferenceH, const char * );
-OGRErr  OSRSetWellKnownGeogCS( OGRSpatialReferenceH, const char * );
+int     OSRSetProjCS( OGRSpatialReferenceH, const char * );
+int     OSRSetWellKnownGeogCS( OGRSpatialReferenceH, const char * );
 
-OGRErr  OSRSetGeogCS( OGRSpatialReferenceH hSRS,
+int     OSRSetGeogCS( OGRSpatialReferenceH hSRS,
                       const char * pszGeogName,
                       const char * pszDatumName,
                       const char * pszEllipsoidName,
@@ -1049,23 +1052,23 @@ OGRErr  OSRSetGeogCS( OGRSpatialReferenceH hSRS,
                       const char * pszUnits /* = NULL */,
                       double dfConvertToRadians /* = 0.0 */ );
 
-double  OSRGetSemiMajor( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
-double  OSRGetSemiMinor( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
-double  OSRGetInvFlattening( OGRSpatialReferenceH, OGRErr * /* = NULL */ );
+double  OSRGetSemiMajor( OGRSpatialReferenceH, int    * /* = NULL */ );
+double  OSRGetSemiMinor( OGRSpatialReferenceH, int    * /* = NULL */ );
+double  OSRGetInvFlattening( OGRSpatialReferenceH, int    * /* = NULL */ );
 
-OGRErr  OSRSetAuthority( OGRSpatialReferenceH hSRS,
+int     OSRSetAuthority( OGRSpatialReferenceH hSRS,
                          const char * pszTargetKey,
                          const char * pszAuthority,
                          int nCode );
-OGRErr  OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
+int     OSRSetProjParm( OGRSpatialReferenceH, const char *, double );
 double  OSRGetProjParm( OGRSpatialReferenceH hSRS,
                         const char * pszParmName, 
                         double dfDefault /* = 0.0 */,
-                        OGRErr * /* = NULL */ );
+                        int    * /* = NULL */ );
 
-OGRErr  OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth );
+int     OSRSetUTM( OGRSpatialReferenceH hSRS, int nZone, int bNorth );
 int     OSRGetUTMZone( OGRSpatialReferenceH hSRS, int *pbNorth );
-OGRErr  OSRSetStatePlane( OGRSpatialReferenceH hSRS, int nZone, int bNAD83 );
+int     OSRSetStatePlane( OGRSpatialReferenceH hSRS, int nZone, int bNAD83 );
 
 %{
 /************************************************************************/
