@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/03/13 19:39:51  warmerda
+ * changed short name to GIO, added help link
+ *
  * Revision 1.11  2000/03/27 13:38:57  warmerda
  * Fixed SetBand() call in Create().
  *
@@ -668,8 +671,9 @@ void GDALRegister_AIGrid2()
         
         poGIODriver = poDriver = new GDALDriver();
         
-        poDriver->pszShortName = "AIGrid2";
+        poDriver->pszShortName = "GIO";
         poDriver->pszLongName = "Arc/Info Binary Grid (avgridio.dll)";
+        poDriver->pszHelpTopic = "frmt_various.html#GIO";
         
         poDriver->pfnOpen = GIODataset::Open;
         poDriver->pfnCreate = GIODataset::Create;
