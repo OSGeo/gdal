@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/05/17 01:52:35  warmerda
+ * Fixed argument type problem.
+ *
  * Revision 1.3  1999/04/21 16:51:30  warmerda
  * fixed up floating point support
  *
@@ -195,7 +198,7 @@ CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
                          psInfo->panBlockOffset[nBlockID],
                          psInfo->panBlockSize[nBlockID],
                          psInfo->nBlockXSize, psInfo->nBlockYSize,
-                         (GInt32 *) pafData, psInfo->nCellType );
+                         (GUInt32 *) pafData, psInfo->nCellType );
 
     if( eErr == CE_None && psInfo->nCellType == AIG_CELLTYPE_INT )
     {
