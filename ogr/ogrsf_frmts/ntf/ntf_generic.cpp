@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/10/04 03:07:34  warmerda
+ * added text_ht_ground and rename TX TEXT and FC FEAT_CODE
+ *
  * Revision 1.3  1999/10/03 01:12:50  warmerda
  * ensure generic translators are attached to all files in a set
  *
@@ -95,7 +98,14 @@ void NTFGenericClass::CheckAddAttr( const char * pszName,
                                     int nWidth )
 
 {
-    int		iAttrOffset = CSLFindString( papszAttrNames, pszName );
+    int		iAttrOffset;
+
+    if( EQUAL(pszName,"TX") )
+        pszName = "TEXT";
+    if( EQUAL(pszName,"FC") )
+        pszName = "FEAT_CODE";
+
+    iAttrOffset = CSLFindString( papszAttrNames, pszName );
     
     if( iAttrOffset == -1 )
     {
@@ -192,6 +202,8 @@ void OGRNTFDataSource::WorkupGeneric( NTFFileReader * poReader )
               case NRT_NAMEPOSTN:
                 poClass->CheckAddAttr( "FONT", "I4", 4 );
                 poClass->CheckAddAttr( "TEXT_HT", "R3,1", 3 );
+                poClass->CheckAddAttr( "TEXT_HT_GROUND", "R9,3", 9 );
+                poClass->CheckAddAttr( "TEXT_HT", "R3,1", 3 );
                 poClass->CheckAddAttr( "DIG_POSTN", "I1", 1 );
                 poClass->CheckAddAttr( "ORIENT", "R4,1", 4 );
                 break;
@@ -248,7 +260,14 @@ static void AddGenericAttributes( NTFFileReader * poReader,
 
     for( int iAtt = 0; papszTypes != NULL && papszTypes[iAtt] != NULL; iAtt++ )
     {
-        int		iField = poFeature->GetFieldIndex(papszTypes[iAtt]);
+        int		iField;
+        
+        if( EQUAL(papszTypes[iAtt],"TX") )
+            iField = poFeature->GetFieldIndex("TEXT");
+        else if( EQUAL(papszTypes[iAtt],"FC") )
+            iField = poFeature->GetFieldIndex("FEAT_CODE");
+        else
+            iField = poFeature->GetFieldIndex(papszTypes[iAtt]);
 
         if( iField == -1 )
             continue;
@@ -415,6 +434,9 @@ static OGRFeature *TranslateGenericText( NTFFileReader *poReader,
             poFeature->SetField( "FONT", atoi(poRecord->GetField(9,12)) );
             poFeature->SetField( "TEXT_HT",
                                  atoi(poRecord->GetField(13,15)) * 0.1 );
+            poFeature->SetField( "TEXT_HT_GROUND",
+                                 atoi(poRecord->GetField(13,15))
+                                 * 0.1 * poReader->GetPaperToGround() );
             poFeature->SetField( "DIG_POSTN",
                                  atoi(poRecord->GetField(16,16)) );
             poFeature->SetField( "ORIENT",
@@ -480,6 +502,9 @@ static OGRFeature *TranslateGenericName( NTFFileReader *poReader,
             poFeature->SetField( "FONT", atoi(poRecord->GetField(3,6)) );
             poFeature->SetField( "TEXT_HT",
                                  atoi(poRecord->GetField(7,9)) * 0.1 );
+            poFeature->SetField( "TEXT_HT_GROUND",
+                                 atoi(poRecord->GetField(7,9))
+                                 * 0.1 * poReader->GetPaperToGround() );
             poFeature->SetField( "DIG_POSTN",
                                  atoi(poRecord->GetField(10,10)) );
             poFeature->SetField( "ORIENT",
