@@ -44,6 +44,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
+ * $Log: tif_overview.c,v $
+ * Revision 1.5  2004/07/26 14:27:27  warmerda
+ * improve error check for overview failure, fix warnings, fix header
+ *
  * tif_overview.c,v
  * Revision 1.3  2000/04/18 22:48:31  warmerda
  * Added support for averaging resampling
