@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  1999/11/17 16:16:53  warmerda
+ * Fixed X/Y mixup in setting xblocksize for stripped files.
+ *
  * Revision 1.11  1999/10/29 17:28:11  warmerda
  * Added projection support, and odd pixel data types
  *
@@ -582,7 +585,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
                            &(poDS->nRowsPerStrip) ) )
             poDS->nRowsPerStrip = 1; /* dummy value */
 
-        poDS->nBlockXSize = poDS->nRasterYSize;
+        poDS->nBlockXSize = poDS->nRasterXSize;
         poDS->nBlockYSize = poDS->nRowsPerStrip;
     }
         
