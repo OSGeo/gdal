@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/04/16 15:26:04  warmerda
+ * completed metadata support
+ *
  * Revision 1.24  2004/04/15 20:52:31  warmerda
  * treat geocentic like geographic
  *
@@ -172,6 +175,76 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     psImage->pachHeader = pachHeader;
 
     psSegInfo->hAccess = psImage;
+
+/* -------------------------------------------------------------------- */
+/*      Collect a variety of information as metadata.                   */
+/* -------------------------------------------------------------------- */
+#define GetMD( target, hdr, start, length, name )              \
+    NITFExtractMetadata( &(target->papszMetadata), hdr,       \
+                         start, length,                        \
+                         "NITF_" #name );
+       
+    if( EQUAL(psFile->szVersion,"NITF02.10") )
+    {
+        GetMD( psImage, pachHeader,   2,  10, IID1   );
+        GetMD( psImage, pachHeader,  12,  14, IDATIM );
+        GetMD( psImage, pachHeader,  26,  17, TGTID  );
+        GetMD( psImage, pachHeader,  43,  80, IID2   );
+        GetMD( psImage, pachHeader, 123,   1, ISCLAS );
+        GetMD( psImage, pachHeader, 124,   2, ISCLSY );
+        GetMD( psImage, pachHeader, 126,  11, ISCODE );
+        GetMD( psImage, pachHeader, 137,   2, ISCTLH );
+        GetMD( psImage, pachHeader, 139,  20, ISREL  );
+        GetMD( psImage, pachHeader, 159,   2, ISDCTP );
+        GetMD( psImage, pachHeader, 161,   8, ISDCDT );
+        GetMD( psImage, pachHeader, 169,   4, ISDCXM );
+        GetMD( psImage, pachHeader, 173,   1, ISDG   );
+        GetMD( psImage, pachHeader, 174,   8, ISDGDT );
+        GetMD( psImage, pachHeader, 182,  43, ISCLTX );
+        GetMD( psImage, pachHeader, 225,   1, ISCATP );
+        GetMD( psImage, pachHeader, 226,  40, ISCAUT );
+        GetMD( psImage, pachHeader, 266,   1, ISCRSN );
+        GetMD( psImage, pachHeader, 267,   8, ISSRDT );
+        GetMD( psImage, pachHeader, 275,  15, ISCTLN );
+        /* skip ENCRYPT - 1 character */
+        GetMD( psImage, pachHeader, 291,  42, ISORCE );
+        /* skip NROWS (8), and NCOLS (8) */
+        GetMD( psImage, pachHeader, 349,   3, PVTYPE );
+        GetMD( psImage, pachHeader, 352,   8, IREP   );
+        GetMD( psImage, pachHeader, 360,   8, ICAT   );
+        GetMD( psImage, pachHeader, 368,   2, ABPP   );
+        GetMD( psImage, pachHeader, 371,   1, PJUST  );
+    }
+    else if( EQUAL(psFile->szVersion,"NITF02.00") )
+    {
+        int nOffset = 0;
+        GetMD( psImage, pachHeader,   2,  10, IID1   );
+        GetMD( psImage, pachHeader,  12,  14, IDATIM );
+        GetMD( psImage, pachHeader,  26,  17, TGTID  );
+        GetMD( psImage, pachHeader,  43,  80, ITITLE );
+        GetMD( psImage, pachHeader, 123,   1, ISCLAS );
+        GetMD( psImage, pachHeader, 124,  40, ISCODE );
+        GetMD( psImage, pachHeader, 164,  40, ISCTLH );
+        GetMD( psImage, pachHeader, 204,  40, ISREL  );
+        GetMD( psImage, pachHeader, 244,  20, ISCAUT );
+        GetMD( psImage, pachHeader, 264,  20, ISCTLN );
+        GetMD( psImage, pachHeader, 284,   6, ISDWNG );
+        
+        if( EQUALN(pachHeader+284,"999998",6) )
+        {
+            GetMD( psImage, pachHeader, 290,  40, ISDEVT );
+            nOffset += 40;
+        }
+
+        /* skip ENCRYPT - 1 character */
+        GetMD( psImage, pachHeader, 291+nOffset,  42, ISORCE );
+        /* skip NROWS (8), and NCOLS (8) */
+        GetMD( psImage, pachHeader, 349+nOffset,   3, PVTYPE );
+        GetMD( psImage, pachHeader, 352+nOffset,   8, IREP   );
+        GetMD( psImage, pachHeader, 360+nOffset,   8, ICAT   );
+        GetMD( psImage, pachHeader, 368+nOffset,   2, ABPP   );
+        GetMD( psImage, pachHeader, 371+nOffset,   1, PJUST  );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Does this header have the FSDEVT field?                         */

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/04/16 15:26:04  warmerda
+ * completed metadata support
+ *
  * Revision 1.15  2004/04/15 20:52:44  warmerda
  * added metadata extraction
  *
@@ -199,16 +202,9 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 /*      Collect a variety of information as metadata.                   */
 /* -------------------------------------------------------------------- */
 #define GetMD( target, hdr, start, length, name )              \
-{                                                              \
-        char szWork2[400];                                     \
-        int  iWork;                                            \
-        NITFGetField( szWork2, hdr, start, length );           \
-        iWork = length - 1;                                    \
-        while( iWork >= 0 && szWork2[iWork] == ' ' )           \
-            szWork2[iWork--] = '\0';                           \
-        target->papszMetadata =                                \
-            CSLSetNameValue( target->papszMetadata, "NITF_" #name, szWork2 ); \
-}
+    NITFExtractMetadata( &(target->papszMetadata), hdr,       \
+                         start, length,                        \
+                         "NITF_" #name );
        
     if( EQUAL(psFile->szVersion,"NITF02.10") )
     {
@@ -240,7 +236,9 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
         GetMD( psFile, pachHeader, 291,   5, FSCPYS );
         GetMD( psFile, pachHeader, 296,   1, ENCRYP );
         sprintf( szWork, "%3d,%3d,%3d", 
-                 pachHeader[297], pachHeader[298], pachHeader[299] );
+                 ((GByte *)pachHeader)[297], 
+                 ((GByte *)pachHeader)[298], 
+                 ((GByte *)pachHeader)[299] );
         GetMD( psFile, szWork, 0, 11, FBKGC );
         GetMD( psFile, pachHeader, 300,  24, ONAME  );
         GetMD( psFile, pachHeader, 324,  18, OPHONE );
@@ -481,7 +479,7 @@ NITFFile *NITFCreate( const char *pszFilename,
     pachIMHDR = achHeader + 404;
 
     PLACE (pachIMHDR+  0, IM           , "IM"                           );
-    OVR(10,pachIMHDR+  2, HD1          , "Missing"                      );
+    OVR(10,pachIMHDR+  2, IID1         , "Missing"                      );
     OVR(14,pachIMHDR+ 12, IDATIM       , "20021216151629"               );
     OVR(17,pachIMHDR+ 26, TGTID        , ""                             );
     OVR(80,pachIMHDR+ 43, IID2         , ""                             );
@@ -852,3 +850,24 @@ const char *NITFFindTRE( const char *pszTREData, int nTREBytes,
 
     return NULL;
 }
+
+/************************************************************************/
+/*                        NITFExtractMetadata()                         */
+/************************************************************************/
+
+void NITFExtractMetadata( char ***ppapszMetadata, const char *pachHeader,
+                          int nStart, int nLength, const char *pszName )
+
+{
+    char szWork[400];
+
+    /* trim white space */
+    while( nLength > 0 && pachHeader[nStart + nLength - 1] == ' ' )
+        nLength--;
+
+    memcpy( szWork, pachHeader + nStart, nLength );
+    szWork[nLength] = '\0';
+
+    *ppapszMetadata = CSLSetNameValue( *ppapszMetadata, pszName, szWork );
+}
+                          

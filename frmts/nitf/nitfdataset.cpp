@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/04/16 15:26:04  warmerda
+ * completed metadata support
+ *
  * Revision 1.18  2004/04/15 20:53:15  warmerda
  * Added support for geocentric coordinates, and file level metadata
  *
@@ -691,7 +694,19 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Do we have metadata.                                            */
 /* -------------------------------------------------------------------- */
-    poDS->SetMetadata( poDS->psFile->papszMetadata );
+    char **papszMergedMD;
+
+    papszMergedMD = CSLDuplicate( poDS->psFile->papszMetadata );
+    papszMergedMD = CSLInsertStrings( papszMergedMD, 
+                                      CSLCount( papszMergedMD ),
+                                      psImage->papszMetadata );
+
+    if( psImage->pszComments != NULL && strlen(psImage->pszComments) != 0 )
+        papszMergedMD = CSLSetNameValue( 
+            papszMergedMD, "NITF_IMAGE_COMMENTS", psImage->pszComments );
+
+    poDS->SetMetadata( papszMergedMD );
+    CSLDestroy( papszMergedMD );
     
 /* -------------------------------------------------------------------- */
 /*      Do we have RPC info.                                            */
@@ -771,12 +786,6 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
                  sRPCInfo.LAT_OFF + 2 * sRPCInfo.LAT_SCALE );
         poDS->SetMetadataItem( "RPC_MAX_LAT", szValue );
     }
-
-/* -------------------------------------------------------------------- */
-/*      Assign any other tidbits of metadata we would like to           */
-/*      preserve.                                                       */
-/* -------------------------------------------------------------------- */
-    poDS->SetMetadataItem( "NITF_ABPP", CPLSPrintf( "%d", psImage->nABPP ) );
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
