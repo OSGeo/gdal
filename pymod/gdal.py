@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.56  2004/01/22 21:27:38  dron
+# Added wrapper for GDALDataTypeIsComplex() function.
+#
 # Revision 1.55  2004/01/18 16:52:39  dron
 # Added wrapper for GDALGetDataTypeByName().
 #
@@ -171,6 +174,9 @@ def GetCacheUsed():
     
 def GetDataTypeSize(type):
     return _gdal.GDALGetDataTypeSize(type)
+
+def DataTypeIsComplex(type):
+    return _gdal.GDALDataTypeIsComplex(type)
 
 def GetDataTypeName(type):
     return _gdal.GDALGetDataTypeName(type)
