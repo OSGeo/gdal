@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.29  2004/12/20 22:15:41  fwarmerdam
+ * avoid ECWRasterBand::AdviseRead() now calls on poGDS, limit debug msgs
+ *
  * Revision 1.28  2004/12/20 06:40:32  fwarmerdam
  * fixed up for reading non-byte data
  *
@@ -134,10 +137,6 @@ static unsigned char jp2_header[] =
 static int    gnTriedCSFile = FALSE;
 static char **gpapszCSLookup = NULL;
 
-CPL_C_START
-char **ECWGetCSList(void);
-CPL_C_END
-
 /************************************************************************/
 /* ==================================================================== */
 /*				ECWDataset				*/
@@ -182,6 +181,8 @@ class CPL_DLL ECWDataset : public GDALDataset
     		~ECWDataset();
                 
     static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *OpenJPEG2000( GDALOpenInfo * );
+    static GDALDataset *OpenECW( GDALOpenInfo * );
 
     virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
@@ -262,9 +263,9 @@ CPLErr ECWRasterBand::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                   GDALDataType eDT, 
                                   char **papszOptions )
 {
-    return poDS->AdviseRead( nXOff, nYOff, nXSize, nYSize, 
-                             nBufXSize, nBufYSize, eDT, 
-                             1, &nBand, papszOptions );
+    return poGDS->AdviseRead( nXOff, nYOff, nXSize, nYSize, 
+                              nBufXSize, nBufYSize, eDT, 
+                              1, &nBand, papszOptions );
 }
 
 /************************************************************************/
@@ -649,10 +650,19 @@ int ECWDataset::TryWinRasterIO( GDALRWFlag eFlag,
 /* -------------------------------------------------------------------- */
 /*      Now we try more subtle tests.                                   */
 /* -------------------------------------------------------------------- */
+    {
+        static int nDebugCount = 0;
 
-    CPLDebug( "ECWDataset", 
-              "TryWinRasterIO(%d,%d,%d,%d -> %dx%d) - doing advised read.", 
-              nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
+        if( nDebugCount < 30 )
+            CPLDebug( "ECWDataset", 
+                      "TryWinRasterIO(%d,%d,%d,%d -> %dx%d) - doing advised read.", 
+                      nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize );
+
+        if( nDebugCount == 29 )
+            CPLDebug( "ECWDataset", "No more TryWinRasterIO messages will be reported" );
+        
+        nDebugCount++;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Actually load data one buffer line at a time.                   */
@@ -861,6 +871,48 @@ CPLErr ECWDataset::IRasterIO( GDALRWFlag eRWFlag,
     return CE_None;
 }
 
+/************************************************************************/
+/*                            OpenJPEG2000()                            */
+/************************************************************************/
+
+GDALDataset *ECWDataset::OpenJPEG2000( GDALOpenInfo * poOpenInfo )
+
+{
+    if( EQUALN(poOpenInfo->pszFilename,"J2K_SUBFILE:",12) )
+        return Open( poOpenInfo );
+
+    else if( poOpenInfo->nHeaderBytes >= 16 
+        && (memcmp( poOpenInfo->pabyHeader, jpc_header, 
+                    sizeof(jpc_header) ) == 0
+            || memcmp( poOpenInfo->pabyHeader, jp2_header, 
+                    sizeof(jp2_header) ) == 0) )
+        return Open( poOpenInfo );
+    
+    else
+        return NULL;
+}
+    
+/************************************************************************/
+/*                              OpenECW()                               */
+/*                                                                      */
+/*      Open method that only supports ECW files.                       */
+/************************************************************************/
+
+GDALDataset *ECWDataset::OpenECW( GDALOpenInfo * poOpenInfo )
+
+{
+/* -------------------------------------------------------------------- */
+/*      This has to either be a file on disk ending in .ecw or a        */
+/*      ecwp: protocol url.                                             */
+/* -------------------------------------------------------------------- */
+    if( (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw")
+         || poOpenInfo->nHeaderBytes == 0)
+        && !EQUALN(poOpenInfo->pszFilename,"ecwp:",5) )
+        return( NULL );
+
+    return Open( poOpenInfo );
+}
+    
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -1207,11 +1259,79 @@ void GDALRegister_ECW()
                                    "frmt_ecw.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ecw" );
         
-        poDriver->pfnOpen = ECWDataset::Open;
+        poDriver->pfnOpen = ECWDataset::OpenECW;
 #ifdef HAVE_COMPRESS
-        poDriver->pfnCreateCopy = ECWCreateCopy;
+        poDriver->pfnCreateCopy = ECWCreateCopyECW;
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>"
+"   <Option name='TARGET' type='float' description='Compression Percentage' />"
+"   <Option name='PROJ' type='string' description='ERMapper Projection Name'/>"
+"   <Option name='DATUM' type='string' description='ERMapper Datum Name' />"
+"</CreationOptionList>" );
+#endif
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
+#endif /* def FRMT_ecw */
+}
+
+/************************************************************************/
+/*                        GDALRegister_JP2ECW()                         */
+/************************************************************************/
+void GDALRegister_JP2ECW()
+
+{
+#ifdef FRMT_ecw 
+    GDALDriver	*poDriver;
+
+
+    if( GDALGetDriverByName( "JP2ECW" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+        
+        poDriver->SetDescription( "JP2ECW" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "ERMapper JPEG2000" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_ecw.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
+        
+        poDriver->pfnOpen = ECWDataset::OpenJPEG2000;
+#ifdef HAVE_COMPRESS
+        poDriver->pfnCreateCopy = ECWCreateCopyJPEG2000;
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte UInt16 Int16 UInt32 Int32 Float32 Float64" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>"
+"   <Option name='TARGET' type='float' description='Compression Percentage' />"
+"   <Option name='PROJ' type='string' description='ERMapper Projection Name'/>"
+"   <Option name='DATUM' type='string' description='ERMapper Datum Name' />"
+"   <Option name='PROFILE' type='string-select'>"
+"       <Value>BASELINE_0</Value>"
+"       <Value>BASELINE_1</Value>"
+"       <Value>BASELINE_2</Value>"
+"       <Value>NPJE</Value>"
+"       <Value>EPJE</Value>"
+"   </Option>"
+"   <Option name='PROGRESSION' type='string-select'>"
+"       <Value>LRCP</Value>"
+"       <Value>RLCP</Value>"
+"       <Value>RPCL</Value>"
+"   </Option>"
+"   <Option name='CODESTREAM_ONLY' type='boolean' description='No JP2 wrapper'/>"
+"   <Option name='LEVELS' type='int'/>"
+"   <Option name='LAYERS' type='int'/>"
+"   <Option name='PRECINCT_WIDTH' type='int'/>"
+"   <Option name='PRECINCT_HEIGHT' type='int'/>"
+"   <Option name='TILE_WIDTH' type='int'/>"
+"   <Option name='TILE_HEIGHT' type='int'/>"
+"   <Option name='INCLUDE_SOP' type='boolean'/>"
+"   <Option name='INCLUDE_EPH' type='boolean'/>"
+"   <Option name='DECOMPRESS_LAYERS' type='int'/>"
+"   <Option name='DECOMPRESS_RECONSTRUCTION_PARAMETER' type='float'/>"
+"</CreationOptionList>" );
 #endif
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
