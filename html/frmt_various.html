@@ -175,7 +175,7 @@ NOTE: Implemented as <tt>gdal/frmts/envisat/envisatdataset.cpp</tt>.<p>
 
 <h2><a name="FITS">FITS -- Flexible Image Transport System</h2>
 
-FITS is a format used mainly by astronomers, but it is a relatively
+<p>FITS is a format used mainly by astronomers, but it is a relatively
 simple format that supports arbitrary image types and multi-spectral
 images, and so has found its way into GDAL. FITS support is
 implemented in terms of the standard <a
@@ -185,6 +185,51 @@ support to be enabled. Both reading and writing of FITS files is
 supported. At the current time, no support for a georeferencing system
 is implemented, but WCS (World Coordinate System) support is possible
 in the future.
+
+<p>Non-standard header keywords that are present in the FITS file will
+be copied to the dataset's metadata when the file is opened, for
+access via GDAL methods. Similarly, non-standard header keywords that
+the user defines in the dataset's metadata will be written to the FITS
+file when the GDAL handle is closed.
+
+<p>FITS files that contain the header keywords BSCALE and BZERO are
+handled specially. Such files appear to GDAL to contain float data,
+regardless of the actual type of the data in the file. Data read
+from or written to the file is automatically scaled according to the
+formula:
+
+<blockquote>
+external_value = BZERO + BSCALE * stored_value
+</blockquote>
+
+<p>The BSCALE and BZERO header keywords can only be set during file
+creation, using the creation options listed below. The type specified
+for the Create() method should indicate the required underlying data
+type of the file (typically, byte). As far as GDAL is concerned the
+file will look like a float file. This special behavior can be
+disabled using the NOSCALE creation option. With this option in place,
+in addition to the BSCALE/BZERO options, then the BSCALE and BZERO
+header keywords will be set, but the file will behave in every other
+way like a normal file. This is useful when you want to write raw
+values to the file, but also want to set BSCALE and BZERO.
+
+<p>Creation Options:
+
+<ul>
+
+  <li> <b>BSCALE=nnn</b>: Set the FITS BSCALE header to the specified
+value, and enable automatic re-scaling of data on read/write. If
+BSCALE is specified, then BZERO must also be specified.
+
+  <li> <b>BZERO=nnn</b>: Set the FITS BZERO header to the specified
+value, and enable automatic re-scaling of data on read/write. If BZERO
+is specified then BSCALE must also be specified.
+
+  <li> <b>NOSCALE=yes</b>: Only has an effect if BSCALE/BZERO are
+specified, in which case it disables the re-scaling normally induced
+by those options.
+
+</ul>
 
 <p>NOTE: Implemented as <tt>gdal/frmts/fits/fitsdataset.cpp</tt>.<p>
 
