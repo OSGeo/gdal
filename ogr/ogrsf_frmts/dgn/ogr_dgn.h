@@ -28,6 +28,13 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/10/29 19:45:29  warmerda
+ * OGR driver now always builds an index if any features are to be read.  This
+ * is primarily done to ensure that color tables appearing late in the file
+ * will still affect feature elements occuring before them ... such as with
+ * the m_epoche.dgn file.  Also implement fast feature counting and spatial
+ * extents support based on the index.
+ *
  * Revision 1.5  2002/05/31 19:03:46  warmerda
  * removed old CollectLines code
  *
@@ -79,6 +86,9 @@ class OGRDGNLayer : public OGRLayer
     void		ResetReading();
     OGRFeature *	GetNextFeature();
     OGRFeature *        GetFeature( long nFeatureId );
+
+    virtual int         GetFeatureCount( int bForce = TRUE );
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
 
     OGRFeatureDefn *	GetLayerDefn() { return poFeatureDefn; }
 
