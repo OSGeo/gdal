@@ -38,4 +38,8 @@
 /* Define if large file api should be enabled, normally with UNIX_STDIO_64 */
 #undef VSI_LARGE_API_SUPPORTED
 
+/* Define if _LARGEFILE64_SOURCE needs to be defined. */
+#undef VSI_NEED_LARGEFILE64_SOURCE
+
+
 

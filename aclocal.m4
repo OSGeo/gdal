@@ -87,6 +87,22 @@ AC_DEFUN(AC_UNIX_STDIO_64,
     rm -f conftest*
   fi
 
+  dnl This is much like the first test, but we predefine _LARGEFILE64_SOURCE 
+  dnl before including stdio.h.  This should work on Linux 2.4 series systems.
+
+  if test "$with_unix_stdio_64" = "" ; then
+    echo '#define _LARGEFILE64_SOURCE' > conftest.c
+    echo '#include <stdio.h>' >> conftest.c
+    echo 'int main() { long long off=0; fseeko64(NULL, SEEK_SET, off); off = ftello64(NULL); return 0; }' >> conftest.c
+    if test -z "`${CXX} -o conftest conftest.c 2>&1`" ; then
+      with_unix_stdio_64=yes
+      VSI_FTELL64=ftello64
+      VSI_FSEEK64=fseeko64
+      AC_DEFINE(VSI_NEED_LARGEFILE64_SOURCE)
+    fi
+    rm -f conftest*
+  fi
+
   if test "$with_unix_stdio_64" = "yes" ; then
     AC_MSG_RESULT([yes])
 
