@@ -28,16 +28,16 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/08/30 15:27:54  warmerda
+ * Ensure stdafx.h include first
+ *
  * Revision 1.1  2002/08/29 18:56:15  warmerda
  * New
  *
  */
 
-#include <assert.h>
-#include "cpl_error.h"
 #include "stdafx.h"
 #include "SF.h"
-#include "SFSess.h"
 #include "SFDS.h"
 
 /************************************************************************/
