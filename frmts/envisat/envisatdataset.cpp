@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/05/29 16:38:35  warmerda
+ * dont use variable sized buffer on stack
+ *
  * Revision 1.12  2002/05/21 21:29:58  warmerda
  * added support for MERIS tiepoints, and capture DS name as band desc
  *
@@ -367,7 +370,7 @@ void EnvisatDataset::ScanForGCPs_MERIS()
 /* -------------------------------------------------------------------- */
 /*      Collect the first GCP set from each record.			*/
 /* -------------------------------------------------------------------- */
-    GByte	abyRecord[nDSRSize];
+    GByte	*pabyRecord = (GByte *) CPLMalloc(nDSRSize);
     int  	iGCP;
     GUInt32 	unValue;
 
@@ -378,10 +381,10 @@ void EnvisatDataset::ScanForGCPs_MERIS()
     for( iRecord = 0; iRecord < nNumDSR; iRecord++ )
     {
         if( EnvisatFile_ReadDatasetRecord( hEnvisatFile, nDatasetIndex, 
-                                           iRecord, abyRecord ) != SUCCESS )
+                                           iRecord, pabyRecord ) != SUCCESS )
             continue;
 
-        memcpy( &unValue, abyRecord + 13, 4 );
+        memcpy( &unValue, pabyRecord + 13, 4 );
 
         for( iGCP = 0; iGCP < nTPPerLine; iGCP++ )
         {
@@ -394,11 +397,11 @@ void EnvisatDataset::ScanForGCPs_MERIS()
             sprintf( szId, "%d", nGCPCount+1 );
             pasGCPList[nGCPCount].pszId = CPLStrdup( szId );
 
-            memcpy( &unValue, abyRecord + 13 + nTPPerLine*4 + iGCP*4, 4 );
+            memcpy( &unValue, pabyRecord + 13 + nTPPerLine*4 + iGCP*4, 4 );
             pasGCPList[nGCPCount].dfGCPX = 
                 ((int)CPL_MSBWORD32(unValue))*0.000001;
 
-            memcpy( &unValue, abyRecord + 13 + iGCP*4, 4 );
+            memcpy( &unValue, pabyRecord + 13 + iGCP*4, 4 );
             pasGCPList[nGCPCount].dfGCPY = 
                 ((int)CPL_MSBWORD32(unValue))*0.000001;
 
@@ -410,6 +413,7 @@ void EnvisatDataset::ScanForGCPs_MERIS()
             nGCPCount++;
         }
     }
+    CPLFree( pabyRecord );
 }
 
 /************************************************************************/
