@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.20  2003/12/09 20:09:59  warmerda
+# No such function as OGR_Fld_GetName()!
+#
 # Revision 1.19  2003/12/05 18:01:24  warmerda
 # added GetDriver() support on Datasource
 #
@@ -644,7 +647,7 @@ class FieldDefn:
         return _gdal.OGR_Fld_GetNameRef( self._o )
 
     def GetNameRef( self ):
-        return _gdal.OGR_Fld_GetName( self._o )
+        return _gdal.OGR_Fld_GetNameRef( self._o )
 
     def SetName( self, name ):
         _gdal.OGR_Fld_SetName( self._o, name )
