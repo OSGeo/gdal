@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/03/18 19:56:13  warmerda
+ * added an error reset
+ *
  * Revision 1.3  2002/02/18 20:38:42  warmerda
  * added TXT and TX6 support
  *
@@ -95,7 +98,10 @@ int OGRAVCBinDataSource::Open( const char * pszNewName, int bTestOpen )
     psAVC = AVCE00ReadOpen( pszNewName );
 
     if( bTestOpen )
+    {
         CPLPopErrorHandler();
+        CPLErrorReset();
+    }
 
     if( psAVC == NULL )
         return FALSE;
