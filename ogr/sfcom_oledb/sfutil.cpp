@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/11/02 19:24:42  warmerda
+ * avoid warnings
+ *
  * Revision 1.12  2001/05/28 19:39:29  warmerda
  * added SFWkbGeomTypeToDBGEOM
  *
@@ -217,7 +220,7 @@ char *SFGetInitDataSource(IUnknown *pIUnknownIn)
         if (rgPropSets)
         {
             int i;
-            for (i=0; i < nPropSets; i++)
+            for (i=0; i < (int) nPropSets; i++)
             {
                 CoTaskMemFree(rgPropSets[i].rgProperties);
             }
