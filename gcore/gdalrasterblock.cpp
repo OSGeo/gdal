@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/03/19 05:17:42  warmerda
+ * Increase default cachesize to 10MB.
+ *
  * Revision 1.13  2004/03/15 08:33:38  warmerda
  * Use CPLGetConfigOption() for cache max.
  *
@@ -76,7 +79,7 @@ CPL_CVSID("$Id$");
 
 static int nTileAgeTicker = 0; 
 static int bCacheMaxInitialized = FALSE;
-static int nCacheMax = 5 * 1024*1024;
+static int nCacheMax = 10 * 1024*1024;
 static int nCacheUsed = 0;
 
 static GDALRasterBlock   *poOldest = NULL;    /* tail */
@@ -123,7 +126,7 @@ int GDALGetCacheMax()
     {
         if( CPLGetConfigOption("GDAL_CACHEMAX",NULL) != NULL )
         {
-            nCacheMax = atoi(CPLGetConfigOption("GDAL_CACHEMAX","5"));
+            nCacheMax = atoi(CPLGetConfigOption("GDAL_CACHEMAX","10"));
             if( nCacheMax < 1000 )
                 nCacheMax *= 1024 * 1024;
         }
