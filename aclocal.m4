@@ -253,6 +253,30 @@ AC_DEFUN(AC_LD_SHARED,
     fi
   fi
 
+  dnl Test special MacOS (Darwin) case. 
+
+  if test ! -z "`uname | grep Darwin`" \
+          -a "$LD_SHARED" = "/bin/true" \
+          -a -z "`${CXX} -dynamiclib conftest2.o -o libconftest.so 2>&1`" ; then
+    ${CC} -c conftest1.c
+    if test -z "`${CXX} conftest1.o libconftest.so -o conftest1 2>&1`"; then
+      DYLD_LIBRARY_PATH_OLD="$DYLD_LIBRARY_PATH"
+      if test -z "$DYLD_LIBRARY_PATH" ; then
+        DYLD_LIBRARY_PATH="`pwd`"
+      else
+        DYLD_LIBRARY_PATH="`pwd`:$DYLD_LIBRARY_PATH"
+      fi
+      export DYLD_LIBRARY_PATH
+      if test -z "`./conftest1 2>&1`" ; then
+        echo "checking for ${CXX} -dynamiclib ... yes"
+        LD_SHARED="${CXX} -dynamiclib"
+	SO_EXT=dylib
+      fi
+      DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH_OLD"
+    fi
+    rm -f conftest1.o
+  fi
+
   if test "$LD_SHARED" = "/bin/true" \
 	-a -z "`${CXX} -shared $IRIX_ALL conftest2.o -o libconftest.so 2>&1|grep -v WARNING`" ; then
     if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
@@ -294,25 +318,6 @@ AC_DEFUN(AC_LD_SHARED,
         LD_SHARED="ld -shared"
       fi
       LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
-    fi
-  fi
-
-  if test "$LD_SHARED" = "/bin/true" \
-          -a -z "`${CC} -dynamiclib conftest2.o -o libconftest.so 2>&1`" ; then
-    if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
-      DYLD_LIBRARY_PATH_OLD="$DYLD_LIBRARY_PATH"
-      if test -z "$DYLD_LIBRARY_PATH" ; then
-        DYLD_LIBRARY_PATH="`pwd`"
-      else
-        DYLD_LIBRARY_PATH="`pwd`:$DYLD_LIBRARY_PATH"
-      fi
-      export DYLD_LIBRARY_PATH
-      if test -z "`./conftest1 2>&1`" ; then
-        echo "checking for ${CC} -dynamiclib ... yes"
-        LD_SHARED="${CC} -dynamiclib"
-	SO_EXT=dylib
-      fi
-      DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH_OLD"
     fi
   fi
 
