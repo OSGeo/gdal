@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2000/08/09 16:25:42  warmerda
+ * don't crash if block is null
+ *
  * Revision 1.18  2000/07/11 14:35:43  warmerda
  * added documentation
  *
@@ -686,6 +689,8 @@ int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
         iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
 
         poBlock = poBand->GetBlockRef( iXBlock, iYBlock );
+        if( poBlock == NULL )
+            continue;
         
         if( (iYBlock+1) * nBlockYSize > poBand->GetYSize() )
             nYCheck = poBand->GetYSize() - iYBlock * nBlockYSize;
