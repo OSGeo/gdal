@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c,v 1.39 2004/06/07 12:57:13 warmerda Exp $
+ * $Id: geo_normalize.c,v 1.40 2004/07/09 17:27:37 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.c,v $
+ * Revision 1.40  2004/07/09 17:27:37  warmerda
+ * Added 9122 as an alias for simple degrees.
+ *
  * Revision 1.39  2004/06/07 12:57:13  warmerda
  * fallback to using gdal_datum.csv if datum.csv not found
  *
@@ -910,7 +913,8 @@ int GTIFGetUOMAngleInfo( int nUOMAngleCode,
 
         /* We do a special override of some of the DMS formats name */
         if( nUOMAngleCode == 9102 || nUOMAngleCode == 9107
-            || nUOMAngleCode == 9108 || nUOMAngleCode == 9110 )
+            || nUOMAngleCode == 9108 || nUOMAngleCode == 9110
+            || nUOMAngleCode == 9122 )
         {
             dfInDegrees = 1.0;
             pszUOMName = "degree";
