@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/03/14 21:38:52  warmerda
+ * added DGNWriteElement, DGNResizeElement, make offset/size manditory
+ *
  * Revision 1.18  2002/03/12 17:07:26  warmerda
  * added tagset and tag value element support
  *
@@ -93,8 +96,6 @@
 
 CPL_C_START
 
-#define DGN_DEBUG
-
 /**
  * \file dgnlib.h
  *
@@ -141,10 +142,8 @@ typedef struct {
  */
 
 typedef struct {
-#ifdef DGN_DEBUG
-    GUInt32     offset;
-    GUInt32     size;
-#endif
+    int         offset;
+    int         size;
 
     int         element_id;     /*!< Element number (zero based) */
     int         stype;          /*!< Structure type: (DGNST_*) */
@@ -322,7 +321,7 @@ typedef struct {
  * Returned for DGNT_TAG_VALUE(37).
  */
 
-typedef union { char *string; int integer; double real; } tagValueUnion;
+typedef union { char *string; GInt32 integer; double real; } tagValueUnion;
 
 typedef struct {
     DGNElemCore core;
@@ -498,12 +497,14 @@ typedef struct {
 /** Opaque handle representing DGN file, used with DGN API. */
 typedef void *DGNHandle;
 
-DGNHandle CPL_DLL    DGNOpen( const char * );
+DGNHandle CPL_DLL    DGNOpen( const char *, int );
 void CPL_DLL         DGNSetOptions( DGNHandle, int );
 int CPL_DLL          DGNTestOpen( GByte *, int );
 const DGNElementInfo CPL_DLL *DGNGetElementIndex( DGNHandle, int * );
 int CPL_DLL          DGNGetExtents( DGNHandle, double * );
 DGNElemCore CPL_DLL *DGNReadElement( DGNHandle );
+int  CPL_DLL         DGNWriteElement( DGNHandle, DGNElemCore * );
+int  CPL_DLL         DGNResizeElement( DGNHandle, DGNElemCore *, int );
 void CPL_DLL         DGNFreeElement( DGNHandle, DGNElemCore * );
 void CPL_DLL         DGNRewind( DGNHandle );
 int  CPL_DLL         DGNGotoElement( DGNHandle, int );
@@ -524,6 +525,3 @@ void CPL_DLL  DGNSetSpatialFilter( DGNHandle hDGN,
 CPL_C_END
 
 #endif /* ndef _DGNLIB_H_INCLUDED */
-
-
-
