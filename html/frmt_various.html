@@ -164,7 +164,8 @@ NOTE: Implemented as <tt>gdal/frmts/raw/envidataset.cpp</tt>.<p>
 
 GDAL supports the Envisat product format for read access.  All sample
 types are supported.  Files with two matching measurement datasets (MDS)
-are represented as having two bands.<p>
+are represented as having two bands.  Currently all ASAR Level 1 and above
+products, and some MERIS and AATSR products are supported.<p>
 
 The control points of the GEOLOCATION GRID ADS dataset are read if available,
 generally giving a good coverage of the dataset.  The GCPs are in WGS84.<p>
@@ -173,6 +174,9 @@ Virtually all key/value pairs from the MPH and SPH (primary and secondary
 headers) are copied through as dataset level metadata. <p>
 
 NOTE: Implemented as <tt>gdal/frmts/envisat/envisatdataset.cpp</tt>.<p>
+
+See Also: <a href="http://envisat.esa.int/dataproducts/">
+Envisat Data Products</a> at ESA.<p>
 
 <h2><a name="FITS">FITS -- Flexible Image Transport System</h2>
 
