@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/02/02 20:12:41  fwarmerdam
+ * added SetNextByIndex support
+ *
  * Revision 1.3  2003/10/10 15:11:07  warmerda
  * added DeleteFeature()
  *
@@ -74,6 +77,7 @@ class OGRMemLayer : public OGRLayer
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
+    virtual OGRErr      SetNextByIndex( long nIndex );
 
     OGRFeature         *GetFeature( long nFeatureId );
     OGRErr              SetFeature( OGRFeature *poFeature );
