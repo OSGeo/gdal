@@ -38,6 +38,9 @@
  *   without compromising the system.
  *
  * $Log$
+ * Revision 1.7  2003/09/22 05:34:46  warmerda
+ * implemented support for various kinds of geometry collections
+ *
  * Revision 1.6  2003/04/17 08:22:06  dron
  * Completed secutity audit, fix in MakeGMLCoordinate().
  *
@@ -154,7 +157,7 @@ static void AppendCoordinateList( OGRLineString *poLine,
 
 {
     char        szCoordinate[256];
-    int         b3D = (poLine->getGeometryType() & 0x8000);
+    int         b3D = (poLine->getGeometryType() & wkb25DBit);
 
     *pnLength += strlen(*ppszText + *pnLength);
     _GrowBuffer( *pnLength + 20, ppszText, pnMaxLength );
@@ -308,33 +311,58 @@ static int OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
 /*      MultiPolygon                                                    */
 /* -------------------------------------------------------------------- */
-    else if( poGeometry->getGeometryType() == wkbMultiPolygon 
-             || poGeometry->getGeometryType() == wkbMultiPolygon25D )
+    else if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPolygon 
+             || wkbFlatten(poGeometry->getGeometryType()) == wkbMultiLineString
+             || wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPoint
+             || wkbFlatten(poGeometry->getGeometryType()) == wkbGeometryCollection )
     {
-        OGRMultiPolygon *poMPoly = (OGRMultiPolygon *) poGeometry;
+        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeometry;
         int             iMember;
+        const char *pszElem, *pszMemberElem;
 
-        AppendString( ppszText, pnLength, pnMaxLength,
-                      "<gml:MultiPolygon>" );
-
-        for( iMember = 0; iMember < poMPoly->getNumGeometries(); iMember++)
+        if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPolygon )
         {
-            OGRGeometry *poMember = poMPoly->getGeometryRef( iMember );
+            pszElem = "MultiPolygon>";
+            pszMemberElem = "polygonMember>";
+        }
+        else if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiLineString )
+        {
+            pszElem = "MultiLineString>";
+            pszMemberElem = "lineStringMember>";
+        }
+        else if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPoint )
+        {
+            pszElem = "MultiPoint>";
+            pszMemberElem = "pointMember>";
+        }
+        else
+        {
+            pszElem = "GeometryCollection>";
+            pszMemberElem = "geometryMember>";
+        }
 
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "<gml:polygonMember>" );
+        AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
+        AppendString( ppszText, pnLength, pnMaxLength, pszElem );
+
+        for( iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
+        {
+            OGRGeometry *poMember = poGC->getGeometryRef( iMember );
+
+            AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
+            AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
             
             if( !OGR2GMLGeometryAppend( poMember, 
                                         ppszText, pnLength, pnMaxLength ) )
                 return FALSE;
             
-            AppendString( ppszText, pnLength, pnMaxLength,
-                          "</gml:polygonMember>" );
+            AppendString( ppszText, pnLength, pnMaxLength, "</gml:" );
+            AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
         }
 
-        AppendString( ppszText, pnLength, pnMaxLength,
-                      "</gml:MultiPolygon>" );
+        AppendString( ppszText, pnLength, pnMaxLength, "</gml:" );
+        AppendString( ppszText, pnLength, pnMaxLength, pszElem );
     }
+
     else
         return FALSE;
 
