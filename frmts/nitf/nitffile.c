@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/06/06 17:10:14  warmerda
+ * Improved header size test to support large headers, even those as large as
+ * the whole file.
+ *
  * Revision 1.11  2003/06/06 16:52:32  warmerda
  * changes based on better understanding of conditional FSDEVT field
  *
@@ -90,6 +94,7 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
     NITFFile    *psFile;
     int         nHeaderLen, nOffset, nNextData, nHeaderLenOffset;
     char        szTemp[128], achFSDWNG[6];
+    long        nFileLength;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -152,7 +157,9 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
     szTemp[6] = '\0';
     nHeaderLen = atoi(szTemp);
 
-    if( nHeaderLen < nHeaderLenOffset || nHeaderLen > 100000 )
+    VSIFSeek( fp, 0, SEEK_END );
+    nFileLength = VSIFTell( fp ) ;
+    if( nHeaderLen < nHeaderLenOffset || nHeaderLen > nFileLength )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "NITF Header Length (%d) seems to be corrupt.",
