@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.22  2005/02/22 18:44:34  hobu
+ * and the one in the Datasource constructor
+ *
  * Revision 1.21  2005/02/22 18:43:31  hobu
  * yank out debug refcount increments
  *
@@ -266,7 +269,6 @@ public:
 
 class OGRDataSourceShadow {
   OGRDataSourceShadow() {
-        OGR_DS_Reference(self);
   }
   ~OGRDataSourceShadow();
 public:
