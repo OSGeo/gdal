@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/10/12 16:59:31  fwarmerdam
+ * rearrange include files for win32
+ *
  * Revision 1.2  2004/10/08 20:49:01  fwarmerdam
  * enable ExecuteSQL
  *
@@ -39,8 +42,10 @@
 #ifndef _OGR_MYSQL_H_INCLUDED
 #define _OGR_MYSQL_H_INLLUDED
 
-#include "ogrsf_frmts.h"
+#include <my_global.h>
 #include <mysql.h>
+
+#include "ogrsf_frmts.h"
 
 /************************************************************************/
 /*                            OGRMySQLLayer                             */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/10/12 16:59:31  fwarmerdam
+ * rearrange include files for win32
+ *
  * Revision 1.2  2004/10/08 20:50:05  fwarmerdam
  * Implemented ExecuteSQL().
  * Added support for getting host, password, port, and user from the
@@ -38,11 +41,11 @@
  *
  */
 
-#include <my_global.h>
-#include <my_sys.h>
 
 #include <string>
 #include "ogr_mysql.h"
+#include <my_sys.h>
+
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
