@@ -28,6 +28,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2002/06/04 16:02:28  dron
+ * Fixes in georeferencing, metadata, NOAA-K/L/M support.
+ * Many thanks to Markus Neteler for intensive testing.
+ *
  * Revision 1.4  2002/05/21 17:37:09  dron
  * Additional meteadata.
  *
@@ -44,6 +48,7 @@
  */
 
 #include "gdal_priv.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -87,18 +92,36 @@ enum {		// Receiving stations names:
     GC,		// Fairbanks, Alaska, USA (formerly Gilmore Creek)
     HO,		// Honolulu, Hawaii, USA
     MO,		// Monterey, California, USA
-    WE,		// Westarn Europe CDA, Lannion, France
+    WE,		// Western Europe CDA, Lannion, France
     SO,		// SOCC (Satellite Operations Control Center), Suitland, Maryland, USA
     WI,		// Wallops Island, Virginia, USA
     UNKNOWN_STATION
 };
 
-enum {		// Data processing center:
+enum {		// Data processing centers:
     CMS,	// Centre de Meteorologie Spatiale - Lannion, France
     DSS,	// Dundee Satellite Receiving Station - Dundee, Scotland, UK
     NSS,	// NOAA/NESDIS - Suitland, Maryland, USA
     UKM,	// United Kingdom Meteorological Office - Bracknell, England, UK
     UNKNOWN_CENTER
+};
+
+enum {		// AVHRR Earth location indication
+	ASCEND,
+	DESCEND
+};
+
+const char *paszChannelsDesc[] =				// AVHRR band widths
+{								// NOAA-7 -- NOAA-17 channels
+"AVHRR Channel 1:  0.58  micrometers -- 0.68 micrometers",
+"AVHRR Channel 2:  0.725 micrometers -- 1.10 micrometers",
+"AVHRR Channel 3:  3.55  micrometers -- 3.93 micrometers",
+"AVHRR Channel 4:  10.3  micrometers -- 11.3 micrometers",
+"AVHRR Channel 5:  11.5  micrometers -- 12.5 micrometers",	// not in NOAA-6,-8,-10
+"AVHRR Channel 5:  11.4  micrometers -- 12.4 micrometers",	// NOAA-13
+								// NOAA-15 -- NOAA-17
+"AVHRR Channel 3A: 1.58  micrometers -- 1.64 micrometers",
+"AVHRR Channel 3B: 3.55  micrometers -- 3.93 micrometers"
 };
 
 #define TBM_HEADER_SIZE 122
@@ -118,15 +141,15 @@ class TimeCode {
   public:
     void SetYear(long year)
     {
-	    lYear = year;
+        lYear = year;
     }
     void SetDay(long day)
     {
-	    lDay = day;
+	lDay = day;
     }
     void SetMillisecond(long millisecond)
     {
-	    lMillisecond = millisecond;
+	lMillisecond = millisecond;
     }
     char* PrintTime()
     {
@@ -158,9 +181,9 @@ class L1BDataset : public GDALDataset
     int         nGCPCount;
     int		iGCPOffset;
     int		iGCPCodeOffset;
-    int		nGCPStart;
-    int		nGCPStep;
     int		nGCPPerLine;
+    int		iLocationIndicator;
+    double	dfGCPStart, dfGCPStep;
     double	dfTLDist, dfTRDist, dfBLDist, dfBRDist;
 
     int		nBufferSize;
@@ -171,9 +194,12 @@ class L1BDataset : public GDALDataset
     int		nRecordDataEnd;
     int		nDataStartOffset;
     int		nRecordSize;
+    int		iChannels;
+    GUInt16	iInstrumentStatus;
 
     double      adfGeoTransform[6];
-    char        *pszProjection; 
+    char        *pszProjection;
+    int		bProjDetermined;
 
     FILE	*fp;
 
@@ -181,10 +207,11 @@ class L1BDataset : public GDALDataset
     void	FetchNOAA9GCPs(GDAL_GCP *pasGCPList, GInt16 *piRecordHeader, int iLine);
     void	FetchNOAA15GCPs(GDAL_GCP *pasGCPList, GInt32 *piRecordHeader, int iLine);
     void	UpdateCorners(GDAL_GCP *psGCP);
-    void	FetchNOAA9TimeCode(TimeCode *psTime, GByte *piRecordHeader);
-    void	FetchNOAA15TimeCode(TimeCode *psTime, GUInt16 *piRecordHeader);
+    void	FetchNOAA9TimeCode(TimeCode *psTime, GByte *piRecordHeader, int *iLocInd);
+    void	FetchNOAA15TimeCode(TimeCode *psTime, GUInt16 *piRecordHeader, int *intLocInd);
     void	ComputeGeoref();
-
+    void	L1BDataset::ProcessDatasetHeader();
+    
   public:
                 L1BDataset();
 		~L1BDataset();
@@ -248,54 +275,73 @@ CPLErr L1BRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     L1BDataset *poGDS = (L1BDataset *) poDS;
     GUInt32 *iscan;		// Packed scanline buffer
     GUInt32 iword, jword;
-    int i, j;
-    GUInt16 *scan;
+    int iDataOffset, i, j;
+    GUInt16 *scan = NULL;
 	    
 /* -------------------------------------------------------------------- */
 /*      Seek to data.                                                   */
 /* -------------------------------------------------------------------- */
-    VSIFSeek(poGDS->fp,
-	poGDS->nDataStartOffset + nBlockYOff * poGDS->nRecordSize, SEEK_SET);
+    iDataOffset = (poGDS->iLocationIndicator == DESCEND)?
+	    poGDS->nDataStartOffset + nBlockYOff * poGDS->nRecordSize:
+	    poGDS->nDataStartOffset +
+	    (poGDS->GetRasterYSize() - nBlockYOff - 1) * poGDS->nRecordSize;
+    VSIFSeek(poGDS->fp,	iDataOffset, SEEK_SET);
 
 /* -------------------------------------------------------------------- */
 /*      Read data into the buffer.					*/
 /* -------------------------------------------------------------------- */
     // Read packed scanline
     int nBlockSize = nBlockXSize * nBlockYSize;
+    iscan = (GUInt32 *)CPLMalloc(poGDS->nRecordSize);
+    VSIFRead(iscan, 1, poGDS->nRecordSize, poGDS->fp);
     switch (poGDS->iDataFormat)
     {
         case PACKED10BIT:
-            iscan = (GUInt32 *)CPLMalloc(poGDS->nRecordSize);
-            scan = (GUInt16 *)CPLMalloc(poGDS->nBufferSize);
-            VSIFRead(iscan, 1, poGDS->nRecordSize, poGDS->fp);
-            j = 0;
-            for(i = poGDS->nRecordDataStart / (int)sizeof(iscan[0]);
-		i < poGDS->nRecordDataEnd / (int)sizeof(iscan[0]); i++)
-            {
-                iword = iscan[i];
+        scan = (GUInt16 *)CPLMalloc(poGDS->nBufferSize);
+        j = 0;
+        for(i = poGDS->nRecordDataStart / (int)sizeof(iscan[0]);
+	    i < poGDS->nRecordDataEnd / (int)sizeof(iscan[0]); i++)
+        {
+            iword = iscan[i];
 #ifdef CPL_LSB
-                CPL_SWAP32PTR(&iword);
+            CPL_SWAP32PTR(&iword);
 #endif
-                jword = iword & 0x3FF00000;
-                scan[j++] = jword >> 20;
-                jword = iword & 0x000FFC00;
-                scan[j++] = jword >> 10;
-                scan[j++] = iword & 0x000003FF;
-             }
-    
-             for( i = 0, j = 0; i < nBlockSize; i++ )
-             {
-                 ((GUInt16 *) pImage)[i] = scan[j + nBand - 1];
-	         j += poGDS->nBands;
-             }
-    
-             CPLFree(iscan);
-             CPLFree(scan);
+            jword = iword & 0x3FF00000;
+            scan[j++] = jword >> 20;
+            jword = iword & 0x000FFC00;
+            scan[j++] = jword >> 10;
+            scan[j++] = iword & 0x000003FF;
+        }
+        CPLFree(iscan);
+        CPLFree(scan);
 	break;
 	case UNPACKED16BIT: // FIXME: Not implemented yet, need a sample image
-	default:
+	scan = (GUInt16 *)(iscan + poGDS->nRecordDataStart);
+	for (i = 0; i < poGDS->GetRasterXSize() * poGDS->nBands; i++)
+	{
+#ifdef CPL_LSB
+            CPL_SWAP32PTR(&scan[i]);
+#endif
+	}
+	CPLFree(iscan);
+	break;
+        default:
 	break;
     }
+    
+    if (poGDS->iLocationIndicator == DESCEND)
+        for( i = 0, j = 0; i < nBlockSize; i++ )
+        {
+            ((GUInt16 *) pImage)[i] = scan[j + nBand - 1];
+            j += poGDS->nBands;
+        }
+    else
+	for ( i = nBlockSize - 1, j = 0; i >= 0; i-- )
+        {
+            ((GUInt16 *) pImage)[i] = scan[j + nBand - 1];
+            j += poGDS->nBands;
+        }
+
     return CE_None;
 }
 
@@ -316,8 +362,12 @@ L1BDataset::L1BDataset()
     nGCPCount = 0;
     pasGCPList = NULL;
     pasCorners = (GDAL_GCP *) CPLCalloc( 4, sizeof(GDAL_GCP) );
-    pszProjection = "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",7043]],TOWGS84[0,0,4.5,0,0,0.554,0.2263],AUTHORITY[\"EPSG\",6322]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",\"NORTH\"],AXIS[\"Long\",\"EAST\"],AUTHORITY[\"EPSG\",4322]";
+    pszProjection = "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",7043]],TOWGS84[0,0,4.5,0,0,0.554,0.2263],AUTHORITY[\"EPSG\",6322]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",\"NORTH\"],AXIS[\"Long\",\"EAST\"],AUTHORITY[\"EPSG\",4322]]";
+    bProjDetermined = FALSE; // FIXME
     nBands = 0;
+    iLocationIndicator = DESCEND; // XXX: should be initialised
+    iChannels = 0;
+    iInstrumentStatus = 0;
 }
 
 /************************************************************************/
@@ -351,7 +401,10 @@ CPLErr L1BDataset::GetGeoTransform( double * padfTransform )
 const char *L1BDataset::GetProjectionRef()
 
 {
-    return pszProjection;
+    if( bProjDetermined )
+        return pszProjection;
+    else
+        return "";
 }
 
 /************************************************************************/
@@ -386,34 +439,46 @@ const GDAL_GCP *L1BDataset::GetGCPs()
     return pasGCPList;
 }
 
+/************************************************************************/
+/*                            ComputeGeoref()				*/
+/************************************************************************/
+
 void L1BDataset::ComputeGeoref()
 {
-    int bApproxOK = TRUE;
-    GDALGCPsToGeoTransform( 4, pasCorners, adfGeoTransform, bApproxOK );
-/*	adfGeoTransform[0]; //lon
-	adfGeoTransform[3]; //lat*/
-	;
+    if (nGCPCount >= 3 && bProjDetermined)
+    {
+        int bApproxOK = TRUE;
+        GDALGCPsToGeoTransform( 4, pasCorners, adfGeoTransform, bApproxOK );
+    }
+    else
+    {
+        adfGeoTransform[0] = adfGeoTransform[2] = adfGeoTransform[3] = adfGeoTransform[4] = 0;
+	adfGeoTransform[1] = adfGeoTransform[5] = 1;
+    }
 }
 
 /************************************************************************/
 /*	Fetch timecode from the record header (NOAA9-NOAA14 version)	*/
 /************************************************************************/
-void L1BDataset::FetchNOAA9TimeCode(TimeCode *psTime, GByte *piRecordHeader)
+
+void L1BDataset::FetchNOAA9TimeCode(TimeCode *psTime, GByte *piRecordHeader, int *iLocInd)
 {
     GUInt32 lTemp;
 
     lTemp = ((piRecordHeader[2] >> 1) & 0x7F);
-    psTime->SetYear((lTemp > 77)?(lTemp + 1900):(lTemp + 2000)); // Avoid `Year 2000' bug
+    psTime->SetYear((lTemp > 77)?(lTemp + 1900):(lTemp + 2000)); // Avoid `Year 2000' problem
     psTime->SetDay((GUInt32)(piRecordHeader[2] & 0x01) << 8 | (GUInt32)piRecordHeader[3]);
     psTime->SetMillisecond(
 	((GUInt32)(piRecordHeader[4] & 0x07) << 24) | ((GUInt32)piRecordHeader[5] << 16) |
 	((GUInt32)piRecordHeader[6] << 8) | (GUInt32)piRecordHeader[7]);
+    *iLocInd = ((piRecordHeader[8] & 0x02) == 0)?ASCEND:DESCEND;
 }
 
 /************************************************************************/
 /*	Fetch timecode from the record header (NOAA15-NOAA17 version)	*/
 /************************************************************************/
-void L1BDataset::FetchNOAA15TimeCode(TimeCode *psTime, GUInt16 *piRecordHeader)
+
+void L1BDataset::FetchNOAA15TimeCode(TimeCode *psTime, GUInt16 *piRecordHeader, int *iLocInd)
 {
     GUInt16 iTemp;
     GUInt32 lTemp;
@@ -426,12 +491,13 @@ void L1BDataset::FetchNOAA15TimeCode(TimeCode *psTime, GUInt16 *piRecordHeader)
     lTemp = (GUInt32)CPL_SWAP16(piRecordHeader[4]) << 16 |
 	(GUInt32)CPL_SWAP16(piRecordHeader[5]);
     psTime->SetMillisecond(lTemp);
+    *iLocInd = ((CPL_SWAP16(piRecordHeader[6]) & 0x8000) == 0)?ASCEND:DESCEND; // FIXME: hemisphere
 #else
     psTime->SetYear(piRecordHeader[1]);
     psTime->SetDay(piRecordHeader[2]);
     psTime->SetMillisecond((GUInt32)piRecordHeader[4] << 16 | (GUInt32)piRecordHeader[5]);
+    *iLocInd = ((piRecordHeader[6] & 0x8000) == 0)?ASCEND:DESCEND;
 #endif
-
 }
 
 /************************************************************************/
@@ -470,7 +536,9 @@ void L1BDataset::UpdateCorners(GDAL_GCP *psGCP)
 	    }
 	    else
 	    {
-	        brdist = (GetRasterXSize() - psGCP->dfGCPPixel) *
+	        bldist=psGCP->dfGCPPixel*psGCP->dfGCPPixel+
+	        (GetRasterYSize() - psGCP->dfGCPLine) * (GetRasterYSize() - psGCP->dfGCPLine);
+		brdist = (GetRasterXSize() - psGCP->dfGCPPixel) *
 	            (GetRasterXSize() - psGCP->dfGCPPixel) +
 		    (GetRasterYSize() - psGCP->dfGCPLine) *
 		    (GetRasterYSize() - psGCP->dfGCPLine);
@@ -485,49 +553,59 @@ void L1BDataset::UpdateCorners(GDAL_GCP *psGCP)
 }
 
 /************************************************************************/
-/* Fetch the GCP from the individual scanlines (NOAA9-NOAA14 version)	*/
+/* Fetch the GCPs from the individual scanlines (NOAA9-NOAA14 version)	*/
 /************************************************************************/
 
 void L1BDataset::FetchNOAA9GCPs(GDAL_GCP *pasGCPList, GInt16 *piRecordHeader, int iLine)
 {
-    int		nGoodGCPs, iPixel;
+    int		nGoodGCPs, iGCPPos, j;
+    GInt16	iTemp;
+    double	dfPixel;
     
-    nGoodGCPs =(piRecordHeader[iGCPCodeOffset] <= nGCPPerLine)?
-	    piRecordHeader[iGCPCodeOffset]:nGCPPerLine;
-    iPixel = nGCPStart;
-    int j = iGCPOffset / (int)sizeof(piRecordHeader[0]);
-    while ( j < iGCPOffset / (int)sizeof(piRecordHeader[0]) + 2 * nGoodGCPs )
+    nGoodGCPs = ((GByte)*(piRecordHeader + iGCPCodeOffset) <= nGCPPerLine)?
+	    (GByte)*(piRecordHeader + iGCPCodeOffset):nGCPPerLine;
+    dfPixel = (iLocationIndicator == DESCEND)?dfGCPStart: GetRasterXSize() - dfGCPStart;
+    j = iGCPOffset / (int)sizeof(piRecordHeader[0]);
+    iGCPPos = iGCPOffset / (int)sizeof(piRecordHeader[0]) + 2 * nGoodGCPs;
+    while ( j < iGCPPos )
     {
 #ifdef CPL_LSB
-        pasGCPList[nGCPCount].dfGCPY = CPL_SWAP16(piRecordHeader[j]) / 128.0; j++;
-        pasGCPList[nGCPCount].dfGCPX = CPL_SWAP16(piRecordHeader[j]) / 128.0; j++;
+	iTemp = piRecordHeader[j++];
+	pasGCPList[nGCPCount].dfGCPY = CPL_SWAP16(iTemp) / 128.0;
+        iTemp = piRecordHeader[j++];
+        pasGCPList[nGCPCount].dfGCPX = CPL_SWAP16(iTemp) / 128.0;
 #else
         pasGCPList[nGCPCount].dfGCPY = piRecordHeader[j++] / 128.0;
         pasGCPList[nGCPCount].dfGCPX = piRecordHeader[j++] / 128.0;
 #endif
+	if (pasGCPList[nGCPCount].dfGCPX < -180 || pasGCPList[nGCPCount].dfGCPX > 180 ||
+	    pasGCPList[nGCPCount].dfGCPY < -90 || pasGCPList[nGCPCount].dfGCPY > 90)
+	    continue;
 //	pasGCPList[nGCPCount].pszId;
 	pasGCPList[nGCPCount].dfGCPZ = 0.0;
-	pasGCPList[nGCPCount].dfGCPPixel = (double)iPixel;
-	iPixel += nGCPStep;
-	pasGCPList[nGCPCount].dfGCPLine = (double)iLine;
+	pasGCPList[nGCPCount].dfGCPPixel = dfPixel;
+	dfPixel += (iLocationIndicator == DESCEND)?dfGCPStep:-dfGCPStep;
+	pasGCPList[nGCPCount].dfGCPLine = (double)((iLocationIndicator == DESCEND)?
+            iLine:GetRasterYSize() - iLine - 1) + 0.5;
         UpdateCorners(&pasGCPList[nGCPCount]);
         nGCPCount++;
     }
 }
 
 /************************************************************************/
-/* Fetch the GCP from the individual scanlines (NOAA15-NOAA17 version)	*/
+/* Fetch the GCPs from the individual scanlines (NOAA15-NOAA17 version)	*/
 /************************************************************************/
 
 void L1BDataset::FetchNOAA15GCPs(GDAL_GCP *pasGCPList, GInt32 *piRecordHeader, int iLine)
 {
+    int		j, iGCPPos;
     GUInt32	lTemp;
-    int		nGoodGCPs, iPixel;
+    double	dfPixel;
     
-    nGoodGCPs = nGCPPerLine;
-    iPixel = nGCPStart;
-    int j = iGCPOffset / (int)sizeof(piRecordHeader[0]);
-    while ( j < iGCPOffset / (int)sizeof(piRecordHeader[0]) + 2 * nGoodGCPs )
+    dfPixel = (iLocationIndicator == DESCEND)?dfGCPStart: GetRasterXSize() - dfGCPStart;
+    j = iGCPOffset / (int)sizeof(piRecordHeader[0]);
+    iGCPPos = iGCPOffset / (int)sizeof(piRecordHeader[0]) + 2 * nGCPPerLine;
+    while ( j < iGCPPos )
     {
 #ifdef CPL_LSB
 	lTemp = piRecordHeader[j++];
@@ -538,11 +616,14 @@ void L1BDataset::FetchNOAA15GCPs(GDAL_GCP *pasGCPList, GInt32 *piRecordHeader, i
         pasGCPList[nGCPCount].dfGCPY = piRecordHeader[j++] / 10000.0;
         pasGCPList[nGCPCount].dfGCPX = piRecordHeader[j++] / 10000.0;
 #endif
-//	pasGCPList[nGCPCount].pszId;
+	if (pasGCPList[nGCPCount].dfGCPX < -180 || pasGCPList[nGCPCount].dfGCPX > 180 ||
+	    pasGCPList[nGCPCount].dfGCPY < -90 || pasGCPList[nGCPCount].dfGCPY > 90)
+	    continue;
 	pasGCPList[nGCPCount].dfGCPZ = 0.0;
-	pasGCPList[nGCPCount].dfGCPPixel = (double)iPixel;
-	iPixel += nGCPStep;
-	pasGCPList[nGCPCount].dfGCPLine = (double)iLine;
+	pasGCPList[nGCPCount].dfGCPPixel = dfPixel;
+	dfPixel += (iLocationIndicator == DESCEND)?dfGCPStep:-dfGCPStep;
+	pasGCPList[nGCPCount].dfGCPLine = (double)((iLocationIndicator == DESCEND)?
+            iLine:GetRasterYSize() - iLine - 1) + 0.5;
         UpdateCorners(&pasGCPList[nGCPCount]);
         nGCPCount++;
     }
@@ -554,7 +635,7 @@ void L1BDataset::FetchNOAA15GCPs(GDAL_GCP *pasGCPList, GInt32 *piRecordHeader, i
 
 void L1BDataset::ProcessRecordHeaders()
 {
-    int		iLine;
+    int		iLine, iLocInd;
     void	*piRecordHeader;
 
     piRecordHeader = CPLMalloc(nRecordDataStart);
@@ -562,30 +643,49 @@ void L1BDataset::ProcessRecordHeaders()
     GDALInitGCPs( GetRasterYSize() * nGCPPerLine, pasGCPList );
     dfTLDist = dfTRDist = dfBLDist = dfBRDist = GetRasterXSize() * GetRasterXSize() +
 	    				GetRasterYSize() * GetRasterYSize();
-    
+    VSIFSeek(fp, nDataStartOffset, SEEK_SET);
+    VSIFRead(piRecordHeader, 1, nRecordDataStart, fp);
+    if (iSpacecraftID <= NOAA14)
+        FetchNOAA9TimeCode(&sStartTime, (GByte *) piRecordHeader, &iLocInd);
+    else
+	FetchNOAA15TimeCode(&sStartTime, (GUInt16 *) piRecordHeader, &iLocInd);
+    iLocationIndicator = iLocInd;
+    VSIFSeek(fp, nDataStartOffset + (GetRasterYSize() - 1) * nRecordSize, SEEK_SET);
+    VSIFRead(piRecordHeader, 1, nRecordDataStart, fp);
+    if (iSpacecraftID <= NOAA14)
+        FetchNOAA9TimeCode(&sStopTime, (GByte *) piRecordHeader, &iLocInd);
+    else
+	FetchNOAA15TimeCode(&sStopTime, (GUInt16 *) piRecordHeader, &iLocInd);
     for ( iLine = 0; iLine < GetRasterYSize(); iLine++ )
     {
-	VSIFSeek(fp, nDataStartOffset + iLine * nRecordSize, SEEK_SET);
+        VSIFSeek(fp, nDataStartOffset + iLine * nRecordSize, SEEK_SET);
 	VSIFRead(piRecordHeader, 1, nRecordDataStart, fp);
 	if (iSpacecraftID <= NOAA14)
-	{
-	    if (iLine == 0 )
-	        FetchNOAA9TimeCode(&sStartTime, (GByte *) piRecordHeader);
-	    else if (iLine == GetRasterYSize() - 1)
-		    FetchNOAA9TimeCode(&sStopTime, (GByte *) piRecordHeader);
             FetchNOAA9GCPs(pasGCPList, (GInt16 *)piRecordHeader, iLine);
-	}
 	else
-	{
-	    if (iLine == 0)
-	        FetchNOAA15TimeCode(&sStartTime, (GUInt16 *) piRecordHeader);
-	    else if (iLine == GetRasterYSize() - 1)
-	        FetchNOAA15TimeCode(&sStopTime, (GUInt16 *) piRecordHeader);
 	    FetchNOAA15GCPs(pasGCPList, (GInt32 *)piRecordHeader, iLine);
-	}
     }
     ComputeGeoref();
     CPLFree(piRecordHeader);
+}
+
+/************************************************************************/
+/*			ProcessDatasetHeader()				*/
+/************************************************************************/
+
+void L1BDataset::ProcessDatasetHeader()
+{
+    GUInt16 *piHeader;
+    piHeader = (GUInt16 *)CPLMalloc(nDataStartOffset);
+    VSIFSeek( fp, 0, SEEK_SET );
+    VSIFRead( piHeader, 1, nDataStartOffset, fp );
+    if (iSpacecraftID > NOAA14)
+    {
+	iInstrumentStatus = (piHeader + 512)[58];
+#ifdef CPL_LSB
+	CPL_SWAP16PTR(&iInstrumentStatus);
+#endif
+    }
 }
 
 /************************************************************************/
@@ -705,22 +805,25 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
     else
 	 poDS->iSource = UNKNOWN_STATION;
 
-    // Determine number of channels and data format
+    // Determine number of bands and data format
     // (10-bit packed or 16-bit unpacked)
-    /*if ( EQUALN((const char *)poDS->pabyTBMHeader + 74, "T", 1) )
-    {*/
-	 poDS->nBands = 5;
-	 poDS->iDataFormat = PACKED10BIT;
-    /*}
-    else if ( EQUALN((const char *)poDS->pabyTBMHeader + 74, "S", 1) )
+    for ( int i = 97; i < 117; i++ )
+        if (poDS->pabyTBMHeader[i] == 1 || poDS->pabyTBMHeader[i] == 'Y')
+	{
+	    poDS->nBands++;
+	    poDS->iChannels = poDS->iChannels | (1 << (i - 97));
+	}
+    if (poDS->nBands == 0 || poDS->nBands > 5)
     {
-        for ( int i = 97; i < 117; i++ ) // FIXME: should report type of the band
-	    if (poDS->pabyTBMHeader[i] == 1)
-	        poDS->nBands++;
-	poDS->iDataFormat = UNPACKED16BIT;
+        poDS->nBands = 5;
+	poDS->iChannels = 0x1F;
     }
+    if ( EQUALN((const char *)poDS->pabyTBMHeader + 117, "10", 2) )
+	poDS->iDataFormat = PACKED10BIT;
+    else if ( EQUALN((const char *)poDS->pabyTBMHeader + 117, "16", 2) )
+        poDS->iDataFormat = UNPACKED16BIT;
     else
-	 goto bad;*/
+	goto bad;
 
     switch( poDS->iDataType )
     {
@@ -728,13 +831,13 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 	case LAC:
             poDS->nRasterXSize = 2048;
 	    poDS->nBufferSize = 20484;
-	    poDS->nGCPStart = 25;
-	    poDS->nGCPStep = 40;
+	    poDS->dfGCPStart = 25.5; // GCPs are located at center of pixel
+	    poDS->dfGCPStep = 40;
 	    poDS->nGCPPerLine = 51;
 	    if (poDS->iSpacecraftID <= NOAA14)
 	    {
                 poDS->nDataStartOffset = 14922;
-                poDS->nRecordSize = 14800;
+		poDS->nRecordSize = 14800;
 	        poDS->nRecordDataStart = 448;
 	        poDS->nRecordDataEnd = 14104;
 		poDS->iGCPCodeOffset = 53;
@@ -743,7 +846,10 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 	    else if (poDS->iSpacecraftID <= NOAA17)
 	    {
 		poDS->nDataStartOffset = 16384;
-                poDS->nRecordSize = 15872;
+		if (poDS->iDataFormat == PACKED10BIT)
+                    poDS->nRecordSize = 15872;
+                else
+		    poDS->nRecordSize = 14336;
 	        poDS->nRecordDataStart = 1264;
 	        poDS->nRecordDataEnd = 14920;
 		poDS->iGCPCodeOffset = 0; // XXX: not exist for NOAA15?
@@ -754,14 +860,17 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         break;
 	case GAC:
     	    poDS->nRasterXSize = 409;
-	    poDS->nBufferSize = 4092;
-	    poDS->nGCPStart = 5;
-	    poDS->nGCPStep = 8;
+            poDS->nBufferSize = 4092;
+	    poDS->dfGCPStart = 5.5; // FIXME: depends to scan direction
+	    poDS->dfGCPStep = 8;
 	    poDS->nGCPPerLine = 51;
 	    if (poDS->iSpacecraftID <= NOAA14)
 	    {
 	        poDS->nDataStartOffset = 6562;
-                poDS->nRecordSize = 3220;
+                if (poDS->iDataFormat == PACKED10BIT)
+		    poDS->nRecordSize = 3220;
+		else
+		    poDS->nRecordSize = 2904;
 	        poDS->nRecordDataStart = 448;
 	        poDS->nRecordDataEnd = 3176;
 		poDS->iGCPCodeOffset = 53;
@@ -787,6 +896,11 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLStat(poOpenInfo->pszFilename, &sStat);
     poDS->nRasterYSize =
 	(sStat.st_size - poDS->nDataStartOffset) / poDS->nRecordSize;
+
+/* -------------------------------------------------------------------- */
+/*      Load some info from header.	                                */
+/* -------------------------------------------------------------------- */
+    poDS->ProcessDatasetHeader();
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -885,7 +999,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 	    pszText = "Monterey, California, USA";
 	break;
         case WE:
-	    pszText = "Westarn Europe CDA, Lannion, France";
+	    pszText = "Western Europe CDA, Lannion, France";
 	break;
         case SO:
 	    pszText = "SOCC (Satellite Operations Control Center), Suitland, Maryland, USA";
@@ -919,7 +1033,46 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetMetadataItem( "START",  poDS->sStartTime.PrintTime() );
     // Time of last scanline
     poDS->SetMetadataItem( "STOP",  poDS->sStopTime.PrintTime() );
-    
+    // AVHRR Earth location indication
+    switch(poDS->iLocationIndicator)
+    {
+        case ASCEND:
+        poDS->SetMetadataItem( "LOCATION", "Ascending" );
+	break;
+	case DESCEND:
+	default:
+	poDS->SetMetadataItem( "LOCATION", "Descending" );
+	break;
+    }
+    // Channels descriptions
+    i = 1;
+    if ( poDS->iSpacecraftID >= NOAA6 && poDS->iSpacecraftID <= NOAA17 )
+    {
+        if (poDS->iChannels & 0x01)
+	    poDS->SetMetadataItem(CPLSPrintf("BAND%1d", i++), paszChannelsDesc[0] );	//1
+	if (poDS->iChannels & 0x02)
+	    poDS->SetMetadataItem(CPLSPrintf("BAND%1d", i++), paszChannelsDesc[1]);	//2
+	if (poDS->iChannels & 0x04)
+	    if (poDS->iSpacecraftID >= NOAA15 && poDS->iSpacecraftID <= NOAA17)
+                if (poDS->iInstrumentStatus & 0x0400)
+		    poDS->SetMetadataItem(CPLSPrintf("BAND%1d", i++), paszChannelsDesc[7]);//3B
+		else
+		    poDS->SetMetadataItem(CPLSPrintf("BAND%1d", i++), paszChannelsDesc[6]);//3A
+	    else    
+	        poDS->SetMetadataItem(CPLSPrintf("BAND%1d", i++), paszChannelsDesc[2]);	//3
+	if (poDS->iChannels & 0x08)
+	    poDS->SetMetadataItem(CPLSPrintf("BAND%1d", i++), paszChannelsDesc[3]);	//4
+	if (poDS->iChannels & 0x0F)
+		if (poDS->iSpacecraftID == NOAA13)	 // 5 NOAA-13
+		    poDS->SetMetadataItem(CPLSPrintf("BAND%1d", i++), paszChannelsDesc[5]);
+	        else if (poDS->iSpacecraftID == NOAA6 ||
+		        poDS->iSpacecraftID == NOAA8 ||
+			poDS->iSpacecraftID == NOAA10)	 // 4 NOAA-6,-8,-10
+		    poDS->SetMetadataItem(CPLSPrintf("BAND%1d", i++), paszChannelsDesc[3]);
+		else
+	            poDS->SetMetadataItem(CPLSPrintf("BAND%1d", i++), paszChannelsDesc[4]);//5
+    }
+
     return( poDS );
 bad:
     delete poDS;
