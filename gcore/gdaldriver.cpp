@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/01/31 16:24:01  warmerda
+ * use failure, not fatal
+ *
  * Revision 1.9  2000/01/31 15:00:25  warmerda
  * added some documentation
  *
@@ -114,7 +117,7 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 
     if( pfnCreate == NULL )
     {
-        CPLError( CE_Fatal, CPLE_NotSupported,
+        CPLError( CE_Failure, CPLE_NotSupported,
                   "GDALDriver::Create() ... no create method implemented"
                   " for this format.\n" );
 
