@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2002/10/02 20:48:39  warmerda
+ * Added support for GENERIC_CPOLY layer
+ *
  * Revision 1.17  2002/08/26 20:15:56  warmerda
  * fixed _LIST if attributes split over multiple records for one feature
  *
@@ -828,108 +831,79 @@ static OGRFeature *TranslateGenericPoly( NTFFileReader *poReader,
 
         return poFeature;
     }
-#ifdef notdef
-/* ==================================================================== */
-/*      CPOLYGON Group                                                  */
-/* ==================================================================== */
 
+    return NULL;
+}
+
+/************************************************************************/
+/*                       TranslateGenericCPoly()                        */
+/************************************************************************/
+
+static OGRFeature *TranslateGenericCPoly( NTFFileReader *poReader,
+                                          OGRNTFLayer *poLayer,
+                                          NTFRecord **papoGroup )
+
+{
 /* -------------------------------------------------------------------- */
 /*      First we do validation of the grouping.                         */
 /* -------------------------------------------------------------------- */
-    int         iRec;
+    if( papoGroup[0]->GetType() != NRT_CPOLY )
+        return NULL;
     
-    for( iRec = 0;
-         papoGroup[iRec] != NULL && papoGroup[iRec+1] != NULL
-             && papoGroup[iRec]->GetType() == NRT_POLYGON
-             && papoGroup[iRec+1]->GetType() == NRT_CHAIN;
-         iRec += 2 ) {}
-
-    if( CSLCount((char **) papoGroup) != iRec + 3 )
+    if( papoGroup[1] == NULL || 
+        (papoGroup[1]->GetType() != NRT_GEOMETRY 
+         && papoGroup[1]->GetType() != NRT_GEOMETRY3D) ) 
+        return NULL;
+    
+    if( papoGroup[1] != NULL 
+        && papoGroup[2]->GetType() != NRT_ATTREC )
         return NULL;
 
-    if( papoGroup[iRec]->GetType() != NRT_CPOLY
-        || papoGroup[iRec+1]->GetType() != NRT_ATTREC
-        || papoGroup[iRec+2]->GetType() != NRT_GEOMETRY )
-        return NULL;
+/* -------------------------------------------------------------------- */
+/*      collect information for whole complex polygon.                  */
+/* -------------------------------------------------------------------- */
+    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
+    // CPOLY_ID
+    poFeature->SetField( "CPOLY_ID", atoi(papoGroup[0]->GetField( 3, 8 )) );
+    
+    // ATTREC Attributes
+    AddGenericAttributes( poReader, papoGroup, poFeature );
+    
+    // Read point geometry
+    if( papoGroup[1] != NULL 
+        && (papoGroup[1]->GetType() == NRT_GEOMETRY
+            || papoGroup[1]->GetType() == NRT_GEOMETRY3D) )
+    {
+        poFeature->SetGeometryDirectly(
+            poReader->ProcessGeometry(papoGroup[1]));
+        poFeature->SetField( "GEOM_ID", 
+                             atoi(papoGroup[1]->GetField(3,8)) );
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Collect the chains for each of the rings, and just aggregate    */
 /*      these into the master list without any concept of where the     */
 /*      boundaries are.  The boundary information will be emmitted      */
 /*      in the RingStart field.                                         */
 /* -------------------------------------------------------------------- */
-    OGRFeature  *poFeature = new OGRFeature( poLayer->GetLayerDefn() );
-    int         nNumLink = 0;
-    int         anDirList[MAX_LINK*2], anGeomList[MAX_LINK*2];
-    int         anRingStart[MAX_LINK], nRings = 0;
+    int         nNumLink = 0, iLink;
+    int         anPolyId[MAX_LINK*2];
 
-    for( iRec = 0;
-         papoGroup[iRec] != NULL && papoGroup[iRec+1] != NULL
-             && papoGroup[iRec]->GetType() == NRT_POLYGON
-             && papoGroup[iRec+1]->GetType() == NRT_CHAIN;
-         iRec += 2 )
+    nNumLink = atoi(papoGroup[0]->GetField(9,12));
+    for( iLink = 0; iLink < nNumLink; iLink++ )
     {
-        int             i, nLineCount;
-
-        nLineCount = atoi(papoGroup[iRec+1]->GetField(9,12));
-
-        anRingStart[nRings++] = nNumLink;
-        
-        for( i = 0; i < nLineCount && nNumLink < MAX_LINK*2; i++ )
-        {
-            anDirList[nNumLink] =
-                atoi(papoGroup[iRec+1]->GetField( 19+i*7, 19+i*7 ));
-            anGeomList[nNumLink] =
-                atoi(papoGroup[iRec+1]->GetField( 13+i*7, 18+i*7 ));
-            nNumLink++;
-        }
-
-        if( nNumLink == MAX_LINK*2 )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "MAX_LINK exceeded in ntf_generic.cpp." );
-
-            delete poFeature;
-            return NULL;
-        }
+        anPolyId[iLink] = atoi(papoGroup[0]->GetField(13 + iLink*7,
+                                                      18 + iLink*7));
     }
 
-    // NUM_PART
-    poFeature->SetField( 4, nNumLink );
+    // NUM_PARTS
+    poFeature->SetField( "NUM_PARTS", nNumLink );
 
-    // DIR
-    poFeature->SetField( 5, nNumLink, anDirList );
-
-    // GEOM_ID_OF_LINK
-    poFeature->SetField( 6, nNumLink, anGeomList );
-
-    // RingStart
-    poFeature->SetField( 7, nRings, anRingStart );
-
-    
-/* -------------------------------------------------------------------- */
-/*      collect information for whole complex polygon.                  */
-/* -------------------------------------------------------------------- */
     // POLY_ID
-    poFeature->SetField( 0, atoi(papoGroup[iRec]->GetField( 3, 8 )) );
-
-    // Attributes
-    poReader->ApplyAttributeValues( poFeature, papoGroup,
-                                    "FC", 1, "PI", 2, "HA", 3,
-                                    NULL );
-
-    // point geometry for seed.
-    poFeature->SetGeometryDirectly(
-        poReader->ProcessGeometry(papoGroup[iRec+2]));
+    poFeature->SetField( "POLY_ID", nNumLink, anPolyId );
 
     return poFeature;
-#endif
-
-    CPLError( CE_Warning, CPLE_AppDefined, 
-              "TranslateGenericPolygon() currently does not support"
-              " CPOLYGONS, skipping." );
-
-    return NULL;
 }
 
 /************************************************************************/
@@ -1048,8 +1022,7 @@ void OGRNTFDataSource::EstablishGenericLayers()
             {
                 poPReader->
                     EstablishLayer( "GENERIC_POLY", 
-                                    (OGRwkbGeometryType) 
-                                    (wkbPoint | n3DFlag),
+                                    (OGRwkbGeometryType) (wkbPoint | n3DFlag),
                                     TranslateGenericPoly,
                                     NRT_POLYGON, poClass,
                                     "POLY_ID", OFTInteger, 6, 0,
@@ -1057,6 +1030,18 @@ void OGRNTFDataSource::EstablishGenericLayers()
                                     "DIR", OFTIntegerList, 1, 0,
                                     "GEOM_ID_OF_LINK", OFTIntegerList, 6, 0,
                                     "RingStart", OFTIntegerList, 6, 0,
+                                    NULL );
+            }
+            else if( iType == NRT_CPOLY )
+            {
+                poPReader->
+                    EstablishLayer( "GENERIC_CPOLY", 
+                                    (OGRwkbGeometryType) (wkbPoint | n3DFlag),
+                                    TranslateGenericCPoly,
+                                    NRT_CPOLY, poClass,
+                                    "CPOLY_ID", OFTInteger, 6, 0,
+                                    "NUM_PARTS", OFTInteger, 4, 0, 
+                                    "POLY_ID", OFTIntegerList, 1, 0,
                                     NULL );
             }
         }

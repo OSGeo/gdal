@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2002/10/02 20:48:39  warmerda
+ * Added support for GENERIC_CPOLY layer
+ *
  * Revision 1.27  2002/07/08 14:49:44  warmerda
  * added TILE_REF uniquification support
  *
@@ -1804,6 +1807,7 @@ NTFRecord **NTFFileReader::GetNextIndexedRecordGroup( NTFRecord **
                    && nPrevType != NRT_NAMEREC
                    && nPrevType != NRT_COLLECT
                    && nPrevType != NRT_POLYGON
+                   && nPrevType != NRT_CPOLY
                    && nPrevType != NRT_POINTREC
                    && nPrevType != NRT_LINEREC );
             
@@ -1978,6 +1982,35 @@ NTFRecord **NTFFileReader::GetNextIndexedRecordGroup( NTFRecord **
                 GetIndexedRecord( NRT_ATTREC,
                                   atoi(poAnchor->GetField(23+6*iAtt,
                                                           28+6*iAtt)) ) );
+        }
+    }
+/* -------------------------------------------------------------------- */
+/*      Handle CPOLY                                                    */
+/* -------------------------------------------------------------------- */
+    else if( poAnchor->GetType() == NRT_CPOLY )
+    {
+        int     nPolyCount = atoi(poAnchor->GetField(9,12));
+        int     nPostPoly = nPolyCount*7 + 12;
+
+        if( poAnchor->GetLength() >= nPostPoly + 6 )
+        {
+            int  nGeomId = atoi(poAnchor->GetField(nPostPoly+1,nPostPoly+6));
+
+            AddToIndexGroup( apoCGroup, 
+                             GetIndexedRecord( NRT_GEOMETRY, nGeomId) );
+        }
+
+        if( poAnchor->GetLength() >= nPostPoly + 8 )
+        {
+            int nAttCount = atoi(poAnchor->GetField(nPostPoly+7,nPostPoly+8));
+            
+            for( int iAtt = 0; iAtt < nAttCount; iAtt++ )
+            {
+                int nAttId = atoi(poAnchor->GetField(nPostPoly+9+iAtt*6,
+                                                     nPostPoly+14+iAtt*6));
+                AddToIndexGroup( apoCGroup, 
+                                 GetIndexedRecord( NRT_ATTREC, nAttId) );
+            }
         }
     }
 
