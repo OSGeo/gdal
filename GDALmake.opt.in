@@ -18,6 +18,7 @@ INST_PREFIX	=	@INST_PREFIX@
 INST_INCLUDE	=	@INST_INCLUDE@
 INST_LIB	=	@INST_LIB@
 INST_BIN	=	@INST_BIN@
+INST_PYMOD      =       @INST_PYMOD@
 
 #
 #	Whether we use debug flags, or optimization is determined by
@@ -74,7 +75,9 @@ GDAL_LIBS	=	$(GDAL_LIB) $(OGR_LIB) $(GDAL_ROOT)/frmts/o/*.a \
 GDAL_OBJ	=	$(GDAL_ROOT)/frmts/o/*.o \
 			$(GDAL_ROOT)/core/*.o \
 			$(GDAL_ROOT)/ogr/ogrct.o \
-			$(GDAL_ROOT)/ogr/ogr_fromepsg.o
+			$(GDAL_ROOT)/ogr/ogr_fromepsg.o \
+			$(GDAL_ROOT)/ogr/ogrutils.o \
+			$(GDAL_ROOT)/ogr/ogr_srs_proj4.o
 
 ifeq ($(OGR_ENABLED),yes)
 GDAL_LIBS := $(GDAL_ROOT)/ogr/ogrsf_frmts/ogrsf_frmts.a $(GDAL_LIBS) 
