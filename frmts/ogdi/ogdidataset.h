@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/04/17 21:46:04  warmerda
+ * complete Image support, utilize cln_GetLayerCapabilities()
+ *
  * Revision 1.6  2000/10/26 03:30:46  warmerda
  * added math.h so it doesn't get included first from within ecsutil.h
  *
@@ -82,7 +85,7 @@ class CPL_DLL OGDIDataset : public GDALDataset
 
     char	*pszProjection;
 
-    static CPLErr CollectLayers(char***,char***);
+    static CPLErr CollectLayers(int, char***,char***);
 
   public:
     		OGDIDataset();
@@ -108,8 +111,12 @@ class OGDIRasterBand : public GDALRasterBand
 {
     friend	OGDIDataset;
 
+    int		nOGDIImageType; /* ie. 1 for RGB */
+
     char	*pszLayerName;
     ecs_Family  eFamily;
+
+    int		nComponent; /* varies only for RGB layers */
 
     GDALColorTable *poCT;
 
@@ -123,7 +130,7 @@ class OGDIRasterBand : public GDALRasterBand
   public:
 
                    OGDIRasterBand( OGDIDataset *, int, const char *,
-                                   ecs_Family );
+                                   ecs_Family, int );
                    ~OGDIRasterBand();
 
     virtual CPLErr IReadBlock( int, int, void * );
