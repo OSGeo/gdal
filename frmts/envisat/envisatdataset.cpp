@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/06/07 14:21:55  warmerda
+ * avoid paths in include directives
+ *
  * Revision 1.13  2002/05/29 16:38:35  warmerda
  * dont use variable sized buffer on stack
  *
@@ -69,7 +72,7 @@
  *
  */
 
-#include "frmts/raw/rawdataset.h"
+#include "rawdataset.h"
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
