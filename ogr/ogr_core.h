@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2003/09/11 19:59:41  warmerda
+ * avoid casting issue with UNFIX macro
+ *
  * Revision 1.22  2003/08/27 15:40:37  warmerda
  * added support for generating DB2 V7.2 compatible WKB
  *
@@ -216,7 +219,7 @@ typedef enum
 
 #ifdef HACK_FOR_IBM_DB2_V72
 #  define DB2_V72_FIX_BYTE_ORDER(x) ((((x) & 0x31) == (x)) ? (OGRwkbByteOrder) ((x) & 0x1) : (x))
-#  define DB2_V72_UNFIX_BYTE_ORDER(x) (OGRGeometry::bGenerate_DB2_V72_BYTE_ORDER ? ((x) | 0x30) : (x))
+#  define DB2_V72_UNFIX_BYTE_ORDER(x) ((unsigned char) (OGRGeometry::bGenerate_DB2_V72_BYTE_ORDER ? ((x) | 0x30) : (x)))
 #else
 #  define DB2_V72_FIX_BYTE_ORDER(x) (x)
 #  define DB2_V72_UNFIX_BYTE_ORDER(x) (x)
