@@ -135,6 +135,10 @@ recently implemented a GDAL plugin (still prerelease).<p>
 <li> <a href="http://www.safe.com/">FME</a>: A GIS translator package
 includes a GDAL plugin (still prerelease).<p>
 
+<li> <a href="http://www.scanex.ru/software/scanmagic/">ScanMagic</a>: 
+Commercial Win32 application for visualization, analysis and processing of
+remote sensing data (lite version for free).<p>
+
 <li> <a href="http://www.msmacrosystem.nl/Ilwis/index.html">MS MacroSystem</a>: 3D DEM Viewer.<p>
 
 <li> <a href="http://www.gstat.org/">gstat</a>: a geostatistical modelling
