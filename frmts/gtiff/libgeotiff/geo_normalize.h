@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.h,v 1.9 2003/01/15 03:37:40 warmerda Exp $
+ * $Id: geo_normalize.h,v 1.10 2003/01/15 04:39:16 warmerda Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Include file related to geo_normalize.c containing Code to
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.h,v $
+ * Revision 1.10  2003/01/15 04:39:16  warmerda
+ * Added GTIFDeaccessCSV
+ *
  * Revision 1.9  2003/01/15 03:37:40  warmerda
  * added GTIFFreeMemory()
  *
@@ -184,6 +187,7 @@ int CPL_DLL GTIFGetUOMAngleInfo( int nUOMAngleCode,
 
 /* this should be used to free strings returned by GTIFGet... funcs */
 void CPL_DLL GTIFFreeMemory( char * );
+void CPL_DLL GTIFDeaccessCSV();
 
 int CPL_DLL GTIFGetDefn( GTIF *psGTIF, GTIFDefn * psDefn );
 void CPL_DLL GTIFPrintDefn( GTIFDefn *, FILE * );
