@@ -5,7 +5,8 @@ PYGDAL_DLL	=	_gdal.dll
 GDAL_ROOT	=	..
 
 PY_COMMANDS	=	epsg_tr.py gdalchksum.py gdal2xyz.py gcps2wld.py \
-			gdalimport.py gdal_merge.py pct2rgb.py rgb2pct.py 
+			gdalimport.py gdal_merge.py pct2rgb.py rgb2pct.py \
+			gcps2vec.py
 PY_MODULES	=	gdal.py ogr.py osr.py gdalconst.py gdalnumeric.py
 
 !INCLUDE ..\nmake.opt

@@ -12,7 +12,8 @@ CFLAGS		:=	$(PYTHON_CFLAGS) $(CFLAGS)
 CXXFLAGS	:=	$(PYTHON_CFLAGS) $(CXXFLAGS)
 
 PY_COMMANDS	=	epsg_tr.py gdalchksum.py gdal2xyz.py gcps2wld.py \
-			gdalimport.py gdal_merge.py pct2rgb.py rgb2pct.py 
+			gdalimport.py gdal_merge.py pct2rgb.py rgb2pct.py \
+			gcps2vec.py
 PY_MODULES	=	gdal.py ogr.py osr.py gdalconst.py gdalnumeric.py
 
 # this is needed during install due to the _gdalmodule.so library
