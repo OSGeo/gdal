@@ -28,8 +28,8 @@
  *****************************************************************************
  *
  * $Log$
- * Revision 1.7  2002/03/07 22:36:51  warmerda
- * fixed bounds computation
+ * Revision 1.8  2002/03/08 20:20:09  warmerda
+ * initialized class locked flag
  *
  * Revision 1.6  2002/03/06 20:08:02  warmerda
  * added tracking of extents, feature count and extrainfo
@@ -117,6 +117,8 @@ GMLReader::GMLReader()
 {
     m_nClassCount = 0;
     m_papoClass = NULL;
+
+    m_bClassListLocked = FALSE;
 
     m_poGMLHandler = NULL;
     m_poSAXReader = NULL;
@@ -708,6 +710,8 @@ int GMLReader::PrescanForSchema( int bGetExtents )
 
     if( m_pszFilename == NULL )
         return FALSE;
+
+    SetClassListLocked( FALSE );
 
     ClearClasses();
     if( !SetupParser() )
