@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.52  2003/09/01 15:03:34  dron
+# Added DecToDMS() wrapper.
+#
 # Revision 1.51  2003/07/18 04:52:52  warmerda
 # remote GetMetadata() on RasterBand
 #
@@ -230,6 +233,9 @@ def RGBFile2PCTFile( src_filename, dst_filename ):
     src_ds = None
 
     return 0
+
+def DecToDMS(angle, axis, precision = 2):
+    return _gdal.GDALDecToDMS(angle, axis, precision)
 
 def GetDriverList():
     list = []
