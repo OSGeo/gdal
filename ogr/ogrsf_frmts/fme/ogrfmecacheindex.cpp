@@ -24,6 +24,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/02/06 05:02:42  warmerda
+ * added rec to clean list
+ *
  * Revision 1.2  2002/07/11 16:07:27  warmerda
  * added CreationTime support, test against FMECACHE_MAX_RETENTION
  *
@@ -56,6 +59,7 @@ OGRFMECacheIndex::OGRFMECacheIndex( const char * pszPathIn )
 {
     psTree = NULL;
     pszPath = CPLStrdup( pszPathIn );
+    hLock = NULL;
 }
 
 /************************************************************************/
