@@ -1,0 +1,144 @@
+/*!
+\page credits
+<center>
+<title>Acknowledgements and Credits</title>
+</center>
+
+There are too many people who have helped since GDAL/OGR was launched in 
+late 1998 for me to thank them all.  I have received moral support, 
+financial support, code contributions, sample datasets, and bug reports
+from literally hundreds of people.  However, below I would like to single
+out a few people and organizations who have supported GDAL over the 
+years.  Forgive me for all those I left out.<p>
+
+<i>Frank Warmerdam</i><p>
+
+<h2>Sponsorship</h2>
+
+<a href="http://www.ermapper.com/">ER Mapper</a> has generously provided
+ongoing primary sponsorship for GDAL since February 2005 sufficient to
+support three days a month of work on GDAL improvement efforts not focused on 
+any particular client project.<p>
+
+<h2>Personal</h2>
+
+<ul>
+<li> <b>Andrey Kiselev</b>: my right hand man on GDAL for several years.
+He is primarily responsible for the HDF, MrSID, L1B, and PCIDSK drivers.
+He has also relieved me of most libtiff maintenance work.  <p>
+
+<li> <b>Daniel Morissette</b>: for his key contributions to CPL library, and 
+development of the Mapinfo TAB translator.<p>
+
+<li> <b>Howard Butler</b>: for substantial improvements to the python
+bindings.<p>
+
+<li> <b>Ken Shih</b>: for the bulk of the implementation of the OLE DB 
+provider.<p>
+
+<li> <b>Markus Neteler</b>: for various contributions to GDAL documentation
+and general supportiveness.<p>
+
+<li> <b>Silke Reimer</b>: for work on Debian, and RPM packaging as well
+as the GDAL man pages.<p>
+
+<li> <b>Stephane Villeneuve</b>: for development of the Mapinfo MIF 
+translator.<p>
+
+</ul>
+
+<h2>Corporate</h2>
+
+<ul> 
+<li> <b><a href="http://www.actgate.com/">Applied Coherent 
+Technologies</a></b>: Supported implementation of the GDAL contour generator, 
+as well as various improvements to HDF drivers.
+<p>
+
+<li> <b><a href="http://www.atlantis-scientific.com/">Atlantis 
+Scientific</a></b>: Supported the development of the CEOS, 
+and a variety of other radar oriented format drivers as well as 
+development of OpenEV, my day-to-day GDAL image viewer.<p>
+
+<li> <b><a href="http://www.augsignals.com">A.U.G. Signals</a></b>:
+Supported work on the HDF, NITF and ODBC drivers.
+<p>
+
+<li> <b><a href="http://www.avenza.com">Avenza Systems</a></b>:
+Supported development of <a href="http://dgnlib.maptools.org/">dgnlib</a>,
+the basis of OGR dgn support, as well as preliminary work on image warping
+in GDAL.
+<p>
+
+<li> <b><a href="http://www.cadcorp.com">Cadcorp</a></b>: Supported 
+development of the Virtual Warped Raster capability.
+<p>
+
+<li> <b><a href="http://www.dmsolutions.ca/">DM Solutions Group</a></b>:
+Supported the development of the DGN driver, the OGR Arc/Info Binary 
+Coverage driver, OGR WCTS (Web Coordinate Transformation Server), 
+OGR VRT driver, ODBC driver, MySQL driver, SQLite driver, OGR JOIN and
+OGR C API.
+<p>
+
+<li> <b><a href="http://www.globalgeo.com">Global Geomatics</a></b>: Supported
+development of GXF support.
+<p>
+
+<li> <b><a href="http://www.geosoft.com/">Geosoft</a></b>: Supported 
+improvements to libtiff (RGBA Strip/Tile access), and the Arc/Info Binary Grid 
+driver.
+<p>
+
+<li> <b><a href="http://www.geotango.com/">GeoTango</a></b>: Supported 
+OGR Memory driver, Virtual Raster Filtering, and NITF RPC capabilities.
+<p>
+
+<li> <b><a href="http://www.i3.com">i-cubed</a></b>: Supported the MrSID 
+driver.
+<p>
+
+<li> <b><a href="http://www.intergraph.com">Intergraph</a></b>: Supported
+development of the Erdas Imagine driver.
+<p>
+
+<li> <b><a href="http://www.keyhole.com">Keyhole</a></b>: Supported development
+of Erdas Imagine driver, and the GDAL Warp API.
+<p>
+
+<li> <b><a href="http://www.opendap.org">OPeNDAP</a></b>: Supported development
+of the OGR OPeNDAP Driver.
+<p>
+
+<li> <b><a href="http://www.pcigeomatics.com/">PCI Geomatics</a></b>: Supported
+development of the JPEG2000 (JP2KAK) driver.
+<p>
+
+<li> <b><a href="http://www.pixia.com">Pixia</a></b>: Supported NITF/JPEG2000
+read support.
+<p>
+
+<li> <b><a href="http://www.fao.org/">UN FAO</a></b>: Supported development
+of the IDA (WinDisp) driver, and GDAL VB6 bindings.<p>
+
+<li> <b><a href="http://www.softmaptech.com">SoftMap</a></b>: Supported 
+initial development of OGR as well as the OGR MapInfo integration. 
+<p>
+
+<li> <b><a href="http://www.extendthereach.com/">SRC</a></b>: Supported
+development of the OGR OCI (Oracle Spatial) driver.
+<p>
+
+<li> <b><a href="http://www.safe.com/">Safe Software</a></b>: Supported
+development of the OGR OLE DB provider, TIGER/Line driver, S-57 driver, 
+DTED driver, FMEObjects driver, SDTS driver and NTF driver. 
+<p>
+
+<li> <b><a href="http://www.environmentyukon.gov.yk.ca/main/index.shtml/">
+Yukon Department of the Environment</a></b>: Supported development of 
+CDED / USGS DEM Writer.
+<p>
+
+</ul>
+
+*/

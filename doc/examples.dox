@@ -1,0 +1,36 @@
+/*!
+\page gdalinfo.c
+<center>
+<title>Simple C Example: gdalinfo.c</title>
+</center>
+
+\include gdalinfo.c
+*/
+
+/*!
+\page gdalallregister.cpp
+<center>
+<title>Standard Driver Registration: gdalallregister.cpp</title>
+</center>
+
+\include gdalallregister.cpp
+*/
+
+/*!
+\page jdemdataset.cpp
+<center>
+<title>Sample Driver: jdemdataset.cpp</title>
+</center>
+
+\include jdemdataset.cpp
+*/
+
+/*!
+\page NEWS
+<center>
+<title>NEWS</title>
+</center>
+
+\include NEWS
+*/
+
