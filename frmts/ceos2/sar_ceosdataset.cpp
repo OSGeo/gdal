@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2002/07/18 20:16:11  gwalter
+ * Fix to recognize esrin pri's gcps.
+ *
  * Revision 1.27  2002/06/12 21:12:24  warmerda
  * update to metadata based driver info
  *
@@ -861,7 +864,7 @@ int SAR_CEOSDataset::ScanForMapProjection()
 
     memset( szField, 0, 17 );
     GetCeosField( record, 29, "A16", szField );
-    if( !EQUALN(szField,"Slant Range",11) )
+    if( !EQUALN(szField,"Slant Range",11) && !EQUALN(szField,"Ground Range",12) )
         return FALSE;
 
     GetCeosField( record, 1073, "A16", szField );
