@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2004/11/17 22:57:21  fwarmerdam
+ * added CPLScanPointer() and CPLPrintPointer()
+ *
  * Revision 1.34  2004/08/16 20:24:07  warmerda
  * added CPLUnlinkTree
  *
@@ -152,6 +155,7 @@ char CPL_DLL *CPLScanString( const char *, int, int, int );
 double CPL_DLL CPLScanDouble( const char *, int, char * );
 long CPL_DLL CPLScanLong( const char *, int );
 GUIntBig CPL_DLL CPLScanUIntBig( const char *, int );
+void CPL_DLL *CPLScanPointer( const char *, int );
 
 /* -------------------------------------------------------------------- */
 /*      Print a value to an ASCII character string.                     */
@@ -163,6 +167,7 @@ int CPL_DLL CPLPrintUIntBig( char *, GUIntBig , int );
 int CPL_DLL CPLPrintDouble( char *, const char *, double, char * );
 int CPL_DLL CPLPrintTime( char *, int , const char *, const struct tm *,
                           char * );
+int CPL_DLL CPLPrintPointer( char *, void *, int );
 
 /* -------------------------------------------------------------------- */
 /*      Fetch a function from DLL / so.                                 */
