@@ -1,7 +1,7 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  Polarmetric Workstation
+ * Project:  Polarimetric Workstation
  * Purpose:  Convair PolGASP data (.img/.hdr format). 
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/11/11 00:16:01  gwalter
+ * Polarmetric->Polarimetric.
+ *
  * Revision 1.4  2004/10/21 18:15:25  gwalter
  * Added gcp id's- the lack of them
  * was causing weird export problems.
@@ -335,7 +338,7 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
                                GDT_CFloat32, !CPL_IS_LSB, FALSE );
         poDS->SetBand( iBand+1, poBand );
 
-        poBand->SetMetadataItem( "POLARMETRIC_INTERP", 
+        poBand->SetMetadataItem( "POLARIMETRIC_INTERP", 
                                  apszPolarizations[iBand] );
     }
 

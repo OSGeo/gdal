@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2004/11/11 00:16:01  gwalter
+ * Polarmetric->Polarimetric.
+ *
  * Revision 1.37  2004/11/01 18:22:07  fwarmerdam
  * added PALSAR support
  *
@@ -427,13 +430,13 @@ CCPRasterBand::CCPRasterBand( SAR_CEOSDataset *poGDS, int nBand,
     nBlockYSize = 1;
 
     if( nBand == 1 )
-        SetMetadataItem( "POLARMETRIC_INTERP", "HH" );
+        SetMetadataItem( "POLARIMETRIC_INTERP", "HH" );
     else if( nBand == 2 )
-        SetMetadataItem( "POLARMETRIC_INTERP", "HV" );
+        SetMetadataItem( "POLARIMETRIC_INTERP", "HV" );
     else if( nBand == 3 )
-        SetMetadataItem( "POLARMETRIC_INTERP", "VH" );
+        SetMetadataItem( "POLARIMETRIC_INTERP", "VH" );
     else if( nBand == 4 )
-        SetMetadataItem( "POLARMETRIC_INTERP", "VV" );
+        SetMetadataItem( "POLARIMETRIC_INTERP", "VV" );
 }
 
 /************************************************************************/
@@ -589,17 +592,17 @@ PALSARRasterBand::PALSARRasterBand( SAR_CEOSDataset *poGDS, int nBand )
     nBlockYSize = 1;
 
     if( nBand == 1 )
-        SetMetadataItem( "POLARMETRIC_INTERP", "HH*HH" );
+        SetMetadataItem( "POLARIMETRIC_INTERP", "HH*HH" );
     else if( nBand == 2 )
-        SetMetadataItem( "POLARMETRIC_INTERP", "HV*HV" );
+        SetMetadataItem( "POLARIMETRIC_INTERP", "HV*HV" );
     else if( nBand == 3 )
-        SetMetadataItem( "POLARMETRIC_INTERP", "VV*VV" );
+        SetMetadataItem( "POLARIMETRIC_INTERP", "VV*VV" );
     else if( nBand == 4 )
-        SetMetadataItem( "POLARMETRIC_INTERP", "HH*HV" );
+        SetMetadataItem( "POLARIMETRIC_INTERP", "HH*HV" );
     else if( nBand == 5 )
-        SetMetadataItem( "POLARMETRIC_INTERP", "HH*VV" );
+        SetMetadataItem( "POLARIMETRIC_INTERP", "HH*VV" );
     else if( nBand == 6 )
-        SetMetadataItem( "POLARMETRIC_INTERP", "VV*HV" );
+        SetMetadataItem( "POLARIMETRIC_INTERP", "VV*HV" );
 }
 
 /************************************************************************/
