@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/05/21 21:29:58  warmerda
+ * added support for MERIS tiepoints, and capture DS name as band desc
+ *
  * Revision 1.11  2002/05/16 03:29:50  warmerda
  * ensure fpImage is closed on cleanup
  *
@@ -94,7 +97,8 @@ class EnvisatDataset : public RawDataset
 
     char        **papszTempMD;
     
-    void        ScanForGCPs();
+    void        ScanForGCPs_ASAR();
+    void        ScanForGCPs_MERIS();
 
     void	CollectMetadata( EnvisatFile_HeaderFlag );
     void        CollectDSDMetadata();
@@ -187,10 +191,10 @@ const GDAL_GCP *EnvisatDataset::GetGCPs()
 }
 
 /************************************************************************/
-/*                            ScanForGCPs()                             */
+/*                          ScanForGCPs_ASAR()                          */
 /************************************************************************/
 
-void EnvisatDataset::ScanForGCPs()
+void EnvisatDataset::ScanForGCPs_ASAR()
 
 {
     int		nDatasetIndex, nNumDSR, nDSRSize, iRecord;
@@ -291,6 +295,120 @@ void EnvisatDataset::ScanForGCPs()
         pasGCPList[nGCPCount].dfGCPPixel = nSample - 0.5;
             
         nGCPCount++;
+    }
+}
+
+/************************************************************************/
+/*                         ScanForGCPs_MERIS()                          */
+/************************************************************************/
+
+void EnvisatDataset::ScanForGCPs_MERIS()
+
+{
+    int		nDatasetIndex, nNumDSR, nDSRSize, iRecord;
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a meaningful geolocation grid?  Seach for a          */
+/*      DS_TYPE=A and a name containing "geolocation" or "tie           */
+/*      points".                                                        */
+/* -------------------------------------------------------------------- */
+    nDatasetIndex = EnvisatFile_GetDatasetIndex( hEnvisatFile, 
+                                                 "Tie points ADS" );
+    if( nDatasetIndex == -1 )
+        return;
+
+    if( EnvisatFile_GetDatasetInfo( hEnvisatFile, nDatasetIndex, 
+                                    NULL, NULL, NULL, NULL, NULL, 
+                                    &nNumDSR, &nDSRSize ) != SUCCESS )
+        return;
+
+    if( nNumDSR == 0 )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Figure out the tiepoint space, and how many we have.            */
+/* -------------------------------------------------------------------- */
+    int  nLinesPerTiePoint, nSamplesPerTiePoint;
+    int  nTPPerLine, nTPPerColumn = nNumDSR;
+
+    if( nNumDSR == 0 )
+        return;
+
+    nLinesPerTiePoint = 
+        EnvisatFile_GetKeyValueAsInt( hEnvisatFile, SPH, 
+                                      "LINES_PER_TIE_PT", 0 );
+    nSamplesPerTiePoint =
+        EnvisatFile_GetKeyValueAsInt( hEnvisatFile, SPH, 
+                                      "SAMPLES_PER_TIE_PT", 0 );
+
+    if( nLinesPerTiePoint == 0 || nSamplesPerTiePoint == 0 )
+        return;
+
+    nTPPerLine = (GetRasterXSize() + nSamplesPerTiePoint - 1) 
+        / nSamplesPerTiePoint;
+
+    if( (GetRasterXSize() + nSamplesPerTiePoint - 1) 
+        / nSamplesPerTiePoint  != nTPPerColumn )
+    {
+        CPLDebug( "EnvisatDataset", "Got %d instead of %d nTPPerColumn.", 
+                  (GetRasterXSize()+nSamplesPerTiePoint-1)/nSamplesPerTiePoint,
+                  nTPPerColumn );
+        return;
+    }
+
+    if( 50*nTPPerLine + 13 != nDSRSize )
+    {
+        CPLDebug( "EnvisatDataset", 
+                  "DSRSize=%d instead of expected %d for tiepoints ADS.", 
+                  nDSRSize, 50*nTPPerLine + 13 );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Collect the first GCP set from each record.			*/
+/* -------------------------------------------------------------------- */
+    GByte	abyRecord[nDSRSize];
+    int  	iGCP;
+    GUInt32 	unValue;
+
+    nGCPCount = 0;
+    pasGCPList = (GDAL_GCP *) 
+        CPLCalloc(sizeof(GDAL_GCP),nNumDSR * nTPPerLine);
+
+    for( iRecord = 0; iRecord < nNumDSR; iRecord++ )
+    {
+        if( EnvisatFile_ReadDatasetRecord( hEnvisatFile, nDatasetIndex, 
+                                           iRecord, abyRecord ) != SUCCESS )
+            continue;
+
+        memcpy( &unValue, abyRecord + 13, 4 );
+
+        for( iGCP = 0; iGCP < nTPPerLine; iGCP++ )
+        {
+            char	szId[128];
+
+            GDALInitGCPs( 1, pasGCPList + nGCPCount );
+
+            CPLFree( pasGCPList[nGCPCount].pszId );
+            
+            sprintf( szId, "%d", nGCPCount+1 );
+            pasGCPList[nGCPCount].pszId = CPLStrdup( szId );
+
+            memcpy( &unValue, abyRecord + 13 + nTPPerLine*4 + iGCP*4, 4 );
+            pasGCPList[nGCPCount].dfGCPX = 
+                ((int)CPL_MSBWORD32(unValue))*0.000001;
+
+            memcpy( &unValue, abyRecord + 13 + iGCP*4, 4 );
+            pasGCPList[nGCPCount].dfGCPY = 
+                ((int)CPL_MSBWORD32(unValue))*0.000001;
+
+            pasGCPList[nGCPCount].dfGCPZ = 0.0;
+
+            pasGCPList[nGCPCount].dfGCPLine = iRecord*nLinesPerTiePoint + 0.5;
+            pasGCPList[nGCPCount].dfGCPPixel = iGCP*nSamplesPerTiePoint + 0.5;
+            
+            nGCPCount++;
+        }
     }
 }
 
@@ -498,12 +616,29 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
         == FAILURE )
         return NULL;
 
-    ds_index = EnvisatFile_GetDatasetIndex( hEnvisatFile, "MDS1" );
-    if( ds_index == -1 )
+/* -------------------------------------------------------------------- */
+/*      Find a Mesurement type dataset to use as our reference          */
+/*      raster band.                                                    */
+/* -------------------------------------------------------------------- */
+    int		dsr_size, num_dsr, ds_offset, bNative;
+    char        *pszDSType;
+
+    for( ds_index = 0; TRUE; ds_index++ )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unable to find \"MDS1\" datatset in Envisat file.\n" );
-        return NULL;
+        if( EnvisatFile_GetDatasetInfo( hEnvisatFile, ds_index, 
+                                        NULL, &pszDSType, NULL, 
+                                        &ds_offset, NULL, 
+                                        &num_dsr, &dsr_size ) == FAILURE )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Unable to find \"MDS1\" measurement datatset in Envisat file." );
+            EnvisatFile_Close( hEnvisatFile );
+            return NULL;
+        }
+
+        /* Have we found what we are looking for?  A Measurement ds. */
+        if( EQUAL(pszDSType,"M") )
+            break;
     }
 
 /* -------------------------------------------------------------------- */
@@ -519,9 +654,9 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Setup image definition.                                         */
 /* -------------------------------------------------------------------- */
-    int		dsr_size, num_dsr, ds_offset, bNative;
-    const char  *pszDataType, *pszSampleType;
+    const char  *pszDataType, *pszSampleType, *pszProduct;
     GDALDataType eDataType;
+    int          nPrefixBytes;
 
     EnvisatFile_GetDatasetInfo( hEnvisatFile, ds_index, 
                                 NULL, NULL, NULL, &ds_offset, NULL, 
@@ -532,6 +667,8 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = num_dsr;
     poDS->eAccess = GA_ReadOnly;
 
+    pszProduct = EnvisatFile_GetKeyValueAsString( hEnvisatFile, MPH,
+                                                  "PRODUCT", "" );
     pszDataType = EnvisatFile_GetKeyValueAsString( hEnvisatFile, SPH, 
                                                    "DATA_TYPE", "" );
     pszSampleType = EnvisatFile_GetKeyValueAsString( hEnvisatFile, SPH, 
@@ -546,14 +683,22 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
         eDataType = GDT_CInt16;
     else if( EQUAL(pszDataType,"SWORD") )
         eDataType = GDT_Int16;
-    else 
-        eDataType = GDT_Byte;
+    else
+    {
+        if( dsr_size >= 2 * poDS->nRasterXSize )
+            eDataType = GDT_UInt16;
+        else
+            eDataType = GDT_Byte;
+    }
 
 #ifdef CPL_LSB 
     bNative = FALSE;
 #else
     bNative = TRUE;
 #endif
+
+    nPrefixBytes = dsr_size - 
+        ((GDALGetDataTypeSize(eDataType) / 8) * poDS->nRasterXSize);
 
 /* -------------------------------------------------------------------- */
 /*      Assume ownership of the file handled from the GDALOpenInfo.     */
@@ -564,38 +709,33 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try to collect GCPs.                                            */
 /* -------------------------------------------------------------------- */
-    poDS->ScanForGCPs();
 
 /* -------------------------------------------------------------------- */
-/*      Collect raw definitions of each channel and create              */
-/*      corresponding bands.                                            */
+/*      Scan for all datasets matching the reference dataset.           */
 /* -------------------------------------------------------------------- */
-    poDS->SetBand( 1, 
-                   new RawRasterBand( poDS, 1, poDS->fpImage,
-                                      ds_offset + 17, 
-                                      GDALGetDataTypeSize(eDataType) / 8, 
-                                      dsr_size, 
-                                      eDataType, bNative ) );
+    int	num_dsr2, dsr_size2, iBand = 0;
+    const char *pszDSName;
 
-/* -------------------------------------------------------------------- */
-/*      Do we have an MDS2 dataset that matches the MDS1 dataset?       */
-/* -------------------------------------------------------------------- */
-    int	num_dsr2, dsr_size2;
-    int nMDS2Index = EnvisatFile_GetDatasetIndex( hEnvisatFile, "MDS2" );
-
-    if( nMDS2Index != -1 )
-        EnvisatFile_GetDatasetInfo( hEnvisatFile, nMDS2Index, 
-                                    NULL, NULL, NULL, &ds_offset, NULL, 
-                                    &num_dsr2, &dsr_size2 );
-
-    if( num_dsr2 != 0 && num_dsr2 == num_dsr && dsr_size2 == dsr_size )
+    for( ds_index = 0; 
+         EnvisatFile_GetDatasetInfo( hEnvisatFile, ds_index, 
+                                     (char **) &pszDSName, NULL, NULL, 
+                                     &ds_offset, NULL, 
+                                     &num_dsr2, &dsr_size2 ) == SUCCESS;
+         ds_index++ )
     {
-        poDS->SetBand( 2, 
-                       new RawRasterBand( poDS, 2, poDS->fpImage,
-                                          ds_offset + 17, 
+        if( EQUAL(pszDSType,"M") 
+            && num_dsr2 == num_dsr && dsr_size2 == dsr_size )
+        {
+            poDS->SetBand( iBand+1,
+                       new RawRasterBand( poDS, iBand+1, poDS->fpImage,
+                                          ds_offset + nPrefixBytes,
                                           GDALGetDataTypeSize(eDataType) / 8, 
                                           dsr_size, 
                                           eDataType, bNative ) );
+            iBand++;
+
+            poDS->GetRasterBand(iBand)->SetDescription( pszDSName );
+        }
     }
     
 /* -------------------------------------------------------------------- */
@@ -604,6 +744,11 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->CollectMetadata( MPH );
     poDS->CollectMetadata( SPH );
     poDS->CollectDSDMetadata();
+
+    if( EQUALN(pszProduct,"MER",3) )
+        poDS->ScanForGCPs_MERIS();
+    else
+        poDS->ScanForGCPs_ASAR();
 
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
