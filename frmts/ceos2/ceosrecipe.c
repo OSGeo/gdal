@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/11/02 17:58:06  warmerda
+ * more hacks to handle ESA LANDSAT dataset from Markus
+ *
  * Revision 1.9  2001/10/23 14:26:52  warmerda
  * D-PAF ERS-1: allow CIS4 as alias for CI*4
  *
@@ -82,7 +85,9 @@ CeosStringType_t CeosDataType[] = { { "IU1", __CEOS_TYP_UCHAR },
 				    { NULL, 0 } };
 
 CeosStringType_t CeosInterleaveType[] = { { "BSQ", __CEOS_IL_BAND },
+					  { " BSQ", __CEOS_IL_BAND },
 					  { "BIL", __CEOS_IL_LINE },
+					  { " BIL", __CEOS_IL_LINE },
 					  { NULL, 0 } };
 
 #define IMAGE_OPT { 63, 192, 18, 18 }
@@ -359,7 +364,20 @@ int CeosDefaultRecipe( CeosSARVolume_t *volume, void *token )
 	if(ImageDesc->PixelsPerRecord > ImageDesc->PixelsPerLine)
 	    ImageDesc->PixelsPerRecord = ImageDesc->PixelsPerLine;
     }
-    
+
+    /* If we didn't get a data type, try guessing. */
+    if( ImageDesc->DataType == 0
+        && ImageDesc->BytesPerPixel != 0
+        && ImageDesc->NumChannels != 0 )
+    {
+        int  nDataTypeSize = ImageDesc->BytesPerPixel / ImageDesc->NumChannels;
+
+        if( nDataTypeSize == 1 )
+            ImageDesc->DataType = __CEOS_TYP_UCHAR;
+        else if( nDataTypeSize == 2 )
+            ImageDesc->DataType = __CEOS_TYP_USHORT;
+    }
+
     /* Sanity checking */
     
     if( ImageDesc->PixelsPerLine == 0 || ImageDesc->Lines == 0 ||
