@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.121  2004/10/19 13:21:12  fwarmerdam
+ * Be careful to avoid unused argument warnings.
+ *
  * Revision 1.120  2004/10/19 13:18:17  fwarmerdam
  * Added GetInternalHandle() method to fetch hTIFF.
  *
@@ -3710,7 +3713,7 @@ CPLErr GTiffDataset::SetMetadataItem( const char *pszName,
 /*                         GetInternalHandle()                          */
 /************************************************************************/
 
-void *GTiffDataset::GetInternalHandle( const char * pszHandleName )
+void *GTiffDataset::GetInternalHandle( const char * /* pszHandleName */ )
 
 {
     return hTIFF;
