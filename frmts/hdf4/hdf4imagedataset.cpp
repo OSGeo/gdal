@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.34  2003/11/07 15:48:49  dron
+ * GetDataType() moved to HDF4Dataset class.
+ *
  * Revision 1.33  2003/10/31 19:12:47  dron
  * Read properly GR datasets with multiple samples per pixel.
  *
@@ -188,10 +191,6 @@ class HDF4ImageDataset : public HDF4Dataset
 
     void                ReadCoordinates( const char*, double*, double* );
     void                ToUTM( OGRSpatialReference *, double *, double * );
-
-  protected:
-
-    GDALDataType        GetDataType( int32 );
 
   public:
                 HDF4ImageDataset();
@@ -747,49 +746,6 @@ void HDF4ImageDataset::FlushCache()
         }
 
         CPLFree( pszName );
-    }
-}
-
-/************************************************************************/
-/*              Translate HDF4 data type into GDAL data type            */
-/************************************************************************/
-GDALDataType HDF4ImageDataset::GetDataType( int32 iNumType )
-{
-    switch (iNumType)
-    {
-        case DFNT_CHAR8: // The same as DFNT_CHAR
-        case DFNT_UCHAR8: // The same as DFNT_UCHAR
-        case DFNT_INT8:
-        case DFNT_UINT8:
-        return GDT_Byte;
-        break;
-        case DFNT_INT16:
-        return GDT_Int16;
-        break;
-        case DFNT_UINT16:
-        return GDT_UInt16;
-        break;
-        case DFNT_INT32:
-        return GDT_Int32;
-        break;
-        case DFNT_UINT32:
-        return GDT_UInt32;
-        break;
-        case DFNT_INT64:
-        return GDT_Unknown;
-        break;
-        case DFNT_UINT64:
-        return GDT_Unknown;
-        break;
-        case DFNT_FLOAT32:
-        return GDT_Float32;
-        break;
-        case DFNT_FLOAT64:
-        return GDT_Float64;
-        break;
-        default:
-        return GDT_Unknown;
-        break;
     }
 }
 
