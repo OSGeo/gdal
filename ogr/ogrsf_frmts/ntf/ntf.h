@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/09/13 14:07:21  warmerda
+ * added landline99 and geometry3d
+ *
  * Revision 1.4  1999/09/08 00:59:09  warmerda
  * Added limiting list of files for OGRNTFDataSource::Open() for FME IDs.
  *
@@ -61,6 +64,7 @@
 #define NRT_POINTREC 15                /* Point Record */
 #define NRT_NODEREC  16                /* Node Record */
 #define NRT_GEOMETRY 21                /* Geometry Record */
+#define NRT_GEOMETRY3D 22	       /* 3D Geometry Record */
 #define NRT_LINEREC  23                /* Line Record */
 #define NRT_CHAIN    24                /* Chain */
 #define NRT_POLYGON  31                /* Polygon */
@@ -70,6 +74,7 @@
 #define NRT_TEXTREC  43		       /* Text */
 #define NRT_TEXTPOS  44		       /* Text position */
 #define NRT_TEXTREP  45		       /* Text representation */
+#define NRT_COMMENT  90		       /* Comment record */
 #define NRT_VTR      99                /* Volume Termination Record */
 
 /* -------------------------------------------------------------------- */
@@ -79,11 +84,9 @@
 #define NPC_UNKNOWN		0
 
 #define NPC_LANDLINE            1
+#define NPC_LANDLINE99          2
 #define NTF_LANDLINE		"LAND-LINE.93"
 #define NTF_LANDLINE_PLUS	"LAND-LINE.93+"
-
-#define NPC_LANDRANGER_CONT     2
-#define NTF_LANDRANGER_CONT     "OS_LANDRANGER_CONT"
 
 #define NPC_STRATEGI		3
 #define NTF_STRATEGI            "Strategi_02.96"
@@ -106,6 +109,11 @@
 
 #define NPC_CODE_POINT		12
 #define NPC_CODE_POINT_PLUS     13
+
+#define NPC_LANDFORM_PROFILE_CONT 14
+
+#define NPC_LANDRANGER_CONT     15
+#define NTF_LANDRANGER_CONT     "OS_LANDRANGER_CONT"
 
 /************************************************************************/
 /*                              NTFRecord                               */
@@ -171,9 +179,11 @@ class NTFFileReader
     
     char             *pszTileName;
     int               nCoordWidth;
+    int		      nZWidth;
     int		      nNTFLevel;
 
     double            dfXYMult;
+    double	      dfZMult;
 
     double            dfXOrigin;
     double            dfYOrigin;
@@ -193,6 +203,7 @@ class NTFFileReader
     NTFRecord	      *apoCGroup[MAX_REC_GROUP+1];
 
     char	     *pszProduct;
+    char	     *pszPVName;
     int		      nProduct;
 
     void	      EstablishLayer( const char *, OGRwkbGeometryType,
@@ -220,6 +231,7 @@ class NTFFileReader
   
     
     OGRGeometry      *ProcessGeometry( NTFRecord *, int * = NULL );
+    OGRGeometry      *ProcessGeometry3D( NTFRecord *, int * = NULL );
     int               ProcessAttDesc( NTFRecord *, NTFAttDesc * );
     int               ProcessAttRec( NTFRecord *, int *, char ***, char ***);
     int               ProcessAttRecGroup( NTFRecord **, char ***, char ***);
@@ -251,6 +263,7 @@ class NTFFileReader
     const char       *GetTileName() { return pszTileName; }
     int		      GetNTFLevel() { return nNTFLevel; }
     const char       *GetProduct() { return pszProduct; }
+    const char       *GetPVName() { return pszPVName; }
     int               GetProductId() { return nProduct; }
 
     int		      GetFCCount() { return nFCCount; }
