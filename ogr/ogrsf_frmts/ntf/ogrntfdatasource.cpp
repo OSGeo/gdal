@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/09/08 00:58:40  warmerda
+ * Added limiting list of files for FME.
+ *
  * Revision 1.2  1999/08/30 16:49:26  warmerda
  * added feature class layer support
  *
@@ -151,7 +154,8 @@ int OGRNTFDataSource::GetLayerCount()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen )
+int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen,
+                            char ** papszLimitedFileList )
 
 {
     VSIStatBuf      stat;
@@ -189,6 +193,13 @@ int OGRNTFDataSource::Open( const char * pszFilename, int bTestOpen )
              candidateFileList != NULL && candidateFileList[i] != NULL; 
              i++ ) 
         {
+            if( papszLimitedFileList != NULL
+                && CSLFindString(papszLimitedFileList,
+                                 candidateFileList[i]) == -1 )
+            {
+                continue;
+            }
+            
             if( EQUALN(candidateFileList[i] + strlen(candidateFileList[i])-4,
                        ".ntf",4) )
             {
