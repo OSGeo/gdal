@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/10/30 20:49:40  warmerda
+ * Added error test to ensure the user isn't selecting the .hdr file
+ * directly instead of the image data file.
+ *
  * Revision 1.7  2000/08/15 19:28:26  warmerda
  * added help topic
  *
@@ -129,7 +133,7 @@ CPLErr EHdrDataset::GetGeoTransform( double * padfTransform )
 GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    int		i;
+    int		i, bSelectedHDR;
     char	*pszHDRFilename;
     
 /* -------------------------------------------------------------------- */
@@ -155,6 +159,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     strcat( pszHDRFilename, ".hdr" );
+
+    bSelectedHDR = EQUAL(pszHDRFilename,poOpenInfo->pszFilename);
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a .hdr file?                                         */
@@ -255,6 +261,21 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nRows == -1 || nCols == -1 )
         return NULL;
     
+/* -------------------------------------------------------------------- */
+/*      Has the user selected the .hdr file to open?                    */
+/* -------------------------------------------------------------------- */
+    if( bSelectedHDR )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "The selected file is an ESRI BIL header file, but to\n"
+                  "open ESRI BIL datasets, the data file should be selected\n"
+                  "instead of the .hdr file.  Please try again selecting\n"
+                "the data file (often with the extension .bil) corresponding\n"
+                  "to the header file: %s\n", 
+                  poOpenInfo->pszFilename );
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
