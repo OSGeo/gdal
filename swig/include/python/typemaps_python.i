@@ -1,9 +1,27 @@
-//
-// Typemap for counted arrays of ints <- PySequence
-//
+/******************************************************************************
+ * $Id$
+ *
+ * Name:     gdal.i
+ * Project:  GDAL Python Interface
+ * Purpose:  GDAL Core SWIG Interface declarations.
+ * Author:   Kevin Ruland, kruland@ku.edu
+ *
+
+ *
+ * $Log$
+ * Revision 1.3  2005/02/14 23:56:02  hobu
+ * Added log info and C99-style comments
+ *
+ *
+*/
+
+/*
+*  Typemap for counted arrays of ints <- PySequence
+*/
+
 %typemap(in,numargs=1) (int nList, int* pList)
 {
-  // %typemap(in,numargs=1) (int nList, int* pList)
+  /* %typemap(in,numargs=1) (int nList, int* pList)*/
   /* check if is List */
   if ( !PySequence_Check($input) ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
@@ -20,14 +38,14 @@
 }
 %typemap(freearg) (int nList, int* pList)
 {
-  // %typemap(freearg) (int nList, int* pList)
+  /* %typemap(freearg) (int nList, int* pList) */
   if ($2) {
     free((void*) $2);
   }
 }
-//
-// Typemap for vector<double> <-> PyTuple.
-//
+/*
+* Typemap for vector<double> <-> PyTuple.
+*/
 %typemap(out) std::vector<double>
 {
    // %typemap(out) std::vector<double>
@@ -39,7 +57,7 @@
 
 %typemap(in) std::vector<double>
 {
-   // %typemap(in) std::vector<double>
+   /* %typemap(in) std::vector<double> */
    if (! PySequence_Check($input) ) {
      PyErr_SetString(PyExc_TypeError, "not a sequence");
      SWIG_fail;
@@ -53,18 +71,18 @@
    }
 }
 
-//
-// Typemap argout of GDAL_GCP* used in Dataset::GetGCPs( )
-//
+/*
+* Typemap argout of GDAL_GCP* used in Dataset::GetGCPs( )
+*/
 %typemap(in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) (int nGCPs, GDAL_GCP *pGCPs )
 {
-  // %typemap(in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs )
+  /* %typemap(in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) */
   $1 = &nGCPs;
   $2 = &pGCPs;
 }
 %typemap(argout) (int *nGCPs, GDAL_GCP const **pGCPs )
 {
-  // %typemap(argout) (int *nGCPs, GDAL_GCP const **pGCPs )
+  /* %typemap(argout) (int *nGCPs, GDAL_GCP const **pGCPs ) */
   PyObject *dict = PyTuple_New( *$1 );
   for( int i = 0; i < *$1; i++ ) {
     PyTuple_SetItem(dict, i, 
@@ -82,18 +100,18 @@ cout << "leaving" << endl;
   $result = dict;
 }
 
-//
-// Typemap for GDALColorEntry* <-> tuple
-//
+/*
+* Typemap for GDALColorEntry* <-> tuple
+*/
 %typemap(out) GDALColorEntry*
 {
-  // %typemap(out) GDALColorEntry*
+  /*  %typemap(out) GDALColorEntry* */
    $result = Py_BuildValue( "(hhhh)", (*$1).c1,(*$1).c2,(*$1).c3,(*$1).c4);
 }
 
 %typemap(in) GDALColorEntry*
 {
-  // %typemap(in) GDALColorEntry*
+  /* %typemap(in) GDALColorEntry* */
    
    GDALColorEntry ce = {255,255,255,255};
    int size = PySequence_Size($input);
@@ -105,12 +123,12 @@ cout << "leaving" << endl;
    $1 = &ce;
 }
 
-//
-// Typemap char ** -> dict
-//
+/*
+* Typemap char ** -> dict
+*/
 %typemap(out) char **
 {
-  // %typemap(out) char ** -> to hash
+  /* %typemap(out) char ** -> to hash */
   char **valptr = $1;
   $result = PyDict_New();
   if ( valptr != NULL ) {
@@ -124,12 +142,12 @@ cout << "leaving" << endl;
   }
 }
 
-//
-// Typemap char **<- dict
-//
+/*
+* Typemap char **<- dict
+*/
 %typemap(in) char **dict
 {
-  // %typemap(in) char **dict
+  /* %typemap(in) char **dict */
   if ( ! PyMapping_Check( $input ) ) {
     PyErr_SetString(PyExc_TypeError,"not supports mapping (dict) protocol");
     SWIG_fail;
@@ -149,16 +167,16 @@ cout << "leaving" << endl;
 }
 %typemap(freearg) char **dict
 {
-  // %typemap(freearg) char **dict
+  /* %typemap(freearg) char **dict */
   CSLDestroy( $1 );
 }
 
-//
-// Typemap maps char** arguments from Python Sequence Object
-//
+/*
+* Typemap maps char** arguments from Python Sequence Object
+*/
 %typemap(in) char **options
 {
-  // %typemap(in) char **options
+  /* %typemap(in) char **options */
   /* Check if is a list */
   if ( ! PySequence_Check($input)) {
     PyErr_SetString(PyExc_TypeError,"not a sequence");
@@ -177,7 +195,7 @@ cout << "leaving" << endl;
 }
 %typemap(freearg) char **options
 {
-  // %typemap(freearg) char **options
+  /* %typemap(freearg) char **options */
   CSLDestroy( $1 );
 }
 
