@@ -116,6 +116,7 @@ docs:
 	(cd ogr; $(MAKE) docs)
 	(cd html; rm -f *.*)
 	doxygen
+	doxygen Doxyfile.man
 	cp data/gdalicon.png html
 	cp frmts/*.html frmts/*/frmt_*.html html
 
