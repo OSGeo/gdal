@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/08/19 15:49:52  warmerda
+ * Don't continue if the srcwin falls outside the raster.
+ *
  * Revision 1.24  2004/08/11 19:06:48  warmerda
  * use CopyCommonInfoFrom() method on band
  *
@@ -526,6 +529,7 @@ int main( int argc, char ** argv )
                      "Computed -srcwin falls outside raster size of %dx%d.\n",
                      GDALGetRasterXSize(hDataset), 
                      GDALGetRasterYSize(hDataset) );
+            exit( 1 );
         }
     }
 
