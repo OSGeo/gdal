@@ -34,6 +34,14 @@ Release Notes
 Release 1.4
 -----------
 
+ o Added "fast" spatial searching via the DGNSetSpatialFilter() function. 
+   This basically just reads the extents information at beginning of 
+   geometric features to see if they should be returned. 
+
+ o Actually extract the global origin from the TCB, and use it when 
+   transforming points.  Only a few files (ie. Brazos County roads.rds) use
+   a non-zero origin.
+
  o Added experimental multi byte text support from Ason Kang
    (hiska@netian.com). 
 
