@@ -32,6 +32,11 @@ gt_write:	gt_write.o gt_gs.o cpl_csv.o
 	$(CC) gt_write.o gt_gs.o cpl_csv.o $(GDAL_ROOT)/port/*.o \
 		libgeotiff/libgeotiff.a libtiff/libtiff.a $(LIBS) -o gt_write
 
+addtifo:	addtifo.o tif_overview.o rawblockedimage.o
+	$(CC) addtifo.o tif_overview.o rawblockedimage.o \
+		$(GDAL_ROOT)/port/*.o \
+		libgeotiff/libgeotiff.a libtiff/libtiff.a $(LIBS) -o addtifo
+
 
 lib-tiff:
 	cd libtiff; $(MAKE)
