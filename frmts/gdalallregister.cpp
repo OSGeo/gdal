@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.7  1999/05/13 15:28:19  warmerda
+ * Added elas format.
+ *
  * Revision 1.6  1999/05/05 17:32:53  warmerda
  * added ceos
  *
@@ -55,6 +58,7 @@ void GDALRegister_OGDI(void);
 void GDALRegister_HFA(void);
 void GDALRegister_AIGrid(void);
 void GDALRegister_CEOS(void);
+void GDALRegister_ELAS(void);
 CPL_C_END
 
 static char *szConfiguredFormats = "GDAL_FORMATS";
@@ -86,6 +90,10 @@ void GDALAllRegister()
     
 #ifdef FRMT_ceos
     GDALRegister_CEOS();
+#endif
+    
+#ifdef FRMT_elas
+    GDALRegister_ELAS();
 #endif
     
 #ifdef FRMT_aigrid
