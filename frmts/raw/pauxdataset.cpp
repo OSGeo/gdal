@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/02/01 20:20:40  warmerda
+ * Added delete support.
+ *
  * Revision 1.16  2001/12/12 18:15:46  warmerda
  * preliminary update for large raw file support
  *
@@ -1032,6 +1035,49 @@ GDALDataset *PAuxDataset::Create( const char * pszFilename,
 }
 
 /************************************************************************/
+/*                             PAuxDelete()                             */
+/************************************************************************/
+
+CPLErr PAuxDelete( const char * pszBasename )
+
+{
+    FILE	*fp;
+    const char *pszLine;
+
+    fp = VSIFOpen( CPLResetExtension( pszBasename, "aux" ), "r" );
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "%s does not appear to be a PAux dataset, there is no .aux file.",
+                  pszBasename );
+        return CE_Failure;
+    }
+
+    pszLine = CPLReadLine( fp );
+    VSIFClose( fp );
+    
+    if( pszLine == NULL || !EQUALN(pszLine,"AuxilaryTarget",14) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "%s does not appear to be a PAux dataset,\n"
+                  "the .aux file does not start with AuxilaryTarget",
+                  pszBasename );
+        return CE_Failure;
+    }
+
+    if( VSIUnlink( pszBasename ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "OS unlinking file %s.", pszBasename );
+        return CE_Failure;
+    }
+
+    VSIUnlink( CPLResetExtension( pszBasename, "aux" ) );
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                         GDALRegister_PAux()                          */
 /************************************************************************/
 
@@ -1049,6 +1095,7 @@ void GDALRegister_PAux()
         
         poDriver->pfnOpen = PAuxDataset::Open;
         poDriver->pfnCreate = PAuxDataset::Create;
+        poDriver->pfnDelete = PAuxDelete;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
