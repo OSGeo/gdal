@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/11/05 18:24:26  fwarmerdam
+ * In ComputeSourceWindow() fallback to using grid if any points along edges
+ * fail.  Also add a buffer around the imagery read if any points fail.
+ *
  * Revision 1.21  2004/10/07 15:50:18  fwarmerdam
  * added preliminary alpha band support
  *
@@ -1639,7 +1643,7 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
     int nSampleMax, nStepCount = 21, bUseGrid;
     int *pabSuccess = NULL;
     double *padfX, *padfY, *padfZ;
-    int    nSamplePoints=0;
+    int    nSamplePoints;
     double dfRatio;
 
     if( CSLFetchNameValue( psOptions->papszWarpOptions, 
@@ -1656,6 +1660,8 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
     bUseGrid = CSLFetchBoolean( psOptions->papszWarpOptions, 
                                 "SAMPLE_GRID", FALSE );
 
+  TryAgainWithGrid:
+    nSamplePoints = 0;
     if( bUseGrid )
         nSampleMax = nStepCount * nStepCount;
     else
@@ -1767,7 +1773,22 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
     CPLFree( padfX );
     CPLFree( pabSuccess );
 
-    if( nFailedCount > nSamplePoints - 10 )
+/* -------------------------------------------------------------------- */
+/*      If we got any failures when not using a grid, we should         */
+/*      really go back and try again with the grid.  Sorry for the      */
+/*      goto.                                                           */
+/* -------------------------------------------------------------------- */
+    if( !bUseGrid && nFailedCount > 0 )
+    {
+        bUseGrid = TRUE;
+        goto TryAgainWithGrid;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we get hardly any points (or none) transforming, we give     */
+/*      up.                                                             */
+/* -------------------------------------------------------------------- */
+    if( nFailedCount > nSamplePoints - 5 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Too many points (%d out of %d) failed to transform,\n"
@@ -1798,7 +1819,9 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
 
 /* -------------------------------------------------------------------- */
 /*      Allow addition of extra sample pixels to source window to       */
-/*      avoid missing pixels due to sampling error.                     */
+/*      avoid missing pixels due to sampling error.  In fact,           */
+/*      fallback to adding a bit to the window if any points failed     */
+/*      to transform.                                                   */
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue( psOptions->papszWarpOptions, 
                            "SOURCE_EXTRA" ) != NULL )
@@ -1806,6 +1829,8 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(int nDstXOff, int nDstYOff,
         nResWinSize += atoi(
             CSLFetchNameValue( psOptions->papszWarpOptions, "SOURCE_EXTRA" ));
     }
+    else if( nFailedCount > 0 )
+        nResWinSize += 10;
 
 /* -------------------------------------------------------------------- */
 /*      return bounds.                                                  */
