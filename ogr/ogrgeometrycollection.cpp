@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/05/24 18:06:30  warmerda
+ * use addGeometryDirectly when parsing WKT
+ *
  * Revision 1.9  1999/11/18 19:02:19  warmerda
  * expanded tabs
  *
@@ -522,7 +525,7 @@ OGRErr OGRGeometryCollection::importFromWkt( char ** ppszInput )
         if( eErr != OGRERR_NONE )
             return eErr;
 
-        addGeometry( poGeom );
+        addGeometryDirectly( poGeom );
 
 /* -------------------------------------------------------------------- */
 /*      Read the delimeter following the ring.                          */
