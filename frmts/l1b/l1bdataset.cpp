@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.15  2002/11/27 13:45:45  dron
+ * Fixed problem with L1B signature handling.
+ *
  * Revision 1.14  2002/10/04 16:23:56  dron
  * Memory leak fixed.
  *
@@ -621,7 +624,7 @@ void L1BDataset::FetchNOAA9GCPs(GDAL_GCP *pasGCPList, GInt16 *piRecordHeader, in
 	if (pasGCPList[nGCPCount].dfGCPX < -180 || pasGCPList[nGCPCount].dfGCPX > 180 ||
 	    pasGCPList[nGCPCount].dfGCPY < -90 || pasGCPList[nGCPCount].dfGCPY > 90)
 	    continue;
-//	pasGCPList[nGCPCount].pszId;
+	pasGCPList[nGCPCount].pszId = NULL;
 	pasGCPList[nGCPCount].dfGCPZ = 0.0;
 	pasGCPList[nGCPCount].dfGCPPixel = dfPixel;
 	dfPixel += (iLocationIndicator == DESCEND)?dfGCPStep:-dfGCPStep;
@@ -659,6 +662,7 @@ void L1BDataset::FetchNOAA15GCPs(GDAL_GCP *pasGCPList, GInt32 *piRecordHeader, i
 	if (pasGCPList[nGCPCount].dfGCPX < -180 || pasGCPList[nGCPCount].dfGCPX > 180 ||
 	    pasGCPList[nGCPCount].dfGCPY < -90 || pasGCPList[nGCPCount].dfGCPY > 90)
 	    continue;
+	pasGCPList[nGCPCount].pszId = NULL;
 	pasGCPList[nGCPCount].dfGCPZ = 0.0;
 	pasGCPList[nGCPCount].dfGCPPixel = dfPixel;
 	dfPixel += (iLocationIndicator == DESCEND)?dfGCPStep:-dfGCPStep;
@@ -742,12 +746,12 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
     // XXX: Signature is not very good
-    if( !EQUALN((const char *) poOpenInfo->pabyHeader + 33, ".", 1) &&
-	!EQUALN((const char *) poOpenInfo->pabyHeader + 38, ".", 1) && 
-	!EQUALN((const char *) poOpenInfo->pabyHeader + 41, ".", 1) && 
-	!EQUALN((const char *) poOpenInfo->pabyHeader + 48, ".", 1) && 
-	!EQUALN((const char *) poOpenInfo->pabyHeader + 54, ".", 1) &&
-	!EQUALN((const char *) poOpenInfo->pabyHeader + 60, ".", 1) &&
+    if( !EQUALN((const char *) poOpenInfo->pabyHeader + 33, ".", 1) ||
+	!EQUALN((const char *) poOpenInfo->pabyHeader + 38, ".", 1) || 
+	!EQUALN((const char *) poOpenInfo->pabyHeader + 41, ".", 1) || 
+	!EQUALN((const char *) poOpenInfo->pabyHeader + 48, ".", 1) || 
+	!EQUALN((const char *) poOpenInfo->pabyHeader + 54, ".", 1) ||
+	!EQUALN((const char *) poOpenInfo->pabyHeader + 60, ".", 1) ||
 	!EQUALN((const char *) poOpenInfo->pabyHeader + 69, ".", 1) )
         return NULL;
 
