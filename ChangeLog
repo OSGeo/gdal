@@ -1,3 +1,9 @@
+2000-10-13  Frank Warmerdam  <warmerda@cs46980-c>
+
+	* Fixed EquidistantConic support for GeoTIFF. 
+
+	* Fixed up cygnus support in port/cpl_port.h.
+
 2000-10-12  Frank Warmerdam  <warmerda@cs46980-c>
 
 	* gdal/frmts/hfa: Implemented write support for Imagine files.

@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/10/13 18:03:32  warmerda
+ * econic fix
+ *
  * Revision 1.13  2000/06/14 20:57:48  warmerda
  * Don't return a WKT coordinate system if Model wasn't defined.
  *
@@ -294,6 +297,12 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
                          adfParm[5], adfParm[6] );
             break;
         
+          case CT_EquidistantConic: 
+            oSRS.SetEC( adfParm[0], adfParm[1],
+                        adfParm[2], adfParm[3],
+                        adfParm[5], adfParm[6] );
+            break;
+        
           case CT_CassiniSoldner:
             oSRS.SetCS( adfParm[0], adfParm[1],
                         adfParm[5], adfParm[6] );
@@ -356,8 +365,8 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
             break;
         
           case CT_LambertConfConic_2SP:
-            oSRS.SetLCC( adfParm[0], adfParm[1],
-                         adfParm[2], adfParm[3],
+            oSRS.SetLCC( adfParm[2], adfParm[3],
+                         adfParm[0], adfParm[1],
                          adfParm[5], adfParm[6] );
             break;
 
