@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/09/26 18:16:19  warmerda
+ * added C entry points
+ *
  * Revision 1.2  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -37,6 +40,7 @@
  */
 
 #include "ogrsf_frmts.h"
+#include "ogr_api.h"
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$");
@@ -62,3 +66,48 @@ OGRDataSource *OGRSFDriver::CreateDataSource( const char *, char ** )
               
     return NULL;
 }
+
+/************************************************************************/
+/*                      OGR_Dr_CreateDataSource()                       */
+/************************************************************************/
+
+OGRDataSourceH OGR_Dr_CreateDataSource( OGRSFDriverH hDriver,
+                                        const char *pszName, 
+                                        char ** papszOptions )
+
+{
+    return ((OGRSFDriver *)hDriver)->CreateDataSource( pszName, 
+                                                       papszOptions );
+}
+
+/************************************************************************/
+/*                           OGR_Dr_GetName()                           */
+/************************************************************************/
+
+const char *OGR_Dr_GetName( OGRSFDriverH hDriver )
+
+{
+    return ((OGRSFDriver *) hDriver)->GetName();
+}
+
+/************************************************************************/
+/*                            OGR_Dr_Open()                             */
+/************************************************************************/
+
+OGRDataSourceH OGR_Dr_Open( OGRSFDriverH hDriver, const char *pszName, 
+                            int bUpdate )
+
+{
+    return ((OGRSFDriver *)hDriver)->Open( pszName, bUpdate );
+}
+
+/************************************************************************/
+/*                       OGR_Dr_TestCapability()                        */
+/************************************************************************/
+
+int OGR_Dr_TestCapability( OGRSFDriverH hDriver, const char *pszCap )
+
+{
+    return ((OGRSFDriver *) hDriver)->TestCapability( pszCap );
+}
+
