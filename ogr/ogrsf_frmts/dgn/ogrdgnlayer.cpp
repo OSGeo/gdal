@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/01/09 14:12:12  warmerda
+ * Treat SHAPE elements as polygon geometries, not linestrings.
+ *
  * Revision 1.11  2001/11/09 18:14:36  warmerda
  * added size info for LABELs
  *
@@ -228,7 +231,26 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
     switch( psElement->stype )
     {
       case DGNST_MULTIPOINT:
-        if( psElement->type == DGNT_CURVE )
+        if( psElement->type == DGNT_SHAPE )
+        {
+            OGRLinearRing	*poLine = new OGRLinearRing();
+            OGRPolygon          *poPolygon = new OGRPolygon();
+            DGNElemMultiPoint *psEMP = (DGNElemMultiPoint *) psElement;
+            
+            poLine->setNumPoints( psEMP->num_vertices );
+            for( int i = 0; i < psEMP->num_vertices; i++ )
+            {
+                poLine->setPoint( i, 
+                                  psEMP->vertices[i].x,
+                                  psEMP->vertices[i].y,
+                                  psEMP->vertices[i].z );
+            }
+
+            poPolygon->addRingDirectly( poLine );
+
+            poFeature->SetGeometryDirectly( poPolygon );
+        }
+        else if( psElement->type == DGNT_CURVE )
         {
             DGNElemMultiPoint *psEMP = (DGNElemMultiPoint *) psElement;
             OGRLineString	*poLine = new OGRLineString();
