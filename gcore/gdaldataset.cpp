@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2003/01/28 16:07:31  warmerda
+ * improved documentation
+ *
  * Revision 1.30  2002/12/18 15:17:05  warmerda
  * added errors in some unimplemented methods
  *
@@ -119,6 +122,24 @@ CPL_CVSID("$Id$");
 
 static int nGDALDatasetCount = 0;
 static GDALDataset **papoGDALDatasetList = NULL;
+
+/************************************************************************/
+/* ==================================================================== */
+/*                             GDALDataset                              */
+/* ==================================================================== */
+/************************************************************************/
+
+/**
+ * \class GDALDataset 
+ *
+ * A dataset encapsulating one or more raster bands.  Details are
+ * further discussed in the <a href="gdal_datamodel.html#GDALDataset">GDAL
+ * Data Model</a>.
+ *
+ * Use GDALOpen() or GDALOpenShared() to create a GDALDataset for a named file,
+ * or GDALDriver::Create() or GDALDriver::CreateCopy() to create a new 
+ * dataset.
+ */
 
 /************************************************************************/
 /*                            GDALDataset()                             */

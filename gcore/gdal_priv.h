@@ -4,7 +4,7 @@
  * Name:     gdal_priv.h
  * Project:  GDAL Core
  * Purpose:  GDAL Core C++/Private declarations. 
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2003/01/28 16:07:30  warmerda
+ * improved documentation
+ *
  * Revision 1.38  2002/10/21 18:05:42  warmerda
  * added AutoSkipDrivers() method on driver manager
  *
@@ -227,12 +230,6 @@ class CPL_DLL GDALDefaultOverviews
 /* ******************************************************************** */
 /*                             GDALDataset                              */
 /* ******************************************************************** */
-
-/**
- * A dataset encapsulating one or more raster bands.
- *
- * Use GDALOpen() to create a GDALDataset for a named file.
- */
 
 class CPL_DLL GDALDataset : public GDALMajorObject
 {
