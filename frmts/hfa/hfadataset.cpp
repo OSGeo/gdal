@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.44  2004/10/27 18:06:45  fwarmerdam
+ * Avoid use of auto-sized arrays ... not really C++ standard.
+ *
  * Revision 1.43  2004/10/26 22:47:23  fwarmerdam
  * Fixed at least one botch in SetColorTable().
  *
@@ -906,8 +909,12 @@ CPLErr HFARasterBand::SetColorTable( GDALColorTable * poCTable )
 /* -------------------------------------------------------------------- */
 /*      Write out the colortable, and update the configuration.         */
 /* -------------------------------------------------------------------- */
-    double adfRed[nColors], adfGreen[nColors], adfBlue[nColors], 
-        adfAlpha[nColors];
+    double *padfRed, *padfGreen, *padfBlue, *padfAlpha;
+
+    padfRed   = (double *) CPLMalloc(sizeof(double) * nColors);
+    padfGreen = (double *) CPLMalloc(sizeof(double) * nColors);
+    padfBlue  = (double *) CPLMalloc(sizeof(double) * nColors);
+    padfAlpha = (double *) CPLMalloc(sizeof(double) * nColors);
 
     for( int iColor = 0; iColor < nColors; iColor++ )
     {
@@ -915,15 +922,19 @@ CPLErr HFARasterBand::SetColorTable( GDALColorTable * poCTable )
 	    
         poCTable->GetColorEntryAsRGB( iColor, &sRGB );
         
-        adfRed[iColor] = sRGB.c1 / 255.0;
-        adfGreen[iColor] = sRGB.c2 / 255.0;
-        adfBlue[iColor] = sRGB.c3 / 255.0;
-        adfAlpha[iColor] = sRGB.c4 / 255.0;
+        padfRed[iColor] = sRGB.c1 / 255.0;
+        padfGreen[iColor] = sRGB.c2 / 255.0;
+        padfBlue[iColor] = sRGB.c3 / 255.0;
+        padfAlpha[iColor] = sRGB.c4 / 255.0;
     }
 
     HFASetPCT( hHFA, nBand, nColors,
-	       adfRed, adfGreen, adfBlue, adfAlpha);
+	       padfRed, padfGreen, padfBlue, padfAlpha);
 
+    CPLFree( padfRed );
+    CPLFree( padfGreen );
+    CPLFree( padfBlue );
+    CPLFree( padfAlpha );
 
     if( poCT )
       delete poCT;
