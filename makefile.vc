@@ -21,6 +21,12 @@ OGR_INCLUDE =	/INCLUDE:_OCTNewCoordinateTransformation /INCLUDE:_OGRFree \
 		/INCLUDE:_OPTGetParameterList
 !ENDIF
 
+BASE_INCLUDE =	/INCLUDE:_GDALSimpleImageWarp \
+		/INCLUDE:_GDALSuggestedWarpOutput \
+		/INCLUDE:_GDALGCPTransform \
+		/INCLUDE:_GDALComputeMedianCutPCT \
+		/INCLUDE:_GDALDitherRGB2PCT
+
 LIBOBJ = port\*.obj core\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ)
 	
 DISTDIR	=	gdal_$(VERSION)
@@ -117,7 +123,7 @@ lib_dist:	default
 	zip -r $(DISTDIR).zip $(DISTDIR)
 
 $(GDAL_DLL):	lib
-	link /dll /debug $(OGR_INCLUDE) $(LIBOBJ) \
+	link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) $(LIBOBJ) \
 		$(ECWLIB) $(OGDILIB) $(XERCES_LIB) $(FME_LIB) $(JASPER_LIB)\
 		$(HDF4_LIB) \
 		 /out:$(GDAL_DLL) /implib:gdal_i.lib $(LINKER_FLAGS)
