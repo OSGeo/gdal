@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/01/27 04:06:32  fwarmerdam
+ * added 3L0 XSD support
+ *
  * Revision 1.15  2004/01/29 15:30:40  warmerda
  * cleanup layer and field names
  *
@@ -232,6 +235,23 @@ int OGRGMLDataSource::Open( const char * pszNewName, int bTestOpen )
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Can we find an xsd which might conform to tbe GML3 Level 0      */
+/*      profile?  We really ought to look for it based on the rules     */
+/*      schemaLocation in the GML feature collection but for now we     */
+/*      just hopes it is in the same director with the same name.       */
+/* -------------------------------------------------------------------- */
+    const char *pszXSDFilename;
+
+    if( !bHaveSchema )
+    {
+        pszXSDFilename = CPLResetExtension( pszNewName, "xsd" );
+        if( CPLStat( pszXSDFilename, &sGMLStatBuf ) == 0 )
+        {
+            bHaveSchema = poReader->ParseXSD( pszXSDFilename );
+        }
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Force a first pass to establish the schema.  Eventually we      */
 /*      will have mechanisms for remembering the schema and related     */
