@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/02/04 21:40:38  warmerda
+ * Fixed handling of Cntl-Z.
+ *
  * Revision 1.2  2003/02/04 20:42:45  warmerda
  * skip zero length fields, improve type handling
  *
@@ -111,6 +114,10 @@ OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
         nTypeCode = atoi(RECGetField(pszLine,33,4));
         if( nTypeCode == 12 )
             eFType = OFTInteger;
+        else if( nTypeCode > 100 && nTypeCode < 120 )
+        {
+            eFType = OFTReal;
+        }
         else if( nTypeCode == 0 || nTypeCode == 6 || nTypeCode == 102 )
         {
             if( panFieldWidth[nFieldCount] < 3 )
@@ -128,7 +135,12 @@ OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
             panFieldOffset[nFieldCount]
                 = panFieldOffset[nFieldCount-1] + panFieldWidth[nFieldCount-1];
 
-        if( eFType == OFTReal )
+        if( nTypeCode > 100 && nTypeCode < 120 )
+        {
+            oField.SetWidth( panFieldWidth[nFieldCount] );
+            oField.SetPrecision( nTypeCode - 100 );
+        }
+        else if( eFType == OFTReal )
         {
             oField.SetWidth( panFieldWidth[nFieldCount]*2 );
             oField.SetPrecision( panFieldWidth[nFieldCount]-1 );
@@ -192,6 +204,12 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
         int         iSegLen;
 
         if( pszLine == NULL )
+        {
+            CPLFree( pszRecord );
+            return NULL;
+        }
+
+        if( *pszLine == 26 /* Cntl-Z - DOS EOF */ )
         {
             CPLFree( pszRecord );
             return NULL;
