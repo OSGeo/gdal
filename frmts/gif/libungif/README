@@ -1,0 +1,8 @@
+This code is from libungif 4.0.
+
+http://prtr-13.ucsc.edu/~badger/software/libungif.shtml
+
+Changes:
+
+ o Select only lib files needed.
+ o Fix a few warnings about unused variables. 
