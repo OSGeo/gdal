@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2000/10/16 21:26:07  warmerda
+ * added some level of LOCAL_CS support
+ *
  * Revision 1.22  2000/08/28 20:13:23  warmerda
  * added importFromProj4
  *
@@ -226,6 +229,7 @@ class OGRSpatialReference
     int         IsSameGeogCS( OGRSpatialReference * );
     int         IsSame( OGRSpatialReference * );
 
+    OGRErr      SetLocalCS( const char * );
     OGRErr      SetProjCS( const char * );
     OGRErr      SetProjection( const char * );
     OGRErr      SetGeogCS( const char * pszGeogName,

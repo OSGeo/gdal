@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/10/16 21:26:07  warmerda
+ * added some level of LOCAL_CS support
+ *
  * Revision 1.11  2000/09/01 20:58:01  warmerda
  * added CPL_DLL for entry points
  *
@@ -255,6 +258,7 @@ int CPL_DLL OSRIsProjected( OGRSpatialReferenceH );
 int CPL_DLL OSRIsSameGeogCS( OGRSpatialReferenceH, OGRSpatialReferenceH );
 int CPL_DLL OSRIsSame( OGRSpatialReferenceH, OGRSpatialReferenceH );
 
+OGRErr CPL_DLL OSRSetLocalCS( OGRSpatialReferenceH hSRS, const char *pszName );
 OGRErr CPL_DLL OSRSetProjCS( OGRSpatialReferenceH hSRS, const char * pszName );
 OGRErr CPL_DLL OSRSetWellKnownGeogCS( OGRSpatialReferenceH hSRS,
                                       const char * pszName );

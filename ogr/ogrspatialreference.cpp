@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2000/10/16 21:26:07  warmerda
+ * added some level of LOCAL_CS support
+ *
  * Revision 1.20  2000/10/13 20:59:49  warmerda
  * ensure we can set the PROJCS name on an existing PROJCS
  *
@@ -941,8 +944,8 @@ OGRErr OGRSpatialReference::SetNode( const char *pszNodePath,
  * Set the linear units for the projection.
  *
  * This method creates a UNITS subnode with the specified values as a
- * child of the PROJCS node.  It does not currently check for an existing
- * node and override it, but it should!
+ * child of the PROJCS or LOCAL_CS node.  It does not currently check for an 
+ * existing node and override it, but it should!
  *
  * This method does the same as the C function OSRSetLinearUnits(). 
  *
@@ -961,11 +964,15 @@ OGRErr OGRSpatialReference::SetLinearUnits( const char * pszUnitsName,
                                             double dfInMeters )
 
 {
-    OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
+    OGR_SRSNode *poCS;
     OGR_SRSNode *poUnits;
     char        szValue[128];
 
-    if( poPROJCS == NULL )
+    poCS = GetAttrNode( "PROJCS" );
+    if( poCS == NULL )
+        poCS = GetAttrNode( "LOCAL_CS" );
+
+    if( poCS == NULL )
         return OGRERR_FAILURE;
 
     if( dfInMeters == (int) dfInMeters )
@@ -978,7 +985,7 @@ OGRErr OGRSpatialReference::SetLinearUnits( const char * pszUnitsName,
     poUnits->AddChild( new OGR_SRSNode( pszUnitsName ) );
     poUnits->AddChild( new OGR_SRSNode( szValue ) );
 
-    poPROJCS->AddChild( poUnits );
+    poCS->AddChild( poUnits );
 
     return OGRERR_NONE;
 }
@@ -1003,7 +1010,8 @@ OGRErr OSRSetLinearUnits( OGRSpatialReferenceH hSRS,
  * Fetch linear projection units. 
  *
  * If no units are available, a value of "Meters" and 1.0 will be assumed.
- * This method only checks directly under the PROJCS node for units.
+ * This method only checks directly under the PROJCS or LOCAL_CS node for 
+ * units.
  *
  * This method does the same thing as the C function OSRGetLinearUnits()/
  *
@@ -1019,17 +1027,20 @@ OGRErr OSRSetLinearUnits( OGRSpatialReferenceH hSRS,
 double OGRSpatialReference::GetLinearUnits( char ** ppszName )
 
 {
-    OGR_SRSNode *poPROJCS = GetAttrNode( "PROJCS" );
+    OGR_SRSNode *poCS = GetAttrNode( "PROJCS" );
+
+    if( poCS == NULL )
+        poCS = GetAttrNode( "LOCAL_CS" );
 
     if( ppszName != NULL )
         *ppszName = "unknown";
         
-    if( poPROJCS == NULL )
+    if( poCS == NULL )
         return 1.0;
 
-    for( int iChild = 0; iChild < poPROJCS->GetChildCount(); iChild++ )
+    for( int iChild = 0; iChild < poCS->GetChildCount(); iChild++ )
     {
-        OGR_SRSNode     *poChild = poPROJCS->GetChild(iChild);
+        OGR_SRSNode     *poChild = poCS->GetChild(iChild);
         
         if( EQUAL(poChild->GetValue(),"UNIT")
             && poChild->GetChildCount() == 2 )
@@ -1454,6 +1465,53 @@ double OSRGetSemiMinor( OGRSpatialReferenceH hSRS, OGRErr *pnErr )
 
 {
     return ((OGRSpatialReference *) hSRS)->GetSemiMinor( pnErr );
+}
+
+/************************************************************************/
+/*                             SetLocalCS()                             */
+/************************************************************************/
+
+/**
+ * Set the user visible LOCAL_CS name.
+ *
+ * This method is the same as the C function OSRSetLocalCS(). 
+ *
+ * This method is will ensure a LOCAL_CS node is created as the root, 
+ * and set the provided name on it.  It must be used before SetLinearUnits().
+ *
+ * @param pszName the user visible name to assign.  Not used as a key.
+ * 
+ * @return OGRERR_NONE on success.
+ */
+
+OGRErr OGRSpatialReference::SetLocalCS( const char * pszName )
+
+{
+    OGR_SRSNode	*poCS = GetAttrNode( "LOCAL_CS" );
+
+    if( poCS == NULL && GetRoot() != NULL )
+    {
+        CPLDebug( "OGR", 
+                  "OGRSpatialReference::SetLocalCS(%s) failed.\n"
+               "It appears an incompatible root node (%s) already exists.\n",
+                  GetRoot()->GetValue() );
+        return OGRERR_FAILURE;
+    }
+    else
+    {
+        SetNode( "LOCAL_CS", pszName );
+        return OGRERR_NONE;
+    }
+}
+
+/************************************************************************/
+/*                           OSRSetLocalCS()                            */
+/************************************************************************/
+
+OGRErr OSRSetLocalCS( OGRSpatialReferenceH hSRS, const char * pszName )
+
+{
+    return ((OGRSpatialReference *) hSRS)->SetLocalCS( pszName );
 }
 
 /************************************************************************/
