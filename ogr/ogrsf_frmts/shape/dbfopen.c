@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.46 2002/10/09 13:10:21 warmerda Exp $
+ * $Id: dbfopen.c,v 1.50 2003/04/21 18:58:25 warmerda Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -34,6 +34,18 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.50  2003/04/21 18:58:25  warmerda
+ * ensure current record is flushed at same time as header is updated
+ *
+ * Revision 1.49  2003/04/21 18:30:37  warmerda
+ * added header write/update public methods
+ *
+ * Revision 1.48  2003/03/10 14:51:27  warmerda
+ * DBFWrite* calls now return FALSE if they have to truncate
+ *
+ * Revision 1.47  2002/11/20 03:32:22  warmerda
+ * Ensure field name in DBFGetFieldIndex() is properly terminated.
+ *
  * Revision 1.46  2002/10/09 13:10:21  warmerda
  * Added check that width is positive.
  *
@@ -177,7 +189,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: dbfopen.c,v 1.46 2002/10/09 13:10:21 warmerda Exp $";
+  "$Id: dbfopen.c,v 1.50 2003/04/21 18:58:25 warmerda Exp $";
 
 #include "shapefil.h"
 
@@ -238,7 +250,12 @@ static void DBFWriteHeader(DBFHandle psDBF)
 
     abyHeader[0] = 0x03;		/* memo field? - just copying 	*/
 
-    /* date updated on close, record count preset at zero */
+    /* write out a dummy date */
+    abyHeader[1] = 95;			/* YY */
+    abyHeader[2] = 7;			/* MM */
+    abyHeader[3] = 26;			/* DD */
+
+    /* record count preset at zero */
 
     abyHeader[8] = psDBF->nHeaderLength % 256;
     abyHeader[9] = psDBF->nHeaderLength / 256;
@@ -287,6 +304,35 @@ static void DBFFlushRecord( DBFHandle psDBF )
 	fseek( psDBF->fp, nRecordOffset, 0 );
 	fwrite( psDBF->pszCurrentRecord, psDBF->nRecordLength, 1, psDBF->fp );
     }
+}
+
+/************************************************************************/
+/*                          DBFUpdateHeader()                           */
+/************************************************************************/
+
+void SHPAPI_CALL
+DBFUpdateHeader( DBFHandle psDBF )
+
+{
+    unsigned char		abyFileHeader[32];
+
+    if( psDBF->bNoHeader )
+        DBFWriteHeader( psDBF );
+
+    DBFFlushRecord( psDBF );
+
+    fseek( psDBF->fp, 0, 0 );
+    fread( abyFileHeader, 32, 1, psDBF->fp );
+    
+    abyFileHeader[4] = psDBF->nRecords % 256;
+    abyFileHeader[5] = (psDBF->nRecords/256) % 256;
+    abyFileHeader[6] = (psDBF->nRecords/(256*256)) % 256;
+    abyFileHeader[7] = (psDBF->nRecords/(256*256*256)) % 256;
+    
+    fseek( psDBF->fp, 0, 0 );
+    fwrite( abyFileHeader, 32, 1, psDBF->fp );
+
+    fflush( psDBF->fp );
 }
 
 /************************************************************************/
@@ -448,24 +494,7 @@ DBFClose(DBFHandle psDBF)
 /*	write access.                					*/
 /* -------------------------------------------------------------------- */
     if( psDBF->bUpdated )
-    {
-	unsigned char		abyFileHeader[32];
-
-	fseek( psDBF->fp, 0, 0 );
-	fread( abyFileHeader, 32, 1, psDBF->fp );
-
-	abyFileHeader[1] = 95;			/* YY */
-	abyFileHeader[2] = 7;			/* MM */
-	abyFileHeader[3] = 26;			/* DD */
-
-	abyFileHeader[4] = psDBF->nRecords % 256;
-	abyFileHeader[5] = (psDBF->nRecords/256) % 256;
-	abyFileHeader[6] = (psDBF->nRecords/(256*256)) % 256;
-	abyFileHeader[7] = (psDBF->nRecords/(256*256*256)) % 256;
-
-	fseek( psDBF->fp, 0, 0 );
-	fwrite( abyFileHeader, 32, 1, psDBF->fp );
-    }
+        DBFUpdateHeader( psDBF );
 
 /* -------------------------------------------------------------------- */
 /*      Close, and free resources.                                      */
@@ -965,7 +994,7 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
 			     void * pValue )
 
 {
-    int	       	nRecordOffset, i, j;
+    int	       	nRecordOffset, i, j, nRetResult = TRUE;
     unsigned char	*pabyRec;
     char	szSField[400], szFormat[20];
 
@@ -1068,7 +1097,10 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
 	    sprintf( szFormat, "%%%dd", nWidth );
 	    sprintf(szSField, szFormat, (int) *((double *) pValue) );
 	    if( (int)strlen(szSField) > psDBF->panFieldSize[iField] )
+            {
 	        szSField[psDBF->panFieldSize[iField]] = '\0';
+                nRetResult = FALSE;
+            }
 
 	    strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]),
 		    szSField, strlen(szSField) );
@@ -1084,7 +1116,10 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
                      nWidth, psDBF->panFieldDecimals[iField] );
 	    sprintf(szSField, szFormat, *((double *) pValue) );
 	    if( (int) strlen(szSField) > psDBF->panFieldSize[iField] )
+            {
 	        szSField[psDBF->panFieldSize[iField]] = '\0';
+                nRetResult = FALSE;
+            }
 	    strncpy((char *) (pabyRec+psDBF->panFieldOffset[iField]),
 		    szSField, strlen(szSField) );
 	}
@@ -1098,7 +1133,10 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
 
       default:
 	if( (int) strlen((char *) pValue) > psDBF->panFieldSize[iField] )
+        {
 	    j = psDBF->panFieldSize[iField];
+            nRetResult = FALSE;
+        }
 	else
         {
             memset( pabyRec+psDBF->panFieldOffset[iField], ' ',
@@ -1111,7 +1149,7 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
 	break;
     }
 
-    return( TRUE );
+    return( nRetResult );
 }
 
 /************************************************************************/
@@ -1464,6 +1502,7 @@ DBFGetFieldIndex(DBFHandle psDBF, const char *pszFieldName)
     int           i;
 
     strncpy(name1, pszFieldName,11);
+    name1[11] = '\0';
     str_to_upper(name1);
 
     for( i = 0; i < DBFGetFieldCount(psDBF); i++ )

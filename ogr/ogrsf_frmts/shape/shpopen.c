@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.39 2002/08/26 06:46:56 warmerda Exp $
+ * $Id: shpopen.c,v 1.40 2003/04/21 18:30:37 warmerda Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.40  2003/04/21 18:30:37  warmerda
+ * added header write/update public methods
+ *
  * Revision 1.39  2002/08/26 06:46:56  warmerda
  * avoid c++ comments
  *
@@ -159,7 +162,7 @@
  */
 
 static char rcsid[] = 
-  "$Id: shpopen.c,v 1.39 2002/08/26 06:46:56 warmerda Exp $";
+  "$Id: shpopen.c,v 1.40 2003/04/21 18:30:37 warmerda Exp $";
 
 #include "shapefil.h"
 
@@ -234,7 +237,7 @@ static void * SfRealloc( void * pMem, int nNewSize )
 /*	contents of the index (.shx) file.				*/
 /************************************************************************/
 
-static void SHPWriteHeader( SHPHandle psSHP )
+void SHPWriteHeader( SHPHandle psSHP )
 
 {
     uchar     	abyHeader[100];
@@ -328,6 +331,12 @@ static void SHPWriteHeader( SHPHandle psSHP )
     fwrite( panSHX, sizeof(int32) * 2, psSHP->nRecords, psSHP->fpSHX );
 
     free( panSHX );
+
+/* -------------------------------------------------------------------- */
+/*      Flush to disk.                                                  */
+/* -------------------------------------------------------------------- */
+    fflush( psSHP->fpSHP );
+    fflush( psSHP->fpSHX );
 }
 
 /************************************************************************/
@@ -557,9 +566,7 @@ SHPClose(SHPHandle psSHP )
 /*	Update the header if we have modified anything.			*/
 /* -------------------------------------------------------------------- */
     if( psSHP->bUpdated )
-    {
 	SHPWriteHeader( psSHP );
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Free all resources, and close files.                            */
