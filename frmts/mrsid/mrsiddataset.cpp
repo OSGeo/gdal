@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/05/27 21:08:38  warmerda
+ * avoid int/short casting warnings
+ *
  * Revision 1.3  2003/05/25 15:24:49  dron
  * Added georeferencing.
  *
@@ -1215,8 +1218,8 @@ void MrSIDDataset::GetGTIFDefn()
         nMapSys = GTIFPCSToMapSys( psDefn->PCS, &nGCS, &nZone );
         if( nMapSys != KvUserDefined )
         {
-            psDefn->ProjCode = GTIFMapSysToProj( nMapSys, nZone );
-            psDefn->GCS = nGCS;
+            psDefn->ProjCode = (short) GTIFMapSysToProj( nMapSys, nZone );
+            psDefn->GCS = (short) nGCS;
         }
     }
    
@@ -1242,7 +1245,7 @@ void MrSIDDataset::GetGTIFDefn()
         /*
          * Set the GeoTIFF identity of the parameters.
          */
-        psDefn->CTProjection =
+        psDefn->CTProjection = (short)
             EPSGProjMethodToCTProjMethod( psDefn->Projection );
 
         SetGTParmIds( psDefn->CTProjection, psDefn->ProjParmId, NULL);
