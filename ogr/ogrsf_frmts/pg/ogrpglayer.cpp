@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/07/10 04:46:24  warmerda
+ * initialize nResultOffset, use soft transactions
+ *
  * Revision 1.14  2004/05/08 02:14:49  warmerda
  * added GetFeature() on table, generalize FID support a bit
  *
@@ -110,6 +113,7 @@ OGRPGLayer::OGRPGLayer()
     pszFIDColumn = NULL;
 
     iNextShapeId = 0;
+    nResultOffset = 0;
 
     poSRS = NULL;
     nSRSId = -2; // we haven't even queried the database for it yet. 
@@ -169,8 +173,7 @@ void OGRPGLayer::ResetReading()
             PQclear( hCursorResult );
         }
 
-        hCursorResult = PQexec(hPGConn, "COMMIT" );
-        PQclear( hCursorResult );
+        poDS->FlushSoftTransaction();
 
         hCursorResult = NULL;
     }
@@ -367,8 +370,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
         CPLAssert( pszQueryStatement != NULL );
 
         poDS->FlushSoftTransaction();
-        hCursorResult = PQexec(hPGConn, "BEGIN");
-        PQclear( hCursorResult );
+        poDS->SoftStartTransaction();
 
         sprintf( szCommand, "DECLARE %s CURSOR for %s",
                  pszCursorName, pszQueryStatement );
@@ -426,8 +428,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
             PQclear( hCursorResult );
         }
 
-        hCursorResult = PQexec(hPGConn, "COMMIT" );
-        PQclear( hCursorResult );
+        poDS->FlushSoftTransaction();
 
         hCursorResult = NULL;
         bCursorActive = FALSE;
