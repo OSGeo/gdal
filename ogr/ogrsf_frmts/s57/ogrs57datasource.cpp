@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2003/09/12 21:06:31  warmerda
+ * use SetWellKnownGeogCS() to establish WGS84 SRS
+ *
  * Revision 1.21  2003/09/05 19:12:05  warmerda
  * added RETURN_PRIMITIVES support to get low level prims
  *
@@ -116,7 +119,8 @@ OGRS57DataSource::OGRS57DataSource()
 
     pszName = NULL;
 
-    poSpatialRef = new OGRSpatialReference( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]");
+    poSpatialRef = new OGRSpatialReference();
+    poSpatialRef->SetWellKnownGeogCS( "WGS84" );
     
     bExtentsSet = FALSE;
 
