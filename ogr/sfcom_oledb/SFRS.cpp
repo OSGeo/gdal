@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  1999/06/08 17:44:10  warmerda
+ * Fixed sequential Read() with SFIStream ... seek position wasn't
+ * being incremented after reads.
+ *
  * Revision 1.6  1999/06/04 15:33:51  warmerda
  * Added copyright headers, and function headers.
  *
@@ -67,7 +71,6 @@ struct SFIStream : IStream
     ~SFIStream()
 	{
             // fill in later		
-	
 	}
 
 
@@ -113,7 +116,7 @@ struct SFIStream : IStream
 
 
             *pcbActuallyRead = MIN(cbToRead, m_nSize - m_nSeekPos);
-            memcpy(pDest, m_pStream,*pcbActuallyRead);
+            memcpy(pDest, ((BYTE *)m_pStream)+m_nSeekPos,*pcbActuallyRead);
             m_nSeekPos+= *pcbActuallyRead;
 
             return S_OK;
