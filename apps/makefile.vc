@@ -5,7 +5,7 @@ OBJ	=	gdalopen.obj gdaldrivermanager.obj gdaldriver.obj \
 
 GDAL_ROOT	=	..
 
-XTRAOBJ =	$(VCDIR)\lib\setargv.obj
+XTRAOBJ =	$(SETARGV)
 
 LIBS	=	$(GDAL_ROOT)\gdal_i.lib
 
