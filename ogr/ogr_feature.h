@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2001/11/01 16:54:16  warmerda
+ * added DestroyFeature
+ *
  * Revision 1.20  2001/07/19 18:25:07  warmerda
  * expanded tabs
  *
@@ -392,6 +395,7 @@ class CPL_DLL OGRFeature
     virtual void        SetStyleTable(OGRStyleTable *poStyleTable);
 
     static OGRFeature  *CreateFeature( OGRFeatureDefn * );
+    static void         DestroyFeature( OGRFeature * );
 };
 
 /************************************************************************/

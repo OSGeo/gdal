@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2001/11/01 16:54:16  warmerda
+ * added DestroyFeature
+ *
  * Revision 1.18  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *
@@ -178,7 +181,8 @@ OGRFeature::~OGRFeature()
 /*                           CreateFeature()                            */
 /************************************************************************/
 
-/* Feature factory.
+/**
+ * Feature factory.
  *
  * This is essentially a feature factory, useful for               
  * applications creating features but wanting to ensure they       
@@ -194,6 +198,28 @@ OGRFeature *OGRFeature::CreateFeature( OGRFeatureDefn *poDefn )
 
 {
     return new OGRFeature( poDefn );
+}
+
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
+
+/**
+ * Destroy feature
+ *
+ * The feature is deleted, but within the context of the GDAL/OGR heap.
+ * This is necessary when higher level applications use GDAL/OGR from a 
+ * DLL and they want to delete a feature created within the DLL.  If the
+ * delete is done in the calling application the memory will be freed onto
+ * the application heap which is inappropriate. 
+ * 
+ * @param poFeature the feature to delete.
+ */
+
+void OGRFeature::DestroyFeature( OGRFeature *poFeature )
+
+{
+    delete poFeature;
 }
 
 /************************************************************************/
