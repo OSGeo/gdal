@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.33  2004/11/25 20:16:30  fwarmerdam
+# Fixed TransformTo() (bug 685).
+#
 # Revision 1.32  2004/10/27 18:27:33  fwarmerdam
 # Fixed last fix?
 #
@@ -831,7 +834,7 @@ class Geometry:
         return _gdal.OGR_G_Transform( self._o, coord_tran._o )
     
     def TransformTo( self, srs_out ):
-        return _gdal.OGR_G_Transform( self._o, srs_out._o )
+        return _gdal.OGR_G_TransformTo( self._o, srs_out._o )
     
     def Intersect( self, other_geom ):
         return _gdal.OGR_G_Intersect( self._o, other_geom._o )
