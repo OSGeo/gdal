@@ -18,6 +18,7 @@ int main()
 
     oStatement.Execute( "DROP TABLE fasttest" );
     oStatement.Execute( "CREATE TABLE fasttest (ifld INTEGER, cfld VARCHAR(4000), shape mdsys.sdo_geometry)" );
+//    oStatement.Execute( "CREATE TABLE fasttest (ifld INTEGER, cfld VARCHAR(4000))" );
 
 /* -------------------------------------------------------------------- */
 /*      Prepare insert statement.                                       */
@@ -25,6 +26,8 @@ int main()
     
     oStatement.Prepare( "INSERT INTO fasttest VALUES "
                         "(:field_1, :field_2, :field_3)" );
+//    oStatement.Prepare( "INSERT INTO fasttest VALUES "
+//                        "(:field_1, :field_2)" );
     
 /* -------------------------------------------------------------------- */
 /*      Do a conventional bind.                                         */
@@ -38,6 +41,7 @@ int main()
     SDO_GEOMETRY_TYPE  aoGeometries[100];
     SDO_GEOMETRY_ind   aoGeometryIndicators[100];
     SDO_GEOMETRY_TYPE *apoGeomMap[100];
+    SDO_GEOMETRY_ind  *apoGeomIndMap[100];
     double adfX[100], adfY[100];
 
     memset( aphElemInfos, 0, sizeof(OCIArray*) * 100 );
@@ -51,11 +55,11 @@ int main()
     
     if( oStatement.BindScalar( ":field_2", szField2, 4, SQLT_STR ) != CE_None )
         exit( 1 );
-        
-    if( oStatement.BindObject( ":field_3", apoGeomMap,
-                               oSession.hGeometryTDO ) != CE_None )
+
+    if( oStatement.BindObject( ":field_3", apoGeomMap, oSession.hGeometryTDO, 
+                               (void**)apoGeomIndMap ) != CE_None )
         exit( 1 );
-    
+
 /* -------------------------------------------------------------------- */
 /*      Create array of arrays for elem_info and ordinates.             */
 /* -------------------------------------------------------------------- */
@@ -99,7 +103,7 @@ int main()
         int anElemInfo[3], nElemInfoCount;
         OCINumber oci_number; 
         int i;
-
+        
         nElemInfoCount = 3;
         anElemInfo[0] = 1;
         anElemInfo[1] = 1;
@@ -126,13 +130,16 @@ int main()
 	}
 
         //---------------------------------------------------------------
-        double adfOrdinates[3];
+        double adfOrdinates[6];
         int    nOrdCount;
 
         nOrdCount = 3;
         adfOrdinates[0] = iRow + 100;
         adfOrdinates[1] = iRow - 100;
         adfOrdinates[2] = 0.0;
+        adfOrdinates[3] = iRow + 100;
+        adfOrdinates[4] = iRow - 100;
+        adfOrdinates[5] = 0.0;
 
         // Prepare the VARRAY of ordinate values. 
 	for (i = 0; i < nOrdCount; i++)
@@ -181,18 +188,24 @@ int main()
         poGeom->sdo_ordinates = aphOrdinates[iRow];
 
         apoGeomMap[iRow] = poGeom;
+        apoGeomIndMap[iRow] = poInd;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Execute the statement.                                          */
 /* -------------------------------------------------------------------- */
-    if( oSession.Failed( 
-        OCIStmtExecute( oSession.hSvcCtx, oStatement.GetStatement(), 
-                        oSession.hError, (ub4) 100, (ub4)0, 
-                        (OCISnapshot *)NULL, (OCISnapshot *)NULL, 
-                        (ub4) OCI_COMMIT_ON_SUCCESS ),
-        "OCIStmtExecute" ) )
-        exit( 1 );
+    int iGroup;
+
+    for( iGroup = 0; iGroup < 2; iGroup++ )
+    {
+        if( oSession.Failed( 
+                OCIStmtExecute( oSession.hSvcCtx, oStatement.GetStatement(), 
+                                oSession.hError, (ub4) 100, (ub4)0, 
+                                (OCISnapshot *)NULL, (OCISnapshot *)NULL, 
+                                (ub4) OCI_COMMIT_ON_SUCCESS ),
+                "OCIStmtExecute" ) )
+            exit( 1 );
+    }
 
     printf( "Successful completion\n" );
     exit( 0 );
