@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2003/06/10 14:44:11  warmerda
+ * Added support for writing shapes with NULL geometries.
+ *
  * Revision 1.26  2003/05/27 21:39:53  warmerda
  * added support for writing MULTILINESTRINGs as ARCs
  *
@@ -317,11 +320,23 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
 
 {
 /* ==================================================================== */
+/*      Write "shape" with no geometry.                                 */
+/* ==================================================================== */
+    if( poGeom == NULL )
+    {
+        SHPObject       *psShape;
+
+        psShape = SHPCreateSimpleObject( SHPT_NULL, 0, NULL, NULL, NULL );
+        SHPWriteObject( hSHP, iShape, psShape );
+        SHPDestroyObject( psShape );
+    }
+
+/* ==================================================================== */
 /*      Write point geometry.                                           */
 /* ==================================================================== */
-    if( hSHP->nShapeType == SHPT_POINT
-        || hSHP->nShapeType == SHPT_POINTM
-        || hSHP->nShapeType == SHPT_POINTZ )
+    else if( hSHP->nShapeType == SHPT_POINT
+             || hSHP->nShapeType == SHPT_POINTM
+             || hSHP->nShapeType == SHPT_POINTZ )
     {
         SHPObject       *psShape;
         OGRPoint        *poPoint = (OGRPoint *) poGeom;
@@ -788,6 +803,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            OGRFeature * poFeature )
 
 {
+#ifdef notdef
 /* -------------------------------------------------------------------- */
 /*      Don't write objects with missing geometry.                      */
 /* -------------------------------------------------------------------- */
@@ -799,6 +815,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
         
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
     }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Write the geometry.                                             */
