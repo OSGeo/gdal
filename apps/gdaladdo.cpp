@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/07/16 15:12:05  warmerda
+ * Added AVERAGE_MAGPHASE option.
+ *
  * Revision 1.4  2001/01/30 22:32:42  warmerda
  * added AVERAGE_MP (magnitude preserving averaging) overview resampling type
  *
@@ -51,7 +54,7 @@
 static void Usage()
 
 {
-    printf( "Usage: gdaladdo [-r {nearest,average,average_mp,mode}]\n"
+    printf( "Usage: gdaladdo [-r {nearest,average,average_mp,average_magphase,mode}]\n"
             "                filename levels\n"
             "\n"
             "Example:\n"
