@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/12/08 15:58:45  warmerda
+ * fixed VSIFSeek() arguments as per Chris Schaefer
+ *
  * Revision 1.1  2001/12/08 04:35:16  warmerda
  * New
  *
@@ -178,7 +181,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Rewind, and read line by line.                                  */
 /* -------------------------------------------------------------------- */
-    VSIFSeek( fp, SEEK_SET, 0 );
+    VSIFSeek( fp, 0, SEEK_SET );
 
     while( (pszLine = BSBReadHeaderLine(fp)) != NULL )
     {
