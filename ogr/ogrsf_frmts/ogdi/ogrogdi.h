@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/02/22 13:08:54  fwarmerdam
+ * use OGRLayer base spatial filter support
+ *
  * Revision 1.5  2003/05/21 03:58:49  warmerda
  * expand tabs
  *
@@ -75,7 +78,6 @@ class OGROGDILayer : public OGRLayer
     OGRFeatureDefn     *m_poFeatureDefn;
     OGRSpatialReference *m_poSpatialRef;
     ecs_Region          m_sFilterBounds;
-    OGRGeometry        *m_poFilterGeom;
 
     int                 m_iNextShapeId;
     int                 m_nTotalShapeCount;
@@ -85,8 +87,7 @@ class OGROGDILayer : public OGRLayer
                                      ecs_Family);
                         ~OGROGDILayer();
 
-    OGRGeometry *       GetSpatialFilter() { return m_poFilterGeom; }
-    void                SetSpatialFilter( OGRGeometry * );
+    virtual void        SetSpatialFilter( OGRGeometry * );
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();
