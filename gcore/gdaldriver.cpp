@@ -24,8 +24,11 @@
  *
  * The GDALDriver class.  This class is mostly just a container for
  * driver specific function pointers.
- * 
+ *
  * $Log$
+ * Revision 1.7  2000/01/13 04:13:10  pgs
+ * added initialization of pfnCreate = NULL to prevent run-time crash when format doesn't support creating a file
+ *
  * Revision 1.6  1999/12/08 14:40:50  warmerda
  * Fixed error message.
  *
@@ -59,6 +62,7 @@ GDALDriver::GDALDriver()
     pszLongName = NULL;
 
     pfnOpen = NULL;
+    pfnCreate = NULL;
 }
 
 /************************************************************************/
@@ -80,13 +84,13 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 
 {
     /* notdef: should add a bunch of error checking here */
-    
+
     if( pfnCreate == NULL )
     {
         CPLError( CE_Fatal, CPLE_NotSupported,
                   "GDALDriver::Create() ... no create method implemented"
                   " for this format.\n" );
-        
+
         return NULL;
     }
     else
