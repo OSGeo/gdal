@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/09/17 16:36:34  warmerda
+ * fixed setting of dimension for point objects
+ *
  * Revision 1.3  2003/08/05 01:59:09  warmerda
  * Default unsized string fields to 2047 instead of 4000 to avoid problem reading
  * fields of width 2048 or more as reported by Ned.
@@ -406,15 +409,15 @@ OGRErr OGROCIWritableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry,
         char szResult[1024];
         OGRPoint *poPoint = (OGRPoint *) poGeometry;
 
-        if( poGeometry->getDimension() == 2 )
+        if( nDimension == 2 )
             sprintf( szResult, 
-                     "%s(%d,%s,MDSYS.SDO_POINT_TYPE(%.16g,%.16g),NULL,NULL)",
+                     "%s(%d,%s,MDSYS.SDO_POINT_TYPE(%.16g,%.16g,0.0),NULL,NULL)",
                      SDO_GEOMETRY, 2001, szSRID, 
                      poPoint->getX(), poPoint->getY() );
         else
             sprintf( szResult, 
                      "%s(%d,%s,MDSYS.SDO_POINT_TYPE(%.16g,%.16g,%.16g),NULL,NULL)",
-                     SDO_GEOMETRY, 2001, szSRID, 
+                     SDO_GEOMETRY, 3001, szSRID, 
                      poPoint->getX(), poPoint->getY(), poPoint->getZ() );
 
         return CPLStrdup(szResult );
