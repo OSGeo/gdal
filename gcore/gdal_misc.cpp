@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/03/24 00:09:19  warmerda
+ * added sort-of random sampling
+ *
  * Revision 1.8  2000/03/23 16:53:21  warmerda
  * use overviews for approximate min/max
  *
@@ -398,4 +401,125 @@ int GDALDummyProgress( double, const char *, void * )
 
 {
     return TRUE;
+}
+
+/************************************************************************/
+/*                     GDALGetRandomRasterSample()                      */
+/************************************************************************/
+
+int GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples, 
+                               float *pafSampleBuf )
+
+{
+    GDALRasterBand *poBand = (GDALRasterBand *) hBand;
+
+/* -------------------------------------------------------------------- */
+/*      If we have overview bands, use them for min/max.                */
+/* -------------------------------------------------------------------- */
+    int     nBestSize = poBand->GetXSize() * poBand->GetYSize();
+    GDALRasterBand *poBestBand = poBand;
+
+    for( int iOverview = 0; 
+         iOverview < poBand->GetOverviewCount(); 
+         iOverview++ )
+    {
+        GDALRasterBand *poTestBand = poBand->GetOverview(iOverview);
+        
+        if( poTestBand->GetXSize() * poTestBand->GetYSize() < nBestSize )
+        {
+            nBestSize = poTestBand->GetXSize() * poTestBand->GetYSize();
+            poBestBand = poTestBand;
+        }
+    }
+    
+    poBand = poBestBand;
+    
+/* -------------------------------------------------------------------- */
+/*      Figure out the ratio of blocks we will read to get an           */
+/*      approximate value.                                              */
+/* -------------------------------------------------------------------- */
+    int         nBlockXSize, nBlockYSize;
+    int         nBlocksPerRow, nBlocksPerColumn;
+    int         nSampleRate;
+    int         bGotNoDataValue;
+    double      dfNoDataValue;
+    int         nActualSamples = 0;
+    int         nBlockSampleRate;
+
+    dfNoDataValue = poBand->GetNoDataValue( &bGotNoDataValue );
+
+    poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
+    nBlocksPerRow = (poBand->GetXSize() + nBlockXSize - 1) / nBlockXSize;
+    nBlocksPerColumn = (poBand->GetYSize() + nBlockYSize - 1) / nBlockYSize;
+
+    nSampleRate = 
+        (int) MAX(1,sqrt((double) nBlocksPerRow * nBlocksPerColumn));
+
+    nBlockSampleRate = MAX(1,(nBlockXSize * nBlockYSize) / 
+        (nSamples / (nBlocksPerRow*nBlocksPerColumn / nSampleRate)));
+    
+    for( int iSampleBlock = 0; 
+         iSampleBlock < nBlocksPerRow * nBlocksPerColumn;
+         iSampleBlock += nBlockSampleRate )
+    {
+        double dfValue = 0.0;
+        int  iXBlock, iYBlock, nXCheck, nYCheck, iOffset;
+        GDALRasterBlock *poBlock;
+
+        iYBlock = iSampleBlock / nBlocksPerRow;
+        iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
+
+        poBlock = poBand->GetBlockRef( iXBlock, iYBlock );
+        
+        if( (iXBlock+1) * nBlockXSize > poBand->GetXSize() )
+            nXCheck = poBand->GetXSize() - iXBlock * nBlockXSize;
+        else
+            nXCheck = nBlockXSize;
+
+        if( (iYBlock+1) * nBlockYSize > poBand->GetYSize() )
+            nYCheck = poBand->GetYSize() - iYBlock * nBlockYSize;
+        else
+            nYCheck = nBlockYSize;
+
+        /* this isn't the fastest way to do this, but is easier for now */
+        for( iOffset = nBlockXSize*nBlockYSize-1; 
+             iOffset >= 0 && nActualSamples < nSamples; 
+             iOffset -= nBlockSampleRate )
+        {
+            switch( poBlock->GetDataType() )
+            {
+              case GDT_Byte:
+                dfValue = ((GByte *) poBlock->GetDataRef())[iOffset];
+                break;
+                
+              case GDT_UInt16:
+                dfValue = ((GUInt16 *) poBlock->GetDataRef())[iOffset];
+                break;
+              case GDT_Int16:
+                dfValue = ((GInt16 *) poBlock->GetDataRef())[iOffset];
+                break;
+              case GDT_UInt32:
+                dfValue = ((GUInt32 *) poBlock->GetDataRef())[iOffset];
+                break;
+              case GDT_Int32:
+                dfValue = ((GInt32 *) poBlock->GetDataRef())[iOffset];
+                break;
+              case GDT_Float32:
+                dfValue = ((float *) poBlock->GetDataRef())[iOffset];
+                break;
+              case GDT_Float64:
+                dfValue = ((double *) poBlock->GetDataRef())[iOffset];
+                break;
+              default:
+                CPLAssert( FALSE );
+            }
+            
+            if( bGotNoDataValue && dfValue == dfNoDataValue )
+                continue;
+
+            pafSampleBuf[nActualSamples++] = dfValue;
+        }
+    }
+
+    return nActualSamples;
 }
