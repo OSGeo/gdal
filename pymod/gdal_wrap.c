@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.65  2003/04/08 22:13:00  warmerda
- * added new entry poins, and listtostringlist support
+ * Revision 1.66  2003/04/22 17:28:41  warmerda
+ * avoid use of assert()
  *
  ************************************************************************/
 
@@ -2463,7 +2463,7 @@ void PyErrorHandlerProxy( CPLErr eErrType, int nErrorCode, const char *pszMsg )
     PyObject *psArgs;
     PyObject *psResult;
 
-    assert( psPyHandlerStack != NULL );
+    CPLAssert( psPyHandlerStack != NULL );
     if( psPyHandlerStack == NULL )
         return;
 
@@ -7620,6 +7620,26 @@ static PyObject *_wrap_OGR_L_GetRefCount(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OGR_L_SyncToDisk(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRErr  _result;
+    OGRLayerH  _arg0;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGR_L_SyncToDisk",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_L_SyncToDisk. Expected _OGRLayerH.");
+        return NULL;
+        }
+    }
+    _result = (OGRErr )OGR_L_SyncToDisk(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OGR_DS_Destroy(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRDataSourceH  _arg0;
@@ -8689,6 +8709,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_DS_GetLayerCount", _wrap_OGR_DS_GetLayerCount, 1 },
 	 { "OGR_DS_GetName", _wrap_OGR_DS_GetName, 1 },
 	 { "OGR_DS_Destroy", _wrap_OGR_DS_Destroy, 1 },
+	 { "OGR_L_SyncToDisk", _wrap_OGR_L_SyncToDisk, 1 },
 	 { "OGR_L_GetRefCount", _wrap_OGR_L_GetRefCount, 1 },
 	 { "OGR_L_Dereference", _wrap_OGR_L_Dereference, 1 },
 	 { "OGR_L_Reference", _wrap_OGR_L_Reference, 1 },
