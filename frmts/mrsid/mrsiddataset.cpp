@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/03/26 19:29:21  kmelero
+ * Added flag to set 64-bit fwrite in support of large MrSID files.  (kmelero@sanz.com)
+ *
  * Revision 1.24  2005/03/25 15:02:22  kmelero
  * Removed misplaced < character.  Was causing compiler error. (kmelero@sanz.com)
  *
@@ -1350,7 +1353,7 @@ CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
       MG2ImageWriter oImageWriter(&oImageReader);
       oImageWriter.initialize();
 
-      oImageWriter.setUsageMeterEnabled( true );
+      oImageWriter.setUsageMeterEnabled(true);
    
       // set output filename
       oImageWriter.setOutputFileSpec( pszFilename );
@@ -1381,14 +1384,17 @@ CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
       if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
       
-      // Create the file.                                               
+      // Create the file.   
       MrSIDDummyImageReader oImageReader( poSrcDS );
       oImageReader.initialize();
       
       MG3ImageWriter oImageWriter(&oImageReader);
       oImageWriter.initialize();
       
-      oImageWriter.setUsageMeterEnabled( true );
+      // Set 64-bit Interface for large files.
+      oImageWriter.setFileStream64(true);
+
+      oImageWriter.setUsageMeterEnabled(true);
       
       // set output filename
       oImageWriter.setOutputFileSpec( pszFilename );
