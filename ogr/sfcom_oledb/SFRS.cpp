@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2002/05/06 15:12:39  warmerda
+ * improve IErrorInfo support
+ *
  * Revision 1.40  2002/04/30 17:16:59  warmerda
  * set eKind for columnid as per fix from Ryan
  *
@@ -268,7 +271,8 @@ HRESULT CSFCommand::ExtractSpatialQuery( DBPARAMS *pParams )
         CPLDebug( "OGR_OLEDB", "DBPARAMS->cParamSets=%d, this is a problem!\n",
                   pParams->cParamSets );
         return SFReportError(DB_E_ERRORSINCOMMAND,IID_ICommand,0,
-                             "Improper Parameters.");
+                             "%s", 
+                            "Too many parameters to command, only 1 allowed.");
     }
 
     ULONG   cBindings;
@@ -655,7 +659,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
         if( m_poLayer == NULL )
         {
             return SFReportError(DB_E_ERRORSINCOMMAND,IID_IUnknown,0,
-                                 "ExecuteSQL() failed.");
+                                 "%s", CPLGetLastErrorMsg() );
         }
     }
 /* -------------------------------------------------------------------- */
@@ -679,7 +683,7 @@ HRESULT CSFRowset::Execute(DBPARAMS * pParams, LONG* pcRowsAffected)
         {
             m_poLayer = NULL;
             return SFReportError(DB_E_ERRORSINCOMMAND,IID_IUnknown,0,
-                                 "Invalid Layer Name");
+                                 "Invalid Layer Name: %s", pszCommand );
         }
 
         m_poLayer->SetSpatialFilter(poGeometry);

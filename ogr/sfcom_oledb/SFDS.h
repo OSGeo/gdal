@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2002/05/06 15:12:39  warmerda
+ * improve IErrorInfo support
+ *
  * Revision 1.15  2002/04/25 17:38:28  warmerda
  * added custom connection tabs
  *
@@ -134,7 +137,13 @@ class ATL_NO_VTABLE MyIDBInitializeImpl : public IDBInitializeImpl<T>
                 }
                 else
                 {
-                    hr = SFReportError(E_FAIL,IID_IDBInitialize,0,pszDataSource);
+                    if( strlen(CPLGetLastErrorMsg()) > 0 )
+                        hr = SFReportError(E_FAIL,IID_IDBInitialize,0,
+                                           "%s", CPLGetLastErrorMsg() );
+                    else
+                        hr = SFReportError(E_FAIL,IID_IDBInitialize,0,
+                                           "Failed to open: %s",
+                                           pszDataSource);
                 }
 			
                 free(pszDataSource);

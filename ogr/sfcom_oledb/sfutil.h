@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/05/06 15:12:39  warmerda
+ * improve IErrorInfo support
+ *
  * Revision 1.7  2001/11/09 20:48:58  warmerda
  * added functions for processing WKT and getting provider options
  *
@@ -62,7 +65,7 @@ char	       *SFGetInitDataSource(IUnknown *pIUnknownIn);
 char          **SFGetProviderOptions( IUnknown *);
 char           *SFGetLayerWKT( OGRLayer *, IUnknown * );
 HRESULT	     	SFReportError(HRESULT passed_hr, IID iid, DWORD providerCode,
-                              char *pszText);
+                              char *pszText, ...);
 void		SFRegisterOGRFormats();
 int             SFWkbGeomTypeToDBGEOM( OGRwkbGeometryType );
 
