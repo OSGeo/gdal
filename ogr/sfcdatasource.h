@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/06/10 14:39:25  warmerda
+ * Added use of OGIS Features Tables schema rowset
+ *
  * Revision 1.5  1999/06/09 21:09:36  warmerda
  * updated docs
  *
@@ -89,7 +92,7 @@ class SFCDataSource : public CDataSource
     int         nSRInitialized;
     char	**papszSRName;
 
-    void        UseOGISFeaturesTables();
+    int         UseOGISFeaturesTables();
     void        UseTables();
 
     void        AddSFTable( const char * );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  1999/06/10 14:39:25  warmerda
+ * Added use of OGIS Features Tables schema rowset
+ *
  * Revision 1.3  1999/06/09 21:09:36  warmerda
  * updated docs
  *
@@ -40,11 +43,52 @@
  */
 
 #include "sfcdatasource.h"
-#include "ogr_geometry.h"
 #include "sfctable.h"
+#include "ogr_geometry.h"
 #include "cpl_string.h"
+#include "oledbgis.h"
 
 #include <atldbsch.h>
+
+/************************************************************************/
+/*                        COGISFeatureTableInfo                         */
+/*                                                                      */
+/*      Hardbound record for the OGIS Feature Tables schema rowset.     */
+/*      Modelled on CTableInfo.                                         */
+/************************************************************************/
+class COGISFeatureTableInfo
+{
+public:
+// Constructors
+	COGISFeatureTableInfo()
+	{
+		memset(this, 0, sizeof(*this));
+	}
+
+// Attributes
+
+	TCHAR   m_szFeatureTableAlias[129];
+	TCHAR   m_szCatalog[129];
+	TCHAR   m_szSchema[129];
+	TCHAR   m_szName[129];
+	TCHAR   m_szIdColumnName[129];
+	TCHAR   m_szDGColumnName[129];
+
+
+// Binding Map
+BEGIN_COLUMN_MAP(COGISFeatureTableInfo)
+	COLUMN_ENTRY(1, m_szFeatureTableAlias)
+	COLUMN_ENTRY(2, m_szCatalog)
+	COLUMN_ENTRY(3, m_szSchema)
+	COLUMN_ENTRY(4, m_szName)
+	COLUMN_ENTRY(5, m_szIdColumnName)
+	COLUMN_ENTRY(6, m_szDGColumnName)
+END_COLUMN_MAP()
+};
+
+typedef CRestrictions<CAccessor<COGISFeatureTableInfo>, 1, 
+                      &DBSCHEMA_OGIS_FEATURE_TABLES> COGISFeatureTables;
+
 
 /************************************************************************/
 /*                           SFCDataSource()                            */
@@ -160,9 +204,11 @@ void SFCDataSource::Reinitialize()
     papszSRName = NULL;
 
 /* -------------------------------------------------------------------- */
-/*      For now we just go straight to the table of tables.             */
+/*      Try the OGIS features tables schema rowset.  If that doesn't    */
+/*      work, fallback to the regular tables schema rowset.             */
 /* -------------------------------------------------------------------- */
-    UseTables();
+    if( !UseOGISFeaturesTables() )
+        UseTables();
 }
 
 /************************************************************************/
@@ -180,13 +226,11 @@ void SFCDataSource::UseTables()
 
     if( FAILED(oSession.Open(*this)) )
     {
-        printf( "Failed to create CSession.\n" );
         return;
     }
 
     if( FAILED(oTables.Open(oSession)) )
     {
-        printf( "Failed to create CTables rowset. \n" );
         return;
     }
 
@@ -214,6 +258,49 @@ void SFCDataSource::UseTables()
 
         delete poSFCTable;
     }
+}
+
+/************************************************************************/
+/*                       UseOGISFeaturesTables()                        */
+/*                                                                      */
+/*      Construct the list of spatial tables from the OGISFeatures      */
+/*      schema rowset.                                                  */
+/************************************************************************/
+
+int SFCDataSource::UseOGISFeaturesTables()
+
+{
+    CSession           oSession;
+    COGISFeatureTables oTables;
+
+    if( FAILED(oSession.Open(*this)) )
+    {
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If this provider doesn't support this schema rowset, we         */
+/*      silently return without making a big fuss.  The caller will     */
+/*      try using the regular tables schema rowset instead.             */
+/* -------------------------------------------------------------------- */
+    if( FAILED(oTables.Open(oSession)) )
+    {
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      For now we use the most expensive approach to deciding if       */
+/*      this table could be instantiated as a spatial table             */
+/*      ... actually go ahead and try.  Eventually we should use the    */
+/*      DBSCHEMA_COLUMNS or something else to try and do this more      */
+/*      cheaply.                                                        */
+/* -------------------------------------------------------------------- */
+    while( oTables.MoveNext() == S_OK )
+    {
+        AddSFTable( oTables.m_szName );
+    }
+
+    return TRUE;
 }
 
 /************************************************************************/
