@@ -30,6 +30,10 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.4  2004/01/31 10:14:08  aamici
+# fix all stale references after the libtool transition.
+# don't install non-python data files.
+#
 # Revision 1.3  2003/02/07 14:14:00  warmerda
 # fixed spelling of python
 #
@@ -59,7 +63,7 @@ soversion=v[:3]
 SOURCES=glob.glob(os.path.join("pymod","*.c*"))
 print SOURCES
 INCLUDE_DIRS=[os.path.join("core"), os.path.join("port"), os.path.join("ogr"), os.path.join("pymod"), ] # only necessary
-LIBRARY_DIRS = ["."]
+LIBRARY_DIRS = ["./libs"]
 
 INCLUDE_FILES = [
 	glob.glob(os.path.join("core", "*.h")),
@@ -97,7 +101,7 @@ else:
 	]
 	LIBRARIES = []
 	#EXTRA_LINK_ARGS=[os.path.join("gdal.a")]
-	LIBRARIES = ["gdal.%s" % soversion]
+	LIBRARIES = ["gdal"]
 	EXTRA_LINK_ARGS=[]
 	
 DATA_FILES.append(("include", INCLUDE_FILES))
@@ -113,8 +117,8 @@ setup (name = "Python_GDAL",
        url = "http://www.remotesensing.org/gdal/",
        packages = [''],
        package_dir = {'': 'pymod'},
-       extra_path = "gdal",
-       ext_modules = [Extension('_gdal',
+       #extra_path = "gdal",
+       ext_modules = [Extension('_gdalmodule',
 			sources = SOURCES,
 			include_dirs = INCLUDE_DIRS,
 			libraries = LIBRARIES,
@@ -122,6 +126,6 @@ setup (name = "Python_GDAL",
 			extra_link_args=EXTRA_LINK_ARGS,
 			),
 		],
-		data_files = DATA_FILES
+		#data_files = DATA_FILES
 	)
 
