@@ -1,12 +1,12 @@
 /**********************************************************************
- * $Id: mitab_datfile.cpp,v 1.16 2001/05/01 12:32:03 daniel Exp $
+ * $Id: mitab_datfile.cpp,v 1.17 2004/06/30 20:29:03 dmorissette Exp $
  *
  * Name:     mitab_datfile.cpp
  * Project:  MapInfo TAB Read/Write library
  * Language: C++
  * Purpose:  Implementation of the TABIDFile class used to handle
  *           reading/writing of the .DAT file
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
  * Copyright (c) 1999-2001, Daniel Morissette
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_datfile.cpp,v $
+ * Revision 1.17  2004/06/30 20:29:03  dmorissette
+ * Fixed refs to old address danmo@videotron.ca
+ *
  * Revision 1.16  2001/05/01 12:32:03  daniel
  * Get rid of leading spaces in WriteDateField().
  *

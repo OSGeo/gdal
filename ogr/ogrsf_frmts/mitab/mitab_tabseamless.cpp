@@ -1,15 +1,15 @@
 /**********************************************************************
- * $Id: mitab_tabseamless.cpp,v 1.4 2002/06/28 18:32:37 julien Exp $
+ * $Id: mitab_tabseamless.cpp,v 1.6 2004/06/30 20:29:04 dmorissette Exp $
  *
  * Name:     mitab_tabseamless.cpp
  * Project:  MapInfo TAB Read/Write library
  * Language: C++
  * Purpose:  Implementation of the TABSeamless class, used to handle seamless
  *           .TAB datasets.
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 1999-2001, Daniel Morissette
+ * Copyright (c) 1999-2004, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,12 @@
  **********************************************************************
  *
  * $Log: mitab_tabseamless.cpp,v $
+ * Revision 1.6  2004/06/30 20:29:04  dmorissette
+ * Fixed refs to old address danmo@videotron.ca
+ *
+ * Revision 1.5  2004/03/12 16:29:05  dmorissette
+ * Fixed 2 memory leaks (bug 283)
+ *
  * Revision 1.4  2002/06/28 18:32:37  julien
  * Add SetSpatialFilter() in TABSeamless class (Bug 164, MapServer)
  * Use double for comparison in Coordsys2Int() in mitab_mapheaderblock.cpp
@@ -349,6 +355,10 @@ int TABSeamless::Close()
     m_nTableNameField = -1;
     m_nCurBaseTableId = -1;
 
+    if (m_poCurBaseTable)
+        delete m_poCurBaseTable;
+    m_poCurBaseTable = NULL;
+
     return 0;
 }
 
@@ -410,6 +420,7 @@ int TABSeamless::OpenBaseTable(TABFeature *poIndexFeature,
             CPLErrorReset();
         delete m_poCurBaseTable;
         m_poCurBaseTable = NULL;
+        CPLFree(pszFname);
         return -1;
     }
 
@@ -420,6 +431,7 @@ int TABSeamless::OpenBaseTable(TABFeature *poIndexFeature,
     }
 
     m_nCurBaseTableId = nTableId;
+    CPLFree(pszFname);
 
     return 0;
 }

@@ -1,11 +1,11 @@
 /**********************************************************************
- * $Id: mitab_bounds.cpp,v 1.3 2001/02/14 21:17:33 daniel Exp $
+ * $Id: mitab_bounds.cpp,v 1.4 2004/06/30 20:29:03 dmorissette Exp $
  *
  * Name:     mitab_bounds.cpp
  * Project:  MapInfo TAB Read/Write library
  * Language: C++
  * Purpose:  Implementation of bound lookup tables for known projections.
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
  * Copyright (c) 2001, Daniel Morissette
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_bounds.cpp,v $
+ * Revision 1.4  2004/06/30 20:29:03  dmorissette
+ * Fixed refs to old address danmo@videotron.ca
+ *
  * Revision 1.3  2001/02/14 21:17:33  daniel
  * Check only if first char is "#" for comments in MITABLoadCoordSysTable()
  *

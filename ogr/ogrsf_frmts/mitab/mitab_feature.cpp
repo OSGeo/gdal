@@ -1,11 +1,11 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.50 2003/12/19 08:30:10 fwarmerdam Exp $
+ * $Id: mitab_feature.cpp,v 1.51 2004/06/30 20:29:03 dmorissette Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
  * Language: C++
  * Purpose:  Implementation of the feature classes specific to MapInfo files.
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
  * Copyright (c) 1999-2002, Daniel Morissette
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.51  2004/06/30 20:29:03  dmorissette
+ * Fixed refs to old address danmo@videotron.ca
+ *
  * Revision 1.50  2003/12/19 08:30:10  fwarmerdam
  * write 3d geometries to tab in 2D
  *

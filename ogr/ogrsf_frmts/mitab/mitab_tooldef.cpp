@@ -1,12 +1,12 @@
 /**********************************************************************
- * $Id: mitab_tooldef.cpp,v 1.5 2000/11/15 04:13:50 daniel Exp $
+ * $Id: mitab_tooldef.cpp,v 1.6 2004/06/30 20:29:04 dmorissette Exp $
  *
  * Name:     mitab_tooldef.cpp
  * Project:  MapInfo TAB Read/Write library
  * Language: C++
  * Purpose:  Implementation of the TABToolDefTable class used to handle
  *           a dataset's table of drawing tool blocks
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
  * Copyright (c) 1999, 2000, Daniel Morissette
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_tooldef.cpp,v $
+ * Revision 1.6  2004/06/30 20:29:04  dmorissette
+ * Fixed refs to old address danmo@videotron.ca
+ *
  * Revision 1.5  2000/11/15 04:13:50  daniel
  * Fixed writing of TABMAPToolBlock to allocate a new block when full
  *

@@ -1,12 +1,12 @@
 /**********************************************************************
- * $Id: mitab_indfile.cpp,v 1.9 2003/07/24 02:45:57 daniel Exp $
+ * $Id: mitab_indfile.cpp,v 1.10 2004/06/30 20:29:04 dmorissette Exp $
  *
  * Name:     mitab_indfile.cpp
  * Project:  MapInfo TAB Read/Write library
  * Language: C++
  * Purpose:  Implementation of the TABINDFile class used to handle
  *           access to .IND file (table field indexes) attached to a .DAT file
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
  * Copyright (c) 1999-2001, Daniel Morissette
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_indfile.cpp,v $
+ * Revision 1.10  2004/06/30 20:29:04  dmorissette
+ * Fixed refs to old address danmo@videotron.ca
+ *
  * Revision 1.9  2003/07/24 02:45:57  daniel
  * Fixed problem scanning node in TABINDNode::FindNext() - bug 2176, FW
  *

@@ -1,11 +1,11 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.36 2003/08/12 23:17:21 dmorissette Exp $
+ * $Id: mitab_priv.h,v 1.37 2004/06/30 20:29:04 dmorissette Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
  * Language: C++
  * Purpose:  Header file containing private definitions for the library.
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
  * Copyright (c) 1999-2003, Daniel Morissette
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.37  2004/06/30 20:29:04  dmorissette
+ * Fixed refs to old address danmo@videotron.ca
+ *
  * Revision 1.36  2003/08/12 23:17:21  dmorissette
  * Added reading of v500+ coordsys affine params (Anthony D. - Encom)
  *

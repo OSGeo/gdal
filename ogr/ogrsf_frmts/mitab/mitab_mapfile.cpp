@@ -1,12 +1,12 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.29 2003/08/12 23:17:21 dmorissette Exp $
+ * $Id: mitab_mapfile.cpp,v 1.30 2004/06/30 20:29:04 dmorissette Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
  * Language: C++
  * Purpose:  Implementation of the TABMAPFile class used to handle
  *           reading/writing of the .MAP files at the MapInfo object level
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
  * Copyright (c) 1999-2002, Daniel Morissette
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.30  2004/06/30 20:29:04  dmorissette
+ * Fixed refs to old address danmo@videotron.ca
+ *
  * Revision 1.29  2003/08/12 23:17:21  dmorissette
  * Added reading of v500+ coordsys affine params (Anthony D. - Encom)
  *
