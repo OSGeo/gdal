@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2003/05/21 03:42:01  warmerda
+ * Expanded tabs
+ *
  * Revision 1.8  2003/05/12 18:48:57  warmerda
  * added preliminary 3D write support
  *
@@ -110,8 +113,8 @@ int OGRDGNDataSource::Open( const char * pszNewName,
 /* -------------------------------------------------------------------- */
     if( bTestOpen )
     {
-        FILE	*fp;
-        GByte	abyHeader[512];
+        FILE    *fp;
+        GByte   abyHeader[512];
 
         fp = VSIFOpen( pszNewName, "rb" );
         if( fp == NULL )
@@ -141,7 +144,7 @@ int OGRDGNDataSource::Open( const char * pszNewName,
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGRDGNLayer	*poLayer;
+    OGRDGNLayer *poLayer;
 
     poLayer = new OGRDGNLayer( "elements", hDGN, bUpdate );
     pszName = CPLStrdup( pszNewName );
@@ -341,7 +344,7 @@ OGRLayer *OGRDGNDataSource::CreateLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGRDGNLayer	*poLayer;
+    OGRDGNLayer *poLayer;
 
     poLayer = new OGRDGNLayer( pszLayerName, hDGN, TRUE );
 

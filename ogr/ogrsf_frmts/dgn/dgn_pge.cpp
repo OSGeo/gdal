@@ -13,6 +13,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/05/21 03:42:01  warmerda
+ * Expanded tabs
+ *
  * Revision 1.6  2002/04/11 14:22:31  warmerda
  * skip tags without tagsets
  *
@@ -97,8 +100,8 @@ int DGNReadTags( const char *pszFilename, int nTagScheme,
 /* -------------------------------------------------------------------- */
     DGNElemTagValue *psTag;
     DGNElemTagSet   *psSet;
-    int	iTagSet;
-    int	iTag;
+    int iTagSet;
+    int iTag;
     char *pszResult;
 
     pszResult = CPLStrdup( "TAG_LIST;" );
@@ -124,7 +127,7 @@ int DGNReadTags( const char *pszFilename, int nTagScheme,
 
         if( psSet != NULL && psSet->tagSet == psTag->tagSet )
         {
-            int	i;
+            int i;
 
             for( i = 0; i < psSet->tagCount; i++ )
             {
@@ -158,7 +161,7 @@ int DGNReadTags( const char *pszFilename, int nTagScheme,
         }
         else
         {
-            char	szId[32];
+            char        szId[32];
 
             sprintf( szId, "%d", psTag->tagSet );
             *ppapszRetTagSets = CSLAddString( *ppapszRetTagSets, szId );
@@ -267,7 +270,7 @@ int DGNWriteTags( const char *pszFilename, int nTagScheme,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Load all tag value elements.					*/
+/*      Load all tag value elements.                                    */
 /* -------------------------------------------------------------------- */
     DGNElemTagValue **papsTagValues = NULL;
     int nTagValueCount = 0;
@@ -294,7 +297,7 @@ int DGNWriteTags( const char *pszFilename, int nTagScheme,
     }
 
 /* -------------------------------------------------------------------- */
-/*	Process each tag passed by the application.			*/
+/*      Process each tag passed by the application.                     */
 /* -------------------------------------------------------------------- */
     for( iTag = 0; iTag < CSLCount(papszTagSets); iTag++ )
     {

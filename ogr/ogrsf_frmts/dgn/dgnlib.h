@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2003/05/21 03:42:01  warmerda
+ * Expanded tabs
+ *
  * Revision 1.31  2003/05/15 14:47:24  warmerda
  * implement quaternion support on write
  *
@@ -133,7 +136,7 @@
 CPL_C_START
 
 #define CPLE_DGN_ERROR_BASE
-#define CPLE_ElementTooBig     		CPLE_DGN_ERROR_BASE+1
+#define CPLE_ElementTooBig              CPLE_DGN_ERROR_BASE+1
 
 /**
  * \file dgnlib.h
@@ -150,7 +153,7 @@ CPL_C_START
  */
 
 typedef struct {
-    double x;	/*!< X (normally eastwards) coordinate. */
+    double x;   /*!< X (normally eastwards) coordinate. */
     double y;   /*!< y (normally northwards) coordinate. */
     double z;   /*!< z, up coordinate.  Zero for 2D objects. */
 } DGNPoint;
@@ -162,7 +165,7 @@ typedef struct {
  * index is built for a file by DGNGetElementIndex().
  */
 typedef struct {
-    unsigned char	level;   /*!< Element Level: 0-63 */
+    unsigned char       level;   /*!< Element Level: 0-63 */
     unsigned char       type;    /*!< Element type (DGNT_*) */
     unsigned char       stype;   /*!< Structure type (DGNST_*) */
     unsigned char       flags;   /*!< Other flags */
@@ -186,18 +189,18 @@ typedef struct {
 
     int         element_id;     /*!< Element number (zero based) */
     int         stype;          /*!< Structure type: (DGNST_*) */
-    int		level;		/*!< Element Level: 0-63 */
-    int		type;		/*!< Element type (DGNT_) */
-    int		complex;	/*!< Is element complex? */
-    int		deleted;	/*!< Is element deleted? */
+    int         level;          /*!< Element Level: 0-63 */
+    int         type;           /*!< Element type (DGNT_) */
+    int         complex;        /*!< Is element complex? */
+    int         deleted;        /*!< Is element deleted? */
 
-    int		graphic_group;  /*!< Graphic group number */
-    int		properties;     /*!< Properties: ORing of DGNPF_ flags */
+    int         graphic_group;  /*!< Graphic group number */
+    int         properties;     /*!< Properties: ORing of DGNPF_ flags */
     int         color;          /*!< Color index (0-255) */
     int         weight;         /*!< Line Weight (0-31) */
     int         style;          /*!< Line Style: One of DGNS_* values */
 
-    int		attr_bytes;	/*!< Bytes of attribute data, usually zero. */
+    int         attr_bytes;     /*!< Bytes of attribute data, usually zero. */
     unsigned char *attr_data;   /*!< Raw attribute data */
 
     int         raw_bytes;      /*!< Bytes of raw data, usually zero. */
@@ -214,9 +217,9 @@ typedef struct {
  */
 
 typedef struct {
-  DGNElemCore 	core;
+  DGNElemCore   core;
 
-  int		num_vertices;  /*!< Number of vertices in "vertices" */
+  int           num_vertices;  /*!< Number of vertices in "vertices" */
   DGNPoint      vertices[2];   /*!< Array of two or more vertices */
 
 } DGNElemMultiPoint;    
@@ -230,18 +233,18 @@ typedef struct {
  */
 
 typedef struct {
-  DGNElemCore 	core;
+  DGNElemCore   core;
 
-  DGNPoint	origin;		/*!< Origin of ellipse */
+  DGNPoint      origin;         /*!< Origin of ellipse */
 
-  double	primary_axis;	/*!< Primary axis length */
+  double        primary_axis;   /*!< Primary axis length */
   double        secondary_axis; /*!< Secondary axis length */
 
-  double	rotation;       /*!< Counterclockwise rotation in degrees */
+  double        rotation;       /*!< Counterclockwise rotation in degrees */
   int           quat[4];
 
-  double	startang;       /*!< Start angle (degrees counterclockwise of primary axis) */
-  double	sweepang;       /*!< Sweep angle (degrees) */
+  double        startang;       /*!< Start angle (degrees counterclockwise of primary axis) */
+  double        sweepang;       /*!< Sweep angle (degrees) */
 
 } DGNElemArc;
 
@@ -258,13 +261,13 @@ typedef struct {
 typedef struct {
     DGNElemCore core;
     
-    int		font_id;       /*!< Microstation font id, no list available*/
-    int		justification; /*!< Justification, see DGNJ_* */
+    int         font_id;       /*!< Microstation font id, no list available*/
+    int         justification; /*!< Justification, see DGNJ_* */
     double      length_mult;   /*!< Char width in master (if square) */
     double      height_mult;   /*!< Char height in master units */
-    double	rotation;      /*!< Counterclockwise rotation in degrees */
-    DGNPoint	origin;        /*!< Bottom left corner of text. */
-    char	string[1];     /*!< Actual text (length varies, \0 terminated*/
+    double      rotation;      /*!< Counterclockwise rotation in degrees */
+    DGNPoint    origin;        /*!< Bottom left corner of text. */
+    char        string[1];     /*!< Actual text (length varies, \0 terminated*/
 } DGNElemText;
 
 /** 
@@ -278,8 +281,8 @@ typedef struct {
 typedef struct {
     DGNElemCore core;
     
-    int		totlength;     /*!< Total length of surface */
-    int		numelems;      /*!< # of elements in surface */
+    int         totlength;     /*!< Total length of surface */
+    int         numelems;      /*!< # of elements in surface */
 } DGNElemComplexHeader;
 
 /** 
@@ -292,14 +295,14 @@ typedef struct {
  */
 
 typedef struct {
-  DGNElemCore 	core;
+  DGNElemCore   core;
 
   int           screen_flag;
   GByte         color_info[256][3]; /*!< Color table, 256 colors by red (0), green(1) and blue(2) component. */
 } DGNElemColorTable;
 
 typedef struct {
-    int		  flags;
+    int           flags;
     unsigned char levels[8];
     DGNPoint      origin;
     DGNPoint      delta;
@@ -325,14 +328,14 @@ typedef struct {
 typedef struct {
     DGNElemCore core;
 
-    int		dimension;         /*!< Dimension (2 or 3) */
+    int         dimension;         /*!< Dimension (2 or 3) */
 
-    double	origin_x;       /*!< X origin of UOR space in master units(?)*/
+    double      origin_x;       /*!< X origin of UOR space in master units(?)*/
     double      origin_y;       /*!< Y origin of UOR space in master units(?)*/
     double      origin_z;       /*!< Z origin of UOR space in master units(?)*/
     
-    long	uor_per_subunit;   /*!< UOR per subunit. */
-    char	sub_units[3];      /*!< User name for subunits (2 chars)*/
+    long        uor_per_subunit;   /*!< UOR per subunit. */
+    char        sub_units[3];      /*!< User name for subunits (2 chars)*/
     long        subunits_per_master; /*!< Subunits per master unit. */
     char        master_units[3];   /*!< User name for master units (2 chars)*/
 
@@ -351,7 +354,7 @@ typedef struct {
 typedef struct {
     DGNElemCore core;
 
-    int		totlength;         /*!< Total length of cell */
+    int         totlength;         /*!< Total length of cell */
     char        name[7];           /*!< Cell name */
  unsigned short cclass;            /*!< Class bitmap */
  unsigned short levels[4];         /*!< Levels used in cell */
@@ -420,7 +423,7 @@ typedef struct {
  * Structure holding definition of one tag within a DGNTagSet.
  */
 typedef struct _DGNTagDef {
-    char	*name;      /*!< Name of this tag. */
+    char        *name;      /*!< Name of this tag. */
     int         id;         /*!< Tag index/identifier. */
     char        *prompt;    /*!< User prompt when requesting value. */
     int         type;       /*!< Tag type (one of DGNTT_STRING(1), DGNTT_INTEGER(3) or DGNTT_FLOAT(4). */
@@ -456,10 +459,10 @@ typedef struct {
 /* -------------------------------------------------------------------- */
 
 /** DGNElemCore style: Element uses DGNElemCore structure */
-#define DGNST_CORE		   1 
+#define DGNST_CORE                 1 
 
 /** DGNElemCore style: Element uses DGNElemMultiPoint structure */
-#define DGNST_MULTIPOINT	   2 
+#define DGNST_MULTIPOINT           2 
 
 /** DGNElemCore style: Element uses DGNElemColorTable structure */
 #define DGNST_COLORTABLE           3 
@@ -491,17 +494,17 @@ typedef struct {
 /* -------------------------------------------------------------------- */
 /*      Element types                                                   */
 /* -------------------------------------------------------------------- */
-#define DGNT_CELL_LIBRARY	   1
-#define DGNT_CELL_HEADER	   2
-#define DGNT_LINE		   3
-#define DGNT_LINE_STRING	   4
+#define DGNT_CELL_LIBRARY          1
+#define DGNT_CELL_HEADER           2
+#define DGNT_LINE                  3
+#define DGNT_LINE_STRING           4
 #define DGNT_GROUP_DATA            5
-#define DGNT_SHAPE		   6
+#define DGNT_SHAPE                 6
 #define DGNT_TEXT_NODE             7
 #define DGNT_DIGITIZER_SETUP       8
 #define DGNT_TCB                   9
 #define DGNT_LEVEL_SYMBOLOGY      10
-#define DGNT_CURVE		  11
+#define DGNT_CURVE                11
 #define DGNT_COMPLEX_CHAIN_HEADER 12
 #define DGNT_COMPLEX_SHAPE_HEADER 14
 #define DGNT_ELLIPSE              15
@@ -516,22 +519,22 @@ typedef struct {
 /* -------------------------------------------------------------------- */
 /*      Line Styles                                                     */
 /* -------------------------------------------------------------------- */
-#define DGNS_SOLID		0
-#define DGNS_DOTTED		1
-#define DGNS_MEDIUM_DASH	2
-#define DGNS_LONG_DASH		3
-#define DGNS_DOT_DASH		4
-#define DGNS_SHORT_DASH		5
+#define DGNS_SOLID              0
+#define DGNS_DOTTED             1
+#define DGNS_MEDIUM_DASH        2
+#define DGNS_LONG_DASH          3
+#define DGNS_DOT_DASH           4
+#define DGNS_SHORT_DASH         5
 #define DGNS_DASH_DOUBLE_DOT    6
 #define DGNS_LONG_DASH_SHORT_DASH 7
 
 /* -------------------------------------------------------------------- */
 /*      Class                                                           */
 /* -------------------------------------------------------------------- */
-#define DGNC_PRIMARY			0
-#define DGNC_PATTERN_COMPONENT		1
-#define DGNC_CONSTRUCTION_ELEMENT	2
-#define DGNC_DIMENSION_ELEMENT	        3
+#define DGNC_PRIMARY                    0
+#define DGNC_PATTERN_COMPONENT          1
+#define DGNC_CONSTRUCTION_ELEMENT       2
+#define DGNC_DIMENSION_ELEMENT          3
 #define DGNC_PRIMARY_RULE_ELEMENT       4
 #define DGNC_LINEAR_PATTERNED_ELEMENT   5
 #define DGNC_CONSTRUCTION_RULE_ELEMENT  6
@@ -549,7 +552,7 @@ typedef struct {
 /* -------------------------------------------------------------------- */
 /*      Word 17 property flags.                                         */
 /* -------------------------------------------------------------------- */
-#define DGNPF_HOLE	   0x8000
+#define DGNPF_HOLE         0x8000
 #define DGNPF_SNAPPABLE    0x4000
 #define DGNPF_PLANAR       0x2000
 #define DGNPF_ORIENTATION  0x1000
@@ -568,26 +571,26 @@ typedef struct {
 /* -------------------------------------------------------------------- */
 /*      Justifications                                                  */
 /* -------------------------------------------------------------------- */
-#define DGNJ_LEFT_TOP		0
-#define DGNJ_LEFT_CENTER	1
-#define DGNJ_LEFT_BOTTOM	2
-#define DGNJ_LEFTMARGIN_TOP	3    /* text node header only */
-#define DGNJ_LEFTMARGIN_CENTER	4    /* text node header only */
-#define DGNJ_LEFTMARGIN_BOTTOM	5    /* text node header only */
-#define DGNJ_CENTER_TOP		6
-#define DGNJ_CENTER_CENTER	6
-#define DGNJ_CENTER_BOTTOM	8
-#define DGNJ_RIGHTMARGIN_TOP	9    /* text node header only */
-#define DGNJ_RIGHTMARGIN_CENTER	10   /* text node header only */
-#define DGNJ_RIGHTMARGIN_BOTTOM	11   /* text node header only */
-#define DGNJ_RIGHT_TOP		12
-#define DGNJ_RIGHT_CENTER	13
-#define DGNJ_RIGHT_BOTTOM	14
+#define DGNJ_LEFT_TOP           0
+#define DGNJ_LEFT_CENTER        1
+#define DGNJ_LEFT_BOTTOM        2
+#define DGNJ_LEFTMARGIN_TOP     3    /* text node header only */
+#define DGNJ_LEFTMARGIN_CENTER  4    /* text node header only */
+#define DGNJ_LEFTMARGIN_BOTTOM  5    /* text node header only */
+#define DGNJ_CENTER_TOP         6
+#define DGNJ_CENTER_CENTER      6
+#define DGNJ_CENTER_BOTTOM      8
+#define DGNJ_RIGHTMARGIN_TOP    9    /* text node header only */
+#define DGNJ_RIGHTMARGIN_CENTER 10   /* text node header only */
+#define DGNJ_RIGHTMARGIN_BOTTOM 11   /* text node header only */
+#define DGNJ_RIGHT_TOP          12
+#define DGNJ_RIGHT_CENTER       13
+#define DGNJ_RIGHT_BOTTOM       14
 
 /* -------------------------------------------------------------------- */
 /*      DGN file reading options.                                       */
 /* -------------------------------------------------------------------- */
-#define DGNO_CAPTURE_RAW_DATA	0x01
+#define DGNO_CAPTURE_RAW_DATA   0x01
 
 /* -------------------------------------------------------------------- */
 /*      Known attribute linkage types, including my synthetic ones.     */
@@ -606,8 +609,8 @@ typedef struct {
 /*      File creation options.                                          */
 /* -------------------------------------------------------------------- */
 
-#define DGNCF_USE_SEED_UNITS   		  0x01
-#define DGNCF_USE_SEED_ORIGIN		  0x02
+#define DGNCF_USE_SEED_UNITS              0x01
+#define DGNCF_USE_SEED_ORIGIN             0x02
 #define DGNCF_COPY_SEED_FILE_COLOR_TABLE  0x04
 #define DGNCF_COPY_WHOLE_SEED_FILE        0x08
 
@@ -645,7 +648,7 @@ void CPL_DLL  DGNSetSpatialFilter( DGNHandle hDGN,
                                    double dfXMax, double dfYMax );
 int  CPL_DLL  DGNGetAttrLinkSize( DGNHandle, DGNElemCore *, int );
 unsigned char CPL_DLL *
-	      DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement, 
+              DGNGetLinkage( DGNHandle hDGN, DGNElemCore *psElement, 
                              int iIndex, int *pnLinkageType,
                              int *pnEntityNum, int *pnMSLink, int *pnLinkSize);
 

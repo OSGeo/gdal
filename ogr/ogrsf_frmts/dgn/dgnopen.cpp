@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2003/05/21 03:42:01  warmerda
+ * Expanded tabs
+ *
  * Revision 1.15  2003/05/12 18:48:57  warmerda
  * added preliminary 3D write support
  *
@@ -145,8 +148,8 @@ int DGNTestOpen( GByte *pabyHeader, int nByteCount )
 DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 
 {
-    DGNInfo	*psDGN;
-    FILE	*fp;
+    DGNInfo     *psDGN;
+    FILE        *fp;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -166,7 +169,7 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 /* -------------------------------------------------------------------- */
 /*      Verify the format ... add later.                                */
 /* -------------------------------------------------------------------- */
-    GByte	abyHeader[512];
+    GByte       abyHeader[512];
 
     VSIFRead( abyHeader, 1, sizeof(abyHeader), fp );
     if( !DGNTestOpen( abyHeader, sizeof(abyHeader) ) )
@@ -191,7 +194,7 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
     psDGN->scale = 1.0;
     psDGN->origin_x = 0.0;
     psDGN->origin_y = 0.0;
-    psDGN->origin_z = 0.0;					       
+    psDGN->origin_z = 0.0;                                             
 
     psDGN->index_built = FALSE;
     psDGN->element_count = 0;
@@ -229,7 +232,7 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 void DGNSetOptions( DGNHandle hDGN, int nOptions )
 
 {
-    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+    DGNInfo     *psDGN = (DGNInfo *) hDGN;
 
     psDGN->options = nOptions;
 }
@@ -264,7 +267,7 @@ void DGNSetSpatialFilter( DGNHandle hDGN,
                           double dfXMax, double dfYMax )
 
 {
-    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+    DGNInfo     *psDGN = (DGNInfo *) hDGN;
 
     if( dfXMin == 0.0 && dfXMax == 0.0
         && dfYMin == 0.0 && dfYMax == 0.0 )
@@ -292,7 +295,7 @@ void DGNSetSpatialFilter( DGNHandle hDGN,
 void DGNSpatialFilterToUOR( DGNInfo *psDGN )
 
 {
-    DGNPoint	sMin, sMax;
+    DGNPoint    sMin, sMax;
 
     if( psDGN->sf_converted_to_uor 
         || !psDGN->has_spatial_filter 
@@ -331,7 +334,7 @@ void DGNSpatialFilterToUOR( DGNInfo *psDGN )
 void DGNClose( DGNHandle hDGN )
 
 {
-    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+    DGNInfo     *psDGN = (DGNInfo *) hDGN;
 
     VSIFClose( psDGN->fp );
     CPLFree( psDGN->element_index );
@@ -351,7 +354,7 @@ void DGNClose( DGNHandle hDGN )
 int DGNGetDimension( DGNHandle hDGN )
 
 {
-    DGNInfo	*psDGN = (DGNInfo *) hDGN;
+    DGNInfo     *psDGN = (DGNInfo *) hDGN;
 
     return psDGN->dimension;
 }

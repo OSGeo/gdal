@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2003/05/21 03:42:01  warmerda
+ * Expanded tabs
+ *
  * Revision 1.7  2002/04/29 19:52:29  warmerda
  * clean up memory after stroking curve
  *
@@ -68,11 +71,11 @@ static void ComputePointOnArc2D( double dfPrimary, double dfSecondary,
                                  double *pdfX, double *pdfY )
 
 {
-    double	dfRadiusSquared, dfRadius, dfX2, dfY2;
-    double	dfCosAngle = cos(dfAngle);
-    double	dfSinAngle = sin(dfAngle);
-    double	dfPrimarySquared = dfPrimary * dfPrimary;
-    double	dfSecondarySquared = dfSecondary * dfSecondary;
+    double      dfRadiusSquared, dfRadius, dfX2, dfY2;
+    double      dfCosAngle = cos(dfAngle);
+    double      dfSinAngle = sin(dfAngle);
+    double      dfPrimarySquared = dfPrimary * dfPrimary;
+    double      dfSecondarySquared = dfSecondary * dfSecondary;
 
     dfRadiusSquared = (dfPrimarySquared * dfSecondarySquared)
         / (dfSecondarySquared * dfCosAngle * dfCosAngle
@@ -110,8 +113,8 @@ int DGNStrokeArc( DGNHandle hFile, DGNElemArc *psArc,
                   int nPoints, DGNPoint * pasPoints )
 
 {
-    double	dfAngleStep, dfAngle;
-    int		i;
+    double      dfAngleStep, dfAngle;
+    int         i;
 
     if( nPoints < 2 )
         return FALSE;
@@ -158,10 +161,10 @@ int DGNStrokeCurve( DGNHandle hFile, DGNElemMultiPoint *psCurve,
                     int nPoints, DGNPoint * pasPoints )
 
 {
-    int		k, nDGNPoints, iOutPoint;
-    double	*padfMx, *padfMy, *padfD, dfTotalD = 0, dfStepSize, dfD;
-    double	*padfTx, *padfTy;
-    DGNPoint	*pasDGNPoints = psCurve->vertices;
+    int         k, nDGNPoints, iOutPoint;
+    double      *padfMx, *padfMy, *padfD, dfTotalD = 0, dfStepSize, dfD;
+    double      *padfTx, *padfTy;
+    DGNPoint    *pasDGNPoints = psCurve->vertices;
 
     nDGNPoints = psCurve->num_vertices;
 
@@ -247,7 +250,7 @@ int DGNStrokeCurve( DGNHandle hFile, DGNElemMultiPoint *psCurve,
 
     for( k = 2; k < nDGNPoints - 3; k++ )
     {
-        double	dfAx, dfAy, dfBx, dfBy, dfCx, dfCy;
+        double  dfAx, dfAy, dfBx, dfBy, dfCx, dfCy;
 
 /* -------------------------------------------------------------------- */
 /*      Compute the "x" coefficients for this segment.                  */
@@ -337,7 +340,7 @@ int main( int argc, char ** argv )
         exit( 1 );
     }
 
-    double	dfX, dfY, dfPrimary, dfSecondary, dfAxisRotation, dfAngle;
+    double      dfX, dfY, dfPrimary, dfSecondary, dfAxisRotation, dfAngle;
 
     dfPrimary = atof(argv[1]);
     dfSecondary = atof(argv[2]);

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/05/21 03:42:01  warmerda
+ * Expanded tabs
+ *
  * Revision 1.16  2003/01/20 20:07:19  warmerda
  * added ascii to rad50 prototype
  *
@@ -91,35 +94,35 @@
 #endif
 
 typedef struct {
-    FILE	*fp;
-    int		next_element_id;
+    FILE        *fp;
+    int         next_element_id;
 
     int         nElemBytes;
-    GByte	abyElem[131076];
+    GByte       abyElem[131076];
 
     int         got_tcb;
     int         dimension;
     int         options;
-    double	scale;
-    double	origin_x;
-    double	origin_y;
-    double	origin_z;
+    double      scale;
+    double      origin_x;
+    double      origin_y;
+    double      origin_z;
 
     int         index_built;
-    int	        element_count;
+    int         element_count;
     int         max_element_count;
     DGNElementInfo *element_index;
 
     int         got_color_table;
-    GByte	color_table[256][3];
+    GByte       color_table[256][3];
 
     int         got_bounds;
-    GUInt32	min_x;
-    GUInt32	min_y;
-    GUInt32	min_z;
-    GUInt32	max_x;
-    GUInt32	max_y;
-    GUInt32	max_z;
+    GUInt32     min_x;
+    GUInt32     min_y;
+    GUInt32     min_z;
+    GUInt32     max_x;
+    GUInt32     max_y;
+    GUInt32     max_z;
 
     int         has_spatial_filter;
     int         sf_converted_to_uor;
@@ -127,10 +130,10 @@ typedef struct {
     int         select_complex_group;
     int         in_complex_group;
 
-    GUInt32	sf_min_x;
-    GUInt32	sf_min_y;
-    GUInt32	sf_max_x;
-    GUInt32	sf_max_y;
+    GUInt32     sf_min_x;
+    GUInt32     sf_min_y;
+    GUInt32     sf_max_x;
+    GUInt32     sf_max_y;
 
     double      sf_min_x_geo;
     double      sf_min_y_geo;
@@ -138,11 +141,11 @@ typedef struct {
     double      sf_max_y_geo;
 } DGNInfo;
 
-#define DGN_INT32( p )	((p)[2] \
-			+ (p)[3]*256 \
+#define DGN_INT32( p )  ((p)[2] \
+                        + (p)[3]*256 \
                         + (p)[1]*65536*256 \
                         + (p)[0]*65536)
-#define DGN_WRITE_INT32( n, p )	{ GInt32 nMacroWork = (n);                    \
+#define DGN_WRITE_INT32( n, p ) { GInt32 nMacroWork = (n);                    \
                    ((unsigned char *)p)[0] = (nMacroWork & 0x00ff0000) >> 16; \
                    ((unsigned char *)p)[1] = (nMacroWork & 0xff000000) >> 24; \
                    ((unsigned char *)p)[2] = (nMacroWork & 0x000000ff) >> 0;  \

@@ -13,6 +13,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/05/21 03:42:01  warmerda
+ * Expanded tabs
+ *
  * Revision 1.3  2002/03/15 16:08:42  warmerda
  * update to use strings lists for read/write function args
  *
@@ -35,7 +38,7 @@ CPL_CVSID("$Id$");
 int main( int nArgc, char **papszArgv )
 
 {
-    char	**papszTagSets = NULL;
+    char        **papszTagSets = NULL;
     char        **papszTagNames = NULL;
     char        **papszTagValues = NULL;
         
@@ -44,7 +47,7 @@ int main( int nArgc, char **papszArgv )
         if( DGNReadTags( papszArgv[2], 0, 
                          &papszTagSets, &papszTagNames, &papszTagValues ) )
         {
-            int	nItems = CSLCount(papszTagSets);
+            int nItems = CSLCount(papszTagSets);
 
             for( int i = 0; i < nItems; i++ )
                 printf( "  %s:%s = %s\n", 
