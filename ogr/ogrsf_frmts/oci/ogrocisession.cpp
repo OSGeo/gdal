@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/01/14 16:58:39  warmerda
+ * treat very long string fields as having no set width
+ *
  * Revision 1.5  2003/01/10 22:30:40  warmerda
  * collect type info for SDO_ORDINATE_ARRAY and added CleanName()
  *
@@ -340,7 +343,8 @@ OGROCISession::GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
         case SQLT_CHR:
         case SQLT_AFC: /* CHAR(), NCHAR() */
             poOGRDefn->SetType( OFTString );
-            poOGRDefn->SetWidth( nOCILen );
+            if( nOCILen < 2048 )
+                poOGRDefn->SetWidth( nOCILen );
             break;
 
         case SQLT_NUM:
