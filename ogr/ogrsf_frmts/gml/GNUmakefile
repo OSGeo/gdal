@@ -19,7 +19,7 @@ endif
 
 # By default, XML validation is disabled.  Uncomment the following line to
 # enable XML schema validation in the parser.
-#ALL_C_FLAGS :=  -DOGR_GML_VALIDATION=1 $(ALL_C_FLAGS)
+ALL_C_FLAGS :=  -DOGR_GML_VALIDATION=1 $(ALL_C_FLAGS)
 
 default:	$(CORE_OBJ) $(OGR_OBJ)
 
@@ -36,7 +36,7 @@ clean:
 
 gmlview:	gmlview.cpp $(CORE_OBJ)
 	$(CXX) $(ALL_C_FLAGS) $(LNK_FLAGS) \
-		gmlview.cpp gml2ogrgeometry.o $(CORE_OBJ) \
+		gmlview.cpp $(CORE_OBJ) \
 		../ogrsf_frmts.a ../../ogr.a $(CPL_LIB) $(LIBS) \
 		-o gmlview
 
