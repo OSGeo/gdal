@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/11/26 13:50:34  warmerda
+ * added NATF support
+ *
  * Revision 1.8  1999/11/26 13:26:03  warmerda
  * fixed up sounding support
  *
@@ -455,6 +458,9 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
                                             OGRFeature * poFeature )
 
 {
+/* -------------------------------------------------------------------- */
+/*      ATTF Attributes                                                 */
+/* -------------------------------------------------------------------- */
     DDFField    *poATTF = poRecord->FindField( "ATTF" );
     int         nAttrCount, iAttr;
 
@@ -468,6 +474,23 @@ void S57Reader::ApplyObjectClassAttributes( DDFRecord * poRecord,
         
         poFeature->SetField( poRegistrar->GetAttrAcronym(nAttrId),
                           poRecord->GetStringSubfield("ATTF",0,"ATVL",iAttr) );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      NATF (national) attributes                                      */
+/* -------------------------------------------------------------------- */
+    DDFField    *poNATF = poRecord->FindField( "NATF" );
+
+    if( poNATF == NULL )
+        return;
+
+    nAttrCount = poNATF->GetRepeatCount();
+    for( iAttr = 0; iAttr < nAttrCount; iAttr++ )
+    {
+        int     nAttrId = poRecord->GetIntSubfield("NATF",0,"ATTL",iAttr);
+        
+        poFeature->SetField( poRegistrar->GetAttrAcronym(nAttrId),
+                          poRecord->GetStringSubfield("NATF",0,"ATVL",iAttr) );
     }
 }
 
