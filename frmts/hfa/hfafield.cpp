@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/12/08 19:09:34  warmerda
+ * implemented DumpInstValue and GetInstBytes for basedata
+ *
  * Revision 1.13  2003/05/21 15:35:05  warmerda
  * cleanup type conversion warnings
  *
@@ -838,7 +841,24 @@ int HFAField::GetInstBytes( GByte * pabyData )
     else
         nCount = 1;
 
-    if( poItemObjectType == NULL )
+    if( chItemType == 'b' )
+    {
+        GInt32 nRows, nColumns;
+        GInt16 nBaseItemType;
+        
+        memcpy( &nRows, pabyData, 4 );
+        HFAStandard( 4, &nRows );
+        memcpy( &nColumns, pabyData+4, 4 );
+        HFAStandard( 4, &nColumns );
+        memcpy( &nBaseItemType, pabyData+8, 2 );
+        HFAStandard( 2, &nBaseItemType );
+
+        nInstBytes += 12;
+
+        nInstBytes += 
+            (HFAGetDataTypeBits( nBaseItemType ) / 8) * nRows * nColumns;
+    }
+    else if( poItemObjectType == NULL )
     {
         nInstBytes += nCount * HFADictionary::GetItemSize(chItemType);
     }
@@ -943,8 +963,22 @@ void HFAField::DumpInstValue( FILE *fpOut,
             break;
 
           case 'b':
-            VSIFPrintf( fpOut, "(basedata)\n" );
-            break;
+          {
+              GInt32 nRows, nColumns;
+
+              GInt16 nBaseItemType;
+        
+              memcpy( &nRows, pabyData+8, 4 );
+              HFAStandard( 4, &nRows );
+              memcpy( &nColumns, pabyData+12, 4 );
+              HFAStandard( 4, &nColumns );
+              memcpy( &nBaseItemType, pabyData+16, 2 );
+              HFAStandard( 2, &nBaseItemType );
+              
+              VSIFPrintf( fpOut, "%dx%d basedata of type %d\n",
+                          nRows, nColumns, nBaseItemType );
+          }
+          break;
 
           case 'e':
             pReturn = ExtractInstValue( NULL, iEntry,
