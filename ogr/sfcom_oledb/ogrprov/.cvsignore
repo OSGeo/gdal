@@ -20,3 +20,6 @@ SFRS.cpp
 OGRVirtualArray.cpp
 swq.c
 SFDSCache.cpp
+SFSess.cpp
+SFDS.cpp
+
