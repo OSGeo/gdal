@@ -13,6 +13,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/03/15 16:08:42  warmerda
+ * update to use strings lists for read/write function args
+ *
  * Revision 1.2  2002/03/15 15:07:06  warmerda
  * use dgn_pge.h
  *
@@ -22,6 +25,7 @@
  */
 
 #include "dgn_pge.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -31,28 +35,44 @@ CPL_CVSID("$Id$");
 int main( int nArgc, char **papszArgv )
 
 {
+    char	**papszTagSets = NULL;
+    char        **papszTagNames = NULL;
+    char        **papszTagValues = NULL;
+        
     if( nArgc >= 3 && EQUAL(papszArgv[1],"-r") )
     {
-        printf( "%s\n", pgeDGNReadTags( papszArgv[2], 0 ) );
+        if( DGNReadTags( papszArgv[2], 0, 
+                         &papszTagSets, &papszTagNames, &papszTagValues ) )
+        {
+            int	nItems = CSLCount(papszTagSets);
+
+            for( int i = 0; i < nItems; i++ )
+                printf( "  %s:%s = %s\n", 
+                        papszTagSets[i], 
+                        papszTagNames[i],
+                        papszTagValues[i] );
+            
+            CSLDestroy( papszTagSets );
+            CSLDestroy( papszTagNames );
+            CSLDestroy( papszTagValues );
+        }
+        else
+            printf( "DGNReadTags() returned an error.\n" );
     }
     else if( nArgc >= 6 && EQUAL(papszArgv[1],"-w") )
     {
-        char	szPassString[10000];
-
-        sprintf( szPassString, "TAGLIST;" );
-
         for( int i = 3; i < nArgc; i += 3 )
         {
-            sprintf( szPassString+strlen(szPassString), 
-                     "\"%s\":\"%s\":\"%s\";", 
-                     papszArgv[i],
-                     papszArgv[i+1],
-                     papszArgv[i+2] );
+            papszTagSets = CSLAddString( papszTagSets, papszArgv[i] );
+            papszTagNames = CSLAddString( papszTagNames, papszArgv[i+1] );
+            papszTagValues = CSLAddString( papszTagValues, papszArgv[i+2] );
         }
 
-        printf( "Passing:\n%s\n", szPassString );
-        printf( "Result:%s\n", 
-                pgeDGNWriteTags( papszArgv[2], 0, szPassString ) );
+        if( !DGNWriteTags( papszArgv[2], 0, 
+                           papszTagSets, papszTagNames, papszTagValues ) )
+            printf( "DGNWriteTags() failed.\n" );
+        else
+            printf( "DGNWriteTags() succeeded\n" );
     }
     else 
     {

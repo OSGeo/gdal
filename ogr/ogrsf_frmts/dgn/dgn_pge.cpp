@@ -13,6 +13,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/03/15 16:08:42  warmerda
+ * update to use strings lists for read/write function args
+ *
  * Revision 1.2  2002/03/15 15:07:06  warmerda
  * use dgn_pge.h
  *
@@ -27,21 +30,25 @@
 
 CPL_CVSID("$Id$");
 
-static void CPLEscapeString( const char *pszSource, char *pszDest );
 static int DGNUpdateTagValue( DGNHandle, DGNElemTagValue *, const char * );
-
-#define MAX_ITEM_SIZE (768*6)
 
 /************************************************************************/
 /*                            DGNReadTags()                             */
 /************************************************************************/
 
-char *pgeDGNReadTags( const char *pszFilename, int nTagScheme )
+int DGNReadTags( const char *pszFilename, int nTagScheme,
+                 char ***ppapszRetTagSets, 
+                 char ***ppapszRetTagNames, 
+                 char ***ppapszRetTagValues )
 
 {
     DGNHandle hDGN;
     DGNElemCore **papsTagValues = NULL, **papsTagSets = NULL;
     int  nTagValueCount = 0, nTagSetCount = 0;
+
+    *ppapszRetTagSets = NULL;
+    *ppapszRetTagNames = NULL;
+    *ppapszRetTagValues = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file for read access.                                  */
@@ -49,12 +56,7 @@ char *pgeDGNReadTags( const char *pszFilename, int nTagScheme )
     hDGN = DGNOpen( pszFilename, FALSE );
 
     if( hDGN == NULL )
-    {
-        if( strlen(CPLGetLastErrorMsg()) > 0 )
-            return CPLStrdup(CPLGetLastErrorMsg());
-        else
-            return CPLStrdup("Failure opening DGN file.");
-    }
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Scan the file, keeping all tag set and tag value elements.      */
@@ -89,7 +91,6 @@ char *pgeDGNReadTags( const char *pszFilename, int nTagScheme )
     int	iTagSet;
     int	iTag;
     char *pszResult;
-    char szItem[MAX_ITEM_SIZE];
 
     pszResult = CPLStrdup( "TAG_LIST;" );
 
@@ -133,15 +134,20 @@ char *pgeDGNReadTags( const char *pszFilename, int nTagScheme )
 /* -------------------------------------------------------------------- */
         if( psTagDef != NULL )
         {
-            strcpy( szItem, "\"" );
-            CPLEscapeString( psSet->tagSetName, szItem + strlen(szItem) );
-            strcat( szItem, "\":\"" );
-            CPLEscapeString( psTagDef->name, szItem + strlen(szItem) );
-            strcat( szItem, "\":" );
+            *ppapszRetTagSets = 
+                CSLAddString( *ppapszRetTagSets, psSet->tagSetName );
+            *ppapszRetTagNames = 
+                CSLAddString( *ppapszRetTagNames, psTagDef->name );
         }
         else
         {
-            sprintf( szItem, "%d:%d:", psTag->tagSet, psTag->tagIndex );
+            char	szId[32];
+
+            sprintf( szId, "%d", psTag->tagSet );
+            *ppapszRetTagSets = CSLAddString( *ppapszRetTagSets, szId );
+
+            sprintf( szId, "%d", psTag->tagIndex );
+            *ppapszRetTagNames = CSLAddString( *ppapszRetTagNames, szId );
         }
 
 /* -------------------------------------------------------------------- */
@@ -149,30 +155,31 @@ char *pgeDGNReadTags( const char *pszFilename, int nTagScheme )
 /* -------------------------------------------------------------------- */
         if( psTag->tagType == 1 )
         {
-            strcat( szItem, "\"" );
-            CPLEscapeString( psTag->tagValue.string, szItem+strlen(szItem) );
-            strcat( szItem, "\";" );
+            *ppapszRetTagValues = 
+                CSLAddString( *ppapszRetTagValues, psTag->tagValue.string );
         }
         else if( psTag->tagType == 3 )
         {
-            sprintf( szItem+strlen(szItem), "%d;", psTag->tagValue.integer );
+            char szValue[128];
+            
+            sprintf( szValue, "%d", psTag->tagValue.integer );
+            *ppapszRetTagValues = 
+                CSLAddString( *ppapszRetTagValues, szValue );
         }
         else if( psTag->tagType == 4 )
         {
-            sprintf( szItem+strlen(szItem), "%g;", psTag->tagValue.real );
+            char szValue[128];
+            
+            sprintf( szValue, "%g", psTag->tagValue.real );
+            *ppapszRetTagValues = 
+                CSLAddString( *ppapszRetTagValues, szValue );
         }
         else
         {
-            sprintf( szItem+strlen(szItem), "<unrecognised tag type %d>;",
-                     psTag->tagType );
+            *ppapszRetTagValues = 
+                CSLAddString( *ppapszRetTagValues, 
+                              "<unrecognised tag type %d>;" );
         }
-
-/* -------------------------------------------------------------------- */
-/*      Add this item to the overall result string.                     */
-/* -------------------------------------------------------------------- */
-        pszResult = (char *) 
-            CPLRealloc( pszResult, strlen(pszResult) + strlen(szItem) + 1);
-        strcat( pszResult, szItem );
     }
 
 /* -------------------------------------------------------------------- */
@@ -190,34 +197,20 @@ char *pgeDGNReadTags( const char *pszFilename, int nTagScheme )
     
     DGNClose( hDGN );
 
-    return pszResult;
+    return TRUE;
 }
 
 /************************************************************************/
 /*                            DGNWriteTags()                            */
 /************************************************************************/
 
-char *pgeDGNWriteTags( const char *pszFilename, int nTagScheme, 
-                       const char *pszTagList )
+int DGNWriteTags( const char *pszFilename, int nTagScheme, 
+                  char **papszTagSets, 
+                  char **papszTagNames, 
+                  char **papszTagValues )
     
 {
     int  iTag, i;
-    char **papszTagList;
-
-/* -------------------------------------------------------------------- */
-/*      Split the tag list into individual tagset:tagname:value         */
-/*      items.                                                          */
-/* -------------------------------------------------------------------- */
-    papszTagList = CSLTokenizeString2( pszTagList, ";", 
-                                       CSLT_HONOURSTRINGS
-                                       | CSLT_PRESERVEQUOTES
-                                       | CSLT_PRESERVEESCAPES );
-
-    if( CSLCount(papszTagList) < 1 
-        || !EQUAL(papszTagList[0],"TAGLIST") )
-    {
-        return CPLStrdup( "Corrupt TAGLIST" );
-    }
 
 /* -------------------------------------------------------------------- */
 /*      open the file in update mode, and index it.                     */
@@ -227,7 +220,7 @@ char *pgeDGNWriteTags( const char *pszFilename, int nTagScheme,
 
     hDGN = DGNOpen( pszFilename, TRUE );
     if( hDGN == NULL )
-        return CPLStrdup( "ERROR: Failed to open file with update access." );
+        return FALSE;
 
     const DGNElementInfo *pasIndex = DGNGetElementIndex(hDGN,&nElementCount);
 
@@ -283,30 +276,22 @@ char *pgeDGNWriteTags( const char *pszFilename, int nTagScheme,
 /* -------------------------------------------------------------------- */
 /*	Process each tag passed by the application.			*/
 /* -------------------------------------------------------------------- */
-    for( iTag = 0; iTag < CSLCount(papszTagList); iTag++ )
+    for( iTag = 0; iTag < CSLCount(papszTagSets); iTag++ )
     {
-        char **papszTokens;
         int  iTagSet, nTagSetId=-1, nTagId=-1;
         DGNElemTagSet *psTagSet = NULL;
-
-        papszTokens = CSLTokenizeString2( papszTagList[iTag], ":",
-                                          CSLT_HONOURSTRINGS
-                                          | CSLT_ALLOWEMPTYTOKENS );
-
-        if( CSLCount(papszTokens) < 3 )
-            continue;
 
         // Find matching tagset.
         for( iTagSet = 0; iTagSet < nTagSetCount; iTagSet++ )
         {
-            if( EQUAL(papszTokens[0],papsTagSets[iTagSet]->tagSetName) )
+            if( EQUAL(papszTagSets[iTag],papsTagSets[iTagSet]->tagSetName) )
                 psTagSet = papsTagSets[iTagSet];
         }
 
         // Find matching tag.
         for( i = 0; psTagSet != NULL && i < psTagSet->tagCount; i++ )
         {
-            if( EQUAL(papszTokens[1],psTagSet->tagList[i].name) )
+            if( EQUAL(papszTagNames[iTag],psTagSet->tagList[i].name) )
             {
                 nTagSetId = psTagSet->tagSet;
                 nTagId = psTagSet->tagList[i].id;
@@ -317,7 +302,6 @@ char *pgeDGNWriteTags( const char *pszFilename, int nTagScheme,
         if( nTagId == -1 )
         {
             //notdef: we must record an error for this tag. 
-            CSLDestroy( papszTokens );
             continue;
         }
 
@@ -332,34 +316,21 @@ char *pgeDGNWriteTags( const char *pszFilename, int nTagScheme,
         if( i == nTagValueCount )
         {
             //notdef: we must record an error for this tag. 
-            CSLDestroy( papszTokens );
             continue;
         }
 
         // Update tag value with new value.
-        if( !DGNUpdateTagValue( hDGN, papsTagValues[i], papszTokens[2] ) )
+        if( !DGNUpdateTagValue( hDGN, papsTagValues[i], 
+                                papszTagValues[iTag] ) )
         {
             // notdef - should indicate error.
         }
     }
 
-    CSLDestroy( papszTagList );
-
     DGNClose( hDGN );
 
-    return CPLStrdup("SUCCESS");
+    return TRUE;
 }
-
-/************************************************************************/
-/*                           DGNFreeResult()                            */
-/************************************************************************/
-
-void pgeDGNFreeResult( char *pszResult )
-
-{
-    CPLFree( pszResult );
-}
-
 
 /************************************************************************/
 /*                         DGNUpdateTagValue()                          */
@@ -405,27 +376,4 @@ int DGNUpdateTagValue( DGNHandle hDGN, DGNElemTagValue *psTag,
     }
 
     return DGNWriteElement( hDGN, (DGNElemCore *) psTag );
-}
-
-/************************************************************************/
-/*                          CPLEscapeString()                           */
-/************************************************************************/
-
-static void CPLEscapeString( const char *pszSource, char *pszDest )
-
-{
-    while( *pszSource != '\0' )
-    {
-        if( *pszSource == '\\' || *pszSource == '\"' )
-        {
-            *(pszDest++) = '\\';
-            *(pszDest++) = *pszSource;
-        }
-        else
-            *(pszDest++) = *pszSource;
-
-        pszSource++;
-    }
-
-    *pszDest = '\0';
 }
