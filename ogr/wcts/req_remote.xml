@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<Transform xmlns="http://schemas.opengis.net/wcts" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml" version="0.1.0">
+  <SourceCRS>
+    <crsID>
+      <gml:code>4267</gml:code>
+      <gml:codeSpace>EPSG</gml:codeSpace>
+    </crsID>
+  </SourceCRS>
+  <TargetCRS>
+    <crsID>
+      <gml:code>4269</gml:code>
+      <gml:codeSpace>EPSG</gml:codeSpace>
+    </crsID>
+  </TargetCRS>
+  <CoordinateOperationID>
+    <gml:code>1241</gml:code> 
+    <gml:codeSpace>EPSG</gml:codeSpace> 
+    <gml:version>6.2.2</gml:version> 
+  </CoordinateOperationID>
+  <Data>
+    <FileURL>http://gdal.velocet.ca/~warmerda/nad27.gml</FileURL>
+  </Data>
+</Transform>
