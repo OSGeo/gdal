@@ -27,12 +27,19 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************
  *
+ * Independent Security Audit 2003/04/17 Andrey Kiselev:
+ *   Completed audit of this module. All functions may be used without buffer
+ *   overflows and stack corruptions with any kind of input data.
+ *
  * Security Audit 2003/03/28 warmerda:
  *   Completed security audit.  I believe that this module may be safely used 
  *   to parse, arbitrary GML potentially provided by a hostile source without
  *   compromising the system.
  *
  * $Log$
+ * Revision 1.6  2003/04/17 08:23:07  dron
+ * Completed security audit, few fixes in error format strings.
+ *
  * Revision 1.5  2003/03/28 05:46:43  warmerda
  * completed security audit, fix error report risk
  *
@@ -343,7 +350,7 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( CPLXMLNode *psNode )
         if( !EQUAL(poRing->getGeometryName(),"LINEARRING") )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Got %s geometry as outerBoundaryIs instead of LINEARRING.", 
+                      "Got %.500s geometry as outerBoundaryIs instead of LINEARRING.",
                       poRing->getGeometryName() );
             delete poPolygon;
             delete poRing;
@@ -365,7 +372,7 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( CPLXMLNode *psNode )
                 if( !EQUAL(poRing->getGeometryName(),"LINEARRING") )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined, 
-                              "Got %s geometry as innerBoundaryIs instead of LINEARRING.", 
+                              "Got %.500s geometry as innerBoundaryIs instead of LINEARRING.",
                               poRing->getGeometryName() );
                     delete poPolygon;
                     delete poRing;
@@ -484,7 +491,7 @@ static OGRGeometry *GML2OGRGeometry_XMLNode( CPLXMLNode *psNode )
                 if( !EQUAL(poPolygon->getGeometryName(),"POLYGON") )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined, 
-                              "Got %s geometry as polygonMember instead of POLYGON.", 
+                              "Got %.500s geometry as polygonMember instead of POLYGON.",
                               poPolygon->getGeometryName() );
                     delete poPolygon;
                     delete poMPoly;
