@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/osrs/libtiff/libtiff/tif_dirread.c,v 1.5 2000/01/28 21:00:20 warmerda Exp $ */
+/* $Header: /usr/cvsroot/gdal/frmts/gtiff/libtiff/tif_dirread.c,v 1.3 2000/04/03 21:30:11 warmerda Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -506,7 +506,7 @@ TIFFReadDirectory(TIFF* tif)
 		    _TIFFFieldWithTag(tif,TIFFTAG_STRIPBYTECOUNTS)->field_name);
 		EstimateStripByteCounts(tif, dir, dircount);
 #define	BYTECOUNTLOOKSBAD \
-    (td->td_stripbytecount[0] == 0 || \
+    ((td->td_stripbytecount[0] == 0 && td->td_stripoffset[0] != 0) || \
     (td->td_compression == COMPRESSION_NONE && \
      td->td_stripbytecount[0] > TIFFGetFileSize(tif) - td->td_stripoffset[0]))
 	} else if (td->td_nstrips == 1 && BYTECOUNTLOOKSBAD) {
