@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/06/27 14:38:26  warmerda
+ * avoid warnings
+ *
  * Revision 1.17  2003/05/21 03:42:01  warmerda
  * Expanded tabs
  *
@@ -504,7 +507,7 @@ void DGNRad50ToAscii(unsigned short rad50, char *str )
         if (value==0)                      
             ch = ' ';          /* space */
         else if (value >= 1 && value <= 26)  
-            ch = value-1+'A';/* printable alpha A..Z */
+            ch = (char) (value-1+'A');/* printable alpha A..Z */
         else if (value == 27)              
             ch = '$';          /* dollar */
         else if (value == 28)              
@@ -512,7 +515,7 @@ void DGNRad50ToAscii(unsigned short rad50, char *str )
         else if (value == 29)              
             ch = ' ';          /* unused char, emit a space instead */
         else if (value >= 30 && value <= 39) 
-            ch = value-30+'0';   /* digit 0..9 */
+            ch = (char) (value-30+'0');   /* digit 0..9 */
 
         *str = ch;
         str++;
