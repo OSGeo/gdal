@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2002/09/25 13:08:57  warmerda
+ * Fixed free of static PCS name as per bugzilla 207.
+ *
  * Revision 1.24  2002/09/04 06:46:30  warmerda
  * fixed two memory leaks
  *
@@ -215,7 +218,8 @@ char *GTIFGetOGISDefn( GTIFDefn * psDefn )
 
         GTIFGetPCSInfo( psDefn->PCS, &pszPCSName, NULL, NULL, NULL, NULL );
         oSRS.SetNode( "PROJCS", pszPCSName );
-        CPLFree( pszPCSName );
+        if( !EQUAL(pszPCSName,"unnamed") )
+            CPLFree( pszPCSName );
     }
     
 /* ==================================================================== */
