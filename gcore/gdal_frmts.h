@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2004/10/22 14:14:49  fwarmerdam
+ * Added PCRaster.
+ *
  * Revision 1.30  2004/10/21 19:22:41  fwarmerdam
  * Added GDALRegister_RS2().
  *
@@ -182,6 +185,7 @@ void CPL_DLL GDALRegister_LAN(void);
 void CPL_DLL GDALRegister_CPG(void);
 void CPL_DLL GDALRegister_AirSAR(void);
 void CPL_DLL GDALRegister_RS2(void);
+void CPL_DLL GDALRegister_PCRaster(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
