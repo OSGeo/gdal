@@ -31,6 +31,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.21  2005/03/29 20:56:32  fwarmerdam
+ * Ensure that DataSpecVersion can be overridden even if CDED50K product
+ * is selected.
+ *
  * Revision 1.20  2005/03/23 20:30:57  fwarmerdam
  * Fixed "east" check for NTS option case.
  *
@@ -1202,8 +1206,11 @@ static int USGSDEMProductSetup_CDED50K( USGSDEMWriteInfo *psWInfo )
 /* -------------------------------------------------------------------- */
     psWInfo->papszOptions = 
         CSLSetNameValue( psWInfo->papszOptions, "DEMLevelCode", "1" );
-    psWInfo->papszOptions = 
-        CSLSetNameValue( psWInfo->papszOptions, "DataSpecVersion", "1020" );
+
+    if( CSLFetchNameValue( psWInfo->papszOptions, "DataSpecVersion" ) == NULL )
+        psWInfo->papszOptions = 
+            CSLSetNameValue( psWInfo->papszOptions, "DataSpecVersion", 
+                             "1020" );
 
 /* -------------------------------------------------------------------- */
 /*      Set the destination coordinate system.                          */
