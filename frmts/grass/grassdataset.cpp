@@ -28,18 +28,18 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/09/14 21:07:33  warmerda
+ * modified to use new G_check_cell() function
+ *
  * Revision 1.1  2000/09/11 13:31:52  warmerda
  * New
  *
  */
 
+#include <libgrass.h>
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
-
-CPL_C_START
-#include <libgrass.h>
-CPL_C_END
 
 static GDALDriver	*poGRASSDriver = NULL;
 
@@ -180,47 +180,17 @@ GRASSDataset::~GRASSDataset()
 GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-/* -------------------------------------------------------------------- */
-/*      Are we dealing with a direct path to a GRASS cellhd file?       */
-/*                                                                      */
-/*      Eventually we will come up with other methods as well.          */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes > 100 
-        && EQUALN((const char *) poOpenInfo->pabyHeader,"proj:",5) )
-    {
-    }
+    static int	bDoneGISInit = FALSE;
+    char	*pszMapset = NULL, *pszCell = NULL;
 
-    else
+    if( !bDoneGISInit )
+        G_gisinit_2( "GDAL", NULL, NULL, NULL );
+
+/* -------------------------------------------------------------------- */
+/*      Check if this is a valid grass cell.                            */
+/* -------------------------------------------------------------------- */
+    if( !G_check_cell( poOpenInfo->pszFilename, &pszMapset, &pszCell ) )
         return NULL;
-
-/* -------------------------------------------------------------------- */
-/*      Can we establish a database, location and mapset?               */
-/* -------------------------------------------------------------------- */
-    char 	*pszCell, *pszMapset, *pszLocation, *pszGISDB;
-    char  	*pszMapsetPath, *pszLocationPath, *pszCellhdPath;
-
-    pszCell = CPLStrdup(CPLGetFilename(poOpenInfo->pszFilename ));
-    pszCellhdPath = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
-    pszMapsetPath = CPLStrdup(CPLGetPath(pszCellhdPath));
-    CPLFree( pszCellhdPath );
-    pszMapset = CPLStrdup(CPLGetFilename(pszMapsetPath));
-    pszLocationPath = CPLStrdup(CPLGetPath(pszMapsetPath));
-    CPLFree( pszMapsetPath );
-    pszLocation = CPLStrdup(CPLGetFilename(pszLocationPath));
-    pszGISDB = CPLStrdup(CPLGetPath(pszLocationPath));
-    CPLFree( pszLocationPath );
-
-/* -------------------------------------------------------------------- */
-/*      Try to initialize with the selected db, location and mapset.    */
-/* -------------------------------------------------------------------- */
-    int nInitError;
-
-    nInitError = G_gisinit_2( "GDAL", pszGISDB, pszLocation, pszMapset );
-    if( nInitError != 0 )
-    {
-        /* notdef: we should likely report an error through CPL */
-        return NULL;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -252,6 +222,9 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     poDS->SetBand( 1, new GRASSRasterBand( poDS, 1, pszMapset, pszCell ) );
+
+    G_free( pszMapset );
+    G_free( pszCell );
 
     return poDS;
 }
