@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/07/16 15:06:26  warmerda
+ * ensure that attributes are serialized properly regardless of their order
+ *
  * Revision 1.13  2002/07/09 20:25:25  warmerda
  * expand tabs
  *
@@ -749,7 +752,8 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
 /* -------------------------------------------------------------------- */
     else if( psNode->eType == CXT_Element )
     {
-        CPLXMLNode      *psChild = psNode->psChild;
+        int             bHasNonAttributeChildren = FALSE;
+        CPLXMLNode      *psChild;
         char *pszIndent;
         
         pszIndent =  (char *) CPLCalloc(nIndent + 1,1);
@@ -758,15 +762,20 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
         strcat( *ppszText + *pnLength, pszIndent );
         *pnLength += nIndent;
         sprintf( *ppszText + *pnLength, "<%s", psNode->pszValue );
-        
-        while( psChild != NULL && psChild->eType == CXT_Attribute )
+
+        /* Serialize *all* the attribute children, regardless of order */
+        for( psChild = psNode->psChild; 
+             psChild != NULL; 
+             psChild = psChild->psNext )
         {
-            CPLSerializeXMLNode( psChild, 0, ppszText, pnLength, 
-                                 pnMaxLength );
-            psChild = psChild->psNext;
+            if( psChild->eType == CXT_Attribute )
+                CPLSerializeXMLNode( psChild, 0, ppszText, pnLength, 
+                                     pnMaxLength );
+            else
+                bHasNonAttributeChildren = TRUE;
         }
         
-        if( psChild == NULL )
+        if( !bHasNonAttributeChildren )
         {
             if( psNode->pszValue[0] == '?' )
                 strcat( *ppszText + *pnLength, "?>\n" );
@@ -779,8 +788,13 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
 
             strcat( *ppszText + *pnLength, ">" );
 
-            while( psChild != NULL )
+            for( psChild = psNode->psChild; 
+                 psChild != NULL; 
+                 psChild = psChild->psNext )
             {
+                if( psChild->eType == CXT_Attribute )
+                    continue;
+
                 if( psChild->eType != CXT_Text && bJustText )
                 {
                     bJustText = FALSE;
@@ -789,9 +803,8 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
 
                 CPLSerializeXMLNode( psChild, nIndent + 2, ppszText, pnLength, 
                                      pnMaxLength );
-                psChild = psChild->psNext;
             }
-
+        
             if( strlen(psNode->pszValue)+*pnLength+40+nIndent > *pnMaxLength)
                 _GrowBuffer( strlen(psNode->pszValue)+*pnLength+40+nIndent, 
                              ppszText, pnMaxLength );
