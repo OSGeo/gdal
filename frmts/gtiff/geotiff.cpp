@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2002/05/06 21:40:09  warmerda
+ * fix up mapinfo tab support substantially
+ *
  * Revision 1.60  2002/04/03 20:43:13  warmerda
  * Avoid using tiffiop.h - added IsBlockAvailable() method
  *
@@ -176,6 +179,7 @@
 #include "geo_normalize.h"
 #include "tif_ovrcache.h"
 #include "cpl_string.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -186,6 +190,11 @@ void	GDALRegister_GTiff(void);
 char *  GTIFGetOGISDefn( GTIFDefn * );
 int     GTIFSetFromOGISDefn( GTIF *, const char * );
 CPL_C_END
+
+#ifdef HAVE_MITAB
+// from mitab component.
+OGRSpatialReference * MITABCoordSys2SpatialRef( const char * pszCoordSys );
+#endif
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1007,9 +1016,14 @@ GDALColorTable *GTiffBitmapBand::GetColorTable()
 /*      Helper function for translator implementators wanting           */
 /*      support for MapInfo .tab-files.                                 */
 /************************************************************************/
+
+#define MAX_GCP 256
  
 static int GDALReadTabFile( const char * pszBaseFilename, 
-                            double *padfGeoTransform )
+                            double *padfGeoTransform,
+                            OGRSpatialReference **ppoSRS,
+                            int *pnGCPCount, GDAL_GCP **ppasGCPs )
+
 
 {
     const char	*pszTAB;
@@ -1019,11 +1033,9 @@ static int GDALReadTabFile( const char * pszBaseFilename,
     int 	bTypeRasterFound = FALSE;
     int		bInsideTableDef = FALSE;
     int		iLine, numLines=0;
-    double 	dfMinWorldX = 1e99, dfMinWorldY = 1e99;
-    double	dfMaxWorldX = -1e99, dfMaxWorldY = -1e99;
-    double 	dfMinRasterX = 1e99, dfMinRasterY = 1e99;
-    double	dfMaxRasterX = -1e99, dfMaxRasterY = -1e99;
-    int 	bCoordinateCount = 0;
+    int 	nCoordinateCount = 0;
+    GDAL_GCP    asGCPs[MAX_GCP];
+    
 
 /* -------------------------------------------------------------------- */
 /*      Try lower case, then upper case.                                */
@@ -1081,53 +1093,53 @@ static int GDALReadTabFile( const char * pszBaseFilename,
                 return FALSE;
             }
         }
-        else if (bTypeRasterFound && bInsideTableDef)
+        else if (bTypeRasterFound && bInsideTableDef
+                 && CSLCount(papszTok) > 5
+                 && EQUAL(papszTok[4], "Label") 
+                 && nCoordinateCount < MAX_GCP )
         {
-            // A line with 'Label' contains coordinates
-            if ( EQUAL(papszTok[4], "Label") )
-            {
-		// Find minimum & maximum values from the world coordinates 
-                // in this line
-                dfMinWorldX = MIN(dfMinWorldX, atof(papszTok[0]));
-                dfMaxWorldX = MAX(dfMaxWorldX, atof(papszTok[0]));
-                dfMinWorldY = MIN(dfMinWorldY, atof(papszTok[1]));
-                dfMaxWorldY = MAX(dfMaxWorldY, atof(papszTok[1]));
+            GDALInitGCPs( 1, asGCPs + nCoordinateCount );
+            
+            asGCPs[nCoordinateCount].dfGCPPixel = atof(papszTok[2]);
+            asGCPs[nCoordinateCount].dfGCPLine = atof(papszTok[3]);
+            asGCPs[nCoordinateCount].dfGCPX = atof(papszTok[0]);
+            asGCPs[nCoordinateCount].dfGCPY = atof(papszTok[1]);
+            CPLFree( asGCPs[nCoordinateCount].pszId );
+            asGCPs[nCoordinateCount].pszId = CPLStrdup(papszTok[5]);
 
-		// Find minimum & maximum values from the raster coordinates 
-                // in this line
-                dfMinRasterX = MIN(dfMinRasterX, atof(papszTok[2]));
-                dfMaxRasterX = MAX(dfMaxRasterX, atof(papszTok[2]));
-                dfMinRasterY = MIN(dfMinRasterY, atof(papszTok[3]));
-                dfMaxRasterY = MAX(dfMaxRasterY, atof(papszTok[3]));
-
-                bCoordinateCount++;
-            }
-            else
-            {
-		// We hit something other than coordinates, but correct number
-	        // of coordinates have been found and now min-max values 
-		// should be resolved.
-                if ( bCoordinateCount == 4 )
-                {
-                    padfGeoTransform[0] = dfMinWorldX;
-                    padfGeoTransform[1] = (dfMaxWorldX-dfMinWorldX)/(dfMaxRasterX-dfMinRasterX);
-                    padfGeoTransform[2] = 0;
-                    padfGeoTransform[3] = dfMaxWorldY;
-                    padfGeoTransform[4] = 0;
-                    padfGeoTransform[5] = -(dfMaxWorldY-dfMinWorldY)/(dfMaxRasterY-dfMinRasterY);
-
-                    CSLDestroy(papszTok);
-                    CSLDestroy(papszLines);
-                    return TRUE;					
-                }
-            }
+            nCoordinateCount++;
+        }
+        else if( bTypeRasterFound && bInsideTableDef 
+                 && EQUAL(papszTok[0],"CoordSys") )
+        {
+#ifdef HAVE_MITAB
+            *ppoSRS = MITABCoordSys2SpatialRef( papszLines[iLine] );
+#endif
         }
     }
 
-    CPLDebug( "GDAL", 
-              "GDALReadTabFile(%s) found file, but not 4 lines of coordinates.",
-              pszTAB );
+/* -------------------------------------------------------------------- */
+/*      Try to convert the GCPs into a geotransform definition, if      */
+/*      possible.  Otherwise we will need to use them as GCPs.          */
+/* -------------------------------------------------------------------- */
+    if( !GDALGCPsToGeoTransform( nCoordinateCount, asGCPs, padfGeoTransform, 
+                                 FALSE ) )
+    {
+        CPLDebug( "GDAL", 
+                  "GDALReadTabFile(%s) found file, wasn't able to derive a\n"
+                  "first order geotransform.  Using points as GCPs.",
+                  pszTAB );
 
+        *ppasGCPs = (GDAL_GCP *) 
+            CPLCalloc(sizeof(GDAL_GCP),nCoordinateCount);
+        memcpy( *ppasGCPs, asGCPs, sizeof(GDAL_GCP) * nCoordinateCount );
+        *pnGCPCount = nCoordinateCount;
+    }
+    else
+    {
+        GDALDeinitGCPs( nCoordinateCount, asGCPs );
+    }
+     
     CSLDestroy(papszTok);
     CSLDestroy(papszLines);
     return FALSE;
@@ -1925,6 +1937,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 /* -------------------------------------------------------------------- */
 /*      Get the transform or gcps from the GeoTIFF file.                */
 /* -------------------------------------------------------------------- */
+    OGRSpatialReference *poTabSRS = NULL;
     double	*padfTiePoints, *padfScale, *padfMatrix;
     int16	nCount;
 
@@ -2008,7 +2021,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
         if( !bGeoTransformValid )
         {
             bGeoTransformValid = 
-                GDALReadTabFile( GetDescription(), adfGeoTransform );
+                GDALReadTabFile( GetDescription(), adfGeoTransform, 
+                                 &poTabSRS, &nGCPCount, &pasGCPList );
         }
     }
 
@@ -2056,12 +2070,20 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
     {
         pszProjection = GTIFGetOGISDefn( &sGTIFDefn );
     }
+    else if( poTabSRS != NULL )
+    {
+        pszProjection = NULL;
+        poTabSRS->exportToWkt( &pszProjection );
+    }
     else
     {
         pszProjection = CPLStrdup( "" );
     }
     
     GTIFFree( hGTIF );
+
+    if( poTabSRS != NULL )
+        delete poTabSRS;
 
 /* -------------------------------------------------------------------- */
 /*      Capture some other potentially interesting information.         */

@@ -18,6 +18,15 @@ SUBLIBS	:= lib-geotiff $(SUBLIBS)
 TIFF_OPTS	:=	-Ilibgeotiff $(TIFF_OPTS)
 endif
 
+# Enable the following if you want to use MITAB's code to convert
+# .tab coordinate systems into well known text.  But beware that linking
+# against static libraries becomes more complicated because of the odd
+# call out.
+
+#ifeq ($(OGR_ENABLED),yes)
+#TIFF_OPTS	:=	-DHAVE_MITAB $(TIFF_OPTS)
+#endif
+
 default:	$(OBJ) $(SUBLIBS)
 
 clean:
