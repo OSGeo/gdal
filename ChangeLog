@@ -1,3 +1,12 @@
+2003-09-09  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* ogr/{ogr_srs_api.h, ogr_spatialref.h, ogr_srs_pci.cpp}: Implemented
+	OGRSpatialReference::exportToPCI() to write PCI style coordinate
+	system reference.
+
+	* frmts/pcidsk/pcidskdataset.cpp: New read/write driver for PCI image
+	database (PCIDSK).
+
 2003-08-31  Andrey Kiselev  <dron@remotesensing.org>
 	
 	* ogr/{ogr_srs_api.h, ogr_spatialref.h, ogr_srs_pci.cpp}: Implemented
