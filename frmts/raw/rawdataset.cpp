@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/06/02 20:54:42  warmerda
+ * Ensure poCT and eInterp are initialize in the *other* constructor.
+ *
  * Revision 1.23  2004/05/28 18:16:22  warmerda
  * Added support for hold colortable and interp on RawRasterBand
  *
@@ -140,6 +143,9 @@ RawRasterBand::RawRasterBand( GDALDataset *poDS, int nBand,
 
     dfNoDataValue = 0.0;
     bNoDataSet = FALSE;
+
+    poCT = NULL;
+    eInterp = GCI_Undefined;
 
 /* -------------------------------------------------------------------- */
 /*      Treat one scanline as the block size.                           */
