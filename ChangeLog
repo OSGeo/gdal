@@ -1,3 +1,9 @@
+2004-02-01  Andrey Kiselev  <dron@remotesensing.org>
+	
+	* ogr/{ogr_srs_api.h, ogr_spatialref.h, ogr_srs_usgs.cpp}: Implemented
+	OGRSpatialReference::importFromUSGS() to import USGS style coordinate
+	system reference as used in GCTP package.
+
 2003-10-22	Silke Reimer	<silke@intevation.de>
 
 	* debian/changelog: Added remark about patched libtool to avoid linking
