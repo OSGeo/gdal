@@ -1,3 +1,20 @@
+2001-03-16  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* OGR Shapefile driver: added support for reading and writing 
+	.prj files.
+
+	* ogr/ogr_srs_esri.cpp: added support for esri .prj files with
+	WKT in them.  We don't massage datum names yet though.
+
+2001-03-14  Frank Warmerdam  <warmerdam@pobox.com>
+
+	* Improved ld -shared / CXX -shared testing to preserve existing
+	LD_LIBRARY_PATH incase it is needed for something like the C++
+	support shared library.
+
+	* Upgraded to use install-sh so we will have reliable install
+	semantics.
+
 ===============================================================================
 	
 2001-03-14  Frank Warmerdam  <warmerdam@pobox.com>
