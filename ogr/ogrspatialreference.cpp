@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2002/11/30 15:45:49  warmerda
+ * be more careful about how AUTHORITY is fetched, to not get wrong one
+ *
  * Revision 1.54  2002/11/25 16:12:54  warmerda
  * added GetAuthorityCode/Name
  *
@@ -2605,10 +2608,10 @@ const char *OGRSpatialReference::GetAuthorityCode( const char *pszTargetKey )
 /* -------------------------------------------------------------------- */
 /*      Fetch AUTHORITY child if there is one.                          */
 /* -------------------------------------------------------------------- */
-    poNode = poNode->GetNode("AUTHORITY");
-
-    if( poNode == NULL )
+    if( poNode->FindChild("AUTHORITY") == -1 )
         return NULL;
+        
+    poNode = poNode->GetChild(poNode->FindChild("AUTHORITY"));
 
 /* -------------------------------------------------------------------- */
 /*      Create a new authority node.                                    */
@@ -2665,10 +2668,10 @@ const char *OGRSpatialReference::GetAuthorityName( const char *pszTargetKey )
 /* -------------------------------------------------------------------- */
 /*      Fetch AUTHORITY child if there is one.                          */
 /* -------------------------------------------------------------------- */
-    poNode = poNode->GetNode("AUTHORITY");
-
-    if( poNode == NULL )
+    if( poNode->FindChild("AUTHORITY") == -1 )
         return NULL;
+        
+    poNode = poNode->GetChild(poNode->FindChild("AUTHORITY"));
 
 /* -------------------------------------------------------------------- */
 /*      Create a new authority node.                                    */
