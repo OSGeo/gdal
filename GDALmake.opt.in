@@ -266,6 +266,12 @@ O_OBJ =	$(foreach file,$(OBJ),../o/$(file))
 ../o/%.o:	%.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
+%.o:	%.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+
+%.o:	%.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
+
 #
 # default rules for handling subdirectories
 #
