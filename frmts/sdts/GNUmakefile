@@ -1,4 +1,4 @@
-VERSION =	1_2
+VERSION =	1_3
 DISTDIR =	sdts_$(VERSION)
 WEB_DIR =	/u/www/projects/sdts
 
@@ -13,7 +13,7 @@ OBJ	=	sdtsiref.o sdtscatd.o sdtslinereader.o sdtslib.o \
 		sdtspolygonreader.o sdtsxref.o sdtsrasterreader.o \
 		sdtsindexedreader.o
 
-CPPFLAGS :=	-I$(ISO8211DIR) $(CPPFLAGS)
+CPPFLAGS :=	-I$(ISO8211DIR) $(GDAL_INCLUDE) $(CPPFLAGS)
 
 SDTSLIB	=	libsdts_al.a
 LIBS	:=	$(SDTSLIB) $(ISO8211DIR)/libiso8211.a $(GDAL_LIB) $(LIBS)
