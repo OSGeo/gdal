@@ -4,7 +4,7 @@ James Gallagher
 12 December 2003
 
 This document describes how to configure the OPeNDAP/GDAL driver. It
-documents version 0.9 of the driver and uses version 3.4.1 of DODS.
+documents version 1.0 of the driver and uses version 3.4.1 of DODS/OPeNDAP.
 
 0. Introduction
 
@@ -36,11 +36,7 @@ to write data to a DODS/OPeNDAP server since that really has no meaning in
 the context of the Data Access Protocol (DAP). You can read from the this
 driver and use another driver (say geotiff) to write data to a local file.
 
-This version of the driver does not handle sub-setting individual rasters,
-even though the OPeNDAP servers _do_ support this operation. Adding support
-for sub-sampling is the highest priority item on the TODO list.
-
-This code is currently at version 0.9 (version.h holds the current version
+This code is currently at version 1.0 (version.h holds the current version
 number). It needs more testing.
 
 ---------------------------------------------------------------------------
@@ -95,21 +91,47 @@ if it should always use one specific 'slice' of a dimension or if a
 dimension should be interpreted as making up a set of bands. This is the
 function of the <bracket expression>. The full syntax is:
 
-  ( [ <lat|lon|0:N|N> ] )+
+  ( [ <lat|lon|1-N|N> ] )+
 
-Where 'lat' and 'lon' are literal and N is a positive integer.
+Where '-', 'lat' and 'lon' are literal and N is a positive integer.
 
 Here's an example for a three-dimensional Array:
 
-    u[0:15][lat][lon]
+    u[1-16][lat][lon]
 
 (This variable can be found in th test data source at
 http://dodsdev.gso.uri.edu/dods-test/nph-dods/data/nc/fnoc1.nc). The bracket
-expression says that the first dimension holds sixteen bands (numbers 0 to
-15, note that zero-based indexing is used), the second dimension corresponds
-to Latitude and the third to Longitude. If the variable 'u' had four
-dimensions, the expression would need to specify which element of the fourth
-dimension should be used.
+expression says that the first dimension holds sixteen bands (numbers 1 to
+16, note that ones-based indexing is used to match GDAL's band numbering
+scheme. The DAP uses zero-based indexing, so you'll need to take this into
+account), the second dimension corresponds to Latitude and the third to
+Longitude. If the variable 'u' had four dimensions, the expression would need
+to specify which element of the fourth dimension should be used.
+
+If a data source array has four or more dimensions, two *must* be labeled
+'lat' and 'lon', one must be used to specify a group of bands and the
+remaining dimensions must use the 'slice' notation to tell the driver which
+single element of that dimension is to be used. For example, a hypothetical
+four dimensional array called 'four' would need a bracket expression like:
+
+    four[1][1-12][lat][lon]
+
+or
+
+    four_prime[3][3-9][lat][lon]
+
+In the first example the driver is told to use only first element of
+dimension one, that the second dimension is to be considered twelve bands and
+the last tow dimensions are to be taken as latitude and longitude. In the
+second example the driver is to use the third element of the first dimension
+and the bands 3 through 9 of the second dimension.
+
+When the driver opens a data source with a raster like 'four_prime' int he
+above example, it will map the raster's bands 3 through 9 to GDAL bands 1
+through 6.
+
+It bears repeating: The band numbers and 'slice' in the 'bracket expression'
+use ones-based indexing.
 
 * Summary
 
@@ -118,7 +140,7 @@ the driver a URL with the name of the variable and the bracket expression.
 Use a question mark to separate the variable name from the data source URL.
 Here's an example using the sample data set at dodsdev:
 
-     http://dodsdev.gso.uri.edu/dods-test/nph-dods/data/nc/fnoc1.nc?u[0:15][LAT][LON]
+     http://dodsdev.gso.uri.edu/dods-test/nph-dods/data/nc/fnoc1.nc?u[1-16][lat][lon]
 
 * Adding geo-referencing information 
 
@@ -315,7 +337,7 @@ as described above in Section 2. Here's an example using one of the DODS test
 data sets:
 
      [jimg@comet dods]$ ./using_dods http://dodsdev.gso.uri.edu/dods-test/
-     nph-dods/data/nc/fnoc1.nc?u[0:3][lat][lon]
+     nph-dods/data/nc/fnoc1.nc?u[1-4][lat][lon]
 
 This should print the following:
 
@@ -327,7 +349,11 @@ This should print the following:
     -146 -422 -1033 -1668 -2000 -2307 -2216 -1757 -1231 -294 861 1807 2561
 
 followed by the remaining output (which is fairly long since it'll write out
-data for the four bands 0, 1, ..., 3).
+data for the four bands)
+
+Note that if you want to use the DODS/OPeNDAP HTML form interface of the data
+source to check on these values, remember that the DAP uses zero-based
+indexing. Be sure to adjust your band numbers accordingly!
 
 You can also try using gdalinfo to open one of the rasters. Here's an example
 using the pathfinder data (if you run this make sure to set the environment
