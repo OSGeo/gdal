@@ -5,7 +5,9 @@
 <title>Building GDAL From Source</title>
 </center>
 
-GDAL has been successfully built on Linux, IRIX, Solaris, and Windows NT.  
+<h2><a name="unix">Building on Unix</a></h2>
+
+GDAL has been successfully built on Linux, IRIX, Solaris, BSD, and MacOS X.  
 On Unix platforms you might be able to build it as follows (assuming it is
 unpacked or checked out of CVS as <b>gdal</b>):
 
@@ -20,6 +22,14 @@ Some caveats are:<p>
 
 <li> I depend on GNUmake on Unix platforms.  Just get and install it if
 you don't already have it.<p>
+
+<li> GDAL shouldn't have many pre-requisite packages.  It includes 
+built-in versions of libz, libtiff, libgeotiff, libpng, libgif, and libjpeg 
+if pre-installed versions are not available (or not desirable).  
+
+<li> There are quite a few optional drivers that depend on external libraries.
+Use "configure --help" to see the configure options.  Some optional libraries
+include those for GRASS, FITS, OGDI, HDF4, and ECW.
 
 <li> The shared library building is pretty specific to the GNU tool chain. 
 If you are using something different than GNU C++, then you will likely 
@@ -50,16 +60,73 @@ don't care about, just remove the format from the GDAL_FORMATS line
 at the bottom of gdal/GDALmake.opt, do a make clean, and make.  This will
 drop it from the build and default runtime registration. <p>
 
+<li> If you are trying to install as other than root (to your own tree
+set with --prefix) you will likelyhave problems with the python since it
+always tries to install under the site-packages directory for the installed
+python tree.  If you don't need python support you can supress it at
+configure using --without-python, or override the python module output
+directory at configure time with the --with-pymodir=<directory>.
+
 </ul>
 
-GDAL can be built on Windows using MS VC++ at the commandline.  For this to
-work you will normally have to have run the VCVAR32.BAT script that comes
-with the compiler, and then do the following:<p>
+<h2><a name="win32">Building on Windows</a></h2>
+
+GDAL can be built on Windows using MS VC++ 6.x and MS Visual Studio .NET (C++) 
+at the DOS command line.  For this to work you will normally have to have run 
+the VCVAR32.BAT script that comes with the compiler.  For VC 6.x this might be
+found at:
 
 <pre>
-C:\> CD GDAL
+  C:\Program Files\Microsoft Visual Studio\VC98\bin\VCVARS32.BAT
+</pre>
+
+Once the environment is setup, you can cd to the GDAL root directory
+and do the following:<p>
+
+<pre>
 C:\GDAL\> nmake /f makefile.vc
 </pre>
+
+There are lots of options that can be tweaked by hand in the nmake.opt
+file in the GDAL root directory. 
+
+<ul>
+<li> <b>BINDIR</b>: Directory in which to install executables, and DLLs if 
+you use the "nmake /f makefile.vc install" command.
+
+<li> <b>PY_INST_DIR</b>: Directory to install python modules in.
+
+<li> <b>PYDIR</b>: The directory where your python tree is installed.
+Used to find python include files.  If this is set to a directory that
+does not exist then python support will be omitted from the build.
+
+<li> <b>DLLBUILD</b>: Define this (to "1") to force all the OGR utilities
+to link against the GDAL DLL instead of building built statically.
+
+<li> <b>INCLUDE_OGR_FRMTS</b>: Set to "YES" to build OGR formats into
+the GDAL dll, or comment out to omit OGR formats from build.
+
+<li> <b>SETARGV</b>:  Point this to the setargv.obj file distributed with
+Visual Studio to get wildcard expanasion for commandline arguments or
+leave commented out to omit this.
+
+<li> <b>OPTFLAGS</b>: Set this to contain the desired compiler flags for
+compiling.  The default is a debug build but there is usually a suitable
+alternative for optimized builds commented out in the template file. 
+
+<li> <b>ECWDIR/ECWLIB</b>: Uncomment these to enable building with ECW
+support, correcting ECWDIR to point to the install location on your system.
+
+<li> <b>OGDIDIR/OGDIVER/OGDILIB</b>: Uncomment these to enable OGDI 
+support, correcting the OGDIDIR and OGDIVER values as needed.
+
+<li> <b>XERCES_DIR/XERCES_INCLUDE/XERCES_LIB</b>: Uncomment these and
+correct XERCES_DIR to enable Xerces XML parser support for GML read support.
+
+<li> <b>FME_DIR</b>: Uncomment, and correct path to enable support for
+FMEObject vector access. 
+
+</ul>
 
 I frequently forget to update the Windows makefiles when I add new files,
 so if something comes up missing consider comparing the file lists in the
