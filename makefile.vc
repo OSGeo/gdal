@@ -64,6 +64,7 @@ clean:
 	if exist $(GDAL_DLL) del $(GDAL_DLL)
 	if exist gdal_i.lib del gdal_i.*
 	-del *.ilk
+	-del *.pdb
 
 port_dir:
 	cd port
