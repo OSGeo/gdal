@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/01/16 03:59:28  warmerda
+ * added CPLTokenizeString2
+ *
  * Revision 1.7  2000/10/06 15:19:03  warmerda
  * added CPLSetNameValueSeparator
  *
@@ -74,6 +77,14 @@ char CPL_DLL **CSLTokenizeString(const char *pszString );
 char CPL_DLL **CSLTokenizeStringComplex(const char *pszString,
                                    const char *pszDelimiter,
                                    int bHonourStrings, int bAllowEmptyTokens );
+char CPL_DLL **CSLTokenizeString2( const char *pszString, 
+                                   const char *pszDelimeter, 
+                                   int nCSLTFlags );
+
+#define CSLT_HONOURSTRINGS	0x0001
+#define CSLT_ALLOWEMPTYTOKENS   0x0002
+#define CSLT_PRESERVEQUOTES     0x0004
+#define CSLT_PRESERVEESCAPES    0x0008
 
 int CPL_DLL CSLPrint(char **papszStrList, FILE *fpOut);
 char CPL_DLL **CSLLoad(const char *pszFname);
