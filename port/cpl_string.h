@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  1999/02/17 01:41:58  warmerda
+ * Added CSLGetField
+ *
  * Revision 1.2  1998/12/04 21:40:42  danmo
  * Added more Name=Value manipulation fuctions
  *
@@ -51,6 +54,7 @@ CPL_C_START
 
 char    **CSLAddString(char **papszStrList, const char *pszNewString);
 int     CSLCount(char **papszStrList);
+const char *CSLGetField( char **, int );
 void    CSLDestroy(char **papszStrList);
 char    **CSLDuplicate(char **papszStrList);
 

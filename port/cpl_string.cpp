@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/02/17 01:41:58  warmerda
+ * Added CSLGetField
+ *
  * Revision 1.4  1998/12/15 19:01:40  warmerda
  * *** empty log message ***
  *
@@ -102,6 +105,31 @@ int CSLCount(char **papszStrList)
     return nItems;
 }
 
+/************************************************************************/
+/*                            CSLGetField()                             */
+/*                                                                      */
+/*      Fetches the indicated field, being careful not to crash if      */
+/*      the field doesn't exist within this string list.  The           */
+/*      returned pointer should not be freed, and doesn't               */
+/*      necessarily last long.                                          */
+/************************************************************************/
+
+const char * CSLGetField( char ** papszStrList, int iField )
+
+{
+    int		i;
+    
+    if( papszStrList == NULL || iField < 0 )
+        return( "" );
+
+    for( i = 0; i < iField+1; i++ )
+    {
+        if( papszStrList[i] == NULL )
+            return "";
+    }
+
+    return( papszStrList[iField] );
+}
 
 /**********************************************************************
  *                       CSLDestroy()
