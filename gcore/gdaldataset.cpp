@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2001/10/17 21:47:02  warmerda
+ * added SetGCPs() on GDALDataset
+ *
  * Revision 1.23  2001/07/18 04:04:30  warmerda
  * added CPL_CVSID
  *
@@ -751,6 +754,56 @@ const GDAL_GCP *GDALGetGCPs( GDALDatasetH hDS )
 
 {
     return ((GDALDataset *) hDS)->GetGCPs();
+}
+
+
+/************************************************************************/
+/*                              SetGCPs()                               */
+/************************************************************************/
+
+/**
+ * Assign GCPs.
+ *
+ * This method is the same as the C function GDALSetGCPs(). 
+ *
+ * This method assigns the passed set of GCPs to this dataset, as well as
+ * setting their coordinate system.  Internally copies are made of the
+ * coordinate system and list of points, so the caller remains resposible for
+ * deallocating these arguments if appropriate. 
+ *
+ * Most formats do not support setting of GCPs, even foramts that can 
+ * handle GCPs.  These formats will return CE_Failure. 
+ *
+ * @param nGCPCount number of GCPs being assigned. 
+ *
+ * @param pasGCPList array of GCP structures being assign (nGCPCount in array).
+ *
+ * @param pszGCPProjection the new OGC WKT coordinate system to assign for the 
+ * GCP output coordinates.  This parameter should be "" if no output coordinate
+ * system is known.
+ *
+ * @return CE_None on success, CE_Failure on failure (including if action is
+ * not supported for this format). 
+ */ 
+
+CPLErr GDALDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                             const char *pszGCPProjection )
+
+{
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                            GDALSetGCPs()                             */
+/************************************************************************/
+
+CPLErr GDALSetGCPs( GDALDatasetH hDS, int nGCPCount, 
+                    const GDAL_GCP *pasGCPList, 
+                    const char *pszGCPProjection )
+
+{
+    return ((GDALDataset *) hDS)->SetGCPs( nGCPCount, pasGCPList, 
+                                           pszGCPProjection );
 }
 
 /************************************************************************/

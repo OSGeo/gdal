@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2001/10/17 21:47:02  warmerda
+ * added SetGCPs() on GDALDataset
+ *
  * Revision 1.25  2001/10/02 13:15:16  warmerda
  * added CPL_DLL for GDALDefaultOverviews
  *
@@ -267,6 +270,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
+    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                            const char *pszGCPProjection );
  
     int           Reference();
     int           Dereference();
