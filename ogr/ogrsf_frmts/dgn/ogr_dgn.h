@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/02/22 22:18:44  warmerda
+ * added support for commplex shapes
+ *
  * Revision 1.2  2000/12/28 21:27:11  warmerda
  * updated email address
  *
@@ -57,6 +60,10 @@ class OGRDGNLayer : public OGRLayer
     DGNHandle           hDGN;
 
     OGRFeature	       *ElementToFeature( DGNElemCore * );
+    OGRGeometry        *CollectLines( OGRGeometryCollection *poLines, 
+                                      int bMakePolygon );
+    void                ConsiderBrush( DGNElemCore *, const char *pszPen,
+                                       OGRFeature *poFeature );
 
   public:
                         OGRDGNLayer( const char * pszName, DGNHandle hDGN );
