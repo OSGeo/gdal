@@ -1,3 +1,4 @@
+Attribute VB_Name = "GDAL"
 '*****************************************************************************
 ' $Id$
 '
@@ -28,14 +29,16 @@
 '*****************************************************************************
 '
 ' $Log$
+' Revision 1.2  2005/03/16 23:34:07  fwarmerdam
+' fixed up open to always return a GDALDataset
+'
 ' Revision 1.1  2005/03/16 19:40:49  fwarmerdam
 ' new
 '
 '
 
-Attribute VB_Name = "GDAL"
 
-Public Const GA_ReadOnly As Long = 1
+Public Const GA_ReadOnly As Long = 0
 Public Const GA_Update As Long = 1
 
 Public Const GDT_Unknown As Long = 0
@@ -112,19 +115,24 @@ End Function
 
 ' ----------------------------------------------------------------------------
 Public Function OpenDS(Filename As String, ByVal Access As Long) As GDALDataset
-    obj = GDALCore.GDALOpen(Filename, Access)
-    If obj <> 0 Then
-        Set OpenDS = New GDALDataset
-        OpenDS.CInit (obj)
-    End If
+    Set OpenDS = New GDALDataset
+    Call OpenDS.CInit(GDALCore.GDALOpen(Filename, Access))
 End Function
 
 ' ----------------------------------------------------------------------------
-Public Function OpenSharedDS(Filename As String, Access As Long) As GDALDataset
-    obj = GDALCore.GDALOpenShared(Filename, Access)
+Public Function OpenSharedDS(Filename As String, ByVal Access As Long) As GDALDataset
+    Set OpenSharedDS = New GDALDataset
+    Call OpenSharedDS.CInit(GDALCore.GDALOpenShared(Filename, Access))
+End Function
+
+' ----------------------------------------------------------------------------
+Public Function CreateColorTable(ByVal PaletteInterp As Long) _
+                As GDALColorTable
+    obj = GDALCore.GDALCreateColorTable(PaletteInterp)
     If obj <> 0 Then
-        Set OpenDS = New GDALDataset
-        OpenDS.CInit (obj)
+        Set CreateColorTable = New GDALColorTable
+        Call CreateColorTable.CInit(obj)
     End If
 End Function
+
 
