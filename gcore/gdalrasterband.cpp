@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.28  2002/05/28 18:55:08  warmerda
+ * added GetDataset()
+ *
  * Revision 1.27  2002/03/01 14:29:09  warmerda
  * added GetBand() method on GDALRasterBand
  *
@@ -1550,10 +1553,45 @@ int GDALGetRasterBandYSize( GDALRasterBandH hBand )
 /*                              GetBand()                               */
 /************************************************************************/
 
+/**
+ * Fetch the band number.
+ *
+ * This method returns the band that this GDALRasterBand objects represents
+ * within it's dataset.  This method may return a value of 0 to indicate
+ * GDALRasterBand objects without an apparently relationship to a dataset,
+ * such as GDALRasterBands serving as overviews.
+ *
+ * There is currently no C analog to this method.
+ *
+ * @return band number (1+) or 0 if the band number isn't known.
+ */
+
 int GDALRasterBand::GetBand()
 
 {
     return nBand;
+}
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+/**
+ * Fetch the owning dataset handle.
+ *
+ * Note that some GDALRasterBands are not considered to be a part of a dataset,
+ * such as overviews or other "freestanding" bands. 
+ *
+ * There is currently no C analog to this method.
+ *
+ * @return the pointer to the GDALDataset to which this band belongs, or
+ * NULL if this cannot be determined.
+ */
+
+GDALDataset *GDALRasterBand::GetDataset()
+
+{
+    return poDS;
 }
 
 /************************************************************************/
