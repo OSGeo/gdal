@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.9  2005/02/23 17:44:37  kruland
+ * Change SpatialReference constructor to have keyword argument "wkt".
+ *
  * Revision 1.8  2005/02/20 19:46:04  kruland
  * Use the new fixed size typemap for (double **) arguments in ExportToPCI and
  * ExportToUSGS.
@@ -185,8 +188,9 @@ class OSRSpatialReferenceShadow {
 private:
 public:
 %extend {
-  OSRSpatialReferenceShadow( char const * arg = "" ) {
-    OSRSpatialReferenceShadow *sr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(arg);
+  %feature("kwargs") OSRSpatialReferenceShadow;
+  OSRSpatialReferenceShadow( char const * wkt = "" ) {
+    OSRSpatialReferenceShadow *sr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(wkt);
     if (sr) {
       OSRReference( sr );
     }
