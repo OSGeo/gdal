@@ -7,8 +7,8 @@
 
 <h1>FAST -- EOSAT FAST Format</h1>
 
-Supported reading from FAST-L7A format (Landsat TM data). If you want to read
-other datasets in this format (SPOT, IRS), write to me (Andrey Kiselev, 
+Supported reading from FAST-L7A format (Landsat TM data) and EOSAT Fast Format
+Rev. C (IRS-1C/1D data). If you want to read other datasets in this format (SPOT), write to me (Andrey Kiselev,
 <a href=mailto:dron@remotesensing.org>dron@remotesensing.org</a>). You should
 share data samples with me.<p>
 
@@ -88,9 +88,16 @@ Calibration coefficients for each band reported as metadata items.
 
 <ul>
 
-<li> <b>BIASn</b>: Bias value for the channel <b>n</b>. <p> 
+	<li> <b>ACQUISITION_DATE</b>: First scene acquisition date in yyyyddmm
+	format.<p>
 
-<li> <b>GAINn</b>: Gain value for the channel <b>n</b>. <p> 
+	<li> <b>SATELLITE</b>: First scene satellite name.<p>
+
+	<li> <b>SENSOR</b>: First scene sensor name.<p>
+
+	<li> <b>BIASn</b>: Bias value for the channel <b>n</b>.<p> 
+
+	<li> <b>GAINn</b>: Gain value for the channel <b>n</b>.<p> 
 
 </ul>
 
