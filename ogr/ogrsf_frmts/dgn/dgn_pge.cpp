@@ -13,6 +13,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/03/25 17:12:30  warmerda
+ * allow wildcarded tagsets
+ *
  * Revision 1.4  2002/03/15 20:13:23  warmerda
  * added error reporting.
  *
@@ -284,57 +287,81 @@ int DGNWriteTags( const char *pszFilename, int nTagScheme,
 /* -------------------------------------------------------------------- */
     for( iTag = 0; iTag < CSLCount(papszTagSets); iTag++ )
     {
-        int  iTagSet, nTagSetId=-1, nTagId=-1;
+        int  iTagSet, nTagSetId=-1, nTagId=-1, bFoundTag = FALSE;
         DGNElemTagSet *psTagSet = NULL;
 
         // Find matching tagset.
         for( iTagSet = 0; iTagSet < nTagSetCount; iTagSet++ )
         {
-            if( EQUAL(papszTagSets[iTag],papsTagSets[iTagSet]->tagSetName) )
-                psTagSet = papsTagSets[iTagSet];
-        }
+            if( !EQUAL(papszTagSets[iTag],"*")
+               && !EQUAL(papszTagSets[iTag],papsTagSets[iTagSet]->tagSetName) )
+                continue;
 
-        // Find matching tag.
-        for( i = 0; psTagSet != NULL && i < psTagSet->tagCount; i++ )
-        {
-            if( EQUAL(papszTagNames[iTag],psTagSet->tagList[i].name) )
+            psTagSet = papsTagSets[iTagSet];
+
+            // Find matching tag.
+            for( i = 0; psTagSet != NULL && i < psTagSet->tagCount; i++ )
             {
-                nTagSetId = psTagSet->tagSet;
-                nTagId = psTagSet->tagList[i].id;
-                break;
+                if( EQUAL(papszTagNames[iTag],psTagSet->tagList[i].name) )
+                {
+                    nTagSetId = psTagSet->tagSet;
+                    nTagId = psTagSet->tagList[i].id;
+                    break;
+                }
+            }
+
+            if( nTagId == -1 )
+            {
+                if( !EQUAL(papszTagSets[iTag],"*") )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                              "Failed to find tag %s:%s", 
+                              papszTagSets[iTag], papszTagNames[iTag] );
+                    bResult = FALSE;
+                }
+                continue;
+            }
+
+            bFoundTag = TRUE;
+
+            // Now we find the associated tag value element.
+            for( i = 0; i < nTagValueCount; i++ )
+            {
+                if( papsTagValues[i]->tagSet == nTagSetId
+                    && papsTagValues[i]->tagIndex == nTagId )
+                    break;
+            }
+            
+            if( i == nTagValueCount )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "Failed to find tag for %s:%s",
+                          papszTagSets[iTag], papszTagNames[iTag] );
+                bResult = FALSE;
+                continue;
+            }
+            
+            // Update tag value with new value.
+            if( !DGNUpdateTagValue( hDGN, papsTagValues[i], 
+                                    papszTagValues[iTag] ) )
+            {
+                bResult = FALSE;
             }
         }
 
-        if( nTagId == -1 )
+        if( psTagSet == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Failed to find tagset %s:%s", 
-                      papszTagSets[iTag], papszTagNames[iTag] );
+                      "Failed to find tagset %s", 
+                      papszTagSets[iTag] );
             bResult = FALSE;
-            continue;
         }
 
-        // Now we find the associated tag value element.
-        for( i = 0; i < nTagValueCount; i++ )
-        {
-            if( papsTagValues[i]->tagSet == nTagSetId
-                && papsTagValues[i]->tagIndex == nTagId )
-                break;
-        }
-
-        if( i == nTagValueCount )
+        if( !bFoundTag && EQUAL(papszTagSets[iTag],"*") )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Failed to find tag for %s:%s",
-                      papszTagSets[iTag], papszTagNames[iTag] );
-            bResult = FALSE;
-            continue;
-        }
-
-        // Update tag value with new value.
-        if( !DGNUpdateTagValue( hDGN, papsTagValues[i], 
-                                papszTagValues[iTag] ) )
-        {
+                      "Found no tags matching *:%s", 
+                      papszTagNames[iTag] );
             bResult = FALSE;
         }
     }
