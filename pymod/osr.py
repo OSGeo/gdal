@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.16  2003/01/08 18:17:33  warmerda
+# added FixupOrdering() and StripCTParms
+#
 # Revision 1.15  2002/11/30 20:53:51  warmerda
 # added SetFromUserInput
 #
@@ -121,6 +124,12 @@ class SpatialReference:
     
     def Validate(self):
         return _gdal.OSRValidate( self._o )
+    
+    def StripCTParms(self):
+        return _gdal.OSRStripCTParms( self._o )
+    
+    def FixupOrdering(self):
+        return _gdal.OSRFixupOrdering( self._o )
     
     def MorphToESRI(self):
         return _gdal.OSRMorphToESRI( self._o )
