@@ -9,6 +9,12 @@
 
  *
  * $Log$
+ * Revision 1.14  2005/02/21 18:56:54  kruland
+ * Fix usage of the Geometry class.  The factory methods were confused by
+ * returning voids instead of void*s.
+ * Renamed the internal type to OGRGeometryShadow to prevent confusion.
+ * Properly implemented Geometry.ExportToWkb() using the buffer typemaps.
+ *
  * Revision 1.13  2005/02/21 18:00:44  hobu
  * Started in on Geometry
  *
@@ -149,6 +155,7 @@ using namespace std;
 #include "cpl_string.h"
 
 typedef void OSRSpatialReferenceShadow;
+typedef void OGRGeometryShadow;
 
 %}
 
@@ -307,7 +314,7 @@ public:
   %newobject ExecuteSQL;
   %feature( "kwargs" ) ExecuteSQL;
   OGRLayerH *ExecuteSQL(const char* statement,
-                        OGRGeometryH geom=NULL,
+                        OGRGeometryShadow* geom=NULL,
                         const char* dialect=NULL) {
     OGRLayerH* layer = (OGRLayerH*) OGR_DS_ExecuteSQL(self,
                                                       statement,
@@ -388,7 +395,7 @@ public:
     return OGR_L_GetRefCount(self);
   }
   
-  void SetSpatialFilter(OGRGeometryH filter) {
+  void SetSpatialFilter(OGRGeometryShadow* filter) {
     OGR_L_SetSpatialFilter (self, filter);
   }
   
@@ -398,8 +405,8 @@ public:
   }
   
   %newobject GetSpatialFilter;
-  OGRGeometryH *GetSpatialFilter() {
-    return (OGRGeometryH *) OGR_L_GetSpatialFilter(self);
+  OGRGeometryShadow *GetSpatialFilter() {
+    return (OGRGeometryShadow *) OGR_L_GetSpatialFilter(self);
   }
 
   OGRErr SetAttributeFilter(char* filter_string) {
@@ -588,14 +595,14 @@ public:
     return (OGRFeatureDefnH*) OGR_F_GetDefnRef(self);
   }
   
-  OGRErr SetGeometry(OGRGeometryH geom) {
+  OGRErr SetGeometry(OGRGeometryShadow* geom) {
     OGRErr err = OGR_F_SetGeometry(self, geom);
     if (err != 0)
       throw err;
     return 0;
   }
 
-  OGRErr SetGeometryDirectly(OGRGeometryH geom) {
+  OGRErr SetGeometryDirectly(OGRGeometryShadow* geom) {
     OGRErr err = OGR_F_SetGeometryDirectly(self, geom);
     if (err != 0)
       throw err;
@@ -603,8 +610,8 @@ public:
   }
   
   %newobject GetGeometryRef;
-  OGRGeometryH *GetGeometryRef() {
-    return (OGRGeometryH*) OGR_F_GetGeometryRef(self);
+  OGRGeometryShadow *GetGeometryRef() {
+    return (OGRGeometryShadow*) OGR_F_GetGeometryRef(self);
   }
   
   %newobject Clone;
@@ -860,11 +867,11 @@ public:
 %clear (OGRErr);
 
 
-%rename (Geometry) OGRGeometryH;
+%rename (Geometry) OGRGeometryShadow;
 %apply (THROW_OGR_ERROR) {OGRErr};
-class OGRGeometryH {
-  
-  ~OGRGeometryH();
+class OGRGeometryShadow {
+  OGRGeometryShadow();
+  ~OGRGeometryShadow();
 public:
 %extend {
 
@@ -877,12 +884,10 @@ public:
   }
 
   %feature("kwargs") ExportToWkb;
-  unsigned char * ExportToWkb(OGRwkbByteOrder byte_order=wkbXDR) {
-    unsigned char * output;
-    OGRErr err = OGR_G_ExportToWkb(self, byte_order, (unsigned char*) &output);
-    if (err != 0) 
-      throw err;
-    return output;
+  OGRErr ExportToWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
+    *nLen = OGR_G_WkbSize( self );
+    *pBuf = (char *) malloc( *nLen * sizeof(unsigned char) );
+    return OGR_G_ExportToWkb(self, byte_order, (unsigned char*) *pBuf );
   }
 
 
@@ -890,7 +895,7 @@ public:
 } /* %extend */
 
 
-}; /* class OGRGeometry */
+}; /* class OGRGeometryShadow */
 
 %clear (OGRErr);
 
@@ -960,15 +965,15 @@ char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
 %newobject CreateGeometryFromWkb;
 %apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
 %inline %{
-  OGRGeometryH CreateGeometryFromWkb( int len, char *bin_string, 
-                                      OSRSpatialReferenceShadow *reference=NULL ) {
-    OGRGeometryH geom;
+  OGRGeometryShadow* CreateGeometryFromWkb( int len, char *bin_string, 
+                                            OSRSpatialReferenceShadow *reference=NULL ) {
+    void *geom;
     OGRErr err = OGR_G_CreateFromWkb( (unsigned char *) bin_string,
                                       reference,
                                       &geom);
     if (err != 0 )
        throw err;
-    return geom;
+    return (OGRGeometryShadow*) geom;
   }
  
 %}
@@ -979,15 +984,15 @@ char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
 %apply (char **ignorechange) { (char **) };
 %newobject CreateGeometryFromWkt;
 %inline %{
-  OGRGeometryH CreateGeometryFromWkt( char **val, 
+  OGRGeometryShadow* CreateGeometryFromWkt( char **val, 
                                       OSRSpatialReferenceShadow *reference=NULL ) {
-    OGRGeometryH geom;
+    void *geom;
     OGRErr err = OGR_G_CreateFromWkt(val,
                                       reference,
                                       &geom);
     if (err != 0 )
        throw err;
-    return geom;
+    return (OGRGeometryShadow*) geom;
   }
  
 %}
@@ -995,8 +1000,8 @@ char const *OGRDataSourceH_name_get( OGRDataSourceH *h ) {
 
 %newobject CreateGeometryFromGML;
 %inline %{
-  OGRGeometryH *CreateGeometryFromGML( const char * input_string ) {
-    OGRGeometryH* geom = (OGRGeometryH*)OGR_G_CreateFromGML(input_string);
+  OGRGeometryShadow *CreateGeometryFromGML( const char * input_string ) {
+    OGRGeometryShadow* geom = (OGRGeometryShadow*)OGR_G_CreateFromGML(input_string);
     return geom;
   }
  
