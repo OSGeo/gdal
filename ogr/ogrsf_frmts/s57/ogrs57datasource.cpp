@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/11/29 14:04:53  warmerda
+ * use LNAM_REFS
+ *
  * Revision 1.5  1999/11/26 16:18:33  warmerda
  * OGRFeatureDefn generators no longer static
  *
@@ -164,6 +167,7 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
 /*      instantiate a whole series of modules.                          */
 /* -------------------------------------------------------------------- */
     S57Reader   *poModule;
+    char	*papszReaderOptions[] = { "LNAM_REFS=ON", NULL };
 
     poModule = new S57Reader( pszFilename );
     if( !poModule->Open( bTestOpen ) )
@@ -176,6 +180,8 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     nModules = 1;
     papoModules = (S57Reader **) CPLMalloc(sizeof(void*));
     papoModules[0] = poModule;
+    
+    poModule->SetOptions( papszReaderOptions );
     
 /* -------------------------------------------------------------------- */
 /*      Instantiate the class registrar if possible.                    */
