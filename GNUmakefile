@@ -25,3 +25,8 @@ configure:	configure.in
 GDALmake.opt:	GDALmake.opt.in config.status
 	config.status
 
+docs:
+	doxygen
+
+all:	default
+
