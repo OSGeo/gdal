@@ -11,7 +11,7 @@ XTRAFLAGS =	-I..\frmts -I..\alg
 
 default:	gdal_translate.exe gdalinfo.exe gdaladdo.exe gdalwarp.exe
 
-all:	default gdalwarptest.exe gdaltindex.exe
+all:	default gdalwarpsimple.exe gdaltindex.exe gdal_contour.exe
 
 gdalinfo.exe:	gdalinfo.c $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalinfo.c $(XTRAOBJ) $(LIBS) \
@@ -31,6 +31,10 @@ gdalwarpsimple.exe:	gdalwarpsimple.c $(GDALLIB) $(XTRAOBJ)
 	
 gdalwarp.exe:	gdalwarp.cpp $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalwarp.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	
+gdal_contour.exe:	gdal_contour.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) gdal_contour.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
 	
 gdal2raw.exe:	gdal2raw.c $(GDALLIB) $(XTRAOBJ)
