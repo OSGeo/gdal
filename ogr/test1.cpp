@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  1999/05/31 20:40:17  warmerda
+ * modified createFromWkt() to indicate how much text consumed
+ *
  * Revision 1.5  1999/05/23 05:34:41  warmerda
  * added support for clone(), multipolygons and geometry collections
  *
@@ -202,8 +205,9 @@ void ReportBin( const char * pszFilename )
     poGeom = NULL;
     if( pabyData[0] > 31 )
     {
-        eErr = OGRGeometryFactory::createFromWkt( (char *) pabyData, NULL,
-                                                  &poGeom );
+        char	*pszInput = (char *) pabyData;
+        
+        eErr = OGRGeometryFactory::createFromWkt( &pszInput, NULL, &poGeom );
     }
     else
     {
