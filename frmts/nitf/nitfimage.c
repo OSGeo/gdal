@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/06/06 16:52:32  warmerda
+ * changes based on better understanding of conditional FSDEVT field
+ *
  * Revision 1.16  2003/06/06 15:07:53  warmerda
  * fixed security area sizing for NITF 2.0 images, its like NITF 1.1.
  *
@@ -149,13 +152,12 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     psSegInfo->hAccess = psImage;
 
 /* -------------------------------------------------------------------- */
-/*      Is this an old NITF 1.1 image?  If so, there seems to be an     */
-/*      extra 40 bytes of info in the security area.                    */
+/*      Does this header have the FSDEVT field?                         */
 /* -------------------------------------------------------------------- */
     nOffset = 333;
 
-//    if( EQUALN(psFile->szVersion,"NITF01.",7) )
-    if( atof(psFile->szVersion+4) < 2.1 )
+    if( EQUALN(psFile->szVersion,"NITF01.",7) 
+        || EQUALN(pachHeader+284,"999998",6) )
         nOffset += 40;
 
 /* -------------------------------------------------------------------- */
