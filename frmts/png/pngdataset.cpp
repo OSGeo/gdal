@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.11  2001/09/28 14:30:19  warmerda
+ * Ensure num_trans is initialized to zero in case png_get_tRNS fails.
+ *
  * Revision 1.10  2001/08/23 03:45:15  warmerda
  * If there is only one transparent color in the color table, also consider
  * it to be the nodata value.
@@ -634,7 +637,7 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
         GDALColorEntry oEntry;
         unsigned char *trans = NULL;
         png_color_16 *trans_values = NULL;
-        int	num_trans;
+        int	num_trans = 0;
         int	nNoDataIndex = -1;
 
         if( png_get_PLTE( poDS->hPNG, poDS->psPNGInfo, 
