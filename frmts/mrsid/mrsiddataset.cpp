@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/04/06 22:03:17  kmelero
+ * Updated for CPLStrdup and mod to pointers for large file support per
+ * LizardTech Mrsid Team.  (kmelero@sanz.com)
+ *
  * Revision 1.27  2005/04/02 19:26:08  kmelero
  * Added read support for WKT.  (kmelero@sanz.com)
  *
@@ -1006,7 +1010,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
 /*      Read georeferencing.                                            */
 /* -------------------------------------------------------------------- */
     if ( !poImageReader->isGeoCoordImplicit() )
-    {
+      {
         const LTIGeoCoord& oGeo = poImageReader->getGeoCoord();
         oGeo.get( adfGeoTransform[0], adfGeoTransform[3],
 	          adfGeoTransform[1], adfGeoTransform[5],
@@ -1015,23 +1019,23 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
         adfGeoTransform[0] = adfGeoTransform[0] - adfGeoTransform[1] / 2;
         adfGeoTransform[3] = adfGeoTransform[3] - adfGeoTransform[5] / 2;
 	bHasGeoTransform = TRUE;
-    }
-
+      }
+    
 /* -------------------------------------------------------------------- */
 /*      Read wkt.                                                       */
 /* -------------------------------------------------------------------- */
     if ( !poImageReader->isGeoCoordImplicit() )
-    {
-        const LTIGeoCoord& oGeo = poImageReader->getGeoCoord();
-
+      {
+	const LTIGeoCoord& oGeo = poImageReader->getGeoCoord();
+	
 	if( oGeo.getWKT() )
-	  pszProjection = (char*)oGeo.getWKT();
-    }
+	  pszProjection =  CPLStrdup( oGeo.getWKT() );
+      }
 
 /* -------------------------------------------------------------------- */
 /*      Read NoData value.                                              */
 /* -------------------------------------------------------------------- */
-     poNDPixel = poImageReader->getNoDataPixel();
+    poNDPixel = poImageReader->getNoDataPixel();
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -1052,15 +1056,14 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     int     bIsJP2 = FALSE;
 
-    if ( poOpenInfo->fp == NULL )
-        return NULL;
-
     if ( EQUALN((const char *) poOpenInfo->pabyHeader + 4, "jP  ", 4) )
         bIsJP2 = TRUE;
     else if ( !EQUALN((const char *) poOpenInfo->pabyHeader, "msid", 4) )
         return NULL;
 
-    VSIFClose( poOpenInfo->fp );
+    if(poOpenInfo->fp)
+      VSIFClose( poOpenInfo->fp );
+    
     poOpenInfo->fp = NULL;
 
 /* -------------------------------------------------------------------- */
