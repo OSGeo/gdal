@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/12/07 17:09:38  warmerda
+ * added order flag to GenImgProjTransformer
+ *
  * Revision 1.4  2002/12/06 21:43:56  warmerda
  * added GCP support to general transformer
  *
@@ -260,7 +263,8 @@ typedef struct {
 void *
 GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
                                  GDALDatasetH hDstDS, const char *pszDstWKT,
-                                 int bGCPUseOK, double dfGCPErrorThreshold )
+                                 int bGCPUseOK, double dfGCPErrorThreshold,
+                                 int nOrder )
 
 {
     GDALGenImgProjTransformInfo *psInfo;
@@ -289,7 +293,7 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
     {
         psInfo->pSrcGCPTransformArg = 
             GDALCreateGCPTransformer( GDALGetGCPCount( hSrcDS ),
-                                      GDALGetGCPs( hSrcDS ), 0, FALSE );
+                                      GDALGetGCPs( hSrcDS ), nOrder, FALSE );
         if( psInfo->pSrcGCPTransformArg == NULL )
         {
             GDALDestroyGenImgProjTransformer( psInfo );
