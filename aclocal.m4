@@ -436,6 +436,8 @@ dnl NFW: Modified from original to avoid overridding CC, SO and OPT
 
 AC_DEFUN(AM_INIT_PYEXEC_MOD,
   [AC_REQUIRE([AM_PATH_PYTHON])
+
+PYTHON_LIBS=""
 if test "$PYTHON" != no ; then
   AC_MSG_CHECKING([for python headers])
   AC_CACHE_VAL(am_cv_python_includes,
@@ -456,6 +458,11 @@ print \"-I%s -I%s\" % (includepy, libpl)'`"
   AC_MSG_CHECKING([definitions from Python makefile])
   AC_CACHE_VAL(am_cv_python_makefile,
     [changequote(,)dnl
+    if test ! -z "`uname -a | grep CYGWIN`" ; then 
+      PYTHON_LIBS="`$PYTHON -c '
+import sys
+print \"-L%s/lib/python%s/config -lpython%s.dll" % (sys.prefix, sys.version[:3], sys.version[:3])'`"
+    fi 
     py_makefile="`$PYTHON -c '
 import sys
 print \"%s/lib/python%s/config/Makefile\"%(sys.exec_prefix, sys.version[:3])'`"
@@ -479,6 +486,7 @@ print \"%s/lib/python%s/config/Makefile\"%(sys.exec_prefix, sys.version[:3])'`"
   PYTHON_SO="$am_cv_python_SO"
   PYTHON_CFLAGS="$am_cv_python_CCSHARED \$(OPT)"
   PYTHON_LINK="$am_cv_python_LDSHARED -o \[$]@"
+
 else
   PYTHON_CC=""
   PYTHON_OPT=""
@@ -490,6 +498,7 @@ AC_SUBST(PYTHON_CC)dnl
 AC_SUBST(PYTHON_OPT)dnl
 AC_SUBST(PYTHON_SO)dnl
 AC_SUBST(PYTHON_CFLAGS)dnl
+AC_SUBST(PYTHON_LIBS)dnl
 AC_SUBST(PYTHON_LINK)])
 
 dnl
