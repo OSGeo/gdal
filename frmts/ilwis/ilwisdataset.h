@@ -138,9 +138,11 @@ class ILWISDataset : public GDALDataset
 {
     friend class ILWISRasterBand;
 		const char *pszFileName;
+		string pszIlwFileName;
 		char	 *pszProjection;
-    double adfGeoTransform[6];
+		double adfGeoTransform[6];
 		int    bGeoDirty;
+		int		 bNewDataset;            /* product of Create() */
 		string pszFileType; //indicating the input dataset: Map/MapList  
 		CPLErr ReadProjection( string csyFileName);
 		CPLErr WriteProjection();

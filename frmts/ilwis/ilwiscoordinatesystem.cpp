@@ -979,17 +979,14 @@ CPLErr ILWISDataset::WriteProjection()
 		string csFileName = CPLResetExtension(pszFileName, "csy" );
 		string pszBaseName = string(CPLStrdup( CPLGetBasename( pszFileName )));
 		string pszPath = string(CPLStrdup( CPLGetPath( pszFileName )));
-		
-		if( pszProjection != NULL && strlen(pszProjection) > 0
-        && oSRS.importFromWkt( &pszP ) == OGRERR_NONE )
+		bool fProjection = ((strlen(pszProjection)>0) && (pszProjection != NULL));
+		if( fProjection && (oSRS.importFromWkt( &pszP ) == OGRERR_NONE) )
 		{
-		
-        bHaveSRS = TRUE;
+		    bHaveSRS = TRUE;
 		}
     else
         bHaveSRS = FALSE;
 		
-
 		IlwisDatums   *piwDatum = iwDatums;
 		string pszEllips;
 		string pszDatum;
