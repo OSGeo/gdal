@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2005/03/25 06:31:12  fwarmerdam
+ * added addSubLineString
+ *
  * Revision 1.45  2005/02/22 12:38:01  fwarmerdam
  * rename Equal/Intersect to Equals/Intersects
  *
@@ -645,6 +648,93 @@ void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY,
 
     if( this->padfZ != NULL )
         memcpy( this->padfZ, padfZ, sizeof(double) * nPointsIn );
+}
+
+/************************************************************************/
+/*                          addSubLineString()                          */
+/************************************************************************/
+
+/**
+ * Add a segment of another linestring to this one.
+ *
+ * Adds the request range of vertices to the end of this line string
+ * in an efficient manner.  If the nStartVertex is larger than the
+ * nEndVertex then the vertices will be reversed as they are copied. 
+ *
+ * @param poOtherLine the other OGRLineString. 
+ * @param nStartVertex the first vertex to copy, defaults to 0 to start
+ * with the first vertex in the other linestring. 
+ * @param nEndVertex the last vertex to copy, defaults to -1 indicating 
+ * the last vertex of the other line string. 
+ */
+
+void OGRLineString::addSubLineString( const OGRLineString *poOtherLine, 
+                                      int nStartVertex, int nEndVertex )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Do a bit of argument defaulting and validation.                 */
+/* -------------------------------------------------------------------- */
+    if( nEndVertex == -1 )
+        nEndVertex = poOtherLine->getNumPoints() - 1;
+
+    if( nStartVertex < 0 || nEndVertex < 0 
+        || nStartVertex >= poOtherLine->getNumPoints() 
+        || nEndVertex >= poOtherLine->getNumPoints() )
+    {
+        CPLAssert( FALSE );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Grow this linestring to hold the additional points.             */
+/* -------------------------------------------------------------------- */
+    int nOldPoints = nPointCount;
+    int nPointsToAdd = ABS(nEndVertex-nStartVertex) + 1;
+
+    setNumPoints( nPointsToAdd + nOldPoints );
+
+/* -------------------------------------------------------------------- */
+/*      Copy the x/y points - forward copies use memcpy.                */
+/* -------------------------------------------------------------------- */
+    if( nEndVertex >= nStartVertex )
+    {
+        memcpy( paoPoints + nOldPoints, 
+                poOtherLine->paoPoints + nStartVertex, 
+                sizeof(OGRRawPoint) * nPointsToAdd );
+        if( poOtherLine->padfZ != NULL )
+        {
+            Make3D();
+            memcpy( padfZ + nOldPoints, poOtherLine->padfZ + nStartVertex,
+                    sizeof(double) * nPointsToAdd );
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Copy the x/y points - reverse copies done double by double.     */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        int i;
+
+        for( i = 0; i < nPointsToAdd; i++ )
+        {
+            paoPoints[i+nOldPoints].x = 
+                poOtherLine->paoPoints[nStartVertex-i].x;
+            paoPoints[i+nOldPoints].y = 
+                poOtherLine->paoPoints[nStartVertex-i].y;
+        }
+
+        if( poOtherLine->padfZ != NULL )
+        {
+            Make3D();
+
+            for( i = 0; i < nPointsToAdd; i++ )
+            {
+                padfZ[i+nOldPoints] = poOtherLine->padfZ[nStartVertex-i];
+            }
+        }
+    }
 }
 
 /************************************************************************/
