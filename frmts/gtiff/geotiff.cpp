@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.134  2005/03/22 19:40:59  fwarmerdam
+ * Added support for forcing RGB color mode with YCBCR files and JPEG
+ * compression.  Added special (fast) case for 12bit to 16bit conversion
+ * in the OddBits raster band class.  Fixed colorinterp reporting for
+ * YCbCr files forced to RGB.
+ *
  * Revision 1.133  2005/03/22 05:12:15  fwarmerdam
  * first crack at support 9-15 bit depths
  *
@@ -375,7 +381,9 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
 /* -------------------------------------------------------------------- */
 /*      Try to work out band color interpretation.                      */
 /* -------------------------------------------------------------------- */
-    if( poDS->nPhotometric == PHOTOMETRIC_RGB )
+    if( poDS->nPhotometric == PHOTOMETRIC_RGB 
+        || (poDS->nPhotometric == PHOTOMETRIC_YCBCR 
+            && poDS->nCompression == COMPRESSION_JPEG ) )
     {
         if( nBand == 1 )
             eBandInterp = GCI_RedBand;
@@ -1282,13 +1290,6 @@ GTiffOddBitsBand::GTiffOddBitsBand( GTiffDataset *poGDS, int nBand )
         : GTiffRasterBand( poGDS, nBand )
 
 {
-
-    if( nBand != 1 )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "One bit deep TIFF files only supported with one sample per pixel (band)." );
-    }
-
     eDataType = GDT_Byte;
     if( poGDS->nBitsPerSample > 8 && poGDS->nBitsPerSample < 16 )
         eDataType = GDT_UInt16;
@@ -1363,9 +1364,53 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return eErr;
 
 /* -------------------------------------------------------------------- */
+/*      Special case for moving 12bit data somewhat more efficiently.   */
+/* -------------------------------------------------------------------- */
+    if( poGDS->nBitsPerSample == 12 )
+    {
+        int	iPixel, iBitOffset = 0, nBlockPixels;
+        int     iPixelBitSkip, iBandBitOffset;
+
+        if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
+        {
+            iPixelBitSkip = poGDS->nBands * poGDS->nBitsPerSample;
+            iBandBitOffset = (nBand-1) * poGDS->nBitsPerSample;
+        }
+        else
+        {
+            iPixelBitSkip = poGDS->nBitsPerSample;
+            iBandBitOffset = 0;
+        }
+
+        nBlockPixels = nBlockXSize * nBlockYSize;
+        for( iPixel = 0; iPixel < nBlockPixels; iPixel++ )
+        {
+            iBitOffset = iBandBitOffset + iPixel * iPixelBitSkip;
+            int iByte = iBitOffset>>3;
+
+            if( (iBitOffset & 0x7) == 0 )
+            {
+                /* starting on byte boundary */
+
+                ((GUInt16 *) pImage)[iPixel] = 
+                    (poGDS->pabyBlockBuf[iByte] << 4)
+                    | (poGDS->pabyBlockBuf[iByte+1] >> 4);
+            }
+            else
+            {
+                /* starting off byte boundary */
+
+                ((GUInt16 *) pImage)[iPixel] = 
+                    ((poGDS->pabyBlockBuf[iByte] & 0xf) << 8)
+                    | (poGDS->pabyBlockBuf[iByte+1]);
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Handle 9-15 bits to 16 bits.                                    */
 /* -------------------------------------------------------------------- */
-    if( eDataType == GDT_UInt16 )
+    else if( eDataType == GDT_UInt16 )
     {
         int	iBit, iPixel, iBitOffset = 0, nBlockPixels;
         int     iPixelBitSkip, iBandBitOffset;
@@ -1567,6 +1612,15 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId )
 
     if( nLoadedBlock == nBlockId )
         return CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      This is rather overkill, but relatively harmless so we do it    */
+/*      here to be sure.                                                */
+/* -------------------------------------------------------------------- */
+    if( nCompression == COMPRESSION_JPEG && nPhotometric == PHOTOMETRIC_YCBCR )
+    {
+        TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we have a dirty loaded block, flush it out first.            */
@@ -2517,7 +2571,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 /* -------------------------------------------------------------------- */
 /*      Should we treat this via the RGBA interface?                    */
 /* -------------------------------------------------------------------- */
-    if( !bTreatAsBitmap
+    if( !bTreatAsBitmap && !nBitsPerSample > 8 
         && (nPhotometric == PHOTOMETRIC_CIELAB ||
             nPhotometric == PHOTOMETRIC_LOGL ||
             nPhotometric == PHOTOMETRIC_LOGLUV ||
