@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/01/17 20:39:29  warmerda
+ * added bounding rectangle support
+ *
  * Revision 1.4  2002/03/07 22:39:01  warmerda
  * include ogr_gml_geom.h
  *
@@ -118,6 +121,8 @@ class OGRGMLDataSource : public OGRDataSource
 
     // output related parameters 
     FILE		*fpOutput;
+    OGREnvelope         sBoundingRect;
+    int                 nBoundedByLocation;
 
     // input related parameters.
     IGMLReader		*poReader;
@@ -142,6 +147,8 @@ class OGRGMLDataSource : public OGRDataSource
 
     FILE		*GetOutputFP() { return fpOutput; }
     IGMLReader          *GetReader() { return poReader; }
+
+    void                GrowExtents( OGREnvelope *psGeomBounds );
 };
 
 /************************************************************************/

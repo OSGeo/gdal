@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/01/17 20:39:40  warmerda
+ * added bounding rectangle support
+ *
  * Revision 1.5  2003/01/10 16:23:11  warmerda
  * assign FIDs if not provided in CreateFeature()
  *
@@ -263,11 +266,15 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
     if( poFeature->GetGeometryRef() != NULL )
     {
         char	*pszGeometry;
+        OGREnvelope sGeomBounds;
 
         pszGeometry = OGR2GMLGeometry( poFeature->GetGeometryRef() );
         VSIFPrintf( fp, "      <gml:geometryProperty>%s</gml:geometryProperty>\n",
                     pszGeometry );
         CPLFree( pszGeometry );
+
+        poFeature->GetGeometryRef()->getEnvelope( &sGeomBounds );
+        poDS->GrowExtents( &sGeomBounds );
     }
 
     VSIFPrintf( fp, "    </%s>\n", poFeatureDefn->GetName() );
