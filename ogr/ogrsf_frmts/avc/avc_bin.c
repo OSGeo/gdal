@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: avc_bin.c,v 1.21 2002/02/14 22:54:13 warmerda Exp $
+ * $Id: avc_bin.c,v 1.22 2002/03/18 19:03:37 daniel Exp $
  *
  * Name:     avc_bin.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: avc_bin.c,v $
+ * Revision 1.22  2002/03/18 19:03:37  daniel
+ * Fixed AVCBinReadObject() for PAL objects (bug 848)
+ *
  * Revision 1.21  2002/02/14 22:54:13  warmerda
  * added polygon and table support for random reading
  *
@@ -529,7 +532,7 @@ int AVCBinReadRewind(AVCBinFile *psFile)
 void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
 {
     int	 bIndexed = FALSE;
-    int  nObjectOffset, nRecordSize=0, nRecordStart = 0;
+    int  nObjectOffset, nRecordSize=0, nRecordStart = 0, nLen;
     char *pszExt = NULL;
 
     if( iObjIndex < 0 )
@@ -538,15 +541,18 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
     /*-----------------------------------------------------------------
      * Determine some information from based on the coverage type.    
      *----------------------------------------------------------------*/
-    if( psFile->eFileType == AVCFileARC )
+    nLen = strlen(psFile->pszFilename);
+    if( psFile->eFileType == AVCFileARC &&
+        ((nLen>=3 && EQUALN((pszExt=psFile->pszFilename+nLen-3), "arc", 3)) ||
+         (nLen>=7 && EQUALN((pszExt=psFile->pszFilename+nLen-7),"arc.adf",7))))
     {
         bIndexed = TRUE;
-        pszExt = strstr(psFile->pszFilename,"arc");
     }
-    else if( psFile->eFileType == AVCFilePAL )
+    else if( psFile->eFileType == AVCFilePAL &&
+        ((nLen>=3 && EQUALN((pszExt=psFile->pszFilename+nLen-3), "pal", 3)) ||
+         (nLen>=7 && EQUALN((pszExt=psFile->pszFilename+nLen-7),"pal.adf",7))))
     {
         bIndexed = TRUE;
-        pszExt = strstr(psFile->pszFilename,"pax");
     }
     else if( psFile->eFileType == AVCFileTABLE )
     {
