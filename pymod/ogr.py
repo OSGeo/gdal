@@ -28,8 +28,39 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.39  2005/01/22 23:47:06  hobu
+# Support for slicing and index access on DataSources and Layers:
+# for layer in ds:
+#    do something
+#
+# for feature in layer:
+#    do something
+#
+# This also means that we get list comprehension support
+# [i.GetName() for i in ds[0:4]]
+# or
+# [i..GetFID() for feature in layer[0:]]
+#
+# *Note*-- some datasources do not always have sequential
+# feature ids and slicing may not work as expected for all
+# datasources.
+#
+# Support for len(ds) or len(layer) to return the number of
+# layers in the datasource or features in the layer (these are
+# simple wrappers around GetLayerCount() and GetFeatureCount())
+#
+# A custom exception, OGRError, is now raised in many cases
+# instead of generic IndexErrors or ValueErrors when the error
+# is really coming from OGR not being able to read something.
+#
+# Reworked DataSource.GetLayer() to check the types of the input
+# value (int or string) and call the appropriate OGR function to do so.
+# __getitem__ in DataSource uses this function instead of switching
+# between it and GetLayerByName().
+#
 # Revision 1.38  2005/01/22 18:52:16  hobu
-# passing _obj instead of obj in GetSpatialFilter in the Geometry constructor at the end of the function.
+# passing _obj instead of obj in GetSpatialFilter in the Geometry
+# constructor at the end of the function.
 #
 # Revision 1.37  2005/01/22 18:30:58  hobu
 # typo in Layer::GetSpatialFilter
@@ -149,8 +180,13 @@
 import _gdal
 import gdal
 import osr
+import types
+import sys
 
 from _gdal import ptrcreate, ptrfree, ptrvalue, ptrset, ptrcast, ptradd, ptrmap, ptrptrcreate, ptrptrvalue, ptrptrset
+
+
+class OGRError(Exception): pass
 
 # OGRwkbGeometryType
 
@@ -203,6 +239,8 @@ _gdal.OGRRegisterAll()
 # Various free standing functions.
 
 def Open( filename, update = 0 ):
+    """Return an OGR DataSource
+update=0,1 -- open it for update"""
 
     drv_ptr = ptrptrcreate( 'void' )
     ptrptrset( drv_ptr, 'NULL' )
@@ -213,7 +251,7 @@ def Open( filename, update = 0 ):
     ptrfree( drv_ptr )
     
     if ds_o is None or ds_o == 'NULL':
-        raise ValueError, 'Unable to open: ' + filename
+        raise OGRError, 'Unable to open: ' + filename
     else:
         ds = DataSource( ds_o )
         ds.driver_o = driver_o
@@ -231,7 +269,7 @@ def OpenShared( filename, update = 0 ):
     ptrfree( drv_ptr )
     
     if ds_o is None or ds_o == 'NULL':
-        raise ValueError, 'Unable to open: ' + filename
+        raise OGRError, 'Unable to open: ' + filename
     else:
         ds = DataSource( ds_o )
         ds.driver_o = driver_o
@@ -244,7 +282,7 @@ def GetDriverCount():
 def GetDriver( driver_index ):
     dr_o = _gdal.OGRGetDriver( driver_index )
     if dr_o is None or dr_o == 'NULL':
-        raise IndexError
+        raise OGRError, 'Unable to find ogr.Driver named at index "%s".' % driver_index
     else:
         return Driver( dr_o )
 
@@ -254,8 +292,7 @@ def GetDriverByName( name ):
         dr = GetDriver( i )
         if dr.GetName() == name:
             return dr
-
-    raise ValueError, 'Unable to find ogr.Driver named "%s".' % name
+    raise OGRError, 'Unable to find ogr.Driver named "%s".' % name
 
 def GetOpenDSCount():
     return _gdal.OGRGetOpenDSCount()
@@ -277,12 +314,12 @@ class Driver:
 
     def __init__(self,obj=None):
         if obj is None:
-            raise ValueError, 'OGRDriver may not be directly instantiated.'
+            raise OGRError, 'OGRDriver may not be directly instantiated.'
         self._o = obj
 
     def GetName( self ):
         return _gdal.OGR_Dr_GetName( self._o )
-
+    
     def TestCapability( self, cap ):
         return _gdal.OGR_Dr_TestCapability( self._o, cap )
 
@@ -299,7 +336,7 @@ class Driver:
         _gdal.CSLDestroy(md_c)
         
         if ds_o is None or ds_o == 'NULL':
-            raise ValueError, _gdal.CPLGetLastErrorMsg()
+            raise OGRError, _gdal.CPLGetLastErrorMsg()
         else:
             return DataSource( ds_o )
 
@@ -309,7 +346,7 @@ class Driver:
         _gdal.CSLDestroy(md_c)
         
         if ds_o is None or ds_o == 'NULL':
-            raise ValueError, _gdal.CPLGetLastErrorMsg()
+            raise OGRError, _gdal.CPLGetLastErrorMsg()
         else:
             return DataSource( ds_o )
 
@@ -322,8 +359,34 @@ class Driver:
 class DataSource:
     def __init__(self,obj=None):
         if obj is None:
-            raise ValueError, 'OGRDataSource may not be directly instantiated.'
+            raise OGRError, 'OGRDataSource may not be directly instantiated.'
         self._o = obj
+
+    def __len__(self):
+        """Returns the number of layers on the datasource"""
+        return self.GetLayerCount()
+
+    def __getitem__(self, value):
+        """Support dictionary, list, and slice -like access to the datasource.
+ds[0] would return the first layer on the datasource.
+ds['aname'] would return the layer named "aname".
+ds[0:4] would return a list of the first four layers."""
+        if isinstance(value, types.SliceType):
+            output = []
+            for i in xrange(value.start,value.stop,step=value.step):
+                try:
+                    output.append(self.GetLayer(i))
+                except OGRError: #we're done because we're off the end
+                    return output
+            return output
+        if isinstance(value, types.IntType):
+            if value > len(self)-1:
+                raise IndexError
+            return self.GetLayer(value)
+        elif isinstance(value,types.StringType):
+            return self.GetLayer(value)
+        else:
+            raise TypeError,"Input %s is not of String or Int type" % type(value)
 
     def Destroy(self):
         _gdal.OGR_DS_Destroy( self._o )
@@ -346,21 +409,26 @@ class DataSource:
         return _gdal.OGR_DS_GetSummaryRefCount(self._o)
 
     def GetName(self):
+        """Returns the name of the datasource"""
         return _gdal.OGR_DS_GetName( self._o )
-
+    
     def GetLayerCount(self):
+        """Returns the number of layers on the datasource"""
         return _gdal.OGR_DS_GetLayerCount( self._o )
 
     def GetLayer(self,iLayer=0):
-        # If given a layer name, scan for it. 
-        if type(iLayer).__name__ == 'str':
-            return self.GetLayerByName( iLayer )
-
-        l_obj = _gdal.OGR_DS_GetLayer( self._o, iLayer)
+        """Return the layer given an index or a name"""
+        if isinstance(iLayer, types.StringType):
+            l_obj = _gdal.OGR_DS_GetLayerByName( self._o, iLayer)
+        elif isinstance(iLayer, types.IntType):
+            l_obj = _gdal.OGR_DS_GetLayer( self._o, iLayer)
+        else:
+            raise TypeError, "Input %s is not of String or Int type" % type(iLayer)
+        
         if l_obj is not None and l_obj != 'NULL':
             return Layer( l_obj )
         else:
-            raise IndexError, 'No layer %d on datasource' % iLayer
+            raise OGRError, 'No layer %d on datasource' % iLayer
 
     def GetLayerByName(self,name):
         # If given a layer name, scan for it. 
@@ -368,7 +436,7 @@ class DataSource:
         if l_obj is not None and l_obj != 'NULL':
             return Layer( l_obj )
         else:
-            raise IndexError, 'No layer %s on datasource' % name 
+            raise OGRError, 'No layer %s on datasource' % name 
 
     def DeleteLayer( self, iLayer ):
         return _gdal.OGR_DS_DeleteLayer( self._o, iLayer )
@@ -384,7 +452,7 @@ class DataSource:
         obj = _gdal.OGR_DS_CreateLayer( self._o, name, srs_o, geom_type, md_c)
         _gdal.CSLDestroy(md_c)
         if obj is None or obj == 'NULL':
-            raise ValueError, gdal.GetLastErrorMsg()
+            raise OGRError, gdal.GetLastErrorMsg()
         else:
             return Layer( obj = obj )
 
@@ -393,7 +461,7 @@ class DataSource:
         obj = _gdal.OGR_DS_CopyLayer( self._o, src_layer._o, new_name, md_c)
         _gdal.CSLDestroy(md_c)
         if obj is None and obj != 'NULL':
-            raise ValueError, gdal.GetLastErrorMsg()
+            raise OGRError, gdal.GetLastErrorMsg()
         else:
             return Layer( obj = obj )
 
@@ -411,16 +479,47 @@ class DataSource:
         _gdal.OGR_DS_ReleaseResultSet( self._o, layer._o )
 
     def GetDriver( self ):
+        """Returns the driver of the datasource"""
         return Driver( obj = self.driver_o )
-
 #############################################################################
 # OGRLayer
 
 class Layer:
     def __init__(self,obj=None):
         if obj is None:
-            raise ValueError, 'OGRLayer may not be directly instantiated.'
+            raise OGRError, 'OGRLayer may not be directly instantiated.'
         self._o = obj
+
+    def __len__(self):
+        """Returns the number of layers on the datasource"""
+        return self.GetFeatureCount()
+
+    def __getitem__(self, value):
+        """Support list and slice -like access to the layer.
+ds[0] would return the first feature on the layer.
+ds[0:4] would return a list of the first four features."""
+        if isinstance(value, types.SliceType):
+            output = []
+            if value.stop == sys.maxint:
+                #for an unending slice, sys.maxint is used
+                #We need to stop before that or GDAL will write an
+                #error to stdout
+                stop = len(self) - 1
+            else:
+                stop = value.stop
+            for i in xrange(value.start,stop,step=value.step):
+                feature = self.GetFeature(i)
+                if feature:
+                    output.append(feature)
+                else:
+                    return output
+            return output
+        if isinstance(value, types.IntType):
+            if value > len(self)-1:
+                raise IndexError
+            return self.GetFeature(value)
+        else:
+            raise TypeError,"Input %s is not of Int type" % type(value)
 
     def Reference(self):
         return _gdal.OGR_L_Reference(self._o)
@@ -432,6 +531,7 @@ class Layer:
         return _gdal.OGR_L_GetRefCount(self._o)
 
     def SetSpatialFilter( self, geom ):
+        """Sets an ogr.Geometry as a spatial filter"""
         if geom is None:
             geom_o = 'NULL'
         else:
@@ -439,9 +539,11 @@ class Layer:
         _gdal.OGR_L_SetSpatialFilter( self._o, geom_o )
 
     def SetSpatialFilterRect( self, minx, miny, maxx, maxy ):
+        """Sets a four-tuple extent as a spatial filter"""
         _gdal.OGR_L_SetSpatialFilterRect( self._o, minx, miny, maxx, maxy )
 
     def GetSpatialFilter( self ):
+        """Returns the Spatial filter of the Layer as a Geometry"""
         geom_o = _gdal.OGR_L_GetSpatialFilter( self._o )
         if geom_o is None or geom_o == 'NULL':
             return None
@@ -459,7 +561,7 @@ class Layer:
 
     def GetName( self ):
         return _gdal.OGR_FD_GetName( _gdal.OGR_L_GetLayerDefn( self._o ) )
-
+    
     def GetFeature( self, fid ):
         f_o = _gdal.OGR_L_GetFeature( self._o, fid )
         if f_o is None or f_o == 'NULL':
@@ -477,7 +579,7 @@ class Layer:
             newfeat = Feature( obj = f_o )
             newfeat.thisown = 1
             return newfeat
-
+        
     def SetFeature( self, feat ):
         return _gdal.OGR_L_SetFeature( self._o, feat._o )
 
@@ -510,7 +612,7 @@ class Layer:
         _gdal.ptrfree( extents )
         
         return ret_extents
-
+    
     def TestCapability( self, cap ):
         return _gdal.OGR_L_TestCapability( self._o, cap )
 
@@ -542,9 +644,9 @@ class Layer:
 class Feature:
     def __init__(self,feature_def=None,obj=None):
         if feature_def is None and obj is None:
-            raise ValueError, 'ogr.Feature() needs an ogr.FeatureDefn.'
+            raise OGRError, 'ogr.Feature() needs an ogr.FeatureDefn.'
         if feature_def is not None and obj is not None:
-            raise ValueError, 'ogr.Feature() cannot receive obj and feature_def.'
+            raise OGRError, 'ogr.Feature() cannot receive obj and feature_def.'
         if obj is not None:
             self._o = obj
             self.thisown = 0
@@ -555,7 +657,10 @@ class Feature:
     def __del__(self):
         if self.thisown:
             self.Destroy()
-            
+
+    def __cmp__(self, other):
+        return _gdal.OGR_F_Equal( self._o, other._o )
+
     def Destroy( self ):
         if self._o is not None and self.thisown:
             _gdal.OGR_F_Destroy( self._o )
@@ -595,7 +700,7 @@ class Feature:
 
     def Equal( self, other_geom ):
         return _gdal.OGR_F_Equal( self._o, other_geom._o )
-
+    
     def GetFieldCount( self ):
         return _gdal.OGR_F_GetFieldCount( self._o )
 
@@ -609,43 +714,43 @@ class Feature:
         return _gdal.OGR_F_GetFieldIndex( self._o, name )
 
     def IsFieldSet( self, fld_index ):
-        if type(fld_index).__name__ == 'str':
+        if isinstance(fld_index, types.StringType):
             fld_index = self.GetFieldIndex(fld_index)
         return _gdal.OGR_F_IsFieldSet( self._o, fld_index )
 
     def UnsetField( self, fld_index ):
-        if type(fld_index).__name__ == 'str':
+        if isinstance(fld_index, types.StringType):
             fld_index = self.GetFieldIndex(fld_index)
         _gdal.OGR_F_UnsetField( self._o, fld_index )
 
     def SetField( self, fld_index, value ):
-        if type(fld_index).__name__ == 'str':
+        if isinstance(fld_index, types.StringType):
             fld_index = self.GetFieldIndex(fld_index)
         _gdal.OGR_F_SetFieldString( self._o, fld_index, str(value) )
 
     def GetFieldAsString( self, fld_index ):
-        if type(fld_index).__name__ == 'str':
+        if isinstance(fld_index, types.StringType):
             fld_index = self.GetFieldIndex(fld_index)
         return _gdal.OGR_F_GetFieldAsString( self._o, fld_index )
 
     def GetFieldAsInteger( self, fld_index ):
-        if type(fld_index).__name__ == 'str':
+        if isinstance(fld_index, types.StringType):
             fld_index = self.GetFieldIndex(fld_index)
         return _gdal.OGR_F_GetFieldAsInteger( self._o, fld_index )
 
     def GetFieldAsDouble( self, fld_index ):
-        if type(fld_index).__name__ == 'str':
+        if isinstance(fld_index, types.StringType):
             fld_index = self.GetFieldIndex(fld_index)
         return _gdal.OGR_F_GetFieldAsDouble( self._o, fld_index )
 
     def GetField( self, fld_index ):
-        if type(fld_index).__name__ == 'str':
+        if isinstance(fld_index, types.StringType):
             fld_index = self.GetFieldIndex(fld_index)
         return _gdal.OGR_F_GetField( self._o, fld_index )
 
     def GetFID( self ):
         return _gdal.OGR_F_GetFID( self._o )
-
+    
     def SetFID( self, fid ):
         return _gdal.OGR_F_SetFID( self._o, fid )
 
@@ -809,7 +914,7 @@ class Geometry:
             self._o = _gdal.OGR_G_CreateGeometry( type )
             self.thisown = 1
         else:
-            raise ValueError, 'OGRGeometry may not be directly instantiated.'
+            raise OGRError, 'OGRGeometry may not be directly instantiated.'
 
     def __del__(self):
         if self.thisown:
@@ -925,7 +1030,7 @@ class Geometry:
             
         err_code = _gdal.OGR_G_Centroid( self._o, pnt_geom._o )
         if err_code != 0:
-            raise ValueError, 'Error in Centroid operation.  ' + _gdal.CPLGetLastErrorMsg()
+            raise OGRError, 'Error in Centroid operation.  ' + _gdal.CPLGetLastErrorMsg()
 
         return pnt_geom
 
