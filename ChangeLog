@@ -1,6 +1,7 @@
 2000-10-30  Frank Warmerdam  <warmerda@cs46980-c>
 
-	* Fixed bug with GetRasterColorTable in gdal.py.
+	* Fixed bug with GetRasterColorTable in gdal.py, and 
+	GetRasterNoDataValue in gdal.i.
 
 2000-10-25  Frank Warmerdam  <warmerda@cs46980-c>
 
