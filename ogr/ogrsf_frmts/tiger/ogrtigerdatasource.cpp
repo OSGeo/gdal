@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/01/13 16:39:17  warmerda
+ * Use CPLGetBasename() to compare to limitedFileList.
+ *
  * Revision 1.5  2000/01/13 05:18:11  warmerda
  * added support for multiple versions
  *
@@ -190,9 +193,9 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
              candidateFileList != NULL && candidateFileList[i] != NULL; 
              i++ ) 
         {
-            if( papszLimitedFileList != NULL
+            if( papszLimitedFileList != NULL 
                 && CSLFindString(papszLimitedFileList,
-                                 candidateFileList[i]) == -1 )
+                                 CPLGetBasename(candidateFileList[i])) == -1 )
             {
                 continue;
             }
