@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.118  2004/10/06 13:11:21  fwarmerdam
+ * added BigTIFF test
+ *
  * Revision 1.117  2004/09/30 19:34:04  fwarmerdam
  * Fixed memory leak of codecs info.
  *
@@ -2041,6 +2044,14 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     if( (poOpenInfo->pabyHeader[0] != 'I' || poOpenInfo->pabyHeader[1] != 'I')
      && (poOpenInfo->pabyHeader[0] != 'M' || poOpenInfo->pabyHeader[1] != 'M'))
         return NULL;
+
+    if( poOpenInfo->pabyHeader[2] == 43 && poOpenInfo->pabyHeader[3] == 0 )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "This is a BigTIFF file.  BigTIFF is not supported by this\n"
+                  "version of GDAL and libtiff." );
+        return NULL;
+    }
 
     if( (poOpenInfo->pabyHeader[2] != 0x2A || poOpenInfo->pabyHeader[3] != 0)
         && (poOpenInfo->pabyHeader[3] != 0x2A || poOpenInfo->pabyHeader[2] != 0) )
