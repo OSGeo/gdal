@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2003/03/21 22:23:27  warmerda
+ * added xml support
+ *
  * Revision 1.59  2003/03/20 17:53:30  warmerda
  * added OGR OpenShared and reference coutnting stuff
  *
@@ -1403,6 +1406,8 @@ int     OSRDereference( OGRSpatialReferenceH );
 int     OSRImportFromEPSG( OGRSpatialReferenceH, int );
 OGRSpatialReferenceH OSRCloneGeogCS( OGRSpatialReferenceH );
 
+int     OSRImportFromXML( OGRSpatialReferenceH, const char * );
+
 int     OSRMorphToESRI( OGRSpatialReferenceH );
 int     OSRMorphFromESRI( OGRSpatialReferenceH );
 int     OSRValidate( OGRSpatialReferenceH );
@@ -1657,6 +1662,45 @@ py_OSRExportToPrettyWkt(PyObject *self, PyObject *args) {
 %}
 
 %native(OSRExportToPrettyWkt) py_OSRExportToPrettyWkt;
+
+%{
+/************************************************************************/
+/*                           OSRExportToXML()                           */
+/************************************************************************/
+static PyObject *
+py_OSRExportToXML(PyObject *self, PyObject *args) {
+
+    OGRSpatialReferenceH _arg0;
+    char *_argc0 = NULL;
+    char *pszDialect = NULL;
+    char *pszXML = NULL;
+    OGRErr err;
+    PyObject *ret;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:OSRExportToXML",&_argc0, &pszDialect) )
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_OGRSpatialReferenceH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of OSRExportToXML."
+                            "  Expected _OGRSpatialReferenceH.");
+            return NULL;
+        }
+    }
+	
+    err = OSRExportToXML( _arg0, &pszXML, pszDialect );
+    if( pszXML == NULL )
+	pszXML = CPLStrdup("");
+
+    ret = Py_BuildValue( "s", pszXML );
+    OGRFree( pszXML );
+    return ret;
+}
+%}
+
+%native(OSRExportToXML) py_OSRExportToXML;
 
 /* -------------------------------------------------------------------- */
 /*      OGRCoordinateTransform C API.                                   */

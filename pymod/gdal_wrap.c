@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.60  2003/03/20 17:53:30  warmerda
- * added OGR OpenShared and reference coutnting stuff
+ * Revision 1.61  2003/03/21 22:23:27  warmerda
+ * added xml support
  *
  ************************************************************************/
 
@@ -1744,6 +1744,41 @@ py_OSRExportToPrettyWkt(PyObject *self, PyObject *args) {
 
     ret = Py_BuildValue( "s", wkt );
     OGRFree( wkt );
+    return ret;
+}
+
+/************************************************************************/
+/*                           OSRExportToXML()                           */
+/************************************************************************/
+static PyObject *
+py_OSRExportToXML(PyObject *self, PyObject *args) {
+
+    OGRSpatialReferenceH _arg0;
+    char *_argc0 = NULL;
+    char *pszDialect = NULL;
+    char *pszXML = NULL;
+    OGRErr err;
+    PyObject *ret;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:OSRExportToXML",&_argc0, &pszDialect) )
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &_arg0,_OGRSpatialReferenceH)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Type error in argument 1 of OSRExportToXML."
+                            "  Expected _OGRSpatialReferenceH.");
+            return NULL;
+        }
+    }
+	
+    err = OSRExportToXML( _arg0, &pszXML, pszDialect );
+    if( pszXML == NULL )
+	pszXML = CPLStrdup("");
+
+    ret = Py_BuildValue( "s", pszXML );
+    OGRFree( pszXML );
     return ret;
 }
 
@@ -3711,6 +3746,27 @@ static PyObject *_wrap_OSRCloneGeogCS(PyObject *self, PyObject *args) {
     _result = (OGRSpatialReferenceH )OSRCloneGeogCS(_arg0);
     SWIG_MakePtr(_ptemp, (char *) _result,"_OGRSpatialReferenceH");
     _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRImportFromXML(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRSpatialReferenceH  _arg0;
+    char * _arg1;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ss:OSRImportFromXML",&_argc0,&_arg1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRImportFromXML. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (int )OSRImportFromXML(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
@@ -7874,6 +7930,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OCTTransform", py_OCTTransform, 1 },
 	 { "OCTDestroyCoordinateTransformation", _wrap_OCTDestroyCoordinateTransformation, 1 },
 	 { "OCTNewCoordinateTransformation", _wrap_OCTNewCoordinateTransformation, 1 },
+	 { "OSRExportToXML", py_OSRExportToXML, 1 },
 	 { "OSRExportToPrettyWkt", py_OSRExportToPrettyWkt, 1 },
 	 { "OSRExportToWkt", py_OSRExportToWkt, 1 },
 	 { "OSRExportToProj4", py_OSRExportToProj4, 1 },
@@ -7909,6 +7966,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRValidate", _wrap_OSRValidate, 1 },
 	 { "OSRMorphFromESRI", _wrap_OSRMorphFromESRI, 1 },
 	 { "OSRMorphToESRI", _wrap_OSRMorphToESRI, 1 },
+	 { "OSRImportFromXML", _wrap_OSRImportFromXML, 1 },
 	 { "OSRCloneGeogCS", _wrap_OSRCloneGeogCS, 1 },
 	 { "OSRImportFromEPSG", _wrap_OSRImportFromEPSG, 1 },
 	 { "OSRDereference", _wrap_OSRDereference, 1 },

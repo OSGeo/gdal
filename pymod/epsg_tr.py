@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.7  2003/03/21 22:23:27  warmerda
+# added xml support
+#
 # Revision 1.6  2002/12/13 06:36:18  warmerda
 # added postgis output
 #
@@ -57,7 +60,8 @@ import string
 # =============================================================================
 def Usage():
 
-    print 'Usage: epsg_tr.py [-wkt] [-pretty_wkt] [-proj4] [-postgis] start_code [end_code]'
+    print 'Usage: epsg_tr.py [-wkt] [-pretty_wkt] [-proj4] [-xml] [-postgis]'
+    print '                  start_code [end_code]'
     sys.exit(1)
 
 # =============================================================================
@@ -76,6 +80,9 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
 
             print prj_srs.ExportToPrettyWkt()
 
+        if output_format == '-xml':
+            print prj_srs.ExportToXML()
+            
         if output_format == '-wkt':
             if gen_dict_line:
                 print 'EPSG:',code
@@ -126,7 +133,7 @@ if __name__ == '__main__':
         arg = sys.argv[i]
 
         if arg == '-wkt' or arg == '-pretty_wkt' or arg == '-proj4' \
-           or arg == '-postgis':
+           or arg == '-postgis' or arg == '-xml':
             output_format = arg
 
         elif arg == '-list' and i < len(sys.argv)-1:

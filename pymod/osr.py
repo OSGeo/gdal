@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.24  2003/03/21 22:23:27  warmerda
+# added xml support
+#
 # Revision 1.23  2003/03/07 16:29:39  warmerda
 # NULL fixes
 #
@@ -129,6 +132,9 @@ class SpatialReference:
     def ImportFromESRI( self, prj_lines ):
         return _gdal.OSRImportFromESRI( self._o, prj_lines )
 
+    def ImportFromXML( self, xml ):
+        return _gdal.OSRImportFromXML( self._o, xml )
+
     def ExportToWkt(self):
         return _gdal.OSRExportToWkt( self._o )
 
@@ -137,6 +143,9 @@ class SpatialReference:
 
     def ExportToProj4(self):
         return _gdal.OSRExportToProj4( self._o )
+
+    def ExportToXML( self, dialect = '' ):
+        return _gdal.OSRExportToXML( self._o, dialect )
 
     def CloneGeogCS(self):
         o = _gdal.OSRCloneGeogCS( self._o )
