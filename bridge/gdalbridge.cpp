@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  1999/05/07 14:08:49  warmerda
+ * change .so name
+ *
  * Revision 1.4  1999/04/22 13:35:11  warmerda
  * Fixed copyright header.
  *
@@ -49,10 +52,10 @@
 #include <stdlib.h>
 
 #ifdef _WIN32
-static const char	*pszSOFilename = "gdal.1.dll";
+static const char	*pszSOFilename = "gdal.1.0.dll";
 #define PATH_SEP	'\\'
 #else
-static const char	*pszSOFilename = "gdal.1.so";
+static const char	*pszSOFilename = "gdal.1.0.so";
 #define PATH_SEP	'/'
 #endif
 
