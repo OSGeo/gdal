@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  1999/11/10 14:17:26  warmerda
+ * Fixed defaulting of peErr parameter.
+ *
  * Revision 1.1  1999/11/04 21:18:46  warmerda
  * New
  *
@@ -116,7 +119,7 @@ static int PointsEqual( OGRLineString *poLine1, int iPoint1,
 /************************************************************************/
 
 OGRPolygon *OGRBuildPolygonFromEdges( OGRGeometryCollection * poLines,
-                                      int bBestEffort, OGRErr * peErr = NULL )
+                                      int bBestEffort, OGRErr * peErr )
 
 {
     int		bSuccess = TRUE;
