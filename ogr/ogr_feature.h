@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  1999/11/04 21:05:49  warmerda
+ * Added the Set() method on OGRFieldDefn to set all info in one call,
+ * and the SetFrom() method on OGRFeature to copy the contents of one
+ * feature to another, even if of a different OGRFeatureDefn.
+ *
  * Revision 1.8  1999/10/01 14:47:05  warmerda
  * added full family of get/set field methods with field names
  *
@@ -73,15 +78,15 @@
 
 enum OGRFieldType
 {
-    OFTInteger = 0,
-    OFTIntegerList = 1,
-    OFTReal = 2,
-    OFTRealList = 3,
-    OFTString = 4,
-    OFTStringList = 5,
-    OFTWideString = 6,
-    OFTWideStringList = 7,
-    OFTBinary = 8,
+  /** Simple 32bit integer */    		OFTInteger = 0,
+  /** List of 32bit integers */  		OFTIntegerList = 1,
+  /** Double Precision floating point */  	OFTReal = 2,
+  /** List of doubles */                        OFTRealList = 3,
+  /** String of ASCII chars */                  OFTString = 4,
+  /** Array of strings */                       OFTStringList = 5,
+  /** Double byte string (unsupported) */       OFTWideString = 6,
+  /** List of wide strings (unsupported) */     OFTWideStringList = 7,
+  /** Raw Binary data (unsupported) */          OFTBinary = 8,
 };
 
 /**
@@ -174,6 +179,9 @@ class OGRFieldDefn
     int			GetPrecision() { return nPrecision; }
     void                SetPrecision( int nPrecisionIn )
         				        { nPrecision = nPrecisionIn; }
+
+    void		Set( const char *, OGRFieldType, int = 0, int = 0,
+                             OGRJustification = OJUndefined );
 
     void		SetDefault( const OGRField * );
     const OGRField     *GetDefaultRef() { return &uDefault; }
@@ -322,6 +330,8 @@ class OGRFeature
     virtual OGRErr	SetFID( long );
 
     void		DumpReadable( FILE * );
+
+    OGRErr		SetFrom( OGRFeature *, int = TRUE);
 };
 
 #endif /* ndef _OGR_FEATURE_H_INCLUDED */
