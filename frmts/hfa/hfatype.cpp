@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/01/26 18:28:51  warmerda
+ * added error recover after corrupt/unrecognised entries - bug 411
+ *
  * Revision 1.7  2003/04/22 19:40:36  warmerda
  * fixed email address
  *
@@ -103,8 +106,19 @@ const char *HFAType::Initialize( const char * pszInput )
 {
     int		i;
     
+    
     if( *pszInput != '{' )
-        return NULL;
+    {
+        if( *pszInput != '\0' )
+            CPLDebug( "HFAType", "Initialize(%60.60s) - unexpected input.",
+                      pszInput );
+
+        while( *pszInput != '{' && *pszInput != '\0' )
+            pszInput++;
+
+        if( *pszInput == '\0' )
+            return NULL;
+    }
 
     pszInput++;
 
