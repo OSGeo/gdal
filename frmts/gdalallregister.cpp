@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.58  2003/09/09 08:32:17  dron
+ * PCIDSK added.
+ *
  * Revision 1.57  2003/06/26 19:51:49  dron
  * Register HDF4 driver before ESRI to avoid confusion when ESRI .hdr exist.
  *
@@ -334,6 +337,10 @@ void GDALAllRegister()
 
 #ifdef FRMT_bmp
     GDALRegister_BMP();
+#endif
+
+#ifdef FRMT_pcidsk
+    GDALRegister_PCIDSK();
 #endif
 
 #ifdef FRMT_ecw
