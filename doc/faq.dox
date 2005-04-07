@@ -146,6 +146,25 @@ switch with pretty much any GDAL utility.  Each driver will include either
 <b>rw</b> (read-only), <b>rw</b> (read or sequential write) or <b>rw+</b>
 (read, sequential write or random write).<p>
 
+<!--------------------------------------------------------------------------->
+
+<li> <b>Is the GDAL library thread-safe?</b><p>
+
+No, GDAL is not thread safe.  
+
+There are some relatively minor race conditions in the way error
+messages are stored (one global error context).  Also a variety of
+string management functions use static globals that are not
+thread local.  But the biggest issue by far is that GDAL uses a
+single global raster block cache.  That means that in a multithreaded
+application, working on two distinct GDALDatasets you can end up
+with one thread expiring and freeing a cache block still in use by
+another thread.
+
+I am interested in making GDAL threadsafe but it is a fairly substantial
+effort and I can't say when I might get around to it. However, it should
+be relatively easy to correct the block caching issues.
+
 </ol>
 
 */
