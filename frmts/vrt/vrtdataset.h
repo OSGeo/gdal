@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/04/07 17:27:33  fwarmerdam
+ * Default path in OpenXML to NULL.
+ *
  * Revision 1.18  2004/08/12 08:24:26  warmerda
  * added overview support
  *
@@ -172,7 +175,7 @@ class CPL_DLL VRTDataset : public GDALDataset
     virtual CPLErr      XMLInit( CPLXMLNode *, const char * );
  
     static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *OpenXML( const char *, const char * );
+    static GDALDataset *OpenXML( const char *, const char * = NULL );
     static GDALDataset *Create( const char * pszName,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszOptions );
