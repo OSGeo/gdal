@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2005/04/07 17:31:00  fwarmerdam
+ * added some brief descriptions of classes
+ *
  * Revision 1.52  2005/04/04 15:24:48  fwarmerdam
  * Most C entry points now CPL_STDCALL
  *
@@ -214,6 +217,8 @@ class GDALDriver;
 /*      services shared by major objects.                               */
 /* ******************************************************************** */
 
+//! Object with metadata.
+
 class CPL_DLL GDALMajorObject
 {
   protected:
@@ -269,6 +274,8 @@ class CPL_DLL GDALDefaultOverviews
 /* ******************************************************************** */
 /*                             GDALDataset                              */
 /* ******************************************************************** */
+
+//! A set of associated raster bands, usually from one file.
 
 class CPL_DLL GDALDataset : public GDALMajorObject
 {
@@ -590,7 +597,10 @@ class CPL_DLL GDALOpenInfo
 /*                              GDALDriver                              */
 /* ******************************************************************** */
 
+
 /**
+ * \brief Format specific driver.
+ *
  * An instance of this class is created for each supported format, and
  * manages information about the format.
  * 
