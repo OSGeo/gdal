@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/04/07 18:18:02  fwarmerdam
+ * upgraded GDALOpen info
+ *
  * Revision 1.21  2005/04/04 15:24:48  fwarmerdam
  * Most C entry points now CPL_STDCALL
  *
@@ -196,11 +199,14 @@ GDALOpenInfo::~GDALOpenInfo()
 /************************************************************************/
 
 /**
- * \fn GDALDatasetH GDALOpen( const char * pszFilename, GDALAccess eAccess );
- *
  * Open a raster file as a GDALDataset.
  *
- * See Also: GDALOpenShared()
+ * This function will try to open the passed file, or virtual dataset
+ * name by invoking the Open method of each registered GDALDriver in turn. 
+ * The first successful open will result in a returned dataset.  If all
+ * drivers fail then NULL is returned.
+ *
+ * \sa GDALOpenShared()
  *
  * @param pszFilename the name of the file to access.  In the case of
  * exotic drivers this may not refer to a physical file, but instead contain
@@ -212,9 +218,9 @@ GDALOpenInfo::~GDALOpenInfo()
  * @return A GDALDatasetH handle or NULL on failure.  For C++ applications
  * this handle can be cast to a GDALDataset *. 
  */
- 
 
-GDALDatasetH CPL_STDCALL GDALOpen( const char * pszFilename, GDALAccess eAccess )
+GDALDatasetH CPL_STDCALL 
+GDALOpen( const char * pszFilename, GDALAccess eAccess )
 
 {
     int         iDriver;
@@ -272,8 +278,11 @@ GDALDatasetH CPL_STDCALL GDALOpen( const char * pszFilename, GDALAccess eAccess 
  * 
  * In particular, GDALOpenShared() will first consult it's list of currently
  * open and shared GDALDataset's, and if the GetDescription() name for one
- * exactly matches the pszFilename passed to GDALOpenShared() it 
-
+ * exactly matches the pszFilename passed to GDALOpenShared() it will be
+ * referenced and returned.
+ *
+ * \sa GDALOpen()
+ *
  * @param pszFilename the name of the file to access.  In the case of
  * exotic drivers this may not refer to a physical file, but instead contain
  * information for the driver on how to access a dataset.
