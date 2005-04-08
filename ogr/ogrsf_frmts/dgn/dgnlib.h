@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2005/04/08 23:36:36  fwarmerdam
+ * Fixed DGNJ_CENTER_CENTER value.
+ *
  * Revision 1.37  2003/11/25 15:47:56  warmerda
  * Added surface type for complex headers: Marius
  *
@@ -644,7 +647,7 @@ typedef struct {
 #define DGNJ_LEFTMARGIN_CENTER  4    /* text node header only */
 #define DGNJ_LEFTMARGIN_BOTTOM  5    /* text node header only */
 #define DGNJ_CENTER_TOP         6
-#define DGNJ_CENTER_CENTER      6
+#define DGNJ_CENTER_CENTER      7
 #define DGNJ_CENTER_BOTTOM      8
 #define DGNJ_RIGHTMARGIN_TOP    9    /* text node header only */
 #define DGNJ_RIGHTMARGIN_CENTER 10   /* text node header only */
