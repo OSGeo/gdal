@@ -40,12 +40,12 @@ Begin VB.Form frmMain
          BeginProperty Panel2 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             Style           =   6
             AutoSize        =   2
-            TextSave        =   "4/6/2005"
+            TextSave        =   "4/8/2005"
          EndProperty
          BeginProperty Panel3 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             Style           =   5
             AutoSize        =   2
-            TextSave        =   "2:19 PM"
+            TextSave        =   "10:38 AM"
          EndProperty
       EndProperty
    End
@@ -143,6 +143,10 @@ Private Sub mnuCreate_Click()
     
     Call GDALCore.GDALAllRegister
     Set SrcDS = GDAL.OpenDS(SrcFilename, GDAL.GA_ReadOnly)
+    If Not SrcDS.IsValid() Then
+        Print GDAL.GetLastErrorMsg()
+        Exit Sub
+    End If
     
     Set Drv = GDAL.GetDriverByName("GTiff")
     Set DstDS = Drv.Create(DstFilename, SrcDS.XSize, SrcDS.YSize, _
@@ -151,6 +155,7 @@ Private Sub mnuCreate_Click()
         Print "Create Succeeded, file is " & DstFilename
     Else
         Print "Create Failed: " & GDAL.GetLastErrorMsg()
+        Exit Sub
     End If
     
     ' Copy geotransform
@@ -192,9 +197,20 @@ Private Sub mnuCreate_Click()
         Dim ct As GDALColorTable
         Set ct = SrcBand.GetColorTable()
         If ct.IsValid() Then
-            err = DstBand.SetColorTable(ct)
-        End If
+            ' We manually copy the color table.  This isn't really
+            ' necessary, but gives us a chance to try out all color
+            ' table methods.
+            Dim ct2 As GDALColorTable
+            Dim iColor As Integer
+            Dim Tuple(4) As Integer
 
+            Set ct2 = GDAL.CreateColorTable(GDAL.GPI_RGB)
+            For iColor = 0 To ct.EntryCount
+                Call ct.GetColorEntryAsRGB(iColor, Tuple)
+                Call ct2.SetColorEntry(iColor, Tuple)
+            Next iColor
+            err = DstBand.SetColorTable(ct2)
+        End If
         
         ' Copy band raster data.
         For iLine = 0 To SrcDS.YSize - 1
@@ -242,7 +258,7 @@ Private Sub mnuCSInfo_Click()
         End If
         
         Print "Origin: " & Geotransform(0) & "," & Geotransform(3)
-        Print "Pixel Size: " & Geotransform(1) & "x" & Geotransform(5)
+        Print "Pixel Size: " & Geotransform(1) & "x" & (-1 * Geotransform(5))
         
         Call ReportCorner("Top Left      ", 0, 0, _
                           Geotransform, ct)

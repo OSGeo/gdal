@@ -28,6 +28,9 @@
 '*****************************************************************************
 '
 ' $Log$
+' Revision 1.4  2005/04/08 14:36:25  fwarmerdam
+' applied owned flag, and auto-destroy
+'
 ' Revision 1.3  2005/04/06 22:30:39  fwarmerdam
 ' fixed some color table stuff, added headers
 '
@@ -217,7 +220,7 @@ Public Function GetColorTable() As GDALColorTable
 
         CTHandle = GDALCore.GDALGetRasterColorTable(obj)
         If CTHandle <> 0 Then
-            Call ct.CInit(CTHandle)
+            Call ct.CInit(CTHandle,0)
         End If
     End If
     Set GetColorTable = ct

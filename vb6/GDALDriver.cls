@@ -28,6 +28,9 @@
 '*****************************************************************************
 '
 ' $Log$
+' Revision 1.2  2005/04/08 14:36:25  fwarmerdam
+' applied owned flag, and auto-destroy
+'
 ' Revision 1.1  2005/03/16 19:45:19  fwarmerdam
 ' new
 '
@@ -69,12 +72,12 @@ Public Function Create(ByVal Filename As String, _
 
         CSLOptions = GDALCore.VariantToCSL(Options)
         ds_obj = GDALCore.GDALCreate(obj, Filename, XSize, YSize, BandCount, _
-                                      DataType, CSLOptions)
+                                     DataType, CSLOptions)
         Call GDALCore.CSLDestroy(CSLOptions)
 
         If ds_obj <> 0 Then
             Dim ds As New GDALDataset
-            Call ds.CInit(ds_obj)
+            Call ds.CInit(ds_obj,1)
             Set Create = ds
         End If
     End If
@@ -95,12 +98,12 @@ Public Function CreateCopy(Filename As String, SrcDS As GDALDataset, _
   
         CSLOptions = GDALCore.VariantToCSL(Options)
         ds_obj = GDALCore.GDALCreateCopy(obj, Filename, SrcDS.GetObjPtr(), _
-                                          ApproxOK_Int, CSLOptions, 0, 0)
+                                         ApproxOK_Int, CSLOptions, 0, 0)
         Call GDALCore.CSLDestroy(CSLOptions)
 
         If ds_obj <> 0 Then
             Dim ds As New GDALDataset
-            Call ds.CInit(ds_obj)
+            Call ds.CInit(ds_obj,1)
             Set CreateCopy = ds
         End If
     End If
@@ -125,7 +128,8 @@ End Function
 ' ----------------------------------------------------------------------------
 Public Function GetMetadataItem(Name As String, Domain As String) As String
     If obj <> 0 Then
-        GetMetadataItem = GDALCore.CStr2VB(GDALCore.GDALGetMetadataItem(obj, Name, Domain))
+        GetMetadataItem = GDALCore.CStr2VB(GDALCore.GDALGetMetadataItem(obj, _
+					   Name, Domain))
     Else
         GetMetadataItem = vbNullString
     End If

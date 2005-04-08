@@ -28,6 +28,9 @@
 '*****************************************************************************
 '
 ' $Log$
+' Revision 1.2  2005/04/08 14:36:25  fwarmerdam
+' applied owned flag, and auto-destroy
+'
 ' Revision 1.1  2005/03/16 23:34:27  fwarmerdam
 ' new
 '
@@ -49,23 +52,46 @@ Attribute VB_Exposed = False
 
 Option Explicit
 Private obj As Long
+Private owned As Long
 Public EntryCount As Long
 Public PaletteInterpretation As Long
 
 ' ----------------------------------------------------------------------------
 Private Sub Class_Initialize()
     obj = 0
+    owned = 0
     EntryCount = 0
     PaletteInterpretation = 0
 End Sub
 
 ' ----------------------------------------------------------------------------
-Public Sub CInit(obj_in As Long)
+Private Sub Class_Terminate()
+    If obj <> 0 and owned <> 0 Then
+        call Destroy()
+    End If
+End Sub
+
+' ----------------------------------------------------------------------------
+Public Sub CInit(obj_in As Long, owned_in As Long )
+    if obj <> 0 and owned <> 0 Then
+	Call Destroy()
+    End If
     obj = obj_in
+    owned = owned_in
     If obj <> 0 Then
         EntryCount = GDALCore.GDALGetColorEntryCount(obj)
         PaletteInterpretation = GDALCore.GDALGetPaletteInterpretation(obj)
     End If
+End Sub
+
+' ----------------------------------------------------------------------------
+Public Sub Destroy()
+    If obj <> 0 Then
+	'Call MsgBox( "Destroying ColorTable" )
+	Call GDALCore.GDALDestroyColorTable( obj )
+	obj = 0
+	owned = 0
+    End If 
 End Sub
 
 ' ----------------------------------------------------------------------------
@@ -90,7 +116,7 @@ Public Function Clone()
     If obj <> 0 Then
         other_c_obj = GDALCore.GDALCloneColorTable(obj)
         Set other_ct = New GDALColorTable
-        Call other_ct.CInit(other_c_obj)
+        Call other_ct.CInit(other_c_obj,1)
         Set Clone = other_ct
     End If
 End Function
@@ -142,7 +168,3 @@ Public Function GetColorEntryAsRGB(ByVal ColorIndex As Long, _
         GetColorEntryAsRGB = GDALCore.ObjIsNULLError
     End If
 End Function
-
-
-
-

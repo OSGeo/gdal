@@ -1,38 +1,3 @@
-'*****************************************************************************
-' $Id$
-'
-' Project:  GDAL VB6 Bindings
-' Purpose:  VB6 OGRCoordinateTransformation Shadow Class.
-' Author:   Frank Warmerdam, warmerdam@pobox.com
-'
-'*****************************************************************************
-' Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
-'
-' Permission is hereby granted, free of charge, to any person obtaining a
-' copy of this software and associated documentation files (the "Software"),
-' to deal in the Software without restriction, including without limitation
-' the rights to use, copy, modify, merge, publish, distribute, sublicense,
-' and/or sell copies of the Software, and to permit persons to whom the
-' Software is furnished to do so, subject to the following conditions:
-'
-' The above copyright notice and this permission notice shall be included
-' in all copies or substantial portions of the Software.
-'
-' THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-' OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-' FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-' THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-' LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-' FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-' DEALINGS IN THE SOFTWARE.
-'*****************************************************************************
-'
-' $Log$
-' Revision 1.1  2005/04/06 22:29:25  fwarmerdam
-' new
-'
-'
-
 VERSION 1.0 CLASS
 BEGIN
   MultiUse = -1  'True
@@ -51,11 +16,19 @@ Attribute VB_Exposed = False
 Option Explicit
 
 Private obj As Long
+Private owned As Long
 
 ' ----------------------------------------------------------------------------
 Private Sub Class_Initialize()
     obj = 0
     owned = 0
+End Sub
+
+' ----------------------------------------------------------------------------
+Private Sub Class_Terminate()
+    If obj <> 0 And owned <> 0 Then
+        Call Destroy
+    End If
 End Sub
 
 ' ----------------------------------------------------------------------------
@@ -71,7 +44,9 @@ End Sub
 Public Sub Destroy()
     If obj <> 0 Then
         Call GDALCore.OCTDestroyCoordinateTransformation(obj)
+'        Call MsgBox("Destroying OGRCoordinateTransformation")
         obj = 0
+        owned = 0
     End If
 End Sub
 
