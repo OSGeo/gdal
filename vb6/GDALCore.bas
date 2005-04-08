@@ -31,6 +31,9 @@ Attribute VB_Name = "GDALCore"
 '*****************************************************************************
 '
 ' $Log$
+' Revision 1.6  2005/04/08 14:36:25  fwarmerdam
+' applied owned flag, and auto-destroy
+'
 ' Revision 1.5  2005/04/06 22:30:15  fwarmerdam
 ' added OGRCoordinateTransformation and OGRSpatialReference functions
 '
@@ -324,7 +327,7 @@ Public Declare Sub GDALDestroyColorTable _
 
 Public Declare Function GDALCloneColorTable _
         Lib "gdal12.dll" _
-        Alias "_GDALCloneTable@4" _
+        Alias "_GDALCloneColorTable@4" _
         (ByVal Handle As Long) As Long
 
 Public Declare Function GDALGetPaletteInterpretation _

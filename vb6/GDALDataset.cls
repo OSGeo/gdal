@@ -28,6 +28,9 @@
 '*****************************************************************************
 '
 ' $Log$
+' Revision 1.2  2005/04/08 14:36:25  fwarmerdam
+' applied owned flag, and auto-destroy
+'
 ' Revision 1.1  2005/03/16 19:45:19  fwarmerdam
 ' new
 '
@@ -49,12 +52,15 @@ Attribute VB_Exposed = False
 
 Option Explicit
 Private obj As Long
+Private owned As Long
 Public XSize As Long
 Public YSize As Long
 Public BandCount As Long
 
+' ----------------------------------------------------------------------------
 Private Sub Class_Initialize()
     obj = 0
+    owned = 0
     XSize = 0
     YSize = 0
     BandCount = 0
@@ -62,14 +68,15 @@ End Sub
 
 ' ----------------------------------------------------------------------------
 Private Sub Class_Terminate()
-    ' For now we do nothing special.  We might
-    ' eventually destroy based on reference counting.
-    'Call MsgBox("Class_Terminate " & obj)
+    If obj <> 0 and owned <> 0 Then
+        call CloseDS()
+    End If
 End Sub
 
 ' ----------------------------------------------------------------------------
-Public Sub CInit(obj_in As Long)
+Public Sub CInit(obj_in As Long, owned_in As Long )
     obj = obj_in
+    owned = owned_in
     If obj <> 0 Then
         XSize = GDALCore.GDALGetRasterXSize(obj)
         YSize = GDALCore.GDALGetRasterYSize(obj)
@@ -94,9 +101,10 @@ End Function
 ' ----------------------------------------------------------------------------
 Public Sub CloseDS()
     If obj <> 0 Then
-        'Call MsgBox("CloseDS " & obj)
+        'Call MsgBox("CloseDS " & GetDescription() )
         Call GDALCore.GDALClose(obj)
         obj = 0
+        owned = 0
     End If
 End Sub
 

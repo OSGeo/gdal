@@ -29,6 +29,9 @@ Attribute VB_Name = "GDAL"
 '*****************************************************************************
 '
 ' $Log$
+' Revision 1.4  2005/04/08 14:36:25  fwarmerdam
+' applied owned flag, and auto-destroy
+'
 ' Revision 1.3  2005/04/06 22:29:50  fwarmerdam
 ' added CreateCoordinateTransformation() function
 '
@@ -41,9 +44,11 @@ Attribute VB_Name = "GDAL"
 '
 
 
+' GDALAccess (for open)
 Public Const GA_ReadOnly As Long = 0
 Public Const GA_Update As Long = 1
 
+' GDALDataTypes
 Public Const GDT_Unknown As Long = 0
 Public Const GDT_Byte As Long = 1
 Public Const GDT_UInt16 As Long = 2
@@ -58,9 +63,17 @@ Public Const GDT_CFloat32 As Long = 10
 Public Const GDT_CFloat64 As Long = 11
 Public Const GDT_TypeCount As Long = 12
 
+' read/write flags for RasterIO
 Public Const GF_Read As Long = 0
 Public Const GF_Write As Long = 1
 
+' Palette Interpretation
+Public Const GPI_Gray As Long = 0
+Public Const GPI_RGB As Long = 1
+Public Const GPI_CMYK As Long = 2
+Public Const GPI_HLS As Long = 3
+
+' Driver metadata items.
 Public Const DMD_SHORTNAME As String = "DMD_SHORTNAME"
 Public Const DMD_LONGNAME As String = "DMD_LONGNAME"
 Public Const DMD_HELPTOPIC As String = "DMD_HELPTOPIC"
@@ -119,22 +132,23 @@ End Function
 ' ----------------------------------------------------------------------------
 Public Function OpenDS(Filename As String, ByVal Access As Long) As GDALDataset
     Set OpenDS = New GDALDataset
-    Call OpenDS.CInit(GDALCore.GDALOpen(Filename, Access))
+    Call OpenDS.CInit(GDALCore.GDALOpen(Filename, Access), 1)
 End Function
 
 ' ----------------------------------------------------------------------------
 Public Function OpenSharedDS(Filename As String, ByVal Access As Long) As GDALDataset
     Set OpenSharedDS = New GDALDataset
-    Call OpenSharedDS.CInit(GDALCore.GDALOpenShared(Filename, Access))
+    Call OpenSharedDS.CInit(GDALCore.GDALOpenShared(Filename, Access), 1)
 End Function
 
 ' ----------------------------------------------------------------------------
 Public Function CreateColorTable(ByVal PaletteInterp As Long) _
                 As GDALColorTable
+    Dim obj As Long
     obj = GDALCore.GDALCreateColorTable(PaletteInterp)
     If obj <> 0 Then
         Set CreateColorTable = New GDALColorTable
-        Call CreateColorTable.CInit(obj)
+        Call CreateColorTable.CInit(obj, 1)
     End If
 End Function
 
@@ -150,7 +164,7 @@ Public Function CreateCoordinateTransformation( _
     obj = GDALCore.OCTNewCoordinateTransformation(SrcSRS.GetObjPtr(), _
                                                   TrgSRS.GetObjPtr())
     If obj <> 0 Then
-        Call ct.CInit(obj)
+        Call ct.CInit(obj, 1)
     End If
     Set CreateCoordinateTransformation = ct
 End Function
