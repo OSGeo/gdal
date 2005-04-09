@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.5  2005/04/09 00:34:35  fwarmerdam
+ * Added prototype Grid Map support for deriving geotransform.
+ *
  * Revision 1.4  2005/01/14 22:51:18  fwarmerdam
  * implemented better url constrains, flipping, and transposing
  *
@@ -223,6 +226,7 @@ private:
 
     void            HarvestDAS();
     static void     HarvestMetadata( GDALMajorObject *, AttrTable * );
+    void            HarvestMaps( string oVarName, string oCE );
     
     friend class DODSRasterBand;
 
@@ -765,6 +769,131 @@ void DODSDataset::HarvestDAS()
 }
 
 /************************************************************************/
+/*                            HarvestMaps()                             */
+/************************************************************************/
+
+void DODSDataset::HarvestMaps( string oVarName, string oCE )
+
+{
+    BaseType *poDDSDef = get_variable( GetDDS(), oVarName );
+    if( poDDSDef == NULL || poDDSDef->type() != dods_grid_c )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Get the grid.                                                   */
+/* -------------------------------------------------------------------- */
+    Grid  *poGrid = NULL;
+    poGrid = dynamic_cast<Grid *>( poDDSDef );
+
+/* -------------------------------------------------------------------- */
+/*      Get the map arrays for x and y.                                 */
+/* -------------------------------------------------------------------- */
+    Array *poXMap = NULL, *poYMap = NULL;
+    int iXDim = GetDimension( oCE, "x" );
+    int iYDim = GetDimension( oCE, "y" );
+    int iMap;
+    Grid::Map_iter iterMap;
+    
+    for( iterMap = poGrid->map_begin(), iMap = 0;
+         iterMap != poGrid->map_end(); 
+         iterMap++, iMap++ )
+    {
+        if( iMap == iXDim )
+            poXMap = dynamic_cast<Array *>(*iterMap);
+        else if( iMap == iYDim )
+            poYMap = dynamic_cast<Array *>(*iterMap);
+    }
+
+    if( poXMap == NULL || poYMap == NULL )
+        return;
+
+    if( poXMap->var()->type() != dods_float64_c 
+        || poYMap->var()->type() != dods_float64_c )
+    {
+        CPLDebug( "DODS", "Ignoring Grid Map - not a supported data type." );
+        return;							       
+    }
+
+/* -------------------------------------------------------------------- */
+/*      TODO: We ought to validate the dimension of the map against our */
+/*      expected size.                                                  */
+/* -------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------- 
+ *  Fetch maps.  We need to construct a seperate request like:     
+ *    http://dods.gso.uri.edu/cgi-bin/nph-dods/MCSST/Northwest_Atlantic/5km/raw/1982/9/m82258070000.pvu.Z?dsp_band_1.lat,dsp_band_1.lon
+ *
+ *  to fetch just the maps, and not the actual dataset. 
+ * -------------------------------------------------------------------- */
+/* -------------------------------------------------------------------- */
+/*      Build constraint expression.                                    */
+/* -------------------------------------------------------------------- */
+    string constraint;
+    string xdimname = "lon";
+    string ydimname = "lat";
+    
+
+    constraint = oVarName + "." + xdimname + "," 
+        + oVarName + "." + ydimname;
+
+/* -------------------------------------------------------------------- */
+/*      Request data from server.                                       */
+/* -------------------------------------------------------------------- */
+    DataDDS data;
+    
+    GetConnect()->request_data(data, constraint );
+
+/* -------------------------------------------------------------------- */
+/*      Get the DataDDS Array object from the response.                 */
+/* -------------------------------------------------------------------- */
+    BaseType *poBtX = get_variable(data, oVarName + "." + xdimname );
+    BaseType *poBtY = get_variable(data, oVarName + "." + ydimname );
+    if (!poBtX || !poBtY 
+        || poBtX->type() != dods_array_c 
+        || poBtY->type() != dods_array_c )
+        return;
+
+    Array *poAX = dynamic_cast<Array *>(poBtX);
+    Array *poAY = dynamic_cast<Array *>(poBtY);
+
+/* -------------------------------------------------------------------- */
+/*      Pre-initialize the output buffer to zero.                       */
+/* -------------------------------------------------------------------- */
+    double *padfXMap, *padfYMap;
+
+    padfXMap = (double *) CPLCalloc(sizeof(double),nRasterXSize );
+    padfYMap = (double *) CPLCalloc(sizeof(double),nRasterYSize );
+
+/* -------------------------------------------------------------------- */
+/*      Dump the contents of the Array data into our output image       */
+/*      buffer.                                                         */
+/* -------------------------------------------------------------------- */
+    poAX->buf2val( (void **) &padfXMap );
+    poAY->buf2val( (void **) &padfYMap );
+
+/* -------------------------------------------------------------------- */
+/*      Compute a geotransform from the maps.  We are implicitly        */
+/*      assuming the maps are linear and refer to the center of the     */
+/*      pixels.                                                         */
+/* -------------------------------------------------------------------- */
+    bGotGeoTransform = TRUE;
+
+    // pixel size. 
+    adfGeoTransform[1] = (padfXMap[nRasterXSize-1] - padfXMap[0])
+        / (nRasterXSize-1);
+    adfGeoTransform[5] = (padfYMap[nRasterYSize-1] - padfYMap[0])
+        / (nRasterYSize-1);
+
+    // rotational coefficients. 
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[4] = 0.0;
+
+    // origin/ 
+    adfGeoTransform[0] = padfXMap[0] - adfGeoTransform[1] * 0.5;
+    adfGeoTransform[3] = padfYMap[0] - adfGeoTransform[5] * 0.5;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -855,6 +984,16 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
 /*      georeferencing, and metadata.                                   */
 /* -------------------------------------------------------------------- */
         poDS->HarvestDAS();
+
+/* -------------------------------------------------------------------- */
+/*      If we don't have georeferencing, look for "map" information     */
+/*      for a grid.                                                     */
+/* -------------------------------------------------------------------- */
+        if( !poDS->bGotGeoTransform )
+        {
+            poDS->HarvestMaps( string(papszVarConstraintList[0]),
+                               string(papszVarConstraintList[1]) );
+        }
     }
 
     catch (Error &e) {
