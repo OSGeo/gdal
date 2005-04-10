@@ -41,6 +41,9 @@ and general supportiveness.<p>
 <li> <b>Silke Reimer</b>: for work on Debian, and RPM packaging as well
 as the GDAL man pages.<p>
 
+<li> <b>Alessandro Amici</b>: for work on configuration and build system, 
+and for the initial Debian packaging.<p>
+
 <li> <b>Stephane Villeneuve</b>: for development of the Mapinfo MIF 
 translator.<p>
 
