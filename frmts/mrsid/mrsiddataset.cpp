@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2005/04/11 14:41:14  fwarmerdam
+ * Only call getWKT() if HAVE_MRSID_GETWKT is defined.
+ *
  * Revision 1.28  2005/04/06 22:03:17  kmelero
  * Updated for CPLStrdup and mod to pointers for large file support per
  * LizardTech Mrsid Team.  (kmelero@sanz.com)
@@ -981,36 +984,36 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
     eSampleType = poImageReader->getDataType();
     switch ( eSampleType )
     {
-        case LTI_DATATYPE_UINT16:
-            eDataType = GDT_UInt16;
-            break;
-        case LTI_DATATYPE_SINT16:
-            eDataType = GDT_Int16;
-            break;
-        case LTI_DATATYPE_UINT32:
-            eDataType = GDT_UInt32;
-            break;
-        case LTI_DATATYPE_SINT32:
-            eDataType = GDT_Int32;
-            break;
-        case LTI_DATATYPE_FLOAT32:
-            eDataType = GDT_Float32;
-            break;
-        case LTI_DATATYPE_FLOAT64:
-            eDataType = GDT_Float64;
-            break;
-        case LTI_DATATYPE_UINT8:
-        case LTI_DATATYPE_SINT8:
-        default:
-            eDataType = GDT_Byte;
-            break;
+      case LTI_DATATYPE_UINT16:
+        eDataType = GDT_UInt16;
+        break;
+      case LTI_DATATYPE_SINT16:
+        eDataType = GDT_Int16;
+        break;
+      case LTI_DATATYPE_UINT32:
+        eDataType = GDT_UInt32;
+        break;
+      case LTI_DATATYPE_SINT32:
+        eDataType = GDT_Int32;
+        break;
+      case LTI_DATATYPE_FLOAT32:
+        eDataType = GDT_Float32;
+        break;
+      case LTI_DATATYPE_FLOAT64:
+        eDataType = GDT_Float64;
+        break;
+      case LTI_DATATYPE_UINT8:
+      case LTI_DATATYPE_SINT8:
+      default:
+        eDataType = GDT_Byte;
+        break;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Read georeferencing.                                            */
 /* -------------------------------------------------------------------- */
     if ( !poImageReader->isGeoCoordImplicit() )
-      {
+    {
         const LTIGeoCoord& oGeo = poImageReader->getGeoCoord();
         oGeo.get( adfGeoTransform[0], adfGeoTransform[3],
 	          adfGeoTransform[1], adfGeoTransform[5],
@@ -1019,18 +1022,20 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
         adfGeoTransform[0] = adfGeoTransform[0] - adfGeoTransform[1] / 2;
         adfGeoTransform[3] = adfGeoTransform[3] - adfGeoTransform[5] / 2;
 	bHasGeoTransform = TRUE;
-      }
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Read wkt.                                                       */
 /* -------------------------------------------------------------------- */
+#ifdef HAVE_MRSID_GETWKT
     if ( !poImageReader->isGeoCoordImplicit() )
-      {
+    {
 	const LTIGeoCoord& oGeo = poImageReader->getGeoCoord();
 	
 	if( oGeo.getWKT() )
-	  pszProjection =  CPLStrdup( oGeo.getWKT() );
-      }
+            pszProjection =  CPLStrdup( oGeo.getWKT() );
+    }
+#endif // HAVE_MRSID_GETWKT
 
 /* -------------------------------------------------------------------- */
 /*      Read NoData value.                                              */
