@@ -29,6 +29,9 @@ Attribute VB_Name = "GDAL"
 '*****************************************************************************
 '
 ' $Log$
+' Revision 1.5  2005/04/11 19:58:47  fwarmerdam
+' added CPLSet/GetConfigOption
+'
 ' Revision 1.4  2005/04/08 14:36:25  fwarmerdam
 ' applied owned flag, and auto-destroy
 '
@@ -89,6 +92,16 @@ Public Const DCAP_CREATECOPY As String = "DCAP_CREATECOPY"
 Public Function GetLastErrorMsg() As String
     GetLastErrorMsg = CStr2VB(GDALCore.CPLGetLastErrorMsg())
 End Function
+
+' ----------------------------------------------------------------------------
+Public Function GetConfigOption(Key As String, Default As String)
+    GetConfigOption = CStr2VB(GDALCore.CPLGetConfigOption(Key, Default))
+End Function
+
+' ----------------------------------------------------------------------------
+Public Sub SetConfigOption(Key As String, Value As String)
+    Call GDALCore.CPLSetConfigOption(Key, Value)
+End Sub
 
 ' ----------------------------------------------------------------------------
 Public Sub AllRegister()
