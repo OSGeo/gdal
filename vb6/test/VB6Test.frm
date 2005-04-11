@@ -40,12 +40,12 @@ Begin VB.Form frmMain
          BeginProperty Panel2 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             Style           =   6
             AutoSize        =   2
-            TextSave        =   "4/8/2005"
+            TextSave        =   "4/11/2005"
          EndProperty
          BeginProperty Panel3 {8E3867AB-8586-11D1-B16A-00C0F0283628} 
             Style           =   5
             AutoSize        =   2
-            TextSave        =   "10:38 AM"
+            TextSave        =   "3:59 PM"
          EndProperty
       EndProperty
    End
@@ -88,6 +88,9 @@ Private Sub Form_Load()
     Me.Top = GetSetting(App.Title, "Settings", "MainTop", 1000)
     Me.Width = GetSetting(App.Title, "Settings", "MainWidth", 6500)
     Me.Height = GetSetting(App.Title, "Settings", "MainHeight", 6500)
+
+    Call GDAL.AllRegister
+    Call GDAL.SetConfigOption("GDAL_DATA", "D:\warmerda\fao\bld\data")
 End Sub
 
 
@@ -120,6 +123,7 @@ Private Sub mnuCCTest_Click()
     Set SrcDS = GDAL.OpenDS(SrcFilename, GDAL.GA_ReadOnly)
     
     Set Drv = GDAL.GetDriverByName("GTiff")
+ 
     Set DstDS = Drv.CreateCopy(DstFilename, SrcDS, True, Nothing)
     If DstDS.IsValid() Then
         Print "CreateCopy Succeeded, output is " & DstFilename
@@ -305,6 +309,8 @@ End Sub
 
 Private Sub mnuListDrivers_Click()
     Dim Drv As GDALDriver
+    
+    Print "GDAL_DATA = " & GDAL.GetConfigOption("GDAL_DATA", "<not set>")
     
     If GDAL.GetDriverCount() < 1 Then
         Call GDAL.AllRegister

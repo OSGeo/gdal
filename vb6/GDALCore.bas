@@ -31,6 +31,9 @@ Attribute VB_Name = "GDALCore"
 '*****************************************************************************
 '
 ' $Log$
+' Revision 1.7  2005/04/11 19:58:47  fwarmerdam
+' added CPLSet/GetConfigOption
+'
 ' Revision 1.6  2005/04/08 14:36:25  fwarmerdam
 ' applied owned flag, and auto-destroy
 '
@@ -80,6 +83,16 @@ Public Declare Sub CSLDestroy _
     Lib "gdal12.dll" _
     Alias "_CSLDestroy@4" _
     (ByVal CSLList As Long)
+    
+Public Declare Function CPLGetConfigOption _
+    Lib "gdal12.dll" _
+    Alias "_CPLGetConfigOption@8" _
+    (ByVal Key As String, ByVal Default As String) As Long
+    
+Public Declare Sub CPLSetConfigOption _
+    Lib "gdal12.dll" _
+    Alias "_CPLSetConfigOption@8" _
+    (ByVal Key As String, ByVal Value As String)
     
 ' ----------------------------------------------------------------------------
 '       GDALMajorObject
