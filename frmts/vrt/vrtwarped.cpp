@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/04/11 17:36:26  fwarmerdam
+ * make sure we cleanup up transformer(s) too
+ *
  * Revision 1.7  2005/04/04 15:25:59  fwarmerdam
  * some functions now CPL_STDCALL
  *
@@ -314,6 +317,12 @@ VRTWarpedDataset::~VRTWarpedDataset()
                 GDALClose( psWO->hSrcDS );
             }
         }
+
+/* -------------------------------------------------------------------- */
+/*      We are responsible for cleaning up the transformer outselves.   */
+/* -------------------------------------------------------------------- */
+        if( psWO->pTransformerArg != NULL )
+            GDALDestroyTransformer( psWO->pTransformerArg );
 
         delete poWarper;
     }
