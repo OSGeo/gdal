@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/04/11 13:52:50  fwarmerdam
+ * added proper handling of iostream cleanup from David Carter
+ *
  * Revision 1.8  2005/04/04 14:13:54  fwarmerdam
  * Return true for 0 byte reads.
  *
@@ -114,9 +117,11 @@ class VSIIOStream : public CNCSJPCIOStream
     INT64    lengthOfJPData;
     FILE    *fpVSIL;
     int      bWritable;
+	int      nFileViewCount;
     char     *pszFilename;
 
     VSIIOStream() {
+		nFileViewCount = 0;
         startOfJPData = 0;
         lengthOfJPData = -1;
     }
@@ -194,7 +199,7 @@ class VSIIOStream : public CNCSJPCIOStream
 
     virtual bool NCS_FASTCALL Write(void* buffer, UINT32 count) {
         if( count == 0 )
-            return 0;
+            return true;
         return(1 == VSIFWriteL(buffer, count, 1, fpVSIL));
     }
 };
@@ -202,3 +207,4 @@ class VSIIOStream : public CNCSJPCIOStream
 #endif /* def FRMT_ecw */
 
 #endif /* ndef VSIIOSTREAM_H_INCLUDED */
+
