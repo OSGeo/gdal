@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/04/11 17:03:07  fwarmerdam
+ * Improved initial open checking to ensure it works properly with no header
+ * data at all.
+ *
  * Revision 1.29  2005/04/11 14:41:14  fwarmerdam
  * Only call getWKT() if HAVE_MRSID_GETWKT is defined.
  *
@@ -1061,15 +1065,22 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     int     bIsJP2 = FALSE;
 
-    if ( EQUALN((const char *) poOpenInfo->pabyHeader + 4, "jP  ", 4) )
+/* -------------------------------------------------------------------- */
+/*      Is this a mrsid or jpeg 2000 file?                              */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->nHeaderBytes < 32 )
+        return NULL;
+
+    if( EQUALN((const char *) poOpenInfo->pabyHeader + 4, "jP  ", 4) )
         bIsJP2 = TRUE;
     else if ( !EQUALN((const char *) poOpenInfo->pabyHeader, "msid", 4) )
         return NULL;
 
     if(poOpenInfo->fp)
-      VSIFClose( poOpenInfo->fp );
-    
-    poOpenInfo->fp = NULL;
+    {
+        VSIFClose( poOpenInfo->fp );
+        poOpenInfo->fp = NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
