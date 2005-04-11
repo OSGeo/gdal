@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/04/11 17:36:53  fwarmerdam
+ * added GDALDestroyTransformer
+ *
  * Revision 1.21  2005/04/04 15:24:16  fwarmerdam
  * added CPL_STDCALL to some functions
  *
@@ -1722,3 +1725,22 @@ CPLErr GDALDeserializeTransformer( CPLXMLNode *psTree,
 
     return CPLGetLastErrorType();
 }
+
+/************************************************************************/
+/*                       GDALDestroyTransformer()                       */
+/************************************************************************/
+
+void GDALDestroyTransformer( void *pTransformArg )
+
+{
+    GDALTransformerInfo *psInfo = (GDALTransformerInfo *) pTransformArg;
+
+    if( psInfo == NULL || !EQUAL(psInfo->szSignature,"GTI") )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to destroy non-GTI transformer." );
+    }
+    else
+        psInfo->pfnCleanup( pTransformArg );
+}
+

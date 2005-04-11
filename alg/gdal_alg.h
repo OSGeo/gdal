@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/04/11 17:36:53  fwarmerdam
+ * added GDALDestroyTransformer
+ *
  * Revision 1.20  2005/04/04 15:24:16  fwarmerdam
  * added CPL_STDCALL to some functions
  *
@@ -140,6 +143,8 @@ typedef struct {
     void (*pfnCleanup)( void * );
     CPLXMLNode *(*pfnSerialize)( void * );
 } GDALTransformerInfo;
+
+void CPL_DLL GDALDestroyTransformer( void *pTransformerArg );
 
 
 /* High level transformer for going from image coordinates on one file
