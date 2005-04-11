@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.43  2005/04/11 13:56:27  fwarmerdam
+ * Added a bit of reformatting.
+ *
  * Revision 1.42  2005/04/11 13:52:50  fwarmerdam
  * added proper handling of iostream cleanup from David Carter
  *
@@ -1212,24 +1215,28 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
           poFileView = new CNCSJP2FileView();
           oErr = poFileView->Open( poIOStream, false );
 
-          //The CNCSJP2FileView (poFileView) object may not use the iostream (poIOStream) passed
-		  //to the CNCSJP2FileView::Open() method if an iostream is already available to the ECW 
-		  //JPEG 2000 SDK for a given file.  Consequently, if the iostream passed to 
-		  //CNCSJP2FileView::Open() does not become the underlying iostream of the 
-		  //CNCSJP2FileView object, then it should be deleted.
-		  //In addition, the underlying iostream of the CNCSJP2FileView object should not be 
-		  //deleted until all CNCSJP2FileView objects using the underlying iostream are deleted.
-		  //Consequently, each time a CNCSJP2FileView object is created, the nFileViewCount 
-		  //attribute of the underlying VSIIOStream object must be incremented for use in the 
-		  //ECWDataset destructor.
+          // The CNCSJP2FileView (poFileView) object may not use the iostream 
+          // (poIOStream) passed to the CNCSJP2FileView::Open() method if an 
+          // iostream is already available to the ECW JPEG 2000 SDK for a given
+          // file.  Consequently, if the iostream passed to 
+          // CNCSJP2FileView::Open() does not become the underlying iostream 
+          // of the CNCSJP2FileView object, then it should be deleted.
+          //
+          // In addition, the underlying iostream of the CNCSJP2FileView object
+          // should not be deleted until all CNCSJP2FileView objects using the 
+          // underlying iostream are deleted. Consequently, each time a 
+          // CNCSJP2FileView object is created, the nFileViewCount attribute 
+          // of the underlying VSIIOStream object must be incremented for use 
+          // in the ECWDataset destructor.
 		  
-          VSIIOStream * poUnderlyingIOStream = ((VSIIOStream *)(poFileView->GetStream()));
+          VSIIOStream * poUnderlyingIOStream = 
+              ((VSIIOStream *)(poFileView->GetStream()));
           poUnderlyingIOStream->nFileViewCount++;
 
-		  if ( poIOStream != poUnderlyingIOStream ) 
-		  {
+          if ( poIOStream != poUnderlyingIOStream ) 
+          {
               delete poIOStream;
-		  } 		
+          } 		
 
           CPLReleaseMutex( hECWDatasetMutex );
 
