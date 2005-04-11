@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/04/11 17:08:36  fwarmerdam
+ * Fixed leak of xml tree when XMLInit() fails.
+ *
  * Revision 1.19  2004/10/03 16:52:45  fwarmerdam
  * ensure overviews initialized in Create()
  *
@@ -703,7 +706,7 @@ GDALDataset *VRTDataset::OpenXML( const char *pszXML, const char *pszVRTPath )
     if( poDS->XMLInit( psTree, pszVRTPath ) != CE_None )
     {
         delete poDS;
-        return NULL;
+        poDS = NULL;
     }
 
 /* -------------------------------------------------------------------- */
