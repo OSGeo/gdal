@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/04/11 17:20:40  fwarmerdam
+ * ensure dstnodata is duplicate in clonewarpoptions: bug 821
+ *
  * Revision 1.18  2005/04/04 15:24:16  fwarmerdam
  * added CPL_STDCALL to some functions
  *
@@ -785,6 +788,8 @@ GDALCloneWarpOptions( const GDALWarpOptions *psSrcOptions )
     COPY_MEM( panDstBands, int, psSrcOptions->nBandCount );
     COPY_MEM( padfSrcNoDataReal, double, psSrcOptions->nBandCount );
     COPY_MEM( padfSrcNoDataImag, double, psSrcOptions->nBandCount );
+    COPY_MEM( padfDstNoDataReal, double, psSrcOptions->nBandCount );
+    COPY_MEM( padfDstNoDataImag, double, psSrcOptions->nBandCount );
     COPY_MEM( papfnSrcPerBandValidityMaskFunc, GDALMaskFunc, 
               psSrcOptions->nBandCount );
 
