@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.44  2005/04/12 03:58:34  fwarmerdam
+ * turn ownership of fpVSIL over to vsiiostream
+ *
  * Revision 1.43  2005/04/11 13:56:27  fwarmerdam
  * Added a bit of reformatting.
  *
@@ -208,8 +211,6 @@ class CPL_DLL ECWDataset : public GDALDataset
 {
     friend class ECWRasterBand;
 
-    FILE        *fpVSIL;
-    
     CNCSJP2FileView *poFileView;
     NCSFileViewFileInfoEx *psFileInfo;
 
@@ -635,7 +636,6 @@ ECWDataset::ECWDataset()
 {
     pszProjection = NULL;
     poFileView = NULL;
-    fpVSIL = NULL;
     bWinActive = FALSE;
     panWinBandList = NULL;
     eRasterDataType = GDT_Byte;
@@ -690,12 +690,12 @@ ECWDataset::~ECWDataset()
     if( poFileView != NULL )
     {
         poUnderlyingIOStream = ((VSIIOStream *)(poFileView->GetStream()));
-        poUnderlyingIOStream->nFileViewCount--;
         delete poFileView;
     }
 
     if( poUnderlyingIOStream != NULL )
     {
+        poUnderlyingIOStream->nFileViewCount--;
         if ( poUnderlyingIOStream->nFileViewCount == 0 )
         {
             delete poUnderlyingIOStream;
@@ -703,13 +703,6 @@ ECWDataset::~ECWDataset()
     }
 
     CPLReleaseMutex( hECWDatasetMutex );
-
-/* -------------------------------------------------------------------- */
-/*      Close underlying file (if managed by us).                       */
-/* -------------------------------------------------------------------- */
-
-    if( fpVSIL != NULL )
-        VSIFCloseL( fpVSIL );
 }
 
 /************************************************************************/
@@ -1289,7 +1282,6 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new ECWDataset();
 
     poDS->poFileView = poFileView;
-    poDS->fpVSIL = fpVSIL;
 
 /* -------------------------------------------------------------------- */
 /*      Fetch general file information.                                 */
