@@ -69,6 +69,9 @@ AC_DEFUN(AC_UNIX_STDIO_64,
   if test "$with_unix_stdio_64" = "yes" ; then
     VSI_FTELL64=ftell64
     VSI_FSEEK64=fseek64
+    VSI_STAT64_T=stat64
+    VSI_STAT64=stat64
+    VSI_FOPEN64=fopen64
   fi
 
   if test "$with_unix_stdio_64" = "" ; then
@@ -78,6 +81,9 @@ AC_DEFUN(AC_UNIX_STDIO_64,
       with_unix_stdio_64=yes
       VSI_FTELL64=ftell64
       VSI_FSEEK64=fseek64
+      VSI_STAT64_T=stat64
+      VSI_STAT64=stat64
+      VSI_FOPEN64=fopen64
     fi
     rm -f conftest*
   fi
@@ -93,6 +99,9 @@ AC_DEFUN(AC_UNIX_STDIO_64,
       with_unix_stdio_64=yes
       VSI_FTELL64=ftello64
       VSI_FSEEK64=fseeko64
+      VSI_STAT64_T=stat64
+      VSI_STAT64=stat64
+      VSI_FOPEN64=fopen64
     fi
     rm -f conftest*
   fi
@@ -108,10 +117,25 @@ AC_DEFUN(AC_UNIX_STDIO_64,
       with_unix_stdio_64=yes
       VSI_FTELL64=ftello64
       VSI_FSEEK64=fseeko64
+      VSI_STAT64_T=stat64
+      VSI_STAT64=stat64
+      VSI_FOPEN64=fopen64
       AC_DEFINE(VSI_NEED_LARGEFILE64_SOURCE, 1, [Define to 1, if you have
       LARGEFILE64_SOURCE])
     fi
     rm -f conftest*
+  fi
+
+  dnl Test special MacOS (Darwin) case. 
+
+  if test ! -z "`uname | grep Darwin`" \
+          -a "$with_unix_stdio_64" = "" ; then
+      with_unix_stdio_64=yes
+      VSI_FTELL64=ftello
+      VSI_FSEEK64=fseeko
+      VSI_STAT64_T=stat
+      VSI_STAT64=stat
+      VSI_FOPEN64=fopen
   fi
 
   if test "$with_unix_stdio_64" = "yes" ; then
@@ -121,11 +145,12 @@ AC_DEFUN(AC_UNIX_STDIO_64,
     AC_DEFINE(VSI_LARGE_API_SUPPORTED, 1, [Define to 1, if you have 64 bit
     STDIO API])
 
-    export VSI_FTELL64 VSI_FSEEK64
-    AC_DEFINE_UNQUOTED(VSI_FTELL64,$VSI_FTELL64, [Define to 1, if you have
-    ftell64])
-    AC_DEFINE_UNQUOTED(VSI_FSEEK64,$VSI_FSEEK64, [Define to 1, if you have
-    fseek64])
+    export VSI_FTELL64 VSI_FSEEK64 VSI_STAT64 VSI_STAT64_T VSI_OPEN64
+    AC_DEFINE_UNQUOTED(VSI_FTELL64,$VSI_FTELL64, [Define to name of 64bit ftell func])
+    AC_DEFINE_UNQUOTED(VSI_FSEEK64,$VSI_FSEEK64, [Define to name of 64bit fseek func])
+    AC_DEFINE_UNQUOTED(VSI_STAT64,$VSI_STAT64, [Define to name of 64bit stat function])
+    AC_DEFINE_UNQUOTED(VSI_STAT64_T,$VSI_STAT64_T, [Define to name of 64bit stat structure])
+    AC_DEFINE_UNQUOTED(VSI_FOPEN64,$VSI_FOPEN64, [Define to name of 64bit fopen function])
   else
     AC_MSG_RESULT([no])
   fi

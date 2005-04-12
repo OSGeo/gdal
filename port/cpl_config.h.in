@@ -136,6 +136,15 @@
 /* Define to 1, if you have ftell64 */
 #undef VSI_FTELL64
 
+/* Define to 1, if you have ftell64 */
+#undef VSI_STAT64
+
+/* Define to 1, if you have ftell64 */
+#undef VSI_STAT64_T
+
+/* Define to 1, if you have ftell64 */
+#undef VSI_FOPEN64
+
 /* Define to 1, if you have 64 bit STDIO API */
 #undef VSI_LARGE_API_SUPPORTED
 

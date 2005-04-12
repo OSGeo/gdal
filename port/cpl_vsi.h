@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.19  2005/04/12 00:27:39  fwarmerdam
+ * added macos large file support
+ *
  * Revision 1.18  2003/09/10 19:44:36  warmerda
  * added VSIStrerrno()
  *
@@ -186,7 +189,7 @@ int CPL_DLL     VSIFEofL( FILE * );
 void CPL_DLL    VSIFFlushL( FILE * );
 
 #ifndef WIN32
-typedef struct stat64 VSIStatBufL;
+typedef struct stat VSIStatBufL;
 int CPL_DLL     VSIStatL( const char *, VSIStatBufL * );
 #else
 #define VSIStatBufL    VSIStatBuf
