@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/04/12 03:58:34  fwarmerdam
+ * turn ownership of fpVSIL over to vsiiostream
+ *
  * Revision 1.16  2005/04/02 22:05:21  fwarmerdam
  * ifdef out some stuff on ECW_FW
  *
@@ -117,8 +120,6 @@ public:
 
     GDALDataset *m_poSrcDS;
 
-    FILE *fpVSIL;
-
     VSIIOStream m_OStream;
     int m_nPercentComplete;
 
@@ -143,7 +144,6 @@ GDALECWCompressor::GDALECWCompressor()
     m_bCancelled = FALSE;
     pfnProgress = GDALDummyProgress;
     pProgressData = NULL;
-    fpVSIL = NULL;
 }
 
 /************************************************************************/
@@ -169,9 +169,6 @@ CPLErr GDALECWCompressor::CloseDown()
     CPLFree( sFileInfo.pBands );
 
     Close( true );
-
-    if( fpVSIL != NULL )
-        VSIFCloseL( fpVSIL );
 
     return CE_None;
 }
@@ -862,7 +859,7 @@ CPLErr GDALECWCompressor::Initialize(
 /* -------------------------------------------------------------------- */
 /*      Handle special case of a JPEG2000 data stream in another file.  */
 /* -------------------------------------------------------------------- */
-    fpVSIL = NULL;
+    FILE *fpVSIL = NULL;
 
     if( EQUALN(pszFilename,"J2K_SUBFILE:",12) )
     {

@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/04/12 03:58:34  fwarmerdam
+ * turn ownership of fpVSIL over to vsiiostream
+ *
  * Revision 1.9  2005/04/11 13:52:50  fwarmerdam
  * added proper handling of iostream cleanup from David Carter
  *
@@ -121,12 +124,18 @@ class VSIIOStream : public CNCSJPCIOStream
     char     *pszFilename;
 
     VSIIOStream() {
-		nFileViewCount = 0;
+        nFileViewCount = 0;
         startOfJPData = 0;
         lengthOfJPData = -1;
+        fpVSIL = NULL;
     }
     virtual ~VSIIOStream() {
         Close();
+        if( fpVSIL != NULL )
+        {
+            VSIFCloseL( fpVSIL );
+            fpVSIL = NULL;
+        }
     }
 
     virtual CNCSError Access( FILE *fpVSILIn, BOOLEAN bWrite,
