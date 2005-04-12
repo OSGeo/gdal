@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.20  2005/04/12 03:51:11  fwarmerdam
+ * Fixed stat64 problem.
+ *
  * Revision 1.19  2005/04/12 00:27:39  fwarmerdam
  * added macos large file support
  *
@@ -189,7 +192,7 @@ int CPL_DLL     VSIFEofL( FILE * );
 void CPL_DLL    VSIFFlushL( FILE * );
 
 #ifndef WIN32
-typedef struct stat VSIStatBufL;
+typedef struct VSI_STAT64_T VSIStatBufL;
 int CPL_DLL     VSIStatL( const char *, VSIStatBufL * );
 #else
 #define VSIStatBufL    VSIStatBuf
