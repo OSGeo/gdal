@@ -1391,9 +1391,12 @@ fi
 if test "$GEOS_CONFIG" != "no" ; then
 
   VERSION=`$GEOS_CONFIG --version`
-  if test "${VERSION:0:1}" -lt 2 ; then
+  case ${VERSION} in 
+   1*)
     AC_MSG_ERROR([geos-config reports version $VERSION, need at least 2.0 or configure --without-geos])
-  fi
+    ;;
+    *) ;;
+  esac
 
   LIBS="`$GEOS_CONFIG --libs` $LIBS"
   GEOS_INC=-I"`$GEOS_CONFIG --includes`"
