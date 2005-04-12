@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/04/12 00:27:39  fwarmerdam
+ * added macos large file support
+ *
  * Revision 1.6  2002/06/17 14:00:16  warmerda
  * segregate VSIStatL() and VSIStatBufL.
  *
@@ -62,6 +65,15 @@ CPL_CVSID("$Id$");
 #ifndef VSI_FSEEK64
 #define VSI_FSEEK64 fseek64
 #endif
+#ifndef VSI_FOPEN64
+#define VSI_FOPEN64 fopen64
+#endif
+#ifndef VSI_STAT64
+#define VSI_STAT64 stat64
+#endif
+#ifndef VSI_STAT64_T
+#define VSI_STAT64_T stat64
+#endif
 
 /************************************************************************/
 /*                              VSIFOpen()                              */
@@ -70,7 +82,7 @@ CPL_CVSID("$Id$");
 FILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
 
 {
-    return fopen64( pszFilename, pszAccess );
+    return VSI_FOPEN64( pszFilename, pszAccess );
 }
 
 /************************************************************************/
@@ -160,7 +172,7 @@ int VSIFEofL( FILE * fp )
 int VSIStatL( const char * pszFilename, VSIStatBufL * pStatBuf )
 
 {
-    return( stat64( pszFilename, pStatBuf ) );
+    return( VSI_STAT64( pszFilename, pStatBuf ) );
 }
 
 #endif /* defined UNIX_STDIO_64 */
