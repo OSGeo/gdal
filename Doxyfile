@@ -182,7 +182,7 @@ INCLUDE_PATH =
 # or name=definition (no spaces). In the former case 1 is used as the
 # definition.
 
-PREDEFINED = HAVE_DLFCN_H CPL_DLL CPL_C_START CPL_C_END __cplusplus
+PREDEFINED = HAVE_DLFCN_H CPL_DLL CPL_STDCALL CPL_C_START CPL_C_END __cplusplus DOXYGEN_SKIP
 
 # If the EXPAND_ONLY_PREDEF and MACRO_EXPANSION tags are both set to YES
 # then the macro expansion is limited to the macros specified with the
