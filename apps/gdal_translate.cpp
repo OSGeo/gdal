@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.29  2005/04/12 14:37:47  fwarmerdam
+ * Added the -a_nodata switch to assign nodata values to output bands.
+ *
  * Revision 1.28  2005/01/27 20:58:11  fwarmerdam
  * Added -a_ullr switch.
  *
@@ -177,7 +180,7 @@ static void Usage()
             "       [-of format] [-b band] [-outsize xsize[%%] ysize[%%]]\n"
             "       [-scale [src_min src_max [dst_min dst_max]]]\n"
             "       [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry]\n"
-            "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry]\n"
+            "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
             "       [-gcp pixel line easting northing]*\n" 
             "       [-mo \"META-TAG=VALUE\"]* [-quiet] [-sds]\n"
             "       [-co \"NAME=VALUE\"]*\n"
@@ -233,6 +236,8 @@ int main( int argc, char ** argv )
     int                 iSrcFileArg = -1, iDstFileArg = -1;
     int                 bCopySubDatasets = FALSE;
     double              adfULLR[4];
+    int                 bSetNoData = FALSE;
+    double		dfNoDataReal = 0.0;
 
 
     anSrcWin[0] = 0;
@@ -330,6 +335,13 @@ int main( int argc, char ** argv )
                 pasGCPs[nGCPCount-1].dfGCPZ = atof(argv[++i]);
 
             /* should set id and info? */
+        }   
+
+        else if( EQUAL(argv[i],"-a_nodata") && i < argc - 1 )
+        {
+            bSetNoData = TRUE;
+            dfNoDataReal = atof(argv[i+1]);
+            i += 1;
         }   
 
         else if( EQUAL(argv[i],"-a_ullr") && i < argc - 4 )
@@ -670,7 +682,7 @@ int main( int argc, char ** argv )
         && anSrcWin[3] == GDALGetRasterYSize(hDataset) 
         && pszOXSize == NULL && pszOYSize == NULL 
         && nGCPCount == 0 && !bGotBounds
-        && pszOutputSRS == NULL )
+        && pszOutputSRS == NULL && !bSetNoData )
     {
         
         hOutDS = GDALCreateCopy( hDriver, pszDest, hDataset, 
@@ -851,6 +863,12 @@ int main( int argc, char ** argv )
                 / (dfScaleSrcMax - dfScaleSrcMin);
             dfOffset = -1 * dfScaleSrcMin * dfScale + dfScaleDstMin;
         }
+
+/* -------------------------------------------------------------------- */
+/*      Set a forcable nodata value?                                    */
+/* -------------------------------------------------------------------- */
+        if( bSetNoData )
+            poVRTBand->SetNoDataValue( dfNoDataReal );
 
 /* -------------------------------------------------------------------- */
 /*      Create a simple or complex data source depending on the         */
