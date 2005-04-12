@@ -19,8 +19,8 @@
 
    % cvs2cl.pl > AutoChangeLog
 
-5) Update the GDAL gcore/index.dox to refer to the newly to be created
-   source files, and commit. 
+5) Update the GDAL doc/index_raw.html to refer to the 
+   newly to be created version, and commit. 
 
 5.5) Place Release notice in ChangeLog file. 
 
