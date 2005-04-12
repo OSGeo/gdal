@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geotiff_proj4.c,v 1.21 2003/08/21 18:42:39 warmerda Exp $
+ * $Id: geotiff_proj4.c,v 1.22 2005/03/04 04:32:37 fwarmerdam Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Code to convert a normalized GeoTIFF definition into a PROJ.4
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log: geotiff_proj4.c,v $
+ * Revision 1.22  2005/03/04 04:32:37  fwarmerdam
+ * added cylindricalequalarea support
+ *
  * Revision 1.21  2003/08/21 18:42:39  warmerda
  * fixed support for ModelTypeGeographic as per email from Young Su, Cha
  *
@@ -470,6 +473,20 @@ char * GTIFGetProj4Defn( GTIFDefn * psDefn )
                  psDefn->ProjParm[0],
                  psDefn->ProjParm[1],
                  psDefn->ProjParm[4],
+                 psDefn->ProjParm[5],
+                 psDefn->ProjParm[6] );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      CT_CylindricalEqualArea                                         */
+/* -------------------------------------------------------------------- */
+    else if( psDefn->CTProjection == CT_CylindricalEqualArea )
+    {
+        sprintf( szProjection+strlen(szProjection),
+                 "+proj=cea +lat_ts=%.9f +lon_0=%.9f "
+                 " +x_0=%.3f +y_0=%.3f ",
+                 psDefn->ProjParm[0],
+                 psDefn->ProjParm[1],
                  psDefn->ProjParm[5],
                  psDefn->ProjParm[6] );
     }

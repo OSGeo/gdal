@@ -1,4 +1,37 @@
-/* GeoTIFF Coordinate Transformations Database */
+/******************************************************************************
+ * $Id: geo_ctrans.inc,v 1.3 2005/03/04 03:59:11 fwarmerdam Exp $
+ *
+ * Project:  libgeotiff
+ * Purpose:  GeoTIFF Projection Method codes. 
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *
+ ******************************************************************************
+ * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ******************************************************************************
+ *
+ * $Log: geo_ctrans.inc,v $
+ * Revision 1.3  2005/03/04 03:59:11  fwarmerdam
+ * Added header.
+ *
+ */
 
 /* C database for Geotiff include files.   */
 /* the macro ValuePair() must be defined   */
@@ -39,6 +72,9 @@ ValuePair(CT_VanDerGrinten,	25)
 ValuePair(CT_NewZealandMapGrid,	26)
 /* Added for 1.0 */
 ValuePair(CT_TransvMercator_SouthOrientated, 27)
+
+/* Added Feb 2005 */
+ValuePair(CT_CylindricalEqualArea, 28)
 
 
 /* Aliases */
