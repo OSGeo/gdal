@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.135  2005/04/13 15:32:20  dron
+ * Added support for 16- and 24-bit floating point TIFFs (as per TechNote 3).
+ *
  * Revision 1.134  2005/03/22 19:40:59  fwarmerdam
  * Added support for forcing RGB color mode with YCBCR files and JPEG
  * compression.  Added special (fast) case for 12bit to 16bit conversion
@@ -112,37 +115,6 @@
  *
  * Revision 1.110  2004/04/21 14:00:18  warmerda
  * pass GTIF pointer into GTIFGetOGISDefn
- *
- * Revision 1.109  2004/04/12 09:13:18  dron
- * Use compression type of the base image to generate overviews
- * (requires libtiff >= 3.7.0).
- *
- * Revision 1.108  2004/03/01 18:36:47  warmerda
- * improve error checking for overview generation
- *
- * Revision 1.107  2004/02/19 14:31:44  dron
- * Replace COMPRESSION_DEFLATE with COMPRESSION_ADOBE_DEFLATE.
- *
- * Revision 1.106  2004/02/12 14:29:55  warmerda
- * Fiddled with rules when reading georeferencing information.  Now if there
- * are tiepoints and a transformation matrix, we will build a geotransform
- * *and* attached tiepoints.  Related to:
- * http://bugzilla.remotesensing.org/show_bug.cgi?id=489
- *
- * Revision 1.105  2004/01/15 10:18:35  dron
- * PHOTOMETRIC option flag added. Few improvements in option parsing.
- *
- * Revision 1.104  2004/01/14 23:09:08  warmerda
- * Removed duplicate line.
- *
- * Revision 1.103  2004/01/14 23:06:09  warmerda
- * Improve calculation of 16bit color table values.
- *
- * Revision 1.102  2004/01/07 20:51:22  warmerda
- * Added Float64 to supported data types.
- *
- * Revision 1.101  2004/01/01 19:49:50  dron
- * Use uint16 insted of int16 for the count of tie points.
  */
 
 #include "gdal_priv.h"
@@ -163,6 +135,8 @@ CPL_C_START
 char CPL_DLL *  GTIFGetOGISDefn( GTIF *, GTIFDefn * );
 int  CPL_DLL   GTIFSetFromOGISDefn( GTIF *, const char * );
 const char * GDALDefaultCSVFilename( const char *pszBasename );
+GUInt32 HalfToFloat( GUInt16 );
+GUInt32 TripleToFloat( GUInt32 );
 CPL_C_END
 
 static void GTiffOneTimeInit();
@@ -565,6 +539,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             pabyImage += poGDS->nBands;
         }
     }
+
     else
     {
         int	i, nBlockPixels, nWordBytes;
@@ -1291,7 +1266,9 @@ GTiffOddBitsBand::GTiffOddBitsBand( GTiffDataset *poGDS, int nBand )
 
 {
     eDataType = GDT_Byte;
-    if( poGDS->nBitsPerSample > 8 && poGDS->nBitsPerSample < 16 )
+    if( poGDS->nSampleFormat == SAMPLEFORMAT_IEEEFP )
+        eDataType = GDT_Float32;
+    else if( poGDS->nBitsPerSample > 8 && poGDS->nBitsPerSample < 16 )
         eDataType = GDT_UInt16;
 }
 
@@ -1364,9 +1341,46 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return eErr;
 
 /* -------------------------------------------------------------------- */
+/*      Handle the case of 16- and 24-bit floating point data as per    */
+/*      TIFF Technical Note 3.                                          */
+/* -------------------------------------------------------------------- */
+    if( eDataType == GDT_Float32 && poGDS->nBitsPerSample < 32 )
+    {
+        int	i, nBlockPixels, nWordBytes, iSkipBytes;
+        GByte	*pabyImage;
+
+        nWordBytes = poGDS->nBitsPerSample / 8;
+        pabyImage = poGDS->pabyBlockBuf + (nBand - 1) * nWordBytes;
+        iSkipBytes = ( poGDS->nPlanarConfig == PLANARCONFIG_SEPARATE ) ?
+            nWordBytes : poGDS->nBands * nWordBytes;
+
+        nBlockPixels = nBlockXSize * nBlockYSize;
+        if ( poGDS->nBitsPerSample == 16 )
+        {
+            for( i = 0; i < nBlockPixels; i++ )
+            {
+                ((GUInt32 *) pImage)[i] =
+                    HalfToFloat( *((GUInt16 *)pabyImage) );
+                pabyImage += iSkipBytes;
+            }
+        }
+        else if ( poGDS->nBitsPerSample == 24 )
+        {
+            for( i = 0; i < nBlockPixels; i++ )
+            {
+                ((GUInt32 *) pImage)[i] =
+                    TripleToFloat( ((GUInt32)*(pabyImage + 2) << 16)
+                                   | ((GUInt32)*(pabyImage + 1) << 8)
+                                   | (GUInt32)*pabyImage );
+                pabyImage += iSkipBytes;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Special case for moving 12bit data somewhat more efficiently.   */
 /* -------------------------------------------------------------------- */
-    if( poGDS->nBitsPerSample == 12 )
+    else if( poGDS->nBitsPerSample == 12 )
     {
         int	iPixel, iBitOffset = 0, nBlockPixels;
         int     iPixelBitSkip, iBandBitOffset;
@@ -2497,6 +2511,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 {
     uint32	nXSize, nYSize;
     int		bTreatAsBitmap = FALSE;
+    int         bTreatAsOdd = FALSE;
 
     hTIFF = hTIFFIn;
 
@@ -2594,6 +2609,18 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
     }
         
 /* -------------------------------------------------------------------- */
+/*      Should we treat this via the odd bits interface?                */
+/* -------------------------------------------------------------------- */
+
+    if ( nSampleFormat == SAMPLEFORMAT_IEEEFP )
+    {
+        if ( nBitsPerSample == 16 || nBitsPerSample == 24 )
+            bTreatAsOdd = TRUE;
+    }
+    else if ( nBitsPerSample > 8 && nBitsPerSample < 16 )
+        bTreatAsOdd = TRUE;
+
+/* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < nBands; iBand++ )
@@ -2602,7 +2629,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
             SetBand( iBand+1, new GTiffRGBABand( this, iBand+1 ) );
         else if( bTreatAsBitmap )
             SetBand( iBand+1, new GTiffBitmapBand( this, iBand+1 ) );
-        else if( nBitsPerSample > 8 && nBitsPerSample < 16 )
+        else if( bTreatAsOdd )
             SetBand( iBand+1, new GTiffOddBitsBand( this, iBand+1 ) );
         else
             SetBand( iBand+1, new GTiffRasterBand( this, iBand+1 ) );
