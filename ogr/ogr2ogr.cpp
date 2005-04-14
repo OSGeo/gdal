@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/04/14 14:20:24  fwarmerdam
+ * More stuff to avoid feature leaks.
+ *
  * Revision 1.27  2005/04/14 14:16:37  fwarmerdam
  * Fix from Julien for destroying features in error case.
  *
@@ -777,6 +780,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                       poFeature->GetFID(), poFDefn->GetName() );
             
             OGRFeature::DestroyFeature( poFeature );
+            OGRFeature::DestroyFeature( poDstFeature );
             return FALSE;
         }
 
@@ -794,7 +798,11 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                 printf( "Failed to transform feature %d.\n", 
                         (int) poFeature->GetFID() );
                 if( !bSkipFailures )
+                {
+                    OGRFeature::DestroyFeature( poFeature );
+                    OGRFeature::DestroyFeature( poDstFeature );
                     return FALSE;
+                }
             }
         }
 
