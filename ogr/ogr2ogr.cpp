@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/04/14 14:16:37  fwarmerdam
+ * Fix from Julien for destroying features in error case.
+ *
  * Revision 1.26  2005/03/15 21:18:47  fwarmerdam
  * Added -sql to usage message.
  *
@@ -769,11 +772,11 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             if( nGroupTransactions )
                 poDstLayer->CommitTransaction();
             
-            delete poFeature;
-            
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Unable to translate feature %d from layer %s.\n",
                       poFeature->GetFID(), poFDefn->GetName() );
+            
+            OGRFeature::DestroyFeature( poFeature );
             return FALSE;
         }
 
