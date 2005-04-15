@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.93  2005/04/15 18:34:52  fwarmerdam
+ * Added area or point metadata constants.
+ *
  * Revision 1.92  2005/04/04 15:24:48  fwarmerdam
  * Most C entry points now CPL_STDCALL
  *
@@ -271,6 +274,12 @@ typedef enum
 
 /*! Translate a GDALPaletteInterp into a user displayable string. */
 const char CPL_DLL *GDALGetPaletteInterpretationName( GDALPaletteInterp );
+
+/* "well known" metadata items. */
+
+#define GDALMD_AREA_OR_POINT   "AREA_OR_POINT" 
+#  define GDALMD_AOP_AREA      "Area"
+#  define GDALMD_AOP_POINT     "Point"
 
 /* -------------------------------------------------------------------- */
 /*      GDAL Specific error codes.                                      */
