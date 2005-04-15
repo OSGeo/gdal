@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.16  2005/04/15 19:28:57  fwarmerdam
+ * added AREA_OR_POINT=Point metadata
+ *
  * Revision 1.15  2004/04/08 12:59:10  warmerda
  * fixed sides of polygon fixed value
  *
@@ -610,6 +613,8 @@ GDALDataset *USGSDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     poDS->SetBand( 1, new USGSDEMRasterBand( poDS ));
+
+    poDS->SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
 
     return( poDS );
 }
