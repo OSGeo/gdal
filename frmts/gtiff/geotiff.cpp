@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.136  2005/04/15 18:24:24  dron
+ * Added "PREDICTOR" option (works with LZW and ZIP compression types).
+ *
  * Revision 1.135  2005/04/13 15:32:20  dron
  * Added support for 16- and 24-bit floating point TIFFs (as per TechNote 3).
  *
@@ -3022,6 +3025,7 @@ TIFF *GTiffCreate( const char * pszFilename,
     int                 nBlockXSize = 0, nBlockYSize = 0;
     int                 bTiled = FALSE;
     int                 nCompression = COMPRESSION_NONE;
+    int                 nPredictor = 1;
     uint16              nSampleFormat;
     int			nPlanar;
     const char          *pszValue;
@@ -3066,7 +3070,7 @@ TIFF *GTiffCreate( const char * pszFilename,
             nPlanar = PLANARCONFIG_SEPARATE;
     }
 
-    pszValue = CSLFetchNameValue(papszParmList,"COMPRESS");
+    pszValue = CSLFetchNameValue( papszParmList, "COMPRESS" );
     if( pszValue  != NULL )
     {
         if( EQUAL( pszValue, "JPEG" ) )
@@ -3082,6 +3086,10 @@ TIFF *GTiffCreate( const char * pszFilename,
                       "COMPRESS=%s value not recognised, ignoring.",
                       pszValue );
     }
+
+    pszValue = CSLFetchNameValue( papszParmList, "PREDICTOR" );
+    if( pszValue  != NULL )
+        nPredictor =  atoi( pszValue );
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
@@ -3101,6 +3109,9 @@ TIFF *GTiffCreate( const char * pszFilename,
 /*      Setup some standard flags.                                      */
 /* -------------------------------------------------------------------- */
     TIFFSetField( hTIFF, TIFFTAG_COMPRESSION, nCompression );
+    if ( nCompression == COMPRESSION_LZW ||
+         nCompression == COMPRESSION_ADOBE_DEFLATE )
+        TIFFSetField( hTIFF, TIFFTAG_PREDICTOR, nPredictor );
     TIFFSetField( hTIFF, TIFFTAG_IMAGEWIDTH, nXSize );
     TIFFSetField( hTIFF, TIFFTAG_IMAGELENGTH, nYSize );
     TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE, GDALGetDataTypeSize(eType) );
@@ -4266,6 +4277,7 @@ void GDALRegister_GTiff()
 "   <Option name='COMPRESS' type='string-select'>",
                  szOptionalCompressItems,
 "   </Option>"
+"   <Option name='PREDICTOR' type='int' description='Predictor Type'/>"
 "   <Option name='INTERLEAVE' type='string-select'>"
 "       <Value>BAND</Value>"
 "       <Value>PIXEL</Value>"
