@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/04/15 19:28:57  fwarmerdam
+ * added AREA_OR_POINT=Point metadata
+ *
  * Revision 1.14  2004/01/30 18:27:25  gwalter
  * Fixed bug in tile sizing.
  *
@@ -325,6 +328,8 @@ GDALDataset *DTEDDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetMetadataItem( "DTED_RelVerticalAccuracy", pszValue );
     CPLFree( pszValue );
     
+    poDS->SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
+
     return( poDS );
 }
 
