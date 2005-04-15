@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.29  2005/04/15 18:34:35  fwarmerdam
+ * Added AREA_OR_POINT metadata.
+ *
  * Revision 1.28  2005/02/08 18:15:34  fwarmerdam
  * Removed tail recursion in IReadBlock() to avoid stack overflows.
  *
@@ -449,6 +452,8 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     else if ((i = CSLFindString( papszTokens, "xllcenter" )) >= 0 &&
              (j = CSLFindString( papszTokens, "yllcenter" )) >= 0 )
     {
+        poDS->SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
+
         poDS->adfGeoTransform[0] = atof(papszTokens[i + 1]) - 0.5 * dfCellSize;
         poDS->adfGeoTransform[1] = dfCellSize;
         poDS->adfGeoTransform[2] = 0.0;
