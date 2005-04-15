@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.137  2005/04/15 18:45:29  fwarmerdam
+ * added area or point metadata
+ *
  * Revision 1.136  2005/04/15 18:24:24  dron
  * Added "PREDICTOR" option (works with LZW and ZIP compression types).
  *
@@ -127,6 +130,7 @@
 #include "xtiffio.h"
 #include "geotiff.h"
 #include "geo_normalize.h"
+#include "geovalues.h"
 #include "tif_ovrcache.h"
 #include "cpl_string.h"
 #include "cpl_csv.h"
@@ -2813,6 +2817,19 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
             if( GTIFGetDefn( hGTIF, &sGTIFDefn ) )
             {
                 pszProjection = GTIFGetOGISDefn( hGTIF, &sGTIFDefn );
+            }
+
+            // Is this a pixel-is-point dataset?
+            short nRasterType;
+            
+
+            if( GTIFKeyGet(hGTIF, GTRasterTypeGeoKey, &nRasterType, 
+                           0, 1 ) == 1 )
+            {
+                if( nRasterType == (short) RasterPixelIsPoint )
+                    SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
+                else
+                    SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_AREA );
             }
 
             GTIFFree( hGTIF );
