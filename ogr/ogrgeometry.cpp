@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/04/18 15:42:17  fwarmerdam
+ * fix geos exception catching
+ *
  * Revision 1.29  2005/04/06 20:43:00  fwarmerdam
  * fixed a variety of method signatures for documentation
  *
@@ -1299,12 +1302,13 @@ geos::Geometry *OGRGeometry::exportToGEOS() const
         geosGeometry = geosWktReader.read( oWKT );
         return geosGeometry;
     }
-    catch( geos::GEOSException &e )
+    catch( geos::GEOSException *e )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "GEOSException: %s", 
-                  e.toString().c_str() );
+                  e->toString().c_str() );
 
+        delete e;
         return NULL;
     }
 
