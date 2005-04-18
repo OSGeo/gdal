@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2005/04/18 15:45:17  gwalter
+ * Check for Space Imaging style .hdr + .nfw, and
+ * default to these rather than in-file geocoding
+ * information if both files are present and have
+ * recognizable information.
+ *
  * Revision 1.40  2005/04/18 13:40:22  fwarmerdam
  * Remove the default geotransform if we don't have a valid geotransform.
  *
@@ -955,18 +961,9 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     psGCPs[3].dfGCPY		= psImage->dfLLY;
 
 /* -------------------------------------------------------------------- */
-/*      Convert the GCPs into a geotransform definition, if possible.   */
-/* -------------------------------------------------------------------- */
-    if( GDALGCPsToGeoTransform( nGCPCount, psGCPs, 
-                                poDS->adfGeoTransform, TRUE ) )
-    {	
-        poDS->bGotGeoTransform = TRUE;
-    } 
-
-/* -------------------------------------------------------------------- */
 /*      Try looking for a .nfw file.                                    */
 /* -------------------------------------------------------------------- */
-    else if( GDALReadWorldFile( poOpenInfo->pszFilename, "nfw", 
+    if( GDALReadWorldFile( poOpenInfo->pszFilename, "nfw", 
                                 poDS->adfGeoTransform ) )
     {
         const char *pszHDR;
@@ -1021,11 +1018,31 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
                     oSRSWork.SetWellKnownGeogCS( "WGS84" );
                     oSRSWork.exportToWkt( &(poDS->pszProjection) );
                 }
+                else
+                {
+                     /* Couldn't find associated projection info.
+                        Go back to original file for geotransform.
+                      */
+                      poDS->bGotGeoTransform = FALSE;
+                }
             }
+            else
+                poDS->bGotGeoTransform = FALSE;
             CSLDestroy(papszLines);
         }
-
+        else
+            poDS->bGotGeoTransform = FALSE;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Convert the GCPs into a geotransform definition, if possible.   */
+/* -------------------------------------------------------------------- */
+    if(  ( poDS->bGotGeoTransform == FALSE ) &&
+         GDALGCPsToGeoTransform( nGCPCount, psGCPs, 
+                                 poDS->adfGeoTransform, TRUE ) )
+    {	
+        poDS->bGotGeoTransform = TRUE;
+    } 
 
 /* -------------------------------------------------------------------- */
 /*      If we have IGEOLO that isn't north up, return it as GCPs.       */
