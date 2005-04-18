@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2005/04/18 17:53:57  fwarmerdam
+ * ICORDS=N means different things in NITF2.1 and 2.0
+ *
  * Revision 1.35  2005/03/21 16:24:34  fwarmerdam
  * IGEOLO now interpreted as being the corner coordinates at the center
  * of the corner coordinates.  It is transformed into outer corners
@@ -152,7 +155,6 @@
 CPL_CVSID("$Id$");
 
 static char *NITFTrimWhite( char * );
-static int NITFIsAllDigits( const char *, int );
 static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
                            int nWordSkip );
 
@@ -316,19 +318,21 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     nOffset += 38;
 
 /* -------------------------------------------------------------------- */
-/*      Read the image bounds.  According to the specification the      */
-/*      60 character IGEOGLO field should occur unless the ICORDS is    */
-/*      ' '; however, some datasets (ie. an ADRG OVERVIEW.OVR file)     */
-/*      have 'N' in the ICORDS but still no IGEOGLO.  To detect this    */
-/*      we verify that the IGEOGLO value seems valid before             */
-/*      accepting that it must be there.                                */
+/*      Do we have IGEOLO information?  In NITF 2.0 'N' means no        */
+/*      information, while in 2.1 this is indicated as ' ', and 'N'     */
+/*      means UTM (north).  So for 2.0 products we change 'N' to ' '    */
+/*      to conform to 2.1 conventions.                                  */
 /* -------------------------------------------------------------------- */
     psImage->chICORDS = pachHeader[nOffset++];
     psImage->bHaveIGEOLO = FALSE;
 
-    if( psImage->chICORDS != ' ' 
-        && (psImage->chICORDS != 'N' 
-            || NITFIsAllDigits( pachHeader+nOffset, 60)) )
+    if( EQUALN(psFile->szVersion,"NITF02.0",8) && psImage->chICORDS == 'N' )
+        psImage->chICORDS = ' ';
+
+/* -------------------------------------------------------------------- */
+/*      Read the image bounds.                                          */
+/* -------------------------------------------------------------------- */
+    if( psImage->chICORDS != ' ' )
     {
         int iCoord;
 
@@ -760,37 +764,40 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /*      We can't set dfGCPPixel and dfGCPPixel until we know            */
 /*      psImage->nRows and psImage->nCols.                              */
 /* -------------------------------------------------------------------- */
-    psIGEOLOGCPs[0].dfGCPPixel = 0.5;
-    psIGEOLOGCPs[0].dfGCPLine = 0.5;
-    psIGEOLOGCPs[1].dfGCPPixel = psImage->nCols - 0.5;
-    psIGEOLOGCPs[1].dfGCPLine = 0.5;
-    psIGEOLOGCPs[2].dfGCPPixel = psImage->nCols - 0.5;
-    psIGEOLOGCPs[2].dfGCPLine = psImage->nRows - 0.5;
-    psIGEOLOGCPs[3].dfGCPPixel = 0.5;
-    psIGEOLOGCPs[3].dfGCPLine = psImage->nRows - 0.5;
+    if( psImage->chICORDS != ' ' )
+    {
+        psIGEOLOGCPs[0].dfGCPPixel = 0.5;
+        psIGEOLOGCPs[0].dfGCPLine = 0.5;
+        psIGEOLOGCPs[1].dfGCPPixel = psImage->nCols - 0.5;
+        psIGEOLOGCPs[1].dfGCPLine = 0.5;
+        psIGEOLOGCPs[2].dfGCPPixel = psImage->nCols - 0.5;
+        psIGEOLOGCPs[2].dfGCPLine = psImage->nRows - 0.5;
+        psIGEOLOGCPs[3].dfGCPPixel = 0.5;
+        psIGEOLOGCPs[3].dfGCPLine = psImage->nRows - 0.5;
 
 /* -------------------------------------------------------------------- */
 /*      Convert the GCPs into a geotransform definition, if possible.	*/
 /* -------------------------------------------------------------------- */
-    if( !GDALGCPsToGeoTransform( nIGEOLOGCPCount, psIGEOLOGCPs, 
-                                 adfGeoTransform, TRUE ) )
-    {
-        CPLDebug( "GDAL", "NITFImageAccess() wasn't able to derive a\n"
-                  "first order geotransform.");
+        if( !GDALGCPsToGeoTransform( nIGEOLOGCPCount, psIGEOLOGCPs, 
+                                     adfGeoTransform, TRUE ) )
+        {
+            CPLDebug( "GDAL", "NITFImageAccess() wasn't able to derive a\n"
+                      "first order geotransform.");
+        }
+        
+        GDALDeinitGCPs( nIGEOLOGCPCount, psIGEOLOGCPs );
+        
+        psImage->dfULX = adfGeoTransform[0];
+        psImage->dfULY = adfGeoTransform[3];
+        psImage->dfURX = psImage->dfULX + adfGeoTransform[1] * psImage->nCols;
+        psImage->dfURY = psImage->dfULY + adfGeoTransform[4] * psImage->nCols;
+        psImage->dfLRX = psImage->dfULX + adfGeoTransform[1] * psImage->nCols
+            + adfGeoTransform[2] * psImage->nRows;
+        psImage->dfLRY = psImage->dfULY + adfGeoTransform[4] * psImage->nCols
+            + adfGeoTransform[5] * psImage->nRows;
+        psImage->dfLLX = psImage->dfULX + adfGeoTransform[2] * psImage->nRows;
+        psImage->dfLLY = psImage->dfULY + adfGeoTransform[5] * psImage->nRows;
     }
-    
-    GDALDeinitGCPs( nIGEOLOGCPCount, psIGEOLOGCPs );
-
-    psImage->dfULX = adfGeoTransform[0];
-    psImage->dfULY = adfGeoTransform[3];
-    psImage->dfURX = psImage->dfULX + adfGeoTransform[1] * psImage->nCols;
-    psImage->dfURY = psImage->dfULY + adfGeoTransform[4] * psImage->nCols;
-    psImage->dfLRX = psImage->dfULX + adfGeoTransform[1] * psImage->nCols
-        + adfGeoTransform[2] * psImage->nRows;
-    psImage->dfLRY = psImage->dfULY + adfGeoTransform[4] * psImage->nCols
-        + adfGeoTransform[5] * psImage->nRows;
-    psImage->dfLLX = psImage->dfULX + adfGeoTransform[2] * psImage->nRows;
-    psImage->dfLLY = psImage->dfULY + adfGeoTransform[5] * psImage->nRows;
 
 /* -------------------------------------------------------------------- */
 /*      If we have an RPF CoverageSectionSubheader, read the more       */
@@ -1501,27 +1508,6 @@ char *NITFTrimWhite( char *pszTarget )
         pszTarget[i--] = '\0';
 
     return pszTarget;
-}
-
-/************************************************************************/
-/*                          NITFIsAllDigits()                           */
-/*                                                                      */
-/*      This is used in verifying that the IGEOLO value is actually     */
-/*      present for ICORDS='N'.   We also allow for spaces.             */
-/************************************************************************/
-
-static int NITFIsAllDigits( const char *pachBuffer, int nCharCount )
-
-{
-    int i;
-
-    for( i = 0; i < nCharCount; i++ )
-    {
-        if( pachBuffer[i] != ' '
-            && (pachBuffer[i] < '0' || pachBuffer[i] > '9' ) )
-            return FALSE;
-    }
-    return TRUE;
 }
 
 /************************************************************************/
