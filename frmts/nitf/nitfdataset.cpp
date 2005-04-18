@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2005/04/18 17:58:12  fwarmerdam
+ * fixed up ICORDS=' ' case to mean no geotransform
+ *
  * Revision 1.41  2005/04/18 15:45:17  gwalter
  * Check for Space Imaging style .hdr + .nfw, and
  * default to these rather than in-file geocoding
@@ -934,37 +937,42 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      geotransform?  Our approach should support images in an         */
 /*      affine rotated frame of reference.                              */
 /* -------------------------------------------------------------------- */
-    int nGCPCount = 4;
-    GDAL_GCP    *psGCPs;
+    int nGCPCount = 0;
+    GDAL_GCP    *psGCPs = NULL;
 
-    psGCPs = (GDAL_GCP *) CPLMalloc(sizeof(GDAL_GCP) * nGCPCount);
-    GDALInitGCPs( nGCPCount, psGCPs );
+    if( psImage->chICORDS != ' ' )
+    {
+        nGCPCount = 4;
 
-    psGCPs[0].dfGCPPixel	= 0.0;
-    psGCPs[0].dfGCPLine		= 0.0;
-    psGCPs[0].dfGCPX		= psImage->dfULX;
-    psGCPs[0].dfGCPY		= psImage->dfULY;
+        psGCPs = (GDAL_GCP *) CPLMalloc(sizeof(GDAL_GCP) * nGCPCount);
+        GDALInitGCPs( nGCPCount, psGCPs );
 
-    psGCPs[1].dfGCPPixel = poDS->nRasterXSize;
-    psGCPs[1].dfGCPLine = 0.0;
-    psGCPs[1].dfGCPX		= psImage->dfURX;
-    psGCPs[1].dfGCPY		= psImage->dfURY;
+        psGCPs[0].dfGCPPixel	= 0.0;
+        psGCPs[0].dfGCPLine		= 0.0;
+        psGCPs[0].dfGCPX		= psImage->dfULX;
+        psGCPs[0].dfGCPY		= psImage->dfULY;
 
-    psGCPs[2].dfGCPPixel = poDS->nRasterXSize;
-    psGCPs[2].dfGCPLine = poDS->nRasterYSize;
-    psGCPs[2].dfGCPX		= psImage->dfLRX;
-    psGCPs[2].dfGCPY		= psImage->dfLRY;
+        psGCPs[1].dfGCPPixel = poDS->nRasterXSize;
+        psGCPs[1].dfGCPLine = 0.0;
+        psGCPs[1].dfGCPX		= psImage->dfURX;
+        psGCPs[1].dfGCPY		= psImage->dfURY;
 
-    psGCPs[3].dfGCPPixel = 0.0;
-    psGCPs[3].dfGCPLine = poDS->nRasterYSize;
-    psGCPs[3].dfGCPX		= psImage->dfLLX;
-    psGCPs[3].dfGCPY		= psImage->dfLLY;
+        psGCPs[2].dfGCPPixel = poDS->nRasterXSize;
+        psGCPs[2].dfGCPLine = poDS->nRasterYSize;
+        psGCPs[2].dfGCPX		= psImage->dfLRX;
+        psGCPs[2].dfGCPY		= psImage->dfLRY;
+
+        psGCPs[3].dfGCPPixel = 0.0;
+        psGCPs[3].dfGCPLine = poDS->nRasterYSize;
+        psGCPs[3].dfGCPX		= psImage->dfLLX;
+        psGCPs[3].dfGCPY		= psImage->dfLLY;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try looking for a .nfw file.                                    */
 /* -------------------------------------------------------------------- */
     if( GDALReadWorldFile( poOpenInfo->pszFilename, "nfw", 
-                                poDS->adfGeoTransform ) )
+                           poDS->adfGeoTransform ) )
     {
         const char *pszHDR;
         FILE *fpHDR;
@@ -1020,10 +1028,10 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
                 }
                 else
                 {
-                     /* Couldn't find associated projection info.
-                        Go back to original file for geotransform.
-                      */
-                      poDS->bGotGeoTransform = FALSE;
+                    /* Couldn't find associated projection info.
+                       Go back to original file for geotransform.
+                    */
+                    poDS->bGotGeoTransform = FALSE;
                 }
             }
             else
@@ -1037,7 +1045,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Convert the GCPs into a geotransform definition, if possible.   */
 /* -------------------------------------------------------------------- */
-    if(  ( poDS->bGotGeoTransform == FALSE ) &&
+    if(  ( poDS->bGotGeoTransform == FALSE ) && nGCPCount > 0 && 
          GDALGCPsToGeoTransform( nGCPCount, psGCPs, 
                                  poDS->adfGeoTransform, TRUE ) )
     {	
@@ -1049,7 +1057,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     else if( (psImage->dfULX != 0 || psImage->dfURX != 0 
               || psImage->dfLRX != 0 || psImage->dfLLX != 0)
-             && psImage->chICORDS != 'N' )
+             && psImage->chICORDS != ' ' )
     {
         CPLDebug( "GDAL", 
                   "NITFDataset::Open() wasn't able to derive a first order\n"
@@ -1093,7 +1101,10 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // This cleans up the original copy of the GCPs used to test if 
     // this IGEOLO could be used for a geotransform.
-    GDALDeinitGCPs( nGCPCount, psGCPs );
+    if( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, psGCPs );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do we have metadata.                                            */
