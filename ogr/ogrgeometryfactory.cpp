@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/04/18 15:42:17  fwarmerdam
+ * fix geos exception catching
+ *
  * Revision 1.24  2005/02/22 17:17:30  hobu
  * typo in the haveGEOS() method
  *
@@ -821,12 +824,13 @@ OGRGeometryFactory::createFromGEOS( const geos::Geometry *geosGeom )
     {
         oWKT = oWKTWriter.write( geosGeom );
     }
-    catch( geos::GEOSException &e )
+    catch( geos::GEOSException *e )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "GEOSException: %s", 
-                  e.toString().c_str() );
+                  e->toString().c_str() );
 
+        delete e;
         return NULL;
     }
 
