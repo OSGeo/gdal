@@ -49,7 +49,11 @@ gdaltindex.exe:	gdaltindex.c $(GDALLIB) $(XTRAOBJ)
 		$(XTRAOBJ) $(LIBS) /link $(LINKER_FLAGS)
 	
 clean:
-	-del *.obj *.exe
+	-del *.obj
+	-del *.exe
+	-del *.pdb
+	-del *.ilk
+	-del *.lib
 
 install:	default
 	copy *.exe $(BINDIR)
