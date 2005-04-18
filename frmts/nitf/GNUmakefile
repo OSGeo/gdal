@@ -16,6 +16,6 @@ clean:
 	rm -f *.o $(O_OBJ)
 
 nitfdump:	nitfdump.o $(NITFLIB_OBJ)
-	$(CXX) nitfdump.o $(NITFLIB_OBJ) $(GDAL_LIB) -o nitfdump
+	$(CXX) nitfdump.o $(NITFLIB_OBJ) $(CONFIG_LIBS) -o nitfdump
 
 install-obj:	$(O_OBJ)
