@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2005/04/18 13:40:22  fwarmerdam
+ * Remove the default geotransform if we don't have a valid geotransform.
+ *
  * Revision 1.39  2005/03/21 16:25:41  fwarmerdam
  * When writing IGEOLO adjust for center of corner pixels instead of
  * outer image corners.  Also support generating geotransform from
@@ -1342,11 +1345,10 @@ CPLErr NITFDataset::IRasterIO( GDALRWFlag eRWFlag,
 CPLErr NITFDataset::GetGeoTransform( double *padfGeoTransform )
 
 {
+    memcpy( padfGeoTransform, adfGeoTransform, sizeof(double) * 6 );
+
     if( bGotGeoTransform )
-    {
-        memcpy( padfGeoTransform, adfGeoTransform, sizeof(double) * 6 );
         return CE_None;
-    }
     else
         return CE_Failure;
 }
