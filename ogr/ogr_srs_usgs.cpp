@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/04/19 12:13:36  dron
+ * Do not fetch zone code from the projection parameters if the one supplied.
+ *
  * Revision 1.5  2005/01/27 16:57:24  fwarmerdam
  * provide fallback if EPSG lookup fails
  *
@@ -414,7 +417,7 @@ OGRErr OSRImportFromUSGS( OGRSpatialReferenceH hSRS, long iProjsys,
  *   where
  *
  *    Lon/Z     Longitude of any point in the UTM zone or zero.  If zero,
- *              a zone code must be specified. <br>
+ *              a zone code must be specified.
  *    Lat/Z     Latitude of any point in the UTM zone or zero.  If zero, a
  *              zone code must be specified.
  *    SMajor    Semi-major axis of ellipsoid.  If zero, Clarke 1866 in meters
@@ -551,14 +554,18 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
         case UTM:
             {
                 int bNorth = TRUE;
-                if ( padfPrjParams[2] != 0.0 )
-                    iZone = (long) padfPrjParams[2];
-                else if ( padfPrjParams[0] != 0.0 && padfPrjParams[1] != 0.0 )
+
+                if ( !iZone )
                 {
-                    iZone = (long)(((CPLPackedDMSToDec(padfPrjParams[0])
-                                     + 180.0) / 6.0) + 1.0);
-                    if ( CPLPackedDMSToDec(padfPrjParams[0]) < 0 )
-                        bNorth = FALSE;
+                    if ( padfPrjParams[2] != 0.0 )
+                        iZone = (long) padfPrjParams[2];
+                    else if (padfPrjParams[0] != 0.0 && padfPrjParams[1] != 0.0)
+                    {
+                        iZone = (long)(((CPLPackedDMSToDec(padfPrjParams[0])
+                                         + 180.0) / 6.0) + 1.0);
+                        if ( CPLPackedDMSToDec(padfPrjParams[0]) < 0 )
+                            bNorth = FALSE;
+                    }
                 }
 
                 if ( iZone < 0 )
