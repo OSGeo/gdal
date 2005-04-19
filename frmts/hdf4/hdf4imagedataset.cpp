@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.48  2005/04/19 14:08:09  dron
+ * Support for ASTER Level 1B/Level 2 datasets.
+ *
  * Revision 1.47  2005/03/30 11:55:36  dron
  * Fixes in Swath geolocation; fetch NoData value for Swath; fetch attributes.
  *
@@ -120,7 +123,8 @@ class HDF4ImageDataset : public HDF4Dataset
 
     char        *pszFilename;
     int32       iGR, iPal, iDataset;
-    int32       iRank, iNumType, nAttrs, iInterlaceMode, iPalInterlaceMode, iPalDataType;
+    int32       iRank, iNumType, nAttrs,
+                iInterlaceMode, iPalInterlaceMode, iPalDataType;
     int32       nComps, nPalEntries;
     int32       aiDimSizes[MAX_VAR_DIMS];
     int         iXDim, iYDim, iBandDim;
@@ -140,13 +144,13 @@ class HDF4ImageDataset : public HDF4Dataset
     GDAL_GCP    *pasGCPList;
     int         nGCPCount;
 
+    static long         USGSMnemonicToCode( const char* );
     void                ReadCoordinates( const char*, double*, double* );
     void                ToUTM( OGRSpatialReference *, double *, double * );
     char**              GetSwatAttrs( int32 hSW, char **papszMetadata );
     char**              GetGridAttrs( int32 hGD, char **papszMetadata );
     void                CaptureNRLGeoTransform(void);
     void                CaptureCoastwatchGCTPInfo(void);
-    void                PullParentMetadata();
 
   public:
                 HDF4ImageDataset();
@@ -822,6 +826,30 @@ void HDF4ImageDataset::FlushCache()
 }
 
 /************************************************************************/
+/*                        USGSMnemonicToCode()                          */
+/************************************************************************/
+
+long HDF4ImageDataset::USGSMnemonicToCode( const char* pszMnemonic )
+{
+    if ( EQUAL(pszMnemonic, "UTM") )
+        return 1L;
+    else if ( EQUAL(pszMnemonic, "LCC") )
+        return 4L;
+    else if ( EQUAL(pszMnemonic, "PS") )
+        return 6L;
+    else if ( EQUAL(pszMnemonic, "PC") )
+        return 7L;
+    else if ( EQUAL(pszMnemonic, "TM") )
+        return 9L;
+    else if ( EQUAL(pszMnemonic, "OM") )
+        return 20L;
+    else if ( EQUAL(pszMnemonic, "SOM") )
+        return 22L;
+    else
+        return 1L;  // UTM by default
+}
+
+/************************************************************************/
 /*                                ToUTM()                               */
 /************************************************************************/
 
@@ -855,28 +883,6 @@ void HDF4ImageDataset::ReadCoordinates( const char *pszString,
     *pdfX = atof(papszStrList[0]);
     *pdfY = atof(papszStrList[1]);
     CSLDestroy( papszStrList );
-}
-
-/************************************************************************/
-/*                         PullParentMetadata()                         */
-/*                                                                      */
-/*      Copy all metadata from the parent dataset to this dataset.      */
-/************************************************************************/
-
-void HDF4ImageDataset::PullParentMetadata()
-
-{
-    GDALDataset *poParentDS;
-
-    poParentDS = (GDALDataset *) GDALOpenShared( pszFilename, GA_ReadOnly );
-    if( poParentDS != NULL )
-    {
-        char **papszParentMD = poParentDS->GetMetadata();
-
-        papszLocalMetadata = CSLInsertStrings( papszLocalMetadata,
-                                                0, papszParentMD );
-        GDALClose( poParentDS );
-    }
 }
 
 /************************************************************************/
@@ -1111,10 +1117,12 @@ char**  HDF4ImageDataset::GetSwatAttrs( int32 hSW, char **papszMetadata )
 
         pszAttrList = (char *)CPLMalloc( nStrBufSize + 1 );
         SWinqattrs( hSW, pszAttrList, &nStrBufSize );
+
 #if DEBUG
         CPLDebug( "HDF4Image", "List of attributes in swath %s: %s",
                   pszFieldName, pszAttrList );
 #endif
+
         papszAttributes = CSLTokenizeString2( pszAttrList, ",",
                                               CSLT_HONOURSTRINGS );
         nAttrs = CSLCount( papszAttributes );
@@ -1329,7 +1337,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
                 case EOS_SWATH:
                 {
-                    int32   hSW,  nDimensions, nStrBufSize, iNumType;
+                    int32   hHDF4, hSW, nDimensions, nStrBufSize, iNumType;
                     char    **papszDimList = NULL,
                         **papszGeolocations = NULL, **papszDimMap = NULL;
                     char    *pszDimList = NULL,
@@ -1432,7 +1440,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     CPLFree( pNoDataValue );
 
                     // Fetch metadata
-                    poDS->PullParentMetadata();
+                    EHidinfo( poDS->hHDF4, &hHDF4, &poDS->hSD );
+                    poDS->ReadGlobalAttributes( poDS->hSD );
+                    poDS->papszLocalMetadata =
+                        CSLDuplicate( poDS->papszGlobalMetadata );
                     poDS->papszLocalMetadata = 
                         poDS->GetSwatAttrs( hSW, poDS->papszLocalMetadata );
                     poDS->SetMetadata( poDS->papszLocalMetadata );
@@ -1474,6 +1485,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                               nDataFields, "," );
                         CPLDebug( "HDF4Image",
                                   "Geolocation fields ranks: %s", pszTmp );
+                        CPLFree( pszTmp );
                     }
 #endif
 
@@ -1647,6 +1659,101 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                     piLatticeY[i] + 0.5;*/
                             }
                         }
+
+/* -------------------------------------------------------------------- */
+/*  Assign projection strings for different datasets.                   */
+/* -------------------------------------------------------------------- */
+                        if ( poDS->pszGCPProjection )
+                            CPLFree( poDS->pszGCPProjection );
+                        poDS->pszGCPProjection = NULL;
+
+                        // ASTER Level 1B, Level 2
+                        if ( EQUAL(poDS->pszSubdatasetName,
+                                   "VNIR_Swath")
+                             || EQUAL(poDS->pszSubdatasetName,
+                                   "SWIR_Swath")
+                             || EQUAL(poDS->pszSubdatasetName,
+                                   "TIR_Swath")
+                             || EQUAL(poDS->pszSubdatasetName,
+                                   "SurfaceReflectanceVNIR")
+                             || EQUAL(poDS->pszSubdatasetName,
+                                   "SurfaceReflectanceSWIR"))
+                        {
+                            // Constuct the metadata keys.
+                            // A band number is taken from the field name.
+                            char *pszBand = strpbrk( poDS->pszFieldName,
+                                                     "0123456789" );
+
+                            if ( !pszBand )
+                                pszBand = "";
+
+                            char *pszProjLine =
+                                CPLStrdup(CPLSPrintf("MPMETHOD%s", pszBand));
+                            char *pszParmsLine = 
+                                CPLStrdup(CPLSPrintf("PROJECTIONPARAMETERS%s",
+                                                     pszBand));
+                            char *pszZoneLine = 
+                                CPLStrdup(CPLSPrintf("UTMZONECODE%s",
+                                                     pszBand));
+
+                            // Fetch projection related values from the
+                            // metadata.
+                            const char *pszProj =
+                                CSLFetchNameValue( poDS->papszLocalMetadata,
+                                                   pszProjLine );
+                            const char *pszParms =
+                                CSLFetchNameValue( poDS->papszLocalMetadata,
+                                                   pszParmsLine );
+                            const char *pszZone =
+                                CSLFetchNameValue( poDS->papszLocalMetadata,
+                                                   pszZoneLine );
+
+#if DEBUG
+                            CPLDebug( "HDF4Image",
+                                      "Projection %s=%s, parameters %s=%s, "
+                                      "zone %s=%s",
+                                      pszProjLine, pszProj, pszParmsLine,
+                                      pszParms, pszZoneLine, pszZone );
+#endif
+
+                            // Transform all mnemonical codes in the values.
+                            int i, nParms;
+                            // Projection is UTM by default
+                            long iProjSys = (pszProj) ?
+                                poDS->USGSMnemonicToCode(pszProj) : 1L;
+                            long iZone =
+                                (pszZone && iProjSys == 1L) ? atoi(pszZone): 0L;
+                            double adfProjParms[15];
+                            char **papszParms = (pszParms) ?
+                                CSLTokenizeString2( pszParms, ",",
+                                                    CSLT_HONOURSTRINGS ) : NULL;
+                            nParms = CSLCount(papszParms);
+                            if (nParms >= 15)
+                                nParms = 15;
+                            for (i = 0; i < nParms; i++)
+                                adfProjParms[i] = atof(papszParms[i]);
+                            for (; i < 15; i++)
+                                adfProjParms[i] = 0.0;
+
+                            // Create projection definition
+                            OGRSpatialReference oSRS;
+                            oSRS.importFromUSGS( iProjSys, iZone,
+                                                 adfProjParms, 0L );
+                            oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
+                            oSRS.exportToWkt( &poDS->pszGCPProjection );
+
+                            CSLDestroy( papszParms );
+                            CPLFree( pszZoneLine );
+                            CPLFree( pszParmsLine );
+                            CPLFree( pszProjLine );
+                        }
+
+                        // MODIS L1B
+                        else if ( EQUAL(poDS->pszSubdatasetName,
+                                   "MODIS_SWATH_Type_L1B") )
+                        {
+                            poDS->pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]" );
+                        }
                     }
 
                     if ( pLat )
@@ -1673,7 +1780,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
                 case EOS_GRID:
                 {
-                    int32   hGD, iProjCode = 0, iZoneCode = 0, iSphereCode = 0;
+                    int32   hHDF4, hGD,
+                            iProjCode = 0, iZoneCode = 0, iSphereCode = 0;
                     int32   nXSize, nYSize;
                     char    szDimList[8192];
                     char    **papszDimList = NULL;
@@ -1809,7 +1917,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     CPLFree( pNoDataValue );
 
                     // Fetch metadata
-                    poDS->PullParentMetadata();
+                    EHidinfo( poDS->hHDF4, &hHDF4, &poDS->hSD );
+                    poDS->ReadGlobalAttributes( poDS->hSD );
+                    poDS->papszLocalMetadata =
+                        CSLDuplicate( poDS->papszGlobalMetadata );
                     poDS->papszLocalMetadata = 
                         poDS->GetGridAttrs( hGD, poDS->papszLocalMetadata );
                     poDS->SetMetadata( poDS->papszLocalMetadata );
