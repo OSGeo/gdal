@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/04/19 19:56:11  fwarmerdam
+ * Explicitly mark destructor as virtual.
+ *
  * Revision 1.10  2004/04/15 18:54:10  warmerda
  * added UnitType, Offset, Scale and CategoryNames support
  *
@@ -86,7 +89,7 @@ class CPL_DLL MEMDataset : public GDALDataset
 
   public:
                  MEMDataset();
-                 ~MEMDataset();
+    virtual      ~MEMDataset();
 
     virtual const char *GetProjectionRef(void);
     virtual CPLErr SetProjection( const char * );
