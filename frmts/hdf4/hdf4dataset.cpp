@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.31  2005/04/19 12:21:03  dron
+ * Meory leak fixed.
+ *
  * Revision 1.30  2005/03/30 11:21:15  dron
  * Remove inline keyword from function definitions.
  *
@@ -669,7 +672,7 @@ CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler )
     char	szAttrName[MAX_NC_NAME];
 
 /* -------------------------------------------------------------------- */
-/*     Obtain number of SDSsand global attributes in input file.        */
+/*     Obtain number of SDSs and global attributes in input file.       */
 /* -------------------------------------------------------------------- */
     if ( SDfileinfo( hSD, &nDatasets, &nAttributes ) != 0 )
 	return CE_Failure;
@@ -876,12 +879,18 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                 SWinqdatafields( hSW, pszFieldList, paiRank, paiNumType );
 
 #if DEBUG
-                CPLDebug( "HDF4", "Number of data fields in swath %ld: %d",
-                          i, nFields );
-                CPLDebug( "HDF4", "List of data fields in swath %ld: %s",
-                          i, pszFieldList );
-                CPLDebug( "HDF4", "Data fields ranks: %s",
-                          SPrintArray( GDT_UInt32, paiRank, nFields, "," ) );
+                {
+                    char *pszTmp =
+                        SPrintArray( GDT_UInt32, paiRank, nFields, "," );
+
+                    CPLDebug( "HDF4", "Number of data fields in swath %ld: %d",
+                              i, nFields );
+                    CPLDebug( "HDF4", "List of data fields in swath %ld: %s",
+                              i, pszFieldList );
+                    CPLDebug( "HDF4", "Data fields ranks: %s", pszTmp );
+
+                    CPLFree( pszTmp );
+                }
 #endif
 
                 papszFields = CSLTokenizeString2( pszFieldList, ",",
