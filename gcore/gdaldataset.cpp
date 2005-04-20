@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2005/04/20 16:32:06  fwarmerdam
+ * Ensure GetRasterBand() returns NULL on illegal band.
+ *
  * Revision 1.47  2005/04/04 15:24:48  fwarmerdam
  * Most C entry points now CPL_STDCALL
  *
@@ -509,6 +512,7 @@ GDALRasterBand * GDALDataset::GetRasterBand( int nBandId )
         CPLError( CE_Fatal, CPLE_IllegalArg,
                   "GDALDataset::GetRasterBand(%d) - Illegal band #\n",
                   nBandId );
+        return NULL;
     }
 
     return( papoBands[nBandId-1] );
