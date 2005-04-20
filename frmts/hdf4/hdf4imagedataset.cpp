@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.49  2005/04/20 14:19:20  dron
+ * Added support for ASTER Level 1A products.
+ *
  * Revision 1.48  2005/04/19 14:08:09  dron
  * Support for ASTER Level 1B/Level 2 datasets.
  *
@@ -109,7 +112,15 @@ CPL_C_END
 const char      *pszGDALSignature =
         "Created with GDAL (http://www.remotesensing.org/gdal/)";
 
-//const double    PI = 3.14159265358979323846;
+enum HDF4EOSProduct
+{
+    PROD_UNKNOWN,
+    PROD_ASTER_L1A,
+    PROD_ASTER_L1B,
+    PROD_ASTER_L2,
+    PROD_AST14DEM,
+    PROD_MODIS_L1B
+};
 
 /************************************************************************/
 /* ==================================================================== */
@@ -833,7 +844,7 @@ long HDF4ImageDataset::USGSMnemonicToCode( const char* pszMnemonic )
 {
     if ( EQUAL(pszMnemonic, "UTM") )
         return 1L;
-    else if ( EQUAL(pszMnemonic, "LCC") )
+    else if ( EQUAL(pszMnemonic, "LAMCC") )
         return 4L;
     else if ( EQUAL(pszMnemonic, "PS") )
         return 6L;
@@ -841,6 +852,8 @@ long HDF4ImageDataset::USGSMnemonicToCode( const char* pszMnemonic )
         return 7L;
     else if ( EQUAL(pszMnemonic, "TM") )
         return 9L;
+    else if ( EQUAL(pszMnemonic, "EQRECT") )
+        return 17L;
     else if ( EQUAL(pszMnemonic, "OM") )
         return 20L;
     else if ( EQUAL(pszMnemonic, "SOM") )
@@ -1427,7 +1440,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                       poDS->iYDim = i;
                       }*/
 
-                    // Fetch NODATA value.
+/* -------------------------------------------------------------------- */
+/*  Fetch NODATA value.                                                 */
+/* -------------------------------------------------------------------- */
                     pNoDataValue =
                         CPLMalloc( poDS->GetDataTypeSize(poDS->iNumType) );
                     if ( SWgetfillvalue( hSW, poDS->pszFieldName,
@@ -1439,7 +1454,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     }
                     CPLFree( pNoDataValue );
 
-                    // Fetch metadata
+/* -------------------------------------------------------------------- */
+/*  Fetch metadata.                                                     */
+/* -------------------------------------------------------------------- */
                     EHidinfo( poDS->hHDF4, &hHDF4, &poDS->hSD );
                     poDS->ReadGlobalAttributes( poDS->hSD );
                     poDS->papszLocalMetadata =
@@ -1449,14 +1466,38 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     poDS->SetMetadata( poDS->papszLocalMetadata );
 
 /* -------------------------------------------------------------------- */
+/*  Determine a product name.                                           */
+/* -------------------------------------------------------------------- */
+                    const char *pszProduct =
+                        CSLFetchNameValue( poDS->papszLocalMetadata,
+                                           "SHORTNAME" );
+                    HDF4EOSProduct eProduct = PROD_UNKNOWN;
+                    if ( pszProduct )
+                    {
+                        if ( EQUAL(pszProduct, "ASTL1A") )
+                            eProduct = PROD_ASTER_L1A;
+                        else if ( EQUAL(pszProduct, "ASTL1B") )
+                            eProduct = PROD_ASTER_L1B;
+                        else if ( EQUAL(pszProduct, "AST_07") )
+                            eProduct = PROD_ASTER_L2;
+                        else if ( EQUALN(pszProduct, "MOD02", 5)
+                                  || EQUALN(pszProduct, "MYD02", 5) )
+                            eProduct = PROD_MODIS_L1B;
+                    }
+                        
+/* -------------------------------------------------------------------- */
 /*  Fetch geolocation fields.                                           */
 /* -------------------------------------------------------------------- */
                     char    szXGeo[8192], szYGeo[8192];
                     char    szPixel[8192], szLine[8192];
+                    char    szGeoDimList[8192];
                     int32   nDataFields, nDimMaps;
                     void    *pLat = NULL, *pLong = NULL;
+                    void    *pLatticeX = NULL, *pLatticeY = NULL;
+                    int32   iLatticeType, iLatticeDataSize, iRank;
                     int32   nLatCount = 0, nLongCount = 0;
                     int32   nXPoints, nYPoints;
+                    int32   aiDimSizes[MAX_VAR_DIMS];
                     int     j, iDataSize, iPixelDim, iLineDim;
 
                     nDataFields = SWnentries( hSW, HDFE_NENTGFLD, &nStrBufSize );
@@ -1551,10 +1592,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
                     for ( i = 0; i < CSLCount(papszGeolocations); i++ )
                     {
-                        char    szGeoDimList[8192];
                         char    **papszGeoDimList = NULL;
-                        int32   iRank;
-                        int32   aiDimSizes[MAX_VAR_DIMS];
 
                         SWfieldinfo( hSW, papszGeolocations[i], &iRank,
                                      aiDimSizes, &iNumType, szGeoDimList );
@@ -1614,8 +1652,54 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                         }
 
                         CSLDestroy( papszGeoDimList );
+
                     }
 
+                    // Do we have a lattice table?
+                    if (SWfieldinfo(hSW, "LatticePoint", &iRank, aiDimSizes,
+                                    &iLatticeType, szGeoDimList) == 0
+                        && iRank == 3
+                        && nXPoints == aiDimSizes[1]
+                        && nYPoints == aiDimSizes[0]
+                        && aiDimSizes[2] == 2 )
+                    {
+                        int32   iStart[MAX_NC_DIMS], iEdges[MAX_NC_DIMS];
+
+                        iLatticeDataSize =
+                            poDS->GetDataTypeSize( iLatticeType );
+
+                        iStart[1] = 0;
+                        iEdges[1] = nXPoints;
+
+                        iStart[0] = 0;
+                        iEdges[0] = nYPoints;
+
+                        iStart[2] = 0;
+                        iEdges[2] = 1;
+                        
+                        pLatticeX = CPLMalloc( nLatCount * iLatticeDataSize );
+                        if (SWreadfield( hSW, "LatticePoint", iStart, NULL,
+                                         iEdges, (VOIDP)pLatticeX ) < 0)
+                        {
+                            CPLDebug( "HDF4Image", "Can't read lattice field" );
+                            CPLFree( pLatticeX );
+                            pLatticeX = NULL;
+                        }
+
+                        iStart[2] = 1;
+                        iEdges[2] = 1;
+
+                        pLatticeY = CPLMalloc( nLatCount * iLatticeDataSize );
+                        if (SWreadfield( hSW, "LatticePoint", iStart, NULL,
+                                         iEdges, (VOIDP)pLatticeY ) < 0)
+                        {
+                            CPLDebug( "HDF4Image", "Can't read lattice field" );
+                            CPLFree( pLatticeY );
+                            pLatticeY = NULL;
+                        }
+
+                    }
+                    
                     if ( nLatCount && nLongCount && nLatCount == nLongCount
                          && pLat && pLong )
                     {
@@ -1630,33 +1714,49 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                             for ( j = 0; j < nXPoints; j++ )
                             {
                                 int iGCP =  i * nXPoints + j;
-                                // GCPs in Level 1A dataset are in geocentric
-                                // coordinates. Convert them in geodetic (we
-                                // will convert latitudes only, longitudes
-                                // does not need to be converted, because
-                                // they are the same).
-                                // This calculation valid for WGS84 datum only.
-                                /*poDS->pasGCPList[iGCP].dfGCPY = 
-                                    atan(tan(padfLat[iGCP]*PI/180)/0.99330562)*180/PI;*/
+                                
                                 poDS->pasGCPList[iGCP].dfGCPX =
                                     poDS->AnyTypeToDouble(iNumType,
                                     (void *)((char *)pLong + iGCP * iDataSize));
                                 poDS->pasGCPList[iGCP].dfGCPY =
                                     poDS->AnyTypeToDouble(iNumType,
                                     (void *)((char *)pLat + iGCP * iDataSize));
+                                
+                                // GCPs in Level 1A/1B dataset are in geocentric
+                                // coordinates. Convert them in geodetic (we
+                                // will convert latitudes only, longitudes
+                                // do not need to be converted, because
+                                // they are the same).
+                                // This calculation valid for WGS84 datum only.
+                                if ( eProduct == PROD_ASTER_L1A
+                                     || eProduct == PROD_ASTER_L1B )
+                                {
+                                    poDS->pasGCPList[iGCP].dfGCPY = 
+                                        atan(tan(poDS->pasGCPList[iGCP].dfGCPY
+                                                 *PI/180)/0.99330562)*180/PI;
+                                }
                                 poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
 
-                                poDS->pasGCPList[iGCP].dfGCPPixel =
-                                    paiOffset[iPixelDim] +
-                                    j * paiIncrement[iPixelDim] + 0.5;
-                                poDS->pasGCPList[iGCP].dfGCPLine =
-                                    paiOffset[iLineDim] +
-                                    i * paiIncrement[iLineDim] + 0.5;
-
-                                /*poDS->pasGCPList[i].dfGCPPixel =
-                                    piLatticeX[i] + 0.5;
-                                poDS->pasGCPList[i].dfGCPLine =
-                                    piLatticeY[i] + 0.5;*/
+                                if ( pLatticeX && pLatticeY )
+                                {
+                                    poDS->pasGCPList[iGCP].dfGCPPixel =
+                                        poDS->AnyTypeToDouble(iLatticeType,
+                                            (void *)((char *)pLatticeX
+                                                     + iGCP * iLatticeDataSize))+0.5;
+                                    poDS->pasGCPList[iGCP].dfGCPLine =
+                                        poDS->AnyTypeToDouble(iLatticeType,
+                                            (void *)((char *)pLatticeY
+                                                     + iGCP * iLatticeDataSize))+0.5;
+                                }
+                                else
+                                {
+                                    poDS->pasGCPList[iGCP].dfGCPPixel =
+                                        paiOffset[iPixelDim] +
+                                        j * paiIncrement[iPixelDim] + 0.5;
+                                    poDS->pasGCPList[iGCP].dfGCPLine =
+                                        paiOffset[iLineDim] +
+                                        i * paiIncrement[iLineDim] + 0.5;
+                                }
                             }
                         }
 
@@ -1667,17 +1767,15 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                             CPLFree( poDS->pszGCPProjection );
                         poDS->pszGCPProjection = NULL;
 
+                        // ASTER Level 1A
+                        if ( eProduct == PROD_ASTER_L1A )
+                        {
+                            poDS->pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]" );
+                        }
+
                         // ASTER Level 1B, Level 2
-                        if ( EQUAL(poDS->pszSubdatasetName,
-                                   "VNIR_Swath")
-                             || EQUAL(poDS->pszSubdatasetName,
-                                   "SWIR_Swath")
-                             || EQUAL(poDS->pszSubdatasetName,
-                                   "TIR_Swath")
-                             || EQUAL(poDS->pszSubdatasetName,
-                                   "SurfaceReflectanceVNIR")
-                             || EQUAL(poDS->pszSubdatasetName,
-                                   "SurfaceReflectanceSWIR"))
+                        else if ( eProduct == PROD_ASTER_L1B
+                             || eProduct == PROD_ASTER_L2 )
                         {
                             // Constuct the metadata keys.
                             // A band number is taken from the field name.
@@ -1738,7 +1836,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                             // Create projection definition
                             OGRSpatialReference oSRS;
                             oSRS.importFromUSGS( iProjSys, iZone,
-                                                 adfProjParms, 0L );
+                                                 // Datum is always WGS84
+                                                 adfProjParms, 8L );
                             oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
                             oSRS.exportToWkt( &poDS->pszGCPProjection );
 
@@ -1749,13 +1848,16 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                         }
 
                         // MODIS L1B
-                        else if ( EQUAL(poDS->pszSubdatasetName,
-                                   "MODIS_SWATH_Type_L1B") )
+                        else if ( eProduct == PROD_MODIS_L1B )
                         {
                             poDS->pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]" );
                         }
                     }
 
+                    if ( pLatticeX )
+                        CPLFree( pLatticeX );
+                    if ( pLatticeY )
+                        CPLFree( pLatticeY );
                     if ( pLat )
                         CPLFree( pLat );
                     if ( pLong )
@@ -1904,7 +2006,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                         poDS->bHasGeoTransform = TRUE;
                     }
 
-                    // Fetch NODATA value
+/* -------------------------------------------------------------------- */
+/*  Fetch NODATA value.                                                 */
+/* -------------------------------------------------------------------- */
                     pNoDataValue =
                         CPLMalloc( poDS->GetDataTypeSize(poDS->iNumType) );
                     if ( GDgetfillvalue( hGD, poDS->pszFieldName,
@@ -1916,7 +2020,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     }
                     CPLFree( pNoDataValue );
 
-                    // Fetch metadata
+/* -------------------------------------------------------------------- */
+/*  Fetch metadata.                                                     */
+/* -------------------------------------------------------------------- */
                     EHidinfo( poDS->hHDF4, &hHDF4, &poDS->hSD );
                     poDS->ReadGlobalAttributes( poDS->hSD );
                     poDS->papszLocalMetadata =
