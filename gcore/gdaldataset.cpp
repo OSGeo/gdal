@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2005/04/20 16:39:04  fwarmerdam
+ * Fixed last fix.
+ *
  * Revision 1.49  2005/04/20 16:38:10  fwarmerdam
  * Undo last change, error is fatal.
  *
@@ -512,7 +515,7 @@ GDALRasterBand * GDALDataset::GetRasterBand( int nBandId )
 {
     if( nBandId < 1 || nBandId > nBands )
     {
-        CPLError( CE_Fatal CPLE_IllegalArg,
+        CPLError( CE_Fatal, CPLE_IllegalArg,
                   "GDALDataset::GetRasterBand(%d) - Illegal band #\n",
                   nBandId );
     }
