@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2005/04/20 16:38:10  fwarmerdam
+ * Undo last change, error is fatal.
+ *
  * Revision 1.48  2005/04/20 16:32:06  fwarmerdam
  * Ensure GetRasterBand() returns NULL on illegal band.
  *
@@ -509,10 +512,9 @@ GDALRasterBand * GDALDataset::GetRasterBand( int nBandId )
 {
     if( nBandId < 1 || nBandId > nBands )
     {
-        CPLError( CE_Fatal, CPLE_IllegalArg,
+        CPLError( CE_Fatal CPLE_IllegalArg,
                   "GDALDataset::GetRasterBand(%d) - Illegal band #\n",
                   nBandId );
-        return NULL;
     }
 
     return( papoBands[nBandId-1] );
