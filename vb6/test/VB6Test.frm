@@ -17,7 +17,7 @@ Begin VB.Form frmMain
       _ExtentX        =   847
       _ExtentY        =   847
       _Version        =   393216
-      FileName        =   "dolphin_i.png"
+      FileName        =   "dolphins_i.png"
    End
    Begin MSComctlLib.StatusBar sbStatusBar 
       Align           =   2  'Align Bottom
