@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.51  2005/04/21 13:42:24  dron
+ * Added suppodt for ASTER 3D Orto product.
+ *
  * Revision 1.50  2005/04/21 12:52:39  dron
  * Added support for ASTER DE product.
  *
@@ -1490,7 +1493,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                   || EQUALN(pszProduct, "AST_06", 6)
                                   || EQUALN(pszProduct, "AST_07", 6)
                                   || EQUALN(pszProduct, "AST_08", 6)
-                                  || EQUALN(pszProduct, "AST_09", 6) )
+                                  || EQUALN(pszProduct, "AST_09", 6)
+                                  || EQUALN(pszProduct, "AST13", 5)
+                                  || EQUALN(pszProduct, "AST3", 4) )
                             eProduct = PROD_ASTER_L2;
                         else if ( EQUALN(pszProduct, "AST14", 5) )
                             eProduct = PROD_ASTER_L3;
@@ -1749,6 +1754,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                             char *pszZoneLine = 
                                 CPLStrdup(CPLSPrintf("UTMZONECODE%s",
                                                      pszBand));
+                            char *pszEllipsoidLine =
+                                CPLStrdup(CPLSPrintf("ELLIPSOIDANDDATUM%s",
+                                                     pszBand));
 
                             // Fetch projection related values from the
                             // metadata.
@@ -1761,6 +1769,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                             const char *pszZone =
                                 CSLFetchNameValue( poDS->papszLocalMetadata,
                                                    pszZoneLine );
+                            const char* pszEllipsoid =
+                                CSLFetchNameValue( poDS->papszLocalMetadata,
+                                                   pszEllipsoidLine );
 
 #if DEBUG
                             CPLDebug( "HDF4Image",
@@ -1768,6 +1779,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                       "zone %s=%s",
                                       pszProjLine, pszProj, pszParmsLine,
                                       pszParms, pszZoneLine, pszZone );
+                            CPLDebug( "HDF4Image", "Ellipsoid %s=%s",
+                                      pszEllipsoidLine, pszEllipsoid );
 #endif
 
                             // Transform all mnemonical codes in the values.
@@ -1777,6 +1790,18 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                 poDS->USGSMnemonicToCode(pszProj) : 1L;
                             long iZone =
                                 (pszZone && iProjSys == 1L) ? atoi(pszZone): 0L;
+                            char **papszEllipsoid = (pszEllipsoid) ?
+                                CSLTokenizeString2( pszEllipsoid, ",",
+                                                    CSLT_HONOURSTRINGS ) : NULL;
+                            
+                            long iEllipsoid = 8L; // WGS84 by default
+                            if ( papszEllipsoid
+                                 && CSLCount(papszEllipsoid) > 0 )
+                            {
+                                if (EQUAL( papszEllipsoid[0], "WGS84"))
+                                    iEllipsoid = 8L;
+                            }
+                            
                             double adfProjParms[15];
                             char **papszParms = (pszParms) ?
                                 CSLTokenizeString2( pszParms, ",",
@@ -1791,8 +1816,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
                             // Create projection definition
                             poDS->oSRS.importFromUSGS( iProjSys, iZone,
-                                                 // Datum is always WGS84
-                                                 adfProjParms, 8L );
+                                                    adfProjParms, iEllipsoid );
                             poDS->oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
                             poDS->oSRS.exportToWkt( &poDS->pszGCPProjection );
 
