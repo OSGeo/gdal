@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.50  2005/04/21 12:52:39  dron
+ * Added support for ASTER DE product.
+ *
  * Revision 1.49  2005/04/20 14:19:20  dron
  * Added support for ASTER Level 1A products.
  *
@@ -112,12 +115,19 @@ CPL_C_END
 const char      *pszGDALSignature =
         "Created with GDAL (http://www.remotesensing.org/gdal/)";
 
+/************************************************************************/
+/* ==================================================================== */
+/*  List of HDF-EOS Swath product types.                                */
+/* ==================================================================== */
+/************************************************************************/
+
 enum HDF4EOSProduct
 {
     PROD_UNKNOWN,
     PROD_ASTER_L1A,
     PROD_ASTER_L1B,
     PROD_ASTER_L2,
+    PROD_ASTER_L3,
     PROD_AST14DEM,
     PROD_MODIS_L1B
 };
@@ -148,6 +158,7 @@ class HDF4ImageDataset : public HDF4Dataset
 
     GDALColorTable *poColorTable;
 
+    OGRSpatialReference oSRS;
     int         bHasGeoTransform;
     double      adfGeoTransform[6];
     char        *pszProjection;
@@ -157,7 +168,7 @@ class HDF4ImageDataset : public HDF4Dataset
 
     static long         USGSMnemonicToCode( const char* );
     void                ReadCoordinates( const char*, double*, double* );
-    void                ToUTM( OGRSpatialReference *, double *, double * );
+    void                ToGeoref( double *, double * );
     char**              GetSwatAttrs( int32 hSW, char **papszMetadata );
     char**              GetGridAttrs( int32 hGD, char **papszMetadata );
     void                CaptureNRLGeoTransform(void);
@@ -863,16 +874,15 @@ long HDF4ImageDataset::USGSMnemonicToCode( const char* pszMnemonic )
 }
 
 /************************************************************************/
-/*                                ToUTM()                               */
+/*                              ToGeoref()                              */
 /************************************************************************/
 
-void HDF4ImageDataset::ToUTM( OGRSpatialReference *poProj,
-                              double *pdfGeoX, double *pdfGeoY )
+void HDF4ImageDataset::ToGeoref( double *pdfGeoX, double *pdfGeoY )
 {
     OGRCoordinateTransformation *poTransform = NULL;
     OGRSpatialReference *poLatLong = NULL;
-    poLatLong = poProj->CloneGeogCS();
-    poTransform = OGRCreateCoordinateTransformation( poLatLong, poProj );
+    poLatLong = oSRS.CloneGeogCS();
+    poTransform = OGRCreateCoordinateTransformation( poLatLong, &oSRS );
     
     if( poTransform != NULL )
         poTransform->Transform( 1, pdfGeoX, pdfGeoY, NULL );
@@ -993,8 +1003,6 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
         adfGeoTransform[4] = 0.0;
         adfGeoTransform[5] = (adfXY[2*2+1] - adfXY[0*2+1]) / nRasterYSize;
         
-        OGRSpatialReference oSRS;
-
         oSRS.SetWellKnownGeogCS( "WGS84" );
         CPLFree( pszProjection );
         oSRS.exportToWkt( &pszProjection );
@@ -1078,7 +1086,6 @@ void HDF4ImageDataset::CaptureCoastwatchGCTPInfo()
 /* -------------------------------------------------------------------- */
 /*      Convert into an SRS.                                            */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReference oSRS;
 
     if( oSRS.importFromUSGS( nSys, nZone, adfParms, nDatum ) != OGRERR_NONE )
         return;
@@ -1474,12 +1481,19 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     HDF4EOSProduct eProduct = PROD_UNKNOWN;
                     if ( pszProduct )
                     {
-                        if ( EQUAL(pszProduct, "ASTL1A") )
+                        if ( EQUALN(pszProduct, "ASTL1A", 6) )
                             eProduct = PROD_ASTER_L1A;
-                        else if ( EQUAL(pszProduct, "ASTL1B") )
+                        else if ( EQUALN(pszProduct, "ASTL1B", 6) )
                             eProduct = PROD_ASTER_L1B;
-                        else if ( EQUAL(pszProduct, "AST_07") )
+                        else if ( EQUALN(pszProduct, "AST_04", 6)
+                                  || EQUALN(pszProduct, "AST_05", 6)
+                                  || EQUALN(pszProduct, "AST_06", 6)
+                                  || EQUALN(pszProduct, "AST_07", 6)
+                                  || EQUALN(pszProduct, "AST_08", 6)
+                                  || EQUALN(pszProduct, "AST_09", 6) )
                             eProduct = PROD_ASTER_L2;
+                        else if ( EQUALN(pszProduct, "AST14", 5) )
+                            eProduct = PROD_ASTER_L3;
                         else if ( EQUALN(pszProduct, "MOD02", 5)
                                   || EQUALN(pszProduct, "MYD02", 5) )
                             eProduct = PROD_MODIS_L1B;
@@ -1703,69 +1717,11 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                     if ( nLatCount && nLongCount && nLatCount == nLongCount
                          && pLat && pLong )
                     {
-                        poDS->nGCPCount = nLatCount;
-                        
-                        poDS->pasGCPList = (GDAL_GCP *)
-                            CPLCalloc( poDS->nGCPCount, sizeof( GDAL_GCP ) );
-                        GDALInitGCPs( poDS->nGCPCount, poDS->pasGCPList );
-
-                        for ( i = 0; i < nYPoints; i++ )
-                        {
-                            for ( j = 0; j < nXPoints; j++ )
-                            {
-                                int iGCP =  i * nXPoints + j;
-                                
-                                poDS->pasGCPList[iGCP].dfGCPX =
-                                    poDS->AnyTypeToDouble(iNumType,
-                                    (void *)((char *)pLong + iGCP * iDataSize));
-                                poDS->pasGCPList[iGCP].dfGCPY =
-                                    poDS->AnyTypeToDouble(iNumType,
-                                    (void *)((char *)pLat + iGCP * iDataSize));
-                                
-                                // GCPs in Level 1A/1B dataset are in geocentric
-                                // coordinates. Convert them in geodetic (we
-                                // will convert latitudes only, longitudes
-                                // do not need to be converted, because
-                                // they are the same).
-                                // This calculation valid for WGS84 datum only.
-                                if ( eProduct == PROD_ASTER_L1A
-                                     || eProduct == PROD_ASTER_L1B )
-                                {
-                                    poDS->pasGCPList[iGCP].dfGCPY = 
-                                        atan(tan(poDS->pasGCPList[iGCP].dfGCPY
-                                                 *PI/180)/0.99330562)*180/PI;
-                                }
-                                poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
-
-                                if ( pLatticeX && pLatticeY )
-                                {
-                                    poDS->pasGCPList[iGCP].dfGCPPixel =
-                                        poDS->AnyTypeToDouble(iLatticeType,
-                                            (void *)((char *)pLatticeX
-                                                     + iGCP * iLatticeDataSize))+0.5;
-                                    poDS->pasGCPList[iGCP].dfGCPLine =
-                                        poDS->AnyTypeToDouble(iLatticeType,
-                                            (void *)((char *)pLatticeY
-                                                     + iGCP * iLatticeDataSize))+0.5;
-                                }
-                                else
-                                {
-                                    poDS->pasGCPList[iGCP].dfGCPPixel =
-                                        paiOffset[iPixelDim] +
-                                        j * paiIncrement[iPixelDim] + 0.5;
-                                    poDS->pasGCPList[iGCP].dfGCPLine =
-                                        paiOffset[iLineDim] +
-                                        i * paiIncrement[iLineDim] + 0.5;
-                                }
-                            }
-                        }
-
 /* -------------------------------------------------------------------- */
-/*  Assign projection strings for different datasets.                   */
+/*  Fetch projection information for various datasets.                  */
 /* -------------------------------------------------------------------- */
                         if ( poDS->pszGCPProjection )
                             CPLFree( poDS->pszGCPProjection );
-                        poDS->pszGCPProjection = NULL;
 
                         // ASTER Level 1A
                         if ( eProduct == PROD_ASTER_L1A )
@@ -1834,17 +1790,39 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                 adfProjParms[i] = 0.0;
 
                             // Create projection definition
-                            OGRSpatialReference oSRS;
-                            oSRS.importFromUSGS( iProjSys, iZone,
+                            poDS->oSRS.importFromUSGS( iProjSys, iZone,
                                                  // Datum is always WGS84
                                                  adfProjParms, 8L );
-                            oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
-                            oSRS.exportToWkt( &poDS->pszGCPProjection );
+                            poDS->oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
+                            poDS->oSRS.exportToWkt( &poDS->pszGCPProjection );
 
                             CSLDestroy( papszParms );
                             CPLFree( pszZoneLine );
                             CPLFree( pszParmsLine );
                             CPLFree( pszProjLine );
+                        }
+
+                        // ASTER Level 3 (DEM)
+                        else if ( eProduct == PROD_ASTER_L3 )
+                        {
+                            double  dfCenterX, dfCenterY;
+                            int     iZone;
+                            
+                            poDS->ReadCoordinates( CSLFetchNameValue( 
+                                poDS->papszGlobalMetadata, "SCENECENTER" ),
+                                &dfCenterY, &dfCenterX );
+                            
+                            // Calculate UTM zone from scene center coordinates
+                            iZone = 30 + (int) ((dfCenterX + 6.0) / 6.0);
+           
+                            // Create projection definition
+                            if( dfCenterY > 0 )
+                                poDS->oSRS.SetUTM( iZone, TRUE );
+                            else
+                                poDS->oSRS.SetUTM( - iZone, FALSE );
+                            poDS->oSRS.SetWellKnownGeogCS( "WGS84" );
+                            poDS->oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
+                            poDS->oSRS.exportToWkt( &poDS->pszGCPProjection );
                         }
 
                         // MODIS L1B
@@ -1853,6 +1831,70 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                             poDS->pszGCPProjection = CPLStrdup( "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]" );
                         }
                     }
+
+/* -------------------------------------------------------------------- */
+/*  Fill the GCPs list.                                                 */
+/* -------------------------------------------------------------------- */
+                        poDS->nGCPCount = nLatCount;
+                        
+                        poDS->pasGCPList = (GDAL_GCP *)
+                            CPLCalloc( poDS->nGCPCount, sizeof( GDAL_GCP ) );
+                        GDALInitGCPs( poDS->nGCPCount, poDS->pasGCPList );
+
+                        for ( i = 0; i < nYPoints; i++ )
+                        {
+                            for ( j = 0; j < nXPoints; j++ )
+                            {
+                                int iGCP =  i * nXPoints + j;
+                                
+                                poDS->pasGCPList[iGCP].dfGCPX =
+                                    poDS->AnyTypeToDouble(iNumType,
+                                    (void *)((char *)pLong + iGCP * iDataSize));
+                                poDS->pasGCPList[iGCP].dfGCPY =
+                                    poDS->AnyTypeToDouble(iNumType,
+                                    (void *)((char *)pLat + iGCP * iDataSize));
+                                
+                                // GCPs in Level 1A/1B dataset are in geocentric
+                                // coordinates. Convert them in geodetic (we
+                                // will convert latitudes only, longitudes
+                                // do not need to be converted, because
+                                // they are the same).
+                                // This calculation valid for WGS84 datum only.
+                                if ( eProduct == PROD_ASTER_L1A
+                                     || eProduct == PROD_ASTER_L1B )
+                                {
+                                    poDS->pasGCPList[iGCP].dfGCPY = 
+                                        atan(tan(poDS->pasGCPList[iGCP].dfGCPY
+                                                 *PI/180)/0.99330562)*180/PI;
+                                }
+
+                                poDS->ToGeoref(&poDS->pasGCPList[iGCP].dfGCPX,
+                                               &poDS->pasGCPList[iGCP].dfGCPY);
+
+                                poDS->pasGCPList[iGCP].dfGCPZ = 0.0;
+
+                                if ( pLatticeX && pLatticeY )
+                                {
+                                    poDS->pasGCPList[iGCP].dfGCPPixel =
+                                        poDS->AnyTypeToDouble(iLatticeType,
+                                            (void *)((char *)pLatticeX
+                                                     + iGCP * iLatticeDataSize))+0.5;
+                                    poDS->pasGCPList[iGCP].dfGCPLine =
+                                        poDS->AnyTypeToDouble(iLatticeType,
+                                            (void *)((char *)pLatticeY
+                                                     + iGCP * iLatticeDataSize))+0.5;
+                                }
+                                else
+                                {
+                                    poDS->pasGCPList[iGCP].dfGCPPixel =
+                                        paiOffset[iPixelDim] +
+                                        j * paiIncrement[iPixelDim] + 0.5;
+                                    poDS->pasGCPList[iGCP].dfGCPLine =
+                                        paiOffset[iLineDim] +
+                                        i * paiIncrement[iLineDim] + 0.5;
+                                }
+                            }
+                        }
 
                     if ( pLatticeX )
                         CPLFree( pLatticeX );
@@ -1954,13 +1996,12 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                   "sphere code %d",
                                   iProjCode, iZoneCode, iSphereCode );
 #endif
-                        OGRSpatialReference oSRS;
-                        oSRS.importFromUSGS( iProjCode, iZoneCode,
+                        poDS->oSRS.importFromUSGS( iProjCode, iZoneCode,
                                              adfProjParms, iSphereCode );
                         
                         if ( poDS->pszProjection )
                             CPLFree( poDS->pszProjection );
-                        oSRS.exportToWkt( &poDS->pszProjection );
+                        poDS->oSRS.exportToWkt( &poDS->pszProjection );
                     }
 
                     // Fetch geotransformation matrix
@@ -2246,7 +2287,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Variables for reading georeferencing
     double          dfULX, dfULY, dfLRX, dfLRY;
-    OGRSpatialReference oSRS;
 
     switch ( poDS->iSubdatasetType )
     {
@@ -2313,17 +2353,17 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             }
 
             // Read coordinate system and geotransform matrix
-            oSRS.SetWellKnownGeogCS( "WGS84" );
+            poDS->oSRS.SetWellKnownGeogCS( "WGS84" );
             
             if ( EQUAL(CSLFetchNameValue(poDS->papszGlobalMetadata,
                                          "Map Projection"),
                        "Equidistant Cylindrical") )
             {
-                oSRS.SetEquirectangular( 0.0, 0.0, 0.0, 0.0 );
-                oSRS.SetLinearUnits( SRS_UL_METER, 1 );
+                poDS->oSRS.SetEquirectangular( 0.0, 0.0, 0.0, 0.0 );
+                poDS->oSRS.SetLinearUnits( SRS_UL_METER, 1 );
                 if ( poDS->pszProjection )
                     CPLFree( poDS->pszProjection );
-                oSRS.exportToWkt( &poDS->pszProjection );
+                poDS->oSRS.exportToWkt( &poDS->pszProjection );
             }
 
             dfULX = atof( CSLFetchNameValue(poDS->papszGlobalMetadata,
@@ -2334,8 +2374,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                             "Easternmost Longitude") );
             dfLRY = atof( CSLFetchNameValue(poDS->papszGlobalMetadata,
                                             "Southernmost Latitude") );
-            poDS->ToUTM( &oSRS, &dfULX, &dfULY );
-            poDS->ToUTM( &oSRS, &dfLRX, &dfLRY );
+            poDS->ToGeoref( &dfULX, &dfULY );
+            poDS->ToGeoref( &dfLRX, &dfLRY );
             poDS->adfGeoTransform[0] = dfULX;
             poDS->adfGeoTransform[3] = dfULY;
             poDS->adfGeoTransform[1] = (dfLRX - dfULX) / poDS->nRasterXSize;
