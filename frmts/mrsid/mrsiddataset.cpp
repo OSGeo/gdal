@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/04/21 16:43:26  fwarmerdam
+ * Fixed bug with RasterIO() at overview levels higher than is available
+ * in the file.  Now the code limits itself to available overview levels.
+ *
  * Revision 1.30  2005/04/11 17:03:07  fwarmerdam
  * Improved initial open checking to ensure it works properly with no header
  * data at all.
@@ -691,10 +695,13 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 /*      request just very, very slightly larger than a zoom level do    */
 /*      not force us to the next level.                                 */
 /* -------------------------------------------------------------------- */
+    int iOverview = 0;
     double dfZoomMag = MIN((nXSize / (double)nBufXSize), 
                            (nYSize / (double)nBufYSize));
 
-    for( nZoomMag = 1; nZoomMag * 2 < (dfZoomMag + 0.1); nZoomMag *= 2 ) {}
+    for( nZoomMag = 1; 
+         nZoomMag * 2 < (dfZoomMag + 0.1) && iOverview < nOverviewCount; 
+         nZoomMag *= 2, iOverview++ ) {}
 
 /* -------------------------------------------------------------------- */
 /*      Work out the size of the temporary buffer and allocate it.      */
