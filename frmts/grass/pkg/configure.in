@@ -70,7 +70,7 @@ else
   if $GDAL_CONFIG --autoload > /dev/null 2>&1 ; then
     AUTOLOAD_DIR=`$GDAL_CONFIG --autoload`
   else
-    AUTOLOAD_DIR=`$GDAL_CONFIG --prefix`/lib
+    AUTOLOAD_DIR=`$GDAL_CONFIG --prefix`/lib/gdalplugins
   fi
 fi
 
