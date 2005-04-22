@@ -19,6 +19,7 @@ LIBNAME =	gdal_GRASS.so
 default:	$(LIBNAME)
 
 install:	$(LIBNAME)
+	install -d $(AUTOLOAD_DIR)
 	cp $(LIBNAME) $(AUTOLOAD_DIR)
 
 clean:
