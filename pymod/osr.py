@@ -28,6 +28,10 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.46  2005/04/22 08:09:26  dron
+# Use empty tuple instead of None as default parameter for proj_parms
+# in ImportFromUSGS().
+#
 # Revision 1.45  2005/02/15 02:32:11  fwarmerdam
 # added osr.SpatialReference init from wkt
 #
@@ -273,7 +277,7 @@ class SpatialReference:
 	    return _gdal.OSRImportFromPCI( self._o, proj, units, proj_parms )
 
     def ImportFromUSGS( self, proj_code, zone=0, \
-		        proj_parms=None, datum_code=0 ):
+		        proj_parms=(), datum_code=0 ):
 	"""Imports USGS styled projection definition.
 	
 	proj_code --- USGS projection system code,
