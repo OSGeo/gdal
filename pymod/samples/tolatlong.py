@@ -31,6 +31,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.3  2005/04/22 08:19:00  dron
+#  Fixed mess with the lat/long variables naming.
+#
 #  Revision 1.2  2003/09/01 15:04:43  dron
 #  More comments, report improved.
 #
@@ -101,18 +104,18 @@ Y = geomatrix[3] + geomatrix[4] * pixel + geomatrix[5] * line
 X += geomatrix[1] / 2.0
 Y += geomatrix[5] / 2.0
 
-# Build Spatial Reference object based on coordinate system, fecthed from the
+# Build Spatial Reference object based on coordinate system, fethed from the
 # opened dataset
 srs = osr.SpatialReference()
 srs.ImportFromWkt(indataset.GetProjection())
 
 srsLatLong = srs.CloneGeogCS()
 ct = osr.CoordinateTransformation(srs, srsLatLong)
-(lat, long, height) = ct.TransformPoint(X, Y)
+(long, lat, height) = ct.TransformPoint(X, Y)
 
 # Report results
 print 'pixel: %g\t\t\tline: %g' % (pixel, line)
-print 'latitude: %fd\t\tlongitude: %fd' % (long, lat)
-print 'latitude: ', gdal.DecToDMS(long, 'Lat', 2), \
-    '\tlongitude: ', gdal.DecToDMS(lat, 'Long', 2)
+print 'latitude: %fd\t\tlongitude: %fd' % (lat, long)
+print 'latitude: ', gdal.DecToDMS(lat, 'Lat', 2), \
+    '\tlongitude: ', gdal.DecToDMS(long, 'Long', 2)
 
