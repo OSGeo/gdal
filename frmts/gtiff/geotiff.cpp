@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.138  2005/04/23 16:38:43  fwarmerdam
+ * Handle more integer datatypes (ie 2-7 bits, 17+ bits) via
+ * OddBits class.
+ *
  * Revision 1.137  2005/04/15 18:45:29  fwarmerdam
  * added area or point metadata
  *
@@ -1277,6 +1281,8 @@ GTiffOddBitsBand::GTiffOddBitsBand( GTiffDataset *poGDS, int nBand )
         eDataType = GDT_Float32;
     else if( poGDS->nBitsPerSample > 8 && poGDS->nBitsPerSample < 16 )
         eDataType = GDT_UInt16;
+    else if( poGDS->nBitsPerSample > 16 )
+        eDataType = GDT_UInt32;
 }
 
 /************************************************************************/
@@ -1389,8 +1395,8 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     else if( poGDS->nBitsPerSample == 12 )
     {
-        int	iPixel, iBitOffset = 0, nBlockPixels;
-        int     iPixelBitSkip, iBandBitOffset;
+        int	iPixel, iBitOffset = 0;
+        int     iPixelBitSkip, iBandBitOffset, iX, iY, nBitsPerLine;
 
         if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
         {
@@ -1403,38 +1409,48 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             iBandBitOffset = 0;
         }
 
-        nBlockPixels = nBlockXSize * nBlockYSize;
-        for( iPixel = 0; iPixel < nBlockPixels; iPixel++ )
+        // bits per line rounds up to next byte boundary.
+        nBitsPerLine = nBlockXSize * poGDS->nBitsPerSample;
+        if( (nBitsPerLine & 7) != 0 )
+            nBitsPerLine = (nBitsPerLine + 7) & (~7);
+
+        iPixel = 0;
+        for( iY = 0; iY < nBlockYSize; iY++ )
         {
-            iBitOffset = iBandBitOffset + iPixel * iPixelBitSkip;
-            int iByte = iBitOffset>>3;
+            iBitOffset = iBandBitOffset + iY * nBitsPerLine;
 
-            if( (iBitOffset & 0x7) == 0 )
+            for( iX = 0; iX < nBlockXSize; iX++ )
             {
-                /* starting on byte boundary */
+                int iByte = iBitOffset>>3;
 
-                ((GUInt16 *) pImage)[iPixel] = 
-                    (poGDS->pabyBlockBuf[iByte] << 4)
-                    | (poGDS->pabyBlockBuf[iByte+1] >> 4);
-            }
-            else
-            {
-                /* starting off byte boundary */
-
-                ((GUInt16 *) pImage)[iPixel] = 
-                    ((poGDS->pabyBlockBuf[iByte] & 0xf) << 8)
-                    | (poGDS->pabyBlockBuf[iByte+1]);
+                if( (iBitOffset & 0x7) == 0 )
+                {
+                    /* starting on byte boundary */
+                    
+                    ((GUInt16 *) pImage)[iPixel++] = 
+                        (poGDS->pabyBlockBuf[iByte] << 4)
+                        | (poGDS->pabyBlockBuf[iByte+1] >> 4);
+                }
+                else
+                {
+                    /* starting off byte boundary */
+                    
+                    ((GUInt16 *) pImage)[iPixel++] = 
+                        ((poGDS->pabyBlockBuf[iByte] & 0xf) << 8)
+                        | (poGDS->pabyBlockBuf[iByte+1]);
+                }
+                iBitOffset += 12;
             }
         }
     }
 
 /* -------------------------------------------------------------------- */
-/*      Handle 9-15 bits to 16 bits.                                    */
+/*      Handle 1-32 bit integer data.                                   */
 /* -------------------------------------------------------------------- */
-    else if( eDataType == GDT_UInt16 )
+    else
     {
-        int	iBit, iPixel, iBitOffset = 0, nBlockPixels;
-        int     iPixelBitSkip, iBandBitOffset;
+        int	iBit, iPixel, iBitOffset = 0;
+        int     iPixelBitSkip, iBandBitOffset, iX, iY, nBitsPerLine;
 
         if( poGDS->nPlanarConfig == PLANARCONFIG_CONTIG )
         {
@@ -1447,24 +1463,38 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             iBandBitOffset = 0;
         }
 
-        nBlockPixels = nBlockXSize * nBlockYSize;
-        for( iPixel = 0; iPixel < nBlockPixels; iPixel++ )
-        {
-            iBitOffset = iBandBitOffset + iPixel * iPixelBitSkip;
-            GUInt16   nOutWord = 0;
+        // bits per line rounds up to next byte boundary.
+        nBitsPerLine = nBlockXSize * poGDS->nBitsPerSample;
+        if( (nBitsPerLine & 7) != 0 )
+            nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
-            for( iBit = 0; iBit < poGDS->nBitsPerSample; iBit++ )
+        iPixel = 0;
+        for( iY = 0; iY < nBlockYSize; iY++ )
+        {
+            iBitOffset = iBandBitOffset + iY * nBitsPerLine;
+
+            for( iX = 0; iX < nBlockXSize; iX++ )
             {
-                if( poGDS->pabyBlockBuf[iBitOffset>>3] 
-                    & (0x80 >>(iBitOffset & 7)) )
-                    nOutWord |= (1 << (poGDS->nBitsPerSample - 1 - iBit));
-                iBitOffset++;
-            } 
-            
-            ((GUInt16 *) pImage)[iPixel] = nOutWord;
+                int  nOutWord = 0;
+
+                for( iBit = 0; iBit < poGDS->nBitsPerSample; iBit++ )
+                {
+                    if( poGDS->pabyBlockBuf[iBitOffset>>3] 
+                        & (0x80 >>(iBitOffset & 7)) )
+                        nOutWord |= (1 << (poGDS->nBitsPerSample - 1 - iBit));
+                    iBitOffset++;
+                } 
+                
+                if( eDataType == GDT_Byte )
+                    ((GByte *) pImage)[iPixel++] = nOutWord;
+                else if( eDataType == GDT_UInt16 )
+                    ((GUInt16 *) pImage)[iPixel++] = nOutWord;
+                else if( eDataType == GDT_UInt32 )
+                    ((GUInt32 *) pImage)[iPixel++] = nOutWord;
+            }
         }
     }
-    
+
     return CE_None;
 }
 
@@ -2593,14 +2623,13 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 /* -------------------------------------------------------------------- */
 /*      Should we treat this via the RGBA interface?                    */
 /* -------------------------------------------------------------------- */
-    if( !bTreatAsBitmap && !nBitsPerSample > 8 
-        && (nPhotometric == PHOTOMETRIC_CIELAB ||
-            nPhotometric == PHOTOMETRIC_LOGL ||
-            nPhotometric == PHOTOMETRIC_LOGLUV ||
-            ( nPhotometric == PHOTOMETRIC_YCBCR 
+    if( !bTreatAsBitmap && !(nBitsPerSample > 8) 
+        && nPhotometric == PHOTOMETRIC_CIELAB ||
+           nPhotometric == PHOTOMETRIC_LOGL ||
+           nPhotometric == PHOTOMETRIC_LOGLUV ||
+           ( nPhotometric == PHOTOMETRIC_YCBCR 
             && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
-                                                  "YES") )) ||
-            nBitsPerSample < 8 ) )
+                                                  "YES") ))  )
     {
         char	szMessage[1024];
 
@@ -2618,14 +2647,19 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 /* -------------------------------------------------------------------- */
 /*      Should we treat this via the odd bits interface?                */
 /* -------------------------------------------------------------------- */
-
     if ( nSampleFormat == SAMPLEFORMAT_IEEEFP )
     {
         if ( nBitsPerSample == 16 || nBitsPerSample == 24 )
             bTreatAsOdd = TRUE;
     }
-    else if ( nBitsPerSample > 8 && nBitsPerSample < 16 )
+    else if ( !bTreatAsRGBA && !bTreatAsBitmap
+              && nBitsPerSample != 8
+              && nBitsPerSample != 16
+              && nBitsPerSample != 32
+              && nBitsPerSample != 64 
+              && nBitsPerSample != 128 )
         bTreatAsOdd = TRUE;
+
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -2640,6 +2674,13 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
             SetBand( iBand+1, new GTiffOddBitsBand( this, iBand+1 ) );
         else
             SetBand( iBand+1, new GTiffRasterBand( this, iBand+1 ) );
+    }
+
+    if( GetRasterBand(1)->GetRasterDataType() == GDT_Unknown )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Unsupported TIFF configuration." );
+        return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
