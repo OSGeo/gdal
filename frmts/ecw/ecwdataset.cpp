@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.45  2005/04/25 04:32:23  fwarmerdam
+ * dynamic cast seems to throw exception sometimes
+ *
  * Revision 1.44  2005/04/12 03:58:34  fwarmerdam
  * turn ownership of fpVSIL over to vsiiostream
  *
@@ -1675,11 +1678,21 @@ int ECWDataset::ReadJP2GeoTIFF()
     if( poBox == NULL )
         return FALSE;
 
-    CNCSJP2File::CNCSJP2UUIDBox *poUUIDBox = 
-        dynamic_cast<CNCSJP2File::CNCSJP2UUIDBox *>( poBox );
+    CNCSJP2File::CNCSJP2UUIDBox *poUUIDBox = NULL;
+
+    try 
+    {
+        poUUIDBox = dynamic_cast<CNCSJP2File::CNCSJP2UUIDBox *>( poBox );
+    }
+    catch(...)
+    {
+        CPLDebug( "ECW", "Caught an exception on GeoTIFF UUID dynamic cast" );
+        poUUIDBox = (CNCSJP2File::CNCSJP2UUIDBox *) poBox;
+    }
 
     if( poUUIDBox == NULL )
         return FALSE;
+
 /* -------------------------------------------------------------------- */
 /*      Read the raw data.  The raw data for this box was already       */
 /*      read once as part of parsing the geotiff info in                */
