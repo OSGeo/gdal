@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.32  2005/04/25 20:05:27  dron
+ * Memory leak fixed.
+ *
  * Revision 1.31  2005/04/19 12:21:03  dron
  * Meory leak fixed.
  *
@@ -395,7 +398,7 @@ double HDF4Dataset::AnyTypeToDouble( int32 iNumType, void *pData ) const
 /*         Tokenize HDF-EOS attributes.                                 */
 /************************************************************************/
 
-char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
+char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString ) const
 
 {
     const char  *pszDelimiters = " \t\n\r";
@@ -497,7 +500,7 @@ char **HDF4Dataset::HDF4EOSTokenizeAttrs( const char * pszString )
 /************************************************************************/
 
 char **HDF4Dataset::HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
-                                      char **ppszAttrValue )
+                                      char **ppszAttrValue ) const
 {
     int	    iCount, i, j;
     *ppszAttrName = NULL;
@@ -533,7 +536,7 @@ char **HDF4Dataset::HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
 /************************************************************************/
 
 char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
-    int32 iAttribute, int32 nValues, char **papszMetadata )
+    int32 iAttribute, int32 nValues, char **papszMetadata ) const
 {
     char	*pszData;
     
@@ -625,7 +628,7 @@ char** HDF4Dataset::TranslateHDF4EOSAttributes( int32 iHandle,
 
 char** HDF4Dataset::TranslateHDF4Attributes( int32 iHandle,
     int32 iAttribute, char *pszAttrName, int32 iNumType, int32 nValues,
-    char **papszMetadata )
+    char **papszMetadata ) const
 {
     void	*pData = NULL;
     char	*pszTemp = NULL;
@@ -753,6 +756,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->hSD = SDstart( poOpenInfo->pszFilename, DFACC_READ );
     if ( poDS->hSD == -1 )
     {
+        Hclose( hHDF4 );
 	delete poDS;
         return NULL;
     }
@@ -762,6 +766,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if ( poDS->ReadGlobalAttributes( poDS->hSD ) != CE_None )
     {
+        Hclose( hHDF4 );
 	delete poDS;
         return NULL;
     }
@@ -829,7 +834,12 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     if ( CSLFetchNameValue(poDS->papszGlobalMetadata, "HDFEOSVersion") )
     {
         int32   nSubDatasets, nStrBufSize;
-        
+
+/* -------------------------------------------------------------------- */
+/*  Close previously opened dataset.                                    */
+/* -------------------------------------------------------------------- */
+        Hclose( hHDF4 );
+
 /* -------------------------------------------------------------------- */
 /*  Process swath layers.                                           	*/
 /* -------------------------------------------------------------------- */
@@ -845,6 +855,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
             pszSwathList = (char *)CPLMalloc( nStrBufSize + 1 );
             SWinqswath( poOpenInfo->pszFilename, pszSwathList, &nStrBufSize );
+            pszSwathList[nStrBufSize] = '\0';
 
 #if DEBUG
             CPLDebug( "HDF4", "List of HDF-EOS swaths: %s", pszSwathList );
@@ -1117,11 +1128,11 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
     GRend( poDS->hGR );
 
+    Hclose( hHDF4 );
+
     }
     
     poDS->nRasterXSize = poDS->nRasterYSize = 512; // XXX: bogus values
-    
-    Hclose( hHDF4 );
 
 /* -------------------------------------------------------------------- */
 /*      If we have single subdataset only, open it immediately          */
