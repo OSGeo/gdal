@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.46  2005/04/25 18:40:16  fwarmerdam
+ * It seems dynamic cast is bad karma on VC6 with /Ox
+ *
  * Revision 1.45  2005/04/25 04:32:23  fwarmerdam
  * dynamic cast seems to throw exception sometimes
  *
@@ -1678,17 +1681,8 @@ int ECWDataset::ReadJP2GeoTIFF()
     if( poBox == NULL )
         return FALSE;
 
-    CNCSJP2File::CNCSJP2UUIDBox *poUUIDBox = NULL;
-
-    try 
-    {
-        poUUIDBox = dynamic_cast<CNCSJP2File::CNCSJP2UUIDBox *>( poBox );
-    }
-    catch(...)
-    {
-        CPLDebug( "ECW", "Caught an exception on GeoTIFF UUID dynamic cast" );
-        poUUIDBox = (CNCSJP2File::CNCSJP2UUIDBox *) poBox;
-    }
+    CNCSJP2File::CNCSJP2UUIDBox *poUUIDBox = 
+        (CNCSJP2File::CNCSJP2UUIDBox *) poBox;
 
     if( poUUIDBox == NULL )
         return FALSE;
