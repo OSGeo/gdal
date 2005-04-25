@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/04/25 22:26:46  fwarmerdam
+ * avoid extra copy if we are loading into the cache block in IReadBlock
+ *
  * Revision 1.8  2005/04/11 17:36:26  fwarmerdam
  * make sure we cleanup up transformer(s) too
  *
@@ -933,7 +936,7 @@ CPLErr VRTWarpedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     eErr = poWDS->ProcessBlock( nBlockXOff, nBlockYOff );
 
-    if( eErr == CE_None )
+    if( eErr == CE_None && pImage != poBlock->GetDataRef() )
     {
         int nDataBytes;
         nDataBytes = (GDALGetDataTypeSize(poBlock->GetDataType()) / 8)
