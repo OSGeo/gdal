@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.16  2005/04/25 20:04:43  dron
+ * Make more functions constant.
+ *
  * Revision 1.15  2005/03/29 12:42:53  dron
  * Added AnyTypeToDouble() method.
  *
@@ -112,9 +115,9 @@ class HDF4Dataset : public GDALDataset
 
   private:
 
-    char        **HDF4EOSTokenizeAttrs( const char *pszString );
+    char        **HDF4EOSTokenizeAttrs( const char *pszString ) const;
     char        **HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,
-                                    char **ppszAttrValue );
+                                    char **ppszAttrValue ) const;
      
   protected:
 
@@ -133,8 +136,9 @@ class HDF4Dataset : public GDALDataset
     int         GetDataTypeSize( int32 ) const;
     double      AnyTypeToDouble( int32, void * ) const;
     char        **TranslateHDF4Attributes( int32, int32, char *,
-                                           int32, int32, char ** );
-    char        ** TranslateHDF4EOSAttributes( int32, int32, int32, char ** );
+                                           int32, int32, char ** ) const;
+    char        ** TranslateHDF4EOSAttributes( int32, int32, int32,
+                                               char ** ) const;
     CPLErr      ReadGlobalAttributes( int32 );
 
   public:
