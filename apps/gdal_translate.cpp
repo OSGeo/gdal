@@ -28,6 +28,10 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/04/26 20:38:52  fwarmerdam
+ * Added main/ProxyMain distinction since calling main does not work on
+ * some platforms.
+ *
  * Revision 1.29  2005/04/12 14:37:47  fwarmerdam
  * Added the -a_nodata switch to assign nodata values to output bands.
  *
@@ -203,11 +207,11 @@ static void Usage()
     }
 }
 
-/* ******************************************************************** */
-/*                                main()                                */
-/* ******************************************************************** */
+/************************************************************************/
+/*                             ProxyMain()                              */
+/************************************************************************/
 
-int main( int argc, char ** argv )
+static int ProxyMain( int argc, char ** argv )
 
 {
     GDALDatasetH	hDataset, hOutDS;
@@ -501,7 +505,7 @@ int main( int argc, char ** argv )
             {
                 argv[iSrcFileArg] = strstr(papszSubdatasets[i],"=")+1;
                 sprintf( pszSubDest, "%s%d", pszDest, i/2 + 1 );
-                if( main( argc, argv ) != 0 )
+                if( ProxyMain( argc, argv ) != 0 )
                     break;
             }
 
@@ -969,3 +973,15 @@ static void AttachMetadata( GDALDatasetH hDS, char **papszMetadataOptions )
 
     CSLDestroy( papszMetadataOptions );
 }
+
+/************************************************************************/
+/*                                main()                                */
+/************************************************************************/
+
+int main( int argc, char ** argv )
+
+{
+    return ProxyMain( argc, argv );
+}
+
+
