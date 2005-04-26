@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/04/26 20:52:10  fwarmerdam
+ * use a typedef type for thread mains (for Sun port)
+ *
  * Revision 1.3  2003/04/23 04:36:55  warmerda
  * pthreads based implementation
  *
@@ -60,6 +63,8 @@
 
 CPL_C_START
 
+typedef void (*CPLThreadFunc)(void *);
+
 void CPL_DLL *CPLLockFile( const char *pszPath, double dfWaitInSeconds );
 void  CPL_DLL CPLUnlockFile( void *hLock );
 
@@ -69,10 +74,23 @@ void  CPL_DLL CPLReleaseMutex( void *hMutex );
 void  CPL_DLL CPLDestroyMutex( void *hMutex );
 
 int   CPL_DLL CPLGetPID();
-int   CPL_DLL CPLCreateThread( void (*pfnMain)(void *), void *pArg );
+int   CPL_DLL CPLCreateThread( CPLThreadFunc pfnMain, void *pArg );
 void  CPL_DLL CPLSleep( double dfWaitInSeconds );
 
 const char CPL_DLL *CPLGetThreadingModel();
+
+#ifdef notdef
+/* -------------------------------------------------------------------- */
+/*      Threadlocal info support.                                       */
+/* -------------------------------------------------------------------- */
+typedef struct 
+{
+    
+} CPLThreadLocalInfo;
+
+void CPL_DLL *CPLGetThreadLocalInfo( const char * );
+void CPL_DLL CPLAddThreadLocalInfo( const char *, void * );
+#endif
 
 CPL_C_END
 

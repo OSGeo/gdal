@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/04/26 20:52:10  fwarmerdam
+ * use a typedef type for thread mains (for Sun port)
+ *
  * Revision 1.4  2003/05/06 18:30:54  warmerda
  * fix unix createmutex to implicitly acquire it
  *
@@ -234,7 +237,7 @@ int CPLGetPID()
 /*                          CPLCreateThread();                          */
 /************************************************************************/
 
-int CPLCreateThread( void (*pfnMain)(void *), void *pArg )
+int CPLCreateThread( CPLThreadFunc pfnMain, void *pArg )
 
 {
     return -1;
@@ -409,7 +412,7 @@ int CPLGetPID()
 
 typedef struct {
     void *pAppData;
-    void (*pfnMain)(void *);
+    CPLThreadFunc pfnMain;
 } CPLStdCallThreadInfo;
 
 static DWORD WINAPI CPLStdCallThreadJacket( void *pData )
@@ -432,7 +435,7 @@ static DWORD WINAPI CPLStdCallThreadJacket( void *pData )
 /*      to supply that.                                                 */
 /************************************************************************/
 
-int CPLCreateThread( void (*pfnMain)(void *), void *pThreadArg )
+int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
 
 {
     HANDLE hThread;
@@ -580,7 +583,7 @@ int CPLGetPID()
 
 typedef struct {
     void *pAppData;
-    void (*pfnMain)(void *);
+    CPLThreadFunc pfnMain;
     pthread_t hThread;
 } CPLStdCallThreadInfo;
 
@@ -604,7 +607,7 @@ static void *CPLStdCallThreadJacket( void *pData )
 /*      to supply that.                                                 */
 /************************************************************************/
 
-int CPLCreateThread( void (*pfnMain)(void *), void *pThreadArg )
+int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
 
 {
     
