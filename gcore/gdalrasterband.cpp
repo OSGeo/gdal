@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2005/04/27 16:30:28  fwarmerdam
+ * added statistics related methods
+ *
  * Revision 1.57  2005/04/04 15:24:48  fwarmerdam
  * Most C entry points now CPL_STDCALL
  *
@@ -2124,6 +2127,31 @@ const char * CPL_STDCALL GDALGetRasterUnitType( GDALRasterBandH hBand )
 }
 
 /************************************************************************/
+/*                            SetUnitType()                             */
+/************************************************************************/
+
+/**
+ * Set unit type.
+ *
+ * Set the unit type for a raster band.  Values should be one of
+ * "" (the default indicating it is unknown), "m" indicating meters, 
+ * or "ft" indicating feet, though other nonstandard values are allowed.
+ *
+ * @param pszNewValue the new unit type value.
+ *
+ * @return CE_None on success or CE_Failure if not succuessful, or 
+ * unsupported.
+ */
+
+CPLErr GDALRasterBand::SetUnitType( const char *pszNewValue )
+
+{
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "SetUnitType() not supported on this raster band." );
+    return CE_Failure;
+}
+
+/************************************************************************/
 /*                              GetXSize()                              */
 /************************************************************************/
 
@@ -2571,5 +2599,298 @@ GDALRasterAdviseRead( GDALRasterBandH hRB,
     return ((GDALRasterBand *) hRB)->AdviseRead( nXOff, nYOff, nXSize, nYSize, 
                                                  nBufXSize, nBufYSize, eDT, 
                                                  papszOptions );
+}
+
+/************************************************************************/
+/*                           GetStatistics()                            */
+/************************************************************************/
+
+/**
+ * Fetch image statistics. 
+ *
+ * Returns the minimum, maximum, mean and standard deviation of all
+ * pixel values in this band.  If approximate statistics are sufficient,
+ * the bApproxOK flag can be set to true in which case overviews, or a
+ * subset of image tiles may be used in computing the statistics.  
+ *
+ * If bForce is FALSE results will only be returned if it can be done 
+ * quickly (ie. without scanning the data).  If bForce is FALSE and 
+ * results cannot be returned efficiently, the method will return CE_Warning
+ * but no warning will have been issued.   This is a non-standard use of
+ * the CE_Warning return value to indicate "nothing done". 
+ *
+ * Note that file formats using PAM (Persistent Auxilary Metadata) services
+ * will generally cache statistics in the .pam file allowing fast fetch
+ * after the first request. 
+ *
+ * @param bApproxOK If TRUE statistics may be computed based on overviews
+ * or a subset of all tiles. 
+ * 
+ * @param bForce If FALSE statistics will only be returned if it can
+ * be done without rescanning the image. 
+ *
+ * @param pdfMin Location into which to load image minimum (may be NULL).
+ *
+ * @param pdfMax Location into which to load image maximum (may be NULL).-
+ *
+ * @param pdfMean Location into which to load image mean (may be NULL).
+ *
+ * @param pdfStdDev Location into which to load image standard deviation 
+ * (may be NULL).
+ *
+ * @return CE_None on success, CE_Warning if no values returned, 
+ * CE_Failure if an error occurs.
+ */
+
+CPLErr GDALRasterBand::GetStatistics( int bApproxOK, int bForce,
+                                      double *pdfMin, double *pdfMax, 
+                                      double *pdfMean, double *pdfStdDev )
+
+{
+    double       dfMin=0.0, dfMax=0.0;
+
+/* -------------------------------------------------------------------- */
+/*      Do we already have metadata items for the requested values?     */
+/* -------------------------------------------------------------------- */
+    if( (pdfMin == NULL || GetMetadataItem("STATISTICS_MINIMUM") != NULL)
+     && (pdfMax == NULL || GetMetadataItem("STATISTICS_MAXIMUM") != NULL)
+     && (pdfMean == NULL || GetMetadataItem("STATISTICS_MEAN") != NULL)
+     && (pdfStdDev == NULL || GetMetadataItem("STATISTICS_STDDEV") != NULL) )
+    {
+        if( pdfMin != NULL )
+            *pdfMin = atof(GetMetadataItem("STATISTICS_MINIMUM"));
+        if( pdfMax != NULL )
+            *pdfMax = atof(GetMetadataItem("STATISTICS_MAXIMUM"));
+        if( pdfMean != NULL )
+            *pdfMean = atof(GetMetadataItem("STATISTICS_MEAN"));
+        if( pdfStdDev != NULL )
+            *pdfStdDev = atof(GetMetadataItem("STATISTICS_STDDEV"));
+
+        return CE_None;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Does the driver already know the min/max?                       */
+/* -------------------------------------------------------------------- */
+    if( bApproxOK && pdfMean == NULL && pdfStdDev == NULL )
+    {
+        int          bSuccessMin, bSuccessMax;
+
+        dfMin = GetMinimum( &bSuccessMin );
+        dfMax = GetMaximum( &bSuccessMax );
+
+        if( bSuccessMin && bSuccessMax )
+        {
+            if( pdfMin != NULL )
+                *pdfMin = dfMin;
+            if( pdfMax != NULL )
+                *pdfMax = dfMax;
+            return CE_None;
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      If we have overview bands, use them for min/max.                */
+/* -------------------------------------------------------------------- */
+    if( bApproxOK )
+    {
+        GDALRasterBand *poBand;
+
+        poBand = (GDALRasterBand *) GDALGetRasterSampleOverview( this, 2500 );
+
+        if( poBand != this )
+            return poBand->GetStatistics( bApproxOK, bForce, pdfMin, pdfMax, 
+                                          pdfMean, pdfStdDev );
+    }
+    
+
+    if( !bForce )
+        return CE_Warning;
+
+/* -------------------------------------------------------------------- */
+/*      Figure out the ratio of blocks we will read to get an           */
+/*      approximate value.                                              */
+/* -------------------------------------------------------------------- */
+    int         nBlockXSize, nBlockYSize;
+    int         nBlocksPerRow, nBlocksPerColumn;
+    int         nSampleRate, nSampleCount = 0;
+    int         bGotNoDataValue, bFirstValue = TRUE;
+    double      dfNoDataValue, dfSum=0.0, dfSum2=0.0;
+
+    dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
+
+    GetBlockSize( &nBlockXSize, &nBlockYSize );
+    nBlocksPerRow = (GetXSize() + nBlockXSize - 1) / nBlockXSize;
+    nBlocksPerColumn = (GetYSize() + nBlockYSize - 1) / nBlockYSize;
+
+    if( bApproxOK )
+        nSampleRate = 
+            (int) MAX(1,sqrt((double) nBlocksPerRow * nBlocksPerColumn));
+    else
+        nSampleRate = 1;
+    
+    for( int iSampleBlock = 0; 
+         iSampleBlock < nBlocksPerRow * nBlocksPerColumn;
+         iSampleBlock += nSampleRate )
+    {
+        double dfValue = 0.0;
+        int  iXBlock, iYBlock, nXCheck, nYCheck;
+        GDALRasterBlock *poBlock;
+
+        iYBlock = iSampleBlock / nBlocksPerRow;
+        iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
+        
+        poBlock = GetBlockRef( iXBlock, iYBlock );
+        if( poBlock == NULL )
+            continue;
+        
+        if( (iXBlock+1) * nBlockXSize > GetXSize() )
+            nXCheck = GetXSize() - iXBlock * nBlockXSize;
+        else
+            nXCheck = nBlockXSize;
+
+        if( (iYBlock+1) * nBlockYSize > GetYSize() )
+            nYCheck = GetYSize() - iYBlock * nBlockYSize;
+        else
+            nYCheck = nBlockYSize;
+
+        /* this isn't the fastest way to do this, but is easier for now */
+        for( int iY = 0; iY < nYCheck; iY++ )
+        {
+            for( int iX = 0; iX < nXCheck; iX++ )
+            {
+                int    iOffset = iX + iY * nBlockXSize;
+
+                switch( poBlock->GetDataType() )
+                {
+                  case GDT_Byte:
+                    dfValue = ((GByte *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_UInt16:
+                    dfValue = ((GUInt16 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Int16:
+                    dfValue = ((GInt16 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_UInt32:
+                    dfValue = ((GUInt32 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Int32:
+                    dfValue = ((GInt32 *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Float32:
+                    dfValue = ((float *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_Float64:
+                    dfValue = ((double *) poBlock->GetDataRef())[iOffset];
+                    break;
+                  case GDT_CInt16:
+                    dfValue = ((GInt16 *) poBlock->GetDataRef())[iOffset*2];
+                    break;
+                  case GDT_CInt32:
+                    dfValue = ((GInt32 *) poBlock->GetDataRef())[iOffset*2];
+                    break;
+                  case GDT_CFloat32:
+                    dfValue = ((float *) poBlock->GetDataRef())[iOffset*2];
+                    break;
+                  case GDT_CFloat64:
+                    dfValue = ((double *) poBlock->GetDataRef())[iOffset*2];
+                    break;
+                  default:
+                    CPLAssert( FALSE );
+                }
+                
+                if( bGotNoDataValue && dfValue == dfNoDataValue )
+                    continue;
+
+                if( bFirstValue )
+                {
+                    dfMin = dfMax = dfValue;
+                    bFirstValue = FALSE;
+                }
+                else
+                {
+                    dfMin = MIN(dfMin,dfValue);
+                    dfMax = MAX(dfMax,dfValue);
+                }
+
+                dfSum += dfValue;
+                dfSum2 += dfValue * dfValue;
+
+                nSampleCount++;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Save computed information.                                      */
+/* -------------------------------------------------------------------- */
+    char szValue[64];
+    double dfMean = dfSum / nSampleCount;
+    double dfStdDev = sqrt((dfSum2 / nSampleCount) - (dfMean * dfMean));
+
+    if( nSampleCount > 1 )
+        SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
+
+/* -------------------------------------------------------------------- */
+/*      Record results.                                                 */
+/* -------------------------------------------------------------------- */
+    if( pdfMin != NULL )
+        *pdfMin = dfMin;
+    if( pdfMax != NULL )
+        *pdfMax = dfMax;
+
+    if( pdfMean != NULL )
+        *pdfMean = dfMean;
+
+    if( pdfStdDev != NULL )
+        *pdfStdDev = dfStdDev;
+
+    if( nSampleCount > 0 )
+        return CE_None;
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to compute statistics, no valid pixels found in sampling." );
+        return CE_Failure;
+    }
+}
+
+/************************************************************************/
+/*                      GDALGetRasterStatistics()                       */
+/************************************************************************/
+
+CPLErr CPL_STDCALL GDALGetRasterStatistics( 
+        GDALRasterBandH hBand, int bApproxOK, int bForce, 
+        double *pdfMin, double *pdfMax, double *pdfMean, double *pdfStdDev )
+
+{
+    return ((GDALRasterBand *) hBand)->GetStatistics( 
+        bApproxOK, bForce, pdfMin, pdfMax, pdfMean, pdfStdDev );
+}
+
+/************************************************************************/
+/*                           SetStatistics()                            */
+/************************************************************************/
+
+CPLErr GDALRasterBand::SetStatistics( double dfMin, double dfMax, 
+                                      double dfMean, double dfStdDev )
+
+{
+    char szValue[128];
+
+    sprintf( szValue, "%.14g", dfMin );
+    SetMetadataItem( "STATISTICS_MINIMUM", szValue );
+
+    sprintf( szValue, "%.14g", dfMax );
+    SetMetadataItem( "STATISTICS_MAXIMUM", szValue );
+
+    sprintf( szValue, "%.14g", dfMean );
+    SetMetadataItem( "STATISTICS_MEAN", szValue );
+
+    sprintf( szValue, "%.14g", dfStdDev );
+    SetMetadataItem( "STATISTICS_STDDEV", szValue );
+
+    return CE_Failure;
 }
 
