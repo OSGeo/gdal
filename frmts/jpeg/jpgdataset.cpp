@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.21  2005/04/27 16:35:58  fwarmerdam
+ * PAM enable
+ *
  * Revision 1.20  2005/03/23 00:27:32  fwarmerdam
  * First pass try at support for the libjpeg Mk1 library.
  *
@@ -91,7 +94,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
@@ -113,7 +116,7 @@ CPL_C_END
 
 class JPGRasterBand;
 
-class JPGDataset : public GDALDataset
+class JPGDataset : public GDALPamDataset
 {
     friend class JPGRasterBand;
 
@@ -144,7 +147,7 @@ class JPGDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class JPGRasterBand : public GDALRasterBand
+class JPGRasterBand : public GDALPamRasterBand
 {
     friend class JPGDataset;
 
@@ -367,12 +370,14 @@ void JPGDataset::Restart()
 CPLErr JPGDataset::GetGeoTransform( double * padfTransform )
 
 {
-    memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
-
     if( bGeoTransformValid )
+    {
+        memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
+        
         return CE_None;
-    else
-        return CE_Failure;
+    }
+    else 
+        return GDALPamDataset::GetGeoTransform( padfTransform );
 }
 
 /************************************************************************/
@@ -484,6 +489,12 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Open overviews.                                                 */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
 /*      Check for world file.                                           */
@@ -689,7 +700,15 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform );
     }
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+/* -------------------------------------------------------------------- */
+/*      Re-open dataset, and copy any auxilary pam information.         */
+/* -------------------------------------------------------------------- */
+    JPGDataset *poDS = (JPGDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+
+    if( poDS )
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+
+    return poDS;
 }
 
 /************************************************************************/

@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.30  2005/04/27 16:35:45  fwarmerdam
+ * PAM enable
+ *
  * Revision 1.29  2004/08/26 21:20:08  warmerda
  * Adjusted so png_access_version_number() is not called for old libpng
  * versions (pre 1.2).
@@ -137,7 +140,7 @@
  * New
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "png.h"
 #include "cpl_string.h"
 
@@ -156,7 +159,7 @@ CPL_C_END
 
 class PNGRasterBand;
 
-class PNGDataset : public GDALDataset
+class PNGDataset : public GDALPamDataset
 {
     friend class PNGRasterBand;
 
@@ -200,7 +203,7 @@ class PNGDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class PNGRasterBand : public GDALRasterBand
+class PNGRasterBand : public GDALPamRasterBand
 {
     friend class PNGDataset;
 
@@ -424,7 +427,7 @@ CPLErr PNGDataset::GetGeoTransform( double * padfTransform )
         return CE_None;
     }
     else
-        return CE_Failure;
+        return GDALPamDataset::GetGeoTransform( padfTransform );
 }
 
 /************************************************************************/
@@ -805,6 +808,12 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+
+/* -------------------------------------------------------------------- */
 /*      Check for world file.                                           */
 /* -------------------------------------------------------------------- */
     poDS->bGeoTransformValid = 
@@ -1051,7 +1060,15 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform );
     }
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+/* -------------------------------------------------------------------- */
+/*      Re-open dataset, and copy any auxilary pam information.         */
+/* -------------------------------------------------------------------- */
+    PNGDataset *poDS = (PNGDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+
+    if( poDS )
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+
+    return poDS;
 }
 
 /************************************************************************/
