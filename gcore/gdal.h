@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.94  2005/04/27 16:28:39  fwarmerdam
+ * added GDALGetRasterStatistics
+ *
  * Revision 1.93  2005/04/15 18:34:52  fwarmerdam
  * Added area or point metadata constants.
  *
@@ -504,6 +507,9 @@ char CPL_DLL ** CPL_STDCALL GDALGetRasterCategoryNames( GDALRasterBandH );
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterCategoryNames( GDALRasterBandH, char ** );
 double CPL_DLL CPL_STDCALL GDALGetRasterMinimum( GDALRasterBandH, int *pbSuccess );
 double CPL_DLL CPL_STDCALL GDALGetRasterMaximum( GDALRasterBandH, int *pbSuccess );
+CPLErr CPL_DLL CPL_STDCALL GDALGetRasterStatistics( 
+    GDALRasterBandH, int bApproxOK, int bForce, 
+    double *pdfMin, double *pdfMax, double *pdfMean, double *pdfStdDev );
 const char CPL_DLL * CPL_STDCALL GDALGetRasterUnitType( GDALRasterBandH );
 double CPL_DLL CPL_STDCALL GDALGetRasterOffset( GDALRasterBandH, int *pbSuccess );
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterOffset( GDALRasterBandH hBand, double dfNewOffset);
