@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2005/04/27 16:29:33  fwarmerdam
+ * GetHistogram() made virtual.  Added methods for getting and setting
+ * statistics.  Added SetUnitType method.
+ *
  * Revision 1.53  2005/04/07 17:31:00  fwarmerdam
  * added some brief descriptions of classes
  *
@@ -549,6 +553,13 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr SetColorInterpretation( GDALColorInterp );
     virtual CPLErr SetOffset( double );
     virtual CPLErr SetScale( double );
+    virtual CPLErr SetUnitType( const char * );
+
+    virtual CPLErr GetStatistics( int bApproxOK, int bForce,
+                                  double *pdfMin, double *pdfMax, 
+                                  double *pdfMean, double *padfStdDev );
+    virtual CPLErr SetStatistics( double dfMin, double dfMax, 
+                                  double dfMean, double dfStdDev );
 
     virtual int HasArbitraryOverviews();
     virtual int GetOverviewCount();
@@ -560,7 +571,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                int nBufXSize, int nBufYSize, 
                                GDALDataType eDT, char **papszOptions );
 
-    CPLErr  GetHistogram( double dfMin, double dfMax,
+    virtual CPLErr  GetHistogram( double dfMin, double dfMax,
                           int nBuckets, int * panHistogram,
                           int bIncludeOutOfRange, int bApproxOK,
                           GDALProgressFunc, void *pProgressData );
