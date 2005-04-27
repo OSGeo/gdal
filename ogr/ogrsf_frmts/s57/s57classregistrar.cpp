@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/04/27 13:34:14  fwarmerdam
+ * Fixed a few memory leaks, including the ones from bug 840.
+ *
  * Revision 1.9  2004/08/30 20:11:14  warmerda
  * various optimizations made
  *
@@ -86,6 +89,9 @@ S57ClassRegistrar::S57ClassRegistrar()
     papszTempResult = NULL;
     papszNextLine = NULL;
     papapszClassesFields = NULL;
+    pachAttrClass = NULL;
+    pachAttrType = NULL;
+    panAttrIndex = NULL;
 }
 
 /************************************************************************/
@@ -95,15 +101,30 @@ S57ClassRegistrar::S57ClassRegistrar()
 S57ClassRegistrar::~S57ClassRegistrar()
 
 {
+    int i;
+
     CSLDestroy( papszClassesInfo );
     CSLDestroy( papszTempResult );
     
     if( papapszClassesFields != NULL )
     {
-        for( int i = 0; i < nClasses; i++ )
+        for( i = 0; i < nClasses; i++ )
             CSLDestroy( papapszClassesFields[i] );
         CPLFree( papapszClassesFields );
     }
+    if( papszAttrNames )
+    {
+        for( i = 0; i < MAX_ATTRIBUTES; i++ )
+        {
+            CPLFree( papszAttrNames[i] );
+            CPLFree( papszAttrAcronym[i] );
+        }
+        CPLFree( papszAttrNames );
+        CPLFree( papszAttrAcronym );
+    }
+    CPLFree( pachAttrType );
+    CPLFree( pachAttrClass );
+    CPLFree( panAttrIndex );
 }
 
 /************************************************************************/
@@ -269,7 +290,7 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     nAttrMax = MAX_ATTRIBUTES-1;
     papszAttrNames = (char **) CPLCalloc(sizeof(char *),nAttrMax);
     papszAttrAcronym = (char **) CPLCalloc(sizeof(char *),nAttrMax);
-    papapszAttrValues = (char ***) CPLCalloc(sizeof(char **),nAttrMax);
+    //papapszAttrValues = (char ***) CPLCalloc(sizeof(char **),nAttrMax);
     pachAttrType = (char *) CPLCalloc(sizeof(char),nAttrMax);
     pachAttrClass = (char *) CPLCalloc(sizeof(char),nAttrMax);
     panAttrIndex = (int *) CPLCalloc(sizeof(int),nAttrMax);
