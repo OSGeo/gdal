@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/04/29 17:08:58  dron
+ * Move nSRSId checking into constructor. Change spatial filter query syntax
+ * to match PostGIS 1.0.0 syntax (Oleg Semykin <oleg.semykin@gmail.com>)
+ *
  * Revision 1.25  2005/02/22 12:54:05  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -143,6 +147,10 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     ResetReading();
 
     bLaunderColumnNames = TRUE;
+	
+	// check SRID if it's necessary
+	if( nSRSId == -2 )
+		GetSpatialRef();    
 }
 
 /************************************************************************/
@@ -361,7 +369,7 @@ void OGRPGTableLayer::BuildWhere()
 
         m_poFilterGeom->getEnvelope( &sEnvelope );
         sprintf( szWHERE, 
-                 "WHERE %s && GeometryFromText('BOX3D(%.12f %.12f, %.12f %.12f)'::box3d,%d) ",
+                 "WHERE %s && SetSRID('BOX3D(%.12f %.12f, %.12f %.12f)'::box3d,%d) ",
                  pszGeomColumn, 
                  sEnvelope.MinX, sEnvelope.MinY, 
                  sEnvelope.MaxX, sEnvelope.MaxY,
@@ -661,10 +669,6 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
     if( bHasPostGISGeometry && poFeature->GetGeometryRef() != NULL)
     {
         char    *pszWKT = NULL;
-
-        // Do we need to force nSRSId to be set?
-        if( nSRSId == -2 )
-            GetSpatialRef();
 
         if( poFeature->GetGeometryRef() != NULL )
         {
