@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_indfile.cpp,v 1.10 2004/06/30 20:29:04 dmorissette Exp $
+ * $Id: mitab_indfile.cpp,v 1.11 2005/04/29 19:08:56 dmorissette Exp $
  *
  * Name:     mitab_indfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_indfile.cpp,v $
+ * Revision 1.11  2005/04/29 19:08:56  dmorissette
+ * Produce an error if m_nSubtreeDepth > 255 when creating a .IND (OGR bug 839)
+ *
  * Revision 1.10  2004/06/30 20:29:04  dmorissette
  * Fixed refs to old address danmo@videotron.ca
  *
@@ -453,6 +456,18 @@ int TABINDFile::WriteHeader()
             poHeaderBlock->WriteByte( poRootNode->GetKeyLength());
 
             poHeaderBlock->WriteZeros( 8 );
+
+            /*---------------------------------------------------------
+             * Look for overflow of the SubTreeDepth field (byte)
+             *--------------------------------------------------------*/
+            if (poRootNode->GetSubTreeDepth() > 255)
+            {
+                CPLError(CE_Failure, CPLE_AssertionFailed,
+                         "Index no %d is too large and will not be useable. "
+                         "(SubTreeDepth = %d, cannot exceed 255).",
+                         iIndex+1, poRootNode->GetSubTreeDepth());
+                return -1;
+            }
         }
         else
         {
