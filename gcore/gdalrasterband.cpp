@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2005/05/03 21:09:54  fwarmerdam
+ * Removed unused variable.
+ *
  * Revision 1.58  2005/04/27 16:30:28  fwarmerdam
  * added statistics related methods
  *
@@ -2825,7 +2828,6 @@ CPLErr GDALRasterBand::GetStatistics( int bApproxOK, int bForce,
 /* -------------------------------------------------------------------- */
 /*      Save computed information.                                      */
 /* -------------------------------------------------------------------- */
-    char szValue[64];
     double dfMean = dfSum / nSampleCount;
     double dfStdDev = sqrt((dfSum2 / nSampleCount) - (dfMean * dfMean));
 
