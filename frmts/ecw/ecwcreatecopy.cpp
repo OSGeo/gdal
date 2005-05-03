@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/05/03 21:11:47  fwarmerdam
+ * upgraded to copy PAM information
+ *
  * Revision 1.17  2005/04/12 03:58:34  fwarmerdam
  * turn ownership of fpVSIL over to vsiiostream
  *
@@ -82,7 +85,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
 #include "cpl_conv.h"
@@ -988,7 +991,16 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     oCompressor.CloseDown();
     pfnProgress( 1.001, NULL, pProgressData );
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+/* -------------------------------------------------------------------- */
+/*      Re-open dataset, and copy any auxilary pam information.         */
+/* -------------------------------------------------------------------- */
+    GDALDataset *poDS = (GDALDataset *) 
+        GDALOpen( pszFilename, GA_ReadOnly );
+
+    if( poDS )
+        ((GDALPamDataset *) poDS)->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+
+    return poDS;
 }
 
 /************************************************************************/
