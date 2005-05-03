@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.47  2005/05/03 21:12:14  fwarmerdam
+ * use GDALJP2Metadata facilities for GML and GeoTIFF
+ *
  * Revision 1.46  2005/04/25 18:40:16  fwarmerdam
  * It seems dynamic cast is bad karma on VC6 with /Ox
  *
@@ -119,61 +122,10 @@
  *
  * Revision 1.18  2004/03/30 17:00:07  warmerda
  * Allow "ecwp:" urls to be opened.
- *
- * Revision 1.17  2003/12/16 20:24:01  dron
- * Implemented support for supersampling in IRasterIO().
- *
- * Revision 1.16  2003/10/27 15:04:36  warmerda
- * fix small new memory leak
- *
- * Revision 1.15  2003/10/27 15:02:44  warmerda
- * Added ECWDataset::IRasterIO special case
- *
- * Revision 1.14  2003/09/23 13:47:47  warmerda
- * never return a NULL projection
- *
- * Revision 1.13  2003/06/19 18:50:20  warmerda
- * added projection reading support
- *
- * Revision 1.12  2003/06/18 17:26:35  warmerda
- * dont try ecwopen function if path isnt to a valid file
- *
- * Revision 1.11  2002/11/23 18:54:17  warmerda
- * added CREATIONDATATYPES metadata for drivers
- *
- * Revision 1.10  2002/10/01 19:34:27  warmerda
- * fixed problems with supersampling by forcing through fullres blocks
- *
- * Revision 1.9  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.8  2002/07/23 14:40:41  warmerda
- * disable compress support on Unix
- *
- * Revision 1.7  2002/07/23 14:05:35  warmerda
- * Avoid warnings.
- *
- * Revision 1.6  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.5  2002/01/22 14:48:19  warmerda
- * Fixed pabyWorkBuffer memory leak in IRasterIO().
- *
- * Revision 1.4  2001/11/11 23:50:59  warmerda
- * added required class keyword to friend declarations
- *
- * Revision 1.3  2001/07/18 04:51:56  warmerda
- * added CPL_CVSID
- *
- * Revision 1.2  2001/04/20 03:06:07  warmerda
- * addec compression support
- *
- * Revision 1.1  2001/04/02 17:06:46  warmerda
- * New
- *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
+#include "gdaljp2metadata.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
 #include "cpl_conv.h"
@@ -213,7 +165,7 @@ CPL_C_END
 
 class ECWRasterBand;
 
-class CPL_DLL ECWDataset : public GDALDataset
+class CPL_DLL ECWDataset : public GDALPamDataset
 {
     friend class ECWRasterBand;
 
@@ -240,9 +192,6 @@ class CPL_DLL ECWDataset : public GDALDataset
     char        **papszGMLMetadata;
 
     void        ECW2WKTProjection();
-    int         ReadJP2GeoTIFF();
-    int         ReadGMLCoverageDesc();
-    int         ParseGMLCoverageDesc();
 
     void        CleanupWindow();
     int         TryWinRasterIO( GDALRWFlag, int, int, int, int,
@@ -285,7 +234,7 @@ class CPL_DLL ECWDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ECWRasterBand : public GDALRasterBand
+class ECWRasterBand : public GDALPamRasterBand
 {
     friend class ECWDataset;
     
@@ -664,9 +613,16 @@ ECWDataset::ECWDataset()
 ECWDataset::~ECWDataset()
 
 {
+    FlushCache();
     CleanupWindow();
     CPLFree( pszProjection );
     CSLDestroy( papszGMLMetadata );
+
+    if( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+    }
 
     if( hECWDatasetMutex == NULL )
     {
@@ -1359,11 +1315,42 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
     for( i=0; i < poDS->psFileInfo->nBands; i++ )
         poDS->SetBand( i+1, new ECWRasterBand( poDS, i+1 ) );
 
-    poDS->ReadGMLCoverageDesc();
+/* -------------------------------------------------------------------- */
+/*      Look for supporting coordinate system information.              */
+/* -------------------------------------------------------------------- */
+    GDALJP2Metadata oJP2Geo;
+    FILE *fpLL;
 
-    if( !poDS->ParseGMLCoverageDesc()
-        && !poDS->ReadJP2GeoTIFF() )
+    fpLL = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    
+    if( fpLL != NULL )
+    {
+        oJP2Geo.ReadBoxes( fpLL );
+        VSIFCloseL( fpLL );
+
+        poDS->papszGMLMetadata = CSLDuplicate(oJP2Geo.papszGMLMetadata);
+    }
+
+    if( oJP2Geo.ParseJP2GeoTIFF() 
+        || oJP2Geo.ParseGMLCoverageDesc() )
+    {
+        poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
+        memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform, 
+                sizeof(double) * 6 );
+        poDS->nGCPCount = oJP2Geo.nGCPCount;
+        poDS->pasGCPList = oJP2Geo.pasGCPList;
+        oJP2Geo.pasGCPList = NULL;
+    }
+    else
+    {
         poDS->ECW2WKTProjection();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }
@@ -1462,272 +1449,6 @@ char **ECWDataset::GetMetadata( const char *pszDomain )
         return GDALDataset::GetMetadata( pszDomain );
     else
         return papszGMLMetadata;
-}
-
-/************************************************************************/
-/*                        ParseGMLCoverageDesc()                        */
-/************************************************************************/
-
-int ECWDataset::ParseGMLCoverageDesc() 
-
-{
-/* -------------------------------------------------------------------- */
-/*      Do we have an XML doc that is apparently a coverage             */
-/*      description?                                                    */
-/* -------------------------------------------------------------------- */
-    const char *pszCoverage = CSLFetchNameValue( papszGMLMetadata, 
-                                                 "COVERAGE" );
-
-    if( pszCoverage == NULL )
-        return FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      Try parsing the XML.  Wipe any namespace prefixes.              */
-/* -------------------------------------------------------------------- */
-    CPLXMLNode *psXML = CPLParseXMLString( pszCoverage );
-
-    if( psXML == NULL )
-        return FALSE;
-
-    CPLStripXMLNamespace( psXML, NULL, TRUE );
-
-/* -------------------------------------------------------------------- */
-/*      Isolate RectifiedGrid.  Eventually we will need to support      */
-/*      other georeferencing objects.                                   */
-/* -------------------------------------------------------------------- */
-    CPLXMLNode *psRG = CPLSearchXMLNode( psXML, "=RectifiedGrid" );
-    CPLXMLNode *psOriginPoint = NULL;
-    const char *pszOffset1=NULL, *pszOffset2=NULL;
-
-    if( psRG != NULL )
-    {
-        psOriginPoint = CPLGetXMLNode( psRG, "origin.Point" );
-
-        
-        CPLXMLNode *psOffset1 = CPLGetXMLNode( psRG, "offsetVector" );
-        if( psOffset1 != NULL )
-        {
-            pszOffset1 = CPLGetXMLValue( psOffset1, "", NULL );
-            pszOffset2 = CPLGetXMLValue( psOffset1->psNext, "=offsetVector", 
-                                         NULL );
-        }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      If we are missing any of the origin or 2 offsets then give up.  */
-/* -------------------------------------------------------------------- */
-    if( psOriginPoint == NULL || pszOffset1 == NULL || pszOffset2 == NULL )
-    {
-        CPLDestroyXMLNode( psXML );
-        return FALSE;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Extract origin location.                                        */
-/* -------------------------------------------------------------------- */
-    OGRPoint *poOriginGeometry = NULL;
-    const char *pszSRSName = NULL;
-
-    if( psOriginPoint != NULL )
-    {
-        poOriginGeometry = (OGRPoint *) 
-            OGR_G_CreateFromGMLTree( psOriginPoint );
-
-        if( poOriginGeometry != NULL 
-            && wkbFlatten(poOriginGeometry->getGeometryType()) != wkbPoint )
-        {
-            delete poOriginGeometry;
-            poOriginGeometry = NULL;
-        }
-
-        // SRS?
-        pszSRSName = CPLGetXMLValue( psOriginPoint, "srsName", NULL );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Extract offset(s)                                               */
-/* -------------------------------------------------------------------- */
-    char **papszOffset1Tokens = NULL;
-    char **papszOffset2Tokens = NULL;
-    int bSuccess = FALSE;
-
-    papszOffset1Tokens = 
-        CSLTokenizeStringComplex( pszOffset1, " ,", FALSE, FALSE );
-    papszOffset2Tokens = 
-        CSLTokenizeStringComplex( pszOffset2, " ,", FALSE, FALSE );
-
-    if( CSLCount(papszOffset1Tokens) >= 2
-        && CSLCount(papszOffset2Tokens) >= 2
-        && poOriginGeometry != NULL )
-    {
-        adfGeoTransform[0] = poOriginGeometry->getX();
-        adfGeoTransform[1] = atof(papszOffset1Tokens[0]);
-        adfGeoTransform[2] = atof(papszOffset1Tokens[1]);
-        adfGeoTransform[3] = poOriginGeometry->getY();
-        adfGeoTransform[4] = atof(papszOffset2Tokens[0]);
-        adfGeoTransform[5] = atof(papszOffset2Tokens[1]);
-        bSuccess = TRUE;
-    }
-
-    CSLDestroy( papszOffset1Tokens );
-    CSLDestroy( papszOffset2Tokens );
-
-    if( poOriginGeometry != NULL )
-        delete poOriginGeometry;
-
-/* -------------------------------------------------------------------- */
-/*      If we have gotten a geotransform, then try to interprete the    */
-/*      srsName.                                                        */
-/* -------------------------------------------------------------------- */
-    if( bSuccess && pszSRSName != NULL && pszProjection == NULL )
-    {
-        if( EQUALN(pszSRSName,"epsg:",5) )
-        {
-            OGRSpatialReference oSRS;
-            if( oSRS.SetFromUserInput( pszSRSName ) == OGRERR_NONE )
-                oSRS.exportToWkt( &pszProjection );
-        }
-        else if( EQUALN(pszSRSName,"urn:ogc:def:crs:EPSG::",22) )
-        {
-            OGRSpatialReference oSRS;
-            if( oSRS.importFromEPSG( atoi(pszSRSName + 22) ) == OGRERR_NONE )
-                oSRS.exportToWkt( &pszProjection );
-        }
-        else if( EQUALN(pszSRSName,"urn:ogc:def:crs:EPSG:",21) )
-        {
-            const char *pszCode = pszSRSName+21;
-            while( *pszCode != ':' && *pszCode != '\0' )
-                pszCode++;
-
-            OGRSpatialReference oSRS;
-            if( oSRS.importFromEPSG( atoi(pszCode+1) ) == OGRERR_NONE )
-                oSRS.exportToWkt( &pszProjection );
-        }
-    }
-
-    return pszProjection != NULL && bSuccess;
-}
-
-/************************************************************************/
-/*                        ReadGMLCoverageDesc()                         */
-/************************************************************************/
-
-int ECWDataset::ReadGMLCoverageDesc()
-
-{
-    if( poFileView == NULL )
-        return FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      Loop processing XML boxes.                                      */
-/* -------------------------------------------------------------------- */
-    CNCSJP2Box *poBox = NULL;
-
-    while( (poBox = poFileView->GetXMLBox( poBox )) != NULL )
-    {
-        char *pszData = (char *) CPLMalloc( poBox->m_nLDBox+1 );
-        CNCSJPCIOStream *pStream = NULL;
-        INT64   nOldOffset;
-
-        pStream = poFileView->GetFile()->m_pStream;
-        nOldOffset = pStream->Tell();
-        pStream->Seek( poBox->m_nDBoxOffset, CNCSJPCIOStream::START );
-        if( !pStream->Read( pszData, poBox->m_nLDBox ) )
-        {
-            CPLFree( pszData );
-            return FALSE;
-        }
-        
-        pStream->Seek( nOldOffset, CNCSJPCIOStream::START );
-        pszData[poBox->m_nLDBox] = '\0';
-
-        if( strstr(pszData, "RectifiedGrid") != NULL )
-            papszGMLMetadata = 
-                CSLSetNameValue( papszGMLMetadata, 
-                                 "COVERAGE", pszData );
-        
-        CPLDebug( "ECW", "XML:%s\n", pszData );
-        CPLFree( pszData );
-    }
-
-    if( poBox == NULL )
-        return FALSE;
-
-    return FALSE;
-}
-
-/************************************************************************/
-/*                           ReadJP2GeoTIFF()                           */
-/*                                                                      */
-/*      This methods searches for a GeoJP2 style degenerate GeoTIFF,    */
-/*      and if found extracts the georeferencing from it.               */
-/************************************************************************/
-
-int ECWDataset::ReadJP2GeoTIFF()
-
-{
-    if( poFileView == NULL )
-        return FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      Do we have the GeoJP2 UUID Box?                                 */
-/* -------------------------------------------------------------------- */
-    const UINT8 PCS_UUID_Bytes[16] = { 0xb1,0x4b,0xf8,0xbd,0x08,0x3d,0x4b,0x43,
-                                       0xa5,0xae,0x8c,0xd7,0xd5,0xa6,0xce,0x03 };
-    NCSUUID PCS_UUID( PCS_UUID_Bytes);
-
-    CNCSJP2Box *poBox = poFileView->GetUUIDBox( PCS_UUID );
-    
-    if( poBox == NULL )
-        return FALSE;
-
-    CNCSJP2File::CNCSJP2UUIDBox *poUUIDBox = 
-        (CNCSJP2File::CNCSJP2UUIDBox *) poBox;
-
-    if( poUUIDBox == NULL )
-        return FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      Read the raw data.  The raw data for this box was already       */
-/*      read once as part of parsing the geotiff info in                */
-/*      NCSJP2PCSBox, but we need to refetch it now.                    */
-/* -------------------------------------------------------------------- */
-    GByte *pabyData = (GByte *) CPLMalloc( poUUIDBox->m_nLength );
-    CNCSJPCIOStream *pStream = NULL;
-    INT64   nOldOffset;
-
-    pStream = poFileView->GetFile()->m_pStream;
-    nOldOffset = pStream->Tell();
-    pStream->Seek( poUUIDBox->m_nDBoxOffset+16, CNCSJPCIOStream::START );
-    if( !pStream->Read( pabyData, poUUIDBox->m_nLength ) )
-    {
-        CPLFree( pabyData );
-        return FALSE;
-    }
-    pStream->Seek( nOldOffset, CNCSJPCIOStream::START );
-    
-/* -------------------------------------------------------------------- */
-/*      Convert raw data into projection and geotransform.              */
-/* -------------------------------------------------------------------- */
-    int bSuccess = TRUE;
-
-    if( GTIFWktFromMemBuf( poUUIDBox->m_nLength, pabyData, 
-                           &pszProjection, adfGeoTransform,
-                           &nGCPCount, &pasGCPList ) != CE_None )
-    {
-        bSuccess = FALSE;
-    }
-
-    CPLFree( pabyData );
-    
-    if( pszProjection == NULL || strlen(pszProjection) == 0 )
-        bSuccess = FALSE;
-
-    if( bSuccess )
-        CPLDebug( "JP2ECW", "Got projection from GeoJP2 (geotiff) box: %s", 
-                 pszProjection );
-
-    return bSuccess;;
 }
 
 /************************************************************************/
