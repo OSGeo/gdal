@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/05/04 19:34:07  fwarmerdam
+ * delete reader in datasource destructor, not layer
+ *
  * Revision 1.16  2005/02/22 12:56:28  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -130,9 +133,6 @@ OGRGMLLayer::~OGRGMLLayer()
 
     if( poSRS != NULL )
         delete poSRS;
-
-    if( !bWriter )
-        delete poDS->GetReader();
 }
 
 /************************************************************************/
