@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/05/04 17:21:00  fwarmerdam
+ * Avoid 32bit overflow when testing xsize*ysize.
+ *
  * Revision 1.31  2005/04/21 16:43:26  fwarmerdam
  * Fixed bug with RasterIO() at overview levels higher than is available
  * in the file.  Now the code limits itself to available overview levels.
@@ -663,7 +666,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     int bUseBlockedIO = bForceCachedIO;
 
-    if( nYSize == 1 || nXSize * nYSize < 100 )
+    if( nYSize == 1 || nXSize * ((double) nYSize) < 100.0 )
         bUseBlockedIO = TRUE;
 
     if( CSLTestBoolean( CPLGetConfigOption( "GDAL_ONE_BIG_READ", "NO") ) )
