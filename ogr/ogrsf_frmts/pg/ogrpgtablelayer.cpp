@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/05/04 19:14:27  dron
+ * Determine layer geometry type from Geometry_Columns standard OGC table.
+ * Works only for PostGIS layers. (Oleg Semykin <oleg.semykin@gmail.com>)
+ *
  * Revision 1.26  2005/04/29 17:08:58  dron
  * Move nSRSId checking into constructor. Change spatial filter query syntax
  * to match PostGIS 1.0.0 syntax (Oleg Semykin <oleg.semykin@gmail.com>)
@@ -327,6 +331,33 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
 
     hResult = PQexec(hPGConn, "COMMIT");
     PQclear( hResult );
+
+	// get layer geometry type (for PostGIS dataset)
+	if ( bHasPostGISGeometry )
+	{
+		sprintf(szCommand,"SELECT type FROM geometry_columns WHERE f_table_name='%s'", pszTable);
+		
+		hResult = PQexec(hPGConn,szCommand);
+		if ( hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult,0,0) )
+		{
+			char * pszType = PQgetvalue(hResult,0,0);
+			PQclear( hResult );
+
+			OGRwkbGeometryType nGeomType = wkbUnknown;
+
+			// check only standard OGC geometry types
+			if ( EQUAL(pszType, "POINT") )					nGeomType = wkbPoint;
+			else if ( EQUAL(pszType,"LINESTRING"))			nGeomType = wkbLineString;
+			else if ( EQUAL(pszType,"POLYGON"))				nGeomType = wkbPolygon;
+			else if ( EQUAL(pszType,"MULTIPOINT"))			nGeomType = wkbMultiPoint;
+			else if ( EQUAL(pszType,"MULTILINESTRING"))		nGeomType = wkbMultiLineString;
+			else if ( EQUAL(pszType,"MULTIPOLYGON"))		nGeomType = wkbMultiPolygon;
+			else if ( EQUAL(pszType,"GEOMETRYCOLLECTION"))	nGeomType = wkbGeometryCollection;
+
+			CPLDebug("OGR_PG","Layer '%s' geometry type: %s:%d", pszTable, pszType, nGeomType);
+			poDefn->SetGeomType( nGeomType );
+		}
+	}
 
     return poDefn;
 }
