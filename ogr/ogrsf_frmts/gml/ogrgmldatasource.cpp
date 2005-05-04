@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/05/04 19:34:07  fwarmerdam
+ * delete reader in datasource destructor, not layer
+ *
  * Revision 1.18  2005/04/06 13:38:33  fwarmerdam
  * Initialize nSchemaStart.
  *
@@ -152,6 +155,9 @@ OGRGMLDataSource::~OGRGMLDataSource()
         delete papoLayers[i];
     
     CPLFree( papoLayers );
+
+    if( poReader )
+        delete poReader;
 }
 
 /************************************************************************/
