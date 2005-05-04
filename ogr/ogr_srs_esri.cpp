@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2005/05/04 14:29:20  fwarmerdam
+ * convert Standard_Parallel_1 in ESRI Mercator to Latitude_Of_Origin.
+ *
  * Revision 1.38  2005/02/18 21:52:44  fwarmerdam
  * Fixed support for .prj files with blank lines between the parameters.
  *
@@ -177,6 +180,10 @@ static char *apszAlbersMapping[] = {
     SRS_PP_CENTRAL_MERIDIAN, SRS_PP_LONGITUDE_OF_CENTER, 
     SRS_PP_LATITUDE_OF_ORIGIN, SRS_PP_LATITUDE_OF_CENTER,
     "Central_Parallel", SRS_PP_LATITUDE_OF_CENTER,
+    NULL, NULL };
+
+static char *apszMercatorMapping[] = {
+    SRS_PP_STANDARD_PARALLEL_1, SRS_PP_LATITUDE_OF_ORIGIN,
     NULL, NULL };
 
 static char **papszDatumMapping = NULL;
@@ -1026,11 +1033,15 @@ OGRErr OGRSpatialReference::morphToESRI()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Remap parameters used for Albers.                               */
+/*      Remap parameters used for Albers and Mercator.                  */
 /* -------------------------------------------------------------------- */
     pszProjection = GetAttrValue("PROJECTION");
     
     if( pszProjection != NULL && EQUAL(pszProjection,"Albers") )
+        GetRoot()->applyRemapper( 
+            "PARAMETER", apszAlbersMapping + 1, apszAlbersMapping + 0, 2 );
+
+    if( pszProjection != NULL && EQUAL(pszProjection,"Mercator") )
         GetRoot()->applyRemapper( 
             "PARAMETER", apszAlbersMapping + 1, apszAlbersMapping + 0, 2 );
 
@@ -1176,11 +1187,15 @@ OGRErr OGRSpatialReference::morphFromESRI()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Remap albers parameters.                                        */
+/*      Remap albers and Mercator parameters.                           */
 /* -------------------------------------------------------------------- */
     if( pszProjection != NULL && EQUAL(pszProjection,"Albers") )
         GetRoot()->applyRemapper( 
             "PARAMETER", apszAlbersMapping + 0, apszAlbersMapping + 1, 2 );
+
+    if( pszProjection != NULL && EQUAL(pszProjection,"Mercator") )
+        GetRoot()->applyRemapper( 
+            "PARAMETER", apszMercatorMapping + 0, apszMercatorMapping + 1, 2 );
 
 /* -------------------------------------------------------------------- */
 /*      Translate PROJECTION keywords that are misnamed.                */
