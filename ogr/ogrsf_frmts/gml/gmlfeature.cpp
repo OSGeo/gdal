@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/05/04 19:51:26  fwarmerdam
+ * Avoid leaking in SetProperty() if the property is already set.
+ *
  * Revision 1.2  2002/01/24 17:37:06  warmerda
  * added SetGeometryDirectly
  *
@@ -124,6 +127,7 @@ void GMLFeature::SetProperty( int iIndex, const char *pszValue )
         m_nPropertyCount = m_poClass->GetPropertyCount();
     }
 
+    CPLFree( m_papszProperty[iIndex] );
     m_papszProperty[iIndex] = CPLStrdup( pszValue );
 }
 
