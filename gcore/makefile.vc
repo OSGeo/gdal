@@ -6,7 +6,8 @@ OBJ	=	gdalopen.obj gdaldrivermanager.obj gdaldriver.obj \
 		gdaldataset.obj gdalrasterband.obj gdal_misc.obj \
 		rasterio.obj gdalrasterblock.obj \
 		gdalcolortable.obj overview.obj gdaldefaultoverviews.obj \
-		gdalmajorobject.obj gdalpamdataset.obj gdalpamrasterband.obj
+		gdalmajorobject.obj gdalpamdataset.obj gdalpamrasterband.obj \
+		gdaljp2metadata.obj gdaljp2box.obj
 
 RES	=	Version.res
 
