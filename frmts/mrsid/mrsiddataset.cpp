@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/05/05 15:54:49  fwarmerdam
+ * PAM Enabled
+ *
  * Revision 1.32  2005/05/04 17:21:00  fwarmerdam
  * Avoid 32bit overflow when testing xsize*ysize.
  *
@@ -130,7 +133,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
 
@@ -174,7 +177,7 @@ LT_USE_NAMESPACE(LizardTech)
 /* ==================================================================== */
 /************************************************************************/
 
-class MrSIDDataset : public GDALDataset
+class MrSIDDataset : public GDALPamDataset
 {
     friend class MrSIDRasterBand;
 
@@ -243,7 +246,7 @@ class MrSIDDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class MrSIDRasterBand : public GDALRasterBand
+class MrSIDRasterBand : public GDALPamRasterBand
 {
     friend class MrSIDDataset;
 
@@ -622,8 +625,8 @@ MrSIDDataset::MrSIDDataset()
 
 MrSIDDataset::~MrSIDDataset()
 {
-#ifdef MRSID_ESDK_VERSION_40
     FlushCache();
+#ifdef MRSID_ESDK_VERSION_40
 
     if ( poImageWriter )
         delete poImageWriter;
@@ -1183,6 +1186,12 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
               "Opened image: width %d, height %d, bands %d",
               poDS->nRasterXSize, poDS->nRasterYSize, poDS->nBands );
 
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+
     return( poDS );
 }
 
@@ -1469,14 +1478,16 @@ CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
       oImageWriter.write( oScene );
     }
   
-  // Return pointer to created dataset.                                  
-  GDALDataset *poDS;
-  
-  poDS = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
-  if ( poDS == NULL )
-    poDS = (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
-  
-  return poDS;
+/* -------------------------------------------------------------------- */
+/*      Re-open dataset, and copy any auxilary pam information.         */
+/* -------------------------------------------------------------------- */
+    GDALPamDataset *poDS = (GDALPamDataset *) 
+        GDALOpen( pszFilename, GA_ReadOnly );
+
+    if( poDS )
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+
+    return poDS;
 }
 #endif /* MRSID_ESDK_VERSION_40 */
 

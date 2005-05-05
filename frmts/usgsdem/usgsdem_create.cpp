@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.22  2005/05/05 15:54:49  fwarmerdam
+ * PAM Enabled
+ *
  * Revision 1.21  2005/03/29 20:56:32  fwarmerdam
  * Ensure that DataSpecVersion can be overridden even if CDED50K product
  * is selected.
@@ -99,7 +102,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
 #include "gdalwarper.h"
@@ -1603,5 +1606,14 @@ USGSDEMCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     USGSDEMWriteCleanup( &sWInfo );
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+/* -------------------------------------------------------------------- */
+/*      Re-open dataset, and copy any auxilary pam information.         */
+/* -------------------------------------------------------------------- */
+    GDALPamDataset *poDS = (GDALPamDataset *) 
+        GDALOpen( pszFilename, GA_ReadOnly );
+
+    if( poDS )
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+
+    return poDS;
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/05/05 15:54:49  fwarmerdam
+ * PAM Enabled
+ *
  * Revision 1.11  2004/11/12 15:37:46  fwarmerdam
  * Added logic to compute the channel type if it is missing from
  * the channel header.
@@ -150,7 +153,7 @@ class PCIDSKDataset : public RawDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class PCIDSKRasterBand : public GDALRasterBand
+class PCIDSKRasterBand : public GDALPamRasterBand
 {
     friend class PCIDSKDataset;
 
@@ -1008,6 +1011,17 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Open overviews.                                                 */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+
     return( poDS );
 }
 
@@ -1376,6 +1390,8 @@ PCIDSKDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         poPCIDSKDriver->Delete( pszFilename );
         return NULL;
     }
+
+    poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
 
     return poDS;
 }

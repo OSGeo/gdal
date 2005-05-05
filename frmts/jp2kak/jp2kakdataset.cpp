@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.28  2005/05/05 15:54:48  fwarmerdam
+ * PAM Enabled
+ *
  * Revision 1.27  2004/10/07 20:18:27  fwarmerdam
  * added support for greyscale+alpha
  *
@@ -140,7 +143,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 #include "jp2_local.h"
@@ -221,7 +224,7 @@ static unsigned char jpc_header[] =
 /* ==================================================================== */
 /************************************************************************/
 
-class JP2KAKDataset : public GDALDataset
+class JP2KAKDataset : public GDALPamDataset
 {
     kdu_codestream oCodeStream;
     kdu_compressed_source *poInput;
@@ -257,7 +260,7 @@ class JP2KAKDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class JP2KAKRasterBand : public GDALRasterBand
+class JP2KAKRasterBand : public GDALPamRasterBand
 {
     friend class JP2KAKDataset;
 
@@ -944,6 +947,8 @@ JP2KAKDataset::JP2KAKDataset()
 JP2KAKDataset::~JP2KAKDataset()
 
 {
+    FlushCache();
+
     CPLFree( pszProjection );
     
     if( poInput != NULL )
@@ -1387,6 +1392,12 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         if( poDS->pszProjection == NULL )
             poDS->pszProjection = CPLStrdup("");
         
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+        poDS->SetDescription( poOpenInfo->pszFilename );
+        poDS->TryLoadXML();
+
         return( poDS );
     }
 
@@ -2181,7 +2192,16 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( !pfnProgress( 1.0, NULL, pProgressData ) )
         return NULL;
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );;
+/* -------------------------------------------------------------------- */
+/*      Re-open dataset, and copy any auxilary pam information.         */
+/* -------------------------------------------------------------------- */
+    GDALPamDataset *poDS = (GDALPamDataset *) 
+        GDALOpen( pszFilename, GA_ReadOnly );
+
+    if( poDS )
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+
+    return poDS;
 }
 
 /************************************************************************/

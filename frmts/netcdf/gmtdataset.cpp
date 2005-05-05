@@ -28,12 +28,15 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2005/05/05 15:54:49  fwarmerdam
+ * PAM Enabled
+ *
  * Revision 1.1  2004/10/16 14:56:34  fwarmerdam
  * split off GMT version as gmtdataset.cpp
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "gdal_frmts.h"
 #include "netcdf.h"
 
@@ -47,7 +50,7 @@ CPL_CVSID("$Id$");
 
 class GMTRasterBand;
 
-class GMTDataset : public GDALDataset
+class GMTDataset : public GDALPamDataset
 {
     int         z_id;
     double      adfGeoTransform[6];
@@ -68,7 +71,7 @@ class GMTDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GMTRasterBand : public GDALRasterBand
+class GMTRasterBand : public GDALPamRasterBand
 {
     nc_type nc_datatype;
     int         nZId;
@@ -187,6 +190,7 @@ CPLErr GMTRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 GMTDataset::~GMTDataset()
 
 {
+    FlushCache();
     nc_close (cdfid);
 }
 
@@ -309,11 +313,17 @@ GDALDataset *GMTDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nBands = 1;
     poDS->SetBand( 1, new GMTRasterBand( poDS, z_id, 1 ));
 
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+
     return( poDS );
 }
 
 /************************************************************************/
-/*                          GMTCreateCopy()                          */
+/*                           GMTCreateCopy()                            */
 /*                                                                      */
 /*      This code mostly cribbed from GMT's "gmt_cdf.c" module.         */
 /************************************************************************/
@@ -506,8 +516,16 @@ GMTCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     nc_close (cdfid);
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_Update);
-    
+/* -------------------------------------------------------------------- */
+/*      Re-open dataset, and copy any auxilary pam information.         */
+/* -------------------------------------------------------------------- */
+    GDALPamDataset *poDS = (GDALPamDataset *) 
+        GDALOpen( pszFilename, GA_ReadOnly );
+
+    if( poDS )
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+
+    return poDS;
 }
 
 /************************************************************************/

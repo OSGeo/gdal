@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.17  2005/05/05 15:54:49  fwarmerdam
+ * PAM Enabled
+ *
  * Revision 1.16  2005/04/15 19:28:57  fwarmerdam
  * added AREA_OR_POINT=Point metadata
  *
@@ -81,7 +84,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
@@ -131,7 +134,7 @@ static double DConvert( FILE *fp, int nCharCount )
 
 class USGSDEMRasterBand;
 
-class USGSDEMDataset : public GDALDataset
+class USGSDEMDataset : public GDALPamDataset
 {
     friend class USGSDEMRasterBand;
 
@@ -164,7 +167,7 @@ class USGSDEMDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class USGSDEMRasterBand : public GDALRasterBand
+class USGSDEMRasterBand : public GDALPamRasterBand
 {
     friend class USGSDEMDataset;
 
@@ -328,6 +331,8 @@ USGSDEMDataset::USGSDEMDataset()
 USGSDEMDataset::~USGSDEMDataset()
 
 {
+    FlushCache();
+
     CPLFree( pszProjection );
     if( fp != NULL )
         VSIFClose( fp );
@@ -615,6 +620,12 @@ GDALDataset *USGSDEMDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetBand( 1, new USGSDEMRasterBand( poDS ));
 
     poDS->SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }

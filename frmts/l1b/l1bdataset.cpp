@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.25  2005/05/05 15:54:48  fwarmerdam
+ * PAM Enabled
+ *
  * Revision 1.24  2005/02/07 20:19:11  fwarmerdam
  * Parametrized sampling rates.
  *
@@ -107,7 +110,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
@@ -225,7 +228,7 @@ class TimeCode {
 /* ==================================================================== */
 /************************************************************************/
 
-class L1BDataset : public GDALDataset
+class L1BDataset : public GDALPamDataset
 {
     friend class L1BRasterBand;
 
@@ -283,7 +286,7 @@ class L1BDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class L1BRasterBand : public GDALRasterBand
+class L1BRasterBand : public GDALPamRasterBand
 {
     friend class L1BDataset;
 
@@ -429,6 +432,8 @@ L1BDataset::L1BDataset()
 L1BDataset::~L1BDataset()
 
 {
+    FlushCache();
+
     if( nGCPCount > 0 )
     {
         for( int i = 0; i < nGCPCount; i++ )
@@ -1349,6 +1354,12 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetMetadataItem( "LOCATION", "Descending" );
         break;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 bad:

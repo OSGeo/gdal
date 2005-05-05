@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.17  2005/05/05 15:52:48  fwarmerdam
+ * PAM Enabled
+ *
  * Revision 1.16  2004/11/03 01:17:58  fwarmerdam
  * added extra testing to avoid mis-identification
  *
@@ -79,7 +82,7 @@
  */
 
 #include "gxfopen.h"
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 
 CPL_CVSID("$Id$");
 
@@ -99,7 +102,7 @@ CPL_C_END
 
 class GXFRasterBand;
 
-class GXFDataset : public GDALDataset
+class GXFDataset : public GDALPamDataset
 {
     friend class GXFRasterBand;
     
@@ -123,7 +126,7 @@ class GXFDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GXFRasterBand : public GDALRasterBand
+class GXFRasterBand : public GDALPamRasterBand
 {
     friend class GXFDataset;
     
@@ -202,6 +205,7 @@ GXFDataset::GXFDataset()
 GXFDataset::~GXFDataset()
 
 {
+    FlushCache();
     if( hGXF != NULL )
         GXFClose( hGXF );
     CPLFree( pszProjection );
@@ -347,6 +351,12 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->nBands = 1;
     poDS->SetBand( 1, new GXFRasterBand( poDS, 1 ));
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }

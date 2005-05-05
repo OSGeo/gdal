@@ -12,10 +12,7 @@
 // PCRaster library headers.
 
 // Module headers.
-#ifndef INCLUDED_GDAL_PRIV
-#include "gdal_priv.h"
-#define INCLUDED_GDAL_PRIV
-#endif
+#include "gdal_pam.h"
 
 #ifndef INCLUDED_PCRASTERDATASET
 #include "pcrasterdataset.h"

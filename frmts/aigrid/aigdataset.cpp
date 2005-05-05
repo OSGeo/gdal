@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.24  2005/05/05 15:52:48  fwarmerdam
+ * PAM Enabled
+ *
  * Revision 1.23  2005/02/21 03:04:18  fwarmerdam
  * fixed for files in arcseconds (bug 775)
  *
@@ -100,7 +103,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
 #include "aigrid.h"
@@ -123,7 +126,7 @@ static const char*OSR_GDS( char **papszNV, const char * pszField,
 
 class AIGRasterBand;
 
-class CPL_DLL AIGDataset : public GDALDataset
+class CPL_DLL AIGDataset : public GDALPamDataset
 {
     friend class AIGRasterBand;
     
@@ -152,7 +155,7 @@ class CPL_DLL AIGDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class AIGRasterBand : public GDALRasterBand
+class AIGRasterBand : public GDALPamRasterBand
 {
     friend class AIGDataset;
 
@@ -365,6 +368,7 @@ AIGDataset::AIGDataset()
 AIGDataset::~AIGDataset()
 
 {
+    FlushCache();
     CPLFree( pszProjection );
     CSLDestroy( papszPrj );
     if( psInfo != NULL )
@@ -472,6 +476,12 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
     }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( psInfo->pszCoverName );
+    poDS->TryLoadXML();
 
     return( poDS );
 }

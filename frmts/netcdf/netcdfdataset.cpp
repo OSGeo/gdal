@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2005/05/05 15:54:49  fwarmerdam
+ * PAM Enabled
+ *
  * Revision 1.5  2004/10/16 14:57:31  fwarmerdam
  * Substantial rewrite by Radim to sometimes handle COARDS style datasets
  * but really only under some circumstances.   CreateCopy() removed since
@@ -47,7 +50,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "gdal_frmts.h"
 #include "netcdf.h"
 
@@ -61,7 +64,7 @@ CPL_CVSID("$Id$");
 
 class netCDFRasterBand;
 
-class netCDFDataset : public GDALDataset
+class netCDFDataset : public GDALPamDataset
 {
     double      adfGeoTransform[6];
 
@@ -81,7 +84,7 @@ class netCDFDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class netCDFRasterBand : public GDALRasterBand
+class netCDFRasterBand : public GDALPamRasterBand
 {
     nc_type nc_datatype;
     int         nZId;
@@ -214,6 +217,7 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 netCDFDataset::~netCDFDataset()
 
 {
+    FlushCache();
     nc_close (cdfid);
 }
 
@@ -356,6 +360,12 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     poDS->nBands = i;
         
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+
     return( poDS );
 }
 /************************************************************************/

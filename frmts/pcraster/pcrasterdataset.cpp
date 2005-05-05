@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/05/05 15:54:49  fwarmerdam
+ * PAM Enabled
+ *
  * Revision 1.8  2004/11/25 15:00:41  kdejong
  * Replace and by &&, moved free out of std namespace
  *
@@ -55,10 +58,7 @@
  *
  */
 
-#ifndef INCLUDED_GDAL_PRIV
-#include "gdal_priv.h"
-#define INCLUDED_GDAL_PRIV
-#endif
+#include "gdal_pam.h"
 
 CPL_CVSID("$Id$");
 
@@ -137,6 +137,15 @@ GDALDataset* PCRasterDataset::open(GDALOpenInfo* info)
     if(map) {
       dataset = new PCRasterDataset(map);
     }
+  }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+  if( dataset )
+  {
+      dataset->SetDescription( info->pszFilename );
+      dataset->TryLoadXML();
   }
 
   return dataset;
@@ -291,8 +300,19 @@ GDALDataset* PCRasterDataset::createCopy(char const* filename,
   free(buffer);
   buffer = 0;
 
-  return errorCode != CE_None ? 0
-         : static_cast<GDALDataset*>(GDALOpen(filename, GA_Update));
+  if( errorCode != CE_None )
+      return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Re-open dataset, and copy any auxilary pam information.         */
+/* -------------------------------------------------------------------- */
+  GDALPamDataset *poDS = (GDALPamDataset *) 
+        GDALOpen( filename, GA_Update );
+
+  if( poDS )
+      poDS->CloneInfo( source, GCIF_PAM_DEFAULT );
+  
+  return poDS;
 }
 
 
@@ -307,7 +327,7 @@ GDALDataset* PCRasterDataset::createCopy(char const* filename,
 */
 PCRasterDataset::PCRasterDataset(MAP* map)
 
-  : GDALDataset(),
+  : GDALPamDataset(),
     d_map(map), d_west(0.0), d_north(0.0), d_cellSize(0.0)
 
 {
@@ -339,7 +359,8 @@ PCRasterDataset::PCRasterDataset(MAP* map)
 */
 PCRasterDataset::~PCRasterDataset()
 {
-  Mclose(d_map);
+    FlushCache();
+    Mclose(d_map);
 }
 
 

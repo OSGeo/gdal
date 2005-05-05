@@ -9,7 +9,7 @@
 
 // Module headers.
 #ifndef INCLUDED_GDAL_PRIV
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #define INCLUDED_GDAL_PRIV
 #endif
 
@@ -29,7 +29,7 @@ class PCRasterDataset;
 //! This class specialises the GDALRasterBand class for PCRaster rasters.
 /*!
 */
-class PCRasterRasterBand: public GDALRasterBand
+class PCRasterRasterBand: public GDALPamRasterBand
 {
 
 private:

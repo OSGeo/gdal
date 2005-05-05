@@ -51,7 +51,7 @@
 */
 PCRasterRasterBand::PCRasterRasterBand(PCRasterDataset* dataset)
 
-  : GDALRasterBand(), d_dataset(dataset)
+  : GDALPamRasterBand(), d_dataset(dataset)
 
 {
   this->poDS = dataset;
