@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/05/05 13:56:34  fwarmerdam
+ * moved metadata handling to PAM
+ *
  * Revision 1.20  2005/04/11 17:08:36  fwarmerdam
  * Fixed leak of xml tree when XMLInit() fails.
  *
@@ -247,7 +250,7 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPath )
     /* -------------------------------------------------------------------- */
     /*      Metadata                                                        */
     /* -------------------------------------------------------------------- */
-    psMD = VRTSerializeMetadata( this );
+    psMD = PamSerializeMetadata( this );
     if( psMD != NULL )
         CPLAddXMLChild( psDSTree, psMD );
 
@@ -415,7 +418,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
 /* -------------------------------------------------------------------- */
 /*      Apply any dataset level metadata.                               */
 /* -------------------------------------------------------------------- */
-    VRTApplyMetadata( psTree, this );
+    PamApplyMetadata( psTree, this );
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -888,70 +891,3 @@ VRTDataset::Create( const char * pszName,
     }
 }
 
-/************************************************************************/
-/*                          VRTApplyMetadata()                          */
-/************************************************************************/
-int VRTApplyMetadata( CPLXMLNode *psTree, GDALMajorObject *poMO )
-
-{
-    char **papszMD = NULL;
-    CPLXMLNode *psMetadata = CPLGetXMLNode( psTree, "Metadata" );
-    CPLXMLNode *psMDI;
-
-    if( psMetadata == NULL )
-        return FALSE;
-
-    /* Format is <MDI key="...">value_Text</MDI> */
-
-    for( psMDI = psMetadata->psChild; psMDI != NULL; psMDI = psMDI->psNext )
-    {
-        if( !EQUAL(psMDI->pszValue,"MDI") || psMDI->eType != CXT_Element 
-            || psMDI->psChild == NULL || psMDI->psChild->psNext == NULL 
-            || psMDI->psChild->eType != CXT_Attribute
-            || psMDI->psChild->psChild == NULL )
-            continue;
-
-        papszMD = 
-            CSLSetNameValue( papszMD, psMDI->psChild->psChild->pszValue, 
-                             psMDI->psChild->psNext->pszValue );
-    }
-
-    poMO->SetMetadata( papszMD );
-    CSLDestroy( papszMD );
-
-    return papszMD != NULL;
-}
-
-/************************************************************************/
-/*                        VRTSerializeMetadata()                        */
-/************************************************************************/
-
-CPLXMLNode *VRTSerializeMetadata( GDALMajorObject *poMO )
-
-{
-    char **papszMD = poMO->GetMetadata();
-
-    if( papszMD == NULL || CSLCount(papszMD) == 0 )
-        return NULL;
-
-    CPLXMLNode *psMD;
-
-    psMD = CPLCreateXMLNode( NULL, CXT_Element, "Metadata" );
-
-    for( int i = 0; papszMD[i] != NULL; i++ )
-    {
-        const char *pszRawValue;
-        char *pszKey;
-        CPLXMLNode *psMDI;
-
-        pszRawValue = CPLParseNameValue( papszMD[i], &pszKey );
-
-        psMDI = CPLCreateXMLNode( psMD, CXT_Element, "MDI" );
-        CPLSetXMLValue( psMDI, "#key", pszKey );
-        CPLCreateXMLNode( psMDI, CXT_Text, pszRawValue );
-
-        CPLFree( pszKey );
-    }
-
-    return psMD;
-}

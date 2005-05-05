@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/05/05 13:56:14  fwarmerdam
+ * moved metadata handling to PAM
+ *
  * Revision 1.20  2004/08/11 18:46:45  warmerda
  * pass pszVRTPath through serialize methods
  *
@@ -339,7 +342,7 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
 /* -------------------------------------------------------------------- */
 /*      Apply any band level metadata.                                  */
 /* -------------------------------------------------------------------- */
-    VRTApplyMetadata( psTree, this );
+    PamApplyMetadata( psTree, this );
 
 /* -------------------------------------------------------------------- */
 /*      Collect various other items of metadata.                        */
@@ -446,7 +449,7 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
     if( nBand > 0 )
         CPLSetXMLValue( psTree, "#band", CPLSPrintf( "%d", GetBand() ) );
 
-    psMD = VRTSerializeMetadata( this );
+    psMD = PamSerializeMetadata( this );
     if( psMD != NULL )
         CPLAddXMLChild( psTree, psMD );
 
