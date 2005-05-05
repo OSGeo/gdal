@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/05/05 20:17:15  fwarmerdam
+ * support dictionary lookups
+ *
  * Revision 1.1  2005/05/03 21:10:59  fwarmerdam
  * New
  *
@@ -94,6 +97,7 @@ class CPL_DLL GDALJP2Metadata
 {
   private:
     void    CollectGMLData( GDALJP2Box * );
+    int     GMLSRSLookup( const char *pszURN );
 
   public:
     int     bHaveGeoTransform;
