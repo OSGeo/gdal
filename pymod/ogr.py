@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.50  2005/05/05 22:45:33  fwarmerdam
+# Fixed Empty call ... only one argument.
+#
 # Revision 1.49  2005/03/02 17:42:46  hobu
 # First pass at a __setattr__ for Feature
 #
@@ -1126,8 +1129,8 @@ class Geometry:
     def Overlaps( self, other_geom ):
         return _gdal.OGR_G_Overlaps( self._o, other_geom._o )
 
-    def Empty( self, other_geom ):
-        return _gdal.OGR_G_Empty( self._o, other_geom._o )
+    def Empty( self ):
+        return _gdal.OGR_G_Empty( self._o )
 
     def GetArea( self ):
         return _gdal.OGR_G_GetArea( self._o )
