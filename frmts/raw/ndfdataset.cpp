@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/05/05 13:55:42  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.3  2005/03/05 17:27:00  fwarmerdam
  * updated to support NDF1 and rotated datasets
  *
@@ -97,6 +100,7 @@ NDFDataset::NDFDataset()
 NDFDataset::~NDFDataset()
 
 {
+    FlushCache();
     CPLFree( pszProjection );
     CSLDestroy( papszHeader );
 
@@ -335,6 +339,12 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }

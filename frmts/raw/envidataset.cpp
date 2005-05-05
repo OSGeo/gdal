@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/05/05 13:55:42  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.24  2005/03/16 11:04:00  lichun
  * FlushCache() now always writes the whole header file
  * in the case of classes the type will be Classified and the class names and colors are written
@@ -1189,6 +1192,12 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+    
     return( poDS );
 }
 
@@ -1232,7 +1241,7 @@ int ENVIDataset::GetEnviType(GDALDataType eType)
               "Attempt to create ENVI .hdr labelled dataset with an illegal\n"
               "data type (%s).\n",
               GDALGetDataTypeName(eType) );
-      	return NULL;
+      	return 1;
   }
   return iENVIType;
 }

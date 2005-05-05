@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2005/05/05 13:55:42  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.35  2004/01/23 18:55:01  gwalter
  * Remove unnecessary print statement.
  *
@@ -1485,6 +1488,12 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, pszOvrFilename, TRUE );
 
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( pszOvrFilename );
+    poDS->TryLoadXML();
+    
     CPLFree( pszOvrFilename );
 
     return( poDS );
@@ -1717,10 +1726,10 @@ HKVDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     /* check that other bands match type- sets type */
     /* to unknown if they differ.                  */
     for( iBand = 1; iBand < poSrcDS->GetRasterCount(); iBand++ )
-     {
-         GDALRasterBand *poBand = poSrcDS->GetRasterBand( iBand+1 );
-         eType = GDALDataTypeUnion( eType, poBand->GetRasterDataType() );
-     }
+    {
+        GDALRasterBand *poBand = poSrcDS->GetRasterBand( iBand+1 );
+        eType = GDALDataTypeUnion( eType, poBand->GetRasterDataType() );
+    }
 
     poDS = (HKVDataset *) Create( pszFilename, 
                                   poSrcDS->GetRasterXSize(), 
@@ -1855,6 +1864,8 @@ HKVDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         poHKVDriver->Delete( pszFilename );
         return NULL;
     }
+
+    poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
 
     return poDS;
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/05/05 13:55:42  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.4  2002/09/04 06:50:37  warmerda
  * avoid static driver pointers
  *
@@ -87,6 +90,7 @@ FujiBASDataset::FujiBASDataset()
 FujiBASDataset::~FujiBASDataset()
 
 {
+    FlushCache();
     if( fpImage != NULL )
         VSIFClose( fpImage );
     CSLDestroy( papszHeader );
@@ -208,6 +212,12 @@ GDALDataset *FujiBASDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+    
     return( poDS );
 }
 

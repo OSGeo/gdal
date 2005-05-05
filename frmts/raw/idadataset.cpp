@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/05/05 13:55:42  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.6  2005/02/08 20:22:39  fwarmerdam
  * Added SetProjection support.
  *
@@ -389,11 +392,7 @@ CPLErr IDADataset::SetGeoTransform( double *padfGeoTransform )
 
 {
     if( padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0 )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "IDA Format does not support rotated images, SetGeoTransform() failed." );
-        return CE_Failure;
-    }
+        return GDALPamDataset::SetGeoTransform( padfGeoTransform );
 
     memcpy( adfGeoTransform, padfGeoTransform, sizeof(double) * 6 );
     bHeaderDirty = TRUE;
@@ -436,7 +435,7 @@ CPLErr IDADataset::SetProjection( const char *pszWKTIn )
     oSRS.importFromWkt( (char **) &pszWKTIn );
 
     if( !oSRS.IsGeographic() && !oSRS.IsProjected() )
-        return CE_None;
+        GDALPamDataset::SetProjection( pszWKTIn );
 
 /* -------------------------------------------------------------------- */
 /*      Clear projection parameters.                                    */
@@ -510,10 +509,7 @@ CPLErr IDADataset::SetProjection( const char *pszWKTIn )
     }
     else
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s is an unsupported projection for IDA format.", 
-                  pszProjection );
-        return CE_Failure;
+        return GDALPamDataset::SetProjection( pszWKTIn );
     }
 
 /* -------------------------------------------------------------------- */
@@ -772,6 +768,12 @@ CALCULATED =200
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }

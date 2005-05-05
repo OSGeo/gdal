@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/05/05 13:55:42  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.2  2002/10/03 06:07:31  warmerda
  * Added nodata support.
  *
@@ -84,6 +87,7 @@ GSCDataset::GSCDataset()
 GSCDataset::~GSCDataset()
 
 {
+    FlushCache();
     if( fpImage != NULL )
         VSIFClose( fpImage );
 }
@@ -199,6 +203,12 @@ GDALDataset *GSCDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+    
     return( poDS );
 }
 

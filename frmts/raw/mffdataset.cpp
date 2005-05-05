@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/05/05 13:55:42  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.27  2003/04/02 19:05:59  dron
  * Large file support.
  *
@@ -1031,6 +1034,12 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+
+/* -------------------------------------------------------------------- */
 /*      Set all information from the .hdr that isn't well know to be    */
 /*      metadata.                                                       */
 /* -------------------------------------------------------------------- */
@@ -1629,6 +1638,8 @@ MFFDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         poMFFDriver->Delete( pszFilename );
         return NULL;
     }
+
+    poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
 
     return poDS;
 }

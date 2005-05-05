@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.17  2005/05/05 13:55:42  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.16  2004/07/12 18:24:23  gwalter
  * Fixed geotransform calculation.
  *
@@ -94,7 +97,6 @@
  *
  */
 
-#include "gdal_priv.h"
 #include "cpl_string.h"
 #include "cpl_conv.h"
 #include "ogr_spatialref.h"
@@ -165,7 +167,7 @@ enum FASTSatellite  // Satellites:
 /* ==================================================================== */
 /************************************************************************/
 
-class FASTDataset : public GDALDataset
+class FASTDataset : public GDALPamDataset
 {
     friend class FASTRasterBand;
 
@@ -254,6 +256,9 @@ FASTDataset::~FASTDataset()
 
 {
     int i;
+
+    FlushCache();
+
     if ( pszDirname )
 	CPLFree( pszDirname );
     if ( pszProjection )
@@ -821,6 +826,12 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     CPLFree( pszHeader );
 
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+    
     return( poDS );
 }
 

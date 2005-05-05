@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/05/05 13:55:41  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.6  2004/05/11 17:27:33  warmerda
  * Set eAccess properly in Open().
  *
@@ -230,7 +233,7 @@ CPLErr BTRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* ==================================================================== */
 /************************************************************************/
 
-class BTDataset : public GDALDataset
+class BTDataset : public GDALPamDataset
 {
     FILE        *fpImage;       // image data file.
 
@@ -714,6 +717,12 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
         GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
                            poDS->adfGeoTransform );
 #endif
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }
