@@ -30,6 +30,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/05/05 20:47:52  dron
+ * Override GetExtent() method for PostGIS layers with PostGIS standard function
+ * extent() (Oleg Semykin <oleg.semykin@gmail.com>
+ *
  * Revision 1.17  2005/02/22 12:54:05  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -641,6 +645,9 @@ int OGRPGLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCTransactions) )
         return TRUE;
+
+	else if( EQUAL(pszCap,OLCFastGetExtent) )
+		return bHasPostGISGeometry;
 
     else 
         return FALSE;
