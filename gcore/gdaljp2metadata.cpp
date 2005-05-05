@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/05/05 20:17:15  fwarmerdam
+ * support dictionary lookups
+ *
  * Revision 1.1  2005/05/03 21:10:59  fwarmerdam
  * New
  *
@@ -223,6 +226,149 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
 }
 
 /************************************************************************/
+/*                         GetDictionaryItem()                          */
+/************************************************************************/
+
+static CPLXMLNode *
+GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
+
+{
+    char *pszLabel;
+    const char *pszFragmentId = NULL;
+    int i;
+
+
+    if( EQUALN(pszURN,"urn:jp2k:xml:", 13) )
+        pszLabel = CPLStrdup( pszURN + 13 );
+    else if( EQUALN(pszURN,"urn:ogc:tc:gmljp2:xml:", 22) )
+        pszLabel = CPLStrdup( pszURN + 22 );
+    else
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Split out label and fragment id.                                */
+/* -------------------------------------------------------------------- */
+    for( i = 0; pszLabel[i] != '#'; i++ )
+    {
+        if( pszLabel[i] == '\0' )
+            return NULL;
+    }
+
+    pszFragmentId = pszLabel + i + 1;
+    pszLabel[i] = '\0';
+
+/* -------------------------------------------------------------------- */
+/*      Can we find an XML box with the desired label?                  */
+/* -------------------------------------------------------------------- */
+    const char *pszDictionary = 
+        CSLFetchNameValue( papszGMLMetadata, pszLabel );
+
+    if( pszDictionary == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Try and parse the dictionary.                                   */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psDictTree = CPLParseXMLString( pszDictionary );
+
+    if( psDictTree == NULL )
+    {
+        CPLDestroyXMLNode( psDictTree );
+        return NULL;
+    }
+
+    CPLStripXMLNamespace( psDictTree, NULL, TRUE );
+
+    CPLXMLNode *psDictRoot = CPLSearchXMLNode( psDictTree, "Dictionary" );
+    
+    if( psDictRoot == NULL )
+    {
+        CPLDestroyXMLNode( psDictTree );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Search for matching id.                                         */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psEntry, *psHit = NULL;
+    for( psEntry = psDictRoot->psChild; 
+         psEntry != NULL && psHit == NULL; 
+         psEntry = psEntry->psNext )
+    {
+        const char *pszId;
+
+        if( psEntry->eType != CXT_Element )
+            continue;
+
+        if( !EQUAL(psEntry->pszValue,"dictionaryEntry") )
+            continue;
+        
+        if( psEntry->psChild == NULL )
+            continue;
+
+        pszId = CPLGetXMLValue( psEntry->psChild, "id", "" );
+
+        if( EQUAL(pszId, pszFragmentId) )
+            psHit = CPLCloneXMLTree( psEntry->psChild );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    CPLFree( pszLabel );
+    CPLDestroyXMLNode( psDictTree );
+
+    return psHit;
+}
+
+        
+/************************************************************************/
+/*                            GMLSRSLookup()                            */
+/*                                                                      */
+/*      Lookup an SRS in a dictionary inside this file.  We will get    */
+/*      something like:                                                 */
+/*        urn:jp2k:xml:CRSDictionary.xml#crs1112                        */
+/*                                                                      */
+/*      We need to split the filename from the fragment id, and         */
+/*      lookup the fragment in the file if we can find it our           */
+/*      list of labelled xml boxes.                                     */
+/************************************************************************/
+
+int GDALJP2Metadata::GMLSRSLookup( const char *pszURN )
+
+{
+    CPLXMLNode *psDictEntry = GetDictionaryItem( papszGMLMetadata, pszURN );
+
+    if( psDictEntry == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Reserialize this fragment.                                      */
+/* -------------------------------------------------------------------- */
+    char *pszDictEntryXML = CPLSerializeXMLTree( psDictEntry );
+    CPLDestroyXMLNode( psDictEntry );
+
+/* -------------------------------------------------------------------- */
+/*      Try to convert into an OGRSpatialReference.                     */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oSRS;
+    int bSuccess = FALSE;
+
+    if( oSRS.importFromXML( pszDictEntryXML ) == OGRERR_NONE )
+    {
+        CPLFree( pszProjection );
+        pszProjection = NULL;
+
+        oSRS.exportToWkt( &pszProjection );
+        bSuccess = TRUE;
+    }
+
+    CPLFree( pszDictEntryXML );
+
+    return bSuccess;
+}
+
+/************************************************************************/
 /*                        ParseGMLCoverageDesc()                        */
 /************************************************************************/
 
@@ -363,8 +509,14 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
             if( oSRS.importFromEPSG( atoi(pszCode+1) ) == OGRERR_NONE )
                 oSRS.exportToWkt( &pszProjection );
         }
+        else if( EQUALN(pszSRSName,"urn:jp2k:xml:",13) 
+                 || EQUALN(pszSRSName,"urn:ogc:tc:gmljp2:xml:", 22) )
+        {
+            GMLSRSLookup( pszSRSName );
+        }
         else
-            CPLDebug( "GDALJP2Metadata", "Unable to evaluate SRSName=%s", 
+            CPLDebug( "GDALJP2Metadata", 
+                      "Unable to evaluate SRSName=%s", 
                       pszSRSName );
     }
 
