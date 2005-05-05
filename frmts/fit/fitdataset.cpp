@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.21  2005/05/05 14:02:57  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.20  2004/03/22 23:45:41  aubin
  * wrap endian swapping functions in namespace to limit scope
  *
@@ -102,7 +105,7 @@
 
 #include "fit.h"
 #include "gstEndian.h"
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
@@ -126,7 +129,7 @@ using namespace gstEndian;
 
 class FITRasterBand;
 
-class FITDataset : public GDALDataset
+class FITDataset : public GDALPamDataset
 {
     friend class FITRasterBand;
     
@@ -155,7 +158,7 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 /* ==================================================================== */
 /************************************************************************/
 
-class FITRasterBand : public GDALRasterBand
+class FITRasterBand : public GDALPamRasterBand
 {
     friend class FITDataset;
     
@@ -865,6 +868,7 @@ FITDataset::FITDataset() : fp( NULL ), info( NULL )
 
 FITDataset::~FITDataset()
 {
+    FlushCache();
     if (info)
         delete(info);
 }
@@ -1134,6 +1138,12 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( i+1,  new FITRasterBand( poDS, i+1 ) ) ;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+
     return guard.take();
 }
 
@@ -1373,7 +1383,16 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
 
     pfnProgress( 1.0, NULL, pProgressData );
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+/* -------------------------------------------------------------------- */
+/*      Re-open dataset, and copy any auxilary pam information.         */
+/* -------------------------------------------------------------------- */
+    GDALPamDataset *poDS = (GDALPamDataset *) 
+        GDALOpen( pszFilename, GA_ReadOnly );
+
+    if( poDS )
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+
+    return poDS;
 }
 #endif // FIT_WRITE
 

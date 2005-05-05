@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/05/05 14:01:36  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.32  2004/09/28 14:18:06  fwarmerdam
  * A few more additions to improve error handling.  The "create" write
  * error checks don't work (at least on Linux) because of the buffering.
@@ -131,7 +134,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
@@ -283,7 +286,7 @@ typedef struct
 /* ==================================================================== */
 /************************************************************************/
 
-class BMPDataset : public GDALDataset
+class BMPDataset : public GDALPamDataset
 {
     friend class BMPRasterBand;
     friend class BMPComprRasterBand;
@@ -326,7 +329,7 @@ class BMPDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class BMPRasterBand : public GDALRasterBand
+class BMPRasterBand : public GDALPamRasterBand
 {
     friend class BMPDataset;
 
@@ -1194,6 +1197,12 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->bGeoTransformValid =
             GDALReadWorldFile( poOpenInfo->pszFilename, ".bmpw",
                                poDS->adfGeoTransform );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }

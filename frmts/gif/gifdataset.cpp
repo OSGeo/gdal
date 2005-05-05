@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.22  2005/05/05 14:05:03  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.21  2004/08/20 17:33:06  warmerda
  * Support overviews.
  *
@@ -95,7 +98,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
@@ -119,7 +122,7 @@ static int InterlacedJumps[] = { 8, 8, 4, 2 };
 
 class GIFRasterBand;
 
-class GIFDataset : public GDALDataset
+class GIFDataset : public GDALPamDataset
 {
     friend class GIFRasterBand;
 
@@ -142,7 +145,7 @@ class GIFDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GIFRasterBand : public GDALRasterBand
+class GIFRasterBand : public GDALPamRasterBand
 {
     friend class GIFDataset;
 
@@ -363,6 +366,7 @@ GIFDataset::GIFDataset()
 GIFDataset::~GIFDataset()
 
 {
+    FlushCache();
     DGifCloseFile( hGifFile );
 }
 
@@ -478,6 +482,12 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Support overviews.                                              */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return poDS;
 }
@@ -665,7 +675,16 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform );
     }
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+/* -------------------------------------------------------------------- */
+/*      Re-open dataset, and copy any auxilary pam information.         */
+/* -------------------------------------------------------------------- */
+    GDALPamDataset *poDS = (GDALPamDataset *) 
+        GDALOpen( pszFilename, GA_ReadOnly );
+
+    if( poDS )
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+
+    return poDS;
 }
 
 /************************************************************************/

@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/05/05 14:01:36  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.29  2005/04/15 18:34:35  fwarmerdam
  * Added AREA_OR_POINT metadata.
  *
@@ -119,7 +122,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include <ctype.h>
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
@@ -138,7 +141,7 @@ CPL_C_END
 
 class AAIGRasterBand;
 
-class CPL_DLL AAIGDataset : public GDALDataset
+class CPL_DLL AAIGDataset : public GDALPamDataset
 {
     friend class AAIGRasterBand;
     
@@ -169,7 +172,7 @@ class CPL_DLL AAIGDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class AAIGRasterBand : public GDALRasterBand
+class AAIGRasterBand : public GDALPamRasterBand
 {
     friend class AAIGDataset;
 
@@ -369,6 +372,8 @@ AAIGDataset::AAIGDataset()
 AAIGDataset::~AAIGDataset()
 
 {
+    FlushCache();
+
     if( fp != NULL )
         VSIFClose( fp );
 
@@ -543,6 +548,12 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLFree( pszDirname );
     CPLFree( pszBasename );
 
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+
     return( poDS );
 }
 
@@ -704,7 +715,16 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         CPLFree( pszESRIProjection );
     }
     
-    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+/* -------------------------------------------------------------------- */
+/*      Re-open dataset, and copy any auxilary pam information.         */
+/* -------------------------------------------------------------------- */
+    GDALPamDataset *poDS = (GDALPamDataset *) 
+        GDALOpen( pszFilename, GA_ReadOnly );
+
+    if( poDS )
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+
+    return poDS;
 }
 
 /************************************************************************/

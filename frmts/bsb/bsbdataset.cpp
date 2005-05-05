@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.15  2005/05/05 14:01:36  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.14  2004/04/02 16:38:38  warmerda
  * Also disable creation type metadata.
  *
@@ -74,7 +77,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "bsb_read.h"
 #include "cpl_string.h"
 
@@ -95,7 +98,7 @@ CPL_C_END
 
 class BSBRasterBand;
 
-class BSBDataset : public GDALDataset
+class BSBDataset : public GDALPamDataset
 {
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
@@ -127,7 +130,7 @@ class BSBDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class BSBRasterBand : public GDALRasterBand
+class BSBRasterBand : public GDALPamRasterBand
 {
     GDALColorTable	oCT;
 
@@ -249,6 +252,8 @@ BSBDataset::BSBDataset()
 BSBDataset::~BSBDataset()
 
 {
+    FlushCache();
+
     GDALDeinitGCPs( nGCPCount, pasGCPList );
     CPLFree( pasGCPList );
 
@@ -416,6 +421,12 @@ GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->ScanForGCPs();
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }

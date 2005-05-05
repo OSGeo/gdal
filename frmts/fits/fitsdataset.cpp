@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/05/05 14:02:58  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.18  2003/05/06 05:20:38  sperkins
  * cleaned up comments
  *
@@ -107,7 +110,7 @@ CPL_C_END
 
 class FITSRasterBand;
 
-class FITSDataset : public GDALDataset {
+class FITSDataset : public GDALPamDataset {
 
   friend class FITSRasterBand;
   
@@ -140,7 +143,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class FITSRasterBand : public GDALRasterBand {
+class FITSRasterBand : public GDALPamRasterBand {
 
   friend class	FITSDataset;
   
@@ -172,9 +175,8 @@ FITSRasterBand::FITSRasterBand(FITSDataset *poDS, int nBand) {
 /************************************************************************/
 
 FITSRasterBand::~FITSRasterBand() {
-  // Nothing here yet
+    FlushCache();
 }
-
 
 /************************************************************************/
 /*                             IReadBlock()                             */
@@ -557,7 +559,15 @@ GDALDataset* FITSDataset::Open(GDALOpenInfo* poOpenInfo) {
     return NULL;
   }
   else
-    return dataset;
+  {
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+      dataset->SetDescription( poOpenInfo->pszFilename );
+      dataset->TryLoadXML();
+
+      return dataset;
+  }
 }
 
 

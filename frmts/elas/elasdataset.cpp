@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/05/05 14:02:58  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.10  2003/07/08 15:37:05  warmerda
  * avoid warnings
  *
@@ -60,7 +63,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 
 CPL_CVSID("$Id$");
 
@@ -110,7 +113,7 @@ typedef struct {
 
 class ELASRasterBand;
 
-class ELASDataset : public GDALDataset
+class ELASDataset : public GDALPamDataset
 {
     friend class ELASRasterBand;
 
@@ -147,7 +150,7 @@ class ELASDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ELASRasterBand : public GDALRasterBand
+class ELASRasterBand : public GDALPamRasterBand
 {
     friend class ELASDataset;
 
@@ -452,6 +455,12 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[5] = 1.0;
     }
     
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+
     return( poDS );
 }
 
