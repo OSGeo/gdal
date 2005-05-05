@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.9  2005/05/05 15:54:48  fwarmerdam
+ * PAM Enabled
+ *
  * Revision 1.8  2003/07/08 21:21:56  warmerda
  * avoid warnings
  *
@@ -54,7 +57,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 
 CPL_CVSID("$Id$");
 
@@ -108,7 +111,7 @@ static double JDEMGetAngle( char *pszField )
 
 class JDEMRasterBand;
 
-class JDEMDataset : public GDALDataset
+class JDEMDataset : public GDALPamDataset
 {
     friend class JDEMRasterBand;
 
@@ -130,7 +133,7 @@ class JDEMDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class JDEMRasterBand : public GDALRasterBand
+class JDEMRasterBand : public GDALPamRasterBand
 {
     friend class JDEMDataset;
     
@@ -216,6 +219,7 @@ CPLErr JDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 JDEMDataset::~JDEMDataset()
 
 {
+    FlushCache();
     if( fp != NULL )
         VSIFClose( fp );
 }
@@ -305,6 +309,12 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     poDS->SetBand( 1, new JDEMRasterBand( poDS, 1 ));
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }

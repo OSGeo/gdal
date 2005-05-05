@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2005/05/05 15:54:49  fwarmerdam
+ * PAM Enabled
+ *
  * Revision 1.42  2005/04/18 17:58:12  fwarmerdam
  * fixed up ICORDS=' ' case to mean no geotransform
  *
@@ -162,7 +165,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "nitflib.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
@@ -186,7 +189,7 @@ static CPLErr NITFSetColorInterpretation( NITFImage *psImage,
 
 class NITFRasterBand;
 
-class NITFDataset : public GDALDataset
+class NITFDataset : public GDALPamDataset
 {
     friend class NITFRasterBand;
 
@@ -243,7 +246,7 @@ class NITFDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class NITFRasterBand : public GDALRasterBand
+class NITFRasterBand : public GDALPamRasterBand
 {
     friend class NITFDataset;
 
@@ -1315,6 +1318,12 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+
     return( poDS );
 }
 
@@ -1636,7 +1645,7 @@ NITFDataset::NITFCreateCopy(
     GDALRasterBand *poBand1 = poSrcDS->GetRasterBand(1);
     char  **papszFullOptions = CSLDuplicate( papszOptions );
     int   bJPEG2000 = FALSE;
-    GDALDataset *poDstDS = NULL;
+    NITFDataset *poDstDS = NULL;
     GDALDriver *poJ2KDriver = NULL;
 
     if( poBand1 == NULL )
@@ -1767,7 +1776,7 @@ NITFDataset::NITFCreateCopy(
 /* ==================================================================== */
     if( !bJPEG2000 )
     {
-        poDstDS = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+        poDstDS = (NITFDataset *) GDALOpen( pszFilename, GA_Update );
         if( poDstDS == NULL )
             return NULL;
         
@@ -1857,7 +1866,7 @@ NITFDataset::NITFCreateCopy(
 
         NITFPatchImageLength( pszFilename, nImageOffset, nPixelCount );
 
-        poDstDS = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+        poDstDS = (NITFDataset *) GDALOpen( pszFilename, GA_Update );
 
         if( poDstDS == NULL )
             return NULL;
@@ -1868,9 +1877,11 @@ NITFDataset::NITFCreateCopy(
 /* -------------------------------------------------------------------- */
     if( bWriteGeoTransform )
     {
-        ((NITFDataset *)poDstDS)->psImage->nZone = nZone;
+        poDstDS->psImage->nZone = nZone;
         poDstDS->SetGeoTransform( adfGeoTransform );
     }
+
+    poDstDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
 
     return poDstDS;
 }

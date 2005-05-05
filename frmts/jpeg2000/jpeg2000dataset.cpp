@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.20  2005/05/05 15:54:48  fwarmerdam
+ * PAM Enabled
+ *
  * Revision 1.19  2004/01/20 16:23:44  dron
  * Don't close streams before deleting the JPEG2000Dataset object.
  *
@@ -87,7 +90,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "cpl_string.h"
 
 #include <jasper/jasper.h>
@@ -238,7 +241,7 @@ static unsigned char msi_uuid2[16] =
 /* ==================================================================== */
 /************************************************************************/
 
-class JPEG2000Dataset : public GDALDataset
+class JPEG2000Dataset : public GDALPamDataset
 {
     friend class JPEG2000RasterBand;
 
@@ -272,7 +275,7 @@ class JPEG2000Dataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class JPEG2000RasterBand : public GDALRasterBand
+class JPEG2000RasterBand : public GDALPamRasterBand
 {
     friend class JPEG2000Dataset;
 
@@ -497,6 +500,8 @@ JPEG2000Dataset::JPEG2000Dataset()
 JPEG2000Dataset::~JPEG2000Dataset()
 
 {
+    FlushCache();
+
     if ( psStream )
         jas_stream_close( psStream );
     if ( psImage )
@@ -790,6 +795,12 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
             GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
                                poDS->adfGeoTransform );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }
@@ -1134,7 +1145,16 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform );
     }
 
-    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+/* -------------------------------------------------------------------- */
+/*      Re-open dataset, and copy any auxilary pam information.         */
+/* -------------------------------------------------------------------- */
+    GDALPamDataset *poDS = (GDALPamDataset *) 
+        GDALOpen( pszFilename, GA_ReadOnly );
+
+    if( poDS )
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+
+    return poDS;
 }
 
 /************************************************************************/

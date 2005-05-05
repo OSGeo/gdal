@@ -12,12 +12,7 @@
 #endif
 
 // Module headers.
-#ifndef INCLUDED_GDAL_PRIV
-#include "gdal_priv.h"
-#define INCLUDED_GDAL_PRIV
-#endif
-
-
+#include "gdal_pam.h"
 
 // namespace {
   // PCRasterDataset declarations.
@@ -43,7 +38,7 @@ namespace gdal {
   Additional documentation about this driver can be found in
   frmts/frmts_various.html of the GDAL source code distribution.
 */
-class PCRasterDataset: public GDALDataset
+class PCRasterDataset: public GDALPamDataset
 {
 
   friend class gdal::PCRasterDatasetTest;

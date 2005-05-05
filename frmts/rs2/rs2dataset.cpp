@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/05/05 15:54:49  fwarmerdam
+ * PAM Enabled
+ *
  * Revision 1.4  2004/11/11 00:16:01  gwalter
  * Polarmetric->Polarimetric.
  *
@@ -43,7 +46,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "cpl_minixml.h"
 
 CPL_CVSID("$Id$");
@@ -58,7 +61,7 @@ CPL_C_END
 /* ==================================================================== */
 /************************************************************************/
 
-class RS2Dataset : public GDALDataset
+class RS2Dataset : public GDALPamDataset
 {
     CPLXMLNode *psProduct;
 
@@ -85,7 +88,7 @@ class RS2Dataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class RS2RasterBand : public GDALRasterBand
+class RS2RasterBand : public GDALPamRasterBand
 {
     GDALDataset     *poBandFile;
 
@@ -250,6 +253,8 @@ RS2Dataset::RS2Dataset()
 RS2Dataset::~RS2Dataset()
 
 {
+    FlushCache();
+
     CPLDestroyXMLNode( psProduct );
 
     CPLFree( pszGCPProjection );
@@ -450,6 +455,12 @@ GDALDataset *RS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }

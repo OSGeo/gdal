@@ -457,16 +457,17 @@ ILWISDataset::ILWISDataset()
 ILWISDataset::~ILWISDataset()
 
 {
-		FlushCache();
+    FlushCache();
     CPLFree( pszProjection );
 }
 
 /************************************************************************/
-/*			CollectTransformCoef()																				  */
+/*                        CollectTransformCoef()                        */
+/*                                                                      */
 /*      Collect the geotransform, support for the GeoRefCorners         */
-/*			georeferencing only; We use the extent of the coordinates 			*/
+/*      georeferencing only; We use the extent of the coordinates       */
 /*      to determine the pixelsize in X and Y direction. Then calculate */
-/*      the transform coefficients from the extent and pixelsize        */                                               
+/*      the transform coefficients from the extent and pixelsize        */
 /************************************************************************/
 
 void ILWISDataset::CollectTransformCoef(string &pszRefName)
@@ -532,8 +533,9 @@ void ILWISDataset::CollectTransformCoef(string &pszRefName)
 }
 
 /************************************************************************/
-/*      WriteGeoReference()																							*/
-/*			Try to write a geo-reference file for the dataset to create     */	
+/*                         WriteGeoReference()                          */
+/*                                                                      */
+/*      Try to write a geo-reference file for the dataset to create     */
 /************************************************************************/
 
 CPLErr ILWISDataset::WriteGeoReference()
@@ -812,6 +814,13 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->ReadProjection( csy );
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+
     return( poDS );
 }
 
@@ -1204,7 +1213,9 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-    return (GDALDataset *) poDS;
+    poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+
+    return poDS;
 }
 
 /************************************************************************/

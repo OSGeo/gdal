@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/05/05 15:54:49  fwarmerdam
+ * PAM Enabled
+ *
  * Revision 1.15  2003/02/06 03:18:49  warmerda
  * use Fixup() on SRS to set linear units
  *
@@ -76,7 +79,7 @@
  */
 
 #include "sdts_al.h"
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
@@ -99,7 +102,7 @@ CPL_C_END
 
 class SDTSRasterBand;
 
-class SDTSDataset : public GDALDataset
+class SDTSDataset : public GDALPamDataset
 {
     friend class SDTSRasterBand;
     
@@ -117,7 +120,7 @@ class SDTSDataset : public GDALDataset
     virtual CPLErr GetGeoTransform( double * );
 };
 
-class SDTSRasterBand : public GDALRasterBand
+class SDTSRasterBand : public GDALPamRasterBand
 {
     friend class SDTSDataset;
 
@@ -141,6 +144,8 @@ class SDTSRasterBand : public GDALRasterBand
 SDTSDataset::~SDTSDataset()
 
 {
+    FlushCache();
+
     if( poTransfer != NULL )
         delete poTransfer;
 
@@ -150,7 +155,6 @@ SDTSDataset::~SDTSDataset()
     if( pszProjection != NULL )
         CPLFree( pszProjection );
 }
-
 
 /************************************************************************/
 /*                                Open()                                */
@@ -276,6 +280,12 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->pszProjection = NULL;
     if( oSRS.exportToWkt( &poDS->pszProjection ) != OGRERR_NONE )
         poDS->pszProjection = CPLStrdup("");
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }

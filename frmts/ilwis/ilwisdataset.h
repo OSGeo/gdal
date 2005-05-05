@@ -31,7 +31,7 @@
 #pragma warning(disable : 4503)
 #endif
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "cpl_csv.h"
 #include "ogr_spatialref.h"
 //#include "Windows.h"
@@ -116,7 +116,7 @@ struct ILWISInfo
 /*                           ILWISRasterBand                            */
 /************************************************************************/
 
-class ILWISRasterBand : public GDALRasterBand
+class ILWISRasterBand : public GDALPamRasterBand
 {
   friend class ILWISDataset;
 	public:
@@ -137,47 +137,47 @@ class ILWISRasterBand : public GDALRasterBand
 };
 
 /************************************************************************/
-/*				             ILWISDataset																			*/
+/*	                   ILWISDataset					*/
 /************************************************************************/
-class ILWISDataset : public GDALDataset
+class ILWISDataset : public GDALPamDataset
 {
     friend class ILWISRasterBand;
-		const char *pszFileName;
-		string pszIlwFileName;
-		char	 *pszProjection;
-		double adfGeoTransform[6];
-		int    bGeoDirty;
-		int		 bNewDataset;            /* product of Create() */
-    string pszFileType; //indicating the input dataset: Map/MapList  
-		CPLErr ReadProjection( string csyFileName);
-		CPLErr WriteProjection();
-		CPLErr WriteGeoReference();
-		void   CollectTransformCoef(string &pszRefFile );
+    const char *pszFileName;
+    string pszIlwFileName;
+    char	 *pszProjection;
+    double adfGeoTransform[6];
+    int    bGeoDirty;
+    int		 bNewDataset;            /* product of Create() */
+    string pszFileType; //indicating the input dataset: Map/MapList
+    CPLErr ReadProjection( string csyFileName);
+    CPLErr WriteProjection();
+    CPLErr WriteGeoReference();
+    void   CollectTransformCoef(string &pszRefFile );
 		
-	public:
-		ILWISDataset();
-		~ILWISDataset();
+public:
+    ILWISDataset();
+    ~ILWISDataset();
 
-		static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Open( GDALOpenInfo * );
 		
-		static GDALDataset *CreateCopy( const char * pszFilename,
+    static GDALDataset *CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
 
-		static GDALDataset *Create(const char* pszFilename,
-															 int nXSize, int nYSize, 
-															 int nBands, GDALDataType eType,
-															 char** papszParmList); 
+    static GDALDataset *Create(const char* pszFilename,
+                               int nXSize, int nYSize, 
+                               int nBands, GDALDataType eType,
+                               char** papszParmList); 
 		
-		virtual CPLErr 	GetGeoTransform( double * padfTransform );
-		virtual CPLErr  SetGeoTransform( double * );
+    virtual CPLErr 	GetGeoTransform( double * padfTransform );
+    virtual CPLErr  SetGeoTransform( double * );
 
     virtual const char *GetProjectionRef(void);
-		virtual CPLErr SetProjection( const char * );
+    virtual CPLErr SetProjection( const char * );
 
-		virtual void   FlushCache( void );
+    virtual void   FlushCache( void );
 };
 
 // IniFile.h: interface for the IniFile class.

@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.52  2005/05/05 15:54:48  fwarmerdam
+ * PAM Enabled
+ *
  * Revision 1.51  2005/03/06 19:54:12  fwarmerdam
  * Make sure a fuller UTM projcs name gets set.
  *
@@ -111,82 +114,9 @@
  *
  * Revision 1.25  2003/02/20 14:43:14  warmerda
  * fixed quirks in handling ungeoreferenced images
- *
- * Revision 1.24  2002/11/23 18:54:17  warmerda
- * added CREATIONDATATYPES metadata for drivers
- *
- * Revision 1.23  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.22  2002/06/20 14:11:27  warmerda
- * added support for 1 bit files
- *
- * Revision 1.21  2002/06/19 20:48:11  warmerda
- * ensure metadata dirty flag set by SetMetadataItem calls
- *
- * Revision 1.20  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.19  2002/05/21 15:09:12  warmerda
- * read/write support for GDAL_MetaData table now supported
- *
- * Revision 1.18  2002/05/21 05:29:48  warmerda
- * added metadata support from a table named GDAL_MetaData
- *
- * Revision 1.17  2001/11/11 23:51:00  warmerda
- * added required class keyword to friend declarations
- *
- * Revision 1.16  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.15  2000/10/31 18:02:47  warmerda
- * fixed unkonwn and external projections
- *
- * Revision 1.14  2000/10/20 04:18:15  warmerda
- * added overviews, stateplane, and u4
- *
- * Revision 1.13  2000/10/19 18:35:43  warmerda
- * changed help topic location
- *
- * Revision 1.12  2000/10/13 20:58:37  warmerda
- * added to projections list
- *
- * Revision 1.11  2000/10/13 18:09:40  warmerda
- * fixed degree/radian translation
- *
- * Revision 1.10  2000/10/12 19:30:31  warmerda
- * substantially improved write support
- *
- * Revision 1.9  2000/09/29 21:42:38  warmerda
- * preliminary write support implemented
- *
- * Revision 1.8  2000/09/01 19:39:48  warmerda
- * added support for f64, and returning geotransform
- *
- * Revision 1.7  2000/08/25 21:31:34  warmerda
- * added overview support
- *
- * Revision 1.6  2000/08/18 16:24:06  warmerda
- * Added color table support
- *
- * Revision 1.5  2000/08/15 19:28:26  warmerda
- * added help topic
- *
- * Revision 1.4  2000/02/28 16:32:20  warmerda
- * use SetBand method
- *
- * Revision 1.3  1999/01/27 18:48:12  warmerda
- * Declare constructor and destructor for HFADataset.
- *
- * Revision 1.2  1999/01/27 18:32:46  warmerda
- * compiles OK
- *
- * Revision 1.1  1999/01/22 17:40:43  warmerda
- * New
- *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "hfa_p.h"
 #include "ogr_spatialref.h"
 
@@ -410,7 +340,7 @@ int anUsgsEsriZones[] =
 
 class HFARasterBand;
 
-class CPL_DLL HFADataset : public GDALDataset
+class CPL_DLL HFADataset : public GDALPamDataset
 {
     friend class HFARasterBand;
 
@@ -466,7 +396,7 @@ class CPL_DLL HFADataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class HFARasterBand : public GDALRasterBand
+class HFARasterBand : public GDALPamRasterBand
 {
     friend class HFADataset;
 
@@ -1952,6 +1882,12 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->bMetadataDirty = FALSE;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+
     return( poDS );
 }
 
@@ -2411,6 +2347,8 @@ xx
         poHFADriver->Delete( pszFilename );
         return NULL;
     }
+
+    poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
 
     return poDS;
 }

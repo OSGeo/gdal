@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2005/05/05 15:52:48  fwarmerdam
+ * PAM Enabled
+ *
  * Revision 1.5  2004/11/11 00:16:01  gwalter
  * Polarmetric->Polarimetric.
  *
@@ -45,7 +48,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "cpl_string.h"
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
@@ -64,7 +67,7 @@ CPL_C_END
 
 class AirSARRasterBand;
 
-class AirSARDataset : public GDALDataset
+class AirSARDataset : public GDALPamDataset
 {
     friend class AirSARRasterBand;
 
@@ -95,7 +98,7 @@ class AirSARDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class AirSARRasterBand : public GDALRasterBand
+class AirSARRasterBand : public GDALPamRasterBand
 {
   public:
     		AirSARRasterBand( AirSARDataset *, int );
@@ -307,6 +310,7 @@ AirSARDataset::AirSARDataset()
 AirSARDataset::~AirSARDataset()
 
 {
+    FlushCache();
     if( pabyCompressedLine != NULL )
     {
         CPLFree( pabyCompressedLine );
@@ -628,6 +632,12 @@ GDALDataset *AirSARDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetBand( 6, new AirSARRasterBand( poDS, 6 ));
 
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }
