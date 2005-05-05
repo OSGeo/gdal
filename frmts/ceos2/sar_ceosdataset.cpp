@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2005/05/05 14:01:36  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.41  2005/02/17 02:29:03  gwalter
  * Check for more extensions.
  *
@@ -85,73 +88,6 @@
  *
  * Revision 1.23  2002/04/03 22:12:49  warmerda
  * Added special metadata access to raw record data
- *
- * Revision 1.22  2001/12/20 15:20:03  warmerda
- * Added some more metadata from Landsat ESA CEOS files.
- *
- * Revision 1.21  2001/11/11 23:50:59  warmerda
- * added required class keyword to friend declarations
- *
- * Revision 1.20  2001/10/23 14:27:15  warmerda
- * D-PAF ERS-1: add naming convention
- *
- * Revision 1.19  2001/10/18 17:04:09  warmerda
- * added hacks to determine record length and pd pixels/line for Telaviv ERS data
- *
- * Revision 1.18  2001/09/28 14:43:06  warmerda
- * Added true and platform heading metadata.
- * Added ERS2 DATASET SUMMARY record code.
- *
- * Revision 1.17  2001/08/31 15:17:48  warmerda
- * added ASF SAR Toolbox naming convention support
- *
- * Revision 1.16  2001/08/30 18:24:06  warmerda
- * added support for reading map projection record in ers dataset
- *
- * Revision 1.15  2001/08/22 16:54:30  warmerda
- * dont try to extract gcps if there is no prefix data
- *
- * Revision 1.14  2001/07/18 04:51:56  warmerda
- * added CPL_CVSID
- *
- * Revision 1.13  2001/07/16 16:42:32  warmerda
- * Added radiometric data record type code.
- *
- * Revision 1.12  2001/01/24 22:35:34  warmerda
- * multi-record scanline support added to ceos2
- *
- * Revision 1.11  2000/11/22 19:14:16  warmerda
- * added CEOS_DM_* metadata items
- *
- * Revision 1.10  2000/08/15 19:28:26  warmerda
- * added help topic
- *
- * Revision 1.9  2000/07/13 14:41:36  warmerda
- * fixed byte order
- *
- * Revision 1.8  2000/06/12 15:24:24  warmerda
- * Fixed byte order handling.
- *
- * Revision 1.7  2000/06/05 17:24:06  warmerda
- * added real complex support
- *
- * Revision 1.6  2000/05/15 14:18:27  warmerda
- * added COMPLEX_INTERPRETATION metadata
- *
- * Revision 1.5  2000/04/21 21:59:04  warmerda
- * added overview support, updated metadata handling
- *
- * Revision 1.4  2000/04/17 21:51:42  warmerda
- * added metadata support
- *
- * Revision 1.3  2000/04/07 19:39:16  warmerda
- * added some metadata
- *
- * Revision 1.2  2000/04/04 22:25:18  warmerda
- * Added logic to read gcps if available.
- *
- * Revision 1.1  2000/03/31 13:32:49  warmerda
- * New
  */
 
 #include "ceos.h"
@@ -257,7 +193,7 @@ class SAR_CEOSRasterBand;
 class CCPRasterBand;
 class PALSARRasterBand;
 
-class SAR_CEOSDataset : public GDALDataset
+class SAR_CEOSDataset : public GDALPamDataset
 {
     friend class SAR_CEOSRasterBand;
     friend class CCPRasterBand;
@@ -295,7 +231,7 @@ class SAR_CEOSDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class CCPRasterBand : public GDALRasterBand
+class CCPRasterBand : public GDALPamRasterBand
 {
     friend class SAR_CEOSDataset;
 
@@ -311,7 +247,7 @@ class CCPRasterBand : public GDALRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class PALSARRasterBand : public GDALRasterBand
+class PALSARRasterBand : public GDALPamRasterBand
 {
     friend class SAR_CEOSDataset;
 
@@ -327,7 +263,7 @@ class PALSARRasterBand : public GDALRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class SAR_CEOSRasterBand : public GDALRasterBand
+class SAR_CEOSRasterBand : public GDALPamRasterBand
 {
     friend class SAR_CEOSDataset;
 
@@ -786,6 +722,8 @@ SAR_CEOSDataset::SAR_CEOSDataset()
 SAR_CEOSDataset::~SAR_CEOSDataset()
 
 {
+    FlushCache();
+
     CSLDestroy( papszTempMD );
 
     if( fpImage != NULL )
@@ -2055,6 +1993,12 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Open overviews.                                                 */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }

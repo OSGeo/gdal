@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/05/05 14:02:58  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.18  2003/03/24 14:16:38  warmerda
  * added fallback case for unrecognised products
  *
@@ -158,6 +161,8 @@ EnvisatDataset::EnvisatDataset()
 EnvisatDataset::~EnvisatDataset()
 
 {
+    FlushCache();
+
     if( hEnvisatFile != NULL )
         EnvisatFile_Close( hEnvisatFile );
 
@@ -797,6 +802,12 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }

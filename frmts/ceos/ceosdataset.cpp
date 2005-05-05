@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/05/05 14:01:36  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.9  2002/09/04 06:50:36  warmerda
  * avoid static driver pointers
  *
@@ -58,7 +61,7 @@
  */
 
 #include "ceosopen.h"
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 
 CPL_CVSID("$Id$");
 
@@ -74,13 +77,15 @@ CPL_C_END
 
 class CEOSRasterBand;
 
-class CEOSDataset : public GDALDataset
+class CEOSDataset : public GDALPamDataset
 {
     friend class CEOSRasterBand;
     
     CEOSImage	*psCEOS;
 
   public:
+                 CEOSDataset();
+                ~CEOSDataset();
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
@@ -90,7 +95,7 @@ class CEOSDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class CEOSRasterBand : public GDALRasterBand
+class CEOSRasterBand : public GDALPamRasterBand
 {
     friend class CEOSDataset;
     
@@ -131,6 +136,34 @@ CPLErr CEOSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     CPLAssert( nBlockXOff == 0 );
 
     return( CEOSReadScanline(poCEOS_DS->psCEOS, nBand, nBlockYOff+1, pImage) );
+}
+
+/************************************************************************/
+/* ==================================================================== */
+/*                             CEOSDataset                              */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                            CEOSDataset()                             */
+/************************************************************************/
+
+CEOSDataset::CEOSDataset()
+
+{
+    psCEOS = NULL;
+}
+
+/************************************************************************/
+/*                            ~CEOSDataset()                            */
+/************************************************************************/
+
+CEOSDataset::~CEOSDataset()
+
+{
+    FlushCache();
+    if( psCEOS )
+        CEOSClose( psCEOS );
 }
 
 /************************************************************************/
@@ -191,6 +224,12 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }
