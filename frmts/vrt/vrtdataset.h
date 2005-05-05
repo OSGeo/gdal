@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/05/05 13:56:53  fwarmerdam
+ * include gdal_pam.h
+ *
  * Revision 1.19  2005/04/07 17:27:33  fwarmerdam
  * Default path in OpenXML to NULL.
  *
@@ -95,6 +98,7 @@
 #define VIRTUALDATASET_H_INCLUDED
 
 #include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "cpl_minixml.h"
 
 CPL_C_START
