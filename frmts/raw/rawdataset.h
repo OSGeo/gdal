@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/05/05 13:55:42  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.16  2004/11/02 20:21:38  fwarmerdam
  * added support for category names
  *
@@ -79,7 +82,7 @@
  *
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 
 /************************************************************************/
 /* ==================================================================== */
@@ -89,7 +92,7 @@
 
 class RawRasterBand;
 
-class CPL_DLL RawDataset : public GDALDataset
+class CPL_DLL RawDataset : public GDALPamDataset
 {
     friend class RawRasterBand;
 
@@ -109,7 +112,7 @@ class CPL_DLL RawDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class CPL_DLL RawRasterBand : public GDALRasterBand
+class CPL_DLL RawRasterBand : public GDALPamRasterBand
 {
     friend class RawDataset;
 

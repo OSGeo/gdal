@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/05/05 13:55:41  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.6  2004/12/17 22:45:55  gwalter
  * Added support for sirc-style convair flat
  * binary datasets.
@@ -593,6 +596,12 @@ GDALDataset *CPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     // Need to think about this. 
     // poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/05/05 13:55:41  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.13  2002/09/17 13:09:28  warmerda
  * fix zone in WKT description - bugzilla 199
  *
@@ -140,6 +143,8 @@ DOQ1Dataset::DOQ1Dataset()
 DOQ1Dataset::~DOQ1Dataset()
 
 {
+    FlushCache();
+
     CPLFree( pszProjection );
     CPLFree( pszDescription );
     if( fpImage != NULL )
@@ -358,6 +363,12 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }

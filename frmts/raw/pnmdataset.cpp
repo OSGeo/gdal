@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/05/05 13:55:42  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.16  2004/02/04 21:47:31  warmerda
  * use VSIFClose() to close openinfo file, not VSIFCloseL()
  *
@@ -307,6 +310,12 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     poDS->bGeoTransformValid = 
         GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 

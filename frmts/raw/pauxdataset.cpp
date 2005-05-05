@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/05/05 13:55:42  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.29  2004/04/23 22:23:59  warmerda
  * Fixed memory leak of pszAuxFilename.
  *
@@ -655,7 +658,10 @@ const GDAL_GCP *PAuxDataset::GetGCPs()
 const char *PAuxDataset::GetProjectionRef()
 
 {
-    return pszProjection;
+    if( pszProjection )
+        return pszProjection;
+    else
+        return GDALPamDataset::GetProjectionRef();
 }
 
 /************************************************************************/
@@ -954,13 +960,17 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
     
     if( pszMapUnits != NULL )
         poDS->pszProjection = poDS->PCI2WKT( pszMapUnits, pszProjParms );
-    else
-        poDS->pszProjection = CPLStrdup("");
     
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, pszTarget );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( pszTarget );
+    poDS->TryLoadXML();
 
     poDS->ScanForGCPs();
 

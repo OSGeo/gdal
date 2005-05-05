@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/05/05 13:55:42  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.5  2004/05/28 18:15:58  warmerda
  * added .TRL colortable support
  *
@@ -325,6 +328,8 @@ LANDataset::LANDataset()
 LANDataset::~LANDataset()
 
 {
+    FlushCache();
+
     if( fpImage != NULL )
         VSIFClose( fpImage );
 
@@ -464,6 +469,12 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
 /*      Try to interprete georeferencing.                               */

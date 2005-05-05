@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/05/05 13:55:41  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.18  2003/08/12 14:57:41  warmerda
  * dont use CPLReadLine to preread the first line
  *
@@ -150,6 +153,8 @@ DOQ2Dataset::DOQ2Dataset()
 DOQ2Dataset::~DOQ2Dataset()
 
 {
+    FlushCache();
+
     CPLFree( pszProjection );
     if( fpImage != NULL )
         VSIFClose( fpImage );
@@ -450,6 +455,12 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
 
     return( poDS );
 }

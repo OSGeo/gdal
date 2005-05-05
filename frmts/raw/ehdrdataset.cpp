@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/05/05 13:55:41  fwarmerdam
+ * PAM Enable
+ *
  * Revision 1.25  2005/02/25 19:40:27  fwarmerdam
  * Support lower case byteorder values too.
  *
@@ -564,12 +567,18 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
-        poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
-        CPLFree( pszName );
-        CPLFree( pszPath );
-
-        return( poDS );
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+    
+    CPLFree( pszName );
+    CPLFree( pszPath );
+    
+    return( poDS );
 }
 
 /************************************************************************/
