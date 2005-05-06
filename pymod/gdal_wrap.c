@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.109  2005/04/05 20:42:35  fwarmerdam
- * error handler is CPL_STDCALL
+ * Revision 1.110  2005/05/06 17:35:24  fwarmerdam
+ * updated
  *
  ************************************************************************/
 
@@ -3481,6 +3481,19 @@ static PyObject *_wrap_CPLSetConfigOption(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_CSLTestBoolean(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    char * _arg0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:CSLTestBoolean",&_arg0)) 
+        return NULL;
+    _result = (int )CSLTestBoolean(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_CPLPushFinderLocation(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     char * _arg0;
@@ -4852,6 +4865,60 @@ static PyObject *_wrap_GDALSetRasterNoDataValue(PyObject *self, PyObject *args) 
         }
     }
     _result = (int )GDALSetRasterNoDataValue(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALGetRasterStatistics(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    GDALRasterBandH  _arg0;
+    int  _arg1;
+    int  _arg2;
+    double * _arg3;
+    double * _arg4;
+    double * _arg5;
+    double * _arg6;
+    char * _argc0 = 0;
+    char * _argc3 = 0;
+    char * _argc4 = 0;
+    char * _argc5 = 0;
+    char * _argc6 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"siissss:GDALGetRasterStatistics",&_argc0,&_arg1,&_arg2,&_argc3,&_argc4,&_argc5,&_argc6)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALGetRasterStatistics. Expected _GDALRasterBandH.");
+        return NULL;
+        }
+    }
+    if (_argc3) {
+        if (SWIG_GetPtr(_argc3,(void **) &_arg3,"_double_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of GDALGetRasterStatistics. Expected _double_p.");
+        return NULL;
+        }
+    }
+    if (_argc4) {
+        if (SWIG_GetPtr(_argc4,(void **) &_arg4,"_double_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of GDALGetRasterStatistics. Expected _double_p.");
+        return NULL;
+        }
+    }
+    if (_argc5) {
+        if (SWIG_GetPtr(_argc5,(void **) &_arg5,"_double_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of GDALGetRasterStatistics. Expected _double_p.");
+        return NULL;
+        }
+    }
+    if (_argc6) {
+        if (SWIG_GetPtr(_argc6,(void **) &_arg6,"_double_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 7 of GDALGetRasterStatistics. Expected _double_p.");
+        return NULL;
+        }
+    }
+    _result = (int )GDALGetRasterStatistics(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
     _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
@@ -11627,6 +11694,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALGetOverview", _wrap_GDALGetOverview, 1 },
 	 { "GDALGetOverviewCount", _wrap_GDALGetOverviewCount, 1 },
 	 { "GDALComputeRasterMinMax", _wrap_GDALComputeRasterMinMax, 1 },
+	 { "GDALGetRasterStatistics", _wrap_GDALGetRasterStatistics, 1 },
 	 { "GDALSetRasterNoDataValue", _wrap_GDALSetRasterNoDataValue, 1 },
 	 { "GDALGetRasterNoDataValue", _wrap_GDALGetRasterNoDataValue, 1 },
 	 { "GDALGetRasterScale", _wrap_GDALGetRasterScale, 1 },
@@ -11693,6 +11761,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "CPLFinderClean", _wrap_CPLFinderClean, 1 },
 	 { "CPLPopFinderLocation", _wrap_CPLPopFinderLocation, 1 },
 	 { "CPLPushFinderLocation", _wrap_CPLPushFinderLocation, 1 },
+	 { "CSLTestBoolean", _wrap_CSLTestBoolean, 1 },
 	 { "CPLSetConfigOption", _wrap_CPLSetConfigOption, 1 },
 	 { "CPLGetConfigOption", _wrap_CPLGetConfigOption, 1 },
 	 { "CSLDestroy", _wrap_CSLDestroy, 1 },
