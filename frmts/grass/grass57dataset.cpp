@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/05/06 18:21:14  fwarmerdam
+ * Applied patch from Radim.  Better logic to reset the region.
+ *
  * Revision 1.3  2004/09/24 14:28:49  fwarmerdam
  * fixed some typos with floating point (from Radim)
  *
@@ -420,6 +423,24 @@ CPLErr GRASSRasterBand::ResetReading ( struct Cell_head *sNewWindow )
 	G_copy((void *) &sOpenWindow, (void *) sNewWindow, sizeof(struct Cell_head));
 	
     }
+    else
+    {
+        /* The windows are identical, check current window */
+        struct Cell_head sCurrentWindow;
+
+        G_get_window ( &sCurrentWindow );
+
+        if ( sNewWindow->north  != sCurrentWindow.north  || sNewWindow->south  != sCurrentWindow.south ||
+             sNewWindow->east   != sCurrentWindow.east   || sNewWindow->west   != sCurrentWindow.west ||
+             sNewWindow->ew_res != sCurrentWindow.ew_res || sNewWindow->ns_res != sCurrentWindow.ns_res ||
+             sNewWindow->rows   != sCurrentWindow.rows   || sNewWindow->cols   != sCurrentWindow.cols
+             )
+        {
+            /* Reset window */
+            G_set_window( sNewWindow );
+        }
+    }
+
 
     return CE_None;
 }
