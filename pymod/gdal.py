@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.76  2005/05/06 17:34:45  fwarmerdam
+# Added GetStatistics and TestBoolean
+#
 # Revision 1.75  2005/03/02 17:55:38  hobu
 # CreateAndReprojectImage needs dst_filename to be a NULLableString
 #
@@ -240,6 +243,9 @@ def SetConfigOption( name, value ):
 
 def GetConfigOption( name, default ):
     return _gdal.CPLGetConfigOption( name, default )
+
+def TestBoolean( value ):
+    return _gdal.CSLTestBoolean( value )
 
 def ParseXMLString( text ):
     return _gdal.CPLParseXMLString( text )
@@ -870,6 +876,18 @@ class Band(MajorObject):
         _gdal.GDALComputeRasterMinMax(self._o, approx_ok, c_minmax )
         result = ( ptrvalue(c_minmax,0), ptrvalue(c_minmax,1) )
         ptrfree( c_minmax )
+        return result
+
+    def GetStatistics( self, approx_ok = 0, force = 1 ):
+        x = ptrcreate( 'double', 0, 4 )
+        err = _gdal.GDALGetRasterStatistics( self._o, approx_ok, force,
+                                             x, ptradd(x,1), ptradd(x,2), ptradd(x,3) )
+        if err != 0:
+            ptrfree( x )
+            raise ValueError, GetLastErrorMsg()
+
+        result = (ptrvalue(x,0),ptrvalue(x,1),ptrvalue(x,2),ptrvalue(x,3))
+        ptrfree(x)
         return result
     
     def GetNoDataValue(self):

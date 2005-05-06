@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.116  2005/05/06 17:35:02  fwarmerdam
+ * Added GetStatistics and TestBoolean
+ *
  * Revision 1.115  2005/04/05 20:42:35  fwarmerdam
  * error handler is CPL_STDCALL
  *
@@ -623,6 +626,7 @@ void CSLDestroy(stringList);
 
 const char *CPLGetConfigOption( const char *, const char * );
 void        CPLSetConfigOption( const char *, const char * );
+int         CSLTestBoolean( const char * );
 
 void         CPLPushFinderLocation( const char * );
 void         CPLPopFinderLocation();
@@ -757,8 +761,11 @@ double GDALGetRasterMaximum( GDALRasterBandH, int *pbSuccess );
 double GDALGetRasterOffset( GDALRasterBandH, int *pbSuccess );
 double GDALGetRasterScale( GDALRasterBandH, int *pbSuccess );
 
-double           GDALGetRasterNoDataValue( GDALRasterBandH, int * );
-int              GDALSetRasterNoDataValue( GDALRasterBandH, double );
+double GDALGetRasterNoDataValue( GDALRasterBandH, int * );
+int    GDALSetRasterNoDataValue( GDALRasterBandH, double );
+
+int    GDALGetRasterStatistics( GDALRasterBandH, int, int, 
+		double *, double *, double *, double * );
 
 void             GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
                  	                  double adfMinMax[2] );
