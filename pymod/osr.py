@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.47  2005/05/06 17:34:30  fwarmerdam
+# added GetUserInputAsWKT
+#
 # Revision 1.46  2005/04/22 08:09:26  dron
 # Use empty tuple instead of None as default parameter for proj_parms
 # in ImportFromUSGS().
@@ -230,6 +233,13 @@ def GetWellKnownGeogCSAsWKT( name ):
     srs = SpatialReference()
     srs.SetWellKnownGeogCS( name )
     return srs.ExportToWkt()
+
+def GetUserInputAsWKT( user_def ):
+    srs = SpatialReference()
+    if srs.SetFromUserInput( user_def ) == 0:
+        return srs.ExportToWkt()
+    else:
+        raise ValueError, gdal.GetLastErrorMsg()
 
 class SpatialReference:
 
