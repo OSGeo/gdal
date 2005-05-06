@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/05/06 14:03:37  fwarmerdam
+ * Fixed gdal_pam include.
+ *
  * Revision 1.19  2005/05/05 14:02:58  fwarmerdam
  * PAM Enable
  *
@@ -91,7 +94,7 @@
 
 
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #include "cpl_string.h"
 #include <string.h>
 
