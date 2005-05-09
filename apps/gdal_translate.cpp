@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/05/09 14:31:56  fwarmerdam
+ * Added optional elevation in -gcp usage message.
+ *
  * Revision 1.30  2005/04/26 20:38:52  fwarmerdam
  * Added main/ProxyMain distinction since calling main does not work on
  * some platforms.
@@ -185,7 +188,7 @@ static void Usage()
             "       [-scale [src_min src_max [dst_min dst_max]]]\n"
             "       [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry]\n"
             "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
-            "       [-gcp pixel line easting northing]*\n" 
+            "       [-gcp pixel line easting northing [elevation]]*\n" 
             "       [-mo \"META-TAG=VALUE\"]* [-quiet] [-sds]\n"
             "       [-co \"NAME=VALUE\"]*\n"
             "       src_dataset dst_dataset\n\n" );
