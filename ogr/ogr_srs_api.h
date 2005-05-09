@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2005/05/09 15:39:44  fwarmerdam
+ * Added TM_MI_21 as per email from Safe.
+ *
  * Revision 1.51  2005/04/06 00:02:05  fwarmerdam
  * various osr and oct functions now stdcall
  *
@@ -290,6 +293,8 @@ typedef enum {
                                 "Transverse_Mercator_South_Orientated"
 
 /* special mapinfo variants on Transverse Mercator */
+#define SRS_PT_TRANSVERSE_MERCATOR_MI_21 \
+                                "Transverse_Mercator_MapInfo_21"
 #define SRS_PT_TRANSVERSE_MERCATOR_MI_22 \
                                 "Transverse_Mercator_MapInfo_22"
 #define SRS_PT_TRANSVERSE_MERCATOR_MI_23 \
