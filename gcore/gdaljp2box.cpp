@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/05/09 14:42:33  fwarmerdam
+ * Fixed to use VSFReadL() instead of VSIFRead().
+ *
  * Revision 1.1  2005/05/03 21:10:59  fwarmerdam
  * New
  *
@@ -135,8 +138,8 @@ int GDALJP2Box::ReadBox()
 
     nBoxOffset = VSIFTellL( fpVSIL );
 
-    if( VSIFRead( &nLBox, 4, 1, fpVSIL ) != 1
-        || VSIFRead( &nTBox, 4, 1, fpVSIL ) != 1 )
+    if( VSIFReadL( &nLBox, 4, 1, fpVSIL ) != 1
+        || VSIFReadL( &nTBox, 4, 1, fpVSIL ) != 1 )
     {
         return FALSE;
     }
@@ -155,7 +158,7 @@ int GDALJP2Box::ReadBox()
     {
         GByte abyXLBox[8];
 
-        if( VSIFRead( &nLBox, 8, 1, fpVSIL ) != 1 )
+        if( VSIFReadL( &nLBox, 8, 1, fpVSIL ) != 1 )
             return FALSE;
 
         
