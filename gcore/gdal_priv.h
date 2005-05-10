@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2005/05/10 15:30:28  fwarmerdam
+ * export some overview functions
+ *
  * Revision 1.55  2005/05/10 04:49:24  fwarmerdam
  * added getdefaulthistogram and GDALOvLevelAdjust
  *
@@ -719,14 +722,14 @@ CPL_C_END
 
 CPL_C_START
 
-CPLErr 
+CPLErr CPL_DLL 
 GTIFFBuildOverviews( const char * pszFilename,
                      int nBands, GDALRasterBand **papoBandList, 
                      int nOverviews, int * panOverviewList,
                      const char * pszResampling, 
                      GDALProgressFunc pfnProgress, void * pProgressData );
 
-CPLErr
+CPLErr CPL_DLL
 GDALDefaultBuildOverviews( GDALDataset *hSrcDS, const char * pszBasename,
                            const char * pszResampling, 
                            int nOverviews, int * panOverviewList,
@@ -734,11 +737,11 @@ GDALDefaultBuildOverviews( GDALDataset *hSrcDS, const char * pszBasename,
                            GDALProgressFunc pfnProgress, void * pProgressData);
                            
 
-CPLErr
+CPLErr CPL_DLL 
 GDALRegenerateOverviews( GDALRasterBand *, int, GDALRasterBand **,
                          const char *, GDALProgressFunc, void * );
 
-int GDALOvLevelAdjust( int nOvLevel, int nXSize );
+int CPL_DLL GDALOvLevelAdjust( int nOvLevel, int nXSize );
 
 CPL_C_END
 
