@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/05/10 00:57:40  fwarmerdam
+ * added HFACreateLayer, HFACreateOverview
+ *
  * Revision 1.12  2005/04/04 13:14:00  fwarmerdam
  * Added HFAGetClassNames() (bug 819).
  *
@@ -173,6 +176,7 @@ HFAHandle CPL_DLL HFACreateLL( const char *pszFilename );
 HFAHandle CPL_DLL HFACreate( const char *pszFilename, int nXSize, int nYSize, 
                              int nBands, int nDataType, char ** papszOptions );
 CPLErr  CPL_DLL HFAFlush( HFAHandle );
+int CPL_DLL HFACreateOverview( HFAHandle hHFA, int nBand, int nOverviewLevel);
 
 const Eprj_MapInfo CPL_DLL *HFAGetMapInfo( HFAHandle );
 CPLErr CPL_DLL HFASetMapInfo( HFAHandle, const Eprj_MapInfo * );
@@ -197,6 +201,9 @@ CPLErr CPL_DLL HFAGetOverviewRasterBlock( HFAHandle hHFA, int nBand,
 CPLErr CPL_DLL HFASetRasterBlock( HFAHandle hHFA, int nBand, 
                                   int nXBlock, int nYBlock,
                                   void * pData );
+CPLErr CPL_DLL HFASetOverviewRasterBlock( 
+    HFAHandle hHFA, int nBand, int iOverview,int nXBlock, int nYBlock, 
+    void * pData );
 int     CPL_DLL HFAGetDataTypeBits( int );
 CPLErr	CPL_DLL HFAGetPCT( HFAHandle, int, int *, 
                            double **, double **, double ** , double **);
@@ -207,6 +214,19 @@ CPLErr  CPL_DLL HFAGetDataRange( HFAHandle, int, double *, double * );
 char  CPL_DLL **HFAGetMetadata( HFAHandle hHFA, int nBand );
 CPLErr  CPL_DLL HFASetMetadata( HFAHandle hHFA, int nBand, char ** );
 char  CPL_DLL **HFAGetClassNames( HFAHandle hHFA, int nBand );
+int CPL_DLL 
+HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
+                const char *pszLayerName,
+                int bOverview, int nBlockSize, 
+                int bCreateCompressed, int bCreateLargeRaster,
+                int nXSize, int nYSize, int nDataType, 
+                char **papszOptions,
+                
+                // these are only related to external (large) files
+                const char *pszExternalFilename, 
+                int nStackValidFlagsOffset, 
+                int nStackDataOffset,
+                int nStackCount, int nStackIndex );
 
 /* -------------------------------------------------------------------- */
 /*      data types.                                                     */
