@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/05/10 04:50:42  fwarmerdam
+ * GDALOvLevelAdjust now global
+ *
  * Revision 1.9  2005/04/25 22:26:46  fwarmerdam
  * avoid extra copy if we are loading into the cache block in IReadBlock
  *
@@ -400,14 +403,6 @@ int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,
     }
 
     return bSuccess;
-}
-
-static int GDALOvLevelAdjust( int nOvLevel, int nXSize )
-
-{
-    int nOXSize = (nXSize + nOvLevel - 1) / nOvLevel;
-    
-    return (int) (0.5 + nXSize / (double) nOXSize);
 }
 
 /************************************************************************/
