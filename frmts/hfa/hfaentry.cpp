@@ -33,6 +33,9 @@
  * Implementation of the HFAEntry class.
  *
  * $Log$
+ * Revision 1.12  2005/05/10 00:55:46  fwarmerdam
+ * Added GetFieldCount method
+ *
  * Revision 1.11  2005/02/22 21:34:47  fwarmerdam
  * added GetBigIntField method
  *
@@ -437,6 +440,46 @@ void *HFAEntry::GetFieldValue( const char * pszFieldPath,
     return( poType->ExtractInstValue( pszFieldPath,
                                       pabyData, nDataPos, nDataSize,
                                       chReqType ) );
+}
+
+/************************************************************************/
+/*                           GetFieldCount()                            */
+/************************************************************************/
+
+int HFAEntry::GetFieldCount( const char * pszFieldPath, CPLErr *peErr )
+
+{
+    HFAEntry	*poEntry = this;
+    
+/* -------------------------------------------------------------------- */
+/*      Is there a node path in this string?                            */
+/* -------------------------------------------------------------------- */
+    if( strchr(pszFieldPath,':') != NULL )
+    {
+        poEntry = GetNamedChild( pszFieldPath );
+        if( poEntry == NULL )
+            return -1;
+        
+        pszFieldPath = strchr(pszFieldPath,':') + 1;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have the data and type for this node?                     */
+/* -------------------------------------------------------------------- */
+    LoadData();
+
+    if( pabyData == NULL )
+        return -1;
+    
+    if( poType == NULL )
+        return -1;
+
+/* -------------------------------------------------------------------- */
+/*      Extract the instance information.                               */
+/* -------------------------------------------------------------------- */
+
+    return( poType->GetInstCount( pszFieldPath,
+                                  pabyData, nDataPos, nDataSize ) );
 }
 
 /************************************************************************/
