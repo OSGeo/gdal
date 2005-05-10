@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/05/10 00:56:38  fwarmerdam
+ * added CreateOverview and GetInstCount methods
+ *
  * Revision 1.18  2005/02/22 21:33:21  fwarmerdam
  * added GetBigIntField method
  *
@@ -224,6 +227,8 @@ class HFABand
 
     CPLErr	GetPCT( int *, double **, double **, double **, double ** );
     CPLErr	SetPCT( int, double *, double *, double *, double * );
+
+    int         CreateOverview( int nOverviewLevel );
 };
 
 
@@ -290,6 +295,7 @@ public:
     double	GetDoubleField( const char *, CPLErr * = NULL );
     const char	*GetStringField( const char *, CPLErr * = NULL );
     GIntBig     GetBigIntField( const char *, CPLErr * = NULL );
+    int         GetFieldCount( const char *, CPLErr * = NULL );
 
     CPLErr      SetIntField( const char *, int );
     CPLErr      SetDoubleField( const char *, double );
@@ -378,6 +384,8 @@ class HFAType
     void	Dump( FILE * );
 
     int		GetInstBytes( GByte * pabyData );
+    int         GetInstCount( const char *pszField, 
+                          GByte *pabyData, GUInt32 nDataOffset, int nDataSize);
     void	*ExtractInstValue( const char * pszField,
                            GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                                char chReqType );
