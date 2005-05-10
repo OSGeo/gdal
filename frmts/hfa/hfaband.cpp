@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2005/05/10 00:56:55  fwarmerdam
+ * added CreateOverview method
+ *
  * Revision 1.41  2005/02/22 21:35:15  fwarmerdam
  * fixed up bigint offset handling in ige file: bug 774
  *
@@ -1482,3 +1485,78 @@ CPLErr HFABand::SetPCT( int nColors,
     return( CE_None );
 }
 
+/************************************************************************/
+/*                           CreateOverview()                           */
+/************************************************************************/
+
+int HFABand::CreateOverview( int nOverviewLevel )
+
+{
+
+    char *pszLayerName;
+    int    nOXSize, nOYSize;
+
+    pszLayerName = (char *) CPLMalloc(strlen(psInfo->pszFilename) + 128);
+
+    nOXSize = (psInfo->nXSize + nOverviewLevel - 1) / nOverviewLevel;
+    nOYSize = (psInfo->nYSize + nOverviewLevel - 1) / nOverviewLevel;
+
+/* -------------------------------------------------------------------- */
+/*      Create the layer.                                               */
+/* -------------------------------------------------------------------- */
+    sprintf( pszLayerName, "_ss_%d_", nOverviewLevel );
+
+    if( !HFACreateLayer( psInfo, poNode, pszLayerName, 
+                         TRUE, nBlockXSize, FALSE, FALSE,	
+                         nOXSize, nOYSize, nDataType, NULL, 
+                         NULL, 0, 0, 0, 0 ) )
+        return -1;
+    
+    HFAEntry *poOverLayer = poNode->GetNamedChild( pszLayerName );
+    if( poOverLayer == NULL )
+        return -1;
+
+/* -------------------------------------------------------------------- */
+/*      Create RRDNamesList list if it does not yet exist.              */
+/* -------------------------------------------------------------------- */
+    HFAEntry *poRRDNamesList = poNode->GetNamedChild("RRDNamesList");
+    if( poRRDNamesList == NULL )
+    {
+        poRRDNamesList = new HFAEntry( psInfo, "RRDNamesList", 
+                                       "Eimg_RRDNamesList", 
+                                       poNode );
+        poRRDNamesList->MakeData( 23+16+8+ 500 /* hack for growth room*/ );
+
+        /* we need to hardcode file offset into the data, so locate it now */
+        poRRDNamesList->SetPosition();
+
+        poRRDNamesList->SetStringField( "algorithm.string", 
+                                        "IMAGINE 2X2 Resampling" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Add new overview layer to RRDNamesList.                         */
+/* -------------------------------------------------------------------- */
+    int iNextName = poRRDNamesList->GetFieldCount( "nameList" );
+    char szName[50];
+
+    sprintf( szName, "nameList[%d].string", iNextName );
+
+    sprintf( pszLayerName, "%s(:%s:_ss_%d_)", 
+             psInfo->pszFilename, poNode->GetName(), nOverviewLevel );
+
+    // TODO: Need to add to end of array.
+    // TODO: Need to check that this fits into the data area of this entry.
+    poRRDNamesList->SetStringField( szName, pszLayerName );
+    
+    CPLFree( pszLayerName );
+
+/* -------------------------------------------------------------------- */
+/*      Add to the list of overviews for this band.                     */
+/* -------------------------------------------------------------------- */
+    papoOverviews = (HFABand **) 
+        CPLRealloc(papoOverviews, sizeof(void*) * ++nOverviews );
+    papoOverviews[nOverviews-1] = new HFABand( psInfo, poOverLayer );
+
+    return nOverviews-1;
+}
