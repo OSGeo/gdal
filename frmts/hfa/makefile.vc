@@ -13,4 +13,4 @@ clean:
 	-del *.obj
 
 hfatest.exe:	hfatest.cpp $(GDALLIB) 
-	$(CC) $(CFLAGS) hfatest.cpp $(GDALLIB) 
+	$(CC) $(CFLAGS) hfatest.cpp $(OBJ) $(GDALLIB) 
