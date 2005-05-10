@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.39  2005/05/10 00:57:17  fwarmerdam
+ * factored out CreateLayer code, added CreateOverview
+ *
  * Revision 1.38  2005/02/22 21:34:18  fwarmerdam
  * minor comment cleanup
  *
@@ -681,6 +684,24 @@ CPLErr HFASetRasterBlock( HFAHandle hHFA, int nBand,
         return CE_Failure;
 
     return( hHFA->papoBand[nBand-1]->SetRasterBlock(nXBlock,nYBlock,pData) );
+}
+
+/************************************************************************/
+/*                         HFASetRasterBlock()                          */
+/************************************************************************/
+
+CPLErr HFASetOverviewRasterBlock( HFAHandle hHFA, int nBand, int iOverview,
+                                  int nXBlock, int nYBlock, void * pData )
+
+{
+    if( nBand < 1 || nBand > hHFA->nBands )
+        return CE_Failure;
+
+    if( iOverview < 0 || iOverview >= hHFA->papoBand[nBand-1]->nOverviews )
+        return CE_Failure;
+
+    return( hHFA->papoBand[nBand-1]->papoOverviews[iOverview]->
+            SetRasterBlock(nXBlock,nYBlock,pData) );
 }
 
 /************************************************************************/
@@ -1454,6 +1475,250 @@ CPLErr HFAFlush( HFAHandle hHFA )
 }
 
 /************************************************************************/
+/*                           HFACreateLayer()                           */
+/*                                                                      */
+/*      Create a layer object, and corresponding RasterDMS.             */
+/*      Suitable for use with primary layers, and overviews.            */
+/************************************************************************/
+
+int 
+HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
+                const char *pszLayerName,
+                int bOverview, int nBlockSize, 
+                int bCreateCompressed, int bCreateLargeRaster,
+                int nXSize, int nYSize, int nDataType, 
+                char **papszOptions,
+                
+                // these are only related to external (large) files
+                const char *pszExternalFilename, 
+                int nStackValidFlagsOffset, 
+                int nStackDataOffset,
+                int nStackCount, int nStackIndex )
+
+{
+
+    HFAEntry	*poEimg_Layer;
+    const char *pszLayerType;
+
+    if( bOverview )
+        pszLayerType = "Eimg_Layer_SubSample";
+    else
+        pszLayerType = "Eimg_Layer";
+
+/* -------------------------------------------------------------------- */
+/*      Work out some details about the tiling scheme.                  */
+/* -------------------------------------------------------------------- */
+    int	nBlocksPerRow, nBlocksPerColumn, nBlocks, nBytesPerBlock;
+
+    nBlocksPerRow = (nXSize + nBlockSize - 1) / nBlockSize;
+    nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
+    nBlocks = nBlocksPerRow * nBlocksPerColumn;
+    nBytesPerBlock = (nBlockSize * nBlockSize
+                      * HFAGetDataTypeBits(nDataType) + 7) / 8;
+
+/* -------------------------------------------------------------------- */
+/*      Create the Eimg_Layer for the band.                             */
+/* -------------------------------------------------------------------- */
+    poEimg_Layer =
+        new HFAEntry( psInfo, pszLayerName, pszLayerType, poParent );
+
+    poEimg_Layer->SetIntField( "width", nXSize );
+    poEimg_Layer->SetIntField( "height", nYSize );
+    poEimg_Layer->SetStringField( "layerType", "athematic" );
+    poEimg_Layer->SetIntField( "pixelType", nDataType );
+    poEimg_Layer->SetIntField( "blockWidth", nBlockSize );
+    poEimg_Layer->SetIntField( "blockHeight", nBlockSize );
+
+/* -------------------------------------------------------------------- */
+/*      Create the RasterDMS (block list).  This is a complex type      */
+/*      with pointers, and variable size.  We set the superstructure    */
+/*      ourselves rather than trying to have the HFA type management    */
+/*      system do it for us (since this would be hard to implement).    */
+/* -------------------------------------------------------------------- */
+    if ( !bCreateLargeRaster )
+    {
+        int	nDmsSize;
+        HFAEntry *poEdms_State;
+        GByte	*pabyData;
+
+        poEdms_State =
+            new HFAEntry( psInfo, "RasterDMS", "Edms_State", poEimg_Layer );
+
+        nDmsSize = 14 * nBlocks + 38;
+        pabyData = poEdms_State->MakeData( nDmsSize );
+
+        /* set some simple values */
+        poEdms_State->SetIntField( "numvirtualblocks", nBlocks );
+        poEdms_State->SetIntField( "numobjectsperblock",
+                                   nBlockSize*nBlockSize );
+        poEdms_State->SetIntField( "nextobjectnum",
+                                   nBlockSize*nBlockSize*nBlocks );
+				  
+        /* Is file compressed or not? */     
+        if( bCreateCompressed )
+        {				       
+            poEdms_State->SetStringField( "compressionType", "RLC compression" );
+        }
+        else
+        {
+            poEdms_State->SetStringField( "compressionType", "no compression" );
+        }
+
+        /* we need to hardcode file offset into the data, so locate it now */
+        poEdms_State->SetPosition();
+
+        /* Set block info headers */
+        GUInt32		nValue;
+
+        /* blockinfo count */
+        nValue = nBlocks;
+        HFAStandard( 4, &nValue );
+        memcpy( pabyData + 14, &nValue, 4 );
+
+        /* blockinfo position */
+        nValue = poEdms_State->GetDataPos() + 22;
+        HFAStandard( 4, &nValue );
+        memcpy( pabyData + 18, &nValue, 4 );
+
+        /* Set each blockinfo */
+        for( int iBlock = 0; iBlock < nBlocks; iBlock++ )
+        {
+            GInt16  nValue16;
+            int	    nOffset = 22 + 14 * iBlock;
+
+            /* fileCode */
+            nValue16 = 0;
+            HFAStandard( 2, &nValue16 );
+            memcpy( pabyData + nOffset, &nValue16, 2 );
+
+            /* offset */
+            if( bCreateCompressed )
+            {				     
+                /* flag it with zero offset - will allocate space when we compress it */  
+                nValue = 0;
+            }
+            else
+            {
+                nValue = HFAAllocateSpace( psInfo, nBytesPerBlock );
+            }
+            HFAStandard( 4, &nValue );
+            memcpy( pabyData + nOffset + 2, &nValue, 4 );
+
+            /* size */
+            if( bCreateCompressed )
+            {
+                /* flag it with zero size - don't know until we compress it */
+                nValue = 0;
+            }
+            else
+            {
+                nValue = nBytesPerBlock;
+            }
+            HFAStandard( 4, &nValue );
+            memcpy( pabyData + nOffset + 6, &nValue, 4 );
+
+            /* logValid (true) */
+            nValue16 = 1;
+            HFAStandard( 2, &nValue16 );
+            memcpy( pabyData + nOffset + 10, &nValue16, 2 );
+
+            /* compressionType */
+            if( bCreateCompressed )
+                nValue16 = 1;
+            else
+                nValue16 = 0;
+
+            HFAStandard( 2, &nValue16 );
+            memcpy( pabyData + nOffset + 12, &nValue16, 2 );
+        }
+
+    }
+    else
+    {
+/* -------------------------------------------------------------------- */
+/*      Create ExternalRasterDMS object.                                */
+/* -------------------------------------------------------------------- */
+        HFAEntry *poEdms_State;
+
+        poEdms_State =
+            new HFAEntry( psInfo, "ExternalRasterDMS",
+                          "ImgExternalRaster", poEimg_Layer );
+        poEdms_State->MakeData( 8 + strlen(pszExternalFilename) + 1 + 6 * 4 );
+
+        poEdms_State->SetStringField( "fileName.string", pszExternalFilename );
+
+        poEdms_State->SetIntField( "layerStackValidFlagsOffset[0]",
+                                   nStackValidFlagsOffset );
+        poEdms_State->SetIntField( "layerStackValidFlagsOffset[1]", 0 );
+
+        poEdms_State->SetIntField( "layerStackDataOffset[0]",
+                                   nStackDataOffset );
+        poEdms_State->SetIntField( "layerStackDataOffset[1]", 0 );
+        poEdms_State->SetIntField( "layerStackCount", nStackCount );
+        poEdms_State->SetIntField( "layerStackIndex", nStackIndex );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the Ehfa_Layer.                                          */
+/* -------------------------------------------------------------------- */
+    HFAEntry *poEhfa_Layer;
+    GUInt32  nLDict;
+    char     szLDict[128], chBandType;
+    
+    if( nDataType == EPT_u1 )
+        chBandType = '1';
+    else if( nDataType == EPT_u2 )
+        chBandType = '2';
+    else if( nDataType == EPT_u4 )
+        chBandType = '4';
+    else if( nDataType == EPT_u8 )
+        chBandType = 'c';
+    else if( nDataType == EPT_s8 )
+        chBandType = 'C';
+    else if( nDataType == EPT_u16 )
+        chBandType = 's';
+    else if( nDataType == EPT_s16 )
+        chBandType = 'S';
+    else if( nDataType == EPT_u32 )
+        // for some reason erdas imagine expects an L for unsinged 32 bit ints
+        // otherwise it gives strange "out of memory errors"
+        chBandType = 'L';
+    else if( nDataType == EPT_s32 )
+        chBandType = 'L';
+    else if( nDataType == EPT_f32 )
+        chBandType = 'f';
+    else if( nDataType == EPT_f64 )
+        chBandType = 'd';
+    else if( nDataType == EPT_c64 )
+        chBandType = 'm';
+    else if( nDataType == EPT_c128 )
+        chBandType = 'M';
+    else
+    {
+        CPLAssert( FALSE );
+        chBandType = 'c';
+    }
+
+    // the first value in the entry below gives the number of pixels within a block
+    sprintf( szLDict, "{%d:%cdata,}RasterDMS,.", nBlockSize*nBlockSize, chBandType );
+
+    poEhfa_Layer = new HFAEntry( psInfo, "Ehfa_Layer", "Ehfa_Layer",
+                                 poEimg_Layer );
+    poEhfa_Layer->MakeData();
+    poEhfa_Layer->SetPosition();
+    nLDict = HFAAllocateSpace( psInfo, strlen(szLDict) + 1 );
+
+    poEhfa_Layer->SetStringField( "type", "raster" );
+    poEhfa_Layer->SetIntField( "dictionaryPtr", nLDict );
+
+    VSIFSeekL( psInfo->fp, nLDict, SEEK_SET );
+    VSIFWriteL( (void *) szLDict, strlen(szLDict) + 1, 1, psInfo->fp );
+
+    return TRUE;
+}
+
+
+/************************************************************************/
 /*                             HFACreate()                              */
 /************************************************************************/
 
@@ -1492,7 +1757,7 @@ HFAHandle HFACreate( const char * pszFilename,
 /*      Work out some details about the tiling scheme.                  */
 /* -------------------------------------------------------------------- */
     int	nBlocksPerRow, nBlocksPerColumn, nBlocks, nBytesPerBlock;
-    int	nBytesPerRow, nBlockMapSize, iHeaderSize, iFlagsSize;
+    int	nBytesPerRow, nBlockMapSize, iHeaderSize=49, iFlagsSize;
 
     nBlocksPerRow = (nXSize + nBlockSize - 1) / nBlockSize;
     nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
@@ -1506,7 +1771,6 @@ HFAHandle HFACreate( const char * pszFilename,
 
     nBytesPerRow = ( nBlocksPerRow + 7 ) / 8;
     nBlockMapSize = nBytesPerRow * nBlocksPerColumn;
-    iHeaderSize = 49;
     iFlagsSize = nBlockMapSize + 20;
 
 /* -------------------------------------------------------------------- */
@@ -1543,6 +1807,17 @@ HFAHandle HFACreate( const char * pszFilename,
                                   nBytesPerBlock*nBlocks*nBands );
     }
 
+/* -------------------------------------------------------------------- */
+/*      External filename, if needed.                                   */
+/* -------------------------------------------------------------------- */
+    if( bCreateLargeRaster )
+    {
+        pszFullFilename =
+            CPLStrdup( CPLResetExtension( pszFilename, "ige" ) );
+        pszRawFilename =
+            CPLStrdup( CPLGetFilename( pszFullFilename ) );
+    }
+
 /* ==================================================================== */
 /*      Create each band (layer)                                        */
 /* ==================================================================== */
@@ -1550,271 +1825,28 @@ HFAHandle HFACreate( const char * pszFilename,
 
     for( iBand = 0; iBand < nBands; iBand++ )
     {
-	HFAEntry	*poEimg_Layer;
         char		szName[128];
 
         sprintf( szName, "Layer_%d", iBand + 1 );
 
-/* -------------------------------------------------------------------- */
-/*      Create the Eimg_Layer for the band.                             */
-/* -------------------------------------------------------------------- */
-        poEimg_Layer =
-            new HFAEntry( psInfo, szName, "Eimg_Layer", psInfo->poRoot );
-
-        poEimg_Layer->SetIntField( "width", nXSize );
-        poEimg_Layer->SetIntField( "height", nYSize );
-        poEimg_Layer->SetStringField( "layerType", "athematic" );
-        poEimg_Layer->SetIntField( "pixelType", nDataType );
-        poEimg_Layer->SetIntField( "blockWidth", nBlockSize );
-        poEimg_Layer->SetIntField( "blockHeight", nBlockSize );
-
-	if ( !bCreateLargeRaster )
-	{
-/* -------------------------------------------------------------------- */
-/*      Create the RasterDMS (block list).  This is a complex type      */
-/*      with pointers, and variable size.  We set the superstructure    */
-/*      ourselves rather than trying to have the HFA type management    */
-/*      system do it for us (since this would be hard to implement).    */
-/* -------------------------------------------------------------------- */
-	    int	nDmsSize;
-	    HFAEntry *poEdms_State;
-	    GByte	*pabyData;
-
-	    poEdms_State =
-		new HFAEntry( psInfo, "RasterDMS", "Edms_State", poEimg_Layer );
-
-	    nDmsSize = 14 * nBlocks + 38;
-	    pabyData = poEdms_State->MakeData( nDmsSize );
-
-	    /* set some simple values */
-	    poEdms_State->SetIntField( "numvirtualblocks", nBlocks );
-	    poEdms_State->SetIntField( "numobjectsperblock",
-				       nBlockSize*nBlockSize );
-	    poEdms_State->SetIntField( "nextobjectnum",
-				       nBlockSize*nBlockSize*nBlocks );
-				  
-            /* Is file compressed or not? */     
-            if( bCreateCompressed )
-            {				       
-	    	poEdms_State->SetStringField( "compressionType", "RLC compression" );
-            }
-            else
-            {
-	    	poEdms_State->SetStringField( "compressionType", "no compression" );
-            }
-
-	    /* we need to hardcode file offset into the data, so locate it now */
-	    poEdms_State->SetPosition();
-
-	    /* Set block info headers */
-	    GUInt32		nValue;
-
-	    /* blockinfo count */
-	    nValue = nBlocks;
-	    HFAStandard( 4, &nValue );
-	    memcpy( pabyData + 14, &nValue, 4 );
-
-	    /* blockinfo position */
-	    nValue = poEdms_State->GetDataPos() + 22;
-	    HFAStandard( 4, &nValue );
-	    memcpy( pabyData + 18, &nValue, 4 );
-
-	    /* Set each blockinfo */
-	    for( int iBlock = 0; iBlock < nBlocks; iBlock++ )
-	    {
-		GInt16  nValue16;
-		int	    nOffset = 22 + 14 * iBlock;
-
-		/* fileCode */
-		nValue16 = 0;
-		HFAStandard( 2, &nValue16 );
-		memcpy( pabyData + nOffset, &nValue16, 2 );
-
-		/* offset */
-		if( bCreateCompressed )
-		{				     
-                    /* flag it with zero offset - will allocate space when we compress it */  
-                    nValue = 0;
-		}
-		else
-		{
-                    nValue = HFAAllocateSpace( psInfo, nBytesPerBlock );
-		}
-		HFAStandard( 4, &nValue );
-		memcpy( pabyData + nOffset + 2, &nValue, 4 );
-
-		/* size */
-		if( bCreateCompressed )
-		{
-                    /* flag it with zero size - don't know until we compress it */
-                    nValue = 0;
-		}
-		else
-		{
-                    nValue = nBytesPerBlock;
-		}
-		HFAStandard( 4, &nValue );
-		memcpy( pabyData + nOffset + 6, &nValue, 4 );
-
-		/* logValid (true) */
-		nValue16 = 1;
-		HFAStandard( 2, &nValue16 );
-		memcpy( pabyData + nOffset + 10, &nValue16, 2 );
-
-		/* compressionType */
-		if( bCreateCompressed )
-                    nValue16 = 1;
-		else
-                    nValue16 = 0;
-
-		HFAStandard( 2, &nValue16 );
-		memcpy( pabyData + nOffset + 12, &nValue16, 2 );
-	    }
-
-/* -------------------------------------------------------------------- */
-/*      Create the Ehfa_Layer.                                          */
-/* -------------------------------------------------------------------- */
-	    HFAEntry *poEhfa_Layer;
-	    GUInt32  nLDict;
-	    char     szLDict[128], chBandType;
-
-	    if( nDataType == EPT_u1 )
-		chBandType = '1';
-	    else if( nDataType == EPT_u2 )
-		chBandType = '2';
-	    else if( nDataType == EPT_u4 )
-		chBandType = '4';
-	    else if( nDataType == EPT_u8 )
-		chBandType = 'c';
-	    else if( nDataType == EPT_s8 )
-		chBandType = 'C';
-	    else if( nDataType == EPT_u16 )
-		chBandType = 's';
-	    else if( nDataType == EPT_s16 )
-		chBandType = 'S';
-	    else if( nDataType == EPT_u32 )
-                // for some reason erdas imagine expects an L for unsinged 32 bit ints
-                // otherwise it gives strange "out of memory errors"
-		chBandType = 'L';
-	    else if( nDataType == EPT_s32 )
-		chBandType = 'L';
-	    else if( nDataType == EPT_f32 )
-		chBandType = 'f';
-	    else if( nDataType == EPT_f64 )
-		chBandType = 'd';
-	    else if( nDataType == EPT_c64 )
-		chBandType = 'm';
-	    else if( nDataType == EPT_c128 )
-		chBandType = 'M';
-	    else
-	    {
-		CPLAssert( FALSE );
-		chBandType = 'c';
-	    }
-
-            // the first value in the entry below gives the number of pixels within a block
-	    sprintf( szLDict, "{%d:%cdata,}RasterDMS,.", nBlockSize*nBlockSize, chBandType );
-
-	    poEhfa_Layer = new HFAEntry( psInfo, "Ehfa_Layer", "Ehfa_Layer",
-					 poEimg_Layer );
-	    poEhfa_Layer->MakeData();
-	    poEhfa_Layer->SetPosition();
-	    nLDict = HFAAllocateSpace( psInfo, strlen(szLDict) + 1 );
-
-	    poEhfa_Layer->SetStringField( "type", "raster" );
-	    poEhfa_Layer->SetIntField( "dictionaryPtr", nLDict );
-
-	    VSIFSeekL( psInfo->fp, nLDict, SEEK_SET );
-	    VSIFWriteL( (void *) szLDict, strlen(szLDict) + 1, 1, psInfo->fp );
-	}
-	else
-	{
-/* -------------------------------------------------------------------- */
-/*      Create ExternalRasterDMS object.                                */
-/* -------------------------------------------------------------------- */
-	    HFAEntry *poEdms_State;
-
-	    pszFullFilename =
-		CPLStrdup( CPLResetExtension( pszFilename, "ige" ) );
-	    pszRawFilename =
-		CPLStrdup( CPLGetFilename( pszFullFilename ) );
-	    poEdms_State =
-		new HFAEntry( psInfo, "ExternalRasterDMS",
-			      "ImgExternalRaster", poEimg_Layer );
-	    poEdms_State->MakeData( 8 + strlen( pszRawFilename ) + 1 + 6 * 4 );
-
-	    poEdms_State->SetStringField( "fileName.string", pszRawFilename );
-
-	    poEdms_State->SetIntField( "layerStackValidFlagsOffset[0]",
-				       iHeaderSize );
-	    poEdms_State->SetIntField( "layerStackValidFlagsOffset[1]", 0 );
-
-	    poEdms_State->SetIntField( "layerStackDataOffset[0]",
-				       iHeaderSize + nBands * iFlagsSize );
-	    poEdms_State->SetIntField( "layerStackDataOffset[1]", 0 );
-	    poEdms_State->SetIntField( "layerStackCount", nBands );
-	    poEdms_State->SetIntField( "layerStackIndex", iBand );
-
-/* -------------------------------------------------------------------- */
-/*      Create the Ehfa_Layer.                                          */
-/* -------------------------------------------------------------------- */
-	    HFAEntry *poEhfa_Layer;
-	    GUInt32  nLDict;
-	    char     szLDict[128], chBandType;
-
-	    if( nDataType == EPT_u1 )
-		chBandType = '1';
-	    else if( nDataType == EPT_u2 )
-		chBandType = '2';
-	    else if( nDataType == EPT_u4 )
-		chBandType = '4';
-	    else if( nDataType == EPT_u8 )
-		chBandType = 'c';
-	    else if( nDataType == EPT_s8 )
-		chBandType = 'C';
-	    else if( nDataType == EPT_u16 )
-		chBandType = 's';
-	    else if( nDataType == EPT_s16 )
-		chBandType = 'S';
-	    else if( nDataType == EPT_u32 )
-		chBandType = 'I';
-	    else if( nDataType == EPT_s32 )
-		chBandType = 'L';
-	    else if( nDataType == EPT_f32 )
-		chBandType = 'f';
-	    else if( nDataType == EPT_f64 )
-		chBandType = 'd';
-	    else if( nDataType == EPT_c64 )
-		chBandType = 'm';
-	    else if( nDataType == EPT_c128 )
-		chBandType = 'M';
-	    else
-	    {
-		CPLAssert( FALSE );
-		chBandType = 'c';
-	    }
-
-	    sprintf( szLDict, "{4096:%cdata,}RasterDMS,.", chBandType );
-
-	    poEhfa_Layer = new HFAEntry( psInfo, "Ehfa_Layer", "Ehfa_Layer",
-					 poEimg_Layer );
-	    poEhfa_Layer->MakeData();
-	    poEhfa_Layer->SetPosition();
-	    nLDict = HFAAllocateSpace( psInfo, strlen(szLDict) + 1 );
-
-	    poEhfa_Layer->SetStringField( "type", "raster" );
-	    poEhfa_Layer->SetIntField( "dictionaryPtr", nLDict );
-
-	    VSIFSeekL( psInfo->fp, nLDict, SEEK_SET );
-	    VSIFWriteL( (void *) szLDict, strlen(szLDict) + 1, 1, psInfo->fp );
-	}
+        if( !HFACreateLayer( psInfo, psInfo->poRoot, szName, FALSE, nBlockSize,
+                             bCreateCompressed, bCreateLargeRaster, 
+                             nXSize, nYSize, nDataType, papszOptions,
+                             pszRawFilename, 
+                             iHeaderSize, 
+                             iHeaderSize + nBands * iFlagsSize, 
+                             nBands, iBand ) )
+        {
+            HFAClose( psInfo );
+            return NULL;
+        }
     }
 
-    if ( bCreateLargeRaster )
-    {
 /* -------------------------------------------------------------------- */
 /*      Create external file and write its header.                      */
 /* -------------------------------------------------------------------- */
+    if ( bCreateLargeRaster )
+    {
 	GByte	    bUnknown;
 	GInt32	    nValue32;
 	FILE	    *fpExternal;
@@ -1905,6 +1937,24 @@ HFAHandle HFACreate( const char * pszFilename,
     HFAParseBandInfo( psInfo );
 
     return psInfo;
+}
+
+/************************************************************************/
+/*                         HFACreateOverview()                          */
+/*                                                                      */
+/*      Create an overview layer object for a band.                     */
+/************************************************************************/
+
+int HFACreateOverview( HFAHandle hHFA, int nBand, int nOverviewLevel )
+
+{
+    if( nBand < 1 || nBand > hHFA->nBands )
+        return -1;
+    else
+    {
+        HFABand *poBand = hHFA->papoBand[nBand-1];
+        return poBand->CreateOverview( nOverviewLevel );
+    }
 }
 
 /************************************************************************/
