@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/05/10 04:48:42  fwarmerdam
+ * GDALOvLevelAdjust now public
+ *
  * Revision 1.10  2004/07/26 22:32:30  warmerda
  * Support .OVR files as well as .ovr
  *
@@ -204,7 +207,7 @@ GDALDefaultOverviews::GetOverview( int nBand, int iOverview )
 /*      the image size.                                                 */
 /************************************************************************/
 
-static int GDALOvLevelAdjust( int nOvLevel, int nXSize )
+int GDALOvLevelAdjust( int nOvLevel, int nXSize )
 
 {
     int nOXSize = (nXSize + nOvLevel - 1) / nOvLevel;
