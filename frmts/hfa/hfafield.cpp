@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/05/10 00:56:17  fwarmerdam
+ * fixed bug with setting entries in an array (with count setting)
+ *
  * Revision 1.15  2004/02/13 15:58:11  warmerda
  * Fixed serious bug with GetInstBytes() for BASEDATA * fields with
  * a count of zero.  Such as the Excluded field of most stats nodes!
@@ -388,15 +391,20 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
         GUInt32		nCount;
         GUInt32		nOffset;
 
+         /* set the count for fixed sized arrays */
         if( nBytes > -1 )
             nCount = nItemCount;
-        else if( chReqType == 's' )
+
+        /* Set the size from string length */
+        else if( chReqType == 's' && (chItemType == 'c' || chItemType == 'C'))
         {
             if( pValue == NULL )
                 nCount = 0;
             else
                 nCount = strlen((char *) pValue) + 1;
         }
+
+        /* set size based on index ... assumes in-order setting of array */
         else
             nCount = nIndexValue+1;
 
