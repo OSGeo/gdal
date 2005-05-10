@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2005/05/10 04:49:24  fwarmerdam
+ * added getdefaulthistogram and GDALOvLevelAdjust
+ *
  * Revision 1.54  2005/04/27 16:29:33  fwarmerdam
  * GetHistogram() made virtual.  Added methods for getting and setting
  * statistics.  Added SetUnitType method.
@@ -575,6 +578,11 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                           int nBuckets, int * panHistogram,
                           int bIncludeOutOfRange, int bApproxOK,
                           GDALProgressFunc, void *pProgressData );
+
+    virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
+                                        int *pnBuckets, int ** ppanHistogram,
+                                        int bForce,
+                                        GDALProgressFunc, void *pProgressData);
 };
 
 /* ******************************************************************** */
@@ -729,6 +737,8 @@ GDALDefaultBuildOverviews( GDALDataset *hSrcDS, const char * pszBasename,
 CPLErr
 GDALRegenerateOverviews( GDALRasterBand *, int, GDALRasterBand **,
                          const char *, GDALProgressFunc, void * );
+
+int GDALOvLevelAdjust( int nOvLevel, int nXSize );
 
 CPL_C_END
 
