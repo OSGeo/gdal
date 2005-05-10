@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2005/05/10 04:49:54  fwarmerdam
+ * added GetDefaultHistogram
+ *
  * Revision 1.59  2005/05/03 21:09:54  fwarmerdam
  * Removed unused variable.
  *
@@ -2536,6 +2539,79 @@ GDALGetRasterHistogram( GDALRasterBandH hBand,
         GetHistogram( dfMin, dfMax, nBuckets, panHistogram, 
                       bIncludeOutOfRange, bApproxOK,
                       pfnProgress, pProgressData );
+}
+
+/************************************************************************/
+/*                            GetHistogram()                            */
+/************************************************************************/
+
+/**
+ * Fetch default raster histogram. 
+ *
+ * Note that the bucket size is (dfMax-dfMin) / nBuckets.  
+ *
+ * For example to compute a simple 256 entry histogram of eight bit data, 
+ * the following would be suitable.  The unusual bounds are to ensure that
+ * bucket boundaries don't fall right on integer values causing possible errors
+ * due to rounding after scaling. 
+<pre>
+    int anHistogram[256];
+
+    poBand->GetHistogram( -0.5, 255.5, 256, anHistogram, FALSE, FALSE, 
+                          GDALDummyProgress, NULL );
+</pre>
+ *
+ * Note that setting bApproxOK will generally result in a subsampling of the
+ * file, and will utilize overviews if available.  It should generally 
+ * produce a representative histogram for the data that is suitable for use
+ * in generating histogram based luts for instance.  Generally bApproxOK is
+ * much faster than an exactly computed histogram.
+ *
+ * @param dfMin the lower bound of the histogram.
+ * @param dfMax the upper bound of the histogram.
+ * @param nBuckets the number of buckets in panHistogram.
+ * @param panHistogram array into which the histogram totals are placed.
+ * @param bIncludeOutOfRange if TRUE values below the histogram range will
+ * mapped into panHistogram[0], and values above will be mapped into 
+ * panHistogram[nBuckets-1] otherwise out of range values are discarded.
+ * @param bApproxOK TRUE if an approximate, or incomplete histogram OK.
+ * @param pfnProgress function to report progress to completion. 
+ * @param pProgressData application data to pass to pfnProgress. 
+ *
+ * @return CE_None on success, CE_Failure if something goes wrong, or 
+ * CE_Warning if no default histogram is available.
+ */
+
+CPLErr 
+    GDALRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax, 
+                                         int *pnBuckets, int **ppanHistogram, 
+                                         int bForce,
+                                         GDALProgressFunc pfnProgress, 
+                                         void *pProgressData )
+
+{
+    if( !bForce )
+        return CE_Warning;
+
+    if( GetRasterDataType() == GDT_Byte )
+    {
+        *pdfMin = -0.5;
+        *pdfMax = 255.5;
+    }
+    else
+    {
+        CPLErr eErr;
+
+        eErr = GetStatistics( TRUE, TRUE, pdfMin, pdfMax, NULL, NULL );
+        if( eErr != CE_None )
+            return eErr;
+    }
+
+    *pnBuckets = 256;
+    *ppanHistogram = (int *) CPLCalloc(sizeof(int),256);
+
+    return GetHistogram( *pdfMin, *pdfMax, *pnBuckets, *ppanHistogram, 
+                         TRUE, FALSE, pfnProgress, pProgressData );
 }
 
 /************************************************************************/
