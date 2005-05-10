@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.53  2005/05/10 00:58:22  fwarmerdam
+ * added preliminary overview within .img support
+ *
  * Revision 1.52  2005/05/05 15:54:48  fwarmerdam
  * PAM Enabled
  *
@@ -388,6 +391,11 @@ class CPL_DLL HFADataset : public GDALPamDataset
     virtual CPLErr SetMetadataItem( const char *, const char *, const char * = "" );
 
     virtual void   FlushCache( void );
+    virtual CPLErr IBuildOverviews( const char *pszResampling, 
+                                    int nOverviews, int *panOverviewList, 
+                                    int nListBands, int *panBandList,
+                                    GDALProgressFunc pfnProgress, 
+                                    void * pProgressData );
 };
 
 /************************************************************************/
@@ -433,6 +441,9 @@ class HFARasterBand : public GDALPamRasterBand
 
     virtual CPLErr SetMetadata( char **, const char * = "" );
     virtual CPLErr SetMetadataItem( const char *, const char *, const char * = "" );
+    virtual CPLErr BuildOverviews( const char *, int, int *,
+                                   GDALProgressFunc, void * );
+
 };
 
 /************************************************************************/
@@ -835,11 +846,13 @@ CPLErr HFARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                    void * pImage )
 
 {
-    if( nThisOverview != -1 )
-        return CE_Failure;
-
-    return( HFASetRasterBlock( hHFA, nBand, nBlockXOff, nBlockYOff,
-                               pImage ) );
+    if( nThisOverview == -1 )
+        return( HFASetRasterBlock( hHFA, nBand, nBlockXOff, nBlockYOff,
+                                   pImage ) );
+    else
+        return( HFASetOverviewRasterBlock( hHFA, nBand, nThisOverview,
+                                           nBlockXOff, nBlockYOff,
+                                           pImage ) );
 }
 
 /************************************************************************/
@@ -864,6 +877,7 @@ GDALColorTable *HFARasterBand::GetColorTable()
 {
     return poCT;
 }
+
 /************************************************************************/
 /*                           SetColorTable()                            */
 /************************************************************************/
@@ -936,6 +950,85 @@ CPLErr HFARasterBand::SetMetadataItem( const char *pszTag, const char *pszValue,
     return GDALRasterBand::SetMetadataItem( pszTag, pszValue, pszDomain );
 }
 
+/************************************************************************/
+/*                           BuildOverviews()                           */
+/************************************************************************/
+
+CPLErr HFARasterBand::BuildOverviews( const char *pszResampling, 
+                                      int nReqOverviews, int *panOverviewList, 
+                                      GDALProgressFunc pfnProgress, 
+                                      void *pProgressData )
+
+{
+    int iOverview;
+    GDALRasterBand **papoOvBands;
+    
+
+    if( nThisOverview != -1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Attempt to build overviews on an overview layer." );
+
+        return CE_Failure;
+    }
+
+    papoOvBands = (GDALRasterBand **) CPLCalloc(sizeof(void*),nReqOverviews);
+
+/* -------------------------------------------------------------------- */
+/*      Loop over overview levels requested.                            */
+/* -------------------------------------------------------------------- */
+    for( iOverview = 0; iOverview < nReqOverviews; iOverview++ )
+    {
+/* -------------------------------------------------------------------- */
+/*      Find this overview level.                                       */
+/* -------------------------------------------------------------------- */
+        int i, iResult = -1, nReqOvLevel;
+
+        nReqOvLevel = 
+            GDALOvLevelAdjust(panOverviewList[iOverview],nRasterXSize);
+
+        for( i = 0; i < nOverviews && papoOvBands[iOverview] == NULL; i++ )
+        {
+            int nThisOvLevel;
+
+            nThisOvLevel = (int) (0.5 + GetXSize() 
+                    / (double) papoOverviewBands[i]->GetXSize());
+
+            if( nReqOvLevel == nThisOvLevel )
+                papoOvBands[iOverview] = papoOverviewBands[i];
+        }
+
+/* -------------------------------------------------------------------- */
+/*      If this overview level does not yet exist, create it now.       */
+/* -------------------------------------------------------------------- */
+        if( papoOvBands[iOverview] == NULL )
+        {
+            iResult = HFACreateOverview( hHFA, nBand, panOverviewList[iOverview] );
+            if( iResult < 0 )
+                return CE_Failure;
+            
+            nOverviews = iResult + 1;
+            papoOverviewBands = (HFARasterBand **) 
+                CPLRealloc( papoOverviewBands, sizeof(void*) * nOverviews);
+            papoOverviewBands[iResult] = new HFARasterBand( 
+                (HFADataset *) poDS, nBand, iResult );
+
+            papoOvBands[iOverview] = papoOverviewBands[iResult];
+        }
+
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Regenerate the overviews.                                       */
+/* -------------------------------------------------------------------- */
+    CPLErr eErr;
+
+    eErr = GDALRegenerateOverviews( this, nReqOverviews, papoOvBands,
+                                    pszResampling, 
+                                    pfnProgress, pProgressData );
+    
+    return CE_None;
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1777,6 +1870,44 @@ CPLErr HFADataset::ReadProjection()
         pszProjection = NULL;
         return CE_Failure;
     }
+}
+
+/************************************************************************/
+/*                          IBuildOverviews()                           */
+/************************************************************************/
+
+CPLErr HFADataset::IBuildOverviews( const char *pszResampling, 
+                                    int nOverviews, int *panOverviewList, 
+                                    int nListBands, int *panBandList,
+                                    GDALProgressFunc pfnProgress, 
+                                    void * pProgressData )
+    
+{
+    int i;
+
+    if( GetAccess() == GA_ReadOnly )
+        return GDALDataset::IBuildOverviews( pszResampling, 
+                                             nOverviews, panOverviewList, 
+                                             nListBands, panBandList, 
+                                             pfnProgress, pProgressData );
+
+    for( i = 0; i < nListBands; i++ )
+    {
+        CPLErr eErr;
+        GDALRasterBand *poBand;
+
+        // TODO: We ought to used scaled progress monitors so we would get 
+        // 0 to 100 progress out of the whole process ... later.
+
+        poBand = GetRasterBand( panBandList[i] );
+        eErr = 
+            poBand->BuildOverviews( pszResampling, nOverviews, panOverviewList,
+                                    pfnProgress, pProgressData );
+        if( eErr != CE_None )
+            return eErr;
+    }
+
+    return CE_None;
 }
 
 /************************************************************************/
