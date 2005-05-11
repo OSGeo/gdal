@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2005/05/11 14:17:57  fwarmerdam
+ * include stdcall modifier for GDALGetDefaultHistogram
+ *
  * Revision 1.61  2005/05/11 14:04:08  fwarmerdam
  * added getdefaulthistogram
  *
@@ -2627,7 +2630,7 @@ CPLErr
 /*                      GDALGetDefaultHistogram()                       */
 /************************************************************************/
 
-CPLErr GDALGetDefaultHistogram( GDALRasterBandH hBand, 
+CPLErr CPL_STDCALL GDALGetDefaultHistogram( GDALRasterBandH hBand, 
                                 double *pdfMin, double *pdfMax, 
                                 int *pnBuckets, int **ppanHistogram, 
                                 int bForce,
