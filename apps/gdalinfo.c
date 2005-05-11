@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.37  2005/05/11 14:39:43  fwarmerdam
+ * added option to report stats
+ *
  * Revision 1.36  2004/08/24 20:13:28  warmerda
  * ensure -nomd works for bands too
  *
@@ -173,6 +176,7 @@ int main( int argc, char ** argv )
     char		**papszMetadata;
     int                 bComputeMinMax = FALSE, bSample = FALSE;
     int                 bShowGCPs = TRUE, bShowMetadata = TRUE ;
+    int                 bStats = FALSE;
     const char          *pszFilename = NULL;
 
     GDALAllRegister();
@@ -188,6 +192,8 @@ int main( int argc, char ** argv )
     {
         if( EQUAL(argv[i], "-mm") )
             bComputeMinMax = TRUE;
+        else if( EQUAL(argv[i], "-stats") )
+            bStats = TRUE;
         else if( EQUAL(argv[i], "-sample") )
             bSample = TRUE;
         else if( EQUAL(argv[i], "-nogcp") )
@@ -361,6 +367,8 @@ int main( int argc, char ** argv )
         double      dfMin, dfMax, adfCMinMax[2], dfNoData;
         int         bGotMin, bGotMax, bGotNodata, bSuccess;
         int         nBlockXSize, nBlockYSize;
+        double      dfMean, dfStdDev;
+        CPLErr      eErr;
 
         hBand = GDALGetRasterBand( hDataset, iBand+1 );
 
@@ -403,6 +411,14 @@ int main( int argc, char ** argv )
             }
 
             printf( "\n" );
+        }
+
+        eErr = GDALGetRasterStatistics( hBand, FALSE, bStats, 
+                                        &dfMin, &dfMax, &dfMean, &dfStdDev );
+        if( eErr == CE_None )
+        {
+            printf( "  Minimum=%.3f, Maximum=%.3f, Mean=%.3f, StdDev=%.3f\n",
+                    dfMin, dfMax, dfMean, dfStdDev );
         }
 
         dfNoData = GDALGetRasterNoDataValue( hBand, &bGotNodata );
