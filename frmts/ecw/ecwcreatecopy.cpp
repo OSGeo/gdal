@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/05/11 14:38:42  fwarmerdam
+ * added dictionary support, updated to latest urn and gml.root-instance plans
+ *
  * Revision 1.18  2005/05/03 21:11:47  fwarmerdam
  * upgraded to copy PAM information
  *
@@ -281,7 +284,11 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox( const char *pszWKT,
         }
     }
 
-    sprintf( szSRSName, "urn:ogc:def:crs:EPSG::%d", nEPSGCode );
+    if( nEPSGCode != 0 )
+        sprintf( szSRSName, "urn:ogc:def:crs:EPSG::%d", nEPSGCode );
+    else
+        strcpy( szSRSName, 
+                "urn:ogc:tc:gmljp2:xml:CRSDictionary.gml#ogrcrs1" );
 
 /* -------------------------------------------------------------------- */
 /*      For now we hardcode for a minimal instance format.              */
@@ -297,27 +304,37 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox( const char *pszWKT,
 "    <gml:Null>withheld</gml:Null>\n"
 "  </gml:boundedBy>\n"
 "  <gml:featureMember>\n"
-"    <gml:RectifiedGridCoverage dimension=\"2\" gml:id=\"RGC0001\">\n"
-"      <gml:rectifiedGridDomain>\n"
-"        <gml:RectifiedGrid dimension=\"2\">\n"
-"          <gml:limits>\n"
-"            <gml:GridEnvelope>\n"
-"              <gml:low>0 0</gml:low>\n"
-"              <gml:high>%d %d</gml:high>\n"
-"            </gml:GridEnvelope>\n"
-"          </gml:limits>\n"
-"          <gml:axisName>x</gml:axisName>\n"
-"          <gml:axisName>y</gml:axisName>\n"
-"          <gml:origin>\n"
-"            <gml:Point gml:id=\"P0001\" srsName=\"%s\">\n"
-"              <gml:pos>%.15g %.15g</gml:pos>\n"
-"            </gml:Point>\n"
-"          </gml:origin>\n"
-"          <gml:offsetVector srsName=\"%s\">%.15g %.15g</gml:offsetVector>\n"
-"          <gml:offsetVector srsName=\"%s\">%.15g %.15g</gml:offsetVector>\n"
-"        </gml:RectifiedGrid>\n"
-"      </gml:rectifiedGridDomain>\n"
-"    </gml:RectifiedGridCoverage>\n"
+"    <gml:FeatureCollection>\n"
+"      <gml:featureMember>\n"
+"        <gml:RectifiedGridCoverage dimension=\"2\" gml:id=\"RGC0001\">\n"
+"          <gml:rectifiedGridDomain>\n"
+"            <gml:RectifiedGrid dimension=\"2\">\n"
+"              <gml:limits>\n"
+"                <gml:GridEnvelope>\n"
+"                  <gml:low>0 0</gml:low>\n"
+"                  <gml:high>%d %d</gml:high>\n"
+"                </gml:GridEnvelope>\n"
+"              </gml:limits>\n"
+"              <gml:axisName>x</gml:axisName>\n"
+"              <gml:axisName>y</gml:axisName>\n"
+"              <gml:origin>\n"
+"                <gml:Point gml:id=\"P0001\" srsName=\"%s\">\n"
+"                  <gml:pos>%.15g %.15g</gml:pos>\n"
+"                </gml:Point>\n"
+"              </gml:origin>\n"
+"              <gml:offsetVector srsName=\"%s\">%.15g %.15g</gml:offsetVector>\n"
+"              <gml:offsetVector srsName=\"%s\">%.15g %.15g</gml:offsetVector>\n"
+"            </gml:RectifiedGrid>\n"
+"          </gml:rectifiedGridDomain>\n"
+"          <gml:rangeSet>\n"
+"            <gml:File>\n"
+"              <gml:fileName>urn:ogc:tc:gmljp2:codestream:0</gml:fileName>\n"
+"              <gml:fileStructure>Record Interleaved</gml:fileStructure>\n"
+"            </gml:File>\n"
+"          </gml:rangeSet>\n"
+"        </gml:RectifiedGridCoverage>\n"
+"      </gml:featureMember>\n"
+"    </gml:FeatureCollection>\n"
 "  </gml:featureMember>\n"
 "</gml:FeatureCollection>\n",
              sFileInfo.nSizeX-1, sFileInfo.nSizeY-1, 
@@ -330,6 +347,34 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox( const char *pszWKT,
              padfGeoTransform[1], padfGeoTransform[2],
              szSRSName,
              padfGeoTransform[4], padfGeoTransform[5] );
+
+/* -------------------------------------------------------------------- */
+/*      If we need a user defined CRSDictionary entry, prepare it       */
+/*      here.                                                           */
+/* -------------------------------------------------------------------- */
+    char *pszDictBox = NULL;
+
+    if( nEPSGCode == 0 )
+    {
+        char *pszGMLDef = NULL;
+
+        if( oSRS.exportToXML( &pszGMLDef, NULL ) == OGRERR_NONE )
+        {
+            pszDictBox = (char *) CPLMalloc(strlen(pszGMLDef) + 4000);
+            
+            sprintf( pszDictBox, 
+"<gml:Dictionary gml:id=\"CRSU1\" \n"
+"        xmlns:gml=\"http://www.opengis.net/gml\"\n"
+"        xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n"
+"        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n"
+"  <gml:dictionaryEntry>\n"
+"%s\n"
+"  </gml:dictionaryEntry>\n"
+"</gml:Dictionary>\n",
+                     pszGMLDef );
+        }
+        CPLFree( pszGMLDef );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Setup the various required boxes.                               */
@@ -360,6 +405,29 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox( const char *pszWKT,
     poGMLData->SetData( strlen( szDoc ), (unsigned char *) szDoc );
     poAssoc->m_OtherBoxes.push_back( poGMLData );
     poAssoc->m_OwnedBoxes.push_back( poGMLData );
+
+    if( pszDictBox != NULL )
+    {
+        poAssoc = new CNCSJP2File::CNCSJPXAssocBox();
+        m_oGMLAssoc.m_OtherBoxes.push_back( poAssoc );
+        m_oGMLAssoc.m_OwnedBoxes.push_back( poAssoc );
+        poAssoc->m_bValid = true;
+        
+        poLabel = new CNCSJP2File::CNCSJPXLabelBox();
+        poLabel->SetLabel( "CRSDictionary.gml" );
+        poLabel->m_bValid = true;
+        poAssoc->m_OtherBoxes.push_back( poLabel );
+        poAssoc->m_OwnedBoxes.push_back( poLabel );
+
+        poGMLData = new JP2UserBox();
+        poGMLData->m_nTBox = 'xml ';
+        poGMLData->SetData( strlen(pszDictBox), 
+                            (unsigned char *) pszDictBox );
+        poAssoc->m_OtherBoxes.push_back( poGMLData );
+        poAssoc->m_OwnedBoxes.push_back( poGMLData );
+
+        CPLFree( pszDictBox );
+    }
 
     m_oGMLAssoc.m_bValid = true;
     AddBox( &m_oGMLAssoc );
