@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/05/11 14:37:25  fwarmerdam
+ * add id on projectedcrs
+ *
  * Revision 1.6  2005/01/17 17:04:24  fwarmerdam
  * major overhaul to more-or-less GML 3 CRS support
  *
@@ -610,6 +613,7 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
     CPLXMLNode   *psCRS_XML;
 
     psCRS_XML = CPLCreateXMLNode( NULL, CXT_Element, "gml:ProjectedCRS" );
+    addGMLId( psCRS_XML );
     
 /* -------------------------------------------------------------------- */
 /*      Attach symbolic name (a name in a nameset).                     */
