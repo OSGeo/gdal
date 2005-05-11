@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/05/11 14:03:08  fwarmerdam
+ * added option to disable pam, and quiet failed .pam opens
+ *
  * Revision 1.1  2005/04/27 16:27:44  fwarmerdam
  * New
  *
@@ -210,8 +213,17 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszVRTPath )
 void GDALPamDataset::PamInitialize()
 
 {
-    if( psPam )
+    if( psPam || (nPamFlags & GPF_DISABLED) )
         return;
+
+    if( !CSLTestBoolean( CPLGetConfigOption( "GDAL_PAM_ENABLED", "YES" ) ) )
+    {
+        nPamFlags |= GPF_DISABLED;
+        return;
+    }
+
+    if( EQUAL( CPLGetConfigOption( "GDAL_PAM_MODE", "PAM" ), "AUX") )
+        nPamFlags |= GPF_AUXMODE;
 
     psPam = (GDALDatasetPamInfo *) CPLCalloc(sizeof(GDALDatasetPamInfo),1);
 
@@ -261,8 +273,6 @@ void GDALPamDataset::PamClear()
 CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
 
 {
-    PamInitialize();
-
 /* -------------------------------------------------------------------- */
 /*      Check for an SRS node.                                          */
 /* -------------------------------------------------------------------- */
@@ -444,10 +454,12 @@ CPLErr GDALPamDataset::TryLoadXML()
     // we should really check for the files existance before trying
     // to open it. 
     CPLErrorReset();
+    CPLPushErrorHandler( CPLQuietErrorHandler );
     psTree = CPLParseXMLFile( psPam->pszPamFilename );
+    CPLPopErrorHandler();
+
     if( psTree == NULL )
         return CPLGetLastErrorType();
-    
 
 /* -------------------------------------------------------------------- */
 /*      Initialize ourselves from this XML tree.                        */
