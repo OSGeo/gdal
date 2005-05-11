@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2005/05/11 14:04:08  fwarmerdam
+ * added getdefaulthistogram
+ *
  * Revision 1.60  2005/05/10 04:49:54  fwarmerdam
  * added GetDefaultHistogram
  *
@@ -2593,6 +2596,8 @@ CPLErr
     if( !bForce )
         return CE_Warning;
 
+    *pnBuckets = 256;
+
     if( GetRasterDataType() == GDT_Byte )
     {
         *pdfMin = -0.5;
@@ -2601,17 +2606,38 @@ CPLErr
     else
     {
         CPLErr eErr;
+        double dfHalfBucket;
 
         eErr = GetStatistics( TRUE, TRUE, pdfMin, pdfMax, NULL, NULL );
+        dfHalfBucket = (*pdfMax - *pdfMin) / (2 * *pnBuckets);
+        *pdfMin -= dfHalfBucket;
+        *pdfMax += dfHalfBucket;
+
         if( eErr != CE_None )
             return eErr;
     }
 
-    *pnBuckets = 256;
-    *ppanHistogram = (int *) CPLCalloc(sizeof(int),256);
+    *ppanHistogram = (int *) CPLCalloc(sizeof(int),*pnBuckets);
 
     return GetHistogram( *pdfMin, *pdfMax, *pnBuckets, *ppanHistogram, 
                          TRUE, FALSE, pfnProgress, pProgressData );
+}
+
+/************************************************************************/
+/*                      GDALGetDefaultHistogram()                       */
+/************************************************************************/
+
+CPLErr GDALGetDefaultHistogram( GDALRasterBandH hBand, 
+                                double *pdfMin, double *pdfMax, 
+                                int *pnBuckets, int **ppanHistogram, 
+                                int bForce,
+                                GDALProgressFunc pfnProgress, 
+                                void *pProgressData )
+
+{
+    return ((GDALRasterBand *) hBand)->GetDefaultHistogram( 
+        pdfMin, pdfMax, pnBuckets, ppanHistogram, bForce, 
+        pfnProgress, pProgressData );
 }
 
 /************************************************************************/

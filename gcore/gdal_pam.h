@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/05/11 14:04:21  fwarmerdam
+ * added getdefaulthistogram
+ *
  * Revision 1.1  2005/04/27 16:27:44  fwarmerdam
  * New
  *
@@ -72,6 +75,7 @@ class GDALPamRasterBand;
 #define GPF_DIRTY		0x01  // .pam file needs to be written on close
 #define GPF_TRIED_READ_FAILED   0x02  // no need to keep trying to read .pam.
 #define GPF_DISABLED            0x04  // do not try any PAM stuff. 
+#define GPF_AUXMODE             0x08  // store info in .aux (HFA) file.
 
 /* ==================================================================== */
 /*      GDALDatasetPamInfo                                              */
@@ -117,13 +121,14 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     virtual CPLErr TryLoadXML();
     virtual CPLErr TrySaveXML();
 
+    CPLErr  TryLoadAux();
+    CPLErr  TrySaveAux();
+
     virtual const char *BuildPamFilename();
 
     void   PamInitialize();
     void   PamClear();
 
-    void   MarkPamDirty() { nPamFlags |= GPF_DIRTY; }
-    
   public:
     virtual     ~GDALPamDataset();
 
@@ -148,6 +153,11 @@ class CPL_DLL GDALPamDataset : public GDALDataset
                                          const char * pszDomain = "" );
 
     virtual CPLErr CloneInfo( GDALDataset *poSrcDS, int nCloneInfoFlags );
+
+
+    // "semi private" methods.
+    void   MarkPamDirty() { nPamFlags |= GPF_DIRTY; }
+    GDALDatasetPamInfo *GetPamInfo() { return psPam; }
 };
 
 /* ==================================================================== */
@@ -232,6 +242,11 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
                           int bIncludeOutOfRange, int bApproxOK,
                           GDALProgressFunc, void *pProgressData );
 
+    virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
+                                        int *pnBuckets, int ** ppanHistogram,
+                                        int bForce,
+                                        GDALProgressFunc, void *pProgressData);
+
 #ifdef notdef    
     virtual CPLErr GetStatistics( int bApproxOK, int bForce,
                                   double *pdfMin, double *pdfMax, 
@@ -251,6 +266,9 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
 
     // new in GDALPamRasterBand. 
     virtual CPLErr CloneInfo( GDALRasterBand *poSrcBand, int nCloneInfoFlags );
+
+    // "semi private" methods.
+    GDALRasterBandPamInfo *GetPamInfo() { return psPam; }
 };
 
 // These are mainly helper functions for internal use.
