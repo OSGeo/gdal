@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.95  2005/05/11 14:04:08  fwarmerdam
+ * added getdefaulthistogram
+ *
  * Revision 1.94  2005/04/27 16:28:39  fwarmerdam
  * added GDALGetRasterStatistics
  *
@@ -523,6 +526,12 @@ CPLErr CPL_DLL CPL_STDCALL GDALGetRasterHistogram( GDALRasterBandH hBand,
                                        double dfMin, double dfMax,
                                        int nBuckets, int *panHistogram,
                                        int bIncludeOutOfRange, int bApproxOK,
+                                       GDALProgressFunc pfnProgress,
+                                       void * pProgressData );
+CPLErr CPL_DLL CPL_STDCALL GDALGetDefaultHistogram( GDALRasterBandH hBand,
+                                       double *pdfMin, double *pdfMax,
+                                       int *pnBuckets, int **ppanHistogram,
+                                       int bForce,
                                        GDALProgressFunc pfnProgress,
                                        void * pProgressData );
 int CPL_DLL CPL_STDCALL

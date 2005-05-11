@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/05/11 14:04:08  fwarmerdam
+ * added getdefaulthistogram
+ *
  * Revision 1.1  2005/04/27 16:27:44  fwarmerdam
  * New
  *
@@ -900,7 +903,7 @@ CPLErr GDALPamRasterBand::GetHistogram( double dfMin, double dfMax,
 
             if( atof(CPLGetXMLValue( psXMLHist, "HistMin", "0")) != dfMin 
                 || atof(CPLGetXMLValue( psXMLHist, "HistMax", "0")) != dfMax
-                || atof(CPLGetXMLValue( psXMLHist, "BucketCount","0")) 
+                || atoi(CPLGetXMLValue( psXMLHist, "BucketCount","0")) 
                 != nBuckets)
                 continue;
 
@@ -983,3 +986,59 @@ CPLErr GDALPamRasterBand::GetHistogram( double dfMin, double dfMax,
 
     return eErr;
 }
+
+
+/************************************************************************/
+/*                        GetDefaultHistogram()                         */
+/************************************************************************/
+
+CPLErr 
+GDALPamRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax, 
+                                        int *pnBuckets, int **ppanHistogram, 
+                                        int bForce,
+                                        GDALProgressFunc pfnProgress, 
+                                        void *pProgressData )
+    
+{
+    if( psPam && psPam->psSavedHistograms != NULL )
+    {
+        CPLXMLNode *psXMLHist;
+
+        for( psXMLHist = psPam->psSavedHistograms->psChild;
+             psXMLHist != NULL; psXMLHist = psXMLHist->psNext )
+        {
+            if( psXMLHist->eType != CXT_Element
+                || !EQUAL(psXMLHist->pszValue,"HistItem") )
+                continue;
+
+            *pdfMin = atof(CPLGetXMLValue( psXMLHist, "HistMin", "0"));
+            *pdfMax = atof(CPLGetXMLValue( psXMLHist, "HistMax", "255"));
+            *pnBuckets = atoi(CPLGetXMLValue( psXMLHist, "BucketCount","0"));
+
+            // Fetch the histogram and use it. 
+            int iBucket;
+            const char *pszHistCounts = CPLGetXMLValue( psXMLHist, 
+                                                        "HistCounts", "" );
+
+            *ppanHistogram = (int *) CPLCalloc(sizeof(int),*pnBuckets);
+
+            for( iBucket = 0; iBucket < *pnBuckets; iBucket++ )
+            {
+                (*ppanHistogram)[iBucket] = atoi(pszHistCounts);
+
+                // skip to next number.
+                while( *pszHistCounts != '\0' && *pszHistCounts != '|' )
+                    pszHistCounts++;
+                if( *pszHistCounts == '|' )
+                    pszHistCounts++;
+            }
+            
+            return CE_None;
+        }
+    }
+
+    return GDALRasterBand::GetDefaultHistogram( pdfMin, pdfMax, pnBuckets, 
+                                                ppanHistogram, bForce, 
+                                                pfnProgress, pProgressData );
+}
+
