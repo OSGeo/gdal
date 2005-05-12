@@ -157,8 +157,8 @@ else
   AC_MSG_RESULT([        thread safe support disabled.])
 fi
 
-CFLAGS="$CFLAGS $THREAD_FLAG"
-CXXFLAGS="$CXXFLAGS $THREAD_FLAG"
+AC_SUBST(THREAD_FLAG,$THREAD_FLAG)
+
 LIBS="$THREAD_LIB $LIBS" 
 
 dnl ---------------------------------------------------------------------------
