@@ -43,6 +43,10 @@ gdaltindex$(EXE):	gdaltindex.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdaltindex.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		-o gdaltindex$(EXE)
 
+multireadtest$(EXE):	multireadtest.o $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) multireadtest.o $(XTRAOBJ) $(CONFIG_LIBS) \
+		 -o multireadtest$(EXE)
+
 test1$(EXE):	test1.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) test1.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o test1$(EXE)
