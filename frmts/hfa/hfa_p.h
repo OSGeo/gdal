@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/05/13 02:05:25  fwarmerdam
+ * added HFACreateSpillStack
+ *
  * Revision 1.19  2005/05/10 00:56:38  fwarmerdam
  * added CreateOverview and GetInstCount methods
  *
@@ -109,6 +112,7 @@ class HFAEntry;
 class HFAType;
 class HFADictionary;
 class HFABand;
+class HFASpillFile;
 
 /************************************************************************/
 /*      Flag indicating read/write, or read-only access to data.        */
@@ -129,6 +133,7 @@ typedef struct hfainfo {
 
     char	*pszPath;
     char        *pszFilename; /* sans path */
+    char        *pszIGEFilename; /* sans path */
 
     HFAAccess	eAccess;
 
@@ -156,12 +161,16 @@ typedef struct hfainfo {
     void        *pProParameters;
 
     struct hfainfo *psDependent;
-
 } HFAInfo_t;
 
 GUInt32 HFAAllocateSpace( HFAInfo_t *, GUInt32 );
 CPLErr  HFAParseBandInfo( HFAInfo_t * );
 HFAInfo_t *HFAGetDependent( HFAInfo_t *, const char * );
+int HFACreateSpillStack( HFAInfo_t *, int nXSize, int nYSize, int nLayers, 
+                         int nBlockSize, int nDataType,
+                         GIntBig *pnValidFlagsOffset, 
+                         GIntBig *pnDataOffset );
+
 
 char ** GetHFAAuxMetaDataList();
 
