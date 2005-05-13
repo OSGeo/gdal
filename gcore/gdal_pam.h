@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/05/13 18:19:04  fwarmerdam
+ * Added SetDefaultHistogram
+ *
  * Revision 1.2  2005/05/11 14:04:21  fwarmerdam
  * added getdefaulthistogram
  *
@@ -246,6 +249,9 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
                                         int *pnBuckets, int ** ppanHistogram,
                                         int bForce,
                                         GDALProgressFunc, void *pProgressData);
+
+    virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
+                                        int nBuckets, int *panHistogram );
 
 #ifdef notdef    
     virtual CPLErr GetStatistics( int bApproxOK, int bForce,
