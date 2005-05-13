@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/05/13 18:56:52  fwarmerdam
+ * fixed SetDefaultHistogram
+ *
  * Revision 1.3  2005/05/13 18:18:46  fwarmerdam
  * reworked histogram support, SetHistogram prototype
  *
@@ -1086,11 +1089,11 @@ CPLErr GDALPamRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
 /* -------------------------------------------------------------------- */
     psNode = PamFindMatchingHistogram( psPam, dfMin, dfMax, nBuckets,
                                        TRUE, TRUE );
-    if( psNode == NULL )
+    if( psNode != NULL )
     {
         /* blow this one away */
         CPLRemoveXMLChild( psPam->psSavedHistograms, psNode );
-        CPLDestroyXMLNode( psNode->psChild );
+        CPLDestroyXMLNode( psNode );
     }
 
 /* -------------------------------------------------------------------- */
