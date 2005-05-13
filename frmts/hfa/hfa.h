@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/05/13 02:05:54  fwarmerdam
+ * adjusted CreateLayer
+ *
  * Revision 1.13  2005/05/10 00:57:40  fwarmerdam
  * added HFACreateLayer, HFACreateOverview
  *
@@ -223,7 +226,6 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
                 char **papszOptions,
                 
                 // these are only related to external (large) files
-                const char *pszExternalFilename, 
                 int nStackValidFlagsOffset, 
                 int nStackDataOffset,
                 int nStackCount, int nStackIndex );
