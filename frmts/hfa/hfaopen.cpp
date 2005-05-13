@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.42  2005/05/13 05:19:53  fwarmerdam
+ * Fixed VSIFSeek that should have been VSIFSeekL().
+ *
  * Revision 1.41  2005/05/13 04:57:18  fwarmerdam
  * fix handling of large offsets in ige file for HFACreateLayer()
  *
@@ -2286,7 +2289,7 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
     GByte bUnknown;
     GInt32 nValue32;
 
-    VSIFSeek( fpVSIL, 0, SEEK_END );
+    VSIFSeekL( fpVSIL, 0, SEEK_END );
 
     bUnknown = 1;
     VSIFWriteL( &bUnknown, 1, 1, fpVSIL );
