@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/05/13 18:18:46  fwarmerdam
+ * reworked histogram support, SetHistogram prototype
+ *
  * Revision 1.2  2005/05/11 14:04:08  fwarmerdam
  * added getdefaulthistogram
  *
@@ -872,6 +875,125 @@ double GDALPamRasterBand::GetMaximum( int *pbSuccess )
 #endif
 
 /************************************************************************/
+/*                         PamParseHistogram()                          */
+/************************************************************************/
+
+static int 
+PamParseHistogram( CPLXMLNode *psHistItem, 
+                   double *pdfMin, double *pdfMax, 
+                   int *pnBuckets, int **ppanHistogram, 
+                   int *pbIncludeOutOfRange, int *pbApproxOK )
+
+{
+    if( psHistItem == NULL )
+        return FALSE;
+
+    *pdfMin = atof(CPLGetXMLValue( psHistItem, "HistMin", "0"));
+    *pdfMax = atof(CPLGetXMLValue( psHistItem, "HistMax", "1"));
+    *pnBuckets = atoi(CPLGetXMLValue( psHistItem, "BucketCount","2"));
+
+    if( ppanHistogram == NULL )
+        return TRUE;
+
+    // Fetch the histogram and use it. 
+    int iBucket;
+    const char *pszHistCounts = CPLGetXMLValue( psHistItem, 
+                                                "HistCounts", "" );
+
+    *ppanHistogram = (int *) CPLCalloc(sizeof(int),*pnBuckets);
+
+    for( iBucket = 0; iBucket < *pnBuckets; iBucket++ )
+    {
+        (*ppanHistogram)[iBucket] = atoi(pszHistCounts);
+        
+        // skip to next number.
+        while( *pszHistCounts != '\0' && *pszHistCounts != '|' )
+            pszHistCounts++;
+        if( *pszHistCounts == '|' )
+            pszHistCounts++;
+    }
+    
+    return TRUE;
+}
+
+/************************************************************************/
+/*                      PamFindMatchingHistogram()                      */
+/************************************************************************/
+static CPLXMLNode *
+PamFindMatchingHistogram( GDALRasterBandPamInfo *psPam, 
+                          double dfMin, double dfMax, int nBuckets, 
+                          int bIncludeOutOfRange, int bApproxOK )
+
+{
+    if( psPam == NULL || psPam->psSavedHistograms == NULL )
+        return NULL;
+
+    CPLXMLNode *psXMLHist;
+    for( psXMLHist = psPam->psSavedHistograms->psChild;
+         psXMLHist != NULL; psXMLHist = psXMLHist->psNext )
+    {
+        if( psXMLHist->eType != CXT_Element
+            || !EQUAL(psXMLHist->pszValue,"HistItem") )
+            continue;
+
+        // should try and make min/max test a bit fuzzy.
+
+        if( atof(CPLGetXMLValue( psXMLHist, "HistMin", "0")) != dfMin 
+            || atof(CPLGetXMLValue( psXMLHist, "HistMax", "0")) != dfMax
+            || atoi(CPLGetXMLValue( psXMLHist, "BucketCount","0")) 
+            != nBuckets)
+            continue;
+
+        return psXMLHist;
+    }
+
+    return NULL;
+}
+
+/************************************************************************/
+/*                       PamHistogramToXMLTree()                        */
+/************************************************************************/
+
+static CPLXMLNode *
+PamHistogramToXMLTree( double dfMin, double dfMax,
+                       int nBuckets, int * panHistogram,
+                       int bIncludeOutOfRange, int bApprox )
+
+{
+    char *pszHistCounts = (char *) CPLMalloc(8 * nBuckets + 10);
+    int iBucket, iHistOffset;
+    CPLXMLNode *psXMLHist;
+
+    psXMLHist = CPLCreateXMLNode( NULL, CXT_Element, "HistItem" );
+
+    CPLSetXMLValue( psXMLHist, "HistMin", 
+                    CPLSPrintf( "%.16g", dfMin ));
+    CPLSetXMLValue( psXMLHist, "HistMax", 
+                    CPLSPrintf( "%.16g", dfMax ));
+    CPLSetXMLValue( psXMLHist, "BucketCount", 
+                    CPLSPrintf( "%d", nBuckets ));
+    CPLSetXMLValue( psXMLHist, "IncludeOutOfRange", 
+                    CPLSPrintf( "%d", bIncludeOutOfRange ));
+    CPLSetXMLValue( psXMLHist, "Approximate", 
+                    CPLSPrintf( "%d", bApprox ));
+
+    iHistOffset = 0;
+    pszHistCounts[0] = '\0';
+    for( iBucket = 0; iBucket < nBuckets; iBucket++ )
+    {
+        sprintf( pszHistCounts + iHistOffset, "%d", panHistogram[iBucket] );
+        if( iBucket < nBuckets-1 )
+            strcat( pszHistCounts + iHistOffset, "|" );
+        iHistOffset += strlen(pszHistCounts+iHistOffset);
+    }
+        
+    CPLSetXMLValue( psXMLHist, "HistCounts", pszHistCounts );
+    CPLFree( pszHistCounts );
+
+    return psXMLHist;
+}
+
+/************************************************************************/
 /*                            GetHistogram()                            */
 /************************************************************************/
 
@@ -891,41 +1013,20 @@ CPLErr GDALPamRasterBand::GetHistogram( double dfMin, double dfMax,
 /* -------------------------------------------------------------------- */
 /*      Check if we have a matching histogram.                          */
 /* -------------------------------------------------------------------- */
-    if( psPam->psSavedHistograms != NULL )
+    CPLXMLNode *psHistItem;
+
+    psHistItem = PamFindMatchingHistogram( psPam, dfMin, dfMax, nBuckets, 
+                                           bIncludeOutOfRange, bApproxOK );
+    if( psHistItem != NULL )
     {
-        CPLXMLNode *psXMLHist;
-        for( psXMLHist = psPam->psSavedHistograms->psChild;
-             psXMLHist != NULL; psXMLHist = psXMLHist->psNext )
+        int *panTempHist = NULL;
+
+        if( PamParseHistogram( psHistItem, &dfMin, &dfMax, &nBuckets, 
+                               &panTempHist,
+                               &bIncludeOutOfRange, &bApproxOK ) )
         {
-            if( psXMLHist->eType != CXT_Element
-                || !EQUAL(psXMLHist->pszValue,"HistItem") )
-                continue;
-
-            if( atof(CPLGetXMLValue( psXMLHist, "HistMin", "0")) != dfMin 
-                || atof(CPLGetXMLValue( psXMLHist, "HistMax", "0")) != dfMax
-                || atoi(CPLGetXMLValue( psXMLHist, "BucketCount","0")) 
-                != nBuckets)
-                continue;
-
-            // we likely ought to check approx ok and include out of range. 
-            // later...
-
-            // Fetch the histogram and use it. 
-            int iBucket;
-            const char *pszHistCounts = CPLGetXMLValue( psXMLHist, 
-                                                        "HistCounts", "" );
-
-            for( iBucket = 0; iBucket < nBuckets; iBucket++ )
-            {
-                panHistogram[iBucket] = atoi(pszHistCounts);
-
-                // skip to next number.
-                while( *pszHistCounts != '\0' && *pszHistCounts != '|' )
-                    pszHistCounts++;
-                if( *pszHistCounts == '|' )
-                    pszHistCounts++;
-            }
-            
+            memcpy( panHistogram, panTempHist, sizeof(int) * nBuckets );
+            CPLFree( panTempHist );
             return CE_None;
         }
     }
@@ -942,51 +1043,79 @@ CPLErr GDALPamRasterBand::GetHistogram( double dfMin, double dfMax,
                                          pfnProgress, pProgressData );
 
 /* -------------------------------------------------------------------- */
-/*      Prepare an XML description this histogram.                      */
+/*      Save an XML description of this histogram.                      */
 /* -------------------------------------------------------------------- */
     if( eErr == CE_None )
     {
-        char *pszHistCounts = (char *) CPLMalloc(8 * nBuckets + 10);
-        int iBucket, iHistOffset;
         CPLXMLNode *psXMLHist;
 
-        psPam->poParentDS->MarkPamDirty();
-
-        if( psPam->psSavedHistograms == NULL )
-            psPam->psSavedHistograms = CPLCreateXMLNode( NULL, CXT_Element, 
-                                                         "Histograms" );
-
-        psXMLHist = CPLCreateXMLNode( psPam->psSavedHistograms,
-                                      CXT_Element, "HistItem" );
-
-        CPLSetXMLValue( psXMLHist, "HistMin", 
-                        CPLSPrintf( "%.16g", dfMin ));
-        CPLSetXMLValue( psXMLHist, "HistMax", 
-                        CPLSPrintf( "%.16g", dfMax ));
-        CPLSetXMLValue( psXMLHist, "BucketCount", 
-                        CPLSPrintf( "%d", nBuckets ));
-        CPLSetXMLValue( psXMLHist, "IncludeOutOfRange", 
-                        CPLSPrintf( "%d", bIncludeOutOfRange ));
-        CPLSetXMLValue( psXMLHist, "Approximate", 
-                        CPLSPrintf( "%d", bApproxOK ));
-
-        iHistOffset = 0;
-        pszHistCounts[0] = '\0';
-        for( iBucket = 0; iBucket < nBuckets; iBucket++ )
+        psXMLHist = PamHistogramToXMLTree( dfMin, dfMax, nBuckets, 
+                                           panHistogram, 
+                                           bIncludeOutOfRange, bApproxOK );
+        if( psXMLHist != NULL )
         {
-            sprintf( pszHistCounts + iHistOffset, "%d", panHistogram[iBucket] );
-            if( iBucket < nBuckets-1 )
-                strcat( pszHistCounts + iHistOffset, "|" );
-            iHistOffset += strlen(pszHistCounts+iHistOffset);
+            psPam->poParentDS->MarkPamDirty();
+
+            if( psPam->psSavedHistograms == NULL )
+                psPam->psSavedHistograms = CPLCreateXMLNode( NULL, CXT_Element,
+                                                             "Histograms" );
+            
+            CPLAddXMLChild( psPam->psSavedHistograms, psXMLHist );
         }
-        
-        CPLSetXMLValue( psXMLHist, "HistCounts", pszHistCounts );
-        CPLFree( pszHistCounts );
     }
 
     return eErr;
 }
 
+/************************************************************************/
+/*                        SetDefaultHistogram()                         */
+/************************************************************************/
+
+CPLErr GDALPamRasterBand::SetDefaultHistogram( double dfMin, double dfMax, 
+                                               int nBuckets, int *panHistogram)
+
+{
+    CPLXMLNode *psNode;
+
+    if( psPam == NULL )
+        return GDALRasterBand::SetDefaultHistogram( dfMin, dfMax, 
+                                                    nBuckets, panHistogram );
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a matching histogram we should replace?              */
+/* -------------------------------------------------------------------- */
+    psNode = PamFindMatchingHistogram( psPam, dfMin, dfMax, nBuckets,
+                                       TRUE, TRUE );
+    if( psNode == NULL )
+    {
+        /* blow this one away */
+        CPLRemoveXMLChild( psPam->psSavedHistograms, psNode );
+        CPLDestroyXMLNode( psNode->psChild );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Translate into a histogram XML tree.                            */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psHistItem;
+
+    psHistItem = PamHistogramToXMLTree( dfMin, dfMax, nBuckets, 
+                                        panHistogram, TRUE, FALSE );
+
+/* -------------------------------------------------------------------- */
+/*      Insert our new default histogram at the front of the            */
+/*      histogram list so that it will be the default histogram.        */
+/* -------------------------------------------------------------------- */
+    psPam->poParentDS->MarkPamDirty();
+
+    if( psPam->psSavedHistograms == NULL )
+        psPam->psSavedHistograms = CPLCreateXMLNode( NULL, CXT_Element,
+                                                     "Histograms" );
+            
+    psHistItem->psNext = psPam->psSavedHistograms->psChild;
+    psPam->psSavedHistograms->psChild = psHistItem;
+    
+    return CE_None;
+}
 
 /************************************************************************/
 /*                        GetDefaultHistogram()                         */
@@ -1007,33 +1136,18 @@ GDALPamRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
         for( psXMLHist = psPam->psSavedHistograms->psChild;
              psXMLHist != NULL; psXMLHist = psXMLHist->psNext )
         {
+            int bApprox, bIncludeOutOfRange;
+
             if( psXMLHist->eType != CXT_Element
                 || !EQUAL(psXMLHist->pszValue,"HistItem") )
                 continue;
 
-            *pdfMin = atof(CPLGetXMLValue( psXMLHist, "HistMin", "0"));
-            *pdfMax = atof(CPLGetXMLValue( psXMLHist, "HistMax", "255"));
-            *pnBuckets = atoi(CPLGetXMLValue( psXMLHist, "BucketCount","0"));
-
-            // Fetch the histogram and use it. 
-            int iBucket;
-            const char *pszHistCounts = CPLGetXMLValue( psXMLHist, 
-                                                        "HistCounts", "" );
-
-            *ppanHistogram = (int *) CPLCalloc(sizeof(int),*pnBuckets);
-
-            for( iBucket = 0; iBucket < *pnBuckets; iBucket++ )
-            {
-                (*ppanHistogram)[iBucket] = atoi(pszHistCounts);
-
-                // skip to next number.
-                while( *pszHistCounts != '\0' && *pszHistCounts != '|' )
-                    pszHistCounts++;
-                if( *pszHistCounts == '|' )
-                    pszHistCounts++;
-            }
-            
-            return CE_None;
+            if( PamParseHistogram( psXMLHist, pdfMin, pdfMax, pnBuckets, 
+                                   ppanHistogram, &bIncludeOutOfRange,
+                                   &bApprox ) )
+                return CE_None;
+            else
+                return CE_Failure;
         }
     }
 
