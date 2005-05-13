@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2005/05/13 18:19:37  fwarmerdam
+ * added SetDefaultHistogram
+ *
  * Revision 1.62  2005/05/11 14:17:57  fwarmerdam
  * include stdcall modifier for GDALGetDefaultHistogram
  *
@@ -3001,3 +3004,15 @@ CPLErr GDALRasterBand::SetStatistics( double dfMin, double dfMax,
     return CE_Failure;
 }
 
+/************************************************************************/
+/*                        SetDefaultHistogram()                         */
+/************************************************************************/
+
+CPLErr GDALRasterBand::SetDefaultHistogram( double dfMin, double dfMax, 
+                                            int nBuckets, int *panHistogram )
+
+{
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "SetDefaultHistogram() not implemented for this format." );
+    return CE_Failure;
+}
