@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2005/05/13 02:07:00  fwarmerdam
+ * generalized use of spill file, added HFACreateSpillStack
+ *
  * Revision 1.42  2005/05/10 00:56:55  fwarmerdam
  * added CreateOverview method
  *
@@ -1502,14 +1505,34 @@ int HFABand::CreateOverview( int nOverviewLevel )
     nOYSize = (psInfo->nYSize + nOverviewLevel - 1) / nOverviewLevel;
 
 /* -------------------------------------------------------------------- */
+/*      Eventually we need to decide on the whether to use the spill    */
+/*      file, primarily on the basis of whether the new overview        */
+/*      will drive our .img file size near 4BG.  For now, just base     */
+/*      it on the config options.                                       */
+/* -------------------------------------------------------------------- */
+    int bCreateLargeRaster = CSLTestBoolean(
+        CPLGetConfigOption("USE_SPILL","NO") );
+    GIntBig nValidFlagsOffset = 0, nDataOffset = 0;
+
+    if( bCreateLargeRaster )
+    {
+        if( !HFACreateSpillStack( psInfo, nOXSize, nOYSize, 1, 
+                                  nBlockXSize, nDataType, 
+                                  &nValidFlagsOffset, &nDataOffset ) )
+	{
+	    return -1;
+	}
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the layer.                                               */
 /* -------------------------------------------------------------------- */
     sprintf( pszLayerName, "_ss_%d_", nOverviewLevel );
 
     if( !HFACreateLayer( psInfo, poNode, pszLayerName, 
-                         TRUE, nBlockXSize, FALSE, FALSE,	
-                         nOXSize, nOYSize, nDataType, NULL, 
-                         NULL, 0, 0, 0, 0 ) )
+                         TRUE, nBlockXSize, FALSE, bCreateLargeRaster,	
+                         nOXSize, nOYSize, nDataType, NULL,
+                         nValidFlagsOffset, nDataOffset, 1, 0 ) )
         return -1;
     
     HFAEntry *poOverLayer = poNode->GetNamedChild( pszLayerName );
