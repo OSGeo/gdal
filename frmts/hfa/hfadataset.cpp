@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.54  2005/05/13 13:59:54  fwarmerdam
+ * Added GetDefaultHistogram() method.
+ *
  * Revision 1.53  2005/05/10 00:58:22  fwarmerdam
  * added preliminary overview within .img support
  *
@@ -444,6 +447,10 @@ class HFARasterBand : public GDALPamRasterBand
     virtual CPLErr BuildOverviews( const char *, int, int *,
                                    GDALProgressFunc, void * );
 
+    virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
+                                        int *pnBuckets, int ** ppanHistogram,
+                                        int bForce,
+                                        GDALProgressFunc, void *pProgressData);
 };
 
 /************************************************************************/
@@ -1028,6 +1035,65 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
                                     pfnProgress, pProgressData );
     
     return CE_None;
+}
+
+/************************************************************************/
+/*                        GetDefaultHistogram()                         */
+/************************************************************************/
+
+CPLErr 
+HFARasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
+                                    int *pnBuckets, int ** ppanHistogram,
+                                    int bForce,
+                                    GDALProgressFunc pfnProgress, 
+                                    void *pProgressData)
+
+{
+    if( GetMetadataItem( "STATISTICS_HISTOBINVALUES" ) != NULL 
+        && GetMetadataItem( "STATISTICS_MINIMUM" ) != NULL 
+        && GetMetadataItem( "STATISTICS_MAXIMUM" ) != NULL )
+    {
+        int i;
+        const char *pszNextBin;
+        const char *pszBinValues = 
+            GetMetadataItem( "STATISTICS_HISTOBINVALUES" );
+
+        *pdfMin = atof(GetMetadataItem("STATISTICS_MINIMUM"));
+        *pdfMax = atof(GetMetadataItem("STATISTICS_MAXIMUM"));
+
+        *pnBuckets = 0;
+        for( i = 0; pszBinValues[i] != '\0'; i++ )
+        {
+            if( pszBinValues[i] == '|' )
+                (*pnBuckets)++;
+        }
+
+        *ppanHistogram = (int *) CPLCalloc(sizeof(int),*pnBuckets);
+
+        pszNextBin = pszBinValues;
+        for( i = 0; i < *pnBuckets; i++ )
+        {
+            (*ppanHistogram)[i] = atoi(pszNextBin);
+
+            while( *pszNextBin != '|' && *pszNextBin != '\0' )
+                pszNextBin++;
+            if( *pszNextBin == '|' )
+                pszNextBin++;
+        }
+
+        // Adjust min/max to reflect outer edges of buckets.
+        double dfBucketWidth = (*pdfMax - *pdfMin) / (*pnBuckets-1);
+        *pdfMax += 0.5 * dfBucketWidth;
+        *pdfMin -= 0.5 * dfBucketWidth;
+
+        return CE_None;
+    }
+    else
+        return GDALPamRasterBand::GetDefaultHistogram( pdfMin, pdfMax, 
+                                                       pnBuckets,ppanHistogram,
+                                                       bForce, 
+                                                       pfnProgress,
+                                                       pProgressData );
 }
 
 /************************************************************************/
