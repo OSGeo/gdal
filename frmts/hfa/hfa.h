@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/05/13 04:57:28  fwarmerdam
+ * fix handling of large offsets in ige file for HFACreateLayer()
+ *
  * Revision 1.14  2005/05/13 02:05:54  fwarmerdam
  * adjusted CreateLayer
  *
@@ -226,8 +229,8 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
                 char **papszOptions,
                 
                 // these are only related to external (large) files
-                int nStackValidFlagsOffset, 
-                int nStackDataOffset,
+                GIntBig nStackValidFlagsOffset, 
+                GIntBig nStackDataOffset,
                 int nStackCount, int nStackIndex );
 
 /* -------------------------------------------------------------------- */
