@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.35  2005/05/13 18:17:48  fwarmerdam
+ * added CPLRemoveXMLChild
+ *
  * Revision 1.34  2005/03/09 17:07:25  fwarmerdam
  * added CPLSearchXMLNode
  *
@@ -1398,6 +1401,49 @@ void CPLAddXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
 }
 
 /************************************************************************/
+/*                           CPLAddXMLChild()                           */
+/************************************************************************/
+
+/**
+ * Remove child node from parent. 
+ *
+ * The passed child is removed from the child list of the passed parent,
+ * but the child is not destroyed.  The child retains ownership of it's
+ * own children, but is cleanly removed from the child list of the parent.
+ *
+ * @param psParent the node to the child is attached to.
+ *
+ * @param psChild the child to remove.
+ *
+ * @return TRUE on success or FALSE if the child was not found.
+ */
+
+int CPLRemoveXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
+
+{
+    CPLXMLNode *psLast = NULL, *psThis;
+
+    if( psParent == NULL )
+        return FALSE;
+
+    for( psThis = psParent->psChild; psThis != NULL; psThis = psThis->psNext )
+    {
+        if( psThis == psChild )
+        {
+            if( psLast == NULL )
+                psParent->psChild = psThis->psNext;
+            else 
+                psLast->psNext = psThis->psNext;
+
+            psThis->psNext = NULL;
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+/************************************************************************/
 /*                          CPLAddXMLSibling()                          */
 /************************************************************************/
 
@@ -1851,3 +1897,4 @@ void       CPL_DLL CPLCleanXMLElementName( char *pszTarget )
         }
     }
 }
+

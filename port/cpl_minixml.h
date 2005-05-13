@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/05/13 18:17:48  fwarmerdam
+ * added CPLRemoveXMLChild
+ *
  * Revision 1.12  2005/03/09 17:07:25  fwarmerdam
  * added CPLSearchXMLNode
  *
@@ -173,6 +176,8 @@ CPLXMLNode CPL_DLL *CPLCreateXMLNode( CPLXMLNode *poParent,
 char       CPL_DLL *CPLSerializeXMLTree( CPLXMLNode *psNode );
 void       CPL_DLL  CPLAddXMLChild( CPLXMLNode *psParent,
                                     CPLXMLNode *psChild );
+int        CPL_DLL  CPLRemoveXMLChild( CPLXMLNode *psParent,
+                                       CPLXMLNode *psChild );
 void       CPL_DLL  CPLAddXMLSibling( CPLXMLNode *psOlderSibling,
                                       CPLXMLNode *psNewSibling );
 CPLXMLNode CPL_DLL *CPLCreateXMLElementAndValue( CPLXMLNode *psParent,
