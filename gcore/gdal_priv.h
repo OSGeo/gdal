@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2005/05/13 18:19:15  fwarmerdam
+ * Added SetDefaultHistogram
+ *
  * Revision 1.56  2005/05/10 15:30:28  fwarmerdam
  * export some overview functions
  *
@@ -586,6 +589,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                         int *pnBuckets, int ** ppanHistogram,
                                         int bForce,
                                         GDALProgressFunc, void *pProgressData);
+    virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
+                                        int nBuckets, int *panHistogram );
 };
 
 /* ******************************************************************** */
