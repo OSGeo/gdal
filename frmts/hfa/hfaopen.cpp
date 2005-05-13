@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.40  2005/05/13 02:07:20  fwarmerdam
+ * generalized use of spill file, added HFACreateSpillStack
+ *
  * Revision 1.39  2005/05/10 00:57:17  fwarmerdam
  * factored out CreateLayer code, added CreateOverview
  *
@@ -1490,7 +1493,6 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
                 char **papszOptions,
                 
                 // these are only related to external (large) files
-                const char *pszExternalFilename, 
                 int nStackValidFlagsOffset, 
                 int nStackDataOffset,
                 int nStackCount, int nStackIndex )
@@ -1643,9 +1645,10 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
         poEdms_State =
             new HFAEntry( psInfo, "ExternalRasterDMS",
                           "ImgExternalRaster", poEimg_Layer );
-        poEdms_State->MakeData( 8 + strlen(pszExternalFilename) + 1 + 6 * 4 );
+        poEdms_State->MakeData( 8 + strlen(psInfo->pszIGEFilename) + 1 + 6 * 4 );
 
-        poEdms_State->SetStringField( "fileName.string", pszExternalFilename );
+        poEdms_State->SetStringField( "fileName.string", 
+                                      psInfo->pszIGEFilename );
 
         poEdms_State->SetIntField( "layerStackValidFlagsOffset[0]",
                                    nStackValidFlagsOffset );
@@ -1757,7 +1760,6 @@ HFAHandle HFACreate( const char * pszFilename,
 /*      Work out some details about the tiling scheme.                  */
 /* -------------------------------------------------------------------- */
     int	nBlocksPerRow, nBlocksPerColumn, nBlocks, nBytesPerBlock;
-    int	nBytesPerRow, nBlockMapSize, iHeaderSize=49, iFlagsSize;
 
     nBlocksPerRow = (nXSize + nBlockSize - 1) / nBlockSize;
     nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
@@ -1768,10 +1770,6 @@ HFAHandle HFACreate( const char * pszFilename,
     CPLDebug( "HFACreate", "Blocks per row %d, blocks per column %d, "
 	      "total number of blocks %d, bytes per block %d.",
 	      nBlocksPerRow, nBlocksPerColumn, nBlocks, nBytesPerBlock );
-
-    nBytesPerRow = ( nBlocksPerRow + 7 ) / 8;
-    nBlockMapSize = nBytesPerRow * nBlocksPerColumn;
-    iFlagsSize = nBlockMapSize + 20;
 
 /* -------------------------------------------------------------------- */
 /*      Check whether we should create external large file with         */
@@ -1808,14 +1806,20 @@ HFAHandle HFACreate( const char * pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
-/*      External filename, if needed.                                   */
+/*      Create external file and write its header.                      */
 /* -------------------------------------------------------------------- */
+    GIntBig nValidFlagsOffset = 0, nDataOffset = 0;
+
     if( bCreateLargeRaster )
     {
-        pszFullFilename =
-            CPLStrdup( CPLResetExtension( pszFilename, "ige" ) );
-        pszRawFilename =
-            CPLStrdup( CPLGetFilename( pszFullFilename ) );
+        if( !HFACreateSpillStack( psInfo, nXSize, nYSize, nBands, 
+                                  nBlockSize, nDataType, 
+                                  &nValidFlagsOffset, &nDataOffset ) )
+	{
+	    CPLFree( pszRawFilename );
+	    CPLFree( pszFullFilename );
+	    return NULL;
+	}
     }
 
 /* ==================================================================== */
@@ -1832,103 +1836,12 @@ HFAHandle HFACreate( const char * pszFilename,
         if( !HFACreateLayer( psInfo, psInfo->poRoot, szName, FALSE, nBlockSize,
                              bCreateCompressed, bCreateLargeRaster, 
                              nXSize, nYSize, nDataType, papszOptions,
-                             pszRawFilename, 
-                             iHeaderSize, 
-                             iHeaderSize + nBands * iFlagsSize, 
+                             nValidFlagsOffset, nDataOffset,
                              nBands, iBand ) )
         {
             HFAClose( psInfo );
             return NULL;
         }
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Create external file and write its header.                      */
-/* -------------------------------------------------------------------- */
-    if ( bCreateLargeRaster )
-    {
-	GByte	    bUnknown;
-	GInt32	    nValue32;
-	FILE	    *fpExternal;
-	char	    *pszMagick = "ERDAS_IMG_EXTERNAL_RASTER";
-
-	fpExternal = VSIFOpenL( pszFullFilename, "wb" );
-	if( fpExternal == NULL )
-	{
-	    CPLError( CE_Failure, CPLE_OpenFailed,
-		      "Unable to create external data file: %s\n",
-		      pszFullFilename );
-	    CPLFree( pszRawFilename );
-	    CPLFree( pszFullFilename );
-	    return NULL;
-	}
-
-	VSIFWriteL( pszMagick, 1, 26, fpExternal );
-	bUnknown = 1;
-	VSIFWriteL( &bUnknown, 1, 1, fpExternal );
-	nValue32 = nBands;
-	HFAStandard( 4, &nValue32 );
-	VSIFWriteL( &nValue32, 4, 1, fpExternal );
-	nValue32 = nXSize;
-	HFAStandard( 4, &nValue32 );
-	VSIFWriteL( &nValue32, 4, 1, fpExternal );
-	nValue32 = nYSize;
-	HFAStandard( 4, &nValue32 );
-	VSIFWriteL( &nValue32, 4, 1, fpExternal );
-	nValue32 = nBlockSize;
-	HFAStandard( 4, &nValue32 );
-	VSIFWriteL( &nValue32, 4, 1, fpExternal );
-	VSIFWriteL( &nValue32, 4, 1, fpExternal );
-	bUnknown = 3;
-	VSIFWriteL( &bUnknown, 1, 1, fpExternal );
-	bUnknown = 0;
-	VSIFWriteL( &bUnknown, 1, 1, fpExternal );
-
-/* -------------------------------------------------------------------- */
-/*      Write out ValidFlags section(s).                                */
-/* -------------------------------------------------------------------- */
-	unsigned char   *pabyBlockMap;
-
-	pabyBlockMap = (unsigned char *) CPLMalloc( nBlockMapSize );
-	memset( pabyBlockMap, 0xff, nBlockMapSize );
-	for ( iBand = 0; iBand < nBands; iBand++ )
-	{
-	    int		    i, iRemainder;
-
-	    nValue32 = 1;	// Unknown
-	    HFAStandard( 4, &nValue32 );
-	    VSIFWriteL( &nValue32, 4, 1, fpExternal );
-	    nValue32 = 0;	// Unknown
-	    VSIFWriteL( &nValue32, 4, 1, fpExternal );
-	    nValue32 = nBlocksPerColumn;
-	    HFAStandard( 4, &nValue32 );
-	    VSIFWriteL( &nValue32, 4, 1, fpExternal );
-	    nValue32 = nBlocksPerRow;
-	    HFAStandard( 4, &nValue32 );
-	    VSIFWriteL( &nValue32, 4, 1, fpExternal );
-	    nValue32 = 0x30000;	// Unknown
-	    VSIFWriteL( &nValue32, 4, 1, fpExternal );
-
-	    iRemainder = nBlocksPerRow % 8;
-	    CPLDebug( "HFACreate",
-		      "Block map size %d, bytes per row %d, remainder %d.",
-		      nBlockMapSize, nBytesPerRow, iRemainder );
-	    if ( iRemainder )
-	    {
-		for ( i = nBytesPerRow - 1; i < nBlockMapSize; i+=nBytesPerRow )
-		    pabyBlockMap[i] = (GByte) ((1<<iRemainder) - 1);
-	    }
-
-	    VSIFWriteL( pabyBlockMap, 1, nBlockMapSize, fpExternal );
-	}
-	VSIFCloseL( fpExternal );
-
-	if ( pabyBlockMap )
-	    CPLFree( pabyBlockMap );
-	if ( pszRawFilename )
-	    CPLFree( pszRawFilename );
-	if ( pszFullFilename )
-	    CPLFree( pszFullFilename );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2297,3 +2210,160 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
         return CE_Failure;
 }
 
+/************************************************************************/
+/*                        HFACreateSpillStack()                         */
+/*                                                                      */
+/*      Create a new stack of raster layers in the spill (.ige)         */
+/*      file.  Create the spill file if it didn't exist before.         */
+/************************************************************************/
+
+int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize, 
+                         int nLayers, int nBlockSize, int nDataType,
+                         GIntBig *pnValidFlagsOffset, 
+                         GIntBig *pnDataOffset )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Form .ige filename.                                             */
+/* -------------------------------------------------------------------- */
+    char *pszFullFilename;
+
+    if( psInfo->pszIGEFilename == NULL )
+        psInfo->pszIGEFilename = 
+            CPLStrdup( CPLResetExtension( psInfo->pszFilename, "ige" ) );
+
+    pszFullFilename = 
+        CPLStrdup( CPLFormFilename( psInfo->pszPath, psInfo->pszIGEFilename, NULL ) );
+
+/* -------------------------------------------------------------------- */
+/*      Try and open it.  If we fail, create it and write the magic     */
+/*      header.                                                         */
+/* -------------------------------------------------------------------- */
+    static const char *pszMagick = "ERDAS_IMG_EXTERNAL_RASTER";
+    FILE *fpVSIL;
+
+    fpVSIL = VSIFOpenL( pszFullFilename, "r+b" );
+    if( fpVSIL == NULL )
+    {
+        fpVSIL = VSIFOpenL( pszFullFilename, "w+" );
+        if( fpVSIL == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Failed to create spill file %s.\n%s",
+                      psInfo->pszIGEFilename, VSIStrerror( errno ) );
+            return FALSE;
+        }
+        
+        VSIFWriteL( (void *) pszMagick, 1, strlen(pszMagick)+1, fpVSIL );
+    }
+
+    CPLFree( pszFullFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Work out some details about the tiling scheme.                  */
+/* -------------------------------------------------------------------- */
+    int	nBlocksPerRow, nBlocksPerColumn, nBlocks, nBytesPerBlock;
+    int	nBytesPerRow, nBlockMapSize, iFlagsSize;
+
+    nBlocksPerRow = (nXSize + nBlockSize - 1) / nBlockSize;
+    nBlocksPerColumn = (nYSize + nBlockSize - 1) / nBlockSize;
+    nBlocks = nBlocksPerRow * nBlocksPerColumn;
+    nBytesPerBlock = (nBlockSize * nBlockSize
+                      * HFAGetDataTypeBits(nDataType) + 7) / 8;
+
+    nBytesPerRow = ( nBlocksPerRow + 7 ) / 8;
+    nBlockMapSize = nBytesPerRow * nBlocksPerColumn;
+    iFlagsSize = nBlockMapSize + 20;
+
+/* -------------------------------------------------------------------- */
+/*      Write stack prefix information.                                 */
+/* -------------------------------------------------------------------- */
+    GByte bUnknown;
+    GInt32 nValue32;
+
+    VSIFSeek( fpVSIL, 0, SEEK_END );
+
+    bUnknown = 1;
+    VSIFWriteL( &bUnknown, 1, 1, fpVSIL );
+    nValue32 = nLayers;
+    HFAStandard( 4, &nValue32 );
+    VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+    nValue32 = nXSize;
+    HFAStandard( 4, &nValue32 );
+    VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+    nValue32 = nYSize;
+    HFAStandard( 4, &nValue32 );
+    VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+    nValue32 = nBlockSize;
+    HFAStandard( 4, &nValue32 );
+    VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+    VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+    bUnknown = 3;
+    VSIFWriteL( &bUnknown, 1, 1, fpVSIL );
+    bUnknown = 0;
+    VSIFWriteL( &bUnknown, 1, 1, fpVSIL );
+
+/* -------------------------------------------------------------------- */
+/*      Write out ValidFlags section(s).                                */
+/* -------------------------------------------------------------------- */
+    unsigned char   *pabyBlockMap;
+    int iBand;
+
+    *pnValidFlagsOffset = VSIFTellL( fpVSIL );
+
+    pabyBlockMap = (unsigned char *) CPLMalloc( nBlockMapSize );
+    memset( pabyBlockMap, 0xff, nBlockMapSize );
+    for ( iBand = 0; iBand < nLayers; iBand++ )
+    {
+        int		    i, iRemainder;
+
+        nValue32 = 1;	// Unknown
+        HFAStandard( 4, &nValue32 );
+        VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+        nValue32 = 0;	// Unknown
+        VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+        nValue32 = nBlocksPerColumn;
+        HFAStandard( 4, &nValue32 );
+        VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+        nValue32 = nBlocksPerRow;
+        HFAStandard( 4, &nValue32 );
+        VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+        nValue32 = 0x30000;	// Unknown
+        VSIFWriteL( &nValue32, 4, 1, fpVSIL );
+
+        iRemainder = nBlocksPerRow % 8;
+        CPLDebug( "HFACreate",
+                  "Block map size %d, bytes per row %d, remainder %d.",
+                  nBlockMapSize, nBytesPerRow, iRemainder );
+        if ( iRemainder )
+        {
+            for ( i = nBytesPerRow - 1; i < nBlockMapSize; i+=nBytesPerRow )
+                pabyBlockMap[i] = (GByte) ((1<<iRemainder) - 1);
+        }
+
+        VSIFWriteL( pabyBlockMap, 1, nBlockMapSize, fpVSIL );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Extend the file to account for all the imagery space.           */
+/* -------------------------------------------------------------------- */
+    GIntBig nTileDataSize = ((GIntBig) nBytesPerBlock) 
+        * nBlocksPerRow * nBlocksPerColumn;
+
+    *pnDataOffset = VSIFTellL( fpVSIL );
+    
+    if( VSIFSeekL( fpVSIL, nTileDataSize - 1, SEEK_CUR ) != 0 
+        || VSIFWriteL( (void *) "", 1, 1, fpVSIL ) != 1 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to extend %s to full size, likely out of disk space.\n%s", 
+                  VSIStrerror( errno ) );
+
+        VSIFCloseL( fpVSIL );
+        return FALSE;
+    }
+
+    VSIFCloseL( fpVSIL );
+
+    return TRUE;
+}
