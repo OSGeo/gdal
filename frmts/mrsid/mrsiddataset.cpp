@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2005/05/13 01:12:25  fwarmerdam
+ * Fixed bug with block oriented access to 16bit data.
+ *
  * Revision 1.33  2005/05/05 15:54:49  fwarmerdam
  * PAM Enabled
  *
@@ -399,7 +402,8 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         poGDS->nPrevBlockYOff = nBlockYOff;
     }
 
-    memcpy( pImage, poGDS->poBuffer->getTotalBandData(nBand - 1), nBlockSize );
+    memcpy( pImage, poGDS->poBuffer->getTotalBandData(nBand - 1), 
+            nBlockSize * (GDALGetDataTypeSize(poGDS->eDataType) / 8) );
 
     return CE_None;
 }
