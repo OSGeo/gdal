@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2005/05/13 02:45:05  fwarmerdam
+ * use spill file for overviews if .img will get too big
+ *
  * Revision 1.43  2005/05/13 02:07:00  fwarmerdam
  * generalized use of spill file, added HFACreateSpillStack
  *
@@ -1513,6 +1516,11 @@ int HFABand::CreateOverview( int nOverviewLevel )
     int bCreateLargeRaster = CSLTestBoolean(
         CPLGetConfigOption("USE_SPILL","NO") );
     GIntBig nValidFlagsOffset = 0, nDataOffset = 0;
+
+    if( (psInfo->nEndOfFile 
+         + (nOXSize * (double) nOYSize)
+         * (HFAGetDataTypeBits(nDataType) / 8)) > 2000000000.0 )
+        bCreateLargeRaster = TRUE;
 
     if( bCreateLargeRaster )
     {
