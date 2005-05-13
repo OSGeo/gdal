@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.41  2005/05/13 04:57:18  fwarmerdam
+ * fix handling of large offsets in ige file for HFACreateLayer()
+ *
  * Revision 1.40  2005/05/13 02:07:20  fwarmerdam
  * generalized use of spill file, added HFACreateSpillStack
  *
@@ -1493,8 +1496,8 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
                 char **papszOptions,
                 
                 // these are only related to external (large) files
-                int nStackValidFlagsOffset, 
-                int nStackDataOffset,
+                GIntBig nStackValidFlagsOffset, 
+                GIntBig nStackDataOffset,
                 int nStackCount, int nStackIndex )
 
 {
@@ -1651,12 +1654,14 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
                                       psInfo->pszIGEFilename );
 
         poEdms_State->SetIntField( "layerStackValidFlagsOffset[0]",
-                                   nStackValidFlagsOffset );
-        poEdms_State->SetIntField( "layerStackValidFlagsOffset[1]", 0 );
+                                 (int) (nStackValidFlagsOffset & 0xFFFFFFFF));
+        poEdms_State->SetIntField( "layerStackValidFlagsOffset[1]", 
+                                 (int) (nStackValidFlagsOffset >> 32) );
 
         poEdms_State->SetIntField( "layerStackDataOffset[0]",
-                                   nStackDataOffset );
-        poEdms_State->SetIntField( "layerStackDataOffset[1]", 0 );
+                                   (int) (nStackDataOffset & 0xFFFFFFFF) );
+        poEdms_State->SetIntField( "layerStackDataOffset[1]", 
+                                   (int) (nStackDataOffset >> 32 ) );
         poEdms_State->SetIntField( "layerStackCount", nStackCount );
         poEdms_State->SetIntField( "layerStackIndex", nStackIndex );
     }
