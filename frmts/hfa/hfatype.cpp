@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/05/13 02:45:16  fwarmerdam
+ * fixed GetInstCount() error return
+ *
  * Revision 1.9  2005/05/10 00:55:30  fwarmerdam
  * Added GetInstCount method
  *
@@ -344,7 +347,7 @@ HFAType::GetInstCount( const char * pszFieldPath,
     }
 
     if( iField == nFields )
-        return NULL;
+        return -1;
 
 /* -------------------------------------------------------------------- */
 /*      Extract this field value, and return.                           */
