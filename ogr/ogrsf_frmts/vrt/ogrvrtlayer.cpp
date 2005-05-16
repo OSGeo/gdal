@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/05/16 20:09:46  fwarmerdam
+ * added spatial query on x/y columns
+ *
  * Revision 1.10  2005/02/22 12:50:10  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -418,6 +421,44 @@ void OGRVRTLayer::ResetReading()
 }
 
 /************************************************************************/
+/*                         ResetSourceReading()                         */
+/************************************************************************/
+
+void OGRVRTLayer::ResetSourceReading()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Do we want to let source layer do spatial restriction?          */
+/* -------------------------------------------------------------------- */
+    if( m_poFilterGeom && m_bFilterIsEnvelope 
+        && eGeometryType == VGS_PointFromColumns )
+    {
+        const char *pszXField, *pszYField;
+
+        pszXField = poSrcLayer->GetLayerDefn()->GetFieldDefn(iGeomXField)->GetNameRef();
+        pszYField = poSrcLayer->GetLayerDefn()->GetFieldDefn(iGeomYField)->GetNameRef();
+        char *pszFilter = (char *) 
+            CPLMalloc(strlen(pszXField)+strlen(pszYField) + 100);
+
+        sprintf( pszFilter, 
+                 "%s > %.15g AND %s < %.15g AND %s > %.15g AND %s < %.15g", 
+                 pszXField, m_sFilterEnvelope.MinX,
+                 pszXField, m_sFilterEnvelope.MaxX,
+                 pszYField, m_sFilterEnvelope.MinY,
+                 pszYField, m_sFilterEnvelope.MaxY );
+
+        poSrcLayer->SetAttributeFilter( pszFilter );
+        CPLFree( pszFilter );
+    }
+    else
+        poSrcLayer->SetAttributeFilter( NULL );
+
+    poSrcLayer->SetSpatialFilter( NULL );
+    poSrcLayer->ResetReading();
+    bNeedReset = FALSE;
+}
+
+/************************************************************************/
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
@@ -428,12 +469,7 @@ OGRFeature *OGRVRTLayer::GetNextFeature()
         return NULL;
 
     if( bNeedReset )
-    {
-        poSrcLayer->SetAttributeFilter( NULL );
-        poSrcLayer->SetSpatialFilter( NULL );
-        poSrcLayer->ResetReading();
-        bNeedReset = FALSE;
-    }
+        ResetSourceReading();
 
     for( ; TRUE; )
     {

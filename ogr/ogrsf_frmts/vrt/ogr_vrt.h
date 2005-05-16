@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/05/16 20:09:46  fwarmerdam
+ * added spatial query on x/y columns
+ *
  * Revision 1.3  2005/02/22 12:50:10  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -87,6 +90,8 @@ class OGRVRTLayer : public OGRLayer
     int                *pabDirectCopy;
 
     OGRFeature         *TranslateFeature( OGRFeature * );
+
+    void                ResetSourceReading();
 
   public:
                         OGRVRTLayer();
