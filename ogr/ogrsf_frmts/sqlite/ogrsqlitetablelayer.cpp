@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/05/16 19:56:05  fwarmerdam
+ * in new versions _rowid_ is ogc_fid, handle gracefully
+ *
  * Revision 1.8  2005/02/22 12:50:31  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -113,15 +116,6 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
     pszFIDColumn = NULL;
 
 /* -------------------------------------------------------------------- */
-/*      Do we have a simple primary key?                                */
-/*                                                                      */
-/*      I don't know a way to determine it, so we will just             */
-/*      explicitly use the rowid.                                       */
-/* -------------------------------------------------------------------- */
-
-    pszFIDColumn = CPLStrdup("_rowid_");
-
-/* -------------------------------------------------------------------- */
 /*      Get the column definitions for this table.                      */
 /* -------------------------------------------------------------------- */
     CPLErr eErr;
@@ -141,6 +135,21 @@ CPLErr OGRSQLiteTableLayer::Initialize( const char *pszTableName,
     
     sqlite3_step( hColStmt );
 
+/* -------------------------------------------------------------------- */
+/*      What should we use as FID?  If there is a primary key           */
+/*      integer field, then this will be used as the _rowid_, and we    */
+/*      will pick up the real column name here.  Otherwise, we will     */
+/*      just use fid.                                                   */
+/*                                                                      */
+/*      Note that the select _rowid_ will return the real column        */
+/*      name if the rowid corresponds to another primary key            */
+/*      column.                                                         */
+/* -------------------------------------------------------------------- */
+    pszFIDColumn = CPLStrdup(sqlite3_column_name( hColStmt, 0 ));
+
+/* -------------------------------------------------------------------- */
+/*      Collect the rest of the fields.                                 */
+/* -------------------------------------------------------------------- */
     eErr = BuildFeatureDefn( pszTableName, hColStmt );
     if( eErr != CE_None )
         return eErr;
@@ -706,7 +715,7 @@ OGRErr OGRSQLiteTableLayer::CreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Add FID if we have a cleartext FID column.                      */
 /* -------------------------------------------------------------------- */
-    if( pszFIDColumn != NULL && !EQUAL(pszFIDColumn,"OGC_FID") 
+    if( pszFIDColumn != NULL // && !EQUAL(pszFIDColumn,"OGC_FID") 
         && poFeature->GetFID() != OGRNullFID )
     {
         oCommand += pszFIDColumn;
