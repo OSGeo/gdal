@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.48  2005/05/16 19:34:12  dron
+# Added GetSemiMajor(), GetSemiMinor() and GetInvFlattening() methods.
+#
 # Revision 1.47  2005/05/06 17:34:30  fwarmerdam
 # added GetUserInputAsWKT
 #
@@ -433,6 +436,18 @@ class SpatialReference:
     def IsSame(self, other):
         return _gdal.OSRIsSame(self._o, other._o)
 
+    def GetSemiMajor(self):
+	"""Get spheroid semi major axis."""
+        return _gdal.OSRGetSemiMajor(self._o, 'NULL' )
+ 
+    def GetSemiMinor(self):
+	"""Get spheroid semi minor axis."""
+        return _gdal.OSRGetSemiMinor(self._o, 'NULL' )
+ 
+    def GetInvFlattening(self):
+	"""Get spheroid inverse flattening."""
+        return _gdal.OSRGetInvFlattening(self._o, 'NULL' )
+ 
     def SetAngularUnits(self, units_name, to_radians ):
         return _gdal.OSRSetAngularUnits( self._o, units_name, to_radians )
 
