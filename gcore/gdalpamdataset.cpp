@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/05/16 21:36:23  fwarmerdam
+ * prototype support for reading aux file
+ *
  * Revision 1.2  2005/05/11 14:03:08  fwarmerdam
  * added option to disable pam, and quiet failed .pam opens
  *
@@ -458,8 +461,11 @@ CPLErr GDALPamDataset::TryLoadXML()
     psTree = CPLParseXMLFile( psPam->pszPamFilename );
     CPLPopErrorHandler();
 
+/* -------------------------------------------------------------------- */
+/*      If we fail, try .aux.                                           */
+/* -------------------------------------------------------------------- */
     if( psTree == NULL )
-        return CPLGetLastErrorType();
+        return TryLoadAux();
 
 /* -------------------------------------------------------------------- */
 /*      Initialize ourselves from this XML tree.                        */
@@ -843,3 +849,140 @@ CPLXMLNode *PamSerializeMetadata( GDALMajorObject *poMO )
     return psMD;
 }
 
+/************************************************************************/
+/*                             TryLoadAux()                             */
+/************************************************************************/
+
+CPLErr GDALPamDataset::TryLoadAux()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Initialize PAM.                                                 */
+/* -------------------------------------------------------------------- */
+    PamInitialize();
+    if( psPam == NULL )
+        return CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      Try to build the .aux filename.                                 */
+/* -------------------------------------------------------------------- */
+    char *pszAuxFilename;
+
+    if( GetDescription() == NULL || strlen(GetDescription()) == 0 )
+        return CE_None;
+
+    if( EQUAL(CPLGetExtension(GetDescription()),"aux") )
+        return CE_None;
+
+    pszAuxFilename =
+        CPLStrdup( CPLResetExtension(GetDescription(),"aux") );
+
+/* -------------------------------------------------------------------- */
+/*      Does this file exist?  Does it have the right signature?        */
+/* -------------------------------------------------------------------- */
+    FILE *fpAux;
+    char szSignature[16];
+
+    memset( szSignature, 0, 16 );
+
+    fpAux = VSIFOpenL( pszAuxFilename, "rb" );
+
+    if( fpAux != NULL )
+    {
+        VSIFReadL( szSignature, 16, 1, fpAux );
+        VSIFCloseL( fpAux );
+    }
+
+    if( !EQUALN(szSignature,"EHFA_HEADER_TAG",15) )
+    {
+        CPLFree( pszAuxFilename );
+        return CE_None;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We have a HFA file.  Now try opening it via GDAL.               */
+/* -------------------------------------------------------------------- */
+    GDALDataset *poAuxDS = (GDALDataset *)
+        GDALOpen( pszAuxFilename, GA_ReadOnly );
+
+    CPLFree( pszAuxFilename );
+    if( poAuxDS == NULL )
+        return CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      Check dependent file to ensure it matches our target file.      */
+/* -------------------------------------------------------------------- */
+    // TODO 
+
+/* -------------------------------------------------------------------- */
+/*      Do we have an SRS on the aux file?                              */
+/* -------------------------------------------------------------------- */
+    if( strlen(poAuxDS->GetProjectionRef()) > 0 )
+        GDALPamDataset::SetProjection( poAuxDS->GetProjectionRef() );
+
+/* -------------------------------------------------------------------- */
+/*      Geotransform.                                                   */
+/* -------------------------------------------------------------------- */
+    if( poAuxDS->GetGeoTransform( psPam->adfGeoTransform ) == CE_None )
+        psPam->bHaveGeoTransform = TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      GCPs                                                            */
+/* -------------------------------------------------------------------- */
+    if( poAuxDS->GetGCPCount() > 0 )
+    {
+        psPam->nGCPCount = poAuxDS->GetGCPCount();
+        psPam->pasGCPList = GDALDuplicateGCPs( psPam->nGCPCount, 
+                                               poAuxDS->GetGCPs() );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Apply metadata. We likely ought to be merging this in rather    */
+/*      than overwriting everything that was there.                     */
+/* -------------------------------------------------------------------- */
+    char **papszMD = poAuxDS->GetMetadata();
+    if( CSLCount(papszMD) > 0 )
+        GDALPamDataset::SetMetadata( papszMD );
+
+/* ==================================================================== */
+/*      Process bands.                                                  */
+/* ==================================================================== */
+    int iBand;
+
+    for( iBand = 0; iBand < poAuxDS->GetRasterCount(); iBand++ )
+    {
+        if( iBand >= GetRasterCount() )
+            break;
+
+        GDALRasterBand *poAuxBand = poAuxDS->GetRasterBand( iBand+1 );
+        GDALRasterBand *poBand = GetRasterBand( iBand+1 );
+
+        papszMD = poAuxBand->GetMetadata();
+        if( CSLCount(papszMD) > 0 )
+            GDALPamDataset::SetMetadata( papszMD );
+
+        if( poAuxBand->GetCategoryNames() != NULL )
+            poBand->SetCategoryNames( poAuxBand->GetCategoryNames() );
+
+        if( poAuxBand->GetColorTable() != NULL 
+            && poBand->GetColorTable() == NULL )
+            poBand->SetColorTable( poAuxBand->GetColorTable() );
+
+        // histograms?
+        double dfMin, dfMax;
+        int nBuckets, *panHistogram=NULL;
+
+        if( poAuxBand->GetDefaultHistogram( &dfMin, &dfMax, 
+                                            &nBuckets, &panHistogram,
+                                            FALSE, NULL, NULL ) == CE_None )
+        {
+            poBand->SetDefaultHistogram( dfMin, dfMax, nBuckets, 
+                                         panHistogram );
+            CPLFree( panHistogram );
+        }
+    }
+
+    GDALClose( poAuxDS );
+    
+    return CE_Failure;
+}
