@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/05/17 20:13:28  fwarmerdam
+ * use gmljp2://xml format for uri
+ *
  * Revision 1.19  2005/05/11 14:38:42  fwarmerdam
  * added dictionary support, updated to latest urn and gml.root-instance plans
  *
@@ -288,7 +291,7 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox( const char *pszWKT,
         sprintf( szSRSName, "urn:ogc:def:crs:EPSG::%d", nEPSGCode );
     else
         strcpy( szSRSName, 
-                "urn:ogc:tc:gmljp2:xml:CRSDictionary.gml#ogrcrs1" );
+                "gmljp2://xml/CRSDictionary.gml#ogrcrs1" );
 
 /* -------------------------------------------------------------------- */
 /*      For now we hardcode for a minimal instance format.              */
