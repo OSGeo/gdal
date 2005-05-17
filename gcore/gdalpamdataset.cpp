@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/05/17 15:13:28  fwarmerdam
+ * ensure pam info initialize on any set operation
+ *
  * Revision 1.3  2005/05/16 21:36:23  fwarmerdam
  * prototype support for reading aux file
  *
@@ -529,6 +532,8 @@ CPLErr GDALPamDataset::CloneInfo( GDALDataset *poSrcDS, int nCloneFlags )
 {
     int bOnlyIfMissing = nCloneFlags & GCIF_ONLY_IF_MISSING;
 
+    PamInitialize();
+
 /* -------------------------------------------------------------------- */
 /*      GeoTransform                                                    */
 /* -------------------------------------------------------------------- */
@@ -634,6 +639,8 @@ const char *GDALPamDataset::GetProjectionRef()
 CPLErr GDALPamDataset::SetProjection( const char *pszProjectionIn )
 
 {
+    PamInitialize();
+
     if( psPam == NULL )
         return GDALDataset::SetProjection( pszProjectionIn );
     else
@@ -669,6 +676,8 @@ CPLErr GDALPamDataset::GetGeoTransform( double * padfTransform )
 CPLErr GDALPamDataset::SetGeoTransform( double * padfTransform )
 
 {
+    PamInitialize();
+
     if( psPam )
     {
         MarkPamDirty();
@@ -729,6 +738,8 @@ CPLErr GDALPamDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
                                 const char *pszGCPProjection )
 
 {
+    PamInitialize();
+
     if( psPam )
     {
         CPLFree( psPam->pszGCPProjection );
@@ -760,6 +771,8 @@ CPLErr GDALPamDataset::SetMetadata( char **papszMetadata,
                                     const char *pszDomain )
 
 {
+    PamInitialize();
+
     if( pszDomain == NULL || strlen(pszDomain) == 0 && psPam )
         MarkPamDirty();
 
@@ -775,6 +788,8 @@ CPLErr GDALPamDataset::SetMetadataItem( const char *pszName,
                                         const char *pszDomain )
 
 {
+    PamInitialize();
+
     if( pszDomain == NULL || strlen(pszDomain) == 0 && psPam )
         MarkPamDirty();
 
