@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2005/05/17 15:13:06  fwarmerdam
+ * Added nodata support for bands
+ *
  * Revision 1.33  2005/04/04 15:24:48  fwarmerdam
  * Most C entry points now CPL_STDCALL
  *
@@ -344,6 +347,10 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         dfValue = poSrcBand->GetScale( &bSuccess );
         if( bSuccess )
             poDstBand->SetScale( dfValue );
+
+        dfValue = poSrcBand->GetNoDataValue( &bSuccess );
+        if( bSuccess )
+            poDstBand->SetNoDataValue( dfValue );
 
         if( poSrcBand->GetColorInterpretation() != GCI_Undefined )
             poDstBand->SetColorInterpretation( 
