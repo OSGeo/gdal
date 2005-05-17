@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/05/17 15:13:28  fwarmerdam
+ * ensure pam info initialize on any set operation
+ *
  * Revision 1.4  2005/05/13 18:56:52  fwarmerdam
  * fixed SetDefaultHistogram
  *
@@ -213,20 +216,20 @@ void GDALPamRasterBand::PamInitialize()
     if( psPam )
         return;
 
+    GDALPamDataset *poParentDS = (GDALPamDataset *) GetDataset();
+
+    if( poParentDS == NULL )
+        return;
+
+    poParentDS->PamInitialize();
+    if( poParentDS->psPam == NULL )
+        return;
+
     psPam = (GDALRasterBandPamInfo *)
         CPLCalloc(sizeof(GDALRasterBandPamInfo),1);
 
     psPam->dfScale = 1.0;
-
-    if( GetDataset() != NULL )
-    {
-        // we really should verify this is a PamDataset. 
-        psPam->poParentDS = (GDALPamDataset *) GetDataset();
-    }
-    else
-    {
-        PamClear();
-    }
+    psPam->poParentDS = poParentDS;
 }
 
 /************************************************************************/
@@ -389,6 +392,8 @@ CPLErr GDALPamRasterBand::CloneInfo( GDALRasterBand *poSrcBand,
     int bOnlyIfMissing = nCloneFlags & GCIF_ONLY_IF_MISSING;
     int bSuccess;
 
+    PamInitialize();
+
 /* -------------------------------------------------------------------- */
 /*      Metadata                                                        */
 /* -------------------------------------------------------------------- */
@@ -496,6 +501,8 @@ CPLErr GDALPamRasterBand::SetMetadata( char **papszMetadata,
                                     const char *pszDomain )
 
 {
+    PamInitialize();
+
     if( pszDomain == NULL || strlen(pszDomain) == 0 && psPam )
         psPam->poParentDS->MarkPamDirty();
 
@@ -511,6 +518,8 @@ CPLErr GDALPamRasterBand::SetMetadataItem( const char *pszName,
                                         const char *pszDomain )
 
 {
+    PamInitialize();
+
     if( pszDomain == NULL || strlen(pszDomain) == 0 && psPam )
         psPam->poParentDS->MarkPamDirty();
 
@@ -524,6 +533,8 @@ CPLErr GDALPamRasterBand::SetMetadataItem( const char *pszName,
 CPLErr GDALPamRasterBand::SetNoDataValue( double dfNewValue )
 
 {
+    PamInitialize();
+
     if( psPam )
     {
         psPam->bNoDataValueSet = TRUE;
@@ -578,6 +589,8 @@ double GDALPamRasterBand::GetOffset( int *pbSuccess )
 CPLErr GDALPamRasterBand::SetOffset( double dfNewOffset )
 
 {
+    PamInitialize();
+
     if( psPam != NULL )
     {
         psPam->dfOffset = dfNewOffset;
@@ -614,6 +627,8 @@ double GDALPamRasterBand::GetScale( int *pbSuccess )
 CPLErr GDALPamRasterBand::SetScale( double dfNewScale )
 
 {
+    PamInitialize();
+
     if( psPam != NULL )
     {
         psPam->dfScale = dfNewScale;
@@ -649,6 +664,8 @@ const char *GDALPamRasterBand::GetUnitType()
 CPLErr GDALPamRasterBand::SetUnitType( const char *pszNewValue )
 
 {
+    PamInitialize();
+
     if( psPam )
     {
         CPLFree( psPam->pszUnitType );
@@ -684,6 +701,8 @@ char **GDALPamRasterBand::GetCategoryNames()
 CPLErr GDALPamRasterBand::SetCategoryNames( char ** papszNewNames )
 
 {
+    PamInitialize();
+
     if( psPam ) 
     {
         CSLDestroy( psPam->papszCategoryNames );
@@ -717,6 +736,8 @@ GDALColorTable *GDALPamRasterBand::GetColorTable()
 CPLErr GDALPamRasterBand::SetColorTable( GDALColorTable *poTableIn )
 
 {
+    PamInitialize();
+
     if( psPam )
     {
         if( psPam->poColorTable != NULL )
@@ -747,6 +768,8 @@ CPLErr GDALPamRasterBand::SetColorTable( GDALColorTable *poTableIn )
 CPLErr GDALPamRasterBand::SetColorInterpretation( GDALColorInterp eInterpIn )
 
 {
+    PamInitialize();
+
     if( psPam )
     {
         psPam->poParentDS->MarkPamDirty();
@@ -832,6 +855,8 @@ CPLErr GDALPamRasterBand::SetStatistics( double dfMin, double dfMax,
                                          double dfMean, double dfStdDev )
 
 {
+    PamInitialize();
+
     if( psPam )
     {
         psPam->bHaveMinMax = TRUE;
@@ -1007,6 +1032,8 @@ CPLErr GDALPamRasterBand::GetHistogram( double dfMin, double dfMax,
                                         void *pProgressData )
 
 {
+    PamInitialize();
+
     if( psPam == NULL )
         return GDALRasterBand::GetHistogram( dfMin, dfMax, 
                                              nBuckets, panHistogram, 
@@ -1079,6 +1106,8 @@ CPLErr GDALPamRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
 
 {
     CPLXMLNode *psNode;
+
+    PamInitialize();
 
     if( psPam == NULL )
         return GDALRasterBand::SetDefaultHistogram( dfMin, dfMax, 
