@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2005/05/17 15:12:24  fwarmerdam
+ * Cleanup out residual flushcache and projections support for
+ * better pam support.
+ *
  * Revision 1.33  2005/05/05 14:01:36  fwarmerdam
  * PAM Enable
  *
@@ -298,7 +302,6 @@ class BMPDataset : public GDALPamDataset
     GDALColorTable      *poColorTable;
     double              adfGeoTransform[6];
     int                 bGeoTransformValid;
-    char                *pszProjection;
 
     const char          *pszFilename;
     FILE                *fp;
@@ -316,11 +319,9 @@ class BMPDataset : public GDALPamDataset
     static GDALDataset  *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
-    virtual void        FlushCache( void );
 
     CPLErr              GetGeoTransform( double * padfTransform );
     virtual CPLErr      SetGeoTransform( double * );
-    const char          *GetProjectionRef();
 };
 
 /************************************************************************/
@@ -860,7 +861,6 @@ BMPDataset::BMPDataset()
     pszFilename = NULL;
     fp = NULL;
     nBands = 0;
-    pszProjection = CPLStrdup( "" );
     bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -882,8 +882,6 @@ BMPDataset::~BMPDataset()
 {
     FlushCache();
 
-    if ( pszProjection )
-        CPLFree( pszProjection );
     if ( pabyColorTable )
         CPLFree( pabyColorTable );
     if ( poColorTable != NULL )
@@ -903,7 +901,7 @@ CPLErr BMPDataset::GetGeoTransform( double * padfTransform )
     if( bGeoTransformValid )
         return CE_None;
     else
-        return CE_Failure;
+        return GDALPamDataset::GetGeoTransform( padfTransform );
 }
 
 /************************************************************************/
@@ -917,26 +915,16 @@ CPLErr BMPDataset::SetGeoTransform( double * padfTransform )
     memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
 
     if ( pszFilename && bGeoTransformValid )
+    {
         if ( GDALWriteWorldFile( pszFilename, "wld", adfGeoTransform )
              == FALSE )
         {
             CPLError( CE_Failure, CPLE_FileIO, "Can't write world file." );
             eErr = CE_Failure;
         }
+    }
 
     return eErr;
-}
-
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *BMPDataset::GetProjectionRef()
-{
-    if( pszProjection )
-        return pszProjection;
-    else
-        return "";
 }
 
 /************************************************************************/
@@ -967,16 +955,6 @@ CPLErr BMPDataset::IRasterIO( GDALRWFlag eRWFlag,
                                     pData, nBufXSize, nBufYSize, eBufType, 
                                     nBandCount, panBandMap, 
                                     nPixelSpace, nLineSpace, nBandSpace );
-}
-
-/************************************************************************/
-/*                             FlushCache()                             */
-/************************************************************************/
-
-void BMPDataset::FlushCache()
-
-{
-    GDALDataset::FlushCache();
 }
 
 /************************************************************************/
