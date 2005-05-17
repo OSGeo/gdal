@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.31  2005/05/17 19:05:52  fwarmerdam
+ * Allow flowthrough to pam for geotransform & nodata.
+ *
  * Revision 1.30  2005/04/27 16:35:45  fwarmerdam
  * PAM enable
  *
@@ -356,10 +359,16 @@ double PNGRasterBand::GetNoDataValue( int *pbSuccess )
 {
     PNGDataset *poPDS = (PNGDataset *) poDS;
 
-    if( pbSuccess != NULL )
-        *pbSuccess = poPDS->bHaveNoData;
-
-    return poPDS->dfNoDataValue;
+    if( poPDS->bHaveNoData )
+    {
+        if( pbSuccess != NULL )
+            *pbSuccess = poPDS->bHaveNoData;
+        return poPDS->dfNoDataValue;
+    }
+    else
+    {
+        return GDALPamRasterBand::GetNoDataValue( pbSuccess );
+    }
 }
 
 /************************************************************************/
@@ -440,7 +449,7 @@ CPLErr PNGDataset::GetGeoTransform( double * padfTransform )
 void PNGDataset::FlushCache()
 
 {
-    GDALDataset::FlushCache();
+    GDALPamDataset::FlushCache();
 
     if( pabyBuffer != NULL )
     {
