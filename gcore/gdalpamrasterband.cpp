@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/05/17 18:30:51  fwarmerdam
+ * initialize nodatavalue to -1e10, fix copying
+ *
  * Revision 1.5  2005/05/17 15:13:28  fwarmerdam
  * ensure pam info initialize on any set operation
  *
@@ -230,6 +233,7 @@ void GDALPamRasterBand::PamInitialize()
 
     psPam->dfScale = 1.0;
     psPam->poParentDS = poParentDS;
+    psPam->dfNoDataValue = -1e10;
 }
 
 /************************************************************************/
@@ -418,7 +422,9 @@ CPLErr GDALPamRasterBand::CloneInfo( GDALRasterBand *poSrcBand,
         
         if( bSuccess )
         {
-            if( !bOnlyIfMissing || GetNoDataValue() != dfNoData )
+            if( !bOnlyIfMissing 
+                || GetNoDataValue( &bSuccess ) != dfNoData 
+                || !bSuccess )
                 GDALPamRasterBand::SetNoDataValue( dfNoData );
         }
     }
