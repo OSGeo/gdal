@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/05/17 19:04:47  fwarmerdam
+ * Make sure nodata value is set after copycommoninfo.
+ *
  * Revision 1.31  2005/05/09 14:31:56  fwarmerdam
  * Added optional elevation in -gcp usage message.
  *
@@ -872,12 +875,6 @@ static int ProxyMain( int argc, char ** argv )
         }
 
 /* -------------------------------------------------------------------- */
-/*      Set a forcable nodata value?                                    */
-/* -------------------------------------------------------------------- */
-        if( bSetNoData )
-            poVRTBand->SetNoDataValue( dfNoDataReal );
-
-/* -------------------------------------------------------------------- */
 /*      Create a simple or complex data source depending on the         */
 /*      translation type required.                                      */
 /* -------------------------------------------------------------------- */
@@ -899,6 +896,12 @@ static int ProxyMain( int argc, char ** argv )
 /*      copy over some other information of interest.                   */
 /* -------------------------------------------------------------------- */
         poVRTBand->CopyCommonInfoFrom( poSrcBand );
+
+/* -------------------------------------------------------------------- */
+/*      Set a forcable nodata value?                                    */
+/* -------------------------------------------------------------------- */
+        if( bSetNoData )
+            poVRTBand->SetNoDataValue( dfNoDataReal );
     }
 
 /* -------------------------------------------------------------------- */
