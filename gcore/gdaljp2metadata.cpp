@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/05/17 20:13:04  fwarmerdam
+ * fix up to support relative and absolute gmljp2:// uri format
+ *
  * Revision 1.2  2005/05/05 20:17:15  fwarmerdam
  * support dictionary lookups
  *
@@ -242,8 +245,10 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
         pszLabel = CPLStrdup( pszURN + 13 );
     else if( EQUALN(pszURN,"urn:ogc:tc:gmljp2:xml:", 22) )
         pszLabel = CPLStrdup( pszURN + 22 );
+    else if( EQUALN(pszURN,"gmljp2://xml/",13) )
+        pszLabel = CPLStrdup( pszURN + 13 );
     else
-        return NULL;
+        pszLabel = CPLStrdup( pszURN );
 
 /* -------------------------------------------------------------------- */
 /*      Split out label and fragment id.                                */
@@ -279,7 +284,7 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
 
     CPLStripXMLNamespace( psDictTree, NULL, TRUE );
 
-    CPLXMLNode *psDictRoot = CPLSearchXMLNode( psDictTree, "Dictionary" );
+    CPLXMLNode *psDictRoot = CPLSearchXMLNode( psDictTree, "=Dictionary" );
     
     if( psDictRoot == NULL )
     {
@@ -485,7 +490,8 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 /*      If we have gotten a geotransform, then try to interprete the    */
 /*      srsName.                                                        */
 /* -------------------------------------------------------------------- */
-    if( bSuccess && pszSRSName != NULL && pszProjection == NULL )
+    if( bSuccess && pszSRSName != NULL 
+        && (pszProjection == NULL || strlen(pszProjection) == 0) )
     {
         if( EQUALN(pszSRSName,"epsg:",5) )
         {
@@ -509,15 +515,12 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
             if( oSRS.importFromEPSG( atoi(pszCode+1) ) == OGRERR_NONE )
                 oSRS.exportToWkt( &pszProjection );
         }
-        else if( EQUALN(pszSRSName,"urn:jp2k:xml:",13) 
-                 || EQUALN(pszSRSName,"urn:ogc:tc:gmljp2:xml:", 22) )
+        else if( !GMLSRSLookup( pszSRSName ) )
         {
-            GMLSRSLookup( pszSRSName );
-        }
-        else
             CPLDebug( "GDALJP2Metadata", 
                       "Unable to evaluate SRSName=%s", 
                       pszSRSName );
+        }
     }
 
     if( pszProjection )
