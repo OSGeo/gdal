@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2005/05/19 20:43:08  dron
+ * Added RMF format.
+ *
  * Revision 1.35  2005/01/06 20:27:51  fwarmerdam
  * added NDF driver
  *
@@ -202,6 +205,7 @@ void CPL_DLL GDALRegister_ILWIS(void);
 void CPL_DLL GDALRegister_PCRaster(void);
 void CPL_DLL GDALRegister_IDA(void);
 void CPL_DLL GDALRegister_NDF(void);
+void CPL_DLL GDALRegister_RMF(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

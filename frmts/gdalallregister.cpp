@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.77  2005/05/19 20:41:14  dron
+ * Added RMF format.
+ *
  * Revision 1.76  2005/04/04 15:25:26  fwarmerdam
  * GDALAllRegister() now CPL_STDCALL
  *
@@ -283,6 +286,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_mrsid
     GDALRegister_MrSID();
+#endif
+
+#ifdef FRMT_rmf
+    GDALRegister_RMF();
 #endif
 
 /* -------------------------------------------------------------------- */
