@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/05/19 20:39:54  dron
+ * Derive the MEMRasterBand from GDALPamRasterBand.
+ *
  * Revision 1.11  2005/04/19 19:56:11  fwarmerdam
  * Explicitly mark destructor as virtual.
  *
@@ -66,6 +69,7 @@
 #ifndef MEMDATASET_H_INCLUDED
 #define MEMDATASET_H_INCLUDED
 
+#include "gdal_pam.h"
 #include "gdal_priv.h"
 
 CPL_C_START
@@ -110,7 +114,7 @@ class CPL_DLL MEMDataset : public GDALDataset
 /*                            MEMRasterBand                             */
 /************************************************************************/
 
-class CPL_DLL MEMRasterBand : public GDALRasterBand
+class CPL_DLL MEMRasterBand : public GDALPamRasterBand
 {
   protected:
 
