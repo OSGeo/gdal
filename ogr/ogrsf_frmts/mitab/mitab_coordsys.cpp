@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.29 2004/06/03 19:36:53 fwarmerdam Exp $
+ * $Id: mitab_coordsys.cpp,v 1.31 2005/05/12 22:07:52 dmorissette Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,12 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.31  2005/05/12 22:07:52  dmorissette
+ * Improved handling of Danish modified TM proj#21-24 (hss, bugs 976,1010)
+ *
+ * Revision 1.30  2005/03/22 23:24:54  dmorissette
+ * Added support for datum id in .MAP header (bug 910)
+ *
  * Revision 1.29  2004/06/03 19:36:53  fwarmerdam
  * fixed memory leak processing non-earth coordsys
  *
@@ -982,7 +988,55 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         parms[4] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
         nParmCount = 5;
     }
-    
+
+    // Transverse Mercator,(modified for Danish System 34 Jylland-Fyn)
+    else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_MI_21) )
+    {
+       nProjection = 21;
+       parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+       parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+       parms[2] = poSR->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
+       parms[3] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
+       parms[4] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+       nParmCount = 5;
+    }
+
+    // Transverse Mercator,(modified for Danish System 34 Sjaelland)
+    else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_MI_22) )
+    {
+       nProjection = 22;
+       parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+       parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+       parms[2] = poSR->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
+       parms[3] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
+       parms[4] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+       nParmCount = 5;
+    }
+
+    // Transverse Mercator,(modified for Danish System 34/45 Bornholm)
+    else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_MI_23) )
+    {
+       nProjection = 23;
+       parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+       parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+       parms[2] = poSR->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
+       parms[3] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
+       parms[4] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+       nParmCount = 5;
+    }
+
+    // Transverse Mercator,(modified for Finnish KKJ)
+    else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_MI_24) )
+    {
+       nProjection = 24;
+       parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
+       parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
+       parms[2] = poSR->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
+       parms[3] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
+       parms[4] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+       nParmCount = 5;
+    }
+
     else if( EQUAL(pszProjection,SRS_PT_CASSINI_SOLDNER) )
     {
         nProjection = 30;
@@ -1391,6 +1445,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
         if( psDatumInfo != NULL )
         {
             psProj->nEllipsoidId = psDatumInfo->nEllipsoid;
+            psProj->nDatumId = psDatumInfo->nMapInfoDatumID;
             psProj->dDatumShiftX = psDatumInfo->dfShiftX;
             psProj->dDatumShiftY = psDatumInfo->dfShiftY;
             psProj->dDatumShiftZ = psDatumInfo->dfShiftZ;
