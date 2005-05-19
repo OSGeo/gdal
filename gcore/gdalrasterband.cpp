@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.65  2005/05/19 14:45:16  fwarmerdam
+ * SetStatistics should now succeed.
+ *
  * Revision 1.64  2005/05/16 21:35:16  fwarmerdam
  * added CPLSetDefaultHistogram
  *
@@ -3004,7 +3007,7 @@ CPLErr GDALRasterBand::SetStatistics( double dfMin, double dfMax,
     sprintf( szValue, "%.14g", dfStdDev );
     SetMetadataItem( "STATISTICS_STDDEV", szValue );
 
-    return CE_Failure;
+    return CE_None;
 }
 
 /************************************************************************/
