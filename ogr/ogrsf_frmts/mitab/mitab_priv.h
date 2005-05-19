@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.37 2004/06/30 20:29:04 dmorissette Exp $
+ * $Id: mitab_priv.h,v 1.38 2005/03/22 23:24:54 dmorissette Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.38  2005/03/22 23:24:54  dmorissette
+ * Added support for datum id in .MAP header (bug 910)
+ *
  * Revision 1.37  2004/06/30 20:29:04  dmorissette
  * Fixed refs to old address danmo@videotron.ca
  *
@@ -261,8 +264,9 @@ typedef struct TABProjInfo_t
     GByte       nUnitsId;
     double      adProjParams[6];   // params in same order as in .MIF COORDSYS
 
-    double      dDatumShiftX;
-    double      dDatumShiftY;
+    GInt16      nDatumId;       // Datum Id added in MapInfo 7.8+ (.map V500)
+    double      dDatumShiftX;   // Before that, we had to always lookup datum
+    double      dDatumShiftY;   // parameters to establish datum id
     double      dDatumShiftZ;
     double      adDatumParams[5];
 

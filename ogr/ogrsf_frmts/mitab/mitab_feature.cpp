@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.54 2004/12/01 18:25:03 dmorissette Exp $
+ * $Id: mitab_feature.cpp,v 1.55 2005/05/19 15:26:59 jlacroix Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.55  2005/05/19 15:26:59  jlacroix
+ * Implement a method to set the StyleString of a TABFeature.
+ * This is done via the ITABFeaturePen, Brush and Symbol classes.
+ *
  * Revision 1.54  2004/12/01 18:25:03  dmorissette
  * Fixed potential memory leaks in error conditions (bug 881)
  *
@@ -6213,7 +6217,7 @@ double ITABFeaturePen::GetPenWidthPoint()
 
 void  ITABFeaturePen::SetPenWidthPoint(double val) 
 {
-    m_sPenDef.nPointWidth = MAX(MIN(((int)(val*10)), 1), 2037);
+    m_sPenDef.nPointWidth = MIN(MAX(((int)(val*10)), 1), 2037);
     m_sPenDef.nPixelWidth = 1;
 }
 
@@ -6398,6 +6402,149 @@ const char *ITABFeaturePen::GetPenStyleString()
 }
 
 /**********************************************************************
+ *                   ITABFeaturePen::SetPenFromStyleString()
+ *
+ *  Init the Pen properties from a style string.
+ **********************************************************************/
+void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
+{
+    int numParts, i;
+    GBool bIsNull;
+
+    const char *pszPenName, *pszPenPattern;
+
+    double nPenWidth;
+
+    GInt32 nPenColor;
+    const char *pszPenColor;
+
+    int   nPenId;
+    char* pszPenId;
+
+    // Use the Style Manager to retreive all the information we need.
+    OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
+    OGRStyleTool *poStylePart;
+
+    // Init the StyleMgr with the StyleString.
+    poStyleMgr->InitStyleString(pszStyleString);
+
+    // Retreive the Pen info.
+    numParts = poStyleMgr->GetPartCount();
+    for(i=0; i<numParts; i++)
+    {
+        poStylePart = poStyleMgr->GetPart(i);
+
+        if(poStylePart->GetType() == OGRSTCPen)
+        {
+            break;
+        }
+    }
+
+    // If the no Pen found, do nothing.
+    if(i >= numParts)
+        return;
+
+    OGRStylePen *poPenStyle = (OGRStylePen*)poStylePart;
+
+    // Get the Pen Id or pattern
+    pszPenName = poPenStyle->Id(bIsNull);
+    if (bIsNull) pszPenName = NULL;
+
+    // Set the width
+    if(poPenStyle->Width(bIsNull))
+    {
+        nPenWidth = poPenStyle->Width(bIsNull);
+        // Width < 10 is a pixel
+        if(nPenWidth > 10)
+            SetPenWidthPoint(nPenWidth);
+        else
+            SetPenWidthPixel((GByte)nPenWidth);
+    }
+
+    //Set the color
+    pszPenColor = poPenStyle->Color(bIsNull);
+    if(pszPenColor != NULL)
+    {
+        if(pszPenColor[0] == '#')
+            pszPenColor++;
+        // The Pen color is an Hexa string that need to be convert in a int
+        nPenColor = strtol(pszPenColor, NULL, 16);
+        SetPenColor(nPenColor);
+    }
+
+    // Set the Id of the Pen, use Pattern if necessary.
+    if(pszPenName && strstr(pszPenName, "mapinfo-pen-") ||
+       strstr(pszPenName, "ogr-pen-"))
+    {
+        if((pszPenId = strstr(pszPenName, "mapinfo-pen-")))
+        {
+            nPenId = atoi(pszPenId+12);
+            SetPenPattern(nPenId);
+        }
+        else if((pszPenId = strstr(pszPenName, "ogr-pen-")))
+        {
+            nPenId = atoi(pszPenId+8);
+            if(nPenId == 0)
+                nPenId = 2;
+            SetPenPattern(nPenId);
+        }
+    }
+    else
+    {
+        // If no Pen Id, use the Pen Pattern to retreive the Id.
+        pszPenPattern = poPenStyle->Pattern(bIsNull);
+        if(strcmp(pszPenPattern, "1 1") == 0)
+            SetPenPattern(3);
+        else if(strcmp(pszPenPattern, "2 1") == 0)
+            SetPenPattern(4);
+        else if(strcmp(pszPenPattern, "3 1") == 0)
+            SetPenPattern(5);
+        else if(strcmp(pszPenPattern, "6 1") == 0)
+            SetPenPattern(6);
+        else if(strcmp(pszPenPattern, "12 2") == 0)
+            SetPenPattern(7);
+        else if(strcmp(pszPenPattern, "24 4") == 0)
+            SetPenPattern(8);
+        else if(strcmp(pszPenPattern, "4 3") == 0)
+            SetPenPattern(9);
+        else if(strcmp(pszPenPattern, "1 4") == 0)
+            SetPenPattern(10);
+        else if(strcmp(pszPenPattern, "4 6") == 0)
+            SetPenPattern(11);
+        else if(strcmp(pszPenPattern, "6 4") == 0)
+            SetPenPattern(12);
+        else if(strcmp(pszPenPattern, "12 12") == 0)
+            SetPenPattern(13);
+        else if(strcmp(pszPenPattern, "8 2 1 2") == 0)
+            SetPenPattern(14);
+        else if(strcmp(pszPenPattern, "12 1 1 1") == 0)
+            SetPenPattern(15);
+        else if(strcmp(pszPenPattern, "12 1 3 1") == 0)
+            SetPenPattern(16);
+        else if(strcmp(pszPenPattern, "24 6 4 6") == 0)
+            SetPenPattern(17);
+        else if(strcmp(pszPenPattern, "24 3 3 3 3 3") == 0)
+            SetPenPattern(18);
+        else if(strcmp(pszPenPattern, "24 3 3 3 3 3 3 3") == 0)
+            SetPenPattern(19);
+        else if(strcmp(pszPenPattern, "6 3 1 3 1 3") == 0)
+            SetPenPattern(20);
+        else if(strcmp(pszPenPattern, "12 2 1 2 1 2") == 0)
+            SetPenPattern(21);
+        else if(strcmp(pszPenPattern, "12 2 1 2 1 2 1 2") == 0)
+            SetPenPattern(22);
+        else if(strcmp(pszPenPattern, "4 1 1 1") == 0)
+            SetPenPattern(23);
+        else if(strcmp(pszPenPattern, "4 1 1 1 1") == 0)
+            SetPenPattern(24);
+        else if(strcmp(pszPenPattern, "4 1 1 1 2 1 1 1") == 0)
+            SetPenPattern(25);
+    }
+
+    return;
+}
+
+/**********************************************************************
  *                   ITABFeaturePen::DumpPenDef()
  *
  * Dump pen definition information.
@@ -6482,6 +6629,98 @@ const char *ITABFeatureBrush::GetBrushStyleString()
     }
 
      return pszStyle;
+    
+}  
+
+
+/**********************************************************************
+ *                   ITABFeatureBrush::SetBrushFromStyleString()
+ *
+ *  Set all Brush elements from a StyleString.
+ *  Use StyleMgr to do so.
+ **********************************************************************/
+void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
+{
+    int numParts, i;
+    GBool bIsNull;
+
+    const char *pszBrushId;
+    int nBrushId;
+
+    const char *pszBrushColor;
+    int nBrushColor;
+
+    // Use the Style Manager to retreive all the information we need.
+    OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
+    OGRStyleTool *poStylePart;
+
+    // Init the StyleMgr with the StyleString.
+    poStyleMgr->InitStyleString(pszStyleString);
+
+    // Retreive the Brush info.
+    numParts = poStyleMgr->GetPartCount();
+    for(i=0; i<numParts; i++)
+    {
+        poStylePart = poStyleMgr->GetPart(i);
+
+        if(poStylePart->GetType() == OGRSTCBrush)
+        {
+            break;
+        }
+    }
+
+    // If the no Brush found, do nothing.
+    if(i >= numParts)
+        return;
+
+    OGRStyleBrush *poBrushStyle = (OGRStyleBrush*)poStylePart;
+
+    // Set the Brush Id (FillPattern)
+    pszBrushId = poBrushStyle->Id(bIsNull);
+    if(bIsNull) pszBrushId = NULL;
+
+    if(pszBrushId && strstr(pszBrushId, "mapinfo-brush-") || 
+       strstr(pszBrushId, "ogr-brush-"))
+    {
+        if(strstr(pszBrushId, "mapinfo-brush-"))
+        {
+            nBrushId = atoi(pszBrushId+14);
+            SetBrushPattern((GByte)nBrushId);
+        }
+        else if(strstr(pszBrushId, "ogr-brush-"))
+        {
+            nBrushId = atoi(pszBrushId+10);
+            if(nBrushId > 1)
+                nBrushId++;
+            SetBrushPattern((GByte)nBrushId);
+        }
+    }
+
+    // Set the BackColor, if not set, then it's transparent
+    pszBrushColor = poBrushStyle->BackColor(bIsNull);
+    if(pszBrushColor)
+    {
+        if(pszBrushColor[0] == '#')
+            pszBrushColor++;
+        nBrushColor = strtol(pszBrushColor, NULL, 16);
+        SetBrushBGColor((GInt32)nBrushColor);
+    }
+    else
+    {
+        SetBrushTransparent(1);
+    }
+
+    // Set the ForeColor
+    pszBrushColor = poBrushStyle->ForeColor(bIsNull);
+    if(pszBrushColor)
+    {
+        if(pszBrushColor[0] == '#')
+            pszBrushColor++;
+        nBrushColor = strtol(pszBrushColor, NULL, 16);
+        SetBrushFGColor((GInt32)nBrushColor);
+    }
+
+     return;
     
 }  
 
@@ -6636,6 +6875,127 @@ const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle)
                         nOGRStyle);
      
     return pszStyle;
+    
+}  
+
+/**********************************************************************
+ *                   ITABFeatureSymbol::SetSymbolFromStyleString()
+ *
+ *  Set all Symbol var from a StyleString. Use StyleMgr to do so.
+ **********************************************************************/
+void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
+{
+    int numParts, i;
+    GBool bIsNull;
+
+    const char *pszSymbolId;
+    int nSymbolId;
+
+    const char *pszSymbolColor;
+    int nSymbolColor;
+
+    double dSymbolSize;
+
+    // Use the Style Manager to retreive all the information we need.
+    OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
+    OGRStyleTool *poStylePart;
+
+    // Init the StyleMgr with the StyleString.
+    poStyleMgr->InitStyleString(pszStyleString);
+
+    // Retreive the Symbol info.
+    numParts = poStyleMgr->GetPartCount();
+    for(i=0; i<numParts; i++)
+    {
+        poStylePart = poStyleMgr->GetPart(i);
+
+        if(poStylePart->GetType() == OGRSTCSymbol)
+        {
+            break;
+        }
+    }
+
+    // If the no Symbol found, do nothing.
+    if(i >= numParts)
+        return;
+
+    OGRStyleSymbol *poSymbolStyle = (OGRStyleSymbol*)poStylePart;
+
+    // Set the Symbol Id (SymbolNo)
+    pszSymbolId = poSymbolStyle->Id(bIsNull);
+    if(bIsNull) pszSymbolId = NULL;
+
+    if(pszSymbolId && strstr(pszSymbolId, "mapinfo-sym-") || 
+       strstr(pszSymbolId, "ogr-sym-"))
+    {
+        if(strstr(pszSymbolId, "mapinfo-sym-"))
+        {
+            nSymbolId = atoi(pszSymbolId+12);
+            SetSymbolNo((GByte)nSymbolId);
+        }
+        else if(strstr(pszSymbolId, "ogr-sym-"))
+        {
+            nSymbolId = atoi(pszSymbolId+8);
+
+            // The OGR symbol is not the MapInfo one
+            // Here's some mapping
+            switch (nSymbolId)
+            {
+              case 0:
+                SetSymbolNo(31);
+                break;
+              case 1:
+                SetSymbolNo(49);
+                break;
+              case 2:
+                SetSymbolNo(50);
+                break;
+              case 3:
+                SetSymbolNo(40);
+                break;
+              case 4:
+                SetSymbolNo(34);
+                break;
+              case 5:
+                SetSymbolNo(38);
+                break;
+              case 6:
+                SetSymbolNo(32);
+                break;
+              case 7:
+                SetSymbolNo(42);
+                break;
+              case 8:
+                SetSymbolNo(36);
+                break;
+              case 9:
+                SetSymbolNo(41);
+                break;
+              case 10:
+                SetSymbolNo(35);
+                break;
+            }
+        }
+    }
+
+    // Set SymbolSize
+    dSymbolSize = poSymbolStyle->Size(bIsNull);
+    if(dSymbolSize)
+    {
+        SetSymbolSize((GInt32)dSymbolSize);
+    }
+
+    // Set Symbol Color
+    pszSymbolColor = poSymbolStyle->Color(bIsNull);
+    if(pszSymbolColor)
+    {
+        if(pszSymbolColor[0] == '#')
+            pszSymbolColor++;
+        nSymbolColor = strtol(pszSymbolColor, NULL, 16);
+        SetSymbolColor((GInt32)nSymbolColor);
+    }
+    
+    return;
     
 }  
 

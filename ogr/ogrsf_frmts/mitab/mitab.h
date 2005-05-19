@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.73 2004/07/07 22:18:02 dmorissette Exp $
+ * $Id: mitab.h,v 1.77 2005/05/19 21:10:50 fwarmerdam Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,19 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.77  2005/05/19 21:10:50  fwarmerdam
+ * changed to use OGRLayers spatial filter support
+ *
+ * Revision 1.76  2005/05/19 15:26:59  jlacroix
+ * Implement a method to set the StyleString of a TABFeature.
+ * This is done via the ITABFeaturePen, Brush and Symbol classes.
+ *
+ * Revision 1.75  2005/04/01 16:48:41  dmorissette
+ * Updated 1.4.0 release date
+ *
+ * Revision 1.74  2005/03/23 20:36:09  dmorissette
+ * Ready for V1.4.0
+ *
  * Revision 1.73  2004/07/07 22:18:02  dmorissette
  * Updated 1.3.0 release date
  *
@@ -172,13 +185,14 @@
 
 #include "mitab_priv.h"
 #include "ogr_feature.h"
+#include "ogr_featurestyle.h"
 #include "ogrsf_frmts.h"
 
 /*---------------------------------------------------------------------
  * Current version of the MITAB library... always useful!
  *--------------------------------------------------------------------*/
-#define MITAB_VERSION      "1.3.0 (2004-07-07)"
-#define MITAB_VERSION_INT  1003000  /* version x.y.z -> xxxyyyzzz */
+#define MITAB_VERSION      "1.4.0 (2005-04-01)"
+#define MITAB_VERSION_INT  1004000  /* version x.y.z -> xxxyyyzzz */
 
 #ifndef PI
 #  define PI 3.14159265358979323846
@@ -217,6 +231,7 @@ class IMapInfoFile : public OGRLayer
   private:
 
   protected: 
+    OGRGeometry        *m_poFilterGeom;
     int                 m_nCurFeatureId;
     TABFeature         *m_poCurFeature;
     GBool               m_bBoundsSet;
@@ -955,6 +970,7 @@ class ITABFeaturePen
     void        SetPenColor(GInt32 clr)  {m_sPenDef.rgbColor = clr;};
 
     const char *GetPenStyleString();
+    void        SetPenFromStyleString(const char *pszStyleString);
 
     void        DumpPenDef(FILE *fpOut = NULL);
 };
@@ -982,6 +998,7 @@ class ITABFeatureBrush
                                           {m_sBrushDef.bTransparentFill=val;};
 
     const char *GetBrushStyleString();
+    void        SetBrushFromStyleString(const char *pszStyleString);
 
     void        DumpBrushDef(FILE *fpOut = NULL);
 };
@@ -1026,6 +1043,7 @@ class ITABFeatureSymbol
     void        SetSymbolColor(GInt32 clr)  { m_sSymbolDef.rgbColor = clr;};
 
     const char *GetSymbolStyleString(double dfAngle = 0.0);
+    void        SetSymbolFromStyleString(const char *pszStyleString);
 
     void        DumpSymbolDef(FILE *fpOut = NULL);
 };

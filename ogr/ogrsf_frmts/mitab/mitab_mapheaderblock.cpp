@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapheaderblock.cpp,v 1.26 2004/06/30 20:29:04 dmorissette Exp $
+ * $Id: mitab_mapheaderblock.cpp,v 1.30 2005/05/12 20:46:15 dmorissette Exp $
  *
  * Name:     mitab_mapheaderblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,19 @@
  **********************************************************************
  *
  * $Log: mitab_mapheaderblock.cpp,v $
+ * Revision 1.30  2005/05/12 20:46:15  dmorissette
+ * Initialize m_sProj.nDatumId in InitNewBlock(). (hss/geh)
+ *
+ * Revision 1.29  2005/03/22 23:24:54  dmorissette
+ * Added support for datum id in .MAP header (bug 910)
+ *
+ * Revision 1.28  2004/12/15 22:52:49  dmorissette
+ * Revert back to using doubles for range check in CoordSys2Int(). Hopefully
+ * I got it right this time. (bug 894)
+ *
+ * Revision 1.27  2004/12/08 23:27:35  dmorissette
+ * Fixed coordinates rounding error in Coordsys2Int() (bug 894)
+ *
  * Revision 1.26  2004/06/30 20:29:04  dmorissette
  * Fixed refs to old address danmo@videotron.ca
  *
@@ -306,8 +319,17 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf, int nSize,
     m_numFontDefs = ReadByte();
     m_numMapToolBlocks = ReadInt16();
 
-    GotoByteInBlock(0x16d);     // Skip 3 unknown bytes
-
+    /* DatumId was never set (always 0) until MapInfo 7.8. See bug 910
+     * MAP Version Number is 500 in this case.
+     */
+    if (m_nMAPVersionNumber >= 500)
+        m_sProj.nDatumId  = ReadInt16();
+    else
+    {
+        ReadInt16();    // Skip.
+        m_sProj.nDatumId = 0;
+    }
+    ReadByte();         // Skip unknown byte
     m_sProj.nProjId  = ReadByte();
     m_sProj.nEllipsoidId = ReadByte();
     m_sProj.nUnitsId = ReadByte();
@@ -431,24 +453,22 @@ int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY,
     // a quadrant 0 and it should be treated the same way as quadrant 3
 
     /*-----------------------------------------------------------------
-     * NOTE: double value must be use here, the limit of integer value 
-     * have been reach some times due to the very big number used here.
+     * NOTE: double values must be used here, the limit of integer value 
+     * have been reached some times due to the very big numbers used here.
      *----------------------------------------------------------------*/
     double dTempX, dTempY;
 
     if (m_nCoordOriginQuadrant==2 || m_nCoordOriginQuadrant==3 ||
         m_nCoordOriginQuadrant==0 )
-        dTempX = (double)((-1.0*dX*m_XScale - m_XDispl)+0.5);
+        dTempX = (double)(-1.0*dX*m_XScale - m_XDispl);
     else
-        dTempX = (double)((dX*m_XScale + m_XDispl)+0.5);
+        dTempX = (double)(dX*m_XScale + m_XDispl);
 
     if (m_nCoordOriginQuadrant==3 || m_nCoordOriginQuadrant==4 ||
         m_nCoordOriginQuadrant==0 )
-        dTempY = (double)((-1.0*dY*m_YScale - m_YDispl)+0.5);
+        dTempY = (double)(-1.0*dY*m_YScale - m_YDispl);
     else
-        dTempY = (double)((dY*m_YScale + m_YDispl)+0.5);
-
-//printf("Coordsys2Int: (%10g, %10g) -> (%d, %d)\n", dX, dY, nX, nY);
+        dTempY = (double)(dY*m_YScale + m_YDispl);
 
     /*-----------------------------------------------------------------
      * Make sure we'll never output coordinates outside of the valid
@@ -477,8 +497,8 @@ int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY,
         bIntBoundsOverflow = TRUE;
     }
 
-    nX = (GInt32) dTempX;
-    nY = (GInt32) dTempY;
+    nX = (GInt32) ROUND_INT(dTempX);
+    nY = (GInt32) ROUND_INT(dTempY);
 
     if (bIntBoundsOverflow && !bIgnoreOverflow)
     {
@@ -795,7 +815,8 @@ int     TABMAPHeaderBlock::CommitToFile()
     WriteByte(m_numFontDefs);
     WriteInt16(m_numMapToolBlocks);
 
-    WriteZeros(3);      // ???
+    WriteInt16(m_sProj.nDatumId);
+    WriteZeros(1);      // ???
 
     WriteByte(m_sProj.nProjId);
     WriteByte(m_sProj.nEllipsoidId);
@@ -885,6 +906,7 @@ int     TABMAPHeaderBlock::InitNewBlock(FILE *fpSrc, int nBlockSize,
     m_sProj.nProjId  = 0;
     m_sProj.nEllipsoidId = 0;
     m_sProj.nUnitsId = 7;
+    m_sProj.nDatumId = 0;
     m_XScale = 1000.0;  // Default coord range (before SetCoordSysBounds()) 
     m_YScale = 1000.0;  // will be [-1000000.000 .. 1000000.000]
     m_XDispl = 0.0;
@@ -973,6 +995,7 @@ void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
         fprintf(fpOut,"  m_numMapToolBlocks    = %d\n", m_numMapToolBlocks);
 
         fprintf(fpOut,"\n");
+        fprintf(fpOut,"  m_sProj.nDatumId      = %d\n", m_sProj.nDatumId);
         fprintf(fpOut,"  m_sProj.nProjId       = %d\n", (int)m_sProj.nProjId);
         fprintf(fpOut,"  m_sProj.nEllipsoidId  = %d\n", 
                                                     (int)m_sProj.nEllipsoidId);
