@@ -96,5 +96,26 @@ the layer as a point layer, and as being in the WGS84 coordinate system.<p>
 &lt;/OGRVRTDataSource&gt;
 </pre>
 
+<h2>Other Notes</h2>
+
+<ul>
+
+<li> When the GeometryField is "WKT" spatial filtering is applied
+after extracting all rows from the source datasource.  Essentially that means
+there is no fast spatial filtering on WKT derived geometries. <p>
+
+<li> When the GeometryField is "PointFromColumns", and a SrcLayer (as opposed
+to SrcSQL) is used, and a spatial filter is in effect on the virtual layer
+then the spatial filter will be internally translated into an attribute filter
+on the X and Y columns in the SrcLayer.  In cases where fast spatial filtering
+is important it can be helpful to index the X and Y columns in the source
+datastore, if that is possible.  For instance if the source is an RDBMS. <p>
+
+<li> Normally the SrcDataSource is a non-spatial tabular format (such as
+MySQL, SQLite, CSV, or ODBC) but it can also be a spatial database in which
+case the geometry can be directly copied over. <p>
+
+</ul>
+
 </body>
 </html>
