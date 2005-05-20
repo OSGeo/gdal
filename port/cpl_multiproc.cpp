@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/05/20 19:19:00  fwarmerdam
+ * added CPLCreateOrAcquireMutex()
+ *
  * Revision 1.5  2005/04/26 20:52:10  fwarmerdam
  * use a typedef type for thread mains (for Sun port)
  *
@@ -50,6 +53,44 @@
 #include <time.h>
 
 CPL_CVSID("$Id$");
+
+/************************************************************************/
+/*                      CPLCreateOrAcquireMutex()                       */
+/************************************************************************/
+
+int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
+
+{
+    static void *hCOAMutex = NULL;
+
+    /*
+    ** ironically, creation of this initial mutex is not threadsafe
+    ** even though we use it to ensure that creation of other mutexes
+    ** is threadsafe. 
+    */
+    if( hCOAMutex == NULL )
+    {
+        hCOAMutex = CPLCreateMutex();
+    }
+    else
+    {
+        CPLAcquireMutex( hCOAMutex, dfWaitInSeconds );
+    }
+
+    if( *phMutex == NULL )
+    {
+        *phMutex = CPLCreateMutex();
+        CPLReleaseMutex( hCOAMutex );
+        return TRUE;
+    }
+    else
+    {
+        int bSuccess = CPLAcquireMutex( *phMutex, dfWaitInSeconds );
+        
+        CPLReleaseMutex( hCOAMutex );
+        return bSuccess;
+    }
+}
 
 #ifdef CPL_MULTIPROC_STUB
 /************************************************************************/
