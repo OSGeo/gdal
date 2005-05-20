@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/05/20 19:19:00  fwarmerdam
+ * added CPLCreateOrAcquireMutex()
+ *
  * Revision 1.4  2005/04/26 20:52:10  fwarmerdam
  * use a typedef type for thread mains (for Sun port)
  *
@@ -69,6 +72,7 @@ void CPL_DLL *CPLLockFile( const char *pszPath, double dfWaitInSeconds );
 void  CPL_DLL CPLUnlockFile( void *hLock );
 
 void CPL_DLL *CPLCreateMutex();
+int   CPL_DLL CPLCreateOrAcquireMutex( void **, double dfWaitInSeconds );
 int   CPL_DLL CPLAcquireMutex( void *hMutex, double dfWaitInSeconds );
 void  CPL_DLL CPLReleaseMutex( void *hMutex );
 void  CPL_DLL CPLDestroyMutex( void *hMutex );
