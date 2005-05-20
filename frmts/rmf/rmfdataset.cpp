@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/05/20 19:25:11  dron
+ * Fixed problem with the last line of tiles.
+ *
  * Revision 1.1  2005/05/19 20:42:03  dron
  * New.
  *
@@ -231,7 +234,13 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     RMFDataset  *poGDS = (RMFDataset *) poDS;
     GUInt32     nTile = nBlockYOff * poGDS->nXTiles + nBlockXOff;
     GUInt32     nTileBytes = poGDS->paiTiles[2 * nTile + 1];
-    GUInt32     i;
+    GUInt32     i, nCurBlockYSize;
+
+    if ( poGDS->sHeader.nLastTileHeight
+         && (GUInt32) nBlockYOff == poGDS->nYTiles - 1 )
+        nCurBlockYSize = poGDS->sHeader.nLastTileHeight;
+    else
+        nCurBlockYSize = nBlockYSize;
 
     if ( VSIFSeekL( poGDS->fp, poGDS->paiTiles[2 * nTile], SEEK_SET ) < 0 )
     {
@@ -422,7 +431,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         GUInt32 iRow;
 
-        for ( iRow = nBlockYSize - 1; iRow > 0; iRow-- )
+        for ( iRow = nCurBlockYSize - 1; iRow > 0; iRow-- )
         {
             memmove( (GByte *)pImage + nBlockXSize * iRow * nDataSize,
                      (GByte *)pImage + iRow * nLastTileXBytes,
@@ -444,7 +453,7 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     RMFDataset  *poGDS = (RMFDataset *)poDS;
     GUInt32     nTile = nBlockYOff * poGDS->nXTiles + nBlockXOff;
     GUInt32     nTileBytes = nDataSize * poGDS->nBands;
-    GUInt32     iInPixel, iOutPixel;
+    GUInt32     iInPixel, iOutPixel, nCurBlockYSize;
     GByte       *pabyTile;
 
     CPLAssert( poGDS != NULL
@@ -480,11 +489,13 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     else
         nTileBytes *= nBlockXSize;
 
-    if ( nLastTileXBytes
+    if ( poGDS->sHeader.nLastTileHeight
          && (GUInt32) nBlockYOff == poGDS->nYTiles - 1 )
-        nTileBytes *= poGDS->sHeader.nLastTileHeight;
+        nCurBlockYSize = poGDS->sHeader.nLastTileHeight;
     else
-        nTileBytes *= nBlockYSize;
+        nCurBlockYSize = nBlockYSize;
+
+    nTileBytes *= nCurBlockYSize;
         
     pabyTile = (GByte *) CPLMalloc( nTileBytes );
     if ( !pabyTile )
@@ -495,7 +506,20 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
-    memcpy( pabyTile, pImage, nTileBytes );
+    if ( nLastTileXBytes
+         && (GUInt32) nBlockXOff == poGDS->nXTiles - 1 )
+    {
+        GUInt32 iRow;
+
+        for ( iRow = 0; iRow < nCurBlockYSize; iRow++ )
+        {
+            memcpy( pabyTile + iRow * nLastTileXBytes,
+                     (GByte*)pImage + nBlockXSize * iRow * nDataSize,
+                     nLastTileXBytes );
+        }
+    }
+    else
+        memcpy( pabyTile, pImage, nTileBytes );
     
 #ifdef CPL_MSB
     if ( poGDS->eRMFType == RMFT_MTW )
@@ -520,19 +544,6 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     }
 #endif
 
-   if ( nLastTileXBytes
-         && (GUInt32) nBlockXOff == poGDS->nXTiles - 1 )
-    {
-        GInt32 iRow;
-
-        for ( iRow = 1; iRow < nBlockYSize; iRow++ )
-        {
-            memmove( pabyTile + iRow * nLastTileXBytes,
-                     pabyTile + nBlockXSize * iRow * nDataSize,
-                     nLastTileXBytes );
-        }
-    }
-    
     if ( poGDS->nBands == 1 )
     {
         if ( VSIFWriteL( pabyTile, 1, nTileBytes, poGDS->fp ) < nTileBytes )
