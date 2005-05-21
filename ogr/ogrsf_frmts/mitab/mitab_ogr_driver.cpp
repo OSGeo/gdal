@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_driver.cpp,v 1.10 2004/02/27 21:06:03 fwarmerdam Exp $
+ * $Id: mitab_ogr_driver.cpp,v 1.11 2005/05/21 03:15:18 fwarmerdam Exp $
  *
  * Name:     mitab_ogr_driver.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_ogr_driver.cpp,v $
+ * Revision 1.11  2005/05/21 03:15:18  fwarmerdam
+ * Removed unused stat buffer.
+ *
  * Revision 1.10  2004/02/27 21:06:03  fwarmerdam
  * Better support for "single file" creation ... don't allow other layers to
  * be created.  But *do* single file to satisfy the first layer creation request
@@ -124,7 +127,6 @@ OGRDataSource *OGRTABDriver::CreateDataSource( const char * pszName,
                                                char ** papszOptions )
 
 {
-    VSIStatBuf  stat;
     OGRTABDataSource *poDS;
 
 /* -------------------------------------------------------------------- */

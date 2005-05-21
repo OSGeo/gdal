@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.77 2005/05/19 21:10:50 fwarmerdam Exp $
+ * $Id: mitab.h,v 1.78 2005/05/21 03:16:01 fwarmerdam Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.78  2005/05/21 03:16:01  fwarmerdam
+ * Removed m_poFilterGeom ... should have been done yesterday with spatial
+ * filter overhaul.
+ *
  * Revision 1.77  2005/05/19 21:10:50  fwarmerdam
  * changed to use OGRLayers spatial filter support
  *
@@ -231,7 +235,6 @@ class IMapInfoFile : public OGRLayer
   private:
 
   protected: 
-    OGRGeometry        *m_poFilterGeom;
     int                 m_nCurFeatureId;
     TABFeature         *m_poCurFeature;
     GBool               m_bBoundsSet;
