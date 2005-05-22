@@ -29,6 +29,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.55  2005/05/22 16:32:07  fwarmerdam
+ * Fixed so that when we write .img files we translate the false easting
+ * and northing into meters if the source SRS is not in meters.
+ *
  * Revision 1.54  2005/05/13 13:59:54  fwarmerdam
  * Added GetDefaultHistogram() method.
  *
@@ -1491,6 +1495,9 @@ CPLErr HFADataset::WriteProjection()
     }
     else
     {
+        CPLError( CE_Warning, CPLE_NotSupported,
+                  "Projection %s not supported for translation to Imagine.",
+                  pszProjName );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1547,6 +1554,10 @@ CPLErr HFADataset::WriteProjection()
         }
         else
             sMapInfo.units = (char *) apszUnitMap[iClosest];
+
+        /* We need to convert false easting and northing to meters. */
+        sPro.proParams[6] *= dfActualSize;
+        sPro.proParams[7] *= dfActualSize;
     }
 
 /* -------------------------------------------------------------------- */
