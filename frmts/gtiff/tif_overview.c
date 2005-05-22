@@ -51,6 +51,8 @@
  * Revision 1.5  2004/07/26 14:27:27  warmerda
  * improve error check for overview failure, fix warnings, fix header
  *
+<<<<<<< tif_overview.c
+=======
  * tif_overview.c,v
  * Revision 1.3  2000/04/18 22:48:31  warmerda
  * Added support for averaging resampling
@@ -61,6 +63,7 @@
  * Revision 1.1  2000/01/28 15:04:03  warmerda
  * New
  *
+>>>>>>> 1.6
  */
 
 #include <stdio.h>
@@ -98,7 +101,7 @@ void TIFFBuildOverviews( TIFF *, int, int *, int, const char *,
 /************************************************************************/
 
 uint32 TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
-                           int nBitsPerPixel, int nSamples, 
+                           int nBitsPerPixel, int nPlanarConfig, int nSamples, 
                            int nBlockXSize, int nBlockYSize,
                            int bTiled, int nCompressFlag, int nPhotometric,
                            int nSampleFormat,
@@ -123,7 +126,7 @@ uint32 TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
     if( nSamples == 1 )
         TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG );
     else
-        TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_SEPARATE );
+        TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, nPlanarConfig );
 
     TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE, nBitsPerPixel );
     TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL, nSamples );
@@ -598,8 +601,8 @@ void TIFFBuildOverviews( TIFF *hTIFF, int nOverviews, int * panOvList,
         }
 
         nDirOffset = TIFF_WriteOverview( hTIFF, nOXSize, nOYSize,
-                                         nBitsPerPixel, nSamples,
-                                         nOBlockXSize, nOBlockYSize,
+                                         nBitsPerPixel, nPlanarConfig,
+                                         nSamples, nOBlockXSize, nOBlockYSize,
                                          bTiled, nCompressFlag, nPhotometric,
                                          nSampleFormat,
                                          panRedMap, panGreenMap, panBlueMap,

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.139  2005/05/22 16:58:12  dron
+ * Added PlanarConfiguration parameter to the TIFF_WriteOverview().
+ *
  * Revision 1.138  2005/04/23 16:38:43  fwarmerdam
  * Handle more integer datatypes (ie 2-7 bits, 17+ bits) via
  * OddBits class.
@@ -1980,9 +1983,9 @@ CPLErr GTiffDataset::IBuildOverviews(
 
             nOverviewOffset = 
                 TIFF_WriteOverview( hTIFF, nOXSize, nOYSize, 
-                                    nBitsPerSample, nSamplesPerPixel, 
-                                    128, 128, TRUE, nCompression, 
-                                    nPhotometric, nSampleFormat, 
+                                    nBitsPerSample, nPlanarConfig,
+                                    nSamplesPerPixel, 128, 128, TRUE,
+                                    nCompression, nPhotometric, nSampleFormat, 
                                     panRed, panGreen, panBlue, FALSE );
 
             if( nOverviewOffset == 0 )

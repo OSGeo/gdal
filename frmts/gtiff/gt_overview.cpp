@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/05/22 16:58:12  dron
+ * Added PlanarConfiguration parameter to the TIFF_WriteOverview().
+ *
  * Revision 1.12  2004/09/09 18:59:21  fwarmerdam
  * Adjusted to properly support colormaps with up to 65536 entries.
  *
@@ -91,7 +94,7 @@ GTIFFBuildOverviews( const char * pszFilename,
 {
     TIFF    *hOTIFF;
     int     nBitsPerPixel=0, nCompression=COMPRESSION_NONE, nPhotometric=0;
-    int     nSampleFormat=0, iOverview, iBand;
+    int     nSampleFormat=0, nPlanarConfig, iOverview, iBand;
     int     nXSize=0, nYSize=0;
 
     if( nBands == 0 || nOverviews == 0 )
@@ -216,6 +219,14 @@ GTIFFBuildOverviews( const char * pszFilename,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Figure out the planar configuration to use.                     */
+/* -------------------------------------------------------------------- */
+    if( nBands == 1 )
+        nPlanarConfig = PLANARCONFIG_CONTIG;
+    else
+        nPlanarConfig = PLANARCONFIG_SEPARATE;
+
+/* -------------------------------------------------------------------- */
 /*      Figure out the photometric interpretation to use.               */
 /* -------------------------------------------------------------------- */
     if( nBands == 3 )
@@ -311,7 +322,8 @@ GTIFFBuildOverviews( const char * pszFilename,
 
         nDirOffset = 
             TIFF_WriteOverview( hOTIFF, nOXSize, nOYSize, nBitsPerPixel, 
-                                nBands, 128, 128, TRUE, nCompression,
+                                nPlanarConfig, nBands,
+                                128, 128, TRUE, nCompression,
                                 nPhotometric, nSampleFormat, 
                                 panRed, panGreen, panBlue, 
                                 FALSE );
