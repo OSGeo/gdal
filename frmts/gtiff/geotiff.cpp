@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.140  2005/05/22 21:00:44  fwarmerdam
+ * metadata support rewritten to support multiple domains
+ *
  * Revision 1.139  2005/05/22 16:58:12  dron
  * Added PlanarConfiguration parameter to the TIFF_WriteOverview().
  *
@@ -130,7 +133,7 @@
  * pass GTIF pointer into GTIFGetOGISDefn
  */
 
-#include "gdal_priv.h"
+#include "gdal_pam.h"
 #define CPL_SERV_H_INCLUDED
 
 #include "tiffio.h"
@@ -167,7 +170,7 @@ class GTiffRasterBand;
 class GTiffRGBABand;
 class GTiffBitmapBand;
 
-class GTiffDataset : public GDALDataset
+class GTiffDataset : public GDALPamDataset
 {
     friend class GTiffRasterBand;
     friend class GTiffRGBABand;
@@ -225,11 +228,13 @@ class GTiffDataset : public GDALDataset
 
     int         IsBlockAvailable( int nBlockId );
 
-    int 	bMetadataChanged;
     int         bGeoTIFFInfoChanged;
     int         bNoDataSet;
     int         bNoDataChanged;
     double      dfNoDataValue;
+
+    int 	bMetadataChanged;
+    GDALMultiDomainMetadata oMDMD;
 
   public:
                  GTiffDataset();
@@ -257,13 +262,16 @@ class GTiffDataset : public GDALDataset
                                 GDALDataType eType, char ** papszParmList );
     virtual void    FlushCache( void );
 
+    virtual char  **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr  SetMetadata( char **, const char * = "" );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
     virtual CPLErr  SetMetadataItem( const char*, const char*, 
                                      const char* = "" );
     virtual void   *GetInternalHandle( const char * );
 
     // only needed by createcopy and close code.
-    static void	    WriteMetadata( GDALDataset *, TIFF * );
+    static void	    WriteMetadata( GDALDataset *, TIFF *, int );
     static void	    WriteNoDataValue( TIFF *, double );
 };
 
@@ -273,7 +281,7 @@ class GTiffDataset : public GDALDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GTiffRasterBand : public GDALRasterBand
+class GTiffRasterBand : public GDALPamRasterBand
 {
     friend class GTiffDataset;
 
@@ -283,8 +291,9 @@ class GTiffRasterBand : public GDALRasterBand
     double dfOffset;
     double dfScale;
 
-  public:
+    GDALMultiDomainMetadata oMDMD;
 
+  public:
                    GTiffRasterBand( GTiffDataset *, int );
 
     // should override RasterIO eventually.
@@ -303,7 +312,10 @@ class GTiffRasterBand : public GDALRasterBand
     virtual double GetScale( int *pbSuccess = NULL );
     virtual CPLErr SetScale( double dfNewValue );
 
+    virtual char  **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr  SetMetadata( char **, const char * = "" );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
     virtual CPLErr  SetMetadataItem( const char*, const char*, 
                                      const char* = "" );
     virtual int    GetOverviewCount();
@@ -716,6 +728,16 @@ CPLErr GTiffRasterBand::SetScale( double dfNewValue )
 }
 
 /************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char **GTiffRasterBand::GetMetadata( const char *pszDomain )
+
+{
+    return oMDMD.GetMetadata( pszDomain );
+}
+
+/************************************************************************/
 /*                            SetMetadata()                             */
 /************************************************************************/
 CPLErr GTiffRasterBand::SetMetadata( char ** papszMD, const char *pszDomain )
@@ -724,7 +746,18 @@ CPLErr GTiffRasterBand::SetMetadata( char ** papszMD, const char *pszDomain )
     GTiffDataset	*poGDS = (GTiffDataset *) poDS;
 
     poGDS->bMetadataChanged = TRUE;
-    return GDALRasterBand::SetMetadata( papszMD, pszDomain );
+    return oMDMD.SetMetadata( papszMD, pszDomain );
+}
+
+/************************************************************************/
+/*                          GetMetadataItem()                           */
+/************************************************************************/
+
+const char *GTiffRasterBand::GetMetadataItem( const char *pszName, 
+                                              const char *pszDomain )
+
+{
+    return oMDMD.GetMetadataItem( pszName, pszDomain );
 }
 
 /************************************************************************/
@@ -739,7 +772,7 @@ CPLErr GTiffRasterBand::SetMetadataItem( const char *pszName,
     GTiffDataset	*poGDS = (GTiffDataset *) poDS;
 
     poGDS->bMetadataChanged = TRUE;
-    return GDALRasterBand::SetMetadataItem( pszName, pszValue, pszDomain );
+    return oMDMD.SetMetadataItem( pszName, pszValue, pszDomain );
 }
 
 /************************************************************************/
@@ -1574,7 +1607,7 @@ GTiffDataset::~GTiffDataset()
     if( GetAccess() == GA_Update && bBase )
     {
         if( bNewDataset || bMetadataChanged )
-            WriteMetadata( this, hTIFF );
+            WriteMetadata( this, hTIFF, TRUE );
         
         if( bNewDataset || bGeoTIFFInfoChanged )
             WriteGeoTIFFInfo();
@@ -1822,7 +1855,7 @@ int GTiffDataset::IsBlockAvailable( int nBlockId )
 void GTiffDataset::FlushCache()
 
 {
-    GDALDataset::FlushCache();
+    GDALPamDataset::FlushCache();
 
     if( bLoadedBlockDirty && nLoadedBlock != -1 )
         FlushBlockBuf();
@@ -2190,28 +2223,37 @@ void GTiffDataset::WriteGeoTIFFInfo()
 
         psGTIF = GTIFNew( hTIFF );
         GTIFSetFromOGISDefn( psGTIF, pszProjection );
+
+        if( GetMetadataItem( GDALMD_AREA_OR_POINT ) 
+            && EQUAL(GetMetadataItem(GDALMD_AREA_OR_POINT),
+                     GDALMD_AOP_POINT) )
+        {
+            GTIFKeySet(psGTIF, GTRasterTypeGeoKey, TYPE_SHORT, 1,
+                       RasterPixelIsPoint);
+        }
+
         GTIFWriteKeys( psGTIF );
         GTIFFree( psGTIF );
     }
 }
 
 /************************************************************************/
-/*                         AppendMetadataItem()                         */
+/*                          MakeMetadataItem()                          */
 /************************************************************************/
 
-static CPLXMLNode *AppendMetadataItem( CPLXMLNode *psRoot, 
-                                       const char *pszKey, 
-                                       const char *pszValue,
-                                       int nBand, const char *pszRole )
+static void AppendMetadataItem( CPLXMLNode **ppsRoot, CPLXMLNode **ppsTail,
+                                const char *pszKey, const char *pszValue,
+                                int nBand, const char *pszRole, 
+                                const char *pszDomain )
 
 {
     char szBandId[32];
     CPLXMLNode *psItem;
 
-    if( psRoot == NULL )
-        psRoot = CPLCreateXMLNode( NULL, CXT_Element, "GDALMetadata" );
-        
-    psItem = CPLCreateXMLNode( psRoot, CXT_Element, "Item" );
+/* -------------------------------------------------------------------- */
+/*      Create the Item element, and subcomponents.                     */
+/* -------------------------------------------------------------------- */
+    psItem = CPLCreateXMLNode( NULL, CXT_Element, "Item" );
     CPLCreateXMLNode( CPLCreateXMLNode( psItem, CXT_Attribute, "name"),
                       CXT_Text, pszKey );
 
@@ -2226,80 +2268,153 @@ static CPLXMLNode *AppendMetadataItem( CPLXMLNode *psRoot,
         CPLCreateXMLNode( CPLCreateXMLNode( psItem,CXT_Attribute,"role"),
                           CXT_Text, pszRole );
 
+    if( pszDomain != NULL && strlen(pszDomain) > 0 )
+        CPLCreateXMLNode( CPLCreateXMLNode( psItem,CXT_Attribute,"domain"),
+                          CXT_Text, pszDomain );
+
     char *pszEscapedItemValue = CPLEscapeString(pszValue,-1,CPLES_XML);
     CPLCreateXMLNode( psItem, CXT_Text, pszEscapedItemValue );
     CPLFree( pszEscapedItemValue );
 
-    return psRoot;
+/* -------------------------------------------------------------------- */
+/*      Create root, if missing.                                        */
+/* -------------------------------------------------------------------- */
+    if( *ppsRoot == NULL )
+        *ppsRoot = CPLCreateXMLNode( NULL, CXT_Element, "GDALMetadata" );
+
+/* -------------------------------------------------------------------- */
+/*      Append item to tail.  We keep track of the tail to avoid        */
+/*      O(nsquared) time as the list gets longer.                       */
+/* -------------------------------------------------------------------- */
+    if( *ppsTail == NULL )
+        CPLAddXMLChild( *ppsRoot, psItem );
+    else
+        CPLAddXMLSibling( *ppsTail, psItem );
+    
+    *ppsTail = psItem;
+}
+
+/************************************************************************/
+/*                         WriteMDMDMetadata()                          */
+/************************************************************************/
+
+static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
+                             CPLXMLNode **ppsRoot, CPLXMLNode **ppsTail, 
+                             int nBand )
+
+{
+    int iDomain;
+    char **papszDomainList;
+
+/* ==================================================================== */
+/*      Process each domain.                                            */
+/* ==================================================================== */
+    papszDomainList = poMDMD->GetDomainList();
+    for( iDomain = 0; papszDomainList && papszDomainList[iDomain]; iDomain++ )
+    {
+        char **papszMD = poMDMD->GetMetadata( papszDomainList[iDomain] );
+        int iItem;
+
+/* -------------------------------------------------------------------- */
+/*      Process each item in this domain.                               */
+/* -------------------------------------------------------------------- */
+        for( iItem = 0; papszMD && papszMD[iItem]; iItem++ )
+        {
+            const char *pszItemValue;
+            char *pszItemName = NULL;
+            
+            pszItemValue = CPLParseNameValue( papszMD[iItem], &pszItemName );
+            
+/* -------------------------------------------------------------------- */
+/*      Convert into XML item or handle as a special TIFF tag.          */
+/* -------------------------------------------------------------------- */
+            if( strlen(papszDomainList[iDomain]) == 0 
+                && nBand == 0 && EQUALN(pszItemName,"TIFFTAG_",8) )
+            {
+                if( EQUAL(pszItemName,"TIFFTAG_DOCUMENTNAME") )
+                    TIFFSetField( hTIFF, TIFFTAG_DOCUMENTNAME, pszItemValue );
+                else if( EQUAL(pszItemName,"TIFFTAG_IMAGEDESCRIPTION") )
+                    TIFFSetField( hTIFF, TIFFTAG_IMAGEDESCRIPTION, pszItemValue );
+                else if( EQUAL(pszItemName,"TIFFTAG_SOFTWARE") )
+                    TIFFSetField( hTIFF, TIFFTAG_SOFTWARE, pszItemValue );
+                else if( EQUAL(pszItemName,"TIFFTAG_DATETIME") )
+                    TIFFSetField( hTIFF, TIFFTAG_DATETIME, pszItemValue );
+                else if( EQUAL(pszItemName,"TIFFTAG_XRESOLUTION") )
+                    TIFFSetField( hTIFF, TIFFTAG_XRESOLUTION, atof(pszItemValue) );
+                else if( EQUAL(pszItemName,"TIFFTAG_YRESOLUTION") )
+                    TIFFSetField( hTIFF, TIFFTAG_YRESOLUTION, atof(pszItemValue) );
+                else if( EQUAL(pszItemName,"TIFFTAG_RESOLUTIONUNIT") )
+                    TIFFSetField( hTIFF, TIFFTAG_RESOLUTIONUNIT, atoi(pszItemValue) );
+            }
+            else if( nBand == 0 && EQUAL(pszItemName,GDALMD_AREA_OR_POINT) )
+                /* do nothing, handled elsewhere */;
+            else
+                AppendMetadataItem( ppsRoot, ppsTail, 
+                                    pszItemName, pszItemValue, 
+                                    nBand, NULL, papszDomainList[iDomain] );
+
+            CPLFree( pszItemName );
+        }
+    }
 }
 
 /************************************************************************/
 /*                           WriteMetadata()                            */
 /************************************************************************/
 
-void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF )
+void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
+                                  int bSrcIsGeoTIFF )
 
 {
 /* -------------------------------------------------------------------- */
 /*      Convert all the remaining metadata into a simple XML            */
 /*      format.                                                         */
 /* -------------------------------------------------------------------- */
-    char **papszMD = poSrcDS->GetMetadata();
-    int  iItem, nItemCount = CSLCount(papszMD);
-    CPLXMLNode *psRoot = NULL;
-    
-    for( iItem = 0; iItem < nItemCount; iItem++ )
+    CPLXMLNode *psRoot = NULL, *psTail = NULL;
+
+    if( bSrcIsGeoTIFF )
     {
-        const char *pszItemValue;
-        char *pszItemName = NULL;
+        WriteMDMetadata( &(((GTiffDataset *)poSrcDS)->oMDMD), 
+                         hTIFF, &psRoot, &psTail, 0 );
+    }
+    else
+    {
+        char **papszMD = poSrcDS->GetMetadata();
 
-        pszItemValue = CPLParseNameValue( papszMD[iItem], &pszItemName );
-
-        if( EQUAL(pszItemName,"TIFFTAG_DOCUMENTNAME") )
-            TIFFSetField( hTIFF, TIFFTAG_DOCUMENTNAME, pszItemValue );
-        else if( EQUAL(pszItemName,"TIFFTAG_IMAGEDESCRIPTION") )
-            TIFFSetField( hTIFF, TIFFTAG_IMAGEDESCRIPTION, pszItemValue );
-        else if( EQUAL(pszItemName,"TIFFTAG_SOFTWARE") )
-            TIFFSetField( hTIFF, TIFFTAG_SOFTWARE, pszItemValue );
-        else if( EQUAL(pszItemName,"TIFFTAG_DATETIME") )
-            TIFFSetField( hTIFF, TIFFTAG_DATETIME, pszItemValue );
-        else if( EQUAL(pszItemName,"TIFFTAG_XRESOLUTION") )
-            TIFFSetField( hTIFF, TIFFTAG_XRESOLUTION, atof(pszItemValue) );
-        else if( EQUAL(pszItemName,"TIFFTAG_YRESOLUTION") )
-            TIFFSetField( hTIFF, TIFFTAG_YRESOLUTION, atof(pszItemValue) );
-        else if( EQUAL(pszItemName,"TIFFTAG_RESOLUTIONUNIT") )
-            TIFFSetField( hTIFF, TIFFTAG_RESOLUTIONUNIT, atoi(pszItemValue) );
-        else
+        if( CSLCount(papszMD) > 0 )
         {
-            psRoot = AppendMetadataItem( psRoot, pszItemName, pszItemValue, 
-                                         0, NULL );
-        }
+            GDALMultiDomainMetadata oMDMD;
+            oMDMD.SetMetadata( papszMD );
 
-        CPLFree( pszItemName );
+            WriteMDMetadata( &oMDMD, hTIFF, &psRoot, &psTail, 0 );
+        }
     }
 
 /* -------------------------------------------------------------------- */
-/*      We also need to address band specific metadata.                 */
+/*      We also need to address band specific metadata, and special     */
+/*      "role" metadata.                                                */
 /* -------------------------------------------------------------------- */
     int nBand;
     for( nBand = 1; nBand <= poSrcDS->GetRasterCount(); nBand++ )
     {
         GDALRasterBand *poBand = poSrcDS->GetRasterBand( nBand );
 
-        
-        papszMD = poBand->GetMetadata();
-        nItemCount = CSLCount(papszMD);
-
-        for( iItem = 0; iItem < nItemCount; iItem++ )
+        if( bSrcIsGeoTIFF )
         {
-            const char *pszItemValue;
-            char *pszItemName = NULL;
-
-            pszItemValue = CPLParseNameValue( papszMD[iItem], &pszItemName );
-
-            psRoot = AppendMetadataItem( psRoot, pszItemName, pszItemValue, 
-                                         nBand, NULL );
-            CPLFree( pszItemName );
+            WriteMDMetadata( &(((GTiffRasterBand *)poBand)->oMDMD), 
+                             hTIFF, &psRoot, &psTail, nBand );
+        }
+        else
+        {
+            char **papszMD = poBand->GetMetadata();
+            
+            if( CSLCount(papszMD) > 0 )
+            {
+                GDALMultiDomainMetadata oMDMD;
+                oMDMD.SetMetadata( papszMD );
+                
+                WriteMDMetadata( &oMDMD, hTIFF, &psRoot, &psTail, nBand );
+            }
         }
 
         int bSuccess;
@@ -2311,11 +2426,11 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF )
             char szValue[128];
 
             sprintf( szValue, "%.16g", dfOffset );
-            psRoot = AppendMetadataItem( psRoot, "OFFSET", szValue, nBand, 
-                                         "offset" );
+            AppendMetadataItem( &psRoot, &psTail, "OFFSET", szValue, nBand, 
+                                "offset", "" );
             sprintf( szValue, "%.16g", dfScale );
-            psRoot = AppendMetadataItem( psRoot, "SCALE", szValue, nBand, 
-                                         "scale" );
+            AppendMetadataItem( &psRoot, &psTail, "SCALE", szValue, nBand, 
+                                "scale", "" );
         }
     }
 
@@ -2443,8 +2558,17 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Check for external overviews.                                   */
+/* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
     
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+
     return poDS;
 }
 
@@ -2956,7 +3080,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 
             for( ; psItem != NULL; psItem = psItem->psNext )
             {
-                const char *pszKey, *pszValue, *pszRole; 
+                const char *pszKey, *pszValue, *pszRole, *pszDomain; 
                 char *pszUnescapedValue;
                 int nBand;
 
@@ -2968,6 +3092,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
                 pszValue = CPLGetXMLValue( psItem, NULL, NULL );
                 nBand = atoi(CPLGetXMLValue( psItem, "sample", "-1" )) + 1;
                 pszRole = CPLGetXMLValue( psItem, "role", "" );
+                pszDomain = CPLGetXMLValue( psItem, "domain", "" );
                 
                 if( pszKey == NULL || pszValue == NULL )
                     continue;
@@ -2975,7 +3100,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
                 pszUnescapedValue = CPLUnescapeString( pszValue, NULL, 
                                                        CPLES_XML );
                 if( nBand == 0 )
-                    SetMetadataItem( pszKey, pszUnescapedValue );
+                    SetMetadataItem( pszKey, pszUnescapedValue, pszDomain );
                 else
                 {
                     GDALRasterBand *poBand = GetRasterBand(nBand);
@@ -2986,7 +3111,8 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
                         else if( EQUAL(pszRole,"offset") )
                             poBand->SetOffset( atof(pszUnescapedValue) );
                         else
-                            poBand->SetMetadataItem(pszKey,pszUnescapedValue);
+                            poBand->SetMetadataItem(pszKey,pszUnescapedValue,
+                                                    pszDomain );
                     }
                 }
                 CPLFree( pszUnescapedValue );
@@ -3570,10 +3696,11 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                   "can only be written to 1 band Byte or UInt16 GeoTIFF files." );
 
 /* -------------------------------------------------------------------- */
-/* 	Transfer some TIFF specific metadata, if available.             */
+/*      Transfer some TIFF specific metadata, if available.  Should     */
+/*      we push this into .pam if we are avoiding GDAL tags?            */
 /* -------------------------------------------------------------------- */
     if( EQUAL(pszProfile,"GDALGeoTIFF") )
-        GTiffDataset::WriteMetadata( poSrcDS, hTIFF );
+        GTiffDataset::WriteMetadata( poSrcDS, hTIFF, FALSE );
 
 /* -------------------------------------------------------------------- */
 /* 	Write NoData value, if exist.                                   */
@@ -3692,6 +3819,15 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         psGTIF = GTIFNew( hTIFF );
         GTIFSetFromOGISDefn( psGTIF, pszProjection );
+
+        if( poSrcDS->GetMetadataItem( GDALMD_AREA_OR_POINT ) 
+            && EQUAL(poSrcDS->GetMetadataItem(GDALMD_AREA_OR_POINT),
+                     GDALMD_AOP_POINT) )
+        {
+            GTIFKeySet(psGTIF, GTRasterTypeGeoKey, TYPE_SHORT, 1,
+                       RasterPixelIsPoint);
+        }
+
         GTIFWriteKeys( psGTIF );
         GTIFFree( psGTIF );
     }
@@ -3964,11 +4100,18 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
 
-    GDALDataset *poDS;
+/* -------------------------------------------------------------------- */
+/*      Re-open as a dataset and copy over missing metadata using       */
+/*      PAM facilities.                                                 */
+/* -------------------------------------------------------------------- */
+    GDALPamDataset *poDS;
 
-    poDS = (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+    poDS = (GDALPamDataset *) GDALOpen( pszFilename, GA_Update );
     if( poDS == NULL )
-        poDS = (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+        poDS = (GDALPamDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+
+    if( poDS != NULL )
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
     
     return poDS;
 }
@@ -4117,13 +4260,34 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
 }
 
 /************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char **GTiffDataset::GetMetadata( const char *pszDomain )
+
+{
+    return oMDMD.GetMetadata( pszDomain );
+}
+
+/************************************************************************/
 /*                            SetMetadata()                             */
 /************************************************************************/
 CPLErr GTiffDataset::SetMetadata( char ** papszMD, const char *pszDomain )
 
 {
     bMetadataChanged = TRUE;
-    return GDALDataset::SetMetadata( papszMD, pszDomain );
+    return oMDMD.SetMetadata( papszMD, pszDomain );
+}
+
+/************************************************************************/
+/*                          GetMetadataItem()                           */
+/************************************************************************/
+
+const char *GTiffDataset::GetMetadataItem( const char *pszName, 
+                                           const char *pszDomain )
+
+{
+    return oMDMD.GetMetadataItem( pszName, pszDomain );
 }
 
 /************************************************************************/
@@ -4136,7 +4300,7 @@ CPLErr GTiffDataset::SetMetadataItem( const char *pszName,
 
 {
     bMetadataChanged = TRUE;
-    return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
+    return oMDMD.SetMetadataItem( pszName, pszValue, pszDomain );
 }
 
 /************************************************************************/
