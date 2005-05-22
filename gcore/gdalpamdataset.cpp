@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/05/22 08:13:40  fwarmerdam
+ * added multidomain metadata support
+ *
  * Revision 1.4  2005/05/17 15:13:28  fwarmerdam
  * ensure pam info initialize on any set operation
  *
@@ -131,7 +134,7 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszVRTPath )
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psMD;
 
-    psMD = PamSerializeMetadata( this );
+    psMD = psPam->oMDMD.Serialize();
     if( psMD != NULL )
         CPLAddXMLChild( psDSTree, psMD );
 
@@ -377,7 +380,7 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
 /* -------------------------------------------------------------------- */
 /*      Apply any dataset level metadata.                               */
 /* -------------------------------------------------------------------- */
-    PamApplyMetadata( psTree, this );
+    psPam->oMDMD.XMLInit( psTree );
 
 /* -------------------------------------------------------------------- */
 /*      Process bands.                                                  */
@@ -764,6 +767,19 @@ CPLErr GDALPamDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
 }
 
 /************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char **GDALPamDataset::GetMetadata( const char *pszDomain )
+
+{
+    if( psPam )
+        return psPam->oMDMD.GetMetadata( pszDomain );
+    else
+        return GDALDataset::GetMetadata( pszDomain );
+}
+
+/************************************************************************/
 /*                            SetMetadata()                             */
 /************************************************************************/
 
@@ -773,10 +789,35 @@ CPLErr GDALPamDataset::SetMetadata( char **papszMetadata,
 {
     PamInitialize();
 
-    if( pszDomain == NULL || strlen(pszDomain) == 0 && psPam )
+    if( psPam )
+    {
         MarkPamDirty();
+        return psPam->oMDMD.SetMetadata( papszMetadata, pszDomain );
+    }
+    else
+    {
+        return GDALDataset::SetMetadata( papszMetadata, pszDomain );
+    }
+}
 
-    return GDALDataset::SetMetadata( papszMetadata, pszDomain );
+/************************************************************************/
+/*                          GetMetadataItem()                           */
+/************************************************************************/
+
+const char *GDALPamDataset::GetMetadataItem( const char *pszName, 
+                                             const char *pszDomain )
+
+{
+    PamInitialize();
+
+    if( psPam )
+    {
+        return psPam->oMDMD.GetMetadataItem( pszName, pszDomain );
+    }
+    else
+    {
+        return GDALDataset::GetMetadataItem( pszName, pszDomain );
+    }
 }
 
 /************************************************************************/
@@ -790,10 +831,15 @@ CPLErr GDALPamDataset::SetMetadataItem( const char *pszName,
 {
     PamInitialize();
 
-    if( pszDomain == NULL || strlen(pszDomain) == 0 && psPam )
+    if( psPam )
+    {
         MarkPamDirty();
-
-    return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
+        return psPam->oMDMD.SetMetadataItem( pszName, pszValue, pszDomain );
+    }
+    else
+    {
+        return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
+    }
 }
 
 /************************************************************************/
