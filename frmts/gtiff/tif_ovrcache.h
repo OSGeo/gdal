@@ -89,15 +89,9 @@ void TIFF_ProcessFullResBlock( TIFF *hTIFF, int nPlanarConfig,
                                int nBlockXSize, int nBlockYSize,
                                int nSampleFormat, const char * pszResampling );
 
-uint32 TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
-                           int nBitsPerPixel, int nSamples, 
-                           int nBlockXSize, int nBlockYSize,
-                           int bTiled, int nCompressFlag, int nPhotometric,
-                           int nSampleFormat,
-                           unsigned short *panRed,
-                           unsigned short *panGreen,
-                           unsigned short *panBlue,
-                           int bUseSubIFDs );
+uint32 TIFF_WriteOverview( TIFF *, int, int, int, int, int, int, int,
+                           int, int, int, int, unsigned short *,
+                           unsigned short *, unsigned short *, int );
 
 #if defined(__cplusplus)
 }
