@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.36  2005/05/22 08:17:07  fwarmerdam
+ * allow CPLAddXMLChild() to support siblings
+ *
  * Revision 1.35  2005/05/13 18:17:48  fwarmerdam
  * added CPLRemoveXMLChild
  *
@@ -1362,9 +1365,6 @@ void CPLAddXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
 
 {
     CPLXMLNode *psSib;
-
-    CPLAssert( psChild->psNext == NULL );
-    psChild->psNext = NULL;
 
     if( psParent->psChild == NULL )
     {
