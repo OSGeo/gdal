@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.22  2005/05/23 06:57:12  fwarmerdam
+ * Use lockedblockrefs
+ *
  * Revision 1.21  2005/04/27 16:35:58  fwarmerdam
  * PAM enable
  *
@@ -234,8 +237,15 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     if( poGDS->GetRasterCount() == 3 && nBand == 1 )
     {
-        poGDS->GetRasterBand(2)->GetBlockRef( nBlockXOff, nBlockYOff );
-        poGDS->GetRasterBand(3)->GetBlockRef( nBlockXOff, nBlockYOff );
+        GDALRasterBlock *poBlock;
+
+        poBlock = 
+            poGDS->GetRasterBand(2)->GetLockedBlockRef(nBlockXOff,nBlockYOff);
+        poBlock->DropLock();
+
+        poBlock = 
+            poGDS->GetRasterBand(3)->GetLockedBlockRef(nBlockXOff,nBlockYOff);
+        poBlock->DropLock();
     }
 
     return CE_None;
