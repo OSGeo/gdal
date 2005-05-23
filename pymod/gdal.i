@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.117  2005/05/23 07:29:06  fwarmerdam
+ * added some histogram related stuff
+ *
  * Revision 1.116  2005/05/06 17:35:02  fwarmerdam
  * Added GetStatistics and TestBoolean
  *
@@ -777,14 +780,16 @@ int              GDALFlushRasterCache( GDALRasterBandH );
 int              GDALFillRaster( GDALRasterBandH hBand, double dfRealValue,
 		                 double dfImaginaryValue );
 
+int GDALSetDefaultHistogram( GDALRasterBandH hBand, 
+                             double dfMin, double dfMax, 
+                             int nBuckets, int *panHistogram );
 int      GDALRasterAdviseRead( GDALRasterBandH hRB, 
     int nDSXOff, int nDSYOff, int nDSXSize, int nDSYSize,
     int nBXSize, int nBYSize, GDALDataType eBDataType, stringList options );
 
-int      GDALComputeBandStats( GDALRasterBandH hBand, int nSampleStep, 
+int GDALComputeBandStats( GDALRasterBandH hBand, int nSampleStep, 
                              double *pdfMean, double *pdfStdDev, 
                              void *pfnProgress, void *pProgressData );
-
 /* ==================================================================== */
 /*      Color tables.                                                   */
 /* ==================================================================== */
@@ -1496,11 +1501,18 @@ py_GDALGetRasterHistogram(PyObject *self, PyObject *args) {
     int nBuckets = 256, bIncludeOutOfRange = FALSE, bApproxOK = FALSE;
     int *panHistogram, i;
     PyObject *psList;
+    PyProgressData sProgressInfo;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"s|ddiii:GDALGetRasterHistogram",&_argc0,
+    sProgressInfo.nLastReported = -1;
+    sProgressInfo.psPyCallback = NULL;
+    sProgressInfo.psPyCallbackData = NULL;
+    if(!PyArg_ParseTuple(args,"s|ddiiiOO:GDALGetRasterHistogram",&_argc0,
 			 &dfMin, &dfMax, &nBuckets, &bIncludeOutOfRange, 
-	 	         &bApproxOK))
+	 	         &bApproxOK,
+                         &(sProgressInfo.psPyCallback), 
+		         &(sProgressInfo.psPyCallbackData) ) )
+
         return NULL;
 
     if (_argc0) {
@@ -1515,7 +1527,7 @@ py_GDALGetRasterHistogram(PyObject *self, PyObject *args) {
     panHistogram = (int *) CPLCalloc(sizeof(int),nBuckets);
     GDALGetRasterHistogram(hBand, dfMin, dfMax, nBuckets, panHistogram, 
 			   bIncludeOutOfRange, bApproxOK, 
-		           GDALDummyProgress, NULL);
+			   PyProgressProxy, &sProgressInfo );
 
     psList = PyList_New(nBuckets);
     for( i = 0; i < nBuckets; i++ )
@@ -1528,6 +1540,68 @@ py_GDALGetRasterHistogram(PyObject *self, PyObject *args) {
 %}
 
 %native(GDALGetRasterHistogram) py_GDALGetRasterHistogram;
+
+%{
+/************************************************************************/
+/*                      GDALGetDefaultHistogram()                       */
+/************************************************************************/
+static PyObject *
+py_GDALGetDefaultHistogram(PyObject *self, PyObject *args) {
+
+    GDALRasterBandH  hBand;
+    char *_argc0 = NULL;
+    int bForce = FALSE;
+    int *panHistogram=NULL, i;
+    PyObject *psList, *psResult;
+    PyProgressData sProgressInfo;
+    double dfMin, dfMax;
+    int nBuckets;
+    CPLErr eErr;
+
+    self = self;
+    sProgressInfo.nLastReported = -1;
+    sProgressInfo.psPyCallback = NULL;
+    sProgressInfo.psPyCallbackData = NULL;
+    if(!PyArg_ParseTuple(args,"s|iOO:GDALGetDefaultHistogram",&_argc0,
+			 &bForce,
+                         &(sProgressInfo.psPyCallback), 
+		         &(sProgressInfo.psPyCallbackData) ) )
+
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &hBand,_GDALRasterBandH)) {
+            PyErr_SetString(PyExc_TypeError,
+                          "Type error in argument 1 of GDALGetRasterHistogram."
+                          "  Expected _GDALRasterBandH.");
+            return NULL;
+        }
+    }
+
+    eErr = GDALGetDefaultHistogram(hBand, &dfMin, &dfMax, &nBuckets, 
+				  &panHistogram, bForce, 
+			          PyProgressProxy, &sProgressInfo );
+
+    if( eErr == CE_Warning )
+    {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    psList = PyList_New(nBuckets);
+    for( i = 0; i < nBuckets; i++ )
+	PyList_SetItem(psList, i, Py_BuildValue("i", panHistogram[i] ));
+
+    CPLFree( panHistogram );
+
+    psResult = Py_BuildValue( "(ddiO)", dfMin, dfMax, nBuckets, psList );
+    Py_XDECREF(psList);
+	
+    return psResult;
+}
+%}
+
+%native(GDALGetDefaultHistogram) py_GDALGetDefaultHistogram;
 
 /* -------------------------------------------------------------------- */
 /*      Algorithms                                                      */

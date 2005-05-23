@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.110  2005/05/06 17:35:24  fwarmerdam
- * updated
+ * Revision 1.111  2005/05/23 07:29:07  fwarmerdam
+ * added some histogram related stuff
  *
  ************************************************************************/
 
@@ -1926,11 +1926,18 @@ py_GDALGetRasterHistogram(PyObject *self, PyObject *args) {
     int nBuckets = 256, bIncludeOutOfRange = FALSE, bApproxOK = FALSE;
     int *panHistogram, i;
     PyObject *psList;
+    PyProgressData sProgressInfo;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"s|ddiii:GDALGetRasterHistogram",&_argc0,
+    sProgressInfo.nLastReported = -1;
+    sProgressInfo.psPyCallback = NULL;
+    sProgressInfo.psPyCallbackData = NULL;
+    if(!PyArg_ParseTuple(args,"s|ddiiiOO:GDALGetRasterHistogram",&_argc0,
 			 &dfMin, &dfMax, &nBuckets, &bIncludeOutOfRange, 
-	 	         &bApproxOK))
+	 	         &bApproxOK,
+                         &(sProgressInfo.psPyCallback), 
+		         &(sProgressInfo.psPyCallbackData) ) )
+
         return NULL;
 
     if (_argc0) {
@@ -1945,7 +1952,7 @@ py_GDALGetRasterHistogram(PyObject *self, PyObject *args) {
     panHistogram = (int *) CPLCalloc(sizeof(int),nBuckets);
     GDALGetRasterHistogram(hBand, dfMin, dfMax, nBuckets, panHistogram, 
 			   bIncludeOutOfRange, bApproxOK, 
-		           GDALDummyProgress, NULL);
+			   PyProgressProxy, &sProgressInfo );
 
     psList = PyList_New(nBuckets);
     for( i = 0; i < nBuckets; i++ )
@@ -1954,6 +1961,64 @@ py_GDALGetRasterHistogram(PyObject *self, PyObject *args) {
     CPLFree( panHistogram );
 
     return psList;
+}
+
+/************************************************************************/
+/*                      GDALGetDefaultHistogram()                       */
+/************************************************************************/
+static PyObject *
+py_GDALGetDefaultHistogram(PyObject *self, PyObject *args) {
+
+    GDALRasterBandH  hBand;
+    char *_argc0 = NULL;
+    int bForce = FALSE;
+    int *panHistogram=NULL, i;
+    PyObject *psList, *psResult;
+    PyProgressData sProgressInfo;
+    double dfMin, dfMax;
+    int nBuckets;
+    CPLErr eErr;
+
+    self = self;
+    sProgressInfo.nLastReported = -1;
+    sProgressInfo.psPyCallback = NULL;
+    sProgressInfo.psPyCallbackData = NULL;
+    if(!PyArg_ParseTuple(args,"s|iOO:GDALGetDefaultHistogram",&_argc0,
+			 &bForce,
+                         &(sProgressInfo.psPyCallback), 
+		         &(sProgressInfo.psPyCallbackData) ) )
+
+        return NULL;
+
+    if (_argc0) {
+        if (SWIG_GetPtr_2(_argc0,(void **) &hBand,_GDALRasterBandH)) {
+            PyErr_SetString(PyExc_TypeError,
+                          "Type error in argument 1 of GDALGetRasterHistogram."
+                          "  Expected _GDALRasterBandH.");
+            return NULL;
+        }
+    }
+
+    eErr = GDALGetDefaultHistogram(hBand, &dfMin, &dfMax, &nBuckets, 
+				  &panHistogram, bForce, 
+			          PyProgressProxy, &sProgressInfo );
+
+    if( eErr == CE_Warning )
+    {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    psList = PyList_New(nBuckets);
+    for( i = 0; i < nBuckets; i++ )
+	PyList_SetItem(psList, i, Py_BuildValue("i", panHistogram[i] ));
+
+    CPLFree( panHistogram );
+
+    psResult = Py_BuildValue( "(ddiO)", dfMin, dfMax, nBuckets, psList );
+    Py_XDECREF(psList);
+	
+    return psResult;
 }
 
 /************************************************************************/
@@ -5033,6 +5098,37 @@ static PyObject *_wrap_GDALFillRaster(PyObject *self, PyObject *args) {
         }
     }
     _result = (int )GDALFillRaster(_arg0,_arg1,_arg2);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GDALSetDefaultHistogram(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    GDALRasterBandH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    int  _arg3;
+    int * _arg4;
+    char * _argc0 = 0;
+    char * _argc4 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sddis:GDALSetDefaultHistogram",&_argc0,&_arg1,&_arg2,&_arg3,&_argc4)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GDALSetDefaultHistogram. Expected _GDALRasterBandH.");
+        return NULL;
+        }
+    }
+    if (_argc4) {
+        if (SWIG_GetPtr(_argc4,(void **) &_arg4,"_int_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of GDALSetDefaultHistogram. Expected _int_p.");
+        return NULL;
+        }
+    }
+    _result = (int )GDALSetDefaultHistogram(_arg0,_arg1,_arg2,_arg3,_arg4);
     _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
@@ -11662,6 +11758,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALChecksumImage", _wrap_GDALChecksumImage, 1 },
 	 { "GDALDitherRGB2PCT", py_GDALDitherRGB2PCT, 1 },
 	 { "GDALComputeMedianCutPCT", py_GDALComputeMedianCutPCT, 1 },
+	 { "GDALGetDefaultHistogram", py_GDALGetDefaultHistogram, 1 },
 	 { "GDALGetRasterHistogram", py_GDALGetRasterHistogram, 1 },
 	 { "GDALGCPsToGeoTransform", py_GDALGCPsToGeoTransform, 1 },
 	 { "GDALSetGCPs", py_GDALSetGCPs, 1 },
@@ -11689,6 +11786,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "GDALCreateColorTable", _wrap_GDALCreateColorTable, 1 },
 	 { "GDALComputeBandStats", _wrap_GDALComputeBandStats, 1 },
 	 { "GDALRasterAdviseRead", _wrap_GDALRasterAdviseRead, 1 },
+	 { "GDALSetDefaultHistogram", _wrap_GDALSetDefaultHistogram, 1 },
 	 { "GDALFillRaster", _wrap_GDALFillRaster, 1 },
 	 { "GDALFlushRasterCache", _wrap_GDALFlushRasterCache, 1 },
 	 { "GDALGetOverview", _wrap_GDALGetOverview, 1 },
