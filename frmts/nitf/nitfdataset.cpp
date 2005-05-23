@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2005/05/23 06:57:36  fwarmerdam
+ * fix flushing to go through pam
+ *
  * Revision 1.43  2005/05/05 15:54:49  fwarmerdam
  * PAM Enabled
  *
@@ -717,7 +720,7 @@ void NITFDataset::FlushCache()
     if( poJ2KDataset != NULL && bJP2Writing)
         poJ2KDataset->FlushCache();
 
-    GDALDataset::FlushCache();
+    GDALPamDataset::FlushCache();
 }
 
 /************************************************************************/
