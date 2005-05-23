@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.77  2005/05/23 07:28:20  fwarmerdam
+# added GetDefaultHistogram
+#
 # Revision 1.76  2005/05/06 17:34:45  fwarmerdam
 # Added GetStatistics and TestBoolean
 #
@@ -870,6 +873,22 @@ class Band(MajorObject):
                      include_out_of_range=0, approx_ok = 0 ):
         return _gdal.GDALGetRasterHistogram(self._o, min, max, buckets,
                                             include_out_of_range, approx_ok)
+
+    def GetDefaultHistogram( self, force = 1 ):
+        """Returns 4-tuple with (min,max,hist_count,[histogram_as_list])"""
+        
+        return _gdal.GDALGetDefaultHistogram(self._o, force)
+
+    def SetDefaultHistogram( self, min, max, histogram ):
+	count = len(histogram)
+	hist_array = ptrcreate( 'int', 0, count)
+	for i in range(count):
+	    ptrset( hist_array, histogram[i], i )
+
+	result = _gdal.GDALSetDefaultHistogram( self._o, min, max, count, 
+						hist_array )	
+	ptrfree( hist_array )
+	return result
 
     def ComputeRasterMinMax(self, approx_ok = 0):
         c_minmax = ptrcreate('double',0,2)
