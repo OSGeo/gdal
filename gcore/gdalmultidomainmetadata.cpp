@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/05/23 06:45:59  fwarmerdam
+ * fixed flaw in walking papszMD
+ *
  * Revision 1.1  2005/05/22 08:13:53  fwarmerdam
  * New
  *
@@ -245,7 +248,7 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
                 CPLCreateXMLNode( psMD, CXT_Attribute, "Domain" ), 
                 CXT_Text, papszDomainList[iDomain] );
         
-        for( int i = 0; papszMD[i] != NULL; i++ )
+        for( int i = 0; papszMD != NULL && papszMD[i] != NULL; i++ )
         {
             const char *pszRawValue;
             char *pszKey;
