@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.48  2005/05/23 06:56:10  fwarmerdam
+ * disable pam support for subfile streams
+ *
  * Revision 1.47  2005/05/03 21:12:14  fwarmerdam
  * use GDALJP2Metadata facilities for GML and GeoTIFF
  *
@@ -1245,6 +1248,9 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->poFileView = poFileView;
 
+    if( fpVSIL != NULL )
+        poDS->nPamFlags |= GPF_DISABLED;
+
 /* -------------------------------------------------------------------- */
 /*      Fetch general file information.                                 */
 /* -------------------------------------------------------------------- */
@@ -1318,32 +1324,35 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Look for supporting coordinate system information.              */
 /* -------------------------------------------------------------------- */
-    GDALJP2Metadata oJP2Geo;
-    FILE *fpLL;
-
-    fpLL = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    
-    if( fpLL != NULL )
+    if( fpVSIL == NULL )
     {
-        oJP2Geo.ReadBoxes( fpLL );
-        VSIFCloseL( fpLL );
-
-        poDS->papszGMLMetadata = CSLDuplicate(oJP2Geo.papszGMLMetadata);
-    }
-
-    if( oJP2Geo.ParseJP2GeoTIFF() 
-        || oJP2Geo.ParseGMLCoverageDesc() )
-    {
-        poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
-        memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform, 
-                sizeof(double) * 6 );
-        poDS->nGCPCount = oJP2Geo.nGCPCount;
-        poDS->pasGCPList = oJP2Geo.pasGCPList;
-        oJP2Geo.pasGCPList = NULL;
-    }
-    else
-    {
-        poDS->ECW2WKTProjection();
+        GDALJP2Metadata oJP2Geo;
+        FILE *fpLL;
+        
+        fpLL = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+        
+        if( fpLL != NULL )
+        {
+            oJP2Geo.ReadBoxes( fpLL );
+            VSIFCloseL( fpLL );
+            
+            poDS->papszGMLMetadata = CSLDuplicate(oJP2Geo.papszGMLMetadata);
+        }
+        
+        if( oJP2Geo.ParseJP2GeoTIFF() 
+            || oJP2Geo.ParseGMLCoverageDesc() )
+        {
+            poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
+            memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform, 
+                    sizeof(double) * 6 );
+            poDS->nGCPCount = oJP2Geo.nGCPCount;
+            poDS->pasGCPList = oJP2Geo.pasGCPList;
+            oJP2Geo.pasGCPList = NULL;
+        }
+        else
+        {
+            poDS->ECW2WKTProjection();
+        }
     }
 
 /* -------------------------------------------------------------------- */
