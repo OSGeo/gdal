@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2005/05/23 06:42:16  fwarmerdam
+ * added mutex to protect dataset list
+ *
  * Revision 1.50  2005/04/20 16:39:04  fwarmerdam
  * Fixed last fix.
  *
@@ -91,11 +94,13 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
-static int nGDALDatasetCount = 0;
-static GDALDataset **papoGDALDatasetList = NULL;
+static volatile int nGDALDatasetCount = 0;
+static volatile GDALDataset **papoGDALDatasetList = NULL;
+static void *hDLMutex = NULL;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -134,10 +139,14 @@ GDALDataset::GDALDataset()
 /* -------------------------------------------------------------------- */
 /*      Add this dataset to the open dataset list.                      */
 /* -------------------------------------------------------------------- */
-    nGDALDatasetCount++;
-    papoGDALDatasetList = (GDALDataset **) 
-        CPLRealloc( papoGDALDatasetList, sizeof(void *) * nGDALDatasetCount );
-    papoGDALDatasetList[nGDALDatasetCount-1] = this;
+    {
+        CPLMutexHolderD( &hDLMutex );
+        
+        nGDALDatasetCount++;
+        papoGDALDatasetList = (volatile GDALDataset **) 
+            CPLRealloc( papoGDALDatasetList, sizeof(void *)*nGDALDatasetCount);
+        papoGDALDatasetList[nGDALDatasetCount-1] = this;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Set forced caching flag.                                        */
@@ -175,6 +184,8 @@ GDALDataset::~GDALDataset()
     {
         if( papoGDALDatasetList[i] == this )
         {
+            CPLMutexHolderD( &hDLMutex );
+
             papoGDALDatasetList[i] = papoGDALDatasetList[nGDALDatasetCount-1];
             nGDALDatasetCount--;
             if( nGDALDatasetCount == 0 )
@@ -1488,7 +1499,7 @@ GDALDataset **GDALDataset::GetOpenDatasets( int *pnCount )
 
 {
     *pnCount = nGDALDatasetCount;
-    return papoGDALDatasetList;
+    return (GDALDataset **) papoGDALDatasetList;
 }
 
 /************************************************************************/
