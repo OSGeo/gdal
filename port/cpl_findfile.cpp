@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/05/23 03:59:07  fwarmerdam
+ * make finder stuff threadlocal
+ *
  * Revision 1.8  2005/01/15 07:46:20  fwarmerdam
  * make cplpopfinderlocation safer for final cleanup
  *
@@ -59,10 +62,10 @@
 
 CPL_CVSID("$Id$");
 
-static int bFinderInitialized = FALSE;
-static int nFileFinders = 0;
-static CPLFileFinder *papfnFinders = NULL;
-static char **papszFinderLocations = NULL;
+static CPL_THREADLOCAL int bFinderInitialized = FALSE;
+static CPL_THREADLOCAL int nFileFinders = 0;
+static CPL_THREADLOCAL CPLFileFinder *papfnFinders = NULL;
+static CPL_THREADLOCAL char **papszFinderLocations = NULL;
 
 /************************************************************************/
 /*                           CPLFinderInit()                            */
