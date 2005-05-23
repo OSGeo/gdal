@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.56  2005/05/23 06:56:48  fwarmerdam
+ * delay metadata on band
+ *
  * Revision 1.55  2005/05/22 16:32:07  fwarmerdam
  * Fixed so that when we write .img files we translate the false easting
  * and northing into meters if the source SRS is not in meters.
@@ -579,22 +582,6 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
                 new HFARasterBand( poDS, nBand, iOvIndex );
         }
     }
-
-/* -------------------------------------------------------------------- */
-/*      Collect GDAL custom Metadata, and "auxilary" metadata from      */
-/*      well known HFA structures.                                      */
-/* -------------------------------------------------------------------- */
-    if( nThisOverview == -1 )
-    {
-        char **papszMD = HFAGetMetadata( hHFA, nBand );
-        if( papszMD != NULL )
-        {
-            SetMetadata( papszMD );
-            poDS->bMetadataDirty = FALSE;
-        }
-
-        ReadAuxMetadata();
-    }
 }
 
 /************************************************************************/
@@ -945,7 +932,7 @@ CPLErr HFARasterBand::SetMetadata( char **papszMDIn, const char *pszDomain )
 {
     bMetadataDirty = TRUE;
 
-    return GDALRasterBand::SetMetadata( papszMDIn, pszDomain );
+    return GDALPamRasterBand::SetMetadata( papszMDIn, pszDomain );
 }
 
 /************************************************************************/
@@ -958,7 +945,7 @@ CPLErr HFARasterBand::SetMetadataItem( const char *pszTag, const char *pszValue,
 {
     bMetadataDirty = TRUE;
 
-    return GDALRasterBand::SetMetadataItem( pszTag, pszValue, pszDomain );
+    return GDALPamRasterBand::SetMetadataItem( pszTag, pszValue, pszDomain );
 }
 
 /************************************************************************/
@@ -2076,6 +2063,26 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Collect GDAL custom Metadata, and "auxilary" metadata from      */
+/*      well known HFA structures for the bands.  We defer this till    */
+/*      now to ensure that the bands are properly setup before          */
+/*      interacting with PAM.                                           */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < poDS->nBands; i++ )
+    {
+        HFARasterBand *poBand = (HFARasterBand *) poDS->GetRasterBand( i+1 );
+
+        char **papszMD = HFAGetMetadata( hHFA, i+1 );
+        if( papszMD != NULL )
+        {
+            poBand->SetMetadata( papszMD );
+            poDS->bMetadataDirty = FALSE;
+        }
+        
+        poBand->ReadAuxMetadata();
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
@@ -2132,7 +2139,7 @@ CPLErr HFADataset::SetMetadata( char **papszMDIn, const char *pszDomain )
 {
     bMetadataDirty = TRUE;
 
-    return GDALDataset::SetMetadata( papszMDIn, pszDomain );
+    return GDALPamDataset::SetMetadata( papszMDIn, pszDomain );
 }
 
 /************************************************************************/
@@ -2145,7 +2152,7 @@ CPLErr HFADataset::SetMetadataItem( const char *pszTag, const char *pszValue,
 {
     bMetadataDirty = TRUE;
 
-    return GDALDataset::SetMetadataItem( pszTag, pszValue, pszDomain );
+    return GDALPamDataset::SetMetadataItem( pszTag, pszValue, pszDomain );
 }
 
 /************************************************************************/
