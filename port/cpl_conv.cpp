@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2005/05/23 03:57:57  fwarmerdam
+ * make make static buffers threadlocal
+ *
  * Revision 1.43  2005/04/04 15:23:30  fwarmerdam
  * some functions now CPL_STDCALL
  *
@@ -166,10 +169,10 @@
 
 CPL_CVSID("$Id$");
 
-static char **papszConfigOptions = NULL;
+static volatile char **papszConfigOptions = NULL;
 
-static int nSharedFileCount = 0;
-static CPLSharedFileInfo *pasSharedFileList = NULL;
+static volatile int nSharedFileCount = 0;
+static volatile CPLSharedFileInfo *pasSharedFileList = NULL;
 
 
 /************************************************************************/
@@ -435,7 +438,7 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
         while( (chCheck != 13 && chCheck != EOF)
                || VSIFTell(fp) < nOriginalOffset + nActuallyRead )
         {
-            static int bWarned = FALSE;
+            static volatile int bWarned = FALSE;
 
             if( !bWarned )
             {
@@ -478,8 +481,8 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
 const char *CPLReadLine( FILE * fp )
 
 {
-    static char *pszRLBuffer = NULL;
-    static int  nRLBufferSize = 0;
+    static CPL_THREADLOCAL char *pszRLBuffer = NULL;
+    static CPL_THREADLOCAL int  nRLBufferSize = 0;
     int         nReadSoFar = 0;
 
 /* -------------------------------------------------------------------- */
@@ -1212,7 +1215,8 @@ const char * CPL_STDCALL
 CPLGetConfigOption( const char *pszKey, const char *pszDefault )
 
 {
-    const char *pszResult = CSLFetchNameValue( papszConfigOptions, pszKey );
+    const char *pszResult = 
+        CSLFetchNameValue( (char **) papszConfigOptions, pszKey );
 
     if( pszResult == NULL )
         pszResult = getenv( pszKey );
@@ -1231,8 +1235,8 @@ void CPL_STDCALL
 CPLSetConfigOption( const char *pszKey, const char *pszValue )
 
 {
-    papszConfigOptions = 
-        CSLSetNameValue( papszConfigOptions, pszKey, pszValue );
+    papszConfigOptions = (volatile char **) 
+        CSLSetNameValue( (char **) papszConfigOptions, pszKey, pszValue );
 }
 
 /************************************************************************/
@@ -1242,7 +1246,7 @@ CPLSetConfigOption( const char *pszKey, const char *pszValue )
 void CPL_STDCALL CPLFreeConfig()
 
 {
-    CSLDestroy(papszConfigOptions);
+    CSLDestroy( (char **) papszConfigOptions);
     papszConfigOptions = NULL;
 }
 
@@ -1380,7 +1384,7 @@ const char *CPLDecToDMS( double dfAngle, const char * pszAxis,
     int         nDegrees, nMinutes;
     double      dfSeconds, dfABSAngle, dfEpsilon;
     char        szFormat[30];
-    static char szBuffer[50];
+    static CPL_THREADLOCAL char szBuffer[50];
     const char  *pszHemisphere;
     
     dfEpsilon = (0.5/3600.0) * pow(0.1,nPrecision);
@@ -1612,7 +1616,7 @@ FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
     nSharedFileCount++;
 
     pasSharedFileList = (CPLSharedFileInfo *)
-        CPLRealloc( pasSharedFileList, 
+        CPLRealloc( (void *) pasSharedFileList, 
                     sizeof(CPLSharedFileInfo) * nSharedFileCount );
 
     pasSharedFileList[nSharedFileCount-1].fp = fp;
@@ -1673,11 +1677,14 @@ void CPLCloseShared( FILE * fp )
     CPLFree( pasSharedFileList[i].pszFilename );
     CPLFree( pasSharedFileList[i].pszAccess );
 
-    pasSharedFileList[i] = pasSharedFileList[--nSharedFileCount];
+//    pasSharedFileList[i] = pasSharedFileList[--nSharedFileCount];
+    memcpy( (void *) (pasSharedFileList + i), 
+            (void *) (pasSharedFileList + --nSharedFileCount), 
+            sizeof(CPLSharedFileInfo) );
 
     if( nSharedFileCount == 0 )
     {
-        CPLFree( pasSharedFileList );
+        CPLFree( (void *) pasSharedFileList );
         pasSharedFileList = NULL;
     }
 }
@@ -1701,7 +1708,7 @@ CPLSharedFileInfo *CPLGetSharedList( int *pnCount )
     if( pnCount != NULL )
         *pnCount = nSharedFileCount;
         
-    return pasSharedFileList;
+    return (CPLSharedFileInfo *) pasSharedFileList;
 }
 
 /************************************************************************/

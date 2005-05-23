@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/05/23 03:58:15  fwarmerdam
+ * make make static buffers threadlocal
+ *
  * Revision 1.12  2004/11/22 16:01:05  fwarmerdam
  * added GDAL_PREFIX
  *
@@ -107,7 +110,10 @@ typedef struct ctb {
     char        *pszRawData;
 } CSVTable;
 
-static CSVTable *psCSVTableList = NULL;
+/* It would likely be better to share this list between threads, but
+   that will require some rework. */
+
+static CPL_THREADLOCAL CSVTable *psCSVTableList = NULL;
 
 /************************************************************************/
 /*                             CSVAccess()                              */
@@ -903,10 +909,10 @@ const char *CSVGetField( const char * pszFilename,
 const char * GDALDefaultCSVFilename( const char *pszBasename )
 
 {
-    static char         szPath[512];
+    static CPL_THREADLOCAL char         szPath[512];
     FILE    *fp = NULL;
     const char *pszResult;
-    static int bFinderInitialized = FALSE;
+    static CPL_THREADLOCAL int bFinderInitialized = FALSE;
 
     pszResult = CPLFindFile( "epsg_csv", pszBasename );
 
@@ -1005,7 +1011,7 @@ put into CSVDirName).  <p>
 static const char *CSVFileOverride( const char * pszInput )
 
 {
-    static char         szPath[1024];
+    static CPL_THREADLOCAL char         szPath[1024];
 
 #ifdef WIN32
     sprintf( szPath, "%s\\%s", CSVDirName, pszInput );

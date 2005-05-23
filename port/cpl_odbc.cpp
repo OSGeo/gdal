@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/05/23 03:56:44  fwarmerdam
+ * make make static buffers threadlocal
+ *
  * Revision 1.19  2005/01/12 07:51:29  fwarmerdam
  * Fix some argument types needed for ODBC 3.52. In particular SQLDescribeCol
  * and SQLGetData require SQLLEN and SQLULEN instead of SQLINTEGER and
@@ -1287,7 +1290,7 @@ const char *CPLODBCStatement::GetTypeName( int nTypeCode )
         return "TIMESTAMP";
 
       default:
-          static char szType[100];
+          static CPL_THREADLOCAL char szType[100];
 
           sprintf( szType, "UNKNOWN:%d", nTypeCode );
           return szType;
