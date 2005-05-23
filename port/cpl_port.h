@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2005/05/23 03:57:08  fwarmerdam
+ * added default definition of CPL_THREADLOCAL
+ *
  * Revision 1.42  2005/04/04 15:22:36  fwarmerdam
  * added CPL_STDCALL declaration
  *
@@ -305,6 +308,10 @@ typedef unsigned long    GUIntBig;
 int strcasecmp(char * str1, char * str2);
 int strncasecmp(char * str1, char * str2, int len);
 char * strdup (char *instr);
+#endif
+
+#ifndef CPL_THREADLOCAL 
+#  define CPL_THREADLOCAL 
 #endif
 
 /* -------------------------------------------------------------------- */
