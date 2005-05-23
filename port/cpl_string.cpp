@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.43  2005/05/23 03:59:44  fwarmerdam
+ * make cplsprintf buffer threadlocal
+ *
  * Revision 1.42  2005/04/04 15:23:31  fwarmerdam
  * some functions now CPL_STDCALL
  *
@@ -812,8 +815,8 @@ char ** CSLTokenizeString2( const char * pszString,
  */
 #define CPLSPrintf_BUF_SIZE 8000
 #define CPLSPrintf_BUF_Count 10
-static char gszCPLSPrintfBuffer[CPLSPrintf_BUF_Count][CPLSPrintf_BUF_SIZE];
-static int gnCPLSPrintfBuffer = 0;
+static CPL_THREADLOCAL char gszCPLSPrintfBuffer[CPLSPrintf_BUF_Count][CPLSPrintf_BUF_SIZE];
+static CPL_THREADLOCAL int gnCPLSPrintfBuffer = 0;
 
 const char *CPLSPrintf(char *fmt, ...)
 {
