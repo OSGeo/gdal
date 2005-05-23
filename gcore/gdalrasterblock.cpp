@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/05/23 06:43:37  fwarmerdam
+ * adding mutex for block list
+ *
  * Revision 1.17  2005/04/04 15:24:48  fwarmerdam
  * Most C entry points now CPL_STDCALL
  *
@@ -85,16 +88,19 @@
  */
 
 #include "gdal_priv.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
-static int nTileAgeTicker = 0; 
+static volatile int nTileAgeTicker = 0; 
 static int bCacheMaxInitialized = FALSE;
 static int nCacheMax = 10 * 1024*1024;
-static int nCacheUsed = 0;
+static volatile int nCacheUsed = 0;
 
-static GDALRasterBlock   *poOldest = NULL;    /* tail */
-static GDALRasterBlock   *poNewest = NULL;    /* head */
+static volatile GDALRasterBlock *poOldest = NULL;    /* tail */
+static volatile GDALRasterBlock *poNewest = NULL;    /* head */
+
+static void *hRBMutex = NULL;
 
 
 /************************************************************************/
@@ -189,24 +195,40 @@ int CPL_STDCALL GDALFlushCacheBlock()
 
 /************************************************************************/
 /*                          FlushCacheBlock()                           */
+/*                                                                      */
+/*      Note, if we have alot of blocks locked for a long time, this    */
+/*      method is going to get slow because it will have to traverse    */
+/*      the linked list a long ways looking for a flushing              */
+/*      candidate.   It might help to re-touch locked blocks to push    */
+/*      them to the top of the list.                                    */
 /************************************************************************/
 
 int GDALRasterBlock::FlushCacheBlock()
 
 {
-    GDALRasterBlock *poTarget = poOldest;
+    int nXOff, nYOff;
+    GDALRasterBand *poBand;
 
-    while( poTarget != NULL && poTarget->GetLockCount() > 0 ) 
-        poTarget = poTarget->poPrevious;
-
-    if( poTarget != NULL )
     {
-        poTarget->GetBand()->FlushBlock( poTarget->GetXOff(), 
-                                         poTarget->GetYOff() );
-        return TRUE;
+        CPLMutexHolderD( &hRBMutex );
+        GDALRasterBlock *poTarget = (GDALRasterBlock *) poOldest;
+
+        while( poTarget != NULL && poTarget->GetLockCount() > 0 ) 
+            poTarget = poTarget->poPrevious;
+        
+        if( poTarget == NULL )
+            return FALSE;
+
+        poTarget->Detach();
+
+        nXOff = poTarget->GetXOff();
+        nYOff = poTarget->GetYOff();
+        poBand = poTarget->GetBand();
     }
-    else
-        return FALSE;
+
+    poBand->FlushBlock( nXOff, nYOff );
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -238,6 +260,8 @@ GDALRasterBlock::GDALRasterBlock( GDALRasterBand *poBandIn,
 GDALRasterBlock::~GDALRasterBlock()
 
 {
+    Detach();
+
     if( pData != NULL )
     {
         int nSizeInBytes;
@@ -247,6 +271,26 @@ GDALRasterBlock::~GDALRasterBlock()
         nSizeInBytes = (nXSize * nYSize * GDALGetDataTypeSize(eType)+7)/8;
         nCacheUsed -= nSizeInBytes;
     }
+
+    CPLAssert( nLockCount == 0 );
+
+#ifdef ENABLE_DEBUG
+    Verify();
+#endif
+
+    nAge = -1;
+}
+
+/************************************************************************/
+/*                               Detach()                               */
+/*                                                                      */
+/*      Remove from block lists.                                        */
+/************************************************************************/
+
+void GDALRasterBlock::Detach()
+
+{
+    CPLMutexHolderD( &hRBMutex );
 
     if( poOldest == this )
         poOldest = poPrevious;
@@ -261,14 +305,6 @@ GDALRasterBlock::~GDALRasterBlock()
 
     if( poNext != NULL )
         poNext->poPrevious = poPrevious;
-
-    CPLAssert( nLockCount == 0 );
-
-#ifdef ENABLE_DEBUG
-    Verify();
-#endif
-
-    nAge = -1;
 }
 
 /************************************************************************/
@@ -278,6 +314,8 @@ GDALRasterBlock::~GDALRasterBlock()
 void GDALRasterBlock::Verify()
 
 {
+    CPLMutexHolderD( &hRBMutex );
+
     CPLAssert( (poNewest == NULL && poOldest == NULL)
                || (poNewest != NULL && poOldest != NULL) );
 
@@ -286,8 +324,7 @@ void GDALRasterBlock::Verify()
         CPLAssert( poNewest->poPrevious == NULL );
         CPLAssert( poOldest->poNext == NULL );
         
-
-        for( GDALRasterBlock *poBlock = poNewest; 
+        for( GDALRasterBlock *poBlock = (GDALRasterBlock *) poNewest; 
              poBlock != NULL;
              poBlock = poBlock->poNext )
         {
@@ -329,6 +366,8 @@ CPLErr GDALRasterBlock::Write()
 void GDALRasterBlock::Touch()
 
 {
+    CPLMutexHolderD( &hRBMutex );
+
     nAge = nTileAgeTicker++;
 
     if( poNewest == this )
@@ -344,7 +383,7 @@ void GDALRasterBlock::Touch()
         poNext->poPrevious = poPrevious;
 
     poPrevious = NULL;
-    poNext = poNewest;
+    poNext = (GDALRasterBlock *) poNewest;
 
     if( poNewest != NULL )
     {
@@ -401,12 +440,11 @@ CPLErr GDALRasterBlock::Internalize()
             break;
     }
 
-    DropLock();
-
 /* -------------------------------------------------------------------- */
 /*      Add this block to the list.                                     */
 /* -------------------------------------------------------------------- */
     Touch();
+    DropLock();
 
     return( CE_None );
 }
@@ -432,3 +470,34 @@ void GDALRasterBlock::MarkClean()
     bDirty = FALSE;
 }
 
+/************************************************************************/
+/*                           SafeLockBlock()                            */
+/************************************************************************/
+
+/**
+ * Safely lock block.
+ *
+ * This method locks a GDALRasterBlock (and touches it) in a thread-safe
+ * manner.  The global block cache mutex is held while locking the block,
+ * in order to avoid race conditions with other threads that might be
+ * trying to expire the block at the same time.  The block pointer may be
+ * safely NULL, in which case this method does nothing. 
+ *
+ * @param ppBlock Pointer to the block pointer to try and lock/touch.
+ */
+ 
+int GDALRasterBlock::SafeLockBlock( GDALRasterBlock ** ppBlock )
+
+{
+    CPLMutexHolderD( &hRBMutex );
+
+    if( *ppBlock != NULL )
+    {
+        (*ppBlock)->AddLock();
+        (*ppBlock)->Touch();
+        
+        return TRUE;
+    }
+    else
+        return FALSE;
+}
