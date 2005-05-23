@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.29  2005/05/23 03:58:51  fwarmerdam
+ * make handler stack threadlocal
+ *
  * Revision 1.28  2005/04/04 15:23:31  fwarmerdam
  * some functions now CPL_STDCALL
  *
@@ -127,11 +130,11 @@ CPL_CVSID("$Id$");
  * messages cannot be longer than 2000 chars... which is quite reasonable
  * (that's 25 lines of 80 chars!!!)
  */
-static char gszCPLLastErrMsg[2000] = "";
-static int  gnCPLLastErrNo = 0;
-static CPLErr geCPLLastErrType = CE_None;
+static CPL_THREADLOCAL char gszCPLLastErrMsg[2000] = "";
+static CPL_THREADLOCAL int  gnCPLLastErrNo = 0;
+static CPL_THREADLOCAL CPLErr geCPLLastErrType = CE_None;
 
-static CPLErrorHandler gpfnCPLErrorHandler = CPLDefaultErrorHandler;
+static CPL_THREADLOCAL CPLErrorHandler gpfnCPLErrorHandler = CPLDefaultErrorHandler;
 
 typedef struct errHandler
 {
@@ -139,7 +142,7 @@ typedef struct errHandler
     CPLErrorHandler     pfnHandler;
 } CPLErrorHandlerNode;
 
-static CPLErrorHandlerNode * psHandlerStack = NULL;
+static CPL_THREADLOCAL CPLErrorHandlerNode * psHandlerStack = NULL;
 
 /**********************************************************************
  *                          CPLError()
