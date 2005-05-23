@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/05/23 06:43:10  fwarmerdam
+ * Updated for locking of block refs
+ *
  * Revision 1.30  2005/04/04 15:24:48  fwarmerdam
  * Most C entry points now CPL_STDCALL
  *
@@ -146,7 +149,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     int         nBandDataSize = GDALGetDataTypeSize( eDataType ) / 8;
     int         nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
     GByte       *pabySrcBlock = NULL;
-    GDALRasterBlock *poBlock;
+    GDALRasterBlock *poBlock = NULL;
     int         nLBlockX=-1, nLBlockY=-1, iBufYOff, iBufXOff, iSrcY;
 
 /* ==================================================================== */
@@ -175,7 +178,10 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     && nYOff <= nLBlockY * nBlockYSize
                     && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize;
 
-                poBlock = GetBlockRef( 0, nLBlockY, bJustInitialize );
+                if( poBlock )
+                    poBlock->DropLock();
+
+                poBlock = GetLockedBlockRef( 0, nLBlockY, bJustInitialize );
                 if( poBlock == NULL )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
@@ -220,6 +226,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                    eDataType, nBandDataSize, nBufXSize );
             }
         }
+
+        if( poBlock )
+            poBlock->DropLock();
 
         return CE_None;
     }
@@ -282,7 +291,7 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Ensure we have the appropriate block loaded.                    */
 /* -------------------------------------------------------------------- */
-                poBlock = GetBlockRef( nLBlockX, nLBlockY, bJustInitialize );
+                poBlock = GetLockedBlockRef( nLBlockX, nLBlockY, bJustInitialize );
                 if( !poBlock )
                 {
                     CPLError( CE_Failure, CPLE_AppDefined,
@@ -296,7 +305,10 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 
                 pabySrcBlock = (GByte *) poBlock->GetDataRef();
                 if( pabySrcBlock == NULL )
+                {
+                    poBlock->DropLock();
                     return CE_Failure;
+                }
 
 /* -------------------------------------------------------------------- */
 /*      Copy over this chunk of data.                                   */
@@ -333,6 +345,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 iBufOffset += nXSpanSize;
                 nLBlockX++;
                 iSrcX+=nXSpan;
+
+                poBlock->DropLock();
+                poBlock = NULL;
             }
         }
 
@@ -389,7 +404,11 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     && nXOff <= nLBlockX * nBlockXSize
                     && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
 
-                poBlock = GetBlockRef( nLBlockX, nLBlockY, bJustInitialize );
+                if( poBlock != NULL )
+                    poBlock->DropLock();
+
+                poBlock = GetLockedBlockRef( nLBlockX, nLBlockY, 
+                                             bJustInitialize );
                 if( poBlock == NULL )
                 {
                     return( CE_Failure );
@@ -400,7 +419,10 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                 
                 pabySrcBlock = (GByte *) poBlock->GetDataRef();
                 if( pabySrcBlock == NULL )
+                {
+                    poBlock->DropLock();
                     return CE_Failure;
+                }
             }
 
 /* -------------------------------------------------------------------- */
@@ -436,6 +458,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             iBufOffset += nPixelSpace;
         }
     }
+
+    if( poBlock != NULL )
+        poBlock->DropLock();
 
     return( CE_None );
 }
@@ -1201,8 +1226,8 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                 for( iBand = 0; iBand < nBandCount; iBand++ )
                 {
                     GDALRasterBand *poBand = GetRasterBand( panBandMap[iBand]);
-                    poBlock = poBand->GetBlockRef( nLBlockX, nLBlockY, 
-                                                   bJustInitialize );
+                    poBlock = poBand->GetLockedBlockRef( nLBlockX, nLBlockY, 
+                                                         bJustInitialize );
                     if( poBlock == NULL )
                     {
                         eErr = CE_Failure;
@@ -1216,7 +1241,6 @@ GDALDataset::BlockBasedRasterIO( GDALRWFlag eRWFlag,
                         papoBlocks[iBand]->DropLock();
                 
                     papoBlocks[iBand] = poBlock;
-                    poBlock->AddLock();
 
                     papabySrcBlock[iBand] = (GByte *) poBlock->GetDataRef();
                     if( papabySrcBlock[iBand] == NULL )

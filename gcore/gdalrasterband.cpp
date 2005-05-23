@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.66  2005/05/23 06:42:57  fwarmerdam
+ * Updated for locking of block refs
+ *
  * Revision 1.65  2005/05/19 14:45:16  fwarmerdam
  * SetStatistics should now succeed.
  *
@@ -834,24 +837,6 @@ CPLErr GDALRasterBand::AdoptBlock( int nXBlockOff, int nYBlockOff,
 }
 
 /************************************************************************/
-/*                           IsBlockCached()                            */
-/************************************************************************/
-
-/**
- * Check whether specified block is already cached.
- *
- * @param nXOff horizontal offset of the requested block.
- * @param nYOff vertical offset of the requested block.
- *
- * @return TRUE if specified block is in cache and FALSE otherwise.
- */
-
-int GDALRasterBand::IsBlockCached( int nXOff, int nYOff )
-{
-    return TryGetBlockRef( nXOff, nYOff ) != NULL;
-}
-
-/************************************************************************/
 /*                             FlushCache()                             */
 /************************************************************************/
 
@@ -996,6 +981,9 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff )
     if( !bSubBlockingActive )
     {
         nBlockIndex = nXBlockOff + nYBlockOff * nBlocksPerRow;
+
+        GDALRasterBlock::SafeLockBlock( papoBlocks + nBlockIndex );
+
         poBlock = papoBlocks[nBlockIndex];
         papoBlocks[nBlockIndex] = NULL;
     }
@@ -1020,6 +1008,8 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff )
         int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
             + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
         
+        GDALRasterBlock::SafeLockBlock( papoSubBlockGrid + nBlockInSubBlock );
+
         poBlock = papoSubBlockGrid[nBlockInSubBlock];
         papoSubBlockGrid[nBlockInSubBlock] = NULL;
     }
@@ -1027,9 +1017,10 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff )
 /* -------------------------------------------------------------------- */
 /*      Is the target block dirty?  If so we need to write it.          */
 /* -------------------------------------------------------------------- */
-
     if( poBlock == NULL )
         return CE_None;
+
+    poBlock->Detach();
 
     if( poBlock->GetDirty() )
         poBlock->Write();
@@ -1037,21 +1028,41 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff )
 /* -------------------------------------------------------------------- */
 /*      Deallocate the block;                                           */
 /* -------------------------------------------------------------------- */
+    poBlock->DropLock();
     delete poBlock;
 
     return( CE_None );
 }
 
 /************************************************************************/
-/*                           TryGetBlockRef()                           */
+/*                        TryGetLockedBlockRef()                        */
 /************************************************************************/
 
-GDALRasterBlock *GDALRasterBand::TryGetBlockRef( int nXBlockOff, 
-                                                 int nYBlockOff )
+/**
+ * Try fetching block ref. 
+ *
+ * This method will returned the requested block (locked) if it is already
+ * in the block cache for the layer.  If not, NULL is returned.  
+ * 
+ * If a non-NULL value is returned, then a lock for the block will have been
+ * acquired on behalf of the caller.  It is absolutely imperative that the
+ * caller release this lock (with GDALRasterBlock::DropLock()) or else
+ * severe problems may result.
+ *
+ * @param nBlockXOff the horizontal block offset, with zero indicating
+ * the left most block, 1 the next block and so forth. 
+ *
+ * @param nYBlockOff the vertical block offset, with zero indicating
+ * the top most block, 1 the next block and so forth.
+ * 
+ * @return NULL if block not available, or locked block pointer. 
+ */
+
+GDALRasterBlock *GDALRasterBand::TryGetLockedBlockRef( int nXBlockOff, 
+                                                       int nYBlockOff )
 
 {
     int             nBlockIndex;
-    GDALRasterBlock *poBlock;
     
     InitBlockInfo();
     
@@ -1084,10 +1095,10 @@ GDALRasterBlock *GDALRasterBand::TryGetBlockRef( int nXBlockOff,
     if( !bSubBlockingActive )
     {
         nBlockIndex = nXBlockOff + nYBlockOff * nBlocksPerRow;
-        poBlock = papoBlocks[nBlockIndex];
-        if( poBlock != NULL )
-            poBlock->Touch();
-        return poBlock;
+        
+        GDALRasterBlock::SafeLockBlock( papoBlocks + nBlockIndex );
+
+        return papoBlocks[nBlockIndex];
     }
 
 /* -------------------------------------------------------------------- */
@@ -1108,19 +1119,28 @@ GDALRasterBlock *GDALRasterBand::TryGetBlockRef( int nXBlockOff,
     int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
         + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
 
-    poBlock = papoSubBlockGrid[nBlockInSubBlock];
-    if( poBlock != NULL )
-        poBlock->Touch();
+    GDALRasterBlock::SafeLockBlock( papoSubBlockGrid + nBlockInSubBlock );
 
-    return poBlock;
+    return papoSubBlockGrid[nBlockInSubBlock];
 }
 
 /************************************************************************/
-/*                            GetBlockRef()                             */
+/*                         GetLockedBlockRef()                          */
 /************************************************************************/
 
 /**
  * Fetch a pointer to an internally cached raster block.
+ *
+ * This method will returned the requested block (locked) if it is already
+ * in the block cache for the layer.  If not, the block will be read from 
+ * the driver, and placed in the layer block cached, then returned.  If an
+ * error occurs reading the block from the driver, a NULL value will be
+ * returned.
+ * 
+ * If a non-NULL value is returned, then a lock for the block will have been
+ * acquired on behalf of the caller.  It is absolutely imperative that the
+ * caller release this lock (with GDALRasterBlock::DropLock()) or else
+ * severe problems may result.
  *
  * Note that calling GetBlockRef() on a previously uncached band will
  * enable caching.
@@ -1138,9 +1158,9 @@ GDALRasterBlock *GDALRasterBand::TryGetBlockRef( int nXBlockOff,
  * @return pointer to the block object, or NULL on failure.
  */
 
-GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
-                                               int nYBlockOff,
-                                               int bJustInitialize )
+GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
+                                                     int nYBlockOff,
+                                                     int bJustInitialize )
 
 {
     GDALRasterBlock *poBlock;
@@ -1148,7 +1168,7 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
 /* -------------------------------------------------------------------- */
 /*      Try and fetch from cache.                                       */
 /* -------------------------------------------------------------------- */
-    poBlock = TryGetBlockRef( nXBlockOff, nYBlockOff );
+    poBlock = TryGetLockedBlockRef( nXBlockOff, nYBlockOff );
 
 /* -------------------------------------------------------------------- */
 /*      If we didn't find it in our memory cache, instantiate a         */
@@ -1168,8 +1188,8 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
             return( NULL );
         }
 
-        AdoptBlock( nXBlockOff, nYBlockOff, poBlock );
         poBlock->AddLock();
+        AdoptBlock( nXBlockOff, nYBlockOff, poBlock );
 
         if( !bJustInitialize
          && IReadBlock(nXBlockOff,nYBlockOff,poBlock->GetDataRef()) != CE_None)
@@ -1181,8 +1201,6 @@ GDALRasterBlock * GDALRasterBand::GetBlockRef( int nXBlockOff,
 		      nXBlockOff, nYBlockOff );
 	    return( NULL );
         }
-
-        poBlock->DropLock();
 
         if( !bJustInitialize )
         {
@@ -1264,7 +1282,7 @@ CPLErr GDALRasterBand::Fill(double dfRealValue, double dfImaginaryValue) {
     // Write block to block cache
     for (int j = 0; j < nBlocksPerColumn; ++j) {
 	for (int i = 0; i < nBlocksPerRow; ++i) {
-	    GDALRasterBlock* destBlock = GetBlockRef(i, j, TRUE);
+	    GDALRasterBlock* destBlock = GetLockedBlockRef(i, j, TRUE);
 	    if (destBlock == NULL) {
 		CPLError(CE_Failure, CPLE_OutOfMemory,
 			 "GDALRasterBand::Fill(): Error "
@@ -1273,6 +1291,7 @@ CPLErr GDALRasterBand::Fill(double dfRealValue, double dfImaginaryValue) {
 	    }
 	    memcpy(destBlock->GetDataRef(), srcBlock, blockByteSize);
 	    destBlock->MarkDirty();
+            destBlock->DropLock();
 	}
     }
 
@@ -2422,7 +2441,7 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
         iYBlock = iSampleBlock / nBlocksPerRow;
         iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
         
-        poBlock = GetBlockRef( iXBlock, iYBlock );
+        poBlock = GetLockedBlockRef( iXBlock, iYBlock );
         if( poBlock == NULL )
             return CE_Failure;
         
@@ -2447,7 +2466,8 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
             
             for( int i = 0; i < nPixels; i++ )
                 panHistogram[pabyData[i]]++;
-            
+
+            poBlock->DropLock();
             continue; /* to next sample block */
         }
 
@@ -2525,7 +2545,10 @@ CPLErr GDALRasterBand::GetHistogram( double dfMin, double dfMax,
                     panHistogram[nIndex]++;
                 }
             }
+
         }
+
+        poBlock->DropLock();
     }
 
     pfnProgress( 1.0, NULL, pProgressData );
@@ -2857,7 +2880,7 @@ CPLErr GDALRasterBand::GetStatistics( int bApproxOK, int bForce,
         iYBlock = iSampleBlock / nBlocksPerRow;
         iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
         
-        poBlock = GetBlockRef( iXBlock, iYBlock );
+        poBlock = GetLockedBlockRef( iXBlock, iYBlock );
         if( poBlock == NULL )
             continue;
         
@@ -2937,6 +2960,8 @@ CPLErr GDALRasterBand::GetStatistics( int bApproxOK, int bForce,
                 nSampleCount++;
             }
         }
+
+        poBlock->DropLock();
     }
 
 /* -------------------------------------------------------------------- */

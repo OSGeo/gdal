@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.67  2005/05/23 06:44:31  fwarmerdam
+ * Updated for locking of block refs
+ *
  * Revision 1.66  2005/04/04 15:24:48  fwarmerdam
  * Most C entry points now CPL_STDCALL
  *
@@ -603,7 +606,7 @@ GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
         iYBlock = iSampleBlock / nBlocksPerRow;
         iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
         
-        poBlock = poBand->GetBlockRef( iXBlock, iYBlock );
+        poBlock = poBand->GetLockedBlockRef( iXBlock, iYBlock );
         if( poBlock == NULL )
             continue;
         
@@ -678,6 +681,8 @@ GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
                 }
             }
         }
+
+        poBlock->DropLock();
     }
 
     adfMinMax[0] = dfMin;
@@ -850,7 +855,7 @@ int CPL_STDCALL GDALTermProgress( double dfComplete, const char *pszMessage,
                       void * pProgressArg )
 
 {
-    static double dfLastComplete = -1.0;
+    static CPL_THREADLOCAL double dfLastComplete = -1.0;
 
     (void) pProgressArg;
 
@@ -1007,7 +1012,7 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
         iYBlock = iSampleBlock / nBlocksPerRow;
         iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
 
-        poBlock = poBand->GetBlockRef( iXBlock, iYBlock );
+        poBlock = poBand->GetLockedBlockRef( iXBlock, iYBlock );
         if( poBlock == NULL )
             continue;
 
@@ -1084,6 +1089,8 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
 
             iRemainder = iX - iXValid;
         }
+
+        poBlock->DropLock();
     }
 
     return nActualSamples;
@@ -1542,7 +1549,7 @@ GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
 const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
 
 {
-    static char szResult[128];
+    static CPL_THREADLOCAL char szResult[128];
 
     
     if( pszRequest == NULL || EQUAL(pszRequest,"VERSION_NUM") )
