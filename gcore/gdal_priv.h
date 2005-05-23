@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2005/05/23 06:44:48  fwarmerdam
+ * blockrefs now fetched locked
+ *
  * Revision 1.57  2005/05/13 18:19:15  fwarmerdam
  * Added SetDefaultHistogram
  *
@@ -419,6 +422,7 @@ class CPL_DLL GDALRasterBlock
     void        MarkClean( void );
     void        AddLock( void ) { nLockCount++; }
     void        DropLock( void ) { nLockCount--; }
+    void        Detach();
 
     CPLErr      Write();
 
@@ -437,8 +441,9 @@ class CPL_DLL GDALRasterBlock
 
     static int  FlushCacheBlock();
     static void Verify();
-};
 
+    static int  SafeLockBlock( GDALRasterBlock ** );
+};
 
 /* ******************************************************************** */
 /*                             GDALColorTable                           */
@@ -513,9 +518,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     void           InitBlockInfo();
 
     CPLErr         AdoptBlock( int, int, GDALRasterBlock * );
-    GDALRasterBlock *TryGetBlockRef( int nXBlockOff, int nYBlockYOff );
-    int            IsBlockCached( int, int );
-
+    GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff, int nYBlockYOff );
 
   public:
                 GDALRasterBand();
@@ -538,8 +541,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     CPLErr      WriteBlock( int, int, void * );
 
-    GDALRasterBlock *GetBlockRef( int nXBlockOff, int nYBlockOff, 
-                                  int bJustInitialize = FALSE );
+    GDALRasterBlock *GetLockedBlockRef( int nXBlockOff, int nYBlockOff, 
+                                        int bJustInitialize = FALSE );
     CPLErr      FlushBlock( int = -1, int = -1 );
 
     // New OpengIS CV_SampleDimension stuff.
