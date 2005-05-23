@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.24  2005/05/23 06:46:24  fwarmerdam
+ * added mutex to protect driver manager
+ *
  * Revision 1.23  2005/04/04 15:24:48  fwarmerdam
  * Most C entry points now CPL_STDCALL
  *
@@ -99,11 +102,13 @@
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include "ogr_srs_api.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
-static char *pszUpdatableINST_DATA = 
+static const char *pszUpdatableINST_DATA = 
 "__INST_DATA_TARGET:                                                                                                                                      ";
 
 /************************************************************************/
@@ -112,7 +117,8 @@ static char *pszUpdatableINST_DATA =
 /* ==================================================================== */
 /************************************************************************/
 
-static GDALDriverManager        *poDM = NULL;
+static volatile GDALDriverManager        *poDM = NULL;
+static void *hDMMutex = NULL;
 
 /************************************************************************/
 /*                        GetGDALDriverManager()                        */
@@ -134,10 +140,12 @@ static GDALDriverManager        *poDM = NULL;
 GDALDriverManager * GetGDALDriverManager()
 
 {
+//    CPLMutexHolderD( &hDMMutex );
+
     if( poDM == NULL )
         new GDALDriverManager();
 
-    return( poDM );
+    return( (GDALDriverManager *) poDM );
 }
 
 /************************************************************************/
@@ -326,6 +334,8 @@ GDALDriverH CPL_STDCALL GDALGetDriver( int iDriver )
 int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
 
 {
+    CPLMutexHolderD( &hDMMutex );
+
 /* -------------------------------------------------------------------- */
 /*      If it is already registered, just return the existing           */
 /*      index.                                                          */
@@ -337,7 +347,9 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
         for( i = 0; i < nDrivers; i++ )
         {
             if( papoDrivers[i] == poDriver )
+            {
                 return i;
+            }
         }
 
         CPLAssert( FALSE );
@@ -358,7 +370,9 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
     if( poDriver->pfnCreateCopy != NULL )
         poDriver->SetMetadataItem( GDAL_DCAP_CREATECOPY, "YES" );
 
-    return( nDrivers - 1 );
+    int iResult = nDrivers - 1;
+
+    return iResult;
 }
 
 /************************************************************************/
@@ -394,6 +408,7 @@ void GDALDriverManager::DeregisterDriver( GDALDriver * poDriver )
 
 {
     int         i;
+    CPLMutexHolderD( &hDMMutex );
 
     for( i = 0; i < nDrivers; i++ )
     {
@@ -486,6 +501,8 @@ const char *GDALDriverManager::GetHome()
 void GDALDriverManager::SetHome( const char * pszNewHome )
 
 {
+    CPLMutexHolderD( &hDMMutex );
+
     CPLFree( pszHome );
     pszHome = CPLStrdup(pszNewHome);
 }
@@ -528,7 +545,6 @@ void GDALDriverManager::AutoSkipDrivers()
             DeregisterDriver( poDriver );
             delete poDriver;
         }
-            
     }
 
     CSLDestroy( papszList );
@@ -660,6 +676,9 @@ void GDALDriverManager::AutoLoadDrivers()
 void CPL_STDCALL GDALDestroyDriverManager( void )
 
 {
+    // THREADSAFETY: We would like to lock the mutex here, but it 
+    // needs to be reacquired within the destructor during driver
+    // deregistration.
     if( poDM != NULL )
         delete poDM;
 }
