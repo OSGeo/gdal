@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/05/23 14:28:21  fwarmerdam
+ * fixed serious flaw in Detach() method
+ *
  * Revision 1.18  2005/05/23 06:43:37  fwarmerdam
  * adding mutex for block list
  *
@@ -305,6 +308,9 @@ void GDALRasterBlock::Detach()
 
     if( poNext != NULL )
         poNext->poPrevious = poPrevious;
+
+    poPrevious = NULL;
+    poNext = NULL;
 }
 
 /************************************************************************/
@@ -409,6 +415,7 @@ void GDALRasterBlock::Touch()
 CPLErr GDALRasterBlock::Internalize()
 
 {
+    CPLMutexHolderD( &hRBMutex );
     void        *pNewData;
     int         nSizeInBytes;
     int         nCurCacheMax = GDALGetCacheMax();
