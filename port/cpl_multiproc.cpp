@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/05/23 06:40:40  fwarmerdam
+ * fixed flaw in CPLCreateOrAcquireMutex, added mutex holder
+ *
  * Revision 1.6  2005/05/20 19:19:00  fwarmerdam
  * added CPLCreateOrAcquireMutex()
  *
@@ -53,6 +56,59 @@
 #include <time.h>
 
 CPL_CVSID("$Id$");
+
+//#undef DEBUG
+
+/************************************************************************/
+/*                           CPLMutexHolder()                           */
+/************************************************************************/
+
+CPLMutexHolder::CPLMutexHolder( void **phMutex, double dfWaitInSeconds,
+                                const char *pszFileIn, 
+                                int nLineIn )
+
+{
+    pszFile = pszFileIn;
+    nLine = nLineIn;
+
+#ifdef DEBUG
+    CPLDebug( "MH", "Request %p for pid %d at %d/%s", 
+              *phMutex, CPLGetPID(), nLine, pszFile );
+#endif
+
+    if( !CPLCreateOrAcquireMutex( phMutex, dfWaitInSeconds ) )
+    {
+        CPLDebug( "CPLMutexHolder", "failed to acquire mutex!" );
+        hMutex = NULL;
+    }
+    else
+    {
+#ifdef DEBUG
+        CPLDebug( "MH", "Acquired %p for pid %d at %d/%s", 
+                  *phMutex, CPLGetPID(), nLine, pszFile );
+#endif
+
+        hMutex = *phMutex;
+    }
+}
+
+/************************************************************************/
+/*                          ~CPLMutexHolder()                           */
+/************************************************************************/
+
+CPLMutexHolder::~CPLMutexHolder()
+
+{
+    if( hMutex != NULL )
+    {
+#ifdef DEBUG
+        CPLDebug( "MH", "Release %p for pid %d at %d/%s", 
+                  hMutex, CPLGetPID(), nLine, pszFile );
+#endif
+        CPLReleaseMutex( hMutex );
+    }
+}
+
 
 /************************************************************************/
 /*                      CPLCreateOrAcquireMutex()                       */
@@ -85,9 +141,10 @@ int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
     }
     else
     {
+        CPLReleaseMutex( hCOAMutex );
+
         int bSuccess = CPLAcquireMutex( *phMutex, dfWaitInSeconds );
         
-        CPLReleaseMutex( hCOAMutex );
         return bSuccess;
     }
 }
@@ -541,7 +598,13 @@ void *CPLCreateMutex()
 
 {
     pthread_mutex_t *hMutex;
+#if defined(PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP)
+    pthread_mutex_t hMutexSrc = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+#elif defined(PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP)
+    pthread_mutex_t hMutexSrc = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;
+#else
     pthread_mutex_t hMutexSrc = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
     hMutex = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
     *hMutex = hMutexSrc;
@@ -559,8 +622,20 @@ void *CPLCreateMutex()
 int CPLAcquireMutex( void *hMutexIn, double dfWaitInSeconds )
 
 {
+    int err;
+
     /* we need to add timeout support */
-    pthread_mutex_lock( (pthread_mutex_t *) hMutexIn );
+    err =  pthread_mutex_lock( (pthread_mutex_t *) hMutexIn );
+    
+    if( err != 0 )
+    {
+        if( err == EDEADLK )
+            CPLDebug( "CPLAcquireMutex", "Error = %d/EDEADLK", err );
+        else
+            CPLDebug( "CPLAcquireMutex", "Error = %d", err );
+
+        return FALSE;
+    }
 
     return TRUE;
 }
