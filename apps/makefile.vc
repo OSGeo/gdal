@@ -48,6 +48,10 @@ gdaltindex.exe:	gdaltindex.c $(GDALLIB) $(XTRAOBJ)
 		../ogr/ogrsf_frmts/shape/dbfopen.c \
 		$(XTRAOBJ) $(LIBS) /link $(LINKER_FLAGS)
 	
+multireadtest.exe:	multireadtest.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) multireadtest.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	
 clean:
 	-del *.obj
 	-del *.exe
