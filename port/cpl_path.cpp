@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/05/23 03:59:25  fwarmerdam
+ * make working buffer threadlocal
+ *
  * Revision 1.17  2004/08/13 15:59:39  warmerda
  * Fixed bug with CPLExtractRelativePath.
  *
@@ -90,7 +93,7 @@ CPL_CVSID("$Id$");
 
 /* should be size of larged possible filename */
 #define CPL_PATH_BUF_SIZE 2048
-static char     szStaticResult[CPL_PATH_BUF_SIZE]; 
+static CPL_THREADLOCAL char     szStaticResult[CPL_PATH_BUF_SIZE]; 
 
 #ifdef WIN32        
 #define SEP_CHAR '\\'
