@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/05/23 06:53:45  fwarmerdam
+ * Avoid IsBlockCached()
+ *
  * Revision 1.26  2004/11/02 20:21:38  fwarmerdam
  * added support for category names
  *
@@ -521,8 +524,12 @@ int RawRasterBand::IsLineLoaded( int nLineOff, int nLines )
 
     for ( iLine = nLineOff; iLine < nLineOff + nLines; iLine++ )
     {
-        if ( IsBlockCached( 0, iLine ) )
+        GDALRasterBlock *poBlock = TryGetLockedBlockRef( 0, iLine );
+        if( poBlock != NULL )
+        {
+            poBlock->DropLock();
             return TRUE;
+        }
     }
 
     return FALSE;
