@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/05/23 06:58:46  fwarmerdam
+ * updated to locked blockref api
+ *
  * Revision 1.10  2005/05/10 04:50:42  fwarmerdam
  * GDALOvLevelAdjust now global
  *
@@ -851,7 +854,9 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
         GDALRasterBlock *poBlock;
 
         poBand = GetRasterBand(iBand+1);
-        poBlock = poBand->GetBlockRef( iBlockX, iBlockY, TRUE );
+        poBlock = poBand->GetLockedBlockRef( iBlockX, iBlockY, TRUE );
+
+        CPLAssert( poBlock != NULL && poBlock->GetDataRef() != NULL );
 
         GDALCopyWords( pabyDstBuffer + iBand*nBlockXSize*nBlockYSize*nWordSize,
                        psWO->eWorkingDataType, nWordSize, 
@@ -859,6 +864,8 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
                        poBlock->GetDataType(), 
                        GDALGetDataTypeSize(poBlock->GetDataType())/8,
                        nBlockXSize * nBlockYSize );
+
+        poBlock->DropLock();
     }
     
     return CE_None;
@@ -926,8 +933,7 @@ CPLErr VRTWarpedRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     VRTWarpedDataset *poWDS = (VRTWarpedDataset *) poDS;
     GDALRasterBlock *poBlock;
 
-    poBlock = GetBlockRef( nBlockXOff, nBlockYOff, TRUE );
-    poBlock->AddLock();
+    poBlock = GetLockedBlockRef( nBlockXOff, nBlockYOff, TRUE );
 
     eErr = poWDS->ProcessBlock( nBlockXOff, nBlockYOff );
 
