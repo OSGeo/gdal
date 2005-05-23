@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/05/23 06:45:34  fwarmerdam
+ * make msi_uuid const
+ *
  * Revision 1.3  2005/05/17 20:13:04  fwarmerdam
  * fix up to support relative and absolute gmljp2:// uri format
  *
@@ -48,7 +51,7 @@
 
 CPL_CVSID("$Id$");
 
-static unsigned char msi_uuid2[16] =
+static const unsigned char msi_uuid2[16] =
 {0xb1,0x4b,0xf8,0xbd,0x08,0x3d,0x4b,0x43,
  0xa5,0xae,0x8c,0xd7,0xd5,0xa6,0xce,0x03}; 
 
