@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/05/23 06:39:49  fwarmerdam
+ * added CPLMutexHolder stuff
+ *
  * Revision 1.5  2005/05/20 19:19:00  fwarmerdam
  * added CPLCreateOrAcquireMutex()
  *
@@ -83,19 +86,26 @@ void  CPL_DLL CPLSleep( double dfWaitInSeconds );
 
 const char CPL_DLL *CPLGetThreadingModel();
 
-#ifdef notdef
-/* -------------------------------------------------------------------- */
-/*      Threadlocal info support.                                       */
-/* -------------------------------------------------------------------- */
-typedef struct 
-{
-    
-} CPLThreadLocalInfo;
-
-void CPL_DLL *CPLGetThreadLocalInfo( const char * );
-void CPL_DLL CPLAddThreadLocalInfo( const char *, void * );
-#endif
-
 CPL_C_END
+
+#ifdef __cplusplus
+
+#define CPLMutexHolderD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__);
+
+class CPLMutexHolder
+{
+  private:
+    void *hMutex;
+    const char *pszFile;
+    int         nLine;
+
+  public:
+
+    CPLMutexHolder( void **phMutex, double dfWaitInSeconds = 1000.0,
+                    const char *pszFile = __FILE__,
+                    int nLine = __LINE__ );
+    ~CPLMutexHolder();
+};
+#endif /* def __cplusplus */
 
 #endif /* _CPL_MULTIPROC_H_INCLUDED_ */
