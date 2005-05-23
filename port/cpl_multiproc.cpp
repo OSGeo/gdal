@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/05/23 16:00:33  fwarmerdam
+ * Make sure that stub implementation of mutex support recursive holds.
+ *
  * Revision 1.7  2005/05/23 06:40:40  fwarmerdam
  * fixed flaw in CPLCreateOrAcquireMutex, added mutex holder
  *
@@ -57,7 +60,7 @@
 
 CPL_CVSID("$Id$");
 
-//#undef DEBUG
+#undef DEBUG
 
 /************************************************************************/
 /*                           CPLMutexHolder()                           */
@@ -199,11 +202,6 @@ int CPLAcquireMutex( void *hMutex, double dfWaitInSeconds )
     CPLAssert( pabyMutex[1] == 'r' && pabyMutex[2] == 'e' 
                && pabyMutex[3] == 'd' );
 
-    if( pabyMutex[0] != 0 )
-        CPLDebug( "CPLMultiProc", 
-                  "CPLAcquireMutex() called on mutex with %d as ref count!",
-                  pabyMutex[0] );
-
     pabyMutex[0] += 1;
 
     return TRUE;
@@ -221,7 +219,7 @@ void CPLReleaseMutex( void *hMutex )
     CPLAssert( pabyMutex[1] == 'r' && pabyMutex[2] == 'e' 
                && pabyMutex[3] == 'd' );
 
-    if( pabyMutex[0] != 1 )
+    if( pabyMutex[0] < 1 )
         CPLDebug( "CPLMultiProc", 
                   "CPLReleaseMutex() called on mutex with %d as ref count!",
                   pabyMutex[0] );
