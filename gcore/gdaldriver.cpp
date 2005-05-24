@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2005/05/24 18:13:15  dron
+ * Added GDALGetDriverCreationOptionList() function.
+ *
  * Revision 1.34  2005/05/17 15:13:06  fwarmerdam
  * Added nodata support for bands
  *
@@ -538,3 +541,21 @@ const char * CPL_STDCALL GDALGetDriverHelpTopic( GDALDriverH hDriver )
     return ((GDALDriver *) hDriver)->GetMetadataItem( GDAL_DMD_HELPTOPIC );
 }
 
+/************************************************************************/
+/*                   GDALGetDriverCreationOptionList()                  */
+/************************************************************************/
+
+const char * CPL_STDCALL GDALGetDriverCreationOptionList( GDALDriverH hDriver )
+
+{
+    if( hDriver == NULL )
+        return NULL;
+
+    const char *pszOptionList = 
+        ((GDALDriver *) hDriver)->GetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST );
+
+    if( pszOptionList == NULL )
+        return "";
+    else
+        return pszOptionList;
+}
