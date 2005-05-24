@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.97  2005/05/24 18:13:15  dron
+ * Added GDALGetDriverCreationOptionList() function.
+ *
  * Revision 1.96  2005/05/16 21:34:33  fwarmerdam
  * Added SetDefaultHistogram
  *
@@ -367,6 +370,7 @@ CPLErr      CPL_DLL CPL_STDCALL GDALDeleteDataset( GDALDriverH, const char * );
 const char CPL_DLL * CPL_STDCALL GDALGetDriverShortName( GDALDriverH );
 const char CPL_DLL * CPL_STDCALL GDALGetDriverLongName( GDALDriverH );
 const char CPL_DLL * CPL_STDCALL GDALGetDriverHelpTopic( GDALDriverH );
+const char CPL_DLL * CPL_STDCALL GDALGetDriverCreationOptionList( GDALDriverH );
 
 /* ==================================================================== */
 /*      GDAL_GCP                                                        */
