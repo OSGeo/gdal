@@ -1,5 +1,5 @@
 /******************************************************************************
- * tif_ovrcache.h,v 1.1 2000/11/24 18:13:43 warmerda Exp
+ * tif_ovrcache.h,v 1.3 2005/05/25 09:03:16 dron Exp
  *
  * Project:  TIFF Overview Builder
  * Purpose:  Library functions to maintain two rows of tiles or two strips
@@ -30,14 +30,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
- *
- * tif_ovrcache.h,v
- * Revision 1.1  2000/11/24 18:13:43  warmerda
- * New
- *
- * Revision 1.1  2000/01/28 15:03:32  warmerda
- * New
- *
  */
 
 #ifndef TIF_OVRCACHE_H_INCLUDED
