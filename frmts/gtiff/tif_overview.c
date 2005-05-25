@@ -1,5 +1,5 @@
 /******************************************************************************
- * tif_overview.c,v 1.1 2000/11/24 18:13:43 warmerda Exp
+ * $Id: $
  *
  * Project:  TIFF Overview Builder
  * Purpose:  Library function for building overviews in a TIFF file.
@@ -43,27 +43,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
- *
- * tif_overview.c,v
- * Revision 1.6  2004/07/26 14:27:45  warmerda
- * updated from libtiff CVS
- *
- * Revision 1.5  2004/07/26 14:27:27  warmerda
- * improve error check for overview failure, fix warnings, fix header
- *
-<<<<<<< tif_overview.c
-=======
- * tif_overview.c,v
- * Revision 1.3  2000/04/18 22:48:31  warmerda
- * Added support for averaging resampling
- *
- * Revision 1.2  2000/01/28 15:36:38  warmerda
- * pass TIFF handle instead of filename to overview builder
- *
- * Revision 1.1  2000/01/28 15:04:03  warmerda
- * New
- *
->>>>>>> 1.6
  */
 
 #include <stdio.h>
