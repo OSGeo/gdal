@@ -1,4 +1,4 @@
-/* $Id: tif_predict.c,v 1.6 2004/10/02 13:29:41 dron Exp $ */
+/* $Id: tif_predict.c,v 1.8 2005/04/14 20:35:02 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -39,6 +39,8 @@ static	void horAcc16(TIFF*, tidata_t, tsize_t);
 static	void swabHorAcc16(TIFF*, tidata_t, tsize_t);
 static	void horDiff8(TIFF*, tidata_t, tsize_t);
 static	void horDiff16(TIFF*, tidata_t, tsize_t);
+static	void fpAcc(TIFF*, tidata_t, tsize_t);
+static	void fpDiff(TIFF*, tidata_t, tsize_t);
 static	int PredictorDecodeRow(TIFF*, tidata_t, tsize_t, tsample_t);
 static	int PredictorDecodeTile(TIFF*, tidata_t, tsize_t, tsample_t);
 static	int PredictorEncodeRow(TIFF*, tidata_t, tsize_t, tsample_t);
@@ -47,21 +49,37 @@ static	int PredictorEncodeTile(TIFF*, tidata_t, tsize_t, tsample_t);
 static int
 PredictorSetup(TIFF* tif)
 {
+	static const char module[] = "PredictorSetup";
+
 	TIFFPredictorState* sp = PredictorState(tif);
 	TIFFDirectory* td = &tif->tif_dir;
 
-	if (sp->predictor == 1)		/* no differencing */
-		return (1);
-	if (sp->predictor != 2) {
-		TIFFError(tif->tif_name, "\"Predictor\" value %d not supported",
-		    sp->predictor);
-		return (0);
-	}
-	if (td->td_bitspersample != 8 && td->td_bitspersample != 16) {
-		TIFFError(tif->tif_name,
+	switch (sp->predictor)		/* no differencing */
+	{
+		case PREDICTOR_NONE:
+			return 1;
+		case PREDICTOR_HORIZONTAL:
+			if (td->td_bitspersample != 8
+			    && td->td_bitspersample != 16) {
+				TIFFError(module,
     "Horizontal differencing \"Predictor\" not supported with %d-bit samples",
-		    td->td_bitspersample);
-		return (0);
+					  td->td_bitspersample);
+				return 0;
+			}
+			break;
+		case PREDICTOR_FLOATINGPOINT:
+			if (td->td_sampleformat != SAMPLEFORMAT_IEEEFP) {
+				TIFFError(module,
+	"Floating point \"Predictor\" not supported with %d data format",
+					  td->td_sampleformat);
+				return 0;
+			}
+			break;
+		default:
+			TIFFError(module,
+				  "\"Predictor\" value %d not supported",
+				  sp->predictor);
+			return 0;
 	}
 	sp->stride = (td->td_planarconfig == PLANARCONFIG_CONTIG ?
 	    td->td_samplesperpixel : 1);
@@ -72,7 +90,8 @@ PredictorSetup(TIFF* tif)
 		sp->rowsize = TIFFTileRowSize(tif);
 	else
 		sp->rowsize = TIFFScanlineSize(tif);
-	return (1);
+
+	return 1;
 }
 
 static int
@@ -82,15 +101,16 @@ PredictorSetupDecode(TIFF* tif)
 	TIFFDirectory* td = &tif->tif_dir;
 
 	if (!(*sp->setupdecode)(tif) || !PredictorSetup(tif))
-		return (0);
+		return 0;
+
 	if (sp->predictor == 2) {
 		switch (td->td_bitspersample) {
-		case 8:  sp->pfunc = horAcc8; break;
-		case 16: sp->pfunc = horAcc16; break;
+			case 8:  sp->pfunc = horAcc8; break;
+			case 16: sp->pfunc = horAcc16; break;
 		}
 		/*
-		 * Override default decoding method with
-		 * one that does the predictor stuff.
+		 * Override default decoding method with one that does the
+		 * predictor stuff.
 		 */
 		sp->coderow = tif->tif_decoderow;
 		tif->tif_decoderow = PredictorDecodeRow;
@@ -99,22 +119,47 @@ PredictorSetupDecode(TIFF* tif)
 		sp->codetile = tif->tif_decodetile;
 		tif->tif_decodetile = PredictorDecodeTile;
 		/*
-		 * If the data is horizontally differenced
-		 * 16-bit data that requires byte-swapping,
-		 * then it must be byte swapped before the
-		 * accumulation step.  We do this with a
-		 * special-purpose routine and override the
-		 * normal post decoding logic that the library
-		 * setup when the directory was read.
+		 * If the data is horizontally differenced 16-bit data that
+		 * requires byte-swapping, then it must be byte swapped before
+		 * the accumulation step.  We do this with a special-purpose
+		 * routine and override the normal post decoding logic that
+		 * the library setup when the directory was read.
 		 */
-		if (tif->tif_flags&TIFF_SWAB) {
+		if (tif->tif_flags & TIFF_SWAB) {
 			if (sp->pfunc == horAcc16) {
 				sp->pfunc = swabHorAcc16;
 				tif->tif_postdecode = _TIFFNoPostDecode;
 			} /* else handle 32-bit case... */
 		}
 	}
-	return (1);
+
+	else if (sp->predictor == 3) {
+		sp->pfunc = fpAcc;
+		/*
+		 * Override default decoding method with one that does the
+		 * predictor stuff.
+		 */
+		sp->coderow = tif->tif_decoderow;
+		tif->tif_decoderow = PredictorDecodeRow;
+		sp->codestrip = tif->tif_decodestrip;
+		tif->tif_decodestrip = PredictorDecodeTile;
+		sp->codetile = tif->tif_decodetile;
+		tif->tif_decodetile = PredictorDecodeTile;
+		/*
+		 * The data should not be swapped outside of the floating
+		 * point predictor, the accumulation routine should return
+		 * byres in the native order.
+		 */
+		if (tif->tif_flags & TIFF_SWAB) {
+			tif->tif_postdecode = _TIFFNoPostDecode;
+		}
+		/*
+		 * Allocate buffer to keep the decoded bytes before
+		 * rearranging in the ight order
+		 */
+	}
+
+	return 1;
 }
 
 static int
@@ -124,15 +169,16 @@ PredictorSetupEncode(TIFF* tif)
 	TIFFDirectory* td = &tif->tif_dir;
 
 	if (!(*sp->setupencode)(tif) || !PredictorSetup(tif))
-		return (0);
+		return 0;
+
 	if (sp->predictor == 2) {
 		switch (td->td_bitspersample) {
-		case 8:  sp->pfunc = horDiff8; break;
-		case 16: sp->pfunc = horDiff16; break;
+			case 8:  sp->pfunc = horDiff8; break;
+			case 16: sp->pfunc = horDiff16; break;
 		}
 		/*
-		 * Override default encoding method with
-		 * one that does the predictor stuff.
+		 * Override default encoding method with one that does the
+		 * predictor stuff.
 		 */
 		sp->coderow = tif->tif_encoderow;
 		tif->tif_encoderow = PredictorEncodeRow;
@@ -141,7 +187,22 @@ PredictorSetupEncode(TIFF* tif)
 		sp->codetile = tif->tif_encodetile;
 		tif->tif_encodetile = PredictorEncodeTile;
 	}
-	return (1);
+	
+	else if (sp->predictor == 3) {
+		sp->pfunc = fpDiff;
+		/*
+		 * Override default encoding method with one that does the
+		 * predictor stuff.
+		 */
+		sp->coderow = tif->tif_encoderow;
+		tif->tif_encoderow = PredictorEncodeRow;
+		sp->codestrip = tif->tif_encodestrip;
+		tif->tif_encodestrip = PredictorEncodeTile;
+		sp->codetile = tif->tif_encodetile;
+		tif->tif_encodetile = PredictorEncodeTile;
+	}
+
+	return 1;
 }
 
 #define REPEAT4(n, op)		\
@@ -157,8 +218,7 @@ PredictorSetupEncode(TIFF* tif)
 static void
 horAcc8(TIFF* tif, tidata_t cp0, tsize_t cc)
 {
-	TIFFPredictorState* sp = PredictorState(tif);
-	tsize_t stride = sp->stride;
+	tsize_t stride = PredictorState(tif)->stride;
 
 	char* cp = (char*) cp0;
 	if (cc > stride) {
@@ -190,7 +250,8 @@ horAcc8(TIFF* tif, tidata_t cp0, tsize_t cc)
 			} while ((int32) cc > 0);
 		} else  {
 			do {
-				REPEAT4(stride, cp[stride] = (char) (cp[stride] + *cp); cp++)
+				REPEAT4(stride, cp[stride] =
+					(char) (cp[stride] + *cp); cp++)
 				cc -= stride;
 			} while ((int32) cc > 0);
 		}
@@ -200,8 +261,7 @@ horAcc8(TIFF* tif, tidata_t cp0, tsize_t cc)
 static void
 swabHorAcc16(TIFF* tif, tidata_t cp0, tsize_t cc)
 {
-	TIFFPredictorState* sp = PredictorState(tif);
-	tsize_t stride = sp->stride;
+	tsize_t stride = PredictorState(tif)->stride;
 	uint16* wp = (uint16*) cp0;
 	tsize_t wc = cc / 2;
 
@@ -232,6 +292,39 @@ horAcc16(TIFF* tif, tidata_t cp0, tsize_t cc)
 }
 
 /*
+ * Floating point predictor accumulation routine.
+ */
+static void
+fpAcc(TIFF* tif, tidata_t cp0, tsize_t cc)
+{
+	tsize_t stride = PredictorState(tif)->stride;
+	uint32 bps = tif->tif_dir.td_bitspersample / 8;
+	tsize_t wc = cc / bps;
+	tsize_t count = cc;
+	uint8 *cp = (uint8 *) cp0;
+	uint8 *tmp = (uint8 *)_TIFFmalloc(cc);
+
+	if (!tmp)
+		return;
+
+	while (count > stride) {
+		REPEAT4(stride, cp[stride] += cp[0]; cp++)
+		count -= stride;
+	}
+
+	_TIFFmemcpy(tmp, cp0, cc);
+	cp = (uint8 *) cp0;
+	for (count = 0; count < wc; count++) {
+		uint32 byte;
+		for (byte = 0; byte < bps; byte++) {
+			cp[bps * count + byte] =
+				tmp[(bps - byte - 1) * wc + count];
+		}
+	}
+	_TIFFfree(tmp);
+}
+
+/*
  * Decode a scanline and apply the predictor routine.
  */
 static int
@@ -244,9 +337,9 @@ PredictorDecodeRow(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 	assert(sp->pfunc != NULL);
 	if ((*sp->coderow)(tif, op0, occ0, s)) {
 		(*sp->pfunc)(tif, op0, occ0);
-		return (1);
+		return 1;
 	} else
-		return (0);
+		return 0;
 }
 
 /*
@@ -272,9 +365,9 @@ PredictorDecodeTile(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 			occ0 -= rowsize;
 			op0 += rowsize;
 		}
-		return (1);
+		return 1;
 	} else
-		return (0);
+		return 0;
 }
 
 static void
@@ -340,6 +433,38 @@ horDiff16(TIFF* tif, tidata_t cp0, tsize_t cc)
 	}
 }
 
+/*
+ * Floating point predictor differencing routine.
+ */
+static void
+fpDiff(TIFF* tif, tidata_t cp0, tsize_t cc)
+{
+	tsize_t stride = PredictorState(tif)->stride;
+	uint32 bps = tif->tif_dir.td_bitspersample / 8;
+	tsize_t wc = cc / bps;
+	tsize_t count;
+	uint8 *cp = (uint8 *) cp0;
+	uint8 *tmp = (uint8 *)_TIFFmalloc(cc);
+
+	if (!tmp)
+		return;
+
+	_TIFFmemcpy(tmp, cp0, cc);
+	for (count = 0; count < wc; count++) {
+		uint32 byte;
+		for (byte = 0; byte < bps; byte++) {
+			cp[(bps - byte - 1) * wc + count] =
+				tmp[bps * count + byte];
+		}
+	}
+	_TIFFfree(tmp);
+
+	cp = (uint8 *) cp0;
+	cp += cc - stride - 1;
+	for (count = cc; count > stride; count -= stride)
+		REPEAT4(stride, cp[stride] -= cp[0]; cp--)
+}
+
 static int
 PredictorEncodeRow(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 {
@@ -350,7 +475,7 @@ PredictorEncodeRow(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 	assert(sp->coderow != NULL);
 /* XXX horizontal differencing alters user's data XXX */
 	(*sp->pfunc)(tif, bp, cc);
-	return ((*sp->coderow)(tif, bp, cc, s));
+	return (*sp->coderow)(tif, bp, cc, s);
 }
 
 static int
@@ -370,7 +495,7 @@ PredictorEncodeTile(TIFF* tif, tidata_t bp0, tsize_t cc0, tsample_t s)
 		cc -= rowsize;
 		bp += rowsize;
 	}
-	return ((*sp->codetile)(tif, bp0, cc0, s));
+	return (*sp->codetile)(tif, bp0, cc0, s);
 }
 
 #define	FIELD_PREDICTOR	(FIELD_CODEC+0)		/* XXX */
@@ -395,7 +520,7 @@ PredictorVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		return (*sp->vsetparent)(tif, tag, ap);
 	}
 	tif->tif_flags |= TIFF_DIRTYDIRECT;
-	return (1);
+	return 1;
 }
 
 static int
@@ -410,7 +535,7 @@ PredictorVGetField(TIFF* tif, ttag_t tag, va_list ap)
 	default:
 		return (*sp->vgetparent)(tif, tag, ap);
 	}
-	return (1);
+	return 1;
 }
 
 static void
@@ -424,6 +549,7 @@ PredictorPrintDir(TIFF* tif, FILE* fd, long flags)
 		switch (sp->predictor) {
 		case 1: fprintf(fd, "none "); break;
 		case 2: fprintf(fd, "horizontal differencing "); break;
+		case 3: fprintf(fd, "floating point predictor "); break;
 		}
 		fprintf(fd, "%u (0x%x)\n", sp->predictor, sp->predictor);
 	}
@@ -458,7 +584,7 @@ TIFFPredictorInit(TIFF* tif)
 
 	sp->predictor = 1;			/* default value */
 	sp->pfunc = NULL;			/* no predictor routine */
-	return (1);
+	return 1;
 }
 
 /* vim: set ts=8 sts=8 sw=8 noet: */

@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.32 2005/05/06 14:18:15 fwarmerdam Exp $ */
+/* $Id: tif_jpeg.c,v 1.34 2005/05/23 22:40:51 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -162,7 +162,8 @@ static	int JPEGDecode(TIFF*, tidata_t, tsize_t, tsample_t);
 static	int JPEGDecodeRaw(TIFF*, tidata_t, tsize_t, tsample_t);
 static	int JPEGEncode(TIFF*, tidata_t, tsize_t, tsample_t);
 static	int JPEGEncodeRaw(TIFF*, tidata_t, tsize_t, tsample_t);
-static  int JPEGInitializeLibJPEG( TIFF * tif );
+static  int JPEGInitializeLibJPEG( TIFF * tif,
+                                   int force_encode, int force_decode );
 
 #define	FIELD_JPEGTABLES	(FIELD_CODEC+0)
 #define	FIELD_RECVPARAMS	(FIELD_CODEC+1)
@@ -627,7 +628,7 @@ JPEGSetupDecode(TIFF* tif)
 	JPEGState* sp = JState(tif);
 	TIFFDirectory *td = &tif->tif_dir;
 
-        JPEGInitializeLibJPEG( tif );
+        JPEGInitializeLibJPEG( tif, 0, 1 );
 
 	assert(sp != NULL);
 	assert(sp->cinfo.comm.is_decompressor);
@@ -1080,7 +1081,7 @@ prepare_JPEGTables(TIFF* tif)
 {
 	JPEGState* sp = JState(tif);
 
-        JPEGInitializeLibJPEG( tif );
+        JPEGInitializeLibJPEG( tif, 0, 0 );
 
 	/* Initialize quant tables for current quality setting */
 	if (!TIFFjpeg_set_quality(sp, sp->jpegquality, FALSE))
@@ -1116,7 +1117,7 @@ JPEGSetupEncode(TIFF* tif)
 	TIFFDirectory *td = &tif->tif_dir;
 	static const char module[] = "JPEGSetupEncode";
 
-        JPEGInitializeLibJPEG( tif );
+        JPEGInitializeLibJPEG( tif, 1, 0 );
 
 	assert(sp != NULL);
 	assert(!sp->cinfo.comm.is_decompressor);
@@ -1517,6 +1518,8 @@ JPEGVSetField(TIFF* tif, ttag_t tag, va_list ap)
 	TIFFDirectory* td = &tif->tif_dir;
 	uint32 v32;
 
+	assert(sp != NULL);
+
 	switch (tag) {
 	case TIFFTAG_JPEGTABLES:
 		v32 = va_arg(ap, uint32);
@@ -1620,7 +1623,7 @@ JPEGFixupTestSubsampling( TIFF * tif )
     JPEGState *sp = JState(tif);
     TIFFDirectory *td = &tif->tif_dir;
 
-    JPEGInitializeLibJPEG( tif );
+    JPEGInitializeLibJPEG( tif, 0, 0 );
 
     /*
      * Some JPEG-in-TIFF files don't provide the ycbcrsampling tags, 
@@ -1654,6 +1657,8 @@ static int
 JPEGVGetField(TIFF* tif, ttag_t tag, va_list ap)
 {
 	JPEGState* sp = JState(tif);
+
+	assert(sp != NULL);
 
 	switch (tag) {
 	case TIFFTAG_JPEGTABLES:
@@ -1695,6 +1700,8 @@ static void
 JPEGPrintDir(TIFF* tif, FILE* fd, long flags)
 {
 	JPEGState* sp = JState(tif);
+
+	assert(sp != NULL);
 
 	(void) flags;
 	if (TIFFFieldSet(tif,FIELD_JPEGTABLES))
@@ -1757,11 +1764,12 @@ JPEGDefaultTileSize(TIFF* tif, uint32* tw, uint32* th)
  * NFW, Feb 3rd, 2003.
  */
 
-static int JPEGInitializeLibJPEG( TIFF * tif )
+static int JPEGInitializeLibJPEG( TIFF * tif, int force_encode, int force_decode )
 {
     JPEGState* sp = JState(tif);
     uint32 *byte_counts = NULL;
     int     data_is_empty = TRUE;
+    int     decompress;
 
     if( sp->cinfo_initialized )
         return 1;
@@ -1784,10 +1792,21 @@ static int JPEGInitializeLibJPEG( TIFF * tif )
         data_is_empty = byte_counts[0] == 0;
     }
 
+    if( force_decode )
+        decompress = 1;
+    else if( force_encode )
+        decompress = 0;
+    else if( tif->tif_mode == O_RDONLY )
+        decompress = 1;
+    else if( data_is_empty )
+        decompress = 0;
+    else
+        decompress = 1;
+
     /*
      * Initialize libjpeg.
      */
-    if (tif->tif_mode == O_RDONLY || !data_is_empty ) {
+    if ( decompress ) {
         if (!TIFFjpeg_create_decompress(sp))
             return (0);
 
@@ -1868,6 +1887,19 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 	tif->tif_flags |= TIFF_NOBITREV;	/* no bit reversal, please */
 
         sp->cinfo_initialized = FALSE;
+
+	/*
+        ** Create a JPEGTables field if no directory has yet been created. 
+        ** We do this just to ensure that sufficient space is reserved for
+        ** the JPEGTables field.  It will be properly created the right
+        ** size later. 
+        */
+        if( tif->tif_diroff == 0 )
+        {
+            TIFFSetFieldBit(tif, FIELD_JPEGTABLES);
+            sp->jpegtables_length = 2000;
+            sp->jpegtables = (void *) _TIFFmalloc(sp->jpegtables_length);
+        }
 
         /*
          * Mark the TIFFTAG_YCBCRSAMPLES as present even if it is not

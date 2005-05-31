@@ -1,4 +1,4 @@
-/* $Id: tif_open.c,v 1.23 2005/01/30 12:05:20 dron Exp $ */
+/* $Id: tif_open.c,v 1.24 2005/03/30 13:49:13 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -295,7 +295,8 @@ TIFFClientOpen(
 	/*
 	 * Read in TIFF header.
 	 */
-	if (!ReadOK(tif, &tif->tif_header, sizeof (TIFFHeader))) {
+	if (tif->tif_mode & O_TRUNC ||
+	    !ReadOK(tif, &tif->tif_header, sizeof (TIFFHeader))) {
 		if (tif->tif_mode == O_RDONLY) {
 			TIFFError(name, "Cannot read TIFF header");
 			goto bad;

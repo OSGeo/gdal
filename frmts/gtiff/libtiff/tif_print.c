@@ -1,4 +1,4 @@
-/* $Id: tif_print.c,v 1.22 2005/03/21 10:17:37 dron Exp $ */
+/* $Id: tif_print.c,v 1.24 2005/05/25 13:10:09 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -537,11 +537,11 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		for(j = 0; j < value_count; j++) {
 		    if(fip->field_type == TIFF_BYTE)
 		        fprintf(fd, "%u",
-				(unsigned int) ((unsigned char *) raw_data)[j]);
+				(unsigned int) ((uint16 *) raw_data)[j]);
 		    else if(fip->field_type == TIFF_UNDEFINED)
 		        fprintf(fd, "0x%x",
 				(unsigned int) ((unsigned char *) raw_data)[j]);		    else if(fip->field_type == TIFF_SBYTE)
-		        fprintf(fd, "%d", (int) ((char *) raw_data)[j]);
+		        fprintf(fd, "%d", (int) ((uint16 *) raw_data)[j]);
 		    else if(fip->field_type == TIFF_SHORT)
 		        fprintf(fd, "%u",
 		    	    (unsigned int)((unsigned short *) raw_data)[j]);
@@ -549,7 +549,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		        fprintf(fd, "%d", (int)((short *) raw_data)[j]);
 		    else if(fip->field_type == TIFF_LONG)
 		        fprintf(fd, "%lu",
-		    	    (int)((unsigned long *) raw_data)[j]);
+		    	    (unsigned long)((unsigned long *) raw_data)[j]);
 		    else if(fip->field_type == TIFF_SLONG)
 		        fprintf(fd, "%ld", (long)((long *) raw_data)[j]);
 		    else if(fip->field_type == TIFF_RATIONAL
