@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.40 2005/03/18 14:27:30 dron Exp $ */
+/* $Id: tif_dirinfo.c,v 1.43 2005/05/25 13:10:09 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -247,20 +247,18 @@ const TIFFFieldInfo tiffFieldInfo[] = {
 /* end Pixar tags */
     { TIFFTAG_RICHTIFFIPTC, -1, -3, TIFF_LONG,   FIELD_RICHTIFFIPTC, 
       FALSE,    TRUE,   "RichTIFFIPTC" },
-/* begin EXIF tags */
-    { TIFFTAG_EXIFIFD,		1, 1,	TIFF_LONG,	FIELD_CUSTOM,
-      FALSE,	FALSE,	"EXIFIFDOffset" },
-    { TIFFTAG_GPSIFD,		1, 1,	TIFF_LONG,	FIELD_CUSTOM,
-      FALSE,	FALSE,	"GPSIFDOffset" },
-    { TIFFTAG_INTEROPERABILITYIFD,	1, 1,	TIFF_LONG,	FIELD_CUSTOM,
-      FALSE,	FALSE,	"InteroperabilityIFDOffset" },
-/* end EXIF tags */
     { TIFFTAG_PHOTOSHOP,    -1, -3, TIFF_BYTE,   FIELD_PHOTOSHOP, 
       FALSE,    TRUE,   "Photoshop" },
+    { TIFFTAG_EXIFIFD,		1, 1,	TIFF_LONG,	FIELD_CUSTOM,
+      FALSE,	FALSE,	"EXIFIFDOffset" },
     { TIFFTAG_ICCPROFILE,	-1, -3, TIFF_UNDEFINED,	FIELD_ICCPROFILE,
       FALSE,	TRUE,	"ICC Profile" },
+    { TIFFTAG_GPSIFD,		1, 1,	TIFF_LONG,	FIELD_CUSTOM,
+      FALSE,	FALSE,	"GPSIFDOffset" },
     { TIFFTAG_STONITS,		 1, 1, TIFF_DOUBLE,	FIELD_STONITS,
       FALSE,	FALSE,	"StoNits" },
+    { TIFFTAG_INTEROPERABILITYIFD,	1, 1,	TIFF_LONG,	FIELD_CUSTOM,
+      FALSE,	FALSE,	"InteroperabilityIFDOffset" },
 /* begin DNG tags */
     { TIFFTAG_DNGVERSION,	4, 4,	TIFF_BYTE,	FIELD_CUSTOM, 
       FALSE,	FALSE,	"DNGVersion" },
@@ -517,11 +515,11 @@ int
 _TIFFDataSize(TIFFDataType type)
 {
 	switch (type) {
-		case TIFF_BYTE:
 		case TIFF_ASCII:
-		case TIFF_SBYTE:
 		case TIFF_UNDEFINED:
 		    return 1;
+		case TIFF_BYTE:
+		case TIFF_SBYTE:
 		case TIFF_SHORT:
 		case TIFF_SSHORT:
 		    return 2;
@@ -604,17 +602,18 @@ _TIFFFindFieldInfoByName(TIFF* tif, const char *field_name, TIFFDataType dt)
             TIFFFieldInfo key = {0, 0, 0, 0, 0, 0, 0, 0};
             key.field_name = (char *)field_name;
             key.field_type = dt;
-            return((const TIFFFieldInfo *) bsearch(&key, 
+            return((const TIFFFieldInfo *) lfind(&key, 
 						   tif->tif_fieldinfo, 
-						   tif->tif_nfields,
+						   &tif->tif_nfields,
 						   sizeof(TIFFFieldInfo), 
 						   tagNameCompare));
-        } else for (i = 0, n = tif->tif_nfields; i < n; i++) {
-		const TIFFFieldInfo* fip = tif->tif_fieldinfo[i];
-		if (streq(fip->field_name, field_name) &&
-		    (dt == TIFF_ANY || fip->field_type == dt))
-			return (tif->tif_foundfield = fip);
-	}
+        } else
+		for (i = 0, n = tif->tif_nfields; i < n; i++) {
+			const TIFFFieldInfo* fip = tif->tif_fieldinfo[i];
+			if (streq(fip->field_name, field_name) &&
+			    (dt == TIFF_ANY || fip->field_type == dt))
+				return (tif->tif_foundfield = fip);
+		}
 	return ((const TIFFFieldInfo *)0);
 }
 

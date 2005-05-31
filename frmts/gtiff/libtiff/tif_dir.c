@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.46 2005/03/21 10:17:37 dron Exp $ */
+/* $Id: tif_dir.c,v 1.49 2005/05/25 11:38:32 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -53,31 +53,31 @@ setByteArray(void** vpp, void* vp, size_t nmemb, size_t elem_size)
 			_TIFFmemcpy(*vpp, vp, bytes);
 	}
 }
-void _TIFFsetByteArray(void** vpp, void* vp, long n)
+void _TIFFsetByteArray(void** vpp, void* vp, uint32 n)
     { setByteArray(vpp, vp, n, 1); }
 void _TIFFsetString(char** cpp, char* cp)
     { setByteArray((void**) cpp, (void*) cp, strlen(cp)+1, 1); }
-void _TIFFsetNString(char** cpp, char* cp, long n)
+void _TIFFsetNString(char** cpp, char* cp, uint32 n)
     { setByteArray((void**) cpp, (void*) cp, n, 1); }
-void _TIFFsetShortArray(uint16** wpp, uint16* wp, long n)
+void _TIFFsetShortArray(uint16** wpp, uint16* wp, uint32 n)
     { setByteArray((void**) wpp, (void*) wp, n, sizeof (uint16)); }
-void _TIFFsetLongArray(uint32** lpp, uint32* lp, long n)
+void _TIFFsetLongArray(uint32** lpp, uint32* lp, uint32 n)
     { setByteArray((void**) lpp, (void*) lp, n, sizeof (uint32)); }
-void _TIFFsetFloatArray(float** fpp, float* fp, long n)
+void _TIFFsetFloatArray(float** fpp, float* fp, uint32 n)
     { setByteArray((void**) fpp, (void*) fp, n, sizeof (float)); }
-void _TIFFsetDoubleArray(double** dpp, double* dp, long n)
+void _TIFFsetDoubleArray(double** dpp, double* dp, uint32 n)
     { setByteArray((void**) dpp, (void*) dp, n, sizeof (double)); }
 
 /*
  * Install extra samples information.
  */
 static int
-setExtraSamples(TIFFDirectory* td, va_list ap, int* v)
+setExtraSamples(TIFFDirectory* td, va_list ap, uint32* v)
 {
 	uint16* va;
 	int i;
 
-	*v = va_arg(ap, int);
+	*v = va_arg(ap, uint32);
 	if ((uint16) *v > td->td_samplesperpixel)
 		return (0);
 	va = va_arg(ap, uint16*);
@@ -91,11 +91,11 @@ setExtraSamples(TIFFDirectory* td, va_list ap, int* v)
 	return (1);
 }
 
-static int
-checkInkNamesString(TIFF* tif, int slen, const char* s)
+static uint32
+checkInkNamesString(TIFF* tif, uint32 slen, const char* s)
 {
 	TIFFDirectory* td = &tif->tif_dir;
-	int i = td->td_samplesperpixel;
+	uint16 i = td->td_samplesperpixel;
 
 	if (slen > 0) {
 		const char* ep = s+slen;
@@ -124,8 +124,7 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 	
 	TIFFDirectory* td = &tif->tif_dir;
 	int status = 1;
-	uint32 v32;
-	int i, v;
+	uint32 v32, i, v;
 	double d;
 	char* s;
 
@@ -152,6 +151,8 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		if (tif->tif_flags & TIFF_SWAB) {
 			if (td->td_bitspersample == 16)
 				tif->tif_postdecode = _TIFFSwab16BitData;
+			else if (td->td_bitspersample == 24)
+				tif->tif_postdecode = _TIFFSwab24BitData;
 			else if (td->td_bitspersample == 32)
 				tif->tif_postdecode = _TIFFSwab32BitData;
 			else if (td->td_bitspersample == 64)
@@ -159,7 +160,7 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		}
 		break;
 	case TIFFTAG_COMPRESSION:
-		v = va_arg(ap, int) & 0xffff;
+		v = va_arg(ap, uint32) & 0xffff;
 		/*
 		 * If we're changing the compression scheme,
 		 * the notify the previous module so that it
@@ -186,7 +187,7 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		td->td_threshholding = (uint16) va_arg(ap, int);
 		break;
 	case TIFFTAG_FILLORDER:
-		v = va_arg(ap, int);
+		v = va_arg(ap, uint32);
 		if (v != FILLORDER_LSB2MSB && v != FILLORDER_MSB2LSB)
 			goto badvalue;
 		td->td_fillorder = (uint16) v;
@@ -216,17 +217,17 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		_TIFFsetString(&td->td_copyright, va_arg(ap, char*));
 		break;
 	case TIFFTAG_ORIENTATION:
-		v = va_arg(ap, int);
+		v = va_arg(ap, uint32);
 		if (v < ORIENTATION_TOPLEFT || ORIENTATION_LEFTBOT < v) {
 			TIFFWarning(tif->tif_name,
-			    "Bad value %ld for \"%s\" tag ignored",
+			    "Bad value %lu for \"%s\" tag ignored",
 			    v, _TIFFFieldWithTag(tif, tag)->field_name);
 		} else
 			td->td_orientation = (uint16) v;
 		break;
 	case TIFFTAG_SAMPLESPERPIXEL:
 		/* XXX should cross check -- e.g. if pallette, then 1 */
-		v = va_arg(ap, int);
+		v = va_arg(ap, uint32);
 		if (v == 0)
 			goto badvalue;
 		td->td_samplesperpixel = (uint16) v;
@@ -260,7 +261,7 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		td->td_yresolution = (float) va_arg(ap, dblparam_t);
 		break;
 	case TIFFTAG_PLANARCONFIG:
-		v = va_arg(ap, int);
+		v = va_arg(ap, uint32);
 		if (v != PLANARCONFIG_CONTIG && v != PLANARCONFIG_SEPARATE)
 			goto badvalue;
 		td->td_planarconfig = (uint16) v;
@@ -275,7 +276,7 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		td->td_yposition = (float) va_arg(ap, dblparam_t);
 		break;
 	case TIFFTAG_RESOLUTIONUNIT:
-		v = va_arg(ap, int);
+		v = va_arg(ap, uint32);
 		if (v < RESUNIT_NONE || RESUNIT_CENTIMETER < v)
 			goto badvalue;
 		td->td_resolutionunit = (uint16) v;
@@ -334,7 +335,7 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		td->td_tiledepth = v32;
 		break;
 	case TIFFTAG_DATATYPE:
-		v = va_arg(ap, int);
+		v = va_arg(ap, uint32);
 		switch (v) {
 		case DATATYPE_VOID:	v = SAMPLEFORMAT_VOID;	break;
 		case DATATYPE_INT:	v = SAMPLEFORMAT_INT;	break;
@@ -345,7 +346,7 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		td->td_sampleformat = (uint16) v;
 		break;
 	case TIFFTAG_SAMPLEFORMAT:
-		v = va_arg(ap, int);
+		v = va_arg(ap, uint32);
 		if (v < SAMPLEFORMAT_UINT || SAMPLEFORMAT_COMPLEXIEEEFP < v)
 			goto badvalue;
 		td->td_sampleformat = (uint16) v;
@@ -446,13 +447,13 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		td->td_dotrange[1] = (uint16) va_arg(ap, int);
 		break;
 	case TIFFTAG_INKNAMES:
-		i = va_arg(ap, int);
+		v = va_arg(ap, uint32);
 		s = va_arg(ap, char*);
-		i = checkInkNamesString(tif, i, s);
-                status = i > 0;
-		if( i > 0 ) {
-			_TIFFsetNString(&td->td_inknames, s, i);
-			td->td_inknameslen = i;
+		v = checkInkNamesString(tif, v, s);
+                status = v > 0;
+		if( v > 0 ) {
+			_TIFFsetNString(&td->td_inknames, s, v);
+			td->td_inknameslen = v;
 		}
 		break;
 	case TIFFTAG_NUMBEROFINKS:
@@ -1015,7 +1016,6 @@ _TIFFVGetField(TIFF* tif, ttag_t tag, va_list ap)
 				*va_arg(ap, uint16*) = (uint16)tv->count;
 			*va_arg(ap, void **) = tv->value;
 			ret_val = 1;
-			break;
                 } else {
 			if (fip->field_type == TIFF_ASCII
 			    || fip->field_readcount == TIFF_VARIABLE
@@ -1076,6 +1076,7 @@ _TIFFVGetField(TIFF* tif, ttag_t tag, va_list ap)
 				}
 			}
                 }
+		break;
             }
         }
     }

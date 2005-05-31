@@ -1,4 +1,4 @@
-/* $Id: tiffiop.h,v 1.30 2005/03/17 14:41:46 dron Exp $ */
+/* $Id: tiffiop.h,v 1.32 2005/04/13 14:06:21 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -48,6 +48,10 @@
 # include <assert.h>
 #else
 # define assert(x) 
+#endif
+
+#ifdef HAVE_SEARCH_H
+# include <search.h>
 #endif
 
 #include "tiffio.h"
@@ -234,6 +238,7 @@ extern	void _TIFFNoPostDecode(TIFF*, tidata_t, tsize_t);
 extern  int  _TIFFNoPreCode (TIFF*, tsample_t); 
 extern	int _TIFFNoSeek(TIFF*, uint32);
 extern	void _TIFFSwab16BitData(TIFF*, tidata_t, tsize_t);
+extern	void _TIFFSwab24BitData(TIFF*, tidata_t, tsize_t);
 extern	void _TIFFSwab32BitData(TIFF*, tidata_t, tsize_t);
 extern	void _TIFFSwab64BitData(TIFF*, tidata_t, tsize_t);
 extern	int TIFFFlushData1(TIFF*);
@@ -245,12 +250,12 @@ extern	uint32 _TIFFDefaultStripSize(TIFF*, uint32);
 extern	void _TIFFDefaultTileSize(TIFF*, uint32*, uint32*);
 extern	int _TIFFDataSize(TIFFDataType);
 
-extern	void _TIFFsetByteArray(void**, void*, long);
+extern	void _TIFFsetByteArray(void**, void*, uint32);
 extern	void _TIFFsetString(char**, char*);
-extern	void _TIFFsetShortArray(uint16**, uint16*, long);
-extern	void _TIFFsetLongArray(uint32**, uint32*, long);
-extern	void _TIFFsetFloatArray(float**, float*, long);
-extern	void _TIFFsetDoubleArray(double**, double*, long);
+extern	void _TIFFsetShortArray(uint16**, uint16*, uint32);
+extern	void _TIFFsetLongArray(uint32**, uint32*, uint32);
+extern	void _TIFFsetFloatArray(float**, float*, uint32);
+extern	void _TIFFsetDoubleArray(double**, double*, uint32);
 
 extern	void _TIFFprintAscii(FILE*, const char*);
 extern	void _TIFFprintAsciiTag(FILE*, const char*, const char*);

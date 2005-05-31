@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.11 2004/10/02 13:29:41 dron Exp $ */
+/* $Id: tif_read.c,v 1.12 2005/04/13 14:06:21 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -621,6 +621,14 @@ _TIFFSwab16BitData(TIFF* tif, tidata_t buf, tsize_t cc)
     (void) tif;
     assert((cc & 1) == 0);
     TIFFSwabArrayOfShort((uint16*) buf, cc/2);
+}
+
+void
+_TIFFSwab24BitData(TIFF* tif, tidata_t buf, tsize_t cc)
+{
+    (void) tif;
+    assert((cc % 3) == 0);
+    TIFFSwabArrayOfTriples((uint8*) buf, cc/3);
 }
 
 void
