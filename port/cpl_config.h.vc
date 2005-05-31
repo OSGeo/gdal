@@ -69,5 +69,7 @@
 #  endif
 #endif
 
+#define lfind _lfind
+
 /* #define CPL_DISABLE_DLL */
 
