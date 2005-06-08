@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/06/08 01:16:57  fwarmerdam
+ * fix warnings
+ *
  * Revision 1.2  2005/06/08 01:14:35  fwarmerdam
  * dos2unix
  *
@@ -299,7 +302,7 @@ int PCIDSKTiledRasterBand::SysRead( vsi_l_offset nOffset,
             return 0;
 
         if( VSIFReadL( ((char *) pData) + iReadSoFar, 1, nThisReadBytes,
-                       poPDS->fp ) != nThisReadBytes )
+                       poPDS->fp ) != (size_t) nThisReadBytes )
             return 0;
 
         iReadSoFar += nThisReadBytes;
