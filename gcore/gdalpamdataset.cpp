@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/06/08 14:04:38  fwarmerdam
+ * use .aux.xml as the default extension instead of .pam
+ *
  * Revision 1.5  2005/05/22 08:13:40  fwarmerdam
  * added multidomain metadata support
  *
@@ -435,9 +438,9 @@ const char *GDALPamDataset::BuildPamFilename()
     if( GetDescription() == NULL || strlen(GetDescription()) == 0 )
         return NULL;
 
-    psPam->pszPamFilename = (char *) CPLMalloc(strlen(GetDescription()) + 5 );
+    psPam->pszPamFilename = (char *) CPLMalloc(strlen(GetDescription()) + 10 );
     strcpy( psPam->pszPamFilename, GetDescription() );
-    strcat( psPam->pszPamFilename, ".pam" );
+    strcat( psPam->pszPamFilename, ".aux.xml" );
 
     return psPam->pszPamFilename;
 }
