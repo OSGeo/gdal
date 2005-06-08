@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/06/08 01:16:57  fwarmerdam
+ * fix warnings
+ *
  * Revision 1.13  2005/06/08 01:08:47  fwarmerdam
  * added tiled bands
  *
@@ -732,7 +735,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
     
     for( iSeg = 0; iSeg < poDS->nSegCount; iSeg++ )
     {
-        int bActive, nSegType, nSegStartBlock, nSegSize;
+        int bActive, nSegStartBlock, nSegSize;
         char szSegName[9];
 
         VSIFSeekL( poDS->fp, nSegPointersOffset + iSeg * 32, SEEK_SET );
