@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/06/08 01:08:47  fwarmerdam
+ * added tiled bands
+ *
  * Revision 1.12  2005/05/05 15:54:49  fwarmerdam
  * PAM Enabled
  *
@@ -67,10 +70,7 @@
  *
  */
 
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include "ogr_spatialref.h"
-#include "rawdataset.h"
+#include "gdal_pcidsk.h"
 
 CPL_CVSID("$Id$");
 
@@ -78,113 +78,8 @@ CPL_C_START
 void    GDALRegister_PCIDSK(void);
 CPL_C_END
 
-typedef enum
-{
-    PDI_PIXEL,
-    PDI_BAND,
-    PDI_FILE
-} PCIDSKInterleaving;
-
 const int       nSegBlocks = 64;    // Number of blocks of Segment Pointers
 const int       nGeoSegBlocks = 8;  // Number of blocks in GEO Segment
-
-/************************************************************************/
-/* ==================================================================== */
-/*                              PCIDSKDataset                           */
-/* ==================================================================== */
-/************************************************************************/
-
-class PCIDSKDataset : public RawDataset
-{
-    friend class PCIDSKRasterBand;
-
-    const char          *pszFilename;
-    FILE                *fp;
-
-    char                *pszCreatTime;  // Date/time of the database creation
-
-    vsi_l_offset        nGeoPtrOffset;  // Offset in bytes to the pointer
-                                        // to GEO segment
-    vsi_l_offset        nGeoOffset;     // Offset in bytes to the GEO segment
-    vsi_l_offset        nGcpPtrOffset;  // Offset in bytes to the pointer
-                                        // to GCP segment
-    vsi_l_offset        nGcpOffset;     // Offset in bytes to the GCP segment
-
-    int                 bGeoSegmentDirty;
-
-    GDAL_GCP            *pasGCPList;
-    long                 nGCPCount;
-
-    double              adfGeoTransform[6];
-    char                *pszProjection;
-    char                *pszGCPProjection;
-
-    GDALDataType        PCIDSKTypeToGDAL( const char *);
-    void                WriteGeoSegment();
-
-  public:
-                PCIDSKDataset();
-                ~PCIDSKDataset();
-
-    static GDALDataset  *Open( GDALOpenInfo * );
-    static GDALDataset  *Create( const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
-                                 GDALDataType eType, char **papszParmList );
-    static GDALDataset *CreateCopy( const char * pszFilename, 
-                                    GDALDataset *poSrcDS, 
-                                    int bStrict, char ** papszOptions, 
-                                    GDALProgressFunc pfnProgress, 
-                                    void * pProgressData );
-
-    virtual void        FlushCache( void );
-
-    CPLErr              GetGeoTransform( double * padfTransform );
-    virtual CPLErr      SetGeoTransform( double * );
-    const char          *GetProjectionRef();
-    virtual CPLErr      SetProjection( const char * );
-    virtual int         GetGCPCount();
-    virtual const       char *GetGCPProjection();
-    virtual const       GDAL_GCP *GetGCPs();
-};
-
-/************************************************************************/
-/* ==================================================================== */
-/*                            PCIDSKRasterBand                          */
-/* ==================================================================== */
-/************************************************************************/
-
-class PCIDSKRasterBand : public GDALPamRasterBand
-{
-    friend class PCIDSKDataset;
-
-  public:
-
-                PCIDSKRasterBand( PCIDSKDataset *, int, GDALDataType );
-                ~PCIDSKRasterBand();
-};
-
-/************************************************************************/
-/*                           PCIDSKRasterBand()                         */
-/************************************************************************/
-
-PCIDSKRasterBand::PCIDSKRasterBand( PCIDSKDataset *poDS, int nBand,
-                                    GDALDataType eType )
-{
-    this->poDS = poDS;
-    this->nBand = nBand;
-    eDataType = eType;
-
-    nBlockXSize = poDS->GetRasterXSize();
-    nBlockYSize = 1;
-}
-
-/************************************************************************/
-/*                           ~PCIDSKRasterBand()                        */
-/************************************************************************/
-
-PCIDSKRasterBand::~PCIDSKRasterBand()
-{
-}
 
 /************************************************************************/
 /*                           PCIDSKDataset()                            */
@@ -198,6 +93,16 @@ PCIDSKDataset::PCIDSKDataset()
     pszCreatTime = NULL;
     nGeoOffset = 0;
     bGeoSegmentDirty = FALSE;
+
+    nBlockMapSeg = 0;
+
+    nSegCount = 0;
+    panSegType = NULL;
+    panSegType = NULL;
+    papszSegName = NULL;
+    panSegOffset = NULL;
+    panSegSize = NULL;
+
     pszProjection = CPLStrdup( "" );
     pszGCPProjection = CPLStrdup( "" );
     nGCPCount = 0;
@@ -661,7 +566,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             case PDI_PIXEL:
                 nPixelOffset = nByteBands + 2 * (nInt16Bands + nUInt16Bands)
-                               + 4 * nFloat32Bands;
+                    + 4 * nFloat32Bands;
                 nLineSize = nPixelOffset * poDS->nRasterXSize;
                 nLineOffset = ((int)((nLineSize + 511)/512)) * 512;
                 break;
@@ -670,45 +575,45 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                 nLineOffset = nPixelOffset * poDS->nRasterXSize;
                 break;
             case PDI_FILE:
+            {
+                char    *pszFilename;
+
+                // Read the filename
+                pszFilename = CPLScanString( szTemp + 64, 64, TRUE, FALSE );
+
+                // Non-empty filename means we have data stored in
+                // external raw file
+                if ( !EQUAL(pszFilename, "") )
                 {
-                    char    *pszFilename;
+                    CPLDebug( "PCIDSK", "pszFilename=%s", pszFilename );
 
-                    // Read the filename
-                    pszFilename = CPLScanString( szTemp + 64, 64, TRUE, FALSE );
+                    if( poOpenInfo->eAccess == GA_ReadOnly )
+                        fp = VSIFOpenL( pszFilename, "rb" );
+                    else
+                        fp = VSIFOpenL( pszFilename, "r+b" );
 
-                    // Non-empty filename means we have data stored in
-                    // external raw file
-                    if ( !EQUAL(pszFilename, "") )
+                    if ( !fp )
                     {
-                        CPLDebug( "PCIDSK", "pszFilename=%s", pszFilename );
-
-                        if( poOpenInfo->eAccess == GA_ReadOnly )
-                            fp = VSIFOpenL( pszFilename, "rb" );
-                        else
-                            fp = VSIFOpenL( pszFilename, "r+b" );
-
-                        if ( !fp )
-                        {
-                            CPLDebug( "PCIDSK",
-                                      "Cannot open external raw file %s",
-                                      pszFilename );
-                            iBand--;
-                            poDS->nBands--;
-                            CPLFree( pszFilename );
-                            continue;
-                        }
+                        CPLDebug( "PCIDSK",
+                                  "Cannot open external raw file %s",
+                                  pszFilename );
+                        iBand--;
+                        poDS->nBands--;
+                        CPLFree( pszFilename );
+                        continue;
                     }
-
-                    pszString = CPLScanString( szTemp + 168, 16, TRUE, FALSE );
-                    nImageOffset = atol( pszString ); // XXX: should be atoll()
-                    CPLFree( pszString );
-
-                    nPixelOffset = CPLScanLong( szTemp + 184, 8 );
-                    nLineOffset = CPLScanLong( szTemp +  + 192, 8 );
-
-                    CPLFree( pszFilename );
                 }
-                break;
+
+                pszString = CPLScanString( szTemp + 168, 16, TRUE, FALSE );
+                nImageOffset = atol( pszString ); // XXX: should be atoll()
+                CPLFree( pszString );
+
+                nPixelOffset = CPLScanLong( szTemp + 184, 8 );
+                nLineOffset = CPLScanLong( szTemp +  + 192, 8 );
+
+                CPLFree( pszFilename );
+            }
+            break;
             default: /* NOTREACHED */
                 break;
         }
@@ -720,31 +625,31 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
 
 #ifdef DEBUG
-    #if defined(WIN32) && defined(_MSC_VER)
+#if defined(WIN32) && defined(_MSC_VER)
         CPLDebug( "PCIDSK",
                   "Band %d: nImageOffset=%I64d, nPixelOffset=%I64d, "
                   "nLineOffset=%I64d, nLineSize=%I64d",
                   iBand + 1, nImageOffset, nPixelOffset,
                   nLineOffset, nLineSize );
-    #elif HAVE_LONG_LONG
+#elif HAVE_LONG_LONG
         CPLDebug( "PCIDSK",
                   "Band %d: nImageOffset=%Ld, nPixelOffset=%Ld, "
                   "nLineOffset=%Ld, nLineSize=%Ld",
                   iBand + 1, nImageOffset, nPixelOffset,
                   nLineOffset, nLineSize );
-    #else
+#else
         CPLDebug( "PCIDSK",
                   "Band %d: nImageOffset=%ld, nPixelOffset=%ld, "
                   "nLineOffset=%ld, nLineSize=%ld",
                   iBand + 1, nImageOffset, nPixelOffset,
                   nLineOffset, nLineSize );
-    #endif
+#endif
 #endif
 
-        poBand = new RawRasterBand( poDS, iBand + 1, fp,
+        poBand = new PCIDSKRawRasterBand( poDS, iBand + 1, fp,
                                     nImageOffset, (int) nPixelOffset, 
                                     (int) nLineOffset, 
-                                    eType, bNativeOrder, TRUE);
+                                    eType, bNativeOrder);
         poDS->SetBand( iBand + 1, poBand );
 
 /* -------------------------------------------------------------------- */
@@ -798,7 +703,6 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
     vsi_l_offset    nSegPointersStart;  // Start block of Segment Pointers
     vsi_l_offset    nSegPointersOffset; // Offset in bytes to Pointers
     int             nSegBlocks;         // Number of blocks of Segment Pointers
-    int             nSegments;          // Max number of segments in the file
 
     VSIFSeekL( poDS->fp, 440, SEEK_SET );
     VSIFReadL( szTemp, 1, 16, poDS->fp );
@@ -809,162 +713,195 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
     VSIFSeekL( poDS->fp, 456, SEEK_SET );
     VSIFReadL( szTemp, 1, 8, poDS->fp );
     nSegBlocks = CPLScanLong( szTemp, 8 );
-    nSegments = ( nSegBlocks * 512 ) / 32;
+    poDS->nSegCount = ( nSegBlocks * 512 ) / 32;
 
 /* -------------------------------------------------------------------- */
-/*      Read segments.                                                  */
+/*      Allocate segment info structures.                               */
 /* -------------------------------------------------------------------- */
-    int             i;
+    poDS->panSegType = (int *) CPLCalloc(sizeof(int),poDS->nSegCount );
+    poDS->papszSegName = (char **) CPLCalloc(sizeof(char*),poDS->nSegCount );
+    poDS->panSegOffset = (vsi_l_offset *) 
+        CPLCalloc(sizeof(vsi_l_offset),poDS->nSegCount );
+    poDS->panSegSize = (vsi_l_offset *) 
+        CPLCalloc(sizeof(vsi_l_offset),poDS->nSegCount );
+
+/* ==================================================================== */
+/*      Process segment table.                                          */
+/* ==================================================================== */
+    int             iSeg;
     
-    for ( i = 0; i < nSegments; i++ )
+    for( iSeg = 0; iSeg < poDS->nSegCount; iSeg++ )
     {
-        int     bActive;
+        int bActive, nSegType, nSegStartBlock, nSegSize;
+        char szSegName[9];
 
-        VSIFSeekL( poDS->fp, nSegPointersOffset + i * 32, SEEK_SET );
-        VSIFReadL( szTemp, 1, 23, poDS->fp );
-        szTemp[23] = '\0';
+        VSIFSeekL( poDS->fp, nSegPointersOffset + iSeg * 32, SEEK_SET );
+        VSIFReadL( szTemp, 1, 32, poDS->fp );
+        szTemp[32] = '\0';
+
+        strncpy( szSegName, szTemp+4, 8 );
+        szSegName[8] = '\0';
 
         if ( szTemp[0] == 'A' || szTemp[0] == 'L' )
             bActive = TRUE;
         else
             bActive = FALSE;
 
-        switch ( CPLScanLong( szTemp + 1, 3 ) )
+        if( !bActive )
+            continue;
+
+        poDS->panSegType[iSeg] = CPLScanLong( szTemp + 1, 3 );
+        nSegStartBlock = CPLScanLong( szTemp+12, 11 );
+        nSegSize = CPLScanLong( szTemp+23, 9 );
+
+        poDS->papszSegName[iSeg] = CPLStrdup( szSegName );
+        poDS->panSegOffset[iSeg] = 512 * ((vsi_l_offset) (nSegStartBlock-1));
+        poDS->panSegSize[iSeg] = 512 * ((vsi_l_offset) nSegSize);
+
+        CPLDebug( "PCIDSK", 
+                  "Seg=%d, Type=%d, Start=%9d, Size=%7d, Name=%s",
+                  iSeg+1, poDS->panSegType[iSeg], 
+                  nSegStartBlock, nSegSize, szSegName );
+
+        switch( poDS->panSegType[iSeg] )
         {
+/* -------------------------------------------------------------------- */
+/*      Georeferencing segment.                                         */
+/* -------------------------------------------------------------------- */
             case 150:                   // GEO segment
             {
                 vsi_l_offset    nGeoStart, nGeoDataOffset;
                 int             j, nXCoeffs, nYCoeffs;
                 OGRSpatialReference oSRS;
 
-                poDS->nGeoPtrOffset = nSegPointersOffset + i * 32;
+                poDS->nGeoPtrOffset = nSegPointersOffset + iSeg * 32;
                 nGeoStart = atol( szTemp + 12 ); // XXX: should be atoll()
                 poDS->nGeoOffset = ( nGeoStart - 1 ) * 512;
                 nGeoDataOffset = poDS->nGeoOffset + 1024;
 
-                if ( bActive )
+                VSIFSeekL( poDS->fp, nGeoDataOffset, SEEK_SET );
+                VSIFReadL( szTemp, 1, 16, poDS->fp );
+                szTemp[16] = '\0';
+                if ( EQUALN( szTemp, "POLYNOMIAL", 10 ) )
                 {
-                    VSIFSeekL( poDS->fp, nGeoDataOffset, SEEK_SET );
+                    char        szProj[17];
+
+                    // Read projection definition
+                    VSIFSeekL( poDS->fp, nGeoDataOffset + 32, SEEK_SET );
+                    VSIFReadL( szProj, 1, 16, poDS->fp );
+                    szProj[16] = '\0';
+                    if ( EQUALN( szProj, "PIXEL", 5 )
+                         || EQUALN( szProj, "METRE", 5 ) )
+                        break;
+
+                    // Read number of transform coefficients
+                    VSIFSeekL( poDS->fp, nGeoDataOffset + 48, SEEK_SET );
                     VSIFReadL( szTemp, 1, 16, poDS->fp );
-                    szTemp[16] = '\0';
-                    if ( EQUALN( szTemp, "POLYNOMIAL", 10 ) )
+                    nXCoeffs = CPLScanLong( szTemp, 8 );
+                    if ( nXCoeffs > 3 )
+                        nXCoeffs = 3;
+                    nYCoeffs = CPLScanLong( szTemp + 8, 8 );
+                    if ( nYCoeffs > 3 )
+                        nYCoeffs = 3;
+
+                    // Read geotransform coefficients
+                    VSIFSeekL( poDS->fp, nGeoDataOffset + 212, SEEK_SET );
+                    VSIFReadL( szTemp, 1, nXCoeffs * 26, poDS->fp );
+                    for ( j = 0; j < nXCoeffs; j++ )
                     {
-                        char        szProj[17];
-
-                        // Read projection definition
-                        VSIFSeekL( poDS->fp, nGeoDataOffset + 32, SEEK_SET );
-                        VSIFReadL( szProj, 1, 16, poDS->fp );
-                        szProj[16] = '\0';
-                        if ( EQUALN( szProj, "PIXEL", 5 )
-                             || EQUALN( szProj, "METRE", 5 ) )
-                            break;
-
-                        // Read number of transform coefficients
-                        VSIFSeekL( poDS->fp, nGeoDataOffset + 48, SEEK_SET );
-                        VSIFReadL( szTemp, 1, 16, poDS->fp );
-                        nXCoeffs = CPLScanLong( szTemp, 8 );
-                        if ( nXCoeffs > 3 )
-                            nXCoeffs = 3;
-                        nYCoeffs = CPLScanLong( szTemp + 8, 8 );
-                        if ( nYCoeffs > 3 )
-                            nYCoeffs = 3;
-
-                        // Read geotransform coefficients
-                        VSIFSeekL( poDS->fp, nGeoDataOffset + 212, SEEK_SET );
-                        VSIFReadL( szTemp, 1, nXCoeffs * 26, poDS->fp );
-                        for ( j = 0; j < nXCoeffs; j++ )
-                        {
-                            poDS->adfGeoTransform[j] =
-                                CPLScanDouble( szTemp + 26 * j, 26, "C" );
-                        }
-                        VSIFSeekL( poDS->fp, nGeoDataOffset + 1642, SEEK_SET );
-                        VSIFReadL( szTemp, 1, nYCoeffs * 26, poDS->fp );
-                        for ( j = 0; j < nYCoeffs; j++ )
-                        {
-                            poDS->adfGeoTransform[j + 3] =
-                                CPLScanDouble( szTemp + 26 * j, 26, "C" );
-                        }
-
-                        oSRS.importFromPCI( szProj, NULL, NULL );
-                        if ( poDS->pszProjection )
-                            CPLFree( poDS->pszProjection );
-                        oSRS.exportToWkt( &poDS->pszProjection );
+                        poDS->adfGeoTransform[j] =
+                            CPLScanDouble( szTemp + 26 * j, 26, "C" );
                     }
-                    else if ( EQUALN( szTemp, "PROJECTION", 10 ) )
+                    VSIFSeekL( poDS->fp, nGeoDataOffset + 1642, SEEK_SET );
+                    VSIFReadL( szTemp, 1, nYCoeffs * 26, poDS->fp );
+                    for ( j = 0; j < nYCoeffs; j++ )
                     {
-                        char        szProj[17], szUnits[17];
-                        double      adfProjParms[17];
-
-                        // Read projection definition
-                        VSIFSeekL( poDS->fp, nGeoDataOffset + 32, SEEK_SET );
-                        VSIFReadL( szProj, 1, 16, poDS->fp );
-                        szProj[16] = '\0';
-                        if ( EQUALN( szProj, "PIXEL", 5 )
-                             || EQUALN( szProj, "METRE", 5 ) )
-                            break;
-
-                        // Read number of transform coefficients
-                        VSIFSeekL( poDS->fp, nGeoDataOffset + 48, SEEK_SET );
-                        VSIFReadL( szTemp, 1, 16, poDS->fp );
-                        nXCoeffs = CPLScanLong( szTemp, 8 );
-                        if ( nXCoeffs > 3 )
-                            nXCoeffs = 3;
-                        nYCoeffs = CPLScanLong( szTemp + 8, 8 );
-                        if ( nYCoeffs > 3 )
-                            nYCoeffs = 3;
-
-                        // Read grid units definition
-                        VSIFSeekL( poDS->fp, nGeoDataOffset + 64, SEEK_SET );
-                        VSIFReadL( szUnits, 1, 16, poDS->fp );
-                        szUnits[16] = '\0';
-
-                        // Read 16 projection parameters
-                        VSIFSeekL( poDS->fp, nGeoDataOffset + 80, SEEK_SET );
-                        VSIFReadL( szTemp, 1, 26 * 16, poDS->fp );
-                        for ( j = 0; j < 17; j++ )
-                        {
-                            adfProjParms[j] =
-                                CPLScanDouble( szTemp + 26 * j, 26, "C" );
-                        }
-
-                        // Read geotransform coefficients
-                        VSIFSeekL( poDS->fp, nGeoDataOffset + 1980, SEEK_SET );
-                        VSIFReadL( szTemp, 1, nXCoeffs * 26, poDS->fp );
-                        for ( j = 0; j < nXCoeffs; j++ )
-                        {
-                            poDS->adfGeoTransform[j] =
-                                CPLScanDouble( szTemp + 26 * j, 26, "C" );;
-                        }
-                        VSIFSeekL( poDS->fp, nGeoDataOffset + 2526, SEEK_SET );
-                        VSIFReadL( szTemp, 1, nYCoeffs * 26, poDS->fp );
-                        for ( j = 0; j < nYCoeffs; j++ )
-                        {
-                            poDS->adfGeoTransform[j + 3] =
-                                CPLScanDouble( szTemp + 26 * j, 26, "C" );
-                        }
-
-                        oSRS.importFromPCI( szProj, szUnits, adfProjParms );
-                        if ( poDS->pszProjection )
-                            CPLFree( poDS->pszProjection );
-                        oSRS.exportToWkt( &poDS->pszProjection );
+                        poDS->adfGeoTransform[j + 3] =
+                            CPLScanDouble( szTemp + 26 * j, 26, "C" );
                     }
+
+                    oSRS.importFromPCI( szProj, NULL, NULL );
+                    if ( poDS->pszProjection )
+                        CPLFree( poDS->pszProjection );
+                    oSRS.exportToWkt( &poDS->pszProjection );
+                }
+                else if ( EQUALN( szTemp, "PROJECTION", 10 ) )
+                {
+                    char        szProj[17], szUnits[17];
+                    double      adfProjParms[17];
+
+                    // Read projection definition
+                    VSIFSeekL( poDS->fp, nGeoDataOffset + 32, SEEK_SET );
+                    VSIFReadL( szProj, 1, 16, poDS->fp );
+                    szProj[16] = '\0';
+                    if ( EQUALN( szProj, "PIXEL", 5 )
+                         || EQUALN( szProj, "METRE", 5 ) )
+                        break;
+
+                    // Read number of transform coefficients
+                    VSIFSeekL( poDS->fp, nGeoDataOffset + 48, SEEK_SET );
+                    VSIFReadL( szTemp, 1, 16, poDS->fp );
+                    nXCoeffs = CPLScanLong( szTemp, 8 );
+                    if ( nXCoeffs > 3 )
+                        nXCoeffs = 3;
+                    nYCoeffs = CPLScanLong( szTemp + 8, 8 );
+                    if ( nYCoeffs > 3 )
+                        nYCoeffs = 3;
+
+                    // Read grid units definition
+                    VSIFSeekL( poDS->fp, nGeoDataOffset + 64, SEEK_SET );
+                    VSIFReadL( szUnits, 1, 16, poDS->fp );
+                    szUnits[16] = '\0';
+
+                    // Read 16 projection parameters
+                    VSIFSeekL( poDS->fp, nGeoDataOffset + 80, SEEK_SET );
+                    VSIFReadL( szTemp, 1, 26 * 16, poDS->fp );
+                    for ( j = 0; j < 17; j++ )
+                    {
+                        adfProjParms[j] =
+                            CPLScanDouble( szTemp + 26 * j, 26, "C" );
+                    }
+
+                    // Read geotransform coefficients
+                    VSIFSeekL( poDS->fp, nGeoDataOffset + 1980, SEEK_SET );
+                    VSIFReadL( szTemp, 1, nXCoeffs * 26, poDS->fp );
+                    for ( j = 0; j < nXCoeffs; j++ )
+                    {
+                        poDS->adfGeoTransform[j] =
+                            CPLScanDouble( szTemp + 26 * j, 26, "C" );;
+                    }
+                    VSIFSeekL( poDS->fp, nGeoDataOffset + 2526, SEEK_SET );
+                    VSIFReadL( szTemp, 1, nYCoeffs * 26, poDS->fp );
+                    for ( j = 0; j < nYCoeffs; j++ )
+                    {
+                        poDS->adfGeoTransform[j + 3] =
+                            CPLScanDouble( szTemp + 26 * j, 26, "C" );
+                    }
+
+                    oSRS.importFromPCI( szProj, szUnits, adfProjParms );
+                    if ( poDS->pszProjection )
+                        CPLFree( poDS->pszProjection );
+                    oSRS.exportToWkt( &poDS->pszProjection );
                 }
             }
             break;
 
+/* -------------------------------------------------------------------- */
+/*      GCP Segment                                                     */
+/* -------------------------------------------------------------------- */
             case 214:                       // GCP segment
             {
                 vsi_l_offset    nGcpStart, nGcpDataOffset;
                 int             j;
                 OGRSpatialReference oSRS;
 
-                poDS->nGcpPtrOffset = nSegPointersOffset + i * 32;
+                poDS->nGcpPtrOffset = nSegPointersOffset + iSeg * 32;
                 nGcpStart = atol( szTemp + 12 ); // XXX: should be atoll()
                 poDS->nGcpOffset = ( nGcpStart - 1 ) * 512;
                 nGcpDataOffset = poDS->nGcpOffset + 1024;
 
                 if ( bActive && !poDS->nGCPCount )  // XXX: We will read the
-                                                    // first GCP segment only
+                    // first GCP segment only
                 {
                     VSIFSeekL( poDS->fp, nGcpDataOffset, SEEK_SET );
                     VSIFReadL( szTemp, 1, 80, poDS->fp );
@@ -978,7 +915,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                         szProj[16] = '\0';
                         oSRS.importFromPCI( szProj, NULL, NULL );
                         if ( poDS->pszGCPProjection )
-                                CPLFree( poDS->pszGCPProjection );
+                            CPLFree( poDS->pszGCPProjection );
                         oSRS.exportToWkt( &poDS->pszGCPProjection );
                         poDS->pasGCPList = (GDAL_GCP *)
                             CPLCalloc( poDS->nGCPCount, sizeof(GDAL_GCP) );
@@ -1006,11 +943,46 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
             }
             break;
 
-            default:
+/* -------------------------------------------------------------------- */
+/*      SYS Segments.  Process metadata immediately.                    */
+/* -------------------------------------------------------------------- */
+            case 182: // SYS segment.
+            {
+                if( EQUAL(szSegName,"METADATA") )
+                    poDS->CollectPCIDSKMetadata( iSeg+1 );
+                else if( EQUAL(szSegName,"SysBMDir") )
+                    poDS->nBlockMapSeg = iSeg+1;
+            }
             break;
+
+            default:
+                break;
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Check for band overviews.                                       */
+/* -------------------------------------------------------------------- */
+    for( iBand = 0; iBand < poDS->GetRasterCount(); iBand++ )
+    {
+        GDALRasterBand *poBand = poDS->GetRasterBand( iBand+1 );
+        char **papszMD = poBand->GetMetadata( "PCISYS" );
+        int iMD;
+
+        for( iMD = 0; papszMD != NULL && papszMD[iMD] != NULL; iMD++ )
+        {
+            if( EQUALN(papszMD[iMD],"Overview_",9) )
+            {
+                int nImage = atoi(CPLParseNameValue( papszMD[iMD], NULL ));
+                PCIDSKTiledRasterBand *poOvBand;
+
+                poOvBand = new PCIDSKTiledRasterBand( poDS, 0, nImage );
+
+                ((PCIDSKRawRasterBand *) poBand)->AttachOverview( poOvBand );
+            }
+        }
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Open overviews.                                                 */
 /* -------------------------------------------------------------------- */
@@ -1023,6 +995,123 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->TryLoadXML();
 
     return( poDS );
+}
+
+/************************************************************************/
+/*                              SegRead()                               */
+/************************************************************************/
+
+int PCIDSKDataset::SegRead( int nSegment, vsi_l_offset nOffset, 
+                            int nSize, void *pBuffer )
+
+{
+    if( nSegment < 1 || nSegment > nSegCount || panSegType[nSegment-1] == 0 )
+        return 0;
+
+    if( nOffset + nSize > panSegSize[nSegment-1] )
+    {
+        return 0;
+    }
+    else
+    {
+        if( VSIFSeekL( fp, panSegOffset[nSegment-1]+nOffset+1024, 
+                       SEEK_SET ) != 0 ) 
+            return 0;
+
+        return VSIFReadL( pBuffer, 1, nSize, fp );
+    }
+}
+
+
+/************************************************************************/
+/*                       CollectPCIDSKMetadata()                        */
+/************************************************************************/
+
+void PCIDSKDataset::CollectPCIDSKMetadata( int nSegment )
+
+{
+    int nSegSize = panSegSize[nSegment-1];
+
+/* -------------------------------------------------------------------- */
+/*      Read all metadata in one gulp.                                  */
+/* -------------------------------------------------------------------- */
+    char *pszMetadataBuf = (char *) CPLCalloc(1,nSegSize + 1);
+
+    if( !SegRead( nSegment, 0, nSegSize, pszMetadataBuf ) )
+    {
+        CPLFree( pszMetadataBuf );
+        CPLError( CE_Warning, CPLE_FileIO,
+                  "IO error reading metadata, ignoring." );
+        return;
+    }
+
+/* ==================================================================== */
+/*      Parse out domain/name/value sets.                               */
+/* ==================================================================== */
+    char *pszNext = pszMetadataBuf;
+
+    while( *pszNext != '\0' )
+    {
+        char *pszName, *pszValue;
+
+        pszName = pszNext;
+        
+/* -------------------------------------------------------------------- */
+/*      Identify the end of this line, and zero terminate it.           */
+/* -------------------------------------------------------------------- */
+        while( *pszNext != 10 && *pszNext != 12 && *pszNext != 0 )
+            pszNext++;
+
+        if( *pszNext != 0 )
+        {
+            *(pszNext++) = '\0';
+            while( *pszNext == 10 || *pszNext == 12 )
+                pszNext++;
+        }
+            
+/* -------------------------------------------------------------------- */
+/*      Split off the value from the name.                              */
+/* -------------------------------------------------------------------- */
+        pszValue = pszName;
+        while( *pszValue != 0 && *pszValue != ':' ) 
+            pszValue++;
+
+        if( *pszValue != 0 )
+            *(pszValue++) = '\0';
+
+        while( *pszValue == ' ' )
+            pszValue++;
+
+/* -------------------------------------------------------------------- */
+/*      Handle METADATA_IMG values by assigning to the appropriate      */
+/*      band object.                                                    */
+/* -------------------------------------------------------------------- */
+        if( EQUALN(pszName,"METADATA_IMG_",13) )
+        {
+            int nBand = atoi(pszName+13);
+            pszName += 13;
+            while( *pszName && *pszName != '_' )
+                pszName++;
+
+            if( *pszName == '_' )
+                pszName++;
+
+            if( nBand > 0 && nBand <= GetRasterCount() )
+            {
+                GDALRasterBand *poBand = GetRasterBand( nBand );
+
+                if( *pszName == '_' )
+                    poBand->SetMetadataItem( pszName+1, pszValue, "PCISYS" );
+                else
+                    poBand->SetMetadataItem( pszName, pszValue );
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    CPLFree( pszMetadataBuf );
 }
 
 /************************************************************************/
@@ -1429,4 +1518,5 @@ void GDALRegister_PCIDSK()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
+
 
