@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2005/06/08 18:07:35  fwarmerdam
+ * Fixed for memory allocation mixup in GTIFGetOGISDefn() return value.
+ *
  * Revision 1.54  2005/05/22 21:00:15  fwarmerdam
  * ensure false easting/northing written out in meters
  *
@@ -321,7 +324,18 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
     if( psDefn->Model != ModelTypeProjected 
         && psDefn->Model != ModelTypeGeographic )
-        return CPLStrdup("");
+    {
+        char	*pszWKT;
+        
+        // We use this ackward alternative to return an empty string
+        // to ensure that it is allocated with GDAL's copy of VSIMalloc()
+        // instead of the one in libtiff as they sometime differ (ie. on
+        // win32 with external libtiff). 
+
+        oSRS.exportToWkt( &pszWKT );
+
+        return pszWKT;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      If this is a projected SRS we set the PROJCS keyword first      */
