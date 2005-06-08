@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/06/08 19:38:14  fwarmerdam
+ * protect PROJ.4 use with a mutex
+ *
  * Revision 1.27  2005/04/06 00:02:05  fwarmerdam
  * various osr and oct functions now stdcall
  *
@@ -115,6 +118,7 @@
 #include "cpl_error.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 #ifdef PROJ_STATIC
 #include "proj_api.h"
@@ -134,6 +138,8 @@ typedef struct { double u, v; } projUV;
 #define DEG_TO_RAD      .0174532925199432958
 
 #endif
+
+static void *hPROJMutex = NULL;
 
 static projPJ       (*pfn_pj_init_plus)(const char *) = NULL;
 static projPJ       (*pfn_pj_init)(int, char**) = NULL;
@@ -202,6 +208,7 @@ static int LoadProjLibrary()
 {
     static int  bTriedToLoad = FALSE;
     const char *pszLibName = LIBNAME;
+    CPLMutexHolderD( &hPROJMutex );
     
     if( bTriedToLoad )
         return( pfn_pj_init != NULL );
@@ -286,6 +293,7 @@ char *OCTProj4Normalize( const char *pszProj4Src )
 {
     char        *pszNewProj4Def, *pszCopy;
     projPJ      psPJSource = NULL;
+    CPLMutexHolderD( &hPROJMutex );
 
     if( !LoadProjLibrary() || pfn_pj_dalloc == NULL || pfn_pj_get_def == NULL )
         return CPLStrdup( pszProj4Src );
@@ -414,6 +422,8 @@ OGRProj4CT::~OGRProj4CT()
             delete poSRSTarget;
     }
 
+    CPLMutexHolderD( &hPROJMutex );
+
     if( psPJSource != NULL )
         pfn_pj_free( psPJSource );
 
@@ -429,8 +439,10 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
                             OGRSpatialReference * poTargetIn )
 
 {
-	if( poSourceIn == NULL || poTargetIn == NULL )
-		return FALSE;
+    CPLMutexHolderD( &hPROJMutex );
+
+    if( poSourceIn == NULL || poTargetIn == NULL )
+        return FALSE;
 
     poSRSSource = poSourceIn->Clone();
     poSRSTarget = poTargetIn->Clone();
@@ -615,6 +627,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
 /* -------------------------------------------------------------------- */
 /*      Do the transformation using PROJ.4.                             */
 /* -------------------------------------------------------------------- */
+    CPLMutexHolderD( &hPROJMutex );
     err = pfn_pj_transform( psPJSource, psPJTarget, nCount, 1, x, y, z );
 
 /* -------------------------------------------------------------------- */
