@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/06/08 21:11:24  fwarmerdam
+ * bug 865: fixed "ogr_" name test.
+ *
  * Revision 1.17  2005/01/19 20:28:18  fwarmerdam
  * added untested autoloaddrivers.
  *
@@ -650,7 +653,7 @@ void OGRSFDriverRegistrar::AutoLoadDrivers()
             const char *pszExtension = CPLGetExtension( papszFiles[iFile] );
             void   *pRegister;
 
-            if( !EQUALN(papszFiles[iFile],"ogr_",5) )
+            if( !EQUALN(papszFiles[iFile],"ogr_",4) )
                 continue;
 
             if( !EQUAL(pszExtension,"dll") 
