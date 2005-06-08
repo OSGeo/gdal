@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/06/08 14:04:58  fwarmerdam
+ * fixed last fix in handling of histograms
+ *
  * Revision 1.7  2005/05/22 08:13:40  fwarmerdam
  * added multidomain metadata support
  *
@@ -385,7 +388,7 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
     if( psHist != NULL )
     {
         CPLXMLNode *psNext = psHist->psNext;
-        psHist = NULL;
+        psHist->psNext = NULL;
 
         psPam->psSavedHistograms = CPLCloneXMLTree( psHist );
         psHist = psNext;
