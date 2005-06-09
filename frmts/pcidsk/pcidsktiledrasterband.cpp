@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/06/09 19:01:40  fwarmerdam
+ * added support for tiled primary bands
+ *
  * Revision 1.3  2005/06/08 01:16:57  fwarmerdam
  * fix warnings
  *
@@ -57,10 +60,8 @@ PCIDSKTiledRasterBand::PCIDSKTiledRasterBand( PCIDSKDataset *poDS,
     this->nBand = nBand;
     this->nImage = nImage;
 
-#ifdef notdef
     nOverviewCount = 0;
     papoOverviews = NULL;
-#endif
 
     nBlocks = 0;
     panBlockOffset = NULL;
@@ -92,13 +93,11 @@ PCIDSKTiledRasterBand::~PCIDSKTiledRasterBand()
 {
     FlushCache();
 
-#ifdef notdef
     int i;
 
     for( i = 0; i < nOverviewCount; i++ )
         delete papoOverviews[i];
     CPLFree( papoOverviews );
-#endif
 
     CPLFree( panBlockOffset );
     CPLFree( panTileOffset );

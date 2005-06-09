@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/06/09 19:01:40  fwarmerdam
+ * added support for tiled primary bands
+ *
  * Revision 1.2  2005/06/08 01:14:35  fwarmerdam
  * dos2unix
  *
@@ -142,7 +145,6 @@ class PCIDSKTiledRasterBand : public GDALPamRasterBand
     vsi_l_offset *panTileOffset; // offset in "image" virtual file.
     int          *panTileSize;
 
-#ifdef notdef
     int         nOverviewCount;
     GDALRasterBand **papoOverviews;
     
@@ -153,7 +155,7 @@ class PCIDSKTiledRasterBand : public GDALPamRasterBand
             CPLRealloc(papoOverviews,sizeof(void*) * nOverviewCount);
         papoOverviews[nOverviewCount-1] = poOvBand;
     }
-#endif
+
     int         BuildBlockMap();
     int         BuildTileMap();
     
@@ -165,11 +167,9 @@ class PCIDSKTiledRasterBand : public GDALPamRasterBand
 
     int         SysRead( vsi_l_offset nOffset, int nSize, void * );
 
-#ifdef notdef
     virtual int GetOverviewCount() { return nOverviewCount; }
     virtual GDALRasterBand *GetOverview(int iOverview)
         { return papoOverviews[iOverview]; }
-#endif 
 };
 
 /************************************************************************/

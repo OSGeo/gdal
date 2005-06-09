@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/06/09 19:01:40  fwarmerdam
+ * added support for tiled primary bands
+ *
  * Revision 1.14  2005/06/08 01:16:57  fwarmerdam
  * fix warnings
  *
@@ -465,6 +468,80 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetMetadataItem( "DATE_OF_UPDATE", pszString );
     CPLFree( pszString );
 
+/* ==================================================================== */
+/*   Read Segment Pointers.                                             */
+/* ==================================================================== */
+    vsi_l_offset    nSegPointersStart;  // Start block of Segment Pointers
+    vsi_l_offset    nSegPointersOffset; // Offset in bytes to Pointers
+    int             nSegBlocks;         // Number of blocks of Segment Pointers
+
+    {
+        VSIFSeekL( poDS->fp, 440, SEEK_SET );
+        VSIFReadL( szTemp, 1, 16, poDS->fp );
+        szTemp[16] = '\0';
+        nSegPointersStart = atol( szTemp ); // XXX: should be atoll()
+        nSegPointersOffset = ( nSegPointersStart - 1 ) * 512;
+        
+        VSIFSeekL( poDS->fp, 456, SEEK_SET );
+        VSIFReadL( szTemp, 1, 8, poDS->fp );
+        nSegBlocks = CPLScanLong( szTemp, 8 );
+        poDS->nSegCount = ( nSegBlocks * 512 ) / 32;
+
+/* -------------------------------------------------------------------- */
+/*      Allocate segment info structures.                               */
+/* -------------------------------------------------------------------- */
+        poDS->panSegType = (int *) CPLCalloc(sizeof(int),poDS->nSegCount );
+        poDS->papszSegName = (char **) CPLCalloc(sizeof(char*),poDS->nSegCount );
+        poDS->panSegOffset = (vsi_l_offset *) 
+            CPLCalloc(sizeof(vsi_l_offset),poDS->nSegCount );
+        poDS->panSegSize = (vsi_l_offset *) 
+            CPLCalloc(sizeof(vsi_l_offset),poDS->nSegCount );
+
+/* -------------------------------------------------------------------- */
+/*      Parse each segment pointer.                                     */
+/* -------------------------------------------------------------------- */
+        int             iSeg;
+    
+        for( iSeg = 0; iSeg < poDS->nSegCount; iSeg++ )
+        {
+            int bActive, nSegStartBlock, nSegSize;
+            char szSegName[9];
+            
+            VSIFSeekL( poDS->fp, nSegPointersOffset + iSeg * 32, SEEK_SET );
+            VSIFReadL( szTemp, 1, 32, poDS->fp );
+            szTemp[32] = '\0';
+            
+            strncpy( szSegName, szTemp+4, 8 );
+            szSegName[8] = '\0';
+            
+            if ( szTemp[0] == 'A' || szTemp[0] == 'L' )
+                bActive = TRUE;
+            else
+                bActive = FALSE;
+            
+            if( !bActive )
+                continue;
+            
+            poDS->panSegType[iSeg] = CPLScanLong( szTemp + 1, 3 );
+            nSegStartBlock = CPLScanLong( szTemp+12, 11 );
+            nSegSize = CPLScanLong( szTemp+23, 9 );
+            
+            poDS->papszSegName[iSeg] = CPLStrdup( szSegName );
+            poDS->panSegOffset[iSeg] = 512 * ((vsi_l_offset) (nSegStartBlock-1));
+            poDS->panSegSize[iSeg] = 512 * ((vsi_l_offset) nSegSize);
+            
+            CPLDebug( "PCIDSK", 
+                      "Seg=%d, Type=%d, Start=%9d, Size=%7d, Name=%s",
+                      iSeg+1, poDS->panSegType[iSeg], 
+                      nSegStartBlock, nSegSize, szSegName );
+            
+            // Some segments will be needed sooner, rather than later. 
+            
+            if( poDS->panSegType[iSeg] == 182 && EQUAL(szSegName,"SysBMDir"))
+                poDS->nBlockMapSeg = iSeg+1;
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Read Image Data.                                                */
 /* -------------------------------------------------------------------- */
@@ -528,7 +605,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
     for( iBand = 0; iBand < poDS->nBands; iBand++ )
     {
         GDALDataType    eType;
-        GDALRasterBand  *poBand;
+        GDALRasterBand  *poBand = NULL;
         vsi_l_offset    nImgHdrOffset = (nImgHdrsStart - 1 + iBand * 2) * 512;
         vsi_l_offset    nPixelOffset = 0, nLineOffset = 0, nLineSize = 0;
         int             bNativeOrder;
@@ -567,92 +644,119 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
 
         switch ( eInterleaving )
         {
-            case PDI_PIXEL:
-                nPixelOffset = nByteBands + 2 * (nInt16Bands + nUInt16Bands)
-                    + 4 * nFloat32Bands;
-                nLineSize = nPixelOffset * poDS->nRasterXSize;
-                nLineOffset = ((int)((nLineSize + 511)/512)) * 512;
-                break;
-            case PDI_BAND:
-                nPixelOffset = GDALGetDataTypeSize( eType ) / 8;
-                nLineOffset = nPixelOffset * poDS->nRasterXSize;
-                break;
-            case PDI_FILE:
-            {
-                char    *pszFilename;
-
-                // Read the filename
-                pszFilename = CPLScanString( szTemp + 64, 64, TRUE, FALSE );
-
-                // Non-empty filename means we have data stored in
-                // external raw file
-                if ( !EQUAL(pszFilename, "") )
-                {
-                    CPLDebug( "PCIDSK", "pszFilename=%s", pszFilename );
-
-                    if( poOpenInfo->eAccess == GA_ReadOnly )
-                        fp = VSIFOpenL( pszFilename, "rb" );
-                    else
-                        fp = VSIFOpenL( pszFilename, "r+b" );
-
-                    if ( !fp )
-                    {
-                        CPLDebug( "PCIDSK",
-                                  "Cannot open external raw file %s",
-                                  pszFilename );
-                        iBand--;
-                        poDS->nBands--;
-                        CPLFree( pszFilename );
-                        continue;
-                    }
-                }
-
-                pszString = CPLScanString( szTemp + 168, 16, TRUE, FALSE );
-                nImageOffset = atol( pszString ); // XXX: should be atoll()
-                CPLFree( pszString );
-
-                nPixelOffset = CPLScanLong( szTemp + 184, 8 );
-                nLineOffset = CPLScanLong( szTemp +  + 192, 8 );
-
-                CPLFree( pszFilename );
-            }
+          case PDI_PIXEL:
+            nPixelOffset = nByteBands + 2 * (nInt16Bands + nUInt16Bands)
+                + 4 * nFloat32Bands;
+            nLineSize = nPixelOffset * poDS->nRasterXSize;
+            nLineOffset = ((int)((nLineSize + 511)/512)) * 512;
             break;
-            default: /* NOTREACHED */
-                break;
+          case PDI_BAND:
+            nPixelOffset = GDALGetDataTypeSize( eType ) / 8;
+            nLineOffset = nPixelOffset * poDS->nRasterXSize;
+            break;
+          case PDI_FILE:
+          {
+              char    *pszFilename;
+
+              // Read the filename
+              pszFilename = CPLScanString( szTemp + 64, 64, TRUE, FALSE );
+
+              // /SIS=n is special case for internal tiled file.
+              if( EQUALN(pszFilename,"/SIS=",5) )
+              {
+                  int nImage = atoi(pszFilename+5);
+                  poBand = new PCIDSKTiledRasterBand( poDS, iBand+1, nImage );
+              }
+
+              // Non-empty filename means we have data stored in
+              // external raw file
+              else if ( !EQUAL(pszFilename, "") )
+              {
+                  CPLDebug( "PCIDSK", "pszFilename=%s", pszFilename );
+
+                  if( poOpenInfo->eAccess == GA_ReadOnly )
+                      fp = VSIFOpenL( pszFilename, "rb" );
+                  else
+                      fp = VSIFOpenL( pszFilename, "r+b" );
+
+                  if ( !fp )
+                  {
+                      CPLDebug( "PCIDSK",
+                                "Cannot open external raw file %s",
+                                pszFilename );
+                      iBand--;
+                      poDS->nBands--;
+                      CPLFree( pszFilename );
+                      continue;
+                  }
+              }
+
+              pszString = CPLScanString( szTemp + 168, 16, TRUE, FALSE );
+              nImageOffset = atol( pszString ); // XXX: should be atoll()
+              CPLFree( pszString );
+
+              nPixelOffset = CPLScanLong( szTemp + 184, 8 );
+              nLineOffset = CPLScanLong( szTemp +  + 192, 8 );
+
+              CPLFree( pszFilename );
+          }
+          break;
+          default: /* NOTREACHED */
+            break;
         }
 
+/* -------------------------------------------------------------------- */
+/*      Create raw band, only if we didn't already get a tiled band.    */
+/* -------------------------------------------------------------------- */
+        if( poBand == NULL )
+        {
 #ifdef CPL_MSB
-        bNativeOrder = ( szTemp[201] == 'S')?FALSE:TRUE;
+            bNativeOrder = ( szTemp[201] == 'S')?FALSE:TRUE;
 #else
-        bNativeOrder = ( szTemp[201] == 'S')?TRUE:FALSE;
+            bNativeOrder = ( szTemp[201] == 'S')?TRUE:FALSE;
 #endif
 
 #ifdef DEBUG
 #if defined(WIN32) && defined(_MSC_VER)
-        CPLDebug( "PCIDSK",
-                  "Band %d: nImageOffset=%I64d, nPixelOffset=%I64d, "
-                  "nLineOffset=%I64d, nLineSize=%I64d",
-                  iBand + 1, nImageOffset, nPixelOffset,
-                  nLineOffset, nLineSize );
+            CPLDebug( "PCIDSK",
+                      "Band %d: nImageOffset=%I64d, nPixelOffset=%I64d, "
+                      "nLineOffset=%I64d, nLineSize=%I64d",
+                      iBand + 1, nImageOffset, nPixelOffset,
+                      nLineOffset, nLineSize );
 #elif HAVE_LONG_LONG
-        CPLDebug( "PCIDSK",
-                  "Band %d: nImageOffset=%Ld, nPixelOffset=%Ld, "
-                  "nLineOffset=%Ld, nLineSize=%Ld",
-                  iBand + 1, nImageOffset, nPixelOffset,
-                  nLineOffset, nLineSize );
+            CPLDebug( "PCIDSK",
+                      "Band %d: nImageOffset=%Ld, nPixelOffset=%Ld, "
+                      "nLineOffset=%Ld, nLineSize=%Ld",
+                      iBand + 1, nImageOffset, nPixelOffset,
+                      nLineOffset, nLineSize );
 #else
-        CPLDebug( "PCIDSK",
-                  "Band %d: nImageOffset=%ld, nPixelOffset=%ld, "
-                  "nLineOffset=%ld, nLineSize=%ld",
-                  iBand + 1, nImageOffset, nPixelOffset,
-                  nLineOffset, nLineSize );
+            CPLDebug( "PCIDSK",
+                      "Band %d: nImageOffset=%ld, nPixelOffset=%ld, "
+                      "nLineOffset=%ld, nLineSize=%ld",
+                      iBand + 1, nImageOffset, nPixelOffset,
+                      nLineOffset, nLineSize );
 #endif
 #endif
+            
+            poBand = new PCIDSKRawRasterBand( poDS, iBand + 1, fp,
+                                              nImageOffset, 
+                                              (int) nPixelOffset, 
+                                              (int) nLineOffset, 
+                                              eType, bNativeOrder);
 
-        poBand = new PCIDSKRawRasterBand( poDS, iBand + 1, fp,
-                                    nImageOffset, (int) nPixelOffset, 
-                                    (int) nLineOffset, 
-                                    eType, bNativeOrder);
+            switch ( eInterleaving )
+            {
+              case PDI_PIXEL:
+                nImageOffset += GDALGetDataTypeSize( eType ) / 8;
+                break;
+              case  PDI_BAND:
+                nImageOffset += nLineOffset * poDS->nRasterYSize;
+                break;
+              default:
+                break;
+            }
+        }
+
         poDS->SetBand( iBand + 1, poBand );
 
 /* -------------------------------------------------------------------- */
@@ -684,88 +788,18 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLFree( pszString );
         }
 
-        switch ( eInterleaving )
-        {
-            case PDI_PIXEL:
-                nImageOffset += GDALGetDataTypeSize( eType ) / 8;
-                break;
-            case  PDI_BAND:
-                nImageOffset += nLineOffset * poDS->nRasterYSize;
-                break;
-            default:
-                break;
-        }
     }
 
     if (!poDS->GetRasterCount())
         CPLError(CE_Warning, CPLE_None, "Dataset contain no raster bands.");
    
 /* ==================================================================== */
-/*   Read Segment Pointers.                                             */
+/*      Process some segments of interest.                              */
 /* ==================================================================== */
-    vsi_l_offset    nSegPointersStart;  // Start block of Segment Pointers
-    vsi_l_offset    nSegPointersOffset; // Offset in bytes to Pointers
-    int             nSegBlocks;         // Number of blocks of Segment Pointers
+    int iSeg;
 
-    VSIFSeekL( poDS->fp, 440, SEEK_SET );
-    VSIFReadL( szTemp, 1, 16, poDS->fp );
-    szTemp[16] = '\0';
-    nSegPointersStart = atol( szTemp ); // XXX: should be atoll()
-    nSegPointersOffset = ( nSegPointersStart - 1 ) * 512;
-
-    VSIFSeekL( poDS->fp, 456, SEEK_SET );
-    VSIFReadL( szTemp, 1, 8, poDS->fp );
-    nSegBlocks = CPLScanLong( szTemp, 8 );
-    poDS->nSegCount = ( nSegBlocks * 512 ) / 32;
-
-/* -------------------------------------------------------------------- */
-/*      Allocate segment info structures.                               */
-/* -------------------------------------------------------------------- */
-    poDS->panSegType = (int *) CPLCalloc(sizeof(int),poDS->nSegCount );
-    poDS->papszSegName = (char **) CPLCalloc(sizeof(char*),poDS->nSegCount );
-    poDS->panSegOffset = (vsi_l_offset *) 
-        CPLCalloc(sizeof(vsi_l_offset),poDS->nSegCount );
-    poDS->panSegSize = (vsi_l_offset *) 
-        CPLCalloc(sizeof(vsi_l_offset),poDS->nSegCount );
-
-/* ==================================================================== */
-/*      Process segment table.                                          */
-/* ==================================================================== */
-    int             iSeg;
-    
     for( iSeg = 0; iSeg < poDS->nSegCount; iSeg++ )
     {
-        int bActive, nSegStartBlock, nSegSize;
-        char szSegName[9];
-
-        VSIFSeekL( poDS->fp, nSegPointersOffset + iSeg * 32, SEEK_SET );
-        VSIFReadL( szTemp, 1, 32, poDS->fp );
-        szTemp[32] = '\0';
-
-        strncpy( szSegName, szTemp+4, 8 );
-        szSegName[8] = '\0';
-
-        if ( szTemp[0] == 'A' || szTemp[0] == 'L' )
-            bActive = TRUE;
-        else
-            bActive = FALSE;
-
-        if( !bActive )
-            continue;
-
-        poDS->panSegType[iSeg] = CPLScanLong( szTemp + 1, 3 );
-        nSegStartBlock = CPLScanLong( szTemp+12, 11 );
-        nSegSize = CPLScanLong( szTemp+23, 9 );
-
-        poDS->papszSegName[iSeg] = CPLStrdup( szSegName );
-        poDS->panSegOffset[iSeg] = 512 * ((vsi_l_offset) (nSegStartBlock-1));
-        poDS->panSegSize[iSeg] = 512 * ((vsi_l_offset) nSegSize);
-
-        CPLDebug( "PCIDSK", 
-                  "Seg=%d, Type=%d, Start=%9d, Size=%7d, Name=%s",
-                  iSeg+1, poDS->panSegType[iSeg], 
-                  nSegStartBlock, nSegSize, szSegName );
-
         switch( poDS->panSegType[iSeg] )
         {
 /* -------------------------------------------------------------------- */
@@ -773,13 +807,12 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
             case 150:                   // GEO segment
             {
-                vsi_l_offset    nGeoStart, nGeoDataOffset;
+                vsi_l_offset    nGeoDataOffset;
                 int             j, nXCoeffs, nYCoeffs;
                 OGRSpatialReference oSRS;
 
                 poDS->nGeoPtrOffset = nSegPointersOffset + iSeg * 32;
-                nGeoStart = atol( szTemp + 12 ); // XXX: should be atoll()
-                poDS->nGeoOffset = ( nGeoStart - 1 ) * 512;
+                poDS->nGeoOffset = poDS->panSegOffset[iSeg];
                 nGeoDataOffset = poDS->nGeoOffset + 1024;
 
                 VSIFSeekL( poDS->fp, nGeoDataOffset, SEEK_SET );
@@ -894,16 +927,15 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
             case 214:                       // GCP segment
             {
-                vsi_l_offset    nGcpStart, nGcpDataOffset;
+                vsi_l_offset    nGcpDataOffset;
                 int             j;
                 OGRSpatialReference oSRS;
 
                 poDS->nGcpPtrOffset = nSegPointersOffset + iSeg * 32;
-                nGcpStart = atol( szTemp + 12 ); // XXX: should be atoll()
-                poDS->nGcpOffset = ( nGcpStart - 1 ) * 512;
+                poDS->nGcpOffset = poDS->panSegOffset[iSeg];
                 nGcpDataOffset = poDS->nGcpOffset + 1024;
 
-                if ( bActive && !poDS->nGCPCount )  // XXX: We will read the
+                if( !poDS->nGCPCount )  // XXX: We will read the
                     // first GCP segment only
                 {
                     VSIFSeekL( poDS->fp, nGcpDataOffset, SEEK_SET );
@@ -951,10 +983,8 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
             case 182: // SYS segment.
             {
-                if( EQUAL(szSegName,"METADATA") )
+                if( EQUAL(poDS->papszSegName[iSeg],"METADATA") )
                     poDS->CollectPCIDSKMetadata( iSeg+1 );
-                else if( EQUAL(szSegName,"SysBMDir") )
-                    poDS->nBlockMapSeg = iSeg+1;
             }
             break;
 
@@ -976,12 +1006,20 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             if( EQUALN(papszMD[iMD],"Overview_",9) )
             {
+                int nBlockXSize, nBlockYSize;
                 int nImage = atoi(CPLParseNameValue( papszMD[iMD], NULL ));
                 PCIDSKTiledRasterBand *poOvBand;
 
                 poOvBand = new PCIDSKTiledRasterBand( poDS, 0, nImage );
 
-                ((PCIDSKRawRasterBand *) poBand)->AttachOverview( poOvBand );
+                poBand->GetBlockSize( &nBlockXSize, &nBlockYSize );
+               
+                if( nBlockYSize == 1 )
+                    ((PCIDSKRawRasterBand *) poBand)->
+                        AttachOverview( poOvBand );
+                else
+                    ((PCIDSKTiledRasterBand *) poBand)->
+                        AttachOverview( poOvBand );
             }
         }
     }
@@ -1108,6 +1146,18 @@ void PCIDSKDataset::CollectPCIDSKMetadata( int nSegment )
                 else
                     poBand->SetMetadataItem( pszName, pszValue );
             }
+        }
+        
+        else if( EQUALN(pszName,"METADATA_FIL",13) )
+        {
+            pszName += 13;
+            if( *pszName == '_' )
+                pszName++;
+
+            if( *pszName == '_' )
+                SetMetadataItem( pszName+1, pszValue, "PCISYS" );
+            else
+                SetMetadataItem( pszName, pszValue );
         }
     }
 
