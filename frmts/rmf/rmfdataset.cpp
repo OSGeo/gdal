@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/06/09 19:32:01  dron
+ * Fixed compilation on big-endian arch.
+ *
  * Revision 1.2  2005/05/20 19:25:11  dron
  * Fixed problem with the last line of tiles.
  *
@@ -289,19 +292,19 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 #ifdef CPL_MSB
         if ( poGDS->eRMFType == RMFT_MTW )
         {
-            if ( oGDS->sHeader.nBitDepth == 16 )
+            if ( poGDS->sHeader.nBitDepth == 16 )
             {
                 for ( i = 0; i < nTileBytes; i += 2 )
                     CPL_SWAP16PTR( (GByte*)pImage + i );
             }
 
-            else if ( oGDS->sHeader.nBitDepth == 32 )
+            else if ( poGDS->sHeader.nBitDepth == 32 )
             {
                 for ( i = 0; i < nTileBytes; i += 4 )
                     CPL_SWAP32PTR( (GByte*)pImage + i );
             }
 
-            else if ( oGDS->sHeader.nBitDepth == 64 )
+            else if ( poGDS->sHeader.nBitDepth == 64 )
             {
                 for ( i = 0; i < nTileBytes; i += 8 )
                     CPL_SWAPDOUBLE( (GByte*)pImage + i );
@@ -453,7 +456,7 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     RMFDataset  *poGDS = (RMFDataset *)poDS;
     GUInt32     nTile = nBlockYOff * poGDS->nXTiles + nBlockXOff;
     GUInt32     nTileBytes = nDataSize * poGDS->nBands;
-    GUInt32     iInPixel, iOutPixel, nCurBlockYSize;
+    GUInt32     iInPixel, iOutPixel, nCurBlockYSize, i;
     GByte       *pabyTile;
 
     CPLAssert( poGDS != NULL
@@ -524,19 +527,19 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 #ifdef CPL_MSB
     if ( poGDS->eRMFType == RMFT_MTW )
     {
-        if ( oGDS->sHeader.nBitDepth == 16 )
+        if ( poGDS->sHeader.nBitDepth == 16 )
         {
             for ( i = 0; i < nTileBytes; i += 2 )
                 CPL_SWAP16PTR( pabyTile + i );
         }
 
-        else if ( oGDS->sHeader.nBitDepth == 32 )
+        else if ( poGDS->sHeader.nBitDepth == 32 )
         {
             for ( i = 0; i < nTileBytes; i += 4 )
                 CPL_SWAP32PTR( pabyTile + i );
         }
 
-        else if ( oGDS->sHeader.nBitDepth == 64 )
+        else if ( poGDS->sHeader.nBitDepth == 64 )
         {
             for ( i = 0; i < nTileBytes; i += 8 )
                 CPL_SWAPDOUBLE( pabyTile + i );
