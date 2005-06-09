@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/06/09 15:43:02  fwarmerdam
+ * Clear dirty flag in TryLoadXML() so we don't end up writing out
+ * a pam file for metadata set within the callers Open() method.
+ *
  * Revision 1.6  2005/06/08 14:04:38  fwarmerdam
  * use .aux.xml as the default extension instead of .pam
  *
@@ -456,6 +460,16 @@ CPLErr GDALPamDataset::TryLoadXML()
     CPLXMLNode *psTree;
 
     PamInitialize();
+
+/* -------------------------------------------------------------------- */
+/*      Clear dirty flag.  Generally when we get to this point is       */
+/*      from a call at the end of the Open() method, and some calls     */
+/*      may have already marked the PAM info as dirty (for instance     */
+/*      setting metadata), but really everything to this point is       */
+/*      reproducable, and so the PAM info shouldn't really be           */
+/*      thought of as dirty.                                            */
+/* -------------------------------------------------------------------- */
+    nPamFlags &= ~GPF_DIRTY;
 
 /* -------------------------------------------------------------------- */
 /*      Try reading the file.                                           */
