@@ -7,9 +7,24 @@
 
 <h1>PCIDSK --- PCI Geomatics Database File</h1>
 
-PCIDSK database file used by PCI EASI/PACE software for image analysis.<p>
+PCIDSK database file used by PCI EASI/PACE software for image analysis.
+It is supported for reading, and writing by GDAL.  All pixel data types, and
+data organizations (pixel interleaved, band interleaved, file interleaved
+and tiled) should be supported, but compressed PCIDSK files are not 
+supported.  Currently LUT and PCT segments are ignored.  Overall file, 
+and band specific metadata should be correctly associated with the image
+or bands.<P>
 
-<h2>Metadadta</h2>
+Georeferencing is supported though there may be some limitations
+in support of datums and ellipsoids.   If GCP segments are present, the
+first will be used, and the rest ignored.<p>
+
+Internal overview (pyramid) images will also be correctly read though newly
+requested overviews will be built externally as an .ovr file.<p>
+
+Vector segments are not supported by GDAL or OGR at this time. <p>
+
+<h2>Metadata</h2>
 
 Dataset:<p>
 
@@ -45,6 +60,10 @@ Band:<p>
 </ul>
 
 <h2>Creation Options</h2>
+
+Note that PCIDSK files are always produced pixel interleaved, even though 
+other organizations are supported for read.<p>
+
 <ul>
 	<li> <b>FILEDESC1="description"</b>, <b>FILEDESC2="description"</b>:
 	The first and second lines of descriptive text identifying the file,
