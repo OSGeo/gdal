@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.26  2005/06/10 15:37:35  fwarmerdam
+ * avoid use of MAX_PATH
+ *
  * Revision 1.25  2005/06/10 14:59:12  fwarmerdam
  * Added option to search under executable directory for plugins on win32.
  *
@@ -600,11 +603,11 @@ void GDALDriverManager::AutoLoadDrivers()
         papszSearchPath = CSLAddString( papszSearchPath, 
                                         GDAL_PREFIX "/lib/gdalplugins" );
 #else
-        char szExecPath[MAX_PATH+1];
+        char szExecPath[1024];
 
-        if( CPLGetExecPath( szExecPath, MAX_PATH ) )
+        if( CPLGetExecPath( szExecPath, sizeof(szExecPath) ) )
         {
-            char szPluginDir[MAX_PATH+1+50];
+            char szPluginDir[sizeof(szExecPath)+50];
             strcpy( szPluginDir, CPLGetDirname( szExecPath ) );
             strcat( szPluginDir, "\\gdalplugins\\" );
             papszSearchPath = CSLAddString( papszSearchPath, szPluginDir );
