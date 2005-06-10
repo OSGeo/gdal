@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.118  2005/06/10 21:51:03  fwarmerdam
+ * fixed up osr.Clone() support
+ *
  * Revision 1.117  2005/05/23 07:29:06  fwarmerdam
  * added some histogram related stuff
  *
@@ -1735,6 +1738,7 @@ int     OSRDereference( OGRSpatialReferenceH );
 int     OSRImportFromEPSG( OGRSpatialReferenceH, int );
 int     OSRImportFromProj4( OGRSpatialReferenceH, const char *);
 OGRSpatialReferenceH OSRCloneGeogCS( OGRSpatialReferenceH );
+OGRSpatialReferenceH OSRClone( OGRSpatialReferenceH );
 
 int     OSRImportFromXML( OGRSpatialReferenceH, const char * );
 
