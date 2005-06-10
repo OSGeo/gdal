@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.25  2005/06/10 14:59:12  fwarmerdam
+ * Added option to search under executable directory for plugins on win32.
+ *
  * Revision 1.24  2005/05/23 06:46:24  fwarmerdam
  * added mutex to protect driver manager
  *
@@ -597,8 +600,20 @@ void GDALDriverManager::AutoLoadDrivers()
         papszSearchPath = CSLAddString( papszSearchPath, 
                                         GDAL_PREFIX "/lib/gdalplugins" );
 #else
-        papszSearchPath = CSLAddString( papszSearchPath, 
-                                        "/usr/local/lib/gdalplugins" );
+        char szExecPath[MAX_PATH+1];
+
+        if( CPLGetExecPath( szExecPath, MAX_PATH ) )
+        {
+            char szPluginDir[MAX_PATH+1+50];
+            strcpy( szPluginDir, CPLGetDirname( szExecPath ) );
+            strcat( szPluginDir, "\\gdalplugins\\" );
+            papszSearchPath = CSLAddString( papszSearchPath, szPluginDir );
+        }
+        else
+        {
+            papszSearchPath = CSLAddString( papszSearchPath, 
+                                            "/usr/local/lib/gdalplugins" );
+        }
 #endif
 
         if( strlen(GetHome()) > 0 )
