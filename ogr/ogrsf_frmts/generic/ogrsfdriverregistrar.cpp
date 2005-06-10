@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/06/10 14:58:46  fwarmerdam
+ * Added option to search under executable directory for plugins.
+ *
  * Revision 1.18  2005/06/08 21:11:24  fwarmerdam
  * bug 865: fixed "ogr_" name test.
  *
@@ -626,8 +629,20 @@ void OGRSFDriverRegistrar::AutoLoadDrivers()
         papszSearchPath = CSLAddString( papszSearchPath, 
                                         GDAL_PREFIX "/lib/gdalplugins" );
 #else
-        papszSearchPath = CSLAddString( papszSearchPath, 
-                                        "/usr/local/lib/gdalplugins" );
+        char szExecPath[MAX_PATH+1];
+
+        if( CPLGetExecPath( szExecPath, MAX_PATH ) )
+        {
+            char szPluginDir[MAX_PATH+1+50];
+            strcpy( szPluginDir, CPLGetDirname( szExecPath ) );
+            strcat( szPluginDir, "\\gdalplugins\\" );
+            papszSearchPath = CSLAddString( papszSearchPath, szPluginDir );
+        }
+        else
+        {
+            papszSearchPath = CSLAddString( papszSearchPath, 
+                                            "/usr/local/lib/gdalplugins" );
+        }
 #endif
 
 #ifdef notdef
