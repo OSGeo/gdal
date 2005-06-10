@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.49  2005/06/10 21:51:02  fwarmerdam
+# fixed up osr.Clone() support
+#
 # Revision 1.48  2005/05/16 19:34:12  dron
 # Added GetSemiMajor(), GetSemiMinor() and GetInvFlattening() methods.
 #
@@ -350,7 +353,7 @@ class SpatialReference:
             return SpatialReference(obj=o)
     
     def Clone(self):
-        o = SpatialReference(obj=_gdal.OSRClone( self._o ))
+        o = _gdal.OSRClone( self._o )
         if o is None or o == 'NULL':
             return None
         else:

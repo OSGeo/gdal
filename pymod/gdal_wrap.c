@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.111  2005/05/23 07:29:07  fwarmerdam
- * added some histogram related stuff
+ * Revision 1.112  2005/06/10 21:51:02  fwarmerdam
+ * fixed up osr.Clone() support
  *
  ************************************************************************/
 
@@ -5812,6 +5812,28 @@ static PyObject *_wrap_OSRCloneGeogCS(PyObject *self, PyObject *args) {
         }
     }
     _result = (OGRSpatialReferenceH )OSRCloneGeogCS(_arg0);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_OGRSpatialReferenceH");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSRClone(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRSpatialReferenceH  _result;
+    OGRSpatialReferenceH  _arg0;
+    char * _argc0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OSRClone",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRClone. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRSpatialReferenceH )OSRClone(_arg0);
     SWIG_MakePtr(_ptemp, (char *) _result,"_OGRSpatialReferenceH");
     _resultobj = Py_BuildValue("s",_ptemp);
     return _resultobj;
@@ -11748,6 +11770,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRMorphFromESRI", _wrap_OSRMorphFromESRI, 1 },
 	 { "OSRMorphToESRI", _wrap_OSRMorphToESRI, 1 },
 	 { "OSRImportFromXML", _wrap_OSRImportFromXML, 1 },
+	 { "OSRClone", _wrap_OSRClone, 1 },
 	 { "OSRCloneGeogCS", _wrap_OSRCloneGeogCS, 1 },
 	 { "OSRImportFromProj4", _wrap_OSRImportFromProj4, 1 },
 	 { "OSRImportFromEPSG", _wrap_OSRImportFromEPSG, 1 },
