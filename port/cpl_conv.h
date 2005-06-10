@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2005/06/10 15:00:00  fwarmerdam
+ * added cpl_getexecpath.cpp
+ *
  * Revision 1.36  2005/04/04 15:23:31  fwarmerdam
  * some functions now CPL_STDCALL
  *
@@ -183,6 +186,11 @@ void CPL_DLL *CPLGetSymbol( const char *, const char * );
 /*      Read a directory  (cpl_dir.c)                                   */
 /* -------------------------------------------------------------------- */
 char CPL_DLL  **CPLReadDir( const char *pszPath );
+
+/* -------------------------------------------------------------------- */
+/*      Fetch executable path.                                          */
+/* -------------------------------------------------------------------- */
+int CPL_DLL CPLGetExecPath( char *pszPathBuf, int nMaxLength );
 
 /* -------------------------------------------------------------------- */
 /*      Filename handling functions.                                    */
