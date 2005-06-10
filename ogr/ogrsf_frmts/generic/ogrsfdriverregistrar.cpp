@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/06/10 15:38:10  fwarmerdam
+ * avoid use of MAX_PATH
+ *
  * Revision 1.19  2005/06/10 14:58:46  fwarmerdam
  * Added option to search under executable directory for plugins.
  *
@@ -629,11 +632,11 @@ void OGRSFDriverRegistrar::AutoLoadDrivers()
         papszSearchPath = CSLAddString( papszSearchPath, 
                                         GDAL_PREFIX "/lib/gdalplugins" );
 #else
-        char szExecPath[MAX_PATH+1];
+        char szExecPath[1024];
 
-        if( CPLGetExecPath( szExecPath, MAX_PATH ) )
+        if( CPLGetExecPath( szExecPath, sizeof(szExecPath) ) )
         {
-            char szPluginDir[MAX_PATH+1+50];
+            char szPluginDir[sizeof(szExecPath)+50];
             strcpy( szPluginDir, CPLGetDirname( szExecPath ) );
             strcat( szPluginDir, "\\gdalplugins\\" );
             papszSearchPath = CSLAddString( papszSearchPath, szPluginDir );
