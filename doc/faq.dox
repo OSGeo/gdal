@@ -167,5 +167,24 @@ be relatively easy to correct the block caching issues.
 
 </ol>
 
+<!-------------------------------------------------------------------------->
+
+<h2>Does GDAL work in different international numeric locales?</h2>
+
+No.  GDAL makes extensive use of sprintf() and atof() internally to translate
+numeric values.  If a locale is in effect that modifies formatting of 
+numbers, altering the role of commas and periods in numbers, then PROJ.4
+will not work.  This problem is common in some European locales.<p>
+
+On unix-like platforms, this problem can be avoided by forcing the use
+of the default numeric locale by setting the LC_NUMERIC environment variable
+to C. <p>
+
+eg.
+<pre>
+$ export LC_NUMERIC=C
+$ gdalinfo abc.tif
+</pre>
+
 */
 
