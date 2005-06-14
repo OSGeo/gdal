@@ -29,6 +29,9 @@
 ###############################################################################
 #
 #  $Log$
+#  Revision 1.3  2005/06/14 15:14:10  dron
+#  Use empty() instead of zeros() to create scanline buffer.
+#
 #  Revision 1.2  2003/09/22 09:41:07  dron
 #  Spped optimizations, as suggested by Norman Vine.
 #
@@ -202,7 +205,7 @@ if inband == None:
     sys.exit(2)
 
 numtype = gdalnumeric.GDALTypeCodeToNumericTypeCode(type)
-outline = Numeric.zeros((1, inband.XSize), numtype)
+outline = Numeric.empty((1, inband.XSize), numtype)
 
 prev = inband.ReadAsArray(0, 0, inband.XSize, 1, inband.XSize, 1)[0]
 outband.WriteArray(outline, 0, 0)
