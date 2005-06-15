@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2005/06/15 09:11:58  dron
+ * Added CPLIsEqual() macro.
+ *
  * Revision 1.43  2005/05/23 03:57:08  fwarmerdam
  * added default definition of CPL_THREADLOCAL
  *
@@ -292,6 +295,15 @@ typedef unsigned long    GUIntBig;
 
 #ifndef ABS
 #  define ABS(x)        ((x<0) ? (-1*(x)) : x)
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Macro to test equality of two floating point values.            */
+/*      We use fabs() function instead of ABS() macro to avoid side     */
+/*      effects.                                                        */
+/* -------------------------------------------------------------------- */
+#ifndef CPLIsEqual
+#  define CPLIsEqual(x,y) (fabs(x) - fabs(y) < 0.0000000000001 ? 1 : 0)
 #endif
 
 #ifndef EQUAL
