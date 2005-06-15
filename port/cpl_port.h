@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2005/06/15 09:47:40  dron
+ * Fixed typo.
+ *
  * Revision 1.44  2005/06/15 09:11:58  dron
  * Added CPLIsEqual() macro.
  *
@@ -303,7 +306,7 @@ typedef unsigned long    GUIntBig;
 /*      effects.                                                        */
 /* -------------------------------------------------------------------- */
 #ifndef CPLIsEqual
-#  define CPLIsEqual(x,y) (fabs(x) - fabs(y) < 0.0000000000001 ? 1 : 0)
+#  define CPLIsEqual(x,y) (fabs(fabs(x) - fabs(y)) < 0.0000000000001 ? 1 : 0)
 #endif
 
 #ifndef EQUAL
