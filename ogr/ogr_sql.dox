@@ -1,17 +1,13 @@
-/*! \page ogr_sql
+/*! \page ogr_sql OGR SQL
 
-<center>
-<title>OGR SQL</title>
-</center>
+The OGRDataSource supports executing commands against a datasource via the
+OGRDataSource::ExecuteSQL() method.  While in theory any sort of command could
+be handled this way, in practice the mechanism is used to provide a subset of
+SQL SELECT capability to applications.  This page discusses the generic SQL
+implementation implemented within OGR, and issue with driver specific SQL
+support.<p>
 
-The OGRDataSource supports executing commands against a 
-datasource via the OGRDataSource::ExecuteSQL() method.  While in theory 
-any sort of command could be handled this way, in practice the mechanism is
-used to provide a subset of SQL SELECT capability to applications.  This page
-discusses the generic SQL implementation implemented within OGR, and issue
-with driver specific SQL support.<p>
-
-<h2>SELECT</h2>
+\section ogr_sql_select SELECT
 
 The SELECT statement is used to fetch layer features (analygous to table
 rows in an RDBMS) with the result of the query represented as a temporary layer
@@ -52,7 +48,7 @@ distinct values of the eas_id attribute.
 SELECT COUNT(DISTINCT eas_id) FROM polylayer
 \endcode
 
-<h3>Field List Operators</h3>
+\subsection ogr_sql_flist_ops Field List Operators
 
 The field list is a comma separate list of the fields to be carried into
 the output features from the source layer.  They will appear on output features
@@ -100,7 +96,7 @@ Field names can also be prefixed by a table name though this is only
 really meaningful when performing joins.  It is further demonstrated in 
 the JOIN section.
 
-<h4>Field List Limitations</h4>
+\subsubsection ogr_sql_flist_limits Field List Limitations
 
 <ol>
 
@@ -120,7 +116,7 @@ is done in real SQL.
 
 </ol>
 
-<h3>WHERE</h3>
+\subsection ogr_sql_where WHERE
 
 The argument to the WHERE clause is a fairly simplistic logical expression
 used select records to be selected from the source layer.  In addition to its
@@ -191,7 +187,7 @@ SELECT * FROM poly WHERE NOT (area_code LIKE "N0N%")
 SELECT * FROM poly WHERE (prop_value IS NOT NULL) AND (prop_value < 100000)
 \endcode
 
-<h4>WHERE Limitations</h4>
+\subsection ogr_sql_where_limits WHERE Limitations
 
 <ol>
 <li> The left of any comparison operator must be a field name, and the right
@@ -205,7 +201,7 @@ name.
 <li> Greater than, and less than operators may not be used with strings.
 </ol>
 
-<h3>ORDER BY</h3>
+\subsection ogr_sql_order_by ORDER BY
 
 The <b>ORDER BY</b> clause is used force the returned features to be reordered
 into sorted order (ascending or descending) on one of the field values.  
@@ -228,7 +224,7 @@ be a very expensive operation.
 Sorting of string field values is case sensitive, not case insensitive like in
 most other parts of OGR SQL.
 
-<h3>JOINs</h3>
+\subsection ogr_sql_joins JOINs
 
 OGR SQL supports a limited form of one to one JOIN.  This allows records from
 a secondary table to be looked up based on a shared key between it and the
@@ -314,7 +310,7 @@ SELECT city.name, prov.name, nation.name FROM city
   LEFT JOIN nation ON city.nation_id = nation.id
 \endcode
 
-<h4>JOIN Limitations</h4>
+\subsection ogr_sql_join_limits JOIN Limitations
 
 <ol>
 <li> Joins can be very expensive operations if the secondary table is not
@@ -335,7 +331,7 @@ record cannot be found, the secondary derived fields will be NULL.  If more
 than one matching secondary field is found only the first will be used. 
 </ol>
 
-<h3>FID</h3>
+\subsection ogr_sql_fid FID
 
 Normally the feature id is a special property of a feature and not treated
 as an attribute of the feature.  In some cases it is convenient to be able to 
@@ -347,7 +343,7 @@ the feature id, but it may be explicitly included using a syntax like:
 SELECT FID, * FROM nation
 \endcode
 
-<h2>CREATE INDEX</h2>
+\section ogr_sql_create_index CREATE INDEX
 
 Some OGR SQL drivers support creating of attribute indexes.  Currently
 this includes the Shapefile driver.  An index accelerates very simple
@@ -359,7 +355,7 @@ the nation_id field of the nation table a command like this would be used:
 CREATE INDEX ON nation USING nation_id
 \endcode
 
-<h3>Index Limitations</h3>
+\subsection ogr_sql_index_limits Index Limitations
 
 <ol>
 <li> Indexes are not maintained dynamically when new features are added to or
@@ -372,7 +368,7 @@ then recreate all the indexes.
 query the will accelerate is a simple "field = value" query.
 </ol>
 
-<h2>DROP INDEX</h2>
+\section ogr_sql_drop_index DROP INDEX
 
 The OGR SQL DROP INDEX command can be used to drop all indexes on a particular
 table, or just the index for a particular column. 
@@ -382,7 +378,7 @@ DROP INDEX ON nation USING nation_id
 DROP INDEX ON nation
 \endcode
 
-<h2>ExecuteSQL()</h2>
+\section ogr_sql_exec_sql ExecuteSQL()
 
 SQL is executed against an OGRDataSource, not against a specific layer.  The
 call looks like this:
@@ -408,13 +404,13 @@ for instance.  The returned temporary layer should be released with
 OGRDataSource::ReleaseResultsSet() method when no longer needed.  Failure
 to release it before the datasource is destroyed may result in a crash.<p>
 
-<h2>Non-OGR SQL</h2>
+\section ogr_sql_non_ogr_sql Non-OGR SQL
 
 The Oracle (OCI) and PostGIS (PG) drivers both override the ExecuteSQL()
 implementation, and pass the SQL statements directly through to the underlying
 RDBMS.  In these cases the SQL syntax varies in some particulars from OGR SQL.
 Also, anything possible in SQL can then be accomplished for these particular
-databases.  Only the result of SQL WHERE statements will be returned as layers.
-<p>
+databases.  Only the result of SQL WHERE statements will be returned as
+layers. <p>
 
 */
