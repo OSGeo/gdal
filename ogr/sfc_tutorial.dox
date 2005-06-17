@@ -1,19 +1,14 @@
-/*! \page sfc_tutorial
+/*! \page sfc_tutorial Simple Features Client Tutorial
 
-<center>
-<title>Simple Features Client Tutorial</title>
-</center>
-
-<h2>Introduction</h2>
+\section sfc_tutorial_intro Introduction
 
 The Simple Features Client API is a set of classes, and support functions
 that simplify access to OpenGIS SF OLE DB providers. <p>
 
-Most of the classes
-are based on the ATL OLE DB consumer templates.  To fully understand the
-classes it is critical to also review the Microsoft provided information
-on these classes.  It can be accessed in the
-<http://msdn.microsoft.com/">MSDN Online Library</a>. <p>
+Most of the classes are based on the ATL OLE DB consumer templates.  To fully
+understand the classes it is critical to also review the Microsoft provided
+information on these classes.  It can be accessed in the <a
+href="http://msdn.microsoft.com/">MSDN Online Library</a>. <p>
 
 In general terms, the OpenGIS SF COM interface specification requires 
 geographic data providers to make their datasets look like a database.  
@@ -55,7 +50,7 @@ the possible geometry types.
 
 </ul>
 
-<h2>Example Client</h2>
+\section sfc_tutorial_example Example Client
 
 The console program SFCDUMP is intended to be an example of how to use
 the client api (as well as being a useful debugging tool in it's own
@@ -64,7 +59,7 @@ right).  The full source should be available in
 gdal/ogr/sfcdump.cpp</a>.<p>
 
 
-<h3>SFCEnumerator: Finding a Provider</h3>
+\subsection sfc_tutorial_enum SFCEnumerator: Finding a Provider
 
 The SFCEnumerator class is used to identify all the installed OLE DB
 providers (drivers) installed on a system.  It essentially makes the
@@ -120,7 +115,7 @@ counts.<p>
 
 </ul>
 
-<h3>Opening a Simple Features File</h3>
+\subsection sfc_tutorial_open Opening a Simple Features File
 
 In order to open a file with OGIS simple features information in it, the
 following steps should be followed.  First, it is necessary to identify the
@@ -186,7 +181,7 @@ needed.<p>
 
 </ul>
 
-<h3>Accessing an SFCTable</h3>
+\subsection sfc_tutorial_access Accessing an SFCTable
 
 The SFCDataSource that we opened could have a number of spatial, and non
 spatial tables in it.  Eventually the SFCDataSource will include methods for
@@ -229,7 +224,7 @@ wrong. <p>
 
 </ul>
 
-<h3>Reading the Features</h3>
+\subsection sfc_tutorial_read Reading the Features
 
 The following example shows reading through all the records in a
 simple features table, and reading back just the geometry column.
