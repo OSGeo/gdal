@@ -1,15 +1,11 @@
-/*! \page ogr_apitut
-
-<center>
-<title>OGR API Tutorial</title>
-</center>
+/*! \page ogr_apitut OGR API Tutorial
 
 This document is intended to document using the OGR C++ classes to read
 and write data from a file.  It is strongly advised that the read first
 review the <a href="ogr_arch.html">OGR Architecture</a> document describing
 the key classes and their roles in OGR.
 
-<h2>Reading From OGR</h2>
+\section ogr_apitut_read Reading From OGR
 
 For purposes of demonstrating reading with OGR, we will constuct a small 
 utility for dumping point layers from an OGR data source to stdout in
@@ -225,7 +221,7 @@ int main()
 }
 \endcode
 
-<h2>Writing To OGR</h2>
+\section ogr_apitut_write Writing To OGR
 
 As an example of writing through OGR, we will do roughly the opposite of the
 above.  A short program that reads comma seperated values from input text
