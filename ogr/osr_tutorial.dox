@@ -1,10 +1,6 @@
-/*! \page osr_tutorial
+/*! \page osr_tutorial OGR Projections Tutorial
 
-<center>
-<title>OGR Projections Tutorial</title>
-</center>
-
-<h2>Introduction</h2>
+\section osr_tutorial_intro Introduction
 
 The OGRSpatialReference, and OGRCoordinateTransformation classes provide
 services to represent coordinate systems (projections and datums) and to
@@ -21,7 +17,7 @@ understanding formulations of projections in WKT.  The
 <a href="http://www.epsg.org">EPSG</a> 
 Geodesy web page is also a useful resource. 
 
-<h2>Defining a Geographic Coordinate System</h2>
+\section osr_tutorial_cs Defining a Geographic Coordinate System
 
 Coordinate systems are encapsulated in the OGRSpatialReference class.  There
 are a number of ways of initializing an OGRSpatialReference object to a
@@ -110,7 +106,7 @@ GEOGCS["WGS 84",
 The OGRSpatialReference::importFromWkt() method can be used to set an 
 OGRSpatialReference from a WKT coordinate system definition.
 
-<h2>Defining a Projected Coordinate System</h2>
+\section osr_tutorial_proj Defining a Projected Coordinate System
 
 A projected coordinate system (such as UTM, Lambert Conformal Conic, etc) 
 requires and underlying geographic coordinate system as well as a definition
@@ -164,7 +160,7 @@ PROJCS["UTM 17 (WGS84) in northern hemisphere.",
 There are methods for many projection methods including SetTM() (Transverse
 Mercator), SetLCC() (Lambert Conformal Conic), and SetMercator().
 
-<h2>Querying Coordinate System</h2>
+\section osr_tutorial_query Querying Coordinate System
 
 Once an OGRSpatialReference has been established, various information about
 it can be queried.  It can be established if it is a projected or 
@@ -210,7 +206,7 @@ which projections.
     ...
 \endcode
 
-<h2>Coordinate Transformation</h2>
+\section osr_tutorial_transform Coordinate Transformation
 
 The OGRCoordinateTransformation class is used for translating positions
 between different coordinate systems.  New transformation objects are
@@ -291,7 +287,7 @@ lat/long.
     ...
 \endcode
 
-<h2>Alternate Interfaces</h2>
+\section osr_tutorial_apis Alternate Interfaces
 
 A C interface to the coordinate system services is defined in 
 ogr_srs_api.h, and Python bindings are available via the osr.py module. 
@@ -392,7 +388,7 @@ class CoordinateTransformation:
     def TransformPoints(self, points):
 \endcode
 
-<h2>Internal Implementation</h2>
+\section osr_tutorial_impl Internal Implementation
 
 The OGRCoordinateTransformation service is implemented on top of the
 <a href="http://www.remotesensing.org/proj">PROJ.4</a> library originally
