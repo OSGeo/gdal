@@ -1,8 +1,4 @@
-/*! \page ogr_arch
-
-<center>
-<h1>OGR Architecture</h1>
-</center>
+/*! \page ogr_arch OGR Architecture
 
 This document is intended to document the OGR classes.  The OGR
 classes are intended to be generic (not specific to OLE DB or COM or
@@ -19,7 +15,7 @@ specifications which can be retrieved from the
 types, and method names are modelled on those from the interface 
 specifications.<p>
 
-<h2>Class Overview</h2>
+\section ogr_arch_overview Class Overview
 
 <ul>
 <li> <b>Geometry</b> (<a href="ogr__geometry_8h-source.html">ogr_geometry.h</a>): 
@@ -61,7 +57,7 @@ by the OGRSFDriverRegistrar.<p>
 
 </ul>
 
-<h2>Geometry</h2>
+\section ogr_arch_geometry Geometry
 
 The geometry classes are represent various kinds of vector geometry.  All
 the geometry classes derived from OGRGeometry which defines the common 
@@ -96,7 +92,7 @@ possible to create specialized classes using the OGRGeometryFactory without
 modifying it.<p>
 
 
-<h2>Spatial Reference</h2>
+\section ogr_arch_srs Spatial Reference
 
 The OGRSpatialReference class is intended to store an OpenGIS Spatial
 Reference System definition.  Currently local, geographic and projected
@@ -116,7 +112,7 @@ encapsulates use of PROJ.4 for converting between different coordinate
 systems.  There is a <a href="osr_tutorial.html">tutorial</a> available 
 describing how to use the OGRSpatialReference class.<p>
 
-<h2>Feature / Feature Definition</h2>
+\section ogr_arch_feature Feature / Feature Definition
 
 The OGRGeometry captures the geometry of a vector feature ... the 
 spatial position/region of a feature.  The OGRFeature contains this 
@@ -148,7 +144,7 @@ system for all features of that type and a feature class name (normally
 used as a layer name).<p>
 
 
-<h2>Layer</h2>
+\section ogr_arch_layer Layer
 
 An OGRLayer represents a layer of features within a data source.  All 
 features in an OGRLayer share a common schema and are of the same 
@@ -197,7 +193,7 @@ expected to be subclassed for each file format driver implemented.
 OGRLayers are normally owned directly by their OGRDataSource, and aren't
 instantiated or destroyed directly.<p>
 
-<h2>Data Source</h2>
+\section ogr_arch_data_source Data Source
 
 An OGRDataSource represents a set of OGRLayer objects.  This usually 
 represents a single file, set of files, database or gateway.  An OGRDataSource
@@ -220,7 +216,7 @@ and Oracle) pass the SQL through to an underlying database, OGR also includes
 support for evaluating a subset of the SQL SELECT statement against any
 datasource. <p>
 
-<h2>Drivers</h2>
+\section ogr_arch_drivers Drivers
 
 An OGRSFDriver object is instantiated for each file format supported.  
 The OGRSFDriver objects are registered with the OGRSFDriverRegistrar, a
