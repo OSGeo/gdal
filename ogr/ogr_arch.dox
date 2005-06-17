@@ -1,7 +1,7 @@
 /*! \page ogr_arch
 
 <center>
-<title>OGR Architecture</title>
+<h1>OGR Architecture</h1>
 </center>
 
 This document is intended to document the OGR classes.  The OGR
