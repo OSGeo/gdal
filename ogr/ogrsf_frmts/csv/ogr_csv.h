@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/06/20 17:54:04  fwarmerdam
+ * added support for external csvt file
+ *
  * Revision 1.6  2005/02/22 12:55:18  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -77,9 +80,9 @@ class OGRCSVLayer : public OGRLayer
     int                 bNeedRewind;
 
   public:
-                        OGRCSVLayer( const char *pszName, FILE *fp, 
+    OGRCSVLayer( const char *pszName, FILE *fp, const char *pszFilename,
                                      int bNew, int bInWriteMode );
-                        ~OGRCSVLayer();
+  ~OGRCSVLayer();
 
     void                ResetReading();
     OGRFeature *        GetNextFeature();

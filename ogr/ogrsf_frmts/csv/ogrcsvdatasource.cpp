@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/06/20 17:54:04  fwarmerdam
+ * added support for external csvt file
+ *
  * Revision 1.6  2004/08/17 21:03:03  warmerda
  * Avoid leak of papoLayers array.
  *
@@ -227,7 +230,7 @@ int OGRCSVDataSource::OpenTable( const char * pszFilename )
                                              sizeof(void*) * nLayers);
     
     papoLayers[nLayers-1] = 
-        new OGRCSVLayer( CPLGetBasename(pszFilename), fp, FALSE, bUpdate );
+        new OGRCSVLayer( CPLGetBasename(pszFilename), fp, pszFilename, FALSE, bUpdate );
 
     return TRUE;
 }
@@ -299,7 +302,7 @@ OGRCSVDataSource::CreateLayer( const char *pszLayerName,
     papoLayers = (OGRCSVLayer **) CPLRealloc(papoLayers, 
                                              sizeof(void*) * nLayers);
     
-    papoLayers[nLayers-1] = new OGRCSVLayer( pszLayerName, fp, TRUE, TRUE );
+    papoLayers[nLayers-1] = new OGRCSVLayer( pszLayerName, fp, pszFilename, TRUE, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Was a partiuclar CRLF order requested?                          */
