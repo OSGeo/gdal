@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2005/06/20 01:52:47  fwarmerdam
+ * an illegal band in GetRasterBand() no longer fatal
+ *
  * Revision 1.51  2005/05/23 06:42:16  fwarmerdam
  * added mutex to protect dataset list
  *
@@ -526,12 +529,13 @@ GDALRasterBand * GDALDataset::GetRasterBand( int nBandId )
 {
     if( nBandId < 1 || nBandId > nBands )
     {
-        CPLError( CE_Fatal, CPLE_IllegalArg,
+        CPLError( CE_Failure, CPLE_IllegalArg,
                   "GDALDataset::GetRasterBand(%d) - Illegal band #\n",
                   nBandId );
+        return NULL;
     }
-
-    return( papoBands[nBandId-1] );
+    else
+        return( papoBands[nBandId-1] );
 }
 
 /************************************************************************/
