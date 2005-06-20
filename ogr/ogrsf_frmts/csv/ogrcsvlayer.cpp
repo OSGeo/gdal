@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/06/20 17:54:04  fwarmerdam
+ * added support for external csvt file
+ *
  * Revision 1.4  2005/02/02 20:30:10  fwarmerdam
  * added m_nFeaturesRead support
  *
@@ -57,7 +60,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn, 
-                          FILE * fp, int bNew, int bInWriteMode )
+                          FILE * fp, const char *pszFilename, int bNew, int bInWriteMode )
 
 {
     fpCSV = fp;
@@ -130,6 +133,25 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     if( !bHasFieldNames )
         VSIRewind( fpCSV );
 
+
+/* -------------------------------------------------------------------- */
+/*      Search a csvt file for types                                */
+/* -------------------------------------------------------------------- */
+    char** papszFieldTypes = NULL;
+    if (!bNew) {
+      char* dname = strdup(CPLGetDirname(pszFilename));
+      char* fname = strdup(CPLGetBasename(pszFilename));
+      FILE* fpCSVT = fopen(CPLFormFilename(dname, fname, ".csvt"), "r");
+      free(dname);
+      free(fname);
+      if (fpCSVT!=NULL) {
+        VSIRewind(fpCSVT);
+        papszFieldTypes = CSVReadParseLine(fpCSVT);
+        fclose(fpCSVT);
+      }
+    }
+    
+
 /* -------------------------------------------------------------------- */
 /*      Build field definitions.                                        */
 /* -------------------------------------------------------------------- */
@@ -155,8 +177,16 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
             pszFieldName = szFieldNameBuffer;
             sprintf( szFieldNameBuffer, "field_%d", iField+1 );
         }
-            
-        OGRFieldDefn oField( pszFieldName, OFTString );
+
+        OGRFieldDefn oField(pszFieldName, OFTString);
+        if (papszFieldTypes!=NULL && iField<CSLCount(papszFieldTypes)) {
+          if (!strcmp(papszFieldTypes[iField], "Integer"))
+            oField.SetType(OFTInteger);
+          else if (!strcmp(papszFieldTypes[iField], "Real"))
+            oField.SetType(OFTReal);
+          else if (!strcmp(papszFieldTypes[iField], "String"))
+            oField.SetType(OFTString);
+        }
 
         poFeatureDefn->AddFieldDefn( &oField );
     }
