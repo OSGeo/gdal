@@ -9,6 +9,13 @@
 
  *
  * $Log$
+ * Revision 1.23  2005/06/22 18:48:23  kruland
+ * Added bUseExceptions flag and supporting methods UseExceptions(),
+ * DontUseExceptions() to the python binding.  This allows the user
+ * to determine if method invocations will throw exceptions in scripts or
+ * use the old return value method.
+ * Added PythonErrorHandler, a special CPLErrorHandler which will throw.
+ *
  * Revision 1.22  2005/03/10 17:18:15  hobu
  * #ifdefs for csharp
  *
@@ -98,6 +105,7 @@
 %}
 #endif
 
+
 %{
 #include <iostream>
 using namespace std;
@@ -121,6 +129,50 @@ typedef void GDALRasterBandShadow;
 typedef int FALSE_IS_ERR;
 
 %}
+
+%{
+int bUseExceptions=0;
+%}
+#ifdef SWIGPYTHON
+%{
+class GDALError {
+public:
+  GDALError( int code, const char *msg ) :
+    code(code),
+    msg(msg)
+  {}
+  int code;
+  const char *msg;
+};
+
+void PythonErrorHandler(CPLErr eclass, int code, const char *msg ) {
+  throw GDALError(code,msg);
+}
+%}
+
+%inline {
+void UseExceptions() {
+  bUseExceptions = 1;
+  CPLSetErrorHandler( (CPLErrorHandler)PythonErrorHandler );
+}
+
+void DontUseExceptions() {
+  bUseExceptions = 0;
+  CPLSetErrorHandler( CPLDefaultErrorHandler );
+}
+}
+
+%include exception.i
+
+%exception {
+  try {
+    $action
+  }
+  catch(GDALError e) {
+    SWIG_exception( SWIG_RuntimeError, e.msg );
+  }
+}
+#endif /* SWIGPYTHON */
 
 %feature("compactdefaultargs");
 %feature("autodoc");
