@@ -9,6 +9,13 @@
 
  *
  * $Log$
+ * Revision 1.28  2005/06/22 18:46:22  kruland
+ * Be consistant about using 'python' in %typemap decls.
+ * Removed references to 'python' in the %typemap comment strings to improve greps.
+ * Use $result instead of resultobj.
+ * Renamed type for OGRErr out typemap to OGRErr instead of THROW_OGR_ERROR.
+ * First cut at CPLErr out typemap which uses the bUseExceptions flag.
+ *
  * Revision 1.27  2005/02/24 18:37:20  kruland
  * Moved the c# typemaps to its own file.
  *
@@ -145,12 +152,12 @@
  * CPLErr function_to_wrap( );
  * %clear (CPLErr);
  */
-%typemap(out) IF_ERR_RETURN_NONE
+%typemap(python,out) IF_ERR_RETURN_NONE
 {
   /* %typemap(out) IF_ERR_RETURN_NONE */
-  resultobj = 0;
+  result = 0;
 }
-%typemap(ret) IF_ERR_RETURN_NONE
+%typemap(python,ret) IF_ERR_RETURN_NONE
 {
  /* %typemap(ret) IF_ERR_RETURN_NONE */
   if (result != 0 ) {
@@ -163,22 +170,22 @@
     Py_INCREF(resultobj);
   }
 }
-%typemap(out) IF_FALSE_RETURN_NONE
+%typemap(python,out) IF_FALSE_RETURN_NONE
 {
   /* %typemap(out) IF_FALSE_RETURN_NONE */
-  resultobj = 0;
+  $result = 0;
 }
-%typemap(ret) IF_FALSE_RETURN_NONE
+%typemap(python,ret) IF_FALSE_RETURN_NONE
 {
  /* %typemap(ret) IF_FALSE_RETURN_NONE */
-  if (result == 0 ) {
-    Py_XDECREF( resultobj );
-    resultobj = Py_None;
-    Py_INCREF(resultobj);
+  if ($1 == 0 ) {
+    Py_XDECREF( $result );
+    $result = Py_None;
+    Py_INCREF($result);
   }
-  if (resultobj == 0) {
-    resultobj = Py_None;
-    Py_INCREF(resultobj);
+  if ($result == 0) {
+    $result = Py_None;
+    Py_INCREF($result);
   }
 }
 
@@ -211,18 +218,18 @@ OGRErrMessages( int rc ) {
   }
 }
 %}
-%typemap(python, out,fragment="OGRErrMessages") THROW_OGR_ERROR
+%typemap(python, out,fragment="OGRErrMessages") OGRErr
 {
-  /* %typemap(out) THROW_OGR_ERROR */
+  /* %typemap(out) OGRErr */
   resultobj = 0;
   if ( result != 0) {
     PyErr_Format( PyExc_RuntimeError, OGRErrMessages(result), result );
     SWIG_fail;
   }
 }
-%typemap(python, ret) THROW_OGR_ERROR
+%typemap(python, ret) OGRErr
 {
-  /* %typemap(ret) THROW_OGR_ERROR */
+  /* %typemap(ret) OGRErr */
   if (resultobj == Py_None ) {
     Py_DECREF(resultobj);
     resultobj = 0;
@@ -308,12 +315,12 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
 }
 %typemap(python,freearg) (double_ ## size *argout)
 {
-  /* %typemap(python,freearg) (double_ ## size *argout) */
+  /* %typemap(freearg) (double_ ## size *argout) */
   CPLFree(*$1);
 }
 %typemap(python,in) (double_ ## size argin) (double argin[size])
 {
-  /* %typemap(python,in) (double_ ## size argin) */
+  /* %typemap(in) (double_ ## size argin) */
   $1 = argin;
   if (! PySequence_Check($input) ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
@@ -362,9 +369,9 @@ ARRAY_TYPEMAP(3);
 /*
  *  Typemap for counted arrays of ints <- PySequence
  */
-%typemap(python,in,numargs=1) (int nList, int* pList)
+%typemap(python,in,numinputs=1) (int nList, int* pList)
 {
-  /* %typemap(in,numargs=1) (int nList, int* pList)*/
+  /* %typemap(in,numinputs=1) (int nList, int* pList)*/
   /* check if is List */
   if ( !PySequence_Check($input) ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
@@ -381,7 +388,7 @@ ARRAY_TYPEMAP(3);
 }
 %typemap(python,freearg) (int nList, int* pList)
 {
-  /* %typemap(python,freearg) (int nList, int* pList) */
+  /* %typemap(freearg) (int nList, int* pList) */
   if ($2) {
     free((void*) $2);
   }
@@ -420,7 +427,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 %typemap(python,freearg) (int *nLen, char **pBuf )
 {
-  /* %typemap(python,freearg) (int *nLen, char **pBuf ) */
+  /* %typemap(freearg) (int *nLen, char **pBuf ) */
   if( $1 ) {
     free( *$2 );
   }
@@ -467,7 +474,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 %typemap(python,in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) ( GDAL_GCP *tmpGCPList )
 {
-  /* %typemap(python,in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) */
+  /* %typemap(in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) */
   /* check if is List */
   if ( !PySequence_Check($input) ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
@@ -489,7 +496,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 %typemap(python,freearg) (int nGCPs, GDAL_GCP const *pGCPs )
 {
-  /* %typemap(python,freearg) (int nGCPs, GDAL_GCP const *pGCPs ) */
+  /* %typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs ) */
   if ($2) {
     free( (void*) $2 );
   }
@@ -500,7 +507,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
  */
 %typemap(python,out) GDALColorEntry*
 {
-  /*  %typemap(out) GDALColorEntry* */
+  /* %typemap(out) GDALColorEntry* */
    $result = Py_BuildValue( "(hhhh)", (*$1).c1,(*$1).c2,(*$1).c3,(*$1).c4);
 }
 
@@ -523,7 +530,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
  */
 %typemap(python,out) char **dict
 {
-  /* %typemap(out) char ** -> to hash */
+  /* %typemap(out) char **dict */
   char **stringarray = $1;
   $result = PyDict_New();
   if ( stringarray != NULL ) {
@@ -567,7 +574,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 %typemap(python,freearg) char **dict
 {
-  /* %typemap(python,freearg) char **dict */
+  /* %typemap(freearg) char **dict */
   CSLDestroy( $1 );
 }
 
@@ -595,7 +602,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 %typemap(python,freearg) char **options
 {
-  /* %typemap(python,freearg) char **options */
+  /* %typemap(freearg) char **options */
   CSLDestroy( $1 );
 }
 %typemap(python,out) char **options
@@ -633,12 +640,12 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
  */
 %typemap(python,in,numinputs=0) (char **argout) ( char *argout=0 )
 {
-  /* %typemap(python,in,numinputs=0) (char **argout) */
+  /* %typemap(in,numinputs=0) (char **argout) */
   $1 = &argout;
 }
 %typemap(python,argout,fragment="t_output_helper") (char **argout)
 {
-  /* %typemap(python,argout) (char **argout) */
+  /* %typemap(argout) (char **argout) */
   PyObject *o;
   if ( $1 ) {
     o = PyString_FromString( *$1 );
@@ -651,7 +658,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 %typemap(python,freearg) (char **argout)
 {
-  /* %typemap(python,freearg) (char **argout) */
+  /* %typemap(freearg) (char **argout) */
   if ( *$1 )
     CPLFree( *$1 );
 }
@@ -665,7 +672,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %define OPTIONAL_POD(type,argstring)
 %typemap(python,in) (type *optional_##type) ( type val )
 {
-  /* %typemap(python,in) (type *optional_##type) */
+  /* %typemap(in) (type *optional_##type) */
   if ( $input == Py_None ) {
     $1 = 0;
   }
@@ -679,7 +686,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 %typemap(python,typecheck,precedence=0) (type *optional_##type)
 {
-  /* %typemap(python,typecheck,precedence=0) (type *optionalInt) */
+  /* %typemap(typecheck,precedence=0) (type *optionalInt) */
   $1 = (($input==Py_None) || my_PyCheck_##type($input)) ? 1 : 0;
 }
 %enddef
@@ -694,7 +701,7 @@ OPTIONAL_POD(int,i);
 
 %typemap(python,in) (tostring argin) (PyObject *str)
 {
-  /* %typemap(python,in) (tostring argin) */
+  /* %typemap(in) (tostring argin) */
   str = PyObject_Str( $input );
   if ( str == 0 ) {
     PyErr_SetString( PyExc_RuntimeError, "Unable to format argument as string");
@@ -705,11 +712,48 @@ OPTIONAL_POD(int,i);
 }
 %typemap(python,freearg)(tostring argin)
 {
-  /* %typemap(python,freearg) (tostring argin) */
+  /* %typemap(freearg) (tostring argin) */
   Py_DECREF(str$argnum);
 }
 %typemap(python,typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
 {
-  /* %typemap(python,typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin) */
+  /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin) */
   $1 = 1;
+}
+
+/*
+ * Typemap for CPLErr.
+ * This typemap will use the wrapper C-variable
+ * int UseExceptions to determine proper behavour for
+ * CPLErr return codes.
+ * If UseExceptions ==0, then return the rc.
+ * If UseExceptions ==1, then if rc >= CE_Failure, raise an exception.
+ */
+%typemap(python,out) CPLErr
+{
+  /* %typemap(out) CPLErr */
+  if ( bUseExceptions == 1 && $1 >= CE_Failure ) {
+    int errcode = CPLGetLastErrorNo();
+    const char *errmsg = CPLGetLastErrorMsg();
+    PyErr_Format( PyExc_RuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
+    SWIG_fail;
+  }
+}
+%typemap(python,ret,fragment="t_output_helper") CPLErr
+{
+  /* %typemap(ret) CPLErr */
+  if ( bUseExceptions == 0 ) {
+    $result = t_output_helper($result,SWIG_From_int( $1 ) );
+  }
+  else {
+    /* We're using exceptions.  The test in the out typemap means that
+       we know we have a valid return value.  Test if there are any return
+       values set by argout typemaps.
+    */
+    if ( $result == 0 ) {
+      /* No other return values set so return None */
+      $result = Py_None;
+      Py_INCREF($result);
+    }
+  }
 }
