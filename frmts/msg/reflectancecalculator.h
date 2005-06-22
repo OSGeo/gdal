@@ -1,10 +1,10 @@
-// msgcommand.h: interface for the msgcommand class.
+// ReflectanceCalculator.h: interface for the ReflectanceCalculator class.
 //
 //////////////////////////////////////////////////////////////////////
 
 /******************************************************************************
  *
- * Purpose:  Parse the src_dataset string that is meant for the MSG driver.
+ * Purpose:  Calculate reflectance values from radiance, for visual bands.
  * Author:   Bas Retsios, retsios@itc.nl
  *
  ******************************************************************************
@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
-#if !defined(AFX_MSGCOMMAND_H__64E1CE65_4F49_4198_9C4C_13625CF54EC5__INCLUDED_)
-#define AFX_MSGCOMMAND_H__64E1CE65_4F49_4198_9C4C_13625CF54EC5__INCLUDED_
+#if !defined(AFX_REFLECTANCECALCULATOR_H__C9960E01_2A1B_41F0_B903_7957F11618D2__INCLUDED_)
+#define AFX_REFLECTANCECALCULATOR_H__C9960E01_2A1B_41F0_B903_7957F11618D2__INCLUDED_
 
 #if _MSC_VER > 1000
 #pragma once
@@ -38,36 +38,24 @@
 
 #include <string>
 
-class MSGCommand  
+class ReflectanceCalculator  
 {
 public:
-  MSGCommand();
-  virtual ~MSGCommand();
-
-  std::string parse(std::string command_line);
-  std::string sFileName(int iSequence, int iStrip);
-  std::string sPrologueFileName(int iCycle);
-  std::string sCycle(int iCycle);
-  int iNrChannels();
-  int iChannel(int iNr);
-
-  static int iNrStrips(int iChannel);
-
-  char cDataConversion;
-  int iNrCycles;
-  int channel[12];
-
+	ReflectanceCalculator(std::string sTimeStamp, double rRTOA);
+	virtual ~ReflectanceCalculator();
+	double rGetReflectance(double rRadiance, double rLat, double rLon) const;
 private:
-  std::string sTrimSpaces(std::string str);
-  std::string sNextTerm(std::string str, int & iPos);
-  int iDaysInMonth(int iMonth, int iYear);
-  static std::string sChannel(int iChannel);
-  static int iChannel(std::string sChannel);
-  static std::string sTimeStampToFolder(std::string & sTimeStamp);
-  std::string sRootFolder;
-  std::string sTimeStamp;
-  int iStep;
-  bool fUseTimestampFolder;
+  double rZenithAngle(double phi, double rDeclin, double rHourAngle) const;
+	const double rDeclination() const;
+  double rHourAngle(double lam) const;
+  const double rSunDistance() const;
+  int iDaysInYear(int iYear) const;
+	int iDaysInMonth(int iMonth, int iYear) const;
+
+	const double m_rRTOA; // solar irradiance on Top of Atmosphere
+	int m_iYear; // e.g. 2005
+	int m_iDay; // 1-365/366
+	double m_rHours; // 0-24
 };
 
-#endif // !defined(AFX_MSGCOMMAND_H__64E1CE65_4F49_4198_9C4C_13625CF54EC5__INCLUDED_)
+#endif // !defined(AFX_REFLECTANCECALCULATOR_H__C9960E01_2A1B_41F0_B903_7957F11618D2__INCLUDED_)

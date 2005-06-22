@@ -29,6 +29,7 @@
 #include "MSGDataset.h"
 #include "prologue.h"
 #include "xritheaderparser.h"
+#include "reflectancecalculator.h"
 
 #include "PublicDecompWT\COMP\WT\Inc\CWTDecoder.h"
 #include "PublicDecompWT\DISE\CDataField.h" // Util namespace
@@ -48,6 +49,7 @@ const double MSGDataset::rB[12] = {-1, -1, -1, 3.471, 2.219, 0.485, 0.181, 0.060
 MSGDataset::MSGDataset()
 
 {
+  poTransform = NULL;
   pszProjection = CPLStrdup("");
   adfGeoTransform[0] = 0.0;
   adfGeoTransform[1] = 1.0;
@@ -64,6 +66,9 @@ MSGDataset::MSGDataset()
 MSGDataset::~MSGDataset()
 
 {
+  if( poTransform != NULL )
+    delete poTransform;
+
   CPLFree( pszProjection );
 }
 
@@ -216,11 +221,9 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Set Projection Information                                      */
 /* -------------------------------------------------------------------- */
 
-    OGRSpatialReference oSRS;
-
-    oSRS.SetGEOS(  0, 35785831, 0, 0 );
-    oSRS.SetWellKnownGeogCS( "WGS84" ); // Temporary line to satisfy ERDAS (otherwise the ellips is "unnamed"). Eventually this should become the custom a and b ellips (CGMS).
-    oSRS.exportToWkt( &(poDS->pszProjection) );
+    poDS->oSRS.SetGEOS(  0, 35785831, 0, 0 );
+    poDS->oSRS.SetWellKnownGeogCS( "WGS84" ); // Temporary line to satisfy ERDAS (otherwise the ellips is "unnamed"). Eventually this should become the custom a and b ellips (CGMS).
+    poDS->oSRS.exportToWkt( &(poDS->pszProjection) );
 
     // The following are 3 different try-outs for also setting the ellips a and b parameters.
     // We leave them out for now however because this does not work. In gdalwarp, when choosing some
@@ -243,8 +246,14 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     */
 
+/* -------------------------------------------------------------------- */
+/*   Create a transformer to LatLon (only for Reflectance calculation)  */
+/* -------------------------------------------------------------------- */
 
-
+    char *pszLLTemp;
+    (poDS->oSRS.GetAttrNode("GEOGCS"))->exportToWkt(&pszLLTemp);
+    poDS->oLL.importFromWkt(&pszLLTemp);
+    poDS->poTransform = OGRCreateCoordinateTransformation( &(poDS->oSRS), &(poDS->oLL) );
 
 /* -------------------------------------------------------------------- */
 /*      Set the radiometric calibration parameters.                     */
@@ -269,8 +278,10 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                         MSGRasterBand()                              */
 /************************************************************************/
 
+const double MSGRasterBand::rRTOA[12] = {20.76, 23.24, 19.85, -1, -1, -1, -1, -1, -1, -1, -1, 25.11};
+
 MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
-:  cScanDir('s')
+: cScanDir('s')
 , iLowerShift(0)
 , iSplitLine(0)
 
@@ -367,6 +378,23 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
         iSplitLine = abs(pp.idr()->PlannedCoverageHRV->UpperNorthLinePlanned - pp.idr()->PlannedCoverageHRV->LowerNorthLinePlanned) + 1; // without the "+ 1" the image of 1-Jan-2005 splits incorrectly
       }
     }
+
+/* -------------------------------------------------------------------- */
+/*  Initialize the ReflectanceCalculator with the band-dependent info.  */
+/* -------------------------------------------------------------------- */
+
+    int iCycle = 1 + (nBand - 1) / poDS->command.iNrChannels();
+    std::string sTimeStamp = poDS->command.sCycle(iCycle);
+
+    m_rc = new ReflectanceCalculator(sTimeStamp, rRTOA[nBand-1]);
+}
+
+/************************************************************************/
+/*                           ~MSGRasterBand()                           */
+/************************************************************************/
+MSGRasterBand::~MSGRasterBand()
+{
+    delete m_rc;
 }
 
 /************************************************************************/
@@ -549,14 +577,10 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
           }
           else if (eDataType == GDT_Float32) // radiometric calibration is requested
           {
-            double rCalibrationOffset = poGDS->rCalibrationOffset[iChannel - 1];
-            double rCalibrationSlope = poGDS->rCalibrationSlope[iChannel - 1];
-            double rConversionFactor = (poGDS->command.cDataConversion == 'R')?1:(10 / pow(poGDS->rCentralWvl[iChannel - 1], 2));
-            bool fTemperature = (poGDS->command.cDataConversion == 'T');
             if (nBlockXSize == chunck_width) // optimized version
             {
               for( int i = 0; i < nBlockSize; ++i )
-                  ((float *)pImage)[i] = (float)rRadiometricCorrection(cimg.Get()[y+=iStep], rCalibrationSlope, rCalibrationOffset, rConversionFactor, fTemperature, iChannel, poGDS);
+                ((float *)pImage)[i] = (float)rRadiometricCorrection(cimg.Get()[y+=iStep], iChannel, nBlockYOff * nBlockYSize + i / nBlockXSize, i % nBlockXSize, poGDS);
             }
             else
             {
@@ -567,8 +591,10 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 int iXOffset = j * nBlockXSize + nBlockXSize - chunck_width + iShift - 1;
                 if (fSplitStrip && (j >= iSplitRow)) // do not shift!!
                   iXOffset -= iShift;
-                for (int i = 0; i < chunck_width; ++i)
-                  ((float *)pImage)[++iXOffset] = (float)rRadiometricCorrection(cimg.Get()[y+=iStep], rCalibrationSlope, rCalibrationOffset, rConversionFactor, fTemperature, iChannel, poGDS);
+                int iXFrom = nBlockXSize - chunck_width + iShift;
+                int iXTo = nBlockXSize + iShift;
+                for (int i = iXFrom; i < iXTo; ++i) // range always equal to chunck_width .. this is only to utilize i to get iCol
+                  ((float *)pImage)[++iXOffset] = (float)rRadiometricCorrection(cimg.Get()[y+=iStep], iChannel, nBlockYOff * nBlockYSize + j, (fSplitStrip && (j >= iSplitRow))?(i - iShift):i, poGDS);
               }
             }
           }
@@ -587,30 +613,47 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     return CE_None;
 }
 
-double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, double rSlope, double rOffset, double rFactor, bool fTemperature, int iChannel, MSGDataset* poGDS)
+double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, int iChannel, int iRow, int iCol, MSGDataset* poGDS)
 {
-  if (fTemperature)
+	int iIndex = iChannel - 1; // just for speed optimization
+
+  double rSlope = poGDS->rCalibrationSlope[iIndex];
+  double rOffset = poGDS->rCalibrationOffset[iIndex];
+  
+  if (poGDS->command.cDataConversion == 'T') // reflectance for visual bands, temperatore for IR bands
   {
-    const double rC1 = 1.19104e-5;
-    const double rC2 = 1.43877e+0;
+    double rRadiance = rOffset + (iDN * rSlope);
 
-    double rR = rOffset + (iDN * rSlope);
-    /*
-    if (rR < 20)
-      rR = 20;
-    else if (rR > 350)
-      rR = 350;
-    */
-    // above boundary checks removed .. the / and log mathematical operations will fail silently, returning an appropriate temperature
+		if (iChannel >= 4 && iChannel <= 11) // Channels 4 to 11 (infrared): Temperature
+		{
+			const double rC1 = 1.19104e-5;
+			const double rC2 = 1.43877e+0;
 
-    int iIndex = iChannel - 1; // just for speed optimization
-    double cc2 = rC2 * poGDS->rVc[iIndex];
-    double cc1 = rC1 * pow(poGDS->rVc[iIndex], 3) / rR;
-    double rTemperature = ((cc2 / log(cc1 + 1)) - poGDS->rB[iIndex]) / poGDS->rA[iIndex];
-    return rTemperature;
+			double cc2 = rC2 * poGDS->rVc[iIndex];
+			double cc1 = rC1 * pow(poGDS->rVc[iIndex], 3) / rRadiance;
+			double rTemperature = ((cc2 / log(cc1 + 1)) - poGDS->rB[iIndex]) / poGDS->rA[iIndex];
+			return rTemperature;
+		}
+		else // Channels 1,2,3 and 12 (visual): Reflectance
+		{
+      double rLon = poGDS->adfGeoTransform[0] + iCol * poGDS->adfGeoTransform[1]; // this is
+      double rLat = poGDS->adfGeoTransform[3] + iRow * poGDS->adfGeoTransform[5]; // in "geos" meters
+      if ((poGDS->poTransform != NULL) && poGDS->poTransform->Transform( 1, &rLon, &rLat )) // transform it to latlon
+	      return m_rc->rGetReflectance(rRadiance, rLat, rLon);
+			else
+				return 0;
+		}
   }
-  else
-    return rFactor * (rOffset + (iDN * rSlope));
+  else // radiometric
+  {
+    if (poGDS->command.cDataConversion == 'R')
+      return rOffset + (iDN * rSlope);
+    else
+    {
+      double rFactor = 10 / pow(poGDS->rCentralWvl[iIndex], 2);
+      return rFactor * (rOffset + (iDN * rSlope));
+    }
+  }
 }
 
 /************************************************************************/
