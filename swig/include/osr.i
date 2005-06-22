@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.14  2005/06/22 18:42:33  kruland
+ * Don't apply a typemap for returning OGRErr.
+ *
  * Revision 1.13  2005/02/24 20:33:58  kruland
  * Back to import gdal_typemaps.i to prevent confusion.
  *
@@ -180,8 +183,6 @@ typedef double * double_17;
 %import gdal_typemaps.i
 
 typedef int OGRErr;
-
-%apply (THROW_OGR_ERROR) { OGRErr };
 
 /******************************************************************************
  *
