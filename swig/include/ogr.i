@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.27  2005/06/22 18:42:33  kruland
+ * Don't apply a typemap for returning OGRErr.
+ *
  * Revision 1.26  2005/03/14 21:33:33  hobu
  * rename method names that are common to both gdal and ogr
  * for the C# only
@@ -430,7 +433,6 @@ ds[0:4] would return a list of the first four layers."""
 
 
 %rename (Layer) OGRLayerShadow;
-//%apply (THROW_OGR_ERROR) {OGRErr};
 class OGRLayerShadow {
   OGRLayerShadow();
   ~OGRLayerShadow();
@@ -624,12 +626,8 @@ layer[0:4] would return a list of the first four features."""
 
 }; /* class OGRLayerShadow */
 
-//%clear (OGRErr);
-
-
 
 %rename (Feature) OGRFeatureShadow;
-%apply (THROW_OGR_ERROR) {OGRErr};
 class OGRFeatureShadow {
   OGRFeatureShadow();
   ~OGRFeatureShadow();
@@ -857,11 +855,8 @@ public:
 
 }; /* class OGRFeatureShadow */
 
-%clear (OGRErr);
-
 
 %rename (FeatureDefn) OGRFeatureDefnShadow;
-%apply (THROW_OGR_ERROR) {OGRErr};
 class OGRFeatureDefnShadow {
   OGRFeatureDefnShadow();
   ~OGRFeatureDefnShadow();
@@ -925,8 +920,6 @@ public:
 
 }; /* class OGRFeatureDefnShadow */
 
-%clear (OGRErr);
-
 
 %rename (FieldDefn) OGRFieldDefnShadow;
 
@@ -934,7 +927,6 @@ public:
 %rename (GetFieldType) GetType;
 #endif
 
-%apply (THROW_OGR_ERROR) {OGRErr};
 class OGRFieldDefnShadow {
   OGRFieldDefnShadow();
   ~OGRFieldDefnShadow();
@@ -1001,9 +993,6 @@ public:
 
 }; /* class OGRFieldDefnShadow */
 
-%clear (OGRErr);
-
-
 
 
 
@@ -1054,7 +1043,6 @@ public:
 
 
 %rename (Geometry) OGRGeometryShadow;
-%apply (THROW_OGR_ERROR) {OGRErr};
 class OGRGeometryShadow {
   OGRGeometryShadow();
   ~OGRGeometryShadow();
@@ -1292,10 +1280,6 @@ public:
 
 }; /* class OGRGeometryShadow */
 
-%clear (OGRErr);
-
-
-
 
 %{
 char const *OGRDriverShadow_get_name( OGRDriverShadow *h ) {
@@ -1321,10 +1305,8 @@ int OGRGetDriverCount();
 %rename (GetOpenDSCount) OGRGetOpenDSCount;
 int OGRGetOpenDSCount();
 
-%apply (THROW_OGR_ERROR) {OGRErr};
 %rename (SetGenerate_DB2_V72_BYTE_ORDER) OGRSetGenerate_DB2_V72_BYTE_ORDER;
 OGRErr OGRSetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER);
-%clear (OGRErr);
 
 
 %rename (RegisterAll) OGRRegisterAll();
