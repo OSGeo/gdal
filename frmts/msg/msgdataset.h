@@ -42,19 +42,23 @@ CPL_C_END
 /*                            MSGRasterBand                             */
 /************************************************************************/
 
+class ReflectanceCalculator;
 class MSGRasterBand : public GDALRasterBand
 {
   friend class MSGDataset;
 
   public:
     MSGRasterBand( MSGDataset *, int );
+    virtual ~MSGRasterBand();
     virtual CPLErr IReadBlock( int, int, void * );
 
   private:
-    double rRadiometricCorrection(unsigned int iDN, double rSlope, double rOffset, double rFactor, bool fTemperature, int iChannel, MSGDataset * poGDS);
+    double rRadiometricCorrection(unsigned int iDN, int iChannel, int iRow, int iCol, MSGDataset* poGDS);
     char cScanDir;
     int iLowerShift; // nr of pixels that lower HRV image is shifted compared to upper
     int iSplitLine; // line from top where the HRV image splits
+    ReflectanceCalculator* m_rc;
+    static const double rRTOA[12];
 };
 
 /************************************************************************/
@@ -77,6 +81,9 @@ class MSGDataset : public GDALDataset
     MSGCommand command;
     double adfGeoTransform[6]; // Calculate and store once as GetGeoTransform may be called multiple times
     char   *pszProjection;
+    OGRSpatialReference oSRS;
+    OGRSpatialReference oLL;
+    OGRCoordinateTransformation *poTransform;
     double rCalibrationOffset[12];
     double rCalibrationSlope[12];
     static const double rCentralWvl[12];

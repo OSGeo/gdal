@@ -1,5 +1,5 @@
 
-OBJ	=	msgdataset.obj xritheaderparser.obj prologue.obj msgcommand.obj
+OBJ	=	msgdataset.obj xritheaderparser.obj prologue.obj msgcommand.obj reflectancecalculator.obj
 
 EXTRAFLAGS = 	-I PublicDecompWT\DISE -I PublicDecompWT\COMP\WT\Inc -I PublicDecompWT\COMP\Inc
 

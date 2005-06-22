@@ -191,10 +191,8 @@ std::string MSGCommand::parse(std::string command_line)
             sErr = "It is not possible to combine channel 12 (HRV) with the other channels.";
           else if (iNrChannels() == 0 && sErr.length() == 0)
             sErr = "At least one channel should be specified.";
-          else if (((channel[0] != 0) || (channel[1] != 0) || (channel[2] != 0) || (channel[11] != 0)) && (cDataConversion == 'T'))
-            sErr = "Temperatures can not be calculated for the visible bands (1, 2, 3 and 12).";
           else if ((cDataConversion != 'N') && (cDataConversion != 'B') && (cDataConversion != 'R') && (cDataConversion != 'L') && (cDataConversion != 'T'))
-            sErr = "Please specify N(o change), B(yte conversion), R(adiometric calibration), L(radiometric using central wavelength) or T(emperature) for data conversion.";
+            sErr = "Please specify N(o change), B(yte conversion), R(adiometric calibration), L(radiometric using central wavelength) or T(reflectance or temperature) for data conversion.";
         }
         catch(...)
         {
