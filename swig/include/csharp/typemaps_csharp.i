@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.3  2005/06/22 18:41:30  kruland
+ * Renamed type for OGRErr typemap to use OGRErr instead of the made up
+ * THROW_OGR_ERROR.
+ *
  * Revision 1.2  2005/03/10 17:12:55  hobu
  * dummy typemaps for csharp.  Nothing here yet, but the names
  * are there
@@ -83,14 +87,14 @@ OGRErrMessages( int rc ) {
 
 }
 
-%typemap(csharp, out,fragment="OGRErrMessages") THROW_OGR_ERROR
+%typemap(csharp, out,fragment="OGRErrMessages") OGRErr
 {
-  /* %typemap(csharp, out) THROW_OGR_ERROR */
+  /* %typemap(csharp, out) OGRErr */
   
 }
-%typemap(csharp, ret) THROW_OGR_ERROR
+%typemap(csharp, ret) OGRErr
 {
-  /* %typemap(csharp, ret) THROW_OGR_ERROR */
+  /* %typemap(csharp, ret) OGRErr */
 
 }
 
