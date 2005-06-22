@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/06/22 16:18:38  fwarmerdam
+ * Fixed from JeffGIS for cloning DGNST_TAG_SET properly.
+ *
  * Revision 1.20  2004/03/23 16:17:12  warmerda
  * Corrected level setting of cell header groups, and also fixed total length
  * of cell groups.
@@ -647,8 +650,12 @@ DGNElemCore *DGNCloneElement( DGNHandle hDGNSrc, DGNHandle hDGNDst,
         {
             pasTagList[iTag].name = CPLStrdup( pasTagList[iTag].name );
             pasTagList[iTag].prompt = CPLStrdup( pasTagList[iTag].prompt );
+            if( pasTagList[iTag].type == 1 )
+                pasTagList[iTag].defaultValue.string = 
+                    CPLStrdup( pasTagList[iTag].defaultValue.string);
         }
 
+        psTS->tagList = pasTagList;
         psClone = (DGNElemCore *) psTS;
     }
     else
