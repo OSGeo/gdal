@@ -26,6 +26,10 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.19  2005/06/23 19:51:51  fwarmerdam
+#  Fixed support for non-square pixels c/o Matt Giger
+#  http://bugzilla.remotesensing.org/show_bug.cgi?id=874
+#
 #  Revision 1.18  2005/03/29 22:40:00  fwarmerdam
 #  Added -ot option.
 #
@@ -86,6 +90,8 @@ import gdal
 import sys
 
 verbose = 0
+
+global_list = []
 
 # =============================================================================
 def raster_copy( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
@@ -270,6 +276,8 @@ class file_info:
 
         # Open the source file, and copy the selected region.
         s_fh = gdal.Open( self.filename )
+
+        global_list.append( s_fh )
         
         return \
             raster_copy( s_fh, sw_xoff, sw_yoff, sw_xsize, sw_ysize, s_band,
@@ -361,7 +369,7 @@ if __name__ == '__main__':
 
         elif arg == '-ps':
             psize_x = float(argv[i+1])
-            psize_y = -1 * abs(float(argv[i+1]))
+            psize_y = -1 * abs(float(argv[i+2]))
             i = i + 2
 
         elif arg == '-ul_lr':
