@@ -15,5 +15,8 @@ clean:
 	-del *.obj
 
 nitfdump.exe:	nitfdump.obj $(NITFLIB_OBJ)
-	cl nitfdump.obj $(NITFLIB_OBJ) ..\..\port\cpl.lib
+	cl nitfdump.obj $(NITFLIB_OBJ) ..\..\port\cpl.lib ..\..\gdal.lib
+
+
+
 
