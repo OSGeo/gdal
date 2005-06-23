@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.24  2005/06/23 14:46:39  kruland
+ * Switch from using the poor-form exception in the custom CPLErrorHandler to
+ * using a global variable flag.
+ *
  * Revision 1.23  2005/06/22 18:48:23  kruland
  * Added bUseExceptions flag and supporting methods UseExceptions(),
  * DontUseExceptions() to the python binding.  This allows the user
@@ -132,32 +136,25 @@ typedef int FALSE_IS_ERR;
 
 %{
 int bUseExceptions=0;
+int bErrorHappened=0;
 %}
 #ifdef SWIGPYTHON
 %{
-class GDALError {
-public:
-  GDALError( int code, const char *msg ) :
-    code(code),
-    msg(msg)
-  {}
-  int code;
-  const char *msg;
-};
-
 void PythonErrorHandler(CPLErr eclass, int code, const char *msg ) {
-  throw GDALError(code,msg);
+  bErrorHappened = 1;
 }
 %}
 
 %inline {
 void UseExceptions() {
   bUseExceptions = 1;
+  bErrorHappened = 0;
   CPLSetErrorHandler( (CPLErrorHandler)PythonErrorHandler );
 }
 
 void DontUseExceptions() {
   bUseExceptions = 0;
+  bErrorHappened = 0;
   CPLSetErrorHandler( CPLDefaultErrorHandler );
 }
 }
@@ -165,11 +162,12 @@ void DontUseExceptions() {
 %include exception.i
 
 %exception {
-  try {
+  {
+    bErrorHappened = 0;
     $action
-  }
-  catch(GDALError e) {
-    SWIG_exception( SWIG_RuntimeError, e.msg );
+    if ( bErrorHappened ) {
+      SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+    }
   }
 }
 #endif /* SWIGPYTHON */
