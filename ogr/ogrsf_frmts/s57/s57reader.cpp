@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2005/06/23 18:22:48  fwarmerdam
+ * Fixed ReadNextFeature(poTarget=NULL) support.
+ *
  * Revision 1.49  2004/08/30 20:10:38  warmerda
  * implemented FetchLine() with optimized access
  *
@@ -236,6 +239,8 @@ S57Reader::~S57Reader()
     
     CPLFree( pszModuleName );
     CSLDestroy( papszOptions );
+
+    CPLFree( papoFDefnList );
 }
 
 /************************************************************************/
@@ -693,7 +698,7 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
             oFE_Index.SetClientInfoByIndex( nNextFEIndex, poFeatureDefn );
         }
 
-        if( poFeatureDefn != poTarget )
+        if( poFeatureDefn != poTarget && poTarget != NULL )
         {
             nNextFEIndex++;
             continue;
