@@ -30,6 +30,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/06/23 16:07:55  fwarmerdam
+ * Use polygon instead of rect object for sdo_filter.  Apparently this is needed
+ * for queries against geodetic coordinates.  Patch provided by Lorenzo
+ * Sassolini (http://www.maior.it).
+ *
  * Revision 1.32  2005/02/22 12:57:51  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -414,11 +419,15 @@ void OGROCITableLayer::BuildWhere()
         else
             oWHERE.Appendf( 15, "%d", nSRID );
         oWHERE.Append( ",NULL," );
-        oWHERE.Append( "MDSYS.SDO_ELEM_INFO_ARRAY(1,1003,3)," );
+        oWHERE.Append( "MDSYS.SDO_ELEM_INFO_ARRAY(1,1003,1)," );
         oWHERE.Append( "MDSYS.SDO_ORDINATE_ARRAY(" );
-        oWHERE.Appendf( 200, "%.16g,%.16g,%.16g,%.16g", 
+        oWHERE.Appendf( 600,
+                "%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g",
                         sEnvelope.MinX, sEnvelope.MinY,
-                        sEnvelope.MaxX, sEnvelope.MaxY );
+                        sEnvelope.MaxX, sEnvelope.MinY,
+                        sEnvelope.MaxX, sEnvelope.MaxY,
+                        sEnvelope.MinX, sEnvelope.MaxY,
+                        sEnvelope.MinX, sEnvelope.MinY);
         oWHERE.Append( ")), 'querytype=window') = 'TRUE' " );
     }
 
