@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.49  2005/06/24 20:54:00  fwarmerdam
+ * added explicit init/shutdown calls
+ *
  * Revision 1.48  2005/05/23 06:56:10  fwarmerdam
  * disable pam support for subfile streams
  *
@@ -1573,6 +1576,7 @@ void GDALDeregister_ECW( GDALDriver * )
         CSLDestroy( gpapszCSLookup );
         gpapszCSLookup = NULL;
         gnTriedCSFile = FALSE;
+        NCSecwShutdown();
     }
 }
 
@@ -1590,6 +1594,8 @@ void GDALRegister_ECW()
     {
         poDriver = new GDALDriver();
         
+        NCSecwInit();
+
         poDriver->SetDescription( "ECW" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "ERMapper Compressed Wavelets" );
