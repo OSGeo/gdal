@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2005/06/24 15:54:30  dron
+ * Properly fetch NODATA taking in account data type of the value.
+ *
  * Revision 1.34  2005/05/13 01:12:25  fwarmerdam
  * Fixed bug with block oriented access to 16bit data.
  *
@@ -314,7 +317,38 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDS, int nBand )
 /* -------------------------------------------------------------------- */
      if ( poDS->poNDPixel )
      {
-	 dfNoDataValue = poDS->poNDPixel->getSampleValueFloat32( nBand - 1 );
+         switch( poDS->eSampleType )
+         {
+             case LTI_DATATYPE_UINT8:
+             case LTI_DATATYPE_SINT8:
+                 dfNoDataValue = (double)
+                     poDS->poNDPixel->getSampleValueUint8( nBand - 1 );
+                 break;
+             case LTI_DATATYPE_UINT16:
+                 dfNoDataValue = (double)
+                     poDS->poNDPixel->getSampleValueUint16( nBand - 1 );
+                 break;
+             case LTI_DATATYPE_FLOAT32:
+                 dfNoDataValue =
+                     poDS->poNDPixel->getSampleValueFloat32( nBand - 1 );
+                 break;
+             case LTI_DATATYPE_SINT16:
+                 dfNoDataValue = (double)
+                     *(GInt16 *)poDS->poNDPixel->getSampleValueAddr( nBand - 1 );
+                 break;
+             case LTI_DATATYPE_UINT32:
+                 dfNoDataValue = (double)
+                     *(GUInt32 *)poDS->poNDPixel->getSampleValueAddr( nBand - 1 );
+                 break;
+             case LTI_DATATYPE_SINT32:
+                 dfNoDataValue = (double)
+                     *(GInt32 *)poDS->poNDPixel->getSampleValueAddr( nBand - 1 );
+                 break;
+             case LTI_DATATYPE_FLOAT64:
+                 dfNoDataValue =
+                     *(double *)poDS->poNDPixel->getSampleValueAddr( nBand - 1 );
+                 break;
+         }
 	 bNoDataSet = TRUE;
      }
      else
