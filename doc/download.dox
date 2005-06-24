@@ -42,6 +42,11 @@ part of the easy-to-install
 OS X</a> package by Lorenzo Moretti, and a standalone <a href="http://www.gdal.org/dl/GDAL-1.2.6.dmg">GDAL 1.2.6 installer</a> which includes a Framework 
 version of the GDAL library.<p>
 
+<li> For the fink and framework adverse another option is William Kyngesburye's
+GISLibs package, <a href="http://www.kyngchaos.com/macosx/downloads.php">
+binaries</a> and 
+<a href="http://www.kyngchaos.com/macosx/index.php">build instructions</a>.<p>
+
 <li> <a href="http://hobu.stat.iastate.edu/gdal-1.2.0win32.exe">http://hobu.stat.iastate.edu/gdal-1.2.0win32.exe</a>: Python 2.3 GDAL 1.2.0 add-on including ECW, netcdf, GML and PostGIS.<p>
 
 </ol>
