@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/06/26 00:16:51  fwarmerdam
+ * Performance improvements to GDALCopyWords() from Steve Sproule (Vexcel).
+ *
  * Revision 1.31  2005/05/23 06:43:10  fwarmerdam
  * Updated for locking of block refs
  *
@@ -641,10 +644,11 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
 /* ==================================================================== */
     for( int iWord = 0; iWord < nWordCount; iWord++ )
     {
-        GByte   *pabySrcWord, *pabyDstWord;
+        void   *pSrcWord, *pDstWord;
         double  dfPixelValue=0.0, dfPixelValueI=0.0;
 
-        pabySrcWord = ((GByte *) pSrcData) + iWord * nSrcPixelOffset;
+        pSrcWord = static_cast<GByte *>(pSrcData) + iWord * nSrcPixelOffset;
+        pDstWord = static_cast<GByte *>(pDstData) + iWord * nDstPixelOffset;
 
 /* -------------------------------------------------------------------- */
 /*      Fetch source value based on data type.                          */
@@ -652,97 +656,400 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
         switch( eSrcType )
         {
           case GDT_Byte:
-            dfPixelValue = *pabySrcWord;
-            break;
+          {
+              GByte byVal = *static_cast<GByte *>(pSrcWord);
+              switch( eDstType )
+              {
+                case GDT_UInt16:
+                  *static_cast<GUInt16 *>(pDstWord) = byVal;
+                  continue;
+                case GDT_Int16:
+                  *static_cast<GInt16 *>(pDstWord) = byVal;
+                  continue;
+                case GDT_UInt32:
+                  *static_cast<GUInt32 *>(pDstWord) = byVal;
+                  continue;
+                case GDT_Int32:
+                  *static_cast<GInt32 *>(pDstWord) = byVal;
+                  continue;
+                case GDT_CInt16:
+                {
+                    GInt16 *panDstWord = static_cast<GInt16 *>(pDstWord);
+                    panDstWord[0] = byVal;
+                    panDstWord[1] = 0;
+                    continue;
+                }
+                case GDT_CInt32:
+                {
+                    GInt32 *panDstWord = static_cast<GInt32 *>(pDstWord);
+                    panDstWord[0] = byVal;
+                    panDstWord[1] = 0;
+                    continue;
+                }
+                default:
+                  break;
+              }
+              dfPixelValue = byVal;
+          }
+          break;
 
           case GDT_UInt16:
           {
-              GUInt16   nVal;
-
-              memcpy( &nVal, pabySrcWord, 2 );
+              GUInt16 nVal = *static_cast<GUInt16 *>(pSrcWord);
+              switch( eDstType )
+              {
+                case GDT_Byte:
+                {
+                    GByte byVal;
+                    if( nVal > 255 )
+                        byVal = 255;
+                    else
+                        byVal = nVal;
+                    *static_cast<GByte *>(pDstWord) = byVal;
+                    continue;
+                }
+                case GDT_Int16:
+                  if( nVal > 32767 )
+                      nVal = 32767;
+                  *static_cast<GInt16 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_UInt32:
+                  *static_cast<GUInt32 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_Int32:
+                  *static_cast<GInt32 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_CInt16:
+                {
+                    GInt16 *panDstWord = static_cast<GInt16 *>(pDstWord);
+                    if( nVal > 32767 )
+                        nVal = 32767;
+                    panDstWord[0] = nVal;
+                    panDstWord[1] = 0;
+                    continue;
+                }
+                case GDT_CInt32:
+                {
+                    GInt32 *panDstWord = static_cast<GInt32 *>(pDstWord);
+                    panDstWord[0] = nVal;
+                    panDstWord[1] = 0;
+                    continue;
+                }
+                default:
+                  break;
+              }
               dfPixelValue = nVal;
           }
           break;
           
           case GDT_Int16:
           {
-              GInt16    nVal;
-
-              memcpy( &nVal, pabySrcWord, 2 );
+              GInt16 nVal = *static_cast<GInt16 *>(pSrcWord);
+              switch( eDstType )
+              {
+                case GDT_Byte:
+                {
+                    GByte byVal;
+                    if( nVal > 255 )
+                        byVal = 255;
+                    else if (nVal < 0)
+                        byVal = 0;
+                    else
+                        byVal = nVal;
+                    *static_cast<GByte *>(pDstWord) = byVal;
+                    continue;
+                }
+                case GDT_UInt16:
+                  if( nVal < 0 )
+                      nVal = 0;
+                  *static_cast<GUInt16 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_UInt32:
+                  if( nVal < 0 )
+                      nVal = 0;
+                  *static_cast<GUInt32 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_Int32:
+                  *static_cast<GInt32 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_CInt16:
+                {
+                    GInt16 *panDstWord = static_cast<GInt16 *>(pDstWord);
+                    panDstWord[0] = nVal;
+                    panDstWord[1] = 0;
+                    continue;
+                }
+                case GDT_CInt32:
+                {
+                    GInt32 *panDstWord = static_cast<GInt32 *>(pDstWord);
+                    panDstWord[0] = nVal;
+                    panDstWord[1] = 0;
+                    continue;
+                }
+                default:
+                  break;
+              }
               dfPixelValue = nVal;
           }
           break;
           
           case GDT_Int32:
           {
-              GInt32    nVal;
-
-              memcpy( &nVal, pabySrcWord, 4 );
+              GInt32 nVal = *static_cast<GInt32 *>(pSrcWord);
+              switch( eDstType )
+              {
+                case GDT_Byte:
+                {
+                    GByte byVal;
+                    if( nVal > 255 )
+                        byVal = 255;
+                    else if (nVal < 0)
+                        byVal = 0;
+                    else
+                        byVal = nVal;
+                    *static_cast<GByte *>(pDstWord) = byVal;
+                    continue;
+                }
+                case GDT_UInt16:
+                  if( nVal > 65535 )
+                      nVal = 65535;
+                  else if( nVal < 0 )
+                      nVal = 0;
+                  *static_cast<GUInt16 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_Int16:
+                  if( nVal > 32767 )
+                      nVal = 32767;
+                  else if( nVal < -32768)
+                      nVal = -32768;
+                  *static_cast<GInt16 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_UInt32:
+                  if( nVal < 0 )
+                      nVal = 0;
+                  *static_cast<GUInt32 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_CInt16:
+                {
+                    GInt16 *panDstWord = static_cast<GInt16 *>(pDstWord);
+                    if( nVal > 32767 )
+                        nVal = 32767;
+                    else if( nVal < -32768)
+                        nVal = -32768;
+                    panDstWord[0] = nVal;
+                    panDstWord[1] = 0;
+                    continue;
+                }
+                case GDT_CInt32:
+                {
+                    GInt32 *panDstWord = static_cast<GInt32 *>(pDstWord);
+                    panDstWord[0] = nVal;
+                    panDstWord[1] = 0;
+                    continue;
+                }
+                default:
+                  break;
+              }
               dfPixelValue = nVal;
           }
           break;
           
           case GDT_UInt32:
           {
-              GUInt32   nVal;
-
-              memcpy( &nVal, pabySrcWord, 4 );
+              GUInt32 nVal = *static_cast<GUInt32 *>(pSrcWord);
+              switch( eDstType )
+              {
+                case GDT_Byte:
+                {
+                    GByte byVal;
+                    if( nVal > 255 )
+                        byVal = 255;
+                    else if (nVal < 0)
+                        byVal = 0;
+                    else
+                        byVal = nVal;
+                    *static_cast<GByte *>(pDstWord) = byVal;
+                    continue;
+                }
+                case GDT_UInt16:
+                  if( nVal > 65535 )
+                      nVal = 65535;
+                  *static_cast<GUInt16 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_Int16:
+                  if( nVal > 32767 )
+                      nVal = 32767;
+                  *static_cast<GInt16 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_Int32:
+                  if( nVal > 2147483647UL )
+                      nVal = 2147483647UL;
+                  *static_cast<GInt32 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_CInt16:
+                {
+                    GInt16 *panDstWord = static_cast<GInt16 *>(pDstWord);
+                    if( nVal > 32767 )
+                        nVal = 32767;
+                    panDstWord[0] = nVal;
+                    panDstWord[1] = 0;
+                    continue;
+                }
+                case GDT_CInt32:
+                {
+                    GInt32 *panDstWord = static_cast<GInt32 *>(pDstWord);
+                    if( nVal > 2147483647UL )
+                        nVal = 2147483647UL;
+                    panDstWord[0] = nVal;
+                    panDstWord[1] = 0;
+                    continue;
+                }
+                default:
+                  break;
+              }
               dfPixelValue = nVal;
           }
           break;
           
+          case GDT_CInt16:
+          {
+              GInt16 *panSrcWord = static_cast<GInt16 *>(pSrcWord);
+              GInt16 nVal = panSrcWord[0];
+              switch( eDstType )
+              {
+                case GDT_Byte:
+                {
+                    GByte byVal;
+                    if( nVal > 255 )
+                        byVal = 255;
+                    else if (nVal < 0)
+                        byVal = 0;
+                    else
+                        byVal = nVal;
+                    *static_cast<GByte *>(pDstWord) = byVal;
+                    continue;
+                }
+                case GDT_Int16:
+                  *static_cast<GInt16 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_UInt16:
+                  if( nVal < 0 )
+                      nVal = 0;
+                  *static_cast<GUInt16 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_UInt32:
+                  if( nVal < 0 )
+                      nVal = 0;
+                  *static_cast<GUInt32 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_Int32:
+                  *static_cast<GInt32 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_CInt32:
+                {
+                    GInt32 *panDstWord = static_cast<GInt32 *>(pDstWord);
+                    panDstWord[0] = panSrcWord[0];
+                    panDstWord[1] = panSrcWord[1];
+                    continue;
+                }
+                default:
+                  break;
+              }
+              dfPixelValue = panSrcWord[0];
+              dfPixelValueI = panSrcWord[1];
+          }
+          break;
+          
+          case GDT_CInt32:
+          {
+              GInt32 *panSrcWord = static_cast<GInt32 *>(pSrcWord);
+              GInt32 nVal = panSrcWord[0];
+              switch( eDstType )
+              {
+                case GDT_Byte:
+                {
+                    GByte byVal;
+                    if( nVal > 255 )
+                        byVal = 255;
+                    else if (nVal < 0)
+                        byVal = 0;
+                    else
+                        byVal = nVal;
+                    *static_cast<GByte *>(pDstWord) = byVal;
+                    continue;
+                }
+                case GDT_Int16:
+                  if( nVal > 32767 )
+                      nVal = 32767;
+                  else if( nVal < -32768)
+                      nVal = -32768;
+                  *static_cast<GInt16 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_UInt16:
+                  if( nVal > 65535 )
+                      nVal = 65535;
+                  else if( nVal < 0 )
+                      nVal = 0;
+                  *static_cast<GUInt16 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_UInt32:
+                  if( nVal < 0 )
+                      nVal = 0;
+                  *static_cast<GUInt32 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_Int32:
+                  *static_cast<GInt32 *>(pDstWord) = nVal;
+                  continue;
+                case GDT_CInt16:
+                {
+                    GInt16 *panDstWord = static_cast<GInt16 *>(pDstWord);
+                    if( nVal > 32767 )
+                        nVal = 32767;
+                    else if( nVal < -32768)
+                        nVal = -32768;
+                    panDstWord[0] = nVal;
+                    nVal = panSrcWord[1];
+                    if( nVal > 32767 )
+                        nVal = 32767;
+                    else if( nVal < -32768)
+                        nVal = -32768;
+                    panDstWord[1] = nVal;
+                    continue;
+                }
+                default:
+                  break;
+              }
+              dfPixelValue = panSrcWord[0];
+              dfPixelValueI = panSrcWord[1];
+          }
+          break;
+
           case GDT_Float32:
           {
-              float     fVal;
-
-              memcpy( &fVal, pabySrcWord, 4 );
+              float fVal = *static_cast<float *>(pSrcWord);
               dfPixelValue = fVal;
           }
           break;
           
           case GDT_Float64:
           {
-              memcpy( &dfPixelValue, pabySrcWord, 8 );
+              dfPixelValue = *static_cast<double *>(pSrcWord);
           }
           break;
 
-          case GDT_CInt16:
-          {
-              GInt16    nVal;
-
-              memcpy( &nVal, pabySrcWord, 2 );
-              dfPixelValue = nVal;
-              memcpy( &nVal, pabySrcWord+2, 2 );
-              dfPixelValueI = nVal;
-          }
-          break;
-          
-          case GDT_CInt32:
-          {
-              GInt32    nVal;
-
-              memcpy( &nVal, pabySrcWord, 4 );
-              dfPixelValue = nVal;
-              memcpy( &nVal, pabySrcWord+4, 4 );
-              dfPixelValueI = nVal;
-          }
-          break;
-          
           case GDT_CFloat32:
           {
-              float     fVal;
-
-              memcpy( &fVal, pabySrcWord, 4 );
-              dfPixelValue = fVal;
-              memcpy( &fVal, pabySrcWord+4, 4 );
-              dfPixelValueI = fVal;
+              float *pafSrcWord = static_cast<float *>(pSrcWord);
+              dfPixelValue = pafSrcWord[0];
+              dfPixelValueI = pafSrcWord[1];
           }
           break;
           
           case GDT_CFloat64:
           {
-              memcpy( &dfPixelValue, pabySrcWord, 8 );
-              memcpy( &dfPixelValueI, pabySrcWord+8, 8 );
+              double *padfSrcWord = static_cast<double *>(pSrcWord);
+              dfPixelValue = padfSrcWord[0];
+              dfPixelValueI = padfSrcWord[1];
           }
           break;
 
@@ -753,11 +1060,12 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
 /* -------------------------------------------------------------------- */
 /*      Set the destination pixel, doing range clipping as needed.      */
 /* -------------------------------------------------------------------- */
-        pabyDstWord = ((GByte *) pDstData) + iWord * nDstPixelOffset;
         switch( eDstType )
         {
           case GDT_Byte:
           {
+              GByte *pabyDstWord = static_cast<GByte *>(pDstWord);
+
               dfPixelValue += (float) 0.5;
 
               if( dfPixelValue < 0.0 )
@@ -782,7 +1090,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
               else
                   nVal = (GUInt16) dfPixelValue;
 
-              memcpy( pabyDstWord, &nVal, 2 );
+              *static_cast<GUInt16 *>(pDstWord) = nVal;
           }
           break;
 
@@ -799,7 +1107,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
               else
                   nVal = (GInt16) floor(dfPixelValue);
 
-              memcpy( pabyDstWord, &nVal, 2 );
+              *static_cast<GInt16 *>(pDstWord) = nVal;
           }
           break;
           
@@ -816,7 +1124,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
               else
                   nVal = (GInt32) dfPixelValue;
 
-              memcpy( pabyDstWord, &nVal, 4 );
+              *static_cast<GUInt32 *>(pDstWord) = nVal;
           }
           break;
           
@@ -833,27 +1141,24 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
               else
                   nVal = (GInt32) floor(dfPixelValue);
 
-              memcpy( pabyDstWord, &nVal, 4 );
+              *static_cast<GInt32 *>(pDstWord) = nVal;
           }
           break;
 
           case GDT_Float32:
           {
-              float     fVal;
-
-              fVal = (float) dfPixelValue;
-
-              memcpy( pabyDstWord, &fVal, 4 );
+              *static_cast<float *>(pDstWord) = dfPixelValue;
           }
           break;
 
           case GDT_Float64:
-              memcpy( pabyDstWord, &dfPixelValue, 8 );
-              break;
+            *static_cast<double *>(pDstWord) = dfPixelValue;
+            break;
               
           case GDT_CInt16:
           {
               GInt16    nVal;
+              GInt16 *panDstWord = static_cast<GInt16 *>(pDstWord);
               
               dfPixelValue += 0.5;
               dfPixelValueI += 0.5;
@@ -864,7 +1169,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
                   nVal = 32767;
               else
                   nVal = (GInt16) floor(dfPixelValue);
-              memcpy( pabyDstWord, &nVal, 2 );
+              panDstWord[0] = nVal;
 
               if( dfPixelValueI < -32768 )
                   nVal = -32768;
@@ -872,13 +1177,14 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
                   nVal = 32767;
               else
                   nVal = (GInt16) floor(dfPixelValueI);
-              memcpy( pabyDstWord+2, &nVal, 2 );
+              panDstWord[1] = nVal;
           }
           break;
           
           case GDT_CInt32:
           {
               GInt32    nVal;
+              GInt32 *panDstWord = static_cast<GInt32 *>(pDstWord);
               
               dfPixelValue += 0.5;
               dfPixelValueI += 0.5;
@@ -890,7 +1196,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
               else
                   nVal = (GInt32) floor(dfPixelValue);
 
-              memcpy( pabyDstWord, &nVal, 4 );
+              panDstWord[0] = nVal;
 
               if( dfPixelValueI < -2147483647.0 )
                   nVal = -2147483647;
@@ -899,25 +1205,25 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
               else
                   nVal = (GInt32) floor(dfPixelValueI);
 
-              memcpy( pabyDstWord+4, &nVal, 4 );
+              panDstWord[1] = nVal;
           }
           break;
 
           case GDT_CFloat32:
           {
-              float     fVal;
-
-              fVal = (float) dfPixelValue;
-              memcpy( pabyDstWord, &fVal, 4 );
-              fVal = (float) dfPixelValueI;
-              memcpy( pabyDstWord+4, &fVal, 4 );
+              float *pafDstWord = static_cast<float *>(pDstWord);
+              pafDstWord[0] = dfPixelValue;
+              pafDstWord[1] = dfPixelValueI;
           }
           break;
 
           case GDT_CFloat64:
-              memcpy( pabyDstWord, &dfPixelValue, 8 );
-              memcpy( pabyDstWord+8, &dfPixelValueI, 8 );
-              break;
+          {
+              double *padfDstWord = static_cast<double *>(pDstWord);
+              padfDstWord[0] = dfPixelValue;
+              padfDstWord[1] = dfPixelValueI;
+          }
+          break;
               
           default:
             CPLAssert( FALSE );
