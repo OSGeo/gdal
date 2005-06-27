@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/06/27 17:00:50  fwarmerdam
+ * Fixed bug with cleaning up hResultSet in GetFeature(id).
+ *
  * Revision 1.4  2005/02/24 21:54:36  fwarmerdam
  * added support for decimal fields.
  *
@@ -407,7 +410,7 @@ OGRFeature *OGRMySQLTableLayer::GetFeature( long nFeatureId )
 /* -------------------------------------------------------------------- */
 /*      Discard any existing resultset.                                 */
 /* -------------------------------------------------------------------- */
-    poDS->InterruptLongResult();
+    ResetReading();
 
 /* -------------------------------------------------------------------- */
 /*      Prepare query command that will just fetch the one record of    */
@@ -461,6 +464,7 @@ OGRFeature *OGRMySQLTableLayer::GetFeature( long nFeatureId )
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
     mysql_free_result( hResultSet );
+    hResultSet = NULL;
 
     return poFeature;
 }
