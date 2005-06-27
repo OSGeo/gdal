@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/06/27 20:13:11  fwarmerdam
+ * Delete poSRS if no longer referenced.
+ *
  * Revision 1.11  2005/05/16 20:09:46  fwarmerdam
  * added spatial query on x/y columns
  *
@@ -127,7 +130,10 @@ OGRVRTLayer::~OGRVRTLayer()
     }
 
     if( poSRS != NULL )
-        poSRS->Dereference();
+    {
+        if( poSRS->Dereference() == 0 )
+            delete poSRS;
+    }
 
     if( poSrcDS != NULL )
     {
