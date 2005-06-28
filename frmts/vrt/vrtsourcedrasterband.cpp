@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/06/28 14:51:05  fwarmerdam
+ * added error reporting if there are no sources
+ *
  * Revision 1.3  2004/08/25 14:21:00  warmerda
  * Added support for overviews in sourced band RasterIO() contributed
  * by Sebasien Grignard.
@@ -293,7 +296,12 @@ CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
     if( nSources > 0 )
         return CE_None;
     else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "No valid sources found for band in VRT file:\n%s",
+                  pszVRTPath );
         return CE_Failure;
+    }
 }
 
 /************************************************************************/
