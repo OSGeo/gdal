@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/06/28 20:22:40  fwarmerdam
+ * treat xml: domains as a special inline XML format
+ *
  * Revision 1.2  2005/05/23 06:45:59  fwarmerdam
  * fixed flaw in walking papszMD
  *
@@ -187,35 +190,63 @@ int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree )
 {
     CPLXMLNode *psMetadata;
 
+/* ==================================================================== */
+/*      Process all <Metadata> elements, each for one domain.           */
+/* ==================================================================== */
     for( psMetadata = psTree->psChild; 
          psMetadata != NULL; psMetadata = psMetadata->psNext )
     {
         char **papszMD = NULL;
         CPLXMLNode *psMDI;
-        const char *pszDomain = "";
+        const char *pszDomain, *pszFormat;
 
         if( psMetadata->eType != CXT_Element
             || !EQUAL(psMetadata->pszValue,"Metadata") )
             continue;
 
-        /* Format is <MDI key="...">value_Text</MDI> */
+        pszDomain = CPLGetXMLValue( psMetadata, "domain", "" );
+        pszFormat = CPLGetXMLValue( psMetadata, "format", "" );
 
-        for( psMDI = psMetadata->psChild; psMDI != NULL; psMDI = psMDI->psNext )
+/* -------------------------------------------------------------------- */
+/*      XML format subdocuments.                                        */
+/* -------------------------------------------------------------------- */
+        if( EQUAL(pszFormat,"xml") )
         {
-            if( psMDI->eType == CXT_Attribute 
-                && EQUAL(psMDI->pszValue,"domain") 
-                && psMDI->psChild != NULL )
-                pszDomain = psMDI->psChild->pszValue; 
+            CPLXMLNode *psSubDoc;
 
-            if( !EQUAL(psMDI->pszValue,"MDI") || psMDI->eType != CXT_Element 
-                || psMDI->psChild == NULL || psMDI->psChild->psNext == NULL 
-                || psMDI->psChild->eType != CXT_Attribute
-                || psMDI->psChild->psChild == NULL )
-                continue;
+            /* find first non-attribute child of current element */
+            psSubDoc = psMetadata->psChild;
+            while( psSubDoc != NULL && psSubDoc->eType == CXT_Attribute )
+                psSubDoc = psSubDoc->psNext;
+            
+            char *pszDoc = CPLSerializeXMLTree( psSubDoc );
 
-            papszMD = 
-                CSLSetNameValue( papszMD, psMDI->psChild->psChild->pszValue, 
-                                 psMDI->psChild->psNext->pszValue );
+            papszMD = (char **) CPLCalloc(sizeof(char*),2);
+            papszMD[0] = pszDoc;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Name value format.                                              */
+/*      <MDI key="...">value_Text</MDI>                                 */
+/* -------------------------------------------------------------------- */
+        else
+        {
+            for( psMDI = psMetadata->psChild; psMDI != NULL; 
+                 psMDI = psMDI->psNext )
+            {
+                if( !EQUAL(psMDI->pszValue,"MDI") 
+                    || psMDI->eType != CXT_Element 
+                    || psMDI->psChild == NULL 
+                    || psMDI->psChild->psNext == NULL 
+                    || psMDI->psChild->eType != CXT_Attribute
+                    || psMDI->psChild->psChild == NULL )
+                    continue;
+                
+                papszMD = 
+                    CSLSetNameValue( papszMD, 
+                                     psMDI->psChild->psChild->pszValue, 
+                                     psMDI->psChild->psNext->pszValue );
+            }
         }
 
         SetMetadata( papszMD, pszDomain );
@@ -240,29 +271,51 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
     {
         char **papszMD = papapszMetadataLists[iDomain];
         CPLXMLNode *psMD;
+        int bFormatXML = FALSE;
         
         psMD = CPLCreateXMLNode( NULL, CXT_Element, "Metadata" );
 
         if( strlen( papszDomainList[iDomain] ) > 0 )
             CPLCreateXMLNode( 
-                CPLCreateXMLNode( psMD, CXT_Attribute, "Domain" ), 
+                CPLCreateXMLNode( psMD, CXT_Attribute, "domain" ), 
                 CXT_Text, papszDomainList[iDomain] );
-        
-        for( int i = 0; papszMD != NULL && papszMD[i] != NULL; i++ )
-        {
-            const char *pszRawValue;
-            char *pszKey;
-            CPLXMLNode *psMDI;
-        
-            pszRawValue = CPLParseNameValue( papszMD[i], &pszKey );
 
-            psMDI = CPLCreateXMLNode( psMD, CXT_Element, "MDI" );
-            CPLSetXMLValue( psMDI, "#key", pszKey );
-            CPLCreateXMLNode( psMDI, CXT_Text, pszRawValue );
-            
-            CPLFree( pszKey );
+        if( EQUALN(papszDomainList[iDomain],"xml:",4) 
+            && CSLCount(papszMD) == 1 )
+        {
+            CPLXMLNode *psValueAsXML = CPLParseXMLString( papszMD[0] );
+            if( psValueAsXML != NULL )
+            {
+                bFormatXML = TRUE;
+
+                CPLCreateXMLNode( 
+                    CPLCreateXMLNode( psMD, CXT_Attribute, "format" ), 
+                    CXT_Text, "xml" );
+                
+                CPLAddXMLChild( psMD, psValueAsXML );
+
+                printf( "Got XML metadata item\n" );
+            }
         }
 
+        if( !bFormatXML )
+        {
+            for( int i = 0; papszMD != NULL && papszMD[i] != NULL; i++ )
+            {
+                const char *pszRawValue;
+                char *pszKey;
+                CPLXMLNode *psMDI;
+                
+                pszRawValue = CPLParseNameValue( papszMD[i], &pszKey );
+                
+                psMDI = CPLCreateXMLNode( psMD, CXT_Element, "MDI" );
+                CPLSetXMLValue( psMDI, "#key", pszKey );
+                CPLCreateXMLNode( psMDI, CXT_Text, pszRawValue );
+                
+                CPLFree( pszKey );
+            }
+        }
+            
         if( psFirst == NULL )
             psFirst = psMD;
         else
