@@ -170,9 +170,14 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Capture raster size from MSG prologue and submit it to GDAL     */
 /* -------------------------------------------------------------------- */
 
+    bool fLowerHRVShiftedRight = pp.idr()->PlannedCoverageHRV->UpperWestColumnPlanned >= pp.idr()->PlannedCoverageHRV->LowerWestColumnPlanned;
     if (command.channel[11] != 0) // the HRV band
     {
-      int iRasterXSize = abs(pp.idr()->PlannedCoverageHRV->UpperWestColumnPlanned - pp.idr()->PlannedCoverageHRV->LowerEastColumnPlanned) + 1;
+      int iRasterXSize;
+      if (fLowerHRVShiftedRight)
+        iRasterXSize = abs(pp.idr()->PlannedCoverageHRV->UpperWestColumnPlanned - pp.idr()->PlannedCoverageHRV->LowerEastColumnPlanned) + 1;
+      else
+        iRasterXSize = abs(pp.idr()->PlannedCoverageHRV->LowerWestColumnPlanned - pp.idr()->PlannedCoverageHRV->UpperEastColumnPlanned) + 1;
       iRasterXSize += 20; // reserve space for different x-sizes in time series
       iRasterXSize = 100 * (1 + iRasterXSize / 100); // next multiple of 100 .. to have a more or less constant x-size over multiple runs
       poDS->nRasterXSize = iRasterXSize;
@@ -195,11 +200,16 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (command.channel[11] != 0)
     {
-      int iXOffset = poDS->nRasterXSize - pp.idr()->PlannedCoverageHRV->UpperWestColumnPlanned;
+      int iXOffset = 0;
+      if (fLowerHRVShiftedRight)
+        iXOffset = poDS->nRasterXSize - pp.idr()->PlannedCoverageHRV->UpperWestColumnPlanned + pp.idr()->PlannedCoverageHRV->LowerEastColumnPlanned - 1;
       rPixelSizeX = 1000 * pp.idr()->ReferenceGridHRV->ColumnDirGridStep;
       rPixelSizeY = 1000 * pp.idr()->ReferenceGridHRV->LineDirGridStep;
       rMinX = -rPixelSizeX * (pp.idr()->ReferenceGridHRV->NumberOfColumns / 2.0); // assumption: (0,0) falls in centre
-      rMinX += rPixelSizeX * (pp.idr()->ReferenceGridHRV->NumberOfColumns - pp.idr()->PlannedCoverageHRV->UpperWestColumnPlanned);
+      if (fLowerHRVShiftedRight)
+        rMinX += rPixelSizeX * (pp.idr()->ReferenceGridHRV->NumberOfColumns - pp.idr()->PlannedCoverageHRV->UpperWestColumnPlanned);
+      else
+        rMinX += rPixelSizeX * (pp.idr()->ReferenceGridHRV->NumberOfColumns - pp.idr()->PlannedCoverageHRV->LowerWestColumnPlanned);
       rMinX -= rPixelSizeX * iXOffset;
       rMaxY = rPixelSizeY * (pp.idr()->ReferenceGridHRV->NumberOfLines / 2.0);
     }
@@ -374,7 +384,7 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
           pp.read(p_file);
         p_file.close();
 
-        iLowerShift = abs(pp.idr()->PlannedCoverageHRV->UpperWestColumnPlanned - pp.idr()->PlannedCoverageHRV->LowerWestColumnPlanned);
+        iLowerShift = pp.idr()->PlannedCoverageHRV->UpperWestColumnPlanned - pp.idr()->PlannedCoverageHRV->LowerWestColumnPlanned;
         iSplitLine = abs(pp.idr()->PlannedCoverageHRV->UpperNorthLinePlanned - pp.idr()->PlannedCoverageHRV->LowerNorthLinePlanned) + 1; // without the "+ 1" the image of 1-Jan-2005 splits incorrectly
       }
     }
@@ -454,10 +464,15 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             iSplitRow = iSplitLine % xhp.xrit_hdr().nl;
             int iSplitBlock = iSplitLine / xhp.xrit_hdr().nl;
             fSplitStrip = (nBlockYOff == iSplitBlock); // in the split strip the "shift" only happens before the split "row"
+
+            // When iLowerShift > 0, the lower HRV image is shifted to the right and must be right-aligned in the raster.
+            // When iLowerShift < 0, the lower HRV image is shifted to the left and must be left-aligned in the raster.
+            // The available raster may be wider than needed, so that time series don't fall outside the raster.
+            
             if (nBlockYOff <= iSplitBlock)
-              iShift = -iLowerShift; // when iShift is negative, shift image to the left
-            // In order to right-align the HRV image in the available square, we shift the upper image to the left
-            // instead of shifting the lower image to the right
+              iShift = -iLowerShift;
+            // iShift < 0 means upper image moves to the left, and the lower image aligns to the right
+            // iShift > 0 means upper image moves to the right, and the lower image aligns to the left
           }
           
           std::auto_ptr< unsigned char > ibuf( new unsigned char[nb_ibytes]);
@@ -534,9 +549,11 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
               {
                 for( int j = 0; j < chunck_height; ++j ) // assumption: nBlockYSize == chunck_height
                 { 
-                  int iXOffset = j * nBlockXSize + nBlockXSize - chunck_width + iShift - 1;
-                  if (fSplitStrip && (j >= iSplitRow)) // do not shift!!
+                  int iXOffset = j * nBlockXSize + iShift;
+                  if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
                     iXOffset -= iShift;
+                  if (iLowerShift > 0) // In this case right-align the lower HRV part
+                    iXOffset += nBlockXSize - chunck_width - 1;
                   for (int i = 0; i < chunck_width; ++i)
                     ((GByte *)pImage)[++iXOffset] = cimg.Get()[y+=iStep] / 4;
                 }
@@ -545,9 +562,11 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
               {
                 for( int j = 0; j < chunck_height; ++j ) // assumption: nBlockYSize == chunck_height
                 { 
-                  int iXOffset = j * nBlockXSize + nBlockXSize - chunck_width + iShift - 1;
-                  if (fSplitStrip && (j >= iSplitRow)) // do not shift!!
+                  int iXOffset = j * nBlockXSize + iShift;
+                  if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
                     iXOffset -= iShift;
+                  if (iLowerShift > 0) // In this case right-align the lower HRV part
+                    iXOffset += nBlockXSize - chunck_width - 1;
                   for (int i = 0; i < chunck_width; ++i)
                     ((GByte *)pImage)[++iXOffset] = cimg.Get()[y+=iStep];
                 }
@@ -567,9 +586,11 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
               memset(pImage, 0, nBlockXSize * nBlockYSize * iBytesPerPixel);
               for( int j = 0; j < chunck_height; ++j ) // assumption: nBlockYSize == chunck_height
               {
-                int iXOffset = j * nBlockXSize + nBlockXSize - chunck_width + iShift - 1;
-                if (fSplitStrip && (j >= iSplitRow)) // do not shift!!
+                int iXOffset = j * nBlockXSize + iShift;
+                if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
                   iXOffset -= iShift;
+                if (iLowerShift > 0) // In this case right-align the lower HRV part
+                  iXOffset += nBlockXSize - chunck_width - 1;
                 for (int i = 0; i < chunck_width; ++i)
                   ((GUInt16 *)pImage)[++iXOffset] = cimg.Get()[y+=iStep];
               }
@@ -588,11 +609,22 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
               memset(pImage, 0, nBlockXSize * nBlockYSize * iBytesPerPixel);
               for( int j = 0; j < chunck_height; ++j ) // assumption: nBlockYSize == chunck_height
               {
-                int iXOffset = j * nBlockXSize + nBlockXSize - chunck_width + iShift - 1;
-                if (fSplitStrip && (j >= iSplitRow)) // do not shift!!
+                int iXOffset = j * nBlockXSize + iShift;
+                if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
                   iXOffset -= iShift;
-                int iXFrom = nBlockXSize - chunck_width + iShift;
-                int iXTo = nBlockXSize + iShift;
+                int iXFrom;
+                int iXTo;
+                if (iLowerShift > 0) // In this case right-align the lower HRV part
+                {
+                  iXOffset += nBlockXSize - chunck_width - 1;
+                  iXFrom = nBlockXSize - chunck_width + iShift;
+                  iXTo = nBlockXSize + iShift;
+                }
+                else // left-align the lower HRV part
+                {
+                  iXFrom = 1 + iShift;
+                  iXTo = 1 + iShift + chunck_width;
+                }
                 for (int i = iXFrom; i < iXTo; ++i) // range always equal to chunck_width .. this is only to utilize i to get iCol
                   ((float *)pImage)[++iXOffset] = (float)rRadiometricCorrection(cimg.Get()[y+=iStep], iChannel, nBlockYOff * nBlockYSize + j, (fSplitStrip && (j >= iSplitRow))?(i - iShift):i, poGDS);
               }
@@ -636,8 +668,8 @@ double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, int iChannel, int
 		}
 		else // Channels 1,2,3 and 12 (visual): Reflectance
 		{
-      double rLon = poGDS->adfGeoTransform[0] + iCol * poGDS->adfGeoTransform[1]; // this is
-      double rLat = poGDS->adfGeoTransform[3] + iRow * poGDS->adfGeoTransform[5]; // in "geos" meters
+      double rLon = poGDS->adfGeoTransform[0] + iCol * poGDS->adfGeoTransform[1]; // X, in "geos" meters
+      double rLat = poGDS->adfGeoTransform[3] + iRow * poGDS->adfGeoTransform[5]; // Y, in "geos" meters
       if ((poGDS->poTransform != NULL) && poGDS->poTransform->Transform( 1, &rLon, &rLat )) // transform it to latlon
 	      return m_rc->rGetReflectance(rRadiance, rLat, rLon);
 			else
