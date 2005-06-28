@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.50  2005/06/28 14:17:06  fwarmerdam
+ * Added worldfile support (on read).
+ *
  * Revision 1.49  2005/06/24 20:54:00  fwarmerdam
  * added explicit init/shutdown calls
  *
@@ -190,6 +193,7 @@ class CPL_DLL ECWDataset : public GDALPamDataset
     int         nWinBufLoaded;
     void        **papCurLineBuf;
 
+    int         bGeoTransformValid;
     double      adfGeoTransform[6];
     char        *pszProjection;
     int         nGCPCount;
@@ -604,6 +608,7 @@ ECWDataset::ECWDataset()
     pasGCPList = NULL;
     papszGMLMetadata = NULL;
     
+    bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -1346,6 +1351,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
             || oJP2Geo.ParseGMLCoverageDesc() )
         {
             poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
+            poDS->bGeoTransformValid = TRUE;
             memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform, 
                     sizeof(double) * 6 );
             poDS->nGCPCount = oJP2Geo.nGCPCount;
@@ -1357,6 +1363,17 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->ECW2WKTProjection();
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Check for world file.                                           */
+/* -------------------------------------------------------------------- */
+    poDS->bGeoTransformValid |= 
+        GDALReadWorldFile( poOpenInfo->pszFilename, ".eww", 
+                           poDS->adfGeoTransform )
+        || GDALReadWorldFile( poOpenInfo->pszFilename, ".ecww", 
+                              poDS->adfGeoTransform )
+        || GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+                              poDS->adfGeoTransform );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
@@ -1408,7 +1425,7 @@ const char *ECWDataset::GetProjectionRef()
 
 {
     if( pszProjection == NULL )
-        return "";
+        return GDALPamDataset::GetProjectionRef();
     else
         return pszProjection;
 }
@@ -1420,9 +1437,13 @@ const char *ECWDataset::GetProjectionRef()
 CPLErr ECWDataset::GetGeoTransform( double * padfTransform )
 
 {
-    memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
-
-    return( CE_None );
+    if( bGeoTransformValid )
+    {
+        memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
+        return( CE_None );
+    }
+    else
+        return GDALPamDataset::GetGeoTransform( padfTransform );
 }
 
 /************************************************************************/
@@ -1485,13 +1506,24 @@ void ECWDataset::ECW2WKTProjection()
 /* -------------------------------------------------------------------- */
 /*      Capture Geotransform.                                           */
 /* -------------------------------------------------------------------- */
-    adfGeoTransform[0] = psFileInfo->fOriginX;
-    adfGeoTransform[1] = psFileInfo->fCellIncrementX;
-    adfGeoTransform[2] = 0.0;
 
-    adfGeoTransform[3] = psFileInfo->fOriginY;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = psFileInfo->fCellIncrementY;
+    if( psFileInfo->fOriginX != 0.0 
+        || psFileInfo->fOriginY != 0.0 
+        && (psFileInfo->fCellIncrementX != 0.0 && 
+            psFileInfo->fCellIncrementX != 1.0)
+        && (psFileInfo->fCellIncrementY != 0.0 && 
+            psFileInfo->fCellIncrementY != 1.0) )
+    {
+        bGeoTransformValid = TRUE;
+        
+        adfGeoTransform[0] = psFileInfo->fOriginX;
+        adfGeoTransform[1] = psFileInfo->fCellIncrementX;
+        adfGeoTransform[2] = 0.0;
+        
+        adfGeoTransform[3] = psFileInfo->fOriginY;
+        adfGeoTransform[4] = 0.0;
+        adfGeoTransform[5] = psFileInfo->fCellIncrementY;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      do we have projection and datum?                                */
