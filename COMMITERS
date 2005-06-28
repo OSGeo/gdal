@@ -18,7 +18,7 @@ kdejong		Kor de Jong		k.dejong at geog.uu.nl		gdal
 
 dgilbert	Dave Gilbert		dgilbert at dclg.ca		libjpeg
 
-hobu    Howard Butler       hobu at hobu.net            ogr.py next-gen bindings
+hobu 		Howard Butler           hhobu at hobu.net               gdal
 
 lichun		Lichun Wang 		lichun at itc.nl 		gdal
 
@@ -31,3 +31,5 @@ kruland		Kevin Ruland		kruland at ku.edu		gdal
 mbrudka		Marek Brudka		mbrudka@aster.pl		gdal
 
 pka		Pirmin Kalberer		pka at sourcepole.ch		gdal
+
+ssoule		Steve Soule		Steve.Soule at vexcel.com	gdal
