@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/06/28 14:50:44  fwarmerdam
+ * avoid destroy psTree in case of failure - done at higher level
+ *
  * Revision 1.21  2005/05/05 13:56:34  fwarmerdam
  * moved metadata handling to PAM
  *
@@ -453,7 +456,6 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
             }
             else
             {
-                CPLDestroyXMLNode( psTree );
                 if( poBand )
                     delete poBand; 
                 return CE_Failure;
