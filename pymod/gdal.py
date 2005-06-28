@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.78  2005/06/28 20:23:47  fwarmerdam
+# support non-dict values for Set/Get metadata
+#
 # Revision 1.77  2005/05/23 07:28:20  fwarmerdam
 # added GetDefaultHistogram
 #
@@ -521,11 +524,21 @@ class MajorObject:
         md = _gdal.GDALGetMetadata( self._o, domain )
 	if md is None:
 	    return {}
-        md_dict = _gdal.StringListToDict( md )
-        return md_dict
+        if domain[:4] == 'xml:':
+            return _gdal.StringListToList( md )
+        else:
+            return _gdal.StringListToDict( md )
         
     def SetMetadata(self, metadata, domain = ''):
-        md_c = _gdal.DictToStringList( metadata )
+        if type(metadata) == type({1:2}):
+            md_c = _gdal.DictToStringList( metadata )
+        elif type(metadata) == type([1]):
+            md_c = _gdal.ListToStringList( metadata )
+        elif type(metadata) == type('a'):
+            md_c = _gdal.ListToStringList( [metadata] )
+        else:
+            raise ValueError, 'metadata not a dict, list or string.'
+
         result = _gdal.GDALSetMetadata(self._o, md_c, domain)
         _gdal.CSLDestroy(md_c)
         return result
