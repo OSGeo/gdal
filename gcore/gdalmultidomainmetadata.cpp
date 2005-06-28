@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/06/28 22:13:43  fwarmerdam
+ * Removed debug printf()
+ *
  * Revision 1.3  2005/06/28 20:22:40  fwarmerdam
  * treat xml: domains as a special inline XML format
  *
@@ -293,8 +296,6 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize()
                     CXT_Text, "xml" );
                 
                 CPLAddXMLChild( psMD, psValueAsXML );
-
-                printf( "Got XML metadata item\n" );
             }
         }
 
