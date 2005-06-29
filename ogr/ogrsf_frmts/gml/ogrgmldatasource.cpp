@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/06/29 16:08:57  fwarmerdam
+ * Fixed gml:geometryPropertyType to be gml:GeometryPropertyType as per
+ * suggestion from Tom Kralidis.
+ *
  * Revision 1.19  2005/05/04 19:34:07  fwarmerdam
  * delete reader in datasource destructor, not layer
  *
@@ -660,7 +664,7 @@ void OGRGMLDataSource::InsertHeader()
 /* -------------------------------------------------------------------- */
         VSIFPrintf( 
             fpSchema,
-            "<xs:element name=\"geometryProperty\" type=\"gml:geometryPropertyType\" nillable=\"true\" minOccurs=\"1\" maxOccurs=\"1\"/>\n" );
+            "<xs:element name=\"geometryProperty\" type=\"gml:GeometryPropertyType\" nillable=\"true\" minOccurs=\"1\" maxOccurs=\"1\"/>\n" );
             
 /* -------------------------------------------------------------------- */
 /*      Emit each of the attributes.                                    */
