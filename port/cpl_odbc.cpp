@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/06/29 01:01:01  ssoule
+ * Changed return type of CPLODBCStatement::GetTypeName from const char * to
+ * std::string.
+ *
  * Revision 1.20  2005/05/23 03:56:44  fwarmerdam
  * make make static buffers threadlocal
  *
@@ -1206,7 +1210,8 @@ void CPLODBCStatement::DumpResult( FILE *fp, int bShowSchema )
             else
                 fprintf( fp, " Size:%5d", GetColSize(iCol) );
 
-            fprintf( fp, " Type:%s", GetTypeName( GetColType(iCol) ) );
+            std::string sType = GetTypeName( GetColType(iCol) );
+            fprintf( fp, " Type:%s", sType.c_str() );
             if( GetColNullable(iCol) )
                 fprintf( fp, " NULLABLE" );
             fprintf( fp, "\n" );
@@ -1236,15 +1241,15 @@ void CPLODBCStatement::DumpResult( FILE *fp, int bShowSchema )
 /**
  * Get name for SQL column type.
  *
- * Returns a pointer to an internal static string name for the 
- * indicate type code (as returned from CPLODBCStatement::GetColType().
+ * Returns a string name for the indicated type code (as returned
+ * from CPLODBCStatement::GetColType()).
  *
  * @param nTypeCode the SQL_ code, such as SQL_CHAR.
  *
  * @return internal string, "UNKNOWN" if code not recognised. 
  */
 
-const char *CPLODBCStatement::GetTypeName( int nTypeCode )
+std::string CPLODBCStatement::GetTypeName( int nTypeCode )
 
 {
     switch( nTypeCode )
@@ -1290,7 +1295,7 @@ const char *CPLODBCStatement::GetTypeName( int nTypeCode )
         return "TIMESTAMP";
 
       default:
-          static CPL_THREADLOCAL char szType[100];
+          char szType[100];
 
           sprintf( szType, "UNKNOWN:%d", nTypeCode );
           return szType;

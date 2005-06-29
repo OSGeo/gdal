@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/06/29 01:01:01  ssoule
+ * Changed return type of CPLODBCStatement::GetTypeName from const char * to
+ * std::string.
+ *
  * Revision 1.11  2005/01/13 03:24:54  fwarmerdam
  * changed type of m_panColSize, per ODBC 3.52 requirements
  *
@@ -74,6 +78,7 @@
 
 #include <sql.h>
 #include <sqlext.h>
+#include <string>
 
 /**
  * \file cpl_odbc.h
@@ -198,7 +203,7 @@ class CPL_DLL CPLODBCStatement {
 
     void           DumpResult( FILE *fp, int bShowSchema = FALSE );
 
-    static const char *GetTypeName( int );
+    static std::string GetTypeName( int );
 
     int            CollectResultsInfo();
 };
