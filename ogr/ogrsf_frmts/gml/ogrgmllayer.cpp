@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/06/30 02:16:41  fwarmerdam
+ * more efforts to produce valid GML
+ *
  * Revision 1.17  2005/05/04 19:34:07  fwarmerdam
  * delete reader in datasource destructor, not layer
  *
@@ -306,28 +309,9 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
     if( poFeature->GetFID() == OGRNullFID )
         poFeature->SetFID( iNextGMLId++ );
 
-    VSIFPrintf( fp, "    <%s fid=\"%d\">\n", 
+    VSIFPrintf( fp, "    <ogr:%s fid=\"F%d\">\n", 
                 poFeatureDefn->GetName(),
                 poFeature->GetFID() );
-
-    // Write all "set" fields. 
-    for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
-    {
-        
-        OGRFieldDefn *poField = poFeatureDefn->GetFieldDefn( iField );
-
-        if( poFeature->IsFieldSet( iField ) )
-        {
-            char *pszEscaped = 
-                CPLEscapeString( poFeature->GetFieldAsString( iField ), 
-                                 -1, CPLES_XML );
-
-            VSIFPrintf( fp, "      <%s>%s</%s>\n", 
-                        poField->GetNameRef(), pszEscaped, 
-                        poField->GetNameRef() );
-            CPLFree( pszEscaped );
-        }
-    }
 
     // Write out Geometry - for now it isn't indented properly.
     if( poFeature->GetGeometryRef() != NULL )
@@ -344,7 +328,29 @@ OGRErr OGRGMLLayer::CreateFeature( OGRFeature *poFeature )
         poDS->GrowExtents( &sGeomBounds );
     }
 
-    VSIFPrintf( fp, "    </%s>\n", poFeatureDefn->GetName() );
+    // Write all "set" fields. 
+    for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    {
+        
+        OGRFieldDefn *poField = poFeatureDefn->GetFieldDefn( iField );
+
+        if( poFeature->IsFieldSet( iField ) )
+        {
+            const char *pszRaw = poFeature->GetFieldAsString( iField );
+
+            while( *pszRaw == ' ' )
+                pszRaw++;
+
+            char *pszEscaped = CPLEscapeString( pszRaw, -1, CPLES_XML );
+
+            VSIFPrintf( fp, "      <ogr:%s>%s</ogr:%s>\n", 
+                        poField->GetNameRef(), pszEscaped, 
+                        poField->GetNameRef() );
+            CPLFree( pszEscaped );
+        }
+    }
+
+    VSIFPrintf( fp, "    </ogr:%s>\n", poFeatureDefn->GetName() );
     VSIFPrintf( fp, "  </gml:featureMember>\n" );
 
     return OGRERR_NONE;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/06/30 02:16:41  fwarmerdam
+ * more efforts to produce valid GML
+ *
  * Revision 1.20  2005/06/29 16:08:57  fwarmerdam
  * Fixed gml:geometryPropertyType to be gml:GeometryPropertyType as per
  * suggestion from Tom Kralidis.
@@ -422,15 +425,13 @@ int OGRGMLDataSource::Create( const char *pszFilename,
 
         VSIFPrintf( fpOutput, 
               "     xmlns:xsi=\"http://www.w3c.org/2001/XMLSchema-instance\"\n"
-              "     xsi:schemaLocation=\". %s\"\n", 
+              "     xsi:schemaLocation=\"http://ogr.maptools.org/ %s\"\n", 
                     CPLResetExtension( pszBasename, "xsd" ) );
         CPLFree( pszBasename );
     }
 
     VSIFPrintf( fpOutput, "%s", 
                 "     xmlns:ogr=\"http://ogr.maptools.org/\"\n" );
-    VSIFPrintf( fpOutput, "%s", 
-                "     xmlns=\"http://ogr.maptools.org/\"\n" );
     VSIFPrintf( fpOutput, "%s", 
                 "     xmlns:gml=\"http://www.opengis.net/gml\">\n" );
 
@@ -697,7 +698,7 @@ void OGRGMLDataSource::InsertHeader()
                 int nWidth, nDecimals;
 
                 if( poFieldDefn->GetPrecision() == 0 )
-                    nDecimals = 16;
+                    nDecimals = 0;
                 else
                     nDecimals = poFieldDefn->GetPrecision();
 
