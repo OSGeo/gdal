@@ -35,7 +35,3 @@ gmlview:	gmlview.cpp $(CORE_OBJ)
 		-o gmlview
 
 
-xtest:	xtest.cpp
-	$(CXX) $(CPPFLAGS) $(CFLAGS) $(LNK_FLAGS) xtest.cpp \
-		$(LIBS) -o xtest
-
