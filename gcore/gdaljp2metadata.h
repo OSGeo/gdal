@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/07/05 22:09:00  fwarmerdam
+ * add preliminary support for MSIG boxes
+ *
  * Revision 1.2  2005/05/05 20:17:15  fwarmerdam
  * support dictionary lookups
  *
@@ -113,12 +116,16 @@ class CPL_DLL GDALJP2Metadata
     int    nGeoTIFFSize;
     GByte  *pabyGeoTIFFData;
 
+    int    nMSIGSize;
+    GByte  *pabyMSIGData;
+
             GDALJP2Metadata();
            ~GDALJP2Metadata();
 
     int     ReadBoxes( FILE * fpVSIL );
 
     int     ParseJP2GeoTIFF();
+    int     ParseMSIG();
     int     ParseGMLCoverageDesc();
 };
 
