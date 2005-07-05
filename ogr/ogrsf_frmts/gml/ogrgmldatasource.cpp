@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/07/05 19:18:58  fwarmerdam
+ * Use www.w3.org not www.w3c.org.
+ *
  * Revision 1.21  2005/06/30 02:16:41  fwarmerdam
  * more efforts to produce valid GML
  *
@@ -415,7 +418,7 @@ int OGRGMLDataSource::Create( const char *pszFilename,
     if( pszSchemaURI != NULL )
     {
         VSIFPrintf( fpOutput, 
-              "     xmlns:xsi=\"http://www.w3c.org/2001/XMLSchema-instance\"\n"
+              "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
               "     xsi:schemaLocation=\"%s\"\n", 
                     CSLFetchNameValue( papszOptions, "XSISCHEMAURI" ) );
     }
@@ -424,7 +427,7 @@ int OGRGMLDataSource::Create( const char *pszFilename,
         char *pszBasename = CPLStrdup(CPLGetBasename( pszName ));
 
         VSIFPrintf( fpOutput, 
-              "     xmlns:xsi=\"http://www.w3c.org/2001/XMLSchema-instance\"\n"
+              "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
               "     xsi:schemaLocation=\"http://ogr.maptools.org/ %s\"\n", 
                     CPLResetExtension( pszBasename, "xsd" ) );
         CPLFree( pszBasename );
