@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2005/07/05 18:00:10  dron
+ * Add support for reading external overviews.
+ *
  * Revision 1.34  2005/05/17 15:12:24  fwarmerdam
  * Cleanup out residual flushcache and projections support for
  * better pam support.
@@ -102,40 +105,6 @@
  * Revision 1.12  2002/12/13 14:15:50  dron
  * IWriteBlock() fixed, CreateCopy() removed, added RLE4 decoding and OS/2 BMP
  * support.
- *
- * Revision 1.11  2002/12/11 22:09:13  warmerda
- * Re-enable createcopy.
- *
- * Revision 1.10  2002/12/11 22:08:20  warmerda
- * fixed multiband support for writing ... open wit wb+ in create
- *
- * Revision 1.9  2002/12/11 16:13:04  dron
- * Support for 16-bit RGB images (untested).
- *
- * Revision 1.8  2002/12/10 22:12:59  dron
- * RLE8 decoding added.
- *
- * Revision 1.7  2002/12/09 19:31:44  dron
- * Switched to CPL_LSBWORD32 macro.
- *
- * Revision 1.6  2002/12/07 15:20:23  dron
- * SetColorTable() added. Create() really works now.
- *
- * Revision 1.5  2002/12/06 20:50:13  warmerda
- * fixed type warning
- *
- * Revision 1.4  2002/12/06 18:37:05  dron
- * Create() method added, 1- and 4-bpp images readed now.
- *
- * Revision 1.3  2002/12/05 19:25:35  dron
- * Preliminary CreateCopy() function.
- *
- * Revision 1.2  2002/12/04 18:37:49  dron
- * Support 32-bit, 24-bit True Color images and 8-bit pseudocolor ones.
- *
- * Revision 1.1  2002/12/03 19:04:18  dron
- * Initial version.
- *
  */
 
 #include "gdal_pam.h"
@@ -1175,6 +1144,11 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->bGeoTransformValid =
             GDALReadWorldFile( poOpenInfo->pszFilename, ".bmpw",
                                poDS->adfGeoTransform );
+
+/* -------------------------------------------------------------------- */
+/*      Check for overviews.                                            */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
