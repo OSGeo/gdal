@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.22  2005/07/05 17:10:52  fwarmerdam
+ * give swap funcs unique names
+ *
  * Revision 1.21  2005/05/05 14:02:57  fwarmerdam
  * PAM Enable
  *
@@ -363,15 +366,15 @@ CPLErr FITRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         break;
     case 2:
         for(i=0; i < recordSize; i+= bytesPerPixel)
-            swap16(p + i);
+            gst_swap16(p + i);
         break;
     case 4:
         for(i=0; i < recordSize; i+= bytesPerPixel)
-            swap32(p + i);
+            gst_swap32(p + i);
         break;
     case 8:
         for(i=0; i < recordSize; i+= bytesPerPixel)
-            swap64(p + i);
+            gst_swap64(p + i);
         break;
     default:
         CPLError(CE_Failure, CPLE_NotSupported, 
@@ -996,11 +999,11 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 
         CPLDebug("FIT", "Loading file with header version 02");
 
-        swapb(head->minValue);
+        gst_swapb(head->minValue);
 	info->minValue = head->minValue;
-        swapb(head->maxValue);
+        gst_swapb(head->maxValue);
 	info->maxValue = head->maxValue;
-        swapb(head->dataOffset);
+        gst_swapb(head->dataOffset);
 	info->dataOffset = head->dataOffset;
 
         info->userOffset = sizeof(FIThead02);
@@ -1014,7 +1017,7 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 
         // map old style header into new header structure
 	FIThead01* head01 = (FIThead01*)&head;
-        swapb(head->dataOffset);
+        gst_swapb(head->dataOffset);
 	info->dataOffset = head01->dataOffset;
 
         info->userOffset = sizeof(FIThead01);
@@ -1033,29 +1036,29 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
     info->magic = head->magic;
     info->version = head->version;
 
-    swapb(head->xSize);
+    gst_swapb(head->xSize);
     info->xSize = head->xSize;
-    swapb(head->ySize);
+    gst_swapb(head->ySize);
     info->ySize = head->ySize;
-    swapb(head->zSize);
+    gst_swapb(head->zSize);
     info->zSize = head->zSize;
-    swapb(head->cSize);
+    gst_swapb(head->cSize);
     info->cSize = head->cSize;
-    swapb(head->dtype);
+    gst_swapb(head->dtype);
     info->dtype = head->dtype;
-    swapb(head->order);
+    gst_swapb(head->order);
     info->order = head->order;
-    swapb(head->space);
+    gst_swapb(head->space);
     info->space = head->space;
-    swapb(head->cm);
+    gst_swapb(head->cm);
     info->cm = head->cm;
-    swapb(head->xPageSize);
+    gst_swapb(head->xPageSize);
     info->xPageSize = head->xPageSize;
-    swapb(head->yPageSize);
+    gst_swapb(head->yPageSize);
     info->yPageSize = head->yPageSize;
-    swapb(head->zPageSize);
+    gst_swapb(head->zPageSize);
     info->zPageSize = head->zPageSize;
-    swapb(head->cPageSize);
+    gst_swapb(head->cPageSize);
     info->cPageSize = head->cPageSize;
 
     CPLDebug("FIT", "size %i %i %i %i, pageSize %i %i %i %i",
@@ -1195,14 +1198,14 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
     strncpy((char *) &head->version, "02", 2);
 
     head->xSize = poSrcDS->GetRasterXSize();
-    swapb(head->xSize);
+    gst_swapb(head->xSize);
     head->ySize = poSrcDS->GetRasterYSize();
-    swapb(head->ySize);
+    gst_swapb(head->ySize);
     head->zSize = 1;
-    swapb(head->zSize);
+    gst_swapb(head->zSize);
     int nBands = poSrcDS->GetRasterCount();
     head->cSize = nBands;
-    swapb(head->cSize);
+    gst_swapb(head->cSize);
 
     GDALRasterBand *firstBand = poSrcDS->GetRasterBand(1);
     if (! firstBand) {
@@ -1215,15 +1218,15 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
         //free(head);
         return NULL;
     }
-    swapb(head->dtype);
+    gst_swapb(head->dtype);
     head->order = 1; // interleaved - RGBRGB
-    swapb(head->order);
+    gst_swapb(head->order);
     head->space = 1; // upper left
-    swapb(head->space);
+    gst_swapb(head->space);
 
     // XXX - need to check all bands
     head->cm = fitGetColorModel(firstBand->GetColorInterpretation(), nBands);
-    swapb(head->cm);
+    gst_swapb(head->cm);
 
     int blockX, blockY;
     firstBand->GetBlockSize(&blockX, &blockY);
@@ -1255,22 +1258,22 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
     CPLDebug("FIT write", "using block size %ix%i", blockX, blockY);
 
     head->xPageSize = blockX;
-    swapb(head->xPageSize);
+    gst_swapb(head->xPageSize);
     head->yPageSize = blockY;
-    swapb(head->yPageSize);
+    gst_swapb(head->yPageSize);
     head->zPageSize = 1;
-    swapb(head->zPageSize);
+    gst_swapb(head->zPageSize);
     head->cPageSize = nBands;
-    swapb(head->cPageSize);
+    gst_swapb(head->cPageSize);
 
     // XXX - need to check all bands
     head->minValue = firstBand->GetMinimum();
-    swapb(head->minValue);
+    gst_swapb(head->minValue);
     // XXX - need to check all bands
     head->maxValue = firstBand->GetMaximum();
-    swapb(head->maxValue);
+    gst_swapb(head->maxValue);
     head->dataOffset = size;
-    swapb(head->dataOffset);
+    gst_swapb(head->dataOffset);
 
     VSIFWriteL(head, size, 1, fpImage);
 
@@ -1346,15 +1349,15 @@ static GDALDataset *FITCreateCopy(const char * pszFilename,
                 break;
             case 2:
                 for(i=0; i < pageBytes; i+= bytesPerComponent)
-                    swap16(p + i);
+                    gst_swap16(p + i);
                 break;
             case 4:
                 for(i=0; i < pageBytes; i+= bytesPerComponent)
-                    swap32(p + i);
+                    gst_swap32(p + i);
                 break;
             case 8:
                 for(i=0; i < pageBytes; i+= bytesPerComponent)
-                    swap64(p + i);
+                    gst_swap64(p + i);
                 break;
             default:
                 CPLError(CE_Failure, CPLE_NotSupported, 
