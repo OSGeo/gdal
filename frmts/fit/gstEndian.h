@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2005/07/05 17:10:52  fwarmerdam
+ * give swap funcs unique names
+ *
  * Revision 1.3  2004/03/22 23:45:41  aubin
  * wrap endian swapping functions in namespace to limit scope
  *
@@ -60,7 +63,7 @@ size_t swapped_fread(void *ptr, size_t size, size_t nitems, FILE *stream);
 size_t swapped_fwrite(const void *ptr, size_t size, size_t nitems, FILE
                       *stream);
 
-static inline void swap64(void * value)
+static inline void gst_swap64(void * value)
 {
     // 0x1122334455667788 --> 0x8877665544332211
 
@@ -75,7 +78,7 @@ static inline void swap64(void * value)
         	 ((*(uint64 *)(value) >> 56) & 0x00000000000000ff) );
 }
 
-static inline void swap32(void * value)
+static inline void gst_swap32(void * value)
 {
     // 0x12 34 56 78 --> 0x78 56 34 12
 
@@ -86,36 +89,36 @@ static inline void swap32(void * value)
         	 ((*(uint32 *)(value) >> 24) & 0x000000ff) );
 }
 
-static inline void swap16(void * value)
+static inline void gst_swap16(void * value)
 {
     *(uint16 *)(value) = 
 		   ( ((*(uint16 *)(value) & 0x00ff) << 8) |
              ((*(uint16 *)(value) >> 8) & 0x00ff) );
 }
 
-static inline void swapbytes(void * value, int size)
+static inline void gst_swapbytes(void * value, int size)
 {
     switch (size) {
     case 1:
         // do nothing
         break;
     case 2:
-        swap16(value);
+        gst_swap16(value);
         break;
     case 4:
-        swap32(value);
+        gst_swap32(value);
         break;
     case 8:
-        swap64(value);
+        gst_swap64(value);
         break;
     default:
-        fprintf(stderr, "swapbytes unsupported size %i - not swapping\n",
+        fprintf(stderr, "gst_swapbytes unsupported size %i - not swapping\n",
                 size);
         break;
     } // switch
 }
 
-#define swapb( value )  swapbytes( &value, sizeof(value))
+#define gst_swapb( value )  gst_swapbytes( &value, sizeof(value))
 
 #else // swapping
 
@@ -124,11 +127,11 @@ static inline void swapbytes(void * value, int size)
 #define swapped_fwrite(ptr, size, nitems, stream) \
 	fwrite(ptr, size, nitems, stream)
 
-#define swap64( vlaue )
-#define swap32( vlaue )
-#define swap16( vlaue )
-#define swapbytes( value, size )
-#define swapb( value )
+#define gst_swap64( vlaue )
+#define gst_swap32( vlaue )
+#define gst_swap16( vlaue )
+#define gst_swapbytes( value, size )
+#define gst_swapb( value )
 
 #endif // swapping
 
