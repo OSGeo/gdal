@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/07/05 22:09:00  fwarmerdam
+ * add preliminary support for MSIG boxes
+ *
  * Revision 1.4  2005/05/23 06:45:34  fwarmerdam
  * make msi_uuid const
  *
@@ -54,6 +57,10 @@ CPL_CVSID("$Id$");
 static const unsigned char msi_uuid2[16] =
 {0xb1,0x4b,0xf8,0xbd,0x08,0x3d,0x4b,0x43,
  0xa5,0xae,0x8c,0xd7,0xd5,0xa6,0xce,0x03}; 
+
+static const unsigned char msig_uuid[16] = 
+{ 0x96,0xA9,0xF1,0xF1,0xDC,0x98,0x40,0x2D,
+  0xA7,0xAE,0xD6,0x8E,0x34,0x45,0x18,0x09 };
 
 CPL_C_START
 CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT, 
@@ -83,6 +90,9 @@ GDALJP2Metadata::GDALJP2Metadata()
     nGeoTIFFSize = 0;
     pabyGeoTIFFData = NULL;
 
+    nMSIGSize = 0;
+    pabyMSIGData = NULL;
+
     
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -107,6 +117,7 @@ GDALJP2Metadata::~GDALJP2Metadata()
     }
 
     CPLFree( pabyGeoTIFFData );
+    CPLFree( pabyMSIGData );
 }
 
 /************************************************************************/
@@ -168,6 +179,9 @@ int GDALJP2Metadata::ReadBoxes( FILE *fpVSIL )
 
     while( strlen(oBox.GetType()) > 0 )
     {
+/* -------------------------------------------------------------------- */
+/*      Collect geotiff box.                                            */
+/* -------------------------------------------------------------------- */
         if( EQUAL(oBox.GetType(),"uuid") 
             && memcmp( oBox.GetUUID(), msi_uuid2, 16 ) == 0 )
         {
@@ -175,6 +189,27 @@ int GDALJP2Metadata::ReadBoxes( FILE *fpVSIL )
             pabyGeoTIFFData = oBox.ReadBoxData();
         }
 
+/* -------------------------------------------------------------------- */
+/*      Collect MSIG box.                                               */
+/* -------------------------------------------------------------------- */
+        if( EQUAL(oBox.GetType(),"uuid") 
+            && memcmp( oBox.GetUUID(), msig_uuid, 16 ) == 0 )
+        {
+            nMSIGSize = oBox.GetDataLength();
+            pabyMSIGData = oBox.ReadBoxData();
+
+            if( nMSIGSize < memcmp( pabyMSIGData, "MSIG/", 5 ) != 0 
+                || nMSIGSize < 70 )
+            {
+                CPLFree( pabyMSIGData );
+                pabyMSIGData = NULL;
+                nMSIGSize = 0;
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Process asoc box looking for Labelled GML data.                 */
+/* -------------------------------------------------------------------- */
         if( EQUAL(oBox.GetType(),"asoc") )
         {
             GDALJP2Box oSubBox( fpVSIL );
@@ -229,6 +264,43 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
                  pszProjection );
 
     return bSuccess;;
+}
+
+/************************************************************************/
+/*                             ParseMSIG()                              */
+/************************************************************************/
+
+int GDALJP2Metadata::ParseMSIG()
+
+{
+    if( nMSIGSize < 70 )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Try and extract worldfile parameters and adjust.                */
+/* -------------------------------------------------------------------- */
+    memcpy( adfGeoTransform + 0, pabyMSIGData + 22 + 8 * 4, 8 );
+    memcpy( adfGeoTransform + 1, pabyMSIGData + 22 + 8 * 0, 8 );
+    memcpy( adfGeoTransform + 2, pabyMSIGData + 22 + 8 * 2, 8 );
+    memcpy( adfGeoTransform + 3, pabyMSIGData + 22 + 8 * 5, 8 );
+    memcpy( adfGeoTransform + 4, pabyMSIGData + 22 + 8 * 1, 8 );
+    memcpy( adfGeoTransform + 5, pabyMSIGData + 22 + 8 * 3, 8 );
+
+    // data is in LSB (little endian) order in file.
+    CPL_LSBPTR64( adfGeoTransform + 0 );
+    CPL_LSBPTR64( adfGeoTransform + 1 );
+    CPL_LSBPTR64( adfGeoTransform + 2 );
+    CPL_LSBPTR64( adfGeoTransform + 3 );
+    CPL_LSBPTR64( adfGeoTransform + 4 );
+    CPL_LSBPTR64( adfGeoTransform + 5 );
+
+    // correct for center of pixel vs. top left of pixel
+    adfGeoTransform[0] -= 0.5 * adfGeoTransform[1];
+    adfGeoTransform[0] -= 0.5 * adfGeoTransform[2];
+    adfGeoTransform[3] -= 0.5 * adfGeoTransform[4];
+    adfGeoTransform[3] -= 0.5 * adfGeoTransform[5];
+
+    return TRUE;
 }
 
 /************************************************************************/
