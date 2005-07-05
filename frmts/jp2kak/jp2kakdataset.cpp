@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.29  2005/07/05 22:09:50  fwarmerdam
+ * use GDALJP2Metadata for geoinfo, better pam support
+ *
  * Revision 1.28  2005/05/05 15:54:48  fwarmerdam
  * PAM Enabled
  *
@@ -144,6 +147,7 @@
  */
 
 #include "gdal_pam.h"
+#include "gdaljp2metadata.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 #include "jp2_local.h"
@@ -237,6 +241,8 @@ class JP2KAKDataset : public GDALPamDataset
 
     char	   *pszProjection;
     double	   adfGeoTransform[6];
+    int            bGeoTransformValid;
+
     int		   nGCPCount;
     GDAL_GCP       *pasGCPList;
 
@@ -932,6 +938,7 @@ JP2KAKDataset::JP2KAKDataset()
     family = NULL;
 #endif
 
+    bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -983,7 +990,10 @@ JP2KAKDataset::~JP2KAKDataset()
 const char *JP2KAKDataset::GetProjectionRef()
 
 {
-    return( pszProjection );
+    if( pszProjection && *pszProjection )
+        return( pszProjection );
+    else
+        return GDALPamDataset::GetProjectionRef();
 }
 
 /************************************************************************/
@@ -993,9 +1003,14 @@ const char *JP2KAKDataset::GetProjectionRef()
 CPLErr JP2KAKDataset::GetGeoTransform( double * padfTransform )
 
 {
-    memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
-
-    return CE_None;
+    if( bGeoTransformValid )
+    {
+        memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
+    
+        return CE_None;
+    }
+    else
+        return GDALPamDataset::GetGeoTransform( padfTransform );
 }
 
 /************************************************************************/
@@ -1337,61 +1352,44 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
 /* -------------------------------------------------------------------- */
-/*      Try to read any available georeferencing info in a "geotiff"    */
-/*      box".                                                           */
+/*      Look for supporting coordinate system information.              */
 /* -------------------------------------------------------------------- */
-        unsigned char  *pabyGTData = NULL;
-        int		nGTDataSize = 0;
-        jp2_input_box   oBox;
-
-        if( !bIsJPIP )
+        if( poOpenInfo->fp != NULL )
         {
-#ifdef KAKADU4
-            for( family == NULL || oBox.open( family ); 
-                 oBox.exists(); oBox.open_next() )
-#else
-            VSIFSeek( poOpenInfo->fp, 0, SEEK_SET );
-            while( oBox.open(poOpenInfo->fp).exists() 
-                   && oBox.get_remaining_bytes() != -1 )
-#endif
+            GDALJP2Metadata oJP2Geo;
+            FILE *fpLL;
+        
+            fpLL = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+        
+            if( fpLL != NULL )
             {
-                if( oBox.get_box_type() == 0x75756964 /* UUID */ )
-                {
-                    unsigned char uuid2[16];
-                    oBox.read( uuid2, 16 );
-                    if( memcmp( uuid2, msi_uuid2, 16 ) == 0 )
-                    {
-                        nGTDataSize = (int) oBox.get_remaining_bytes();
-                        
-                        pabyGTData = (unsigned char *) CPLMalloc(nGTDataSize);
-                        oBox.read( pabyGTData, nGTDataSize );
-                    }
-                }
-                oBox.close();
-            }
+                oJP2Geo.ReadBoxes( fpLL );
+                VSIFCloseL( fpLL );
             
-            oBox.close();
+                //poDS->papszGMLMetadata = CSLDuplicate(oJP2Geo.papszGMLMetadata);
+            }
+        
+            if( oJP2Geo.ParseJP2GeoTIFF() 
+                || oJP2Geo.ParseGMLCoverageDesc() 
+                || oJP2Geo.ParseMSIG() )
+            {
+                poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
+                poDS->bGeoTransformValid = TRUE;
+                memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform, 
+                        sizeof(double) * 6 );
+                poDS->nGCPCount = oJP2Geo.nGCPCount;
+                poDS->pasGCPList = oJP2Geo.pasGCPList;
+                oJP2Geo.pasGCPList = NULL;
+            }
         }
 
 /* -------------------------------------------------------------------- */
-/*      Try to turn the geotiff block into projection and geotransform. */
+/*      Check for world file.                                           */
 /* -------------------------------------------------------------------- */
-        if( pabyGTData != NULL )
-        {
-            GTIFWktFromMemBuf( nGTDataSize, pabyGTData, 
-                               &(poDS->pszProjection), poDS->adfGeoTransform,
-                               &(poDS->nGCPCount), &(poDS->pasGCPList) );
-            CPLDebug("GDAL", "Got projection: %s", poDS->pszProjection );
-            CPLFree( pabyGTData );
-            pabyGTData = NULL;
-        }
-        else
+        poDS->bGeoTransformValid |= 
             GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
                                poDS->adfGeoTransform );
 
-        if( poDS->pszProjection == NULL )
-            poDS->pszProjection = CPLStrdup("");
-        
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
