@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.51  2005/07/05 22:09:23  fwarmerdam
+ * added ParseMSIG() call
+ *
  * Revision 1.50  2005/06/28 14:17:06  fwarmerdam
  * Added worldfile support (on read).
  *
@@ -1348,7 +1351,8 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         
         if( oJP2Geo.ParseJP2GeoTIFF() 
-            || oJP2Geo.ParseGMLCoverageDesc() )
+            || oJP2Geo.ParseGMLCoverageDesc() 
+            || oJP2Geo.ParseMSIG() )
         {
             poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
             poDS->bGeoTransformValid = TRUE;
