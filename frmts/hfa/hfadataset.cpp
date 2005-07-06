@@ -29,6 +29,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.57  2005/07/06 23:12:44  fwarmerdam
+ * Fixed up "ds" (digital seconds) units on mapinfo
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=883
+ *
  * Revision 1.56  2005/05/23 06:56:48  fwarmerdam
  * delay metadata on band
  *
@@ -2047,6 +2051,16 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
             - poDS->adfGeoTransform[5]*0.5;
         poDS->adfGeoTransform[4] = 0.0;
 
+        // special logic to fixup odd angular units.
+        if( EQUAL(psMapinfo->units,"ds") )
+        {
+            poDS->adfGeoTransform[0] /= 3600.0;
+            poDS->adfGeoTransform[1] /= 3600.0;
+            poDS->adfGeoTransform[2] /= 3600.0;
+            poDS->adfGeoTransform[3] /= 3600.0;
+            poDS->adfGeoTransform[4] /= 3600.0;
+            poDS->adfGeoTransform[5] /= 3600.0;
+        }
     }
 
 /* -------------------------------------------------------------------- */
