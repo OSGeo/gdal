@@ -2,8 +2,8 @@
 */
 
 #include "msg_basic_types.h"
+#include "cpl_port.h"
 
-#include <netinet/in.h>
 #include <stdio.h>
 
 namespace msg_native_format {
@@ -14,18 +14,18 @@ namespace msg_native_format {
 
 // endian conversion routines
 void to_native(GP_PK_HEADER& h) {
-    h.sourceSUId    = ntohl(h.sourceSUId);
-    h.sequenceCount = ntohs(h.sequenceCount);
-    h.packetLength  = ntohl(h.packetLength);
+    h.sourceSUId    = CPL_MSBWORD32(h.sourceSUId);
+    h.sequenceCount = CPL_MSBWORD16(h.sequenceCount);
+    h.packetLength  = CPL_MSBWORD32(h.packetLength);
 }
 
 void to_native(GP_PK_SH1& h) {
-    h.spacecraftId  = ntohs(h.spacecraftId);
+    h.spacecraftId  = CPL_MSBWORD16(h.spacecraftId);
 }
 
 void to_native(SUB_VISIRLINE& v) {
-    v.satelliteId   = ntohs(v.satelliteId);
-    v.lineNumberInVisirGrid = ntohl(v.lineNumberInVisirGrid);
+    v.satelliteId   = CPL_MSBWORD16(v.satelliteId);
+    v.lineNumberInVisirGrid = CPL_MSBWORD32(v.lineNumberInVisirGrid);
 }
 
 static void swap_64_bits(unsigned char* b) {
@@ -44,19 +44,19 @@ void to_native(RADIOMETRIC_PROCCESSING_RECORD& r) {
 }
 
 void to_native(IMAGE_DESCRIPTION_RECORD& r) {
-    r.referencegrid_visir.numberOfLines = ntohl(r.referencegrid_visir.numberOfLines);
-    r.referencegrid_visir.numberOfColumns = ntohl(r.referencegrid_visir.numberOfColumns);
+    r.referencegrid_visir.numberOfLines = CPL_MSBWORD32(r.referencegrid_visir.numberOfLines);
+    r.referencegrid_visir.numberOfColumns = CPL_MSBWORD32(r.referencegrid_visir.numberOfColumns);
     // should floats be swapped too?
     unsigned int t;
     
-    // convert float using ntohl
+    // convert float using CPL_MSBWORD32
     t = *(unsigned int *)&r.referencegrid_visir.lineDirGridStep;
-    t = ntohl(t);
+    t = CPL_MSBWORD32(t);
     r.referencegrid_visir.lineDirGridStep = *(float *)&t;
     
-    // convert float using ntohl
+    // convert float using CPL_MSBWORD32
     t = *(unsigned int *)&r.referencegrid_visir.columnDirGridStep;
-    t = ntohl(t);
+    t = CPL_MSBWORD32(t);
     r.referencegrid_visir.columnDirGridStep = *(float *)&t;
 }
 
