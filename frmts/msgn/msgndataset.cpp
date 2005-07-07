@@ -297,9 +297,9 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    unsigned int band_count = 1;
+    unsigned int band_count = 1, i;
     unsigned char* bands = poDS->msg_reader_core->get_band_map();
-    for (unsigned int i=0; i < MSG_NUM_CHANNELS-1; i++) {
+    for ( i=0; i < MSG_NUM_CHANNELS-1; i++) {
         if (bands[i]) {
             poDS->SetBand( band_count, new MSGNRasterBand( poDS, band_count ));
             band_count++;
@@ -340,7 +340,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     char hexvalue2[30];
     
     poDS->SetMetadataItem("Radiometric parameters format", "offset slopehex_offset hex_slope");
-    for (unsigned int i=0; i < MSG_NUM_CHANNELS; i++) {
+    for (i=0; i < MSG_NUM_CHANNELS; i++) {
         sprintf(tagname, "ch%02d_cal", i+1);
         
         MSGNDataset::double2hex(cal[i].cal_offset, hexvalue1);
@@ -351,7 +351,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     
     poDS->SetMetadataItem("Blackbody parameters format", "vc A B");
-    for (unsigned int i=4; i < MSG_NUM_CHANNELS-1; i++) {
+    for (i=4; i < MSG_NUM_CHANNELS-1; i++) {
         sprintf(tagname, "ch%02d_blackbody", i);
         sprintf(field, "%.4f %.4f %.4f",
             Msg_reader_core::Blackbody_LUT[i].vc,
