@@ -8,8 +8,6 @@
 #include <string.h>
 #include <math.h>
 
-#include <sys/time.h>
-
 #ifdef DEBUG
 #ifdef GDAL_SUPPORT
 #undef DEBUG
@@ -71,7 +69,9 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
         hd++;
     }   
     PH_DATA_ID* hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification;
-    for (int i=0; i < 5; i++) {
+    int i;
+
+    for (i=0; i < 5; i++) {
         printf("%s %s %s", hdi->name, hdi->size, hdi->address);
         hdi++;
     }
@@ -117,7 +117,7 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
 #endif // DEBUG
 
     int records_per_line = 0;
-    for (unsigned int i=0; i < MSG_NUM_CHANNELS; i++) {
+    for (i=0; i < MSG_NUM_CHANNELS; i++) {
         if (_sec_header.selectedBandIds.value[i] == 'X') {
             _bands[i] = 1;
             records_per_line += (i == (MSG_NUM_CHANNELS-1)) ? 3 : 1;
@@ -181,7 +181,7 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
 
     int scanned_bands[MSG_NUM_CHANNELS];
     int band_count = 0;
-    for (unsigned int i=0; i < MSG_NUM_CHANNELS; i++) {
+    for (i=0; i < MSG_NUM_CHANNELS; i++) {
         scanned_bands[i] = _bands[i];
         band_count += _bands[i];
     }
