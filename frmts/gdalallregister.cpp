@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.78  2005/07/07 23:35:44  fwarmerdam
+ * added msgn support
+ *
  * Revision 1.77  2005/05/19 20:41:14  dron
  * Added RMF format.
  *
@@ -290,6 +293,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_rmf
     GDALRegister_RMF();
+#endif
+
+#ifdef FRMT_msgn
+    GDALRegister_MSGN();
 #endif
 
 /* -------------------------------------------------------------------- */
