@@ -1117,7 +1117,7 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         adfMinMax[0] = poBand->GetMinimum( &bGotMin );
         adfMinMax[1] = poBand->GetMaximum( &bGotMax );
         if( ! (bGotMin && bGotMax) )
-            GDALComputeRasterMinMax((GDALRasterBandH)poBand, TRUE, adfMinMax);
+            GDALComputeRasterMinMax((GDALRasterBandH)poBand, FALSE, adfMinMax);
 				if ((!CPLIsNan(adfMinMax[0])) && CPLIsFinite(adfMinMax[0]) && (!CPLIsNan(adfMinMax[1])) && CPLIsFinite(adfMinMax[1]))
 				{
 					// only write a range if we got a correct one from the source dataset (otherwise ILWIS can't show the map properly)
