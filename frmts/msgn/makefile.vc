@@ -1,0 +1,15 @@
+
+OBJ    =        msgndataset.o msg_basic_types.o msg_reader_core.o
+
+EXTRAFLAGS =   -I..\iso8211 -I. -Imodule-msg_reader -DGDAL_SUPPORT
+
+GDAL_ROOT      =       ..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:       $(OBJ)
+       copy *.obj ..\o
+
+clean:
+       -del *.obj
+
