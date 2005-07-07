@@ -57,6 +57,8 @@ Msg_reader_core::Msg_reader_core(FILE* fp) {
 
 void Msg_reader_core::read_metadata_block(FILE* fin) {
 
+    unsigned int i;
+
     VSIFRead(&_main_header, sizeof(_main_header), 1, fin);
     VSIFRead(&_sec_header, sizeof(_sec_header), 1, fin);
 
@@ -69,7 +71,6 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
         hd++;
     }   
     PH_DATA_ID* hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification;
-    int i;
 
     for (i=0; i < 5; i++) {
         printf("%s %s %s", hdi->name, hdi->size, hdi->address);
@@ -84,7 +85,8 @@ void Msg_reader_core::read_metadata_block(FILE* fin) {
 #endif // DEBUG    
 
     // extract data & header positions
-    for (int i=0; i < 5; i++) {
+
+    for (i=0; i < 5; i++) {
         PH_DATA_ID* hdi = (PH_DATA_ID*)&_main_header.dataSetIdentification[i];
         if (strncmp(hdi->name, "15Header", strlen("15Header")) == 0) {
             sscanf(hdi->size, "%d", &_f_header_size);
