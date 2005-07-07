@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2005/07/07 23:36:14  fwarmerdam
+ * added msgn support
+ *
  * Revision 1.36  2005/05/19 20:43:08  dron
  * Added RMF format.
  *
@@ -206,6 +209,7 @@ void CPL_DLL GDALRegister_PCRaster(void);
 void CPL_DLL GDALRegister_IDA(void);
 void CPL_DLL GDALRegister_NDF(void);
 void CPL_DLL GDALRegister_RMF(void);
+void CPL_DLL GDALRegister_MSGN(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
