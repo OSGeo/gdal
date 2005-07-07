@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.141  2005/07/07 13:26:48  fwarmerdam
+ * Fixed colormap conversion to 16bit in CreateCopy() per report from
+ * Uwe Schmitz on gdal-dev.
+ *
  * Revision 1.140  2005/05/22 21:00:44  fwarmerdam
  * metadata support rewritten to support multiple domains
  *
@@ -3647,9 +3651,9 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
                 poCT->GetColorEntryAsRGB( iColor, &sRGB );
 
-                anTRed[iColor] = (unsigned short) (256 * sRGB.c1);
-                anTGreen[iColor] = (unsigned short) (256 * sRGB.c2);
-                anTBlue[iColor] = (unsigned short) (256 * sRGB.c3);
+                anTRed[iColor] = (unsigned short) (257 * sRGB.c1);
+                anTGreen[iColor] = (unsigned short) (257 * sRGB.c2);
+                anTBlue[iColor] = (unsigned short) (257 * sRGB.c3);
             }
             else
             {
