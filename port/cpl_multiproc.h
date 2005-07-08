@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/07/08 18:17:52  fwarmerdam
+ * complete TLS implementation for win32
+ *
  * Revision 1.7  2005/07/08 14:35:26  fwarmerdam
  * preliminary TLS support
  *
@@ -126,8 +129,7 @@ class CPLMutexHolder
 
 #define CTLS_MAX                       32         
 
-void * CPL_DLL CPLGetTLS( int nIndex );
+void CPL_DLL * CPLGetTLS( int nIndex );
 void CPL_DLL CPLSetTLS( int nIndex, void *pData, int bFreeOnExit );
-void * CPL_DLL CPLGetOrInitTLS( int nIndex, int nSize );
 
 #endif /* _CPL_MULTIPROC_H_INCLUDED_ */
