@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/07/08 14:35:56  fwarmerdam
+ * restructured to use error context and TLS
+ *
  * Revision 1.29  2005/05/23 03:58:51  fwarmerdam
  * make handler stack threadlocal
  *
@@ -121,20 +124,11 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
+#include "cpl_multiproc.h"
 
 #define TIMESTAMP_DEBUG
 
 CPL_CVSID("$Id$");
-
-/* static buffer to store the last error message.  We'll assume that error
- * messages cannot be longer than 2000 chars... which is quite reasonable
- * (that's 25 lines of 80 chars!!!)
- */
-static CPL_THREADLOCAL char gszCPLLastErrMsg[2000] = "";
-static CPL_THREADLOCAL int  gnCPLLastErrNo = 0;
-static CPL_THREADLOCAL CPLErr geCPLLastErrType = CE_None;
-
-static CPL_THREADLOCAL CPLErrorHandler gpfnCPLErrorHandler = CPLDefaultErrorHandler;
 
 typedef struct errHandler
 {
@@ -142,7 +136,36 @@ typedef struct errHandler
     CPLErrorHandler     pfnHandler;
 } CPLErrorHandlerNode;
 
-static CPL_THREADLOCAL CPLErrorHandlerNode * psHandlerStack = NULL;
+typedef struct {
+    char    szLastErrMsg[2000];
+    int     nLastErrNo;
+    CPLErr  eLastErrType;
+    
+    CPLErrorHandlerNode *psHandlerStack;
+    CPLErrorHandler     pfnErrorHandler;
+} CPLErrorContext;
+
+/************************************************************************/
+/*                         CPLGetErrorContext()                         */
+/************************************************************************/
+
+static CPLErrorContext *CPLGetErrorContext()
+
+{
+    CPLErrorContext *psCtx = 
+        (CPLErrorContext *) CPLGetTLS( CTLS_ERRORCONTEXT );
+
+    if( psCtx == NULL )
+    {
+        psCtx = (CPLErrorContext *) CPLCalloc(sizeof(CPLErrorContext),1);
+        psCtx->eLastErrType = CE_None;
+        psCtx->pfnErrorHandler = CPLDefaultErrorHandler;
+        CPLSetTLS( CTLS_ERRORCONTEXT, psCtx, TRUE );
+    }
+
+    return psCtx;
+}
+
 
 /**********************************************************************
  *                          CPLError()
@@ -197,25 +220,27 @@ void    CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...)
 
 void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
 {
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+
     /* Expand the error message 
      */
 #if defined(HAVE_VSNPRINTF)
-    vsnprintf( gszCPLLastErrMsg, sizeof(gszCPLLastErrMsg), fmt, args );
+    vsnprintf( psCtx->szLastErrMsg, sizeof(psCtx->szLastErrMsg), fmt, args );
 #else
-    vsprintf(gszCPLLastErrMsg, fmt, args);
+    vsprintf( psCtx->szLastErrMsg, fmt, args);
 #endif
 
     /* If the user provided his own error handling function, then call
      * it, otherwise print the error to stderr and return.
      */
-    gnCPLLastErrNo = err_no;
-    geCPLLastErrType = eErrClass;
+    psCtx->nLastErrNo = err_no;
+    psCtx->eLastErrType = eErrClass;
 
     if( CPLGetConfigOption("CPL_LOG_ERRORS",NULL) != NULL )
-        CPLDebug( "CPLError", "%s", gszCPLLastErrMsg );
+        CPLDebug( "CPLError", "%s", psCtx->szLastErrMsg );
 
-    if( gpfnCPLErrorHandler )
-        gpfnCPLErrorHandler(eErrClass, err_no, gszCPLLastErrMsg);
+    if( psCtx->pfnErrorHandler )
+        psCtx->pfnErrorHandler(eErrClass, err_no, psCtx->szLastErrMsg);
 
     if( eErrClass == CE_Fatal )
         abort();
@@ -249,6 +274,7 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
 void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 
 {
+    CPLErrorContext *psCtx = CPLGetErrorContext();
     char        *pszMessage;
     va_list     args;
     const char  *pszDebug = CPLGetConfigOption("CPL_DEBUG",NULL);
@@ -327,8 +353,8 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 /*      If the user provided his own error handling function, then call */
 /*      it, otherwise print the error to stderr and return.             */
 /* -------------------------------------------------------------------- */
-    if( gpfnCPLErrorHandler )
-        gpfnCPLErrorHandler(CE_Debug, CPLE_None, pszMessage);
+    if( psCtx->pfnErrorHandler )
+        psCtx->pfnErrorHandler(CE_Debug, CPLE_None, pszMessage);
 
     VSIFree( pszMessage );
 }
@@ -346,9 +372,11 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 
 void CPL_STDCALL CPLErrorReset()
 {
-    gnCPLLastErrNo = CPLE_None;
-    gszCPLLastErrMsg[0] = '\0';
-    geCPLLastErrType = CE_None;
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+
+    psCtx->nLastErrNo = CPLE_None;
+    psCtx->szLastErrMsg[0] = '\0';
+    psCtx->eLastErrType = CE_None;
 }
 
 
@@ -367,7 +395,9 @@ void CPL_STDCALL CPLErrorReset()
 
 int CPL_STDCALL CPLGetLastErrorNo()
 {
-    return gnCPLLastErrNo;
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+
+    return psCtx->nLastErrNo;
 }
 
 /**********************************************************************
@@ -385,7 +415,9 @@ int CPL_STDCALL CPLGetLastErrorNo()
 
 CPLErr CPL_STDCALL CPLGetLastErrorType()
 {
-    return geCPLLastErrType;
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+
+    return psCtx->eLastErrType;
 }
 
 /**********************************************************************
@@ -405,7 +437,9 @@ CPLErr CPL_STDCALL CPLGetLastErrorType()
 
 const char* CPL_STDCALL CPLGetLastErrorMsg()
 {
-    return gszCPLLastErrMsg;
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+
+    return psCtx->szLastErrMsg;
 }
 
 /************************************************************************/
@@ -564,9 +598,10 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, int nError,
 CPLErrorHandler CPL_STDCALL 
 CPLSetErrorHandler( CPLErrorHandler pfnErrorHandler )
 {
-    CPLErrorHandler     pfnOldHandler = gpfnCPLErrorHandler;
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+    CPLErrorHandler     pfnOldHandler = psCtx->pfnErrorHandler;
     
-    gpfnCPLErrorHandler = pfnErrorHandler;
+    psCtx->pfnErrorHandler = pfnErrorHandler;
 
     return pfnOldHandler;
 }
@@ -591,13 +626,14 @@ CPLSetErrorHandler( CPLErrorHandler pfnErrorHandler )
 void CPL_STDCALL CPLPushErrorHandler( CPLErrorHandler pfnErrorHandler )
 
 {
+    CPLErrorContext *psCtx = CPLGetErrorContext();
     CPLErrorHandlerNode         *psNode;
 
     psNode = (CPLErrorHandlerNode *) VSIMalloc(sizeof(CPLErrorHandlerNode));
-    psNode->psNext = psHandlerStack;
-    psNode->pfnHandler = gpfnCPLErrorHandler;
+    psNode->psNext = psCtx->psHandlerStack;
+    psNode->pfnHandler = psCtx->pfnErrorHandler;
 
-    psHandlerStack = psNode;
+    psCtx->psHandlerStack = psNode;
 
     CPLSetErrorHandler( pfnErrorHandler );
 }
@@ -616,11 +652,13 @@ void CPL_STDCALL CPLPushErrorHandler( CPLErrorHandler pfnErrorHandler )
 void CPL_STDCALL CPLPopErrorHandler()
 
 {
-    if( psHandlerStack != NULL )
-    {
-        CPLErrorHandlerNode     *psNode = psHandlerStack;
+    CPLErrorContext *psCtx = CPLGetErrorContext();
 
-        psHandlerStack = psNode->psNext;
+    if( psCtx->psHandlerStack != NULL )
+    {
+        CPLErrorHandlerNode     *psNode = psCtx->psHandlerStack;
+
+        psCtx->psHandlerStack = psNode->psNext;
         CPLSetErrorHandler( psNode->pfnHandler );
         VSIFree( psNode );
     }
