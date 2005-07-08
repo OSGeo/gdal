@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2005/07/08 22:10:56  pka
+ * Initial import of OGR Interlis driver
+ *
  * Revision 1.50  2005/02/22 12:40:37  fwarmerdam
  * added base OGRLayer spatial filter support
  *
@@ -447,6 +450,8 @@ void CPL_DLL RegisterOGRVRT();
 void CPL_DLL RegisterOGRDODS();
 void CPL_DLL RegisterOGRSQLite();
 void CPL_DLL RegisterOGRCSV();
+void CPL_DLL RegisterOGRILI1();
+void CPL_DLL RegisterOGRILI2();
 
 CPL_C_END
 

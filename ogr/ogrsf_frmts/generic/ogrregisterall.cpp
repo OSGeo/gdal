@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/07/08 22:10:57  pka
+ * Initial import of OGR Interlis driver
+ *
  * Revision 1.22  2005/01/19 20:34:38  fwarmerdam
  * added autoloaddrivers call
  *
@@ -122,6 +125,8 @@ void OGRRegisterAll()
     RegisterOGRMEM();
     RegisterOGRCSV();
     RegisterOGRGML();
+    RegisterOGRILI1();
+    RegisterOGRILI2();
 #ifdef SQLITE_ENABLED
     RegisterOGRSQLite();
 #endif
