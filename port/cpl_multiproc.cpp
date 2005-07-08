@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/07/08 16:30:25  fwarmerdam
+ * real implementation of TLS for pthreads
+ *
  * Revision 1.9  2005/07/08 14:35:26  fwarmerdam
  * preliminary TLS support
  *
@@ -817,17 +820,74 @@ void CPLSleep( double dfWaitInSeconds )
     nanosleep( &sRequest, &sRemain );
 }
 
+static int           bTLSKeySetup = FALSE;
+static pthread_key_t oTLSKey;
+
+/************************************************************************/
+/*                           CPLCleanupTLS()                            */
+/************************************************************************/
+
+static void CPLCleanupTLS( void * pData )
+
+{
+    void **papTLSList = (void **) pData;
+    int i;
+    
+    for( i = 0; i < CTLS_MAX; i++ )
+    {
+        if( papTLSList[i] != NULL && papTLSList[i+CTLS_MAX] != NULL )
+        {
+            CPLFree( papTLSList[i] );
+        }
+    }
+
+    CPLFree( papTLSList );
+}
+
+/************************************************************************/
+/*                           CPLGetTLSList()                            */
+/************************************************************************/
+
+static void **CPLGetTLSList()
+
+{
+    void **papTLSList;
+
+    if( !bTLSKeySetup )
+    {
+        if( pthread_key_create( &oTLSKey, CPLCleanupTLS ) != 0 )
+        {
+            CPLError( CE_Fatal, CPLE_AppDefined, 
+                      "pthread_key_create() failed!" );
+        }
+        bTLSKeySetup = TRUE;
+    }
+
+    papTLSList = (void **) pthread_getspecific( oTLSKey );
+    if( papTLSList == NULL )
+    {
+        papTLSList = (void **) CPLCalloc(sizeof(void*),CTLS_MAX*2);
+        if( pthread_setspecific( oTLSKey, papTLSList ) != 0 )
+        {
+            CPLError( CE_Fatal, CPLE_AppDefined, 
+                      "pthread_setspecific() failed!" );
+        }
+    }
+
+    return papTLSList;
+}
+
+
 /************************************************************************/
 /*                             CPLGetTLS()                              */
 /************************************************************************/
 
-static void **papTLSList = NULL;
-
 void *CPLGetTLS( int nIndex )
 
 {
-    if( papTLSList == NULL )
-        papTLSList = (void **) CPLCalloc(sizeof(void*),CTLS_MAX);
+    void **papTLSList = CPLGetTLSList();
+
+    CPLAssert( nIndex >= 0 && nIndex <= CTLS_MAX );
 
     return papTLSList[nIndex];
 }
@@ -839,10 +899,12 @@ void *CPLGetTLS( int nIndex )
 void CPLSetTLS( int nIndex, void *pData, int bFreeOnExit )
 
 {
-    if( papTLSList == NULL )
-        papTLSList = (void **) CPLCalloc(sizeof(void*),CTLS_MAX);
+    void **papTLSList = CPLGetTLSList();
+
+    CPLAssert( nIndex >= 0 && nIndex <= CTLS_MAX );
 
     papTLSList[nIndex] = pData;
+    papTLSList[CTLS_MAX + nIndex] = (void *) bFreeOnExit;
 }
 
 #endif /* def CPL_MULTIPROC_PTHREAD */
