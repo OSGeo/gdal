@@ -268,7 +268,8 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
     /* check if this is a "NATIVE" MSG format image */
-    if( !EQUALN((char *)poOpenInfo->pabyHeader,"FormatName                  :NATIVE",36) )
+    if( !EQUALN((char *)poOpenInfo->pabyHeader,
+                "FormatName                  : NATIVE", 36) )
     {
         return NULL;
     }
