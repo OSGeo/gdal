@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/07/08 14:35:26  fwarmerdam
+ * preliminary TLS support
+ *
  * Revision 1.8  2005/05/23 16:00:33  fwarmerdam
  * Make sure that stub implementation of mutex support recursive holds.
  *
@@ -359,6 +362,34 @@ void CPLSleep( double dfWaitInSeconds )
     }
 }
 
+/************************************************************************/
+/*                             CPLGetTLS()                              */
+/************************************************************************/
+
+static void **papTLSList = NULL;
+
+void *CPLGetTLS( int nIndex )
+
+{
+    if( papTLSList == NULL )
+        papTLSList = (void **) CPLCalloc(sizeof(void*),CTLS_MAX);
+
+    return papTLSList[nIndex];
+}
+
+/************************************************************************/
+/*                             CPLSetTLS()                              */
+/************************************************************************/
+
+void CPLSetTLS( int nIndex, void *pData, int bFreeOnExit )
+
+{
+    if( papTLSList == NULL )
+        papTLSList = (void **) CPLCalloc(sizeof(void*),CTLS_MAX);
+
+    papTLSList[nIndex] = pData;
+}
+
 #endif /* def CPL_MULTIPROC_STUB */
 
 #ifdef CPL_MULTIPROC_WIN32
@@ -563,6 +594,34 @@ void CPLSleep( double dfWaitInSeconds )
     Sleep( (DWORD) (dfWaitInSeconds * 1000.0) );
 }
 
+/************************************************************************/
+/*                             CPLGetTLS()                              */
+/************************************************************************/
+
+static void **papTLSList = NULL;
+
+void *CPLGetTLS( int nIndex )
+
+{
+    if( papTLSList == NULL )
+        papTLSList = (void **) CPLCalloc(sizeof(void*),CTLS_MAX);
+
+    return papTLSList[nIndex];
+}
+
+/************************************************************************/
+/*                             CPLSetTLS()                              */
+/************************************************************************/
+
+void CPLSetTLS( int nIndex, void *pData, int bFreeOnExit )
+
+{
+    if( papTLSList == NULL )
+        papTLSList = (void **) CPLCalloc(sizeof(void*),CTLS_MAX);
+
+    papTLSList[nIndex] = pData;
+}
+
 #endif /* def CPL_MULTIPROC_WIN32 */
 
 #ifdef CPL_MULTIPROC_PTHREAD
@@ -756,6 +815,34 @@ void CPLSleep( double dfWaitInSeconds )
     sRequest.tv_sec = (int) floor(dfWaitInSeconds);
     sRequest.tv_nsec = (int) ((dfWaitInSeconds - sRequest.tv_sec)*1000000000);
     nanosleep( &sRequest, &sRemain );
+}
+
+/************************************************************************/
+/*                             CPLGetTLS()                              */
+/************************************************************************/
+
+static void **papTLSList = NULL;
+
+void *CPLGetTLS( int nIndex )
+
+{
+    if( papTLSList == NULL )
+        papTLSList = (void **) CPLCalloc(sizeof(void*),CTLS_MAX);
+
+    return papTLSList[nIndex];
+}
+
+/************************************************************************/
+/*                             CPLSetTLS()                              */
+/************************************************************************/
+
+void CPLSetTLS( int nIndex, void *pData, int bFreeOnExit )
+
+{
+    if( papTLSList == NULL )
+        papTLSList = (void **) CPLCalloc(sizeof(void*),CTLS_MAX);
+
+    papTLSList[nIndex] = pData;
 }
 
 #endif /* def CPL_MULTIPROC_PTHREAD */

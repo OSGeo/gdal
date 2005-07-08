@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/07/08 14:35:26  fwarmerdam
+ * preliminary TLS support
+ *
  * Revision 1.6  2005/05/23 06:39:49  fwarmerdam
  * added CPLMutexHolder stuff
  *
@@ -95,7 +98,7 @@ CPL_C_END
 class CPLMutexHolder
 {
   private:
-    void *hMutex;
+    void       *hMutex;
     const char *pszFile;
     int         nLine;
 
@@ -107,5 +110,24 @@ class CPLMutexHolder
     ~CPLMutexHolder();
 };
 #endif /* def __cplusplus */
+
+/* -------------------------------------------------------------------- */
+/*      Thread local storage.                                           */
+/* -------------------------------------------------------------------- */
+
+#define CTLS_RLBUFFERINFO     		1         /* cpl_conv.cpp */
+#define CTLS_DECDMSBUFFER               2	  /* cpl_conv.cpp */
+#define CTLS_CSVTABLEPTR                3         /* cpl_csv.cpp */
+#define CTLS_CSVDEFAULTFILENAME         4         /* cpl_csv.cpp */
+#define CTLS_ERRORCONTEXT               5         /* cpl_error.cpp */
+#define CTLS_FINDERINFO                 6         /* cpl_finder.cpp */
+#define CTLS_PATHBUF                    7         /* cpl_path.cpp */
+#define CTLS_SPRINTFBUF                 8         /* cpl_string.cpp */
+
+#define CTLS_MAX                       32         
+
+void * CPL_DLL CPLGetTLS( int nIndex );
+void CPL_DLL CPLSetTLS( int nIndex, void *pData, int bFreeOnExit );
+void * CPL_DLL CPLGetOrInitTLS( int nIndex, int nSize );
 
 #endif /* _CPL_MULTIPROC_H_INCLUDED_ */
