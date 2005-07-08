@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.68  2005/07/08 18:59:54  fwarmerdam
+ * Don't use thread local storage for GDALTermProgress() last complete, or
+ * the GDALVersionInfo() static buffer.
+ *
  * Revision 1.67  2005/05/23 06:44:31  fwarmerdam
  * Updated for locking of block refs
  *
@@ -844,6 +848,11 @@ void CPL_STDCALL GDALDestroyScaledProgress( void * pData )
  * percentage reported and will get confused if two terminal based progress
  * reportings are active at the same time.
  *
+ * The GDALTermProgress() function maintains an internal memory of the 
+ * last percentage complete reported in a static variable, and this makes
+ * it unsuitable to have multiple GDALTermProgress()'s active eithin a 
+ * single thread or across multiple threads.
+ *
  * @param dfComplete completion ratio from 0.0 to 1.0.
  * @param pszMessage optional message.
  * @param pProgressArg ignored callback data argument. 
@@ -855,7 +864,7 @@ int CPL_STDCALL GDALTermProgress( double dfComplete, const char *pszMessage,
                       void * pProgressArg )
 
 {
-    static CPL_THREADLOCAL double dfLastComplete = -1.0;
+    static double dfLastComplete = -1.0;
 
     (void) pProgressArg;
 
@@ -1549,8 +1558,12 @@ GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
 const char * CPL_STDCALL GDALVersionInfo( const char *pszRequest )
 
 {
-    static CPL_THREADLOCAL char szResult[128];
+    // NOTE: There is a slight risk of a multithreaded race condition if
+    // one thread is in the process of sprintf()ing into this buffer while
+    // another is using it but that seems pretty low risk.  All threads
+    // want the same value in the buffer.
 
+    static char szResult[128];
     
     if( pszRequest == NULL || EQUAL(pszRequest,"VERSION_NUM") )
         sprintf( szResult, "%d", GDAL_VERSION_NUM );
