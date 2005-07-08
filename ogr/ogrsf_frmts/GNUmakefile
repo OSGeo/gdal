@@ -3,7 +3,7 @@ GDAL_ROOT	=	../..
 include ../../GDALmake.opt
 
 SUBDIRS-yes	:= generic shape ntf sdts tiger s57 mitab dgn gml avc rec mem \
-		   vrt csv
+		   vrt csv ili
 SUBDIRS-$(HAVE_OGDI)	+= ogdi
 SUBDIRS-$(HAVE_OCI)	+= oci
 SUBDIRS-$(HAVE_OGR_PG)	+= pg
