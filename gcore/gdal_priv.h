@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2005/07/11 21:08:17  fwarmerdam
+ * Removed GetAge() method.
+ *
  * Revision 1.59  2005/07/11 19:07:02  fwarmerdam
  * removed GDALRasterBlock nAge.
  *
@@ -433,7 +436,6 @@ class CPL_DLL GDALRasterBlock
     int         GetYOff() { return nYOff; }
     int         GetXSize() { return nXSize; }
     int         GetYSize() { return nYSize; }
-    int         GetAge() { return nAge; }
     int         GetDirty() { return bDirty; }
     int         GetLockCount() { return nLockCount; }
 
