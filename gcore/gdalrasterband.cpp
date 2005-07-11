@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.67  2005/07/11 21:07:33  fwarmerdam
+ * fixed a couple papoBlocks related multi-threading issues
+ *
  * Revision 1.66  2005/05/23 06:42:57  fwarmerdam
  * Updated for locking of block refs
  *
@@ -949,8 +952,9 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff )
 {
     int             nBlockIndex;
     GDALRasterBlock *poBlock;
-    
-    InitBlockInfo();
+
+    if( !papoBlocks )
+        return CE_None;
     
 /* -------------------------------------------------------------------- */
 /*      Validate the request                                            */
@@ -1179,6 +1183,8 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
     {
         poBlock = new GDALRasterBlock( this, nXBlockOff, nYBlockOff );
 
+        poBlock->AddLock();
+
         /* allocate data space */
         if( poBlock->Internalize() != CE_None )
         {
@@ -1188,7 +1194,6 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
             return( NULL );
         }
 
-        poBlock->AddLock();
         AdoptBlock( nXBlockOff, nYBlockOff, poBlock );
 
         if( !bJustInitialize
