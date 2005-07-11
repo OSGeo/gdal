@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.28  2005/07/11 17:17:21  fwarmerdam
+ * Added note on thread un-safety of GDALDestroyDriverManager.
+ *
  * Revision 1.27  2005/07/11 17:15:32  fwarmerdam
  * Grab mutex to create drive manager
  *
@@ -695,6 +698,9 @@ void GDALDriverManager::AutoLoadDrivers()
  * Destroy the driver manager.
  *
  * Incidently unloads all managed drivers.
+ *
+ * NOTE: This function is not thread safe.  It should not be called while
+ * other threads are actively using GDAL. 
  */
 
 void CPL_STDCALL GDALDestroyDriverManager( void )
