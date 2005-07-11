@@ -18,6 +18,7 @@
 #include <xercesc/framework/XMLBuffer.hpp>
 #include <xercesc/util/StringPool.hpp>
 #include <xercesc/framework/XMLPScanToken.hpp>
+#include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/sax2/SAX2XMLReader.hpp>
 #include <xercesc/sax2/DefaultHandler.hpp>
 #include <xercesc/framework/XMLFormatter.hpp>
