@@ -436,7 +436,7 @@ void iom_file::writeAttrs(XmlWriter &out, IomObject &obj)
 	}else{
 		// class found
 		attrv_type attrv=tag->second;
-		for(int attri=0;attri<attrv.size();attri++){
+		for(unsigned int attri=0;attri<attrv.size();attri++){
 			int attr=attrv[attri].second;
 			writeAttr(out, obj,attr);
 		}
@@ -508,7 +508,7 @@ int iom_file::save()
 			ind++;
 
 			// write all baskets
-			for(int basketi=0;basketi<basketv.size();basketi++){
+			for(unsigned int basketi=0;basketi<basketv.size();basketi++){
 				IomBasket basket=basketv.at(basketi);
 				const XMLCh *topics=basket->getTopics();
 				const XMLCh *kind=encodeBasketKind(basket->getKind());
@@ -731,11 +731,19 @@ void XmlWriter::open(const char *filename)
     );
 	*/
 	destination=new LocalFileFormatTarget(filename); 
+
+#if XERCES_VERSION_MAJOR == 2 && XERCES_VERSION_MINOR < 3
+	out= new XMLFormatter(gUTF8
+                 ,destination
+                 ,XMLFormatter::NoEscapes
+                 ,XMLFormatter::UnRep_CharRef);
+#else
 	out= new XMLFormatter(gUTF8
                  ,gXMLDecl_ver10
                  ,destination
                  ,XMLFormatter::NoEscapes
                  ,XMLFormatter::UnRep_CharRef);
+#endif
 
     out->setUnRepFlags(XMLFormatter::UnRep_CharRef);
 
