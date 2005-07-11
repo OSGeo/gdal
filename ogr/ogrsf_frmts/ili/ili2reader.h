@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/07/11 19:42:42  pka
+ * Syntax fix
+ *
  * Revision 1.1  2005/07/08 22:10:57  pka
  * Initial import of OGR Interlis driver
  *
@@ -54,7 +57,7 @@ public:
     
     virtual int  SaveClasses( const char *pszFilename ) = 0;
     
-    virtual std::list<OGRLayer *> GetLayers() = NULL;
+    virtual std::list<OGRLayer *> GetLayers() = 0;
     virtual int GetLayerCount() = 0;
 };
 
