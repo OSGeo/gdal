@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.30  2005/07/11 17:29:48  fwarmerdam
+ * More use of mutex in some "read" cases.
+ *
  * Revision 1.29  2005/07/11 17:25:49  fwarmerdam
  * Fixed minior race condition in GDALDriverManager creation.
  *
@@ -305,6 +308,8 @@ int CPL_STDCALL GDALGetDriverCount()
 GDALDriver * GDALDriverManager::GetDriver( int iDriver )
 
 {
+    CPLMutexHolderD( &hDMMutex );
+
     if( iDriver < 0 || iDriver >= nDrivers )
         return NULL;
     else
@@ -477,6 +482,8 @@ GDALDriver * GDALDriverManager::GetDriverByName( const char * pszName )
 
 {
     int         i;
+
+    CPLMutexHolderD( &hDMMutex );
 
     for( i = 0; i < nDrivers; i++ )
     {
