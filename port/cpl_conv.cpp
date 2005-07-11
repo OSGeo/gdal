@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2005/07/11 16:41:31  fwarmerdam
+ * Protect config list and shared file list with mutex.
+ *
  * Revision 1.44  2005/05/23 03:57:57  fwarmerdam
  * make make static buffers threadlocal
  *
@@ -166,11 +169,14 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
+static void *hConfigMutex = NULL;
 static volatile char **papszConfigOptions = NULL;
 
+static void *hSharedFileMutex = NULL;
 static volatile int nSharedFileCount = 0;
 static volatile CPLSharedFileInfo *pasSharedFileList = NULL;
 
@@ -1215,8 +1221,13 @@ const char * CPL_STDCALL
 CPLGetConfigOption( const char *pszKey, const char *pszDefault )
 
 {
-    const char *pszResult = 
-        CSLFetchNameValue( (char **) papszConfigOptions, pszKey );
+    const char *pszResult = NULL;
+
+    {
+        CPLMutexHolderD( &hConfigMutex );
+
+        pszResult = CSLFetchNameValue( (char **) papszConfigOptions, pszKey );
+    }
 
     if( pszResult == NULL )
         pszResult = getenv( pszKey );
@@ -1235,6 +1246,8 @@ void CPL_STDCALL
 CPLSetConfigOption( const char *pszKey, const char *pszValue )
 
 {
+    CPLMutexHolderD( &hConfigMutex );
+
     papszConfigOptions = (volatile char **) 
         CSLSetNameValue( (char **) papszConfigOptions, pszKey, pszValue );
 }
@@ -1246,6 +1259,8 @@ CPLSetConfigOption( const char *pszKey, const char *pszValue )
 void CPL_STDCALL CPLFreeConfig()
 
 {
+    CPLMutexHolderD( &hConfigMutex );
+
     CSLDestroy( (char **) papszConfigOptions);
     papszConfigOptions = NULL;
 }
@@ -1580,6 +1595,7 @@ FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
 {
     int i;
     int bReuse;
+    CPLMutexHolderD( &hSharedFileMutex );
 
 /* -------------------------------------------------------------------- */
 /*      Is there an existing file we can use?                           */
@@ -1645,6 +1661,7 @@ FILE *CPLOpenShared( const char *pszFilename, const char *pszAccess,
 void CPLCloseShared( FILE * fp )
 
 {
+    CPLMutexHolderD( &hSharedFileMutex );
     int i;
 
 /* -------------------------------------------------------------------- */
