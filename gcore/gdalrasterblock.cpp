@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/07/11 19:06:36  fwarmerdam
+ * Removed tile ticker, and GDALRasterBlock age.
+ *
  * Revision 1.19  2005/05/23 14:28:21  fwarmerdam
  * fixed serious flaw in Detach() method
  *
@@ -95,7 +98,6 @@
 
 CPL_CVSID("$Id$");
 
-static volatile int nTileAgeTicker = 0; 
 static int bCacheMaxInitialized = FALSE;
 static int nCacheMax = 10 * 1024*1024;
 static volatile int nCacheUsed = 0;
@@ -280,8 +282,6 @@ GDALRasterBlock::~GDALRasterBlock()
 #ifdef ENABLE_DEBUG
     Verify();
 #endif
-
-    nAge = -1;
 }
 
 /************************************************************************/
@@ -373,8 +373,6 @@ void GDALRasterBlock::Touch()
 
 {
     CPLMutexHolderD( &hRBMutex );
-
-    nAge = nTileAgeTicker++;
 
     if( poNewest == this )
         return;
