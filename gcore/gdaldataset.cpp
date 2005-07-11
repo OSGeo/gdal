@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2005/07/11 17:10:02  fwarmerdam
+ * moved in GDALOpen, GDALClose - make shared list thread safer
+ *
  * Revision 1.52  2005/06/20 01:52:47  fwarmerdam
  * an illegal band in GetRasterBand() no longer fatal
  *
@@ -102,7 +105,7 @@
 CPL_CVSID("$Id$");
 
 static volatile int nGDALDatasetCount = 0;
-static volatile GDALDataset **papoGDALDatasetList = NULL;
+static GDALDataset ** volatile papoGDALDatasetList = NULL;
 static void *hDLMutex = NULL;
 
 /************************************************************************/
@@ -146,7 +149,7 @@ GDALDataset::GDALDataset()
         CPLMutexHolderD( &hDLMutex );
         
         nGDALDatasetCount++;
-        papoGDALDatasetList = (volatile GDALDataset **) 
+        papoGDALDatasetList = (GDALDataset ** volatile) 
             CPLRealloc( papoGDALDatasetList, sizeof(void *)*nGDALDatasetCount);
         papoGDALDatasetList[nGDALDatasetCount-1] = this;
     }
@@ -183,20 +186,23 @@ GDALDataset::~GDALDataset()
 /* -------------------------------------------------------------------- */
 /*      Remove dataset from the "open" dataset list.                    */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < nGDALDatasetCount; i++ )
     {
-        if( papoGDALDatasetList[i] == this )
-        {
-            CPLMutexHolderD( &hDLMutex );
+        CPLMutexHolderD( &hDLMutex );
 
-            papoGDALDatasetList[i] = papoGDALDatasetList[nGDALDatasetCount-1];
-            nGDALDatasetCount--;
-            if( nGDALDatasetCount == 0 )
+        for( i = 0; i < nGDALDatasetCount; i++ )
+        {
+            if( papoGDALDatasetList[i] == this )
             {
-                CPLFree( papoGDALDatasetList );
-                papoGDALDatasetList = NULL;
+                papoGDALDatasetList[i] = 
+                    papoGDALDatasetList[nGDALDatasetCount-1];
+                nGDALDatasetCount--;
+                if( nGDALDatasetCount == 0 )
+                {
+                    CPLFree( papoGDALDatasetList );
+                    papoGDALDatasetList = NULL;
+                }
+                break;
             }
-            break;
         }
     }
 
@@ -1493,6 +1499,9 @@ GDALDatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
  *
  * This method is the same as the C function GDALGetOpenDatasets().
  *
+ * NOTE: This method is not thread safe.  The returned list may changed
+ * at any time.
+ *
  * @param pnCount integer into which to place the count of dataset pointers
  * being returned.
  *
@@ -1627,3 +1636,232 @@ GDALDatasetAdviseRead( GDALDatasetH hDS,
                                               papszOptions );
 }
 
+/************************************************************************/
+/*                              GDALOpen()                              */
+/************************************************************************/
+
+/**
+ * Open a raster file as a GDALDataset.
+ *
+ * This function will try to open the passed file, or virtual dataset
+ * name by invoking the Open method of each registered GDALDriver in turn. 
+ * The first successful open will result in a returned dataset.  If all
+ * drivers fail then NULL is returned.
+ *
+ * \sa GDALOpenShared()
+ *
+ * @param pszFilename the name of the file to access.  In the case of
+ * exotic drivers this may not refer to a physical file, but instead contain
+ * information for the driver on how to access a dataset.
+ *
+ * @param eAccess the desired access, either GA_Update or GA_ReadOnly.  Many
+ * drivers support only read only access.
+ *
+ * @return A GDALDatasetH handle or NULL on failure.  For C++ applications
+ * this handle can be cast to a GDALDataset *. 
+ */
+
+GDALDatasetH CPL_STDCALL 
+GDALOpen( const char * pszFilename, GDALAccess eAccess )
+
+{
+    int         iDriver;
+    GDALDriverManager *poDM = GetGDALDriverManager();
+    GDALOpenInfo oOpenInfo( pszFilename, eAccess );
+
+    CPLErrorReset();
+    
+    for( iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++ )
+    {
+        GDALDriver      *poDriver = poDM->GetDriver( iDriver );
+        GDALDataset     *poDS;
+
+        poDS = poDriver->pfnOpen( &oOpenInfo );
+        if( poDS != NULL )
+        {
+            poDS->SetDescription( pszFilename );
+
+            if( poDS->poDriver == NULL )
+                poDS->poDriver = poDriver;
+
+            
+            CPLDebug( "GDAL", "GDALOpen(%s) succeeds as %s.\n",
+                      pszFilename, poDriver->GetDescription() );
+
+            return (GDALDatasetH) poDS;
+        }
+
+        if( CPLGetLastErrorNo() != 0 )
+            return NULL;
+    }
+
+    if( oOpenInfo.bStatOK )
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "`%s' not recognised as a supported file format.\n",
+                  pszFilename );
+    else
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "`%s' does not exist in the file system,\n"
+                  "and is not recognised as a supported dataset name.\n",
+                  pszFilename );
+              
+    return NULL;
+}
+
+/************************************************************************/
+/*                           GDALOpenShared()                           */
+/************************************************************************/
+
+/**
+ * Open a raster file as a GDALDataset.
+ *
+ * This function works the same as GDALOpen(), but allows the sharing of
+ * GDALDataset handles for a dataset with other callers to GDALOpenShared().
+ * 
+ * In particular, GDALOpenShared() will first consult it's list of currently
+ * open and shared GDALDataset's, and if the GetDescription() name for one
+ * exactly matches the pszFilename passed to GDALOpenShared() it will be
+ * referenced and returned.
+ *
+ * \sa GDALOpen()
+ *
+ * @param pszFilename the name of the file to access.  In the case of
+ * exotic drivers this may not refer to a physical file, but instead contain
+ * information for the driver on how to access a dataset.
+ *
+ * @param eAccess the desired access, either GA_Update or GA_ReadOnly.  Many
+ * drivers support only read only access.
+ *
+ * @return A GDALDatasetH handle or NULL on failure.  For C++ applications
+ * this handle can be cast to a GDALDataset *. 
+ */
+ 
+GDALDatasetH CPL_STDCALL 
+GDALOpenShared( const char *pszFilename, GDALAccess eAccess )
+
+{
+/* -------------------------------------------------------------------- */
+/*      First scan the existing list to see if it could already         */
+/*      contain the requested dataset.                                  */
+/* -------------------------------------------------------------------- */
+    {
+        CPLMutexHolderD( &hDLMutex );
+        int         i;
+    
+        for( i = 0; i < nGDALDatasetCount; i++ )
+        {
+            if( strcmp(pszFilename,
+                       papoGDALDatasetList[i]->GetDescription()) == 0 
+                && (eAccess == GA_ReadOnly 
+                    || papoGDALDatasetList[i]->GetAccess() == eAccess ) )
+                
+            {
+                papoGDALDatasetList[i]->Reference();
+                return papoGDALDatasetList[i];
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try opening the the requested dataset.                          */
+/* -------------------------------------------------------------------- */
+    GDALDataset *poDataset;
+
+    poDataset = (GDALDataset *) GDALOpen( pszFilename, eAccess );
+    if( poDataset != NULL )
+        poDataset->MarkAsShared();
+    
+    return (GDALDatasetH) poDataset;
+}
+
+/************************************************************************/
+/*                             GDALClose()                              */
+/************************************************************************/
+
+/**
+ * Close GDAL dataset. 
+ *
+ * For non-shared datasets (opened with GDALOpen()) the dataset is closed
+ * using the C++ "delete" operator, recovering all dataset related resources.  
+ * For shared datasets (opened with GDALOpenShared()) the dataset is 
+ * dereferenced, and closed only if the referenced count has dropped below 1.
+ *
+ * @param hDS The dataset to close.  May be cast from a "GDALDataset *". 
+ */
+
+void CPL_STDCALL GDALClose( GDALDatasetH hDS )
+
+{
+    GDALDataset *poDS = (GDALDataset *) hDS;
+    int         i;
+    CPLMutexHolderD( &hDLMutex );
+
+/* -------------------------------------------------------------------- */
+/*      If this file is in the shared dataset list then dereference     */
+/*      it, and only delete/remote it if the reference count has        */
+/*      dropped to zero.                                                */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < nGDALDatasetCount; i++ )
+    {
+        if( papoGDALDatasetList[i] == poDS )
+        {
+            if( poDS->Dereference() > 0 )
+                return;
+
+            delete poDS;
+            return;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      This is not shared dataset, so directly delete it.              */
+/* -------------------------------------------------------------------- */
+    delete poDS;
+}
+
+/************************************************************************/
+/*                        GDALDumpOpenDataset()                         */
+/************************************************************************/
+
+/**
+ * List open datasets.
+ *
+ * Dumps a list of all open datasets (shared or not) to the indicated 
+ * text file (may be stdout or stderr).   This function is primariliy intended
+ * to assist in debugging "dataset leaks" and reference counting issues. 
+ * The information reported includes the dataset name, referenced count, 
+ * shared status, driver name, size, and band count. 
+ */
+
+int CPL_STDCALL GDALDumpOpenDatasets( FILE *fp )
+   
+{
+    CPLMutexHolderD( &hDLMutex );
+    int         i;
+
+    if( nGDALDatasetCount > 0 )
+        VSIFPrintf( fp, "Open GDAL Datasets:\n" );
+    
+    for( i = 0; i < nGDALDatasetCount; i++ )
+    {
+        const char *pszDriverName;
+        GDALDataset *poDS = (GDALDataset *) papoGDALDatasetList[i];
+        
+        if( poDS->GetDriver() == NULL )
+            pszDriverName = "DriverIsNULL";
+        else
+            pszDriverName = poDS->GetDriver()->GetDescription();
+
+        poDS->Reference();
+        VSIFPrintf( fp, "  %d %c %-6s %dx%dx%d %s\n", 
+                    poDS->Dereference(), 
+                    poDS->GetShared() ? 'S' : 'N',
+                    pszDriverName, 
+                    poDS->GetRasterXSize(),
+                    poDS->GetRasterYSize(),
+                    poDS->GetRasterCount(),
+                    poDS->GetDescription() );
+    }
+    
+    return nGDALDatasetCount;
+}
