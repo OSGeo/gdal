@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.29  2005/07/11 17:25:49  fwarmerdam
+ * Fixed minior race condition in GDALDriverManager creation.
+ *
  * Revision 1.28  2005/07/11 17:17:21  fwarmerdam
  * Added note on thread un-safety of GDALDestroyDriverManager.
  *
@@ -157,7 +160,7 @@ GDALDriverManager * GetGDALDriverManager()
         CPLMutexHolderD( &hDMMutex );
 
         if( poDM == NULL )
-            new GDALDriverManager();
+            poDM = new GDALDriverManager();
     }
 
     return( (GDALDriverManager *) poDM );
@@ -175,7 +178,6 @@ GDALDriverManager::GDALDriverManager()
     pszHome = CPLStrdup("");
 
     CPLAssert( poDM == NULL );
-    poDM = this;
 
 /* -------------------------------------------------------------------- */
 /*      We want to push a location to search for data files             */
