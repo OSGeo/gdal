@@ -2,7 +2,7 @@ GDAL_ROOT	=	..
 
 include ../GDALmake.opt
 
-OBJ	=	gdalopen.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
+OBJ	=	gdalopeninfo.o gdaldrivermanager.o gdaldriver.o gdaldataset.o \
 		gdalrasterband.o gdal_misc.o rasterio.o gdalrasterblock.o \
 		gdalcolortable.o gdalmajorobject.o overview.o \
 		gdaldefaultoverviews.o gdalpamdataset.o gdalpamrasterband.o \
