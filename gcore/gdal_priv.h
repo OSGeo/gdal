@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2005/07/11 19:07:02  fwarmerdam
+ * removed GDALRasterBlock nAge.
+ *
  * Revision 1.58  2005/05/23 06:44:48  fwarmerdam
  * blockrefs now fetched locked
  *
@@ -395,7 +398,6 @@ class CPL_DLL GDALRasterBlock
 {
     GDALDataType        eType;
     
-    int                 nAge;
     int                 bDirty;
     int                 nLockCount;
 
