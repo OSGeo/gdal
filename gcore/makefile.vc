@@ -2,7 +2,7 @@
 # CPL (Common Portability Library) makefile
 #
 
-OBJ	=	gdalopen.obj gdaldrivermanager.obj gdaldriver.obj \
+OBJ	=	gdalopeninfo.obj gdaldrivermanager.obj gdaldriver.obj \
 		gdaldataset.obj gdalrasterband.obj gdal_misc.obj \
 		rasterio.obj gdalrasterblock.obj \
 		gdalcolortable.obj overview.obj gdaldefaultoverviews.obj \
