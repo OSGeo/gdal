@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.27  2005/07/11 17:15:32  fwarmerdam
+ * Grab mutex to create drive manager
+ *
  * Revision 1.26  2005/06/10 15:37:35  fwarmerdam
  * avoid use of MAX_PATH
  *
@@ -146,10 +149,13 @@ static void *hDMMutex = NULL;
 GDALDriverManager * GetGDALDriverManager()
 
 {
-//    CPLMutexHolderD( &hDMMutex );
-
     if( poDM == NULL )
-        new GDALDriverManager();
+    {
+        CPLMutexHolderD( &hDMMutex );
+
+        if( poDM == NULL )
+            new GDALDriverManager();
+    }
 
     return( (GDALDriverManager *) poDM );
 }
