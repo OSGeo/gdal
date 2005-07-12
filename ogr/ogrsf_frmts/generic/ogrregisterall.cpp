@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2005/07/12 16:06:06  fwarmerdam
+ * Don't register ILI unless enabled.
+ *
  * Revision 1.23  2005/07/08 22:10:57  pka
  * Initial import of OGR Interlis driver
  *
@@ -125,8 +128,10 @@ void OGRRegisterAll()
     RegisterOGRMEM();
     RegisterOGRCSV();
     RegisterOGRGML();
+#ifdef ILI_ENABLED
     RegisterOGRILI1();
     RegisterOGRILI2();
+#endif
 #ifdef SQLITE_ENABLED
     RegisterOGRSQLite();
 #endif
