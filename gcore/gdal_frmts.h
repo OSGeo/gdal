@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2005/07/12 16:58:06  denad21
+ * added hdf5 support
+ *
  * Revision 1.37  2005/07/07 23:36:14  fwarmerdam
  * added msgn support
  *
@@ -209,6 +212,8 @@ void CPL_DLL GDALRegister_PCRaster(void);
 void CPL_DLL GDALRegister_IDA(void);
 void CPL_DLL GDALRegister_NDF(void);
 void CPL_DLL GDALRegister_RMF(void);
+void CPL_DLL GDALRegister_HDF5(void);
+void CPL_DLL GDALRegister_HDF5Image(void);
 void CPL_DLL GDALRegister_MSGN(void);
 CPL_C_END
 

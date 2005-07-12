@@ -802,6 +802,72 @@ if test "$HAVE_HDF4" != "no" ; then
   OPT_GDAL_FORMATS="hdf4 $OPT_GDAL_FORMATS"
 fi
 
+
+dnl ---------------------------------------------------------------------------
+dnl Select an HDF5 Library to use, or disable driver.
+dnl
+dnl ---------------------------------------------------------------------------
+
+HDF5_INCLUDE=
+export HDF5_INCLUDE
+
+AC_ARG_WITH(hdf5,[  --with-hdf5[=ARG]       Include HDF5 support (ARG=path)],,)
+
+if test "$with_hdf5" = "no" ; then
+
+  HAVE_HDF5=no
+
+  echo "hdf5 support disabled."
+
+elif test "$with_hdf5" = "yes" -o "$with_hdf5" = "" ; then
+
+  AC_CHECK_LIB(hdf5,H5Fopen,HAVE_HDF5=yes,HAVE_HDF5=no,)
+
+  if test "$HAVE_HDF5" = "yes" ; then   
+    LIBS="-lhdf5 $LIBS"
+  fi
+
+dnl Some Linux distros install hdf include files here. 
+  if test "$HAVE_HDF5" = "yes" -a -r /usr/include/hdf5.h ; then
+    HDF5_INCLUDE="-I/usr/include"
+  fi
+
+else
+
+  if test -d $with_hdf5/lib ; then
+    HDF5_LIB_DIR=$with_hdf5/lib
+  else
+    HDF5_LIB_DIR=$with_hdf5
+  fi
+
+  ORIG_LIBS="$LIBS"
+  LIBS="-L$HDF5_LIB_DIR $LIBS -lhdf5"
+
+  AC_CHECK_LIB(hdf5,H5Fopen,HDF5_LIB_NAME="-lhdf5 ",HDF5_LIB_NAME=missing,-lhdf5)
+
+
+  LIBS="-L$HDF5_LIB_DIR $HDF5_LIB_NAME $ORIG_LIBS"
+
+  if test -r "$with_hdf5/hdf5/hdf5.h" ; then
+    HDF5_INCLUDE="-I$with_hdf5/hdf5"
+  elif test -r "$with_hdf5/include/hdf5/hdf5.h" ; then
+    HDF5_INCLUDE="-I$with_hdf5/include/hdf5"
+  elif test -r "$with_hdf5/include/hdf5.h" ; then
+    HDF5_INCLUDE="-I$with_hdf5/include"
+  elif test -r "$with_hdf5/hdf.h" ; then
+    HDF5_INCLUDE="-I$with_hdf5"
+  fi
+
+  HAVE_HDF5=yes
+fi
+
+AC_SUBST(HAVE_HDF5,$HAVE_HDF5)
+AC_SUBST(HDF5_INCLUDE,$HDF5_INCLUDE)
+
+if test "$HAVE_HDF5" != "no" ; then
+  OPT_GDAL_FORMATS="hdf5 $OPT_GDAL_FORMATS"
+fi
+
 dnl ---------------------------------------------------------------------------
 dnl Select a JasPer Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
@@ -1617,6 +1683,7 @@ LOC_MSG([  LIBJPEG support:           ${JPEG_SETTING}])
 LOC_MSG([  LIBGIF support:            ${GIF_SETTING}])
 LOC_MSG([  OGDI support:              ${HAVE_OGDI}])
 LOC_MSG([  HDF4 support:              ${HAVE_HDF4}])
+LOC_MSG([  HDF5 support:              ${HAVE_HDF5}])
 LOC_MSG([  KAKADU support:            ${HAVE_KAKADU}])
 if test "x$HAVE_JASPER_UUID" != "x" ; then
   LOC_MSG([  JASPER support:            ${HAVE_JASPER} (GeoJP2=${HAVE_JASPER_UUID})])

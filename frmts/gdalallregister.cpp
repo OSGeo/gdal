@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.79  2005/07/12 16:56:56  denad21
+ * added hdf5 support
+ *
  * Revision 1.78  2005/07/07 23:35:44  fwarmerdam
  * added msgn support
  *
@@ -111,6 +114,8 @@ static char *szConfiguredFormats = "GDAL_FORMATS";
  * <li> OGDI (OGDI)
  * <li> ESRI Labelled BIL (EHdr)
  * <li> PCI .aux Labelled Raw Raster (PAux)
+ * <li> HDF4 Hierachal Data Format Release 4
+ * <li> HDF5 Hierachal Data Format Release 5
  * </ul>
  *
  */
@@ -317,6 +322,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_dods
     GDALRegister_DODS();
+#endif
+#ifdef FRMT_hdf5
+    GDALRegister_HDF5();
+    GDALRegister_HDF5Image();
 #endif
 /* -------------------------------------------------------------------- */
 /*      Deregister any drivers explicitly marked as supressed by the    */
