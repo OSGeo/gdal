@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/07/12 17:34:00  fwarmerdam
+ * updated to produce proper empty syntax and consume either
+ *
  * Revision 1.13  2004/09/17 15:05:36  fwarmerdam
  * added get_Area() support
  *
@@ -173,6 +176,13 @@ OGRErr OGRMultiPolygon::importFromWkt( char ** ppszInput )
 /*      list of polygons.                                               */
 /* -------------------------------------------------------------------- */
     pszInput = OGRWktReadToken( pszInput, szToken );
+
+    if( EQUAL(szToken,"EMPTY") )
+    {
+        *ppszInput = (char *) pszInput;
+        return OGRERR_NONE;
+    }
+
     if( szToken[0] != '(' )
         return OGRERR_CORRUPT_DATA;
 
@@ -305,7 +315,7 @@ OGRErr OGRMultiPolygon::exportToWkt( char ** ppszDstText ) const
 
     if( getNumGeometries() == 0 )
     {
-        *ppszDstText = CPLStrdup("MULTIPOLYGON(EMPTY)");
+        *ppszDstText = CPLStrdup("MULTIPOLYGON EMPTY");
         return OGRERR_NONE;
     }
 

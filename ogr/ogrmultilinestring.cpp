@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/07/12 17:34:00  fwarmerdam
+ * updated to produce proper empty syntax and consume either
+ *
  * Revision 1.13  2004/02/21 15:36:14  warmerda
  * const correctness updates for geometry: bug 289
  *
@@ -181,6 +184,13 @@ OGRErr OGRMultiLineString::importFromWkt( char ** ppszInput )
 /*      list of linestrings.                                            */
 /* -------------------------------------------------------------------- */
     pszInput = OGRWktReadToken( pszInput, szToken );
+
+    if( EQUAL(szToken,"EMPTY") )
+    {
+        *ppszInput = (char *) pszInput;
+        return OGRERR_NONE;
+    }
+
     if( szToken[0] != '(' )
         return OGRERR_CORRUPT_DATA;
 
@@ -276,7 +286,7 @@ OGRErr OGRMultiLineString::exportToWkt( char ** ppszDstText ) const
 
     if( getNumGeometries() == 0 )
     {
-        *ppszDstText = CPLStrdup("MULTILINESTRING(EMPTY)");
+        *ppszDstText = CPLStrdup("MULTILINESTRING EMPTY");
         return OGRERR_NONE;
     }
 

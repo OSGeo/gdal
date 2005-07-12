@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2005/07/12 17:34:00  fwarmerdam
+ * updated to produce proper empty syntax and consume either
+ *
  * Revision 1.46  2005/03/25 06:31:12  fwarmerdam
  * added addSubLineString
  *
@@ -938,11 +941,17 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
         return OGRERR_CORRUPT_DATA;
 
 /* -------------------------------------------------------------------- */
-/*      Check for EMPTY ... but treat like a point at 0,0.              */
+/*      Check for EMPTY or (EMPTY).                                     */
 /* -------------------------------------------------------------------- */
     const char *pszPreScan;
 
     pszPreScan = OGRWktReadToken( pszInput, szToken );
+    if( EQUAL(szToken,"EMPTY") )
+    {
+        *ppszInput = (char *) pszPreScan;
+        return OGRERR_NONE;
+    }
+
     if( !EQUAL(szToken,"(") )
         return OGRERR_CORRUPT_DATA;
     
@@ -994,7 +1003,7 @@ OGRErr OGRLineString::exportToWkt( char ** ppszDstText ) const
 /* -------------------------------------------------------------------- */
     if( nPointCount == 0 )
     {
-        *ppszDstText = CPLStrdup("LINESTRING(EMPTY)");
+        *ppszDstText = CPLStrdup("LINESTRING EMPTY");
         return OGRERR_NONE;
     }
 

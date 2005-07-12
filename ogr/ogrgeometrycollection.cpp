@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/07/12 17:34:00  fwarmerdam
+ * updated to produce proper empty syntax and consume either
+ *
  * Revision 1.29  2005/02/22 12:38:01  fwarmerdam
  * rename Equal/Intersect to Equals/Intersects
  *
@@ -662,6 +665,13 @@ OGRErr OGRGeometryCollection::importFromWkt( char ** ppszInput )
 /*      list of objects.                                                */
 /* -------------------------------------------------------------------- */
     pszInput = OGRWktReadToken( pszInput, szToken );
+
+    if( EQUAL(szToken,"EMPTY") )
+    {
+        *ppszInput = (char *) pszInput;
+        return OGRERR_NONE;
+    }
+
     if( szToken[0] != '(' )
         return OGRERR_CORRUPT_DATA;
 
@@ -733,7 +743,7 @@ OGRErr OGRGeometryCollection::exportToWkt( char ** ppszDstText ) const
 
     if( getNumGeometries() == 0 )
     {
-        *ppszDstText = CPLStrdup("GEOMETRYCOLLECTION(EMPTY)");
+        *ppszDstText = CPLStrdup("GEOMETRYCOLLECTION EMPTY");
         return OGRERR_NONE;
     }
 

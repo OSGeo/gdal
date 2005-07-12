@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/07/12 17:34:00  fwarmerdam
+ * updated to produce proper empty syntax and consume either
+ *
  * Revision 1.18  2004/02/21 15:36:14  warmerda
  * const correctness updates for geometry: bug 289
  *
@@ -176,7 +179,7 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszDstText ) const
 
     if( getNumGeometries() == 0 )
     {
-        *ppszDstText = CPLStrdup("MULTIPOINT(EMPTY)");
+        *ppszDstText = CPLStrdup("MULTIPOINT EMPTY");
         return OGRERR_NONE;
     }
 
@@ -254,6 +257,13 @@ OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
     // skip white space. 
     while( *pszPreScan == ' ' || *pszPreScan == '\t' )
         pszPreScan++;
+
+    // Handle the proper EMPTY syntax.
+    if( EQUALN(pszPreScan,"EMPTY",5) )
+    {
+        *ppszInput = (char *) pszPreScan+5;
+        return OGRERR_NONE;
+    }
 
     // Skip outer bracket.
     if( *pszPreScan != '(' )

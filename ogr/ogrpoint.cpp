@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/07/12 17:34:00  fwarmerdam
+ * updated to produce proper empty syntax and consume either
+ *
  * Revision 1.30  2005/04/06 20:43:00  fwarmerdam
  * fixed a variety of method signatures for documentation
  *
@@ -410,6 +413,13 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
     const char *pszPreScan;
 
     pszPreScan = OGRWktReadToken( pszInput, szToken );
+    if( EQUAL(szToken,"EMPTY") )
+    {
+        *ppszInput = (char *) pszInput;
+        empty();
+        return OGRERR_NONE;
+    }
+
     if( !EQUAL(szToken,"(") )
         return OGRERR_CORRUPT_DATA;
 
