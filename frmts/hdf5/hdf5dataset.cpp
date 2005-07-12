@@ -30,8 +30,8 @@
  ******************************************************************************
  * 
  * $Log$
- * Revision 1.1  2005/07/12 16:55:07  denad21
- * New
+ * Revision 1.2  2005/07/12 17:13:57  denad21
+ * comment printf and pointer problem
  *
  *
  *
@@ -106,10 +106,10 @@ HDF5Dataset::~HDF5Dataset()
     H5Gclose(hGroupID);
   if (papszSubDatasets)
     CSLDestroy(papszSubDatasets);
-  if (pszFilename != NULL)
-    CPLFree(pszFilename);
-  if (poH5RootGroup != NULL)
-    DestroyH5Objects(poH5RootGroup);
+  // if (pszFilename != NULL)
+  //es  CPLFree(pszFilename);
+  //  if (poH5RootGroup != NULL)
+  //    DestroyH5Objects(poH5RootGroup);
 }
 
 /************************************************************************/
@@ -302,7 +302,7 @@ char* CreatePath(HDF5GroupObjects *poH5Object)
     strcat(pszPath,poH5Object->pszName);
   }
   poH5Object->pszPath  = (char *)strdup(pszPath);
-  printf("poH5Object->pszPath %s\n",poH5Object->pszPath);
+  /*printf("poH5Object->pszPath %s\n",poH5Object->pszPath);*/
   return(poH5Object->pszPath);
 }
 
