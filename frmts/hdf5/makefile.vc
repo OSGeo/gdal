@@ -1,0 +1,14 @@
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+OBJ	=	hdf5dataset.obj 
+
+EXTRAFLAGS = 	-I$(HDF5_DIR)\include -DFRMT_hdf5 
+
+default:	$(OBJ)
+	copy *.obj ..\o
+
+clean:
+	-del *.obj
+
