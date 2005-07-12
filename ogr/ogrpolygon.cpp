@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/07/12 17:34:00  fwarmerdam
+ * updated to produce proper empty syntax and consume either
+ *
  * Revision 1.31  2005/04/06 20:43:00  fwarmerdam
  * fixed a variety of method signatures for documentation
  *
@@ -625,16 +628,20 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
 
 /* -------------------------------------------------------------------- */
 /*      The next character should be a ( indicating the start of the    */
-/*      list of rings.                                                  */
+/*      list of rings.  We also need to support POLYGON EMPTY and       */
+/*      POLYGON(EMPTY).                                                 */
 /* -------------------------------------------------------------------- */
     pszInput = OGRWktReadToken( pszInput, szToken );
+
+    if( EQUAL(szToken,"EMPTY") )
+    {
+        *ppszInput = (char *) pszInput;
+        return OGRERR_NONE;
+    }
+
     if( szToken[0] != '(' )
         return OGRERR_CORRUPT_DATA;
 
-/* -------------------------------------------------------------------- */
-/*      If the next token is EMPTY, then verify that we have proper     */
-/*      EMPTY format will a trailing closing bracket.                   */
-/* -------------------------------------------------------------------- */
     OGRWktReadToken( pszInput, szToken );
     if( EQUAL(szToken,"EMPTY") )
     {
@@ -731,7 +738,7 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText ) const
 /* -------------------------------------------------------------------- */
     if( nRingCount == 0 )
     {
-        *ppszDstText = CPLStrdup("POLYGON(EMPTY)");
+        *ppszDstText = CPLStrdup("POLYGON EMPTY");
         return OGRERR_NONE;
     }
 
