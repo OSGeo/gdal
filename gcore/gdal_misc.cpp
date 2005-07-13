@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.69  2005/07/13 17:21:10  fwarmerdam
+ * Avoiding 32bit overflow in GDALGetRasterSampleOverview().
+ *
  * Revision 1.68  2005/07/08 18:59:54  fwarmerdam
  * Don't use thread local storage for GDALTermProgress() last complete, or
  * the GDALVersionInfo() static buffer.
@@ -926,11 +929,11 @@ GDALGetRasterSampleOverview( GDALRasterBandH hBand,
                              int nDesiredSamples )
 
 {
-    int     nBestSamples; 
+    double dfBestSamples; 
     GDALRasterBandH hBestBand = hBand;
 
-    nBestSamples = GDALGetRasterBandXSize(hBand) 
-        * GDALGetRasterBandYSize(hBand);
+    dfBestSamples = GDALGetRasterBandXSize(hBand) 
+        * (double) GDALGetRasterBandYSize(hBand);
 
     for( int iOverview = 0; 
          iOverview < GDALGetOverviewCount( hBand );
@@ -942,9 +945,9 @@ GDALGetRasterSampleOverview( GDALRasterBandH hBand,
         nOSamples = GDALGetRasterBandXSize(hOBand) 
             * GDALGetRasterBandYSize(hOBand);
 
-        if( nOSamples < nBestSamples && nOSamples > nDesiredSamples )
+        if( nOSamples < dfBestSamples && nOSamples > nDesiredSamples )
         {
-            nBestSamples = nOSamples;
+            dfBestSamples = nOSamples;
             hBestBand = hOBand;
         }
     }
