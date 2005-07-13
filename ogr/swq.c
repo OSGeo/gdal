@@ -19,6 +19,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/07/13 18:02:58  mbrudka
+ * Removed serious bug in sql_realloc which sometimes corrupted heap.
+ *
  * Revision 1.24  2005/03/17 04:59:20  fwarmerdam
  * added local FORCE_CDECL definition
  *
@@ -161,11 +164,11 @@ void *swq_realloc( void *old_mem, int old_size, int new_size )
 
     if( old_mem != NULL )
     {
-        memcpy( new_mem, old_mem, old_size );
+        memcpy( new_mem, old_mem, old_size < new_size ? old_size : new_size);
         SWQ_FREE( old_mem );
     }
-
-    memset( ((char *) new_mem) + old_size, 0, new_size - old_size );
+    if (old_size <= new_size )
+        memset( ((char *) new_mem) + old_size, 0, new_size - old_size );
 
     return new_mem;
 }
