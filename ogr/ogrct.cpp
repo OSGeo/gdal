@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2005/07/13 18:06:03  mbrudka
+ * Just for a case moved proj4 lock above static bTriedToLoad
+ *
  * Revision 1.28  2005/06/08 19:38:14  fwarmerdam
  * protect PROJ.4 use with a mutex
  *
@@ -206,9 +209,9 @@ public:
 static int LoadProjLibrary()
 
 {
+    CPLMutexHolderD( &hPROJMutex );
     static int  bTriedToLoad = FALSE;
     const char *pszLibName = LIBNAME;
-    CPLMutexHolderD( &hPROJMutex );
     
     if( bTriedToLoad )
         return( pfn_pj_init != NULL );
