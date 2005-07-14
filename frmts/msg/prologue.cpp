@@ -188,7 +188,8 @@ RadiometricProcessingRecord::RadiometricProcessingRecord(std::ifstream & ifile)
 {
   // skip a part that doesn't interest us
     unsigned char dummy [12];
-    for (int i = 0; i < 6; ++i)
+    int i;
+    for (i = 0; i < 6; ++i)
       ifile.read((char*)dummy, 12);
 
     for (i = 0; i < 12; ++i)
@@ -223,7 +224,11 @@ void Prologue::read(std::ifstream & ifile)
 
   int iSkipHeadersSize = size_SatelliteStatus() + size_ImageAcquisition() + size_CelestialEvents() + size_Correction();
 
+#if _MSC_VER > 1000 && _MSC_VER < 1300
   ifile.seekg(iSkipHeadersSize, std::ios_base::seekdir::cur);
+#else
+  ifile.seekg(iSkipHeadersSize, std::ios_base::cur);
+#endif
 
   m_idr = new ImageDescriptionRecord(ifile);
 
