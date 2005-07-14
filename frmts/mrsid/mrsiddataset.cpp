@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2005/07/14 23:40:31  fwarmerdam
+ * getNumLevels() is the number of overviews
+ *
  * Revision 1.35  2005/06/24 15:54:30  dron
  * Properly fetch NODATA taking in account data type of the value.
  *
@@ -347,6 +350,10 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDS, int nBand )
              case LTI_DATATYPE_FLOAT64:
                  dfNoDataValue =
                      *(double *)poDS->poNDPixel->getSampleValueAddr( nBand - 1 );
+                 break;
+
+             case LTI_DATATYPE_INVALID:
+                 CPLAssert( FALSE );
                  break;
          }
 	 bNoDataSet = TRUE;
@@ -1191,12 +1198,8 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Get number of resolution levels (we will use them as overviews).*/
 /* -------------------------------------------------------------------- */
-//    if ( bIsJP2 )
-//        poDS->nOverviewCount
-//	  = ((J2KImageReader *) (poDS->poImageReader))->getNumLevels() - 1;
-//    else
-        poDS->nOverviewCount
-	  = ((MrSIDImageReader *) (poDS->poImageReader))->getNumLevels() - 1;
+    poDS->nOverviewCount
+        = ((MrSIDImageReader *) (poDS->poImageReader))->getNumLevels();
 
     if ( poDS->nOverviewCount > 0 )
     {
