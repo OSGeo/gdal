@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature_mif.cpp,v 1.25 2003/12/19 07:52:34 fwarmerdam Exp $
+ * $Id: mitab_feature_mif.cpp,v 1.26 2005/07/14 16:15:05 jlacroix Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature_mif.cpp,v $
+ * Revision 1.26  2005/07/14 16:15:05  jlacroix
+ * \n and \ are now unescaped internally.
+ *
  * Revision 1.25  2003/12/19 07:52:34  fwarmerdam
  * write 3d as 2d
  *
@@ -1509,6 +1512,7 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     const char          *pszLine;
     char               **papszToken;
     const char          *pszString;
+    char                *pszTmpString;
   
     papszToken = CSLTokenizeString2(fp->GetLastLine(), 
                                     " \t", CSLT_HONOURSTRINGS);
@@ -1538,9 +1542,13 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     /*-------------------------------------------------------------
      * Note: The text string may contain escaped "\n" chars, and we
-     * return them in their escaped form.
+     * sstore them in memory in the UnEscaped form to be OGR 
+     * compliant. See Maptools bug 1107 for more details.
      *------------------------------------------------------------*/
-    m_pszString = CPLStrdup(pszString);
+    pszTmpString = CPLStrdup(pszString);
+    m_pszString = TABUnEscapeString(pszTmpString, TRUE);
+    if (pszTmpString != m_pszString)
+        CPLFree(pszTmpString);
 
     CSLDestroy(papszToken);
     papszToken = CSLTokenizeString2(fp->GetLine(), 
@@ -1758,12 +1766,21 @@ int TABText::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 int TABText::WriteGeometryToMIFFile(MIDDATAFile *fp)
 {
     double dXMin,dYMin,dXMax,dYMax;
+    char   *pszTmpString;
 
     /*-------------------------------------------------------------
-     * Note: The text string may contain "\n" chars or "\\" chars
-     * and we expect to receive them in an escaped form.
+     * Note: The text string may contain unescaped "\n" chars or 
+     * "\\" chars and we expect to receive them in an unescaped 
+     * form. Those characters are unescaped in memory to be like
+     * other OGR drivers. See MapTools bug 1107 for more details.
      *------------------------------------------------------------*/
-    fp->WriteLine("Text \"%s\"\n", GetTextString() );
+    pszTmpString = TABEscapeString(m_pszString);
+    if(pszTmpString == NULL)
+        fp->WriteLine("Text \"\"\n" );
+    else
+        fp->WriteLine("Text \"%s\"\n", pszTmpString );
+    if (pszTmpString != m_pszString)
+        CPLFree(pszTmpString);
 
     //    UpdateTextMBR();
     GetMBR(dXMin, dYMin, dXMax, dYMax);
