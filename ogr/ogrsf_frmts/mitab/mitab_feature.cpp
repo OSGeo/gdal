@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.55 2005/05/19 15:26:59 jlacroix Exp $
+ * $Id: mitab_feature.cpp,v 1.56 2005/07/14 16:15:05 jlacroix Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.56  2005/07/14 16:15:05  jlacroix
+ * \n and \ are now unescaped internally.
+ *
  * Revision 1.55  2005/05/19 15:26:59  jlacroix
  * Implement a method to set the StyleString of a TABFeature.
  * This is done via the ITABFeaturePen, Brush and Symbol classes.
@@ -4811,7 +4814,8 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         /*-------------------------------------------------------------
          * Read text string from the coord. block
          * Note that the string may contain binary '\n' and '\\' chars
-         * that we have to convert to an escaped form internally.
+         * that we keep to an unescaped form internally. This is to
+         * be like OGR drivers. See bug 1107 for details.
          *------------------------------------------------------------*/
         char *pszTmpString = (char*)CPLMalloc((nStringLen+1)*sizeof(char));
 
@@ -4833,9 +4837,7 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
         pszTmpString[nStringLen] = '\0';
 
         CPLFree(m_pszString);
-        m_pszString = TABEscapeString(pszTmpString);
-        if (pszTmpString != m_pszString)
-            CPLFree(pszTmpString);
+        m_pszString = pszTmpString; // This string was Escaped before 20050714
     }
     else
     {
@@ -4962,15 +4964,16 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 
     /*-----------------------------------------------------------------
      * Write string to a coord block first...
-     * Note that the string may contain escaped "\"+"n" and "\"+"\"
-     * sequences that we have to convert to binary chars '\n' and '\\'
-     * for the MAP file.
+     * Note that the string may contain unescaped '\n' and '\\'
+     * that we have to keep like that for the MAP file.
+     * See MapTools bug 1107 for more details. 
      *----------------------------------------------------------------*/
     poCoordBlock = poMapFile->GetCurCoordBlock();
     poCoordBlock->StartNewFeature();
     nCoordBlockPtr = poCoordBlock->GetCurAddress();
 
-    char *pszTmpString = TABUnEscapeString(m_pszString, TRUE);
+    // This string was escaped before 20050714
+    char *pszTmpString = m_pszString;
 
     nStringLen = strlen(pszTmpString);
 
@@ -4983,8 +4986,6 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         nCoordBlockPtr = 0;
     }
 
-    if (pszTmpString != m_pszString)
-        CPLFree(pszTmpString);
     pszTmpString = NULL;
 
     /*-----------------------------------------------------------------
