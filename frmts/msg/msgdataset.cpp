@@ -26,16 +26,21 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
-#include "MSGDataset.h"
+#include "msgdataset.h"
 #include "prologue.h"
 #include "xritheaderparser.h"
 #include "reflectancecalculator.h"
 
-#include "PublicDecompWT\COMP\WT\Inc\CWTDecoder.h"
-#include "PublicDecompWT\DISE\CDataField.h" // Util namespace
+#include "PublicDecompWT/COMP/WT/Inc/CWTDecoder.h"
+#include "PublicDecompWT/DISE/CDataField.h" // Util namespace
 
 #include <vector>
+
+#if _MSC_VER > 1000
 #include  <io.h>
+#else
+#include <stdio.h>
+#endif
 
 const double MSGDataset::rCentralWvl[12] = {0.635, 0.810, 1.640, 3.900, 6.250, 7.350, 8.701, 9.660, 10.800, 12.000, 13.400, 0.750};
 const double MSGDataset::rVc[12] = {-1, -1, -1, 2569.094, 1598.566, 1362.142, 1149.083, 1034.345, 930.659, 839.661, 752.381, -1};
@@ -436,7 +441,7 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
       strip_number = poGDS->command.iNrStrips(iChannel) - nBlockYOff;
 
     std::string strip_input_file = poGDS->command.sFileName(nBand, strip_number);
-
+    
 /* -------------------------------------------------------------------- */
 /*      Open the input file                                             */
 /* -------------------------------------------------------------------- */

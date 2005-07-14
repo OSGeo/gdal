@@ -366,11 +366,13 @@ int XRITHeaderParser::read_xrithdr(std::ifstream & ifile)
   int hdr_len;
 
 /* Read in primary header, just to determine length of all headers  */
-  //fread(l1,16,1,fp);
   ifile.read((char*)l1, 16);
   
-  //fseek(fp,-16,SEEK_CUR);
+#if _MSG_VER > 1000 && _MSC_VER < 1300  
   ifile.seekg(-16, std::ios_base::seekdir::cur);
+#else
+  ifile.seekg(-16, std::ios_base::cur);
+#endif  
 
 /* Test header; expected primary */
   if (l1[0]!=0) return 0;
@@ -383,7 +385,6 @@ int XRITHeaderParser::read_xrithdr(std::ifstream & ifile)
 
 /* Allocate and read all headers */
   l=(unsigned char*)malloc(hdr_len);
-  // fread(l,hdr_len,1,fp);
   ifile.read((char*)l, hdr_len);
   
 /* Extract header info */
@@ -393,13 +394,15 @@ int XRITHeaderParser::read_xrithdr(std::ifstream & ifile)
   if (m_xrit_hdr.file_type==0)
   {
     unsigned char c[2];
-    // fread(c,2,1,fp);
     ifile.read((char*)c, 2);
     if ((c[0]==0xff) && (c[1]==0x01))      m_xrit_hdr.image_iformat='w';
     else if ((c[0]==0xff) && (c[1]==0xd8)) m_xrit_hdr.image_iformat='j';
     else                                   m_xrit_hdr.image_iformat='?';
+#if _MSC_VER > 1000 && _MSC_VER < 1300  
     ifile.seekg(-2, std::ios_base::seekdir::cur);
-    //fseek(fp,-2,SEEK_CUR);
+#else
+    ifile.seekg(-2, std::ios_base::cur);
+#endif    
   }
 
   channame2nr(&m_xrit_hdr);

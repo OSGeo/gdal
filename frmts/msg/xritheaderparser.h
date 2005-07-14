@@ -29,6 +29,8 @@
 #if !defined(AFX_XRIT_HEADER_H__6BA5C029_3F7A_43B0_9C69_D002B83A2A63__INCLUDED_)
 #define AFX_XRIT_HEADER_H__6BA5C029_3F7A_43B0_9C69_D002B83A2A63__INCLUDED_
 
+#include "cpl_port.h"
+
 #if _MSC_VER > 1000
 #pragma once
 #endif // _MSC_VER > 1000
@@ -52,7 +54,7 @@ typedef struct xrit_hdr_tag
   char image_oformat;  /* 'j' or 'w' */
 
   char proj_name[35];
-  __int32 cfac,lfac,coff,loff;
+  GInt32 cfac,lfac,coff,loff;
 
 /*Anno and extracted contents */
   char anno[100];
@@ -80,7 +82,7 @@ typedef struct xrit_hdr_tag
   int seq_no,seq_start,seq_end;
   int dt_f_rep;
 
-  unsigned __int32 pic_id;
+  GUInt32 pic_id;
 
 } XRIT_HDR;
 
