@@ -5,7 +5,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	dodsdataset2.o 
 
-CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) -I$(DODS_INC)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) $(DODS_INC)
 
 default:	$(OBJ)
 
