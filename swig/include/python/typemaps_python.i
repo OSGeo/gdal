@@ -9,6 +9,13 @@
 
  *
  * $Log$
+ * Revision 1.29  2005/07/15 15:08:19  kruland
+ * - Use the method SWIG_ConvertPtr instead of the #define'd name
+ * SWIG_Python_ConvertPtr.  The other name is available in older versions of swig.
+ * - Use PyInt_FromLong instead of SWIG_From_int.
+ * - In all the typemaps which use t_output_helper, implement code which forces
+ * initialization of $result to 0 at the beginning of the wrapper.
+ *
  * Revision 1.28  2005/06/22 18:46:22  kruland
  * Be consistant about using 'python' in %typemap decls.
  * Removed references to 'python' in the %typemap comment strings to improve greps.
@@ -295,6 +302,7 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
 {
   /* %typemap(in,numinputs=0) (double_ ## size argout) */
   $1 = argout;
+  $result = 0;
 }
 %typemap(python,argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double_ ## size argout)
 {
@@ -306,6 +314,7 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
 {
   /* %typemap(in,numinputs=0) (double_ ## size *argout) */
   $1 = &argout;
+  $result = 0;
 }
 %typemap(python,argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double_ ## size *argout)
 {
@@ -486,7 +495,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   for( int i = 0; i<$1; i++ ) {
     PyObject *o = PySequence_GetItem($input,i);
     GDAL_GCP *item = 0;
-    SWIG_Python_ConvertPtr( o, (void**)&item, SWIGTYPE_p_GDAL_GCP, SWIG_POINTER_EXCEPTION | 0 );
+    SWIG_ConvertPtr( o, (void**)&item, SWIGTYPE_p_GDAL_GCP, SWIG_POINTER_EXCEPTION | 0 );
     if ( ! item ) {
       SWIG_fail;
     }
@@ -642,6 +651,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 {
   /* %typemap(in,numinputs=0) (char **argout) */
   $1 = &argout;
+  $result = 0;
 }
 %typemap(python,argout,fragment="t_output_helper") (char **argout)
 {
@@ -729,6 +739,11 @@ OPTIONAL_POD(int,i);
  * If UseExceptions ==0, then return the rc.
  * If UseExceptions ==1, then if rc >= CE_Failure, raise an exception.
  */
+%typemap(python,arginit) CPLErr
+{
+  /* %typemap(python,arginit) CPLErr */
+  $result = 0;
+}
 %typemap(python,out) CPLErr
 {
   /* %typemap(out) CPLErr */
@@ -743,7 +758,7 @@ OPTIONAL_POD(int,i);
 {
   /* %typemap(ret) CPLErr */
   if ( bUseExceptions == 0 ) {
-    $result = t_output_helper($result,SWIG_From_int( $1 ) );
+    $result = t_output_helper($result,PyInt_FromLong( $1 ) );
   }
   else {
     /* We're using exceptions.  The test in the out typemap means that
