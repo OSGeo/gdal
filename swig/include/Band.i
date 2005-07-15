@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.12  2005/07/15 18:33:57  kruland
+ * Added SetMetadata with single string argument.
+ *
  * Revision 1.11  2005/03/10 17:19:08  hobu
  * #ifdefs for csharp
  *
@@ -124,6 +127,13 @@ public:
     return GDALSetMetadata( self, papszMetadata, pszDomain );
   }
 %clear char **papszMetadata;
+
+  CPLErr SetMetadata( char * pszMetadataString , const char *pszDomain = "" ) {
+    char *tmpList[2];
+    tmpList[0] = pszMetadataString;
+    tmpList[1] = 0;
+    return GDALSetMetadata( self, tmpList, pszDomain );
+  }
 
   GDALColorInterp GetRasterColorInterpretation() {
     return GDALGetRasterColorInterpretation( self );
