@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.31  2005/07/15 18:34:59  kruland
+ * Revised the char **<-dict in mapping.  It now allows either dictionaries,
+ * or sequences of strings.  Added a typecheck so overloading works.  This
+ * typemap is only used in SetMetadata.
+ *
  * Revision 1.30  2005/07/15 17:08:00  kruland
  * - Initialize the local pointer variables in
  *   (in,numinputs=0)(int *nLen,char**pBuf) argout typemap.
@@ -568,26 +573,47 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 }
 
 /*
- * Typemap char **<- dict
+ * Typemap char **<- dict.  This typemap actually supports lists as well,
+ * Then each entry in the list must be a string and have the form:
+ * "name=value" so gdal can handle it.
  */
+%typemap(python,typecheck,precedence=SWIG_TYPECHECK_POINTER) (char **dict)
+{
+  /* %typecheck(SWIG_TYPECHECK_POINTER) (char **dict) */
+  $1 = (PyMapping_Check($input) || PySequence_Check($input) ) ? 1 : 0;
+}
 %typemap(python,in) char **dict
 {
   /* %typemap(in) char **dict */
-  if ( ! PyMapping_Check( $input ) ) {
-    PyErr_SetString(PyExc_TypeError,"not supports mapping (dict) protocol");
-    SWIG_fail;
-  }
   $1 = NULL;
-  int size = PyMapping_Length( $input );
-  if ( size > 0 ) {
-    PyObject *item_list = PyMapping_Items( $input );
-    for( int i=0; i<size; i++ ) {
-      PyObject *it = PySequence_GetItem( item_list, i );
-      char *nm;
-      char *val;
-      PyArg_ParseTuple( it, "ss", &nm, &val );
-      $1 = CSLAddNameValue( $1, nm, val );
+  if ( PyMapping_Check( $input ) ) {
+    /* We need to use the dictionary form. */
+    int size = PyMapping_Length( $input );
+    if ( size > 0 ) {
+      PyObject *item_list = PyMapping_Items( $input );
+      for( int i=0; i<size; i++ ) {
+        PyObject *it = PySequence_GetItem( item_list, i );
+        char *nm;
+        char *val;
+        PyArg_ParseTuple( it, "ss", &nm, &val );
+        $1 = CSLAddNameValue( $1, nm, val );
+      }
     }
+  }
+  else if ( PySequence_Check( $input ) ) {
+    int size = PySequence_Size($input);
+    for (int i = 0; i < size; i++) {
+      char *pszItem = NULL;
+      if ( ! PyArg_Parse( PySequence_GetItem($input,i), "s", &pszItem ) ) {
+        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+        SWIG_fail;
+      }
+      $1 = CSLAddString( $1, pszItem );
+    }
+  }
+  else {
+    PyErr_SetString(PyExc_TypeError,"Argument must be dictionary or sequence of strings");
+    SWIG_fail;
   }
 }
 %typemap(python,freearg) char **dict
