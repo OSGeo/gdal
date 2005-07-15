@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.9  2005/07/15 16:55:46  kruland
+ * Implemented SetDescription and GetDescription.
+ *
  * Revision 1.8  2005/03/10 17:18:42  hobu
  * #ifdefs for csharp
  *
@@ -86,11 +89,17 @@ public:
   }
 %clear char **;
 
+  const char *GetDescription() {
+    return GDALGetDescription( self );
+  }
+
+  void SetDescription( const char *pszNewDesc ) {
+    GDALSetDescription( self, pszNewDesc );
+  }
+
 // NEEDED
 // Register
 // Deregister
-// MajorObject - GetDescription
-// MajorObject - SetDescription
 
 }
 };

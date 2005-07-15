@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.11  2005/07/15 16:55:21  kruland
+ * Implemented SetDescription and GetDescription.
+ *
  * Revision 1.10  2005/03/10 17:18:55  hobu
  * #ifdefs for csharp
  *
@@ -212,14 +215,20 @@ public:
 %clear (int*);
 %clear (int buf_len, char *buf_string);
 
+  const char *GetDescription() {
+    return GDALGetDescription( self );
+  }
+
+  void SetDescription( const char *pszNewDesc ) {
+    GDALSetDescription( self, pszNewDesc );
+  }
+
 /* NEEDED */
 /* GetSubDatasets */
 /* ReadAsArray */
 /* AddBand */
 /* AdviseRead */
 /* ReadRaster */
-/* GetDescription */
-/* SetDescription */
   
 } /* extend */
 }; /* GDALDatasetShadow */
