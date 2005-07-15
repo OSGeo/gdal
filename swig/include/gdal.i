@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.25  2005/07/15 15:10:03  kruland
+ * Move the #ifdef SWIGPYTHON to include the exception flags.
+ * Correct some %inline to use %{ %}.
+ *
  * Revision 1.24  2005/06/23 14:46:39  kruland
  * Switch from using the poor-form exception in the custom CPLErrorHandler to
  * using a global variable flag.
@@ -134,18 +138,17 @@ typedef int FALSE_IS_ERR;
 
 %}
 
+#ifdef SWIGPYTHON
 %{
 int bUseExceptions=0;
 int bErrorHappened=0;
-%}
-#ifdef SWIGPYTHON
-%{
+
 void PythonErrorHandler(CPLErr eclass, int code, const char *msg ) {
   bErrorHappened = 1;
 }
 %}
 
-%inline {
+%inline %{
 void UseExceptions() {
   bUseExceptions = 1;
   bErrorHappened = 0;
@@ -157,7 +160,7 @@ void DontUseExceptions() {
   bErrorHappened = 0;
   CPLSetErrorHandler( CPLDefaultErrorHandler );
 }
-}
+%}
 
 %include exception.i
 
@@ -265,7 +268,7 @@ struct GDAL_GCP {
 
 } /* extend */
 }; /* GDAL_GCP */
-%inline {
+%inline %{
 double GDAL_GCP_GCPX_get( GDAL_GCP *h ) {
   return h->dfGCPX;
 }
@@ -362,7 +365,7 @@ void GDAL_GCP_set_Id( GDAL_GCP *h, const char * val ) {
 }
 #endif
 
-}
+%}
 
 %rename (GCPsToGeoTransform) GDALGCPsToGeoTransform;
 %apply (IF_FALSE_RETURN_NONE) { (FALSE_IS_ERR) };
