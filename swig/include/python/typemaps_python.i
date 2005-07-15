@@ -9,6 +9,15 @@
 
  *
  * $Log$
+ * Revision 1.30  2005/07/15 17:08:00  kruland
+ * - Initialize the local pointer variables in
+ *   (in,numinputs=0)(int *nLen,char**pBuf) argout typemap.
+ * - Fix the freearg typemap for int *nLen,char **pBuf.
+ * - Initialize the local pointer variables in
+ *   (in,numinputs=0)(int*nGCPs, GDAL_GCP*pGCPs) argout typemap.
+ * - Fix the ret CPLErr typemap for the not using exceptions case.
+ *   The use exception case is probably still broken.
+ *
  * Revision 1.29  2005/07/15 15:08:19  kruland
  * - Use the method SWIG_ConvertPtr instead of the #define'd name
  * SWIG_Python_ConvertPtr.  The other name is available in older versions of swig.
@@ -422,7 +431,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
  * This typemap has a typecheck also since the WriteRaster()
  * methods are overloaded.
  */
-%typemap(python,in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen, char *pBuf )
+%typemap(python,in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen = 0, char *pBuf = 0 )
 {
   /* %typemap(in,numinputs=0) (int *nLen, char **pBuf ) */
   $1 = &nLen;
@@ -437,7 +446,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 %typemap(python,freearg) (int *nLen, char **pBuf )
 {
   /* %typemap(freearg) (int *nLen, char **pBuf ) */
-  if( $1 ) {
+  if( *$1 ) {
     free( *$2 );
   }
 }
@@ -456,7 +465,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 /*
  * Typemap argout of GDAL_GCP* used in Dataset::GetGCPs( )
  */
-%typemap(python,in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) (int nGCPs, GDAL_GCP *pGCPs )
+%typemap(python,in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) (int nGCPs=0, GDAL_GCP *pGCPs=0 )
 {
   /* %typemap(in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) */
   $1 = &nGCPs;
@@ -754,21 +763,17 @@ OPTIONAL_POD(int,i);
     SWIG_fail;
   }
 }
-%typemap(python,ret,fragment="t_output_helper") CPLErr
+%typemap(python,ret) CPLErr
 {
   /* %typemap(ret) CPLErr */
   if ( bUseExceptions == 0 ) {
-    $result = t_output_helper($result,PyInt_FromLong( $1 ) );
-  }
-  else {
-    /* We're using exceptions.  The test in the out typemap means that
+    /* We're not using exceptions.  The test in the out typemap means that
        we know we have a valid return value.  Test if there are any return
        values set by argout typemaps.
     */
     if ( $result == 0 ) {
       /* No other return values set so return None */
-      $result = Py_None;
-      Py_INCREF($result);
+      $result = PyInt_FromLong($1);
     }
   }
 }
