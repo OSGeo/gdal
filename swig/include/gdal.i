@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.26  2005/07/15 16:58:04  kruland
+ * In the %exception spec, if an error is detected while UseExceptions(),
+ * SWIG_fail immediately.
+ *
  * Revision 1.25  2005/07/15 15:10:03  kruland
  * Move the #ifdef SWIGPYTHON to include the exception flags.
  * Correct some %inline to use %{ %}.
@@ -170,6 +174,7 @@ void DontUseExceptions() {
     $action
     if ( bErrorHappened ) {
       SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      SWIG_fail;
     }
   }
 }
