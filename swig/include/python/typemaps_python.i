@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.33  2005/07/15 20:28:16  kruland
+ * It seems that in Python 2.3 (maybe 2.4 as well), sequence objects (lists) are also
+ * mapping objects (dicts).  Fortunately, dicts are not lists.  So, in the in char **dict
+ * typemap, we need to first test if the arg is a sequence then test for mapping.
+ *
  * Revision 1.32  2005/07/15 19:01:45  kruland
  * Typemap out char **options needs to return a list instead of tuple to satisfy
  * the gdalautotests.
@@ -590,7 +595,18 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 {
   /* %typemap(in) char **dict */
   $1 = NULL;
-  if ( PyMapping_Check( $input ) ) {
+  if ( PySequence_Check( $input ) ) {
+    int size = PySequence_Size($input);
+    for (int i = 0; i < size; i++) {
+      char *pszItem = NULL;
+      if ( ! PyArg_Parse( PySequence_GetItem($input,i), "s", &pszItem ) ) {
+        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+        SWIG_fail;
+      }
+      $1 = CSLAddString( $1, pszItem );
+    }
+  }
+  else if ( PyMapping_Check( $input ) ) {
     /* We need to use the dictionary form. */
     int size = PyMapping_Length( $input );
     if ( size > 0 ) {
@@ -602,17 +618,6 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
         PyArg_ParseTuple( it, "ss", &nm, &val );
         $1 = CSLAddNameValue( $1, nm, val );
       }
-    }
-  }
-  else if ( PySequence_Check( $input ) ) {
-    int size = PySequence_Size($input);
-    for (int i = 0; i < size; i++) {
-      char *pszItem = NULL;
-      if ( ! PyArg_Parse( PySequence_GetItem($input,i), "s", &pszItem ) ) {
-        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-        SWIG_fail;
-      }
-      $1 = CSLAddString( $1, pszItem );
     }
   }
   else {
