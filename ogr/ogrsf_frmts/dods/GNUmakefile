@@ -6,7 +6,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 OBJ	=	ogrdodsdriver.o ogrdodsdatasource.o ogrdodslayer.o \
 		ogrdodssequencelayer.o ogrdodsfielddefn.o ogrdodsgrid.o
 
-CPPFLAGS	:=	-I.. $(GDAL_INCLUDE) $(CPPFLAGS) -I$(DODS_INC)
+CPPFLAGS	:=	-I.. $(GDAL_INCLUDE) $(CPPFLAGS) $(DODS_INC)
 
 default:	$(O_OBJ)
 
