@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.12  2005/07/15 19:00:55  kruland
+ * Implement the SetMetadata/GetMetadata methods as in Band.i
+ *
  * Revision 1.11  2005/07/15 16:55:21  kruland
  * Implemented SetDescription and GetDescription.
  *
@@ -120,16 +123,40 @@ public:
   }
 
 %apply (char **dict) { char ** };
-  char ** GetMetadata( const char * pszDomain = "" ) {
+  char ** GetMetadata_Dict( const char * pszDomain = "" ) {
     return GDALGetMetadata( self, pszDomain );
   }
 %clear char **;
+
+%apply (char **options) {char **};
+  char **GetMetadata_List( const char *pszDomain = "" ) {
+    return GDALGetMetadata( self, pszDomain );
+  }
+%clear char **;
+
+#ifdef SWIGPYTHON
+%pythoncode {
+  def GetMetadata( self, domain = '' ):
+    if domain[:4] == 'xml:':
+      return self.GetMetadata_List( domain )
+    return self.GetMetadata_Dict( domain )
+}
+#else
+%rename GetMetadata_Dict (GetMetadata)
+#endif
 
 %apply (char **dict) { char ** papszMetadata };
   CPLErr SetMetadata( char ** papszMetadata, const char * pszDomain = "" ) {
     return GDALSetMetadata( self, papszMetadata, pszDomain );
   }
 %clear char **papszMetadata;
+
+  CPLErr SetMetadata( char * pszMetadataString , const char *pszDomain = "" ) {
+    char *tmpList[2];
+    tmpList[0] = pszMetadataString;
+    tmpList[1] = 0;
+    return GDALSetMetadata( self, tmpList, pszDomain );
+  }
 
   // The (int,int*) arguments are typemapped.  The name of the first argument
   // becomes the kwarg name for it.
