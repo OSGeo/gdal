@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.70  2005/07/15 13:28:00  fwarmerdam
+ * Fixed another big raster int overflow problem in GDALGetRasterSampleOverview
+ *
  * Revision 1.69  2005/07/13 17:21:10  fwarmerdam
  * Avoiding 32bit overflow in GDALGetRasterSampleOverview().
  *
@@ -940,14 +943,14 @@ GDALGetRasterSampleOverview( GDALRasterBandH hBand,
          iOverview++ )
     {
         GDALRasterBandH hOBand = GDALGetOverview( hBand, iOverview );
-        int    nOSamples;
+        double    dfOSamples;
 
-        nOSamples = GDALGetRasterBandXSize(hOBand) 
-            * GDALGetRasterBandYSize(hOBand);
+        dfOSamples = GDALGetRasterBandXSize(hOBand) 
+            * (double) GDALGetRasterBandYSize(hOBand);
 
-        if( nOSamples < dfBestSamples && nOSamples > nDesiredSamples )
+        if( dfOSamples < dfBestSamples && dfOSamples > nDesiredSamples )
         {
-            dfBestSamples = nOSamples;
+            dfBestSamples = dfOSamples;
             hBestBand = hOBand;
         }
     }
