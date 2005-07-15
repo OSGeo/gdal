@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.32  2005/07/15 19:01:45  kruland
+ * Typemap out char **options needs to return a list instead of tuple to satisfy
+ * the gdalautotests.
+ *
  * Revision 1.31  2005/07/15 18:34:59  kruland
  * Revised the char **<-dict in mapping.  It now allows either dictionaries,
  * or sequences of strings.  Added a typecheck so overloading works.  This
@@ -659,10 +663,10 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   }
   else {
     int len = CSLCount( stringarray );
-    $result = PyTuple_New( len );
+    $result = PyList_New( len );
     for ( int i = 0; i < len; ++i, ++stringarray ) {
       PyObject *o = PyString_FromString( *stringarray );
-      PyTuple_SET_ITEM($result, i, o );
+      PyList_SetItem($result, i, o );
     }
     CSLDestroy( $1 );
   }
