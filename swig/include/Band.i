@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.13  2005/07/15 19:00:24  kruland
+ * Implement two GetMetadata methods, one which returns a dict and one
+ * which returns a List.  Have python code determine which to use.
+ *
  * Revision 1.12  2005/07/15 18:33:57  kruland
  * Added SetMetadata with single string argument.
  *
@@ -117,10 +121,27 @@ public:
 %mutable;
 
 %apply (char **dict) { char ** };
-  char ** GetMetadata( const char * pszDomain = "" ) {
+  char ** GetMetadata_Dict( const char * pszDomain = "" ) {
     return GDALGetMetadata( self, pszDomain );
   }
 %clear char **;
+
+%apply (char **options) {char **};
+  char **GetMetadata_List( const char *pszDomain = "" ) {
+    return GDALGetMetadata( self, pszDomain );
+  }
+%clear char **;
+
+#ifdef SWIGPYTHON
+%pythoncode {
+  def GetMetadata( self, domain = '' ):
+    if domain[:4] == 'xml:':
+      return self.GetMetadata_List( domain )
+    return self.GetMetadata_Dict( domain )
+}
+#else
+%rename GetMetadata_Dict (GetMetadata)
+#endif
 
 %apply (char **dict) { char ** papszMetadata };
   CPLErr SetMetadata( char ** papszMetadata, const char * pszDomain = "" ) {
