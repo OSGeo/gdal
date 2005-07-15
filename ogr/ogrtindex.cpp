@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/07/15 15:06:52  fwarmerdam
+ * Set default location field width to 200.
+ *
  * Revision 1.2  2002/04/25 20:56:29  warmerda
  * expanded tabs
  *
@@ -153,6 +156,8 @@ int main( int nArgc, char ** papszArgv )
         if( poDstDS->GetLayerCount() == 0 )
         {
             OGRFieldDefn oLocation( pszTileIndexField, OFTString );
+            
+            oLocation.SetWidth( 200 );
 
             poDstLayer = poDstDS->CreateLayer( "tileindex" );
             poDstLayer->CreateField( &oLocation, OFTString );
