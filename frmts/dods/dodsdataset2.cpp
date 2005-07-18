@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.6  2005/07/18 14:13:12  fwarmerdam
+ * bug 891: added DEFAULT_BASETYPE_FACTORY define for 3.5.x compatability
+ *
  * Revision 1.5  2005/04/09 00:34:35  fwarmerdam
  * Added prototype Grid Map support for deriving geotransform.
  *
@@ -51,6 +54,8 @@
 #include <exception>
 
 #include <debug.h>
+
+#define DEFAULT_BASETYPE_FACTORY
 
 #include <BaseType.h>		// DODS
 #include <Byte.h>

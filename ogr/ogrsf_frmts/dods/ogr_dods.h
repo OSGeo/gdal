@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/07/18 14:12:59  fwarmerdam
+ * bug 891: added DEFAULT_BASETYPE_FACTORY define for 3.5.x compatability
+ *
  * Revision 1.9  2005/02/22 12:57:39  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -70,6 +73,8 @@
 #include <sstream>
 #include <algorithm>
 #include <exception>
+
+#define DEFAULT_BASETYPE_FACTORY
 
 // #define DODS_DEBUG 1
 #include <debug.h>
