@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/07/18 15:34:11  fwarmerdam
+ * Fixed papTLSList sizing.
+ *
  * Revision 1.11  2005/07/08 18:17:52  fwarmerdam
  * complete TLS implementation for win32
  *
@@ -378,7 +381,7 @@ static void **CPLGetTLSList()
 
 {
     if( papTLSList == NULL )
-        papTLSList = (void **) CPLCalloc(sizeof(void*),CTLS_MAX);
+        papTLSList = (void **) CPLCalloc(sizeof(void*),CTLS_MAX*2);
 
     return papTLSList;
 }
@@ -613,7 +616,7 @@ static void **CPLGetTLSList()
     papTLSList = (void **) TlsGetValue( nTLSKey );
     if( papTLSList == NULL )
     {
-        papTLSList = (void **) CPLCalloc(sizeof(void*),CTLS_MAX);
+        papTLSList = (void **) CPLCalloc(sizeof(void*),CTLS_MAX*2);
         if( TlsSetValue( nTLSKey, papTLSList ) == 0 )
         {
             CPLError( CE_Fatal, CPLE_AppDefined, 
