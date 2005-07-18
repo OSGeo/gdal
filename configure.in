@@ -936,6 +936,14 @@ elif test "$with_ecw" = "yes" -o "$with_ecw" = "" ; then
     LIBS="-lNCSEcw $LIBS"
   fi
 
+  if test "$ECW_SETTING" = "no" ; then
+    AC_CHECK_LIB(ecwj2,NCScbmOpenFileView,ECW_SETTING=yes,ECW_SETTING=no,)
+
+    if test "$ECW_SETTING" = "yes" ; then   
+      LIBS="-lecwj2 $LIBS"
+    fi
+  fi
+
 else
 
   AC_MSG_CHECKING([for libNCSEcw.so])
@@ -1371,6 +1379,9 @@ else
     if test -x $DODS_BIN/opendap-config ; then 
       dnl OPeNDAP 3.4 and earlier lack opendap-config, but use it if avail.
       LIBS="$LIBS `$DODS_BIN/opendap-config --libs`"
+    elif test -x $DODS_BIN/dap-config ; then 
+      dnl OPeNDAP 3.4 and earlier lack opendap-config, but use it if avail.
+      LIBS="$LIBS `$DODS_BIN/dap-config --libs`"
     else
       dnl Otherwise try to put things together in a more primitive way.
       LIBS="$LIBS -L$DODS_LIB -ldap++ -lpthread -lrx"
