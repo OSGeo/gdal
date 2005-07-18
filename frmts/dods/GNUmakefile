@@ -29,7 +29,7 @@ docs:
 clean:
 	-rm -f *.o *.lo *~ $(O_OBJ)
 	-rm -rf docs
-	-rm dodsdataset_test using_dods
+	-rm -f dodsdataset_test using_dods
 
 install-obj:	$(O_OBJ)
 
