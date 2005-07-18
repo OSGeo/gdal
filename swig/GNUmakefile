@@ -2,11 +2,11 @@ GDAL_ROOT	=	../..
 
 include ../../GDALmake.opt
 
+PYTHON = python
 SWIG = swig
 SWIGARGS = -Wall
 
 TYPEMAPDEPS = gdal_typemaps.i typemaps_csharp.i typemaps_python.i
-
 
 PY_COMMANDS	=	epsg_tr.py gdalchksum.py gdal2xyz.py gcps2wld.py \
 			gdalimport.py gdal_merge.py pct2rgb.py rgb2pct.py \
@@ -32,14 +32,14 @@ install: ${BINDINGS:%=%_install}
 dist: $(PY_WRAPPERS)
 
 clean:
-	$(RM) -r build
+	rm -r build
 
 veryclean:
-	-$(RM) -r build
-	-$(RM) $(PY_WRAPPERS)
-	-$(RM) $(PY_MODULES) $(PY_MODULES:%.py=%.pyc)
+	-rm -r build
+	-rm $(PY_WRAPPERS)
+	-rm $(PY_MODULES) $(PY_MODULES:%.py=%.pyc)
 
-gdal_python.cpp: gdal.i Driver.i Dataset.i Band.i ColorTable.i cpl.i $(TYPEMAPDEPS)
+gdal_python.cpp: gdal.i MajorObject.i Driver.i Dataset.i Band.i ColorTable.i cpl.i $(TYPEMAPDEPS)
 	$(SWIG) $(SWIGARGS) -I$(GDAL_ROOT) -c++ -python -o $@ gdal.i 
 
 gdalconst_python.c: gdalconst.i
@@ -56,8 +56,8 @@ osr_python.cpp:  osr.i ${TYPEMAPDEPS}
 # through the setup.py script.  I don't understand how this will interact
 # with libtool based builds.  It might have to be changed some in the future.
 python_build: $(PY_WRAPPERS)
-	python setup.py build
+	$(PYTHON) setup.py build
 
 python_install: $(PY_WRAPPERS)
-	python setup.py install --prefix=$(prefix)
+	$(PYTHON) setup.py install --prefix=$(prefix)
 

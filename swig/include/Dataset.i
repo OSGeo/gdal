@@ -9,6 +9,14 @@
 
  *
  * $Log$
+ * Revision 1.13  2005/07/18 16:13:31  kruland
+ * Added MajorObject.i an interface specification to the MajorObject baseclass.
+ * Used inheritance in Band.i, Driver.i, and Dataset.i to access MajorObject
+ * functionality.
+ * Adjusted Makefile to have PYTHON be a variable, gdal wrapper depend on
+ * MajorObject.i, use rm (instead of libtool's wrapped RM) for removal because
+ * the libtool didn't accept -r.
+ *
  * Revision 1.12  2005/07/15 19:00:55  kruland
  * Implement the SetMetadata/GetMetadata methods as in Band.i
  *
@@ -66,7 +74,7 @@
 
 %rename (Dataset) GDALDatasetShadow;
 
-class GDALDatasetShadow {
+class GDALDatasetShadow : public GDALMajorObjectShadow {
 private:
   GDALDatasetShadow();
 public:
@@ -120,42 +128,6 @@ public:
 
   CPLErr SetGeoTransform( double_6 argin ) {
     return GDALSetGeoTransform( self, argin );
-  }
-
-%apply (char **dict) { char ** };
-  char ** GetMetadata_Dict( const char * pszDomain = "" ) {
-    return GDALGetMetadata( self, pszDomain );
-  }
-%clear char **;
-
-%apply (char **options) {char **};
-  char **GetMetadata_List( const char *pszDomain = "" ) {
-    return GDALGetMetadata( self, pszDomain );
-  }
-%clear char **;
-
-#ifdef SWIGPYTHON
-%pythoncode {
-  def GetMetadata( self, domain = '' ):
-    if domain[:4] == 'xml:':
-      return self.GetMetadata_List( domain )
-    return self.GetMetadata_Dict( domain )
-}
-#else
-%rename GetMetadata_Dict (GetMetadata)
-#endif
-
-%apply (char **dict) { char ** papszMetadata };
-  CPLErr SetMetadata( char ** papszMetadata, const char * pszDomain = "" ) {
-    return GDALSetMetadata( self, papszMetadata, pszDomain );
-  }
-%clear char **papszMetadata;
-
-  CPLErr SetMetadata( char * pszMetadataString , const char *pszDomain = "" ) {
-    char *tmpList[2];
-    tmpList[0] = pszMetadataString;
-    tmpList[1] = 0;
-    return GDALSetMetadata( self, tmpList, pszDomain );
   }
 
   // The (int,int*) arguments are typemapped.  The name of the first argument
@@ -241,14 +213,6 @@ public:
 %clear (GDALDataType *buf_type);
 %clear (int*);
 %clear (int buf_len, char *buf_string);
-
-  const char *GetDescription() {
-    return GDALGetDescription( self );
-  }
-
-  void SetDescription( const char *pszNewDesc ) {
-    GDALSetDescription( self, pszNewDesc );
-  }
 
 /* NEEDED */
 /* GetSubDatasets */

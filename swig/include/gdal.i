@@ -9,6 +9,14 @@
 
  *
  * $Log$
+ * Revision 1.27  2005/07/18 16:13:32  kruland
+ * Added MajorObject.i an interface specification to the MajorObject baseclass.
+ * Used inheritance in Band.i, Driver.i, and Dataset.i to access MajorObject
+ * functionality.
+ * Adjusted Makefile to have PYTHON be a variable, gdal wrapper depend on
+ * MajorObject.i, use rm (instead of libtool's wrapped RM) for removal because
+ * the libtool didn't accept -r.
+ *
  * Revision 1.26  2005/07/15 16:58:04  kruland
  * In the %exception spec, if an error is detected while UseExceptions(),
  * SWIG_fail immediately.
@@ -134,6 +142,7 @@ typedef double *double_2;
 typedef double *double_4;
 typedef double *double_6;
 
+typedef void GDALMajorObjectShadow;
 typedef void GDALDriverShadow;
 typedef void GDALDatasetShadow;
 typedef void GDALRasterBandShadow;
@@ -197,6 +206,13 @@ typedef int GDALResampleAlg;
 //
 //************************************************************************
 %include "cpl.i"
+
+//************************************************************************
+//
+// Define the MajorObject object
+//
+//************************************************************************
+%include "MajorObject.i"
 
 //************************************************************************
 //
