@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.14  2005/07/18 15:41:27  kruland
+ * Added Set/Get Description.  Some comment changes.
+ *
  * Revision 1.13  2005/07/15 19:00:24  kruland
  * Implement two GetMetadata methods, one which returns a dict and one
  * which returns a List.  Have python code determine which to use.
@@ -120,6 +123,23 @@ public:
   GDALDataType DataType;
 %mutable;
 
+/*
+ * GetDescription
+ */
+  const char *GetDescription() {
+    return GDALGetDescription( self );
+  }
+
+/*
+ * SetDescription
+ */
+  void SetDescription( const char *pszNewDesc ) {
+    GDALSetDescription( self, pszNewDesc );
+  }
+
+/*
+ * GetMetadata methods
+ */
 %apply (char **dict) { char ** };
   char ** GetMetadata_Dict( const char * pszDomain = "" ) {
     return GDALGetMetadata( self, pszDomain );
@@ -143,6 +163,9 @@ public:
 %rename GetMetadata_Dict (GetMetadata)
 #endif
 
+/*
+ * SetMetadata methods
+ */
 %apply (char **dict) { char ** papszMetadata };
   CPLErr SetMetadata( char ** papszMetadata, const char * pszDomain = "" ) {
     return GDALSetMetadata( self, papszMetadata, pszDomain );
@@ -155,6 +178,14 @@ public:
     tmpList[1] = 0;
     return GDALSetMetadata( self, tmpList, pszDomain );
   }
+
+/*
+ * GetMetadataItem
+ */
+
+/*
+ * SetMetadataItem
+ */
 
   GDALColorInterp GetRasterColorInterpretation() {
     return GDALGetRasterColorInterpretation( self );
