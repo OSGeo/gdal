@@ -9,6 +9,14 @@
 
  *
  * $Log$
+ * Revision 1.15  2005/07/18 16:13:31  kruland
+ * Added MajorObject.i an interface specification to the MajorObject baseclass.
+ * Used inheritance in Band.i, Driver.i, and Dataset.i to access MajorObject
+ * functionality.
+ * Adjusted Makefile to have PYTHON be a variable, gdal wrapper depend on
+ * MajorObject.i, use rm (instead of libtool's wrapped RM) for removal because
+ * the libtool didn't accept -r.
+ *
  * Revision 1.14  2005/07/18 15:41:27  kruland
  * Added Set/Get Description.  Some comment changes.
  *
@@ -110,7 +118,7 @@ CPLErr WriteRaster_internal( GDALRasterBandShadow *obj,
 
 %rename (Band) GDALRasterBandShadow;
 
-class GDALRasterBandShadow {
+class GDALRasterBandShadow : public GDALMajorObjectShadow {
 private:
   GDALRasterBandShadow();
   ~GDALRasterBandShadow();
@@ -123,69 +131,6 @@ public:
   GDALDataType DataType;
 %mutable;
 
-/*
- * GetDescription
- */
-  const char *GetDescription() {
-    return GDALGetDescription( self );
-  }
-
-/*
- * SetDescription
- */
-  void SetDescription( const char *pszNewDesc ) {
-    GDALSetDescription( self, pszNewDesc );
-  }
-
-/*
- * GetMetadata methods
- */
-%apply (char **dict) { char ** };
-  char ** GetMetadata_Dict( const char * pszDomain = "" ) {
-    return GDALGetMetadata( self, pszDomain );
-  }
-%clear char **;
-
-%apply (char **options) {char **};
-  char **GetMetadata_List( const char *pszDomain = "" ) {
-    return GDALGetMetadata( self, pszDomain );
-  }
-%clear char **;
-
-#ifdef SWIGPYTHON
-%pythoncode {
-  def GetMetadata( self, domain = '' ):
-    if domain[:4] == 'xml:':
-      return self.GetMetadata_List( domain )
-    return self.GetMetadata_Dict( domain )
-}
-#else
-%rename GetMetadata_Dict (GetMetadata)
-#endif
-
-/*
- * SetMetadata methods
- */
-%apply (char **dict) { char ** papszMetadata };
-  CPLErr SetMetadata( char ** papszMetadata, const char * pszDomain = "" ) {
-    return GDALSetMetadata( self, papszMetadata, pszDomain );
-  }
-%clear char **papszMetadata;
-
-  CPLErr SetMetadata( char * pszMetadataString , const char *pszDomain = "" ) {
-    char *tmpList[2];
-    tmpList[0] = pszMetadataString;
-    tmpList[1] = 0;
-    return GDALSetMetadata( self, tmpList, pszDomain );
-  }
-
-/*
- * GetMetadataItem
- */
-
-/*
- * SetMetadataItem
- */
 
   GDALColorInterp GetRasterColorInterpretation() {
     return GDALGetRasterColorInterpretation( self );

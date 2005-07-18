@@ -9,6 +9,14 @@
 
  *
  * $Log$
+ * Revision 1.10  2005/07/18 16:13:31  kruland
+ * Added MajorObject.i an interface specification to the MajorObject baseclass.
+ * Used inheritance in Band.i, Driver.i, and Dataset.i to access MajorObject
+ * functionality.
+ * Adjusted Makefile to have PYTHON be a variable, gdal wrapper depend on
+ * MajorObject.i, use rm (instead of libtool's wrapped RM) for removal because
+ * the libtool didn't accept -r.
+ *
  * Revision 1.9  2005/07/15 16:55:46  kruland
  * Implemented SetDescription and GetDescription.
  *
@@ -47,7 +55,8 @@
 
 %rename (Driver) GDALDriverShadow;
 
-class GDALDriverShadow {
+class GDALDriverShadow : public GDALMajorObjectShadow {
+private:
   ~GDALDriverShadow();
   GDALDriverShadow();
 public:
@@ -59,7 +68,6 @@ public:
   char const *HelpTopic;
 %mutable;
 
-    
 %newobject Create;
 %feature( "kwargs" ) Create;
   GDALDatasetShadow *Create( const char *name, int xsize, int ysize, int bands =1,
@@ -81,20 +89,6 @@ public:
 
   int Delete( const char *name ) {
     return GDALDeleteDataset( self, name );
-  }
-
-%apply (char **dict) { char ** };
-  char **GetMetadata( const char * pszDomain = "" ) {
-    return GDALGetMetadata( self, pszDomain );
-  }
-%clear char **;
-
-  const char *GetDescription() {
-    return GDALGetDescription( self );
-  }
-
-  void SetDescription( const char *pszNewDesc ) {
-    GDALSetDescription( self, pszNewDesc );
   }
 
 // NEEDED
