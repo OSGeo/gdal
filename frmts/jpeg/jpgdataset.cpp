@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.24  2005/07/19 15:33:53  fwarmerdam
+ * Removed /Exif in longname.
+ *
  * Revision 1.23  2005/07/19 15:21:57  dnadeau
  * added exif support
  *
@@ -1283,7 +1286,7 @@ void GDALRegister_JPEG()
         
         poDriver->SetDescription( "JPEG" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "JPEG JFIF/Exif" );
+                                   "JPEG JFIF" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_jpeg.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jpg" );
