@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.25  2005/07/19 15:38:33  fwarmerdam
+ * Disable a few less interesting tags.
+ *
  * Revision 1.24  2005/07/19 15:33:53  fwarmerdam
  * Removed /Exif in longname.
  *
@@ -130,8 +133,8 @@ static struct tagname {
   char*  name;
 } tagnames [] = {
 
-	{ 0x100,	"EXIF_Image_Width"},
-	{ 0x101,	"EXIF_Image_Length"},
+//	{ 0x100,	"EXIF_Image_Width"},
+//	{ 0x101,	"EXIF_Image_Length"},
 	{ 0x102,	"EXIF_Bits_Per_Sample"},
 	{ 0x103,	"EXIF_Compression"},
 	{ 0x106,	"EXIF_Photometric+Interpretation"},
@@ -192,15 +195,15 @@ static struct tagname {
 	{ 0x9208,	"EXIF_Light_Source"},
 	{ 0x9209,	"EXIF_Flash"},
 	{ 0x920A,	"EXIF_Focal_Length"},
-	{ 0x927C,	"EXIF_Maker_Note"},
+//	{ 0x927C,	"EXIF_Maker_Note"},
 	{ 0x9286,	"EXIF_User_Comment"},
 	{ 0x9290,	"EXIF_Sub_Sec_Time"},
 	{ 0x9291,	"EXIF_Sub_Sec_Time_Original"},
 	{ 0x9292,	"EXIF_Sub_Sec_Time_Digitized"},
 	{ 0xA000,	"EXIF_Flash_Pix_Version"},
 	{ 0xA001,	"EXIF_Color_Space"},
-	{ 0xA002,	"EXIF_Image_Width"},
-	{ 0xA003,	"EXIF_Image_Length"},
+//	{ 0xA002,	"EXIF_Image_Width"},
+//	{ 0xA003,	"EXIF_Image_Length"},
 	{ 0xA005,	"EXIF_Interoperability_Offset"},
 	{ 0xA20B,	"EXIF_Flash_Energy"},	  // 0x920B in TIFF/EP
 	{ 0xA20C,	"EXIF_Spatial_Frequency_Response"},   // 0x920C    -  -
