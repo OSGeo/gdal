@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.20  2005/07/19 03:33:39  fwarmerdam
+#  removed left over global_list
+#
 #  Revision 1.19  2005/06/23 19:51:51  fwarmerdam
 #  Fixed support for non-square pixels c/o Matt Giger
 #  http://bugzilla.remotesensing.org/show_bug.cgi?id=874
@@ -91,7 +94,6 @@ import sys
 
 verbose = 0
 
-global_list = []
 
 # =============================================================================
 def raster_copy( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
@@ -277,8 +279,6 @@ class file_info:
         # Open the source file, and copy the selected region.
         s_fh = gdal.Open( self.filename )
 
-        global_list.append( s_fh )
-        
         return \
             raster_copy( s_fh, sw_xoff, sw_yoff, sw_xsize, sw_ysize, s_band,
                          t_fh, tw_xoff, tw_yoff, tw_xsize, tw_ysize, t_band,
