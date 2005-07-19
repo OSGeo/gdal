@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.26  2005/07/19 18:06:28  dnadeau
+ * fix loop problem finding tags
+ *
  * Revision 1.25  2005/07/19 15:38:33  fwarmerdam
  * Disable a few less interesting tags.
  *
@@ -538,8 +541,8 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 
   TIFFDirEntry *poTIFFDirEntry;
   TIFFDirEntry *poTIFFDir;
-  struct tagname *poExifTags;
-  struct intr_tag *poInterTags;
+  struct tagname *poExifTags ;
+  struct intr_tag *poInterTags = intr_tags;
 
 /* -------------------------------------------------------------------- */
 /*      Read number of entry in directory                               */
@@ -584,14 +587,21 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
     for (poExifTags = tagnames; poExifTags->tag; poExifTags++)
       if(poExifTags->tag == poTIFFDirEntry->tdir_tag){
 	  strcpy(pszName, poExifTags->name);
+          break;
       }
 /* -------------------------------------------------------------------- */
 /*      If the tag was not found, look into the interoperability table  */
 /* -------------------------------------------------------------------- */
       if(!poExifTags->tag)
 	for(poInterTags = intr_tags; poInterTags->tag; poInterTags++)
-	  if(poInterTags->tag == poTIFFDirEntry->tdir_tag) 
+	  if(poInterTags->tag == poTIFFDirEntry->tdir_tag) {
 	    strcpy(pszName, poInterTags->name);
+	    break;
+          }
+
+      if((!poExifTags->tag) && (!poInterTags->tag))
+	continue;
+
 
 /* -------------------------------------------------------------------- */
 /*      Save important directory tag offset                             */
