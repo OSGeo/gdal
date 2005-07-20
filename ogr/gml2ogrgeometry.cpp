@@ -37,6 +37,9 @@
  *   compromising the system.
  *
  * $Log$
+ * Revision 1.10  2005/07/20 02:33:24  fwarmerdam
+ * fix up dimension support
+ *
  * Revision 1.9  2005/03/08 19:51:15  fwarmerdam
  * added gml:pos support
  *
@@ -163,7 +166,7 @@ static const char *GetElementText( CPLXMLNode *psElement )
 /************************************************************************/
 
 static int AddPoint( OGRGeometry *poGeometry, 
-                     double dfX, double dfY, double dfZ )
+                     double dfX, double dfY, double dfZ, int nDimension )
 
 {
     if( poGeometry->getGeometryType() == wkbPoint 
@@ -180,7 +183,8 @@ static int AddPoint( OGRGeometry *poGeometry,
             
         poPoint->setX( dfX );
         poPoint->setY( dfY );
-        poPoint->setZ( dfZ );
+        if( nDimension == 3 )
+            poPoint->setZ( dfZ );
 
         return TRUE;
     }
@@ -188,7 +192,10 @@ static int AddPoint( OGRGeometry *poGeometry,
     else if( poGeometry->getGeometryType() == wkbLineString
              || poGeometry->getGeometryType() == wkbLineString25D )
     {
-        ((OGRLineString *) poGeometry)->addPoint( dfX, dfY, dfZ );
+        if( nDimension == 3 )
+            ((OGRLineString *) poGeometry)->addPoint( dfX, dfY, dfZ );
+        else
+            ((OGRLineString *) poGeometry)->addPoint( dfX, dfY );
 
         return TRUE;
     }
@@ -227,6 +234,7 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
         while( *pszCoordString != '\0' )
         {
             double dfX, dfY, dfZ = 0.0;
+            int nDimension = 2;
 
             // parse out 2 or 3 tuple. 
             dfX = atof( pszCoordString );
@@ -253,6 +261,7 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
             {
                 pszCoordString++;
                 dfZ = atof( pszCoordString );
+                nDimension = 3;
                 while( *pszCoordString != '\0' 
                        && *pszCoordString != ','
                        && !isspace(*pszCoordString) )
@@ -262,7 +271,7 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
             while( isspace(*pszCoordString) )
                 pszCoordString++;
 
-            if( !AddPoint( poGeometry, dfX, dfY, dfZ ) )
+            if( !AddPoint( poGeometry, dfX, dfY, dfZ, nDimension ) )
                 return FALSE;
 
             iCoord++;
@@ -287,14 +296,14 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
             bSuccess = AddPoint( poGeometry, 
                                  atof(papszTokens[0]), 
                                  atof(papszTokens[1]),
-                                 atof(papszTokens[2]) );
+                                 atof(papszTokens[2]), 3 );
         }
         else if( CSLCount( papszTokens ) > 1 )
         {
             bSuccess = AddPoint( poGeometry, 
                                  atof(papszTokens[0]), 
                                  atof(papszTokens[1]),
-                                 0.0 );
+                                 0.0, 2 );
         }
         else
         {
@@ -325,6 +334,7 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
 
         CPLXMLNode *psXNode, *psYNode, *psZNode;
         double dfX, dfY, dfZ = 0.0;
+        int nDimension = 2;
 
         psXNode = FindBareXMLChild( psCoordNode, "X" );
         psYNode = FindBareXMLChild( psCoordNode, "Y" );
@@ -344,9 +354,12 @@ int ParseGMLCoordinates( CPLXMLNode *psGeomNode, OGRGeometry *poGeometry )
         dfY = atof( GetElementText(psYNode) );
 
         if( psZNode != NULL && GetElementText(psZNode) != NULL )
+        {
             dfZ = atof( GetElementText(psZNode) );
+            nDimension = 3;
+        }
 
-        if( !AddPoint( poGeometry, dfX, dfY, dfZ ) )
+        if( !AddPoint( poGeometry, dfX, dfY, dfZ, nDimension ) )
             return FALSE;
 
         iCoord++;
