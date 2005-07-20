@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.52  2005/07/20 02:34:52  fwarmerdam
+# fixed up AddPoint to default z
+#
 # Revision 1.51  2005/07/20 01:46:51  fwarmerdam
 # ogr coordinate dimension upgrades
 #
@@ -1170,7 +1173,7 @@ class Geometry:
     def SetPoint_2D( self, i, x, y):
         return _gdal.OGR_G_SetPoint_2D( self._o, i, x, y )
 
-    def AddPoint( self, x, y, z ):
+    def AddPoint( self, x, y, z=0 ):
         return _gdal.OGR_G_AddPoint( self._o, x, y, z )
 
     def AddPoint_2D( self, x, y ):
