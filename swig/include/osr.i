@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.15  2005/07/20 14:44:13  kruland
+ * Use correct name for OPTGetProjectionMethods().
+ *
  * Revision 1.14  2005/06/22 18:42:33  kruland
  * Don't apply a typemap for returning OGRErr.
  *
@@ -278,7 +281,7 @@ py_OPTGetProjectionMethods(PyObject *self, PyObject *args) {
 #else
 
 %rename (GetProjectionMethods) OPTGetProjectionMethods;
-char **OptGetProjectionMethods();
+char **OPTGetProjectionMethods();
 
 %rename (GetProjectionMethodParameterList) OPTGetParameterList;
 char **OPTGetParameterList( char *method, char **username );
