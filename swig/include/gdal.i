@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.28  2005/07/20 16:33:52  kruland
+ * Added wrapper for GDALGetDriverCount.
+ * Added %init for PHP.
+ *
  * Revision 1.27  2005/07/18 16:13:32  kruland
  * Added MajorObject.i an interface specification to the MajorObject baseclass.
  * Used inheritance in Band.i, Driver.i, and Dataset.i to access MajorObject
@@ -125,6 +129,13 @@
 %}
 #endif
 
+#ifdef SWIGPHP4
+%init %{
+  if (GDALGetDriverCount() == 0 ) {
+    GDALAllRegister();
+  }
+%}
+#endif
 
 %{
 #include <iostream>
@@ -480,6 +491,12 @@ double GDALDecToPackedDMS( double );
 
 // Missing
 // GetDriverList
+
+%inline %{
+int GetDriverCount() {
+  return GDALGetDriverCount();
+}
+%}
 
 %inline %{
 GDALDriverShadow* GetDriverByName( char const *name ) {
