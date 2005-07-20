@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/07/20 02:33:51  fwarmerdam
+ * fixed up dimension test for adding to polygons
+ *
  * Revision 1.8  2005/07/20 01:43:51  fwarmerdam
  * upgraded OGR geometry dimension handling
  *
@@ -568,7 +571,7 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
           OGRLinearRing *poRing = (OGRLinearRing *) hNewSubGeom;
 
           if( poRing->WkbSize() != 0 
-              || poRing->getGeometryType() != wkbLineString )
+              || wkbFlatten(poRing->getGeometryType()) != wkbLineString )
               return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
           else
           {
