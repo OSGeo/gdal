@@ -86,15 +86,15 @@
 %constant CPLE_NoWriteAccess              = CPLE_NoWriteAccess;
 %constant CPLE_UserInterrupt              = CPLE_UserInterrupt;
 
-%constant DMD_LONGNAME           = GDAL_DMD_LONGNAME;
-%constant DMD_HELPTOPIC          = GDAL_DMD_HELPTOPIC;
-%constant DMD_MIMETYPE           = GDAL_DMD_MIMETYPE;
-%constant DMD_EXTENSION          = GDAL_DMD_EXTENSION;
-%constant DMD_CREATIONOPTIONLIST = GDAL_DMD_CREATIONOPTIONLIST;
-%constant DMD_CREATIONDATATYPES  = GDAL_DMD_CREATIONDATATYPES;
+%constant char *DMD_LONGNAME           = GDAL_DMD_LONGNAME;
+%constant char *DMD_HELPTOPIC          = GDAL_DMD_HELPTOPIC;
+%constant char *DMD_MIMETYPE           = GDAL_DMD_MIMETYPE;
+%constant char *DMD_EXTENSION          = GDAL_DMD_EXTENSION;
+%constant char *DMD_CREATIONOPTIONLIST = GDAL_DMD_CREATIONOPTIONLIST;
+%constant char *DMD_CREATIONDATATYPES  = GDAL_DMD_CREATIONDATATYPES;
 
-%constant DCAP_CREATE     = GDAL_DCAP_CREATE;
-%constant DCAP_CREATECOPY = GDAL_DCAP_CREATECOPY;
+%constant char *DCAP_CREATE     = GDAL_DCAP_CREATE;
+%constant char *DCAP_CREATECOPY = GDAL_DCAP_CREATECOPY;
 
 %constant CPLES_BackslashQuotable = CPLES_BackslashQuotable;
 %constant CPLES_XML               = CPLES_XML;
