@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.119  2005/07/20 01:46:51  fwarmerdam
+ * ogr coordinate dimension upgrades
+ *
  * Revision 1.118  2005/06/10 21:51:03  fwarmerdam
  * fixed up osr.Clone() support
  *
@@ -2966,6 +2969,7 @@ OGRGeometryH OGR_G_CreateGeometry( OGRwkbGeometryType );
 
 int    OGR_G_GetDimension( OGRGeometryH );
 int    OGR_G_GetCoordinateDimension( OGRGeometryH );
+void   OGR_G_SetCoordinateDimension( OGRGeometryH, int );
 OGRGeometryH OGR_G_Clone( OGRGeometryH );
 void   OGR_G_GetEnvelope( OGRGeometryH, OGREnvelope * );
 int    OGR_G_WkbSize( OGRGeometryH hGeom );
@@ -3010,8 +3014,11 @@ double OGR_G_GetX( OGRGeometryH, int );
 double OGR_G_GetY( OGRGeometryH, int );
 double OGR_G_GetZ( OGRGeometryH, int );
 void   OGR_G_SetPoint( OGRGeometryH, int iPoint, 
-                               double, double, double );
+                       double, double, double );
+void   OGR_G_SetPoint_2D( OGRGeometryH, int iPoint, 
+                          double, double );
 void   OGR_G_AddPoint( OGRGeometryH, double, double, double );
+void   OGR_G_AddPoint_2D( OGRGeometryH, double, double );
 
 /* Methods for getting/setting rings and members collections */
 

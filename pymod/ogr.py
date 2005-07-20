@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.51  2005/07/20 01:46:51  fwarmerdam
+# ogr coordinate dimension upgrades
+#
 # Revision 1.50  2005/05/05 22:45:33  fwarmerdam
 # Fixed Empty call ... only one argument.
 #
@@ -1057,6 +1060,9 @@ class Geometry:
     def GetCoordinateDimension( self ):
         return _gdal.OGR_G_GetCoordinateDimension( self._o )
     
+    def SetCoordinateDimension( self, new_dimension ):
+        return _gdal.OGR_G_SetCoordinateDimension( self._o, new_dimension )
+    
     def WkbSize( self ):
         return _gdal.OGR_G_WkbSize( self._o )
 
@@ -1161,8 +1167,14 @@ class Geometry:
     def SetPoint( self, i, x, y, z = 0):
         return _gdal.OGR_G_SetPoint( self._o, i, x, y, z )
 
-    def AddPoint( self, x, y, z = 0 ):
+    def SetPoint_2D( self, i, x, y):
+        return _gdal.OGR_G_SetPoint_2D( self._o, i, x, y )
+
+    def AddPoint( self, x, y, z ):
         return _gdal.OGR_G_AddPoint( self._o, x, y, z )
+
+    def AddPoint_2D( self, x, y ):
+        return _gdal.OGR_G_AddPoint_2D( self._o, x, y )
 
     def GetGeometryCount( self ):
         return _gdal.OGR_G_GetGeometryCount( self._o )
