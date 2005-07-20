@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/07/20 01:45:01  fwarmerdam
+ * added PostGIS 8.0 hex geometry format support
+ *
  * Revision 1.18  2005/05/05 20:47:52  dron
  * Override GetExtent() method for PostGIS layers with PostGIS standard function
  * extent() (Oleg Semykin <oleg.semykin@gmail.com>
@@ -256,7 +259,8 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 /* -------------------------------------------------------------------- */
         if( bHasPostGISGeometry
             && (EQUAL(PQfname(hCursorResult,iField),pszGeomColumn)
-                || EQUAL(PQfname(hCursorResult,iField),"astext") ) )
+                || EQUAL(PQfname(hCursorResult,iField),"asEWKT") 
+                || EQUAL(PQfname(hCursorResult,iField),"asText") ) )
         {
             char        *pszWKT;
             char        *pszPostSRID;
@@ -275,8 +279,15 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                     pszPostSRID++;
             }
 
-            OGRGeometryFactory::createFromWkt( &pszPostSRID, NULL, 
-                                               &poGeometry );
+            if( EQUALN(pszPostSRID,"00",2) || EQUALN(pszPostSRID,"01",2) )
+            {
+                poGeometry = 
+                    HEXToGeometry( 
+                        PQgetvalue( hCursorResult, iRecord, iField ) );
+            }
+            else
+                OGRGeometryFactory::createFromWkt( &pszPostSRID, NULL, 
+                                                   &poGeometry );
             if( poGeometry != NULL )
                 poFeature->SetGeometryDirectly( poGeometry );
 
@@ -473,6 +484,56 @@ OGRFeature *OGRPGLayer::GetFeature( long nFeatureId )
     /* This should be implemented! */
 
     return NULL;
+}
+
+/************************************************************************/
+/*                           HEXToGeometry()                            */
+/************************************************************************/
+
+OGRGeometry *OGRPGLayer::HEXToGeometry( const char *pszBytea )
+
+{
+    GByte       *pabyWKB;
+    int iSrc=0, iDst=0;
+    OGRGeometry *poGeometry;
+
+    if( pszBytea == NULL )
+        return NULL;
+
+    pabyWKB = (GByte *) CPLMalloc(strlen(pszBytea)+1);
+    while( pszBytea[iSrc] != '\0' )
+    {
+        if( pszBytea[iSrc] > '0' && pszBytea[iSrc] <= '9' )
+            pabyWKB[iDst] = pszBytea[iSrc] - '0';
+        else if( pszBytea[iSrc] > 'A' && pszBytea[iSrc] <= 'F' )
+            pabyWKB[iDst] = pszBytea[iSrc] - 'A' + 10;
+        else if( pszBytea[iSrc] > 'a' && pszBytea[iSrc] <= 'f' )
+            pabyWKB[iDst] = pszBytea[iSrc] - 'a' + 10;
+        else 
+            pabyWKB[iDst] = 0;
+
+        pabyWKB[iDst] *= 16;
+
+        iSrc++;
+
+        if( pszBytea[iSrc] > '0' && pszBytea[iSrc] <= '9' )
+            pabyWKB[iDst] += pszBytea[iSrc] - '0';
+        else if( pszBytea[iSrc] > 'A' && pszBytea[iSrc] <= 'F' )
+            pabyWKB[iDst] += pszBytea[iSrc] - 'A' + 10;
+        else if( pszBytea[iSrc] > 'a' && pszBytea[iSrc] <= 'f' )
+            pabyWKB[iDst] += pszBytea[iSrc] - 'a' + 10;
+        else 
+            pabyWKB[iDst] += 0;
+
+        iSrc++;
+        iDst++;
+    }
+
+    poGeometry = NULL;
+    OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeometry, iDst );
+
+    CPLFree( pabyWKB );
+    return poGeometry;
 }
 
 /************************************************************************/
