@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/07/20 01:44:25  fwarmerdam
+ * try and preserve geometry dimension properly
+ *
  * Revision 1.32  2004/07/06 19:35:51  warmerda
  * Default to using FTString for unrecognised field types like logical.
  *
@@ -321,6 +324,8 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
     {
         poOGR = new OGRPoint( psShape->padfX[0], psShape->padfY[0],
                               psShape->padfZ[0] );
+        if( psShape->nSHPType == SHPT_POINT )
+            poOGR->setCoordinateDimension( 2 );
     }
 
 /* -------------------------------------------------------------------- */
@@ -346,6 +351,9 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
         }
         
         poOGR = poOGRMPoint;
+
+        if( psShape->nSHPType == SHPT_MULTIPOINT )
+            poOGR->setCoordinateDimension( 2 );
     }
 
 /* -------------------------------------------------------------------- */
@@ -406,6 +414,9 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
                 poOGRMulti->addGeometryDirectly( poLine );
             }
         }
+
+        if( psShape->nSHPType == SHPT_ARC )
+            poOGR->setCoordinateDimension( 2 );
     }
 
 /* -------------------------------------------------------------------- */
@@ -549,6 +560,9 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
             CPLFree( outer );
             CPLFree( outside );
 	}
+
+        if( psShape->nSHPType == SHPT_POLYGON )
+            poOGR->setCoordinateDimension( 2 );
     }
 
 /* -------------------------------------------------------------------- */
