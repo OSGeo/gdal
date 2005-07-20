@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/07/20 01:43:51  fwarmerdam
+ * upgraded OGR geometry dimension handling
+ *
  * Revision 1.11  2003/01/06 17:57:18  warmerda
  * Added some extra validation in OGRMakeWktCoordinate()
  *
@@ -81,10 +84,11 @@ CPL_CVSID("$Id$");
 /*      characters barring the X or Y value being extremely large.      */
 /************************************************************************/
 
-void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z )
+void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z, 
+                           int nDimension )
 
 {
-    if( z == 0 )
+    if( nDimension < 3 )
     {
         if( x == (int) x && y == (int) y )
             sprintf( pszTarget, "%d %d", (int) x, (int) y );

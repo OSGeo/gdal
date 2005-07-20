@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/07/20 01:43:51  fwarmerdam
+ * upgraded OGR geometry dimension handling
+ *
  * Revision 1.7  2001/11/01 17:01:28  warmerda
  * pass output buffer into OGRMakeWktCoordinate
  *
@@ -78,11 +81,12 @@
 const char CPL_DLL * OGRWktReadToken( const char * pszInput, char * pszToken );
 
 const char CPL_DLL * OGRWktReadPoints( const char * pszInput,
-                               OGRRawPoint **ppaoPoints, double **ppadfZ,
-                               int * pnMaxPoints,
-                               int * pnReadPoints );
+                                       OGRRawPoint **ppaoPoints, 
+                                       double **ppadfZ,
+                                       int * pnMaxPoints,
+                                       int * pnReadPoints );
 
-void CPL_DLL OGRMakeWktCoordinate( char *, double, double, double );
+void CPL_DLL OGRMakeWktCoordinate( char *, double, double, double, int );
 #endif
 
 #endif /* ndef _OGR_P_H_INCLUDED */

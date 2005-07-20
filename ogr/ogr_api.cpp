@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/07/20 01:43:51  fwarmerdam
+ * upgraded OGR geometry dimension handling
+ *
  * Revision 1.7  2004/09/17 15:05:36  fwarmerdam
  * added get_Area() support
  *
@@ -276,6 +279,50 @@ void OGR_G_SetPoint( OGRGeometryH hGeom, int i,
 }
 
 /************************************************************************/
+/*                         OGR_G_SetPoint_2D()                          */
+/************************************************************************/
+/**
+ * Set the location of a vertex in a point or linestring geometry.
+ *
+ * If iPoint is larger than the number of existing
+ * points in the linestring, the point count will be increased to
+ * accomodate the request.
+ *
+ * @param hGeom handle to the geometry to add a vertex to.
+ * @param i the index of the vertex to assign (zero based) or
+ *  zero for a point.
+ * @param dfX input X coordinate to assign.
+ * @param dfY input Y coordinate to assign.
+ */
+
+void OGR_G_SetPoint_2D( OGRGeometryH hGeom, int i, 
+                        double dfX, double dfY )
+    
+{
+    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    {
+      case wkbPoint:
+      {
+          CPLAssert( i == 0 );
+          if( i == 0 )
+          {
+              ((OGRPoint *) hGeom)->setX( dfX );
+              ((OGRPoint *) hGeom)->setY( dfY );
+          }
+      }
+      break;
+
+      case wkbLineString:
+        ((OGRLineString *) hGeom)->setPoint( i, dfX, dfY );
+        break;
+
+      default:
+        CPLAssert( FALSE );
+        break;
+    }
+}
+
+/************************************************************************/
 /*                           OGR_G_AddPoint()                           */
 /************************************************************************/
 /**
@@ -306,6 +353,43 @@ void OGR_G_AddPoint( OGRGeometryH hGeom,
 
       case wkbLineString:
         ((OGRLineString *) hGeom)->addPoint( dfX, dfY, dfZ );
+        break;
+
+      default:
+        CPLAssert( FALSE );
+        break;
+    }
+}
+
+/************************************************************************/
+/*                           OGR_G_AddPoint()                           */
+/************************************************************************/
+/**
+ * Add a point to a geometry (line string or point).
+ *
+ * The vertex count of the line string is increased by one, and assigned from
+ * the passed location value.
+ *
+ * @param hGeom handle to the geometry to add a point to.
+ * @param dfX x coordinate of point to add.
+ * @param dfY y coordinate of point to add.
+ */
+
+void OGR_G_AddPoint_2D( OGRGeometryH hGeom, 
+                        double dfX, double dfY )
+
+{
+    switch( wkbFlatten(((OGRGeometry *) hGeom)->getGeometryType()) )
+    {
+      case wkbPoint:
+      {
+          ((OGRPoint *) hGeom)->setX( dfX );
+          ((OGRPoint *) hGeom)->setY( dfY );
+      }
+      break;
+
+      case wkbLineString:
+        ((OGRLineString *) hGeom)->addPoint( dfX, dfY );
         break;
 
       default:

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/07/20 01:43:51  fwarmerdam
+ * upgraded OGR geometry dimension handling
+ *
  * Revision 1.32  2005/07/12 17:34:00  fwarmerdam
  * updated to produce proper empty syntax and consume either
  *
@@ -222,22 +225,6 @@ OGRwkbGeometryType OGRPolygon::getGeometryType() const
 int OGRPolygon::getDimension() const
 
 {
-    return 2;
-}
-
-/************************************************************************/
-/*                       getCoordinateDimension()                       */
-/************************************************************************/
-
-int OGRPolygon::getCoordinateDimension() const
-
-{
-    for( int iRing = 0; iRing < nRingCount; iRing++ )
-    {
-        if( papoRings[iRing]->getCoordinateDimension() == 3 )
-            return 3;
-    }
-
     return 2;
 }
 
@@ -479,6 +466,11 @@ OGRErr OGRPolygon::importFromWkb( unsigned char * pabyData,
     else
         b3D = pabyData[1] & 0x80 || pabyData[3] & 0x80;
 
+    if( b3D )
+        nCoordDimension = 3;
+    else
+        nCoordDimension = 2;
+
 /* -------------------------------------------------------------------- */
 /*      Do we already have some rings?                                  */
 /* -------------------------------------------------------------------- */
@@ -664,6 +656,8 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
     OGRRawPoint *paoPoints = NULL;
     int         nMaxPoints = 0, nMaxRings = 0;
     double      *padfZ = NULL;
+
+    nCoordDimension = 2;
     
     do
     {
@@ -699,6 +693,9 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
 
         nRingCount++;
 
+        if( padfZ )
+            nCoordDimension = 3;
+
 /* -------------------------------------------------------------------- */
 /*      Read the delimeter following the ring.                          */
 /* -------------------------------------------------------------------- */
@@ -711,7 +708,7 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
 /* -------------------------------------------------------------------- */
     CPLFree( paoPoints );
     CPLFree( padfZ );
-   
+
     if( szToken[0] != ')' )
         return OGRERR_CORRUPT_DATA;
     
@@ -1009,3 +1006,17 @@ double OGRPolygon::get_Area() const
 
     return dfArea;
 }
+
+/************************************************************************/
+/*                       setCoordinateDimension()                       */
+/************************************************************************/
+
+void OGRPolygon::setCoordinateDimension( int nNewDimension )
+
+{
+    for( int iRing = 0; iRing < nRingCount; iRing++ )
+        papoRings[iRing]->setCoordinateDimension( nNewDimension );
+
+    OGRGeometry::setCoordinateDimension( nNewDimension );
+}
+

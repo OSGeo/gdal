@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/07/20 01:43:51  fwarmerdam
+ * upgraded OGR geometry dimension handling
+ *
  * Revision 1.25  2005/02/22 12:37:26  fwarmerdam
  * rename Equal/Intersect to Equals/Intersects
  *
@@ -147,6 +150,7 @@ OGRGeometryH CPL_DLL OGR_G_CreateGeometry( OGRwkbGeometryType );
 
 int    CPL_DLL OGR_G_GetDimension( OGRGeometryH );
 int    CPL_DLL OGR_G_GetCoordinateDimension( OGRGeometryH );
+void   CPL_DLL OGR_G_SetCoordinateDimension( OGRGeometryH, int );
 OGRGeometryH CPL_DLL OGR_G_Clone( OGRGeometryH );
 void   CPL_DLL OGR_G_GetEnvelope( OGRGeometryH, OGREnvelope * );
 OGRErr CPL_DLL OGR_G_ImportFromWkb( OGRGeometryH, unsigned char *, int );
@@ -211,7 +215,10 @@ void   CPL_DLL OGR_G_GetPoint( OGRGeometryH, int iPoint,
                                double *, double *, double * );
 void   CPL_DLL OGR_G_SetPoint( OGRGeometryH, int iPoint, 
                                double, double, double );
+void   CPL_DLL OGR_G_SetPoint_2D( OGRGeometryH, int iPoint, 
+                                  double, double );
 void   CPL_DLL OGR_G_AddPoint( OGRGeometryH, double, double, double );
+void   CPL_DLL OGR_G_AddPoint_2D( OGRGeometryH, double, double );
 
 /* Methods for getting/setting rings and members collections */
 

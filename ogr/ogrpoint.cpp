@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/07/20 01:43:51  fwarmerdam
+ * upgraded OGR geometry dimension handling
+ *
  * Revision 1.31  2005/07/12 17:34:00  fwarmerdam
  * updated to produce proper empty syntax and consume either
  *
@@ -204,19 +207,6 @@ int OGRPoint::getDimension() const
 }
 
 /************************************************************************/
-/*                       getCoordinateDimension()                       */
-/************************************************************************/
-
-int OGRPoint::getCoordinateDimension() const
-
-{
-    if( z == 0 )
-        return 2;
-    else
-        return 3;
-}
-
-/************************************************************************/
 /*                          getGeometryType()                           */
 /************************************************************************/
 
@@ -247,6 +237,7 @@ void OGRPoint::flattenTo2D()
 
 {
     z = 0;
+    nCoordDimension = 2;
 }
 
 /************************************************************************/
@@ -259,7 +250,7 @@ void OGRPoint::flattenTo2D()
 int OGRPoint::WkbSize() const
 
 {
-    if( z == 0)
+    if( nCoordDimension != 3 )
         return 21;
     else
         return 29;
@@ -326,10 +317,13 @@ OGRErr OGRPoint::importFromWkb( unsigned char * pabyData,
         {
             CPL_SWAPDOUBLE( &z );
         }
-        
+        nCoordDimension = 3;
     }
     else
+    {
         z = 0;
+        nCoordDimension = 2;
+    }
 
     return OGRERR_NONE;
 }
@@ -366,7 +360,7 @@ OGRErr  OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
 /* -------------------------------------------------------------------- */
     memcpy( pabyData+5, &x, 16 );
 
-    if( z != 0 )
+    if( nCoordDimension == 3 )
     {
         memcpy( pabyData + 5 + 16, &z, 8 );
     }
@@ -379,7 +373,7 @@ OGRErr  OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
         CPL_SWAPDOUBLE( pabyData + 5 );
         CPL_SWAPDOUBLE( pabyData + 5 + 8 );
 
-        if( z != 0 )
+        if( nCoordDimension == 3 )
             CPL_SWAPDOUBLE( pabyData + 5 + 16 );
     }
 
@@ -457,9 +451,12 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
 
     if( padfZ != NULL )
     {
-        z = padfZ[0];
+        z = padfZ[0];						
+        nCoordDimension = 3;
         CPLFree( padfZ );
     }
+    else
+        nCoordDimension = 2;
 
     *ppszInput = (char *) pszInput;
     
@@ -479,7 +476,7 @@ OGRErr OGRPoint::exportToWkt( char ** ppszDstText ) const
     char        szTextEquiv[100];
     char        szCoordinate[80];
 
-    OGRMakeWktCoordinate(szCoordinate, x, y, z);
+    OGRMakeWktCoordinate(szCoordinate, x, y, z, nCoordDimension );
     sprintf( szTextEquiv, "POINT (%s)", szCoordinate );
     *ppszDstText = CPLStrdup( szTextEquiv );
     

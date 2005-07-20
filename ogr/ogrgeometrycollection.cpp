@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/07/20 01:43:51  fwarmerdam
+ * upgraded OGR geometry dimension handling
+ *
  * Revision 1.30  2005/07/12 17:34:00  fwarmerdam
  * updated to produce proper empty syntax and consume either
  *
@@ -214,28 +217,6 @@ int OGRGeometryCollection::getDimension() const
 
 {
     return 2; // This isn't strictly correct.  It should be based on members.
-}
-
-/************************************************************************/
-/*                       getCoordinateDimension()                       */
-/*                                                                      */
-/*      Returning 2 is a dubious solution.  This should at least be     */
-/*      overridden by some of the subclasses.                           */
-/************************************************************************/
-
-int OGRGeometryCollection::getCoordinateDimension() const
-
-{
-    if( nCoordinateDimension == 0 )
-    {
-        ((OGRGeometryCollection *)this)->nCoordinateDimension = 2;
-
-        for( int i = 0; i < nGeomCount; i++ )
-            if( papoGeoms[i]->getCoordinateDimension() == 3 )
-                ((OGRGeometryCollection *)this)->nCoordinateDimension = 3;
-    }
-
-    return nCoordinateDimension;
 }
 
 /************************************************************************/
@@ -899,3 +880,19 @@ void OGRGeometryCollection::closeRings()
             ((OGRPolygon *) papoGeoms[iGeom])->closeRings();
     }
 }
+
+/************************************************************************/
+/*                       setCoordinateDimension()                       */
+/************************************************************************/
+
+void OGRGeometryCollection::setCoordinateDimension( int nNewDimension )
+
+{
+    for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
+    {
+        papoGeoms[iGeom]->setCoordinateDimension( nNewDimension );
+    }
+
+    OGRGeometry::setCoordinateDimension( nNewDimension );
+}
+

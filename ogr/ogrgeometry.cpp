@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/07/20 01:43:51  fwarmerdam
+ * upgraded OGR geometry dimension handling
+ *
  * Revision 1.30  2005/04/18 15:42:17  fwarmerdam
  * fix geos exception catching
  *
@@ -148,6 +151,7 @@ OGRGeometry::OGRGeometry()
 
 {
     poSRS = NULL;
+    nCoordDimension = 2;
 }
 
 /************************************************************************/
@@ -570,9 +574,10 @@ int OGR_G_GetDimension( OGRGeometryH hGeom )
     return ((OGRGeometry *) hGeom)->getDimension();
 }
 
+/************************************************************************/
+/*                       getCoordinateDimension()                       */
+/************************************************************************/
 /**
- * \fn int OGRGeometry::getCoordinateDimension() const;
- *
  * Get the dimension of the coordinates in this object.
  *
  * This method corresponds to the SFCOM IGeometry::GetDimension() method.
@@ -582,6 +587,12 @@ int OGR_G_GetDimension( OGRGeometryH hGeom )
  * @return in practice this always returns 2 indicating that coordinates are
  * specified within a two dimensional space.
  */
+
+int OGRGeometry::getCoordinateDimension() const
+
+{
+    return nCoordDimension;
+}
 
 /************************************************************************/
 /*                    OGR_G_GetCoordinateDimension()                    */
@@ -605,6 +616,37 @@ int OGR_G_GetCoordinateDimension( OGRGeometryH hGeom )
 
 {
     return ((OGRGeometry *) hGeom)->getCoordinateDimension();
+}
+
+/************************************************************************/
+/*                       setCoordinateDimension()                       */
+/************************************************************************/
+
+/**
+ * Set the coordinate dimension. 
+ *
+ * This method sets the explicit coordinate dimension.  Setting the coordinate
+ * dimension of a geometry to 2 should zero out any existing Z values.  Setting
+ * the dimension of a geometry collection will not necessarily affect the
+ * children geometries. 
+ *
+ * @param nNewDimension New coordinate dimension value, either 2 or 3.
+ */
+
+void OGRGeometry::setCoordinateDimension( int nNewDimension )
+
+{
+    nCoordDimension = nNewDimension;
+}
+
+/************************************************************************/
+/*                    OGR_G_SetCoordinateDimension()                    */
+/************************************************************************/
+
+void OGR_G_SetCoordinateDimension( OGRGeometryH hGeom, int nNewDimension)
+
+{
+    ((OGRGeometry *) hGeom)->setCoordinateDimension( nNewDimension );
 }
 
 
@@ -2320,3 +2362,4 @@ void OGR_G_CloseRings( OGRGeometryH hGeom )
 {
     ((OGRGeometry *) hGeom)->closeRings();
 }
+
