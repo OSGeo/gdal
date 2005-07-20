@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.112  2005/06/10 21:51:02  fwarmerdam
- * fixed up osr.Clone() support
+ * Revision 1.113  2005/07/20 01:46:51  fwarmerdam
+ * ogr coordinate dimension upgrades
  *
  ************************************************************************/
 
@@ -7775,6 +7775,27 @@ static PyObject *_wrap_OGR_G_GetCoordinateDimension(PyObject *self, PyObject *ar
     return _resultobj;
 }
 
+static PyObject *_wrap_OGR_G_SetCoordinateDimension(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _arg0;
+    int  _arg1;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"si:OGR_G_SetCoordinateDimension",&_argc0,&_arg1)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_SetCoordinateDimension. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    OGR_G_SetCoordinateDimension(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_OGR_G_Clone(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRGeometryH  _result;
@@ -8681,6 +8702,29 @@ static PyObject *_wrap_OGR_G_SetPoint(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OGR_G_SetPoint_2D(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _arg0;
+    int  _arg1;
+    double  _arg2;
+    double  _arg3;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sidd:OGR_G_SetPoint_2D",&_argc0,&_arg1,&_arg2,&_arg3)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_SetPoint_2D. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    OGR_G_SetPoint_2D(_arg0,_arg1,_arg2,_arg3);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_OGR_G_AddPoint(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRGeometryH  _arg0;
@@ -8699,6 +8743,28 @@ static PyObject *_wrap_OGR_G_AddPoint(PyObject *self, PyObject *args) {
         }
     }
     OGR_G_AddPoint(_arg0,_arg1,_arg2,_arg3);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_OGR_G_AddPoint_2D(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRGeometryH  _arg0;
+    double  _arg1;
+    double  _arg2;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"sdd:OGR_G_AddPoint_2D",&_argc0,&_arg1,&_arg2)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_G_AddPoint_2D. Expected _OGRGeometryH.");
+        return NULL;
+        }
+    }
+    OGR_G_AddPoint_2D(_arg0,_arg1,_arg2);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
     return _resultobj;
@@ -11633,7 +11699,9 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_G_AddGeometry", _wrap_OGR_G_AddGeometry, 1 },
 	 { "OGR_G_GetGeometryRef", _wrap_OGR_G_GetGeometryRef, 1 },
 	 { "OGR_G_GetGeometryCount", _wrap_OGR_G_GetGeometryCount, 1 },
+	 { "OGR_G_AddPoint_2D", _wrap_OGR_G_AddPoint_2D, 1 },
 	 { "OGR_G_AddPoint", _wrap_OGR_G_AddPoint, 1 },
+	 { "OGR_G_SetPoint_2D", _wrap_OGR_G_SetPoint_2D, 1 },
 	 { "OGR_G_SetPoint", _wrap_OGR_G_SetPoint, 1 },
 	 { "OGR_G_GetZ", _wrap_OGR_G_GetZ, 1 },
 	 { "OGR_G_GetY", _wrap_OGR_G_GetY, 1 },
@@ -11671,6 +11739,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_G_WkbSize", _wrap_OGR_G_WkbSize, 1 },
 	 { "OGR_G_GetEnvelope", _wrap_OGR_G_GetEnvelope, 1 },
 	 { "OGR_G_Clone", _wrap_OGR_G_Clone, 1 },
+	 { "OGR_G_SetCoordinateDimension", _wrap_OGR_G_SetCoordinateDimension, 1 },
 	 { "OGR_G_GetCoordinateDimension", _wrap_OGR_G_GetCoordinateDimension, 1 },
 	 { "OGR_G_GetDimension", _wrap_OGR_G_GetDimension, 1 },
 	 { "OGR_G_CreateGeometry", _wrap_OGR_G_CreateGeometry, 1 },
