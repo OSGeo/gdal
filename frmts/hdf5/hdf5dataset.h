@@ -28,8 +28,8 @@
  ******************************************************************************
  * 
  * $Log$
- * Revision 1.1  2005/07/12 16:55:33  denad21
- * New
+ * Revision 1.2  2005/07/20 20:18:35  dnadeau
+ * correct subdataset and color interpretation
  *
  *
  *

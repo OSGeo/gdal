@@ -30,8 +30,8 @@
  ******************************************************************************
  * 
  * $Log$
- * Revision 1.2  2005/07/12 17:13:57  denad21
- * comment printf and pointer problem
+ * Revision 1.3  2005/07/20 20:18:27  dnadeau
+ * correct subdataset and color interpretation
  *
  *
  *
@@ -510,68 +510,45 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects(HDF5GroupObjects *poRootGroup)
 /* -------------------------------------------------------------------- */
 /*      Create Sub dataset list                                         */
 /* -------------------------------------------------------------------- */
-  if(poRootGroup->nType == H5G_DATASET){
+  if( poRootGroup->nType == H5G_DATASET ) {
   
-    switch(poRootGroup->nRank) 
-      {
-  	 case 3: {
-  	   szDim[0]='\0';
-  	   sprintf(szTemp,"%dx%dx%d",
-  		   (int)poRootGroup->paDims[0],
-  		   (int)poRootGroup->paDims[1],
-  		   (int)poRootGroup->paDims[2]);
-  	   strcat(szDim,szTemp);
-  	   
-  	   for (i=0; i<(int)poRootGroup->paDims[2]; i++){
-  	     sprintf( szTemp, "SUBDATASET_%d_NAME", poDS->nSubDataCount );
-  	     
-  	     poDS->papszSubDatasets =
-  	       CSLSetNameValue(poDS->papszSubDatasets, 
-  			       szTemp,
-  			       CPLSPrintf( "HDF5:\"%s\":%s:Band_%d",
-  					   poDS->pszFilename,
-  					   poRootGroup->pszName,i+1));
-  	     
-  	     sprintf( szTemp, "SUBDATASET_%d_DESC", poDS->nSubDataCount++ );
-  	     
-  	     
-  	     poDS->papszSubDatasets =
-  	       CSLSetNameValue(poDS->papszSubDatasets, 
-  			       szTemp,
-  			       CPLSPrintf("[%s] %s (%s)", 
-  					  szDim,
-  					  poRootGroup->pszName,
-  					  poDS->GetDataTypeName
-  					  (poRootGroup->native)));
-  	     
-  	   }
-  	 }
-  	
-  	case 2: {
-  	szDim[0]='\0';
-  	sprintf(szTemp,"%dx%d",
-  		(int)poRootGroup->paDims[0],
-  		(int)poRootGroup->paDims[1]);
-  	strcat(szDim,szTemp);
-  	sprintf( szTemp, "SUBDATASET_%d_NAME", poDS->nSubDataCount );
-  	
-  	poDS->papszSubDatasets =
-  	  CSLSetNameValue(poDS->papszSubDatasets, szTemp,
-  			  CPLSPrintf( "HDF5:\"%s\":%s:Band_1 ",
-  				      poDS->pszFilename,
-  				      poRootGroup->pszName));
-  	sprintf( szTemp, "SUBDATASET_%d_DESC", poDS->nSubDataCount++ );
-  	
-  	
-  	poDS->papszSubDatasets =
-  	  CSLSetNameValue(poDS->papszSubDatasets, szTemp,
-  			  CPLSPrintf( "[%s] %s (%s)", 
-  				      szDim,
-  				      poRootGroup->pszName,
-  				      poDS->GetDataTypeName
-  				      (poRootGroup->native)));
-  	}
-      }
+    szDim[0]='\0';
+    switch( poRootGroup->nRank ) {
+       case 3: 
+	 sprintf(szTemp,"%dx%dx%d",
+		 (int)poRootGroup->paDims[0],
+		 (int)poRootGroup->paDims[1],
+		 (int)poRootGroup->paDims[2]);
+	 break;
+       
+  	case 2: 
+	  sprintf(szTemp,"%dx%d",
+		  (int)poRootGroup->paDims[0],
+		  (int)poRootGroup->paDims[1]);
+	  break;
+        default:
+	  return CE_None;
+
+    }
+    strcat(szDim,szTemp);
+    
+    sprintf( szTemp, "SUBDATASET_%d_NAME", poDS->nSubDataCount );
+    
+    poDS->papszSubDatasets =
+      CSLSetNameValue(poDS->papszSubDatasets, szTemp,
+		      CPLSPrintf( "HDF5:\"%s\":%s",
+				  poDS->pszFilename,
+					poRootGroup->pszName));
+    
+    sprintf( szTemp, "SUBDATASET_%d_DESC", poDS->nSubDataCount++ );
+    
+    poDS->papszSubDatasets =
+      CSLSetNameValue(poDS->papszSubDatasets, szTemp,
+		      CPLSPrintf( "[%s] %s (%s)", 
+				  szDim,
+				  poRootGroup->pszName,
+				  poDS->GetDataTypeName
+				  (poRootGroup->native)));
   }
   
   return CE_None;
