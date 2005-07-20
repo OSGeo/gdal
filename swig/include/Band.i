@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.16  2005/07/20 16:28:26  kruland
+ * Merge the two definitions of Checksum into one.  Use the pointer trick
+ * to allow the passing of optional xsize,ysize parameters.
+ *
  * Revision 1.15  2005/07/18 16:13:31  kruland
  * Added MajorObject.i an interface specification to the MajorObject baseclass.
  * Used inheritance in Band.i, Driver.i, and Dataset.i to access MajorObject
@@ -177,15 +181,14 @@ public:
     return (GDALRasterBandShadow*) GDALGetOverview( self, i );
   }
 
-  int Checksum( int xoff, int yoff, int xsize, int ysize) {
-    return GDALChecksumImage( self, xoff, yoff, xsize, ysize );
+%apply (int *optional_int) {(int*)};
+%feature ("kwargs") Checksum;
+  int Checksum( int xoff = 0, int yoff = 0, int *xsize = 0, int *ysize = 0) {
+    int nxsize = (xsize!=0) ? *xsize : GDALGetRasterBandXSize( self );
+    int nysize = (ysize!=0) ? *ysize : GDALGetRasterBandYSize( self );
+    return GDALChecksumImage( self, xoff, yoff, nxsize, nysize );
   }
-
-  int Checksum( int xoff = 0, int yoff = 0 ) {
-    int xsize = GDALGetRasterBandXSize( self );
-    int ysize = GDALGetRasterBandYSize( self );
-    return GDALChecksumImage( self, xoff, yoff, xsize, ysize );
-  }
+%clear (int*);
 
   void ComputeRasterMinMax( double_2 argout, int approx_ok = 0) {
     GDALComputeRasterMinMax( self, approx_ok, argout );
