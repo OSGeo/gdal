@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2005/07/20 02:34:09  fwarmerdam
+ * maintain dimension better
+ *
  * Revision 1.33  2005/07/20 01:43:51  fwarmerdam
  * upgraded OGR geometry dimension handling
  *
@@ -371,6 +374,9 @@ void OGRPolygon::addRing( OGRLinearRing * poNewRing )
     papoRings[nRingCount] = new OGRLinearRing( poNewRing );
 
     nRingCount++;
+
+    if( poNewRing->getCoordinateDimension() == 3 )
+        nCoordDimension = 3;
 }
 
 /************************************************************************/
@@ -399,6 +405,10 @@ void OGRPolygon::addRingDirectly( OGRLinearRing * poNewRing )
     papoRings[nRingCount] = poNewRing;
 
     nRingCount++;
+
+
+    if( poNewRing->getCoordinateDimension() == 3 )
+        nCoordDimension = 3;
 }
 
 /************************************************************************/
@@ -746,6 +756,7 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText ) const
 
     for( iRing = 0; iRing < nRingCount; iRing++ )
     {
+        papoRings[iRing]->setCoordinateDimension( getCoordinateDimension() );
         eErr = papoRings[iRing]->exportToWkt( &(papszRings[iRing]) );
         if( eErr != OGRERR_NONE )
             return eErr;
