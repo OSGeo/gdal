@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/07/20 01:43:51  fwarmerdam
+ * upgraded OGR geometry dimension handling
+ *
  * Revision 1.19  2005/07/12 17:34:00  fwarmerdam
  * updated to produce proper empty syntax and consume either
  *
@@ -204,16 +207,11 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszDstText ) const
             *ppszDstText = (char *) CPLRealloc(*ppszDstText,nMaxString);
         }
         
-        if( poPoint->getCoordinateDimension() == 3 )
-            OGRMakeWktCoordinate( *ppszDstText + nRetLen,
-                                  poPoint->getX(), 
-                                  poPoint->getY(),
-                                  poPoint->getZ() );
-        else
-            OGRMakeWktCoordinate( *ppszDstText + nRetLen,
-                                  poPoint->getX(), 
-                                  poPoint->getY(),
-                                  0.0 );
+        OGRMakeWktCoordinate( *ppszDstText + nRetLen,
+                              poPoint->getX(), 
+                              poPoint->getY(),
+                              poPoint->getZ(),
+                              poPoint->getCoordinateDimension() );
     }
 
     strcat( *ppszDstText+nRetLen, ")" );

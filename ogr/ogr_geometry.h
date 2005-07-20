@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2005/07/20 01:43:51  fwarmerdam
+ * upgraded OGR geometry dimension handling
+ *
  * Revision 1.53  2005/03/25 06:31:12  fwarmerdam
  * added addSubLineString
  *
@@ -242,6 +245,9 @@ class CPL_DLL OGRGeometry
 {
   private:
     OGRSpatialReference * poSRS;                // may be NULL
+
+  protected:
+    int                   nCoordDimension;
     
   public:
                 OGRGeometry();
@@ -249,7 +255,7 @@ class CPL_DLL OGRGeometry
                         
     // standard IGeometry
     virtual int getDimension() const = 0;
-    virtual int getCoordinateDimension() const = 0;
+    virtual int getCoordinateDimension() const;
     virtual OGRBoolean  IsEmpty() const { return 0; } 
     virtual OGRBoolean  IsSimple() const { return 1; }
     virtual void        empty() = 0;
@@ -271,6 +277,8 @@ class CPL_DLL OGRGeometry
     virtual char * exportToGML() const;
     virtual geos::Geometry *exportToGEOS() const;
     virtual void closeRings();
+
+    virtual void setCoordinateDimension( int nDimension ); 
 
     void    assignSpatialReference( OGRSpatialReference * poSR );
     OGRSpatialReference *getSpatialReference( void ) const { return poSRS; }
@@ -336,7 +344,6 @@ class CPL_DLL OGRPoint : public OGRGeometry
     
     // IGeometry
     virtual int getDimension() const;
-    virtual int getCoordinateDimension() const;
     virtual OGRGeometry *clone() const;
     virtual void empty();
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
@@ -349,7 +356,7 @@ class CPL_DLL OGRPoint : public OGRGeometry
     // Non standard
     void        setX( double xIn ) { x = xIn; }
     void        setY( double yIn ) { y = yIn; }
-    void        setZ( double zIn ) { z = zIn; }
+    void        setZ( double zIn ) { z = zIn; nCoordDimension=3; }
 
     // ISpatialRelation
     virtual OGRBoolean  Equals( OGRGeometry * ) const;
@@ -415,7 +422,6 @@ class CPL_DLL OGRLineString : public OGRCurve
 
     // IGeometry interface
     virtual int getDimension() const;
-    virtual int getCoordinateDimension() const;
     virtual OGRGeometry *clone() const;
     virtual void empty();
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
@@ -437,14 +443,17 @@ class CPL_DLL OGRLineString : public OGRCurve
     virtual OGRBoolean  Equals( OGRGeometry * ) const;
     
     // non standard.
+    virtual void setCoordinateDimension( int nDimension ); 
     void        setNumPoints( int );
     void        setPoint( int, OGRPoint * );
-    void        setPoint( int, double, double, double = 0.0 );
+    void        setPoint( int, double, double );
+    void        setPoint( int, double, double, double );
     void        setPoints( int, OGRRawPoint *, double * = NULL );
     void        setPoints( int, double * padfX, double * padfY,
                            double *padfZ = NULL );
     void        addPoint( OGRPoint * );
-    void        addPoint( double, double, double = 0.0 );
+    void        addPoint( double, double );
+    void        addPoint( double, double, double );
 
     void        addSubLineString( const OGRLineString *, 
                                   int nStartVertex = 0, int nEndVertex = -1 );
@@ -563,13 +572,14 @@ class CPL_DLL OGRPolygon : public OGRSurface
 
     // IGeometry
     virtual int getDimension() const;
-    virtual int getCoordinateDimension() const;
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
 
     // ISpatialRelation
     virtual OGRBoolean  Equals( OGRGeometry * ) const;
     
     // Non standard
+    virtual void setCoordinateDimension( int nDimension ); 
+
     void        addRing( OGRLinearRing * );
     void        addRingDirectly( OGRLinearRing * );
 
@@ -621,7 +631,6 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
 
     // IGeometry methods
     virtual int getDimension() const;
-    virtual int getCoordinateDimension() const;
     virtual void getEnvelope( OGREnvelope * psEnvelope ) const;
 
     // IGeometryCollection
@@ -633,6 +642,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual OGRBoolean  Equals( OGRGeometry * ) const;
     
     // Non standard
+    virtual void setCoordinateDimension( int nDimension ); 
     virtual OGRErr addGeometry( const OGRGeometry * );
     virtual OGRErr addGeometryDirectly( OGRGeometry * );
     virtual OGRErr removeGeometry( int iIndex, int bDelete = TRUE );

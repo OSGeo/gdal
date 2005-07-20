@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2005/07/20 01:43:51  fwarmerdam
+ * upgraded OGR geometry dimension handling
+ *
  * Revision 1.47  2005/07/12 17:34:00  fwarmerdam
  * updated to produce proper empty syntax and consume either
  *
@@ -255,9 +258,8 @@ OGRGeometry *OGRLineString::clone() const
 
     poNewLineString->assignSpatialReference( getSpatialReference() );
     poNewLineString->setPoints( nPointCount, paoPoints, padfZ );
-
-    // notdef: not 3D
-
+    poNewLineString->setCoordinateDimension( getCoordinateDimension() );
+    
     return poNewLineString;
 }
 
@@ -271,7 +273,6 @@ void OGRLineString::empty()
     setNumPoints( 0 );
 }
 
-
 /************************************************************************/
 /*                            getDimension()                            */
 /************************************************************************/
@@ -283,16 +284,17 @@ int OGRLineString::getDimension() const
 }
 
 /************************************************************************/
-/*                       getCoordinateDimension()                       */
+/*                       setCoordinateDimension()                       */
 /************************************************************************/
 
-int OGRLineString::getCoordinateDimension() const
+void OGRLineString::setCoordinateDimension( int nNewDimension )
 
 {
-    if( padfZ != NULL )
-        return 3;
-    else
-        return 2;
+    nCoordDimension = nNewDimension;
+    if( nNewDimension == 2 )
+        Make2D();
+    else if( nNewDimension == 3 )
+        Make3D();
 }
 
 /************************************************************************/
@@ -320,6 +322,7 @@ void OGRLineString::Make2D()
         OGRFree( padfZ );
         padfZ = NULL;
     }
+    nCoordDimension = 2;
 }
 
 /************************************************************************/
@@ -336,6 +339,7 @@ void OGRLineString::Make3D()
         else
             padfZ = (double *) OGRCalloc(sizeof(double),nPointCount);
     }
+    nCoordDimension = 3;
 }
 
 /************************************************************************/
@@ -361,7 +365,7 @@ void    OGRLineString::getPoint( int i, OGRPoint * poPoint ) const
     poPoint->setX( paoPoints[i].x );
     poPoint->setY( paoPoints[i].y );
 
-    if( getCoordinateDimension() == 3 )
+    if( getCoordinateDimension() == 3 && padfZ != NULL )
         poPoint->setZ( padfZ[i] );
 }
 
@@ -372,7 +376,7 @@ void    OGRLineString::getPoint( int i, OGRPoint * poPoint ) const
 double OGRLineString::getZ( int i ) const
 
 {
-    if( padfZ != NULL && i >= 0 && i < nPointCount )
+    if( padfZ != NULL && i >= 0 && i < nPointCount && nCoordDimension >= 3 )
         return( padfZ[i] );
     else
         return 0.0;
@@ -476,6 +480,9 @@ void OGRLineString::setPoint( int iPoint, OGRPoint * poPoint )
 void OGRLineString::setPoint( int iPoint, double xIn, double yIn, double zIn )
 
 {
+    if( getCoordinateDimension() == 2 )
+        Make3D();
+
     if( iPoint >= nPointCount )
         setNumPoints( iPoint+1 );
 
@@ -491,6 +498,16 @@ void OGRLineString::setPoint( int iPoint, double xIn, double yIn, double zIn )
     {
         padfZ[iPoint] = 0.0;
     }
+}
+
+void OGRLineString::setPoint( int iPoint, double xIn, double yIn )
+
+{
+    if( iPoint >= nPointCount )
+        setNumPoints( iPoint+1 );
+
+    paoPoints[iPoint].x = xIn;
+    paoPoints[iPoint].y = yIn;
 }
 
 /************************************************************************/
@@ -537,6 +554,12 @@ void OGRLineString::addPoint( double x, double y, double z )
     setPoint( nPointCount, x, y, z );
 }
 
+void OGRLineString::addPoint( double x, double y )
+
+{
+    setPoint( nPointCount, x, y );
+}
+
 /************************************************************************/
 /*                             setPoints()                              */
 /************************************************************************/
@@ -565,26 +588,11 @@ void OGRLineString::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
 /* -------------------------------------------------------------------- */
 /*      Check 2D/3D.                                                    */
 /* -------------------------------------------------------------------- */
-    if( padfZ != NULL )
+    if( padfZ == NULL && getCoordinateDimension() > 2 )
     {
-        int     i, bIs3D = FALSE;
-
-        for( i = 0; i < nPointsIn && !bIs3D; i++ )
-        {
-            if( padfZ[i] != 0.0 )
-                bIs3D = TRUE;
-        }
-
-        if( !bIs3D )
-            padfZ = NULL;
+        Make2D();
     }
-
-    if( padfZ == NULL )
-    {
-        if( this->padfZ != NULL )
-            Make2D();
-    }
-    else
+    else if( padfZ )
     {
         Make3D();
         memcpy( this->padfZ, padfZ, sizeof(double) * nPointsIn );
@@ -619,20 +627,6 @@ void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY,
 /* -------------------------------------------------------------------- */
 /*      Check 2D/3D.                                                    */
 /* -------------------------------------------------------------------- */
-    if( padfZ != NULL )
-    {
-        int     bIs3D = FALSE;
-
-        for( i = 0; i < nPointsIn && !bIs3D; i++ )
-        {
-            if( padfZ[i] != 0.0 )
-                bIs3D = TRUE;
-        }
-
-        if( !bIs3D )
-            padfZ = NULL;
-    }
-
     if( padfZ == NULL )
         Make2D();
     else
@@ -971,7 +965,7 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
 /* -------------------------------------------------------------------- */
 /*      Read the point list.                                            */
 /* -------------------------------------------------------------------- */
-    int                 nMaxPoint = 0;
+    int      nMaxPoint = 0;
 
     nPointCount = 0;
 
@@ -981,6 +975,11 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
         return OGRERR_CORRUPT_DATA;
 
     *ppszInput = (char *) pszInput;
+
+    if( padfZ == NULL )
+        nCoordDimension = 2;
+    else
+        nCoordDimension = 3;
     
     return OGRERR_NONE;
 }
@@ -1039,12 +1038,14 @@ OGRErr OGRLineString::exportToWkt( char ** ppszDstText ) const
             OGRMakeWktCoordinate( *ppszDstText + nRetLen,
                                   paoPoints[i].x,
                                   paoPoints[i].y,
-                                  padfZ[i] );
+                                  padfZ[i],
+                                  nCoordDimension );
         else
             OGRMakeWktCoordinate( *ppszDstText + nRetLen,
                                   paoPoints[i].x,
                                   paoPoints[i].y,
-                                  0.0 );
+                                  0.0,
+                                  nCoordDimension );
 
         nRetLen += strlen(*ppszDstText + nRetLen);
     }
