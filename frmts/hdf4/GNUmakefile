@@ -18,7 +18,7 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) $(HDF4_INCLUDE) $(HDFEOS_OPTS) $(CPPFLAGS)
 default:	$(OBJ) $(SUBLIBS)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)
 	(cd hdf-eos; $(MAKE) clean)
 
 lib-hdfeos:
