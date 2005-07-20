@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2005/07/20 01:45:30  fwarmerdam
+ * improved geometry dimension support, PostGIS 8 EWKT upgrades
+ *
  * Revision 1.28  2005/05/05 20:47:52  dron
  * Override GetExtent() method for PostGIS layers with PostGIS standard function
  * extent() (Oleg Semykin <oleg.semykin@gmail.com>
@@ -157,9 +160,9 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
 
     bLaunderColumnNames = TRUE;
 	
-	// check SRID if it's necessary
-	if( nSRSId == -2 )
-		GetSpatialRef();    
+    // check SRID if it's necessary
+    if( nSRSId == -2 )
+        GetSpatialRef();    
 }
 
 /************************************************************************/
@@ -337,32 +340,49 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
     hResult = PQexec(hPGConn, "COMMIT");
     PQclear( hResult );
 
-	// get layer geometry type (for PostGIS dataset)
-	if ( bHasPostGISGeometry )
-	{
-		sprintf(szCommand,"SELECT type FROM geometry_columns WHERE f_table_name='%s'", pszTable);
-		
-		hResult = PQexec(hPGConn,szCommand);
-		if ( hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult,0,0) )
-		{
-			char * pszType = PQgetvalue(hResult,0,0);
-			PQclear( hResult );
+    // get layer geometry type (for PostGIS dataset)
+    if ( bHasPostGISGeometry )
+    {
+        sprintf(szCommand,
+                "SELECT type, coord_dimension FROM geometry_columns WHERE f_table_name='%s'", 
+                pszTable);
 
-			OGRwkbGeometryType nGeomType = wkbUnknown;
+        hResult = PQexec(hPGConn,szCommand);
+        if ( hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult,0,0) )
+        {
+            char * pszType = PQgetvalue(hResult,0,0);
+            OGRwkbGeometryType nGeomType = wkbUnknown;
 
-			// check only standard OGC geometry types
-			if ( EQUAL(pszType, "POINT") )					nGeomType = wkbPoint;
-			else if ( EQUAL(pszType,"LINESTRING"))			nGeomType = wkbLineString;
-			else if ( EQUAL(pszType,"POLYGON"))				nGeomType = wkbPolygon;
-			else if ( EQUAL(pszType,"MULTIPOINT"))			nGeomType = wkbMultiPoint;
-			else if ( EQUAL(pszType,"MULTILINESTRING"))		nGeomType = wkbMultiLineString;
-			else if ( EQUAL(pszType,"MULTIPOLYGON"))		nGeomType = wkbMultiPolygon;
-			else if ( EQUAL(pszType,"GEOMETRYCOLLECTION"))	nGeomType = wkbGeometryCollection;
+            nCoordDimension = MAX(2,MIN(3,atoi(PQgetvalue(hResult,0,1))));
 
-			CPLDebug("OGR_PG","Layer '%s' geometry type: %s:%d", pszTable, pszType, nGeomType);
-			poDefn->SetGeomType( nGeomType );
-		}
-	}
+            // check only standard OGC geometry types
+            if ( EQUAL(pszType, "POINT") )
+                nGeomType = wkbPoint;
+            else if ( EQUAL(pszType,"LINESTRING"))
+                nGeomType = wkbLineString;
+            else if ( EQUAL(pszType,"POLYGON"))
+                nGeomType = wkbPolygon;
+            else if ( EQUAL(pszType,"MULTIPOINT"))
+                nGeomType = wkbMultiPoint;
+            else if ( EQUAL(pszType,"MULTILINESTRING"))
+                nGeomType = wkbMultiLineString;
+            else if ( EQUAL(pszType,"MULTIPOLYGON"))
+                nGeomType = wkbMultiPolygon;
+            else if ( EQUAL(pszType,"GEOMETRYCOLLECTION"))
+                nGeomType = wkbGeometryCollection;
+
+            if( nCoordDimension == 3 && nGeomType != wkbUnknown )
+                nGeomType = (OGRwkbGeometryType) (nGeomType | wkb25DBit);
+
+            CPLDebug("OGR_PG","Layer '%s' geometry type: %s:%s, Dim=%d", 
+                     pszTable, pszType, OGRGeometryTypeToName(nGeomType),
+                     nCoordDimension );
+
+            poDefn->SetGeomType( nGeomType );
+
+            PQclear( hResult );
+        }
+    }
 
     return poDefn;
 }
@@ -497,7 +517,7 @@ char *OGRPGTableLayer::BuildFields()
         if( bHasPostGISGeometry )
         {
             sprintf( pszFieldList+strlen(pszFieldList), 
-                     "AsText(\"%s\")", pszGeomColumn );
+                     "AsEWKT(\"%s\")", pszGeomColumn );
         }
         else
         {
@@ -711,6 +731,8 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
             OGRGeometry *poGeom = (OGRGeometry *) poFeature->GetGeometryRef();
 
             poGeom->closeRings();
+            poGeom->setCoordinateDimension( nCoordDimension );
+
             poGeom->exportToWkt( &pszWKT );
         }
         
@@ -723,8 +745,12 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
 
         if( pszWKT != NULL )
         {
-            sprintf( pszCommand + strlen(pszCommand), 
-                     "GeometryFromText('%s'::TEXT,%d) ", pszWKT, nSRSId );
+            if( poDS->dfPostGISVersion >= 1.0 )
+                sprintf( pszCommand + strlen(pszCommand), 
+                         "GeomFromEWKT('SRID=%d;%s'::TEXT) ", nSRSId, pszWKT );
+            else
+                sprintf( pszCommand + strlen(pszCommand), 
+                         "GeometryFromText('%s'::TEXT,%d) ", pszWKT, nSRSId );
             OGRFree( pszWKT );
         }
         else
