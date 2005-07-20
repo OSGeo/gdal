@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/07/20 01:45:56  fwarmerdam
+ * fetch PostGIS version
+ *
  * Revision 1.30  2005/03/04 21:04:06  fwarmerdam
  * Added setting of dimension based on geometry type, or DIM override.
  *
@@ -282,6 +285,21 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
     hResult = PQexec(hPGConn, "SET ENABLE_SEQSCAN = OFF");
     PQclear( hResult );
+
+    // find out postgis version.
+    dfPostGISVersion = 0.0;
+    if( bHavePostGIS )
+    {
+        hResult = PQexec(hPGConn, "SELECT postgis_version()" );
+        if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK 
+            && PQntuples(hResult) > 0 )
+        {
+            dfPostGISVersion = atof(PQgetvalue(hResult,0,0));
+            CPLDebug( "OGR_PG", "POSTGIS_VERSION=%s", 
+                      PQgetvalue(hResult,0,0));
+        }
+        PQclear(hResult);
+    }
 
     hResult = PQexec(hPGConn, "COMMIT");
     PQclear( hResult );
