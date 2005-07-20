@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2005/07/20 02:33:03  fwarmerdam
+ * Set feature geometry dimension based on source file.
+ *
  * Revision 1.33  2005/02/22 12:54:50  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -733,6 +736,13 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement )
       default:
         break;
     }
+    
+/* -------------------------------------------------------------------- */
+/*      Fixup geometry dimension.                                       */
+/* -------------------------------------------------------------------- */
+    if( poFeature->GetGeometryRef() != NULL )
+        poFeature->GetGeometryRef()->setCoordinateDimension( 
+            DGNGetDimension( hDGN ) );
 
     return poFeature;
 }
