@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/07/20 01:46:04  fwarmerdam
+ * postgis 8.0 upgrades
+ *
  * Revision 1.17  2005/05/05 20:47:52  dron
  * Override GetExtent() method for PostGIS layers with PostGIS standard function
  * extent() (Oleg Semykin <oleg.semykin@gmail.com>
@@ -102,11 +105,13 @@ class OGRPGLayer : public OGRLayer
     // Layer spatial reference system, and srid.
     OGRSpatialReference *poSRS;
     int                 nSRSId;
+    int                 nCoordDimension;
 
     int                 iNextShapeId;
 
     char               *GeometryToBYTEA( OGRGeometry * );
     OGRGeometry        *BYTEAToGeometry( const char * );
+    OGRGeometry        *HEXToGeometry( const char * );
     Oid                 GeometryToOID( OGRGeometry * );
     OGRGeometry        *OIDToGeometry( Oid );
 
@@ -249,6 +254,7 @@ class OGRPGDataSource : public OGRDataSource
 
     int                 bDSUpdate;
     int                 bHavePostGIS;
+
     int                 nSoftTransactionLevel;
 
     PGconn              *hPGConn;
@@ -262,7 +268,10 @@ class OGRPGDataSource : public OGRDataSource
     int                 nKnownSRID;
     int                *panSRID;
     OGRSpatialReference **papoSRS;
-    
+
+  public:
+    double              dfPostGISVersion;
+
   public:
                         OGRPGDataSource();
                         ~OGRPGDataSource();
