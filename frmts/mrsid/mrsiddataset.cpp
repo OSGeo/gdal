@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2005/07/21 17:30:13  fwarmerdam
+ * Added preliminary worldfile support.
+ *
  * Revision 1.36  2005/07/14 23:40:31  fwarmerdam
  * getNumLevels() is the number of overviews
  *
@@ -242,8 +245,6 @@ class MrSIDDataset : public GDALPamDataset
                                  int nXSize, int nYSize, int nBands,
                                  GDALDataType eType, char ** papszParmList );
     virtual void        FlushCache( void );
-    /*virtual CPLErr      SetGeoTransform( double * );
-    virtual CPLErr      SetProjectionRef( const char * );*/
 #endif /* MRSID_ESDK_VERSION_40 */
 };
 
@@ -861,12 +862,13 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 
 CPLErr MrSIDDataset::GetGeoTransform( double * padfTransform )
 {
-    memcpy( padfTransform, adfGeoTransform, sizeof(adfGeoTransform[0]) * 6 );
-
-    if ( !bHasGeoTransform )
-        return CE_Failure;
-
-    return CE_None;
+    if( bHasGeoTransform )
+    {
+        memcpy( padfTransform, adfGeoTransform, sizeof(adfGeoTransform[0]) * 6 );
+        return CE_None;
+    }
+    else
+        return GDALPamDataset::GetGeoTransform( padfTransform );
 }
 
 /************************************************************************/
@@ -878,7 +880,7 @@ const char *MrSIDDataset::GetProjectionRef()
     if( pszProjection )
         return pszProjection;
     else
-        return "";
+        return GDALPamDataset::GetProjectionRef();
 }
 
 /************************************************************************/
@@ -1084,6 +1086,15 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
         adfGeoTransform[0] = adfGeoTransform[0] - adfGeoTransform[1] / 2;
         adfGeoTransform[3] = adfGeoTransform[3] - adfGeoTransform[5] / 2;
 	bHasGeoTransform = TRUE;
+    }
+    else if( iZoom == 0 )
+    {
+        bHasGeoTransform = 
+            GDALReadWorldFile( GetDescription(), ".sdw",  adfGeoTransform )
+            || GDALReadWorldFile( GetDescription(), ".sidw", 
+                                  adfGeoTransform )
+            || GDALReadWorldFile( GetDescription(), ".wld", 
+                                  adfGeoTransform );
     }
     
 /* -------------------------------------------------------------------- */
