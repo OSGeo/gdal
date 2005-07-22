@@ -28,5 +28,16 @@ If a single integer field is a primary key, it will be used as the FID
 otherwise the FID will be assigned sequentially, and fetches by FID will
 be extremely slow. <p>
 
+The following example datasource name opens the database schema 
+<i>westholland</i> with password <i>psv9570</i> for userid <i>root</i>
+on the port <i>3306</i>.  No hostname is provided, so localhost is assumed.
+The tables= directive means that only the bedrijven table is scanned and
+presented as a layer for use.<p>
+
+<pre>
+MYSQL:westholland,user=root,password=psv9570,port=3306,tables=bedrijven
+</pre>
+
+
 </body>
 </html>
