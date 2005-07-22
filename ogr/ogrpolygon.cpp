@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2005/07/22 19:30:25  fwarmerdam
+ * Document get_Area().
+ *
  * Revision 1.34  2005/07/20 02:34:09  fwarmerdam
  * maintain dimension better
  *
@@ -999,6 +1002,15 @@ void OGRPolygon::closeRings()
 /************************************************************************/
 /*                              get_Area()                              */
 /************************************************************************/
+
+/**
+ * Compute area of polygon.
+ *
+ * The area is computed as the area of the outer ring less the area of all
+ * internal rings. 
+ *
+ * @return computed area.
+ */
 
 double OGRPolygon::get_Area() const
 
