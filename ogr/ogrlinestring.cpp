@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2005/07/22 19:28:56  fwarmerdam
+ * reserve extra space for WKT encoding of weird numbers
+ *
  * Revision 1.48  2005/07/20 01:43:51  fwarmerdam
  * upgraded OGR geometry dimension handling
  *
@@ -994,7 +997,7 @@ OGRErr OGRLineString::importFromWkt( char ** ppszInput )
 OGRErr OGRLineString::exportToWkt( char ** ppszDstText ) const
 
 {
-    int         nMaxString = nPointCount * 20 * 3 + 20;
+    int         nMaxString = nPointCount * 40 * 3 + 20;
     int         nRetLen = 0;
 
 /* -------------------------------------------------------------------- */
