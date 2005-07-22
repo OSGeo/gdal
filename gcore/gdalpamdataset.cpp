@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/07/22 13:50:13  fwarmerdam
+ * Default PAM support to off.
+ *
  * Revision 1.7  2005/06/09 15:43:02  fwarmerdam
  * Clear dirty flag in TryLoadXML() so we don't end up writing out
  * a pam file for metadata set within the callers Open() method.
@@ -232,7 +235,7 @@ void GDALPamDataset::PamInitialize()
     if( psPam || (nPamFlags & GPF_DISABLED) )
         return;
 
-    if( !CSLTestBoolean( CPLGetConfigOption( "GDAL_PAM_ENABLED", "YES" ) ) )
+    if( !CSLTestBoolean( CPLGetConfigOption( "GDAL_PAM_ENABLED", "NO" ) ) )
     {
         nPamFlags |= GPF_DISABLED;
         return;
