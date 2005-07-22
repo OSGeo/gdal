@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/07/22 20:39:36  fwarmerdam
+ * Fixed getGeometryType to look at coordinate dimension, expand wkt buffer.
+ *
  * Revision 1.32  2005/07/20 01:43:51  fwarmerdam
  * upgraded OGR geometry dimension handling
  *
@@ -213,7 +216,7 @@ int OGRPoint::getDimension() const
 OGRwkbGeometryType OGRPoint::getGeometryType() const
 
 {
-    if( z == 0 )
+    if( nCoordDimension < 3 )
         return wkbPoint;
     else
         return wkbPoint25D;
@@ -473,7 +476,7 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
 OGRErr OGRPoint::exportToWkt( char ** ppszDstText ) const
 
 {
-    char        szTextEquiv[100];
+    char        szTextEquiv[140];
     char        szCoordinate[80];
 
     OGRMakeWktCoordinate(szCoordinate, x, y, z, nCoordDimension );
