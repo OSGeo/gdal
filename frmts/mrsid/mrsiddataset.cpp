@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2005/07/22 15:50:10  fwarmerdam
+ * Use blocked io for very small request buffers as well as small windows.
+ *
  * Revision 1.37  2005/07/21 17:30:13  fwarmerdam
  * Added preliminary worldfile support.
  *
@@ -716,6 +719,9 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
     int bUseBlockedIO = bForceCachedIO;
 
     if( nYSize == 1 || nXSize * ((double) nYSize) < 100.0 )
+        bUseBlockedIO = TRUE;
+
+    if( nBufYSize == 1 || nBufXSize * ((double) nBufYSize) < 100.0 )
         bUseBlockedIO = TRUE;
 
     if( CSLTestBoolean( CPLGetConfigOption( "GDAL_ONE_BIG_READ", "NO") ) )
