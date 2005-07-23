@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/07/23 13:15:45  fwarmerdam
+ * Fixed problem with size of filter string for spatial query.
+ *
  * Revision 1.12  2005/06/27 20:13:11  fwarmerdam
  * Delete poSRS if no longer referenced.
  *
@@ -444,7 +447,7 @@ void OGRVRTLayer::ResetSourceReading()
         pszXField = poSrcLayer->GetLayerDefn()->GetFieldDefn(iGeomXField)->GetNameRef();
         pszYField = poSrcLayer->GetLayerDefn()->GetFieldDefn(iGeomYField)->GetNameRef();
         char *pszFilter = (char *) 
-            CPLMalloc(strlen(pszXField)+strlen(pszYField) + 100);
+            CPLMalloc(2*strlen(pszXField)+2*strlen(pszYField) + 100);
 
         sprintf( pszFilter, 
                  "%s > %.15g AND %s < %.15g AND %s > %.15g AND %s < %.15g", 
