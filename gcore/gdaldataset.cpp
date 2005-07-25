@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2005/07/25 23:15:31  fwarmerdam
+ * Fixed another typo.
+ *
  * Revision 1.54  2005/07/25 23:13:38  fwarmerdam
  * Fixed typo in BuildOverviews docs.
  *
@@ -1124,7 +1127,8 @@ CPLErr CPL_STDCALL GDALSetGCPs( GDALDatasetH hDS, int nGCPCount,
  * Build raster overview(s)
  *
  * If the operation is unsupported for the indicated dataset, then 
- * CE_Failure is returned, and CPLGetLastError() will return CPLE_NotSupported.
+ * CE_Failure is returned, and CPLGetLastErrorNo() will return 
+ * CPLE_NotSupported.
  *
  * This method is the same as the C function GDALBuildOverviews().
  *
