@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/07/25 18:07:48  fwarmerdam
+ * Fixed up description handling.
+ *
  * Revision 1.14  2005/05/05 13:55:41  fwarmerdam
  * PAM Enable
  *
@@ -77,7 +80,7 @@
 CPL_CVSID("$Id$");
 
 static double DOQGetField( unsigned char *, int );
-static char * DOQGetDescription( unsigned char * );
+static void DOQGetDescription( GDALDataset *, unsigned char * );
 
 CPL_C_START
 void	GDALRegister_DOQ1(void);
@@ -112,7 +115,6 @@ class DOQ1Dataset : public RawDataset
     double	dfXPixelSize, dfYPixelSize;
 
     char	*pszProjection;
-    char	*pszDescription;
     
   public:
     		DOQ1Dataset();
@@ -120,7 +122,6 @@ class DOQ1Dataset : public RawDataset
 
     CPLErr 	GetGeoTransform( double * padfTransform );
     const char  *GetProjectionRef( void );
-    const char  *GetDescriptionRef( void );
     
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -132,7 +133,6 @@ class DOQ1Dataset : public RawDataset
 DOQ1Dataset::DOQ1Dataset()
 {
     pszProjection = NULL;
-    pszDescription = NULL;
     fpImage = NULL;
 }
 
@@ -146,7 +146,6 @@ DOQ1Dataset::~DOQ1Dataset()
     FlushCache();
 
     CPLFree( pszProjection );
-    CPLFree( pszDescription );
     if( fpImage != NULL )
         VSIFClose( fpImage );
 }
@@ -176,16 +175,6 @@ const char *DOQ1Dataset::GetProjectionRef()
 
 {
     return pszProjection;
-}
-
-/************************************************************************/
-/*                        GetDescriptionRef()                         */
-/************************************************************************/
-
-const char *DOQ1Dataset::GetDescriptionRef()
-
-{
-    return pszDescription;
 }
 
 /************************************************************************/
@@ -277,7 +266,10 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
                                GDT_Byte, TRUE ) );
     }
 
-    poDS->pszDescription = DOQGetDescription(poOpenInfo->pabyHeader);
+/* -------------------------------------------------------------------- */
+/*      Set the description.                                            */
+/* -------------------------------------------------------------------- */
+    DOQGetDescription(poDS, poOpenInfo->pabyHeader);
 
 /* -------------------------------------------------------------------- */
 /*      Establish the projection string.                                */
@@ -421,10 +413,10 @@ static double DOQGetField( unsigned char *pabyData, int nBytes )
 }
 
 /************************************************************************/
-/*                            DOQGetAscii()                             */
+/*                         DOQGetDescription()                          */
 /************************************************************************/
 
-static char *DOQGetDescription( unsigned char *pabyData )
+static void DOQGetDescription( GDALDataset *poDS, unsigned char *pabyData )
 
 {
     char	szWork[128];
@@ -441,5 +433,5 @@ static char *DOQGetDescription( unsigned char *pabyData )
     strncpy( szWork + 76 - i, (const char *) pabyData + 44, 2 );
     szWork[77-i] = '\0';
 
-    return CPLStrdup(szWork);
+    poDS->SetMetadataItem( "DOQ_DESC", szWork );
 }
