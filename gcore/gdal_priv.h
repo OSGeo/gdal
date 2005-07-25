@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2005/07/25 19:52:43  ssoule
+ * Changed GDALMajorObject's char *pszDescription to std::string sDescription.
+ *
  * Revision 1.60  2005/07/11 21:08:17  fwarmerdam
  * Removed GetAge() method.
  *
@@ -231,6 +234,7 @@ class GDALDriver;
 #include "gdal_frmts.h"
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
+#include <string>
 
 /* ******************************************************************** */
 /*                           GDALMajorObject                            */
@@ -244,7 +248,7 @@ class GDALDriver;
 class CPL_DLL GDALMajorObject
 {
   protected:
-    char             *pszDescription;
+    std::string       sDescription;
     char            **papszMetadata;
     
   public:
