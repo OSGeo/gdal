@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/07/25 16:08:50  fwarmerdam
+ * Fixed recognision of some integer types, such as mediumint.
+ *
  * Revision 1.6  2005/07/25 14:39:55  fwarmerdam
  * Added FID column related debug statement.
  *
@@ -164,11 +167,11 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         {
             oField.SetType( OFTInteger );
         }
-        else if( EQUAL(pszType,"mediumint") )
+        else if( EQUALN(pszType,"mediumint",9) )
         {
             oField.SetType( OFTInteger );
         }
-        else if( EQUAL(pszType,"bigint") )
+        else if( EQUALN(pszType,"bigint",6) )
         {
             oField.SetType( OFTInteger );
         }
