@@ -29,6 +29,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/07/25 17:56:34  fwarmerdam
+ * Altered so that CPLSetErrorHandler sets a handler global to all threads, but
+ * that the error handler stack takes precidence over it.
+ *
  * Revision 1.30  2005/07/08 14:35:56  fwarmerdam
  * restructured to use error context and TLS
  *
@@ -130,6 +134,9 @@
 
 CPL_CVSID("$Id$");
 
+static void *hErrorMutex = NULL;
+CPLErrorHandler pfnErrorHandler = CPLDefaultErrorHandler;
+
 typedef struct errHandler
 {
     struct errHandler   *psNext;
@@ -142,7 +149,6 @@ typedef struct {
     CPLErr  eLastErrType;
     
     CPLErrorHandlerNode *psHandlerStack;
-    CPLErrorHandler     pfnErrorHandler;
 } CPLErrorContext;
 
 /************************************************************************/
@@ -159,7 +165,6 @@ static CPLErrorContext *CPLGetErrorContext()
     {
         psCtx = (CPLErrorContext *) CPLCalloc(sizeof(CPLErrorContext),1);
         psCtx->eLastErrType = CE_None;
-        psCtx->pfnErrorHandler = CPLDefaultErrorHandler;
         CPLSetTLS( CTLS_ERRORCONTEXT, psCtx, TRUE );
     }
 
@@ -239,8 +244,20 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
     if( CPLGetConfigOption("CPL_LOG_ERRORS",NULL) != NULL )
         CPLDebug( "CPLError", "%s", psCtx->szLastErrMsg );
 
-    if( psCtx->pfnErrorHandler )
-        psCtx->pfnErrorHandler(eErrClass, err_no, psCtx->szLastErrMsg);
+/* -------------------------------------------------------------------- */
+/*      Invoke the current error handler.                               */
+/* -------------------------------------------------------------------- */
+    if( psCtx->psHandlerStack != NULL )
+    {
+        psCtx->psHandlerStack->pfnHandler(eErrClass, err_no, 
+                                          psCtx->szLastErrMsg);
+    }
+    else
+    {
+        CPLMutexHolderD( &hErrorMutex );
+        if( pfnErrorHandler != NULL )
+            pfnErrorHandler(eErrClass, err_no, psCtx->szLastErrMsg);
+    }
 
     if( eErrClass == CE_Fatal )
         abort();
@@ -350,11 +367,18 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
     va_end(args);
 
 /* -------------------------------------------------------------------- */
-/*      If the user provided his own error handling function, then call */
-/*      it, otherwise print the error to stderr and return.             */
+/*      Invoke the current error handler.                               */
 /* -------------------------------------------------------------------- */
-    if( psCtx->pfnErrorHandler )
-        psCtx->pfnErrorHandler(CE_Debug, CPLE_None, pszMessage);
+    if( psCtx->psHandlerStack != NULL )
+    {
+        psCtx->psHandlerStack->pfnHandler( CE_Debug, CPLE_None, pszMessage );
+    }
+    else
+    {
+        CPLMutexHolderD( &hErrorMutex );
+        if( pfnErrorHandler != NULL )
+            pfnErrorHandler( CE_Debug, CPLE_None, pszMessage );
+    }
 
     VSIFree( pszMessage );
 }
@@ -591,39 +615,65 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, int nError,
  * make any attempt to report the passed error or warning messages but
  * will process debug messages via CPLDefaultErrorHandler.
  *
+ * Note that error handlers set with CPLSetErrorHandler() apply to all
+ * threads in an application, while error handlers set with CPLPushErrorHandler
+ * are thread-local.  However, any error handlers pushed with 
+ * CPLPushErrorHandler (and not removed with CPLPopErrorHandler) take 
+ * precidence over the global error handlers set with CPLSetErrorHandler(). 
+ * Generally speaking CPLSetErrorHandler() would be used to set a desired
+ * global error handler, while CPLPushErrorHandler() would be used to install
+ * a temporary local error handler, such as CPLQuietErrorHandler() to suppress
+ * error reporting in a limited segment of code. 
+ *
  * @param pfnErrorHandler new error handler function.
  * @return returns the previously installed error handler.
  */ 
 
 CPLErrorHandler CPL_STDCALL 
-CPLSetErrorHandler( CPLErrorHandler pfnErrorHandler )
+CPLSetErrorHandler( CPLErrorHandler pfnErrorHandlerNew )
 {
+    CPLErrorHandler     pfnOldHandler = pfnErrorHandler;
     CPLErrorContext *psCtx = CPLGetErrorContext();
-    CPLErrorHandler     pfnOldHandler = psCtx->pfnErrorHandler;
-    
-    psCtx->pfnErrorHandler = pfnErrorHandler;
+
+    if( psCtx->psHandlerStack != NULL )
+    {
+        CPLDebug( "CPL", 
+                  "CPLSetErrorHandler() called with an error handler on\n"
+                  "the local stack.  New error handler will not be used immediately.\n" );
+    }
+
+
+    {
+        CPLMutexHolderD( &hErrorMutex );
+
+        pfnOldHandler = pfnErrorHandler;
+        
+        if( pfnErrorHandler == NULL )
+            pfnErrorHandler = CPLDefaultErrorHandler;
+        else
+            pfnErrorHandler = pfnErrorHandlerNew;
+    }
 
     return pfnOldHandler;
 }
-
-
 
 /************************************************************************/
 /*                        CPLPushErrorHandler()                         */
 /************************************************************************/
 
 /**
- * Assign new CPLError handler.
+ * Push a new CPLError handler.
  *
- * The old handler is "pushed down" onto a stack and can be easily
- * restored with CPLPopErrorHandler().  Otherwise this works similarly
- * to CPLSetErrorHandler() which contains more details on how error
- * handlers work.
+ * This pushes a new error handler on the thread-local error handler
+ * stack.  This handler will be used untill removed with CPLPopErrorHandler().
+ *
+ * The CPLSetErrorHandler() docs have further information on how 
+ * CPLError handlers work.
  *
  * @param pfnErrorHandler new error handler function.
  */
 
-void CPL_STDCALL CPLPushErrorHandler( CPLErrorHandler pfnErrorHandler )
+void CPL_STDCALL CPLPushErrorHandler( CPLErrorHandler pfnErrorHandlerNew )
 
 {
     CPLErrorContext *psCtx = CPLGetErrorContext();
@@ -631,11 +681,9 @@ void CPL_STDCALL CPLPushErrorHandler( CPLErrorHandler pfnErrorHandler )
 
     psNode = (CPLErrorHandlerNode *) VSIMalloc(sizeof(CPLErrorHandlerNode));
     psNode->psNext = psCtx->psHandlerStack;
-    psNode->pfnHandler = psCtx->pfnErrorHandler;
+    psNode->pfnHandler = pfnErrorHandlerNew;
 
     psCtx->psHandlerStack = psNode;
-
-    CPLSetErrorHandler( pfnErrorHandler );
 }
 
 /************************************************************************/
@@ -643,10 +691,12 @@ void CPL_STDCALL CPLPushErrorHandler( CPLErrorHandler pfnErrorHandler )
 /************************************************************************/
 
 /**
- * Restore old CPLError handler.
+ * Pop error handler off stack.
  *
- * Discards the current error handler, and restore the one in use before
- * the last CPLPushErrorHandler() call.
+ * Discards the current error handler on the error handler stack, and restores 
+ * the one in use before the last CPLPushErrorHandler() call.  This method
+ * has no effect if there are no error handlers on the current threads error
+ * handler stack. 
  */ 
 
 void CPL_STDCALL CPLPopErrorHandler()
@@ -659,7 +709,6 @@ void CPL_STDCALL CPLPopErrorHandler()
         CPLErrorHandlerNode     *psNode = psCtx->psHandlerStack;
 
         psCtx->psHandlerStack = psNode->psNext;
-        CPLSetErrorHandler( psNode->pfnHandler );
         VSIFree( psNode );
     }
 }
