@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/07/25 18:09:10  fwarmerdam
+ * Made pfnErrorHandler static.
+ *
  * Revision 1.31  2005/07/25 17:56:34  fwarmerdam
  * Altered so that CPLSetErrorHandler sets a handler global to all threads, but
  * that the error handler stack takes precidence over it.
@@ -135,7 +138,7 @@
 CPL_CVSID("$Id$");
 
 static void *hErrorMutex = NULL;
-CPLErrorHandler pfnErrorHandler = CPLDefaultErrorHandler;
+static CPLErrorHandler pfnErrorHandler = CPLDefaultErrorHandler;
 
 typedef struct errHandler
 {
