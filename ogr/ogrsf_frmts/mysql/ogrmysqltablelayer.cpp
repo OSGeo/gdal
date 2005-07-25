@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/07/25 14:39:55  fwarmerdam
+ * Added FID column related debug statement.
+ *
  * Revision 1.5  2005/06/27 17:00:50  fwarmerdam
  * Fixed bug with cleaning up hResultSet in GetFeature(id).
  *
@@ -226,6 +229,14 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 /*      optimized response.                                             */
 /* -------------------------------------------------------------------- */
     poDefn->SetGeomType( wkbNone );
+
+    if( bHasFid )
+        CPLDebug( "MySQL", "table %s has FID column %s.",
+                  pszTable, pszFIDColumn );
+    else
+        CPLDebug( "MySQL", 
+                  "table %s has no FID column, FIDs will not be reliable!",
+                  pszTable );
 
     return poDefn;
 }
