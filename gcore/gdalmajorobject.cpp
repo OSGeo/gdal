@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/07/25 19:52:43  ssoule
+ * Changed GDALMajorObject's char *pszDescription to std::string sDescription.
+ *
  * Revision 1.8  2005/04/04 15:24:48  fwarmerdam
  * Most C entry points now CPL_STDCALL
  *
@@ -67,7 +70,6 @@ CPL_CVSID("$Id$");
 GDALMajorObject::GDALMajorObject()
 
 {
-    pszDescription = NULL;
     papszMetadata = NULL;
 }
 
@@ -78,7 +80,6 @@ GDALMajorObject::GDALMajorObject()
 GDALMajorObject::~GDALMajorObject()
 
 {
-    CPLFree( pszDescription );
     CSLDestroy( papszMetadata );
 }
 
@@ -101,10 +102,7 @@ GDALMajorObject::~GDALMajorObject()
 const char *GDALMajorObject::GetDescription() const
 
 {
-    if( pszDescription == NULL )
-        return "";
-    else
-        return pszDescription;
+    return sDescription.c_str();
 }
 
 /************************************************************************/
@@ -141,8 +139,7 @@ const char * CPL_STDCALL GDALGetDescription( GDALMajorObjectH hObject )
 void GDALMajorObject::SetDescription( const char * pszNewDesc ) 
 
 {
-    CPLFree( pszDescription );
-    pszDescription = CPLStrdup( pszNewDesc );
+    sDescription = pszNewDesc;
 }
 
 /************************************************************************/

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/07/25 19:52:43  ssoule
+ * Changed GDALMajorObject's char *pszDescription to std::string sDescription.
+ *
  * Revision 1.25  2005/05/05 13:55:42  fwarmerdam
  * PAM Enable
  *
@@ -408,8 +411,8 @@ void ENVIDataset::FlushCache()
 #endif
 
     VSIFPrintf( fp, "ENVI\n" );
-    if (0 != pszDescription)
-      VSIFPrintf( fp, "description = {\n%s}\n", pszDescription);
+    if ("" != sDescription)
+      VSIFPrintf( fp, "description = {\n%s}\n", sDescription.c_str());
     VSIFPrintf( fp, "samples = %d\nlines   = %d\nbands   = %d\n",
 		nRasterXSize, nRasterYSize, nBands );
 
@@ -536,11 +539,11 @@ void ENVIDataset::FlushCache()
     VSIFPrintf( fp, "band names = {\n" );
     for ( int i = 1; i <= nBands; i++ )
     {
-	    const char  *pszDescription = GetRasterBand( i )->GetDescription();
+	    std::string sBandDesc = GetRasterBand( i )->GetDescription();
 
-	    if ( EQUAL( pszDescription, "" ) )
-	        pszDescription = CPLSPrintf( "Band %d", i );
-	    VSIFPrintf( fp, "%s", pszDescription );
+	    if ( sBandDesc == "" )
+	        sBandDesc = CPLSPrintf( "Band %d", i );
+	    VSIFPrintf( fp, "%s", sBandDesc.c_str() );
 	    if ( i != nBands )
 	        VSIFPrintf( fp, ",\n" );
     }
