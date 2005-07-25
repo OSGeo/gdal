@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2005/07/25 21:24:28  ssoule
+ * Changed GDALColorTable's "GDALColorEntry *paoEntries" to
+ * "std::vector<GDALColorEntry> aoEntries".
+ *
  * Revision 1.61  2005/07/25 19:52:43  ssoule
  * Changed GDALMajorObject's char *pszDescription to std::string sDescription.
  *
@@ -235,6 +239,7 @@ class GDALDriver;
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
 #include <string>
+#include <vector>
 
 /* ******************************************************************** */
 /*                           GDALMajorObject                            */
@@ -461,8 +466,7 @@ class CPL_DLL GDALColorTable
 {
     GDALPaletteInterp eInterp;
 
-    int         nEntryCount;
-    GDALColorEntry *paoEntries;
+    std::vector<GDALColorEntry> aoEntries;
 
 public:
                 GDALColorTable( GDALPaletteInterp = GPI_RGB );

@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.4  2005/07/25 21:24:28  ssoule
+ * Changed GDALColorTable's "GDALColorEntry *paoEntries" to
+ * "std::vector<GDALColorEntry> aoEntries".
+ *
  * Revision 1.3  2005/04/04 15:24:48  fwarmerdam
  * Most C entry points now CPL_STDCALL
  *
@@ -59,9 +63,6 @@ GDALColorTable::GDALColorTable( GDALPaletteInterp eInterpIn )
 
 {
     eInterp = eInterpIn;
-
-    nEntryCount = 0;
-    paoEntries = NULL;
 }
 
 /************************************************************************/
@@ -88,8 +89,6 @@ GDALColorTableH CPL_STDCALL GDALCreateColorTable( GDALPaletteInterp eInterp )
 GDALColorTable::~GDALColorTable()
 
 {
-    CPLFree( paoEntries );
-    paoEntries = NULL;
 }
 
 /************************************************************************/
@@ -119,10 +118,10 @@ void CPL_STDCALL GDALDestroyColorTable( GDALColorTableH hTable )
 const GDALColorEntry *GDALColorTable::GetColorEntry( int i ) const
 
 {
-    if( i < 0 || i >= nEntryCount )
+    if( i < 0 || i >= static_cast<int>(aoEntries.size()) )
         return NULL;
     else
-        return paoEntries + i;
+        return &aoEntries[i];
 }
 
 /************************************************************************/
@@ -161,10 +160,10 @@ GDALGetColorEntry( GDALColorTableH hTable, int i )
 int GDALColorTable::GetColorEntryAsRGB( int i, GDALColorEntry *poEntry ) const
 
 {
-    if( eInterp != GPI_RGB || i < 0 || i >= nEntryCount )
+    if( eInterp != GPI_RGB || i < 0 || i >= static_cast<int>(aoEntries.size()) )
         return FALSE;
     
-    *poEntry = paoEntries[i];
+    *poEntry = aoEntries[i];
     return TRUE;
 }
 
@@ -204,17 +203,14 @@ void GDALColorTable::SetColorEntry( int i, const GDALColorEntry * poEntry )
     if( i < 0 )
         return;
     
-    if( i >= nEntryCount )
+    if( i >= static_cast<int>(aoEntries.size()) )
     {
-        paoEntries = (GDALColorEntry *) 
-            CPLRealloc(paoEntries, sizeof(GDALColorEntry) * (i+1));
-        memset( paoEntries + nEntryCount, 0, 
-                sizeof(GDALColorEntry) * (i + 1 - nEntryCount) );
-        
-        nEntryCount = i+1;
+		GDALColorEntry oBlack;
+		oBlack.c1 = oBlack.c2 = oBlack.c3 = oBlack.c4 = 0;
+		aoEntries.resize(i+1, oBlack);
     }
 
-    paoEntries[i] = *poEntry;
+    aoEntries[i] = *poEntry;
 }
 
 /************************************************************************/
@@ -242,15 +238,7 @@ void CPL_STDCALL GDALSetColorEntry( GDALColorTableH hTable, int i,
 GDALColorTable *GDALColorTable::Clone() const
 
 {
-    GDALColorTable *poNew;
-
-    poNew = new GDALColorTable(eInterp);
-    poNew->nEntryCount = nEntryCount;
-    poNew->paoEntries = (GDALColorEntry *) 
-        CPLMalloc(sizeof(GDALColorEntry)*nEntryCount);
-    memcpy( poNew->paoEntries, paoEntries, sizeof(GDALColorEntry)*nEntryCount);
-
-    return poNew;
+	return new GDALColorTable(*this);
 }
 
 /************************************************************************/
@@ -278,7 +266,7 @@ GDALColorTableH CPL_STDCALL GDALCloneColorTable( GDALColorTableH hTable )
 int GDALColorTable::GetColorEntryCount() const
 
 {
-    return nEntryCount;
+    return aoEntries.size();
 }
 
 /************************************************************************/
