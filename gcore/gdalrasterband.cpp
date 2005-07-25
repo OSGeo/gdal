@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.69  2005/07/25 23:15:10  fwarmerdam
+ * Fixed another doc typo.
+ *
  * Revision 1.68  2005/07/25 23:14:27  fwarmerdam
  * Fixed typo in BuildOverviews() docs.
  *
@@ -1941,7 +1944,8 @@ GDALRasterBandH CPL_STDCALL GDALGetOverview( GDALRasterBandH hBand, int i )
  * Build raster overview(s)
  *
  * If the operation is unsupported for the indicated dataset, then 
- * CE_Failure is returned, and CPLGetLastError() will return CPLE_NotSupported.
+ * CE_Failure is returned, and CPLGetLastErrorNo() will return 
+ * CPLE_NotSupported.
  *
  * WARNING:  It is not possible to build overviews for a single band in
  * TIFF format, and thus this method does not work for TIFF format, or any
