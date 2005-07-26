@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.143  2005/07/26 17:53:33  fwarmerdam
+ * Added error check.
+ *
  * Revision 1.142  2005/07/26 15:14:00  fwarmerdam
  * Added check on geotiff size.
  *
@@ -3234,7 +3237,7 @@ TIFF *GTiffCreate( const char * pszFilename,
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Attempt to create %dx%dx%d TIFF file, but width, height and bands\n"
                   "must be positive.", 
-                  nXSize, nYSize, nBAnds );
+                  nXSize, nYSize, nBands );
 
         return NULL;
     }
