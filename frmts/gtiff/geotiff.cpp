@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.142  2005/07/26 15:14:00  fwarmerdam
+ * Added check on geotiff size.
+ *
  * Revision 1.141  2005/07/07 13:26:48  fwarmerdam
  * Fixed colormap conversion to 16bit in CreateCopy() per report from
  * Uwe Schmitz on gdal-dev.
@@ -3222,6 +3225,19 @@ TIFF *GTiffCreate( const char * pszFilename,
     const char          *pszValue;
 
     GTiffOneTimeInit();
+
+/* -------------------------------------------------------------------- */
+/*      Blow on a few errors.                                           */
+/* -------------------------------------------------------------------- */
+    if( nXSize < 1 || nYSize < 1 || nBands < 1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Attempt to create %dx%dx%d TIFF file, but width, height and bands\n"
+                  "must be positive.", 
+                  nXSize, nYSize, nBAnds );
+
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*	Setup values based on options.					*/
