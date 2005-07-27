@@ -28,8 +28,8 @@
  ******************************************************************************
  * 
  * $Log$
- * Revision 1.2  2005/07/20 20:18:35  dnadeau
- * correct subdataset and color interpretation
+ * Revision 1.3  2005/07/27 16:42:13  dnadeau
+ * change variable to hdf5imagedataset class
  *
  *
  *
@@ -82,7 +82,7 @@ class HDF5Dataset : public GDALDataset
   char             *pszFilename;
 
   HDF5GroupObjects *poH5RootGroup; /* Contain hdf5 Groups information */
-  HDF5GroupObjects *poH5Objects;   /* Object containning data info */
+
   CPLErr ReadGlobalAttributes(int);
   CPLErr HDF5ListGroupObjects(HDF5GroupObjects *);
   HDF5GroupObjects* HDF5FindDatasetObjects

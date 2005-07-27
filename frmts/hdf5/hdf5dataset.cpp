@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2005/07/27 16:42:55  dnadeau
+ * change variable to hdf5imagedataset class
+ *
  * Revision 1.4  2005/07/27 02:02:41  dnadeau
  * correct memory leak problem.
  *
@@ -385,16 +388,11 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
     poHchild->paDims    = 0;
     poHchild->HDatatype = 0;
     if(poHchild->pszPath == NULL) {
-	static int j=0;
-	printf("j=%d\n",j++);
 	poHchild->pszPath  = CreatePath(poHchild);
     }
     if (poHparent->pszPath == NULL) {
-	static int m=0;
-	printf("kiki = %d\n",m++);
 	poHparent->pszPath = CreatePath(poHparent);
     }
-    //CreatePath(poHchild);
 
 
     switch (oStatbuf.type) 
