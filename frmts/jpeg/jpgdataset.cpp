@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.28  2005/07/27 02:00:39  dnadeau
+ * correct leak problem. Free poTIFFDir.
+ *
  * Revision 1.27  2005/07/19 19:36:15  fwarmerdam
  * fixed libtiff conflicts
  *
@@ -256,8 +259,11 @@ void JPGDataset::EXIFPrintData(char* pszData, GUInt16 type,
 {
   char* sep = "";
   char  pszTemp[MAXSTRINGLENGTH];
+
   pszData[0]='\0';
+
   switch (type) {
+
   case TIFF_UNDEFINED:
   case TIFF_BYTE:
     while (count-- > 0){
@@ -538,7 +544,9 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 /*      The data is being read where tdir_offset point to in the file   */
 /* -------------------------------------------------------------------- */
       else {
+
 	unsigned char *data = (unsigned char *)CPLMalloc(space);
+
 	if (data) {
 	  int width = TIFFDataWidth((TIFFDataType) poTIFFDirEntry->tdir_type);
 	  tsize_t cc = poTIFFDirEntry->tdir_count * width;
@@ -573,6 +581,7 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
       }
       papszMetadata = CSLSetNameValue(papszMetadata, pszName, pszTemp);
   }
+  CPLFree(poTIFFDir);
 
   return CE_None;
 }
