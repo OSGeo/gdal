@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/07/28 20:00:57  fwarmerdam
+ * upgrade to support 2-4GB files, use large file api
+ *
  * Revision 1.19  2004/12/10 21:35:00  fwarmerdam
  * preliminary support for writing JPEG2000 compressed data
  *
@@ -115,15 +118,15 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
     NITFFile    *psFile;
     int         nHeaderLen, nOffset, nNextData, nHeaderLenOffset;
     char        szTemp[128], achFSDWNG[6];
-    long        nFileLength;
+    GIntBig     nFileLength;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
     if( bUpdatable )
-        fp = VSIFOpen( pszFilename, "r+b" );
+        fp = VSIFOpenL( pszFilename, "r+b" );
     else
-        fp = VSIFOpen( pszFilename, "rb" );
+        fp = VSIFOpenL( pszFilename, "rb" );
 
     if( fp == NULL )
     {
@@ -136,7 +139,7 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 /* -------------------------------------------------------------------- */
 /*      Check file type.                                                */
 /* -------------------------------------------------------------------- */
-    VSIFRead( szTemp, 1, 9, fp );
+    VSIFReadL( szTemp, 1, 9, fp );
 
     if( !EQUALN(szTemp,"NITF",4) && !EQUALN(szTemp,"NSIF",4) )
     {
@@ -149,8 +152,8 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 /* -------------------------------------------------------------------- */
 /*      Read the FSDWNG field.                                          */
 /* -------------------------------------------------------------------- */
-    if( VSIFSeek( fp, 280, SEEK_SET ) != 0 
-        || VSIFRead( achFSDWNG, 1, 6, fp ) != 6 )
+    if( VSIFSeekL( fp, 280, SEEK_SET ) != 0 
+        || VSIFReadL( achFSDWNG, 1, 6, fp ) != 6 )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "Unable to read FSDWNG field from NITF file.  File is either corrupt\n"
@@ -166,8 +169,8 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
     else
         nHeaderLenOffset = 354;
 
-    if( VSIFSeek( fp, nHeaderLenOffset, SEEK_SET ) != 0 
-        || VSIFRead( szTemp, 1, 6, fp ) != 6 )
+    if( VSIFSeekL( fp, nHeaderLenOffset, SEEK_SET ) != 0 
+        || VSIFReadL( szTemp, 1, 6, fp ) != 6 )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
                   "Unable to read header length from NITF file.  File is either corrupt\n"
@@ -178,8 +181,8 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
     szTemp[6] = '\0';
     nHeaderLen = atoi(szTemp);
 
-    VSIFSeek( fp, 0, SEEK_END );
-    nFileLength = VSIFTell( fp ) ;
+    VSIFSeekL( fp, 0, SEEK_END );
+    nFileLength = VSIFTellL( fp ) ;
     if( nHeaderLen < nHeaderLenOffset || nHeaderLen > nFileLength )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
@@ -192,8 +195,8 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 /*      Read the whole file header.                                     */
 /* -------------------------------------------------------------------- */
     pachHeader = (char *) CPLMalloc(nHeaderLen);
-    VSIFSeek( fp, 0, SEEK_SET );
-    VSIFRead( pachHeader, 1, nHeaderLen, fp );
+    VSIFSeekL( fp, 0, SEEK_SET );
+    VSIFReadL( pachHeader, 1, nHeaderLen, fp );
 
 /* -------------------------------------------------------------------- */
 /*      Create and initialize info structure about file.                */
@@ -354,7 +357,7 @@ void NITFClose( NITFFile *psFile )
         CPLFree( psFile->apanVQLUT[i] );
 
     if( psFile->fp != NULL )
-        VSIFClose( psFile->fp );
+        VSIFCloseL( psFile->fp );
     CPLFree( psFile->pachHeader );
     CSLDestroy( psFile->papszMetadata );
     CPLFree( psFile );
@@ -375,7 +378,8 @@ int NITFCreate( const char *pszFilename,
     FILE	*fp;
     char        *pachIMHDR;
     char        achHeader[5000];
-    int         nOffset = 0, iBand, nImageSize, nIHSize, nNPPBH, nNPPBV;
+    int         nOffset = 0, iBand, nIHSize, nNPPBH, nNPPBV;
+    GIntBig     nImageSize;
     int         nNBPR, nNBPC;
     const char *pszIREP;
     const char *pszIC = CSLFetchNameValue(papszOptions,"IC");
@@ -386,7 +390,7 @@ int NITFCreate( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Open new file.                                                  */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszFilename, "wb+" );
+    fp = VSIFOpenL( pszFilename, "wb+" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -431,7 +435,9 @@ int NITFCreate( const char *pszFilename,
     nNBPC = (nLines + nNPPBV - 1) / nNPPBV;
 
     nImageSize = 
-        ((nBitsPerSample)/8) * nNBPR * nNBPC * nNPPBH * nNPPBV * nBands;
+        ((nBitsPerSample)/8) 
+        * ((GIntBig) nNBPR * nNBPC)
+        * nNPPBH * nNPPBV * nBands;
 
 /* -------------------------------------------------------------------- */
 /*      Prepare the file header.                                        */
@@ -478,7 +484,7 @@ int NITFCreate( const char *pszFilename,
     PLACE (achHeader+354, HL           ,"000404"                        );
     PLACE (achHeader+360, NUMI         ,"001"                           );
     PLACE (achHeader+363, LISH1        ,"??????"                        );
-    PLACE (achHeader+369, LI1          ,CPLSPrintf("%010d",nImageSize)  );
+    PLACE (achHeader+369, LI1          ,CPLSPrintf("%010ud",(GUInt32) nImageSize)  );
     PLACE (achHeader+379, NUMS         ,"000"                           );
     PLACE (achHeader+382, NUMX         ,"000"                           );
     PLACE (achHeader+385, NUMT         ,"000"                           );
@@ -625,7 +631,7 @@ int NITFCreate( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write header info to file.                                      */
 /* -------------------------------------------------------------------- */
-    VSIFWrite( achHeader, 1, nIHSize+404, fp );
+    VSIFWriteL( achHeader, 1, nIHSize+404, fp );
 
 /* -------------------------------------------------------------------- */
 /*      Grow file to full required size by writing one byte at the end. */
@@ -637,13 +643,13 @@ int NITFCreate( const char *pszFilename,
             /* don't extend file */;
         else
         {
-            VSIFSeek( fp, nImageSize-1, SEEK_CUR );
+            VSIFSeekL( fp, nImageSize-1, SEEK_CUR );
             achHeader[0] = '\0';
-            VSIFWrite( achHeader, 1, 1, fp );
+            VSIFWriteL( achHeader, 1, 1, fp );
         }
     }
 
-    VSIFClose( fp );
+    VSIFCloseL( fp );
 
     return TRUE;
 }
@@ -669,8 +675,8 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
 /*      Get the segment count, and grow the segmentinfo array           */
 /*      accordingly.                                                    */
 /* -------------------------------------------------------------------- */
-    VSIFSeek( psFile->fp, nOffset, SEEK_SET );
-    VSIFRead( szTemp, 1, 3, psFile->fp );
+    VSIFSeekL( psFile->fp, nOffset, SEEK_SET );
+    VSIFReadL( szTemp, 1, 3, psFile->fp );
     szTemp[3] = '\0';
 
     nCount = atoi(szTemp);
@@ -693,7 +699,7 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
     nSegDefSize = nCount * (nHeaderLenSize + nDataLenSize);
     pachSegDef = (char *) CPLMalloc(nCount * (nHeaderLenSize + nDataLenSize));
     
-    VSIFRead( pachSegDef, 1, nSegDefSize, psFile->fp );
+    VSIFReadL( pachSegDef, 1, nSegDefSize, psFile->fp );
 
 /* -------------------------------------------------------------------- */
 /*      Collect detailed about segment.                                 */
@@ -756,8 +762,8 @@ static void NITFLoadLocationTable( NITFFile *psFile )
 /* -------------------------------------------------------------------- */
 /*      Read the count of entries in the location table.                */
 /* -------------------------------------------------------------------- */
-    VSIFSeek( psFile->fp, nLocTableOffset + 6, SEEK_SET );
-    VSIFRead( &nLocCount, 1, 2, psFile->fp );
+    VSIFSeekL( psFile->fp, nLocTableOffset + 6, SEEK_SET );
+    VSIFReadL( &nLocCount, 1, 2, psFile->fp );
     nLocCount = CPL_MSBWORD16( nLocCount );
     psFile->nLocCount = nLocCount;
 
@@ -767,12 +773,12 @@ static void NITFLoadLocationTable( NITFFile *psFile )
 /* -------------------------------------------------------------------- */
 /*      Process the locations.                                          */
 /* -------------------------------------------------------------------- */
-    VSIFSeek( psFile->fp, 6, SEEK_CUR );
+    VSIFSeekL( psFile->fp, 6, SEEK_CUR );
     for( iLoc = 0; iLoc < nLocCount; iLoc++ )
     {
         unsigned char abyEntry[10];
         
-        VSIFRead( abyEntry, 1, 10, psFile->fp );
+        VSIFReadL( abyEntry, 1, 10, psFile->fp );
         
         psFile->pasLocations[iLoc].nLocId = abyEntry[0] * 256 + abyEntry[1];
 
@@ -823,12 +829,12 @@ static int NITFLoadVQTables( NITFFile *psFile )
 
         psFile->apanVQLUT[i] = (GUInt32 *) CPLCalloc(4096,sizeof(GUInt32));
 
-        VSIFSeek( psFile->fp, nVQOffset + 6 + i*14 + 10, SEEK_SET );
-        VSIFRead( &nVQVector, 1, 4, psFile->fp );
+        VSIFSeekL( psFile->fp, nVQOffset + 6 + i*14 + 10, SEEK_SET );
+        VSIFReadL( &nVQVector, 1, 4, psFile->fp );
         nVQVector = CPL_MSBWORD32( nVQVector );
         
-        VSIFSeek( psFile->fp, nVQOffset + nVQVector, SEEK_SET );
-        VSIFRead( psFile->apanVQLUT[i], 4, 4096, psFile->fp );
+        VSIFSeekL( psFile->fp, nVQOffset + nVQVector, SEEK_SET );
+        VSIFReadL( psFile->apanVQLUT[i], 4, 4096, psFile->fp );
     }
 
     return TRUE;
