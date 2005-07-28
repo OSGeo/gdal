@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2005/07/28 20:00:57  fwarmerdam
+ * upgrade to support 2-4GB files, use large file api
+ *
  * Revision 1.44  2005/05/23 06:57:36  fwarmerdam
  * fix flushing to go through pam
  *
@@ -542,8 +545,8 @@ static CPLErr NITFSetColorInterpretation( NITFImage *psImage,
     
     if( nOffset != 0 )
     {
-        if( VSIFSeek( psImage->psFile->fp, nOffset, SEEK_SET ) != 0 
-            || VSIFWrite( (void *) szPadded, 1, 2, psImage->psFile->fp ) != 2 )
+        if( VSIFSeekL( psImage->psFile->fp, nOffset, SEEK_SET ) != 0 
+            || VSIFWriteL( (void *) szPadded, 1, 2, psImage->psFile->fp ) != 2 )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "IO failure writing new IREPBAND value to NITF file." );
