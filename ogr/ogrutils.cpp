@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/07/29 04:13:17  fwarmerdam
+ * preserve 'full' precision in OGRMAkeWktCoordinate
+ *
  * Revision 1.13  2005/07/22 19:32:43  fwarmerdam
  * Preserve more precision in WKT encoding of coordinates.
  *
@@ -77,6 +80,41 @@
 CPL_CVSID("$Id$");
 
 /************************************************************************/
+/*                         OGRTrimExtraZeros()                          */
+/************************************************************************/
+
+static void OGRTrimExtraZeros( char *pszTarget )
+
+{
+    int i = 0;
+
+    while( pszTarget[i] != '\0' ) 
+        i++;
+
+/* -------------------------------------------------------------------- */
+/*      Trim trailing 000001's as they are likely roundoff error.       */
+/* -------------------------------------------------------------------- */
+    if( i > 10
+        && pszTarget[i-1] == '1' 
+        && pszTarget[i-2] == '0' 
+        && pszTarget[i-3] == '0' 
+        && pszTarget[i-4] == '0' 
+        && pszTarget[i-5] == '0' 
+        && pszTarget[i-6] == '0' )
+    {
+        pszTarget[--i] = '\0';
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Trim trailing zeros.                                            */
+/* -------------------------------------------------------------------- */
+    while( i > 2 && pszTarget[i-1] == '0' && pszTarget[i-2] != '.' )
+    {
+        pszTarget[--i] = '\0';
+    }
+}
+
+/************************************************************************/
 /*                        OGRMakeWktCoordinate()                        */
 /*                                                                      */
 /*      Format a well known text coordinate, trying to keep the         */
@@ -91,29 +129,51 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
                            int nDimension )
 
 {
-    if( nDimension < 3 )
+    char  szX[40], szY[40], szZ[40];
+
+    szZ[0] = '\0';
+
+    if( x == (int) x && y == (int) y && z == (int) z )
     {
-        if( x == (int) x && y == (int) y )
-            sprintf( pszTarget, "%d %d", (int) x, (int) y );
-        else
-            sprintf( pszTarget, "%.15f %.15f", x, y);
+        sprintf( szX, "%d", (int) x );
+        sprintf( szY, " %d", (int) y );
     }
     else
     {
-        if( x == (int) x && y == (int) y && z == (int) z )
-            sprintf( pszTarget, "%d %d %d", (int) x, (int) y, (int) z );
-        else
-            sprintf( pszTarget, "%.15f %.15f %.15f", x, y, z);
+        sprintf( szX, "%.15f", x );
+        OGRTrimExtraZeros( szX );
+        sprintf( szY, " %.15f", y );
+        OGRTrimExtraZeros( szY );
     }
 
-#ifdef DEBUG
-    if( strlen(pszTarget) > 48 )
+    if( nDimension == 3 )
     {
+        if( z == (int) z )
+            sprintf( szZ, " %d", (int) z );
+        else
+        {
+            sprintf( szZ, " %.15f", z );
+            OGRTrimExtraZeros( szZ );
+        }
+    }
+            
+    if( strlen(szX) + strlen(szY) + strlen(szZ) > 75 )
+    {
+        strcpy( szX, "0" );
+        strcpy( szY, "0" );
+        if( nDimension == 3 )
+            strcpy( szZ, "0" );
+
+#ifdef DEBUG
         CPLDebug( "OGR", 
                   "Yow!  Got this big result in OGRMakeWktCoordinate()\n%s", 
                   pszTarget );
-    }
 #endif
+    }
+
+    strcpy( pszTarget, szX );
+    strcat( pszTarget, szY );
+    strcat( pszTarget, szZ );
 }
 
 /************************************************************************/
