@@ -29,6 +29,10 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.5  2005/07/29 04:49:46  fwarmerdam
+#  Set SRS on generated file.
+#  http://bugzilla.remotesensing.org/show_bug.cgi?id=644
+#
 #  Revision 1.4  2004/10/30 20:54:42  fwarmerdam
 #  Applied patch from Schuyler Erle (bug 646) to discard dangles and
 #  degenerate rings.
@@ -99,12 +103,16 @@ poly_layer = ds.GetLayerByName( 'Polygon' )
 #############################################################################
 #	Create output file for the composed polygons.
 
+nad83 = osr.SpatialReference()
+nad83.SetFromUserInput('NAD83')
+
 shp_driver = ogr.GetDriverByName( 'ESRI Shapefile' )
 shp_driver.DeleteDataSource( outfile )
 
 shp_ds = shp_driver.CreateDataSource( outfile )
 
-shp_layer = shp_ds.CreateLayer( 'out', geom_type = ogr.wkbPolygon )
+shp_layer = shp_ds.CreateLayer( 'out', geom_type = ogr.wkbPolygon,
+                                srs = nad83 )
 
 src_defn = poly_layer.GetLayerDefn()
 poly_field_count = src_defn.GetFieldCount()
