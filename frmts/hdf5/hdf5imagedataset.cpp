@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2005/07/29 15:44:01  fwarmerdam
+ * minor formatting change
+ *
  * Revision 1.4  2005/07/27 16:41:46  dnadeau
  * take care of memory leak
  *
@@ -288,11 +291,12 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     /* printf("poOpenInfo->pszFilename %s\n",poOpenInfo->pszFilename); */
     poDS->papszName = CSLTokenizeString2( poOpenInfo->pszFilename,
 				    ":", CSLT_HONOURSTRINGS );
-    if (CSLCount(poDS->papszName) != 3)
-	{
-	    CSLDestroy(poDS->papszName);
-	    return NULL;
-	}
+
+    if (CSLCount(poDS->papszName) != 3) {
+        CSLDestroy(poDS->papszName);
+        return NULL;
+    }
+
     poDS->pszFilename = CPLStrdup(poOpenInfo->pszFilename);
   
     if(!EQUAL(poDS->papszName[0], "HDF5")) {
