@@ -38,6 +38,9 @@
  *   without compromising the system.
  *
  * $Log$
+ * Revision 1.8  2005/07/29 04:13:39  fwarmerdam
+ * use OGR WKT encoding function for GML coordinates too
+ *
  * Revision 1.7  2003/09/22 05:34:46  warmerda
  * implemented support for various kinds of geometry collections
  *
@@ -92,6 +95,15 @@ static void MakeGMLCoordinate( char *pszTarget,
                                double x, double y, double z, int b3D )
 
 {
+    OGRMakeWktCoordinate( pszTarget, x, y, z, b3D ? 3 : 2 );
+    while( *pszTarget != '\0' )
+    {
+        if( *pszTarget == ' ' )
+            *pszTarget = ',';
+        pszTarget++;
+    }
+
+#ifdef notdef
     if( !b3D )
     {
         if( x == (int) x && y == (int) y )
@@ -115,6 +127,7 @@ static void MakeGMLCoordinate( char *pszTarget,
         else
             sprintf( pszTarget, "%.3f,%.3f,%.3f", x, y, z );
     }
+#endif
 }
 
 /************************************************************************/
