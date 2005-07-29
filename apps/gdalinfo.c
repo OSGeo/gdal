@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.38  2005/07/29 04:27:42  fwarmerdam
+ * Don't crash if a "paletted" band has no color table object.
+ *
  * Revision 1.37  2005/05/11 14:39:43  fwarmerdam
  * added option to report stats
  *
@@ -368,6 +371,7 @@ int main( int argc, char ** argv )
         int         bGotMin, bGotMax, bGotNodata, bSuccess;
         int         nBlockXSize, nBlockYSize;
         double      dfMean, dfStdDev;
+        GDALColorTableH	hTable;
         CPLErr      eErr;
 
         hBand = GDALGetRasterBand( hDataset, iBand+1 );
@@ -485,12 +489,11 @@ int main( int argc, char ** argv )
             }
         }
 
-        if( GDALGetRasterColorInterpretation(hBand) == GCI_PaletteIndex )
+        if( GDALGetRasterColorInterpretation(hBand) == GCI_PaletteIndex 
+            && (hTable = GDALGetRasterColorTable( hBand )) != NULL )
         {
-            GDALColorTableH	hTable;
             int			i;
 
-            hTable = GDALGetRasterColorTable( hBand );
             printf( "  Color Table (%s with %d entries)\n", 
                     GDALGetPaletteInterpretationName(
                         GDALGetPaletteInterpretation( hTable )), 
