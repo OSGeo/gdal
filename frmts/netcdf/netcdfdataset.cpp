@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2005/07/29 16:21:37  fwarmerdam
+ * use CPLIsNan, and float.h
+ *
  * Revision 1.7  2005/07/29 02:33:32  dnadeau
  * enhance netcdf to conform to CF convention.  Allow multidimensionnal array and read metatdata
  *
@@ -53,6 +56,7 @@
  *
  */
 
+#include <float.h>
 #include "gdal_pam.h"
 #include "gdal_frmts.h"
 #include "cpl_string.h"
@@ -359,7 +363,7 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         nErr = nc_get_vara_float( cdfid, nZId, start, edge, 
                                   (float *) pImage );
 	for( i=0; i<nBlockXSize; i++ ){
-	    if(isnan(((float *)pImage)[i]))
+	    if(CPLIsNan(((float *)pImage)[i]))
 		((float *)pImage)[i] = dfNoDataValue;
 	}
     }
@@ -367,7 +371,7 @@ CPLErr netCDFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         nErr = nc_get_vara_double( cdfid, nZId, start, edge, 
                                    (double *) pImage );
 	for( i=0; i<nBlockXSize; i++ ){
-	    if(isnan(((double *)pImage)[i])) 
+	    if(CPLIsNan(((double *)pImage)[i])) 
 		((double *)pImage)[i] = dfNoDataValue;
 	}
 
