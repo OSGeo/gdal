@@ -38,6 +38,9 @@
  *   without compromising the system.
  *
  * $Log$
+ * Revision 1.9  2005/07/29 15:54:07  fwarmerdam
+ * ogrmakewktcoordinate defined in ogr_p.h
+ *
  * Revision 1.8  2005/07/29 04:13:39  fwarmerdam
  * use OGR WKT encoding function for GML coordinates too
  *
@@ -84,6 +87,7 @@
 #include "cpl_minixml.h"
 #include "ogr_geometry.h"
 #include "ogr_api.h"
+#include "ogr_p.h"
 #include "cpl_error.h"
 #include "cpl_conv.h"
 
