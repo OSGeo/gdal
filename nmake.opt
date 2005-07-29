@@ -96,6 +96,12 @@ JPEG_SUPPORTED = 1
 #HDF4_DIR =	D:\warmerda\HDF41r5
 #HDF4_LIB =	/LIBPATH:$(HDF4_DIR)\lib Ws2_32.lib
 
+# Uncomment the following and update to enable NCSA HDF Release 5 support.
+#HDF5_DIR =	c:\warmerda\supportlibs\hdf5\5-164-win
+#SZIP_DIR =      c:\warmerda\supportlibs\hdf5\szip20
+#HDF5_LIB =	$(HDF5_DIR)\dll\hdf5dll.lib \
+#		$(SZIP_DIR)\dll\szlibdll.lib
+
 # Uncomment the following for MrSID support.
 # You will likely require /MD and /EHsc in OPTFLAGS. 
 #MRSID_DIR =	d:\projects\mrsid
@@ -206,7 +212,7 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(OCI_LIB) $(PG_LIB) $(ODBCLIB) \
 		$(ECWLIB) $(HDF4_LIB) $(FME_LIB) $(JASPER_LIB) $(MRSID_ELIB) \
 		$(FITS_LIB) $(JPEG_LIB) $(PNG_LIB) $(NETCDF_LIB) $(PROJ4_LIB) \
 		$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIB) $(SQLITE_LIB) \
-		$(MYSQL_LIB) $(GEOS_LIB) $(ADD_LIBS)
+		$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB) $(ADD_LIBS)
 
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
