@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/07/29 15:54:07  fwarmerdam
+ * ogrmakewktcoordinate defined in ogr_p.h
+ *
  * Revision 1.26  2005/07/29 04:12:47  fwarmerdam
  * expose OGRMakeWktCoordinates
  *
@@ -165,9 +168,6 @@ void CPL_DLL *OGRCalloc( size_t, size_t );
 void CPL_DLL *OGRRealloc( void *, size_t );
 char CPL_DLL *OGRStrdup( const char * );
 void CPL_DLL OGRFree( void * );
-
-void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z, 
-                           int nDimension );
 
 typedef int OGRErr;
 
