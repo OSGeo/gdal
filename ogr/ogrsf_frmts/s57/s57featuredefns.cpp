@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/07/30 18:26:38  fwarmerdam
+ * accept one character primitives like we get in AML classes
+ *
  * Revision 1.2  2003/11/17 20:10:46  warmerda
  * added support for writing FFPT linkages
  *
@@ -217,7 +220,7 @@ OGRFeatureDefn *S57GenerateObjectClassDefn( S57ClassRegistrar *poCR,
     {
         // leave as unknown geometry type.
     }
-    else if( EQUAL(papszGeomPrim[0],"Point") )
+    else if( papszGeomPrim[0][0] == 'P' )
     {
         if( EQUAL(poCR->GetAcronym(),"SOUNDG") )
         {
@@ -229,11 +232,11 @@ OGRFeatureDefn *S57GenerateObjectClassDefn( S57ClassRegistrar *poCR,
         else
             poFDefn->SetGeomType( wkbPoint );
     }
-    else if( EQUAL(papszGeomPrim[0],"Area") )
+    else if( papszGeomPrim[0][0] == 'A' )
     {
         poFDefn->SetGeomType( wkbPolygon );
     }
-    else if( EQUAL(papszGeomPrim[0],"Line") )
+    else if( papszGeomPrim[0][0] == 'L' )
     {
         poFDefn->SetGeomType( wkbLineString );
     }
