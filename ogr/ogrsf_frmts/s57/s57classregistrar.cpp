@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/07/30 18:26:59  fwarmerdam
+ * dont freak out about duplicate attributes
+ *
  * Revision 1.13  2005/07/30 17:24:27  fwarmerdam
  * Use CPLGetConfigOption for S57_CSV value.
  *
@@ -341,7 +344,8 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
         if( iAttr < 0 || iAttr >= nAttrMax
             || papszAttrNames[iAttr] != NULL )
         {
-            CPLAssert( FALSE );
+            CPLDebug( "S57", "Duplicate definition for attribute %d:%s", 
+                      iAttr, papszTokens[2] );
             continue;
         }
         
