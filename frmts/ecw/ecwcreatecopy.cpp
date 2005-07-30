@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/07/30 03:06:33  fwarmerdam
+ * added LARGE_OK create option, and much improved error reporting
+ *
  * Revision 1.20  2005/05/17 20:13:28  fwarmerdam
  * use gmljp2://xml format for uri
  *
@@ -979,17 +982,17 @@ CPLErr GDALECWCompressor::Initialize(
 /*      ERMapper options for licensing larger than 500MB input          */
 /*      files.  See Bug 767.                                            */
 /* -------------------------------------------------------------------- */
-    if( CSLTestBoolean(CPLGetConfigOption( "ECW_LARGE_OK", "NO" )) )
-        CNCSFile::SetKeySize();
+    const char *pszLargeOK = CSLFetchNameValue(papszOptions, "LARGE_OK");
+    if( pszLargeOK == NULL )
+        pszLargeOK = "NO";
 
-/* -------------------------------------------------------------------- */
-/*      Check if we can enable large files.  This option should only    */
-/*      be set when the application is adhering to one of the           */
-/*      ERMapper options for licensing larger than 500MB input          */
-/*      files.  See Bug 767.                                            */
-/* -------------------------------------------------------------------- */
-    if( CSLTestBoolean(CPLGetConfigOption( "ECW_LARGE_OK", "NO" )) )
+    pszLargeOK = CPLGetConfigOption( "ECW_LARGE_OK", pszLargeOK );
+
+    if( CSLTestBoolean(pszLargeOK) )
+    {
         CNCSFile::SetKeySize();
+        CPLDebug( "ECW", "Large file generation enabled." );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Set the file info.                                              */
@@ -1006,7 +1009,20 @@ CPLErr GDALECWCompressor::Initialize(
             oError = CNCSJP2FileView::Open( &(m_OStream) );
     }
 
-    return CE_None;
+    if( oError.GetErrorNumber() == NCS_SUCCESS )
+        return CE_None;
+    else if( oError.GetErrorNumber() == NCS_INPUT_SIZE_EXCEEDED )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "ECW SDK 500MB compress limit exceeded." );
+        return CE_Failure;
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", oError.GetErrorMessage() );
+        return CE_Failure;
+    }
 }
 
 /************************************************************************/
