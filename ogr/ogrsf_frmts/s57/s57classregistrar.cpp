@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/07/30 17:22:11  fwarmerdam
+ * added preliminary "profile" support, and make class selection case
+ * sensitive.
+ *
  * Revision 1.11  2005/05/03 16:11:53  fwarmerdam
  * Fixed initialization of attr tables.
  *
@@ -95,6 +99,7 @@ S57ClassRegistrar::S57ClassRegistrar()
     pachAttrClass = NULL;
     pachAttrType = NULL;
     panAttrIndex = NULL;
+    papszAttrNames = NULL;
 }
 
 /************************************************************************/
@@ -207,10 +212,12 @@ const char *S57ClassRegistrar::ReadLine( FILE * fp )
 /************************************************************************/
 
 int S57ClassRegistrar::LoadInfo( const char * pszDirectory, 
+                                 const char * pszProfile,
                                  int bReportErr )
 
 {
     FILE        *fp;
+    char        szTargetFile[1024];
 
     if( pszDirectory == NULL && getenv( "S57_CSV" ) != NULL )
         pszDirectory = getenv( "S57_CSV" );
@@ -218,7 +225,15 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 /* ==================================================================== */
 /*      Read the s57objectclasses file.                                 */
 /* ==================================================================== */
-    if( !FindFile( "s57objectclasses.csv", pszDirectory, bReportErr, &fp ) )
+    if( pszProfile == NULL )
+        pszProfile = CPLGetConfigOption( "S57_PROFILE", "" );
+    
+    if( pszProfile[0] == '\0' )
+        strcpy( szTargetFile, "s57objectclasses.csv" );
+    else
+        sprintf( szTargetFile, "s57objectclasses_%s.csv", pszProfile );
+
+    if( !FindFile( szTargetFile, pszDirectory, bReportErr, &fp ) )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -271,7 +286,12 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 /* ==================================================================== */
 /*      Read the attributes list.                                       */
 /* ==================================================================== */
-    if( !FindFile( "s57attributes.csv", pszDirectory, bReportErr, &fp ) )
+    if( pszProfile[0] == '\0' )
+        strcpy( szTargetFile, "s57attributes.csv" );
+    else
+        sprintf( szTargetFile, "s57attributes_%s.csv", pszProfile );
+
+    if( !FindFile( szTargetFile, pszDirectory, bReportErr, &fp ) )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -431,7 +451,7 @@ int S57ClassRegistrar::SelectClass( const char *pszAcronym )
         if( !SelectClassByIndex( i ) )
             continue;
 
-        if( EQUAL(GetAcronym(),pszAcronym) )
+        if( strcmp(GetAcronym(),pszAcronym) == 0 )
             return TRUE;
     }
 
