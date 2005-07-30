@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/07/30 17:23:05  fwarmerdam
+ * added profile to LoadInfo
+ *
  * Revision 1.7  2004/08/30 20:11:51  warmerda
  * keep the S57ClassRegistrar on the driver, not the datasource
  *
@@ -164,7 +167,7 @@ S57ClassRegistrar *OGRS57Driver::GetS57Registrar()
     {
         poRegistrar = new S57ClassRegistrar();
 
-        if( !poRegistrar->LoadInfo( NULL, FALSE ) )
+        if( !poRegistrar->LoadInfo( NULL, NULL, FALSE ) )
         {
             delete poRegistrar;
             poRegistrar = NULL;
