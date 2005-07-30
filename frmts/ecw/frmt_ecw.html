@@ -9,8 +9,8 @@
 
 GDAL supports .ecw format for read access and write.  The current 
 implementation reads any number of bands but returns only as eight bit
-image data.  Georeferencing transform information is read, but projection
-and datum definitions are ignored.<p>
+image data.  Coordinate system and georeferencing transformations are read,
+but in some cases coordinate systems may not translate.<p>
 
 Support for the ECW driver in GDAL is optional, and requires linking
 in external ECW SDK libraries provided by ERMapper.<p>
