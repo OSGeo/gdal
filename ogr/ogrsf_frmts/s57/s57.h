@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/07/30 17:22:52  fwarmerdam
+ * added profile to LoadInfo
+ *
  * Revision 1.30  2004/08/30 20:12:21  warmerda
  * various optimizations
  *
@@ -217,7 +220,7 @@ public:
                 S57ClassRegistrar();
                ~S57ClassRegistrar();
 
-    int         LoadInfo( const char *, int );
+    int         LoadInfo( const char *, const char *, int );
 
     // class table methods.
     int         SelectClassByIndex( int );
