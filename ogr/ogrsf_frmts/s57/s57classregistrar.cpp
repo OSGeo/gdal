@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/07/30 17:24:27  fwarmerdam
+ * Use CPLGetConfigOption for S57_CSV value.
+ *
  * Revision 1.12  2005/07/30 17:22:11  fwarmerdam
  * added preliminary "profile" support, and make class selection case
  * sensitive.
@@ -219,8 +222,8 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     FILE        *fp;
     char        szTargetFile[1024];
 
-    if( pszDirectory == NULL && getenv( "S57_CSV" ) != NULL )
-        pszDirectory = getenv( "S57_CSV" );
+    if( pszDirectory == NULL )
+        pszDirectory = CPLGetConfigOption("S57_CSV",NULL);
 
 /* ==================================================================== */
 /*      Read the s57objectclasses file.                                 */
