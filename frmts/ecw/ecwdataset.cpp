@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.52  2005/07/30 03:05:56  fwarmerdam
+ * Added LARGE_OK, frmt_jp2ecw.html link
+ *
  * Revision 1.51  2005/07/05 22:09:23  fwarmerdam
  * added ParseMSIG() call
  *
@@ -1652,6 +1655,7 @@ void GDALRegister_ECW()
 "   <Option name='TARGET' type='float' description='Compression Percentage' />"
 "   <Option name='PROJ' type='string' description='ERMapper Projection Name'/>"
 "   <Option name='DATUM' type='string' description='ERMapper Datum Name' />"
+"   <Option name='LARGE_OK' type='boolean' description='Enable compressing 500+MB files'/>"
 "</CreationOptionList>" );
 #endif
 
@@ -1678,7 +1682,7 @@ void GDALRegister_JP2ECW()
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "ERMapper JPEG2000" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_ecw.html" );
+                                   "frmt_jp2ecw.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
         
         poDriver->pfnOpen = ECWDataset::OpenJPEG2000;
@@ -1692,6 +1696,7 @@ void GDALRegister_JP2ECW()
 "   <Option name='TARGET' type='float' description='Compression Percentage' />"
 "   <Option name='PROJ' type='string' description='ERMapper Projection Name'/>"
 "   <Option name='DATUM' type='string' description='ERMapper Datum Name' />"
+"   <Option name='LARGE_OK' type='boolean' description='Enable compressing 500+MB files'/>"
 "   <Option name='PROFILE' type='string-select'>"
 "       <Value>BASELINE_0</Value>"
 "       <Value>BASELINE_1</Value>"
