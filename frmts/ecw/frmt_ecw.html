@@ -12,23 +12,8 @@ implementation reads any number of bands but returns only as eight bit
 image data.  Georeferencing transform information is read, but projection
 and datum definitions are ignored.<p>
 
-<h2>Caveats and Limitions</h2>
-
-<ol>
-<li> <b>Windows Only</b>: Currently it appears that the ECW SDK is avalable
-only for Windows, so ECW support in GDAL is only available on windows.<p>
-
-<li> <b>Compilation Optional</b>: Inclusion of ECW support in GDAL is a
-build time option, and disabled by default.  GDAL for windows will not 
-support ECW if it was not configured in during the build of the GDAL 
-librarys (controlled by uncommenting and adjusting the lines starting with
-ECW in the gdal\nmake.opt file).<p>
-
-<li> <b>Extra DLLs Required</b>: To work, the ECW support requires that
-the ECW SDK DLLs NCSEcw.dll, NCSEcwC.dll, NCSUtil.dll and NCScnet.dll be
-somewhere in the path, for instance in the same directory as the GDAL DLL.<p>
-
-</ol>
+Support for the ECW driver in GDAL is optional, and requires linking
+in external ECW SDK libraries provided by ERMapper.<p>
 
 <h2>Creation Issues</h2>
 
@@ -39,8 +24,10 @@ be at least 128x128.  Non-eight bit source data will be rescaled by
 the ECW SDK in some manner that I don't understand ... the resulting image
 is effectively eight bit.<p>
 
-While georeferencing information is written to the ECW file, the coordinate
-system definition is currently not (this could be corrected).<p>
+When writing coordinate system information to ECW files, many less
+common coordinate systems are not mapped properly.  If you know the 
+ERMapper name for the coordinate system you can force it to be set at
+creation time with the PROJ and DATUM creation options. <p>
 
 Creation Options:<p>
 
@@ -49,13 +36,16 @@ Creation Options:<p>
 <li> <b>TARGET=percent</b>: Set the target size reduction as a percentage of 
 the original.  If not provided defaults to 75 for an 75% reduction.<p>
 
-<li> <b>BLOCKXSIZE=n</b>: Width of blocks to use for compression.  Must be
-one of 64, 128, 256, 512, 1024, 2048.  Default is 256.<p>
+<li> <b>PROJ=name</b>: Name of the ERMapper projection string to use. 
+Common examples are NUTM11, or GEODETIC.<p>
 
-<li> <b>BLOCKYSIZE=n</b>: Width of blocks to use for compression.  Must be
-one of 64, 128, 256, 512, 1024, 2048.  Default is 256.<p>
+<li> <b>DATUM=name</b>: Name of the ERMapper datum string to use. 
+Common examples are WGS84 or NAD83.<p>
 
-<li> <b>BLOCKSIZE=n</b>: Same as setting BLOCKXSIZE and BLOCKYSIZE.<p>
+<li> <b>LARGE_OK=YES</b>: Under some circumstances this option can be set
+to allow compressing files larger than 500MB.  It is the users responsibility
+to ensure that ERMapper licensing requirments for large file compression
+are being adhered to.<p>
 
 </ul>
 
