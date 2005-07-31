@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/07/31 02:14:49  fwarmerdam
+ * improved recursive mutex creation for pthreads, works on macosx now
+ *
  * Revision 1.12  2005/07/18 15:34:11  fwarmerdam
  * Fixed papTLSList sizing.
  *
@@ -660,16 +663,21 @@ void *CPLCreateMutex()
 
 {
     pthread_mutex_t *hMutex;
-#if defined(PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP)
-    pthread_mutex_t hMutexSrc = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
-#elif defined(PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP)
-    pthread_mutex_t hMutexSrc = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;
-#else
-    pthread_mutex_t hMutexSrc = PTHREAD_MUTEX_INITIALIZER;
-#endif
 
     hMutex = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
-    *hMutex = hMutexSrc;
+
+#if defined(PTHREAD_MUTEX_RECURSIVE)
+    {
+        pthread_mutexattr_t  attr;
+        pthread_mutexattr_init( &attr );
+        pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
+        pthread_mutex_init( hMutex, &attr );
+    }
+#elif defined(PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP)
+    *hMutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+#else
+#error "Recursive mutexes apparently unsupported, configure --without-threads" 
+#endif
 
     // mutexes are implicitly acquired when created.
     CPLAcquireMutex( hMutex, 0.0 );
