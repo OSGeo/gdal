@@ -88,27 +88,27 @@ TIFFXYZToRGB(TIFFCIELabToRGB *cielab, float X, float Y, float Z,
 	Yb =  matrix[6] * X + matrix[7] * Y + matrix[8] * Z;
 
 	/* Clip input */
-	Yr = TIFFmax( Yr, cielab->display.d_Y0R );
-	Yg = TIFFmax( Yg, cielab->display.d_Y0G );
-	Yb = TIFFmax( Yb, cielab->display.d_Y0B );
+	Yr = TIFFmax(Yr, cielab->display.d_Y0R);
+	Yg = TIFFmax(Yg, cielab->display.d_Y0G);
+	Yb = TIFFmax(Yb, cielab->display.d_Y0B);
 
 	/* Turn luminosity to colour value. */
-	i = TIFFmin(cielab->range,
-		    (int)((Yr - cielab->display.d_Y0R) / cielab->rstep));
+	i = (int)((Yr - cielab->display.d_Y0R) / cielab->rstep);
+	i = TIFFmin(cielab->range, i);
 	*r = RINT(cielab->Yr2r[i]);
 
-	i = TIFFmin(cielab->range,
-		    (int)((Yg - cielab->display.d_Y0G) / cielab->gstep));
+	i = (int)((Yg - cielab->display.d_Y0G) / cielab->gstep);
+	i = TIFFmin(cielab->range, i);
 	*g = RINT(cielab->Yg2g[i]);
 
-	i = TIFFmin(cielab->range,
-		    (int)((Yb - cielab->display.d_Y0B) / cielab->bstep));
+	i = (int)((Yb - cielab->display.d_Y0B) / cielab->bstep);
+	i = TIFFmin(cielab->range, i);
 	*b = RINT(cielab->Yb2b[i]);
 
 	/* Clip output. */
-	*r = TIFFmin( *r, cielab->display.d_Vrwr );
-	*g = TIFFmin( *g, cielab->display.d_Vrwg );
-	*b = TIFFmin( *b, cielab->display.d_Vrwb );
+	*r = TIFFmin(*r, cielab->display.d_Vrwr);
+	*g = TIFFmin(*g, cielab->display.d_Vrwg);
+	*b = TIFFmin(*b, cielab->display.d_Vrwb);
 }
 #undef RINT
 

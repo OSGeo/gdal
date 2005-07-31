@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.17 2004/11/05 11:37:29 dron Exp $ */
+/* $Id: tif_write.c,v 1.18 2005/07/21 13:57:00 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -516,11 +516,21 @@ TIFFWriteCheck(TIFF* tif, int tiles, const char* module)
 		    tif->tif_name);
 		return (0);
 	}
-	if (!TIFFFieldSet(tif, FIELD_PLANARCONFIG)) {
-		TIFFError(module,
-	    "%s: Must set \"PlanarConfiguration\" before writing data",
-		    tif->tif_name);
-		return (0);
+	if (tif->tif_dir.td_samplesperpixel == 1) {
+		/* 
+		 * Planarconfiguration is irrelevant in case of single band
+		 * images and need not be included. We will set it anyway,
+		 * because this field is used in other parts of library even
+		 * in the single band case.
+		 */
+		tif->tif_dir.td_planarconfig == PLANARCONFIG_CONTIG;
+	} else {
+		if (!TIFFFieldSet(tif, FIELD_PLANARCONFIG)) {
+			TIFFError(module,
+		    "%s: Must set \"PlanarConfiguration\" before writing data",
+			    tif->tif_name);
+			return (0);
+		}
 	}
 	if (tif->tif_dir.td_stripoffset == NULL && !TIFFSetupStrips(tif)) {
 		tif->tif_dir.td_nstrips = 0;

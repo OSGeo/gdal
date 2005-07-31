@@ -1,4 +1,4 @@
-/* $Id: tif_compress.c,v 1.9 2004/10/03 08:34:01 dron Exp $ */
+/* $Id: tif_compress.c,v 1.10 2005/06/28 15:15:58 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -32,7 +32,7 @@
 #include "tiffiop.h"
 
 static int
-TIFFNoEncode(TIFF* tif, char* method)
+TIFFNoEncode(TIFF* tif, const char* method)
 {
 	const TIFFCodec* c = TIFFFindCODEC(tif->tif_dir.td_compression);
 
@@ -69,7 +69,7 @@ _TIFFNoTileEncode(TIFF* tif, tidata_t pp, tsize_t cc, tsample_t s)
 }
 
 static int
-TIFFNoDecode(TIFF* tif, char* method)
+TIFFNoDecode(TIFF* tif, const char* method)
 {
 	const TIFFCodec* c = TIFFFindCODEC(tif->tif_dir.td_compression);
 
@@ -248,7 +248,8 @@ TIFFGetConfiguredCODECs()
 	TIFFCodec	*codecs = NULL, *new_codecs;
 
         for (cd = registeredCODECS; cd; cd = cd->next) {
-                new_codecs = _TIFFrealloc(codecs, i * sizeof(TIFFCodec));
+                new_codecs = (TIFFCodec *)
+			_TIFFrealloc(codecs, i * sizeof(TIFFCodec));
 		if (!new_codecs) {
 			_TIFFfree (codecs);
 			return NULL;
@@ -259,7 +260,8 @@ TIFFGetConfiguredCODECs()
 	}
         for (c = _TIFFBuiltinCODECS; c->name; c++) {
                 if (TIFFIsCODECConfigured(c->scheme)) {
-                        new_codecs = _TIFFrealloc(codecs, i * sizeof(TIFFCodec));
+                        new_codecs = (TIFFCodec *)
+				_TIFFrealloc(codecs, i * sizeof(TIFFCodec));
 			if (!new_codecs) {
 				_TIFFfree (codecs);
 				return NULL;
@@ -270,7 +272,7 @@ TIFFGetConfiguredCODECs()
 		}
 	}
 
-	new_codecs = _TIFFrealloc(codecs, i * sizeof(TIFFCodec));
+	new_codecs = (TIFFCodec *) _TIFFrealloc(codecs, i * sizeof(TIFFCodec));
 	if (!new_codecs) {
 		_TIFFfree (codecs);
 		return NULL;
