@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.26  2005/07/31 01:00:08  fwarmerdam
+ * Moved CPL_LSB variables into #ifdef.
+ *
  * Revision 1.25  2005/05/05 15:54:48  fwarmerdam
  * PAM Enabled
  *
@@ -509,10 +512,10 @@ void L1BDataset::FetchNOAA9TimeCode( TimeCode *psTime, GByte *piRecordHeader,
 void L1BDataset::FetchNOAA15TimeCode( TimeCode *psTime,
                                       GUInt16 *piRecordHeader, int *iLocInd )
 {
+#ifdef CPL_LSB
     GUInt16 iTemp;
     GUInt32 lTemp;
 
-#ifdef CPL_LSB
     iTemp = piRecordHeader[1];
     psTime->SetYear(CPL_SWAP16(iTemp));
     iTemp = piRecordHeader[2];
