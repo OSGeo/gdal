@@ -1,4 +1,4 @@
-/* $Id: tif_predict.c,v 1.8 2005/04/14 20:35:02 dron Exp $ */
+/* $Id: tif_predict.c,v 1.9 2005/06/03 07:58:54 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -317,8 +317,12 @@ fpAcc(TIFF* tif, tidata_t cp0, tsize_t cc)
 	for (count = 0; count < wc; count++) {
 		uint32 byte;
 		for (byte = 0; byte < bps; byte++) {
+#if WORDS_BIGENDIAN
+			cp[bps * count + byte] = tmp[byte * wc + count];
+#else
 			cp[bps * count + byte] =
 				tmp[(bps - byte - 1) * wc + count];
+#endif
 		}
 	}
 	_TIFFfree(tmp);
@@ -453,8 +457,12 @@ fpDiff(TIFF* tif, tidata_t cp0, tsize_t cc)
 	for (count = 0; count < wc; count++) {
 		uint32 byte;
 		for (byte = 0; byte < bps; byte++) {
+#if WORDS_BIGENDIAN
+			cp[byte * wc + count] =	tmp[bps * count + byte];
+#else
 			cp[(bps - byte - 1) * wc + count] =
 				tmp[bps * count + byte];
+#endif
 		}
 	}
 	_TIFFfree(tmp);

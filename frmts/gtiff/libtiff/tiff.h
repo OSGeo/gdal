@@ -1,4 +1,4 @@
-/* $Id: tiff.h,v 1.36 2005/04/13 14:07:43 dron Exp $ */
+/* $Id: tiff.h,v 1.38 2005/07/26 10:33:57 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -26,6 +26,9 @@
 
 #ifndef _TIFF_
 #define	_TIFF_
+
+#include "tiffconf.h"
+
 /*
  * Tag Image File Format (TIFF)
  *
@@ -49,24 +52,6 @@
 #define	TIFF_LITTLEENDIAN	0x4949
 
 /*
- * The so called TIFF types conflict with definitions from inttypes.h 
- * included from sys/types.h on AIX (at least using VisualAge compiler). 
- * We try to work around this by detecting this case.  Defining 
- * _TIFF_DATA_TYPEDEFS_ short circuits the later definitions in tiff.h, and
- * we will in the holes not provided for by inttypes.h. 
- *
- * See http://bugzilla.remotesensing.org/show_bug.cgi?id=39
- */
-#if defined(_H_INTTYPES) && defined(_ALL_SOURCE) && defined(USING_VISUALAGE)
-
-#define _TIFF_DATA_TYPEDEFS_
-typedef unsigned char uint8;
-typedef unsigned short uint16;
-typedef unsigned int uint32;
-
-#endif
-
-/*
  * Intrinsic data types required by the file format:
  *
  * 8-bit quantities	int8/uint8
@@ -74,22 +59,26 @@ typedef unsigned int uint32;
  * 32-bit quantities	int32/uint32
  * strings		unsigned char*
  */
-#ifndef _TIFF_DATA_TYPEDEFS_
-#define _TIFF_DATA_TYPEDEFS_
 
+#ifndef HAVE_INT8
 typedef	signed char int8;	/* NB: non-ANSI compilers may not grok */
+#endif
 typedef	unsigned char uint8;
+#ifndef HAVE_INT16
 typedef	short int16;
+#endif
 typedef	unsigned short uint16;	/* sizeof (uint16) must == 2 */
-#if defined(__alpha) || (defined(_MIPS_SZLONG) && _MIPS_SZLONG == 64) || defined(__LP64__) || defined(__arch64__)
+#if SIZEOF_INT == 4
+#ifndef HAVE_INT32
 typedef	int int32;
+#endif
 typedef	unsigned int uint32;	/* sizeof (uint32) must == 4 */
-#else
+#elif SIZEOF_LONG == 4
+#ifndef HAVE_INT32
 typedef	long int32;
+#endif
 typedef	unsigned long uint32;	/* sizeof (uint32) must == 4 */
 #endif
-
-#endif /* _TIFF_DATA_TYPEDEFS_ */
 
 /* For TIFFReassignTagToIgnore */
 enum TIFFIgnoreSense /* IGNORE tag table */

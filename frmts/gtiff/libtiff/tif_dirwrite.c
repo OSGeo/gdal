@@ -1,4 +1,4 @@
-/* $Id: tif_dirwrite.c,v 1.28 2005/05/26 07:50:38 dron Exp $ */
+/* $Id: tif_dirwrite.c,v 1.29 2005/07/12 12:23:42 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -31,9 +31,9 @@
  */
 #include "tiffiop.h"
 
-#if HAVE_IEEEFP
-#define	TIFFCvtNativeToIEEEFloat(tif, n, fp)
-#define	TIFFCvtNativeToIEEEDouble(tif, n, dp)
+#ifdef HAVE_IEEEFP
+# define	TIFFCvtNativeToIEEEFloat(tif, n, fp)
+# define	TIFFCvtNativeToIEEEDouble(tif, n, dp)
 #else
 extern	void TIFFCvtNativeToIEEEFloat(TIFF*, uint32, float*);
 extern	void TIFFCvtNativeToIEEEDouble(TIFF*, uint32, double*);

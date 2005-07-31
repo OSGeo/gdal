@@ -1,4 +1,4 @@
-/* $Id: tif_aux.c,v 1.8 2004/11/10 21:08:11 dron Exp $ */
+/* $Id: tif_aux.c,v 1.12 2005/07/28 17:46:52 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -32,6 +32,24 @@
 #include "tiffiop.h"
 #include "tif_predict.h"
 #include <math.h>
+
+tdata_t
+_TIFFCheckMalloc(TIFF* tif, size_t nmemb, size_t elem_size, const char* what)
+{
+	tdata_t *cp = NULL;
+	tsize_t	bytes = nmemb * elem_size;
+
+	/*
+	 * XXX: Check for integer overflow.
+	 */
+	if (nmemb && elem_size && bytes / elem_size == nmemb)
+		cp = _TIFFmalloc(bytes);
+
+	if (cp == NULL)
+		TIFFError(tif->tif_name, "No space %s", what);
+	
+	return (cp);
+}
 
 static int
 TIFFDefaultTransferFunction(TIFFDirectory* td)

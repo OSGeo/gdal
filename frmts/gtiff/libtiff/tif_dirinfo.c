@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.43 2005/05/25 13:10:09 dron Exp $ */
+/* $Id: tif_dirinfo.c,v 1.49 2005/07/26 11:18:36 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -31,13 +31,11 @@
  */
 #include "tiffiop.h"
 #include <stdlib.h>
-#include <stdio.h>
 
 /*
  * NB: NB: THIS ARRAY IS ASSUMED TO BE SORTED BY TAG.
- *     If a tag can have both LONG and SHORT types
- *     then the LONG must be placed before the SHORT for
- *     writing to work properly.
+ *       If a tag can have both LONG and SHORT types then the LONG must be
+ *       placed before the SHORT for writing to work properly.
  *
  * NOTE: The second field (field_readcount) and third field (field_writecount)
  *       sometimes use the values TIFF_VARIABLE (-1), TIFF_VARIABLE2 (-3)
@@ -87,13 +85,13 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       TRUE,	FALSE,	"CellLength" },
     { TIFFTAG_FILLORDER,	 1, 1, TIFF_SHORT,	FIELD_FILLORDER,
       FALSE,	FALSE,	"FillOrder" },
-    { TIFFTAG_DOCUMENTNAME,	-1,-1, TIFF_ASCII,	FIELD_DOCUMENTNAME,
+    { TIFFTAG_DOCUMENTNAME,	-1,-1, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"DocumentName" },
-    { TIFFTAG_IMAGEDESCRIPTION,	-1,-1, TIFF_ASCII,	FIELD_IMAGEDESCRIPTION,
+    { TIFFTAG_IMAGEDESCRIPTION,	-1,-1, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"ImageDescription" },
-    { TIFFTAG_MAKE,		-1,-1, TIFF_ASCII,	FIELD_MAKE,
+    { TIFFTAG_MAKE,		-1,-1, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"Make" },
-    { TIFFTAG_MODEL,		-1,-1, TIFF_ASCII,	FIELD_MODEL,
+    { TIFFTAG_MODEL,		-1,-1, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"Model" },
     { TIFFTAG_STRIPOFFSETS,	-1,-1, TIFF_LONG,	FIELD_STRIPOFFSETS,
       FALSE,	FALSE,	"StripOffsets" },
@@ -121,7 +119,7 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       FALSE,	FALSE,	"YResolution" },
     { TIFFTAG_PLANARCONFIG,	 1, 1, TIFF_SHORT,	FIELD_PLANARCONFIG,
       FALSE,	FALSE,	"PlanarConfiguration" },
-    { TIFFTAG_PAGENAME,		-1,-1, TIFF_ASCII,	FIELD_PAGENAME,
+    { TIFFTAG_PAGENAME,		-1,-1, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"PageName" },
     { TIFFTAG_XPOSITION,	 1, 1, TIFF_RATIONAL,	FIELD_POSITION,
       TRUE,	FALSE,	"XPosition" },
@@ -145,15 +143,15 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       TRUE,	FALSE,	"TransferFunction" },
     { TIFFTAG_SOFTWARE,		-1,-1, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"Software" },
-    { TIFFTAG_DATETIME,		20,20, TIFF_ASCII,	FIELD_DATETIME,
+    { TIFFTAG_DATETIME,		20,20, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"DateTime" },
-    { TIFFTAG_ARTIST,		-1,-1, TIFF_ASCII,	FIELD_ARTIST,
+    { TIFFTAG_ARTIST,		-1,-1, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"Artist" },
-    { TIFFTAG_HOSTCOMPUTER,	-1,-1, TIFF_ASCII,	FIELD_HOSTCOMPUTER,
+    { TIFFTAG_HOSTCOMPUTER,	-1,-1, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"HostComputer" },
-    { TIFFTAG_WHITEPOINT,	 2, 2, TIFF_RATIONAL,FIELD_WHITEPOINT,
+    { TIFFTAG_WHITEPOINT,	 2, 2, TIFF_RATIONAL,	FIELD_WHITEPOINT,
       TRUE,	FALSE,	"WhitePoint" },
-    { TIFFTAG_PRIMARYCHROMATICITIES,6,6,TIFF_RATIONAL,FIELD_PRIMARYCHROMAS,
+    { TIFFTAG_PRIMARYCHROMATICITIES,6,6,TIFF_RATIONAL,	FIELD_CUSTOM,
       TRUE,	FALSE,	"PrimaryChromaticities" },
     { TIFFTAG_COLORMAP,		-1,-1, TIFF_SHORT,	FIELD_COLORMAP,
       TRUE,	FALSE,	"ColorMap" },
@@ -187,7 +185,7 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       FALSE,	FALSE,	"DotRange" },
     { TIFFTAG_DOTRANGE,		 2, 2, TIFF_BYTE,	FIELD_DOTRANGE,
       FALSE,	FALSE,	"DotRange" },
-    { TIFFTAG_TARGETPRINTER,	-1,-1, TIFF_ASCII,	FIELD_TARGETPRINTER,
+    { TIFFTAG_TARGETPRINTER,	-1,-1, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"TargetPrinter" },
     { TIFFTAG_EXTRASAMPLES,	-1,-1, TIFF_SHORT,	FIELD_EXTRASAMPLES,
       FALSE,	TRUE,	"ExtraSamples" },
@@ -200,6 +198,20 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       TRUE,	FALSE,	"SMinSampleValue" },
     { TIFFTAG_SMAXSAMPLEVALUE,	-2,-1, TIFF_ANY,	FIELD_SMAXSAMPLEVALUE,
       TRUE,	FALSE,	"SMaxSampleValue" },
+    { TIFFTAG_CLIPPATH,		-1, -3, TIFF_BYTE,	FIELD_CUSTOM,
+      FALSE,	TRUE,	"ClipPath" },
+    { TIFFTAG_XCLIPPATHUNITS,	 1, 1,	TIFF_SLONG,	FIELD_CUSTOM,
+      FALSE,	FALSE,	"XClipPathUnits" },
+    { TIFFTAG_XCLIPPATHUNITS,	 1, 1,	TIFF_SSHORT,	FIELD_CUSTOM,
+      FALSE,	FALSE,	"XClipPathUnits" },
+    { TIFFTAG_XCLIPPATHUNITS,	 1, 1,	TIFF_SBYTE,	FIELD_CUSTOM,
+      FALSE,	FALSE,	"XClipPathUnits" },
+    { TIFFTAG_YCLIPPATHUNITS,	 1, 1,	TIFF_SLONG,	FIELD_CUSTOM,
+      FALSE,	FALSE,	"YClipPathUnits" },
+    { TIFFTAG_YCLIPPATHUNITS,	 1, 1,	TIFF_SSHORT,	FIELD_CUSTOM,
+      FALSE,	FALSE,	"YClipPathUnits" },
+    { TIFFTAG_YCLIPPATHUNITS,	 1, 1,	TIFF_SBYTE,	FIELD_CUSTOM,
+      FALSE,	FALSE,	"YClipPathUnits" },
     { TIFFTAG_YCBCRCOEFFICIENTS, 3, 3, TIFF_RATIONAL,	FIELD_YCBCRCOEFFICIENTS,
       FALSE,	FALSE,	"YCbCrCoefficients" },
     { TIFFTAG_YCBCRSUBSAMPLING,	 2, 2, TIFF_SHORT,	FIELD_YCBCRSUBSAMPLING,
@@ -228,21 +240,21 @@ const TIFFFieldInfo tiffFieldInfo[] = {
       FALSE,	FALSE,	"TileDepth" },
 /* end SGI tags */
 /* begin Pixar tags */
-    { TIFFTAG_PIXAR_IMAGEFULLWIDTH,  1, 1, TIFF_LONG,	FIELD_IMAGEFULLWIDTH,
+    { TIFFTAG_PIXAR_IMAGEFULLWIDTH,  1, 1, TIFF_LONG,	FIELD_CUSTOM,
       TRUE,	FALSE,	"ImageFullWidth" },
-    { TIFFTAG_PIXAR_IMAGEFULLLENGTH, 1, 1, TIFF_LONG,	FIELD_IMAGEFULLLENGTH,
+    { TIFFTAG_PIXAR_IMAGEFULLLENGTH, 1, 1, TIFF_LONG,	FIELD_CUSTOM,
       TRUE,	FALSE,	"ImageFullLength" },
-    { TIFFTAG_PIXAR_TEXTUREFORMAT,  -1, -1, TIFF_ASCII,	FIELD_TEXTUREFORMAT,
+    { TIFFTAG_PIXAR_TEXTUREFORMAT,  -1, -1, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"TextureFormat" },
-    { TIFFTAG_PIXAR_WRAPMODES,	    -1, -1, TIFF_ASCII,	FIELD_WRAPMODES,
+    { TIFFTAG_PIXAR_WRAPMODES,	    -1, -1, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"TextureWrapModes" },
-    { TIFFTAG_PIXAR_FOVCOT,	     1, 1, TIFF_FLOAT,	FIELD_FOVCOT,
-      TRUE,	FALSE,	"FieldOfViewCotan" },
+    { TIFFTAG_PIXAR_FOVCOT,	     1, 1, TIFF_FLOAT,	FIELD_CUSTOM,
+      TRUE,	FALSE,	"FieldOfViewCotangent" },
     { TIFFTAG_PIXAR_MATRIX_WORLDTOSCREEN,	16,16,	TIFF_FLOAT,
-      FIELD_MATRIX_WORLDTOSCREEN,	TRUE,	FALSE,	"MatrixWorldToScreen" },
+      FIELD_CUSTOM,	TRUE,	FALSE,	"MatrixWorldToScreen" },
     { TIFFTAG_PIXAR_MATRIX_WORLDTOCAMERA,	16,16,	TIFF_FLOAT,
-       FIELD_MATRIX_WORLDTOCAMERA,	TRUE,	FALSE,	"MatrixWorldToCamera" },
-    { TIFFTAG_COPYRIGHT,	-1, -1, TIFF_ASCII,	FIELD_COPYRIGHT,
+       FIELD_CUSTOM,	TRUE,	FALSE,	"MatrixWorldToCamera" },
+    { TIFFTAG_COPYRIGHT,	-1, -1, TIFF_ASCII,	FIELD_CUSTOM,
       TRUE,	FALSE,	"Copyright" },
 /* end Pixar tags */
     { TIFFTAG_RICHTIFFIPTC, -1, -3, TIFF_LONG,   FIELD_RICHTIFFIPTC, 
@@ -392,10 +404,9 @@ _TIFFSetupFieldInfo(TIFF* tif)
 		{
 			TIFFFieldInfo *fld = tif->tif_fieldinfo[i];
 			if (fld->field_bit == FIELD_CUSTOM && 
-				strncmp("Tag ", fld->field_name, 4) == 0) 
-				{
-				_TIFFfree(fld->field_name);
-				_TIFFfree(fld);
+				strncmp("Tag ", fld->field_name, 4) == 0) {
+					_TIFFfree(fld->field_name);
+					_TIFFfree(fld);
 				}
 		}   
       
@@ -448,8 +459,8 @@ _TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], int n)
 		tp[i] = (TIFFFieldInfo*) &info[i];	/* XXX */
 
         /* Sort the field info by tag number */
-        qsort(tif->tif_fieldinfo, (size_t) (tif->tif_nfields += n),
-              sizeof (TIFFFieldInfo*), tagCompare);
+        qsort(tif->tif_fieldinfo, tif->tif_nfields += n,
+	      sizeof (TIFFFieldInfo*), tagCompare);
 }
 
 void
@@ -515,11 +526,11 @@ int
 _TIFFDataSize(TIFFDataType type)
 {
 	switch (type) {
+		case TIFF_BYTE:
+		case TIFF_SBYTE:
 		case TIFF_ASCII:
 		case TIFF_UNDEFINED:
 		    return 1;
-		case TIFF_BYTE:
-		case TIFF_SBYTE:
 		case TIFF_SHORT:
 		case TIFF_SSHORT:
 		    return 2;
@@ -602,11 +613,11 @@ _TIFFFindFieldInfoByName(TIFF* tif, const char *field_name, TIFFDataType dt)
             TIFFFieldInfo key = {0, 0, 0, 0, 0, 0, 0, 0};
             key.field_name = (char *)field_name;
             key.field_type = dt;
-            return((const TIFFFieldInfo *) lfind(&key, 
-						   tif->tif_fieldinfo, 
-						   &tif->tif_nfields,
-						   sizeof(TIFFFieldInfo), 
-						   tagNameCompare));
+            return((const TIFFFieldInfo *) lfind(&key,
+						 tif->tif_fieldinfo, 
+						 &tif->tif_nfields,
+						 sizeof(TIFFFieldInfo),
+						 tagNameCompare));
         } else
 		for (i = 0, n = tif->tif_nfields; i < n; i++) {
 			const TIFFFieldInfo* fip = tif->tif_fieldinfo[i];
