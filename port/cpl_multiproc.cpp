@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/08/01 18:58:42  fwarmerdam
+ * Fixed problem with _NP mutex initializer.
+ *
  * Revision 1.13  2005/07/31 02:14:49  fwarmerdam
  * improved recursive mutex creation for pthreads, works on macosx now
  *
@@ -674,7 +677,8 @@ void *CPLCreateMutex()
         pthread_mutex_init( hMutex, &attr );
     }
 #elif defined(PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP)
-    *hMutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+    pthread_mutex_t tmp_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+    *hMutex = tmp_mutex;
 #else
 #error "Recursive mutexes apparently unsupported, configure --without-threads" 
 #endif
