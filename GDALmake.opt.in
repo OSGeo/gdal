@@ -25,14 +25,14 @@ INSTALL_DATA	= 	$(GDAL_ROOT)/install-sh -c -m 0644
 INSTALL_DIR	= 	$(GDAL_ROOT)/install-sh -d
 
 #Flags to build optimized relese version
-CXX_OPTFLAGS =	@CXXFLAGS@ @THREAD_FLAG@
-C_OPTFLAGS =	@CFLAGS@ @THREAD_FLAG@
+CXX_OPTFLAGS =	@CXXFLAGS@
+C_OPTFLAGS =	@FOLIAGS@
 # Flags to build debug version
-CXX_DBGFLAGS =	-g -DDEBUG @THREAD_FLAG@
-C_DBGFLAGS =	-g -DDEBUG @THREAD_FLAG@
+CXX_DBGFLAGS =	-g -DDEBUG 
+C_DBGFLAGS =	-g -DDEBUG 
 # Flags to build profiling version
-CXX_PROFFLAGS =	-g3 -pg -DDEBUG @THREAD_FLAG@
-C_PROFFLAGS =	-g3 -pg -DDEBUG @THREAD_FLAG@
+CXX_PROFFLAGS =	-g3 -pg -DDEBUG 
+C_PROFFLAGS =	-g3 -pg -DDEBUG 
 
 LIBS	=	@LIBS@
 
