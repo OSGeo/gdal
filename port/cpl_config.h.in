@@ -151,6 +151,9 @@
 /* Define to 1, if you have LARGEFILE64_SOURCE */
 #undef VSI_NEED_LARGEFILE64_SOURCE
 
-/* Define to 1 if your processor stores words with the most significant byte
+/* Define to 1, if you want to use pthreads based multiprocessing support */
+#undef CPL_MULTIPROC_PTHREAD
+
+/* Define if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
 #undef WORDS_BIGENDIAN

@@ -141,7 +141,7 @@ AC_ARG_WITH(threads,
 
 if test "$with_threads" = "yes" ; then
 
-  AC_CHECK_LIB(pthread,pthread_create,THREAD_FLAG=-DCPL_MULTIPROC_PTHREAD,,,)
+  AC_CHECK_LIB(pthread,pthread_create,THREAD_FLAG=CPL_MULTIPROC_PTHREAD,,,)
 
   if test -n "$THREAD_FLAG" ; then
       THREAD_LIB="-lpthread"
@@ -149,7 +149,7 @@ if test "$with_threads" = "yes" ; then
 
 elif test -n "$with_threads" -a "$with_threads" != "no" ; then
 
-  THREAD_FLAG=-DCPL_MULTIPROC_PTHREAD
+  THREAD_FLAG=CPL_MULTIPROC_PTHREAD
   THREAD_LIB="$with_threads"  
 
   AC_CHECKING(whether we should include thread/mutex support...)
@@ -160,7 +160,9 @@ else
   AC_MSG_RESULT([        thread safe support disabled.])
 fi
 
-AC_SUBST(THREAD_FLAG,$THREAD_FLAG)
+if test "$THREAD_FLAG" = "CPL_MULTIPROC_PTHREAD" ; then
+  AC_DEFINE_UNQUOTED(CPL_MULTIPROC_PTHREAD,1, [Define if you want to use pthreads based multiprocessing support])
+fi
 
 LIBS="$THREAD_LIB $LIBS" 
 
