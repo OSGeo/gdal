@@ -73,15 +73,17 @@ extern "C" IOM_BASKET iom_compileIli(int filec,char *filename[])
 	cmdline+=" --without-warnings -oIOM";
         int i;
 	for(i=0;i<filec;i++){
-		cmdline+=" ";
+		cmdline+=" \"";
 		cmdline+=filename[i];
+		cmdline+="\"";
 	}
 	if(i==0){
 		iom_issueerr("no ili-file given");
 		return 0;
 	}
-	cmdline+=" >";
+	cmdline+=" >\"";
 	cmdline+=ili2cout;
+	cmdline+="\"";
 	//std::cerr << cmdline << std::endl;
 	system(cmdline.c_str());
 	// read xtf of models
