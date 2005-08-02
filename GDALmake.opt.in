@@ -26,7 +26,7 @@ INSTALL_DIR	= 	$(GDAL_ROOT)/install-sh -d
 
 #Flags to build optimized relese version
 CXX_OPTFLAGS =	@CXXFLAGS@
-C_OPTFLAGS =	@FOLIAGS@
+C_OPTFLAGS =	@CFLAGS@
 # Flags to build debug version
 CXX_DBGFLAGS =	-g -DDEBUG 
 C_DBGFLAGS =	-g -DDEBUG 
