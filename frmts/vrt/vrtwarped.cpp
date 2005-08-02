@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/08/02 22:21:47  fwarmerdam
+ * fixed a whopper of a memory leak in ProcessBlock
+ *
  * Revision 1.11  2005/05/23 06:58:46  fwarmerdam
  * updated to locked blockref api
  *
@@ -867,6 +870,8 @@ CPLErr VRTWarpedDataset::ProcessBlock( int iBlockX, int iBlockY )
 
         poBlock->DropLock();
     }
+
+    VSIFree( pabyDstBuffer );
     
     return CE_None;
 }
