@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/08/02 20:17:26  fwarmerdam
+ * pass attribute filter to sublayer
+ *
  * Revision 1.13  2005/07/23 13:15:45  fwarmerdam
  * Fixed problem with size of filter string for spatial query.
  *
@@ -72,6 +75,7 @@
 #include "cpl_conv.h"
 #include "ogr_vrt.h"
 #include "cpl_string.h"
+#include <string>
 
 CPL_CVSID("$Id$");
 
@@ -103,7 +107,6 @@ OGRVRTLayer::OGRVRTLayer()
 
 {
     poFeatureDefn = NULL;
-    pszQuery = NULL;
     poSrcLayer = NULL;
     poSRS = NULL;
 
@@ -111,7 +114,8 @@ OGRVRTLayer::OGRVRTLayer()
 
     eGeometryType = VGS_Direct;
     iGeomField = iGeomXField = iGeomYField = iGeomZField = -1;
-    
+
+    pszAttrFilter = NULL;
     panSrcField = NULL;
     pabDirectCopy = NULL;
 
@@ -439,6 +443,7 @@ void OGRVRTLayer::ResetSourceReading()
 /* -------------------------------------------------------------------- */
 /*      Do we want to let source layer do spatial restriction?          */
 /* -------------------------------------------------------------------- */
+    char *pszFilter = NULL;
     if( m_poFilterGeom && m_bFilterIsEnvelope 
         && eGeometryType == VGS_PointFromColumns )
     {
@@ -446,7 +451,7 @@ void OGRVRTLayer::ResetSourceReading()
 
         pszXField = poSrcLayer->GetLayerDefn()->GetFieldDefn(iGeomXField)->GetNameRef();
         pszYField = poSrcLayer->GetLayerDefn()->GetFieldDefn(iGeomYField)->GetNameRef();
-        char *pszFilter = (char *) 
+        pszFilter = (char *) 
             CPLMalloc(2*strlen(pszXField)+2*strlen(pszYField) + 100);
 
         sprintf( pszFilter, 
@@ -456,12 +461,37 @@ void OGRVRTLayer::ResetSourceReading()
                  pszYField, m_sFilterEnvelope.MinY,
                  pszYField, m_sFilterEnvelope.MaxY );
 
-        poSrcLayer->SetAttributeFilter( pszFilter );
-        CPLFree( pszFilter );
     }
     else
         poSrcLayer->SetAttributeFilter( NULL );
 
+/* -------------------------------------------------------------------- */
+/*      Install spatial + attr filter query on source layer.            */
+/* -------------------------------------------------------------------- */
+    if( pszFilter == NULL && pszAttrFilter == NULL )
+        poSrcLayer->SetAttributeFilter( NULL );
+
+    else if( pszFilter != NULL && pszAttrFilter == NULL )
+        poSrcLayer->SetAttributeFilter( pszFilter );
+
+    else if( pszFilter == NULL && pszAttrFilter != NULL )
+        poSrcLayer->SetAttributeFilter( pszAttrFilter );
+
+    else
+    {
+        std::string osMerged = pszFilter;
+
+        osMerged += " AND ";
+        osMerged += pszAttrFilter;
+
+        poSrcLayer->SetAttributeFilter( osMerged.c_str() );
+    }
+
+    CPLFree( pszFilter );
+
+/* -------------------------------------------------------------------- */
+/*      Clear spatial filter (to be safe) and reset reading.            */
+/* -------------------------------------------------------------------- */
     poSrcLayer->SetSpatialFilter( NULL );
     poSrcLayer->ResetReading();
     bNeedReset = FALSE;
@@ -645,6 +675,28 @@ OGRFeature *OGRVRTLayer::GetFeature( long nFeatureId )
     delete poSrcFeature;
 
     return poFeature;
+}
+
+/************************************************************************/
+/*                         SetAttributeFilter()                         */
+/************************************************************************/
+
+OGRErr OGRVRTLayer::SetAttributeFilter( const char *pszNewQuery )
+
+{
+    CPLFree( pszAttrFilter );
+    if( pszNewQuery == NULL || strlen(pszNewQuery) == 0 )
+    {
+        pszAttrFilter = NULL;
+    }
+    else
+    {
+        CPLFree( pszAttrFilter );
+        pszAttrFilter = CPLStrdup( pszNewQuery );
+    }
+
+    ResetReading();
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

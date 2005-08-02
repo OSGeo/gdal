@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/08/02 20:17:26  fwarmerdam
+ * pass attribute filter to sublayer
+ *
  * Revision 1.4  2005/05/16 20:09:46  fwarmerdam
  * added spatial query on x/y columns
  *
@@ -73,7 +76,7 @@ class OGRVRTLayer : public OGRLayer
     // Layer spatial reference system, and srid.
     OGRSpatialReference *poSRS;
 
-    char                *pszQuery;
+    char                *pszAttrFilter;
 
     int                 iFIDField; // -1 means pass through. 
 
@@ -111,7 +114,7 @@ class OGRVRTLayer : public OGRLayer
 
     virtual int         GetFeatureCount( int );
 
-//    virtual OGRErr      SetAttributeFilter( const char * );
+    virtual OGRErr      SetAttributeFilter( const char * );
 
     virtual int         TestCapability( const char * );
 };
