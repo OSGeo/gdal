@@ -44,6 +44,7 @@
 #undef HAVE_LIBDBMALLOC
 #undef WORDS_BIGENDIAN
 
+#define HAVE_SEARCH_H
 
 /* The size of a `int', as computed by sizeof. */
 #define SIZEOF_INT 4
