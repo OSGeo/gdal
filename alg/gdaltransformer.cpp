@@ -30,6 +30,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/08/02 22:21:06  fwarmerdam
+ * Approx transformer can now own and cleanup it's subtransformer.
+ * GenImg transformer now deserialized with property GTI signature.
+ *
  * Revision 1.22  2005/04/11 17:36:53  fwarmerdam
  * added GDALDestroyTransformer
  *
@@ -975,6 +979,12 @@ void *GDALDeserializeGenImgProjTransformer( CPLXMLNode *psTree )
     psInfo = (GDALGenImgProjTransformInfo *) 
         CPLCalloc(sizeof(GDALGenImgProjTransformInfo),1);
 
+    strcpy( psInfo->sTI.szSignature, "GTI" );
+    psInfo->sTI.pszClassName = "GDALGenImgProjTransformer";
+    psInfo->sTI.pfnTransform = GDALGenImgProjTransform;
+    psInfo->sTI.pfnCleanup = GDALDestroyGenImgProjTransformer;
+    psInfo->sTI.pfnSerialize = GDALSerializeGenImgProjTransformer;
+
 /* -------------------------------------------------------------------- */
 /*      SrcGeotransform                                                 */
 /* -------------------------------------------------------------------- */
@@ -1318,6 +1328,8 @@ typedef struct
     GDALTransformerFunc pfnBaseTransformer;
     void             *pBaseCBData;
     double	      dfMaxError;
+
+    int               bOwnSubtransformer;
 } ApproxTransformInfo;
 
 /************************************************************************/
@@ -1408,6 +1420,7 @@ void *GDALCreateApproxTransformer( GDALTransformerFunc pfnBaseTransformer,
     psATInfo->pfnBaseTransformer = pfnBaseTransformer;
     psATInfo->pBaseCBData = pBaseTransformArg;
     psATInfo->dfMaxError = dfMaxError;
+    psATInfo->bOwnSubtransformer = FALSE;
 
     strcpy( psATInfo->sTI.szSignature, "GTI" );
     psATInfo->sTI.pszClassName = "GDALApproxTransformer";
@@ -1416,6 +1429,18 @@ void *GDALCreateApproxTransformer( GDALTransformerFunc pfnBaseTransformer,
     psATInfo->sTI.pfnSerialize = GDALSerializeApproxTransformer;
 
     return psATInfo;
+}
+
+/************************************************************************/
+/*              GDALApproxTransformerOwnsSubtransformer()               */
+/************************************************************************/
+
+void GDALApproxTransformerOwnsSubtransformer( void *pCBData, int bOwnFlag )
+
+{
+    ApproxTransformInfo	*psATInfo = (ApproxTransformInfo *) pCBData;
+
+    psATInfo->bOwnSubtransformer = bOwnFlag;
 }
 
 /************************************************************************/
@@ -1434,6 +1459,11 @@ void *GDALCreateApproxTransformer( GDALTransformerFunc pfnBaseTransformer,
 void GDALDestroyApproxTransformer( void * pCBData )
 
 {
+    ApproxTransformInfo	*psATInfo = (ApproxTransformInfo *) pCBData;
+
+    if( psATInfo->bOwnSubtransformer ) 
+        GDALDestroyTransformer( psATInfo->pBaseCBData );
+
     CPLFree( pCBData );
 }
 
@@ -1568,14 +1598,20 @@ GDALDeserializeApproxTransformer( CPLXMLNode *psTree )
         GDALDeserializeTransformer( psContainer->psChild, 
                                     &pfnBaseTransform, 
                                     &pBaseCBData );
+        
     }
     
     if( pfnBaseTransform == NULL )
         return NULL;
     else
-        return GDALCreateApproxTransformer( pfnBaseTransform,
-                                            pBaseCBData, 
-                                            dfMaxError );
+    {
+        void *pApproxCBData = GDALCreateApproxTransformer( pfnBaseTransform,
+                                                           pBaseCBData, 
+                                                           dfMaxError );
+        GDALApproxTransformerOwnsSubtransformer( pApproxCBData, TRUE );
+
+        return pApproxCBData;
+    }
 }
 
 /************************************************************************/
