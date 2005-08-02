@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/08/02 22:19:41  fwarmerdam
+ * approx transformer now can own its subtransformer
+ *
  * Revision 1.21  2005/04/11 17:36:53  fwarmerdam
  * added GDALDestroyTransformer
  *
@@ -205,6 +208,8 @@ int CPL_DLL GDALRPCTransform(
 void CPL_DLL *
 GDALCreateApproxTransformer( GDALTransformerFunc pfnRawTransformer, 
                              void *pRawTransformerArg, double dfMaxError );
+void CPL_DLL GDALApproxTransformerOwnsSubtransformer( void *pCBData, 
+                                                      int bOwnFlag );
 void CPL_DLL GDALDestroyApproxTransformer( void *pApproxArg );
 int  CPL_DLL GDALApproxTransform(
     void *pTransformArg, int bDstToSrc, int nPointCount,
