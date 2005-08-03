@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/08/03 21:13:51  osemykin
+ * Changed PostGIS version representation
+ *
  * Revision 1.18  2005/07/20 01:46:04  fwarmerdam
  * postgis 8.0 upgrades
  *
@@ -96,7 +99,7 @@
 /************************************************************************/
 
 class OGRPGDataSource;
-    
+
 class OGRPGLayer : public OGRLayer
 {
   protected:
@@ -142,7 +145,7 @@ class OGRPGLayer : public OGRLayer
     virtual OGRFeature *GetNextFeature();
 
     virtual OGRFeature *GetFeature( long nFeatureId );
-    
+
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
     virtual OGRErr      StartTransaction();
@@ -177,7 +180,7 @@ class OGRPGTableLayer : public OGRPGLayer
 
     int                 bLaunderColumnNames;
     int                 bPreservePrecision;
-    
+
   public:
                         OGRPGTableLayer( OGRPGDataSource *,
                                          const char * pszName,
@@ -195,20 +198,20 @@ class OGRPGTableLayer : public OGRPGLayer
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
     virtual OGRErr      DeleteFeature( long nFID );
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
-    
+
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
-    
+
     virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int         TestCapability( const char * );
-	
+
 	virtual OGRErr		GetExtent( OGREnvelope *psExtent, int bForce );
-	
+
     // follow methods are not base class overrides
-    void                SetLaunderFlag( int bFlag ) 
+    void                SetLaunderFlag( int bFlag )
                                 { bLaunderColumnNames = bFlag; }
-    void                SetPrecisionFlag( int bFlag ) 
+    void                SetPrecisionFlag( int bFlag )
                                 { bPreservePrecision = bFlag; }
 };
 
@@ -246,9 +249,16 @@ class OGRPGResultLayer : public OGRPGLayer
 
 class OGRPGDataSource : public OGRDataSource
 {
+    typedef struct
+    {
+        int nMajor;
+        int nMinor;
+        int nRelease;
+    } PGver;
+
     OGRPGLayer        **papoLayers;
     int                 nLayers;
-    
+
     char               *pszName;
     char               *pszDBName;
 
@@ -264,19 +274,19 @@ class OGRPGDataSource : public OGRDataSource
     Oid                 nGeometryOID;
 
     // We maintain a list of known SRID to reduce the number of trips to
-    // the database to get SRSes. 
+    // the database to get SRSes.
     int                 nKnownSRID;
-    int                *panSRID;
+    int                 *panSRID;
     OGRSpatialReference **papoSRS;
 
   public:
-    double              dfPostGISVersion;
+    PGver               sPostGISVersion;
 
   public:
                         OGRPGDataSource();
                         ~OGRPGDataSource();
 
-    PGconn             *GetPGConn() { return hPGConn; }
+    PGconn              *GetPGConn() { return hPGConn; }
 
     int                 FetchSRSId( OGRSpatialReference * poSRS );
     OGRSpatialReference *FetchSRS( int nSRSId );
@@ -289,7 +299,7 @@ class OGRPGDataSource : public OGRDataSource
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
 
-    virtual OGRLayer    *CreateLayer( const char *, 
+    virtual OGRLayer    *CreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
@@ -299,7 +309,7 @@ class OGRPGDataSource : public OGRDataSource
     OGRErr              SoftStartTransaction();
     OGRErr              SoftCommit();
     OGRErr              SoftRollback();
-    
+
     OGRErr              FlushSoftTransaction();
 
     Oid                 GetGeometryOID() { return nGeometryOID; }
@@ -320,13 +330,13 @@ class OGRPGDriver : public OGRSFDriver
 {
   public:
                 ~OGRPGDriver();
-                
+
     const char *GetName();
     OGRDataSource *Open( const char *, int );
 
     virtual OGRDataSource *CreateDataSource( const char *pszName,
                                              char ** = NULL );
-    
+
     int                 TestCapability( const char * );
 };
 
