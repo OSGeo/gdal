@@ -135,6 +135,7 @@ layer.  The operator is one of
 <b>&lt;=</b>, 
 <b>&gt;=</b>, 
 <b>LIKE</b> and 
+<b>ILIKE</b> and 
 <b>IN</b>. 
 
 Most of the operators are self explanitory, but is is worth nothing that <b>
