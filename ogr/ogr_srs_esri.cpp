@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2005/08/03 16:11:18  fwarmerdam
+ * Added additional morphToESRI() rules to:
+ *  o Change NAD27/NAD83/WGS84 GEOGCSes to GCS_ names used by ESRI.
+ *  o Change the word Unnamed to Unknown in names.
+ *  o Set exact ESRI names for UTM PROJCSes (for WGS84, NAD27 and NAD83).
+ *
  * Revision 1.39  2005/05/04 14:29:20  fwarmerdam
  * convert Standard_Parallel_1 in ESRI Mercator to Latitude_Of_Origin.
  *
@@ -987,6 +993,26 @@ OGRErr OGRSpatialReference::morphToESRI()
     }
 
 /* -------------------------------------------------------------------- */
+/*      Force Unnamed to Unknown for most common locations.             */
+/* -------------------------------------------------------------------- */
+    static char *apszUnknownMapping[] = { 
+        "Unknown", "Unnamed",
+        NULL, NULL 
+    };
+
+    GetRoot()->applyRemapper( "PROJCS", 
+                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
+    GetRoot()->applyRemapper( "GEOGCS", 
+                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
+    GetRoot()->applyRemapper( "DATUM", 
+                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
+    GetRoot()->applyRemapper( "SPHEROID", 
+                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
+    GetRoot()->applyRemapper( "PRIMEM", 
+                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
+    
+
+/* -------------------------------------------------------------------- */
 /*      Translate PROJECTION keywords that are misnamed.                */
 /* -------------------------------------------------------------------- */
     GetRoot()->applyRemapper( "PROJECTION", 
@@ -999,6 +1025,65 @@ OGRErr OGRSpatialReference::morphToESRI()
 
     GetRoot()->applyRemapper( "DATUM", 
                               papszDatumMapping+2, papszDatumMapping+1, 3 );
+
+/* -------------------------------------------------------------------- */
+/*      Very specific handling for some well known geographic           */
+/*      coordinate systems.                                             */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode *poGeogCS = GetAttrNode( "GEOGCS" );
+    if( poGeogCS != NULL )
+    {
+        const char *pszGeogCSName = poGeogCS->GetChild(0)->GetValue();
+        const char *pszAuthName = GetAuthorityName("GEOGCS");
+        const char *pszUTMPrefix = NULL;
+        int nGCSCode = -1;
+        
+        if( pszAuthName != NULL && EQUAL(pszAuthName,"EPSG") )
+            nGCSCode = atoi(GetAuthorityCode("GEOGCS"));
+
+        if( nGCSCode == 4326 
+            || EQUAL(pszGeogCSName,"WGS84") 
+            || EQUAL(pszGeogCSName,"WGS 84") )
+        {
+            poGeogCS->GetChild(0)->SetValue( "GCS_WGS_1984" );
+            pszUTMPrefix = "WGS_1984";
+        }
+        else if( nGCSCode == 4267
+                 || EQUAL(pszGeogCSName,"NAD27") 
+                 || EQUAL(pszGeogCSName,"NAD 27") )
+        {
+            poGeogCS->GetChild(0)->SetValue( "GCS_North_American_1927" );
+            pszUTMPrefix = "NAD_1927";
+        }
+        else if( nGCSCode == 4269
+                 || EQUAL(pszGeogCSName,"NAD83") 
+                 || EQUAL(pszGeogCSName,"NAD 83") )
+        {
+            poGeogCS->GetChild(0)->SetValue( "GCS_North_American_1983" );
+            pszUTMPrefix = "NAD_1983";
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Prepare very specific PROJCS names for UTM coordinate           */
+/*      systems.                                                        */
+/* -------------------------------------------------------------------- */
+        int bNorth, nZone;
+
+        nZone = GetUTMZone( &bNorth );
+        if( nZone > 0 && pszUTMPrefix != NULL )
+        {
+            char szUTMName[128];
+
+            if( bNorth )
+                sprintf( szUTMName, "%s_UTM_Zone_%dN", pszUTMPrefix, nZone );
+            else
+                sprintf( szUTMName, "%s_UTM_Zone_%dS", pszUTMPrefix, nZone );
+            
+            OGR_SRSNode *poProjCS = GetAttrNode( "PROJCS" );
+            if( poProjCS != NULL )
+                poProjCS->GetChild(0)->SetValue( szUTMName );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Translate UNIT keywords that are misnamed, or even the wrong    */
