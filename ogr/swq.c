@@ -19,6 +19,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/08/03 13:31:36  fwarmerdam
+ * Added ILIKE, but LIKE and ILIKE are both still case insensitive.
+ *
  * Revision 1.25  2005/07/13 18:02:58  mbrudka
  * Removed serious bug in sql_realloc which sometimes corrupted heap.
  *
@@ -388,7 +391,8 @@ static swq_op swq_identify_op( char **tokens, int *tokens_consumed )
     if( strcasecmp(token,"NOT") == 0 )
     {
         if( tokens[*tokens_consumed+1] != NULL
-            && strcasecmp(tokens[*tokens_consumed+1],"LIKE") == 0 )
+            && (strcasecmp(tokens[*tokens_consumed+1],"LIKE") == 0 
+                || strcasecmp(tokens[*tokens_consumed+1],"ILIKE") == 0) )
         {
             *tokens_consumed += 1;
             return SWQ_NOTLIKE;
@@ -425,6 +429,9 @@ static swq_op swq_identify_op( char **tokens, int *tokens_consumed )
         return SWQ_GT;
 
     if( strcasecmp(token,"LIKE") == 0 )
+        return SWQ_LIKE;
+
+    if( strcasecmp(token,"ILIKE") == 0 )
         return SWQ_LIKE;
 
     if( strcasecmp(token,"IN") == 0 )
