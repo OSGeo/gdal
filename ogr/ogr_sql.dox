@@ -141,7 +141,7 @@ layer.  The operator is one of
 Most of the operators are self explanitory, but is is worth nothing that <b>
 !=</b> is the same as <b>&lt;&gt;</b>, the less than and greater than 
 operators do not currently work on string values, and string equality is
-case insensitive.
+case insensitive.  Both the LIKE and ILIKE operators are case insensitive.
 
 The value argument to the <b>LIKE</b> operator is a pattern against which
 the value string is matched.  In this pattern percent (%) matches any number of
