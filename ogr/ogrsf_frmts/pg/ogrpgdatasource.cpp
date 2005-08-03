@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/08/03 21:22:29  osemykin
+ * Changed PostGIS version representation
+ * For PostGIS database layers loads from geometry_columns table
+ *
  * Revision 1.31  2005/07/20 01:45:56  fwarmerdam
  * fetch PostGIS version
  *
@@ -168,7 +172,7 @@ OGRPGDataSource::~OGRPGDataSource()
 
     for( i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    
+
     CPLFree( papoLayers );
 
     if( hPGConn != NULL )
@@ -199,20 +203,20 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     if( !EQUALN(pszNewName,"PG:",3) )
     {
         if( !bTestOpen )
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "%s does not conform to PostgreSQL naming convention,"
                       " PG:*\n" );
         return FALSE;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
     hPGConn = PQconnectdb( pszNewName + 3 );
     if( hPGConn == NULL || PQstatus(hPGConn) == CONNECTION_BAD )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "PGconnectcb failed.\n%s", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "PGconnectcb failed.\n%s",
                   PQerrorMessage(hPGConn) );
         PQfinish(hPGConn);
         hPGConn = NULL;
@@ -220,7 +224,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     pszName = CPLStrdup( pszNewName );
-    
+
     bDSUpdate = bUpdate;
 
 /* -------------------------------------------------------------------- */
@@ -240,7 +244,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
         for( i = 0; pszDBName[i] != '\0'; i++ )
         {
-            if( pszDBName[i] == ' ' )                                   
+            if( pszDBName[i] == ' ' )
             {
                 pszDBName[i] = '\0';
                 break;
@@ -251,7 +255,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         pszDBName = CPLStrdup( getenv("USER") );
     else
         pszDBName = CPLStrdup( "unknown_dbname" );
-        
+
     CPLDebug( "OGR_PG", "DBName=\"%s\"", pszDBName );
 
 /* -------------------------------------------------------------------- */
@@ -260,18 +264,18 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /*      so we will get the value of the gist indexes.                   */
 /* -------------------------------------------------------------------- */
     PGresult            *hResult;
-    
+
     hResult = PQexec(hPGConn, "BEGIN");
 
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
     {
         PQclear( hResult );
 
-        hResult = PQexec(hPGConn, 
+        hResult = PQexec(hPGConn,
                          "SELECT oid FROM pg_type WHERE typname = 'geometry'" );
     }
 
-    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK 
+    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
         && PQntuples(hResult) > 0 )
     {
         bHavePostGIS = TRUE;
@@ -287,15 +291,51 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     PQclear( hResult );
 
     // find out postgis version.
-    dfPostGISVersion = 0.0;
+    //dfPostGISVersion = 0.0;
+    sPostGISVersion.nMajor = -1;
+    sPostGISVersion.nMinor = -1;
+    sPostGISVersion.nRelease = -1;
+
     if( bHavePostGIS )
     {
-        hResult = PQexec(hPGConn, "SELECT postgis_version()" );
-        if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK 
+        hResult = PQexec(hPGConn, "SELECT postgis_lib_version()" );
+        if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
             && PQntuples(hResult) > 0 )
         {
-            dfPostGISVersion = atof(PQgetvalue(hResult,0,0));
-            CPLDebug( "OGR_PG", "POSTGIS_VERSION=%s", 
+            char * pszVer = PQgetvalue(hResult,0,0);
+            char * ptr = pszVer;
+            char szNum[25];
+            int iLen;
+
+            // get Major number
+            while (*ptr && *ptr != '.') ptr++;
+            iLen = ptr-pszVer;
+            if ( iLen > sizeof(szNum) - 1) iLen = sizeof(szNum) - 1;
+            strncpy(szNum,pszVer,iLen);
+            szNum[iLen] = '\0';
+            sPostGISVersion.nMajor = atoi(szNum);
+
+            pszVer = ++ptr;
+
+            // get Minor number
+            while (*ptr && *ptr != '.') ptr++;
+            iLen = ptr-pszVer;
+            if ( iLen > sizeof(szNum) - 1) iLen = sizeof(szNum) - 1;
+            strncpy(szNum,pszVer,iLen);
+            szNum[iLen] = '\0';
+            sPostGISVersion.nMinor = atoi(szNum);
+
+            pszVer = ++ptr;
+
+            // get Release number
+            while (*ptr && *ptr != '.') ptr++;
+            iLen = ptr-pszVer;
+            if ( iLen > sizeof(szNum) - 1) iLen = sizeof(szNum) - 1;
+            strncpy(szNum,pszVer,iLen);
+            szNum[iLen] = '\0';
+            sPostGISVersion.nRelease = atoi(szNum);
+
+            CPLDebug( "OGR_PG", "POSTGIS_LIB_VERSION=%s",
                       PQgetvalue(hResult,0,0));
         }
         PQclear(hResult);
@@ -313,10 +353,17 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     {
         PQclear( hResult );
 
-        hResult = PQexec(hPGConn, 
-                         "DECLARE mycursor CURSOR for "
-                         "SELECT relname FROM pg_class "
-                         "WHERE (relkind in ('r','v') AND relname !~ '^pg')" );
+        if ( bHavePostGIS )
+            hResult = PQexec(hPGConn,
+                             "DECLARE mycursor CURSOR for "
+                             "SELECT c.relname FROM pg_class c, geometry_columns g "
+                             "WHERE (c.relkind in ('r','v') AND c.relname !~ '^pg' "
+                             "AND c.relname = g.f_table_name)" );
+        else
+            hResult = PQexec(hPGConn,
+                             "DECLARE mycursor CURSOR for "
+                             "SELECT relname FROM pg_class "
+                             "WHERE (relkind in ('r','v') AND relname !~ '^pg')" );
     }
 
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
@@ -327,7 +374,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
     if( !hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", PQerrorMessage(hPGConn) );
         return FALSE;
     }
@@ -346,7 +393,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             || EQUAL(pszTable,"geometry_columns") )
             continue;
 
-        papszTableNames = CSLAddString(papszTableNames, 
+        papszTableNames = CSLAddString(papszTableNames,
                                        PQgetvalue(hResult, iRecord, 0));
     }
 
@@ -364,7 +411,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Get the schema of the available tables.                         */
 /* -------------------------------------------------------------------- */
-    for( iRecord = 0; 
+    for( iRecord = 0;
          papszTableNames != NULL && papszTableNames[iRecord] != NULL;
          iRecord++ )
     {
@@ -372,7 +419,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     }
 
     CSLDestroy( papszTableNames );
-    
+
     return nLayers > 0 || bUpdate;
 }
 
@@ -397,7 +444,7 @@ int OGRPGDataSource::OpenTable( const char *pszNewName, int bUpdate,
     papoLayers = (OGRPGLayer **)
         CPLRealloc( papoLayers,  sizeof(OGRPGLayer *) * (nLayers+1) );
     papoLayers[nLayers++] = poLayer;
-    
+
     return TRUE;
 }
 
@@ -421,8 +468,8 @@ void OGRPGDataSource::DeleteLayer( const char *pszLayerName )
 
     if( iLayer == nLayers )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Attempt to delete layer '%s', but this layer is not known to OGR.", 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to delete layer '%s', but this layer is not known to OGR.",
                   pszLayerName );
         return;
     }
@@ -434,7 +481,7 @@ void OGRPGDataSource::DeleteLayer( const char *pszLayerName )
     CPLDebug( "OGR_PG", "DeleteLayer(%s)", pszLayerName );
 
     delete papoLayers[iLayer];
-    memmove( papoLayers + iLayer, papoLayers + iLayer + 1, 
+    memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
              sizeof(void *) * (nLayers - iLayer - 1) );
     nLayers--;
 
@@ -449,7 +496,7 @@ void OGRPGDataSource::DeleteLayer( const char *pszLayerName )
 
     if( bHavePostGIS )
     {
-        sprintf( szCommand, 
+        sprintf( szCommand,
                  "SELECT DropGeometryColumn('%s','%s','wkb_geometry')",
                  pszDBName, pszLayerName );
 
@@ -463,7 +510,7 @@ void OGRPGDataSource::DeleteLayer( const char *pszLayerName )
     CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
     hResult = PQexec( hPGConn, szCommand );
     PQclear( hResult );
-    
+
     hResult = PQexec(hPGConn, "COMMIT");
     PQclear( hResult );
 
@@ -474,7 +521,7 @@ void OGRPGDataSource::DeleteLayer( const char *pszLayerName )
     CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
     hResult = PQexec( hPGConn, szCommand );
     PQclear( hResult );
-    
+
     hResult = PQexec(hPGConn, "COMMIT");
     PQclear( hResult );
 }
@@ -522,7 +569,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
             else
             {
                 CPLFree( pszLayerName );
-                CPLError( CE_Failure, CPLE_AppDefined, 
+                CPLError( CE_Failure, CPLE_AppDefined,
                           "Layer %s already exists, CreateLayer failed.\n"
                           "Use the layer creation option OVERWRITE=YES to "
                           "replace it.",
@@ -571,21 +618,21 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     PQclear( hResult );
 
     if( !bHavePostGIS )
-        sprintf( szCommand, 
+        sprintf( szCommand,
                  "CREATE TABLE \"%s\" ( "
                  "   OGC_FID SERIAL, "
                  "   WKB_GEOMETRY %s )",
                  pszLayerName, pszGeomType );
     else
-        sprintf( szCommand, 
-                 "CREATE TABLE \"%s\" ( OGC_FID SERIAL )", 
+        sprintf( szCommand,
+                 "CREATE TABLE \"%s\" ( OGC_FID SERIAL )",
                  pszLayerName );
 
     CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
     hResult = PQexec(hPGConn, szCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s\n%s", szCommand, PQerrorMessage(hPGConn) );
 
         CPLFree( pszLayerName );
@@ -596,7 +643,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 
         return NULL;
     }
-    
+
     PQclear( hResult );
 
 /* -------------------------------------------------------------------- */
@@ -615,10 +662,10 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
          * table if things were not properly cleaned up before.  We make
          * an effort to clean out such cruft.
          */
-        sprintf( szCommand, 
-                 "DELETE FROM geometry_columns WHERE f_table_name = '%s'", 
+        sprintf( szCommand,
+                 "DELETE FROM geometry_columns WHERE f_table_name = '%s'",
                  pszLayerName );
-                 
+
         CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
         hResult = PQexec(hPGConn, szCommand);
         PQclear( hResult );
@@ -659,21 +706,21 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 
         }
 
-        sprintf( szCommand, 
+        sprintf( szCommand,
                  "select AddGeometryColumn('%s','%s','wkb_geometry',%d,'%s',%d)",
-                 pszDBName, pszLayerName, nSRSId, pszGeometryType, 
+                 pszDBName, pszLayerName, nSRSId, pszGeometryType,
                  nDimension );
 
         CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
         hResult = PQexec(hPGConn, szCommand);
 
-        if( !hResult 
+        if( !hResult
             || PQresultStatus(hResult) != PGRES_TUPLES_OK )
         {
-            CPLError( CE_Failure, CPLE_AppDefined, 
+            CPLError( CE_Failure, CPLE_AppDefined,
                       "AddGeometryColumn failed for layer %s, layer creation has failed.",
                       pszLayerName );
-            
+
             CPLFree( pszLayerName );
 
             PQclear( hResult );
@@ -706,7 +753,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 /* -------------------------------------------------------------------- */
     papoLayers = (OGRPGLayer **)
         CPLRealloc( papoLayers,  sizeof(OGRPGLayer *) * (nLayers+1) );
-    
+
     papoLayers[nLayers++] = poLayer;
 
     CPLFree( pszLayerName );
@@ -795,17 +842,17 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
     PGresult        *hResult;
     char            szCommand[1024];
     OGRSpatialReference *poSRS = NULL;
-        
+
     SoftStartTransaction();
 
-    sprintf( szCommand, 
+    sprintf( szCommand,
              "SELECT srtext FROM spatial_ref_sys "
-             "WHERE srid = %d", 
+             "WHERE srid = %d",
              nId );
     hResult = PQexec(hPGConn, szCommand );
 
-    if( hResult 
-        && PQresultStatus(hResult) == PGRES_TUPLES_OK 
+    if( hResult
+        && PQresultStatus(hResult) == PGRES_TUPLES_OK
         && PQntuples(hResult) == 1 )
     {
         char *pszWKT;
@@ -826,7 +873,7 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
 /*      Add to the cache.                                               */
 /* -------------------------------------------------------------------- */
     panSRID = (int *) CPLRealloc(panSRID,sizeof(int) * (nKnownSRID+1) );
-    papoSRS = (OGRSpatialReference **) 
+    papoSRS = (OGRSpatialReference **)
         CPLRealloc(papoSRS, sizeof(void*) * (nKnownSRID + 1) );
     panSRID[nKnownSRID] = nId;
     papoSRS[nKnownSRID] = poSRS;
@@ -857,7 +904,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
     if( poSRS->exportToWkt( &pszWKT ) != OGRERR_NONE )
         return -1;
-    
+
     CPLAssert( strlen(pszWKT) < sizeof(szCommand) - 500 );
 
 /* -------------------------------------------------------------------- */
@@ -865,19 +912,19 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
     hResult = PQexec(hPGConn, "BEGIN");
 
-    sprintf( szCommand, 
+    sprintf( szCommand,
              "SELECT srid FROM spatial_ref_sys WHERE srtext = '%s'",
              pszWKT );
     hResult = PQexec(hPGConn, szCommand );
-                     
+
 /* -------------------------------------------------------------------- */
 /*      We got it!  Return it.                                          */
 /* -------------------------------------------------------------------- */
-    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK 
+    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
         && PQntuples(hResult) > 0 )
     {
         nSRSId = atoi(PQgetvalue( hResult, 0, 0 ));
-        
+
         PQclear( hResult );
 
         hResult = PQexec(hPGConn, "COMMIT");
@@ -885,14 +932,14 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
         return nSRSId;
     }
-    
+
 /* -------------------------------------------------------------------- */
 /*      If the command actually failed, then the metadata table is      */
 /*      likely missing. Try defining it.                                */
 /* -------------------------------------------------------------------- */
     int         bTableMissing;
 
-    bTableMissing = 
+    bTableMissing =
         hResult == NULL || PQresultStatus(hResult) == PGRES_NONFATAL_ERROR;
 
     hResult = PQexec(hPGConn, "COMMIT");
@@ -919,14 +966,14 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     }
     else
         nSRSId = 1;
-    
+
 /* -------------------------------------------------------------------- */
 /*      Try adding the SRS to the SRS table.                            */
 /* -------------------------------------------------------------------- */
-    sprintf( szCommand, 
+    sprintf( szCommand,
              "INSERT INTO spatial_ref_sys (srid,srtext) VALUES (%d,'%s')",
              nSRSId, pszWKT );
-             
+
     hResult = PQexec(hPGConn, szCommand );
     PQclear( hResult );
 
@@ -1029,12 +1076,12 @@ OGRErr OGRPGDataSource::SoftRollback()
 
     PGresult            *hResult;
     PGconn              *hPGConn = GetPGConn();
-    
+
     hResult = PQexec(hPGConn, "ROLLBACK");
-    
+
     if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
         return OGRERR_FAILURE;
-    
+
     PQclear( hResult );
 
     return OGRERR_NONE;
@@ -1069,7 +1116,7 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 {
     if( poSpatialFilter != NULL )
     {
-        CPLDebug( "OGR_PG", 
+        CPLDebug( "OGR_PG",
           "Spatial filter ignored for now in OGRPGDataSource::ExecuteSQL()" );
     }
 
@@ -1077,8 +1124,8 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Use generic implementation for OGRSQL dialect.                  */
 /* -------------------------------------------------------------------- */
     if( pszDialect != NULL && EQUAL(pszDialect,"OGRSQL") )
-        return OGRDataSource::ExecuteSQL( pszSQLCommand, 
-                                          poSpatialFilter, 
+        return OGRDataSource::ExecuteSQL( pszSQLCommand,
+                                          poSpatialFilter,
                                           pszDialect );
 
 /* -------------------------------------------------------------------- */
@@ -1099,7 +1146,7 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Execute the statement.                                          */
 /* -------------------------------------------------------------------- */
     PGresult            *hResult = NULL;
-    
+
     FlushSoftTransaction();
 
     if( SoftStartTransaction() == OGRERR_NONE  )
@@ -1114,24 +1161,24 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      layer for it.                                                   */
 /* -------------------------------------------------------------------- */
 
-    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK 
+    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
         && PQntuples(hResult) > 0 )
     {
         OGRPGResultLayer *poLayer = NULL;
 
         poLayer = new OGRPGResultLayer( this, pszSQLCommand, hResult );
-        
+
         return poLayer;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Generate an error report if an error occured.                   */
 /* -------------------------------------------------------------------- */
-    if( hResult && 
+    if( hResult &&
         (PQresultStatus(hResult) == PGRES_NONFATAL_ERROR
          || PQresultStatus(hResult) == PGRES_FATAL_ERROR ) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", PQresultErrorMessage( hResult ) );
     }
 
