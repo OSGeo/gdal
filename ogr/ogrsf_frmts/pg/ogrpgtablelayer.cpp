@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/08/03 13:22:50  fwarmerdam
+ * Patched GetExtent method to support BOX3D return types as reported
+ * by Markus on gdal-dev.
+ *
  * Revision 1.29  2005/07/20 01:45:30  fwarmerdam
  * improved geometry dimension support, PostGIS 8 EWKT upgrades
  *
@@ -1255,52 +1259,67 @@ OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
 
 OGRErr OGRPGTableLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 {
-	if ( bHasPostGISGeometry )
-	{
-		PGconn          *hPGConn = poDS->GetPGConn();
-		PGresult        *hResult;
-		char            szCommand[1024];
+    if ( bHasPostGISGeometry )
+    {
+        PGconn          *hPGConn = poDS->GetPGConn();
+        PGresult        *hResult;
+        char            szCommand[1024];
 
-		sprintf( szCommand, "SELECT Extent(\"%s\") FROM \"%s\"", pszGeomColumn, poFeatureDefn->GetName() );
-		CPLDebug("OGR_PG","PQexec(%s)",szCommand);
+        sprintf( szCommand, "SELECT Extent(\"%s\") FROM \"%s\"", pszGeomColumn, poFeatureDefn->GetName() );
+        CPLDebug("OGR_PG","PQexec(%s)",szCommand);
 		
-		hResult = PQexec( hPGConn, szCommand );
+        hResult = PQexec( hPGConn, szCommand );
         if( ! hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK || PQgetisnull(hResult,0,0) )
-		{
-			PQclear( hResult );
-			CPLDebug("OGR_PG","Unable to get extent by PostGIS. Using standard OGRLayer method.");
-			return OGRLayer::GetExtent( psExtent, bForce );
-		}
+        {
+            PQclear( hResult );
+            CPLDebug("OGR_PG","Unable to get extent by PostGIS. Using standard OGRLayer method.");
+            return OGRLayer::GetExtent( psExtent, bForce );
+        }
 		
-		char * pszBox = PQgetvalue(hResult,0,0);
-		char * ptr = pszBox;
-		char szVals[64*4+6];
+        char * pszBox = PQgetvalue(hResult,0,0);
+        char * ptr = pszBox;
+        char szVals[64*4+6];
 
-		while ( *ptr != '(' && ptr ) ptr++; ptr++;
+        while ( *ptr != '(' && ptr ) ptr++; ptr++;
 
-		strncpy(szVals,ptr,strstr(ptr,")") - ptr);
-		szVals[strstr(ptr,")") - ptr] = '\0';
+        strncpy(szVals,ptr,strstr(ptr,")") - ptr);
+        szVals[strstr(ptr,")") - ptr] = '\0';
 
-		char ** papszTokens = CSLTokenizeString2(szVals," ,",CSLT_HONOURSTRINGS);
-		if ( CSLCount(papszTokens) != 4 )
-		{
-			CPLError(CE_Failure, CPLE_IllegalArg, "Bad extent representation: '%s'", pszBox);
-			CSLDestroy(papszTokens);
-			PQclear(hResult);
-			return OGRERR_FAILURE;
-		}
+        char ** papszTokens = CSLTokenizeString2(szVals," ,",CSLT_HONOURSTRINGS);
+        if ( CSLCount(papszTokens) != 4 
+             && CSLCount(papszTokens) != 6 )
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg, 
+                     "Bad extent representation: '%s'", pszBox);
+            CSLDestroy(papszTokens);
+            PQclear(hResult);
+            return OGRERR_FAILURE;
+        }
 
-		psExtent->MinX = CPLScanDouble(papszTokens[0],strlen(papszTokens[0]),"C");
-		psExtent->MinY = CPLScanDouble(papszTokens[1],strlen(papszTokens[1]),"C");
-		psExtent->MaxX = CPLScanDouble(papszTokens[2],strlen(papszTokens[2]),"C");
-		psExtent->MaxY = CPLScanDouble(papszTokens[3],strlen(papszTokens[3]),"C");	
+        psExtent->MinX = CPLScanDouble(papszTokens[0],strlen(papszTokens[0]),"C");
+        psExtent->MinY = CPLScanDouble(papszTokens[1],strlen(papszTokens[1]),"C");
 
-		CSLDestroy(papszTokens);	
+        if( CSLCount( papszTokens ) == 4 ) // BOX2D
+        {
+            psExtent->MaxX = CPLScanDouble(papszTokens[2],
+                                           strlen(papszTokens[2]),"C");
+            psExtent->MaxY = CPLScanDouble(papszTokens[3],
+                                           strlen(papszTokens[3]),"C");	
+        }
+        else // BOX3D
+        {
+            psExtent->MaxX = CPLScanDouble(papszTokens[3],
+                                           strlen(papszTokens[4]),"C");
+            psExtent->MaxY = CPLScanDouble(papszTokens[4],
+                                           strlen(papszTokens[5]),"C");	
+        }
 
-		PQclear( hResult );
-		return OGRERR_NONE;
-	}
+        CSLDestroy(papszTokens);	
 
-	return OGRLayer::GetExtent( psExtent, bForce ); 
+        PQclear( hResult );
+        return OGRERR_NONE;
+    }
+
+    return OGRLayer::GetExtent( psExtent, bForce ); 
 }
 
