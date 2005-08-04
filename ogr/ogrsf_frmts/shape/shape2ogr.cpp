@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2005/08/04 15:10:46  fwarmerdam
+ * Committed fix to avoid infinite loop on degenerate shapefiles.  Patch
+ * provided by Baumann Konstantin.  See Var2_STRASSE.shp.
+ *
  * Revision 1.33  2005/07/20 01:44:25  fwarmerdam
  * try and preserve geometry dimension properly
  *
@@ -186,6 +190,8 @@ int RingDirection ( SHPObject *Shape, int ring )
     y = Shape->padfY;
 
     RingStartEnd ( Shape, ring, &start, &end );
+
+    if ( start == end ) return ( 0 ); // empty ring!?!?
 
     /* Find the lowest rightmost vertex */
     v = start;  
