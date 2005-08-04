@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2005/08/04 15:31:09  fwarmerdam
+ * Added additional patch for computing ring direction in cases of
+ * vertices that are very near or coincident.
+ *
  * Revision 1.34  2005/08/04 15:10:46  fwarmerdam
  * Committed fix to avoid infinite loop on degenerate shapefiles.  Patch
  * provided by Baumann Konstantin.  See Var2_STRASSE.shp.
@@ -151,6 +155,17 @@
 
 CPL_CVSID("$Id$");
 
+static const double EPSILON = 1E-5;
+
+/************************************************************************/
+/*                            epsilonEqual()                            */
+/************************************************************************/
+
+static inline bool epsilonEqual(double a, double b, double eps) 
+{
+    return (::fabs(a - b) < eps);
+}
+
 /************************************************************************/
 /*                        RingStartEnd                                  */
 /*        set first and last vertex for given ring                      */
@@ -208,7 +223,8 @@ int RingDirection ( SHPObject *Shape, int ring )
 	if ( next < start ) 
 	    next = end - 1; 
 
-	if ( x[next] != x[v] || y[next] != y[v] )
+        if( !epsilonEqual(x[next], x[v], EPSILON) 
+            || !epsilonEqual(y[next], y[v], EPSILON) )
 	    break;
 
 	if ( next == v ) /* So we cannot get into endless loop */
@@ -227,7 +243,8 @@ int RingDirection ( SHPObject *Shape, int ring )
 	if ( next >= end ) 
 	    next = start; 
 
-	if ( x[next] != x[v] || y[next] != y[v] )
+        if ( !epsilonEqual(x[next], x[v], EPSILON) 
+             || !epsilonEqual(y[next], y[v], EPSILON) )
 	    break;
 
 	if ( next == v ) /* So we cannot get into endless loop */
