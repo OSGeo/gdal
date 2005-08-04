@@ -31,6 +31,9 @@ Attribute VB_Name = "GDALCore"
 '*****************************************************************************
 '
 ' $Log$
+' Revision 1.8  2005/08/04 20:53:51  fwarmerdam
+' convert to DOS text mode
+'
 ' Revision 1.7  2005/04/11 19:58:47  fwarmerdam
 ' added CPLSet/GetConfigOption
 '

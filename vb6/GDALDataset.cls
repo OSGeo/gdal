@@ -28,6 +28,9 @@
 '*****************************************************************************
 '
 ' $Log$
+' Revision 1.3  2005/08/04 20:53:51  fwarmerdam
+' convert to DOS text mode
+'
 ' Revision 1.2  2005/04/08 14:36:25  fwarmerdam
 ' applied owned flag, and auto-destroy
 '

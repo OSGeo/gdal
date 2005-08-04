@@ -29,6 +29,9 @@ Attribute VB_Name = "GDAL"
 '*****************************************************************************
 '
 ' $Log$
+' Revision 1.6  2005/08/04 20:53:51  fwarmerdam
+' convert to DOS text mode
+'
 ' Revision 1.5  2005/04/11 19:58:47  fwarmerdam
 ' added CPLSet/GetConfigOption
 '
