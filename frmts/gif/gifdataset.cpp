@@ -28,6 +28,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.23  2005/08/04 18:44:33  fwarmerdam
+ * Report background as metadata rather than NODATA.  It was causing too
+ * many problems.
+ *
  * Revision 1.22  2005/05/05 14:05:03  fwarmerdam
  * PAM Enable
  *
@@ -254,19 +258,17 @@ GIFRasterBand::GIFRasterBand( GIFDataset *poDS, int nBand,
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we have a known background color, but no identified          */
-/*      transparent color, then we use the background color as the      */
-/*      NODATA value, but we don't mark it in the colormap as           */
-/*      transparent.  "background" is a slightly different concept      */
-/*      than transparent, but we still want to be able to do it         */
-/*      transparent in some apps (like MapServer).                      */
+/*      If we have a background value, return it here.  Some            */
+/*      applications might want to treat this as transparent, but in    */
+/*      many uses this is inappropriate so we don't return it as        */
+/*      nodata or transparent.                                          */
 /* -------------------------------------------------------------------- */
-    if( nTransparentColor == -1 )
+    if( nBackground != 255 )
     {
-	if( nBackground == 255 )
-	    nTransparentColor = 0;
-	else
-	    nTransparentColor = nBackground;
+        char szBackground[10];
+        
+        sprintf( szBackground, "%d", nBackground );
+        SetMetadataItem( "GIF_BACKGROUND", szBackground );
     }
 }
 
