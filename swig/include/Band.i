@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.17  2005/08/04 19:16:06  kruland
+ * GetRasterColorTable does not return a newobject.
+ *
  * Revision 1.16  2005/07/20 16:28:26  kruland
  * Merge the two definitions of Checksum into one.  Use the pointer trick
  * to allow the passing of optional xsize,ysize parameters.
@@ -238,7 +241,6 @@ public:
     GDALFlushRasterCache( self );
   }
 
-  %newobject GetRasterColorTable;
   GDALColorTable *GetRasterColorTable() {
     return (GDALColorTable*) GDALGetRasterColorTable( self );
   }
