@@ -17,20 +17,22 @@ correctly.
 <h2>Georeference</h2>
 
 Note, that GDAL simple affine georeference model completely unsuitable for
-the NOAA data. So you should not rely on it. Automatic image rectification
-can be done with ground control points (GCPs) from the input file. NOAA stores
-51 GCPs per scanline both in the LAC and GAC datasets. In fact you may get
-less than 51 GCPs, especially at end of scanlines. Another approach to
-rectification is manual selection of the GCPs using external source of
+the NOAA data. So you should not rely on it. It is recommended to use the
+thin spline warper (tps). Automatic image rectification can be done with
+ground control points (GCPs) from the input file.
+
+NOAA stores 51 GCPs per scanline both in the LAC and GAC datasets. In fact
+you may get less than 51 GCPs, especially at end of scanlines. Another approach
+to rectification is manual selection of the GCPs using external source of
 georeference information.
 <br>
-Precision of the GCPs determination depends from thr satellite type. In the
+Precision of the GCPs determination depends from the satellite type. In the
 NOAA-9 -- NOAA-14 datasets geographic coordinates of the GCPs stored in
 integer values as a 128th of a degree. So we can't determine positions more
-precise than 1/128=0.0078125 of degree (~28"). In NOAA-15 --- NOAA-17 datasets
+precise than 1/128=0.0078125 of degree (~28"). In NOAA-15 -- NOAA-17 datasets
 we have much more precise positions, they are stored as 10000th of degree.
 <br>
-Image will be always returned with most northen scanline located at the top of
+Image will be always returned with most northern scanline located at the top of
 image. If you want determine actual direction of the satellite moving you
 should look at <b>LOCATION</b> metadata record.
 
@@ -93,8 +95,8 @@ Taylor&Francis Ltd., 1997, ISBN 0-7484-0209-8.
 </a><p>
 
 <li> NOAA data can be downloaded from the 
-<a href="http://www.saa.noaa.gov/">Satellite Active Archive (SAA)</a>. 
-Actually it is only source of Level 1b datasets for me, so my implementation
+<a href="http://www.class.noaa.gov/">Comprehensive Large Array-data Stewardship System (CLASS)</a>
+(former SAA). Actually it is only source of Level 1b datasets for me, so my implementation
 tested with that files only. <p>
 
 </ul>
