@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.18  2005/08/04 20:48:32  kruland
+ * Recoded GetNoDataValue(), GetMaximum(), GetMinimum(), GetOffset(), GetScale() to have
+ * access to both the double return value and the has value flag.
+ *
  * Revision 1.17  2005/08/04 19:16:06  kruland
  * GetRasterColorTable does not return a newobject.
  *
@@ -147,33 +151,28 @@ public:
     return GDALSetRasterColorInterpretation( self, val );
   }
 
-  double GetNoDataValue() {
-    int noval;
-    return GDALGetRasterNoDataValue( self, &noval );
+  void GetNoDataValue( double *val, int *hasval ) {
+    *val = GDALGetRasterNoDataValue( self, hasval );
   }
 
   CPLErr SetNoDataValue( double d) {
     return GDALSetRasterNoDataValue( self, d );
   }
 
-  double GetMinimum() {
-    int noval;
-    return GDALGetRasterMinimum( self, &noval );
+  void GetMinimum( double *val, int *hasval ) {
+    *val = GDALGetRasterMinimum( self, hasval );
   }
 
-  double GetMaximum() {
-    int noval;
-    return GDALGetRasterMaximum( self, &noval );
+  void GetMaximum( double *val, int *hasval ) {
+    *val = GDALGetRasterMaximum( self, hasval );
   }
 
-  double GetOffset() {
-    int noval;
-    return GDALGetRasterOffset( self, &noval );
+  void GetOffset( double *val, int *hasval ) {
+    *val = GDALGetRasterOffset( self, hasval );
   }
 
-  double GetScale() {
-    int noval;
-    return GDALGetRasterScale( self, &noval );
+  void GetScale( double *val, int *hasval ) {
+    *val = GDALGetRasterScale( self, hasval );
   }
 
   int GetOverviewCount() {
@@ -248,6 +247,24 @@ public:
   int SetRasterColorTable( GDALColorTable *arg ) {
     return GDALSetRasterColorTable( self, arg );
   }
+
+#ifdef SWIGPYTHON
+%pythoncode {
+  def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
+                  buf_xsize=None, buf_ysize=None, buf_obj=None):
+      import gdalnumeric
+
+      return gdalnumeric.BandReadAsArray( self, xoff, yoff,
+                                          win_xsize, win_ysize,
+                                          buf_xsize, buf_ysize, buf_obj )
+    
+  def WriteArray(self, array, xoff=0, yoff=0):
+      import gdalnumeric
+
+      return gdalnumeric.BandWriteArray( self, array, xoff, yoff )
+
+}
+#endif
 
 /* NEEDED */
 /* ReadAsArray */
