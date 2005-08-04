@@ -116,6 +116,8 @@ struct ILWISInfo
 /*                           ILWISRasterBand                            */
 /************************************************************************/
 
+class ILWISDataset;
+
 class ILWISRasterBand : public GDALPamRasterBand
 {
   friend class ILWISDataset;
