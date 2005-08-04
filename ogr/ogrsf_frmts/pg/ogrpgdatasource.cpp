@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/08/04 07:28:28  osemykin
+ * Fixes for support postgis version < 0.9.0
+ * geom as EWKT for PostGIS >= 1.0
+ * geom as Text for PostGIS < 1.0
+ *
  * Revision 1.32  2005/08/03 21:22:29  osemykin
  * Changed PostGIS version representation
  * For PostGIS database layers loads from geometry_columns table
@@ -291,21 +296,32 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     PQclear( hResult );
 
     // find out postgis version.
-    //dfPostGISVersion = 0.0;
     sPostGISVersion.nMajor = -1;
     sPostGISVersion.nMinor = -1;
     sPostGISVersion.nRelease = -1;
 
     if( bHavePostGIS )
     {
-        hResult = PQexec(hPGConn, "SELECT postgis_lib_version()" );
+        hResult = PQexec(hPGConn, "SELECT postgis_version()" );
         if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
             && PQntuples(hResult) > 0 )
         {
             char * pszVer = PQgetvalue(hResult,0,0);
             char * ptr = pszVer;
+            char szVer[10];
             char szNum[25];
-            int iLen;
+            uint iLen;
+
+            // get Version string
+            if ( *ptr == ' ' ) *ptr++;
+            while (*ptr && *ptr != ' ') ptr++;
+            iLen = ptr-pszVer;
+            if ( iLen > sizeof(szVer) - 1 ) iLen = sizeof(szVer) - 1;
+            strncpy(szVer,pszVer,iLen);
+            szVer[iLen] = '\0';
+            CPLDebug("OGR_PG","PostSIS version string: '%s' -> '%s'",pszVer,szVer);
+            
+            pszVer = szVer;
 
             // get Major number
             while (*ptr && *ptr != '.') ptr++;
@@ -335,7 +351,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             szNum[iLen] = '\0';
             sPostGISVersion.nRelease = atoi(szNum);
 
-            CPLDebug( "OGR_PG", "POSTGIS_LIB_VERSION=%s",
+            CPLDebug( "OGR_PG", "POSTGIS_VERSION=%s",
                       PQgetvalue(hResult,0,0));
         }
         PQclear(hResult);
@@ -358,7 +374,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                              "DECLARE mycursor CURSOR for "
                              "SELECT c.relname FROM pg_class c, geometry_columns g "
                              "WHERE (c.relkind in ('r','v') AND c.relname !~ '^pg' "
-                             "AND c.relname = g.f_table_name)" );
+                             "AND c.relname ~ g.f_table_name)" );
         else
             hResult = PQexec(hPGConn,
                              "DECLARE mycursor CURSOR for "

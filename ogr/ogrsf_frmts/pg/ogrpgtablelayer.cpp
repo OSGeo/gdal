@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/08/04 07:28:28  osemykin
+ * Fixes for support postgis version < 0.9.0
+ * geom as EWKT for PostGIS >= 1.0
+ * geom as Text for PostGIS < 1.0
+ *
  * Revision 1.31  2005/08/03 21:27:32  osemykin
  * GetExtent fixes for old PostGIS version support
  *
@@ -552,8 +557,12 @@ char *OGRPGTableLayer::BuildFields()
 
         if( bHasPostGISGeometry )
         {
-            sprintf( pszFieldList+strlen(pszFieldList),
-                     "AsEWKT(\"%s\")", pszGeomColumn );
+            if ( poDS->sPostGISVersion.nMajor >= 1 )
+                sprintf( pszFieldList+strlen(pszFieldList),
+                        "AsEWKT(\"%s\")", pszGeomColumn );
+            else
+                sprintf( pszFieldList+strlen(pszFieldList),
+                        "AsText(\"%s\")", pszGeomColumn );
         }
         else
         {
@@ -1321,8 +1330,6 @@ OGRErr OGRPGTableLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 
         char ** papszTokens = CSLTokenizeString2(szVals," ,",CSLT_HONOURSTRINGS);
         int nTokenCnt = poDS->sPostGISVersion.nMajor >= 1 ? 4 : 6;
-
-        CSLPrint(papszTokens,stderr);
 
         if ( CSLCount(papszTokens) != nTokenCnt )
         {
