@@ -45,7 +45,7 @@ public:
     return self.GetMetadata_Dict( domain )
 }
 #else
-%rename GetMetadata_Dict (GetMetadata)
+%rename (GetMetadata) GetMetadata_Dict;
 #endif
 
 /*
