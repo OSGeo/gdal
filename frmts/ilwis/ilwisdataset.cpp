@@ -24,7 +24,14 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- ******************************************************************************/
+ ******************************************************************************
+ *
+ * $Log$
+ * Revision 1.14  2005/08/04 15:26:53  fwarmerdam
+ * added log headers
+ *
+ */
+
 
 #include "ilwisdataset.h"
 #include <float.h>
