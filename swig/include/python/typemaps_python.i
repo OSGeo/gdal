@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.34  2005/08/04 20:47:24  kruland
+ * Added a new binding to support RasterBand::GetNoDataValue(), GetMaximum(), GetMinimum(),
+ * GetOffset(), GetScale() returning None when the attribute is not set.
+ *
  * Revision 1.33  2005/07/15 20:28:16  kruland
  * It seems that in Python 2.3 (maybe 2.4 as well), sequence objects (lists) are also
  * mapping objects (dicts).  Fortunately, dicts are not lists.  So, in the in char **dict
@@ -170,6 +174,32 @@
 %include "typemaps.i"
 
 %apply (double *OUTPUT) { double *argout };
+
+/*
+ * double *val, int*hasval, is a special contrived typemap used for
+ * the RasterBand GetNoDataValue, GetMinimum, GetMaximum, GetOffset, GetScale methods.
+ * In the python bindings, the variable hasval is tested.  If it is 0 (is, the value
+ * is not set in the raster band) then Py_None is returned.  If is is != 0, then
+ * the value is coerced into a long and returned.
+ */
+%typemap(python,in,numinputs=0) (double *val, int*hasval) ( double tmpval, int tmphasval ) {
+  /* %typemap(python,in,numinputs=0) (double *val, int*hasval) */
+  $1 = &tmpval;
+  $2 = &tmphasval;
+}
+%typemap(python,argout) (double *val, int*hasval) {
+  /* %typemap(python,argout) (double *val, int*hasval) */
+  PyObject *r;
+  if ( !*$2 ) {
+    Py_INCREF(Py_None);
+    r = Py_None;
+    $result = t_output_helper($result,r);
+  }
+  else {
+    r = PyFloat_FromDouble( *$1 );
+    $result = t_output_helper($result,r);
+  }
+}
 
 /*
  *
