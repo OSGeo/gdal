@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.44  2005/08/04 19:41:33  fwarmerdam
+ * support setting null value in CSLSetNameValue
+ *
  * Revision 1.43  2005/05/23 03:59:44  fwarmerdam
  * make cplsprintf buffer threadlocal
  *
@@ -1107,7 +1110,8 @@ char **CSLAddNameValue(char **papszStrList,
  * @param pszName the name to be assigned a value.  This should be a well
  * formed token (no spaces or very special characters). 
  * @param pszValue the value to assign to the name.  This should not contain
- * any newlines (CR or LF) but is otherwise pretty much unconstrained.
+ * any newlines (CR or LF) but is otherwise pretty much unconstrained.  If
+ * NULL any corresponding value will be removed.
  *
  * @return modified stringlist.
  */
@@ -1136,8 +1140,28 @@ char **CSLSetNameValue(char **papszList,
             cSep = (*papszPtr)[nLen];
 
             CPLFree(*papszPtr);
-            *papszPtr = (char *) CPLMalloc(strlen(pszName)+strlen(pszValue)+2);
-            sprintf( *papszPtr, "%s%c%s", pszName, cSep, pszValue );
+
+            /* 
+             * If the value is NULL, remove this entry completely/
+             */
+            if( pszValue == NULL )
+            {
+                while( papszPtr[1] != NULL )
+                {
+                    *papszPtr = papszPtr[1];
+                    papszPtr++;
+                }
+                *papszPtr = NULL;
+            }
+
+            /*
+             * Otherwise replace with new value.
+             */
+            else
+            {
+                *papszPtr = (char *) CPLMalloc(strlen(pszName)+strlen(pszValue)+2);
+                sprintf( *papszPtr, "%s%c%s", pszName, cSep, pszValue );
+            }
             return papszList;
         }
         papszPtr++;
