@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.3  2005/08/04 19:16:35  kruland
+ * Clone() returns a newobject.  And changed some whitespace.
+ *
  * Revision 1.2  2005/02/22 23:33:07  kruland
  * Implement GetCount, and GetColorTableEntry correctly.
  *
@@ -30,9 +33,10 @@ typedef int GDALPaletteInterp;
 class GDALColorTable
 {
 public:
-                GDALColorTable( GDALPaletteInterp = GPI_RGB );
-                ~GDALColorTable();
+    GDALColorTable( GDALPaletteInterp = GPI_RGB );
+    ~GDALColorTable();
 
+%newobject Clone();
     GDALColorTable *Clone() const;
 
     GDALPaletteInterp GetPaletteInterpretation() const;
