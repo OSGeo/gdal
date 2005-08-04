@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2005/08/04 19:01:29  fwarmerdam
+ * avoid use of non-standard datatypes like uint
+ *
  * Revision 1.33  2005/08/04 07:28:28  osemykin
  * Fixes for support postgis version < 0.9.0
  * geom as EWKT for PostGIS >= 1.0
@@ -310,7 +313,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             char * ptr = pszVer;
             char szVer[10];
             char szNum[25];
-            uint iLen;
+            GUInt32 iLen;
 
             // get Version string
             if ( *ptr == ' ' ) *ptr++;
