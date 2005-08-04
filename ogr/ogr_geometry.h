@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2005/08/04 17:18:59  fwarmerdam
+ * now have separate 2D and 3D OGRPoint constructors
+ *
  * Revision 1.54  2005/07/20 01:43:51  fwarmerdam
  * upgraded OGR geometry dimension handling
  *
@@ -332,7 +335,8 @@ class CPL_DLL OGRPoint : public OGRGeometry
 
   public:
                 OGRPoint();
-                OGRPoint( double x, double y, double z = 0.0 );
+                OGRPoint( double x, double y );
+                OGRPoint( double x, double y, double z );
     virtual     ~OGRPoint();
 
     // IWks Interface

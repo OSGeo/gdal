@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2005/08/04 17:18:59  fwarmerdam
+ * now have separate 2D and 3D OGRPoint constructors
+ *
  * Revision 1.33  2005/07/22 20:39:36  fwarmerdam
  * Fixed getGeometryType to look at coordinate dimension, expand wkt buffer.
  *
@@ -163,6 +166,21 @@ OGRPoint::OGRPoint( double xIn, double yIn, double zIn )
     x = xIn;
     y = yIn;
     z = zIn;
+    nCoordDimension = 3;
+}
+
+/************************************************************************/
+/*                              OGRPoint()                              */
+/*                                                                      */
+/*      Initialize point to value.                                      */
+/************************************************************************/
+
+OGRPoint::OGRPoint( double xIn, double yIn )
+
+{
+    x = xIn;
+    y = yIn;
+    nCoordDimension = 2;
 }
 
 /************************************************************************/
