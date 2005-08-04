@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.113  2005/07/20 01:46:51  fwarmerdam
- * ogr coordinate dimension upgrades
+ * Revision 1.114  2005/08/04 19:42:09  fwarmerdam
+ * make value nullable in Set/Get ConfigOption
  *
  ************************************************************************/
 
@@ -3522,11 +3522,18 @@ static PyObject *_wrap_CPLGetConfigOption(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     char * _result;
     char * _arg0;
-    char * _arg1;
+    NULLableString  _arg1;
+    char * _argc1 = 0;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"ss:CPLGetConfigOption",&_arg0,&_arg1)) 
+    if(!PyArg_ParseTuple(args,"ss:CPLGetConfigOption",&_arg0,&_argc1)) 
         return NULL;
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of CPLGetConfigOption. Expected _NULLableString.");
+        return NULL;
+        }
+    }
     _result = (char *)CPLGetConfigOption(_arg0,_arg1);
     _resultobj = Py_BuildValue("s", _result);
     return _resultobj;
@@ -3535,11 +3542,18 @@ static PyObject *_wrap_CPLGetConfigOption(PyObject *self, PyObject *args) {
 static PyObject *_wrap_CPLSetConfigOption(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     char * _arg0;
-    char * _arg1;
+    NULLableString  _arg1;
+    char * _argc1 = 0;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"ss:CPLSetConfigOption",&_arg0,&_arg1)) 
+    if(!PyArg_ParseTuple(args,"ss:CPLSetConfigOption",&_arg0,&_argc1)) 
         return NULL;
+    if (_argc1) {
+        if (SWIG_GetPtr(_argc1,(void **) &_arg1,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of CPLSetConfigOption. Expected _NULLableString.");
+        return NULL;
+        }
+    }
     CPLSetConfigOption(_arg0,_arg1);
     Py_INCREF(Py_None);
     _resultobj = Py_None;

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.120  2005/08/04 19:42:08  fwarmerdam
+ * make value nullable in Set/Get ConfigOption
+ *
  * Revision 1.119  2005/07/20 01:46:51  fwarmerdam
  * ogr coordinate dimension upgrades
  *
@@ -633,8 +636,8 @@ const char *CPLGetLastErrorMsg();
 
 void CSLDestroy(stringList);
 
-const char *CPLGetConfigOption( const char *, const char * );
-void        CPLSetConfigOption( const char *, const char * );
+const char *CPLGetConfigOption( const char *, NULLableString );
+void        CPLSetConfigOption( const char *, NULLableString );
 int         CSLTestBoolean( const char * );
 
 void         CPLPushFinderLocation( const char * );

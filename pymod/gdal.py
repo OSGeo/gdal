@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.79  2005/08/04 19:42:08  fwarmerdam
+# make value nullable in Set/Get ConfigOption
+#
 # Revision 1.78  2005/06/28 20:23:47  fwarmerdam
 # support non-dict values for Set/Get metadata
 #
@@ -245,10 +248,19 @@ def FindFile( classname, basename ):
     return _gdal.CPLFindFile( classname, basename )
 
 def SetConfigOption( name, value ):
-    _gdal.CPLSetConfigOption( name, value )
+    n_value = ToNULLableString( value )
+    _gdal.CPLSetConfigOption( name, n_value )
+    FreeNULLableString( n_value )
 
 def GetConfigOption( name, default ):
-    return _gdal.CPLGetConfigOption( name, default )
+    n_default = ToNULLableString( default )
+    result = _gdal.CPLGetConfigOption( name, n_default )
+    FreeNULLableString( n_default )
+
+    if result == 'NULL':
+        return None
+    else:
+        return result
 
 def TestBoolean( value ):
     return _gdal.CSLTestBoolean( value )
