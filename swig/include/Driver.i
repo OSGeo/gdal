@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.11  2005/08/04 19:17:19  kruland
+ * The Open() and OpenShared() methods were incrementing the gdal internal
+ * reference count by mistake.
+ *
  * Revision 1.10  2005/07/18 16:13:31  kruland
  * Added MajorObject.i an interface specification to the MajorObject baseclass.
  * Used inheritance in Band.i, Driver.i, and Dataset.i to access MajorObject
@@ -73,8 +77,6 @@ public:
   GDALDatasetShadow *Create( const char *name, int xsize, int ysize, int bands =1,
                        GDALDataType eType=GDT_Byte, char **options = 0 ) {
     GDALDatasetShadow* ds = (GDALDatasetShadow*) GDALCreate( self, name, xsize, ysize, bands, eType, options );
-    if ( ds != 0 )
-      GDALDereferenceDataset( ds );
     return ds;
   }
 
@@ -82,8 +84,6 @@ public:
 %feature( "kwargs" ) CreateCopy;
   GDALDatasetShadow *CreateCopy( const char *name, GDALDatasetShadow* src, int strict =1, char **options = 0 ) {
     GDALDatasetShadow *ds = (GDALDatasetShadow*) GDALCreateCopy(self, name, src, strict, 0, 0, 0 );
-    if ( ds != 0 )
-      GDALDereferenceDataset( ds );
     return ds;
   }
 

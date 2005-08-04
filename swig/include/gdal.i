@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.29  2005/08/04 19:18:01  kruland
+ * The Open() and OpenShared() methods were incrementing the gdal internal
+ * reference count by mistake.
+ *
  * Revision 1.28  2005/07/20 16:33:52  kruland
  * Added wrapper for GDALGetDriverCount.
  * Added %init for PHP.
@@ -508,8 +512,6 @@ GDALDriverShadow* GetDriverByName( char const *name ) {
 %inline %{
 GDALDatasetShadow* Open( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
   GDALDatasetShadow *ds = GDALOpen( name, eAccess );
-  if ( ds ) 
-    GDALReferenceDataset( ds );
   return (GDALDatasetShadow*) ds;
 }
 %}
@@ -518,8 +520,6 @@ GDALDatasetShadow* Open( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
 %inline %{
 GDALDatasetShadow* OpenShared( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
   GDALDatasetShadow *ds = GDALOpenShared( name, eAccess );
-  if ( ds ) 
-    GDALReferenceDataset( ds );
   return (GDALDatasetShadow*) ds;
 }
 %}
