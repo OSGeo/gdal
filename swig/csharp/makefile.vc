@@ -4,7 +4,7 @@
 OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
 
 
-all: sign 
+all: sign ogr_dir gdal_dir osr_dir const_dir
     csc /target:library /out:gdal_ogr_csharp.dll ogr\*.cs
     csc /target:library /out:gdal_gdal_csharp.dll gdal\*.cs 
     csc /target:library /out:gdal_gdalconst_csharp.dll const\*.cs
@@ -24,15 +24,7 @@ all: sign
 sign:
     sn -k gdal.snk
 
-register: sign
-    RegAsm.exe /tlb:gdal.tlb gdal_csharp.dll
 
-install_com:
-    gacutil.exe /i gdal_csharp.dll
-
-uninstall_com:
-    gacutil.exe /u gdal_csharp
-    
     
 ogr_dir:
 	cd ogr
