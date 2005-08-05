@@ -114,28 +114,28 @@ else:
 
 
 gdal_module = Extension('_gdal',
-                    sources=['gdal_python.cpp'],
+                    sources=['gdal_wrap.cpp'],
                     include_dirs = include_dirs,
                     libraries = libraries,
                     library_dirs = library_dirs,
                     extra_link_args = extra_link_args)
 
 gdalconst_module = Extension('_gdalconst',
-                    sources=['gdalconst_python.c'],
+                    sources=['gdalconst_wrap.c'],
                     include_dirs = include_dirs,
                     libraries = libraries,
                     library_dirs = library_dirs,
                     extra_link_args = extra_link_args)
 
 osr_module = Extension('_osr',
-                    sources=['osr_python.cpp'],
+                    sources=['osr_wrap.cpp'],
                     include_dirs = include_dirs,
                     libraries = libraries,
                     library_dirs = library_dirs,
                     extra_link_args = extra_link_args)
 
 ogr_module = Extension('_ogr',
-                    sources=['ogr_python.cpp'],
+                    sources=['ogr_wrap.cpp'],
                     include_dirs = include_dirs,
                     libraries = libraries,
                     library_dirs = library_dirs,
