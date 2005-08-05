@@ -9,7 +9,7 @@ BINDINGS = python php
 
 # The ALL_BINDINGS variable defines all the possible bindings.  It's used
 # in the dist and clean definitions.
-ALL_BINDINGS = python php
+ALL_BINDINGS = python php csharp
 
 default: generate
 
@@ -26,7 +26,7 @@ veryclean:
 	for dir in ${BINDINGS}; do (cd $$dir; make veryclean ); done
 
 generate:
-	for dir in ${BINDINGS}; do (cd $$dir; make generate ); done
+	for dir in ${ALL_BINDINGS}; do (cd $$dir; make generate ); done
 
 build:
 	for dir in ${BINDINGS}; do (cd $$dir; make build ); done
