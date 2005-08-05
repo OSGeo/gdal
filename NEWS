@@ -1,3 +1,127 @@
+GDAL 1.3.0 - Overview of Changes
+--------------------------------
+
+Multithreading:
+ - Lots of work done to implement support for multiple threads reading
+   from distinct GDALDataset objects at the same time. 
+
+GDALRasterBand / Persistant Auxilary Metadata (PAM):
+ - Support for preserving a variety of metadata in a supporting XML file. 
+ - GDALRasterBand now supports "remembering" histograms, and has a concept
+   of the default histogram. 
+ - GDALRasterBand now supports remembering image statistics.
+ - Disabled by default (set GDAL_PAM_ENABLED=YES to turn on). 
+ - Supported by *most* drivers with some caveats.
+
+GDALCopyWords(): 
+ - This function is a low level work horse for copying and converting pixel 
+   data in GDAL.  It has been substantially optimized by Steve Soule (Vexcel).
+
+Next Generation Bindings:
+ - Kevin Ruland and Howard Butler are working on reworked support for 
+   SWIG to generate Python, PHP, Java, C# and other language bindings for GDAL
+   and OGR. 
+
+VB6 Bindings: 
+ - Now substantially complete, see VB6 directory.
+
+HDF5 Driver: 
+ - New HDF5 driver implemented by Denis Nadeau. 
+
+RMF Driver: 
+ - New driver for Raster Matrix Format by Andrey Kislev. 
+
+MSGN (Meteosat Second Generation Native) Driver:
+ - New driver implemented by Frans van der Bergh.
+
+VRT Driver:
+ - Fixed whopper of a memory leak in warped raster case.
+
+NetCDF Driver: 
+ - Preliminary CF conventions support by Denis Nadeau.
+
+NITF Driver:
+ - NITF files between 2 and 4 GB in size can now be read and written.
+
+JPEG Driver: 
+ - Added support for reading EXIF as metadata by Denis Nadeau.
+
+DODS Driver:
+ - Fixed up libdap 3.5.x compatibility.
+
+JP2ECW (JPEG2000 ECW SDK) Driver:
+ - Implemented support for new GML-in-JPEG2000 specification.
+ - Implemented support for old MSI "worldfile" box. 
+
+JP2KAK (JPEG2000 Kakadu) Driver:
+ - Implemented support for new GML-in-JPEG2000 specification.
+ - Implemented support for old MSI "worldfile" box. 
+
+PCIDSK Driver: 
+ - tiled files now supported for reading.
+ - overviews now supported for reading.
+
+HFA (Imagine) Driver:
+ - Supports creating internal overviews in very large files. 
+ - Support reading class names. 
+ - Support creating compressed files. 
+
+GeoTIFF Driver:
+ - Support reading files with odd bit depths (ie. 3, 12, etc). 
+ - Support 16/24bit floating point TIFFs (per Technote 3) (Andrey).
+ - Support 12bit jpeg compressed imagery using libjpeg "MK1" library.
+
+HDF4 Driver:
+ - Added support for ASTER Level 1A, 1B and 2 products (Andrey). 
+
+
+OGR 1.3.0 - Overview of Changes
+-------------------------------
+
+OGRGeometry:
+ - WKT (and GML) encoding now attempts to preserve pretty much full double
+   precision. 
+ - geometries are now "coordinate dimension preserving" rather than dynamically
+   figuring out dimension depending on whether Z is set.  So a geometry can
+   now be 3D even if all z values are zero.  
+ - Fixed up proper EMPTY geometry support per standard.
+
+GRASS Driver:  
+ - New driver for GRASS 6 vector data written by Radim Blazek. 
+
+Interlis Driver: 
+ - New driver for Swiss Interlis format from Permin Kalberer (SourcePole).
+
+Shape Driver:
+ - Fixed logic for degenerate polygons (Baumann Konstantin).
+ 
+PostgreSQL/PostGIS Driver:
+ - Implemented fast GetExtent() method (Oleg Semykin).
+ - Implemented layer type from geometry_columns (Oleg Semykin).
+ - Handle PostGIS 1.0 requirements for coordinate dimemsion exactness.
+ - Handle EWKT type in PostGIS 1.0.
+ - Generally PostGIS 0.x and 1.0 should now be supported fairly gracefully.
+
+VRT Driver:
+ - Pass through attribute queries to underlying driver. 
+ - Pass through spatial queries as attribute filters on the underlying layer.
+
+S57 Driver:
+ - Added concept of supporting different profiles. 
+ - Added prototype AML profile support. 
+
+MySQL Driver:
+ - Fixed for FID recognition (eg. mediumint). 
+
+GML Driver: 
+ - Various fixes for generated GML correctness (Tom Kralidis).
+
+TIGER/Line Driver:
+ - Added Tiger 2004 support.
+
+
+===============================================================================
+
 GDAL 1.2.6 - Overview of Changes
 --------------------------------
 
