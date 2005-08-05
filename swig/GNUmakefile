@@ -1,18 +1,16 @@
-GDAL_ROOT	=	../..
+GDAL_ROOT	=	..
 
-include ../../GDALmake.opt
+include ../GDALmake.opt
 
 PYTHON = python
 SWIG = swig
 SWIGARGS = -Wall
 
-TYPEMAPDEPS = gdal_typemaps.i typemaps_csharp.i typemaps_python.i typemaps_php.i
-
 PY_COMMANDS	=	epsg_tr.py gdalchksum.py gdal2xyz.py gcps2wld.py \
 			gdalimport.py gdal_merge.py pct2rgb.py rgb2pct.py \
 			gcps2vec.py
-PY_MODULES	=	gdal.py ogr.py osr.py gdalconst.py
-PY_WRAPPERS	= 	gdal_python.cpp gdalconst_python.c ogr_python.cpp osr_python.cpp
+PY_MODULES	=	python/gdal.py python/ogr.py python/osr.py python/gdalconst.py
+PY_WRAPPERS	= 	python/gdal_python.cpp python/gdalconst_python.c python/ogr_python.cpp python/osr_python.cpp
 
 PHP_MODULES	=	php/gdal.php php/gdalconst.php php/ogr.php php/osr.php
 PHP_WRAPPERS	= 	php/gdal_php.cpp php/gdalconst_php.c php/ogr_php.cpp php/osr_php.cpp 
@@ -44,29 +42,29 @@ veryclean:
 	-rm $(PY_MODULES) $(PY_MODULES:%.py=%.pyc) 2> /dev/null
 	-rm $(PHP_MODULES) $(PHP_WRAPPERS) $(PHP_EXTRADIST) 2> /dev/null
 
-gdal_python.cpp: gdal.i MajorObject.i Driver.i Dataset.i Band.i ColorTable.i cpl.i $(TYPEMAPDEPS)
-	$(SWIG) $(SWIGARGS) -I$(GDAL_ROOT) -c++ -python -o $@ gdal.i 
+python/gdal_python.cpp: include/gdal.i include/MajorObject.i include/Driver.i include/Dataset.i include/Band.i include/ColorTable.i include/cpl.i include/typemaps_python.i
+	$(SWIG) $(SWIGARGS) -Iinclude -I$(GDAL_ROOT) -c++ -outdir python -python -o $@ gdal.i 
 
-gdalconst_python.c: gdalconst.i
-	$(SWIG) $(SWIGARGS) -I$(GDAL_ROOT) -python -o $@ gdalconst.i
+python/gdalconst_python.c: include/gdalconst.i
+	$(SWIG) $(SWIGARGS) -Iinclude -I$(GDAL_ROOT) -outdir python -python -o $@ gdalconst.i
 
-ogr_python.cpp:  ogr.i ${TYPEMAPDEPS}
-	$(SWIG) $(SWIGARGS) -I$(GDAL_ROOT) -c++ -python -o $@ ogr.i 
+python/ogr_python.cpp:  include/ogr.i include/typemaps_python.i
+	$(SWIG) $(SWIGARGS) -Iinclude -I$(GDAL_ROOT) -c++ -outdir python -python -o $@ ogr.i 
 
-osr_python.cpp:  osr.i ${TYPEMAPDEPS}
-	$(SWIG) $(SWIGARGS) -I$(GDAL_ROOT) -c++ -python -o $@ osr.i 
+python/osr_python.cpp:  include/osr.i include/typemaps_python.i
+	$(SWIG) $(SWIGARGS) -Iinclude -I$(GDAL_ROOT) -c++ -outdir python -python -o $@ osr.i 
 
-php/gdal_php.cpp: gdal.i MajorObject.i Driver.i Dataset.i Band.i ColorTable.i cpl.i $(TYPEMAPDEPS)
-	$(SWIG) $(SWIGARGS) -I$(GDAL_ROOT) -c++ -php -outdir php -o $@ gdal.i 
+php/gdal_php.cpp: include/gdal.i include/MajorObject.i include/Driver.i include/Dataset.i include/Band.i include/ColorTable.i include/cpl.i include/typemaps_php.i
+	$(SWIG) $(SWIGARGS) -Iinclude -I$(GDAL_ROOT) -c++ -php -outdir php -o $@ gdal.i 
 
-php/gdalconst_php.c: gdalconst.i
-	$(SWIG) $(SWIGARGS) -I$(GDAL_ROOT) -php -outdir php -o $@ gdalconst.i
+php/gdalconst_php.c: include/gdalconst.i
+	$(SWIG) $(SWIGARGS) -Iinclude -I$(GDAL_ROOT) -php -outdir php -o $@ gdalconst.i
 
-php/ogr_php.cpp:  ogr.i ${TYPEMAPDEPS}
-	$(SWIG) $(SWIGARGS) -I$(GDAL_ROOT) -c++ -outdir php -php -o $@ ogr.i 
+php/ogr_php.cpp:  include/ogr.i include/typemaps_php.i
+	$(SWIG) $(SWIGARGS) -Iinclude -I$(GDAL_ROOT) -c++ -outdir php -php -o $@ ogr.i 
 
-php/osr_php.cpp:  osr.i ${TYPEMAPDEPS}
-	$(SWIG) $(SWIGARGS) -I$(GDAL_ROOT) -c++ -outdir php -php -o $@ osr.i 
+php/osr_php.cpp:  include/osr.i include/typemaps_php.i
+	$(SWIG) $(SWIGARGS) -Iinclude -I$(GDAL_ROOT) -c++ -outdir php -php -o $@ osr.i 
 
 #
 # We delegate the build and install processes to Python's distutils module
@@ -76,12 +74,17 @@ php/osr_php.cpp:  osr.i ${TYPEMAPDEPS}
 python_generate: $(PY_WRAPPERS)
 
 python_build: $(PY_WRAPPERS)
-	$(PYTHON) setup.py build
+	(cd python; $(PYTHON) setup.py build)
 
 python_install: $(PY_WRAPPERS)
-	$(PYTHON) setup.py install --prefix=$(prefix)
+	(cd python; $(PYTHON) setup.py install --prefix=$(prefix))
 
 #
 # PHP
 php_generate: $(PHP_WRAPPERS)
 
+php_build: $(PHP_WRAPPERS)
+	(cd php; make build)
+
+php_install: $(PHP_WRAPPERS)
+	(cd php; make install)
