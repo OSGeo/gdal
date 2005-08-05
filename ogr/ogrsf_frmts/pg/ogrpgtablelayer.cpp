@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/08/05 13:37:40  fwarmerdam
+ * Bug 902: set pszGeomColumn if WKB_GEOMETRY found.
+ *
  * Revision 1.32  2005/08/04 07:28:28  osemykin
  * Fixes for support postgis version < 0.9.0
  * geom as EWKT for PostGIS >= 1.0
@@ -290,12 +293,13 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
         else if( EQUAL(pszType,"geometry") )
         {
             bHasPostGISGeometry = TRUE;
-            pszGeomColumn = CPLStrdup( oField.GetNameRef());
+            pszGeomColumn = CPLStrdup(oField.GetNameRef());
             continue;
         }
         else if( EQUAL(oField.GetNameRef(),"WKB_GEOMETRY") )
         {
             bHasWkb = TRUE;
+            pszGeomColumn = CPLStrdup(oField.GetNameRef());
             if( EQUAL(pszType,"OID") )
                 bWkbAsOid = TRUE;
             continue;
