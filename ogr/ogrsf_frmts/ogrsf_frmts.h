@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2005/08/05 15:34:34  fwarmerdam
+ * added grass
+ *
  * Revision 1.51  2005/07/08 22:10:56  pka
  * Initial import of OGR Interlis driver
  *
@@ -452,6 +455,7 @@ void CPL_DLL RegisterOGRSQLite();
 void CPL_DLL RegisterOGRCSV();
 void CPL_DLL RegisterOGRILI1();
 void CPL_DLL RegisterOGRILI2();
+void CPL_DLL RegisterOGRGRASS();
 
 CPL_C_END
 

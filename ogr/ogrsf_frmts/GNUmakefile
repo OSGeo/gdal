@@ -12,6 +12,7 @@ SUBDIRS-$(HAVE_FME)	+= fme
 SUBDIRS-$(HAVE_DODS)	+= dods
 SUBDIRS-$(ODBC_SETTING)	+= odbc
 SUBDIRS-$(HAVE_SQLITE)	+= sqlite
+SUBDIRS-$(HAVE_GRASS)	+= grass
 SUBDIRS-$(HAVE_XERCES)	+= ili
 
 default:	$(foreach d,$(SUBDIRS-yes),$(d)-target)
