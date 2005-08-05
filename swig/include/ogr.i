@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.29  2005/08/05 20:32:11  kruland
+ * Pass bytecount into OGR_G_CreateFromWkb.
+ *
  * Revision 1.28  2005/08/05 15:49:27  kruland
  * Added __str__ to Geometry class python bindings.
  *
@@ -1008,7 +1011,8 @@ public:
     void *geom;
     OGRErr err = OGR_G_CreateFromWkb( (unsigned char *) bin_string,
                                       reference,
-                                      &geom);
+                                      &geom,
+                                      len );
     if (err != 0 )
        throw err;
     return (OGRGeometryShadow*) geom;
