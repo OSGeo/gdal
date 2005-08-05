@@ -202,11 +202,59 @@ fi
 AC_SUBST(LIBZ_SETTING,$LIBZ_SETTING)
 
 dnl ---------------------------------------------------------------------------
+dnl Select an PostgreSQL Library to use, or disable driver.
+dnl ---------------------------------------------------------------------------
+
+PG_CONFIG=no
+
+AC_ARG_WITH(pg,[  --with-pg[=ARG]         Include PostgreSQL OGR Support (ARG=path to pg_config)],,)
+
+if test "$with_pg" = "yes" -o "$with_pg" = "" ; then
+  AC_PATH_PROG(PG_CONFIG, pg_config, no)
+else 
+  PG_CONFIG=$with_pg
+fi
+
+AC_MSG_CHECKING([for PostgreSQL])
+
+if test "$PG_CONFIG" = "no" ; then
+
+  HAVE_PG=no
+  PG_LIB=
+  PG_INC=
+
+  AC_MSG_RESULT([no])LIBZ
+
+else
+  if test -d $PG_CONFIG ; then
+      AC_MSG_RESULT([no])
+      AC_MSG_ERROR([--with-pg argument is a directory.  It should be the path to the pg_config script, often somewhere like /usr/local/pgsql/bin/pg_config.])
+  fi
+
+  if test \! -x $PG_CONFIG ; then
+      AC_MSG_RESULT([no])
+      AC_MSG_ERROR([--with-pg argument is a not an executable file.  It should be the path to the pg_config script, often somewhere like /usr/local/pgsql/bin/pg_config.])
+  fi
+
+  HAVE_PG=yes
+  LIBS="-L`$PG_CONFIG --libdir` -lpq $LIBS"
+  PG_INC="-I`$PG_CONFIG --includedir`"
+
+  AC_MSG_RESULT([yes])
+
+fi
+
+AC_SUBST(HAVE_PG,$HAVE_PG)
+AC_SUBST(PG_INC,$PG_INC)
+AC_SUBST(PG_LIB,$PG_LIB)
+
+dnl ---------------------------------------------------------------------------
 dnl Check if we should build with GRASS support.
 dnl ---------------------------------------------------------------------------
 
 GRASS_SETTING=no
 GRASS_INCLUDE=
+HAVE_GRASS=no
 export GRASS_INCLUDE GRASS_SETTING
 
 AC_ARG_WITH(grass,[  --with-grass[=ARG]      Include GRASS support (GRASS 5.7+, ARG=GRASS install tree dir)],,)
@@ -219,13 +267,18 @@ if test "$with_grass" = "" ; then
 fi
 
 # Check for GRASS 5.7.0 or later library use.
+# TODO: separate libs for rasters and vectors
 if test "$with_grass" != "yes" -a "$with_grass" != "no" ; then
 
   AC_CHECK_LIB(grass_gis,G_asprintf,GRASS_SETTING=grass57+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime)
    
   if test "$GRASS_SETTING" = "grass57+" ; then   
-    LIBS="-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
+    G_RASTLIBS="-lgrass_I"
+    G_VECTLIBS="-lgrass_vect -lgrass_dig2 -lgrass_dgl -lgrass_rtree -lgrass_linkm -lgrass_dbmiclient -lgrass_dbmibase"
+    LIBS="-L$with_grass/lib $G_VECTLIBS $G_RASTLIBS -lgrass_gproj -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
     GRASS_INCLUDE="-I$with_grass/include"
+    GRASS_GISBASE="$with_grass"
+    HAVE_GRASS=yes
   else
     AC_MSG_ERROR([--with-grass=$with_grass requested, but libraries not found!])
   fi
@@ -257,6 +310,8 @@ fi
 
 AC_SUBST(GRASS_SETTING,$GRASS_SETTING)
 AC_SUBST(GRASS_INCLUDE,$GRASS_INCLUDE)
+AC_SUBST(GRASS_GISBASE,$GRASS_GISBASE)
+AC_SUBST(HAVE_GRASS)
 
 if test "$GRASS_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="grass $OPT_GDAL_FORMATS"
@@ -1109,53 +1164,6 @@ fi
 AC_SUBST(OGR_ENABLED,$OGR_ENABLED)
 
 dnl ---------------------------------------------------------------------------
-dnl Select an PostgreSQL Library to use, or disable driver.
-dnl ---------------------------------------------------------------------------
-
-PG_CONFIG=no
-
-AC_ARG_WITH(pg,[  --with-pg[=ARG]         Include PostgreSQL OGR Support (ARG=path to pg_config)],,)
-
-if test "$with_pg" = "yes" -o "$with_pg" = "" ; then
-  AC_PATH_PROG(PG_CONFIG, pg_config, no)
-else 
-  PG_CONFIG=$with_pg
-fi
-
-AC_MSG_CHECKING([for PostgreSQL])
-
-if test "$PG_CONFIG" = "no" ; then
-
-  HAVE_PG=no
-  PG_LIB=
-  PG_INC=
-
-  AC_MSG_RESULT([no])LIBZ
-
-else
-  if test -d $PG_CONFIG ; then
-      AC_MSG_RESULT([no])
-      AC_MSG_ERROR([--with-pg argument is a directory.  It should be the path to the pg_config script, often somewhere like /usr/local/pgsql/bin/pg_config.])
-  fi
-
-  if test \! -x $PG_CONFIG ; then
-      AC_MSG_RESULT([no])
-      AC_MSG_ERROR([--with-pg argument is a not an executable file.  It should be the path to the pg_config script, often somewhere like /usr/local/pgsql/bin/pg_config.])
-  fi
-
-  HAVE_PG=yes
-  PG_LIB="-L`$PG_CONFIG --libdir` -lpq"
-  PG_INC="-I`$PG_CONFIG --includedir`"
-
-  AC_MSG_RESULT([yes])
-
-fi
-
-AC_SUBST(HAVE_PG,$HAVE_PG)
-AC_SUBST(PG_INC,$PG_INC)
-AC_SUBST(PG_LIB,$PG_LIB)
-
-dnl ---------------------------------------------------------------------------
 dnl Select an MySQL Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
@@ -1263,7 +1271,7 @@ else
   echo 'int main() {  XMLPlatformUtils::Initialize(); }' >> conftest.cpp
   CMD="${CXX} ${XERCES_INCLUDE} ${CPPFLAGS} -o conftest conftest.cpp $LIBS"
 
-  if test -z "`$CMD 2>&1`" ; then
+  if test -z "`$CMD 2>&1 | grep -v warning`" ; then
     HAVE_XERCES=yes
     AC_MSG_RESULT([yes])
   else
