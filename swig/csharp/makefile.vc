@@ -1,4 +1,4 @@
-!INCLUDE ..\..\..\nmake.opt
+!INCLUDE ../../nmake.opt
 
 
 OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj
@@ -57,3 +57,5 @@ clean:
 	-del *.pdb
 	-del *.tlb
 	-del *.snk
+	-del *.cs
+	-del *.cpp
