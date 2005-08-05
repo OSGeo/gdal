@@ -1,0 +1,35 @@
+
+GDAL_ROOT	=	../
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+SCRIPT_CONFIG = .\setup.ini
+
+gdalvars:
+	-del $(SCRIPT_CONFIG)
+	echo $(GDAL_HOME) > $(SCRIPT_CONFIG)
+        findstr /c:"define GDAL_RELEASE_NAME " ..\gcore\gdal_version.h  >> $(SCRIPT_CONFIG)
+        echo $(EXTERNAL_LIBS) >> $(SCRIPT_CONFIG)
+
+python: gdalvars 
+        cd python
+        $(SWIG) -python -modern -new_repr -o gdalconst_python.c ..\include\gdalconst.i
+        $(SWIG) -c++ -python -modern -new_repr -o gdal_python.cpp ..\include\gdal.i
+        $(SWIG) -c++ -python -modern -new_repr -o osr_python.cpp ..\include\osr.i
+        $(SWIG) -c++ -python -modern -new_repr -o ogr_python.cpp ..\include\ogr.i
+        $(PYDIR)/python.exe setup.py build
+        
+#d:\Python\debug\Python-2.4\PCbuild\python_d.exe setup.py build   --debug
+
+
+csharp: gdalvars
+        cd csharp
+        $(SWIG) -csharp -namespace GDAL -o const\gdalconst_wrap.c ../include/gdalconst.i
+        $(SWIG) -c++ -csharp -namespace GDAL -o gdal\gdal_wrap.cpp ../include/gdal.i
+        $(SWIG) -c++ -csharp -o gdal_wrap.cpp ../include/gdal.i
+        $(SWIG) -c++ -csharp -o osr_wrap.cpp ../include/osr.i
+        $(SWIG) -c++ -csharp  -namespace OGR -o ogr\ogr_wrap.cpp ../include/ogr.i
+        nmake /f makefile.vc
+
+clean:
+        cd csharp
+        nmake /f makefile.vc clean
