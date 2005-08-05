@@ -32,7 +32,7 @@ include_dirs = ['../../port',
 if sys.platform == 'win32':
     # Created by the GDAL build process.
     # This was swiped from MapServer
-    setupvars = "setup.ini"
+    setupvars = "../setup.ini"
 
     # Open and read lines from setup.ini.
     try:
