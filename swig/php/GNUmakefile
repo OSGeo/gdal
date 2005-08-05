@@ -1,15 +1,36 @@
+
+GDAL_ROOT = ../..
+
+include ../../GDALmake.opt
+
+BINDING = php
+include ../SWIGmake.base
+
 CC=gcc
 CXX=g++
-
 CFLAGS=-fpic
 LDFLAGS=-shared
 PHP_INC=`php-config --includes`
 EXTRA_INC=
 EXTRA_LIB=
 
-all: php_gdal.so php_ogr.so php_gdalconst.so php_osr.so
+all_libs = php_gdal.so php_ogr.so php_gdalconst.so php_osr.so
 
-default:all
+PHP_MODULES   =       gdal.php gdalconst.php ogr.php osr.php
+PHP_EXTRADIST =       php_gdal.h php_gdalconst.h php_ogr.h php_osr.h
+
+clean:
+	-rm -rf ${all_libs}
+
+veryclean: clean
+	-rm -f ${WRAPPERS} ${PHP_MODULES} ${PHP_EXTRADIST}
+
+generate: ${WRAPPERS}
+
+build: ${all_libs}
+
+# This directive should actually do an install.
+install: build
 
 php_%.so: %_wrap.o
 	$(CC) $(LDFLAGS) $< -o $@ $(EXTRA_LIB)
