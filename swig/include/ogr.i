@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.28  2005/08/05 15:49:27  kruland
+ * Added __str__ to Geometry class python bindings.
+ *
  * Revision 1.27  2005/06/22 18:42:33  kruland
  * Don't apply a typemap for returning OGRErr.
  *
@@ -1275,6 +1278,13 @@ public:
   int GetDimension() {
     return OGR_G_GetDimension(self);
   }
+
+#ifdef SWIGPYTHON
+%pythoncode {
+  def __str__(self):
+    return self.ExportToWkt()
+}
+#endif
 } /* %extend */
 
 
