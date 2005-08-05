@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.30  2005/08/05 18:48:59  hobu
+ * gross hack of duplicate function names for the
+ * GCP stuff because C# module of swig is stupid
+ *
  * Revision 1.29  2005/08/04 19:18:01  kruland
  * The Open() and OpenShared() methods were incrementing the gdal internal
  * reference count by mistake.
@@ -305,6 +309,7 @@ struct GDAL_GCP {
 } /* extend */
 }; /* GDAL_GCP */
 %inline %{
+
 double GDAL_GCP_GCPX_get( GDAL_GCP *h ) {
   return h->dfGCPX;
 }
@@ -352,7 +357,11 @@ void GDAL_GCP_Id_set( GDAL_GCP *h, const char * val ) {
   h->pszId = CPLStrdup(val);
 }
 
-#ifdef SWIGCSHARP
+
+
+/* Duplicate, but transposed names for C# because 
+*  the C# module outputs backwards names
+*/
 double GDAL_GCP_get_GCPX( GDAL_GCP *h ) {
   return h->dfGCPX;
 }
@@ -399,9 +408,8 @@ void GDAL_GCP_set_Id( GDAL_GCP *h, const char * val ) {
     CPLFree( h->pszId );
   h->pszId = CPLStrdup(val);
 }
-#endif
 
-%}
+%} //%inline 
 
 %rename (GCPsToGeoTransform) GDALGCPsToGeoTransform;
 %apply (IF_FALSE_RETURN_NONE) { (FALSE_IS_ERR) };
