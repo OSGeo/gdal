@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/08/05 17:40:45  fwarmerdam
+ * Reformat for clarity.
+ *
  * Revision 1.26  2005/07/25 19:52:43  ssoule
  * Changed GDALMajorObject's char *pszDescription to std::string sDescription.
  *
@@ -412,33 +415,33 @@ void ENVIDataset::FlushCache()
 
     VSIFPrintf( fp, "ENVI\n" );
     if ("" != sDescription)
-      VSIFPrintf( fp, "description = {\n%s}\n", sDescription.c_str());
+        VSIFPrintf( fp, "description = {\n%s}\n", sDescription.c_str());
     VSIFPrintf( fp, "samples = %d\nlines   = %d\nbands   = %d\n",
 		nRasterXSize, nRasterYSize, nBands );
 
-		GDALRasterBand* band = GetRasterBand(1);
-		catNames = band->GetCategoryNames();
+    GDALRasterBand* band = GetRasterBand(1);
+    catNames = band->GetCategoryNames();
     VSIFPrintf( fp, "header offset = 0\n");
     if (0 == catNames)
-      VSIFPrintf( fp, "file type = ENVI Standard\n" );
+        VSIFPrintf( fp, "file type = ENVI Standard\n" );
     else
-      VSIFPrintf( fp, "file type = ENVI Classification\n" );
+        VSIFPrintf( fp, "file type = ENVI Classification\n" );
     int iENVIType = GetEnviType(band->GetRasterDataType());
     VSIFPrintf( fp, "data type = %d\n", iENVIType );
     switch (interleave)
     {
-    case BIP:
-      pszInterleaving = "bip";		    // interleaved by pixel
-      break;
-    case BIL:
-	    pszInterleaving = "bil";		    // interleaved by line
-      break;
-    case BSQ:
-	    pszInterleaving = "bsq";		// band sequental by default
-      break;
-    default:
+      case BIP:
+        pszInterleaving = "bip";		    // interleaved by pixel
+        break;
+      case BIL:
+        pszInterleaving = "bil";		    // interleaved by line
+        break;
+      case BSQ:
+        pszInterleaving = "bsq";		// band sequental by default
+        break;
+      default:
     	pszInterleaving = "bsq";
-      break;
+        break;
     }
     VSIFPrintf( fp, "interleave = %s\n", pszInterleaving);
     VSIFPrintf( fp, "byte order = %d\n", iBigEndian );
@@ -447,105 +450,105 @@ void ENVIDataset::FlushCache()
 /* -------------------------------------------------------------------- */
 /*      Write class and color information                               */
 /* -------------------------------------------------------------------- */
-		catNames = band->GetCategoryNames();
+    catNames = band->GetCategoryNames();
     if (0 != catNames)
     {
-		  int nrClasses = 0;
-		  while (*catNames++)
-			  ++nrClasses;
+        int nrClasses = 0;
+        while (*catNames++)
+            ++nrClasses;
 
-		  if (nrClasses > 0)
-		  {
-			  VSIFPrintf( fp, "classes = %d\n", nrClasses );
+        if (nrClasses > 0)
+        {
+            VSIFPrintf( fp, "classes = %d\n", nrClasses );
 
-			  GDALColorTable* colorTable = band->GetColorTable();
-			  if (0 != colorTable)
-			  {
-				  int nrColors = colorTable->GetColorEntryCount();
-				  if (nrColors > nrClasses)
-					  nrColors = nrClasses;
-				  VSIFPrintf( fp, "class lookup = {\n");
-				  for (int i = 0; i < nrColors; ++i)
-				  {
-					  const GDALColorEntry* color = colorTable->GetColorEntry(i);
-					  VSIFPrintf(fp, "%d, %d, %d", color->c1, color->c2, color->c3);
-					  if (i < nrColors - 1)
-					  {
-						  VSIFPrintf(fp, ", ");
-						  if (0 == (i+1) % 5)
-							  VSIFPrintf(fp, "\n");
-					  }
-				  }
-				  VSIFPrintf(fp, "}\n");
-			  }
+            GDALColorTable* colorTable = band->GetColorTable();
+            if (0 != colorTable)
+            {
+                int nrColors = colorTable->GetColorEntryCount();
+                if (nrColors > nrClasses)
+                    nrColors = nrClasses;
+                VSIFPrintf( fp, "class lookup = {\n");
+                for (int i = 0; i < nrColors; ++i)
+                {
+                    const GDALColorEntry* color = colorTable->GetColorEntry(i);
+                    VSIFPrintf(fp, "%d, %d, %d", color->c1, color->c2, color->c3);
+                    if (i < nrColors - 1)
+                    {
+                        VSIFPrintf(fp, ", ");
+                        if (0 == (i+1) % 5)
+                            VSIFPrintf(fp, "\n");
+                    }
+                }
+                VSIFPrintf(fp, "}\n");
+            }
 
-			  catNames = band->GetCategoryNames();
-			  if (0 != *catNames)
-			  {
-				  VSIFPrintf( fp, "class names = {\n%s", *catNames++);
-          int i = 0;
-          while (*catNames) {
-					  VSIFPrintf( fp, ",");
-					  if (0 == (++i) % 5)
-						  VSIFPrintf(fp, "\n");
-					  VSIFPrintf( fp, " %s", *catNames++);
-          }
-				  VSIFPrintf( fp, "}\n");
-			  }
-      }
-		}
+            catNames = band->GetCategoryNames();
+            if (0 != *catNames)
+            {
+                VSIFPrintf( fp, "class names = {\n%s", *catNames++);
+                int i = 0;
+                while (*catNames) {
+                    VSIFPrintf( fp, ",");
+                    if (0 == (++i) % 5)
+                        VSIFPrintf(fp, "\n");
+                    VSIFPrintf( fp, " %s", *catNames++);
+                }
+                VSIFPrintf( fp, "}\n");
+            }
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write the rest of header.                                       */
 /* -------------------------------------------------------------------- */
     if ( pszProjection && !EQUAL(pszProjection, "") )
     {
-	    const char	*pszHemisphere;
-	    double		dfPixelY;
-	    int		bNorth;
-	    int		iUTMZone;
-	    OGRSpatialReference oSRS;
+        const char	*pszHemisphere;
+        double		dfPixelY;
+        int		bNorth;
+        int		iUTMZone;
+        OGRSpatialReference oSRS;
 
-	    char	*pszProj = pszProjection;
+        char	*pszProj = pszProjection;
 
-	    oSRS.importFromWkt( &pszProj );
-            iUTMZone = oSRS.GetUTMZone( &bNorth );
-	    if ( iUTMZone )
-	    {
-	      if ( bNorth )
-	      {
-		      pszHemisphere = "North";
-		      dfPixelY = -adfGeoTransform[5];
-	      }
-	      else
-	      {
-		      pszHemisphere = "South";
-		      dfPixelY = adfGeoTransform[5];
-	      }
+        oSRS.importFromWkt( &pszProj );
+        iUTMZone = oSRS.GetUTMZone( &bNorth );
+        if ( iUTMZone )
+        {
+            if ( bNorth )
+            {
+                pszHemisphere = "North";
+                dfPixelY = -adfGeoTransform[5];
+            }
+            else
+            {
+                pszHemisphere = "South";
+                dfPixelY = adfGeoTransform[5];
+            }
   	    VSIFPrintf( fp, "map info = {UTM, 1, 1, %f, %f, %f, %f, %d, %s}\n",
-	    	adfGeoTransform[0], adfGeoTransform[3], adfGeoTransform[1],
-		    dfPixelY, iUTMZone, pszHemisphere);
-	    }
+                        adfGeoTransform[0], adfGeoTransform[3], adfGeoTransform[1],
+                        dfPixelY, iUTMZone, pszHemisphere);
+        }
     } else {
-      // Suppose we are in North hemisphere.
-      double dfPixelY = -adfGeoTransform[5];
-      const char* pszHemisphere = "North";
-      VSIFPrintf( fp, "map info = {Unknown, 1, 1, %f, %f, %f, %f, %d, %s}\n",
-                  adfGeoTransform[0], adfGeoTransform[3], adfGeoTransform[1],
-                  dfPixelY, 0, pszHemisphere);
+        // Suppose we are in North hemisphere.
+        double dfPixelY = -adfGeoTransform[5];
+        const char* pszHemisphere = "North";
+        VSIFPrintf( fp, "map info = {Unknown, 1, 1, %f, %f, %f, %f, %d, %s}\n",
+                    adfGeoTransform[0], adfGeoTransform[3], adfGeoTransform[1],
+                    dfPixelY, 0, pszHemisphere);
     }
     
 
     VSIFPrintf( fp, "band names = {\n" );
     for ( int i = 1; i <= nBands; i++ )
     {
-	    std::string sBandDesc = GetRasterBand( i )->GetDescription();
+        std::string sBandDesc = GetRasterBand( i )->GetDescription();
 
-	    if ( sBandDesc == "" )
-	        sBandDesc = CPLSPrintf( "Band %d", i );
-	    VSIFPrintf( fp, "%s", sBandDesc.c_str() );
-	    if ( i != nBands )
-	        VSIFPrintf( fp, ",\n" );
+        if ( sBandDesc == "" )
+            sBandDesc = CPLSPrintf( "Band %d", i );
+        VSIFPrintf( fp, "%s", sBandDesc.c_str() );
+        if ( i != nBands )
+            VSIFPrintf( fp, ",\n" );
     }
     VSIFPrintf( fp, "}\n" );
 }
