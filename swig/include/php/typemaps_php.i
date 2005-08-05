@@ -6,16 +6,7 @@
  * Purpose:  GDAL Core SWIG Interface declarations.
  * Author:   Kevin Ruland, kruland@ku.edu
  *
-
 */
-
-/*
- * The typemaps defined here use the code fragment called:
- * t_out_helper which is defined in the pytuplehlp.swg file.
- * The *.swg library files are considered "swig internal".
- * fortunately, pytuplehlp.swg is included by typemaps.i
- * which we need anyway.
- */
 
 /*
  * Include the typemaps from swig library for returning of
@@ -36,23 +27,15 @@
  * CPLErr function_to_wrap( );
  * %clear (CPLErr);
  */
-%typemap(out) IF_ERR_RETURN_NONE
-{
-  /* %typemap(out) IF_ERR_RETURN_NONE */
-  result = 0;
-}
-%typemap(ret) IF_ERR_RETURN_NONE
-{
- /* %typemap(ret) IF_ERR_RETURN_NONE */
-}
 %typemap(out) IF_FALSE_RETURN_NONE
 {
-  /* %typemap(out) IF_FALSE_RETURN_NONE */
-  $result = 0;
+ /* %typemap(out) IF_FALSE_RETURN_NONE */
+ RETVAL_NULL();  
 }
 %typemap(ret) IF_FALSE_RETURN_NONE
 {
  /* %typemap(ret) IF_FALSE_RETURN_NONE */
+ RETVAL_NULL();
 }
 
 /*
@@ -62,35 +45,39 @@
  * then it will return 0.
  */
 %fragment("OGRErrMessages","header") %{
-static char const *
+static char *
 OGRErrMessages( int rc ) {
   switch( rc ) {
   case 0:
-    return "OGR Error %d: None";
+    return "OGR Error 0: None";
   case 1:
-    return "OGR Error %d: Not enough data";
+    return "OGR Error 1: Not enough data";
   case 2:
-    return "OGR Error %d: Unsupported geometry type";
+    return "OGR Error 2: Unsupported geometry type";
   case 3:
-    return "OGR Error %d: Unsupported operation";
+    return "OGR Error 3: Unsupported operation";
   case 4:
-    return "OGR Error %d: Corrupt data";
+    return "OGR Error 4: Corrupt data";
   case 5:
-    return "OGR Error %d: General Error";
+    return "OGR Error 5: General Error";
   case 6:
-    return "OGR Error %d: Unsupported SRS";
+    return "OGR Error 6: Unsupported SRS";
   default:
-    return "OGR Error %d: Unknown";
+    return "OGR Error: Unknown";
   }
 }
 %}
-%typemap(php, out,fragment="OGRErrMessages") OGRErr
+%typemap(out) OGRErr
 {
   /* %typemap(out) OGRErr */
+  if (result != 0 ) {
+    SWIG_PHP_Error(E_ERROR,OGRErrMessages(result));
+  }
 }
-%typemap(php, ret) OGRErr
+%typemap(ret,fragment="OGRErrMessages") OGRErr
 {
   /* %typemap(ret) OGRErr */
+  RETVAL_LONG(0);
 }
 
 /*
@@ -132,18 +119,17 @@ OGRErrMessages( int rc ) {
  */
 
 %fragment("CreateTupleFromDoubleArray","header") %{
-/*
- * static PyObject *
- * CreateTupleFromDoubleArray( double *first, unsigned int size ) {
- *  PyObject *out = PyTuple_New( size );
- *  for( unsigned int i=0; i<size; i++ ) {
- *    PyObject *val = PyFloat_FromDouble( *first );
- *    ++first;
- *    PyTuple_SetItem( out, i, val );
- *  }
- *  return out;
- * }
- */
+  zval *
+  CreateTupleFromDoubleArray( double *first, unsigned int size ) {
+    zval *tmp;
+    MAKE_STD_ZVAL(tmp);
+    array_init(tmp);
+    for( unsigned int i=0; i<size; i++ ) {
+      add_next_index_double( tmp, *first );
+      ++first;
+    }
+    return tmp;
+ }
 %}
 
 %define ARRAY_TYPEMAP(size)
@@ -152,17 +138,22 @@ OGRErrMessages( int rc ) {
   /* %typemap(in,numinputs=0) (double_ ## size argout) */
   $1 = argout;
 }
-%typemap(argout,fragment="CreateTupleFromDoubleArray") ( double_ ## size argout)
+%typemap(argout,fragment="CreateTupleFromDoubleArray,t_output_helper") ( double_ ## size argout)
 {
   /* %typemap(argout) (double_ ## size argout) */
+  zval *t = CreateTupleFromDoubleArray( $1, size );
+  t_output_helper( &$result, t );
 }
 %typemap(in,numinputs=0) ( double_ ## size *argout) (double *argout)
 {
   /* %typemap(in,numinputs=0) (double_ ## size *argout) */
+  $1 = &argout;
 }
-%typemap(argout,fragment="CreateTupleFromDoubleArray") ( double_ ## size *argout)
+%typemap(argout,fragment="CreateTupleFromDoubleArray,t_output_helper") ( double_ ## size *argout)
 {
   /* %typemap(argout) (double_ ## size *argout) */
+  zval *t = CreateTupleFromDoubleArray( *$1, size );
+  t_output_helper( &$result, t);
 }
 %typemap(freearg) (double_ ## size *argout)
 {
@@ -172,6 +163,11 @@ OGRErrMessages( int rc ) {
 %typemap(in) (double_ ## size argin) (double argin[size])
 {
   /* %typemap(in) (double_ ## size argin) */
+  $1 = argin;
+  for (unsigned int i=0; i<size; i++) {
+    double val = 0.0; /* extract val from i-th position of $input */
+    $1[i] =  val;
+  }
 }
 %enddef
 
@@ -207,11 +203,27 @@ ARRAY_TYPEMAP(3);
 %typemap(in,numinputs=1) (int nList, int* pList)
 {
   /* %typemap(in,numinputs=1) (int nList, int* pList)*/
+  zend_error(E_ERROR,"Typemap (in,numinputs=1) (int nList, int*pList) not properly defined");
   /* check if is List */
+//  if ( !PySequence_Check($input) ) {
+//    PyErr_SetString(PyExc_TypeError, "not a sequence");
+//    SWIG_fail;
+//  }
+//  $1 = PySequence_Size($input);
+//  $2 = (int*) malloc($1*sizeof(int));
+//  for( int i = 0; i<$1; i++ ) {
+//    PyObject *o = PySequence_GetItem($input,i);
+//    if ( !PyArg_Parse(o,"i",&$2[i]) ) {
+//      SWIG_fail;
+//    }
+//  }
 }
 %typemap(freearg) (int nList, int* pList)
 {
   /* %typemap(freearg) (int nList, int* pList) */
+  if ($2) {
+    free((void*) $2);
+  }
 }
 
 /*
@@ -230,19 +242,27 @@ ARRAY_TYPEMAP(3);
 %typemap(argout) (int *nLen, char **pBuf )
 {
   /* %typemap(argout) (int *nLen, char **pBuf ) */
+  ZVAL_STRINGL( $result, *$2, *$1, 1 );
 }
 %typemap(freearg) (int *nLen, char **pBuf )
 {
   /* %typemap(freearg) (int *nLen, char **pBuf ) */
+  if( *$1 ) {
+    free( *$2 );
+  }
 }
 %typemap(in,numinputs=1) (int nLen, char *pBuf )
 {
   /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+  convert_to_string_ex($input);
+  $2 = Z_STRVAL_PP($input);
+  $1 = Z_STRLEN_PP($input);
 }
 %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER)
         (int nLen, char *pBuf)
 {
   /* %typecheck(SWIG_TYPECHECK_POINTER) (int nLen, char *pBuf) */
+  $1 = ($input)->type == IS_STRING;
 }
 
 /*
@@ -257,6 +277,24 @@ ARRAY_TYPEMAP(3);
 %typemap(argout) (int *nGCPs, GDAL_GCP const **pGCPs )
 {
   /* %typemap(argout) (int *nGCPs, GDAL_GCP const **pGCPs ) */
+  zval *out;
+  MAKE_STD_ZVAL(out);
+  array_init(out);
+  for( int i = 0; i < *$1; i++ ) {
+    GDAL_GCP *o = new_GDAL_GCP( (*$2)[i].dfGCPX,
+                                (*$2)[i].dfGCPY,
+                                (*$2)[i].dfGCPZ,
+                                (*$2)[i].dfGCPPixel,
+                                (*$2)[i].dfGCPLine,
+                                (*$2)[i].pszInfo,
+                                (*$2)[i].pszId );
+    zval *t;
+    MAKE_STD_ZVAL(t);
+    SWIG_SetPointerZval(t,(void*)o,SWIGTYPE_p_GDAL_GCP,1);
+    add_next_index_zval(out,t);
+  }
+  $result = out;
+  zval_copy_ctor($result);
 }
 %typemap(in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) ( GDAL_GCP *tmpGCPList )
 {
@@ -265,6 +303,9 @@ ARRAY_TYPEMAP(3);
 %typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs )
 {
   /* %typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs ) */
+  if ($2) {
+    free( (void*) $2 );
+  }
 }
 
 /*
@@ -273,11 +314,19 @@ ARRAY_TYPEMAP(3);
 %typemap(out) GDALColorEntry*
 {
   /* %typemap(out) GDALColorEntry* */
+  array_init($result);
+  add_next_index_long($result,(*$1).c1);
+  add_next_index_long($result,(*$1).c2);
+  add_next_index_long($result,(*$1).c3);
+  add_next_index_long($result,(*$1).c4);
 }
 
 %typemap(in) GDALColorEntry*
 {
   /* %typemap(in) GDALColorEntry* */
+  GDALColorEntry ce = {255,255,255,255};
+  // Need to parse the array values from $input
+  $1 = &ce;
 }
 
 /*
@@ -286,6 +335,20 @@ ARRAY_TYPEMAP(3);
 %typemap(out) char **dict
 {
   /* %typemap(out) char **dict */
+  char **stringarray = $1;
+  array_init($result);
+  if ( stringarray != NULL ) {
+    while (*stringarray != NULL ) {
+      char const *valptr;
+      char *keyptr;
+      valptr = CPLParseNameValue( *stringarray, &keyptr );
+      if ( valptr != 0 ) {
+	add_assoc_string($result,keyptr,(char*)valptr,1);
+        CPLFree( keyptr );
+      }
+      stringarray++;
+    }
+  }
 }
 
 /*
@@ -296,14 +359,29 @@ ARRAY_TYPEMAP(3);
 %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (char **dict)
 {
   /* %typecheck(SWIG_TYPECHECK_POINTER) (char **dict) */
+  $1 = 0; //(PyMapping_Check($input) || PySequence_Check($input) ) ? 1 : 0;
 }
 %typemap(in) char **dict
 {
   /* %typemap(in) char **dict */
+  zend_error(E_ERROR,"Typemap (in) char **dict not properly defined");
+/*  if ( PySequence_Check( $input ) ) {
+    int size = PySequence_Size($input);
+    for (int i = 0; i < size; i++) {
+      char *pszItem = NULL;
+      if ( ! PyArg_Parse( PySequence_GetItem($input,i), "s", &pszItem ) ) {
+        PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+        SWIG_fail;
+      }
+      $1 = CSLAddString( $1, pszItem );
+    }
+  }
+*/
 }
 %typemap(freearg) char **dict
 {
   /* %typemap(freearg) char **dict */
+  CSLDestroy( $1 );
 }
 
 /*
@@ -312,13 +390,37 @@ ARRAY_TYPEMAP(3);
 %typemap(in) char **options
 {
   /* %typemap(in) char **options */
+  zend_error(E_ERROR,"Typemap (in) char **options not properly defined");
+  //  int size = PySequence_Size($input);
+  //  for (int i = 0; i < size; i++) {
+  //    char *pszItem = NULL;
+  //    if ( ! PyArg_Parse( PySequence_GetItem($input,i), "s", &pszItem ) ) {
+  //      PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+  //      SWIG_fail;
+  //    }
+  //    $1 = CSLAddString( $1, pszItem );
+  //  }
 }
 %typemap(freearg) char **options
 {
   /* %typemap(freearg) char **options */
+  CSLDestroy( $1 );
 }
 %typemap(out) char **options
 {
+  /* %typemap(out) char ** -> ( string ) */
+  char **stringarray = $1;
+  if ( stringarray == NULL ) {
+    RETVAL_NULL();
+  }
+  else {
+    int len = CSLCount( stringarray );
+    array_init($result);
+    for ( int i = 0; i < len; ++i, ++stringarray ) {
+      add_next_index_string( $result, *stringarray, 1 );
+    }
+    CSLDestroy( $1 );
+  }
 }
 
 /*
@@ -328,6 +430,8 @@ ARRAY_TYPEMAP(3);
 %typemap(in) (char **ignorechange) ( char *val )
 {
   /* %typemap(in) (char **ignorechange) */
+  convert_to_string_ex( $input );
+  $1 = NULL;
 }
 
 /*
@@ -336,33 +440,43 @@ ARRAY_TYPEMAP(3);
 %typemap(in,numinputs=0) (char **argout) ( char *argout=0 )
 {
   /* %typemap(in,numinputs=0) (char **argout) */
+  $1 = &argout;
 }
-%typemap(argout) (char **argout)
+%typemap(argout,fragment="t_output_helper") (char **argout)
 {
   /* %typemap(argout) (char **argout) */
+  zval *t;
+  MAKE_STD_ZVAL(t);
+  if ( $1 ) {
+    ZVAL_STRING(t,*$1,strlen(*$1));
+  }
+  else {
+    ZVAL_NULL(t);
+  }
+  t_output_helper(&$result, t);
 }
 %typemap(freearg) (char **argout)
 {
+  /* %typemap(freearg) (char **argout) */
+  if ( *$1 )
+    CPLFree( *$1 );
 }
 
-/*
- * Typemap for an optional POD argument.
- * Declare function to take POD *.  If the parameter
- * is NULL then the function needs to define a default
- * value.
- */
-%define OPTIONAL_POD(type,argstring)
-%typemap(in) (type *optional_##type) ( type val )
+%typemap(in) (int *optional_int) ( $*1_ltype val )
 {
-  /* %typemap(in) (type *optional_##type) */
+  /* %typemap(in) (int *optional_int) */
+  if ( ZVAL_IS_NULL(*$input) ) {
+    $1 = 0;
+  }
+  convert_to_long_ex($input);
+  val = ($*1_ltype) Z_LVAL_PP( $input );
+  $1 = &val;  
 }
-%typemap(typecheck,precedence=0) (type *optional_##type)
+%typemap(typecheck,precedence=0) (int *optional_int)
 {
-  /* %typemap(typecheck,precedence=0) (type *optionalInt) */
+  /* %typemap(typecheck,precedence=0) (int *optional_int) */
+  $1 = (($input->type == IS_NONE) || $input->type == IS_LONG ) ? 1 : 0;
 }
-%enddef
-
-OPTIONAL_POD(int,i);
 
 /*
  * Typedef const char * <- Any object.
@@ -370,36 +484,15 @@ OPTIONAL_POD(int,i);
  * Formats the object using str and returns the string representation
  */
 
-%typemap(in) (tostring argin) ()
+%typemap(in) (tostring argin)
 {
   /* %typemap(in) (tostring argin) */
-}
-%typemap(freearg)(tostring argin)
-{
-  /* %typemap(freearg) (tostring argin) */
+  convert_to_string_ex($input);
+  $1 = Z_STRVAL_PP( $input );
 }
 %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
 {
   /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin) */
+  $1 = 1;
 }
 
-/*
- * Typemap for CPLErr.
- * This typemap will use the wrapper C-variable
- * int UseExceptions to determine proper behavour for
- * CPLErr return codes.
- * If UseExceptions ==0, then return the rc.
- * If UseExceptions ==1, then if rc >= CE_Failure, raise an exception.
- */
-%typemap(arginit) CPLErr
-{
-  /* %typemap(arginit) CPLErr */
-}
-%typemap(out) CPLErr
-{
-  /* %typemap(out) CPLErr */
-}
-%typemap(ret) CPLErr
-{
-  /* %typemap(ret) CPLErr */
-}
