@@ -23,7 +23,7 @@ clean:
 	for dir in ${BINDINGS}; do (cd $$dir; make clean ); done
 
 veryclean:
-	for dir in ${BINDINGS}; do (cd $$dir; make veryclean ); done
+	for dir in ${ALL_BINDINGS}; do (cd $$dir; make veryclean ); done
 
 generate:
 	for dir in ${ALL_BINDINGS}; do (cd $$dir; make generate ); done
