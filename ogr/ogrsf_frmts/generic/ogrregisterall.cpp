@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/08/05 15:34:49  fwarmerdam
+ * added grass support
+ *
  * Revision 1.24  2005/07/12 16:06:06  fwarmerdam
  * Don't register ILI unless enabled.
  *
@@ -154,10 +157,11 @@ void OGRRegisterAll()
 #ifdef OCI_ENABLED
     RegisterOGROCI();
 #endif
+#ifdef GRASS_ENABLED
+    RegisterOGRGRASS();
+#endif
 #ifdef FME_ENABLED
     RegisterOGRFME();
 #endif
-
-    
 }
 
