@@ -1,6 +1,6 @@
 OBJ	=	gdalconst_wrap.obj
 
-GDAL_ROOT	=	..\..\..\..
+GDAL_ROOT	=	..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
@@ -9,4 +9,6 @@ default:	$(OBJ)
 
 clean:
 	-del *.obj
+	-del *.cs
+	-del *.c
 
