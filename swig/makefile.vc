@@ -23,11 +23,18 @@ python: gdalvars
 
 csharp: gdalvars
         cd csharp
-        $(SWIG) -csharp -namespace GDAL -o const\gdalconst_wrap.c ../include/gdalconst.i
-        $(SWIG) -c++ -csharp -namespace GDAL -o gdal\gdal_wrap.cpp ../include/gdal.i
-        $(SWIG) -c++ -csharp -o gdal_wrap.cpp ../include/gdal.i
-        $(SWIG) -c++ -csharp -o osr_wrap.cpp ../include/osr.i
-        $(SWIG) -c++ -csharp  -namespace OGR -o ogr\ogr_wrap.cpp ../include/ogr.i
+        cd const
+        $(SWIG) -csharp -namespace GDAL -o gdalconst_wrap.c ../../include/gdalconst.i
+        cd ..
+        cd gdal
+        $(SWIG) -c++ -csharp -namespace GDAL -o gdal_wrap.cpp ../../include/gdal.i
+        cd ..
+        cd osr
+        $(SWIG) -c++ -csharp -namespace GDAL -o osr_wrap.cpp ../../include/osr.i
+        cd ..
+        cd ogr
+        $(SWIG) -c++ -csharp -namespace OGR -o ogr_wrap.cpp ../../include/ogr.i
+        cd ..
         nmake /f makefile.vc
 
 clean:
