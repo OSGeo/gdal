@@ -12,10 +12,10 @@ gdalvars:
 
 python: gdalvars 
         cd python
-        $(SWIG) -python -modern -new_repr -o gdalconst_python.c ..\include\gdalconst.i
-        $(SWIG) -c++ -python -modern -new_repr -o gdal_python.cpp ..\include\gdal.i
-        $(SWIG) -c++ -python -modern -new_repr -o osr_python.cpp ..\include\osr.i
-        $(SWIG) -c++ -python -modern -new_repr -o ogr_python.cpp ..\include\ogr.i
+        $(SWIG) -python -modern -new_repr -o gdalconst_wrap.c ..\include\gdalconst.i
+        $(SWIG) -c++ -python -modern -new_repr -o gdal_wrap.cpp ..\include\gdal.i
+        $(SWIG) -c++ -python -modern -new_repr -o osr_wrap.cpp ..\include\osr.i
+        $(SWIG) -c++ -python -modern -new_repr -o ogr_wrap.cpp ..\include\ogr.i
         $(PYDIR)/python.exe setup.py build
         
 #d:\Python\debug\Python-2.4\PCbuild\python_d.exe setup.py build   --debug
