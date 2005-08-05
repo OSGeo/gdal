@@ -1,16 +1,26 @@
 !INCLUDE ../../nmake.opt
 
 
-OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj
+OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
 
 
-all: sign ogr_dir gdal_dir const_dir
-    csc /target:library /out:ogr_csharp.dll ogr\*.cs
-    csc /target:library /out:gdal_csharp.dll gdal\*.cs const\*.cs
-    link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) $(OBJ) \
-		$(EXTERNAL_LIBS) ..\..\..\gdal.lib\
-		 /out:gdal.dll $(LINKER_FLAGS)
-
+all: sign 
+    csc /target:library /out:gdal_ogr_csharp.dll ogr\*.cs
+    csc /target:library /out:gdal_gdal_csharp.dll gdal\*.cs 
+    csc /target:library /out:gdal_gdalconst_csharp.dll const\*.cs
+    csc /target:library /out:gdal_osr_csharp.dll osr\*.cs 
+    link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) ogr_wrap.obj \
+		$(EXTERNAL_LIBS) ..\..\gdal.lib\
+		 /out:gdal_ogr_wrap.dll $(LINKER_FLAGS)
+    link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) gdal_wrap.obj \
+		$(EXTERNAL_LIBS) ..\..\gdal.lib\
+		 /out:gdal_gdal_wrap.dll $(LINKER_FLAGS)
+    link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) gdalconst_wrap.obj \
+		$(EXTERNAL_LIBS) ..\..\gdal.lib\
+		 /out:gdal_gdalconst_wrap.dll $(LINKER_FLAGS)
+    link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) osr_wrap.obj \
+		$(EXTERNAL_LIBS) ..\..\gdal.lib\
+		 /out:gdal_osr_wrap.dll $(LINKER_FLAGS)
 sign:
     sn -k gdal.snk
 
@@ -38,6 +48,12 @@ const_dir:
 	cd const
 	$(MAKE) /f makefile.vc
 	cd ..
+
+osr_dir:
+	cd osr
+	$(MAKE) /f makefile.vc
+	cd ..
+	
 	
 clean:	
 	cd gdal
@@ -49,6 +65,9 @@ clean:
 	cd const
 	$(MAKE) /f makefile.vc clean
 	cd ..
+	cd osr
+	$(MAKE) /f makefile.vc clean
+	cd ..	
 	-del gdal.lib
 	-del *.dll
 	-del *.obj
@@ -59,3 +78,4 @@ clean:
 	-del *.snk
 	-del *.cs
 	-del *.cpp
+	-del *.lib
