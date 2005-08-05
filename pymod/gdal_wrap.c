@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.114  2005/08/04 19:42:09  fwarmerdam
- * make value nullable in Set/Get ConfigOption
+ * Revision 1.115  2005/08/05 20:29:22  fwarmerdam
+ * pass nbytes in OGR_G_CreateFromWkb()
  *
  ************************************************************************/
 
@@ -3005,7 +3005,7 @@ py_OGR_G_CreateFromWkb(PyObject *self, PyObject *args) {
     OGRSpatialReferenceH hSRS = NULL;
     OGRErr eErr;
     OGRGeometryH hGeom = NULL;
-    int    wkb_len = 0;
+    int    wkb_len = -1;
 
     self = self;
     if(!PyArg_ParseTuple(args,"z#s:OGR_G_CreateFromWkb", &wkb_in, &wkb_len,
@@ -3022,7 +3022,7 @@ py_OGR_G_CreateFromWkb(PyObject *self, PyObject *args) {
         }
     }
 
-    eErr = OGR_G_CreateFromWkb( wkb_in, hSRS, &hGeom );
+    eErr = OGR_G_CreateFromWkb( wkb_in, hSRS, &hGeom, wkb_len );
 
     if( eErr != CE_None )
     {

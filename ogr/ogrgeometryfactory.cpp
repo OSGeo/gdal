@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/08/05 20:28:55  fwarmerdam
+ * pass nbytes in OGR_G_CreateFromWkb()
+ *
  * Revision 1.25  2005/04/18 15:42:17  fwarmerdam
  * fix geos exception catching
  *
@@ -252,7 +255,9 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
  *             created geometry object.  This may be NULL.
  * @param phGeometry the newly created geometry object will 
  * be assigned to the indicated handle on return.  This will be NULL in case
- *                  of failure.
+ * of failure.
+ * @param nBytes the number of bytes of data available in pabyData, or -1
+ * if it is not known, but assumed to be sufficient.
  *
  * @return OGRERR_NONE if all goes well, otherwise any of
  * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
@@ -261,12 +266,14 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
 
 OGRErr CPL_DLL OGR_G_CreateFromWkb( unsigned char *pabyData, 
                                     OGRSpatialReferenceH hSRS,
-                                    OGRGeometryH *phGeometry )
+                                    OGRGeometryH *phGeometry, 
+                                    int nBytes )
 
 {
     return OGRGeometryFactory::createFromWkb( pabyData, 
                                               (OGRSpatialReference *) hSRS,
-                                              (OGRGeometry **) phGeometry );
+                                              (OGRGeometry **) phGeometry,
+                                              nBytes );
 }
 
 /************************************************************************/

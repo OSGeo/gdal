@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/08/05 20:28:55  fwarmerdam
+ * pass nbytes in OGR_G_CreateFromWkb()
+ *
  * Revision 1.26  2005/07/20 01:43:51  fwarmerdam
  * upgraded OGR geometry dimension handling
  *
@@ -142,7 +145,7 @@ struct _CPLXMLNode;
 /* From base OGRGeometry class */
 
 OGRErr CPL_DLL OGR_G_CreateFromWkb( unsigned char *, OGRSpatialReferenceH, 
-                                    OGRGeometryH * );
+                                    OGRGeometryH *, int );
 OGRErr CPL_DLL OGR_G_CreateFromWkt( char **, OGRSpatialReferenceH, 
                                     OGRGeometryH * );
 void   CPL_DLL OGR_G_DestroyGeometry( OGRGeometryH );
