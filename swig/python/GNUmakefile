@@ -14,7 +14,7 @@ PY_MODULES      =       gdal.py ogr.py osr.py gdalconst.py
 clean:
 	-rm -rf build
 
-veryclean:
+veryclean: clean
 	-rm -f ${WRAPPERS} ${PY_MODULES}
 
 generate: ${WRAPPERS}
