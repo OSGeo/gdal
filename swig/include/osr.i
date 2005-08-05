@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.17  2005/08/05 19:19:53  hobu
+ * OPTGetParameterInfo uses default as an argument.
+ * C# uses default as a keyword.
+ * C# wins.  Rename the parameter name.
+ *
  * Revision 1.16  2005/07/20 16:08:49  kruland
  * Declare the double and char * consts correctly.  And change all the decls
  * to defer the the #defined values from the headers.
@@ -291,7 +296,7 @@ char **OPTGetParameterList( char *method, char **username );
 
 %rename (GetProjectionMethodParamInfo) OPTGetParameterInfo;
 void OPTGetParameterInfo( char *method, char *param, char **usrname,
-                          char **type, double *default );
+                          char **type, double *defaultval );
 
 #endif
 
