@@ -31,5 +31,6 @@ csharp: gdalvars
         nmake /f makefile.vc
 
 clean:
+        -del setup.ini
         cd csharp
         nmake /f makefile.vc clean
