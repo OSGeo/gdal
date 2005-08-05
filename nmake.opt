@@ -15,6 +15,9 @@ HTMLDIR = $(GDAL_HOME)\html
 # have python just let it point to a directory that does not exist (as now). 
 PYDIR   =	"C:\Software\Python24"
 
+# Set the location of your SWIG installation
+SWIG = D:\swig\swig-1.3.25\swig.exe
+
 # Uncomment the first for an optimized build or the second for a debug build.
 #OPTFLAGS=	/nologo /MD /GX /Ox
 OPTFLAGS=	/nologo /MD /GX /Zi /Fd$(GDAL_ROOT)\gdal.pdb
