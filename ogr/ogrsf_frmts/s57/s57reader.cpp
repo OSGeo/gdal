@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2005/08/06 04:23:51  fwarmerdam
+ * Bug 840: allow linestrings with zero vertices between end nodes.
+ *
  * Revision 1.50  2005/06/23 18:22:48  fwarmerdam
  * Fixed ReadNextFeature(poTarget=NULL) support.
  *
@@ -1361,12 +1364,13 @@ int S57Reader::FetchLine( DDFRecord *poSRecord,
         return TRUE;
     }
 
+/* -------------------------------------------------------------------- */
+/*      It is legitimate to have zero vertices for line segments        */
+/*      that just have the start and end node (bug 840).                */
+/* -------------------------------------------------------------------- */
     if( nVCount == 0 )
-    {
-        CPLDebug( "S57", "VCount is zero." );
-        return FALSE;
-    }
-
+        return TRUE;
+ 
 /* -------------------------------------------------------------------- */
 /*      Make sure out line is long enough to hold all the vertices      */
 /*      we will apply.                                                  */
@@ -1819,8 +1823,6 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
             if( !FetchLine( poSRecord, poLine->getNumPoints(), 1, poLine ) )
             {
                 CPLDebug( "S57", "FetchLine() failed in AssembleAreaGeometry()!" );
-                delete poLine;
-                continue;
             }
 
 
