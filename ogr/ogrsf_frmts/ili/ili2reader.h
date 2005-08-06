@@ -3,10 +3,10 @@
  *
  * Project:  Interlis 2 Reader
  * Purpose:  Public Declarations for Reader code.
- * Author:   Markus Schnider, Sourcepole AG <pi@sourcepole.com>
+ * Author:   Markus Schnider, Sourcepole AG
  *
  ******************************************************************************
- * Copyright (c) 2004, Pirmin Kalberer, Sourcepole AG <pi@sourcepole.com>
+ * Copyright (c) 2004, Pirmin Kalberer, Sourcepole AG
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/08/06 22:21:53  pka
+ * Area polygonizer added
+ *
  * Revision 1.2  2005/07/11 19:42:42  pka
  * Syntax fix
  *

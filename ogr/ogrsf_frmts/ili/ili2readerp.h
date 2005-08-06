@@ -3,10 +3,10 @@
  *
  * Project:  Interlis 2 Reader
  * Purpose:  Private Declarations for Reader code.
- * Author:   Markus Schnider, Sourcepole AG <pi@sourcepole.com>
+ * Author:   Markus Schnider, Sourcepole AG
  *
  ******************************************************************************
- * Copyright (c) 2004, Pirmin Kalberer, Sourcepole AG <pi@sourcepole.com>
+ * Copyright (c) 2004, Pirmin Kalberer, Sourcepole AG
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/08/06 22:21:53  pka
+ * Area polygonizer added
+ *
  * Revision 1.1  2005/07/08 22:10:57  pka
  * Initial import of OGR Interlis driver
  *
@@ -47,8 +50,6 @@
 
 #include <string>
 #include <set>
-
-#if HAVE_XERCES == 1
 
 #include <util/PlatformUtils.hpp>
 #include <sax2/DefaultHandler.hpp>
@@ -140,7 +141,5 @@ public:
     
     int      AddFeature(DOMElement *elem);
 };
-
-#endif
 
 #endif

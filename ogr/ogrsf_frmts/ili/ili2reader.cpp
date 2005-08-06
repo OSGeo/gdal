@@ -3,10 +3,10 @@
  *
  * Project:  Interlis 2 Reader
  * Purpose:  Implementation of ILI2Reader class.
- * Author:   Markus Schnider, Sourcepole AG <pi@sourcepole.com>
+ * Author:   Markus Schnider, Sourcepole AG
  *
  ******************************************************************************
- * Copyright (c) 2004, Pirmin Kalberer, Sourcepole AG <pi@sourcepole.com>
+ * Copyright (c) 2004, Pirmin Kalberer, Sourcepole AG
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/08/06 22:21:53  pka
+ * Area polygonizer added
+ *
  * Revision 1.1  2005/07/08 22:10:57  pka
  * Initial import of OGR Interlis driver
  *
@@ -107,7 +110,6 @@ string trim(string tmpstr) {
   return tmpstr;
 }
 
-#if HAVE_XERCES == 1
 int getTypeOfGeometry(DOMElement* elem, bool parseDown) {
   int type = ILI2_STRING_TYPE;
   
@@ -434,15 +436,12 @@ void addFeature(OGRFeature *feature, DOMElement *elem, int type) {
     feature->SetGeometry(getGeometry(elem, type));
   }
 }
-#endif
 
 //
 // ILI2Reader
 //
 IILI2Reader::~IILI2Reader() {
 }
-
-#if HAVE_XERCES == 1
 
 ILI2Reader::ILI2Reader() {
     m_poILI2Handler = NULL;
@@ -687,17 +686,6 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
   return 0;
 }
 
-#endif
-
 IILI2Reader *CreateILI2Reader() {
-
-#if HAVE_XERCES == 0
-
-    CPLError( CE_Failure, CPLE_AppDefined,
-              "Unable to create Xerces C++ based ILI2 reader, Xerces support\n"
-              "not configured into GDAL/OGR." );
-    return NULL;
-#else
     return new ILI2Reader();
-#endif
 }

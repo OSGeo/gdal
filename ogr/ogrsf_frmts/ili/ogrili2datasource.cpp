@@ -3,10 +3,10 @@
  *
  * Project:  Interlis 2 Translator
  * Purpose:  Implements OGRILI2DataSource class.
- * Author:   Markus Schnider, Sourcepole AG <pi@sourcepole.com>
+ * Author:   Markus Schnider, Sourcepole AG
  *
  ******************************************************************************
- * Copyright (c) 2004, Pirmin Kalberer, Sourcepole AG <pi@sourcepole.com>
+ * Copyright (c) 2004, Pirmin Kalberer, Sourcepole AG
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/08/06 22:21:53  pka
+ * Area polygonizer added
+ *
  * Revision 1.1  2005/07/08 22:10:57  pka
  * Initial import of OGR Interlis driver
  *
@@ -145,9 +148,7 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
 
   poReader->SaveClasses( pszNewName );  
   
-#if HAVE_XERCES == 1
   listLayer = poReader->GetLayers();
-#endif
   
     
     return TRUE;
