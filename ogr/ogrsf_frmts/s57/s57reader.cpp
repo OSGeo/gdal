@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2005/08/06 04:41:42  fwarmerdam
+ * Incorporated support for finding update files using the catalog file
+ * as per bug 840.
+ *
  * Revision 1.51  2005/08/06 04:23:51  fwarmerdam
  * Bug 840: allow linestrings with zero vertices between end nodes.
  *
@@ -188,6 +192,9 @@
 #include "ogr_api.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+#include <string>
+#include <fstream>
 
 CPL_CVSID("$Id$");
 
@@ -2477,26 +2484,79 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
 
     for( iUpdate = 1; bSuccess; iUpdate++ )
     {
-        char    szExtension[4];
-        char    *pszUpdateFilename;
-        DDFModule oUpdateModule;
-
-        sprintf( szExtension, "%03d", iUpdate );
-        
-        pszUpdateFilename = CPLStrdup(CPLResetExtension(pszPath,szExtension));
-
-        bSuccess = oUpdateModule.Open( pszUpdateFilename, TRUE );
-
-        if( bSuccess )
-            CPLDebug( "S57", "Applying feature updates from %s.", 
-                      pszUpdateFilename );
-        CPLFree( pszUpdateFilename );
-
-        if( bSuccess )
+        //Creaing file extension
+        std::string extension;
+        std::string dirname;
+        if( 1 <= iUpdate &&  iUpdate < 10 )
         {
-            if( !ApplyUpdates( &oUpdateModule ) )
-                return FALSE;
+            char buf[2];
+            std::sprintf( buf, "%i", iUpdate );
+            extension.append("00");
+            extension.append(buf);
+            dirname.append(buf);
         }
+        else if( 10 <= iUpdate && iUpdate < 100 )
+        {
+            char buf[3];
+            std::sprintf( buf, "%i", iUpdate );
+            extension.append("0");
+            extension.append(buf);
+            dirname.append(buf);
+        }
+        else if( 100 <= iUpdate && iUpdate < 1000 )
+        {
+            char buf[4];
+            std::sprintf( buf, "%i", iUpdate );
+            extension.append(buf);
+            dirname.append(buf);
+        }
+
+        DDFModule oUpdateModule;
+          
+        //trying current dir first
+        char    *pszUpdateFilename = 
+            CPLStrdup(CPLResetExtension(pszPath,extension.c_str()));
+
+        std::ifstream file(pszUpdateFilename);
+        if( file )
+        {
+            file.close();
+            bSuccess = oUpdateModule.Open( pszUpdateFilename, TRUE );
+            if( bSuccess )
+                CPLDebug( "S57", "Applying feature updates from %s.", 
+                          pszUpdateFilename );
+            if( bSuccess )
+            {
+                if( !ApplyUpdates( &oUpdateModule ) )
+                    return FALSE;
+            }
+        }
+        else // file is store on Primar generated cd
+        {
+            file.close();
+            char* pszBaseFileDir = CPLStrdup(CPLGetDirname(pszPath));
+            char* pszFileDir = CPLStrdup(CPLGetDirname(pszBaseFileDir));
+            std::string remotefile(pszFileDir);
+            remotefile.append( "/" );
+            remotefile.append( dirname );
+            remotefile.append( "/" );
+            remotefile.append( CPLGetBasename(pszPath) );
+            remotefile.append( "." );
+            remotefile.append( extension );
+            bSuccess = oUpdateModule.Open( remotefile.c_str(), TRUE );
+	
+            if( bSuccess )
+                CPLDebug( "S57", "Applying feature updates from %s.", 
+                          remotefile.c_str() );
+            CPLFree( pszBaseFileDir );
+            CPLFree( pszFileDir );
+            if( bSuccess )
+            {
+                if( !ApplyUpdates( &oUpdateModule ) )
+                    return FALSE;
+            }
+        }//end for if-else
+        CPLFree( pszUpdateFilename );
     }
 
     return TRUE;
