@@ -20,7 +20,7 @@ veryclean: clean
 generate: ${WRAPPERS}
 
 build: generate
-	$(PYTHON) setup.py build
+	python setup.py build
 
 install: generate
-	$(PYTHON) setup.py install --prefix=$(prefix)
+	python setup.py install --prefix=$(prefix)
