@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.5  2005/08/06 20:51:58  kruland
+ * Instead of using double_## defines and SWIG macros, use typemaps with
+ * [ANY] specified and use $dim0 to extract the dimension.  This makes the
+ * code quite a bit more readable.
+ *
  * Revision 1.4  2005/08/05 18:49:26  hobu
  * Add some more dummy typemaps to get us closer to where
  * Kevin is with python
@@ -229,35 +234,33 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
 }
 %}
 
-%define ARRAY_TYPEMAP(size)
-%typemap(csharp,in,numinputs=0) ( double_ ## size argout) (double argout[size])
+%typemap(csharp,in,numinputs=0) ( double argout[ANY]) (double argout[$dim0])
 {
-  /* %typemap(in,numinputs=0) (double_ ## size argout) */
+  /* %typemap(in,numinputs=0) (double argout[ANY]) */
 
 }
-%typemap(csharp,argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double_ ## size argout)
+%typemap(csharp,argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double argout[ANY])
 {
-  /* %typemap(argout) (double_ ## size argout) */
+  /* %typemap(argout) (double argout[ANY]) */
 
 }
-%typemap(csharp,in,numinputs=0) ( double_ ## size *argout) (double *argout)
+%typemap(csharp,in,numinputs=0) ( double *argout[ANY]) (double *argout[ANY])
 {
-  /* %typemap(in,numinputs=0) (double_ ## size *argout) */
+  /* %typemap(in,numinputs=0) (double *argout[ANY]) */
 
 }
-%typemap(csharp,argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double_ ## size *argout)
+%typemap(csharp,argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double *argout[ANY])
 {
-  /* %typemap(argout) (double_ ## size *argout) */
+  /* %typemap(argout) (double *argout[ANY]) */
 
 }
-%typemap(csharp,freearg) (double_ ## size *argout)
+%typemap(csharp,freearg) (double *argout[ANY])
 {
-  /* %typemap(freearg) (double_ ## size *argout) */
+  /* %typemap(freearg) (double *argout[ANY]) */
 
 }
-%typemap(csharp,in) (double_ ## size argin) (double argin[size])
+%typemap(csharp,in) (double argin[ANY]) (double argin[$dim0])
 {
-  /* %typemap(in) (double_ ## size argin) */
+  /* %typemap(in) (double argin[ANY]) */
 
 }
-%enddef

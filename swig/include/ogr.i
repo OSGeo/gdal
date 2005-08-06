@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.30  2005/08/06 20:51:58  kruland
+ * Instead of using double_## defines and SWIG macros, use typemaps with
+ * [ANY] specified and use $dim0 to extract the dimension.  This makes the
+ * code quite a bit more readable.
+ *
  * Revision 1.29  2005/08/05 20:32:11  kruland
  * Pass bytecount into OGR_G_CreateFromWkb.
  *
@@ -221,8 +226,6 @@ typedef void OGRFeatureDefnShadow;
 typedef void OGRGeometryShadow;
 typedef void OSRCoordinateTransformationShadow;
 typedef void OGRFieldDefnShadow;
-
-typedef double *double_4;
 
 const unsigned long wkb25bit = -2147483648;
 %}
@@ -545,7 +548,7 @@ public:
   }
   
   %feature( "kwargs" ) GetExtent;
-  void GetExtent(double_4 argout, int force=1) {
+  void GetExtent(double argout[4], int force=1) {
     OGRErr err = OGR_L_GetExtent(self, (OGREnvelope*)argout, force);
     if (err != 0)
       throw err;
@@ -1260,7 +1263,7 @@ public:
     OGR_G_FlattenTo2D(self);
   }
     
-  void GetEnvelope(double_4 argout) {
+  void GetEnvelope(double argout[4]) {
     OGR_G_GetEnvelope(self, (OGREnvelope*)argout);
   }
 

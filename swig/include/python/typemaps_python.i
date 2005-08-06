@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.35  2005/08/06 20:51:58  kruland
+ * Instead of using double_## defines and SWIG macros, use typemaps with
+ * [ANY] specified and use $dim0 to extract the dimension.  This makes the
+ * code quite a bit more readable.
+ *
  * Revision 1.34  2005/08/04 20:47:24  kruland
  * Added a new binding to support RasterBand::GetNoDataValue(), GetMaximum(), GetMinimum(),
  * GetOffset(), GetScale() returning None when the attribute is not set.
@@ -350,83 +355,56 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
 }
 %}
 
-%define ARRAY_TYPEMAP(size)
-%typemap(python,in,numinputs=0) ( double_ ## size argout) (double argout[size])
+%typemap(python,in,numinputs=0) ( double argout[ANY]) (double argout[$dim0])
 {
-  /* %typemap(in,numinputs=0) (double_ ## size argout) */
+  /* %typemap(in,numinputs=0) (double argout[ANY]) */
   $1 = argout;
   $result = 0;
 }
-%typemap(python,argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double_ ## size argout)
+%typemap(python,argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double argout[ANY])
 {
-  /* %typemap(argout) (double_ ## size argout) */
-  PyObject *out = CreateTupleFromDoubleArray( $1, size );
+  /* %typemap(argout) (double argout[ANY]) */
+  PyObject *out = CreateTupleFromDoubleArray( $1, $dim0 );
   $result = t_output_helper($result,out);
 }
-%typemap(python,in,numinputs=0) ( double_ ## size *argout) (double *argout)
+
+%typemap(python,in,numinputs=0) ( double *argout[ANY]) (double *argout)
 {
-  /* %typemap(in,numinputs=0) (double_ ## size *argout) */
+  /* %typemap(in,numinputs=0) (double *argout[ANY]) */
   $1 = &argout;
   $result = 0;
 }
-%typemap(python,argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double_ ## size *argout)
+%typemap(python,argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double *argout[ANY])
 {
-  /* %typemap(argout) (double_ ## size *argout) */
-  PyObject *out = CreateTupleFromDoubleArray( *$1, size );
+  /* %typemap(argout) (double *argout[ANY]) */
+  PyObject *out = CreateTupleFromDoubleArray( *$1, $dim0 );
   $result = t_output_helper($result,out);
 }
-%typemap(python,freearg) (double_ ## size *argout)
+%typemap(python,freearg) (double *argout[ANY])
 {
-  /* %typemap(freearg) (double_ ## size *argout) */
+  /* %typemap(freearg) (double *argout[ANY]) */
   CPLFree(*$1);
 }
-%typemap(python,in) (double_ ## size argin) (double argin[size])
+%typemap(python,in) (double argin[ANY]) (double argin[$dim0])
 {
-  /* %typemap(in) (double_ ## size argin) */
+  /* %typemap(in) (double argin[ANY]) */
   $1 = argin;
   if (! PySequence_Check($input) ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
     SWIG_fail;
   }
   int seq_size = PySequence_Size($input);
-  if ( seq_size != size ) {
+  if ( seq_size != $dim0 ) {
     PyErr_SetString(PyExc_TypeError, "sequence must have length ##size");
     SWIG_fail;
   }
-  for (unsigned int i=0; i<size; i++) {
+  for (unsigned int i=0; i<$dim0; i++) {
     PyObject *o = PySequence_GetItem($input,i);
     double val;
     PyArg_Parse(o, "d", &val );
     $1[i] =  val;
   }
 }
-%enddef
-
-/*
- * Typemap for double c_minmax[2]. 
- * Used in Band::ComputeMinMax()
- */
-ARRAY_TYPEMAP(2);
-
-/*
- * Typemap for double[4]
- * Used in OGR::Geometry::GetEnvelope
- */
-ARRAY_TYPEMAP(4);
-
-/*
- * Typemap for double c_transform[6]
- * Used in Dataset::GetGeoTransform(), Dataset::SetGeoTransform().
- */
-ARRAY_TYPEMAP(6);
-
-// Used by SpatialReference
-ARRAY_TYPEMAP(7);
-ARRAY_TYPEMAP(15);
-ARRAY_TYPEMAP(17);
-
-// Used by CoordinateTransformation::TransformPoint()
-ARRAY_TYPEMAP(3);
 
 /*
  *  Typemap for counted arrays of ints <- PySequence

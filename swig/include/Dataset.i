@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.14  2005/08/06 20:51:58  kruland
+ * Instead of using double_## defines and SWIG macros, use typemaps with
+ * [ANY] specified and use $dim0 to extract the dimension.  This makes the
+ * code quite a bit more readable.
+ *
  * Revision 1.13  2005/07/18 16:13:31  kruland
  * Added MajorObject.i an interface specification to the MajorObject baseclass.
  * Used inheritance in Band.i, Driver.i, and Dataset.i to access MajorObject
@@ -115,7 +120,7 @@ public:
     return GDALSetProjection( self, prj );
   }
 
-  void GetGeoTransform( double_6 argout ) {
+  void GetGeoTransform( double argout[6] ) {
     if ( GDALGetGeoTransform( self, argout ) != 0 ) {
       argout[0] = 0.0;
       argout[1] = 1.0;
@@ -126,7 +131,7 @@ public:
     }
   }
 
-  CPLErr SetGeoTransform( double_6 argin ) {
+  CPLErr SetGeoTransform( double argin[6] ) {
     return GDALSetGeoTransform( self, argin );
   }
 

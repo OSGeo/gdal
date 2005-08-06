@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.18  2005/08/06 20:51:58  kruland
+ * Instead of using double_## defines and SWIG macros, use typemaps with
+ * [ANY] specified and use $dim0 to extract the dimension.  This makes the
+ * code quite a bit more readable.
+ *
  * Revision 1.17  2005/08/05 19:19:53  hobu
  * OPTGetParameterInfo uses default as an argument.
  * C# uses default as a keyword.
@@ -180,11 +185,6 @@ using namespace std;
 
 typedef void OSRSpatialReferenceShadow;
 typedef void OSRCoordinateTransformationShadow;
-
-typedef double * double_3;
-typedef double * double_7;
-typedef double * double_15;
-typedef double * double_17;
 
 %}
 
@@ -535,7 +535,7 @@ public:
     return OSRSetTOWGS84( self, p1, p2, p3, p4, p5, p6, p7 );
   }
 
-  OGRErr GetTOWGS84( double_7 argout ) {
+  OGRErr GetTOWGS84( double argout[7] ) {
     return OSRGetTOWGS84( self, argout, 7 );
   }
 
@@ -577,12 +577,12 @@ public:
   }
 
   OGRErr ImportFromPCI( char const *proj, char const *units = "METRE",
-                        double_17 argin = 0 ) {
+                        double argin[17] = 0 ) {
     return OSRImportFromPCI( self, proj, units, argin );
   }
 
   OGRErr ImportFromUSGS( long proj_code, long zone = 0,
-                         double_15 argin = 0,
+                         double argin[15] = 0,
                          long datum_code = 0 ) {
     return OSRImportFromUSGS( self, proj_code, zone, argin, datum_code );
   }
@@ -604,20 +604,20 @@ public:
   }
 
 %apply (char **argout) { (char **) };
-%apply (double_17 *argout) { (double_17 *parms ) };
-  OGRErr ExportToPCI( char **proj, char **units, double_17 *parms ) {
+%apply (double *argout[ANY]) { (double *parms[17] ) };
+  OGRErr ExportToPCI( char **proj, char **units, double *parms[17] ) {
     return OSRExportToPCI( self, proj, units, parms );
   }
 %clear (char **);
-%clear (double_17 *parms);
+%clear (double *parms[17]);
 
 %apply (long *OUTPUT) { (long*) };
-%apply (double_15 *argout) { (double_15 *parms) }
-  OGRErr ExportToUSGS( long *code, long *zone, double_15 *parms, long *datum ) {
+%apply (double *argout[ANY]) { (double *parms[15]) }
+  OGRErr ExportToUSGS( long *code, long *zone, double *parms[15], long *datum ) {
     return OSRExportToUSGS( self, code, zone, parms, datum );
   }
 %clear (long*);
-%clear (double_15 *parms);
+%clear (double *parms[15]);
 
   OGRErr ExportToXML( char **argout, const char *dialect = "" ) {
     return OSRExportToXML( self, argout, dialect );
@@ -695,14 +695,14 @@ public:
 
 // Need to apply argin typemap second so the numinputs=1 version gets applied
 // instead of the numinputs=0 version from argout.
-%apply (double_3 argout) {(double_3 inout)};
-%apply (double_3 argin) {(double_3 inout)};
-  void TransformPoint( double_3 inout ) {
+%apply (double argout[ANY]) {(double inout[3])};
+%apply (double argin[ANY]) {(double inout[3])};
+  void TransformPoint( double inout[3] ) {
     OCTTransform( self, 1, &inout[0], &inout[1], &inout[2] );
   }
-%clear (double_3 inout);
+%clear (double inout[3]);
 
-  void TransformPoint( double_3 argout, double x, double y, double z = 0.0 ) {
+  void TransformPoint( double argout[3], double x, double y, double z = 0.0 ) {
     argout[0] = x;
     argout[1] = y;
     argout[2] = z;

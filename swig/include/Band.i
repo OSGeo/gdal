@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.19  2005/08/06 20:51:58  kruland
+ * Instead of using double_## defines and SWIG macros, use typemaps with
+ * [ANY] specified and use $dim0 to extract the dimension.  This makes the
+ * code quite a bit more readable.
+ *
  * Revision 1.18  2005/08/04 20:48:32  kruland
  * Recoded GetNoDataValue(), GetMaximum(), GetMinimum(), GetOffset(), GetScale() to have
  * access to both the double return value and the has value flag.
@@ -192,7 +197,7 @@ public:
   }
 %clear (int*);
 
-  void ComputeRasterMinMax( double_2 argout, int approx_ok = 0) {
+  void ComputeRasterMinMax( double argout[2], int approx_ok = 0) {
     GDALComputeRasterMinMax( self, approx_ok, argout );
   }
 
