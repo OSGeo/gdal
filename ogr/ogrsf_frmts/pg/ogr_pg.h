@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/08/06 14:49:27  osemykin
+ * Added BINARY CURSOR support
+ * Use it with 'PGB:dbname=...' instead 'PG:dbname=...'
+ *
  * Revision 1.19  2005/08/03 21:13:51  osemykin
  * Changed PostGIS version representation
  *
@@ -281,6 +285,8 @@ class OGRPGDataSource : public OGRDataSource
 
   public:
     PGver               sPostGISVersion;
+    
+    int                 bUseBinaryCursor;
 
   public:
                         OGRPGDataSource();
