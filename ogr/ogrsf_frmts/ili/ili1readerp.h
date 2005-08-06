@@ -3,10 +3,10 @@
  *
  * Project:  Interlis 1 Reader
  * Purpose:  Private Declarations for Reader code.
- * Author:   Pirmin Kalberer, Sourcepole AG <pi@sourcepole.com>
+ * Author:   Pirmin Kalberer, Sourcepole AG
  *
  ******************************************************************************
- * Copyright (c) 2004, Pirmin Kalberer, Sourcepole AG <pi@sourcepole.com>
+ * Copyright (c) 2004, Pirmin Kalberer, Sourcepole AG
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/08/06 22:21:53  pka
+ * Area polygonizer added
+ *
  * Revision 1.1  2005/07/08 22:10:57  pka
  * Initial import of OGR Interlis driver
  *
@@ -64,11 +67,12 @@ public:
     int          ReadModel( const char *pszModelFilename );
     int          ReadFeatures();
     int          ReadTable();
-    OGRGeometry  *ReadGeom(char **stgeom);
+    OGRGeometry  *ReadGeom(char **stgeom, OGRwkbGeometryType eType);
     char         **ReadParseLine();
 
     void         AddLayer( OGRLayer * poNewLayer );    
     int          AddIliGeom(OGRFeature *feature, int iField, long fpos);
+    OGRMultiPolygon* Polygonize( OGRGeometryCollection* poLines );
     OGRLayer     *GetLayer( int );
     OGRLayer     *GetLayerByName( const char* );
     int          GetLayerCount();
@@ -76,7 +80,7 @@ public:
     const char*  GetLayerNameString(const char* topicname, const char* tablename);
     const char*  GetLayerName(IOM_BASKET model, IOM_OBJECT table);
     void         AddCoord(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT modelele, IOM_OBJECT typeobj);
-    void         AddPolyTable(OGRLayer* layer, IOM_OBJECT obj);
+    void         AddGeomTable(const char* datalayername, const char* geomname, OGRwkbGeometryType eType);
     void         AddField(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT obj);
     unsigned int GetCoordDim(IOM_BASKET model, IOM_OBJECT typeobj);
 };

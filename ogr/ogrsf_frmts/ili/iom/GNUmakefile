@@ -9,13 +9,6 @@ OBJ =	iom_attr.o iom_basket.o iom_error.o iom_file.o iom_iterator.o iom_object.o
 O_OBJ = $(foreach file,$(OBJ),../../o/$(file))
 
 CPPFLAGS	:=	$(XERCES_INCLUDE) $(CPPFLAGS) -I..
-#CFLAGS	:=	$(filter-out -Wall,$(CFLAGS))
-
-ifeq ($(HAVE_XERCES),yes)
-CPPFLAGS +=  -DHAVE_XERCES=1
-else
-CPPFLAGS +=  -DHAVE_XERCES=0
-endif
 
 default:	 $(O_OBJ)
 
