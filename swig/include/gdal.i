@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.31  2005/08/06 20:51:58  kruland
+ * Instead of using double_## defines and SWIG macros, use typemaps with
+ * [ANY] specified and use $dim0 to extract the dimension.  This makes the
+ * code quite a bit more readable.
+ *
  * Revision 1.30  2005/08/05 18:48:59  hobu
  * gross hack of duplicate function names for the
  * GCP stuff because C# module of swig is stupid
@@ -156,10 +161,6 @@ using namespace std;
 #include "gdal_priv.h"
 #include "gdal_alg.h"
 #include "gdalwarper.h"
-
-typedef double *double_2;
-typedef double *double_4;
-typedef double *double_6;
 
 typedef void GDALMajorObjectShadow;
 typedef void GDALDriverShadow;
@@ -414,7 +415,7 @@ void GDAL_GCP_set_Id( GDAL_GCP *h, const char * val ) {
 %rename (GCPsToGeoTransform) GDALGCPsToGeoTransform;
 %apply (IF_FALSE_RETURN_NONE) { (FALSE_IS_ERR) };
 FALSE_IS_ERR GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs, 
-    	                             double_6 argout, int bApproxOK = 1 ); 
+    	                             double argout[6], int bApproxOK = 1 ); 
 %clear (FALSE_IS_ERR);
 
 

@@ -154,70 +154,42 @@ OGRErrMessages( int rc ) {
  }
 %}
 
-%define ARRAY_TYPEMAP(size)
-%typemap(in,numinputs=0) ( double_ ## size argout) (double argout[size])
+%typemap(in,numinputs=0) ( double argout[ANY]) (double argout[$dim0])
 {
-  /* %typemap(in,numinputs=0) (double_ ## size argout) */
+  /* %typemap(in,numinputs=0) (double argout[ANY]) */
   $1 = argout;
 }
-%typemap(argout,fragment="CreateTupleFromDoubleArray,t_output_helper") ( double_ ## size argout)
+%typemap(argout,fragment="CreateTupleFromDoubleArray,t_output_helper") ( double argout[ANY])
 {
-  /* %typemap(argout) (double_ ## size argout) */
-  zval *t = CreateTupleFromDoubleArray( $1, size );
+  /* %typemap(argout) (double argout[ANY]) */
+  zval *t = CreateTupleFromDoubleArray( $1, $dim0 );
   t_output_helper( &$result, t );
 }
-%typemap(in,numinputs=0) ( double_ ## size *argout) (double *argout)
+%typemap(in,numinputs=0) ( double *argout[ANY]) (double *argout[ANY])
 {
-  /* %typemap(in,numinputs=0) (double_ ## size *argout) */
+  /* %typemap(in,numinputs=0) (double *argout[ANY]) */
   $1 = &argout;
 }
-%typemap(argout,fragment="CreateTupleFromDoubleArray,t_output_helper") ( double_ ## size *argout)
+%typemap(argout,fragment="CreateTupleFromDoubleArray,t_output_helper") ( double *argout[ANY])
 {
-  /* %typemap(argout) (double_ ## size *argout) */
-  zval *t = CreateTupleFromDoubleArray( *$1, size );
+  /* %typemap(argout) (double *argout[ANY]) */
+  zval *t = CreateTupleFromDoubleArray( *$1, $dim0 );
   t_output_helper( &$result, t);
 }
-%typemap(freearg) (double_ ## size *argout)
+%typemap(freearg) (double *argout[ANY])
 {
-  /* %typemap(freearg) (double_ ## size *argout) */
+  /* %typemap(freearg) (double *argout[ANY]) */
   CPLFree(*$1);
 }
-%typemap(in) (double_ ## size argin) (double argin[size])
+%typemap(in) (double argin[ANY]) (double argin[$dim0])
 {
-  /* %typemap(in) (double_ ## size argin) */
+  /* %typemap(in) (double argin[ANY]) */
   $1 = argin;
-  for (unsigned int i=0; i<size; i++) {
+  for (unsigned int i=0; i<$dim0; i++) {
     double val = 0.0; /* extract val from i-th position of $input */
     $1[i] =  val;
   }
 }
-%enddef
-
-/*
- * Typemap for double c_minmax[2]. 
- * Used in Band::ComputeMinMax()
- */
-ARRAY_TYPEMAP(2);
-
-/*
- * Typemap for double[4]
- * Used in OGR::Geometry::GetEnvelope
- */
-ARRAY_TYPEMAP(4);
-
-/*
- * Typemap for double c_transform[6]
- * Used in Dataset::GetGeoTransform(), Dataset::SetGeoTransform().
- */
-ARRAY_TYPEMAP(6);
-
-// Used by SpatialReference
-ARRAY_TYPEMAP(7);
-ARRAY_TYPEMAP(15);
-ARRAY_TYPEMAP(17);
-
-// Used by CoordinateTransformation::TransformPoint()
-ARRAY_TYPEMAP(3);
 
 /*
  *  Typemap for counted arrays of ints <- PySequence

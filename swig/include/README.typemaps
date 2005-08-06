@@ -9,25 +9,13 @@ even if it does nothing.
 
 ---------------------------------------
 
-argout (double_15 *argout) - Required:
-  double_15 is typedef'd to double *.  This is used to return a fixed length
-  array from function calls.
+argout (double *argout[ANY]) - Required:
+  This is used to return a fixed length array from function calls.  The array is allocated
+  by the GDAL function and must be CPLFree'd by the caller.
 
-argout (double_17 *argout) - Required 
-
-argout (double_2 argout)-
-  double_2 is typedef'd to double * in gdal.i.  Used to return fixed length
-  array from function calls.  FrankW:  does the caller need to free the data?
-
-argout (double_3 argout ) - Required
-
-argout (double_4 argout ) -
-
-argout (double_6 argout) -
-  double_6 is typedef'd to double * in gdal.i.  Used to return fixed length
-  array from function calls.  FrankW:  does the caller need to free the data?
-
-argout (double_7 argout ) -
+argout (double argout[ANY])-
+  Used to return fixed length array from function calls.  The memory is allocated by the caller.
+  In a typical typemap implementation, the array is defined on the stack of fixed size.
 
 argout (int *nGCPs, GDAL_GCP const **pGCPs ) -
 
@@ -53,13 +41,8 @@ in (char **options) -
   Convert a native tuple/list of strings into a char ** using the CSLAddString
   routines.  The converted char ** must be released with CSLDestroy.
 
-in (double_15)
-
-in (double_17)
-
-in (double_3) - Required 
-
-in (double_6)
+in (double argin[ANY]) - Required
+  Used to pass a fixed length array of doubles into a gdal function.
 
 in GDALColorEntry* -
   Pass a GDALColorEntry into a function.
