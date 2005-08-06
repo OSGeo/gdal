@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2005/08/06 14:49:27  osemykin
+ * Added BINARY CURSOR support
+ * Use it with 'PGB:dbname=...' instead 'PG:dbname=...'
+ *
  * Revision 1.34  2005/08/04 19:01:29  fwarmerdam
  * avoid use of non-standard datatypes like uint
  *
@@ -157,6 +161,7 @@ OGRPGDataSource::OGRPGDataSource()
     nLayers = 0;
     hPGConn = NULL;
     bHavePostGIS = FALSE;
+    bUseBinaryCursor = FALSE;
     nSoftTransactionLevel = 0;
 
     nKnownSRID = 0;
@@ -208,6 +213,12 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Verify postgresql prefix.                                       */
 /* -------------------------------------------------------------------- */
+    if( EQUALN(pszNewName,"PGB:",4) )
+    {
+        bUseBinaryCursor = TRUE;
+        CPLDebug("OGR_PG","BINARY cursor is used for geometry fetching");
+    }
+    else
     if( !EQUALN(pszNewName,"PG:",3) )
     {
         if( !bTestOpen )
@@ -220,7 +231,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
-    hPGConn = PQconnectdb( pszNewName + 3 );
+    hPGConn = PQconnectdb( pszNewName + (bUseBinaryCursor ? 4 : 3) );
     if( hPGConn == NULL || PQstatus(hPGConn) == CONNECTION_BAD )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -323,8 +334,8 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             strncpy(szVer,pszVer,iLen);
             szVer[iLen] = '\0';
             CPLDebug("OGR_PG","PostSIS version string: '%s' -> '%s'",pszVer,szVer);
-            
-            pszVer = szVer;
+
+            pszVer = ptr = szVer;
 
             // get Major number
             while (*ptr && *ptr != '.') ptr++;
@@ -344,15 +355,19 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
             szNum[iLen] = '\0';
             sPostGISVersion.nMinor = atoi(szNum);
 
-            pszVer = ++ptr;
 
-            // get Release number
-            while (*ptr && *ptr != '.') ptr++;
-            iLen = ptr-pszVer;
-            if ( iLen > sizeof(szNum) - 1) iLen = sizeof(szNum) - 1;
-            strncpy(szNum,pszVer,iLen);
-            szNum[iLen] = '\0';
-            sPostGISVersion.nRelease = atoi(szNum);
+            if ( *ptr )
+            {
+                pszVer = ++ptr;
+
+                // get Release number
+                while (*ptr && *ptr != '.') ptr++;
+                iLen = ptr-pszVer;
+                if ( iLen > sizeof(szNum) - 1) iLen = sizeof(szNum) - 1;
+                strncpy(szNum,pszVer,iLen);
+                szNum[iLen] = '\0';
+                sPostGISVersion.nRelease = atoi(szNum);
+            }
 
             CPLDebug( "OGR_PG", "POSTGIS_VERSION=%s",
                       PQgetvalue(hResult,0,0));

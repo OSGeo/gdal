@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2005/08/06 14:49:27  osemykin
+ * Added BINARY CURSOR support
+ * Use it with 'PGB:dbname=...' instead 'PG:dbname=...'
+ *
  * Revision 1.33  2005/08/05 13:37:40  fwarmerdam
  * Bug 902: set pszGeomColumn if WKB_GEOMETRY found.
  *
@@ -561,6 +565,13 @@ char *OGRPGTableLayer::BuildFields()
 
         if( bHasPostGISGeometry )
         {
+            if ( poDS->bUseBinaryCursor )
+            {
+                nSize += 10;
+                sprintf( pszFieldList+strlen(pszFieldList),
+                         "AsBinary(\"%s\")", pszGeomColumn );
+            }
+            else
             if ( poDS->sPostGISVersion.nMajor >= 1 )
                 sprintf( pszFieldList+strlen(pszFieldList),
                         "AsEWKT(\"%s\")", pszGeomColumn );

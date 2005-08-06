@@ -30,6 +30,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/08/06 14:49:27  osemykin
+ * Added BINARY CURSOR support
+ * Use it with 'PGB:dbname=...' instead 'PG:dbname=...'
+ *
  * Revision 1.19  2005/07/20 01:45:01  fwarmerdam
  * added PostGIS 8.0 hex geometry format support
  *
@@ -315,6 +319,16 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
             }
             continue;
         }
+        /* Handle binary cursor result */
+        else if ( EQUAL(PQfname(hCursorResult,iField),"AsBinary") )
+        {
+            GByte * pabyWkb = (GByte *)PQgetvalue( hCursorResult,
+                                                   iRecord, iField);
+            OGRGeometry * poGeom = NULL;
+            OGRGeometryFactory::createFromWkb(pabyWkb,NULL,&poGeom);
+            poFeature->SetGeometryDirectly( poGeom );
+            continue;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Transfer regular data fields.                                   */
@@ -396,8 +410,12 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
         poDS->FlushSoftTransaction();
         poDS->SoftStartTransaction();
 
-        sprintf( szCommand, "DECLARE %s CURSOR for %s",
-                 pszCursorName, pszQueryStatement );
+        if ( poDS->bUseBinaryCursor )
+            sprintf( szCommand, "DECLARE %s BINARY CURSOR for %s",
+                     pszCursorName, pszQueryStatement );
+        else
+            sprintf( szCommand, "DECLARE %s CURSOR for %s",
+                     pszCursorName, pszQueryStatement );
 
         CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
 
