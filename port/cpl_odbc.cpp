@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/08/07 14:05:44  fwarmerdam
+ * added connect/disconnect debug statements
+ *
  * Revision 1.21  2005/06/29 01:01:01  ssoule
  * Changed return type of CPLODBCStatement::GetTypeName from const char * to
  * std::string.
@@ -139,6 +142,7 @@ int CPLODBCSession::CloseSession()
 {
     if( m_hDBC!=NULL ) 
     {
+        CPLDebug( "ODBC", "SQLDisconnect()" );
         SQLDisconnect( m_hDBC );
         SQLFreeConnect( m_hDBC );
         m_hDBC = NULL;
@@ -231,6 +235,7 @@ int CPLODBCSession::EstablishSession( const char *pszDSN,
         return FALSE;
     }
 
+    CPLDebug( "ODBC", "SQLConnect(%s)", pszDSN );
     return TRUE;
 }
 
