@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2005/08/07 13:58:17  fwarmerdam
+ * avoid use of std::sprintf in favor of plain sprintf
+ *
  * Revision 1.52  2005/08/06 04:41:42  fwarmerdam
  * Incorporated support for finding update files using the catalog file
  * as per bug 840.
@@ -2490,7 +2493,7 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
         if( 1 <= iUpdate &&  iUpdate < 10 )
         {
             char buf[2];
-            std::sprintf( buf, "%i", iUpdate );
+            sprintf( buf, "%i", iUpdate );
             extension.append("00");
             extension.append(buf);
             dirname.append(buf);
@@ -2498,7 +2501,7 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
         else if( 10 <= iUpdate && iUpdate < 100 )
         {
             char buf[3];
-            std::sprintf( buf, "%i", iUpdate );
+            sprintf( buf, "%i", iUpdate );
             extension.append("0");
             extension.append(buf);
             dirname.append(buf);
@@ -2506,7 +2509,7 @@ int S57Reader::FindAndApplyUpdates( const char * pszPath )
         else if( 100 <= iUpdate && iUpdate < 1000 )
         {
             char buf[4];
-            std::sprintf( buf, "%i", iUpdate );
+            sprintf( buf, "%i", iUpdate );
             extension.append(buf);
             dirname.append(buf);
         }
