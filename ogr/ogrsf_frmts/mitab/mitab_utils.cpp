@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_utils.cpp,v 1.19 2004/06/30 20:29:04 dmorissette Exp $
+ * $Id: mitab_utils.cpp,v 1.20 2005/08/07 21:02:14 fwarmerdam Exp $
  *
  * Name:     mitab_utils.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_utils.cpp,v $
+ * Revision 1.20  2005/08/07 21:02:14  fwarmerdam
+ * avoid warnings about testing for characters > 255.
+ *
  * Revision 1.19  2004/06/30 20:29:04  dmorissette
  * Fixed refs to old address danmo@videotron.ca
  *
@@ -633,7 +636,7 @@ char *TABCleanFieldName(const char *pszSrcName)
                 (pszSrcName[i]>='0' && pszSrcName[i]<='9') || 
                 (pszSrcName[i]>='a' && pszSrcName[i]<='z') || 
                 (pszSrcName[i]>='A' && pszSrcName[i]<='Z') ||
-                ((GByte)pszSrcName[i]>=192 && (GByte)pszSrcName[i]<=255) ) )
+                (GByte)pszSrcName[i]>=192 ) )
         {
             pszNewName[i] = '_';
             numInvalidChars++;
