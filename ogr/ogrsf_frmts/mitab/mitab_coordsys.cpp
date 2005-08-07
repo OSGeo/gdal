@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.31 2005/05/12 22:07:52 dmorissette Exp $
+ * $Id: mitab_coordsys.cpp,v 1.32 2005/08/07 21:00:38 fwarmerdam Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.32  2005/08/07 21:00:38  fwarmerdam
+ * Initialize adfDatumParm[] to avoid warnings with gcc 4.
+ *
  * Revision 1.31  2005/05/12 22:07:52  dmorissette
  * Improved handling of Danish modified TM proj#21-24 (hss, bugs 976,1010)
  *
@@ -229,7 +232,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
 /*      Fetch the datum information.                                    */
 /* -------------------------------------------------------------------- */
     int         nDatum = 0;
-    double      adfDatumParm[8];
+    double      adfDatumParm[8] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
     int         nEllipsoid=0;
 
     if( nProjection != 0 && CSLCount(papszNextField) > 0 )
@@ -1071,7 +1074,7 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
      * Translate Datum and Ellipsoid
      * ============================================================== */
     int         nDatum = 0;
-    double      adfDatumParm[8];
+    double      adfDatumParm[8] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
     int         nEllipsoid=0;
     
     const char *pszWKTDatum = poSR->GetAttrValue("DATUM");
