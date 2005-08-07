@@ -1,4 +1,4 @@
-.TH "gdal_translate" 1 "13 Mar 2005" "Doxygen" \" -*- nroff -*-
+.TH "gdal_translate" 1 "7 Aug 2005" "Doxygen" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,7 +15,7 @@ gdal_translate [--help-general]
        [-of format] [-b band] [-outsize xsize[%] ysize[%]]
        [-scale [src_min src_max [dst_min dst_max]]]
        [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry]
-       [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
+       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
        [-gcp pixel line easting northing]*
        [-mo "META-TAG=VALUE"]* [-quiet] [-sds]
        [-co "NAME=VALUE"]*
@@ -44,6 +44,8 @@ Selects a subwindow from the source image for copying (like -srcwin) but with th
 Override the projection for the output file. The srs_def may be any of the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing the wkt.  
 .IP "\fB\fB-a_ullr\fP \fIulx uly lrx lry\fP:\fP" 1c
 Assign/override the georeferenced bounds of the output file. This assigns georeferenced bounds to the output file, ignoring what would have been derived from the source file. 
+.IP "\fB\fB-a_nodata\fP \fIvalue\fP:\fP" 1c
+Assign a specified nodata value to output bands. 
 .IP "\fB\fB-mo\fP \fI'KEY=VALUE'\fP:\fP" 1c
 passes a metadata key and value to set on the output dataset if possible. 
 .IP "\fB\fB-co\fP \fI'NAME=VALUE'\fP:\fP" 1c

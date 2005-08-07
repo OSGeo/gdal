@@ -1,4 +1,4 @@
-.TH "gdal_merge.py" 1 "13 Mar 2005" "Doxygen" \" -*- nroff -*-
+.TH "gdal_merge.py" 1 "7 Aug 2005" "Doxygen" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -12,7 +12,7 @@ gdal_merge.py \- mosaics a set of images
 gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*
                      [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]
                      [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init value]
-                     [-seperate] input_files
+                     [-ot datatype] input_files
 .PP
 .SH "DESCRIPTION"
 .PP
@@ -24,6 +24,8 @@ The name of the output file to be created.
 Output format, defaults to GeoTIFF (GTiff).  
 .IP "\fB\fB-co\fP \fINAME=VALUE\fP:\fP" 1c
 Creation option for output file. Multiple options can be specified.  
+.IP "\fB\fB-ot\fP \fIdatatype\fP:\fP" 1c
+Force the output image bands to have a specific type. Use type names (ie. Byte, Int16,...)  
 .IP "\fB\fB-ps\fP \fIpixelsize_x pixelsize_y\fP:\fP" 1c
 Pixel size to be used for the output file. If not specified the resolution of the first input file will be used. 
 .IP "\fB\fB-ul_lr\fP \fIulx uly lrx lry\fP:\fP" 1c
