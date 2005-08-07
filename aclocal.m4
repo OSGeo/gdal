@@ -550,7 +550,7 @@ if test ! -z "`uname | grep Darwin`" -a ${with_libtool} == no ; then
 elif test ! -z "`uname | grep Darwin`" -a ${with_libtool} == yes ; then
     AC_MSG_RESULT(darwin-libtool)
 
-    PYTHON_LIBS='-framework Python $(LIBS)'
+    PYTHON_LIBS='-XCClinker -framework -XCClinker Python $(LIBS)'
     PY_LD_SHARED='$(LD_SHARED)'
     PY_SO_EXT='$(SO_EXT)'
 else
