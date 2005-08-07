@@ -22,3 +22,5 @@ clean:
 
 Version.res:	
 	rc -fo Version.res -r -I..\port Version.rc
+
+gdal_misc.obj:	gdal_misc.cpp gdal_version.h
