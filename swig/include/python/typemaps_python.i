@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.36  2005/08/08 17:07:16  kruland
+ * Added python typemaps for CPLXMLNode* in and return for the ParseXMLString
+ * and SerializeXMLTree methods.
+ *
  * Revision 1.35  2005/08/06 20:51:58  kruland
  * Instead of using double_## defines and SWIG macros, use typemaps with
  * [ANY] specified and use $dim0 to extract the dimension.  This makes the
@@ -819,4 +823,95 @@ OPTIONAL_POD(int,i);
       $result = PyInt_FromLong($1);
     }
   }
+}
+
+/*
+ * Typemaps for minixml:  CPLXMLNode* input, CPLXMLNode *ret
+ */
+
+%fragment("PyListToXMLTree","header") %{
+/************************************************************************/
+/*                          PyListToXMLTree()                           */
+/************************************************************************/
+static CPLXMLNode *PyListToXMLTree( PyObject *pyList )
+
+{
+    int      nChildCount = 0, iChild, nType;
+    CPLXMLNode *psThisNode;
+    CPLXMLNode *psChild;
+    char       *pszText = NULL;
+
+    nChildCount = PyList_Size(pyList) - 2;
+    if( nChildCount < 0 )
+    {
+        PyErr_SetString(PyExc_TypeError,"Error in input XMLTree." );
+	return NULL;
+    }
+
+    PyArg_Parse( PyList_GET_ITEM(pyList,0), "i", &nType );
+    PyArg_Parse( PyList_GET_ITEM(pyList,1), "s", &pszText );
+    psThisNode = CPLCreateXMLNode( NULL, (CPLXMLNodeType) nType, pszText );
+
+    for( iChild = 0; iChild < nChildCount; iChild++ )
+    {
+        psChild = PyListToXMLTree( PyList_GET_ITEM(pyList,iChild+2) );
+        CPLAddXMLChild( psThisNode, psChild );
+    }
+
+    return psThisNode;
+}
+%}
+
+%typemap(python,in,fragment="PyListToXMLTree") (CPLXMLNode* xmlnode )
+{
+  /* %typemap(python,in) (CPLXMLNode* xmlnode ) */
+  $1 = PyListToXMLTree( $input );
+  if ( !$1 ) SWIG_fail;
+}
+%typemap(python,freearg) (CPLXMLNode *xmlnode)
+{
+  /* %typemap(python,freearg) (CPLXMLNode *xmlnode) */
+  if ( $1 ) CPLDestroyXMLNode( $1 );
+}
+
+%fragment("XMLTreeToPyList","header") %{
+/************************************************************************/
+/*                          XMLTreeToPyList()                           */
+/************************************************************************/
+static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
+{
+    PyObject *pyList;
+    int      nChildCount = 0, iChild;
+    CPLXMLNode *psChild;
+
+    for( psChild = psTree->psChild; 
+         psChild != NULL; 
+         psChild = psChild->psNext )
+        nChildCount++;
+
+    pyList = PyList_New(nChildCount+2);
+
+    PyList_SetItem( pyList, 0, Py_BuildValue( "i", (int) psTree->eType ) );
+    PyList_SetItem( pyList, 1, Py_BuildValue( "s", psTree->pszValue ) );
+
+    for( psChild = psTree->psChild, iChild = 2; 
+         psChild != NULL; 
+         psChild = psChild->psNext, iChild++ )
+    {
+        PyList_SetItem( pyList, iChild, XMLTreeToPyList( psChild ) );
+    }
+
+    return pyList; 
+}
+%}
+
+%typemap(python,out,fragment="XMLTreeToPyList") (CPLXMLNode*)
+{
+  /* %typemap(python,out) (CPLXMLNode*) */
+  $result = XMLTreeToPyList( $1 );
+}
+%typemap(python,ret) (CPLXMLNode*)
+{
+  /* %typemap(python,ret) (CPLXMLNode*) */
+  if ( $1 ) CPLDestroyXMLNode( $1 );
 }
