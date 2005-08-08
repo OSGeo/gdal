@@ -11,11 +11,12 @@ OGR_OBJ =	iomhelper.o ogrili1driver.o ogrili1datasource.o ogrili1layer.o ogrili2
 
 OBJ =	$(CORE_OBJ) $(OGR_OBJ)
 
-CPPFLAGS :=	-I.. -I../.. $(GDAL_INCLUDE) $(XERCES_INCLUDE) $(CPPFLAGS)
-
 ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_INC) $(CPPFLAGS)
 endif
+
+CPPFLAGS :=	-I.. -I../.. $(GDAL_INCLUDE) $(XERCES_INCLUDE) $(CPPFLAGS)
+
 
 default:	$(foreach d,$(SUBDIRS-yes),$(d)-target)	$(O_OBJ)
 
