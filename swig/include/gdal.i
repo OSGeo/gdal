@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.32  2005/08/08 17:06:40  kruland
+ * Added bindings for ParseXMLString and SerializeXMLTree.
+ *
  * Revision 1.31  2005/08/06 20:51:58  kruland
  * Instead of using double_## defines and SWIG macros, use typemaps with
  * [ANY] specified and use $dim0 to extract the dimension.  This makes the
@@ -495,6 +498,11 @@ double GDALPackedDMSToDec( double );
 %rename (DecToPackedDMS) GDALDecToPackedDMS;
 double GDALDecToPackedDMS( double );
 
+%rename (ParseXMLString) CPLParseXMLString;
+CPLXMLNode *CPLParseXMLString( char * );
+
+%rename (SerializeXMLTree) CPLSerializeXMLTree;
+char *CPLSerializeXMLTree( CPLXMLNode *xmlnode );
 
 //************************************************************************
 //
