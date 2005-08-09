@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/08/09 21:02:06  hobu
+ * Updated ReadTableDefinition to use the OCI_FID
+ * variable from the environment if it is available
+ *
  * Revision 1.4  2003/05/21 03:54:01  warmerda
  * expand tabs
  *
@@ -134,9 +138,11 @@ OGROCISelectLayer::ReadTableDefinition( OGROCIStatement *poCommand )
 /* -------------------------------------------------------------------- */
 /*      Do we have an FID?                                              */
 /* -------------------------------------------------------------------- */
-    if( poDefn->GetFieldIndex( "OGR_FID" ) > -1 )
+    const char *pszExpectedFIDName = 
+        CPLGetConfigOption( "OCI_FID", "OGR_FID" );
+    if( poDefn->GetFieldIndex(pszExpectedFIDName) > -1 )
     {
-        iFIDColumn = poDefn->GetFieldIndex( "OGR_FID" );
+        iFIDColumn = poDefn->GetFieldIndex(pszExpectedFIDName);
         pszFIDName = CPLStrdup(poDefn->GetFieldDefn(iFIDColumn)->GetNameRef());
     }
 
