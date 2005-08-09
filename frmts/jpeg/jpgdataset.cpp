@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.29  2005/08/09 20:19:19  dnadeau
+ * add EXIF GPS IFD Tags
+ *
  * Revision 1.28  2005/07/27 02:00:39  dnadeau
  * correct leak problem. Free poTIFFDir.
  *
@@ -159,6 +162,7 @@ class JPGDataset : public GDALPamDataset
     int	   bigendian;
     int    nExifOffset;
     int    nInterOffset;
+    int    nGPSOffset;
     int	   bSwabflag;
     int    nTiffDirStart;
 
@@ -426,6 +430,7 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
   TIFFDirEntry *poTIFFDir;
   struct tagname *poExifTags ;
   struct intr_tag *poInterTags = intr_tags;
+  struct gpsname *poGPSTags;
 
 /* -------------------------------------------------------------------- */
 /*      Read number of entry in directory                               */
@@ -482,18 +487,28 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 	    break;
           }
 
-      if((!poExifTags->tag) && (!poInterTags->tag))
+      if(!poInterTags->tag)
+	  for(poGPSTags = gpstags; poGPSTags->tag != 0xffff; poGPSTags++) 
+	      if(poGPSTags->tag == poTIFFDirEntry->tdir_tag) {
+		  strcpy(pszName, poGPSTags->name);
+		  break;
+	      }
+
+      if( (!poExifTags->tag) && (!poInterTags->tag) && (poGPSTags->tag == 0xffff) )
 	continue;
 
 
 /* -------------------------------------------------------------------- */
 /*      Save important directory tag offset                             */
 /* -------------------------------------------------------------------- */
-      if(poTIFFDirEntry->tdir_tag == EXIFOFFSETTAG)
+      if( poTIFFDirEntry->tdir_tag == EXIFOFFSETTAG )
 	nExifOffset=poTIFFDirEntry->tdir_offset;
-      if(poTIFFDirEntry->tdir_tag == INTEROPERABILITYOFFSET)
+      if( poTIFFDirEntry->tdir_tag == INTEROPERABILITYOFFSET )
 	nInterOffset=poTIFFDirEntry->tdir_offset;
-
+      if( poTIFFDirEntry->tdir_tag == GPSOFFSET ) {
+	  nGPSOffset=poTIFFDirEntry->tdir_offset;
+	  printf ("found gpsoffset = %#x\n",nGPSOffset);
+      }
 /* -------------------------------------------------------------------- */
 /*      Print tags                                                      */
 /* -------------------------------------------------------------------- */
@@ -716,6 +731,7 @@ JPGDataset::JPGDataset()
     papszSubDatasets= NULL;
     nExifOffset     = -1;
     nInterOffset    = -1;
+    nGPSOffset      = -1;
     bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -879,6 +895,9 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
       }
       if(poDS->nInterOffset > 0) {
       	poDS->EXIFExtractMetadata(poOpenInfo->fp,poDS->nInterOffset);
+      }
+      if(poDS->nGPSOffset > 0) {
+      	poDS->EXIFExtractMetadata(poOpenInfo->fp,poDS->nGPSOffset);
       }
       poDS->SetMetadata( poDS->papszMetadata );
     }

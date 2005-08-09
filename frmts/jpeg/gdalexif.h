@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2005/08/09 20:19:02  dnadeau
+ * add EXIF GPS IFD Tags
+ *
  * Revision 1.1  2005/07/19 19:35:32  fwarmerdam
  * New
  *
@@ -37,9 +40,44 @@
 #define	ord(e)	((int)e)
 #define EXIFOFFSETTAG 0x8769
 #define INTEROPERABILITYOFFSET 0xA005
+#define GPSOFFSET     0x8825
 #define MAXSTRINGLENGTH 65535
 #define TIFFHEADER 12
 
+
+static struct gpsname {
+    GUInt16 tag;
+    char*   name;
+} gpstags [] = {
+    { 0x00, "EXIF_GPSVersionID" },
+    { 0x01, "EXIF_GPSLatitudeRef" },
+    { 0x02, "EXIF_GPSLatitude" },
+    { 0x03, "EXIF_GPSLongitudeRef" },
+    { 0x04, "EXIF_GPSLongitude" },
+    { 0x05, "EXIF_GPSAltitudeRef" },
+    { 0x06, "EXIF_GPSAltitude" },
+    { 0x07, "EXIF_GPSTimeStamp" }, 
+    { 0x08, "EXIF_GPSSatellites" }, 
+    { 0x09, "EXIF_GPSStatus" }, 
+    { 0x0a, "EXIF_GPSMeasureMode" }, 
+    { 0x0b, "EXIF_GPSDOP" },
+    { 0x0c, "EXIF_GPSSpeedRef"},
+    { 0x0d, "EXIF_GPSSpeed"},
+    { 0x0e, "EXIF_GPSTrackRef"},
+    { 0x0f, "EXIF_GPSTrack"},
+    { 0x10, "EXIF_GPSImgDirectionRef"},
+    { 0x11, "EXIF_GPSImgDirection"},
+    { 0x12, "EXIF_GPSMapDatum"},
+    { 0x13, "EXIF_GPSDestLatitudeRef"},
+    { 0x14, "EXIF_GPSDestLatitude"},
+    { 0x15, "EXIF_GPSDestLongitudeRef"},
+    { 0x16, "EXIF_GPSDestLongitude"},
+    { 0x17, "EXIF_GPSDestBearingRef"},
+    { 0x18, "EXIF_GPSDestBearing"},
+    { 0x19, "EXIF_GPSDestDistanceRef"},
+    { 0x1a, "EXIF_GPSDestDistance"},
+    { 0xffff,       ""}
+};
 
 static struct tagname {
   GUInt16 tag;
@@ -90,7 +128,7 @@ static struct tagname {
 	{ 0x8773,	"EXIF_Inter_Color_Profile"},
 	{ 0x8822,	"EXIF_Exposure_Program"},
 	{ 0x8824,	"EXIF_Spectral_Sensitivity"},
-	{ 0x8825,	"EXIF_GPS_Info"},
+	{ 0x8825,	"EXIF_GPS_Offset"},
 	{ 0x8827,	"EXIF_ISO_Speed_Ratings"},
 	{ 0x8828,	"EXIF_OECF"},
 	{ 0x9000,	"EXIF_Version"},
@@ -130,6 +168,7 @@ static struct tagname {
 	{ 0xA301,	"EXIF_Scene_Type"},
 	{ 0x0000,       ""}
 };
+
 
 static struct intr_tag {
   GInt16 tag;
