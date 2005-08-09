@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/08/09 21:01:00  hobu
+ * Allow OGROCILoaderLayer to grab the OCI_FID from the
+ * environment if it is available and substitute it into the loader
+ * file.
+ *
  * Revision 1.4  2005/02/10 15:46:02  fwarmerdam
  * added GEOMETRY_NAME layer creation option
  *
@@ -72,7 +77,8 @@ OGROCILoaderLayer::OGROCILoaderLayer( OGROCIDataSource *poDSIn,
     poFeatureDefn->Reference();
     
     pszGeomName = CPLStrdup( pszGeomColIn );
-    pszFIDName = CPLStrdup( "OGR_FID" );
+    pszFIDName = (char*)CPLGetConfigOption( "OCI_FID", "OGR_FID" );
+    
 
     nSRID = nSRIDIn;
     poSRS = poDSIn->FetchSRS( nSRID );
@@ -173,12 +179,14 @@ void OGROCILoaderLayer::WriteLoaderHeader()
             
         VSIFPrintf( fpLoader, "INFILE %s \"var 8\"\n", pszDataFilename );
     }
+    const char *pszExpectedFIDName = 
+        CPLGetConfigOption( "OCI_FID", "OGR_FID" );
 
     VSIFPrintf( fpLoader, "INTO TABLE \"%s\" REPLACE\n", 
                 poFeatureDefn->GetName() );
     VSIFPrintf( fpLoader, "FIELDS TERMINATED BY '|'\n" );
     VSIFPrintf( fpLoader, "TRAILING NULLCOLS (\n" );
-    VSIFPrintf( fpLoader, "    ogr_fid INTEGER EXTERNAL,\n" );
+    VSIFPrintf( fpLoader, "    %s INTEGER EXTERNAL,\n", pszExpectedFIDName );
     VSIFPrintf( fpLoader, "    %s COLUMN OBJECT (\n",
                 pszGeometryName );
     VSIFPrintf( fpLoader, "      SDO_GTYPE INTEGER EXTERNAL,\n" );
