@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.32  2005/08/09 17:40:09  kruland
+ * Added support for ruby.
+ *
  * Revision 1.31  2005/08/09 14:38:27  kruland
  * Fixed the FeatureDefn constructor -- their decls don't have a return value.
  *
@@ -132,11 +135,13 @@
  *D:\cvs\gdal\gdalautotest>d:\Python\debug\Python-2.4\PCbuild\python_d.exe run_all.py ogr
 */
 
+%include "exception.i"
+
 %module ogr
 %import gdal_typemaps.i
 %feature("autodoc");
 
-#ifdef SWIGPYTHON
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %init %{
 
   if ( OGRGetDriverCount() == 0 ) {

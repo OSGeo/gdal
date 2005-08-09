@@ -9,7 +9,7 @@ BINDINGS = python php
 
 # The ALL_BINDINGS variable defines all the possible bindings.  It's used
 # in the dist and clean definitions.
-ALL_BINDINGS = python php csharp
+ALL_BINDINGS = python php csharp ruby
 
 default: generate
 

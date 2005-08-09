@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.33  2005/08/09 17:40:09  kruland
+ * Added support for ruby.
+ *
  * Revision 1.32  2005/08/08 17:06:40  kruland
  * Added bindings for ParseXMLString and SerializeXMLTree.
  *
@@ -174,7 +177,7 @@ typedef int FALSE_IS_ERR;
 
 %}
 
-#ifdef SWIGPYTHON
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %{
 int bUseExceptions=0;
 int bErrorHappened=0;
@@ -206,7 +209,6 @@ void DontUseExceptions() {
     $action
     if ( bErrorHappened ) {
       SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      SWIG_fail;
     }
   }
 }
