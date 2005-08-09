@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.3  2005/08/09 17:40:09  kruland
+ * Added support for ruby.
+ *
  * Revision 1.2  2005/07/20 16:30:32  kruland
  * Import the php typemaps.
  *
@@ -29,4 +32,8 @@
 
 #ifdef SWIGPHP
 %import typemaps_php.i
+#endif
+
+#ifdef SWIGRUBY
+%import typemaps_ruby.i
 #endif
