@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/08/09 20:54:43  hobu
+ * Allow CreateLayer to use the OCI_FID environment
+ * variable if it set.  Also, throw a CPLDebug statement
+ * out there if the layer wasn't found in the layer list
+ * when deleting.
+ *
  * Revision 1.26  2005/02/10 15:46:02  fwarmerdam
  * added GEOMETRY_NAME layer creation option
  *
@@ -434,6 +440,8 @@ void OGROCIDataSource::DeleteLayer( const char *pszLayerName )
     }
 
     if( iLayer == nLayers )
+        CPLDebug( "OCI", "DeleteLayer: %s not found in layer list." \
+                  "  Layer * not* deleted.", pszLayerName );
         return;
 
 /* -------------------------------------------------------------------- */
@@ -534,14 +542,15 @@ OGROCIDataSource::CreateLayer( const char * pszLayerName,
 /*      Create a basic table with the FID.  Also include the            */
 /*      geometry if this is not a PostGIS enabled table.                */
 /* -------------------------------------------------------------------- */
+    const char *pszExpectedFIDName = 
+        CPLGetConfigOption( "OCI_FID", "OGR_FID" );    
    
     OGROCIStatement oStatement( poSession );
-    
     sprintf( szCommand, 
              "CREATE TABLE \"%s\" ( "
-             "OGR_FID INTEGER, "
+             "%s INTEGER, "
              "%s %s )",
-             pszSafeLayerName, pszGeometryName, SDO_GEOMETRY );
+             pszSafeLayerName, pszExpectedFIDName, pszGeometryName, SDO_GEOMETRY );
 
     if( oStatement.Execute( szCommand ) != CE_None )
     {
