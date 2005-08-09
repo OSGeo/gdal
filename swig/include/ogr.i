@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.31  2005/08/09 14:38:27  kruland
+ * Fixed the FeatureDefn constructor -- their decls don't have a return value.
+ *
  * Revision 1.30  2005/08/06 20:51:58  kruland
  * Instead of using double_## defines and SWIG macros, use typemaps with
  * [ANY] specified and use $dim0 to extract the dimension.  This makes the
@@ -872,10 +875,10 @@ class OGRFeatureDefnShadow {
 public:
 %extend {
 
- /* %feature("kwargs") OGRFeatureDefnShadow;
-  OGRFeatureDefnShadow* OGRFeatureDefnShadow(const char* name=NULL) {
+  %feature("kwargs") OGRFeatureDefnShadow;
+  OGRFeatureDefnShadow(const char* name=NULL) {
     return (OGRFeatureDefnShadow* )OGR_FD_Create(name);
-  }*/
+  }
   
   void Destroy() {
     OGR_FD_Destroy(self);
