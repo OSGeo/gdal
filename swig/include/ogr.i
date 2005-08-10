@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.34  2005/08/10 16:49:43  hobu
+ * syntactic sugar to support the __iter__ protocol on Layer
+ * for Python.  This allows us to (slowly) do for feature in layer and
+ * have it call GetNextFeature for us until we are done.
+ *
  * Revision 1.33  2005/08/10 15:44:57  hobu
  * Added some convenience properties for FieldDefn:
  * width, type, precision, name, justify as shortcuts for the
@@ -640,6 +645,18 @@ layer[0:4] would return a list of the first four features."""
             return self.GetFeature(value)
         else:
             raise TypeError,"Input %s is not of IntType or SliceType" % type(value)
+    def CreateFields(fields):
+        """Create a list of fields on the Layer"""
+        for i in fields:
+            self.CreateField(i)
+    def __iter__(self):
+        return self
+    def next(self):
+        feature = self.GetNextFeature()
+        if not feature:
+            raise StopIteration
+        else:
+            return feature
   }
   
 #endif
@@ -868,7 +885,7 @@ public:
             return self.GetFieldAsDouble(fld_index)
         if fld_type == OFTString:
             return self.GetFieldAsString(fld_index)
-        
+
 }
 
 #endif
