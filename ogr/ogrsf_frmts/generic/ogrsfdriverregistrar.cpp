@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/08/10 13:49:43  fwarmerdam
+ * fix logic for dll entry point.
+ *
  * Revision 1.20  2005/06/10 15:38:10  fwarmerdam
  * avoid use of MAX_PATH
  *
@@ -681,7 +684,7 @@ void OGRSFDriverRegistrar::AutoLoadDrivers()
 
             pszFuncName = (char *) CPLCalloc(strlen(papszFiles[iFile])+20,1);
             sprintf( pszFuncName, "RegisterOGR%s", 
-                     CPLGetBasename(papszFiles[iFile]) + 5 );
+                     CPLGetBasename(papszFiles[iFile]) + 4 );
             
             pszFilename = 
                 CPLFormFilename( papszSearchPath[iDir], 
