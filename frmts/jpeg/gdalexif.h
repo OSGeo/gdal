@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2005/08/10 20:54:01  dnadeau
+ * do not print EXIF Offset tags
+ *
  * Revision 1.2  2005/08/09 20:19:02  dnadeau
  * add EXIF GPS IFD Tags
  *
@@ -40,7 +43,7 @@
 #define	ord(e)	((int)e)
 #define EXIFOFFSETTAG 0x8769
 #define INTEROPERABILITYOFFSET 0xA005
-#define GPSOFFSET     0x8825
+#define GPSOFFSETTAG     0x8825
 #define MAXSTRINGLENGTH 65535
 #define TIFFHEADER 12
 
@@ -76,8 +79,12 @@ static struct gpsname {
     { 0x18, "EXIF_GPSDestBearing"},
     { 0x19, "EXIF_GPSDestDistanceRef"},
     { 0x1a, "EXIF_GPSDestDistance"},
+    { 0x1b, "EXIF_GPSProcessingMethod"},
+    { 0x1c, "EXIF_GPSAreaInformation"},
+    { 0x1d, "EXIF_GPSDateStamp"},
+    { 0x1e, "EXIF_GPSDifferential"},  
     { 0xffff,       ""}
-};
+}; 
 
 static struct tagname {
   GUInt16 tag;
@@ -124,11 +131,11 @@ static struct tagname {
 	{ 0x829A,	"EXIF_Exposure_Time"},
 	{ 0x829D,	"EXIF_F_Number"},
 	{ 0x83BB,	"EXIF_IPTC/NAA"},
-	{ 0x8769,	"EXIF_Offset"},
+	//	{ 0x8769,	"EXIF_Offset"},
 	{ 0x8773,	"EXIF_Inter_Color_Profile"},
 	{ 0x8822,	"EXIF_Exposure_Program"},
 	{ 0x8824,	"EXIF_Spectral_Sensitivity"},
-	{ 0x8825,	"EXIF_GPS_Offset"},
+	//	{ 0x8825,	"EXIF_GPS_Offset"},
 	{ 0x8827,	"EXIF_ISO_Speed_Ratings"},
 	{ 0x8828,	"EXIF_OECF"},
 	{ 0x9000,	"EXIF_Version"},
@@ -153,9 +160,9 @@ static struct tagname {
 	{ 0x9292,	"EXIF_Sub_Sec_Time_Digitized"},
 	{ 0xA000,	"EXIF_Flash_Pix_Version"},
 	{ 0xA001,	"EXIF_Color_Space"},
-//	{ 0xA002,	"EXIF_Image_Width"},
-//	{ 0xA003,	"EXIF_Image_Length"},
-	{ 0xA005,	"EXIF_Interoperability_Offset"},
+	{ 0xA002,	"EXIF_Image_Width"},
+	{ 0xA003,	"EXIF_Image_Length"},
+//	{ 0xA005,	"EXIF_Interoperability_Offset"},
 	{ 0xA20B,	"EXIF_Flash_Energy"},	  // 0x920B in TIFF/EP
 	{ 0xA20C,	"EXIF_Spatial_Frequency_Response"},   // 0x920C    -  -
 	{ 0xA20E,	"EXIF_Focal_Plane_X_Resolution"},     // 0x920E    -  -
