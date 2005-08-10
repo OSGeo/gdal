@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.33  2005/08/10 15:44:57  hobu
+ * Added some convenience properties for FieldDefn:
+ * width, type, precision, name, justify as shortcuts for the
+ * setters/getters
+ *
  * Revision 1.32  2005/08/09 17:40:09  kruland
  * Added support for ruby.
  *
@@ -1005,6 +1010,16 @@ public:
     OGR_Fld_SetPrecision(self, precision);
   }
   
+#ifdef SWIGPYTHON
+%pythoncode {
+    width = property(GetWidth, SetWidth)
+    type = property(GetType, SetType)
+    precision = property(GetPrecision, SetPrecision)
+    name = property(GetName, SetName)
+    justify = property(GetJustify, SetJustify)
+}
+#endif  
+
 } /* %extend */
 
 
