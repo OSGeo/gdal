@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/08/10 21:15:03  hobu
+ * Use VARCHAR2 for OFTString fields
+ *
  * Revision 1.4  2003/09/17 16:36:34  warmerda
  * fixed setting of dimension for point objects
  *
@@ -299,9 +302,9 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
     else if( oField.GetType() == OFTString )
     {
         if( oField.GetWidth() == 0 || !bPreservePrecision )
-            strcpy( szFieldType, "VARCHAR(2047)" );
+            strcpy( szFieldType, "VARCHAR2(2047)" );
         else
-            sprintf( szFieldType, "CHAR(%d)", oField.GetWidth() );
+            sprintf( szFieldType, "VARCHAR2(%d)", oField.GetWidth() );
     }
     else if( bApproxOK )
     {
