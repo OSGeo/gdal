@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.30  2005/08/10 20:53:24  dnadeau
+ * correct GPS and logic problems for EXIF
+ *
  * Revision 1.29  2005/08/09 20:19:19  dnadeau
  * add EXIF GPS IFD Tags
  *
@@ -321,21 +324,28 @@ void JPGDataset::EXIFPrintData(char* pszData, GUInt16 type,
     break;
   }
   case TIFF_RATIONAL: {
-    register GUInt32 *lp = (GUInt32*)data;
-    while (count-- > 0) {
-      sprintf(pszTemp, "%s(%g)", sep,
-	      (double) lp[0]/ (double)lp[1]);
-      sep = " ";
-      lp += 2;
-      strcat(pszData,pszTemp);
-    }
-    break;
+      register GUInt32 *lp = (GUInt32*)data;
+      //      if(bSwabflag)
+      //	  TIFFSwabArrayOfLong((GUInt32*) data, 2*count);
+      while (count-- > 0) {
+	  if( (lp[0]==0) && (lp[1] == 0) ) {
+	      sprintf(pszTemp,"%s(0)",sep);
+	  }
+	  else{
+	      sprintf(pszTemp, "%s(%g)", sep,
+		      (double) lp[0]/ (double)lp[1]);
+	  }
+	  sep = " ";
+	  lp += 2;
+	  strcat(pszData,pszTemp);
+      }
+      break;
   }
   case TIFF_SRATIONAL: {
     register GInt32 *lp = (GInt32*)data;
     while (count-- > 0) {
       sprintf(pszTemp, "%s(%g)", sep,
-	      (double) lp[0]/ (double) lp[1]);
+	      (float) lp[0]/ (float) lp[1]);
       sep = " ";
       lp += 2;
       strcat(pszData,pszTemp);
@@ -364,7 +374,7 @@ void JPGDataset::EXIFPrintData(char* pszData, GUInt16 type,
 
 
 /************************************************************************/
-/*                        EXIFExtractMetadata()                         */
+/*                        EXIFInit()                                    */
 /*                                                                      */
 /*           Create Metadata from Information file directory APP1       */
 /************************************************************************/
@@ -392,6 +402,7 @@ CPLErr JPGDataset::EXIFInit(FILE *fp)
 
   if (hdr.tiff_magic == TIFF_BIGENDIAN)    bSwabflag = !bigendian;
   if (hdr.tiff_magic == TIFF_LITTLEENDIAN) bSwabflag = bigendian;
+
 
   if (bSwabflag) {
     TIFFSwabShort(&hdr.tiff_version);
@@ -472,29 +483,34 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 /* -------------------------------------------------------------------- */
 /*      Find Tag name in table                                          */
 /* -------------------------------------------------------------------- */
+
     for (poExifTags = tagnames; poExifTags->tag; poExifTags++)
-      if(poExifTags->tag == poTIFFDirEntry->tdir_tag){
-	  strcpy(pszName, poExifTags->name);
-          break;
-      }
+	if(poExifTags->tag == poTIFFDirEntry->tdir_tag){
+	    strcpy(pszName, poExifTags->name);
+	    break;
+	}
+
+    
+    if( nOffset == nGPSOffset) {
+	for( poGPSTags = gpstags; poGPSTags->tag != 0xffff; poGPSTags++ ) 
+	    if( poGPSTags->tag == poTIFFDirEntry->tdir_tag ) {
+		strcpy(pszName, poGPSTags->name);
+		break;
+	    }
+    }
 /* -------------------------------------------------------------------- */
 /*      If the tag was not found, look into the interoperability table  */
 /* -------------------------------------------------------------------- */
-      if(!poExifTags->tag)
+    if( nOffset == nInterOffset ) {
 	for(poInterTags = intr_tags; poInterTags->tag; poInterTags++)
-	  if(poInterTags->tag == poTIFFDirEntry->tdir_tag) {
-	    strcpy(pszName, poInterTags->name);
-	    break;
-          }
+	    if(poInterTags->tag == poTIFFDirEntry->tdir_tag) {
+		strcpy(pszName, poInterTags->name);
+		break;
+	    }
+    }
 
-      if(!poInterTags->tag)
-	  for(poGPSTags = gpstags; poGPSTags->tag != 0xffff; poGPSTags++) 
-	      if(poGPSTags->tag == poTIFFDirEntry->tdir_tag) {
-		  strcpy(pszName, poGPSTags->name);
-		  break;
-	      }
-
-      if( (!poExifTags->tag) && (!poInterTags->tag) && (poGPSTags->tag == 0xffff) )
+      if( (!poExifTags->tag) && (!poInterTags->tag) && 
+	  (poGPSTags->tag == 0xffff) )
 	continue;
 
 
@@ -505,9 +521,8 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 	nExifOffset=poTIFFDirEntry->tdir_offset;
       if( poTIFFDirEntry->tdir_tag == INTEROPERABILITYOFFSET )
 	nInterOffset=poTIFFDirEntry->tdir_offset;
-      if( poTIFFDirEntry->tdir_tag == GPSOFFSET ) {
+      if( poTIFFDirEntry->tdir_tag == GPSOFFSETTAG ) {
 	  nGPSOffset=poTIFFDirEntry->tdir_offset;
-	  printf ("found gpsoffset = %#x\n",nGPSOffset);
       }
 /* -------------------------------------------------------------------- */
 /*      Print tags                                                      */
@@ -569,23 +584,29 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 	  VSIFRead(data, 1, cc, fp);
 
 	  if (bSwabflag) {
-	    switch (poTIFFDir->tdir_type) {
+	    switch (poTIFFDirEntry->tdir_type) {
 	    case TIFF_SHORT:
 	    case TIFF_SSHORT:
-	      TIFFSwabArrayOfShort((GUInt16*) data, poTIFFDir->tdir_count);
+	      TIFFSwabArrayOfShort((GUInt16*) data, 
+				   poTIFFDirEntry->tdir_count);
 	      break;
 	    case TIFF_LONG:
 	    case TIFF_SLONG:
 	    case TIFF_FLOAT:
-	      TIFFSwabArrayOfLong((GUInt32*) data, poTIFFDir->tdir_count);
+	      TIFFSwabArrayOfLong((GUInt32*) data, 
+				  poTIFFDirEntry->tdir_count);
 	      break;
 	    case TIFF_RATIONAL:
 	    case TIFF_SRATIONAL:
-	      TIFFSwabArrayOfLong((GUInt32*) data, 2*poTIFFDir->tdir_count);
+		TIFFSwabArrayOfLong((GUInt32*) data, 
+				    2*poTIFFDirEntry->tdir_count);
 	      break;
 	    case TIFF_DOUBLE:
-	      TIFFSwabArrayOfDouble((double*) data, poTIFFDir->tdir_count);
+	      TIFFSwabArrayOfDouble((double*) data, 
+				    poTIFFDirEntry->tdir_count);
 	      break;
+	    default:
+		break;
 	    }
 	  }
 
