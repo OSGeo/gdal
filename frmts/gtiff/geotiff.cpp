@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.144  2005/08/11 17:27:05  fwarmerdam
+ * fixed so that PAM copyinfo does not override profile option
+ *
  * Revision 1.143  2005/07/26 17:53:33  fwarmerdam
  * Added error check.
  *
@@ -4133,8 +4136,10 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( poDS == NULL )
         poDS = (GDALPamDataset *) GDALOpen( pszFilename, GA_ReadOnly );
 
-    if( poDS != NULL )
+    if( poDS != NULL && EQUAL(pszProfile,"GDALGeoTIFF") )
+    {
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+    }
     
     return poDS;
 }
