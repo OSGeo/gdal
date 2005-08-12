@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/08/12 13:21:10  fwarmerdam
+ * Avoid warning about unused variable.
+ *
  * Revision 1.3  2005/06/09 19:32:01  dron
  * Fixed compilation on big-endian arch.
  *
@@ -456,7 +459,7 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     RMFDataset  *poGDS = (RMFDataset *)poDS;
     GUInt32     nTile = nBlockYOff * poGDS->nXTiles + nBlockXOff;
     GUInt32     nTileBytes = nDataSize * poGDS->nBands;
-    GUInt32     iInPixel, iOutPixel, nCurBlockYSize, i;
+    GUInt32     iInPixel, iOutPixel, nCurBlockYSize;
     GByte       *pabyTile;
 
     CPLAssert( poGDS != NULL
@@ -527,6 +530,8 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 #ifdef CPL_MSB
     if ( poGDS->eRMFType == RMFT_MTW )
     {
+        GUInt32 i;
+
         if ( poGDS->sHeader.nBitDepth == 16 )
         {
             for ( i = 0; i < nTileBytes; i += 2 )
@@ -582,7 +587,6 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             CPLFree( pabyTile );
             return CE_Failure;
         }
-
     }
     
     poGDS->paiTiles[2 * nTile + 1] = nTileBytes;
