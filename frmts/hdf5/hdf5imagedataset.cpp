@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2005/08/12 23:39:50  dnadeau
+ * add GCPs and projection class members
+ *
  * Revision 1.5  2005/07/29 15:44:01  fwarmerdam
  * minor formatting change
  *
@@ -44,6 +47,7 @@
 #include "gdal_priv.h"
 #include "cpl_string.h"
 #include "hdf5dataset.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -62,6 +66,7 @@ class HDF5ImageDataset : public HDF5Dataset
     char        *pszGCPProjection;
     GDAL_GCP    *pasGCPList;
     int         nGCPCount;
+    OGRSpatialReference oSRS;
 
     hsize_t      *dims,*maxdims;
     char          **papszName;
@@ -79,21 +84,14 @@ public:
     HDF5ImageDataset();
     ~HDF5ImageDataset();
     
-
+    CPLErr CreateProjections();
     static GDALDataset  *Open( GDALOpenInfo * );
-    /*  const char          *GetProjectionRef();
-	virtual CPLErr      SetProjection( const char * );
-	virtual int         GetGCPCount();
-	virtual const char  *GetGCPProjection();
-	virtual const GDAL_GCP *GetGCPs(); 
-    */
-    /*    static GDALDataset  *Create( const char * pszFilename,
-	  int nXSize, int nYSize, int nBands,
-	  GDALDataType eType, char ** papszParmList );
-
-	  CPLErr              GetGeoTransform( double * padfTransform );
-	  virtual CPLErr      SetGeoTransform( double * );
-    */
+    const char          *GetProjectionRef();
+    virtual CPLErr      SetProjection( const char * );
+    virtual int         GetGCPCount();
+    virtual const char  *GetGCPProjection();
+    virtual const GDAL_GCP *GetGCPs(); 
+    
 };
 
 /************************************************************************/
@@ -134,6 +132,20 @@ HDF5ImageDataset::~HDF5ImageDataset()
 
     if(maxdims)
 	CPLFree(maxdims);
+
+    if( nGCPCount > 0 )
+    {
+        for( int i = 0; i < nGCPCount; i++ )
+        {
+            if ( pasGCPList[i].pszId )
+                CPLFree( pasGCPList[i].pszId );
+            if ( pasGCPList[i].pszInfo )
+                CPLFree( pasGCPList[i].pszInfo );
+        }
+
+        CPLFree( pasGCPList );
+    }
+
 
 
 }
@@ -369,6 +381,11 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 	if ( poBand->bNoDataSet )
 		poBand->SetNoDataValue( 255 );
     }
+
+    
+    poDS->CreateProjections();
+
+
     return(poDS);
 }
 
@@ -402,64 +419,151 @@ void GDALRegister_HDF5Image()
 	}
 }
 
+/************************************************************************/
+/*                         CreateProjections()                          */
+/************************************************************************/
+CPLErr HDF5ImageDataset::CreateProjections()
+{
+#define NBGCPLAT 100
+#define NBGCPLON 30
 
+    hid_t LatitudeDatasetID  = -1;
+    hid_t LongitudeDatasetID = -1;
+    hid_t LatitudeDataspaceID;
+    hid_t LongitudeDataspaceID;
+    float* Latitude;
+    float* Longitude;
+    int    i,j;
+/* -------------------------------------------------------------------- */
+/*      Create HDF5 Data Hierarchy in a link list                       */
+/* -------------------------------------------------------------------- */
+    poH5Objects=HDF5FindDatasetObjects(poH5RootGroup,  "Latitude");
+/* -------------------------------------------------------------------- */
+/*      Retrieve HDF5 data information                                  */
+/* -------------------------------------------------------------------- */
+    LatitudeDatasetID   = H5Dopen(hHDF5,poH5Objects->pszPath); 
+    LatitudeDataspaceID = H5Dget_space(dataset_id);                       
+
+    poH5Objects=HDF5FindDatasetObjects(poH5RootGroup, "Longitude");
+    LongitudeDatasetID   = H5Dopen(hHDF5,poH5Objects->pszPath); 
+    LongitudeDataspaceID = H5Dget_space(dataset_id);                       
+
+    if( ( LatitudeDatasetID > 0 ) && ( LongitudeDatasetID > 0) ) {
+	int nDeltaLat = nRasterYSize / NBGCPLAT;
+	int nDeltaLon = nRasterXSize / NBGCPLON;
+	
+	Latitude         = (float *) CPLCalloc( nRasterYSize*nRasterXSize, 
+						sizeof(float) );
+	Longitude         = (float *) CPLCalloc( nRasterYSize*nRasterXSize, 
+						 sizeof(float) );
+	memset( Latitude, 0, nRasterXSize*nRasterYSize*sizeof( float ) );
+	memset( Longitude, 0, nRasterXSize*nRasterYSize*sizeof( float ) );
+	
+	H5Dread (LatitudeDatasetID,
+		 H5T_NATIVE_FLOAT, 
+		 H5S_ALL,
+		 H5S_ALL,
+		 H5P_DEFAULT, 
+		 Latitude);
+	
+	H5Dread (LongitudeDatasetID,
+		 H5T_NATIVE_FLOAT, 
+		 H5S_ALL,
+		 H5S_ALL,
+		 H5P_DEFAULT, 
+		 Longitude);
+	
+	oSRS.SetWellKnownGeogCS( "WGS84" );
+	CPLFree( pszProjection );
+	oSRS.exportToWkt( &pszProjection );
+	oSRS.exportToWkt( &pszGCPProjection );
+	
+/* -------------------------------------------------------------------- */
+/*  Fill the GCPs list.                                                 */
+/* -------------------------------------------------------------------- */
+	nGCPCount = NBGCPLAT*NBGCPLON;
+	
+	pasGCPList = (GDAL_GCP *)
+	    CPLCalloc( nGCPCount, sizeof( GDAL_GCP ) );
+	
+	GDALInitGCPs( nGCPCount, pasGCPList );
+	int k=0;
+	for ( j = 0; j < nRasterYSize; j+=nDeltaLat ) {
+	    for ( i = 0; i < nRasterXSize; i+=nDeltaLon ) {
+		int iGCP =  j * nRasterXSize + i;
+		
+		pasGCPList[k].dfGCPX = (double) Longitude[iGCP]+180.0;
+		pasGCPList[k].dfGCPY = (double) Latitude[iGCP];
+		
+		pasGCPList[k].dfGCPPixel = i + 0.5;
+		pasGCPList[k++].dfGCPLine =  j + 0.5;
+		
+	    }
+	}
+	
+	CPLFree(Latitude);
+	CPLFree(Longitude);
+    }
+    return CE_None;
+
+}
 /************************************************************************/
 /*                          GetProjectionRef()                          */
 /************************************************************************/
-/*
+
   const char *HDF5ImageDataset::GetProjectionRef()
 
   {
   return pszProjection;
   }
-*/
+
 /************************************************************************/
 /*                          SetProjection()                             */
 /************************************************************************/
 
-/*CPLErr HDF5ImageDataset::SetProjection( const char *pszNewProjection )
+CPLErr HDF5ImageDataset::SetProjection( const char *pszNewProjection )
 
 {
-if ( pszProjection )
-CPLFree( pszProjection );
-pszProjection = CPLStrdup( pszNewProjection );
-
-return CE_None;
+    if ( pszProjection )
+	CPLFree( pszProjection );
+    pszProjection = CPLStrdup( pszNewProjection );
+    
+    return CE_None;
 }
-*/
+
 /************************************************************************/
 /*                            GetGCPCount()                             */
 /************************************************************************/
 
-/*int HDF5ImageDataset::GetGCPCount()
-
+int HDF5ImageDataset::GetGCPCount()
+    
 {
-return nGCPCount;
+    return nGCPCount;
 }
-*/
+
 /************************************************************************/
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-/*const char *HDF5ImageDataset::GetGCPProjection()
+const char *HDF5ImageDataset::GetGCPProjection()
 
 {
-if( nGCPCount > 0 )
-return pszGCPProjection;
-else
-return "";
+    if( nGCPCount > 0 )
+	return pszGCPProjection;
+    else
+	return "";
 }
-*/
+
 /************************************************************************/
 /*                               GetGCPs()                              */
 /************************************************************************/
 
-/*const GDAL_GCP *HDF5ImageDataset::GetGCPs()
-  {
-  return pasGCPList;
-  }
+const GDAL_GCP *HDF5ImageDataset::GetGCPs()
+{
+    return pasGCPList;
+}
 
-*/
+
 
 
 
