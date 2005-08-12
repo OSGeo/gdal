@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/08/12 13:22:46  fwarmerdam
+ * avoid initialization warning.
+ *
  * Revision 1.4  2005/08/12 13:21:10  fwarmerdam
  * Avoid warning about unused variable.
  *
@@ -1030,7 +1033,7 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  Set up essential image parameters.                                  */
 /* -------------------------------------------------------------------- */
-    GDALDataType eType;
+    GDALDataType eType = GDT_Byte;
 
     poDS->eRMFType =
         ( EQUAL( poDS->sHeader.szSignature, "MTW" ) ) ? RMFT_MTW : RMFT_RSW;
