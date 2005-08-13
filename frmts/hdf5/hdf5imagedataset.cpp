@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2005/08/13 02:22:01  dnadeau
+ * check for windows drive letter in filename
+ *
  * Revision 1.6  2005/08/12 23:39:50  dnadeau
  * add GCPs and projection class members
  *
@@ -113,7 +116,6 @@ HDF5ImageDataset::HDF5ImageDataset()
     poH5RootGroup   = NULL;
     dims            = NULL;
     maxdims         = NULL;
-    papszName       = NULL;
 
 }
 
@@ -289,7 +291,8 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     int i;
     HDF5ImageDataset    *poDS;
-
+    int nDatasetPos = 2;
+    char szFilename[2048];
     poDS = new HDF5ImageDataset();
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
@@ -304,11 +307,12 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->papszName = CSLTokenizeString2( poOpenInfo->pszFilename,
 				    ":", CSLT_HONOURSTRINGS );
 
-    if (CSLCount(poDS->papszName) != 3) {
+    if( !((CSLCount(poDS->papszName) == 3) || 
+          (CSLCount(poDS->papszName) == 4)) ){
         CSLDestroy(poDS->papszName);
         return NULL;
     }
-
+     	  
     poDS->pszFilename = CPLStrdup(poOpenInfo->pszFilename);
   
     if(!EQUAL(poDS->papszName[0], "HDF5")) {
@@ -316,19 +320,32 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
   
-    if (!H5Fis_hdf5(poDS->papszName[1])) {
-	return NULL;
+    /* -------------------------------------------------------------------- */
+    /*    Check for drive name in windows HDF5:"D:\...                      */
+    /* -------------------------------------------------------------------- */
+    strcpy(szFilename, poDS->papszName[1]);
+
+    if( strlen(poDS->papszName[1]) == 1 ) {
+	strcat(szFilename, ":");
+	strcat(szFilename, poDS->papszName[2]);
+        nDatasetPos = 3;
     }
+    printf("szFilenname %s\n",szFilename);
+    if( !H5Fis_hdf5(szFilename) ) {
+	    return NULL;
+        }
+
     /* -------------------------------------------------------------------- */
     /*      Try opening the dataset.                                        */
     /* -------------------------------------------------------------------- */
-    poDS->hHDF5 = H5Fopen(poDS->papszName[1],
+    poDS->hHDF5 = H5Fopen(szFilename,
 			  H5F_ACC_RDONLY, 
 			  H5P_DEFAULT);
   
     if (poDS->hHDF5 < 0)  {
 	return NULL;
     }
+    printf("Open!!\n");
   
     poDS->hGroupID = H5Gopen(poDS->hHDF5, "/"); 
     if (poDS->hGroupID < 0){
@@ -347,7 +364,8 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->poH5Objects=
 	poDS->HDF5FindDatasetObjects(poDS->poH5RootGroup, 
-				     poDS->papszName[2]);
+				     poDS->papszName[nDatasetPos]);
+	printf("%s\n",poDS->poH5Objects->pszPath);
 /* -------------------------------------------------------------------- */
 /*      Retrieve HDF5 data information                                  */
 /* -------------------------------------------------------------------- */
@@ -449,8 +467,6 @@ CPLErr HDF5ImageDataset::CreateProjections()
     LongitudeDataspaceID = H5Dget_space(dataset_id);                       
 
     if( ( LatitudeDatasetID > 0 ) && ( LongitudeDatasetID > 0) ) {
-	int nDeltaLat = nRasterYSize / NBGCPLAT;
-	int nDeltaLon = nRasterXSize / NBGCPLON;
 	
 	Latitude         = (float *) CPLCalloc( nRasterYSize*nRasterXSize, 
 						sizeof(float) );
@@ -481,15 +497,20 @@ CPLErr HDF5ImageDataset::CreateProjections()
 /* -------------------------------------------------------------------- */
 /*  Fill the GCPs list.                                                 */
 /* -------------------------------------------------------------------- */
-	nGCPCount = NBGCPLAT*NBGCPLON;
 	
+	int nDeltaLat = (nRasterYSize / NBGCPLAT);
+	int nDeltaLon = (nRasterXSize / NBGCPLON);
+	nGCPCount =  (nRasterYSize / nDeltaLat); 
+	nGCPCount *= (nRasterXSize / nDeltaLon);
 	pasGCPList = (GDAL_GCP *)
 	    CPLCalloc( nGCPCount, sizeof( GDAL_GCP ) );
 	
 	GDALInitGCPs( nGCPCount, pasGCPList );
 	int k=0;
-	for ( j = 0; j < nRasterYSize; j+=nDeltaLat ) {
-	    for ( i = 0; i < nRasterXSize; i+=nDeltaLon ) {
+
+	printf("nGCPCount = %d \n",nGCPCount);
+	for ( j = 0; j <= nRasterYSize-nDeltaLat; j+=nDeltaLat ) {
+	    for ( i = 0; i <= nRasterXSize-nDeltaLon; i+=nDeltaLon ) {
 		int iGCP =  j * nRasterXSize + i;
 		
 		pasGCPList[k].dfGCPX = (double) Longitude[iGCP]+180.0;
@@ -500,6 +521,7 @@ CPLErr HDF5ImageDataset::CreateProjections()
 		
 	    }
 	}
+printf("k=%d\n",k);
 	
 	CPLFree(Latitude);
 	CPLFree(Longitude);
