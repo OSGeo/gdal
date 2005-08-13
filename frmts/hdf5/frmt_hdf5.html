@@ -1,0 +1,231 @@
+<!-- $Id$ -->
+
+<html>
+<head>
+<title>HDF5 --- Hierarchical Data Format Release 5 (HDF5)</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>HDF5 --- Hierarchical Data Format Release 5 (HDF5)</h1>
+
+This driver intended for HDF5 file formats importing.   This 
+modification is
+suited for use with remote sensing data and fully compatible with
+underlying HDF5.  This driver can import HDF5-EOS files.  Currently EOS use
+HDF5 for data storing (telemetry form `Aura' satellites). In
+the future they will switch to HDF5 format, which will be used for
+telemetry from `Aura' satellite.<p>
+
+<h2>Multiple Image Handling (Subdatasets)</h2>
+
+Hierarchical Data Format is a container for several different datasets.
+For data storing. HDF contains multidimensional arrays filled by data.  
+One HDF file may contain several arrays.  They may differ in size, 
+number of dimensions.<p>
+
+The first step is to get a report of the components images (arrays) in the 
+file using <b>gdalinfo</b>, and
+then to import the desired images using gdal_translate.
+
+The <b>gdalinfo</b> utility lists all multidimensional subdatasets from the 
+input HDF file. The name of individual images (subdatasets) are assigned to 
+the <b>SUBDATASET_n_NAME</b> metadata item.  The description for each image is
+found in the <b>SUBDATASET_n_DESC</b> metadata item.  For HDF5 images the
+subdataset names will be formatted like this:<p>
+
+<i>HDF5:file_name:subdataset</i><p>
+
+where:<br> <i>file_name</i> is the name of the input file, and<br>
+<i>subdataset</i> is the dataset name of the array to use (for internal use in 
+GDAL).<p>
+
+On the second step you should provide this name for <b>gdalinfo</b> or
+<b>gdal_translate</b> for actual reading of the data.<p>
+
+For example, we want to read data from the OMI/Aura Ozone (O3)  dataset:<p>
+<pre>
+$ gdalinfo OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5
+Driver: HDF5/Hierarchical Data Format Release 5
+Size is 512, 512
+Coordinate System is `'
+
+Subdatasets:
+  SUBDATASET_-1_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":APrioriLayerO3
+  SUBDATASET_-1_DESC=[1645x60x11] APrioriLayerO3 (32-bit floating-point)
+  SUBDATASET_0_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":AlgorithmFlags
+  SUBDATASET_0_DESC=[1645x60] AlgorithmFlags (8-bit unsigned character)
+  SUBDATASET_1_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":CloudFraction
+  SUBDATASET_1_DESC=[1645x60] CloudFraction (32-bit floating-point)
+  SUBDATASET_2_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":CloudTopPressure
+  SUBDATASET_2_DESC=[1645x60] CloudTopPressure (32-bit floating-point)
+  SUBDATASET_3_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":ColumnAmountO3
+  SUBDATASET_3_DESC=[1645x60] ColumnAmountO3 (32-bit floating-point)
+  SUBDATASET_4_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":LayerEfficiency
+  SUBDATASET_4_DESC=[1645x60x11] LayerEfficiency (32-bit floating-point)
+  SUBDATASET_5_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":NValue
+  SUBDATASET_5_DESC=[1645x60x10] NValue (32-bit floating-point)
+  SUBDATASET_6_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":O3BelowCloud
+  SUBDATASET_6_DESC=[1645x60] O3BelowCloud (32-bit floating-point)
+  SUBDATASET_7_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":QualityFlags
+  SUBDATASET_7_DESC=[1645x60] QualityFlags (8-bit unsigned integer)
+  SUBDATASET_8_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":Reflectivity331
+  SUBDATASET_8_DESC=[1645x60] Reflectivity331 (32-bit floating-point)
+  SUBDATASET_9_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":Reflectivity360
+  SUBDATASET_9_DESC=[1645x60] Reflectivity360 (32-bit floating-point)
+  SUBDATASET_10_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":Residual
+  SUBDATASET_10_DESC=[1645x60x10] Residual (32-bit floating-point)
+  SUBDATASET_11_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":ResidualStep1
+  SUBDATASET_11_DESC=[1645x60x10] ResidualStep1 (32-bit floating-point)
+  SUBDATASET_12_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":ResidualStep2
+  SUBDATASET_12_DESC=[1645x60x10] ResidualStep2 (32-bit floating-point)
+  SUBDATASET_13_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":SO2index
+  SUBDATASET_13_DESC=[1645x60] SO2index (32-bit floating-point)
+  SUBDATASET_14_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":Sensitivity
+  SUBDATASET_14_DESC=[1645x60x10] Sensitivity (32-bit floating-point)
+  SUBDATASET_15_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":StepOneO3
+  SUBDATASET_15_DESC=[1645x60] StepOneO3 (32-bit floating-point)
+  SUBDATASET_16_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":StepTwoO3
+  SUBDATASET_16_DESC=[1645x60] StepTwoO3 (32-bit floating-point)
+  SUBDATASET_17_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":TerrainPressure
+  SUBDATASET_17_DESC=[1645x60] TerrainPressure (32-bit floating-point)
+  SUBDATASET_18_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":UVAerosolIndex
+  SUBDATASET_18_DESC=[1645x60] UVAerosolIndex (32-bit floating-point)
+  SUBDATASET_19_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":dN_dR
+  SUBDATASET_19_DESC=[1645x60x10] dN_dR (32-bit floating-point)
+  SUBDATASET_20_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":dN_dT
+  SUBDATASET_20_DESC=[1645x60x10] dN_dT (32-bit floating-point)
+  SUBDATASET_21_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":GroundPixelQualityFlags
+  SUBDATASET_21_DESC=[1645x60] GroundPixelQualityFlags (8-bit unsigned integer)
+  SUBDATASET_22_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":Latitude
+  SUBDATASET_22_DESC=[1645x60] Latitude (32-bit floating-point)
+  SUBDATASET_23_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":Longitude
+  SUBDATASET_23_DESC=[1645x60] Longitude (32-bit floating-point)
+  SUBDATASET_24_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":RelativeAzimuthAngle
+  SUBDATASET_24_DESC=[1645x60] RelativeAzimuthAngle (32-bit floating-point)
+  SUBDATASET_25_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":SolarAzimuthAngle
+  SUBDATASET_25_DESC=[1645x60] SolarAzimuthAngle (32-bit floating-point)
+  SUBDATASET_26_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":SolarZenithAngle
+  SUBDATASET_26_DESC=[1645x60] SolarZenithAngle (32-bit floating-point)
+  SUBDATASET_27_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":TerrainHeight
+  SUBDATASET_27_DESC=[1645x60] TerrainHeight (8-bit integer)
+  SUBDATASET_28_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":ViewingAzimuthAngle
+  SUBDATASET_28_DESC=[1645x60] ViewingAzimuthAngle (32-bit floating-point)
+  SUBDATASET_29_NAME=HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":ViewingZenithAngle
+  SUBDATASET_29_DESC=[1645x60] ViewingZenithAngle (32-bit floating-point)
+Corner Coordinates:
+Upper Left  (    0.0,    0.0)
+Lower Left  (    0.0,  512.0)
+Upper Right (  512.0,    0.0)
+Lower Right (  512.0,  512.0)
+Center      (  256.0,  256.0)
+</pre>
+
+Now select one of the subdatasets, described as
+<tt>[1645x60] CloudFraction (32-bit floating-point)</tt>:<p>
+<pre>
+$ gdalinfo HDF5:"OMI-Aura_L2-OMTO3_2005m0326t2307-o03709_v002-2005m0428t201311.he5":CloudFraction 
+Driver: HDF5Image/HDF5 Dataset
+Size is 60, 1645
+Coordinate System is:
+GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        TOWGS84[0,0,0,0,0,0,0],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9108"]],
+    AXIS["Lat",NORTH],
+    AXIS["Long",EAST],
+    AUTHORITY["EPSG","4326"]]
+GCP Projection = GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG","4326"]]
+GCP[  0]: Id=, Info=
+          (0.5,0.5) -> (261.575,-84.3495,0)
+GCP[  1]: Id=, Info=
+          (2.5,0.5) -> (240.826,-85.9928,0)
+GCP[  2]: Id=, Info=
+          (4.5,0.5) -> (216.754,-86.5932,0)
+GCP[  3]: Id=, Info=
+          (6.5,0.5) -> (195.5,-86.5541,0)
+GCP[  4]: Id=, Info=
+          (8.5,0.5) -> (180.265,-86.2009,0)
+GCP[  5]: Id=, Info=
+          (10.5,0.5) -> (170.011,-85.7315,0)
+GCP[  6]: Id=, Info=
+          (12.5,0.5) -> (162.987,-85.2337,0)
+<pre>... 3000 GCPs are read from the file if Latitude and Longitude arrays are presents </pre>
+Corner Coordinates:
+Upper Left  (    0.0,    0.0)
+Lower Left  (    0.0, 1645.0)
+Upper Right (   60.0,    0.0)
+Lower Right (   60.0, 1645.0)
+Center      (   30.0,  822.5)
+Band 1 Block=60x1 Type=Float32, ColorInterp=Undefined
+Open GDAL Datasets:
+  1 N DriverIsNULL 512x512x0
+</pre>
+
+You may use <b>gdal_translate</b> for reading image bands from this
+dataset.<p>
+
+Note that you should provide exactly the contents of the line marked 
+<b>SUBDATASET_n_NAME</b> to GDAL, including the <b>HDF5:</b> prefix.<p>
+
+This driver is intended only for importing remote sensing and geospatial 
+datasets in form of raster images(2D or 3D arrays). If you want explore all 
+data contained in HDF file you should use another tools (you can find 
+information about different HDF tools using links at end of this page).
+
+<h2>Georeference</h2>
+
+There is no universal way of storing georeferencing in HDF files.  However,
+some product types have mechanisms for saving georeferencing, and some of
+these are supported by GDAL.  Currently supported are (<i>subdataset_type</i>
+shown in parenthesis):<p>
+
+<ul>
+	<li> HDF5 OMI/Aura Ozone (O3) Total Column 1-Orbit L2 Swath 13x24km (<B>Level-2 OMTO3</B>)
+</ul>
+
+<h2>Metadata</h2>
+
+No Metadata are read at this time from the HDF5 files.
+
+<h2>Driver building</h2>
+
+This driver builded on top of NCSA HDF5 library, so you need to dowload 
+prebuild HDF5 librariesI HDF5-1.6.4 library or higher.  You also need zlib 1.2 
+and szlib 2.0.  For windows user be sure to set the attributes writable 
+(especialy if you are using cygwin) and that the DLLs can be located 
+somewhere by your PATH environment variable.
+
+You may also download source code  NCSA HDF
+Home Page (see links below).<p>
+
+
+<h2>See Also:</h2>
+
+<ul>
+<li> Implemented as <tt>gdal/frmts/hdf5/hdf5dataset.cpp</tt>
+and <tt>gdal/frmts/hdf5/hdf5imagedataset.cpp</tt>.<p>
+
+<li> <a href="http://hdf.ncsa.uiuc.edu/HDF5/release/obtain5.html">The NCSA HDF5 Dowload Page</a>
+at the
+<a href="http://www.ncsa.uiuc.edu/">
+National Center for Supercomputing Applications
+</a>
+<li> <a href="http://hdf.ncsa.uiuc.edu/hdf-java-html/hdfview/">The HDFView is a visual tool for browsing and editing NCSA HDF4 and HDF5 files.</a><p>
+
+Documentation to individual products, supported by this driver:<p>
+<ul>
+
+<li> <a href="http://disc.gsfc.nasa.gov/Aura/OMI/omto3.shtml">
+Aura OMI  Total Ozone Data Product-OMTO3</a>
+
+</ul>
+
+</body>
+</html>
