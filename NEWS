@@ -101,6 +101,7 @@ PostgreSQL/PostGIS Driver:
  - Handle PostGIS 1.0 requirements for coordinate dimemsion exactness.
  - Handle EWKT type in PostGIS 1.0.
  - Generally PostGIS 0.x and 1.0 should now be supported fairly gracefully.
+ - Added PostGIS "binary cursor" mode for faster geometry access.
 
 VRT Driver:
  - Pass through attribute queries to underlying driver. 
@@ -118,6 +119,12 @@ GML Driver:
 
 TIGER/Line Driver:
  - Added Tiger 2004 support.
+
+Oracle Driver:
+ - Use VARCHAR2 for fixed size string fields. 
+ - Use OCI_FID config variable when creating layers, and reading select results
+
+
 
 
 ===============================================================================
