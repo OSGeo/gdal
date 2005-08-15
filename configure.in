@@ -123,7 +123,6 @@ if test "$with_local" != "no" -a "$with_local" != "" ; then
   AC_MSG_RESULT(adding $ADD_PREFIX)
 
   LIBS="$LIBS -L$ADD_PREFIX/lib"
-  CFLAGS="$CFLAGS -I$ADD_PREFIX/include"
   CPPFLAGS="$CPPFLAGS -I$ADD_PREFIX/include"
 else
   AC_MSG_RESULT([none])
