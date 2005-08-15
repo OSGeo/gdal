@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/08/15 20:12:06  fwarmerdam
+ * Ensure that SrcSQL resultsets are released.
+ *
  * Revision 1.14  2005/08/02 20:17:26  fwarmerdam
  * pass attribute filter to sublayer
  *
@@ -120,6 +123,7 @@ OGRVRTLayer::OGRVRTLayer()
     pabDirectCopy = NULL;
 
     bNeedReset = TRUE;
+    bSrcLayerFromSQL = FALSE;
 }
 
 /************************************************************************/
@@ -144,6 +148,9 @@ OGRVRTLayer::~OGRVRTLayer()
 
     if( poSrcDS != NULL )
     {
+        if( bSrcLayerFromSQL && poSrcLayer )
+            poSrcDS->ReleaseResultSet( poSrcLayer );
+
         OGRSFDriverRegistrar::GetRegistrar()->ReleaseDataSource( poSrcDS );
     }
 
@@ -233,6 +240,7 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
                       pszSQL );					      
             return FALSE;
         }
+        bSrcLayerFromSQL = TRUE;
     }
 
 /* -------------------------------------------------------------------- */
