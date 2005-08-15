@@ -378,7 +378,8 @@ In Python:
 
 \code
     format = "GTiff"
-    metadata = gdal.GetDriverByName( format )
+    driver = gdal.GetDriverByName( format )
+    metadata = driver.GetMetadata()
     if metadata.has_key(gdal.DCAP_CREATE) \
        and metadata[gdal.DCAP_CREATE] == 'YES':
         print 'Driver %s supports Create() method.' % format
