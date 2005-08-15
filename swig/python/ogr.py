@@ -391,6 +391,18 @@ class Layer(_object):
             return self.GetFeature(value)
         else:
             raise TypeError,"Input %s is not of IntType or SliceType" % type(value)
+    def CreateFields(fields):
+        """Create a list of fields on the Layer"""
+        for i in fields:
+            self.CreateField(i)
+    def __iter__(self):
+        return self
+    def next(self):
+        feature = self.GetNextFeature()
+        if not feature:
+            raise StopIteration
+        else:
+            return feature
 
 
 class LayerPtr(Layer):
@@ -562,7 +574,7 @@ class Feature(_object):
             return self.GetFieldAsDouble(fld_index)
         if fld_type == OFTString:
             return self.GetFieldAsString(fld_index)
-        
+
 
 
 class FeaturePtr(Feature):
@@ -578,9 +590,12 @@ class FeatureDefn(_object):
     __setattr__ = lambda self, name, value: _swig_setattr(self, FeatureDefn, name, value)
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, FeatureDefn, name)
-    def __init__(self): raise RuntimeError, "No constructor defined"
     def __repr__(self):
         return "<%s.%s; proxy of C++ OGRFeatureDefnShadow instance at %s>" % (self.__class__.__module__, self.__class__.__name__, self.this,)
+    def __init__(self, *args, **kwargs):
+        """__init__(self, char name=None) -> FeatureDefn"""
+        _swig_setattr(self, FeatureDefn, 'this', _ogr.new_FeatureDefn(*args, **kwargs))
+        _swig_setattr(self, FeatureDefn, 'thisown', 1)
     def Destroy(*args):
         """Destroy(self)"""
         return _ogr.FeatureDefn_Destroy(*args)
@@ -692,6 +707,12 @@ class FieldDefn(_object):
     def SetPrecision(*args):
         """SetPrecision(self, int precision)"""
         return _ogr.FieldDefn_SetPrecision(*args)
+
+    width = property(GetWidth, SetWidth)
+    type = property(GetType, SetType)
+    precision = property(GetPrecision, SetPrecision)
+    name = property(GetName, SetName)
+    justify = property(GetJustify, SetJustify)
 
 
 class FieldDefnPtr(FieldDefn):

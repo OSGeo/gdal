@@ -1378,24 +1378,25 @@ SWIG_Python_SetModule(swig_module_info *swig_module) {
 /* -------- TYPES TABLE (BEGIN) -------- */
 
 #define SWIGTYPE_p_CPLErrorHandler swig_types[0]
-#define SWIGTYPE_p_GDALColorEntry swig_types[1]
-#define SWIGTYPE_p_GDALColorTable swig_types[2]
-#define SWIGTYPE_p_GDALDatasetShadow swig_types[3]
-#define SWIGTYPE_p_GDALDriverShadow swig_types[4]
-#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[5]
-#define SWIGTYPE_p_GDALRasterBandShadow swig_types[6]
-#define SWIGTYPE_p_GDAL_GCP swig_types[7]
-#define SWIGTYPE_p_char swig_types[8]
-#define SWIGTYPE_p_double swig_types[9]
-#define SWIGTYPE_p_int swig_types[10]
-#define SWIGTYPE_p_p_GDAL_GCP swig_types[11]
-#define SWIGTYPE_p_p_char swig_types[12]
-#define SWIGTYPE_ptrdiff_t swig_types[13]
-#define SWIGTYPE_size_t swig_types[14]
-#define SWIGTYPE_std__ptrdiff_t swig_types[15]
-#define SWIGTYPE_std__size_t swig_types[16]
-static swig_type_info *swig_types[17];
-static swig_module_info swig_module = {swig_types, 17, 0, 0, 0, 0};
+#define SWIGTYPE_p_CPLXMLNode swig_types[1]
+#define SWIGTYPE_p_GDALColorEntry swig_types[2]
+#define SWIGTYPE_p_GDALColorTable swig_types[3]
+#define SWIGTYPE_p_GDALDatasetShadow swig_types[4]
+#define SWIGTYPE_p_GDALDriverShadow swig_types[5]
+#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[6]
+#define SWIGTYPE_p_GDALRasterBandShadow swig_types[7]
+#define SWIGTYPE_p_GDAL_GCP swig_types[8]
+#define SWIGTYPE_p_char swig_types[9]
+#define SWIGTYPE_p_double swig_types[10]
+#define SWIGTYPE_p_int swig_types[11]
+#define SWIGTYPE_p_p_GDAL_GCP swig_types[12]
+#define SWIGTYPE_p_p_char swig_types[13]
+#define SWIGTYPE_ptrdiff_t swig_types[14]
+#define SWIGTYPE_size_t swig_types[15]
+#define SWIGTYPE_std__ptrdiff_t swig_types[16]
+#define SWIGTYPE_std__size_t swig_types[17]
+static swig_type_info *swig_types[18];
+static swig_module_info swig_module = {swig_types, 18, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -1678,7 +1679,7 @@ SWIG_Check_int(PyObject* obj)
 }
 
 
-  /*@/usr/share/swig/1.3.25/python/pymacros.swg,66,SWIG_define@*/
+  /*@/home/kruland/opt/share/swig/1.3.25/python/pymacros.swg,66,SWIG_define@*/
 #define SWIG_From_int PyInt_FromLong
 /*@@*/
 
@@ -1796,7 +1797,7 @@ SWIG_Check_double(PyObject* obj)
 }
 
 
-  /*@/usr/share/swig/1.3.25/python/pymacros.swg,66,SWIG_define@*/
+  /*@/home/kruland/opt/share/swig/1.3.25/python/pymacros.swg,66,SWIG_define@*/
 #define SWIG_From_double PyFloat_FromDouble
 /*@@*/
 
@@ -2166,6 +2167,68 @@ int GDALRasterBandShadow_YSize_get( GDALRasterBandShadow *h ) {
 }
 
 
+/************************************************************************/
+/*                          XMLTreeToPyList()                           */
+/************************************************************************/
+static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
+{
+    PyObject *pyList;
+    int      nChildCount = 0, iChild;
+    CPLXMLNode *psChild;
+
+    for( psChild = psTree->psChild; 
+         psChild != NULL; 
+         psChild = psChild->psNext )
+        nChildCount++;
+
+    pyList = PyList_New(nChildCount+2);
+
+    PyList_SetItem( pyList, 0, Py_BuildValue( "i", (int) psTree->eType ) );
+    PyList_SetItem( pyList, 1, Py_BuildValue( "s", psTree->pszValue ) );
+
+    for( psChild = psTree->psChild, iChild = 2; 
+         psChild != NULL; 
+         psChild = psChild->psNext, iChild++ )
+    {
+        PyList_SetItem( pyList, iChild, XMLTreeToPyList( psChild ) );
+    }
+
+    return pyList; 
+}
+
+
+/************************************************************************/
+/*                          PyListToXMLTree()                           */
+/************************************************************************/
+static CPLXMLNode *PyListToXMLTree( PyObject *pyList )
+
+{
+    int      nChildCount = 0, iChild, nType;
+    CPLXMLNode *psThisNode;
+    CPLXMLNode *psChild;
+    char       *pszText = NULL;
+
+    nChildCount = PyList_Size(pyList) - 2;
+    if( nChildCount < 0 )
+    {
+        PyErr_SetString(PyExc_TypeError,"Error in input XMLTree." );
+	return NULL;
+    }
+
+    PyArg_Parse( PyList_GET_ITEM(pyList,0), "i", &nType );
+    PyArg_Parse( PyList_GET_ITEM(pyList,1), "s", &pszText );
+    psThisNode = CPLCreateXMLNode( NULL, (CPLXMLNodeType) nType, pszText );
+
+    for( iChild = 0; iChild < nChildCount; iChild++ )
+    {
+        psChild = PyListToXMLTree( PyList_GET_ITEM(pyList,iChild+2) );
+        CPLAddXMLChild( psThisNode, psChild );
+    }
+
+    return psThisNode;
+}
+
+
 int GetDriverCount() {
   return GDALGetDriverCount();
 }
@@ -2255,7 +2318,6 @@ static PyObject *_wrap_Debug(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2304,7 +2366,6 @@ static PyObject *_wrap_Error(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2334,7 +2395,6 @@ static PyObject *_wrap_PushErrorHandler__SWIG_0(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2389,7 +2449,6 @@ static PyObject *_wrap_PushErrorHandler__SWIG_1(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2451,7 +2510,6 @@ static PyObject *_wrap_PopErrorHandler(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2473,7 +2531,6 @@ static PyObject *_wrap_ErrorReset(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2496,7 +2553,6 @@ static PyObject *_wrap_GetLastErrorNo(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2521,7 +2577,6 @@ static PyObject *_wrap_GetLastErrorType(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2565,7 +2620,6 @@ static PyObject *_wrap_GetLastErrorMsg(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2592,7 +2646,6 @@ static PyObject *_wrap_PushFinderLocation(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2614,7 +2667,6 @@ static PyObject *_wrap_PopFinderLocation(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2636,7 +2688,6 @@ static PyObject *_wrap_FinderClean(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2669,7 +2720,6 @@ static PyObject *_wrap_FindFile(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2701,7 +2751,6 @@ static PyObject *_wrap_SetConfigOption(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2734,7 +2783,6 @@ static PyObject *_wrap_GetConfigOption(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2761,7 +2809,6 @@ static PyObject *_wrap_MajorObject_GetDescription(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2792,7 +2839,6 @@ static PyObject *_wrap_MajorObject_SetDescription(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2826,7 +2872,6 @@ static PyObject *_wrap_MajorObject_GetMetadata_Dict(PyObject *, PyObject *args) 
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2878,7 +2923,6 @@ static PyObject *_wrap_MajorObject_GetMetadata_List(PyObject *, PyObject *args) 
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -2963,7 +3007,6 @@ static PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *, PyObject *arg
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3031,7 +3074,6 @@ static PyObject *_wrap_MajorObject_SetMetadata__SWIG_1(PyObject *, PyObject *arg
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3152,7 +3194,6 @@ static PyObject *_wrap_Driver_ShortName_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3179,7 +3220,6 @@ static PyObject *_wrap_Driver_LongName_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3206,7 +3246,6 @@ static PyObject *_wrap_Driver_HelpTopic_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3291,7 +3330,6 @@ static PyObject *_wrap_Driver_Create(PyObject *, PyObject *args, PyObject *kwarg
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3368,7 +3406,6 @@ static PyObject *_wrap_Driver_CreateCopy(PyObject *, PyObject *args, PyObject *k
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3408,7 +3445,6 @@ static PyObject *_wrap_Driver_Delete(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3449,7 +3485,6 @@ static PyObject *_wrap_GCP_GCPX_set(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3476,7 +3511,6 @@ static PyObject *_wrap_GCP_GCPX_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3510,7 +3544,6 @@ static PyObject *_wrap_GCP_GCPY_set(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3537,7 +3570,6 @@ static PyObject *_wrap_GCP_GCPY_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3571,7 +3603,6 @@ static PyObject *_wrap_GCP_GCPZ_set(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3598,7 +3629,6 @@ static PyObject *_wrap_GCP_GCPZ_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3632,7 +3662,6 @@ static PyObject *_wrap_GCP_GCPPixel_set(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3659,7 +3688,6 @@ static PyObject *_wrap_GCP_GCPPixel_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3693,7 +3721,6 @@ static PyObject *_wrap_GCP_GCPLine_set(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3720,7 +3747,6 @@ static PyObject *_wrap_GCP_GCPLine_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3753,7 +3779,6 @@ static PyObject *_wrap_GCP_Info_set(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3780,7 +3805,6 @@ static PyObject *_wrap_GCP_Info_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3811,7 +3835,6 @@ static PyObject *_wrap_GCP_Id_set(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3838,7 +3861,6 @@ static PyObject *_wrap_GCP_Id_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3918,7 +3940,6 @@ static PyObject *_wrap_new_GCP(PyObject *, PyObject *args, PyObject *kwargs) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3944,7 +3965,6 @@ static PyObject *_wrap_delete_GCP(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -3978,7 +3998,6 @@ static PyObject *_wrap_GDAL_GCP_GCPX_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4012,7 +4031,6 @@ static PyObject *_wrap_GDAL_GCP_GCPX_set(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4039,7 +4057,6 @@ static PyObject *_wrap_GDAL_GCP_GCPY_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4073,7 +4090,6 @@ static PyObject *_wrap_GDAL_GCP_GCPY_set(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4100,7 +4116,6 @@ static PyObject *_wrap_GDAL_GCP_GCPZ_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4134,7 +4149,6 @@ static PyObject *_wrap_GDAL_GCP_GCPZ_set(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4161,7 +4175,6 @@ static PyObject *_wrap_GDAL_GCP_GCPPixel_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4195,7 +4208,6 @@ static PyObject *_wrap_GDAL_GCP_GCPPixel_set(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4222,7 +4234,6 @@ static PyObject *_wrap_GDAL_GCP_GCPLine_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4256,7 +4267,6 @@ static PyObject *_wrap_GDAL_GCP_GCPLine_set(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4283,7 +4293,6 @@ static PyObject *_wrap_GDAL_GCP_Info_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4314,7 +4323,6 @@ static PyObject *_wrap_GDAL_GCP_Info_set(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4341,7 +4349,6 @@ static PyObject *_wrap_GDAL_GCP_Id_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4372,7 +4379,6 @@ static PyObject *_wrap_GDAL_GCP_Id_set(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4399,7 +4405,6 @@ static PyObject *_wrap_GDAL_GCP_get_GCPX(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4433,7 +4438,6 @@ static PyObject *_wrap_GDAL_GCP_set_GCPX(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4460,7 +4464,6 @@ static PyObject *_wrap_GDAL_GCP_get_GCPY(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4494,7 +4497,6 @@ static PyObject *_wrap_GDAL_GCP_set_GCPY(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4521,7 +4523,6 @@ static PyObject *_wrap_GDAL_GCP_get_GCPZ(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4555,7 +4556,6 @@ static PyObject *_wrap_GDAL_GCP_set_GCPZ(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4582,7 +4582,6 @@ static PyObject *_wrap_GDAL_GCP_get_GCPPixel(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4616,7 +4615,6 @@ static PyObject *_wrap_GDAL_GCP_set_GCPPixel(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4643,7 +4641,6 @@ static PyObject *_wrap_GDAL_GCP_get_GCPLine(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4677,7 +4674,6 @@ static PyObject *_wrap_GDAL_GCP_set_GCPLine(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4704,7 +4700,6 @@ static PyObject *_wrap_GDAL_GCP_get_Info(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4735,7 +4730,6 @@ static PyObject *_wrap_GDAL_GCP_set_Info(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4762,7 +4756,6 @@ static PyObject *_wrap_GDAL_GCP_get_Id(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4793,7 +4786,6 @@ static PyObject *_wrap_GDAL_GCP_set_Id(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4856,7 +4848,6 @@ static PyObject *_wrap_GCPsToGeoTransform(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4915,7 +4906,6 @@ static PyObject *_wrap_Dataset_RasterXSize_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4944,7 +4934,6 @@ static PyObject *_wrap_Dataset_RasterYSize_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -4973,7 +4962,6 @@ static PyObject *_wrap_Dataset_RasterCount_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5001,7 +4989,6 @@ static PyObject *_wrap_delete_Dataset(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5028,7 +5015,6 @@ static PyObject *_wrap_Dataset_GetDriver(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5061,7 +5047,6 @@ static PyObject *_wrap_Dataset_GetRasterBand(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5088,7 +5073,6 @@ static PyObject *_wrap_Dataset_GetProjection(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5115,7 +5099,6 @@ static PyObject *_wrap_Dataset_GetProjectionRef(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5147,7 +5130,6 @@ static PyObject *_wrap_Dataset_SetProjection(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5201,7 +5183,6 @@ static PyObject *_wrap_Dataset_GetGeoTransform(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5255,7 +5236,6 @@ static PyObject *_wrap_Dataset_SetGeoTransform(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5334,7 +5314,6 @@ static PyObject *_wrap_Dataset_BuildOverviews(PyObject *, PyObject *args, PyObje
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5375,7 +5354,6 @@ static PyObject *_wrap_Dataset_GetGCPCount(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5404,7 +5382,6 @@ static PyObject *_wrap_Dataset_GetGCPProjection(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5439,7 +5416,6 @@ static PyObject *_wrap_Dataset_GetGCPs(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5514,7 +5490,6 @@ static PyObject *_wrap_Dataset_SetGCPs(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5573,7 +5548,6 @@ static PyObject *_wrap_Dataset_FlushCache(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5633,7 +5607,6 @@ static PyObject *_wrap_Dataset_AddBand(PyObject *, PyObject *args, PyObject *kwa
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5798,7 +5771,6 @@ static PyObject *_wrap_Dataset_WriteRaster(PyObject *, PyObject *args, PyObject 
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5865,7 +5837,6 @@ static PyObject *_wrap_Band_XSize_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5894,7 +5865,6 @@ static PyObject *_wrap_Band_YSize_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5923,7 +5893,6 @@ static PyObject *_wrap_Band_DataType_get(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5952,7 +5921,6 @@ static PyObject *_wrap_Band_GetRasterColorInterpretation(PyObject *, PyObject *a
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -5987,7 +5955,6 @@ static PyObject *_wrap_Band_SetRasterColorInterpretation(PyObject *, PyObject *a
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -6043,7 +6010,6 @@ static PyObject *_wrap_Band_GetNoDataValue(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -6089,7 +6055,6 @@ static PyObject *_wrap_Band_SetNoDataValue(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -6145,7 +6110,6 @@ static PyObject *_wrap_Band_GetMinimum(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -6193,7 +6157,6 @@ static PyObject *_wrap_Band_GetMaximum(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -6241,7 +6204,6 @@ static PyObject *_wrap_Band_GetOffset(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -6289,7 +6251,6 @@ static PyObject *_wrap_Band_GetScale(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -6329,7 +6290,6 @@ static PyObject *_wrap_Band_GetOverviewCount(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -6364,7 +6324,6 @@ static PyObject *_wrap_Band_GetOverview(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -6446,7 +6405,6 @@ static PyObject *_wrap_Band_Checksum(PyObject *, PyObject *args, PyObject *kwarg
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -6489,7 +6447,6 @@ static PyObject *_wrap_Band_ComputeRasterMinMax(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -6535,7 +6492,6 @@ static PyObject *_wrap_Band_Fill(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -6673,7 +6629,6 @@ static PyObject *_wrap_Band_ReadRaster(PyObject *, PyObject *args, PyObject *kwa
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -6826,7 +6781,6 @@ static PyObject *_wrap_Band_WriteRaster(PyObject *, PyObject *args, PyObject *kw
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -6873,7 +6827,6 @@ static PyObject *_wrap_Band_FlushCache(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -6900,7 +6853,6 @@ static PyObject *_wrap_Band_GetRasterColorTable(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -6931,7 +6883,6 @@ static PyObject *_wrap_Band_SetRasterColorTable(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -6971,7 +6922,6 @@ static PyObject *_wrap_new_ColorTable(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -6997,7 +6947,6 @@ static PyObject *_wrap_delete_ColorTable(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7024,7 +6973,6 @@ static PyObject *_wrap_ColorTable_Clone(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7051,7 +6999,6 @@ static PyObject *_wrap_ColorTable_GetPaletteInterpretation(PyObject *, PyObject 
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7080,7 +7027,6 @@ static PyObject *_wrap_ColorTable_GetCount(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7115,7 +7061,6 @@ static PyObject *_wrap_ColorTable_GetColorEntry(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7167,7 +7112,6 @@ static PyObject *_wrap_ColorTable_GetColorEntryAsRGB(PyObject *, PyObject *args)
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7217,7 +7161,6 @@ static PyObject *_wrap_ColorTable_SetColorEntry(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7246,7 +7189,6 @@ static PyObject *_wrap_AllRegister(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7269,7 +7211,6 @@ static PyObject *_wrap_GetCacheMax(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7299,7 +7240,6 @@ static PyObject *_wrap_SetCacheMax(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7322,7 +7262,6 @@ static PyObject *_wrap_GetCacheUsed(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7353,7 +7292,6 @@ static PyObject *_wrap_GetDataTypeSize(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7384,7 +7322,6 @@ static PyObject *_wrap_DataTypeIsComplex(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7415,7 +7352,6 @@ static PyObject *_wrap_GetDataTypeName(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7443,7 +7379,6 @@ static PyObject *_wrap_GetDataTypeByName(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7474,7 +7409,6 @@ static PyObject *_wrap_GetColorInterpretationName(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7503,7 +7437,6 @@ static PyObject *_wrap_GetPaletteInterpretationName(PyObject *, PyObject *args) 
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7545,7 +7478,6 @@ static PyObject *_wrap_DecToDMS(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7574,7 +7506,6 @@ static PyObject *_wrap_PackedDMSToDec(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7605,7 +7536,6 @@ static PyObject *_wrap_DecToPackedDMS(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7614,6 +7544,77 @@ static PyObject *_wrap_DecToPackedDMS(PyObject *, PyObject *args) {
     }
     return resultobj;
     fail:
+    return NULL;
+}
+
+
+static PyObject *_wrap_ParseXMLString(PyObject *, PyObject *args) {
+    PyObject *resultobj = NULL;
+    char *arg1 = (char *) 0 ;
+    CPLXMLNode *result;
+    PyObject * obj0 = 0 ;
+    
+    if(!PyArg_ParseTuple(args,(char *)"O:ParseXMLString",&obj0)) goto fail;
+    if (!SWIG_AsCharPtr(obj0, (char**)&arg1)) {
+        SWIG_arg_fail(1);SWIG_fail;
+    }
+    {
+        {
+            bErrorHappened = 0;
+            result = (CPLXMLNode *)CPLParseXMLString(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        /* %typemap(python,out) (CPLXMLNode*) */
+        resultobj = XMLTreeToPyList( result );
+    }
+    {
+        /* %typemap(python,ret) (CPLXMLNode*) */
+        if ( result ) CPLDestroyXMLNode( result );
+    }
+    return resultobj;
+    fail:
+    return NULL;
+}
+
+
+static PyObject *_wrap_SerializeXMLTree(PyObject *, PyObject *args) {
+    PyObject *resultobj = NULL;
+    CPLXMLNode *arg1 = (CPLXMLNode *) 0 ;
+    char *result;
+    PyObject * obj0 = 0 ;
+    
+    if(!PyArg_ParseTuple(args,(char *)"O:SerializeXMLTree",&obj0)) goto fail;
+    {
+        /* %typemap(python,in) (CPLXMLNode* xmlnode ) */
+        arg1 = PyListToXMLTree( obj0 );
+        if ( !arg1 ) SWIG_fail;
+    }
+    {
+        {
+            bErrorHappened = 0;
+            result = (char *)CPLSerializeXMLTree(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    resultobj = SWIG_FromCharPtr(result);
+    {
+        /* %typemap(python,freearg) (CPLXMLNode *xmlnode) */
+        if ( arg1 ) CPLDestroyXMLNode( arg1 );
+    }
+    return resultobj;
+    fail:
+    {
+        /* %typemap(python,freearg) (CPLXMLNode *xmlnode) */
+        if ( arg1 ) CPLDestroyXMLNode( arg1 );
+    }
     return NULL;
 }
 
@@ -7630,7 +7631,6 @@ static PyObject *_wrap_GetDriverCount(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7660,7 +7660,6 @@ static PyObject *_wrap_GetDriverByName(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7696,7 +7695,6 @@ static PyObject *_wrap_Open(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7732,7 +7730,6 @@ static PyObject *_wrap_OpenShared(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7789,7 +7786,6 @@ static PyObject *_wrap_AutoCreateWarpedVRT(PyObject *, PyObject *args) {
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-                SWIG_fail;
             }
         }
     }
@@ -7940,6 +7936,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"DecToDMS", _wrap_DecToDMS, METH_VARARGS, NULL},
 	 { (char *)"PackedDMSToDec", _wrap_PackedDMSToDec, METH_VARARGS, NULL},
 	 { (char *)"DecToPackedDMS", _wrap_DecToPackedDMS, METH_VARARGS, NULL},
+	 { (char *)"ParseXMLString", _wrap_ParseXMLString, METH_VARARGS, NULL},
+	 { (char *)"SerializeXMLTree", _wrap_SerializeXMLTree, METH_VARARGS, NULL},
 	 { (char *)"GetDriverCount", _wrap_GetDriverCount, METH_VARARGS, NULL},
 	 { (char *)"GetDriverByName", _wrap_GetDriverByName, METH_VARARGS, NULL},
 	 { (char *)"Open", _wrap_Open, METH_VARARGS, NULL},
@@ -7961,6 +7959,7 @@ static void *_p_GDALRasterBandShadowTo_p_GDALMajorObjectShadow(void *x) {
     return (void *)((GDALMajorObjectShadow *)  ((GDALRasterBandShadow *) x));
 }
 static swig_type_info _swigt__p_CPLErrorHandler = {"_p_CPLErrorHandler", "CPLErrorHandler *", 0, 0, 0};
+static swig_type_info _swigt__p_CPLXMLNode = {"_p_CPLXMLNode", "CPLXMLNode *", 0, 0, 0};
 static swig_type_info _swigt__p_GDALColorEntry = {"_p_GDALColorEntry", "GDALColorEntry *", 0, 0, 0};
 static swig_type_info _swigt__p_GDALColorTable = {"_p_GDALColorTable", "GDALColorTable *", 0, 0, 0};
 static swig_type_info _swigt__p_GDALDatasetShadow = {"_p_GDALDatasetShadow", "GDALDatasetShadow *", 0, 0, 0};
@@ -7980,6 +7979,7 @@ static swig_type_info _swigt__std__size_t = {"_std__size_t", "std::size_t", 0, 0
 
 static swig_type_info *swig_type_initial[] = {
   &_swigt__p_CPLErrorHandler,
+  &_swigt__p_CPLXMLNode,
   &_swigt__p_GDALColorEntry,
   &_swigt__p_GDALColorTable,
   &_swigt__p_GDALDatasetShadow,
@@ -7999,6 +7999,7 @@ static swig_type_info *swig_type_initial[] = {
 };
 
 static swig_cast_info _swigc__p_CPLErrorHandler[] = {  {&_swigt__p_CPLErrorHandler, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_CPLXMLNode[] = {  {&_swigt__p_CPLXMLNode, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALColorEntry[] = {  {&_swigt__p_GDALColorEntry, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALColorTable[] = {  {&_swigt__p_GDALColorTable, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALDatasetShadow[] = {  {&_swigt__p_GDALDatasetShadow, 0, 0, 0},{0, 0, 0, 0}};
@@ -8018,6 +8019,7 @@ static swig_cast_info _swigc__std__size_t[] = {  {&_swigt__std__size_t, 0, 0, 0}
 
 static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_CPLErrorHandler,
+  _swigc__p_CPLXMLNode,
   _swigc__p_GDALColorEntry,
   _swigc__p_GDALColorTable,
   _swigc__p_GDALDatasetShadow,

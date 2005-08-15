@@ -1410,7 +1410,64 @@ static swig_module_info swig_module = {swig_types, 18, 0, 0, 0, 0};
 
 #define SWIG_name    "_ogr"
 
-  /*@/usr/share/swig/1.3.25/python/pymacros.swg,66,SWIG_define@*/
+#define  SWIG_MemoryError    1
+#define  SWIG_IOError        2
+#define  SWIG_RuntimeError   3
+#define  SWIG_IndexError     4
+#define  SWIG_TypeError      5
+#define  SWIG_DivisionByZero 6
+#define  SWIG_OverflowError  7
+#define  SWIG_SyntaxError    8
+#define  SWIG_ValueError     9
+#define  SWIG_SystemError   10
+#define  SWIG_UnknownError  99
+
+
+SWIGINTERN void SWIG_exception_(int code, const char *msg) {
+  switch(code) {
+  case SWIG_MemoryError:
+    PyErr_SetString(PyExc_MemoryError,msg);
+    break;
+  case SWIG_IOError:
+    PyErr_SetString(PyExc_IOError,msg);
+    break;
+  case SWIG_RuntimeError:
+    PyErr_SetString(PyExc_RuntimeError,msg);
+    break;
+  case SWIG_IndexError:
+    PyErr_SetString(PyExc_IndexError,msg);
+    break;
+  case SWIG_TypeError:
+    PyErr_SetString(PyExc_TypeError,msg);
+    break;
+  case SWIG_DivisionByZero:
+    PyErr_SetString(PyExc_ZeroDivisionError,msg);
+    break;
+  case SWIG_OverflowError:
+    PyErr_SetString(PyExc_OverflowError,msg);
+    break;
+  case SWIG_SyntaxError:
+    PyErr_SetString(PyExc_SyntaxError,msg);
+    break;
+  case SWIG_ValueError:
+    PyErr_SetString(PyExc_ValueError,msg);
+    break;
+  case SWIG_SystemError:
+    PyErr_SetString(PyExc_SystemError,msg);
+    break;
+  default:
+    PyErr_SetString(PyExc_RuntimeError,msg);
+    break;
+  }
+}
+
+#define SWIG_exception(a,b) { SWIG_exception_(a,b); SWIG_fail; }
+
+
+#include <stdexcept>
+
+
+  /*@/home/kruland/opt/share/swig/1.3.25/python/pymacros.swg,66,SWIG_define@*/
 #define SWIG_From_int PyInt_FromLong
 /*@@*/
 
@@ -1981,7 +2038,7 @@ static double OGRFeatureShadow_GetFieldAsDouble__SWIG_0(OGRFeatureShadow *self,i
     return OGR_F_GetFieldAsDouble(self, id);
   }
 
-  /*@/usr/share/swig/1.3.25/python/pymacros.swg,66,SWIG_define@*/
+  /*@/home/kruland/opt/share/swig/1.3.25/python/pymacros.swg,66,SWIG_define@*/
 #define SWIG_From_double PyFloat_FromDouble
 /*@@*/
 
@@ -2044,6 +2101,9 @@ static OGRFieldType OGRFeatureShadow_GetFieldType__SWIG_1(OGRFeatureShadow *self
                                                   )
                                           );
     
+  }
+static OGRFeatureDefnShadow *new_OGRFeatureDefnShadow(char const *name=NULL){
+    return (OGRFeatureDefnShadow* )OGR_FD_Create(name);
   }
 static void OGRFeatureDefnShadow_Destroy(OGRFeatureDefnShadow *self){
     OGR_FD_Destroy(self);
@@ -5134,6 +5194,30 @@ static PyObject * Feature_swigregister(PyObject *, PyObject *args) {
     Py_INCREF(obj);
     return Py_BuildValue((char *)"");
 }
+static PyObject *_wrap_new_FeatureDefn(PyObject *, PyObject *args, PyObject *kwargs) {
+    PyObject *resultobj = NULL;
+    char *arg1 = (char *) NULL ;
+    OGRFeatureDefnShadow *result;
+    PyObject * obj0 = 0 ;
+    char *kwnames[] = {
+        (char *) "name", NULL 
+    };
+    
+    if(!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"|O:new_FeatureDefn",kwnames,&obj0)) goto fail;
+    if (obj0) {
+        if (!SWIG_AsCharPtr(obj0, (char**)&arg1)) {
+            SWIG_arg_fail(1);SWIG_fail;
+        }
+    }
+    result = (OGRFeatureDefnShadow *)new_OGRFeatureDefnShadow((char const *)arg1);
+    
+    resultobj = SWIG_NewPointerObj((void*)(result), SWIGTYPE_p_OGRFeatureDefnShadow, 1);
+    return resultobj;
+    fail:
+    return NULL;
+}
+
+
 static PyObject *_wrap_FeatureDefn_Destroy(PyObject *, PyObject *args) {
     PyObject *resultobj = NULL;
     OGRFeatureDefnShadow *arg1 = (OGRFeatureDefnShadow *) 0 ;
@@ -7248,6 +7332,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Feature_SetStyleString", _wrap_Feature_SetStyleString, METH_VARARGS, NULL},
 	 { (char *)"Feature_GetFieldType", _wrap_Feature_GetFieldType, METH_VARARGS, NULL},
 	 { (char *)"Feature_swigregister", Feature_swigregister, METH_VARARGS, NULL},
+	 { (char *)"new_FeatureDefn", (PyCFunction) _wrap_new_FeatureDefn, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"FeatureDefn_Destroy", _wrap_FeatureDefn_Destroy, METH_VARARGS, NULL},
 	 { (char *)"FeatureDefn_GetName", _wrap_FeatureDefn_GetName, METH_VARARGS, NULL},
 	 { (char *)"FeatureDefn_GetFieldCount", _wrap_FeatureDefn_GetFieldCount, METH_VARARGS, NULL},

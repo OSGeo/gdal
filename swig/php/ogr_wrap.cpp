@@ -847,6 +847,26 @@ extern "C" {
 #endif
 
 
+#define  SWIG_MemoryError    1
+#define  SWIG_IOError        2
+#define  SWIG_RuntimeError   3
+#define  SWIG_IndexError     4
+#define  SWIG_TypeError      5
+#define  SWIG_DivisionByZero 6
+#define  SWIG_OverflowError  7
+#define  SWIG_SyntaxError    8
+#define  SWIG_ValueError     9
+#define  SWIG_SystemError   10
+#define  SWIG_UnknownError  99
+
+
+/* We should make use of "code" if we can */
+#define SWIG_exception(code, msg) { zend_error(E_ERROR, msg); }
+
+
+#include <stdexcept>
+
+
 #include <iostream>
 using namespace std;
 
@@ -1254,6 +1274,9 @@ static int _wrap_propset_Feature(zend_property_reference *property_reference, pv
 static int _propset_Feature(zend_property_reference *property_reference, pval *value);
 static pval _wrap_propget_Feature(zend_property_reference *property_reference);
 static int _propget_Feature(zend_property_reference *property_reference, pval *value);
+static OGRFeatureDefnShadow *new_OGRFeatureDefnShadow(char const *name=NULL){
+    return (OGRFeatureDefnShadow* )OGR_FD_Create(name);
+  }
 static void OGRFeatureDefnShadow_Destroy(OGRFeatureDefnShadow *self){
     OGR_FD_Destroy(self);
   }
@@ -1728,6 +1751,8 @@ static zend_function_entry Feature_functions[] = {
 };
 /* Function entries for FeatureDefn */
 static zend_function_entry FeatureDefn_functions[] = {
+	ZEND_NAMED_FE(new_featuredefn,_wrap_new_FeatureDefn, NULL)
+	ZEND_NAMED_FE(featuredefn,_wrap_new_FeatureDefn, NULL)
 	ZEND_NAMED_FE(featuredefn_destroy,_wrap_FeatureDefn_Destroy, NULL)
 	ZEND_NAMED_FE(destroy,_wrap_FeatureDefn_Destroy, NULL)
 	ZEND_NAMED_FE(featuredefn_getname,_wrap_FeatureDefn_GetName, NULL)
@@ -5825,6 +5850,58 @@ static int _propset_Feature(zend_property_reference *property_reference, pval *v
   char *propname=Z_STRVAL_P(&(property->element));
   return FAILURE;
 }
+
+ZEND_NAMED_FUNCTION(_wrap_new_FeatureDefn) {
+    char *arg1 = (char *) NULL ;
+    OGRFeatureDefnShadow *result;
+    zval **args[1];
+    int arg_count;
+    
+    SWIG_ResetError();
+    /* NATIVE Constructor */
+    arg_count = ZEND_NUM_ARGS();
+    if(arg_count<0 || arg_count>1)
+    WRONG_PARAM_COUNT;
+    
+    if(zend_get_parameters_array_ex(arg_count,args)!=SUCCESS)
+    WRONG_PARAM_COUNT;
+    
+    if(arg_count > 0) {
+        {
+            /*@/home/kruland/opt/share/swig/1.3.25/php4/utils.i,23,CONVERT_STRING_IN@*/
+            convert_to_string_ex(args[0]);
+            arg1 = (char *) Z_STRVAL_PP(args[0]);
+            /*@@*/;
+        }
+    }
+    result = (OGRFeatureDefnShadow *)new_OGRFeatureDefnShadow((char const *)arg1);
+    
+    {
+        SWIG_SetPointerZval(return_value, (void *)result, SWIGTYPE_p_OGRFeatureDefnShadow, 1);
+    }
+    /* Wrap this return value */
+    if (this_ptr) {
+        /* NATIVE Constructor, use this_ptr */
+        zval *_cPtr; MAKE_STD_ZVAL(_cPtr);
+        *_cPtr = *return_value;
+        INIT_ZVAL(*return_value);
+        add_property_zval(this_ptr,"_cPtr",_cPtr);
+    } else if (! this_ptr) {
+        /* ALTERNATIVE Constructor, make an object wrapper */
+        zval *obj, *_cPtr;
+        MAKE_STD_ZVAL(obj);
+        MAKE_STD_ZVAL(_cPtr);
+        *_cPtr = *return_value;
+        INIT_ZVAL(*return_value);
+        object_init_ex(obj,ptr_ce_swig_FeatureDefn);
+        add_property_zval(obj,"_cPtr",_cPtr);
+        *return_value=*obj;
+    }
+    return;
+    fail:
+    zend_error(ErrorCode(),ErrorMsg());
+}
+
 
 ZEND_NAMED_FUNCTION(_wrap_FeatureDefn_Destroy) {
     OGRFeatureDefnShadow *arg1 = (OGRFeatureDefnShadow *) 0 ;

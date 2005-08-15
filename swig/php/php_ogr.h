@@ -198,6 +198,8 @@ ZEND_NAMED_FUNCTION(_wrap_Feature_SetStyleString);
 ZEND_NAMED_FUNCTION(_wrap_Feature_GetFieldType);
 ZEND_NAMED_FUNCTION(_wrap_Feature_GetFieldType);
 ZEND_NAMED_FUNCTION(_wrap_Feature_GetFieldType);
+ZEND_NAMED_FUNCTION(_wrap_new_FeatureDefn);
+ZEND_NAMED_FUNCTION(_wrap_new_FeatureDefn);
 ZEND_NAMED_FUNCTION(_wrap_FeatureDefn_Destroy);
 ZEND_NAMED_FUNCTION(_wrap_FeatureDefn_Destroy);
 ZEND_NAMED_FUNCTION(_wrap_FeatureDefn_GetName);

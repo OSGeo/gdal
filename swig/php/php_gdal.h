@@ -201,6 +201,8 @@ ZEND_NAMED_FUNCTION(_wrap_GetPaletteInterpretationName);
 ZEND_NAMED_FUNCTION(_wrap_DecToDMS);
 ZEND_NAMED_FUNCTION(_wrap_PackedDMSToDec);
 ZEND_NAMED_FUNCTION(_wrap_DecToPackedDMS);
+ZEND_NAMED_FUNCTION(_wrap_ParseXMLString);
+ZEND_NAMED_FUNCTION(_wrap_SerializeXMLTree);
 ZEND_NAMED_FUNCTION(_wrap_GetDriverCount);
 ZEND_NAMED_FUNCTION(_wrap_GetDriverByName);
 ZEND_NAMED_FUNCTION(_wrap_Open);

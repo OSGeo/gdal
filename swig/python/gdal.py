@@ -688,6 +688,14 @@ def DecToPackedDMS(*args):
     """DecToPackedDMS(double ??) -> double"""
     return _gdal.DecToPackedDMS(*args)
 
+def ParseXMLString(*args):
+    """ParseXMLString(char ??) -> CPLXMLNode"""
+    return _gdal.ParseXMLString(*args)
+
+def SerializeXMLTree(*args):
+    """SerializeXMLTree(CPLXMLNode xmlnode) -> char"""
+    return _gdal.SerializeXMLTree(*args)
+
 def GetDriverCount(*args):
     """GetDriverCount() -> int"""
     return _gdal.GetDriverCount(*args)
