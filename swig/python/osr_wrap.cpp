@@ -1425,7 +1425,7 @@ SWIG_FromCharPtr(const char* cptr)
 }
 
 
-  /*@/usr/share/swig/1.3.25/python/pymacros.swg,66,SWIG_define@*/
+  /*@/home/kruland/opt/share/swig/1.3.25/python/pymacros.swg,66,SWIG_define@*/
 #define SWIG_From_double PyFloat_FromDouble
 /*@@*/
 
@@ -1617,7 +1617,7 @@ static int OSRSpatialReferenceShadow_IsSame(OSRSpatialReferenceShadow *self,OSRS
     return OSRIsSame( self, rhs );
   }
 
-  /*@/usr/share/swig/1.3.25/python/pymacros.swg,66,SWIG_define@*/
+  /*@/home/kruland/opt/share/swig/1.3.25/python/pymacros.swg,66,SWIG_define@*/
 #define SWIG_From_int PyInt_FromLong
 /*@@*/
 
@@ -1963,7 +1963,7 @@ static OGRErr OSRSpatialReferenceShadow_ExportToPCI(OSRSpatialReferenceShadow *s
     return OSRExportToPCI( self, proj, units, parms );
   }
 
-  /*@/usr/share/swig/1.3.25/python/pymacros.swg,66,SWIG_define@*/
+  /*@/home/kruland/opt/share/swig/1.3.25/python/pymacros.swg,66,SWIG_define@*/
 #define SWIG_From_long PyInt_FromLong
 /*@@*/
 

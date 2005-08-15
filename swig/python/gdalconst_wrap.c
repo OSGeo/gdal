@@ -1384,7 +1384,7 @@ static swig_module_info swig_module = {swig_types, 3, 0, 0, 0, 0};
 #include "cpl_minixml.h"
 
 
-  /*@/usr/share/swig/1.3.25/python/pymacros.swg,66,SWIG_define@*/
+  /*@/home/kruland/opt/share/swig/1.3.25/python/pymacros.swg,66,SWIG_define@*/
 #define SWIG_From_int PyInt_FromLong
 /*@@*/
 

@@ -762,24 +762,26 @@ static void SWIG_Php4_SetModule(swig_module_info *pointer) {
 /* -------- TYPES TABLE (BEGIN) -------- */
 
 #define SWIGTYPE_p_CPLErrorHandler swig_types[0]
-#define SWIGTYPE_p_GDALColorEntry swig_types[1]
-#define SWIGTYPE_p_GDALColorTable swig_types[2]
-#define SWIGTYPE_p_GDALDatasetShadow swig_types[3]
-#define SWIGTYPE_p_GDALDriverShadow swig_types[4]
-#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[5]
-#define SWIGTYPE_p_GDALRasterBandShadow swig_types[6]
-#define SWIGTYPE_p_GDAL_GCP swig_types[7]
-#define SWIGTYPE_p_double swig_types[8]
-#define SWIGTYPE_p_int swig_types[9]
-#define SWIGTYPE_p_p_GDALColorTable swig_types[10]
-#define SWIGTYPE_p_p_GDALDatasetShadow swig_types[11]
-#define SWIGTYPE_p_p_GDALDriverShadow swig_types[12]
-#define SWIGTYPE_p_p_GDALMajorObjectShadow swig_types[13]
-#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[14]
-#define SWIGTYPE_p_p_GDAL_GCP swig_types[15]
-#define SWIGTYPE_p_p_char swig_types[16]
-static swig_type_info *swig_types[17];
-static swig_module_info swig_module = {swig_types, 17, 0, 0, 0, 0};
+#define SWIGTYPE_p_CPLXMLNode swig_types[1]
+#define SWIGTYPE_p_GDALColorEntry swig_types[2]
+#define SWIGTYPE_p_GDALColorTable swig_types[3]
+#define SWIGTYPE_p_GDALDatasetShadow swig_types[4]
+#define SWIGTYPE_p_GDALDriverShadow swig_types[5]
+#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[6]
+#define SWIGTYPE_p_GDALRasterBandShadow swig_types[7]
+#define SWIGTYPE_p_GDAL_GCP swig_types[8]
+#define SWIGTYPE_p_double swig_types[9]
+#define SWIGTYPE_p_int swig_types[10]
+#define SWIGTYPE_p_p_CPLXMLNode swig_types[11]
+#define SWIGTYPE_p_p_GDALColorTable swig_types[12]
+#define SWIGTYPE_p_p_GDALDatasetShadow swig_types[13]
+#define SWIGTYPE_p_p_GDALDriverShadow swig_types[14]
+#define SWIGTYPE_p_p_GDALMajorObjectShadow swig_types[15]
+#define SWIGTYPE_p_p_GDALRasterBandShadow swig_types[16]
+#define SWIGTYPE_p_p_GDAL_GCP swig_types[17]
+#define SWIGTYPE_p_p_char swig_types[18]
+static swig_type_info *swig_types[19];
+static swig_module_info swig_module = {swig_types, 19, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -1544,6 +1546,8 @@ function_entry gdal_functions[] = {
 	ZEND_NAMED_FE(dectodms,_wrap_DecToDMS, NULL)
 	ZEND_NAMED_FE(packeddmstodec,_wrap_PackedDMSToDec, NULL)
 	ZEND_NAMED_FE(dectopackeddms,_wrap_DecToPackedDMS, NULL)
+	ZEND_NAMED_FE(parsexmlstring,_wrap_ParseXMLString, NULL)
+	ZEND_NAMED_FE(serializexmltree,_wrap_SerializeXMLTree, NULL)
 	ZEND_NAMED_FE(getdrivercount,_wrap_GetDriverCount, NULL)
 	ZEND_NAMED_FE(getdriverbyname,_wrap_GetDriverByName, NULL)
 	ZEND_NAMED_FE(open,_wrap_Open, NULL)
@@ -1592,6 +1596,7 @@ static void *_p_GDALRasterBandShadowTo_p_GDALMajorObjectShadow(void *x) {
     return (void *)((GDALMajorObjectShadow *)  ((GDALRasterBandShadow *) x));
 }
 static swig_type_info _swigt__p_CPLErrorHandler = {"_p_CPLErrorHandler", "CPLErrorHandler *", 0, 0, 0};
+static swig_type_info _swigt__p_CPLXMLNode = {"_p_CPLXMLNode", "CPLXMLNode *", 0, 0, 0};
 static swig_type_info _swigt__p_GDALColorEntry = {"_p_GDALColorEntry", "GDALColorEntry *", 0, 0, 0};
 static swig_type_info _swigt__p_GDALColorTable = {"_p_GDALColorTable", "GDALColorTable *", 0, 0, 0};
 static swig_type_info _swigt__p_GDALDatasetShadow = {"_p_GDALDatasetShadow", "GDALDatasetShadow *", 0, 0, 0};
@@ -1601,6 +1606,7 @@ static swig_type_info _swigt__p_GDALRasterBandShadow = {"_p_GDALRasterBandShadow
 static swig_type_info _swigt__p_GDAL_GCP = {"_p_GDAL_GCP", "GDAL_GCP *", 0, 0, 0};
 static swig_type_info _swigt__p_double = {"_p_double", "double *", 0, 0, 0};
 static swig_type_info _swigt__p_int = {"_p_int", "int *|GDALPaletteInterp *", 0, 0, 0};
+static swig_type_info _swigt__p_p_CPLXMLNode = {"_p_p_CPLXMLNode", "CPLXMLNode **", 0, 0, 0};
 static swig_type_info _swigt__p_p_GDALColorTable = {"_p_p_GDALColorTable", "GDALColorTable **", 0, 0, 0};
 static swig_type_info _swigt__p_p_GDALDatasetShadow = {"_p_p_GDALDatasetShadow", "GDALDatasetShadow **", 0, 0, 0};
 static swig_type_info _swigt__p_p_GDALDriverShadow = {"_p_p_GDALDriverShadow", "GDALDriverShadow **", 0, 0, 0};
@@ -1611,6 +1617,7 @@ static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, 0};
 
 static swig_type_info *swig_type_initial[] = {
   &_swigt__p_CPLErrorHandler,
+  &_swigt__p_CPLXMLNode,
   &_swigt__p_GDALColorEntry,
   &_swigt__p_GDALColorTable,
   &_swigt__p_GDALDatasetShadow,
@@ -1620,6 +1627,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_GDAL_GCP,
   &_swigt__p_double,
   &_swigt__p_int,
+  &_swigt__p_p_CPLXMLNode,
   &_swigt__p_p_GDALColorTable,
   &_swigt__p_p_GDALDatasetShadow,
   &_swigt__p_p_GDALDriverShadow,
@@ -1630,6 +1638,7 @@ static swig_type_info *swig_type_initial[] = {
 };
 
 static swig_cast_info _swigc__p_CPLErrorHandler[] = {  {&_swigt__p_CPLErrorHandler, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_CPLXMLNode[] = {  {&_swigt__p_CPLXMLNode, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALColorEntry[] = {  {&_swigt__p_GDALColorEntry, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALColorTable[] = {  {&_swigt__p_GDALColorTable, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALDatasetShadow[] = {  {&_swigt__p_GDALDatasetShadow, 0, 0, 0},{0, 0, 0, 0}};
@@ -1639,6 +1648,7 @@ static swig_cast_info _swigc__p_GDALRasterBandShadow[] = {  {&_swigt__p_GDALRast
 static swig_cast_info _swigc__p_GDAL_GCP[] = {  {&_swigt__p_GDAL_GCP, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_double[] = {  {&_swigt__p_double, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_int[] = {  {&_swigt__p_int, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_p_CPLXMLNode[] = {  {&_swigt__p_p_CPLXMLNode, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_GDALColorTable[] = {  {&_swigt__p_p_GDALColorTable, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_GDALDatasetShadow[] = {  {&_swigt__p_p_GDALDatasetShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_GDALDriverShadow[] = {  {&_swigt__p_p_GDALDriverShadow, 0, 0, 0},{0, 0, 0, 0}};
@@ -1649,6 +1659,7 @@ static swig_cast_info _swigc__p_p_char[] = {  {&_swigt__p_p_char, 0, 0, 0},{0, 0
 
 static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_CPLErrorHandler,
+  _swigc__p_CPLXMLNode,
   _swigc__p_GDALColorEntry,
   _swigc__p_GDALColorTable,
   _swigc__p_GDALDatasetShadow,
@@ -1658,6 +1669,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_GDAL_GCP,
   _swigc__p_double,
   _swigc__p_int,
+  _swigc__p_p_CPLXMLNode,
   _swigc__p_p_GDALColorTable,
   _swigc__p_p_GDALDatasetShadow,
   _swigc__p_p_GDALDriverShadow,
@@ -1689,6 +1701,8 @@ static int le_swig__p_p_char=0; /* handle for  */
 static int le_swig__p_p_GDAL_GCP=0; /* handle for  */
 static int le_swig__p_GDAL_GCP=0; /* handle for GCP */
 static int le_swig__p_CPLErrorHandler=0; /* handle for GCP */
+static int le_swig__p_CPLXMLNode=0; /* handle for GCP */
+static int le_swig__p_p_CPLXMLNode=0; /* handle for GCP */
 static int le_swig__p_GDALColorTable=0; /* handle for ColorTable */
 static int le_swig__p_p_GDALColorTable=0; /* handle for ColorTable */
 static int le_swig__p_int=0; /* handle for ColorTable */
@@ -6984,6 +6998,64 @@ ZEND_NAMED_FUNCTION(_wrap_DecToPackedDMS) {
 }
 
 
+ZEND_NAMED_FUNCTION(_wrap_ParseXMLString) {
+    char *arg1 = (char *) 0 ;
+    CPLXMLNode *result;
+    zval **args[1];
+    
+    SWIG_ResetError();
+    if(((ZEND_NUM_ARGS() )!= 1) || (zend_get_parameters_array_ex(1, args)!= SUCCESS)) {
+        WRONG_PARAM_COUNT;
+    }
+    
+    {
+        /*@/home/kruland/opt/share/swig/1.3.25/php4/utils.i,23,CONVERT_STRING_IN@*/
+        convert_to_string_ex(args[0]);
+        arg1 = (char *) Z_STRVAL_PP(args[0]);
+        /*@@*/;
+    }
+    result = (CPLXMLNode *)CPLParseXMLString(arg1);
+    
+    {
+        SWIG_SetPointerZval(return_value, (void *)result, SWIGTYPE_p_CPLXMLNode, 0);
+    }
+    return;
+    fail:
+    zend_error(ErrorCode(),ErrorMsg());
+}
+
+
+ZEND_NAMED_FUNCTION(_wrap_SerializeXMLTree) {
+    CPLXMLNode *arg1 = (CPLXMLNode *) 0 ;
+    char *result;
+    zval **args[1];
+    
+    SWIG_ResetError();
+    if(((ZEND_NUM_ARGS() )!= 1) || (zend_get_parameters_array_ex(1, args)!= SUCCESS)) {
+        WRONG_PARAM_COUNT;
+    }
+    
+    {
+        /* typemap(in) SWIGTYPE * */
+        if(SWIG_ConvertPtr(*args[0], (void **) &arg1, SWIGTYPE_p_CPLXMLNode) < 0) {
+            SWIG_PHP_Error(E_ERROR, "Type error in argument 1 of SerializeXMLTree. Expected SWIGTYPE_p_p_CPLXMLNode");
+        }
+    }
+    result = (char *)CPLSerializeXMLTree(arg1);
+    
+    {
+        if(!result) {
+            ZVAL_NULL(return_value);
+        } else {
+            ZVAL_STRING(return_value,result, 1);
+        }
+    }
+    return;
+    fail:
+    zend_error(ErrorCode(),ErrorMsg());
+}
+
+
 ZEND_NAMED_FUNCTION(_wrap_GetDriverCount) {
     int result;
     zval **args[0];
@@ -7252,6 +7324,14 @@ static ZEND_RSRC_DTOR_FUNC(_wrap_destroy_p_CPLErrorHandler) {
   /* bah! No destructor for this simple type!! */
 }
 /* NEW Destructor style */
+static ZEND_RSRC_DTOR_FUNC(_wrap_destroy_p_CPLXMLNode) {
+  /* bah! No destructor for this simple type!! */
+}
+/* NEW Destructor style */
+static ZEND_RSRC_DTOR_FUNC(_wrap_destroy_p_p_CPLXMLNode) {
+  /* bah! No destructor for this simple type!! */
+}
+/* NEW Destructor style */
 static ZEND_RSRC_DTOR_FUNC(_wrap_destroy_p_GDALColorTable) {
   /* has destructor: __wrap_delete_ColorTable */
   __wrap_delete_ColorTable(rsrc, SWIGTYPE_p_GDALColorTable->name TSRMLS_CC);
@@ -7511,6 +7591,10 @@ le_swig__p_GDAL_GCP=zend_register_list_destructors_ex(_wrap_destroy_p_GDAL_GCP,N
 SWIG_TypeClientData(SWIGTYPE_p_GDAL_GCP,&le_swig__p_GDAL_GCP);
 le_swig__p_CPLErrorHandler=zend_register_list_destructors_ex(_wrap_destroy_p_CPLErrorHandler,NULL,(char *)(SWIGTYPE_p_CPLErrorHandler->name),module_number);
 SWIG_TypeClientData(SWIGTYPE_p_CPLErrorHandler,&le_swig__p_CPLErrorHandler);
+le_swig__p_CPLXMLNode=zend_register_list_destructors_ex(_wrap_destroy_p_CPLXMLNode,NULL,(char *)(SWIGTYPE_p_CPLXMLNode->name),module_number);
+SWIG_TypeClientData(SWIGTYPE_p_CPLXMLNode,&le_swig__p_CPLXMLNode);
+le_swig__p_p_CPLXMLNode=zend_register_list_destructors_ex(_wrap_destroy_p_p_CPLXMLNode,NULL,(char *)(SWIGTYPE_p_p_CPLXMLNode->name),module_number);
+SWIG_TypeClientData(SWIGTYPE_p_p_CPLXMLNode,&le_swig__p_p_CPLXMLNode);
 le_swig__p_GDALColorTable=zend_register_list_destructors_ex(_wrap_destroy_p_GDALColorTable,NULL,(char *)(SWIGTYPE_p_GDALColorTable->name),module_number);
 SWIG_TypeClientData(SWIGTYPE_p_GDALColorTable,&le_swig__p_GDALColorTable);
 le_swig__p_p_GDALColorTable=zend_register_list_destructors_ex(_wrap_destroy_p_p_GDALColorTable,NULL,(char *)(SWIGTYPE_p_p_GDALColorTable->name),module_number);
