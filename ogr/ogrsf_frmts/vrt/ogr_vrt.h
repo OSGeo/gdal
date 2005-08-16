@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/08/16 00:08:52  fwarmerdam
+ * Added bSrcLayerFromSQL
+ *
  * Revision 1.5  2005/08/02 20:17:26  fwarmerdam
  * pass attribute filter to sublayer
  *
@@ -72,6 +75,7 @@ class OGRVRTLayer : public OGRLayer
     OGRDataSource       *poSrcDS;
     OGRLayer            *poSrcLayer;
     int                 bNeedReset;
+    int                 bSrcLayerFromSQL;
 
     // Layer spatial reference system, and srid.
     OGRSpatialReference *poSRS;
