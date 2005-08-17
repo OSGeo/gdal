@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/08/17 16:11:18  dwallner
+ * old and new ANSI compability fix
+ *
  * Revision 1.2  2005/08/17 15:44:23  fwarmerdam
  * patch up for win32/vc6 compatibility
  *
@@ -827,7 +830,8 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     GByte palette[768];
 
-    for( GUInt16 i = 0; i < 256; i++ )
+    GUInt16 i;
+    for( i = 0; i < 256; i++ )
     {
         VSIFReadL( &palette[i * 3 + 2], 1, 1, poOpenInfo->fp );
         VSIFReadL( &palette[i * 3 + 1], 1, 1, poOpenInfo->fp );
