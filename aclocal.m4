@@ -416,6 +416,13 @@ AC_DEFUN(AM_PATH_PYTHON,
      echo "python support disabled"
      PYTHON=no
   fi
+
+  ARCH=`uname -i`
+  PYLIB=lib
+  if [ "$ARCH" = "x86_64" ] ; then
+    PYLIB=lib64
+  fi
+
   if test "$PYTHON" != no ; then
     AC_MSG_CHECKING([where python Makefiles are])
 changequote(,)dnl
@@ -434,15 +441,15 @@ import sys
 print sys.version[:3]'`"
 changequote([, ])dnl
 
-    pythondir=$python_prefix/lib/python${python_version}/site-packages
-    pyexecdir=$python_execprefix/lib/python${python_version}/site-packages
+    pythondir=$python_prefix/$PYLIB/python${python_version}/site-packages
+    pyexecdir=$python_execprefix/$PYLIB/python${python_version}/site-packages
 
     AC_MSG_RESULT(found)
 
     dnl Verify that we have the makefile needed later.
     
     AC_MSG_CHECKING([Python makefile])
-    py_mf=$python_execprefix/lib/python${python_version}/config/Makefile
+    py_mf=$python_execprefix/$PYLIB/python${python_version}/config/Makefile
     if test -f $py_mf ; then
       AC_MSG_RESULT(found)
     else
@@ -494,7 +501,7 @@ includepy = \"%s/include/python%s\" % (sys.prefix, sys.version[:3])
 if sys.version[0] > \"1\" or sys.version[2] > \"4\":
   libpl = \"%s/include/python%s\" % (sys.exec_prefix, sys.version[:3])
 else:
-  libpl = \"%s/lib/python%s/config\" % (sys.exec_prefix, sys.version[:3])
+  libpl = \"%s/$PYLIB/python%s/config\" % (sys.exec_prefix, sys.version[:3])
 print \"-I%s -I%s\" % (includepy, libpl)'`"
     changequote([, ])])
   PYTHON_INCLUDES="$am_cv_python_includes"
@@ -507,11 +514,11 @@ print \"-I%s -I%s\" % (includepy, libpl)'`"
     if test ! -z "`uname -a | grep CYGWIN`" ; then 
       PYTHON_LIBS="`$PYTHON -c '
 import sys
-print \"-L%s/lib/python%s/config -lpython%s.dll\" % (sys.prefix, sys.version[:3], sys.version[:3])'`"
+print \"-L%s/$PYLIB/python%s/config -lpython%s.dll\" % (sys.prefix, sys.version[:3], sys.version[:3])'`"
     fi 
     py_makefile="`$PYTHON -c '
 import sys
-print \"%s/lib/python%s/config/Makefile\"%(sys.exec_prefix, sys.version[:3])'`"
+print \"%s/$PYLIB/python%s/config/Makefile\"%(sys.exec_prefix, sys.version[:3])'`"
     if test ! -f "$py_makefile"; then
       echo Could not find the python config makefile.  Maybe you are;
       echo missing the development portion of the python installation;
