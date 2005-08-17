@@ -28,12 +28,16 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/08/17 15:44:23  fwarmerdam
+ * patch up for win32/vc6 compatibility
+ *
  * Revision 1.1  2005/08/17 07:20:55  dwallner
  * Import
  *
  *
  */
 
+#include <float.h>
 #include "gdal_pam.h"
 
 CPL_CVSID("$Id$");
@@ -370,12 +374,12 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         int bitsTaken = 0;
         int breakOffset = 0;
 
-        int prefix[LZW_CODES];
+        int prefix[LZW_CODES], i;
         GByte character[LZW_CODES];
 
-        for( int i = 0; i < LZW_CLEAR; i++ )
+        for( i = 0; i < LZW_CLEAR; i++ )
             character[i] = i;
-        for( int i = 0; i < LZW_CODES; i++ )
+        for( i = 0; i < LZW_CODES; i++ )
             prefix[i] = LZW_NO_SUCH_CODE;
 
         filePos = LZW_OFFSET;
@@ -1004,7 +1008,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     GDALColorEntry oEntry;
     poDS->poColorTable = new GDALColorTable();
-    for( GUInt16 i = 0; i < 256; i++ )
+    for( i = 0; i < 256; i++ )
     {
         oEntry.c1 = palette[i * 3 + 2]; // Red
         oEntry.c2 = palette[i * 3 + 1]; // Green
