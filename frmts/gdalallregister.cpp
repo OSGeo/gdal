@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.80  2005/08/17 15:34:23  fwarmerdam
+ * added RIK driver
+ *
  * Revision 1.79  2005/07/12 16:56:56  denad21
  * added hdf5 support
  *
@@ -236,6 +239,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_ilwis
     GDALRegister_ILWIS();
+#endif
+
+#ifdef FRMT_rik
+    GDALRegister_RIK();
 #endif
 
 #ifdef FRMT_netcdf
