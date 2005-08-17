@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2005/08/17 15:33:46  fwarmerdam
+ * added rik driver
+ *
  * Revision 1.38  2005/07/12 16:58:06  denad21
  * added hdf5 support
  *
@@ -215,6 +218,7 @@ void CPL_DLL GDALRegister_RMF(void);
 void CPL_DLL GDALRegister_HDF5(void);
 void CPL_DLL GDALRegister_HDF5Image(void);
 void CPL_DLL GDALRegister_MSGN(void);
+void CPL_DLL GDALRegister_RIK(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
