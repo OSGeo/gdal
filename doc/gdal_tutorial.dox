@@ -269,12 +269,22 @@ In C:
                       0, 0 );
 \endcode
 
-In Python (note that the returned scanline is of type string, and contains
-xsize*4 bytes of raw binary floating point data):
+In Python:
+ 
+\code
+  	scanline = band.ReadRaster( 0, 0, band.XSize, 1, \
+                                     band.XSize, 1, GDT_Float32 )
+\endcode
+ 
+Note that the returned scanline is of type string, and contains
+xsize*4 bytes of raw binary floating point data. This can be converted
+to Python values using the <b>struct</b> module from the standard
+library:
 
 \code
- 	scanline = band.ReadRaster( 0, 0, band.XSize, 1, \
-                                    band.XSize, 1, GDT_Float32 )
+	import struct
+
+	tuple_of_floats = struct.unpack('f' * b2.XSize, scanline)
 \endcode
 
 The RasterIO call takes the following arguments. 
