@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2005/08/17 16:25:39  fwarmerdam
+ * Patched error output to include command if CreateFeature() fails.
+ *
  * Revision 1.34  2005/08/06 14:49:27  osemykin
  * Added BINARY CURSOR support
  * Use it with 'PGB:dbname=...' instead 'PG:dbname=...'
@@ -976,11 +979,11 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
     {
         CPLDebug( "OGR_PG", "PQexec(%s)\n", pszCommand );
 
-        CPLFree( pszCommand );
-
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "INSERT command for new feature failed.\n%s",
+                  "INSERT command for new feature failed.\n%s\nCommand: %s",
                   PQerrorMessage(hPGConn) );
+
+        CPLFree( pszCommand );
 
         PQclear( hResult );
 
