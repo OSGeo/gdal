@@ -28,8 +28,8 @@
  ******************************************************************************
  * 
  * $Log$
- * Revision 1.10  2005/08/18 16:21:30  dnadeau
- * fix wrong variable for number of bands creation
+ * Revision 1.11  2005/08/18 17:00:31  dnadeau
+ * fix latitude/longitude variable name identification
  *
  * Revision 1.9  2005/08/17 21:43:16  dnadeau
  * support CF convention and lat/long proj.
@@ -588,8 +588,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     int          *panBandDimPos;         // X, Y, Z postion in array
     int          *panBandZLev;
     unsigned int k;
-    int          nDimXid;
-    int          nDimYid;
+    int          nDimXid=-1;
+    int          nDimYid=-1;
     int          *paDimIds;
     int          nVarLatID=-1;
     int          nVarLonID=-1;
@@ -605,6 +605,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     int          status;
     int          nLatSizeArray;
     int          nLonSizeArray;
+    char attname[NC_MAX_NAME];
 
     char papszDimName[NC_MAX_NAME][1024];
 /* -------------------------------------------------------------------- */
@@ -636,6 +637,13 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
     CPLDebug( "GDAL_netCDF", "dim_count = %d\n", dim_count );
+
+    if( (status = nc_get_att_text( cdfid, NC_GLOBAL, "Conventions",
+				   attname )) != NC_NOERR ) {
+	CPLError( CE_Warning, CPLE_AppDefined, 
+		  "No UNIDATA NC_GLOBAL:Conventions attribute");
+        /* note that 'Conventions' is always capital 'C' in CF spec*/
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -684,6 +692,11 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 
+    if( (nDimYid == -1) || (nDimXid == -1 ) ){
+        CPLError( CE_Warning, CPLE_AppDefined, 
+		  "x/lon/longitude or y/lat/latitude variable(s) not found!");
+	    return NULL;
+    }
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
@@ -787,12 +800,27 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     status = nc_inq_varid( cdfid, "lat", &nVarLatID );
     if ( status ==  NC_ENOTVAR ) {
-	status = nc_inq_varid( cdfid, "latitude", &nVarLatID );
+	status = nc_inq_varid( cdfid, "Lat", &nVarLatID );
     }
+    if ( status ==  NC_ENOTVAR ) {
+	status = nc_inq_varid( cdfid, "latitude", &nVarLatID );
+    } 
+    if ( status ==  NC_ENOTVAR ) {
+	status = nc_inq_varid( cdfid, "Latitude", &nVarLatID );
+    }
+
     status = nc_inq_varid( cdfid, "lon", &nVarLonID );
     if ( status ==  NC_ENOTVAR ) {
-	status = nc_inq_varid( cdfid, "longitude", &nVarLatID );
+	status = nc_inq_varid( cdfid, "Lon", &nVarLonID );
+    } 
+    if( status == NC_ENOTVAR ) {
+	status = nc_inq_varid( cdfid, "longitude", &nVarLonID );
+    } 
+    if( status == NC_ENOTVAR ) {
+	status = nc_inq_varid( cdfid, "Longitude", &nVarLonID );
     }
+
+    //printf("nVarLatID = %d, nVarLonID = %d\n",nVarLatID, nVarLonID);
     if( (nVarLatID != -1) && (nVarLonID != -1) ) {
 	nc_inq_varndims ( cdfid, nVarLatID, &nDimsY );
 	nc_inq_varndims ( cdfid, nVarLonID, &nDimsX );
