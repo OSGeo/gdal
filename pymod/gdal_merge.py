@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.21  2005/08/18 15:45:15  fwarmerdam
+#  Added the -createonly switch.
+#
 #  Revision 1.20  2005/07/19 03:33:39  fwarmerdam
 #  removed left over global_list
 #
@@ -290,7 +293,7 @@ def Usage():
     print 'Usage: gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*'
     print '                     [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]'
     print '                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init value]'
-    print '                     [-ot datatype] input_files'
+    print '                     [-ot datatype] [-createonly] input_files'
     print
 
 # =============================================================================
@@ -312,6 +315,7 @@ if __name__ == '__main__':
     create_options = []
     pre_init = None
     band_type = None
+    createonly = 0
 
     gdal.AllRegister()
     argv = gdal.GeneralCmdLineProcessor( sys.argv )
@@ -329,6 +333,9 @@ if __name__ == '__main__':
 
         elif arg == '-v':
             verbose = 1
+
+        elif arg == '-createonly':
+            createonly = 1
 
         elif arg == '-separate':
             separate = 1
@@ -459,6 +466,9 @@ if __name__ == '__main__':
     # Copy data from source files into output file.
     t_band = 1
     for fi in file_infos:
+        if createonly != 0:
+            continue
+        
         if verbose != 0:
             print
             fi.report()
