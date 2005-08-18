@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.10  2005/08/18 16:21:30  dnadeau
+ * fix wrong variable for number of bands creation
+ *
  * Revision 1.9  2005/08/17 21:43:16  dnadeau
  * support CF convention and lat/long proj.
  *
@@ -600,7 +603,6 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     int          nDimsX, nDimsY;
     double       *pdfLat, *pdfLon;
     int          status;
-    int          bWest=FALSE;
     int          nLatSizeArray;
     int          nLonSizeArray;
 
@@ -749,12 +751,12 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 		    nc_inq_dimlen ( cdfid, paDimIds[j], &lev_count );
 		    nTotLevCount *= lev_count;
 		    panBandZLev[ nDim-2 ] = lev_count;
-		    panBandDimPos[nDim++] = j;         // Save Position of ZDim
+		    panBandDimPos[ nDim++ ] = j;    // Save Position of ZDim
 
 		}
 	    }
 	}
-	for ( int lev = 0; lev < (int) lev_count; lev++ ) {
+	for ( unsigned int lev = 0; lev < nTotLevCount ; lev++ ) {
 
 	    netCDFRasterBand *poBand = new netCDFRasterBand( poDS, 
 							     var, 
@@ -825,15 +827,10 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 	for( int i=0; i < nLonSizeArray; i++) {
 	    if( pdfLon[i] < 0 ) {
-		bWest=TRUE;
-		break;
-	    }
-	}
-	if( bWest ) {
-	    for( int i=0; i < nLonSizeArray; i++) {
 		pdfLon[i] += 360;
 	    }
 	}
+
 /* -------------------------------------------------------------------- */
 /*      Set transformation array                                        */
 /* -------------------------------------------------------------------- */
