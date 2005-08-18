@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/08/18 21:06:52  dwallner
+ * RIK3 header support
+ *
  * Revision 1.3  2005/08/17 16:11:18  dwallner
  * old and new ANSI compability fix
  *
@@ -670,6 +673,34 @@ const char *RIKDataset::GetProjectionRef()
 }
 
 /************************************************************************/
+/*                             GetRikString()                           */
+/************************************************************************/
+
+static GUInt16 GetRikString( FILE *fp,
+                             char *str,
+                             GUInt16 strLength )
+
+{
+    GUInt16 actLength;
+
+    VSIFReadL( &actLength, 1, sizeof(actLength), fp );
+#ifdef CPL_MSB
+    CPL_SWAP16PTR( &actLength );
+#endif
+
+    if( actLength + 2 > strLength )
+    {
+        return actLength;
+    }
+
+    VSIFReadL( str, 1, actLength, fp );
+
+    str[actLength] = '\0';
+
+    return actLength;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -679,149 +710,227 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 50 )
         return NULL;
 
+    bool rik3header = false;
+
     if( EQUALN((const char *) poOpenInfo->pabyHeader, "RIK3", 4) )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "File %s is in unsupported RIK3 format.\n",
-                  poOpenInfo->pszFilename );
-        return NULL;
+        rik3header = true;
     }
+
+    if( rik3header )
+        VSIFSeekL( poOpenInfo->fp, 4, SEEK_SET );
+    else
+        VSIFSeekL( poOpenInfo->fp, 0, SEEK_SET );
 
 /* -------------------------------------------------------------------- */
 /*      Read the map name.                                              */
 /* -------------------------------------------------------------------- */
 
-    GUInt32 nameLength;
     char name[1024];
 
-    VSIFSeekL( poOpenInfo->fp, 0, SEEK_SET );
+    GUInt16 nameLength = GetRikString( poOpenInfo->fp, name, sizeof(name) );
 
-    VSIFReadL( &nameLength, 1, 2, poOpenInfo->fp );
-#ifdef CPL_MSB
-    CPL_SWAP16PTR( &nameLength );
-#endif
-
-    if( nameLength > 1023 )
+    if( nameLength > sizeof(name) - 1 )
     {
-        // Unreasonable string length, assume wrong format
         return NULL;
     }
-
-    VSIFReadL( name, 1, nameLength, poOpenInfo->fp );
-    name[nameLength] = '\0';
 
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
 
     RIKHeader header;
-
-    VSIFReadL( &header.iUnknown, 1, sizeof(header.iUnknown), poOpenInfo->fp );
-    VSIFReadL( &header.fSouth, 1, sizeof(header.fSouth), poOpenInfo->fp );
-    VSIFReadL( &header.fWest, 1, sizeof(header.fWest), poOpenInfo->fp );
-    VSIFReadL( &header.fNorth, 1, sizeof(header.fNorth), poOpenInfo->fp );
-    VSIFReadL( &header.fEast, 1, sizeof(header.fEast), poOpenInfo->fp );
-    VSIFReadL( &header.iScale, 1, sizeof(header.iScale), poOpenInfo->fp );
-    VSIFReadL( &header.iMPPNum, 1, sizeof(header.iMPPNum), poOpenInfo->fp );
-#ifdef CPL_MSB
-    CPL_SWAP64PTR( &header.fSouth );
-    CPL_SWAP64PTR( &header.fWest );
-    CPL_SWAP64PTR( &header.fNorth );
-    CPL_SWAP64PTR( &header.fEast );
-    CPL_SWAP32PTR( &header.iScale );
-    CPL_SWAP32PTR( &header.iMPPNum );
-#endif
-
-    if (!CPLIsFinite(header.fSouth) |
-        !CPLIsFinite(header.fWest) |
-        !CPLIsFinite(header.fNorth) |
-        !CPLIsFinite(header.fEast))
-        return NULL;
-
-    bool offsetBounds;
-
-    offsetBounds = header.fSouth < 4000000;
-
-    header.iMPPDen = 1;
-
-    if( offsetBounds )
-    {
-        header.fSouth += 4002995;
-        header.fNorth += 5004000;
-        header.fWest += 201000;
-        header.fEast += 302005;
-
-        VSIFReadL( &header.iMPPDen, 1, sizeof(header.iMPPDen), poOpenInfo->fp );
-#ifdef CPL_MSB
-        CPL_SWAP32PTR( &header.iMPPDen );
-#endif
-    }
-
     double metersPerPixel;
-    metersPerPixel = header.iMPPNum / double(header.iMPPDen);
 
-    VSIFReadL( &header.iBlockWidth, 1, sizeof(header.iBlockWidth), poOpenInfo->fp );
-    VSIFReadL( &header.iBlockHeight, 1, sizeof(header.iBlockHeight), poOpenInfo->fp );
-    VSIFReadL( &header.iHorBlocks, 1, sizeof(header.iHorBlocks), poOpenInfo->fp );
-#ifdef CPL_MSB
-    CPL_SWAP32PTR( &header.iBlockWidth );
-    CPL_SWAP32PTR( &header.iBlockHeight );
-    CPL_SWAP32PTR( &header.iHorBlocks );
-#endif
-
-    if(( header.iBlockWidth > 2000 ) || ( header.iBlockWidth < 10 ) ||
-       ( header.iBlockHeight > 2000 ) || ( header.iBlockHeight < 10 ))
-       return NULL;
-
-    if( !offsetBounds )
+    if( rik3header )
     {
+/* -------------------------------------------------------------------- */
+/*      RIK3 header.                                                    */
+/* -------------------------------------------------------------------- */
+
+        // Read projection name
+
+        char projection[1024];
+
+        GUInt16 projLength = GetRikString( poOpenInfo->fp,
+                                           projection, sizeof(projection) );
+
+        if( projLength > sizeof(projection) - 1 )
+        {
+            // Unreasonable string length, assume wrong format
+            return NULL;
+        }
+
+        // Read unknown string
+
+        projLength = GetRikString( poOpenInfo->fp, projection, sizeof(projection) );
+
+        // Read map north edge
+
+        char tmpStr[16];
+
+        GUInt16 tmpLength = GetRikString( poOpenInfo->fp,
+                                          tmpStr, sizeof(tmpStr) );
+
+        if( tmpLength > sizeof(tmpStr) - 1 )
+        {
+            // Unreasonable string length, assume wrong format
+            return NULL;
+        }
+
+        header.fNorth = atof( tmpStr );
+
+        // Read map west edge
+
+        tmpLength = GetRikString( poOpenInfo->fp,
+                                  tmpStr, sizeof(tmpStr) );
+
+        if( tmpLength > sizeof(tmpStr) - 1 )
+        {
+            // Unreasonable string length, assume wrong format
+            return NULL;
+        }
+
+        header.fWest = atof( tmpStr );
+
+        // Read binary values
+
+        VSIFReadL( &header.iScale, 1, sizeof(header.iScale), poOpenInfo->fp );
+        VSIFReadL( &header.iMPPNum, 1, sizeof(header.iMPPNum), poOpenInfo->fp );
+        VSIFReadL( &header.iBlockWidth, 1, sizeof(header.iBlockWidth), poOpenInfo->fp );
+        VSIFReadL( &header.iBlockHeight, 1, sizeof(header.iBlockHeight), poOpenInfo->fp );
+        VSIFReadL( &header.iHorBlocks, 1, sizeof(header.iHorBlocks), poOpenInfo->fp );
         VSIFReadL( &header.iVertBlocks, 1, sizeof(header.iVertBlocks), poOpenInfo->fp );
 #ifdef CPL_MSB
+        CPL_SWAP32PTR( &header.iScale );
+        CPL_SWAP32PTR( &header.iMPPNum );
+        CPL_SWAP32PTR( &header.iBlockWidth );
+        CPL_SWAP32PTR( &header.iBlockHeight );
+        CPL_SWAP32PTR( &header.iHorBlocks );
         CPL_SWAP32PTR( &header.iVertBlocks );
 #endif
-    }
 
-    if( offsetBounds || !header.iVertBlocks )
+        VSIFReadL( &header.iBitsPerPixel, 1, sizeof(header.iBitsPerPixel), poOpenInfo->fp );
+        VSIFReadL( &header.iOptions, 1, sizeof(header.iOptions), poOpenInfo->fp );
+        header.iUnknown = header.iOptions;
+        VSIFReadL( &header.iOptions, 1, sizeof(header.iOptions), poOpenInfo->fp );
+        header.iOptions = 0xb;
+
+        header.fSouth = header.fNorth -
+            header.iVertBlocks * header.iBlockHeight * header.iMPPNum;
+        header.fEast = header.fWest +
+            header.iHorBlocks * header.iBlockWidth * header.iMPPNum;
+
+        metersPerPixel = header.iMPPNum;
+    }
+    else
     {
-        header.iVertBlocks = (GUInt32)
-            ceil( (header.fNorth - header.fSouth) /
-                  (header.iBlockHeight * metersPerPixel) );
-    }
+/* -------------------------------------------------------------------- */
+/*      Old RIK header.                                                 */
+/* -------------------------------------------------------------------- */
 
-#if RIK_HEADER_DEBUG
-    CPLDebug( "RIK",
-              "Original vertical blocks %d\n",
-              header.iVertBlocks );
+        VSIFReadL( &header.iUnknown, 1, sizeof(header.iUnknown), poOpenInfo->fp );
+        VSIFReadL( &header.fSouth, 1, sizeof(header.fSouth), poOpenInfo->fp );
+        VSIFReadL( &header.fWest, 1, sizeof(header.fWest), poOpenInfo->fp );
+        VSIFReadL( &header.fNorth, 1, sizeof(header.fNorth), poOpenInfo->fp );
+        VSIFReadL( &header.fEast, 1, sizeof(header.fEast), poOpenInfo->fp );
+        VSIFReadL( &header.iScale, 1, sizeof(header.iScale), poOpenInfo->fp );
+        VSIFReadL( &header.iMPPNum, 1, sizeof(header.iMPPNum), poOpenInfo->fp );
+#ifdef CPL_MSB
+        CPL_SWAP64PTR( &header.fSouth );
+        CPL_SWAP64PTR( &header.fWest );
+        CPL_SWAP64PTR( &header.fNorth );
+        CPL_SWAP64PTR( &header.fEast );
+        CPL_SWAP32PTR( &header.iScale );
+        CPL_SWAP32PTR( &header.iMPPNum );
 #endif
 
-    VSIFReadL( &header.iBitsPerPixel, 1, sizeof(header.iBitsPerPixel), poOpenInfo->fp );
+        if (!CPLIsFinite(header.fSouth) |
+            !CPLIsFinite(header.fWest) |
+            !CPLIsFinite(header.fNorth) |
+            !CPLIsFinite(header.fEast))
+            return NULL;
 
-    if( header.iBitsPerPixel != 8 )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "File %s has unsupported number of bits per pixel.\n",
-                  poOpenInfo->pszFilename );
-        return NULL;
-    }
+        bool offsetBounds;
 
-    VSIFReadL( &header.iOptions, 1, sizeof(header.iOptions), poOpenInfo->fp );
+        offsetBounds = header.fSouth < 4000000;
 
-    if( !header.iHorBlocks || !header.iVertBlocks )
-       return NULL;
+        header.iMPPDen = 1;
 
-/* -------------------------------------------------------------------- */
-/*      Check image options.                                            */
-/* -------------------------------------------------------------------- */
+        if( offsetBounds )
+        {
+            header.fSouth += 4002995;
+            header.fNorth += 5004000;
+            header.fWest += 201000;
+            header.fEast += 302005;
 
-    if( header.iOptions != 0x00 && // Uncompressed
-        header.iOptions != 0x01 && // RLE
-        header.iOptions != 0x41 && // RLE
-        header.iOptions != 0x0B )  // LZW
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Unknown map options.\n",
-                  poOpenInfo->pszFilename );
-        return NULL;
+            VSIFReadL( &header.iMPPDen, 1, sizeof(header.iMPPDen), poOpenInfo->fp );
+#ifdef CPL_MSB
+            CPL_SWAP32PTR( &header.iMPPDen );
+#endif
+        }
+
+        metersPerPixel = header.iMPPNum / double(header.iMPPDen);
+
+        VSIFReadL( &header.iBlockWidth, 1, sizeof(header.iBlockWidth), poOpenInfo->fp );
+        VSIFReadL( &header.iBlockHeight, 1, sizeof(header.iBlockHeight), poOpenInfo->fp );
+        VSIFReadL( &header.iHorBlocks, 1, sizeof(header.iHorBlocks), poOpenInfo->fp );
+#ifdef CPL_MSB
+        CPL_SWAP32PTR( &header.iBlockWidth );
+        CPL_SWAP32PTR( &header.iBlockHeight );
+        CPL_SWAP32PTR( &header.iHorBlocks );
+#endif
+
+        if(( header.iBlockWidth > 2000 ) || ( header.iBlockWidth < 10 ) ||
+           ( header.iBlockHeight > 2000 ) || ( header.iBlockHeight < 10 ))
+           return NULL;
+
+        if( !offsetBounds )
+        {
+            VSIFReadL( &header.iVertBlocks, 1, sizeof(header.iVertBlocks), poOpenInfo->fp );
+#ifdef CPL_MSB
+            CPL_SWAP32PTR( &header.iVertBlocks );
+#endif
+        }
+
+        if( offsetBounds || !header.iVertBlocks )
+        {
+            header.iVertBlocks = (GUInt32)
+                ceil( (header.fNorth - header.fSouth) /
+                      (header.iBlockHeight * metersPerPixel) );
+        }
+
+#if RIK_HEADER_DEBUG
+        CPLDebug( "RIK",
+                  "Original vertical blocks %d\n",
+                  header.iVertBlocks );
+#endif
+
+        VSIFReadL( &header.iBitsPerPixel, 1, sizeof(header.iBitsPerPixel), poOpenInfo->fp );
+
+        if( header.iBitsPerPixel != 8 )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "File %s has unsupported number of bits per pixel.\n",
+                      poOpenInfo->pszFilename );
+            return NULL;
+        }
+
+        VSIFReadL( &header.iOptions, 1, sizeof(header.iOptions), poOpenInfo->fp );
+
+        if( !header.iHorBlocks || !header.iVertBlocks )
+           return NULL;
+
+        if( header.iOptions != 0x00 && // Uncompressed
+            header.iOptions != 0x01 && // RLE
+            header.iOptions != 0x41 && // RLE
+            header.iOptions != 0x0B )  // LZW
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed,
+                      "Unknown map options.\n",
+                      poOpenInfo->pszFilename );
+            return NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -868,13 +977,21 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        VSIFReadL( offsets, 1, blocks * sizeof(GUInt32), poOpenInfo->fp );
-#ifdef CPL_MSB
         for( GUInt32 i = 0; i < blocks; i++ )
         {
+            VSIFReadL( &offsets[i], 1, sizeof(offsets[i]), poOpenInfo->fp );
+#ifdef CPL_MSB
             CPL_SWAP32PTR( &offsets[i] );
-        }
 #endif
+            if( rik3header )
+            {
+                GUInt32 blockSize;
+                VSIFReadL( &blockSize, 1, sizeof(blockSize), poOpenInfo->fp );
+#ifdef CPL_MSB
+                CPL_SWAP32PTR( &blockSize );
+#endif
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -961,7 +1078,6 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
               " west: %lf\n"
               " north: %lf\n"
               " east: %lf\n"
-              " calculated east: %lf\n"
               " original scale: %d\n"
               " meters per pixel: %lf\n"
               " block width: %d\n"
@@ -973,7 +1089,6 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
               " compression: %s\n",
               name, header.iUnknown,
               header.fSouth, header.fWest, header.fNorth, header.fEast,
-              header.fWest + header.iHorBlocks * metersPerPixel * header.iBlockWidth,
               header.iScale, metersPerPixel,
               header.iBlockWidth, header.iBlockHeight,
               header.iHorBlocks, header.iVertBlocks,
