@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/08/18 14:45:22  fwarmerdam
+ * Cleanup session on exit.
+ *
  * Revision 1.27  2005/08/09 20:54:43  hobu
  * Allow CreateLayer to use the OCI_FID environment
  * variable if it set.  Also, throw a CPLDebug statement
@@ -179,6 +182,9 @@ OGROCIDataSource::~OGROCIDataSource()
     }
     CPLFree( papoSRS );
     CPLFree( panSRID );
+
+    if( poSession != NULL )
+        delete poSession;
 }
 
 /************************************************************************/
