@@ -771,7 +771,7 @@ Usage:
 gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*
                      [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]
                      [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init value]
-                     [-ot datatype] input_files
+                     [-ot datatype] [-createonly] input_files
 \endverbatim
 \if man
 \section mdescription DESCRIPTION
@@ -815,6 +815,10 @@ Ignore pixels from files being merged in with this pixel value.
 <dt> <b>-init</b> <i>value</i>:</dt><dd> 
 Pre-initialize the output file with this value.  However, it is not marked
 as the nodata value in the output file. 
+</dd>
+<dt> <b>-createonly</b>:</dt><dd> 
+The output file is created (and potentially pre-initialized) but no input
+image data is copied into it.  
 </dd>
 </dl>
 
