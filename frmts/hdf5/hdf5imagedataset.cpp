@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2005/08/19 15:03:20  dron
+ * Fixed type of start offset array in IReadBlock().
+ *
  * Revision 1.7  2005/08/13 02:22:01  dnadeau
  * check for windows drive letter in filename
  *
@@ -223,13 +226,13 @@ CPLErr HDF5ImageRasterBand::SetNoDataValue( double dfNoData )
 CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                         void * pImage )
 {
-    herr_t       status;
-    hsize_t      count[3];    
-    hsize_t      offset[3];
-    int          nSizeOfData;
-    hid_t memspace;
-    hsize_t col_dims[3];
-    hsize_t rank;
+    herr_t      status;
+    hsize_t     count[3];    
+    hssize_t    offset[3];
+    int         nSizeOfData;
+    hid_t       memspace;
+    hsize_t     col_dims[3];
+    hsize_t     rank;
 
     HDF5ImageDataset    *poGDS = (HDF5ImageDataset *) poDS;
    
