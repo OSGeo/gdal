@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/08/19 02:14:11  fwarmerdam
+ * bug 857: add ability to set layer names
+ *
  * Revision 1.15  2005/05/13 04:57:28  fwarmerdam
  * fix handling of large offsets in ige file for HFACreateLayer()
  *
@@ -210,6 +213,8 @@ CPLErr CPL_DLL HFASetRasterBlock( HFAHandle hHFA, int nBand,
 CPLErr CPL_DLL HFASetOverviewRasterBlock( 
     HFAHandle hHFA, int nBand, int iOverview,int nXBlock, int nYBlock, 
     void * pData );
+const char * HFAGetBandName( HFAHandle hHFA, int nBand );
+void HFASetBandName( HFAHandle hHFA, int nBand, const char *pszName );
 int     CPL_DLL HFAGetDataTypeBits( int );
 CPLErr	CPL_DLL HFAGetPCT( HFAHandle, int, int *, 
                            double **, double **, double ** , double **);

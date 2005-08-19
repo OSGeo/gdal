@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.58  2005/08/19 02:14:11  fwarmerdam
+ * bug 857: add ability to set layer names
+ *
  * Revision 1.57  2005/07/06 23:12:44  fwarmerdam
  * Fixed up "ds" (digital seconds) units on mapinfo
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=883
@@ -444,6 +447,9 @@ class HFARasterBand : public GDALPamRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
 
+    virtual const char *GetDescription() const;
+    virtual void        SetDescription( const char * );
+
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
     virtual CPLErr          SetColorTable( GDALColorTable * );
@@ -858,6 +864,28 @@ CPLErr HFARasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
+/*                         GetDescription()                             */
+/************************************************************************/
+
+const char * HFARasterBand::GetDescription() const
+{
+    const char *pszName = HFAGetBandName( hHFA, nBand );
+    
+    if( pszName == NULL )
+        return GDALPamRasterBand::GetDescription();
+    else
+        return pszName;
+}
+ 
+/************************************************************************/
+/*                         SetDescription()                             */
+/************************************************************************/
+void HFARasterBand::SetDescription( const char *pszName )
+{
+    HFASetBandName( hHFA, nBand, pszName );
+}
+
+/************************************************************************/
 /*                       GetColorInterpretation()                       */
 /************************************************************************/
 
@@ -1133,7 +1161,7 @@ HFADataset::~HFADataset()
 void HFADataset::FlushCache()
 
 {
-    GDALDataset::FlushCache();
+    GDALPamDataset::FlushCache();
 
     if( eAccess != GA_Update )
         return;

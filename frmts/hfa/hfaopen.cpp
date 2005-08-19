@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.43  2005/08/19 02:14:11  fwarmerdam
+ * bug 857: add ability to set layer names
+ *
  * Revision 1.42  2005/05/13 05:19:53  fwarmerdam
  * Fixed VSIFSeek that should have been VSIFSeekL().
  *
@@ -539,24 +542,28 @@ CPLErr HFARemove( const char *pszFilename )
 CPLErr HFADelete( const char *pszFilename )
 
 {
-    char	szName[128];
     HFAInfo_t   *psInfo = HFAOpen( pszFilename, "rb" );
-    HFAEntry	*poDMS;
+    HFAEntry	*poDMS = NULL;
+    HFAEntry    *poLayer = NULL;
 
-
-    sprintf( szName, "Layer_%d", 1 );
-    poDMS = psInfo->poRoot->GetNamedChild( szName )->
-        GetNamedChild( "ExternalRasterDMS" );
-
-    if ( poDMS )
+    if( psInfo != NULL )
     {
-        const char *pszRawFilename =
-            poDMS->GetStringField( "fileName.string" );
-        
-        HFARemove( CPLFormFilename( psInfo->pszPath, pszRawFilename, NULL ) );
-    }
+        poLayer = psInfo->poRoot->GetNamedChild( "Layer_1" );
+        if( poLayer != NULL )
+            poDMS = poLayer->GetNamedChild( "ExternalRasterDMS" );
 
-    HFAClose( psInfo );
+        if ( poDMS )
+        {
+            const char *pszRawFilename =
+                poDMS->GetStringField( "fileName.string" );
+
+            if( pszRawFilename != NULL )
+                HFARemove( CPLFormFilename( psInfo->pszPath, 
+                                            pszRawFilename, NULL ) );
+        }
+
+        HFAClose( psInfo );
+    }
     return HFARemove( pszFilename );
 }
 
@@ -711,6 +718,30 @@ CPLErr HFASetOverviewRasterBlock( HFAHandle hHFA, int nBand, int iOverview,
 
     return( hHFA->papoBand[nBand-1]->papoOverviews[iOverview]->
             SetRasterBlock(nXBlock,nYBlock,pData) );
+}
+
+/************************************************************************/
+/*                         HFAGetBandName()                             */
+/************************************************************************/
+
+const char * HFAGetBandName( HFAHandle hHFA, int nBand )
+{
+  if( nBand < 1 || nBand > hHFA->nBands )
+    return "";
+
+  return( hHFA->papoBand[nBand-1]->GetBandName() );
+}
+
+/************************************************************************/
+/*                         HFASetBandName()                             */
+/************************************************************************/
+
+void HFASetBandName( HFAHandle hHFA, int nBand, const char *pszName )
+{
+  if( nBand < 1 || nBand > hHFA->nBands )
+    return;
+
+  hHFA->papoBand[nBand-1]->SetBandName( pszName );
 }
 
 /************************************************************************/

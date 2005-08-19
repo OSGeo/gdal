@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/08/19 02:14:11  fwarmerdam
+ * bug 857: add ability to set layer names
+ *
  * Revision 1.20  2005/05/13 02:05:25  fwarmerdam
  * added HFACreateSpillStack
  *
@@ -233,6 +236,9 @@ class HFABand
     
     CPLErr	GetRasterBlock( int nXBlock, int nYBlock, void * pData );
     CPLErr	SetRasterBlock( int nXBlock, int nYBlock, void * pData );
+    
+    const char * GetBandName();
+    void SetBandName(const char *pszName);
 
     CPLErr	GetPCT( int *, double **, double **, double **, double ** );
     CPLErr	SetPCT( int, double *, double *, double *, double * );
@@ -291,6 +297,8 @@ public:
     GUInt32	GetFilePos() { return nFilePos; }
 
     const char	*GetName() { return szName; }
+    void SetName( const char *pszNodeName );
+    
     const char  *GetType() { return szType; }
 
     GUInt32	GetDataPos() { return nDataPos; }
