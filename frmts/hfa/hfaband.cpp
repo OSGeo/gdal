@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2005/08/19 02:14:11  fwarmerdam
+ * bug 857: add ability to set layer names
+ *
  * Revision 1.44  2005/05/13 02:45:05  fwarmerdam
  * use spill file for overviews if .img will get too big
  *
@@ -1029,33 +1032,33 @@ CPLErr HFABand::GetRasterBlock( int nXBlock, int nYBlock, void * pData )
 
 void HFABand::ReAllocBlock( int iBlock, int nSize )
 {
-	/* For compressed files - need to realloc the space for the block */
+    /* For compressed files - need to realloc the space for the block */
 	
- 	// TODO: Should check to see if panBlockStart[iBlock] is not zero then do a HFAFreeSpace()
- 	// but that doesn't exist yet.
- 	// Instead as in interim measure it will reuse the existing block if
- 	// the new data will fit in.
- 	if( ( panBlockStart[iBlock] != 0 ) && ( nSize <= panBlockSize[iBlock] ) )
- 	{
- 		panBlockSize[iBlock] = nSize;
- 		//fprintf( stderr, "Reusing block %d\n", iBlock );
- 	}
-	else
-	{
-	 	panBlockStart[iBlock] = HFAAllocateSpace( psInfo, nSize );
+    // TODO: Should check to see if panBlockStart[iBlock] is not zero then do a HFAFreeSpace()
+    // but that doesn't exist yet.
+    // Instead as in interim measure it will reuse the existing block if
+    // the new data will fit in.
+    if( ( panBlockStart[iBlock] != 0 ) && ( nSize <= panBlockSize[iBlock] ) )
+    {
+        panBlockSize[iBlock] = nSize;
+        //fprintf( stderr, "Reusing block %d\n", iBlock );
+    }
+    else
+    {
+        panBlockStart[iBlock] = HFAAllocateSpace( psInfo, nSize );
 	
-	 	panBlockSize[iBlock] = nSize;
+        panBlockSize[iBlock] = nSize;
 	
-	 	// need to re - write this info to the RasterDMS node
-	 	HFAEntry	*poDMS = poNode->GetNamedChild( "RasterDMS" );
+        // need to re - write this info to the RasterDMS node
+        HFAEntry	*poDMS = poNode->GetNamedChild( "RasterDMS" );
 	 	
-	  char	szVarName[64];
-	  sprintf( szVarName, "blockinfo[%d].offset", iBlock );
-		poDMS->SetIntField( szVarName, panBlockStart[iBlock] );
+        char	szVarName[64];
+        sprintf( szVarName, "blockinfo[%d].offset", iBlock );
+        poDMS->SetIntField( szVarName, panBlockStart[iBlock] );
 		
-	  sprintf( szVarName, "blockinfo[%d].size", iBlock );
-		poDMS->SetIntField( szVarName, panBlockSize[iBlock] );
-	}
+        sprintf( szVarName, "blockinfo[%d].size", iBlock );
+        poDMS->SetIntField( szVarName, panBlockSize[iBlock] );
+    }
 }
 
 
@@ -1297,6 +1300,31 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
 #endif /* def CPL_MSB */
 
     return( CE_None );
+}
+
+/************************************************************************/
+/*                         GetBandName()                                */
+/*                                                                      */
+/*      Return the Layer Name                                           */
+/************************************************************************/
+ 
+const char * HFABand::GetBandName()
+{
+    return( poNode->GetName() );
+}
+
+/************************************************************************/
+/*                         SetBandName()                                */
+/*                                                                      */
+/*      Set the Layer Name                                              */
+/************************************************************************/
+ 
+void HFABand::SetBandName(const char *pszName)
+{
+    if( psInfo->eAccess == HFA_Update )
+    {
+        poNode->SetName(pszName);
+    }
 }
 
 /************************************************************************/

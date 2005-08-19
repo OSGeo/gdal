@@ -33,6 +33,9 @@
  * Implementation of the HFAEntry class.
  *
  * $Log$
+ * Revision 1.13  2005/08/19 02:14:11  fwarmerdam
+ * bug 857: add ability to set layer names
+ *
  * Revision 1.12  2005/05/10 00:55:46  fwarmerdam
  * Added GetFieldCount method
  *
@@ -173,8 +176,7 @@ HFAEntry::HFAEntry( HFAInfo_t * psHFAIn,
     nDataPos = nDataSize = 0;
     nNextPos = nChildPos = 0;
 
-    memset( szName, 0, 64 );
-    strncpy( szName, pszNodeName, 64 );
+    SetName( pszNodeName );
     memset( szType, 0, 32 );
     strncpy( szType, pszTypeName, 32 );
 
@@ -223,6 +225,20 @@ HFAEntry::~HFAEntry()
 
     if( poChild != NULL )
         delete poChild;
+}
+
+/************************************************************************/
+/*                              SetName()                               */
+/*                                                                      */
+/*    Changes the name assigned to this node                            */
+/************************************************************************/
+
+void HFAEntry::SetName( const char *pszNodeName )
+{
+  memset( szName, 0, 64 );
+  strncpy( szName, pszNodeName, 64 );
+
+  MarkDirty();
 }
 
 /************************************************************************/
