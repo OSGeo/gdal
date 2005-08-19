@@ -1,0 +1,59 @@
+# Use this makefile to build Ruby GDAL bindings on Windows.
+#
+#	nmake -f makefile.vc build - Will build the bindings
+#	nmake -f makefile.vc install - Will install the bindings
+#		to the local Ruby installation
+#
+# Note you must manually set the variable RUBY_DIR, and possibly
+# RUBY_VERSION.
+
+GDAL_ROOT = ../..
+!INCLUDE $(GDAL_ROOT)/nmake.opt
+
+RUBY_VERSION = 1.8
+RUBY_ARCH = i386-mswin32
+RUBY_SO_NAME = msvcrt-ruby18.lib
+
+RUBY_DIR = C:\Development\ruby
+RUBY_ARCH_DIR = $(RUBY_DIR)\lib\ruby\$(RUBY_VERSION)\$(RUBY_ARCH)
+INSTALLATION_DIR = $(RUBY_ARCH_DIR)\gdal
+
+$(INSTALLATION_DIR):
+	mkdir $(INSTALLATION_DIR)
+
+install: $(INSTALLATION_DIR)
+	cp *.so $(INSTALLATION_DIR)
+
+build: $(RUBY_ARCH_DIR) gdal.so gdalconst.so ogr.so osr.so
+
+gdal.so: gdal.obj
+
+gdalconst.so: gdalconst.obj
+
+ogr.so: ogr.obj
+
+osr.so: osr.obj
+
+.obj.so:
+	link /dll /debug $(LINKER_FLAGS) $(EXTERNAL_LIBS) \
+	/LIBPATH:$(RUBY_DIR)/lib $(RUBY_SO_NAME) ..\..\gdal.lib \
+    /out:$*.so $(LINKER_FLAGS)  $*.obj
+    
+.c.obj:	
+	$(CC) $(CFLAGS) /I $(RUBY_ARCH_DIR) /c $*.c
+
+.cpp.obj:	
+	$(CC) $(CFLAGS) /I $(RUBY_ARCH_DIR) /c $*.cpp
+
+clean:	
+	-del *.c
+	-del *.cpp
+	-del *.so
+	-del *.dll
+	-del *.obj
+	-del *.exp
+	-del *.ilk
+	-del *.pdb
+	-del *.lib
+	rmdir /S /Q $(RUBY_ARCH_DIR)\gdal
+
