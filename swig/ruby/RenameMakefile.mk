@@ -25,6 +25,6 @@ reset:
 	
 build: reset $(WRAPPERS)
 	# Run Ruby code to rename methods and pipe the output to renames.i
-	ruby rename_methods.rb > renames.i
+	ruby rename_methods.rb --match="OGR(.*)" --replace="\1" > renames.i
 	# Remove the swig wrappers
 	rm -f *.c *.cpp
