@@ -1,3 +1,7 @@
+#! /usr/bin/env ruby
+
+require 'optparse'
+require 'ostruct'
 
 class SwigRename
   @@keywords = %w{new create delete union}
@@ -6,12 +10,16 @@ class SwigRename
   RenameStruct = Struct.new(:class_name, :original_method_name, :new_method_name)
   AliasStruct = Struct.new(:class_name, :method_name, :alias_name)
 
-  def initialize(filename)
+  def initialize(filename, options)
     @filename = filename
     @renames = Array.new
     @aliases = Array.new
+
+    # Is there a prefix to strip?
+    @match = options.match
+    @replace = options.replace
   end
-  
+
   def convert_file()
     begin
       file = File.open(@filename, 'r')
@@ -40,7 +48,7 @@ class SwigRename
 		  method_type = $1
   	
       match = line.match(/.*"(.*)"/)
-     	original_method_name = $1
+      original_method_name = $1
 
       # Eliminate methods that don't start with a
       # capital letter.
@@ -51,13 +59,12 @@ class SwigRename
 	  	# because SWIG will apply a rename
 	  	# directive to the method anyway.
 	  	next if original_method_name =~ /(.*)=$/
-      
+
       rubified_method_name = rubify_method_name(original_method_name)
       alias_name = check_alias(rubified_method_name)
 
 			new_method_name = (alias_name.nil?) ? rubified_method_name: alias_name      
 
-			
 			if method_type == 'rb_define_method'
 			  temp_class = class_name
 			else
@@ -73,6 +80,11 @@ class SwigRename
   end
 
   def rubify_method_name(method_name)
+	  # apply the function regex if it exists
+  	if @replace and @match
+    	method_name = method_name.gsub(@match, @replace)
+    end
+    
 	  new_method_name = method_name.gsub(/([[:lower:]])([[:upper:]])/, '\1_\2')
 	  new_method_name.downcase!
   end
@@ -119,11 +131,40 @@ class SwigRename
 end
 				    
 
+def parse_args
+  options = OpenStruct.new
+
+  opts = OptionParser.new do |opts|
+  	opts.banner = "Usage: example.rb [options]"
+
+    opts.separator ""
+    opts.separator "Options:"
+
+    # Mandatory argument.
+    usage = "Used in conjunction with --replace.  Specifies the regular expression pattern for the gsub funtion."
+  	opts.on("--match=VALUE", usage) do |match|
+  	  options.match = Regexp.new(match)
+	  end
+
+    usage = "Used in conjunction with --match.  Specifies the replacement for the gsub funtion."
+  	opts.on("--replace=VALUE", usage) do |pattern|
+  	  options.replace = pattern
+	  end
+
+	  opts.on("-h", "--help") do
+		  puts opts.to_s
+	  end
+  end
+
+  opts.parse(ARGV)
+  return options
+end
+  
+options = parse_args
 Dir.new(Dir.getwd)
 Dir.glob('*.cpp') do |file|
-  path = File.join(Dir.getwd, file)
-  rename = SwigRename.new(path)	
-  rename.convert_file()
+	path = File.join(Dir.getwd, file)
+	rename = SwigRename.new(path, options)	
+	rename.convert_file()
 end
 
-  
