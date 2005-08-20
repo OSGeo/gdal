@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/08/20 23:46:28  fwarmerdam
+ * bug 858: fix for double compression
+ *
  * Revision 1.21  2005/08/19 02:14:11  fwarmerdam
  * bug 857: add ability to set layer names
  *
@@ -452,6 +455,9 @@ public:
   // This is the method that does the work.
   bool compressBlock();
 
+  // static method to allow us to query whether HFA type supported
+  static bool QueryDataTypeSupported( int nHFADataType );
+
   // Get methods - only valid after compressBlock has been called.
   GByte*  getCounts()     { return m_pCounts; };
   GUInt32 getCountSize()  { return m_nSizeCounts; };
@@ -471,6 +477,7 @@ private:
   GUInt32 m_nBlockSize;
   GUInt32 m_nBlockCount;
   int m_nDataType;
+  int m_nDataTypeNumBits; // the number of bits the datatype we are trying to compress takes
   
   GByte   *m_pCounts;
   GByte   *m_pCurrCount;
@@ -482,7 +489,7 @@ private:
   
   GUInt32  m_nMin;
   GUInt32  m_nNumRuns;
-  GByte    m_nNumBits;
+  GByte    m_nNumBits; // the number of bits needed to compress the range of values in the block
   
 };
 
