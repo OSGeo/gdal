@@ -37,6 +37,15 @@ csharp: gdalvars
         cd ..
         nmake /f makefile.vc
 
+ruby: gdalvars
+		cd ruby
+		$(SWIG) -ruby -o gdalconst.c ..\include\gdalconst.i
+        $(SWIG) -c++ -ruby -o gdal.cpp ..\include\gdal.i
+        $(SWIG) -c++ -ruby -o osr.cpp ..\include\osr.i
+        $(SWIG) -c++ -ruby -o ogr.cpp ..\include\ogr.i
+        nmake /f makefile.vc build
+        nmake /f makefile.vc install 
+
 clean:
         -del setup.ini
         cd csharp
@@ -44,3 +53,7 @@ clean:
         cd ..
         cd python
         rmdir /S /Q build
+        cd ..
+        cd ruby
+        name /f makefile.vc clean
+        cd ..
