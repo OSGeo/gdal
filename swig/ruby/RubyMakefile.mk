@@ -8,23 +8,14 @@
 #
 # * By convention Ruby method names are lower case with underscores,
 #	thus methods such as "GetFieldName" need to be mapped to
-#	"get_field_name."  The makefile automatically does this by:
-#	
-#	1. Calls the RenameMakefile which blanks out the renames.i 
-#	   SWIG file.  It then runs SWIG to generate wrapper files.
-#	   Then it runs a Ruby script to translate methods names, 
-#	   writes %rename directives to renames.i, and then deletes
-#	   the wrapper files.
-#	2. This makefile then generates the wrappers and builds
-#	   the Ruby extensions as shared libraries.
-
+#	"get_field_name."  This is done by running the separate
+#	RenamesMakefile.mk script.
 
 GDAL_ROOT = ../..
 RUBY = ruby
 
-include ../../GDALmake.opt
+include $(GDAL_ROOT)/GDALmake.opt
 
-BINDING = ruby
 include ../SWIGmake.base
 
 RUBY_MODULES = gdal/gdal.so gdal/ogr.so gdal/gdalconst.so gdal/osr.so
@@ -44,8 +35,7 @@ RUBY_INCLUDE := -I$(RUBY_ARCH_DIR)
 GDAL_LIB := -L$(GDAL_ROOT) -lgdal 
 RUBY_LIB := -shared -L$(RUBY_DIR)/lib -l$(RUBY_SO_NAME)
 
-renames:
-	$(MAKE) -f RenameMakefile.mk all
+generate: $(WRAPPERS)
 
 build: $(RUBY_MODULES)
 
