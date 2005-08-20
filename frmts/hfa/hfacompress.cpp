@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/08/20 23:46:28  fwarmerdam
+ * bug 858: fix for double compression
+ *
  * Revision 1.1  2005/01/10 17:40:40  fwarmerdam
  * New
  *
@@ -41,9 +44,10 @@ CPL_CVSID("$Id$");
 HFACompress::HFACompress( void *pData, GUInt32 nBlockSize, int nDataType )
 {
   m_pData       = pData;
-  m_nBlockSize  = nBlockSize;
-  m_nBlockCount = nBlockSize / ( HFAGetDataTypeBits( nDataType ) / 8 );
   m_nDataType   = nDataType;
+  m_nDataTypeNumBits    = HFAGetDataTypeBits( m_nDataType );
+  m_nBlockSize  = nBlockSize;
+  m_nBlockCount = nBlockSize / ( m_nDataTypeNumBits / 8 );
 
   /* Allocate some memory for the count and values - probably too big */
   /* About right for worst case scenario tho */
@@ -87,21 +91,25 @@ GUInt32 HFACompress::valueAsUInt32( GUInt32 index )
 {
 GUInt32 val = 0;
 
-  if( HFAGetDataTypeBits( m_nDataType ) == 8 )
+  if( m_nDataTypeNumBits == 8 )
   {
     val = ((GByte*)m_pData)[index];
   }
-  else if( HFAGetDataTypeBits( m_nDataType ) == 16 )
+  else if( m_nDataTypeNumBits == 16 )
   {
     val = ((GUInt16*)m_pData)[index];
   }
-  else if( HFAGetDataTypeBits( m_nDataType ) == 32 )
+  else if( m_nDataTypeNumBits == 32 )
   {
     val = ((GUInt32*)m_pData)[index]; 
   }
   else
   {
-    fprintf( stderr, "%d not supported\n", m_nDataType );
+    /* Should not get to here - check in compressBlock() should return false if 
+    we can't compress this blcok because we don't know about the type */
+    CPLError( CE_Failure, CPLE_FileIO, "Imagine Datatype 0x%x (0x%x bits) not supported\n", 
+          m_nDataType,
+          m_nDataTypeNumBits );
     CPLAssert( FALSE );
   }
   
@@ -131,7 +139,6 @@ GUInt32 u32Min, u32Max;
       u32Max = u32Val;
   }    
   
-  //fprintf( stderr, "max = %x min = %x diff = %x\n", u32Max, u32Min, u32Max - u32Min );
   *pNumBits = _FindNumBits( u32Max - u32Min );
 
   return u32Min;
@@ -215,6 +222,18 @@ bool HFACompress::compressBlock()
 {
 GUInt32 nLastUnique = 0;
 
+  /* Check we know about the datatype to be compressed.
+      If we can't compress it we should return false so that 
+      the block cannot be compressed (we can handle just about 
+      any type uncompressed) */
+  if( ! QueryDataTypeSupported( m_nDataType ) )
+  {
+    CPLDebug( "HFA", "Cannot compress HFA datatype 0x%x (0x%x bits). Writing uncompressed instead.\n", 
+              m_nDataType,
+              m_nDataTypeNumBits );
+    return false; 
+  }
+
   /* reset our pointers */
   m_pCurrCount  = m_pCounts;
   m_pCurrValues = m_pValues;
@@ -222,8 +241,6 @@ GUInt32 nLastUnique = 0;
   /* Get the minimum value - this can be subtracted from each value in the image */
   m_nMin = findMin( &m_nNumBits );
   
-  //fprintf( stderr, "min = %x, bits = %x\n", m_nMin, (int)m_nNumBits );
-
   /* Go thru the block */
   GUInt32 u32Last, u32Val;
   u32Last = valueAsUInt32( 0 );
@@ -254,8 +271,15 @@ GUInt32 nLastUnique = 0;
   /* set the size variables */
   m_nSizeCounts = m_pCurrCount - m_pCounts;
   m_nSizeValues = m_pCurrValues - m_pValues;
-  
+
   // The 13 is for the header size - maybe this should live with some constants somewhere?
   return ( m_nSizeCounts +  m_nSizeValues + 13 ) < m_nBlockSize;
+}
+
+bool HFACompress::QueryDataTypeSupported( int nHFADataType )
+{
+  int nBits = HFAGetDataTypeBits( nHFADataType );
+  
+  return ( nBits == 8 ) || ( nBits == 16 ) || ( nBits == 32 );
 }
 
