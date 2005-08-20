@@ -10,6 +10,9 @@
 
  *
  * $Log$
+ * Revision 1.2  2005/08/20 20:50:13  cfis
+ * Added GetLayer method that maps to either GetLayerByName or GetLayerByIndex.  Also commented out Open and OpenShared as DataSouce class static methods.
+ *
  * Revision 1.1  2005/08/09 17:40:09  kruland
  * Added support for ruby.
  *
@@ -433,7 +436,7 @@
 
 
 //**************   Ruby specific type maps ***************
-%extend OGRDriverShadow {
+/*%extend OGRDriverShadow {
 	static OGRDriverShadow* GetDriverByName( char const *name ) {
   	return (OGRDriverShadow*) OGRGetDriverByName( name );
 	}
@@ -442,20 +445,42 @@
   	return (OGRDriverShadow*) OGRGetDriver(driver_number);
 	}  
 }
+*/
+
+/* Replace GetLayerByIndex and GetLayerByName by GetLayer */
+%ignore OGRDataSourceShadow::GetLayerByIndex;
+%ignore OGRDataSourceShadow::GetLayerByName;
 
 %extend OGRDataSourceShadow {
-	%newobject Open;
+	OGRLayerShadow *GetLayer(VALUE object) {
+		// get field index
+		switch (TYPE(object)) {
+			case T_STRING: {
+				char* name = StringValuePtr(object);
+				return OGR_DS_GetLayerByName(self, name);
+				break;
+			}
+			case T_FIXNUM: {
+				int index = NUM2INT(object);
+				return OGR_DS_GetLayer(self, index);
+				break;
+			}
+			default:
+				SWIG_exception(SWIG_TypeError, "Value must be a string or integer.");
+		}
+	}
+
+	/*%newobject Open;
 	static OGRDataSourceShadow *Open( const char * filename, int update=0 ) {
 	    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(filename,update, NULL);
 	    return ds;
 	  }
 	
 	%newobject OpenShared;
-	static
-	OGRDataSourceShadow *OpenShared( const char * filename, int update=0 ) {
+	static OGRDataSourceShadow *OpenShared( const char * filename, int update=0 ) {
 	    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(filename,update, NULL);
 	    return ds;
-	}
+	}*/
 }
 
 // Extend the layers class by adding the method each to support
@@ -568,4 +593,3 @@
 		return result;		
 	}        
 }
-
