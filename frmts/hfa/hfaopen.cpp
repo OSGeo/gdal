@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.44  2005/08/20 23:43:37  fwarmerdam
+ * Better implementation of HFADelete().
+ *
  * Revision 1.43  2005/08/19 02:14:11  fwarmerdam
  * bug 857: add ability to set layer names
  *
@@ -543,12 +546,22 @@ CPLErr HFADelete( const char *pszFilename )
 
 {
     HFAInfo_t   *psInfo = HFAOpen( pszFilename, "rb" );
-    HFAEntry	*poDMS = NULL;
+    HFAEntry    *poDMS = NULL;
     HFAEntry    *poLayer = NULL;
+    HFAEntry    *poNode = NULL;
 
     if( psInfo != NULL )
     {
-        poLayer = psInfo->poRoot->GetNamedChild( "Layer_1" );
+        poNode = psInfo->poRoot->GetChild();
+        while( ( poNode != NULL ) && ( poLayer == NULL ) )
+        {
+            if( EQUAL(poNode->GetType(),"Eimg_Layer") )
+            {
+                poLayer = poNode;
+            }
+            poNode = poNode->GetNext();
+        }
+
         if( poLayer != NULL )
             poDMS = poLayer->GetNamedChild( "ExternalRasterDMS" );
 
@@ -558,7 +571,7 @@ CPLErr HFADelete( const char *pszFilename )
                 poDMS->GetStringField( "fileName.string" );
 
             if( pszRawFilename != NULL )
-                HFARemove( CPLFormFilename( psInfo->pszPath, 
+                HFARemove( CPLFormFilename( psInfo->pszPath,
                                             pszRawFilename, NULL ) );
         }
 
