@@ -10,6 +10,9 @@
 
  *
  * $Log$
+ * Revision 1.3  2005/08/21 23:52:08  cfis
+ * The Layer each method was not correctly setting the owernship flag for returned objects.  This has now been fixed and commented.
+ *
  * Revision 1.2  2005/08/20 20:50:13  cfis
  * Added GetLayer method that maps to either GetLayerByName or GetLayerByIndex.  Also commented out Open and OpenShared as DataSouce class static methods.
  *
@@ -487,11 +490,17 @@
 // the ruby enumerator mixin.
 %mixin OGRLayerShadow "Enumerable";
 %extend OGRLayerShadow {
+  %newobject OGRLayerShadow::each;
   void each() {
 		OGRFeatureShadow* feature = NULL;
 	 	while (feature = (OGRFeatureShadow*) OGR_L_GetNextFeature(self))
 	 	{
-			rb_yield(SWIG_NewPointerObj((void *) feature, $descriptor(OGRFeatureShadow *), 0));
+			/* Convert the pointer to a Ruby object.  Note we set the flag
+			   to one manually to show this is a new object */
+			VALUE object = SWIG_NewPointerObj((void *) feature, $descriptor(OGRFeatureShadow *), 1);			
+
+			/* Now invoke the block specified for this method. */
+			rb_yield(object);
     }
 	}
 }
