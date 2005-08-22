@@ -1105,7 +1105,7 @@ else
 
     AC_MSG_CHECKING([for lt_base.h in $with_mrsid/include/support])
     if test -r "$with_mrsid/include/support/lt_base.h" ; then
-      AC_MSG_RESULT([found MrSID DSDK version 4.0.x.])
+      AC_MSG_RESULT([found MrSID DSDK version 4.x or newer.])
 
       HAVE_MRSID=yes
       MRSID_INCLUDE="-I$with_mrsid/include/base -I$with_mrsid/include/metadata -I$with_mrsid/include/mrsid_readers -I$with_mrsid/include/j2k_readers -I$with_mrsid/include/support"
@@ -1119,7 +1119,7 @@ else
 
       AC_MSG_CHECKING([for MG3ImageWriter.h in $with_mrsid/include/mrsid_writers])
       if test -r "$with_mrsid/include/mrsid_writers/MG3ImageWriter.h" ; then
-        AC_MSG_RESULT([found MrSID ESDK version 4.0.x.])
+        AC_MSG_RESULT([found MrSID ESDK version 4.x or newer.])
 	MRSID_FLAGS="-DMRSID_ESDK_VERSION_40 $MRSID_FLAGS"
 	MRSID_INCLUDE="-I$with_mrsid/include/mrsid_writers -I$with_mrsid/include/j2k_writers $MRSID_INCLUDE"
 	LIBS="-L$with_mrsid/3rd-party/lib/Release -lltiesdk $LIBS -lcryptopp"
