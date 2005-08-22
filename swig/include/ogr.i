@@ -9,6 +9,24 @@
 
  *
  * $Log$
+ * Revision 1.35  2005/08/22 19:00:50  kruland
+ * Attempt to make ogr library behave well using normal script memory
+ * management.
+ * - Implemented public destructor for DataSource, Feature, FeatureDefn, FieldDefn,
+ *   Geometry
+ * - Stubbed Reference() and Dereference() for all classes as "pass"
+ *   in python for backward compatibility
+ * - Implemented Destroy() and Release() for all classes in python
+ *   as calls to destructor along with disowning the C ptr so the destructor
+ *   is not called again.  These methods are only for backward compatibility in
+ *   python bindings.
+ * - Added %newobject to Layer.GetFeature() and Layer.GetNextFeature()
+ * - Use DISOWN typemap on Feature.SetGeometryDirectly() and
+ *   Geometry.AddGeometryDirectly() because they assume ownership of the
+ *   argument.
+ * - Removed %newobject from Geometry.GetGeometryRef(), GetOpenDS() because they
+ *   return internal references.
+ *
  * Revision 1.34  2005/08/10 16:49:43  hobu
  * syntactic sugar to support the __iter__ protocol on Layer
  * for Python.  This allows us to (slowly) do for feature in layer and
@@ -311,7 +329,6 @@ public:
 class OGRDataSourceShadow {
   OGRDataSourceShadow() {
   }
-  ~OGRDataSourceShadow();
 public:
 %extend {
 
@@ -319,21 +336,30 @@ public:
   char const *name;
 %mutable;
 
-  void Destroy() {
-    OGR_DS_Destroy(self);
-  }
-
-  void Release() {
+  ~OGRDataSourceShadow() {
     OGRReleaseDataSource(self);
   }
+
+#ifdef SWIGPYTHON
+%pythoncode {
+  def Destroy(self):
+    self.__del__()
+    self.thisown = 0
+}
+
+%pythoncode {
+  def Release(self):
+    self.__del__()
+    self.thisown = 0
+}
+%pythoncode {
+  def Reference(self):
+    pass
   
-  int Reference() {
-    return OGR_DS_Reference(self);
-  }
-  
-  int Dereference() {
-    return OGR_DS_Dereference(self);
-  }
+  def Dereference(self):
+    pass
+}
+#endif
   
   int GetRefCount() {
     return OGR_DS_GetRefCount(self);
@@ -456,9 +482,6 @@ ds[0:4] would return a list of the first four layers."""
 
 }; /* class OGRDataSourceShadow */
 
-
-
-
 %rename (Layer) OGRLayerShadow;
 class OGRLayerShadow {
   OGRLayerShadow();
@@ -466,13 +489,15 @@ class OGRLayerShadow {
 public:
 %extend {
 
-  int Reference() {
-    return OGR_L_Reference(self);
-  }
-
-  int Dereference() {
-    return OGR_L_Dereference(self);
-  }
+#ifdef SWIGPYTHON
+%pythoncode {
+  def Reference(self):
+    pass
+  
+  def Dereference(self):
+    pass
+}
+#endif
   
   int GetRefCount() {
     return OGR_L_GetRefCount(self);
@@ -508,10 +533,12 @@ public:
     return OGR_FD_GetName(OGR_L_GetLayerDefn(self));
   }
   
+%newobject GetFeature;
   OGRFeatureShadow *GetFeature(long fid) {
     return (OGRFeatureShadow*) OGR_L_GetFeature(self, fid);
   }
   
+%newobject GetNextFeature;
   OGRFeatureShadow *GetNextFeature() {
     return (OGRFeatureShadow*) OGR_L_GetNextFeature(self);
   }
@@ -532,6 +559,7 @@ public:
     return 0;
   }
   
+
   OGRErr CreateFeature(OGRFeatureShadow *feature) {
     OGRErr err = OGR_L_CreateFeature(self, feature);
     if (err != 0) {
@@ -669,18 +697,25 @@ layer[0:4] would return a list of the first four features."""
 %rename (Feature) OGRFeatureShadow;
 class OGRFeatureShadow {
   OGRFeatureShadow();
-  ~OGRFeatureShadow();
 public:
 %extend {
+
+  ~OGRFeatureShadow() {
+    OGR_F_Destroy(self);
+  }
 
   %feature("kwargs") OGRFeatureShadow;
   OGRFeatureShadow( OGRFeatureDefnShadow *feature_def = 0 ) {
     return (OGRFeatureShadow*) OGR_F_Create( feature_def );
   }
 
-  void Destroy() {
-    OGR_F_Destroy(self);
-  }
+#ifdef SWIGPYTHON
+%pythoncode {
+  def Destroy(self):
+    self.__del__()
+    self.thisown = 0
+}
+#endif
   
   OGRFeatureDefnShadow *GetDefnRef() {
     return (OGRFeatureDefnShadow*) OGR_F_GetDefnRef(self);
@@ -693,12 +728,14 @@ public:
     return 0;
   }
 
+%apply SWIGTYPE *DISOWN {OGRGeometryShadow *geom};
   OGRErr SetGeometryDirectly(OGRGeometryShadow* geom) {
     OGRErr err = OGR_F_SetGeometryDirectly(self, geom);
     if (err != 0)
       throw err;
     return 0;
   }
+%clear OGRGeometryShadow *geom;
   
   OGRGeometryShadow *GetGeometryRef() {
     return (OGRGeometryShadow*) OGR_F_GetGeometryRef(self);
@@ -898,18 +935,25 @@ public:
 %rename (FeatureDefn) OGRFeatureDefnShadow;
 class OGRFeatureDefnShadow {
   OGRFeatureDefnShadow();
-  ~OGRFeatureDefnShadow();
 public:
 %extend {
+  
+  ~OGRFeatureDefnShadow() {
+    OGR_FD_Destroy(self);
+  }
 
   %feature("kwargs") OGRFeatureDefnShadow;
   OGRFeatureDefnShadow(const char* name=NULL) {
     return (OGRFeatureDefnShadow* )OGR_FD_Create(name);
   }
   
-  void Destroy() {
-    OGR_FD_Destroy(self);
-  }
+#ifdef SWIGPYTHON
+%pythoncode {
+  def Destroy(self):
+    self.__del__()
+    self.thisown = 0
+}
+#endif
 
   const char* GetName(){
     return OGR_FD_GetName(self);
@@ -940,13 +984,15 @@ public:
     OGR_FD_SetGeomType(self, geom_type);
   }
   
-  int Reference() {
-    return OGR_FD_Reference(self);
-  }
+#ifdef SWIGPYTHON
+%pythoncode {
+  def Reference(self):
+    pass
   
-  int Dereference() {
-    return OGR_FD_Dereference(self);
-  }
+  def Dereference(self):
+    pass
+}
+#endif
   
   int GetReferenceCount(){
     return OGR_FD_GetReferenceCount(self);
@@ -968,9 +1014,12 @@ public:
 
 class OGRFieldDefnShadow {
   OGRFieldDefnShadow();
-  ~OGRFieldDefnShadow();
 public:
 %extend {
+
+  ~OGRFieldDefnShadow() {
+    OGR_Fld_Destroy(self);
+  }
 
   %feature("kwargs") OGRFieldDefnShadow;
   OGRFieldDefnShadow( const char* name="unnamed", 
@@ -978,9 +1027,13 @@ public:
     return (OGRFieldDefnShadow*) OGR_Fld_Create(name, field_type);
   }
 
-  void Destroy() {
-    OGR_Fld_Destroy(self);
-  }
+#ifdef SWIGPYTHON
+%pythoncode {
+  def Destroy(self):
+    self.__del__()
+    self.thisown = 0
+}
+#endif
   
   const char * GetName() {
     return (const char *) OGR_Fld_GetNameRef(self);
@@ -1095,9 +1148,12 @@ public:
 %rename (Geometry) OGRGeometryShadow;
 class OGRGeometryShadow {
   OGRGeometryShadow();
-  ~OGRGeometryShadow();
 public:
 %extend {
+    
+  ~OGRGeometryShadow() {
+    OGR_G_DestroyGeometry( self );
+  }
 
   %feature("kwargs") OGRGeometryShadow;
   OGRGeometryShadow( OGRwkbGeometryType type = wkbUnknown, char *wkt = 0, int wkb= 0, char *wkb_buf = 0, char *gml = 0 ) {
@@ -1141,9 +1197,11 @@ public:
     OGR_G_AddPoint( self, x, y, z );
   }
 
+%apply SWIGTYPE *DISOWN {OGRGeometryShadow* other};
   OGRErr AddGeometryDirectly( OGRGeometryShadow* other ) {
     return OGR_G_AddGeometryDirectly( self, other );
   }
+%clear OGRGeometryShadow* other;
 
   OGRErr AddGeometry( OGRGeometryShadow* other ) {
     return OGR_G_AddGeometry( self, other );
@@ -1154,9 +1212,13 @@ public:
     return (OGRGeometryShadow*) OGR_G_Clone(self);
   } 
     
-  void Destroy() {
-    OGR_G_DestroyGeometry( self );
-  }
+#ifdef SWIGPYTHON
+%pythoncode {
+  def Destroy(self):
+    self.__del__()
+    self.thisown = 0
+}
+#endif
 
   OGRwkbGeometryType GetGeometryType() {
     return (OGRwkbGeometryType) OGR_G_GetGeometryType(self);
@@ -1198,7 +1260,6 @@ public:
     OGR_G_SetPoint(self, point, x, y, z);
   }
   
-  %newobject GetGeometryRef;
   OGRGeometryShadow* GetGeometryRef(int geom) {
     return (OGRGeometryShadow*) OGR_G_GetGeometryRef(self, geom);
   }
@@ -1399,7 +1460,6 @@ OGRDriverShadow* GetDriver(int driver_number) {
 %}
 #endif
 
-%newobject GetOpenDS;
 %inline %{
   OGRDataSourceShadow* GetOpenDS(int ds_number) {
     OGRDataSourceShadow* layer = (OGRDataSourceShadow*) OGRGetOpenDS(ds_number);
