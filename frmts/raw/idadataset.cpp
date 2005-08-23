@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/08/23 16:21:25  fwarmerdam
+ * Fixed help link, dont barf in open if fp null.
+ *
  * Revision 1.7  2005/05/05 13:55:42  fwarmerdam
  * PAM Enable
  *
@@ -539,6 +542,9 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
     int      nXSize, nYSize;
     GIntBig  nExpectedFileSize, nActualFileSize;
 
+    if( poOpenInfo->fp == NULL )
+        return NULL;
+
     if( poOpenInfo->nHeaderBytes < 512 )
         return NULL;
 
@@ -957,7 +963,7 @@ void GDALRegister_IDA()
         poDriver->SetDescription( "IDA" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Image Data and Analysis" );
-//        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_IDA.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_varios.html#IDA" );
 
         poDriver->pfnOpen = IDADataset::Open;
         poDriver->pfnCreate = IDADataset::Create;
