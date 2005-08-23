@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2005/08/23 20:11:46  dnadeau
+ * HDF5 add Metadata
+ *
  * Revision 1.3  2005/07/27 16:42:13  dnadeau
  * change variable to hdf5imagedataset class
  *
@@ -57,7 +60,6 @@ typedef struct HDF5GroupObjects {
 } HDF5GroupObjects;
 
 
-
 herr_t HDF5CreateGroupObjs(hid_t, const char *,void *);
 
 /************************************************************************/
@@ -74,17 +76,19 @@ class HDF5Dataset : public GDALDataset
   hid_t            hHDF5;     
   hid_t            hDatasetID;
   hid_t            hGroupID; /* H handler interface */
-  char	           **papszGlobalMetadata;
   char             **papszSubDatasets;
   int              bIsHDFEOS;
   int              nDatasetType;
   int              nSubDataCount;
   char             *pszFilename;
 
+
   HDF5GroupObjects *poH5RootGroup; /* Contain hdf5 Groups information */
 
   CPLErr ReadGlobalAttributes(int);
-  CPLErr HDF5ListGroupObjects(HDF5GroupObjects *);
+  CPLErr HDF5ListGroupObjects(HDF5GroupObjects *, int );
+  CPLErr CreateMetadata( HDF5GroupObjects *, int );
+
   HDF5GroupObjects* HDF5FindDatasetObjects
     (HDF5GroupObjects *, char *);
   char* CreatePath(HDF5GroupObjects *);
@@ -94,12 +98,16 @@ class HDF5Dataset : public GDALDataset
   const char * GetDataTypeName(hid_t);
 
   public:
-    HDF5Dataset();
-    ~HDF5Dataset();
-    
-    virtual char **GetMetadata(const char * pszDomain = "");
 
-    static GDALDataset *Open(GDALOpenInfo *);
+  char	           **papszMetadata;
+  HDF5GroupObjects *poH5CurrentObject; 
+
+  HDF5Dataset();
+  ~HDF5Dataset();
+    
+  virtual char **GetMetadata(const char * pszDomain = "");
+
+  static GDALDataset *Open(GDALOpenInfo *);
 
 };
 

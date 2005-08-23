@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.9  2005/08/23 20:11:30  dnadeau
+ * HDF5 add Metadata
+ *
  * Revision 1.8  2005/08/19 15:03:20  dron
  * Fixed type of start offset array in IReadBlock().
  *
@@ -50,6 +53,7 @@
  */
 #include "hdf5.h"
 
+#include "gdal_pam.h"
 #include "gdal_priv.h"
 #include "cpl_string.h"
 #include "hdf5dataset.h"
@@ -90,13 +94,13 @@ public:
     HDF5ImageDataset();
     ~HDF5ImageDataset();
     
-    CPLErr CreateProjections();
+    CPLErr CreateProjections( );
     static GDALDataset  *Open( GDALOpenInfo * );
     const char          *GetProjectionRef();
     virtual CPLErr      SetProjection( const char * );
-    virtual int         GetGCPCount();
+    virtual int         GetGCPCount( );
     virtual const char  *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs(); 
+    virtual const GDAL_GCP *GetGCPs( ); 
     
 };
 
@@ -119,32 +123,34 @@ HDF5ImageDataset::HDF5ImageDataset()
     poH5RootGroup   = NULL;
     dims            = NULL;
     maxdims         = NULL;
+    papszName       = NULL;
+    papszMetadata   = NULL;
 
 }
 
 /************************************************************************/
 /*                            ~HDF5ImageDataset()                       */
 /************************************************************************/
-HDF5ImageDataset::~HDF5ImageDataset()
+HDF5ImageDataset::~HDF5ImageDataset( )
 {
 
 
-    if (papszName != NULL)
-	CSLDestroy(papszName);
+    if( papszName != NULL )
+    	CSLDestroy( papszName );
 
-    if(dims)
-	CPLFree(dims);
+    if( dims )
+	CPLFree( dims );
 
-    if(maxdims)
-	CPLFree(maxdims);
+    if( maxdims )
+	CPLFree( maxdims );
 
     if( nGCPCount > 0 )
     {
         for( int i = 0; i < nGCPCount; i++ )
         {
-            if ( pasGCPList[i].pszId )
+            if( pasGCPList[i].pszId )
                 CPLFree( pasGCPList[i].pszId );
-            if ( pasGCPList[i].pszInfo )
+            if( pasGCPList[i].pszInfo )
                 CPLFree( pasGCPList[i].pszInfo );
         }
 
@@ -157,10 +163,10 @@ HDF5ImageDataset::~HDF5ImageDataset()
 
 /************************************************************************/
 /* ==================================================================== */
-/*                            HDF5ImageRasterBand                       */
+/*                            Hdf5imagerasterband                       */
 /* ==================================================================== */
 /************************************************************************/
-class HDF5ImageRasterBand : public GDALRasterBand
+class HDF5ImageRasterBand : public GDALPamRasterBand
 {
     friend class HDF5ImageDataset;
 
@@ -172,7 +178,8 @@ class HDF5ImageRasterBand : public GDALRasterBand
 public:
   
     HDF5ImageRasterBand( HDF5ImageDataset *, int, GDALDataType );
-    
+    ~HDF5ImageRasterBand();
+
     virtual CPLErr          IReadBlock( int, int, void * );
     virtual double	    GetNoDataValue( int * ); 
     virtual CPLErr	    SetNoDataValue( double );
@@ -180,20 +187,52 @@ public:
 };
 
 /************************************************************************/
+/*                        ~HDF5ImageRasterBand()                        */
+/************************************************************************/
+
+HDF5ImageRasterBand::~HDF5ImageRasterBand()
+{
+
+}
+/************************************************************************/
 /*                           HDF5ImageRasterBand()                      */
 /************************************************************************/
 HDF5ImageRasterBand::HDF5ImageRasterBand( HDF5ImageDataset *poDS, int nBand,
                                           GDALDataType eType )
 
 {
+    char          **papszMetaGlobal;
     this->poDS    = poDS;
     this->nBand   = nBand;
     eDataType     = eType;
     bNoDataSet    = FALSE;
     dfNoDataValue = -9999;
-    nBlockXSize   = poDS->GetRasterXSize();
+    nBlockXSize   = poDS->GetRasterXSize( );
     nBlockYSize   = 1;
 
+/* -------------------------------------------------------------------- */
+/*      Take a copy of Global Metadata since  I can't pass Raster       */
+/*      variable to Iterate function.                                   */
+/* -------------------------------------------------------------------- */
+    CSLDestroy( papszMetadata );
+
+    papszMetaGlobal = CSLDuplicate( poDS->papszMetadata );
+    CSLDestroy( poDS->papszMetadata );
+    poDS->papszMetadata = NULL;
+
+    if( poDS->poH5Objects->nType == H5G_DATASET ) {
+	poDS->CreateMetadata( poDS->poH5Objects, H5G_DATASET );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Recover Global Metadat and set Band Metadata                    */
+/* -------------------------------------------------------------------- */
+
+    papszMetadata = CSLDuplicate( poDS->papszMetadata );
+    CSLDestroy( poDS->papszMetadata );
+    poDS->papszMetadata = CSLDuplicate( papszMetaGlobal );
+    CSLDestroy( papszMetaGlobal );
+    SetMetadata( papszMetadata );
 }
 
 /************************************************************************/
@@ -202,7 +241,7 @@ HDF5ImageRasterBand::HDF5ImageRasterBand( HDF5ImageDataset *poDS, int nBand,
 double HDF5ImageRasterBand::GetNoDataValue( int * pbSuccess )
 
 {
-    if(pbSuccess)
+    if( pbSuccess )
 	*pbSuccess = bNoDataSet;
 
     return dfNoDataValue;
@@ -228,24 +267,24 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     herr_t      status;
     hsize_t     count[3];    
-    hssize_t    offset[3];
+    hsize_t     offset[3];
     int         nSizeOfData;
     hid_t       memspace;
     hsize_t     col_dims[3];
     hsize_t     rank;
 
-    HDF5ImageDataset    *poGDS = (HDF5ImageDataset *) poDS;
+    HDF5ImageDataset    *poGDS = ( HDF5ImageDataset * ) poDS;
    
     if( poGDS->eAccess == GA_Update ) {
 	memset( pImage, 0,
 		nBlockXSize * nBlockYSize * 
-		GDALGetDataTypeSize(eDataType)/8);
+		GDALGetDataTypeSize( eDataType )/8 );
 	return CE_None;
     }
 
     rank=2;
 
-    if(poGDS->ndims == 3){
+    if( poGDS->ndims == 3 ){
 	rank=3;
 	offset[2] = nBand-1;
 	count[2]  = 1;
@@ -255,18 +294,18 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     offset[0] = nBlockYOff;
     offset[1] = nBlockXOff;
     count[0]  = 1;
-    count[1]  = poGDS->GetRasterXSize();
+    count[1]  = poGDS->GetRasterXSize( );
 
-    nSizeOfData = H5Tget_size(poGDS->native);
-    memset(pImage,0,count[1]-offset[1]*nSizeOfData);
+    nSizeOfData = H5Tget_size( poGDS->native );
+    memset( pImage,0,count[1]-offset[1]*nSizeOfData );
 
 /* -------------------------------------------------------------------- */
 /*      Select 1 line                                                   */
 /* -------------------------------------------------------------------- */
-    status =  H5Sselect_hyperslab(poGDS->dataspace_id, 
+    status =  H5Sselect_hyperslab( poGDS->dataspace_id, 
 				  H5S_SELECT_SET, 
 				  offset, NULL, 
-				  count, NULL);
+				  count, NULL );
    
 
 /* -------------------------------------------------------------------- */
@@ -274,14 +313,14 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     col_dims[0]=count[1];
     col_dims[1]=1;
-    memspace = H5Screate_simple(rank,col_dims, NULL);
+    memspace = H5Screate_simple( rank,col_dims, NULL );
 
-    status = H5Dread (poGDS->dataset_id,
+    status = H5Dread ( poGDS->dataset_id,
 		      poGDS->native, 
 		      memspace,
 		      poGDS->dataspace_id,
 		      H5P_DEFAULT, 
-		      pImage);
+		      pImage );
 
     return CE_None;
 }
@@ -296,18 +335,20 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     HDF5ImageDataset    *poDS;
     int nDatasetPos = 2;
     char szFilename[2048];
+
     poDS = new HDF5ImageDataset();
+
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
   
-    if(!EQUALN(poOpenInfo->pszFilename, "HDF5:", 5))
+    if(!EQUALN( poOpenInfo->pszFilename, "HDF5:", 5 ) )
 	return NULL;
   
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
     /* printf("poOpenInfo->pszFilename %s\n",poOpenInfo->pszFilename); */
-    poDS->papszName = CSLTokenizeString2( poOpenInfo->pszFilename,
+    poDS->papszName = CSLTokenizeString2(  poOpenInfo->pszFilename,
 				    ":", CSLT_HONOURSTRINGS );
 
     if( !((CSLCount(poDS->papszName) == 3) || 
@@ -315,10 +356,10 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         CSLDestroy(poDS->papszName);
         return NULL;
     }
-     	  
-    poDS->pszFilename = CPLStrdup(poOpenInfo->pszFilename);
+
+    poDS->pszFilename = CPLStrdup( poOpenInfo->pszFilename );
   
-    if(!EQUAL(poDS->papszName[0], "HDF5")) {
+    if( !EQUAL( poDS->papszName[0], "HDF5" ) ) {
 	return NULL;
     }
 
@@ -343,15 +384,14 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     /* -------------------------------------------------------------------- */
     poDS->hHDF5 = H5Fopen(szFilename,
 			  H5F_ACC_RDONLY, 
-			  H5P_DEFAULT);
+			  H5P_DEFAULT );
   
-    if (poDS->hHDF5 < 0)  {
+    if( poDS->hHDF5 < 0 )  {
 	return NULL;
     }
-    printf("Open!!\n");
   
-    poDS->hGroupID = H5Gopen(poDS->hHDF5, "/"); 
-    if (poDS->hGroupID < 0){
+    poDS->hGroupID = H5Gopen( poDS->hHDF5, "/" ); 
+    if( poDS->hGroupID < 0 ){
 	poDS->bIsHDFEOS=false;
 	return NULL;
     }
@@ -360,83 +400,86 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      THIS IS AN HDF5 FILE                                            */
 /* -------------------------------------------------------------------- */
     poDS->bIsHDFEOS=TRUE;
-    poDS->ReadGlobalAttributes(FALSE);
+    poDS->ReadGlobalAttributes( FALSE );
   
 /* -------------------------------------------------------------------- */
 /*      Create HDF5 Data Hierarchy in a link list                       */
 /* -------------------------------------------------------------------- */
-    poDS->poH5Objects=
-	poDS->HDF5FindDatasetObjects(poDS->poH5RootGroup, 
-				     poDS->papszName[nDatasetPos]);
-	printf("%s\n",poDS->poH5Objects->pszPath);
+    poDS->poH5Objects = 
+	poDS->HDF5FindDatasetObjects( poDS->poH5RootGroup, 
+				      poDS->papszName[nDatasetPos] );
+
 /* -------------------------------------------------------------------- */
 /*      Retrieve HDF5 data information                                  */
 /* -------------------------------------------------------------------- */
-    poDS->dataset_id   = H5Dopen(poDS->hHDF5,poDS->poH5Objects->pszPath); 
-    poDS->dataspace_id = H5Dget_space(poDS->dataset_id);                       
-    poDS->ndims        = H5Sget_simple_extent_ndims(poDS->dataspace_id);
-    poDS->dims         = (hsize_t *)CPLCalloc(poDS->ndims, sizeof(hsize_t));
-    poDS->maxdims      = (hsize_t *)CPLCalloc(poDS->ndims, sizeof(hsize_t));
-    poDS->dimensions   = H5Sget_simple_extent_dims(poDS->dataspace_id,
+    poDS->dataset_id   = H5Dopen( poDS->hHDF5,poDS->poH5Objects->pszPath ); 
+    poDS->dataspace_id = H5Dget_space( poDS->dataset_id );                       
+    poDS->ndims        = H5Sget_simple_extent_ndims( poDS->dataspace_id );
+    poDS->dims         = ( hsize_t * )CPLCalloc( poDS->ndims, 
+						 sizeof( hsize_t ) );
+    poDS->maxdims      = ( hsize_t * )CPLCalloc( poDS->ndims, 
+						 sizeof( hsize_t ) );
+    poDS->dimensions   = H5Sget_simple_extent_dims( poDS->dataspace_id,
 						   poDS->dims,
-						   poDS->maxdims);
-    poDS->datatype = H5Dget_type(poDS->dataset_id);
-    poDS->clas     = H5Tget_class(poDS->datatype);
-    poDS->size     = H5Tget_size(poDS->datatype);
-    poDS->address = H5Dget_offset(poDS->dataset_id);
-    poDS->native  = H5Tget_native_type(poDS->datatype, H5T_DIR_ASCEND);
+						   poDS->maxdims );
+    poDS->datatype = H5Dget_type( poDS->dataset_id );
+    poDS->clas     = H5Tget_class( poDS->datatype );
+    poDS->size     = H5Tget_size( poDS->datatype );
+    poDS->address = H5Dget_offset( poDS->dataset_id );
+    poDS->native  = H5Tget_native_type( poDS->datatype, H5T_DIR_ASCEND );
 
     poDS->nRasterYSize=poDS->dims[0];
     poDS->nRasterXSize=poDS->dims[1];
 
     poDS->nBands=1;
 
-    if(poDS->ndims == 3) poDS->nBands=poDS->dims[poDS->ndims-1];
+    if( poDS->ndims == 3 ) poDS->nBands=poDS->dims[poDS->ndims-1];
 
 
-    for( i = 1; i <= poDS->nBands; i++ ) {
+    for(  i = 1; i <= poDS->nBands; i++ ) {
 	HDF5ImageRasterBand *poBand = 
-	    new HDF5ImageRasterBand(poDS, i, poDS->GetDataType(poDS->native));
+	    new HDF5ImageRasterBand( poDS, i, 
+				     poDS->GetDataType( poDS->native ) );
 	
 	poDS->SetBand( i, poBand );
-	if ( poBand->bNoDataSet )
+	if( poBand->bNoDataSet )
 		poBand->SetNoDataValue( 255 );
     }
 
     
-    poDS->CreateProjections();
+    poDS->CreateProjections( );
 
-
-    return(poDS);
+    poDS->SetMetadata( poDS->papszMetadata );
+    return( poDS );
 }
 
 
 /************************************************************************/
 /*                        GDALRegister_HDF5Image()                      */
 /************************************************************************/
-void GDALRegister_HDF5Image()
+void GDALRegister_HDF5Image( )
 
 {
     GDALDriver  *poDriver;
 
-    if( GDALGetDriverByName( "HDF5Image" ) == NULL )
+    if(  GDALGetDriverByName( "HDF5Image" ) == NULL )
 	{
-	    poDriver = new GDALDriver();
+	    poDriver = new GDALDriver( );
         
-	    poDriver->SetDescription("HDF5Image");
-	    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, 
-				      "HDF5 Dataset");
-	    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, 
-				      "frmt_hdf5.html");
-	    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, 
-				      "Byte Int16 UInt16 Int32 UInt32 Float32 Float64" );
-	    poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, 
+	    poDriver->SetDescription( "HDF5Image" );
+	    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+				      "HDF5 Dataset" );
+	    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+				      "frmt_hdf5.html" );
+	    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+				      "Byte Int16 UInt16 Int32 UInt32 Float32 Float64"  );
+	    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 				      "<CreationOptionList>"
 				      "   <Option name='RANK' type='int' description='Rank of output file'/>"
-				      "</CreationOptionList>");
+				      "</CreationOptionList>" );
 	    poDriver->pfnOpen = HDF5ImageDataset::Open;
 
-	    GetGDALDriverManager()->RegisterDriver(poDriver);
+	    GetGDALDriverManager( )->RegisterDriver( poDriver );
 	}
 }
 
@@ -455,79 +498,80 @@ CPLErr HDF5ImageDataset::CreateProjections()
     float* Latitude;
     float* Longitude;
     int    i,j;
+    int   nDeltaLat;
+    int   nDeltaLon;
+
+    nDeltaLat = nRasterYSize / NBGCPLAT;
+    nDeltaLon = nRasterXSize / NBGCPLON;
+
 /* -------------------------------------------------------------------- */
 /*      Create HDF5 Data Hierarchy in a link list                       */
 /* -------------------------------------------------------------------- */
-    poH5Objects=HDF5FindDatasetObjects(poH5RootGroup,  "Latitude");
+    poH5Objects=HDF5FindDatasetObjects( poH5RootGroup,  "Latitude" );
 /* -------------------------------------------------------------------- */
 /*      Retrieve HDF5 data information                                  */
 /* -------------------------------------------------------------------- */
-    LatitudeDatasetID   = H5Dopen(hHDF5,poH5Objects->pszPath); 
-    LatitudeDataspaceID = H5Dget_space(dataset_id);                       
+    LatitudeDatasetID   = H5Dopen( hHDF5,poH5Objects->pszPath ); 
+    LatitudeDataspaceID = H5Dget_space( dataset_id );                       
 
-    poH5Objects=HDF5FindDatasetObjects(poH5RootGroup, "Longitude");
-    LongitudeDatasetID   = H5Dopen(hHDF5,poH5Objects->pszPath); 
-    LongitudeDataspaceID = H5Dget_space(dataset_id);                       
+    poH5Objects=HDF5FindDatasetObjects( poH5RootGroup, "Longitude" );
+    LongitudeDatasetID   = H5Dopen( hHDF5,poH5Objects->pszPath ); 
+    LongitudeDataspaceID = H5Dget_space( dataset_id );                       
 
     if( ( LatitudeDatasetID > 0 ) && ( LongitudeDatasetID > 0) ) {
 	
-	Latitude         = (float *) CPLCalloc( nRasterYSize*nRasterXSize, 
-						sizeof(float) );
-	Longitude         = (float *) CPLCalloc( nRasterYSize*nRasterXSize, 
-						 sizeof(float) );
-	memset( Latitude, 0, nRasterXSize*nRasterYSize*sizeof( float ) );
+	Latitude         = ( float * ) CPLCalloc(  nRasterYSize*nRasterXSize, 
+						sizeof( float ) );
+	Longitude         = ( float * ) CPLCalloc( nRasterYSize*nRasterXSize, 
+						 sizeof( float ) );
+	memset( Latitude, 0, nRasterXSize*nRasterYSize*sizeof(  float ) );
 	memset( Longitude, 0, nRasterXSize*nRasterYSize*sizeof( float ) );
 	
-	H5Dread (LatitudeDatasetID,
-		 H5T_NATIVE_FLOAT, 
-		 H5S_ALL,
-		 H5S_ALL,
-		 H5P_DEFAULT, 
-		 Latitude);
+	H5Dread ( LatitudeDatasetID,
+		  H5T_NATIVE_FLOAT, 
+		  H5S_ALL,
+		  H5S_ALL,
+		  H5P_DEFAULT, 
+		  Latitude );
 	
-	H5Dread (LongitudeDatasetID,
-		 H5T_NATIVE_FLOAT, 
-		 H5S_ALL,
-		 H5S_ALL,
-		 H5P_DEFAULT, 
-		 Longitude);
+	H5Dread ( LongitudeDatasetID,
+		  H5T_NATIVE_FLOAT, 
+		  H5S_ALL,
+		  H5S_ALL,
+		  H5P_DEFAULT, 
+		  Longitude );
 	
 	oSRS.SetWellKnownGeogCS( "WGS84" );
-	CPLFree( pszProjection );
 	oSRS.exportToWkt( &pszProjection );
 	oSRS.exportToWkt( &pszGCPProjection );
 	
 /* -------------------------------------------------------------------- */
 /*  Fill the GCPs list.                                                 */
 /* -------------------------------------------------------------------- */
-	
-	int nDeltaLat = (nRasterYSize / NBGCPLAT);
-	int nDeltaLon = (nRasterXSize / NBGCPLON);
-	nGCPCount =  (nRasterYSize / nDeltaLat); 
-	nGCPCount *= (nRasterXSize / nDeltaLon);
-	pasGCPList = (GDAL_GCP *)
+	nGCPCount = nRasterYSize/nDeltaLat * nRasterXSize/nDeltaLon;
+
+	pasGCPList = ( GDAL_GCP * )
 	    CPLCalloc( nGCPCount, sizeof( GDAL_GCP ) );
 	
 	GDALInitGCPs( nGCPCount, pasGCPList );
 	int k=0;
 
-	printf("nGCPCount = %d \n",nGCPCount);
-	for ( j = 0; j <= nRasterYSize-nDeltaLat; j+=nDeltaLat ) {
-	    for ( i = 0; i <= nRasterXSize-nDeltaLon; i+=nDeltaLon ) {
+	int nYLimit = ((int)nRasterYSize/nDeltaLat) * nDeltaLat;
+	int nXLimit = ((int)nRasterXSize/nDeltaLon) * nDeltaLon;
+	for( j = 0; j < nYLimit; j+=nDeltaLat ) {
+	    for( i = 0; i < nXLimit; i+=nDeltaLon ) {
 		int iGCP =  j * nRasterXSize + i;
-		
-		pasGCPList[k].dfGCPX = (double) Longitude[iGCP]+180.0;
-		pasGCPList[k].dfGCPY = (double) Latitude[iGCP];
+		pasGCPList[k].dfGCPX = ( double ) Longitude[iGCP]+180.0;
+		pasGCPList[k].dfGCPY = ( double ) Latitude[iGCP];
 		
 		pasGCPList[k].dfGCPPixel = i + 0.5;
 		pasGCPList[k++].dfGCPLine =  j + 0.5;
 		
 	    }
 	}
-printf("k=%d\n",k);
 	
-	CPLFree(Latitude);
-	CPLFree(Longitude);
+	CPLFree( Latitude );
+	CPLFree( Longitude );
     }
     return CE_None;
 
@@ -536,7 +580,7 @@ printf("k=%d\n",k);
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-  const char *HDF5ImageDataset::GetProjectionRef()
+  const char *HDF5ImageDataset::GetProjectionRef( )
 
   {
   return pszProjection;
@@ -549,7 +593,7 @@ printf("k=%d\n",k);
 CPLErr HDF5ImageDataset::SetProjection( const char *pszNewProjection )
 
 {
-    if ( pszProjection )
+    if( pszProjection )
 	CPLFree( pszProjection );
     pszProjection = CPLStrdup( pszNewProjection );
     
@@ -560,7 +604,7 @@ CPLErr HDF5ImageDataset::SetProjection( const char *pszNewProjection )
 /*                            GetGCPCount()                             */
 /************************************************************************/
 
-int HDF5ImageDataset::GetGCPCount()
+int HDF5ImageDataset::GetGCPCount( )
     
 {
     return nGCPCount;
@@ -570,7 +614,7 @@ int HDF5ImageDataset::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *HDF5ImageDataset::GetGCPProjection()
+const char *HDF5ImageDataset::GetGCPProjection( )
 
 {
     if( nGCPCount > 0 )
@@ -583,7 +627,7 @@ const char *HDF5ImageDataset::GetGCPProjection()
 /*                               GetGCPs()                              */
 /************************************************************************/
 
-const GDAL_GCP *HDF5ImageDataset::GetGCPs()
+const GDAL_GCP *HDF5ImageDataset::GetGCPs( )
 {
     return pasGCPList;
 }
