@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/08/23 16:32:23  fwarmerdam
+ * Fixed to support tabs for white space too.
+ *
  * Revision 1.30  2005/05/05 14:01:36  fwarmerdam
  * PAM Enable
  *
@@ -408,7 +411,7 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     papszTokens =  
         CSLTokenizeString2( (const char *) poOpenInfo->pabyHeader,
-                                  " \n\r", 0 );
+                                  " \n\r\t", 0 );
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -417,9 +420,6 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new AAIGDataset();
 
-    poDS->fp = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
-    
 /* -------------------------------------------------------------------- */
 /*      Parse the header.                                               */
 /* -------------------------------------------------------------------- */
@@ -486,6 +486,9 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     
     CSLDestroy( papszTokens );
 
+    poDS->fp = poOpenInfo->fp;
+    poOpenInfo->fp = NULL;
+    
 /* -------------------------------------------------------------------- */
 /*      Find the start of real data.                                    */
 /* -------------------------------------------------------------------- */
