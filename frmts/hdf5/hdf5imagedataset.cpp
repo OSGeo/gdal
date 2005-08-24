@@ -1,13 +1,12 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  Hierarchical Data Format Release 4 (HDF4)
- * Purpose:  Read subdatasets of HDF4 file.
- *           This driver initially based on code supplied by Markus Neteler
- * Author:   Andrey Kiselev, dron@remotesensing.org
+ * Project:  Hierarchical Data Format Release 5 (HDF5)
+ * Purpose:  Read subdatasets of HDF5 file.
+ * Author:   Denis Nadeau <denis.nadeau@gmail.com>
  *
  ******************************************************************************
- * Copyright (c) 2002
+ * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.11  2005/08/24 22:08:28  fwarmerdam
+ * fixed header attribution
+ *
  * Revision 1.10  2005/08/24 15:53:52  dron
  * The type of start offset array fixed again (goes away in the last commit).
  *

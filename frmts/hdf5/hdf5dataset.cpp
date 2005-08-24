@@ -5,10 +5,10 @@
  * Purpose:  HDF5 Datasets. Open HDF5 file, fetch metadata and list of
  *           subdatasets.
  *           This driver initially based on code supplied by Markus Neteler
- * Author:  
+ * Author:  Denis Nadeau <denis.nadeau@gmail.com>
  *
  ******************************************************************************
- * Copyright (c) 2005
+ * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2005/08/24 22:08:28  fwarmerdam
+ * fixed header attribution
+ *
  * Revision 1.6  2005/08/23 19:45:17  dnadeau
  * HDF5 add Metadata
  *
@@ -38,10 +41,8 @@
  *
  * Revision 1.4  2005/07/27 02:02:41  dnadeau
  * correct memory leak problem.
- *
- *
- *
  */
+
 #include "hdf5.h"
 
 #include "gdal_priv.h"
