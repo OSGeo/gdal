@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.10  2005/08/24 15:53:52  dron
+ * The type of start offset array fixed again (goes away in the last commit).
+ *
  * Revision 1.9  2005/08/23 20:11:30  dnadeau
  * HDF5 add Metadata
  *
@@ -267,7 +270,7 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     herr_t      status;
     hsize_t     count[3];    
-    hsize_t     offset[3];
+    hssize_t    offset[3];
     int         nSizeOfData;
     hid_t       memspace;
     hsize_t     col_dims[3];
