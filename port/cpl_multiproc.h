@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/08/24 22:19:27  fwarmerdam
+ * added CPLCleanupTLS
+ *
  * Revision 1.8  2005/07/08 18:17:52  fwarmerdam
  * complete TLS implementation for win32
  *
@@ -129,7 +132,10 @@ class CPLMutexHolder
 
 #define CTLS_MAX                       32         
 
+CPL_C_START
 void CPL_DLL * CPLGetTLS( int nIndex );
 void CPL_DLL CPLSetTLS( int nIndex, void *pData, int bFreeOnExit );
+void CPL_DLL CPLCleanupTLS();
+CPL_C_END
 
 #endif /* _CPL_MULTIPROC_H_INCLUDED_ */
