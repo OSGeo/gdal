@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/08/24 21:51:06  fwarmerdam
+ * added CPLCleanupTLS
+ *
  * Revision 1.14  2005/08/01 18:58:42  fwarmerdam
  * Fixed problem with _NP mutex initializer.
  *
@@ -168,6 +171,34 @@ int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
         
         return bSuccess;
     }
+}
+
+/************************************************************************/
+/*                        CPLCleanupTLSList()                           */
+/*                                                                      */
+/*      Free resources associated with a TLS vector (implementation     */
+/*      independent).                                                   */
+/************************************************************************/
+
+static void CPLCleanupTLSList( void **papTLSList )
+
+{
+    int i;
+
+//    printf( "CPLCleanupTLSList(%p)\n", papTLSList );
+    
+    if( papTLSList == NULL )
+        return;
+
+    for( i = 0; i < CTLS_MAX; i++ )
+    {
+        if( papTLSList[i] != NULL && papTLSList[i+CTLS_MAX] != NULL )
+        {
+            CPLFree( papTLSList[i] );
+        }
+    }
+
+    CPLFree( papTLSList );
 }
 
 #ifdef CPL_MULTIPROC_STUB
@@ -390,6 +421,17 @@ static void **CPLGetTLSList()
         papTLSList = (void **) CPLCalloc(sizeof(void*),CTLS_MAX*2);
 
     return papTLSList;
+}
+
+/************************************************************************/
+/*                           CPLCleanupTLS()                            */
+/************************************************************************/
+
+void CPLCleanupTLS()
+
+{
+    CPLCleanupTLSList( papTLSList );
+    papTLSList = NULL;
 }
 
 #endif /* def CPL_MULTIPROC_STUB */
@@ -633,6 +675,28 @@ static void **CPLGetTLSList()
     return papTLSList;
 }
 
+/************************************************************************/
+/*                           CPLCleanupTLS()                            */
+/************************************************************************/
+
+void CPLCleanupTLS()
+
+{
+    void **papTLSList;
+    int i;
+
+    if( !bTLSKeySetup )
+        return;
+
+    papTLSList = (void **) TlsGetValue( nTLSKey );
+    if( papTLSList == NULL )
+        return;
+
+    TlsSetValue( nTLSKey, NULL );
+
+    CPLCleanupTLSList( papTLSList );
+}
+
 #endif /* def CPL_MULTIPROC_WIN32 */
 
 #ifdef CPL_MULTIPROC_PTHREAD
@@ -841,21 +905,21 @@ static pthread_key_t oTLSKey;
 /*                           CPLCleanupTLS()                            */
 /************************************************************************/
 
-static void CPLCleanupTLS( void * pData )
+void CPLCleanupTLS()
 
 {
-    void **papTLSList = (void **) pData;
-    int i;
-    
-    for( i = 0; i < CTLS_MAX; i++ )
-    {
-        if( papTLSList[i] != NULL && papTLSList[i+CTLS_MAX] != NULL )
-        {
-            CPLFree( papTLSList[i] );
-        }
-    }
+    void **papTLSList;
 
-    CPLFree( papTLSList );
+    if( !bTLSKeySetup )
+        return;
+
+    papTLSList = (void **) pthread_getspecific( oTLSKey );
+    if( papTLSList == NULL )
+        return;
+
+    pthread_setspecific( oTLSKey, NULL );
+
+    CPLCleanupTLSList( papTLSList );
 }
 
 /************************************************************************/
@@ -869,7 +933,8 @@ static void **CPLGetTLSList()
 
     if( !bTLSKeySetup )
     {
-        if( pthread_key_create( &oTLSKey, CPLCleanupTLS ) != 0 )
+        if( pthread_key_create( &oTLSKey, 
+                                (void (*)(void*)) CPLCleanupTLSList ) != 0 )
         {
             CPLError( CE_Fatal, CPLE_AppDefined, 
                       "pthread_key_create() failed!" );
