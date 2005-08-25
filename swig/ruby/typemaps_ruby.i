@@ -10,6 +10,9 @@
 
  *
  * $Log$
+ * Revision 1.4  2005/08/25 21:00:55  cfis
+ * Added note saying that SWIG 1.3.26 or higher is required because the bindings need the SWIGTYPE *DISOWN  typemap.
+ *
  * Revision 1.3  2005/08/21 23:52:08  cfis
  * The Layer each method was not correctly setting the owernship flag for returned objects.  This has now been fixed and commented.
  *
@@ -21,13 +24,16 @@
  *
  */
 
+/* NOTE - The Ruby bindings require SWIG-1.3.26 or above (the SWIG
+	head after 8/23/2005 will also work).  Earlier versions do not
+	work because they did not include support for the 
+	SWIGTYPE *DISOWN typemap which is crucial for supporting
+	the AddGeometryDirectly and SetGeometryDirectly methods.*/
 
 %include "typemaps.i"
 %include "../ruby/renames.i"
 
 %apply (double *OUTPUT) { double *argout };
-
-
 
 
 /* -----------  Typemaps ported from typemaps_python.i.  For more information
@@ -284,11 +290,10 @@
 }
 
 
-/* -------------   Ruby Array <-> array of char*  ----------------------
+/* -------------   Ruby Array <-> array of char*  ------------*/
 
-/*
- * Typemap maps char** arguments from Ruby Array
- */
+
+/* Typemap maps char** arguments from Ruby Array  */
 %typemap(ruby,in) char **options
 {
   /* %typemap(ruby,in) char **options */
@@ -345,7 +350,7 @@
 %apply char** {char **ignorechange};
 
 
-/* -------------  Ruby String  <- char ** no lengths ----------------------*/
+/* -------------  Ruby String  <- char ** no lengths ------------------*/
 
 %typemap(ruby,in,numinputs=0) (char **argout) ( char *argout=0 )
 {
@@ -438,7 +443,8 @@
 }
 
 
-//**************   Ruby specific type maps ***************
+/* -------------  Ruby specific type maps   ----------------------*/
+	
 /*%extend OGRDriverShadow {
 	static OGRDriverShadow* GetDriverByName( char const *name ) {
   	return (OGRDriverShadow*) OGRGetDriverByName( name );
