@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/08/25 21:35:03  dwallner
+ * GetProjectionRef was completely wrong
+ *
  * Revision 1.4  2005/08/18 21:06:52  dwallner
  * RIK3 header support
  *
@@ -668,7 +671,7 @@ const char *RIKDataset::GetProjectionRef()
 {
     // http://www.sm5sxl.net/~mats/text/gis/Geodesi/geodesi/refsys/sweref-rt/sweref99-rt90.htm
 
-    return( "GEOGCS[\"RT90\",DATUM[\"Rikets_koordinatsystem_1990\",SPHEROID[\"Bessel 1841\",6377397.155,299.1528128,AUTHORITY[\"EPSG\",7004]],TOWGS84[414.1055246174,41.3265500042,603.0582474221,0.8551163377,-2.1413174055,7.0227298286,0],AUTHORITY[\"EPSG\",6124]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"degree\",0.01745329251994328,AUTHORITY[\"EPSG\",9122]],AUTHORITY[\"EPSG\",4124]]" );
+    return( "PROJCS[\"RT90 2.5 gon W\",GEOGCS[\"RT90\",DATUM[\"Rikets_koordinatsystem_1990\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],AUTHORITY[\"EPSG\",\"6124\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.017453292519943295,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4124\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",15.806284529],PARAMETER[\"scale_factor\",1.00000561024],PARAMETER[\"false_easting\",1500064.274],PARAMETER[\"false_northing\",-667.711],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"2400\"]]" );
 
 }
 
@@ -1168,7 +1171,7 @@ void GDALRegister_RIK()
 
         poDriver->SetDescription( "RIK" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                                   "Swedish RIK (.rik)" );
+                                   "Swedish Grid RIK (.rik)" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "frmt_various.html#RIK" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "rik" );
