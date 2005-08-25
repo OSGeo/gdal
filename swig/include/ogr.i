@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.36  2005/08/25 21:02:30  cfis
+ * Added check for SWIGRuby when defining open,openshared,GetDriverByName and GetDriver methods.
+ *
+ * Also moved all the renames into a preprocessor macro block because they interfere with the Ruby specific %rename directives.
+ *
  * Revision 1.35  2005/08/22 19:00:50  kruland
  * Attempt to make ogr library behave well using normal script memory
  * management.
@@ -1417,17 +1422,19 @@ char const *OGRDataSourceShadow_name_get( OGRDataSourceShadow *h ) {
 }
 %}
 
+#ifndef SWIGRUBY
 %rename (GetDriverCount) OGRGetDriverCount;
+%rename (GetOpenDSCount) OGRGetOpenDSCount;
+%rename (SetGenerate_DB2_V72_BYTE_ORDER) OGRSetGenerate_DB2_V72_BYTE_ORDER;
+%rename (RegisterAll) OGRRegisterAll();
+#endif
+
 int OGRGetDriverCount();
 
-%rename (GetOpenDSCount) OGRGetOpenDSCount;
 int OGRGetOpenDSCount();
 
-%rename (SetGenerate_DB2_V72_BYTE_ORDER) OGRSetGenerate_DB2_V72_BYTE_ORDER;
 OGRErr OGRSetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER);
 
-
-%rename (RegisterAll) OGRRegisterAll();
 void OGRRegisterAll();
 
 
@@ -1446,7 +1453,7 @@ OGRDriverShadow* OGR_GetDriver(int driver_number) {
 #endif
 
 
-#ifdef SWIGPYTHON
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %inline %{
 OGRDriverShadow* GetDriverByName( char const *name ) {
   return (OGRDriverShadow*) OGRGetDriverByName( name );
@@ -1489,7 +1496,7 @@ OGRDriverShadow* GetDriver(int driver_number) {
 %}
 #endif
 
-#ifdef SWIGPYTHON
+#if defined(SWIGPYTHON) || defined(SWIGRUBY)
 %feature( "kwargs" ) Open;
 %newobject Open;
 %inline %{
