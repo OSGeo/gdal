@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2005/08/25 18:06:48  fwarmerdam
+ * void in empty arg lists.
+ *
  * Revision 1.37  2005/06/10 15:00:00  fwarmerdam
  * added cpl_getexecpath.cpp
  *
@@ -131,12 +134,12 @@
 /* -------------------------------------------------------------------- */
 CPL_C_START
 
-void CPL_DLL CPLVerifyConfiguration();
+void CPL_DLL CPLVerifyConfiguration(void);
 
 const char CPL_DLL * CPL_STDCALL
 CPLGetConfigOption( const char *, const char * );
 void CPL_DLL CPL_STDCALL CPLSetConfigOption( const char *, const char * );
-void CPL_DLL CPL_STDCALL CPLFreeConfig();
+void CPL_DLL CPL_STDCALL CPLFreeConfig(void);
 
 /* -------------------------------------------------------------------- */
 /*      Safe malloc() API.  Thin cover over VSI functions with fatal    */
@@ -222,10 +225,10 @@ const char    CPL_DLL *CPLFindFile(const char *pszClass,
 const char    CPL_DLL *CPLDefaultFindFile(const char *pszClass, 
                                           const char *pszBasename);
 void          CPL_DLL CPLPushFileFinder( CPLFileFinder pfnFinder );
-CPLFileFinder CPL_DLL CPLPopFileFinder();
+CPLFileFinder CPL_DLL CPLPopFileFinder(void);
 void          CPL_DLL CPLPushFinderLocation( const char * );
-void          CPL_DLL CPLPopFinderLocation();
-void          CPL_DLL CPLFinderClean();
+void          CPL_DLL CPLPopFinderLocation(void);
+void          CPL_DLL CPLFinderClean(void);
 
 /* -------------------------------------------------------------------- */
 /*      Safe version of stat() that works properly on stuff like "C:".  */
