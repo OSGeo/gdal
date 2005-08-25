@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.14  2005/08/25 23:10:44  dnadeau
+ * add metadata for all bands
+ *
  * Revision 1.13  2005/08/25 22:38:44  dnadeau
  * add xdim and ydim as label for x and y dimension
  *
@@ -359,9 +362,8 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poDS,
 	    this->panBandZPos[i] = panBandDimPos[i+2];
 	    this->panBandZLev[i] = panBandZLev[i];
 	}
-
-	CreateBandMetadata();
     }
+    CreateBandMetadata();
     bNoDataSet    = FALSE;
     dfNoDataValue = -9999.0;
 
@@ -955,13 +957,13 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 	}
 	for ( unsigned int lev = 0; lev < nTotLevCount ; lev++ ) {
 	    
-	    netCDFRasterBand *poBand = new netCDFRasterBand( poDS, 
-							     var, 
-							     nDim,
-							     lev,
-							     poDS->panBandZLev,
-							     poDS->panBandDimPos,
-							     i+1 );
+	    netCDFRasterBand *poBand=new netCDFRasterBand(poDS, 
+							  var, 
+							  nDim,
+							  lev,
+							  poDS->panBandZLev,
+							  poDS->panBandDimPos,
+							  i+1 );
 	    poDS->SetBand( i+1, poBand );
 	    i++;
 	}
@@ -1031,7 +1033,22 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 	    start[1] = 0;
 	    edge[0]  = ydim;
 	    edge[1]  = xdim;
-	    nc_get_vara_double( cdfid, nVarLatID, start, edge, pdfLat);
+	    status = nc_get_vara_double( cdfid, nVarLatID, 
+					 start, edge, pdfLat);
+
+/* -------------------------------------------------------------------- */
+/*      Find out which dimension is x and which is y                    */
+/* -------------------------------------------------------------------- */
+	    if( status == NC_EEDGE ) {
+		size_t xdimtemp;
+		xdimtemp = xdim;
+		xdim = ydim;
+		ydim = xdimtemp;
+		edge[0]  = ydim;
+		edge[1]  = xdim;
+		status = nc_get_vara_double( cdfid, nVarLatID, 
+					     start, edge, pdfLat);
+	    }
 	    nc_get_vara_double( cdfid, nVarLonID, start, edge, pdfLon);
 	}
 	else {   // Assume 1 dimensionnal array
