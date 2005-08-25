@@ -37,14 +37,42 @@ csharp: gdalvars
         cd ..
         nmake /f makefile.vc
 
+
+java: gdalvars
+        cd java
+        mkdir org\gdal\gdal
+        cd gdal
+        $(SWIG) -java -c++ -package org.gdal.gdal -outdir ../org/gdal/gdal -o gdal_wrap.cpp ../../../include/gdal.i
+        cd ..
+        cd org\gdal
+        mkdir ogr
+        cd ../../
+        cd ogr
+        $(SWIG) -java -c++ -package org.gdal.ogr -outdir ../org/gdal/ogr -o ogr_wrap.cpp ../../../include/ogr.i
+        cd ..
+        cd org\gdal
+        mkdir osr
+        cd ../../
+        cd osr
+        $(SWIG) -java -c++ -package org.gdal.osr -outdir ../org/gdal/osr -o osr_wrap.cpp ../../../include/osr.i
+        cd ..
+        cd org\gdal
+        mkdir gdalconst
+        cd ../../
+        cd const
+        $(SWIG) -java -c++ -package org.gdal.gdalconst -outdir ../org/gdal/gdalconst -o gdalconst_wrap.cpp ../../../include/gdalconst.i
+        cd ..
+        nmake /f makefile.vc
+
 ruby: gdalvars
 		cd ruby
 		$(SWIG) -ruby -o gdalconst.c ..\include\gdalconst.i
         $(SWIG) -c++ -ruby -o gdal.cpp ..\include\gdal.i
         $(SWIG) -c++ -ruby -o osr.cpp ..\include\osr.i
-        $(SWIG) -c++ -ruby -o ogr.cpp ..\include\ogr.i
+        $(SWIG) -c++ -ruby -o ogr.cpp ..\include\ogr.
         nmake /f makefile.vc build
         nmake /f makefile.vc install 
+
 
 clean:
         -del setup.ini
@@ -54,6 +82,10 @@ clean:
         cd python
         rmdir /S /Q build
         cd ..
+        cd java
+        nmake /f makefile.vc clean
+        cd ..
         cd ruby
         name /f makefile.vc clean
         cd ..
+
