@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/08/25 18:05:36  fwarmerdam
+ * Added void in empty arg lists.
+ *
  * Revision 1.17  2005/04/04 15:23:31  fwarmerdam
  * some functions now CPL_STDCALL
  *
@@ -111,15 +114,15 @@ typedef enum
 
 void CPL_DLL CPLError(CPLErr eErrClass, int err_no, const char *fmt, ...);
 void CPL_DLL CPLErrorV(CPLErr, int, const char *, va_list );
-void CPL_DLL CPL_STDCALL CPLErrorReset();
-int CPL_DLL CPL_STDCALL CPLGetLastErrorNo();
-CPLErr CPL_DLL CPL_STDCALL CPLGetLastErrorType();
-const char CPL_DLL * CPL_STDCALL CPLGetLastErrorMsg();
+void CPL_DLL CPL_STDCALL CPLErrorReset( void );
+int CPL_DLL CPL_STDCALL CPLGetLastErrorNo( void );
+CPLErr CPL_DLL CPL_STDCALL CPLGetLastErrorType( void );
+const char CPL_DLL * CPL_STDCALL CPLGetLastErrorMsg( void );
 
 typedef void (CPL_STDCALL *CPLErrorHandler)(CPLErr, int, const char*);
 CPLErrorHandler CPL_DLL CPL_STDCALL CPLSetErrorHandler(CPLErrorHandler);
 void CPL_DLL CPL_STDCALL CPLPushErrorHandler( CPLErrorHandler );
-void CPL_DLL CPL_STDCALL CPLPopErrorHandler();
+void CPL_DLL CPL_STDCALL CPLPopErrorHandler( void );
 void CPL_DLL CPL_STDCALL CPLDefaultErrorHandler( CPLErr, int, const char * );
 void CPL_DLL CPL_STDCALL CPLQuietErrorHandler( CPLErr, int, const char * );
 void CPL_DLL CPL_STDCALL CPLLoggingErrorHandler( CPLErr, int, const char * );
