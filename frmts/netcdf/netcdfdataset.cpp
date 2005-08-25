@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.13  2005/08/25 22:38:44  dnadeau
+ * add xdim and ydim as label for x and y dimension
+ *
  * Revision 1.12  2005/08/19 20:07:55  dnadeau
  * add netcdf band metadata info
  *
@@ -840,7 +843,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 	
 	if ( EQUAL( poDS->papszDimName[j],"lat" ) ||
 	     EQUAL( poDS->papszDimName[j], "latitude" ) ||
-	     EQUAL( poDS->papszDimName[j],"y" ) ){
+	     EQUAL( poDS->papszDimName[j],"y" )  ||
+	     EQUAL( poDS->papszDimName[j],"ydim" ) ) {
 	    nc_inq_dimlen ( cdfid, j, &ydim );
 	    poDS->nRasterYSize = ydim;
 	    nDimYid=j;
@@ -849,7 +853,8 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 	}
 	if ( EQUAL( poDS->papszDimName[j],"lon" ) ||
 	     EQUAL( poDS->papszDimName[j], "longitude" ) ||
-	     EQUAL( poDS->papszDimName[j],"x" ) ){
+	     EQUAL( poDS->papszDimName[j],"x" )  ||
+	     EQUAL( poDS->papszDimName[j],"xdim" ) ) {
 	    nc_inq_dimlen ( cdfid, j, &xdim );
 	    poDS->nRasterXSize = xdim;
 	    nDimXid=j;
@@ -860,7 +865,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     
     if( (nDimYid == -1) || (nDimXid == -1 ) ){
 	CPLError( CE_Warning, CPLE_AppDefined, 
-		  "x/lon/longitude or y/lat/latitude "
+		  "xdim/x/lon/longitude or ydim/y/lat/latitude "
 		  "variable(s) not found!");
 	//	return NULL;
     }
