@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/08/25 22:36:30  dwallner
+ * print header type in debug output
+ *
  * Revision 1.5  2005/08/25 21:35:03  dwallner
  * GetProjectionRef was completely wrong
  *
@@ -745,6 +748,8 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
     RIKHeader header;
     double metersPerPixel;
 
+    char *headerType = "RIK3";
+
     if( rik3header )
     {
 /* -------------------------------------------------------------------- */
@@ -871,6 +876,12 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 #ifdef CPL_MSB
             CPL_SWAP32PTR( &header.iMPPDen );
 #endif
+
+            headerType = "RIK1";
+        }
+        else
+        {
+            headerType = "RIK2";
         }
 
         metersPerPixel = header.iMPPNum / double(header.iMPPDen);
@@ -1076,6 +1087,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLDebug( "RIK",
               "RIK file parameters:\n"
               " name: %s\n"
+              " header: %s\n"
               " unknown: 0x%X\n"
               " south: %lf\n"
               " west: %lf\n"
@@ -1090,7 +1102,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
               " bits per pixel: %d\n"
               " options: 0x%X\n"
               " compression: %s\n",
-              name, header.iUnknown,
+              name, headerType, header.iUnknown,
               header.fSouth, header.fWest, header.fNorth, header.fEast,
               header.iScale, metersPerPixel,
               header.iBlockWidth, header.iBlockHeight,
