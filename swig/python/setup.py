@@ -62,7 +62,7 @@ if sys.platform == 'win32':
             extras.append(x)
             
     # don't forget to add gdal to the list :)
-    libraries.append('gdal')
+    libraries.append('gdal_i')
     extra_link_args = []#['/NODEFAULTLIB:MSVCRT']
 
 elif sys.platform == 'cygwin':
