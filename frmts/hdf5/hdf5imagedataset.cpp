@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.12  2005/08/25 15:35:57  fwarmerdam
+ * Handle offset type to hyperslab based on lib version
+ *
  * Revision 1.11  2005/08/24 22:08:28  fwarmerdam
  * fixed header attribution
  *
@@ -70,7 +73,14 @@ CPL_C_START
 void    GDALRegister_HDF5Image(void);
 CPL_C_END
 
+/* release 1.6.3 or 1.6.4 changed the type of count in some api functions */
 
+#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR <= 6 \
+       && (H5_VERS_MINOR < 6 || H5_VERS_RELEASE < 3)
+#  define H5OFFSET_TYPE hssize_t
+#else
+#  define H5OFFSET_TYPE  hsize_t
+#endif
 
 class HDF5ImageDataset : public HDF5Dataset
 {
@@ -271,8 +281,8 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                         void * pImage )
 {
     herr_t      status;
-    hsize_t     count[3];    
-    hssize_t    offset[3];
+    hsize_t     count[3];
+    H5OFFSET_TYPE offset[3];
     int         nSizeOfData;
     hid_t       memspace;
     hsize_t     col_dims[3];
