@@ -110,7 +110,7 @@ transforming between coordinate systems.  The
 OGRSpatialReference, and PROJ.4 linkaged (but not PROJ.4 itself) is
 linked into the GDAL shared library by default.  More documentation on WKT
 and OGRSpatialReference can be found in the 
-<a href="http://gdal.velocet.ca/projects/opengis/ogrhtml/osr_tutorial.html">
+<a href="http://www.gdal.org/ogr/osr_tutorial.html">
 OGR Projections Tutorial</a>.<p>
 
 
