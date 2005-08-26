@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2005/08/26 14:48:33  fwarmerdam
+ * Do not return nodata on bands since MrSID NODATA semantics are
+ * across all bands.   Note that IMAGE__TRANSPARENT_DATA_VALUE metadata
+ * on the dataset holds the set of values for application use if needed.
+ *
  * Revision 1.38  2005/07/22 15:50:10  fwarmerdam
  * Use blocked io for very small request buffers as well as small windows.
  *
@@ -151,6 +156,7 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
+#include <string>
 
 #include <geo_normalize.h>
 #include <geovalues.h>
@@ -321,7 +327,13 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDS, int nBand )
 
 /* -------------------------------------------------------------------- */
 /*      Set NoData values.                                              */
+/*                                                                      */
+/*      This logic is disabled for now since the MrSID nodata           */
+/*      semantics are different than GDAL.  In MrSID all bands must     */
+/*      match the nodata value for that band in order for the pixel     */
+/*      to be considered nodata, otherwise all values are valid.        */
 /* -------------------------------------------------------------------- */
+#ifdef notdef
      if ( poDS->poNDPixel )
      {
          switch( poDS->eSampleType )
@@ -363,6 +375,7 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDS, int nBand )
 	 bNoDataSet = TRUE;
      }
      else
+#endif
      {
 	dfNoDataValue = 0.0;
         bNoDataSet = FALSE;
