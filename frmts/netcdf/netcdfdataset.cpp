@@ -28,6 +28,12 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.16  2005/08/26 22:02:09  fwarmerdam
+ * Changed to use # instead of : as the separator between variable name
+ * and attribute name in metadata, since : is reserved.
+ * Set WGS84 as the GEOGCS for projected coordinate systems.
+ * Don't set WGS84 as a GEOGCS if we don't recognise the projection.
+ *
  * Revision 1.15  2005/08/26 21:34:53  dnadeau
  * support projections (UTM and LCC)
  *
@@ -699,7 +705,7 @@ CPLErr netCDFDataset::ReadAttributes( int cdfid, int var)
     for( int l=0; l < nbAttr; l++){
 	
 	nc_inq_attname( cdfid, var, l, szAttrName);
-	sprintf( szMetaName, "%s:%s", szVarName, szAttrName  );
+	sprintf( szMetaName, "%s#%s", szVarName, szAttrName  );
 	*szMetaTemp='\0';
 	nc_inq_att( cdfid, var, szAttrName, &nAttrType, &nAttrLen );
 	
@@ -967,7 +973,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Look for third dimension ID                                     */
 /* -------------------------------------------------------------------- */
 	poDS->panBandZLev = (int *)CPLCalloc( sizeof( nd ) - 2, 
-					sizeof( int ) );
+                                              sizeof( int ) );
 	
 	nTotLevCount = 1;
 	if ( dim_count > 2 ) {
@@ -1026,16 +1032,16 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 #define L_C_CONIC             "lambert_conformal_conic"
 #define TM                    "transverse_mercator"
 
-#define GRD_MAPPING_NAME      ":grid_mapping_name"
+#define GRD_MAPPING_NAME      "#grid_mapping_name"
 
-#define STD_PARALLEL          ":standard_parallel"
-#define LONG_CENTRAL_MERIDIAN ":longitude_of_central_meridian"
-#define LAT_PROJ_ORIGIN       ":latitude_of_projection_origin"
-#define EARTH_SHAPE           ":GRIB_earth_shape"
-#define EARTH_SHAPE_CODE      ":GRIB_earth_shape_code"
-#define SCALE_FACTOR          ":scale_factor_at_central_meridian"
-#define FALSE_EASTING         ":false_easting"
-#define FALSE_NORTHING        ":false_northing"
+#define STD_PARALLEL          "#standard_parallel"
+#define LONG_CENTRAL_MERIDIAN "#longitude_of_central_meridian"
+#define LAT_PROJ_ORIGIN       "#latitude_of_projection_origin"
+#define EARTH_SHAPE           "#GRIB_earth_shape"
+#define EARTH_SHAPE_CODE      "#GRIB_earth_shape_code"
+#define SCALE_FACTOR          "#scale_factor_at_central_meridian"
+#define FALSE_EASTING         "#false_easting"
+#define FALSE_NORTHING        "#false_northing"
 
     const char *pszValue;
     int nVarProjectionID;
@@ -1051,7 +1057,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     double  dfFalseEasting;
     double  dfFalseNorthing;
 
-    OGRSpatialReference ogr;
+    OGRSpatialReference oSRS;
     int nVarDimXID = -1;
     int nVarDimYID = -1;
     double *pdfXCoord;
@@ -1066,7 +1072,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     for ( int var = 0; var < var_count; var++ ) {
 	nc_inq_varname(  cdfid, var, szVarName );
 	strcpy(szTemp,szVarName);
-	strcat(szTemp,":grid_mapping");
+	strcat(szTemp,"#grid_mapping");
 	pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
 	if( pszValue ) {
 	    strcpy(szGridMappingName,szTemp);
@@ -1124,19 +1130,17 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 	    if( pszValue )
 		dfFalseNorthing = atof (pszValue);
 	    
-	    ogr.SetProjCS("UTM");
-	    ogr.SetTM( dfCenterLat, 
-		       dfCenterLon,
-		       dfScale,
-		       dfFalseEasting,
-		       dfFalseNorthing );
-
+	    oSRS.SetTM( dfCenterLat, 
+                        dfCenterLon,
+                        dfScale,
+                        dfFalseEasting,
+                        dfFalseNorthing );
+            oSRS.SetWellKnownGeogCS( "WGS84" );
 	}
-	else 
 /* -------------------------------------------------------------------- */
 /*      Lambert conformal conic                                         */
 /* -------------------------------------------------------------------- */
-	if( EQUAL( pszValue, L_C_CONIC ) ) {
+	else if( EQUAL( pszValue, L_C_CONIC ) ) {
 
 	    strcpy( szTemp,szGridMappingValue );
 	    strcat( szTemp, STD_PARALLEL );
@@ -1159,13 +1163,14 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 	    if( pszValue )
 		dfCenterLat = atof(pszValue);
 
-	    ogr.SetProjCS("Lambert Conformal Conic (1SP)");
-	    ogr.SetLCC1SP( dfCenterLat, dfCenterLon, dfStdP1, 0,0 );
-
+	    oSRS.SetLCC1SP( dfCenterLat, dfCenterLon, dfStdP1, 0,0 );
+            oSRS.SetWellKnownGeogCS( "WGS84" );
 	}
     }
     else {
-	ogr.SetWellKnownGeogCS( "WGS84" );
+        // This would be too indiscrimant.  But we should set
+        // it if we know the data is geographic.
+	//oSRS.SetWellKnownGeogCS( "WGS84" );
     }
 /* -------------------------------------------------------------------- */
 /*      Try to display latitude/longitude if no projection were found.  */
@@ -1185,7 +1190,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 				     start, edge, pdfXCoord);
 	edge[0]  = ydim;
 	status = nc_get_vara_double( cdfid, nVarDimYID, 
-				 start, edge, pdfYCoord);
+                                     start, edge, pdfYCoord);
 
 /* -------------------------------------------------------------------- */
 /*      Is pixel spacing is uniform accross the map?                    */
@@ -1215,20 +1220,16 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 					poDS->nRasterXSize) ;
 	    poDS->adfGeoTransform[5] = (( pdfYCoord[ydim-1] - pdfYCoord[0] ) / 
 					poDS->nRasterYSize) ;
-	    ogr.exportToWkt( &(poDS->pszProjection) );
+	    oSRS.exportToWkt( &(poDS->pszProjection) );
 	    
 	} 
 	CPLFree( pdfXCoord );
 	CPLFree( pdfYCoord );
 
-}
+    }
 
 
-                            // Handle angular geographic coordinates here
-
-	    
-
-
+    // Handle angular geographic coordinates here
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
