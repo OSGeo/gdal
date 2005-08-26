@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.15  2005/08/26 21:34:53  dnadeau
+ * support projections (UTM and LCC)
+ *
  * Revision 1.14  2005/08/25 23:10:44  dnadeau
  * add metadata for all bands
  *
@@ -76,6 +79,7 @@
 #include "gdal_pam.h"
 #include "gdal_frmts.h"
 #include "cpl_string.h"
+#include "ogr_spatialref.h"
 #include "netcdf.h"
 
 CPL_CVSID("$Id$");
@@ -94,6 +98,8 @@ class netCDFDataset : public GDALPamDataset
     char        **papszMetadata;
     int          *panBandDimPos;         // X, Y, Z postion in array
     int          *panBandZLev;
+    char         *pszProjection;
+    int          bGotGeoTransform;
 
   public:
     int         cdfid;
@@ -108,7 +114,8 @@ class netCDFDataset : public GDALPamDataset
     CPLErr      ReadAttributes( int, int );
 
     CPLErr 	GetGeoTransform( double * padfTransform );    
-
+    const char * GetProjectionRef();
+    
 };
 
 /************************************************************************/
@@ -147,6 +154,19 @@ class netCDFRasterBand : public GDALPamRasterBand
 
 
 };
+
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char * netCDFDataset::GetProjectionRef()
+{
+    if( bGotGeoTransform )
+	return pszProjection;
+    else
+	return "";
+}
 
 /************************************************************************/
 /*                           GetNoDataValue()                           */
@@ -613,6 +633,9 @@ netCDFDataset::netCDFDataset()
 
 {
     papszMetadata   = NULL;						
+    bGotGeoTransform = FALSE;
+    pszProjection = NULL;
+
 }
 
 
@@ -627,6 +650,9 @@ netCDFDataset::~netCDFDataset()
     FlushCache();
     if( papszMetadata != NULL )
       CSLDestroy( papszMetadata );
+    if( pszProjection ) 
+	CPLFree( pszProjection );
+
     nc_close( cdfid );
 }
 
@@ -639,8 +665,12 @@ CPLErr netCDFDataset::GetGeoTransform( double * padfTransform )
 
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
-    return CE_None;
+    if( bGotGeoTransform )
+        return CE_None;
+    else
+        return CE_Failure;
 }
+
 
 /************************************************************************/
 /*                        ReadAttributes()                              */
@@ -770,14 +800,12 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     size_t       nTotLevCount = 1;
     int          nDim = 2;
     size_t       start[2], edge[2];
-    int          x_range_id, y_range_id;
-    int          nDimsX, nDimsY;
-    double       *pdfLat, *pdfLon;
     int          status;
-    int          nLatSizeArray;
-    int          nLonSizeArray;
     int          nDimID;
-    char attname[NC_MAX_NAME];
+    int          nSpacingBegin;
+    int          nSpacingMiddle;
+    int          nSpacingLast;
+    char         attname[NC_MAX_NAME];
 
 
 /* -------------------------------------------------------------------- */
@@ -990,126 +1018,215 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->adfGeoTransform[3] = 0.0;
     poDS->adfGeoTransform[4] = 0.0;
     poDS->adfGeoTransform[5] = 1.0;
+    poDS->pszProjection = NULL;
     
-    
-    status = nc_inq_varid( cdfid, "lat", &nVarLatID );
-    if ( status ==  NC_ENOTVAR ) {
-	status = nc_inq_varid( cdfid, "Lat", &nVarLatID );
-    }
-    if ( status ==  NC_ENOTVAR ) {
-	status = nc_inq_varid( cdfid, "latitude", &nVarLatID );
-    } 
-    if ( status ==  NC_ENOTVAR ) {
-	status = nc_inq_varid( cdfid, "Latitude", &nVarLatID );
-    }
-    
-    status = nc_inq_varid( cdfid, "lon", &nVarLonID );
-    if ( status ==  NC_ENOTVAR ) {
-	status = nc_inq_varid( cdfid, "Lon", &nVarLonID );
-    } 
-    if( status == NC_ENOTVAR ) {
-	status = nc_inq_varid( cdfid, "longitude", &nVarLonID );
-    } 
-    if( status == NC_ENOTVAR ) {
-	status = nc_inq_varid( cdfid, "Longitude", &nVarLonID );
-    }
-    
-    nc_inq_varndims ( cdfid, nVarLatID, &nDimsY );
+/* -------------------------------------------------------------------- */
+/*      Set Projection                                                  */
+/* -------------------------------------------------------------------- */
+#define L_C_CONIC             "lambert_conformal_conic"
+#define TM                    "transverse_mercator"
+
+#define GRD_MAPPING_NAME      ":grid_mapping_name"
+
+#define STD_PARALLEL          ":standard_parallel"
+#define LONG_CENTRAL_MERIDIAN ":longitude_of_central_meridian"
+#define LAT_PROJ_ORIGIN       ":latitude_of_projection_origin"
+#define EARTH_SHAPE           ":GRIB_earth_shape"
+#define EARTH_SHAPE_CODE      ":GRIB_earth_shape_code"
+#define SCALE_FACTOR          ":scale_factor_at_central_meridian"
+#define FALSE_EASTING         ":false_easting"
+#define FALSE_NORTHING        ":false_northing"
+
+    const char *pszValue;
+    int nVarProjectionID;
+    char szVarName[MAX_NC_NAME];
+    char szTemp[MAX_NC_NAME];
+    char szGridMappingName[MAX_NC_NAME]="";
+    char szGridMappingValue[MAX_NC_NAME];
+
+    double dfStdP1, dfStdP2;
+    double  dfCenterLat;
+    double  dfCenterLon;
+    double  dfScale;
+    double  dfFalseEasting;
+    double  dfFalseNorthing;
+
+    OGRSpatialReference ogr;
+    int nVarDimXID = -1;
+    int nVarDimYID = -1;
+    double *pdfXCoord;
+    double *pdfYCoord;
+
+
 
 /* -------------------------------------------------------------------- */
-/*      No dimensional arrays are not supported                         */
+/*      Look for grid_mapping metadata                                  */
 /* -------------------------------------------------------------------- */
-    if( nDimsY == 0 ) nVarLatID = -1;
 
-    if( (nVarLatID != -1) && (nVarLonID != -1) ) {
-	nc_inq_varndims ( cdfid, nVarLatID, &nDimsY );
-	nc_inq_varndims ( cdfid, nVarLonID, &nDimsX );
-	if( nDimsY == 2 ) {
-	    nLatSizeArray = xdim*ydim;
-	    nLonSizeArray = xdim*ydim;
-	    pdfLat = (double *) CPLCalloc( nLatSizeArray, sizeof(double) );
-	    pdfLon = (double *) CPLCalloc( nLonSizeArray, sizeof(double) );
-	    start[0] = 0;
-	    start[1] = 0;
-	    edge[0]  = ydim;
-	    edge[1]  = xdim;
-	    status = nc_get_vara_double( cdfid, nVarLatID, 
-					 start, edge, pdfLat);
-
-/* -------------------------------------------------------------------- */
-/*      Find out which dimension is x and which is y                    */
-/* -------------------------------------------------------------------- */
-	    if( status == NC_EEDGE ) {
-		size_t xdimtemp;
-		xdimtemp = xdim;
-		xdim = ydim;
-		ydim = xdimtemp;
-		edge[0]  = ydim;
-		edge[1]  = xdim;
-		status = nc_get_vara_double( cdfid, nVarLatID, 
-					     start, edge, pdfLat);
-	    }
-	    nc_get_vara_double( cdfid, nVarLonID, start, edge, pdfLon);
+    for ( int var = 0; var < var_count; var++ ) {
+	nc_inq_varname(  cdfid, var, szVarName );
+	strcpy(szTemp,szVarName);
+	strcat(szTemp,":grid_mapping");
+	pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+	if( pszValue ) {
+	    strcpy(szGridMappingName,szTemp);
+	    strcpy(szGridMappingValue,pszValue);
+	    break;
 	}
-	else {   // Assume 1 dimensionnal array
-	    nLatSizeArray = ydim;
-	    nLonSizeArray = xdim;
-	    pdfLat = (double *) CPLCalloc( ydim, sizeof(double) );
-	    pdfLon = (double *) CPLCalloc( xdim, sizeof(double) );
-	    start[0] = 0;
-	    edge [0] = ydim;
-	    nc_get_vara_double( cdfid, nVarLatID, start, edge, pdfLat);
-	    edge [0] = xdim;
-	    nc_get_vara_double( cdfid, nVarLonID, start, edge, pdfLon);
-	}
-
-/* -------------------------------------------------------------------- */
-/*      If longitude contains negative values, add 360 degrees to       */
-/*      set it to eastern values.                                       */
-/* -------------------------------------------------------------------- */
-	
-	for( int i=0; i < nLonSizeArray; i++) {
-	    if( pdfLon[i] < 0 ) {
-		pdfLon[i] += 360;
-	    }
-	}
-
-/* -------------------------------------------------------------------- */
-/*      Set transformation array                                        */
-/* -------------------------------------------------------------------- */
-	poDS->adfGeoTransform[0] = pdfLon[0];
-	poDS->adfGeoTransform[3] = pdfLat[0];
-	
-	poDS->adfGeoTransform[2] = 0;
-	poDS->adfGeoTransform[4] = 0;
-	poDS->adfGeoTransform[1] = 
-	    ( pdfLon[nLonSizeArray-1] - pdfLon[0] ) / 
-	    poDS->nRasterXSize;
-	poDS->adfGeoTransform[5] = 
-	    ( pdfLat[nLatSizeArray-1] - pdfLat[0] ) / poDS->nRasterYSize;
-	CPLFree( pdfLat );
-	CPLFree( pdfLon );
-	
     }
 
+
+/* -------------------------------------------------------------------- */
+/*      Read grid_mapping information and set projections               */
+/* -------------------------------------------------------------------- */
+
+    if( !( EQUAL(szGridMappingName,"" ) ) ) {
+	nc_inq_varid( cdfid, szGridMappingValue, &nVarProjectionID );
+	poDS->ReadAttributes( cdfid, nVarProjectionID );
     
-    if( nc_inq_varid( cdfid, "x_range", &x_range_id ) == NC_NOERR 
-	&& nc_inq_varid( cdfid, "y_range", &y_range_id ) == NC_NOERR )
-	{
-	    double x_range[2], y_range[2];
+	strcpy(szTemp,szGridMappingValue);
+	strcat(szTemp,GRD_MAPPING_NAME);
+	pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+
+/* -------------------------------------------------------------------- */
+/*      Transverse Mercator                                             */
+/* -------------------------------------------------------------------- */
+
+	if( EQUAL( pszValue, TM ) ) {
+
+	    strcpy(szTemp,szGridMappingValue);
+	    strcat( szTemp, SCALE_FACTOR );
+	    pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+	    if( pszValue )
+		dfScale = atof( pszValue );
+
+	    strcpy(szTemp,szGridMappingValue);
+	    strcat( szTemp, LONG_CENTRAL_MERIDIAN );
+	    pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+	    if( pszValue )
+		dfCenterLon = atof( pszValue );
+
+	    strcpy(szTemp,szGridMappingValue);
+	    strcat( szTemp, LAT_PROJ_ORIGIN );
+	    pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+	    if( pszValue )
+		dfCenterLat = atof( pszValue );
+
+	    strcpy(szTemp,szGridMappingValue);
+	    strcat( szTemp, FALSE_EASTING );
+	    pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+	    if( pszValue )
+		dfFalseEasting = atof( pszValue );
+
+	    strcpy(szTemp,szGridMappingValue);
+	    strcat( szTemp, FALSE_NORTHING );
+	    pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+	    if( pszValue )
+		dfFalseNorthing = atof (pszValue);
 	    
-	    nc_get_vara_double( cdfid, x_range_id, start, edge, x_range );
-	    nc_get_vara_double( cdfid, y_range_id, start, edge, y_range );
-	    
-	    poDS->adfGeoTransform[0] = x_range[0];
-	    poDS->adfGeoTransform[1] = 
-		( x_range[1] - x_range[0] ) / poDS->nRasterXSize;
-	    poDS->adfGeoTransform[2] = 0.0;
-	    poDS->adfGeoTransform[3] = y_range[1];
-	    poDS->adfGeoTransform[4] = 0.0;
-	    poDS->adfGeoTransform[5] = 
-		( y_range[0] - y_range[1] ) / poDS->nRasterYSize;
+	    ogr.SetProjCS("UTM");
+	    ogr.SetTM( dfCenterLat, 
+		       dfCenterLon,
+		       dfScale,
+		       dfFalseEasting,
+		       dfFalseNorthing );
+
 	}
+	else 
+/* -------------------------------------------------------------------- */
+/*      Lambert conformal conic                                         */
+/* -------------------------------------------------------------------- */
+	if( EQUAL( pszValue, L_C_CONIC ) ) {
+
+	    strcpy( szTemp,szGridMappingValue );
+	    strcat( szTemp, STD_PARALLEL );
+	    pszValue = CSLFetchNameValue( poDS->papszMetadata, szTemp );
+	    if( pszValue ) {
+		dfStdP1 = atof( pszValue );
+		dfStdP2 = dfStdP1;
+	    }
+
+	    strcpy( szTemp,szGridMappingValue );
+	    strcat( szTemp, LONG_CENTRAL_MERIDIAN );
+	    pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+	    if( pszValue )
+		dfCenterLon = atof(pszValue);
+
+
+	    strcpy(szTemp,szGridMappingValue);
+	    strcat( szTemp, LAT_PROJ_ORIGIN );
+	    pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+	    if( pszValue )
+		dfCenterLat = atof(pszValue);
+
+	    ogr.SetProjCS("Lambert Conformal Conic (1SP)");
+	    ogr.SetLCC1SP( dfCenterLat, dfCenterLon, dfStdP1, 0,0 );
+
+	}
+    }
+    else {
+	ogr.SetWellKnownGeogCS( "WGS84" );
+    }
+/* -------------------------------------------------------------------- */
+/*      Try to display latitude/longitude if no projection were found.  */
+/* -------------------------------------------------------------------- */
+
+    nc_inq_varid( cdfid, poDS->papszDimName[nDimXid], &nVarDimXID );
+    nc_inq_varid( cdfid, poDS->papszDimName[nDimYid], &nVarDimYID );
+    
+    if( ( nVarDimXID != -1 ) && ( nVarDimYID != -1 ) ) {
+	pdfXCoord = (double *) CPLCalloc( xdim, sizeof(double) );
+	pdfYCoord = (double *) CPLCalloc( ydim, sizeof(double) );
+    
+	start[0] = 0;
+	edge[0]  = xdim;
+	
+	status = nc_get_vara_double( cdfid, nVarDimXID, 
+				     start, edge, pdfXCoord);
+	edge[0]  = ydim;
+	status = nc_get_vara_double( cdfid, nVarDimYID, 
+				 start, edge, pdfYCoord);
+
+/* -------------------------------------------------------------------- */
+/*      Is pixel spacing is uniform accross the map?                    */
+/* -------------------------------------------------------------------- */
+	nSpacingBegin   = (int) rint((pdfXCoord[1]-pdfXCoord[0]) * 1000); 
+	
+	nSpacingMiddle  = (int) rint((pdfXCoord[xdim / 2] - 
+				      pdfXCoord[(xdim / 2) + 1]) * 1000);
+	
+	nSpacingLast    = (int) rint((pdfXCoord[xdim - 2] - 
+				      pdfXCoord[xdim-1]) * 1000);
+	
+	if( ( abs( nSpacingBegin ) == abs( nSpacingLast )) &&
+	    ( abs( nSpacingBegin ) == abs( nSpacingMiddle )) &&
+	    ( abs( nSpacingMiddle ) == abs( nSpacingLast )) ) {
+	    
+/* -------------------------------------------------------------------- */
+/*      Enable GeoTransform                                             */
+/* -------------------------------------------------------------------- */
+	    poDS->bGotGeoTransform = TRUE;
+
+	    poDS->adfGeoTransform[0] = pdfXCoord[0];
+	    poDS->adfGeoTransform[3] = pdfYCoord[0];
+	    poDS->adfGeoTransform[2] = 0;
+	    poDS->adfGeoTransform[4] = 0;
+	    poDS->adfGeoTransform[1] = (( pdfXCoord[xdim-1] - pdfXCoord[0] ) / 
+					poDS->nRasterXSize) ;
+	    poDS->adfGeoTransform[5] = (( pdfYCoord[ydim-1] - pdfYCoord[0] ) / 
+					poDS->nRasterYSize) ;
+	    ogr.exportToWkt( &(poDS->pszProjection) );
+	    
+	} 
+	CPLFree( pdfXCoord );
+	CPLFree( pdfYCoord );
+
+}
+
+
+                            // Handle angular geographic coordinates here
+
+	    
 
 
 
@@ -1153,100 +1270,97 @@ void GDALRegister_netCDF()
 /*      Set Lambert Conformal Conic Projection                          */
 /* -------------------------------------------------------------------- */
 
-//    char **papszVarRefNames;
-//    const char *pszValue;
-//    int nVarProjectionID;
-//    int nAttrType,nAttrLen;
-//    char szAttrName[MAX_NC_NAME];
-//    char szProjectionName[MAX_NC_NAME];
-//    char szVarName[MAX_NC_NAME];
-//    char szTemp[MAX_NC_NAME];
-//    char szGridMappingName[MAX_NC_NAME]="";
-//    char szGridMappingValue[MAX_NC_NAME];
-//    char szCoordinatesVarName[MAX_NC_NAME]="";
-//    char szCoordinatesValue[MAX_NC_NAME];
-//    double dfStdP1, dfStdP2;
-//    double dfCenterLat, dfCenterLong;
-//    for ( int var = 0; var < var_count; var++ ) {
-//	nc_inq_varname(  cdfid, var, szVarName );
-//	strcpy(szTemp,szVarName);
-//	strcat(szTemp,":coordinates");
-//	pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
-//	if( pszValue ) {
-//	    printf("coordinates = %s\n",pszValue);
-//	    strcpy(szCoordinatesVarName,szTemp);
-//	    strcpy(szCoordinatesValue,pszValue);
-//	    papszVarRefNames = CSLTokenizeString2( pszValue,
-//						   " ", CSLT_HONOURSTRINGS );
-//
-//	    break;
-//	}
-//    }
-//
-//
-//    for ( int var = 0; var < var_count; var++ ) {
-//	nc_inq_varname(  cdfid, var, szVarName );
-//	strcpy(szTemp,szVarName);
-//	strcat(szTemp,":grid_mapping");
-//	pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
-//	if( pszValue ) {
-//	    printf("grid_mapping = %s\n",pszValue);
-//	    strcpy(szGridMappingName,szTemp);
-//	    strcpy(szGridMappingValue,pszValue);
-//	    break;
-//	}
-//    }
-//
-//#define GRD_MAPPING_NAME                ":grid_mapping_name"
-//#define L_C_CONIC                       "lambert_conformal_conic"
-//#define L_C_CONIC_STD_PARALLEL          ":standard_parallel"
-//#define L_C_CONIC_LONG_CENTRAL_MERIDIAN ":longitude_of_central_meridian"
-//#define L_C_CONIC_LAT_PROJ_ORIGIN ":latitude_of_projection_origin"
-//#define L_C_CONIC_EARTH_SHAPE           ":GRIB_earth_shape"
-//#define L_C_CONIC_EARTH_SHAPE_CODE      ":GRIB_earth_shape_code"
-//
-//
-//    if( !( EQUAL(szGridMappingName,"" ) ) ) {
-//	nc_inq_varid( cdfid, szGridMappingValue, &nVarProjectionID );
-//	poDS->ReadAttributes( cdfid, nVarProjectionID, 9999 );
-//    
-//	strcpy(szTemp,szGridMappingValue);
-//	strcat(szTemp,GRD_MAPPING_NAME);
-//	pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
-///* -------------------------------------------------------------------- */
-///*      Lambert conformal conic                                         */
-///* -------------------------------------------------------------------- */
-//	if( EQUAL( pszValue, L_C_CONIC ) ) {
-//	    strcpy(szTemp,szGridMappingValue);
-//	    strcat( szTemp, L_C_CONIC_STD_PARALLEL );
-//	    pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
-//	    if( pszValue )
-//		dfStdP1 = atof(pszValue);
-//
-//	    strcpy(szTemp,szGridMappingValue);
-//	    strcat( szTemp, L_C_CONIC_LONG_CENTRAL_MERIDIAN );
-//	    pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
-//	    if( pszValue )
-//		dfCenterLat = atof(pszValue);
-//
-//	    strcpy(szTemp,szGridMappingValue);
-//	    strcat( szTemp, L_C_CONIC_LAT_PROJ_ORIGIN );
-//	    pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
-//	    if( pszValue )
-//		dfCenterLong = atof(pszValue);
-//
-//	    strcpy(szTemp,szGridMappingValue);
-//	    strcat( szTemp, L_C_CONIC_EARTH_SHAPE );
-//	    pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
-//	    if( pszValue )
-//		printf("%s = %s\n",szTemp, pszValue);
-//
-//	    strcpy(szTemp,szGridMappingValue);
-//	    strcat( szTemp, L_C_CONIC_EARTH_SHAPE_CODE );
-//	    pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
-//	    if( pszValue )
-//		printf("%s = %s\n",szTemp, pszValue);
-//	}
-//    }
 
     
+//Albers equal area
+//
+//grid_mapping_name = albers_conical_equal_area
+//
+//Map parameters:
+//
+//    * standard_parallel - There may be 1 or 2 values.
+//    * longitude_of_central_meridian
+//    * latitude_of_projection_origin
+//    * false_easting
+//    * false_northing
+//Lambert azimuthal equal area
+//
+//grid_mapping_name = lambert_azimuthal_equal_area
+//
+//Map parameters:
+//
+//    * longitude_of_projection_origin
+//    * latitude_of_projection_origin
+//    * false_easting
+//    * false_northing
+//Lambert conformal
+//
+//grid_mapping_name = lambert_conformal_conic
+//
+//Map parameters:
+//
+//    * standard_parallel - There may be 1 or 2 values.
+//    * longitude_of_central_meridian
+//    * latitude_of_projection_origin
+//    * false_easting
+//    * false_northing
+//Polar stereographic
+//
+//grid_mapping_name = polar_stereographic
+//
+//Map parameters:
+//
+//    * straight_vertical_longitude_from_pole
+//    * latitude_of_projection_origin - Either +90. or -90.
+//    * Either standard_parallel or scale_factor_at_projection_origin
+//    * false_easting
+//    * false_northing
+//Rotated pole
+//
+//grid_mapping_name = rotated_latitude_longitude
+//
+//Map parameters:
+//
+//    * grid_north_pole_latitude
+//    * grid_north_pole_longitude
+//    * north_pole_grid_longitude - This parameter is optional (default is 0.).
+//Stereographic
+//
+//grid_mapping_name = stereographic
+//
+//Map parameters:
+//
+//    * longitude_of_projection_origin
+//    * latitude_of_projection_origin
+//    * scale_factor_at_projection_origin
+//    * false_easting
+//    * false_northing
+//Transverse Mercator
+//
+//grid_mapping_name = transverse_mercator
+//
+//Map parameters:
+//
+//    * scale_factor_at_central_meridian
+//    * longitude_of_central_meridian
+//    * latitude_of_projection_origin
+//    * false_easting
+//    * false_northing
+//
+//
+//
+//Grid mapping attributes
+//
+//false_easting 	
+//false_northing 	
+//grid_mapping_name 	
+//grid_north_pole_latitude
+//grid_north_pole_longitude
+//latitude_of_projection_origin 
+//longitude_of_central_meridian 
+//longitude_of_projection_origin
+//north_pole_grid_longitude 	
+//scale_factor_at_central_meridian 
+//scale_factor_at_projection_origin 
+//standard_parallel 	
+//straight_vertical_longitude_from_pole 	
