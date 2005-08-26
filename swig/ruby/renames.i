@@ -135,27 +135,12 @@
 
 
 // -------  SWIG Renames ------------
-%rename(debug) Debug;
-%rename(error) Error;
-%rename(push_error_handler) PushErrorHandler;
-%rename(pop_error_handler) PopErrorHandler;
-%rename(error_reset) ErrorReset;
-%rename(get_last_error_no) GetLastErrorNo;
-%rename(get_last_error_type) GetLastErrorType;
-%rename(get_last_error_msg) GetLastErrorMsg;
-%rename(push_finder_location) PushFinderLocation;
-%rename(pop_finder_location) PopFinderLocation;
-%rename(finder_clean) FinderClean;
-%rename(find_file) FindFile;
-%rename(set_config_option) SetConfigOption;
-%rename(get_config_option) GetConfigOption;
 %rename(create_data_source) OGRDriverShadow::CreateDataSource;
 %rename(copy_data_source) OGRDriverShadow::CopyDataSource;
 %rename(open) OGRDriverShadow::Open;
 %rename(delete_data_source) OGRDriverShadow::DeleteDataSource;
 %rename(test_capability) OGRDriverShadow::TestCapability;
 %rename(get_name) OGRDriverShadow::GetName;
-%rename(release) OGRDataSourceShadow::Release;
 %rename(get_ref_count) OGRDataSourceShadow::GetRefCount;
 %rename(get_summary_ref_count) OGRDataSourceShadow::GetSummaryRefCount;
 %rename(get_layer_count) OGRDataSourceShadow::GetLayerCount;
