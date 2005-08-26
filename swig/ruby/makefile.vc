@@ -26,18 +26,26 @@ install: $(INSTALLATION_DIR)
 
 build: $(RUBY_ARCH_DIR) gdal.so gdalconst.so ogr.so osr.so
 
-gdal.so: gdal.obj
-
-gdalconst.so: gdalconst.obj
-
-ogr.so: ogr.obj
-
-osr.so: osr.obj
-
-.obj.so:
+gdal.so: gdal_wrap.obj
 	link /dll /debug $(LINKER_FLAGS) $(EXTERNAL_LIBS) \
 	/LIBPATH:$(RUBY_DIR)/lib $(RUBY_SO_NAME) ..\..\gdal.lib \
-    /out:$*.so $(LINKER_FLAGS)  $*.obj
+    /out:$*.so $*_wrap.obj
+    
+gdalconst.so: gdalconst_wrap.obj
+	link /dll /debug $(LINKER_FLAGS) $(EXTERNAL_LIBS) \
+	/LIBPATH:$(RUBY_DIR)/lib $(RUBY_SO_NAME) ..\..\gdal.lib \
+    /out:$*.so $*_wrap.obj
+
+ogr.so: ogr_wrap.obj
+	link /dll /debug $(LINKER_FLAGS) $(EXTERNAL_LIBS) \
+	/LIBPATH:$(RUBY_DIR)/lib $(RUBY_SO_NAME) ..\..\gdal.lib \
+    /out:$*.so $*_wrap.obj
+    
+osr.so: osr_wrap.obj
+	link /dll /debug $(LINKER_FLAGS) $(EXTERNAL_LIBS) \
+	/LIBPATH:$(RUBY_DIR)/lib $(RUBY_SO_NAME) ..\..\gdal.lib \
+    /out:$*.so $*_wrap.obj
+    
     
 .c.obj:	
 	$(CC) $(CFLAGS) /I $(RUBY_ARCH_DIR) /c $*.c
