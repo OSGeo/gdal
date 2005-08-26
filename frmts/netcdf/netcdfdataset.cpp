@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.17  2005/08/26 22:37:22  dnadeau
+ * add WGS84 for lat/lon data
+ *
  * Revision 1.16  2005/08/26 22:02:09  fwarmerdam
  * Changed to use # instead of : as the separator between variable name
  * and attribute name in metadata, since : is reserved.
@@ -1062,14 +1065,14 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     int nVarDimYID = -1;
     double *pdfXCoord;
     double *pdfYCoord;
-
+    char   szDimNameX[4];
 
 
 /* -------------------------------------------------------------------- */
 /*      Look for grid_mapping metadata                                  */
 /* -------------------------------------------------------------------- */
 
-    for ( int var = 0; var < var_count; var++ ) {
+    for( int var = 0; var < var_count; var++ ) {
 	nc_inq_varname(  cdfid, var, szVarName );
 	strcpy(szTemp,szVarName);
 	strcat(szTemp,"#grid_mapping");
@@ -1081,7 +1084,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 	}
     }
 
-
+    for( i = 0; i<3; i++ )
+	szDimNameX[i] = tolower( (poDS->papszDimName[nDimXid])[i] );
+    szDimNameX[3] = '\0';
 /* -------------------------------------------------------------------- */
 /*      Read grid_mapping information and set projections               */
 /* -------------------------------------------------------------------- */
@@ -1165,9 +1170,15 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 	    oSRS.SetLCC1SP( dfCenterLat, dfCenterLon, dfStdP1, 0,0 );
             oSRS.SetWellKnownGeogCS( "WGS84" );
+
 	}
-    }
-    else {
+/* -------------------------------------------------------------------- */
+/*      Is this Latitude/Longitude Grid                                 */
+/* -------------------------------------------------------------------- */
+
+    } else if( EQUAL( szDimNameX,"lon" ) ) {
+	oSRS.SetWellKnownGeogCS( "WGS84" );
+    } else {
         // This would be too indiscrimant.  But we should set
         // it if we know the data is geographic.
 	//oSRS.SetWellKnownGeogCS( "WGS84" );
