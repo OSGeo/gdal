@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.18  2005/08/27 19:46:59  dnadeau
+ * add rint function for Windows
+ *
  * Revision 1.17  2005/08/26 22:37:22  dnadeau
  * add WGS84 for lat/lon data
  *
@@ -109,6 +112,7 @@ class netCDFDataset : public GDALPamDataset
     int          *panBandZLev;
     char         *pszProjection;
     int          bGotGeoTransform;
+    double       rint( double );
 
   public:
     int         cdfid;
@@ -680,6 +684,26 @@ CPLErr netCDFDataset::GetGeoTransform( double * padfTransform )
         return CE_Failure;
 }
 
+double netCDFDataset::rint( double dfX)
+{
+    if( dfX > 0 ) {
+        int nX = (int) (dfX+0.5);
+        if( nX % 2 ) {
+            double dfDiff = dfX - (double)nX;
+            if( dfDiff == -0.5 )
+                return double( nX-1 );
+        }
+        return double( nX );
+    } else {
+        int nX= (int) (dfX-0.5);
+        if( nX % 2 ) {
+            double dfDiff = dfX - (double)nX;
+            if( dfDiff == 0.5 )
+                return double(nX+1);
+        }
+        return double(nX);
+    }
+}
 
 /************************************************************************/
 /*                        ReadAttributes()                              */
@@ -1206,12 +1230,12 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Is pixel spacing is uniform accross the map?                    */
 /* -------------------------------------------------------------------- */
-	nSpacingBegin   = (int) rint((pdfXCoord[1]-pdfXCoord[0]) * 1000); 
+	nSpacingBegin   = (int) poDS->rint((pdfXCoord[1]-pdfXCoord[0]) * 1000); 
 	
-	nSpacingMiddle  = (int) rint((pdfXCoord[xdim / 2] - 
+	nSpacingMiddle  = (int) poDS->rint((pdfXCoord[xdim / 2] - 
 				      pdfXCoord[(xdim / 2) + 1]) * 1000);
 	
-	nSpacingLast    = (int) rint((pdfXCoord[xdim - 2] - 
+	nSpacingLast    = (int) poDS->rint((pdfXCoord[xdim - 2] - 
 				      pdfXCoord[xdim-1]) * 1000);
 	
 	if( ( abs( nSpacingBegin ) == abs( nSpacingLast )) &&
