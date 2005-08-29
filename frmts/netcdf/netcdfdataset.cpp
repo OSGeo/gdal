@@ -28,6 +28,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.20  2005/08/29 16:26:41  hobu
+ * move the declaration up instead of having it
+ * inlined so it is easy to find
+ *
  * Revision 1.19  2005/08/29 16:16:31  hobu
  * according to msvc 7.1, var on line 1099 was already
  * declared on line 946.  removed the declaration and it
@@ -832,7 +836,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     int          nDimYid=-1;
     int          nVarLatID=-1;
     int          nVarLonID=-1;
-    int          cdfid, dim_count, var_count;
+    int          cdfid, dim_count, var, var_count;
     int          i = 0;
     size_t       lev_count;
     size_t       nTotLevCount = 1;
@@ -948,7 +952,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
     // Add new band for each variable - 3. dimension level
     
     poDS->ReadAttributes( cdfid, NC_GLOBAL );	
-    for ( int var = 0; var < var_count; var++ ) {
+    for ( var = 0; var < var_count; var++ ) {
 	int nd;
 	
 	nc_inq_varndims ( cdfid, var, &nd );
