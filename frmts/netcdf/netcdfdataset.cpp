@@ -28,6 +28,11 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.19  2005/08/29 16:16:31  hobu
+ * according to msvc 7.1, var on line 1099 was already
+ * declared on line 946.  removed the declaration and it
+ * builds fine now
+ *
  * Revision 1.18  2005/08/27 19:46:59  dnadeau
  * add rint function for Windows
  *
@@ -1096,7 +1101,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Look for grid_mapping metadata                                  */
 /* -------------------------------------------------------------------- */
 
-    for( int var = 0; var < var_count; var++ ) {
+    for( var = 0; var < var_count; var++ ) {
 	nc_inq_varname(  cdfid, var, szVarName );
 	strcpy(szTemp,szVarName);
 	strcat(szTemp,"#grid_mapping");
