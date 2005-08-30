@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/08/30 23:50:43  fwarmerdam
+ * Fixed some memory leaks (and an error condition) related to parsing
+ * the name from the modelfilename.
+ *
  * Revision 1.2  2005/08/06 22:21:53  pka
  * Area polygonizer added
  *
@@ -45,6 +49,7 @@
 #include "iomhelper.h"
 #include "iom/iom.h"
 
+#include <string>
 
 CPL_CVSID("$Id$");
 
@@ -88,15 +93,21 @@ int OGRILI1DataSource::Open( const char * pszNewName, int bTestOpen )
 {
     FILE        *fp;
     char        szHeader[1000];
+    std::string osBasename, osModelFilename;
 
     char **filenames = CSLTokenizeString2( pszNewName, ",", 0 );
-    pszNewName = filenames[0];
-    pszModelFilename = (CSLCount(filenames)>1) ? filenames[1] : NULL;
+
+    osBasename = filenames[0];
+
+    if( CSLCount(filenames) > 1 )
+        osModelFilename = filenames[1];
+
+    CSLDestroy( filenames );
 
 /* -------------------------------------------------------------------- */
 /*      Open the source file.                                           */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszNewName, "r" );
+    fp = VSIFOpen( osBasename.c_str(), "r" );
     if( fp == NULL )
     {
         if( !bTestOpen )
@@ -140,11 +151,13 @@ int OGRILI1DataSource::Open( const char * pszNewName, int bTestOpen )
         return FALSE;
      }
 
-    poReader->OpenFile( pszNewName );
+    poReader->OpenFile( osBasename.c_str() );
     
-    pszName = CPLStrdup( pszNewName );
+    pszName = CPLStrdup( osBasename.c_str() );
 
-    if (pszModelFilename) poReader->ReadModel(pszModelFilename);
+    if (osModelFilename.length() > 0 )
+        poReader->ReadModel( osModelFilename.c_str() );
+
     poReader->ReadFeatures(); //FIXME
 
     return TRUE;
@@ -158,28 +171,34 @@ int OGRILI1DataSource::Create( const char *pszFilename,
                               char **papszOptions )
 
 {
+    std::string osBasename, osModelFilename;
     char **filenames = CSLTokenizeString2( pszFilename, ",", 0 );
-    pszName = filenames[0];
-    pszModelFilename = (CSLCount(filenames)>1) ? filenames[1] : NULL;
 
-    if( pszModelFilename == NULL )
+    osBasename = filenames[0];
+
+    if( CSLCount(filenames) > 1 )
+        osModelFilename = filenames[1];
+
+    CSLDestroy( filenames );
+
+    if( osModelFilename.length() == 0 )
     {
         CPLError( CE_Warning, CPLE_OpenFailed, 
-                  "Model file '%s' (%s) not found.", 
-                  pszModelFilename, pszFilename, VSIStrerror( errno ) );
+                  "Model filename not found in '%s'.", 
+                  pszFilename );
         return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Create the empty file.                                          */
 /* -------------------------------------------------------------------- */
-    fpTransfer = VSIFOpen( pszName, "w+b" );
+    fpTransfer = VSIFOpen( osBasename.c_str(), "w+b" );
 
     if( fpTransfer == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Failed to create %s:\n%s", 
-                  pszName, VSIStrerror( errno ) );
+                  osBasename.c_str(), VSIStrerror( errno ) );
 
         return FALSE;
     }
@@ -188,22 +207,22 @@ int OGRILI1DataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Parse model                                                     */
 /* -------------------------------------------------------------------- */
-	iom_init();
+    iom_init();
 
-	// set error listener to a iom provided one, that just 
-	// dumps all errors to stderr
-	iom_seterrlistener(iom_stderrlistener);
+    // set error listener to a iom provided one, that just 
+    // dumps all errors to stderr
+    iom_seterrlistener(iom_stderrlistener);
 
-	// compile ili model
-    char *iliFiles[1] = {(char *)pszModelFilename};
-	IOM_BASKET model=iom_compileIli(1,iliFiles);
-	if(!model){
+    // compile ili model
+    char *iliFiles[1] = {(char *)osModelFilename.c_str()};
+    IOM_BASKET model=iom_compileIli(1,iliFiles);
+    if(!model){
         CPLError( CE_Warning, CPLE_OpenFailed, 
                   "iom_compileIli .", 
                   pszName, VSIStrerror( errno ) );
-		iom_end();
+        iom_end();
         return FALSE;
-	}
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write headers                                                   */
