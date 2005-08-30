@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/08/30 23:53:00  fwarmerdam
+ * implement WKB translation
+ *
  * Revision 1.15  2005/08/15 20:12:06  fwarmerdam
  * Ensure that SrcSQL resultsets are released.
  *
@@ -362,13 +365,9 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
      else if( EQUAL(pszEncoding,"None") )
          eGeometryType = VGS_None;
      else if( EQUAL(pszEncoding,"WKT") )
-     {
          eGeometryType = VGS_WKT;
-     }
      else if( EQUAL(pszEncoding,"WKB") )
-     {
          eGeometryType = VGS_WKB;
-     }
      else if( EQUAL(pszEncoding,"PointFromColumns") )
      {
          eGeometryType = VGS_PointFromColumns;
@@ -584,6 +583,36 @@ OGRFeature *OGRVRTLayer::TranslateFeature( OGRFeature *poSrcFeat )
             poDstFeat->SetGeometryDirectly( poGeom );
         }
     }
+    else if( eGeometryType == VGS_WKB )
+    {
+        int nBytes;
+        GByte *pabyWKB;
+        int bNeedFree = FALSE;
+
+        if( poSrcFeat->GetFieldDefnRef(iGeomField)->GetType() == OFTBinary )
+        {
+            pabyWKB = poSrcFeat->GetFieldAsBinary( iGeomField, &nBytes );
+        }
+        else
+        {
+            const char *pszWKT = poSrcFeat->GetFieldAsString( iGeomField );
+
+            pabyWKB = CPLHexToBinary( pszWKT, &nBytes );
+            bNeedFree = TRUE;
+        }
+        
+        if( pabyWKB != NULL )
+        {
+            OGRGeometry *poGeom = NULL;
+
+            if( OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeom,
+                                                   nBytes ) == OGRERR_NONE )
+                poDstFeat->SetGeometryDirectly( poGeom );
+        }
+
+        if( bNeedFree )
+            CPLFree( pabyWKB );
+    }
     else if( eGeometryType == VGS_Direct )
     {
         poDstFeat->SetGeometry( poSrcFeat->GetGeometryRef() );
@@ -610,26 +639,26 @@ OGRFeature *OGRVRTLayer::TranslateFeature( OGRFeature *poSrcFeat )
 
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
-        OGRFieldDefn *poDstDefn = poFeatureDefn->GetFieldDefn( iField );
-
         if( panSrcField[iField] < 0 )
             continue;
 
+        OGRFieldDefn *poDstDefn = poFeatureDefn->GetFieldDefn( iField );
+        OGRFieldDefn *poSrcDefn = poFeatureDefn->GetFieldDefn( panSrcField[iField] );
+
         if( pabDirectCopy[iField] 
-            && (poDstDefn->GetType() == OFTInteger
-                || poDstDefn->GetType() == OFTReal) )
+            && poDstDefn->GetType() == poSrcDefn->GetType() )
         {
-            memcpy( poDstFeat->GetRawFieldRef( iField ), 
-                    poSrcFeat->GetRawFieldRef( panSrcField[iField] ), 
-                    sizeof(OGRField) );
-            continue;
+            poDstFeat->SetField( iField,
+                                 poSrcFeat->GetRawFieldRef( panSrcField[iField] ) );
         }
-
-        /* Eventually we need to offer some more sophisticated translation
-           options here for more esoteric types. */
-
-        poDstFeat->SetField( iField, 
-                             poSrcFeat->GetFieldAsString(panSrcField[iField]));
+        else
+        {
+            /* Eventually we need to offer some more sophisticated translation
+               options here for more esoteric types. */
+            
+            poDstFeat->SetField( iField, 
+                                 poSrcFeat->GetFieldAsString(panSrcField[iField]));
+        }
     }
 
     return poDstFeat;
