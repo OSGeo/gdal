@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/08/30 17:57:34  fwarmerdam
+ * allow directly set profile names too
+ *
  * Revision 1.15  2005/08/30 17:55:50  fwarmerdam
  * Changed profile names
  *
@@ -264,6 +267,10 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     else if ( EQUAL(pszProfile, "Inland_Waterways") )
     {
        sprintf( szTargetFile, "s57objectclasses_%s.csv", "iw" );
+    }
+    else if( strlen(pszProfile) > 0 )
+    {
+       sprintf( szTargetFile, "s57objectclasses_%s.csv", pszProfile );
     }
     else
     {
