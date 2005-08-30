@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/08/30 23:52:35  fwarmerdam
+ * implement preliminary OFTBinary support
+ *
  * Revision 1.27  2005/07/29 15:54:07  fwarmerdam
  * ogrmakewktcoordinate defined in ogr_p.h
  *
@@ -310,6 +313,11 @@ typedef union {
     } WideStringList;
     */
 
+    struct {
+        int     nCount;
+        GByte   *paData;
+    } Binary;
+    
     struct {
         int     nMarker1;
         int     nMarker2;
