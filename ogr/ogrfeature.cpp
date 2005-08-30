@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/08/30 23:52:35  fwarmerdam
+ * implement preliminary OFTBinary support
+ *
  * Revision 1.31  2005/02/22 12:38:19  fwarmerdam
  * rename Equal/Intersect to Equals/Intersects
  *
@@ -148,7 +151,7 @@ OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn )
  * destruction of all OGRFeatures that depend on it is likely to result in
  * a crash. 
  *
- * This function is the same as the CPP method OGRFeature::OGRFeature().
+ * This function is the same as the C++ method OGRFeature::OGRFeature().
  * 
  * @param hDefn handle to the feature class (layer) definition to 
  * which the feature will adhere.
@@ -189,6 +192,11 @@ OGRFeature::~OGRFeature()
                 VSIFree( pauFields[i].String );
             break;
 
+          case OFTBinary:
+            if( pauFields[i].Binary.paData != NULL )
+                VSIFree( pauFields[i].Binary.paData );
+            break;
+
           case OFTStringList:
             CSLDestroy( pauFields[i].StringList.paList );
             break;
@@ -220,7 +228,7 @@ OGRFeature::~OGRFeature()
  * delete is done in the calling application the memory will be freed onto
  * the application heap which is inappropriate. 
  *
- * This function is the same as the CPP method OGRFeature::DestroyFeature().
+ * This function is the same as the C++ method OGRFeature::DestroyFeature().
  * 
  * @param hFeat handle to the feature to destroy.
  */
@@ -299,7 +307,7 @@ void OGRFeature::DestroyFeature( OGRFeature *poFeature )
 /**
  * Fetch feature definition.
  *
- * This function is the same as the CPP method OGRFeature::GetDefnRef().
+ * This function is the same as the C++ method OGRFeature::GetDefnRef().
  *
  * @param hFeat handle to the feature to get the feature definition from.
  *
@@ -357,7 +365,7 @@ OGRErr OGRFeature::SetGeometryDirectly( OGRGeometry * poGeomIn )
  * SetGeometry(), except that this function assumes ownership of the
  * passed geometry.
  *
- * This function is the same as the CPP method 
+ * This function is the same as the C++ method 
  * OGRFeature::SetGeometryDirectly.
  *
  * @param hFeat handle to the feature on which to apply the geometry.
@@ -421,7 +429,7 @@ OGRErr OGRFeature::SetGeometry( OGRGeometry * poGeomIn )
  * SetGeometryDirectly(), except that this function does not assume ownership
  * of the passed geometry, but instead makes a copy of it. 
  *
- * This function is the same as the CPP OGRFeature::SetGeometry().
+ * This function is the same as the C++ OGRFeature::SetGeometry().
  *
  * @param hFeat handle to the feature on which new geometry is applied to.
  * @param hGeom handle to the new geometry to apply to feature.
@@ -484,7 +492,7 @@ OGRGeometry *OGRFeature::StealGeometry()
 /**
  * Fetch an handle to feature geometry.
  *
- * This function is the same as the CPP method OGRFeature::GetGeometryRef().
+ * This function is the same as the C++ method OGRFeature::GetGeometryRef().
  *
  * @param hFeat handle to the feature to get geometry from.
  * @return an handle to internal feature geometry.  This object should
@@ -542,7 +550,7 @@ OGRFeature *OGRFeature::Clone()
  * The newly created feature is owned by the caller, and will have it's own
  * reference to the OGRFeatureDefn.
  *
- * This function is the same as the CPP method OGRFeature::Clone().
+ * This function is the same as the C++ method OGRFeature::Clone().
  *
  * @param hFeat handle to the feature to clone.
  * @return an handle to the new feature, exactly matching this feature.
@@ -577,7 +585,7 @@ OGRFeatureH OGR_F_Clone( OGRFeatureH hFeat )
  * Fetch number of fields on this feature.  This will always be the same
  * as the field count for the OGRFeatureDefn.
  *
- * This function is the same as the CPP method OGRFeature::GetFieldCount().
+ * This function is the same as the C++ method OGRFeature::GetFieldCount().
  *
  * @param hFeat handle to the feature to get the fields count from.
  * @return count of fields.
@@ -613,7 +621,7 @@ int OGR_F_GetFieldCount( OGRFeatureH hFeat )
 /**
  * Fetch definition for this field.
  *
- * This function is the same as the CPP method OGRFeature::GetFieldDefnRef().
+ * This function is the same as the C++ method OGRFeature::GetFieldDefnRef().
  *
  * @param hFeat handle to the feature on which the field is found.
  * @param i the field to fetch, from 0 to GetFieldCount()-1.
@@ -655,7 +663,7 @@ OGRFieldDefnH OGR_F_GetFieldDefnRef( OGRFeatureH hFeat, int i )
  *
  * This is a cover for the OGRFeatureDefn::GetFieldIndex() method. 
  *
- * This function is the same as the CPP method OGRFeature::GetFieldIndex().
+ * This function is the same as the C++ method OGRFeature::GetFieldIndex().
  *
  * @param hFeat handle to the feature on which the field is found.
  * @param pszName the name of the field to search for. 
@@ -692,7 +700,7 @@ int OGR_F_GetFieldIndex( OGRFeatureH hFeat, const char *pszName )
 /**
  * Test if a field has ever been assigned a value or not.
  *
- * This function is the same as the CPP method OGRFeature::IsFieldSet().
+ * This function is the same as the C++ method OGRFeature::IsFieldSet().
  *
  * @param hFeat handle to the feature on which the field is.
  * @param iField the field to test.
@@ -742,6 +750,10 @@ void OGRFeature::UnsetField( int iField )
         CPLFree( pauFields[iField].String );
         break;
 
+      case OFTBinary:
+        CPLFree( pauFields[iField].Binary.paData );
+        break;
+
       default:
         break;
     }
@@ -757,7 +769,7 @@ void OGRFeature::UnsetField( int iField )
 /**
  * Clear a field, marking it as unset.
  *
- * This function is the same as the CPP method OGRFeature::UnsetField().
+ * This function is the same as the C++ method OGRFeature::UnsetField().
  *
  * @param hFeat handle to the feature on which the field is.
  * @param iField the field to unset.
@@ -793,7 +805,7 @@ void OGR_F_UnsetField( OGRFeatureH hFeat, int iField )
 /**
  * Fetch an handle to the internal field value given the index.  
  *
- * This function is the same as the CPP method OGRFeature::GetRawFieldRef().
+ * This function is the same as the C++ method OGRFeature::GetRawFieldRef().
  *
  * @param hFeat handle to the feature on which field is found.
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
@@ -864,7 +876,7 @@ int OGRFeature::GetFieldAsInteger( int iField )
  * will be cast to integer.   Other field types, or errors will result in
  * a return value of zero.
  *
- * This function is the same as the CPP method OGRFeature::GetFieldAsInteger().
+ * This function is the same as the C++ method OGRFeature::GetFieldAsInteger().
  *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
@@ -934,7 +946,7 @@ double OGRFeature::GetFieldAsDouble( int iField )
  * will be cast to double.   Other field types, or errors will result in
  * a return value of zero.
  *
- * This function is the same as the CPP method OGRFeature::GetFieldAsDouble().
+ * This function is the same as the C++ method OGRFeature::GetFieldAsDouble().
  *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
@@ -1101,6 +1113,25 @@ const char *OGRFeature::GetFieldAsString( int iField )
         
         return szTempBuffer;
     }
+    else if( poFDefn->GetType() == OFTBinary )
+    {
+        int     nCount = pauFields[iField].Binary.nCount;
+        char    *pszHex;
+        
+        if( nCount > (int) sizeof(szTempBuffer) / 2 - 4 )
+            nCount = sizeof(szTempBuffer) / 2 - 4;
+
+        pszHex = CPLBinaryToHex( nCount, pauFields[iField].Binary.paData );
+
+        memcpy( szTempBuffer, pszHex, 2 * nCount );
+        szTempBuffer[nCount*2] = '\0';
+        if( nCount < pauFields[iField].Binary.nCount )
+            strcat( szTempBuffer, "..." );
+
+        CPLFree( pszHex );
+
+        return szTempBuffer;
+    }
     else
         return "";
 }
@@ -1116,7 +1147,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
  * sprintf(), but not necessarily using the established formatting rules.
  * Other field types, or errors will result in a return value of zero.
  *
- * This function is the same as the CPP method OGRFeature::GetFieldAsString().
+ * This function is the same as the C++ method OGRFeature::GetFieldAsString().
  *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
@@ -1187,7 +1218,7 @@ const int *OGRFeature::GetFieldAsIntegerList( int iField, int *pnCount )
  *
  * Currently this function only works for OFTIntegerList fields.
  *
- * This function is the same as the CPP method 
+ * This function is the same as the C++ method 
  * OGRFeature::GetFieldAsIntegerList().
  *
  * @param hFeat handle to the feature that owned the field.
@@ -1262,7 +1293,7 @@ const double *OGRFeature::GetFieldAsDoubleList( int iField, int *pnCount )
  *
  * Currently this function only works for OFTRealList fields.
  *
- * This function is the same as the CPP method 
+ * This function is the same as the C++ method 
  * OGRFeature::GetFieldAsDoubleList().
  *
  * @param hFeat handle to the feature that owned the field.
@@ -1329,7 +1360,7 @@ char **OGRFeature::GetFieldAsStringList( int iField )
  *
  * Currently this method only works for OFTStringList fields.
  *
- * This function is the same as the CPP method 
+ * This function is the same as the C++ method 
  * OGRFeature::GetFieldAsStringList().
  *
  * @param hFeat handle to the feature that owned the field.
@@ -1343,6 +1374,75 @@ char **OGR_F_GetFieldAsStringList( OGRFeatureH hFeat, int iField )
 
 {
     return ((OGRFeature *)hFeat)->GetFieldAsStringList(iField);
+}
+
+/************************************************************************/
+/*                          GetFieldAsBinary()                          */
+/************************************************************************/
+
+/**
+ * Fetch field value as binary data.
+ *
+ * Currently this method only works for OFTBinary fields.
+ *
+ * This method is the same as the C function OGR_F_GetFieldAsBinary().
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ * @param pnBytes location to put the number of bytes returned.
+ *
+ * @return the field value.  This data is internal, and should not be
+ * modified, or freed.  It's lifetime may be very brief.
+ */
+
+GByte *OGRFeature::GetFieldAsBinary( int iField, int *pnBytes )
+
+{
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
+
+    *pnBytes = 0;
+
+    CPLAssert( poFDefn != NULL || iField == -1 );
+    if( poFDefn == NULL )
+        return NULL;
+    
+    if( !IsFieldSet(iField) )
+        return NULL;
+    
+    if( poFDefn->GetType() == OFTBinary )
+    {
+        *pnBytes = pauFields[iField].Binary.nCount;
+        return pauFields[iField].Binary.paData;
+    }
+    else
+    {
+        return NULL;
+    }
+}
+
+/************************************************************************/
+/*                       OGR_F_GetFieldAsBinary()                       */
+/************************************************************************/
+
+/**
+ * Fetch field value as binary.
+ *
+ * Currently this method only works for OFTBinary fields.
+ *
+ * This function is the same as the C++ method 
+ * OGRFeature::GetFieldAsBinary().
+ *
+ * @param hFeat handle to the feature that owned the field.
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ * @param pnBytes location to place count of bytes returned.
+ *
+ * @return the field value.  This list is internal, and should not be
+ * modified, or freed.  It's lifetime may be very brief.
+ */
+
+GByte *OGR_F_GetFieldAsBinary( OGRFeatureH hFeat, int iField, int *pnBytes )
+
+{
+    return ((OGRFeature *)hFeat)->GetFieldAsBinary(iField,pnBytes);
 }
 
 /************************************************************************/
@@ -1408,7 +1508,7 @@ void OGRFeature::SetField( int iField, int nValue )
  * taking into account formatting constraints on this field.  Other field
  * types may be unaffected.
  *
- * This function is the same as the CPP method OGRFeature::SetField().
+ * This function is the same as the C++ method OGRFeature::SetField().
  *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
@@ -1484,7 +1584,7 @@ void OGRFeature::SetField( int iField, double dfValue )
  * taking into account formatting constraints on this field.  Other field
  * types may be unaffected.
  *
- * This function is the same as the CPP method OGRFeature::SetField().
+ * This function is the same as the C++ method OGRFeature::SetField().
  *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
@@ -1554,7 +1654,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
  * OFTReal fields will be set based on an atof() conversion of the string.
  * Other field types may be unaffected.
  *
- * This function is the same as the CPP method OGRFeature::SetField().
+ * This function is the same as the C++ method OGRFeature::SetField().
  *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
@@ -1612,7 +1712,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
  *
  * This function currently on has an effect of OFTIntegerList fields.
  *
- * This function is the same as the CPP method OGRFeature::SetField().
+ * This function is the same as the C++ method OGRFeature::SetField().
  *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to set, from 0 to GetFieldCount()-1.
@@ -1672,7 +1772,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
  *
  * This function currently on has an effect of OFTRealList fields.
  *
- * This function is the same as the CPP method OGRFeature::SetField().
+ * This function is the same as the C++ method OGRFeature::SetField().
  *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to set, from 0 to GetFieldCount()-1.
@@ -1731,7 +1831,7 @@ void OGRFeature::SetField( int iField, char ** papszValues )
  *
  * This function currently on has an effect of OFTStringList fields.
  *
- * This function is the same as the CPP method OGRFeature::SetField().
+ * This function is the same as the C++ method OGRFeature::SetField().
  *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to set, from 0 to GetFieldCount()-1.
@@ -1743,6 +1843,65 @@ void OGR_F_SetFieldStringList( OGRFeatureH hFeat, int iField,
 
 {
     ((OGRFeature *)hFeat)->SetField( iField, papszValues );
+}
+
+/************************************************************************/
+/*                              SetField()                              */
+/************************************************************************/
+
+/**
+ * Set field to binary data.
+ *
+ * This method currently on has an effect of OFTBinary fields.
+ *
+ * This method is the same as the C function OGR_F_SetFieldBinary().
+ *
+ * @param iField the field to set, from 0 to GetFieldCount()-1.
+ * @param nBytes bytes of data being set.
+ * @param pabyData the raw data being applied. 
+ */
+
+void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
+
+{
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
+
+    CPLAssert( poFDefn != NULL || iField == -1 );
+    if( poFDefn == NULL )
+        return;
+    
+    if( poFDefn->GetType() == OFTBinary )
+    {
+        OGRField        uField;
+
+        uField.Binary.nCount = nBytes;
+        uField.Binary.paData = pabyData;
+        SetField( iField, &uField );
+    }
+}
+
+/************************************************************************/
+/*                        OGR_F_SetFieldBinary()                        */
+/************************************************************************/
+
+/**
+ * Set field to binary data.
+ *
+ * This function currently on has an effect of OFTBinary fields.
+ *
+ * This function is the same as the C++ method OGRFeature::SetField().
+ *
+ * @param hFeat handle to the feature that owned the field.
+ * @param iField the field to set, from 0 to GetFieldCount()-1.
+ * @param nBytes the number of bytes in pabyData array.
+ * @param pabyData the data to apply.
+ */
+
+void OGR_F_SetFieldBinary( OGRFeatureH hFeat, int iField, 
+                           int nBytes, GByte *pabyData )
+
+{
+    ((OGRFeature *)hFeat)->SetField( iField, nBytes, pabyData );
 }
 
 /************************************************************************/
@@ -1857,6 +2016,26 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
                        == puValue->StringList.nCount );
         }
     }
+    else if( poFDefn->GetType() == OFTBinary )
+    {
+        if( IsFieldSet( iField ) )
+            CPLFree( pauFields[iField].Binary.paData );
+        
+        if( puValue->Set.nMarker1 == OGRUnsetMarker
+            && puValue->Set.nMarker2 == OGRUnsetMarker )
+        {
+            pauFields[iField] = *puValue;
+        }
+        else
+        {
+            pauFields[iField].Binary.nCount = puValue->Binary.nCount;
+            pauFields[iField].Binary.paData = 
+                (GByte *) CPLMalloc(puValue->Binary.nCount);
+            memcpy( pauFields[iField].Binary.paData, 
+                    puValue->Binary.paData, 
+                    puValue->Binary.nCount );
+        }
+    }
     else
         /* do nothing for other field types */;
 }
@@ -1873,7 +2052,7 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
  * is copied, and will not be affected.  It remains the responsibility of
  * the caller. 
  *
- * This function is the same as the CPP method OGRFeature::SetField().
+ * This function is the same as the C++ method OGRFeature::SetField().
  *
  * @param hFeat handle to the feature that owned the field.
  * @param iField the field to fetch, from 0 to GetFieldCount()-1.
@@ -1945,7 +2124,7 @@ void OGRFeature::DumpReadable( FILE * fpOut )
  * information (other than field types and names), nor does it report the
  * geometry spatial reference system.
  *
- * This function is the same as the CPP method OGRFeature::DumpReadable().
+ * This function is the same as the C++ method OGRFeature::DumpReadable().
  *
  * @param hFeat handle to the feature to dump.
  * @param fpOut the stream to write to, such as strout.
@@ -1978,7 +2157,7 @@ void OGR_F_DumpReadable( OGRFeatureH hFeat, FILE *fpOut )
 /**
  * Get feature identifier.
  *
- * This function is the same as the CPP method OGRFeature::GetFID().
+ * This function is the same as the C++ method OGRFeature::GetFID().
  *
  * @param hFeat handle to the feature from which to get the feature
  * identifier.
@@ -2030,7 +2209,7 @@ OGRErr OGRFeature::SetFID( long nFID )
  * greater than or equal to zero, with the exception of OGRNullFID (-1)
  * indicating that the feature id is unknown.
  *
- * This function is the same as the CPP method OGRFeature::SetFID().
+ * This function is the same as the C++ method OGRFeature::SetFID().
  *
  * @param hFeat handle to the feature to set the feature id to.
  * @param nFID the new feature identifier value to assign.
@@ -2094,7 +2273,7 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
  * same OGRFeatureDefn, have the same field values, and the same geometry
  * (as tested by OGR_G_Equal()) as well as the same feature id.
  *
- * This function is the same as the CPP method OGRFeature::Equal().
+ * This function is the same as the C++ method OGRFeature::Equal().
  *
  * @param hFeat handle to one of the feature.
  * @param hOtherFeat handle to the other feature to test this one against.
@@ -2220,7 +2399,7 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
  * Field types do not have to exactly match.  OGR_F_SetField*() function 
  * conversion rules will be applied as needed.
  *
- * This function is the same as the CPP method OGRFeature::SetFrom().
+ * This function is the same as the C++ method OGRFeature::SetFrom().
  *
  * @param hFeat handle to the feature to set to.
  * @param hOtherFeat handle to the feature from which geometry,
@@ -2275,7 +2454,7 @@ const char *OGRFeature::GetStyleString()
  * Set the OGR Feature Style Specification for details on the format of
  * this string, and ogr_featurestyle.h for services available to parse it.
  *
- * This function is the same as the CPP method OGRFeature::GetStyleString().
+ * This function is the same as the C++ method OGRFeature::GetStyleString().
  * 
  * @param hFeat handle to the feature to get the style from.
  * @return a reference to a representation in string format, or NULL if 
@@ -2315,7 +2494,7 @@ void OGRFeature::SetStyleString(const char *pszString)
 /**
  * Set feature style string.
  *
- * This function is the same as the CPP method OGRFeature::SetStyleString().
+ * This function is the same as the C++ method OGRFeature::SetStyleString().
  *
  * @param hFeat handle to the feature to set style to.
  * @param pszStyle the style string to apply to this feature, cannot be NULL.

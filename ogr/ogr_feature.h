@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/08/30 23:52:35  fwarmerdam
+ * implement preliminary OFTBinary support
+ *
  * Revision 1.29  2004/02/23 21:47:23  warmerda
  * Added GetUsedFields() and GetSWGExpr() methods on OGRFeatureQuery class
  *
@@ -297,6 +300,7 @@ class CPL_DLL OGRFeature
     const int          *GetFieldAsIntegerList( int i, int *pnCount );
     const double       *GetFieldAsDoubleList( int i, int *pnCount );
     char              **GetFieldAsStringList( int i );
+    GByte               *GetFieldAsBinary( int i, int *pnCount );
 
     int                 GetFieldAsInteger( const char *pszFName )
                       { return GetFieldAsInteger( GetFieldIndex(pszFName) ); }
@@ -322,6 +326,7 @@ class CPL_DLL OGRFeature
     void                SetField( int i, int nCount, double * padfValues );
     void                SetField( int i, char ** papszValues );
     void                SetField( int i, OGRField * puValue );
+    void                SetField( int i, int nCount, GByte * pabyBinary );
 
     void                SetField( const char *pszFName, int nValue )
                            { SetField( GetFieldIndex(pszFName), nValue ); }
