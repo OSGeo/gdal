@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/08/30 17:55:50  fwarmerdam
+ * Changed profile names
+ *
  * Revision 1.14  2005/07/30 18:26:59  fwarmerdam
  * dont freak out about duplicate attributes
  *
@@ -39,17 +42,35 @@
  * added preliminary "profile" support, and make class selection case
  * sensitive.
  *
+ * Revision 16.1  2005/06/21 18:29:33  hsaggu
+ * =S57 : Updates to the reader and first check-in of writer code from Frank.(PR#5223).<hss><geh>
+ *
  * Revision 1.11  2005/05/03 16:11:53  fwarmerdam
  * Fixed initialization of attr tables.
  *
  * Revision 1.10  2005/04/27 13:34:14  fwarmerdam
  * Fixed a few memory leaks, including the ones from bug 840.
  *
+ * Revision 16.0  2005/04/14 19:27:58  geh
+ * FME 2006 Beta baseline start. <geh>
+ *
  * Revision 1.9  2004/08/30 20:11:14  warmerda
  * various optimizations made
  *
+ * Revision 15.0  2004/04/26 20:09:44  geh
+ * FME 2005 Baseline just after making branch FME_2004_ICE_Branch. <geh>
+ *
+ * Revision 14.0  2003/11/07 23:21:02  cvs
+ * FME 2004 Baseline before branch/FME 2004ICE start point
+ *
  * Revision 1.8  2003/09/12 21:18:54  warmerda
  * open csv files in binary mode, not text mode
+ *
+ * Revision 5.0  2003/04/05 02:03:15  geh
+ * 2003X2 Baseline before branch/ FME 2004 Start Point
+ *
+ * Revision 4.1  2003/02/19 22:40:29  ryan
+ * S57 - Latest version from Frank that does not fail to build with the newest OGR <rjp><dal>
  *
  * Revision 1.7  2001/12/17 22:38:42  warmerda
  * restructure LoadInfo() to support in-code tables
@@ -106,6 +127,8 @@ S57ClassRegistrar::S57ClassRegistrar()
     pachAttrType = NULL;
     panAttrIndex = NULL;
     papszAttrNames = NULL;
+    papszAttrAcronym = NULL;
+    papapszAttrValues = NULL;
 }
 
 /************************************************************************/
@@ -234,10 +257,18 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     if( pszProfile == NULL )
         pszProfile = CPLGetConfigOption( "S57_PROFILE", "" );
     
-    if( pszProfile[0] == '\0' )
-        strcpy( szTargetFile, "s57objectclasses.csv" );
+    if( EQUAL(pszProfile, "Additional_Military_Layers") )
+    {
+       sprintf( szTargetFile, "s57objectclasses_%s.csv", "aml" );
+    }
+    else if ( EQUAL(pszProfile, "Inland_Waterways") )
+    {
+       sprintf( szTargetFile, "s57objectclasses_%s.csv", "iw" );
+    }
     else
-        sprintf( szTargetFile, "s57objectclasses_%s.csv", pszProfile );
+    {
+       strcpy( szTargetFile, "s57objectclasses.csv" );
+    }
 
     if( !FindFile( szTargetFile, pszDirectory, bReportErr, &fp ) )
         return FALSE;
@@ -292,11 +323,20 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
 /* ==================================================================== */
 /*      Read the attributes list.                                       */
 /* ==================================================================== */
-    if( pszProfile[0] == '\0' )
-        strcpy( szTargetFile, "s57attributes.csv" );
-    else
-        sprintf( szTargetFile, "s57attributes_%s.csv", pszProfile );
 
+    if( EQUAL(pszProfile, "Additional_Military_Layers") )
+    {
+        sprintf( szTargetFile, "s57attributes_%s.csv", "aml" );
+    }
+    else if ( EQUAL(pszProfile, "Inland_Waterways") )
+    {
+       sprintf( szTargetFile, "s57attributes_%s.csv", "iw" );
+    }
+    else
+    {
+       strcpy( szTargetFile, "s57attributes.csv" );
+    }
+       
     if( !FindFile( szTargetFile, pszDirectory, bReportErr, &fp ) )
         return FALSE;
 
