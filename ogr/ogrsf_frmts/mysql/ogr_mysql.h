@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/08/30 23:53:16  fwarmerdam
+ * implement binary field support
+ *
  * Revision 1.4  2005/02/22 12:54:27  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -97,7 +100,7 @@ class OGRMySQLLayer : public OGRLayer
     virtual int         TestCapability( const char * );
 
     /* custom methods */
-    virtual OGRFeature *RecordToFeature( char **papszRow );
+    virtual OGRFeature *RecordToFeature( char **papszRow, unsigned long * );
     virtual OGRFeature *GetNextRawFeature();
 };
 

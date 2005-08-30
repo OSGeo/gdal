@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/08/30 23:53:16  fwarmerdam
+ * implement binary field support
+ *
  * Revision 1.7  2005/07/25 16:08:50  fwarmerdam
  * Fixed recognision of some integer types, such as mediumint.
  *
@@ -142,11 +145,15 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         if( pszType == NULL )
             continue;
 
-        if( EQUAL(pszType,"varchar") 
-            || (strlen(pszType)>3 && EQUAL(pszType+strlen(pszType)-4,"text"))
-            || (strlen(pszType)>3 && EQUAL(pszType+strlen(pszType)-4,"blob"))
-            || EQUAL(pszType+strlen(pszType)-4,"enum") 
-            || EQUAL(pszType+strlen(pszType)-4,"set") )
+        if( EQUAL(pszType,"varbinary")
+            || (strlen(pszType)>3 && EQUAL(pszType+strlen(pszType)-4,"blob")))
+        {
+            oField.SetType( OFTBinary );
+        }
+        else if( EQUAL(pszType,"varchar") 
+                 || (strlen(pszType)>3 && EQUAL(pszType+strlen(pszType)-4,"text"))
+                 || EQUAL(pszType+strlen(pszType)-4,"enum") 
+                 || EQUAL(pszType+strlen(pszType)-4,"set") )
         {
             oField.SetType( OFTString );
         }
@@ -460,17 +467,20 @@ OGRFeature *OGRMySQLTableLayer::GetFeature( long nFeatureId )
 /*      Fetch the result record.                                        */
 /* -------------------------------------------------------------------- */
     char **papszRow;
+    unsigned long *panLengths;
 
     papszRow = mysql_fetch_row( hResultSet );
     if( papszRow == NULL )
         return NULL;
+
+    panLengths = mysql_fetch_lengths( hResultSet );
 
 /* -------------------------------------------------------------------- */
 /*      Transform into a feature.                                       */
 /* -------------------------------------------------------------------- */
     iNextShapeId = nFeatureId;
 
-    OGRFeature *poFeature = RecordToFeature( papszRow );
+    OGRFeature *poFeature = RecordToFeature( papszRow, panLengths );
 
     iNextShapeId = 0;
 

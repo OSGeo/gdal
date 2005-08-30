@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/08/30 23:53:16  fwarmerdam
+ * implement binary field support
+ *
  * Revision 1.3  2005/02/22 12:54:27  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -148,7 +151,8 @@ OGRFeature *OGRMySQLLayer::GetNextFeature()
 /*      a feature.                                                      */
 /************************************************************************/
 
-OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow )
+OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
+                                            unsigned long *panLengths )
 
 {
     mysql_field_seek( hResultSet, 0 );
@@ -194,11 +198,20 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow )
 /*      Transfer regular data fields.                                   */
 /* -------------------------------------------------------------------- */
         iOGRField = poFeatureDefn->GetFieldIndex(psMSField->name);
-
         if( iOGRField < 0 )
             continue;
 
-        poFeature->SetField( iOGRField, papszRow[iField] );
+        OGRFieldDefn *psFieldDefn = poFeatureDefn->GetFieldDefn( iOGRField );
+
+        if( psFieldDefn->GetType() == OFTBinary )
+        {
+            poFeature->SetField( iOGRField, panLengths[iField], 
+                                 (GByte *) papszRow[iField] );
+        }
+        else
+        {
+            poFeature->SetField( iOGRField, papszRow[iField] );
+        }
     }
 
     return poFeature;
@@ -238,6 +251,7 @@ OGRFeature *OGRMySQLLayer::GetNextRawFeature()
 /*      Fetch next record.                                              */
 /* -------------------------------------------------------------------- */
     char **papszRow;
+    unsigned long *panLengths;
 
     papszRow = mysql_fetch_row( hResultSet );
     if( papszRow == NULL )
@@ -246,10 +260,12 @@ OGRFeature *OGRMySQLLayer::GetNextRawFeature()
         return NULL;
     }
 
+    panLengths = mysql_fetch_lengths( hResultSet );
+
 /* -------------------------------------------------------------------- */
 /*      Process record.                                                 */
 /* -------------------------------------------------------------------- */
-    OGRFeature *poFeature = RecordToFeature( papszRow );
+    OGRFeature *poFeature = RecordToFeature( papszRow, panLengths );
 
     iNextShapeId++;
 
