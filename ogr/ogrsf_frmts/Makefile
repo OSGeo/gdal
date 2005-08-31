@@ -37,7 +37,7 @@ MYSQL_DIR = mysql
 MYSQL_OBJ = mysql\*.obj
 !ENDIF
 
-!IFDEF XERCES_DIR
+!IFDEF ILI_ENABLED
 ILI_DIR = ili
 ILI_OBJ = ili\*.obj ili\iom\*.obj
 !ENDIF
