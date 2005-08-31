@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/08/31 03:32:41  fwarmerdam
+ * GetTypeName now returns CPLString
+ *
  * Revision 1.12  2005/06/29 01:01:01  ssoule
  * Changed return type of CPLODBCStatement::GetTypeName from const char * to
  * std::string.
@@ -78,7 +81,7 @@
 
 #include <sql.h>
 #include <sqlext.h>
-#include <string>
+#include "cpl_string.h"
 
 /**
  * \file cpl_odbc.h
@@ -203,7 +206,7 @@ class CPL_DLL CPLODBCStatement {
 
     void           DumpResult( FILE *fp, int bShowSchema = FALSE );
 
-    static std::string GetTypeName( int );
+    static CPLString GetTypeName( int );
 
     int            CollectResultsInfo();
 };
