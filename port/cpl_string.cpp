@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.45  2005/08/31 03:31:15  fwarmerdam
+ * added binarytohex/hextobinary
+ *
  * Revision 1.44  2005/08/04 19:41:33  fwarmerdam
  * support setting null value in CSLSetNameValue
  *
@@ -1581,4 +1584,93 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
         *pnLength = iOut;
 
     return pszOutput;
+}
+
+/************************************************************************/
+/*                           CPLBinaryToHex()                           */
+/************************************************************************/
+
+/**
+ * Binary to hexadecimal translation.
+ *
+ * @param nBytes number of bytes of binary data in pabyData.
+ * @param pabyData array of data bytes to translate. 
+ * 
+ * @return hexadecimal translation, zero terminated.  Free with CPLFree().
+ */
+
+char *CPLBinaryToHex( int nBytes, GByte *pabyData )
+
+{
+    char *pszHex = (char *) CPLMalloc(nBytes * 2 + 1 );
+    int i;
+    static const char achHex[] = "0123456789ABCDEF";
+
+    pszHex[nBytes*2] = '\0';
+
+    for( i = 0; i < nBytes; i++ )
+    {
+        int nLow = pabyData[i] & 0x0f;
+        int nHigh = (pabyData[i] & 0xf0) >> 8;
+
+        pszHex[i*2] = achHex[nHigh];
+        pszHex[i*2+1] = achHex[nLow];
+    }
+
+    return pszHex;
+}
+
+
+/************************************************************************/
+/*                           CPLHexToBinary()                           */
+/************************************************************************/
+
+/**
+ * Hexadecimal to binary translation
+ *
+ * @param 
+
+*/
+
+GByte *CPLHexToBinary( const char *pszHex, int *pnBytes )
+
+{
+    int iSrc, iDst, nHexLen = strlen(pszHex);
+
+    GByte *pabyWKB;
+
+    pabyWKB = (GByte *) CPLMalloc(nHexLen / 2 + 2);
+
+    while( pszHex[iSrc] != '\0' )
+    {
+        if( pszHex[iSrc] > '0' && pszHex[iSrc] <= '9' )
+            pabyWKB[iDst] = pszHex[iSrc] - '0';
+        else if( pszHex[iSrc] > 'A' && pszHex[iSrc] <= 'F' )
+            pabyWKB[iDst] = pszHex[iSrc] - 'A' + 10;
+        else if( pszHex[iSrc] > 'a' && pszHex[iSrc] <= 'f' )
+            pabyWKB[iDst] = pszHex[iSrc] - 'a' + 10;
+        else 
+            break;
+
+        pabyWKB[iDst] *= 16;
+
+        iSrc++;
+
+        if( pszHex[iSrc] > '0' && pszHex[iSrc] <= '9' )
+            pabyWKB[iDst] += pszHex[iSrc] - '0';
+        else if( pszHex[iSrc] > 'A' && pszHex[iSrc] <= 'F' )
+            pabyWKB[iDst] += pszHex[iSrc] - 'A' + 10;
+        else if( pszHex[iSrc] > 'a' && pszHex[iSrc] <= 'f' )
+            pabyWKB[iDst] += pszHex[iSrc] - 'a' + 10;
+        else
+            break;
+
+        iSrc++;
+        iDst++;
+    }
+    
+    pabyWKB[iDst] = 0;
+    *pnBytes = iDst;
+
+    return pabyWKB;
 }
