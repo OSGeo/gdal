@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/08/31 03:32:41  fwarmerdam
+ * GetTypeName now returns CPLString
+ *
  * Revision 1.22  2005/08/07 14:05:44  fwarmerdam
  * added connect/disconnect debug statements
  *
@@ -1215,8 +1218,8 @@ void CPLODBCStatement::DumpResult( FILE *fp, int bShowSchema )
             else
                 fprintf( fp, " Size:%5d", GetColSize(iCol) );
 
-            std::string sType = GetTypeName( GetColType(iCol) );
-            fprintf( fp, " Type:%s", sType.c_str() );
+            CPLString osType = GetTypeName( GetColType(iCol) );
+            fprintf( fp, " Type:%s", osType.c_str() );
             if( GetColNullable(iCol) )
                 fprintf( fp, " NULLABLE" );
             fprintf( fp, "\n" );
@@ -1254,7 +1257,7 @@ void CPLODBCStatement::DumpResult( FILE *fp, int bShowSchema )
  * @return internal string, "UNKNOWN" if code not recognised. 
  */
 
-std::string CPLODBCStatement::GetTypeName( int nTypeCode )
+CPLString CPLODBCStatement::GetTypeName( int nTypeCode )
 
 {
     switch( nTypeCode )
@@ -1300,9 +1303,8 @@ std::string CPLODBCStatement::GetTypeName( int nTypeCode )
         return "TIMESTAMP";
 
       default:
-          char szType[100];
-
-          sprintf( szType, "UNKNOWN:%d", nTypeCode );
-          return szType;
+        CPLString osResult;
+        osResult.Printf( "UNKNOWN:%d", nTypeCode );
+        return osResult;
     }
 }
