@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/08/31 03:33:35  fwarmerdam
+ * dont bother trying to make szPath in CSVFileOverride() threadlocal
+ *
  * Revision 1.13  2005/05/23 03:58:15  fwarmerdam
  * make make static buffers threadlocal
  *
@@ -1011,7 +1014,7 @@ put into CSVDirName).  <p>
 static const char *CSVFileOverride( const char * pszInput )
 
 {
-    static CPL_THREADLOCAL char         szPath[1024];
+    static char         szPath[1024];
 
 #ifdef WIN32
     sprintf( szPath, "%s\\%s", CSVDirName, pszInput );
