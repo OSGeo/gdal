@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/08/31 05:08:01  fwarmerdam
+ * fixed up std::string use for vc6 compatability
+ *
  * Revision 1.19  2005/08/31 03:30:51  fwarmerdam
  * added binarytohex/hextobinary, CPLString
  *
@@ -191,12 +194,14 @@ CPL_C_END
 
 #include <string>
 
-class CPL_DLL CPLString : public std::string
+using std::string;
+
+class CPL_DLL CPLString : public string
 {
 public:
     CPLString(void) {}
-    CPLString( const std::string &oStr ) : std::string( oStr ) {}
-    CPLString( const char *pszStr ) : std::string( pszStr ) {}
+    CPLString( const std::string &oStr ) : string( oStr ) {}
+    CPLString( const char *pszStr ) : string( pszStr ) {}
     
     operator const char* (void) const { return c_str(); }
 
