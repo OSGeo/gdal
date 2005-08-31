@@ -13,7 +13,7 @@ endif
 OBJ	=	cpl_conv.o cpl_error.o cpl_string.o cpl_vsisimple.o \
 		cplgetsymbol.o cpl_dir.o cpl_path.o cpl_csv.o cpl_findfile.o \
 		cpl_vsil_unix_stdio_64.o cpl_minixml.o cpl_multiproc.o \
-		cpl_list.o cpl_getexecpath.o
+		cpl_list.o cpl_getexecpath.o cplstring.o
 
 ifeq ($(ODBC_SETTING),yes)
 OBJ	:= 	$(OBJ) cpl_odbc.o
