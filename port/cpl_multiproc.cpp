@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/08/31 01:00:51  fwarmerdam
+ * Fixed assert limits.
+ *
  * Revision 1.15  2005/08/24 21:51:06  fwarmerdam
  * added CPLCleanupTLS
  *
@@ -967,7 +970,7 @@ void *CPLGetTLS( int nIndex )
 {
     void **papTLSList = CPLGetTLSList();
 
-    CPLAssert( nIndex >= 0 && nIndex <= CTLS_MAX );
+    CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
 
     return papTLSList[nIndex];
 }
@@ -981,7 +984,7 @@ void CPLSetTLS( int nIndex, void *pData, int bFreeOnExit )
 {
     void **papTLSList = CPLGetTLSList();
 
-    CPLAssert( nIndex >= 0 && nIndex <= CTLS_MAX );
+    CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
 
     papTLSList[nIndex] = pData;
     papTLSList[CTLS_MAX + nIndex] = (void *) bFreeOnExit;
