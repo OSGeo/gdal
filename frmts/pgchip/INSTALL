@@ -1,0 +1,37 @@
+REQUIREMENTS :
+
+* Make sure you have a full PostgreSQL/Postgis clean source installation 
+* You need to have Proj4 installed and configured in Pstgis to get the driver work
+
+
+INSTALL NOTES :
+
+1* Go to frmts directory under GDAL source tree
+
+2* Unpack pgchip archive in the frmts directory 
+
+3* Edit GNUMakefile to set your Postgis include path
+
+4* Add registration entry point declaration :
+    - Open gdal/gcore/gdal_frmts.h
+    - Add "void CPL_DLL GDALRegister_PGCHIP(void);" between the CPL_C_START and CPL_C_END tags
+
+5* Add a call to the registration function in frmts/gdalallregister.c
+    In the GDALAllRegister() function add the followinf lines :
+    #ifdef FRMT_pgchip
+        GDALRegister_PGCHIP();
+    #endif
+    
+6* Add the format short name to the GDAL_FORMATS macro in GDALmake.opt.in (and to GDALmake.opt) :
+    - Locate the variable GDAL_FORMATS and add "pgchip" (lowercase) to the list of formats
+    
+7* Add a format specific item to the EXTRAFLAGS macro in frmts/makefile.vc
+
+8* Recompile your GDAL library :
+    - make clean
+    -./configure
+    - make
+    - make install
+    
+9* Test your pgchip installation :
+    execute gdalinfo --formats and search for pgchip  
