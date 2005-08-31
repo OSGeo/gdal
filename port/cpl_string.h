@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/08/31 03:30:51  fwarmerdam
+ * added binarytohex/hextobinary, CPLString
+ *
  * Revision 1.18  2005/04/04 15:23:31  fwarmerdam
  * some functions now CPL_STDCALL
  *
@@ -175,6 +178,32 @@ char CPL_DLL *CPLEscapeString( const char *pszString, int nLength,
 char CPL_DLL *CPLUnescapeString( const char *pszString, int *pnLength,
                                  int nScheme );
 
+char CPL_DLL *CPLBinaryToHex( int nBytes, GByte *pabyData );
+GByte CPL_DLL *CPLHexToBinary( const char *pszHex, int *pnBytes );
+
 CPL_C_END
+
+/************************************************************************/
+/*                              CPLString                               */
+/************************************************************************/
+
+#ifdef __cplusplus
+
+#include <string>
+
+class CPL_DLL CPLString : public std::string
+{
+public:
+    CPLString(void) {}
+    CPLString( const std::string &oStr ) : std::string( oStr ) {}
+    CPLString( const char *pszStr ) : std::string( pszStr ) {}
+    
+    operator const char* (void) const { return c_str(); }
+
+    CPLString &Printf( const char *pszFormat, ... );
+    CPLString &vPrintf( const char *pszFormat, va_list args );
+};
+
+#endif /* def __cplusplus */
 
 #endif /* _CPL_STRING_H_INCLUDED */
