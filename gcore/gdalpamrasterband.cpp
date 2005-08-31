@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/08/31 03:34:23  fwarmerdam
+ * use CPLString.Printf instead of CSPrintf()
+ *
  * Revision 1.8  2005/06/08 14:04:58  fwarmerdam
  * fixed last fix in handling of histograms
  *
@@ -94,12 +97,14 @@ CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char *pszVRTPath )
 /* -------------------------------------------------------------------- */
 /*      Setup root node and attributes.                                 */
 /* -------------------------------------------------------------------- */
+    CPLString oFmt;
+
     CPLXMLNode *psTree;
 
     psTree = CPLCreateXMLNode( NULL, CXT_Element, "PAMRasterBand" );
 
     if( GetBand() > 0 )
-        CPLSetXMLValue( psTree, "#band", CPLSPrintf( "%d", GetBand() ) );
+        CPLSetXMLValue( psTree, "#band", oFmt.Printf( "%d", GetBand() ) );
 
 /* -------------------------------------------------------------------- */
 /*      Serialize information of interest.                              */
@@ -109,18 +114,18 @@ CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char *pszVRTPath )
 
     if( psPam->bNoDataValueSet )
         CPLSetXMLValue( psTree, "NoDataValue", 
-                        CPLSPrintf( "%.14E", psPam->dfNoDataValue ) );
+                        oFmt.Printf( "%.14E", psPam->dfNoDataValue ) );
 
     if( psPam->pszUnitType != NULL )
         CPLSetXMLValue( psTree, "UnitType", psPam->pszUnitType );
 
     if( psPam->dfOffset != 0.0 )
         CPLSetXMLValue( psTree, "Offset", 
-                        CPLSPrintf( "%.16g", psPam->dfOffset ) );
+                        oFmt.Printf( "%.16g", psPam->dfOffset ) );
 
     if( psPam->dfScale != 1.0 )
         CPLSetXMLValue( psTree, "Scale", 
-                        CPLSPrintf( "%.16g", psPam->dfScale ) );
+                        oFmt.Printf( "%.16g", psPam->dfScale ) );
 
     if( psPam->eColorInterp != GCI_Undefined )
         CPLSetXMLValue( psTree, "ColorInterp", 
@@ -158,10 +163,10 @@ CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char *pszVRTPath )
 
             psPam->poColorTable->GetColorEntryAsRGB( iEntry, &sEntry );
             
-            CPLSetXMLValue( psEntry_XML, "#c1", CPLSPrintf("%d",sEntry.c1) );
-            CPLSetXMLValue( psEntry_XML, "#c2", CPLSPrintf("%d",sEntry.c2) );
-            CPLSetXMLValue( psEntry_XML, "#c3", CPLSPrintf("%d",sEntry.c3) );
-            CPLSetXMLValue( psEntry_XML, "#c4", CPLSPrintf("%d",sEntry.c4) );
+            CPLSetXMLValue( psEntry_XML, "#c1", oFmt.Printf("%d",sEntry.c1) );
+            CPLSetXMLValue( psEntry_XML, "#c2", oFmt.Printf("%d",sEntry.c2) );
+            CPLSetXMLValue( psEntry_XML, "#c3", oFmt.Printf("%d",sEntry.c3) );
+            CPLSetXMLValue( psEntry_XML, "#c4", oFmt.Printf("%d",sEntry.c4) );
         }
     }
 
@@ -171,9 +176,9 @@ CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char *pszVRTPath )
     if( psPam->bHaveMinMax )
     {
         CPLSetXMLValue( psTree, "Minimum", 
-                        CPLSPrintf( "%.16g", psPam->dfMin ) );
+                        oFmt.Printf( "%.16g", psPam->dfMin ) );
         CPLSetXMLValue( psTree, "Maximum", 
-                        CPLSPrintf( "%.16g", psPam->dfMax ) );
+                        oFmt.Printf( "%.16g", psPam->dfMax ) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -182,9 +187,9 @@ CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char *pszVRTPath )
     if( psPam->bHaveStats )
     {
         CPLSetXMLValue( psTree, "Mean", 
-                        CPLSPrintf( "%.16g", psPam->dfMean ) );
+                        oFmt.Printf( "%.16g", psPam->dfMean ) );
         CPLSetXMLValue( psTree, "StandardDeviation", 
-                        CPLSPrintf( "%.16g", psPam->dfStdDev ) );
+                        oFmt.Printf( "%.16g", psPam->dfStdDev ) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1052,19 +1057,20 @@ PamHistogramToXMLTree( double dfMin, double dfMax,
     char *pszHistCounts = (char *) CPLMalloc(8 * nBuckets + 10);
     int iBucket, iHistOffset;
     CPLXMLNode *psXMLHist;
+    CPLString oFmt;
 
     psXMLHist = CPLCreateXMLNode( NULL, CXT_Element, "HistItem" );
 
     CPLSetXMLValue( psXMLHist, "HistMin", 
-                    CPLSPrintf( "%.16g", dfMin ));
+                    oFmt.Printf( "%.16g", dfMin ));
     CPLSetXMLValue( psXMLHist, "HistMax", 
-                    CPLSPrintf( "%.16g", dfMax ));
+                    oFmt.Printf( "%.16g", dfMax ));
     CPLSetXMLValue( psXMLHist, "BucketCount", 
-                    CPLSPrintf( "%d", nBuckets ));
+                    oFmt.Printf( "%d", nBuckets ));
     CPLSetXMLValue( psXMLHist, "IncludeOutOfRange", 
-                    CPLSPrintf( "%d", bIncludeOutOfRange ));
+                    oFmt.Printf( "%d", bIncludeOutOfRange ));
     CPLSetXMLValue( psXMLHist, "Approximate", 
-                    CPLSPrintf( "%d", bApprox ));
+                    oFmt.Printf( "%d", bApprox ));
 
     iHistOffset = 0;
     pszHistCounts[0] = '\0';

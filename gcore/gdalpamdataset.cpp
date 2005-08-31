@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/08/31 03:34:23  fwarmerdam
+ * use CPLString.Printf instead of CSPrintf()
+ *
  * Revision 1.8  2005/07/22 13:50:13  fwarmerdam
  * Default PAM support to off.
  *
@@ -108,6 +111,8 @@ void GDALPamDataset::FlushCache()
 CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszVRTPath )
 
 {
+    CPLString oFmt;
+
     if( psPam == NULL )
         return NULL;
 
@@ -130,13 +135,13 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszVRTPath )
     if( psPam->bHaveGeoTransform )
     {
         CPLSetXMLValue( psDSTree, "GeoTransform", 
-                        CPLSPrintf( "%24.16e,%24.16e,%24.16e,%24.16e,%24.16e,%24.16e",
-                                    psPam->adfGeoTransform[0],
-                                    psPam->adfGeoTransform[1],
-                                    psPam->adfGeoTransform[2],
-                                    psPam->adfGeoTransform[3],
-                                    psPam->adfGeoTransform[4],
-                                    psPam->adfGeoTransform[5] ) );
+                        oFmt.Printf( "%24.16e,%24.16e,%24.16e,%24.16e,%24.16e,%24.16e",
+                                     psPam->adfGeoTransform[0],
+                                     psPam->adfGeoTransform[1],
+                                     psPam->adfGeoTransform[2],
+                                     psPam->adfGeoTransform[3],
+                                     psPam->adfGeoTransform[4],
+                                     psPam->adfGeoTransform[5] ) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -174,20 +179,20 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszVRTPath )
                 CPLSetXMLValue( psXMLGCP, "Info", psGCP->pszInfo );
 
             CPLSetXMLValue( psXMLGCP, "#Pixel", 
-                            CPLSPrintf( "%.4f", psGCP->dfGCPPixel ) );
+                            oFmt.Printf( "%.4f", psGCP->dfGCPPixel ) );
 
             CPLSetXMLValue( psXMLGCP, "#Line", 
-                            CPLSPrintf( "%.4f", psGCP->dfGCPLine ) );
+                            oFmt.Printf( "%.4f", psGCP->dfGCPLine ) );
 
             CPLSetXMLValue( psXMLGCP, "#X", 
-                            CPLSPrintf( "%.12E", psGCP->dfGCPX ) );
+                            oFmt.Printf( "%.12E", psGCP->dfGCPX ) );
 
             CPLSetXMLValue( psXMLGCP, "#Y", 
-                            CPLSPrintf( "%.12E", psGCP->dfGCPY ) );
+                            oFmt.Printf( "%.12E", psGCP->dfGCPY ) );
 
             if( psGCP->dfGCPZ != 0.0 )
                 CPLSetXMLValue( psXMLGCP, "#GCPZ", 
-                                CPLSPrintf( "%.12E", psGCP->dfGCPZ ) );
+                                oFmt.Printf( "%.12E", psGCP->dfGCPZ ) );
         }
     }
 
