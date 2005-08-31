@@ -83,9 +83,14 @@ JPEG_SUPPORTED = 1
 #		$(OGDIDIR)\lib\$(TARGET)\zlib_ogdi$(OGDIVER).lib
 
 # Uncomment for Xerces based GML support.
-#XERCES_DIR =	d:\warmerda\iii\drivers\gml\xerces-c1_7_0-win32
+#XERCES_DIR =	c:\warmerda\supportlibs\xerces-c_2_6_0
 #XERCES_INCLUDE = -I$(XERCES_DIR)/include -I$(XERCES_DIR)/include/xercesc
-#XERCES_LIB = $(XERCES_DIR)/lib/xerces-c_1.lib
+#XERCES_LIB = $(XERCES_DIR)/lib/xerces-c_2.lib
+
+# Uncomment the following for Interlis support.  Note that a Xercex 2.x
+# is also required (see above).  Also, Interlis support only works with
+# Visual Studio.NET or newer, not VC6.
+#ILI_ENABLED = YES
 
 # Uncomment for JasPer based JPEG2000 support
 #JASPER_DIR = d:\projects\jasper-1.700.2.uuid
