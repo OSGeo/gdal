@@ -1,0 +1,9 @@
+TODO List :
+
+* Test Driver compatibility with various raster formats
+* Modify the connection string to cope with the name of the raster column
+* Improve the number of color interpretation options
+* Manage geoTrasnform
+* Deal with more datatypes
+* Improve SRID conversion
+* Test makefile.vc (Visual C)
