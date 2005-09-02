@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.12  2005/09/02 16:19:23  kruland
+ * Major reorganization to accomodate multiple language bindings.
+ * Each language binding can define renames and supplemental code without
+ * having to have a lot of conditionals in the main interface definition files.
+ *
  * Revision 1.11  2005/08/04 19:17:19  kruland
  * The Open() and OpenShared() methods were incrementing the gdal internal
  * reference count by mistake.
@@ -110,16 +115,3 @@ char const *GDALDriverShadow_HelpTopic_get( GDALDriverShadow *h ) {
 }
 %}
 
-#ifdef SWIGCSHARP
-%{
-char const *GDALDriverShadow_get_ShortName( GDALDriverShadow *h ) {
-  return GDALGetDriverShortName( h );
-}
-char const *GDALDriverShadow_get_LongName( GDALDriverShadow *h ) {
-  return GDALGetDriverLongName( h );
-}
-char const *GDALDriverShadow_get_HelpTopic( GDALDriverShadow *h ) {
-  return GDALGetDriverHelpTopic( h );
-}
-%}
-#endif

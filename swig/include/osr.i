@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.19  2005/09/02 16:19:23  kruland
+ * Major reorganization to accomodate multiple language bindings.
+ * Each language binding can define renames and supplemental code without
+ * having to have a lot of conditionals in the main interface definition files.
+ *
  * Revision 1.18  2005/08/06 20:51:58  kruland
  * Instead of using double_## defines and SWIG macros, use typemaps with
  * [ANY] specified and use $dim0 to extract the dimension.  This makes the
@@ -188,12 +193,17 @@ typedef void OSRCoordinateTransformationShadow;
 
 %}
 
-%feature("compactdefaultargs");
-%feature("autodoc");
-
-%import gdal_typemaps.i
-
 typedef int OGRErr;
+
+#if defined(SWIGPYTHON)
+%include osr_python.i
+#elif defined(SWIGRUBY)
+%include typemaps_ruby.i
+#elif defined(SWIGPHP4)
+%include typemaps_php.i
+#elif defined(SWIGCSHARP)
+%include typemaps_csharp.i
+#endif
 
 /******************************************************************************
  *
@@ -225,69 +235,7 @@ OGRErr GetWellKnownGeogCSAsWKT( const char *name, char **argout ) {
  * exactly the same as the C api.
  * 
  */
-#ifdef SWIGPYTHON
-%{
-static PyObject *
-py_OPTGetProjectionMethods(PyObject *self, PyObject *args) {
-
-    PyObject *py_MList;
-    char     **papszMethods;
-    int      iMethod;
-    
-    self = self;
-    args = args;
-
-    papszMethods = OPTGetProjectionMethods();
-    py_MList = PyList_New(CSLCount(papszMethods));
-
-    for( iMethod = 0; papszMethods[iMethod] != NULL; iMethod++ )
-    {
-	char    *pszUserMethodName;
-	char    **papszParameters;
-	PyObject *py_PList;
-	int       iParam;
-
-	papszParameters = OPTGetParameterList( papszMethods[iMethod], 
-					       &pszUserMethodName );
-        if( papszParameters == NULL )
-            return NULL;
-
-	py_PList = PyList_New(CSLCount(papszParameters));
-	for( iParam = 0; papszParameters[iParam] != NULL; iParam++ )
-       	{
-	    char    *pszType;
-	    char    *pszUserParamName;
-            double  dfDefault;
-
-	    OPTGetParameterInfo( papszMethods[iMethod], 
-				 papszParameters[iParam], 
-				 &pszUserParamName, 
-				 &pszType, &dfDefault );
-	    PyList_SetItem(py_PList, iParam, 
-			   Py_BuildValue("(sssd)", 
-					 papszParameters[iParam], 
-					 pszUserParamName, 
-                                         pszType, dfDefault ));
-	}
-	
-	CSLDestroy( papszParameters );
-
-	PyList_SetItem(py_MList, iMethod, 
-		       Py_BuildValue("(ssO)", 
-		                     papszMethods[iMethod], 
-				     pszUserMethodName, 
-		                     py_PList));
-    }
-
-    CSLDestroy( papszMethods );
-
-    return py_MList;
-}
-%}
-%native(GetProjectionMethods) py_OPTGetProjectionMethods;
-
-#else
-
+#if !defined(SWIGPYTHON)
 %rename (GetProjectionMethods) OPTGetProjectionMethods;
 char **OPTGetProjectionMethods();
 
@@ -297,7 +245,6 @@ char **OPTGetParameterList( char *method, char **username );
 %rename (GetProjectionMethodParamInfo) OPTGetParameterInfo;
 void OPTGetParameterInfo( char *method, char *param, char **usrname,
                           char **type, double *defaultval );
-
 #endif
 
 /******************************************************************************

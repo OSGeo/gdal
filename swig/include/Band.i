@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.20  2005/09/02 16:19:23  kruland
+ * Major reorganization to accomodate multiple language bindings.
+ * Each language binding can define renames and supplemental code without
+ * having to have a lot of conditionals in the main interface definition files.
+ *
  * Revision 1.19  2005/08/06 20:51:58  kruland
  * Instead of using double_## defines and SWIG macros, use typemaps with
  * [ANY] specified and use $dim0 to extract the dimension.  This makes the
@@ -253,24 +258,6 @@ public:
     return GDALSetRasterColorTable( self, arg );
   }
 
-#ifdef SWIGPYTHON
-%pythoncode {
-  def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
-                  buf_xsize=None, buf_ysize=None, buf_obj=None):
-      import gdalnumeric
-
-      return gdalnumeric.BandReadAsArray( self, xoff, yoff,
-                                          win_xsize, win_ysize,
-                                          buf_xsize, buf_ysize, buf_obj )
-    
-  def WriteArray(self, array, xoff=0, yoff=0):
-      import gdalnumeric
-
-      return gdalnumeric.BandWriteArray( self, array, xoff, yoff )
-
-}
-#endif
-
 /* NEEDED */
 /* ReadAsArray */
 /* WriteArray */
@@ -293,17 +280,3 @@ int GDALRasterBandShadow_YSize_get( GDALRasterBandShadow *h ) {
   return GDALGetRasterBandYSize( h );
 }
 %}
-
-#ifdef SWIGCSHARP
-%{
-GDALDataType GDALRasterBandShadow_get_DataType( GDALRasterBandShadow *h ) {
-  return GDALGetRasterDataType( h );
-}
-int GDALRasterBandShadow_get_XSize( GDALRasterBandShadow *h ) {
-  return GDALGetRasterBandXSize( h );
-}
-int GDALRasterBandShadow_get_YSize( GDALRasterBandShadow *h ) {
-  return GDALGetRasterBandYSize( h );
-}
-%}
-#endif

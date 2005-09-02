@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.15  2005/09/02 16:19:23  kruland
+ * Major reorganization to accomodate multiple language bindings.
+ * Each language binding can define renames and supplemental code without
+ * having to have a lot of conditionals in the main interface definition files.
+ *
  * Revision 1.14  2005/08/06 20:51:58  kruland
  * Instead of using double_## defines and SWIG macros, use typemaps with
  * [ANY] specified and use $dim0 to extract the dimension.  This makes the
@@ -240,17 +245,3 @@ int GDALDatasetShadow_RasterCount_get( GDALDatasetShadow *h ) {
   return GDALGetRasterCount( h );
 }
 %}
-
-#ifdef SWIGCSHARP
-%{
-int GDALDatasetShadow_get_RasterXSize( GDALDatasetShadow *h ) {
-  return GDALGetRasterXSize( h );
-}
-int GDALDatasetShadow_get_RasterYSize( GDALDatasetShadow *h ) {
-  return GDALGetRasterYSize( h );
-}
-int GDALDatasetShadow_get_RasterCount( GDALDatasetShadow *h ) {
-  return GDALGetRasterCount( h );
-}
-%}
-#endif

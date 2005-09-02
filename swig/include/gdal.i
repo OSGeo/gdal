@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.34  2005/09/02 16:19:23  kruland
+ * Major reorganization to accomodate multiple language bindings.
+ * Each language binding can define renames and supplemental code without
+ * having to have a lot of conditionals in the main interface definition files.
+ *
  * Revision 1.33  2005/08/09 17:40:09  kruland
  * Added support for ruby.
  *
@@ -136,25 +141,6 @@
 //
 // We register all the drivers upon module initialization
 //
-#ifdef SWIGPYTHON
-%init %{
-  if ( GDALGetDriverCount() == 0 ) {
-    GDALAllRegister();
-  }
-%}
-
-%pythoncode %{
-  from gdalconst import *
-%}
-#endif
-
-#ifdef SWIGPHP4
-%init %{
-  if (GDALGetDriverCount() == 0 ) {
-    GDALAllRegister();
-  }
-%}
-#endif
 
 %{
 #include <iostream>
@@ -177,53 +163,21 @@ typedef int FALSE_IS_ERR;
 
 %}
 
-#if defined(SWIGPYTHON) || defined(SWIGRUBY)
-%{
-int bUseExceptions=0;
-int bErrorHappened=0;
-
-void PythonErrorHandler(CPLErr eclass, int code, const char *msg ) {
-  bErrorHappened = 1;
-}
-%}
-
-%inline %{
-void UseExceptions() {
-  bUseExceptions = 1;
-  bErrorHappened = 0;
-  CPLSetErrorHandler( (CPLErrorHandler)PythonErrorHandler );
-}
-
-void DontUseExceptions() {
-  bUseExceptions = 0;
-  bErrorHappened = 0;
-  CPLSetErrorHandler( CPLDefaultErrorHandler );
-}
-%}
-
-%include exception.i
-
-%exception {
-  {
-    bErrorHappened = 0;
-    $action
-    if ( bErrorHappened ) {
-      SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-    }
-  }
-}
-#endif /* SWIGPYTHON */
-
-%feature("compactdefaultargs");
-%feature("autodoc");
-
-%import gdal_typemaps.i
-
 typedef int GDALColorInterp;
 typedef int GDALAccess;
 typedef int GDALDataType;
 typedef int CPLErr;
 typedef int GDALResampleAlg;
+
+#if defined(SWIGPYTHON)
+%include "gdal_python.i"
+#elif defined(SWIGRUBY)
+%include "gdal_ruby.i"
+#elif defined(SWIGPHP4)
+%include "gdal_php.i"
+#elif defined(SWIGCSHARP)
+%include "gdal_csharp.i"
+#endif
 
 //************************************************************************
 //
@@ -251,6 +205,7 @@ typedef int GDALResampleAlg;
 // Define the Ground Control Point structure.
 //
 //************************************************************************
+// GCP - class?  serialize() method missing.
 %rename (GCP) GDAL_GCP;
 struct GDAL_GCP {
 %extend {
@@ -264,7 +219,6 @@ struct GDAL_GCP {
   char *Id;
 %immutable;
 
-%feature("kwargs") GDAL_GCP;
   GDAL_GCP( double x = 0.0, double y = 0.0, double z = 0.0,
             double pixel = 0.0, double line = 0.0,
             const char *info = "", const char *id = "" ) {
@@ -287,30 +241,6 @@ struct GDAL_GCP {
     CPLFree( self );
   }
 
-#ifdef SWIGPYTHON
-%pythoncode {
-  def __str__(self):
-    str = '%s (%.2fP,%.2fL) -> (%.7fE,%.7fN,%.2f) %s '\
-          % (self.Id, self.GCPPixel, self.GCPLine,
-             self.GCPX, self.GCPY, self.GCPZ, self.Info )
-    return str
-    def serialize(self,with_Z=0):
-        base = [CXT_Element,'GCP']
-        base.append([CXT_Attribute,'Id',[CXT_Text,self.Id]])
-        pixval = '%0.15E' % self.GCPPixel       
-        lineval = '%0.15E' % self.GCPLine
-        xval = '%0.15E' % self.GCPX
-        yval = '%0.15E' % self.GCPY
-        zval = '%0.15E' % self.GCPZ
-        base.append([CXT_Attribute,'Pixel',[CXT_Text,pixval]])
-        base.append([CXT_Attribute,'Line',[CXT_Text,lineval]])
-        base.append([CXT_Attribute,'X',[CXT_Text,xval]])
-        base.append([CXT_Attribute,'Y',[CXT_Text,yval]])
-        if with_Z:
-            base.append([CXT_Attribute,'Z',[CXT_Text,zval]])        
-        return base
-} /* pythoncode */
-#endif
 
 } /* extend */
 }; /* GDAL_GCP */
@@ -456,10 +386,6 @@ FALSE_IS_ERR GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 // GeneralCmdLineProcessor
 // TermProgress
 //
-// Majorobject - GetDescription
-// Majorobject - SetDescription
-//
-// GCP - class?  serialize() method missing.
 
 %rename (AllRegister) GDALAllRegister;
 void GDALAllRegister();
