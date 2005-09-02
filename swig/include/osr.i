@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.20  2005/09/02 21:42:42  kruland
+ * The compactdefaultargs feature should be turned on for all bindings not just
+ * python.
+ *
  * Revision 1.19  2005/09/02 16:19:23  kruland
  * Major reorganization to accomodate multiple language bindings.
  * Each language binding can define renames and supplemental code without
@@ -90,6 +94,8 @@
 */
 
 %module osr
+
+%feature("compactdefaultargs");
 
 %constant char *SRS_PT_ALBERS_CONIC_EQUAL_AREA	= SRS_PT_ALBERS_CONIC_EQUAL_AREA;
 %constant char *SRS_PT_AZIMUTHAL_EQUIDISTANT	= SRS_PT_AZIMUTHAL_EQUIDISTANT;
