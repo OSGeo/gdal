@@ -1,17 +1,17 @@
 
 SWIG = swig
-SWIGARGS = -Wall
+SWIGARGS = -Wall -I../include -I../include/$(BINDING)
 
 WRAPPERS = gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp
 
 gdal_wrap.cpp: ../include/gdal.i ../include/MajorObject.i ../include/Driver.i ../include/Dataset.i ../include/Band.i ../include/ColorTable.i ../include/cpl.i ../include/typemaps_$(BINDING).i
-	$(SWIG) $(SWIGARGS) -I../include -I$(GDAL_ROOT) -c++ -$(BINDING) -o $@ gdal.i
+	$(SWIG) $(SWIGARGS) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $@ gdal.i
 
 gdalconst_wrap.c: ../include/gdalconst.i
-	$(SWIG) $(SWIGARGS) -I../include -I$(GDAL_ROOT) -$(BINDING) -o $@ gdalconst.i
+	$(SWIG) $(SWIGARGS) -I$(GDAL_ROOT) -$(BINDING) -o $@ gdalconst.i
 
 ogr_wrap.cpp:  ../include/ogr.i ../include/typemaps_$(BINDING).i
-	$(SWIG) $(SWIGARGS) -I../include -I$(GDAL_ROOT) -c++ -$(BINDING) -o $@ ogr.i
+	$(SWIG) $(SWIGARGS) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $@ ogr.i
 
 osr_wrap.cpp:  ../include/osr.i ../include/typemaps_$(BINDING).i
-	$(SWIG) $(SWIGARGS) -I../include -I$(GDAL_ROOT) -c++ -$(BINDING) -o $@ osr.i
+	$(SWIG) $(SWIGARGS) -I$(GDAL_ROOT) -c++ -$(BINDING) -o $@ osr.i

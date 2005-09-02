@@ -37,17 +37,6 @@ public:
   }
 %clear char **;
 
-#ifdef SWIGPYTHON
-%pythoncode {
-  def GetMetadata( self, domain = '' ):
-    if domain[:4] == 'xml:':
-      return self.GetMetadata_List( domain )
-    return self.GetMetadata_Dict( domain )
-}
-#else
-%rename (GetMetadata) GetMetadata_Dict;
-#endif
-
 /*
  * SetMetadata methods
  */
