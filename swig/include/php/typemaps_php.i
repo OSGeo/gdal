@@ -127,7 +127,7 @@ OGRErrMessages( int rc ) {
   zval *t = CreateTupleFromDoubleArray( $1, $dim0 );
   t_output_helper( &$result, t );
 }
-%typemap(in,numinputs=0) ( double *argout[ANY]) (double *argout[ANY])
+%typemap(in,numinputs=0) ( double *argout[ANY]) (double *argout)
 {
   /* %typemap(in,numinputs=0) (double *argout[ANY]) */
   $1 = &argout;
