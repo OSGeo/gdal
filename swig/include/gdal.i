@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.35  2005/09/02 21:42:42  kruland
+ * The compactdefaultargs feature should be turned on for all bindings not just
+ * python.
+ *
  * Revision 1.34  2005/09/02 16:19:23  kruland
  * Major reorganization to accomodate multiple language bindings.
  * Each language binding can define renames and supplemental code without
@@ -137,6 +141,8 @@
 */
 
 %module gdal
+
+%feature ("compactdefaultargs");
 
 //
 // We register all the drivers upon module initialization
