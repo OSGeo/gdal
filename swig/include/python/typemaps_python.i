@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.37  2005/09/02 15:24:38  kruland
+ * Remove old and confusing comment which is no longer required.
+ *
  * Revision 1.36  2005/08/08 17:07:16  kruland
  * Added python typemaps for CPLXMLNode* in and return for the ParseXMLString
  * and SerializeXMLTree methods.
@@ -307,44 +310,6 @@ OGRErrMessages( int rc ) {
     resultobj = PyInt_FromLong( 0 );
   }
 }
-
-/*
- * SWIG macro to define fixed length array typemaps
- * defines three different typemaps.
- *
- * 1) For argument in.  The wrapped function's prototype is:
- *
- *    FunctionOfDouble3( double *vector );
- *
- *    The function assumes that vector points to three consecutive doubles.
- *    This can be wrapped using:
- * 
- *    %apply (double_3 argin) { (double *vector) };
- *    FunctionOfDouble3( double *vector );
- *    %clear (double *vector);
- *
- *    Example:  Dataset.SetGeoTransform().
- *
- * 2) Functions which modify a fixed length array passed as
- *    an argument or return data in an array allocated by the
- *    caller.
- *
- *    %apply (double_6 argout ) { (double *vector) };
- *    GetVector6( double *vector );
- *    %clear ( double *vector );
- *
- *    Example:  Dataset.GetGeoTransform().
- *
- * 3) Functions which take a double **.  Through this argument it
- *    returns a pointer to a fixed size array allocated with CPLMalloc.
- *
- *    %apply (double_17 *argoug) { (double **vector) };
- *    ReturnVector17( double **vector );
- *    %clear ( double **vector );
- *   
- *    Example:  SpatialReference.ExportToPCI().
- *
- */
 
 %fragment("CreateTupleFromDoubleArray","header") %{
 static PyObject *
