@@ -102,44 +102,6 @@ OGRErrMessages( int rc ) {
   RETVAL_LONG(0);
 }
 
-/*
- * SWIG macro to define fixed length array typemaps
- * defines three different typemaps.
- *
- * 1) For argument in.  The wrapped function's prototype is:
- *
- *    FunctionOfDouble3( double *vector );
- *
- *    The function assumes that vector points to three consecutive doubles.
- *    This can be wrapped using:
- * 
- *    %apply (double_3 argin) { (double *vector) };
- *    FunctionOfDouble3( double *vector );
- *    %clear (double *vector);
- *
- *    Example:  Dataset.SetGeoTransform().
- *
- * 2) Functions which modify a fixed length array passed as
- *    an argument or return data in an array allocated by the
- *    caller.
- *
- *    %apply (double_6 argout ) { (double *vector) };
- *    GetVector6( double *vector );
- *    %clear ( double *vector );
- *
- *    Example:  Dataset.GetGeoTransform().
- *
- * 3) Functions which take a double **.  Through this argument it
- *    returns a pointer to a fixed size array allocated with CPLMalloc.
- *
- *    %apply (double_17 *argoug) { (double **vector) };
- *    ReturnVector17( double **vector );
- *    %clear ( double **vector );
- *   
- *    Example:  SpatialReference.ExportToPCI().
- *
- */
-
 %fragment("CreateTupleFromDoubleArray","header") %{
   zval *
   CreateTupleFromDoubleArray( double *first, unsigned int size ) {
