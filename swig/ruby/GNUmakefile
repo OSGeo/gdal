@@ -12,6 +12,8 @@ clean:
 veryclean: clean
 	-rm -f $(WRAPPERS)
 
+generate: ${WRAPPERS}
+
 build: generate
 	$(MAKE) -f RubyMakefile.mk build
 
