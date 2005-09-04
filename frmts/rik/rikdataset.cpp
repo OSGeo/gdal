@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/09/04 09:43:03  dwallner
+ * recognize all compression codes
+ *
  * Revision 1.6  2005/08/25 22:36:30  dwallner
  * print header type in debug output
  *
@@ -336,7 +339,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Read uncompressed block.                                        */
 /* -------------------------------------------------------------------- */
 
-    if( poRDS->options == 0x00 )
+    if( poRDS->options == 0x00 || poRDS->options == 0x40 )
     {
         VSIFRead( pImage, 1, nBlockSize, poRDS->fp );
         return CE_None;
@@ -353,7 +356,8 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Read RLE block.                                                 */
 /* -------------------------------------------------------------------- */
 
-    if( poRDS->options != 0x0b ) do
+    if( poRDS->options == 0x01 ||
+        poRDS->options == 0x41 ) do
     {
         GByte count = blockData[filePos++];
         GByte color = blockData[filePos++];
@@ -363,12 +367,12 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             ((GByte *) pImage)[imagePos++] = color;
         }
     } while( filePos < nBlockSize && imagePos < pixels );
-    else
 
 /* -------------------------------------------------------------------- */
 /*      Read LZW block.                                                 */
 /* -------------------------------------------------------------------- */
 
+    else if( poRDS->options == 0x0b )
     {
         const int LZW_BITS_PER_PIXEL = 8;
         const int LZW_CLEAR = 1 << LZW_BITS_PER_PIXEL;
@@ -608,6 +612,15 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Read RIK3 block.                                                */
+/* -------------------------------------------------------------------- */
+
+    else if( poRDS->options == 0x0d )
+    {
+      // Unsupported
+    }
+
     CPLFree( blockData );
 
     return CE_None;
@@ -822,7 +835,6 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         VSIFReadL( &header.iOptions, 1, sizeof(header.iOptions), poOpenInfo->fp );
         header.iUnknown = header.iOptions;
         VSIFReadL( &header.iOptions, 1, sizeof(header.iOptions), poOpenInfo->fp );
-        header.iOptions = 0xb;
 
         header.fSouth = header.fNorth -
             header.iVertBlocks * header.iBlockHeight * header.iMPPNum;
@@ -936,9 +948,11 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
            return NULL;
 
         if( header.iOptions != 0x00 && // Uncompressed
+            header.iOptions != 0x40 && // Uncompressed
             header.iOptions != 0x01 && // RLE
             header.iOptions != 0x41 && // RLE
-            header.iOptions != 0x0B )  // LZW
+            header.iOptions != 0x0B && // LZW
+            header.iOptions != 0x0D )  // RIK3
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "Unknown map options.\n",
@@ -1079,10 +1093,13 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     char *compression = "RLE";
 
-    if( header.iOptions == 0x00 )
+    if( header.iOptions == 0x00 ||
+        header.iOptions == 0x40 )
         compression = "Uncompressed";
     if( header.iOptions == 0x0b )
         compression = "LZW";
+    if( header.iOptions == 0x0d )
+        compression = "RIK3";
 
     CPLDebug( "RIK",
               "RIK file parameters:\n"
