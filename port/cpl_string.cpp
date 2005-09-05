@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.46  2005/09/05 20:19:08  fwarmerdam
+ * fixed binarytohex function
+ *
  * Revision 1.45  2005/08/31 03:31:15  fwarmerdam
  * added binarytohex/hextobinary
  *
@@ -1611,7 +1614,7 @@ char *CPLBinaryToHex( int nBytes, GByte *pabyData )
     for( i = 0; i < nBytes; i++ )
     {
         int nLow = pabyData[i] & 0x0f;
-        int nHigh = (pabyData[i] & 0xf0) >> 8;
+        int nHigh = (pabyData[i] & 0xf0) >> 4;
 
         pszHex[i*2] = achHex[nHigh];
         pszHex[i*2+1] = achHex[nLow];
