@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/09/05 20:29:19  fwarmerdam
+ * removed unused variable
+ *
  * Revision 1.17  2005/09/05 19:35:10  fwarmerdam
  * Added shape support
  *
@@ -831,8 +834,6 @@ OGRErr OGRVRTLayer::createFromShapeBin( GByte *pabyShape, OGRGeometry **ppoGeom,
                                         int nBytes )
 
 {
-    int i;
-
     *ppoGeom = NULL;
 
     if( nBytes < 1 )

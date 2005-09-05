@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/09/05 20:30:06  fwarmerdam
+ * removed unused variable
+ *
  * Revision 1.1  2005/09/05 19:34:17  fwarmerdam
  * New
  *
@@ -397,8 +400,6 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
                                          int nBytes )
 
 {
-    int i;
-
     *ppoGeom = NULL;
 
     if( nBytes < 1 )
