@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2005/09/05 20:42:52  fwarmerdam
+ * ensure that non-geographic, non-projected srses return empty string
+ *
  * Revision 1.54  2005/04/06 00:02:05  fwarmerdam
  * various osr and oct functions now stdcall
  *
@@ -1076,15 +1079,15 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
 /*      Handle the projection definition.                               */
 /* ==================================================================== */
 
-    if( IsLocal() )
-    {
-        /* LOCAL_CS (NonEarth): return an empty PROJ4 string */
-        *ppszProj4 = CPLStrdup("");
-        return OGRERR_NONE;
-    }
-    else if( pszProjection == NULL )
+    if( pszProjection == NULL && IsGeographic() )
     {
         sprintf( szProj4+strlen(szProj4), "+proj=longlat " );
+    }
+    else if( pszProjection == NULL && !IsGeographic() )
+    {
+        // LOCAL_CS, or incompletely initialized coordinate systems.
+        *ppszProj4 = CPLStrdup("");
+        return OGRERR_NONE;
     }
     else if( EQUAL(pszProjection,SRS_PT_CYLINDRICAL_EQUAL_AREA) )
     {
