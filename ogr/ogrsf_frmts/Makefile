@@ -13,8 +13,8 @@ OGDIOBJ =	ogdi\*.obj
 !ENDIF
 
 !IFDEF ODBC_SUPPORTED
-ODBCDIR	=	odbc
-ODBCOBJ =	odbc\*.obj
+ODBCDIR	=	odbc pgeo
+ODBCOBJ =	odbc\*.obj pgeo\*.obj
 !ENDIF
 
 !IFDEF OCI_LIB
