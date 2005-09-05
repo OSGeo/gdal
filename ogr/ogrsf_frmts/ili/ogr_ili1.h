@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/09/05 20:29:00  fwarmerdam
+ * removed pszModelFilename from class
+ *
  * Revision 1.2  2005/08/06 22:21:53  pka
  * Area polygonizer added
  *
@@ -105,7 +108,6 @@ class OGRILI1DataSource : public OGRDataSource
 {
   private:
     char       *pszName;
-    const char *pszModelFilename;
     IILI1Reader *poReader;
     FILE       *fpTransfer;
     char       *pszTopic;
