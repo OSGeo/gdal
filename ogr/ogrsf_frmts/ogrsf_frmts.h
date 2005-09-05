@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2005/09/05 19:31:45  fwarmerdam
+ * Added PGeo driver.
+ *
  * Revision 1.52  2005/08/05 15:34:34  fwarmerdam
  * added grass
  *
@@ -456,6 +459,7 @@ void CPL_DLL RegisterOGRCSV();
 void CPL_DLL RegisterOGRILI1();
 void CPL_DLL RegisterOGRILI2();
 void CPL_DLL RegisterOGRGRASS();
+void CPL_DLL RegisterOGRPGeo();
 
 CPL_C_END
 
