@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/09/05 19:35:10  fwarmerdam
+ * Added shape support
+ *
  * Revision 1.6  2005/08/16 00:08:52  fwarmerdam
  * Added bSrcLayerFromSQL
  *
@@ -60,7 +63,8 @@ typedef enum {
     VGS_Direct,
     VGS_PointFromColumns, 
     VGS_WKT, 
-    VGS_WKB
+    VGS_WKB,
+    VGS_Shape
 } OGRVRTGeometryStyle;
 
 /************************************************************************/
@@ -97,6 +101,7 @@ class OGRVRTLayer : public OGRLayer
     int                *pabDirectCopy;
 
     OGRFeature         *TranslateFeature( OGRFeature * );
+    OGRErr              createFromShapeBin( GByte *, OGRGeometry **, int );
 
     void                ResetSourceReading();
 
