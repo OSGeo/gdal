@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/09/05 20:30:20  fwarmerdam
+ * fixed warning
+ *
  * Revision 1.1  2005/09/05 19:34:17  fwarmerdam
  * New
  *
@@ -141,10 +144,12 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Create a layer for each spatial table.                          */
 /* -------------------------------------------------------------------- */
+    unsigned int iTable;
+
     papoLayers = (OGRPGeoLayer **) CPLCalloc(apapszGeomColumns.size(),
                                              sizeof(void*));
 
-    for( int iTable = 0; iTable < apapszGeomColumns.size(); iTable++ )
+    for( iTable = 0; iTable < apapszGeomColumns.size(); iTable++ )
     {
         char **papszRecord = apapszGeomColumns[iTable];
         OGRPGeoTableLayer  *poLayer;
