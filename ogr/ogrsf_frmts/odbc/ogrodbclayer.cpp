@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/09/05 19:56:42  fwarmerdam
+ * added binary field support
+ *
  * Revision 1.9  2005/03/21 20:36:31  fwarmerdam
  * set precision for decimal fields - MS bug 1255
  *
@@ -150,6 +153,12 @@ CPLErr OGRODBCLayer::BuildFeatureDefn( const char *pszLayerName,
             oField.SetType( OFTInteger );
             break;
 
+          case SQL_BINARY:
+          case SQL_VARBINARY:
+          case SQL_LONGVARBINARY:
+            oField.SetType( OFTBinary );
+            break;
+
           case SQL_DECIMAL:
             oField.SetType( OFTReal );
             oField.SetPrecision( poStmt->GetColPrecision(iCol) );
@@ -249,9 +258,16 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
     for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
     {
-        const char *pszValue = poStmt->GetColData(panFieldOrdinals[iField]-1);
+        int iSrcField = panFieldOrdinals[iField]-1;
+        const char *pszValue = poStmt->GetColData( iSrcField );
 
-        if( pszValue != NULL )
+        if( pszValue == NULL )
+            /* no value */;
+        else if( poFeature->GetFieldDefnRef(iField)->GetType() == OFTBinary )
+            poFeature->SetField( iField, 
+                                 poStmt->GetColDataLength(iSrcField),
+                                 (GByte *) pszValue );
+        else
             poFeature->SetField( iField, pszValue );
     }
 
