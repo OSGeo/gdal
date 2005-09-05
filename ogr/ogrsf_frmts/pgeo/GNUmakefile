@@ -3,8 +3,8 @@ GDAL_ROOT	=	../../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-OBJ	=	ogrodbcdatasource.o ogrodbclayer.o ogrodbcdriver.o \
-		ogrodbctablelayer.o ogrodbcselectlayer.o
+OBJ	=	ogrpgeodatasource.o ogrpgeolayer.o ogrpgeodriver.o \
+		ogrpgeotablelayer.o ogrpgeoselectlayer.o
 
 CPPFLAGS	:=	-I.. -I../.. $(CPPFLAGS)
 
