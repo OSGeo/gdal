@@ -1,0 +1,16 @@
+
+OBJ	=	ogrpgeodriver.obj ogrpgeodatasource.obj ogrpgeolayer.obj \
+		ogrpgeotablelayer.obj  ogrpgeoselectlayer.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS = -I.. -I..\..
+
+default:	$(OBJ)
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb
+	-del *.exe
