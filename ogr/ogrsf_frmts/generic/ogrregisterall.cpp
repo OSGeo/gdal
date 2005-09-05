@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/09/05 19:32:52  fwarmerdam
+ * Added PGEO
+ *
  * Revision 1.25  2005/08/05 15:34:49  fwarmerdam
  * added grass support
  *
@@ -143,6 +146,7 @@ void OGRRegisterAll()
 #endif
 #ifdef ODBC_ENABLED
     RegisterOGRODBC();
+    RegisterOGRPGeo();
 #endif
 //    RegisterOGRE00();
 #ifdef OGDI_ENABLED
