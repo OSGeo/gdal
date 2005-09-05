@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2005/09/05 20:18:43  fwarmerdam
+ * added binary column support
+ *
  * Revision 1.23  2005/08/31 03:32:41  fwarmerdam
  * GetTypeName now returns CPLString
  *
@@ -290,6 +293,7 @@ CPLODBCStatement::CPLODBCStatement( CPLODBCSession *poSession )
     m_panColNullable = NULL;
 
     m_papszColValues = NULL;
+    m_panColValueLengths = NULL;
 
     m_pszStatement = NULL;
     m_nStatementMax = 0;
@@ -371,6 +375,7 @@ int CPLODBCStatement::CollectResultsInfo()
 /* -------------------------------------------------------------------- */
     m_papszColNames = (char **) VSICalloc(sizeof(char *),(m_nColCount+1));
     m_papszColValues = (char **) VSICalloc(sizeof(char *),(m_nColCount+1));
+    m_panColValueLengths = (int *) VSICalloc(sizeof(int),(m_nColCount+1));
 
     m_panColType = (short *) VSICalloc(sizeof(short),m_nColCount);
     m_panColSize = (_SQLULEN *) VSICalloc(sizeof(_SQLULEN),m_nColCount);
@@ -587,33 +592,52 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
     
     for( iCol = 0; iCol < m_nColCount; iCol++ )
     {
-        char szWrkData[256];
+        char szWrkData[512];
         _SQLLEN cbDataLen;
         int nRetCode;
+        int nFetchType;
+
+        if( m_panColType[iCol] == SQL_BINARY 
+            || m_panColType[iCol] == SQL_VARBINARY 
+            || m_panColType[iCol] == SQL_LONGVARBINARY )
+        {
+            nFetchType = SQL_C_BINARY;
+        }
+        else
+            nFetchType = SQL_C_CHAR;
 
         szWrkData[0] = '\0';
         szWrkData[sizeof(szWrkData)-1] = '\0';
 
-        nRetCode = SQLGetData( m_hStmt, (SQLUSMALLINT) iCol+1, SQL_C_CHAR,
+        nRetCode = SQLGetData( m_hStmt, (SQLUSMALLINT) iCol+1, nFetchType,
                                szWrkData, sizeof(szWrkData)-1, 
                                &cbDataLen );
         if( Failed( nRetCode ) )
             return FALSE;
 
         if( cbDataLen == SQL_NULL_DATA )
+        {
             m_papszColValues[iCol] = NULL;
+            m_panColValueLengths[iCol] = 0;
+        }
 
         // assume big result: should check for state=SQLSATE 01004.
         else if( nRetCode == SQL_SUCCESS_WITH_INFO  ) 
         {
-            m_papszColValues[iCol] = strdup(szWrkData);
+            if( cbDataLen > (int) (sizeof(szWrkData)-1) )
+                cbDataLen = (int) (sizeof(szWrkData)-1);
+
+            m_papszColValues[iCol] = (char *) CPLMalloc(cbDataLen+1);
+            memcpy( m_papszColValues[iCol], szWrkData, cbDataLen );
+            m_papszColValues[iCol][cbDataLen] = '\0';
+            m_panColValueLengths[iCol] = cbDataLen;
 
             while( TRUE )
             {
                 int nChunkLen;
 
                 nRetCode = SQLGetData( m_hStmt, (SQLUSMALLINT) iCol+1, 
-                                       SQL_C_CHAR,
+                                       nFetchType,
                                        szWrkData, sizeof(szWrkData)-1, 
                                        &cbDataLen );
                 if( nRetCode == SQL_NO_DATA )
@@ -631,17 +655,23 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 
                 m_papszColValues[iCol] = (char *) 
                     CPLRealloc( m_papszColValues[iCol], 
-                                strlen(m_papszColValues[iCol]) + nChunkLen+1 );
-                strcat( m_papszColValues[iCol], szWrkData );
+                                m_panColValueLengths[iCol] + nChunkLen + 1 );
+                memcpy( m_papszColValues[iCol] + m_panColValueLengths[iCol], 
+                        szWrkData, nChunkLen );
+                m_panColValueLengths[iCol] += nChunkLen;
+                m_papszColValues[iCol][m_panColValueLengths[iCol]] = '\0';
             }
         }
         else
         {
-            m_papszColValues[iCol] = strdup( szWrkData );
+            m_panColValueLengths[iCol] = cbDataLen;
+            m_papszColValues[iCol] = (char *) CPLMalloc(cbDataLen+1);
+            memcpy( m_papszColValues[iCol], szWrkData, cbDataLen );
+            m_papszColValues[iCol][cbDataLen] = '\0';
         }
 
         // Trim white space off end, if there is any.
-        if( m_papszColValues[iCol] != NULL )
+        if( nFetchType == SQL_C_CHAR && m_papszColValues[iCol] != NULL )
         {
             char *pszTarget = m_papszColValues[iCol];
             int iEnd = strlen(pszTarget) - 1;
@@ -715,6 +745,21 @@ const char *CPLODBCStatement::GetColData( const char *pszColName,
         return pszDefault;
     else
         return GetColData( iCol, pszDefault );
+}
+
+/************************************************************************/
+/*                          GetColDataLength()                          */
+/************************************************************************/
+
+int CPLODBCStatement::GetColDataLength( int iCol )
+
+{
+    if( iCol < 0 || iCol >= m_nColCount )
+        return 0;
+    else if( m_papszColValues[iCol] != NULL )
+        return m_panColValueLengths[iCol];
+    else
+        return 0;
 }
 
 /************************************************************************/
@@ -1055,8 +1100,6 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
 /*      Establish columns to use for key information.                   */
 /* -------------------------------------------------------------------- */
     int iCol;
-
-    CPLDebug( "ODBC", "GetColumn() - m_nColCount=%d", m_nColCount ); 
 
     for( iCol = 0; iCol < m_nColCount; iCol++ )
     {

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/09/05 20:18:43  fwarmerdam
+ * added binary column support
+ *
  * Revision 1.13  2005/08/31 03:32:41  fwarmerdam
  * GetTypeName now returns CPLString
  *
@@ -153,6 +156,7 @@ class CPL_DLL CPLODBCStatement {
     short         *m_panColNullable;
 
     char         **m_papszColValues;
+    int           *m_panColValueLengths;
     
     int            Failed( int );
 
@@ -192,6 +196,7 @@ class CPL_DLL CPLODBCStatement {
     int            GetColId( const char * );
     const char    *GetColData( int, const char * = NULL );
     const char    *GetColData( const char *, const char * = NULL );
+    int            GetColDataLength( int );
 
     // Fetch special metadata.
     int            GetColumns( const char *pszTable, 
