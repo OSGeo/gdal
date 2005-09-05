@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/09/05 19:30:06  fwarmerdam
+ * fix usage message
+ *
  * Revision 1.24  2004/10/12 19:27:17  fwarmerdam
  * avoid passing local stdout into GDAL library
  *
@@ -361,7 +364,7 @@ int main( int nArgc, char ** papszArgv )
 static void Usage()
 
 {
-    printf( "Usage: ogrinfo [-ro] [-q] [-where restricted_where] [-summary]\n"
+    printf( "Usage: ogrinfo [-ro] [-q] [-where restricted_where]\n"
             "               [-spat xmin ymin xmax ymax] [-fid fid]\n"
             "               [-sql statement] [-al] [-so] [--formats]\n"
             "               datasource_name [layer [layer ...]]\n");
