@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.5  2005/09/05 19:29:29  fwarmerdam
+ * minor formatting fix
+ *
  * Revision 1.4  2005/07/25 21:24:28  ssoule
  * Changed GDALColorTable's "GDALColorEntry *paoEntries" to
  * "std::vector<GDALColorEntry> aoEntries".
@@ -205,9 +208,9 @@ void GDALColorTable::SetColorEntry( int i, const GDALColorEntry * poEntry )
     
     if( i >= static_cast<int>(aoEntries.size()) )
     {
-		GDALColorEntry oBlack;
-		oBlack.c1 = oBlack.c2 = oBlack.c3 = oBlack.c4 = 0;
-		aoEntries.resize(i+1, oBlack);
+        GDALColorEntry oBlack;
+        oBlack.c1 = oBlack.c2 = oBlack.c3 = oBlack.c4 = 0;
+        aoEntries.resize(i+1, oBlack);
     }
 
     aoEntries[i] = *poEntry;
