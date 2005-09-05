@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/09/05 20:45:16  fwarmerdam
+ * fail in intialize() if exportToProj4 result is empty
+ *
  * Revision 1.29  2005/07/13 18:06:03  mbrudka
  * Just for a case moved proj4 lock above static bTriedToLoad
  *
@@ -498,6 +501,14 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
     if( poSRSSource->exportToProj4( &pszProj4Defn ) != OGRERR_NONE )
         return FALSE;
 
+    if( strlen(pszProj4Defn) == 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "No PROJ.4 translation for source SRS, coordinate\n"
+                  "transformation initialization has failed." );
+        return FALSE;
+    }
+
     psPJSource = pfn_pj_init_plus( pszProj4Defn );
     
     if( psPJSource == NULL )
@@ -529,6 +540,14 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
 /* -------------------------------------------------------------------- */
     if( poSRSTarget->exportToProj4( &pszProj4Defn ) != OGRERR_NONE )
         return FALSE;
+
+    if( strlen(pszProj4Defn) == 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "No PROJ.4 translation for destination SRS, coordinate\n"
+                  "transformation initialization has failed." );
+        return FALSE;
+    }
 
     psPJTarget = pfn_pj_init_plus( pszProj4Defn );
     
