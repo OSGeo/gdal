@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.31  2005/09/05 22:37:52  fwarmerdam
+ * Added progress monitor support in createcopy.
+ *
  * Revision 1.30  2005/08/10 20:53:24  dnadeau
  * correct GPS and logic problems for EXIF
  *
@@ -1026,6 +1029,9 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int  nQuality = 75;
     int  bProgressive = FALSE;
 
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+        return NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Some some rudimentary checks                                    */
 /* -------------------------------------------------------------------- */
@@ -1179,14 +1185,32 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
         if( eErr == CE_None )
             jpeg_write_scanlines( &sCInfo, &ppSamples, 1 );
+
+        if( eErr == CE_None 
+            && !pfnProgress( (iLine+1) / nYSize,
+                             NULL, pProgressData ) )
+        {
+            eErr = CE_Failure;
+            CPLError( CE_Failure, CPLE_UserInterrupt, 
+                      "User terminated CreateCopy()" );
+        }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Cleanup and close.                                              */
+/* -------------------------------------------------------------------- */
     CPLFree( pabyScanline );
 
     jpeg_finish_compress( &sCInfo );
     jpeg_destroy_compress( &sCInfo );
 
     VSIFClose( fpImage );
+
+    if( eErr != CE_None )
+    {
+        VSIUnlink( pszFilename );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do we need a world file?                                          */
