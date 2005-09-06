@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/09/06 21:58:11  dwallner
+ * zlib/rik3 support
+ *
  * Revision 1.9  2005/09/06 03:06:01  dwallner
  * lzw image distortion resolved
  *
@@ -60,6 +63,7 @@
 
 #include <float.h>
 #include "gdal_pam.h"
+#include "zlib.h"
 
 CPL_CVSID("$Id$");
 
@@ -79,15 +83,14 @@ CPL_C_END
 // The RIK file format information was extracted from the trikpanel project:
 // http://sourceforge.net/projects/trikpanel/
 //
-// There is currently no public information on RIK version 3 available.
-// The information below only applies to formats prior to version 3.
-//
 // A RIK file consists of the following elements:
 //
 // +--------------------+
-// | Map name           | (The first two bytes is the string length.)
+// | Magic "RIK3"       | (Only in RIK version 3)
 // +--------------------+
-// | Header             | (Variable length.)
+// | Map name           | (The first two bytes is the string length)
+// +--------------------+
+// | Header             | (Three different formats exists)
 // +--------------------+
 // | Color palette      |
 // +--------------------+
@@ -98,7 +101,7 @@ CPL_C_END
 //
 // All numbers are stored in little endian.
 //
-// There are three different image block formats:
+// There are four different image block formats:
 //
 // 1. Uncompressed image block
 //
@@ -113,7 +116,12 @@ CPL_C_END
 //
 //   The LZW image block uses the same LZW encoding as a GIF file
 //   except that there is no EOF code and maximum code length is 13 bits.
-//   These blocks are upside down compared to RLE blocks (and GDAL).
+//   These blocks are upside down compared to GDAL.
+//
+// 4. ZLIB image block
+//
+//   These blocks are upside down compared to GDAL.
+//
 
 typedef struct
 {
@@ -558,18 +566,29 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "RIK decompression failed. "
                           "Corrupt image block." );
-                          return CE_Failure;
+                return CE_Failure;
 #endif
         }
     }
 
 /* -------------------------------------------------------------------- */
-/*      Read RIK3 block.                                                */
+/*      Read ZLIB block.                                                */
 /* -------------------------------------------------------------------- */
 
     else if( poRDS->options == 0x0d )
     {
-      // Unsupported
+        uLong destLen = pixels;
+        Byte *upsideDown = (Byte *) CPLMalloc( pixels );
+
+        uncompress( upsideDown, &destLen, blockData, nBlockSize );
+
+        for (GUInt32 i = 0; i < poRDS->nBlockYSize; i++)
+        {
+            memcpy( ((Byte *)pImage) + poRDS->nBlockXSize * i,
+                    upsideDown + poRDS->nBlockXSize *
+                                 (poRDS->nBlockYSize - i - 1),
+                    poRDS->nBlockXSize );
+        }
     }
 
     CPLFree( blockData );
@@ -592,6 +611,7 @@ GDALColorInterp RIKRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 GDALColorTable *RIKRasterBand::GetColorTable()
+
 {
     RIKDataset *poRDS = (RIKDataset *) poDS;
 
@@ -908,7 +928,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
             header.iOptions != 0x01 && // RLE
             header.iOptions != 0x41 && // RLE
             header.iOptions != 0x0B && // LZW
-            header.iOptions != 0x0D )  // RIK3
+            header.iOptions != 0x0D )  // ZLIB
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "Unknown map options.\n",
@@ -1055,7 +1075,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
     if( header.iOptions == 0x0b )
         compression = "LZW";
     if( header.iOptions == 0x0d )
-        compression = "RIK3";
+        compression = "ZLIB";
 
     CPLDebug( "RIK",
               "RIK file parameters:\n"
