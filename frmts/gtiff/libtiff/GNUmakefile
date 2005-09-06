@@ -64,8 +64,10 @@ import:
 	fi
 
 	mv tif_config.h tif_config_safe.h
+	mv tiffconf.h tiffconf_safe.h
 	copymatch.sh ~/libtiff/libtiff *.c *.h
 	mv tif_config_safe.h tif_config.h
+	mv tiffconf_safe.h tiffconf.h
 
 	@echo
 	@echo 'Now do something like:'
