@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/09/06 03:06:01  dwallner
+ * lzw image distortion resolved
+ *
  * Revision 1.8  2005/09/06 02:01:58  dwallner
  * lzw read alignment problems fixed
  *
@@ -393,8 +396,10 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         GByte lastOutput;
         int bitsTaken = 0;
 
-        int prefix[LZW_CODES], i;
+        int prefix[LZW_CODES];
         GByte character[LZW_CODES];
+
+        int i;
 
         for( i = 0; i < LZW_CLEAR; i++ )
             character[i] = i;
@@ -474,53 +479,36 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 GByte stack[LZW_CODES];
 
                 int stackPtr = 0;
-                int decodeCode = 0;
+                int decodeCode = code;
 
-                if( prefix[code] == LZW_NO_SUCH_CODE )
+                if( code == lastAdded + 1 )
                 {
-                    if( code < LZW_CLEAR )
-                    {
-                        // Normal character
-                        *stack = code;
-                        stackPtr = 1;
-                    }
-                    else if( code == lastAdded + 1 )
-                    {
-                        // Handle special case
-                        *stack = lastOutput;
-                        stackPtr = 1;
-                        decodeCode = lastCode;
-       	            }
-                    else
-                    {
-                        throw "Too high code";
-                    }
-                }
-                else
-       	        {
-                    // Normal code
-                    decodeCode = code;
+                    // Handle special case
+                    *stack = lastOutput;
+                    stackPtr = 1;
+                    decodeCode = lastCode;
        	        }
+                else if( code > lastAdded + 1 )
+                {
+                    throw "Too high code";
+                }
 
                 // Decode
 
-                if( decodeCode )
+                i = 0;
+                while( ++i < LZW_CODES &&
+       	               decodeCode >= LZW_CLEAR &&
+       	               decodeCode < LZW_NO_SUCH_CODE )
                 {
-                    int j = 0;
-                    while( ++j < LZW_CODES &&
-       	                   decodeCode >= LZW_CLEAR &&
-			   decodeCode < LZW_NO_SUCH_CODE )
-                    {
-                      stack[stackPtr++] = character[decodeCode];
-                      decodeCode = prefix[decodeCode];
-                    }
-                    stack[stackPtr++] = decodeCode;
+                    stack[stackPtr++] = character[decodeCode];
+                    decodeCode = prefix[decodeCode];
+                }
+                stack[stackPtr++] = decodeCode;
 
-                    if( j == LZW_CODES || decodeCode >= LZW_NO_SUCH_CODE )
-                    {
-                        throw "Decode error";
-                    }
-       	        }
+                if( i == LZW_CODES || decodeCode >= LZW_NO_SUCH_CODE )
+                {
+                    throw "Decode error";
+                }
 
                 // Output stack
 
