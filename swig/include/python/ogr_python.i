@@ -6,6 +6,11 @@
 
 /*
  * $Log$
+ * Revision 1.2  2005/09/06 01:51:42  kruland
+ * Removed GetDriverByName, GetDriver, Open, OpenShared because they are defined
+ * in ogr now.
+ * Removed %feature("compactdefaultargs") because it's defined in ogr.i now.
+ *
  * Revision 1.1  2005/09/02 16:19:23  kruland
  * Major reorganization to accomodate multiple language bindings.
  * Each language binding can define renames and supplemental code without
@@ -13,7 +18,6 @@
  *
  */
 
-%feature ("compactdefaultargs");
 %feature("autodoc");
 
 %init %{
@@ -237,35 +241,5 @@ layer[0:4] would return a list of the first four features."""
     self.thisown = 0
 }
 }
-
-%inline %{
-OGRDriverShadow* GetDriverByName( char const *name ) {
-  return (OGRDriverShadow*) OGRGetDriverByName( name );
-}
-  
-OGRDriverShadow* GetDriver(int driver_number) {
-  return (OGRDriverShadow*) OGRGetDriver(driver_number);
-}
-%}
-
-%newobject Open;
-%feature("kwargs") Open;
-%inline %{
-  OGRDataSourceShadow *Open( const char * filename, int update=0 ) {
-    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(filename,update, NULL);
-    return ds;
-  }
- 
-%}
-
-%newobject OpenShared;
-%feature("kwargs") OpenShared;
-%inline %{
-  OGRDataSourceShadow *OpenShared( const char * filename, int update=0 ) {
-    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(filename,update, NULL);
-    return ds;
-  }
- 
-%}
 
 %import typemaps_python.i
