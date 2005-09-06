@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.21  2005/09/06 01:43:06  kruland
+ * Include gdal_typemaps.i if no other file is specified.
+ *
  * Revision 1.20  2005/09/02 21:42:42  kruland
  * The compactdefaultargs feature should be turned on for all bindings not just
  * python.
@@ -209,6 +212,8 @@ typedef int OGRErr;
 %include typemaps_php.i
 #elif defined(SWIGCSHARP)
 %include typemaps_csharp.i
+#else
+%include gdal_typemaps.i
 #endif
 
 /******************************************************************************
