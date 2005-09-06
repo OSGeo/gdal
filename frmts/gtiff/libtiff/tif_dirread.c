@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.57 2005/07/28 11:35:12 dron Exp $ */
+/* $Id: tif_dirread.c,v 1.58 2005/08/12 15:23:10 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -672,8 +672,6 @@ bad:
 int
 TIFFReadCustomDirectory(TIFF* tif, toff_t diroff)
 {
-	static const char module[] = "TIFFReadCustomDirectory";
-
 	return 1;
 }
 
