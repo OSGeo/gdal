@@ -9,6 +9,13 @@
 
  *
  * $Log$
+ * Revision 1.38  2005/09/06 01:49:07  kruland
+ * Declare %feature("compactdefaultargs") so all bindings use it.
+ * Import gdal_typemaps.i if no other language specific file used.
+ * Added Geometry::GetFieldTypeName() binding.
+ * Moved Open, OpenShared, GetDriver, and GetDriverByName from python
+ * language file.
+ *
  * Revision 1.37  2005/09/02 16:19:23  kruland
  * Major reorganization to accomodate multiple language bindings.
  * Each language binding can define renames and supplemental code without
@@ -176,6 +183,8 @@
 %include "exception.i"
 
 %module ogr
+
+%feature("compactdefaultargs");
 %feature("autodoc");
 
 typedef int OGRErr;
@@ -270,6 +279,8 @@ typedef void OGRFieldDefnShadow;
 %include ogr_php.i
 #elif defined(SWIGCSHARP)
 %include ogr_csharp.i
+#else
+%include gdal_typemaps.i
 #endif
 
 
@@ -1025,6 +1036,10 @@ public:
   int GetPointCount() {
     return OGR_G_GetPointCount(self);
   }
+
+  const char * GetFieldTypeName(OGRFieldType type) {
+    return OGR_GetFieldTypeName(type);
+  }
   
   %feature("kwargs") GetX;  
   double GetX(int point=0) {
@@ -1216,3 +1231,30 @@ void OGRRegisterAll();
     return layer;
   }
 %}
+
+%newobject Open;
+%inline %{
+  OGRDataSourceShadow* Open( const char *filename, int update =0 ) {
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(filename,update,NULL);
+    return ds;
+  }
+%}
+
+%newobject OpenShared;
+%inline %{
+  OGRDataSourceShadow* OpenShared( const char *filename, int update =0 ) {
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(filename,update,NULL);
+    return ds;
+  }
+%}
+
+%inline %{
+OGRDriverShadow* GetDriverByName( char const *name ) {
+  return (OGRDriverShadow*) OGRGetDriverByName( name );
+}
+
+OGRDriverShadow* GetDriver(int driver_number) {
+  return (OGRDriverShadow*) OGRGetDriver(driver_number);
+}
+%}
+
