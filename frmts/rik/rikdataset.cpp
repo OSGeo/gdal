@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/09/06 02:01:58  dwallner
+ * lzw read alignment problems fixed
+ *
  * Revision 1.7  2005/09/04 09:43:03  dwallner
  * recognize all compression codes
  *
@@ -62,7 +65,7 @@ void	GDALRegister_RIK(void);
 CPL_C_END
 
 #define RIK_HEADER_DEBUG 0
-#define RIK_RESTART_DEBUG 0
+#define RIK_CLEAR_DEBUG 0
 #define RIK_PIXEL_DEBUG 0
 
 //#define RIK_SINGLE_BLOCK 0
@@ -107,10 +110,6 @@ CPL_C_END
 //
 //   The LZW image block uses the same LZW encoding as a GIF file
 //   except that there is no EOF code and maximum code length is 13 bits.
-//   The block starts with 5 unknown bytes and each restart code
-//   is followed by an unknown number of unknown bytes.
-//   The LZW block read function handles the unknown bytes by
-//   restarting with different settings when an error has ocurred.
 //   These blocks are upside down compared to RLE blocks (and GDAL).
 
 typedef struct
@@ -210,15 +209,18 @@ RIKRasterBand::RIKRasterBand( RIKDataset *poDS, int nBand )
 static int GetNextLZWCode( int codeBits,
                            GByte *blockData,
                            GUInt32 &filePos,
+                           GUInt32 &fileAlign,
                            int &bitsTaken )
 
 {
+    if( filePos == fileAlign )
+    {
+        fileAlign += codeBits;
+    }
+
     const int BitMask[] = {
         0x0000, 0x0001, 0x0003, 0x0007,
-        0x000f, 0x001f, 0x003f, 0x007f,
-        0x00ff, 0x01ff, 0x03ff, 0x07ff,
-        0x0fff
-    };
+        0x000f, 0x001f, 0x003f, 0x007f };
 
     int ret = 0;
     int bitsLeftToGo = codeBits;
@@ -248,7 +250,7 @@ static int GetNextLZWCode( int codeBits,
     }
 
 #if RIK_PIXEL_DEBUG
-    printf( "\nc%d", ret );
+    printf( "c%03X\n", ret );
 #endif
 
     return ret;
@@ -272,7 +274,7 @@ static void OutputPixel( GByte pixel,
     imagePos++;
 
 #if RIK_PIXEL_DEBUG
-    printf( "_%02X", pixel );
+    printf( "_%02X %d\n", pixel, imagePos );
 #endif
 
     // Check if we need to change line
@@ -280,7 +282,7 @@ static void OutputPixel( GByte pixel,
     if( imagePos == lineBreak )
     {
 #if RIK_PIXEL_DEBUG
-        printf( "\n\n", pixel );
+        printf( "\n%d\n", imageLine );
 #endif
 
         imagePos = 0;
@@ -374,21 +376,22 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     else if( poRDS->options == 0x0b )
     {
+        const bool LZW_HAS_CLEAR_CODE = !!(blockData[4] & 0x80);
+        const int LZW_MAX_BITS = blockData[4] & 0x1f; // Max 13
         const int LZW_BITS_PER_PIXEL = 8;
-        const int LZW_CLEAR = 1 << LZW_BITS_PER_PIXEL;
-        const int LZW_MAX_BITS = 13;
-        const int LZW_CODES = 1 << LZW_MAX_BITS;
-        const int LZW_NO_SUCH_CODE = LZW_CODES + 1;
         const int LZW_OFFSET = 5;
 
-        int lastAdded = LZW_CLEAR;
+        const int LZW_CLEAR = 1 << LZW_BITS_PER_PIXEL;
+        const int LZW_CODES = 1 << LZW_MAX_BITS;
+        const int LZW_NO_SUCH_CODE = LZW_CODES + 1;
+
+        int lastAdded = LZW_HAS_CLEAR_CODE ? LZW_CLEAR : LZW_CLEAR - 1;
         int codeBits = LZW_BITS_PER_PIXEL + 1;
 
         int code;
         int lastCode;
-        int prefixChar;
+        GByte lastOutput;
         int bitsTaken = 0;
-        int breakOffset = 0;
 
         int prefix[LZW_CODES], i;
         GByte character[LZW_CODES];
@@ -399,25 +402,29 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             prefix[i] = LZW_NO_SUCH_CODE;
 
         filePos = LZW_OFFSET;
+        GUInt32 fileAlign = LZW_OFFSET;
         int imageLine = poRDS->nBlockYSize - 1;
 
         GUInt32 lineBreak = poRDS->nBlockXSize;
 
         // 32 bit alignment
-        if( lineBreak & 3 )
-            lineBreak = (lineBreak & 0xfffffffc) + 4;
+        lineBreak += 3;
+        lineBreak &= 0xfffffffc;
 
-        code = GetNextLZWCode( codeBits, blockData, filePos, bitsTaken );
+        code = GetNextLZWCode( codeBits, blockData, filePos,
+                               fileAlign, bitsTaken );
+
         OutputPixel( code, pImage, poRDS->nBlockXSize,
                      lineBreak, imageLine, imagePos );
-        prefixChar = code;
+        lastOutput = code;
 
         while( imageLine >= 0 &&
                (imageLine || imagePos < poRDS->nBlockXSize - 1) &&
                filePos < nBlockSize ) try
         {
             lastCode = code;
-            code = GetNextLZWCode( codeBits, blockData, filePos, bitsTaken );
+            code = GetNextLZWCode( codeBits, blockData,
+                                   filePos, fileAlign, bitsTaken );
             if( VSIFEofL( poRDS->fp ) )
             {
                 CPLFree( blockData );
@@ -427,47 +434,38 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 return CE_Failure;
             }
 
-            if (code == LZW_CLEAR)
+            if( LZW_HAS_CLEAR_CODE && code == LZW_CLEAR )
             {
-#if RIK_RESTART_DEBUG
+#if RIK_CLEAR_DEBUG
                 CPLDebug( "RIK",
-                          "Clearing block %d \n"
+                          "Clearing block %d\n"
                           " x=%d y=%d\n"
                           " pos=%d size=%d\n",
-                          breakOffset,
+                          nBlockIndex,
                           imagePos, imageLine,
                           filePos, nBlockSize );
 #endif
 
                 // Clear prefix table
-                for( int i = LZW_CLEAR; i < LZW_CODES; i++ )
+                for( i = LZW_CLEAR; i < LZW_CODES; i++ )
                     prefix[i] = LZW_NO_SUCH_CODE;
                 lastAdded = LZW_CLEAR;
                 codeBits = LZW_BITS_PER_PIXEL + 1;
 
-                if( filePos > 13 ) do
-                {
-                    filePos++;
-                } while( blockData[filePos] == blockData[filePos - 13] );
-
-                filePos += breakOffset;
-
-                if( bitsTaken == 0 )
-                    filePos--;
-                else
-                    bitsTaken = 0;
+                filePos = fileAlign;
+                bitsTaken = 0;
 
                 code = GetNextLZWCode( codeBits, blockData,
-                                       filePos, bitsTaken );
+                                       filePos, fileAlign, bitsTaken );
 
                 if( code > lastAdded )
                 {
-                    throw "Restart Error";
+                    throw "Clear Error";
                 }
 
                 OutputPixel( code, pImage, poRDS->nBlockXSize,
                              lineBreak, imageLine, imagePos );
-                prefixChar = code;
+                lastOutput = code;
             }
             else
             {
@@ -489,7 +487,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     else if( code == lastAdded + 1 )
                     {
                         // Handle special case
-                        *stack = prefixChar;
+                        *stack = lastOutput;
                         stackPtr = 1;
                         decodeCode = lastCode;
        	            }
@@ -510,14 +508,15 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 {
                     int j = 0;
                     while( ++j < LZW_CODES &&
-       	                   decodeCode > LZW_CLEAR )
+       	                   decodeCode >= LZW_CLEAR &&
+			   decodeCode < LZW_NO_SUCH_CODE )
                     {
                       stack[stackPtr++] = character[decodeCode];
                       decodeCode = prefix[decodeCode];
                     }
                     stack[stackPtr++] = decodeCode;
 
-                    if( j == LZW_CODES )
+                    if( j == LZW_CODES || decodeCode >= LZW_NO_SUCH_CODE )
                     {
                         throw "Decode error";
                     }
@@ -525,7 +524,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
                 // Output stack
 
-                prefixChar = stack[stackPtr - 1];
+                lastOutput = stack[stackPtr - 1];
 
                 while( stackPtr != 0 && imagePos < pixels )
                 {
@@ -539,7 +538,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     lastAdded != LZW_CODES - 1 )
                 {
                     prefix[++lastAdded] = lastCode;
-                    character[lastAdded] = prefixChar;
+                    character[lastAdded] = lastOutput;
                 }
 
                 // Check if we need to use more bits
@@ -548,52 +547,17 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     codeBits != LZW_MAX_BITS )
                 {
                      codeBits++;
+
+                     filePos = fileAlign;
+                     bitsTaken = 0;
                 }
             }
         }
         catch (const char *errStr)
         {
-#if RIK_RESTART_DEBUG
-            CPLDebug( "RIK",
-                      "Restarting block %d %s\n"
-                      " x=%d y=%d lastAdded=%d\n"
-                      " code=%X pos=%d size=%d\n",
-                      breakOffset, errStr,
-                      imagePos, imageLine, lastAdded,
-                      code, filePos, nBlockSize );
-#endif
-            lastAdded = LZW_CLEAR;
-            codeBits = LZW_BITS_PER_PIXEL + 1;
-            bitsTaken = 0;
-
-            for( int i = LZW_CLEAR; i < LZW_CODES; i++ )
-                prefix[i] = LZW_NO_SUCH_CODE;
-
-            filePos = LZW_OFFSET;
-            imagePos = 0;
-            imageLine = poRDS->nBlockYSize - 1;
-
-            filePos = 5;
-            code = GetNextLZWCode( codeBits, blockData,
-                                   filePos, bitsTaken );
-            OutputPixel( code, pImage, poRDS->nBlockXSize,
-                         lineBreak, imageLine, imagePos );
-            prefixChar = code;
-            if( breakOffset == 0)
-            {
-                breakOffset = -1;
-                continue;
-            }
-            else if( breakOffset == -1)
-            {
-                breakOffset = 1;
-                continue;
-            }
-            else
-            {
 #if RIK_ALLOW_BLOCK_ERRORS
                 CPLDebug( "RIK",
-                          "Restart failed\n"
+                          "LZW Decompress Failed\n"
                           " blocks: %d\n"
                           " blockindex: %d\n"
                           " blockoffset: %X\n"
@@ -608,7 +572,6 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                           "Corrupt image block." );
                           return CE_Failure;
 #endif
-            }
         }
     }
 
@@ -687,8 +650,13 @@ const char *RIKDataset::GetProjectionRef()
 {
     // http://www.sm5sxl.net/~mats/text/gis/Geodesi/geodesi/refsys/sweref-rt/sweref99-rt90.htm
 
-    return( "PROJCS[\"RT90 2.5 gon W\",GEOGCS[\"RT90\",DATUM[\"Rikets_koordinatsystem_1990\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],AUTHORITY[\"EPSG\",\"6124\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.017453292519943295,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4124\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",15.806284529],PARAMETER[\"scale_factor\",1.00000561024],PARAMETER[\"false_easting\",1500064.274],PARAMETER[\"false_northing\",-667.711],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"2400\"]]" );
+  // This projection gives large transformation errors
+  return( "PROJCS[\"RT90 2.5 gon W\",GEOGCS[\"RT90\",DATUM[\"Rikets_koordinatsystem_1990\",SPHEROID[\"Bessel 1841\",6377397.155,299.1528128,AUTHORITY[\"EPSG\",\"7004\"]],AUTHORITY[\"EPSG\",\"6124\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.01745329251994328,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4124\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",15.80827777777778],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",1500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"2400\"]]");
 
+  // This projection gives better results but crashes qgis
+  /*
+    return( "PROJCS[\"RT90 2.5 gon W\",GEOGCS[\"RT90\",DATUM[\"Rikets_koordinatsystem_1990\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],AUTHORITY[\"EPSG\",\"6124\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.017453292519943295,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4124\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",15.806284529],PARAMETER[\"scale_factor\",1.00000561024],PARAMETER[\"false_easting\",1500064.274],PARAMETER[\"false_northing\",-667.711],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"2400\"]]" );
+  */
 }
 
 /************************************************************************/
