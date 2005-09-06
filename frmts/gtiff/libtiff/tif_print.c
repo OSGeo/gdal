@@ -1,4 +1,4 @@
-/* $Id: tif_print.c,v 1.27 2005/07/25 14:22:27 dron Exp $ */
+/* $Id: tif_print.c,v 1.28 2005/08/12 15:25:38 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -496,7 +496,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 			    || fip->field_type == TIFF_FLOAT)
 		        fprintf(fd, "%f", ((float *) raw_data)[j]);
 		    else if(fip->field_type == TIFF_IFD)
-		        fprintf(fd, "0x%lx", ((uint32 *) raw_data)[j]);
+		        fprintf(fd, "0x%ulx", ((uint32 *) raw_data)[j]);
 		    else if(fip->field_type == TIFF_ASCII) {
 		        fprintf(fd, "%s", (char *) raw_data);
 		        break;
