@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.36  2005/09/06 01:43:06  kruland
+ * Include gdal_typemaps.i if no other file is specified.
+ *
  * Revision 1.35  2005/09/02 21:42:42  kruland
  * The compactdefaultargs feature should be turned on for all bindings not just
  * python.
@@ -183,6 +186,8 @@ typedef int GDALResampleAlg;
 %include "gdal_php.i"
 #elif defined(SWIGCSHARP)
 %include "gdal_csharp.i"
+#else
+%include "gdal_typemaps.i"
 #endif
 
 //************************************************************************
