@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.4  2005/09/06 01:41:06  kruland
+ * Added SWIGPERL include.
+ *
  * Revision 1.3  2005/08/09 17:40:09  kruland
  * Added support for ruby.
  *
@@ -36,4 +39,8 @@
 
 #ifdef SWIGRUBY
 %import typemaps_ruby.i
+#endif
+
+#ifdef SWIGPERL
+%import typemaps_perl.i
 #endif
