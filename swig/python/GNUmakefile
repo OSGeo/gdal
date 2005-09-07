@@ -3,6 +3,8 @@ GDAL_ROOT = ../..
 
 include ../../GDALmake.opt
 
+all: build
+
 BINDING = python
 include ../SWIGmake.base
 
