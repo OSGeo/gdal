@@ -3,6 +3,8 @@ GDAL_ROOT = ../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
+all: build
+
 BINDING = ruby
 include ../SWIGmake.base
 
