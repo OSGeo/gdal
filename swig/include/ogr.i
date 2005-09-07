@@ -9,6 +9,13 @@
 
  *
  * $Log$
+ * Revision 1.39  2005/09/07 01:12:49  kruland
+ * Have ogr.i include osr.i in order to have access to types defined in the osr
+ * module.
+ * Removed the typedef for OGRErr.  The %include osr.i caused it to be double
+ * defined and caused warnings from swig.
+ * Fixed the %constant declarations for strings.
+ *
  * Revision 1.38  2005/09/06 01:49:07  kruland
  * Declare %feature("compactdefaultargs") so all bindings use it.
  * Import gdal_typemaps.i if no other language specific file used.
@@ -187,7 +194,6 @@
 %feature("compactdefaultargs");
 %feature("autodoc");
 
-typedef int OGRErr;
 typedef int OGRwkbByteOrder;
 typedef int OGRwkbGeometryType;
 typedef int OGRFieldType;
@@ -233,7 +239,6 @@ typedef void OGRFieldDefnShadow;
 %constant wkbMultiPolygon25D =       wkbMultiPolygon       + wkb25DBit;
 %constant wkbGeometryCollection25D = wkbGeometryCollection + wkb25DBit;
 
-
 %constant OFTInteger = 0;
 %constant OFTIntegerList= 1;
 %constant OFTReal = 2;
@@ -244,7 +249,6 @@ typedef void OGRFieldDefnShadow;
 %constant OFTWideStringList = 7;
 %constant OFTBinary = 8;
 
-
 %constant OJUndefined = 0;
 %constant OJLeft = 1;
 %constant OJRight = 2;
@@ -252,24 +256,22 @@ typedef void OGRFieldDefnShadow;
 %constant wkbXDR = 0;
 %constant wkbNDR = 1;
 
-%constant OLCRandomRead          = "RandomRead";
-%constant OLCSequentialWrite     = "SequentialWrite";
-%constant OLCRandomWrite         = "RandomWrite";
-%constant OLCFastSpatialFilter   = "FastSpatialFilter";
-%constant OLCFastFeatureCount    = "FastFeatureCount";
-%constant OLCFastGetExtent       = "FastGetExtent";
-%constant OLCCreateField         = "CreateField";
-%constant OLCTransactions        = "Transactions";
-%constant OLCDeleteFeature       = "DeleteFeature";
-%constant OLCFastSetNextByIndex  = "FastSetNextByIndex";
+%constant char *OLCRandomRead          = "RandomRead";
+%constant char *OLCSequentialWrite     = "SequentialWrite";
+%constant char *OLCRandomWrite         = "RandomWrite";
+%constant char *OLCFastSpatialFilter   = "FastSpatialFilter";
+%constant char *OLCFastFeatureCount    = "FastFeatureCount";
+%constant char *OLCFastGetExtent       = "FastGetExtent";
+%constant char *OLCCreateField         = "CreateField";
+%constant char *OLCTransactions        = "Transactions";
+%constant char *OLCDeleteFeature       = "DeleteFeature";
+%constant char *OLCFastSetNextByIndex  = "FastSetNextByIndex";
 
+%constant char *ODsCCreateLayer        = "CreateLayer";
+%constant char *ODsCDeleteLayer        = "DeleteLayer";
 
-%constant ODsCCreateLayer        = "CreateLayer";
-%constant ODsCDeleteLayer        = "DeleteLayer";
-
-
-%constant ODrCCreateDataSource   = "CreateDataSource";
-%constant ODrCDeleteDataSource   = "DeleteDataSource";
+%constant char *ODrCCreateDataSource   = "CreateDataSource";
+%constant char *ODrCDeleteDataSource   = "DeleteDataSource";
 
 #if defined(SWIGPYTHON)
 %include ogr_python.i
@@ -283,6 +285,14 @@ typedef void OGRFieldDefnShadow;
 %include gdal_typemaps.i
 #endif
 
+/*
+ * We need to import osr.i here so the ogr module knows about the
+ * wrapper for SpatialReference and CoordinateSystem from osr.
+ * These types are used in Geometry::Transform() among others.
+ * This was primarily a problem in the perl bindings because
+ * perl names things differently when using -proxy (default) argument
+ */
+%import osr.i
 
 /* OGR Driver */
 
