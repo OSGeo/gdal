@@ -5,6 +5,8 @@ GDAL_ROOT	=	..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
+EXTRAFLAGS = 	-I..\zlib
+
 default:	$(OBJ)
 	copy *.obj ..\o
 
