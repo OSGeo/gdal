@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/09/09 04:54:21  fwarmerdam
+ * avoid use of dynamic array sizes, fails on VC6
+ *
  * Revision 1.10  2005/09/06 21:58:11  dwallner
  * zlib/rik3 support
  *
@@ -404,8 +407,8 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         GByte lastOutput;
         int bitsTaken = 0;
 
-        int prefix[LZW_CODES];
-        GByte character[LZW_CODES];
+        int prefix[8192];      // only need LZW_CODES for size.
+        GByte character[8192]; // only need LZW_CODES for size.
 
         int i;
 
@@ -484,7 +487,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             {
                 // Set-up decoding
 
-                GByte stack[LZW_CODES];
+                GByte stack[8192]; // only need LZW_CODES for size.
 
                 int stackPtr = 0;
                 int decodeCode = code;
