@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2005/09/09 02:27:28  fwarmerdam
+ * Fallback to PAM if projection string is empty.
+ *
  * Revision 1.39  2005/08/26 14:48:33  fwarmerdam
  * Do not return nodata on bands since MrSID NODATA semantics are
  * across all bands.   Note that IMAGE__TRANSPARENT_DATA_VALUE metadata
@@ -896,7 +899,7 @@ CPLErr MrSIDDataset::GetGeoTransform( double * padfTransform )
 
 const char *MrSIDDataset::GetProjectionRef()
 {
-    if( pszProjection )
+    if( pszProjection && strlen(pszProjection) > 0 )
         return pszProjection;
     else
         return GDALPamDataset::GetProjectionRef();
