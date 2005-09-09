@@ -67,9 +67,9 @@ by the OGRSpatialReference::SetUserInput() method. <p>
 how the geometry for features should be derived.  If not provided the
 geometry of the source feature is copied directly.  The type of geometry
 encoding is indicated with the <b>encoding</b> attribute which may have the
-value "WKT" or "PointFromColumns" (some other values may be supported in the
-future).  If the encoding is "WKT" then the <b>field</b> attribute will have
-the name of the field containing the WKT geometry.  If the encoding is 
+value "WKT", "WKB" or "PointFromColumns".  If the encoding is "WKT" or "WKB" 
+then the <b>field</b> attribute will have
+the name of the field containing the WKT or WKB geometry.  If the encoding is 
 "PointFromColumns" then the <b>x</b>, <b>y</b> and <b>z</b> attributes
 will have the names of the columns to be used for the X, Y and Z coordinates.
 The <b>z</b> attribute is optional.<p>
