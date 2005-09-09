@@ -39,7 +39,8 @@ tables accessed is primarily a performance issue.<p>
 
 If the GEOMETRY_COLUMNS table is found, it is used to select a column to 
 be the geometry source.  However, it is currently a hardcoded assumption
-that the geometry is in WKT format.<p>
+that the geometry is in Well Known Binary (WKB) format if the field
+is binary, or Well Known Text (WKT) otherwise.<p>
 
 <h2>Creation Issues</h2>
 
