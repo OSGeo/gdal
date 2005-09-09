@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/09/09 05:02:12  fwarmerdam
+ * added wkb support
+ *
  * Revision 1.5  2005/02/22 12:53:56  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -73,6 +76,7 @@ class OGRODBCLayer : public OGRLayer
 
     OGRODBCDataSource    *poDS;
 
+    int                 bGeomColumnWKB;
     char                *pszGeomColumn;
     char                *pszFIDColumn;
 

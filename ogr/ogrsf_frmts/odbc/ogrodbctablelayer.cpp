@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/09/09 05:02:12  fwarmerdam
+ * added wkb support
+ *
  * Revision 1.5  2005/02/22 12:53:56  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -90,12 +93,6 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszTableName,
 {
     CPLODBCSession *poSession = poDS->GetSession();
 
-    CPLFree( pszGeomColumn );
-    if( pszGeomCol == NULL )
-        pszGeomColumn = NULL;
-    else
-        pszGeomColumn = CPLStrdup( pszGeomCol );
-
     CPLFree( pszFIDColumn );
     pszFIDColumn = NULL;
 
@@ -114,6 +111,15 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszTableName,
             pszFIDColumn = NULL;
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Have we been provided a geometry column?                        */
+/* -------------------------------------------------------------------- */
+    CPLFree( pszGeomColumn );
+    if( pszGeomCol == NULL )
+        pszGeomColumn = NULL;
+    else
+        pszGeomColumn = CPLStrdup( pszGeomCol );
 
 /* -------------------------------------------------------------------- */
 /*      Get the column definitions for this table.                      */
@@ -135,6 +141,30 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszTableName,
                   pszTableName );
         return CE_Failure;
     }
+
+/* -------------------------------------------------------------------- */
+/*      If we got a geometry column, does it exist?  Is it binary?      */
+/* -------------------------------------------------------------------- */
+    if( pszGeomColumn != NULL )
+    {
+        int iColumn = oGetCol.GetColId( pszGeomColumn );
+        if( iColumn < 0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Column %s requested for geometry, but it does not exist.", 
+                      pszGeomColumn );
+            CPLFree( pszGeomColumn );
+            pszGeomColumn = NULL;
+        }
+        else
+        {
+            if( oGetCol.GetColType( iColumn ) == SQL_BINARY
+                || oGetCol.GetColType( iColumn ) == SQL_VARBINARY
+                || oGetCol.GetColType( iColumn ) == SQL_LONGVARBINARY )
+                bGeomColumnWKB = TRUE;
+        }
+    }
+
 
     return CE_None;
 }

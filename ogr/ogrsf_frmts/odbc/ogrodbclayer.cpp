@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/09/09 05:02:12  fwarmerdam
+ * added wkb support
+ *
  * Revision 1.10  2005/09/05 19:56:42  fwarmerdam
  * added binary field support
  *
@@ -77,6 +80,7 @@ OGRODBCLayer::OGRODBCLayer()
 {
     poDS = NULL;
 
+    bGeomColumnWKB = FALSE;
     pszGeomColumn = NULL;
     pszFIDColumn = NULL;
 
@@ -280,9 +284,18 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
         const char *pszGeomText = poStmt->GetColData( iField );
         OGRGeometry *poGeom = NULL;
 
-        if( pszGeomText != NULL )
+        if( pszGeomText != NULL && !bGeomColumnWKB )
+        {
             OGRGeometryFactory::createFromWkt( (char **) &pszGeomText,
                                                NULL, &poGeom );
+        }
+        else if( pszGeomText != NULL && bGeomColumnWKB )
+        {
+            int nLength = poStmt->GetColDataLength( iField );
+
+            OGRGeometryFactory::createFromWkb( (unsigned char *) pszGeomText,
+                                               NULL, &poGeom, nLength );
+        }
         
         if( poGeom != NULL )
             poFeature->SetGeometryDirectly( poGeom );
