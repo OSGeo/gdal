@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/09/10 15:51:47  fwarmerdam
+ * cleanup VRT overviews
+ *
  * Revision 1.12  2005/08/02 22:21:47  fwarmerdam
  * fixed a whopper of a memory leak in ProcessBlock
  *
@@ -309,6 +312,28 @@ VRTWarpedDataset::~VRTWarpedDataset()
 
 {
     FlushCache();
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup overviews.                                              */
+/* -------------------------------------------------------------------- */
+    int iOverview;
+
+    for( iOverview = 0; iOverview < nOverviewCount; iOverview++ )
+    {
+        GDALDatasetH hDS = (GDALDatasetH) papoOverviews[iOverview];
+
+        if( GDALDereferenceDataset( hDS ) < 1 )
+        {
+            GDALReferenceDataset( hDS );
+            GDALClose( hDS );
+        }
+    }
+
+    CPLFree( papoOverviews );
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup warper if one is in effect.                             */
+/* -------------------------------------------------------------------- */
     if( poWarper != NULL )
     {
         const GDALWarpOptions *psWO = poWarper->GetOptions();
