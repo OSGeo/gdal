@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/09/10 22:32:34  fwarmerdam
+ * Make GetNextShape() more bulletproof if SHPReadOGRFeature() fails.
+ *
  * Revision 1.19  2005/02/22 12:51:56  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -353,8 +356,6 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
 
             poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, 
                                            panMatchingFIDs[iMatchingFID++] );
-            if( poFeature != NULL )
-                m_nFeaturesRead++;
         }
         else
         {
@@ -363,17 +364,20 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
     
             poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
                                            iNextShapeId++ );
-            if( poFeature != NULL )
-                m_nFeaturesRead++;
         }
 
-        if( (m_poFilterGeom == NULL
-             || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
-                || m_poAttrQuery->Evaluate( poFeature )) )
-            return poFeature;
+        if( poFeature != NULL )
+        {
+            m_nFeaturesRead++;
 
-        delete poFeature;
+            if( (m_poFilterGeom == NULL
+                 || FilterGeometry( poFeature->GetGeometryRef() ) )
+                && (m_poAttrQuery == NULL
+                    || m_poAttrQuery->Evaluate( poFeature )) )
+                return poFeature;
+
+            delete poFeature;
+        }
     }        
 }
 
