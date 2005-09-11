@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.39  2005/09/11 17:18:33  fwarmerdam
+ * added CPLCleanupTLS()
+ *
  * Revision 1.38  2005/07/29 04:27:42  fwarmerdam
  * Don't crash if a "paletted" band has no color table object.
  *
@@ -523,6 +526,7 @@ int main( int argc, char ** argv )
     GDALDestroyDriverManager();
 
     CPLDumpSharedList( NULL );
+    CPLCleanupTLS();
 
     exit( 0 );
 }
