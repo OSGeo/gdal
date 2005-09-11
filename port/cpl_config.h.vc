@@ -72,5 +72,7 @@
 
 #define lfind _lfind
 
+#pragma warning(disable: 4786)
+
 /* #define CPL_DISABLE_DLL */
 
