@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2005/09/11 17:59:01  fwarmerdam
+ * Fixed use of ferror().
+ *
  * Revision 1.1  2005/09/11 17:15:16  fwarmerdam
  * New
  *
@@ -333,9 +336,7 @@ term_destination (j_compress_ptr cinfo)
     if (VSIFWriteL(dest->buffer, 1, datacount, dest->outfile) != datacount)
       ERREXIT(cinfo, JERR_FILE_WRITE);
   }
-  VSIFFlushL(dest->outfile);
-  /* Make sure we wrote the output file OK */
-  if (ferror(dest->outfile))
+  if( VSIFFlushL(dest->outfile) != 0 )
     ERREXIT(cinfo, JERR_FILE_WRITE);
 }
 
