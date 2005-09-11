@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.22  2005/09/11 18:31:41  fwarmerdam
+ * ensure a distinct VSIStatL() exists on win32
+ *
  * Revision 1.21  2005/09/11 18:01:28  fwarmerdam
  * preliminary implementatin of fully virtualized large file api
  *
@@ -196,11 +199,11 @@ int CPL_DLL    VSIFFlushL( FILE * );
 
 #ifndef WIN32
 typedef struct VSI_STAT64_T VSIStatBufL;
-int CPL_DLL     VSIStatL( const char *, VSIStatBufL * );
 #else
 #define VSIStatBufL    VSIStatBuf
-#define VSIStatL       VSIStat
 #endif
+
+int CPL_DLL     VSIStatL( const char *, VSIStatBufL * );
 
 #else
 
