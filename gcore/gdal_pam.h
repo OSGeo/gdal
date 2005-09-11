@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/09/11 18:03:34  fwarmerdam
+ * added Clear() method on multidomainmetadata
+ *
  * Revision 1.4  2005/05/22 08:14:06  fwarmerdam
  * added multidomain metadata support
  *
@@ -110,6 +113,8 @@ public:
     CPLErr      SetMetadataItem( const char * pszName,
                                  const char * pszValue,
                                  const char * pszDomain = "" );
+
+    void        Clear();
 };
 
 /* ==================================================================== */
