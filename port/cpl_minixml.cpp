@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.38  2005/09/11 19:30:12  fwarmerdam
+ * Try to write in text mode through large file API.
+ *
  * Revision 1.37  2005/09/11 19:14:54  fwarmerdam
  * Use largefile API for virtualization support.  Note that XML files are
  * no longer produced in machine-local text format.
@@ -1834,7 +1837,7 @@ int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Create file.                                                    */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpenL( pszFilename, "w" );
+    fp = VSIFOpenL( pszFilename, "wt" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
