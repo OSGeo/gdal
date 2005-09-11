@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.72  2005/09/11 21:07:54  fwarmerdam
+ * Changed worldfile reading to use large file API.
+ *
  * Revision 1.71  2005/09/11 19:16:31  fwarmerdam
  * Use CPLString for safer string manipulation.
  *
@@ -1397,7 +1400,6 @@ GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
     const char  *pszTFW;
     char        szExtUpper[32], szExtLower[32];
     int         i;
-    FILE        *fpTFW;
     char        **papszLines;
 
 /* -------------------------------------------------------------------- */
@@ -1453,27 +1455,29 @@ GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
 /* -------------------------------------------------------------------- */
 /*      Try lower case, then upper case.                                */
 /* -------------------------------------------------------------------- */
+    VSIStatBufL sStatBuf;
+    int bGotTFW;
+
     pszTFW = CPLResetExtension( pszBaseFilename, szExtLower );
 
-    fpTFW = VSIFOpen( pszTFW, "rt" );
+    bGotTFW = VSIStatL( pszTFW, &sStatBuf ) == 0;
 
 #ifndef WIN32
-    if( fpTFW == NULL )
+    if( !bGotTFW )
     {
         pszTFW = CPLResetExtension( pszBaseFilename, szExtUpper );
-        fpTFW = VSIFOpen( pszTFW, "rt" );
+        bGotTFW = VSIStatL( pszTFW, &sStatBuf ) == 0;
     }
 #endif
     
-    if( fpTFW == NULL )
+    if( !bGotTFW )
         return FALSE;
-
-    VSIFClose( fpTFW );
 
 /* -------------------------------------------------------------------- */
 /*      We found the file, now load and parse it.                       */
 /* -------------------------------------------------------------------- */
     papszLines = CSLLoad( pszTFW );
+
     if( CSLCount(papszLines) >= 6 
         && atof(papszLines[0]) != 0.0
         && atof(papszLines[3]) != 0.0 )
@@ -1517,29 +1521,38 @@ GDALWriteWorldFile( const char * pszBaseFilename, const char *pszExtension,
                     double *padfGeoTransform )
 
 {
+
+/* -------------------------------------------------------------------- */
+/*      Prepare the text to write to the file.                          */
+/* -------------------------------------------------------------------- */
+    CPLString osTFWText;
+
+    osTFWText.Printf( "%.10f\n%.10f\n%.10f\n%.10f\n%.10f\n%.10f\n", 
+                      padfGeoTransform[1],
+                      padfGeoTransform[4],
+                      padfGeoTransform[2],
+                      padfGeoTransform[5],
+                      padfGeoTransform[0] 
+                      + 0.5 * padfGeoTransform[1]
+                      + 0.5 * padfGeoTransform[2],
+                      padfGeoTransform[3]
+                      + 0.5 * padfGeoTransform[4]
+                      + 0.5 * padfGeoTransform[5] );
+
+/* -------------------------------------------------------------------- */
+/*      Update extention, and write to disk.                            */
+/* -------------------------------------------------------------------- */
     const char  *pszTFW;
     FILE    *fpTFW;
 
     pszTFW = CPLResetExtension( pszBaseFilename, pszExtension );
-    fpTFW = VSIFOpen( pszTFW, "wt" );
+    fpTFW = VSIFOpenL( pszTFW, "wt" );
     if( fpTFW == NULL )
         return FALSE;
 
-/* -------------------------------------------------------------------- */
-/*      We open the file, now fill it with the world data.              */
-/* -------------------------------------------------------------------- */
-    fprintf( fpTFW, "%.10f\n", padfGeoTransform[1] );
-    fprintf( fpTFW, "%.10f\n", padfGeoTransform[4] );
-    fprintf( fpTFW, "%.10f\n", padfGeoTransform[2] );
-    fprintf( fpTFW, "%.10f\n", padfGeoTransform[5] );
-    fprintf( fpTFW, "%.10f\n", padfGeoTransform[0] 
-             + 0.5 * padfGeoTransform[1]
-             + 0.5 * padfGeoTransform[2] );
-    fprintf( fpTFW, "%.10f\n", padfGeoTransform[3]
-             + 0.5 * padfGeoTransform[4]
-             + 0.5 * padfGeoTransform[5] );
+    VSIFWriteL( (void *) osTFWText.c_str(), 1, osTFWText.size(), fpTFW );
+    VSIFCloseL( fpTFW );
 
-    VSIFClose( fpTFW );
     return TRUE;
 }
 
