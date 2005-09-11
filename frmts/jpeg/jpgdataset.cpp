@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.33  2005/09/11 17:15:33  fwarmerdam
+ * direct io through VSI, use large file API
+ *
  * Revision 1.32  2005/09/11 16:36:54  fwarmerdam
  * Turn raw EXIF printf() into a debug statement.
  *
@@ -142,7 +145,8 @@ CPL_C_START
 void	GDALRegister_JPEG(void);
 CPL_C_END
 
-
+void jpeg_vsiio_src (j_decompress_ptr cinfo, FILE * infile);
+void jpeg_vsiio_dest (j_compress_ptr cinfo, FILE * outfile);
 
 /************************************************************************/
 /* ==================================================================== */
@@ -183,6 +187,8 @@ class JPGDataset : public GDALPamDataset
     void   EXIFPrintByte(char *, const char*, TIFFDirEntry* );
     void   EXIFPrintShort(char *, const char*, TIFFDirEntry*);
     void   EXIFPrintData(char *, GUInt16, GUInt32, unsigned char* );
+
+    
 
   public:
                  JPGDataset();
@@ -395,11 +401,11 @@ CPLErr JPGDataset::EXIFInit(FILE *fp)
 /* -------------------------------------------------------------------- */
 /*      Read TIFF header                                                */
 /* -------------------------------------------------------------------- */
-  VSIFSeek(fp, TIFFHEADER, SEEK_SET);
-  if(VSIFRead(&hdr,1,sizeof(hdr),fp) != sizeof(hdr)) 
-    CPLError( CE_Failure, CPLE_FileIO,
-	      "Failed to read %d byte from image header.",
-	      sizeof(hdr));
+  VSIFSeekL(fp, TIFFHEADER, SEEK_SET);
+  if(VSIFReadL(&hdr,1,sizeof(hdr),fp) != sizeof(hdr)) 
+      CPLError( CE_Failure, CPLE_FileIO,
+                "Failed to read %d byte from image header.",
+                sizeof(hdr));
 
   if (hdr.tiff_magic != TIFF_BIGENDIAN && hdr.tiff_magic != TIFF_LITTLEENDIAN)
     CPLError( CE_Failure, CPLE_AppDefined,
@@ -452,9 +458,9 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 /* -------------------------------------------------------------------- */
 /*      Read number of entry in directory                               */
 /* -------------------------------------------------------------------- */
-  VSIFSeek(fp, nOffset+TIFFHEADER, SEEK_SET);
+  VSIFSeekL(fp, nOffset+TIFFHEADER, SEEK_SET);
 
-  if(VSIFRead(&nEntryCount,1,sizeof(GUInt16),fp) != sizeof(GUInt16)) 
+  if(VSIFReadL(&nEntryCount,1,sizeof(GUInt16),fp) != sizeof(GUInt16)) 
     CPLError( CE_Failure, CPLE_AppDefined,
 	      "Error directory count");
 
@@ -470,7 +476,7 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 /* -------------------------------------------------------------------- */
 /*      Read all directory entries                                      */
 /* -------------------------------------------------------------------- */
-  n = VSIFRead(poTIFFDir, 1,nEntryCount*sizeof(TIFFDirEntry),fp);
+  n = VSIFReadL(poTIFFDir, 1,nEntryCount*sizeof(TIFFDirEntry),fp);
   if (n != nEntryCount*sizeof(TIFFDirEntry)) 
     CPLError( CE_Failure, CPLE_AppDefined,
 	      "Could not read all directories");
@@ -586,8 +592,8 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 	if (data) {
 	  int width = TIFFDataWidth((TIFFDataType) poTIFFDirEntry->tdir_type);
 	  tsize_t cc = poTIFFDirEntry->tdir_count * width;
-	  VSIFSeek(fp,poTIFFDirEntry->tdir_offset+TIFFHEADER,SEEK_SET);
-	  VSIFRead(data, 1, cc, fp);
+	  VSIFSeekL(fp,poTIFFDirEntry->tdir_offset+TIFFHEADER,SEEK_SET);
+	  VSIFReadL(data, 1, cc, fp);
 
 	  if (bSwabflag) {
 	    switch (poTIFFDirEntry->tdir_type) {
@@ -781,7 +787,7 @@ JPGDataset::~JPGDataset()
     jpeg_destroy_decompress( &sDInfo );
 
     if( fpImage != NULL )
-        VSIFClose( fpImage );
+        VSIFCloseL( fpImage );
 
     if( pabyScanline != NULL )
         CPLFree( pabyScanline );
@@ -830,9 +836,9 @@ void JPGDataset::Restart()
     jpeg_destroy_decompress( &sDInfo );
     jpeg_create_decompress( &sDInfo );
 
-    VSIRewind( fpImage );
+    VSIRewindL( fpImage );
 
-    jpeg_stdio_src( &sDInfo, fpImage );
+    jpeg_vsiio_src( &sDInfo, fpImage );
     jpeg_read_header( &sDInfo, TRUE );
     
     if( GetRasterCount() == 1 )
@@ -879,19 +885,19 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
         || poOpenInfo->pabyHeader[2] != 0xff )
         return NULL;
 
-    /* Some files lack the JFIF marker, like IMG_0519.JPG. For these we
-       require the .jpg extension */
-    if(   !((poOpenInfo->pabyHeader[3] == 0xe0
-	   && poOpenInfo->pabyHeader[6] == 'J'
-	   && poOpenInfo->pabyHeader[7] == 'F'
-	   && poOpenInfo->pabyHeader[8] == 'I'
-	   && poOpenInfo->pabyHeader[9] == 'F')
-	||(poOpenInfo->pabyHeader[3] == 0xe1
-	   && poOpenInfo->pabyHeader[6] == 'E'
-	   && poOpenInfo->pabyHeader[7] == 'x'
-	   && poOpenInfo->pabyHeader[8] == 'i'
-	   && poOpenInfo->pabyHeader[9] == 'f')
-        && EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"jpg")) )
+    if( poOpenInfo->pabyHeader[3] == 0xe0
+        && poOpenInfo->pabyHeader[6] == 'J'
+        && poOpenInfo->pabyHeader[7] == 'F'
+        && poOpenInfo->pabyHeader[8] == 'I'
+        && poOpenInfo->pabyHeader[9] == 'F' )
+        /* OK */;
+    else if( poOpenInfo->pabyHeader[3] == 0xe1
+             && poOpenInfo->pabyHeader[6] == 'E'
+             && poOpenInfo->pabyHeader[7] == 'x'
+             && poOpenInfo->pabyHeader[8] == 'i'
+             && poOpenInfo->pabyHeader[9] == 'f' )
+        /* OK */;
+    else
         return NULL;
 
     if( poOpenInfo->eAccess == GA_Update )
@@ -910,23 +916,35 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new JPGDataset();
 
 /* -------------------------------------------------------------------- */
+/*      Open the file using the large file api.                         */
+/* -------------------------------------------------------------------- */
+    poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    if( poDS->fpImage == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "VSIFOpenL(%s) failed unexpectedly in jpgdataset.cpp", 
+                  poOpenInfo->pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Take care of EXIF Metadata                                      */
 /* -------------------------------------------------------------------- */
-    if (poOpenInfo->pabyHeader [3] == 0xe1) {
-      poDS->EXIFInit(poOpenInfo->fp);
+    if (poOpenInfo->pabyHeader [3] == 0xe1 ) {
+        poDS->EXIFInit(poDS->fpImage);
 
-      poDS->EXIFExtractMetadata(poOpenInfo->fp,poDS->nTiffDirStart);
+        poDS->EXIFExtractMetadata(poDS->fpImage,poDS->nTiffDirStart);
 
-      if(poDS->nExifOffset  > 0){ 
-      	poDS->EXIFExtractMetadata(poOpenInfo->fp,poDS->nExifOffset);
-      }
-      if(poDS->nInterOffset > 0) {
-      	poDS->EXIFExtractMetadata(poOpenInfo->fp,poDS->nInterOffset);
-      }
-      if(poDS->nGPSOffset > 0) {
-      	poDS->EXIFExtractMetadata(poOpenInfo->fp,poDS->nGPSOffset);
-      }
-      poDS->SetMetadata( poDS->papszMetadata );
+        if(poDS->nExifOffset  > 0){ 
+            poDS->EXIFExtractMetadata(poDS->fpImage,poDS->nExifOffset);
+        }
+        if(poDS->nInterOffset > 0) {
+            poDS->EXIFExtractMetadata(poDS->fpImage,poDS->nInterOffset);
+        }
+        if(poDS->nGPSOffset > 0) {
+            poDS->EXIFExtractMetadata(poDS->fpImage,poDS->nGPSOffset);
+        }
+        poDS->SetMetadata( poDS->papszMetadata );
     }
 
     poDS->eAccess = GA_ReadOnly;
@@ -938,12 +956,9 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*	Read pre-image data after ensuring the file is rewound.         */
 /* -------------------------------------------------------------------- */
-    VSIRewind( poOpenInfo->fp );
+    VSIFSeekL( poDS->fpImage, 0, SEEK_SET );
 
-    poDS->fpImage = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
-
-    jpeg_stdio_src( &(poDS->sDInfo), poDS->fpImage );
+    jpeg_vsiio_src( &(poDS->sDInfo), poDS->fpImage );
     jpeg_read_header( &(poDS->sDInfo), TRUE );
 
     if( poDS->sDInfo.data_precision != 8
@@ -1103,7 +1118,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     FILE	*fpImage;
 
-    fpImage = VSIFOpen( pszFilename, "wb" );
+    fpImage = VSIFOpenL( pszFilename, "wb" );
     if( fpImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -1121,7 +1136,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     sCInfo.err = jpeg_std_error( &sJErr );
     jpeg_create_compress( &sCInfo );
     
-    jpeg_stdio_dest( &sCInfo, fpImage );
+    jpeg_vsiio_dest( &sCInfo, fpImage );
     
     sCInfo.image_width = nXSize;
     sCInfo.image_height = nYSize;
@@ -1207,7 +1222,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     jpeg_finish_compress( &sCInfo );
     jpeg_destroy_compress( &sCInfo );
 
-    VSIFClose( fpImage );
+    VSIFCloseL( fpImage );
 
     if( eErr != CE_None )
     {
