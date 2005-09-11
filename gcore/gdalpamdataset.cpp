@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/09/11 18:04:24  fwarmerdam
+ * clearup multidomain metadata
+ *
  * Revision 1.9  2005/08/31 03:34:23  fwarmerdam
  * use CPLString.Printf instead of CSPrintf()
  *
@@ -284,6 +287,8 @@ void GDALPamDataset::PamClear()
             GDALDeinitGCPs( psPam->nGCPCount, psPam->pasGCPList );
             CPLFree( psPam->pasGCPList );
         }
+
+        psPam->oMDMD.Clear();
 
         CPLFree( psPam );
         psPam = NULL;
