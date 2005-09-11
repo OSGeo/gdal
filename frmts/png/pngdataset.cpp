@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.32  2005/09/11 19:11:59  fwarmerdam
+ * Redirect IO through VSI.
+ *
  * Revision 1.31  2005/05/17 19:05:52  fwarmerdam
  * Allow flowthrough to pam for geotransform & nodata.
  *
@@ -69,78 +72,6 @@
  *
  * Revision 1.24  2003/09/15 20:45:00  warmerda
  * add pngw and pgw support
- *
- * Revision 1.23  2003/07/08 21:27:34  warmerda
- * avoid warnings
- *
- * Revision 1.22  2003/01/31 18:08:24  warmerda
- * Added test for broken png_get_channels().  I don't know what is *really*
- * going on here.
- *
- * Revision 1.21  2003/01/25 22:28:18  warmerda
- * improved data type error message a bit
- *
- * Revision 1.20  2003/01/25 22:26:29  warmerda
- * fixed a read, and a write bug with 16bit png files
- *
- * Revision 1.19  2002/11/23 18:54:17  warmerda
- * added CREATIONDATATYPES metadata for drivers
- *
- * Revision 1.18  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.17  2002/07/13 04:16:39  warmerda
- * added WORLDFILE support
- *
- * Revision 1.16  2002/06/18 02:49:23  warmerda
- * fixed multiline string constants
- *
- * Revision 1.15  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.14  2002/04/20 10:12:05  dron
- * Added support for GDALWriteWolrldFile()
- * New option WORLDFILE=YES
- *
- * Revision 1.13  2002/04/20 09:51:03  dron
- * *** empty log message ***
- *
- * Revision 1.12  2001/11/11 23:51:00  warmerda
- * added required class keyword to friend declarations
- *
- * Revision 1.11  2001/09/28 14:30:19  warmerda
- * Ensure num_trans is initialized to zero in case png_get_tRNS fails.
- *
- * Revision 1.10  2001/08/23 03:45:15  warmerda
- * If there is only one transparent color in the color table, also consider
- * it to be the nodata value.
- *
- * Revision 1.9  2001/08/23 03:32:37  warmerda
- * implemented read/write support for transparency (colortable/nodata)
- *
- * Revision 1.8  2001/08/22 17:12:07  warmerda
- * added world file support
- *
- * Revision 1.7  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.6  2000/08/15 19:28:26  warmerda
- * added help topic
- *
- * Revision 1.5  2000/06/05 13:04:15  warmerda
- * Fixed case where png_get_text fails due to no text blocks existing.
- *
- * Revision 1.4  2000/05/15 22:26:42  warmerda
- * Avoid warning.
- *
- * Revision 1.3  2000/04/28 20:57:07  warmerda
- * Removed some unused code.
- *
- * Revision 1.2  2000/04/28 20:56:01  warmerda
- * converted to use CreateCopy() instead of Create()
- *
- * Revision 1.1  2000/04/27 19:39:51  warmerda
- * New
  */
 
 #include "gdal_pam.h"
@@ -153,6 +84,13 @@ CPL_C_START
 void	GDALRegister_PNG(void);
 CPL_C_END
 
+static void
+png_vsi_read_data(png_structp png_ptr, png_bytep data, png_size_t length);
+
+static void
+png_vsi_write_data(png_structp png_ptr, png_bytep data, png_size_t length);
+
+static void png_vsi_flush(png_structp png_ptr);
 
 /************************************************************************/
 /* ==================================================================== */
@@ -416,7 +354,8 @@ PNGDataset::~PNGDataset()
 
     png_destroy_read_struct( &hPNG, &psPNGInfo, NULL );
 
-    VSIFClose( fpImage );
+    if( fpImage )
+        VSIFCloseL( fpImage );
 
     if( poColorTable != NULL )
         delete poColorTable;
@@ -471,13 +410,12 @@ void PNGDataset::Restart()
 {
     png_destroy_read_struct( &hPNG, &psPNGInfo, NULL );
 
-    VSIRewind( fpImage );
-
     hPNG = png_create_read_struct( PNG_LIBPNG_VER_STRING, this, NULL, NULL );
 
     psPNGInfo = png_create_info_struct( hPNG );
 
-    png_init_io( hPNG, fpImage );
+    VSIFSeekL( fpImage, 0, SEEK_SET );
+    png_set_read_fn( hPNG, fpImage, png_vsi_read_data );
     png_read_info( hPNG, psPNGInfo );
 
     if( nBitDepth < 8 )
@@ -649,12 +587,25 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Open a file handle using large file API.                        */
+/* -------------------------------------------------------------------- */
+    FILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Unexpected failure of VSIFOpenL(%s) in PNG Open()", 
+                  poOpenInfo->pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     PNGDataset 	*poDS;
 
     poDS = new PNGDataset();
 
+    poDS->fpImage = fp;
     poDS->eAccess = poOpenInfo->eAccess;
     
     poDS->hPNG = png_create_read_struct( PNG_LIBPNG_VER_STRING, poDS, 
@@ -683,9 +634,7 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     /* we should likely do a setjmp() here */
 
-    VSIRewind( poOpenInfo->fp );
-    
-    png_init_io( poDS->hPNG, poOpenInfo->fp );
+    png_set_read_fn( poDS->hPNG, poDS->fpImage, png_vsi_read_data );
     png_read_info( poDS->hPNG, poDS->psPNGInfo );
 
 /* -------------------------------------------------------------------- */
@@ -723,12 +672,6 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     for( int iBand = 0; iBand < poDS->nBands; iBand++ )
         poDS->SetBand( iBand+1, new PNGRasterBand( poDS, iBand+1 ) );
-
-/* -------------------------------------------------------------------- */
-/*      Adopt the file pointer.                                         */
-/* -------------------------------------------------------------------- */
-    poDS->fpImage = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Is there a palette?  Note: we should also read back and         */
@@ -919,7 +862,7 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     FILE	*fpImage;
 
-    fpImage = VSIFOpen( pszFilename, "wb" );
+    fpImage = VSIFOpenL( pszFilename, "wb" );
     if( fpImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -938,7 +881,7 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                     NULL, NULL, NULL );
     psPNGInfo = png_create_info_struct( hPNG );
     
-    png_init_io( hPNG, fpImage );
+    png_set_write_fn( hPNG, fpImage, png_vsi_write_data, png_vsi_flush );
 
     png_set_IHDR( hPNG, psPNGInfo, nXSize, nYSize, 
                   nBitDepth, nColorType, PNG_INTERLACE_NONE, 
@@ -1053,7 +996,7 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     png_write_end( hPNG, psPNGInfo );
     png_destroy_write_struct( &hPNG, &psPNGInfo );
 
-    VSIFClose( fpImage );
+    VSIFCloseL( fpImage );
 
     CPLFree( pabyAlpha );
     CPLFree( pasPNGColors );
@@ -1078,6 +1021,50 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
 
     return poDS;
+}
+
+/************************************************************************/
+/*                         png_vsi_read_data()                          */
+/*                                                                      */
+/*      Read data callback through VSI.                                 */
+/************************************************************************/
+static void
+png_vsi_read_data(png_structp png_ptr, png_bytep data, png_size_t length)
+
+{
+   png_size_t check;
+
+   /* fread() returns 0 on error, so it is OK to store this in a png_size_t
+    * instead of an int, which is what fread() actually returns.
+    */
+   check = (png_size_t)VSIFReadL(data, (png_size_t)1, length,
+                                 (png_FILE_p)png_ptr->io_ptr);
+
+   if (check != length)
+      png_error(png_ptr, "Read Error");
+}
+
+/************************************************************************/
+/*                         png_vsi_write_data()                         */
+/************************************************************************/
+
+static void
+png_vsi_write_data(png_structp png_ptr, png_bytep data, png_size_t length)
+{
+   png_uint_32 check;
+
+   check = VSIFWriteL(data, 1, length, (png_FILE_p)(png_ptr->io_ptr));
+
+   if (check != length)
+      png_error(png_ptr, "Write Error");
+}
+
+/************************************************************************/
+/*                           png_vsi_flush()                            */
+/************************************************************************/
+static void png_vsi_flush(png_structp png_ptr)
+{
+    VSIFFlushL( (png_FILE_p)(png_ptr->io_ptr) );
 }
 
 /************************************************************************/
