@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.47  2005/09/11 21:09:27  fwarmerdam
+ * use large file API in CSLLoad
+ *
  * Revision 1.46  2005/09/05 20:19:08  fwarmerdam
  * fixed binarytohex function
  *
@@ -344,21 +347,21 @@ char **CSLLoad(const char *pszFname)
     const char  *pszLine;
     char        **papszStrList=NULL;
 
-    fp = VSIFOpen(pszFname, "rb");
+    fp = VSIFOpenL(pszFname, "rb");
 
     if (fp)
     {
-        while(!VSIFEof(fp))
+        while(!VSIFEofL(fp))
         {
-            if ( (pszLine = CPLReadLine(fp)) != NULL )
+            if ( (pszLine = CPLReadLineL(fp)) != NULL )
             {
                 papszStrList = CSLAddString(papszStrList, pszLine);
             }
         }
 
-        VSIFClose(fp);
+        VSIFCloseL(fp);
 
-        CPLReadLine( NULL );
+        CPLReadLineL( NULL );
     }
     else
     {
