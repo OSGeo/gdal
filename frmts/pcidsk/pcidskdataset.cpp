@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/09/11 16:32:47  fwarmerdam
+ * Ensure things work even if the openinfo->fp is NULL.
+ *
  * Revision 1.15  2005/06/09 19:01:40  fwarmerdam
  * added support for tiled primary bands
  *
@@ -104,7 +107,6 @@ PCIDSKDataset::PCIDSKDataset()
 
     nSegCount = 0;
     panSegType = NULL;
-    panSegType = NULL;
     papszSegName = NULL;
     panSegOffset = NULL;
     panSegSize = NULL;
@@ -127,6 +129,8 @@ PCIDSKDataset::PCIDSKDataset()
 
 PCIDSKDataset::~PCIDSKDataset()
 {
+    int  i;
+
     FlushCache();
 
     if ( pszProjection )
@@ -139,7 +143,7 @@ PCIDSKDataset::~PCIDSKDataset()
         CPLFree( pszCreatTime );
     if( nGCPCount > 0 )
     {
-        for( int i = 0; i < nGCPCount; i++ )
+        for( i = 0; i < nGCPCount; i++ )
         {
             if ( pasGCPList[i].pszId )
                 CPLFree( pasGCPList[i].pszId );
@@ -149,6 +153,15 @@ PCIDSKDataset::~PCIDSKDataset()
 
         CPLFree( pasGCPList );
     }
+
+    CPLFree( panSegOffset );
+    CPLFree( panSegSize );
+    CPLFree( panSegType );
+
+    for( i = 0; i < nSegCount; i++ )
+        if( papszSegName[i] != NULL )
+            CPLFree( papszSegName[i] );
+    CPLFree( papszSegName );
 }
 
 /************************************************************************/
@@ -399,10 +412,8 @@ GDALDataType PCIDSKDataset::PCIDSKTypeToGDAL( const char *pszType )
 
 GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    if( poOpenInfo->fp == NULL )
-        return NULL;
-
-    if( !EQUALN((const char *) poOpenInfo->pabyHeader, "PCIDSK  ", 8) )
+    if( poOpenInfo->nHeaderBytes < 512 
+        || !EQUALN((const char *) poOpenInfo->pabyHeader, "PCIDSK  ", 8) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
