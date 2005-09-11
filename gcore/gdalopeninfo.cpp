@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/09/11 16:33:34  fwarmerdam
+ * Get header info with large file API if ENOENT.  This is intended to
+ * provide access to in-memory and other virtual filesystem objects.
+ *
  * Revision 1.1  2005/07/11 17:09:26  fwarmerdam
  * New
  *
@@ -100,12 +104,13 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn )
 
                 VSIRewind( fp );
             } 
-            else if( errno == 27 /* "File to large" */ )
+            else if( errno == 27 /* "File to large" */ 
+                     || errno == ENOENT )
             {
                 fp = VSIFOpenL( pszFilename, "rb" );
                 if( fp != NULL )
                 {
-                    nHeaderBytes = (int) VSIFRead( pabyHeader, 1, 1024, fp );
+                    nHeaderBytes = (int) VSIFReadL( pabyHeader, 1, 1024, fp );
                     VSIFCloseL( fp );
                     fp = NULL;
                 }
