@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/09/11 18:03:05  fwarmerdam
+ * added clear() method
+ *
  * Revision 1.4  2005/06/28 22:13:43  fwarmerdam
  * Removed debug printf()
  *
@@ -66,9 +69,20 @@ GDALMultiDomainMetadata::GDALMultiDomainMetadata()
 GDALMultiDomainMetadata::~GDALMultiDomainMetadata()
 
 {
+    Clear();
+}
+
+/************************************************************************/
+/*                               Clear()                                */
+/************************************************************************/
+
+void GDALMultiDomainMetadata::Clear()
+
+{
     int i;
 
     CSLDestroy( papszDomainList );
+    papszDomainList = NULL;
 
     for( i = 0; papapszMetadataLists != NULL 
                 && papapszMetadataLists[i] != NULL; i++ )
@@ -76,7 +90,9 @@ GDALMultiDomainMetadata::~GDALMultiDomainMetadata()
         CSLDestroy( papapszMetadataLists[i] );
     }
     CPLFree( papapszMetadataLists );
+    papapszMetadataLists = NULL;
 }
+
 
 /************************************************************************/
 /*                            GetMetadata()                             */
