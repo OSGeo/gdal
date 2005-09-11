@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.32  2005/09/11 16:36:54  fwarmerdam
+ * Turn raw EXIF printf() into a debug statement.
+ *
  * Revision 1.31  2005/09/05 22:37:52  fwarmerdam
  * Added progress monitor support in createcopy.
  *
@@ -419,10 +422,10 @@ CPLErr JPGDataset::EXIFInit(FILE *fp)
 	     hdr.tiff_version, hdr.tiff_version); 
   nTiffDirStart = hdr.tiff_diroff;
 
-  printf("Magic: %#x <%s-endian> Version: %#x\n",
-	 hdr.tiff_magic,
-	 hdr.tiff_magic == TIFF_BIGENDIAN ? "big" : "little",
-	 hdr.tiff_version);
+  CPLDebug( "JPEG", "Magic: %#x <%s-endian> Version: %#x\n",
+            hdr.tiff_magic,
+            hdr.tiff_magic == TIFF_BIGENDIAN ? "big" : "little",
+            hdr.tiff_version );
 
   return (CE_None);
 }
