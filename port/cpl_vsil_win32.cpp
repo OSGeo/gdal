@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/09/11 18:32:42  fwarmerdam
+ * Fixed up a few problems, works now
+ *
  * Revision 1.11  2005/09/11 18:01:28  fwarmerdam
  * preliminary implementatin of fully virtualized large file api
  *
@@ -43,7 +46,10 @@ CPL_CVSID("$Id$");
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <io.h>
-#include <dirent.h>
+#include <fcntl.h>
+#include <direct.h>
+
+#include "cpl_string.h"
 
 /************************************************************************/
 /* ==================================================================== */
@@ -79,15 +85,15 @@ class VSIWin32Handle : public VSIVirtualHandle
     virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
     virtual size_t    Write( void *pBuffer, size_t nSize, size_t nMemb );
     virtual int       Eof();
-    virtual void      Flush();
-    virtual void      Close();
+    virtual int       Flush();
+    virtual int       Close();
 };
 
 /************************************************************************/
 /*                               Close()                                */
 /************************************************************************/
 
-void VSIWin32Handle::Close()
+int VSIWin32Handle::Close()
 
 {
     return CloseHandle( hFile ) ? 0 : -1;
@@ -169,10 +175,11 @@ vsi_l_offset VSIWin32Handle::Tell()
 /*                               Flush()                                */
 /************************************************************************/
 
-void VSIWin32Handle::Flush()
+int VSIWin32Handle::Flush()
 
 {
     FlushFileBuffers( hFile );
+    return 0;
 }
 
 /************************************************************************/
@@ -238,8 +245,8 @@ int VSIWin32Handle::Eof()
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *VSIWin32FilesystemHandler( const char *pszFilename, 
-                                             const char *pszAccess )
+VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename, 
+                                                   const char *pszAccess )
 
 {
     DWORD dwDesiredAccess, dwCreationDisposition;
