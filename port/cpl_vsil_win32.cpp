@@ -6,7 +6,7 @@
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  **********************************************************************
- * Copyright (c) 2000, Frank Warmerdam
+ * Copyright (c) 2000, Frank Warmerdam <warmerdam@pobox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,112 +28,78 @@
  **********************************************************************
  *
  * $Log$
- * Revision 1.10  2004/03/10 18:17:47  warmerda
- * Hopefully corrected type casting warnings without breaking anything.
- *
- * Revision 1.9  2003/05/27 20:45:33  warmerda
- * added VSI IO debugging stuff
- *
- * Revision 1.8  2002/06/17 14:10:14  warmerda
- * no stat64 on Win32
- *
- * Revision 1.7  2002/06/17 14:00:16  warmerda
- * segregate VSIStatL() and VSIStatBufL.
- *
- * Revision 1.6  2002/06/12 02:11:58  warmerda
- * Removed unused variables.
- *
- * Revision 1.5  2001/07/18 04:00:49  warmerda
- * added CPL_CVSID
- *
- * Revision 1.4  2001/06/21 20:40:31  warmerda
- * *** empty log message ***
- *
- * Revision 1.3  2001/06/11 13:47:07  warmerda
- * initialize HighPart in VSIFTellL()
- *
- * Revision 1.2  2001/01/19 21:16:41  warmerda
- * expanded tabs
- *
- * Revision 1.1  2001/01/03 16:16:59  warmerda
- * New
+ * Revision 1.11  2005/09/11 18:01:28  fwarmerdam
+ * preliminary implementatin of fully virtualized large file api
  *
  */
 
-#include "cpl_vsi.h"
+#include "cpl_vsi_private.h"
 
 #if defined(WIN32)
 
 CPL_CVSID("$Id$");
 
 #include <windows.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <io.h>
+#include <dirent.h>
 
-typedef struct {
+/************************************************************************/
+/* ==================================================================== */
+/*                       VSIWin32FilesystemHandler                      */
+/* ==================================================================== */
+/************************************************************************/
+
+class VSIWin32FilesystemHandler : public VSIFilesystemHandler 
+{
+public:
+    virtual VSIVirtualHandle *Open( const char *pszFilename, 
+                                    const char *pszAccess);
+    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf );
+    virtual int      Unlink( const char *pszFilename );
+    virtual int      Mkdir( const char *pszDirname, long nMode );
+    virtual int      Rmdir( const char *pszDirname );
+    virtual char   **ReadDir( const char *pszDirname );
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*                            VSIWin32Handle                            */
+/* ==================================================================== */
+/************************************************************************/
+
+class VSIWin32Handle : public VSIVirtualHandle
+{
+  public:
     HANDLE       hFile;
-    vsi_l_offset nLastOffset;
-} VSIWin32File;
+
+    virtual int       Seek( vsi_l_offset nOffset, int nWhence );
+    virtual vsi_l_offset Tell();
+    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
+    virtual size_t    Write( void *pBuffer, size_t nSize, size_t nMemb );
+    virtual int       Eof();
+    virtual void      Flush();
+    virtual void      Close();
+};
 
 /************************************************************************/
-/*                              VSIFOpen()                              */
+/*                               Close()                                */
 /************************************************************************/
 
-FILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
+void VSIWin32Handle::Close()
 
 {
-    DWORD dwDesiredAccess, dwCreationDisposition;
-    HANDLE hFile;
-
-    if( strchr(pszAccess, '+') != NULL || strchr(pszAccess, 'w') != 0 )
-        dwDesiredAccess = GENERIC_READ | GENERIC_WRITE;
-    else
-        dwDesiredAccess = GENERIC_READ;
-
-    if( strstr(pszAccess, "w") != NULL )
-        dwCreationDisposition = CREATE_ALWAYS;
-    else
-        dwCreationDisposition = OPEN_EXISTING;
-        
-    hFile = CreateFile( pszFilename, dwDesiredAccess, 
-                        FILE_SHARE_READ | FILE_SHARE_WRITE, 
-                        NULL, dwCreationDisposition, 
-                        (dwDesiredAccess == GENERIC_READ) ? 
-                        FILE_ATTRIBUTE_READONLY : FILE_ATTRIBUTE_NORMAL, 
-                        NULL );
-
-    VSIDebug3( "VSIFOpenL(%s,%s) = %p", pszFilename, pszAccess, hFile );
-    
-    if( hFile == INVALID_HANDLE_VALUE )
-    {
-        return NULL;
-    }
-    else
-    {
-        return (FILE *) hFile;
-    }
-}
-
-/************************************************************************/
-/*                             VSIFCloseL()                             */
-/************************************************************************/
-
-int VSIFCloseL( FILE * fp )
-
-{
-    HANDLE hFile = (HANDLE) fp;
-
-    VSIDebug1( "VSIFCloseL(%p)", fp );
-
     return CloseHandle( hFile ) ? 0 : -1;
 }
 
 /************************************************************************/
-/*                             VSIFSeekL()                              */
+/*                                Seek()                                */
 /************************************************************************/
 
-int VSIFSeekL( FILE * fp, vsi_l_offset nOffset, int nWhence )
+int VSIWin32Handle::Seek( vsi_l_offset nOffset, int nWhence )
 
 {
-    HANDLE hFile = (HANDLE) fp;
     GUInt32       dwMoveMethod, dwMoveHigh;
     GUInt32       nMoveLow;
     LARGE_INTEGER li;
@@ -155,30 +121,6 @@ int VSIFSeekL( FILE * fp, vsi_l_offset nOffset, int nWhence )
     li.QuadPart = nOffset;
     nMoveLow = li.LowPart;
     dwMoveHigh = li.HighPart;
-
-#ifdef VSI_DEBUG
-    if( nWhence == SEEK_SET )
-    {
-        VSIDebug3( "VSIFSeekL(%p,%d:%lu,SEEK_SET)", 
-                   fp, (int) dwMoveHigh, (unsigned long) nMoveLow );
-    }
-    else if( nWhence == SEEK_END )
-    {
-        VSIDebug3( "VSIFSeekL(%p,%d:%lu,SEEK_END)",
-                   fp, (int) dwMoveHigh, (unsigned long) nMoveLow );
-    }
-    else if( nWhence == SEEK_CUR )
-    {
-        VSIDebug3( "VSIFSeekL(%p,%d:%lu,SEEK_CUR)",
-                   fp, (int) dwMoveHigh, (unsigned long) nMoveLow );
-    }
-    else
-    {
-        VSIDebug4( "VSIFSeekL(%p,%d:%lu,%d-Unknown)",
-                   fp, (int) dwMoveHigh, (unsigned long) nMoveLow,
-                   nWhence );
-    }
-#endif 
 
     SetLastError( 0 );
     SetFilePointer(hFile, (LONG) nMoveLow, (PLONG)&dwMoveHigh,
@@ -208,56 +150,38 @@ int VSIFSeekL( FILE * fp, vsi_l_offset nOffset, int nWhence )
 }
 
 /************************************************************************/
-/*                             VSIFTellL()                              */
+/*                                Tell()                                */
 /************************************************************************/
 
-vsi_l_offset VSIFTellL( FILE * fp )
+vsi_l_offset VSIWin32Handle::Tell()
 
 {
-    HANDLE hFile = (HANDLE) fp;
     LARGE_INTEGER   li;
 
     li.HighPart = 0;
     li.LowPart = SetFilePointer( hFile, 0, (PLONG) &(li.HighPart), 
                                  FILE_CURRENT );
 
-    VSIDebug3( "VSIFTellL(%p) = %ld:%ld", fp, li.HighPart, li.LowPart );
-
     return li.QuadPart;
 }
 
 /************************************************************************/
-/*                             VSIRewindL()                             */
+/*                               Flush()                                */
 /************************************************************************/
 
-void VSIRewindL( FILE * fp )
+void VSIWin32Handle::Flush()
 
 {
-    VSIFSeekL( fp, 0, SEEK_SET );
-}
-
-/************************************************************************/
-/*                             VSIFFlushL()                             */
-/************************************************************************/
-
-void VSIFFlushL( FILE * fp )
-
-{
-    HANDLE hFile = (HANDLE) fp;
-
-    VSIDebug1( "VSIFFlushL(%p)", fp );
-
     FlushFileBuffers( hFile );
 }
 
 /************************************************************************/
-/*                             VSIFReadL()                              */
+/*                                Read()                                */
 /************************************************************************/
 
-size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
+size_t VSIWin32Handle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
 {
-    HANDLE      hFile = (HANDLE) fp;
     DWORD       dwSizeRead;
     size_t      nResult;
 
@@ -266,20 +190,16 @@ size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
     else
         nResult = dwSizeRead / nSize;
 
-    VSIDebug3( "VSIFReadL(%p,%ld) = %ld", 
-               fp, (long) nSize * nCount, (long) dwSizeRead );
-
     return nResult;
 }
 
 /************************************************************************/
-/*                             VSIFWriteL()                             */
+/*                               Write()                                */
 /************************************************************************/
 
-size_t VSIFWriteL( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
+size_t VSIWin32Handle::Write( void * pBuffer, size_t nSize, size_t nCount )
 
 {
-    HANDLE      hFile = (HANDLE) fp;
     DWORD       dwSizeWritten;
     size_t      nResult;
 
@@ -288,28 +208,165 @@ size_t VSIFWriteL( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
     else
         nResult = dwSizeWritten / nSize;
 
-    VSIDebug3( "VSIFWriteL(%p,%ld) = %ld", 
-               fp, (long) nSize * nCount, (long) dwSizeWritten );
-
     return nResult;
 }
 
 /************************************************************************/
-/*                              VSIFEofL()                              */
+/*                                Eof()                                 */
 /************************************************************************/
 
-int VSIFEofL( FILE * fp )
+int VSIWin32Handle::Eof()
 
 {
     vsi_l_offset       nCur, nEnd;
 
-    nCur = VSIFTell( fp );
-    VSIFSeekL( fp, 0, SEEK_END );
-    nEnd = VSIFTell( fp );
-    VSIFSeekL( fp, nCur, SEEK_SET );
+    nCur = Tell();
+    Seek( 0, SEEK_END );
+    nEnd = Tell();
+    Seek( nCur, SEEK_SET );
 
     return (nCur == nEnd);
 }
 
-#endif /* defined WIN32 */
+/************************************************************************/
+/* ==================================================================== */
+/*                       VSIWin32FilesystemHandler                      */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+VSIVirtualHandle *VSIWin32FilesystemHandler( const char *pszFilename, 
+                                             const char *pszAccess )
+
+{
+    DWORD dwDesiredAccess, dwCreationDisposition;
+    HANDLE hFile;
+
+    if( strchr(pszAccess, '+') != NULL || strchr(pszAccess, 'w') != 0 )
+        dwDesiredAccess = GENERIC_READ | GENERIC_WRITE;
+    else
+        dwDesiredAccess = GENERIC_READ;
+
+    if( strstr(pszAccess, "w") != NULL )
+        dwCreationDisposition = CREATE_ALWAYS;
+    else
+        dwCreationDisposition = OPEN_EXISTING;
+        
+    hFile = CreateFile( pszFilename, dwDesiredAccess, 
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, 
+                        NULL, dwCreationDisposition, 
+                        (dwDesiredAccess == GENERIC_READ) ? 
+                        FILE_ATTRIBUTE_READONLY : FILE_ATTRIBUTE_NORMAL, 
+                        NULL );
+
+    if( hFile == INVALID_HANDLE_VALUE )
+    {
+        return NULL;
+    }
+    else
+    {
+        VSIWin32Handle *poHandle = new VSIWin32Handle;
+        
+        poHandle->hFile = hFile;
+        
+        return poHandle;
+    }
+}
+
+/************************************************************************/
+/*                                Stat()                                */
+/************************************************************************/
+
+int VSIWin32FilesystemHandler::Stat( const char * pszFilename, 
+                                     VSIStatBufL * pStatBuf )
+
+{
+    return( stat( pszFilename, pStatBuf ) );
+}
+
+/************************************************************************/
+/*                               Unlink()                               */
+/************************************************************************/
+
+int VSIWin32FilesystemHandler::Unlink( const char * pszFilename )
+
+{
+    return unlink( pszFilename );
+}
+
+/************************************************************************/
+/*                               Mkdir()                                */
+/************************************************************************/
+
+int VSIWin32FilesystemHandler::Mkdir( const char * pszPathname,
+                                      long nMode )
+
+{
+    (void) nMode;
+    return mkdir( pszPathname );
+}
+
+/************************************************************************/
+/*                               Rmdir()                                */
+/************************************************************************/
+
+int VSIWin32FilesystemHandler::Rmdir( const char * pszPathname )
+
+{
+    return rmdir( pszPathname );
+}
+
+/************************************************************************/
+/*                              ReadDir()                               */
+/************************************************************************/
+
+char **VSIWin32FilesystemHandler::ReadDir( const char *pszPath )
+
+{
+    struct _finddata_t c_file;
+    long    hFile;
+    char    *pszFileSpec, **papszDir = NULL;
+
+    if (strlen(pszPath) == 0)
+        pszPath = ".";
+
+    pszFileSpec = CPLStrdup(CPLSPrintf("%s\\*.*", pszPath));
+
+    if ( (hFile = _findfirst( pszFileSpec, &c_file )) != -1L )
+    {
+        do
+        {
+            papszDir = CSLAddString(papszDir, c_file.name);
+        } while( _findnext( hFile, &c_file ) == 0 );
+
+        _findclose( hFile );
+    }
+    else
+    {
+        /* Should we generate an error???  
+         * For now we'll just return NULL (at the end of the function)
+         */
+    }
+
+    CPLFree(pszFileSpec);
+
+    return papszDir;
+}
+
+/************************************************************************/
+/*                     VSIInstallLargeFileHandler()                     */
+/************************************************************************/
+
+void VSIInstallLargeFileHandler()
+
+{
+    VSIFileManager::InstallHandler( string(""), 
+                                    new VSIWin32FilesystemHandler );
+}
+
+#endif /* def WIN32 */
+
 
