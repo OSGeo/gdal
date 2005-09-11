@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/09/11 04:12:42  fwarmerdam
+ * The large file API can't be used on poOpenInfo->fp which is produced
+ * by the small file API.
+ *
  * Revision 1.11  2005/09/09 04:54:21  fwarmerdam
  * avoid use of dynamic array sizes, fails on VC6
  *
@@ -349,7 +353,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_None;
     }
 
-    VSIFSeekL( poRDS->fp, nBlockOffset, SEEK_SET );
+    VSIFSeek( poRDS->fp, nBlockOffset, SEEK_SET );
 
 /* -------------------------------------------------------------------- */
 /*      Read uncompressed block.                                        */
@@ -441,7 +445,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             lastCode = code;
             code = GetNextLZWCode( codeBits, blockData,
                                    filePos, fileAlign, bitsTaken );
-            if( VSIFEofL( poRDS->fp ) )
+            if( VSIFEof( poRDS->fp ) )
             {
                 CPLFree( blockData );
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -681,7 +685,7 @@ static GUInt16 GetRikString( FILE *fp,
 {
     GUInt16 actLength;
 
-    VSIFReadL( &actLength, 1, sizeof(actLength), fp );
+    VSIFRead( &actLength, 1, sizeof(actLength), fp );
 #ifdef CPL_MSB
     CPL_SWAP16PTR( &actLength );
 #endif
@@ -691,7 +695,7 @@ static GUInt16 GetRikString( FILE *fp,
         return actLength;
     }
 
-    VSIFReadL( str, 1, actLength, fp );
+    VSIFRead( str, 1, actLength, fp );
 
     str[actLength] = '\0';
 
@@ -716,9 +720,9 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     if( rik3header )
-        VSIFSeekL( poOpenInfo->fp, 4, SEEK_SET );
+        VSIFSeek( poOpenInfo->fp, 4, SEEK_SET );
     else
-        VSIFSeekL( poOpenInfo->fp, 0, SEEK_SET );
+        VSIFSeek( poOpenInfo->fp, 0, SEEK_SET );
 
 /* -------------------------------------------------------------------- */
 /*      Read the map name.                                              */
@@ -795,12 +799,12 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
         // Read binary values
 
-        VSIFReadL( &header.iScale, 1, sizeof(header.iScale), poOpenInfo->fp );
-        VSIFReadL( &header.iMPPNum, 1, sizeof(header.iMPPNum), poOpenInfo->fp );
-        VSIFReadL( &header.iBlockWidth, 1, sizeof(header.iBlockWidth), poOpenInfo->fp );
-        VSIFReadL( &header.iBlockHeight, 1, sizeof(header.iBlockHeight), poOpenInfo->fp );
-        VSIFReadL( &header.iHorBlocks, 1, sizeof(header.iHorBlocks), poOpenInfo->fp );
-        VSIFReadL( &header.iVertBlocks, 1, sizeof(header.iVertBlocks), poOpenInfo->fp );
+        VSIFRead( &header.iScale, 1, sizeof(header.iScale), poOpenInfo->fp );
+        VSIFRead( &header.iMPPNum, 1, sizeof(header.iMPPNum), poOpenInfo->fp );
+        VSIFRead( &header.iBlockWidth, 1, sizeof(header.iBlockWidth), poOpenInfo->fp );
+        VSIFRead( &header.iBlockHeight, 1, sizeof(header.iBlockHeight), poOpenInfo->fp );
+        VSIFRead( &header.iHorBlocks, 1, sizeof(header.iHorBlocks), poOpenInfo->fp );
+        VSIFRead( &header.iVertBlocks, 1, sizeof(header.iVertBlocks), poOpenInfo->fp );
 #ifdef CPL_MSB
         CPL_SWAP32PTR( &header.iScale );
         CPL_SWAP32PTR( &header.iMPPNum );
@@ -810,10 +814,10 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         CPL_SWAP32PTR( &header.iVertBlocks );
 #endif
 
-        VSIFReadL( &header.iBitsPerPixel, 1, sizeof(header.iBitsPerPixel), poOpenInfo->fp );
-        VSIFReadL( &header.iOptions, 1, sizeof(header.iOptions), poOpenInfo->fp );
+        VSIFRead( &header.iBitsPerPixel, 1, sizeof(header.iBitsPerPixel), poOpenInfo->fp );
+        VSIFRead( &header.iOptions, 1, sizeof(header.iOptions), poOpenInfo->fp );
         header.iUnknown = header.iOptions;
-        VSIFReadL( &header.iOptions, 1, sizeof(header.iOptions), poOpenInfo->fp );
+        VSIFRead( &header.iOptions, 1, sizeof(header.iOptions), poOpenInfo->fp );
 
         header.fSouth = header.fNorth -
             header.iVertBlocks * header.iBlockHeight * header.iMPPNum;
@@ -828,13 +832,13 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Old RIK header.                                                 */
 /* -------------------------------------------------------------------- */
 
-        VSIFReadL( &header.iUnknown, 1, sizeof(header.iUnknown), poOpenInfo->fp );
-        VSIFReadL( &header.fSouth, 1, sizeof(header.fSouth), poOpenInfo->fp );
-        VSIFReadL( &header.fWest, 1, sizeof(header.fWest), poOpenInfo->fp );
-        VSIFReadL( &header.fNorth, 1, sizeof(header.fNorth), poOpenInfo->fp );
-        VSIFReadL( &header.fEast, 1, sizeof(header.fEast), poOpenInfo->fp );
-        VSIFReadL( &header.iScale, 1, sizeof(header.iScale), poOpenInfo->fp );
-        VSIFReadL( &header.iMPPNum, 1, sizeof(header.iMPPNum), poOpenInfo->fp );
+        VSIFRead( &header.iUnknown, 1, sizeof(header.iUnknown), poOpenInfo->fp );
+        VSIFRead( &header.fSouth, 1, sizeof(header.fSouth), poOpenInfo->fp );
+        VSIFRead( &header.fWest, 1, sizeof(header.fWest), poOpenInfo->fp );
+        VSIFRead( &header.fNorth, 1, sizeof(header.fNorth), poOpenInfo->fp );
+        VSIFRead( &header.fEast, 1, sizeof(header.fEast), poOpenInfo->fp );
+        VSIFRead( &header.iScale, 1, sizeof(header.iScale), poOpenInfo->fp );
+        VSIFRead( &header.iMPPNum, 1, sizeof(header.iMPPNum), poOpenInfo->fp );
 #ifdef CPL_MSB
         CPL_SWAP64PTR( &header.fSouth );
         CPL_SWAP64PTR( &header.fWest );
@@ -863,7 +867,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
             header.fWest += 201000;
             header.fEast += 302005;
 
-            VSIFReadL( &header.iMPPDen, 1, sizeof(header.iMPPDen), poOpenInfo->fp );
+            VSIFRead( &header.iMPPDen, 1, sizeof(header.iMPPDen), poOpenInfo->fp );
 #ifdef CPL_MSB
             CPL_SWAP32PTR( &header.iMPPDen );
 #endif
@@ -877,9 +881,9 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
         metersPerPixel = header.iMPPNum / double(header.iMPPDen);
 
-        VSIFReadL( &header.iBlockWidth, 1, sizeof(header.iBlockWidth), poOpenInfo->fp );
-        VSIFReadL( &header.iBlockHeight, 1, sizeof(header.iBlockHeight), poOpenInfo->fp );
-        VSIFReadL( &header.iHorBlocks, 1, sizeof(header.iHorBlocks), poOpenInfo->fp );
+        VSIFRead( &header.iBlockWidth, 1, sizeof(header.iBlockWidth), poOpenInfo->fp );
+        VSIFRead( &header.iBlockHeight, 1, sizeof(header.iBlockHeight), poOpenInfo->fp );
+        VSIFRead( &header.iHorBlocks, 1, sizeof(header.iHorBlocks), poOpenInfo->fp );
 #ifdef CPL_MSB
         CPL_SWAP32PTR( &header.iBlockWidth );
         CPL_SWAP32PTR( &header.iBlockHeight );
@@ -892,7 +896,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if( !offsetBounds )
         {
-            VSIFReadL( &header.iVertBlocks, 1, sizeof(header.iVertBlocks), poOpenInfo->fp );
+            VSIFRead( &header.iVertBlocks, 1, sizeof(header.iVertBlocks), poOpenInfo->fp );
 #ifdef CPL_MSB
             CPL_SWAP32PTR( &header.iVertBlocks );
 #endif
@@ -911,7 +915,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
                   header.iVertBlocks );
 #endif
 
-        VSIFReadL( &header.iBitsPerPixel, 1, sizeof(header.iBitsPerPixel), poOpenInfo->fp );
+        VSIFRead( &header.iBitsPerPixel, 1, sizeof(header.iBitsPerPixel), poOpenInfo->fp );
 
         if( header.iBitsPerPixel != 8 )
         {
@@ -921,7 +925,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
             return NULL;
         }
 
-        VSIFReadL( &header.iOptions, 1, sizeof(header.iOptions), poOpenInfo->fp );
+        VSIFRead( &header.iOptions, 1, sizeof(header.iOptions), poOpenInfo->fp );
 
         if( !header.iHorBlocks || !header.iVertBlocks )
            return NULL;
@@ -949,9 +953,9 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
     GUInt16 i;
     for( i = 0; i < 256; i++ )
     {
-        VSIFReadL( &palette[i * 3 + 2], 1, 1, poOpenInfo->fp );
-        VSIFReadL( &palette[i * 3 + 1], 1, 1, poOpenInfo->fp );
-        VSIFReadL( &palette[i * 3 + 0], 1, 1, poOpenInfo->fp );
+        VSIFRead( &palette[i * 3 + 2], 1, 1, poOpenInfo->fp );
+        VSIFRead( &palette[i * 3 + 1], 1, 1, poOpenInfo->fp );
+        VSIFRead( &palette[i * 3 + 0], 1, 1, poOpenInfo->fp );
     }
 
 /* -------------------------------------------------------------------- */
@@ -974,7 +978,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( header.iOptions == 0x00 )
     {
-        offsets[0] = VSIFTellL( poOpenInfo->fp );
+        offsets[0] = VSIFTell( poOpenInfo->fp );
 
         for( GUInt32 i = 1; i < blocks; i++ )
         {
@@ -986,14 +990,14 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         for( GUInt32 i = 0; i < blocks; i++ )
         {
-            VSIFReadL( &offsets[i], 1, sizeof(offsets[i]), poOpenInfo->fp );
+            VSIFRead( &offsets[i], 1, sizeof(offsets[i]), poOpenInfo->fp );
 #ifdef CPL_MSB
             CPL_SWAP32PTR( &offsets[i] );
 #endif
             if( rik3header )
             {
                 GUInt32 blockSize;
-                VSIFReadL( &blockSize, 1, sizeof(blockSize), poOpenInfo->fp );
+                VSIFRead( &blockSize, 1, sizeof(blockSize), poOpenInfo->fp );
 #ifdef CPL_MSB
                 CPL_SWAP32PTR( &blockSize );
 #endif
@@ -1007,7 +1011,7 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // File size
 
-    if( VSIFEofL( poOpenInfo->fp ) )
+    if( VSIFEof( poOpenInfo->fp ) )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Read past end of file.\n",
@@ -1015,8 +1019,8 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    VSIFSeekL( poOpenInfo->fp, 0, SEEK_END );
-    GUInt32 fileSize = VSIFTellL( poOpenInfo->fp );
+    VSIFSeek( poOpenInfo->fp, 0, SEEK_END );
+    GUInt32 fileSize = VSIFTell( poOpenInfo->fp );
 
 #if RIK_HEADER_DEBUG
     CPLDebug( "RIK",
