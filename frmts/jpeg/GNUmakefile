@@ -13,10 +13,10 @@ OBJ	=	\
         jfdctint.o jidctflt.o jidctfst.o jidctint.o jidctred.o jquant1.o \
         jquant2.o jutils.o jmemmgr.o jmemansi.o \
 	\
-	jpgdataset.o
+	jpgdataset.o vsidataio.o
 XTRA_OPT	=	-Ilibjpeg
 else
-OBJ	=	jpgdataset.o
+OBJ	=	jpgdataset.o vsidataio.o
 XTRA_OPT	=	
 endif
 
