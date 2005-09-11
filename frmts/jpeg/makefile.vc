@@ -2,7 +2,7 @@ GDAL_ROOT	=	..\..
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 
-OBJ	=    jpgdataset.obj
+OBJ	=    jpgdataset.obj vsidataio.obj
 
 
 !IFDEF JPEG_EXTERNAL_LIB
