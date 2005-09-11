@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2005/09/11 21:08:21  fwarmerdam
+ * added CPLReadLineL
+ *
  * Revision 1.38  2005/08/25 18:06:48  fwarmerdam
  * void in empty arg lists.
  *
@@ -157,6 +160,7 @@ char CPL_DLL *CPLStrdup( const char * );
 /* -------------------------------------------------------------------- */
 char CPL_DLL *CPLFGets( char *, int, FILE *);
 const char CPL_DLL *CPLReadLine( FILE * );
+const char CPL_DLL *CPLReadLineL( FILE * );
 
 /* -------------------------------------------------------------------- */
 /*      Read a numeric value from an ASCII character string.            */
