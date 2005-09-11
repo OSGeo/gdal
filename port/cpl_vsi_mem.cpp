@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/09/11 18:32:07  fwarmerdam
+ * tweak bigint expression to avoid vc6 problems
+ *
  * Revision 1.1  2005/09/11 18:00:30  fwarmerdam
  * New
  *
@@ -155,7 +158,7 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
     if( nNewLength > nAllocLength )
     {
         GByte *pabyNewData;
-        vsi_l_offset nNewAlloc = (int) (nNewLength * 1.1) + 5000;
+        vsi_l_offset nNewAlloc = (nNewLength + nNewLength / 10) + 5000;
 
         pabyNewData = (GByte *) CPLRealloc(pabyData, nNewAlloc);
         if( pabyNewData == NULL )
