@@ -37,6 +37,10 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.37  2005/09/11 19:14:54  fwarmerdam
+ * Use largefile API for virtualization support.  Note that XML files are
+ * no longer produced in machine-local text format.
+ *
  * Revision 1.36  2005/05/22 08:17:07  fwarmerdam
  * allow CPLAddXMLChild() to support siblings
  *
@@ -1753,7 +1757,7 @@ CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Read the file.                                                  */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszFilename, "rb" );
+    fp = VSIFOpenL( pszFilename, "rb" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -1761,9 +1765,9 @@ CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
         return NULL;
     }
 
-    VSIFSeek( fp, 0, SEEK_END );
-    nLen = VSIFTell( fp );
-    VSIFSeek( fp, 0, SEEK_SET );
+    VSIFSeekL( fp, 0, SEEK_END );
+    nLen = VSIFTellL( fp );
+    VSIFSeekL( fp, 0, SEEK_SET );
     
     pszDoc = (char *) VSIMalloc(nLen+1);
     if( pszDoc == NULL )
@@ -1772,17 +1776,17 @@ CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
                   "Out of memory allocating space for %d byte buffer in\n"
                   "CPLParseXMLFile(%.500s).", 
                   nLen+1, pszFilename );
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         return NULL;
     }
-    if( (int) VSIFRead( pszDoc, 1, nLen, fp ) < nLen )
+    if( (int) VSIFReadL( pszDoc, 1, nLen, fp ) < nLen )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "VSIFRead() result short of expected %d bytes from %.500s.", 
                   nLen, pszFilename );
         pszDoc[0] = '\0';
     }
-    VSIFClose( fp );
+    VSIFCloseL( fp );
 
     pszDoc[nLen] = '\0';
 
@@ -1830,7 +1834,7 @@ int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Create file.                                                    */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszFilename, "wt" );
+    fp = VSIFOpenL( pszFilename, "w" );
     if( fp == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -1841,12 +1845,12 @@ int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Write file.                                                     */
 /* -------------------------------------------------------------------- */
-    if( (int) VSIFWrite( pszDoc, 1, nLength, fp ) != nLength )
+    if( (int) VSIFWriteL( pszDoc, 1, nLength, fp ) != nLength )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "Failed to write whole XML document (%.500s).",
                   pszFilename );
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         CPLFree( pszDoc );
         return FALSE;
     }
@@ -1854,7 +1858,7 @@ int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    VSIFClose( fp );
+    VSIFCloseL( fp );
     CPLFree( pszDoc );
 
     return TRUE;
