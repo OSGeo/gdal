@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2005/09/11 21:08:59  fwarmerdam
+ * properly manage TLS ReadLine buffer, added CPLReadLineL()
+ *
  * Revision 1.45  2005/07/11 16:41:31  fwarmerdam
  * Protect config list and shared file list with mutex.
  *
@@ -459,6 +462,63 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
 }
 
 /************************************************************************/
+/*                         CPLReadLineBuffer()                          */
+/*                                                                      */
+/*      Fetch readline buffer, and ensure it is the desired size,       */
+/*      reallocating if needed.  Manages TLS (thread local storage)     */
+/*      issues for the buffer.                                          */
+/************************************************************************/
+static char *CPLReadLineBuffer( int nRequiredSize )
+
+{
+    
+/* -------------------------------------------------------------------- */
+/*      A required size of -1 means the buffer should be freed.         */
+/* -------------------------------------------------------------------- */
+    if( nRequiredSize == -1 )
+    {
+        if( CPLGetTLS( CTLS_RLBUFFERINFO ) != NULL )
+        {
+            CPLFree( CPLGetTLS( CTLS_RLBUFFERINFO ) );
+            CPLSetTLS( CTLS_RLBUFFERINFO, NULL, FALSE );
+        }
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If the buffer doesn't exist yet, create it.                     */
+/* -------------------------------------------------------------------- */
+    GUInt32 *pnAlloc = (GUInt32 *) CPLGetTLS( CTLS_RLBUFFERINFO );
+
+    if( pnAlloc == NULL )
+    {
+        pnAlloc = (GUInt32 *) CPLMalloc(200);
+        *pnAlloc = 196;
+        CPLSetTLS( CTLS_RLBUFFERINFO, pnAlloc, TRUE );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If it is too small, grow it bigger.                             */
+/* -------------------------------------------------------------------- */
+    if( (int) *pnAlloc < nRequiredSize+1 )
+    {
+        int nNewSize = nRequiredSize + 4 + 500;
+
+        pnAlloc = (GUInt32 *) CPLRealloc(pnAlloc,nNewSize);
+        if( pnAlloc == NULL )
+        {
+            CPLSetTLS( CTLS_RLBUFFERINFO, NULL, FALSE );
+            return NULL;
+        }
+            
+        *pnAlloc = nNewSize - 4;
+        CPLSetTLS( CTLS_RLBUFFERINFO, pnAlloc, TRUE );
+    }
+
+    return (char *) (pnAlloc+1);
+}
+
+/************************************************************************/
 /*                            CPLReadLine()                             */
 /************************************************************************/
 
@@ -487,8 +547,7 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
 const char *CPLReadLine( FILE * fp )
 
 {
-    static CPL_THREADLOCAL char *pszRLBuffer = NULL;
-    static CPL_THREADLOCAL int  nRLBufferSize = 0;
+    char *pszRLBuffer = CPLReadLineBuffer(1);
     int         nReadSoFar = 0;
 
 /* -------------------------------------------------------------------- */
@@ -496,9 +555,7 @@ const char *CPLReadLine( FILE * fp )
 /* -------------------------------------------------------------------- */
     if( fp == NULL )
     {
-        CPLFree( pszRLBuffer );
-        pszRLBuffer = NULL;
-        nRLBufferSize = 0;
+        CPLReadLineBuffer( -1 );
         return NULL;
     }
 
@@ -506,41 +563,155 @@ const char *CPLReadLine( FILE * fp )
 /*      Loop reading chunks of the line till we get to the end of       */
 /*      the line.                                                       */
 /* -------------------------------------------------------------------- */
+    int nBytesReadThisTime;
+
     do {
 /* -------------------------------------------------------------------- */
 /*      Grow the working buffer if we have it nearly full.  Fail out    */
 /*      of read line if we can't reallocate it big enough (for          */
 /*      instance for a _very large_ file with no newlines).             */
 /* -------------------------------------------------------------------- */
-        if( nRLBufferSize-nReadSoFar < 128 )
-        {
-            nRLBufferSize = nRLBufferSize*2 + 128;
-            pszRLBuffer = (char *) VSIRealloc(pszRLBuffer, nRLBufferSize);
-            if( pszRLBuffer == NULL )
-            {
-                nRLBufferSize = 0;
-                return NULL;
-            }
-        }
+        pszRLBuffer = CPLReadLineBuffer( nReadSoFar + 129 );
+        if( pszRLBuffer == NULL )
+            return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Do the actual read.                                             */
 /* -------------------------------------------------------------------- */
-        if( CPLFGets( pszRLBuffer+nReadSoFar, nRLBufferSize-nReadSoFar, fp )
-            == NULL )
-        {
-            CPLFree( pszRLBuffer );
-            pszRLBuffer = NULL;
-            nRLBufferSize = 0;
-
+        if( CPLFGets( pszRLBuffer+nReadSoFar, 128, fp ) == NULL )
             return NULL;
+
+        nBytesReadThisTime = strlen(pszRLBuffer+nReadSoFar);
+        nReadSoFar += nBytesReadThisTime;
+
+    } while( nBytesReadThisTime >= 127
+             && pszRLBuffer[nReadSoFar-1] != 13
+             && pszRLBuffer[nReadSoFar-1] != 10 );
+
+    return( pszRLBuffer );
+}
+
+/************************************************************************/
+/*                            CPLReadLineL()                            */
+/************************************************************************/
+
+/**
+ * Simplified line reading from text file.
+ * 
+ * Similar to CPLReadLine(), but reading from a large file API handle.
+ *
+ * @param fp file pointer opened with VSIFOpenL().
+ *
+ * @return pointer to an internal buffer containing a line of text read
+ * from the file or NULL if the end of file was encountered.
+ */
+
+const char *CPLReadLineL( FILE * fp )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Cleanup case.                                                   */
+/* -------------------------------------------------------------------- */
+    if( fp == NULL )
+    {
+        CPLReadLineBuffer( -1 );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Loop reading chunks of the line till we get to the end of       */
+/*      the line.                                                       */
+/* -------------------------------------------------------------------- */
+    char *pszRLBuffer;
+    const int nChunkSize = 40;
+    char szChunk[nChunkSize];
+    int nChunkBytesRead = 0;
+    int nBufLength = 0;
+    int nChunkBytesConsumed = 0;
+
+    while( TRUE )
+    {
+/* -------------------------------------------------------------------- */
+/*      Read a chunk from the input file.                               */
+/* -------------------------------------------------------------------- */
+        pszRLBuffer = CPLReadLineBuffer( nBufLength + nChunkSize + 1 );
+
+        if( nChunkBytesRead == nChunkBytesConsumed + 1 )
+        {
+            // case where one character is left over from last read.
+            szChunk[0] = szChunk[nChunkBytesConsumed];
+            nChunkBytesRead = VSIFReadL( szChunk+1, 1, nChunkSize-1, fp ) + 1;
+            if( nChunkBytesRead == 1 )
+                break;
+        }
+        else
+        {
+            // fresh read.
+            nChunkBytesRead = VSIFReadL( szChunk, 1, nChunkSize, fp );
+            if( nChunkBytesRead == 0 )
+                break;
+        }
+        
+/* -------------------------------------------------------------------- */
+/*      copy over characters watching for end-of-line.                  */
+/* -------------------------------------------------------------------- */
+        int bBreak = FALSE;
+        nChunkBytesConsumed = 0;
+        while( nChunkBytesConsumed < nChunkBytesRead-1 && !bBreak )
+        {
+            if( (szChunk[nChunkBytesConsumed] == 13
+                 && szChunk[nChunkBytesConsumed+1] == 10)
+                || (szChunk[nChunkBytesConsumed] == 10
+                    && szChunk[nChunkBytesConsumed+1] == 13) )
+            {
+                nChunkBytesConsumed += 2;
+                bBreak = TRUE;
+            }
+            else if( szChunk[nChunkBytesConsumed] == 10
+                     || szChunk[nChunkBytesConsumed] == 13 )
+            {
+                nChunkBytesConsumed += 1;
+                bBreak = TRUE;
+            }
+            else
+                pszRLBuffer[nBufLength++] = szChunk[nChunkBytesConsumed++];
         }
 
-        nReadSoFar = strlen(pszRLBuffer);
+        if( bBreak )
+            break;
 
-    } while( nReadSoFar == nRLBufferSize - 1
-             && pszRLBuffer[nRLBufferSize-2] != 13
-             && pszRLBuffer[nRLBufferSize-2] != 10 );
+/* -------------------------------------------------------------------- */
+/*      If there is a remaining character and it is not a newline       */
+/*      consume it.  If it is a newline, but we are clearly at the      */
+/*      end of the file then consume it.                                */
+/* -------------------------------------------------------------------- */
+        if( nChunkBytesConsumed == nChunkBytesRead-1 
+            && nChunkBytesRead < nChunkSize )
+        {
+            if( szChunk[nChunkBytesConsumed] == 10
+                || szChunk[nChunkBytesConsumed] == 13 )
+            {
+                nChunkBytesConsumed++;
+                break;
+            }
+
+            pszRLBuffer[nBufLength++] = szChunk[nChunkBytesConsumed++];
+            break;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we have left over bytes after breaking out, seek back to     */
+/*      ensure they remain to be read next time.                        */
+/* -------------------------------------------------------------------- */
+    if( nChunkBytesConsumed < nChunkBytesRead )
+    {
+        int nBytesToPush = nChunkBytesRead - nChunkBytesConsumed;
+        
+        VSIFSeekL( fp, VSIFTellL( fp ) - nBytesToPush, SEEK_SET );
+    }
+
+    pszRLBuffer[nBufLength] = '\0';
 
     return( pszRLBuffer );
 }
