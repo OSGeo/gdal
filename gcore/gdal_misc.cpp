@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.71  2005/09/11 19:16:31  fwarmerdam
+ * Use CPLString for safer string manipulation.
+ *
  * Revision 1.70  2005/07/15 13:28:00  fwarmerdam
  * Fixed another big raster int overflow problem in GDALGetRasterSampleOverview
  *
@@ -98,6 +101,7 @@
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 #include <ctype.h>
+#include <string>
 
 CPL_CVSID("$Id$");
 
@@ -1403,14 +1407,14 @@ GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
     if( pszExtension == NULL )
     {
         char szDerivedExtension[100];
-        const char *pszBaseExt = CPLGetExtension( pszBaseFilename );
+        std::string  oBaseExt = CPLGetExtension( pszBaseFilename );
 
-        if( strlen(pszBaseExt) < 2 )
+        if( oBaseExt.length() < 2 )
             return FALSE;
 
         // windows version - first + last + 'w'
-        szDerivedExtension[0] = pszBaseExt[0];
-        szDerivedExtension[1] = pszBaseExt[strlen(pszBaseExt)-1];
+        szDerivedExtension[0] = oBaseExt[0];
+        szDerivedExtension[1] = oBaseExt[oBaseExt.length()-1];
         szDerivedExtension[2] = 'w';
         szDerivedExtension[3] = '\0';
         
@@ -1419,10 +1423,10 @@ GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
             return TRUE;
 
         // unix version - extension + 'w'
-        if( strlen(pszBaseExt) > sizeof(szDerivedExtension)-2 )
+        if( oBaseExt.length() > sizeof(szDerivedExtension)-2 )
             return FALSE;
 
-        strcpy( szDerivedExtension, pszBaseExt );
+        strcpy( szDerivedExtension, oBaseExt.c_str() );
         strcat( szDerivedExtension, "w" );
         return GDALReadWorldFile( pszBaseFilename, szDerivedExtension, 
                                   padfGeoTransform );
