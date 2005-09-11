@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.21  2005/09/11 18:01:28  fwarmerdam
+ * preliminary implementatin of fully virtualized large file api
+ *
  * Revision 1.20  2005/04/12 03:51:11  fwarmerdam
  * Fixed stat64 problem.
  *
@@ -189,7 +192,7 @@ void CPL_DLL    VSIRewindL( FILE * );
 size_t CPL_DLL  VSIFReadL( void *, size_t, size_t, FILE * );
 size_t CPL_DLL  VSIFWriteL( void *, size_t, size_t, FILE * );
 int CPL_DLL     VSIFEofL( FILE * );
-void CPL_DLL    VSIFFlushL( FILE * );
+int CPL_DLL    VSIFFlushL( FILE * );
 
 #ifndef WIN32
 typedef struct VSI_STAT64_T VSIStatBufL;
@@ -237,6 +240,17 @@ int CPL_DLL VSIMkdir( const char * pathname, long mode );
 int CPL_DLL VSIRmdir( const char * pathname );
 int CPL_DLL VSIUnlink( const char * pathname );
 char CPL_DLL *VSIStrerror( int );
+
+/* ==================================================================== */
+/*      Install special file access handlers.                           */
+/* ==================================================================== */
+void CPL_DLL VSIInstallMemFileHandler(void);
+void CPL_DLL VSIInstallLargeFileHandler(void);
+
+FILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename, 
+                                    GByte *pabyData, 
+                                    vsi_l_offset nDataLength,
+                                    int bTakeOwnership );
 
 /* ==================================================================== */
 /*      Time quering.                                                   */

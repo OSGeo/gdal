@@ -30,6 +30,9 @@
  *    instance validation of access strings to fopen().
  * 
  * $Log$
+ * Revision 1.18  2005/09/11 18:01:28  fwarmerdam
+ * preliminary implementatin of fully virtualized large file api
+ *
  * Revision 1.17  2003/09/10 19:44:36  warmerda
  * added VSIStrerrno()
  *
@@ -365,43 +368,6 @@ int VSIStat( const char * pszFilename, VSIStatBuf * pStatBuf )
 #else
     return( stat( pszFilename, pStatBuf ) );
 #endif
-}
-
-/************************************************************************/
-/*                              VSIMkdir()                              */
-/************************************************************************/
-
-int VSIMkdir( const char *pszPathname, long mode )
-
-{
-#ifdef WIN32
-    (void) mode;
-    return mkdir( pszPathname );
-#elif defined(macos_pre10)
-    return -1;
-#else
-    return mkdir( pszPathname, mode );
-#endif
-}
-
-/************************************************************************/
-/*                             VSIUnlink()                              */
-/*************************a***********************************************/
-
-int VSIUnlink( const char * pszFilename )
-
-{
-    return unlink( pszFilename );
-}
-
-/************************************************************************/
-/*                              VSIRmdir()                              */
-/************************************************************************/
-
-int VSIRmdir( const char * pszFilename )
-
-{
-    return rmdir( pszFilename );
 }
 
 /************************************************************************/
