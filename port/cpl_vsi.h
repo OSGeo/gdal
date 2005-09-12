@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.23  2005/09/12 16:50:37  fwarmerdam
+ * added VSIMemFile buffer fetcher
+ *
  * Revision 1.22  2005/09/11 18:31:41  fwarmerdam
  * ensure a distinct VSIStatL() exists on win32
  *
@@ -254,6 +257,9 @@ FILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename,
                                     GByte *pabyData, 
                                     vsi_l_offset nDataLength,
                                     int bTakeOwnership );
+GByte CPL_DLL *VSIGetMemFileBuffer( const char *pszFilename, 
+                                    vsi_l_offset &pnDataLength, 
+                                    int bUnlinkAndSeize );
 
 /* ==================================================================== */
 /*      Time quering.                                                   */

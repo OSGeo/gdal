@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/09/12 16:50:37  fwarmerdam
+ * added VSIMemFile buffer fetcher
+ *
  * Revision 1.3  2005/09/12 00:37:55  fwarmerdam
  * fixed ownership in buffer to file function
  *
@@ -511,3 +514,40 @@ FILE *VSIFileFromMemBuffer( const char *pszFilename,
     return (FILE *) poHandler->Open( pszFilename, "r+" );
 }
 
+/************************************************************************/
+/*                        VSIGetMemFileBuffer()                         */
+/************************************************************************/
+
+GByte *VSIGetMemFileBuffer( const char *pszFilename, 
+                            vsi_l_offset *pnDataLength,
+                            int bUnlinkAndSeize )
+
+{
+    VSIMemFilesystemHandler *poHandler = (VSIMemFilesystemHandler *) 
+        VSIFileManager::GetHandler("/vsimem/");
+
+    if( poHandler->oFileList.find(pszFilename) == poHandler->oFileList.end() )
+        return NULL;
+
+    VSIMemFile *poFile = poHandler->oFileList[pszFilename];
+    GByte *pabyData;
+
+    pabyData = poFile->pabyData;
+    if( pnDataLength != NULL )
+        *pnDataLength = poFile->nLength;
+    
+    if( bUnlinkAndSeize )
+    {
+        if( !poFile->bOwnData )
+            CPLDebug( "VSIMemFile", 
+                      "File doesn't own data in VSIGetMemFileBuffer!" );
+        else
+            poFile->bOwnData = FALSE;
+
+        delete poFile;
+        poHandler->oFileList.erase( poHandler->oFileList.find(pszFilename) );
+    }
+
+    return pabyData;
+}
+                            
