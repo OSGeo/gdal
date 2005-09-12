@@ -901,6 +901,9 @@ else
 
   AC_CHECK_LIB(hdf5,H5Fopen,HDF5_LIB_NAME="-lhdf5 ",HDF5_LIB_NAME=missing,-lhdf5)
 
+  if test "$HDF_LIB_NAME" = "missing" ; then
+    AC_MSG_ERROR([HDF4 support requested with arg $with_hdf4, but neither hdf4 nor mfhdf lib found])
+  fi
 
   LIBS="-L$HDF5_LIB_DIR $HDF5_LIB_NAME $ORIG_LIBS"
 
