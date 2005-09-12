@@ -13,6 +13,6 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) $(MRSID_FLAGS) $(MRSID_INCLUDE) $(GEOTIFF_INCLUDE) $
 default:	$(OBJ)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)
 
 install-obj:	$(O_OBJ)
