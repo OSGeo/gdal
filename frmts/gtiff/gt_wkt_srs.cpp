@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2005/09/12 16:56:44  fwarmerdam
+ * fixup to avoid depending on cpl_vsi.h
+ *
  * Revision 1.56  2005/09/12 00:28:28  fwarmerdam
  * use vsi memory io instead of memio module
  *
@@ -70,139 +73,6 @@
  *
  * Revision 1.44  2004/03/18 09:58:07  dron
  * Use auxiliary functions from the libgeotiff instead of the ones from CPL.
- *
- * Revision 1.43  2003/11/25 15:26:08  warmerda
- * dont use GCS or PCS values that are out of range
- *
- * Revision 1.42  2003/06/23 14:09:52  warmerda
- * Use gdal_datum.csv and fallback to datum.csv.
- *
- * Revision 1.41  2003/06/20 19:33:54  warmerda
- * fixed use of const string as non-const argument - bugzilla 350
- *
- * Revision 1.40  2003/06/20 02:12:35  warmerda
- * set photometric tag
- *
- * Revision 1.39  2003/06/19 19:39:09  warmerda
- * when preparing a coordinate-system inmemory GeoTIFF also write image data
- *
- * Revision 1.38  2003/03/26 22:13:53  warmerda
- * Changed geod_datum.csv to datum.csv.
- *
- * Revision 1.37  2003/03/18 18:33:37  warmerda
- * fixed memory leaks
- *
- * Revision 1.36  2003/02/18 16:39:31  warmerda
- * Ensure GeographicTypeGeoKey, GeogGeodeticDatumGeoKey and GeogEllipsoidKey
- * are written out as KvUserDefined when they are not know for compatibility
- * with Erdas Imagine.
- *
- * Revision 1.35  2003/01/08 18:24:03  warmerda
- * ensure order is fixed up
- *
- * Revision 1.34  2002/12/03 03:32:06  warmerda
- * fixed GTIFGetPCSInfo arguments
- *
- * Revision 1.33  2002/11/30 17:36:41  warmerda
- * added support for writing ellipsoid and citation
- *
- * Revision 1.32  2002/11/30 16:44:43  warmerda
- * fixed to set authority info on various nodes
- *
- * Revision 1.31  2002/11/25 16:32:38  warmerda
- * improved support for using authority PCS/GCS/Datum info when writing
- *
- * Revision 1.30  2002/11/25 05:34:10  warmerda
- * implemented support for checking and writing linear units
- *
- * Revision 1.29  2002/11/24 02:44:42  warmerda
- * cleanup poSRS leak when writing geotiff info
- *
- * Revision 1.28  2002/11/23 18:56:56  warmerda
- * fixed GEOTIEPOINTS setting for mem dataset
- *
- * Revision 1.27  2002/10/10 21:06:08  warmerda
- * fine tuned the WktToMemBuf function ... works now
- *
- * Revision 1.26  2002/10/08 23:01:07  warmerda
- * Added code for building/consuming simple memory geotiff files for JPEG2000
- *
- * Revision 1.25  2002/09/25 13:08:57  warmerda
- * Fixed free of static PCS name as per bugzilla 207.
- *
- * Revision 1.24  2002/09/04 06:46:30  warmerda
- * fixed two memory leaks
- *
- * Revision 1.23  2002/02/07 20:29:23  warmerda
- * fixed bug if no DATUM node available
- *
- * Revision 1.22  2001/11/02 22:28:22  warmerda
- * fixed free of static spheroid name
- *
- * Revision 1.21  2001/10/12 15:06:05  warmerda
- * various build improvements to avoid internal/external conflicts
- *
- * Revision 1.20  2001/10/09 17:32:25  warmerda
- * Recognise "WGS 84" as a datum name.
- *
- * Revision 1.19  2001/07/18 04:51:56  warmerda
- * added CPL_CVSID
- *
- * Revision 1.18  2000/12/15 14:48:18  warmerda
- * fixed handling of nongeographic/projected model types
- *
- * Revision 1.17  2000/12/15 13:57:08  warmerda
- * fixed handling of non-geographic/projected model types for Geotiff
- *
- * Revision 1.16  2000/12/05 23:04:12  warmerda
- * added write support for lots of projections
- *
- * Revision 1.15  2000/10/13 20:55:54  warmerda
- * improved support for writing GCS codes, and hardcode common datums
- *
- * Revision 1.14  2000/10/13 18:03:32  warmerda
- * econic fix
- *
- * Revision 1.13  2000/06/14 20:57:48  warmerda
- * Don't return a WKT coordinate system if Model wasn't defined.
- *
- * Revision 1.12  2000/06/09 21:19:05  warmerda
- * Set GTRasterTypeGeoKey.
- *
- * Revision 1.11  2000/06/09 13:26:47  warmerda
- * default spheroid information to WGS84 if we don't have any
- *
- * Revision 1.10  2000/02/14 20:21:08  warmerda
- * avoid reporting error for unknown datum
- *
- * Revision 1.9  2000/01/31 16:25:17  warmerda
- * handle zero semimajor gracefully
- *
- * Revision 1.8  2000/01/06 19:45:22  warmerda
- * added special case for writing UTM projections
- *
- * Revision 1.7  1999/12/07 17:50:17  warmerda
- * Fixed bug in datum handling.
- *
- * Revision 1.6  1999/10/29 17:28:43  warmerda
- * OGC to GeoTIFF conversion
- *
- * Revision 1.5  1999/10/01 14:50:37  warmerda
- * added newzealandmapgrid and gridskewangle
- *
- * Revision 1.4  1999/09/15 20:33:33  warmerda
- * Handle UOMAngle properly.  Translate PM and angular projection parms back
- * into the UOMAngle units from degrees.
- *
- * Revision 1.3  1999/09/10 13:41:34  warmerda
- * Handle OGC datum name exceptions, and massage projparm into proj units
- *
- * Revision 1.2  1999/09/09 13:56:23  warmerda
- * made some changes to order WKT like Adams
- *
- * Revision 1.1  1999/07/29 18:02:21  warmerda
- * New
- *
  */
 
 #include "cpl_serv.h"
@@ -218,6 +88,14 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
+FILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename, 
+                                    GByte *pabyData, 
+                                    vsi_l_offset nDataLength,
+                                    int bTakeOwnership );
+GByte CPL_DLL *VSIGetMemFileBuffer( const char *pszFilename, 
+                                    vsi_l_offset *pnDataLength, 
+                                    int bUnlinkAndSeize );
+
 char CPL_DLL *  GTIFGetOGISDefn( GTIF *, GTIFDefn * );
 int  CPL_DLL   GTIFSetFromOGISDefn( GTIF *, const char * );
 
@@ -1915,21 +1793,10 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
 /*      to be able to "steal" the memory buffer, but there isn't        */
 /*      currently any support for this.                                 */
 /* -------------------------------------------------------------------- */
-    FILE *fp;
+    vsi_l_offset nBigLength;
 
-    fp = VSIFOpenL( pszFilename, "rb" );
-    if( fp == NULL )
-        return CE_Failure;
+    *ppabyBuffer = VSIGetMemFileBuffer( pszFilename, &nBigLength, TRUE );
+    *pnSize = (int) nBigLength;
 
-    VSIFSeekL( fp, 0, SEEK_END );
-    *pnSize = (int) VSIFTellL( fp );
-    VSIFSeekL( fp, 0, SEEK_SET );
-
-    *ppabyBuffer = (unsigned char *) CPLMalloc(*pnSize);
-    VSIFReadL( *ppabyBuffer, 1, *pnSize, fp );
-    VSIFCloseL( fp );
-    
-    VSIUnlink( pszFilename );
-    
     return CE_None;
 }
