@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2005/09/12 00:28:28  fwarmerdam
+ * use vsi memory io instead of memio module
+ *
  * Revision 1.55  2005/06/08 18:07:35  fwarmerdam
  * Fixed for memory allocation mixup in GTIFGetOGISDefn() return value.
  *
@@ -211,7 +214,6 @@
 #include "ogr_spatialref.h"
 #include "gdal.h"
 #include "xtiffio.h"
-#include "tif_memio.h"
 
 CPL_CVSID("$Id$");
 
@@ -227,6 +229,8 @@ CPLErr CPL_DLL GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
                           char **ppszWKT, double *padfGeoTransform,
                           int *pnGCPCount, GDAL_GCP **ppasGCPList );
 CPL_C_END
+
+TIFF* VSI_TIFFOpen(const char* name, const char* mode);
 
 static char *papszDatumEquiv[] =
 {
@@ -1662,20 +1666,23 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
                           int *pnGCPCount, GDAL_GCP **ppasGCPList )
 
 {
-    MemIOBuf	sIOBuf;
     TIFF        *hTIFF;
     GTIF 	*hGTIF;
     GTIFDefn	sGTIFDefn;
+    const static char *pszFilename = "/vsimem/wkt_from_mem_buf.tif";
+
+/* -------------------------------------------------------------------- */
+/*      Create a memory file from the buffer.                           */
+/* -------------------------------------------------------------------- */
+    FILE *fp = VSIFileFromMemBuffer( pszFilename, pabyBuffer, nSize, FALSE );
+    if( fp == NULL )
+        return CE_Failure;
+    VSIFCloseL( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize access to the memory geotiff structure.              */
 /* -------------------------------------------------------------------- */
-    MemIO_InitBuf( &sIOBuf, nSize, pabyBuffer );
-    
-    hTIFF = XTIFFClientOpen( "membuf", "r", (thandle_t) &sIOBuf, 
-                             MemIO_ReadProc, MemIO_WriteProc, MemIO_SeekProc, 
-                             MemIO_CloseProc, MemIO_SizeProc, 
-                             MemIO_MapProc, MemIO_UnmapProc );
+    hTIFF = VSI_TIFFOpen( pszFilename, "r" );
 
     if( hTIFF == NULL )
     {
@@ -1767,7 +1774,7 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
 /* -------------------------------------------------------------------- */
     XTIFFClose( hTIFF );
 
-    MemIO_DeinitBuf( &sIOBuf );
+    VSIUnlink( pszFilename );
 
     if( *ppszWKT == NULL )
         return CE_Failure;
@@ -1784,19 +1791,14 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
                           int *pnSize, unsigned char **ppabyBuffer )
 
 {
-    MemIOBuf	sIOBuf;
     TIFF        *hTIFF;
     GTIF 	*hGTIF;
+    const static char *pszFilename = "/vsimem/wkt_from_mem_buf.tif";
 
 /* -------------------------------------------------------------------- */
 /*      Initialize access to the memory geotiff structure.              */
 /* -------------------------------------------------------------------- */
-    MemIO_InitBuf( &sIOBuf, 0, NULL );
-    
-    hTIFF = XTIFFClientOpen( "membuf", "w", (thandle_t) &sIOBuf, 
-                             MemIO_ReadProc, MemIO_WriteProc, MemIO_SeekProc, 
-                             MemIO_CloseProc, MemIO_SizeProc, 
-                             MemIO_MapProc, MemIO_UnmapProc );
+    hTIFF = VSI_TIFFOpen( pszFilename, "w" );
 
     if( hTIFF == NULL )
     {
@@ -1908,11 +1910,26 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
 
     XTIFFClose( hTIFF );
 
-    *pnSize = sIOBuf.size;
+/* -------------------------------------------------------------------- */
+/*      Read back from the memory buffer.  It would be preferrable      */
+/*      to be able to "steal" the memory buffer, but there isn't        */
+/*      currently any support for this.                                 */
+/* -------------------------------------------------------------------- */
+    FILE *fp;
+
+    fp = VSIFOpenL( pszFilename, "rb" );
+    if( fp == NULL )
+        return CE_Failure;
+
+    VSIFSeekL( fp, 0, SEEK_END );
+    *pnSize = (int) VSIFTellL( fp );
+    VSIFSeekL( fp, 0, SEEK_SET );
+
     *ppabyBuffer = (unsigned char *) CPLMalloc(*pnSize);
-    memcpy( *ppabyBuffer, sIOBuf.data, *pnSize );
+    VSIFReadL( *ppabyBuffer, 1, *pnSize, fp );
+    VSIFCloseL( fp );
     
-    MemIO_DeinitBuf( &sIOBuf );
+    VSIUnlink( pszFilename );
     
     return CE_None;
 }
