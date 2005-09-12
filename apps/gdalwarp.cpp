@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/09/12 18:06:25  fwarmerdam
+ * Added quotes around -srcnodata and -dstnodata in usage message.
+ *
  * Revision 1.15  2004/12/26 16:14:53  fwarmerdam
  * added -tps flag
  *
@@ -144,7 +147,7 @@ static void Usage()
         "    [-s_srs srs_def] [-t_srs srs_def] [-order n] ] [-tps] [-et err_threshold]\n"
         "    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
         "    [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
-        "    [-srcnodata value [value...]] [-dstnodata value [value...]] -dstalpha\n" 
+        "    [-srcnodata "value [value...]"] [-dstnodata "value [value...]"] -dstalpha\n" 
         "    [-rn] [-rb] [-rc] [-rcs] [-wm memory_in_mb] [-multi] [-q]\n"
         "    [-of format] [-co \"NAME=VALUE\"]* srcfile dstfile\n" );
     exit( 1 );
