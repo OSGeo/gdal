@@ -1,6 +1,6 @@
 
 OBJ	=	geotiff.obj gt_wkt_srs.obj gt_overview.obj \
-		tif_overview.obj tif_ovrcache.obj tif_vsi.obj tif_float.obj
+		tif_overview.obj tif_ovrcache.obj tifvsi.obj tif_float.obj
 
 EXTRAFLAGS = 	$(TIFF_INC) $(GEOTIFF_INC)
 
