@@ -3,7 +3,7 @@ GDAL_ROOT	=	../..
 include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	geotiff.o gt_wkt_srs.o gt_overview.o \
-		tif_ovrcache.o tif_overview.o tif_memio.o tif_float.o
+		tif_ovrcache.o tif_overview.o tif_float.o tif_vsi.o
 
 TIFF_OPTS	=	
 SUBLIBS 	=
