@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.24  2005/09/12 16:53:33  fwarmerdam
+ * fixed VSIGetMemFileBuffer declaration
+ *
  * Revision 1.23  2005/09/12 16:50:37  fwarmerdam
  * added VSIMemFile buffer fetcher
  *
@@ -258,7 +261,7 @@ FILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename,
                                     vsi_l_offset nDataLength,
                                     int bTakeOwnership );
 GByte CPL_DLL *VSIGetMemFileBuffer( const char *pszFilename, 
-                                    vsi_l_offset &pnDataLength, 
+                                    vsi_l_offset *pnDataLength, 
                                     int bUnlinkAndSeize );
 
 /* ==================================================================== */
