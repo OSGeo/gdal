@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2005/09/12 17:06:28  fwarmerdam
+ * avoid dependence on tif_vsi.h
+ *
  * Revision 1.57  2005/09/12 16:56:44  fwarmerdam
  * fixup to avoid depending on cpl_vsi.h
  *
@@ -88,12 +91,14 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
+int CPL_DLL VSIFCloseL( FILE * );
+void CPL_DLL VSIUnlink( const char * );
 FILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename, 
                                     GByte *pabyData, 
-                                    vsi_l_offset nDataLength,
+                                    GUIntBig nDataLength,
                                     int bTakeOwnership );
 GByte CPL_DLL *VSIGetMemFileBuffer( const char *pszFilename, 
-                                    vsi_l_offset *pnDataLength, 
+                                    GUIntBig *pnDataLength, 
                                     int bUnlinkAndSeize );
 
 char CPL_DLL *  GTIFGetOGISDefn( GTIF *, GTIFDefn * );
@@ -1793,7 +1798,7 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
 /*      to be able to "steal" the memory buffer, but there isn't        */
 /*      currently any support for this.                                 */
 /* -------------------------------------------------------------------- */
-    vsi_l_offset nBigLength;
+    GUIntBig nBigLength;
 
     *ppabyBuffer = VSIGetMemFileBuffer( pszFilename, &nBigLength, TRUE );
     *pnSize = (int) nBigLength;
