@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/09/12 20:55:41  fwarmerdam
+ * Fixed OGR_G_AddGeometry() to support 2D or 2.5D linestrings being
+ * added to a polygon.
+ *
  * Revision 1.9  2005/07/20 02:33:51  fwarmerdam
  * fixed up dimension test for adding to polygons
  *
@@ -516,7 +520,7 @@ OGRErr OGR_G_AddGeometry( OGRGeometryH hGeom, OGRGeometryH hNewSubGeom )
           OGRLinearRing *poRing = (OGRLinearRing *) hNewSubGeom;
 
           if( poRing->WkbSize() != 0 
-              || poRing->getGeometryType() != wkbLineString )
+              || wkbFlatten(poRing->getGeometryType()) != wkbLineString )
               return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
           else
           {
