@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.145  2005/09/12 00:29:00  fwarmerdam
+ * use VSI_TIFFOpen() instead of XTIFFOpen to get arbitrary redirection
+ *
  * Revision 1.144  2005/08/11 17:27:05  fwarmerdam
  * fixed so that PAM copyinfo does not override profile option
  *
@@ -172,6 +175,8 @@ CPL_C_END
 static void GTiffOneTimeInit();
 #define TIFFTAG_GDAL_METADATA  42112
 #define TIFFTAG_GDAL_NODATA    42113
+
+TIFF* VSI_TIFFOpen(const char* name, const char* mode);
 
 /************************************************************************/
 /* ==================================================================== */
@@ -2549,9 +2554,9 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->eAccess == GA_ReadOnly )
-	hTIFF = XTIFFOpen( poOpenInfo->pszFilename, "r" );
+	hTIFF = VSI_TIFFOpen( poOpenInfo->pszFilename, "r" );
     else
-        hTIFF = XTIFFOpen( poOpenInfo->pszFilename, "r+" );
+        hTIFF = VSI_TIFFOpen( poOpenInfo->pszFilename, "r+" );
     
     if( hTIFF == NULL )
         return( NULL );
@@ -2631,7 +2636,7 @@ GDALDataset *GTiffDataset::OpenDir( const char *pszCompositeName )
 
     GTiffOneTimeInit();
 
-    hTIFF = XTIFFOpen( pszFilename, "r" );
+    hTIFF = VSI_TIFFOpen( pszFilename, "r" );
     if( hTIFF == NULL )
         return( NULL );
 
@@ -3307,7 +3312,7 @@ TIFF *GTiffCreate( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
-    hTIFF = XTIFFOpen( pszFilename, "w+" );
+    hTIFF = VSI_TIFFOpen( pszFilename, "w+" );
     if( hTIFF == NULL )
     {
         if( CPLGetLastErrorNo() == 0 )
