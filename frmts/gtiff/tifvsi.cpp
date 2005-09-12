@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/09/12 17:06:17  fwarmerdam
+ * avoid dependence on xtiffio.h
+ *
  * Revision 1.1  2005/09/12 00:28:35  fwarmerdam
  * New
  *
@@ -39,8 +42,19 @@
  * TIFF Library UNIX-specific Routines.
  */
 #include "tiffio.h"
-#include "xtiffio.h"
 #include "cpl_vsi.h"
+
+// We avoid including xtiffio.h since it drags in the libgeotiff version
+// of the VSI functions.
+
+CPL_C_START
+extern TIFF CPL_DLL * XTIFFClientOpen(const char* name, const char* mode, 
+                                      thandle_t thehandle,
+                                      TIFFReadWriteProc, TIFFReadWriteProc,
+                                      TIFFSeekProc, TIFFCloseProc,
+                                      TIFFSizeProc,
+                                      TIFFMapFileProc, TIFFUnmapFileProc);
+CPL_C_END
 
 static tsize_t
 _tiffReadProc(thandle_t fd, tdata_t buf, tsize_t size)
