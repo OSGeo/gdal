@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/09/12 00:37:55  fwarmerdam
+ * fixed ownership in buffer to file function
+ *
  * Revision 1.2  2005/09/11 18:32:07  fwarmerdam
  * tweak bigint expression to avoid vc6 problems
  *
@@ -498,7 +501,7 @@ FILE *VSIFileFromMemBuffer( const char *pszFilename,
     VSIMemFile *poFile = new VSIMemFile;
 
     poFile->osFilename = pszFilename;
-    poFile->bOwnData = TRUE;
+    poFile->bOwnData = bTakeOwnership;
     poFile->pabyData = pabyData;
     poFile->nLength = nDataLength;
     poFile->nAllocLength = nDataLength;
