@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2005/09/12 01:43:40  fwarmerdam
+ * ensure Z is initialized to zero in 2D constructor
+ *
  * Revision 1.34  2005/08/04 17:18:59  fwarmerdam
  * now have separate 2D and 3D OGRPoint constructors
  *
@@ -180,6 +183,7 @@ OGRPoint::OGRPoint( double xIn, double yIn )
 {
     x = xIn;
     y = yIn;
+    z = 0.0;
     nCoordDimension = 2;
 }
 
