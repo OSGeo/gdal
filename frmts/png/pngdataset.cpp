@@ -43,6 +43,10 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.33  2005/09/12 18:55:10  fwarmerdam
+ * Fixed serious bug with reading multi-band 16bit files, and with
+ * writing 16bit files on LSB systems.
+ *
  * Revision 1.32  2005/09/11 19:11:59  fwarmerdam
  * Redirect IO through VSI.
  *
@@ -519,7 +523,7 @@ CPLErr PNGDataset::LoadScanline( int nLine )
 /* -------------------------------------------------------------------- */
 #ifdef CPL_LSB
     if( nBitDepth == 16 )
-        GDALSwapWords( row, 2, GetRasterXSize(), 2 );
+        GDALSwapWords( row, 2, GetRasterXSize() * GetRasterCount(), 2 );
 #endif
 
     return CE_None;
@@ -988,6 +992,10 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                      nBands * nXSize * nWordSize );
         }
 
+#ifdef CPL_LSB
+        if( nBitDepth == 16 )
+            GDALSwapWords( row, 2, nXSize * nBands, 2 );
+#endif
         png_write_rows( hPNG, &row, 1 );
     }
 
