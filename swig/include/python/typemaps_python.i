@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.39  2005/09/13 02:58:41  kruland
+ * Use the ogr_error_map.i include file.
+ *
  * Revision 1.38  2005/09/13 02:10:19  kruland
  * Make fixes to the in ColorMap typemap.  Possible problems by using
  * references to temporaries.
@@ -265,41 +268,14 @@
   }
 }
 
-/*
- * Another output typemap which will raise an
- * exception on error.  If there is no error,
- * and no other argout typemaps create a return value,
- * then it will return 0.
- */
-%fragment("OGRErrMessages","header") %{
-static char const *
-OGRErrMessages( int rc ) {
-  switch( rc ) {
-  case 0:
-    return "OGR Error %d: None";
-  case 1:
-    return "OGR Error %d: Not enough data";
-  case 2:
-    return "OGR Error %d: Unsupported geometry type";
-  case 3:
-    return "OGR Error %d: Unsupported operation";
-  case 4:
-    return "OGR Error %d: Corrupt data";
-  case 5:
-    return "OGR Error %d: General Error";
-  case 6:
-    return "OGR Error %d: Unsupported SRS";
-  default:
-    return "OGR Error %d: Unknown";
-  }
-}
-%}
+%import "ogr_error_map.i"
+
 %typemap(python, out,fragment="OGRErrMessages") OGRErr
 {
   /* %typemap(out) OGRErr */
   resultobj = 0;
   if ( result != 0) {
-    PyErr_Format( PyExc_RuntimeError, OGRErrMessages(result), result );
+    PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
     SWIG_fail;
   }
 }
