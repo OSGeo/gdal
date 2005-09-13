@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2005/09/13 23:55:00  fwarmerdam
+ * fixed VSIUnlink prototype
+ *
  * Revision 1.58  2005/09/12 17:06:28  fwarmerdam
  * avoid dependence on tif_vsi.h
  *
@@ -92,7 +95,7 @@ CPL_CVSID("$Id$");
 
 CPL_C_START
 int CPL_DLL VSIFCloseL( FILE * );
-void CPL_DLL VSIUnlink( const char * );
+int CPL_DLL VSIUnlink( const char * );
 FILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename, 
                                     GByte *pabyData, 
                                     GUIntBig nDataLength,
