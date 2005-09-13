@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.8  2005/09/13 02:33:07  fwarmerdam
+ * Clean up more carefully on failed opens to avoid leaks.
+ *
  * Revision 1.7  2005/08/24 22:08:28  fwarmerdam
  * fixed header attribution
  *
@@ -219,6 +222,16 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
     HDF5Dataset *poDS;
     CPLErr      Err;
     
+/* -------------------------------------------------------------------- */
+/*  We have special routine in the HDF library for format checking!     */
+/* -------------------------------------------------------------------- */
+    if( !H5Fis_hdf5( poOpenInfo->pszFilename ) ) {
+	return NULL;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Create datasource.                                              */
+/* -------------------------------------------------------------------- */
     poDS = new HDF5Dataset();
     if( poOpenInfo->fp == NULL )
         return NULL;
@@ -226,14 +239,8 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
     
-/* -------------------------------------------------------------------- */
-/*  We have special routine in the HDF library for format checking!     */
-/* -------------------------------------------------------------------- */
     poDS->pszFilename = strdup( poOpenInfo->pszFilename );
-    if( !H5Fis_hdf5( poOpenInfo->pszFilename ) ) {
-	return NULL;
-    }
-    
+
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
@@ -241,12 +248,14 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
 			   H5F_ACC_RDONLY, 
 			   H5P_DEFAULT );
     if( poDS->hHDF5 < 0 )  {
+        delete poDS;
    	return NULL;
     }
     
     poDS->hGroupID = H5Gopen( poDS->hHDF5, "/" ); 
     if( poDS->hGroupID < 0 ){
 	poDS->bIsHDFEOS=false;
+        delete poDS;
 	return NULL;
     }
     
