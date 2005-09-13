@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.37  2005/09/13 16:09:12  kruland
+ * Import gdal_perl.i for SWIGPERL.
+ *
  * Revision 1.36  2005/09/06 01:43:06  kruland
  * Include gdal_typemaps.i if no other file is specified.
  *
@@ -186,6 +189,8 @@ typedef int GDALResampleAlg;
 %include "gdal_php.i"
 #elif defined(SWIGCSHARP)
 %include "gdal_csharp.i"
+#elif defined(SWIGPERL)
+%include "gdal_perl.i"
 #else
 %include "gdal_typemaps.i"
 #endif
