@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.13  2005/09/13 02:34:58  fwarmerdam
+ * Cleanup more carefully in ::Open() to avoid leaks.
+ *
  * Revision 1.12  2005/08/25 15:35:57  fwarmerdam
  * Handle offset type to hyperslab based on lib version
  *
@@ -351,13 +354,13 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     int nDatasetPos = 2;
     char szFilename[2048];
 
+    if(!EQUALN( poOpenInfo->pszFilename, "HDF5:", 5 ) )
+	return NULL;
+  
     poDS = new HDF5ImageDataset();
 
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
-  
-    if(!EQUALN( poOpenInfo->pszFilename, "HDF5:", 5 ) )
-	return NULL;
   
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
@@ -369,12 +372,14 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !((CSLCount(poDS->papszName) == 3) || 
           (CSLCount(poDS->papszName) == 4)) ){
         CSLDestroy(poDS->papszName);
+        delete poDS;
         return NULL;
     }
 
     poDS->pszFilename = CPLStrdup( poOpenInfo->pszFilename );
   
     if( !EQUAL( poDS->papszName[0], "HDF5" ) ) {
+        delete poDS;
 	return NULL;
     }
 
@@ -391,8 +396,9 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     printf("szFilenname %s\n",szFilename);
     if( !H5Fis_hdf5(szFilename) ) {
-	    return NULL;
-        }
+        delete poDS;
+        return NULL;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Try opening the dataset.                                        */
@@ -402,12 +408,14 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 			  H5P_DEFAULT );
   
     if( poDS->hHDF5 < 0 )  {
+        delete poDS;
 	return NULL;
     }
   
     poDS->hGroupID = H5Gopen( poDS->hHDF5, "/" ); 
     if( poDS->hGroupID < 0 ){
 	poDS->bIsHDFEOS=false;
+        delete poDS;
 	return NULL;
     }
 
