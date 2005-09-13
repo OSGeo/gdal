@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/09/13 01:21:16  fwarmerdam
+ * added support for unifiedsrcvalid flag
+ *
  * Revision 1.22  2005/04/01 17:13:37  fwarmerdam
  * GWKSetPixel() now rounds properly for integer outputs.
  * Fixes in GWKGeneralCase() fixes for edges of bilinear/cubic resamples.
@@ -1857,7 +1860,7 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
                 continue;
 
 /* -------------------------------------------------------------------- */
-/*      Do not try to apply transparent source pixels to the            */
+/*      Do not try to apply transparent/invalid source pixels to the    */
 /*      destination.  This currently ignores the multi-pixel input      */
 /*      of bilinear and cubic resamples.                                */
 /* -------------------------------------------------------------------- */
@@ -1871,6 +1874,13 @@ static CPLErr GWKGeneralCase( GDALWarpKernel *poWK )
                 if( dfDensity < 0.00001 )
                     continue;
             }
+
+            if( poWK->panUnifiedSrcValid != NULL
+                && iSrcX >= 0 && iSrcY >= 0 
+                && iSrcX < nSrcXSize && iSrcY < nSrcYSize 
+                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
+                     & (0x01 << (iSrcOffset & 0x1f))) )
+                continue;
 
 /* ==================================================================== */
 /*      Loop processing each band.                                      */
@@ -2610,6 +2620,14 @@ static CPLErr GWKNearestByte( GDALWarpKernel *poWK )
                 continue;
 
 /* -------------------------------------------------------------------- */
+/*      Do not try to apply invalid source pixels to the dest.          */
+/* -------------------------------------------------------------------- */
+            if( poWK->panUnifiedSrcValid != NULL
+                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
+                     & (0x01 << (iSrcOffset & 0x1f))) )
+                continue;
+
+/* -------------------------------------------------------------------- */
 /*      Do not try to apply transparent source pixels to the destination.*/
 /* -------------------------------------------------------------------- */
             double  dfDensity = 1.0;
@@ -3340,6 +3358,15 @@ static CPLErr GWKNearestShort( GDALWarpKernel *poWK )
                 continue;
 
 /* -------------------------------------------------------------------- */
+/*      Don't generate output pixels for which the source valid         */
+/*      mask exists and is invalid.                                     */
+/* -------------------------------------------------------------------- */
+            if( poWK->panUnifiedSrcValid != NULL
+                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
+                     & (0x01 << (iSrcOffset & 0x1f))) )
+                continue;
+
+/* -------------------------------------------------------------------- */
 /*      Do not try to apply transparent source pixels to the destination.*/
 /* -------------------------------------------------------------------- */
             double  dfDensity = 1.0;
@@ -3658,6 +3685,14 @@ static CPLErr GWKNearestFloat( GDALWarpKernel *poWK )
             if( poWK->panDstValid != NULL
                 && (poWK->panDstValid[iDstOffset>>5]
                     & (0x01 << (iDstOffset & 0x1f))) )
+                continue;
+
+/* -------------------------------------------------------------------- */
+/*      Do not try to apply invalid source pixels to the dest.          */
+/* -------------------------------------------------------------------- */
+            if( poWK->panUnifiedSrcValid != NULL
+                && !(poWK->panUnifiedSrcValid[iSrcOffset>>5]
+                     & (0x01 << (iSrcOffset & 0x1f))) )
                 continue;
 
 /* -------------------------------------------------------------------- */
