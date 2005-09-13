@@ -4,6 +4,9 @@
 
 /*
  * $Log$
+ * Revision 1.3  2005/09/13 03:02:43  kruland
+ * Added OGRErr out typemap which uses ogr_error_map.i.
+ *
  * Revision 1.2  2005/09/13 02:10:52  kruland
  * Added Colormap typemaps.
  *
@@ -520,6 +523,18 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
   /* %typemap(out) CPLErr */
   $result = sv_2mortal(newSViv($1));
   argvi++;
+}
+
+/*
+ * Typemap for OGRErr.
+ */
+%import "ogr_error_map.i"
+%typemap(perl5,out,fragment="OGRErrMessages") OGRErr
+{
+  /* %typemap(out) OGRErr */
+  if ( result != 0 ) {
+    croak( OGRErrMessages(result) );
+  }
 }
 
 /*
