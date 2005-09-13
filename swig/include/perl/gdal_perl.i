@@ -6,6 +6,9 @@
 
 /*
  * $Log$
+ * Revision 1.2  2005/09/13 17:36:28  kruland
+ * Whoops!  import typemaps_perl.i.
+ *
  * Revision 1.1  2005/09/13 16:08:45  kruland
  * Added perl specific modifications for gdal and ogr.
  *
@@ -21,4 +24,4 @@
 
 %include cpl_exceptions.i
 
-%import typemaps_python.i
+%import typemaps_perl.i
