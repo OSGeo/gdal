@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/09/13 15:17:52  dron
+ * Unneeded semicolon removed.
+ *
  * Revision 1.2  2005/09/13 15:16:44  dron
  * Added virtual destructor to VSIVirtualHandle and VSIFilesystemHandler classes.
  *
@@ -58,7 +61,7 @@ class VSIVirtualHandle {
     virtual int       Eof() = 0;
     virtual int       Flush() {return 0;}
     virtual int       Close() = 0;
-    virtual           ~VSIVirtualHandle() { };
+    virtual           ~VSIVirtualHandle() { }
 };
 
 /************************************************************************/
