@@ -6,6 +6,9 @@
 
 /*
  * $Log$
+ * Revision 1.3  2005/09/13 03:05:05  kruland
+ * Exception generation code was moved to the cpl_exceptions.i file.
+ *
  * Revision 1.2  2005/09/02 21:42:42  kruland
  * The compactdefaultargs feature should be turned on for all bindings not just
  * python.
@@ -30,45 +33,7 @@
   from gdalconst import *
 %}
 
-/*
- * Code for Optional Exception Handling through gdal.UseExceptions(),
- * gdal.DontUseExceptions()
- */
-
-%{
-int bUseExceptions=0;
-int bErrorHappened=0;
-
-void PythonErrorHandler(CPLErr eclass, int code, const char *msg ) {
-  bErrorHappened = 1;
-}
-%}
-
-%inline %{
-void UseExceptions() {
-  bUseExceptions = 1;
-  bErrorHappened = 0;
-  CPLSetErrorHandler( (CPLErrorHandler)PythonErrorHandler );
-}
-
-void DontUseExceptions() {
-  bUseExceptions = 0;
-  bErrorHappened = 0;
-  CPLSetErrorHandler( CPLDefaultErrorHandler );
-}
-%}
-
-%include exception.i
-
-%exception {
-  {
-    bErrorHappened = 0;
-    $action
-    if ( bErrorHappened ) {
-      SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-    }
-  }
-}
+%include "cpl_exceptions.i";
 
 %extend GDAL_GCP {
 %pythoncode {
