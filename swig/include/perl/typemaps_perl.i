@@ -4,6 +4,9 @@
 
 /*
  * $Log$
+ * Revision 1.2  2005/09/13 02:10:52  kruland
+ * Added Colormap typemaps.
+ *
  * Revision 1.1  2005/09/06 01:40:26  kruland
  * Perl typemaps.
  *
@@ -288,37 +291,68 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
 
 /*
  * Typemap for GDALColorEntry* <-> AV
+ * GDALColorEntry* may be a return value and both input and output param
  */
-%typemap(perl5,in) GDALColorEntry*
+%typemap(perl5,out) GDALColorEntry*
 {
-  /* %typemap(in) GDALColorEntry* */
+  /* %typemap(perl5,out) GDALColorEntry* */
+  if (result == NULL)
+    croak("GetColorEntry failed at index %i",result);
+  $result = sv_newmortal();
+  sv_setiv(ST(argvi++), (IV) result->c1);
+  $result = sv_newmortal();
+  sv_setiv(ST(argvi++), (IV) result->c2);
+  $result = sv_newmortal();
+  sv_setiv(ST(argvi++), (IV) result->c3);
+  $result = sv_newmortal();
+  sv_setiv(ST(argvi++), (IV) result->c4);
+}
+%typemap(perl5,in,numinputs=0) GDALColorEntry*(GDALColorEntry e)
+{
+  /* %typemap(perl5,in,numinputs=0) GDALColorEntry*(GDALColorEntry e) */
+  $1 = &e;
+}
+%typemap(perl5,argout) GDALColorEntry*
+{
+  /* %typemap(perl5,argout) GDALColorEntry* */
+  if (result == FALSE)
+    croak("GetColorEntryAsRGB failed at index %i",result);
+  argvi--;
+  $result = sv_newmortal();
+  sv_setiv(ST(argvi++), (IV) e3.c1);
+  $result = sv_newmortal();
+  sv_setiv(ST(argvi++), (IV) e3.c2);
+  $result = sv_newmortal();
+  sv_setiv(ST(argvi++), (IV) e3.c3);
+  $result = sv_newmortal();
+  sv_setiv(ST(argvi++), (IV) e3.c4);
+}
+%typemap(perl5,argout) const GDALColorEntry*
+{
+  /* %typemap(perl5,argout) const GDALColorEntry* */
+}
+%typemap(perl5,in,numinputs=1) const GDALColorEntry*(GDALColorEntry e)
+{
+  /* %typemap(perl5,in,numinputs=1) const GDALColorEntry*(GDALColorEntry e) */
+  $1 = &e3;
   if (! (SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV))) {
     croak("argument is not an array ref");
     SWIG_fail;
   }
   AV *av = (AV*)(SvRV($input));
-  GDALColorEntry ce = {255,255,255,255};
-  SV *sv;
-  sv = *(av_fetch(av,0,0));
-  ce.c1 = SvIV(sv);
-  sv = *(av_fetch(av,1,0));
-  ce.c2 = SvIV(sv);
-  sv = *(av_fetch(av,2,0));
-  ce.c3 = SvIV(sv);
-  sv = *(av_fetch(av,3,0));
-  ce.c4 = SvIV(sv);
-  $1 = &ce;
-}
-%typemap(perl5,out) GDALColorEntry*
-{
-  /* %typemap(out) GDALColorEntry* */
-  AV *av = (AV*)sv_2mortal((SV*)newAV());
-  av_store(av,0,newSViv((*$1).c1));
-  av_store(av,1,newSViv((*$1).c2));
-  av_store(av,2,newSViv((*$1).c3));
-  av_store(av,3,newSViv((*$1).c4));
-  $result = newRV_noinc((SV*)av);
-  argvi++;
+  int seq_size = av_len(av);
+  if ( seq_size != 3 ) {
+    croak("color entry argument array must have length 4 (it is %i)",seq_size+1);
+    SWIG_fail;
+  }
+  SV **sv = av_fetch(av, 0, 0);
+  $1->c1 =  SvIV(*sv);
+  sv = av_fetch(av, 1, 0);
+  $1->c2 =  SvIV(*sv);
+  sv = av_fetch(av, 2, 0);
+  $1->c3 =  SvIV(*sv);
+  sv = av_fetch(av, 3, 0);
+  $1->c4 =  SvIV(*sv);
 }
 
 /*
