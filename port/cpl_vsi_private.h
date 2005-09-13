@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/09/13 15:16:44  dron
+ * Added virtual destructor to VSIVirtualHandle and VSIFilesystemHandler classes.
+ *
  * Revision 1.1  2005/09/11 18:00:49  fwarmerdam
  * New
  *
@@ -55,6 +58,7 @@ class VSIVirtualHandle {
     virtual int       Eof() = 0;
     virtual int       Flush() {return 0;}
     virtual int       Close() = 0;
+    virtual           ~VSIVirtualHandle() { };
 };
 
 /************************************************************************/
@@ -75,6 +79,7 @@ public:
 			{ errno=ENOENT; return -1; }
     virtual char   **ReadDir( const char *pszDirname ) 
 			{ return NULL; }
+    virtual          ~VSIFilesystemHandler() { }
 };
 
 /************************************************************************/
