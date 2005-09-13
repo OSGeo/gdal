@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.38  2005/09/13 18:37:25  kruland
+ * Added binding for GDALGetDriver.
+ *
  * Revision 1.37  2005/09/13 16:09:12  kruland
  * Import gdal_perl.i for SWIGPERL.
  *
@@ -466,6 +469,12 @@ int GetDriverCount() {
 %inline %{
 GDALDriverShadow* GetDriverByName( char const *name ) {
   return (GDALDriverShadow*) GDALGetDriverByName( name );
+}
+%}
+
+%inline %{
+GDALDriverShadow* GetDriver( int i ) {
+  return (GDALDriverShadow*) GDALGetDriver( i );
 }
 %}
 
