@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.40  2005/09/13 16:10:00  kruland
+ * Import ogr_perl.i for SWIGPERL.
+ * Moved GetFieldTypeName from Geometry to FieldDefn.
+ *
  * Revision 1.39  2005/09/07 01:12:49  kruland
  * Have ogr.i include osr.i in order to have access to types defined in the osr
  * module.
@@ -281,6 +285,8 @@ typedef void OGRFieldDefnShadow;
 %include ogr_php.i
 #elif defined(SWIGCSHARP)
 %include ogr_csharp.i
+#elif defined(SWIGPERL)
+%include ogr_perl.i
 #else
 %include gdal_typemaps.i
 #endif
@@ -908,14 +914,15 @@ public:
   void SetPrecision(int precision) {
     OGR_Fld_SetPrecision(self, precision);
   }
-  
+
+  const char * GetFieldTypeName(OGRFieldType type) {
+    return OGR_GetFieldTypeName(type);
+  }
+
 } /* %extend */
 
 
 }; /* class OGRFieldDefnShadow */
-
-
-
 
 %feature( "kwargs" ) CreateGeometryFromWkb;
 %newobject CreateGeometryFromWkb;
@@ -1047,10 +1054,6 @@ public:
     return OGR_G_GetPointCount(self);
   }
 
-  const char * GetFieldTypeName(OGRFieldType type) {
-    return OGR_GetFieldTypeName(type);
-  }
-  
   %feature("kwargs") GetX;  
   double GetX(int point=0) {
     return OGR_G_GetX(self, point);
