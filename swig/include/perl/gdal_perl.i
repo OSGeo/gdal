@@ -6,6 +6,9 @@
 
 /*
  * $Log$
+ * Revision 1.3  2005/09/13 18:35:50  kruland
+ * Rename GetMetadata_Dict to GetMetadata and ignore GetMetadata_List.
+ *
  * Revision 1.2  2005/09/13 17:36:28  kruland
  * Whoops!  import typemaps_perl.i.
  *
@@ -23,5 +26,8 @@
 %}
 
 %include cpl_exceptions.i
+
+%rename (GetMetadata) GetMetadata_Dict;
+%ignore GetMetadata_List;
 
 %import typemaps_perl.i
