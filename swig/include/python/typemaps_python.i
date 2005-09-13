@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.38  2005/09/13 02:10:19  kruland
+ * Make fixes to the in ColorMap typemap.  Possible problems by using
+ * references to temporaries.
+ *
  * Revision 1.37  2005/09/02 15:24:38  kruland
  * Remove old and confusing comment which is no longer required.
  *
@@ -520,14 +524,17 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
    $result = Py_BuildValue( "(hhhh)", (*$1).c1,(*$1).c2,(*$1).c3,(*$1).c4);
 }
 
-%typemap(python,in) GDALColorEntry*
+%typemap(python,in) GDALColorEntry* (GDALColorEntry ce)
 {
   /* %typemap(in) GDALColorEntry* */
-   
-   GDALColorEntry ce = {255,255,255,255};
+   ce.c4 = 255;
    int size = PySequence_Size($input);
    if ( size > 4 ) {
-     PyErr_SetString(PyExc_TypeError, "sequence too long");
+     PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too long");
+     SWIG_fail;
+   }
+   if ( size < 3 ) {
+     PyErr_SetString(PyExc_TypeError, "ColorEntry sequence too short");
      SWIG_fail;
    }
    PyArg_ParseTuple( $input,"hhh|h", &ce.c1, &ce.c2, &ce.c3, &ce.c4 );
