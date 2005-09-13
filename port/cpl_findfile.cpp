@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/09/13 23:56:06  fwarmerdam
+ * improved cleanup logic
+ *
  * Revision 1.9  2005/05/23 03:59:07  fwarmerdam
  * make finder stuff threadlocal
  *
@@ -174,7 +177,7 @@ CPLFileFinder CPLPopFileFinder()
 {
     CPLFileFinder pfnReturn;
 
-    CPLFinderInit();
+//    CPLFinderInit();
 
     if( nFileFinders == 0 )
         return NULL;
