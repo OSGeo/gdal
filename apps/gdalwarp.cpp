@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/09/13 01:24:45  fwarmerdam
+ * Set UNIFIED_SRC_NODATA by default for -srcnodata switch.
+ *
  * Revision 1.16  2005/09/12 18:06:25  fwarmerdam
  * Added quotes around -srcnodata and -dstnodata in usage message.
  *
@@ -582,6 +585,9 @@ int main( int argc, char ** argv )
         }
 
         CSLDestroy( papszTokens );
+
+        papszWarpOptions = CSLSetNameValue(papszWarpOptions,
+                                           "UNIFIED_SRC_NODATA", "YES" );
     }
 
 /* -------------------------------------------------------------------- */
