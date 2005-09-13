@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.48  2005/09/13 15:07:23  dron
+ * Initialize counters in CPLHexToBinary().
+ *
  * Revision 1.47  2005/09/11 21:09:27  fwarmerdam
  * use large file API in CSLLoad
  *
@@ -1641,7 +1644,7 @@ char *CPLBinaryToHex( int nBytes, GByte *pabyData )
 GByte *CPLHexToBinary( const char *pszHex, int *pnBytes )
 
 {
-    int iSrc, iDst, nHexLen = strlen(pszHex);
+    int iSrc = 0, iDst = 0, nHexLen = strlen(pszHex);
 
     GByte *pabyWKB;
 
