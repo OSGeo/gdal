@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2005/09/13 01:20:16  fwarmerdam
+ * added UNIFIED_SRC_NODATA mechanism
+ *
  * Revision 1.23  2004/11/14 04:16:30  fwarmerdam
  * fixup src alpha support
  *
@@ -1444,6 +1447,36 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
                                           FALSE, oWK.papanBandSrcValid[i] );
             }
         }
+        
+/* -------------------------------------------------------------------- */
+/*      If UNIFIED_SRC_NODATA is set, then compute a unified input      */
+/*      pixel mask if and only if all bands nodata is true.  That       */
+/*      is, we only treat a pixel as nodata if all bands match their    */
+/*      respective nodata values.                                       */
+/* -------------------------------------------------------------------- */
+        if( CSLFetchBoolean( psOptions->papszWarpOptions, "UNIFIED_SRC_NODATA",
+                             FALSE ) 
+            && eErr == CE_None )
+        {
+            int nBytesInMask = (oWK.nSrcXSize * oWK.nSrcYSize + 31) / 8;
+            int iWord;
+
+            eErr = CreateKernelMask( &oWK, i, "UnifiedSrcValid" );
+
+            memset( oWK.panUnifiedSrcValid, 0, nBytesInMask );
+            
+            for( i = 0; i < psOptions->nBandCount; i++ )
+            {
+                for( iWord = nBytesInMask/4 - 1; iWord >= 0; iWord-- )
+                    oWK.panUnifiedSrcValid[iWord] |= 
+                        oWK.papanBandSrcValid[i][iWord];
+                CPLFree( oWK.papanBandSrcValid[i] );
+                oWK.papanBandSrcValid[i] = NULL;
+            }
+            
+            CPLFree( oWK.papanBandSrcValid );
+            oWK.papanBandSrcValid = NULL;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1634,7 +1667,7 @@ CPLErr GDALWarpOperation::CreateKernelMask( GDALWarpKernel *poKernel,
         if( nBitsPerPixel == 32 )
             nBytes = nXSize * nYSize * 4;
         else
-            nBytes = (nXSize * nYSize + 7) / 8;
+            nBytes = (nXSize * nYSize + 31) / 8;
 
         *ppMask = VSIMalloc( nBytes );
 
