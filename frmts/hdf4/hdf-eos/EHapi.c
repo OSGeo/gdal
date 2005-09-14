@@ -106,7 +106,7 @@ EHopen(char *filename, intn access)
     intn            dum;	/* Dummy variable */
 
     int32           HDFfid;	/* HDF file ID */
-    int32           fid;	/* HDF-EOS file ID */
+    int32           fid = -1;	/* HDF-EOS file ID */
     int32           sdInterfaceID;	/* HDF SDS interface ID */
     int32           nfileopen = 0;	/* # of HDF files open */
     int32           attrIndex;	/* Structural Metadata attribute index */
@@ -769,7 +769,7 @@ EHconvAng(float64 inAngle, intn code)
     int32           deg;	/* Truncated Degrees */
 
     float64         sec;	/* Seconds */
-    float64         outAngle;	/* Angle in desired units */
+    float64         outAngle = 0.0;	/* Angle in desired units */
     float64         pi = 3.14159265358979324;	/* Pi */
     float64         r2d = 180 / pi;	/* Radians to degrees conversion */
     float64         d2r = 1 / r2d;	/* Degrees to radians conversion */
@@ -1753,7 +1753,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
     {
 	/* Search for "StructMetadata.x" attribute */
 	/* --------------------------------------- */
-	sprintf(utlstr, "%s%d", "StructMetadata.", nmeta);
+	sprintf(utlstr, "%s%d", "StructMetadata.", (int)nmeta);
 	attrIndex = SDfindattr(sdInterfaceID, utlstr);
 
 
@@ -1921,10 +1921,11 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 
 	/* Build metadata entry string */
 	/* --------------------------- */
-	sprintf(utlstr, "%s%d%s%s%s%d%s%d%s", "\t\t\tOBJECT=Dimension_", count,
+	sprintf(utlstr, "%s%d%s%s%s%d%s%d%s",
+                "\t\t\tOBJECT=Dimension_", (int)count,
 		"\n\t\t\t\tDimensionName=\"", &metastr[0],
-		"\"\n\t\t\t\tSize=", metadata[0],
-		"\n\t\t\tEND_OBJECT=Dimension_", count, "\n");
+		"\"\n\t\t\t\tSize=", (int)metadata[0],
+		"\n\t\t\tEND_OBJECT=Dimension_", (int)count, "\n");
 	break;
 
 
@@ -1957,12 +1958,12 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 	/* Build metadata entry string */
 	/* --------------------------- */
 	sprintf(utlstr, "%s%d%s%s%s%s%s%d%s%d%s%d%s",
-		"\t\t\tOBJECT=DimensionMap_", count,
+		"\t\t\tOBJECT=DimensionMap_", (int)count,
 		"\n\t\t\t\tGeoDimension=\"", &metastr[0],
 		"\"\n\t\t\t\tDataDimension=\"", &metastr[slen[0] + 1],
-		"\"\n\t\t\t\tOffset=", metadata[0],
-		"\n\t\t\t\tIncrement=", metadata[1],
-		"\n\t\t\tEND_OBJECT=DimensionMap_", count, "\n");
+		"\"\n\t\t\t\tOffset=", (int)metadata[0],
+		"\n\t\t\t\tIncrement=", (int)metadata[1],
+		"\n\t\t\tEND_OBJECT=DimensionMap_", (int)count, "\n");
 	break;
 
 
@@ -1995,10 +1996,10 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 	/* Build metadata entry string */
 	/* --------------------------- */
 	sprintf(utlstr, "%s%d%s%s%s%s%s%d%s",
-		"\t\t\tOBJECT=IndexDimensionMap_", count,
+		"\t\t\tOBJECT=IndexDimensionMap_", (int)count,
 		"\n\t\t\t\tGeoDimension=\"", &metastr[0],
 		"\"\n\t\t\t\tDataDimension=\"", &metastr[slen[0] + 1],
-		"\"\n\t\t\tEND_OBJECT=IndexDimensionMap_", count, "\n");
+		"\"\n\t\t\tEND_OBJECT=IndexDimensionMap_", (int)count, "\n");
 	break;
 
 
@@ -2043,7 +2044,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 	/* Build metadata entry string */
 	/* --------------------------- */
 	sprintf(utlstr, "%s%d%s%s%s%s%s%s",
-		"\t\t\tOBJECT=GeoField_", count,
+		"\t\t\tOBJECT=GeoField_", (int)count,
 		"\n\t\t\t\tGeoFieldName=\"", metastr,
 		"\"\n\t\t\t\tDataType=", type,
 		"\n\t\t\t\tDimList=", utlstr2);
@@ -2058,7 +2059,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 	/* Add END_OBJECT terminator to metadata string */
 	/* -------------------------------------------- */
 	sprintf(utlstr2, "%s%d%s",
-		"\n\t\t\tEND_OBJECT=GeoField_", count, "\n");
+		"\n\t\t\tEND_OBJECT=GeoField_", (int)count, "\n");
 	strcat(utlstr, utlstr2);
 
 	break;
@@ -2105,7 +2106,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 	/* Build metadata entry string */
 	/* --------------------------- */
 	sprintf(utlstr, "%s%d%s%s%s%s%s%s",
-		"\t\t\tOBJECT=DataField_", count,
+		"\t\t\tOBJECT=DataField_", (int)count,
 		"\n\t\t\t\tDataFieldName=\"", metastr,
 		"\"\n\t\t\t\tDataType=", type,
 		"\n\t\t\t\tDimList=", utlstr2);
@@ -2120,7 +2121,7 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 	/* Add END_OBJECT terminator to metadata string */
 	/* -------------------------------------------- */
 	sprintf(utlstr2, "%s%d%s",
-		"\n\t\t\tEND_OBJECT=DataField_", count, "\n");
+		"\n\t\t\tEND_OBJECT=DataField_", (int)count, "\n");
 	strcat(utlstr, utlstr2);
 
 	break;
@@ -2160,10 +2161,10 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 	/* Build metadata entry string */
 	/* --------------------------- */
 	sprintf(utlstr, "%s%d%s%s%s%s%s%s%d%s",
-		"\t\t\tOBJECT=MergedFields_", count,
+		"\t\t\tOBJECT=MergedFields_", (int)count,
 		"\n\t\t\t\tMergedFieldName=\"", metastr, "\"",
 		"\n\t\t\t\tFieldList=", utlstr2,
-		"\n\t\t\tEND_OBJECT=MergedFields_", count, "\n");
+		"\n\t\t\tEND_OBJECT=MergedFields_", (int)count, "\n");
 	break;
 
 
@@ -2190,9 +2191,9 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 	/* Build metadata entry string */
 	/* --------------------------- */
 	sprintf(utlstr, "%s%d%s%s%s%d%s",
-		"\t\t\tGROUP=Level_", count,
+		"\t\t\tGROUP=Level_", (int)count,
 		"\n\t\t\t\tLevelName=\"", metastr,
-		"\"\n\t\t\tEND_GROUP=Level_", count, "\n");
+		"\"\n\t\t\tEND_GROUP=Level_", (int)count, "\n");
 	break;
 
 
@@ -2226,11 +2227,11 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 	/* Build metadata entry string */
 	/* --------------------------- */
 	sprintf(utlstr, "%s%d%s%s%s%s%s%d%s%d%s",
-		"\t\t\t\tOBJECT=PointField_", count,
+		"\t\t\t\tOBJECT=PointField_", (int)count,
 		"\n\t\t\t\t\tPointFieldName=\"", metastr,
 		"\"\n\t\t\t\t\tDataType=", type,
-		"\n\t\t\t\t\tOrder=", metadata[1],
-		"\n\t\t\t\tEND_OBJECT=PointField_", count, "\n");
+		"\n\t\t\t\t\tOrder=", (int)metadata[1],
+		"\n\t\t\t\tEND_OBJECT=PointField_", (int)count, "\n");
 	break;
 
 
@@ -2270,11 +2271,11 @@ EHinsertmeta(int32 sdInterfaceID, char *structname, char *structcode,
 	/* Build metadata entry string */
 	/* --------------------------- */
 	sprintf(utlstr, "%s%d%s%s%s%s%s%s%s%d%s",
-		"\t\t\tOBJECT=LevelLink_", count,
+		"\t\t\tOBJECT=LevelLink_", (int)count,
 		"\n\t\t\t\tParent=\"", metastr,
 		"\"\n\t\t\t\tChild=\"", slash + 1,
 		"\"\n\t\t\t\tLinkField=\"", colon + 1,
-		"\"\n\t\t\tEND_OBJECT=LevelLink_", count, "\n");
+		"\"\n\t\t\tEND_OBJECT=LevelLink_", (int)count, "\n");
 
 	break;
 
@@ -2550,7 +2551,7 @@ EHmetagroup(int32 sdInterfaceID, char *structname, char *structcode,
     {
 	/* Search for "StructMetadata.x" attribute */
 	/* --------------------------------------- */
-	sprintf(utlstr, "%s%d", "StructMetadata.", nmeta);
+	sprintf(utlstr, "%s%d", "StructMetadata.", (int)nmeta);
 	attrIndex = SDfindattr(sdInterfaceID, utlstr);
 
 
