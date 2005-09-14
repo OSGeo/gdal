@@ -26,6 +26,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/09/14 13:37:18  dron
+ * Avoid warnings.
+ *
  * Revision 1.4  2005/08/04 15:26:53  fwarmerdam
  * added log headers
  *
@@ -367,7 +370,7 @@ static int scaleFromLATTS( string sEllips, double phits, double &scale )
 		else
 		{
 			IlwisEllips *piwEllips =  iwEllips;
-			double e2;
+			double e2 = 0.0;
 			while ( piwEllips->pszIlwisEllips )
 			{
 					if( EQUALN( sEllips.c_str(), piwEllips->pszIlwisEllips, strlen(piwEllips->pszIlwisEllips) ) )

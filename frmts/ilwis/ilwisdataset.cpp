@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/09/14 13:37:18  dron
+ * Avoid warnings.
+ *
  * Revision 1.14  2005/08/04 15:26:53  fwarmerdam
  * added log headers
  *
@@ -762,7 +765,7 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Capture raster size from ILWIS file (.mpr).                     */
 /* -------------------------------------------------------------------- */
-    int Row, Col;
+    int Row = 0, Col = 0;
     if ( GetRowCol(mapsize, Row, Col) != CE_None)
         return FALSE;
     poDS->nRasterXSize = Col;
@@ -1190,7 +1193,7 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                 (( double * )pData)[iCol] = rUNDEF;
                     }
                 }
-                int iSize = iSize = VSIFWrite( pData, 1, nLineSize, desBand->fpRaw );
+                int iSize = VSIFWrite( pData, 1, nLineSize, desBand->fpRaw );
                 if ( iSize < 1 )
                 {
                     CPLFree( pData );
