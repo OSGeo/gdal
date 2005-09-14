@@ -1179,12 +1179,14 @@ dnl ---------------------------------------------------------------------------
 
 MYSQL_CONFIG=no
 
-AC_ARG_WITH(mysql,[  --with-mysql[=ARG]      Include MySQL (ARG=path to mysql_config)],,)
+AC_ARG_WITH(mysql,[  --with-mysql[=ARG]      Include MySQL (ARG=path to mysql_config) [[default=no]]],,)
 
-if test "$with_mysql" = "yes" -o "$with_mysql" = "" ; then
+if test "$with_mysql" = "yes" ; then
   AC_PATH_PROG(MYSQL_CONFIG, mysql_config, no)
-else 
-  MYSQL_CONFIG=$with_mysql
+else
+    if test "x$with_mysql" != "x" ; then
+      MYSQL_CONFIG=$with_mysql
+    fi
 fi
 
 AC_MSG_CHECKING([for MySQL])
