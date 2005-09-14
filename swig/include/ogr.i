@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.41  2005/09/14 21:28:35  kruland
+ * OGRFeatureDefn::GetFieldDefn() returns an internal pointer, not a newobject.
+ *
  * Revision 1.40  2005/09/13 16:10:00  kruland
  * Import ogr_perl.i for SWIGPERL.
  * Moved GetFieldTypeName from Geometry to FieldDefn.
@@ -821,7 +824,6 @@ public:
     return OGR_FD_GetFieldCount(self);
   }
   
-  %newobject GetFieldDefn;
   OGRFieldDefnShadow* GetFieldDefn(int i){
     return (OGRFieldDefnShadow*) OGR_FD_GetFieldDefn(self, i);
   }
