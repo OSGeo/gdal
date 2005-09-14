@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/09/14 13:13:17  dron
+ * Avoid warnings in DumpReadable().
+ *
  * Revision 1.2  2005/05/09 14:42:33  fwarmerdam
  * Fixed to use VSFReadL() instead of VSIFRead().
  *
@@ -242,6 +245,6 @@ int GDALJP2Box::DumpReadable( FILE *fpOut )
 {
     fprintf( fpOut, "  Type=%s, Offset=%d/%d, Data Size=%d\n",
              szBoxType, (int) nBoxOffset, (int) nDataOffset, 
-             nBoxLength - (nDataOffset - nBoxOffset) );
+             (int)(nBoxLength - (nDataOffset - nBoxOffset)) );
     return 0;
 }
