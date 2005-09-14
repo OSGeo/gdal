@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/09/14 01:12:00  fwarmerdam
+ * Fixed creation data types and help link.
+ *
  * Revision 1.8  2005/08/23 16:21:25  fwarmerdam
  * Fixed help link, dont barf in open if fp null.
  *
@@ -963,7 +966,9 @@ void GDALRegister_IDA()
         poDriver->SetDescription( "IDA" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Image Data and Analysis" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_varios.html#IDA" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#IDA" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 
         poDriver->pfnOpen = IDADataset::Open;
         poDriver->pfnCreate = IDADataset::Create;
