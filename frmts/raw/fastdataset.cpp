@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.18  2005/09/14 13:18:32  dron
+ * Avoid warnings.
+ *
  * Revision 1.17  2005/05/05 13:55:42  fwarmerdam
  * PAM Enable
  *
@@ -618,7 +621,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     // Now search for the first number occurance after that string
     for ( i = 1; i <= poDS->nBands; i++ )
     {
-        char *pszValue;
+        char *pszValue = NULL;
 
         pszTemp = strpbrk( pszTemp, "-.0123456789" );
         if ( pszTemp )
