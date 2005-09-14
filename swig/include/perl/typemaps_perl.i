@@ -4,6 +4,9 @@
 
 /*
  * $Log$
+ * Revision 1.4  2005/09/14 15:01:33  kruland
+ * Removed accidental debug message.
+ *
  * Revision 1.3  2005/09/13 03:02:43  kruland
  * Added OGRErr out typemap which uses ogr_error_map.i.
  *
@@ -106,7 +109,6 @@
 static SV *
 CreateArrayFromDoubleArray( double *first, unsigned int size ) {
   AV *av = (AV*)sv_2mortal((SV*)newAV());
-  fprintf(stderr,"CreateArrayFromDoubleArray %i\n",size);
   for( unsigned int i=0; i<size; i++ ) {
     av_store(av,i,newSVnv(*first));
     ++first;
