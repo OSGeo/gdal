@@ -31,7 +31,8 @@ force-lib:
 	$(LD_SHARED) $(GDAL_SLIB_SONAME) $(GDAL_OBJ) $(GDAL_LIBS) $(LIBS) \
 		-o $(GDAL_SLIB)
 
-$(GDAL_LIB):	$(GDAL_OBJ)
+$(GDAL_LIB):	$(GDAL_OBJ) GDALmake.opt
+	rm -f libgdal.a
 	$(AR) r $(GDAL_LIB) $(GDAL_OBJ)
 	$(RANLIB) $(GDAL_LIB)
 
