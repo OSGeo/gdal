@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/09/14 19:26:50  fwarmerdam
+ * added better debug output
+ *
  * Revision 1.3  2005/09/14 13:13:17  dron
  * Avoid warnings in DumpReadable().
  *
@@ -40,6 +43,7 @@
  */
 
 #include "gdaljp2metadata.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -201,7 +205,7 @@ int GDALJP2Box::ReadBox()
 int GDALJP2Box::IsSuperBox()
 
 {
-    if( EQUAL(GetType(),"asoc") )
+    if( EQUAL(GetType(),"asoc") || EQUAL(GetType(),"jp2h") )
         return TRUE;
     else
         return FALSE;
@@ -243,8 +247,29 @@ GIntBig GDALJP2Box::GetDataLength()
 int GDALJP2Box::DumpReadable( FILE *fpOut )
 
 {
-    fprintf( fpOut, "  Type=%s, Offset=%d/%d, Data Size=%d\n",
+    if( fpOut == NULL )
+        fpOut = stdout;
+
+    fprintf( fpOut, "  Type=%s, Offset=%d/%d, Data Size=%d",
              szBoxType, (int) nBoxOffset, (int) nDataOffset, 
              (int)(nBoxLength - (nDataOffset - nBoxOffset)) );
+
+    if( IsSuperBox() )
+        fprintf( fpOut, " (super)" );
+
+    fprintf( fpOut, "\n" );
+    if( EQUAL(GetType(),"uuid") )
+    {
+        char *pszHex = CPLBinaryToHex( 16, GetUUID() );
+        fprintf( fpOut, "    UUID=%s", pszHex );
+
+        if( EQUAL(pszHex,"B14BF8BD083D4B43A5AE8CD7D5A6CE03") )
+            fprintf( fpOut, " (GeoTIFF)" );
+        if( EQUAL(pszHex,"96A9F1F1DC98402DA7AED68E34451809") )
+            fprintf( fpOut, " (MSI Worldfile)" );
+        CPLFree( pszHex );
+
+        fprintf( fpOut, "\n" );
+    }
     return 0;
 }
