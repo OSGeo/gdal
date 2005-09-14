@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2005/09/14 01:12:52  fwarmerdam
+ * Removed complex types from creatable formats, apparently not
+ * currently supported.
+ *
  * Revision 1.45  2005/07/28 20:00:57  fwarmerdam
  * upgrade to support 2-4GB files, use large file api
  *
@@ -1986,7 +1990,7 @@ void GDALRegister_NITF()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_nitf.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ntf" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte UInt16 Int16 UInt32 Int32 Float32 CFloat32 CFloat64" );
+                                   "Byte UInt16 Int16 UInt32 Int32 Float32" );
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
