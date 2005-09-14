@@ -449,10 +449,10 @@ GDcreate(int32 fid, char *gridname, int32 xdimsize, int32 ydimsize,
 		/* Establish Grid in Structural MetaData Block */
 		/* -------------------------------------------- */
 		sprintf(header, "%s%d%s%s%s%s%d%s%s%d%s",
-			"\tGROUP=GRID_", nGrid + 1,
+			"\tGROUP=GRID_", (int)(nGrid + 1),
 			"\n\t\tGridName=\"", gridname, "\"\n",
-			"\t\tXDim=", xdimsize, "\n",
-			"\t\tYDim=", ydimsize, "\n");
+			"\t\tXDim=", (int)xdimsize, "\n",
+			"\t\tYDim=", (int)ydimsize, "\n");
 
 
 		sprintf(footer,
@@ -463,7 +463,7 @@ GDcreate(int32 fid, char *gridname, int32 xdimsize, int32 ydimsize,
 			"\t\tEND_GROUP=DataField\n",
 			"\t\tGROUP=MergedFields\n",
 			"\t\tEND_GROUP=MergedFields\n",
-			"\tEND_GROUP=GRID_", nGrid + 1, "\n");
+			"\tEND_GROUP=GRID_", (int)(nGrid + 1), "\n");
 
 
 
@@ -1064,7 +1064,7 @@ GDdefproj(int32 gridID, int32 projcode, int32 zonecode, int32 spherecode,
 		    if ((int32) projparm[i] == projparm[i])
 		    {
 			sprintf(utlbuf, "%d%s",
-				(int32) projparm[i], ",");
+				(int) projparm[i], ",");
 		    }
 		    /* else projparm[i] is non-zero floating point ... */
 		    else
@@ -1103,8 +1103,8 @@ GDdefproj(int32 gridID, int32 projcode, int32 zonecode, int32 spherecode,
 	    sprintf(utlbuf,
 		    "%s%s%s%s%d%s%s%d%s",
 		    "\t\tProjection=", Projections[projx].projname, "\n",
-		    "\t\tZoneCode=", zonecode, "\n",
-		    "\t\tSphereCode=", spherecode, "\n");
+		    "\t\tZoneCode=", (int)zonecode, "\n",
+		    "\t\tSphereCode=", (int)spherecode, "\n");
 	}
 	else
 	{
@@ -1112,7 +1112,7 @@ GDdefproj(int32 gridID, int32 projcode, int32 zonecode, int32 spherecode,
 		    "%s%s%s%s%s%s%s%d%s",
 		    "\t\tProjection=", Projections[projx].projname, "\n",
 		    "\t\tProjParams=", projparmbuf, "\n",
-		    "\t\tSphereCode=", spherecode, "\n");
+		    "\t\tSphereCode=", (int)spherecode, "\n");
 	}
 
 
@@ -3568,18 +3568,18 @@ GDdeffield(int32 gridID, char *fieldname, char *dimlist,
 		{
 		    sprintf(utlbuf2, "%s%d",
 			    ":\n\t\t\t\tTilingDimensions=(",
-			    GDXGrid[gID].tiledims[0]);
+			    (int)GDXGrid[gID].tiledims[0]);
 		}
 		else
 		{
 		    sprintf(utlbuf2, "%s%d",
 			    "\n\t\t\t\tTilingDimensions=(",
-			    GDXGrid[gID].tiledims[0]);
+			    (int)GDXGrid[gID].tiledims[0]);
 		}
 
 		for (i = 1; i < GDXGrid[gID].tilerank; i++)
 		{
-		    sprintf(parmbuf, ",%d", GDXGrid[gID].tiledims[i]);
+		    sprintf(parmbuf, ",%d", (int)GDXGrid[gID].tiledims[i]);
 		    strcat(utlbuf2, parmbuf);
 		}
 		strcat(utlbuf2, ")");
@@ -5086,7 +5086,7 @@ GDinqfields(int32 gridID, char *fieldlist, int32 rank[],
     int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
     int32           nFld = 0;	/* Number of mappings */
     int32           slen[8];	/* String length array */
-    int32           ntype;	/* Data Type */
+    int32           ntype = 0;	/* Data Type */
 
     char           *metabuf;	/* Pointer to structural metadata (SM) */
     char           *metaptrs[2];/* Pointers to begin and end of SM section */
@@ -5298,9 +5298,9 @@ GDnentries(int32 gridID, int32 entrycode, int32 * strbufsize)
     int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
     int32           nEntries = 0;	/* Number of entries */
     int32           metaflag;	/* Old (0), New (1) metadata flag) */
-    int32           nVal;	/* Number of strings to search for */
+    int32           nVal = 0;	/* Number of strings to search for */
 
-    char           *metabuf;	/* Pointer to structural metadata (SM) */
+    char           *metabuf = NULL;	/* Pointer to structural metadata (SM) */
     char           *metaptrs[2];/* Pointers to begin and end of SM section */
     char            gridname[80];	/* Grid Name */
     char           *utlstr;/* Utility string */
@@ -6074,7 +6074,7 @@ GDdetach(int32 gridID)
 		    if (k == 0 && rank > 2 && cmbfldcnt > 0)
 		    {
 			sprintf(dimbuf2, "%s%s_%d", "MRGDIM:",
-				gridname, dims[0]);
+				gridname, (int)dims[0]);
 		    }
 		    else
 		    {
