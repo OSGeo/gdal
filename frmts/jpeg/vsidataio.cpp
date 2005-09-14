@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2005/09/14 14:19:55  dron
+ * Use sizeof() function instead of SIZEOF macro.
+ *
  * Revision 1.2  2005/09/11 17:59:01  fwarmerdam
  * Fixed use of ferror().
  *
@@ -42,7 +45,6 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-#include "jinclude.h"
 #include "jpeglib.h"
 #include "jerror.h"
 CPL_C_END
@@ -220,11 +222,11 @@ void jpeg_vsiio_src (j_decompress_ptr cinfo, FILE * infile)
   if (cinfo->src == NULL) {	/* first time for this JPEG object? */
     cinfo->src = (struct jpeg_source_mgr *)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-				  SIZEOF(my_source_mgr));
+				  sizeof(my_source_mgr));
     src = (my_src_ptr) cinfo->src;
     src->buffer = (JOCTET *)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-				  INPUT_BUF_SIZE * SIZEOF(JOCTET));
+				  INPUT_BUF_SIZE * sizeof(JOCTET));
   }
 
   src = (my_src_ptr) cinfo->src;
@@ -270,7 +272,7 @@ init_destination (j_compress_ptr cinfo)
   /* Allocate the output buffer --- it will be released when done with image */
   dest->buffer = (JOCTET *)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
-				  OUTPUT_BUF_SIZE * SIZEOF(JOCTET));
+				  OUTPUT_BUF_SIZE * sizeof(JOCTET));
 
   dest->pub.next_output_byte = dest->buffer;
   dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
@@ -361,7 +363,7 @@ jpeg_vsiio_dest (j_compress_ptr cinfo, FILE * outfile)
   if (cinfo->dest == NULL) {	/* first time for this JPEG object? */
     cinfo->dest = (struct jpeg_destination_mgr *)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-				  SIZEOF(my_destination_mgr));
+				  sizeof(my_destination_mgr));
   }
 
   dest = (my_dest_ptr) cinfo->dest;
