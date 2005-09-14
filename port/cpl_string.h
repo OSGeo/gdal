@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/09/14 19:21:17  fwarmerdam
+ * binary pointer is const in binarytohex
+ *
  * Revision 1.20  2005/08/31 05:08:01  fwarmerdam
  * fixed up std::string use for vc6 compatability
  *
@@ -181,7 +184,7 @@ char CPL_DLL *CPLEscapeString( const char *pszString, int nLength,
 char CPL_DLL *CPLUnescapeString( const char *pszString, int *pnLength,
                                  int nScheme );
 
-char CPL_DLL *CPLBinaryToHex( int nBytes, GByte *pabyData );
+char CPL_DLL *CPLBinaryToHex( int nBytes, const GByte *pabyData );
 GByte CPL_DLL *CPLHexToBinary( const char *pszHex, int *pnBytes );
 
 CPL_C_END
