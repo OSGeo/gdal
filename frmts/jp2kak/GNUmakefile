@@ -11,6 +11,7 @@ APPOBJ  = $(KAKDIR)/apps/make/args.o $(KAKDIR)/apps/make/image_in.o \
 	$(KAKDIR)/apps/make/image_out.o $(KAKDIR)/apps/make/jp2.o \
 	$(KAKDIR)/apps/make/mj2.o $(KAKDIR)/apps/make/palette.o \
 	$(KAKDIR)/apps/make/roi_sources.o 
+INSTOBJ = $(foreach d,$(APPOBJ),../o/$(notdir $(d)))
 
 #CXXFLAGS :=	$(CXXFLAGS) -DFILEIO_DEBUG
 
@@ -20,6 +21,7 @@ default:	$(OBJ)
 
 clean:
 	rm -f *.o $(O_OBJ)
+	rm -f $(INSTOBJ)
 
 install-obj:	$(O_OBJ)
 	cp $(APPOBJ) ../o
