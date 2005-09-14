@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.49  2005/09/14 19:21:17  fwarmerdam
+ * binary pointer is const in binarytohex
+ *
  * Revision 1.48  2005/09/13 15:07:23  dron
  * Initialize counters in CPLHexToBinary().
  *
@@ -1608,7 +1611,7 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
  * @return hexadecimal translation, zero terminated.  Free with CPLFree().
  */
 
-char *CPLBinaryToHex( int nBytes, GByte *pabyData )
+char *CPLBinaryToHex( int nBytes, const GByte *pabyData )
 
 {
     char *pszHex = (char *) CPLMalloc(nBytes * 2 + 1 );
