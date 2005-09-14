@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2005/09/14 12:54:40  dron
+ * Avoid possible using of uninitialized value.
+ *
  * Revision 1.46  2005/09/14 01:12:52  fwarmerdam
  * Removed complex types from creatable formats, apparently not
  * currently supported.
@@ -1574,7 +1577,7 @@ NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
 /* -------------------------------------------------------------------- */
 /*      We disallow any IC value except NC when creating this way.      */
 /* -------------------------------------------------------------------- */
-    GDALDriver *poJ2KDriver;
+    GDALDriver *poJ2KDriver = NULL;
 
     if( pszIC != NULL && EQUAL(pszIC,"C8") )
     {
@@ -1614,7 +1617,7 @@ NITFDatasetCreate( const char *pszFilename, int nXSize, int nYSize, int nBands,
 /* -------------------------------------------------------------------- */
 /*      Various special hacks related to JPEG2000 encoded files.        */
 /* -------------------------------------------------------------------- */
-    if( pszIC != NULL && EQUAL(pszIC,"C8") )
+    if( poJ2KDriver )
     {
         NITFFile *psFile = NITFOpen( pszFilename, TRUE );
         int nImageOffset = psFile->pasSegmentInfo[0].nSegmentStart;
