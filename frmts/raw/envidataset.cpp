@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/09/14 01:09:00  fwarmerdam
+ * Fixed creation data types.
+ *
  * Revision 1.27  2005/08/05 17:40:45  fwarmerdam
  * Reformat for clarity.
  *
@@ -1372,7 +1375,7 @@ void GDALRegister_ENVI()
                                    "frmt_various.html#ENVI" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 UInt16 Int32 UInt32"
+                                   "Byte Int16 UInt16 Int32 UInt32 "
                                    "Float32 Float64 CFloat32 CFloat64" );
 
         poDriver->pfnOpen = ENVIDataset::Open;
