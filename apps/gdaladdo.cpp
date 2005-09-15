@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/09/15 18:28:47  fwarmerdam
+ * Cleanup on exit more carefully.
+ *
  * Revision 1.10  2004/07/28 17:56:00  warmerda
  * use return instead of exit() to avoid lame warnings on windows
  *
@@ -61,6 +64,7 @@
  */
 
 #include "gdal_priv.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -143,6 +147,9 @@ int main( int nArgc, char ** papszArgv )
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
     delete poDataset;
+
+    CSLDestroy( papszArgv );
+    GDALDestroyDriverManager();
 
     return nResultStatus;
 }
