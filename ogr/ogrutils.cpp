@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/09/15 00:52:28  fwarmerdam
+ * fixed debug message
+ *
  * Revision 1.14  2005/07/29 04:13:17  fwarmerdam
  * preserve 'full' precision in OGRMAkeWktCoordinate
  *
@@ -166,8 +169,9 @@ void OGRMakeWktCoordinate( char *pszTarget, double x, double y, double z,
 
 #ifdef DEBUG
         CPLDebug( "OGR", 
-                  "Yow!  Got this big result in OGRMakeWktCoordinate()\n%s", 
-                  pszTarget );
+                  "Yow!  Got this big result in OGRMakeWktCoordinate()\n"
+                  "%s %s %s", 
+                  szX, szY, szZ );
 #endif
     }
 
