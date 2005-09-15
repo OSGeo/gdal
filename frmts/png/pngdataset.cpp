@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.34  2005/09/15 02:37:48  fwarmerdam
+ * added support NODATA_VALUES for RGB images (read and write)
+ *
  * Revision 1.33  2005/09/12 18:55:10  fwarmerdam
  * Fixed serious bug with reading multi-band 16bit files, and with
  * writing 16bit files on LSB systems.
@@ -737,8 +740,7 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for transparency values in greyscale images.              */
 /* -------------------------------------------------------------------- */
-    if( poDS->nColorType == PNG_COLOR_TYPE_GRAY 
-        || poDS->nColorType == PNG_COLOR_TYPE_GRAY_ALPHA )
+    if( poDS->nColorType == PNG_COLOR_TYPE_GRAY )
     {
         png_color_16 *trans_values = NULL;
         unsigned char *trans;
@@ -750,6 +752,29 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             poDS->bHaveNoData = TRUE;
             poDS->dfNoDataValue = trans_values->gray;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for nodata color for RGB images.                          */
+/* -------------------------------------------------------------------- */
+    if( poDS->nColorType == PNG_COLOR_TYPE_RGB ) 
+    {
+        png_color_16 *trans_values = NULL;
+        unsigned char *trans;
+        int num_trans;
+
+        if( png_get_tRNS( poDS->hPNG, poDS->psPNGInfo, 
+                          &trans, &num_trans, &trans_values ) != 0 
+            && trans_values != NULL )
+        {
+            CPLString oNDValue;
+
+            oNDValue.Printf( "%d %d %d", 
+                    trans_values->red, 
+                    trans_values->green, 
+                    trans_values->blue );
+            poDS->SetMetadataItem( "NODATA_VALUES", oNDValue.c_str() );
         }
     }
 
@@ -893,9 +918,8 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
 /* -------------------------------------------------------------------- */
 /*      Try to handle nodata values as a tRNS block (note for           */
-/*      paletted images, we safe the effect to apply as part of         */
-/*      palette).  We don't try to address a nodata value for RGB       */
-/*      images.                                                         */
+/*      paletted images, we save the effect to apply as part of         */
+/*      palette).                                                       */
 /* -------------------------------------------------------------------- */
     int		bHaveNoData = FALSE;
     double	dfNoDataValue = -1;
@@ -903,12 +927,29 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     dfNoDataValue = poSrcDS->GetRasterBand(1)->GetNoDataValue( &bHaveNoData );
 
-    if( (nColorType == PNG_COLOR_TYPE_GRAY 
-         || nColorType == PNG_COLOR_TYPE_GRAY_ALPHA)
+    if( (nColorType == PNG_COLOR_TYPE_GRAY )
         && dfNoDataValue > 0 && dfNoDataValue < 65536 )
     {
         sTRNSColor.gray = (png_uint_16) dfNoDataValue;
         png_set_tRNS( hPNG, psPNGInfo, NULL, 0, &sTRNSColor );
+    }
+
+    // RGB case.
+    if( nColorType == PNG_COLOR_TYPE_RGB 
+        && poSrcDS->GetMetadataItem( "NODATA_VALUES" ) != NULL )
+    {
+        char **papszValues = CSLTokenizeString(
+            poSrcDS->GetMetadataItem( "NODATA_VALUES" ) );
+        
+        if( CSLCount(papszValues) >= 3 )
+        {
+            sTRNSColor.red   = (png_uint_16) atoi(papszValues[0]);
+            sTRNSColor.green = (png_uint_16) atoi(papszValues[1]);
+            sTRNSColor.blue  = (png_uint_16) atoi(papszValues[2]);
+            png_set_tRNS( hPNG, psPNGInfo, NULL, 0, &sTRNSColor );
+        }
+
+        CSLDestroy( papszValues );
     }
 
 /* -------------------------------------------------------------------- */
