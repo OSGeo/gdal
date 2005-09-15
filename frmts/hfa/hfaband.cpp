@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2005/09/15 20:37:15  fwarmerdam
+ * added HFA_USE_RRD support when creating overviews
+ *
  * Revision 1.45  2005/08/19 02:14:11  fwarmerdam
  * bug 857: add ability to set layer names
  *
@@ -1561,17 +1564,40 @@ int HFABand::CreateOverview( int nOverviewLevel )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Do we want to use a dependent file (.rrd) for the overviews?    */
+/*      Or just create them directly in this file?                      */
+/* -------------------------------------------------------------------- */
+    HFAInfo_t *psRRDInfo = psInfo;
+    HFAEntry *poParent = poNode;
+
+    if( !bCreateLargeRaster 
+        && CSLTestBoolean( CPLGetConfigOption( "HFA_USE_RRD", "NO" ) ) )
+    {
+        psRRDInfo = HFACreateDependent( psInfo );
+
+        poParent = psRRDInfo->poRoot->GetNamedChild( poNode->GetName() );
+
+        // Need to create layer object.
+        if( poParent == NULL )
+        {
+            poParent = 
+                new HFAEntry( psRRDInfo, poNode->GetName(), 
+                              "Eimg_Layer", psRRDInfo->poRoot );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create the layer.                                               */
 /* -------------------------------------------------------------------- */
     sprintf( pszLayerName, "_ss_%d_", nOverviewLevel );
 
-    if( !HFACreateLayer( psInfo, poNode, pszLayerName, 
+    if( !HFACreateLayer( psRRDInfo, poParent, pszLayerName, 
                          TRUE, nBlockXSize, FALSE, bCreateLargeRaster,	
                          nOXSize, nOYSize, nDataType, NULL,
                          nValidFlagsOffset, nDataOffset, 1, 0 ) )
         return -1;
     
-    HFAEntry *poOverLayer = poNode->GetNamedChild( pszLayerName );
+    HFAEntry *poOverLayer = poParent->GetNamedChild( pszLayerName );
     if( poOverLayer == NULL )
         return -1;
 
@@ -1602,12 +1628,12 @@ int HFABand::CreateOverview( int nOverviewLevel )
     sprintf( szName, "nameList[%d].string", iNextName );
 
     sprintf( pszLayerName, "%s(:%s:_ss_%d_)", 
-             psInfo->pszFilename, poNode->GetName(), nOverviewLevel );
+             psRRDInfo->pszFilename, poNode->GetName(), nOverviewLevel );
 
     // TODO: Need to add to end of array.
     // TODO: Need to check that this fits into the data area of this entry.
     poRRDNamesList->SetStringField( szName, pszLayerName );
-    
+
     CPLFree( pszLayerName );
 
 /* -------------------------------------------------------------------- */
@@ -1615,7 +1641,7 @@ int HFABand::CreateOverview( int nOverviewLevel )
 /* -------------------------------------------------------------------- */
     papoOverviews = (HFABand **) 
         CPLRealloc(papoOverviews, sizeof(void*) * ++nOverviews );
-    papoOverviews[nOverviews-1] = new HFABand( psInfo, poOverLayer );
+    papoOverviews[nOverviews-1] = new HFABand( psRRDInfo, poOverLayer );
 
     return nOverviews-1;
 }
