@@ -43,7 +43,8 @@ Creation Options:<p>
 </ul>
 
 Erdas Imagine supports external creation of overviews (with gdaladdo for 
-instance).<p>
+instance).  To force them to be created in an .rrd file (rather than inside
+the original .img) set the global config option HFA_USE_RRD=YES).<p>
 
 Layer names can be set and retrieved with the GDALSetDescription/GDALGetDescription calls on the Raster Band objects. <p>
 
@@ -53,7 +54,7 @@ See Also:<p>
 <li> Implemented as <tt>gdal/frmts/hfa/hfadataset.cpp</tt>.<p>
 
 <li> More information, and other tools are available on the
-<a href="http://gdal.velocet.ca/projects/imagine/hfa_index.html">
+<a href="http://home.gdal.org/projects/imagine/hfa_index.html">
 Imagine (.img) Reader</a> page.<p>
 
 <li> <a href="http://www.erdas.com/">Erdas.com</a><p>
