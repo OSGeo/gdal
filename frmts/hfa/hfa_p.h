@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/09/15 20:36:42  fwarmerdam
+ * added HFACreateDependent
+ *
  * Revision 1.22  2005/08/20 23:46:28  fwarmerdam
  * bug 858: fix for double compression
  *
@@ -172,11 +175,11 @@ typedef struct hfainfo {
 GUInt32 HFAAllocateSpace( HFAInfo_t *, GUInt32 );
 CPLErr  HFAParseBandInfo( HFAInfo_t * );
 HFAInfo_t *HFAGetDependent( HFAInfo_t *, const char * );
+HFAInfo_t *HFACreateDependent( HFAInfo_t *psBase );
 int HFACreateSpillStack( HFAInfo_t *, int nXSize, int nYSize, int nLayers, 
                          int nBlockSize, int nDataType,
                          GIntBig *pnValidFlagsOffset, 
                          GIntBig *pnDataOffset );
-
 
 char ** GetHFAAuxMetaDataList();
 

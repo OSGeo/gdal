@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.45  2005/09/15 20:36:42  fwarmerdam
+ * added HFACreateDependent
+ *
  * Revision 1.44  2005/08/20 23:43:37  fwarmerdam
  * Better implementation of HFADelete().
  *
@@ -357,6 +360,56 @@ HFAHandle HFAOpen( const char * pszFilename, const char * pszAccess )
     HFAParseBandInfo( psInfo );
 
     return psInfo;
+}
+
+/************************************************************************/
+/*                         HFACreateDependent()                         */
+/*                                                                      */
+/*      Create a .rrd file for the named file if it does not exist,     */
+/*      or return the existing dependent if it already exists.          */
+/************************************************************************/
+
+HFAInfo_t *HFACreateDependent( HFAInfo_t *psBase )
+
+{
+    if( psBase->psDependent != NULL )
+        return psBase->psDependent;
+
+/* -------------------------------------------------------------------- */
+/*      Create desired RRD filename.                                    */
+/* -------------------------------------------------------------------- */
+    CPLString oBasename = CPLGetBasename( psBase->pszFilename );
+    CPLString oRRDFilename =
+        CPLFormFilename( psBase->pszPath, oBasename, "rrd" );
+
+/* -------------------------------------------------------------------- */
+/*      Does this file already exist?  If so, re-use it.                */
+/* -------------------------------------------------------------------- */
+    FILE *fp = VSIFOpenL( oRRDFilename, "rb" );
+    if( fp != NULL )
+    {
+        VSIFCloseL( fp );
+        psBase->psDependent = HFAOpen( oRRDFilename, "rb" );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise create it now.                                        */
+/* -------------------------------------------------------------------- */
+    HFAInfo_t *psDep;
+    psDep = psBase->psDependent = HFACreateLL( oRRDFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Add the DependentFile node with the pointer back to the         */
+/*      parent.                                                         */
+/* -------------------------------------------------------------------- */
+    HFAEntry *poDF = new HFAEntry( psDep, "DependentFile", 
+                                   "Eimg_DependentFile", psDep->poRoot );
+
+    poDF->MakeData( strlen(psBase->pszFilename) + 50 );
+    poDF->SetPosition();
+    poDF->SetStringField( "dependent.string", psBase->pszFilename );
+    
+    return psDep;
 }
 
 /************************************************************************/
