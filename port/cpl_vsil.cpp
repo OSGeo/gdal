@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/09/15 18:39:00  fwarmerdam
+ * fixedup filemanager cleanup
+ *
  * Revision 1.2  2005/09/15 18:32:35  fwarmerdam
  * added VSICleanupFileManager
  *
@@ -218,6 +221,25 @@ VSIFileManager::VSIFileManager()
 {
     poDefaultHandler = NULL;
 }
+
+/************************************************************************/
+/*                          ~VSIFileManager()                           */
+/************************************************************************/
+
+VSIFileManager::~VSIFileManager()
+{
+    std::map<std::string,VSIFilesystemHandler*>::const_iterator iter;
+
+    for( iter = oHandlers.begin();
+         iter != oHandlers.end();
+         iter++ )
+    {
+        delete iter->second;
+    }
+
+    delete poDefaultHandler;
+}
+
 
 /************************************************************************/
 /*                                Get()                                 */

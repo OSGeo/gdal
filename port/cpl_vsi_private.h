@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/09/15 18:39:00  fwarmerdam
+ * fixedup filemanager cleanup
+ *
  * Revision 1.3  2005/09/13 15:17:52  dron
  * Unneeded semicolon removed.
  *
@@ -82,7 +85,7 @@ public:
 			{ errno=ENOENT; return -1; }
     virtual char   **ReadDir( const char *pszDirname ) 
 			{ return NULL; }
-    virtual          ~VSIFilesystemHandler() { }
+    virtual          ~VSIFilesystemHandler() {}
 };
 
 /************************************************************************/
@@ -100,6 +103,7 @@ private:
     static VSIFileManager *Get();
 
 public:
+    ~VSIFileManager();
 
     static VSIFilesystemHandler *GetHandler( const char * );
     static void                InstallHandler( std::string osPrefix, 
