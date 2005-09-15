@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/09/15 18:32:35  fwarmerdam
+ * added VSICleanupFileManager
+ *
  * Revision 1.1  2005/09/11 18:00:55  fwarmerdam
  * New
  *
@@ -220,10 +223,11 @@ VSIFileManager::VSIFileManager()
 /*                                Get()                                 */
 /************************************************************************/
 
+static VSIFileManager *poManager = NULL;
+
 VSIFileManager *VSIFileManager::Get()
 
 {
-    static VSIFileManager *poManager = NULL;
     
     if( poManager == NULL )
     {
@@ -268,4 +272,18 @@ void VSIFileManager::InstallHandler( std::string osPrefix,
         Get()->poDefaultHandler = poHandler;
     else
         Get()->oHandlers[osPrefix] = poHandler;
+}
+
+/************************************************************************/
+/*                       VSICleanupFileManager()                        */
+/************************************************************************/
+
+void VSICleanupFileManager()
+
+{
+    if( poManager )
+    {
+        delete poManager;
+        poManager = NULL;
+    }
 }
