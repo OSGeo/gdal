@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  Multi-resolution Seamless Image Database (MrSID)
- * Purpose:  Read/write LizardTech's MrSID file format - Version 4 SDK.
+ * Purpose:  Read/write LizardTech's MrSID file format - Version 4+ SDK.
  * Author:   Andrey Kiselev, dron@remotesensing.org
  *
  ******************************************************************************
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2005/09/15 00:31:27  fwarmerdam
+ * added JP2MrSID driver, fixedup ESDK 5.x support
+ *
  * Revision 1.40  2005/09/09 02:27:28  fwarmerdam
  * Fallback to PAM if projection string is empty.
  *
@@ -101,59 +104,6 @@
  *
  * Revision 1.18  2004/11/14 21:18:22  dron
  * Initial support for MrSID Encoding SDK.
- *
- * Revision 1.17  2004/09/09 19:20:18  dron
- * Use VSIFClose instead of VSIFCloseL in MrSIDDataset::Open().
- *
- * Revision 1.16  2004/09/09 18:13:27  dron
- * Fixed bug when getting NoData value in MrSIDRasterBand().
- *
- * Revision 1.15  2004/08/29 10:11:43  dron
- * Implement caching for the case of sequental block reading.
- *
- * Revision 1.14  2004/08/20 19:03:58  dron
- * Fixed problem with wrong sign in georeference calculation.
- *
- * Revision 1.13  2004/08/07 10:25:12  dron
- * Added support for overviews in new version; fixed problem with the last
- * strip decoding; support for DSDK 4.0.9.713.
- *
- * Revision 1.12  2004/07/04 06:26:30  dron
- * Added support for decoding JPEG2000 format using MrSID DSDK.
- *
- * Revision 1.11  2004/05/02 15:47:26  dron
- * Updated to DSDK 4.0.7.646.
- *
- * Revision 1.10  2004/04/27 08:45:59  dron
- * Read strip height from image and use it as BlockYSize.
- *
- * Revision 1.9  2004/04/23 09:49:38  dron
- * Added support for DSDK v.4.0.x; significant changes in the driver structure.
- *
- * Revision 1.8  2004/03/19 12:19:48  dron
- * Few improvements; several memory leaks fixed.
- *
- * Revision 1.7  2004/02/08 14:29:43  dron
- * Support for DSDK v.3.2.x.
- *
- * Revision 1.6  2004/02/03 20:56:45  dron
- * Fixes in coordinate handling.
- *
- * Revision 1.5  2003/07/24 09:33:07  dron
- * Added MrSIDRasterBand::IRasterIO().
- *
- * Revision 1.4  2003/05/27 21:08:38  warmerda
- * avoid int/short casting warnings
- *
- * Revision 1.3  2003/05/25 15:24:49  dron
- * Added georeferencing.
- *
- * Revision 1.2  2003/05/07 10:26:02  dron
- * Added multidimensional metadata handling.
- *
- * Revision 1.1  2003/04/23 12:21:56  dron
- * New.
- *
  */
 
 #include "gdal_pam.h"
@@ -167,9 +117,12 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void    GDALRegister_MrSID(void);
 double GTIFAngleToDD( double dfAngle, int nUOMAngle );
 CPL_C_END
+
+// Key Macros from Makefile:
+//   MRSID_ESDK: Means we have the encoding SDK (version 5 or newer required)
+//   MRSID_J2K: Means we are enabling MrSID SDK JPEG2000 support. 
 
 #include "lt_types.h"
 #include "lt_base.h"
@@ -184,14 +137,21 @@ CPL_C_END
 #include "lti_metadataRecord.h"
 #include "lti_utils.h"
 #include "MrSIDImageReader.h"
-//#include "J2KImageReader.h"
 
-#ifdef MRSID_ESDK_VERSION_40
+#ifdef MRSID_J2K
+#  include "J2KImageReader.h"
+#endif
+
+#ifdef MRSID_ESDK
 # include "MG3ImageWriter.h"
 # include "MG3WriterParams.h"
 # include "MG2ImageWriter.h"
 # include "MG2WriterParams.h"
-#endif /* MRSID_ESDK_VERSION_40 */
+# ifdef MRSID_J2K
+#   include "J2KImageWriter.h"
+#   include "J2KWriterParams.h"
+# endif
+#endif /* MRSID_ESDK */
 
 LT_USE_NAMESPACE(LizardTech)
 
@@ -206,9 +166,11 @@ class MrSIDDataset : public GDALPamDataset
     friend class MrSIDRasterBand;
 
     LTIImageReader      *poImageReader;
-#ifdef MRSID_ESDK_VERSION_40
-    LTIMeteredImageWriter *poImageWriter;
-#endif /* MRSID_ESDK_VERSION_40 */
+
+#ifdef MRSID_ESDK
+    LTIGeoFileImageWriter *poImageWriter;
+#endif
+
     LTINavigator        *poLTINav;
     LTIMetadataDatabase *poMetadata;
     const LTIPixel      *poNDPixel;
@@ -252,12 +214,12 @@ class MrSIDDataset : public GDALPamDataset
     virtual CPLErr      GetGeoTransform( double * padfTransform );
     const char          *GetProjectionRef();
 
-#ifdef MRSID_ESDK_VERSION_40
+#ifdef MRSID_ESDK
     static GDALDataset  *Create( const char * pszFilename,
                                  int nXSize, int nYSize, int nBands,
                                  GDALDataType eType, char ** papszParmList );
     virtual void        FlushCache( void );
-#endif /* MRSID_ESDK_VERSION_40 */
+#endif
 };
 
 #include "mrsidcommon.h"
@@ -294,9 +256,9 @@ class MrSIDRasterBand : public GDALPamRasterBand
     virtual int             GetOverviewCount();
     virtual GDALRasterBand  *GetOverview( int );
 
-#ifdef MRSID_ESDK_VERSION_40
+#ifdef MRSID_ESDK
     virtual CPLErr          IWriteBlock( int, int, void * );
-#endif /* MRSID_ESDK_VERSION_40 */
+#endif
 };
 
 /************************************************************************/
@@ -404,15 +366,15 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 {
     MrSIDDataset    *poGDS = (MrSIDDataset *)poDS;
 
-#ifdef MRSID_ESDK_VERSION_40
+#ifdef MRSID_ESDK
     if( poGDS->eAccess == GA_Update )
     {
         CPLDebug( "MrSID", 
-                  "IReadBlock() - DSDK 4.0 - read on updatable file fails." );
+                  "IReadBlock() - DSDK - read on updatable file fails." );
         memset( pImage, 0, nBlockSize * GDALGetDataTypeSize(eDataType) / 8 );
         return CE_None;
     }
-#endif /* MRSID_ESDK_VERSION_40 */
+#endif /* MRSID_ESDK */
 
     CPLDebug( "MrSID", "IReadBlock(%d,%d)", nBlockXOff, nBlockYOff );
 
@@ -469,7 +431,7 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     return CE_None;
 }
 
-#ifdef MRSID_ESDK_VERSION_40
+#ifdef MRSID_ESDK
 
 /************************************************************************/
 /*                            IWriteBlock()                             */
@@ -520,7 +482,7 @@ CPLErr MrSIDRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     return CE_None;
 }
 
-#endif /* MRSID_ESDK_VERSION_40 */
+#endif /* MRSID_ESDK */
 
 /************************************************************************/
 /*                             IRasterIO()                              */
@@ -653,9 +615,9 @@ GDALRasterBand *MrSIDRasterBand::GetOverview( int i )
 MrSIDDataset::MrSIDDataset()
 {
     poImageReader = NULL;
-#ifdef MRSID_ESDK_VERSION_40
+#ifdef MRSID_ESDK
     poImageWriter = NULL;
-#endif /* MRSID_ESDK_VERSION_40 */
+#endif
     poLTINav = NULL;
     poMetadata = NULL;
     poNDPixel = NULL;
@@ -691,11 +653,11 @@ MrSIDDataset::MrSIDDataset()
 MrSIDDataset::~MrSIDDataset()
 {
     FlushCache();
-#ifdef MRSID_ESDK_VERSION_40
 
+#ifdef MRSID_ESDK
     if ( poImageWriter )
         delete poImageWriter;
-#endif /* MRSID_ESDK_VERSION_40 */
+#endif
 
     if ( poImageReader && !bIsOverview )
         delete poImageReader;
@@ -1149,6 +1111,43 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
 }
 
 /************************************************************************/
+/*                             MrSIDOpen()                              */
+/*                                                                      */
+/*      This is just a jacket to verify that the file is MrSID.         */
+/************************************************************************/
+
+static GDALDataset *MrSIDOpen( GDALOpenInfo * poOpenInfo )
+{
+    if( poOpenInfo->nHeaderBytes < 32 )
+        return NULL;
+
+    if ( !EQUALN((const char *) poOpenInfo->pabyHeader, "msid", 4) )
+        return NULL;
+
+    return MrSIDDataset::Open( poOpenInfo );
+}
+
+/************************************************************************/
+/*                              JP2Open()                               */
+/*                                                                      */
+/*      This is just a jacket to verify that the file is JPEG2000.      */
+/************************************************************************/
+
+#ifdef MRSID_J2K
+static GDALDataset *JP2Open( GDALOpenInfo *poOpenInfo )
+
+{
+    if( poOpenInfo->nHeaderBytes < 32 )
+        return NULL;
+
+    if( !EQUALN((const char *) poOpenInfo->pabyHeader + 4, "jP  ", 4) )
+        return NULL;
+
+    return MrSIDDataset::Open( poOpenInfo );
+}
+#endif /* def MRSID_J2K */
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -1180,10 +1179,13 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
     const LTFileSpec    oFileSpec( poOpenInfo->pszFilename );
 
     poDS = new MrSIDDataset();
-    //    if ( bIsJP2 )
-    //    poDS->poImageReader = new J2KImageReader( oFileSpec, true );
-    //else
+#ifdef MRSID_J2K
+    if ( bIsJP2 )
+        poDS->poImageReader = new J2KImageReader( oFileSpec, true );
+    else
+#endif
         poDS->poImageReader = new MrSIDImageReader( oFileSpec );
+
     if ( !LT_SUCCESS( poDS->poImageReader->initialize() ) )
     {
         delete poDS;
@@ -1231,8 +1233,14 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Get number of resolution levels (we will use them as overviews).*/
 /* -------------------------------------------------------------------- */
-    poDS->nOverviewCount
-        = ((MrSIDImageReader *) (poDS->poImageReader))->getNumLevels();
+#ifdef MRSID_J2K
+    if( bIsJP2 )
+        poDS->nOverviewCount
+            = ((J2KImageReader *) (poDS->poImageReader))->getNumLevels();
+    else
+#endif
+        poDS->nOverviewCount
+            = ((MrSIDImageReader *) (poDS->poImageReader))->getNumLevels();
 
     if ( poDS->nOverviewCount > 0 )
     {
@@ -1269,7 +1277,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
     return( poDS );
 }
 
-#ifdef MRSID_ESDK_VERSION_40
+#ifdef MRSID_ESDK
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1384,11 +1392,19 @@ LT_STATUS MrSIDDummyImageReader::initialize()
 
     if ( poDS->GetGeoTransform( adfGeoTransform ) == CE_None )
     {
+#ifdef MRSID_SDK_40
         LTIGeoCoord oGeo( adfGeoTransform[0] + adfGeoTransform[1] / 2,
                           adfGeoTransform[3] + adfGeoTransform[5] / 2,
                           adfGeoTransform[1], adfGeoTransform[5],
                           adfGeoTransform[2], adfGeoTransform[4], NULL,
                           poDS->GetProjectionRef() );
+#else
+        LTIGeoCoord oGeo( adfGeoTransform[0] + adfGeoTransform[1] / 2,
+                          adfGeoTransform[3] + adfGeoTransform[5] / 2,
+                          adfGeoTransform[1], adfGeoTransform[5],
+                          adfGeoTransform[2], adfGeoTransform[4], 
+                          poDS->GetProjectionRef() );
+#endif
         if ( !LT_SUCCESS(setGeoCoord( oGeo )) )
             return LT_STS_Failure;
     }
@@ -1456,100 +1472,105 @@ void MrSIDDataset::FlushCache()
 }
 
 /************************************************************************/
-/*                             CreateCopy()                             */
+/*                          MrSIDCreateCopy()                           */
 /************************************************************************/
 
 static GDALDataset *
-CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
-            int bStrict, char ** papszOptions, 
-            GDALProgressFunc pfnProgress, void * pProgressData )
+MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
+                 int bStrict, char ** papszOptions, 
+                 GDALProgressFunc pfnProgress, void * pProgressData )
 
 { 
-  const char* pszVerison = CSLFetchNameValue(papszOptions, "VERSION");
+    const char* pszVersion = CSLFetchNameValue(papszOptions, "VERSION");
+#ifdef DEBUG
+    bool bMeter = false;
+#else
+    bool bMeter = true;
+#endif    
 
-  // Output Mrsid Version 2 file.
-  if( pszVerison && atoi(pszVerison) == 2 )
+    // Output Mrsid Version 2 file.
+    if( pszVersion && atoi(pszVersion) == 2 )
     {
-      int nXSize = poSrcDS->GetRasterXSize();
-      int nYSize = poSrcDS->GetRasterYSize();
+        int nXSize = poSrcDS->GetRasterXSize();
+        int nYSize = poSrcDS->GetRasterYSize();
       
-      if( !pfnProgress( 0.0, NULL, pProgressData ) )
-        return NULL;
+        if( !pfnProgress( 0.0, NULL, pProgressData ) )
+            return NULL;
       
-      // Create the file.                                               
-      MrSIDDummyImageReader oImageReader( poSrcDS );
-      oImageReader.initialize();
+        // Create the file.                                               
+        MrSIDDummyImageReader oImageReader( poSrcDS );
+        oImageReader.initialize();
       
-      MG2ImageWriter oImageWriter(&oImageReader);
-      oImageWriter.initialize();
+        MG2ImageWriter oImageWriter(&oImageReader);
+        oImageWriter.initialize();
 
-      oImageWriter.setUsageMeterEnabled(true);
+        oImageWriter.setUsageMeterEnabled(bMeter);
    
-      // set output filename
-      oImageWriter.setOutputFileSpec( pszFilename );
+        // set output filename
+        oImageWriter.setOutputFileSpec( pszFilename );
 
-      // Set defaults
-      oImageWriter.params().setBlockSize(oImageWriter.params().getBlockSize());
-      oImageWriter.setStripHeight(oImageWriter.getStripHeight());
+        // Set defaults
+        oImageWriter.params().setBlockSize(oImageWriter.params().getBlockSize());
+        oImageWriter.setStripHeight(oImageWriter.getStripHeight());
 
-      // check for compression option
-      const char* pszValue = CSLFetchNameValue(papszOptions, "COMPRESSION");
-      if( pszValue != NULL )
-	oImageWriter.params().setCompressionRatio( atof(pszValue) );
+        // check for compression option
+        const char* pszValue = CSLFetchNameValue(papszOptions, "COMPRESSION");
+        if( pszValue != NULL )
+            oImageWriter.params().setCompressionRatio( atof(pszValue) );
 
-      // set MrSID world file
-      if( CSLFetchNameValue(papszOptions, "WORLDFILE") != NULL )
-	oImageWriter.setWorldFileSupport( true );
+        // set MrSID world file
+        if( CSLFetchNameValue(papszOptions, "WORLDFILE") != NULL )
+            oImageWriter.setWorldFileSupport( true );
       
-      // write the scene
-      const LTIScene oScene( 0, 0, nXSize, nYSize, 1.0 );
-      oImageWriter.write( oScene );
+        // write the scene
+        const LTIScene oScene( 0, 0, nXSize, nYSize, 1.0 );
+        oImageWriter.write( oScene );
     }
-  // Output Mrsid Version 3 file.
-  else
+    // Output Mrsid Version 3 file.
+    else
     {
-      int nXSize = poSrcDS->GetRasterXSize();
-      int nYSize = poSrcDS->GetRasterYSize();
+        int nXSize = poSrcDS->GetRasterXSize();
+        int nYSize = poSrcDS->GetRasterYSize();
       
-      if( !pfnProgress( 0.0, NULL, pProgressData ) )
-        return NULL;
+        if( !pfnProgress( 0.0, NULL, pProgressData ) )
+            return NULL;
       
-      // Create the file.   
-      MrSIDDummyImageReader oImageReader( poSrcDS );
-      oImageReader.initialize();
+        // Create the file.   
+        MrSIDDummyImageReader oImageReader( poSrcDS );
+        oImageReader.initialize();
       
-      MG3ImageWriter oImageWriter(&oImageReader);
-      oImageWriter.initialize();
+        MG3ImageWriter oImageWriter(&oImageReader);
+        oImageWriter.initialize();
       
-      // Set 64-bit Interface for large files.
-      oImageWriter.setFileStream64(true);
+        // Set 64-bit Interface for large files.
+        oImageWriter.setFileStream64(true);
 
-      oImageWriter.setUsageMeterEnabled(true);
+        oImageWriter.setUsageMeterEnabled(bMeter);
       
-      // set output filename
-      oImageWriter.setOutputFileSpec( pszFilename );
+        // set output filename
+        oImageWriter.setOutputFileSpec( pszFilename );
 
-      // Set defaults
-      oImageWriter.setStripHeight(oImageWriter.getStripHeight());
+        // Set defaults
+        oImageWriter.setStripHeight(oImageWriter.getStripHeight());
 
-      // set 2 pass optimizer option
-      if( CSLFetchNameValue(papszOptions, "TWOPASS") != NULL )
-	oImageWriter.params().setTwoPassOptimizer( true );
+        // set 2 pass optimizer option
+        if( CSLFetchNameValue(papszOptions, "TWOPASS") != NULL )
+            oImageWriter.params().setTwoPassOptimizer( true );
 
-      // set MrSID world file
-      if( CSLFetchNameValue(papszOptions, "WORLDFILE") != NULL )
-	oImageWriter.setWorldFileSupport( true );
+        // set MrSID world file
+        if( CSLFetchNameValue(papszOptions, "WORLDFILE") != NULL )
+            oImageWriter.setWorldFileSupport( true );
       
-      const char* pszValue;
+        const char* pszValue;
       
-      // set filesize in KB
-      pszValue = CSLFetchNameValue(papszOptions, "FILESIZE");
-      if( pszValue != NULL )
-	oImageWriter.params().setTargetFilesize( atoi(pszValue) );
+        // set filesize in KB
+        pszValue = CSLFetchNameValue(papszOptions, "FILESIZE");
+        if( pszValue != NULL )
+            oImageWriter.params().setTargetFilesize( atoi(pszValue) );
 	
-      // write the scene
-      const LTIScene oScene( 0, 0, nXSize, nYSize, 1.0 );
-      oImageWriter.write( oScene );
+        // write the scene
+        const LTIScene oScene( 0, 0, nXSize, nYSize, 1.0 );
+        oImageWriter.write( oScene );
     }
   
 /* -------------------------------------------------------------------- */
@@ -1563,7 +1584,74 @@ CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     return poDS;
 }
-#endif /* MRSID_ESDK_VERSION_40 */
+
+#ifdef MRSID_J2K
+/************************************************************************/
+/*                           JP2CreateCopy()                            */
+/************************************************************************/
+
+static GDALDataset *
+JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
+                 int bStrict, char ** papszOptions, 
+                 GDALProgressFunc pfnProgress, void * pProgressData )
+
+{ 
+#ifdef DEBUG
+    bool bMeter = false;
+#else
+    bool bMeter = true;
+#endif    
+
+    int nXSize = poSrcDS->GetRasterXSize();
+    int nYSize = poSrcDS->GetRasterYSize();
+      
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+        return NULL;
+      
+    // Create the file.   
+    MrSIDDummyImageReader oImageReader( poSrcDS );
+    oImageReader.initialize();
+      
+    J2KImageWriter oImageWriter(&oImageReader);
+    oImageWriter.initialize();
+      
+    // Set 64-bit Interface for large files.
+    oImageWriter.setFileStream64(true);
+
+    oImageWriter.setUsageMeterEnabled(bMeter);
+      
+    // set output filename
+    oImageWriter.setOutputFileSpec( pszFilename );
+
+    // Set defaults
+    //oImageWriter.setStripHeight(oImageWriter.getStripHeight());
+
+    // set MrSID world file
+    if( CSLFetchNameValue(papszOptions, "WORLDFILE") != NULL )
+        oImageWriter.setWorldFileSupport( true );
+      
+    // check for compression option
+    const char* pszValue = CSLFetchNameValue(papszOptions, "COMPRESSION");
+    if( pszValue != NULL )
+        oImageWriter.params().setCompressionRatio( atof(pszValue) );
+	
+    // write the scene
+    const LTIScene oScene( 0, 0, nXSize, nYSize, 1.0 );
+    oImageWriter.write( oScene );
+  
+/* -------------------------------------------------------------------- */
+/*      Re-open dataset, and copy any auxilary pam information.         */
+/* -------------------------------------------------------------------- */
+    GDALPamDataset *poDS = (GDALPamDataset *) 
+        GDALOpen( pszFilename, GA_ReadOnly );
+
+    if( poDS )
+        poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
+
+    return poDS;
+}
+#endif /* MRSID_J2K */
+#endif /* MRSID_ESDK */
 
 /************************************************************************/
 /*                        GDALRegister_MrSID()                          */
@@ -1574,6 +1662,9 @@ void GDALRegister_MrSID()
 {
     GDALDriver  *poDriver;
 
+/* -------------------------------------------------------------------- */
+/*      MrSID driver.                                                   */
+/* -------------------------------------------------------------------- */
     if( GDALGetDriverByName( "MrSID" ) == NULL )
     {
         poDriver = new GDALDriver();
@@ -1584,8 +1675,9 @@ void GDALRegister_MrSID()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_mrsid.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "sid" );
 
-#ifdef MRSID_ESDK_VERSION_40
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
+#ifdef MRSID_ESDK
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte Int16 UInt16 Int32 UInt32 Float32 Float64" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 // Version 2 Options
@@ -1599,12 +1691,42 @@ void GDALRegister_MrSID()
 "   <Option name='VERSION' type='int' description='Valid versions are 2 and 3, default = 3'/>"
 "</CreationOptionList>" );
 
-        poDriver->pfnCreateCopy = CreateCopy;
-#endif /* MRSID_ESDK_VERSION_40 */
+        poDriver->pfnCreateCopy = MrSIDCreateCopy;
+#endif
 
-        poDriver->pfnOpen = MrSIDDataset::Open;
+        poDriver->pfnOpen = MrSIDOpen;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
-}
 
+/* -------------------------------------------------------------------- */
+/*      JP2MRSID driver.                                                */
+/* -------------------------------------------------------------------- */
+#ifdef MRSID_J2K
+    if( GDALGetDriverByName( "JP2MrSID" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "JP2MrSID" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                        "MrSID JPEG2000" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_mrsid.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
+
+#ifdef MRSID_ESDK
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+                                   "Byte Int16 UInt16" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+"<CreationOptionList>"
+"   <Option name='COMPRESSION' type='double' description='Set compression ratio (0.0 default is meant to be lossless)'/>"
+"   <Option name='WORLDFILE' type='boolean' description='Write out world file'/>"
+"</CreationOptionList>" );
+
+        poDriver->pfnCreateCopy = JP2CreateCopy;
+#endif
+        poDriver->pfnOpen = JP2Open;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
+#endif /* def MRSID_J2K */
+}
