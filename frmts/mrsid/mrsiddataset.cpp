@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2005/09/15 02:17:34  fwarmerdam
+ * note MRSID_HAVE_GETWKT macro.
+ *
  * Revision 1.42  2005/09/15 00:46:21  fwarmerdam
  * Fixed help topic link.
  *
@@ -126,6 +129,7 @@ CPL_C_END
 // Key Macros from Makefile:
 //   MRSID_ESDK: Means we have the encoding SDK (version 5 or newer required)
 //   MRSID_J2K: Means we are enabling MrSID SDK JPEG2000 support. 
+//   MRSID_HAVE_GETWKT: 
 
 #include "lt_types.h"
 #include "lt_base.h"
@@ -1087,8 +1091,8 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
 /* -------------------------------------------------------------------- */
 /*      Read wkt.                                                       */
 /* -------------------------------------------------------------------- */
-#ifdef HAVE_MRSID_GETWKT
-    if ( !poImageReader->isGeoCoordImplicit() )
+#ifdef MRSID_HAVE_GETWKT
+    if( !poImageReader->isGeoCoordImplicit() )
     {
 	const LTIGeoCoord& oGeo = poImageReader->getGeoCoord();
 	
