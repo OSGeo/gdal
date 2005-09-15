@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/09/15 00:29:11  fwarmerdam
+ * fixed typo.
+ *
  * Revision 1.1  2005/08/31 03:31:46  fwarmerdam
  * New
  *
@@ -67,7 +70,7 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 
 {
 /* -------------------------------------------------------------------- */
-/*      This implementation for platforms without vsnprintf() fill      */
+/*      This implementation for platforms without vsnprintf() will      */
 /*      just plain fail if the formatted contents are too large.        */
 /* -------------------------------------------------------------------- */
 
