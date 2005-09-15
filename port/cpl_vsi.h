@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.25  2005/09/15 18:32:35  fwarmerdam
+ * added VSICleanupFileManager
+ *
  * Revision 1.24  2005/09/12 16:53:33  fwarmerdam
  * fixed VSIGetMemFileBuffer declaration
  *
@@ -255,6 +258,7 @@ char CPL_DLL *VSIStrerror( int );
 /* ==================================================================== */
 void CPL_DLL VSIInstallMemFileHandler(void);
 void CPL_DLL VSIInstallLargeFileHandler(void);
+void CPL_DLL VSICleanupFileManager(void);
 
 FILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename, 
                                     GByte *pabyData, 
