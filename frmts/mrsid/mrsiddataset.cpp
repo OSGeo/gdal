@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2005/09/15 00:46:21  fwarmerdam
+ * Fixed help topic link.
+ *
  * Revision 1.41  2005/09/15 00:31:27  fwarmerdam
  * added JP2MrSID driver, fixedup ESDK 5.x support
  *
@@ -1710,7 +1713,7 @@ void GDALRegister_MrSID()
         poDriver->SetDescription( "JP2MrSID" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                         "MrSID JPEG2000" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_mrsid.html" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_jp2mrsid.html" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
 
 #ifdef MRSID_ESDK
