@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/09/15 18:45:16  fwarmerdam
+ * Fixed reentrancy issue with PamInitialize.
+ *
  * Revision 1.10  2005/09/11 18:04:24  fwarmerdam
  * clearup multidomain metadata
  *
@@ -240,6 +243,10 @@ void GDALPamRasterBand::PamInitialize()
 
     poParentDS->PamInitialize();
     if( poParentDS->psPam == NULL )
+        return;
+
+    // Often (always?) initializing our parent will have initialized us. 
+    if( psPam != NULL )
         return;
 
     psPam = (GDALRasterBandPamInfo *)
