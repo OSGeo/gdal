@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.10  2005/09/15 02:37:10  fwarmerdam
+ * improved file header pre-test
+ *
  * Revision 1.9  2005/09/15 00:51:36  fwarmerdam
  * fixed memory leak of poDS
  *
@@ -225,6 +228,12 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
     HDF5Dataset *poDS;
     CPLErr      Err;
     
+    if( poOpenInfo->nHeaderBytes < 32 )
+        return NULL;
+
+    if( !EQUALN((const char *) (poOpenInfo->pabyHeader+1), "HDF",3) )
+        return NULL;
+
 /* -------------------------------------------------------------------- */
 /*  We have special routine in the HDF library for format checking!     */
 /* -------------------------------------------------------------------- */
@@ -232,9 +241,6 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
 	return NULL;
     }
     
-    if( poOpenInfo->fp == NULL )
-        return NULL;
-
 /* -------------------------------------------------------------------- */
 /*      Create datasource.                                              */
 /* -------------------------------------------------------------------- */
