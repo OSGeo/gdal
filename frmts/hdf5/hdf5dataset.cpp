@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.9  2005/09/15 00:51:36  fwarmerdam
+ * fixed memory leak of poDS
+ *
  * Revision 1.8  2005/09/13 02:33:07  fwarmerdam
  * Clean up more carefully on failed opens to avoid leaks.
  *
@@ -229,12 +232,13 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo * poOpenInfo )
 	return NULL;
     }
     
+    if( poOpenInfo->fp == NULL )
+        return NULL;
+
 /* -------------------------------------------------------------------- */
 /*      Create datasource.                                              */
 /* -------------------------------------------------------------------- */
     poDS = new HDF5Dataset();
-    if( poOpenInfo->fp == NULL )
-        return NULL;
     
     poDS->fp = poOpenInfo->fp;
     poOpenInfo->fp = NULL;
