@@ -1069,8 +1069,11 @@ AC_SUBST(KAKDIR,$KAKDIR)
 dnl ---------------------------------------------------------------------------
 dnl Select MrSID library or disable driver.
 dnl ---------------------------------------------------------------------------
+MRSID_FLAGS=
 
 AC_ARG_WITH(mrsid,[  --with-mrsid[=ARG]      Include MrSID support (ARG=path to MrSID DSDK or no)],,)
+
+AC_ARG_WITH(jp2mrsid,[  --with-jp2mrsid[=ARG]   Enable MrSID JPEG2000 support (ARG=yes/no)],,)
 
 if test "x$with_mrsid" = "xno"  -o "x$with_mrsid" = "x" ; then
 
@@ -1080,60 +1083,54 @@ if test "x$with_mrsid" = "xno"  -o "x$with_mrsid" = "x" ; then
 
 else
 
-  AC_MSG_CHECKING([for MrSIDImage.h in $with_mrsid/include])
-  if test -r "$with_mrsid/include/MrSIDImage.h" ; then
-    AC_MSG_RESULT([found.])
+  AC_MSG_CHECKING([for lt_base.h in $with_mrsid/include/support])
+  if test -r "$with_mrsid/include/support/lt_base.h" ; then
+    AC_MSG_RESULT([found MrSID DSDK version 4.x or newer.])
 
     HAVE_MRSID=yes
-    MRSID_INCLUDE="-I$with_mrsid/include"
-    LIBS="-lMrSIDDecode -llt_xTrans -lpthread $LIBS"
-    MRSID_FLAGS=-DMRSID_DSDK_VERSION_32
+    MRSID_INCLUDE="-I$with_mrsid/include/base -I$with_mrsid/include/metadata -I$with_mrsid/include/mrsid_readers -I$with_mrsid/include/j2k_readers -I$with_mrsid/include/support"
+    LIBS="-lltidsdk -lpthread $LIBS"
 
-    if test -r "$with_mrsid/bin/lib/libMrSIDDecode.a" ; then
-      LIBS="-L$with_mrsid/bin/lib $LIBS"
-    else
-      LIBS="-L$with_mrsid/lib $LIBS"
+    AC_MSG_CHECKING([for MG3ImageWriter.h in $with_mrsid/include/mrsid_writers])
+    if test -r "$with_mrsid/include/mrsid_writers/MG3ImageWriter.h" ; then
+      AC_MSG_RESULT([found MrSID ESDK version 4.x or newer.])
+      MRSID_FLAGS="-DMRSID_ESDK $MRSID_FLAGS"
+      MRSID_INCLUDE="-I$with_mrsid/include/mrsid_writers -I$with_mrsid/include/j2k_writers $MRSID_INCLUDE"
+      LIBS="-lltiesdk $LIBS -lcryptopp"
     fi
 
-    AC_MSG_CHECKING([for lt_colorSpace.h in $with_mrsid/include])
-    if test -r "$with_mrsid/include/lt_colorSpace.h" ; then  
-      AC_MSG_RESULT([found MrSID DSDK version 3.1.x.])
-      MRSID_FLAGS=-DMRSID_DSDK_VERSION_31
+    AC_MSG_CHECKING([for MrSID JPEG2000 support])
+    if test "x$with_jp2mrsid" = "xyes" -a "$HAVE_KAKADU" = "yes" ; then
+      AC_MSG_ERROR([MrSID JPEG2000 support requested, but this is incompatible with use of standalone Kakadu])
+    fi
+
+    if test "x$with_jp2mrsid" = "x" -a "$HAVE_KAKADU" = "no" \
+            -a -r $with_mrsid/3rd-party/lib/Release/libltikdu.a ; then 
+      with_jp2mrsid=yes
+    fi
+    if test "x$with_jp2mrsid" = "xyes" \
+            -a ! -r $with_mrsid/3rd-party/lib/Release/libltikdu.a ; then 
+      AC_MSG_ERROR([MrSID JPEG2000 support requested, but libltikdu.a not found.])
+    fi
+
+    if test "x$with_jp2mrsid" = "xyes" ; then
+      LIBS="-lltikdu $LIBS" 
+      MRSID_FLAGS="-DMRSID_J2K $MRSID_FLAGS"
+      AC_MSG_RESULT([enabled])
     else
-      AC_MSG_RESULT([not found.])
+      AC_MSG_RESULT([disabled])
+    fi
+
+    if test -r "$with_mrsid/lib/libltidsdk.a" ; then
+      LIBS="-L$with_mrsid/lib -L$with_mrsid/3rd-party/lib/Release $LIBS"
+    else
+      LIBS="-L$with_mrsid/lib/Release -L$with_mrsid/3rd-party/lib/Release $LIBS"
     fi
 
   else
-    AC_MSG_RESULT([not found.])
-
-    AC_MSG_CHECKING([for lt_base.h in $with_mrsid/include/support])
-    if test -r "$with_mrsid/include/support/lt_base.h" ; then
-      AC_MSG_RESULT([found MrSID DSDK version 4.x or newer.])
-
-      HAVE_MRSID=yes
-      MRSID_INCLUDE="-I$with_mrsid/include/base -I$with_mrsid/include/metadata -I$with_mrsid/include/mrsid_readers -I$with_mrsid/include/j2k_readers -I$with_mrsid/include/support"
-      LIBS="-lltidsdk -lpthread $LIBS"
-
-      if test -r "$with_mrsid/lib/libltidsdk.a" ; then
-        LIBS="-L$with_mrsid/lib $LIBS"
-      else
-        LIBS="-L$with_mrsid/lib/Release $LIBS"
-      fi
-
-      AC_MSG_CHECKING([for MG3ImageWriter.h in $with_mrsid/include/mrsid_writers])
-      if test -r "$with_mrsid/include/mrsid_writers/MG3ImageWriter.h" ; then
-        AC_MSG_RESULT([found MrSID ESDK version 4.x or newer.])
-	MRSID_FLAGS="-DMRSID_ESDK_VERSION_40 $MRSID_FLAGS"
-	MRSID_INCLUDE="-I$with_mrsid/include/mrsid_writers -I$with_mrsid/include/j2k_writers $MRSID_INCLUDE"
-	LIBS="-L$with_mrsid/3rd-party/lib/Release -lltiesdk $LIBS -lcryptopp"
-      fi
-
-    else
-      HAVE_MRSID=no
-      AC_MSG_ERROR([not found.])
-    fi
+    HAVE_MRSID=no
+    AC_MSG_ERROR([not found.])
   fi
-
 fi
 
 AC_SUBST(HAVE_MRSID,$HAVE_MRSID)
