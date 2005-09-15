@@ -25,6 +25,9 @@
  * The GDALDriverManager class from gdal_priv.h.
  * 
  * $Log$
+ * Revision 1.31  2005/09/15 18:39:43  fwarmerdam
+ * cleanup TLS and VSI with driver manager
+ *
  * Revision 1.30  2005/07/11 17:29:48  fwarmerdam
  * More use of mutex in some "read" cases.
  *
@@ -251,6 +254,17 @@ GDALDriverManager::~GDALDriverManager()
 /*      related subsystem.                                              */
 /* -------------------------------------------------------------------- */
     OSRCleanup();
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup VSIFileManager.                                         */
+/* -------------------------------------------------------------------- */
+    VSICleanupFileManager();
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup thread local storage ... I hope the program is all      */
+/*      done with GDAL/OGR!                                             */
+/* -------------------------------------------------------------------- */
+    CPLCleanupTLS();
 
 /* -------------------------------------------------------------------- */
 /*      Ensure the global driver manager pointer is NULLed out.         */
