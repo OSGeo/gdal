@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.59  2005/09/16 20:30:33  fwarmerdam
+ * return HFA_DEPENDENT_FILE in secret metadata, drop .ovr support
+ *
  * Revision 1.58  2005/08/19 02:14:11  fwarmerdam
  * bug 857: add ability to set layer names
  *
@@ -468,6 +471,9 @@ class HFARasterBand : public GDALPamRasterBand
                                         int *pnBuckets, int ** ppanHistogram,
                                         int bForce,
                                         GDALProgressFunc, void *pProgressData);
+
+//    virtual const GDALRasterAttributeTable *GetDefaultRAT();
+//    virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
 };
 
 /************************************************************************/
@@ -1056,6 +1062,8 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
     eErr = GDALRegenerateOverviews( this, nReqOverviews, papoOvBands,
                                     pszResampling, 
                                     pfnProgress, pProgressData );
+
+    CPLFree( papoOvBands );
     
     return CE_None;
 }
@@ -1118,6 +1126,64 @@ HFARasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
                                                        pfnProgress,
                                                        pProgressData );
 }
+
+/************************************************************************/
+/*                           GetDefaultRAT()                            */
+/************************************************************************/
+
+#ifdef notdef
+const GDALRasterAttributeTable *HFARasterBand::GetDefaultRAT()
+
+{		
+#ifdef notdef
+    // now try to read the histogram
+    HFAEntry *poEntry = poBand->poNode->GetNamedChild( "Descriptor_Table.Histogram" );
+    if ( poEntry != NULL )
+    {
+        int nNumBins = poEntry->GetIntField( "numRows" );
+        int nOffset =  poEntry->GetIntField( "columnDataPtr" );
+        const char * pszType =  poEntry->GetStringField( "dataType" );
+        int nBinSize = 4;
+        
+        if( pszType != NULL && EQUALN( "real", pszType, 4 ) )
+        {
+            nBinSize = 8;
+        }
+        unsigned int nBufSize = 1024;
+        char * pszBinValues = (char *)CPLMalloc( nBufSize );
+        pszBinValues[0] = 0;
+        for ( int nBin = 0; nBin < nNumBins; ++nBin )
+        {
+            VSIFSeekL( hHFA->fp, nOffset + nBin*nBinSize, SEEK_SET );
+            char szBuf[32];
+            if ( nBinSize == 8 )
+            {
+                double dfValue;
+                VSIFReadL( &dfValue, nBinSize, 1, hHFA->fp );
+                HFAStandard( nBinSize, &dfValue );
+                snprintf( szBuf, 31, "%.14g", dfValue );
+            }
+            else
+            {
+                int nValue;
+                VSIFReadL( &nValue, nBinSize, 1, hHFA->fp );
+                HFAStandard( nBinSize, &nValue );
+                snprintf( szBuf, 31, "%d", nValue );
+            }
+            if ( ( strlen( pszBinValues ) + strlen( szBuf ) + 2 ) > nBufSize )
+            {
+                nBufSize *= 2;
+                pszBinValues = (char *)realloc( pszBinValues, nBufSize );
+            }
+            strcat( pszBinValues, szBuf );
+            strcat( pszBinValues, "|" );
+        }
+        SetMetadataItem( "STATISTICS_HISTOBINVALUES", pszBinValues );
+        CPLFree( pszBinValues );
+#endif
+    return NULL;
+}
+#endif
 
 /************************************************************************/
 /* ==================================================================== */
@@ -2125,11 +2191,6 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Check for overviews.                                            */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-
-/* -------------------------------------------------------------------- */
 /*      Check for GDAL style metadata.                                  */
 /* -------------------------------------------------------------------- */
     char **papszMD = HFAGetMetadata( hHFA, 0 );
@@ -2137,6 +2198,19 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->SetMetadata( papszMD );
         poDS->bMetadataDirty = FALSE;
+        CSLDestroy( papszMD );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for dependent dataset value.                              */
+/* -------------------------------------------------------------------- */
+    HFAInfo_t *psInfo = (HFAInfo_t *) hHFA;
+    HFAEntry  *poEntry = psInfo->poRoot->GetNamedChild("DependentFile");
+    if( poEntry != NULL )
+    {
+        poDS->SetMetadataItem( "HFA_DEPENDENT_FILE", 
+                               poEntry->GetStringField( "dependent.string" ),
+                               "HFA" );
     }
 
 /* -------------------------------------------------------------------- */
