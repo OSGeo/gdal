@@ -4,6 +4,9 @@
 
 /*
  * $Log$
+ * Revision 1.5  2005/09/16 20:42:49  kruland
+ * Magical adjustments to some list length calls.
+ *
  * Revision 1.4  2005/09/14 15:01:33  kruland
  * Removed accidental debug message.
  *
@@ -154,7 +157,7 @@ CreateArrayFromDoubleArray( double *first, unsigned int size ) {
   }
   $1 = argin;
   AV *av = (AV*)(SvRV($input));
-  int seq_size = av_len(av);
+  int seq_size = av_len(av)+1;
   if ( seq_size != $dim0 ) {
     croak("argument array must have length %d",$dim0);
     SWIG_fail;
@@ -176,7 +179,7 @@ CreateArrayFromDoubleArray( double *first, unsigned int size ) {
     SWIG_fail;
   }
   AV *av = (AV*)(SvRV($input));
-  $1 = av_len(av);
+  $1 = av_len(av)-1;
   $2 = (int*) malloc($1*sizeof(int));
   for( int i = 0; i<$1; i++ ) {
     SV **sv = av_fetch(av, i, 0);
@@ -272,7 +275,7 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
     SWIG_fail;
   }
   AV *av = (AV*)(SvRV($input));
-  $1 = av_len(av);
+  $1 = av_len(av)-1;
   tmpGCPList = (GDAL_GCP*) malloc($1*sizeof(GDAL_GCP));
   $2 = tmpGCPList;
   for( int i = 0; i<$1; i++ ) {
@@ -418,7 +421,7 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
     SWIG_fail;
   }
   AV *av = (AV*)(SvRV($input));
-  for (int i = 0; i < av_len(av); i++) {
+  for (int i = 0; i < av_len(av)-1; i++) {
     char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
     $1 = CSLAddString( $1, pszItem );
   }
@@ -555,7 +558,7 @@ static CPLXMLNode *AVToXMLTree( AV *av )
     CPLXMLNode *psChild;
     char       *pszText = NULL;
 
-    nChildCount = av_len(av) - 2;
+    nChildCount = av_len(av) - 1;
     if( nChildCount < 0 )
     {
         croak("Error in input XMLTree.");
