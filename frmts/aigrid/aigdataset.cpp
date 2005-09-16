@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/09/16 20:38:19  fwarmerdam
+ * added overview support
+ *
  * Revision 1.24  2005/05/05 15:52:48  fwarmerdam
  * PAM Enabled
  *
@@ -476,6 +479,11 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 
     }
+
+/* -------------------------------------------------------------------- */
+/*      Open overviews.                                                 */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
