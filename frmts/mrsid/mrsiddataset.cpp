@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2005/09/16 22:09:18  fwarmerdam
+ * Ensure SetDescription() is called before OpenZoom.
+ *
  * Revision 1.43  2005/09/15 02:17:34  fwarmerdam
  * note MRSID_HAVE_GETWKT macro.
  *
@@ -1081,7 +1084,8 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
     else if( iZoom == 0 )
     {
         bHasGeoTransform = 
-            GDALReadWorldFile( GetDescription(), ".sdw",  adfGeoTransform )
+            GDALReadWorldFile( GetDescription(), ".sdw",  
+                               adfGeoTransform )
             || GDALReadWorldFile( GetDescription(), ".sidw", 
                                   adfGeoTransform )
             || GDALReadWorldFile( GetDescription(), ".wld", 
@@ -1269,6 +1273,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create object for the whole image.                              */
 /* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->OpenZoomLevel( 0 );
 
     CPLDebug( "MrSID",
@@ -1278,7 +1283,6 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
 
     return( poDS );
