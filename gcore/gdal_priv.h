@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2005/09/16 20:31:15  fwarmerdam
+ * added bOvrIsAux, and RAT methods
+ *
  * Revision 1.62  2005/07/25 21:24:28  ssoule
  * Changed GDALColorTable's "GDALColorEntry *paoEntries" to
  * "std::vector<GDALColorEntry> aoEntries".
@@ -227,6 +230,7 @@ class GDALMajorObject;
 class GDALDataset;
 class GDALRasterBand;
 class GDALDriver;
+class GDALRasterAttributeTable;
 
 /* -------------------------------------------------------------------- */
 /*      Pull in the public declarations.  This gets the C apis, and     */
@@ -282,6 +286,8 @@ class CPL_DLL GDALDefaultOverviews
     GDALDataset *poODS;
     
     char        *pszOvrFilename;
+
+    int        bOvrIsAux;
     
   public:
                GDALDefaultOverviews();
@@ -606,6 +612,9 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                         GDALProgressFunc, void *pProgressData);
     virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
                                         int nBuckets, int *panHistogram );
+
+    virtual const GDALRasterAttributeTable *GetDefaultRAT();
+    virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
 };
 
 /* ******************************************************************** */
