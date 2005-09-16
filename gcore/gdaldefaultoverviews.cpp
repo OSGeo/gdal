@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/09/16 20:32:44  fwarmerdam
+ * added preliminary .aux support (read only)
+ *
  * Revision 1.11  2005/05/10 04:48:42  fwarmerdam
  * GDALOvLevelAdjust now public
  *
@@ -65,6 +68,7 @@
  */
 
 #include "gdal_priv.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -78,6 +82,7 @@ GDALDefaultOverviews::GDALDefaultOverviews()
     poDS = NULL;
     poODS = NULL;
     pszOvrFilename = NULL;
+    bOvrIsAux = FALSE;
 }
 
 /************************************************************************/
@@ -104,7 +109,7 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
                                        int bNameIsOVR )
 
 {
-    VSIStatBuf sStatBuf;
+    VSIStatBufL sStatBuf;
 
 /* -------------------------------------------------------------------- */
 /*      If we were already initialized, destroy the old overview        */
@@ -132,20 +137,80 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
     else
         sprintf( pszOvrFilename, "%s.ovr", pszBasename );
 
-    bExists = VSIStat( pszOvrFilename, &sStatBuf ) == 0;
+    bExists = VSIStatL( pszOvrFilename, &sStatBuf ) == 0;
 
 #if !defined(WIN32)
     if( !bNameIsOVR && !bExists )
     {
         sprintf( pszOvrFilename, "%s.OVR", pszBasename );
-        bExists = VSIStat( pszOvrFilename, &sStatBuf ) == 0;
+        bExists = VSIStatL( pszOvrFilename, &sStatBuf ) == 0;
         if( !bExists )
             sprintf( pszOvrFilename, "%s.ovr", pszBasename );
     }
 #endif
 
     if( bExists )
+    {
         poODS = (GDALDataset *) GDALOpen( pszOvrFilename, poDS->GetAccess() );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We didn't find that, so try and find a corresponding aux        */
+/*      file.  Check that we are the dependent file of the aux          */
+/*      file.                                                           */
+/* -------------------------------------------------------------------- */
+    if( !poODS )
+    {
+        CPLString oAuxFilename = CPLResetExtension(pszBasename,"aux");
+        CPLString oJustFile = CPLGetFilename(pszBasename); // without dir
+        
+        if( VSIStatL( oAuxFilename, &sStatBuf ) == 0 )
+        {
+            poODS = (GDALDataset *) GDALOpen( oAuxFilename, 
+                                              poDS->GetAccess() );
+        }
+
+        if( poODS != NULL )
+        {
+            const char *pszDep
+                = poODS->GetMetadataItem( "HFA_DEPENDENT_FILE", "HFA" );
+            if( pszDep == NULL || !EQUAL(pszDep,oJustFile) )
+            {
+                GDALClose( poODS );
+                poODS = NULL;
+            }
+        }
+        
+        if( poODS == NULL )
+        {
+            oAuxFilename = pszBasename;
+            oAuxFilename += ".aux";
+
+            if( VSIStatL( oAuxFilename, &sStatBuf ) == 0 )
+            {
+                poODS = (GDALDataset *) GDALOpen( oAuxFilename, 
+                                                  poDS->GetAccess() );
+            }
+
+            if( poODS != NULL )
+            {
+                const char *pszDep
+                    = poODS->GetMetadataItem( "HFA_DEPENDENT_FILE", "HFA" );
+                if( pszDep == NULL || !EQUAL(pszDep,oJustFile) )
+                {
+                    GDALClose( poODS );
+                    poODS = NULL;
+                }
+            }
+        }
+
+        if( poODS )
+        {
+            bOvrIsAux = TRUE;
+            CPLFree( pszOvrFilename );
+            pszOvrFilename = CPLStrdup(oAuxFilename);
+        }
+    }
 }
 
 /************************************************************************/
@@ -164,7 +229,12 @@ int GDALDefaultOverviews::GetOverviewCount( int nBand )
     if( poBand == NULL )
         return 0;
     else
-        return poBand->GetOverviewCount() + 1;
+    {
+        if( bOvrIsAux )
+            return poBand->GetOverviewCount();
+        else
+            return poBand->GetOverviewCount() + 1;
+    }
 }
 
 /************************************************************************/
@@ -184,12 +254,18 @@ GDALDefaultOverviews::GetOverview( int nBand, int iOverview )
     if( poBand == NULL )
         return NULL;
 
-    if( iOverview == 0 )
-        return poBand;
-    else if( iOverview-1 >= poBand->GetOverviewCount() )
-        return NULL;
-    else
-        return poBand->GetOverview( iOverview-1 );
+    if( bOvrIsAux )
+        return poBand->GetOverview( iOverview );
+
+    else // TIFF case, base is overview 0.
+    {
+        if( iOverview == 0 )
+            return poBand;
+        else if( iOverview-1 >= poBand->GetOverviewCount() )
+            return NULL;
+        else
+            return poBand->GetOverview( iOverview-1 );
+    }
 }
 
 /************************************************************************/
