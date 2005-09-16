@@ -35,6 +35,11 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.46  2005/09/16 23:10:52  fwarmerdam
+ * Docs talk about COMPRESSED, not COMPRESS.  Support both.
+ * Set logvalid flag to false when creating compressed blockinfos
+ * since no space is allocated.
+ *
  * Revision 1.45  2005/09/15 20:36:42  fwarmerdam
  * added HFACreateDependent
  *
@@ -1722,8 +1727,11 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
             HFAStandard( 4, &nValue );
             memcpy( pabyData + nOffset + 6, &nValue, 4 );
 
-            /* logValid (true) */
-            nValue16 = 1;
+            /* logValid (true/false) */
+            if( bCreateCompressed )
+                nValue16 = 0;
+            else
+                nValue16 = 1;
             HFAStandard( 2, &nValue16 );
             memcpy( pabyData + nOffset + 10, &nValue16, 2 );
 
@@ -1850,8 +1858,9 @@ HFAHandle HFACreate( const char * pszFilename,
     }
     int bCreateLargeRaster = CSLFetchBoolean(papszOptions,"USE_SPILL",
                                              FALSE);
-    int bCreateCompressed = CSLFetchBoolean(papszOptions,"COMPRESS",
-                                            FALSE);
+    int bCreateCompressed = 
+        CSLFetchBoolean(papszOptions,"COMPRESS", FALSE)
+        || CSLFetchBoolean(papszOptions,"COMPRESSED", FALSE);
     char *pszFullFilename = NULL, *pszRawFilename = NULL;
 
 /* -------------------------------------------------------------------- */
