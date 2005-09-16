@@ -32,5 +32,5 @@ build: generate Makefile_gdal
 	make -f Makefile_ogr
 	make -f Makefile_osr
 
-install: generate
-	make -f Makefile install
+install: generate Makefile_gdal
+	make -f Makefile_gdal install
