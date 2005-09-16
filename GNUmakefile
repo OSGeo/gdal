@@ -21,7 +21,7 @@ LIBGDAL-$(HAVE_LD_SHARED)	+=	$(GDAL_SLIB)
 # override if we are using libtool
 LIBGDAL-$(HAVE_LIBTOOL)	:= $(LIBGDAL)
 
-default:	lib-target py-target apps-target
+default:	lib-target py-target swig-target apps-target
 
 lib-target:	check-lib;
 
@@ -72,6 +72,7 @@ apps-target:	lib-target ogr-apps
 ogr-apps:	lib-target
 	(cd ogr; $(MAKE) apps)
 
+
 #
 #	We only make python a default target if we think python is installed.
 #
@@ -81,6 +82,9 @@ else
 py-target:	py-module;
 endif
 
+swig-target:
+	(cd swig; $(MAKE) build)
+
 clean:	lclean
 	(cd port; $(MAKE) clean)
 	(cd ogr; $(MAKE) clean)
@@ -88,6 +92,7 @@ clean:	lclean
 	(cd frmts; $(MAKE) clean)
 	(cd alg; $(MAKE) clean)
 	(cd apps; $(MAKE) clean)
+	(cd swig; $(MAKE) clean)
 	(cd pymod; $(MAKE) clean)
 
 py-module:	lib-target
@@ -149,6 +154,7 @@ install-actions: install-lib
 ifneq ($(PYTHON),no)
 	(cd pymod; $(MAKE) install)
 endif
+	(cd swig; $(MAKE) install)
 	for f in data/*.* ; do $(INSTALL_DATA) $$f $(INST_DATA) ; done
 	$(LIBTOOL_FINISH) $(INST_LIB)
 

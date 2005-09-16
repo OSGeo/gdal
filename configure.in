@@ -1,4 +1,4 @@
-dnl Disable configure caching ... it causes lots of hassles.
+Mdnl Disable configure caching ... it causes lots of hassles.
 define([AC_CACHE_LOAD], )
 define([AC_CACHE_SAVE], )
 
@@ -1089,14 +1089,14 @@ else
 
     HAVE_MRSID=yes
     MRSID_INCLUDE="-I$with_mrsid/include/base -I$with_mrsid/include/metadata -I$with_mrsid/include/mrsid_readers -I$with_mrsid/include/j2k_readers -I$with_mrsid/include/support"
-    LIBS="-lltidsdk -lpthread $LIBS"
+    MRSID_LIBS="-lltidsdk -lpthread"
 
     AC_MSG_CHECKING([for MG3ImageWriter.h in $with_mrsid/include/mrsid_writers])
     if test -r "$with_mrsid/include/mrsid_writers/MG3ImageWriter.h" ; then
       AC_MSG_RESULT([found MrSID ESDK version 4.x or newer.])
       MRSID_FLAGS="-DMRSID_ESDK $MRSID_FLAGS"
       MRSID_INCLUDE="-I$with_mrsid/include/mrsid_writers -I$with_mrsid/include/j2k_writers $MRSID_INCLUDE"
-      LIBS="-lltiesdk $LIBS -lcryptopp"
+      MRSID_LIBS="-lltiesdk -lcryptopp $MRSID_LIBS"
     fi
 
     AC_MSG_CHECKING([for MrSID JPEG2000 support])
@@ -1114,7 +1114,7 @@ else
     fi
 
     if test "x$with_jp2mrsid" = "xyes" ; then
-      LIBS="-lltikdu $LIBS" 
+      MRSID_LIBS="$MRSID_LIBS -lltikdu"
       MRSID_FLAGS="-DMRSID_J2K $MRSID_FLAGS"
       AC_MSG_RESULT([enabled])
     else
@@ -1122,11 +1122,12 @@ else
     fi
 
     if test -r "$with_mrsid/lib/libltidsdk.a" ; then
-      LIBS="-L$with_mrsid/lib -L$with_mrsid/3rd-party/lib/Release $LIBS"
+      MRSID_LIBS="-L$with_mrsid/lib -L$with_mrsid/3rd-party/lib/Release $MRSID_LIBS"
     else
-      LIBS="-L$with_mrsid/lib/Release -L$with_mrsid/3rd-party/lib/Release $LIBS"
+      MRSID_LIBS="-L$with_mrsid/lib/Release -L$with_mrsid/3rd-party/lib/Release $MRSID_LIBS"
     fi
 
+    LIBS="$MRSID_LIBS $LIBS" 
   else
     HAVE_MRSID=no
     AC_MSG_ERROR([not found.])
@@ -1668,10 +1669,70 @@ export GDAL_PREFIX
 AC_DEFINE_UNQUOTED(GDAL_PREFIX,["]$GDAL_PREFIX["], [--prefix directory for GDAL install])
 
 dnl ---------------------------------------------------------------------------
+dnl Perl bindings.
+dnl ---------------------------------------------------------------------------
+
+BINDINGS=
+
+AC_ARG_WITH(perl,[  --with-perl           Enable perl bindings],,)
+
+AC_MSG_CHECKING([for SWIG perl bindings])
+if test "$with_perl" = "yes" ; then
+  BINDINGS="perl $BINDINGS"
+  AC_MSG_RESULT([enabled])
+else
+  AC_MSG_RESULT([disabled])
+fi
+
+dnl ---------------------------------------------------------------------------
+dnl PHP bindings.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(php,[  --with-php            Enable php bindings],,)
+
+AC_MSG_CHECKING([for SWIG php bindings])
+if test "$with_php" = "yes" ; then
+  BINDINGS="php $BINDINGS"
+  AC_MSG_RESULT([enabled])
+else
+  AC_MSG_RESULT([disabled])
+fi
+
+dnl ---------------------------------------------------------------------------
+dnl Ruby bindings.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(ruby,[  --with-ruby           Enable Ruby bindings],,)
+
+AC_MSG_CHECKING([for SWIG ruby bindings])
+if test "$with_ruby" = "yes" ; then
+  BINDINGS="ruby $BINDINGS"
+  AC_MSG_RESULT([enabled])
+else
+  AC_MSG_RESULT([disabled])
+fi
+
+dnl ---------------------------------------------------------------------------
+dnl NG Python bindings.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(ngpython,[  --with-ngpython       Enable Next Generation python bindings],,)
+
+AC_MSG_CHECKING([for NG SWIG python bindings])
+if test "$with_ngpython" = "yes" ; then
+  BINDINGS="python $BINDINGS"
+  AC_MSG_RESULT([enabled])
+else
+  AC_MSG_RESULT([disabled])
+fi
+
+AC_SUBST(BINDINGS)
+
+dnl ---------------------------------------------------------------------------
 dnl Python Checks
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(python,[  --without-python      Disable Python],,)
+AC_ARG_WITH(python,[  --with-python         Enable traditional Python bindings],,)
 
 AM_PATH_PYTHON
 AM_INIT_PYEXEC_MOD
@@ -1733,7 +1794,8 @@ LOC_MSG([  GEOS support:              ${HAVE_GEOS}])
 LOC_MSG()
 LOC_MSG([  Statically link PROJ.4:    ${PROJ_STATIC}])
 LOC_MSG()
-LOC_MSG([  Python:                    ${HAVE_PYTHON}])
+LOC_MSG([  Traditional Python:        ${HAVE_PYTHON}])
+LOC_MSG([  NG SWIG Bindings:          ${BINDINGS}])
 LOC_MSG()
 LOC_MSG([  enable OGR building:       ${OGR_ENABLED}])
 LOC_MSG()
