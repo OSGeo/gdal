@@ -41,4 +41,6 @@ int main( int argc, char **argv )
         CPLFree( pszRawXML );
         CPLDestroyXMLNode( poTree );
     }
+
+    return 0;
 }
