@@ -8,7 +8,7 @@ gdal::AllRegister();
 
 ogr::RegisterAll();
 
-$dataset = gdal::Open('/d/data/Corine/100x100/lceugr100_00_pct.tif', gdal::GA_ReadOnly);
+$dataset = gdal::Open('../../data/gdalicon.png', gdal::GA_ReadOnly);
 
 if ($dataset) {
     print $dataset,' ',ref($dataset),"\n";
@@ -19,7 +19,7 @@ if ($dataset) {
     print $dataset->GetProjection,"\n";
 }
 
-$datasource = ogr::Open('/d/data/misc/gma1geo.shp');
+$datasource = ogr::Open('../../data/stateplane.csv');
 
 if ($datasource) {
     print $datasource->swig_name_get,"\n";
