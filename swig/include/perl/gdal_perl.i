@@ -6,6 +6,9 @@
 
 /*
  * $Log$
+ * Revision 1.4  2005/09/16 19:17:46  kruland
+ * Call UseExceptions on module init.
+ *
  * Revision 1.3  2005/09/13 18:35:50  kruland
  * Rename GetMetadata_Dict to GetMetadata and ignore GetMetadata_List.
  *
@@ -20,6 +23,7 @@
 
 %init %{
   /* gdal_perl.i %init code */
+  UseExceptions();
   if ( GDALGetDriverCount() == 0 ) {
     GDALAllRegister();
   }
