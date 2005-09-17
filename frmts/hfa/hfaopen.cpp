@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.47  2005/09/17 03:47:16  fwarmerdam
+ * added dependent overview creation
+ *
  * Revision 1.46  2005/09/16 23:10:52  fwarmerdam
  * Docs talk about COMPRESSED, not COMPRESS.  Support both.
  * Set logvalid flag to false when creating compressed blockinfos
@@ -1869,6 +1872,22 @@ HFAHandle HFACreate( const char * pszFilename,
     psInfo = HFACreateLL( pszFilename );
     if( psInfo == NULL )
         return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Create the DependentFile node if requested.                     */
+/* -------------------------------------------------------------------- */
+    const char *pszDependentFile = 
+        CSLFetchNameValue( papszOptions, "DEPENDENT_FILE" );
+
+    if( pszDependentFile != NULL )
+    {
+        HFAEntry *poDF = new HFAEntry( psInfo, "DependentFile", 
+                                       "Eimg_DependentFile", psInfo->poRoot );
+
+        poDF->MakeData( strlen(pszDependentFile) + 50 );
+        poDF->SetPosition();
+        poDF->SetStringField( "dependent.string", pszDependentFile );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Work out some details about the tiling scheme.                  */

@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.60  2005/09/17 03:47:16  fwarmerdam
+ * added dependent overview creation
+ *
  * Revision 1.59  2005/09/16 20:30:33  fwarmerdam
  * return HFA_DEPENDENT_FILE in secret metadata, drop .ovr support
  *
@@ -998,8 +1001,8 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
 {
     int iOverview;
     GDALRasterBand **papoOvBands;
+    int bNoRegen;
     
-
     if( nThisOverview != -1 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -1009,6 +1012,12 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
     }
 
     papoOvBands = (GDALRasterBand **) CPLCalloc(sizeof(void*),nReqOverviews);
+
+    if( EQUALN(pszResampling,"NO_REGEN:",9) )
+    {
+        pszResampling += 9;
+        bNoRegen = TRUE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Loop over overview levels requested.                            */
@@ -1057,12 +1066,13 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
 /* -------------------------------------------------------------------- */
 /*      Regenerate the overviews.                                       */
 /* -------------------------------------------------------------------- */
-    CPLErr eErr;
+    CPLErr eErr = CE_None;
 
-    eErr = GDALRegenerateOverviews( this, nReqOverviews, papoOvBands,
-                                    pszResampling, 
-                                    pfnProgress, pProgressData );
-
+    if( !bNoRegen )
+        eErr = GDALRegenerateOverviews( this, nReqOverviews, papoOvBands,
+                                        pszResampling, 
+                                        pfnProgress, pProgressData );
+    
     CPLFree( papoOvBands );
     
     return CE_None;
