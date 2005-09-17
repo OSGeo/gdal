@@ -4,7 +4,7 @@ GDAL_ROOT	=	../..
 include $(GDAL_ROOT)/GDALmake.opt
 
 HFAOBJ  =	hfaopen.o hfaentry.o hfadictionary.o hfafield.o hfatype.o \
-		hfaband.o hfacompress.o
+		hfaband.o hfacompress.o hfa_overviews.o
 OBJ	=	$(HFAOBJ) hfadataset.o 
 
 ALL_C_FLAGS	=	$(GDAL_INCLUDE) $(CFLAGS)
