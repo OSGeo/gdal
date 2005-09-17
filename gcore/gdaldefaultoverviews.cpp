@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/09/17 03:46:18  fwarmerdam
+ * added USE_RRD support to create overviews
+ *
  * Revision 1.12  2005/09/16 20:32:44  fwarmerdam
  * added preliminary .aux support (read only)
  *
@@ -309,6 +312,21 @@ GDALDefaultOverviews::BuildOverviews(
     int          i;
 
 /* -------------------------------------------------------------------- */
+/*      If we don't already have an overview file, we need to decide    */
+/*      what format to use.                                             */
+/* -------------------------------------------------------------------- */
+    if( poODS == NULL )
+    {
+        bOvrIsAux = CSLTestBoolean(CPLGetConfigOption( "USE_RRD", "NO" ));
+        if( bOvrIsAux )
+        {
+            CPLFree( pszOvrFilename );
+            pszOvrFilename = 
+                CPLStrdup(CPLResetExtension(poDS->GetDescription(),"aux"));
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Our TIFF overview support currently only works safely if all    */
 /*      bands are handled at the same time.                             */
 /* -------------------------------------------------------------------- */
@@ -332,7 +350,11 @@ GDALDefaultOverviews::BuildOverviews(
     {
         CPLFree( pszOvrFilename );
         pszOvrFilename = (char *) CPLMalloc(strlen(pszBasename)+5);
-        sprintf( pszOvrFilename, "%s.ovr", pszBasename );
+        
+        if( bOvrIsAux )
+            sprintf( pszOvrFilename, "%s.aux", pszBasename );
+        else
+            sprintf( pszOvrFilename, "%s.ovr", pszBasename );
     }
 
 /* -------------------------------------------------------------------- */
@@ -368,15 +390,6 @@ GDALDefaultOverviews::BuildOverviews(
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we have an existing overview file open, close it now.        */
-/* -------------------------------------------------------------------- */
-    if( poODS != NULL )
-    {
-        delete poODS;
-        poODS = NULL;
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Build band list.                                                */
 /* -------------------------------------------------------------------- */
     pahBands = (GDALRasterBand **) CPLCalloc(sizeof(GDALRasterBand *),nBands);
@@ -384,24 +397,56 @@ GDALDefaultOverviews::BuildOverviews(
         pahBands[i] = poDS->GetRasterBand( panBandList[i] );
 
 /* -------------------------------------------------------------------- */
-/*      Build new overviews.                                            */
+/*      Build new overviews - Imagine.  Keep existing file open if      */
+/*      we have it.  But mark all overviews as in need of               */
+/*      regeneration, since HFAAuxBuildOverviews() doesn't actually     */
+/*      produce the imagery.                                            */
 /* -------------------------------------------------------------------- */
+    if( bOvrIsAux )
+    {
+        eErr = HFAAuxBuildOverviews( pszOvrFilename, poDS, &poODS,
+                                     nBands, panBandList,
+                                     nNewOverviews, panNewOverviewList, 
+                                     pszResampling, 
+                                     pfnProgress, pProgressData );
 
-    eErr = GTIFFBuildOverviews( pszOvrFilename, nBands, pahBands, 
-                                nNewOverviews, panNewOverviewList, 
-                                pszResampling, pfnProgress, pProgressData );
+        int j;
+        
+        for( j = 0; j < poBand->GetOverviewCount(); j++ )
+        {
+            if( panOverviewList[j] > 0 )
+                panOverviewList[j] *= -1;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Build new overviews - TIFF.  Close TIFF files while we          */
+/*      operate on it.                                                  */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        if( poODS != NULL )
+        {
+            delete poODS;
+            poODS = NULL;
+        }
+
+        eErr = GTIFFBuildOverviews( pszOvrFilename, nBands, pahBands, 
+                                    nNewOverviews, panNewOverviewList, 
+                                    pszResampling, pfnProgress, pProgressData );
+
+        if( eErr == CE_None )
+        {
+            poODS = (GDALDataset *) GDALOpen( pszOvrFilename, GA_Update );
+            if( poODS == NULL )
+                eErr = CE_Failure;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Refresh old overviews that were listed.                         */
 /* -------------------------------------------------------------------- */
     GDALRasterBand **papoOverviewBands;
-
-    if( eErr == CE_None )
-    {
-        poODS = (GDALDataset *) GDALOpen( pszOvrFilename, GA_Update );
-        if( poODS == NULL )
-            eErr = CE_Failure;
-    }
 
     papoOverviewBands = (GDALRasterBand **) 
         CPLCalloc(sizeof(void*),nOverviews);
@@ -427,7 +472,7 @@ GDALDefaultOverviews::BuildOverviews(
                     || nOvFactor == GDALOvLevelAdjust( -panOverviewList[i], 
                                                        poBand->GetXSize() ) )
                 {
-                    panOverviewList[i] *= -1;
+                    //panOverviewList[i] *= -1;
                     papoOverviewBands[nNewOverviews++] = poOverview;
                 }
             }
@@ -438,7 +483,7 @@ GDALDefaultOverviews::BuildOverviews(
             eErr = GDALRegenerateOverviews( poBand, 
                                             nNewOverviews, papoOverviewBands,
                                             pszResampling, 
-                                            GDALDummyProgress, NULL );
+                                            pfnProgress, pProgressData );
         }
     }
 
