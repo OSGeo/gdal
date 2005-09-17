@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.65  2005/09/17 04:04:16  fwarmerdam
+ * provide default implementation for RAT functions
+ *
  * Revision 1.64  2005/09/17 03:46:37  fwarmerdam
  * added HFAAuxBuildOverviews
  *
@@ -616,8 +619,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
                                         int nBuckets, int *panHistogram );
 
-    virtual const GDALRasterAttributeTable *GetDefaultRAT();
-    virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
+    virtual const GDALRasterAttributeTable *GetDefaultRAT() {return NULL;}
+    virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * ) {return CE_Failure;}
 };
 
 /* ******************************************************************** */
