@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2005/09/17 03:46:37  fwarmerdam
+ * added HFAAuxBuildOverviews
+ *
  * Revision 1.63  2005/09/16 20:31:15  fwarmerdam
  * added bOvrIsAux, and RAT methods
  *
@@ -751,6 +754,14 @@ CPL_C_END
 
 CPL_C_START
 
+CPLErr CPL_DLL
+HFAAuxBuildOverviews( const char *pszOvrFilename, GDALDataset *poParentDS,
+                      GDALDataset **ppoDS,
+                      int nBands, int *panBandList,
+                      int nNewOverviews, int *panNewOverviewList, 
+                      const char *pszResampling, 
+                      GDALProgressFunc pfnProgress, 
+                      void *pProgressData );
 CPLErr CPL_DLL 
 GTIFFBuildOverviews( const char * pszFilename,
                      int nBands, GDALRasterBand **papoBandList, 
