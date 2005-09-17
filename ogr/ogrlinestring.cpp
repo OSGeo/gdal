@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2005/09/17 12:11:30  osemykin
+ * added OGRLineString::getPoints
+ *
  * Revision 1.49  2005/07/22 19:28:56  fwarmerdam
  * reserve extra space for WKT encoding of weird numbers
  *
@@ -649,6 +652,40 @@ void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY,
     if( this->padfZ != NULL )
         memcpy( this->padfZ, padfZ, sizeof(double) * nPointsIn );
 }
+
+/************************************************************************/
+/*                          getPoints()                                 */
+/************************************************************************/
+
+/**
+ * Returns all points of line string.
+ *
+ * This method copies all points into user list. This list must be at
+ * least sizeof(OGRRawPoint) * OGRGeometry::getNumPoints() byte in size.
+ * It also copies all Z coordinates.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param paoPointsOut a buffer into which the points is written.
+ * @param padfZ the Z values that go with the points (optional, may be NULL).
+ */
+
+void OGRLineString::getPoints( OGRRawPoint * paoPointsOut, double * padfZ )
+{
+    if ( ! paoPointsOut )
+        return;
+        
+    memcpy( paoPointsOut, paoPoints, sizeof(OGRRawPoint) * nPointCount );
+
+/* -------------------------------------------------------------------- */
+/*      Check 2D/3D.                                                    */
+/* -------------------------------------------------------------------- */
+    if( padfZ )
+    {
+        memcpy( padfZ, this->padfZ, sizeof(double) * nPointCount );
+    }
+}
+
 
 /************************************************************************/
 /*                          addSubLineString()                          */

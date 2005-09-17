@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2005/09/17 12:11:30  osemykin
+ * added OGRLineString::getPoints
+ *
  * Revision 1.55  2005/08/04 17:18:59  fwarmerdam
  * now have separate 2D and 3D OGRPoint constructors
  *
@@ -458,6 +461,8 @@ class CPL_DLL OGRLineString : public OGRCurve
     void        addPoint( OGRPoint * );
     void        addPoint( double, double );
     void        addPoint( double, double, double );
+
+    void        getPoints( OGRRawPoint *, double * = NULL );
 
     void        addSubLineString( const OGRLineString *, 
                                   int nStartVertex = 0, int nEndVertex = -1 );
