@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.53  2005/09/18 15:26:00  fwarmerdam
+# added Distance method.
+#
 # Revision 1.52  2005/07/20 02:34:52  fwarmerdam
 # fixed up AddPoint to default z
 #
@@ -1247,6 +1250,8 @@ class Geometry:
         else:
             return None
         
+    def Distance( self, other ):
+        return _gdal.OGR_G_Distance( self._o, other._o )
 
 def BuildPolygonFromEdges( edges, bBestEffort=0, bAutoClose=0, Tolerance=0 ):
     _o = _gdal.OGRBuildPolygonFromEdges( edges._o, bBestEffort, bAutoClose,
