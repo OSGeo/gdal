@@ -6,6 +6,9 @@
 
 /*
  * $Log$
+ * Revision 1.2  2005/09/18 07:34:58  cfis
+ * Added support for exceptions, removed some outdated code.
+ *
  * Revision 1.1  2005/09/02 16:19:23  kruland
  * Major reorganization to accomodate multiple language bindings.
  * Each language binding can define renames and supplemental code without
@@ -13,56 +16,42 @@
  *
  */
 
+/* Include default Ruby typemaps */
+%import typemaps_ruby.i
+
+/* Include separate renames file */
+%include renames.i
+
+/* Include exception handling code */
+%include cpl_exceptions.i
+
 %init %{
 
   if ( OGRGetDriverCount() == 0 ) {
     OGRRegisterAll();
   }
-  
-%}
 
-//**************   Ruby specific extensions ***************
-/*
-%extend OGRDriverShadow {
-	static OGRDriverShadow* GetDriverByName( char const *name ) {
-  	return (OGRDriverShadow*) OGRGetDriverByName( name );
-	}
-  
-	static OGRDriverShadow* GetDriver(int driver_number) {
-  	return (OGRDriverShadow*) OGRGetDriver(driver_number);
-	}  
-}
-*/
+  /* Setup exception handling */
+  UseExceptions();
+%}
 
 /* Replace GetLayerByIndex and GetLayerByName by GetLayer */
 %ignore OGRDataSourceShadow::GetLayerByIndex;
 %ignore OGRDataSourceShadow::GetLayerByName;
 
 %extend OGRDataSourceShadow {
-/*
-	%newobject Open;
-	static OGRDataSourceShadow *Open( const char * filename, int update=0 ) {
-	    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(filename,update, NULL);
-	    return ds;
-	  }
-	
-	%newobject OpenShared;
-	static
-	OGRDataSourceShadow *OpenShared( const char * filename, int update=0 ) {
-	    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(filename,update, NULL);
-	    return ds;
-	}
-*/
-	OGRLayerShadow *GetLayer(VALUE object) {
+
+	%apply SWIGTYPE *ParentReference {OGRLayerShadow*};
+	OGRLayerShadow *GetLayer(VALUE whichLayer) {
 		// get field index
-		switch (TYPE(object)) {
+		switch (TYPE(whichLayer)) {
 			case T_STRING: {
-				char* name = StringValuePtr(object);
+				char* name = StringValuePtr(whichLayer);
 				return OGR_DS_GetLayerByName(self, name);
 				break;
 			}
 			case T_FIXNUM: {
-				int index = NUM2INT(object);
+				int index = NUM2INT(whichLayer);
 				return OGR_DS_GetLayer(self, index);
 				break;
 			}
@@ -70,25 +59,43 @@
 				SWIG_exception(SWIG_TypeError, "Value must be a string or integer.");
 		}
 	}
+	%clear OGRLayerShadow*;
 
+	/* Override the way that ReleaseResultSet is handled - we
+	   want to apply a typemap that unlinks the layer from
+		its underlying C++ object since this method destroys
+		the C++ object */
+	%typemap(freearg) OGRLayerShadow *layer {
+		/* %typemap(freearg) OGRLayerShadow *layer */
+		DATA_PTR(argv[0]) = 0;
+	}
+   void ReleaseResultSet(OGRLayerShadow *layer) {
+     OGR_DS_ReleaseResultSet(self, layer);
+   }
+
+	%clear OGRLayerShadow *layer;
 }
 
-// Extend the layers class by adding the method each to support
-// the ruby enumerator mixin.
+/* Extend the layers class by adding support for ruby enumerable mixin. */
 %mixin OGRLayerShadow "Enumerable";
-%extend OGRLayerShadow {
-  %newobject OGRLayerShadow::each;
-  void each() {
-	OGRFeatureShadow* feature = NULL;
- 	while (feature = (OGRFeatureShadow*) OGR_L_GetNextFeature(self))
- 	{
-		/* Convert the pointer to a Ruby object.  Note we set the flag
-		   to one manually to show this is a new object */
-		VALUE object = SWIG_NewPointerObj((void *) feature, $descriptor(OGRFeatureShadow *), 1);			
 
-		/* Now invoke the block specified for this method. */
-		rb_yield(object);
-	}
+/* Replace GetNextFeature by each */
+%ignore OGRDataSourceShadow::GetLayerByIndex;
+
+%extend OGRLayerShadow {
+	%newobject OGRLayerShadow::each;
+	void each() {
+		OGRFeatureShadow* feature = NULL;
+
+ 		while (feature = (OGRFeatureShadow*) OGR_L_GetNextFeature(self))
+ 		{
+			/* Convert the pointer to a Ruby object.  Note we set the flag
+		   to one manually to show this is a new object */
+			VALUE object = SWIG_NewPointerObj((void *) feature, $descriptor(OGRFeatureShadow *), SWIG_POINTER_OWN);			
+
+			/* Now invoke the block specified for this method. */
+			rb_yield(object);
+		}
   }
 }
 
@@ -190,4 +197,4 @@
 	}        
 }
 
-%import typemaps_ruby.i
+
