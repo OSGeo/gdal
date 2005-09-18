@@ -11,6 +11,7 @@
 #	"get_field_name."  This is done by running the separate
 #	RenamesMakefile.mk script.
 
+BINDING = ruby
 GDAL_ROOT = ../..
 RUBY = ruby
 
@@ -18,7 +19,8 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 include ../SWIGmake.base
 
-RUBY_MODULES = gdal/gdal.so gdal/ogr.so gdal/gdalconst.so gdal/osr.so
+#RUBY_MODULES = gdal/gdal.so gdal/ogr.so gdal/gdalconst.so gdal/osr.so
+RUBY_MODULES = gdal/gdalconst.so
 
 RUBY_MAJOR_VERSION := $(shell ruby -rrbconfig -e "puts Config::CONFIG['MAJOR']")
 RUBY_MINOR_VERSION := $(shell ruby -rrbconfig -e "puts Config::CONFIG['MINOR']")
