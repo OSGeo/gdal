@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2005/09/19 21:55:24  gwalter
+ * Avoid creating gcps when geotransform already found.
+ *
  * Revision 1.47  2005/09/14 12:54:40  dron
  * Avoid possible using of uninitialized value.
  *
@@ -948,41 +951,6 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         oSRSWork.exportToWkt( &(poDS->pszProjection) );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Do we have IGEOLO data that can be treated as a                 */
-/*      geotransform?  Our approach should support images in an         */
-/*      affine rotated frame of reference.                              */
-/* -------------------------------------------------------------------- */
-    int nGCPCount = 0;
-    GDAL_GCP    *psGCPs = NULL;
-
-    if( psImage->chICORDS != ' ' )
-    {
-        nGCPCount = 4;
-
-        psGCPs = (GDAL_GCP *) CPLMalloc(sizeof(GDAL_GCP) * nGCPCount);
-        GDALInitGCPs( nGCPCount, psGCPs );
-
-        psGCPs[0].dfGCPPixel	= 0.0;
-        psGCPs[0].dfGCPLine		= 0.0;
-        psGCPs[0].dfGCPX		= psImage->dfULX;
-        psGCPs[0].dfGCPY		= psImage->dfULY;
-
-        psGCPs[1].dfGCPPixel = poDS->nRasterXSize;
-        psGCPs[1].dfGCPLine = 0.0;
-        psGCPs[1].dfGCPX		= psImage->dfURX;
-        psGCPs[1].dfGCPY		= psImage->dfURY;
-
-        psGCPs[2].dfGCPPixel = poDS->nRasterXSize;
-        psGCPs[2].dfGCPLine = poDS->nRasterYSize;
-        psGCPs[2].dfGCPX		= psImage->dfLRX;
-        psGCPs[2].dfGCPY		= psImage->dfLRY;
-
-        psGCPs[3].dfGCPPixel = 0.0;
-        psGCPs[3].dfGCPLine = poDS->nRasterYSize;
-        psGCPs[3].dfGCPX		= psImage->dfLLX;
-        psGCPs[3].dfGCPY		= psImage->dfLLY;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Try looking for a .nfw file.                                    */
@@ -1059,6 +1027,42 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Do we have IGEOLO data that can be treated as a                 */
+/*      geotransform?  Our approach should support images in an         */
+/*      affine rotated frame of reference.                              */
+/* -------------------------------------------------------------------- */
+    int nGCPCount = 0;
+    GDAL_GCP    *psGCPs = NULL;
+
+    if( ( poDS->bGotGeoTransform == FALSE ) && ( psImage->chICORDS != ' ' ) )
+    {
+        nGCPCount = 4;
+
+        psGCPs = (GDAL_GCP *) CPLMalloc(sizeof(GDAL_GCP) * nGCPCount);
+        GDALInitGCPs( nGCPCount, psGCPs );
+
+        psGCPs[0].dfGCPPixel	= 0.0;
+        psGCPs[0].dfGCPLine		= 0.0;
+        psGCPs[0].dfGCPX		= psImage->dfULX;
+        psGCPs[0].dfGCPY		= psImage->dfULY;
+
+        psGCPs[1].dfGCPPixel = poDS->nRasterXSize;
+        psGCPs[1].dfGCPLine = 0.0;
+        psGCPs[1].dfGCPX		= psImage->dfURX;
+        psGCPs[1].dfGCPY		= psImage->dfURY;
+
+        psGCPs[2].dfGCPPixel = poDS->nRasterXSize;
+        psGCPs[2].dfGCPLine = poDS->nRasterYSize;
+        psGCPs[2].dfGCPX		= psImage->dfLRX;
+        psGCPs[2].dfGCPY		= psImage->dfLRY;
+
+        psGCPs[3].dfGCPPixel = 0.0;
+        psGCPs[3].dfGCPLine = poDS->nRasterYSize;
+        psGCPs[3].dfGCPX		= psImage->dfLLX;
+        psGCPs[3].dfGCPY		= psImage->dfLLY;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Convert the GCPs into a geotransform definition, if possible.   */
 /* -------------------------------------------------------------------- */
     if(  ( poDS->bGotGeoTransform == FALSE ) && nGCPCount > 0 && 
@@ -1073,7 +1077,8 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     else if( (psImage->dfULX != 0 || psImage->dfURX != 0 
               || psImage->dfLRX != 0 || psImage->dfLLX != 0)
-             && psImage->chICORDS != ' ' )
+             && psImage->chICORDS != ' ' && 
+             ( poDS->bGotGeoTransform == FALSE ) )
     {
         CPLDebug( "GDAL", 
                   "NITFDataset::Open() wasn't able to derive a first order\n"
