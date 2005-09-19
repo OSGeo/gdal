@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.42  2005/09/19 02:53:23  cfis
+ * The two versions of the method OGRFeatureShadow::GetFieldDefnRef were both marked with the %newobject feature.
+ *
+ * However, this is wrong.  Neither return a newobject so this has been removed.
+ *
  * Revision 1.41  2005/09/14 21:28:35  kruland
  * OGRFeatureDefn::GetFieldDefn() returns an internal pointer, not a newobject.
  *
@@ -665,12 +670,10 @@ public:
   }
 
   /* ---- GetFieldDefnRef --------------------- */
-  %newobject GetFieldDefnRef;
   OGRFieldDefnShadow *GetFieldDefnRef(int id) {
     return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, id);
   }
 
-  %newobject GetFieldDefnRef;
   OGRFieldDefnShadow *GetFieldDefnRef(const char* name) {
     return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, OGR_F_GetFieldIndex(self, name));
   }
