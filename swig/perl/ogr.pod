@@ -1,0 +1,565 @@
+__END__
+
+# documentation is a good thing.
+
+=head1 NAME
+
+ogr - A part of the Perl interface to the GDAL library.
+
+=head1 SYNOPSIS
+
+  use ogr;
+
+=head1 ABSTRACT
+
+This module is a part of the Perl bindings to the GDAL library. The
+GDAL modules allows you to access and manipulate from Perl all
+geospatial data that the installed GDAL library is configured to
+read/write.
+
+=head1 STATUS
+
+This modules is early beta quality. As most of the names and calling
+conventions come directly from the underlying GDAL library they are
+quite stable and will continue to work like the do now. However, many
+things could, should, and will be made more perlish.
+
+Generally, those methods which are documented, have been tested. If
+the method or constructor you are looking for is not documented,
+perhaps there is another way of doing what you want to do.
+
+=head1 PACKAGE METHODS
+
+=over
+
+=item CreateGeometryFromWkb
+
+=item CreateGeometryFromWkt
+
+=item CreateGeometryFromGML
+
+=item GetDriverCount
+
+=item GetOpenDSCount
+
+=item SetGenerate_DB2_V72_BYTE_ORDER
+
+=item RegisterAll
+
+  Done by default.
+
+=item GetOpenDS
+
+=item Open
+
+  $datasource = ogr::Open('directory', $update = 0);
+
+=item OpenShared
+
+=item GetDriverByName
+
+=item GetDriver
+
+=back
+
+=head1 CONSTANTS
+
+=over
+
+=item wkb25Bit
+
+=item wkbUnknown
+
+=item wkbPoint
+
+=item wkbLineString
+
+=item wkbPolygon
+
+=item wkbMultiPoint
+
+=item wkbMultiLineString
+
+=item wkbMultiPolygon
+
+=item wkbGeometryCollection
+
+=item wkbNone
+
+=item wkbLinearRing
+
+=item wkbPoint25D
+
+=item wkbLineString25D
+
+=item wkbPolygon25D
+
+=item wkbMultiPoint25D
+
+=item wkbMultiLineString25D
+
+=item wkbMultiPolygon25D
+
+=item wkbGeometryCollection25D
+
+=item OFTInteger
+
+=item OFTIntegerList
+
+=item OFTReal
+
+=item OFTRealList
+
+=item OFTString
+
+=item OFTStringList
+
+=item OFTWideString
+
+=item OFTWideStringList
+
+=item OFTBinary
+
+=item OJUndefined
+
+=item OJLeft
+
+=item OJRight
+
+=item wkbXDR
+
+=item wkbNDR
+
+=item OLCRandomRead
+
+=item OLCSequentialWrite
+
+=item OLCRandomWrite
+
+=item OLCFastSpatialFilter
+
+=item OLCFastFeatureCount
+
+=item OLCFastGetExtent
+
+=item OLCCreateField
+
+=item OLCTransactions
+
+=item OLCDeleteFeature
+
+=item OLCFastSetNextByIndex
+
+=item ODsCCreateLayer
+
+=item ODsCDeleteLayer
+
+=item ODrCCreateDataSource
+
+=item ODrCDeleteDataSource
+
+=back
+
+=head1 CLASSES
+
+=head2 ogr::Driver
+
+=over
+
+=item name
+
+  $driver->{name}
+
+=item CreateDataSource
+
+  $datasource = $driver->CreateDataSource('directory', 
+    $options = []);
+
+=item CopyDataSource
+
+=item Open
+
+=item DeleteDataSource
+
+=item TestCapability
+
+=item GetName
+
+=back
+
+=head2 ogr::DataSource
+
+=over
+
+=item GetRefCount
+
+=item GetSummaryRefCount
+
+=item GetLayerCount
+
+  $n = $datasource->GetLayerCount;
+
+=item GetName
+
+=item DeleteLayer
+
+=item CreateLayer
+
+  $layer = $datasource->CreateLayer('layer_name', 
+    $spatial_reference = undef, 
+    $geom_type = $ogr::wkbUnknown, $options = []);
+
+layer_name is typically a filename without directory and extension or
+table name.
+
+=item CopyLayer
+
+=item GetLayerByIndex
+
+  $layer = $datasource->GetLayerByIndex($);
+
+=item GetLayerByName
+
+  $layer = $datasource->GetLayerByName('layer_name');
+
+layer_name is typically a filename without directory and extension or
+table name.
+
+=item TestCapability
+
+=item ExecuteSQL
+
+=item ReleaseResultSet
+
+=back
+
+=head2 ogr::Layer
+
+=over
+
+=item GetRefCount
+
+=item SetSpatialFilter
+
+=item SetSpatialFilterRect
+
+=item GetSpatialFilter
+
+=item SetAttributeFilter
+
+=item ResetReading
+
+=item GetName
+
+=item GetFeature
+
+  $feature = $layer->GetFeature($i);
+
+=item GetNextFeature
+
+=item SetNextByIndex
+
+=item SetFeature
+
+=item CreateFeature
+
+  $layer->CreateFeature($feature);
+
+=item DeleteFeature
+
+=item SyncToDisk
+
+  $layer->SyncToDisk;
+
+=item GetLayerDefn
+
+  $schema = $layer->GetLayerDefn();
+
+=item GetFeatureCount
+
+  $n = $layer->GetFeatureCount;
+
+=item GetExtent
+
+=item TestCapability
+
+=item CreateField
+  
+  $layer->CreateField($column);
+
+=item StartTransaction
+
+=item CommitTransaction
+
+=item RollbackTransaction
+
+=item GetSpatialRef
+
+=item GetFeatureRead
+
+=back
+
+=head2 ogr::Feature
+
+  $feature = new ogr::Feature($schema);
+
+=over
+
+=item GetDefnRef
+
+=item SetGeometry
+
+  $feature->SetGeometry($geom);
+
+=item SetGeometryDirectly
+
+=item GetGeometryRef
+
+  $geom = $feature->GetGeometryRef;
+
+=item Clone
+
+=item Equal
+
+=item GetFieldCount
+
+=item GetFieldDefnRef
+
+=item GetFieldAsString
+
+=item GetFieldAsInteger
+
+=item GetFieldAsDouble
+
+=item IsFieldSet
+
+=item GetFieldIndex
+
+=item GetFID
+
+=item SetFID
+
+=item DumpReadable
+
+=item UnsetField
+
+=item SetField
+
+=item SetFrom
+
+=item GetStyleString
+
+=item SetStyleString
+
+=item GetFieldType
+
+=back
+
+=head2 ogr::FeatureDefn (Schema)
+
+=over
+
+=item GetName
+
+=item GetFieldCount
+
+  $n = $schema->GetFieldCount()
+
+=item GetFieldDefn
+
+  $column = $schema->GetFieldDefn($i)
+
+=item GetFieldIndex
+
+=item AddFieldDefn
+
+=item GetGeomType
+
+=item SetGeomType
+
+=item GetReferenceCount
+
+=back
+
+=head2 ogr::FieldDefn (Column)
+
+  $column = new ogr::FieldDefn('name', $ogr::OFTxxxx);
+
+=over
+
+=item GetName
+
+=item GetNameRef
+
+=item SetName
+
+=item GetType
+
+=item SetType
+
+=item GetJustify
+
+=item SetJustify
+
+=item GetWidth
+
+=item SetWidth
+
+=item GetPrecision
+
+=item SetPrecision
+
+=item GetFieldTypeName
+
+=back
+
+=head2 ogr::Geometry
+
+  $type = $ogr::wkbPolygon; # an example
+  $geom = new ogr::Geometry($type);
+
+=over
+
+=item ExportToWkt
+
+=item ExportToWkb
+
+=item ExportToGML
+
+=item AddPoint
+
+  $geom->AddPoint($x, $y, $z = 0);
+
+=item AddGeometryDirectly
+
+=item AddGeometry
+
+  $geom->AddGeometry($another_geom); 
+
+For example add a LinearRing to a Polygon.
+
+=item Clone
+
+=item GetGeometryType
+
+=item GetGeometryName
+
+=item GetArea
+
+=item GetPointCount
+
+=item GetX
+
+=item GetY
+
+=item GetZ
+
+=item GetGeometryCount
+
+=item SetPoint
+
+=item GetGeometryRef
+
+=item GetBoundary
+
+=item ConvexHull
+
+=item Buffer
+
+=item Intersection
+
+=item Union
+
+=item Difference
+
+=item SymmetricDifference
+
+=item Distance
+
+=item Empty
+
+=item Intersect
+
+=item Equal
+
+=item Disjoint
+
+=item Touches
+
+=item Crosses
+
+=item Within
+
+=item Contains
+
+=item Overlaps
+
+=item TransformTo
+
+=item Transform
+
+  $geom->Transform($transformation);
+
+=item GetSpatialReference
+
+=item AssignSpatialReference
+
+=item CloseRings
+
+  $geom->CloseRings;
+
+Defined only for LinearRings.
+
+=item FlattenTo2D
+
+=item GetEnvelope
+
+=item Centroid
+
+=item WkbSize
+
+=item GetCoordinateDimension
+
+=item GetDimension
+
+=back
+
+=head1 KNOWN BUGS
+
+The reference counting scheme is not yet implemented. Make sure that
+parents are not deleted before their children! Use "my" a lot.
+
+=head1 SEE ALSO
+
+L<perl>(1), L<gdalconst>(3pm), L<gdal>(3pm), L<osr>(3pm).
+
+http://www.gdal.org
+
+=head1 AUTHORS
+
+The GDAL bindings team:
+
+kruland at ku.edu
+hobu at iastate.edu
+ari.jolma at tkk.fi
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2005 by the GDAL bindings team.
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Library General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Library General Public License for more details.
+
+You should have received a copy of the GNU Library General Public
+License along with this library; if not, write to the 
+Free Software Foundation, Inc., 59 Temple Place - Suite 330, 
+Boston, MA  02111-1307  USA.
+
+=cut
