@@ -17,6 +17,11 @@ ODBCDIR	=	odbc pgeo
 ODBCOBJ =	odbc\*.obj pgeo\*.obj
 !ENDIF
 
+!IFDEF SQLITE_LIB
+SQLITE_DIR	=	sqlite
+SQLITE_OBJ =	sqlite\*.obj
+!ENDIF
+
 !IFDEF OCI_LIB
 OCIDIR	=	oci
 OCIOBJ =	oci\*.obj
