@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2005/09/20 21:27:25  mbrudka
+ * Some optimizations in reading multi-ring polygons.
+ *
  * Revision 1.35  2005/08/04 15:31:09  fwarmerdam
  * Added additional patch for computing ring direction in cases of
  * vertices that are very near or coincident.
@@ -166,6 +169,71 @@ static inline bool epsilonEqual(double a, double b, double eps)
     return (::fabs(a - b) < eps);
 }
 
+/* A helper class which represents 2D bounding box */
+class RingExtent
+{
+public:
+    RingExtent();
+    /* Calculates bounding box for given set of points */
+    void calculate( int ringParts, double *ringX, double *ringY );
+    /* Does this extent contains rhs*/
+    bool contains( const RingExtent &rhs );
+    /* Does this extent contains given point*/
+    bool contains( double x, double y );
+private:
+    bool empty; /* extent is empty */
+    double xMin, yMin; /* lower left vertex of the bounding box */
+    double xMax, yMax; /* upper right vertex of the bounding box */
+};
+
+RingExtent::RingExtent():
+    empty( true ),
+    xMin( 0 ), //nan ?
+    yMin( 0 ), 
+    xMax( 0 ), 
+    yMax( 0 )
+{
+}
+
+void RingExtent::calculate( int ringParts, double *ringX, double *ringY )
+{
+    empty = ringParts <= 0;
+    if ( !empty )
+    {
+        xMin = xMax = *ringX;
+        yMin = yMax = *ringY;
+        while( --ringParts > 0 )
+        {
+            if ( xMin > *ringX )
+                xMin = *ringX;
+            else if ( xMax < *ringX )
+                xMax = *ringX;
+            if ( yMin > *ringY )
+               yMin = *ringY;
+            else if ( yMax < *ringY )
+                yMax = *ringY;
+            ++ringX; 
+            ++ringY; 
+        }
+    }
+}
+
+inline bool RingExtent::contains( double x, double y )
+{
+    if ( empty )
+        return false;
+
+    return xMin <= x && x <= xMax &&
+        yMin <= y && y <= yMax;
+}
+
+inline bool RingExtent::contains( const RingExtent &extent )
+{
+    return contains( extent.xMin, extent.yMin ) &&
+        contains( extent.xMax, extent.yMax );
+}
+
+
 /************************************************************************/
 /*                        RingStartEnd                                  */
 /*        set first and last vertex for given ring                      */
@@ -297,6 +365,29 @@ int PointInRing ( SHPObject *Shape, int ring, double x, double y )
 	}
     }
     return c;
+}
+
+/************************************************************************/
+/*                          RingInRing()                                */
+/*                                                                      */
+/* Checks point by point using PointInRing if oRing contains iRing      */
+/*                                                                      */
+/*      return: 1 oRing contains iRing                                  */
+/*              0 iRing is not contained by oRing                       */
+/*                                                                      */
+/*              for point exactly on the boundary it returns 0 or 1     */
+/************************************************************************/
+int RingInRing( SHPObject *Shape, int oRing, int iRing )
+{
+    int iRingStart, iRingEnd;
+    RingStartEnd ( Shape, iRing, &iRingStart, &iRingEnd );
+    while( iRingStart < iRingEnd )
+    {
+        if ( !PointInRing( Shape, oRing, Shape->padfX[iRingStart], Shape->padfY[iRingStart] ) )
+            return 0;
+        ++iRingStart;
+    }
+    return 1;
 }
     
 /************************************************************************/
@@ -445,9 +536,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
 /* -------------------------------------------------------------------- */
 /*      Polygon                                                         */
 /*                                                                      */
-/*      For now we assume the first ring is an outer ring, and          */
-/*      everything else is an inner ring.  This must smarten up in      */
-/*      the future.                                                     */
+/* As for now Z coordinate is not handled correctly                     */
 /* -------------------------------------------------------------------- */
     else if( psShape->nSHPType == SHPT_POLYGON
              || psShape->nSHPType == SHPT_POLYGONM
@@ -466,7 +555,9 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
 	    int nOuter = 0; /* Number of outer rings */ 
 	    int *direction; /* ring direction (1 CW,outer, -1 CCW, inner) */ 
 	    int *outer;     /* list of outer rings */ 
-	    int *outside;   /* outer ring index for inner rings, -1 for outer rings */ 
+            /* outer ring index for inner rings, -1 for outer rings */ 
+	    int *outside;   
+            int lastOuterRing = 0;
 
 	    direction = (int *) CPLMalloc( psShape->nParts * sizeof(int) );
 	    outer = (int *) CPLMalloc( psShape->nParts * sizeof(int) );
@@ -476,54 +567,61 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
 	    for( iRing = 0; iRing < psShape->nParts; iRing++ ) {
 		direction[iRing] = RingDirection ( psShape, iRing);
 		if ( direction[iRing] == 1 ) {
-		    outer[nOuter] = iRing;
+		    outer[nOuter] = lastOuterRing = iRing;
 		    nOuter++;
 		}
-		    
 		outside[iRing] = -1;
 	    }
-	    
-	    /* Find for each inner ring outer ring it is within */
 
-	    /* Note: According to specification, rings can touch by one vertex, but not along segment. */
-	    /* It may happen that inner ring touches the outer and PointInRing() retuirns 0 (outside) */
-	    /* because of representation error. Because of that, cycle through all vertices of inner */
-	    /* ring is used, until outer ring is found. Of course, this may fail as well, but probability */
-	    /* is lower. We could use also points on inner segments or centroid. */ 
-	    /* In theory, it may also happen, that vertex touching outer ring falls outside its outer */
-	    /* ring and inside another (incorrect). */ 
-	    /* The problem is how to find a point on inner ring which doesn't lie on outer ring. */
-	    for( iRing = 0; iRing < psShape->nParts; iRing++ ) { /* cycle through inner rings */
-		int  start, end;
-		
-		if ( direction[iRing] != -1 ) /* is not inner ring */
-		    continue;
-		
-		RingStartEnd ( psShape, iRing, &start, &end );
+	    if ( nOuter == 1 ) { 
+                /* one outer ring? we do not need to check anything as we assume that shapefile is valid
+                   ie. if there is one outer ring then all inner rings are inside */
+                for( iRing = 0; iRing < psShape->nParts; iRing++ ) {
+                    if ( direction[iRing] == -1 ) {
+                        outside[iRing] = lastOuterRing;
+                    }
+                }
+            }
+            else {
+                /* calculate ring extents */
+                RingExtent *extents = new RingExtent[ psShape->nParts ]; /* ring extents */
 
-		for ( int vert = start; vert < end; vert++ ) { /* cycle through inner ring's vertices */
-		    double x, y;
-		    
-		    x = psShape->padfX[vert];
-		    y = psShape->padfY[vert];
-
-		    for( int oRing = 0; oRing < psShape->nParts; oRing++ ) { /* outer rings */
-			int inside;
-			    
-			if ( direction[oRing] != 1 ) /* not outer */ 
-			    continue;
-			    
-			inside = PointInRing ( psShape, oRing, x, y);
-
-			if ( inside ) {
-			    outside[iRing] = oRing;
-			    break;
-			}
-		    }
-		    if ( outside[iRing] >= 0 ) /* outer ring found */
-			break;
-	        }
-	    }
+                for( iRing = 0; iRing < psShape->nParts; iRing++ ) {
+                    int  start, end;
+                    RingStartEnd ( psShape, iRing, &start, &end );
+                    extents[ iRing ].calculate( end-start, psShape->padfX + start, psShape->padfY + start );
+                }
+                int oRing; /* outer ring index */
+                /* This loops tries to assign inner to outr rings. The fundamental assumption is */
+                /* that if the extent of an inner ring is contained in the extent of exactly one outer */
+                /* ring then this inner ring is inside the outer ring. Otherwise that shapefile is */
+                /* broken.. */
+                for( iRing = 0; iRing < psShape->nParts; iRing++ ) {
+                    /* Find the outer ring for iRing */
+                    for( oRing = 0; oRing < nOuter; oRing++ ) {
+                        if ( extents[ outer[ oRing ] ].contains( extents[ iRing ] ) ) {
+                            /* the outer ring contains the inner ring, we have to execute some 
+                               additional tests */ 
+                            if ( outside[ iRing ] == -1 ) {
+                                /* this is the first outer ring, assume it containes this inner iRing */
+                                outside[ iRing ] = oRing;
+                            }
+                            else { 
+                                /* this is another outer ring, which contains iRing, have to distinguish
+                                   between this and previous outer rings using RingInPoint. Here is a place
+                                   for some optimization as sometimes we may check the same ring many times*/
+                                if ( !RingInRing( psShape, outside[ iRing ], iRing ) )
+                                    outside[ iRing ] = oRing;
+                            }                            
+                        }
+                    }
+                }                    
+                delete[] extents;
+            }
+            /* The inner rings are preliminary sorted, but: */
+            /* - Some of them are not assigned to any outer ring. Probably broken shapefile */
+            /* - Some inner rings are assigned to outer rings using extents only. */
+            /*     Additional geometry tests are ommited here due to perfomance penalties.*/
 
             /* promote any unassigned inner rings to be outside rings */
             
