@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.146  2005/09/20 18:16:53  fwarmerdam
+ * enable support for NONE compress option
+ *
  * Revision 1.145  2005/09/12 00:29:00  fwarmerdam
  * use VSI_TIFFOpen() instead of XTIFFOpen to get arbitrary redirection
  *
@@ -3291,7 +3294,9 @@ TIFF *GTiffCreate( const char * pszFilename,
     pszValue = CSLFetchNameValue( papszParmList, "COMPRESS" );
     if( pszValue  != NULL )
     {
-        if( EQUAL( pszValue, "JPEG" ) )
+        if( EQUAL( pszValue, "NONE" ) )
+            nCompression = COMPRESSION_NONE;
+        else if( EQUAL( pszValue, "JPEG" ) )
             nCompression = COMPRESSION_JPEG;
         else if( EQUAL( pszValue, "LZW" ) )
             nCompression = COMPRESSION_LZW;
