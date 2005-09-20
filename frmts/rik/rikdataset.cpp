@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/09/20 12:26:59  dwallner
+ * added missing TOWGS84 in wkt
+ *
  * Revision 1.12  2005/09/11 04:12:42  fwarmerdam
  * The large file API can't be used on poOpenInfo->fp which is produced
  * by the small file API.
@@ -596,6 +599,8 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                  (poRDS->nBlockYSize - i - 1),
                     poRDS->nBlockXSize );
         }
+
+        CPLFree( upsideDown );
     }
 
     CPLFree( blockData );
@@ -663,15 +668,7 @@ CPLErr RIKDataset::GetGeoTransform( double * padfTransform )
 const char *RIKDataset::GetProjectionRef()
 
 {
-    // http://www.sm5sxl.net/~mats/text/gis/Geodesi/geodesi/refsys/sweref-rt/sweref99-rt90.htm
-
-  // This projection gives large transformation errors
-  return( "PROJCS[\"RT90 2.5 gon W\",GEOGCS[\"RT90\",DATUM[\"Rikets_koordinatsystem_1990\",SPHEROID[\"Bessel 1841\",6377397.155,299.1528128,AUTHORITY[\"EPSG\",\"7004\"]],AUTHORITY[\"EPSG\",\"6124\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.01745329251994328,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4124\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",15.80827777777778],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",1500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"2400\"]]");
-
-  // This projection gives better results but crashes qgis
-  /*
-    return( "PROJCS[\"RT90 2.5 gon W\",GEOGCS[\"RT90\",DATUM[\"Rikets_koordinatsystem_1990\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],AUTHORITY[\"EPSG\",\"6124\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.017453292519943295,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4124\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",15.806284529],PARAMETER[\"scale_factor\",1.00000561024],PARAMETER[\"false_easting\",1500064.274],PARAMETER[\"false_northing\",-667.711],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"2400\"]]" );
-  */
+  return( "PROJCS[\"RT90 2.5 gon V\",GEOGCS[\"RT90\",DATUM[\"Rikets_koordinatsystem_1990\",SPHEROID[\"Bessel 1841\",6377397.155,299.1528128,AUTHORITY[\"EPSG\",\"7004\"]],TOWGS84[414.1055246174,41.3265500042,603.0582474221,-0.8551163377,2.1413174055,-7.0227298286,0],AUTHORITY[\"EPSG\",\"6124\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.01745329251994328,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4124\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",15.80827777777778],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",1500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"3021\"]]" );
 }
 
 /************************************************************************/
