@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_datasource.cpp,v 1.9 2004/10/15 01:52:30 fwarmerdam Exp $
+ * $Id: mitab_ogr_datasource.cpp,v 1.10 2005/09/20 04:40:02 fwarmerdam Exp $
  *
  * Name:     mitab_ogr_datasource.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_ogr_datasource.cpp,v $
+ * Revision 1.10  2005/09/20 04:40:02  fwarmerdam
+ * fixed CPLReadDir memory leak
+ *
  * Revision 1.9  2004/10/15 01:52:30  fwarmerdam
  * Modified CreateLayer() to use  -1000,-1000,1000,1000 bounds for GEOGCS
  * much like in mitab_bounds.cpp.  This ensures that geographic files in
@@ -271,13 +274,18 @@ int OGRTABDataSource::Open( const char * pszName, int bTestOpen )
             CPLFree( pszSubFilename );
             
             if( poFile == NULL )
+            {
+                CSLDestroy( papszFileList );
                 return FALSE;
+            }
 
             m_nLayerCount++;
             m_papoLayers = (IMapInfoFile **)
                 CPLRealloc(m_papoLayers,sizeof(void*)*m_nLayerCount);
             m_papoLayers[m_nLayerCount-1] = poFile;
         }
+
+        CSLDestroy( papszFileList );
 
         if( m_nLayerCount == 0 )
         {
