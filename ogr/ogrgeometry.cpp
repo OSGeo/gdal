@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/09/21 00:50:53  fwarmerdam
+ * Release SRS on geometry destruction
+ *
  * Revision 1.31  2005/07/20 01:43:51  fwarmerdam
  * upgraded OGR geometry dimension handling
  *
@@ -162,9 +165,7 @@ OGRGeometry::~OGRGeometry()
 
 {
     if( poSRS != NULL )
-    {
-        poSRS->Dereference();
-    }
+        poSRS->Release();
 }
 
 
@@ -242,7 +243,7 @@ void OGRGeometry::assignSpatialReference( OGRSpatialReference * poSR )
 
 {
     if( poSRS != NULL )
-        poSRS->Dereference();
+        poSRS->Release();
 
     poSRS = poSR;
     if( poSRS != NULL )
