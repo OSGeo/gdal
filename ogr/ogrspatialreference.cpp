@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.94  2005/09/21 00:51:27  fwarmerdam
+ * added Release
+ *
  * Revision 1.93  2005/04/06 00:02:05  fwarmerdam
  * various osr and oct functions now stdcall
  *
@@ -113,75 +116,6 @@
  *
  * Revision 1.66  2003/01/08 18:14:28  warmerda
  * added FixupOrdering()
- *
- * Revision 1.65  2002/12/21 17:29:38  warmerda
- * fixed default degree/radian problem for GEOGCS
- *
- * Revision 1.64  2002/12/16 17:08:44  warmerda
- * added GetPrimeMeridian() method, and fiddled with OGRPrintDouble
- *
- * Revision 1.63  2002/12/16 14:41:19  warmerda
- * implement normalized Get/Set ProjParm
- *
- * Revision 1.62  2002/12/15 23:42:59  warmerda
- * added initial support for normalizing proj params
- *
- * Revision 1.61  2002/12/14 22:59:14  warmerda
- * added Krovak in ESRI compatible way
- *
- * Revision 1.60  2002/12/10 04:06:00  warmerda
- * updated well known GEOGCS descriptions
- *
- * Revision 1.59  2002/12/09 16:11:32  warmerda
- * fixed constness of get authority calls
- *
- * Revision 1.58  2002/12/01 21:16:10  warmerda
- * added Get/set angular units methods
- *
- * Revision 1.57  2002/12/01 20:22:39  warmerda
- * preserve a little more precision in projection parameters
- *
- * Revision 1.56  2002/11/30 16:44:08  warmerda
- * fixed some functions that claimed to use node paths, so they work
- *
- * Revision 1.55  2002/11/30 15:45:49  warmerda
- * be more careful about how AUTHORITY is fetched, to not get wrong one
- *
- * Revision 1.54  2002/11/25 16:12:54  warmerda
- * added GetAuthorityCode/Name
- *
- * Revision 1.53  2002/07/25 15:58:02  warmerda
- * Fixed docs for how to compute inverse flattening.
- *
- * Revision 1.52  2002/07/25 13:13:36  warmerda
- * fixed const correctness of some docs
- *
- * Revision 1.51  2002/04/25 20:56:28  warmerda
- * expanded tabs
- *
- * Revision 1.50  2002/04/18 14:22:45  warmerda
- * made OGRSpatialReference and co 'const correct'
- *
- * Revision 1.49  2002/03/12 18:06:09  warmerda
- * added ESRI:: style support to SetFromUserInput()
- *
- * Revision 1.48  2002/03/08 16:38:11  warmerda
- * ensure SetProjParm() will replace an existing node if available
- *
- * Revision 1.47  2002/03/05 14:25:14  warmerda
- * expand tabs
- *
- * Revision 1.46  2002/02/18 15:46:02  warmerda
- * Fixed serious problems in IsSame() method.  Still a work in progress.
- *
- * Revision 1.45  2002/01/24 16:22:18  warmerda
- * reworked StripCTParms and simplify support for prettywkt
- *
- * Revision 1.44  2002/01/18 15:30:41  warmerda
- * ensure all AXIS nodes wiped in StripCTParms
- *
- * Revision 1.43  2002/01/18 04:51:05  warmerda
- * added PROJ.4 support to SetFromUserInput()
  */
 
 #include "ogr_spatialref.h"
@@ -426,6 +360,33 @@ int OSRDereference( OGRSpatialReferenceH hSRS )
  *
  * @return the current reference count.
  */
+
+/************************************************************************/
+/*                              Release()                               */
+/************************************************************************/
+
+/**
+ * Decrements the reference count by one, and destroy if zero.
+ *
+ * The method does the same thing as the C function OSRRelease(). 
+ */
+
+void OGRSpatialReference::Release()
+
+{
+    if( this && Dereference() == 0 )
+        delete this;
+}
+
+/************************************************************************/
+/*                             OSRRelease()                             */
+/************************************************************************/
+
+void OSRRelease( OGRSpatialReferenceH hSRS )
+
+{
+    return ((OGRSpatialReference *) hSRS)->Release();
+}
 
 /************************************************************************/
 /*                              SetRoot()                               */
