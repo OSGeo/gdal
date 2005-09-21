@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/09/21 16:11:21  fwarmerdam
+ * Compute complexity level (Brent Fraser)
+ *
  * Revision 1.20  2005/07/28 20:00:57  fwarmerdam
  * upgrade to support 2-4GB files, use large file api
  *
@@ -383,6 +386,8 @@ int NITFCreate( const char *pszFilename,
     int         nNBPR, nNBPC;
     const char *pszIREP;
     const char *pszIC = CSLFetchNameValue(papszOptions,"IC");
+    const char *pszCLevel;
+
 
     if( pszIC == NULL )
         pszIC = "NC";
@@ -440,6 +445,17 @@ int NITFCreate( const char *pszFilename,
         * nNPPBH * nNPPBV * nBands;
 
 /* -------------------------------------------------------------------- */
+/*      Compute CLEVEL ("complexity" level).                            */
+/*      See: http://164.214.2.51/ntb/baseline/docs/2500b/2500b_not2.pdf */
+/*            page 96u                                                  */
+/*            TBD: Set CLEVEL based on file size too                    */
+/* -------------------------------------------------------------------- */
+    pszCLevel = "03";
+    if (nPixels >  2048 || nLines >  2048 )  pszCLevel = "05";
+    if (nPixels >  8192 || nLines >  8192 )  pszCLevel = "06";
+    if (nPixels > 65536 || nLines > 65536 )  pszCLevel = "07";
+
+/* -------------------------------------------------------------------- */
 /*      Prepare the file header.                                        */
 /* -------------------------------------------------------------------- */
     memset( achHeader, ' ', sizeof(achHeader) );
@@ -453,7 +469,7 @@ int NITFCreate( const char *pszFilename,
     strncpy(location,pszParmValue,MIN(width,strlen(pszParmValue))); }   
 
     PLACE (achHeader+  0, FDHR_FVER,    "NITF02.10"                     );
-    OVR( 2,achHeader+  9, CLEVEL,       "05"                            );
+    OVR( 2,achHeader+  9, CLEVEL,       pszCLevel                       );
     PLACE (achHeader+ 11, STYPE        ,"BF01"                          );
     OVR(10,achHeader+ 15, OSTAID       ,"GDAL"                          );
     OVR(14,achHeader+ 25, FDT          ,"20021216151629"                );
@@ -944,3 +960,4 @@ double NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude( double dfLat )
 
     return dfLat;
 }
+
