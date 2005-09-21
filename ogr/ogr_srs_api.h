@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2005/09/21 00:50:08  fwarmerdam
+ * Added Release
+ *
  * Revision 1.52  2005/05/09 15:39:44  fwarmerdam
  * Added TM_MI_21 as per email from Safe.
  *
@@ -385,6 +388,7 @@ void CPL_DLL CPL_STDCALL OSRDestroySpatialReference( OGRSpatialReferenceH );
 
 int CPL_DLL OSRReference( OGRSpatialReferenceH );
 int CPL_DLL OSRDereference( OGRSpatialReferenceH );
+void CPL_DLL OSRRelease( OGRSpatialReferenceH );
 
 OGRErr CPL_DLL OSRValidate( OGRSpatialReferenceH );
 OGRErr CPL_DLL OSRFixupOrdering( OGRSpatialReferenceH );

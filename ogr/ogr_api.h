@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/09/21 00:50:08  fwarmerdam
+ * Added Release
+ *
  * Revision 1.27  2005/08/05 20:28:55  fwarmerdam
  * pass nbytes in OGR_G_CreateFromWkb()
  *
@@ -274,6 +277,7 @@ const char CPL_DLL *OGR_GetFieldTypeName( OGRFieldType );
 
 OGRFeatureDefnH CPL_DLL OGR_FD_Create( const char * );
 void   CPL_DLL OGR_FD_Destroy( OGRFeatureDefnH );
+void   CPL_DLL OGR_FD_Release( OGRFeatureDefnH );
 const char CPL_DLL *OGR_FD_GetName( OGRFeatureDefnH );
 int    CPL_DLL OGR_FD_GetFieldCount( OGRFeatureDefnH );
 OGRFieldDefnH CPL_DLL OGR_FD_GetFieldDefn( OGRFeatureDefnH, int );

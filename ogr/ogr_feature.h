@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/09/21 00:50:08  fwarmerdam
+ * Added Release
+ *
  * Revision 1.30  2005/08/30 23:52:35  fwarmerdam
  * implement preliminary OFTBinary support
  *
@@ -237,6 +240,7 @@ class CPL_DLL OGRFeatureDefn
     int         Reference() { return ++nRefCount; }
     int         Dereference() { return --nRefCount; }
     int         GetReferenceCount() { return nRefCount; }
+    void        Release();
 
     static OGRFeatureDefn  *CreateFeatureDefn( const char *pszName = NULL );
     static void         DestroyFeatureDefn( OGRFeatureDefn * );
