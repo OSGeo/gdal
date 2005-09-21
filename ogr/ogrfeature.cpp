@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/09/21 00:50:26  fwarmerdam
+ * release OGRFeatureDefn on feature destruction
+ *
  * Revision 1.32  2005/08/30 23:52:35  fwarmerdam
  * implement preliminary OFTBinary support
  *
@@ -173,8 +176,6 @@ OGRFeatureH OGR_F_Create( OGRFeatureDefnH hDefn )
 OGRFeature::~OGRFeature()
 
 {
-    poDefn->Dereference();
-
     if( poGeometry != NULL )
         delete poGeometry;
 
@@ -212,6 +213,8 @@ OGRFeature::~OGRFeature()
         }
     }
     
+    poDefn->Release();
+
     CPLFree( pauFields );
     CPLFree(m_pszStyleString);
 }
