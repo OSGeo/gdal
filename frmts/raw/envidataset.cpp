@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/09/21 19:57:37  fwarmerdam
+ * 2 bytes in headerbytes is enough, that is what Create() writes to the
+ * image file.
+ *
  * Revision 1.29  2005/09/21 16:24:36  fwarmerdam
  * fixed to avoid using openinfo->fp or large files may not work
  *
@@ -845,7 +849,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*	We assume the user is pointing to the binary (ie. .bil) file.	*/
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 100 )
+    if( poOpenInfo->nHeaderBytes < 2 )
         return NULL;
 
 /* -------------------------------------------------------------------- */
