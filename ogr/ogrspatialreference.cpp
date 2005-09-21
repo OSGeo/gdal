@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.95  2005/09/21 03:00:42  fwarmerdam
+ * fixed return for Release
+ *
  * Revision 1.94  2005/09/21 00:51:27  fwarmerdam
  * added Release
  *
@@ -385,7 +388,7 @@ void OGRSpatialReference::Release()
 void OSRRelease( OGRSpatialReferenceH hSRS )
 
 {
-    return ((OGRSpatialReference *) hSRS)->Release();
+    ((OGRSpatialReference *) hSRS)->Release();
 }
 
 /************************************************************************/
