@@ -6,6 +6,9 @@
 
 /*
  * $Log$
+ * Revision 1.3  2005/09/21 18:00:05  kruland
+ * Turn on UseExceptions in ogr init code.
+ *
  * Revision 1.2  2005/09/13 17:36:28  kruland
  * Whoops!  import typemaps_perl.i.
  *
@@ -17,6 +20,7 @@
 
 %init %{
 
+  UseExceptions();
   if ( OGRGetDriverCount() == 0 ) {
     OGRRegisterAll();
   }
