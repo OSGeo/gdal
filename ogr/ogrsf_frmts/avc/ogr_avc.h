@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/09/21 01:00:55  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.4  2005/02/22 12:55:03  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -129,8 +132,6 @@ class OGRAVCBinLayer : public OGRAVCLayer
     int                 nTableAttrIndex;
 
     int                 nNextFID;
-
-    OGRSpatialReference *poSRS;
 
     int                 FormPolygonGeometry( OGRFeature *poFeature,
                                              AVCPal *psPAL );

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/09/21 00:59:36  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.12  2005/02/22 12:57:51  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -120,8 +123,8 @@ OGROCILayer::~OGROCILayer()
     CPLFree( pszQueryStatement );
     pszQueryStatement = NULL;
 
-    if( poFeatureDefn != NULL && poFeatureDefn->Dereference() <= 0 )
-        delete poFeatureDefn;
+    if( poFeatureDefn != NULL )
+        poFeatureDefn->Release();
 }
 
 /************************************************************************/

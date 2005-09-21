@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/09/21 00:53:19  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.14  2005/04/06 15:04:23  fwarmerdam
  * added TIGER2004 support
  *
@@ -433,6 +436,7 @@ TigerPolygon::TigerPolygon( OGRTigerDataSource * poDSIn,
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "Polygon" );
+    poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 
     fpRTS = NULL;

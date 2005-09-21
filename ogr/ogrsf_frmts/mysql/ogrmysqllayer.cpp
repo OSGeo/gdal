@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/09/21 01:00:01  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.4  2005/08/30 23:53:16  fwarmerdam
  * implement binary field support
  *
@@ -95,10 +98,10 @@ OGRMySQLLayer::~OGRMySQLLayer()
     CPLFree( pszQueryStatement );
 
     if( poSRS != NULL )
-        poSRS->Dereference();
+        poSRS->Release();
 
     if( poFeatureDefn )
-        delete poFeatureDefn;
+        poFeatureDefn->Release();
 }
 
 /************************************************************************/

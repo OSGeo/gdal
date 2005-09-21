@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/09/21 00:55:42  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.2  2005/09/05 20:30:06  fwarmerdam
  * removed unused variable
  *
@@ -88,14 +91,14 @@ OGRPGeoLayer::~OGRPGeoLayer()
 
     if( poFeatureDefn != NULL )
     {
-        delete poFeatureDefn;
+        poFeatureDefn->Release();
         poFeatureDefn = NULL;
     }
 
     if( poSRS != NULL )
     {
-        if( poSRS->Dereference() == 0 )
-            delete poSRS;
+        poSRS->Release();
+        poSRS = NULL;
     }
 }
 
@@ -112,6 +115,8 @@ CPLErr OGRPGeoLayer::BuildFeatureDefn( const char *pszLayerName,
 {
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     int    nRawColumns = poStmt->GetColCount();
+
+    poFeatureDefn->Reference();
 
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * nRawColumns );
 

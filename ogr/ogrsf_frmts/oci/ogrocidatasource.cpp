@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2005/09/21 00:56:55  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.28  2005/08/18 14:45:22  fwarmerdam
  * Cleanup session on exit.
  *
@@ -178,7 +181,7 @@ OGROCIDataSource::~OGROCIDataSource()
 
     for( i = 0; i < nKnownSRID; i++ )
     {
-        delete papoSRS[i];
+        papoSRS[i]->Release();
     }
     CPLFree( papoSRS );
     CPLFree( panSRID );

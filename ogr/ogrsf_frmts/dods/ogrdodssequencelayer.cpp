@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/09/21 01:00:29  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.6  2005/02/02 20:54:26  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -84,6 +87,7 @@ OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn,
     }
         
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
+    poFeatureDefn->Reference();
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the target variable.                                      */

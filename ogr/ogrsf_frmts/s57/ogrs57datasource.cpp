@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/09/21 00:54:43  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.26  2004/08/30 20:11:51  warmerda
  * keep the S57ClassRegistrar on the driver, not the datasource
  *
@@ -171,7 +174,7 @@ OGRS57DataSource::~OGRS57DataSource()
 
     CSLDestroy( papszOptions );
 
-    delete poSpatialRef;
+    poSpatialRef->Release();
 
     if( poWriter != NULL )
     {

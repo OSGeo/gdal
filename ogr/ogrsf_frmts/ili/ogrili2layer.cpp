@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/09/21 00:59:36  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.2  2005/08/06 22:21:53  pka
  * Area polygonizer added
  *
@@ -62,6 +65,7 @@ OGRILI2Layer::OGRILI2Layer( const char * pszName,
     poDS = poDSIn;
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
+    poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( eReqType );
 
     bWriter = bWriterIn;
@@ -74,10 +78,11 @@ OGRILI2Layer::OGRILI2Layer( const char * pszName,
 OGRILI2Layer::~OGRILI2Layer()
 
 {
-    delete poFeatureDefn;
+    if( poFeatureDefn )
+        poFeatureDefn->Release();
 
     if( poSRS != NULL )
-        delete poSRS;
+        poSRS->Release();
 
     if( poFilterGeom != NULL )
         delete poFilterGeom;

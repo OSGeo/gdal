@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/09/21 00:59:36  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.18  2005/06/30 02:16:41  fwarmerdam
  * more efforts to produce valid GML
  *
@@ -111,6 +114,7 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
     poDS = poDSIn;
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
+    poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( eReqType );
 
     bWriter = bWriterIn;
@@ -132,10 +136,11 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
 OGRGMLLayer::~OGRGMLLayer()
 
 {
-    delete poFeatureDefn;
+    if( poFeatureDefn )
+        poFeatureDefn->Release();
 
     if( poSRS != NULL )
-        delete poSRS;
+        poSRS->Release();
 }
 
 /************************************************************************/

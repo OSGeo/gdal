@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/09/21 00:53:19  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.11  2003/01/11 15:29:55  warmerda
  * expanded tabs
  *
@@ -117,17 +120,18 @@ TigerLandmarks::TigerLandmarks( OGRTigerDataSource * poDSIn,
                                 const char * pszPrototypeModule )
   : TigerPoint(FALSE)
 {
-  poDS = poDSIn;
-  poFeatureDefn = new OGRFeatureDefn( "Landmarks" );
-  poFeatureDefn->SetGeomType( wkbPoint );
+    poDS = poDSIn;
+    poFeatureDefn = new OGRFeatureDefn( "Landmarks" );
+    poFeatureDefn->Reference();
+    poFeatureDefn->SetGeomType( wkbPoint );
 
-  if (poDS->GetVersion() >= TIGER_2002) {
-    psRT7Info = &rt7_2002_info;
-  } else {
-    psRT7Info = &rt7_info;
-  }
+    if (poDS->GetVersion() >= TIGER_2002) {
+        psRT7Info = &rt7_2002_info;
+    } else {
+        psRT7Info = &rt7_info;
+    }
 
-  AddFieldDefns( psRT7Info, poFeatureDefn );
+    AddFieldDefns( psRT7Info, poFeatureDefn );
 }
 
 TigerLandmarks::~TigerLandmarks()

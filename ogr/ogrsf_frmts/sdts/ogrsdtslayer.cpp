@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/09/21 00:54:43  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.12  2005/02/22 12:53:19  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -97,6 +100,7 @@ OGRSDTSLayer::OGRSDTSLayer( SDTSTransfer * poTransferIn, int iLayerIn,
     
     poFeatureDefn =
         new OGRFeatureDefn(poTransfer->GetCATD()->GetEntryModule(iCATDEntry));
+    poFeatureDefn->Reference();
 
     OGRFieldDefn oRecId( "RCID", OFTInteger );
     poFeatureDefn->AddFieldDefn( &oRecId );
@@ -237,7 +241,8 @@ OGRSDTSLayer::~OGRSDTSLayer()
                   poFeatureDefn->GetName() );
     }
 
-    delete poFeatureDefn;
+    if( poFeatureDefn )
+        poFeatureDefn->Release();
 }
 
 /************************************************************************/

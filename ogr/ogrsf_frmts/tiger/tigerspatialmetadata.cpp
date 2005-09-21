@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/09/21 00:53:19  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.1  2005/04/06 16:05:37  fwarmerdam
  * New
  *
@@ -71,6 +74,7 @@ TigerSpatialMetadata::TigerSpatialMetadata( OGRTigerDataSource * poDSIn,
 
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "SpatialMetadata" );
+    poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 
     psRTMInfo = &rtM_info;

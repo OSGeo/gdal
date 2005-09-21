@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2005/09/21 00:53:20  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.36  2005/09/20 21:27:25  mbrudka
  * Some optimizations in reading multi-ring polygons.
  *
@@ -1049,6 +1052,8 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
 {
     OGRFeatureDefn      *poDefn = new OGRFeatureDefn( pszName );
     int                 iField;
+
+    poDefn->Reference();
 
     for( iField = 0; 
          hDBF != NULL && iField < DBFGetFieldCount( hDBF ); 

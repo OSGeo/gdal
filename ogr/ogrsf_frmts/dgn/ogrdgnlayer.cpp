@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2005/09/21 01:00:46  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.34  2005/07/20 02:33:03  fwarmerdam
  * Set feature geometry dimension based on source file.
  *
@@ -180,6 +183,7 @@ OGRDGNLayer::OGRDGNLayer( const char * pszName, DGNHandle hDGN,
 /*      Create the feature definition.                                  */
 /* -------------------------------------------------------------------- */
     poFeatureDefn = new OGRFeatureDefn( pszName );
+    poFeatureDefn->Reference();
     
     OGRFieldDefn        oField( "", OFTInteger );
 
@@ -293,7 +297,8 @@ OGRDGNLayer::~OGRDGNLayer()
     }
 
     delete poEvalFeature;
-    delete poFeatureDefn;
+
+    poFeatureDefn->Release();
 
     CPLFree( pszLinkFormat );
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/09/21 00:53:19  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.10  2003/01/11 15:29:55  warmerda
  * expanded tabs
  *
@@ -111,16 +114,17 @@ TigerPIP::TigerPIP( OGRTigerDataSource * poDSIn,
                             const char * pszPrototypeModule ) 
   : TigerPoint(TRUE)
 {
-  poDS = poDSIn;
-  poFeatureDefn = new OGRFeatureDefn( "PIP" );
-  poFeatureDefn->SetGeomType( wkbPoint );
+    poDS = poDSIn;
+    poFeatureDefn = new OGRFeatureDefn( "PIP" );
+    poFeatureDefn->Reference();
+    poFeatureDefn->SetGeomType( wkbPoint );
 
-  if (poDS->GetVersion() >= TIGER_2002) {
-    psRTPInfo = &rtP_2002_info;
-  } else {
-    psRTPInfo = &rtP_info;
-  }
-  AddFieldDefns( psRTPInfo, poFeatureDefn );
+    if (poDS->GetVersion() >= TIGER_2002) {
+        psRTPInfo = &rtP_2002_info;
+    } else {
+        psRTPInfo = &rtP_info;
+    }
+    AddFieldDefns( psRTPInfo, poFeatureDefn );
 }
 
 TigerPIP::~TigerPIP()

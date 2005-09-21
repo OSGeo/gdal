@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/09/21 01:00:01  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.1  2004/10/08 20:48:12  fwarmerdam
  * New
  *
@@ -86,6 +89,8 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
 /* -------------------------------------------------------------------- */
     OGRFeatureDefn *poDefn = new OGRFeatureDefn( "sql_statement" );
     int            iRawField;
+
+    poDefn->Reference();
 
     mysql_field_seek( hResultSet, 0 );
     for( iRawField = 0; 

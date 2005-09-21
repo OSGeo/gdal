@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/09/21 01:00:01  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.8  2005/08/30 23:53:16  fwarmerdam
  * implement binary field support
  *
@@ -134,6 +137,8 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 /* -------------------------------------------------------------------- */
     OGRFeatureDefn *poDefn = new OGRFeatureDefn( pszTable );
     char           **papszRow;
+
+    poDefn->Reference();
 
     while( (papszRow = mysql_fetch_row( hResult )) != NULL )
     {

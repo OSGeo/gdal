@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/09/21 00:53:19  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.4  2003/12/10 04:26:10  warmerda
  * updated RTE format based on 2003 spec and sample data
  *
@@ -108,6 +111,7 @@ TigerPolygonEconomic::TigerPolygonEconomic( OGRTigerDataSource * poDSIn,
 
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "PolygonEconomic" );
+    poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 
     psRTEInfo = &rtE_info;

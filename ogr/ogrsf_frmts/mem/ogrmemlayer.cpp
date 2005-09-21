@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/09/21 00:59:36  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.5  2005/02/22 12:54:34  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -72,6 +75,7 @@ OGRMemLayer::OGRMemLayer( const char * pszName, OGRSpatialReference *poSRSIn,
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
     poFeatureDefn->SetGeomType( eReqType );
+    poFeatureDefn->Reference();
 }
 
 /************************************************************************/
@@ -94,11 +98,12 @@ OGRMemLayer::~OGRMemLayer()
             delete papoFeatures[i];
     }
     CPLFree( papoFeatures );
-    
-    delete poFeatureDefn;
 
-    if( poSRS != NULL && poSRS->Dereference() == 0 )
-        delete poSRS;
+    if( poFeatureDefn )
+        poFeatureDefn->Release();
+
+    if( poSRS )
+        poSRS->Release();
 }
 
 /************************************************************************/

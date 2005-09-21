@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/09/21 00:59:36  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.2  2005/08/06 22:21:53  pka
  * Area polygonizer added
  *
@@ -78,10 +81,11 @@ OGRILI1Layer::OGRILI1Layer( const char * pszName,
 OGRILI1Layer::~OGRILI1Layer()
 
 {
-    delete poFeatureDefn;
+    if( poFeatureDefn )
+        poFeatureDefn->Release();
 
     if( poSRS != NULL )
-        delete poSRS;
+        poSRS->Release();
 
     if( poFilterGeom != NULL )
         delete poFilterGeom;

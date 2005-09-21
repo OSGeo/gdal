@@ -23,6 +23,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/09/21 01:00:22  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.17  2005/01/14 18:25:37  fwarmerdam
  * Added http as another exception.
  *
@@ -880,7 +883,7 @@ int OGRFMEDataSource::Open( const char * pszCompositeName )
     poSession->destroyStringArray( poParms );
 
     if( poSRS != NULL )
-        OSRDestroySpatialReference( poSRS );
+        poSRS->Release();
 
     CPLDebug( kPROVIDERNAME, "%p:schema read.", this );
 

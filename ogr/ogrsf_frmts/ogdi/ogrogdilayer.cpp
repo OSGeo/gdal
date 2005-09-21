@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/09/21 00:55:42  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.9  2005/02/22 13:08:54  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -117,7 +120,7 @@ OGROGDILayer::~OGROGDILayer()
     }
 
     if (m_poFeatureDefn)
-        delete m_poFeatureDefn;
+        m_poFeatureDefn->Release();
 
     CPLFree(m_pszOGDILayerName);
 
@@ -476,6 +479,7 @@ void OGROGDILayer::BuildFeatureDefn()
                                                     m_pszOGDILayerName, 
                                                     pszGeomName ));
     m_poFeatureDefn->SetGeomType(eLayerGeomType);
+    m_poFeatureDefn->Reference();
 
 /* -------------------------------------------------------------------- */
 /*      Fetch schema from OGDI server and map to OGR types              */

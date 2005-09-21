@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/09/21 00:54:43  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.18  2005/09/05 20:29:19  fwarmerdam
  * removed unused variable
  *
@@ -150,10 +153,7 @@ OGRVRTLayer::~OGRVRTLayer()
     }
 
     if( poSRS != NULL )
-    {
-        if( poSRS->Dereference() == 0 )
-            delete poSRS;
-    }
+        poSRS->Release();
 
     if( poSrcDS != NULL )
     {
@@ -163,7 +163,8 @@ OGRVRTLayer::~OGRVRTLayer()
         OGRSFDriverRegistrar::GetRegistrar()->ReleaseDataSource( poSrcDS );
     }
 
-    delete poFeatureDefn;
+    if( poFeatureDefn )
+        poFeatureDefn->Release();
 
     CPLFree( panSrcField );
     CPLFree( pabDirectCopy );
@@ -193,6 +194,7 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
     }
 
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
+    poFeatureDefn->Reference();
 
 /* -------------------------------------------------------------------- */
 /*      Figure out the data source name.  It may be treated relative    */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/09/21 00:59:36  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.1  2005/08/05 15:32:43  fwarmerdam
  * New
  *
@@ -93,6 +96,7 @@ OGRGRASSLayer::OGRGRASSLayer( int layerIndex,  struct Map_info * map )
     }
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
+    poFeatureDefn->Reference();
 
     // Get type definition
     int nTypes = Vect_cidx_get_num_types_by_index ( poMap, iLayerIndex );
@@ -232,8 +236,10 @@ OGRGRASSLayer::~OGRGRASSLayer()
     }
     
     if ( pszName ) CPLFree ( pszName );
-    if ( poFeatureDefn ) delete poFeatureDefn;
-    if ( poSRS ) delete poSRS;
+    if ( poFeatureDefn )
+        poFeatureDefn->Release();
+    if ( poSRS )
+        poSRS->Release();
 
     if ( pszQuery ) CPLFree ( pszQuery );
     

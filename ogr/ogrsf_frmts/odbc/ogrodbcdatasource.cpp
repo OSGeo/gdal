@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/09/21 00:56:55  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.8  2004/10/17 04:22:19  fwarmerdam
  * Slightly improve error message.
  *
@@ -94,8 +97,8 @@ OGRODBCDataSource::~OGRODBCDataSource()
 
     for( i = 0; i < nKnownSRID; i++ )
     {
-        if( papoSRS[i] != NULL && papoSRS[i]->Dereference() == 0 )
-            delete papoSRS[i];
+        if( papoSRS[i] != NULL )
+            papoSRS[i]->Release();
     }
     CPLFree( panSRID );
     CPLFree( papoSRS );

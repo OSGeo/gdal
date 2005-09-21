@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/09/21 00:54:43  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.8  2005/02/22 12:50:31  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -108,7 +111,7 @@ OGRSQLiteLayer::~OGRSQLiteLayer()
 
     if( poFeatureDefn != NULL )
     {
-        delete poFeatureDefn;
+        poFeatureDefn->Release();
         poFeatureDefn = NULL;
     }
 
@@ -132,6 +135,8 @@ CPLErr OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
 {
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     int    nRawColumns = sqlite3_column_count( hStmt );
+
+    poFeatureDefn->Reference();
 
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * nRawColumns );
 
