@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2005/09/21 00:19:04  fwarmerdam
+ * set names to be more similar to the specification
+ *
  * Revision 1.3  2005/08/10 20:54:01  dnadeau
  * do not print EXIF Offset tags
  *
@@ -93,86 +96,102 @@ static struct tagname {
 
 //	{ 0x100,	"EXIF_Image_Width"},
 //	{ 0x101,	"EXIF_Image_Length"},
-	{ 0x102,	"EXIF_Bits_Per_Sample"},
+	{ 0x102,	"EXIF_BitsPerSample"},
 	{ 0x103,	"EXIF_Compression"},
-	{ 0x106,	"EXIF_Photometric+Interpretation"},
+	{ 0x106,	"EXIF_PhotometricInterpretation"},
 	{ 0x10A,	"EXIF_Fill_Order"},
 	{ 0x10D,	"EXIF_Document_Name"},
-	{ 0x10E,	"EXIF_Image_Description"},
+	{ 0x10E,	"EXIF_ImageDescription"},
 	{ 0x10F,	"EXIF_Make"},
 	{ 0x110,	"EXIF_Model"},
-	{ 0x111,	"EXIF_Strip_Offsets"},
+	{ 0x111,	"EXIF_StripOffsets"},
 	{ 0x112,	"EXIF_Orientation"},
-	{ 0x115,	"EXIF_Samples_Per_Pixel"},
-	{ 0x116,	"EXIF_Rows_Per_Strip"},
-	{ 0x117,	"EXIF_Strip_Byte_Counts"},
-	{ 0x11A,	"EXIF_X_Resolution"},
-	{ 0x11B,	"EXIF_Y_Resolution"},
-	{ 0x11C,	"EXIF_Planar_Configuration"},
-	{ 0x128,	"EXIF_Resolution_Unit"},
-	{ 0x12D,	"EXIF_Transfer_Function"},
+	{ 0x115,	"EXIF_SamplesPerPixel"},
+	{ 0x116,	"EXIF_RowsPerStrip"},
+	{ 0x117,	"EXIF_StripByteCounts"},
+	{ 0x11A,	"EXIF_XResolution"},
+	{ 0x11B,	"EXIF_YResolution"},
+	{ 0x11C,	"EXIF_PlanarConfiguration"},
+	{ 0x128,	"EXIF_ResolutionUnit"},
+	{ 0x12D,	"EXIF_TransferFunction"},
 	{ 0x131,	"EXIF_Software"},
-	{ 0x132,	"EXIF_Date_Time"},
+	{ 0x132,	"EXIF_DateTime"},
 	{ 0x13B,	"EXIF_Artist"},
-	{ 0x13E,	"EXIF_White_Point"},
-	{ 0x13F,	"EXIF_Primary_Chromaticities"},
+	{ 0x13E,	"EXIF_WhitePoint"},
+	{ 0x13F,	"EXIF_PrimaryChromaticities"},
 	{ 0x156,	"EXIF_Transfer_Range"},
 	{ 0x200,	"EXIF_JPEG_Proc"},
-	{ 0x201,	"EXIF_JPEG_Interchange_Format"},
-	{ 0x202,	"EXIF_JPEG_Interchange_Format_Length"},
-	{ 0x211,	"EXIF_YCbCr_Coefficients"},
-	{ 0x212,	"EXIF_YCbCr_Sub_Sampling"},
-	{ 0x213,	"EXIF_YCbCr_Positioning"},
-	{ 0x214,	"EXIF_Reference_Black_White"},
+	{ 0x201,	"EXIF_JPEGInterchangeFormat"},
+	{ 0x202,	"EXIF_JPEGInterchangeFormatLength"},
+	{ 0x211,	"EXIF_YCbCrCoefficients"},
+	{ 0x212,	"EXIF_YCbCrSubSampling"},
+	{ 0x213,	"EXIF_YCbCrPositioning"},
+	{ 0x214,	"EXIF_ReferenceBlackWhite"},
 	{ 0x828D,	"EXIF_CFA_Repeat_Pattern_Dim"},
 	{ 0x828E,	"EXIF_CFA_Pattern"},
 	{ 0x828F,	"EXIF_Battery_Level"},
 	{ 0x8298,	"EXIF_Copyright"},
-	{ 0x829A,	"EXIF_Exposure_Time"},
-	{ 0x829D,	"EXIF_F_Number"},
+	{ 0x829A,	"EXIF_ExposureTime"},
+	{ 0x829D,	"EXIF_FNumber"},
 	{ 0x83BB,	"EXIF_IPTC/NAA"},
 	//	{ 0x8769,	"EXIF_Offset"},
 	{ 0x8773,	"EXIF_Inter_Color_Profile"},
-	{ 0x8822,	"EXIF_Exposure_Program"},
-	{ 0x8824,	"EXIF_Spectral_Sensitivity"},
-	//	{ 0x8825,	"EXIF_GPS_Offset"},
-	{ 0x8827,	"EXIF_ISO_Speed_Ratings"},
+	{ 0x8822,	"EXIF_ExposureProgram"},
+	{ 0x8824,	"EXIF_SpectralSensitivity"},
+	//	{ 0x8825,	"EXIF_GPSOffset"},
+	{ 0x8827,	"EXIF_ISOSpeedRatings"},
 	{ 0x8828,	"EXIF_OECF"},
-	{ 0x9000,	"EXIF_Version"},
-	{ 0x9003,	"EXIF_Date_Time_Original"},
-	{ 0x9004,	"EXIF_Date_Time_Digitized"},
-	{ 0x9101,	"EXIF_Components_Configuration"},
-	{ 0x9102,	"EXIF_Compressed_Bits_Per_Pixel"},
-	{ 0x9201,	"EXIF_Shutter_Speed_Value"},
-	{ 0x9202,	"EXIF_Aperture_Value"},
-	{ 0x9203,	"EXIF_Brightness_Value"},
-	{ 0x9204,	"EXIF_Exposure_Bias_Value"},
-	{ 0x9205,	"EXIF_Max_Aperture_Value"},
-	{ 0x9206,	"EXIF_Subject_Distance"},
-	{ 0x9207,	"EXIF_Metering_Mode"},
-	{ 0x9208,	"EXIF_Light_Source"},
+	{ 0x9000,	"EXIF_ExifVersion"},
+	{ 0x9003,	"EXIF_DateTimeOriginal"},
+	{ 0x9004,	"EXIF_DateTimeDigitized"},
+	{ 0x9101,	"EXIF_ComponentsConfiguration"},
+	{ 0x9102,	"EXIF_CompressedBitsPerPixel"},
+	{ 0x9201,	"EXIF_ShutterSpeedValue"},
+	{ 0x9202,	"EXIF_ApertureValue"},
+	{ 0x9203,	"EXIF_BrightnessValue"},
+	{ 0x9204,	"EXIF_ExposureBiasValue"},
+	{ 0x9205,	"EXIF_MaxApertureValue"},
+	{ 0x9206,	"EXIF_SubjectDistance"},
+	{ 0x9207,	"EXIF_MeteringMode"},
+	{ 0x9208,	"EXIF_LightSource"},
 	{ 0x9209,	"EXIF_Flash"},
-	{ 0x920A,	"EXIF_Focal_Length"},
-//	{ 0x927C,	"EXIF_Maker_Note"},
-	{ 0x9286,	"EXIF_User_Comment"},
-	{ 0x9290,	"EXIF_Sub_Sec_Time"},
-	{ 0x9291,	"EXIF_Sub_Sec_Time_Original"},
-	{ 0x9292,	"EXIF_Sub_Sec_Time_Digitized"},
-	{ 0xA000,	"EXIF_Flash_Pix_Version"},
-	{ 0xA001,	"EXIF_Color_Space"},
-	{ 0xA002,	"EXIF_Image_Width"},
-	{ 0xA003,	"EXIF_Image_Length"},
-//	{ 0xA005,	"EXIF_Interoperability_Offset"},
-	{ 0xA20B,	"EXIF_Flash_Energy"},	  // 0x920B in TIFF/EP
-	{ 0xA20C,	"EXIF_Spatial_Frequency_Response"},   // 0x920C    -  -
-	{ 0xA20E,	"EXIF_Focal_Plane_X_Resolution"},     // 0x920E    -  -
-	{ 0xA20F,	"EXIF_Focal_Plane_Y_Resolution"},     // 0x920F    -  -
-	{ 0xA210,	"EXIF_Focal_Plane_Resolution_Unit"},  // 0x9210    -  -
-	{ 0xA214,	"EXIF_Subject_Location"},	// 0x9214    -  -
-	{ 0xA215,	"EXIF_Exposure_Index"},		// 0x9215    -  -
-	{ 0xA217,	"EXIF_Sensing_Method"},		// 0x9217    -  -
-	{ 0xA300,	"EXIF_File_Source"},
-	{ 0xA301,	"EXIF_Scene_Type"},
+	{ 0x920A,	"EXIF_FocalLength"},
+    { 0x9214,   "EXIF_SubjectArea"},
+//	{ 0x927C,	"EXIF_MakerNote"},
+	{ 0x9286,	"EXIF_UserComment"},
+	{ 0x9290,	"EXIF_SubSecTime"},
+	{ 0x9291,	"EXIF_SubSecTime_Original"},
+	{ 0x9292,	"EXIF_SubSecTime_Digitized"},
+	{ 0xA000,	"EXIF_FlashpixVersion"},
+	{ 0xA001,	"EXIF_ColorSpace"},
+	{ 0xA002,	"EXIF_PixelXDimension"},
+	{ 0xA003,	"EXIF_PixelYDimension"},
+    { 0xA004,   "EXIF_RelatedSoundFile"},
+//	{ 0xA005,	"EXIF_InteroperabilityOffset"},
+	{ 0xA20B,	"EXIF_FlashEnergy"},	  // 0x920B in TIFF/EP
+	{ 0xA20C,	"EXIF_SpatialFrequencyResponse"},   // 0x920C    -  -
+	{ 0xA20E,	"EXIF_FocalPlaneXResolution"},     // 0x920E    -  -
+	{ 0xA20F,	"EXIF_FocalPlaneYResolution"},     // 0x920F    -  -
+	{ 0xA210,	"EXIF_FocalPlaneResolutionUnit"},  // 0x9210    -  -
+	{ 0xA214,	"EXIF_SubjectLocation"},	// 0x9214    -  -
+	{ 0xA215,	"EXIF_ExposureIndex"},		// 0x9215    -  -
+	{ 0xA217,	"EXIF_SensingMethod"},		// 0x9217    -  -
+	{ 0xA300,	"EXIF_FileSource"},
+	{ 0xA301,	"EXIF_SceneType"},
+    { 0xA302,   "EXIF_CFAPattern"},
+    { 0xA401,   "EXIF_CustomRendered"},
+    { 0xA402,   "EXIF_ExposureMode"},
+    { 0XA403,   "EXIF_WhiteBalance"},
+    { 0xA404,   "EXIF_DigitalZoomRatio"},
+    { 0xA405,   "EXIF_FocalLengthIn35mmFilm"},
+    { 0xA406,   "EXIF_SceneCaptureType"},
+    { 0xA407,   "EXIF_GainControl"},
+    { 0xA408,   "EXIF_Contrast"},
+    { 0xA409,   "EXIF_Saturation"},
+    { 0xA40A,   "EXIF_Sharpness"},
+    { 0xA40B,   "EXIF_DeviceSettingDescription"},
+    { 0xA40C,   "EXIF_SubjectDistanceRange"},
+    { 0xA420,   "EXIF_ImageUniqueID"},
 	{ 0x0000,       ""}
 };
 
@@ -276,3 +295,4 @@ extern	void TIFFSwabArrayOfTriples(GByte*, unsigned long);
 extern	void TIFFSwabArrayOfLong(GUInt32*, unsigned long);
 extern	void TIFFSwabArrayOfDouble(double*, unsigned long);
 CPL_C_END
+
