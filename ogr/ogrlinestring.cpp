@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2005/09/21 07:45:53  osemykin
+ * Fixed getPoints() for support Z coordinate NULL buffer
+ *
  * Revision 1.50  2005/09/17 12:11:30  osemykin
  * added OGRLineString::getPoints
  *
@@ -682,7 +685,10 @@ void OGRLineString::getPoints( OGRRawPoint * paoPointsOut, double * padfZ )
 /* -------------------------------------------------------------------- */
     if( padfZ )
     {
-        memcpy( padfZ, this->padfZ, sizeof(double) * nPointCount );
+        if ( this->padfZ )
+            memcpy( padfZ, this->padfZ, sizeof(double) * nPointCount );
+        else
+            memset( padfZ, 0, sizeof(double) * nPointCount );
     }
 }
 
