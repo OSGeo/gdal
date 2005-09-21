@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2005/09/21 16:24:36  fwarmerdam
+ * fixed to avoid using openinfo->fp or large files may not work
+ *
  * Revision 1.28  2005/09/14 01:09:00  fwarmerdam
  * Fixed creation data types.
  *
@@ -842,7 +845,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*	We assume the user is pointing to the binary (ie. .bil) file.	*/
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->fp == NULL )
+    if( poOpenInfo->nHeaderBytes < 100 )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -1064,9 +1067,6 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Reopen file in update mode if necessary.                        */
 /* -------------------------------------------------------------------- */
-    VSIFClose( poOpenInfo->fp );
-    poOpenInfo->fp = NULL;
-
     if( poOpenInfo->eAccess == GA_Update )
         poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
     else
