@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.43  2005/09/21 02:21:56  fwarmerdam
+ * added comment blocks
+ *
  * Revision 1.42  2005/09/19 02:53:23  cfis
  * The two versions of the method OGRFeatureShadow::GetFieldDefnRef were both marked with the %newobject feature.
  *
@@ -308,7 +311,9 @@ typedef void OGRFieldDefnShadow;
  */
 %import osr.i
 
-/* OGR Driver */
+/************************************************************************/
+/*                              OGRDriver                               */
+/************************************************************************/
 
 %rename (Driver) OGRDriverShadow;
 
@@ -363,7 +368,10 @@ public:
 }; /* class OGRDriverShadow */
 
 
-/* OGR DataSource */
+/************************************************************************/
+/*                            OGRDataSource                             */
+/************************************************************************/
+
 
 %rename (DataSource) OGRDataSourceShadow;
 
@@ -461,6 +469,10 @@ public:
 
 
 }; /* class OGRDataSourceShadow */
+
+/************************************************************************/
+/*                               OGRLayer                               */
+/************************************************************************/
 
 %rename (Layer) OGRLayerShadow;
 class OGRLayerShadow {
@@ -616,6 +628,9 @@ public:
 
 }; /* class OGRLayerShadow */
 
+/************************************************************************/
+/*                              OGRFeature                              */
+/************************************************************************/
 
 %rename (Feature) OGRFeatureShadow;
 class OGRFeatureShadow {
@@ -803,6 +818,9 @@ public:
 
 }; /* class OGRFeatureShadow */
 
+/************************************************************************/
+/*                            OGRFeatureDefn                            */
+/************************************************************************/
 
 %rename (FeatureDefn) OGRFeatureDefnShadow;
 class OGRFeatureDefnShadow {
@@ -851,13 +869,14 @@ public:
     return OGR_FD_GetReferenceCount(self);
   }
   
-  
-  
 } /* %extend */
 
 
 }; /* class OGRFeatureDefnShadow */
 
+/************************************************************************/
+/*                             OGRFieldDefn                             */
+/************************************************************************/
 
 %rename (FieldDefn) OGRFieldDefnShadow;
 
@@ -929,6 +948,10 @@ public:
 
 }; /* class OGRFieldDefnShadow */
 
+
+/* -------------------------------------------------------------------- */
+/*      Geometry factory methods.                                       */
+/* -------------------------------------------------------------------- */
 %feature( "kwargs" ) CreateGeometryFromWkb;
 %newobject CreateGeometryFromWkb;
 %apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
@@ -975,6 +998,9 @@ public:
  
 %}
 
+/************************************************************************/
+/*                             OGRGeometry                              */
+/************************************************************************/
 
 %rename (Geometry) OGRGeometryShadow;
 class OGRGeometryShadow {
@@ -1215,6 +1241,9 @@ public:
 
 }; /* class OGRGeometryShadow */
 
+/************************************************************************/
+/*                        Other misc functions.                         */
+/************************************************************************/
 
 %{
 char const *OGRDriverShadow_get_name( OGRDriverShadow *h ) {
