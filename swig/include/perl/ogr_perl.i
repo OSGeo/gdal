@@ -6,6 +6,9 @@
 
 /*
  * $Log$
+ * Revision 1.4  2005/09/21 19:04:12  kruland
+ * Need to %include cpl_exceptions.i
+ *
  * Revision 1.3  2005/09/21 18:00:05  kruland
  * Turn on UseExceptions in ogr init code.
  *
@@ -26,6 +29,8 @@
   }
   
 %}
+
+%include cpl_exceptions.i
 
 %rename (GetDriverCount) OGRGetDriverCount;
 %rename (GetOpenDSCount) OGRGetOpenDSCount;
