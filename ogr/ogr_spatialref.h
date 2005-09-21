@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.67  2005/09/21 00:50:08  fwarmerdam
+ * Added Release
+ *
  * Revision 1.66  2005/03/03 04:55:42  fwarmerdam
  * make exportToWkt() const
  *
@@ -215,6 +218,7 @@ class CPL_DLL OGRSpatialReference
     int         Reference();
     int         Dereference();
     int         GetReferenceCount() const { return nRefCount; }
+    void        Release();
 
     OGRSpatialReference *Clone() const;
     OGRSpatialReference *CloneGeogCS() const;
