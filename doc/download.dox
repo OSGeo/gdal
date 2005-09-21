@@ -30,9 +30,6 @@ FC4 RPMs are also available from
 <li> RPMs suitable for SuSe are maintained by GDF Hannover Germany site at
 <a href="http://www.gdf-hannover.de/software/suse/">http://www.gdf-hannover.de/software/suse/</a>.<p>
 
-<li> GDAL is also a component of the FreeGIS CDs available 
-from <a href="http://www.freegis.org/">www.freegis.org</a> in RPM format.<p>
-
 <li> Packages for Debian users are available in the official repository
 <a href="http://packages.debian.org/libgdal1">http://packages.debian.org/libgdal1</a>.<p>
 
