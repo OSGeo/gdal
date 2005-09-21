@@ -9,6 +9,12 @@
 
  *
  * $Log$
+ * Revision 1.44  2005/09/21 15:33:02  kruland
+ * - Added DISOWN to ReleaseResultSet
+ * - Added %newobject to GetSpatialFilter and GetOpenDS
+ * - Added kwargs feature to Open and OpenShared - they must have been
+ *   dropped during a previous commit.
+ *
  * Revision 1.43  2005/09/21 02:21:56  fwarmerdam
  * added comment blocks
  *
@@ -461,9 +467,11 @@ public:
     return layer;
   }
   
+%apply SWIGTYPE *DISOWN {OGRLayerShadow *layer};
   void ReleaseResultSet(OGRLayerShadow *layer){
     OGR_DS_ReleaseResultSet(self, layer);
   }
+%clear OGRLayerShadow *layer;
 
 } /* %extend */
 
@@ -494,7 +502,6 @@ public:
     OGR_L_SetSpatialFilterRect(self, minx, miny, maxx, maxy);                          
   }
   
-  %newobject GetSpatialFilter;
   OGRGeometryShadow *GetSpatialFilter() {
     return (OGRGeometryShadow *) OGR_L_GetSpatialFilter(self);
   }
@@ -1271,7 +1278,6 @@ OGRErr OGRSetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER);
 
 void OGRRegisterAll();
 
-%newobject GetOpenDS;
 %inline %{
   OGRDataSourceShadow* GetOpenDS(int ds_number) {
     OGRDataSourceShadow* layer = (OGRDataSourceShadow*) OGRGetOpenDS(ds_number);
@@ -1280,6 +1286,7 @@ void OGRRegisterAll();
 %}
 
 %newobject Open;
+%feature( "kwargs" ) Open;
 %inline %{
   OGRDataSourceShadow* Open( const char *filename, int update =0 ) {
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(filename,update,NULL);
@@ -1288,6 +1295,7 @@ void OGRRegisterAll();
 %}
 
 %newobject OpenShared;
+%feature( "kwargs" ) OpenShared;
 %inline %{
   OGRDataSourceShadow* OpenShared( const char *filename, int update =0 ) {
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(filename,update,NULL);
