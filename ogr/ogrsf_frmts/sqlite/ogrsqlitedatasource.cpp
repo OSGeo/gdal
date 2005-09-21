@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/09/21 00:54:43  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.6  2004/10/30 05:13:10  fwarmerdam
  * ensure we shut the database on exit!
  *
@@ -88,8 +91,8 @@ OGRSQLiteDataSource::~OGRSQLiteDataSource()
 
     for( i = 0; i < nKnownSRID; i++ )
     {
-        if( papoSRS[i] != NULL && papoSRS[i]->Dereference() == 0 )
-            delete papoSRS[i];
+        if( papoSRS[i] != NULL )
+            papoSRS[i]->Release();
     }
     CPLFree( panSRID );
     CPLFree( papoSRS );

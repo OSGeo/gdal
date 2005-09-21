@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/09/21 00:59:55  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.4  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
@@ -68,6 +71,7 @@ OGRNTFFeatureClassLayer::OGRNTFFeatureClassLayer( OGRNTFDataSource *poDSIn )
 /* -------------------------------------------------------------------- */
     poFeatureDefn = new OGRFeatureDefn( "FEATURE_CLASSES" );
     poFeatureDefn->SetGeomType( wkbNone );
+    poFeatureDefn->Reference();
 
     OGRFieldDefn      oFCNum( "FEAT_CODE", OFTString );
 
@@ -87,7 +91,8 @@ OGRNTFFeatureClassLayer::OGRNTFFeatureClassLayer( OGRNTFDataSource *poDSIn )
 OGRNTFFeatureClassLayer::~OGRNTFFeatureClassLayer()
 
 {
-    delete poFeatureDefn;
+    if( poFeatureDefn )
+        poFeatureDefn->Release();
 
     if( poFilterGeom != NULL )
         delete poFilterGeom;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/09/21 00:53:19  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.10  2003/01/11 15:29:55  warmerda
  * expanded tabs
  *
@@ -126,6 +129,7 @@ TigerPolyChainLink::TigerPolyChainLink( OGRTigerDataSource * poDSIn,
 
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "PolyChainLink" );
+    poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 
     if (poDS->GetVersion() >= TIGER_2002) {

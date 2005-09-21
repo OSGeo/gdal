@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/09/21 01:00:55  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.1  2002/02/14 23:01:09  warmerda
  * New
  *
@@ -45,6 +48,7 @@ OGRAVCDataSource::OGRAVCDataSource()
 
 {
     poSRS = NULL;
+    pszCoverageName = NULL;
 }
 
 /************************************************************************/
@@ -55,7 +59,8 @@ OGRAVCDataSource::~OGRAVCDataSource()
 
 {
     if( poSRS )
-        delete poSRS;
+        poSRS->Release();
+    CPLFree( pszCoverageName );
 }
 
 /************************************************************************/

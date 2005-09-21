@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/09/21 00:53:19  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.9  2003/01/04 23:21:56  mbp
  * Minor bug fixes and field definition changes.  Cleaned
  * up and commented code written for TIGER 2002 support.
@@ -99,6 +102,7 @@ TigerIDHistory::TigerIDHistory( OGRTigerDataSource * poDSIn,
 
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "IDHistory" );
+    poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 
     psRTHInfo = &rtH_info;

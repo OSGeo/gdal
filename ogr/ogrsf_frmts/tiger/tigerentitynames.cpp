@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/09/21 00:53:19  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.10  2003/01/11 15:29:55  warmerda
  * expanded tabs
  *
@@ -159,6 +162,7 @@ TigerEntityNames::TigerEntityNames( OGRTigerDataSource * poDSIn,
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "EntityNames" );
+    poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPoint );
 
     if( poDS->GetVersion() >= TIGER_2002 ) {

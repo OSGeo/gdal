@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/09/21 00:55:42  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.6  2005/02/02 20:54:27  fwarmerdam
  * track m_nFeaturesRead
  *
@@ -72,6 +75,7 @@ OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
     nNextFID = 1;
 
     poFeatureDefn = new OGRFeatureDefn( pszLayerNameIn );
+    poFeatureDefn->Reference();
 
     nFieldCount = 0;
     panFieldOffset = (int *) CPLCalloc(sizeof(int),nFieldCountIn);
@@ -162,8 +166,13 @@ OGRRECLayer::~OGRRECLayer()
                   (int) m_nFeaturesRead, 
                   poFeatureDefn->GetName() );
     }
+    
+    if( fpREC != NULL )
+        VSIFClose( fpREC );
 
-    delete poFeatureDefn;
+    if( poFeatureDefn )
+        poFeatureDefn->Release();
+
     CPLFree( panFieldOffset );
     CPLFree( panFieldWidth );
 }
@@ -272,6 +281,8 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
 /* -------------------------------------------------------------------- */
     poFeature->SetFID( nNextFID++ );
     m_nFeaturesRead++;
+
+    CPLFree( pszRecord );
 
     return poFeature;
 }

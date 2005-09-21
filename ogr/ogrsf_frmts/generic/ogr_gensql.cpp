@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/09/21 01:01:28  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.14  2005/02/02 20:00:29  fwarmerdam
  * added SetNextByIndex support
  *
@@ -163,6 +166,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
     OGRFeatureDefn *poSrcDefn = poSrcLayer->GetLayerDefn();
 
     poDefn = new OGRFeatureDefn( psSelectInfo->table_defs[0].table_alias );
+    poDefn->Reference();
 
     for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
     {
@@ -240,7 +244,9 @@ OGRGenSQLResultsLayer::~OGRGenSQLResultsLayer()
         swq_select_free( (swq_select *) pSelectInfo );
 
     if( poDefn != NULL )
-        delete poDefn;
+    {
+        poDefn->Release();
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Release any additional datasources being used in joins.         */

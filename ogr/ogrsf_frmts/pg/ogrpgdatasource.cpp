@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2005/09/21 00:55:42  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.35  2005/08/06 14:49:27  osemykin
  * Added BINARY CURSOR support
  * Use it with 'PGB:dbname=...' instead 'PG:dbname=...'
@@ -193,8 +196,8 @@ OGRPGDataSource::~OGRPGDataSource()
 
     for( i = 0; i < nKnownSRID; i++ )
     {
-        if( papoSRS[i] != NULL && papoSRS[i]->Dereference() == 0 )
-            delete papoSRS[i];
+        if( papoSRS[i] != NULL )
+            papoSRS[i]->Release();
     }
     CPLFree( panSRID );
     CPLFree( papoSRS );

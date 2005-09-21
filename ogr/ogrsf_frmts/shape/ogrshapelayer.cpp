@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/09/21 00:53:20  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.20  2005/09/10 22:32:34  fwarmerdam
  * Make GetNextShape() more bulletproof if SHPReadOGRFeature() fails.
  *
@@ -153,10 +156,8 @@ OGRShapeLayer::~OGRShapeLayer()
 
     CPLFree( pszFullName );
 
-    delete poFeatureDefn;
-
-    if( poSRS != NULL )
-        delete poSRS;
+    poFeatureDefn->Release();
+    poSRS->Release();
 
     if( hDBF != NULL )
         DBFClose( hDBF );

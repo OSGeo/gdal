@@ -25,6 +25,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/09/21 01:00:22  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.4  2005/02/22 12:57:19  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -427,6 +430,7 @@ int OGRFMELayerCached::InitializeFromXML( CPLXMLNode *psLayer )
 /*      Create the feature definition.                                  */
 /* -------------------------------------------------------------------- */
     poFeatureDefn = new OGRFeatureDefn( CPLGetXMLValue(psLayer,"Name","X") );
+    poFeatureDefn->Reference();
     
 /* -------------------------------------------------------------------- */
 /*      Set the geometry type, if available.                            */

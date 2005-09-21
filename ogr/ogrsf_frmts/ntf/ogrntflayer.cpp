@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/09/21 00:59:55  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.12  2005/02/22 12:54:16  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -106,7 +109,8 @@ OGRNTFLayer::~OGRNTFLayer()
                   poFeatureDefn->GetName() );
     }
 
-    delete poFeatureDefn;
+    if( poFeatureDefn )
+        poFeatureDefn->Release();
 }
 
 /************************************************************************/

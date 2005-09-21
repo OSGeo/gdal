@@ -25,6 +25,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/09/21 01:00:22  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.4  2005/02/22 12:57:19  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -131,10 +134,12 @@ OGRFMELayer::~OGRFMELayer()
         poDS->GetFMESession()->destroyFeature( poFMEFeature );
 
     if( poFeatureDefn != NULL )
-        delete poFeatureDefn;
+    {
+        poFeatureDefn->Release();
+    }
 
     if( poSpatialRef != NULL )
-        delete poSpatialRef;
+        poSpatialRef->Release();
 }
 
 /************************************************************************/
@@ -163,6 +168,7 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
     poSchemaFeature->getFeatureType( *poFMEString );
 
     poFeatureDefn = new OGRFeatureDefn( poFMEString->data() );
+    poFeatureDefn->Reference();
 
     poDS->GetFMESession()->destroyString( poFMEString );
 

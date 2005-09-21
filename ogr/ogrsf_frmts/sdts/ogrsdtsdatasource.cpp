@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/09/21 00:54:43  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.9  2003/12/11 21:10:25  warmerda
  * avoid SRS leak
  *
@@ -96,7 +99,9 @@ OGRSDTSDataSource::~OGRSDTSDataSource()
 
     CPLFree( pszName );
 
-    delete poSRS;
+    if( poSRS )
+        poSRS->Release();
+
     if( poTransfer )
         delete poTransfer;
 }

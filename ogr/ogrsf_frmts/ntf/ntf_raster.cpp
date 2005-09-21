@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/09/21 00:59:55  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.13  2003/07/08 15:23:58  warmerda
  * avoid casting warning
  *
@@ -119,6 +122,7 @@ void NTFFileReader::EstablishRasterAccess()
 
     if( poRecord->GetType() != NRT_GRIDHREC )
     {
+        delete poRecord;
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to find GRIDHREC (type 50) record in what appears\n"
                   "to be an NTF Raster DTM product." );
@@ -170,6 +174,8 @@ void NTFFileReader::EstablishRasterAccess()
 /* -------------------------------------------------------------------- */
 /*      Initialize column offsets table.                                */
 /* -------------------------------------------------------------------- */
+    delete poRecord;
+
     panColumnOffset = (long *) CPLCalloc(sizeof(long),nRasterXSize);
 
     GetFPPos( panColumnOffset+0, NULL );
@@ -283,6 +289,7 @@ OGRNTFRasterLayer::OGRNTFRasterLayer( OGRNTFDataSource *poDSIn,
 
     sprintf( szLayerName, "DTM_%s", poReaderIn->GetTileName() );
     poFeatureDefn = new OGRFeatureDefn( szLayerName );
+    poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPoint25D );
 
     OGRFieldDefn      oHeight( "HEIGHT", OFTInteger );
@@ -318,7 +325,9 @@ OGRNTFRasterLayer::OGRNTFRasterLayer( OGRNTFDataSource *poDSIn,
 OGRNTFRasterLayer::~OGRNTFRasterLayer()
 
 {
-    delete poFeatureDefn;
+    CPLFree( pafColumn );
+    if( poFeatureDefn )
+        poFeatureDefn->Release();
 
     if( poFilterGeom != NULL )
         delete poFilterGeom;

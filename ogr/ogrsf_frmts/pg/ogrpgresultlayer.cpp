@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/09/21 00:55:42  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.4  2004/05/08 02:14:49  warmerda
  * added GetFeature() on table, generalize FID support a bit
  *
@@ -122,6 +125,8 @@ OGRFeatureDefn *OGRPGResultLayer::ReadResultDefinition()
 /* -------------------------------------------------------------------- */
     OGRFeatureDefn *poDefn = new OGRFeatureDefn( "sql_statement" );
     int            iRawField;
+
+    poDefn->Reference();
 
     for( iRawField = 0; iRawField < PQnfields(hInitialResult); iRawField++ )
     {

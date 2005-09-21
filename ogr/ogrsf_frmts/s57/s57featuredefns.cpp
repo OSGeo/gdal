@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/09/21 00:54:43  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.3  2005/07/30 18:26:38  fwarmerdam
  * accept one character primitives like we get in AML classes
  *
@@ -86,6 +89,7 @@ OGRFeatureDefn *S57GenerateGeomFeatureDefn( OGRwkbGeometryType eGType,
     else
         return NULL;
 
+    poFDefn->Reference();
     S57GenerateStandardAttributes( poFDefn, nOptionFlags );
 
     return poFDefn;
@@ -123,6 +127,8 @@ S57GenerateVectorPrimitiveFeatureDefn( int nRCNM, int nOptionFlags )
     }
     else
         return NULL;
+
+    poFDefn->Reference();
 
 /* -------------------------------------------------------------------- */
 /*      Core vector primitive attributes                                */
@@ -206,6 +212,7 @@ OGRFeatureDefn *S57GenerateObjectClassDefn( S57ClassRegistrar *poCR,
 /*      acronym.                                                        */
 /* -------------------------------------------------------------------- */
     poFDefn = new OGRFeatureDefn( poCR->GetAcronym() );
+    poFDefn->Reference();
 
 /* -------------------------------------------------------------------- */
 /*      Try and establish the geometry type.  If more than one          */

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/09/21 00:53:19  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.20  2004/10/05 19:30:44  fwarmerdam
  * Added bug fix for a "full" shape record at the end of the .RT2 file.
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=628
@@ -286,6 +289,7 @@ TigerCompleteChain::TigerCompleteChain( OGRTigerDataSource * poDSIn,
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn( "CompleteChain" );
+    poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbLineString );
 
 

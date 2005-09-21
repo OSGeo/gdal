@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/09/21 01:01:01  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.7  2005/06/20 17:54:04  fwarmerdam
  * added support for external csvt file
  *
@@ -155,26 +158,29 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
 
     for( i = 0; papszNames != NULL && papszNames[i] != NULL; i++ )
     {
-        const char *pszSubFilename = 
+        CPLString oSubFilename = 
             CPLFormFilename( pszFilename, papszNames[i], NULL );
 
         if( EQUAL(papszNames[i],".") || EQUAL(papszNames[i],"..") )
             continue;
 
-        if( VSIStat( pszSubFilename, &sStatBuf ) != 0 
+        if( VSIStat( oSubFilename, &sStatBuf ) != 0 
             || !VSI_ISREG(sStatBuf.st_mode) 
-            || !EQUAL(pszSubFilename+strlen(pszSubFilename)-4,".csv") )
+            || !EQUAL(CPLGetExtension(oSubFilename),"csv") )
         {
             nNotCSVCount++;
             continue;
         }
 
-        if( !OpenTable( pszSubFilename ) )
+        if( !OpenTable( oSubFilename ) )
         {
+            CSLDestroy( papszNames );
             nNotCSVCount++;
             return FALSE;
         }
     }
+
+    CSLDestroy( papszNames );
 
 /* -------------------------------------------------------------------- */
 /*      We presume that this is indeed intended to be a CSV             */

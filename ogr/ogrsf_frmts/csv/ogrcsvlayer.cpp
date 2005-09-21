@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/09/21 01:01:01  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.5  2005/06/20 17:54:04  fwarmerdam
  * added support for external csvt file
  *
@@ -74,6 +77,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     nNextFID = 1;
 
     poFeatureDefn = new OGRFeatureDefn( pszLayerNameIn );
+    poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbNone );
 
 /* -------------------------------------------------------------------- */
@@ -208,7 +212,7 @@ OGRCSVLayer::~OGRCSVLayer()
                   poFeatureDefn->GetName() );
     }
 
-    delete poFeatureDefn;
+    poFeatureDefn->Release();
     
     VSIFClose( fpCSV );
 }

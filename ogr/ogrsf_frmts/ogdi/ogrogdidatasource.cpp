@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/09/21 00:55:43  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.7  2004/02/19 06:59:36  warmerda
  * Fixed a couple memory leaks.
  *
@@ -98,7 +101,7 @@ OGROGDIDataSource::~OGROGDIDataSource()
     }
 
     if (m_poSpatialRef)
-        delete m_poSpatialRef;
+        m_poSpatialRef->Release();
 }
 
 /************************************************************************/

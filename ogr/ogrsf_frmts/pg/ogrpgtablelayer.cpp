@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2005/09/21 00:55:42  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.35  2005/08/17 16:25:39  fwarmerdam
  * Patched error output to include command if CreateFeature() fails.
  *
@@ -281,6 +284,8 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
 /* -------------------------------------------------------------------- */
     OGRFeatureDefn *poDefn = new OGRFeatureDefn( pszTable );
     int            iRecord;
+
+    poDefn->Reference();
 
     for( iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
     {

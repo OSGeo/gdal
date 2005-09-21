@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/09/21 01:00:28  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.6  2005/02/22 12:57:39  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -82,6 +85,7 @@ OGRDODSGridLayer::OGRDODSGridLayer( OGRDODSDataSource *poDSIn,
     }
         
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
+    poFeatureDefn->Reference();
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the target variable.                                      */

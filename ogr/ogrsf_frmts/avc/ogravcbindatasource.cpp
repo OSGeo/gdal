@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/09/21 01:00:55  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.4  2002/03/18 19:56:13  warmerda
  * added an error reset
  *
@@ -58,6 +61,7 @@ OGRAVCBinDataSource::OGRAVCBinDataSource()
     pszName = NULL;
     papoLayers = NULL;
     nLayers = 0;
+    poSRS = NULL;
 }
 
 /************************************************************************/

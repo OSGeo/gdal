@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/09/21 00:56:55  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.11  2005/09/09 05:02:12  fwarmerdam
  * added wkb support
  *
@@ -117,12 +120,12 @@ OGRODBCLayer::~OGRODBCLayer()
 
     if( poFeatureDefn != NULL )
     {
-        delete poFeatureDefn;
+        poFeatureDefn->Release();
         poFeatureDefn = NULL;
     }
 
     if( poSRS != NULL )
-        poSRS->Dereference();
+        poSRS->Release();
 }
 
 /************************************************************************/
@@ -138,6 +141,8 @@ CPLErr OGRODBCLayer::BuildFeatureDefn( const char *pszLayerName,
 {
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
     int    nRawColumns = poStmt->GetColCount();
+
+    poFeatureDefn->Reference();
 
     panFieldOrdinals = (int *) CPLMalloc( sizeof(int) * nRawColumns );
 

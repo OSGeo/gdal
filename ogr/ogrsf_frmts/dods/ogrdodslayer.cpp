@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/09/21 01:00:29  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.7  2005/02/22 12:57:39  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -155,10 +158,10 @@ OGRDODSLayer::~OGRDODSLayer()
     }
 
     if( poSRS != NULL )
-        poSRS->Dereference();
+        poSRS->Release();
 
     if( poFeatureDefn != NULL )
-        delete poFeatureDefn;
+        poFeatureDefn->Release();
 
     CPLFree( pszFIDColumn );
     pszFIDColumn = NULL;

@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/09/21 01:00:55  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.8  2005/02/22 12:55:03  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -73,6 +76,7 @@ OGRAVCLayer::OGRAVCLayer( AVCFileType eSectionTypeIn,
 {
     eSectionType = eSectionTypeIn;
     
+    poFeatureDefn = NULL;
     poDS = poDSIn;
 }
 
@@ -91,10 +95,7 @@ OGRAVCLayer::~OGRAVCLayer()
     }
 
     if( poFeatureDefn != NULL )
-    {
-        delete poFeatureDefn;
-        poFeatureDefn = NULL;
-    }
+        poFeatureDefn->Release();
 }
 
 /************************************************************************/
@@ -129,6 +130,7 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
       case AVCFileARC:
         {
             poFeatureDefn = new OGRFeatureDefn( pszName );
+            poFeatureDefn->Reference();
             poFeatureDefn->SetGeomType( wkbLineString );
 
             OGRFieldDefn	oUserId( "UserId", OFTInteger );
@@ -149,6 +151,7 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
       case AVCFileRPL:
         {
             poFeatureDefn = new OGRFeatureDefn( pszName );
+            poFeatureDefn->Reference();
             poFeatureDefn->SetGeomType( wkbPolygon );
 
             OGRFieldDefn	oArcIds( "ArcIds", OFTIntegerList );
@@ -159,6 +162,7 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
       case AVCFileCNT:
         {
             poFeatureDefn = new OGRFeatureDefn( pszName );
+            poFeatureDefn->Reference();
             poFeatureDefn->SetGeomType( wkbPoint );
 
             OGRFieldDefn	oLabelIds( "LabelIds", OFTIntegerList );
@@ -169,6 +173,7 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
       case AVCFileLAB:
         {
             poFeatureDefn = new OGRFeatureDefn( pszName );
+            poFeatureDefn->Reference();
             poFeatureDefn->SetGeomType( wkbPoint );
 
             OGRFieldDefn	oValueId( "ValueId", OFTInteger );
@@ -183,6 +188,7 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
       case AVCFileTX6:
         {
             poFeatureDefn = new OGRFeatureDefn( pszName );
+            poFeatureDefn->Reference();
             poFeatureDefn->SetGeomType( wkbPoint );
 
             OGRFieldDefn	oUserId( "UserId", OFTInteger );

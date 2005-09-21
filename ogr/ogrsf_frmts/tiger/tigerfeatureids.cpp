@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/09/21 00:53:19  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.9  2003/01/04 23:21:56  mbp
  * Minor bug fixes and field definition changes.  Cleaned
  * up and commented code written for TIGER 2002 support.
@@ -114,6 +117,7 @@ TigerFeatureIds::TigerFeatureIds( OGRTigerDataSource * poDSIn,
   OGRFieldDefn        oField("",OFTInteger);
   poDS = poDSIn;
   poFeatureDefn = new OGRFeatureDefn( "FeatureIds" );
+    poFeatureDefn->Reference();
   poFeatureDefn->SetGeomType( wkbNone );
 
   if (poDS->GetVersion() >= TIGER_2002) {

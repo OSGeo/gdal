@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/09/21 01:00:01  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.4  2005/08/02 13:01:29  fwarmerdam
  * Removed old postgis create logic.
  *
@@ -98,8 +101,8 @@ OGRMySQLDataSource::~OGRMySQLDataSource()
 
     for( i = 0; i < nKnownSRID; i++ )
     {
-        if( papoSRS[i] != NULL && papoSRS[i]->Dereference() == 0 )
-            delete papoSRS[i];
+        if( papoSRS[i] != NULL )
+            papoSRS[i]->Release();
     }
     CPLFree( panSRID );
     CPLFree( papoSRS );

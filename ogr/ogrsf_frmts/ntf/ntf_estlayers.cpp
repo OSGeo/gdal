@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/09/21 00:59:55  fwarmerdam
+ * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
+ *
  * Revision 1.19  2003/12/15 16:07:41  warmerda
  * Added CHG_TYPE for landline plus product
  *
@@ -1753,6 +1756,7 @@ void NTFFileReader::EstablishLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
         poDefn = new OGRFeatureDefn( pszLayerName );
         poDefn->SetGeomType( eGeomType );
+        poDefn->Reference();
 
 /* -------------------------------------------------------------------- */
 /*      Fetch definitions of each field in turn.                        */
