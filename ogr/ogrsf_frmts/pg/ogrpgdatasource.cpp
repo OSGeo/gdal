@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2005/09/22 19:29:14  fwarmerdam
+ * Fixed to do exact table name test, instead of a wildcarded test when
+ * scanning for spatial tables.
+ *
  * Revision 1.36  2005/09/21 00:55:42  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -395,7 +399,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                              "DECLARE mycursor CURSOR for "
                              "SELECT c.relname FROM pg_class c, geometry_columns g "
                              "WHERE (c.relkind in ('r','v') AND c.relname !~ '^pg' "
-                             "AND c.relname ~ g.f_table_name)" );
+                             "AND c.relname = g.f_table_name)" );
         else
             hResult = PQexec(hPGConn,
                              "DECLARE mycursor CURSOR for "
