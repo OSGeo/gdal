@@ -28,6 +28,11 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.34  2005/09/22 14:59:47  fwarmerdam
+ * Fixed bug with unrecognised exif tags sometimes being written over
+ * metadata of a previous tag.
+ * Hack so that UserComments is treated as ASCII.
+ *
  * Revision 1.33  2005/09/11 17:15:33  fwarmerdam
  * direct io through VSI, use large file API
  *
@@ -443,195 +448,208 @@ CPLErr JPGDataset::EXIFInit(FILE *fp)
 /************************************************************************/
 CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 {
-  GUInt16        nEntryCount;
-  int space;
-  unsigned int           n,i;
-  char          pszTemp[MAXSTRINGLENGTH];
-  char          pszName[MAXSTRINGLENGTH];
+    GUInt16        nEntryCount;
+    int space;
+    unsigned int           n,i;
+    char          pszTemp[MAXSTRINGLENGTH];
+    char          pszName[MAXSTRINGLENGTH];
 
-  TIFFDirEntry *poTIFFDirEntry;
-  TIFFDirEntry *poTIFFDir;
-  struct tagname *poExifTags ;
-  struct intr_tag *poInterTags = intr_tags;
-  struct gpsname *poGPSTags;
+    TIFFDirEntry *poTIFFDirEntry;
+    TIFFDirEntry *poTIFFDir;
+    struct tagname *poExifTags ;
+    struct intr_tag *poInterTags = intr_tags;
+    struct gpsname *poGPSTags;
 
 /* -------------------------------------------------------------------- */
 /*      Read number of entry in directory                               */
 /* -------------------------------------------------------------------- */
-  VSIFSeekL(fp, nOffset+TIFFHEADER, SEEK_SET);
+    VSIFSeekL(fp, nOffset+TIFFHEADER, SEEK_SET);
 
-  if(VSIFReadL(&nEntryCount,1,sizeof(GUInt16),fp) != sizeof(GUInt16)) 
-    CPLError( CE_Failure, CPLE_AppDefined,
-	      "Error directory count");
+    if(VSIFReadL(&nEntryCount,1,sizeof(GUInt16),fp) != sizeof(GUInt16)) 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Error directory count");
 
-  if (bSwabflag)
-    TIFFSwabShort(&nEntryCount);
+    if (bSwabflag)
+        TIFFSwabShort(&nEntryCount);
 
-  poTIFFDir = (TIFFDirEntry *)CPLMalloc(nEntryCount * sizeof(TIFFDirEntry));
+    poTIFFDir = (TIFFDirEntry *)CPLMalloc(nEntryCount * sizeof(TIFFDirEntry));
 
-  if (poTIFFDir == NULL) 
-    CPLError( CE_Failure, CPLE_AppDefined,
-	      "No space for TIFF directory");
+    if (poTIFFDir == NULL) 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "No space for TIFF directory");
   
 /* -------------------------------------------------------------------- */
 /*      Read all directory entries                                      */
 /* -------------------------------------------------------------------- */
-  n = VSIFReadL(poTIFFDir, 1,nEntryCount*sizeof(TIFFDirEntry),fp);
-  if (n != nEntryCount*sizeof(TIFFDirEntry)) 
-    CPLError( CE_Failure, CPLE_AppDefined,
-	      "Could not read all directories");
+    n = VSIFReadL(poTIFFDir, 1,nEntryCount*sizeof(TIFFDirEntry),fp);
+    if (n != nEntryCount*sizeof(TIFFDirEntry)) 
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Could not read all directories");
 
 /* -------------------------------------------------------------------- */
 /*      Parse all entry information in this directory                   */
 /* -------------------------------------------------------------------- */
-  for(poTIFFDirEntry = poTIFFDir,i=nEntryCount; i > 0; i--,poTIFFDirEntry++) {
-    if (bSwabflag) {
-      TIFFSwabShort(&poTIFFDirEntry->tdir_tag);
-      TIFFSwabShort(&poTIFFDirEntry->tdir_type);
-      TIFFSwabLong (&poTIFFDirEntry->tdir_count);
-      TIFFSwabLong (&poTIFFDirEntry->tdir_offset);
-    }
+    for(poTIFFDirEntry = poTIFFDir,i=nEntryCount; i > 0; i--,poTIFFDirEntry++) {
+        if (bSwabflag) {
+            TIFFSwabShort(&poTIFFDirEntry->tdir_tag);
+            TIFFSwabShort(&poTIFFDirEntry->tdir_type);
+            TIFFSwabLong (&poTIFFDirEntry->tdir_count);
+            TIFFSwabLong (&poTIFFDirEntry->tdir_offset);
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Find Tag name in table                                          */
 /* -------------------------------------------------------------------- */
+        pszName[0] = '\0';
 
-    for (poExifTags = tagnames; poExifTags->tag; poExifTags++)
-	if(poExifTags->tag == poTIFFDirEntry->tdir_tag){
-	    strcpy(pszName, poExifTags->name);
-	    break;
-	}
+        for (poExifTags = tagnames; poExifTags->tag; poExifTags++)
+            if(poExifTags->tag == poTIFFDirEntry->tdir_tag){
+                strcpy(pszName, poExifTags->name);
+                break;
+            }
 
     
-    if( nOffset == nGPSOffset) {
-	for( poGPSTags = gpstags; poGPSTags->tag != 0xffff; poGPSTags++ ) 
-	    if( poGPSTags->tag == poTIFFDirEntry->tdir_tag ) {
-		strcpy(pszName, poGPSTags->name);
-		break;
-	    }
-    }
+        if( nOffset == nGPSOffset) {
+            for( poGPSTags = gpstags; poGPSTags->tag != 0xffff; poGPSTags++ ) 
+                if( poGPSTags->tag == poTIFFDirEntry->tdir_tag ) {
+                    strcpy(pszName, poGPSTags->name);
+                    break;
+                }
+        }
 /* -------------------------------------------------------------------- */
 /*      If the tag was not found, look into the interoperability table  */
 /* -------------------------------------------------------------------- */
-    if( nOffset == nInterOffset ) {
-	for(poInterTags = intr_tags; poInterTags->tag; poInterTags++)
-	    if(poInterTags->tag == poTIFFDirEntry->tdir_tag) {
-		strcpy(pszName, poInterTags->name);
-		break;
-	    }
-    }
-
-      if( (!poExifTags->tag) && (!poInterTags->tag) && 
-	  (poGPSTags->tag == 0xffff) )
-	continue;
-
+        if( nOffset == nInterOffset ) {
+            for(poInterTags = intr_tags; poInterTags->tag; poInterTags++)
+                if(poInterTags->tag == poTIFFDirEntry->tdir_tag) {
+                    strcpy(pszName, poInterTags->name);
+                    break;
+                }
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Save important directory tag offset                             */
 /* -------------------------------------------------------------------- */
-      if( poTIFFDirEntry->tdir_tag == EXIFOFFSETTAG )
-	nExifOffset=poTIFFDirEntry->tdir_offset;
-      if( poTIFFDirEntry->tdir_tag == INTEROPERABILITYOFFSET )
-	nInterOffset=poTIFFDirEntry->tdir_offset;
-      if( poTIFFDirEntry->tdir_tag == GPSOFFSETTAG ) {
-	  nGPSOffset=poTIFFDirEntry->tdir_offset;
-      }
+        if( poTIFFDirEntry->tdir_tag == EXIFOFFSETTAG )
+            nExifOffset=poTIFFDirEntry->tdir_offset;
+        if( poTIFFDirEntry->tdir_tag == INTEROPERABILITYOFFSET )
+            nInterOffset=poTIFFDirEntry->tdir_offset;
+        if( poTIFFDirEntry->tdir_tag == GPSOFFSETTAG ) {
+            nGPSOffset=poTIFFDirEntry->tdir_offset;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      If we didn't recognise the tag just ignore it.  To see all      */
+/*      tags comment out the continue.                                  */
+/* -------------------------------------------------------------------- */
+        if( pszName[0] == '\0' )
+        {
+            sprintf( pszName, "EXIF_%d", poTIFFDirEntry->tdir_tag );
+            continue;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Hack the UserComment to be treated as ASCII.                    */
+/* -------------------------------------------------------------------- */
+        if( EQUAL(pszName,"EXIF_UserComment") )
+            poTIFFDirEntry->tdir_type = TIFF_ASCII;
+
 /* -------------------------------------------------------------------- */
 /*      Print tags                                                      */
 /* -------------------------------------------------------------------- */
-      space = poTIFFDirEntry->tdir_count * 
-	datawidth[poTIFFDirEntry->tdir_type];
+        space = poTIFFDirEntry->tdir_count * 
+            datawidth[poTIFFDirEntry->tdir_type];
 
 /* -------------------------------------------------------------------- */
 /*      This is at most 4 byte data so we can read it from tdir_offset  */
 /* -------------------------------------------------------------------- */
-      if (space >= 0 && space <= 4) {
-	switch (poTIFFDirEntry->tdir_type) {
-	case TIFF_FLOAT:
-	case TIFF_UNDEFINED:
-	case TIFF_ASCII: {
-	  unsigned char data[4];
-	  memcpy(data, &poTIFFDirEntry->tdir_offset, 4);
-	  if (bSwabflag)
-	    TIFFSwabLong((GUInt32*) data);
+        if (space >= 0 && space <= 4) {
+            switch (poTIFFDirEntry->tdir_type) {
+              case TIFF_FLOAT:
+              case TIFF_UNDEFINED:
+              case TIFF_ASCII: {
+                  unsigned char data[4];
+                  memcpy(data, &poTIFFDirEntry->tdir_offset, 4);
+                  if (bSwabflag)
+                      TIFFSwabLong((GUInt32*) data);
 
-	  EXIFPrintData(pszTemp,
-			poTIFFDirEntry->tdir_type, 
-			poTIFFDirEntry->tdir_count, data);
-	  break;
-	}
+                  EXIFPrintData(pszTemp,
+                                poTIFFDirEntry->tdir_type, 
+                                poTIFFDirEntry->tdir_count, data);
+                  break;
+              }
 
-	case TIFF_BYTE:
-	  EXIFPrintByte(pszTemp, "%s%#02x", poTIFFDirEntry);
-	  break;
-	case TIFF_SBYTE:
-	  EXIFPrintByte(pszTemp, "%s%d", poTIFFDirEntry);
-	  break;
-	case TIFF_SHORT:
-	  EXIFPrintShort(pszTemp, "%s%u", poTIFFDirEntry);
-	  break;
-	case TIFF_SSHORT:
-	  EXIFPrintShort(pszTemp, "%s%d", poTIFFDirEntry);
-	  break;
-	case TIFF_LONG:
-	  sprintf(pszTemp, "%lu",(long) poTIFFDirEntry->tdir_offset);	
-	  break;
-	case TIFF_SLONG:
-	  sprintf(pszTemp, "%lu",(long) poTIFFDirEntry->tdir_offset);
-	  break;
-	}
+              case TIFF_BYTE:
+                EXIFPrintByte(pszTemp, "%s%#02x", poTIFFDirEntry);
+                break;
+              case TIFF_SBYTE:
+                EXIFPrintByte(pszTemp, "%s%d", poTIFFDirEntry);
+                break;
+              case TIFF_SHORT:
+                EXIFPrintShort(pszTemp, "%s%u", poTIFFDirEntry);
+                break;
+              case TIFF_SSHORT:
+                EXIFPrintShort(pszTemp, "%s%d", poTIFFDirEntry);
+                break;
+              case TIFF_LONG:
+                sprintf(pszTemp, "%lu",(long) poTIFFDirEntry->tdir_offset);	
+                break;
+              case TIFF_SLONG:
+                sprintf(pszTemp, "%lu",(long) poTIFFDirEntry->tdir_offset);
+                break;
+            }
 	
-      }
+        }
 /* -------------------------------------------------------------------- */
 /*      The data is being read where tdir_offset point to in the file   */
 /* -------------------------------------------------------------------- */
-      else {
+        else {
 
-	unsigned char *data = (unsigned char *)CPLMalloc(space);
+            unsigned char *data = (unsigned char *)CPLMalloc(space);
 
-	if (data) {
-	  int width = TIFFDataWidth((TIFFDataType) poTIFFDirEntry->tdir_type);
-	  tsize_t cc = poTIFFDirEntry->tdir_count * width;
-	  VSIFSeekL(fp,poTIFFDirEntry->tdir_offset+TIFFHEADER,SEEK_SET);
-	  VSIFReadL(data, 1, cc, fp);
+            if (data) {
+                int width = TIFFDataWidth((TIFFDataType) poTIFFDirEntry->tdir_type);
+                tsize_t cc = poTIFFDirEntry->tdir_count * width;
+                VSIFSeekL(fp,poTIFFDirEntry->tdir_offset+TIFFHEADER,SEEK_SET);
+                VSIFReadL(data, 1, cc, fp);
 
-	  if (bSwabflag) {
-	    switch (poTIFFDirEntry->tdir_type) {
-	    case TIFF_SHORT:
-	    case TIFF_SSHORT:
-	      TIFFSwabArrayOfShort((GUInt16*) data, 
-				   poTIFFDirEntry->tdir_count);
-	      break;
-	    case TIFF_LONG:
-	    case TIFF_SLONG:
-	    case TIFF_FLOAT:
-	      TIFFSwabArrayOfLong((GUInt32*) data, 
-				  poTIFFDirEntry->tdir_count);
-	      break;
-	    case TIFF_RATIONAL:
-	    case TIFF_SRATIONAL:
-		TIFFSwabArrayOfLong((GUInt32*) data, 
-				    2*poTIFFDirEntry->tdir_count);
-	      break;
-	    case TIFF_DOUBLE:
-	      TIFFSwabArrayOfDouble((double*) data, 
-				    poTIFFDirEntry->tdir_count);
-	      break;
-	    default:
-		break;
-	    }
-	  }
+                if (bSwabflag) {
+                    switch (poTIFFDirEntry->tdir_type) {
+                      case TIFF_SHORT:
+                      case TIFF_SSHORT:
+                        TIFFSwabArrayOfShort((GUInt16*) data, 
+                                             poTIFFDirEntry->tdir_count);
+                        break;
+                      case TIFF_LONG:
+                      case TIFF_SLONG:
+                      case TIFF_FLOAT:
+                        TIFFSwabArrayOfLong((GUInt32*) data, 
+                                            poTIFFDirEntry->tdir_count);
+                        break;
+                      case TIFF_RATIONAL:
+                      case TIFF_SRATIONAL:
+                        TIFFSwabArrayOfLong((GUInt32*) data, 
+                                            2*poTIFFDirEntry->tdir_count);
+                        break;
+                      case TIFF_DOUBLE:
+                        TIFFSwabArrayOfDouble((double*) data, 
+                                              poTIFFDirEntry->tdir_count);
+                        break;
+                      default:
+                        break;
+                    }
+                }
 
-	  EXIFPrintData(pszTemp, poTIFFDirEntry->tdir_type,
-			poTIFFDirEntry->tdir_count, data);
-	  if (data) CPLFree(data);
-	}
-      }
-      papszMetadata = CSLSetNameValue(papszMetadata, pszName, pszTemp);
-  }
-  CPLFree(poTIFFDir);
+                EXIFPrintData(pszTemp, poTIFFDirEntry->tdir_type,
+                              poTIFFDirEntry->tdir_count, data);
+                if (data) CPLFree(data);
+            }
+        }
+        papszMetadata = CSLSetNameValue(papszMetadata, pszName, pszTemp);
+    }
+    CPLFree(poTIFFDir);
 
-  return CE_None;
+    return CE_None;
 }
 
 /************************************************************************/
