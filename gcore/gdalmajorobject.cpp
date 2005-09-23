@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/09/23 20:52:21  fwarmerdam
+ * added the GMO flags on GDALMajorObject
+ *
  * Revision 1.9  2005/07/25 19:52:43  ssoule
  * Changed GDALMajorObject's char *pszDescription to std::string sDescription.
  *
@@ -70,6 +73,7 @@ CPL_CVSID("$Id$");
 GDALMajorObject::GDALMajorObject()
 
 {
+    nFlags = GMO_VALID;
     papszMetadata = NULL;
 }
 
@@ -80,7 +84,11 @@ GDALMajorObject::GDALMajorObject()
 GDALMajorObject::~GDALMajorObject()
 
 {
+    if( (nFlags & GMO_VALID) == 0 )
+        CPLDebug( "GDAL", "In ~GDALMajorObject on invalid object" );
+
     CSLDestroy( papszMetadata );
+    nFlags &= ~GMO_VALID;
 }
 
 /************************************************************************/
@@ -231,6 +239,8 @@ CPLErr GDALMajorObject::SetMetadata( char ** papszMetadataIn,
         return CE_Failure;
     }
 
+    nFlags |= GMO_MD_DIRTY;
+
     CSLDestroy( papszMetadata );
     papszMetadata = CSLDuplicate( papszMetadataIn );
     
@@ -320,6 +330,10 @@ CPLErr GDALMajorObject::SetMetadataItem( const char * pszName,
     {
         CPLErr eErr;
 
+        // We do lot of work here so that drivers can override SetMetadata()
+        // but let the default SetMetadataItem() method handle setting 
+        // individual items. 
+
         CPLErrorReset();
 
         char **papszWrkMD = GetMetadata( pszDomain );
@@ -339,6 +353,8 @@ CPLErr GDALMajorObject::SetMetadataItem( const char * pszName,
     }
     else
     {
+        nFlags |= GMO_MD_DIRTY;
+
         papszMetadata = CSLSetNameValue( papszMetadata, pszName, pszValue );
     }
 
@@ -362,3 +378,24 @@ GDALSetMetadataItem( GDALMajorObjectH hObject,
     return ((GDALMajorObject *) hObject)->SetMetadataItem( pszName, pszValue,
                                                            pszDomain );
 }
+
+/************************************************************************/
+/*                             GetMOFlags()                             */
+/************************************************************************/
+
+int GDALMajorObject::GetMOFlags()
+
+{
+    return nFlags;
+}
+
+/************************************************************************/
+/*                             SetMOFlags()                             */
+/************************************************************************/
+
+void GDALMajorObject::SetMOFlags( int nNewFlags )
+
+{
+    nFlags = nNewFlags;
+}
+

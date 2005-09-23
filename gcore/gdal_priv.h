@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.67  2005/09/23 20:52:21  fwarmerdam
+ * added the GMO flags on GDALMajorObject
+ *
  * Revision 1.66  2005/09/23 16:55:39  fwarmerdam
  * use CPLString instead of std::string
  *
@@ -254,6 +257,12 @@ class GDALRasterAttributeTable;
 #include "cpl_string.h"
 #include <vector>
 
+#define GMO_VALID                0x0001
+#define GMO_IGNORE_UNIMPLEMENTED 0x0002
+#define GMO_SUPPORT_MD           0x0004
+#define GMO_SUPPORT_MDMD         0x0008
+#define GMO_MD_DIRTY             0x0010
+
 /* ******************************************************************** */
 /*                           GDALMajorObject                            */
 /*                                                                      */
@@ -266,12 +275,16 @@ class GDALRasterAttributeTable;
 class CPL_DLL GDALMajorObject
 {
   protected:
-    CPLString         sDescription;
-    char            **papszMetadata;
+    int                 nFlags; // GMO_* flags. 
+    CPLString           sDescription;
+    char              **papszMetadata;
     
   public:
                         GDALMajorObject();
     virtual            ~GDALMajorObject();
+
+    int                 GetMOFlags();
+    void                SetMOFlags(int nFlags);
                         
     virtual const char *GetDescription() const;
     virtual void        SetDescription( const char * );
