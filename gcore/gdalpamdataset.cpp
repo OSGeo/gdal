@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/09/23 20:55:19  fwarmerdam
+ * avoid unimplemented errors if PAM disabled
+ *
  * Revision 1.10  2005/09/11 18:04:24  fwarmerdam
  * clearup multidomain metadata
  *
@@ -564,8 +567,15 @@ CPLErr GDALPamDataset::CloneInfo( GDALDataset *poSrcDS, int nCloneFlags )
 
 {
     int bOnlyIfMissing = nCloneFlags & GCIF_ONLY_IF_MISSING;
+    int nSavedMOFlags = GetMOFlags();
 
     PamInitialize();
+
+/* -------------------------------------------------------------------- */
+/*      Supress NotImplemented error messages - mainly needed if PAM    */
+/*      disabled.                                                       */
+/* -------------------------------------------------------------------- */
+    SetMOFlags( nSavedMOFlags | GMO_IGNORE_UNIMPLEMENTED );
 
 /* -------------------------------------------------------------------- */
 /*      GeoTransform                                                    */
@@ -648,6 +658,11 @@ CPLErr GDALPamDataset::CloneInfo( GDALDataset *poSrcDS, int nCloneFlags )
             poBand->CloneInfo( poSrcDS->GetRasterBand(iBand+1), nCloneFlags );
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Restore MO flags.                                               */
+/* -------------------------------------------------------------------- */
+    SetMOFlags( nSavedMOFlags );
 
     return CE_None;
 }

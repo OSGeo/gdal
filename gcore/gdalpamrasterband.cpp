@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/09/23 20:55:19  fwarmerdam
+ * avoid unimplemented errors if PAM disabled
+ *
  * Revision 1.11  2005/09/15 18:45:16  fwarmerdam
  * Fixed reentrancy issue with PamInitialize.
  *
@@ -424,8 +427,15 @@ CPLErr GDALPamRasterBand::CloneInfo( GDALRasterBand *poSrcBand,
 {
     int bOnlyIfMissing = nCloneFlags & GCIF_ONLY_IF_MISSING;
     int bSuccess;
+    int nSavedMOFlags = GetMOFlags();
 
     PamInitialize();
+
+/* -------------------------------------------------------------------- */
+/*      Supress NotImplemented error messages - mainly needed if PAM    */
+/*      disabled.                                                       */
+/* -------------------------------------------------------------------- */
+    SetMOFlags( nSavedMOFlags | GMO_IGNORE_UNIMPLEMENTED );
 
 /* -------------------------------------------------------------------- */
 /*      Metadata                                                        */
@@ -524,6 +534,11 @@ CPLErr GDALPamRasterBand::CloneInfo( GDALRasterBand *poSrcBand,
             }
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Restore MO flags.                                               */
+/* -------------------------------------------------------------------- */
+    SetMOFlags( nSavedMOFlags );
 
     return CE_None;
 }
