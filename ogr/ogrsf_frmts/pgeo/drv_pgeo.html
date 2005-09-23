@@ -1,0 +1,29 @@
+<html>
+<head>
+<title>ESRI Personal GeoDatabase</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>ESRI Personal GeoDatabase</h1>
+
+OGR optionally supports reading ESRI Personal GeoDatabase .mdb files via ODBC.
+Personal GeoDatabase is a Microsoft Access database with a set of tables
+defined by ESRI for holding geodatabase metadata, and with geometry for
+features held in a BLOB column in a custom format (essentially Shapefile
+geometry fragments).  This drivers accesses the personal geodatabase via
+ODBC but does not depend on any ESRI middleware.  <p>
+
+ODBC datasources are accessed using a datasource name of the form
+<b>PGEO:<i>dsn</i></b>.  
+
+The <b><i>dsn</i></b> is the ODBC Data Source Name.  You will need to use
+the ODBC Adminstration tool to assign a DSN for each .mdb file you wish
+to access from OGR.<p>
+
+OGR treats all feature tables as layers.  Most geometry types should be
+supported, including 3D data.  Measures information will be discarded. 
+Coordinate system information should be properly associated with layers. <p>
+
+</body>
+</html>
