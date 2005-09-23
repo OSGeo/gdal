@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.70  2005/09/23 16:56:16  fwarmerdam
+ * Added default RAT methods
+ *
  * Revision 1.69  2005/07/25 23:15:10  fwarmerdam
  * Fixed another doc typo.
  *
@@ -3072,3 +3075,50 @@ CPLErr CPL_STDCALL GDALSetDefaultHistogram( GDALRasterBandH hBand,
     return ((GDALRasterBand *) hBand)->SetDefaultHistogram(
         dfMin, dfMax, nBuckets, panHistogram );
 }
+
+/************************************************************************/
+/*                           GetDefaultRAT()                            */
+/************************************************************************/
+
+const GDALRasterAttributeTable *GDALRasterBand::GetDefaultRAT()
+
+{
+    return NULL;
+}
+
+/************************************************************************/
+/*                         GDALGetDefaultRAT()                          */
+/************************************************************************/
+
+GDALRasterAttributeTableH CPL_STDCALL GDALGetDefaultRAT( GDALRasterBandH hBand)
+
+{
+    return (GDALRasterAttributeTableH) 
+        ((GDALRasterBand *) hBand)->GetDefaultRAT();
+}
+
+/************************************************************************/
+/*                           SetDefaultRAT()                            */
+/************************************************************************/
+
+CPLErr GDALRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
+
+{
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "SetDefaultRAT() not implemented for this format." );
+
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                         GDALSetDefaultRAT()                          */
+/************************************************************************/
+
+CPLErr CPL_STDCALL GDALGetDefaultRAT( GDALRasterBandH hBand,
+                                      GDALRasterAttributeTableH hRAT )
+
+{
+    return ((GDALRasterBand *) hBand)->SetDefaultRAT( 
+        (GDALRasterAttributeTable *) hRAT );
+}
+
