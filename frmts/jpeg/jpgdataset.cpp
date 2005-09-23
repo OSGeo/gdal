@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.35  2005/09/23 20:01:56  fwarmerdam
+ * Fixed progress reporting.
+ *
  * Revision 1.34  2005/09/22 14:59:47  fwarmerdam
  * Fixed bug with unrecognised exif tags sometimes being written over
  * metadata of a previous tag.
@@ -1223,7 +1226,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             jpeg_write_scanlines( &sCInfo, &ppSamples, 1 );
 
         if( eErr == CE_None 
-            && !pfnProgress( (iLine+1) / nYSize,
+            && !pfnProgress( (iLine+1) / (double) nYSize,
                              NULL, pProgressData ) )
         {
             eErr = CE_Failure;
