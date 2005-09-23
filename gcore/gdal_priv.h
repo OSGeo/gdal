@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.66  2005/09/23 16:55:39  fwarmerdam
+ * use CPLString instead of std::string
+ *
  * Revision 1.65  2005/09/17 04:04:16  fwarmerdam
  * provide default implementation for RAT functions
  *
@@ -248,7 +251,7 @@ class GDALRasterAttributeTable;
 #include "gdal_frmts.h"
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
-#include <string>
+#include "cpl_string.h"
 #include <vector>
 
 /* ******************************************************************** */
@@ -263,7 +266,7 @@ class GDALRasterAttributeTable;
 class CPL_DLL GDALMajorObject
 {
   protected:
-    std::string       sDescription;
+    CPLString         sDescription;
     char            **papszMetadata;
     
   public:
@@ -619,8 +622,8 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
                                         int nBuckets, int *panHistogram );
 
-    virtual const GDALRasterAttributeTable *GetDefaultRAT() {return NULL;}
-    virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * ) {return CE_Failure;}
+    virtual const GDALRasterAttributeTable *GetDefaultRAT();
+    virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
 };
 
 /* ******************************************************************** */
