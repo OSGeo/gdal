@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2005/09/23 20:52:55  fwarmerdam
+ * avoid issuing NotSupported errors if GMO_IGNORE_UNIMPLEMENTED is set
+ *
  * Revision 1.55  2005/07/25 23:15:31  fwarmerdam
  * Fixed another typo.
  *
@@ -660,8 +663,9 @@ const char * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH hDS )
 CPLErr GDALDataset::SetProjection( const char * )
 
 {
-    CPLError( CE_Failure, CPLE_NotSupported, 
-              "Dataset does not support the SetProjection() method." );
+    if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "Dataset does not support the SetProjection() method." );
     return CE_Failure;
 }
 
@@ -767,8 +771,9 @@ CPLErr CPL_STDCALL GDALGetGeoTransform( GDALDatasetH hDS, double * padfTransform
 CPLErr GDALDataset::SetGeoTransform( double * )
 
 {
-    CPLError( CE_Failure, CPLE_NotSupported,
-              "SetGeoTransform() not supported for this dataset." );
+    if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "SetGeoTransform() not supported for this dataset." );
     
     return( CE_Failure );
 }
@@ -1096,8 +1101,9 @@ CPLErr GDALDataset::SetGCPs( int nGCPCount,
     (void) pasGCPList;
     (void) pszGCPProjection;
 
-    CPLError( CE_Failure, CPLE_NotSupported, 
-              "Dataset does not support the SetGCPs() method." );
+    if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "Dataset does not support the SetGCPs() method." );
 
     return CE_Failure;
 }
