@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/09/23 14:53:48  fwarmerdam
+ * Bug 928: Fix initialization size of m_pCounts and m_pValues.
+ *
  * Revision 1.2  2005/08/20 23:46:28  fwarmerdam
  * bug 858: fix for double compression
  *
@@ -51,10 +54,10 @@ HFACompress::HFACompress( void *pData, GUInt32 nBlockSize, int nDataType )
 
   /* Allocate some memory for the count and values - probably too big */
   /* About right for worst case scenario tho */
-  m_pCounts     = (GByte*)CPLMalloc( m_nBlockSize );
+  m_pCounts     = (GByte*)CPLMalloc( m_nBlockSize + sizeof(GUInt32) );
   m_nSizeCounts = 0;
   
-  m_pValues     = (GByte*)CPLMalloc( m_nBlockSize );
+  m_pValues     = (GByte*)CPLMalloc( m_nBlockSize + sizeof(GUInt32) );
   m_nSizeValues = 0;
   
   m_nMin        = 0;
