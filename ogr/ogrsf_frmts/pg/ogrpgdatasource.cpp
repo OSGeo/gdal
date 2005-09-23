@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2005/09/23 14:09:27  fwarmerdam
+ * Fixed last fix to cast rename to text for postgres 7.x support.
+ *
  * Revision 1.37  2005/09/22 19:29:14  fwarmerdam
  * Fixed to do exact table name test, instead of a wildcarded test when
  * scanning for spatial tables.
@@ -399,7 +402,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                              "DECLARE mycursor CURSOR for "
                              "SELECT c.relname FROM pg_class c, geometry_columns g "
                              "WHERE (c.relkind in ('r','v') AND c.relname !~ '^pg' "
-                             "AND c.relname = g.f_table_name)" );
+                             "AND c.relname::TEXT = g.f_table_name::TEXT)" );
         else
             hResult = PQexec(hPGConn,
                              "DECLARE mycursor CURSOR for "
