@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/09/24 04:58:16  fwarmerdam
+ * Support SQLDriverConnect (pass opts) in EstablishSession
+ *
  * Revision 1.24  2005/09/05 20:18:43  fwarmerdam
  * added binary column support
  *
@@ -233,15 +236,36 @@ int CPLODBCSession::EstablishSession( const char *pszDSN,
     if( pszPassword == NULL )
         pszPassword = "";
 
-    if( Failed( SQLConnect( m_hDBC, (SQLCHAR *) pszDSN, SQL_NTS, 
-                            (SQLCHAR *) pszUserid, SQL_NTS, 
-                            (SQLCHAR *) pszPassword, SQL_NTS ) ) )
+    int bFailed;
+    if( strstr(pszDSN,"=") != NULL )
     {
+        char szOutConnString[1024];
+        SQLSMALLINT nOutConnStringLen;
+
+        CPLDebug( "ODBC", "SQLDriverConnect(%s)", pszDSN );
+        bFailed = Failed(
+            SQLDriverConnect( m_hDBC, NULL, 
+                              (SQLCHAR *) pszDSN, strlen(pszDSN), 
+                              (SQLCHAR *) szOutConnString, 
+                              sizeof(szOutConnString), 
+                              &nOutConnStringLen, SQL_DRIVER_NOPROMPT ) );
+    }
+    else
+    {
+        CPLDebug( "ODBC", "SQLConnect(%s)", pszDSN );
+        bFailed = Failed(
+            SQLConnect( m_hDBC, (SQLCHAR *) pszDSN, SQL_NTS, 
+                        (SQLCHAR *) pszUserid, SQL_NTS, 
+                        (SQLCHAR *) pszPassword, SQL_NTS ) );
+    }
+
+    if( bFailed )
+    {
+        CPLDebug( "ODBC", "... failed: %s", GetLastError() );
         CloseSession();
         return FALSE;
     }
 
-    CPLDebug( "ODBC", "SQLConnect(%s)", pszDSN );
     return TRUE;
 }
 
