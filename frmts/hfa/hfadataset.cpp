@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.61  2005/09/24 19:04:48  fwarmerdam
+ * added preliminary RAT reading code
+ *
  * Revision 1.60  2005/09/17 03:47:16  fwarmerdam
  * added dependent overview creation
  *
@@ -143,6 +146,7 @@
  */
 
 #include "gdal_pam.h"
+#include "gdal_rat.h"
 #include "hfa_p.h"
 #include "ogr_spatialref.h"
 
@@ -443,7 +447,11 @@ class HFARasterBand : public GDALPamRasterBand
 
     int         bMetadataDirty;
 
+    GDALRasterAttributeTable *poDefaultRAT; 
+
     void        ReadAuxMetadata();
+
+    GDALRasterAttributeTable* ReadNamedRAT( const char *pszName );
 
   public:
 
@@ -475,8 +483,8 @@ class HFARasterBand : public GDALPamRasterBand
                                         int bForce,
                                         GDALProgressFunc, void *pProgressData);
 
-//    virtual const GDALRasterAttributeTable *GetDefaultRAT();
-//    virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
+    virtual const GDALRasterAttributeTable *GetDefaultRAT();
+    virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
 };
 
 /************************************************************************/
@@ -601,6 +609,8 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
                 new HFARasterBand( poDS, nBand, iOvIndex );
         }
     }
+
+    poDefaultRAT = ReadNamedRAT( "Descriptor_Table" );
 }
 
 /************************************************************************/
@@ -1138,62 +1148,117 @@ HFARasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
 }
 
 /************************************************************************/
+/*                           SetDefaultRAT()                            */
+/************************************************************************/
+
+CPLErr HFARasterBand::SetDefaultRAT( const GDALRasterAttributeTable * poRAT )
+
+{
+    return GDALPamRasterBand::SetDefaultRAT( poRAT );
+}
+
+/************************************************************************/
 /*                           GetDefaultRAT()                            */
 /************************************************************************/
 
-#ifdef notdef
 const GDALRasterAttributeTable *HFARasterBand::GetDefaultRAT()
 
 {		
-#ifdef notdef
-    // now try to read the histogram
-    HFAEntry *poEntry = poBand->poNode->GetNamedChild( "Descriptor_Table.Histogram" );
-    if ( poEntry != NULL )
-    {
-        int nNumBins = poEntry->GetIntField( "numRows" );
-        int nOffset =  poEntry->GetIntField( "columnDataPtr" );
-        const char * pszType =  poEntry->GetStringField( "dataType" );
-        int nBinSize = 4;
-        
-        if( pszType != NULL && EQUALN( "real", pszType, 4 ) )
-        {
-            nBinSize = 8;
-        }
-        unsigned int nBufSize = 1024;
-        char * pszBinValues = (char *)CPLMalloc( nBufSize );
-        pszBinValues[0] = 0;
-        for ( int nBin = 0; nBin < nNumBins; ++nBin )
-        {
-            VSIFSeekL( hHFA->fp, nOffset + nBin*nBinSize, SEEK_SET );
-            char szBuf[32];
-            if ( nBinSize == 8 )
-            {
-                double dfValue;
-                VSIFReadL( &dfValue, nBinSize, 1, hHFA->fp );
-                HFAStandard( nBinSize, &dfValue );
-                snprintf( szBuf, 31, "%.14g", dfValue );
-            }
-            else
-            {
-                int nValue;
-                VSIFReadL( &nValue, nBinSize, 1, hHFA->fp );
-                HFAStandard( nBinSize, &nValue );
-                snprintf( szBuf, 31, "%d", nValue );
-            }
-            if ( ( strlen( pszBinValues ) + strlen( szBuf ) + 2 ) > nBufSize )
-            {
-                nBufSize *= 2;
-                pszBinValues = (char *)realloc( pszBinValues, nBufSize );
-            }
-            strcat( pszBinValues, szBuf );
-            strcat( pszBinValues, "|" );
-        }
-        SetMetadataItem( "STATISTICS_HISTOBINVALUES", pszBinValues );
-        CPLFree( pszBinValues );
-#endif
-    return NULL;
+    return poDefaultRAT;
 }
+
+/************************************************************************/
+/*                            ReadNamedRAT()                            */
+/************************************************************************/
+
+GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Find the requested table.                                       */
+/* -------------------------------------------------------------------- */
+    HFAEntry *poDT = hHFA->papoBand[nBand-1]->poNode->GetNamedChild(pszName);
+
+    if( poDT == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Create a corresponding RAT.                                     */
+/* -------------------------------------------------------------------- */
+    GDALRasterAttributeTable *poRAT = NULL;
+    int nRowCount = poDT->GetIntField( "numRows" );
+
+    poRAT = new GDALRasterAttributeTable();
+
+/* -------------------------------------------------------------------- */
+/*      Scan under table for columns.                                   */
+/* -------------------------------------------------------------------- */
+    HFAEntry *poDTChild;
+
+    for( poDTChild = poDT->GetChild(); 
+         poDTChild != NULL; 
+         poDTChild = poDTChild->GetNext() )
+    {
+        if( EQUAL(poDTChild->GetType(),"Edsc_BinFunction") )
+        {
+            double dfMax = poDTChild->GetDoubleField( "maxLimit" );
+            double dfMin = poDTChild->GetDoubleField( "minLimit" );
+            int    nBinCount = poDTChild->GetIntField( "numBins" );
+
+            CPLAssert( nBinCount == nRowCount );
+
+            poRAT->SetLinearBinning( dfMin, (dfMax-dfMin) / (nBinCount-1) );
+        }
+
+        if( !EQUAL(poDTChild->GetType(),"Edsc_Column") )
+            continue;
+
+        int nOffset = poDTChild->GetIntField( "columnDataPtr" );
+        const char * pszType = poDTChild->GetStringField( "dataType" );
+        GDALRATFieldUsage eType = GFU_Generic;
+        int i;
+        
+        if( EQUAL(poDTChild->GetName(),"Histogram") )
+            eType = GFU_Generic;
+        else if( EQUAL(poDTChild->GetName(),"Red") )
+            eType = GFU_Red;
+        else if( EQUAL(poDTChild->GetName(),"Green") )
+            eType = GFU_Green;
+        else if( EQUAL(poDTChild->GetName(),"Blue") )
+            eType = GFU_Blue;
+        else if( EQUAL(poDTChild->GetName(),"Alpha") )
+            eType = GFU_Alpha;
+            
+        if( EQUAL(pszType,"real") )
+        {
+            double *padfColData = (double*)CPLMalloc(nRowCount*sizeof(double));
+
+            VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
+            VSIFReadL( padfColData, nRowCount, sizeof(double), hHFA->fp );
+#ifdef CPL_MSB
+            GDALSwapWords( padfColData, 8, nRowCount, 8 );
 #endif
+            poRAT->CreateColumn( poDTChild->GetName(), GFT_Real, GFU_Generic );
+            for( i = 0; i < nRowCount; i++ )
+                poRAT->SetValue( i, poRAT->GetColumnCount()-1, padfColData[i]);
+        }
+        else
+        {
+            GInt32 *panColData = (GInt32*)CPLMalloc(nRowCount*sizeof(GInt32));
+
+            VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
+            VSIFReadL( panColData, nRowCount, sizeof(GInt32), hHFA->fp );
+#ifdef CPL_MSB
+            GDALSwapWords( panColData, 4, nRowCount, 4 );
+#endif
+            poRAT->CreateColumn(poDTChild->GetName(),GFT_Integer,GFU_Generic);
+            for( i = 0; i < nRowCount; i++ )
+                poRAT->SetValue( i, poRAT->GetColumnCount()-1, panColData[i] );
+        }
+    }
+
+    return poRAT;
+}
 
 /************************************************************************/
 /* ==================================================================== */
