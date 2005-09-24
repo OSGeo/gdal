@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/09/24 19:02:15  fwarmerdam
+ * added RasterAttributeTable support
+ *
  * Revision 1.5  2005/09/11 18:03:34  fwarmerdam
  * added Clear() method on multidomainmetadata
  *
@@ -60,14 +63,15 @@ class GDALPamRasterBand;
 #define GCIF_METADATA           0x04
 #define GCIF_GCPS               0x08
 
-#define GCIF_NODATA             0x01000
-#define GCIF_CATEGORYNAMES      0x02000
-#define GCIF_MINMAX             0x04000
-#define GCIF_SCALEOFFSET        0x08000
-#define GCIF_UNITTYPE           0x10000
-#define GCIF_COLORTABLE         0x20000
-#define GCIF_COLORINTERP        0x20000
-#define GCIF_BAND_METADATA      0x40000
+#define GCIF_NODATA             0x001000
+#define GCIF_CATEGORYNAMES      0x002000
+#define GCIF_MINMAX             0x004000
+#define GCIF_SCALEOFFSET        0x008000
+#define GCIF_UNITTYPE           0x010000
+#define GCIF_COLORTABLE         0x020000
+#define GCIF_COLORINTERP        0x020000
+#define GCIF_BAND_METADATA      0x040000
+#define GCIF_RAT                0x080000
 
 #define GCIF_ONLY_IF_MISSING    0x10000000
 #define GCIF_PROCESS_BANDS      0x20000000
@@ -78,6 +82,7 @@ class GDALPamRasterBand;
                                  GCIF_MINMAX | GCIF_SCALEOFFSET |          \
                                  GCIF_UNITTYPE | GCIF_COLORTABLE |         \
                                  GCIF_COLORINTERP | GCIF_BAND_METADATA |   \
+                                 GCIF_RAT |                                \
                                  GCIF_ONLY_IF_MISSING | GCIF_PROCESS_BANDS )
 
 /* GDAL PAM Flags */
@@ -241,6 +246,8 @@ typedef struct {
 
     GDALMultiDomainMetadata  oMDMD;
 
+    GDALRasterAttributeTable *poDefaultRAT;
+
 } GDALRasterBandPamInfo;
 
 /* ******************************************************************** */
@@ -305,6 +312,9 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                          const char * pszValue,
                                          const char * pszDomain = "" );
+
+    virtual const GDALRasterAttributeTable *GetDefaultRAT();
+    virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );
 
     // new in GDALPamRasterBand. 
     virtual CPLErr CloneInfo( GDALRasterBand *poSrcBand, int nCloneInfoFlags );
