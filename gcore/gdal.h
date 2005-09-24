@@ -1,7 +1,6 @@
 /******************************************************************************
  * $Id$
  *
- * Name:     gdal.h
  * Project:  GDAL Core
  * Purpose:  GDAL Core C/Public declarations.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
@@ -29,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.99  2005/09/24 19:01:52  fwarmerdam
+ * added RAT related functions
+ *
  * Revision 1.98  2005/09/24 04:18:43  fwarmerdam
  * added void declaration for GDALRasterAttributeTableH
  *
@@ -109,93 +111,6 @@
  *
  * Revision 1.72  2004/01/18 16:43:37  dron
  * Added GDALGetDataTypeByName() function.
- *
- * Revision 1.71  2003/07/18 04:46:48  sperkins
- * added CPL_DLL to GDALFillRaster
- *
- * Revision 1.70  2003/06/27 20:03:11  warmerda
- * updated version to 1.1.9
- *
- * Revision 1.69  2003/06/03 19:44:00  warmerda
- * added GDALRPCInfo support
- *
- * Revision 1.68  2003/05/06 05:20:38  sperkins
- * cleaned up comments
- *
- * Revision 1.67  2003/05/06 05:13:36  sperkins
- * added Fill() and GDALFillRaster()
- *
- * Revision 1.66  2003/05/02 19:47:57  warmerda
- * added C GetBandNumber and GetBandDataset entry points
- *
- * Revision 1.65  2003/04/30 17:13:48  warmerda
- * added docs for many C functions
- *
- * Revision 1.64  2003/04/30 15:48:31  warmerda
- * Fixed email address, trimmed log messages.
- *
- * Revision 1.63  2003/04/25 19:46:13  warmerda
- * added GDALDatasetRasterIO
- *
- * Revision 1.62  2003/03/18 06:01:03  warmerda
- * Added GDALFlushCache()
- *
- * Revision 1.61  2003/02/20 18:34:12  warmerda
- * added GDALGetRasterAccess()
- *
- * Revision 1.60  2003/01/27 21:55:52  warmerda
- * various documentation improvements
- *
- * Revision 1.59  2002/12/21 17:28:35  warmerda
- * actually, lets use 1.1.8.0
- *
- * Revision 1.58  2002/12/21 17:26:43  warmerda
- * updated version to 1.1.7.5
- *
- * Revision 1.57  2002/12/05 15:46:38  warmerda
- * added GDALReadTabFile()
- *
- * Revision 1.56  2002/11/23 18:07:41  warmerda
- * added DMD_CREATIONDATATYPES
- *
- * Revision 1.55  2002/10/24 14:18:29  warmerda
- * intermediate version update
- *
- * Revision 1.54  2002/09/11 14:17:38  warmerda
- * added C GDALSetDescription()
- *
- * Revision 1.53  2002/09/06 01:29:55  warmerda
- * added C entry points for GetAccess() and GetOpenDatasets()
- *
- * Revision 1.52  2002/09/04 06:52:35  warmerda
- * added GDALDestroyDriverManager
- *
- * Revision 1.51  2002/07/09 20:33:12  warmerda
- * expand tabs
- *
- * Revision 1.50  2002/06/12 21:13:27  warmerda
- * use metadata based driver info
- *
- * Revision 1.49  2002/05/28 18:55:46  warmerda
- * added GDALOpenShared() and GDALDumpOpenDatasets
- *
- * Revision 1.48  2002/05/14 21:38:32  warmerda
- * make INST_DATA overidable with binary patch
- *
- * Revision 1.47  2002/05/06 21:37:29  warmerda
- * added GDALGCPsToGeoTransform
- *
- * Revision 1.46  2002/04/24 16:25:04  warmerda
- * Ensure that GDAL{Read,Write}WorldFile() are exported on Windows.
- *
- * Revision 1.45  2002/04/19 12:22:05  dron
- * added GDALWriteWorldFile()
- *
- * Revision 1.44  2002/04/16 13:59:33  warmerda
- * added GDALVersionInfo
- *
- * Revision 1.43  2002/04/16 13:26:08  warmerda
- * upgrade to version 1.1.7
  */
 
 #ifndef GDAL_H_INCLUDED
@@ -363,7 +278,7 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared( const char *, GDALAccess );
 int          CPL_DLL CPL_STDCALL GDALDumpOpenDatasets( FILE * );
 
 GDALDriverH CPL_DLL CPL_STDCALL GDALGetDriverByName( const char * );
-int CPL_DLL         CPL_STDCALL GDALGetDriverCount();
+int CPL_DLL         CPL_STDCALL GDALGetDriverCount( void );
 GDALDriverH CPL_DLL CPL_STDCALL GDALGetDriver( int );
 int         CPL_DLL CPL_STDCALL GDALRegisterDriver( GDALDriverH );
 void        CPL_DLL CPL_STDCALL GDALDeregisterDriver( GDALDriverH );
@@ -565,6 +480,11 @@ CPLErr CPL_DLL  GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
                                         GDALProgressFunc pfnProgress, 
                                         void *pProgressData );
 
+GDALRasterAttributeTableH CPL_DLL CPL_STDCALL GDALGetDefaultRAT( 
+    GDALRasterBandH hBand );
+CPLErr CPL_DLL CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH, 
+                                              GDALRasterAttributeTableH );
+
 /* -------------------------------------------------------------------- */
 /*      Helper functions.                                               */
 /* -------------------------------------------------------------------- */
@@ -649,13 +569,93 @@ int CPL_DLL CPL_STDCALL GDALGetColorEntryAsRGB( GDALColorTableH, int, GDALColorE
 void CPL_DLL CPL_STDCALL GDALSetColorEntry( GDALColorTableH, int, const GDALColorEntry * );
 
 /* ==================================================================== */
+/*      Raster Attribute Table						*/
+/* ==================================================================== */
+
+typedef enum {
+    GFT_Integer, 
+    GFT_Real,
+    GFT_String
+} GDALRATFieldType;
+
+typedef enum {
+    GFU_Generic = 0,
+    GFU_PixelCount = 1,
+    GFU_Name = 2,
+    GFU_Min = 3,
+    GFU_Max = 4,
+    GFU_MinMax = 5,
+    GFU_Red = 6,
+    GFU_Green = 7,
+    GFU_Blue = 8,
+    GFU_Alpha = 9,
+    GFU_RedMin = 10,
+    GFU_GreenMin = 11,
+    GFU_BlueMin = 12,
+    GFU_AlphaMin = 13,
+    GFU_RedMax = 14,
+    GFU_GreenMax = 15,
+    GFU_BlueMax = 16,
+    GFU_AlphaMax = 17,
+    GFU_MaxCount
+} GDALRATFieldUsage;
+
+GDALRasterAttributeTableH CPL_DLL CPL_STDCALL 
+                                           GDALCreateRasterAttributeTable(void);
+void CPL_DLL CPL_STDCALL GDALDestroyRasterAttributeTable(
+    GDALRasterAttributeTableH );
+
+int CPL_DLL CPL_STDCALL GDALRATGetColumnCount( GDALRasterAttributeTableH );
+
+const char CPL_DLL * CPL_STDCALL GDALRATGetNameOfCol( 
+    GDALRasterAttributeTableH, int );
+GDALRATFieldUsage CPL_DLL CPL_STDCALL GDALRATGetUsageOfCol( 
+    GDALRasterAttributeTableH, int );
+GDALRATFieldType CPL_DLL CPL_STDCALL GDALRATGetTypeOfCol( 
+    GDALRasterAttributeTableH, int );
+
+int CPL_DLL CPL_STDCALL GDALRATGetColOfUsage( GDALRasterAttributeTableH, 
+                                              GDALRATFieldType );
+int CPL_DLL CPL_STDCALL GDALRATGetRowCount( GDALRasterAttributeTableH );
+
+const char CPL_DLL * CPL_STDCALL GDALRATGetValueAsString( 
+    GDALRasterAttributeTableH, int );
+int CPL_DLL CPL_STDCALL GDALRATGetValueAsInt( 
+    GDALRasterAttributeTableH, int );
+double CPL_DLL CPL_STDCALL GDALRATGetValueAsDouble( 
+    GDALRasterAttributeTableH, int );
+
+void CPL_DLL CPL_STDCALL GDALRATSetValueAsString( GDALRasterAttributeTableH, 
+                                                  const char * );
+void CPL_DLL CPL_STDCALL GDALRATSetValueAsInt( GDALRasterAttributeTableH, 
+                                               int );
+void CPL_DLL CPL_STDCALL GDALRATSetValueAsDouble( GDALRasterAttributeTableH, 
+                                                  double );
+void CPL_DLL CPL_STDCALL GDALRATSetRowCount( GDALRasterAttributeTableH, 
+                                             int );
+CPLErr CPL_DLL CPL_STDCALL GDALRATCreateColumn( GDALRasterAttributeTableH, 
+                                                const char *, 
+                                                GDALRATFieldType, 
+                                                GDALRATFieldUsage );
+CPLErr CPL_DLL CPL_STDCALL GDALRATSetLinearBinning( GDALRasterAttributeTableH, 
+                                                    double, double );
+int CPL_DLL CPL_STDCALL GDALRATGetLinearBinning( GDALRasterAttributeTableH, 
+                                                 double *, double * );
+void CPL_DLL CPL_STDCALL GDALRATIntitializeFromColorTable(
+    GDALRasterAttributeTableH, GDALColorTableH );
+void CPL_DLL CPL_STDCALL GDALRATDumpReadable( GDALRasterAttributeTableH, 
+                                              FILE * );
+GDALRasterAttributeTableH CPL_DLL CPL_STDCALL 
+    GDALRATClone( GDALRasterAttributeTableH );
+
+/* ==================================================================== */
 /*      GDAL Cache Management                                           */
 /* ==================================================================== */
 
 void CPL_DLL CPL_STDCALL GDALSetCacheMax( int nBytes );
-int CPL_DLL CPL_STDCALL GDALGetCacheMax();
-int CPL_DLL CPL_STDCALL GDALGetCacheUsed();
-int CPL_DLL CPL_STDCALL GDALFlushCacheBlock();
+int CPL_DLL CPL_STDCALL GDALGetCacheMax(void);
+int CPL_DLL CPL_STDCALL GDALGetCacheUsed(void);
+int CPL_DLL CPL_STDCALL GDALFlushCacheBlock(void);
 
 CPL_C_END
 
