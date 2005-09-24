@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/09/24 04:59:55  fwarmerdam
+ * support DSN-less connection directly to .mdb files
+ *
  * Revision 1.1  2005/09/05 19:34:17  fwarmerdam
  * New
  *
@@ -67,7 +70,8 @@ OGRDataSource *OGRPGeoDriver::Open( const char * pszFilename,
 {
     OGRPGeoDataSource     *poDS;
 
-    if( !EQUALN(pszFilename,"PGEO:",5) )
+    if( !EQUALN(pszFilename,"PGEO:",5) 
+        && !EQUAL(CPLGetExtension(pszFilename),"mdb") )
         return NULL;
 
     poDS = new OGRPGeoDataSource();

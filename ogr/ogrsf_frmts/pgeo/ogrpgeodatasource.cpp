@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/09/24 04:59:43  fwarmerdam
+ * support DSN-less connection directly to .mdb files
+ *
  * Revision 1.2  2005/09/05 20:30:20  fwarmerdam
  * fixed warning
  *
@@ -83,11 +86,20 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
     CPLAssert( nLayers == 0 );
 
 /* -------------------------------------------------------------------- */
-/*      Split out userid, password and DSN.  The general form is        */
-/*      user/password@dsn.  But if there are no @ characters the        */
-/*      whole thing is assumed to be a DSN.                             */
+/*      If this is the name of an MDB file, then construct the          */
+/*      appropriate connection string.  Otherwise clip of PGEO: to      */
+/*      get the DSN.                                                    */
+/*                                                                      */
 /* -------------------------------------------------------------------- */
-    char *pszDSN = CPLStrdup(pszNewName+5);
+    char *pszDSN;
+    if( EQUALN(pszNewName,"PGEO:",5) )
+        pszDSN = CPLStrdup( pszNewName + 5 );
+    else
+    {
+        pszDSN = (char *) CPLMalloc(strlen(pszNewName)+50);
+        sprintf( pszDSN, "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s", 
+                 pszNewName );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize based on the DSN.                                    */
