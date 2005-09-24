@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/09/24 19:02:15  fwarmerdam
+ * added RasterAttributeTable support
+ *
  * Revision 1.12  2005/09/23 20:55:19  fwarmerdam
  * avoid unimplemented errors if PAM disabled
  *
@@ -69,6 +72,7 @@
  */
 
 #include "gdal_pam.h"
+#include "gdal_rat.h"
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
@@ -208,6 +212,12 @@ CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char *pszVRTPath )
         CPLAddXMLChild( psTree, CPLCloneXMLTree( psPam->psSavedHistograms ) );
 
 /* -------------------------------------------------------------------- */
+/*      Raster Attribute Table                                          */
+/* -------------------------------------------------------------------- */
+    if( psPam->poDefaultRAT != NULL )
+        CPLAddXMLChild( psTree, psPam->poDefaultRAT->Serialize() );
+
+/* -------------------------------------------------------------------- */
 /*      Metadata.                                                       */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psMD;
@@ -258,6 +268,7 @@ void GDALPamRasterBand::PamInitialize()
     psPam->dfScale = 1.0;
     psPam->poParentDS = poParentDS;
     psPam->dfNoDataValue = -1e10;
+    psPam->poDefaultRAT = NULL;
 }
 
 /************************************************************************/
@@ -277,6 +288,12 @@ void GDALPamRasterBand::PamClear()
         CSLDestroy( psPam->papszCategoryNames );
 
         psPam->oMDMD.Clear();
+
+        if( psPam->poDefaultRAT != NULL )
+        {
+            delete psPam->poDefaultRAT;
+            psPam->poDefaultRAT = NULL;
+        }
 
         CPLFree( psPam );
         psPam = NULL;
@@ -414,6 +431,16 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
         psHist = psNext;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Raster Attribute Table                                          */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psRAT = CPLGetXMLNode( psTree, "GDALRasterAttributeTable" );
+    if( psRAT != NULL )
+    {
+        psPam->poDefaultRAT = new GDALRasterAttributeTable();
+        psPam->poDefaultRAT->XMLInit( psRAT, "" );
+    }
+
     return CE_None;
 }
 
@@ -531,6 +558,22 @@ CPLErr GDALPamRasterBand::CloneInfo( GDALRasterBand *poSrcBand,
             {
                 GDALPamRasterBand::SetColorTable( 
                     poSrcBand->GetColorTable() );
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Raster Attribute Table.                                         */
+/* -------------------------------------------------------------------- */
+    if( nCloneFlags && GCIF_RAT )
+    {
+        const GDALRasterAttributeTable *poRAT = poSrcBand->GetDefaultRAT();
+
+        if( poRAT != NULL )
+        {
+            if( !bOnlyIfMissing || GetDefaultRAT() == NULL )
+            {
+                GDALPamRasterBand::SetDefaultRAT( poRAT );
             }
         }
     }
@@ -1280,5 +1323,48 @@ GDALPamRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
     return GDALRasterBand::GetDefaultHistogram( pdfMin, pdfMax, pnBuckets, 
                                                 ppanHistogram, bForce, 
                                                 pfnProgress, pProgressData );
+}
+
+/************************************************************************/
+/*                           GetDefaultRAT()                            */
+/************************************************************************/
+
+const GDALRasterAttributeTable *GDALPamRasterBand::GetDefaultRAT()
+
+{
+    PamInitialize();
+
+    if( psPam == NULL )
+        return GDALRasterBand::GetDefaultRAT();
+
+    return psPam->poDefaultRAT;
+}
+
+/************************************************************************/
+/*                           SetDefaultRAT()                            */
+/************************************************************************/
+
+CPLErr GDALPamRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT)
+
+{
+    PamInitialize();
+
+    if( psPam == NULL )
+        return GDALRasterBand::SetDefaultRAT( poRAT );
+
+    psPam->poParentDS->MarkPamDirty();
+
+    if( psPam->poDefaultRAT != NULL )
+    {
+        delete psPam->poDefaultRAT;
+        psPam->poDefaultRAT = NULL;
+    }
+
+    if( poRAT == NULL )
+        psPam->poDefaultRAT = NULL;
+    else
+        psPam->poDefaultRAT = poRAT->Clone();
+
+    return CE_None;
 }
 
