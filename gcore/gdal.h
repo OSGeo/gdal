@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.98  2005/09/24 04:18:43  fwarmerdam
+ * added void declaration for GDALRasterAttributeTableH
+ *
  * Revision 1.97  2005/05/24 18:13:15  dron
  * Added GDALGetDriverCreationOptionList() function.
  *
@@ -309,6 +312,7 @@ typedef void *GDALRasterBandH;
 typedef void *GDALDriverH;
 typedef void *GDALProjDefH;
 typedef void *GDALColorTableH;
+typedef void *GDALRasterAttributeTableH;
 
 /* -------------------------------------------------------------------- */
 /*      Callback "progress" function.                                   */
