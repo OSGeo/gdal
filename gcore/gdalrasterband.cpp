@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.72  2005/09/24 19:02:46  fwarmerdam
+ * RAT functions honour GMO_IGNORE_UNIMPLEMENTED
+ *
  * Revision 1.71  2005/09/23 20:53:09  fwarmerdam
  * avoid issuing NotSupported errors if GMO_IGNORE_UNIMPLEMENTED is set
  *
@@ -183,6 +186,7 @@
  */
 
 #include "gdal_priv.h"
+#include "gdal_rat.h"
 #include "cpl_string.h"
 
 #define SUBBLOCK_SIZE 64
@@ -3118,8 +3122,9 @@ GDALRasterAttributeTableH CPL_STDCALL GDALGetDefaultRAT( GDALRasterBandH hBand)
 CPLErr GDALRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
 
 {
-    CPLError( CE_Failure, CPLE_NotSupported,
-              "SetDefaultRAT() not implemented for this format." );
+    if( !(GetMOFlags() & GMO_IGNORE_UNIMPLEMENTED) )
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "SetDefaultRAT() not implemented for this format." );
 
     return CE_Failure;
 }
