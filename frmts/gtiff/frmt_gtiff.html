@@ -74,6 +74,10 @@ option can be used to force creation of tiled TIFF files.<p>
 to use.  JPEG should only be used with Byte data.  LZW is normally 
 unavailable.  None is the default.<p>
 
+<li> <b>PREDICTOR=[0/1/2]</b>: Set the predictory for LZW or DEFLATE compression. The default is 0 (no predictory), 1 is horizontal differencing and 2 is floating point predictory.<p>
+
+<li> <b>JPEG_QUALITY=[1-100]</b>:  Set the JPEG quality when using JPEG compression.  A value of 100 is best quality (least compression), and 1 is worst quality (best compression).  The default is 75.<p>
+
 <li> <b>PROFILE=[GDALGeoTIFF/GeoTIFF/BASELINE]</b>: Control what non-baseline
 tags are emitted by GDAL.  With <tt>GDALGeoTIFF</tt> (the default) various 
 GDAL custom tags may be written.  With <tt>GeoTIFF</tt> only GeoTIFF tags
