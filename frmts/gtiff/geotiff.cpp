@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.147  2005/09/25 18:04:40  fwarmerdam
+ * added JPEG_QUALITY option
+ *
  * Revision 1.146  2005/09/20 18:16:53  fwarmerdam
  * enable support for NONE compress option
  *
@@ -3233,7 +3236,7 @@ TIFF *GTiffCreate( const char * pszFilename,
     int                 nBlockXSize = 0, nBlockYSize = 0;
     int                 bTiled = FALSE;
     int                 nCompression = COMPRESSION_NONE;
-    int                 nPredictor = 1;
+    int                 nPredictor = 1, nJpegQuality = -1;
     uint16              nSampleFormat;
     int			nPlanar;
     const char          *pszValue;
@@ -3314,6 +3317,10 @@ TIFF *GTiffCreate( const char * pszFilename,
     if( pszValue  != NULL )
         nPredictor =  atoi( pszValue );
 
+    pszValue = CSLFetchNameValue( papszParmList, "JPEG_QUALITY" );
+    if( pszValue  != NULL )
+        nJpegQuality = atoi( pszValue );
+
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
@@ -3335,6 +3342,10 @@ TIFF *GTiffCreate( const char * pszFilename,
     if ( nCompression == COMPRESSION_LZW ||
          nCompression == COMPRESSION_ADOBE_DEFLATE )
         TIFFSetField( hTIFF, TIFFTAG_PREDICTOR, nPredictor );
+    if( nCompression == COMPRESSION_JPEG 
+        && nJpegQuality != -1 )
+        TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, nJpegQuality );
+        
     TIFFSetField( hTIFF, TIFFTAG_IMAGEWIDTH, nXSize );
     TIFFSetField( hTIFF, TIFFTAG_IMAGELENGTH, nYSize );
     TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE, GDALGetDataTypeSize(eType) );
@@ -4541,6 +4552,7 @@ void GDALRegister_GTiff()
                  szOptionalCompressItems,
 "   </Option>"
 "   <Option name='PREDICTOR' type='int' description='Predictor Type'/>"
+"   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100, default 75.'/>"
 "   <Option name='INTERLEAVE' type='string-select'>"
 "       <Value>BAND</Value>"
 "       <Value>PIXEL</Value>"
