@@ -28,6 +28,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.36  2005/09/26 14:52:57  fwarmerdam
+ * Fixed UserComments to skip language encoding.  Force some new tags
+ * to ASCII.
+ *
  * Revision 1.35  2005/09/23 20:01:56  fwarmerdam
  * Fixed progress reporting.
  *
@@ -552,9 +556,23 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
         }
 
 /* -------------------------------------------------------------------- */
-/*      Hack the UserComment to be treated as ASCII.                    */
+/*      For UserComment we need to ignore the language binding and      */
+/*      just return the actual contents.                                */
 /* -------------------------------------------------------------------- */
         if( EQUAL(pszName,"EXIF_UserComment") )
+        {
+            poTIFFDirEntry->tdir_type = TIFF_ASCII;
+            poTIFFDirEntry->tdir_count -= 8;
+            poTIFFDirEntry->tdir_offset += 8;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Make some UNDEFINED or BYTE fields ASCII for readability.       */
+/* -------------------------------------------------------------------- */
+        if( EQUAL(pszName,"EXIF_ExifVersion")
+            || EQUAL(pszName,"EXIF_FlashPixVersion")
+            || EQUAL(pszName,"EXIF_MakerNote")
+            || EQUAL(pszName,"GPSProcessingMethod") )
             poTIFFDirEntry->tdir_type = TIFF_ASCII;
 
 /* -------------------------------------------------------------------- */
