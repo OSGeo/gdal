@@ -6,6 +6,9 @@
 
 /*
  * $Log$
+ * Revision 1.3  2005/09/26 08:18:21  cfis
+ * Moved renames to typemaps_ruby.i.  Now %include typemaps_ruby.i instead of %import (we want to inline the code).
+ *
  * Revision 1.2  2005/09/18 07:34:58  cfis
  * Added support for exceptions, removed some outdated code.
  *
@@ -17,10 +20,7 @@
  */
 
 /* Include default Ruby typemaps */
-%import typemaps_ruby.i
-
-/* Include separate renames file */
-%include renames.i
+%include typemaps_ruby.i
 
 /* Include exception handling code */
 %include cpl_exceptions.i
@@ -41,7 +41,6 @@
 
 %extend OGRDataSourceShadow {
 
-	%apply SWIGTYPE *ParentReference {OGRLayerShadow*};
 	OGRLayerShadow *GetLayer(VALUE whichLayer) {
 		// get field index
 		switch (TYPE(whichLayer)) {
@@ -59,21 +58,18 @@
 				SWIG_exception(SWIG_TypeError, "Value must be a string or integer.");
 		}
 	}
-	%clear OGRLayerShadow*;
 
 	/* Override the way that ReleaseResultSet is handled - we
 	   want to apply a typemap that unlinks the layer from
 		its underlying C++ object since this method destroys
 		the C++ object */
-	%typemap(freearg) OGRLayerShadow *layer {
+//	%typemap(freearg) OGRLayerShadow *layer {
 		/* %typemap(freearg) OGRLayerShadow *layer */
-		DATA_PTR(argv[0]) = 0;
-	}
-   void ReleaseResultSet(OGRLayerShadow *layer) {
-     OGR_DS_ReleaseResultSet(self, layer);
-   }
-
-	%clear OGRLayerShadow *layer;
+//		DATA_PTR(argv[0]) = 0;
+//	}
+  // void ReleaseResultSet(OGRLayerShadow *layer) {
+    // OGR_DS_ReleaseResultSet(self, layer);
+//   }
 }
 
 /* Extend the layers class by adding support for ruby enumerable mixin. */
@@ -83,6 +79,18 @@
 %ignore OGRDataSourceShadow::GetLayerByIndex;
 
 %extend OGRLayerShadow {
+	/*~OGRLayerShadow () {
+		FreeResultSet();
+	}
+
+	%typemap(in) OGRDatasourceShadow *ds {
+		SWIG_ConvertPtr($input, (void **) &$1, $1_descriptor, SWIG_POINTER_DISOWN);
+	   rb_iv_set($input, "__swigtype__", self);
+	}
+   void ReleaseResultSet(OGRDatasourceShadow *ds, OGRLayerShadow *layer) {
+     OGR_DS_ReleaseResultSet(self, layer);
+   }
+*/
 	%newobject OGRLayerShadow::each;
 	void each() {
 		OGRFeatureShadow* feature = NULL;
