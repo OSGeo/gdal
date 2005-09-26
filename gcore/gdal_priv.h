@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.68  2005/09/26 15:52:03  fwarmerdam
+ * centralized .aux opening logic
+ *
  * Revision 1.67  2005/09/23 20:52:21  fwarmerdam
  * added the GMO flags on GDALMajorObject
  *
@@ -801,6 +804,9 @@ GDALRegenerateOverviews( GDALRasterBand *, int, GDALRasterBand **,
                          const char *, GDALProgressFunc, void * );
 
 int CPL_DLL GDALOvLevelAdjust( int nOvLevel, int nXSize );
+
+GDALDataset CPL_DLL *
+GDALFindAssociatedAuxFile( const char *pszBasefile, GDALAccess eAccess );
 
 CPL_C_END
 

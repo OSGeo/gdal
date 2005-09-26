@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.73  2005/09/26 15:52:03  fwarmerdam
+ * centralized .aux opening logic
+ *
  * Revision 1.72  2005/09/11 21:07:54  fwarmerdam
  * Changed worldfile reading to use large file API.
  *
@@ -2231,6 +2234,68 @@ int CPL_STDCALL GDALExtractRPCInfo( char **papszMD, GDALRPCInfo *psRPC )
     _FetchDblFromMD( papszMD, "MAX_LAT", &(psRPC->dfMAX_LAT), 1, 90.0 );
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                     GDALFindAssociatedAuxFile()                      */
+/************************************************************************/
+
+GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
+                                        GDALAccess eAccess )
+
+{
+    if( EQUAL(CPLGetExtension(pszBasename),"aux") )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      We didn't find that, so try and find a corresponding aux        */
+/*      file.  Check that we are the dependent file of the aux          */
+/*      file.                                                           */
+/* -------------------------------------------------------------------- */
+    VSIStatBufL sStatBuf;
+    CPLString oAuxFilename = CPLResetExtension(pszBasename,"aux");
+    CPLString oJustFile = CPLGetFilename(pszBasename); // without dir
+    GDALDataset *poODS = NULL;
+        
+    if( VSIStatL( oAuxFilename, &sStatBuf ) == 0 )
+    {
+        poODS = (GDALDataset *) GDALOpenShared( oAuxFilename, eAccess );
+    }
+
+    if( poODS != NULL )
+    {
+        const char *pszDep
+            = poODS->GetMetadataItem( "HFA_DEPENDENT_FILE", "HFA" );
+        if( pszDep == NULL || !EQUAL(pszDep,oJustFile) )
+        {
+            GDALClose( poODS );
+            poODS = NULL;
+        }
+    }
+        
+    if( poODS == NULL )
+    {
+        oAuxFilename = pszBasename;
+        oAuxFilename += ".aux";
+
+        if( VSIStatL( oAuxFilename, &sStatBuf ) == 0 )
+        {
+            poODS = (GDALDataset *) GDALOpen( oAuxFilename, eAccess );
+        }
+
+        if( poODS != NULL )
+        {
+            const char *pszDep
+                = poODS->GetMetadataItem( "HFA_DEPENDENT_FILE", "HFA" );
+            if( pszDep == NULL || !EQUAL(pszDep,oJustFile) )
+            {
+                GDALClose( poODS );
+                poODS = NULL;
+            }
+        }
+    }
+
+    return poODS;
 }
 
 /************************************************************************/

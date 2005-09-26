@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/09/26 15:52:03  fwarmerdam
+ * centralized .aux opening logic
+ *
  * Revision 1.13  2005/09/17 03:46:18  fwarmerdam
  * added USE_RRD support to create overviews
  *
@@ -164,54 +167,13 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
 /* -------------------------------------------------------------------- */
     if( !poODS )
     {
-        CPLString oAuxFilename = CPLResetExtension(pszBasename,"aux");
-        CPLString oJustFile = CPLGetFilename(pszBasename); // without dir
-        
-        if( VSIStatL( oAuxFilename, &sStatBuf ) == 0 )
-        {
-            poODS = (GDALDataset *) GDALOpen( oAuxFilename, 
-                                              poDS->GetAccess() );
-        }
-
-        if( poODS != NULL )
-        {
-            const char *pszDep
-                = poODS->GetMetadataItem( "HFA_DEPENDENT_FILE", "HFA" );
-            if( pszDep == NULL || !EQUAL(pszDep,oJustFile) )
-            {
-                GDALClose( poODS );
-                poODS = NULL;
-            }
-        }
-        
-        if( poODS == NULL )
-        {
-            oAuxFilename = pszBasename;
-            oAuxFilename += ".aux";
-
-            if( VSIStatL( oAuxFilename, &sStatBuf ) == 0 )
-            {
-                poODS = (GDALDataset *) GDALOpen( oAuxFilename, 
-                                                  poDS->GetAccess() );
-            }
-
-            if( poODS != NULL )
-            {
-                const char *pszDep
-                    = poODS->GetMetadataItem( "HFA_DEPENDENT_FILE", "HFA" );
-                if( pszDep == NULL || !EQUAL(pszDep,oJustFile) )
-                {
-                    GDALClose( poODS );
-                    poODS = NULL;
-                }
-            }
-        }
+        poODS = GDALFindAssociatedAuxFile( pszBasename, poDS->GetAccess() );
 
         if( poODS )
         {
             bOvrIsAux = TRUE;
             CPLFree( pszOvrFilename );
-            pszOvrFilename = CPLStrdup(oAuxFilename);
+            pszOvrFilename = CPLStrdup(poODS->GetDescription());
         }
     }
 }
