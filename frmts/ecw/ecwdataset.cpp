@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.53  2005/09/26 21:09:31  fwarmerdam
+ * Avoid problems in deletion of the iostream.
+ *
  * Revision 1.52  2005/07/30 03:05:56  fwarmerdam
  * Added LARGE_OK, frmt_jp2ecw.html link
  *
@@ -189,6 +192,8 @@ class CPL_DLL ECWDataset : public GDALPamDataset
 
     GDALDataType eRasterDataType;
     NCSEcwCellType eNCSRequestDataType;
+
+    int         bUsingCustomStream;
 
     // Current view window. 
     int         bWinActive;
@@ -605,6 +610,7 @@ CPLErr ECWRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
 ECWDataset::ECWDataset()
 
 {
+    bUsingCustomStream = FALSE;
     pszProjection = NULL;
     poFileView = NULL;
     bWinActive = FALSE;
@@ -663,21 +669,18 @@ ECWDataset::~ECWDataset()
     // object, we must decrement the nFileViewCount attribute of the underlying
     // VSIIOStream object, and only delete the VSIIOStream object when 
     // nFileViewCount is equal to zero.
-    
-    VSIIOStream *poUnderlyingIOStream = (VSIIOStream *)NULL;
 
     if( poFileView != NULL )
     {
+        VSIIOStream *poUnderlyingIOStream = (VSIIOStream *)NULL;
+
         poUnderlyingIOStream = ((VSIIOStream *)(poFileView->GetStream()));
         delete poFileView;
-    }
 
-    if( poUnderlyingIOStream != NULL )
-    {
-        poUnderlyingIOStream->nFileViewCount--;
-        if ( poUnderlyingIOStream->nFileViewCount == 0 )
+        if( bUsingCustomStream )
         {
-            delete poUnderlyingIOStream;
+            if( --poUnderlyingIOStream->nFileViewCount == 0 )
+                delete poUnderlyingIOStream;
         }
     }
 
