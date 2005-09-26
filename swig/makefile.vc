@@ -66,10 +66,10 @@ java: gdalvars
 
 ruby: gdalvars
 		cd ruby
-		$(SWIG) -ruby -I../include/ruby -o gdalconst_wrap.c ../include/gdalconst.i
-        $(SWIG) -c++ -ruby -I../include/ruby -o gdal_wrap.cpp ../include/gdal.i
-        $(SWIG) -c++ -ruby -I../include/ruby -o osr_wrap.cpp ../include/osr.i
-        $(SWIG) -c++ -ruby -I../include/ruby -o ogr_wrap.cpp ../include/ogr.i
+		$(SWIG) -ruby -I../include/ruby -o gdalconst_wrap.c -prefix "gdal::" ../include/gdalconst.i
+        $(SWIG) -c++ -ruby -I../include/ruby -o gdal_wrap.cpp -prefix "gdal::" ../include/gdal.i
+        $(SWIG) -c++ -ruby -I../include/ruby -o osr_wrap.cpp -prefix "gdal::" ../include/osr.i
+        $(SWIG) -c++ -ruby -I../include/ruby -o ogr_wrap.cpp -prefix "gdal::" ../include/ogr.i
         nmake /f makefile.vc build
         nmake /f makefile.vc install 
 
