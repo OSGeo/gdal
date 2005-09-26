@@ -8,6 +8,9 @@ all: build
 BINDING = ruby
 include ../SWIGmake.base
 
+# Add -prefix "Gdal::" to SWIGARGS
+SWIGARGS += -prefix "Gdal::"
+
 clean:
 	-rm -rf gdal
 
