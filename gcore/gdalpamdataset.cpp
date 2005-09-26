@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/09/26 15:52:03  fwarmerdam
+ * centralized .aux opening logic
+ *
  * Revision 1.11  2005/09/23 20:55:19  fwarmerdam
  * avoid unimplemented errors if PAM disabled
  *
@@ -970,55 +973,16 @@ CPLErr GDALPamDataset::TryLoadAux()
         return CE_None;
 
 /* -------------------------------------------------------------------- */
-/*      Try to build the .aux filename.                                 */
+/*      Try to open .aux file.                                          */
 /* -------------------------------------------------------------------- */
-    char *pszAuxFilename;
-
     if( GetDescription() == NULL || strlen(GetDescription()) == 0 )
         return CE_None;
 
-    if( EQUAL(CPLGetExtension(GetDescription()),"aux") )
-        return CE_None;
+    GDALDataset *poAuxDS = GDALFindAssociatedAuxFile( GetDescription(), 
+                                                      GA_ReadOnly );
 
-    pszAuxFilename =
-        CPLStrdup( CPLResetExtension(GetDescription(),"aux") );
-
-/* -------------------------------------------------------------------- */
-/*      Does this file exist?  Does it have the right signature?        */
-/* -------------------------------------------------------------------- */
-    FILE *fpAux;
-    char szSignature[16];
-
-    memset( szSignature, 0, 16 );
-
-    fpAux = VSIFOpenL( pszAuxFilename, "rb" );
-
-    if( fpAux != NULL )
-    {
-        VSIFReadL( szSignature, 16, 1, fpAux );
-        VSIFCloseL( fpAux );
-    }
-
-    if( !EQUALN(szSignature,"EHFA_HEADER_TAG",15) )
-    {
-        CPLFree( pszAuxFilename );
-        return CE_None;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      We have a HFA file.  Now try opening it via GDAL.               */
-/* -------------------------------------------------------------------- */
-    GDALDataset *poAuxDS = (GDALDataset *)
-        GDALOpen( pszAuxFilename, GA_ReadOnly );
-
-    CPLFree( pszAuxFilename );
     if( poAuxDS == NULL )
         return CE_None;
-
-/* -------------------------------------------------------------------- */
-/*      Check dependent file to ensure it matches our target file.      */
-/* -------------------------------------------------------------------- */
-    // TODO 
 
 /* -------------------------------------------------------------------- */
 /*      Do we have an SRS on the aux file?                              */
