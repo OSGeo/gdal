@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2005/09/26 04:37:17  cfis
+ * If inserting a feature into postgresql failed, the program would crash since the wrong number of parameters were sent to CPLError.  Fixed by passing pszCommand.
+ *
  * Revision 1.36  2005/09/21 00:55:42  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -986,7 +989,7 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
 
         CPLError( CE_Failure, CPLE_AppDefined,
                   "INSERT command for new feature failed.\n%s\nCommand: %s",
-                  PQerrorMessage(hPGConn) );
+                  PQerrorMessage(hPGConn), pszCommand);
 
         CPLFree( pszCommand );
 
