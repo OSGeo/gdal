@@ -100,7 +100,9 @@ private:
 
 /* Flags for pointer conversion */
 #define SWIG_POINTER_EXCEPTION     0x1
+#define SWIG_POINTER_OWN           0x1
 #define SWIG_POINTER_DISOWN        0x2
+#define SWIG_TRACK_OBJECTS	        0x4
 
 #define NUM2USHRT(n) (\
     (0 <= NUM2UINT(n) && NUM2UINT(n) <= USHRT_MAX)\
@@ -434,16 +436,18 @@ SWIG_TypePrettyName(const swig_type_info *type) {
 */
 SWIGRUNTIME void
 SWIG_TypeClientData(swig_type_info *ti, void *clientdata) {
-  if (!ti->clientdata) {
-    swig_cast_info *cast = ti->cast;
-    /* if (ti->clientdata == clientdata) return; */
-    ti->clientdata = clientdata;
-    
-    while (cast) {
-      if (!cast->converter)
-	SWIG_TypeClientData(cast->type, clientdata);
-      cast = cast->next;
-    }
+  swig_cast_info *cast = ti->cast;
+  /* if (ti->clientdata == clientdata) return; */
+  ti->clientdata = clientdata;
+  
+  while (cast) {
+    if (!cast->converter) {
+      swig_type_info *tc = cast->type;
+      if (!tc->clientdata) {
+	SWIG_TypeClientData(tc, clientdata);
+      }
+    }    
+    cast = cast->next;
   }
 }
 
@@ -630,15 +634,24 @@ SWIG_UnpackDataName(const char *c, void *ptr, size_t sz, const char *name) {
 }
 #endif
 
+/***********************************************************************
+ * rubytracking.swg
+ *
+ * This file contains support for tracking mappings from 
+ * Ruby objects to C++ objects.  This functionality is needed
+ * to implement mark functions for Ruby's mark and sweep
+ * garbage collector.
+ ************************************************************************/
+
 /* Global Ruby hash table to store Trackings from C/C++
    structs to Ruby Objects. */
 static VALUE swig_ruby_trackings;
 
 /* Setup a Ruby hash table to store Trackings */
-void SWIG_RubyInitializeTrackings() {
+static void SWIG_RubyInitializeTrackings() {
 	/* Create a ruby hash table to store Trackings from C++ 
 	objects to Ruby objects.  Also make sure to tell
-	the garabage collector about the hash table */
+	the garabage collector about the hash table. */
 	swig_ruby_trackings = rb_hash_new();
 	rb_gc_register_address(&swig_ruby_trackings);
 }
@@ -675,19 +688,6 @@ static VALUE SWIG_RubyReferenceToObject(VALUE reference) {
 	return (VALUE) value;
 }
 
-
-#ifndef SWIG_RUBY_OBJECT_TRACKING
-
-/* Object tracking is turned off, stub out these methods to do nothing. */
-static void SWIG_RubyAddTracking(void* ptr, VALUE object) {}
-static void SWIG_RubyRemoveTracking(void* ptr){};
-static VALUE SWIG_RubyInstanceFor(void* ptr) {
-	return Qnil;
-};
-
-#else
-/* Object tracking is turned on */
-
 /* Add a Tracking from a C/C++ struct to a Ruby object */
 static void SWIG_RubyAddTracking(void* ptr, VALUE object) {
 	/* In a Ruby hash table we store the pointer and
@@ -703,7 +703,8 @@ static void SWIG_RubyAddTracking(void* ptr, VALUE object) {
 	/* Get a reference to the Ruby object as a Ruby number */
 	VALUE value = SWIG_RubyObjectToReference(object);
 
-    rb_hash_aset(swig_ruby_trackings, key, value);
+  /* Store the mapping to the global hash table. */
+	rb_hash_aset(swig_ruby_trackings, key, value);
 }
 
 /* Get the Ruby object that owns the specified C/C++ struct */
@@ -711,10 +712,11 @@ static VALUE SWIG_RubyInstanceFor(void* ptr) {
 	/* Get a reference to the pointer as a Ruby number */
 	VALUE key = SWIG_RubyPtrToReference(ptr);
 
-	/* Now lookup the value stored in the Ruby hash table */
+	/* Now lookup the value stored in the global hash table */
 	VALUE value = rb_hash_aref(swig_ruby_trackings, key);
 	
 	if (value == Qnil) {
+	  /* No object exists - return nil. */
 		return Qnil;
 	}
 	else {
@@ -727,26 +729,26 @@ static VALUE SWIG_RubyInstanceFor(void* ptr) {
 static void SWIG_RubyRemoveTracking(void* ptr) {
 	/* Get a reference to the pointer as a Ruby number */
 	VALUE key = SWIG_RubyPtrToReference(ptr);
-	VALUE object = SWIG_RubyInstanceFor(ptr);
 
-	/* Reset the C/C++ data struct associated with the Object.
-	This is needed in case a Ruby object exists longer than 
-	its underlying	C++ object.  By setting the data_struct 
-	to nil,	code in SWIG_Ruby_ConvertPtr can detect this problem 
-	and return an error message, as opposed to causing a
-	segmentation fault.*/
-	if (object != Qnil) {
-		DATA_PTR(object) = 0;
-	}
-		
-	/* Now delete the object from the hash table.  To
-	do this we need to call the Hash.delete method 
-	in Ruby. */
-	static VALUE delete_function = rb_intern("delete");
+	/* Define delete method - in C++ this could be marked as
+	   static but unfortunately not in C. */
+	VALUE delete_function = rb_intern("delete");
+
+	/* Delete the object from the hash table by calling Ruby's
+	   do this we need to call the Hash.delete method.*/
 	rb_funcall(swig_ruby_trackings, delete_function, 1, key);
 }
 
-#endif
+/* This is a helper method that unlinks a Ruby object from its
+   underlying C++ object.  This is needed if the lifetime of the
+   Ruby object is longer than the C++ object */
+static void SWIG_RubyUnlinkObjects(void* ptr) {
+	VALUE object = SWIG_RubyInstanceFor(ptr);
+
+	if (object != Qnil) {
+		DATA_PTR(object) = 0;
+	}
+}
 
 /* Common SWIG API */
 #define SWIG_ConvertPtr(obj, pp, type, flags) \
@@ -812,21 +814,26 @@ SWIG_Ruby_define_class(swig_type_info *type)
 
 /* Create a new pointer object */
 static VALUE
-SWIG_Ruby_NewPointerObj(void *ptr, swig_type_info *type, int own)
+SWIG_Ruby_NewPointerObj(void *ptr, swig_type_info *type, int flags)
 {
+	 int own = flags & SWIG_POINTER_OWN;
+	 int track = flags & SWIG_TRACK_OBJECTS;
+	 
     char *klass_name;
     swig_class *sklass;
     VALUE klass;
     VALUE obj;
     
     if (!ptr)
-			return Qnil;
+      return Qnil;
     
-		/* Have we already wrapped this pointer? */
-		obj = SWIG_RubyInstanceFor(ptr);
-		if (obj != Qnil) {
-			return obj;
-		}
+    /* Have we already wrapped this pointer? */
+    if (track) {
+	    obj = SWIG_RubyInstanceFor(ptr);
+   	 if (obj != Qnil) {
+      	return obj;
+    	}
+    }
 		
     if (type->clientdata) {
       sklass = (swig_class *) type->clientdata;
@@ -839,6 +846,12 @@ SWIG_Ruby_NewPointerObj(void *ptr, swig_type_info *type, int own)
       obj = Data_Wrap_Struct(klass, 0, 0, ptr);
     }
     rb_iv_set(obj, "__swigtype__", rb_str_new2(type->name));
+    
+    /* Keep track of this object if necessary */
+    if (track) {
+	   SWIG_RubyAddTracking(ptr, obj);
+    }
+   
     return obj;
 }
 
@@ -877,11 +890,21 @@ SWIG_Ruby_ConvertPtr(VALUE obj, void **ptr, swig_type_info *ty, int flags)
   }
   
   /* Check to see if the input object is giving up ownership
-     of the underlying C struct or C++ object.  If so, then
-     set the free function to nil so that the C struct
-     is not freed when the Ruby object goes out of scope.*/
+     of the underlying C struct or C++ object.  If so then we
+     need to reset the destructor since the Ruby object no 
+     longer owns the underlying C++ object.*/ 
   if (flags & SWIG_POINTER_DISOWN) {
-    RDATA(obj)->dfree = 0;
+	 if (flags & SWIG_TRACK_OBJECTS) {
+      /* We are tracking objects.  Thus we change the destructor
+		 * to SWIG_RubyRemoveTracking.  This allows us to
+		 * remove the mapping from the C++ to Ruby object
+		 * when the Ruby object is garbage collected.  If we don't
+		 * do this, then it is possible we will return a reference 
+		 * to a Ruby object that no longer exists thereby crashing Ruby. */
+		RDATA(obj)->dfree = SWIG_RubyRemoveTracking;
+  	 } else {    
+      RDATA(obj)->dfree = 0;
+    }
   }
 
   /* Do type-checking if type info was provided */
@@ -1012,7 +1035,7 @@ static void SWIG_Ruby_SetModule(swig_module_info *pointer) {
 #define SWIGTYPE_p_int swig_types[11]
 #define SWIGTYPE_p_p_char swig_types[12]
 #define SWIGTYPE_p_unsigned_long swig_types[13]
-static swig_type_info *swig_types[14];
+static swig_type_info *swig_types[15];
 static swig_module_info swig_module = {swig_types, 14, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
@@ -1020,7 +1043,7 @@ static swig_module_info swig_module = {swig_types, 14, 0, 0, 0, 0};
 /* -------- TYPES TABLE (END) -------- */
 
 #define SWIG_init    Init_ogr
-#define SWIG_name    "Ogr"
+#define SWIG_name    "Gdal::Ogr"
 
 static VALUE mOgr;
 
@@ -1107,7 +1130,76 @@ typedef void OGRGeometryShadow;
 typedef void OSRCoordinateTransformationShadow;
 typedef void OGRFieldDefnShadow;
 
-const unsigned long wkb25bit = -2147483648;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+struct timeval rb_time_timeval(VALUE);
+#endif
+#ifdef __cplusplus
+}
+#endif
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "rubyio.h"
+#ifdef __cplusplus
+}
+#endif
+
+
+
+static char const *
+OGRErrMessages( int rc ) {
+  switch( rc ) {
+  case 0:
+    return "OGR Error: None";
+  case 1:
+    return "OGR Error: Not enough data";
+  case 2:
+    return "OGR Error: Not enough memory";
+  case 3:
+    return "OGR Error: Unsupported geometry type";
+  case 4:
+    return "OGR Error: Unsupported operation";
+  case 5:
+    return "OGR Error: Corrupt data";
+  case 6:
+    return "OGR Error: General Error";
+  case 7:
+    return "OGR Error: Unsupported SRS";
+  default:
+    return "OGR Error: Unknown";
+  }
+}
+
+
+int bUseExceptions=0;
+int bErrorHappened=0;
+
+void ErrorHandler(CPLErr eclass, int code, const char *msg ) {
+  /* Only raise exceptions on failures and fatal errors */
+  if (eclass == CE_Failure || eclass == CE_Fatal) {
+    bErrorHappened = 1;
+  }
+}
+
+
+void UseExceptions() {
+  bUseExceptions = 1;
+  bErrorHappened = 0;
+  CPLSetErrorHandler( (CPLErrorHandler)ErrorHandler );
+}
+
+void DontUseExceptions() {
+  bUseExceptions = 0;
+  bErrorHappened = 0;
+  CPLSetErrorHandler( CPLDefaultErrorHandler );
+}
 
 static OGRDataSourceShadow *OGRDriverShadow_CreateDataSource(OGRDriverShadow *self,char const *name,char **options=0){
     OGRDataSourceShadow *ds = (OGRDataSourceShadow*) OGR_Dr_CreateDataSource( self, name, options);
@@ -1173,16 +1265,16 @@ static OGRLayerShadow *OGRDataSourceShadow_ExecuteSQL(OGRDataSourceShadow *self,
 static void OGRDataSourceShadow_ReleaseResultSet(OGRDataSourceShadow *self,OGRLayerShadow *layer){
     OGR_DS_ReleaseResultSet(self, layer);
   }
-static OGRLayerShadow *OGRDataSourceShadow_GetLayer(OGRDataSourceShadow *self,VALUE object){
+static OGRLayerShadow *OGRDataSourceShadow_GetLayer(OGRDataSourceShadow *self,VALUE whichLayer){
 		// get field index
-		switch (TYPE(object)) {
+		switch (TYPE(whichLayer)) {
 			case T_STRING: {
-				char* name = StringValuePtr(object);
+				char* name = StringValuePtr(whichLayer);
 				return OGR_DS_GetLayerByName(self, name);
 				break;
 			}
 			case T_FIXNUM: {
-				int index = NUM2INT(object);
+				int index = NUM2INT(whichLayer);
 				return OGR_DS_GetLayer(self, index);
 				break;
 			}
@@ -1302,16 +1394,17 @@ static GIntBig OGRLayerShadow_GetFeatureRead(OGRLayerShadow *self){
   }
 static void OGRLayerShadow_each(OGRLayerShadow *self){
 		OGRFeatureShadow* feature = NULL;
-	 	while (feature = (OGRFeatureShadow*) OGR_L_GetNextFeature(self))
-	 	{
+
+ 		while (feature = (OGRFeatureShadow*) OGR_L_GetNextFeature(self))
+ 		{
 			/* Convert the pointer to a Ruby object.  Note we set the flag
-			   to one manually to show this is a new object */
-			VALUE object = SWIG_NewPointerObj((void *) feature, SWIGTYPE_p_OGRFeatureShadow, 1);			
+		   to one manually to show this is a new object */
+			VALUE object = SWIG_NewPointerObj((void *) feature, SWIGTYPE_p_OGRFeatureShadow, SWIG_POINTER_OWN);			
 
 			/* Now invoke the block specified for this method. */
 			rb_yield(object);
-    }
-	}
+		}
+  }
 static OGRFeatureShadow *new_OGRFeatureShadow(OGRFeatureDefnShadow *feature_def=0){
     return (OGRFeatureShadow*) OGR_F_Create( feature_def );
   }
@@ -1581,6 +1674,9 @@ static int OGRFieldDefnShadow_GetPrecision(OGRFieldDefnShadow *self){
 static void OGRFieldDefnShadow_SetPrecision(OGRFieldDefnShadow *self,int precision){
     OGR_Fld_SetPrecision(self, precision);
   }
+static char const *OGRFieldDefnShadow_GetFieldTypeName(OGRFieldDefnShadow *self,OGRFieldType type){
+    return OGR_GetFieldTypeName(type);
+  }
 
   OGRGeometryShadow* CreateGeometryFromWkb( int len, char *bin_string, 
                                             OSRSpatialReferenceShadow *reference=NULL ) {
@@ -1792,35 +1888,51 @@ char const *OGRDataSourceShadow_name_get( OGRDataSourceShadow *h ) {
 }
 
 
-OGRDriverShadow* GetDriverByName( char const *name ) {
-  return (OGRDriverShadow*) OGRGetDriverByName( name );
-}
-  
-OGRDriverShadow* GetDriver(int driver_number) {
-  return (OGRDriverShadow*) OGRGetDriver(driver_number);
-  
-
-}
-
-
   OGRDataSourceShadow* GetOpenDS(int ds_number) {
     OGRDataSourceShadow* layer = (OGRDataSourceShadow*) OGRGetOpenDS(ds_number);
     return layer;
   }
 
 
-  OGRDataSourceShadow *Open( const char * filename, int update=0 ) {
-    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(filename,update, NULL);
+  OGRDataSourceShadow* Open( const char *filename, int update =0 ) {
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(filename,update,NULL);
     return ds;
   }
- 
 
 
-  OGRDataSourceShadow *OpenShared( const char * filename, int update=0 ) {
-    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(filename,update, NULL);
+  OGRDataSourceShadow* OpenShared( const char *filename, int update =0 ) {
+    OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(filename,update,NULL);
     return ds;
   }
- 
+
+
+OGRDriverShadow* GetDriverByName( char const *name ) {
+  return (OGRDriverShadow*) OGRGetDriverByName( name );
+}
+
+OGRDriverShadow* GetDriver(int driver_number) {
+  return (OGRDriverShadow*) OGRGetDriver(driver_number);
+}
+
+static VALUE
+_wrap_UseExceptions(int argc, VALUE *argv, VALUE self) {
+    if ((argc < 0) || (argc > 0))
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
+    UseExceptions();
+    
+    return Qnil;
+}
+
+
+static VALUE
+_wrap_DontUseExceptions(int argc, VALUE *argv, VALUE self) {
+    if ((argc < 0) || (argc > 0))
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
+    DontUseExceptions();
+    
+    return Qnil;
+}
+
 
 swig_class cDriver;
 
@@ -1833,8 +1945,16 @@ _wrap_Driver_name_get(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRDriverShadow, 0);
-    result = (char *)OGRDriverShadow_name_get(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (char *)OGRDriverShadow_name_get(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_str_new2(result);
     return vresult;
 }
@@ -1870,8 +1990,16 @@ _wrap_Driver_create_data_source(int argc, VALUE *argv, VALUE self) {
             }
         }
     }
-    result = (OGRDataSourceShadow *)OGRDriverShadow_CreateDataSource(arg1,(char const *)arg2,arg3);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRDataSourceShadow *)OGRDriverShadow_CreateDataSource(arg1,(char const *)arg2,arg3);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRDataSourceShadow,1);
     {
         /* %typemap(ruby,freearg) char **options */
@@ -1914,8 +2042,16 @@ _wrap_Driver_copy_data_source(int argc, VALUE *argv, VALUE self) {
             }
         }
     }
-    result = (OGRDataSourceShadow *)OGRDriverShadow_CopyDataSource(arg1,arg2,(char const *)arg3,arg4);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRDataSourceShadow *)OGRDriverShadow_CopyDataSource(arg1,arg2,(char const *)arg3,arg4);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRDataSourceShadow,1);
     {
         /* %typemap(ruby,freearg) char **options */
@@ -1944,8 +2080,16 @@ _wrap_Driver_open(int argc, VALUE *argv, VALUE self) {
     if (argc > 1) {
         arg3 = NUM2INT(argv[1]);
     }
-    result = (OGRDataSourceShadow *)OGRDriverShadow_Open(arg1,(char const *)arg2,arg3);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRDataSourceShadow *)OGRDriverShadow_Open(arg1,(char const *)arg2,arg3);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRDataSourceShadow,1);
     return vresult;
 }
@@ -1962,8 +2106,16 @@ _wrap_Driver_delete_data_source(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRDriverShadow, 0);
     arg2 = StringValuePtr(argv[0]);
-    result = (int)OGRDriverShadow_DeleteDataSource(arg1,(char const *)arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRDriverShadow_DeleteDataSource(arg1,(char const *)arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -1980,8 +2132,16 @@ _wrap_Driver_test_capability(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRDriverShadow, 0);
     arg2 = StringValuePtr(argv[0]);
-    result = (int)OGRDriverShadow_TestCapability(arg1,(char const *)arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRDriverShadow_TestCapability(arg1,(char const *)arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -1996,8 +2156,16 @@ _wrap_Driver_get_name(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRDriverShadow, 0);
-    result = (char *)OGRDriverShadow_GetName(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (char *)OGRDriverShadow_GetName(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_str_new2(result);
     return vresult;
 }
@@ -2014,8 +2182,16 @@ _wrap_DataSource_name_get(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRDataSourceShadow, 0);
-    result = (char *)OGRDataSourceShadow_name_get(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (char *)OGRDataSourceShadow_name_get(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_str_new2(result);
     return vresult;
 }
@@ -2027,8 +2203,8 @@ static void delete_OGRDataSourceShadow(OGRDataSourceShadow *self){
 static void
 free_OGRDataSourceShadow(OGRDataSourceShadow *arg1) {
     delete_OGRDataSourceShadow(arg1);
-    SWIG_RubyRemoveTracking(arg1);
 }
+
 static VALUE
 _wrap_DataSource_get_ref_count(int argc, VALUE *argv, VALUE self) {
     OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
@@ -2038,8 +2214,16 @@ _wrap_DataSource_get_ref_count(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRDataSourceShadow, 0);
-    result = (int)OGRDataSourceShadow_GetRefCount(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRDataSourceShadow_GetRefCount(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -2054,8 +2238,16 @@ _wrap_DataSource_get_summary_ref_count(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRDataSourceShadow, 0);
-    result = (int)OGRDataSourceShadow_GetSummaryRefCount(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRDataSourceShadow_GetSummaryRefCount(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -2070,8 +2262,16 @@ _wrap_DataSource_get_layer_count(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRDataSourceShadow, 0);
-    result = (int)OGRDataSourceShadow_GetLayerCount(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRDataSourceShadow_GetLayerCount(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -2086,8 +2286,16 @@ _wrap_DataSource_get_name(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRDataSourceShadow, 0);
-    result = (char *)OGRDataSourceShadow_GetName(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (char *)OGRDataSourceShadow_GetName(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_str_new2(result);
     return vresult;
 }
@@ -2104,9 +2312,21 @@ _wrap_DataSource_delete_layer(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRDataSourceShadow, 0);
     arg2 = NUM2INT(argv[0]);
-    result = (OGRErr)OGRDataSourceShadow_DeleteLayer(arg1,arg2);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRDataSourceShadow_DeleteLayer(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -2152,8 +2372,16 @@ _wrap_DataSource_create_layer(int argc, VALUE *argv, VALUE self) {
             }
         }
     }
-    result = (OGRLayerShadow *)OGRDataSourceShadow_CreateLayer(arg1,(char const *)arg2,arg3,arg4,arg5);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRLayerShadow *)OGRDataSourceShadow_CreateLayer(arg1,(char const *)arg2,arg3,arg4,arg5);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRLayerShadow,0);
     {
         /* %typemap(ruby,freearg) char **options */
@@ -2196,8 +2424,16 @@ _wrap_DataSource_copy_layer(int argc, VALUE *argv, VALUE self) {
             }
         }
     }
-    result = (OGRLayerShadow *)OGRDataSourceShadow_CopyLayer(arg1,arg2,(char const *)arg3,arg4);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRLayerShadow *)OGRDataSourceShadow_CopyLayer(arg1,arg2,(char const *)arg3,arg4);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRLayerShadow,0);
     {
         /* %typemap(ruby,freearg) char **options */
@@ -2219,8 +2455,16 @@ _wrap_DataSource_test_capability(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRDataSourceShadow, 0);
     arg2 = StringValuePtr(argv[0]);
-    result = (int)OGRDataSourceShadow_TestCapability(arg1,(char const *)arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRDataSourceShadow_TestCapability(arg1,(char const *)arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -2248,8 +2492,16 @@ _wrap_DataSource_execute_sql(int argc, VALUE *argv, VALUE self) {
     if (argc > 2) {
         arg4 = StringValuePtr(argv[2]);
     }
-    result = (OGRLayerShadow *)OGRDataSourceShadow_ExecuteSQL(arg1,(char const *)arg2,arg3,(char const *)arg4);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRLayerShadow *)OGRDataSourceShadow_ExecuteSQL(arg1,(char const *)arg2,arg3,(char const *)arg4);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRLayerShadow,1);
     return vresult;
 }
@@ -2263,9 +2515,17 @@ _wrap_DataSource_release_result_set(int argc, VALUE *argv, VALUE self) {
     if ((argc < 1) || (argc > 1))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRDataSourceShadow, 0);
-    SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRLayerShadow, 0);
-    OGRDataSourceShadow_ReleaseResultSet(arg1,arg2);
-    
+    SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRLayerShadow, SWIG_POINTER_DISOWN);
+    {
+        {
+            bErrorHappened = 0;
+            OGRDataSourceShadow_ReleaseResultSet(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -2281,8 +2541,16 @@ _wrap_DataSource_get_layer(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRDataSourceShadow, 0);
     arg2 = argv[0];
-    result = (OGRLayerShadow *)OGRDataSourceShadow_GetLayer(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRLayerShadow *)OGRDataSourceShadow_GetLayer(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRLayerShadow,0);
     return vresult;
 }
@@ -2299,8 +2567,16 @@ _wrap_Layer_get_ref_count(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
-    result = (int)OGRLayerShadow_GetRefCount(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRLayerShadow_GetRefCount(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -2315,8 +2591,16 @@ _wrap_Layer_set_spatial_filter(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
-    OGRLayerShadow_SetSpatialFilter(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRLayerShadow_SetSpatialFilter(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -2336,8 +2620,16 @@ _wrap_Layer_set_spatial_filter_rect(int argc, VALUE *argv, VALUE self) {
     arg3 = (double) NUM2DBL(argv[1]);
     arg4 = (double) NUM2DBL(argv[2]);
     arg5 = (double) NUM2DBL(argv[3]);
-    OGRLayerShadow_SetSpatialFilterRect(arg1,arg2,arg3,arg4,arg5);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRLayerShadow_SetSpatialFilterRect(arg1,arg2,arg3,arg4,arg5);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -2351,9 +2643,17 @@ _wrap_Layer_get_spatial_filter(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
-    result = (OGRGeometryShadow *)OGRLayerShadow_GetSpatialFilter(arg1);
-    
-    vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRGeometryShadow,1);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRGeometryShadow *)OGRLayerShadow_GetSpatialFilter(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRGeometryShadow,0);
     return vresult;
 }
 
@@ -2369,9 +2669,21 @@ _wrap_Layer_set_attribute_filter(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
     arg2 = StringValuePtr(argv[0]);
-    result = (OGRErr)OGRLayerShadow_SetAttributeFilter(arg1,arg2);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRLayerShadow_SetAttributeFilter(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -2383,8 +2695,16 @@ _wrap_Layer_reset_reading(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
-    OGRLayerShadow_ResetReading(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRLayerShadow_ResetReading(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -2398,8 +2718,16 @@ _wrap_Layer_get_name(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
-    result = (char *)OGRLayerShadow_GetName(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (char *)OGRLayerShadow_GetName(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_str_new2(result);
     return vresult;
 }
@@ -2416,8 +2744,16 @@ _wrap_Layer_get_feature(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
     arg2 = NUM2LONG(argv[0]);
-    result = (OGRFeatureShadow *)OGRLayerShadow_GetFeature(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRFeatureShadow *)OGRLayerShadow_GetFeature(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRFeatureShadow,1);
     return vresult;
 }
@@ -2432,8 +2768,16 @@ _wrap_Layer_get_next_feature(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
-    result = (OGRFeatureShadow *)OGRLayerShadow_GetNextFeature(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRFeatureShadow *)OGRLayerShadow_GetNextFeature(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRFeatureShadow,1);
     return vresult;
 }
@@ -2450,9 +2794,21 @@ _wrap_Layer_set_next_by_index(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
     arg2 = NUM2LONG(argv[0]);
-    result = (OGRErr)OGRLayerShadow_SetNextByIndex(arg1,arg2);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRLayerShadow_SetNextByIndex(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -2468,9 +2824,21 @@ _wrap_Layer_set_feature(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRFeatureShadow, 0);
-    result = (OGRErr)OGRLayerShadow_SetFeature(arg1,arg2);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRLayerShadow_SetFeature(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -2486,9 +2854,21 @@ _wrap_Layer_create_feature(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRFeatureShadow, 0);
-    result = (OGRErr)OGRLayerShadow_CreateFeature(arg1,arg2);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRLayerShadow_CreateFeature(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -2504,9 +2884,21 @@ _wrap_Layer_delete_feature(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
     arg2 = NUM2LONG(argv[0]);
-    result = (OGRErr)OGRLayerShadow_DeleteFeature(arg1,arg2);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRLayerShadow_DeleteFeature(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -2520,9 +2912,21 @@ _wrap_Layer_sync_to_disk(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
-    result = (OGRErr)OGRLayerShadow_SyncToDisk(arg1);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRLayerShadow_SyncToDisk(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -2536,8 +2940,16 @@ _wrap_Layer_get_layer_defn(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
-    result = (OGRFeatureDefnShadow *)OGRLayerShadow_GetLayerDefn(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRFeatureDefnShadow *)OGRLayerShadow_GetLayerDefn(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRFeatureDefnShadow,0);
     return vresult;
 }
@@ -2559,8 +2971,16 @@ _wrap_Layer_get_feature_count(int argc, VALUE *argv, VALUE self) {
     if (argc > 0) {
         arg2 = NUM2INT(argv[0]);
     }
-    result = (int)OGRLayerShadow_GetFeatureCount(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRLayerShadow_GetFeatureCount(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -2587,8 +3007,16 @@ _wrap_Layer_get_extent(int argc, VALUE *argv, VALUE self) {
     if (argc > 0) {
         arg3 = NUM2INT(argv[0]);
     }
-    OGRLayerShadow_GetExtent(arg1,arg2,arg3);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRLayerShadow_GetExtent(arg1,arg2,arg3);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     {
         /* %typemap(ruby,argout) (double argout[ANY]) */
         vresult = rb_ary_new();
@@ -2614,8 +3042,16 @@ _wrap_Layer_test_capability(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
     arg2 = StringValuePtr(argv[0]);
-    result = (int)OGRLayerShadow_TestCapability(arg1,(char const *)arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRLayerShadow_TestCapability(arg1,(char const *)arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -2639,9 +3075,21 @@ _wrap_Layer_create_field(int argc, VALUE *argv, VALUE self) {
     if (argc > 1) {
         arg3 = NUM2INT(argv[1]);
     }
-    result = (OGRErr)OGRLayerShadow_CreateField(arg1,arg2,arg3);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRLayerShadow_CreateField(arg1,arg2,arg3);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -2655,9 +3103,21 @@ _wrap_Layer_start_transaction(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
-    result = (OGRErr)OGRLayerShadow_StartTransaction(arg1);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRLayerShadow_StartTransaction(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -2671,9 +3131,21 @@ _wrap_Layer_commit_transaction(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
-    result = (OGRErr)OGRLayerShadow_CommitTransaction(arg1);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRLayerShadow_CommitTransaction(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -2687,9 +3159,21 @@ _wrap_Layer_rollback_transaction(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
-    result = (OGRErr)OGRLayerShadow_RollbackTransaction(arg1);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRLayerShadow_RollbackTransaction(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -2703,8 +3187,16 @@ _wrap_Layer_get_spatial_ref(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
-    result = (OSRSpatialReferenceShadow *)OGRLayerShadow_GetSpatialRef(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OSRSpatialReferenceShadow *)OGRLayerShadow_GetSpatialRef(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OSRSpatialReferenceShadow,0);
     return vresult;
 }
@@ -2719,8 +3211,16 @@ _wrap_Layer_get_feature_read(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
-    result = OGRLayerShadow_GetFeatureRead(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = OGRLayerShadow_GetFeatureRead(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     {
         GIntBig * resultptr;
         resultptr = new GIntBig((GIntBig &)result);
@@ -2737,8 +3237,16 @@ _wrap_Layer_each(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRLayerShadow, 0);
-    OGRLayerShadow_each(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRLayerShadow_each(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -2751,8 +3259,8 @@ static void delete_OGRFeatureShadow(OGRFeatureShadow *self){
 static void
 free_OGRFeatureShadow(OGRFeatureShadow *arg1) {
     delete_OGRFeatureShadow(arg1);
-    SWIG_RubyRemoveTracking(arg1);
 }
+
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
 static VALUE
 _wrap_Feature_allocate(VALUE self) {
@@ -2783,10 +3291,17 @@ _wrap_new_Feature(int argc, VALUE *argv, VALUE self) {
     if (argc > 0) {
         SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_OGRFeatureDefnShadow, 0);
     }
-    result = (OGRFeatureShadow *)new_OGRFeatureShadow(arg1);
-    DATA_PTR(self) = result;
-    SWIG_RubyAddTracking(result, self);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRFeatureShadow *)new_OGRFeatureShadow(arg1);
+            DATA_PTR(self) = result;
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return self;
 }
 
@@ -2800,8 +3315,16 @@ _wrap_Feature_get_defn_ref(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
-    result = (OGRFeatureDefnShadow *)OGRFeatureShadow_GetDefnRef(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRFeatureDefnShadow *)OGRFeatureShadow_GetDefnRef(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRFeatureDefnShadow,0);
     return vresult;
 }
@@ -2818,9 +3341,21 @@ _wrap_Feature_set_geometry(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (OGRErr)OGRFeatureShadow_SetGeometry(arg1,arg2);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRFeatureShadow_SetGeometry(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -2836,9 +3371,21 @@ _wrap_Feature_set_geometry_directly(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_DISOWN);
-    result = (OGRErr)OGRFeatureShadow_SetGeometryDirectly(arg1,arg2);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRFeatureShadow_SetGeometryDirectly(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -2852,8 +3399,16 @@ _wrap_Feature_get_geometry_ref(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
-    result = (OGRGeometryShadow *)OGRFeatureShadow_GetGeometryRef(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRGeometryShadow *)OGRFeatureShadow_GetGeometryRef(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRGeometryShadow,0);
     return vresult;
 }
@@ -2868,8 +3423,16 @@ _wrap_Feature_clone(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
-    result = (OGRFeatureShadow *)OGRFeatureShadow_Clone(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRFeatureShadow *)OGRFeatureShadow_Clone(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRFeatureShadow,1);
     return vresult;
 }
@@ -2886,8 +3449,16 @@ _wrap_Feature_equal(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRFeatureShadow, 0);
-    result = (int)OGRFeatureShadow_Equal(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRFeatureShadow_Equal(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -2902,8 +3473,16 @@ _wrap_Feature_get_field_count(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
-    result = (int)OGRFeatureShadow_GetFieldCount(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRFeatureShadow_GetFieldCount(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -2920,9 +3499,17 @@ _wrap_Feature_get_field_defn_ref__SWIG_0(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = NUM2INT(argv[0]);
-    result = (OGRFieldDefnShadow *)OGRFeatureShadow_GetFieldDefnRef__SWIG_0(arg1,arg2);
-    
-    vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRFieldDefnShadow,1);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRFieldDefnShadow *)OGRFeatureShadow_GetFieldDefnRef__SWIG_0(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRFieldDefnShadow,0);
     return vresult;
 }
 
@@ -2938,9 +3525,17 @@ _wrap_Feature_get_field_defn_ref__SWIG_1(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = StringValuePtr(argv[0]);
-    result = (OGRFieldDefnShadow *)OGRFeatureShadow_GetFieldDefnRef__SWIG_1(arg1,(char const *)arg2);
-    
-    vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRFieldDefnShadow,1);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRFieldDefnShadow *)OGRFeatureShadow_GetFieldDefnRef__SWIG_1(arg1,(char const *)arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRFieldDefnShadow,0);
     return vresult;
 }
 
@@ -3002,8 +3597,16 @@ _wrap_Feature_get_field_as_string__SWIG_0(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = NUM2INT(argv[0]);
-    result = (char *)OGRFeatureShadow_GetFieldAsString__SWIG_0(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (char *)OGRFeatureShadow_GetFieldAsString__SWIG_0(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_str_new2(result);
     return vresult;
 }
@@ -3020,8 +3623,16 @@ _wrap_Feature_get_field_as_string__SWIG_1(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = StringValuePtr(argv[0]);
-    result = (char *)OGRFeatureShadow_GetFieldAsString__SWIG_1(arg1,(char const *)arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (char *)OGRFeatureShadow_GetFieldAsString__SWIG_1(arg1,(char const *)arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_str_new2(result);
     return vresult;
 }
@@ -3084,8 +3695,16 @@ _wrap_Feature_get_field_as_integer__SWIG_0(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = NUM2INT(argv[0]);
-    result = (int)OGRFeatureShadow_GetFieldAsInteger__SWIG_0(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRFeatureShadow_GetFieldAsInteger__SWIG_0(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -3102,8 +3721,16 @@ _wrap_Feature_get_field_as_integer__SWIG_1(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = StringValuePtr(argv[0]);
-    result = (int)OGRFeatureShadow_GetFieldAsInteger__SWIG_1(arg1,(char const *)arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRFeatureShadow_GetFieldAsInteger__SWIG_1(arg1,(char const *)arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -3166,8 +3793,16 @@ _wrap_Feature_get_field_as_double__SWIG_0(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = NUM2INT(argv[0]);
-    result = (double)OGRFeatureShadow_GetFieldAsDouble__SWIG_0(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (double)OGRFeatureShadow_GetFieldAsDouble__SWIG_0(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_float_new(result);
     return vresult;
 }
@@ -3184,8 +3819,16 @@ _wrap_Feature_get_field_as_double__SWIG_1(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = StringValuePtr(argv[0]);
-    result = (double)OGRFeatureShadow_GetFieldAsDouble__SWIG_1(arg1,(char const *)arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (double)OGRFeatureShadow_GetFieldAsDouble__SWIG_1(arg1,(char const *)arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_float_new(result);
     return vresult;
 }
@@ -3248,8 +3891,16 @@ _wrap_Feature_is_field_set__SWIG_0(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = NUM2INT(argv[0]);
-    result = (int)OGRFeatureShadow_IsFieldSet__SWIG_0(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRFeatureShadow_IsFieldSet__SWIG_0(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -3266,8 +3917,16 @@ _wrap_Feature_is_field_set__SWIG_1(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = StringValuePtr(argv[0]);
-    result = (int)OGRFeatureShadow_IsFieldSet__SWIG_1(arg1,(char const *)arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRFeatureShadow_IsFieldSet__SWIG_1(arg1,(char const *)arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -3330,8 +3989,16 @@ _wrap_Feature_get_field_index(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = StringValuePtr(argv[0]);
-    result = (int)OGRFeatureShadow_GetFieldIndex(arg1,(char const *)arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRFeatureShadow_GetFieldIndex(arg1,(char const *)arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -3346,8 +4013,16 @@ _wrap_Feature_get_fid(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
-    result = (int)OGRFeatureShadow_GetFID(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRFeatureShadow_GetFID(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -3364,9 +4039,21 @@ _wrap_Feature_set_fid(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = NUM2INT(argv[0]);
-    result = (OGRErr)OGRFeatureShadow_SetFID(arg1,arg2);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRFeatureShadow_SetFID(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -3378,8 +4065,16 @@ _wrap_Feature_dump_readable(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
-    OGRFeatureShadow_DumpReadable(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRFeatureShadow_DumpReadable(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -3393,8 +4088,16 @@ _wrap_Feature_unset_field__SWIG_0(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = NUM2INT(argv[0]);
-    OGRFeatureShadow_UnsetField__SWIG_0(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRFeatureShadow_UnsetField__SWIG_0(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -3408,8 +4111,16 @@ _wrap_Feature_unset_field__SWIG_1(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = StringValuePtr(argv[0]);
-    OGRFeatureShadow_UnsetField__SWIG_1(arg1,(char const *)arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRFeatureShadow_UnsetField__SWIG_1(arg1,(char const *)arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -3471,8 +4182,16 @@ _wrap_Feature_set_field__SWIG_0(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = NUM2INT(argv[0]);
     arg3 = StringValuePtr(argv[1]);
-    OGRFeatureShadow_SetField__SWIG_0(arg1,arg2,(char const *)arg3);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRFeatureShadow_SetField__SWIG_0(arg1,arg2,(char const *)arg3);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -3488,8 +4207,16 @@ _wrap_Feature_set_field__SWIG_1(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = StringValuePtr(argv[0]);
     arg3 = StringValuePtr(argv[1]);
-    OGRFeatureShadow_SetField__SWIG_1(arg1,(char const *)arg2,(char const *)arg3);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRFeatureShadow_SetField__SWIG_1(arg1,(char const *)arg2,(char const *)arg3);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -3568,9 +4295,21 @@ _wrap_Feature_set_from(int argc, VALUE *argv, VALUE self) {
     if (argc > 1) {
         arg3 = NUM2INT(argv[1]);
     }
-    result = (OGRErr)OGRFeatureShadow_SetFrom(arg1,arg2,arg3);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRFeatureShadow_SetFrom(arg1,arg2,arg3);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -3584,8 +4323,16 @@ _wrap_Feature_get_style_string(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
-    result = (char *)OGRFeatureShadow_GetStyleString(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (char *)OGRFeatureShadow_GetStyleString(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_str_new2(result);
     return vresult;
 }
@@ -3600,8 +4347,16 @@ _wrap_Feature_set_style_string(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = StringValuePtr(argv[0]);
-    OGRFeatureShadow_SetStyleString(arg1,(char const *)arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRFeatureShadow_SetStyleString(arg1,(char const *)arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -3617,8 +4372,16 @@ _wrap_Feature_get_field_type__SWIG_0(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = NUM2INT(argv[0]);
-    result = (OGRFieldType)OGRFeatureShadow_GetFieldType__SWIG_0(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRFieldType)OGRFeatureShadow_GetFieldType__SWIG_0(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -3637,8 +4400,16 @@ _wrap_Feature_get_field_type__SWIG_1(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = StringValuePtr(argv[0]);
     arg3 = StringValuePtr(argv[1]);
-    result = (OGRFieldType)OGRFeatureShadow_GetFieldType__SWIG_1(arg1,(char const *)arg2,(char const *)arg3);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRFieldType)OGRFeatureShadow_GetFieldType__SWIG_1(arg1,(char const *)arg2,(char const *)arg3);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -3706,8 +4477,16 @@ _wrap_Feature_get_field(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureShadow, 0);
     arg2 = argv[0];
-    result = (VALUE)OGRFeatureShadow_GetField(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (VALUE)OGRFeatureShadow_GetField(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = result;
     return vresult;
 }
@@ -3721,8 +4500,8 @@ static void delete_OGRFeatureDefnShadow(OGRFeatureDefnShadow *self){
 static void
 free_OGRFeatureDefnShadow(OGRFeatureDefnShadow *arg1) {
     delete_OGRFeatureDefnShadow(arg1);
-    SWIG_RubyRemoveTracking(arg1);
 }
+
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
 static VALUE
 _wrap_FeatureDefn_allocate(VALUE self) {
@@ -3753,10 +4532,17 @@ _wrap_new_FeatureDefn(int argc, VALUE *argv, VALUE self) {
     if (argc > 0) {
         arg1 = StringValuePtr(argv[0]);
     }
-    result = (OGRFeatureDefnShadow *)new_OGRFeatureDefnShadow((char const *)arg1);
-    DATA_PTR(self) = result;
-    SWIG_RubyAddTracking(result, self);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRFeatureDefnShadow *)new_OGRFeatureDefnShadow((char const *)arg1);
+            DATA_PTR(self) = result;
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return self;
 }
 
@@ -3770,8 +4556,16 @@ _wrap_FeatureDefn_get_name(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureDefnShadow, 0);
-    result = (char *)OGRFeatureDefnShadow_GetName(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (char *)OGRFeatureDefnShadow_GetName(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_str_new2(result);
     return vresult;
 }
@@ -3786,8 +4580,16 @@ _wrap_FeatureDefn_get_field_count(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureDefnShadow, 0);
-    result = (int)OGRFeatureDefnShadow_GetFieldCount(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRFeatureDefnShadow_GetFieldCount(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -3804,9 +4606,17 @@ _wrap_FeatureDefn_get_field_defn(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureDefnShadow, 0);
     arg2 = NUM2INT(argv[0]);
-    result = (OGRFieldDefnShadow *)OGRFeatureDefnShadow_GetFieldDefn(arg1,arg2);
-    
-    vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRFieldDefnShadow,1);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRFieldDefnShadow *)OGRFeatureDefnShadow_GetFieldDefn(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRFieldDefnShadow,0);
     return vresult;
 }
 
@@ -3822,8 +4632,16 @@ _wrap_FeatureDefn_get_field_index(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureDefnShadow, 0);
     arg2 = StringValuePtr(argv[0]);
-    result = (int)OGRFeatureDefnShadow_GetFieldIndex(arg1,(char const *)arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRFeatureDefnShadow_GetFieldIndex(arg1,(char const *)arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -3838,8 +4656,16 @@ _wrap_FeatureDefn_add_field_defn(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureDefnShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRFieldDefnShadow, 0);
-    OGRFeatureDefnShadow_AddFieldDefn(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRFeatureDefnShadow_AddFieldDefn(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -3853,8 +4679,16 @@ _wrap_FeatureDefn_get_geom_type(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureDefnShadow, 0);
-    result = (OGRwkbGeometryType)OGRFeatureDefnShadow_GetGeomType(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRwkbGeometryType)OGRFeatureDefnShadow_GetGeomType(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -3872,8 +4706,16 @@ _wrap_FeatureDefn_set_geom_type(int argc, VALUE *argv, VALUE self) {
         /* %typemap(ruby,in) CPLErr */
         arg2 = (OGRwkbGeometryType) NUM2INT(argv[0]);
     }
-    OGRFeatureDefnShadow_SetGeomType(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRFeatureDefnShadow_SetGeomType(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -3887,8 +4729,16 @@ _wrap_FeatureDefn_get_reference_count(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFeatureDefnShadow, 0);
-    result = (int)OGRFeatureDefnShadow_GetReferenceCount(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRFeatureDefnShadow_GetReferenceCount(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -3902,8 +4752,8 @@ static void delete_OGRFieldDefnShadow(OGRFieldDefnShadow *self){
 static void
 free_OGRFieldDefnShadow(OGRFieldDefnShadow *arg1) {
     delete_OGRFieldDefnShadow(arg1);
-    SWIG_RubyRemoveTracking(arg1);
 }
+
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
 static VALUE
 _wrap_FieldDefn_allocate(VALUE self) {
@@ -3941,10 +4791,17 @@ _wrap_new_FieldDefn(int argc, VALUE *argv, VALUE self) {
             arg2 = (OGRFieldType) NUM2INT(argv[1]);
         }
     }
-    result = (OGRFieldDefnShadow *)new_OGRFieldDefnShadow((char const *)arg1,arg2);
-    DATA_PTR(self) = result;
-    SWIG_RubyAddTracking(result, self);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRFieldDefnShadow *)new_OGRFieldDefnShadow((char const *)arg1,arg2);
+            DATA_PTR(self) = result;
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return self;
 }
 
@@ -3958,8 +4815,16 @@ _wrap_FieldDefn_get_name(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFieldDefnShadow, 0);
-    result = (char *)OGRFieldDefnShadow_GetName(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (char *)OGRFieldDefnShadow_GetName(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_str_new2(result);
     return vresult;
 }
@@ -3974,8 +4839,16 @@ _wrap_FieldDefn_get_name_ref(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFieldDefnShadow, 0);
-    result = (char *)OGRFieldDefnShadow_GetNameRef(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (char *)OGRFieldDefnShadow_GetNameRef(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_str_new2(result);
     return vresult;
 }
@@ -3990,8 +4863,16 @@ _wrap_FieldDefn_set_name(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFieldDefnShadow, 0);
     arg2 = StringValuePtr(argv[0]);
-    OGRFieldDefnShadow_SetName(arg1,(char const *)arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRFieldDefnShadow_SetName(arg1,(char const *)arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -4005,8 +4886,16 @@ _wrap_FieldDefn_get_type(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFieldDefnShadow, 0);
-    result = (OGRFieldType)OGRFieldDefnShadow_GetType(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRFieldType)OGRFieldDefnShadow_GetType(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -4024,8 +4913,16 @@ _wrap_FieldDefn_set_type(int argc, VALUE *argv, VALUE self) {
         /* %typemap(ruby,in) CPLErr */
         arg2 = (OGRFieldType) NUM2INT(argv[0]);
     }
-    OGRFieldDefnShadow_SetType(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRFieldDefnShadow_SetType(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -4039,8 +4936,16 @@ _wrap_FieldDefn_get_justify(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFieldDefnShadow, 0);
-    result = (OGRJustification)OGRFieldDefnShadow_GetJustify(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRJustification)OGRFieldDefnShadow_GetJustify(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -4058,8 +4963,16 @@ _wrap_FieldDefn_set_justify(int argc, VALUE *argv, VALUE self) {
         /* %typemap(ruby,in) CPLErr */
         arg2 = (OGRJustification) NUM2INT(argv[0]);
     }
-    OGRFieldDefnShadow_SetJustify(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRFieldDefnShadow_SetJustify(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -4073,8 +4986,16 @@ _wrap_FieldDefn_get_width(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFieldDefnShadow, 0);
-    result = (int)OGRFieldDefnShadow_GetWidth(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRFieldDefnShadow_GetWidth(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -4089,8 +5010,16 @@ _wrap_FieldDefn_set_width(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFieldDefnShadow, 0);
     arg2 = NUM2INT(argv[0]);
-    OGRFieldDefnShadow_SetWidth(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRFieldDefnShadow_SetWidth(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -4104,8 +5033,16 @@ _wrap_FieldDefn_get_precision(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFieldDefnShadow, 0);
-    result = (int)OGRFieldDefnShadow_GetPrecision(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRFieldDefnShadow_GetPrecision(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -4120,9 +5057,46 @@ _wrap_FieldDefn_set_precision(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFieldDefnShadow, 0);
     arg2 = NUM2INT(argv[0]);
-    OGRFieldDefnShadow_SetPrecision(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRFieldDefnShadow_SetPrecision(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
+}
+
+
+static VALUE
+_wrap_FieldDefn_get_field_type_name(int argc, VALUE *argv, VALUE self) {
+    OGRFieldDefnShadow *arg1 = (OGRFieldDefnShadow *) 0 ;
+    OGRFieldType arg2 ;
+    char *result;
+    VALUE vresult = Qnil;
+    
+    if ((argc < 1) || (argc > 1))
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
+    SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRFieldDefnShadow, 0);
+    {
+        /* %typemap(ruby,in) CPLErr */
+        arg2 = (OGRFieldType) NUM2INT(argv[0]);
+    }
+    {
+        {
+            bErrorHappened = 0;
+            result = (char *)OGRFieldDefnShadow_GetFieldTypeName(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    vresult = rb_str_new2(result);
+    return vresult;
 }
 
 
@@ -4140,15 +5114,22 @@ _wrap_create_geometry_from_wkb(int argc, VALUE *argv, VALUE self) {
     if ((argc < 1) || (argc > 2))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     {
-        /* %typemap(ruby,in,numinputs=0) (int nLen, char *pBuf ) */
         arg1 = (int) StringValueLen(argv[0]);
         arg2 = (char *) StringValuePtr(argv[0]);
     }
     if (argc > 1) {
         SWIG_ConvertPtr(argv[1], (void **) &arg3, SWIGTYPE_p_OSRSpatialReferenceShadow, 0);
     }
-    result = (OGRGeometryShadow *)CreateGeometryFromWkb(arg1,arg2,arg3);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRGeometryShadow *)CreateGeometryFromWkb(arg1,arg2,arg3);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRGeometryShadow,1);
     return vresult;
 }
@@ -4176,8 +5157,16 @@ _wrap_create_geometry_from_wkt(int argc, VALUE *argv, VALUE self) {
     if (argc > 1) {
         SWIG_ConvertPtr(argv[1], (void **) &arg2, SWIGTYPE_p_OSRSpatialReferenceShadow, 0);
     }
-    result = (OGRGeometryShadow *)CreateGeometryFromWkt(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRGeometryShadow *)CreateGeometryFromWkt(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRGeometryShadow,1);
     return vresult;
 }
@@ -4192,8 +5181,16 @@ _wrap_create_geometry_from_gml(int argc, VALUE *argv, VALUE self) {
     if ((argc < 1) || (argc > 1))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     arg1 = StringValuePtr(argv[0]);
-    result = (OGRGeometryShadow *)CreateGeometryFromGML((char const *)arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRGeometryShadow *)CreateGeometryFromGML((char const *)arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRGeometryShadow,1);
     return vresult;
 }
@@ -4207,8 +5204,8 @@ static void delete_OGRGeometryShadow(OGRGeometryShadow *self){
 static void
 free_OGRGeometryShadow(OGRGeometryShadow *arg1) {
     delete_OGRGeometryShadow(arg1);
-    SWIG_RubyRemoveTracking(arg1);
 }
+
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
 static VALUE
 _wrap_Geometry_allocate(VALUE self) {
@@ -4258,10 +5255,17 @@ _wrap_new_Geometry(int argc, VALUE *argv, VALUE self) {
     if (argc > 4) {
         arg5 = StringValuePtr(argv[4]);
     }
-    result = (OGRGeometryShadow *)new_OGRGeometryShadow(arg1,arg2,arg3,arg4,arg5);
-    DATA_PTR(self) = result;
-    SWIG_RubyAddTracking(result, self);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRGeometryShadow *)new_OGRGeometryShadow(arg1,arg2,arg3,arg4,arg5);
+            DATA_PTR(self) = result;
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return self;
 }
 
@@ -4275,8 +5279,16 @@ _wrap_Geometry_export_to_wkt(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (char *)OGRGeometryShadow_ExportToWkt(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (char *)OGRGeometryShadow_ExportToWkt(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_str_new2(result);
     return vresult;
 }
@@ -4310,9 +5322,21 @@ _wrap_Geometry_export_to_wkb(int argc, VALUE *argv, VALUE self) {
             arg4 = (OGRwkbByteOrder) NUM2INT(argv[0]);
         }
     }
-    result = (OGRErr)OGRGeometryShadow_ExportToWkb(arg1,arg2,arg3,arg4);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRGeometryShadow_ExportToWkb(arg1,arg2,arg3,arg4);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     {
         /* %typemap(ruby,argout) (int *nLen, char **pBuf ) */
         vresult = rb_str_new(*arg3, *arg2);
@@ -4336,8 +5360,16 @@ _wrap_Geometry_export_to_gml(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (char *)OGRGeometryShadow_ExportToGML(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (char *)OGRGeometryShadow_ExportToGML(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_str_new2(result);
     return vresult;
 }
@@ -4361,8 +5393,16 @@ _wrap_Geometry_add_point(int argc, VALUE *argv, VALUE self) {
     if (argc > 2) {
         arg4 = (double) NUM2DBL(argv[2]);
     }
-    OGRGeometryShadow_AddPoint(arg1,arg2,arg3,arg4);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRGeometryShadow_AddPoint(arg1,arg2,arg3,arg4);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -4378,9 +5418,21 @@ _wrap_Geometry_add_geometry_directly(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_DISOWN);
-    result = (OGRErr)OGRGeometryShadow_AddGeometryDirectly(arg1,arg2);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRGeometryShadow_AddGeometryDirectly(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -4396,9 +5448,21 @@ _wrap_Geometry_add_geometry(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (OGRErr)OGRGeometryShadow_AddGeometry(arg1,arg2);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRGeometryShadow_AddGeometry(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -4412,8 +5476,16 @@ _wrap_Geometry_clone(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (OGRGeometryShadow *)OGRGeometryShadow_Clone(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRGeometryShadow *)OGRGeometryShadow_Clone(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRGeometryShadow,1);
     return vresult;
 }
@@ -4428,8 +5500,16 @@ _wrap_Geometry_get_geometry_type(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (OGRwkbGeometryType)OGRGeometryShadow_GetGeometryType(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRwkbGeometryType)OGRGeometryShadow_GetGeometryType(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -4444,8 +5524,16 @@ _wrap_Geometry_get_geometry_name(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (char *)OGRGeometryShadow_GetGeometryName(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (char *)OGRGeometryShadow_GetGeometryName(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_str_new2(result);
     return vresult;
 }
@@ -4460,8 +5548,16 @@ _wrap_Geometry_get_area(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (double)OGRGeometryShadow_GetArea(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (double)OGRGeometryShadow_GetArea(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_float_new(result);
     return vresult;
 }
@@ -4476,8 +5572,16 @@ _wrap_Geometry_get_point_count(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (int)OGRGeometryShadow_GetPointCount(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRGeometryShadow_GetPointCount(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -4499,8 +5603,16 @@ _wrap_Geometry_get_x(int argc, VALUE *argv, VALUE self) {
     if (argc > 0) {
         arg2 = NUM2INT(argv[0]);
     }
-    result = (double)OGRGeometryShadow_GetX(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (double)OGRGeometryShadow_GetX(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_float_new(result);
     return vresult;
 }
@@ -4522,8 +5634,16 @@ _wrap_Geometry_get_y(int argc, VALUE *argv, VALUE self) {
     if (argc > 0) {
         arg2 = NUM2INT(argv[0]);
     }
-    result = (double)OGRGeometryShadow_GetY(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (double)OGRGeometryShadow_GetY(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_float_new(result);
     return vresult;
 }
@@ -4545,8 +5665,16 @@ _wrap_Geometry_get_z(int argc, VALUE *argv, VALUE self) {
     if (argc > 0) {
         arg2 = NUM2INT(argv[0]);
     }
-    result = (double)OGRGeometryShadow_GetZ(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (double)OGRGeometryShadow_GetZ(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_float_new(result);
     return vresult;
 }
@@ -4561,8 +5689,16 @@ _wrap_Geometry_get_geometry_count(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (int)OGRGeometryShadow_GetGeometryCount(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRGeometryShadow_GetGeometryCount(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -4588,8 +5724,16 @@ _wrap_Geometry_set_point(int argc, VALUE *argv, VALUE self) {
     if (argc > 3) {
         arg5 = (double) NUM2DBL(argv[3]);
     }
-    OGRGeometryShadow_SetPoint(arg1,arg2,arg3,arg4,arg5);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRGeometryShadow_SetPoint(arg1,arg2,arg3,arg4,arg5);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -4605,8 +5749,16 @@ _wrap_Geometry_get_geometry_ref(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     arg2 = NUM2INT(argv[0]);
-    result = (OGRGeometryShadow *)OGRGeometryShadow_GetGeometryRef(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRGeometryShadow *)OGRGeometryShadow_GetGeometryRef(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRGeometryShadow,0);
     return vresult;
 }
@@ -4621,8 +5773,16 @@ _wrap_Geometry_get_boundary(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (OGRGeometryShadow *)OGRGeometryShadow_GetBoundary(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRGeometryShadow *)OGRGeometryShadow_GetBoundary(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRGeometryShadow,1);
     return vresult;
 }
@@ -4637,8 +5797,16 @@ _wrap_Geometry_convex_hull(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (OGRGeometryShadow *)OGRGeometryShadow_ConvexHull(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRGeometryShadow *)OGRGeometryShadow_ConvexHull(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRGeometryShadow,1);
     return vresult;
 }
@@ -4662,8 +5830,16 @@ _wrap_Geometry_buffer(int argc, VALUE *argv, VALUE self) {
     if (argc > 1) {
         arg3 = NUM2INT(argv[1]);
     }
-    result = (OGRGeometryShadow *)OGRGeometryShadow_Buffer(arg1,arg2,arg3);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRGeometryShadow *)OGRGeometryShadow_Buffer(arg1,arg2,arg3);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRGeometryShadow,1);
     return vresult;
 }
@@ -4680,8 +5856,16 @@ _wrap_Geometry_intersection(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (OGRGeometryShadow *)OGRGeometryShadow_Intersection(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRGeometryShadow *)OGRGeometryShadow_Intersection(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRGeometryShadow,1);
     return vresult;
 }
@@ -4698,8 +5882,16 @@ _wrap_Geometry_union_(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (OGRGeometryShadow *)OGRGeometryShadow_Union(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRGeometryShadow *)OGRGeometryShadow_Union(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRGeometryShadow,1);
     return vresult;
 }
@@ -4716,8 +5908,16 @@ _wrap_Geometry_difference(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (OGRGeometryShadow *)OGRGeometryShadow_Difference(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRGeometryShadow *)OGRGeometryShadow_Difference(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRGeometryShadow,1);
     return vresult;
 }
@@ -4734,8 +5934,16 @@ _wrap_Geometry_symmetric_difference(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (OGRGeometryShadow *)OGRGeometryShadow_SymmetricDifference(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRGeometryShadow *)OGRGeometryShadow_SymmetricDifference(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRGeometryShadow,1);
     return vresult;
 }
@@ -4752,8 +5960,16 @@ _wrap_Geometry_distance(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (double)OGRGeometryShadow_Distance(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (double)OGRGeometryShadow_Distance(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = rb_float_new(result);
     return vresult;
 }
@@ -4766,8 +5982,16 @@ _wrap_Geometry_empty(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    OGRGeometryShadow_Empty(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRGeometryShadow_Empty(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -4783,8 +6007,16 @@ _wrap_Geometry_intersect(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (int)OGRGeometryShadow_Intersect(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRGeometryShadow_Intersect(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -4801,8 +6033,16 @@ _wrap_Geometry_equal(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (int)OGRGeometryShadow_Equal(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRGeometryShadow_Equal(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -4819,8 +6059,16 @@ _wrap_Geometry_disjoint(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (int)OGRGeometryShadow_Disjoint(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRGeometryShadow_Disjoint(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -4837,8 +6085,16 @@ _wrap_Geometry_touches(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (int)OGRGeometryShadow_Touches(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRGeometryShadow_Touches(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -4855,8 +6111,16 @@ _wrap_Geometry_crosses(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (int)OGRGeometryShadow_Crosses(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRGeometryShadow_Crosses(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -4873,8 +6137,16 @@ _wrap_Geometry_within(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (int)OGRGeometryShadow_Within(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRGeometryShadow_Within(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -4891,8 +6163,16 @@ _wrap_Geometry_contains(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (int)OGRGeometryShadow_Contains(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRGeometryShadow_Contains(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -4909,8 +6189,16 @@ _wrap_Geometry_overlaps(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (int)OGRGeometryShadow_Overlaps(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRGeometryShadow_Overlaps(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -4927,9 +6215,21 @@ _wrap_Geometry_transform_to(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OSRSpatialReferenceShadow, 0);
-    result = (OGRErr)OGRGeometryShadow_TransformTo(arg1,arg2);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRGeometryShadow_TransformTo(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -4945,9 +6245,21 @@ _wrap_Geometry_transform(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OSRCoordinateTransformationShadow, 0);
-    result = (OGRErr)OGRGeometryShadow_Transform(arg1,arg2);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRGeometryShadow_Transform(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -4961,8 +6273,16 @@ _wrap_Geometry_get_spatial_reference(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (OSRSpatialReferenceShadow *)OGRGeometryShadow_GetSpatialReference(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OSRSpatialReferenceShadow *)OGRGeometryShadow_GetSpatialReference(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OSRSpatialReferenceShadow,0);
     return vresult;
 }
@@ -4977,8 +6297,16 @@ _wrap_Geometry_assign_spatial_reference(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OSRSpatialReferenceShadow, 0);
-    OGRGeometryShadow_AssignSpatialReference(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRGeometryShadow_AssignSpatialReference(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -4990,8 +6318,16 @@ _wrap_Geometry_close_rings(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    OGRGeometryShadow_CloseRings(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRGeometryShadow_CloseRings(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -5003,8 +6339,16 @@ _wrap_Geometry_flatten_to2d(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    OGRGeometryShadow_FlattenTo2D(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRGeometryShadow_FlattenTo2D(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
 }
 
@@ -5023,8 +6367,16 @@ _wrap_Geometry_get_envelope(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    OGRGeometryShadow_GetEnvelope(arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRGeometryShadow_GetEnvelope(arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     {
         /* %typemap(ruby,argout) (double argout[ANY]) */
         vresult = rb_ary_new();
@@ -5048,8 +6400,16 @@ _wrap_Geometry_centroid(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (OGRGeometryShadow *)OGRGeometryShadow_Centroid(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRGeometryShadow *)OGRGeometryShadow_Centroid(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRGeometryShadow,1);
     return vresult;
 }
@@ -5064,8 +6424,16 @@ _wrap_Geometry_wkb_size(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (int)OGRGeometryShadow_WkbSize(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRGeometryShadow_WkbSize(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -5080,8 +6448,16 @@ _wrap_Geometry_get_coordinate_dimension(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (int)OGRGeometryShadow_GetCoordinateDimension(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRGeometryShadow_GetCoordinateDimension(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -5096,8 +6472,16 @@ _wrap_Geometry_get_dimension(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_OGRGeometryShadow, 0);
-    result = (int)OGRGeometryShadow_GetDimension(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRGeometryShadow_GetDimension(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -5110,8 +6494,16 @@ _wrap_get_driver_count(int argc, VALUE *argv, VALUE self) {
     
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
-    result = (int)OGRGetDriverCount();
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRGetDriverCount();
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -5124,8 +6516,16 @@ _wrap_get_open_dscount(int argc, VALUE *argv, VALUE self) {
     
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
-    result = (int)OGRGetOpenDSCount();
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (int)OGRGetOpenDSCount();
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = INT2NUM(result);
     return vresult;
 }
@@ -5140,9 +6540,21 @@ _wrap_set_generate_db2_v72_byte_order(int argc, VALUE *argv, VALUE self) {
     if ((argc < 1) || (argc > 1))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     arg1 = NUM2INT(argv[0]);
-    result = (OGRErr)OGRSetGenerate_DB2_V72_BYTE_ORDER(arg1);
-    
-    vresult = INT2NUM(result);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRErr)OGRSetGenerate_DB2_V72_BYTE_ORDER(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    {
+        if (result != 0) {
+            rb_raise(rb_eRuntimeError, OGRErrMessages(result));
+        }
+    }
     return vresult;
 }
 
@@ -5151,41 +6563,17 @@ static VALUE
 _wrap_register_all(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
-    OGRRegisterAll();
-    
+    {
+        {
+            bErrorHappened = 0;
+            OGRRegisterAll();
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     return Qnil;
-}
-
-
-static VALUE
-_wrap_get_driver_by_name(int argc, VALUE *argv, VALUE self) {
-    char *arg1 = (char *) 0 ;
-    OGRDriverShadow *result;
-    VALUE vresult = Qnil;
-    
-    if ((argc < 1) || (argc > 1))
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
-    arg1 = StringValuePtr(argv[0]);
-    result = (OGRDriverShadow *)GetDriverByName((char const *)arg1);
-    
-    vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRDriverShadow,0);
-    return vresult;
-}
-
-
-static VALUE
-_wrap_get_driver(int argc, VALUE *argv, VALUE self) {
-    int arg1 ;
-    OGRDriverShadow *result;
-    VALUE vresult = Qnil;
-    
-    if ((argc < 1) || (argc > 1))
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
-    arg1 = NUM2INT(argv[0]);
-    result = (OGRDriverShadow *)GetDriver(arg1);
-    
-    vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRDriverShadow,0);
-    return vresult;
 }
 
 
@@ -5198,8 +6586,16 @@ _wrap_get_open_ds(int argc, VALUE *argv, VALUE self) {
     if ((argc < 1) || (argc > 1))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     arg1 = NUM2INT(argv[0]);
-    result = (OGRDataSourceShadow *)GetOpenDS(arg1);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRDataSourceShadow *)GetOpenDS(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRDataSourceShadow,0);
     return vresult;
 }
@@ -5221,8 +6617,16 @@ _wrap_open(int argc, VALUE *argv, VALUE self) {
     if (argc > 1) {
         arg2 = NUM2INT(argv[1]);
     }
-    result = (OGRDataSourceShadow *)Open((char const *)arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRDataSourceShadow *)Open((char const *)arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRDataSourceShadow,1);
     return vresult;
 }
@@ -5244,9 +6648,65 @@ _wrap_open_shared(int argc, VALUE *argv, VALUE self) {
     if (argc > 1) {
         arg2 = NUM2INT(argv[1]);
     }
-    result = (OGRDataSourceShadow *)OpenShared((char const *)arg1,arg2);
-    
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRDataSourceShadow *)OpenShared((char const *)arg1,arg2);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRDataSourceShadow,1);
+    return vresult;
+}
+
+
+static VALUE
+_wrap_get_driver_by_name(int argc, VALUE *argv, VALUE self) {
+    char *arg1 = (char *) 0 ;
+    OGRDriverShadow *result;
+    VALUE vresult = Qnil;
+    
+    if ((argc < 1) || (argc > 1))
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
+    arg1 = StringValuePtr(argv[0]);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRDriverShadow *)GetDriverByName((char const *)arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRDriverShadow,0);
+    return vresult;
+}
+
+
+static VALUE
+_wrap_get_driver(int argc, VALUE *argv, VALUE self) {
+    int arg1 ;
+    OGRDriverShadow *result;
+    VALUE vresult = Qnil;
+    
+    if ((argc < 1) || (argc > 1))
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
+    arg1 = NUM2INT(argv[0]);
+    {
+        {
+            bErrorHappened = 0;
+            result = (OGRDriverShadow *)GetDriver(arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_OGRDriverShadow,0);
     return vresult;
 }
 
@@ -5437,6 +6897,7 @@ SWIG_InitializeModule(void *clientdata) {
     /* Set entry in modules->types array equal to the type */
     swig_module.types[i] = type;
   }
+  swig_module.types[i] = 0;
 }
 
 /* This function will propagate the clientdata field of type to
@@ -5479,7 +6940,8 @@ SWIGEXPORT void Init_ogr(void) {
     size_t i;
     
     SWIG_InitRuntime();
-    mOgr = rb_define_module("Ogr");
+    mOgr = rb_define_module("Gdal");
+    mOgr = rb_define_module_under(mOgr, "Ogr");
     
     SWIG_InitializeModule(0);
     for (i = 0; i < swig_module.size; i++) {
@@ -5487,14 +6949,7 @@ SWIGEXPORT void Init_ogr(void) {
     }
     
     SWIG_RubyInitializeTrackings();
-    
-    
-    if ( OGRGetDriverCount() == 0 ) {
-        OGRRegisterAll();
-    }
-    
-    
-    rb_define_const(mOgr,"Wkb25Bit", INT2NUM(-2147483648));
+    rb_define_const(mOgr,"Wkb25Bit", INT2NUM(wkb25DBit));
     rb_define_const(mOgr,"WkbUnknown", INT2NUM(0));
     rb_define_const(mOgr,"WkbPoint", INT2NUM(1));
     rb_define_const(mOgr,"WkbLineString", INT2NUM(2));
@@ -5540,6 +6995,18 @@ SWIGEXPORT void Init_ogr(void) {
     rb_define_const(mOgr,"ODsCDeleteLayer", rb_str_new2("DeleteLayer"));
     rb_define_const(mOgr,"ODrCCreateDataSource", rb_str_new2("CreateDataSource"));
     rb_define_const(mOgr,"ODrCDeleteDataSource", rb_str_new2("DeleteDataSource"));
+    rb_define_module_function(mOgr, "UseExceptions", VALUEFUNC(_wrap_UseExceptions), -1);
+    rb_define_module_function(mOgr, "DontUseExceptions", VALUEFUNC(_wrap_DontUseExceptions), -1);
+    
+    
+    if ( OGRGetDriverCount() == 0 ) {
+        OGRRegisterAll();
+    }
+    
+    /* Setup exception handling */
+    UseExceptions();
+    
+    rb_require("gdal/osr");
     
     cDriver.klass = rb_define_class_under(mOgr, "Driver", rb_cObject);
     SWIG_TypeClientData(SWIGTYPE_p_OGRDriverShadow, (void *) &cDriver);
@@ -5662,6 +7129,7 @@ SWIGEXPORT void Init_ogr(void) {
     rb_define_method(cFieldDefn.klass, "set_width", VALUEFUNC(_wrap_FieldDefn_set_width), -1);
     rb_define_method(cFieldDefn.klass, "get_precision", VALUEFUNC(_wrap_FieldDefn_get_precision), -1);
     rb_define_method(cFieldDefn.klass, "set_precision", VALUEFUNC(_wrap_FieldDefn_set_precision), -1);
+    rb_define_method(cFieldDefn.klass, "get_field_type_name", VALUEFUNC(_wrap_FieldDefn_get_field_type_name), -1);
     cFieldDefn.mark = 0;
     cFieldDefn.destroy = (void (*)(void *)) free_OGRFieldDefnShadow;
     rb_define_module_function(mOgr, "create_geometry_from_wkb", VALUEFUNC(_wrap_create_geometry_from_wkb), -1);
@@ -5723,10 +7191,10 @@ SWIGEXPORT void Init_ogr(void) {
     rb_define_module_function(mOgr, "get_open_dscount", VALUEFUNC(_wrap_get_open_dscount), -1);
     rb_define_module_function(mOgr, "set_generate_db2_v72_byte_order", VALUEFUNC(_wrap_set_generate_db2_v72_byte_order), -1);
     rb_define_module_function(mOgr, "register_all", VALUEFUNC(_wrap_register_all), -1);
-    rb_define_module_function(mOgr, "get_driver_by_name", VALUEFUNC(_wrap_get_driver_by_name), -1);
-    rb_define_module_function(mOgr, "get_driver", VALUEFUNC(_wrap_get_driver), -1);
     rb_define_module_function(mOgr, "get_open_ds", VALUEFUNC(_wrap_get_open_ds), -1);
     rb_define_module_function(mOgr, "open", VALUEFUNC(_wrap_open), -1);
     rb_define_module_function(mOgr, "open_shared", VALUEFUNC(_wrap_open_shared), -1);
+    rb_define_module_function(mOgr, "get_driver_by_name", VALUEFUNC(_wrap_get_driver_by_name), -1);
+    rb_define_module_function(mOgr, "get_driver", VALUEFUNC(_wrap_get_driver), -1);
 }
 

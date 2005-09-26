@@ -100,7 +100,9 @@ private:
 
 /* Flags for pointer conversion */
 #define SWIG_POINTER_EXCEPTION     0x1
+#define SWIG_POINTER_OWN           0x1
 #define SWIG_POINTER_DISOWN        0x2
+#define SWIG_TRACK_OBJECTS	        0x4
 
 #define NUM2USHRT(n) (\
     (0 <= NUM2UINT(n) && NUM2UINT(n) <= USHRT_MAX)\
@@ -434,16 +436,18 @@ SWIG_TypePrettyName(const swig_type_info *type) {
 */
 SWIGRUNTIME void
 SWIG_TypeClientData(swig_type_info *ti, void *clientdata) {
-  if (!ti->clientdata) {
-    swig_cast_info *cast = ti->cast;
-    /* if (ti->clientdata == clientdata) return; */
-    ti->clientdata = clientdata;
-    
-    while (cast) {
-      if (!cast->converter)
-	SWIG_TypeClientData(cast->type, clientdata);
-      cast = cast->next;
-    }
+  swig_cast_info *cast = ti->cast;
+  /* if (ti->clientdata == clientdata) return; */
+  ti->clientdata = clientdata;
+  
+  while (cast) {
+    if (!cast->converter) {
+      swig_type_info *tc = cast->type;
+      if (!tc->clientdata) {
+	SWIG_TypeClientData(tc, clientdata);
+      }
+    }    
+    cast = cast->next;
   }
 }
 
@@ -630,15 +634,24 @@ SWIG_UnpackDataName(const char *c, void *ptr, size_t sz, const char *name) {
 }
 #endif
 
+/***********************************************************************
+ * rubytracking.swg
+ *
+ * This file contains support for tracking mappings from 
+ * Ruby objects to C++ objects.  This functionality is needed
+ * to implement mark functions for Ruby's mark and sweep
+ * garbage collector.
+ ************************************************************************/
+
 /* Global Ruby hash table to store Trackings from C/C++
    structs to Ruby Objects. */
 static VALUE swig_ruby_trackings;
 
 /* Setup a Ruby hash table to store Trackings */
-void SWIG_RubyInitializeTrackings() {
+static void SWIG_RubyInitializeTrackings() {
 	/* Create a ruby hash table to store Trackings from C++ 
 	objects to Ruby objects.  Also make sure to tell
-	the garabage collector about the hash table */
+	the garabage collector about the hash table. */
 	swig_ruby_trackings = rb_hash_new();
 	rb_gc_register_address(&swig_ruby_trackings);
 }
@@ -675,19 +688,6 @@ static VALUE SWIG_RubyReferenceToObject(VALUE reference) {
 	return (VALUE) value;
 }
 
-
-#ifndef SWIG_RUBY_OBJECT_TRACKING
-
-/* Object tracking is turned off, stub out these methods to do nothing. */
-static void SWIG_RubyAddTracking(void* ptr, VALUE object) {}
-static void SWIG_RubyRemoveTracking(void* ptr){};
-static VALUE SWIG_RubyInstanceFor(void* ptr) {
-	return Qnil;
-};
-
-#else
-/* Object tracking is turned on */
-
 /* Add a Tracking from a C/C++ struct to a Ruby object */
 static void SWIG_RubyAddTracking(void* ptr, VALUE object) {
 	/* In a Ruby hash table we store the pointer and
@@ -703,7 +703,8 @@ static void SWIG_RubyAddTracking(void* ptr, VALUE object) {
 	/* Get a reference to the Ruby object as a Ruby number */
 	VALUE value = SWIG_RubyObjectToReference(object);
 
-    rb_hash_aset(swig_ruby_trackings, key, value);
+  /* Store the mapping to the global hash table. */
+	rb_hash_aset(swig_ruby_trackings, key, value);
 }
 
 /* Get the Ruby object that owns the specified C/C++ struct */
@@ -711,10 +712,11 @@ static VALUE SWIG_RubyInstanceFor(void* ptr) {
 	/* Get a reference to the pointer as a Ruby number */
 	VALUE key = SWIG_RubyPtrToReference(ptr);
 
-	/* Now lookup the value stored in the Ruby hash table */
+	/* Now lookup the value stored in the global hash table */
 	VALUE value = rb_hash_aref(swig_ruby_trackings, key);
 	
 	if (value == Qnil) {
+	  /* No object exists - return nil. */
 		return Qnil;
 	}
 	else {
@@ -727,26 +729,26 @@ static VALUE SWIG_RubyInstanceFor(void* ptr) {
 static void SWIG_RubyRemoveTracking(void* ptr) {
 	/* Get a reference to the pointer as a Ruby number */
 	VALUE key = SWIG_RubyPtrToReference(ptr);
-	VALUE object = SWIG_RubyInstanceFor(ptr);
 
-	/* Reset the C/C++ data struct associated with the Object.
-	This is needed in case a Ruby object exists longer than 
-	its underlying	C++ object.  By setting the data_struct 
-	to nil,	code in SWIG_Ruby_ConvertPtr can detect this problem 
-	and return an error message, as opposed to causing a
-	segmentation fault.*/
-	if (object != Qnil) {
-		DATA_PTR(object) = 0;
-	}
-		
-	/* Now delete the object from the hash table.  To
-	do this we need to call the Hash.delete method 
-	in Ruby. */
-	static VALUE delete_function = rb_intern("delete");
+	/* Define delete method - in C++ this could be marked as
+	   static but unfortunately not in C. */
+	VALUE delete_function = rb_intern("delete");
+
+	/* Delete the object from the hash table by calling Ruby's
+	   do this we need to call the Hash.delete method.*/
 	rb_funcall(swig_ruby_trackings, delete_function, 1, key);
 }
 
-#endif
+/* This is a helper method that unlinks a Ruby object from its
+   underlying C++ object.  This is needed if the lifetime of the
+   Ruby object is longer than the C++ object */
+static void SWIG_RubyUnlinkObjects(void* ptr) {
+	VALUE object = SWIG_RubyInstanceFor(ptr);
+
+	if (object != Qnil) {
+		DATA_PTR(object) = 0;
+	}
+}
 
 /* Common SWIG API */
 #define SWIG_ConvertPtr(obj, pp, type, flags) \
@@ -812,21 +814,26 @@ SWIG_Ruby_define_class(swig_type_info *type)
 
 /* Create a new pointer object */
 static VALUE
-SWIG_Ruby_NewPointerObj(void *ptr, swig_type_info *type, int own)
+SWIG_Ruby_NewPointerObj(void *ptr, swig_type_info *type, int flags)
 {
+	 int own = flags & SWIG_POINTER_OWN;
+	 int track = flags & SWIG_TRACK_OBJECTS;
+	 
     char *klass_name;
     swig_class *sklass;
     VALUE klass;
     VALUE obj;
     
     if (!ptr)
-			return Qnil;
+      return Qnil;
     
-		/* Have we already wrapped this pointer? */
-		obj = SWIG_RubyInstanceFor(ptr);
-		if (obj != Qnil) {
-			return obj;
-		}
+    /* Have we already wrapped this pointer? */
+    if (track) {
+	    obj = SWIG_RubyInstanceFor(ptr);
+   	 if (obj != Qnil) {
+      	return obj;
+    	}
+    }
 		
     if (type->clientdata) {
       sklass = (swig_class *) type->clientdata;
@@ -839,6 +846,12 @@ SWIG_Ruby_NewPointerObj(void *ptr, swig_type_info *type, int own)
       obj = Data_Wrap_Struct(klass, 0, 0, ptr);
     }
     rb_iv_set(obj, "__swigtype__", rb_str_new2(type->name));
+    
+    /* Keep track of this object if necessary */
+    if (track) {
+	   SWIG_RubyAddTracking(ptr, obj);
+    }
+   
     return obj;
 }
 
@@ -877,11 +890,21 @@ SWIG_Ruby_ConvertPtr(VALUE obj, void **ptr, swig_type_info *ty, int flags)
   }
   
   /* Check to see if the input object is giving up ownership
-     of the underlying C struct or C++ object.  If so, then
-     set the free function to nil so that the C struct
-     is not freed when the Ruby object goes out of scope.*/
+     of the underlying C struct or C++ object.  If so then we
+     need to reset the destructor since the Ruby object no 
+     longer owns the underlying C++ object.*/ 
   if (flags & SWIG_POINTER_DISOWN) {
-    RDATA(obj)->dfree = 0;
+	 if (flags & SWIG_TRACK_OBJECTS) {
+      /* We are tracking objects.  Thus we change the destructor
+		 * to SWIG_RubyRemoveTracking.  This allows us to
+		 * remove the mapping from the C++ to Ruby object
+		 * when the Ruby object is garbage collected.  If we don't
+		 * do this, then it is possible we will return a reference 
+		 * to a Ruby object that no longer exists thereby crashing Ruby. */
+		RDATA(obj)->dfree = SWIG_RubyRemoveTracking;
+  	 } else {    
+      RDATA(obj)->dfree = 0;
+    }
   }
 
   /* Do type-checking if type info was provided */
@@ -1012,7 +1035,7 @@ static void SWIG_Ruby_SetModule(swig_module_info *pointer) {
 #define SWIGTYPE_p_p_GDAL_GCP swig_types[11]
 #define SWIGTYPE_p_p_char swig_types[12]
 #define SWIGTYPE_p_unsigned_long swig_types[13]
-static swig_type_info *swig_types[14];
+static swig_type_info *swig_types[15];
 static swig_module_info swig_module = {swig_types, 14, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
@@ -1020,7 +1043,7 @@ static swig_module_info swig_module = {swig_types, 14, 0, 0, 0, 0};
 /* -------- TYPES TABLE (END) -------- */
 
 #define SWIG_init    Init_gdal
-#define SWIG_name    "Gdal"
+#define SWIG_name    "Gdal::Gdal"
 
 static VALUE mGdal;
 
@@ -1053,15 +1076,18 @@ typedef int FALSE_IS_ERR;
 int bUseExceptions=0;
 int bErrorHappened=0;
 
-void PythonErrorHandler(CPLErr eclass, int code, const char *msg ) {
-  bErrorHappened = 1;
+void ErrorHandler(CPLErr eclass, int code, const char *msg ) {
+  /* Only raise exceptions on failures and fatal errors */
+  if (eclass == CE_Failure || eclass == CE_Fatal) {
+    bErrorHappened = 1;
+  }
 }
 
 
 void UseExceptions() {
   bUseExceptions = 1;
   bErrorHappened = 0;
-  CPLSetErrorHandler( (CPLErrorHandler)PythonErrorHandler );
+  CPLSetErrorHandler( (CPLErrorHandler)ErrorHandler );
 }
 
 void DontUseExceptions() {
@@ -1128,6 +1154,63 @@ SWIGINTERN void SWIG_exception_(int code, const char *msg) {
 
 
 #include <stdexcept>
+
+
+
+static CPLXMLNode *RubyArrayToXMLTree(VALUE rubyArray)
+{
+    int      nChildCount = 0, iChild, nType;
+    CPLXMLNode *psThisNode;
+    CPLXMLNode *psChild;
+    char       *pszText = NULL;
+
+    nChildCount = RARRAY(rubyArray)->len - 2;
+    if( nChildCount < 0 )
+    {
+		 rb_raise(rb_eRuntimeError, "Error in input XMLTree, child count is less than zero.");
+    }
+
+	 VALUE item1 = rb_ary_entry(rubyArray, 0);
+	 nType = NUM2INT(item1);
+
+	 VALUE item2 = rb_ary_entry(rubyArray, 1);
+	 pszText = StringValuePtr(item2);
+
+    psThisNode = CPLCreateXMLNode( NULL, (CPLXMLNodeType) nType, pszText );
+
+    for( iChild = 0; iChild < nChildCount; iChild++ )
+    {
+        psChild = RubyArrayToXMLTree( rb_ary_entry(rubyArray,iChild+2) );
+        CPLAddXMLChild( psThisNode, psChild );
+    }
+
+    return psThisNode;
+}
+
+static VALUE XMLTreeToRubyArray( CPLXMLNode *psTree )
+{
+    int      nChildCount = 0, iChild;
+    CPLXMLNode *psChild;
+
+    for( psChild = psTree->psChild; 
+         psChild != NULL; 
+         psChild = psChild->psNext )
+        nChildCount++;
+
+    VALUE rubyArray = rb_ary_new2(nChildCount+2);
+
+	 rb_ary_store(rubyArray, 0, INT2NUM((int) psTree->eType));
+	 rb_ary_store(rubyArray, 1, rb_str_new2(psTree->pszValue));
+
+    for( psChild = psTree->psChild, iChild = 2; 
+         psChild != NULL; 
+         psChild = psChild->psNext, iChild++ )
+    {
+        rb_ary_store(rubyArray, iChild, XMLTreeToRubyArray(psChild));
+    }
+
+    return rubyArray; 
+}
 
 
   void Debug( const char *msg_class, const char *message ) {
@@ -1530,6 +1613,11 @@ GDALDriverShadow* GetDriverByName( char const *name ) {
 }
 
 
+GDALDriverShadow* GetDriver( int i ) {
+  return (GDALDriverShadow*) GDALGetDriver( i );
+}
+
+
 GDALDatasetShadow* Open( char const* name, GDALAccess eAccess = GA_ReadOnly ) {
   GDALDatasetShadow *ds = GDALOpen( name, eAccess );
   return (GDALDatasetShadow*) ds;
@@ -1608,10 +1696,6 @@ _wrap_error(int argc, VALUE *argv, VALUE self) {
     int arg2 = (int) 0 ;
     char *arg3 = (char *) "error" ;
     
-    {
-        /* %typemap(ruby,arginit) CPLErr */
-        arg1 = (CPLErr) 0;
-    }
     if ((argc < 0) || (argc > 3))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     if (argc > 0) {
@@ -1668,20 +1752,10 @@ _wrap_push_error_handler(int argc, VALUE *argv, VALUE self) {
             const char *errmsg = CPLGetLastErrorMsg();
             rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
         }
+        
+        vresult = (CPLErr)LONG2NUM(result);
     }
-    {
-        /* %typemap(ruby,ret) CPLErr */
-        if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
-            /*  if ( $result == 0 ) { */
-            /* No other return values set so return None */
-            /*    $resul = (CPLErr)LONG2NUM(result); */
-            /* } */
-        }
-    }    return vresult;
+    return vresult;
 }
 
 
@@ -1792,20 +1866,10 @@ _wrap_GetLastErrorType(int argc, VALUE *argv, VALUE self) {
             const char *errmsg = CPLGetLastErrorMsg();
             rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
         }
+        
+        vresult = (CPLErr)LONG2NUM(result);
     }
-    {
-        /* %typemap(ruby,ret) CPLErr */
-        if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
-            /*  if ( $result == 0 ) { */
-            /* No other return values set so return None */
-            /*    $resul = (CPLErr)LONG2NUM(result); */
-            /* } */
-        }
-    }    return vresult;
+    return vresult;
 }
 
 
@@ -2191,24 +2255,14 @@ _wrap_MajorObject_set_metadata__SWIG_0(int argc, VALUE *argv, VALUE self) {
             const char *errmsg = CPLGetLastErrorMsg();
             rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
         }
+        
+        vresult = (CPLErr)LONG2NUM(result);
     }
     {
         /* %typemap(ruby,freearg) char **dict */
         CSLDestroy( arg2 );
     }
-    {
-        /* %typemap(ruby,ret) CPLErr */
-        if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
-            /*  if ( $result == 0 ) { */
-            /* No other return values set so return None */
-            /*    $resul = (CPLErr)LONG2NUM(result); */
-            /* } */
-        }
-    }    return vresult;
+    return vresult;
 }
 
 
@@ -2244,20 +2298,10 @@ _wrap_MajorObject_set_metadata__SWIG_1(int argc, VALUE *argv, VALUE self) {
             const char *errmsg = CPLGetLastErrorMsg();
             rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
         }
+        
+        vresult = (CPLErr)LONG2NUM(result);
     }
-    {
-        /* %typemap(ruby,ret) CPLErr */
-        if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
-            /*  if ( $result == 0 ) { */
-            /* No other return values set so return None */
-            /*    $resul = (CPLErr)LONG2NUM(result); */
-            /* } */
-        }
-    }    return vresult;
+    return vresult;
 }
 
 
@@ -2903,9 +2947,6 @@ _wrap_new_GCP(int argc, VALUE *argv, VALUE self) {
     char *arg6 = (char *) "" ;
     char *arg7 = (char *) "" ;
     GDAL_GCP *result;
-    char *kwnames[] = {
-        "x","y","z","pixel","line","info","id", NULL 
-    };
     
     if ((argc < 0) || (argc > 7))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
@@ -2935,7 +2976,6 @@ _wrap_new_GCP(int argc, VALUE *argv, VALUE self) {
             bErrorHappened = 0;
             result = (GDAL_GCP *)new_GDAL_GCP(arg1,arg2,arg3,arg4,arg5,(char const *)arg6,(char const *)arg7);
             DATA_PTR(self) = result;
-            SWIG_RubyAddTracking(result, self);
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
@@ -2956,8 +2996,8 @@ static void delete_GDAL_GCP(GDAL_GCP *self){
 static void
 free_GDAL_GCP(GDAL_GCP *arg1) {
     delete_GDAL_GCP(arg1);
-    SWIG_RubyRemoveTracking(arg1);
 }
+
 static VALUE
 _wrap_gdal_gcp_gcpx_get(int argc, VALUE *argv, VALUE self) {
     GDAL_GCP *arg1 = (GDAL_GCP *) 0 ;
@@ -3623,6 +3663,7 @@ _wrap_GCPsToGeoTransform(int argc, VALUE *argv, VALUE self) {
     double *arg3 ;
     int arg4 = (int) 1 ;
     FALSE_IS_ERR result;
+    GDAL_GCP *tmpGCPList1 ;
     double argout3[6] ;
     VALUE vresult = Qnil;
     
@@ -3630,12 +3671,34 @@ _wrap_GCPsToGeoTransform(int argc, VALUE *argv, VALUE self) {
         /* %typemap(ruby,in,numinputs=0) (double argout3[ANY]) */
         arg3 = argout3;
     }
-    if ((argc < 2) || (argc > 3))
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc);
-    arg1 = NUM2INT(argv[0]);
-    SWIG_ConvertPtr(argv[1], (void **) &arg2, SWIGTYPE_p_GDAL_GCP, 0);
-    if (argc > 2) {
-        arg4 = NUM2INT(argv[2]);
+    if ((argc < 1) || (argc > 2))
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
+    {
+        /* %typemap(ruby, in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) */
+        
+        /* Check if is a list */
+        Check_Type(argv[0], T_ARRAY);
+        
+        arg1 = RARRAY(argv[0])->len;
+        tmpGCPList1 = (GDAL_GCP*) malloc(arg1*sizeof(GDAL_GCP));
+        arg2 = tmpGCPList1;
+        
+        for( int i = 0; i<arg1; i++ ) {
+            VALUE rubyItem = rb_ary_entry(argv[0],i);
+            GDAL_GCP *item = 0;
+            
+            SWIG_ConvertPtr( rubyItem, (void**)&item, SWIGTYPE_p_GDAL_GCP, SWIG_POINTER_EXCEPTION | 0 );
+            
+            if (!item) {
+                rb_raise(rb_eRuntimeError, "GDAL_GCP item cannot be nil");
+            }
+            
+            memcpy( (void*) item, (void*) tmpGCPList1, sizeof( GDAL_GCP ) );
+            ++tmpGCPList1;
+        }
+    }
+    if (argc > 1) {
+        arg4 = NUM2INT(argv[1]);
     }
     {
         {
@@ -3649,7 +3712,9 @@ _wrap_GCPsToGeoTransform(int argc, VALUE *argv, VALUE self) {
     }
     {
         /* %typemap(ruby,out) IF_FALSE_RETURN_NONE */
-        vresult = Qnil;
+        if (result == 0 ) {
+            vresult = Qnil;
+        }
     }
     {
         /* %typemap(ruby,argout) (double argout[ANY]) */
@@ -3662,16 +3727,12 @@ _wrap_GCPsToGeoTransform(int argc, VALUE *argv, VALUE self) {
         }
     }
     {
-        /* %typemap(ruby,ret) IF_FALSE_RETURN_NONE */
-        /*
-         *  if (result == 0 ) {
-         *    $result = Qnil;
-         *  }
-         *  if ($result == 0) {
-         *    $result = Qnil;
-         *  }
-        */
-    }    return vresult;
+        /* %typemap(ruby, freearg) (int nGCPs, GDAL_GCP const *pGCPs ) */
+        if (arg2) {
+            free( (void*) arg2 );
+        }
+    }
+    return vresult;
 }
 
 
@@ -3757,8 +3818,8 @@ static void delete_GDALDatasetShadow(GDALDatasetShadow *self){
 static void
 free_GDALDatasetShadow(GDALDatasetShadow *arg1) {
     delete_GDALDatasetShadow(arg1);
-    SWIG_RubyRemoveTracking(arg1);
 }
+
 static VALUE
 _wrap_Dataset_get_driver(int argc, VALUE *argv, VALUE self) {
     GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
@@ -3885,20 +3946,10 @@ _wrap_Dataset_set_projection(int argc, VALUE *argv, VALUE self) {
             const char *errmsg = CPLGetLastErrorMsg();
             rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
         }
+        
+        vresult = (CPLErr)LONG2NUM(result);
     }
-    {
-        /* %typemap(ruby,ret) CPLErr */
-        if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
-            /*  if ( $result == 0 ) { */
-            /* No other return values set so return None */
-            /*    $resul = (CPLErr)LONG2NUM(result); */
-            /* } */
-        }
-    }    return vresult;
+    return vresult;
 }
 
 
@@ -3988,20 +4039,10 @@ _wrap_Dataset_set_geo_transform(int argc, VALUE *argv, VALUE self) {
             const char *errmsg = CPLGetLastErrorMsg();
             rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
         }
+        
+        vresult = (CPLErr)LONG2NUM(result);
     }
-    {
-        /* %typemap(ruby,ret) CPLErr */
-        if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
-            /*  if ( $result == 0 ) { */
-            /* No other return values set so return None */
-            /*    $resul = (CPLErr)LONG2NUM(result); */
-            /* } */
-        }
-    }    return vresult;
+    return vresult;
 }
 
 
@@ -4118,12 +4159,18 @@ _wrap_Dataset_get_gcps(int argc, VALUE *argv, VALUE self) {
     GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
     int *arg2 = (int *) 0 ;
     GDAL_GCP **arg3 = (GDAL_GCP **) 0 ;
+    int nGCPs2 = 0 ;
+    GDAL_GCP *pGCPs2 = 0 ;
+    VALUE vresult = Qnil;
     
-    if ((argc < 2) || (argc > 2))
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc);
+    {
+        /* %typemap(ruby, in,numinputs=0) (int *nGCPs2, GDAL_GCP const **pGCPs2 ) */
+        arg2 = &nGCPs2;
+        arg3 = &pGCPs2;
+    }
+    if ((argc < 0) || (argc > 0))
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDatasetShadow, 0);
-    SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_int, 0);
-    SWIG_ConvertPtr(argv[1], (void **) &arg3, SWIGTYPE_p_p_GDAL_GCP, 0);
     {
         {
             bErrorHappened = 0;
@@ -4134,7 +4181,25 @@ _wrap_Dataset_get_gcps(int argc, VALUE *argv, VALUE self) {
             }
         }
     }
-    return Qnil;
+    {
+        /* %typemap(ruby, argout) (int *nGCPs, GDAL_GCP const **pGCPs ) */
+        
+        vresult = rb_ary_new2(*arg2);
+        
+        for( int i = 0; i < *arg2; i++ ) {
+            GDAL_GCP *o = new_GDAL_GCP( (*arg3)[i].dfGCPX,
+            (*arg3)[i].dfGCPY,
+            (*arg3)[i].dfGCPZ,
+            (*arg3)[i].dfGCPPixel,
+            (*arg3)[i].dfGCPLine,
+            (*arg3)[i].pszInfo,
+            (*arg3)[i].pszId );
+            
+            rb_ary_store(vresult, i, 
+            SWIG_NewPointerObj((void*)o, SWIGTYPE_p_GDAL_GCP,1));
+        }
+    }
+    return vresult;
 }
 
 
@@ -4145,14 +4210,37 @@ _wrap_Dataset_set_gcps(int argc, VALUE *argv, VALUE self) {
     GDAL_GCP *arg3 = (GDAL_GCP *) 0 ;
     char *arg4 = (char *) 0 ;
     CPLErr result;
+    GDAL_GCP *tmpGCPList2 ;
     VALUE vresult = Qnil;
     
-    if ((argc < 3) || (argc > 3))
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 3)",argc);
+    if ((argc < 2) || (argc > 2))
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDatasetShadow, 0);
-    arg2 = NUM2INT(argv[0]);
-    SWIG_ConvertPtr(argv[1], (void **) &arg3, SWIGTYPE_p_GDAL_GCP, 0);
-    arg4 = StringValuePtr(argv[2]);
+    {
+        /* %typemap(ruby, in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) */
+        
+        /* Check if is a list */
+        Check_Type(argv[0], T_ARRAY);
+        
+        arg2 = RARRAY(argv[0])->len;
+        tmpGCPList2 = (GDAL_GCP*) malloc(arg2*sizeof(GDAL_GCP));
+        arg3 = tmpGCPList2;
+        
+        for( int i = 0; i<arg2; i++ ) {
+            VALUE rubyItem = rb_ary_entry(argv[0],i);
+            GDAL_GCP *item = 0;
+            
+            SWIG_ConvertPtr( rubyItem, (void**)&item, SWIGTYPE_p_GDAL_GCP, SWIG_POINTER_EXCEPTION | 0 );
+            
+            if (!item) {
+                rb_raise(rb_eRuntimeError, "GDAL_GCP item cannot be nil");
+            }
+            
+            memcpy( (void*) item, (void*) tmpGCPList2, sizeof( GDAL_GCP ) );
+            ++tmpGCPList2;
+        }
+    }
+    arg4 = StringValuePtr(argv[1]);
     {
         {
             bErrorHappened = 0;
@@ -4170,20 +4258,16 @@ _wrap_Dataset_set_gcps(int argc, VALUE *argv, VALUE self) {
             const char *errmsg = CPLGetLastErrorMsg();
             rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
         }
+        
+        vresult = (CPLErr)LONG2NUM(result);
     }
     {
-        /* %typemap(ruby,ret) CPLErr */
-        if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
-            /*  if ( $result == 0 ) { */
-            /* No other return values set so return None */
-            /*    $resul = (CPLErr)LONG2NUM(result); */
-            /* } */
+        /* %typemap(ruby, freearg) (int nGCPs, GDAL_GCP const *pGCPs ) */
+        if (arg3) {
+            free( (void*) arg3 );
         }
-    }    return vresult;
+    }
+    return vresult;
 }
 
 
@@ -4260,25 +4344,15 @@ _wrap_Dataset_add_band(int argc, VALUE *argv, VALUE self) {
             const char *errmsg = CPLGetLastErrorMsg();
             rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
         }
+        
+        vresult = (CPLErr)LONG2NUM(result);
     }
     {
         /* %typemap(ruby,freearg) char **options */
         
         CSLDestroy( arg3 );
     }
-    {
-        /* %typemap(ruby,ret) CPLErr */
-        if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
-            /*  if ( $result == 0 ) { */
-            /* No other return values set so return None */
-            /*    $resul = (CPLErr)LONG2NUM(result); */
-            /* } */
-        }
-    }    return vresult;
+    return vresult;
 }
 
 
@@ -4310,7 +4384,6 @@ _wrap_Dataset_write_raster(int argc, VALUE *argv, VALUE self) {
     arg4 = NUM2INT(argv[2]);
     arg5 = NUM2INT(argv[3]);
     {
-        /* %typemap(ruby,in,numinputs=0) (int nLen, char *pBuf ) */
         arg6 = (int) StringValueLen(argv[4]);
         arg7 = (char *) StringValuePtr(argv[4]);
     }
@@ -4361,6 +4434,8 @@ _wrap_Dataset_write_raster(int argc, VALUE *argv, VALUE self) {
             const char *errmsg = CPLGetLastErrorMsg();
             rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
         }
+        
+        vresult = (CPLErr)LONG2NUM(result);
     }
     {
         /* %typemap(ruby,freearg) (int nList, int* pList) */
@@ -4368,19 +4443,7 @@ _wrap_Dataset_write_raster(int argc, VALUE *argv, VALUE self) {
             free((void*) arg12);
         }
     }
-    {
-        /* %typemap(ruby,ret) CPLErr */
-        if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
-            /*  if ( $result == 0 ) { */
-            /* No other return values set so return None */
-            /*    $resul = (CPLErr)LONG2NUM(result); */
-            /* } */
-        }
-    }    return vresult;
+    return vresult;
 }
 
 
@@ -4513,20 +4576,10 @@ _wrap_Band_set_raster_color_interpretation(int argc, VALUE *argv, VALUE self) {
             const char *errmsg = CPLGetLastErrorMsg();
             rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
         }
+        
+        vresult = (CPLErr)LONG2NUM(result);
     }
-    {
-        /* %typemap(ruby,ret) CPLErr */
-        if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
-            /*  if ( $result == 0 ) { */
-            /* No other return values set so return None */
-            /*    $resul = (CPLErr)LONG2NUM(result); */
-            /* } */
-        }
-    }    return vresult;
+    return vresult;
 }
 
 
@@ -4535,12 +4588,18 @@ _wrap_Band_get_no_data_value(int argc, VALUE *argv, VALUE self) {
     GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
     double *arg2 = (double *) 0 ;
     int *arg3 = (int *) 0 ;
+    double tmpval2 ;
+    int tmphasval2 ;
+    VALUE vresult = Qnil;
     
-    if ((argc < 2) || (argc > 2))
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc);
+    {
+        /* %typemap(ruby,in,numinputs=0) (double *val, int*hasval) */
+        arg2 = &tmpval2;
+        arg3 = &tmphasval2;
+    }
+    if ((argc < 0) || (argc > 0))
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
-    SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_double, 0);
-    SWIG_ConvertPtr(argv[1], (void **) &arg3, SWIGTYPE_p_int, 0);
     {
         {
             bErrorHappened = 0;
@@ -4551,7 +4610,17 @@ _wrap_Band_get_no_data_value(int argc, VALUE *argv, VALUE self) {
             }
         }
     }
-    return Qnil;
+    {
+        /* %typemap(ruby,argout) (double *val, int*hasval) */
+        
+        if ( !*arg3 ) {
+            vresult = Qnil;
+        }
+        else {
+            vresult = rb_float_new(*arg2);
+        }
+    }
+    return vresult;
 }
 
 
@@ -4583,20 +4652,10 @@ _wrap_Band_set_no_data_value(int argc, VALUE *argv, VALUE self) {
             const char *errmsg = CPLGetLastErrorMsg();
             rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
         }
+        
+        vresult = (CPLErr)LONG2NUM(result);
     }
-    {
-        /* %typemap(ruby,ret) CPLErr */
-        if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
-            /*  if ( $result == 0 ) { */
-            /* No other return values set so return None */
-            /*    $resul = (CPLErr)LONG2NUM(result); */
-            /* } */
-        }
-    }    return vresult;
+    return vresult;
 }
 
 
@@ -4605,12 +4664,18 @@ _wrap_Band_get_minimum(int argc, VALUE *argv, VALUE self) {
     GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
     double *arg2 = (double *) 0 ;
     int *arg3 = (int *) 0 ;
+    double tmpval2 ;
+    int tmphasval2 ;
+    VALUE vresult = Qnil;
     
-    if ((argc < 2) || (argc > 2))
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc);
+    {
+        /* %typemap(ruby,in,numinputs=0) (double *val, int*hasval) */
+        arg2 = &tmpval2;
+        arg3 = &tmphasval2;
+    }
+    if ((argc < 0) || (argc > 0))
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
-    SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_double, 0);
-    SWIG_ConvertPtr(argv[1], (void **) &arg3, SWIGTYPE_p_int, 0);
     {
         {
             bErrorHappened = 0;
@@ -4621,7 +4686,17 @@ _wrap_Band_get_minimum(int argc, VALUE *argv, VALUE self) {
             }
         }
     }
-    return Qnil;
+    {
+        /* %typemap(ruby,argout) (double *val, int*hasval) */
+        
+        if ( !*arg3 ) {
+            vresult = Qnil;
+        }
+        else {
+            vresult = rb_float_new(*arg2);
+        }
+    }
+    return vresult;
 }
 
 
@@ -4630,12 +4705,18 @@ _wrap_Band_get_maximum(int argc, VALUE *argv, VALUE self) {
     GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
     double *arg2 = (double *) 0 ;
     int *arg3 = (int *) 0 ;
+    double tmpval2 ;
+    int tmphasval2 ;
+    VALUE vresult = Qnil;
     
-    if ((argc < 2) || (argc > 2))
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc);
+    {
+        /* %typemap(ruby,in,numinputs=0) (double *val, int*hasval) */
+        arg2 = &tmpval2;
+        arg3 = &tmphasval2;
+    }
+    if ((argc < 0) || (argc > 0))
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
-    SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_double, 0);
-    SWIG_ConvertPtr(argv[1], (void **) &arg3, SWIGTYPE_p_int, 0);
     {
         {
             bErrorHappened = 0;
@@ -4646,7 +4727,17 @@ _wrap_Band_get_maximum(int argc, VALUE *argv, VALUE self) {
             }
         }
     }
-    return Qnil;
+    {
+        /* %typemap(ruby,argout) (double *val, int*hasval) */
+        
+        if ( !*arg3 ) {
+            vresult = Qnil;
+        }
+        else {
+            vresult = rb_float_new(*arg2);
+        }
+    }
+    return vresult;
 }
 
 
@@ -4655,12 +4746,18 @@ _wrap_Band_get_offset(int argc, VALUE *argv, VALUE self) {
     GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
     double *arg2 = (double *) 0 ;
     int *arg3 = (int *) 0 ;
+    double tmpval2 ;
+    int tmphasval2 ;
+    VALUE vresult = Qnil;
     
-    if ((argc < 2) || (argc > 2))
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc);
+    {
+        /* %typemap(ruby,in,numinputs=0) (double *val, int*hasval) */
+        arg2 = &tmpval2;
+        arg3 = &tmphasval2;
+    }
+    if ((argc < 0) || (argc > 0))
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
-    SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_double, 0);
-    SWIG_ConvertPtr(argv[1], (void **) &arg3, SWIGTYPE_p_int, 0);
     {
         {
             bErrorHappened = 0;
@@ -4671,7 +4768,17 @@ _wrap_Band_get_offset(int argc, VALUE *argv, VALUE self) {
             }
         }
     }
-    return Qnil;
+    {
+        /* %typemap(ruby,argout) (double *val, int*hasval) */
+        
+        if ( !*arg3 ) {
+            vresult = Qnil;
+        }
+        else {
+            vresult = rb_float_new(*arg2);
+        }
+    }
+    return vresult;
 }
 
 
@@ -4680,12 +4787,18 @@ _wrap_Band_get_scale(int argc, VALUE *argv, VALUE self) {
     GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
     double *arg2 = (double *) 0 ;
     int *arg3 = (int *) 0 ;
+    double tmpval2 ;
+    int tmphasval2 ;
+    VALUE vresult = Qnil;
     
-    if ((argc < 2) || (argc > 2))
-    rb_raise(rb_eArgError, "wrong # of arguments(%d for 2)",argc);
+    {
+        /* %typemap(ruby,in,numinputs=0) (double *val, int*hasval) */
+        arg2 = &tmpval2;
+        arg3 = &tmphasval2;
+    }
+    if ((argc < 0) || (argc > 0))
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
-    SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_double, 0);
-    SWIG_ConvertPtr(argv[1], (void **) &arg3, SWIGTYPE_p_int, 0);
     {
         {
             bErrorHappened = 0;
@@ -4696,7 +4809,17 @@ _wrap_Band_get_scale(int argc, VALUE *argv, VALUE self) {
             }
         }
     }
-    return Qnil;
+    {
+        /* %typemap(ruby,argout) (double *val, int*hasval) */
+        
+        if ( !*arg3 ) {
+            vresult = Qnil;
+        }
+        else {
+            vresult = rb_float_new(*arg2);
+        }
+    }
+    return vresult;
 }
 
 
@@ -4867,20 +4990,10 @@ _wrap_Band_fill(int argc, VALUE *argv, VALUE self) {
             const char *errmsg = CPLGetLastErrorMsg();
             rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
         }
+        
+        vresult = (CPLErr)LONG2NUM(result);
     }
-    {
-        /* %typemap(ruby,ret) CPLErr */
-        if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
-            /*  if ( $result == 0 ) { */
-            /* No other return values set so return None */
-            /*    $resul = (CPLErr)LONG2NUM(result); */
-            /* } */
-        }
-    }    return vresult;
+    return vresult;
 }
 
 
@@ -4942,6 +5055,8 @@ _wrap_Band_read_raster(int argc, VALUE *argv, VALUE self) {
             const char *errmsg = CPLGetLastErrorMsg();
             rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
         }
+        
+        vresult = (CPLErr)LONG2NUM(result);
     }
     {
         /* %typemap(ruby,argout) (int *nLen, char **pBuf ) */
@@ -4953,19 +5068,7 @@ _wrap_Band_read_raster(int argc, VALUE *argv, VALUE self) {
             free( *arg7 );
         }
     }
-    {
-        /* %typemap(ruby,ret) CPLErr */
-        if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
-            /*  if ( $result == 0 ) { */
-            /* No other return values set so return None */
-            /*    $resul = (CPLErr)LONG2NUM(result); */
-            /* } */
-        }
-    }    return vresult;
+    return vresult;
 }
 
 
@@ -4995,7 +5098,6 @@ _wrap_Band_write_raster(int argc, VALUE *argv, VALUE self) {
     arg4 = NUM2INT(argv[2]);
     arg5 = NUM2INT(argv[3]);
     {
-        /* %typemap(ruby,in,numinputs=0) (int nLen, char *pBuf ) */
         arg6 = (int) StringValueLen(argv[4]);
         arg7 = (char *) StringValuePtr(argv[4]);
     }
@@ -5025,20 +5127,10 @@ _wrap_Band_write_raster(int argc, VALUE *argv, VALUE self) {
             const char *errmsg = CPLGetLastErrorMsg();
             rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
         }
+        
+        vresult = (CPLErr)LONG2NUM(result);
     }
-    {
-        /* %typemap(ruby,ret) CPLErr */
-        if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
-            /*  if ( $result == 0 ) { */
-            /* No other return values set so return None */
-            /*    $resul = (CPLErr)LONG2NUM(result); */
-            /* } */
-        }
-    }    return vresult;
+    return vresult;
 }
 
 
@@ -5150,7 +5242,6 @@ _wrap_new_ColorTable(int argc, VALUE *argv, VALUE self) {
             bErrorHappened = 0;
             result = (GDALColorTable *)new GDALColorTable(arg1);
             DATA_PTR(self) = result;
-            SWIG_RubyAddTracking(result, self);
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
@@ -5164,8 +5255,8 @@ _wrap_new_ColorTable(int argc, VALUE *argv, VALUE self) {
 static void
 free_GDALColorTable(GDALColorTable *arg1) {
     delete arg1;
-    SWIG_RubyRemoveTracking(arg1);
 }
+
 static VALUE
 _wrap_ColorTable_clone(int argc, VALUE *argv, VALUE self) {
     GDALColorTable *arg1 = (GDALColorTable *) 0 ;
@@ -5656,8 +5747,17 @@ _wrap_ParseXMLString(int argc, VALUE *argv, VALUE self) {
             }
         }
     }
-    vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_CPLXMLNode,0);
-    return vresult;
+    {
+        /* %typemap(ruby,out) (CPLXMLNode*) */
+        
+        vresult = XMLTreeToRubyArray(result);
+    }
+    {
+        /* %typemap(ruby,ret) (CPLXMLNode*) */
+        if ( result ) {
+            CPLDestroyXMLNode( result );
+        }
+    }    return vresult;
 }
 
 
@@ -5669,7 +5769,14 @@ _wrap_SerializeXMLTree(int argc, VALUE *argv, VALUE self) {
     
     if ((argc < 1) || (argc > 1))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
-    SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_CPLXMLNode, 0);
+    {
+        /* %typemap(ruby,in) (CPLXMLNode* xmlnode ) */
+        arg1 = RubyArrayToXMLTree(argv[0]);
+        
+        if ( !arg1 ) {
+            rb_raise(rb_eRuntimeError, "Could not convert Ruby Array to XML tree.");
+        }
+    }
     {
         {
             bErrorHappened = 0;
@@ -5681,6 +5788,13 @@ _wrap_SerializeXMLTree(int argc, VALUE *argv, VALUE self) {
         }
     }
     vresult = rb_str_new2(result);
+    {
+        /* %typemap(ruby,freearg) (CPLXMLNode *xmlnode) */
+        
+        if ( arg1 ) {
+            CPLDestroyXMLNode( arg1 );
+        }
+    }
     return vresult;
 }
 
@@ -5720,6 +5834,30 @@ _wrap_get_driver_by_name(int argc, VALUE *argv, VALUE self) {
         {
             bErrorHappened = 0;
             result = (GDALDriverShadow *)GetDriverByName((char const *)arg1);
+            
+            if ( bErrorHappened ) {
+                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+            }
+        }
+    }
+    vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_GDALDriverShadow,0);
+    return vresult;
+}
+
+
+static VALUE
+_wrap_get_driver(int argc, VALUE *argv, VALUE self) {
+    int arg1 ;
+    GDALDriverShadow *result;
+    VALUE vresult = Qnil;
+    
+    if ((argc < 1) || (argc > 1))
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
+    arg1 = NUM2INT(argv[0]);
+    {
+        {
+            bErrorHappened = 0;
+            result = (GDALDriverShadow *)GetDriver(arg1);
             
             if ( bErrorHappened ) {
                 SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
@@ -6031,6 +6169,7 @@ SWIG_InitializeModule(void *clientdata) {
     /* Set entry in modules->types array equal to the type */
     swig_module.types[i] = type;
   }
+  swig_module.types[i] = 0;
 }
 
 /* This function will propagate the clientdata field of type to
@@ -6074,6 +6213,7 @@ SWIGEXPORT void Init_gdal(void) {
     
     SWIG_InitRuntime();
     mGdal = rb_define_module("Gdal");
+    mGdal = rb_define_module_under(mGdal, "Gdal");
     
     SWIG_InitializeModule(0);
     for (i = 0; i < swig_module.size; i++) {
@@ -6081,6 +6221,12 @@ SWIGEXPORT void Init_gdal(void) {
     }
     
     SWIG_RubyInitializeTrackings();
+    
+    /* gdal_ruby.i %init code */
+    if ( GDALGetDriverCount() == 0 ) {
+        GDALAllRegister();
+    }
+    
     rb_define_module_function(mGdal, "UseExceptions", VALUEFUNC(_wrap_UseExceptions), -1);
     rb_define_module_function(mGdal, "DontUseExceptions", VALUEFUNC(_wrap_DontUseExceptions), -1);
     rb_define_module_function(mGdal, "debug", VALUEFUNC(_wrap_debug), -1);
@@ -6249,6 +6395,7 @@ SWIGEXPORT void Init_gdal(void) {
     rb_define_module_function(mGdal, "SerializeXMLTree", VALUEFUNC(_wrap_SerializeXMLTree), -1);
     rb_define_module_function(mGdal, "get_driver_count", VALUEFUNC(_wrap_get_driver_count), -1);
     rb_define_module_function(mGdal, "get_driver_by_name", VALUEFUNC(_wrap_get_driver_by_name), -1);
+    rb_define_module_function(mGdal, "get_driver", VALUEFUNC(_wrap_get_driver), -1);
     rb_define_module_function(mGdal, "open", VALUEFUNC(_wrap_open), -1);
     rb_define_module_function(mGdal, "open_shared", VALUEFUNC(_wrap_open_shared), -1);
     rb_define_module_function(mGdal, "auto_create_warped_vrt", VALUEFUNC(_wrap_auto_create_warped_vrt), -1);
