@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.45  2005/09/26 05:02:13  cfis
+ * Added comments pointing out where parent objects are giving out references to child objects.
+ *
  * Revision 1.44  2005/09/21 15:33:02  kruland
  * - Added DISOWN to ReleaseResultSet
  * - Added %newobject to GetSpatialFilter and GetOpenDS
@@ -416,6 +419,7 @@ public:
     return OGR_DS_DeleteLayer(self, index);
   }
 
+  /* Note that datasources own their layers */
   %feature( "kwargs" ) CreateLayer;
   OGRLayerShadow *CreateLayer(const char* name, 
               OSRSpatialReferenceShadow* reference=NULL,
@@ -665,6 +669,7 @@ public:
     return 0;
   }
 
+/* The feature takes over owernship of the geometry. */
 %apply SWIGTYPE *DISOWN {OGRGeometryShadow *geom};
   OGRErr SetGeometryDirectly(OGRGeometryShadow* geom) {
     OGRErr err = OGR_F_SetGeometryDirectly(self, geom);
@@ -674,6 +679,7 @@ public:
   }
 %clear OGRGeometryShadow *geom;
   
+  /* Feature owns its geometry */
   OGRGeometryShadow *GetGeometryRef() {
     return (OGRGeometryShadow*) OGR_F_GetGeometryRef(self);
   }
@@ -852,10 +858,11 @@ public:
     return OGR_FD_GetFieldCount(self);
   }
   
+  /* FeatureDefns own their FieldDefns */
   OGRFieldDefnShadow* GetFieldDefn(int i){
     return (OGRFieldDefnShadow*) OGR_FD_GetFieldDefn(self, i);
   }
-  
+
   int GetFieldIndex(const char* name) {
     return OGR_FD_GetFieldIndex(self, name);
   }
@@ -1061,6 +1068,7 @@ public:
     OGR_G_AddPoint( self, x, y, z );
   }
 
+/* The geometry now owns an inner geometry */
 %apply SWIGTYPE *DISOWN {OGRGeometryShadow* other};
   OGRErr AddGeometryDirectly( OGRGeometryShadow* other ) {
     return OGR_G_AddGeometryDirectly( self, other );
@@ -1116,10 +1124,11 @@ public:
     OGR_G_SetPoint(self, point, x, y, z);
   }
   
+  /* Geometries own their internal geometries */
   OGRGeometryShadow* GetGeometryRef(int geom) {
     return (OGRGeometryShadow*) OGR_G_GetGeometryRef(self, geom);
   }
-  
+
   %newobject GetBoundary;
   OGRGeometryShadow* GetBoundary() {
     return (OGRGeometryShadow*) OGR_G_GetBoundary(self);
