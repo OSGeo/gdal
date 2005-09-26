@@ -5,13 +5,22 @@
  * character strings.
  *
  * $Log$
+ * Revision 1.2  2005/09/26 08:16:48  cfis
+ * Ruby does not seem to support the %fragment directive.
+ *
  * Revision 1.1  2005/09/13 02:58:19  kruland
  * Put the OGRErr to char * mapping in a file so multiple bindings can use it.
  *
  *
  */
 
-%fragment("OGRErrMessages","header") %{
+#ifdef SWIGRUBY
+%header 
+#else
+%fragment("OGRErrMessages","header") 
+#endif
+%{
+
 static char const *
 OGRErrMessages( int rc ) {
   switch( rc ) {
