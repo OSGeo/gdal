@@ -4,6 +4,10 @@
 
 /*
  * $Log$
+ * Revision 1.6  2005/09/27 14:32:01  kruland
+ * Fixed the in,numinputs=1 int nLen, char *pBuf typemap used by
+ * ReadRaster & WriteRaster (thanks Ari).
+ *
  * Revision 1.5  2005/09/16 20:42:49  kruland
  * Magical adjustments to some list length calls.
  *
@@ -234,8 +238,12 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
 %typemap(perl5,in,numinputs=1) (int nLen, char *pBuf )
 {
   /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
-  STRLEN len;
-  $2 = SvPV($input, len);
+  if (!SvPOK($input)) {
+    croak("buf argument has to be binary data");
+    SWIG_fail;
+  }
+  STRLEN len = SvCUR($input);
+  $2 = SvPV_nolen($input);
   $1 = len;
 }
 
