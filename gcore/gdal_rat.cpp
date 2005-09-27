@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/09/27 14:05:47  fwarmerdam
+ * fixed various C wrappers returning void
+ *
  * Revision 1.1  2005/09/24 19:00:53  fwarmerdam
  * New
  *
@@ -460,7 +463,7 @@ void CPL_STDCALL
 GDALRATSetRowCount( GDALRasterAttributeTableH hRAT, int nNewCount )
 
 {
-    return ((GDALRasterAttributeTable *) hRAT)->SetRowCount( nNewCount );
+    ((GDALRasterAttributeTable *) hRAT)->SetRowCount( nNewCount );
 }
 
 /************************************************************************/
@@ -515,8 +518,7 @@ GDALRATSetValueAsString( GDALRasterAttributeTableH hRAT, int iRow, int iField,
                          const char *pszValue )
 
 {
-    return ((GDALRasterAttributeTable *) hRAT)->SetValue(
-        iRow, iField, pszValue );
+    ((GDALRasterAttributeTable *) hRAT)->SetValue( iRow, iField, pszValue );
 }
 
 /************************************************************************/
@@ -576,8 +578,7 @@ GDALRATSetValueAsInt( GDALRasterAttributeTableH hRAT, int iRow, int iField,
                       int nValue )
 
 {
-    return ((GDALRasterAttributeTable *) hRAT)->SetValue(
-        iRow, iField, nValue);
+    ((GDALRasterAttributeTable *) hRAT)->SetValue( iRow, iField, nValue);
 }
 
 /************************************************************************/
@@ -637,8 +638,7 @@ GDALRATSetValueAsDouble( GDALRasterAttributeTableH hRAT, int iRow, int iField,
                          double dfValue )
 
 {
-    return ((GDALRasterAttributeTable *) hRAT)->SetValue(
-        iRow, iField, dfValue);
+    ((GDALRasterAttributeTable *) hRAT)->SetValue( iRow, iField, dfValue );
 }
 
 /************************************************************************/
@@ -1025,7 +1025,7 @@ void CPL_STDCALL
 GDALRATDumpReadable( GDALRasterAttributeTableH hRAT, FILE *fp )
 
 {
-    return ((GDALRasterAttributeTable *) hRAT)->DumpReadable( fp );
+    ((GDALRasterAttributeTable *) hRAT)->DumpReadable( fp );
 }
 
 /************************************************************************/
