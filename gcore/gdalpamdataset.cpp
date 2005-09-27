@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/09/27 22:12:19  fwarmerdam
+ * added RAT support when cloning
+ *
  * Revision 1.12  2005/09/26 15:52:03  fwarmerdam
  * centralized .aux opening logic
  *
@@ -1050,6 +1053,10 @@ CPLErr GDALPamDataset::TryLoadAux()
                                          panHistogram );
             CPLFree( panHistogram );
         }
+
+        // RAT 
+        if( poAuxBand->GetDefaultRAT() != NULL )
+            poBand->SetDefaultRAT( poAuxBand->GetDefaultRAT() );
     }
 
     GDALClose( poAuxDS );
