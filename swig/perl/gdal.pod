@@ -295,7 +295,27 @@ Superclass of gdal::Driver, gdal::Dataset, and gdal::Band
 
 =item ReadRaster
 
+  $scanline = $band->ReadRaster( 0, 0, $width, 1 );
+  @data = unpack("i[$width]", $scanline);
+
+See also the example below.
+
 =item WriteRaster
+
+  SWITCH: for ($band->{DataType}) {
+    if ($_ == $gdalconst::$GDT_Byte) { $type = 'c'; last SWITCH; }
+    if ($_ == $gdalconst::$GDT_Int16) { $type = 's'; last SWITCH; }
+    if ($_ == $gdalconst::$GDT_Int32) { $type = 'i'; last SWITCH; }
+    $nothing = 1;
+  }
+
+  unless ($nothing) {
+
+    $buf = pack($type.'['.$width*$height.']',@data);
+
+    $band->WriteRaster( $xoff, $yoff, $width, $height, $buf );
+
+  }
 
 =item FlushCache
 
