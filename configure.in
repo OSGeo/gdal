@@ -995,10 +995,10 @@ if test "$with_ecw" = "no" ; then
 
 elif test "$with_ecw" = "yes" -o "$with_ecw" = "" ; then
 
-  AC_CHECK_LIB(NCSEcw,NCScbmOpenFileView,ECW_SETTING=yes,ECW_SETTING=no,)
+  AC_CHECK_LIB(NCSEcw,NCScbmOpenFileView,ECW_SETTING=yes,ECW_SETTING=no,-lNCSCnet -lNCSUtil)
 
   if test "$ECW_SETTING" = "yes" ; then   
-    LIBS="-lNCSEcw $LIBS"
+    LIBS="-lNCSEcw -lNCSCnet -lNCSUtil $LIBS"
   fi
 
   if test "$ECW_SETTING" = "no" ; then
@@ -1089,7 +1089,7 @@ else
 
     HAVE_MRSID=yes
     MRSID_INCLUDE="-I$with_mrsid/include/base -I$with_mrsid/include/metadata -I$with_mrsid/include/mrsid_readers -I$with_mrsid/include/j2k_readers -I$with_mrsid/include/support"
-    MRSID_LIBS="-lltidsdk -lpthread"
+    MRSID_LIBS="-lltidsdk -lxmlparse -lpthread"
 
     AC_MSG_CHECKING([for MG3ImageWriter.h in $with_mrsid/include/mrsid_writers])
     if test -r "$with_mrsid/include/mrsid_writers/MG3ImageWriter.h" ; then
