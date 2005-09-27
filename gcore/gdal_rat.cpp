@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/09/27 22:12:44  fwarmerdam
+ * fixed bug creating string columns
+ *
  * Revision 1.2  2005/09/27 14:05:47  fwarmerdam
  * fixed various C wrappers returning void
  *
@@ -770,7 +773,7 @@ CPLErr GDALRasterAttributeTable::CreateColumn( CPLString osFieldName,
         aoFields[iNewField].anValues.resize( nRowCount );
     else if( eFieldType == GFT_Real )
         aoFields[iNewField].adfValues.resize( nRowCount );
-    else if( eFieldType == GFT_Integer )
+    else if( eFieldType == GFT_String )
         aoFields[iNewField].aosValues.resize( nRowCount );
 
     return CE_None;
