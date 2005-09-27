@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/09/27 17:37:20  fwarmerdam
+ * Derived 4bit band from GDALPamRasterBand, and added colortable support.
+ * Also use large file API consistently for file access.
+ *
  * Revision 1.6  2005/05/05 13:55:42  fwarmerdam
  * PAM Enable
  *
@@ -122,7 +126,7 @@ if there are more than 255 bands.
 
 class LANDataset;
 
-class LAN4BitRasterBand : public GDALRasterBand
+class LAN4BitRasterBand : public GDALPamRasterBand
 {
     GDALColorTable *poCT;
     GDALColorInterp eInterp;
@@ -280,7 +284,10 @@ CPLErr LAN4BitRasterBand::SetColorTable( GDALColorTable *poNewCT )
 GDALColorTable *LAN4BitRasterBand::GetColorTable()
 
 {
-    return poCT;
+    if( poCT != NULL )
+        return poCT;
+    else
+        return GDALPamRasterBand::GetColorTable();
 }
 
 /************************************************************************/
@@ -331,7 +338,7 @@ LANDataset::~LANDataset()
     FlushCache();
 
     if( fpImage != NULL )
-        VSIFClose( fpImage );
+        VSIFCloseL( fpImage );
 
     CPLFree( pszProjection );
 }
@@ -364,8 +371,12 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Adopt the openinfo file pointer for use with this file.         */
 /* -------------------------------------------------------------------- */
-    poDS->fpImage = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
+    if( poOpenInfo->eAccess == GA_ReadOnly )
+        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    else
+        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
+    if( poDS->fpImage == NULL )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to byte swap the headers to local machine order?     */
@@ -536,15 +547,15 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLFormCIFilename( pszPath, pszBasename, "trl" );
     FILE *fpTRL;
 
-    fpTRL = VSIFOpen( pszTRLFilename, "rb" );
+    fpTRL = VSIFOpenL( pszTRLFilename, "rb" );
     if( fpTRL != NULL )
     {
         char szTRLData[896];
         int iColor;
         GDALColorTable *poCT;
 
-        VSIFRead( szTRLData, 1, 896, fpTRL );
-        VSIFClose( fpTRL );
+        VSIFReadL( szTRLData, 1, 896, fpTRL );
+        VSIFCloseL( fpTRL );
         
         poCT = new GDALColorTable();
         for( iColor = 0; iColor < 256; iColor++ )
