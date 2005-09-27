@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/09/27 17:40:05  fwarmerdam
+ * Make sure we notify RawRasterBand we are using large file api.
+ *
  * Revision 1.7  2005/09/27 17:37:20  fwarmerdam
  * Derived 4bit band from GDALPamRasterBand, and added colortable support.
  * Also use large file API consistently for file access.
@@ -473,7 +476,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
                                    * nPixelOffset * poDS->nRasterXSize,
                                    nPixelOffset, 
                                    poDS->nRasterXSize*nPixelOffset*nBandCount,
-                                   eDataType, FALSE ));
+                                   eDataType, FALSE, TRUE ));
     }
 
 /* -------------------------------------------------------------------- */
