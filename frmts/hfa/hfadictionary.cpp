@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/09/27 18:01:37  fwarmerdam
+ * Ensure Edsc_Table is defined, fixed default def support
+ *
  * Revision 1.7  2004/01/26 18:28:32  warmerda
  * provide default types if not defined in file
  *
@@ -59,8 +62,9 @@
 CPL_CVSID("$Id$");
 
 static char *apszDefDefn[] = {
-    NULL,
-    NULL,
+
+    "Edsc_Table",
+    "{1:lnumrows,}Edsc_Table",
 
     "Edsc_Column", 
     "{1:lnumRows,1:LcolumnDataPtr,1:e4:integer,real,complex,string,dataType,1:lmaxNumChars,}Edsc_Column", 
@@ -85,7 +89,7 @@ static char *apszDefDefn[] = {
 
     "Eimg_NonInitializedValue", 
     "{1:*bvalueBD,}Eimg_NonInitializedValue",
-
+    
     NULL,
     NULL };
     
