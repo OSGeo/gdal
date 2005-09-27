@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.62  2005/09/27 18:00:59  fwarmerdam
+ * Cleanup memory leaks in RAT code.
+ *
  * Revision 1.61  2005/09/24 19:04:48  fwarmerdam
  * added preliminary RAT reading code
  *
@@ -505,6 +508,7 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
     this->nThisOverview = iOverview;
     this->papoOverviewBands = NULL;
     this->bMetadataDirty = FALSE;
+    this->poDefaultRAT = NULL;
 
     HFAGetBandInfo( hHFA, nBand, &nHFADataType,
                     &nBlockXSize, &nBlockYSize, &nOverviews );
@@ -630,6 +634,9 @@ HFARasterBand::~HFARasterBand()
 
     if( poCT != NULL )
         delete poCT;
+
+    if( poDefaultRAT )
+        delete poDefaultRAT;
 }
 
 /************************************************************************/
@@ -1217,6 +1224,9 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
         const char * pszType = poDTChild->GetStringField( "dataType" );
         GDALRATFieldUsage eType = GFU_Generic;
         int i;
+
+        if( pszType == NULL || nOffset == 0 )
+            continue;
         
         if( EQUAL(poDTChild->GetName(),"Histogram") )
             eType = GFU_Generic;
@@ -1241,6 +1251,8 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
             poRAT->CreateColumn( poDTChild->GetName(), GFT_Real, GFU_Generic );
             for( i = 0; i < nRowCount; i++ )
                 poRAT->SetValue( i, poRAT->GetColumnCount()-1, padfColData[i]);
+
+            CPLFree( padfColData );
         }
         else
         {
@@ -1254,6 +1266,8 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
             poRAT->CreateColumn(poDTChild->GetName(),GFT_Integer,GFU_Generic);
             for( i = 0; i < nRowCount; i++ )
                 poRAT->SetValue( i, poRAT->GetColumnCount()-1, panColData[i] );
+
+            CPLFree( panColData );
         }
     }
 
