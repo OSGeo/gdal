@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/09/27 18:13:04  fwarmerdam
+ * Only return 16 colors for 4bit files.
+ *
  * Revision 1.8  2005/09/27 17:40:05  fwarmerdam
  * Make sure we notify RawRasterBand we are using large file api.
  *
@@ -570,6 +573,10 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
             sEntry.c3 = ((GByte *) szTRLData)[iColor+128+512];
             sEntry.c4 = 255;
             poCT->SetColorEntry( iColor, &sEntry );
+
+            // only 16 colors in 4bit files.
+            if( nPixelOffset == -1 && iColor == 15 )
+                break;
         }
 
         poDS->GetRasterBand(1)->SetColorTable( poCT );
