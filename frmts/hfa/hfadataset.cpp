@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.63  2005/09/27 22:11:48  fwarmerdam
+ * Added String column support for RAT.
+ *
  * Revision 1.62  2005/09/27 18:00:59  fwarmerdam
  * Cleanup memory leaks in RAT code.
  *
@@ -1238,6 +1241,8 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
             eType = GFU_Blue;
         else if( EQUAL(poDTChild->GetName(),"Alpha") )
             eType = GFU_Alpha;
+        else if( EQUAL(poDTChild->GetName(),"Class_Names") )
+            eType = GFU_Name;
             
         if( EQUAL(pszType,"real") )
         {
@@ -1248,13 +1253,33 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
 #ifdef CPL_MSB
             GDALSwapWords( padfColData, 8, nRowCount, 8 );
 #endif
-            poRAT->CreateColumn( poDTChild->GetName(), GFT_Real, GFU_Generic );
+            poRAT->CreateColumn( poDTChild->GetName(), GFT_Real, eType );
             for( i = 0; i < nRowCount; i++ )
                 poRAT->SetValue( i, poRAT->GetColumnCount()-1, padfColData[i]);
 
             CPLFree( padfColData );
         }
-        else
+        else if( EQUAL(pszType,"string") )
+        {
+            int nMaxNumChars = poDTChild->GetIntField( "maxNumChars" );
+            char *pachColData = (char*)CPLCalloc(nRowCount+1,nMaxNumChars);
+
+            VSIFSeekL( hHFA->fp, nOffset, SEEK_SET );
+            VSIFReadL( pachColData, nRowCount, nMaxNumChars, hHFA->fp );
+
+            poRAT->CreateColumn(poDTChild->GetName(),GFT_String,eType);
+            for( i = 0; i < nRowCount; i++ )
+            {
+                CPLString oRowVal;
+
+                oRowVal.assign( pachColData+nMaxNumChars*i, nMaxNumChars );
+                poRAT->SetValue( i, poRAT->GetColumnCount()-1, 
+                                 oRowVal.c_str() );
+            }
+
+            CPLFree( pachColData );
+        }
+        else if( EQUALN(pszType,"int",3) )
         {
             GInt32 *panColData = (GInt32*)CPLMalloc(nRowCount*sizeof(GInt32));
 
@@ -1263,7 +1288,7 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
 #ifdef CPL_MSB
             GDALSwapWords( panColData, 4, nRowCount, 4 );
 #endif
-            poRAT->CreateColumn(poDTChild->GetName(),GFT_Integer,GFU_Generic);
+            poRAT->CreateColumn(poDTChild->GetName(),GFT_Integer,eType);
             for( i = 0; i < nRowCount; i++ )
                 poRAT->SetValue( i, poRAT->GetColumnCount()-1, panColData[i] );
 
