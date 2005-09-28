@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/09/28 19:38:07  fwarmerdam
+ * Added partial support for inline defined types.
+ *
  * Revision 1.16  2005/05/10 00:56:17  fwarmerdam
  * fixed bug with setting entries in an array (with count setting)
  *
@@ -168,6 +171,42 @@ const char *HFAField::Initialize( const char * pszInput )
 /* -------------------------------------------------------------------- */
     if( chItemType == 'o' )
     {
+        for( i = 0; pszInput[i] != '\0' && pszInput[i] != ','; i++ ) {}
+
+        pszItemObjectType = (char *) CPLMalloc(i+1);
+        strncpy( pszItemObjectType, pszInput, i );
+        pszItemObjectType[i] = '\0';
+
+        pszInput += i+1;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If this is an inline object, we need to skip past the           */
+/*      definition, and then extract the object class name.             */
+/*                                                                      */
+/*      We ignore the actual definition, so if the object type isn't    */
+/*      already defined, things will not work properly.  See the        */
+/*      file lceugr250_00_pct.aux for an example of inline defs.        */
+/* -------------------------------------------------------------------- */
+    if( chItemType == 'x' && *pszInput == '{' )
+    {
+        int nBraceDepth = 1;
+        pszInput++;
+
+        // Skip past the definition.
+        while( nBraceDepth > 0 && *pszInput != '\0' )
+        {
+            if( *pszInput == '{' )
+                nBraceDepth++;
+            else if( *pszInput == '}' )
+                nBraceDepth--;
+            
+            pszInput++;
+        }
+
+        chItemType = 'o';
+
+        // find the comma terminating the type name.
         for( i = 0; pszInput[i] != '\0' && pszInput[i] != ','; i++ ) {}
 
         pszItemObjectType = (char *) CPLMalloc(i+1);
