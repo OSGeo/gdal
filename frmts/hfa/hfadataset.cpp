@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.64  2005/09/28 19:55:04  fwarmerdam
+ * Managed the HFA domain ourselves to avoid problems when PAM disabled.
+ *
  * Revision 1.63  2005/09/27 22:11:48  fwarmerdam
  * Added String column support for RAT.
  *
@@ -390,6 +393,8 @@ class CPL_DLL HFADataset : public GDALPamDataset
 
     int         bIgnoreUTM;
 
+    char      **papszHFAMetadata;
+
     CPLErr      ReadProjection();
     CPLErr      WriteProjection();
 
@@ -420,6 +425,7 @@ class CPL_DLL HFADataset : public GDALPamDataset
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
 
+    virtual char **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr SetMetadata( char **, const char * = "" );
     virtual CPLErr SetMetadataItem( const char *, const char *, const char * = "" );
 
@@ -1317,6 +1323,7 @@ HFADataset::HFADataset()
     pszProjection = CPLStrdup("");
     this->bMetadataDirty = FALSE;
     bIgnoreUTM = FALSE;
+    papszHFAMetadata = NULL;
 }
 
 /************************************************************************/
@@ -1332,6 +1339,7 @@ HFADataset::~HFADataset()
         HFAClose( hHFA );
 
     CPLFree( pszProjection );
+    CSLDestroy( papszHFAMetadata );
 }
 
 /************************************************************************/
@@ -2322,9 +2330,10 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     HFAEntry  *poEntry = psInfo->poRoot->GetNamedChild("DependentFile");
     if( poEntry != NULL )
     {
-        poDS->SetMetadataItem( "HFA_DEPENDENT_FILE", 
-                               poEntry->GetStringField( "dependent.string" ),
-                               "HFA" );
+        poDS->papszHFAMetadata = 
+            CSLSetNameValue( poDS->papszHFAMetadata, 
+                             "HFA_DEPENDENT_FILE", 
+                             poEntry->GetStringField( "dependent.string" ));
     }
 
 /* -------------------------------------------------------------------- */
@@ -2370,6 +2379,19 @@ CPLErr HFADataset::SetMetadata( char **papszMDIn, const char *pszDomain )
     bMetadataDirty = TRUE;
 
     return GDALPamDataset::SetMetadata( papszMDIn, pszDomain );
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char **HFADataset::GetMetadata( const char * pszDomain )
+
+{
+    if( pszDomain != NULL && EQUAL(pszDomain,"HFA") )
+        return papszHFAMetadata;
+    else
+        return GDALPamDataset::GetMetadata( pszDomain );
 }
 
 /************************************************************************/
