@@ -358,7 +358,7 @@ dnl ---------------------------------------------------------------------------
 dnl Check if PCRaster (libcsf) library is available.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(pcraster,[  --with-pcraster[=path]  Include PCRaster (libcsf) support],,)
+AC_ARG_WITH(pcraster,[  --with-pcraster[=ARG]   Include PCRaster (libcsf) support (ARG=internal, no or path)],,)
 
 if test "$with_pcraster" = "no" ; then
 
@@ -368,19 +368,34 @@ if test "$with_pcraster" = "no" ; then
 
 elif test "$with_pcraster" = "yes" -o "$with_pcraster" = "" ; then
 
-  AC_CHECK_LIB(csf,Mopen,PCRASTER_SETTING=yes,PCRASTER_SETTING=no,)
+  AC_CHECK_LIB(csf,Mopen,PCRASTER_SETTING=external,PCRASTER_SETTING=internal,$LIBS)
+  AC_CHECK_HEADERS(csf.h)
 
-  if test "$PCRASTER_SETTING" = "yes" ; then   
-    LIBS="-lcsf $LIBS"
+  if test "$PCRASTER_SETTING" = "external" -a "$ac_cv_header_csf_h" = "no" ; then
+    PCRASTER_SETTING=internal
   fi
+
+  if test "$PCRASTER_SETTING" = "external" ; then
+    LIBS="-lcsf $LIBS"
+    echo "using pre-installed libcsf."
+  else
+    echo "using internal csf code."
+  fi
+
+elif test "$with_pcraster" = "internal" ; then
+
+  PCRASTER_SETTING=internal
+
+  echo "using internal csf code."
 
 else
 
-  FITS_SETTING=yes
+  PCRASTER_SETTING=external
   LIBS="-L$with_pcraster/lib -lcsf $LIBS"
   EXTRA_INCLUDES="-I$with_pcraster/include $EXTRA_INCLUDES"
 
   echo "using libcsf from $with_pcraster."
+
 fi
 
 AC_SUBST(PCRASTER_SETTING,$PCRASTER_SETTING)
