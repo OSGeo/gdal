@@ -209,6 +209,8 @@ HAVE_FME        =       yes
 FME_INCLUDE	=	-I@X_FME_HOME@/fmeobjects/cpp
 endif
 
+# PCRaster support
+PCRASTER_SETTING	=	@PCRASTER_SETTING@
 
 OGDI_INCLUDE	=	@OGDI_INCLUDE@
 
