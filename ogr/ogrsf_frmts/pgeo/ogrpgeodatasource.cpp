@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/09/28 20:03:25  fwarmerdam
+ * Quietly give up if first SELECT from GDB_GeomColumns fails.  This must not
+ * be a personal geodatabase even though it is an .mdb file.
+ *
  * Revision 1.3  2005/09/24 04:59:43  fwarmerdam
  * support DSN-less connection directly to .mdb files
  *
@@ -122,11 +126,6 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
     bDSUpdate = bUpdate;
 
 /* -------------------------------------------------------------------- */
-/*      We ought to verify this is a personal geodatabase at this point.*/
-/* -------------------------------------------------------------------- */
-    
-
-/* -------------------------------------------------------------------- */
 /*      Collect list of tables and their supporting info from           */
 /*      GDB_GeomColumns.                                                */
 /* -------------------------------------------------------------------- */
@@ -137,9 +136,10 @@ int OGRPGeoDataSource::Open( const char * pszNewName, int bUpdate,
 
     if( !oStmt.ExecuteSQL() )
     {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
+        CPLDebug( "PGEO", 
                   "SELECT on GDB_GeomColumns fails, perhaps not a personal geodatabase?\n%s", 
                   oSession.GetLastError() );
+        return FALSE;
     }
 
     while( oStmt.Fetch() )
