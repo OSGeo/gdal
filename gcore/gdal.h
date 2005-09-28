@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.100  2005/09/28 21:29:30  fwarmerdam
+ * added RAT documentation
+ *
  * Revision 1.99  2005/09/24 19:01:52  fwarmerdam
  * added RAT related functions
  *
@@ -573,31 +576,31 @@ void CPL_DLL CPL_STDCALL GDALSetColorEntry( GDALColorTableH, int, const GDALColo
 /* ==================================================================== */
 
 typedef enum {
-    GFT_Integer, 
-    GFT_Real,
-    GFT_String
+    /*! Integer field */	   	   GFT_Integer , 
+    /*! Floating point (double) field */   GFT_Real,
+    /*! String field */                    GFT_String
 } GDALRATFieldType;
 
 typedef enum {
-    GFU_Generic = 0,
-    GFU_PixelCount = 1,
-    GFU_Name = 2,
-    GFU_Min = 3,
-    GFU_Max = 4,
-    GFU_MinMax = 5,
-    GFU_Red = 6,
-    GFU_Green = 7,
-    GFU_Blue = 8,
-    GFU_Alpha = 9,
-    GFU_RedMin = 10,
-    GFU_GreenMin = 11,
-    GFU_BlueMin = 12,
-    GFU_AlphaMin = 13,
-    GFU_RedMax = 14,
-    GFU_GreenMax = 15,
-    GFU_BlueMax = 16,
-    GFU_AlphaMax = 17,
-    GFU_MaxCount
+    /*! General purpose field. */          GFU_Generic = 0,  
+    /*! Histogram pixel count */           GFU_PixelCount = 1,
+    /*! Class name */                      GFU_Name = 2,
+    /*! Class range minimum */             GFU_Min = 3,
+    /*! Class range maximum */             GFU_Max = 4,
+    /*! Class value (min=max) */           GFU_MinMax = 5,
+    /*! Red class color (0-255) */         GFU_Red = 6,
+    /*! Green class color (0-255) */       GFU_Green = 7,
+    /*! Blue class color (0-255) */        GFU_Blue = 8,
+    /*! Alpha (0=transparent,255=opaque)*/ GFU_Alpha = 9,
+    /*! Color Range Red Minimum */         GFU_RedMin = 10,
+    /*! Color Range Green Minimum */       GFU_GreenMin = 11,
+    /*! Color Range Blue Minimum */        GFU_BlueMin = 12,
+    /*! Color Range Alpha Minimum */       GFU_AlphaMin = 13,
+    /*! Color Range Red Maximum */         GFU_RedMax = 14,
+    /*! Color Range Green Maximum */       GFU_GreenMax = 15,
+    /*! Color Range Blue Maximum */        GFU_BlueMax = 16,
+    /*! Color Range Alpha Maximum */       GFU_AlphaMax = 17,
+    /*! Maximum GFU value */               GFU_MaxCount
 } GDALRATFieldUsage;
 
 GDALRasterAttributeTableH CPL_DLL CPL_STDCALL 
