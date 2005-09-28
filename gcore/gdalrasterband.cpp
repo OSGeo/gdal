@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.73  2005/09/28 00:54:05  fwarmerdam
+ * Added some RAT docs.
+ *
  * Revision 1.72  2005/09/24 19:02:46  fwarmerdam
  * RAT functions honour GMO_IGNORE_UNIMPLEMENTED
  *
@@ -3098,6 +3101,16 @@ CPLErr CPL_STDCALL GDALSetDefaultHistogram( GDALRasterBandH hBand,
 /*                           GetDefaultRAT()                            */
 /************************************************************************/
 
+/**
+ * Fetch default Raster Attribute Table.
+ *
+ * A RAT will be returned if there is a default one associated with the
+ * band, otherwise NULL is returned.  The returned RAT is owned by the
+ * band and should not be deleted, or altered by the application. 
+ * 
+ * @return NULL, or a pointer to an internal RAT owned by the band.
+ */
+
 const GDALRasterAttributeTable *GDALRasterBand::GetDefaultRAT()
 
 {
@@ -3118,6 +3131,19 @@ GDALRasterAttributeTableH CPL_STDCALL GDALGetDefaultRAT( GDALRasterBandH hBand)
 /************************************************************************/
 /*                           SetDefaultRAT()                            */
 /************************************************************************/
+
+/**
+ * Set default Raster Attribute Table.
+ *
+ * Associates a default RAT with the band.  If not implemented for the
+ * format a CPLE_NotSupported error will be issued.  If successful a copy
+ * of the RAT is made, the original remains owned by the caller.
+ *
+ * @param poRAT the RAT to assign to the band.
+ *
+ * @return CE_None on success or CE_Failure if unsupported or otherwise 
+ * failing.
+ */
 
 CPLErr GDALRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
 
