@@ -10,6 +10,10 @@
  * This is not thread safe.
  *
  * $Log$
+ * Revision 1.3  2005/09/28 18:24:36  kruland
+ * Removed global flag bExceptionHappened.  Create a custom error handler which
+ * writes messages for CE_Fatal errors.
+ *
  * Revision 1.2  2005/09/18 07:36:18  cfis
  * Only raise exceptions on failures or fatal errors.  The previous code rose exceptions on debug messages, warning messages and when nothing at all happened.
  *
@@ -22,12 +26,13 @@
 
 %{
 int bUseExceptions=0;
-int bErrorHappened=0;
 
-void ErrorHandler(CPLErr eclass, int code, const char *msg ) {
-  /* Only raise exceptions on failures and fatal errors */
-  if (eclass == CE_Failure || eclass == CE_Fatal) {
-    bErrorHappened = 1;
+void VeryQuiteErrorHandler(CPLErr eclass, int code, const char *msg ) {
+  /* If the error class is CE_Fatal, we want to have a message issued
+     because the CPL support code does an abort() before any exception
+     can be generated */
+  if (eclass == CE_Fatal ) {
+    CPLDefaultErrorHandler(eclass, code, msg );
   }
 }
 %}
@@ -35,13 +40,11 @@ void ErrorHandler(CPLErr eclass, int code, const char *msg ) {
 %inline %{
 void UseExceptions() {
   bUseExceptions = 1;
-  bErrorHappened = 0;
-  CPLSetErrorHandler( (CPLErrorHandler)ErrorHandler );
+  CPLSetErrorHandler( (CPLErrorHandler) VeryQuiteErrorHandler );
 }
 
 void DontUseExceptions() {
   bUseExceptions = 0;
-  bErrorHappened = 0;
   CPLSetErrorHandler( CPLDefaultErrorHandler );
 }
 %}
@@ -50,10 +53,13 @@ void DontUseExceptions() {
 
 %exception {
   {
-    bErrorHappened = 0;
+    CPLErrorReset();
     $action
-    if ( bErrorHappened ) {
-      SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
     }
   }
 }
