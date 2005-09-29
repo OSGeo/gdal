@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/09/29 00:59:57  fwarmerdam
+ * updated
+ *
  * Revision 1.1  2005/09/16 00:13:12  fwarmerdam
  * New
  *
@@ -44,7 +47,7 @@ CPL_CVSID("$Id$");
 /*                                main()                                */
 /************************************************************************/
 
-static int main( int argc, char ** argv )
+int main( int argc, char ** argv )
 
 {
     const char *pszSrcFilename = NULL;
@@ -177,11 +180,3 @@ static int main( int argc, char ** argv )
 
     GDALClose( hSrcDS );
 }
-
-
-
-
-
-
-
-
