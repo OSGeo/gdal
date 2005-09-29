@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/09/29 00:50:36  fwarmerdam
+ * Added doc note.
+ *
  * Revision 1.4  2005/09/28 21:29:30  fwarmerdam
  * added RAT documentation
  *
@@ -77,6 +80,9 @@ CPL_CVSID("$Id$");
  * value at which the categories start, and the size of a category.  This
  * is called "Linear Binning" and the information is kept specially on 
  * the raster attribute table as a whole.
+ *
+ * RATs are normally associated with GDALRasterBands and be be queried
+ * using the GDALRasterBand::GetDefaultRAT() method.  
  */
 
 /************************************************************************/
