@@ -6,11 +6,13 @@ use osr;
 use ogr;
 $loaded = 1;
 
+#$datasource = ogr::Open(undef);
+
 $verbose = 0;
 
 # tests:
 #
-# for explicitly given raster types: 
+# for explicitly specified raster types: 
 #   Create dataset
 #   Get/SetGeoTransform
 #   Get/SetNoDataValue
@@ -18,8 +20,12 @@ $verbose = 0;
 #   WriteRaster
 #   Open dataset
 #   ReadRaster
+#   GCPs
 #
-# for all OGR drivers:
+# not yet tested:
+#   Overviews
+#
+# for all available OGR drivers:
 #   Create datasource
 #   Create layer
 #   Create field
@@ -27,6 +33,13 @@ $verbose = 0;
 #   Open layer
 #   Open field
 #   Open geom
+#   Cmp points
+#
+# not yet tested
+#   transactions
+#   GEOS methods
+#   osr
+#   XML typemaps
 #
 # if verbose = 1, all operations (skip,fail,ok) are printed out
 
@@ -53,6 +66,17 @@ sub dumphash {
     }
 }
 
+%no_colortable = map {$_=>1} ('ELAS','BMP','ILWIS','BT','RMF','NITF');
+
+%no_nodatavalue = map {$_=>1} ('NITF','HFA','ELAS','BMP','ILWIS','BT','IDA','RMF');
+
+%no_geotransform = map {$_=>1} ('NITF','PAux','PNM','MFF','ENVI','BMP','EHdr');
+
+%no_setgcp = map {$_=>1} ('HFA','ELAS','MEM','BMP','PCIDSK','ILWIS','PNM','ENVI',
+			  'NITF','EHdr','MFF','MFF2','BT','IDA','RMF');
+
+%no_open = map {$_=>1} ('VRT','MEM','ILWIS','MFF2');
+
 @fails;
 
 @tested_drivers = ('VRT','GTiff','NITF','HFA','SAR_CEOS','CEOS','ELAS',
@@ -62,17 +86,11 @@ sub dumphash {
 		   'MFF','MFF2','FujiBAS','GSC','FAST','BT','LAN','CPG','IDA',
 		   'NDF','L1B','FIT','RMF','USGSDEM','GXF');
 
-#@tested_drivers = ('GTiff');
-
-$n = gdal::GetDriverCount();
+#@tested_drivers = ('VRT');
 
 for $i (@tested_drivers) {
-    my $driver = gdal::GetDriverByName($i);
 
-#for $i (0..$n-1) {
-#    $driver = gdal::GetDriver($i);
-#    print "$driver->{ShortName}\n";
-#    next;
+    my $driver = gdal::GetDriverByName($i);
 
     $name = $driver->{ShortName};
     
@@ -85,31 +103,30 @@ for $i (@tested_drivers) {
     
     @create = split /\s+/,$metadata->{DMD_CREATIONDATATYPES};
     
-    @create = ('Byte','Float32','UInt16',
-	       'Int16','CInt16','CInt32','CFloat32') if $driver->{ShortName} eq 'MFF2';
+    @create = ('Byte','Float32','UInt16','Int16','CInt16','CInt32','CFloat32') 
+	if $driver->{ShortName} eq 'MFF2';
     
-    $ext = '.'.$metadata->{DMD_EXTENSION};
-
     unless (@create) {
 	mytest('skipped: no creation datatypes',undef,$name,'dataset create');
 	next;
     }
 
     if ($driver->{ShortName} eq 'PAux') {
-	mytest('skipped: PAux',undef,$name,'dataset create');
+	mytest('skipped: does not work?',undef,$name,'dataset create');
 	next;
     }
 
+    my $ext = '.'.$metadata->{DMD_EXTENSION};
+    $ext = '' if $driver->{ShortName} eq 'ILWIS';
+
     for $type (@create) {
 
-	if (($type eq 'CInt32') and ('MFF2' eq $driver->{ShortName})) {
-	    mytest('skipped: will cause a fatal error',undef,$name,$type,'dataset create');
+	if (($driver->{ShortName} eq 'MFF2') and ($type eq 'CInt32')) {
+	    mytest('skipped: does not work?',undef,$name,$type,'dataset create');
 	    next;
 	}
 
 	$typenr = $types{'GDT_'.$type};
-
-	$ext = '' if $driver->{ShortName} eq 'ILWIS';
 
 	$filename = "tmp_ds_".$driver->{ShortName}."_$type$ext";
 	$width = 100;
@@ -128,13 +145,11 @@ for $i (@tested_drivers) {
 
 	my $band = $dataset->GetRasterBand(1);
 	
-	if ($driver->{ShortName} ne 'NITF' and
-	    $driver->{ShortName} ne 'PAux' and
-	    $driver->{ShortName} ne 'PNM' and
-	    $driver->{ShortName} ne 'MFF' and
-	    $driver->{ShortName} ne 'ENVI' and
-	    $driver->{ShortName} ne 'BMP' and
-	    $driver->{ShortName} ne 'EHdr') 
+	if ($no_geotransform{$driver->{ShortName}}) 
+	{
+	    mytest('skipped',undef,$name,$type,'Get/SetGeoTransform');
+
+	} else
 	{
 	    my $transform = $dataset->GetGeoTransform();
 	    $transform->[5] = 12;
@@ -142,36 +157,26 @@ for $i (@tested_drivers) {
 	    my $transform2 = $dataset->GetGeoTransform();
 	    mytest($transform->[5] == $transform2->[5],
 		   "$transform->[5] != $transform2->[5]",$name,$type,'Get/SetGeoTransform');
-	} else {
-	    mytest('skipped',undef,$name,$type,'Get/SetGeoTransform');
 	}
-	
-	if ($driver->{ShortName} ne 'NITF' and 
-	    $driver->{ShortName} ne 'HFA' and
-	    $driver->{ShortName} ne 'ELAS' and
-	    $driver->{ShortName} ne 'BMP' and
-	    $driver->{ShortName} ne 'ILWIS' and
-	    $driver->{ShortName} ne 'BT' and
-	    $driver->{ShortName} ne 'IDA' and
-	    $driver->{ShortName} ne 'RMF') 
+
+	if ($no_nodatavalue{$driver->{ShortName}}) 
+	{
+	    mytest('skipped',undef,$name,$type,'Get/SetNoDataValue');
+
+	} else
 	{
 	    $band->SetNoDataValue(5.5);
 	    my $value = $band->GetNoDataValue;
 	    mytest($value == 5.5,"$value != 5.5",$name,$type,'Get/SetNoDataValue');
-	} else {
-	    mytest('skipped',undef,$name,$type,'Get/SetNoDataValue');
 	}
 	
-	if (($driver->{ShortName} eq 'GTiff' and ($type ne 'Byte' or $type ne 'UInt16')) or
-	    ($driver->{ShortName} eq 'ELAS') or
-	    ($driver->{ShortName} eq 'BMP') or
-	    ($driver->{ShortName} eq 'ILWIS') or
-	    ($driver->{ShortName} eq 'BT') or
-	    ($driver->{ShortName} eq 'RMF') or
-	    ($driver->{ShortName} eq 'NITF'))
+	if ($no_nodatavalue{$driver->{ShortName}} or
+	    ($driver->{ShortName} eq 'GTiff' and ($type ne 'Byte' or $type ne 'UInt16')))
 	{
 	    mytest('skipped',undef,$name,$type,'Colortable');
-	} else {
+
+	} else 
+	{
 	    my $colortable = new gdal::ColorTable();
 	    @rgba = (255,0,0,255);
 	    $colortable->SetColorEntry(0, \@rgba);
@@ -186,31 +191,58 @@ for $i (@tested_drivers) {
 	}
 
 	my $pc = $pack_types{"GDT_$type"};
-	if ($pc and $driver->{ShortName} ne 'VRT') {
-
+	
+	if ($driver->{ShortName} eq 'VRT') 
+	{
+	    mytest('skipped',"",$name,$type,'WriteRaster');
+	    
+	} elsif (!$pc) 
+	{
+	    mytest('skipped',"no packtype defined yet",$name,$type,'WriteRaster');
+	    
+	} else 
+	{
 	    $pc = "${pc}[$width]";
 	    $scanline = pack($pc,(1..$width));
 
 	    for my $yoff (0..$height-1) {
 		$band->WriteRaster( 0, $yoff, $width, 1, $scanline );
 	    }
+	}
 
-	} else {
-	    mytest('skipped',undef,$name,$type,'WriteRaster');
+	if ($no_setgcp{$driver->{ShortName}})
+	{
+	    mytest('skipped',undef,$name,$type,'Set/GetGCPs');
+
+	} else 
+	{
+	    my @gcps = ();
+	    push @gcps,new gdal::GCP(1.1,2.2);
+	    push @gcps,new gdal::GCP(2.1,3.2);
+	    my $po = "ho ho ho";
+	    $dataset->SetGCPs(\@gcps,$po);
+	    my $c = $dataset->GetGCPCount();
+	    my $p = $dataset->GetGCPProjection();
+	    my $gcps = $dataset->GetGCPs();
+	    my $y1 = $gcps->[0]->{GCPY};
+	    my $y2 = $gcps->[1]->{GCPY};
+	    my $y1o = $gcps[0]->{GCPY};
+	    my $y2o = $gcps[1]->{GCPY};
+	    mytest(($c == 2 and $p eq $po and $y1 == $y1o and $y2 == $y2o),
+		   "$c != 2 or $p ne $po or $y1 != $y1o or $y2 != $y2o",$name,$type,'Set/GetGCPs');
 	}
 
 	undef $band;
 	undef $dataset;
 	
-	if ($driver->{ShortName} eq 'VRT' or 
-	    $driver->{ShortName} eq 'MEM' or 
-	    $driver->{ShortName} eq 'ILWIS' or
+	if ($no_open{$driver->{ShortName}} or 
 	    ($driver->{ShortName} eq 'MFF2' and 
 	     ($type eq 'Int32' or $type eq 'Float64' or $type eq 'CFloat64')))
 	{
 	    mytest('skipped',undef,$name,$type,'open');
-	} else {
 	    
+	} else 
+	{    
 	    $ext = '.'.$metadata->{DMD_EXTENSION};
 	    $filename = "tmp_ds_".$driver->{ShortName}."_$type$ext";
 	    
@@ -229,7 +261,6 @@ for $i (@tested_drivers) {
 
 		    $scanline = $band->ReadRaster( 0, 0, $width, 1);
 		    my @data = unpack($pc, $scanline);
-
 		    mytest($data[49] == 50,'',$name,$type,'ReadRaster');
 
 		}
@@ -340,29 +371,16 @@ for $i (0..ogr::GetDriverCount()-1) {
 	    $t = $type eq 'wkbUnknown' ? $ogr::wkbPolygon : $types{$type};
 	    
 	    my $geom = new ogr::Geometry($t);
-	    my $r;
 
-	    if ($type eq 'wkbPoint' or $type eq 'wkbLineString') {
-		$geom->AddPoint(1,1);
-		$geom->AddPoint(2,2);
-	    } elsif ($type eq 'wkbUnknown' or $type eq 'wkbPolygon') {
-		$r = new ogr::Geometry($ogr::wkbLinearRing);
-		$r->AddPoint(0,0);
-		$r->AddPoint(0,1);
-		$r->AddPoint(1,1);
-		$r->AddPoint(1,0);
-		$geom->AddGeometry($r);
-		$geom->CloseRings;
-	    } else {
-#		print "what to add to $type\n";
-		mytest('skipped',undef,$name,$type,'geom create');
-	    }
+	    test_geom($geom,$name,$type,'create');
 	    
 	    $feature->SetGeometry($geom);
 
 	    $i = 0;
 	    for $ft (@field_types) {
-		$feature->SetField($i++,2);
+		my $v = 2;
+		$v = 'kaksi' if $ft eq 'OFTString';
+		$feature->SetField($i++,$v);
 	    }
 
 	    $layer->CreateFeature($feature);
@@ -427,7 +445,25 @@ for $i (0..ogr::GetDriverCount()-1) {
 			$t = $type eq 'wkbUnknown' ? $ogr::wkbPolygon : $types{$type};
 			$t2 = $geom->GetGeometryType;
 			mytest($t == $t2,"$t != $t2",$name,$type,'geom open');
+			test_geom($geom,$name,$type,'open');
 		    }
+
+		    $i = 0;
+		    for $ft (@field_types) {
+			#$feature->SetField($i++,2);
+			my $f;
+			if ($ft eq 'OFTString') {
+			    $f = $feature->GetFieldAsString($i);
+			    mytest($f eq 'kaksi',"$f ne 'kaksi'",$name,$type,'GetFieldAsString');
+			} else {
+			    $f = $feature->GetFieldAsInteger($i);
+			    mytest($f == 2,"$f != 2",$name,$type,'GetFieldAsInteger');
+			    $f = $feature->GetFieldAsDouble($i);
+			    mytest($f == 2,"$f != 2",$name,$type,'GetFieldAsDouble');
+			}
+			$i++;
+		    }
+		    
 		}
 	    } else {
 		mytest('skipped',undef,$name,$type,'feature open');
@@ -453,6 +489,77 @@ if (@fails) {
 
 system "rm -rf tmp_ds_*";
 
+sub test_geom {
+    my($geom,$name,$type,$mode) = @_;
+#    my($pc,$gn);
+
+    my $pc = $geom->GetPointCount;
+    my $gn = $geom->GetGeometryCount;
+    my $i = 0;
+
+    if ($type eq 'wkbPoint') {
+
+	if ($mode eq 'create') {
+	    $geom->AddPoint(1,1);
+	} else {
+	    mytest($pc == 1,"$pc != 1",$name,$type,'point count');
+	    mytest($gn == 0,"$gn != 0",$name,$type,'geom count');
+	    my @xy = ($geom->GetX($i),$geom->GetY($i));
+	    mytest(cmp_ar(2,\@xy,[1,1]),"(@xy) != (1,1)",$name,$type,"get point");
+	}
+
+    } elsif ($type eq 'wkbLineString') {
+
+	if ($mode eq 'create') {
+	    $geom->AddPoint(1,1);
+	    $geom->AddPoint(2,2);
+	} else {
+	    mytest($pc == 2,"$pc != 2",$name,$type,'point count');
+	    mytest($gn == 0,"$gn != 0",$name,$type,'geom count');
+	    my @xy = ($geom->GetX($i),$geom->GetY($i)); $i++;
+	    mytest(cmp_ar(2,\@xy,[1,1]),"(@xy) != (1,1)",$name,$type,"get point");
+	    @xy = ($geom->GetX($i),$geom->GetY($i));
+	    mytest(cmp_ar(2,\@xy,[2,2]),"(@xy) != (2,2)",$name,$type,"get point");
+	}
+
+    } elsif ($type eq 'wkbUnknown' or $type eq 'wkbPolygon') {
+
+	my @pts = ([1.1,1],[1.11,0],[0,0.2],[0,2.1],[1,1]);
+
+	if ($mode eq 'create') {
+	    my $r = new ogr::Geometry($ogr::wkbLinearRing);
+	    pop @pts;
+	    for $pt (@pts) {
+		$r->AddPoint(@$pt);
+	    }
+	    $geom->AddGeometry($r);
+	    $geom->CloseRings;
+	} else {
+	    mytest($gn == 1,"$gn != 1",$name,$type,'geom count');
+	    my $r = $geom->GetGeometryRef(0);
+	    $pc = $r->GetPointCount;
+	    mytest($pc == 5,"$pc != 5",$name,$type,'point count');
+#	    @pts = reverse @pts if ($name eq 'MapInfo File');
+	    for my $cxy (@pts) {
+		my @xy = ($r->GetX($i),$r->GetY($i)); $i++;
+		mytest(cmp_ar(2,\@xy,$cxy),"(@xy) != (@$cxy)",$name,$type,"get point");
+	    }
+	}
+
+    } else {
+	mytest('skipped',undef,$name,$type,'geom create/open');
+    }
+}
+
+sub cmp_ar {
+    my($n,$a1,$a2) = @_;
+    return 0 unless $n == @$a1;
+    return 0 unless $#$a1 == $#$a2;
+    for my $i (0..$#$a1) {
+	return 0 unless abs($a1->[$i] - $a2->[$i]) < 0.001;
+    }
+    return 1;
+}
 
 sub mytest {
     my $test = shift;
