@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/09/29 11:50:37  dron
+ * Calculate ellipsoid array size dynamically.
+ *
  * Revision 1.6  2005/04/19 12:13:36  dron
  * Do not fetch zone code from the projection parameters if the one supplied.
  *
@@ -137,7 +140,7 @@ static long aoEllips[] =
     0// FIXME: WGS 60 --- skipped
 };
 
-#define NUMBER_OF_ELLIPSOIDS    31
+#define NUMBER_OF_ELLIPSOIDS    (sizeof(aoEllips)/sizeof(aoEllips[0]))
 
 /************************************************************************/
 /*                        USGSGetUOMLengthInfo()                        */
@@ -294,7 +297,7 @@ USGSGetEllipsoidInfo( int nCode, char ** ppszName,
 }
 
 /************************************************************************/
-/*                         OSRImportFromUSGSI()                         */
+/*                         OSRImportFromUSGS()                          */
 /************************************************************************/
 
 OGRErr OSRImportFromUSGS( OGRSpatialReferenceH hSRS, long iProjsys,
