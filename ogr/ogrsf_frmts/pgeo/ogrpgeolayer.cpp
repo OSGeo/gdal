@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/09/29 19:49:48  fwarmerdam
+ * dont try to translate GUID SRTEXT entries
+ *
  * Revision 1.3  2005/09/21 00:55:42  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -368,12 +371,22 @@ void OGRPGeoLayer::LookupSRID( int nSRID )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Check that it isn't just a GUID.  We don't know how to          */
+/*      translate those.                                                */
+/* -------------------------------------------------------------------- */
+    char *pszSRText = (char *) oStmt.GetColData(0);
+
+    if( pszSRText[0] == '{' )
+    {
+        CPLDebug( "PGEO", "Ignoreing GUID SRTEXT: %s", pszSRText );
+        return;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Turn it into an OGRSpatialReference.                            */
 /* -------------------------------------------------------------------- */
     poSRS = new OGRSpatialReference();
     
-    char *pszSRText = (char *) oStmt.GetColData(0);
-
     if( poSRS->importFromWkt( &pszSRText ) != OGRERR_NONE )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
