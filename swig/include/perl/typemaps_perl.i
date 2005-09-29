@@ -4,6 +4,10 @@
 
 /*
  * $Log$
+ * Revision 1.7  2005/09/29 14:00:19  kruland
+ * Fixed: %typemap(perl5,argout) (int *nGCPs, GDAL_GCP const **pGCPs )
+ * Fixed: %typemap(perl5,in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs )
+ *
  * Revision 1.6  2005/09/27 14:32:01  kruland
  * Fixed the in,numinputs=1 int nLen, char *pBuf typemap used by
  * ReadRaster & WriteRaster (thanks Ari).
@@ -268,9 +272,9 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
                                 (*$2)[i].dfGCPLine,
                                 (*$2)[i].pszInfo,
                                 (*$2)[i].pszId );
-	
-    av_store(dict, i, 
-       SWIG_NewPointerObj((void*)o,SWIGTYPE_p_GDAL_GCP,1) );
+    SV *sv = newSV(0);
+    SWIG_MakePtr( sv, (void*)o, $*2_descriptor, SWIG_SHADOW|SWIG_OWNER);
+    av+store(dict, i, sv);
   }
   $result = newRV_noinc((SV*)dict);
   argvi++;
@@ -283,7 +287,7 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
     SWIG_fail;
   }
   AV *av = (AV*)(SvRV($input));
-  $1 = av_len(av)-1;
+  $1 = av_len(av)+1;
   tmpGCPList = (GDAL_GCP*) malloc($1*sizeof(GDAL_GCP));
   $2 = tmpGCPList;
   for( int i = 0; i<$1; i++ ) {
@@ -293,7 +297,7 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
     if ( ! item ) {
       SWIG_fail;
     }
-    memcpy( (void*) item, (void*) tmpGCPList, sizeof( GDAL_GCP ) );
+    memcpy( (void*) tmpGCPList, (void*) item, sizeof( GDAL_GCP ) );
     ++tmpGCPList;
   }
 }
