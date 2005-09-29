@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2005/09/29 20:22:26  dmorissette
+ * Improved support for MapInfo modified TM projections in exportToProj4()
+ * (Anthony D - MITAB bug 1155)
+ *
  * Revision 1.55  2005/09/05 20:42:52  fwarmerdam
  * ensure that non-geographic, non-projected srses return empty string
  *
@@ -1133,7 +1137,12 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
 
-    else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
+    else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) ||
+             EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_MI_21) ||
+             EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_MI_22) ||
+             EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_MI_23) ||
+             EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_MI_24) ||
+             EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_MI_25) )
     {
         int bNorth;
         int nZone = GetUTMZone( &bNorth );
