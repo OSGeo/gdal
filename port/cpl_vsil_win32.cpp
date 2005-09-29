@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/09/29 03:24:56  fwarmerdam
+ * Don't blow a gasket if nSize is 0 in read or write.
+ *
  * Revision 1.12  2005/09/11 18:32:42  fwarmerdam
  * Fixed up a few problems, works now
  *
@@ -194,6 +197,8 @@ size_t VSIWin32Handle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
     if( !ReadFile( hFile, pBuffer, (DWORD)(nSize*nCount), &dwSizeRead, NULL ) )
         nResult = 0;
+    else if( nSize == 0 )
+        nResult = 0;
     else
         nResult = dwSizeRead / nSize;
 
@@ -211,6 +216,8 @@ size_t VSIWin32Handle::Write( void * pBuffer, size_t nSize, size_t nCount )
     size_t      nResult;
 
     if( !WriteFile(hFile,pBuffer,(DWORD)(nSize*nCount),&dwSizeWritten,NULL) )
+        nResult = 0;
+    else if( nSize == 0)
         nResult = 0;
     else
         nResult = dwSizeWritten / nSize;
