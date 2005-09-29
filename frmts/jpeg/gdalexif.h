@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2005/09/29 01:00:48  fwarmerdam
+ * enable MakerNote
+ *
  * Revision 1.5  2005/09/22 15:00:28  fwarmerdam
  * Reformat things more neatly.
  *
@@ -159,8 +162,8 @@ static struct tagname {
     { 0x9208,	"EXIF_LightSource"},
     { 0x9209,	"EXIF_Flash"},
     { 0x920A,	"EXIF_FocalLength"},
-    { 0x9214,   	"EXIF_SubjectArea"},
-//	{ 0x927C,	"EXIF_MakerNote"},
+    { 0x9214,   "EXIF_SubjectArea"},
+    { 0x927C,	"EXIF_MakerNote"},
     { 0x9286,	"EXIF_UserComment"},
     { 0x9290,	"EXIF_SubSecTime"},
     { 0x9291,	"EXIF_SubSecTime_Original"},
