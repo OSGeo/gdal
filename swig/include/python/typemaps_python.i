@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.40  2005/09/29 14:02:23  kruland
+ * Fixed memcpy in %typemap(in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs)
+ *
  * Revision 1.39  2005/09/13 02:58:41  kruland
  * Use the ogr_error_map.i include file.
  *
@@ -479,7 +482,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     if ( ! item ) {
       SWIG_fail;
     }
-    memcpy( (void*) item, (void*) tmpGCPList, sizeof( GDAL_GCP ) );
+    memcpy( (void*) tmpGCPList, (void*) item, sizeof( GDAL_GCP ) );
     ++tmpGCPList;
   }
 }
