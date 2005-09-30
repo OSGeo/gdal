@@ -2,7 +2,9 @@
 # nmake makefile for gdal
 # should go as makefile.vc in frmts/pcraster
 
-OBJ = pcrasterdataset.obj
+OBJ = pcrasterdataset.obj pcrastermisc.obj pcrasterutil.obj \
+	pcrasterrasterband.obj
+
 !IFNDEF PCRASTER_EXTERNAL_LIB
 EXTRAFLAGS = 	-Ilibcsf
 !ENDIF
@@ -12,7 +14,8 @@ GDAL_ROOT	=	..\..
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 default:	$(OBJ)
-	copy *.obj ..\o
+	copy *.obj \
+	..\o
 !IFNDEF PCRASTER_EXTERNAL_LIB
 	cd libcsf
 	$(MAKE) /f makefile.vc
@@ -24,3 +27,4 @@ clean:
 	cd libcsf
 	$(MAKE) /f makefile.vc clean
 	cd ..
+
