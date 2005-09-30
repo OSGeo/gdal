@@ -122,7 +122,7 @@ template<typename T>
  namespace detail {
    template<typename T>
     void setMVMemSet(T *v, size_t n) {
-     std::memset(v,MV_UINT1,n*sizeof(T));
+     memset(v,MV_UINT1,n*sizeof(T));
     }
  };
 
@@ -138,7 +138,7 @@ template<typename T>
 # undef PCR_DEF_SETMV_MEMSET
   template<>
     inline void setMV(INT1 *v, size_t n) {
-     std::memset(v,MV_INT1,n);
+        memset(v,MV_INT1,n);
     }
 
 //! replace a value equal to \a nonStdMV with the standard MV
