@@ -2917,7 +2917,8 @@ AUTOLOAD_DIR=$AUTOLOAD_DIR
 
 GRASS_SETTING=no
 GRASS_INCLUDE=
-export GRASS_INCLUDE GRASS_SETTING
+GRASS_GISBASE=
+export GRASS_INCLUDE GRASS_SETTING GRASS_GISBASE
 
 
 # Check whether --with-grass or --without-grass was given.
@@ -2941,7 +2942,7 @@ if test "${ac_cv_lib_grass_gis_G_asprintf+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgrass_gis -L$with_grass/lib -lgrass_datetime $LIBS"
+LIBS="-lgrass_gis -L$with_grass/lib -lgrass_datetime -lgrass_gproj $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -3007,7 +3008,7 @@ fi
 
 
   if test "$GRASS_SETTING" = "grass57+" ; then
-    LIBS="-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
+    LIBS="-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj $LIBS"
     GRASS_INCLUDE="-I$with_grass/include"
     GRASS_GISBASE="$with_grass"
   else
