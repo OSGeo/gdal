@@ -10,6 +10,9 @@
  * This is not thread safe.
  *
  * $Log$
+ * Revision 1.4  2005/09/30 20:21:31  kruland
+ * Removed the file global variable bUseExceptions.
+ *
  * Revision 1.3  2005/09/28 18:24:36  kruland
  * Removed global flag bExceptionHappened.  Create a custom error handler which
  * writes messages for CE_Fatal errors.
@@ -25,8 +28,6 @@
  */
 
 %{
-int bUseExceptions=0;
-
 void VeryQuiteErrorHandler(CPLErr eclass, int code, const char *msg ) {
   /* If the error class is CE_Fatal, we want to have a message issued
      because the CPL support code does an abort() before any exception
@@ -39,12 +40,10 @@ void VeryQuiteErrorHandler(CPLErr eclass, int code, const char *msg ) {
 
 %inline %{
 void UseExceptions() {
-  bUseExceptions = 1;
   CPLSetErrorHandler( (CPLErrorHandler) VeryQuiteErrorHandler );
 }
 
 void DontUseExceptions() {
-  bUseExceptions = 0;
   CPLSetErrorHandler( CPLDefaultErrorHandler );
 }
 %}
@@ -52,14 +51,10 @@ void DontUseExceptions() {
 %include exception.i
 
 %exception {
-  {
     CPLErrorReset();
     $action
-    if ( bUseExceptions ) {
-      CPLErr eclass = CPLGetLastErrorType();
-      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-      }
+    CPLErr eclass = CPLGetLastErrorType();
+    if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+      SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
     }
-  }
 }
