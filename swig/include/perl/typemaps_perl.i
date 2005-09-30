@@ -4,6 +4,9 @@
 
 /*
  * $Log$
+ * Revision 1.8  2005/09/30 18:52:28  kruland
+ * Fixed typo.
+ *
  * Revision 1.7  2005/09/29 14:00:19  kruland
  * Fixed: %typemap(perl5,argout) (int *nGCPs, GDAL_GCP const **pGCPs )
  * Fixed: %typemap(perl5,in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs )
@@ -274,7 +277,7 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
                                 (*$2)[i].pszId );
     SV *sv = newSV(0);
     SWIG_MakePtr( sv, (void*)o, $*2_descriptor, SWIG_SHADOW|SWIG_OWNER);
-    av+store(dict, i, sv);
+    av_store(dict, i, sv);
   }
   $result = newRV_noinc((SV*)dict);
   argvi++;
