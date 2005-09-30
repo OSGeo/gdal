@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2005/09/30 23:53:35  mbrudka
+ * Fixed bug 940: http://bugzilla.remotesensing.org/show_bug.cgi?id=940
+ *
  * Revision 1.37  2005/09/21 00:53:20  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -560,7 +563,6 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
 	    int *outer;     /* list of outer rings */ 
             /* outer ring index for inner rings, -1 for outer rings */ 
 	    int *outside;   
-            int lastOuterRing = 0;
 
 	    direction = (int *) CPLMalloc( psShape->nParts * sizeof(int) );
 	    outer = (int *) CPLMalloc( psShape->nParts * sizeof(int) );
@@ -570,7 +572,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
 	    for( iRing = 0; iRing < psShape->nParts; iRing++ ) {
 		direction[iRing] = RingDirection ( psShape, iRing);
 		if ( direction[iRing] == 1 ) {
-		    outer[nOuter] = lastOuterRing = iRing;
+		    outer[nOuter] = iRing;
 		    nOuter++;
 		}
 		outside[iRing] = -1;
@@ -581,7 +583,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
                    ie. if there is one outer ring then all inner rings are inside */
                 for( iRing = 0; iRing < psShape->nParts; iRing++ ) {
                     if ( direction[iRing] == -1 ) {
-                        outside[iRing] = lastOuterRing;
+                        outside[iRing] = outer[ 0 ];
                     }
                 }
             }
@@ -600,22 +602,24 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
                 /* ring then this inner ring is inside the outer ring. Otherwise that shapefile is */
                 /* broken.. */
                 for( iRing = 0; iRing < psShape->nParts; iRing++ ) {
-                    /* Find the outer ring for iRing */
-                    for( oRing = 0; oRing < nOuter; oRing++ ) {
-                        if ( extents[ outer[ oRing ] ].contains( extents[ iRing ] ) ) {
-                            /* the outer ring contains the inner ring, we have to execute some 
-                               additional tests */ 
-                            if ( outside[ iRing ] == -1 ) {
-                                /* this is the first outer ring, assume it containes this inner iRing */
-                                outside[ iRing ] = oRing;
+                    if ( direction[ iRing ] != 1 ) { /* inner ring */                    
+                        /* Find the outer ring for iRing */
+                        for( oRing = 0; oRing < nOuter; oRing++ ) {
+                            if ( extents[ outer[ oRing ] ].contains( extents[ iRing ] ) ) {
+                                /* the outer ring contains the inner ring, we have to execute some 
+                                   additional tests */ 
+                                if ( outside[ iRing ] == -1 ) {
+                                    /* this is the first outer ring, assume it containes this inner iRing */
+                                    outside[ iRing ] = outer[ oRing ];
+                                }
+                                else { 
+                                    /* this is another outer ring, which contains iRing, have to distinguish
+                                       between this and previous outer rings using RingInPoint. Here is a place
+                                       for some optimization as sometimes we may check the same ring many times*/
+                                    if ( !RingInRing( psShape, outside[ iRing ], iRing ) )
+                                        outside[ iRing ] = outer[ oRing ];
+                                }                            
                             }
-                            else { 
-                                /* this is another outer ring, which contains iRing, have to distinguish
-                                   between this and previous outer rings using RingInPoint. Here is a place
-                                   for some optimization as sometimes we may check the same ring many times*/
-                                if ( !RingInRing( psShape, outside[ iRing ], iRing ) )
-                                    outside[ iRing ] = oRing;
-                            }                            
                         }
                     }
                 }                    
