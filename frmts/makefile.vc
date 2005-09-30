@@ -7,7 +7,7 @@ EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
 		-DFRMT_envisat -DFRMT_aaigrid -DFRMT_usgsdem -DFRMT_l1b \
 		-DFRMT_fit -DFRMT_vrt -DFRMT_xpm -DFRMT_bmp -DFRMT_rmf \
 		-DFRMT_nitf -DFRMT_pcidsk -DFRMT_airsar -DFRMT_rs2 \
-		-DFRMT_ilwis -DFRMT_msgn -DFRMT_rik
+		-DFRMT_ilwis -DFRMT_msgn -DFRMT_rik -DFRMT_pcraster
 
 MOREEXTRA =	
 
