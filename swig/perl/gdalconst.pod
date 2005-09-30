@@ -192,11 +192,13 @@ http://www.gdal.org
 
 =head1 AUTHORS
 
-The GDAL bindings team:
+The GDAL bindings team (in alphabetical order):
 
-kruland at ku.edu
-hobu at iastate.edu
 ari.jolma at tkk.fi
+cfis at interserv.com
+hobu at iastate.edu
+kruland at ku.edu
+warmerdam at pobox.com
 
 =head1 COPYRIGHT AND LICENSE
 

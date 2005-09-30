@@ -361,7 +361,8 @@ perhaps there is another way of doing what you want to do.
 Method named __str__ is a Pythonism and deprecated.
 
 The reference counting scheme is not yet implemented. Make sure that
-parents are not deleted before their children! Use "my" a lot.
+parents are not deleted before their children! Use "my" a lot.  Do not
+give undefined/uninitialized variables to methods.
 
 =head1 SEE ALSO
 
@@ -371,11 +372,13 @@ http://www.gdal.org
 
 =head1 AUTHORS
 
-The GDAL bindings team:
+The GDAL bindings team (in alphabetical order):
 
-kruland at ku.edu
-hobu at iastate.edu
 ari.jolma at tkk.fi
+cfis at interserv.com
+hobu at iastate.edu
+kruland at ku.edu
+warmerdam at pobox.com
 
 =head1 COPYRIGHT AND LICENSE
 
