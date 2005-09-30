@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/09/30 19:11:16  fwarmerdam
+ * Fixed Hextobinary conversion (a and A mistranslated).
+ *
  * Revision 1.21  2005/09/21 00:55:42  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -524,11 +527,11 @@ OGRGeometry *OGRPGLayer::HEXToGeometry( const char *pszBytea )
     pabyWKB = (GByte *) CPLMalloc(strlen(pszBytea)+1);
     while( pszBytea[iSrc] != '\0' )
     {
-        if( pszBytea[iSrc] > '0' && pszBytea[iSrc] <= '9' )
+        if( pszBytea[iSrc] >= '0' && pszBytea[iSrc] <= '9' )
             pabyWKB[iDst] = pszBytea[iSrc] - '0';
-        else if( pszBytea[iSrc] > 'A' && pszBytea[iSrc] <= 'F' )
+        else if( pszBytea[iSrc] >= 'A' && pszBytea[iSrc] <= 'F' )
             pabyWKB[iDst] = pszBytea[iSrc] - 'A' + 10;
-        else if( pszBytea[iSrc] > 'a' && pszBytea[iSrc] <= 'f' )
+        else if( pszBytea[iSrc] >= 'a' && pszBytea[iSrc] <= 'f' )
             pabyWKB[iDst] = pszBytea[iSrc] - 'a' + 10;
         else 
             pabyWKB[iDst] = 0;
@@ -537,11 +540,11 @@ OGRGeometry *OGRPGLayer::HEXToGeometry( const char *pszBytea )
 
         iSrc++;
 
-        if( pszBytea[iSrc] > '0' && pszBytea[iSrc] <= '9' )
+        if( pszBytea[iSrc] >= '0' && pszBytea[iSrc] <= '9' )
             pabyWKB[iDst] += pszBytea[iSrc] - '0';
-        else if( pszBytea[iSrc] > 'A' && pszBytea[iSrc] <= 'F' )
+        else if( pszBytea[iSrc] >= 'A' && pszBytea[iSrc] <= 'F' )
             pabyWKB[iDst] += pszBytea[iSrc] - 'A' + 10;
-        else if( pszBytea[iSrc] > 'a' && pszBytea[iSrc] <= 'f' )
+        else if( pszBytea[iSrc] >= 'a' && pszBytea[iSrc] <= 'f' )
             pabyWKB[iDst] += pszBytea[iSrc] - 'a' + 10;
         else 
             pabyWKB[iDst] += 0;
