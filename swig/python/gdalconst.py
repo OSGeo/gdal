@@ -1,9 +1,9 @@
-# This file was created automatically by SWIG.
+# This file was created automatically by SWIG 1.3.26.
 # Don't modify this file, modify the SWIG interface instead.
-# This file is compatible with both classic and new-style classes.
 
 import _gdalconst
 
+# This file is compatible with both classic and new-style classes.
 def _swig_setattr_nondynamic(self,class_type,name,value,static=1):
     if (name == "this"):
         if isinstance(value, class_type):
@@ -108,4 +108,5 @@ CPLES_XML = _gdalconst.CPLES_XML
 CPLES_URL = _gdalconst.CPLES_URL
 CPLES_SQL = _gdalconst.CPLES_SQL
 CPLES_CSV = _gdalconst.CPLES_CSV
+
 

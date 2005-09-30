@@ -1,9 +1,9 @@
-# This file was created automatically by SWIG.
+# This file was created automatically by SWIG 1.3.26.
 # Don't modify this file, modify the SWIG interface instead.
-# This file is compatible with both classic and new-style classes.
 
 import _osr
 
+# This file is compatible with both classic and new-style classes.
 def _swig_setattr_nondynamic(self,class_type,name,value,static=1):
     if (name == "this"):
         if isinstance(value, class_type):
@@ -392,7 +392,7 @@ class SpatialReferencePtr(SpatialReference):
     def __init__(self, this):
         _swig_setattr(self, SpatialReference, 'this', this)
         if not hasattr(self,"thisown"): _swig_setattr(self, SpatialReference, 'thisown', 0)
-        _swig_setattr(self, SpatialReference,self.__class__,SpatialReference)
+        self.__class__ = SpatialReference
 _osr.SpatialReference_swigregister(SpatialReferencePtr)
 GetProjectionMethods = _osr.GetProjectionMethods
 
@@ -427,7 +427,8 @@ class CoordinateTransformationPtr(CoordinateTransformation):
     def __init__(self, this):
         _swig_setattr(self, CoordinateTransformation, 'this', this)
         if not hasattr(self,"thisown"): _swig_setattr(self, CoordinateTransformation, 'thisown', 0)
-        _swig_setattr(self, CoordinateTransformation,self.__class__,CoordinateTransformation)
+        self.__class__ = CoordinateTransformation
 _osr.CoordinateTransformation_swigregister(CoordinateTransformationPtr)
+
 
 
