@@ -300,8 +300,12 @@ double missingValue(CSF_CR cellRepresentation)
       break;
     }
     case CR_REAL4: {
+#if defined(_MSC_VER) && _MSC_VER < 1300
+      missingValue = -1.0e5;
+#else
       assert(std::numeric_limits<REAL4>::is_iec559);
       missingValue = -std::numeric_limits<REAL4>::max();
+#endif
       break;
     }
     default: {
@@ -335,6 +339,9 @@ MAP* open(std::string const& filename, MOPEN_PERM mode)
 void alterFromStdMV(void* buffer, size_t size, CSF_CR cellRepresentation,
          double missingValue)
 {
+#if defined(_MSC_VER) && _MSC_VER < 1300
+    // std::for_each does not exist on VC6.  What to do? 
+#else
   switch(cellRepresentation) {
     case(CR_UINT1): {
       std::for_each(static_cast<UINT1*>(buffer),
@@ -359,6 +366,7 @@ void alterFromStdMV(void* buffer, size_t size, CSF_CR cellRepresentation,
       break;
     }
   }
+#endif
 }
 
 
@@ -366,6 +374,9 @@ void alterFromStdMV(void* buffer, size_t size, CSF_CR cellRepresentation,
 void alterToStdMV(void* buffer, size_t size, CSF_CR cellRepresentation,
          double missingValue)
 {
+#if defined(_MSC_VER) && _MSC_VER < 1300
+    // std::for_each does not exist on VC6.  What to do? 
+#else
   switch(cellRepresentation) {
     case(CR_UINT1): {
       std::for_each(static_cast<UINT1*>(buffer),
@@ -396,6 +407,7 @@ void alterToStdMV(void* buffer, size_t size, CSF_CR cellRepresentation,
       break;
     }
   }
+#endif
 }
 
 
