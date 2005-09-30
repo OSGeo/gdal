@@ -1,3 +1,80 @@
+
+GDAL 1.3.1 - Overview of Changes
+--------------------------------
+
+Next Generation SWIG Wrappers (GDAL and OGR):
+ - Python, Perl and Ruby bindings considered to be ready to use. 
+ - C#, Java, PHP are at best initial prototypes.
+ - Added configure options for most NG options. 
+
+PCRaster Driver: 
+ - libcsf is now included as part of GDAL.
+ - PCRaster enabled by default on win32. 
+ - --with-pcraster=internal option now supported on unix (but not yet default)
+
+VSI Virtualization:
+ - The "large file API" (VSI*L) has been re-engineered to allow installing
+   additional file handlers at runtime.  
+ - Added "in memory" VSI handler so that now any driver using VSI*L 
+   functions for data access can operate on in-memory files. 
+ - PNG, JPEG and GeoTIFF drivers upgraded to work with in-memory support.
+
+Raster Attribute Tables:
+ - Implemented new Raster Attribute Tables support.  See the 
+   GDALRasterAttributeTable class for more information. 
+
+Erdas Imagine Overviews:
+ - Erdas Imagine driver upgraded to support building internal overviews. 
+ - Generic overview handler updated to support overviews in Erdas Imagine
+   format for any file format.  Set USE_RRD config option to YES to enable.
+
+gdalwarp:
+ - Added proper support for "unified source nodata", so the -srcnodata
+   switch works well. 
+
+RIK Driver: 
+ - New Swedish format driver implemented by Daniel Wallner.
+
+JPEG Driver:
+ - Substantial improvements to EXIF support.  
+
+MrSID Driver:
+ - Updated with proper JPEG2000 support as JP2MRSID driver, including 
+   encoding with ESDK.
+ - Updated to support MrSID Version 5.x SDKs.
+
+PNG Driver:
+ - Fixed serious bugs with 16bit file support. 
+ - Added NODATA_VALUES to identify RGB sets that indicate a nodata pixel.
+
+
+OGR 1.3.1 - Overview of Changes
+-------------------------------
+
+Reference Counting:
+ - OGRSpatialReference and OGRFeatureDefn now honour reference counting 
+   semantics.
+ - Note that, especially for the OGRFeatureDefn, it is now critical that
+   all drivers be careful with reference counting.  Any OGR drivers not in
+   the core distribution will likely crash if not updated.
+
+ESRI Personal Geodatabase Driver:
+ - New driver implemented for ESRI Personal Geodatabase (.mdb) files. 
+ - Uses ODBC, enabled by default on win32. 
+
+ODBC Driver:
+ - Updated to support binary fields. 
+ - Updated to support WKB geometry fields. 
+ - Updated to support DSN-less connections. 
+
+S57 Driver:
+ - Added support for Inland Waterways, and Additional Military Layers profiles
+
+
+
+
+===============================================================================
+
 GDAL 1.3.0 - Overview of Changes
 --------------------------------
 
