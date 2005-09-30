@@ -22,7 +22,6 @@ GDAL_ROOT	=	..\..\..
 
 
 default:	$(OBJ)
-        lib /out:libcsf.lib $(OBJ)
 	copy *.obj ..\..\o
 
 clean:
