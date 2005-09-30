@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/09/30 21:07:57  fwarmerdam
+ * applied patches from bug 822, add georef support
+ *
  * Revision 1.4  2005/05/06 18:21:14  fwarmerdam
  * Applied patch from Radim.  Better logic to reset the region.
  *
@@ -823,8 +826,10 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
     
     
     if ( !getenv( "GISBASE" ) ) {
-	strcpy( fake_gisbase, "GISBASE=/fake_gisbase" );
-	putenv( fake_gisbase );
+	// we are outside a GRASS session
+	// TODO: use function instead of hardcoded path
+	sprintf(fake_gisbase, "GISBASE=/usr/local/share/gdal/grass/" );	
+        putenv( fake_gisbase );
 	hasGisbase = false;
     } else {
 	hasGisbase = true;
@@ -937,8 +942,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( hasGisbase ) {
 	projinfo = G_get_projinfo();
 	projunits = G_get_projunits();
-	// TODO: disabled because creates circular reference GRASS <-> GDAL
-	//poDS->pszProjection = GPJ_grass_to_wkt ( projinfo, projunits, 0, 0);
+        poDS->pszProjection = GPJ_grass_to_wkt ( projinfo, projunits, 0, 0);
     }
 
 /* -------------------------------------------------------------------- */
