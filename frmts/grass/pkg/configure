@@ -272,7 +272,7 @@ PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
 ac_unique_file="Makefile.in"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LD_SHARED SO_EXT CXX_PIC C_PIC CXX_WFLAGS C_WFLAGS GDAL_CONFIG GDAL_INC AUTOLOAD_DIR GRASS_INCLUDE LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LD_SHARED SO_EXT CXX_PIC C_PIC CXX_WFLAGS C_WFLAGS GDAL_CONFIG GDAL_INC AUTOLOAD_DIR GRASS_INCLUDE GRASS_GISBASE LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -2905,7 +2905,7 @@ else
   if $GDAL_CONFIG --autoload > /dev/null 2>&1 ; then
     AUTOLOAD_DIR=`$GDAL_CONFIG --autoload`
   else
-    AUTOLOAD_DIR=`$GDAL_CONFIG --prefix`/lib
+    AUTOLOAD_DIR=`$GDAL_CONFIG --prefix`/lib/gdalplugins
   fi
 fi
 
@@ -3009,6 +3009,7 @@ fi
   if test "$GRASS_SETTING" = "grass57+" ; then
     LIBS="-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
     GRASS_INCLUDE="-I$with_grass/include"
+    GRASS_GISBASE="$with_grass"
   else
     { { echo "$as_me:$LINENO: error: --with-grass=$with_grass requested, but libraries not found!" >&5
 echo "$as_me: error: --with-grass=$with_grass requested, but libraries not found!" >&2;}
@@ -3017,6 +3018,8 @@ echo "$as_me: error: --with-grass=$with_grass requested, but libraries not found
 fi
 
 GRASS_INCLUDE=$GRASS_INCLUDE
+
+GRASS_GISBASE=$GRASS_GISBASE
 
 
 
@@ -3626,6 +3629,7 @@ s,@GDAL_CONFIG@,$GDAL_CONFIG,;t t
 s,@GDAL_INC@,$GDAL_INC,;t t
 s,@AUTOLOAD_DIR@,$AUTOLOAD_DIR,;t t
 s,@GRASS_INCLUDE@,$GRASS_INCLUDE,;t t
+s,@GRASS_GISBASE@,$GRASS_GISBASE,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF

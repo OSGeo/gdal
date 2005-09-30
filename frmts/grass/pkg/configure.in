@@ -98,12 +98,14 @@ if test "$with_grass" != "yes" ; then
   if test "$GRASS_SETTING" = "grass57+" ; then   
     LIBS="-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
     GRASS_INCLUDE="-I$with_grass/include"
+    GRASS_GISBASE="$with_grass"
   else
     AC_MSG_ERROR([--with-grass=$with_grass requested, but libraries not found!])
   fi
 fi
 
 AC_SUBST(GRASS_INCLUDE,$GRASS_INCLUDE)
+AC_SUBST(GRASS_GISBASE,$GRASS_GISBASE)
 
 dnl ---------------------------------------------------------------------------
 

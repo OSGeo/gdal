@@ -1,9 +1,9 @@
-	Standalone GRASS 5.7 Driver for GDAL
-	====================================
+	Standalone GRASS 6 Drivers for GDAL and OGR
+	===========================================
 
-This package contains a standalone driver for GRASS raster files that
-can be built after GDAL has been built and installed as an "autoload" 
-driver.  
+This package contains standalone drivers for GRASS raster and vector
+files that can be built after GDAL has been built and installed as an 
+"autoload" driver.  
 
 This is particularly useful in resolving problems with GRASS depending
 on GDAL, but GDAL with GRASS support depending on GRASS.  With this 
@@ -13,7 +13,7 @@ build and install GRASS normally and finally build and install this driver.
 To build this driver it is necessary for it to find GDAL and GRASS support
 files.  Typically the configure and build process would look something like:
 
-./configure --with-gdal=/usr/local/bin/gdal-config --with-grass=/usr/local/grass-5.7.0
+./configure --with-gdal=/usr/local/bin/gdal-config --with-grass=/usr/local/grass-6.0.0
 make
 sudo make install
 
