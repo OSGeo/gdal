@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.50  2005/09/30 19:11:40  fwarmerdam
+ * fixed hextobinary conversion, bug 935
+ *
  * Revision 1.49  2005/09/14 19:21:17  fwarmerdam
  * binary pointer is const in binarytohex
  *
@@ -1655,11 +1658,11 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes )
 
     while( pszHex[iSrc] != '\0' )
     {
-        if( pszHex[iSrc] > '0' && pszHex[iSrc] <= '9' )
+        if( pszHex[iSrc] >= '0' && pszHex[iSrc] <= '9' )
             pabyWKB[iDst] = pszHex[iSrc] - '0';
-        else if( pszHex[iSrc] > 'A' && pszHex[iSrc] <= 'F' )
+        else if( pszHex[iSrc] >= 'A' && pszHex[iSrc] <= 'F' )
             pabyWKB[iDst] = pszHex[iSrc] - 'A' + 10;
-        else if( pszHex[iSrc] > 'a' && pszHex[iSrc] <= 'f' )
+        else if( pszHex[iSrc] >= 'a' && pszHex[iSrc] <= 'f' )
             pabyWKB[iDst] = pszHex[iSrc] - 'a' + 10;
         else 
             break;
@@ -1668,11 +1671,11 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes )
 
         iSrc++;
 
-        if( pszHex[iSrc] > '0' && pszHex[iSrc] <= '9' )
+        if( pszHex[iSrc] >= '0' && pszHex[iSrc] <= '9' )
             pabyWKB[iDst] += pszHex[iSrc] - '0';
-        else if( pszHex[iSrc] > 'A' && pszHex[iSrc] <= 'F' )
+        else if( pszHex[iSrc] >= 'A' && pszHex[iSrc] <= 'F' )
             pabyWKB[iDst] += pszHex[iSrc] - 'A' + 10;
-        else if( pszHex[iSrc] > 'a' && pszHex[iSrc] <= 'f' )
+        else if( pszHex[iSrc] >= 'a' && pszHex[iSrc] <= 'f' )
             pabyWKB[iDst] += pszHex[iSrc] - 'a' + 10;
         else
             break;
