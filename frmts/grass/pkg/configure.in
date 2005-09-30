@@ -83,7 +83,8 @@ dnl ---------------------------------------------------------------------------
 
 GRASS_SETTING=no
 GRASS_INCLUDE=
-export GRASS_INCLUDE GRASS_SETTING
+GRASS_GISBASE=
+export GRASS_INCLUDE GRASS_SETTING GRASS_GISBASE
 
 AC_ARG_WITH(grass,[  --with-grass[=ARG]        Include GRASS support (ARG=GRASS install tree dir)],,)
 
@@ -93,10 +94,10 @@ fi
 
 if test "$with_grass" != "yes" ; then
 
-  AC_CHECK_LIB(grass_gis,G_asprintf,GRASS_SETTING=grass57+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime)
+  AC_CHECK_LIB(grass_gis,G_asprintf,GRASS_SETTING=grass57+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime -lgrass_gproj)
    
   if test "$GRASS_SETTING" = "grass57+" ; then   
-    LIBS="-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime $LIBS"
+    LIBS="-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj $LIBS"
     GRASS_INCLUDE="-I$with_grass/include"
     GRASS_GISBASE="$with_grass"
   else

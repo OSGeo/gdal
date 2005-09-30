@@ -12,6 +12,8 @@ LD_SHARED	=	@LD_SHARED@
 
 LIBS	=	@LIBS@
 
+GRASSTABLES_DIR = @prefix@/share/gdal/grass
+
 AUTOLOAD_DIR	=	@AUTOLOAD_DIR@
 
 GLIBNAME =	gdal_GRASS.so
@@ -23,6 +25,10 @@ install:	default
 	install -d $(AUTOLOAD_DIR)
 	cp $(GLIBNAME) $(AUTOLOAD_DIR)
 	cp $(OLIBNAME) $(AUTOLOAD_DIR)
+	test -d ${GRASSTABLES_DIR} || mkdir ${GRASSTABLES_DIR}
+	test -d ${GRASSTABLES_DIR}/etc || mkdir ${GRASSTABLES_DIR}/etc
+	cp @GRASS_GISBASE@/etc/ellipse.table ${GRASSTABLES_DIR}/etc
+	cp @GRASS_GISBASE@/etc/datum.table ${GRASSTABLES_DIR}/etc	
 
 clean:
 	rm -f $(OLIBNAME) $(GLIBNAME) *.o 
