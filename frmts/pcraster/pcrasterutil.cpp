@@ -18,6 +18,7 @@
 #define INCLUDED_PCRASTERUTIL
 #endif
 
+#define DONT_TRUST_STANDARD_LIB
 
 
 //! Converts PCRaster data type to GDAL data type.
@@ -300,7 +301,7 @@ double missingValue(CSF_CR cellRepresentation)
       break;
     }
     case CR_REAL4: {
-#if defined(_MSC_VER) && _MSC_VER < 1300
+#ifdef DONT_TRUST_STANDARD_LIB
       missingValue = -1.0e5;
 #else
       assert(std::numeric_limits<REAL4>::is_iec559);
@@ -339,7 +340,7 @@ MAP* open(std::string const& filename, MOPEN_PERM mode)
 void alterFromStdMV(void* buffer, size_t size, CSF_CR cellRepresentation,
          double missingValue)
 {
-#if defined(_MSC_VER) && _MSC_VER < 1300
+#ifdef DONT_TRUST_STANDARD_LIB
     // std::for_each does not exist on VC6.  What to do? 
 #else
   switch(cellRepresentation) {
@@ -374,7 +375,7 @@ void alterFromStdMV(void* buffer, size_t size, CSF_CR cellRepresentation,
 void alterToStdMV(void* buffer, size_t size, CSF_CR cellRepresentation,
          double missingValue)
 {
-#if defined(_MSC_VER) && _MSC_VER < 1300
+#ifdef DONT_TRUST_STANDARD_LIB
     // std::for_each does not exist on VC6.  What to do? 
 #else
   switch(cellRepresentation) {
