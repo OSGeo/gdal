@@ -1,9 +1,9 @@
-# This file was created automatically by SWIG.
+# This file was created automatically by SWIG 1.3.26.
 # Don't modify this file, modify the SWIG interface instead.
-# This file is compatible with both classic and new-style classes.
 
 import _gdal
 
+# This file is compatible with both classic and new-style classes.
 def _swig_setattr_nondynamic(self,class_type,name,value,static=1):
     if (name == "this"):
         if isinstance(value, class_type):
@@ -39,9 +39,13 @@ del types
 from gdalconst import *
 
 
-UseExceptions = _gdal.UseExceptions
+def UseExceptions(*args):
+    """UseExceptions()"""
+    return _gdal.UseExceptions(*args)
 
-DontUseExceptions = _gdal.DontUseExceptions
+def DontUseExceptions(*args):
+    """DontUseExceptions()"""
+    return _gdal.DontUseExceptions(*args)
 
 def Debug(*args):
     """Debug(char msg_class, char message)"""
@@ -119,11 +123,6 @@ class MajorObject(_object):
         """GetMetadata_List(self, char pszDomain="") -> char"""
         return _gdal.MajorObject_GetMetadata_List(*args)
 
-    def GetMetadata( self, domain = '' ):
-      if domain[:4] == 'xml:':
-        return self.GetMetadata_List( domain )
-      return self.GetMetadata_Dict( domain )
-
     def SetMetadata(*args):
         """
         SetMetadata(self, char papszMetadata, char pszDomain="") -> CPLErr
@@ -131,12 +130,17 @@ class MajorObject(_object):
         """
         return _gdal.MajorObject_SetMetadata(*args)
 
+    def GetMetadata( self, domain = '' ):
+      if domain[:4] == 'xml:':
+        return self.GetMetadata_List( domain )
+      return self.GetMetadata_Dict( domain )
+
 
 class MajorObjectPtr(MajorObject):
     def __init__(self, this):
         _swig_setattr(self, MajorObject, 'this', this)
         if not hasattr(self,"thisown"): _swig_setattr(self, MajorObject, 'thisown', 0)
-        _swig_setattr(self, MajorObject,self.__class__,MajorObject)
+        self.__class__ = MajorObject
 _gdal.MajorObject_swigregister(MajorObjectPtr)
 
 def PushErrorHandler(*args):
@@ -183,7 +187,7 @@ class DriverPtr(Driver):
     def __init__(self, this):
         _swig_setattr(self, Driver, 'this', this)
         if not hasattr(self,"thisown"): _swig_setattr(self, Driver, 'thisown', 0)
-        _swig_setattr(self, Driver,self.__class__,Driver)
+        self.__class__ = Driver
 _gdal.Driver_swigregister(DriverPtr)
 
 class GCP(_object):
@@ -215,12 +219,12 @@ class GCP(_object):
     __swig_setmethods__["Id"] = _gdal.GCP_Id_set
     __swig_getmethods__["Id"] = _gdal.GCP_Id_get
     if _newclass:Id = property(_gdal.GCP_Id_get, _gdal.GCP_Id_set)
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args):
         """
         __init__(self, double x=0.0, double y=0.0, double z=0.0, double pixel=0.0, 
             double line=0.0, char info="", char id="") -> GCP
         """
-        _swig_setattr(self, GCP, 'this', _gdal.new_GCP(*args, **kwargs))
+        _swig_setattr(self, GCP, 'this', _gdal.new_GCP(*args))
         _swig_setattr(self, GCP, 'thisown', 1)
     def __del__(self, destroy=_gdal.delete_GCP):
         """__del__(self)"""
@@ -254,7 +258,7 @@ class GCPPtr(GCP):
     def __init__(self, this):
         _swig_setattr(self, GCP, 'this', this)
         if not hasattr(self,"thisown"): _swig_setattr(self, GCP, 'thisown', 0)
-        _swig_setattr(self, GCP,self.__class__,GCP)
+        self.__class__ = GCP
 _gdal.GCP_swigregister(GCPPtr)
 
 
@@ -465,7 +469,7 @@ class DatasetPtr(Dataset):
     def __init__(self, this):
         _swig_setattr(self, Dataset, 'this', this)
         if not hasattr(self,"thisown"): _swig_setattr(self, Dataset, 'thisown', 0)
-        _swig_setattr(self, Dataset,self.__class__,Dataset)
+        self.__class__ = Dataset
 _gdal.Dataset_swigregister(DatasetPtr)
 
 class Band(MajorObject):
@@ -582,7 +586,7 @@ class BandPtr(Band):
     def __init__(self, this):
         _swig_setattr(self, Band, 'this', this)
         if not hasattr(self,"thisown"): _swig_setattr(self, Band, 'thisown', 0)
-        _swig_setattr(self, Band,self.__class__,Band)
+        self.__class__ = Band
 _gdal.Band_swigregister(BandPtr)
 
 class ColorTable(_object):
@@ -632,7 +636,7 @@ class ColorTablePtr(ColorTable):
     def __init__(self, this):
         _swig_setattr(self, ColorTable, 'this', this)
         if not hasattr(self,"thisown"): _swig_setattr(self, ColorTable, 'thisown', 0)
-        _swig_setattr(self, ColorTable,self.__class__,ColorTable)
+        self.__class__ = ColorTable
 _gdal.ColorTable_swigregister(ColorTablePtr)
 
 
@@ -704,6 +708,10 @@ def GetDriverByName(*args):
     """GetDriverByName(char name) -> Driver"""
     return _gdal.GetDriverByName(*args)
 
+def GetDriver(*args):
+    """GetDriver(int i) -> Driver"""
+    return _gdal.GetDriver(*args)
+
 def Open(*args):
     """Open(char name, GDALAccess eAccess=GA_ReadOnly) -> Dataset"""
     return _gdal.Open(*args)
@@ -718,4 +726,5 @@ def AutoCreateWarpedVRT(*args):
         double maxerror=0.0) -> Dataset
     """
     return _gdal.AutoCreateWarpedVRT(*args)
+
 

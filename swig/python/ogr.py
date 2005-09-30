@@ -1,9 +1,10 @@
-# This file was created automatically by SWIG.
+# This file was created automatically by SWIG 1.3.26.
 # Don't modify this file, modify the SWIG interface instead.
-# This file is compatible with both classic and new-style classes.
+import osr
 
 import _ogr
 
+# This file is compatible with both classic and new-style classes.
 def _swig_setattr_nondynamic(self,class_type,name,value,static=1):
     if (name == "this"):
         if isinstance(value, class_type):
@@ -122,7 +123,7 @@ class DriverPtr(Driver):
     def __init__(self, this):
         _swig_setattr(self, Driver, 'this', this)
         if not hasattr(self,"thisown"): _swig_setattr(self, Driver, 'thisown', 0)
-        _swig_setattr(self, Driver,self.__class__,Driver)
+        self.__class__ = Driver
 _ogr.Driver_swigregister(DriverPtr)
 
 class DataSource(_object):
@@ -136,21 +137,11 @@ class DataSource(_object):
         return "<%s.%s; proxy of C++ OGRDataSourceShadow instance at %s>" % (self.__class__.__module__, self.__class__.__name__, self.this,)
     __swig_getmethods__["name"] = _ogr.DataSource_name_get
     if _newclass:name = property(_ogr.DataSource_name_get)
-    def Destroy(*args):
-        """Destroy(self)"""
-        return _ogr.DataSource_Destroy(*args)
-
-    def Release(*args):
-        """Release(self)"""
-        return _ogr.DataSource_Release(*args)
-
-    def Reference(*args):
-        """Reference(self) -> int"""
-        return _ogr.DataSource_Reference(*args)
-
-    def Dereference(*args):
-        """Dereference(self) -> int"""
-        return _ogr.DataSource_Dereference(*args)
+    def __del__(self, destroy=_ogr.delete_DataSource):
+        """__del__(self)"""
+        try:
+            if self.thisown: destroy(self)
+        except: pass
 
     def GetRefCount(*args):
         """GetRefCount(self) -> int"""
@@ -174,8 +165,8 @@ class DataSource(_object):
 
     def CreateLayer(*args, **kwargs):
         """
-        CreateLayer(self, char name, OSRSpatialReferenceShadow reference=None, 
-            OGRwkbGeometryType geom_type=wkbUnknown, char options=0) -> Layer
+        CreateLayer(self, char name, SpatialReference reference=None, OGRwkbGeometryType geom_type=wkbUnknown, 
+            char options=0) -> Layer
         """
         return _ogr.DataSource_CreateLayer(*args, **kwargs)
 
@@ -202,6 +193,24 @@ class DataSource(_object):
     def ReleaseResultSet(*args):
         """ReleaseResultSet(self, Layer layer)"""
         return _ogr.DataSource_ReleaseResultSet(*args)
+
+    def Destroy(self):
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      self.__del__()
+      self.thisown = 0
+
+    def Release(self):
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      self.__del__()
+      self.thisown = 0
+
+    def Reference(self):
+      "For backwards compatibility only."
+      pass
+
+    def Dereference(self):
+      "For backwards compatibility only."
+      pass
 
     def __len__(self):
         """Returns the number of layers on the datasource"""
@@ -245,7 +254,7 @@ class DataSourcePtr(DataSource):
     def __init__(self, this):
         _swig_setattr(self, DataSource, 'this', this)
         if not hasattr(self,"thisown"): _swig_setattr(self, DataSource, 'thisown', 0)
-        _swig_setattr(self, DataSource,self.__class__,DataSource)
+        self.__class__ = DataSource
 _ogr.DataSource_swigregister(DataSourcePtr)
 
 class Layer(_object):
@@ -257,14 +266,6 @@ class Layer(_object):
     def __init__(self): raise RuntimeError, "No constructor defined"
     def __repr__(self):
         return "<%s.%s; proxy of C++ OGRLayerShadow instance at %s>" % (self.__class__.__module__, self.__class__.__name__, self.this,)
-    def Reference(*args):
-        """Reference(self) -> int"""
-        return _ogr.Layer_Reference(*args)
-
-    def Dereference(*args):
-        """Dereference(self) -> int"""
-        return _ogr.Layer_Dereference(*args)
-
     def GetRefCount(*args):
         """GetRefCount(self) -> int"""
         return _ogr.Layer_GetRefCount(*args)
@@ -354,12 +355,20 @@ class Layer(_object):
         return _ogr.Layer_RollbackTransaction(*args)
 
     def GetSpatialRef(*args):
-        """GetSpatialRef(self) -> OSRSpatialReferenceShadow"""
+        """GetSpatialRef(self) -> SpatialReference"""
         return _ogr.Layer_GetSpatialRef(*args)
 
     def GetFeatureRead(*args):
         """GetFeatureRead(self) -> GIntBig"""
         return _ogr.Layer_GetFeatureRead(*args)
+
+    def Reference(self):
+      "For backwards compatibility only."
+      pass
+
+    def Dereference(self):
+      "For backwards compatibility only."
+      pass
 
     def __len__(self):
         """Returns the number of features in the layer"""
@@ -391,12 +400,15 @@ class Layer(_object):
             return self.GetFeature(value)
         else:
             raise TypeError,"Input %s is not of IntType or SliceType" % type(value)
+
     def CreateFields(fields):
         """Create a list of fields on the Layer"""
         for i in fields:
             self.CreateField(i)
+
     def __iter__(self):
         return self
+
     def next(self):
         feature = self.GetNextFeature()
         if not feature:
@@ -409,7 +421,7 @@ class LayerPtr(Layer):
     def __init__(self, this):
         _swig_setattr(self, Layer, 'this', this)
         if not hasattr(self,"thisown"): _swig_setattr(self, Layer, 'thisown', 0)
-        _swig_setattr(self, Layer,self.__class__,Layer)
+        self.__class__ = Layer
 _ogr.Layer_swigregister(LayerPtr)
 
 class Feature(_object):
@@ -420,14 +432,16 @@ class Feature(_object):
     __getattr__ = lambda self, name: _swig_getattr(self, Feature, name)
     def __repr__(self):
         return "<%s.%s; proxy of C++ OGRFeatureShadow instance at %s>" % (self.__class__.__module__, self.__class__.__name__, self.this,)
+    def __del__(self, destroy=_ogr.delete_Feature):
+        """__del__(self)"""
+        try:
+            if self.thisown: destroy(self)
+        except: pass
+
     def __init__(self, *args, **kwargs):
         """__init__(self, FeatureDefn feature_def=0) -> Feature"""
         _swig_setattr(self, Feature, 'this', _ogr.new_Feature(*args, **kwargs))
         _swig_setattr(self, Feature, 'thisown', 1)
-    def Destroy(*args):
-        """Destroy(self)"""
-        return _ogr.Feature_Destroy(*args)
-
     def GetDefnRef(*args):
         """GetDefnRef(self) -> FeatureDefn"""
         return _ogr.Feature_GetDefnRef(*args)
@@ -540,6 +554,17 @@ class Feature(_object):
         """
         return _ogr.Feature_GetFieldType(*args)
 
+    def Reference(self):
+      pass
+
+    def Dereference(self):
+      pass
+
+    def Destroy(self):
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      self.__del__()
+      self.thisown = 0
+
     def __cmp__(self, other):
         """Compares a feature to another for equality"""
         return self.Equal(other)
@@ -574,14 +599,14 @@ class Feature(_object):
             return self.GetFieldAsDouble(fld_index)
         if fld_type == OFTString:
             return self.GetFieldAsString(fld_index)
-
+        
 
 
 class FeaturePtr(Feature):
     def __init__(self, this):
         _swig_setattr(self, Feature, 'this', this)
         if not hasattr(self,"thisown"): _swig_setattr(self, Feature, 'thisown', 0)
-        _swig_setattr(self, Feature,self.__class__,Feature)
+        self.__class__ = Feature
 _ogr.Feature_swigregister(FeaturePtr)
 
 class FeatureDefn(_object):
@@ -592,14 +617,16 @@ class FeatureDefn(_object):
     __getattr__ = lambda self, name: _swig_getattr(self, FeatureDefn, name)
     def __repr__(self):
         return "<%s.%s; proxy of C++ OGRFeatureDefnShadow instance at %s>" % (self.__class__.__module__, self.__class__.__name__, self.this,)
+    def __del__(self, destroy=_ogr.delete_FeatureDefn):
+        """__del__(self)"""
+        try:
+            if self.thisown: destroy(self)
+        except: pass
+
     def __init__(self, *args, **kwargs):
         """__init__(self, char name=None) -> FeatureDefn"""
         _swig_setattr(self, FeatureDefn, 'this', _ogr.new_FeatureDefn(*args, **kwargs))
         _swig_setattr(self, FeatureDefn, 'thisown', 1)
-    def Destroy(*args):
-        """Destroy(self)"""
-        return _ogr.FeatureDefn_Destroy(*args)
-
     def GetName(*args):
         """GetName(self) -> char"""
         return _ogr.FeatureDefn_GetName(*args)
@@ -628,24 +655,21 @@ class FeatureDefn(_object):
         """SetGeomType(self, OGRwkbGeometryType geom_type)"""
         return _ogr.FeatureDefn_SetGeomType(*args)
 
-    def Reference(*args):
-        """Reference(self) -> int"""
-        return _ogr.FeatureDefn_Reference(*args)
-
-    def Dereference(*args):
-        """Dereference(self) -> int"""
-        return _ogr.FeatureDefn_Dereference(*args)
-
     def GetReferenceCount(*args):
         """GetReferenceCount(self) -> int"""
         return _ogr.FeatureDefn_GetReferenceCount(*args)
+
+    def Destroy(self):
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      self.__del__()
+      self.thisown = 0
 
 
 class FeatureDefnPtr(FeatureDefn):
     def __init__(self, this):
         _swig_setattr(self, FeatureDefn, 'this', this)
         if not hasattr(self,"thisown"): _swig_setattr(self, FeatureDefn, 'thisown', 0)
-        _swig_setattr(self, FeatureDefn,self.__class__,FeatureDefn)
+        self.__class__ = FeatureDefn
 _ogr.FeatureDefn_swigregister(FeatureDefnPtr)
 
 class FieldDefn(_object):
@@ -656,14 +680,16 @@ class FieldDefn(_object):
     __getattr__ = lambda self, name: _swig_getattr(self, FieldDefn, name)
     def __repr__(self):
         return "<%s.%s; proxy of C++ OGRFieldDefnShadow instance at %s>" % (self.__class__.__module__, self.__class__.__name__, self.this,)
+    def __del__(self, destroy=_ogr.delete_FieldDefn):
+        """__del__(self)"""
+        try:
+            if self.thisown: destroy(self)
+        except: pass
+
     def __init__(self, *args, **kwargs):
         """__init__(self, char name="unnamed", OGRFieldType field_type=OFTString) -> FieldDefn"""
         _swig_setattr(self, FieldDefn, 'this', _ogr.new_FieldDefn(*args, **kwargs))
         _swig_setattr(self, FieldDefn, 'thisown', 1)
-    def Destroy(*args):
-        """Destroy(self)"""
-        return _ogr.FieldDefn_Destroy(*args)
-
     def GetName(*args):
         """GetName(self) -> char"""
         return _ogr.FieldDefn_GetName(*args)
@@ -708,27 +734,36 @@ class FieldDefn(_object):
         """SetPrecision(self, int precision)"""
         return _ogr.FieldDefn_SetPrecision(*args)
 
+    def GetFieldTypeName(*args):
+        """GetFieldTypeName(self, OGRFieldType type) -> char"""
+        return _ogr.FieldDefn_GetFieldTypeName(*args)
+
     width = property(GetWidth, SetWidth)
     type = property(GetType, SetType)
     precision = property(GetPrecision, SetPrecision)
     name = property(GetName, SetName)
     justify = property(GetJustify, SetJustify)
 
+    def Destroy(self):
+      "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
+      self.__del__()
+      self.thisown = 0
+
 
 class FieldDefnPtr(FieldDefn):
     def __init__(self, this):
         _swig_setattr(self, FieldDefn, 'this', this)
         if not hasattr(self,"thisown"): _swig_setattr(self, FieldDefn, 'thisown', 0)
-        _swig_setattr(self, FieldDefn,self.__class__,FieldDefn)
+        self.__class__ = FieldDefn
 _ogr.FieldDefn_swigregister(FieldDefnPtr)
 
 
 def CreateGeometryFromWkb(*args, **kwargs):
-    """CreateGeometryFromWkb(int len, OSRSpatialReferenceShadow reference=None) -> Geometry"""
+    """CreateGeometryFromWkb(int len, SpatialReference reference=None) -> Geometry"""
     return _ogr.CreateGeometryFromWkb(*args, **kwargs)
 
 def CreateGeometryFromWkt(*args, **kwargs):
-    """CreateGeometryFromWkt(char val, OSRSpatialReferenceShadow reference=None) -> Geometry"""
+    """CreateGeometryFromWkt(char val, SpatialReference reference=None) -> Geometry"""
     return _ogr.CreateGeometryFromWkt(*args, **kwargs)
 
 def CreateGeometryFromGML(*args):
@@ -742,6 +777,12 @@ class Geometry(_object):
     __getattr__ = lambda self, name: _swig_getattr(self, Geometry, name)
     def __repr__(self):
         return "<%s.%s; proxy of C++ OGRGeometryShadow instance at %s>" % (self.__class__.__module__, self.__class__.__name__, self.this,)
+    def __del__(self, destroy=_ogr.delete_Geometry):
+        """__del__(self)"""
+        try:
+            if self.thisown: destroy(self)
+        except: pass
+
     def __init__(self, *args, **kwargs):
         """
         __init__(self, OGRwkbGeometryType type=wkbUnknown, char wkt=0, int wkb=0, 
@@ -776,10 +817,6 @@ class Geometry(_object):
     def Clone(*args):
         """Clone(self) -> Geometry"""
         return _ogr.Geometry_Clone(*args)
-
-    def Destroy(*args):
-        """Destroy(self)"""
-        return _ogr.Geometry_Destroy(*args)
 
     def GetGeometryType(*args):
         """GetGeometryType(self) -> OGRwkbGeometryType"""
@@ -890,19 +927,19 @@ class Geometry(_object):
         return _ogr.Geometry_Overlaps(*args)
 
     def TransformTo(*args):
-        """TransformTo(self, OSRSpatialReferenceShadow reference) -> OGRErr"""
+        """TransformTo(self, SpatialReference reference) -> OGRErr"""
         return _ogr.Geometry_TransformTo(*args)
 
     def Transform(*args):
-        """Transform(self, OSRCoordinateTransformationShadow trans) -> OGRErr"""
+        """Transform(self, CoordinateTransformation trans) -> OGRErr"""
         return _ogr.Geometry_Transform(*args)
 
     def GetSpatialReference(*args):
-        """GetSpatialReference(self) -> OSRSpatialReferenceShadow"""
+        """GetSpatialReference(self) -> SpatialReference"""
         return _ogr.Geometry_GetSpatialReference(*args)
 
     def AssignSpatialReference(*args):
-        """AssignSpatialReference(self, OSRSpatialReferenceShadow reference)"""
+        """AssignSpatialReference(self, SpatialReference reference)"""
         return _ogr.Geometry_AssignSpatialReference(*args)
 
     def CloseRings(*args):
@@ -933,6 +970,10 @@ class Geometry(_object):
         """GetDimension(self) -> int"""
         return _ogr.Geometry_GetDimension(*args)
 
+    def Destroy(self):
+      self.__del__()
+      self.thisown = 0
+
     def __str__(self):
       return self.ExportToWkt()
 
@@ -941,7 +982,7 @@ class GeometryPtr(Geometry):
     def __init__(self, this):
         _swig_setattr(self, Geometry, 'this', this)
         if not hasattr(self,"thisown"): _swig_setattr(self, Geometry, 'thisown', 0)
-        _swig_setattr(self, Geometry,self.__class__,Geometry)
+        self.__class__ = Geometry
 _ogr.Geometry_swigregister(GeometryPtr)
 
 
@@ -961,14 +1002,6 @@ def RegisterAll(*args):
     """RegisterAll()"""
     return _ogr.RegisterAll(*args)
 
-def GetDriverByName(*args):
-    """GetDriverByName(char name) -> Driver"""
-    return _ogr.GetDriverByName(*args)
-
-def GetDriver(*args):
-    """GetDriver(int driver_number) -> Driver"""
-    return _ogr.GetDriver(*args)
-
 def GetOpenDS(*args):
     """GetOpenDS(int ds_number) -> DataSource"""
     return _ogr.GetOpenDS(*args)
@@ -980,4 +1013,13 @@ def Open(*args, **kwargs):
 def OpenShared(*args, **kwargs):
     """OpenShared(char filename, int update=0) -> DataSource"""
     return _ogr.OpenShared(*args, **kwargs)
+
+def GetDriverByName(*args):
+    """GetDriverByName(char name) -> Driver"""
+    return _ogr.GetDriverByName(*args)
+
+def GetDriver(*args):
+    """GetDriver(int driver_number) -> Driver"""
+    return _ogr.GetDriver(*args)
+
 
