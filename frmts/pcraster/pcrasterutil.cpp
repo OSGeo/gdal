@@ -8,6 +8,16 @@
 #define INCLUDED_CASSERT
 #endif
 
+#ifndef INCLUDED_ALGORITHM
+#include <algorithm>
+#define INCLUDED_ALGORITHM
+#endif
+
+#ifndef INCLUDED_LIMITS
+#include <limits>
+#define INCLUDED_LIMITS
+#endif
+
 #ifndef INCLUDED_PCRTYPES
 #include "pcrtypes.h"
 #define INCLUDED_PCRTYPES
@@ -18,7 +28,6 @@
 #define INCLUDED_PCRASTERUTIL
 #endif
 
-#define DONT_TRUST_STANDARD_LIB
 
 
 //! Converts PCRaster data type to GDAL data type.
@@ -301,12 +310,8 @@ double missingValue(CSF_CR cellRepresentation)
       break;
     }
     case CR_REAL4: {
-#ifdef DONT_TRUST_STANDARD_LIB
-      missingValue = -1.0e5;
-#else
       assert(std::numeric_limits<REAL4>::is_iec559);
       missingValue = -std::numeric_limits<REAL4>::max();
-#endif
       break;
     }
     default: {
@@ -340,9 +345,6 @@ MAP* open(std::string const& filename, MOPEN_PERM mode)
 void alterFromStdMV(void* buffer, size_t size, CSF_CR cellRepresentation,
          double missingValue)
 {
-#ifdef DONT_TRUST_STANDARD_LIB
-    // std::for_each does not exist on VC6.  What to do? 
-#else
   switch(cellRepresentation) {
     case(CR_UINT1): {
       std::for_each(static_cast<UINT1*>(buffer),
@@ -367,7 +369,6 @@ void alterFromStdMV(void* buffer, size_t size, CSF_CR cellRepresentation,
       break;
     }
   }
-#endif
 }
 
 
@@ -375,9 +376,6 @@ void alterFromStdMV(void* buffer, size_t size, CSF_CR cellRepresentation,
 void alterToStdMV(void* buffer, size_t size, CSF_CR cellRepresentation,
          double missingValue)
 {
-#ifdef DONT_TRUST_STANDARD_LIB
-    // std::for_each does not exist on VC6.  What to do? 
-#else
   switch(cellRepresentation) {
     case(CR_UINT1): {
       std::for_each(static_cast<UINT1*>(buffer),
@@ -408,7 +406,6 @@ void alterToStdMV(void* buffer, size_t size, CSF_CR cellRepresentation,
       break;
     }
   }
-#endif
 }
 
 
@@ -476,3 +473,4 @@ CSF_VS fitValueScale(CSF_VS valueScale, CSF_CR cellRepresentation)
 
   return result;
 }
+
