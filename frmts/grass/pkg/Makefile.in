@@ -2,8 +2,9 @@ CC	=	@CC@
 CXX	=	@CXX@
 LD	=	@CXX@
 
-CPPFLAGS	= @GDAL_INC@ @GRASS_INCLUDE@ @CPPFLAGS@ 
-CXXFLAGS	= @CXX_WFLAGS@ @CXX_PIC@
+CPPFLAGS = -DUSE_CPL -DGRASS_GISBASE=\"@GRASS_GISBASE@\" \
+	  @GDAL_INC@ @GRASS_INCLUDE@ @CPPFLAGS@ 
+CXXFLAGS = @CXX_WFLAGS@ @CXX_PIC@ 
 
 RANLIB		=	@RANLIB@
 SO_EXT		=	@SO_EXT@
@@ -13,24 +14,28 @@ LIBS	=	@LIBS@
 
 AUTOLOAD_DIR	=	@AUTOLOAD_DIR@
 
-LIBNAME =	gdal_GRASS.so
+GLIBNAME =	gdal_GRASS.so
+OLIBNAME =	ogr_GRASS.so
 
+default:	$(GLIBNAME) $(OLIBNAME)
 
-default:	$(LIBNAME)
-
-install:	$(LIBNAME)
+install:	default
 	install -d $(AUTOLOAD_DIR)
-	cp $(LIBNAME) $(AUTOLOAD_DIR)
+	cp $(GLIBNAME) $(AUTOLOAD_DIR)
+	cp $(OLIBNAME) $(AUTOLOAD_DIR)
 
 clean:
-	rm -f $(LIBNAME) *.o 
+	rm -f $(OLIBNAME) $(GLIBNAME) *.o 
 
 distclean: clean
 	rm -f Makefile config.status config.log autom*.cache
 
 
-$(LIBNAME):	grass57dataset.o
-	$(LD_SHARED) grass57dataset.o $(LIBS) -o $(LIBNAME)
+$(GLIBNAME):	grass57dataset.o
+	$(LD_SHARED) grass57dataset.o $(LIBS) -o $(GLIBNAME)
+
+$(OLIBNAME):	ogrgrassdriver.o ogrgrassdatasource.o ogrgrasslayer.o 
+	$(LD_SHARED) ogrgrassdriver.o ogrgrassdatasource.o ogrgrasslayer.o $(LIBS) -o $(OLIBNAME)
 
 %.o:	%.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
