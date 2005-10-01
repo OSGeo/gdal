@@ -1073,26 +1073,21 @@ typedef int FALSE_IS_ERR;
 
 
 
-int bUseExceptions=0;
-int bErrorHappened=0;
-
-void ErrorHandler(CPLErr eclass, int code, const char *msg ) {
-  /* Only raise exceptions on failures and fatal errors */
-  if (eclass == CE_Failure || eclass == CE_Fatal) {
-    bErrorHappened = 1;
+void VeryQuiteErrorHandler(CPLErr eclass, int code, const char *msg ) {
+  /* If the error class is CE_Fatal, we want to have a message issued
+     because the CPL support code does an abort() before any exception
+     can be generated */
+  if (eclass == CE_Fatal ) {
+    CPLDefaultErrorHandler(eclass, code, msg );
   }
 }
 
 
 void UseExceptions() {
-  bUseExceptions = 1;
-  bErrorHappened = 0;
-  CPLSetErrorHandler( (CPLErrorHandler)ErrorHandler );
+  CPLSetErrorHandler( (CPLErrorHandler) VeryQuiteErrorHandler );
 }
 
 void DontUseExceptions() {
-  bUseExceptions = 0;
-  bErrorHappened = 0;
   CPLSetErrorHandler( CPLDefaultErrorHandler );
 }
 
@@ -1677,13 +1672,12 @@ _wrap_debug(int argc, VALUE *argv, VALUE self) {
     arg1 = StringValuePtr(argv[0]);
     arg2 = StringValuePtr(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            Debug((char const *)arg1,(char const *)arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        Debug((char const *)arg1,(char const *)arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -1711,13 +1705,12 @@ _wrap_error(int argc, VALUE *argv, VALUE self) {
         arg3 = StringValuePtr(argv[2]);
     }
     {
-        {
-            bErrorHappened = 0;
-            Error(arg1,arg2,(char const *)arg3);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        Error(arg1,arg2,(char const *)arg3);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -1736,23 +1729,16 @@ _wrap_push_error_handler(int argc, VALUE *argv, VALUE self) {
         arg1 = StringValuePtr(argv[0]);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (CPLErr)PushErrorHandler((char const *)arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (CPLErr)PushErrorHandler((char const *)arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
         /* %typemap(ruby,out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-        }
-        
         vresult = (CPLErr)LONG2NUM(result);
     }
     return vresult;
@@ -1771,13 +1757,12 @@ _wrap_PushErrorHandler(int argc, VALUE *argv, VALUE self) {
         if (ptr) arg1 = *ptr;
     }
     {
-        {
-            bErrorHappened = 0;
-            CPLPushErrorHandler(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        CPLPushErrorHandler(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -1789,13 +1774,12 @@ _wrap_PopErrorHandler(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     {
-        {
-            bErrorHappened = 0;
-            CPLPopErrorHandler();
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        CPLPopErrorHandler();
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -1807,13 +1791,12 @@ _wrap_ErrorReset(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     {
-        {
-            bErrorHappened = 0;
-            CPLErrorReset();
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        CPLErrorReset();
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -1828,13 +1811,12 @@ _wrap_GetLastErrorNo(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     {
-        {
-            bErrorHappened = 0;
-            result = (int)CPLGetLastErrorNo();
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)CPLGetLastErrorNo();
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -1850,23 +1832,16 @@ _wrap_GetLastErrorType(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     {
-        {
-            bErrorHappened = 0;
-            result = (CPLErr)CPLGetLastErrorType();
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (CPLErr)CPLGetLastErrorType();
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
         /* %typemap(ruby,out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-        }
-        
         vresult = (CPLErr)LONG2NUM(result);
     }
     return vresult;
@@ -1881,13 +1856,12 @@ _wrap_GetLastErrorMsg(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)CPLGetLastErrorMsg();
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)CPLGetLastErrorMsg();
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -1903,13 +1877,12 @@ _wrap_PushFinderLocation(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     arg1 = StringValuePtr(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            CPLPushFinderLocation((char const *)arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        CPLPushFinderLocation((char const *)arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -1921,13 +1894,12 @@ _wrap_PopFinderLocation(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     {
-        {
-            bErrorHappened = 0;
-            CPLPopFinderLocation();
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        CPLPopFinderLocation();
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -1939,13 +1911,12 @@ _wrap_FinderClean(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     {
-        {
-            bErrorHappened = 0;
-            CPLFinderClean();
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        CPLFinderClean();
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -1964,13 +1935,12 @@ _wrap_FindFile(int argc, VALUE *argv, VALUE self) {
     arg1 = StringValuePtr(argv[0]);
     arg2 = StringValuePtr(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)CPLFindFile((char const *)arg1,(char const *)arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)CPLFindFile((char const *)arg1,(char const *)arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -1988,13 +1958,12 @@ _wrap_SetConfigOption(int argc, VALUE *argv, VALUE self) {
     arg1 = StringValuePtr(argv[0]);
     arg2 = StringValuePtr(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            CPLSetConfigOption((char const *)arg1,(char const *)arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        CPLSetConfigOption((char const *)arg1,(char const *)arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -2013,13 +1982,12 @@ _wrap_GetConfigOption(int argc, VALUE *argv, VALUE self) {
     arg1 = StringValuePtr(argv[0]);
     arg2 = StringValuePtr(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)CPLGetConfigOption((char const *)arg1,(char const *)arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)CPLGetConfigOption((char const *)arg1,(char const *)arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -2039,13 +2007,12 @@ _wrap_MajorObject_get_description(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALMajorObjectShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)GDALMajorObjectShadow_GetDescription(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)GDALMajorObjectShadow_GetDescription(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -2063,13 +2030,12 @@ _wrap_MajorObject_set_description(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALMajorObjectShadow, 0);
     arg2 = StringValuePtr(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            GDALMajorObjectShadow_SetDescription(arg1,(char const *)arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDALMajorObjectShadow_SetDescription(arg1,(char const *)arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -2090,13 +2056,12 @@ _wrap_MajorObject_get_metadata_dict(int argc, VALUE *argv, VALUE self) {
         arg2 = StringValuePtr(argv[0]);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (char **)GDALMajorObjectShadow_GetMetadata_Dict(arg1,(char const *)arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char **)GDALMajorObjectShadow_GetMetadata_Dict(arg1,(char const *)arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
@@ -2144,13 +2109,12 @@ _wrap_MajorObject_get_metadata_list(int argc, VALUE *argv, VALUE self) {
         arg2 = StringValuePtr(argv[0]);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (char **)GDALMajorObjectShadow_GetMetadata_List(arg1,(char const *)arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char **)GDALMajorObjectShadow_GetMetadata_List(arg1,(char const *)arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
@@ -2239,23 +2203,16 @@ _wrap_MajorObject_set_metadata__SWIG_0(int argc, VALUE *argv, VALUE self) {
         arg3 = StringValuePtr(argv[1]);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (CPLErr)GDALMajorObjectShadow_SetMetadata__SWIG_0(arg1,arg2,(char const *)arg3);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (CPLErr)GDALMajorObjectShadow_SetMetadata__SWIG_0(arg1,arg2,(char const *)arg3);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
         /* %typemap(ruby,out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-        }
-        
         vresult = (CPLErr)LONG2NUM(result);
     }
     {
@@ -2282,23 +2239,16 @@ _wrap_MajorObject_set_metadata__SWIG_1(int argc, VALUE *argv, VALUE self) {
         arg3 = StringValuePtr(argv[1]);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (CPLErr)GDALMajorObjectShadow_SetMetadata__SWIG_1(arg1,arg2,(char const *)arg3);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (CPLErr)GDALMajorObjectShadow_SetMetadata__SWIG_1(arg1,arg2,(char const *)arg3);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
         /* %typemap(ruby,out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-        }
-        
         vresult = (CPLErr)LONG2NUM(result);
     }
     return vresult;
@@ -2380,13 +2330,12 @@ _wrap_Driver_short_name_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDriverShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)GDALDriverShadow_ShortName_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)GDALDriverShadow_ShortName_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -2404,13 +2353,12 @@ _wrap_Driver_long_name_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDriverShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)GDALDriverShadow_LongName_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)GDALDriverShadow_LongName_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -2428,13 +2376,12 @@ _wrap_Driver_help_topic_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDriverShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)GDALDriverShadow_HelpTopic_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)GDALDriverShadow_HelpTopic_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -2488,13 +2435,12 @@ _wrap_Driver_create_(int argc, VALUE *argv, VALUE self) {
         }
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (GDALDatasetShadow *)GDALDriverShadow_Create(arg1,(char const *)arg2,arg3,arg4,arg5,arg6,arg7);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDALDatasetShadow *)GDALDriverShadow_Create(arg1,(char const *)arg2,arg3,arg4,arg5,arg6,arg7);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_GDALDatasetShadow,1);
@@ -2544,13 +2490,12 @@ _wrap_Driver_create_copy(int argc, VALUE *argv, VALUE self) {
         }
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (GDALDatasetShadow *)GDALDriverShadow_CreateCopy(arg1,(char const *)arg2,arg3,arg4,arg5);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDALDatasetShadow *)GDALDriverShadow_CreateCopy(arg1,(char const *)arg2,arg3,arg4,arg5);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_GDALDatasetShadow,1);
@@ -2575,13 +2520,12 @@ _wrap_Driver_delete_(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDriverShadow, 0);
     arg2 = StringValuePtr(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            result = (int)GDALDriverShadow_Delete(arg1,(char const *)arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)GDALDriverShadow_Delete(arg1,(char const *)arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -2601,13 +2545,12 @@ _wrap_GCP_gcpx_set(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = (double) NUM2DBL(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_GCPX_set(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_GCPX_set(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -2624,13 +2567,12 @@ _wrap_GCP_gcpx_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (double)GDAL_GCP_GCPX_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (double)GDAL_GCP_GCPX_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_float_new(result);
@@ -2648,13 +2590,12 @@ _wrap_GCP_gcpy_set(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = (double) NUM2DBL(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_GCPY_set(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_GCPY_set(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -2671,13 +2612,12 @@ _wrap_GCP_gcpy_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (double)GDAL_GCP_GCPY_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (double)GDAL_GCP_GCPY_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_float_new(result);
@@ -2695,13 +2635,12 @@ _wrap_GCP_gcpz_set(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = (double) NUM2DBL(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_GCPZ_set(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_GCPZ_set(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -2718,13 +2657,12 @@ _wrap_GCP_gcpz_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (double)GDAL_GCP_GCPZ_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (double)GDAL_GCP_GCPZ_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_float_new(result);
@@ -2742,13 +2680,12 @@ _wrap_GCP_gcppixel_set(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = (double) NUM2DBL(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_GCPPixel_set(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_GCPPixel_set(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -2765,13 +2702,12 @@ _wrap_GCP_gcppixel_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (double)GDAL_GCP_GCPPixel_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (double)GDAL_GCP_GCPPixel_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_float_new(result);
@@ -2789,13 +2725,12 @@ _wrap_GCP_gcpline_set(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = (double) NUM2DBL(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_GCPLine_set(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_GCPLine_set(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -2812,13 +2747,12 @@ _wrap_GCP_gcpline_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (double)GDAL_GCP_GCPLine_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (double)GDAL_GCP_GCPLine_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_float_new(result);
@@ -2836,13 +2770,12 @@ _wrap_GCP_info_set(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = StringValuePtr(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_Info_set(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_Info_set(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -2859,13 +2792,12 @@ _wrap_GCP_info_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)GDAL_GCP_Info_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)GDAL_GCP_Info_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -2883,13 +2815,12 @@ _wrap_GCP_id_set(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = StringValuePtr(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_Id_set(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_Id_set(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -2906,13 +2837,12 @@ _wrap_GCP_id_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)GDAL_GCP_Id_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)GDAL_GCP_Id_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -2972,14 +2902,13 @@ _wrap_new_GCP(int argc, VALUE *argv, VALUE self) {
         arg7 = StringValuePtr(argv[6]);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (GDAL_GCP *)new_GDAL_GCP(arg1,arg2,arg3,arg4,arg5,(char const *)arg6,(char const *)arg7);
-            DATA_PTR(self) = result;
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDAL_GCP *)new_GDAL_GCP(arg1,arg2,arg3,arg4,arg5,(char const *)arg6,(char const *)arg7);
+        DATA_PTR(self) = result;
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return self;
@@ -3008,13 +2937,12 @@ _wrap_gdal_gcp_gcpx_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (double)GDAL_GCP_GCPX_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (double)GDAL_GCP_GCPX_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_float_new(result);
@@ -3032,13 +2960,12 @@ _wrap_gdal_gcp_gcpx_set(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = (double) NUM2DBL(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_GCPX_set(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_GCPX_set(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -3055,13 +2982,12 @@ _wrap_gdal_gcp_gcpy_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (double)GDAL_GCP_GCPY_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (double)GDAL_GCP_GCPY_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_float_new(result);
@@ -3079,13 +3005,12 @@ _wrap_gdal_gcp_gcpy_set(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = (double) NUM2DBL(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_GCPY_set(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_GCPY_set(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -3102,13 +3027,12 @@ _wrap_gdal_gcp_gcpz_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (double)GDAL_GCP_GCPZ_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (double)GDAL_GCP_GCPZ_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_float_new(result);
@@ -3126,13 +3050,12 @@ _wrap_gdal_gcp_gcpz_set(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = (double) NUM2DBL(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_GCPZ_set(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_GCPZ_set(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -3149,13 +3072,12 @@ _wrap_gdal_gcp_gcppixel_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (double)GDAL_GCP_GCPPixel_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (double)GDAL_GCP_GCPPixel_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_float_new(result);
@@ -3173,13 +3095,12 @@ _wrap_gdal_gcp_gcppixel_set(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = (double) NUM2DBL(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_GCPPixel_set(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_GCPPixel_set(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -3196,13 +3117,12 @@ _wrap_gdal_gcp_gcpline_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (double)GDAL_GCP_GCPLine_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (double)GDAL_GCP_GCPLine_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_float_new(result);
@@ -3220,13 +3140,12 @@ _wrap_gdal_gcp_gcpline_set(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = (double) NUM2DBL(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_GCPLine_set(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_GCPLine_set(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -3243,13 +3162,12 @@ _wrap_gdal_gcp_info_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)GDAL_GCP_Info_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)GDAL_GCP_Info_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -3267,13 +3185,12 @@ _wrap_gdal_gcp_info_set(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = StringValuePtr(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_Info_set(arg1,(char const *)arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_Info_set(arg1,(char const *)arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -3290,13 +3207,12 @@ _wrap_gdal_gcp_id_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)GDAL_GCP_Id_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)GDAL_GCP_Id_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -3314,13 +3230,12 @@ _wrap_gdal_gcp_id_set(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = StringValuePtr(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_Id_set(arg1,(char const *)arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_Id_set(arg1,(char const *)arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -3337,13 +3252,12 @@ _wrap_gdal_gcp_get_gcpx(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (double)GDAL_GCP_get_GCPX(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (double)GDAL_GCP_get_GCPX(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_float_new(result);
@@ -3361,13 +3275,12 @@ _wrap_gdal_gcp_set_gcpx(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = (double) NUM2DBL(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_set_GCPX(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_set_GCPX(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -3384,13 +3297,12 @@ _wrap_gdal_gcp_get_gcpy(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (double)GDAL_GCP_get_GCPY(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (double)GDAL_GCP_get_GCPY(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_float_new(result);
@@ -3408,13 +3320,12 @@ _wrap_gdal_gcp_set_gcpy(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = (double) NUM2DBL(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_set_GCPY(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_set_GCPY(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -3431,13 +3342,12 @@ _wrap_gdal_gcp_get_gcpz(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (double)GDAL_GCP_get_GCPZ(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (double)GDAL_GCP_get_GCPZ(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_float_new(result);
@@ -3455,13 +3365,12 @@ _wrap_gdal_gcp_set_gcpz(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = (double) NUM2DBL(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_set_GCPZ(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_set_GCPZ(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -3478,13 +3387,12 @@ _wrap_gdal_gcp_get_gcppixel(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (double)GDAL_GCP_get_GCPPixel(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (double)GDAL_GCP_get_GCPPixel(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_float_new(result);
@@ -3502,13 +3410,12 @@ _wrap_gdal_gcp_set_gcppixel(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = (double) NUM2DBL(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_set_GCPPixel(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_set_GCPPixel(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -3525,13 +3432,12 @@ _wrap_gdal_gcp_get_gcpline(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (double)GDAL_GCP_get_GCPLine(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (double)GDAL_GCP_get_GCPLine(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_float_new(result);
@@ -3549,13 +3455,12 @@ _wrap_gdal_gcp_set_gcpline(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = (double) NUM2DBL(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_set_GCPLine(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_set_GCPLine(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -3572,13 +3477,12 @@ _wrap_gdal_gcp_get_info(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)GDAL_GCP_get_Info(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)GDAL_GCP_get_Info(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -3596,13 +3500,12 @@ _wrap_gdal_gcp_set_info(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = StringValuePtr(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_set_Info(arg1,(char const *)arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_set_Info(arg1,(char const *)arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -3619,13 +3522,12 @@ _wrap_gdal_gcp_get_id(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)GDAL_GCP_get_Id(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)GDAL_GCP_get_Id(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -3643,13 +3545,12 @@ _wrap_gdal_gcp_set_id(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg1, SWIGTYPE_p_GDAL_GCP, 0);
     arg2 = StringValuePtr(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            GDAL_GCP_set_Id(arg1,(char const *)arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDAL_GCP_set_Id(arg1,(char const *)arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -3701,13 +3602,12 @@ _wrap_GCPsToGeoTransform(int argc, VALUE *argv, VALUE self) {
         arg4 = NUM2INT(argv[1]);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = GDALGCPsToGeoTransform(arg1,(GDAL_GCP const *)arg2,arg3,arg4);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = GDALGCPsToGeoTransform(arg1,(GDAL_GCP const *)arg2,arg3,arg4);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
@@ -3748,13 +3648,12 @@ _wrap_Dataset_raster_xsize_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDatasetShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (int)GDALDatasetShadow_RasterXSize_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)GDALDatasetShadow_RasterXSize_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -3772,13 +3671,12 @@ _wrap_Dataset_raster_ysize_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDatasetShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (int)GDALDatasetShadow_RasterYSize_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)GDALDatasetShadow_RasterYSize_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -3796,13 +3694,12 @@ _wrap_Dataset_raster_count_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDatasetShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (int)GDALDatasetShadow_RasterCount_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)GDALDatasetShadow_RasterCount_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -3830,13 +3727,12 @@ _wrap_Dataset_get_driver(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDatasetShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (GDALDriverShadow *)GDALDatasetShadow_GetDriver(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDALDriverShadow *)GDALDatasetShadow_GetDriver(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_GDALDriverShadow,0);
@@ -3856,13 +3752,12 @@ _wrap_Dataset_get_raster_band(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDatasetShadow, 0);
     arg2 = NUM2INT(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            result = (GDALRasterBandShadow *)GDALDatasetShadow_GetRasterBand(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDALRasterBandShadow *)GDALDatasetShadow_GetRasterBand(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_GDALRasterBandShadow,0);
@@ -3880,13 +3775,12 @@ _wrap_Dataset_get_projection(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDatasetShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)GDALDatasetShadow_GetProjection(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)GDALDatasetShadow_GetProjection(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -3904,13 +3798,12 @@ _wrap_Dataset_get_projection_ref(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDatasetShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)GDALDatasetShadow_GetProjectionRef(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)GDALDatasetShadow_GetProjectionRef(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -3930,23 +3823,16 @@ _wrap_Dataset_set_projection(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDatasetShadow, 0);
     arg2 = StringValuePtr(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            result = (CPLErr)GDALDatasetShadow_SetProjection(arg1,(char const *)arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (CPLErr)GDALDatasetShadow_SetProjection(arg1,(char const *)arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
         /* %typemap(ruby,out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-        }
-        
         vresult = (CPLErr)LONG2NUM(result);
     }
     return vresult;
@@ -3968,13 +3854,12 @@ _wrap_Dataset_get_geo_transform(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDatasetShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            GDALDatasetShadow_GetGeoTransform(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDALDatasetShadow_GetGeoTransform(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
@@ -4023,23 +3908,16 @@ _wrap_Dataset_set_geo_transform(int argc, VALUE *argv, VALUE self) {
         }
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (CPLErr)GDALDatasetShadow_SetGeoTransform(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (CPLErr)GDALDatasetShadow_SetGeoTransform(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
         /* %typemap(ruby,out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-        }
-        
         vresult = (CPLErr)LONG2NUM(result);
     }
     return vresult;
@@ -4086,13 +3964,12 @@ _wrap_Dataset_build_overviews(int argc, VALUE *argv, VALUE self) {
         }
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (int)GDALDatasetShadow_BuildOverviews(arg1,(char const *)arg2,arg3,arg4);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)GDALDatasetShadow_BuildOverviews(arg1,(char const *)arg2,arg3,arg4);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -4116,13 +3993,12 @@ _wrap_Dataset_get_gcpcount(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDatasetShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (int)GDALDatasetShadow_GetGCPCount(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)GDALDatasetShadow_GetGCPCount(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -4140,13 +4016,12 @@ _wrap_Dataset_get_gcpprojection(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDatasetShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)GDALDatasetShadow_GetGCPProjection(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)GDALDatasetShadow_GetGCPProjection(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -4172,13 +4047,12 @@ _wrap_Dataset_get_gcps(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDatasetShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            GDALDatasetShadow_GetGCPs(arg1,arg2,(GDAL_GCP const **)arg3);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDALDatasetShadow_GetGCPs(arg1,arg2,(GDAL_GCP const **)arg3);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
@@ -4242,23 +4116,16 @@ _wrap_Dataset_set_gcps(int argc, VALUE *argv, VALUE self) {
     }
     arg4 = StringValuePtr(argv[1]);
     {
-        {
-            bErrorHappened = 0;
-            result = (CPLErr)GDALDatasetShadow_SetGCPs(arg1,arg2,(GDAL_GCP const *)arg3,(char const *)arg4);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (CPLErr)GDALDatasetShadow_SetGCPs(arg1,arg2,(GDAL_GCP const *)arg3,(char const *)arg4);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
         /* %typemap(ruby,out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-        }
-        
         vresult = (CPLErr)LONG2NUM(result);
     }
     {
@@ -4279,13 +4146,12 @@ _wrap_Dataset_flush_cache(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALDatasetShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            GDALDatasetShadow_FlushCache(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDALDatasetShadow_FlushCache(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -4328,23 +4194,16 @@ _wrap_Dataset_add_band(int argc, VALUE *argv, VALUE self) {
         }
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (CPLErr)GDALDatasetShadow_AddBand(arg1,arg2,arg3);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (CPLErr)GDALDatasetShadow_AddBand(arg1,arg2,arg3);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
         /* %typemap(ruby,out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-        }
-        
         vresult = (CPLErr)LONG2NUM(result);
     }
     {
@@ -4418,23 +4277,16 @@ _wrap_Dataset_write_raster(int argc, VALUE *argv, VALUE self) {
         }
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (CPLErr)GDALDatasetShadow_WriteRaster(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (CPLErr)GDALDatasetShadow_WriteRaster(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
         /* %typemap(ruby,out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-        }
-        
         vresult = (CPLErr)LONG2NUM(result);
     }
     {
@@ -4459,13 +4311,12 @@ _wrap_Band_xsize_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (int)GDALRasterBandShadow_XSize_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)GDALRasterBandShadow_XSize_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -4483,13 +4334,12 @@ _wrap_Band_ysize_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (int)GDALRasterBandShadow_YSize_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)GDALRasterBandShadow_YSize_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -4507,13 +4357,12 @@ _wrap_Band_data_type_get(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (GDALDataType)GDALRasterBandShadow_DataType_get(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDALDataType)GDALRasterBandShadow_DataType_get(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -4531,13 +4380,12 @@ _wrap_Band_get_raster_color_interpretation(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (GDALColorInterp)GDALRasterBandShadow_GetRasterColorInterpretation(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDALColorInterp)GDALRasterBandShadow_GetRasterColorInterpretation(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -4560,23 +4408,16 @@ _wrap_Band_set_raster_color_interpretation(int argc, VALUE *argv, VALUE self) {
         arg2 = (GDALColorInterp) NUM2INT(argv[0]);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (CPLErr)GDALRasterBandShadow_SetRasterColorInterpretation(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (CPLErr)GDALRasterBandShadow_SetRasterColorInterpretation(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
         /* %typemap(ruby,out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-        }
-        
         vresult = (CPLErr)LONG2NUM(result);
     }
     return vresult;
@@ -4601,13 +4442,12 @@ _wrap_Band_get_no_data_value(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            GDALRasterBandShadow_GetNoDataValue(arg1,arg2,arg3);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDALRasterBandShadow_GetNoDataValue(arg1,arg2,arg3);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
@@ -4636,23 +4476,16 @@ _wrap_Band_set_no_data_value(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
     arg2 = (double) NUM2DBL(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            result = (CPLErr)GDALRasterBandShadow_SetNoDataValue(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (CPLErr)GDALRasterBandShadow_SetNoDataValue(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
         /* %typemap(ruby,out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-        }
-        
         vresult = (CPLErr)LONG2NUM(result);
     }
     return vresult;
@@ -4677,13 +4510,12 @@ _wrap_Band_get_minimum(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            GDALRasterBandShadow_GetMinimum(arg1,arg2,arg3);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDALRasterBandShadow_GetMinimum(arg1,arg2,arg3);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
@@ -4718,13 +4550,12 @@ _wrap_Band_get_maximum(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            GDALRasterBandShadow_GetMaximum(arg1,arg2,arg3);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDALRasterBandShadow_GetMaximum(arg1,arg2,arg3);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
@@ -4759,13 +4590,12 @@ _wrap_Band_get_offset(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            GDALRasterBandShadow_GetOffset(arg1,arg2,arg3);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDALRasterBandShadow_GetOffset(arg1,arg2,arg3);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
@@ -4800,13 +4630,12 @@ _wrap_Band_get_scale(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            GDALRasterBandShadow_GetScale(arg1,arg2,arg3);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDALRasterBandShadow_GetScale(arg1,arg2,arg3);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
@@ -4833,13 +4662,12 @@ _wrap_Band_get_overview_count(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (int)GDALRasterBandShadow_GetOverviewCount(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)GDALRasterBandShadow_GetOverviewCount(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -4859,13 +4687,12 @@ _wrap_Band_get_overview(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
     arg2 = NUM2INT(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            result = (GDALRasterBandShadow *)GDALRasterBandShadow_GetOverview(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDALRasterBandShadow *)GDALRasterBandShadow_GetOverview(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_GDALRasterBandShadow,0);
@@ -4902,13 +4729,12 @@ _wrap_Band_checksum(int argc, VALUE *argv, VALUE self) {
         SWIG_ConvertPtr(argv[3], (void **) &arg5, SWIGTYPE_p_int, 0);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (int)GDALRasterBandShadow_Checksum(arg1,arg2,arg3,arg4,arg5);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)GDALRasterBandShadow_Checksum(arg1,arg2,arg3,arg4,arg5);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -4935,13 +4761,12 @@ _wrap_Band_compute_raster_min_max(int argc, VALUE *argv, VALUE self) {
         arg3 = NUM2INT(argv[0]);
     }
     {
-        {
-            bErrorHappened = 0;
-            GDALRasterBandShadow_ComputeRasterMinMax(arg1,arg2,arg3);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDALRasterBandShadow_ComputeRasterMinMax(arg1,arg2,arg3);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
@@ -4974,23 +4799,16 @@ _wrap_Band_fill(int argc, VALUE *argv, VALUE self) {
         arg3 = (double) NUM2DBL(argv[1]);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (CPLErr)GDALRasterBandShadow_Fill(arg1,arg2,arg3);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (CPLErr)GDALRasterBandShadow_Fill(arg1,arg2,arg3);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
         /* %typemap(ruby,out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-        }
-        
         vresult = (CPLErr)LONG2NUM(result);
     }
     return vresult;
@@ -5039,23 +4857,16 @@ _wrap_Band_read_raster(int argc, VALUE *argv, VALUE self) {
         SWIG_ConvertPtr(argv[6], (void **) &arg10, SWIGTYPE_p_int, 0);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (CPLErr)GDALRasterBandShadow_ReadRaster(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (CPLErr)GDALRasterBandShadow_ReadRaster(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
         /* %typemap(ruby,out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-        }
-        
         vresult = (CPLErr)LONG2NUM(result);
     }
     {
@@ -5111,23 +4922,16 @@ _wrap_Band_write_raster(int argc, VALUE *argv, VALUE self) {
         SWIG_ConvertPtr(argv[7], (void **) &arg10, SWIGTYPE_p_int, 0);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (CPLErr)GDALRasterBandShadow_WriteRaster(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (CPLErr)GDALRasterBandShadow_WriteRaster(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
         /* %typemap(ruby,out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-        }
-        
         vresult = (CPLErr)LONG2NUM(result);
     }
     return vresult;
@@ -5142,13 +4946,12 @@ _wrap_Band_flush_cache(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            GDALRasterBandShadow_FlushCache(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDALRasterBandShadow_FlushCache(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -5165,13 +4968,12 @@ _wrap_Band_get_raster_color_table(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (GDALColorTable *)GDALRasterBandShadow_GetRasterColorTable(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDALColorTable *)GDALRasterBandShadow_GetRasterColorTable(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_GDALColorTable,0);
@@ -5191,13 +4993,12 @@ _wrap_Band_set_raster_color_table(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALRasterBandShadow, 0);
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_GDALColorTable, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (int)GDALRasterBandShadow_SetRasterColorTable(arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)GDALRasterBandShadow_SetRasterColorTable(arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -5238,14 +5039,13 @@ _wrap_new_ColorTable(int argc, VALUE *argv, VALUE self) {
         }
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (GDALColorTable *)new GDALColorTable(arg1);
-            DATA_PTR(self) = result;
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDALColorTable *)new GDALColorTable(arg1);
+        DATA_PTR(self) = result;
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return self;
@@ -5267,13 +5067,12 @@ _wrap_ColorTable_clone(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALColorTable, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (GDALColorTable *)((GDALColorTable const *)arg1)->Clone();
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDALColorTable *)((GDALColorTable const *)arg1)->Clone();
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_GDALColorTable,0);
@@ -5291,13 +5090,12 @@ _wrap_ColorTable_get_palette_interpretation(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALColorTable, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (GDALPaletteInterp)((GDALColorTable const *)arg1)->GetPaletteInterpretation();
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDALPaletteInterp)((GDALColorTable const *)arg1)->GetPaletteInterpretation();
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -5315,13 +5113,12 @@ _wrap_ColorTable_GetCount(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALColorTable, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (int)((GDALColorTable const *)arg1)->GetColorEntryCount();
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)((GDALColorTable const *)arg1)->GetColorEntryCount();
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -5341,13 +5138,12 @@ _wrap_ColorTable_get_color_entry(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(self, (void **) &arg1, SWIGTYPE_p_GDALColorTable, 0);
     arg2 = NUM2INT(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            result = (GDALColorEntry *)(arg1)->GetColorEntry(arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDALColorEntry *)(arg1)->GetColorEntry(arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_GDALColorEntry,0);
@@ -5369,13 +5165,12 @@ _wrap_ColorTable_get_color_entry_as_rgb(int argc, VALUE *argv, VALUE self) {
     arg2 = NUM2INT(argv[0]);
     SWIG_ConvertPtr(argv[1], (void **) &arg3, SWIGTYPE_p_GDALColorEntry, 0);
     {
-        {
-            bErrorHappened = 0;
-            result = (int)((GDALColorTable const *)arg1)->GetColorEntryAsRGB(arg2,arg3);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)((GDALColorTable const *)arg1)->GetColorEntryAsRGB(arg2,arg3);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -5395,13 +5190,12 @@ _wrap_ColorTable_set_color_entry(int argc, VALUE *argv, VALUE self) {
     arg2 = NUM2INT(argv[0]);
     SWIG_ConvertPtr(argv[1], (void **) &arg3, SWIGTYPE_p_GDALColorEntry, 0);
     {
-        {
-            bErrorHappened = 0;
-            (arg1)->SetColorEntry(arg2,(GDALColorEntry const *)arg3);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        (arg1)->SetColorEntry(arg2,(GDALColorEntry const *)arg3);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -5413,13 +5207,12 @@ _wrap_AllRegister(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     {
-        {
-            bErrorHappened = 0;
-            GDALAllRegister();
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDALAllRegister();
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -5434,13 +5227,12 @@ _wrap_GetCacheMax(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     {
-        {
-            bErrorHappened = 0;
-            result = (int)GDALGetCacheMax();
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)GDALGetCacheMax();
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -5456,13 +5248,12 @@ _wrap_SetCacheMax(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     arg1 = NUM2INT(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            GDALSetCacheMax(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        GDALSetCacheMax(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     return Qnil;
@@ -5477,13 +5268,12 @@ _wrap_GetCacheUsed(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     {
-        {
-            bErrorHappened = 0;
-            result = (int)GDALGetCacheUsed();
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)GDALGetCacheUsed();
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -5504,13 +5294,12 @@ _wrap_GetDataTypeSize(int argc, VALUE *argv, VALUE self) {
         arg1 = (GDALDataType) NUM2INT(argv[0]);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (int)GDALGetDataTypeSize(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)GDALGetDataTypeSize(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -5531,13 +5320,12 @@ _wrap_DataTypeIsComplex(int argc, VALUE *argv, VALUE self) {
         arg1 = (GDALDataType) NUM2INT(argv[0]);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (int)GDALDataTypeIsComplex(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)GDALDataTypeIsComplex(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -5558,13 +5346,12 @@ _wrap_GetDataTypeName(int argc, VALUE *argv, VALUE self) {
         arg1 = (GDALDataType) NUM2INT(argv[0]);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)GDALGetDataTypeName(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)GDALGetDataTypeName(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -5582,13 +5369,12 @@ _wrap_GetDataTypeByName(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     arg1 = StringValuePtr(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            result = (GDALDataType)GDALGetDataTypeByName((char const *)arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDALDataType)GDALGetDataTypeByName((char const *)arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -5609,13 +5395,12 @@ _wrap_GetColorInterpretationName(int argc, VALUE *argv, VALUE self) {
         arg1 = (GDALColorInterp) NUM2INT(argv[0]);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)GDALGetColorInterpretationName(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)GDALGetColorInterpretationName(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -5636,13 +5421,12 @@ _wrap_GetPaletteInterpretationName(int argc, VALUE *argv, VALUE self) {
         arg1 = (GDALPaletteInterp) NUM2INT(argv[0]);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)GDALGetPaletteInterpretationName(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)GDALGetPaletteInterpretationName(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -5666,13 +5450,12 @@ _wrap_DecToDMS(int argc, VALUE *argv, VALUE self) {
         arg3 = NUM2INT(argv[2]);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)GDALDecToDMS(arg1,(char const *)arg2,arg3);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)GDALDecToDMS(arg1,(char const *)arg2,arg3);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -5690,13 +5473,12 @@ _wrap_PackedDMSToDec(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     arg1 = (double) NUM2DBL(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            result = (double)GDALPackedDMSToDec(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (double)GDALPackedDMSToDec(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_float_new(result);
@@ -5714,13 +5496,12 @@ _wrap_DecToPackedDMS(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     arg1 = (double) NUM2DBL(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            result = (double)GDALDecToPackedDMS(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (double)GDALDecToPackedDMS(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_float_new(result);
@@ -5738,13 +5519,12 @@ _wrap_ParseXMLString(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     arg1 = StringValuePtr(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            result = (CPLXMLNode *)CPLParseXMLString(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (CPLXMLNode *)CPLParseXMLString(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     {
@@ -5778,13 +5558,12 @@ _wrap_SerializeXMLTree(int argc, VALUE *argv, VALUE self) {
         }
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (char *)CPLSerializeXMLTree(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (char *)CPLSerializeXMLTree(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = rb_str_new2(result);
@@ -5807,13 +5586,12 @@ _wrap_get_driver_count(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     {
-        {
-            bErrorHappened = 0;
-            result = (int)GetDriverCount();
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (int)GetDriverCount();
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = INT2NUM(result);
@@ -5831,13 +5609,12 @@ _wrap_get_driver_by_name(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     arg1 = StringValuePtr(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            result = (GDALDriverShadow *)GetDriverByName((char const *)arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDALDriverShadow *)GetDriverByName((char const *)arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_GDALDriverShadow,0);
@@ -5855,13 +5632,12 @@ _wrap_get_driver(int argc, VALUE *argv, VALUE self) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc);
     arg1 = NUM2INT(argv[0]);
     {
-        {
-            bErrorHappened = 0;
-            result = (GDALDriverShadow *)GetDriver(arg1);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDALDriverShadow *)GetDriver(arg1);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_GDALDriverShadow,0);
@@ -5886,13 +5662,12 @@ _wrap_open(int argc, VALUE *argv, VALUE self) {
         }
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (GDALDatasetShadow *)Open((char const *)arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDALDatasetShadow *)Open((char const *)arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_GDALDatasetShadow,1);
@@ -5917,13 +5692,12 @@ _wrap_open_shared(int argc, VALUE *argv, VALUE self) {
         }
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (GDALDatasetShadow *)OpenShared((char const *)arg1,arg2);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDALDatasetShadow *)OpenShared((char const *)arg1,arg2);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_GDALDatasetShadow,1);
@@ -5960,13 +5734,12 @@ _wrap_auto_create_warped_vrt(int argc, VALUE *argv, VALUE self) {
         arg5 = (double) NUM2DBL(argv[4]);
     }
     {
-        {
-            bErrorHappened = 0;
-            result = (GDALDatasetShadow *)AutoCreateWarpedVRT(arg1,(char const *)arg2,(char const *)arg3,arg4,arg5);
-            
-            if ( bErrorHappened ) {
-                SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
-            }
+        CPLErrorReset();
+        result = (GDALDatasetShadow *)AutoCreateWarpedVRT(arg1,(char const *)arg2,(char const *)arg3,arg4,arg5);
+        
+        CPLErr eclass = CPLGetLastErrorType();
+        if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+            SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
     vresult = SWIG_NewPointerObj((void *) result, SWIGTYPE_p_GDALDatasetShadow,1);
@@ -6221,14 +5994,14 @@ SWIGEXPORT void Init_gdal(void) {
     }
     
     SWIG_RubyInitializeTrackings();
+    rb_define_module_function(mGdal, "UseExceptions", VALUEFUNC(_wrap_UseExceptions), -1);
+    rb_define_module_function(mGdal, "DontUseExceptions", VALUEFUNC(_wrap_DontUseExceptions), -1);
     
     /* gdal_ruby.i %init code */
     if ( GDALGetDriverCount() == 0 ) {
         GDALAllRegister();
     }
     
-    rb_define_module_function(mGdal, "UseExceptions", VALUEFUNC(_wrap_UseExceptions), -1);
-    rb_define_module_function(mGdal, "DontUseExceptions", VALUEFUNC(_wrap_DontUseExceptions), -1);
     rb_define_module_function(mGdal, "debug", VALUEFUNC(_wrap_debug), -1);
     rb_define_module_function(mGdal, "error", VALUEFUNC(_wrap_error), -1);
     rb_define_module_function(mGdal, "push_error_handler", VALUEFUNC(_wrap_push_error_handler), -1);
