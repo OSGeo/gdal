@@ -9,13 +9,14 @@ BINDING = ruby
 include ../SWIGmake.base
 
 # Add -prefix "Gdal::" to SWIGARGS
-SWIGARGS += -prefix "Gdal::"
+SWIGARGS += -prefix "gdal::"
 
 clean:
-	-rm -rf gdal
+	$(MAKE) -f RubyMakefile.mk clean
 
 veryclean: clean
-	-rm -f $(WRAPPERS)
+	rm -f $(WRAPPERS)
+	$(MAKE) -f RubyMakefile.mk veryclean
 
 generate: ${WRAPPERS}
 
