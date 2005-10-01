@@ -5994,14 +5994,14 @@ SWIGEXPORT void Init_gdal(void) {
     }
     
     SWIG_RubyInitializeTrackings();
-    rb_define_module_function(mGdal, "UseExceptions", VALUEFUNC(_wrap_UseExceptions), -1);
-    rb_define_module_function(mGdal, "DontUseExceptions", VALUEFUNC(_wrap_DontUseExceptions), -1);
     
     /* gdal_ruby.i %init code */
     if ( GDALGetDriverCount() == 0 ) {
         GDALAllRegister();
     }
     
+    rb_define_module_function(mGdal, "UseExceptions", VALUEFUNC(_wrap_UseExceptions), -1);
+    rb_define_module_function(mGdal, "DontUseExceptions", VALUEFUNC(_wrap_DontUseExceptions), -1);
     rb_define_module_function(mGdal, "debug", VALUEFUNC(_wrap_debug), -1);
     rb_define_module_function(mGdal, "error", VALUEFUNC(_wrap_error), -1);
     rb_define_module_function(mGdal, "push_error_handler", VALUEFUNC(_wrap_push_error_handler), -1);
