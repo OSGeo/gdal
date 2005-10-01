@@ -16,7 +16,7 @@ RUBY_SO_NAME = msvcrt-ruby18.lib
 
 RUBY_DIR = C:\Development\ruby
 RUBY_ARCH_DIR = $(RUBY_DIR)\lib\ruby\$(RUBY_VERSION)\$(RUBY_ARCH)
-INSTALLATION_DIR = $(RUBY_ARCH_DIR)\gdal
+INSTALLATION_DIR = $(RUBY_DIR)\lib\ruby\site_ruby\$(RUBY_VERSION)\i386-msvcrt\gdal
 
 $(INSTALLATION_DIR):
 	mkdir $(INSTALLATION_DIR)
@@ -24,7 +24,7 @@ $(INSTALLATION_DIR):
 install: $(INSTALLATION_DIR)
 	cp *.so $(INSTALLATION_DIR)
 
-build: $(RUBY_ARCH_DIR) gdal.so gdalconst.so ogr.so osr.so
+build: $(INSTALLATION_DIR) gdal.so gdalconst.so ogr.so osr.so
 
 gdal.so: gdal_wrap.obj
 	link /dll /debug $(LINKER_FLAGS) $(EXTERNAL_LIBS) \
