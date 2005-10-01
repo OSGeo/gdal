@@ -10,6 +10,9 @@
 
  *
  * $Log$
+ * Revision 1.2  2005/10/01 08:09:21  cfis
+ * Added additional gdal typemaps.  Also removed CPLErr 'ret' typemaps since they are not necessary since the Ruby bindings always raises exceptions on errors.
+ *
  * Revision 1.1  2005/09/26 08:20:19  cfis
  * Significantly updated typemaps for Ruby - resynced with the Python typemaps file.
  *
@@ -98,9 +101,17 @@
 /* --------  OGR Error Handling --------------- */
 %typemap(ruby, out) OGRErr
 {
-  if (result != 0) {
+  /* %typemap(ruby, out) OGRErr */
+
+  /* If an OGRErr occurred then $source will be non-zero number.
+     In that case raise an exception.  Otherwise return true to
+	  indicate success. Note if exceptions are turned on this
+	  code is not relevant because it won't be reached. */
+  if ($source != 0) {
     rb_raise(rb_eRuntimeError, OGRErrMessages(result));
   }
+
+  $result = Qtrue;
 }
 
 /* -------------  Ruby Array  <-> Fixed Length Double Array  ----------------------*/
@@ -575,24 +586,9 @@
 
 
 /* -------------  Ruby Exception <- CPLErr  ----------------------*/
-
-/*
- * Typemap for CPLErr.
- * This typemap will use the wrapper C-variable
- * int UseExceptions to determine proper behavour for
- * CPLErr return codes.
- * If UseExceptions ==0, then return the rc.
- * If UseExceptions ==1, then if rc >= CE_Failure, raise an exception.
- */
 %typemap(ruby,out) CPLErr
 {
   /* %typemap(ruby,out) CPLErr */
-  if ( bUseExceptions == 1 && $1 >= CE_Failure ) {
-    int errcode = CPLGetLastErrorNo();
-    const char *errmsg = CPLGetLastErrorMsg();
-    rb_raise(rb_eRuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-  }
-
   $result = ($1_type)LONG2NUM($1);
 }
 
