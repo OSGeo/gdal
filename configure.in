@@ -23,8 +23,8 @@ AC_ARG_WITH(libtool, [  --without-libtool          Don't use libtool to build th
 
 if test "$with_libtool" = "no"; then
   AC_PROG_RANLIB
-  AC_LD_SHARED
   AC_COMPILER_PIC
+  AC_LD_SHARED
 else
   with_libtool=yes
 fi
