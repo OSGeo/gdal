@@ -7169,6 +7169,7 @@ SWIGEXPORT void Init_ogr(void) {
     rb_define_method(cGeometry.klass, "buffer", VALUEFUNC(_wrap_Geometry_buffer), -1);
     rb_define_method(cGeometry.klass, "intersection", VALUEFUNC(_wrap_Geometry_intersection), -1);
     rb_define_method(cGeometry.klass, "union_", VALUEFUNC(_wrap_Geometry_union_), -1);
+    rb_define_alias(cGeometry.klass, "union", "union_");
     rb_define_method(cGeometry.klass, "difference", VALUEFUNC(_wrap_Geometry_difference), -1);
     rb_define_method(cGeometry.klass, "symmetric_difference", VALUEFUNC(_wrap_Geometry_symmetric_difference), -1);
     rb_define_method(cGeometry.klass, "distance", VALUEFUNC(_wrap_Geometry_distance), -1);
