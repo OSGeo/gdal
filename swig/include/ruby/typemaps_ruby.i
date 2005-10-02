@@ -10,6 +10,9 @@
 
  *
  * $Log$
+ * Revision 1.3  2005/10/02 19:03:45  cfis
+ * Changed $source (which is deprecated) to $1 in "out" and "ret" typemaps.
+ *
  * Revision 1.2  2005/10/01 08:09:21  cfis
  * Added additional gdal typemaps.  Also removed CPLErr 'ret' typemaps since they are not necessary since the Ruby bindings always raises exceptions on errors.
  *
@@ -103,11 +106,11 @@
 {
   /* %typemap(ruby, out) OGRErr */
 
-  /* If an OGRErr occurred then $source will be non-zero number.
+  /* If an OGRErr occurred then $1 will be non-zero number.
      In that case raise an exception.  Otherwise return true to
 	  indicate success. Note if exceptions are turned on this
 	  code is not relevant because it won't be reached. */
-  if ($source != 0) {
+  if ($1 != 0) {
     rb_raise(rb_eRuntimeError, OGRErrMessages(result));
   }
 
