@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.3  2005/10/02 23:31:27  cfis
+ * Updated the renames to include support for Ruby.
+ *
  * Revision 1.2  2005/02/16 16:54:48  kruland
  * Removed the python code from the wrapper for now.  Wrapped a simple version
  * of PushErrorHandler(char const*) which allows assignment of the CPL defined
@@ -44,38 +47,54 @@
 
 %}
 
+#ifndef SWIGRUBY
 %rename (PushErrorHandler) CPLPushErrorHandler;
+%rename (PopErrorHandler) CPLPopErrorHandler;
+%rename (ErrorReset) CPLErrorReset;
+%rename (GetLastErrorNo) CPLGetLastErrorNo;
+%rename (GetLastErrorType) CPLGetLastErrorType;
+%rename (GetLastErrorMsg) CPLGetLastErrorMsg;
+%rename (PushFinderLocation) CPLPushFinderLocation;
+%rename (PopFinderLocation) CPLPopFinderLocation;
+%rename (FinderClean) CPLFinderClean;
+%rename (FindFile) CPLFindFile;
+%rename (SetConfigOption) CPLSetConfigOption;
+%rename (GetConfigOption) CPLGetConfigOption;
+#else
+%rename (push_error_handler) CPLPushErrorHandler;
+%rename (pop_error_handler) CPLPopErrorHandler;
+%rename (error_reset) CPLErrorReset;
+%rename (get_last_error_no) CPLGetLastErrorNo;
+%rename (get_last_error_type) CPLGetLastErrorType;
+%rename (get_last_error_msg) CPLGetLastErrorMsg;
+%rename (push_finder_location) CPLPushFinderLocation;
+%rename (pop_finder_location) CPLPopFinderLocation;
+%rename (finder_clean) CPLFinderClean;
+%rename (find_file) CPLFindFile;
+%rename (set_config_option) CPLSetConfigOption;
+%rename (get_config_option) CPLGetConfigOption;
+#endif
+
 void CPLPushErrorHandler( CPLErrorHandler );
 
-%rename (PopErrorHandler) CPLPopErrorHandler;
 void CPLPopErrorHandler();
 
-%rename (ErrorReset) CPLErrorReset;
 void CPLErrorReset();
 
-%rename (GetLastErrorNo) CPLGetLastErrorNo;
 int CPLGetLastErrorNo();
 
-%rename (GetLastErrorType) CPLGetLastErrorType;
 CPLErr CPLGetLastErrorType();
 
-%rename (GetLastErrorMsg) CPLGetLastErrorMsg;
 char const *CPLGetLastErrorMsg();
 
-%rename (PushFinderLocation) CPLPushFinderLocation;
 void CPLPushFinderLocation( const char * );
 
-%rename (PopFinderLocation) CPLPopFinderLocation;
 void CPLPopFinderLocation();
 
-%rename (FinderClean) CPLFinderClean;
 void CPLFinderClean();
 
-%rename (FindFile) CPLFindFile;
 const char * CPLFindFile( const char *, const char * );
 
-%rename (SetConfigOption) CPLSetConfigOption;
 void CPLSetConfigOption( const char *, const char * );
 
-%rename (GetConfigOption) CPLGetConfigOption;
 const char * CPLGetConfigOption( const char *, const char * );
