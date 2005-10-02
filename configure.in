@@ -15,8 +15,6 @@ AC_CANONICAL_TARGET
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
-AC_LIBTOOL_WIN32_DLL
-AC_PROG_LIBTOOL
 
 dnl switch between libtool and native build system
 AC_ARG_WITH(libtool, [  --without-libtool          Don't use libtool to build the library],,)
@@ -26,6 +24,8 @@ if test "$with_libtool" = "no"; then
   AC_COMPILER_PIC
   AC_LD_SHARED
 else
+  AC_LIBTOOL_WIN32_DLL
+  AC_PROG_LIBTOOL
   with_libtool=yes
 fi
 AC_SUBST(HAVE_LIBTOOL,$with_libtool)
