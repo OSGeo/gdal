@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/10/02 15:14:48  fwarmerdam
+ * fixed size for <8bit basedata items
+ *
  * Revision 1.17  2005/09/28 19:38:07  fwarmerdam
  * Added partial support for inline defined types.
  *
@@ -907,7 +910,7 @@ int HFAField::GetInstBytes( GByte * pabyData )
         nInstBytes += 12;
 
         nInstBytes += 
-            (HFAGetDataTypeBits( nBaseItemType ) / 8) * nRows * nColumns;
+            ((HFAGetDataTypeBits(nBaseItemType) + 7) / 8) * nRows * nColumns;
     }
     else if( poItemObjectType == NULL )
     {
