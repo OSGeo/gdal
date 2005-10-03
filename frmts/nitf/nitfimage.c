@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2005/10/03 19:58:25  fwarmerdam
+ * bug 920: fixed gcp related memory leak
+ *
  * Revision 1.37  2005/07/28 20:00:57  fwarmerdam
  * upgrade to support 2-4GB files, use large file api
  *
@@ -177,9 +180,6 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     double     adfGeoTransform[6] = { 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f };	
     GDAL_GCP   *psIGEOLOGCPs;
     
-    psIGEOLOGCPs = (GDAL_GCP *) CPLMalloc(sizeof(GDAL_GCP) * nIGEOLOGCPCount);
-    GDALInitGCPs( nIGEOLOGCPCount, psIGEOLOGCPs );
-
 /* -------------------------------------------------------------------- */
 /*      Verify segment, and return existing image accessor if there     */
 /*      is one.                                                         */
@@ -335,6 +335,9 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
 /*      Read the image bounds.                                          */
 /* -------------------------------------------------------------------- */
+    psIGEOLOGCPs = (GDAL_GCP *) CPLMalloc(sizeof(GDAL_GCP) * nIGEOLOGCPCount);
+    GDALInitGCPs( nIGEOLOGCPCount, psIGEOLOGCPs );
+
     if( psImage->chICORDS != ' ' )
     {
         int iCoord;
@@ -788,8 +791,6 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                       "first order geotransform.");
         }
         
-        GDALDeinitGCPs( nIGEOLOGCPCount, psIGEOLOGCPs );
-        
         psImage->dfULX = adfGeoTransform[0];
         psImage->dfULY = adfGeoTransform[3];
         psImage->dfURX = psImage->dfULX + adfGeoTransform[1] * psImage->nCols;
@@ -802,6 +803,9 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         psImage->dfLLY = psImage->dfULY + adfGeoTransform[5] * psImage->nRows;
     }
 
+    GDALDeinitGCPs( nIGEOLOGCPCount, psIGEOLOGCPs );
+    CPLFree( psIGEOLOGCPs );
+        
 /* -------------------------------------------------------------------- */
 /*      If we have an RPF CoverageSectionSubheader, read the more       */
 /*      precise bounds from it.                                         */
