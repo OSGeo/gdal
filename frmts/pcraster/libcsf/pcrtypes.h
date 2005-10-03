@@ -6,9 +6,13 @@
 #define INCLUDED_CSFTYPES
 #endif
 
-#ifndef INCLUDED_CSTRING
-#include <cstring>       // memset
-#define INCLUDED_CSTRING
+// memset
+// use string.h not cstring
+// VC6 does not have memset in std
+// better use Ansi-C string.h to be safe
+#ifndef INCLUDED_STRING
+#include <string.h> 
+#define INCLUDED_STRING
 #endif
 
 namespace pcr {
@@ -94,7 +98,7 @@ namespace pcr {
 #   ifndef __i386__
      SET_MV_REAL8((&v));
 #   else
-    std::memset(&v,MV_UINT1,sizeof(REAL8));
+    memset(&v,MV_UINT1,sizeof(REAL8));
     // constraint the setting to memory (m)
     // this fixes the same optimization problem, as for REAL4
     // see com_mvoptest.cc, does not work: !
@@ -122,7 +126,7 @@ template<typename T>
  namespace detail {
    template<typename T>
     void setMVMemSet(T *v, size_t n) {
-     memset(v,MV_UINT1,n*sizeof(T));
+      memset(v,MV_UINT1,n*sizeof(T));
     }
  };
 
@@ -138,7 +142,7 @@ template<typename T>
 # undef PCR_DEF_SETMV_MEMSET
   template<>
     inline void setMV(INT1 *v, size_t n) {
-        memset(v,MV_INT1,n);
+      memset(v,MV_INT1,n);
     }
 
 //! replace a value equal to \a nonStdMV with the standard MV
