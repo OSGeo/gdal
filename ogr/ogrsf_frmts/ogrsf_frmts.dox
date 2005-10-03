@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/10/03 20:46:24  fwarmerdam
+ * removed out of date comments on GetNextFeature().
+ *
  * Revision 1.24  2005/02/02 21:22:00  fwarmerdam
  * Added SetNextByIndex().
  *
@@ -993,17 +996,13 @@ error code.
  \fn OGRFeature *OGRLayer::GetNextFeature();
 
  Fetch the next available feature from this layer.  The returned feature
- becomes the responsiblity of the caller to delete.  It is critical that
- all features associated with an OGRLayer (more specifically an 
- OGRFeatureDefn) be deleted before that layer/datasource is deleted.
+ becomes the responsiblity of the caller to delete. 
 
  Only features matching the current spatial filter (set with 
  SetSpatialFilter()) will be returned.  
 
  This method implements sequential access to the features of a layer.  The
- ResetReading() method can be used to start at the beginning again.  Random
- reading, writing and spatial filtering will be added to the OGRLayer in 
- the future.
+ ResetReading() method can be used to start at the beginning again.  
 
  This method is the same as the C function OGR_L_GetNextFeature().
 
