@@ -2,8 +2,8 @@
 /*
  * setangle.c 
    $Log$
-   Revision 1.1  2005/09/28 20:54:54  kdejong
-   Initial version of internal csf library code.
+   Revision 1.2  2005/10/03 07:22:12  kdejong
+   Lots of small edits for x86-64 support, removed rcs id string.
 
    Revision 1.2  2000/02/05 21:25:48  cees
    added LOCATION_ATTRIBUTER struct
@@ -24,11 +24,6 @@
  * Initial revision
  *
  */
-#ifndef lint  
-static const char *rcs_id = 
- "$Header$";
-#endif
-
 /********/
 /* USES */
 /********/

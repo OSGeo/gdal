@@ -1,8 +1,3 @@
-#ifndef lint  
-static const char *rcs_id = 
- "$Header$";
-#endif
-
 #include "csf.h" 
 #include "csfimpl.h" 
 
@@ -57,9 +52,9 @@ MAP *Rcreate(
 	                        */
 	REAL8 cellSize)        /* cell size of pixel */
 {
-	MAP *newMap;
-	UINT4 fileSize;
-	char crap = 0;
+	MAP    *newMap;
+	size_t  fileSize;
+	char    crap = 0;
 
 	if (! CsfIsBootedCsfKernel())
 		CsfBootCsfKernel();
@@ -152,7 +147,7 @@ MAP *Rcreate(
 	/* put defaults values     */
 
 	/* assure signature is padded with 0x0 */
-	(void)memset(newMap->main.signature, 0x0, CSF_SIG_SPACE);
+	(void)memset(newMap->main.signature, 0x0, (size_t)CSF_SIG_SPACE);
 	(void)strcpy(newMap->main.signature, CSF_SIG);
 	newMap->main.version = CSF_VERSION_2;
 	newMap->main.gisFileId = 0;
@@ -193,7 +188,7 @@ MAP *Rcreate(
 	newMap->file2app = CsfDummyConversion;
 
 	/*  make file the size of the header and data */
-	fileSize   = (UINT4)nrRows*(UINT4)nrCols;
+	fileSize   = nrRows*nrCols;
 	fileSize <<= LOG_CELLSIZE(cellRepr);
 	fileSize  += ADDR_DATA;
 
@@ -201,7 +196,7 @@ MAP *Rcreate(
 	one byte of crap */
 
 	if ( fseek(newMap->fp, (long)(fileSize-1),SEEK_SET) || /* fsetpos() is better */
-	    newMap->write(&crap, 1, 1, newMap->fp) != 1 )
+	    newMap->write(&crap, (size_t)1, (size_t)1, newMap->fp) != 1 )
 	{
 		M_ERROR(NOSPACE);
 		goto error_open;

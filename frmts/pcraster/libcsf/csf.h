@@ -20,10 +20,6 @@
 #include "csfattr.h"
 
 
-#ifndef lint
-# define  RCS_ID_CSF_H "$Header$"
-#endif
-
 /*****************************************************************/
 /*                                                               */
 /*  RUU CROSS SYSTEM MAP FORMAT                                  */
@@ -43,23 +39,24 @@ typedef REAL8 CSF_VAR_TYPE;
  * CSF_FADDR is always an offset from the begin 
  * (0) of the file                                
  */
-typedef UINT4 CSF_FADDR;
+typedef UINT4 CSF_FADDR32;
+typedef long  CSF_FADDR;
 
 /* value for first 27 bytes of MAIN_HEADER.signature */
 #define CSF_SIG  "RUU CROSS SYSTEM MAP FORMAT"
 #define CSF_SIZE_SIG (sizeof(CSF_SIG)-1)
 
-#define CSF_SIG_SPACE 32
+#define CSF_SIG_SPACE ((size_t)32)
 
 typedef struct CSF_MAIN_HEADER
 {
- char    signature[CSF_SIG_SPACE];
- UINT2   version;
- UINT4   gisFileId;
- UINT2   projection;
- CSF_FADDR   attrTable;
- UINT2   mapType;
- UINT4   byteOrder;
+ char        signature[CSF_SIG_SPACE];
+ UINT2       version;
+ UINT4       gisFileId;
+ UINT2       projection;
+ CSF_FADDR32 attrTable;
+ UINT2       mapType;
+ UINT4       byteOrder;
 } CSF_MAIN_HEADER;
 
 /******************************************************************/

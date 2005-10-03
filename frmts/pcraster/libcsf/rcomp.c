@@ -1,11 +1,6 @@
 /*
  * rcomp.c
  */
-#ifndef lint
- static const char *rcs_id = 
- "$Header$";
-#endif
-
 
 /*****************************************************************/
 /*    FUNCTION :  RCOMPARE                                       */

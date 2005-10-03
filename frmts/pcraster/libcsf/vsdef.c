@@ -3,8 +3,8 @@
 /*
  * vsdef.c 
    $Log$
-   Revision 1.1  2005/09/28 20:54:54  kdejong
-   Initial version of internal csf library code.
+   Revision 1.2  2005/10/03 07:22:13  kdejong
+   Lots of small edits for x86-64 support, removed rcs id string.
 
    Revision 1.1.1.1  2000/01/04 21:05:12  cees
    Initial import Cees
@@ -25,10 +25,6 @@
  * Initial revision
  *
  */
-#ifndef lint  
-static const char *rcs_id = 
- "$Header$";
-#endif
 
 /********/
 /* USES */

@@ -2,11 +2,6 @@
 /*
  * legend.c 
  */
-#ifndef lint  
-static const char *rcs_id = 
- "$Header$";
-#endif
-
 #include "csf.h"
 #include "csfimpl.h"
 
@@ -86,8 +81,8 @@ int MgetLegend(
 	nr = size/CSF_LEGEND_ENTRY_SIZE;
 	for(i = start; i < nr+start; i++)
 	{
-		m->read(&(l[i].nr), sizeof(INT4), 1, m->fp);
-		m->read(l[i].descr, sizeof(char), CSF_LEGEND_DESCR_SIZE, m->fp);
+		m->read(&(l[i].nr), sizeof(INT4), (size_t)1, m->fp);
+		m->read(l[i].descr, sizeof(char), (size_t)CSF_LEGEND_DESCR_SIZE, m->fp);
 	}
 	SortEntries(l, nr+start);
 	return 1;
@@ -125,10 +120,10 @@ int MputLegend(
 	for(i = 0; i < (int)nrEntries; i++)
 	{
 	     if(
-		m->write(&(l[i].nr), sizeof(INT4), 1, m->fp) != 1 ||
+		m->write(&(l[i].nr), sizeof(INT4), (size_t)1, m->fp) != 1 ||
 		m->write(
-		 CsfStringPad(l[i].descr,CSF_LEGEND_DESCR_SIZE), 
-		 sizeof(char), CSF_LEGEND_DESCR_SIZE, m->fp) 
+		 CsfStringPad(l[i].descr,(size_t)CSF_LEGEND_DESCR_SIZE), 
+		 sizeof(char), (size_t)CSF_LEGEND_DESCR_SIZE, m->fp) 
 		 != CSF_LEGEND_DESCR_SIZE )
 		 {
 		 	M_ERROR(WRITE_ERROR);

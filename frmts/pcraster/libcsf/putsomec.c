@@ -1,16 +1,10 @@
 /*
  * putsomec.c
  */
-#ifndef lint
- static const char *rcs_id = 
- "$Header$";
-#endif
-
-
 #include "csf.h"
 #include "csfimpl.h"
 
-typedef void (*DF)(void *min, void *max, UINT4 n, const void *buf);
+typedef void (*DF)(void *min, void *max, size_t n, const void *buf);
 
 /* DET: 
  *  while (min is MV) && (i != nrCells)
@@ -51,7 +45,7 @@ typedef void (*DF)(void *min, void *max, UINT4 n, const void *buf);
 static void DetMinMaxINT1(
 INT1 *min,    /* read-write.  adjusted minimum */
 INT1 *max,   /* read-write.  adjusted maximum */
-UINT4 nrCells, /* number of cells in buf */
+size_t nrCells, /* number of cells in buf */
 const INT1 *buf) /* cell values to be examined */
 {
 	DET(min, max, nrCells, buf, INT1);
@@ -67,7 +61,7 @@ const INT1 *buf) /* cell values to be examined */
  static void DetMinMaxINT2(
 INT2 *min,   /* read-write.  adjusted minimum */
 INT2 *max,  /* read-write.  adjusted maximum */
-UINT4 nrCells,/* number of cells in buf */
+size_t nrCells,/* number of cells in buf */
 const INT2 *buf) /* cell values to be examined */
 {
 	DET(min, max,  nrCells, buf, INT2);
@@ -83,7 +77,7 @@ const INT2 *buf) /* cell values to be examined */
  static void DetMinMaxINT4(
 INT4 *min,   /* read-write.  adjusted minimum */
 INT4 *max,  /* read-write.  adjusted maximum */
-UINT4 nrCells,/* number of cells in buf */
+size_t nrCells,/* number of cells in buf */
 const INT4 *buf) /* cell values to be examined */
 {
 	DET(min, max,  nrCells, buf, INT4);
@@ -100,7 +94,7 @@ const INT4 *buf) /* cell values to be examined */
  static void DetMinMaxUINT1(
 UINT1 *min,   /* read-write.  adjusted minimum */
 UINT1 *max,  /* read-write.  adjusted maximum */
-UINT4 nrCells,/* number of cells in buf */
+size_t nrCells,/* number of cells in buf */
 const UINT1 *buf) /* cell values to be examined */
 {
 	DET(min, max,  nrCells, buf, UINT1);
@@ -116,7 +110,7 @@ const UINT1 *buf) /* cell values to be examined */
  static void DetMinMaxUINT2(
 UINT2 *min,   /* read-write.  adjusted minimum */
 UINT2 *max,  /* read-write.  adjusted maximum */
-UINT4 nrCells,/* number of cells in buf */
+size_t nrCells,/* number of cells in buf */
 const UINT2 *buf) /* cell values to be examined */
 {
 	DET(min, max,  nrCells, buf, UINT2);
@@ -132,7 +126,7 @@ const UINT2 *buf) /* cell values to be examined */
  static void DetMinMaxUINT4(
 UINT4 *min,   /* read-write.  adjusted minimum */
 UINT4 *max,  /* read-write.  adjusted maximum */
-UINT4 nrCells,/* number of cells in buf */
+size_t nrCells,/* number of cells in buf */
 const UINT4 *buf) /* cell values to be examined */
 {
 	DET(min, max,  nrCells, buf, UINT4);
@@ -149,7 +143,7 @@ const UINT4 *buf) /* cell values to be examined */
 static void DetMinMaxREAL4(
 REAL4 *min,   /* read-write.  adjusted minimum */
 REAL4 *max,  /* read-write.  adjusted maximum */
-UINT4 nrCells,/* number of cells in buf */
+size_t nrCells,/* number of cells in buf */
 const REAL4 *buf) /* cell values to be examined */
 {
 	size_t i = 0; 
@@ -185,7 +179,7 @@ const REAL4 *buf) /* cell values to be examined */
 static void DetMinMaxREAL8(
 REAL8 *min,   /* read-write.  adjusted minimum */
 REAL8 *max,  /* read-write.  adjusted maximum */
-UINT4 nrCells,/* number of cells in buf */
+size_t nrCells,/* number of cells in buf */
 const REAL8 *buf) /* cell values to be examined */
 {
 	size_t i = 0; 

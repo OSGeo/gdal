@@ -1,10 +1,6 @@
 #ifndef CSF__ATTR_H
 #define CSF__ATTR_H
 
-#ifndef lint
-#define RCS_ID_CSFLEGEN_H "$Header$"
-#endif
-
 #ifdef __cplusplus
  extern "C" {
 #endif

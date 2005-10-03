@@ -1,8 +1,11 @@
 /*
  * pminval.c
 $Log$
-Revision 1.1  2005/09/28 20:54:53  kdejong
-Initial version of internal csf library code.
+Revision 1.2  2005/10/03 07:22:12  kdejong
+Lots of small edits for x86-64 support, removed rcs id string.
+
+Revision 1.2  2005/09/29 18:43:23  cees
+x86_64
 
 Revision 1.1.1.1  2000/01/04 21:04:52  cees
 Initial import Cees
@@ -27,12 +30,6 @@ Revision 1.3  1995/11/01 17:23:03  cees
  * Initial revision
  *
  */
-#ifndef lint
- static const char *rcs_id = 
- "$Header$";
-#endif
-
-
 #include "csf.h"
 #include "csfimpl.h"
 
@@ -50,25 +47,25 @@ Revision 1.3  1995/11/01 17:23:03  cees
  */
 
 void RputMinVal(
-	MAP *map, /* map handle */
-	const void *minVal)   /* New minimum value */
+  MAP *map, /* map handle */
+  const void *minVal)   /* New minimum value */
 {
-	/* use buffer that can hold largest 
-	 * cell representation
-	 */
-	CSF_VAR_TYPE buf_1;
-	void *buf = (void *)(&buf_1);
+  /* use buffer that can hold largest
+   * cell representation
+   */
+  CSF_VAR_TYPE buf_1;
+  void *buf = (void *)(&buf_1);
 
-	CHECKHANDLE(map);
+  CHECKHANDLE(map);
 
-	/* make a copy */
-	CsfGetVarType(buf, minVal, map->appCR);
+  /* make a copy */
+  CsfGetVarType(buf, minVal, map->appCR);
 
-	/* convert */
-	map->app2file(1, buf);
+  /* convert */
+  map->app2file((size_t)1,buf);
 
-	/* set */
-	CsfGetVarType( (void *)&(map->raster.minVal), buf, RgetCellRepr(map));
+  /* set */
+  CsfGetVarType( (void *)&(map->raster.minVal), buf, RgetCellRepr(map));
 
-	map->minMaxStatus = MM_DONTKEEPTRACK;
+  map->minMaxStatus = MM_DONTKEEPTRACK;
 }
