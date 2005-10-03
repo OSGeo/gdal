@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2005/10/03 17:39:45  fwarmerdam
+ * fixed memory leak of GCPs as per bug 920
+ *
  * Revision 1.48  2005/09/19 21:55:24  gwalter
  * Avoid creating gcps when geotransform already found.
  *
@@ -1125,6 +1128,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nGCPCount > 0 )
     {
         GDALDeinitGCPs( nGCPCount, psGCPs );
+        CPLFree( psGCPs );
     }
 
 /* -------------------------------------------------------------------- */
