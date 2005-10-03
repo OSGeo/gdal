@@ -2399,10 +2399,6 @@ static PyObject *_wrap_Error(PyObject *, PyObject *args) {
     PyObject * obj1 = 0 ;
     PyObject * obj2 = 0 ;
     
-    {
-        /* %typemap(python,arginit) CPLErr */
-        resultobj = 0;
-    }
     if(!PyArg_ParseTuple(args,(char *)"|OOO:Error",&obj0,&obj1,&obj2)) goto fail;
     if (obj0) {
         {
@@ -2463,23 +2459,14 @@ static PyObject *_wrap_PushErrorHandler__SWIG_0(PyObject *, PyObject *args) {
         }
     }
     {
-        /* %typemap(out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            PyErr_Format( PyExc_RuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-            SWIG_fail;
-        }
+        resultobj = SWIG_From_int(static_cast<int >(result)); 
     }
     {
         /* %typemap(ret) CPLErr */
         if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
+            /* We're not using exceptions.  And no error has occurred */
             if ( resultobj == 0 ) {
-                /* No other return values set so return None */
+                /* No other return values set so return ErrorCode */
                 resultobj = PyInt_FromLong(result);
             }
         }
@@ -2650,23 +2637,14 @@ static PyObject *_wrap_GetLastErrorType(PyObject *, PyObject *args) {
         }
     }
     {
-        /* %typemap(out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            PyErr_Format( PyExc_RuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-            SWIG_fail;
-        }
+        resultobj = SWIG_From_int(static_cast<int >(result)); 
     }
     {
         /* %typemap(ret) CPLErr */
         if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
+            /* We're not using exceptions.  And no error has occurred */
             if ( resultobj == 0 ) {
-                /* No other return values set so return None */
+                /* No other return values set so return ErrorCode */
                 resultobj = PyInt_FromLong(result);
             }
         }
@@ -3092,13 +3070,7 @@ static PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *, PyObject *arg
         }
     }
     {
-        /* %typemap(out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            PyErr_Format( PyExc_RuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-            SWIG_fail;
-        }
+        resultobj = SWIG_From_int(static_cast<int >(result)); 
     }
     {
         /* %typemap(freearg) char **dict */
@@ -3107,12 +3079,9 @@ static PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *, PyObject *arg
     {
         /* %typemap(ret) CPLErr */
         if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
+            /* We're not using exceptions.  And no error has occurred */
             if ( resultobj == 0 ) {
-                /* No other return values set so return None */
+                /* No other return values set so return ErrorCode */
                 resultobj = PyInt_FromLong(result);
             }
         }
@@ -3160,23 +3129,14 @@ static PyObject *_wrap_MajorObject_SetMetadata__SWIG_1(PyObject *, PyObject *arg
         }
     }
     {
-        /* %typemap(out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            PyErr_Format( PyExc_RuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-            SWIG_fail;
-        }
+        resultobj = SWIG_From_int(static_cast<int >(result)); 
     }
     {
         /* %typemap(ret) CPLErr */
         if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
+            /* We're not using exceptions.  And no error has occurred */
             if ( resultobj == 0 ) {
-                /* No other return values set so return None */
+                /* No other return values set so return ErrorCode */
                 resultobj = PyInt_FromLong(result);
             }
         }
@@ -5273,23 +5233,14 @@ static PyObject *_wrap_Dataset_SetProjection(PyObject *, PyObject *args) {
         }
     }
     {
-        /* %typemap(out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            PyErr_Format( PyExc_RuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-            SWIG_fail;
-        }
+        resultobj = SWIG_From_int(static_cast<int >(result)); 
     }
     {
         /* %typemap(ret) CPLErr */
         if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
+            /* We're not using exceptions.  And no error has occurred */
             if ( resultobj == 0 ) {
-                /* No other return values set so return None */
+                /* No other return values set so return ErrorCode */
                 resultobj = PyInt_FromLong(result);
             }
         }
@@ -5381,23 +5332,14 @@ static PyObject *_wrap_Dataset_SetGeoTransform(PyObject *, PyObject *args) {
         }
     }
     {
-        /* %typemap(out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            PyErr_Format( PyExc_RuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-            SWIG_fail;
-        }
+        resultobj = SWIG_From_int(static_cast<int >(result)); 
     }
     {
         /* %typemap(ret) CPLErr */
         if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
+            /* We're not using exceptions.  And no error has occurred */
             if ( resultobj == 0 ) {
-                /* No other return values set so return None */
+                /* No other return values set so return ErrorCode */
                 resultobj = PyInt_FromLong(result);
             }
         }
@@ -5640,13 +5582,7 @@ static PyObject *_wrap_Dataset_SetGCPs(PyObject *, PyObject *args) {
         }
     }
     {
-        /* %typemap(out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            PyErr_Format( PyExc_RuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-            SWIG_fail;
-        }
+        resultobj = SWIG_From_int(static_cast<int >(result)); 
     }
     {
         /* %typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs ) */
@@ -5657,12 +5593,9 @@ static PyObject *_wrap_Dataset_SetGCPs(PyObject *, PyObject *args) {
     {
         /* %typemap(ret) CPLErr */
         if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
+            /* We're not using exceptions.  And no error has occurred */
             if ( resultobj == 0 ) {
-                /* No other return values set so return None */
+                /* No other return values set so return ErrorCode */
                 resultobj = PyInt_FromLong(result);
             }
         }
@@ -5759,13 +5692,7 @@ static PyObject *_wrap_Dataset_AddBand(PyObject *, PyObject *args, PyObject *kwa
         }
     }
     {
-        /* %typemap(out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            PyErr_Format( PyExc_RuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-            SWIG_fail;
-        }
+        resultobj = SWIG_From_int(static_cast<int >(result)); 
     }
     {
         /* %typemap(freearg) char **options */
@@ -5774,12 +5701,9 @@ static PyObject *_wrap_Dataset_AddBand(PyObject *, PyObject *args, PyObject *kwa
     {
         /* %typemap(ret) CPLErr */
         if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
+            /* We're not using exceptions.  And no error has occurred */
             if ( resultobj == 0 ) {
-                /* No other return values set so return None */
+                /* No other return values set so return ErrorCode */
                 resultobj = PyInt_FromLong(result);
             }
         }
@@ -5924,13 +5848,7 @@ static PyObject *_wrap_Dataset_WriteRaster(PyObject *, PyObject *args, PyObject 
         }
     }
     {
-        /* %typemap(out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            PyErr_Format( PyExc_RuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-            SWIG_fail;
-        }
+        resultobj = SWIG_From_int(static_cast<int >(result)); 
     }
     {
         /* %typemap(freearg) (int nList, int* pList) */
@@ -5941,12 +5859,9 @@ static PyObject *_wrap_Dataset_WriteRaster(PyObject *, PyObject *args, PyObject 
     {
         /* %typemap(ret) CPLErr */
         if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
+            /* We're not using exceptions.  And no error has occurred */
             if ( resultobj == 0 ) {
-                /* No other return values set so return None */
+                /* No other return values set so return ErrorCode */
                 resultobj = PyInt_FromLong(result);
             }
         }
@@ -6113,23 +6028,14 @@ static PyObject *_wrap_Band_SetRasterColorInterpretation(PyObject *, PyObject *a
         }
     }
     {
-        /* %typemap(out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            PyErr_Format( PyExc_RuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-            SWIG_fail;
-        }
+        resultobj = SWIG_From_int(static_cast<int >(result)); 
     }
     {
         /* %typemap(ret) CPLErr */
         if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
+            /* We're not using exceptions.  And no error has occurred */
             if ( resultobj == 0 ) {
-                /* No other return values set so return None */
+                /* No other return values set so return ErrorCode */
                 resultobj = PyInt_FromLong(result);
             }
         }
@@ -6215,23 +6121,14 @@ static PyObject *_wrap_Band_SetNoDataValue(PyObject *, PyObject *args) {
         }
     }
     {
-        /* %typemap(out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            PyErr_Format( PyExc_RuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-            SWIG_fail;
-        }
+        resultobj = SWIG_From_int(static_cast<int >(result)); 
     }
     {
         /* %typemap(ret) CPLErr */
         if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
+            /* We're not using exceptions.  And no error has occurred */
             if ( resultobj == 0 ) {
-                /* No other return values set so return None */
+                /* No other return values set so return ErrorCode */
                 resultobj = PyInt_FromLong(result);
             }
         }
@@ -6661,23 +6558,14 @@ static PyObject *_wrap_Band_Fill(PyObject *, PyObject *args) {
         }
     }
     {
-        /* %typemap(out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            PyErr_Format( PyExc_RuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-            SWIG_fail;
-        }
+        resultobj = SWIG_From_int(static_cast<int >(result)); 
     }
     {
         /* %typemap(ret) CPLErr */
         if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
+            /* We're not using exceptions.  And no error has occurred */
             if ( resultobj == 0 ) {
-                /* No other return values set so return None */
+                /* No other return values set so return ErrorCode */
                 resultobj = PyInt_FromLong(result);
             }
         }
@@ -6799,13 +6687,7 @@ static PyObject *_wrap_Band_ReadRaster(PyObject *, PyObject *args, PyObject *kwa
         }
     }
     {
-        /* %typemap(out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            PyErr_Format( PyExc_RuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-            SWIG_fail;
-        }
+        resultobj = SWIG_From_int(static_cast<int >(result)); 
     }
     {
         /* %typemap(argout) (int *nLen, char **pBuf ) */
@@ -6821,12 +6703,9 @@ static PyObject *_wrap_Band_ReadRaster(PyObject *, PyObject *args, PyObject *kwa
     {
         /* %typemap(ret) CPLErr */
         if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
+            /* We're not using exceptions.  And no error has occurred */
             if ( resultobj == 0 ) {
-                /* No other return values set so return None */
+                /* No other return values set so return ErrorCode */
                 resultobj = PyInt_FromLong(result);
             }
         }
@@ -6952,23 +6831,14 @@ static PyObject *_wrap_Band_WriteRaster(PyObject *, PyObject *args, PyObject *kw
         }
     }
     {
-        /* %typemap(out) CPLErr */
-        if ( bUseExceptions == 1 && result >= CE_Failure ) {
-            int errcode = CPLGetLastErrorNo();
-            const char *errmsg = CPLGetLastErrorMsg();
-            PyErr_Format( PyExc_RuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-            SWIG_fail;
-        }
+        resultobj = SWIG_From_int(static_cast<int >(result)); 
     }
     {
         /* %typemap(ret) CPLErr */
         if ( bUseExceptions == 0 ) {
-            /* We're not using exceptions.  The test in the out typemap means that
-                   we know we have a valid return value.  Test if there are any return
-                   values set by argout typemaps.
-                */
+            /* We're not using exceptions.  And no error has occurred */
             if ( resultobj == 0 ) {
-                /* No other return values set so return None */
+                /* No other return values set so return ErrorCode */
                 resultobj = PyInt_FromLong(result);
             }
         }

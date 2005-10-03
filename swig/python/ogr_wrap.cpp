@@ -1725,9 +1725,18 @@ static OGRDataSourceShadow *OGRDriverShadow_Open(OGRDriverShadow *self,char cons
 static int OGRDriverShadow_DeleteDataSource(OGRDriverShadow *self,char const *name){
     return OGR_Dr_DeleteDataSource( self, name );
   }
-static int OGRDriverShadow_TestCapability(OGRDriverShadow *self,char const *cap){
+static bool OGRDriverShadow_TestCapability(OGRDriverShadow *self,char const *cap){
     return OGR_Dr_TestCapability(self, cap);
   }
+
+SWIGINTERNINLINE PyObject*
+  SWIG_From_bool(bool value)
+{
+  PyObject *obj = value ? Py_True : Py_False;
+  Py_INCREF(obj);
+  return obj;
+}
+
 static char const *OGRDriverShadow_GetName(OGRDriverShadow *self){
     return OGR_Dr_GetName( self );
   }
@@ -1798,7 +1807,7 @@ static OGRLayerShadow *OGRDataSourceShadow_GetLayerByName(OGRDataSourceShadow *s
     OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_GetLayerByName(self, layer_name);
     return layer;
   }
-static int OGRDataSourceShadow_TestCapability(OGRDataSourceShadow *self,char const *cap){
+static bool OGRDataSourceShadow_TestCapability(OGRDataSourceShadow *self,char const *cap){
     return OGR_DS_TestCapability(self, cap);
   }
 static OGRLayerShadow *OGRDataSourceShadow_ExecuteSQL(OGRDataSourceShadow *self,char const *statement,OGRGeometryShadow *geom=NULL,char const *dialect=""){
@@ -1990,7 +1999,7 @@ static void OGRLayerShadow_GetExtent(OGRLayerShadow *self,double argout[4],int f
     if (err != 0)
       throw err;
   }
-static int OGRLayerShadow_TestCapability(OGRLayerShadow *self,char const *cap){
+static bool OGRLayerShadow_TestCapability(OGRLayerShadow *self,char const *cap){
     return OGR_L_TestCapability(self, cap);
   }
 static OGRErr OGRLayerShadow_CreateField(OGRLayerShadow *self,OGRFieldDefnShadow *field_def,int approx_ok=1){
@@ -2050,7 +2059,7 @@ static OGRGeometryShadow *OGRFeatureShadow_GetGeometryRef(OGRFeatureShadow *self
 static OGRFeatureShadow *OGRFeatureShadow_Clone(OGRFeatureShadow *self){
     return (OGRFeatureShadow*) OGR_F_Clone(self);
   }
-static int OGRFeatureShadow_Equal(OGRFeatureShadow *self,OGRFeatureShadow *feature){
+static bool OGRFeatureShadow_Equal(OGRFeatureShadow *self,OGRFeatureShadow *feature){
     return OGR_F_Equal(self, feature);
   }
 static int OGRFeatureShadow_GetFieldCount(OGRFeatureShadow *self){
@@ -2085,10 +2094,10 @@ static double OGRFeatureShadow_GetFieldAsDouble__SWIG_0(OGRFeatureShadow *self,i
 static double OGRFeatureShadow_GetFieldAsDouble__SWIG_1(OGRFeatureShadow *self,char const *name){
     return OGR_F_GetFieldAsDouble(self, OGR_F_GetFieldIndex(self, name));
   }
-static int OGRFeatureShadow_IsFieldSet__SWIG_0(OGRFeatureShadow *self,int id){
+static bool OGRFeatureShadow_IsFieldSet__SWIG_0(OGRFeatureShadow *self,int id){
     return OGR_F_IsFieldSet(self, id);
   }
-static int OGRFeatureShadow_IsFieldSet__SWIG_1(OGRFeatureShadow *self,char const *name){
+static bool OGRFeatureShadow_IsFieldSet__SWIG_1(OGRFeatureShadow *self,char const *name){
     return OGR_F_IsFieldSet(self, OGR_F_GetFieldIndex(self, name));
   }
 static int OGRFeatureShadow_GetFieldIndex(OGRFeatureShadow *self,char const *name){
@@ -2351,28 +2360,28 @@ static double OGRGeometryShadow_Distance(OGRGeometryShadow *self,OGRGeometryShad
 static void OGRGeometryShadow_Empty(OGRGeometryShadow *self){
     OGR_G_Empty(self);
   }
-static int OGRGeometryShadow_Intersect(OGRGeometryShadow *self,OGRGeometryShadow *other){
+static bool OGRGeometryShadow_Intersect(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Intersect(self, other);
   }
-static int OGRGeometryShadow_Equal(OGRGeometryShadow *self,OGRGeometryShadow *other){
+static bool OGRGeometryShadow_Equal(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Equal(self, other);
   }
-static int OGRGeometryShadow_Disjoint(OGRGeometryShadow *self,OGRGeometryShadow *other){
+static bool OGRGeometryShadow_Disjoint(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Disjoint(self, other);
   }
-static int OGRGeometryShadow_Touches(OGRGeometryShadow *self,OGRGeometryShadow *other){
+static bool OGRGeometryShadow_Touches(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Touches(self, other);
   }
-static int OGRGeometryShadow_Crosses(OGRGeometryShadow *self,OGRGeometryShadow *other){
+static bool OGRGeometryShadow_Crosses(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Crosses(self, other);
   }
-static int OGRGeometryShadow_Within(OGRGeometryShadow *self,OGRGeometryShadow *other){
+static bool OGRGeometryShadow_Within(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Within(self, other);
   }
-static int OGRGeometryShadow_Contains(OGRGeometryShadow *self,OGRGeometryShadow *other){
+static bool OGRGeometryShadow_Contains(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Contains(self, other);
   }
-static int OGRGeometryShadow_Overlaps(OGRGeometryShadow *self,OGRGeometryShadow *other){
+static bool OGRGeometryShadow_Overlaps(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Overlaps(self, other);
   }
 static OGRErr OGRGeometryShadow_TransformTo(OGRGeometryShadow *self,OSRSpatialReferenceShadow *reference){
@@ -2654,7 +2663,7 @@ static PyObject *_wrap_Driver_TestCapability(PyObject *, PyObject *args) {
     PyObject *resultobj = NULL;
     OGRDriverShadow *arg1 = (OGRDriverShadow *) 0 ;
     char *arg2 = (char *) 0 ;
-    int result;
+    bool result;
     PyObject * obj0 = 0 ;
     PyObject * obj1 = 0 ;
     
@@ -2664,10 +2673,10 @@ static PyObject *_wrap_Driver_TestCapability(PyObject *, PyObject *args) {
     if (!SWIG_AsCharPtr(obj1, (char**)&arg2)) {
         SWIG_arg_fail(2);SWIG_fail;
     }
-    result = (int)OGRDriverShadow_TestCapability(arg1,(char const *)arg2);
+    result = (bool)OGRDriverShadow_TestCapability(arg1,(char const *)arg2);
     
     {
-        resultobj = SWIG_From_int(static_cast<int >(result)); 
+        resultobj = SWIG_From_bool(static_cast<bool >(result)); 
     }
     return resultobj;
     fail:
@@ -2832,7 +2841,6 @@ static PyObject *_wrap_DataSource_DeleteLayer(PyObject *, PyObject *args) {
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -3040,7 +3048,7 @@ static PyObject *_wrap_DataSource_TestCapability(PyObject *, PyObject *args) {
     PyObject *resultobj = NULL;
     OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
     char *arg2 = (char *) 0 ;
-    int result;
+    bool result;
     PyObject * obj0 = 0 ;
     PyObject * obj1 = 0 ;
     
@@ -3050,10 +3058,10 @@ static PyObject *_wrap_DataSource_TestCapability(PyObject *, PyObject *args) {
     if (!SWIG_AsCharPtr(obj1, (char**)&arg2)) {
         SWIG_arg_fail(2);SWIG_fail;
     }
-    result = (int)OGRDataSourceShadow_TestCapability(arg1,(char const *)arg2);
+    result = (bool)OGRDataSourceShadow_TestCapability(arg1,(char const *)arg2);
     
     {
-        resultobj = SWIG_From_int(static_cast<int >(result)); 
+        resultobj = SWIG_From_bool(static_cast<bool >(result)); 
     }
     return resultobj;
     fail:
@@ -3246,7 +3254,6 @@ static PyObject *_wrap_Layer_SetAttributeFilter(PyObject *, PyObject *args) {
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -3364,7 +3371,6 @@ static PyObject *_wrap_Layer_SetNextByIndex(PyObject *, PyObject *args) {
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -3403,7 +3409,6 @@ static PyObject *_wrap_Layer_SetFeature(PyObject *, PyObject *args) {
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -3442,7 +3447,6 @@ static PyObject *_wrap_Layer_CreateFeature(PyObject *, PyObject *args) {
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -3483,7 +3487,6 @@ static PyObject *_wrap_Layer_DeleteFeature(PyObject *, PyObject *args) {
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -3518,7 +3521,6 @@ static PyObject *_wrap_Layer_SyncToDisk(PyObject *, PyObject *args) {
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -3633,7 +3635,7 @@ static PyObject *_wrap_Layer_TestCapability(PyObject *, PyObject *args) {
     PyObject *resultobj = NULL;
     OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
     char *arg2 = (char *) 0 ;
-    int result;
+    bool result;
     PyObject * obj0 = 0 ;
     PyObject * obj1 = 0 ;
     
@@ -3643,10 +3645,10 @@ static PyObject *_wrap_Layer_TestCapability(PyObject *, PyObject *args) {
     if (!SWIG_AsCharPtr(obj1, (char**)&arg2)) {
         SWIG_arg_fail(2);SWIG_fail;
     }
-    result = (int)OGRLayerShadow_TestCapability(arg1,(char const *)arg2);
+    result = (bool)OGRLayerShadow_TestCapability(arg1,(char const *)arg2);
     
     {
-        resultobj = SWIG_From_int(static_cast<int >(result)); 
+        resultobj = SWIG_From_bool(static_cast<bool >(result)); 
     }
     return resultobj;
     fail:
@@ -3682,7 +3684,6 @@ static PyObject *_wrap_Layer_CreateField(PyObject *, PyObject *args, PyObject *k
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -3717,7 +3718,6 @@ static PyObject *_wrap_Layer_StartTransaction(PyObject *, PyObject *args) {
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -3752,7 +3752,6 @@ static PyObject *_wrap_Layer_CommitTransaction(PyObject *, PyObject *args) {
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -3787,7 +3786,6 @@ static PyObject *_wrap_Layer_RollbackTransaction(PyObject *, PyObject *args) {
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -3931,7 +3929,6 @@ static PyObject *_wrap_Feature_SetGeometry(PyObject *, PyObject *args) {
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -3970,7 +3967,6 @@ static PyObject *_wrap_Feature_SetGeometryDirectly(PyObject *, PyObject *args) {
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -4032,7 +4028,7 @@ static PyObject *_wrap_Feature_Equal(PyObject *, PyObject *args) {
     PyObject *resultobj = NULL;
     OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
     OGRFeatureShadow *arg2 = (OGRFeatureShadow *) 0 ;
-    int result;
+    bool result;
     PyObject * obj0 = 0 ;
     PyObject * obj1 = 0 ;
     
@@ -4041,10 +4037,10 @@ static PyObject *_wrap_Feature_Equal(PyObject *, PyObject *args) {
     if (SWIG_arg_fail(1)) SWIG_fail;
     SWIG_Python_ConvertPtr(obj1, (void **)&arg2, SWIGTYPE_p_OGRFeatureShadow, SWIG_POINTER_EXCEPTION | 0);
     if (SWIG_arg_fail(2)) SWIG_fail;
-    result = (int)OGRFeatureShadow_Equal(arg1,arg2);
+    result = (bool)OGRFeatureShadow_Equal(arg1,arg2);
     
     {
-        resultobj = SWIG_From_int(static_cast<int >(result)); 
+        resultobj = SWIG_From_bool(static_cast<bool >(result)); 
     }
     return resultobj;
     fail:
@@ -4476,7 +4472,7 @@ static PyObject *_wrap_Feature_IsFieldSet__SWIG_0(PyObject *, PyObject *args) {
     PyObject *resultobj = NULL;
     OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
     int arg2 ;
-    int result;
+    bool result;
     PyObject * obj0 = 0 ;
     PyObject * obj1 = 0 ;
     
@@ -4487,10 +4483,10 @@ static PyObject *_wrap_Feature_IsFieldSet__SWIG_0(PyObject *, PyObject *args) {
         arg2 = static_cast<int >(SWIG_As_int(obj1)); 
         if (SWIG_arg_fail(2)) SWIG_fail;
     }
-    result = (int)OGRFeatureShadow_IsFieldSet__SWIG_0(arg1,arg2);
+    result = (bool)OGRFeatureShadow_IsFieldSet__SWIG_0(arg1,arg2);
     
     {
-        resultobj = SWIG_From_int(static_cast<int >(result)); 
+        resultobj = SWIG_From_bool(static_cast<bool >(result)); 
     }
     return resultobj;
     fail:
@@ -4502,7 +4498,7 @@ static PyObject *_wrap_Feature_IsFieldSet__SWIG_1(PyObject *, PyObject *args) {
     PyObject *resultobj = NULL;
     OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
     char *arg2 = (char *) 0 ;
-    int result;
+    bool result;
     PyObject * obj0 = 0 ;
     PyObject * obj1 = 0 ;
     
@@ -4512,10 +4508,10 @@ static PyObject *_wrap_Feature_IsFieldSet__SWIG_1(PyObject *, PyObject *args) {
     if (!SWIG_AsCharPtr(obj1, (char**)&arg2)) {
         SWIG_arg_fail(2);SWIG_fail;
     }
-    result = (int)OGRFeatureShadow_IsFieldSet__SWIG_1(arg1,(char const *)arg2);
+    result = (bool)OGRFeatureShadow_IsFieldSet__SWIG_1(arg1,(char const *)arg2);
     
     {
-        resultobj = SWIG_From_int(static_cast<int >(result)); 
+        resultobj = SWIG_From_bool(static_cast<bool >(result)); 
     }
     return resultobj;
     fail:
@@ -4638,7 +4634,6 @@ static PyObject *_wrap_Feature_SetFID(PyObject *, PyObject *args) {
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -4951,7 +4946,6 @@ static PyObject *_wrap_Feature_SetFrom(PyObject *, PyObject *args, PyObject *kwa
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -5861,7 +5855,6 @@ static PyObject *_wrap_Geometry_ExportToWkb(PyObject *, PyObject *args, PyObject
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -5975,7 +5968,6 @@ static PyObject *_wrap_Geometry_AddGeometryDirectly(PyObject *, PyObject *args) 
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -6014,7 +6006,6 @@ static PyObject *_wrap_Geometry_AddGeometry(PyObject *, PyObject *args) {
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -6519,7 +6510,7 @@ static PyObject *_wrap_Geometry_Intersect(PyObject *, PyObject *args) {
     PyObject *resultobj = NULL;
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
     OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
-    int result;
+    bool result;
     PyObject * obj0 = 0 ;
     PyObject * obj1 = 0 ;
     
@@ -6528,10 +6519,10 @@ static PyObject *_wrap_Geometry_Intersect(PyObject *, PyObject *args) {
     if (SWIG_arg_fail(1)) SWIG_fail;
     SWIG_Python_ConvertPtr(obj1, (void **)&arg2, SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_EXCEPTION | 0);
     if (SWIG_arg_fail(2)) SWIG_fail;
-    result = (int)OGRGeometryShadow_Intersect(arg1,arg2);
+    result = (bool)OGRGeometryShadow_Intersect(arg1,arg2);
     
     {
-        resultobj = SWIG_From_int(static_cast<int >(result)); 
+        resultobj = SWIG_From_bool(static_cast<bool >(result)); 
     }
     return resultobj;
     fail:
@@ -6543,7 +6534,7 @@ static PyObject *_wrap_Geometry_Equal(PyObject *, PyObject *args) {
     PyObject *resultobj = NULL;
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
     OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
-    int result;
+    bool result;
     PyObject * obj0 = 0 ;
     PyObject * obj1 = 0 ;
     
@@ -6552,10 +6543,10 @@ static PyObject *_wrap_Geometry_Equal(PyObject *, PyObject *args) {
     if (SWIG_arg_fail(1)) SWIG_fail;
     SWIG_Python_ConvertPtr(obj1, (void **)&arg2, SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_EXCEPTION | 0);
     if (SWIG_arg_fail(2)) SWIG_fail;
-    result = (int)OGRGeometryShadow_Equal(arg1,arg2);
+    result = (bool)OGRGeometryShadow_Equal(arg1,arg2);
     
     {
-        resultobj = SWIG_From_int(static_cast<int >(result)); 
+        resultobj = SWIG_From_bool(static_cast<bool >(result)); 
     }
     return resultobj;
     fail:
@@ -6567,7 +6558,7 @@ static PyObject *_wrap_Geometry_Disjoint(PyObject *, PyObject *args) {
     PyObject *resultobj = NULL;
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
     OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
-    int result;
+    bool result;
     PyObject * obj0 = 0 ;
     PyObject * obj1 = 0 ;
     
@@ -6576,10 +6567,10 @@ static PyObject *_wrap_Geometry_Disjoint(PyObject *, PyObject *args) {
     if (SWIG_arg_fail(1)) SWIG_fail;
     SWIG_Python_ConvertPtr(obj1, (void **)&arg2, SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_EXCEPTION | 0);
     if (SWIG_arg_fail(2)) SWIG_fail;
-    result = (int)OGRGeometryShadow_Disjoint(arg1,arg2);
+    result = (bool)OGRGeometryShadow_Disjoint(arg1,arg2);
     
     {
-        resultobj = SWIG_From_int(static_cast<int >(result)); 
+        resultobj = SWIG_From_bool(static_cast<bool >(result)); 
     }
     return resultobj;
     fail:
@@ -6591,7 +6582,7 @@ static PyObject *_wrap_Geometry_Touches(PyObject *, PyObject *args) {
     PyObject *resultobj = NULL;
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
     OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
-    int result;
+    bool result;
     PyObject * obj0 = 0 ;
     PyObject * obj1 = 0 ;
     
@@ -6600,10 +6591,10 @@ static PyObject *_wrap_Geometry_Touches(PyObject *, PyObject *args) {
     if (SWIG_arg_fail(1)) SWIG_fail;
     SWIG_Python_ConvertPtr(obj1, (void **)&arg2, SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_EXCEPTION | 0);
     if (SWIG_arg_fail(2)) SWIG_fail;
-    result = (int)OGRGeometryShadow_Touches(arg1,arg2);
+    result = (bool)OGRGeometryShadow_Touches(arg1,arg2);
     
     {
-        resultobj = SWIG_From_int(static_cast<int >(result)); 
+        resultobj = SWIG_From_bool(static_cast<bool >(result)); 
     }
     return resultobj;
     fail:
@@ -6615,7 +6606,7 @@ static PyObject *_wrap_Geometry_Crosses(PyObject *, PyObject *args) {
     PyObject *resultobj = NULL;
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
     OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
-    int result;
+    bool result;
     PyObject * obj0 = 0 ;
     PyObject * obj1 = 0 ;
     
@@ -6624,10 +6615,10 @@ static PyObject *_wrap_Geometry_Crosses(PyObject *, PyObject *args) {
     if (SWIG_arg_fail(1)) SWIG_fail;
     SWIG_Python_ConvertPtr(obj1, (void **)&arg2, SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_EXCEPTION | 0);
     if (SWIG_arg_fail(2)) SWIG_fail;
-    result = (int)OGRGeometryShadow_Crosses(arg1,arg2);
+    result = (bool)OGRGeometryShadow_Crosses(arg1,arg2);
     
     {
-        resultobj = SWIG_From_int(static_cast<int >(result)); 
+        resultobj = SWIG_From_bool(static_cast<bool >(result)); 
     }
     return resultobj;
     fail:
@@ -6639,7 +6630,7 @@ static PyObject *_wrap_Geometry_Within(PyObject *, PyObject *args) {
     PyObject *resultobj = NULL;
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
     OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
-    int result;
+    bool result;
     PyObject * obj0 = 0 ;
     PyObject * obj1 = 0 ;
     
@@ -6648,10 +6639,10 @@ static PyObject *_wrap_Geometry_Within(PyObject *, PyObject *args) {
     if (SWIG_arg_fail(1)) SWIG_fail;
     SWIG_Python_ConvertPtr(obj1, (void **)&arg2, SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_EXCEPTION | 0);
     if (SWIG_arg_fail(2)) SWIG_fail;
-    result = (int)OGRGeometryShadow_Within(arg1,arg2);
+    result = (bool)OGRGeometryShadow_Within(arg1,arg2);
     
     {
-        resultobj = SWIG_From_int(static_cast<int >(result)); 
+        resultobj = SWIG_From_bool(static_cast<bool >(result)); 
     }
     return resultobj;
     fail:
@@ -6663,7 +6654,7 @@ static PyObject *_wrap_Geometry_Contains(PyObject *, PyObject *args) {
     PyObject *resultobj = NULL;
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
     OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
-    int result;
+    bool result;
     PyObject * obj0 = 0 ;
     PyObject * obj1 = 0 ;
     
@@ -6672,10 +6663,10 @@ static PyObject *_wrap_Geometry_Contains(PyObject *, PyObject *args) {
     if (SWIG_arg_fail(1)) SWIG_fail;
     SWIG_Python_ConvertPtr(obj1, (void **)&arg2, SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_EXCEPTION | 0);
     if (SWIG_arg_fail(2)) SWIG_fail;
-    result = (int)OGRGeometryShadow_Contains(arg1,arg2);
+    result = (bool)OGRGeometryShadow_Contains(arg1,arg2);
     
     {
-        resultobj = SWIG_From_int(static_cast<int >(result)); 
+        resultobj = SWIG_From_bool(static_cast<bool >(result)); 
     }
     return resultobj;
     fail:
@@ -6687,7 +6678,7 @@ static PyObject *_wrap_Geometry_Overlaps(PyObject *, PyObject *args) {
     PyObject *resultobj = NULL;
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
     OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
-    int result;
+    bool result;
     PyObject * obj0 = 0 ;
     PyObject * obj1 = 0 ;
     
@@ -6696,10 +6687,10 @@ static PyObject *_wrap_Geometry_Overlaps(PyObject *, PyObject *args) {
     if (SWIG_arg_fail(1)) SWIG_fail;
     SWIG_Python_ConvertPtr(obj1, (void **)&arg2, SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_EXCEPTION | 0);
     if (SWIG_arg_fail(2)) SWIG_fail;
-    result = (int)OGRGeometryShadow_Overlaps(arg1,arg2);
+    result = (bool)OGRGeometryShadow_Overlaps(arg1,arg2);
     
     {
-        resultobj = SWIG_From_int(static_cast<int >(result)); 
+        resultobj = SWIG_From_bool(static_cast<bool >(result)); 
     }
     return resultobj;
     fail:
@@ -6724,7 +6715,6 @@ static PyObject *_wrap_Geometry_TransformTo(PyObject *, PyObject *args) {
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -6763,7 +6753,6 @@ static PyObject *_wrap_Geometry_Transform(PyObject *, PyObject *args) {
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
@@ -7019,7 +7008,6 @@ static PyObject *_wrap_SetGenerate_DB2_V72_BYTE_ORDER(PyObject *, PyObject *args
     
     {
         /* %typemap(out) OGRErr */
-        resultobj = 0;
         if ( result != 0) {
             PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
             SWIG_fail;
