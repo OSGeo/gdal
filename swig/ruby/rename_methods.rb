@@ -72,9 +72,20 @@ class SwigRename
 			end
 			
       @renames.push(RenameStruct.new(temp_class, original_method_name, new_method_name))
-            
+       
+      # For SWIG we need to alias the *original* name not the new name.  For example,
+      # these SWIG directives:
+      #
+			#   %rename(union_) MyClass::Union;
+			#		%alias MyClass::Union "union";
+			#
+			# Result in this SWIG output:
+			#
+			# 	rb_define_method(MyClass.klass, "union_", ...)
+      #		rb_define_alias(MyClass.klass, "union", "union_");
+      #
 		  if not alias_name.nil?
-		    @aliases.push(AliasStruct.new(temp_class, new_method_name, rubified_method_name))
+		    @aliases.push(AliasStruct.new(temp_class, original_method_name, rubified_method_name))
 			end
 		end
   end
