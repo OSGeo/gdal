@@ -28,22 +28,22 @@ build: $(INSTALLATION_DIR) gdal.so gdalconst.so ogr.so osr.so
 
 gdal.so: gdal_wrap.obj
 	link /dll /debug $(LINKER_FLAGS) $(EXTERNAL_LIBS) \
-	/LIBPATH:$(RUBY_DIR)/lib $(RUBY_SO_NAME) ..\..\gdal.lib \
+	/LIBPATH:$(RUBY_DIR)/lib $(RUBY_SO_NAME) $(GDALLIB) \
     /out:$*.so $*_wrap.obj
     
 gdalconst.so: gdalconst_wrap.obj
 	link /dll /debug $(LINKER_FLAGS) $(EXTERNAL_LIBS) \
-	/LIBPATH:$(RUBY_DIR)/lib $(RUBY_SO_NAME) ..\..\gdal.lib \
+	/LIBPATH:$(RUBY_DIR)/lib $(RUBY_SO_NAME) $(GDALLIB) \
     /out:$*.so $*_wrap.obj
 
 ogr.so: ogr_wrap.obj
 	link /dll /debug $(LINKER_FLAGS) $(EXTERNAL_LIBS) \
-	/LIBPATH:$(RUBY_DIR)/lib $(RUBY_SO_NAME) ..\..\gdal.lib \
+	/LIBPATH:$(RUBY_DIR)/lib $(RUBY_SO_NAME) $(GDALLIB) \
     /out:$*.so $*_wrap.obj
     
 osr.so: osr_wrap.obj
 	link /dll /debug $(LINKER_FLAGS) $(EXTERNAL_LIBS) \
-	/LIBPATH:$(RUBY_DIR)/lib $(RUBY_SO_NAME) ..\..\gdal.lib \
+	/LIBPATH:$(RUBY_DIR)/lib $(RUBY_SO_NAME) $(GDALLIB) \
     /out:$*.so $*_wrap.obj
     
     
