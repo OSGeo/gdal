@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2005/10/03 18:13:28  fwarmerdam
+ * Fixed prototype for OSRSetGEOS().
+ *
  * Revision 1.53  2005/09/21 00:50:08  fwarmerdam
  * Added Release
  *
@@ -544,8 +547,9 @@ OGRErr CPL_DLL OSRSetGH( OGRSpatialReferenceH hSRS, double dfCentralMeridian,
                          double dfFalseEasting, double dfFalseNorthing );
     
 /** GEOS - Geostationary Satellite View */
-OGRErr CPL_DLL OSRSetGEOS( OGRSpatialReferenceH hSRS, double dfSatelliteHeight,
-                         double dfFalseEasting, double dfFalseNorthing );
+OGRErr CPL_DLL OSRSetGEOS( OGRSpatialReferenceH hSRS, 
+                           double dfCentralMeridian, double dfSatelliteHeight,
+                           double dfFalseEasting, double dfFalseNorthing );
     
 /** Gnomonic */
 OGRErr CPL_DLL OSRSetGnomonic(OGRSpatialReferenceH hSRS,
