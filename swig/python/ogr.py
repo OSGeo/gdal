@@ -111,7 +111,7 @@ class Driver(_object):
         return _ogr.Driver_DeleteDataSource(*args)
 
     def TestCapability(*args):
-        """TestCapability(self, char cap) -> int"""
+        """TestCapability(self, char cap) -> bool"""
         return _ogr.Driver_TestCapability(*args)
 
     def GetName(*args):
@@ -183,7 +183,7 @@ class DataSource(_object):
         return _ogr.DataSource_GetLayerByName(*args)
 
     def TestCapability(*args):
-        """TestCapability(self, char cap) -> int"""
+        """TestCapability(self, char cap) -> bool"""
         return _ogr.DataSource_TestCapability(*args)
 
     def ExecuteSQL(*args, **kwargs):
@@ -335,7 +335,7 @@ class Layer(_object):
         return _ogr.Layer_GetExtent(*args, **kwargs)
 
     def TestCapability(*args):
-        """TestCapability(self, char cap) -> int"""
+        """TestCapability(self, char cap) -> bool"""
         return _ogr.Layer_TestCapability(*args)
 
     def CreateField(*args, **kwargs):
@@ -463,7 +463,7 @@ class Feature(_object):
         return _ogr.Feature_Clone(*args)
 
     def Equal(*args):
-        """Equal(self, Feature feature) -> int"""
+        """Equal(self, Feature feature) -> bool"""
         return _ogr.Feature_Equal(*args)
 
     def GetFieldCount(*args):
@@ -500,8 +500,8 @@ class Feature(_object):
 
     def IsFieldSet(*args):
         """
-        IsFieldSet(self, int id) -> int
-        IsFieldSet(self, char name) -> int
+        IsFieldSet(self, int id) -> bool
+        IsFieldSet(self, char name) -> bool
         """
         return _ogr.Feature_IsFieldSet(*args)
 
@@ -895,35 +895,35 @@ class Geometry(_object):
         return _ogr.Geometry_Empty(*args)
 
     def Intersect(*args):
-        """Intersect(self, Geometry other) -> int"""
+        """Intersect(self, Geometry other) -> bool"""
         return _ogr.Geometry_Intersect(*args)
 
     def Equal(*args):
-        """Equal(self, Geometry other) -> int"""
+        """Equal(self, Geometry other) -> bool"""
         return _ogr.Geometry_Equal(*args)
 
     def Disjoint(*args):
-        """Disjoint(self, Geometry other) -> int"""
+        """Disjoint(self, Geometry other) -> bool"""
         return _ogr.Geometry_Disjoint(*args)
 
     def Touches(*args):
-        """Touches(self, Geometry other) -> int"""
+        """Touches(self, Geometry other) -> bool"""
         return _ogr.Geometry_Touches(*args)
 
     def Crosses(*args):
-        """Crosses(self, Geometry other) -> int"""
+        """Crosses(self, Geometry other) -> bool"""
         return _ogr.Geometry_Crosses(*args)
 
     def Within(*args):
-        """Within(self, Geometry other) -> int"""
+        """Within(self, Geometry other) -> bool"""
         return _ogr.Geometry_Within(*args)
 
     def Contains(*args):
-        """Contains(self, Geometry other) -> int"""
+        """Contains(self, Geometry other) -> bool"""
         return _ogr.Geometry_Contains(*args)
 
     def Overlaps(*args):
-        """Overlaps(self, Geometry other) -> int"""
+        """Overlaps(self, Geometry other) -> bool"""
         return _ogr.Geometry_Overlaps(*args)
 
     def TransformTo(*args):
