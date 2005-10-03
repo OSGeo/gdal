@@ -1,11 +1,6 @@
 /*
  * _getcell.c
  */
-#ifndef lint
- static const char *rcs_id = 
- "$Header$";
-#endif
-
 #include "csf.h"
 #include "csfimpl.h"
 
@@ -30,5 +25,5 @@ size_t RgetCell(
 {
 	return RgetSomeCells(map, 
 				( (map->raster.nrCols) * rowNr) + colNr,
-	             		1, cellValue);
+	             		(size_t)1, cellValue);
 }

@@ -1,9 +1,3 @@
-
-#ifndef lint  
-static const char *rcs_id = 
- "$Header$";
-#endif
-
 /********/
 /* USES */
 /********/
@@ -58,7 +52,7 @@ int CsfValidSize(size_t size)
 #endif
 
 /* ARGSUSED */
-static void Swap1(unsigned char *buf,  size_t n)
+static void Swap1(unsigned char * buf,  size_t n)
 {
 	/* do nothing */
 }

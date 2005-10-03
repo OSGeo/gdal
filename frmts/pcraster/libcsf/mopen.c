@@ -1,9 +1,4 @@
 
-#ifndef lint
- static const char *rcs_id = 
- "$Header$";
-#endif
-
 /*******************************************************/
 /*	FUNCTIE   MOPEN.C	                       */
 /*******************************************************/
@@ -105,7 +100,7 @@ MAP  *Mopen(
  }
 
  (void)fseek(m->fp, 14+CSF_SIG_SPACE, SEEK_SET);
- (void)fread((void *)&s, sizeof(UINT4),1,m->fp);
+ (void)fread((void *)&s, sizeof(UINT4),(size_t)1,m->fp);
  if (s != ORD_OK) {
 	m->write = CsfWriteSwapped;
 	m->read  = CsfReadSwapped;
@@ -122,36 +117,36 @@ MAP  *Mopen(
  
  (void)fseek(m->fp, ADDR_MAIN_HEADER, SEEK_SET);
  m->read((void *)&(m->main.signature), sizeof(char), CSF_SIG_SPACE,m->fp);
- m->read((void *)&(m->main.version),   sizeof(UINT2),1,m->fp);
- m->read((void *)&(m->main.gisFileId), sizeof(UINT4),1,m->fp);
- m->read((void *)&(m->main.projection),sizeof(UINT2),1,m->fp);
- m->read((void *)&(m->main.attrTable), sizeof(UINT4),1,m->fp);
- m->read((void *)&(m->main.mapType),  sizeof(UINT2),1,m->fp);
- m->read((void *)&(m->main.byteOrder), sizeof(UINT4),1,m->fp);
+ m->read((void *)&(m->main.version),   sizeof(UINT2),(size_t)1,m->fp);
+ m->read((void *)&(m->main.gisFileId), sizeof(UINT4),(size_t)1,m->fp);
+ m->read((void *)&(m->main.projection),sizeof(UINT2),(size_t)1,m->fp);
+ m->read((void *)&(m->main.attrTable), sizeof(UINT4),(size_t)1,m->fp);
+ m->read((void *)&(m->main.mapType),  sizeof(UINT2),(size_t)1,m->fp);
+ m->read((void *)&(m->main.byteOrder), sizeof(UINT4),(size_t)1,m->fp);
  /*                                             14+CSF_SIG_SPACE
   */
  
  (void)fseek(m->fp, ADDR_SECOND_HEADER, SEEK_SET);
- m->read((void *)&(m->raster.valueScale), sizeof(UINT2),1,m->fp);
- m->read((void *)&(m->raster.cellRepr), sizeof(UINT2),1,m->fp);
+ m->read((void *)&(m->raster.valueScale), sizeof(UINT2),(size_t)1,m->fp);
+ m->read((void *)&(m->raster.cellRepr), sizeof(UINT2),(size_t)1,m->fp);
 
- (void)fread((void *)&(m->raster.minVal), sizeof(CSF_VAR_TYPE), 1,m->fp);
- (void)fread((void *)&(m->raster.maxVal), sizeof(CSF_VAR_TYPE), 1,m->fp);
+ (void)fread((void *)&(m->raster.minVal), sizeof(CSF_VAR_TYPE),(size_t)1,m->fp);
+ (void)fread((void *)&(m->raster.maxVal), sizeof(CSF_VAR_TYPE),(size_t)1,m->fp);
  if (s != ORD_OK) {
-  CsfSwap((void *)&(m->raster.minVal), CELLSIZE(m->raster.cellRepr), 1);
-  CsfSwap((void *)&(m->raster.maxVal), CELLSIZE(m->raster.cellRepr), 1);
+  CsfSwap((void *)&(m->raster.minVal), CELLSIZE(m->raster.cellRepr),(size_t)1);
+  CsfSwap((void *)&(m->raster.maxVal), CELLSIZE(m->raster.cellRepr),(size_t)1);
  }
 
- m->read((void *)&(m->raster.xUL), sizeof(REAL8),1,m->fp);
- m->read((void *)&(m->raster.yUL), sizeof(REAL8),1,m->fp);
- m->read((void *)&(m->raster.nrRows), sizeof(UINT4),1,m->fp);
- m->read((void *)&(m->raster.nrCols), sizeof(UINT4),1,m->fp);
- m->read((void *)&(m->raster.cellSize), sizeof(REAL8),1,m->fp);
- m->read((void *)&(m->raster.cellSizeDupl), sizeof(REAL8),1,m->fp);
- 
- m->read((void *)&(m->raster.angle), sizeof(REAL8),1,m->fp);
- 
- 
+ m->read((void *)&(m->raster.xUL), sizeof(REAL8),(size_t)1,m->fp);
+ m->read((void *)&(m->raster.yUL), sizeof(REAL8),(size_t)1,m->fp);
+ m->read((void *)&(m->raster.nrRows), sizeof(UINT4),(size_t)1,m->fp);
+ m->read((void *)&(m->raster.nrCols), sizeof(UINT4),(size_t)1,m->fp);
+ m->read((void *)&(m->raster.cellSize), sizeof(REAL8),(size_t)1,m->fp);
+ m->read((void *)&(m->raster.cellSizeDupl), sizeof(REAL8),(size_t)1,m->fp);
+
+ m->read((void *)&(m->raster.angle), sizeof(REAL8),(size_t)1,m->fp);
+
+
  /*  check signature C.S.F.file	
   */
  if(strncmp(m->main.signature,CSF_SIG,CSF_SIZE_SIG)!=0)

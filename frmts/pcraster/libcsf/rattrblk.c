@@ -1,8 +1,11 @@
 /*
  * rattrblk.c
 $Log$
-Revision 1.1  2005/09/28 20:54:54  kdejong
-Initial version of internal csf library code.
+Revision 1.2  2005/10/03 07:22:12  kdejong
+Lots of small edits for x86-64 support, removed rcs id string.
+
+Revision 1.2  2005/09/29 18:43:23  cees
+x86_64
 
 Revision 1.1.1.1  2000/01/04 21:04:57  cees
 Initial import Cees
@@ -23,11 +26,6 @@ Revision 1.3  1995/11/01 17:23:03  cees
  * Initial revision
  *
  */
-#ifndef lint
- static const char *rcs_id = 
- "$Header$";
-#endif
-
 #include "csf.h"
 #include "csfimpl.h"
 
@@ -42,9 +40,9 @@ void CsfReadAttrBlock(
 	fseek(m->fp, (long)pos, SEEK_SET);
 	for(i=0; i < NR_ATTR_IN_BLOCK; i++)
 	{
-	 m->read((void *)&(b->attrs[i].attrId), sizeof(UINT2),1,m->fp);
-	 m->read((void *)&(b->attrs[i].attrOffset), sizeof(CSF_FADDR),1,m->fp);
-	 m->read((void *)&(b->attrs[i].attrSize), sizeof(UINT4),1,m->fp);
+	 m->read((void *)&(b->attrs[i].attrId), sizeof(UINT2),(size_t)1,m->fp);
+	 m->read((void *)&(b->attrs[i].attrOffset), sizeof(CSF_FADDR),(size_t)1,m->fp);
+	 m->read((void *)&(b->attrs[i].attrSize), sizeof(UINT4),(size_t)1,m->fp);
 	}
-	m->read((void *)&(b->next), sizeof(CSF_FADDR),1,m->fp);
+	m->read((void *)&(b->next), sizeof(CSF_FADDR),(size_t)1,m->fp);
 }

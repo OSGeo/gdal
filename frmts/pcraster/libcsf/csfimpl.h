@@ -1,10 +1,6 @@
 #ifndef CSF__IMPL_H
 #define CSF__IMPL_H
 
-#ifndef lint
-#define RCS_ID_CSFIMPL_H "$Header$"
-#endif
-
 /******************************************************************/
 /******************************************************************/
 /**                                                               */
@@ -34,8 +30,8 @@
 
 /* Padding of headers
  */
-#define RASTER_HEADER_FILL_SIZE (124)
-#define MAIN_HEADER_FILL_SIZE   (14)
+#define RASTER_HEADER_FILL_SIZE ((size_t)124)
+#define MAIN_HEADER_FILL_SIZE   ((size_t)14)
 /* Used in mclose.c
  */
 #define MAX_HEADER_FILL_SIZE    (RASTER_HEADER_FILL_SIZE)

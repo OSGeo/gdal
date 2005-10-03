@@ -3,11 +3,6 @@
  *    Functions to create  and maintain the csf-kernel
  *     runtime structures
  */
-#ifndef lint
- static const char *rcs_id =
- "$Header$";
-#endif
-
 
 /**************************************************************************/
 /*  KERNLCSF.C                                                            */
@@ -49,7 +44,7 @@ static size_t mapListLen = 4;
  */
 static void CsfCloseCsfKernel(void)
 {
-  int i;
+  size_t i;
 
   for(i = 0; i < mapListLen; i++)
    if(mapList[i] != NULL)
@@ -105,14 +100,14 @@ void CsfRegisterMap(
            * initialized
            */
 {
-  int i=0;
+  size_t i=0;
 
   while (mapList[i] != NULL && i < mapListLen)
     i++;
 
   if(i == mapListLen)
   {
-    int j;
+    size_t j;
     /* double size */
     mapListLen *=2;
     mapList=realloc(mapList,sizeof(MAP *)*mapListLen);
@@ -147,6 +142,6 @@ int CsfIsValidMap(
   const MAP *m) /* map handle */
 {
   return(CsfIsBootedCsfKernel() && m != NULL
-          && m->mapListId >= 0 && m->mapListId < mapListLen
+          && m->mapListId >= 0 && ((size_t)m->mapListId) < mapListLen
     && mapList[m->mapListId] == m);
 }

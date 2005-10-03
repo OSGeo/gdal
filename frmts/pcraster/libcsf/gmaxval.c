@@ -1,8 +1,3 @@
-#ifndef lint
- static const char *rcs_id = 
- "$Header$";
-#endif
-
 #include "csf.h"
 #include "csfimpl.h"
 
@@ -30,7 +25,7 @@ int RgetMaxVal(
 	CHECKHANDLE(map);
 	CsfGetVarType(buf, &(map->raster.maxVal), RgetCellRepr(map));
 
-	map->file2app(1, buf);
+	map->file2app((size_t)1, buf);
 
 	if (map->minMaxStatus == MM_WRONGVALUE)
 		SetMV(map, buf);

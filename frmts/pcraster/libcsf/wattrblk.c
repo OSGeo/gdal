@@ -1,8 +1,11 @@
 /*
  * wattrblk.c
 $Log$
-Revision 1.1  2005/09/28 20:54:54  kdejong
-Initial version of internal csf library code.
+Revision 1.2  2005/10/03 07:22:13  kdejong
+Lots of small edits for x86-64 support, removed rcs id string.
+
+Revision 1.2  2005/09/29 18:43:23  cees
+x86_64
 
 Revision 1.1.1.1  2000/01/04 21:05:15  cees
 Initial import Cees
@@ -23,11 +26,6 @@ Revision 1.3  1995/11/01 17:23:03  cees
  * Initial revision
  *
  */
-#ifndef lint
- static const char *rcs_id = 
- "$Header$";
-#endif
-
 #include "csf.h"
 #include "csfimpl.h"
 
@@ -46,11 +44,11 @@ int CsfWriteAttrBlock(
  	return 1;
 
  for(i=0; i < NR_ATTR_IN_BLOCK; i++)
-  if ( m->write(&(b->attrs[i].attrId), sizeof(UINT2),1,m->fp)    != 1 ||
-       m->write(&(b->attrs[i].attrOffset),sizeof(CSF_FADDR),1,m->fp) != 1 ||
-       m->write(&(b->attrs[i].attrSize), sizeof(UINT4),1,m->fp)  != 1 
+  if ( m->write(&(b->attrs[i].attrId), sizeof(UINT2),(size_t)1,m->fp)    != 1 ||
+       m->write(&(b->attrs[i].attrOffset),sizeof(CSF_FADDR),(size_t)1,m->fp) != 1 ||
+       m->write(&(b->attrs[i].attrSize), sizeof(UINT4),(size_t)1,m->fp)  != 1 
      )
      return 1;
  
- return m->write(&(b->next), sizeof(CSF_FADDR),1,m->fp) != 1;
+ return m->write(&(b->next), sizeof(CSF_FADDR),(size_t)1,m->fp) != 1;
 }

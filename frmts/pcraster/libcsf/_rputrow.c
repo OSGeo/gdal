@@ -1,12 +1,6 @@
 /*
  * _rputrow.c
  */
-#ifndef lint
- static const char *rcs_id = 
- "$Header$";
-#endif
-
-
 #include "csf.h"
 #include "csfimpl.h"
 
@@ -33,5 +27,5 @@ void *buf)        /* read-write. Buffer large enough to
                    */
 {
 	return RputSomeCells(map, (map->raster.nrCols)*rowNr,
- 	                             map->raster.nrCols, buf) ;
+ 	                          (size_t)map->raster.nrCols, buf) ;
 }

@@ -1,8 +1,8 @@
 /*
  * getattr.c
 $Log$
-Revision 1.1  2005/09/28 20:54:53  kdejong
-Initial version of internal csf library code.
+Revision 1.2  2005/10/03 07:22:12  kdejong
+Lots of small edits for x86-64 support, removed rcs id string.
 
 Revision 1.1.1.1  2000/01/04 21:04:38  cees
 Initial import Cees
@@ -27,11 +27,6 @@ Initial revision
  * Initial revision
  *
  */
-#ifndef lint
- static const char *rcs_id = 
- "$Header$";
-#endif
-
 #include "csf.h"
 #include "csfimpl.h"
 

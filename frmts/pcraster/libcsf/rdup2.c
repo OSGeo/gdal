@@ -2,11 +2,6 @@
 /*
  * rdup2.c 
  */
-#ifndef lint  
-static const char *rcs_id = 
- "$Header$";
-#endif
-
 #include "csf.h"
 #include "csfimpl.h"
 
@@ -42,8 +37,8 @@ MAP  *Rdup(
 	}
 
 	newMap = Rcreate(toFile,
-	                 from->raster.nrRows,
-			 from->raster.nrCols,
+	            (size_t)from->raster.nrRows,
+			 (size_t)from->raster.nrCols,
         		 cellRepr, 
         		 dataType, 
         		 from->main.projection, 

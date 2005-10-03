@@ -1,10 +1,6 @@
 /*
  * moreattr.c 
  */
-#ifndef lint  
-static const char *rcs_id = 
- "$Header$";
-#endif
 
 #include "csf.h"
 #include "csfimpl.h"
