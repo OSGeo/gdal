@@ -2301,13 +2301,15 @@ XS(_wrap_MajorObject_GetMetadata) {
                     char *keyptr;
                     valptr = CPLParseNameValue( *stringarray, &keyptr );
                     if ( valptr != 0 ) {
+                        size_t klen = strlen(keyptr);
+                        size_t vlen = strlen(valptr);
                         hv_store(hv, keyptr, strlen(keyptr), newSVpv(valptr, strlen(valptr)), 0);
                         CPLFree( keyptr );
                     }
                     stringarray++;
                 }
             }
-            ST(argvi) = newRV_noinc((SV*)hv);
+            ST(argvi) = newRV((SV*)hv);
             argvi++;
         }
         XSRETURN(argvi);
