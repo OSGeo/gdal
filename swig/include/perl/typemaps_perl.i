@@ -4,6 +4,9 @@
 
 /*
  * $Log$
+ * Revision 1.9  2005/10/03 20:28:51  kruland
+ * Fixed bug in  %typemap(out) char **dict.
+ *
  * Revision 1.8  2005/09/30 18:52:28  kruland
  * Fixed typo.
  *
@@ -401,24 +404,26 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
 }
 %typemap(perl5,out) char **dict
 {
-  /* %typemap(out) char **dict */
-  char **stringarray = $1;
-  HV *hv = (HV*)sv_2mortal((SV*)newHV());
-  if ( stringarray != NULL ) {
-    while (*stringarray != NULL ) {
-      char const *valptr;
-      char *keyptr;
-      valptr = CPLParseNameValue( *stringarray, &keyptr );
-      if ( valptr != 0 ) {
-        hv_store(hv, keyptr, strlen(keyptr), newSVpv(valptr, strlen(valptr)), 0);
-        CPLFree( keyptr );
-      }
-      stringarray++;
-    }
-  }
-  $result = newRV_noinc((SV*)hv);
-  argvi++;
-}
+ /* %typemap(out) char **dict */
+ char **stringarray = $1;
+ HV *hv = (HV*)sv_2mortal((SV*)newHV());
+ if ( stringarray != NULL ) {
+   while (*stringarray != NULL ) {
+     char const *valptr;
+     char *keyptr;
+     valptr = CPLParseNameValue( *stringarray, &keyptr );
+     if ( valptr != 0 ) {
+       size_t klen = strlen(keyptr);
+       size_t vlen = strlen(valptr);
+       hv_store(hv, keyptr, strlen(keyptr), newSVpv(valptr, strlen(valptr)), 0);
+       CPLFree( keyptr );
+     }
+     stringarray++;
+   }
+ }
+ $result = newRV((SV*)hv);
+ argvi++;
+} 
 %typemap(perl5,freearg) char **dict
 {
   /* %typemap(freearg) char **dict */
