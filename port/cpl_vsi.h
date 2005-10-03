@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.26  2005/10/03 18:56:40  fwarmerdam
+ * always define large file api - cygwin fix
+ *
  * Revision 1.25  2005/09/15 18:32:35  fwarmerdam
  * added VSICleanupFileManager
  *
@@ -192,8 +195,6 @@ int CPL_DLL VSIStat( const char *, VSIStatBuf * );
 /*      defined, then provide protypes for the large file API,          */
 /*      otherwise redefine to use the regular api.                      */
 /* ==================================================================== */
-#ifdef VSI_LARGE_API_SUPPORTED
-
 typedef GUIntBig vsi_l_offset;
 
 FILE CPL_DLL *  VSIFOpenL( const char *, const char * );
@@ -206,33 +207,13 @@ size_t CPL_DLL  VSIFWriteL( void *, size_t, size_t, FILE * );
 int CPL_DLL     VSIFEofL( FILE * );
 int CPL_DLL    VSIFFlushL( FILE * );
 
-#ifndef WIN32
+#if defined(VSI_STAT64_T)
 typedef struct VSI_STAT64_T VSIStatBufL;
 #else
 #define VSIStatBufL    VSIStatBuf
 #endif
 
 int CPL_DLL     VSIStatL( const char *, VSIStatBufL * );
-
-#else
-
-typedef long vsi_l_offset;
-
-#define vsi_l_offset long
-
-#define VSIFOpenL      VSIFOpen
-#define VSIFCloseL     VSIFClose
-#define VSIFSeekL      VSIFSeek
-#define VSIFTellL      VSIFTell
-#define VSIFRewindL    VSIFRewind
-#define VSIFReadL      VSIFRead
-#define VSIFWriteL     VSIFWrite
-#define VSIFEofL       VSIFEof
-#define VSIFFlushL     VSIFFlush
-#define VSIStatBufL    VSIStatBuf
-#define VSIStatL       VSIStat
-
-#endif
 
 /* ==================================================================== */
 /*      Memory allocation                                               */
