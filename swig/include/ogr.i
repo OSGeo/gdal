@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.46  2005/10/03 20:09:58  cfis
+ * Changed various methods to return bool instead of int.  These changes make the methods more natural to work with in scripting languages.
+ *
  * Revision 1.45  2005/09/26 05:02:13  cfis
  * Added comments pointing out where parent objects are giving out references to child objects.
  *
@@ -364,7 +367,8 @@ public:
   int DeleteDataSource( const char *name ) {
     return OGR_Dr_DeleteDataSource( self, name );
   }
-  int TestCapability (const char *cap) {
+
+  bool TestCapability (const char *cap) {
     return OGR_Dr_TestCapability(self, cap);
   }
   
@@ -455,7 +459,7 @@ public:
     return layer;
   }
 
-  int TestCapability(const char * cap) {
+  bool TestCapability(const char * cap) {
     return OGR_DS_TestCapability(self, cap);
   }
 
@@ -593,7 +597,7 @@ public:
       throw err;
   }
 
-  int TestCapability(const char* cap) {
+  bool TestCapability(const char* cap) {
     return OGR_L_TestCapability(self, cap);
   }
   
@@ -689,7 +693,7 @@ public:
     return (OGRFeatureShadow*) OGR_F_Clone(self);
   }
   
-  int Equal(OGRFeatureShadow *feature) {
+  bool Equal(OGRFeatureShadow *feature) {
     return OGR_F_Equal(self, feature);
   }
   
@@ -743,11 +747,11 @@ public:
 
   
   /* ---- IsFieldSet --------------------------- */
-  int IsFieldSet(int id) {
+  bool IsFieldSet(int id) {
     return OGR_F_IsFieldSet(self, id);
   }
 
-  int IsFieldSet(const char* name) {
+  bool IsFieldSet(const char* name) {
     return OGR_F_IsFieldSet(self, OGR_F_GetFieldIndex(self, name));
   }
   /* ------------------------------------------- */  
@@ -1173,35 +1177,35 @@ public:
     OGR_G_Empty(self);
   }
   
-  int Intersect (OGRGeometryShadow* other) {
+  bool Intersect (OGRGeometryShadow* other) {
     return OGR_G_Intersect(self, other);
   }
 
-  int Equal (OGRGeometryShadow* other) {
+  bool Equal (OGRGeometryShadow* other) {
     return OGR_G_Equal(self, other);
   }
   
-  int Disjoint(OGRGeometryShadow* other) {
+  bool Disjoint(OGRGeometryShadow* other) {
     return OGR_G_Disjoint(self, other);
   }
 
-  int Touches (OGRGeometryShadow* other) {
+  bool Touches (OGRGeometryShadow* other) {
     return OGR_G_Touches(self, other);
   }
 
-  int Crosses (OGRGeometryShadow* other) {
+  bool Crosses (OGRGeometryShadow* other) {
     return OGR_G_Crosses(self, other);
   }
 
-  int Within (OGRGeometryShadow* other) {
+  bool Within (OGRGeometryShadow* other) {
     return OGR_G_Within(self, other);
   }
 
-  int Contains (OGRGeometryShadow* other) {
+  bool Contains (OGRGeometryShadow* other) {
     return OGR_G_Contains(self, other);
   }
   
-  int Overlaps (OGRGeometryShadow* other) {
+  bool Overlaps (OGRGeometryShadow* other) {
     return OGR_G_Overlaps(self, other);
   }
 
