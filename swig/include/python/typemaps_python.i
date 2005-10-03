@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.41  2005/10/03 20:13:33  kruland
+ * Clean up the CPLErr typemap to account for the new-er %exception code.
+ *
  * Revision 1.40  2005/09/29 14:02:23  kruland
  * Fixed memcpy in %typemap(in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs)
  *
@@ -276,7 +279,6 @@
 %typemap(python, out,fragment="OGRErrMessages") OGRErr
 {
   /* %typemap(out) OGRErr */
-  resultobj = 0;
   if ( result != 0) {
     PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
     SWIG_fail;
@@ -746,31 +748,13 @@ OPTIONAL_POD(int,i);
  * If UseExceptions ==0, then return the rc.
  * If UseExceptions ==1, then if rc >= CE_Failure, raise an exception.
  */
-%typemap(python,arginit) CPLErr
-{
-  /* %typemap(python,arginit) CPLErr */
-  $result = 0;
-}
-%typemap(python,out) CPLErr
-{
-  /* %typemap(out) CPLErr */
-  if ( bUseExceptions == 1 && $1 >= CE_Failure ) {
-    int errcode = CPLGetLastErrorNo();
-    const char *errmsg = CPLGetLastErrorMsg();
-    PyErr_Format( PyExc_RuntimeError, "CPLErr %d: %s", errcode, (char*) errmsg );
-    SWIG_fail;
-  }
-}
 %typemap(python,ret) CPLErr
 {
   /* %typemap(ret) CPLErr */
   if ( bUseExceptions == 0 ) {
-    /* We're not using exceptions.  The test in the out typemap means that
-       we know we have a valid return value.  Test if there are any return
-       values set by argout typemaps.
-    */
+    /* We're not using exceptions.  And no error has occurred */
     if ( $result == 0 ) {
-      /* No other return values set so return None */
+      /* No other return values set so return ErrorCode */
       $result = PyInt_FromLong($1);
     }
   }
