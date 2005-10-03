@@ -1718,7 +1718,7 @@ _wrap_error(int argc, VALUE *argv, VALUE self) {
 
 
 static VALUE
-_wrap_push_error_handler(int argc, VALUE *argv, VALUE self) {
+_wrap_push_error_handler__SWIG_0(int argc, VALUE *argv, VALUE self) {
     char *arg1 = (char *) "CPLQuietErrorHandler" ;
     CPLErr result;
     VALUE vresult = Qnil;
@@ -1746,7 +1746,7 @@ _wrap_push_error_handler(int argc, VALUE *argv, VALUE self) {
 
 
 static VALUE
-_wrap_PushErrorHandler(int argc, VALUE *argv, VALUE self) {
+_wrap_push_error_handler__SWIG_1(int argc, VALUE *argv, VALUE self) {
     CPLErrorHandler arg1 ;
     
     if ((argc < 1) || (argc > 1))
@@ -1769,8 +1769,45 @@ _wrap_PushErrorHandler(int argc, VALUE *argv, VALUE self) {
 }
 
 
+static VALUE _wrap_push_error_handler(int nargs, VALUE *args, VALUE self) {
+    int argc;
+    VALUE argv[1];
+    int ii;
+    
+    argc = nargs;
+    for (ii = 0; (ii < argc) && (ii < 1); ii++) {
+        argv[ii] = args[ii];
+    }
+    if ((argc >= 0) && (argc <= 1)) {
+        int _v;
+        if (argc <= 0) {
+            return _wrap_push_error_handler__SWIG_0(nargs, args, self);
+        }
+        {
+            _v = (TYPE(argv[0]) == T_STRING) ? 1 : 0;
+        }
+        if (_v) {
+            return _wrap_push_error_handler__SWIG_0(nargs, args, self);
+        }
+    }
+    if (argc == 1) {
+        int _v;
+        {
+            void *ptr;
+            _v = (NIL_P(argv[0]) || (TYPE(argv[0]) == T_DATA && SWIG_ConvertPtr(argv[0], &ptr, SWIGTYPE_p_CPLErrorHandler, 0) != -1)) ? 1 : 0;
+        }
+        if (_v) {
+            return _wrap_push_error_handler__SWIG_1(nargs, args, self);
+        }
+    }
+    
+    rb_raise(rb_eArgError, "No matching function for overloaded 'push_error_handler'");
+    return Qnil;
+}
+
+
 static VALUE
-_wrap_PopErrorHandler(int argc, VALUE *argv, VALUE self) {
+_wrap_pop_error_handler(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     {
@@ -1787,7 +1824,7 @@ _wrap_PopErrorHandler(int argc, VALUE *argv, VALUE self) {
 
 
 static VALUE
-_wrap_ErrorReset(int argc, VALUE *argv, VALUE self) {
+_wrap_error_reset(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     {
@@ -1804,7 +1841,7 @@ _wrap_ErrorReset(int argc, VALUE *argv, VALUE self) {
 
 
 static VALUE
-_wrap_GetLastErrorNo(int argc, VALUE *argv, VALUE self) {
+_wrap_get_last_error_no(int argc, VALUE *argv, VALUE self) {
     int result;
     VALUE vresult = Qnil;
     
@@ -1825,7 +1862,7 @@ _wrap_GetLastErrorNo(int argc, VALUE *argv, VALUE self) {
 
 
 static VALUE
-_wrap_GetLastErrorType(int argc, VALUE *argv, VALUE self) {
+_wrap_get_last_error_type(int argc, VALUE *argv, VALUE self) {
     CPLErr result;
     VALUE vresult = Qnil;
     
@@ -1849,7 +1886,7 @@ _wrap_GetLastErrorType(int argc, VALUE *argv, VALUE self) {
 
 
 static VALUE
-_wrap_GetLastErrorMsg(int argc, VALUE *argv, VALUE self) {
+_wrap_get_last_error_msg(int argc, VALUE *argv, VALUE self) {
     char *result;
     VALUE vresult = Qnil;
     
@@ -1870,7 +1907,7 @@ _wrap_GetLastErrorMsg(int argc, VALUE *argv, VALUE self) {
 
 
 static VALUE
-_wrap_PushFinderLocation(int argc, VALUE *argv, VALUE self) {
+_wrap_push_finder_location(int argc, VALUE *argv, VALUE self) {
     char *arg1 = (char *) 0 ;
     
     if ((argc < 1) || (argc > 1))
@@ -1890,7 +1927,7 @@ _wrap_PushFinderLocation(int argc, VALUE *argv, VALUE self) {
 
 
 static VALUE
-_wrap_PopFinderLocation(int argc, VALUE *argv, VALUE self) {
+_wrap_pop_finder_location(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     {
@@ -1907,7 +1944,7 @@ _wrap_PopFinderLocation(int argc, VALUE *argv, VALUE self) {
 
 
 static VALUE
-_wrap_FinderClean(int argc, VALUE *argv, VALUE self) {
+_wrap_finder_clean(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     {
@@ -1924,7 +1961,7 @@ _wrap_FinderClean(int argc, VALUE *argv, VALUE self) {
 
 
 static VALUE
-_wrap_FindFile(int argc, VALUE *argv, VALUE self) {
+_wrap_find_file(int argc, VALUE *argv, VALUE self) {
     char *arg1 = (char *) 0 ;
     char *arg2 = (char *) 0 ;
     char *result;
@@ -1949,7 +1986,7 @@ _wrap_FindFile(int argc, VALUE *argv, VALUE self) {
 
 
 static VALUE
-_wrap_SetConfigOption(int argc, VALUE *argv, VALUE self) {
+_wrap_set_config_option(int argc, VALUE *argv, VALUE self) {
     char *arg1 = (char *) 0 ;
     char *arg2 = (char *) 0 ;
     
@@ -1971,7 +2008,7 @@ _wrap_SetConfigOption(int argc, VALUE *argv, VALUE self) {
 
 
 static VALUE
-_wrap_GetConfigOption(int argc, VALUE *argv, VALUE self) {
+_wrap_get_config_option(int argc, VALUE *argv, VALUE self) {
     char *arg1 = (char *) 0 ;
     char *arg2 = (char *) 0 ;
     char *result;
@@ -6005,18 +6042,17 @@ SWIGEXPORT void Init_gdal(void) {
     rb_define_module_function(mGdal, "debug", VALUEFUNC(_wrap_debug), -1);
     rb_define_module_function(mGdal, "error", VALUEFUNC(_wrap_error), -1);
     rb_define_module_function(mGdal, "push_error_handler", VALUEFUNC(_wrap_push_error_handler), -1);
-    rb_define_module_function(mGdal, "PushErrorHandler", VALUEFUNC(_wrap_PushErrorHandler), -1);
-    rb_define_module_function(mGdal, "PopErrorHandler", VALUEFUNC(_wrap_PopErrorHandler), -1);
-    rb_define_module_function(mGdal, "ErrorReset", VALUEFUNC(_wrap_ErrorReset), -1);
-    rb_define_module_function(mGdal, "GetLastErrorNo", VALUEFUNC(_wrap_GetLastErrorNo), -1);
-    rb_define_module_function(mGdal, "GetLastErrorType", VALUEFUNC(_wrap_GetLastErrorType), -1);
-    rb_define_module_function(mGdal, "GetLastErrorMsg", VALUEFUNC(_wrap_GetLastErrorMsg), -1);
-    rb_define_module_function(mGdal, "PushFinderLocation", VALUEFUNC(_wrap_PushFinderLocation), -1);
-    rb_define_module_function(mGdal, "PopFinderLocation", VALUEFUNC(_wrap_PopFinderLocation), -1);
-    rb_define_module_function(mGdal, "FinderClean", VALUEFUNC(_wrap_FinderClean), -1);
-    rb_define_module_function(mGdal, "FindFile", VALUEFUNC(_wrap_FindFile), -1);
-    rb_define_module_function(mGdal, "SetConfigOption", VALUEFUNC(_wrap_SetConfigOption), -1);
-    rb_define_module_function(mGdal, "GetConfigOption", VALUEFUNC(_wrap_GetConfigOption), -1);
+    rb_define_module_function(mGdal, "pop_error_handler", VALUEFUNC(_wrap_pop_error_handler), -1);
+    rb_define_module_function(mGdal, "error_reset", VALUEFUNC(_wrap_error_reset), -1);
+    rb_define_module_function(mGdal, "get_last_error_no", VALUEFUNC(_wrap_get_last_error_no), -1);
+    rb_define_module_function(mGdal, "get_last_error_type", VALUEFUNC(_wrap_get_last_error_type), -1);
+    rb_define_module_function(mGdal, "get_last_error_msg", VALUEFUNC(_wrap_get_last_error_msg), -1);
+    rb_define_module_function(mGdal, "push_finder_location", VALUEFUNC(_wrap_push_finder_location), -1);
+    rb_define_module_function(mGdal, "pop_finder_location", VALUEFUNC(_wrap_pop_finder_location), -1);
+    rb_define_module_function(mGdal, "finder_clean", VALUEFUNC(_wrap_finder_clean), -1);
+    rb_define_module_function(mGdal, "find_file", VALUEFUNC(_wrap_find_file), -1);
+    rb_define_module_function(mGdal, "set_config_option", VALUEFUNC(_wrap_set_config_option), -1);
+    rb_define_module_function(mGdal, "get_config_option", VALUEFUNC(_wrap_get_config_option), -1);
     
     cMajorObject.klass = rb_define_class_under(mGdal, "MajorObject", rb_cObject);
     SWIG_TypeClientData(SWIGTYPE_p_GDALMajorObjectShadow, (void *) &cMajorObject);
@@ -6035,8 +6071,10 @@ SWIGEXPORT void Init_gdal(void) {
     rb_define_method(cDriver.klass, "long_name", VALUEFUNC(_wrap_Driver_long_name_get), -1);
     rb_define_method(cDriver.klass, "help_topic", VALUEFUNC(_wrap_Driver_help_topic_get), -1);
     rb_define_method(cDriver.klass, "create_", VALUEFUNC(_wrap_Driver_create_), -1);
+    rb_define_alias(cDriver.klass, "create", "create_");
     rb_define_method(cDriver.klass, "create_copy", VALUEFUNC(_wrap_Driver_create_copy), -1);
     rb_define_method(cDriver.klass, "delete_", VALUEFUNC(_wrap_Driver_delete_), -1);
+    rb_define_alias(cDriver.klass, "delete", "delete_");
     cDriver.mark = 0;
     
     cGCP.klass = rb_define_class_under(mGdal, "GCP", rb_cObject);

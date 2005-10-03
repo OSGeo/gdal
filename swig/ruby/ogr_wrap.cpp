@@ -1211,7 +1211,7 @@ static OGRDataSourceShadow *OGRDriverShadow_Open(OGRDriverShadow *self,char cons
 static int OGRDriverShadow_DeleteDataSource(OGRDriverShadow *self,char const *name){
     return OGR_Dr_DeleteDataSource( self, name );
   }
-static int OGRDriverShadow_TestCapability(OGRDriverShadow *self,char const *cap){
+static bool OGRDriverShadow_TestCapability(OGRDriverShadow *self,char const *cap){
     return OGR_Dr_TestCapability(self, cap);
   }
 static char const *OGRDriverShadow_GetName(OGRDriverShadow *self){
@@ -1247,7 +1247,7 @@ static OGRLayerShadow *OGRDataSourceShadow_CopyLayer(OGRDataSourceShadow *self,O
                                                       options);
     return layer;
   }
-static int OGRDataSourceShadow_TestCapability(OGRDataSourceShadow *self,char const *cap){
+static bool OGRDataSourceShadow_TestCapability(OGRDataSourceShadow *self,char const *cap){
     return OGR_DS_TestCapability(self, cap);
   }
 static OGRLayerShadow *OGRDataSourceShadow_ExecuteSQL(OGRDataSourceShadow *self,char const *statement,OGRGeometryShadow *geom=NULL,char const *dialect=""){
@@ -1354,7 +1354,7 @@ static void OGRLayerShadow_GetExtent(OGRLayerShadow *self,double argout[4],int f
     if (err != 0)
       throw err;
   }
-static int OGRLayerShadow_TestCapability(OGRLayerShadow *self,char const *cap){
+static bool OGRLayerShadow_TestCapability(OGRLayerShadow *self,char const *cap){
     return OGR_L_TestCapability(self, cap);
   }
 static OGRErr OGRLayerShadow_CreateField(OGRLayerShadow *self,OGRFieldDefnShadow *field_def,int approx_ok=1){
@@ -1424,7 +1424,7 @@ static OGRGeometryShadow *OGRFeatureShadow_GetGeometryRef(OGRFeatureShadow *self
 static OGRFeatureShadow *OGRFeatureShadow_Clone(OGRFeatureShadow *self){
     return (OGRFeatureShadow*) OGR_F_Clone(self);
   }
-static int OGRFeatureShadow_Equal(OGRFeatureShadow *self,OGRFeatureShadow *feature){
+static bool OGRFeatureShadow_Equal(OGRFeatureShadow *self,OGRFeatureShadow *feature){
     return OGR_F_Equal(self, feature);
   }
 static int OGRFeatureShadow_GetFieldCount(OGRFeatureShadow *self){
@@ -1454,10 +1454,10 @@ static double OGRFeatureShadow_GetFieldAsDouble__SWIG_0(OGRFeatureShadow *self,i
 static double OGRFeatureShadow_GetFieldAsDouble__SWIG_1(OGRFeatureShadow *self,char const *name){
     return OGR_F_GetFieldAsDouble(self, OGR_F_GetFieldIndex(self, name));
   }
-static int OGRFeatureShadow_IsFieldSet__SWIG_0(OGRFeatureShadow *self,int id){
+static bool OGRFeatureShadow_IsFieldSet__SWIG_0(OGRFeatureShadow *self,int id){
     return OGR_F_IsFieldSet(self, id);
   }
-static int OGRFeatureShadow_IsFieldSet__SWIG_1(OGRFeatureShadow *self,char const *name){
+static bool OGRFeatureShadow_IsFieldSet__SWIG_1(OGRFeatureShadow *self,char const *name){
     return OGR_F_IsFieldSet(self, OGR_F_GetFieldIndex(self, name));
   }
 static int OGRFeatureShadow_GetFieldIndex(OGRFeatureShadow *self,char const *name){
@@ -1806,28 +1806,28 @@ static double OGRGeometryShadow_Distance(OGRGeometryShadow *self,OGRGeometryShad
 static void OGRGeometryShadow_Empty(OGRGeometryShadow *self){
     OGR_G_Empty(self);
   }
-static int OGRGeometryShadow_Intersect(OGRGeometryShadow *self,OGRGeometryShadow *other){
+static bool OGRGeometryShadow_Intersect(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Intersect(self, other);
   }
-static int OGRGeometryShadow_Equal(OGRGeometryShadow *self,OGRGeometryShadow *other){
+static bool OGRGeometryShadow_Equal(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Equal(self, other);
   }
-static int OGRGeometryShadow_Disjoint(OGRGeometryShadow *self,OGRGeometryShadow *other){
+static bool OGRGeometryShadow_Disjoint(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Disjoint(self, other);
   }
-static int OGRGeometryShadow_Touches(OGRGeometryShadow *self,OGRGeometryShadow *other){
+static bool OGRGeometryShadow_Touches(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Touches(self, other);
   }
-static int OGRGeometryShadow_Crosses(OGRGeometryShadow *self,OGRGeometryShadow *other){
+static bool OGRGeometryShadow_Crosses(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Crosses(self, other);
   }
-static int OGRGeometryShadow_Within(OGRGeometryShadow *self,OGRGeometryShadow *other){
+static bool OGRGeometryShadow_Within(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Within(self, other);
   }
-static int OGRGeometryShadow_Contains(OGRGeometryShadow *self,OGRGeometryShadow *other){
+static bool OGRGeometryShadow_Contains(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Contains(self, other);
   }
-static int OGRGeometryShadow_Overlaps(OGRGeometryShadow *self,OGRGeometryShadow *other){
+static bool OGRGeometryShadow_Overlaps(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_Overlaps(self, other);
   }
 static OGRErr OGRGeometryShadow_TransformTo(OGRGeometryShadow *self,OSRSpatialReferenceShadow *reference){
@@ -1910,7 +1910,7 @@ OGRDriverShadow* GetDriver(int driver_number) {
 }
 
 static VALUE
-_wrap_UseExceptions(int argc, VALUE *argv, VALUE self) {
+_wrap_use_exceptions(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     UseExceptions();
@@ -1920,7 +1920,7 @@ _wrap_UseExceptions(int argc, VALUE *argv, VALUE self) {
 
 
 static VALUE
-_wrap_DontUseExceptions(int argc, VALUE *argv, VALUE self) {
+_wrap_dont_use_exceptions(int argc, VALUE *argv, VALUE self) {
     if ((argc < 0) || (argc > 0))
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc);
     DontUseExceptions();
@@ -2115,7 +2115,7 @@ static VALUE
 _wrap_Driver_test_capability(int argc, VALUE *argv, VALUE self) {
     OGRDriverShadow *arg1 = (OGRDriverShadow *) 0 ;
     char *arg2 = (char *) 0 ;
-    int result;
+    bool result;
     VALUE vresult = Qnil;
     
     if ((argc < 1) || (argc > 1))
@@ -2124,14 +2124,14 @@ _wrap_Driver_test_capability(int argc, VALUE *argv, VALUE self) {
     arg2 = StringValuePtr(argv[0]);
     {
         CPLErrorReset();
-        result = (int)OGRDriverShadow_TestCapability(arg1,(char const *)arg2);
+        result = (bool)OGRDriverShadow_TestCapability(arg1,(char const *)arg2);
         
         CPLErr eclass = CPLGetLastErrorType();
         if ( eclass == CE_Failure || eclass == CE_Fatal ) {
             SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
-    vresult = INT2NUM(result);
+    vresult = result ? Qtrue : Qfalse;
     return vresult;
 }
 
@@ -2436,7 +2436,7 @@ static VALUE
 _wrap_DataSource_test_capability(int argc, VALUE *argv, VALUE self) {
     OGRDataSourceShadow *arg1 = (OGRDataSourceShadow *) 0 ;
     char *arg2 = (char *) 0 ;
-    int result;
+    bool result;
     VALUE vresult = Qnil;
     
     if ((argc < 1) || (argc > 1))
@@ -2445,14 +2445,14 @@ _wrap_DataSource_test_capability(int argc, VALUE *argv, VALUE self) {
     arg2 = StringValuePtr(argv[0]);
     {
         CPLErrorReset();
-        result = (int)OGRDataSourceShadow_TestCapability(arg1,(char const *)arg2);
+        result = (bool)OGRDataSourceShadow_TestCapability(arg1,(char const *)arg2);
         
         CPLErr eclass = CPLGetLastErrorType();
         if ( eclass == CE_Failure || eclass == CE_Fatal ) {
             SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
-    vresult = INT2NUM(result);
+    vresult = result ? Qtrue : Qfalse;
     return vresult;
 }
 
@@ -3050,7 +3050,7 @@ static VALUE
 _wrap_Layer_test_capability(int argc, VALUE *argv, VALUE self) {
     OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
     char *arg2 = (char *) 0 ;
-    int result;
+    bool result;
     VALUE vresult = Qnil;
     
     if ((argc < 1) || (argc > 1))
@@ -3059,14 +3059,14 @@ _wrap_Layer_test_capability(int argc, VALUE *argv, VALUE self) {
     arg2 = StringValuePtr(argv[0]);
     {
         CPLErrorReset();
-        result = (int)OGRLayerShadow_TestCapability(arg1,(char const *)arg2);
+        result = (bool)OGRLayerShadow_TestCapability(arg1,(char const *)arg2);
         
         CPLErr eclass = CPLGetLastErrorType();
         if ( eclass == CE_Failure || eclass == CE_Fatal ) {
             SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
-    vresult = INT2NUM(result);
+    vresult = result ? Qtrue : Qfalse;
     return vresult;
 }
 
@@ -3491,7 +3491,7 @@ static VALUE
 _wrap_Feature_equal(int argc, VALUE *argv, VALUE self) {
     OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
     OGRFeatureShadow *arg2 = (OGRFeatureShadow *) 0 ;
-    int result;
+    bool result;
     VALUE vresult = Qnil;
     
     if ((argc < 1) || (argc > 1))
@@ -3500,14 +3500,14 @@ _wrap_Feature_equal(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRFeatureShadow, 0);
     {
         CPLErrorReset();
-        result = (int)OGRFeatureShadow_Equal(arg1,arg2);
+        result = (bool)OGRFeatureShadow_Equal(arg1,arg2);
         
         CPLErr eclass = CPLGetLastErrorType();
         if ( eclass == CE_Failure || eclass == CE_Fatal ) {
             SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
-    vresult = INT2NUM(result);
+    vresult = result ? Qtrue : Qfalse;
     return vresult;
 }
 
@@ -3923,7 +3923,7 @@ static VALUE
 _wrap_Feature_is_field_set__SWIG_0(int argc, VALUE *argv, VALUE self) {
     OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
     int arg2 ;
-    int result;
+    bool result;
     VALUE vresult = Qnil;
     
     if ((argc < 1) || (argc > 1))
@@ -3932,14 +3932,14 @@ _wrap_Feature_is_field_set__SWIG_0(int argc, VALUE *argv, VALUE self) {
     arg2 = NUM2INT(argv[0]);
     {
         CPLErrorReset();
-        result = (int)OGRFeatureShadow_IsFieldSet__SWIG_0(arg1,arg2);
+        result = (bool)OGRFeatureShadow_IsFieldSet__SWIG_0(arg1,arg2);
         
         CPLErr eclass = CPLGetLastErrorType();
         if ( eclass == CE_Failure || eclass == CE_Fatal ) {
             SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
-    vresult = INT2NUM(result);
+    vresult = result ? Qtrue : Qfalse;
     return vresult;
 }
 
@@ -3948,7 +3948,7 @@ static VALUE
 _wrap_Feature_is_field_set__SWIG_1(int argc, VALUE *argv, VALUE self) {
     OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
     char *arg2 = (char *) 0 ;
-    int result;
+    bool result;
     VALUE vresult = Qnil;
     
     if ((argc < 1) || (argc > 1))
@@ -3957,14 +3957,14 @@ _wrap_Feature_is_field_set__SWIG_1(int argc, VALUE *argv, VALUE self) {
     arg2 = StringValuePtr(argv[0]);
     {
         CPLErrorReset();
-        result = (int)OGRFeatureShadow_IsFieldSet__SWIG_1(arg1,(char const *)arg2);
+        result = (bool)OGRFeatureShadow_IsFieldSet__SWIG_1(arg1,(char const *)arg2);
         
         CPLErr eclass = CPLGetLastErrorType();
         if ( eclass == CE_Failure || eclass == CE_Fatal ) {
             SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
-    vresult = INT2NUM(result);
+    vresult = result ? Qtrue : Qfalse;
     return vresult;
 }
 
@@ -6011,7 +6011,7 @@ static VALUE
 _wrap_Geometry_intersect(int argc, VALUE *argv, VALUE self) {
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
     OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
-    int result;
+    bool result;
     VALUE vresult = Qnil;
     
     if ((argc < 1) || (argc > 1))
@@ -6020,14 +6020,14 @@ _wrap_Geometry_intersect(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
     {
         CPLErrorReset();
-        result = (int)OGRGeometryShadow_Intersect(arg1,arg2);
+        result = (bool)OGRGeometryShadow_Intersect(arg1,arg2);
         
         CPLErr eclass = CPLGetLastErrorType();
         if ( eclass == CE_Failure || eclass == CE_Fatal ) {
             SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
-    vresult = INT2NUM(result);
+    vresult = result ? Qtrue : Qfalse;
     return vresult;
 }
 
@@ -6036,7 +6036,7 @@ static VALUE
 _wrap_Geometry_equal(int argc, VALUE *argv, VALUE self) {
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
     OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
-    int result;
+    bool result;
     VALUE vresult = Qnil;
     
     if ((argc < 1) || (argc > 1))
@@ -6045,14 +6045,14 @@ _wrap_Geometry_equal(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
     {
         CPLErrorReset();
-        result = (int)OGRGeometryShadow_Equal(arg1,arg2);
+        result = (bool)OGRGeometryShadow_Equal(arg1,arg2);
         
         CPLErr eclass = CPLGetLastErrorType();
         if ( eclass == CE_Failure || eclass == CE_Fatal ) {
             SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
-    vresult = INT2NUM(result);
+    vresult = result ? Qtrue : Qfalse;
     return vresult;
 }
 
@@ -6061,7 +6061,7 @@ static VALUE
 _wrap_Geometry_disjoint(int argc, VALUE *argv, VALUE self) {
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
     OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
-    int result;
+    bool result;
     VALUE vresult = Qnil;
     
     if ((argc < 1) || (argc > 1))
@@ -6070,14 +6070,14 @@ _wrap_Geometry_disjoint(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
     {
         CPLErrorReset();
-        result = (int)OGRGeometryShadow_Disjoint(arg1,arg2);
+        result = (bool)OGRGeometryShadow_Disjoint(arg1,arg2);
         
         CPLErr eclass = CPLGetLastErrorType();
         if ( eclass == CE_Failure || eclass == CE_Fatal ) {
             SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
-    vresult = INT2NUM(result);
+    vresult = result ? Qtrue : Qfalse;
     return vresult;
 }
 
@@ -6086,7 +6086,7 @@ static VALUE
 _wrap_Geometry_touches(int argc, VALUE *argv, VALUE self) {
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
     OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
-    int result;
+    bool result;
     VALUE vresult = Qnil;
     
     if ((argc < 1) || (argc > 1))
@@ -6095,14 +6095,14 @@ _wrap_Geometry_touches(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
     {
         CPLErrorReset();
-        result = (int)OGRGeometryShadow_Touches(arg1,arg2);
+        result = (bool)OGRGeometryShadow_Touches(arg1,arg2);
         
         CPLErr eclass = CPLGetLastErrorType();
         if ( eclass == CE_Failure || eclass == CE_Fatal ) {
             SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
-    vresult = INT2NUM(result);
+    vresult = result ? Qtrue : Qfalse;
     return vresult;
 }
 
@@ -6111,7 +6111,7 @@ static VALUE
 _wrap_Geometry_crosses(int argc, VALUE *argv, VALUE self) {
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
     OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
-    int result;
+    bool result;
     VALUE vresult = Qnil;
     
     if ((argc < 1) || (argc > 1))
@@ -6120,14 +6120,14 @@ _wrap_Geometry_crosses(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
     {
         CPLErrorReset();
-        result = (int)OGRGeometryShadow_Crosses(arg1,arg2);
+        result = (bool)OGRGeometryShadow_Crosses(arg1,arg2);
         
         CPLErr eclass = CPLGetLastErrorType();
         if ( eclass == CE_Failure || eclass == CE_Fatal ) {
             SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
-    vresult = INT2NUM(result);
+    vresult = result ? Qtrue : Qfalse;
     return vresult;
 }
 
@@ -6136,7 +6136,7 @@ static VALUE
 _wrap_Geometry_within(int argc, VALUE *argv, VALUE self) {
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
     OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
-    int result;
+    bool result;
     VALUE vresult = Qnil;
     
     if ((argc < 1) || (argc > 1))
@@ -6145,14 +6145,14 @@ _wrap_Geometry_within(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
     {
         CPLErrorReset();
-        result = (int)OGRGeometryShadow_Within(arg1,arg2);
+        result = (bool)OGRGeometryShadow_Within(arg1,arg2);
         
         CPLErr eclass = CPLGetLastErrorType();
         if ( eclass == CE_Failure || eclass == CE_Fatal ) {
             SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
-    vresult = INT2NUM(result);
+    vresult = result ? Qtrue : Qfalse;
     return vresult;
 }
 
@@ -6161,7 +6161,7 @@ static VALUE
 _wrap_Geometry_contains(int argc, VALUE *argv, VALUE self) {
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
     OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
-    int result;
+    bool result;
     VALUE vresult = Qnil;
     
     if ((argc < 1) || (argc > 1))
@@ -6170,14 +6170,14 @@ _wrap_Geometry_contains(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
     {
         CPLErrorReset();
-        result = (int)OGRGeometryShadow_Contains(arg1,arg2);
+        result = (bool)OGRGeometryShadow_Contains(arg1,arg2);
         
         CPLErr eclass = CPLGetLastErrorType();
         if ( eclass == CE_Failure || eclass == CE_Fatal ) {
             SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
-    vresult = INT2NUM(result);
+    vresult = result ? Qtrue : Qfalse;
     return vresult;
 }
 
@@ -6186,7 +6186,7 @@ static VALUE
 _wrap_Geometry_overlaps(int argc, VALUE *argv, VALUE self) {
     OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
     OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
-    int result;
+    bool result;
     VALUE vresult = Qnil;
     
     if ((argc < 1) || (argc > 1))
@@ -6195,14 +6195,14 @@ _wrap_Geometry_overlaps(int argc, VALUE *argv, VALUE self) {
     SWIG_ConvertPtr(argv[0], (void **) &arg2, SWIGTYPE_p_OGRGeometryShadow, 0);
     {
         CPLErrorReset();
-        result = (int)OGRGeometryShadow_Overlaps(arg1,arg2);
+        result = (bool)OGRGeometryShadow_Overlaps(arg1,arg2);
         
         CPLErr eclass = CPLGetLastErrorType();
         if ( eclass == CE_Failure || eclass == CE_Fatal ) {
             SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
         }
     }
-    vresult = INT2NUM(result);
+    vresult = result ? Qtrue : Qfalse;
     return vresult;
 }
 
@@ -7002,8 +7002,8 @@ SWIGEXPORT void Init_ogr(void) {
     rb_define_const(mOgr,"ODsCDeleteLayer", rb_str_new2("DeleteLayer"));
     rb_define_const(mOgr,"ODrCCreateDataSource", rb_str_new2("CreateDataSource"));
     rb_define_const(mOgr,"ODrCDeleteDataSource", rb_str_new2("DeleteDataSource"));
-    rb_define_module_function(mOgr, "UseExceptions", VALUEFUNC(_wrap_UseExceptions), -1);
-    rb_define_module_function(mOgr, "DontUseExceptions", VALUEFUNC(_wrap_DontUseExceptions), -1);
+    rb_define_module_function(mOgr, "use_exceptions", VALUEFUNC(_wrap_use_exceptions), -1);
+    rb_define_module_function(mOgr, "dont_use_exceptions", VALUEFUNC(_wrap_dont_use_exceptions), -1);
     
     
     if ( OGRGetDriverCount() == 0 ) {
