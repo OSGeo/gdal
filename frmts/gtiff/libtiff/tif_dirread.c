@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.58 2005/08/12 15:23:10 fwarmerdam Exp $ */
+/* $Id: tif_dirread.c,v 1.59 2005/09/13 13:17:57 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -77,7 +77,6 @@ TIFFReadDirectory(TIFF* tif)
 	TIFFDirEntry* dir;
 	uint16 iv;
 	uint32 v;
-	double dv;
 	const TIFFFieldInfo* fip;
 	int fix;
 	uint16 dircount;
@@ -445,9 +444,12 @@ TIFFReadDirectory(TIFF* tif)
 			break;
 		case TIFFTAG_SMINSAMPLEVALUE:
 		case TIFFTAG_SMAXSAMPLEVALUE:
-			if (!TIFFFetchPerSampleAnys(tif, dp, &dv) ||
-			    !TIFFSetField(tif, dp->tdir_tag, dv))
-				goto bad;
+			{
+				double dv = 0.0;
+				if (!TIFFFetchPerSampleAnys(tif, dp, &dv) ||
+				    !TIFFSetField(tif, dp->tdir_tag, dv))
+					goto bad;
+			}
 			break;
 		case TIFFTAG_STRIPOFFSETS:
 		case TIFFTAG_TILEOFFSETS:
@@ -1369,9 +1371,8 @@ TIFFFetchPerSampleLongs(TIFF* tif, TIFFDirEntry* dir, uint32* pl)
 }
 
 /*
- * Fetch samples/pixel ANY values for 
- * the specified tag and verify that
- * all values are the same.
+ * Fetch samples/pixel ANY values for the specified tag and verify that all
+ * values are the same.
  */
 static int
 TIFFFetchPerSampleAnys(TIFF* tif, TIFFDirEntry* dir, double* pl)
