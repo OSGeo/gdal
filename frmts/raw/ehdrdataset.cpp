@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/10/04 05:25:13  fwarmerdam
+ * Added support for XLLCENTER/YLLCENTER.
+ *
  * Revision 1.26  2005/05/05 13:55:41  fwarmerdam
  * PAM Enable
  *
@@ -290,7 +293,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
             nSkipBytes = atoi(papszTokens[1]);
         }
         else if( EQUAL(papszTokens[0],"ulxmap") 
-                 || EQUAL(papszTokens[0],"xllcorner") )
+                 || EQUAL(papszTokens[0],"xllcorner") 
+                 || EQUAL(papszTokens[0],"xllcenter") )
         {
             dfULXMap = atof(papszTokens[1]);
         }
@@ -298,7 +302,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             dfULYMap = atof(papszTokens[1]);
         }
-        else if( EQUAL(papszTokens[0],"yllcorner") )
+        else if( EQUAL(papszTokens[0],"yllcorner") 
+                 || EQUAL(papszTokens[0],"yllcenter") )
         {
             dfYLLCorner = atof(papszTokens[1]);
         }
