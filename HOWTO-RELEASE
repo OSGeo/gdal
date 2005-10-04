@@ -45,10 +45,9 @@
  % cd 
  % zip -r ~/gdal-web/dl/gdalXXXdoc.zip gdal-web/*.* gdal-web/ogr
 
-8) Publish the resulting files on ftp.remotesensing.org/gdal, 
-   gdal.maptools.org/dl and ftp.gdal.org/htdocs/dl.
+8) Publish the resulting files on www.gdal.org/gdal-web/dl.
 
-9) Announce release to the gdal-dev@remotesensing.org, and freegis@freegis.org.
+9) Announce release to the gdal-dev@lists.maptools.org, and freegis@freegis.org
 
 10) Update the freshmeat.net entry for GDAL. 
 
