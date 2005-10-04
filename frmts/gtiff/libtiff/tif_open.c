@@ -1,4 +1,4 @@
-/* $Id: tif_open.c,v 1.26 2005/07/01 12:35:18 dron Exp $ */
+/* $Id: tif_open.c,v 1.27 2005/09/12 16:31:04 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -325,6 +325,16 @@ TIFFClientOpen(
 			TIFFSwabShort(&tif->tif_header.tiff_version);
 		tif->tif_header.tiff_diroff = 0;	/* filled in later */
 
+
+                /*
+                 * The doc for "fopen" for some STD_C_LIBs says that if you 
+                 * open a file for modify ("+"), then you must fseek (or 
+                 * fflush?) between any freads and fwrites.  This is not
+                 * necessary on most systems, but has been shown to be needed
+                 * on Solaris. 
+                 */
+                TIFFSeekFile( tif, 0, SEEK_SET );
+               
 		if (!WriteOK(tif, &tif->tif_header, sizeof (TIFFHeader))) {
 			TIFFError(name, "Error writing TIFF header");
 			goto bad;
