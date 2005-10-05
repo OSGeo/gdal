@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.65  2005/10/05 20:39:10  fwarmerdam
+ * ensure HFADataset::GetMetadataItem() overridden even if PAM active
+ *
  * Revision 1.64  2005/09/28 19:55:04  fwarmerdam
  * Managed the HFA domain ourselves to avoid problems when PAM disabled.
  *
@@ -426,6 +429,8 @@ class CPL_DLL HFADataset : public GDALPamDataset
     virtual CPLErr SetGeoTransform( double * );
 
     virtual char **GetMetadata( const char * pszDomain = "" );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
     virtual CPLErr SetMetadata( char **, const char * = "" );
     virtual CPLErr SetMetadataItem( const char *, const char *, const char * = "" );
 
@@ -2392,6 +2397,20 @@ char **HFADataset::GetMetadata( const char * pszDomain )
         return papszHFAMetadata;
     else
         return GDALPamDataset::GetMetadata( pszDomain );
+}
+
+/************************************************************************/
+/*                          GetMetadataItem()                           */
+/************************************************************************/
+
+const char *HFADataset::GetMetadataItem( const char *pszKey, 
+                                         const char *pszDomain )
+
+{
+    if( pszDomain != NULL && EQUAL(pszDomain,"HFA") )
+        return CSLFetchNameValue( papszHFAMetadata, pszKey );
+    else
+        return GDALPamDataset::GetMetadataItem( pszKey, pszDomain );
 }
 
 /************************************************************************/
