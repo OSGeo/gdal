@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/10/06 16:32:37  fwarmerdam
+ * Bug 947: Don't issue an error if there is no RawDefinition in .aux,
+ * just ignore it.
+ *
  * Revision 1.30  2005/05/05 13:55:42  fwarmerdam
  * PAM Enable
  *
@@ -851,6 +855,15 @@ GDALDataset *PAuxDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Find the RawDefinition line to establish overall parameters.    */
 /* -------------------------------------------------------------------- */
     pszLine = CSLFetchNameValue(poDS->papszAuxLines, "RawDefinition");
+
+    // It seems PCI now writes out .aux files without RawDefinition in 
+    // some cases.  See bug 947.
+    if( pszLine == NULL )
+    {
+        delete poDS;
+        return NULL;
+    }
+
     papszTokens = CSLTokenizeString(pszLine);
 
     if( CSLCount(papszTokens) < 3 )
