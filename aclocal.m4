@@ -417,6 +417,11 @@ AC_DEFUN(AM_PATH_PYTHON,
      PYTHON=no
   fi
 
+  if test "x$with_ngpython" != xno -a "x$with_ngpython" != "x" ; then
+     echo "python support disabled since ngpython enabled."
+     PYTHON=no
+  fi
+
   ARCH=`uname -i`
   PYLIB=lib
   if test "$ARCH" = "x86_64" ; then
