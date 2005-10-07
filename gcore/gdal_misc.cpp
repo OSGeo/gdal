@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.74  2005/10/07 13:31:26  dron
+ * Allow pixel width/height to be zero when rotation is present
+ * (GDALReadWorldFile).
+ *
  * Revision 1.73  2005/09/26 15:52:03  fwarmerdam
  * centralized .aux opening logic
  *
@@ -1482,8 +1486,8 @@ GDALReadWorldFile( const char * pszBaseFilename, const char *pszExtension,
     papszLines = CSLLoad( pszTFW );
 
     if( CSLCount(papszLines) >= 6 
-        && atof(papszLines[0]) != 0.0
-        && atof(papszLines[3]) != 0.0 )
+        && (atof(papszLines[0]) != 0.0 || atof(papszLines[2]) != 0.0)
+        && (atof(papszLines[3]) != 0.0 || atof(papszLines[1]) != 0.0) )
     {
         padfGeoTransform[0] = atof(papszLines[4]);
         padfGeoTransform[1] = atof(papszLines[0]);
