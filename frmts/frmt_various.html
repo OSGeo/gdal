@@ -545,10 +545,10 @@ be very inefficient (resulting in many restarts of decompression from the
 start of the file).<p>
 
 Text chunks are translated into metadata, typically with multiple lines per
-item.  World files with the extensions of .wld, .tfw or .tifw will be read.  
-Single transparency values in greyscale files will be recognised as a nodata
-value in GDAL.  Transparent index in paletted images are preserved when the
-color table is read. <p>
+item.  <a href="#WLD">World files</a> with the extensions of .wld, .tfw or
+.tifw will be read.  Single transparency values in greyscale files will be
+recognised as a nodata value in GDAL.  Transparent index in paletted images
+are preserved when the color table is read. <p>
 
 PNG files can be created with a type of PNG, using the CreateCopy() method, 
 requiring a prototype to read from.  Writing includes support for the
@@ -561,7 +561,7 @@ Creation Options:<p>
 <ul>
 
 <li> <b>WORLDFILE=YES</b>: Force the generation of an associated ESRI world
-file (.wld).<p>
+file (.wld). See <a href="#WLD">World File</a> section for details.<p>
 </ul>
 
 NOTE: Implemented as <tt>gdal/frmts/png/pngdataset.cpp</tt>.<p> 
@@ -675,6 +675,36 @@ XPM files must be colormapped or greyscale, and colortables will be reduced
 to about 70 colors automatically.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/xpm/xpmdataset.cpp</tt>.<p>
+
+<h2><a name="WLD">WLD -- ESRI World File</a></h2>
+
+A world file file is a plain ASCII text file consisting of six values separated
+by newlines.  The format is: <br>
+
+<pre>
+ pixel X size
+ rotation about the Y axis (usually 0.0)
+ rotation about the X axis (usually 0.0)
+ negative pixel Y size
+ X coordinate of upper left pixel
+ Y coordinate of upper left pixel
+</pre>
+
+For example: <br>
+
+<pre>
+60.0000000000
+0.0000000000
+0.0000000000
+-60.0000000000
+440750.0000000000
+3751290.0000000000
+</pre>
+
+You can construct that file simply by using your favorite text editor.<p>
+
+World file usually has suffix .wld, but sometimes it may has .tfw, tifw, .jgw
+or other suffixes depending on the image file it comes with.<p>
 
 <hr>
 <a href="formats_list.html">Full list of GDAL Raster Formats</a>
