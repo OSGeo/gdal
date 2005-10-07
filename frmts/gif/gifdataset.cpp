@@ -28,6 +28,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.24  2005/10/07 20:58:43  fwarmerdam
+ * Fall through to pam for getgeotransform if we don't have a world file.
+ * Use VSI*L virtual file io layer allowing memory buffer access.
+ *
  * Revision 1.23  2005/08/04 18:44:33  fwarmerdam
  * Report background as metadata rather than NODATA.  It was causing too
  * many problems.
@@ -113,10 +117,16 @@ CPL_C_END
 
 CPL_C_START
 void	GDALRegister_GIF(void);
+
+// This prototype seems to have been messed up!
+GifFileType CPL_DLL * EGifOpen(void* userData, OutputFunc writeFunc);
 CPL_C_END
 
 static int InterlacedOffset[] = { 0, 4, 2, 1 }; 
 static int InterlacedJumps[] = { 8, 8, 4, 2 };  
+
+static int VSIGIFReadFunc( GifFileType *, GifByteType *, int);
+static int VSIGIFWriteFunc( GifFileType *, const GifByteType *, int );
 
 /************************************************************************/
 /* ==================================================================== */
@@ -129,6 +139,8 @@ class GIFRasterBand;
 class GIFDataset : public GDALPamDataset
 {
     friend class GIFRasterBand;
+
+    FILE *fp;
 
     GifFileType *hGifFile;
 
@@ -352,6 +364,7 @@ GIFDataset::GIFDataset()
 
 {
     hGifFile = NULL;
+    fp = NULL;
     bGeoTransformValid = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -369,7 +382,10 @@ GIFDataset::~GIFDataset()
 
 {
     FlushCache();
-    DGifCloseFile( hGifFile );
+    if( hGifFile )
+        DGifCloseFile( hGifFile );
+    if( fp != NULL )
+        VSIFCloseL( fp );
 }
 
 /************************************************************************/
@@ -379,12 +395,13 @@ GIFDataset::~GIFDataset()
 CPLErr GIFDataset::GetGeoTransform( double * padfTransform )
 
 {
-
-    memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
     if( bGeoTransformValid )
+    {
+        memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
         return CE_None;
+    }
     else
-        return CE_Failure;
+        return GDALPamDataset::GetGeoTransform( padfTransform );
 }
 
 /************************************************************************/
@@ -417,12 +434,18 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Open the file and ingest.                                       */
 /* -------------------------------------------------------------------- */
     GifFileType 	*hGifFile;
+    FILE                *fp;
 
-    hGifFile = DGifOpenFileName( poOpenInfo->pszFilename );
+    fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
+    if( fp == NULL )
+        return NULL;
+
+    hGifFile = DGifOpen( fp, VSIGIFReadFunc );
     if( hGifFile == NULL )
     {
+        VSIFCloseL( fp );
         CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "DGifOpenFileName() failed for %s.\n"
+                  "DGifOpen() failed for %s.\n"
                   "Perhaps the gif file is corrupt?\n",
                   poOpenInfo->pszFilename );
 
@@ -446,6 +469,7 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new GIFDataset();
 
+    poDS->fp = fp;
     poDS->eAccess = GA_ReadOnly;
     poDS->hGifFile = hGifFile;
 
@@ -542,10 +566,21 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Open the output file.                                           */
 /* -------------------------------------------------------------------- */
     GifFileType *hGifFile;
+    FILE *fp;
 
-    hGifFile = EGifOpenFileName( (char *) pszFilename, TRUE );
+    fp = VSIFOpenL( pszFilename, "w" );
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Failed to create %s:\n%s", 
+                  pszFilename, VSIStrerror( errno ) );
+        return NULL;
+    }
+
+    hGifFile = EGifOpen( fp, VSIGIFWriteFunc );
     if( hGifFile == NULL )
     {
+        VSIFCloseL( fp );
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "EGifOpenFilename(%s) failed.  Does file already exist?",
                   pszFilename );
@@ -665,6 +700,8 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                   "EGifCloseFile() failed.\n" );
         return NULL;
     }
+    
+    VSIFCloseL( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Do we need a world file?                                          */
@@ -687,6 +724,34 @@ GIFCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
 
     return poDS;
+}
+
+/************************************************************************/
+/*                           VSIGIFReadFunc()                           */
+/*                                                                      */
+/*      Proxy function for reading from GIF file.                       */
+/************************************************************************/
+
+static int VSIGIFReadFunc( GifFileType *psGFile, GifByteType *pabyBuffer, 
+                           int nBytesToRead )
+
+{
+    return VSIFReadL( pabyBuffer, 1, nBytesToRead, 
+                      (FILE *) psGFile->UserData );
+}
+
+/************************************************************************/
+/*                          VSIGIFWriteFunc()                           */
+/*                                                                      */
+/*      Proxy write function.                                           */
+/************************************************************************/
+
+static int VSIGIFWriteFunc( GifFileType *psGFile, 
+                            const GifByteType *pabyBuffer, int nBytesToWrite )
+
+{
+    return VSIFWriteL( (void *) pabyBuffer, 1, nBytesToWrite, 
+                       (FILE *) psGFile->UserData );
 }
 
 /************************************************************************/
