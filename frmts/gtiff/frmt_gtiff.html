@@ -34,8 +34,9 @@ pixel size, a transformation matrix, or a list of GCPs.<p>
 
 If no georeferencing
 information is available in the TIFF file itself, GDAL will also check for,
-and use an ESRI world file with the extention .tfw, .tiffw or .wld, as
-well as a MapInfo .tab file (only control points used, Coordsys ignored).<P>
+and use an ESRI <a href="frmt_various.html#WLD">world file</a> with the
+extention .tfw, .tiffw or .wld, as well as a MapInfo .tab file (only control
+points used, Coordsys ignored).<P>
 
 <h2>Creation Issues</h2>
 
@@ -53,7 +54,8 @@ Creation Options:<p>
 <ul>
 
 <li> <b>TFW=YES</b>: Force the generation of an associated ESRI world
-file (.tfw).<p>
+file (.tfw).See a <a href="frmt_various.html#WLD">World Files</a> section
+for details.<p>
 
 <li> <b>INTERLEAVE=[BAND,PIXEL]</b>: By default TIFF files with band
 interleaving (PLANARCONFIG_SEPARATE in TIFF terminology) are created.  These
