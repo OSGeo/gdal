@@ -116,7 +116,7 @@ typedef int (*OutputFunc)(GifFileType *, const GifByteType *, int);
 
 GifFileType *EGifOpenFileName(char *GifFileName, int GifTestExistance);
 GifFileType *EGifOpenFileHandle(int GifFileHandle);
-GifFileType *EgifOpen(void *userPtr, OutputFunc writeFunc);
+GifFileType *EGifOpen(void *userPtr, OutputFunc writeFunc);
 int EGifSpew(GifFileType *GifFile);
 void EGifSetGifVersion(char *Version);
 int EGifPutScreenDesc(GifFileType *GifFile,
