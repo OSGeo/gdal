@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/10/07 00:26:27  fwarmerdam
+ * add documentation
+ *
  * Revision 1.3  2005/09/15 18:39:00  fwarmerdam
  * fixedup filemanager cleanup
  *
@@ -48,6 +51,22 @@ CPL_CVSID("$Id$");
 /*                              VSIMkdir()                              */
 /************************************************************************/
 
+/**
+ * \brief Create a directory. 
+ * 
+ * Create a new directory with the indicated mode.  The mode is ignored
+ * on some platforms.  A reasonable default mode value would be 0666.
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX mkdir() function.
+ *
+ * @param pszPathname the path to the directory to create. 
+ * @param mode the permissions mode.
+ *
+ * @return 0 on success or -1 on an error.
+ */
+
 int VSIMkdir( const char *pszPathname, long mode )
 
 {
@@ -60,6 +79,21 @@ int VSIMkdir( const char *pszPathname, long mode )
 /************************************************************************/
 /*                             VSIUnlink()                              */
 /*************************a***********************************************/
+
+/**
+ * \brief Delete a file.
+ * 
+ * Deletes a file object from the file system. 
+ * 
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX unlink() function.
+ *
+ * @param pszFilename the path of the file to be deleted.
+ *
+ * @return 0 on success or -1 on an error.
+ */
 
 int VSIUnlink( const char * pszFilename )
 
@@ -74,18 +108,54 @@ int VSIUnlink( const char * pszFilename )
 /*                              VSIRmdir()                              */
 /************************************************************************/
 
-int VSIRmdir( const char * pszFilename )
+/**
+ * \brief Delete a directory.
+ * 
+ * Deletes a directory object from the file system.  On some systems
+ * the directory must be empty before it can be deleted.
+ * 
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX rmdir() function.
+ *
+ * @param pszDirname the path of the directory to be deleted.
+ *
+ * @return 0 on success or -1 on an error.
+ */
+
+int VSIRmdir( const char * pszDirname )
 
 {
     VSIFilesystemHandler *poFSHandler = 
-        VSIFileManager::GetHandler( pszFilename );
+        VSIFileManager::GetHandler( pszDirname );
 
-    return poFSHandler->Rmdir( pszFilename );
+    return poFSHandler->Rmdir( pszDirname );
 }
 
 /************************************************************************/
 /*                              VSIStatL()                              */
 /************************************************************************/
+
+/**
+ * \brief Get filesystem object info.
+ * 
+ * Fetches status information about a filesystem object (file, directory, etc).
+ * The returned information is placed in the VSIStatBufL structure.   For
+ * portability only the st_size (size in bytes), and st_mode (file type). 
+ * This method is similar to VSIStat(), but will work on large files on 
+ * systems where this requires special calls. 
+ * 
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX stat() function.
+ *
+ * @param pszFilename the path of the filesystem object to be queried.
+ * @param psStatBuf the structure to load with information. 
+ *
+ * @return 0 on success or -1 on an error.
+ */
 
 int VSIStatL( const char * pszFilename, VSIStatBufL *psStatBuf )
 
@@ -97,8 +167,30 @@ int VSIStatL( const char * pszFilename, VSIStatBufL *psStatBuf )
 }
 
 /************************************************************************/
-/*                              VSIFOpen()                              */
+/*                             VSIFOpenL()                              */
 /************************************************************************/
+
+/**
+ * \brief Open file.
+ *
+ * This function opens a file with the desired access.  Large files (larger
+ * than 2GB) should be supported.  Binary access is always implied and
+ * the "b" does not need to be included in the pszAccess string.
+ *
+ * Note that the "FILE *" returned by this function is not really a 
+ * standard C library FILE *, and cannot be used with any functions other
+ * than the "VSI*L" family of functions.  They aren't "real" FILE objects.
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX fopen() function.
+ *
+ * @param pszFilename the file to open.
+ * @param pszAccess access requested (ie. "r", "r+", "w".  
+ *
+ * @return NULL on failure, or the file handle.
+ */
 
 FILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
 
@@ -112,6 +204,21 @@ FILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
 /************************************************************************/
 /*                             VSIFCloseL()                             */
 /************************************************************************/
+
+/**
+ * \brief Close file.
+ *
+ * This function closes the indicated file.
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX fclose() function.
+ *
+ * @param fp file handle opened with VSIOpenL().
+ *
+ * @return 0 on success or -1 on failure.
+ */
 
 int VSIFCloseL( FILE * fp )
 
@@ -128,6 +235,23 @@ int VSIFCloseL( FILE * fp )
 /*                             VSIFSeekL()                              */
 /************************************************************************/
 
+/**
+ * \brief Seek to requested offset.
+ *
+ * Seek to the desired offset (nOffset) in the indicated file. 
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX fseek() call.
+ *
+ * @param fp file handle opened with VSIOpenL(). 
+ * @param nOffset offset in bytes.
+ * @param nWhence one of SEEK_SET, SEEK_CUR or SEEK_END.
+ *
+ * @return 0 on success or -1 one failure.
+ */
+
 int VSIFSeekL( FILE * fp, vsi_l_offset nOffset, int nWhence )
 
 {
@@ -139,6 +263,22 @@ int VSIFSeekL( FILE * fp, vsi_l_offset nOffset, int nWhence )
 /************************************************************************/
 /*                             VSIFTellL()                              */
 /************************************************************************/
+
+/**
+ * \brief Tell current file offset.
+ *
+ * Returns the current file read/write offset in bytes from the beginning of
+ * the file. 
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX ftell() call.
+ *
+ * @param fp file handle opened with VSIOpenL(). 
+ *
+ * @return file offset in bytes.
+ */
 
 vsi_l_offset VSIFTellL( FILE * fp )
 
@@ -162,6 +302,22 @@ void VSIRewindL( FILE * fp )
 /*                             VSIFFlushL()                             */
 /************************************************************************/
 
+/**
+ * \brief Flush pending writes to disk.
+ *
+ * For files in write or update mode and on filesystem types where it is
+ * applicable, all pending output on the file is flushed to the physical disk.
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX fflush() call.
+ *
+ * @param fp file handle opened with VSIOpenL(). 
+ *
+ * @return 0 on success or -1 on error.
+ */
+
 int VSIFFlushL( FILE * fp )
 
 {
@@ -173,6 +329,26 @@ int VSIFFlushL( FILE * fp )
 /************************************************************************/
 /*                             VSIFReadL()                              */
 /************************************************************************/
+
+/**
+ * \brief Read bytes from file.
+ *
+ * Reads nCount objects of nSize bytes from the indicated file at the
+ * current offset into the indicated buffer.
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX fread() call.
+ *
+ * @param pBuffer the buffer into which the data should be read (at least
+ * nCount * nSize bytes in size. 
+ * @param nSize size of objects to read in bytes.
+ * @param nCount number of objects to read.
+ * @param fp file handle opened with VSIOpenL(). 
+ *
+ * @return number of objects successfully read. 
+ */
 
 size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
 
@@ -186,6 +362,26 @@ size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
 /*                             VSIFWriteL()                             */
 /************************************************************************/
 
+/**
+ * \brief Write bytes to file.
+ *
+ * Writess nCount objects of nSize bytes to the indicated file at the
+ * current offset into the indicated buffer.
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX fwrite() call.
+ *
+ * @param pBuffer the buffer from which the data should be written (at least
+ * nCount * nSize bytes in size. 
+ * @param nSize size of objects to read in bytes.
+ * @param nCount number of objects to read.
+ * @param fp file handle opened with VSIOpenL(). 
+ *
+ * @return number of objects successfully written.
+ */
+
 size_t VSIFWriteL( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
 
 {
@@ -197,6 +393,22 @@ size_t VSIFWriteL( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
 /************************************************************************/
 /*                              VSIFEofL()                              */
 /************************************************************************/
+
+/**
+ * \brief Test for end of file.
+ *
+ * Returns TRUE (non-zero) if the file read/write offset is currently at the
+ * end of the file. 
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX feof() call.
+ *
+ * @param fp file handle opened with VSIOpenL(). 
+ *
+ * @return TRUE if at EOF else FALSE.
+ */
 
 int VSIFEofL( FILE * fp )
 

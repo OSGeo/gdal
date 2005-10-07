@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.27  2005/10/07 00:26:27  fwarmerdam
+ * add documentation
+ *
  * Revision 1.26  2005/10/03 18:56:40  fwarmerdam
  * always define large file api - cygwin fix
  *
@@ -148,7 +151,9 @@
 CPL_C_START
 
 /* ==================================================================== */
-/*      stdio file access functions.                                    */
+/*      stdio file access functions.  These may not support large       */
+/*      files, and don't necessarily go through the virtualization      */
+/*      API.                                                            */
 /* ==================================================================== */
 
 FILE CPL_DLL *  VSIFOpen( const char *, const char * );
