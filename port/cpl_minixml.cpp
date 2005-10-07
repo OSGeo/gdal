@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.39  2005/10/07 00:03:29  fwarmerdam
+ * improve documentation
+ *
  * Revision 1.38  2005/09/11 19:30:12  fwarmerdam
  * Try to write in text mode through large file API.
  *
@@ -555,7 +558,7 @@ static void AttachNode( ParseContext *psContext, CPLXMLNode *psNode )
 /************************************************************************/
 
 /**
- * Parse an XML string into tree form.
+ * \brief Parse an XML string into tree form.
  *
  * The passed document is parsed into a CPLXMLNode tree representation. 
  * If the document is not well formed XML then NULL is returned, and errors
@@ -1002,7 +1005,7 @@ CPLSerializeXMLNode( CPLXMLNode *psNode, int nIndent,
 /************************************************************************/
 
 /**
- * Convert tree into string document.
+ * \brief Convert tree into string document.
  *
  * This function converts a CPLXMLNode tree representation of a document
  * into a flat string representation.  White space indentation is used
@@ -1036,7 +1039,7 @@ char *CPLSerializeXMLTree( CPLXMLNode *psNode )
 /************************************************************************/
 
 /**
- * Create an document tree item.
+ * \brief Create an document tree item.
  *
  * Create a single CPLXMLNode object with the desired value and type, and
  * attach it as a child of the indicated parent.  
@@ -1087,7 +1090,7 @@ CPLXMLNode *CPLCreateXMLNode( CPLXMLNode *poParent, CPLXMLNodeType eType,
 /************************************************************************/
 
 /**
- * Destroy a tree. 
+ * \brief Destroy a tree. 
  *
  * This function frees resources associated with a CPLXMLNode and all its
  * children nodes.  
@@ -1116,7 +1119,7 @@ void CPLDestroyXMLNode( CPLXMLNode *psNode )
 /************************************************************************/
 
 /**
- * Search for a node in document.
+ * \brief Search for a node in document.
  *
  * Searches the children (and potentially siblings) of the documented
  * passed in for the named element or attribute.  To search following
@@ -1198,7 +1201,7 @@ CPLXMLNode *CPLSearchXMLNode( CPLXMLNode *psRoot, const char *pszElement )
 /************************************************************************/
 
 /**
- * Find node by path.
+ * \brief Find node by path.
  *
  * Searches the document or subdocument indicated by psRoot for an element 
  * (or attribute) with the given path.  The path should consist of a set of
@@ -1281,7 +1284,7 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
 /************************************************************************/
 
 /**
- * Fetch element/attribute value. 
+ * \brief Fetch element/attribute value. 
  *
  * Searches the document for the element/attribute value associated with
  * the path.  The corresponding node is internally found with CPLGetXMLNode()
@@ -1352,7 +1355,7 @@ const char *CPLGetXMLValue( CPLXMLNode *psRoot, const char *pszPath,
 /************************************************************************/
 
 /**
- * Add child node to parent. 
+ * \brief Add child node to parent. 
  *
  * The passed child is added to the list of children of the indicated
  * parent.  Normally the child is added at the end of the parents child
@@ -1412,7 +1415,7 @@ void CPLAddXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
 /************************************************************************/
 
 /**
- * Remove child node from parent. 
+ * \brief Remove child node from parent. 
  *
  * The passed child is removed from the child list of the passed parent,
  * but the child is not destroyed.  The child retains ownership of it's
@@ -1455,7 +1458,7 @@ int CPLRemoveXMLChild( CPLXMLNode *psParent, CPLXMLNode *psChild )
 /************************************************************************/
 
 /**
- * Add new sibling.
+ * \brief Add new sibling.
  *
  * The passed psNewSibling is added to the end of siblings of the 
  * psOlderSibling node.  That is, it is added to the end of the psNext
@@ -1485,10 +1488,11 @@ void CPLAddXMLSibling( CPLXMLNode *psOlderSibling, CPLXMLNode *psNewSibling )
 /************************************************************************/
 
 /**
- * Create an element and text value.
+ * \brief Create an element and text value.
  *
  * This is function is a convenient short form for:
  *
+ * \code
  *     CPLXMLNode *psTextNode;
  *     CPLXMLNode *psElementNode;
  *
@@ -1496,6 +1500,7 @@ void CPLAddXMLSibling( CPLXMLNode *psOlderSibling, CPLXMLNode *psNewSibling )
  *     psTextNode = CPLCreateXMLNode( psElementNode, CXT_Text, pszValue );
  * 
  *     return psElementNode;
+ * \endcode
  *
  * It creates a CXT_Element node, with a CXT_Text child, and
  * attaches the element to the passed parent.
@@ -1528,7 +1533,7 @@ CPLXMLNode *CPLCreateXMLElementAndValue( CPLXMLNode *psParent,
 /************************************************************************/
 
 /**
- * Copy tree.
+ * \brief Copy tree.
  *
  * Creates a deep copy of a CPLXMLNode tree.  
  *
@@ -1568,7 +1573,7 @@ CPLXMLNode *CPLCloneXMLTree( CPLXMLNode *psTree )
 /************************************************************************/
 
 /**
- * Set element value by path. 
+ * \brief Set element value by path. 
  *
  * Find (or create) the target element or attribute specified in the
  * path, and assign it the indicated value. 
@@ -1667,7 +1672,7 @@ int CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
 /************************************************************************/
 
 /**
- * Strip indicated namespaces. 
+ * \brief Strip indicated namespaces. 
  *
  * The subdocument (psRoot) is recursively examined, and any elements
  * with the indicated namespace prefix will have the namespace prefix
@@ -1738,11 +1743,14 @@ void CPLStripXMLNamespace( CPLXMLNode *psRoot,
 /************************************************************************/
 
 /**
- * Parse XML file into tree.
+ * \brief Parse XML file into tree.
  *
  * The named file is opened, loaded into memory as a big string, and
  * parsed with CPLParseXMLString().  Errors in reading the file or parsing
  * the XML will be reported by CPLError(). 
+ *
+ * The "large file" API is used, so XML files can come from virtualized
+ * files. 
  *
  * @param pszFilename the file to open. 
  *
@@ -1807,7 +1815,7 @@ CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
 /************************************************************************/
 
 /**
- * Write document tree to a file. 
+ * \brief Write document tree to a file. 
  *
  * The passed document tree is converted into one big string (with 
  * CPLSerializeXMLTree()) and then written to the named file.  Errors writing
@@ -1872,7 +1880,7 @@ int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
 /************************************************************************/
 
 /**
- * Make string into safe XML token.
+ * \brief Make string into safe XML token.
  *
  * Modififies a string in place to try and make it into a legal
  * XML token that can be used as an element name.   This is accomplished
@@ -1885,7 +1893,7 @@ int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
  * @param pszTarget the string to be adjusted.  It is altered in place. 
  */
 
-void       CPL_DLL CPLCleanXMLElementName( char *pszTarget )
+void CPLCleanXMLElementName( char *pszTarget )
 
 {
     if( pszTarget == NULL )
