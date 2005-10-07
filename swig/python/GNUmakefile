@@ -3,7 +3,7 @@ GDAL_ROOT = ../..
 
 include ../../GDALmake.opt
 
-all: build
+all:
 
 BINDING = python
 include ../SWIGmake.base
@@ -21,8 +21,8 @@ veryclean: clean
 
 generate: ${WRAPPERS}
 
-build: generate
+build:
 	python setup.py build
 
-install: generate
+install:
 	python setup.py install --prefix=$(prefix)
