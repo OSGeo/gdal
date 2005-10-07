@@ -1049,10 +1049,12 @@ extern "C" {
 
 
 static swig_type_info *swig_type_initial[] = {
+  NULL
 };
 
 
 static swig_cast_info *swig_cast_initial[] = {
+  NULL
 };
 
 
@@ -1118,14 +1120,14 @@ static swig_constant_info swig_constants[] = {
 { SWIG_INT,     (char *) SWIG_prefix "CPLE_AssertionFailed", (long) CPLE_AssertionFailed, 0, 0, 0},
 { SWIG_INT,     (char *) SWIG_prefix "CPLE_NoWriteAccess", (long) CPLE_NoWriteAccess, 0, 0, 0},
 { SWIG_INT,     (char *) SWIG_prefix "CPLE_UserInterrupt", (long) CPLE_UserInterrupt, 0, 0, 0},
-{ SWIG_STRING,  (char *) SWIG_prefix "DMD_LONGNAME", 0, 0, (void *)"GDAL_DMD_LONGNAME", 0},
-{ SWIG_STRING,  (char *) SWIG_prefix "DMD_HELPTOPIC", 0, 0, (void *)"GDAL_DMD_HELPTOPIC", 0},
-{ SWIG_STRING,  (char *) SWIG_prefix "DMD_MIMETYPE", 0, 0, (void *)"GDAL_DMD_MIMETYPE", 0},
-{ SWIG_STRING,  (char *) SWIG_prefix "DMD_EXTENSION", 0, 0, (void *)"GDAL_DMD_EXTENSION", 0},
-{ SWIG_STRING,  (char *) SWIG_prefix "DMD_CREATIONOPTIONLIST", 0, 0, (void *)"GDAL_DMD_CREATIONOPTIONLIST", 0},
-{ SWIG_STRING,  (char *) SWIG_prefix "DMD_CREATIONDATATYPES", 0, 0, (void *)"GDAL_DMD_CREATIONDATATYPES", 0},
-{ SWIG_STRING,  (char *) SWIG_prefix "DCAP_CREATE", 0, 0, (void *)"GDAL_DCAP_CREATE", 0},
-{ SWIG_STRING,  (char *) SWIG_prefix "DCAP_CREATECOPY", 0, 0, (void *)"GDAL_DCAP_CREATECOPY", 0},
+{ SWIG_STRING,  (char *) SWIG_prefix "DMD_LONGNAME", 0, 0, (void *)GDAL_DMD_LONGNAME, 0},
+{ SWIG_STRING,  (char *) SWIG_prefix "DMD_HELPTOPIC", 0, 0, (void *)GDAL_DMD_HELPTOPIC, 0},
+{ SWIG_STRING,  (char *) SWIG_prefix "DMD_MIMETYPE", 0, 0, (void *)GDAL_DMD_MIMETYPE, 0},
+{ SWIG_STRING,  (char *) SWIG_prefix "DMD_EXTENSION", 0, 0, (void *)GDAL_DMD_EXTENSION, 0},
+{ SWIG_STRING,  (char *) SWIG_prefix "DMD_CREATIONOPTIONLIST", 0, 0, (void *)GDAL_DMD_CREATIONOPTIONLIST, 0},
+{ SWIG_STRING,  (char *) SWIG_prefix "DMD_CREATIONDATATYPES", 0, 0, (void *)GDAL_DMD_CREATIONDATATYPES, 0},
+{ SWIG_STRING,  (char *) SWIG_prefix "DCAP_CREATE", 0, 0, (void *)GDAL_DCAP_CREATE, 0},
+{ SWIG_STRING,  (char *) SWIG_prefix "DCAP_CREATECOPY", 0, 0, (void *)GDAL_DCAP_CREATECOPY, 0},
 { SWIG_INT,     (char *) SWIG_prefix "CPLES_BackslashQuotable", (long) CPLES_BackslashQuotable, 0, 0, 0},
 { SWIG_INT,     (char *) SWIG_prefix "CPLES_XML", (long) CPLES_XML, 0, 0, 0},
 { SWIG_INT,     (char *) SWIG_prefix "CPLES_URL", (long) CPLES_URL, 0, 0, 0},
