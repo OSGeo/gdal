@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/10/07 00:03:29  fwarmerdam
+ * improve documentation
+ *
  * Revision 1.13  2005/05/13 18:17:48  fwarmerdam
  * added CPLRemoveXMLChild
  *
@@ -108,7 +111,7 @@ typedef enum
 typedef struct _CPLXMLNode
 {
     /** 
-     * Node type
+     * \brief Node type
      *
      * One of CXT_Element, CXT_Text, CXT_Attribute, CXT_Comment, 
      * or CXT_Literal.
@@ -116,7 +119,7 @@ typedef struct _CPLXMLNode
     CPLXMLNodeType      eType;       
     
     /** 
-     * Node value
+     * \brief Node value
      *
      * For CXT_Element this is the name of the element, without the angle
      * brackets.  Note there is a single CXT_Element even when the document
@@ -139,7 +142,7 @@ typedef struct _CPLXMLNode
     char                *pszValue;   
 
     /** 
-     * Next sibling. 
+     * \brief Next sibling. 
      *
      * Pointer to next sibling, that is the next node appearing after this
      * one that has the same parent as this node.  NULL if this node is the
@@ -148,7 +151,7 @@ typedef struct _CPLXMLNode
     struct _CPLXMLNode  *psNext;     
 
     /** 
-     * Child node.
+     * \brief Child node.
      *
      * Pointer to first child node, if any.  Only CXT_Element and CXT_Attribute
      * nodes should have children.  For CXT_Attribute it should be a single
