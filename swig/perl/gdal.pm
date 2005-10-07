@@ -137,7 +137,7 @@ sub ACQUIRE {
 ############# Class : gdal::Driver ##############
 
 package gdal::Driver;
-@ISA = qw( gdal gdal::MajorObject );
+@ISA = qw( gdal::MajorObject gdal );
 %OWNER = ();
 %ITERATORS = ();
 *swig_ShortName_get = *gdalc::Driver_ShortName_get;
@@ -215,7 +215,7 @@ sub ACQUIRE {
 ############# Class : gdal::Dataset ##############
 
 package gdal::Dataset;
-@ISA = qw( gdal gdal::MajorObject );
+@ISA = qw( gdal::MajorObject gdal );
 %OWNER = ();
 %ITERATORS = ();
 *swig_RasterXSize_get = *gdalc::Dataset_RasterXSize_get;
@@ -266,7 +266,7 @@ sub ACQUIRE {
 ############# Class : gdal::Band ##############
 
 package gdal::Band;
-@ISA = qw( gdal gdal::MajorObject );
+@ISA = qw( gdal::MajorObject gdal );
 %OWNER = ();
 %ITERATORS = ();
 *swig_XSize_get = *gdalc::Band_XSize_get;
