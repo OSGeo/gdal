@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/10/07 00:26:27  fwarmerdam
+ * add documentation
+ *
  * Revision 1.4  2005/09/12 16:50:37  fwarmerdam
  * added VSIMemFile buffer fetcher
  *
@@ -477,6 +480,59 @@ char **VSIMemFilesystemHandler::ReadDir( const char *pszPath )
 /*                     VSIInstallLargeFileHandler()                     */
 /************************************************************************/
 
+/**
+ * \brief Install "memory" file system handler. 
+ *
+ * A special file handler is installed that allows block of memory to be
+ * treated as files.   All portions of the file system underneath the base
+ * path "/vsimem/" will be handled by this driver.  
+ *
+ * Normal VSI*L functions can be used freely to create and destroy memory
+ * arrays treating them as if they were real file system objects.  Some
+ * additional methods exist to efficient create memory file system objects
+ * without duplicating original copies of the data or to "steal" the block
+ * of memory associated with a memory file. 
+ *
+ * At this time the memory handler does not properly handle directory
+ * semantics for the memory portion of the filesystem.  The VSIReadDir()
+ * function is not supported though this will be corrected in the future. 
+ *
+ * Calling this function repeatedly should do no harm, though it is not
+ * necessary.  It is already called the first time a virtualizable 
+ * file access function (ie. VSIFOpenL(), VSIMkDir(), etc) is called. 
+ *
+ * This code example demonstrates using GDAL to translate from one memory
+ * buffer to another.
+ *
+ * \code
+ * GByte *ConvertBufferFormat( GByte *pabyInData, vsi_l_offset nInDataLength, 
+ *                             vsi_l_offset *pnOutDataLength )
+ * {
+ *     // create memory file system object from buffer.
+ *     VSIFCloseL( VSIFileFromMemBuffer( "/vsimem/work.dat", pabyInData,
+ *                                       nInDataLength, FALSE ) );
+ *
+ *     // Open memory buffer for read.
+ *     GDALDatasetH hDS = GDALOpen( "/vsimem/work.dat", GA_ReadOnly );
+ * 
+ *     // Get output format driver. 
+ *     GDALDriverH hDriver = GDALGetDriverByName( "GTiff" );
+ *     GDALDatasetH hOutDS;
+ *
+ *     hOutDS = GDALCreateCopy( hDriver, "/vsimem/out.tif", hDS, TRUE, NULL, 
+ *                              NULL, NULL );
+ * 
+ *     // close source file, and "unlink" it.  
+ *     GDALClose( hDS );
+ *     VSIUnlink( "/vsimem/work.dat" );
+ *
+ *     // seize the buffer associated with the output file.
+ *
+ *     return VSIGetMemFileBuffer( "/vsimem/out.tif", pnOutDataLength, TRUE );
+ * }
+ * \endcode
+ */
+
 void VSIInstallMemFileHandler()
 
 {
@@ -487,6 +543,27 @@ void VSIInstallMemFileHandler()
 /************************************************************************/
 /*                        VSIFileFromMemBuffer()                        */
 /************************************************************************/
+
+/**
+ * \brief Create memory "file" from a buffer.
+ *
+ * A virtual memory file is created from the passed buffer with the indicated
+ * filename.  Under normal conditions the filename would need to be absolute
+ * and within the /vsimem/ portion of the filesystem.  
+ *
+ * If bTakeOwnership is TRUE, then the memory file system handler will take
+ * ownership of the buffer, freeing it when the file is deleted.  Otherwise
+ * it remains the responsibility of the caller, but should not be freed as
+ * long as it might be accessed as a file.  In no circumstances does this
+ * function take a copy of the pabyData contents. 
+ *
+ * @param pszFilename the filename to be created.
+ * @param pabyData the data buffer for the file. 
+ * @param nDataLength the length of buffer in bytes.
+ * @param bTakeOwnership TRUE to transfer "ownership" of buffer or FALSE. 
+ *
+ * @return open file handle on created file (see VSIFOpenL()). 
+ */
 
 FILE *VSIFileFromMemBuffer( const char *pszFilename, 
                           GByte *pabyData, 
@@ -517,6 +594,21 @@ FILE *VSIFileFromMemBuffer( const char *pszFilename,
 /************************************************************************/
 /*                        VSIGetMemFileBuffer()                         */
 /************************************************************************/
+
+/**
+ * \brief Fetch buffer underlying memory file. 
+ *
+ * This function returns a pointer to the memory buffer underlying a 
+ * virtual "in memory" file.  If bUnlinkAndSeize is TRUE the filesystem
+ * object will be deleted, and ownership of the buffer will pass to the 
+ * caller otherwise the underlying file will remain in existance. 
+ *
+ * @param pszFilename the name of the file to grab the buffer of.
+ * @param buffer (file) length returned in this variable.
+ * @param bUnlinkAndSeize TRUE to remove the file, or FALSE to leave unaltered.
+ *
+ * @return pointer to memory buffer or NULL on failure.
+ */
 
 GByte *VSIGetMemFileBuffer( const char *pszFilename, 
                             vsi_l_offset *pnDataLength,
