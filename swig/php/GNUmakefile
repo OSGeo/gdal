@@ -3,7 +3,7 @@ GDAL_ROOT = ../..
 
 include ../../GDALmake.opt
 
-all: build
+all: 
 
 BINDING = php
 include ../SWIGmake.base
@@ -29,7 +29,7 @@ veryclean: clean
 
 generate: ${WRAPPERS}
 
-build: ${all_libs}
+build: php_gdal.so
 
 # This directive should actually do an install.
 install: build
