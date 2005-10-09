@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/10/09 22:59:57  pka
+ * ARC interpolation (Interlis 1)
+ *
  * Revision 1.2  2005/08/06 22:21:53  pka
  * Area polygonizer added
  *
@@ -58,16 +61,20 @@ private:
     int          nLayers;
     OGRLayer     **papoLayers;
     OGRILI1Layer *curLayer;
+    double       arcIncr;
 
 public:
                  ILI1Reader();
                 ~ILI1Reader();
 
+    void         SetArcDegrees(double arcDegrees);
     int          OpenFile( const char *pszFilename );
     int          ReadModel( const char *pszModelFilename );
     int          ReadFeatures();
     int          ReadTable();
     OGRGeometry  *ReadGeom(char **stgeom, OGRwkbGeometryType eType);
+    static double getPhi(OGRPoint *center, OGRPoint *pt);
+    void         interpolateArc(OGRLineString* line, OGRPoint *ptStart, OGRPoint *ptOnArc, OGRPoint *ptEnd);
     char         **ReadParseLine();
 
     void         AddLayer( OGRLayer * poNewLayer );    

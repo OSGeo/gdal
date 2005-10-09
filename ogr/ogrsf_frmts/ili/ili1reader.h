@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/10/09 22:59:57  pka
+ * ARC interpolation (Interlis 1)
+ *
  * Revision 1.2  2005/08/06 22:21:53  pka
  * Area polygonizer added
  *
@@ -50,8 +53,9 @@ public:
     virtual int  ReadModel( const char *pszModelFilename ) = 0;
     virtual int  ReadFeatures() = 0;       
     
-    virtual OGRLayer *GetLayer( int ) = NULL;
-    virtual int GetLayerCount() = 0;
+    virtual OGRLayer *GetLayer( int ) = 0;
+    virtual int  GetLayerCount() = 0;
+    virtual void SetArcDegrees(double newArcDegrees) = 0;
 };
 
 IILI1Reader *CreateILI1Reader();

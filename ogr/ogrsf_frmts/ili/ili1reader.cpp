@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/10/09 22:59:57  pka
+ * ARC interpolation (Interlis 1)
+ *
  * Revision 1.2  2005/08/06 22:21:53  pka
  * Area polygonizer added
  *
@@ -57,7 +60,12 @@
 #ifdef POLYGONIZE_AREAS
 #  define AREA_TYPE wkbGeometryCollection
 #else
+#  warning Interlis 1 Area polygonizing disabled. Needs GEOS >= 2.1.0
 #  define AREA_TYPE wkbMultiLineString
+#endif
+
+#ifndef PI
+#define PI  3.1415926535897932384626433832795
 #endif
 
 
@@ -74,10 +82,15 @@ ILI1Reader::ILI1Reader() {
   fpItf = NULL;
   nLayers = 0;
   papoLayers = NULL;
+  SetArcDegrees(5);
 }
 
 ILI1Reader::~ILI1Reader() {
  if (fpItf) VSIFClose( fpItf );
+}
+
+void ILI1Reader::SetArcDegrees(double arcDegrees) {
+  arcIncr = arcDegrees*PI/180;
 }
 
 /* -------------------------------------------------------------------- */
@@ -347,14 +360,57 @@ int ILI1Reader::AddIliGeom(OGRFeature *feature, int iField, long fpos)
     return TRUE;
 }
 
+OGRPoint *getARCCenter(OGRPoint *ptStart, OGRPoint *ptArc, OGRPoint *ptEnd); //from ILI2 driver
+
+double ILI1Reader::getPhi(OGRPoint *center, OGRPoint *pt) {
+  double cx = center->getX(); double cy = center->getY();
+  double px = pt->getX(); double py = pt->getY();
+  double r = sqrt((cx-px)*(cx-px)+(cy-py)*(cy-py));
+  double phi = acos((px-cx)/r);
+  return (py>cy) ? phi : -phi;
+}
+
+void ILI1Reader::interpolateArc(OGRLineString* line, OGRPoint *ptStart, OGRPoint *ptOnArc, OGRPoint *ptEnd) {
+  OGRPoint *center = getARCCenter(ptStart, ptOnArc, ptEnd);
+
+  double cx = center->getX(); double cy = center->getY();
+  double px = ptOnArc->getX(); double py = ptOnArc->getY();
+  double r = sqrt((cx-px)*(cx-px)+(cy-py)*(cy-py));
+
+  double phiPtStart = getPhi(center, ptStart);
+  double phiPtOnArc = getPhi(center, ptOnArc);
+  double phiPtEnd = getPhi(center, ptEnd);
+
+  int pointCnt = 0;
+  double deltaPhi = phiPtOnArc - phiPtStart;
+  if (deltaPhi < 0) deltaPhi += 2*PI;
+  if (deltaPhi < PI) {
+    if (phiPtEnd < phiPtStart) phiPtEnd += 2*PI;
+    for (double angle = phiPtStart+arcIncr; angle<phiPtEnd; angle += arcIncr) {
+      line->addPoint(center->getX()+r*cos(angle), center->getY()+r*sin(angle), 0);
+      ++pointCnt;
+    }
+  } else {
+    if (phiPtEnd > phiPtStart) phiPtStart += 2*PI;
+    for (double angle = phiPtStart-arcIncr; angle>phiPtEnd; angle -= arcIncr) {
+      line->addPoint(center->getX()+r*cos(angle), center->getY()+r*sin(angle), 0);
+      ++pointCnt;
+    }
+  }
+  if (pointCnt == 0) line->addPoint(ptOnArc);
+  delete center;
+}
+
 OGRMultiPolygon* ILI1Reader::Polygonize( OGRGeometryCollection* poLines )
 {
     OGRMultiPolygon *poPolygon = new OGRMultiPolygon();
 #ifdef POLYGONIZE_AREAS
+    //CPLDebug( "OGR_ILI", "ILI1Reader::Polygonize: exportToGEOS poLines->getNumGeometries(): %d", poLines->getNumGeometries());
     geos::Geometry *poThisGeosGeom = poLines->exportToGEOS();
 
     geos::Polygonizer* polygonizer = new geos::Polygonizer();
     polygonizer->add(poThisGeosGeom);
+    //CPLDebug( "OGR_ILI", "ILI1Reader::Polygonize: polygonizer->getPolygons");
     vector<geos::Polygon*> *poOtherGeosGeom = polygonizer->getPolygons();
 
     for (unsigned i = 0; i < poOtherGeosGeom->size(); i++)
@@ -496,11 +552,14 @@ OGRGeometry *ILI1Reader::ReadGeom(char **stgeom, OGRwkbGeometryType eType) {
     int end = FALSE;
     OGRGeometry *ogrGeom = NULL;
     OGRLineString *ogrLine = NULL; //current line
+    int isArc = FALSE;
+    OGRPoint ogrPoint, arcPoint, endPoint; //points for arc interpolation
     OGRMultiLineString *ogrMultiLine = NULL; //current multi line
     
     //tokens = ["STPT", "1111", "22222"]
+    ogrPoint.setX(atof(stgeom[1])); ogrPoint.setY(atof(stgeom[2]));
     ogrLine = new OGRLineString();
-    ogrLine->addPoint(atof(stgeom[1]), atof(stgeom[2]), 0.0);
+    ogrLine->addPoint(&ogrPoint);
     if (eType == wkbMultiLineString || eType == wkbGeometryCollection)
     {
       ogrMultiLine = new OGRMultiLineString();
@@ -511,11 +570,17 @@ OGRGeometry *ILI1Reader::ReadGeom(char **stgeom, OGRwkbGeometryType eType) {
       firsttok = CSLGetField(tokens, 0);
       if (EQUAL(firsttok, "LIPT"))
       {
-        ogrLine->addPoint(atof(tokens[1]), atof(tokens[2]), 0.0);
+        if (isArc) {
+          endPoint.setX(atof(tokens[1])); endPoint.setY(atof(tokens[2]));
+          interpolateArc(ogrLine, &ogrPoint, &arcPoint, &endPoint);
+        }
+        ogrPoint.setX(atof(tokens[1])); ogrPoint.setY(atof(tokens[2])); isArc = FALSE;
+        ogrLine->addPoint(&ogrPoint);
       }
       else if (EQUAL(firsttok, "ARCP"))
       {
-        ogrLine->addPoint(atof(tokens[1]), atof(tokens[2]), 0.0);
+        isArc = TRUE;
+        arcPoint.setX(atof(tokens[1])); arcPoint.setY(atof(tokens[2]));
       }
       else if (EQUAL(firsttok, "ELIN"))
       {
@@ -528,8 +593,9 @@ OGRGeometry *ILI1Reader::ReadGeom(char **stgeom, OGRwkbGeometryType eType) {
       else if (EQUAL(firsttok, "STPT"))
       {
         //AREA lines spread over mutltiple objects
+        ogrPoint.setX(atof(tokens[1])); ogrPoint.setY(atof(tokens[2])); isArc = FALSE;
         ogrLine = new OGRLineString();
-        ogrLine->addPoint(atof(tokens[1]), atof(tokens[2]), 0.0);
+        ogrLine->addPoint(&ogrPoint);
       }
       else if (EQUAL(firsttok, "EEDG"))
       {
