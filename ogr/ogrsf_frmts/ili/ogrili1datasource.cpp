@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/10/09 22:59:57  pka
+ * ARC interpolation (Interlis 1)
+ *
  * Revision 1.3  2005/08/30 23:50:43  fwarmerdam
  * Fixed some memory leaks (and an error condition) related to parsing
  * the name from the modelfilename.
@@ -188,6 +191,9 @@ int OGRILI1DataSource::Create( const char *pszFilename,
                   pszFilename );
         return FALSE;
     }
+
+    const char *pszArcDegrees = CSLFetchNameValue(papszOptions,"ARC_DEGREES");
+    if (pszArcDegrees != NULL) poReader->SetArcDegrees(atoi(pszArcDegrees));
 
 /* -------------------------------------------------------------------- */
 /*      Create the empty file.                                          */
