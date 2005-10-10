@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2005/10/10 14:45:47  dron
+ * Added OSRImportFromPanorama()/OSRExportToPanorama() wrappers.
+ *
  * Revision 1.54  2005/10/03 18:13:28  fwarmerdam
  * Fixed prototype for OSRSetGEOS().
  *
@@ -409,6 +412,9 @@ OGRErr CPL_DLL OSRImportFromUSGS( OGRSpatialReferenceH,
 OGRErr CPL_DLL OSRImportFromXML( OGRSpatialReferenceH, const char * );
 OGRErr CPL_DLL OSRImportFromDict( OGRSpatialReferenceH, const char *, 
                                   const char * );
+OGRErr OSRImportFromPanorama( OGRSpatialReferenceH, long, long, long, long,
+                              double, double, double, double );
+
 OGRErr CPL_DLL CPL_STDCALL OSRExportToWkt( OGRSpatialReferenceH, char ** );
 OGRErr CPL_DLL CPL_STDCALL OSRExportToPrettyWkt( OGRSpatialReferenceH, char **, int);
 OGRErr CPL_DLL CPL_STDCALL OSRExportToProj4( OGRSpatialReferenceH, char **);
@@ -417,6 +423,8 @@ OGRErr CPL_DLL OSRExportToPCI( OGRSpatialReferenceH, char **, char **,
 OGRErr CPL_DLL OSRExportToUSGS( OGRSpatialReferenceH, long *, long *,
                                 double **, long * );
 OGRErr CPL_DLL OSRExportToXML( OGRSpatialReferenceH, char **, const char * );
+OGRErr OSRExportToPanorama( OGRSpatialReferenceH, long *, long *, long *,
+                            long *, double *, double *, double *, double * );
 
 OGRErr CPL_DLL OSRMorphToESRI( OGRSpatialReferenceH );
 OGRErr CPL_DLL OSRMorphFromESRI( OGRSpatialReferenceH );
