@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/10/10 10:37:44  dron
+ * Typos fixed.
+ *
  * Revision 1.7  2005/09/29 11:50:37  dron
  * Calculate ellipsoid array size dynamically.
  *
@@ -322,13 +325,13 @@ OGRErr OSRImportFromUSGS( OGRSpatialReferenceH hSRS, long iProjsys,
  * longitudes, azimuths, etc.) specified in the padfPrjParams array should
  * be in the packed DMS format.
  *
- * This function is the equivalent of the C function OSRImportFromUSGSI().
+ * This function is the equivalent of the C function OSRImportFromUSGS().
  *
- * @param iProjSys Output projection system code, used in GCTP.
+ * @param iProjSys Input projection system code, used in GCTP.
  *
- * @param iZone Output zone for UTM and State Plane projection systems.
- * For Southern Hemisphere UTM use a negative zone code. iZone ignored
- * for all other projections.
+ * @param iZone Input zone for UTM and State Plane projection systems. For
+ * Southern Hemisphere UTM use a negative zone code. iZone ignored for all
+ * other projections.
  *
  * @param padfPrjParams Array of 15 coordinate system parameters. These
  * parameters differs for different projections.
