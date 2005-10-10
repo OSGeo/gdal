@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.68  2005/10/10 14:44:52  dron
+ * Added exportToPanorama()/importFromPanorama() methods.
+ *
  * Revision 1.67  2005/09/21 00:50:08  fwarmerdam
  * Added Release
  *
@@ -228,16 +231,19 @@ class CPL_DLL OGRSpatialReference
     OGRErr      exportToProj4( char ** ) const;
     OGRErr      exportToPCI( char **, char **, double ** ) const;
     OGRErr      exportToUSGS( long *, long *, double **, long * ) const;
+    OGRErr      exportToPanorama( long *, long *, double **, long * ) const;
     OGRErr      exportToXML( char **, const char * = NULL ) const;
+    OGRErr      exportToPanorama( long *, long *, long *, long *, double *,
+                                  double *, double *, double * ) const;
     OGRErr      importFromWkt( char ** );
     OGRErr      importFromProj4( const char * );
     OGRErr      importFromEPSG( int );
     OGRErr      importFromESRI( char ** );
-    OGRErr      importFromPCI( const char *pszProj,
-                               const char *pszUnits = NULL,
-                               double *padfPrjParams = NULL );
-    OGRErr      importFromUSGS( long iProjsys, long iZone,
-                                double *padfPrjParams, long iDatum );
+    OGRErr      importFromPCI( const char *, const char * = NULL,
+                               double * = NULL );
+    OGRErr      importFromUSGS( long, long, double *, long );
+    OGRErr      importFromPanorama( long, long, long, long,
+                                    double, double, double, double );
     OGRErr      importFromWMSAUTO( const char *pszAutoDef );
     OGRErr      importFromXML( const char * );
     OGRErr      importFromDict( const char *pszDict, const char *pszCode );
