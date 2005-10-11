@@ -27,8 +27,8 @@ the <a href="http://mappinghacks.com">Mapping Hacks</a> site at
 FC4 RPMs are also available from 
 <a href="http://www.gdal.org/dl/fc4-rpms">Intevation</a>.<p>
 
-<li> RPMs suitable for SuSe are maintained by GDF Hannover Germany site at
-<a href="http://www.gdf-hannover.de/software/suse/">http://www.gdf-hannover.de/software/suse/</a>.<p>
+<li> RPMs suitable for SuSe and Mandriva are maintained by GDF Hannover Germany site at
+<a href="http://www.gdf-hannover.de/software">http://www.gdf-hannover.de/software</a>.<p>
 
 <li> Packages for Debian users are available in the official repository
 <a href="http://packages.debian.org/libgdal1">http://packages.debian.org/libgdal1</a>.<p>
