@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2005/10/11 23:34:02  fwarmerdam
+ * fixed up handling of pszFilename
+ *
  * Revision 1.35  2005/07/05 18:00:10  dron
  * Add support for reading external overviews.
  *
@@ -272,7 +275,7 @@ class BMPDataset : public GDALPamDataset
     double              adfGeoTransform[6];
     int                 bGeoTransformValid;
 
-    const char          *pszFilename;
+    char                *pszFilename;
     FILE                *fp;
 
   protected:
@@ -857,6 +860,7 @@ BMPDataset::~BMPDataset()
         delete poColorTable;
     if( fp != NULL )
         VSIFCloseL( fp );
+    CPLFree( pszFilename );
 }
 
 /************************************************************************/
@@ -1203,7 +1207,7 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
         return NULL;
     }
 
-    poDS->pszFilename = pszFilename;
+    poDS->pszFilename = CPLStrdup(pszFilename);
 
 /* -------------------------------------------------------------------- */
 /*      Fill the BMPInfoHeader                                          */
