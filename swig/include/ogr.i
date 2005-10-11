@@ -9,6 +9,15 @@
 
  *
  * $Log$
+ * Revision 1.48  2005/10/11 14:47:36  kruland
+ * Removed all the manual throws and changed to return OGRErr where appropriate.
+ * There are 4 methods which have had serious alterations:
+ * Layer.GetExtent() was changed to OGRErr GetExtent( double argout[4], int = 1);
+ * Geometry.ExportToWkt() was changed to OGRErr ExportToWkt( char **argout );
+ * CreateGeometryFromWkb() and CreateGeometryFromWkt will return a NULL
+ * geometry object is the construction fails.  This will need to be handled
+ * differently in a subsequent revision.
+ *
  * Revision 1.47  2005/10/11 14:10:57  kruland
  * Feature.SetGeomerty() should not throw but should return the OGRErr.
  *
@@ -518,11 +527,7 @@ public:
   }
 
   OGRErr SetAttributeFilter(char* filter_string) {
-    OGRErr err = OGR_L_SetAttributeFilter((OGRLayerShadow*)self, filter_string);
-    if (err != 0) {
-      throw err;
-    } 
-    return 0;
+    return OGR_L_SetAttributeFilter((OGRLayerShadow*)self, filter_string);
   }
   
   void ResetReading() {
@@ -544,44 +549,24 @@ public:
   }
   
   OGRErr SetNextByIndex(long new_index) {
-    OGRErr err = OGR_L_SetNextByIndex(self, new_index);
-    if (err != 0) {
-      throw err;
-    }
-    return 0;
+    return OGR_L_SetNextByIndex(self, new_index);
   }
   
   OGRErr SetFeature(OGRFeatureShadow *feature) {
-    OGRErr err = OGR_L_SetFeature(self, feature);
-    if (err != 0) {
-      throw err;
-    }
-    return 0;
+    return OGR_L_SetFeature(self, feature);
   }
   
 
   OGRErr CreateFeature(OGRFeatureShadow *feature) {
-    OGRErr err = OGR_L_CreateFeature(self, feature);
-    if (err != 0) {
-      throw err;
-    }
-    return 0;
+    return OGR_L_CreateFeature(self, feature);
   }
   
   OGRErr DeleteFeature(long fid) {
-    OGRErr err = OGR_L_DeleteFeature(self, fid);
-    if (err != 0) {
-      throw err;
-    }
-    return 0;
+    return OGR_L_DeleteFeature(self, fid);
   }
   
   OGRErr SyncToDisk() {
-    OGRErr err = OGR_L_SyncToDisk(self);
-    if (err != 0) {
-      throw err;
-    }
-    return 0;
+    return OGR_L_SyncToDisk(self);
   }
   
   OGRFeatureDefnShadow *GetLayerDefn() {
@@ -594,10 +579,8 @@ public:
   }
   
   %feature( "kwargs" ) GetExtent;
-  void GetExtent(double argout[4], int force=1) {
-    OGRErr err = OGR_L_GetExtent(self, (OGREnvelope*)argout, force);
-    if (err != 0)
-      throw err;
+  OGRErr GetExtent(double argout[4], int force=1) {
+    return OGR_L_GetExtent(self, (OGREnvelope*)argout, force);
   }
 
   bool TestCapability(const char* cap) {
@@ -606,31 +589,19 @@ public:
   
   %feature( "kwargs" ) CreateField;
   OGRErr CreateField(OGRFieldDefnShadow* field_def, int approx_ok = 1) {
-    OGRErr err = OGR_L_CreateField(self, field_def, approx_ok);
-    if (err != 0)
-      throw err;
-    return 0;
+    return OGR_L_CreateField(self, field_def, approx_ok);
   }
   
   OGRErr StartTransaction() {
-    OGRErr err = OGR_L_StartTransaction(self);
-    if (err != 0)
-      throw err;
-    return 0;
+    return OGR_L_StartTransaction(self);
   }
   
   OGRErr CommitTransaction() {
-    OGRErr err = OGR_L_CommitTransaction(self);
-    if (err != 0)
-      throw err;
-    return 0;
+    return OGR_L_CommitTransaction(self);
   }
 
   OGRErr RollbackTransaction() {
-    OGRErr err = OGR_L_RollbackTransaction(self);
-    if (err != 0)
-      throw err;
-    return 0;
+    return OGR_L_RollbackTransaction(self);
   }
   
   OSRSpatialReferenceShadow *GetSpatialRef() {
@@ -676,10 +647,7 @@ public:
 /* The feature takes over owernship of the geometry. */
 %apply SWIGTYPE *DISOWN {OGRGeometryShadow *geom};
   OGRErr SetGeometryDirectly(OGRGeometryShadow* geom) {
-    OGRErr err = OGR_F_SetGeometryDirectly(self, geom);
-    if (err != 0)
-      throw err;
-    return 0;
+    return OGR_F_SetGeometryDirectly(self, geom);
   }
 %clear OGRGeometryShadow *geom;
   
@@ -765,10 +733,7 @@ public:
   }
   
   OGRErr SetFID(int fid) {
-    OGRErr err = OGR_F_SetFID(self, fid);
-    if (err != 0)
-      throw err;
-    return 0;
+    return OGR_F_SetFID(self, fid);
   }
   
   void DumpReadable() {
@@ -800,10 +765,7 @@ public:
   
   %feature("kwargs") SetFrom;
   OGRErr SetFrom(OGRFeatureShadow *other, int forgiving=1) {
-    OGRErr err = OGR_F_SetFrom(self, other, forgiving);
-    if (err != 0)
-      throw err;
-    return 0;
+    return OGR_F_SetFrom(self, other, forgiving);
   }
   
   const char *GetStyleString() {
@@ -982,7 +944,7 @@ public:
                                       &geom,
                                       len );
     if (err != 0 )
-       throw err;
+       return NULL;
     return (OGRGeometryShadow*) geom;
   }
  
@@ -1000,7 +962,7 @@ public:
                                       reference,
                                       &geom);
     if (err != 0 )
-       throw err;
+       return NULL;
     return (OGRGeometryShadow*) geom;
   }
  
@@ -1048,12 +1010,8 @@ public:
     else return 0;
   }
 
-  const char * ExportToWkt() {
-    char * output;
-    OGRErr err = OGR_G_ExportToWkt(self, &output);
-    if (err != 0) 
-      throw err;
-    return output;
+  OGRErr ExportToWkt( char** argout ) {
+    return OGR_G_ExportToWkt(self, argout);
   }
 
   %feature("kwargs") ExportToWkb;
