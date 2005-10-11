@@ -9,6 +9,10 @@
 
  *
  * $Log$
+ * Revision 1.42  2005/10/11 14:11:43  kruland
+ * Fix memory bug in typemap(out) char **options.  The returned array of strings
+ * is owned by the dataset.
+ *
  * Revision 1.41  2005/10/03 20:13:33  kruland
  * Clean up the CPLErr typemap to account for the new-er %exception code.
  *
@@ -623,6 +627,11 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   /* %typemap(freearg) char **options */
   CSLDestroy( $1 );
 }
+/*
+ * Typemap converts an array of strings into a list of strings
+ * with the assumption that the called object maintains ownership of the
+ * array of strings.
+ */
 %typemap(python,out) char **options
 {
   /* %typemap(out) char ** -> ( string ) */
@@ -638,7 +647,6 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
       PyObject *o = PyString_FromString( *stringarray );
       PyList_SetItem($result, i, o );
     }
-    CSLDestroy( $1 );
   }
 }
 

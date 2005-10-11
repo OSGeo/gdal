@@ -4,6 +4,10 @@
 
 /*
  * $Log$
+ * Revision 1.11  2005/10/11 14:11:42  kruland
+ * Fix memory bug in typemap(out) char **options.  The returned array of strings
+ * is owned by the dataset.
+ *
  * Revision 1.10  2005/10/11 01:49:07  kruland
  * Back out previous change.  It introduced a memory leak.
  *
@@ -461,7 +465,6 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
     for ( int i = 0; i < CSLCount( stringarray ); ++i, ++stringarray ) {
       av_store(av, i, newSVpv(*stringarray, strlen(*stringarray)));
     }
-    CSLDestroy( $1 );
   }
   $result = newRV_noinc((SV*)av);
   argvi++;

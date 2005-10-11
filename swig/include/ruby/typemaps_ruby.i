@@ -10,6 +10,10 @@
 
  *
  * $Log$
+ * Revision 1.4  2005/10/11 14:11:43  kruland
+ * Fix memory bug in typemap(out) char **options.  The returned array of strings
+ * is owned by the dataset.
+ *
  * Revision 1.3  2005/10/02 19:03:45  cfis
  * Changed $source (which is deprecated) to $1 in "out" and "ret" typemaps.
  *
@@ -478,7 +482,6 @@
       VALUE nm = rb_str_new2( *stringarray );
       rb_ary_push($result, nm);
     }
-    CSLDestroy( $1 );
   }
 }
 
