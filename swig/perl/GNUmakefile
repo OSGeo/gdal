@@ -26,11 +26,11 @@ generate: ${WRAPPERS}
 Makefile_gdal: Makefile.PL ${GDAL_ROOT}/GDALmake.opt
 	PREFIX=${INST_PREFIX} perl Makefile.PL
 
-build:  Makefile_gdal
+build-internal:  Makefile_gdal
 	make -f Makefile_gdal
 	make -f Makefile_gdalconst
 	make -f Makefile_ogr
 	make -f Makefile_osr
 
-install: Makefile_gdal build
+install: Makefile_gdal build-internal
 	make -f Makefile_gdal install
