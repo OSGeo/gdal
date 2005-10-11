@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.25  2005/10/11 18:59:35  fwarmerdam
+ * remove CPL_DLL attribute on EGifOpen
+ *
  * Revision 1.24  2005/10/07 20:58:43  fwarmerdam
  * Fall through to pam for getgeotransform if we don't have a world file.
  * Use VSI*L virtual file io layer allowing memory buffer access.
@@ -119,7 +122,7 @@ CPL_C_START
 void	GDALRegister_GIF(void);
 
 // This prototype seems to have been messed up!
-GifFileType CPL_DLL * EGifOpen(void* userData, OutputFunc writeFunc);
+GifFileType * EGifOpen(void* userData, OutputFunc writeFunc);
 CPL_C_END
 
 static int InterlacedOffset[] = { 0, 4, 2, 1 }; 
