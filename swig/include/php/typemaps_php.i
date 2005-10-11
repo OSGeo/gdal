@@ -375,7 +375,6 @@ OGRErrMessages( int rc ) {
     for ( int i = 0; i < len; ++i, ++stringarray ) {
       add_next_index_string( $result, *stringarray, 1 );
     }
-    CSLDestroy( $1 );
   }
 }
 
