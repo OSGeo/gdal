@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.43  2005/10/11 15:20:28  kruland
+ * Removed the unused IF_ERROR_RETURN_NONE typemap.
+ * Removed the unnecessary $result=0 from typemaps.  These lines were to correct
+ * a bug in SWIG versions <= 1.3.24.
+ *
  * Revision 1.42  2005/10/11 14:11:43  kruland
  * Fix memory bug in typemap(out) char **options.  The returned array of strings
  * is owned by the dataset.
@@ -233,37 +238,19 @@
 /*
  *
  * Define a simple return code typemap which checks if the return code from
- * the wrapped method is non-zero. If non-zero, return None.  Otherwise,
+ * the wrapped method is non-zero. If zero, return None.  Otherwise,
  * return any argout or None.
  *
  * Applied like this:
- * %apply (IF_ERR_RETURN_NONE) {CPLErr};
- * CPLErr function_to_wrap( );
- * %clear (CPLErr);
+ * %apply (IF_FALSE_RETURN_NONE) {int};
+ * int function_to_wrap( );
+ * %clear (int);
  */
-%typemap(python,out) IF_ERR_RETURN_NONE
-{
-  /* %typemap(out) IF_ERR_RETURN_NONE */
-  result = 0;
-}
-%typemap(python,ret) IF_ERR_RETURN_NONE
-{
- /* %typemap(ret) IF_ERR_RETURN_NONE */
-  if (result != 0 ) {
-    Py_XDECREF( resultobj );
-    resultobj = Py_None;
-    Py_INCREF(resultobj);
-  }
-  if (resultobj == 0) {
-    resultobj = Py_None;
-    Py_INCREF(resultobj);
-  }
-}
-%typemap(python,out) IF_FALSE_RETURN_NONE
-{
-  /* %typemap(out) IF_FALSE_RETURN_NONE */
-  $result = 0;
-}
+/*
+ * The out typemap prevents the default typemap for output integers from
+ * applying.
+ */
+%typemap(python,out) IF_FALSE_RETURN_NONE "/*%typemap(out) IF_FALSE_RETURN_NONE */"
 %typemap(python,ret) IF_FALSE_RETURN_NONE
 {
  /* %typemap(ret) IF_FALSE_RETURN_NONE */
@@ -317,7 +304,6 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
 {
   /* %typemap(in,numinputs=0) (double argout[ANY]) */
   $1 = argout;
-  $result = 0;
 }
 %typemap(python,argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double argout[ANY])
 {
@@ -330,7 +316,6 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
 {
   /* %typemap(in,numinputs=0) (double *argout[ANY]) */
   $1 = &argout;
-  $result = 0;
 }
 %typemap(python,argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double *argout[ANY])
 {
@@ -668,7 +653,6 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 {
   /* %typemap(in,numinputs=0) (char **argout) */
   $1 = &argout;
-  $result = 0;
 }
 %typemap(python,argout,fragment="t_output_helper") (char **argout)
 {
