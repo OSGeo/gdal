@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.47  2005/10/11 14:10:57  kruland
+ * Feature.SetGeomerty() should not throw but should return the OGRErr.
+ *
  * Revision 1.46  2005/10/03 20:09:58  cfis
  * Changed various methods to return bool instead of int.  These changes make the methods more natural to work with in scripting languages.
  *
@@ -667,10 +670,7 @@ public:
   }
   
   OGRErr SetGeometry(OGRGeometryShadow* geom) {
-    OGRErr err = OGR_F_SetGeometry(self, geom);
-    if (err != 0)
-      throw err;
-    return 0;
+    return OGR_F_SetGeometry(self, geom);
   }
 
 /* The feature takes over owernship of the geometry. */
