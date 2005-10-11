@@ -365,9 +365,9 @@ In C++:
 
     papszMetadata = poDriver->GetMetadata();
     if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATE, FALSE ) )
-        printf( "Driver %s supports Create() method.\n" );
+        printf( "Driver %s supports Create() method.\n", pszFormat );
     if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATECOPY, FALSE ) )
-        printf( "Driver %s supports CreateCopy() method.\n" );
+        printf( "Driver %s supports CreateCopy() method.\n", pszFormat );
 \endcode
 
 In C:
@@ -383,9 +383,9 @@ In C:
 
     papszMetadata = GDALGetMetadata( hDriver, NULL );
     if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATE, FALSE ) )
-        printf( "Driver %s supports Create() method.\n" );
+        printf( "Driver %s supports Create() method.\n", pszFormat );
     if( CSLFetchBoolean( papszMetadata, GDAL_DCAP_CREATECOPY, FALSE ) )
-        printf( "Driver %s supports CreateCopy() method.\n" );
+        printf( "Driver %s supports CreateCopy() method.\n", pszFormat );
 \endcode
 
 In Python:
