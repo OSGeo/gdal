@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/10/11 19:23:11  fwarmerdam
+ * fixed bugin DeleteLayer
+ *
  * Revision 1.29  2005/09/21 00:56:55  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -449,9 +452,11 @@ void OGROCIDataSource::DeleteLayer( const char *pszLayerName )
     }
 
     if( iLayer == nLayers )
+    {
         CPLDebug( "OCI", "DeleteLayer: %s not found in layer list." \
                   "  Layer * not* deleted.", pszLayerName );
         return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Blow away our OGR structures related to the layer.  This is     */
@@ -657,6 +662,8 @@ OGRLayer * OGROCIDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Ensure any pending stuff is flushed to the database.            */
 /* -------------------------------------------------------------------- */
     SyncToDisk();
+
+    CPLDebug( "OCI", "ExecuteSQL(%s)", pszSQLCommand );
 
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */
