@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.40  2005/10/11 11:29:09  dron
+ * Include cpl_multiproc.h for CPLCleanupTLS() function.
+ *
  * Revision 1.39  2005/09/11 17:18:33  fwarmerdam
  * added CPLCleanupTLS()
  *
@@ -147,6 +150,7 @@
 #include "ogr_srs_api.h"
 #include "cpl_string.h"
 #include "cpl_conv.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
