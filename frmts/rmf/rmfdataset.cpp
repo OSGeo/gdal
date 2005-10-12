@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/10/12 11:36:20  dron
+ * Fetch prohjection definition using the "Panorama" OSR interface.
+ *
  * Revision 1.5  2005/08/12 13:22:46  fwarmerdam
  * avoid initialization warning.
  *
@@ -87,10 +90,10 @@ typedef struct
     GUInt32     nLastTileWidth;
     GUInt32     nROIOffset;
     GUInt32     nROISize;
-    GUInt32     nClrTblOffset;
-    GUInt32     nClrTblSize;
-    GUInt32     nTileTblOffset;
-    GUInt32     nTileTblSize;
+    GUInt32     nClrTblOffset;                  // Position and size
+    GUInt32     nClrTblSize;                    // of the colour table
+    GUInt32     nTileTblOffset;                 // Position and size of the
+    GUInt32     nTileTblSize;                   // tile offsets/sizes table 
     GInt32      iMapType;
     GInt32      iProjection;
     double      dfScale;
@@ -1133,6 +1136,20 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     for( iBand = 1; iBand <= poDS->nBands; iBand++ )
         poDS->SetBand( iBand, new RMFRasterBand( poDS, iBand, eType ) );
+
+/* -------------------------------------------------------------------- */
+/*  Set up projection.                                                  */
+/* -------------------------------------------------------------------- */
+    if( poDS->sHeader.iGeorefFlag )
+    {
+        OGRSpatialReference *poSRS = new OGRSpatialReference;
+
+        poSRS->importFromPanorama( poDS->sHeader.iProjection, 1, 1, 0,
+                                   poDS->sHeader.dfStdP1,
+                                   poDS->sHeader.dfStdP2,
+                                   poDS->sHeader.dfCenterLat,
+                                   poDS->sHeader.dfCenterLong );
+    }
 
 /* -------------------------------------------------------------------- */
 /*  Set up georeferencing.                                              */
