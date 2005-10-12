@@ -21,7 +21,7 @@ LIBGDAL-$(HAVE_LD_SHARED)	+=	$(GDAL_SLIB)
 # override if we are using libtool
 LIBGDAL-$(HAVE_LIBTOOL)	:= $(LIBGDAL)
 
-default:	lib-target py-target swig-target apps-target
+default:	lib-target py-target apps-target
 
 lib-target:	check-lib;
 
