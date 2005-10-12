@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/10/12 15:35:23  fwarmerdam
+ * mark pam info clean at end of TryLoadAux
+ *
  * Revision 1.13  2005/09/27 22:12:19  fwarmerdam
  * added RAT support when cloning
  *
@@ -1061,5 +1064,10 @@ CPLErr GDALPamDataset::TryLoadAux()
 
     GDALClose( poAuxDS );
     
+/* -------------------------------------------------------------------- */
+/*      Mark PAM info as clean.                                         */
+/* -------------------------------------------------------------------- */
+    nPamFlags &= ~GPF_DIRTY;
+
     return CE_Failure;
 }
