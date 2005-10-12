@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/10/12 18:21:57  fwarmerdam
+ * use GDALClose instead of delete in case dataset opened shared
+ *
  * Revision 1.14  2005/09/26 15:52:03  fwarmerdam
  * centralized .aux opening logic
  *
@@ -101,7 +104,8 @@ GDALDefaultOverviews::~GDALDefaultOverviews()
     if( poODS != NULL )
     {
         poODS->FlushCache();
-        delete poODS;
+        GDALClose( poODS );
+        poODS = NULL;
     }
     CPLFree( pszOvrFilename );
 }
@@ -123,7 +127,8 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
 /* -------------------------------------------------------------------- */
     if( poODS != NULL )
     {
-        delete poODS;
+        GDALClose( poODS );
+        poODS = NULL;
     }
 
 /* -------------------------------------------------------------------- */
