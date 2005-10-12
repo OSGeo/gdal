@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/10/12 12:07:46  dron
+ * Remove old projection handling code.
+ *
  * Revision 1.6  2005/10/12 11:36:20  dron
  * Fetch prohjection definition using the "Panorama" OSR interface.
  *
@@ -1140,15 +1143,17 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  Set up projection.                                                  */
 /* -------------------------------------------------------------------- */
-    if( poDS->sHeader.iGeorefFlag )
+    if( poDS->sHeader.iProjection > 0 )
     {
-        OGRSpatialReference *poSRS = new OGRSpatialReference;
+        OGRSpatialReference oSRS;
 
-        poSRS->importFromPanorama( poDS->sHeader.iProjection, 1, 1, 0,
-                                   poDS->sHeader.dfStdP1,
-                                   poDS->sHeader.dfStdP2,
-                                   poDS->sHeader.dfCenterLat,
-                                   poDS->sHeader.dfCenterLong );
+        oSRS.importFromPanorama( poDS->sHeader.iProjection, 1, 1, 0,
+                                 poDS->sHeader.dfStdP1, poDS->sHeader.dfStdP2,
+                                 poDS->sHeader.dfCenterLat,
+                                 poDS->sHeader.dfCenterLong );
+        if ( poDS->pszProjection )
+            CPLFree( poDS->pszProjection );
+        oSRS.exportToWkt( &poDS->pszProjection );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1164,45 +1169,6 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->adfGeoTransform[5] = - poDS->sHeader.dfPixelSize;
         poDS->adfGeoTransform[2] = 0.0;
         poDS->adfGeoTransform[4] = 0.0;
-    }
-
-/* -------------------------------------------------------------------- */
-/*  Construct projection string.                                        */
-/* -------------------------------------------------------------------- */
-    if ( poDS->sHeader.iProjection > 0 )
-    {
-        OGRSpatialReference oSRS;
-
-        if ( !oSRS.IsLocal() )
-            oSRS.importFromEPSG( 4284 );        // Pulkovo, 1942
-
-        switch ( poDS->sHeader.iProjection )
-        {
-            case 1:
-                oSRS.SetTMVariant( "Gauss-Kruger",
-                                   poDS->sHeader.dfCenterLat,
-                                   poDS->sHeader.dfCenterLong,
-                                   1.0, 0.0, 0.0 );
-                break;
-            case 8:
-                oSRS.SetTM( poDS->sHeader.dfCenterLat,
-                            poDS->sHeader.dfCenterLong,
-                            1.0, 0.0, 0.0 );
-                break;
-            default:
-                CPLDebug( "RMF", "Unsupported projection: %d",
-                          poDS->sHeader.iProjection );
-                oSRS.SetLocalCS( CPLSPrintf("RMF projection number %d",
-                                            poDS->sHeader.iProjection ) );
-                break;
-        }
-
-        if( oSRS.IsLocal() || oSRS.IsProjected() )
-            oSRS.SetLinearUnits( SRS_UL_METER, 1.0 );
-
-        if ( poDS->pszProjection )
-            CPLFree( poDS->pszProjection );
-        oSRS.exportToWkt( &poDS->pszProjection );
     }
 
     return( poDS );
