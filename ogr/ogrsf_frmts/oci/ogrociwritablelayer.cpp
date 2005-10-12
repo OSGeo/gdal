@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/10/12 15:09:13  fwarmerdam
+ * Added support for OCI_DEFAULT_DIM to control default table dimension.
+ *
  * Revision 1.5  2005/08/10 21:15:03  hobu
  * Use VARCHAR2 for OFTString fields
  *
@@ -61,7 +64,7 @@ CPL_CVSID("$Id$");
 OGROCIWritableLayer::OGROCIWritableLayer()
 
 {
-    nDimension = 3;
+    nDimension = MAX(2,MIN(3,atoi(CPLGetConfigOption("OCI_DEFAULT_DIM","3"))));
     nSRID = -1;
 
     nOrdinalCount = 0;
