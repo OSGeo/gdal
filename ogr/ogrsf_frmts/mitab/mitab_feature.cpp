@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.60 2005/10/07 21:22:33 dmorissette Exp $
+ * $Id: mitab_feature.cpp,v 1.61 2005/10/12 19:13:30 jlacroix Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.61  2005/10/12 19:13:30  jlacroix
+ * bug1012 Make sure Style Units are set when seting a feature from StyleString
+ *
  * Revision 1.60  2005/10/07 21:22:33  dmorissette
  * Clone region/pline/mpoint components in TABCollection::CloneTABFeature()
  *
@@ -7506,6 +7509,16 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
 
     OGRStylePen *poPenStyle = (OGRStylePen*)poStylePart;
 
+    // With Pen, we always want to output points or pixels (which are the same,
+    // so just use points).
+    //
+    // It's very important to set the output unit of the feature.
+    // The default value is meter. If we don't do it all numerical values 
+    // will be assumed to be converted from the input unit to meter when we 
+    // will get them via GetParam...() functions.
+    // See OGRStyleTool::Parse() for more details.
+    poPenStyle->SetUnit(OGRSTUPoints, 1);
+
     // Get the Pen Id or pattern
     pszPenName = poPenStyle->Id(bIsNull);
     if (bIsNull) pszPenName = NULL;
@@ -7980,6 +7993,15 @@ void ITABFeatureSymbol::SetSymbolFromStyleString(const char *pszStyleString)
         return;
 
     OGRStyleSymbol *poSymbolStyle = (OGRStyleSymbol*)poStylePart;
+
+    // With Symbol, we always want to output points
+    //
+    // It's very important to set the output unit of the feature.
+    // The default value is meter. If we don't do it all numerical values 
+    // will be assumed to be converted from the input unit to meter when we 
+    // will get them via GetParam...() functions.
+    // See OGRStyleTool::Parse() for more details.
+    poSymbolStyle->SetUnit(OGRSTUPoints, (72.0 * 39.37));
 
     // Set the Symbol Id (SymbolNo)
     pszSymbolId = poSymbolStyle->Id(bIsNull);
