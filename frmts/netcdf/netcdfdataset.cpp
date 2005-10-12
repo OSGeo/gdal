@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.21  2005/10/12 20:14:30  fwarmerdam
+ * Use SetMetadataItem() for bands.
+ *
  * Revision 1.20  2005/08/29 16:26:41  hobu
  * move the declaration up instead of having it
  * inlined so it is easy to find
@@ -270,9 +273,7 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
 
     sprintf( szMetaName,"NETCDF_VARNAME");
     sprintf( szMetaTemp,"%s",szVarName);
-    papszMetadata = CSLSetNameValue(papszMetadata, 
-				    szMetaName, 
-				    szMetaTemp);
+    SetMetadataItem( szMetaName, szMetaTemp );
     if( nd == 3 ) {
 	Sum *= panBandZLev[0];
     }
@@ -350,9 +351,7 @@ CPLErr netCDFRasterBand::CreateBandMetadata( )
 	else
 	    sprintf( szMetaTemp,"%d", result+1);
 	
-	papszMetadata = CSLSetNameValue(papszMetadata, 
-					szMetaName, 
-					szMetaTemp);
+        SetMetadataItem( szMetaName, szMetaTemp );
 	Taken += result * Sum;
     }
     
