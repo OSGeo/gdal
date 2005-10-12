@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/10/12 19:16:59  jlacroix
+ * Add comment in the OGRStyleTool::Parse function
+ *
  * Revision 1.13  2004/12/02 18:24:12  fwarmerdam
  * added support for fontname on symbol, per bug 684
  *
@@ -915,8 +918,8 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
 {
     int i,j;
 
-    char **papszToken;
-    char **papszToken2; 
+    char **papszToken; // Token to contains StyleString Type and content
+    char **papszToken2; // Token that will contains StyleString elements
 
 
     OGRSTUnitId  eLastUnit;
@@ -929,6 +932,8 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
     if (m_pszStyleString == NULL)
       return FALSE;
     
+    // Tokenize the String to get the Type and the content
+    // Example: Type(elem1:val2,elem2:val2)
     papszToken  = CSLTokenizeString2(m_pszStyleString,"()",
                                      CSLT_HONOURSTRINGS
                                      | CSLT_PRESERVEQUOTES
@@ -942,7 +947,7 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
         return FALSE;
     }
     
-    
+    // Tokenize the content of the StyleString to get every component in it.
     papszToken2 = CSLTokenizeString2(papszToken[1],":,",
                                      CSLT_HONOURSTRINGS 
                                      | CSLT_ALLOWEMPTYTOKENS );
@@ -956,6 +961,7 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
         return FALSE;
     }
     
+    // Valid that we have the right StyleString for this feature type.
     switch (GetType())
     {
       case OGRSTCPen:
@@ -1012,6 +1018,26 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
     }
     
     i=0;
+
+    ////////////////////////////////////////////////////////////////////////
+    // Here we will loop on each element in the StyleString. If it's 
+    // a valid element, we will add it in the StyleTool with 
+    // SetParamStr().
+    //
+    // It's important to note that the SetInternalUnit...() is use to update 
+    // the unit of the StyleTool param (m_eUnit). 
+    // See OGRStyleTool::SetParamStr().
+    // There's a StyleTool unit (m_eUnit), which is the output unit, and each 
+    // parameter of the style have its own unit value (the input unit). Here we
+    // set m_eUnit to the input unit and in SetParamStr(), we will use thi 
+    // value to set the input unit. Then after the loop we will reset m_eUnit 
+    // to it's original value. (Yes it's a side effect / black magic)
+    //
+    // The pasStyle variable is a global variable passed in argument to the
+    // function. See at the top of this file the four OGRStyleParamId 
+    // variable. They are used to register the valid parameter of each 
+    // StyleTool.
+    ////////////////////////////////////////////////////////////////////////
 
     // Save Scale and output Units because the parsing code will alter 
     // the values
