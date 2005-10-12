@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.66  2005/10/12 18:22:39  fwarmerdam
+ * ensure bNoRegen is initialized
+ *
  * Revision 1.65  2005/10/05 20:39:10  fwarmerdam
  * ensure HFADataset::GetMetadataItem() overridden even if PAM active
  *
@@ -1032,7 +1035,7 @@ CPLErr HFARasterBand::BuildOverviews( const char *pszResampling,
 {
     int iOverview;
     GDALRasterBand **papoOvBands;
-    int bNoRegen;
+    int bNoRegen = FALSE;
     
     if( nThisOverview != -1 )
     {
