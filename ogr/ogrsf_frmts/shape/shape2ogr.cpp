@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2005/10/12 14:50:28  fwarmerdam
+ * recover gracefully from POLYGON EMPTY on write
+ *
  * Revision 1.38  2005/09/30 23:53:35  mbrudka
  * Fixed bug 940: http://bugzilla.remotesensing.org/show_bug.cgi?id=940
  *
@@ -940,14 +943,23 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
         {
             poPoly =  (OGRPolygon *) poGeom;
 
-            nRings = poPoly->getNumInteriorRings()+1;
-            papoRings = (OGRLinearRing **) CPLMalloc(sizeof(void*)*nRings);
-            for( iRing = 0; iRing < nRings; iRing++ )
+            if( poPoly->getExteriorRing() == NULL )
             {
-                if( iRing == 0 )
-                    papoRings[iRing] = poPoly->getExteriorRing();
-                else
-                    papoRings[iRing] = poPoly->getInteriorRing( iRing-1 );
+                CPLDebug( "OGR", 
+                          "Ignore POLYGON EMPTY in shapefile writer." );
+                nRings = 0;
+            }
+            else
+            {
+                nRings = poPoly->getNumInteriorRings()+1;
+                papoRings = (OGRLinearRing **) CPLMalloc(sizeof(void*)*nRings);
+                for( iRing = 0; iRing < nRings; iRing++ )
+                {
+                    if( iRing == 0 )
+                        papoRings[iRing] = poPoly->getExteriorRing();
+                    else
+                        papoRings[iRing] = poPoly->getInteriorRing( iRing-1 );
+                }
             }
         }
         else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon
@@ -971,6 +983,13 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
                               poGeom->getGeometryName() );
 
                     return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+                }
+
+                if( poPoly->getExteriorRing() == NULL )
+                {
+                    CPLDebug( "OGR", 
+                              "Ignore POLYGON EMPTY in shapefile writer." );
+                    continue;
                 }
 
                 papoRings = (OGRLinearRing **) CPLRealloc(papoRings, 
@@ -998,6 +1017,20 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom )
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
 
+/* -------------------------------------------------------------------- */
+/*      If we only had emptypolygons or unacceptable geometries         */
+/*      write NULL geometry object.                                     */
+/* -------------------------------------------------------------------- */
+        if( nRings == 0 )
+        {
+            SHPObject       *psShape;
+            
+            psShape = SHPCreateSimpleObject( SHPT_NULL, 0, NULL, NULL, NULL );
+            SHPWriteObject( hSHP, iShape, psShape );
+            SHPDestroyObject( psShape );
+            return OGRERR_NONE;
+        }
+        
         /* count vertices */
         nVertex = 0;
         for( iRing = 0; iRing < nRings; iRing++ )
