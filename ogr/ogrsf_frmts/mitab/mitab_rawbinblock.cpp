@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_rawbinblock.cpp,v 1.7 2004/12/01 18:25:03 dmorissette Exp $
+ * $Id: mitab_rawbinblock.cpp,v 1.8 2005/10/06 19:15:31 dmorissette Exp $
  *
  * Name:     mitab_rawbinblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_rawbinblock.cpp,v $
+ * Revision 1.8  2005/10/06 19:15:31  dmorissette
+ * Collections: added support for reading/writing pen/brush/symbol ids and
+ * for writing collection objects to .TAB/.MAP (bug 1126)
+ *
  * Revision 1.7  2004/12/01 18:25:03  dmorissette
  * Fixed potential memory leaks in error conditions (bug 881)
  *
@@ -425,10 +429,15 @@ int     TABRawBinBlock::GotoByteRel(int nOffset)
  * In write mode, the current block may automagically be committed to 
  * disk and a new block initialized if necessary.
  *
+ * bForceReadFromFile is used in write mode to read the new block data from
+ * file instead of creating an empty block. (Useful for TABCollection
+ * or other cases that need to do random access in the file in write mode.)
+ *
  * Returns 0 if succesful or -1 if an error happened, in which case 
  * CPLError() will have been called.
  **********************************************************************/
-int     TABRawBinBlock::GotoByteInFile(int nOffset)
+int     TABRawBinBlock::GotoByteInFile(int nOffset, 
+                                       GBool bForceReadFromFile /*=FALSE*/)
 {
     int nNewBlockPtr;
 
@@ -455,7 +464,27 @@ int     TABRawBinBlock::GotoByteInFile(int nOffset)
     {
         if ( (nOffset<m_nFileOffset || nOffset>=m_nFileOffset+m_nBlockSize) &&
              (CommitToFile() != 0 ||
-              InitNewBlock(m_fp, m_nBlockSize, nNewBlockPtr) != 0)  )
+              InitNewBlock(m_fp, m_nBlockSize, nNewBlockPtr) != 0 ) )
+        {
+            // Failed reading new block... error has already been reported.
+            return -1;
+        }
+    }
+    else if (m_eAccess == TABReadWrite)
+    {
+        // TODO: THIS IS NOT REAL read/write access (it's more extended write)
+        // Currently we try to read from file only if explicitly requested.
+        // If we ever want true read/write mode we should implement
+        // more smarts to detect whether the caller wants an existing block to
+        // be read, or a new one to be created from scratch.
+        // CommitToFile() should only be called only if something changed.
+        //
+        if ( (nOffset<m_nFileOffset || nOffset>=m_nFileOffset+m_nBlockSize) &&
+             (CommitToFile() != 0 ||
+              (!bForceReadFromFile && 
+               InitNewBlock(m_fp, m_nBlockSize, nNewBlockPtr) != 0) ||
+              (bForceReadFromFile &&
+               ReadFromFile(m_fp, nNewBlockPtr, m_nBlockSize) != 0) )  )
         {
             // Failed reading new block... error has already been reported.
             return -1;
@@ -847,6 +876,55 @@ void TABRawBinBlock::Dump(FILE *fpOut /*=NULL*/)
 }
 
 #endif // DEBUG
+
+
+/**********************************************************************
+ *                          DumpBytes()
+ *
+ * Read and dump the contents of an Binary file.
+ **********************************************************************/
+void TABRawBinBlock::DumpBytes(GInt32 nValue, int nOffset /*=0*/,
+                               FILE *fpOut /*=NULL*/)
+{
+    GInt32      anVal[2];
+    GInt16      *pn16Val1, *pn16Val2;
+    float       *pfValue;
+    char        *pcValue;
+    double      *pdValue;
+
+
+    pfValue = (float*)(&nValue);
+    pcValue = (char*)(&nValue);
+    pdValue = (double*)anVal;
+
+    pn16Val1 = (GInt16*)(pcValue+2);
+    pn16Val2 = (GInt16*)(pcValue);
+
+    anVal[0] = anVal[1] = 0;
+
+    /* For double precision values, we only use the first half 
+     * of the height bytes... and leave the other 4 bytes as zeros!
+     * It's a bit of a hack, but it seems to be enough for the 
+     * precision of the values we print!
+     */
+#ifdef CPL_MSB
+    anVal[0] = nValue;
+#else
+    anVal[1] = nValue;
+#endif
+
+    if (fpOut == NULL)
+        fpOut = stdout;
+
+    fprintf(fpOut, "%d\t0x%8.8x  %-5d\t%-6d %-6d %5.3e  d=%5.3e",
+                    nOffset, nValue, nValue,
+                    *pn16Val1, *pn16Val2, *pfValue, *pdValue);
+
+    printf("\t[%c%c%c%c]\n", isprint(pcValue[0])?pcValue[0]:'.',
+                             isprint(pcValue[1])?pcValue[1]:'.',
+                             isprint(pcValue[2])?pcValue[2]:'.',
+                             isprint(pcValue[3])?pcValue[3]:'.');
+}
 
 
 

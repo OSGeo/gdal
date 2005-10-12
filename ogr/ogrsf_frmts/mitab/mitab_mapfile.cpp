@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapfile.cpp,v 1.31 2004/09/22 13:07:58 fwarmerdam Exp $
+ * $Id: mitab_mapfile.cpp,v 1.32 2005/10/06 19:15:31 dmorissette Exp $
  *
  * Name:     mitab_mapfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_mapfile.cpp,v $
+ * Revision 1.32  2005/10/06 19:15:31  dmorissette
+ * Collections: added support for reading/writing pen/brush/symbol ids and
+ * for writing collection objects to .TAB/.MAP (bug 1126)
+ *
  * Revision 1.31  2004/09/22 13:07:58  fwarmerdam
  * fixed return value in LoadNextMatchingObjectBlock() per rso bug 615
  *
@@ -928,63 +932,26 @@ int   TABMAPFile::MoveToObjId(int nObjId)
 }
 
 /**********************************************************************
- *                   TABMAPFile::PrepareNewObj()
+ *                   TABMAPFile::UpdateMapHeaderInfo()
  *
- * Get ready to write a new object of the specified type and with the 
- * specified id.  
+ * Update .map header information (counter of objects by type and minimum
+ * required version) in light of a new object to be written to the file.
  *
- * m_poCurObjBlock will be set to be ready to receive the new object, and
- * a new block will be created if necessary (in which case the current 
- * block contents will be committed to disk, etc.)  The object type and 
- * row ID will be written to the m_poCurObjBlock, so it will be ready to
- * receive the first byte of data for this map object.  
- *
- * If this object type uses coordinate blocks, then the coordinate block
- * will be prepared to receive coordinates.
- *
- * This function will also take care of updating the .ID index entry for
- * the new object.
- *
- * Note that object ids are positive and start at 1.
- *
- * Returns 0 on success, -1 on error.
+ * Called only by PrepareNewObj() and by the TABCollection class.
  **********************************************************************/
-int   TABMAPFile::PrepareNewObj(int nObjId, GByte nObjType)
+void  TABMAPFile::UpdateMapHeaderInfo(GByte nObjType)
 {
-    int nObjSize;
-
-    m_nCurObjPtr = m_nCurObjId = m_nCurObjType = -1;
-
-    if (m_eAccessMode != TABWrite || 
-        m_poIdIndex == NULL || m_poHeader == NULL)
-    {
-        CPLError(CE_Failure, CPLE_AssertionFailed,
-                 "PrepareNewObj() failed: file not opened for write access.");
-        return -1;
-    }
-
-    /*-----------------------------------------------------------------
-     * For objects with no geometry, we just update the .ID file and return
-     *----------------------------------------------------------------*/
-    if (nObjType == TAB_GEOM_NONE)
-    {
-        m_nCurObjType = nObjType;
-        m_nCurObjId   = nObjId;
-        m_nCurObjPtr  = 0;
-        m_poIdIndex->SetObjPtr(m_nCurObjId, 0);
-
-        return 0;
-    }
-
     /*-----------------------------------------------------------------
      * Update count of objects by type in the header block
      *----------------------------------------------------------------*/
     if (nObjType == TAB_GEOM_SYMBOL ||
         nObjType == TAB_GEOM_FONTSYMBOL ||
         nObjType == TAB_GEOM_CUSTOMSYMBOL ||
+        nObjType == TAB_GEOM_MULTIPOINT ||
         nObjType == TAB_GEOM_SYMBOL_C ||
         nObjType == TAB_GEOM_FONTSYMBOL_C ||
-        nObjType == TAB_GEOM_CUSTOMSYMBOL_C)
+        nObjType == TAB_GEOM_CUSTOMSYMBOL_C ||
+        nObjType == TAB_GEOM_MULTIPOINT_C )
     {
         m_poHeader->m_numPointObjects++;
     }
@@ -1042,6 +1009,63 @@ int   TABMAPFile::PrepareNewObj(int nObjId, GByte nObjType)
     {
         m_nMinTABVersion = 650;
     }
+
+}
+
+/**********************************************************************
+ *                   TABMAPFile::PrepareNewObj()
+ *
+ * Get ready to write a new object of the specified type and with the 
+ * specified id.  
+ *
+ * m_poCurObjBlock will be set to be ready to receive the new object, and
+ * a new block will be created if necessary (in which case the current 
+ * block contents will be committed to disk, etc.)  The object type and 
+ * row ID will be written to the m_poCurObjBlock, so it will be ready to
+ * receive the first byte of data for this map object.  
+ *
+ * If this object type uses coordinate blocks, then the coordinate block
+ * will be prepared to receive coordinates.
+ *
+ * This function will also take care of updating the .ID index entry for
+ * the new object.
+ *
+ * Note that object ids are positive and start at 1.
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int   TABMAPFile::PrepareNewObj(int nObjId, GByte nObjType)
+{
+    int nObjSize;
+
+    m_nCurObjPtr = m_nCurObjId = m_nCurObjType = -1;
+
+    if (m_eAccessMode != TABWrite || 
+        m_poIdIndex == NULL || m_poHeader == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AssertionFailed,
+                 "PrepareNewObj() failed: file not opened for write access.");
+        return -1;
+    }
+
+    /*-----------------------------------------------------------------
+     * For objects with no geometry, we just update the .ID file and return
+     *----------------------------------------------------------------*/
+    if (nObjType == TAB_GEOM_NONE)
+    {
+        m_nCurObjType = nObjType;
+        m_nCurObjId   = nObjId;
+        m_nCurObjPtr  = 0;
+        m_poIdIndex->SetObjPtr(m_nCurObjId, 0);
+
+        return 0;
+    }
+
+    /*-----------------------------------------------------------------
+     * Update count of objects by type in the header block and minimum
+     * required version.
+     *----------------------------------------------------------------*/
+    UpdateMapHeaderInfo(nObjType);
 
     /*-----------------------------------------------------------------
      * OK, looks like we will need object block... check if it exists and
@@ -1108,12 +1132,16 @@ int   TABMAPFile::PrepareNewObj(int nObjId, GByte nObjType)
     /*-----------------------------------------------------------------
      * Prepare Coords block... 
      * create a new TABMAPCoordBlock if it was not done yet.
+     * Note that in write mode, TABCollections require read/write access
+     * to the coord block.
      *----------------------------------------------------------------*/
     if (m_poHeader->MapObjectUsesCoordBlock(m_nCurObjType))
     {
         if (m_poCurCoordBlock == NULL)
         {
-            m_poCurCoordBlock = new TABMAPCoordBlock(m_eAccessMode);
+            m_poCurCoordBlock = new TABMAPCoordBlock(m_eAccessMode==TABWrite?
+                                                     TABReadWrite: 
+                                                     m_eAccessMode);
             m_poCurCoordBlock->InitNewBlock(m_fp, 512, 
                                             m_oBlockManager.AllocNewBlock());
             m_poCurCoordBlock->SetMAPBlockManagerRef(&m_oBlockManager);

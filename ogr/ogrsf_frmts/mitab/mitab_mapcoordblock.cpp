@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapcoordblock.cpp,v 1.13 2004/06/30 20:29:04 dmorissette Exp $
+ * $Id: mitab_mapcoordblock.cpp,v 1.14 2005/10/06 19:15:31 dmorissette Exp $
  *
  * Name:     mitab_mapcoordblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,10 @@
  **********************************************************************
  *
  * $Log: mitab_mapcoordblock.cpp,v $
+ * Revision 1.14  2005/10/06 19:15:31  dmorissette
+ * Collections: added support for reading/writing pen/brush/symbol ids and
+ * for writing collection objects to .TAB/.MAP (bug 1126)
+ *
  * Revision 1.13  2004/06/30 20:29:04  dmorissette
  * Fixed refs to old address danmo@videotron.ca
  *
@@ -160,6 +164,9 @@ int     TABMAPCoordBlock::InitBlockFromData(GByte *pabyBuf, int nSize,
     m_numDataBytes = ReadInt16();       /* Excluding 8 bytes header */
 
     m_nNextCoordBlock = ReadInt32();
+
+    // Set the real SizeUsed based on numDataBytes
+    m_nSizeUsed = m_numDataBytes + MAP_COORD_HEADER_SIZE;
 
     /*-----------------------------------------------------------------
      * The read ptr is now located at the beginning of the data part.
@@ -436,6 +443,9 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
         /*-------------------------------------------------------------
          * Read the coord. section header blocks
          *------------------------------------------------------------*/
+#ifdef TABDUMP
+        int nHdrAddress = GetCurAddress();
+#endif
         if (bV450Hdr)
             pasHdrs[i].numVertices = ReadInt32();
         else
@@ -454,10 +464,11 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
         pasHdrs[i].nVertexOffset = (pasHdrs[i].nDataOffset - 
                                     nTotalHdrSizeUncompressed ) / 8;
 #ifdef TABDUMP
-        printf("pasHdrs[%d] = { numVertices = %d, numHoles = %d, \n"
+        printf("READING pasHdrs[%d] @ %d = \n"
+               "              { numVertices = %d, numHoles = %d, \n"
                "                nXMin=%d, nYMin=%d, nXMax=%d, nYMax=%d,\n"
                "                nDataOffset=%d, nVertexOffset=%d }\n",
-               i, pasHdrs[i].numVertices, pasHdrs[i].numHoles, 
+               i, nHdrAddress, pasHdrs[i].numVertices, pasHdrs[i].numHoles, 
                pasHdrs[i].nXMin, pasHdrs[i].nYMin, pasHdrs[i].nXMax, 
                pasHdrs[i].nYMax, pasHdrs[i].nDataOffset, 
                pasHdrs[i].nVertexOffset);
@@ -518,6 +529,21 @@ int     TABMAPCoordBlock::WriteCoordSecHdrs(GBool bV450Hdr,
         /*-------------------------------------------------------------
          * Write the coord. section header blocks
          *------------------------------------------------------------*/
+#ifdef TABDUMP
+        printf("WRITING pasHdrs[%d] @ %d = \n"
+               "              { numVertices = %d, numHoles = %d, \n"
+               "                nXMin=%d, nYMin=%d, nXMax=%d, nYMax=%d,\n"
+               "                nDataOffset=%d, nVertexOffset=%d }\n",
+               i, GetCurAddress(), pasHdrs[i].numVertices, pasHdrs[i].numHoles, 
+               pasHdrs[i].nXMin, pasHdrs[i].nYMin, pasHdrs[i].nXMax, 
+               pasHdrs[i].nYMax, pasHdrs[i].nDataOffset, 
+               pasHdrs[i].nVertexOffset);
+        printf("                dX = %d, dY = %d  (center = %d , %d)\n",
+               pasHdrs[i].nXMax - pasHdrs[i].nXMin,
+               pasHdrs[i].nYMax - pasHdrs[i].nYMin,
+               m_nComprOrgX, m_nComprOrgY);
+#endif
+
         if (bV450Hdr)
             WriteInt32(pasHdrs[i].numVertices);
         else
@@ -680,8 +706,14 @@ int     TABMAPCoordBlock::ReadBytes(int numBytes, GByte *pabyDstBuf)
  **********************************************************************/
 int  TABMAPCoordBlock::WriteBytes(int nBytesToWrite, GByte *pabySrcBuf)
 {
-    if (m_eAccess == TABWrite && m_poBlockManagerRef &&
-        (m_nBlockSize - m_nCurPos) < nBytesToWrite)
+    if (m_eAccess != TABWrite && m_eAccess != TABReadWrite )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "WriteBytes(): Block does not support write operations.");
+        return -1;
+    }
+
+    if (m_poBlockManagerRef && (m_nBlockSize - m_nCurPos) < nBytesToWrite)
     {
         if (nBytesToWrite <= (m_nBlockSize-MAP_COORD_HEADER_SIZE))
         {

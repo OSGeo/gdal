@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.56 2004/09/17 19:26:23 fwarmerdam Exp $
+ * $Id: mitab_tabfile.cpp,v 1.57 2005/10/04 15:44:31 dmorissette Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,11 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.57  2005/10/04 15:44:31  dmorissette
+ * First round of support for Collection objects. Currently supports reading
+ * from .TAB/.MAP and writing to .MIF. Still lacks symbol support and write
+ * support. (Based in part on patch and docs from Jim Hope, bug 1126)
+ *
  * Revision 1.56  2004/09/17 19:26:23  fwarmerdam
  * Several fixes in error/failure cases in TABFile::Open() care of
  * Stephen Cheesman of GeoSoft.
@@ -1309,6 +1314,10 @@ TABFeature *TABFile::GetFeatureRef(int nFeatureId)
       case TAB_GEOM_MULTIPOINT_C:
       case TAB_GEOM_MULTIPOINT:
         m_poCurFeature = new TABMultiPoint(m_poDefn);
+        break;
+      case TAB_GEOM_COLLECTION_C:
+      case TAB_GEOM_COLLECTION:
+        m_poCurFeature = new TABCollection(m_poDefn);  
         break;
       default:
         /*-------------------------------------------------------------

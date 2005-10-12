@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapobjectblock.cpp,v 1.13 2004/06/30 20:29:04 dmorissette Exp $
+ * $Id: mitab_mapobjectblock.cpp,v 1.15 2005/10/06 19:15:31 dmorissette Exp $
  *
  * Name:     mitab_mapobjectblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,15 @@
  **********************************************************************
  *
  * $Log: mitab_mapobjectblock.cpp,v $
+ * Revision 1.15  2005/10/06 19:15:31  dmorissette
+ * Collections: added support for reading/writing pen/brush/symbol ids and
+ * for writing collection objects to .TAB/.MAP (bug 1126)
+ *
+ * Revision 1.14  2005/10/04 15:44:31  dmorissette
+ * First round of support for Collection objects. Currently supports reading
+ * from .TAB/.MAP and writing to .MIF. Still lacks symbol support and write
+ * support. (Based in part on patch and docs from Jim Hope, bug 1126)
+ *
  * Revision 1.13  2004/06/30 20:29:04  dmorissette
  * Fixed refs to old address danmo@videotron.ca
  *
@@ -694,6 +703,10 @@ TABMAPObjHdr *TABMAPObjHdr::NewObj(GByte nNewObjType, GInt32 nId /*=0*/)
       case TAB_GEOM_MULTIPOINT:
         poObj = new TABMAPObjMultiPoint;
         break;
+      case TAB_GEOM_COLLECTION_C:
+      case TAB_GEOM_COLLECTION:
+        poObj = new TABMAPObjCollection();
+    break;
       default:
         CPLError(CE_Failure, CPLE_AssertionFailed, 
                  "TABMAPObjHdr::NewObj(): Unsupported object type %d",
@@ -1488,3 +1501,180 @@ int TABMAPObjMultiPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
     return 0;
 }
 
+/**********************************************************************
+ *                   class TABMAPObjCollection
+ *
+ **********************************************************************/
+
+/**********************************************************************
+ *                   TABMAPObjCollection::ReadObj()
+ *
+ * Read Object information starting after the object id which should 
+ * have been read by TABMAPObjHdr::ReadNextObj() already.
+ * This function should be called only by TABMAPObjHdr::ReadNextObj().
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
+{
+    const int SIZE_OF_PLINE_HDR = 24;
+    const int SIZE_OF_REGION_HDR = 24;
+//    const int SIZE_OF_MULTI_PT_HDR = 24;
+  
+    m_nCoordBlockPtr = poObjBlock->ReadInt32();    // pointer into coord block
+    m_nNumMultiPoints = poObjBlock->ReadInt32();   // no. points in multi point
+    m_nRegionDataSize = poObjBlock->ReadInt32();   // size of region data inc. section hdrs
+    m_nPolylineDataSize = poObjBlock->ReadInt32(); // size of multipline data inc. section hdrs
+    m_nNumRegSections = poObjBlock->ReadInt16();   // Num Region section headers
+    m_nNumPLineSections = poObjBlock->ReadInt16(); // Num Pline section headers
+
+    if (IsCompressedType())
+    {
+        m_nMPointDataSize = m_nNumMultiPoints * 2 * 2;
+    }
+    else
+    {
+        m_nMPointDataSize = m_nNumMultiPoints * 2 * 4;
+    }
+    /* NB. The Region and Pline section headers are supposed to be extended
+     * by 2 bytes to align with a 4 byte boundary.  This extension is included
+     * in the Region and Polyline data sizes read above. In reality the 
+     * extension is nowhere to be found so the actual data sizes are
+     * two bytes shorter per section header.
+     */
+    m_nTotalRegDataSize = 0;
+    if(m_nNumRegSections > 0)
+    {
+        m_nTotalRegDataSize = SIZE_OF_REGION_HDR + m_nRegionDataSize - 
+                           (2 * m_nNumRegSections);
+    }
+    m_nTotalPolyDataSize = 0;
+    if(m_nNumPLineSections > 0)
+    {
+        m_nTotalPolyDataSize = SIZE_OF_PLINE_HDR + m_nPolylineDataSize - 
+                            (2 * m_nNumPLineSections);
+    }
+
+#ifdef TABDUMP
+    printf("COLLECTION: id=%d, type=%d (0x%x), "
+           "CoordBlockPtr=%d, numRegionSections=%d, "
+           "numPlineSections=%d, numPoints=%d\n",
+           m_nId, m_nType, m_nType, m_nCoordBlockPtr, 
+           m_nNumRegSections, m_nNumPLineSections, m_nNumMultiPoints);
+#endif
+
+    // ??? All zeros ???
+    poObjBlock->ReadInt32();
+    poObjBlock->ReadInt32();
+    poObjBlock->ReadInt32();
+    poObjBlock->ReadByte();
+    poObjBlock->ReadByte();
+    poObjBlock->ReadByte();
+
+    m_nMultiPointSymbolId = poObjBlock->ReadByte();
+
+    poObjBlock->ReadByte();  // ???
+    m_nRegionPenId = poObjBlock->ReadByte();
+    m_nPolylinePenId = poObjBlock->ReadByte();
+    m_nRegionBrushId = poObjBlock->ReadByte();
+
+    if (IsCompressedType())
+    {
+#ifdef TABDUMP
+    printf("COLLECTION: READING ComprOrg @ %d\n",
+           poObjBlock->GetCurAddress());
+#endif
+        // Compressed coordinate origin
+        m_nComprOrgX = poObjBlock->ReadInt32();
+        m_nComprOrgY = poObjBlock->ReadInt32();
+
+        m_nMinX = m_nComprOrgX + poObjBlock->ReadInt16();  // Read MBR
+        m_nMinY = m_nComprOrgY + poObjBlock->ReadInt16();
+        m_nMaxX = m_nComprOrgX + poObjBlock->ReadInt16();
+        m_nMaxY = m_nComprOrgY + poObjBlock->ReadInt16();
+#ifdef TABDUMP
+    printf("COLLECTION: ComprOrgX,Y= (%d,%d)\n",
+           m_nComprOrgX, m_nComprOrgY);
+#endif
+    }
+    else
+    {
+        m_nMinX = poObjBlock->ReadInt32();    // Read MBR
+        m_nMinY = poObjBlock->ReadInt32();
+        m_nMaxX = poObjBlock->ReadInt32();
+        m_nMaxY = poObjBlock->ReadInt32();
+
+        // Init. Compr. Origin to a default value in case type is ever changed
+        m_nComprOrgX = (m_nMinX + m_nMaxX) / 2;
+        m_nComprOrgY = (m_nMinY + m_nMaxY) / 2;
+    }
+
+    if (CPLGetLastErrorNo() != 0)
+        return -1;
+
+    return 0;
+}
+
+
+/**********************************************************************
+ *                   TABMAPObjCollection::WriteObj()
+ *
+ * Write Object information with the type+object id
+ *
+ * Returns 0 on success, -1 on error.
+ **********************************************************************/
+int TABMAPObjCollection::WriteObj(TABMAPObjectBlock *poObjBlock)
+{
+    // Write object type and id
+    TABMAPObjHdr::WriteObjTypeAndId(poObjBlock);
+
+    poObjBlock->WriteInt32(m_nCoordBlockPtr);    // pointer into coord block
+    poObjBlock->WriteInt32(m_nNumMultiPoints);   // no. points in multi point
+    poObjBlock->WriteInt32(m_nRegionDataSize);   // size of region data inc. section hdrs
+    poObjBlock->WriteInt32(m_nPolylineDataSize); // size of Mpolyline data inc. sction hdrs
+    poObjBlock->WriteInt16(m_nNumRegSections);   // Num Region section headers
+    poObjBlock->WriteInt16(m_nNumPLineSections); // Num Pline section headers
+
+    // Unknown data ?????
+    poObjBlock->WriteInt32(0);
+    poObjBlock->WriteInt32(0);
+    poObjBlock->WriteInt32(0);
+    poObjBlock->WriteByte(0);
+    poObjBlock->WriteByte(0);
+    poObjBlock->WriteByte(0);
+
+    poObjBlock->WriteByte(m_nMultiPointSymbolId);
+
+    poObjBlock->WriteByte(0);
+    poObjBlock->WriteByte(m_nRegionPenId);
+    poObjBlock->WriteByte(m_nPolylinePenId);
+    poObjBlock->WriteByte(m_nRegionBrushId);
+
+    if (IsCompressedType())
+    {
+#ifdef TABDUMP
+    printf("COLLECTION: WRITING ComprOrgX,Y= (%d,%d) @ %d\n",
+           m_nComprOrgX, m_nComprOrgY, poObjBlock->GetCurAddress());
+#endif
+        // Compressed coordinate origin
+        poObjBlock->WriteInt32(m_nComprOrgX);
+        poObjBlock->WriteInt32(m_nComprOrgY);
+
+        poObjBlock->WriteInt16(m_nMinX - m_nComprOrgX);  // MBR
+        poObjBlock->WriteInt16(m_nMinY - m_nComprOrgY);
+        poObjBlock->WriteInt16(m_nMaxX - m_nComprOrgX);
+        poObjBlock->WriteInt16(m_nMaxY - m_nComprOrgY);
+    }
+    else
+    {
+        poObjBlock->WriteInt32(m_nMinX);    // MBR
+        poObjBlock->WriteInt32(m_nMinY);
+        poObjBlock->WriteInt32(m_nMaxX);
+        poObjBlock->WriteInt32(m_nMaxY);
+    }
+
+    if (CPLGetLastErrorNo() != 0)
+        return -1;
+
+    return 0;
+}

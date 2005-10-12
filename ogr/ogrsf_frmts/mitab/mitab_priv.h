@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_priv.h,v 1.38 2005/03/22 23:24:54 dmorissette Exp $
+ * $Id: mitab_priv.h,v 1.40 2005/10/06 19:15:31 dmorissette Exp $
  *
  * Name:     mitab_priv.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,15 @@
  **********************************************************************
  *
  * $Log: mitab_priv.h,v $
+ * Revision 1.40  2005/10/06 19:15:31  dmorissette
+ * Collections: added support for reading/writing pen/brush/symbol ids and
+ * for writing collection objects to .TAB/.MAP (bug 1126)
+ *
+ * Revision 1.39  2005/10/04 15:44:31  dmorissette
+ * First round of support for Collection objects. Currently supports reading
+ * from .TAB/.MAP and writing to .MIF. Still lacks symbol support and write
+ * support. (Based in part on patch and docs from Jim Hope, bug 1126)
+ *
  * Revision 1.38  2005/03/22 23:24:54  dmorissette
  * Added support for datum id in .MAP header (bug 910)
  *
@@ -634,7 +643,39 @@ class TABMAPObjMultiPoint: public TABMAPObjHdrWithCoord
     virtual int ReadObj(TABMAPObjectBlock *);
 };
 
+class TABMAPObjCollection: public TABMAPObjHdrWithCoord
+{
+  public:
+    GInt32      m_nRegionDataSize;
+    GInt32      m_nPolylineDataSize;
+    GInt32      m_nMPointDataSize;
+    GInt32      m_nComprOrgX;   /* Present only in compressed coord. case */
+    GInt32      m_nComprOrgY;
+    GInt32      m_nNumMultiPoints;
+    GInt16      m_nNumRegSections;
+    GInt16      m_nNumPLineSections;
+    GInt32      m_nTotalRegDataSize;
+    GInt32      m_nTotalPolyDataSize;
 
+    GByte       m_nMultiPointSymbolId;
+    GByte       m_nRegionPenId;
+    GByte       m_nRegionBrushId;
+    GByte       m_nPolylinePenId;
+
+    TABMAPObjCollection() {};
+    virtual ~TABMAPObjCollection() 
+    {}
+
+    virtual int WriteObj(TABMAPObjectBlock *);
+
+//  protected:
+    virtual int ReadObj(TABMAPObjectBlock *);
+
+  private:
+    // private copy ctor and assignment operator to prevent shallow copying
+    TABMAPObjCollection& operator=(const TABMAPObjCollection& rhs);
+    TABMAPObjCollection(const TABMAPObjCollection& rhs);
+};
 
 /*=====================================================================
           Classes to handle .MAP files low-level blocks
@@ -712,10 +753,11 @@ class TABRawBinBlock
 #ifdef DEBUG
     virtual void Dump(FILE *fpOut = NULL);
 #endif
+    void        DumpBytes(GInt32 nValue, int nOffset=0, FILE *fpOut=NULL);
 
     int         GotoByteRel(int nOffset);
     int         GotoByteInBlock(int nOffset);
-    int         GotoByteInFile(int nOffset);
+    int         GotoByteInFile(int nOffset, GBool bForceReadFromFile=FALSE);
     void        SetFirstBlockPtr(int nOffset);
 
     int         GetNumUnusedBytes();
@@ -1223,6 +1265,7 @@ class TABMAPFile
 
     GInt32      GetMaxObjId();
     int         MoveToObjId(int nObjId);
+    void        UpdateMapHeaderInfo(GByte nObjType);
     int         PrepareNewObj(int nObjId, GByte nObjType);
 
     void        ResetReading();
