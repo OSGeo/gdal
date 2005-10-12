@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.14  2005/10/12 20:16:10  fwarmerdam
+ * use SetMetadata()
+ *
  * Revision 1.13  2005/09/13 02:34:58  fwarmerdam
  * Cleanup more carefully in ::Open() to avoid leaks.
  *
@@ -232,8 +235,6 @@ HDF5ImageRasterBand::HDF5ImageRasterBand( HDF5ImageDataset *poDS, int nBand,
 /*      Take a copy of Global Metadata since  I can't pass Raster       */
 /*      variable to Iterate function.                                   */
 /* -------------------------------------------------------------------- */
-    CSLDestroy( papszMetadata );
-
     papszMetaGlobal = CSLDuplicate( poDS->papszMetadata );
     CSLDestroy( poDS->papszMetadata );
     poDS->papszMetadata = NULL;
@@ -246,11 +247,11 @@ HDF5ImageRasterBand::HDF5ImageRasterBand( HDF5ImageDataset *poDS, int nBand,
 /*      Recover Global Metadat and set Band Metadata                    */
 /* -------------------------------------------------------------------- */
 
-    papszMetadata = CSLDuplicate( poDS->papszMetadata );
+    SetMetadata( poDS->papszMetadata );
+
     CSLDestroy( poDS->papszMetadata );
     poDS->papszMetadata = CSLDuplicate( papszMetaGlobal );
     CSLDestroy( papszMetaGlobal );
-    SetMetadata( papszMetadata );
 }
 
 /************************************************************************/
