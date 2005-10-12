@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2005/10/12 19:52:56  fwarmerdam
+ * Use SetMetadataItem() for CEOS_BEAM_TYPE.
+ *
  * Revision 1.42  2005/05/05 14:01:36  fwarmerdam
  * PAM Enable
  *
@@ -1126,9 +1129,7 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         GetCeosField( record, 4189, "A16", szField );
 
-        papszMetadata = 
-            CSLSetNameValue( papszMetadata, "CEOS_BEAM_TYPE", 
-                             szField );
+        SetMetadataItem( "CEOS_BEAM_TYPE", szField );
     }
 
 /* ==================================================================== */
