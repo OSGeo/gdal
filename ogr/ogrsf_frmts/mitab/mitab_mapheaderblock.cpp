@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_mapheaderblock.cpp,v 1.30 2005/05/12 20:46:15 dmorissette Exp $
+ * $Id: mitab_mapheaderblock.cpp,v 1.31 2005/09/29 20:16:54 dmorissette Exp $
  *
  * Name:     mitab_mapheaderblock.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_mapheaderblock.cpp,v $
+ * Revision 1.31  2005/09/29 20:16:54  dmorissette
+ *  Support for writing affine projection params in .MAP header (AJD, bug 1155)
+ *
  * Revision 1.30  2005/05/12 20:46:15  dmorissette
  * Initialize m_sProj.nDatumId in InitNewBlock(). (hss/geh)
  *
@@ -222,7 +225,13 @@ TABMAPHeaderBlock::TABMAPHeaderBlock(TABAccess eAccessMode /*= TABRead*/):
         m_sProj.adDatumParams[i] = 0.0;
 
     m_sProj.nAffineFlag = 0;    // Only in version 500 and up
-
+    m_sProj.nAffineUnits  = 7;
+    m_sProj.dAffineParamA = 0.0;
+    m_sProj.dAffineParamB = 0.0;
+    m_sProj.dAffineParamC = 0.0;
+    m_sProj.dAffineParamD = 0.0;
+    m_sProj.dAffineParamE = 0.0;
+    m_sProj.dAffineParamF = 0.0;
 }
 
 /**********************************************************************
@@ -780,7 +789,21 @@ int     TABMAPHeaderBlock::CommitToFile()
 
     GotoByteInBlock(0x100);
     WriteInt32(HDR_MAGIC_COOKIE);
+
+    if (m_sProj.nAffineFlag && m_nMAPVersionNumber<500)
+    {
+        // Must be at least version 500 to support affine params
+        // Default value for HDR_VERSION_NUMBER is 500 so this error should
+        // never happen unless the caller changed the value, in which case they
+        // deserve to get a failure
+        CPLError(CE_Failure, CPLE_AssertionFailed, 
+                 "TABRawBinBlock::CommitToFile(): .MAP version 500 or more is "
+                 "required for affine projection parameter support.");
+        return -1;
+    }
+
     WriteInt16(m_nMAPVersionNumber);
+
     WriteInt16(HDR_DATA_BLOCK_SIZE);
 
     WriteDouble(m_dCoordsys2DistUnits);
@@ -834,6 +857,21 @@ int     TABMAPHeaderBlock::CommitToFile()
     WriteDouble(m_sProj.dDatumShiftZ);
     for(i=0; i<5; i++)
         WriteDouble(m_sProj.adDatumParams[i]);
+
+    if (m_sProj.nAffineFlag)
+    {
+        WriteByte(1); // In Use Flag
+        WriteByte(m_sProj.nAffineUnits);
+        WriteZeros(6);
+        WriteDouble(m_sProj.dAffineParamA);
+        WriteDouble(m_sProj.dAffineParamB);
+        WriteDouble(m_sProj.dAffineParamC);
+        WriteDouble(m_sProj.dAffineParamD);
+        WriteDouble(m_sProj.dAffineParamE);
+        WriteDouble(m_sProj.dAffineParamF);
+
+        WriteZeros(456); // Pad rest of block with zeros (Bounds info here ?)
+    }
 
     /*-----------------------------------------------------------------
      * OK, call the base class to write the block to disk.
@@ -920,6 +958,8 @@ int     TABMAPHeaderBlock::InitNewBlock(FILE *fpSrc, int nBlockSize,
     m_sProj.dDatumShiftZ = 0.0;
     for(i=0; i<5; i++)
         m_sProj.adDatumParams[i] = 0.0;
+
+    m_sProj.nAffineFlag = 0;
 
     /*-----------------------------------------------------------------
      * And Set the map object length array in the buffer...

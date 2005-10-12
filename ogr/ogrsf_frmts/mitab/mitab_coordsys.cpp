@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.32 2005/08/07 21:00:38 fwarmerdam Exp $
+ * $Id: mitab_coordsys.cpp,v 1.33 2005/09/29 20:13:57 dmorissette Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,12 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.33  2005/09/29 20:13:57  dmorissette
+ * MITABCoordSys2SpatialRef() patches from Anthony D (bug 1155):
+ * Improved support for modified TM projections 21-24.
+ * Added support for affine parameters (inside #ifdef MITAB_AFFINE_PARAMS since
+ * affine params cannot be stored directly in OGRSpatialReference)
+ *
  * Revision 1.32  2005/08/07 21:00:38  fwarmerdam
  * Initialize adfDatumParm[] to avoid warnings with gcc 4.
  *
@@ -166,6 +172,12 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
     char        **papszFields;
     OGRSpatialReference *poSR;
 
+#ifdef MITAB_AFFINE_PARAMS  // See MITAB bug 1155
+    // Encom 2003
+    int nAffineUnits = 7;
+    double dAffineParams[6];
+#endif
+
     if( pszCoordSys == NULL )
         return NULL;
     
@@ -177,6 +189,40 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
         pszCoordSys += 9;
     
     papszFields = CSLTokenizeStringComplex( pszCoordSys, " ,", TRUE, FALSE );
+
+#ifdef MITAB_AFFINE_PARAMS  // See MITAB bug 1155
+/* -------------------------------------------------------------------- */
+/*      Store and then clip off Affine information. - Encom 2003        */
+/* -------------------------------------------------------------------- */
+    int         iAffine = CSLFindString( papszFields, "Affine" );
+    int         nAffineIndex = 0;
+    int         nAffineFlag = 0;
+
+    while( iAffine != -1 && papszFields[iAffine] != NULL )
+    {
+        nAffineFlag = 1;
+        if (nAffineIndex<2)
+        {
+            // Ignore "Affine Units"
+        }
+        else if (nAffineIndex==2)
+        {
+            // Convert units to integer (TBD)
+            nAffineUnits = TABUnitIdFromString(papszFields[iAffine]);
+            if (nAffineUnits==-1) nAffineUnits = 7; // metres is default
+        }
+        else if (nAffineIndex<=8)
+        {
+            // Store affine params
+            dAffineParams[nAffineIndex-3] = atof(papszFields[iAffine]);
+        }
+        nAffineIndex++;
+
+        CPLFree( papszFields[iAffine] );
+        papszFields[iAffine] = NULL;
+        iAffine++;
+    }
+#endif // MITAB_AFFINE_PARAMS
 
 /* -------------------------------------------------------------------- */
 /*      Clip off Bounds information.                                    */
@@ -194,6 +240,25 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
 /*      Create a spatialreference object to operate on.                 */
 /* -------------------------------------------------------------------- */
     poSR = new OGRSpatialReference;
+
+#ifdef MITAB_AFFINE_PARAMS  // See MITAB bug 1155
+    // Encom 2003
+    if (nAffineFlag)
+    {
+        poSR->nAffineFlag = 1;
+        poSR->nAffineUnit = nAffineUnits;
+        poSR->dAffineParamA = dAffineParams[0];
+        poSR->dAffineParamB = dAffineParams[1];
+        poSR->dAffineParamC = dAffineParams[2];
+        poSR->dAffineParamD = dAffineParams[3];
+        poSR->dAffineParamE = dAffineParams[4];
+        poSR->dAffineParamF = dAffineParams[5];
+    }
+    else
+    {
+        poSR->nAffineFlag = 0; // Encom 2005
+    }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the projection.                                           */
@@ -441,15 +506,59 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
          * Transverse Mercator
          *-------------------------------------------------------------*/
       case 8:
-      case 21:
-      case 22:
-      case 23:
-      case 24:
         poSR->SetTM( GetMIFParm( papszNextField, 1, 0.0 ),
                      GetMIFParm( papszNextField, 0, 0.0 ),
                      GetMIFParm( papszNextField, 2, 1.0 ),
                      GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv,
                      GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv );
+        break;
+
+        /*----------------------------------------------------------------
+         * Transverse Mercator,(modified for Danish System 34 Jylland-Fyn)
+         *---------------------------------------------------------------*/
+      case 21:
+        poSR->SetTMVariant( SRS_PT_TRANSVERSE_MERCATOR_MI_21,
+                            GetMIFParm( papszNextField, 1, 0.0 ),
+                            GetMIFParm( papszNextField, 0, 0.0 ),
+                            GetMIFParm( papszNextField, 2, 1.0 ),
+                            GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv,
+                            GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv);
+        break;
+
+        /*--------------------------------------------------------------
+         * Transverse Mercator,(modified for Danish System 34 Sjaelland)
+         *-------------------------------------------------------------*/
+      case 22:
+        poSR->SetTMVariant( SRS_PT_TRANSVERSE_MERCATOR_MI_22,
+                            GetMIFParm( papszNextField, 1, 0.0 ),
+                            GetMIFParm( papszNextField, 0, 0.0 ),
+                            GetMIFParm( papszNextField, 2, 1.0 ),
+                            GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv,
+                            GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv);
+        break;
+
+        /*----------------------------------------------------------------
+         * Transverse Mercator,(modified for Danish System 34/45 Bornholm)
+         *---------------------------------------------------------------*/
+      case 23:
+        poSR->SetTMVariant( SRS_PT_TRANSVERSE_MERCATOR_MI_23,
+                            GetMIFParm( papszNextField, 1, 0.0 ),
+                            GetMIFParm( papszNextField, 0, 0.0 ),
+                            GetMIFParm( papszNextField, 2, 1.0 ),
+                            GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv,
+                            GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv);
+        break;
+
+        /*--------------------------------------------------------------
+         * Transverse Mercator,(modified for Finnish KKJ)
+         *-------------------------------------------------------------*/
+      case 24:
+        poSR->SetTMVariant( SRS_PT_TRANSVERSE_MERCATOR_MI_24,
+                            GetMIFParm( papszNextField, 1, 0.0 ),
+                            GetMIFParm( papszNextField, 0, 0.0 ),
+                            GetMIFParm( papszNextField, 2, 1.0 ),
+                            GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv,
+                            GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv);
         break;
 
         /*--------------------------------------------------------------

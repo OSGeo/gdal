@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.78 2005/05/21 03:16:01 fwarmerdam Exp $
+ * $Id: mitab.h,v 1.82 2005/10/07 18:54:23 dmorissette Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo TAB Read/Write library
@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 1999-2004, Daniel Morissette
+ * Copyright (c) 1999-2005, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,22 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.82  2005/10/07 18:54:23  dmorissette
+ * Ready for 1.5.0-beta1 release
+ *
+ * Revision 1.81  2005/10/06 23:05:08  dmorissette
+ * TABCollection: Added automated sync'ing of OGRFeature's geometry in
+ * SetRegion/Pline/MpointDirectly() methods (bug 1126)
+ *
+ * Revision 1.80  2005/10/06 19:15:30  dmorissette
+ * Collections: added support for reading/writing pen/brush/symbol ids and
+ * for writing collection objects to .TAB/.MAP (bug 1126)
+ *
+ * Revision 1.79  2005/10/04 15:44:31  dmorissette
+ * First round of support for Collection objects. Currently supports reading
+ * from .TAB/.MAP and writing to .MIF. Still lacks symbol support and write
+ * support. (Based in part on patch and docs from Jim Hope, bug 1126)
+ *
  * Revision 1.78  2005/05/21 03:16:01  fwarmerdam
  * Removed m_poFilterGeom ... should have been done yesterday with spatial
  * filter overhaul.
@@ -59,124 +75,6 @@
  * Revision 1.70  2003/07/24 02:47:58  daniel
  * Version 1.2.4
  *
- * Revision 1.69  2002/10/15 23:30:49  daniel
- * Version 1.2.3
- *
- * Revision 1.68  2002/07/06 15:36:57  daniel
- * Version 1.2.2
- *
- * Revision 1.67  2002/06/28 18:39:10  julien
- * Change version number (1.2.2-dev)
- *
- * Revision 1.66  2002/06/28 18:32:37  julien
- * Add SetSpatialFilter() in TABSeamless class (Bug 164, MapServer)
- * Use double for comparison in Coordsys2Int() in mitab_mapheaderblock.cpp
- *
- * Revision 1.65  2002/06/17 15:00:30  julien
- * Add IsInteriorRing() function in TABRegion to validate if a ring is internal
- *
- * Revision 1.64  2002/05/08 20:02:29  daniel
- * Version 1.2.1
- *
- * Revision 1.63  2002/05/08 15:10:48  julien
- * Implement MIFFile::SetMIFCoordSys in mitab_capi.cpp (Bug 984)
- *
- * Revision 1.62  2002/05/03 15:09:41  daniel
- * Version 1.2.0
- *
- * Revision 1.61  2002/03/26 19:27:43  daniel
- * Got rid of tabs in source
- *
- * Revision 1.60  2002/03/26 03:17:13  daniel
- * Added Get/SetCenter() to MultiPoint
- *
- * Revision 1.59  2002/03/26 01:48:40  daniel
- * Added Multipoint object type (V650)
- *
- * Revision 1.58  2001/11/17 21:54:05  daniel
- * Made several changes in order to support writing objects in 16 bits 
- * coordinate format. New TABMAPObjHdr-derived classes are used to hold 
- * object info in mem until block is full.
- *
- * Revision 1.57  2001/11/02 17:27:21  daniel
- * Version 1.1.3
- *
- * Revision 1.56  2001/09/19 21:39:15  warmerda
- * get extents efficiently
- *
- * Revision 1.55  2001/09/19 14:31:22  warmerda
- * added m_nPreloadedId to keep track of preloaded line
- *
- * Revision 1.54  2001/09/14 03:23:55  warmerda
- * Substantial upgrade to support spatial queries using spatial indexes
- *
- * Revision 1.53  2001/06/25 01:51:19  daniel
- * Version 1.1.2
- *
- * Revision 1.52  2001/05/01 18:36:10  daniel
- * Version 1.1.1
- *
- * Revision 1.51  2001/03/15 03:57:51  daniel
- * Added implementation for new OGRLayer::GetExtent(), returning data MBR.
- *
- * Revision 1.50  2001/03/09 04:16:02  daniel
- * Added TABSeamless for reading seamless TAB files
- *
- * Revision 1.49  2001/02/28 07:15:08  daniel
- * Added support for text label line end point
- *
- * Revision 1.48  2001/02/27 19:59:05  daniel
- * Enabled spatial filter in IMapInfoFile::GetNextFeature(), and avoid
- * unnecessary feature cloning in GetNextFeature() and GetFeature()
- *
- * Revision 1.47  2001/01/23 22:06:50  daniel
- * Added MITABCoordSysTableLoaded()
- *
- * Revision 1.46  2001/01/23 21:23:41  daniel
- * Added projection bounds lookup table, called from TABFile::SetProjInfo()
- *
- * Revision 1.45  2001/01/22 16:03:59  warmerda
- * expanded tabs
- *
- * Revision 1.44  2000/11/23 20:47:45  daniel
- * Use MI defaults for Pen, Brush, Font, Symbol instead of all zeros
- *
- * Revision 1.43  2000/11/22 04:04:04  daniel
- * Added TAB_WarningBoundsOverflow
- *
- * Revision 1.42  2000/11/15 04:35:35  daniel
- * MITAB_VERSION 1.0.4
- *
- * Revision 1.41  2000/10/19 20:15:41  daniel
- * Update MITAB_VERSION to 1.0.3
- *
- * Revision 1.40  2000/10/03 22:11:43  daniel
- * Added MITAB_VERSION
- *
- * Revision 1.39  2000/10/03 19:29:51  daniel
- * Include OGR StyleString stuff (implemented by Stephane)
- *
- * Revision 1.38  2000/09/19 17:23:52  daniel
- * Maintain and/or compute valid region and polyline center/label point
- *
- * Revision 1.37  2000/09/07 23:32:13  daniel
- * Added RecordDeletedFlag to TABFeature with get/set methods
- *
- * Revision 1.36  2000/07/27 02:03:57  daniel
- * Remove extra comma at end of TABCustSymbStyle enum
- *
- * Revision 1.35  2000/07/04 01:45:16  warmerda
- * avoid warning on nfieldid of IsFieldUnique
- *
- * Revision 1.34  2000/06/28 00:30:25  warmerda
- * added count of points, lines, egions and text for MIFFile
- *
- * Revision 1.33  2000/04/21 12:40:01  daniel
- * Added TABPolyline::GetNumParts()/GetPartRef()
- *
- * Revision 1.32  2000/02/28 16:41:48  daniel
- * Added support for indexed, unique, and for new V450 object types
- *
  * ...
  *
  * Revision 1.1  1999/07/12 04:18:23  daniel
@@ -195,8 +93,8 @@
 /*---------------------------------------------------------------------
  * Current version of the MITAB library... always useful!
  *--------------------------------------------------------------------*/
-#define MITAB_VERSION      "1.4.0 (2005-04-01)"
-#define MITAB_VERSION_INT  1004000  /* version x.y.z -> xxxyyyzzz */
+#define MITAB_VERSION      "1.5.0-beta1 (2005-10-07)"
+#define MITAB_VERSION_INT  1005000  /* version x.y.z -> xxxyyyzzz */
 
 #ifndef PI
 #  define PI 3.14159265358979323846
@@ -1099,10 +997,9 @@ class TABFeature: public OGRFeature
     virtual TABFeature     *CloneTABFeature(OGRFeatureDefn *pNewDefn = NULL);
     virtual TABFeatureClass GetFeatureClass() { return TABFCNoGeomFeature; };
     virtual int             GetMapInfoType()  { return m_nMapInfoType; };
-    virtual int            ValidateMapInfoType(TABMAPFile *poMapFile = NULL)
+    virtual int             ValidateMapInfoType(TABMAPFile *poMapFile = NULL)
                                                 {m_nMapInfoType=TAB_GEOM_NONE;
                                                  return m_nMapInfoType;};
-
     GBool       IsRecordDeleted() { return m_bDeletedFlag; };
     void        SetRecordDeleted(GBool bDeleted) { m_bDeletedFlag=bDeleted; };
 
@@ -1117,6 +1014,8 @@ class TABFeature: public OGRFeature
                                      TABINDFile *poINDFile, int *panIndexNo);
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *);
     GBool       ValidateCoordType(TABMAPFile * poMapFile);
+    void        ForceCoordTypeAndOrigin(int nMapInfoType, GBool bCompr,
+                                        GInt32 nComprOrgX, GInt32 nComprOrgY);
 
     /*-----------------------------------------------------------------
      * Mid/Mif Support
@@ -1322,6 +1221,8 @@ class TABPolyline: public TABFeature,
     int                 GetNumParts();
     OGRLineString      *GetPartRef(int nPartIndex);
 
+    int         ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
+                                        TABMAPCoordBlock **ppoCoordBlock);
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *);
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *);
 
@@ -1392,6 +1293,8 @@ class TABRegion: public TABFeature,
     OGRLinearRing      *GetRingRef(int nRequestedRingIndex);
     GBool               IsInteriorRing(int nRequestedRingIndex);
 
+    int         ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
+                                        TABMAPCoordBlock **ppoCoordBlock);
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *);
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *);
 
@@ -1700,6 +1603,8 @@ class TABMultiPoint: public TABFeature,
     int         GetCenter(double &dX, double &dY);
     void        SetCenter(double dX, double dY);
 
+    int         ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *,
+                                        TABMAPCoordBlock **ppoCoordBlock);
     virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *);
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *);
 
@@ -1711,6 +1616,81 @@ class TABMultiPoint: public TABFeature,
     virtual void DumpMIF(FILE *fpOut = NULL);
 };
 
+/*---------------------------------------------------------------------
+ *
+ *                      class TABCollection
+ *
+ * Feature class to handle MapInfo Collection features:
+ *
+ *     TAB_GEOM_COLLECTION_C        0x37
+ *     TAB_GEOM_COLLECTION          0x38
+ *
+ * Feature geometry will be a OGRCollection
+ *
+ * **** IMPORTANT NOTE: ****
+ *
+ * The current implementation does not allow setting the Geometry via
+ * OGRFeature::SetGeometry*(). The geometries must be set via the
+ * TABCollection::SetRegion/Pline/MpointDirectly() methods which will take
+ * care of keeping the OGRFeature's geometry in sync.
+ *
+ * If we ever want to support creating collections via the OGR interface then
+ * something should be added in TABCollection::WriteGeometryToMapFile(), or
+ * perhaps in ValidateMapInfoType(), or even better in a custom
+ * TABCollection::SetGeometry*()... but then this last option may not work
+ * unless OGRFeature::SetGeometry*() are made virtual in OGR.
+ *
+ *--------------------------------------------------------------------*/
+class TABCollection: public TABFeature, 
+                     public ITABFeatureSymbol
+{
+  private:
+    TABRegion       *m_poRegion;
+    TABPolyline     *m_poPline;
+    TABMultiPoint   *m_poMpoint;
+
+    void    EmptyCollection();
+    int     ReadLabelAndMBR(TABMAPCoordBlock *poCoordBlock, GBool bComprCoord,
+                            GInt32 nComprOrgX, GInt32 nComprOrgY,
+                            GInt32 &pnMinX, GInt32 &pnMinY,
+                            GInt32 &pnMaxX, GInt32 &pnMaxY,
+                            GInt32 &pnLabelX, GInt32 &pnLabelY );
+    int         WriteLabelAndMBR(TABMAPCoordBlock *poCoordBlock,
+                                 GBool bComprCoord,
+                                 GInt32 nMinX, GInt32 nMinY,
+                                 GInt32 nMaxX, GInt32 nMaxY,
+                                 GInt32 nLabelX, GInt32 nLabelY );
+    int         SyncOGRGeometryCollection(GBool bSyncRegion,
+                                          GBool bSyncPline,
+                                          GBool bSyncMpoint);
+
+  public:
+             TABCollection(OGRFeatureDefn *poDefnIn);
+    virtual ~TABCollection();
+
+    virtual TABFeatureClass GetFeatureClass() { return TABFCCollection; };
+    virtual int             ValidateMapInfoType(TABMAPFile *poMapFile = NULL);
+
+    virtual TABFeature *CloneTABFeature(OGRFeatureDefn *poNewDefn = NULL );
+
+    virtual int ReadGeometryFromMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *);
+    virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *);
+    
+    virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp);
+    virtual int WriteGeometryToMIFFile(MIDDATAFile *fp);
+
+    virtual const char *GetStyleString();
+
+    virtual void DumpMIF(FILE *fpOut = NULL);
+
+    TABRegion           *GetRegionRef()         {return m_poRegion; };
+    TABPolyline         *GetPolylineRef()       {return m_poPline; };
+    TABMultiPoint       *GetMultiPointRef()     {return m_poMpoint; };
+
+    int                 SetRegionDirectly(TABRegion *poRegion);
+    int                 SetPolylineDirectly(TABPolyline *poPline);
+    int                 SetMultiPointDirectly(TABMultiPoint *poMpoint);
+};
 
 
 /*---------------------------------------------------------------------
