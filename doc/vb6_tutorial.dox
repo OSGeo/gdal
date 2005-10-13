@@ -22,6 +22,9 @@ The classes for which access has been implemented includes
 GDALDriver, GDALDataset, GDALRasterBand, GDALColorTable, OGRSpatialReference
 and OGRCoordinateTransformation.
 
+A mailing list specifically on VB6 GDAL topics has been setup at
+http://groups.yahoo.com/group/gdal-vb6-appdev .
+
 \section UsingVB6 Using GDAL VB6 Classes
 
 To use VB6 GDAL bindings it is necessary to ensure that GDAL has been
