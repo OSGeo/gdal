@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/10/13 22:02:39  fwarmerdam
+ * dont add fields that fail to initialize
+ *
  * Revision 1.15  2004/02/18 14:09:42  warmerda
  * doc fixups
  *
@@ -369,9 +372,11 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
         nFieldPos = DDFScanInt( pachRecord+nEntryOffset, _sizeFieldPos );
         
         poFDefn = new DDFFieldDefn();
-        poFDefn->Initialize( this, szTag, nFieldLength,
-                             pachRecord+_fieldAreaStart+nFieldPos );
-        AddField( poFDefn );
+        if( poFDefn->Initialize( this, szTag, nFieldLength,
+                                 pachRecord+_fieldAreaStart+nFieldPos ) )
+            AddField( poFDefn );
+        else
+            delete poFDefn;
     }
 
     CPLFree( pachRecord );
