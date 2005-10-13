@@ -15,7 +15,7 @@ GDAL services in VB6 similar to those provided in C++.
 Note that the VB6 bindings are nowhere near comprehensive, nor are they 
 documented.  However, in combination with the corresponding C++ class
 documentation, and the following docs, it should be possible to use GDAL 
-to accomplish a variety of operations.  It is not believe that the VB6
+to accomplish a variety of operations.  It is not believed that the VB6
 bindings will be of any utility with earlier version of VB nor with VB.Net. 
 
 The classes for which access has been implemented includes 
