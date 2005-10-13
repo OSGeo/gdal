@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/10/13 14:30:40  pka
+ * Explicit point geometry type
+ * ARC_DEGREES environment variable (Default 1 degree)
+ *
  * Revision 1.4  2005/10/09 22:59:57  pka
  * ARC interpolation (Interlis 1)
  *
@@ -161,6 +165,11 @@ int OGRILI1DataSource::Open( const char * pszNewName, int bTestOpen )
     if (osModelFilename.length() > 0 )
         poReader->ReadModel( osModelFilename.c_str() );
 
+    if( getenv( "ARC_DEGREES" ) != NULL ) {
+      //No better way to pass arguments to the reader (it could even be an -lco arg)
+      poReader->SetArcDegrees( atoi( getenv("ARC_DEGREES") ) );
+    }
+
     poReader->ReadFeatures(); //FIXME
 
     return TRUE;
@@ -191,9 +200,6 @@ int OGRILI1DataSource::Create( const char *pszFilename,
                   pszFilename );
         return FALSE;
     }
-
-    const char *pszArcDegrees = CSLFetchNameValue(papszOptions,"ARC_DEGREES");
-    if (pszArcDegrees != NULL) poReader->SetArcDegrees(atoi(pszArcDegrees));
 
 /* -------------------------------------------------------------------- */
 /*      Create the empty file.                                          */

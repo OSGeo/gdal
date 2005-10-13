@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/10/13 14:30:40  pka
+ * Explicit point geometry type
+ * ARC_DEGREES environment variable (Default 1 degree)
+ *
  * Revision 1.3  2005/10/09 22:59:57  pka
  * ARC interpolation (Interlis 1)
  *
@@ -82,7 +86,7 @@ ILI1Reader::ILI1Reader() {
   fpItf = NULL;
   nLayers = 0;
   papoLayers = NULL;
-  SetArcDegrees(5);
+  SetArcDegrees(1);
 }
 
 ILI1Reader::~ILI1Reader() {
@@ -129,6 +133,7 @@ const char* ILI1Reader::GetLayerName(IOM_BASKET model, IOM_OBJECT table) {
 }
 
 void ILI1Reader::AddCoord(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT modelele, IOM_OBJECT typeobj) {
+  layer->GetLayerDefn()->SetGeomType(wkbPoint);
   unsigned int dim = ::GetCoordDim(model, typeobj);
   for (unsigned int i=0; i<dim; i++) {
     OGRFieldDefn fieldDef(CPLSPrintf("%s_%d", iom_getattrvalue(modelele, "name"), i), OFTReal);
@@ -465,7 +470,7 @@ int ILI1Reader::ReadTable() {
             if (featureDef->GetFieldDefn(fieldno)->GetType() == OFTReal
                 && fieldno > 0
                 && featureDef->GetFieldDefn(fieldno-1)->GetType() == OFTReal
-                && featureDef->GetGeomType() == wkbUnknown) {
+                && featureDef->GetGeomType() == wkbPoint) {
               //add Point geometry
               OGRPoint *ogrPoint = new OGRPoint(atof(tokens[fIndex-1]), atof(tokens[fIndex]));
               feature->SetGeometry(ogrPoint);
