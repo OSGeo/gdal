@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/10/13 19:44:25  fwarmerdam
+ * Improve open error reporting.
+ *
  * Revision 1.2  2005/09/12 17:06:17  fwarmerdam
  * avoid dependence on xtiffio.h
  *
@@ -140,7 +143,10 @@ TIFF* VSI_TIFFOpen(const char* name, const char* mode)
                     
     fp = VSIFOpenL( name, access );
     if (fp == NULL) {
-        TIFFError(module, "%s: Cannot open", name);
+        if( errno >= 0 )
+            TIFFError(module,"%s: %s", name, VSIStrerror( errno ) );
+        else
+            TIFFError(module, "%s: Cannot open", name);
         return ((TIFF *)0);
     }
 
