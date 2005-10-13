@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.148  2005/10/13 01:20:48  fwarmerdam
+ * restructured to use gdalmajorobject multidomain metadata
+ *
  * Revision 1.147  2005/09/25 18:04:40  fwarmerdam
  * added JPEG_QUALITY option
  *
@@ -258,7 +261,6 @@ class GTiffDataset : public GDALPamDataset
     double      dfNoDataValue;
 
     int 	bMetadataChanged;
-    GDALMultiDomainMetadata oMDMD;
 
   public:
                  GTiffDataset();
@@ -286,10 +288,7 @@ class GTiffDataset : public GDALPamDataset
                                 GDALDataType eType, char ** papszParmList );
     virtual void    FlushCache( void );
 
-    virtual char  **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr  SetMetadata( char **, const char * = "" );
-    virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );
     virtual CPLErr  SetMetadataItem( const char*, const char*, 
                                      const char* = "" );
     virtual void   *GetInternalHandle( const char * );
@@ -315,8 +314,6 @@ class GTiffRasterBand : public GDALPamRasterBand
     double dfOffset;
     double dfScale;
 
-    GDALMultiDomainMetadata oMDMD;
-
   public:
                    GTiffRasterBand( GTiffDataset *, int );
 
@@ -336,10 +333,7 @@ class GTiffRasterBand : public GDALPamRasterBand
     virtual double GetScale( int *pbSuccess = NULL );
     virtual CPLErr SetScale( double dfNewValue );
 
-    virtual char  **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr  SetMetadata( char **, const char * = "" );
-    virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );
     virtual CPLErr  SetMetadataItem( const char*, const char*, 
                                      const char* = "" );
     virtual int    GetOverviewCount();
@@ -752,36 +746,16 @@ CPLErr GTiffRasterBand::SetScale( double dfNewValue )
 }
 
 /************************************************************************/
-/*                            GetMetadata()                             */
-/************************************************************************/
-
-char **GTiffRasterBand::GetMetadata( const char *pszDomain )
-
-{
-    return oMDMD.GetMetadata( pszDomain );
-}
-
-/************************************************************************/
 /*                            SetMetadata()                             */
 /************************************************************************/
+
 CPLErr GTiffRasterBand::SetMetadata( char ** papszMD, const char *pszDomain )
 
 {
     GTiffDataset	*poGDS = (GTiffDataset *) poDS;
 
     poGDS->bMetadataChanged = TRUE;
-    return oMDMD.SetMetadata( papszMD, pszDomain );
-}
-
-/************************************************************************/
-/*                          GetMetadataItem()                           */
-/************************************************************************/
-
-const char *GTiffRasterBand::GetMetadataItem( const char *pszName, 
-                                              const char *pszDomain )
-
-{
-    return oMDMD.GetMetadataItem( pszName, pszDomain );
+    return GDALPamRasterBand::SetMetadata( papszMD, pszDomain );
 }
 
 /************************************************************************/
@@ -796,7 +770,7 @@ CPLErr GTiffRasterBand::SetMetadataItem( const char *pszName,
     GTiffDataset	*poGDS = (GTiffDataset *) poDS;
 
     poGDS->bMetadataChanged = TRUE;
-    return oMDMD.SetMetadataItem( pszName, pszValue, pszDomain );
+    return GDALPamRasterBand::SetMetadataItem( pszName, pszValue, pszDomain );
 }
 
 /************************************************************************/
@@ -2262,7 +2236,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
 }
 
 /************************************************************************/
-/*                          MakeMetadataItem()                          */
+/*                         AppendMetadataItem()                         */
 /************************************************************************/
 
 static void AppendMetadataItem( CPLXMLNode **ppsRoot, CPLXMLNode **ppsTail,
@@ -4309,34 +4283,13 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
 }
 
 /************************************************************************/
-/*                            GetMetadata()                             */
-/************************************************************************/
-
-char **GTiffDataset::GetMetadata( const char *pszDomain )
-
-{
-    return oMDMD.GetMetadata( pszDomain );
-}
-
-/************************************************************************/
 /*                            SetMetadata()                             */
 /************************************************************************/
 CPLErr GTiffDataset::SetMetadata( char ** papszMD, const char *pszDomain )
 
 {
     bMetadataChanged = TRUE;
-    return oMDMD.SetMetadata( papszMD, pszDomain );
-}
-
-/************************************************************************/
-/*                          GetMetadataItem()                           */
-/************************************************************************/
-
-const char *GTiffDataset::GetMetadataItem( const char *pszName, 
-                                           const char *pszDomain )
-
-{
-    return oMDMD.GetMetadataItem( pszName, pszDomain );
+    return GDALPamDataset::SetMetadata( papszMD, pszDomain );
 }
 
 /************************************************************************/
@@ -4349,7 +4302,7 @@ CPLErr GTiffDataset::SetMetadataItem( const char *pszName,
 
 {
     bMetadataChanged = TRUE;
-    return oMDMD.SetMetadataItem( pszName, pszValue, pszDomain );
+    return GDALPamDataset::SetMetadataItem( pszName, pszValue, pszDomain );
 }
 
 /************************************************************************/
