@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.52  2005/10/13 15:21:42  fwarmerdam
+ * Don't try to use papszMetadata directly.
+ *
  * Revision 1.51  2005/04/21 13:42:24  dron
  * Added suppodt for ASTER 3D Orto product.
  *
@@ -787,9 +790,9 @@ void HDF4ImageDataset::FlushCache()
     }
 
     // Store all metadata from source dataset as HDF attributes
-    if ( papszMetadata )
+    if( GetMetadata() )
     {
-        char    **papszMeta = papszMetadata;
+        char    **papszMeta = GetMetadata();
 
         while ( *papszMeta )
         {
