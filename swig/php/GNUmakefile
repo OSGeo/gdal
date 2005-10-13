@@ -29,10 +29,10 @@ veryclean: clean
 
 generate: ${WRAPPERS}
 
-build-internal: php_gdal.so
+build: php_gdal.so
 
 # This directive should actually do an install.
-install: build-internal
+install: build
 
 php_%.so: %_wrap.o
 	$(CC) $(LDFLAGS) $< -o $@ $(EXTRA_LIB)
