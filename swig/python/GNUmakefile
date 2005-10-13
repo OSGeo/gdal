@@ -21,7 +21,7 @@ veryclean: clean
 
 generate: ${WRAPPERS}
 
-build-internal:
+build:
 	python setup.py build
 
 install:
