@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2005/10/13 00:46:19  fwarmerdam
+ * Avoid trying to set scale and offset if they are the defaults.
+ *
  * Revision 1.35  2005/05/24 18:13:15  dron
  * Added GDALGetDriverCreationOptionList() function.
  *
@@ -344,11 +347,11 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         poDstBand->SetMetadata( poSrcBand->GetMetadata() );
 
         dfValue = poSrcBand->GetOffset( &bSuccess );
-        if( bSuccess )
+        if( bSuccess && dfValue != 0.0 )
             poDstBand->SetOffset( dfValue );
 
         dfValue = poSrcBand->GetScale( &bSuccess );
-        if( bSuccess )
+        if( bSuccess && dfValue != 1.0 )
             poDstBand->SetScale( dfValue );
 
         dfValue = poSrcBand->GetNoDataValue( &bSuccess );
