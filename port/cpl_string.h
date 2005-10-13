@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/10/13 01:20:16  fwarmerdam
+ * added CSLMerge()
+ *
  * Revision 1.21  2005/09/14 19:21:17  fwarmerdam
  * binary pointer is const in binarytohex
  *
@@ -126,6 +129,7 @@ int CPL_DLL CSLCount(char **papszStrList);
 const char CPL_DLL *CSLGetField( char **, int );
 void CPL_DLL CPL_STDCALL CSLDestroy(char **papszStrList);
 char CPL_DLL **CSLDuplicate(char **papszStrList);
+char CPL_DLL **CSLMerge( char **papszOrig, char **papszOverride );
 
 char CPL_DLL **CSLTokenizeString(const char *pszString );
 char CPL_DLL **CSLTokenizeStringComplex(const char *pszString,
