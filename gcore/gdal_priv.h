@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.69  2005/10/13 01:19:57  fwarmerdam
+ * moved GDALMultiDomainMetadata into GDALMajorObject
+ *
  * Revision 1.68  2005/09/26 15:52:03  fwarmerdam
  * centralized .aux opening logic
  *
@@ -90,148 +93,6 @@
  *
  * Revision 1.49  2005/01/04 21:14:01  fwarmerdam
  * added GDAL_FORCE_CACHING config variable
- *
- * Revision 1.48  2004/12/02 20:32:03  fwarmerdam
- * added AdviseRead methods
- *
- * Revision 1.47  2004/04/06 19:22:25  dron
- * Removed GDALRasterBlock::IsCached(), added GDALRasterBand::IsBlockCached().
- *
- * Revision 1.46  2003/07/27 11:01:01  dron
- * GDALRasterBlock::IsCached() method added.
- *
- * Revision 1.45  2003/05/08 14:38:40  warmerda
- * added BlockBasedFlushCache
- *
- * Revision 1.44  2003/05/06 05:20:38  sperkins
- * cleaned up comments
- *
- * Revision 1.43  2003/05/06 05:13:36  sperkins
- * added Fill() and GDALFillRaster()
- *
- * Revision 1.42  2003/04/25 19:47:57  warmerda
- * added RasterIO on GDALDataset, added lock count on blocks
- *
- * Revision 1.41  2003/03/20 22:10:53  warmerda
- * added support for reporting cache thrashing
- *
- * Revision 1.40  2003/03/18 06:00:57  warmerda
- * made GDALRasterBand::FlushCache() virtual
- *
- * Revision 1.39  2003/01/28 16:07:30  warmerda
- * improved documentation
- *
- * Revision 1.38  2002/10/21 18:05:42  warmerda
- * added AutoSkipDrivers() method on driver manager
- *
- * Revision 1.37  2002/09/11 14:17:52  warmerda
- * make SetDescription() and GetDescription() virtual
- *
- * Revision 1.36  2002/09/04 06:52:05  warmerda
- * added unload driver support to GDALDriver
- *
- * Revision 1.35  2002/07/09 20:33:12  warmerda
- * expand tabs
- *
- * Revision 1.34  2002/06/19 18:19:59  warmerda
- * GDALOpenInfo: added bIsDirecory flag, removed VSIStatBuf
- *
- * Revision 1.33  2002/06/12 21:13:27  warmerda
- * use metadata based driver info
- *
- * Revision 1.32  2002/05/29 15:58:26  warmerda
- * removed GetDescription(), added SetColorInterpretation()
- *
- * Revision 1.31  2002/05/28 18:56:22  warmerda
- * added shared dataset concept
- *
- * Revision 1.30  2002/03/01 14:29:09  warmerda
- * added GetBand() method on GDALRasterBand
- *
- * Revision 1.29  2001/12/15 15:42:27  warmerda
- * *** empty log message ***
- *
- * Revision 1.28  2001/11/18 00:52:15  warmerda
- * removed GDALProjDef
- *
- * Revision 1.27  2001/11/16 21:36:01  warmerda
- * added the AddBand() method on GDALDataset
- *
- * Revision 1.26  2001/10/17 21:47:02  warmerda
- * added SetGCPs() on GDALDataset
- *
- * Revision 1.25  2001/10/02 13:15:16  warmerda
- * added CPL_DLL for GDALDefaultOverviews
- *
- * Revision 1.24  2001/06/20 16:08:54  warmerda
- * GDALDefaultOverviews now remembers ovr filename, and allows explicit setting
- *
- * Revision 1.23  2001/02/06 16:30:21  warmerda
- * Added gdal_frmts.h
- *
- * Revision 1.22  2000/10/06 15:26:08  warmerda
- * added SetNoDataValue, SetCategoryNames
- *
- * Revision 1.21  2000/07/20 13:38:26  warmerda
- * make GetGDALDriverManager public with CPL_DLL
- *
- * Revision 1.20  2000/04/30 23:22:16  warmerda
- * added CreateCopy support
- *
- * Revision 1.19  2000/04/21 21:55:01  warmerda
- * majorobject updates, and overview building
- *
- * Revision 1.18  2000/04/04 23:44:29  warmerda
- * added AutoLoadDrivers() to GDALDriverManager
- *
- * Revision 1.17  2000/03/31 13:41:24  warmerda
- * added gcps
- *
- * Revision 1.16  2000/03/24 00:09:05  warmerda
- * rewrote cache management
- *
- * Revision 1.15  2000/03/09 23:22:03  warmerda
- * added GetHistogram
- *
- * Revision 1.14  2000/03/06 02:20:35  warmerda
- * added colortables, overviews, etc
- *
- * Revision 1.12  2000/01/31 15:00:25  warmerda
- * added some documentation
- *
- * Revision 1.11  2000/01/31 14:24:36  warmerda
- * implemented dataset delete
- *
- * Revision 1.10  1999/11/11 21:59:07  warmerda
- * added GetDriver() for datasets
- *
- * Revision 1.9  1999/10/21 13:23:45  warmerda
- * Added a bit of driver related documentation.
- *
- * Revision 1.8  1999/10/21 12:04:11  warmerda
- * Reorganized header.
- *
- * Revision 1.7  1999/10/01 14:44:02  warmerda
- * added documentation
- *
- * Revision 1.6  1999/04/21 04:16:25  warmerda
- * experimental docs
- *
- * Revision 1.5  1999/01/11 15:36:18  warmerda
- * Added projections support, and a few other things.
- *
- * Revision 1.4  1998/12/31 18:54:25  warmerda
- * Implement initial GDALRasterBlock support, and block cache
- *
- * Revision 1.3  1998/12/06 22:17:09  warmerda
- * Fill out rasterio support.
- *
- * Revision 1.2  1998/12/03 18:34:06  warmerda
- * Update to use CPL
- *
- * Revision 1.1  1998/10/18 06:15:11  warmerda
- * Initial implementation.
- *
  */
 
 #ifndef GDAL_PRIV_H_INCLUDED
@@ -258,6 +119,7 @@ class GDALRasterAttributeTable;
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_minixml.h"
 #include <vector>
 
 #define GMO_VALID                0x0001
@@ -265,6 +127,37 @@ class GDALRasterAttributeTable;
 #define GMO_SUPPORT_MD           0x0004
 #define GMO_SUPPORT_MDMD         0x0008
 #define GMO_MD_DIRTY             0x0010
+
+/************************************************************************/
+/*                       GDALMultiDomainMetadata                        */
+/************************************************************************/
+
+class CPL_DLL GDALMultiDomainMetadata
+{
+private:
+    char **papszDomainList;
+    char ***papapszMetadataLists;
+
+public:
+    GDALMultiDomainMetadata();
+    ~GDALMultiDomainMetadata();
+
+    int         XMLInit( CPLXMLNode *psMetadata, int bMerge );
+    CPLXMLNode  *Serialize();
+
+    char      **GetDomainList() { return papszDomainList; }
+
+    char      **GetMetadata( const char * pszDomain = "" );
+    CPLErr      SetMetadata( char ** papszMetadata,
+                             const char * pszDomain = "" );
+    const char *GetMetadataItem( const char * pszName,
+                                 const char * pszDomain = "" );
+    CPLErr      SetMetadataItem( const char * pszName,
+                                 const char * pszValue,
+                                 const char * pszDomain = "" );
+
+    void        Clear();
+};
 
 /* ******************************************************************** */
 /*                           GDALMajorObject                            */
@@ -280,7 +173,7 @@ class CPL_DLL GDALMajorObject
   protected:
     int                 nFlags; // GMO_* flags. 
     CPLString           sDescription;
-    char              **papszMetadata;
+    GDALMultiDomainMetadata oMDMD;
     
   public:
                         GDALMajorObject();

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/10/13 01:19:57  fwarmerdam
+ * moved GDALMultiDomainMetadata into GDALMajorObject
+ *
  * Revision 1.10  2005/09/23 20:52:21  fwarmerdam
  * added the GMO flags on GDALMajorObject
  *
@@ -74,7 +77,6 @@ GDALMajorObject::GDALMajorObject()
 
 {
     nFlags = GMO_VALID;
-    papszMetadata = NULL;
 }
 
 /************************************************************************/
@@ -87,7 +89,6 @@ GDALMajorObject::~GDALMajorObject()
     if( (nFlags & GMO_VALID) == 0 )
         CPLDebug( "GDAL", "In ~GDALMajorObject on invalid object" );
 
-    CSLDestroy( papszMetadata );
     nFlags &= ~GMO_VALID;
 }
 
@@ -189,10 +190,7 @@ void CPL_STDCALL GDALSetDescription( GDALMajorObjectH hObject, const char *pszNe
 char **GDALMajorObject::GetMetadata( const char * pszDomain )
 
 {
-    if( pszDomain == NULL || EQUAL(pszDomain,"") )
-        return papszMetadata;
-    else
-        return NULL;
+    return oMDMD.GetMetadata( pszDomain );
 }
 
 /************************************************************************/
@@ -232,19 +230,8 @@ CPLErr GDALMajorObject::SetMetadata( char ** papszMetadataIn,
                                      const char * pszDomain )
 
 {
-    if( pszDomain != NULL && !EQUAL(pszDomain,"") )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported, 
-                  "Non-default domain not supported for this object." );
-        return CE_Failure;
-    }
-
     nFlags |= GMO_MD_DIRTY;
-
-    CSLDestroy( papszMetadata );
-    papszMetadata = CSLDuplicate( papszMetadataIn );
-    
-    return CE_None;
+    return oMDMD.SetMetadata( papszMetadataIn, pszDomain );
 }
 
 /************************************************************************/
@@ -284,9 +271,7 @@ const char *GDALMajorObject::GetMetadataItem( const char * pszName,
                                               const char * pszDomain )
 
 {
-    char  **papszMD = GetMetadata( pszDomain );
-    
-    return CSLFetchNameValue( papszMD, pszName );
+    return oMDMD.GetMetadataItem( pszName, pszDomain );
 }
 
 /************************************************************************/
@@ -326,39 +311,8 @@ CPLErr GDALMajorObject::SetMetadataItem( const char * pszName,
                                          const char * pszDomain )
 
 {
-    if( pszDomain != NULL && !EQUAL(pszDomain,"") )
-    {
-        CPLErr eErr;
-
-        // We do lot of work here so that drivers can override SetMetadata()
-        // but let the default SetMetadataItem() method handle setting 
-        // individual items. 
-
-        CPLErrorReset();
-
-        char **papszWrkMD = GetMetadata( pszDomain );
-
-        if( CPLGetLastErrorType() != CE_None )
-            return CPLGetLastErrorType();
-
-        papszWrkMD = CSLDuplicate( papszWrkMD );
-
-        papszWrkMD = CSLSetNameValue( papszWrkMD, pszName, pszValue );
-
-        eErr = SetMetadata( papszWrkMD, pszDomain );
-
-        CSLDestroy( papszWrkMD );
-
-        return eErr;
-    }
-    else
-    {
-        nFlags |= GMO_MD_DIRTY;
-
-        papszMetadata = CSLSetNameValue( papszMetadata, pszName, pszValue );
-    }
-
-    return CE_None;
+    nFlags |= GMO_MD_DIRTY;
+    return oMDMD.SetMetadataItem( pszName, pszValue,  pszDomain );
 }
 
 /************************************************************************/

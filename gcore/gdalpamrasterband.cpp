@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/10/13 01:19:58  fwarmerdam
+ * moved GDALMultiDomainMetadata into GDALMajorObject
+ *
  * Revision 1.13  2005/09/24 19:02:15  fwarmerdam
  * added RasterAttributeTable support
  *
@@ -222,7 +225,7 @@ CPLXMLNode *GDALPamRasterBand::SerializeToXML( const char *pszVRTPath )
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psMD;
 
-    psMD = psPam->oMDMD.Serialize();
+    psMD = oMDMD.Serialize();
     if( psMD != NULL )
         CPLAddXMLChild( psTree, psMD );
 
@@ -287,8 +290,6 @@ void GDALPamRasterBand::PamClear()
         CPLFree( psPam->pszUnitType );
         CSLDestroy( psPam->papszCategoryNames );
 
-        psPam->oMDMD.Clear();
-
         if( psPam->poDefaultRAT != NULL )
         {
             delete psPam->poDefaultRAT;
@@ -312,7 +313,7 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
 /* -------------------------------------------------------------------- */
 /*      Apply any dataset level metadata.                               */
 /* -------------------------------------------------------------------- */
-    psPam->oMDMD.XMLInit( psTree );
+    oMDMD.XMLInit( psTree, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Collect various other items of metadata.                        */
@@ -587,19 +588,6 @@ CPLErr GDALPamRasterBand::CloneInfo( GDALRasterBand *poSrcBand,
 }
 
 /************************************************************************/
-/*                            GetMetadata()                             */
-/************************************************************************/
-
-char **GDALPamRasterBand::GetMetadata( const char *pszDomain )
-
-{
-    if( psPam )
-        return psPam->oMDMD.GetMetadata( pszDomain );
-    else
-        return GDALRasterBand::GetMetadata( pszDomain );
-}
-
-/************************************************************************/
 /*                            SetMetadata()                             */
 /************************************************************************/
 
@@ -610,34 +598,9 @@ CPLErr GDALPamRasterBand::SetMetadata( char **papszMetadata,
     PamInitialize();
 
     if( psPam )
-    {
         psPam->poParentDS->MarkPamDirty();
-        return psPam->oMDMD.SetMetadata( papszMetadata, pszDomain );
-    }
-    else
-    {
-        return GDALRasterBand::SetMetadata( papszMetadata, pszDomain );
-    }
-}
 
-/************************************************************************/
-/*                          GetMetadataItem()                           */
-/************************************************************************/
-
-const char *GDALPamRasterBand::GetMetadataItem( const char *pszName, 
-                                             const char *pszDomain )
-
-{
-    PamInitialize();
-
-    if( psPam )
-    {
-        return psPam->oMDMD.GetMetadataItem( pszName, pszDomain );
-    }
-    else
-    {
-        return GDALRasterBand::GetMetadataItem( pszName, pszDomain );
-    }
+    return GDALRasterBand::SetMetadata( papszMetadata, pszDomain );
 }
 
 /************************************************************************/
@@ -652,14 +615,9 @@ CPLErr GDALPamRasterBand::SetMetadataItem( const char *pszName,
     PamInitialize();
 
     if( psPam )
-    {
         psPam->poParentDS->MarkPamDirty();
-        return psPam->oMDMD.SetMetadataItem( pszName, pszValue, pszDomain );
-    }
-    else
-    {
-        return GDALRasterBand::SetMetadataItem( pszName, pszValue, pszDomain );
-    }
+
+    return GDALRasterBand::SetMetadataItem( pszName, pszValue, pszDomain );
 }
 
 /************************************************************************/
