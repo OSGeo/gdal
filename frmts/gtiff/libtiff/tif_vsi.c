@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/10/13 18:38:36  fwarmerdam
+ * Try to report system level errors on open in TIFFOpen.
+ *
  * Revision 1.7  2005/03/18 20:30:57  fwarmerdam
  * ensure we close the underlying file if the open fails.
  *
@@ -153,8 +156,11 @@ TIFFOpen(const char* name, const char* mode)
                     
         fp = VSIFOpenL( name, access );
 	if (fp == NULL) {
+            if( errno >= 0 )
+                TIFFError(module,"%s: %s", name, VSIStrerror( errno ) );
+            else
 		TIFFError(module, "%s: Cannot open", name);
-		return ((TIFF *)0);
+            return ((TIFF *)0);
 	}
 
 	tif = TIFFClientOpen(name, mode,
