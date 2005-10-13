@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/10/13 01:19:57  fwarmerdam
+ * moved GDALMultiDomainMetadata into GDALMajorObject
+ *
  * Revision 1.5  2005/09/11 18:03:05  fwarmerdam
  * added clear() method
  *
@@ -204,7 +207,7 @@ CPLErr GDALMultiDomainMetadata::SetMetadataItem( const char *pszName,
 /*      <Metadata> elements.                                            */
 /************************************************************************/
 
-int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree )
+int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree, int bMerge )
 
 {
     CPLXMLNode *psMetadata;
@@ -250,6 +253,13 @@ int GDALMultiDomainMetadata::XMLInit( CPLXMLNode *psTree )
 /* -------------------------------------------------------------------- */
         else
         {
+            if( bMerge )
+            {
+                papszMD = GetMetadata( pszDomain );
+                if( papszMD != NULL )
+                    papszMD = CSLDuplicate( papszMD );
+            }
+            
             for( psMDI = psMetadata->psChild; psMDI != NULL; 
                  psMDI = psMDI->psNext )
             {

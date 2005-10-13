@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/10/13 01:19:57  fwarmerdam
+ * moved GDALMultiDomainMetadata into GDALMajorObject
+ *
  * Revision 1.6  2005/09/24 19:02:15  fwarmerdam
  * added RasterAttributeTable support
  *
@@ -52,7 +55,6 @@
 #define GDAL_PAM_H_INCLUDED
 
 #include "gdal_priv.h"
-#include "cpl_minixml.h"
 
 class GDALPamRasterBand;
 
@@ -91,37 +93,6 @@ class GDALPamRasterBand;
 #define GPF_DISABLED            0x04  // do not try any PAM stuff. 
 #define GPF_AUXMODE             0x08  // store info in .aux (HFA) file.
 
-/************************************************************************/
-/*                       GDALMultiDomainMetadata                        */
-/************************************************************************/
-
-class CPL_DLL GDALMultiDomainMetadata
-{
-private:
-    char **papszDomainList;
-    char ***papapszMetadataLists;
-
-public:
-    GDALMultiDomainMetadata();
-    ~GDALMultiDomainMetadata();
-
-    int         XMLInit( CPLXMLNode *psMetadata );
-    CPLXMLNode  *Serialize();
-
-    char      **GetDomainList() { return papszDomainList; }
-
-    char      **GetMetadata( const char * pszDomain = "" );
-    CPLErr      SetMetadata( char ** papszMetadata,
-                             const char * pszDomain = "" );
-    const char *GetMetadataItem( const char * pszName,
-                                 const char * pszDomain = "" );
-    CPLErr      SetMetadataItem( const char * pszName,
-                                 const char * pszValue,
-                                 const char * pszDomain = "" );
-
-    void        Clear();
-};
-
 /* ==================================================================== */
 /*      GDALDatasetPamInfo                                              */
 /*                                                                      */
@@ -143,8 +114,6 @@ typedef struct {
     char       *pszGCPProjection;
 
     CPLXMLNode *psHistograms;
-
-    GDALMultiDomainMetadata  oMDMD;
 
 } GDALDatasetPamInfo;
 
@@ -193,11 +162,8 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
                             const char *pszGCPProjection );
 
-    virtual char      **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr      SetMetadata( char ** papszMetadata,
                                      const char * pszDomain = "" );
-    virtual const char *GetMetadataItem( const char * pszName,
-                                 const char * pszDomain = "" );
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                          const char * pszValue,
                                          const char * pszDomain = "" );
@@ -243,8 +209,6 @@ typedef struct {
     double         dfStdDev;
 
     CPLXMLNode     *psSavedHistograms;
-
-    GDALMultiDomainMetadata  oMDMD;
 
     GDALRasterAttributeTable *poDefaultRAT;
 
@@ -304,11 +268,8 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
     virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
                                         int nBuckets, int *panHistogram );
 
-    virtual char      **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr      SetMetadata( char ** papszMetadata,
                                      const char * pszDomain = "" );
-    virtual const char *GetMetadataItem( const char * pszName,
-                                 const char * pszDomain = "" );
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                          const char * pszValue,
                                          const char * pszDomain = "" );

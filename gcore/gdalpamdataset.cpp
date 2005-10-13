@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/10/13 01:19:57  fwarmerdam
+ * moved GDALMultiDomainMetadata into GDALMajorObject
+ *
  * Revision 1.14  2005/10/12 15:35:23  fwarmerdam
  * mark pam info clean at end of TryLoadAux
  *
@@ -164,7 +167,7 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszVRTPath )
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psMD;
 
-    psMD = psPam->oMDMD.Serialize();
+    psMD = oMDMD.Serialize();
     if( psMD != NULL )
         CPLAddXMLChild( psDSTree, psMD );
 
@@ -300,8 +303,6 @@ void GDALPamDataset::PamClear()
             CPLFree( psPam->pasGCPList );
         }
 
-        psPam->oMDMD.Clear();
-
         CPLFree( psPam );
         psPam = NULL;
     }
@@ -412,7 +413,7 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
 /* -------------------------------------------------------------------- */
 /*      Apply any dataset level metadata.                               */
 /* -------------------------------------------------------------------- */
-    psPam->oMDMD.XMLInit( psTree );
+    oMDMD.XMLInit( psTree, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Process bands.                                                  */
@@ -821,19 +822,6 @@ CPLErr GDALPamDataset::SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
 }
 
 /************************************************************************/
-/*                            GetMetadata()                             */
-/************************************************************************/
-
-char **GDALPamDataset::GetMetadata( const char *pszDomain )
-
-{
-    if( psPam )
-        return psPam->oMDMD.GetMetadata( pszDomain );
-    else
-        return GDALDataset::GetMetadata( pszDomain );
-}
-
-/************************************************************************/
 /*                            SetMetadata()                             */
 /************************************************************************/
 
@@ -844,34 +832,9 @@ CPLErr GDALPamDataset::SetMetadata( char **papszMetadata,
     PamInitialize();
 
     if( psPam )
-    {
         MarkPamDirty();
-        return psPam->oMDMD.SetMetadata( papszMetadata, pszDomain );
-    }
-    else
-    {
-        return GDALDataset::SetMetadata( papszMetadata, pszDomain );
-    }
-}
 
-/************************************************************************/
-/*                          GetMetadataItem()                           */
-/************************************************************************/
-
-const char *GDALPamDataset::GetMetadataItem( const char *pszName, 
-                                             const char *pszDomain )
-
-{
-    PamInitialize();
-
-    if( psPam )
-    {
-        return psPam->oMDMD.GetMetadataItem( pszName, pszDomain );
-    }
-    else
-    {
-        return GDALDataset::GetMetadataItem( pszName, pszDomain );
-    }
+    return GDALDataset::SetMetadata( papszMetadata, pszDomain );
 }
 
 /************************************************************************/
@@ -886,14 +849,9 @@ CPLErr GDALPamDataset::SetMetadataItem( const char *pszName,
     PamInitialize();
 
     if( psPam )
-    {
         MarkPamDirty();
-        return psPam->oMDMD.SetMetadataItem( pszName, pszValue, pszDomain );
-    }
-    else
-    {
-        return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
-    }
+
+    return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
 }
 
 /************************************************************************/
@@ -1018,7 +976,12 @@ CPLErr GDALPamDataset::TryLoadAux()
 /* -------------------------------------------------------------------- */
     char **papszMD = poAuxDS->GetMetadata();
     if( CSLCount(papszMD) > 0 )
-        GDALPamDataset::SetMetadata( papszMD );
+    {
+        char **papszMerged = 
+            CSLMerge( CSLDuplicate(GetMetadata()), papszMD );
+        GDALPamDataset::SetMetadata( papszMerged );
+        CSLDestroy( papszMerged );
+    }
 
 /* ==================================================================== */
 /*      Process bands.                                                  */
@@ -1035,7 +998,12 @@ CPLErr GDALPamDataset::TryLoadAux()
 
         papszMD = poAuxBand->GetMetadata();
         if( CSLCount(papszMD) > 0 )
-            GDALPamDataset::SetMetadata( papszMD );
+        {
+            char **papszMerged = 
+                CSLMerge( CSLDuplicate(GetMetadata()), papszMD );
+            poBand->SetMetadata( papszMerged );
+            CSLDestroy( papszMerged );
+        }
 
         if( poAuxBand->GetCategoryNames() != NULL )
             poBand->SetCategoryNames( poAuxBand->GetCategoryNames() );
