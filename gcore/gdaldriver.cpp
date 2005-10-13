@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2005/10/13 01:38:29  fwarmerdam
+ * Ensure "large file" stat is used in GDALDriver::Delete() so it works
+ * on in-memory stuff.
+ *
  * Revision 1.36  2005/10/13 00:46:19  fwarmerdam
  * Avoid trying to set scale and offset if they are the defaults.
  *
@@ -461,9 +465,10 @@ CPLErr GDALDriver::Delete( const char * pszFilename )
         return pfnDelete( pszFilename );
     else
     {
-        VSIStatBuf      sStat;
+        VSIStatBufL     sStat;
 
-        if( VSIStat( pszFilename, &sStat ) == 0 && VSI_ISREG( sStat.st_mode ) )
+        if( VSIStatL( pszFilename, &sStat ) == 0 
+            && VSI_ISREG( sStat.st_mode ) )
         {
             if( VSIUnlink( pszFilename ) == 0 )
                 return CE_None;
