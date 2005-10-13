@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_miffile.cpp,v 1.40 2005/10/12 14:03:02 fwarmerdam Exp $
+ * $Id: mitab_miffile.cpp,v 1.41 2005/10/13 20:12:03 fwarmerdam Exp $
  *
  * Name:     mitab_miffile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,11 @@
  **********************************************************************
  *
  * $Log: mitab_miffile.cpp,v $
+ * Revision 1.41  2005/10/13 20:12:03  fwarmerdam
+ * layers with just regions can't be set as type wkbPolygon because they may
+ * have multipolygons (bug GDAL:958)
+ *     http://bugzilla.remotesensing.org/show_bug.cgi?id=958
+ *
  * Revision 1.40  2005/10/12 14:03:02  fwarmerdam
  * Fixed problem with white space parsing in mitab_miffile.cpp (bug GDAL:954)
  *
@@ -391,8 +396,6 @@ int MIFFile::Open(const char *pszFname, const char *pszAccess,
             m_poDefn->SetGeomType( wkbPoint );
         else if( numPoints == 0 && numLines > 0 && numRegions == 0 )
             m_poDefn->SetGeomType( wkbLineString );
-        else if( numPoints == 0 && numLines == 0 && numRegions > 0 )
-            m_poDefn->SetGeomType( wkbPolygon );
         else
             /* we leave it unknown indicating a mixture */;
     }
