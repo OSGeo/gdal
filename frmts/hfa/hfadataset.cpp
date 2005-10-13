@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.68  2005/10/13 01:28:53  fwarmerdam
+ * Changed to use underlying multidomain metadata.
+ *
  * Revision 1.67  2005/10/13 01:22:03  fwarmerdam
  * Clear old cruft.
  *
@@ -402,8 +405,6 @@ class CPL_DLL HFADataset : public GDALPamDataset
 
     int         bIgnoreUTM;
 
-    char      **papszHFAMetadata;
-
     CPLErr      ReadProjection();
     CPLErr      WriteProjection();
 
@@ -434,9 +435,6 @@ class CPL_DLL HFADataset : public GDALPamDataset
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
 
-    virtual char **GetMetadata( const char * pszDomain = "" );
-    virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" );
     virtual CPLErr SetMetadata( char **, const char * = "" );
     virtual CPLErr SetMetadataItem( const char *, const char *, const char * = "" );
 
@@ -1334,7 +1332,6 @@ HFADataset::HFADataset()
     pszProjection = CPLStrdup("");
     this->bMetadataDirty = FALSE;
     bIgnoreUTM = FALSE;
-    papszHFAMetadata = NULL;
 }
 
 /************************************************************************/
@@ -1350,7 +1347,6 @@ HFADataset::~HFADataset()
         HFAClose( hHFA );
 
     CPLFree( pszProjection );
-    CSLDestroy( papszHFAMetadata );
 }
 
 /************************************************************************/
@@ -2341,10 +2337,9 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     HFAEntry  *poEntry = psInfo->poRoot->GetNamedChild("DependentFile");
     if( poEntry != NULL )
     {
-        poDS->papszHFAMetadata = 
-            CSLSetNameValue( poDS->papszHFAMetadata, 
-                             "HFA_DEPENDENT_FILE", 
-                             poEntry->GetStringField( "dependent.string" ));
+        poDS->SetMetadataItem( "HFA_DEPENDENT_FILE", 
+                               poEntry->GetStringField( "dependent.string" ),
+                               "HFA" );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2390,33 +2385,6 @@ CPLErr HFADataset::SetMetadata( char **papszMDIn, const char *pszDomain )
     bMetadataDirty = TRUE;
 
     return GDALPamDataset::SetMetadata( papszMDIn, pszDomain );
-}
-
-/************************************************************************/
-/*                            GetMetadata()                             */
-/************************************************************************/
-
-char **HFADataset::GetMetadata( const char * pszDomain )
-
-{
-    if( pszDomain != NULL && EQUAL(pszDomain,"HFA") )
-        return papszHFAMetadata;
-    else
-        return GDALPamDataset::GetMetadata( pszDomain );
-}
-
-/************************************************************************/
-/*                          GetMetadataItem()                           */
-/************************************************************************/
-
-const char *HFADataset::GetMetadataItem( const char *pszKey, 
-                                         const char *pszDomain )
-
-{
-    if( pszDomain != NULL && EQUAL(pszDomain,"HFA") )
-        return CSLFetchNameValue( papszHFAMetadata, pszKey );
-    else
-        return GDALPamDataset::GetMetadataItem( pszKey, pszDomain );
 }
 
 /************************************************************************/
