@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.67  2005/10/13 01:22:03  fwarmerdam
+ * Clear old cruft.
+ *
  * Revision 1.66  2005/10/12 18:22:39  fwarmerdam
  * ensure bNoRegen is initialized
  *
@@ -2669,22 +2672,6 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
         poDS->GetRasterBand(iBand+1)->SetMetadata( poSrcBand->GetMetadata() );
     }
-
-#ifdef notdef
-    char **papszMD = poSrcDS->GetMetadata();
-
-    if( papszMD != NULL )
-        HFASetMetadata( poDS->hHFA, 0, papszMD );
-
-    for( iBand = 0; iBand < nBandCount; iBand++ )
-    {
-        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
-        char **papszMD = poSrcBand->GetMetadata();
-
-        if( papszMD != NULL )
-            HFASetMetadata( poDS->hHFA, iBand+1, papszMD );
-    }
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Copy projection information.                                    */
