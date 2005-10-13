@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.51  2005/10/13 01:20:16  fwarmerdam
+ * added CSLMerge()
+ *
  * Revision 1.50  2005/09/30 19:11:40  fwarmerdam
  * fixed hextobinary conversion, bug 935
  *
@@ -341,6 +344,46 @@ char    **CSLDuplicate(char **papszStrList)
     *papszDst = NULL;
 
     return papszNewList;
+}
+
+/************************************************************************/
+/*                               CSLMerge                               */
+/************************************************************************/
+
+/**
+ * \brief Merge two lists.
+ *
+ * The two lists are merged, ensuring that if any keys appear in both
+ * that the value from the second (papszOverride) list take precidence.
+ *
+ * @param papszOrig the original list, being modified.
+ * @param papszOverride the list of items being merged in.  This list
+ * is unaltered and remains owned by the caller.
+ *
+ * @return updated list.
+ */
+
+char **CSLMerge( char **papszOrig, char **papszOverride )
+
+{
+    int i;
+
+    if( papszOrig == NULL && papszOverride != NULL )
+        return CSLDuplicate( papszOverride );
+    
+    if( papszOverride == NULL )
+        return papszOrig;
+
+    for( i = 0; papszOverride[i] != NULL; i++ )
+    {
+        char *pszKey = NULL;
+        const char *pszValue = CPLParseNameValue( papszOverride[i], &pszKey );
+
+        papszOrig = CSLSetNameValue( papszOrig, pszKey, pszValue );
+        CPLFree( pszKey );
+    }
+
+    return papszOrig;
 }
 
 /**********************************************************************
