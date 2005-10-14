@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.37  2005/10/14 21:50:03  fwarmerdam
+ * Don't flip out of usercomment is less than 8 characters.
+ *
  * Revision 1.36  2005/09/26 14:52:57  fwarmerdam
  * Fixed UserComments to skip language encoding.  Force some new tags
  * to ASCII.
@@ -559,7 +562,8 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 /*      For UserComment we need to ignore the language binding and      */
 /*      just return the actual contents.                                */
 /* -------------------------------------------------------------------- */
-        if( EQUAL(pszName,"EXIF_UserComment") )
+        if( EQUAL(pszName,"EXIF_UserComment") 
+            && poTIFFDirEntry->tdir_count >= 8 )
         {
             poTIFFDirEntry->tdir_type = TIFF_ASCII;
             poTIFFDirEntry->tdir_count -= 8;
