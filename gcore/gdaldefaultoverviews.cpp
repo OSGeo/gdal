@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/10/14 21:11:28  fwarmerdam
+ * avoid all-bands test for imagine files
+ *
  * Revision 1.15  2005/10/12 18:21:57  fwarmerdam
  * use GDALClose instead of delete in case dataset opened shared
  *
@@ -297,7 +300,7 @@ GDALDefaultOverviews::BuildOverviews(
 /*      Our TIFF overview support currently only works safely if all    */
 /*      bands are handled at the same time.                             */
 /* -------------------------------------------------------------------- */
-    if( nBands != poDS->GetRasterCount() )
+    if( !bOvrIsAux && nBands != poDS->GetRasterCount() )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Generation of overviews in external TIFF currently only"
@@ -379,7 +382,7 @@ GDALDefaultOverviews::BuildOverviews(
 
         int j;
         
-        for( j = 0; j < poBand->GetOverviewCount(); j++ )
+        for( j = 0; j < nOverviews; j++ )
         {
             if( panOverviewList[j] > 0 )
                 panOverviewList[j] *= -1;
