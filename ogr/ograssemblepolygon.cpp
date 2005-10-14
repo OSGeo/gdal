@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/10/14 15:12:07  fwarmerdam
+ * Fixup docs a bit.
+ *
  * Revision 1.11  2005/03/25 06:31:27  fwarmerdam
  * use addSubLineString() to speed up adding edge to ring.
  *
@@ -172,7 +175,7 @@ static void AddEdgeToRing( OGRLinearRing * poRing, OGRLineString * poLine,
 /**
  * Build a ring from a bunch of arcs.
  *
- * @param hLines handle to the line string geometry to add to the ring.
+ * @param hLines handle to an OGRGeometryCollection (or OGRMultiLineString) containing the line string geometries to be built into rings.
  * @param bBestEffort not yet implemented???.
  * @param bAutoClose indicates if the ring should be close when first and
  * last points of the ring are the same.
