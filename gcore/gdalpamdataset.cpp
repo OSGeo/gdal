@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/10/14 21:10:16  fwarmerdam
+ * avoid error if .aux.xml file does not exist
+ *
  * Revision 1.15  2005/10/13 01:19:57  fwarmerdam
  * moved GDALMultiDomainMetadata into GDALMajorObject
  *
@@ -483,7 +486,7 @@ CPLErr GDALPamDataset::TryLoadXML()
 
 {
     char *pszVRTPath = NULL;
-    CPLXMLNode *psTree;
+    CPLXMLNode *psTree = NULL;
 
     PamInitialize();
 
@@ -503,12 +506,16 @@ CPLErr GDALPamDataset::TryLoadXML()
     if( !BuildPamFilename() )
         return CE_None;
 
-    // we should really check for the files existance before trying
-    // to open it. 
-    CPLErrorReset();
-    CPLPushErrorHandler( CPLQuietErrorHandler );
-    psTree = CPLParseXMLFile( psPam->pszPamFilename );
-    CPLPopErrorHandler();
+    VSIStatBufL sStatBuf;
+
+    if( VSIStatL( psPam->pszPamFilename, &sStatBuf ) == 0 
+        && VSI_ISREG( sStatBuf.st_mode ) )
+    {
+        CPLErrorReset();
+        CPLPushErrorHandler( CPLQuietErrorHandler );
+        psTree = CPLParseXMLFile( psPam->pszPamFilename );
+        CPLPopErrorHandler();
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we fail, try .aux.                                           */
