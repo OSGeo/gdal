@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.38  2005/10/14 21:52:26  fwarmerdam
+ * Slightly safer version of last fix, retaining ASCII setting for ucomments.
+ *
  * Revision 1.37  2005/10/14 21:50:03  fwarmerdam
  * Don't flip out of usercomment is less than 8 characters.
  *
@@ -562,12 +565,15 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 /*      For UserComment we need to ignore the language binding and      */
 /*      just return the actual contents.                                */
 /* -------------------------------------------------------------------- */
-        if( EQUAL(pszName,"EXIF_UserComment") 
-            && poTIFFDirEntry->tdir_count >= 8 )
+        if( EQUAL(pszName,"EXIF_UserComment")  )
         {
             poTIFFDirEntry->tdir_type = TIFF_ASCII;
-            poTIFFDirEntry->tdir_count -= 8;
-            poTIFFDirEntry->tdir_offset += 8;
+            
+            if( poTIFFDirEntry->tdir_count >= 8 )
+            {
+                poTIFFDirEntry->tdir_count -= 8;
+                poTIFFDirEntry->tdir_offset += 8;
+            }
         }
 
 /* -------------------------------------------------------------------- */
