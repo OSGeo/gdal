@@ -47,6 +47,10 @@ multireadtest$(EXE):	multireadtest.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) multireadtest.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o multireadtest$(EXE)
 
+dumpoverviews$(EXE):	dumpoverviews.o $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) dumpoverviews.o $(XTRAOBJ) $(CONFIG_LIBS) \
+		 -o dumpoverviews$(EXE)
+
 test1$(EXE):	test1.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) test1.o $(XTRAOBJ) $(CONFIG_LIBS) \
 		 -o test1$(EXE)
