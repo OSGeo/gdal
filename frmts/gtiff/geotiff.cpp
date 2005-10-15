@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.149  2005/10/15 22:14:36  fwarmerdam
+ * GTiffDataset::FlushBlockBuf() fixed to call SetDirectory().  Otherwise
+ * sometimes the block would not be flushed out "against" the the right
+ * overview.
+ *
  * Revision 1.148  2005/10/13 01:20:48  fwarmerdam
  * restructured to use gdalmajorobject multidomain metadata
  *
@@ -1651,6 +1656,8 @@ CPLErr GTiffDataset::FlushBlockBuf()
 
     if( nLoadedBlock < 0 || !bLoadedBlockDirty )
         return CE_None;
+
+    SetDirectory();
 
     if( TIFFIsTiled(hTIFF) )
         nBlockBufSize = TIFFTileSize( hTIFF );
