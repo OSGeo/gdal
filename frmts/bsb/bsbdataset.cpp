@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.16  2005/10/15 19:51:37  fwarmerdam
+ * added NOS/GEO GCP support c/o Karl Palsson
+ *
  * Revision 1.15  2005/05/05 14:01:36  fwarmerdam
  * PAM Enable
  *
@@ -107,7 +110,9 @@ class BSBDataset : public GDALPamDataset
     double      adfGeoTransform[6];
     int         bGeoTransformSet;
 
-    void        ScanForGCPs();
+    void        ScanForGCPs( bool isNos, const char *pszFilename );
+    void        ScanForGCPsNos( const char *pszFilename );
+    void        ScanForGCPsBSB();
   public:
                 BSBDataset();
 		~BSBDataset();
@@ -291,10 +296,10 @@ const char *BSBDataset::GetProjectionRef()
 }
 
 /************************************************************************/
-/*                            ScanForGCPs()                             */
+/*                            ScanForGCPs( isNos, *pszFilename )        */
 /************************************************************************/
 
-void BSBDataset::ScanForGCPs()
+void BSBDataset::ScanForGCPs( bool isNos, const char *pszFilename )
 
 {
 #define MAX_GCP		256
@@ -302,6 +307,92 @@ void BSBDataset::ScanForGCPs()
     nGCPCount = 0;
     pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),MAX_GCP);
 
+    if ( isNos )
+    {
+        ScanForGCPsNos(pszFilename);
+    } else {
+        ScanForGCPsBSB();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Attempt to prepare a geotransform from the GCPs.                */
+/* -------------------------------------------------------------------- */
+    if( GDALGCPsToGeoTransform( nGCPCount, pasGCPList, adfGeoTransform, 
+                                FALSE ) )
+    {
+        bGeoTransformSet = TRUE;
+    }
+}
+
+/************************************************************************/
+/*                            ScanForGCPsNos( pszFilename )             */
+/* Nos files have an accompanying .geo file, that contains some of the  */
+/* information normally contained in the header section with BSB files. */
+/* we try and open a file with the same name, but a .geo extension, and */
+/* look for lines like...                                               */
+/*   PointX=long lat line pixel    (using the same naming system as BSB)*/
+/*   Point1=-22.0000 64.250000 197 744                                  */
+/************************************************************************/
+
+void BSBDataset::ScanForGCPsNos( const char *pszFilename )
+{
+    char **Tokens;
+    const char *geofile;
+    const char *extension;
+
+    extension = CPLGetExtension(pszFilename);
+
+    // pseudointelligently try and guess whether we want a .geo or a .GEO
+    if (extension[1] == 'O')
+    {
+        geofile = CPLResetExtension( pszFilename, "GEO");
+    } else {
+        geofile = CPLResetExtension( pszFilename, "geo");
+    }
+
+    FILE *gfp = VSIFOpen( geofile, "r" );  // Text files
+    if( gfp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Couldn't find a matching .GEO file: %s", geofile );
+        return;
+    }
+
+    char *thisLine = (char *) CPLMalloc( 80 ); // FIXME
+    while (fgets(thisLine, 80, gfp))
+    {
+        if( EQUALN(thisLine, "Point", 5) )
+        {
+            // got a point line, turn it into a gcp
+            Tokens = CSLTokenizeStringComplex(thisLine, "=", FALSE, FALSE);
+            Tokens = CSLTokenizeStringComplex(Tokens[1], " ", FALSE, FALSE);
+
+            GDALInitGCPs( 1, pasGCPList + nGCPCount );
+            pasGCPList[nGCPCount].dfGCPX = atof(Tokens[0]);
+            pasGCPList[nGCPCount].dfGCPY = atof(Tokens[1]);
+            pasGCPList[nGCPCount].dfGCPPixel = atof(Tokens[3]);
+            pasGCPList[nGCPCount].dfGCPLine = atof(Tokens[2]);
+
+            CPLFree( pasGCPList[nGCPCount].pszId );
+            char	szName[50];
+            sprintf( szName, "GCP_%d", nGCPCount+1 );
+            pasGCPList[nGCPCount].pszId = CPLStrdup( szName );
+
+            nGCPCount++;
+        }
+    }
+
+    CPLFree(thisLine);
+    VSIFClose(gfp);
+}
+
+
+/************************************************************************/
+/*                            ScanForGCPsBSB()                          */
+/************************************************************************/
+
+void BSBDataset::ScanForGCPsBSB()
+{
 /* -------------------------------------------------------------------- */
 /*      Collect standalone GCPs.  They look like:                       */
 /*                                                                      */
@@ -346,15 +437,6 @@ void BSBDataset::ScanForGCPs()
         }
         CSLDestroy( papszTokens );
     }
-
-/* -------------------------------------------------------------------- */
-/*      Attempt to prepare a geotransform from the GCPs.                */
-/* -------------------------------------------------------------------- */
-    if( GDALGCPsToGeoTransform( nGCPCount, pasGCPList, adfGeoTransform, 
-                                FALSE ) )
-    {
-        bGeoTransformSet = TRUE;
-    }
 }
 
 /************************************************************************/
@@ -368,6 +450,7 @@ GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for BSB/ keyword.                                         */
 /* -------------------------------------------------------------------- */
     int		i;
+    bool        isNos = false;
 
     if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 1000 )
         return NULL;
@@ -383,7 +466,10 @@ GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
             && poOpenInfo->pabyHeader[i+1] == 'O' 
             && poOpenInfo->pabyHeader[i+2] == 'S' 
             && poOpenInfo->pabyHeader[i+3] == '/' )
+        {
+            isNos = true;
             break;
+        }
         if( poOpenInfo->pabyHeader[i+0] == 'W' 
             && poOpenInfo->pabyHeader[i+1] == 'X' 
             && poOpenInfo->pabyHeader[i+2] == '\\' 
@@ -419,7 +505,7 @@ GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->SetBand( 1, new BSBRasterBand( poDS ));
 
-    poDS->ScanForGCPs();
+    poDS->ScanForGCPs( isNos, poOpenInfo->pszFilename );
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
