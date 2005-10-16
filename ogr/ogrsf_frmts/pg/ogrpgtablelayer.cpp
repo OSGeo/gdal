@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2005/10/16 04:25:42  cfis
+ * Use the bCopyActive flag instead of checking the data source.
+ *
  * Revision 1.39  2005/10/16 03:39:25  fwarmerdam
  * cleanup COPY support somewhat
  *
@@ -747,7 +750,7 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
     }
     else
     {
-        if ( !poDS->CopyInProgress() )
+        if ( !bCopyActive )
             StartCopy();
 
         return CreateFeatureViaCopy( poFeature );
