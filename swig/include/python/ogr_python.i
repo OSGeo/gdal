@@ -6,6 +6,9 @@
 
 /*
  * $Log$
+ * Revision 1.3  2005/10/16 20:39:56  hobu
+ * fix a typo
+ *
  * Revision 1.2  2005/09/06 01:51:42  kruland
  * Removed GetDriverByName, GetDriver, Open, OpenShared because they are defined
  * in ogr now.
@@ -115,7 +118,7 @@ layer[0:4] would return a list of the first four features."""
             if value.stop == sys.maxint:
                 #for an unending slice, sys.maxint is used
                 #We need to stop before that or GDAL will write an
-                #error to stdout
+                ##error to stdout
                 stop = len(self) - 1
             else:
                 stop = value.stop
