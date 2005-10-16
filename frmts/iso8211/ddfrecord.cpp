@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/10/16 04:09:20  fwarmerdam
+ * Avoid warnings in sprintf()s.
+ *
  * Revision 1.27  2004/06/24 00:35:59  warmerda
  * fixed bug in my last 'fix' for resizing records
  *
@@ -273,11 +276,11 @@ int DDFRecord::Write()
 
     memset( szLeader, ' ', nLeaderSize );
 
-    sprintf( szLeader+0, "%05d", nDataSize + nLeaderSize );
+    sprintf( szLeader+0, "%05d", (int) (nDataSize + nLeaderSize) );
     szLeader[5] = ' ';
     szLeader[6] = 'D';
     
-    sprintf( szLeader + 12, "%05d", nFieldOffset + nLeaderSize );
+    sprintf( szLeader + 12, "%05d", (int) (nFieldOffset + nLeaderSize) );
     szLeader[17] = ' ';
 
     szLeader[20] = (char) ('0' + _sizeFieldLength);
