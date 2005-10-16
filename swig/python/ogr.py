@@ -1,4 +1,4 @@
-# This file was created automatically by SWIG 1.3.26.
+# This file was created automatically by SWIG 1.3.27.
 # Don't modify this file, modify the SWIG interface instead.
 import osr
 
@@ -154,6 +154,10 @@ class DataSource(_object):
     def GetLayerCount(*args):
         """GetLayerCount(self) -> int"""
         return _ogr.DataSource_GetLayerCount(*args)
+
+    def GetDriver(*args):
+        """GetDriver(self) -> Driver"""
+        return _ogr.DataSource_GetDriver(*args)
 
     def GetName(*args):
         """GetName(self) -> char"""
@@ -331,7 +335,7 @@ class Layer(_object):
         return _ogr.Layer_GetFeatureCount(*args, **kwargs)
 
     def GetExtent(*args, **kwargs):
-        """GetExtent(self, double argout, int force=1)"""
+        """GetExtent(self, double argout, int force=1) -> OGRErr"""
         return _ogr.Layer_GetExtent(*args, **kwargs)
 
     def TestCapability(*args):
@@ -791,7 +795,7 @@ class Geometry(_object):
         _swig_setattr(self, Geometry, 'this', _ogr.new_Geometry(*args, **kwargs))
         _swig_setattr(self, Geometry, 'thisown', 1)
     def ExportToWkt(*args):
-        """ExportToWkt(self) -> char"""
+        """ExportToWkt(self, char argout) -> OGRErr"""
         return _ogr.Geometry_ExportToWkt(*args)
 
     def ExportToWkb(*args, **kwargs):
