@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2005/10/16 03:39:25  fwarmerdam
+ * cleanup COPY support somewhat
+ *
  * Revision 1.39  2005/10/16 01:38:34  cfis
  * Updates that add support for using COPY for inserting data to Postgresql.  COPY is less robust than INSERT, but signficantly faster.
  *
@@ -188,7 +191,7 @@ OGRPGDataSource::OGRPGDataSource()
        Note that we cache the PG_USE_COPY value because reading
        it "live" results in a 50% performance degradation
        when creating featurs */
-    bUseCopy = (int) CSLTestBoolean( CPLGetConfigOption( "PG_USE_COPY", "NO") );
+    bUseCopy = CSLTestBoolean( CPLGetConfigOption( "PG_USE_COPY", "NO") );
 }
 
 /************************************************************************/
@@ -198,7 +201,7 @@ OGRPGDataSource::OGRPGDataSource()
 OGRPGDataSource::~OGRPGDataSource()
 
 {
-        int         i;
+    int         i;
 
     FlushSoftTransaction();
 
@@ -269,7 +272,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     bDSUpdate = bUpdate;
 
 /* -------------------------------------------------------------------- */
-/*      Set the encoding
+/*      Set the encoding						*/
 /* -------------------------------------------------------------------- */
     char* encoding = "LATIN1";
     if (PQsetClientEncoding(hPGConn, encoding) == -1)
@@ -1096,6 +1099,8 @@ OGRErr OGRPGDataSource::SoftStartTransaction()
 OGRErr OGRPGDataSource::SoftCommit()
 
 {
+    EndCopy();
+
     if( nSoftTransactionLevel <= 0 )
     {
         CPLDebug( "OGR_PG", "SoftCommit() with no transaction active." );
@@ -1171,8 +1176,7 @@ OGRErr OGRPGDataSource::FlushSoftTransaction()
        that ogr2ogr does not use transactions.  Thus, 
        nSoftTransactionLevel will always be zero, so this has
        to come first. */
-    if ( CopyInProgress() )
-        EndCopy();
+    EndCopy(); 
 
     if( nSoftTransactionLevel <= 0 )
         return OGRERR_NONE;
@@ -1298,28 +1302,43 @@ char *OGRPGDataSource::LaunderName( const char *pszSrcName )
 }
 
 /************************************************************************/
-/*                        COPY Support()                                */
+/*                             StartCopy()                              */
 /************************************************************************/
 void OGRPGDataSource::StartCopy( OGRPGTableLayer *poPGLayer )
 {
+    EndCopy();
     poLayerInCopyMode = poPGLayer;
 }
 
+/************************************************************************/
+/*                              EndCopy()                               */
+/************************************************************************/
 OGRErr OGRPGDataSource::EndCopy( )
 {
-    OGRErr result = poLayerInCopyMode->EndCopy();
-    poLayerInCopyMode = NULL;
+    if( poLayerInCopyMode != NULL )
+    {
+        OGRErr result = poLayerInCopyMode->EndCopy();
+        poLayerInCopyMode = NULL;
 
-    return result;
+        return result;
+    }
+    else
+        return OGRERR_NONE;
 }
 
+/************************************************************************/
+/*                              UseCopy()                               */
+/************************************************************************/
 int OGRPGDataSource::UseCopy()
 
 {
     return bUseCopy;
 }
 
-OGRErr OGRPGDataSource::CopyInProgress( )
+/************************************************************************/
+/*                           CopyInProgress()                           */
+/************************************************************************/
+int OGRPGDataSource::CopyInProgress( )
 {
     return ( poLayerInCopyMode != NULL );
 }

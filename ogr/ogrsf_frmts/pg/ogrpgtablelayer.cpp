@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2005/10/16 03:39:25  fwarmerdam
+ * cleanup COPY support somewhat
+ *
  * Revision 1.38  2005/10/16 01:38:34  cfis
  * Updates that add support for using COPY for inserting data to Postgresql.  COPY is less robust than INSERT, but signficantly faster.
  *
@@ -190,6 +193,7 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     ResetReading();
 
     bLaunderColumnNames = TRUE;
+    bCopyActive = FALSE;
 
     // check SRID if it's necessary
     if( nSRSId == -2 )
@@ -203,6 +207,8 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
 OGRPGTableLayer::~OGRPGTableLayer()
 
 {
+    EndCopy();
+
     CPLFree( pszQuery );
     CPLFree( pszWHERE );
 }
@@ -737,18 +743,20 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
 {
     if ( !poDS->UseCopy() )
     {
-		return CreateFeatureViaInsert( poFeature );
+        return CreateFeatureViaInsert( poFeature );
     }
     else
     {
         if ( !poDS->CopyInProgress() )
             StartCopy();
 
-		return CreateFeatureViaCopy( poFeature );
+        return CreateFeatureViaCopy( poFeature );
     }
 }
 
-
+/************************************************************************/
+/*                       CreateFeatureViaInsert()                       */
+/************************************************************************/
 OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
 {
@@ -1030,6 +1038,9 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
     return poDS->SoftCommit();
 }
 
+/************************************************************************/
+/*                        CreateFeatureViaCopy()                        */
+/************************************************************************/
 
 OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 {
@@ -1140,7 +1151,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
         }
 
         // Grow the command buffer?
-        if( strlen(pszStrValue) + strlen(pszCommand+nOffset) + nOffset
+        if( (int) (strlen(pszStrValue) + strlen(pszCommand+nOffset) + nOffset)
             > nCommandBufSize-50 )
         {
             nCommandBufSize = strlen(pszCommand) + strlen(pszStrValue) + 10000;
@@ -1601,19 +1612,21 @@ OGRErr OGRPGTableLayer::GetExtent( OGREnvelope *psExtent, int bForce )
     return OGRLayer::GetExtent( psExtent, bForce );
 }
 
-
-
 /************************************************************************/
-/*                   COPY Support                                        */
+/*                             StartCopy()                              */
 /************************************************************************/
+
 OGRErr OGRPGTableLayer::StartCopy()
 
 {
     OGRErr result = OGRERR_NONE;
 
-	char *pszFields = BuildCopyFields();
+    /* Tell the datasource we are now planning to copy data */
+    poDS->StartCopy( this ); 
 
-	int size = strlen(pszFields) +  strlen(poFeatureDefn->GetName()) + 100;
+    char *pszFields = BuildCopyFields();
+
+    int size = strlen(pszFields) +  strlen(poFeatureDefn->GetName()) + 100;
     char *pszCommand = (char *) CPLMalloc(size);
 
     sprintf( pszCommand,
@@ -1623,66 +1636,77 @@ OGRErr OGRPGTableLayer::StartCopy()
     CPLFree( pszFields );
 
     PGconn *hPGConn = poDS->GetPGConn();
+    CPLDebug( "OGR_PG", "%s", pszCommand );
     PGresult *hResult = PQexec(hPGConn, pszCommand);
 
-	if ( !hResult || (PQresultStatus(hResult) != PGRES_COPY_IN))
-	{
-		CPLError( CE_Failure, CPLE_AppDefined,
-                "%s", PQerrorMessage(hPGConn) );
+    if ( !hResult || (PQresultStatus(hResult) != PGRES_COPY_IN))
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "%s", PQerrorMessage(hPGConn) );
         result = OGRERR_FAILURE;
     }
+    else
+        bCopyActive = TRUE;
 
     PQclear( hResult );
     CPLFree( pszCommand );
 
-    /* Tell the datasource we are now copying data */
-    poDS->StartCopy( this ); 
-
     return OGRERR_NONE;
 }
 
+/************************************************************************/
+/*                              EndCopy()                               */
+/************************************************************************/
 
 OGRErr OGRPGTableLayer::EndCopy()
 
 {
+    if( !bCopyActive )
+        return OGRERR_NONE;
+
     /* This method is called from the datasource when
-    a COPY operation is ended */
+       a COPY operation is ended */
     OGRErr result = OGRERR_NONE;
 
     PGconn *hPGConn = poDS->GetPGConn();
+    CPLDebug( "OGR_PG", "PQputCopyEnd()" );
     int copyResult = PQputCopyEnd(hPGConn, NULL);
+    bCopyActive = FALSE;
 
-	switch (copyResult)
-	{
-	    case 0:
-		    CPLError( CE_Failure, CPLE_AppDefined, "Writing COPY data blocked.");
-            result = OGRERR_FAILURE;
-            break;
-	    case -1:
-		    CPLError( CE_Failure, CPLE_AppDefined, "%s", PQerrorMessage(hPGConn) );
-            result = OGRERR_FAILURE;
-            break;
-        default:
-        {
-            /* Get the final result of the copy */
- 	        PGresult * hResult = PQgetResult( hPGConn );
+    switch (copyResult)
+    {
+      case 0:
+        CPLError( CE_Failure, CPLE_AppDefined, "Writing COPY data blocked.");
+        result = OGRERR_FAILURE;
+        break;
+      case -1:
+        CPLError( CE_Failure, CPLE_AppDefined, "%s", PQerrorMessage(hPGConn) );
+        result = OGRERR_FAILURE;
+        break;
+      default:
+      {
+          /* Get the final result of the copy */
+          PGresult * hResult = PQgetResult( hPGConn );
 
-            if( hResult && PQresultStatus(hResult) != PGRES_COMMAND_OK )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                            "COPY statement failed.\n%s",
-                            PQerrorMessage(hPGConn) );
+          if( hResult && PQresultStatus(hResult) != PGRES_COMMAND_OK )
+          {
+              CPLError( CE_Failure, CPLE_AppDefined,
+                        "COPY statement failed.\n%s",
+                        PQerrorMessage(hPGConn) );
 
-                result = OGRERR_FAILURE;
-            }
+              result = OGRERR_FAILURE;
+          }
 
-            PQclear(hResult);
-        }
+          PQclear(hResult);
+      }
     }
 
     return result;
 }
 
+/************************************************************************/
+/*                          BuildCopyFields()                           */
+/************************************************************************/
 
 char *OGRPGTableLayer::BuildCopyFields()
 {
@@ -1711,7 +1735,7 @@ char *OGRPGTableLayer::BuildCopyFields()
             strcat( pszFieldList, ", " );
 
         sprintf( pszFieldList+strlen(pszFieldList),
-                "\"%s\"", pszGeomColumn );
+                 "\"%s\"", pszGeomColumn );
     }
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )

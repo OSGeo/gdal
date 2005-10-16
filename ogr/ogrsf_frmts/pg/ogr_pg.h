@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/10/16 03:39:25  fwarmerdam
+ * cleanup COPY support somewhat
+ *
  * Revision 1.21  2005/10/16 01:38:34  cfis
  * Updates that add support for using COPY for inserting data to Postgresql.  COPY is less robust than INSERT, but signficantly faster.
  *
@@ -191,9 +194,10 @@ class OGRPGTableLayer : public OGRPGLayer
 
     int                 bLaunderColumnNames;
     int                 bPreservePrecision;
+    int                 bCopyActive;
 
-	OGRErr			    CreateFeatureViaCopy( OGRFeature *poFeature );
-	OGRErr				CreateFeatureViaInsert( OGRFeature *poFeature );
+    OGRErr		CreateFeatureViaCopy( OGRFeature *poFeature );
+    OGRErr		CreateFeatureViaInsert( OGRFeature *poFeature );
     char                *BuildCopyFields(void);
 public:
                         OGRPGTableLayer( OGRPGDataSource *,
