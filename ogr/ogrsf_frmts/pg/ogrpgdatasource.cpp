@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2005/10/16 01:38:34  cfis
+ * Updates that add support for using COPY for inserting data to Postgresql.  COPY is less robust than INSERT, but signficantly faster.
+ *
  * Revision 1.38  2005/09/23 14:09:27  fwarmerdam
  * Fixed last fix to cast rename to text for postgres 7.x support.
  *
@@ -177,6 +180,15 @@ OGRPGDataSource::OGRPGDataSource()
     nKnownSRID = 0;
     panSRID = NULL;
     papoSRS = NULL;
+
+    poLayerInCopyMode = NULL;
+
+    /* Whether we use COPY or not is dependent on the 
+       config option PG_USE_COPY.
+       Note that we cache the PG_USE_COPY value because reading
+       it "live" results in a 50% performance degradation
+       when creating featurs */
+    bUseCopy = (int) CSLTestBoolean( CPLGetConfigOption( "PG_USE_COPY", "NO") );
 }
 
 /************************************************************************/
@@ -186,7 +198,7 @@ OGRPGDataSource::OGRPGDataSource()
 OGRPGDataSource::~OGRPGDataSource()
 
 {
-    int         i;
+        int         i;
 
     FlushSoftTransaction();
 
@@ -255,6 +267,19 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     pszName = CPLStrdup( pszNewName );
 
     bDSUpdate = bUpdate;
+
+/* -------------------------------------------------------------------- */
+/*      Set the encoding
+/* -------------------------------------------------------------------- */
+    char* encoding = "LATIN1";
+    if (PQsetClientEncoding(hPGConn, encoding) == -1)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "PQsetClientEncoding failed.  Encoding: %s", encoding);
+        PQfinish(hPGConn);
+        hPGConn = NULL;
+        return FALSE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Install a notice processor.                                     */
@@ -1141,6 +1166,14 @@ OGRErr OGRPGDataSource::SoftRollback()
 OGRErr OGRPGDataSource::FlushSoftTransaction()
 
 {
+    /* This must come first because of ogr2ogr.  If you want
+       to use ogr2ogr with COPY support, then you must specify
+       that ogr2ogr does not use transactions.  Thus, 
+       nSoftTransactionLevel will always be zero, so this has
+       to come first. */
+    if ( CopyInProgress() )
+        EndCopy();
+
     if( nSoftTransactionLevel <= 0 )
         return OGRERR_NONE;
 
@@ -1262,4 +1295,31 @@ char *OGRPGDataSource::LaunderName( const char *pszSrcName )
     }
 
     return pszSafeName;
+}
+
+/************************************************************************/
+/*                        COPY Support()                                */
+/************************************************************************/
+void OGRPGDataSource::StartCopy( OGRPGTableLayer *poPGLayer )
+{
+    poLayerInCopyMode = poPGLayer;
+}
+
+OGRErr OGRPGDataSource::EndCopy( )
+{
+    OGRErr result = poLayerInCopyMode->EndCopy();
+    poLayerInCopyMode = NULL;
+
+    return result;
+}
+
+int OGRPGDataSource::UseCopy()
+
+{
+    return bUseCopy;
+}
+
+OGRErr OGRPGDataSource::CopyInProgress( )
+{
+    return ( poLayerInCopyMode != NULL );
 }
