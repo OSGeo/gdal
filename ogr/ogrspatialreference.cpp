@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.96  2005/10/16 01:32:41  fwarmerdam
+ * Apply epsilon testing to UTM zone false easting and northing.
+ *
  * Revision 1.95  2005/09/21 03:00:42  fwarmerdam
  * fixed return for Release
  *
@@ -3796,12 +3799,13 @@ int OGRSpatialReference::GetUTMZone( int * pbNorth ) const
     if( GetProjParm( SRS_PP_SCALE_FACTOR, 1.0 ) != 0.9996 )
         return 0;
           
-    if( GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 ) != 500000 )
+    if( fabs(GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 )-500000.0) > 0.001 )
         return 0;
 
     double      dfFalseNorthing = GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0);
 
-    if( dfFalseNorthing != 0.0 && dfFalseNorthing != 10000000 )
+    if( dfFalseNorthing != 0.0 
+        && fabs(dfFalseNorthing-10000000.0) > 0.001 )
         return 0;
 
     if( pbNorth != NULL )
