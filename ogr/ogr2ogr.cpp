@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2005/10/16 01:39:07  cfis
+ * Added support for --config, --debug, and --formats command line parameters similar to what GDAL utilities have.
+ *
  * Revision 1.28  2005/04/14 14:20:24  fwarmerdam
  * More stuff to avoid feature leaks.
  *
@@ -115,6 +118,7 @@
  */
 
 #include "ogrsf_frmts.h"
+#include "ogr_misc.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
@@ -172,6 +176,11 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Processing command line arguments.                              */
 /* -------------------------------------------------------------------- */
+    nArgc = OGRGeneralCmdLineProcessor( nArgc, &papszArgv, 0 );
+    
+    if( nArgc < 1 )
+        exit( -nArgc );
+
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
         if( EQUAL(papszArgv[iArg],"-f") && iArg < nArgc-1 )
