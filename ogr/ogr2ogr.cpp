@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/10/16 01:59:06  cfis
+ * Added declaration for OGRGeneralCmdLineProcessor to ogr_p.h, and included it into ogr2ogr.  Also changed call to CPL_DLL from CPL_STDCALL
+ *
  * Revision 1.29  2005/10/16 01:39:07  cfis
  * Added support for --config, --debug, and --formats command line parameters similar to what GDAL utilities have.
  *
@@ -118,7 +121,7 @@
  */
 
 #include "ogrsf_frmts.h"
-#include "ogr_misc.h"
+#include "ogr_p.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 

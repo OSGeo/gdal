@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/10/16 01:59:06  cfis
+ * Added declaration for OGRGeneralCmdLineProcessor to ogr_p.h, and included it into ogr2ogr.  Also changed call to CPL_DLL from CPL_STDCALL
+ *
  * Revision 1.17  2005/10/16 01:51:43  cfis
  * Added #include for ogrsf_frmts.f to support the --formats command line parameter in OGRGeneralCmdLineProcessor.
  *
@@ -448,8 +451,7 @@ void OGRFree( void * pMemory )
  * without error, return of -1 requests exit with error code.
  */
 
-int CPL_STDCALL 
-OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
+int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 
 {
     char **papszReturn = NULL;

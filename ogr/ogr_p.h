@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/10/16 01:59:06  cfis
+ * Added declaration for OGRGeneralCmdLineProcessor to ogr_p.h, and included it into ogr2ogr.  Also changed call to CPL_DLL from CPL_STDCALL
+ *
  * Revision 1.8  2005/07/20 01:43:51  fwarmerdam
  * upgraded OGR geometry dimension handling
  *
@@ -88,5 +91,10 @@ const char CPL_DLL * OGRWktReadPoints( const char * pszInput,
 
 void CPL_DLL OGRMakeWktCoordinate( char *, double, double, double, int );
 #endif
+
+
+/* General utility option processing. */
+int CPL_DLL OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions );
+
 
 #endif /* ndef _OGR_P_H_INCLUDED */
