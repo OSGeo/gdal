@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/10/16 01:14:32  fwarmerdam
+ * Avoid signed/unsigned warnings.
+ *
  * Revision 1.8  2005/10/10 10:37:44  dron
  * Typos fixed.
  *
@@ -842,7 +845,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
             }
 
         }
-        else if ( iDatum < NUMBER_OF_ELLIPSOIDS && aoEllips[iDatum] )
+        else if ( iDatum < (int) NUMBER_OF_ELLIPSOIDS && aoEllips[iDatum] )
         {
             if( USGSGetEllipsoidInfo( aoEllips[iDatum], &pszName,
                                        &dfSemiMajor, &dfInvFlattening ) )
@@ -1248,7 +1251,7 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
                   "Try to translate ellipsoid definition.", pszDatum );
 #endif
         
-        for ( i = 0; i < NUMBER_OF_ELLIPSOIDS; i++ )
+        for ( i = 0; i < (int) NUMBER_OF_ELLIPSOIDS; i++ )
         {
             double  dfSM;
             double  dfIF;
