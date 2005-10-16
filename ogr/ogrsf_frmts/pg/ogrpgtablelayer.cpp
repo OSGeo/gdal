@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2005/10/16 08:33:50  cfis
+ * Temporary fix for bug 962.  If the same table name is in two different schemas then the number of fields for each table will be doubled.  It its in three, then the number of fields will be tripled, etc.  The appropriate solution is to make ogr postgresql schema aware.
+ *
  * Revision 1.40  2005/10/16 04:25:42  cfis
  * Use the bCopyActive flag instead of checking the data source.
  *
@@ -270,7 +273,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
         PQclear( hResult );
         sprintf( szCommand,
                  "DECLARE mycursor CURSOR for "
-                 "SELECT a.attname, t.typname, a.attlen,"
+                 "SELECT DISTINCT a.attname, t.typname, a.attlen,"
                  "       format_type(a.atttypid,a.atttypmod) "
                  "FROM pg_class c, pg_attribute a, pg_type t "
                  "WHERE c.relname = '%s' "
@@ -1225,12 +1228,12 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 	{
     case 0:
         CPLDebug( "OGR_PG", "PQexec(%s)\n", pszCommand );
-		CPLError( CE_Failure, CPLE_AppDefined, "Writing COPY data blocked.");
+        CPLError( CE_Failure, CPLE_AppDefined, "Writing COPY data blocked.");
         result = OGRERR_FAILURE;
         break;
     case -1:
         CPLDebug( "OGR_PG", "PQexec(%s)\n", pszCommand );
-		CPLError( CE_Failure, CPLE_AppDefined, "%s", PQerrorMessage(hPGConn) );
+        CPLError( CE_Failure, CPLE_AppDefined, "%s", PQerrorMessage(hPGConn) );
         result = OGRERR_FAILURE;
         break;
 	}
