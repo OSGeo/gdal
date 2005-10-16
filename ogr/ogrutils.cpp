@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/10/16 01:51:43  cfis
+ * Added #include for ogrsf_frmts.f to support the --formats command line parameter in OGRGeneralCmdLineProcessor.
+ *
  * Revision 1.16  2005/10/16 01:49:02  cfis
  * Added support for general command line processing similar to what GDAL utilities have.
  *
@@ -81,6 +84,7 @@
 
 #include "ogr_geometry.h"
 #include "ogr_p.h"
+#include "ogrsf_frmts.h"
 #include <ctype.h>
 
 CPL_CVSID("$Id$");
