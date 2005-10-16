@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/10/16 01:38:34  cfis
+ * Updates that add support for using COPY for inserting data to Postgresql.  COPY is less robust than INSERT, but signficantly faster.
+ *
  * Revision 1.20  2005/08/06 14:49:27  osemykin
  * Added BINARY CURSOR support
  * Use it with 'PGB:dbname=...' instead 'PG:dbname=...'
@@ -98,9 +101,11 @@
 #include "ogrsf_frmts.h"
 #include "libpq-fe.h"
 
+
 /************************************************************************/
 /*                            OGRPGLayer                                */
 /************************************************************************/
+
 
 class OGRPGDataSource;
 
@@ -119,6 +124,7 @@ class OGRPGLayer : public OGRLayer
     char               *GeometryToBYTEA( OGRGeometry * );
     OGRGeometry        *BYTEAToGeometry( const char * );
     OGRGeometry        *HEXToGeometry( const char * );
+    char               *GeometryToHex( OGRGeometry * poGeometry, int nSRSId );
     Oid                 GeometryToOID( OGRGeometry * );
     OGRGeometry        *OIDToGeometry( Oid );
 
@@ -169,6 +175,7 @@ class OGRPGLayer : public OGRLayer
 /*                           OGRPGTableLayer                            */
 /************************************************************************/
 
+
 class OGRPGTableLayer : public OGRPGLayer
 {
     int                 bUpdateAccess;
@@ -185,7 +192,10 @@ class OGRPGTableLayer : public OGRPGLayer
     int                 bLaunderColumnNames;
     int                 bPreservePrecision;
 
-  public:
+	OGRErr			    CreateFeatureViaCopy( OGRFeature *poFeature );
+	OGRErr				CreateFeatureViaInsert( OGRFeature *poFeature );
+    char                *BuildCopyFields(void);
+public:
                         OGRPGTableLayer( OGRPGDataSource *,
                                          const char * pszName,
                                          int bUpdate, int nSRSId = -2 );
@@ -217,6 +227,9 @@ class OGRPGTableLayer : public OGRPGLayer
                                 { bLaunderColumnNames = bFlag; }
     void                SetPrecisionFlag( int bFlag )
                                 { bPreservePrecision = bFlag; }
+
+    virtual OGRErr      StartCopy();
+    virtual OGRErr      EndCopy();
 };
 
 /************************************************************************/
@@ -250,7 +263,6 @@ class OGRPGResultLayer : public OGRPGLayer
 /************************************************************************/
 /*                           OGRPGDataSource                            */
 /************************************************************************/
-
 class OGRPGDataSource : public OGRDataSource
 {
     typedef struct
@@ -282,6 +294,9 @@ class OGRPGDataSource : public OGRDataSource
     int                 nKnownSRID;
     int                 *panSRID;
     OGRSpatialReference **papoSRS;
+
+    OGRPGTableLayer     *poLayerInCopyMode;
+    int                 bUseCopy;
 
   public:
     PGver               sPostGISVersion;
@@ -326,6 +341,11 @@ class OGRPGDataSource : public OGRDataSource
     virtual void        ReleaseResultSet( OGRLayer * poLayer );
 
     char               *LaunderName( const char * );
+
+    int                 UseCopy();
+    void                StartCopy( OGRPGTableLayer *poPGLayer );
+    OGRErr              EndCopy( );
+    int                 CopyInProgress( );
 };
 
 /************************************************************************/

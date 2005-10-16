@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2005/10/16 01:38:34  cfis
+ * Updates that add support for using COPY for inserting data to Postgresql.  COPY is less robust than INSERT, but signficantly faster.
+ *
  * Revision 1.37  2005/09/26 04:37:17  cfis
  * If inserting a feature into postgresql failed, the program would crash since the wrong number of parameters were sent to CPLError.  Fixed by passing pszCommand.
  *
@@ -730,8 +733,23 @@ OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
 /************************************************************************/
 /*                           CreateFeature()                            */
 /************************************************************************/
-
 OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
+{
+    if ( !poDS->UseCopy() )
+    {
+		return CreateFeatureViaInsert( poFeature );
+    }
+    else
+    {
+        if ( !poDS->CopyInProgress() )
+            StartCopy();
+
+		return CreateFeatureViaCopy( poFeature );
+    }
+}
+
+
+OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
 {
     PGconn              *hPGConn = poDS->GetPGConn();
@@ -1010,6 +1028,203 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
     PQclear( hResult );
 
     return poDS->SoftCommit();
+}
+
+
+OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
+{
+    int nCommandBufSize = 4000;
+
+    /* First process geometry */
+    OGRGeometry *poGeometry = (OGRGeometry *) poFeature->GetGeometryRef();
+    
+    char *pszGeom = NULL;
+    if ( poGeometry )
+    {
+        poGeometry->closeRings();
+        poGeometry->setCoordinateDimension( nCoordDimension );
+
+        pszGeom = GeometryToHex( poGeometry, nSRSId );
+        nCommandBufSize = nCommandBufSize + strlen(pszGeom);
+    }
+
+    char *pszCommand = (char *) CPLMalloc(nCommandBufSize);
+
+    if ( poGeometry )
+    {
+        sprintf( pszCommand, "%s", pszGeom);
+        CPLFree( pszGeom );
+    }
+    else
+    {
+        sprintf( pszCommand, "\\N");
+    }
+    sprintf( pszCommand, "\\N");
+    strcat( pszCommand, "\t" );
+
+
+    /* Next process the field id column */
+    if( bHasFid && poFeatureDefn->GetFieldIndex( pszFIDColumn ) != -1 )
+    {
+        /* Set the FID */
+        if( poFeature->GetFID() != OGRNullFID )
+        {
+            sprintf( pszCommand + strlen(pszCommand), "%ld ", poFeature->GetFID());
+        }
+        else
+	    {
+	        strcat( pszCommand, "\\N" );
+        }
+
+        strcat( pszCommand, "\t" );
+    }
+
+
+    /* Now process the remaining fields */
+    int nOffset = strlen(pszCommand);
+
+    int nFieldCount = poFeatureDefn->GetFieldCount();
+    for( int i = 0; i < nFieldCount;  i++ )
+    {
+        const char *pszStrValue = poFeature->GetFieldAsString(i);
+        char *pszNeedToFree = NULL;
+
+        if( !poFeature->IsFieldSet( i ) )
+        {
+            strcat( pszCommand, "\\N" );
+
+            if( i < nFieldCount - 1 )
+                strcat( pszCommand, "\t" );
+
+            continue;
+        }
+
+        // We need special formatting for integer list values.
+        if( poFeatureDefn->GetFieldDefn(i)->GetType() == OFTIntegerList )
+        {
+            int nCount, nOff = 0, j;
+            const int *panItems = poFeature->GetFieldAsIntegerList(i,&nCount);
+
+            pszNeedToFree = (char *) CPLMalloc(nCount * 13 + 10);
+            strcpy( pszNeedToFree, "{" );
+            for( j = 0; j < nCount; j++ )
+            {
+                if( j != 0 )
+                    strcat( pszNeedToFree+nOff, "," );
+
+                nOff += strlen(pszNeedToFree+nOff);
+                sprintf( pszNeedToFree+nOff, "%d", panItems[j] );
+            }
+            strcat( pszNeedToFree+nOff, "}" );
+            pszStrValue = pszNeedToFree;
+        }
+
+        // We need special formatting for real list values.
+        if( poFeatureDefn->GetFieldDefn(i)->GetType() == OFTRealList )
+        {
+            int nCount, nOff = 0, j;
+            const double *padfItems =poFeature->GetFieldAsDoubleList(i,&nCount);
+
+            pszNeedToFree = (char *) CPLMalloc(nCount * 40 + 10);
+            strcpy( pszNeedToFree, "{" );
+            for( j = 0; j < nCount; j++ )
+            {
+                if( j != 0 )
+                    strcat( pszNeedToFree+nOff, "," );
+
+                nOff += strlen(pszNeedToFree+nOff);
+                sprintf( pszNeedToFree+nOff, "%.16g", padfItems[j] );
+            }
+            strcat( pszNeedToFree+nOff, "}" );
+            pszStrValue = pszNeedToFree;
+        }
+
+        // Grow the command buffer?
+        if( strlen(pszStrValue) + strlen(pszCommand+nOffset) + nOffset
+            > nCommandBufSize-50 )
+        {
+            nCommandBufSize = strlen(pszCommand) + strlen(pszStrValue) + 10000;
+            pszCommand = (char *) CPLRealloc(pszCommand, nCommandBufSize );
+        }
+
+        if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger
+                 && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTReal )
+        {
+            int         iChar;
+
+            nOffset += strlen(pszCommand+nOffset);
+
+            for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
+            {
+                if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTIntegerList
+                    && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTRealList
+                    && poFeatureDefn->GetFieldDefn(i)->GetWidth() > 0
+                    && iChar == poFeatureDefn->GetFieldDefn(i)->GetWidth() )
+                {
+                    CPLDebug( "PG",
+                              "Truncated %s field value, it was too long.",
+                              poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
+                    break;
+                }
+
+                /* Escape embedded \, \t, \n, \r since they will cause COPY
+                   to misinterpret a line of text and thus abort */
+                if( pszStrValue[iChar] == '\\' || 
+                    pszStrValue[iChar] == '\t' || 
+                    pszStrValue[iChar] == '\r' || 
+                    pszStrValue[iChar] == '\n'   )
+                {
+                    pszCommand[nOffset++] = '\\';
+                }
+
+                pszCommand[nOffset++] = pszStrValue[iChar];
+            }
+
+            pszCommand[nOffset] = '\0';
+//            strcat( pszCommand+nOffset, "'" );
+        }
+        else
+        {
+            strcat( pszCommand+nOffset, pszStrValue );
+        }
+
+        if( pszNeedToFree )
+            CPLFree( pszNeedToFree );
+
+        if( i < nFieldCount - 1 )
+            strcat( pszCommand, "\t" );
+    }
+
+    /* Add end of line marker */
+    strcat( pszCommand, "\n" );
+
+
+    /* ------------------------------------------------------------ */
+    /*      Execute the copy.                                       */
+    /* ------------------------------------------------------------ */
+    PGconn *hPGConn = poDS->GetPGConn();
+    int copyResult = PQputCopyData(hPGConn, pszCommand, strlen(pszCommand));
+
+    OGRErr result = OGRERR_NONE;
+
+    switch (copyResult)
+	{
+    case 0:
+        CPLDebug( "OGR_PG", "PQexec(%s)\n", pszCommand );
+		CPLError( CE_Failure, CPLE_AppDefined, "Writing COPY data blocked.");
+        result = OGRERR_FAILURE;
+        break;
+    case -1:
+        CPLDebug( "OGR_PG", "PQexec(%s)\n", pszCommand );
+		CPLError( CE_Failure, CPLE_AppDefined, "%s", PQerrorMessage(hPGConn) );
+        result = OGRERR_FAILURE;
+        break;
+	}
+
+    /* Free the buffer we allocated before returning */
+    CPLFree( pszCommand );
+
+    return result;
 }
 
 
@@ -1371,7 +1586,7 @@ OGRErr OGRPGTableLayer::GetExtent( OGREnvelope *psExtent, int bForce )
         // For PostGIS ver < 1.0.0 -> Tokens: X1 Y1 Z1 X2 Y2 Z2 (nTokenCnt = 6)
         // =>   X2 index calculated as nTokenCnt/2
         //      Y2 index caluclated as nTokenCnt/2+1
-
+        
         psExtent->MinX = CPLScanDouble(papszTokens[0],strlen(papszTokens[0]),"C");
         psExtent->MinY = CPLScanDouble(papszTokens[1],strlen(papszTokens[1]),"C");
         psExtent->MaxX = CPLScanDouble(papszTokens[nTokenCnt/2],strlen(papszTokens[nTokenCnt/2]),"C");
@@ -1386,3 +1601,132 @@ OGRErr OGRPGTableLayer::GetExtent( OGREnvelope *psExtent, int bForce )
     return OGRLayer::GetExtent( psExtent, bForce );
 }
 
+
+
+/************************************************************************/
+/*                   COPY Support                                        */
+/************************************************************************/
+OGRErr OGRPGTableLayer::StartCopy()
+
+{
+    OGRErr result = OGRERR_NONE;
+
+	char *pszFields = BuildCopyFields();
+
+	int size = strlen(pszFields) +  strlen(poFeatureDefn->GetName()) + 100;
+    char *pszCommand = (char *) CPLMalloc(size);
+
+    sprintf( pszCommand,
+             "COPY \"%s\" (%s) FROM STDIN;",
+             poFeatureDefn->GetName(), pszFields );
+
+    CPLFree( pszFields );
+
+    PGconn *hPGConn = poDS->GetPGConn();
+    PGresult *hResult = PQexec(hPGConn, pszCommand);
+
+	if ( !hResult || (PQresultStatus(hResult) != PGRES_COPY_IN))
+	{
+		CPLError( CE_Failure, CPLE_AppDefined,
+                "%s", PQerrorMessage(hPGConn) );
+        result = OGRERR_FAILURE;
+    }
+
+    PQclear( hResult );
+    CPLFree( pszCommand );
+
+    /* Tell the datasource we are now copying data */
+    poDS->StartCopy( this ); 
+
+    return OGRERR_NONE;
+}
+
+
+OGRErr OGRPGTableLayer::EndCopy()
+
+{
+    /* This method is called from the datasource when
+    a COPY operation is ended */
+    OGRErr result = OGRERR_NONE;
+
+    PGconn *hPGConn = poDS->GetPGConn();
+    int copyResult = PQputCopyEnd(hPGConn, NULL);
+
+	switch (copyResult)
+	{
+	    case 0:
+		    CPLError( CE_Failure, CPLE_AppDefined, "Writing COPY data blocked.");
+            result = OGRERR_FAILURE;
+            break;
+	    case -1:
+		    CPLError( CE_Failure, CPLE_AppDefined, "%s", PQerrorMessage(hPGConn) );
+            result = OGRERR_FAILURE;
+            break;
+        default:
+        {
+            /* Get the final result of the copy */
+ 	        PGresult * hResult = PQgetResult( hPGConn );
+
+            if( hResult && PQresultStatus(hResult) != PGRES_COMMAND_OK )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                            "COPY statement failed.\n%s",
+                            PQerrorMessage(hPGConn) );
+
+                result = OGRERR_FAILURE;
+            }
+
+            PQclear(hResult);
+        }
+    }
+
+    return result;
+}
+
+
+char *OGRPGTableLayer::BuildCopyFields()
+{
+    int         i, nSize;
+    char        *pszFieldList;
+        
+    nSize = 25;
+    if( pszGeomColumn )
+        nSize += strlen(pszGeomColumn);
+
+    if( bHasFid && poFeatureDefn->GetFieldIndex( pszFIDColumn ) != -1 )
+        nSize += strlen(pszFIDColumn);
+
+    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+        nSize += strlen(poFeatureDefn->GetFieldDefn(i)->GetNameRef()) + 4;
+
+    pszFieldList = (char *) CPLMalloc(nSize);
+    pszFieldList[0] = '\0';
+
+    if( bHasFid && poFeatureDefn->GetFieldIndex( pszFIDColumn ) != -1 )
+        sprintf( pszFieldList, "\"%s\"", pszFIDColumn );
+
+    if( pszGeomColumn )
+    {
+        if( strlen(pszFieldList) > 0 )
+            strcat( pszFieldList, ", " );
+
+        sprintf( pszFieldList+strlen(pszFieldList),
+                "\"%s\"", pszGeomColumn );
+    }
+
+    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    {
+        const char *pszName = poFeatureDefn->GetFieldDefn(i)->GetNameRef();
+
+        if( strlen(pszFieldList) > 0 )
+            strcat( pszFieldList, ", " );
+
+        strcat( pszFieldList, "\"" );
+        strcat( pszFieldList, pszName );
+        strcat( pszFieldList, "\"" );
+    }
+
+    CPLAssert( (int) strlen(pszFieldList) < nSize );
+
+    return pszFieldList;
+}

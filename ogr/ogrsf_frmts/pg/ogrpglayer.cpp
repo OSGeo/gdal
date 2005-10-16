@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/10/16 01:38:34  cfis
+ * Updates that add support for using COPY for inserting data to Postgresql.  COPY is less robust than INSERT, but signficantly faster.
+ *
  * Revision 1.22  2005/09/30 19:11:16  fwarmerdam
  * Fixed Hextobinary conversion (a and A mistranslated).
  *
@@ -114,6 +117,12 @@ CPL_CVSID("$Id$");
 #define INV_WRITE               0x00020000
 #define INV_READ                0x00040000
 #endif
+
+/* Flags for creating WKB format for PostGIS */
+#define WKBZOFFSET 0x80000000
+#define WKBMOFFSET 0x40000000
+#define WKBSRIDFLAG 0x20000000
+#define WKBBBOXFLAG 0x10000000
 
 /************************************************************************/
 /*                           OGRPGLayer()                               */
@@ -559,6 +568,80 @@ OGRGeometry *OGRPGLayer::HEXToGeometry( const char *pszBytea )
     CPLFree( pabyWKB );
     return poGeometry;
 }
+
+/************************************************************************/
+/*                           GeometryToHex()                            */
+/************************************************************************/
+char *OGRPGLayer::GeometryToHex( OGRGeometry * poGeometry, int nSRSId )
+{
+    GByte       *pabyWKB;
+    char        *pszTextBuf;
+    char        *pszTextBufCurrent;
+    char        *pszHex;
+
+    int nWkbSize = poGeometry->WkbSize();
+    pabyWKB = (GByte *) CPLMalloc(nWkbSize);
+
+    if( poGeometry->exportToWkb( wkbNDR, pabyWKB ) != OGRERR_NONE )
+    {
+        CPLFree( pabyWKB );
+        return CPLStrdup("");
+    }
+
+    /* When converting to hex, each byte takes 2 hex characters.  In addition
+       we add in 8 characters to represent the SRID integer in hex, and
+       one for a null terminator */
+
+    int pszSize = nWkbSize*2 + 8 + 1;
+    pszTextBuf = (char *) CPLMalloc(pszSize);
+    pszTextBufCurrent = pszTextBuf;
+
+    /* Convert the 1st byte, which is the endianess flag, to hex. */
+    pszHex = CPLBinaryToHex( 1, pabyWKB );
+    sprintf(pszTextBufCurrent, pszHex );
+    CPLFree ( pszHex );
+    pszTextBufCurrent += 2;
+
+    /* Next, get the geom type which is bytes 2 through 5 */
+    GUInt32 geomType = (GUInt32)(*(pabyWKB+1));
+
+    /* Now add the SRID flag if an SRID is provided */
+    if (nSRSId != -1) 
+    {
+        /* Change the flag to wkbNDR (little) endianess */
+        GUInt32 nGSrsFlag = CPL_LSBWORD32( WKBSRIDFLAG );
+        /* Apply the flag */
+        geomType = geomType | nGSrsFlag;
+    }
+
+    /* Now write the geom type which is 4 bytes */
+    pszHex = CPLBinaryToHex( 4, (GByte*) &geomType );
+    sprintf(pszTextBufCurrent, pszHex );
+    CPLFree ( pszHex );
+    pszTextBufCurrent += 8;
+
+    /* Now include SRID if provided */
+    if (nSRSId != -1) 
+    {
+        /* Force the srsid to wkbNDR (little) endianess */
+        GUInt32 nGSRSId = CPL_LSBWORD32( nSRSId );
+        pszHex = CPLBinaryToHex( sizeof(nGSRSId),(GByte*) &nGSRSId );
+        sprintf(pszTextBufCurrent, pszHex );
+        CPLFree ( pszHex );
+        pszTextBufCurrent += 8;
+    }
+
+    /* Copy the rest of the data over - subtract
+       5 since we already copied 5 bytes above */
+    pszHex = CPLBinaryToHex( nWkbSize - 5, pabyWKB + 5 );
+    sprintf(pszTextBufCurrent, pszHex );
+    CPLFree ( pszHex );
+
+    CPLFree( pabyWKB );
+
+    return pszTextBuf;
+}
+
 
 /************************************************************************/
 /*                          BYTEAToGeometry()                           */
