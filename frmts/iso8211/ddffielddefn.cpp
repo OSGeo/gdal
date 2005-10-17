@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/10/17 14:51:24  fwarmerdam
+ * Removed extra newlines from error messages.
+ *
  * Revision 1.22  2005/10/17 14:27:10  fwarmerdam
  * Failure to parse field defns is now a warning, not error
  *
@@ -354,7 +357,7 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
       default:
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Unrecognised data_struct_code value %c.\n"
-                  "Field %s initialization incorrect.\n",
+                  "Field %s initialization incorrect.",
                   pachFieldArea[0], pszTag );
         _data_struct_code = dsc_elementary;
     }
@@ -392,7 +395,7 @@ int DDFFieldDefn::Initialize( DDFModule * poModuleIn,
       default:
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Unrecognised data_type_code value %c.\n"
-                  "Field %s initialization incorrect.\n",
+                  "Field %s initialization incorrect.",
                   pachFieldArea[1], pszTag );
         _data_type_code = dtc_char_string;
     }
@@ -726,7 +729,7 @@ int DDFFieldDefn::ApplyFormats()
         || _formatControls[strlen(_formatControls)-1] != ')' )
     {
         CPLError( CE_Warning, CPLE_DiscardedFormat,
-                  "Format controls for `%s' field missing brackets:%s\n",
+                  "Format controls for `%s' field missing brackets:%s",
                   pszTag, _formatControls );
         
         return FALSE;
@@ -770,7 +773,7 @@ int DDFFieldDefn::ApplyFormats()
         if( iFormatItem >= nSubfieldCount )
         {
             CPLError( CE_Warning, CPLE_DiscardedFormat,
-                      "Got more formats than subfields for field `%s'.\n",
+                      "Got more formats than subfields for field `%s'.",
                       pszTag );
             break;
         }
@@ -787,7 +790,7 @@ int DDFFieldDefn::ApplyFormats()
     if( iFormatItem < nSubfieldCount )
     {
         CPLError( CE_Warning, CPLE_DiscardedFormat,
-                  "Got less formats than subfields for field `%s',\n",
+                  "Got less formats than subfields for field `%s'.",
                   pszTag );
         return FALSE;
     }
