@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/10/17 02:26:49  fwarmerdam
+ * ensure Create produces a defaulted GEO segment
+ *
  * Revision 1.16  2005/09/11 16:32:47  fwarmerdam
  * Ensure things work even if the openinfo->fp is NULL.
  *
@@ -196,7 +199,7 @@ const char *PCIDSKDataset::GetProjectionRef()
     if( pszProjection )
         return pszProjection;
     else
-        return "";
+        return GDALPamDataset::GetProjectionRef();
 }
 
 /************************************************************************/
@@ -206,7 +209,7 @@ const char *PCIDSKDataset::GetProjectionRef()
 CPLErr PCIDSKDataset::SetProjection( const char *pszNewProjection )
 
 {
-    if ( pszProjection )
+    if( pszProjection )
 	CPLFree( pszProjection );
     pszProjection = CPLStrdup( pszNewProjection );
     bGeoSegmentDirty = TRUE;
@@ -234,7 +237,7 @@ const char *PCIDSKDataset::GetGCPProjection()
     if( nGCPCount > 0 )
         return pszGCPProjection;
     else
-        return "";
+        return GDALPamDataset::GetGCPProjection();
 }
 
 /************************************************************************/
@@ -252,7 +255,7 @@ const GDAL_GCP *PCIDSKDataset::GetGCPs()
 
 void PCIDSKDataset::FlushCache()
 {
-    GDALDataset::FlushCache();
+    GDALPamDataset::FlushCache();
 
     if( GetAccess() == GA_Update )
     {
@@ -1381,10 +1384,8 @@ GDALDataset *PCIDSKDataset::Create( const char * pszFilename,
 
 /* -------------------------------------------------------------------- */
 /*      Write out pointer to the Georeferencing segment.                */
-/*      Segment will be disabled until data will be actually written    */
-/*      out in FlushCache().                                            */
 /* -------------------------------------------------------------------- */
-    CPLPrintStringFill( szTemp, " 150GEO", 7 );
+    CPLPrintStringFill( szTemp, "A150GEOref", 12 );
     CPLPrintUIntBig( szTemp + 12, nImageStart + nImageBlocks, 11 );
     sprintf( szTemp + 23, "%9d", nGeoSegBlocks );
     VSIFWriteL( (void *)szTemp, 1, 32, fp );
@@ -1395,6 +1396,13 @@ GDALDataset *PCIDSKDataset::Create( const char * pszFilename,
     CPLPrintStringFill( szTemp, "", 32 );
     for ( i = 1; i < nSegments; i++ )
         VSIFWriteL( (void *)szTemp, 1, 32, fp );
+
+/* -------------------------------------------------------------------- */
+/*      Write out default georef segment.                               */
+/* -------------------------------------------------------------------- */
+    static const char *pszGeoref = "Master Georeferencing Segment for File                                                                                          17:27 11Nov2003 17:27 11Nov2003                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 POLYNOMIAL      PIXEL           PIXEL                  3       3                                                                                                                                                      0.000000000000000000D+00  1.000000000000000000D+00  0.000000000000000000D+00                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          0.000000000000000000D+00  0.000000000000000000D+00  1.000000000000000000D+00                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ";
+    
+    VSIFWriteL( (void *) pszGeoref, 1, strlen(pszGeoref), fp );
 
     VSIFCloseL( fp );
     return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
