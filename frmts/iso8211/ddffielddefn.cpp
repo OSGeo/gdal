@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/10/17 14:27:10  fwarmerdam
+ * Failure to parse field defns is now a warning, not error
+ *
  * Revision 1.21  2004/02/18 14:10:07  warmerda
  * doc fixups
  *
@@ -101,6 +104,8 @@
 #include <ctype.h>
 
 CPL_CVSID("$Id$");
+
+#define CPLE_DiscardedFormat   1301
 
 /************************************************************************/
 /*                            DDFFieldDefn()                            */
@@ -720,7 +725,7 @@ int DDFFieldDefn::ApplyFormats()
         || _formatControls[0] != '('
         || _formatControls[strlen(_formatControls)-1] != ')' )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
+        CPLError( CE_Warning, CPLE_DiscardedFormat,
                   "Format controls for `%s' field missing brackets:%s\n",
                   pszTag, _formatControls );
         
@@ -764,7 +769,7 @@ int DDFFieldDefn::ApplyFormats()
         
         if( iFormatItem >= nSubfieldCount )
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
+            CPLError( CE_Warning, CPLE_DiscardedFormat,
                       "Got more formats than subfields for field `%s'.\n",
                       pszTag );
             break;
@@ -781,7 +786,7 @@ int DDFFieldDefn::ApplyFormats()
 
     if( iFormatItem < nSubfieldCount )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
+        CPLError( CE_Warning, CPLE_DiscardedFormat,
                   "Got less formats than subfields for field `%s',\n",
                   pszTag );
         return FALSE;
