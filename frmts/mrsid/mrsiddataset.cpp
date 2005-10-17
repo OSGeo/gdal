@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2005/10/17 19:30:47  fwarmerdam
+ * Fixed serious bug in MrSID overview access.
+ *
  * Revision 1.44  2005/09/16 22:09:18  fwarmerdam
  * Ensure SetDescription() is called before OpenZoom.
  *
@@ -201,6 +204,7 @@ class MrSIDDataset : public GDALPamDataset
     char                *pszProjection;
     GTIFDefn            *psDefn;
 
+    MrSIDDataset       *poParentDS;
     int                 bIsOverview;
     int                 nOverviewCount;
     MrSIDDataset        **papoOverviewDS;
@@ -652,6 +656,7 @@ MrSIDDataset::MrSIDDataset()
     
     dfCurrentMag = 1.0;
     bIsOverview = FALSE;
+    poParentDS = this;
     nOverviewCount = 0;
     papoOverviewDS = NULL;
 }
@@ -728,7 +733,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 /*      We want to operate from here on as if we were operating on      */
 /*      the full res band.                                              */
 /* -------------------------------------------------------------------- */
-    int nZoomMag = (int) (dfCurrentMag * 1.0001);
+    int nZoomMag = (int) ((1/dfCurrentMag) * 1.0000001);
 
     nXOff *= nZoomMag;
     nYOff *= nZoomMag;
@@ -746,7 +751,8 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
                            (nYSize / (double)nBufYSize));
 
     for( nZoomMag = 1; 
-         nZoomMag * 2 < (dfZoomMag + 0.1) && iOverview < nOverviewCount; 
+         nZoomMag * 2 < (dfZoomMag + 0.1) 
+             && iOverview < poParentDS->nOverviewCount; 
          nZoomMag *= 2, iOverview++ ) {}
 
 /* -------------------------------------------------------------------- */
@@ -1266,7 +1272,7 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->papoOverviewDS[i]->poImageReader = poDS->poImageReader;
             poDS->papoOverviewDS[i]->OpenZoomLevel( i + 1 );
             poDS->papoOverviewDS[i]->bIsOverview = TRUE;
-            
+            poDS->papoOverviewDS[i]->poParentDS = poDS;
         }
     }
 
