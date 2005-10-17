@@ -58,7 +58,7 @@ DISTDIR	=	gdal_$(VERSION)
 default:	port_dir ogr_dir core_dir frmts_dir $(VB6_TARGET) $(GDAL_DLL) \
 		apps_dir pymod_dir ogr_apps
 
-lib:
+staticlib:
 	if exist gdal.lib del gdal.lib
 	lib /out:gdal.lib $(LIBOBJ)
 
@@ -156,7 +156,7 @@ lib_dist:	default
 	cp gdal.lib port\*.h gcore\*.h ogr\*.h $(DISTDIR)
 	zip -r $(DISTDIR).zip $(DISTDIR)
 
-$(GDAL_DLL):	lib
+$(GDAL_DLL):	staticlib
 	link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) $(LIBOBJ) \
 		$(EXTERNAL_LIBS) gcore\Version.res \
 		 /out:$(GDAL_DLL) /implib:gdal_i.lib $(LINKER_FLAGS)
