@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.49  2005/10/17 14:38:16  hobu
+ * Implemented a poor excuse for a GetDriver method on OGRDataSourceShadow
+ *
  * Revision 1.48  2005/10/11 14:47:36  kruland
  * Removed all the manual throws and changed to return OGRErr where appropriate.
  * There are 4 methods which have had serious alterations:
@@ -426,7 +429,13 @@ public:
     return OGR_DS_GetLayerCount(self);
   }
   
-
+  OGRDriverShadow * GetDriver() {
+    OGRDriverShadow* driver;
+    OGRDataSourceShadow* ds;
+    ds = (OGRDataSourceShadow*)OGROpen((const char *) OGR_DS_GetName(self),0,&driver);
+    OGRReleaseDataSource(ds);
+    return driver;
+  }
   const char * GetName() {
     return OGR_DS_GetName(self);
   }
