@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2005/10/17 23:33:51  fwarmerdam
+ * CPLFGets() - be very wary about reads ending in the middle of CRLF.
+ * Was causing problems with world.mif/world.mid reading.
+ *
  * Revision 1.46  2005/09/11 21:08:59  fwarmerdam
  * properly manage TLS ReadLine buffer, added CPLReadLineL()
  *
@@ -403,6 +407,22 @@ char *CPLFGets( char *pszBuffer, int nBufferSize, FILE * fp )
     nActuallyRead = strlen(pszBuffer);
     if ( nActuallyRead == 0 )
         return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      If we found \r and out buffer is full, it is possible there     */
+/*      is also a pending \n.  Check for it.                            */
+/* -------------------------------------------------------------------- */
+    if( nBufferSize == nActuallyRead+1
+        && pszBuffer[nActuallyRead-1] == 13 )
+    {
+        int chCheck;
+        chCheck = fgetc( fp );
+        if( chCheck != 10 )
+        {
+            // unget the character.
+            VSIFSeek( fp, nOriginalOffset+nActuallyRead, SEEK_SET );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Trim off \n, \r or \r\n if it appears at the end.  We don't     */
