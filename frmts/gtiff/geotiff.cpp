@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.150  2005/10/18 13:42:49  fwarmerdam
+ * Force INTERLEAVE=PIXEL if PROFILE=BASELINE.
+ *
  * Revision 1.149  2005/10/15 22:14:36  fwarmerdam
  * GTiffDataset::FlushBlockBuf() fixed to call SetDirectory().  Otherwise
  * sometimes the block would not be flushed out "against" the the right
@@ -3221,6 +3224,7 @@ TIFF *GTiffCreate( const char * pszFilename,
     uint16              nSampleFormat;
     int			nPlanar;
     const char          *pszValue;
+    const char          *pszProfile;
 
     GTiffOneTimeInit();
 
@@ -3240,6 +3244,10 @@ TIFF *GTiffCreate( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*	Setup values based on options.					*/
 /* -------------------------------------------------------------------- */
+    pszProfile = CSLFetchNameValue(papszParmList,"PROFILE");
+    if( pszProfile == NULL )
+        pszProfile = "GDALGeoTIFF";
+
     if( CSLFetchNameValue(papszParmList,"TILED") != NULL )
         bTiled = TRUE;
 
@@ -3269,7 +3277,7 @@ TIFF *GTiffCreate( const char * pszFilename,
     }
     else 
     {
-        if( nBands == 1 )
+        if( nBands == 1 || EQUAL(pszProfile,"BASELINE") )
             nPlanar = PLANARCONFIG_CONTIG;
         else
             nPlanar = PLANARCONFIG_SEPARATE;
