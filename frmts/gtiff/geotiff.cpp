@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.151  2005/10/18 13:43:53  fwarmerdam
+ * Default to PLANAR_CONTIG for PROFILE=GeoTIFF too.
+ *
  * Revision 1.150  2005/10/18 13:42:49  fwarmerdam
  * Force INTERLEAVE=PIXEL if PROFILE=BASELINE.
  *
@@ -3277,7 +3280,9 @@ TIFF *GTiffCreate( const char * pszFilename,
     }
     else 
     {
-        if( nBands == 1 || EQUAL(pszProfile,"BASELINE") )
+        if( nBands == 1 
+            || EQUAL(pszProfile,"BASELINE") 
+            || EQUAL(pszProfile,"GeoTIFF") )
             nPlanar = PLANARCONFIG_CONTIG;
         else
             nPlanar = PLANARCONFIG_SEPARATE;
