@@ -1,3 +1,4 @@
+                                                                                                                                                                                                                                                               
 CC	=	@CC@
 CXX	=	@CXX@
 LD	=	@CXX@
@@ -34,7 +35,7 @@ clean:
 	rm -f $(OLIBNAME) $(GLIBNAME) *.o 
 
 distclean: clean
-	rm -f Makefile config.status config.log autom*.cache
+	rm -fr Makefile config.status config.log autom*.cache
 
 
 $(GLIBNAME):	grass57dataset.o
@@ -45,3 +46,4 @@ $(OLIBNAME):	ogrgrassdriver.o ogrgrassdatasource.o ogrgrasslayer.o
 
 %.o:	%.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
+
