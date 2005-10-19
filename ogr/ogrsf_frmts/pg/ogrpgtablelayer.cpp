@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2005/10/19 02:49:56  cfis
+ * When using COPY geometries were always sent to NULL when sending data to postgresql, even when a geometry existed.  This is now fixed.
+ *
  * Revision 1.41  2005/10/16 08:33:50  cfis
  * Temporary fix for bug 962.  If the same table name is in two different schemas then the number of fields for each table will be doubled.  It its in three, then the number of fields will be tripled, etc.  The appropriate solution is to make ogr postgresql schema aware.
  *
@@ -1076,7 +1079,6 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     {
         sprintf( pszCommand, "\\N");
     }
-    sprintf( pszCommand, "\\N");
     strcat( pszCommand, "\t" );
 
 
@@ -1225,7 +1227,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     OGRErr result = OGRERR_NONE;
 
     switch (copyResult)
-	{
+    {
     case 0:
         CPLDebug( "OGR_PG", "PQexec(%s)\n", pszCommand );
         CPLError( CE_Failure, CPLE_AppDefined, "Writing COPY data blocked.");
@@ -1236,7 +1238,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
         CPLError( CE_Failure, CPLE_AppDefined, "%s", PQerrorMessage(hPGConn) );
         result = OGRERR_FAILURE;
         break;
-	}
+    }
 
     /* Free the buffer we allocated before returning */
     CPLFree( pszCommand );
