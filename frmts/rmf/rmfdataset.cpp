@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/10/19 16:39:31  dron
+ * Export projection info in newly created datasets.
+ *
  * Revision 1.7  2005/10/12 12:07:46  dron
  * Remove old projection handling code.
  *
@@ -151,6 +154,8 @@ class RMFDataset : public GDALDataset
     double          adfGeoTransform[6];
     char            *pszProjection;
 
+    int             bHeaderDirty;
+
     const char      *pszFilename;
     FILE            *fp;
 
@@ -166,9 +171,10 @@ class RMFDataset : public GDALDataset
                                  GDALDataType, char ** );
     virtual void        FlushCache( void );
 
-    CPLErr              GetGeoTransform( double * padfTransform );
+    virtual CPLErr      GetGeoTransform( double * padfTransform );
     virtual CPLErr      SetGeoTransform( double * );
-    const char          *GetProjectionRef();
+    virtual const char  *GetProjectionRef();
+    virtual CPLErr      SetProjection( const char * );
 };
 
 /************************************************************************/
@@ -700,6 +706,8 @@ RMFDataset::RMFDataset()
     poColorTable = NULL;
     memset( abyHeader, 0, RMF_HEADER_SIZE ); 
     memset( &sHeader, 0, sizeof(sHeader) );
+
+    bHeaderDirty = FALSE;
 }
 
 /************************************************************************/
@@ -748,6 +756,8 @@ CPLErr RMFDataset::SetGeoTransform( double * padfTransform )
     sHeader.dfLLY = adfGeoTransform[3] - nRasterYSize * sHeader.dfPixelSize;
     sHeader.iGeorefFlag = 1;
 
+    bHeaderDirty = TRUE;
+
     return CE_None;
 }
 
@@ -761,6 +771,22 @@ const char *RMFDataset::GetProjectionRef()
         return pszProjection;
     else
         return "";
+}
+
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+CPLErr RMFDataset::SetProjection( const char * pszNewProjection )
+
+{
+    if ( pszProjection )
+        CPLFree( pszProjection );
+    pszProjection = CPLStrdup( (pszNewProjection) ? pszNewProjection : "" );
+
+    bHeaderDirty = TRUE;
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -788,6 +814,24 @@ const char *RMFDataset::GetProjectionRef()
 
 CPLErr RMFDataset::WriteHeader()
 {
+/* -------------------------------------------------------------------- */
+/*  Setup projection.                                                   */
+/* -------------------------------------------------------------------- */
+    if( pszProjection && !EQUAL( pszProjection, "" ) )
+    {
+        OGRSpatialReference oSRS;
+        long            iDatum, iEllips, iZone;
+        char            *pszProj =  pszProjection;
+
+        if ( oSRS.importFromWkt( &pszProj ) == OGRERR_NONE )
+        {
+            oSRS.exportToPanorama((long *)&sHeader.iProjection,
+                                  &iDatum, &iEllips, &iZone,
+                                  &sHeader.dfStdP1, &sHeader.dfStdP2,
+                                  &sHeader.dfCenterLat, &sHeader.dfCenterLong);
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*  Write out the file header.                                          */
 /* -------------------------------------------------------------------- */
@@ -874,6 +918,9 @@ void RMFDataset::FlushCache()
 
 {
     GDALDataset::FlushCache();
+
+    if ( !bHeaderDirty )
+        return;
 
     if ( eRMFType == RMFT_MTW )
         GDALComputeRasterMinMax( GetRasterBand(1), FALSE,
@@ -1147,7 +1194,7 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         OGRSpatialReference oSRS;
 
-        oSRS.importFromPanorama( poDS->sHeader.iProjection, 1, 1, 0,
+        oSRS.importFromPanorama( poDS->sHeader.iProjection, 0, 0, 0,
                                  poDS->sHeader.dfStdP1, poDS->sHeader.dfStdP2,
                                  poDS->sHeader.dfCenterLat,
                                  poDS->sHeader.dfCenterLong );
