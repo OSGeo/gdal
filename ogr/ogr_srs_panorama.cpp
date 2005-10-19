@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/10/19 16:32:20  dron
+ * Export projection info in newly created datasets.
+ *
  * Revision 1.1  2005/10/10 14:43:22  dron
  * New.
  *
@@ -690,10 +693,10 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
                   "Try to translate ellipsoid definition.", pszDatum );
 #endif
         
-        for ( i = 0; i < NUMBER_OF_ELLIPSOIDS; i++ )
+        for ( i = 0; i < NUMBER_OF_ELLIPSOIDS && aoEllips[i]; i++ )
         {
-            double  dfSM;
-            double  dfIF;
+            double  dfSM = 0.0;
+            double  dfIF = 1.0;
 
             PanoramaGetEllipsoidInfo( aoEllips[i], NULL, &dfSM, &dfIF );
             if( CPLIsEqual(dfSemiMajor, dfSM)
