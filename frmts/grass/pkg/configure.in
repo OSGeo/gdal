@@ -94,10 +94,10 @@ fi
 
 if test "$with_grass" != "yes" ; then
 
-  AC_CHECK_LIB(grass_gis,G_asprintf,GRASS_SETTING=grass57+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime -lgrass_gproj)
+  AC_CHECK_LIB(grass_gis,G_asprintf,GRASS_SETTING=grass57+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime -lgrass_gproj -lgrass_vect)
    
   if test "$GRASS_SETTING" = "grass57+" ; then   
-    LIBS="-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj $LIBS"
+    LIBS="-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect $LIBS"
     GRASS_INCLUDE="-I$with_grass/include"
     GRASS_GISBASE="$with_grass"
   else
@@ -113,5 +113,6 @@ dnl ---------------------------------------------------------------------------
 rm -f conftest*
 
 AC_OUTPUT(Makefile)
+
 
 
