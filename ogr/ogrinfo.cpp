@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/10/20 19:54:18  fwarmerdam
+ * added better cleanup logic
+ *
  * Revision 1.25  2005/09/05 19:30:06  fwarmerdam
  * fix usage message
  *
@@ -108,6 +111,7 @@
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -352,7 +356,11 @@ int main( int nArgc, char ** papszArgv )
     delete poDS;
 
     delete OGRSFDriverRegistrar::GetRegistrar();
+    OSRCleanup();
     CPLFinderClean();
+    VSICleanupFileManager();
+    CPLFreeConfig();
+    CPLCleanupTLS();
 
     return 0;
 }
