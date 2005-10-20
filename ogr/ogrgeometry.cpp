@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/10/20 19:55:29  fwarmerdam
+ * added GEOS C API support
+ *
  * Revision 1.32  2005/09/21 00:50:53  fwarmerdam
  * Release SRS on geometry destruction
  *
@@ -136,7 +139,7 @@
 #include "ogr_geos.h"
 #include <assert.h>
 
-#ifdef HAVE_GEOS 
+#if defined(HAVE_GEOS) && !defined(GEOS_C_API)
 #  include "geos/opDistance.h"
 #  include "geos/opBuffer.h"
 #  include "geos/geosAlgorithm.h"
@@ -321,7 +324,31 @@ OGRBoolean OGRGeometry::Intersects( OGRGeometry *poOtherGeom ) const
     // Without GEOS we assume that envelope overlap is equivelent to
     // actual intersection.
     return TRUE;
-#else
+#elif GEOS_C_API
+    GEOSGeom hThisGeosGeom, hOtherGeosGeom;
+
+    hThisGeosGeom = exportToGEOS();
+    hOtherGeosGeom = poOtherGeom->exportToGEOS();
+    
+    if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
+    {
+        OGRBoolean bResult;
+        
+        if( GEOSIntersects( hThisGeosGeom, hOtherGeosGeom ) != 0 )
+            bResult = TRUE;
+        else
+            bResult = FALSE;
+        
+        GEOSGeom_destroy( hThisGeosGeom );
+        GEOSGeom_destroy( hOtherGeosGeom );
+
+        return bResult;
+    }
+    else
+    {
+        return TRUE;
+    }
+#else // C++ API
     
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
 
@@ -346,7 +373,6 @@ OGRBoolean OGRGeometry::Intersects( OGRGeometry *poOtherGeom ) const
     {
         return TRUE;
     }
-
 #endif /* HAVE_GEOS */
 }
 
@@ -1318,7 +1344,7 @@ int OGRGetGenerate_DB2_V72_BYTE_ORDER()
 /*                            exportToGEOS()                            */
 /************************************************************************/
 
-geos::Geometry *OGRGeometry::exportToGEOS() const
+GEOSGeom OGRGeometry::exportToGEOS() const
 
 {
 #ifndef HAVE_GEOS
@@ -1327,6 +1353,27 @@ geos::Geometry *OGRGeometry::exportToGEOS() const
               "GEOS support not enabled." );
     return NULL;
 
+#elif GEOS_C_API
+    static int bGEOSInitialized = FALSE;
+
+    if( !bGEOSInitialized )
+    {
+        bGEOSInitialized = TRUE;
+        initGEOS( NULL, NULL );
+    }
+
+    GEOSGeom hGeom = NULL;
+    size_t nDataSize;
+    unsigned char *pabyData = NULL;
+
+    nDataSize = WkbSize();
+    pabyData = (unsigned char *) CPLMalloc(nDataSize);
+    if( exportToWkb( wkbNDR, pabyData ) == OGRERR_NONE )
+        hGeom = GEOSGeomFromWKB_buf( pabyData, nDataSize );
+
+    CPLFree( pabyData );
+
+    return hGeom;
 #else
 
     char *pszWKT = NULL;
@@ -1387,6 +1434,12 @@ double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
 
     CPLError( CE_Failure, CPLE_NotSupported, 
               "GEOS support not enabled." );
+    return -1.0;
+
+#elif GEOS_C_API 
+
+    CPLError( CE_Failure, CPLE_NotSupported, 
+              "GEOS C API does not include DistanceOp." );
     return -1.0;
 
 #else
@@ -1454,6 +1507,25 @@ OGRGeometry *OGRGeometry::ConvexHull() const
               "GEOS support not enabled." );
     return NULL;
 
+#elif GEOS_C_API
+    GEOSGeom hGeosGeom, hGeosHull = NULL;
+    OGRGeometry *poHullOGRGeom = NULL;
+
+    hGeosGeom = exportToGEOS();
+    if( hGeosGeom != NULL )
+    {
+        hGeosHull = GEOSConvexHull( hGeosGeom );
+        GEOSGeom_destroy( hGeosGeom );
+
+        if( hGeosHull != NULL )
+        {
+            poHullOGRGeom = OGRGeometryFactory::createFromGEOS(hGeosHull);
+            GEOSGeom_destroy( hGeosHull);
+        }
+    }
+
+    return poHullOGRGeom;
+
 #else
     geos::Geometry *poGeosGeom;
     OGRGeometry *poHullOGRGeom = NULL;
@@ -1519,6 +1591,25 @@ OGRGeometry *OGRGeometry::getBoundary() const
     CPLError( CE_Failure, CPLE_NotSupported, 
               "GEOS support not enabled." );
     return NULL;
+
+#elif GEOS_C_API
+    GEOSGeom hGeosGeom, hGeosProduct = NULL;
+    OGRGeometry *poOGRProduct = NULL;
+
+    hGeosGeom = exportToGEOS();
+    if( hGeosGeom != NULL )
+    {
+        hGeosProduct = GEOSBoundary( hGeosGeom );
+        GEOSGeom_destroy( hGeosGeom );
+
+        if( hGeosProduct != NULL )
+        {
+            poOGRProduct = OGRGeometryFactory::createFromGEOS(hGeosProduct);
+            GEOSGeom_destroy( hGeosProduct );
+        }
+    }
+
+    return poOGRProduct;
 
 #else
     geos::Geometry *poSrcGeosGeom;
@@ -1599,6 +1690,25 @@ OGRGeometry *OGRGeometry::Buffer( double dfDist, int nQuadSegs ) const
               "GEOS support not enabled." );
     return NULL;
 
+#elif GEOS_C_API
+    GEOSGeom hGeosGeom, hGeosProduct = NULL;
+    OGRGeometry *poOGRProduct = NULL;
+
+    hGeosGeom = exportToGEOS();
+    if( hGeosGeom != NULL )
+    {
+        hGeosProduct = GEOSBuffer( hGeosGeom, dfDist, nQuadSegs );
+        GEOSGeom_destroy( hGeosGeom );
+
+        if( hGeosProduct != NULL )
+        {
+            poOGRProduct = OGRGeometryFactory::createFromGEOS(hGeosProduct);
+            GEOSGeom_destroy( hGeosProduct );
+        }
+    }
+
+    return poOGRProduct;
+
 #else
     geos::Geometry *poGeosGeom;
     OGRGeometry *poBufferOGRGeom = NULL;
@@ -1670,6 +1780,27 @@ OGRGeometry *OGRGeometry::Intersection( const OGRGeometry *poOtherGeom ) const
               "GEOS support not enabled." );
     return NULL;
 
+#elif GEOS_C_API
+    GEOSGeom hThisGeosGeom, hOtherGeosGeom, hGeosProduct = NULL;
+    OGRGeometry *poOGRProduct = NULL;
+
+    hThisGeosGeom = exportToGEOS();
+    hOtherGeosGeom = poOtherGeom->exportToGEOS();
+    if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
+    {
+        hGeosProduct = GEOSIntersection( hThisGeosGeom, hOtherGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+        GEOSGeom_destroy( hOtherGeosGeom );
+
+        if( hGeosProduct != NULL )
+        {
+            poOGRProduct = OGRGeometryFactory::createFromGEOS(hGeosProduct);
+            GEOSGeom_destroy( hGeosProduct );
+        }
+    }
+
+    return poOGRProduct;
+
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
 
@@ -1739,6 +1870,27 @@ OGRGeometry *OGRGeometry::Union( const OGRGeometry *poOtherGeom ) const
     CPLError( CE_Failure, CPLE_NotSupported, 
               "GEOS support not enabled." );
     return NULL;
+
+#elif GEOS_C_API
+    GEOSGeom hThisGeosGeom, hOtherGeosGeom, hGeosProduct = NULL;
+    OGRGeometry *poOGRProduct = NULL;
+
+    hThisGeosGeom = exportToGEOS();
+    hOtherGeosGeom = poOtherGeom->exportToGEOS();
+    if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
+    {
+        hGeosProduct = GEOSUnion( hThisGeosGeom, hOtherGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+        GEOSGeom_destroy( hOtherGeosGeom );
+
+        if( hGeosProduct != NULL )
+        {
+            poOGRProduct = OGRGeometryFactory::createFromGEOS(hGeosProduct);
+            GEOSGeom_destroy( hGeosProduct );
+        }
+    }
+
+    return poOGRProduct;
 
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
@@ -1810,6 +1962,27 @@ OGRGeometry *OGRGeometry::Difference( const OGRGeometry *poOtherGeom ) const
     CPLError( CE_Failure, CPLE_NotSupported, 
               "GEOS support not enabled." );
     return NULL;
+
+#elif GEOS_C_API
+    GEOSGeom hThisGeosGeom, hOtherGeosGeom, hGeosProduct = NULL;
+    OGRGeometry *poOGRProduct = NULL;
+
+    hThisGeosGeom = exportToGEOS();
+    hOtherGeosGeom = poOtherGeom->exportToGEOS();
+    if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
+    {
+        hGeosProduct = GEOSDifference( hThisGeosGeom, hOtherGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+        GEOSGeom_destroy( hOtherGeosGeom );
+
+        if( hGeosProduct != NULL )
+        {
+            poOGRProduct = OGRGeometryFactory::createFromGEOS(hGeosProduct);
+            GEOSGeom_destroy( hGeosProduct );
+        }
+    }
+
+    return poOGRProduct;
 
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
@@ -1883,6 +2056,27 @@ OGRGeometry::SymmetricDifference( const OGRGeometry *poOtherGeom ) const
               "GEOS support not enabled." );
     return NULL;
 
+#elif GEOS_C_API
+    GEOSGeom hThisGeosGeom, hOtherGeosGeom, hGeosProduct = NULL;
+    OGRGeometry *poOGRProduct = NULL;
+
+    hThisGeosGeom = exportToGEOS();
+    hOtherGeosGeom = poOtherGeom->exportToGEOS();
+    if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
+    {
+        hGeosProduct = GEOSSymDifference( hThisGeosGeom, hOtherGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+        GEOSGeom_destroy( hOtherGeosGeom );
+
+        if( hGeosProduct != NULL )
+        {
+            poOGRProduct = OGRGeometryFactory::createFromGEOS(hGeosProduct);
+            GEOSGeom_destroy( hGeosProduct );
+        }
+    }
+
+    return poOGRProduct;
+
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
 
@@ -1953,6 +2147,21 @@ OGRGeometry::Disjoint( const OGRGeometry *poOtherGeom ) const
               "GEOS support not enabled." );
     return FALSE;
 
+#elif GEOS_C_API
+    GEOSGeom hThisGeosGeom, hOtherGeosGeom;
+    OGRBoolean bResult = FALSE;
+
+    hThisGeosGeom = exportToGEOS();
+    hOtherGeosGeom = poOtherGeom->exportToGEOS();
+    if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
+    {
+        bResult = GEOSDisjoint( hThisGeosGeom, hOtherGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+        GEOSGeom_destroy( hOtherGeosGeom );
+    }
+
+    return bResult;
+
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
 
@@ -2021,6 +2230,21 @@ OGRGeometry::Touches( const OGRGeometry *poOtherGeom ) const
     CPLError( CE_Failure, CPLE_NotSupported, 
               "GEOS support not enabled." );
     return FALSE;
+
+#elif GEOS_C_API
+    GEOSGeom hThisGeosGeom, hOtherGeosGeom;
+    OGRBoolean bResult = FALSE;
+
+    hThisGeosGeom = exportToGEOS();
+    hOtherGeosGeom = poOtherGeom->exportToGEOS();
+    if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
+    {
+        bResult = GEOSTouches( hThisGeosGeom, hOtherGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+        GEOSGeom_destroy( hOtherGeosGeom );
+    }
+
+    return bResult;
 
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
@@ -2091,6 +2315,21 @@ OGRGeometry::Crosses( const OGRGeometry *poOtherGeom ) const
               "GEOS support not enabled." );
     return FALSE;
 
+#elif GEOS_C_API
+    GEOSGeom hThisGeosGeom, hOtherGeosGeom;
+    OGRBoolean bResult = FALSE;
+
+    hThisGeosGeom = exportToGEOS();
+    hOtherGeosGeom = poOtherGeom->exportToGEOS();
+    if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
+    {
+        bResult = GEOSCrosses( hThisGeosGeom, hOtherGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+        GEOSGeom_destroy( hOtherGeosGeom );
+    }
+
+    return bResult;
+
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
 
@@ -2159,6 +2398,21 @@ OGRGeometry::Within( const OGRGeometry *poOtherGeom ) const
     CPLError( CE_Failure, CPLE_NotSupported, 
               "GEOS support not enabled." );
     return FALSE;
+
+#elif GEOS_C_API
+    GEOSGeom hThisGeosGeom, hOtherGeosGeom;
+    OGRBoolean bResult = FALSE;
+
+    hThisGeosGeom = exportToGEOS();
+    hOtherGeosGeom = poOtherGeom->exportToGEOS();
+    if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
+    {
+        bResult = GEOSWithin( hThisGeosGeom, hOtherGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+        GEOSGeom_destroy( hOtherGeosGeom );
+    }
+
+    return bResult;
 
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
@@ -2229,6 +2483,21 @@ OGRGeometry::Contains( const OGRGeometry *poOtherGeom ) const
               "GEOS support not enabled." );
     return FALSE;
 
+#elif GEOS_C_API
+    GEOSGeom hThisGeosGeom, hOtherGeosGeom;
+    OGRBoolean bResult = FALSE;
+
+    hThisGeosGeom = exportToGEOS();
+    hOtherGeosGeom = poOtherGeom->exportToGEOS();
+    if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
+    {
+        bResult = GEOSContains( hThisGeosGeom, hOtherGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+        GEOSGeom_destroy( hOtherGeosGeom );
+    }
+
+    return bResult;
+
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
 
@@ -2298,6 +2567,21 @@ OGRGeometry::Overlaps( const OGRGeometry *poOtherGeom ) const
     CPLError( CE_Failure, CPLE_NotSupported, 
               "GEOS support not enabled." );
     return FALSE;
+
+#elif GEOS_C_API
+    GEOSGeom hThisGeosGeom, hOtherGeosGeom;
+    OGRBoolean bResult = FALSE;
+
+    hThisGeosGeom = exportToGEOS();
+    hOtherGeosGeom = poOtherGeom->exportToGEOS();
+    if( hThisGeosGeom != NULL && hOtherGeosGeom != NULL )
+    {
+        bResult = GEOSOverlaps( hThisGeosGeom, hOtherGeosGeom );
+        GEOSGeom_destroy( hThisGeosGeom );
+        GEOSGeom_destroy( hOtherGeosGeom );
+    }
+
+    return bResult;
 
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;

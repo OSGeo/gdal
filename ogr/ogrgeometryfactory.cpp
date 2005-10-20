@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/10/20 19:55:29  fwarmerdam
+ * added GEOS C API support
+ *
  * Revision 1.26  2005/08/05 20:28:55  fwarmerdam
  * pass nbytes in OGR_G_CreateFromWkb()
  *
@@ -813,7 +816,7 @@ OGRGeometry *OGRGeometryFactory::createFromGML( const char *pszData )
 /************************************************************************/
 
 OGRGeometry *
-OGRGeometryFactory::createFromGEOS( const geos::Geometry *geosGeom )
+OGRGeometryFactory::createFromGEOS( GEOSGeom geosGeom )
 
 {
 #ifndef HAVE_GEOS 
@@ -822,8 +825,25 @@ OGRGeometryFactory::createFromGEOS( const geos::Geometry *geosGeom )
               "GEOS support not enabled." );
     return NULL;
 
-#else
+#elif defined(GEOS_C_API)
+    size_t nSize;
+    unsigned char *pabyBuf;
+    OGRGeometry *poGeometry = NULL;
 
+    pabyBuf = GEOSGeomToWKB_buf( geosGeom, &nSize );
+    if( pabyBuf == NULL || nSize == 0 )
+        return NULL;
+
+    if( OGRGeometryFactory::createFromWkb( (unsigned char *) pabyBuf, 
+                                           NULL, &poGeometry, (int) nSize )
+        != OGRERR_NONE )
+        poGeometry = NULL;
+
+    if( pabyBuf != NULL )
+        free( pabyBuf );
+
+    return poGeometry;
+#else
     geos::WKTWriter oWKTWriter;
     string oWKT;
 
@@ -856,23 +876,18 @@ OGRGeometryFactory::createFromGEOS( const geos::Geometry *geosGeom )
 /*                       getGEOSGeometryFactory()                       */
 /************************************************************************/
 
+#if defined(HAVE_GEOS) && !defined(GEOS_C_API)
 geos::GeometryFactory *OGRGeometryFactory::getGEOSGeometryFactory() 
 
 {
-#ifndef HAVE_GEOS 
-    CPLError( CE_Failure, CPLE_NotSupported, 
-              "GEOS support not enabled." );
-    return NULL;
-#else
-
     static geos::GeometryFactory *poSavedFactory = NULL;
 
     if( poSavedFactory == NULL )
         poSavedFactory = new geos::GeometryFactory();
 
     return poSavedFactory;
-#endif /* HAVE_GEOS */
 }
+#endif /* C++ GEOS */
 
 /************************************************************************/
 /*                              haveGEOS()                              */

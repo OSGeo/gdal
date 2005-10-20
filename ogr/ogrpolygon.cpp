@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2005/10/20 19:55:29  fwarmerdam
+ * added GEOS C API support
+ *
  * Revision 1.35  2005/07/22 19:30:25  fwarmerdam
  * Document get_Area().
  *
@@ -820,6 +823,37 @@ int OGRPolygon::Centroid( OGRPoint *poPoint ) const
     // notdef ... not implemented yet.
     
     return OGRERR_FAILURE;
+
+#elif GEOS_C_API
+    GEOSGeom hThisGeosGeom = NULL, hOtherGeosGeom = NULL;
+    
+    hThisGeosGeom = exportToGEOS();
+
+    if( hThisGeosGeom != NULL )
+    {
+    	hOtherGeosGeom = GEOSGetCentroid( hThisGeosGeom );
+        OGRPoint *poCentroid = (OGRPoint *) 
+            OGRGeometryFactory::createFromGEOS( hOtherGeosGeom );
+
+        GEOSGeom_destroy( hThisGeosGeom );
+        GEOSGeom_destroy( hOtherGeosGeom );
+
+        if( poPoint == NULL 
+            || wkbFlatten(poPoint->getGeometryType()) != wkbPoint )
+            return OGRERR_FAILURE;
+
+	poPoint->setX( poCentroid->getX() );
+	poPoint->setY( poCentroid->getY() );
+
+        delete poCentroid;
+
+    	return OGRERR_NONE;
+    }
+    else
+    {
+    	return OGRERR_FAILURE;
+    }
+
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom = 0;
     

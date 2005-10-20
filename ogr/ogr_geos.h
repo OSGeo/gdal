@@ -3,10 +3,12 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Definitions related to support for use of GEOS in OGR.
+ *           This file is only intended to be pulled in by OGR implementation
+ *           code directly accessing GEOS.
  * Author:   Frank Warmerdam <warmerdam@pobox.com>
  *
  ******************************************************************************
- * Copyright (c) 2004, , Frank Warmerdam <warmerdam@pobox.com>
+ * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/10/20 19:55:29  fwarmerdam
+ * added GEOS C API support
+ *
  * Revision 1.1  2004/07/10 04:52:58  warmerda
  * New
  *
@@ -38,9 +43,13 @@
 
 #ifdef HAVE_GEOS 
 
+#ifdef GEOS_C_API
+#  include "geos_c.h"
+#else
 #  include "geos/geom.h"
 #  include "geos/io.h"
 #  include "geos/util.h"
+#endif
 
 #else
 
