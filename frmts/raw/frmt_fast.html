@@ -8,9 +8,9 @@
 <h1>FAST -- EOSAT FAST Format</h1>
 
 Supported reading from FAST-L7A format (Landsat TM data) and EOSAT Fast Format
-Rev. C (IRS-1C/1D data). If you want to read other datasets in this format (SPOT), write to me (Andrey Kiselev,
-<a href=mailto:dron@remotesensing.org>dron@remotesensing.org</a>). You should
-share data samples with me.<p>
+Rev. C (IRS-1C/1D data). If you want to read other datasets in this format (SPOT),
+write to me (Andrey Kiselev, <a href=mailto:dron@ak4719.spb.edu>dron@ak4719.spb.edu</a>).
+You should share data samples with me.<p>
 
 Datasets in FAST format represented by several files: one or more
 administrative headers and one or more files with actual image data in raw
@@ -138,7 +138,7 @@ before importing data with GDAL.<p>
 
 <h2>Georeference</h2>
 
-All USGS projections should be supported (namely UTM, LCC, PS, PC, TM, OM).
+All USGS projections should be supported (namely UTM, LCC, PS, PC, TM, OM, SOM).
 Contact me if you have troubles with proper projection extraction.
 
 <h2>Metadata</h2>
@@ -165,8 +165,8 @@ Calibration coefficients for each band reported as metadata items.
 <ul>
 <li> Implemented as <tt>gdal/frmts/fast/fastdataset.cpp</tt>.<p>
 
-<li> Landsat FAST L7A format description available from <a
-href=http://ltpwww.gsfc.nasa.gov/IAS/htmls/l7_review.html>
+<li> Landsat FAST L7A format description available from
+<a href=http://ltpwww.gsfc.nasa.gov/IAS/htmls/l7_review.html>
 http://ltpwww.gsfc.nasa.gov/IAS/htmls/l7_review.html</a>
 (see <a href=http://ltpwww.gsfc.nasa.gov/IAS/pdfs/DFCB_V5_B2_R4.pdf>
 ESDIS Level 1 Product Generation System (LPGS) Output Files DFCB, Vol. 5, Book 2</a>)<p>
