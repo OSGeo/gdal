@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.81  2005/10/20 13:46:07  fwarmerdam
+ * added Leveller
+ *
  * Revision 1.80  2005/08/17 15:34:23  fwarmerdam
  * added RIK driver
  *
@@ -243,6 +246,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_rik
     GDALRegister_RIK();
+#endif
+
+#ifdef FRMT_leveller
+    GDALRegister_Leveller();
 #endif
 
 #ifdef FRMT_netcdf
