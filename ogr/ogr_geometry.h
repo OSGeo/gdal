@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2005/10/20 19:55:29  fwarmerdam
+ * added GEOS C API support
+ *
  * Revision 1.56  2005/09/17 12:11:30  osemykin
  * added OGRLineString::getPoints
  *
@@ -229,10 +232,15 @@ class OGRRawPoint
     double      y;
 };
 
+#ifdef GEOS_C_API
+typedef struct GEOSGeom_t *GEOSGeom;
+#else
 namespace geos { 
     class Geometry;
     class GeometryFactory;
 };
+typedef geos::Geometry *GEOSGeom;
+#endif
 
 /************************************************************************/
 /*                             OGRGeometry                              */
@@ -281,7 +289,7 @@ class CPL_DLL OGRGeometry
     virtual void   dumpReadable( FILE *, const char * = NULL );
     virtual void   flattenTo2D() = 0;
     virtual char * exportToGML() const;
-    virtual geos::Geometry *exportToGEOS() const;
+    virtual GEOSGeom exportToGEOS() const;
     virtual void closeRings();
 
     virtual void setCoordinateDimension( int nDimension ); 
@@ -754,7 +762,7 @@ class CPL_DLL OGRGeometryFactory
     static OGRErr createFromWkt( char **, OGRSpatialReference *,
                                  OGRGeometry ** );
     static OGRGeometry *createFromGML( const char * );
-    static OGRGeometry *createFromGEOS( const geos::Geometry * );
+    static OGRGeometry *createFromGEOS( GEOSGeom );
 
     static void   destroyGeometry( OGRGeometry * );
     static OGRGeometry *createGeometry( OGRwkbGeometryType );
@@ -764,7 +772,9 @@ class CPL_DLL OGRGeometryFactory
     static OGRGeometry * forceToMultiPoint( OGRGeometry * );
     static OGRGeometry * forceToMultiLineString( OGRGeometry * );
 
+#if defined(HAVE_GEOS) && !defined(GEOS_C_API)
     static geos::GeometryFactory *getGEOSGeometryFactory();
+#endif
 
     static int haveGEOS();
 
