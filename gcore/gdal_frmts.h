@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2005/10/20 13:49:19  fwarmerdam
+ * added leveller
+ *
  * Revision 1.39  2005/08/17 15:33:46  fwarmerdam
  * added rik driver
  *
@@ -219,6 +222,7 @@ void CPL_DLL GDALRegister_HDF5(void);
 void CPL_DLL GDALRegister_HDF5Image(void);
 void CPL_DLL GDALRegister_MSGN(void);
 void CPL_DLL GDALRegister_RIK(void);
+void CPL_DLL GDALRegister_Leveller(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
