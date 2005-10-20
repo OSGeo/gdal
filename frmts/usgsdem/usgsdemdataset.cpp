@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.18  2005/10/20 17:28:20  fwarmerdam
+ * Added overview support.
+ *
  * Revision 1.17  2005/05/05 15:54:49  fwarmerdam
  * PAM Enabled
  *
@@ -620,6 +623,11 @@ GDALDataset *USGSDEMDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->SetBand( 1, new USGSDEMRasterBand( poDS ));
 
     poDS->SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
+
+/* -------------------------------------------------------------------- */
+/*      Open overviews.                                                 */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
