@@ -156,7 +156,7 @@ JPEG_SUPPORTED = 1
 # it will be linked dynamically during runtime.
 #PROJ_FLAGS = -DPROJ_STATIC
 #PROJ_INCLUDE = -Id:\projects\proj.4\src
-#PROJ_LIB = d:\projects\proj.4\src
+#PROJ_LIBRARY = d:\projects\proj.4\src\proj_i.lib
 
 # Add ORACLE support.
 
@@ -219,7 +219,7 @@ MRSID_ELIB = $(MRSID_LIB)
 EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(OCI_LIB) $(PG_LIB) $(ODBCLIB) \
 		$(ECWLIB) $(HDF4_LIB) $(FME_LIB) $(JASPER_LIB) $(MRSID_ELIB) \
 		$(FITS_LIB) $(JPEG_LIB) $(PNG_LIB) $(NETCDF_LIB) $(PROJ4_LIB) \
-		$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIB) $(SQLITE_LIB) \
+		$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
 		$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB) $(ADD_LIBS)
 
 .c.obj:	
