@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.2  2005/10/20 20:18:14  fwarmerdam
+ * Applied some patches from Ray.
+ *
  * Revision 1.1  2005/10/20 13:44:29  fwarmerdam
  * New
  *
@@ -98,7 +101,7 @@ public:
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char** papszOptions );
 
-    CPLErr 	GetGeoTransform( double* );
+    virtual CPLErr 	GetGeoTransform( double* );
 };
 
 /************************************************************************/
@@ -205,7 +208,7 @@ CPLErr LevellerRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Convert raw elevations to realworld elevs.                      */
 /* -------------------------------------------------------------------- */
     for(int i = 0; i < nBlockXSize; i++)
-        pf[i] *= this->GetScale();
+        pf[i] *= poGDS->m_dWorldscale; //this->GetScale();
 
     return CE_None;
 }
@@ -264,7 +267,6 @@ LevellerDataset::LevellerDataset()
 
 {
     m_fp = NULL;
-    //m_pszProjection = NULL;
 }
 
 /************************************************************************/
@@ -276,7 +278,6 @@ LevellerDataset::~LevellerDataset()
 {
     FlushCache();
 
-    //CPLFree( pszProjection );
     if( m_fp != NULL )
         VSIFCloseL( m_fp );
 }
@@ -389,7 +390,7 @@ int LevellerDataset::get(char* pszValue, size_t maxchars, FILE* fp, const char* 
 
     // We can assume 8-bit encoding, so just go straight
     // to the *_d tag.
-    sprintf(szTag, "%s_d", pszTag);
+    sprintf(szTag, "%sd", pszTag);
 
     vsi_l_offset offset;
     size_t		 len;
@@ -539,26 +540,12 @@ int LevellerDataset::LoadFromFile(FILE* file)
 
         // Our extents are such that the origin is at the 
         // center of the heightfield.
-        m_adfTransform[0] = -0.5 * m_dWorldscale * nRasterYSize;
-        m_adfTransform[3] = -0.5 * m_dWorldscale * nRasterXSize;
+        m_adfTransform[0] = -0.5 * m_dWorldscale * nRasterXSize;
+        m_adfTransform[3] = -0.5 * m_dWorldscale * nRasterYSize;
         m_adfTransform[1] = m_dWorldscale;
         m_adfTransform[5] = m_dWorldscale;
-
     }
-    m_dElevScale = m_dWorldscale;
-
-#if 0
-/* -------------------------------------------------------------------- */
-/*      Collect the spatial reference system.                           */
-/* -------------------------------------------------------------------- */
-    OGRSpatialReference sr;
-
-
-    if (nCoordSystem == 1)	// UTM
-        sr.SetUTM( iUTMZone, TRUE );
-
-    sr.exportToWkt( &pszProjection );
-#endif
+    m_dElevScale = 1.0;//m_dWorldscale;
 
     return TRUE;
 }
@@ -570,25 +557,13 @@ int LevellerDataset::LoadFromFile(FILE* file)
 CPLErr LevellerDataset::GetGeoTransform(double* padfTransform)
 
 {
-	// Return identity transform, since Leveller heightfields 
-	// do not currently have geodata.
+    // Return identity transform, since Leveller heightfields 
+    // do not currently have geodata.
 
-	memcpy(padfTransform, m_adfTransform, sizeof(m_adfTransform));
+    memcpy(padfTransform, m_adfTransform, sizeof(m_adfTransform));
 
     return CE_None;
 }
-
-#if 0
-/************************************************************************/
-/*                          GetProjectionRef()                          */
-/************************************************************************/
-
-const char *LevellerDataset::GetProjectionRef()
-
-{
-    return pszProjection;
-}
-#endif
 
 /************************************************************************/
 /*                                Open()                                */
