@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2005/10/21 00:03:41  fwarmerdam
+ * added coordinate system support from Ray
+ *
  * Revision 1.2  2005/10/20 20:18:14  fwarmerdam
  * Applied some patches from Ray.
  *
@@ -73,6 +76,8 @@ class LevellerDataset : public GDALPamDataset
 
     int			 m_version;
 
+    char*		m_pszProjection;
+
     char		m_szWorldscaleUnits[32];
     double		m_dWorldscale;
     double		m_dElevScale;
@@ -102,6 +107,7 @@ public:
                                 GDALDataType eType, char** papszOptions );
 
     virtual CPLErr 	GetGeoTransform( double* );
+    virtual const char*	GetProjectionRef(void);
 };
 
 /************************************************************************/
@@ -267,6 +273,7 @@ LevellerDataset::LevellerDataset()
 
 {
     m_fp = NULL;
+	m_pszProjection = NULL;
 }
 
 /************************************************************************/
@@ -277,6 +284,8 @@ LevellerDataset::~LevellerDataset()
 
 {
     FlushCache();
+
+	CPLFree(m_pszProjection);
 
     if( m_fp != NULL )
         VSIFCloseL( m_fp );
@@ -547,7 +556,37 @@ int LevellerDataset::LoadFromFile(FILE* file)
     }
     m_dElevScale = 1.0;//m_dWorldscale;
 
+
+/* -------------------------------------------------------------------- */
+/*      Set projection.													*/
+/* -------------------------------------------------------------------- */
+	// Leveller files as of Oct 2005 are not currently georeferenced,
+	// but we can't indicate ground units without a spatialref,
+	// so make a default geocs (local).
+    OGRSpatialReference sr;
+
+    sr.SetLocalCS("Leveller world space");
+	if(OGRERR_NONE != sr.SetLinearUnits(m_szWorldscaleUnits, 
+		this->convert_measure(1.0, m_szWorldscaleUnits)))
+		return 0;
+
+    if(OGRERR_NONE != sr.exportToWkt(&m_pszProjection))
+		return 0;
+
+
     return TRUE;
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char*	LevellerDataset::GetProjectionRef(void)
+{
+    if(m_pszProjection == NULL )
+        return "";
+    else
+        return m_pszProjection;
 }
 
 /************************************************************************/
@@ -661,4 +700,3 @@ void GDALRegister_Leveller()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
