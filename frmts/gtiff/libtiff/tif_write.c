@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.18 2005/07/21 13:57:00 dron Exp $ */
+/* $Id: tif_write.c,v 1.19 2005/10/15 15:57:54 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -523,7 +523,7 @@ TIFFWriteCheck(TIFF* tif, int tiles, const char* module)
 		 * because this field is used in other parts of library even
 		 * in the single band case.
 		 */
-		tif->tif_dir.td_planarconfig == PLANARCONFIG_CONTIG;
+		tif->tif_dir.td_planarconfig = PLANARCONFIG_CONTIG;
 	} else {
 		if (!TIFFFieldSet(tif, FIELD_PLANARCONFIG)) {
 			TIFFError(module,
