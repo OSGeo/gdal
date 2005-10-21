@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2005/10/21 15:58:33  fwarmerdam
+ * use c++ casting for GEOSGeom
+ *
  * Revision 1.33  2005/10/20 19:55:29  fwarmerdam
  * added GEOS C API support
  *
@@ -352,8 +355,8 @@ OGRBoolean OGRGeometry::Intersects( OGRGeometry *poOtherGeom ) const
     
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
 
-    poThisGeosGeom = exportToGEOS();
-    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+    poThisGeosGeom = (geos::Geometry *) exportToGEOS();
+    poOtherGeosGeom = (geos::Geometry *) poOtherGeom->exportToGEOS();
 
     if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
     {
@@ -1377,7 +1380,7 @@ GEOSGeom OGRGeometry::exportToGEOS() const
 #else
 
     char *pszWKT = NULL;
-    geos::WKTReader   geosWktReader( 
+    geos::WKTReader   geosWktReader( (geos::GeometryFactory *) 
         OGRGeometryFactory::getGEOSGeometryFactory() );
 
     if( exportToWkt( &pszWKT ) != OGRERR_NONE )
@@ -1390,7 +1393,7 @@ GEOSGeom OGRGeometry::exportToGEOS() const
     { 
         geos::Geometry *geosGeometry = NULL;
         geosGeometry = geosWktReader.read( oWKT );
-        return geosGeometry;
+        return (GEOSGeom) geosGeometry;
     }
     catch( geos::GEOSException *e )
     {
@@ -1445,8 +1448,8 @@ double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
 #else
     geos::Geometry *poThis, *poOther;
 
-    poThis = exportToGEOS();
-    poOther = poOtherGeom->exportToGEOS();
+    poThis = (geos::Geometry *) exportToGEOS();
+    poOther = (geos::Geometry *) poOtherGeom->exportToGEOS();
 
     if( poThis != NULL && poOther != NULL )
     {
@@ -1530,7 +1533,7 @@ OGRGeometry *OGRGeometry::ConvexHull() const
     geos::Geometry *poGeosGeom;
     OGRGeometry *poHullOGRGeom = NULL;
 
-    poGeosGeom = exportToGEOS();
+    poGeosGeom = (geos::Geometry *) exportToGEOS();
 
     if( poGeosGeom != NULL )
     {
@@ -1541,7 +1544,8 @@ OGRGeometry *OGRGeometry::ConvexHull() const
 
         if( poHullGeosGeom != NULL )
         {
-            poHullOGRGeom = OGRGeometryFactory::createFromGEOS(poHullGeosGeom);
+            poHullOGRGeom = 
+                OGRGeometryFactory::createFromGEOS((GEOSGeom)poHullGeosGeom);
             delete poHullGeosGeom;
         }
 
@@ -1615,7 +1619,7 @@ OGRGeometry *OGRGeometry::getBoundary() const
     geos::Geometry *poSrcGeosGeom;
     OGRGeometry *poResultOGRGeom = NULL;
 
-    poSrcGeosGeom = exportToGEOS();
+    poSrcGeosGeom = (geos::Geometry *) exportToGEOS();
 
     if( poSrcGeosGeom != NULL )
     {
@@ -1625,7 +1629,7 @@ OGRGeometry *OGRGeometry::getBoundary() const
         if( poResultGeosGeom != NULL )
         {
             poResultOGRGeom = 
-                OGRGeometryFactory::createFromGEOS(poResultGeosGeom);
+                OGRGeometryFactory::createFromGEOS((GEOSGeom)poResultGeosGeom);
             delete poResultGeosGeom;
         }
 
@@ -1713,7 +1717,7 @@ OGRGeometry *OGRGeometry::Buffer( double dfDist, int nQuadSegs ) const
     geos::Geometry *poGeosGeom;
     OGRGeometry *poBufferOGRGeom = NULL;
 
-    poGeosGeom = exportToGEOS();
+    poGeosGeom = (geos::Geometry *) exportToGEOS();
 
     if( poGeosGeom != NULL )
     {
@@ -1725,7 +1729,7 @@ OGRGeometry *OGRGeometry::Buffer( double dfDist, int nQuadSegs ) const
         if( poBufferGeosGeom != NULL )
         {
             poBufferOGRGeom = 
-                OGRGeometryFactory::createFromGEOS(poBufferGeosGeom);
+                OGRGeometryFactory::createFromGEOS((GEOSGeom)poBufferGeosGeom);
             delete poBufferGeosGeom;
         }
 
@@ -1804,8 +1808,8 @@ OGRGeometry *OGRGeometry::Intersection( const OGRGeometry *poOtherGeom ) const
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
 
-    poThisGeosGeom = exportToGEOS();
-    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+    poThisGeosGeom = (geos::Geometry *) exportToGEOS();
+    poOtherGeosGeom = (geos::Geometry *) poOtherGeom->exportToGEOS();
 
     if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
     {
@@ -1816,7 +1820,7 @@ OGRGeometry *OGRGeometry::Intersection( const OGRGeometry *poOtherGeom ) const
         delete poOtherGeosGeom;
 
         OGRGeometry *poResultOGRGeom = 
-            OGRGeometryFactory::createFromGEOS( poResultGeosGeom );
+            OGRGeometryFactory::createFromGEOS( (GEOSGeom)poResultGeosGeom );
         delete poResultGeosGeom;
 
         return poResultOGRGeom;
@@ -1895,8 +1899,8 @@ OGRGeometry *OGRGeometry::Union( const OGRGeometry *poOtherGeom ) const
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
 
-    poThisGeosGeom = exportToGEOS();
-    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+    poThisGeosGeom = (geos::Geometry *) exportToGEOS();
+    poOtherGeosGeom = (geos::Geometry *) poOtherGeom->exportToGEOS();
 
     if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
     {
@@ -1907,7 +1911,7 @@ OGRGeometry *OGRGeometry::Union( const OGRGeometry *poOtherGeom ) const
         delete poOtherGeosGeom;
 
         OGRGeometry *poResultOGRGeom = 
-            OGRGeometryFactory::createFromGEOS( poResultGeosGeom );
+            OGRGeometryFactory::createFromGEOS( (GEOSGeom) poResultGeosGeom );
         delete poResultGeosGeom;
 
         return poResultOGRGeom;
@@ -1987,8 +1991,8 @@ OGRGeometry *OGRGeometry::Difference( const OGRGeometry *poOtherGeom ) const
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
 
-    poThisGeosGeom = exportToGEOS();
-    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+    poThisGeosGeom = (geos::Geometry *) exportToGEOS();
+    poOtherGeosGeom = (geos::Geometry *) poOtherGeom->exportToGEOS();
 
     if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
     {
@@ -1999,7 +2003,7 @@ OGRGeometry *OGRGeometry::Difference( const OGRGeometry *poOtherGeom ) const
         delete poOtherGeosGeom;
 
         OGRGeometry *poResultOGRGeom = 
-            OGRGeometryFactory::createFromGEOS( poResultGeosGeom );
+            OGRGeometryFactory::createFromGEOS( (GEOSGeom)poResultGeosGeom );
         delete poResultGeosGeom;
 
         return poResultOGRGeom;
@@ -2080,8 +2084,8 @@ OGRGeometry::SymmetricDifference( const OGRGeometry *poOtherGeom ) const
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
 
-    poThisGeosGeom = exportToGEOS();
-    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+    poThisGeosGeom = (geos::Geometry *) exportToGEOS();
+    poOtherGeosGeom = (geos::Geometry *) poOtherGeom->exportToGEOS();
 
     if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
     {
@@ -2092,7 +2096,7 @@ OGRGeometry::SymmetricDifference( const OGRGeometry *poOtherGeom ) const
         delete poOtherGeosGeom;
 
         OGRGeometry *poResultOGRGeom = 
-            OGRGeometryFactory::createFromGEOS( poResultGeosGeom );
+            OGRGeometryFactory::createFromGEOS( (GEOSGeom)poResultGeosGeom );
         delete poResultGeosGeom;
 
         return poResultOGRGeom;
@@ -2165,8 +2169,8 @@ OGRGeometry::Disjoint( const OGRGeometry *poOtherGeom ) const
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
 
-    poThisGeosGeom = exportToGEOS();
-    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+    poThisGeosGeom = (geos::Geometry *) exportToGEOS();
+    poOtherGeosGeom = (geos::Geometry *) poOtherGeom->exportToGEOS();
 
     if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
     {
@@ -2249,8 +2253,8 @@ OGRGeometry::Touches( const OGRGeometry *poOtherGeom ) const
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
 
-    poThisGeosGeom = exportToGEOS();
-    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+    poThisGeosGeom = (geos::Geometry *) exportToGEOS();
+    poOtherGeosGeom = (geos::Geometry *) poOtherGeom->exportToGEOS();
 
     if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
     {
@@ -2333,8 +2337,8 @@ OGRGeometry::Crosses( const OGRGeometry *poOtherGeom ) const
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
 
-    poThisGeosGeom = exportToGEOS();
-    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+    poThisGeosGeom = (geos::Geometry *) exportToGEOS();
+    poOtherGeosGeom = (geos::Geometry *) poOtherGeom->exportToGEOS();
 
     if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
     {
@@ -2417,8 +2421,8 @@ OGRGeometry::Within( const OGRGeometry *poOtherGeom ) const
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
 
-    poThisGeosGeom = exportToGEOS();
-    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+    poThisGeosGeom = (geos::Geometry *) exportToGEOS();
+    poOtherGeosGeom = (geos::Geometry *) poOtherGeom->exportToGEOS();
 
     if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
     {
@@ -2501,8 +2505,8 @@ OGRGeometry::Contains( const OGRGeometry *poOtherGeom ) const
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
 
-    poThisGeosGeom = exportToGEOS();
-    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+    poThisGeosGeom = (geos::Geometry *) exportToGEOS();
+    poOtherGeosGeom = (geos::Geometry *) poOtherGeom->exportToGEOS();
 
     if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
     {
@@ -2586,8 +2590,8 @@ OGRGeometry::Overlaps( const OGRGeometry *poOtherGeom ) const
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom;
 
-    poThisGeosGeom = exportToGEOS();
-    poOtherGeosGeom = poOtherGeom->exportToGEOS();
+    poThisGeosGeom = (geos::Geometry *) exportToGEOS();
+    poOtherGeosGeom = (geos::Geometry *) poOtherGeom->exportToGEOS();
 
     if( poThisGeosGeom != NULL && poOtherGeosGeom != NULL )
     {

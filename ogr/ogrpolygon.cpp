@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2005/10/21 15:58:34  fwarmerdam
+ * use c++ casting for GEOSGeom
+ *
  * Revision 1.37  2005/10/21 03:56:52  fwarmerdam
  * Fixed up for only capi.
  *
@@ -860,7 +863,7 @@ int OGRPolygon::Centroid( OGRPoint *poPoint ) const
 #else
     geos::Geometry *poThisGeosGeom, *poOtherGeosGeom = 0;
     
-    poThisGeosGeom = exportToGEOS();
+    poThisGeosGeom = (geos::Geometry *) exportToGEOS();
 
     if( poThisGeosGeom != NULL )
     {
