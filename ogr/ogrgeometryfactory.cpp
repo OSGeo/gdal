@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/10/21 15:58:34  fwarmerdam
+ * use c++ casting for GEOSGeom
+ *
  * Revision 1.27  2005/10/20 19:55:29  fwarmerdam
  * added GEOS C API support
  *
@@ -849,7 +852,7 @@ OGRGeometryFactory::createFromGEOS( GEOSGeom geosGeom )
 
     try 
     {
-        oWKT = oWKTWriter.write( geosGeom );
+        oWKT = oWKTWriter.write( (geos::Geometry *) geosGeom );
     }
     catch( geos::GEOSException *e )
     {
@@ -876,18 +879,20 @@ OGRGeometryFactory::createFromGEOS( GEOSGeom geosGeom )
 /*                       getGEOSGeometryFactory()                       */
 /************************************************************************/
 
-#if defined(HAVE_GEOS) && !defined(GEOS_C_API)
-geos::GeometryFactory *OGRGeometryFactory::getGEOSGeometryFactory() 
+void *OGRGeometryFactory::getGEOSGeometryFactory() 
 
 {
+#if defined(HAVE_GEOS) && !defined(GEOS_C_API)
     static geos::GeometryFactory *poSavedFactory = NULL;
 
     if( poSavedFactory == NULL )
         poSavedFactory = new geos::GeometryFactory();
 
     return poSavedFactory;
+#else
+    return NULL;
+#endif
 }
-#endif /* C++ GEOS */
 
 /************************************************************************/
 /*                              haveGEOS()                              */
