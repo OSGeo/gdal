@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2005/10/21 15:58:00  fwarmerdam
+ * getGEOSGeometryFactory now returns void *
+ *
  * Revision 1.58  2005/10/21 14:58:53  fwarmerdam
  * don't use geos::Geometry typedef for GEOSGeom
  *
@@ -767,9 +770,7 @@ class CPL_DLL OGRGeometryFactory
     static OGRGeometry * forceToMultiPoint( OGRGeometry * );
     static OGRGeometry * forceToMultiLineString( OGRGeometry * );
 
-#if defined(HAVE_GEOS) && !defined(GEOS_C_API)
-    static geos::GeometryFactory *getGEOSGeometryFactory();
-#endif
+    static void *getGEOSGeometryFactory();
 
     static int haveGEOS();
 
