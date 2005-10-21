@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.59 2005/09/13 13:17:57 dron Exp $ */
+/* $Id: tif_dirread.c,v 1.62 2005/10/21 20:03:12 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -1527,23 +1527,32 @@ ChopUpSingleUncompressedStrip(TIFF* tif)
 	uint32* newoffsets;
 
 	/*
-	 * Make the rows hold at least one
-	 * scanline, but fill 8k if possible.
+	 * Make the rows hold at least one scanline, but fill specified amount
+	 * of data if possible.
 	 */
-	if (rowbytes > 8192) {
+#ifndef STRIP_SIZE_DEFAULT
+# define STRIP_SIZE_DEFAULT 8192
+#endif
+	if (rowbytes > STRIP_SIZE_DEFAULT) {
 		stripbytes = rowbytes;
 		rowsperstrip = 1;
 	} else if (rowbytes > 0 ) {
-		rowsperstrip = 8192 / rowbytes;
+		rowsperstrip = STRIP_SIZE_DEFAULT / rowbytes;
 		stripbytes = rowbytes * rowsperstrip;
 	}
         else
             return;
+#undef STRIP_SIZE_DEFAULT
 
-	/* never increase the number of strips in an image */
+	/* 
+	 * never increase the number of strips in an image
+	 */
 	if (rowsperstrip >= td->td_rowsperstrip)
 		return;
 	nstrips = (tstrip_t) TIFFhowmany(bytecount, stripbytes);
+        if( nstrips == 0 ) /* something is wonky, do nothing. */
+            return;
+
 	newcounts = (uint32*) _TIFFCheckMalloc(tif, nstrips, sizeof (uint32),
 				"for chopped \"StripByteCounts\" array");
 	newoffsets = (uint32*) _TIFFCheckMalloc(tif, nstrips, sizeof (uint32),
@@ -1560,9 +1569,8 @@ ChopUpSingleUncompressedStrip(TIFF* tif)
 		return;
 	}
 	/*
-	 * Fill the strip information arrays with
-	 * new bytecounts and offsets that reflect
-	 * the broken-up format.
+	 * Fill the strip information arrays with new bytecounts and offsets
+	 * that reflect the broken-up format.
 	 */
 	for (strip = 0; strip < nstrips; strip++) {
 		if (stripbytes > (tsize_t) bytecount)
