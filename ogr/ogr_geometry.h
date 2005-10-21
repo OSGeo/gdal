@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2005/10/21 14:58:53  fwarmerdam
+ * don't use geos::Geometry typedef for GEOSGeom
+ *
  * Revision 1.57  2005/10/20 19:55:29  fwarmerdam
  * added GEOS C API support
  *
@@ -232,15 +235,7 @@ class OGRRawPoint
     double      y;
 };
 
-#ifdef GEOS_C_API
 typedef struct GEOSGeom_t *GEOSGeom;
-#else
-namespace geos { 
-    class Geometry;
-    class GeometryFactory;
-};
-typedef geos::Geometry *GEOSGeom;
-#endif
 
 /************************************************************************/
 /*                             OGRGeometry                              */
