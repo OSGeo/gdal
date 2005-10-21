@@ -1513,12 +1513,21 @@ if test "$GEOS_CONFIG" != "no" ; then
    1*)
     AC_MSG_ERROR([geos-config reports version $VERSION, need at least 2.0 or configure --without-geos])
     ;;
-    *) ;;
-  esac
 
-  LIBS="`$GEOS_CONFIG --libs` $LIBS"
-  GEOS_INC=-I"`$GEOS_CONFIG --includes`"
-  HAVE_GEOS=yes
+   2*)
+    LIBS="`$GEOS_CONFIG --libs` $LIBS"
+    GEOS_INC=-I"`$GEOS_CONFIG --includes`"
+    HAVE_GEOS=yes
+    AC_MSG_NOTICE([  using GEOS 2.x C++ API])
+    ;;
+
+    *) 
+    LIBS="`$GEOS_CONFIG --libs` -lgeos_c $LIBS"
+    GEOS_INC=-I"`$GEOS_CONFIG --includes`"
+    HAVE_GEOS=c_api
+    AC_MSG_NOTICE([  using GEOS 3.x+ C API])
+    ;;
+  esac
 
 else
   HAVE_GEOS=no
