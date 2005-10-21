@@ -14,8 +14,8 @@ features held in a BLOB column in a custom format (essentially Shapefile
 geometry fragments).  This drivers accesses the personal geodatabase via
 ODBC but does not depend on any ESRI middleware.<p>
 
-ODBC datasources are accessed by passing the filename of the .mdb file to 
-be accessed.  No DSN is required.<p>
+Personal Geodatabases are accessed by passing the filename of the .mdb file to 
+be accessed as the datasource name.  No ODBC DSN is required.<p>
 
 OGR treats all feature tables as layers.  Most geometry types should be
 supported, including 3D data.  Measures information will be discarded. 
