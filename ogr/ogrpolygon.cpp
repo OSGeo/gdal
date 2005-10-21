@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2005/10/21 03:56:52  fwarmerdam
+ * Fixed up for only capi.
+ *
  * Revision 1.36  2005/10/20 19:55:29  fwarmerdam
  * added GEOS C API support
  *
@@ -143,7 +146,7 @@
 #include "ogr_geos.h"
 #include "ogr_api.h"
 
-#ifdef HAVE_GEOS
+#if defined(HAVE_GEOS) && !defined(GEOS_C_API)
 #  include "geos/geosAlgorithm.h"
 #endif
 
