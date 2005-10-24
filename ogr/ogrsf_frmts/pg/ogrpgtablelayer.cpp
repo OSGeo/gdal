@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2005/10/24 06:38:27  cfis
+ * Added code to support COPY on postgresql 7.3 - however it currently commented out until the appropriate #ifdefs are defined.
+ *
  * Revision 1.42  2005/10/19 02:49:56  cfis
  * When using COPY geometries were always sent to NULL when sending data to postgresql, even when a geometry existed.  This is now fixed.
  *
@@ -1222,9 +1225,11 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     /*      Execute the copy.                                       */
     /* ------------------------------------------------------------ */
     PGconn *hPGConn = poDS->GetPGConn();
-    int copyResult = PQputCopyData(hPGConn, pszCommand, strlen(pszCommand));
 
     OGRErr result = OGRERR_NONE;
+
+    /* This is for postgresql  7.4 and higher */
+    int copyResult = PQputCopyData(hPGConn, pszCommand, strlen(pszCommand));
 
     switch (copyResult)
     {
@@ -1239,6 +1244,16 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
         result = OGRERR_FAILURE;
         break;
     }
+
+    /* This is for postgres 7.3
+    int copyResult = PQputline(hPGConn, pszCommand);
+
+    if (copyResult == EOF)
+    {
+      CPLDebug( "OGR_PG", "PQexec(%s)\n", pszCommand );
+      CPLError( CE_Failure, CPLE_AppDefined, "Writing COPY data blocked.");
+      result = OGRERR_FAILURE;
+    }  */
 
     /* Free the buffer we allocated before returning */
     CPLFree( pszCommand );
@@ -1678,8 +1693,12 @@ OGRErr OGRPGTableLayer::EndCopy()
 
     PGconn *hPGConn = poDS->GetPGConn();
     CPLDebug( "OGR_PG", "PQputCopyEnd()" );
-    int copyResult = PQputCopyEnd(hPGConn, NULL);
+
     bCopyActive = FALSE;
+
+
+    /* This is for postgresql 7.4 and higher */
+    int copyResult = PQputCopyEnd(hPGConn, NULL);
 
     switch (copyResult)
     {
@@ -1691,23 +1710,31 @@ OGRErr OGRPGTableLayer::EndCopy()
         CPLError( CE_Failure, CPLE_AppDefined, "%s", PQerrorMessage(hPGConn) );
         result = OGRERR_FAILURE;
         break;
-      default:
-      {
-          /* Get the final result of the copy */
-          PGresult * hResult = PQgetResult( hPGConn );
-
-          if( hResult && PQresultStatus(hResult) != PGRES_COMMAND_OK )
-          {
-              CPLError( CE_Failure, CPLE_AppDefined,
-                        "COPY statement failed.\n%s",
-                        PQerrorMessage(hPGConn) );
-
-              result = OGRERR_FAILURE;
-          }
-
-          PQclear(hResult);
-      }
     }
+
+    /* This is for postgresql 7.3
+    PQputline(hPGConn, "\\.\n");
+    int copyResult = PQendcopy(hPGConn);
+
+    if (copyResult != 0)
+    {
+      CPLError( CE_Failure, CPLE_AppDefined, "%s", PQerrorMessage(hPGConn) );
+      result = OGRERR_FAILURE;
+    }*/
+
+    /* Now check the results of the copy */
+    PGresult * hResult = PQgetResult( hPGConn );
+
+    if( hResult && PQresultStatus(hResult) != PGRES_COMMAND_OK )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "COPY statement failed.\n%s",
+                  PQerrorMessage(hPGConn) );
+
+        result = OGRERR_FAILURE;
+    }
+
+    PQclear(hResult);
 
     return result;
 }
