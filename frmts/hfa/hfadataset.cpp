@@ -29,6 +29,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.69  2005/10/24 14:29:58  fwarmerdam
+ * Ensure that metadata dirty flags are cleared after finisheding
+ * opening the dataset.
+ *
  * Revision 1.68  2005/10/13 01:28:53  fwarmerdam
  * Changed to use underlying multidomain metadata.
  *
@@ -2311,10 +2315,7 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
 
         char **papszMD = HFAGetMetadata( hHFA, i+1 );
         if( papszMD != NULL )
-        {
             poBand->SetMetadata( papszMD );
-            poDS->bMetadataDirty = FALSE;
-        }
         
         poBand->ReadAuxMetadata();
     }
@@ -2326,7 +2327,6 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
     if( papszMD != NULL )
     {
         poDS->SetMetadata( papszMD );
-        poDS->bMetadataDirty = FALSE;
         CSLDestroy( papszMD );
     }
 
@@ -2347,6 +2347,16 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
+
+/* -------------------------------------------------------------------- */
+/*      Clear dirty metadata flags.                                     */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < poDS->nBands; i++ )
+    {
+        HFARasterBand *poBand = (HFARasterBand *) poDS->GetRasterBand( i+1 );
+        poBand->bMetadataDirty = FALSE;
+    }
+    poDS->bMetadataDirty = FALSE;
 
     return( poDS );
 }
