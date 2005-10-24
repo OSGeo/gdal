@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.152  2005/10/24 18:13:34  fwarmerdam
+ * Fixed memory leak of pszProjection string.
+ *
  * Revision 1.151  2005/10/18 13:43:53  fwarmerdam
  * Default to PLANAR_CONTIG for PROFILE=GeoTIFF too.
  *
@@ -2222,6 +2225,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
 		      6 * GetGCPCount(), padfTiePoints );
 	CPLFree( padfTiePoints );
 	
+        CPLFree( pszProjection );
 	pszProjection = CPLStrdup( GetGCPProjection() );
     }
 
