@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2005/10/24 23:50:16  fwarmerdam
+ * fixed extraction of geomType in GeometryToHex()
+ *
  * Revision 1.23  2005/10/16 01:38:34  cfis
  * Updates that add support for using COPY for inserting data to Postgresql.  COPY is less robust than INSERT, but signficantly faster.
  *
@@ -603,7 +606,8 @@ char *OGRPGLayer::GeometryToHex( OGRGeometry * poGeometry, int nSRSId )
     pszTextBufCurrent += 2;
 
     /* Next, get the geom type which is bytes 2 through 5 */
-    GUInt32 geomType = (GUInt32)(*(pabyWKB+1));
+    GUInt32 geomType;
+    memcpy( &geomType, pabyWKB+1, 4 );
 
     /* Now add the SRID flag if an SRID is provided */
     if (nSRSId != -1) 
