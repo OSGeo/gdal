@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2005/10/24 23:50:50  fwarmerdam
+ * moved bUseCopy test into layer on creation of first feature
+ *
  * Revision 1.44  2005/10/24 21:01:09  fwarmerdam
  * added PG_PRE74 define for old copy functions
  *
@@ -181,6 +184,7 @@
 CPL_CVSID("$Id$");
 
 #define CURSOR_PAGE     1
+#define USE_COPY_UNSET  -10
 
 /************************************************************************/
 /*                          OGRPGTableLayer()                           */
@@ -213,6 +217,8 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     // check SRID if it's necessary
     if( nSRSId == -2 )
         GetSpatialRef();
+
+    bUseCopy = USE_COPY_UNSET;  // unknown
 }
 
 //************************************************************************/
@@ -559,6 +565,8 @@ void OGRPGTableLayer::BuildFullQueryStatement()
 void OGRPGTableLayer::ResetReading()
 
 {
+    bUseCopy = USE_COPY_UNSET;
+
     BuildFullQueryStatement();
 
     OGRPGLayer::ResetReading();
@@ -756,7 +764,11 @@ OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
 /************************************************************************/
 OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
 {
-    if ( !poDS->UseCopy() )
+    // We avoid testing the config option too often. 
+    if( bUseCopy == USE_COPY_UNSET )
+        bUseCopy = CSLTestBoolean( CPLGetConfigOption( "PG_USE_COPY", "NO") );
+
+    if( !bUseCopy )
     {
         return CreateFeatureViaInsert( poFeature );
     }
@@ -1741,6 +1753,8 @@ OGRErr OGRPGTableLayer::EndCopy()
     }
 
     PQclear(hResult);
+
+    bUseCopy = USE_COPY_UNSET;
 
     return result;
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2005/10/24 23:50:50  fwarmerdam
+ * moved bUseCopy test into layer on creation of first feature
+ *
  * Revision 1.40  2005/10/16 03:39:25  fwarmerdam
  * cleanup COPY support somewhat
  *
@@ -185,13 +188,6 @@ OGRPGDataSource::OGRPGDataSource()
     papoSRS = NULL;
 
     poLayerInCopyMode = NULL;
-
-    /* Whether we use COPY or not is dependent on the 
-       config option PG_USE_COPY.
-       Note that we cache the PG_USE_COPY value because reading
-       it "live" results in a 50% performance degradation
-       when creating featurs */
-    bUseCopy = CSLTestBoolean( CPLGetConfigOption( "PG_USE_COPY", "NO") );
 }
 
 /************************************************************************/
@@ -1324,15 +1320,6 @@ OGRErr OGRPGDataSource::EndCopy( )
     }
     else
         return OGRERR_NONE;
-}
-
-/************************************************************************/
-/*                              UseCopy()                               */
-/************************************************************************/
-int OGRPGDataSource::UseCopy()
-
-{
-    return bUseCopy;
 }
 
 /************************************************************************/
