@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/10/24 23:50:50  fwarmerdam
+ * moved bUseCopy test into layer on creation of first feature
+ *
  * Revision 1.22  2005/10/16 03:39:25  fwarmerdam
  * cleanup COPY support somewhat
  *
@@ -194,6 +197,7 @@ class OGRPGTableLayer : public OGRPGLayer
 
     int                 bLaunderColumnNames;
     int                 bPreservePrecision;
+    int                 bUseCopy;
     int                 bCopyActive;
 
     OGRErr		CreateFeatureViaCopy( OGRFeature *poFeature );
@@ -300,7 +304,6 @@ class OGRPGDataSource : public OGRDataSource
     OGRSpatialReference **papoSRS;
 
     OGRPGTableLayer     *poLayerInCopyMode;
-    int                 bUseCopy;
 
   public:
     PGver               sPostGISVersion;
