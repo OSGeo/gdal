@@ -30,6 +30,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.2  2005/10/24 04:37:31  fwarmerdam
+#  use MEMO field for wkt geometry in access
+#
 #  Revision 1.1  2005/10/24 04:05:42  fwarmerdam
 #  New
 #
@@ -92,7 +95,7 @@ except:
 
 defn = in_layer.GetLayerDefn()
 
-cmd = 'CREATE TABLE ' + layername + '( OGC_FID INTEGER, WKT_GEOMETRY TEXT ' 
+cmd = 'CREATE TABLE ' + layername + '( OGC_FID INTEGER, WKT_GEOMETRY MEMO ' 
 
 for iField in range(defn.GetFieldCount()):
     fielddef = defn.GetFieldDefn(iField)
