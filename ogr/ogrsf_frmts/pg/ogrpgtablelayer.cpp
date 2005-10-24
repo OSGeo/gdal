@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2005/10/24 21:01:09  fwarmerdam
+ * added PG_PRE74 define for old copy functions
+ *
  * Revision 1.43  2005/10/24 06:38:27  cfis
  * Added code to support COPY on postgresql 7.3 - however it currently commented out until the appropriate #ifdefs are defined.
  *
@@ -1229,6 +1232,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     OGRErr result = OGRERR_NONE;
 
     /* This is for postgresql  7.4 and higher */
+#if !defined(PG_PRE74)
     int copyResult = PQputCopyData(hPGConn, pszCommand, strlen(pszCommand));
 
     switch (copyResult)
@@ -1244,8 +1248,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
         result = OGRERR_FAILURE;
         break;
     }
-
-    /* This is for postgres 7.3
+#else /* else defined(PG_PRE74) */
     int copyResult = PQputline(hPGConn, pszCommand);
 
     if (copyResult == EOF)
@@ -1253,7 +1256,8 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
       CPLDebug( "OGR_PG", "PQexec(%s)\n", pszCommand );
       CPLError( CE_Failure, CPLE_AppDefined, "Writing COPY data blocked.");
       result = OGRERR_FAILURE;
-    }  */
+    }  
+#endif /* end of defined(PG_PRE74) */
 
     /* Free the buffer we allocated before returning */
     CPLFree( pszCommand );
@@ -1698,6 +1702,7 @@ OGRErr OGRPGTableLayer::EndCopy()
 
 
     /* This is for postgresql 7.4 and higher */
+#if !defined(PG_PRE74)
     int copyResult = PQputCopyEnd(hPGConn, NULL);
 
     switch (copyResult)
@@ -1712,7 +1717,7 @@ OGRErr OGRPGTableLayer::EndCopy()
         break;
     }
 
-    /* This is for postgresql 7.3
+#else /* defined(PG_PRE74) */
     PQputline(hPGConn, "\\.\n");
     int copyResult = PQendcopy(hPGConn);
 
@@ -1720,7 +1725,8 @@ OGRErr OGRPGTableLayer::EndCopy()
     {
       CPLError( CE_Failure, CPLE_AppDefined, "%s", PQerrorMessage(hPGConn) );
       result = OGRERR_FAILURE;
-    }*/
+    }
+#endif /* defined(PG_PRE74) */
 
     /* Now check the results of the copy */
     PGresult * hResult = PQgetResult( hPGConn );
