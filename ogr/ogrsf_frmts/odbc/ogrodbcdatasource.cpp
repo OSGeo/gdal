@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/10/24 04:36:38  fwarmerdam
+ * support passing geometry column with table name in datasource name
+ *
  * Revision 1.9  2005/09/21 00:56:55  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -116,7 +119,8 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 
 /* -------------------------------------------------------------------- */
 /*      Strip off any comma delimeted set of tables names to access     */
-/*      from the end of the string first.                               */
+/*      from the end of the string first.  Also allow an optional       */
+/*      bracketed geometry column name after the table name.            */
 /* -------------------------------------------------------------------- */
     char *pszWrkName = CPLStrdup( pszNewName );
     char **papszTables = NULL;
@@ -125,7 +129,23 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 
     while( (pszComma = strrchr( pszWrkName, ',' )) != NULL )
     {
-        papszTables = CSLAddString( papszTables, pszComma + 1 );
+        char *pszOBracket = strstr(pszComma+1,"(");
+        if( pszOBracket == NULL )
+        {
+            papszTables = CSLAddString( papszTables, pszComma + 1 );
+            papszGeomCol = CSLAddString( papszGeomCol, "" );
+        }
+        else
+        {
+            char *pszCBracket = strstr(pszOBracket,")");
+            
+            if( pszCBracket != NULL )
+                *pszCBracket = '\0';
+            
+            *pszOBracket = '\0';
+            papszTables = CSLAddString( papszTables, pszComma + 1 );
+            papszGeomCol = CSLAddString( papszGeomCol, pszOBracket+1 );
+        }
         *pszComma = '\0';
     }
 
@@ -232,6 +252,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
             {
                 papszTables = 
                     CSLAddString( papszTables, oTableList.GetColData(2) );
+                papszGeomCol = CSLAddString(papszGeomCol,"");
             }
         }
     }
@@ -244,7 +265,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
          papszTables != NULL && papszTables[iTable] != NULL; 
          iTable++ )
     {
-        if( papszGeomCol != NULL )
+        if( strlen(papszGeomCol[iTable]) > 0 )
             OpenTable( papszTables[iTable], papszGeomCol[iTable], bUpdate );
         else
             OpenTable( papszTables[iTable], NULL, bUpdate );
