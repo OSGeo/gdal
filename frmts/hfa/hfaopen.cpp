@@ -35,6 +35,10 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.48  2005/10/24 14:35:55  fwarmerdam
+ * Be careful not to generate a new histogram table in various
+ * degenerate situations like those of zonegimg.img.
+ *
  * Revision 1.47  2005/09/17 03:47:16  fwarmerdam
  * added dependent overview creation
  *
@@ -2195,9 +2199,12 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
     else
         return CE_Failure;
 
-    // check if the Metadata is an "known" entity which should be stored in a
-    // better place
+/* -------------------------------------------------------------------- */
+/*      Check if the Metadata is an "known" entity which should be      */
+/*      stored in a better place.                                       */
+/* -------------------------------------------------------------------- */
     char * pszBinValues = NULL;
+    int bCreatedHistogramParameters = FALSE;
     char ** pszAuxMetaData = GetHFAAuxMetaDataList();
     // check each metadata item
     for( int iColumn = 0; papszMD[iColumn] != NULL; iColumn++ )
@@ -2238,6 +2245,8 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                     // BinFunction to the length of the string
                     poEntry->MakeData( 70 );
                     poEntry->SetStringField( "BinFunction.binFunctionType", "linear" );
+
+                    bCreatedHistogramParameters = TRUE;
                 }
             }
             if ( poEntry == NULL )
@@ -2279,10 +2288,13 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
         CPLFree( pszKey );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Special case to write out the histogram.                        */
+/* -------------------------------------------------------------------- */
     if ( pszBinValues != NULL )
     {
         HFAEntry * poEntry = poNode->GetNamedChild( "HistogramParameters" );
-        if ( poEntry != NULL )
+        if ( poEntry != NULL && bCreatedHistogramParameters )
         {
             // if this node exists we have added Histogram data -- complete with some defaults
             poEntry->SetIntField( "SkipFactorX", 1 );
@@ -2332,6 +2344,9 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Write out metadata items without a special place.               */
+/* -------------------------------------------------------------------- */
     if( CSLCount( papszGDALMD) != 0 )
     {
         CPLErr eErr = HFASetGDALMetadata( hHFA, nBand, papszGDALMD );
