@@ -161,7 +161,7 @@ tiled images this will be one tile.  For scanline oriented images this will
 normally be one scanline. 
 
 <li> A list of name/value pair metadata in the same format as the dataset,
-but of information that is potentially specific to this dataset.
+but of information that is potentially specific to this band.
 
 <li> An optional description string. 
 
