@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/10/25 19:59:15  fwarmerdam
+ * added driver tracking on datasource
+ *
  * Revision 1.21  2005/08/10 13:49:43  fwarmerdam
  * fix logic for dll entry point.
  *
@@ -205,9 +208,11 @@ OGRDataSource *OGRSFDriverRegistrar::Open( const char * pszName,
                 *ppoDriver = poRegistrar->papoDrivers[iDriver];
 
             poDS->Reference();
+            if( poDS->GetDriver() == NULL )
+                poDS->m_poDriver = poRegistrar->papoDrivers[iDriver];
 
-            CPLDebug( "OGR", "OGROpen(%s) succeeded (%p).", 
-                      pszName, poDS );
+            CPLDebug( "OGR", "OGROpen(%s/%p) succeeded as %s.", 
+                      pszName, poDS, poDS->GetDriver()->GetName() );
             
             return poDS;
         }

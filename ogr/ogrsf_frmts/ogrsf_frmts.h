@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2005/10/25 19:58:53  fwarmerdam
+ * added driver tracking on datasource
+ *
  * Revision 1.53  2005/09/05 19:31:45  fwarmerdam
  * Added PGeo driver.
  *
@@ -202,6 +205,7 @@
  */
 
 class OGRLayerAttrIndex;
+class OGRSFDriver;
 
 /************************************************************************/
 /*                               OGRLayer                               */
@@ -301,6 +305,8 @@ class CPL_DLL OGRLayer
 
 class CPL_DLL OGRDataSource
 {
+    friend class OGRSFDriverRegistrar;
+
   public:
 
     OGRDataSource();
@@ -338,6 +344,8 @@ class CPL_DLL OGRDataSource
     int                 GetSummaryRefCount() const;
     OGRErr              Release();
 
+    OGRSFDriver        *GetDriver() const;
+
   protected:
 
     OGRErr              ProcessSQLCreateIndex( const char * );
@@ -345,6 +353,7 @@ class CPL_DLL OGRDataSource
 
     OGRStyleTable      *m_poStyleTable;
     int                 m_nRefCount;
+    OGRSFDriver        *m_poDriver;
 };
 
 /************************************************************************/
