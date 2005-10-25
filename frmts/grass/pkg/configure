@@ -3008,7 +3008,7 @@ fi
 
 
   if test "$GRASS_SETTING" = "grass57+" ; then
-    LIBS="-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect $LIBS"
+    LIBS="-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect -lgrass_dbmibase -lgrass_dbmiclient $LIBS"
     GRASS_INCLUDE="-I$with_grass/include"
     GRASS_GISBASE="$with_grass"
   else
