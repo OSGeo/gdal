@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.122  2005/10/25 20:00:53  fwarmerdam
+ * driver tracking on datasource now in core
+ *
  * Revision 1.121  2005/08/05 20:29:22  fwarmerdam
  * pass nbytes in OGR_G_CreateFromWkb()
  *
@@ -3461,6 +3464,7 @@ int     OGR_DS_Reference( OGRDataSourceH );
 int     OGR_DS_Dereference( OGRDataSourceH );
 int     OGR_DS_GetRefCount( OGRDataSourceH );
 int     OGR_DS_GetSummaryRefCount( OGRDataSourceH );
+OGRSFDriverH OGR_DS_GetDriver( OGRDataSourceH );
 OGRLayerH OGR_DS_CopyLayer(OGRDataSourceH, OGRLayerH, const char*, stringList);
 OGRLayerH OGR_DS_CreateLayer( OGRDataSourceH, const char *, 
                               OGRSpatialReferenceH, OGRwkbGeometryType,
