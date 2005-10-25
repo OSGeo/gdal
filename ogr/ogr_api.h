@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2005/10/25 19:58:27  fwarmerdam
+ * added OGR_DS_GetDriver
+ *
  * Revision 1.28  2005/09/21 00:50:08  fwarmerdam
  * Added Release
  *
@@ -377,6 +380,7 @@ int    CPL_DLL OGR_DS_GetLayerCount( OGRDataSourceH );
 OGRLayerH CPL_DLL OGR_DS_GetLayer( OGRDataSourceH, int );
 OGRLayerH CPL_DLL OGR_DS_GetLayerByName( OGRDataSourceH, const char * );
 OGRErr    CPL_DLL OGR_DS_DeleteLayer( OGRDataSourceH, int );
+OGRSFDriverH CPL_DLL OGR_DS_GetDriver( OGRDataSourceH );
 OGRLayerH CPL_DLL OGR_DS_CreateLayer( OGRDataSourceH, const char *, 
                                       OGRSpatialReferenceH, OGRwkbGeometryType,
                                       char ** );
