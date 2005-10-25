@@ -117,17 +117,17 @@ authoritative.
 
 <h3>Metadata</h3>
 
-GDAL metadata is auxilary format and application specific textual data
+GDAL metadata is auxiliary format and application specific textual data
 kept as a list of name/value pairs.  The names are required to be well 
 behaved tokens (no spaces, or odd characters).  The values can be of
 any length, and contain anything except an embedded null (ASCII zero).  
 
 The metadata handling system is well tuned to handling very large bodies
 of metadata.  Handling of more than 100K of metadata for a dataset is likely
-to lead to performance degredation. 
+to lead to performance degradation. 
 
 Over time there will be some well known names defined with established
-semantics; however, that has not occured at this time. 
+semantics; however, that has not occurred at this time. 
 
 Some formats will support generic (user defined) metadata, while other
 format drivers will map specific format fields to metadata names.  For
@@ -171,7 +171,7 @@ thematic image).
 <li> An optional minimum and maximum value. 
 
 <li> An optional offset and scale for transforming raster values into meaning
-ful values (ie translate height to meters) 
+full values (ie translate height to meters) 
 
 <li> An optional raster unit name.  For instance, this might indicate linear 
 units for elevation data.
@@ -203,7 +203,7 @@ units for elevation data.
 
 <h3>Color Table</h3>
 
-A color table conists of zero or more color entries described in C by the
+A color table consists of zero or more color entries described in C by the
 following structure:
 
 <pre>
@@ -236,7 +236,7 @@ of a color entry should be interpreted.
 
 To associate a color with a raster pixel, the pixel value is used as a
 subscript into the color table.  That means that the colors are always
-applied starting at zero and accending.  There is no provision for indicating
+applied starting at zero and ascending.  There is no provision for indicating
 a prescaling mechanism before looking up in the color table. 
 
 <h3>Overviews</h3>
