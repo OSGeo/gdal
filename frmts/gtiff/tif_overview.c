@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: $
+ * tif_overview.c,v 1.9 2005/05/25 09:03:16 dron Exp
  *
  * Project:  TIFF Overview Builder
  * Purpose:  Library function for building overviews in a TIFF file.
@@ -95,6 +95,7 @@ uint32 TIFF_WriteOverview( TIFF *hTIFF, int nXSize, int nYSize,
 
     nBaseDirOffset = TIFFCurrentDirOffset( hTIFF );
 
+    TIFFFreeDirectory( hTIFF );
     TIFFCreateDirectory( hTIFF );
     
 /* -------------------------------------------------------------------- */
