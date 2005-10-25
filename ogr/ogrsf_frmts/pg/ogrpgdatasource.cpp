@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2005/10/25 21:59:43  fwarmerdam
+ * disable setencoding for now
+ *
  * Revision 1.41  2005/10/24 23:50:50  fwarmerdam
  * moved bUseCopy test into layer on creation of first feature
  *
@@ -270,15 +273,15 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Set the encoding						*/
 /* -------------------------------------------------------------------- */
+#ifdef notdef
     char* encoding = "LATIN1";
     if (PQsetClientEncoding(hPGConn, encoding) == -1)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "PQsetClientEncoding failed.  Encoding: %s", encoding);
-        PQfinish(hPGConn);
-        hPGConn = NULL;
-        return FALSE;
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "PQsetClientEncoding(%s) failed.\n%s", 
+		  encoding, PQerrorMessage( hPGConn ) );
     }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Install a notice processor.                                     */
