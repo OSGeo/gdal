@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.153  2005/10/25 18:48:22  fwarmerdam
+ * make sure we handle missing blocks on read: bug 975
+ *
  * Revision 1.152  2005/10/24 18:13:34  fwarmerdam
  * Fixed memory leak of pszProjection string.
  *
@@ -527,11 +530,10 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         nBlockId = nBlockIdBand0;
         
 /* -------------------------------------------------------------------- */
-/*	Handle the case of a strip in a writable file that doesn't	*/
-/*	exist yet, but that we want to read.  Just set to zeros and	*/
-/*	return.								*/
+/*      Handle the case of a strip or tile that doesn't exist yet.      */
+/*      Just set to zeros and return.                                   */
 /* -------------------------------------------------------------------- */
-    if( poGDS->eAccess == GA_Update && !poGDS->IsBlockAvailable(nBlockId) )
+    if( !poGDS->IsBlockAvailable(nBlockId) )
     {
         memset( pImage, 0,
                 nBlockXSize * nBlockYSize
