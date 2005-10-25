@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/10/25 19:59:15  fwarmerdam
+ * added driver tracking on datasource
+ *
  * Revision 1.22  2004/11/21 22:09:38  fwarmerdam
  * added DestroyDataSource() static method, and Release() method
  *
@@ -118,6 +121,7 @@ OGRDataSource::OGRDataSource()
 {
     m_poStyleTable = NULL;
     m_nRefCount = 0;
+    m_poDriver = NULL;
 }
 
 /************************************************************************/
@@ -972,3 +976,24 @@ OGRErr OGR_DS_SyncToDisk( OGRDataSourceH hDS )
 {
     return ((OGRDataSource *) hDS)->SyncToDisk();
 }
+
+/************************************************************************/
+/*                             GetDriver()                              */
+/************************************************************************/
+
+OGRSFDriver *OGRDataSource::GetDriver() const
+
+{
+    return m_poDriver;
+}
+
+/************************************************************************/
+/*                          OGR_DS_GetDriver()                          */
+/************************************************************************/
+
+OGRSFDriverH OGR_DS_GetDriver( OGRDataSourceH hDS )
+
+{
+    return (OGRSFDriverH) ((OGRDataSource *) hDS)->GetDriver();
+}
+

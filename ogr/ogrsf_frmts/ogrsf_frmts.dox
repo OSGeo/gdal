@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/10/25 19:58:53  fwarmerdam
+ * added driver tracking on datasource
+ *
  * Revision 1.25  2005/10/03 20:46:24  fwarmerdam
  * removed out of date comments on GetNextFeature().
  *
@@ -964,6 +967,16 @@ This method is the same as the C function OGR_DS_SyncToDisk().
 error code.
 */
 
+/**
+ \fn OGRSFDriver *OGRDataSource::GetDriver() const;
+
+Returns the driver that the dataset was opened with. 
+
+This method is the same as the C function OGR_DS_GetDriver().
+
+@return NULL if driver info is not available, or pointer to a driver owned
+by the OGRSFDriverManager.
+*/
 
 
 /************************************************************************/
