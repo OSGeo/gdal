@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.54  2005/10/25 20:00:53  fwarmerdam
+# driver tracking on datasource now in core
+#
 # Revision 1.53  2005/09/18 15:26:00  fwarmerdam
 # added Distance method.
 #
@@ -317,20 +320,12 @@ def Open( filename, update = 0 ):
     """Return an OGR DataSource
 update=0,1 -- open it for update"""
 
-    drv_ptr = ptrptrcreate( 'void' )
-    ptrptrset( drv_ptr, 'NULL' )
+    ds_o = _gdal.OGROpen( filename, update, 'NULL' )
 
-    ds_o = _gdal.OGROpen( filename, update, drv_ptr )
-
-    driver_o = ptrcast(ptrptrvalue(drv_ptr),'OGRSFDriverH')
-    ptrfree( drv_ptr )
-    
     if ds_o is None or ds_o == 'NULL':
         raise OGRError, 'Unable to open: ' + filename
     else:
         ds = DataSource( ds_o )
-        ds.driver_o = driver_o
-
         return ds
 
 def OpenShared( filename, update = 0 ):
@@ -559,7 +554,8 @@ See the constants at the top of ogr.py"""
 
     def GetDriver( self ):
         """Returns the driver of the datasource"""
-        return Driver( obj = self.driver_o )
+        return Driver( _gdal.OGR_DS_GetDriver( self._o ) )
+    
 #############################################################################
 # OGRLayer
 

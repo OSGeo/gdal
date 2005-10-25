@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.115  2005/08/05 20:29:22  fwarmerdam
- * pass nbytes in OGR_G_CreateFromWkb()
+ * Revision 1.116  2005/10/25 20:00:53  fwarmerdam
+ * driver tracking on datasource now in core
  *
  ************************************************************************/
 
@@ -11007,6 +11007,28 @@ static PyObject *_wrap_OGR_DS_GetSummaryRefCount(PyObject *self, PyObject *args)
     return _resultobj;
 }
 
+static PyObject *_wrap_OGR_DS_GetDriver(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRSFDriverH  _result;
+    OGRDataSourceH  _arg0;
+    char * _argc0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGR_DS_GetDriver",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OGR_DS_GetDriver. Expected _OGRDataSourceH.");
+        return NULL;
+        }
+    }
+    _result = (OGRSFDriverH )OGR_DS_GetDriver(_arg0);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_OGRSFDriverH");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OGR_DS_CopyLayer(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRLayerH  _result;
@@ -11609,6 +11631,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGR_Dr_GetName", _wrap_OGR_Dr_GetName, 1 },
 	 { "OGR_DS_CreateLayer", _wrap_OGR_DS_CreateLayer, 1 },
 	 { "OGR_DS_CopyLayer", _wrap_OGR_DS_CopyLayer, 1 },
+	 { "OGR_DS_GetDriver", _wrap_OGR_DS_GetDriver, 1 },
 	 { "OGR_DS_GetSummaryRefCount", _wrap_OGR_DS_GetSummaryRefCount, 1 },
 	 { "OGR_DS_GetRefCount", _wrap_OGR_DS_GetRefCount, 1 },
 	 { "OGR_DS_Dereference", _wrap_OGR_DS_Dereference, 1 },
