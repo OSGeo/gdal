@@ -1,13 +1,9 @@
+/* $Id$ */
+
 /*!
-\page gdal_tutorial
+\page gdal_tutorial GDAL API Tutorial
 
-<center>
-<title>GDAL API Tutorial</title>
-</center>
-
-<h2>Opening the File</h2>
-
-
+\section gdal_tutorial_open Opening the File
 
 Before opening a GDAL supported raster datastore it is necessary to 
 register drivers.  There is a driver for each supported format.  Normally
@@ -75,7 +71,7 @@ dependent, and it might be an URL, a filename with additional parameters
 added at the end controlling the open or almost anything.  Please try not
 to limit GDAL file selection dialogs to only selecting physical files.
 
-<h2>Getting Dataset Information</h2>
+\section gdal_tutorial_dataset Getting Dataset Information
 
 As described in the <a href="gdal_datamodel.html">GDAL Data Model</a>, a
 GDALDataset contains a list of raster bands, all pertaining to the same
@@ -162,7 +158,7 @@ In Python:
 	print 'Pixel Size = (',geotransform[1], ',',geotransform[5],')'
 \endcode
 
-<h2>Fetching a Raster Band</h2>
+\section gdal_tutorial_band Fetching a Raster Band
 
 At this time access to raster data via GDAL is done one band at a time.
 Also, there is metadata, blocksizes, color tables, and various other 
@@ -237,11 +233,21 @@ In Python (note several bindings are missing):
 
 	print 'Band Type=',gdal.GetDataTypeName(band.DataType)
 
+	min = band.GetMinimum()
+	max = band.GetMaximum()
+	if min is not None and max is not None:
+	    (min,max) = ComputeRasterMinMax(1)
+	print 'Min=%.3f, Max=%.3f' % (min,max)
+
+	if band.GetOverviewCount() > 0:
+	    print 'Band has ', band.GetOverviewCount(), ' overviews.'
+
         if not band.GetRasterColorTable() is None:
-	    print 'Band has a color table.'
+	    print 'Band has a color table with ', \
+	    band.GetRasterColorTable().GetCount(), ' entries.'
 \endcode
 
-<h2>Reading Raster Data</h2>
+\section gdal_tutorial_read Reading Raster Data
 
 There are a few ways to read raster data, but the most common is via
 the GDALRasterBand::RasterIO() method.  This method will automatically take 
@@ -327,7 +333,7 @@ values should be used.  However, they can be used to control access to
 the memory data buffer, allowing reading into a buffer containing other
 pixel interleaved data for instance.  
 
-<h2>Closing the Dataset</h2>
+\section gdal_tutorial_close Closing the Dataset
 
 Please keep in mind that GDALRasterBand objects are <i>owned</i> by their
 dataset, and they should never be destroyed with the C++ delete operator. 
@@ -335,7 +341,7 @@ GDALDataset's can be closed either by calling GDALClose() or using the
 delete operator on the GDALDataset.   Either will result in proper cleanup,
 and flushing of any pending writes.  
 
-<h2>Techniques for Creating Files</h2>
+\section gdal_tutorial_creation Techniques for Creating Files
 
 New files in GDAL supported formats may be created if the format driver
 supports creation.  There are two general techniques for creating files,
@@ -407,7 +413,7 @@ In Python:
 Note that a number of drivers are read-only and won't support Create()
 or CreateCopy().
 
-<h2>Using CreateCopy()</h2>
+\section gdal_tutorial_createcopy Using CreateCopy()
 
 The GDALDriver::CreateCopy() method can be used fairly simply as most 
 information is collected from the source dataset.  However, it includes 
@@ -496,7 +502,7 @@ In Python:
                                 [ 'TILED=YES', 'COMPRESS=PACKBITS' ] )
 \endcode
 
-<h2>Using Create()</h2>
+\section gdal_tutorial_create Using Create()
 
 For situations in which you are not just exporting an existing file to a new
 file, it is generally necessary to use the GDALDriver::Create() method (though 
