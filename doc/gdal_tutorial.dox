@@ -148,7 +148,7 @@ In C:
     }
 \endcode
 
-In Python (note, driver bindings are not currently available):
+In Python:
 \code
     print 'Driver: ', dataset.GetDriver().ShortName,'/', \
           dataset.GetDriver().LongName
