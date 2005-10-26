@@ -1,13 +1,13 @@
-/*!
-\page gdal_datamodel
+/* $Id$ */
 
-<title>GDAL Data Model</title>
+/*!
+\page gdal_datamodel GDAL Data Model
 
 This document attempts to describe the GDAL data model.  That is the
 types of information that a GDAL data store can contain, and their 
 semantics.<p>
 
-<h2><a name="GDALDataset">Dataset</a></h2>
+\section gdal_datamodel_dataset Dataset
 
 A dataset (represented by the GDALDataset class) is an assembly of 
 related raster bands and some information common to them all.  In particular
@@ -20,7 +20,7 @@ pairs in string form.
 Note that the GDAL dataset, and raster band data model is loosely 
 based on the OpenGIS Grid Coverages specification. 
 
-<h3>Coordinate System</h3>
+\subsection gdal_datamodel_dataset_cs Coordinate System
 
 Dataset coordinate systems are represented as OpenGIS Well Known Text
 strings.  This can contain:
@@ -52,7 +52,7 @@ georeferenced coordinates of the GCPs returned by GDALDataset::GetGCPs().
 Note that a returned coordinate system strings of "" indicates nothing
 is known about the georeferencing coordinate system.  
 
-<h3>Affine GeoTransform</h3>
+\subsection gdal_datamodel_dataset_gtm Affine GeoTransform
 
 GDAL datasets have two ways of describing the relationship between
 raster positions (in pixel/line coordinates) and georeferenced coordinates.
@@ -77,7 +77,7 @@ top left corner of the top left pixel to (width_in_pixels,height_in_pixels)
 at the bottom right corner of the bottom right pixel.  The pixel/line location
 of the center of the top left pixel would therefore be (0.5,0.5). 
 
-<h3>GCPs</h3>
+\subsection gdal_datamodel_dataset_gcp GCPs
 
 A dataset can have a set of control points relating one or more positions
 on the raster to georeferenced coordinates.  All GCPs share a georeferencing
@@ -115,7 +115,7 @@ Normally a dataset will contain either an affine geotransform, GCPs or
 neither.  It is uncommon to have both, and it is undefined which is 
 authoritative.
 
-<h3>Metadata</h3>
+\subsection gdal_datamodel_dataset_metadata Metadata
 
 GDAL metadata is auxiliary format and application specific textual data
 kept as a list of name/value pairs.  The names are required to be well 
@@ -138,7 +138,7 @@ including the date/time field which is returned as:
 TIFFTAG_DATETIME=1999:05:11 11:29:56
 </pre>
 
-<h2>Raster Band</h2>
+\section gdal_datamodel_rasterband Raster Band
 
 A raster band is represented in GDAL with the GDALRasterBand class.  It 
 represents a single raster band/channel/layer.  It does not necessarily
@@ -201,7 +201,7 @@ units for elevation data.
 
 </ul>
 
-<h3>Color Table</h3>
+\section gdal_datamodel_rasterband_ct Color Table
 
 A color table consists of zero or more color entries described in C by the
 following structure:
@@ -239,7 +239,7 @@ subscript into the color table.  That means that the colors are always
 applied starting at zero and ascending.  There is no provision for indicating
 a prescaling mechanism before looking up in the color table. 
 
-<h3>Overviews</h3>
+\section gdal_datamodel_rasterband_overviews Overviews
 
 A band may have zero or more overviews.  Each overview is represented as
 a "free standing" GDALRasterBand.  The size (in pixels and lines) of the 
