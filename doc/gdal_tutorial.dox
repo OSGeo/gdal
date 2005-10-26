@@ -150,6 +150,8 @@ In C:
 
 In Python (note, driver bindings are not currently available):
 \code
+    print 'Driver: ', dataset.GetDriver().ShortName,'/', \
+          dataset.GetDriver().LongName
     print 'Size is ',dataset.RasterXSize,'x',dataset.RasterYSize, \
           'x',dataset.RasterCount
     print 'Projection is ',dataset.GetProjection()
