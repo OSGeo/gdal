@@ -1,8 +1,9 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
 /*!
-\page credits
-<center>
-<title>Acknowledgements and Credits</title>
-</center>
+\page credits Acknowledgements and Credits
 
 There are too many people who have helped since GDAL/OGR was launched in 
 late 1998 for me to thank them all.  I have received moral support, 
@@ -13,13 +14,13 @@ years.  Forgive me for all those I left out.<p>
 
 <i>Frank Warmerdam</i><p>
 
-<h2>Sponsorship</h2>
+\section credits_sponsorship Sponsorship
 
 <a href="http://www.ermapper.com/">ER Mapper</a> has generously provided
 ongoing primary sponsorship for GDAL since February 2005 to support work on 
 GDAL improvement efforts not focused on any particular client project.<p>
 
-<h2>Personal</h2>
+\section credits_personal Personal
 
 <ul>
 <li> <b>Andrey Kiselev</b>: my right hand man on GDAL for several years.
@@ -49,7 +50,7 @@ translator.<p>
 
 </ul>
 
-<h2>Corporate</h2>
+\section credits_cooperate Corporate
 
 <ul> 
 <li> <b><a href="http://www.actgate.com/">Applied Coherent 
