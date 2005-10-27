@@ -3,7 +3,7 @@
 #endif /* DOXYGEN_SKIP */
 
 /*!
-\page gdal_drivertut GDAL Driver Implementation Tutorial</title>
+\page gdal_drivertut GDAL Driver Implementation Tutorial
 
 \section gdal_drivertut_overall Overall Approach
 
