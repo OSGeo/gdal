@@ -1,9 +1,9 @@
-/*!
-\page vb6_tutorial
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
 
-<center>
-<title>GDAL VB6 Bindings Tutorial</title>
-</center>
+/*!
+\page vb6_tutorial GDAL VB6 Bindings Tutorial
 
 \section Intro Introduction
 
@@ -47,7 +47,7 @@ and include the following key files:
 <li> OGRCoordinateTransformation.cls - The OGRCoordinateTransformation class.
 </ul>
 
-You may need to edit GDALCore.bas, and change occurances of gdal12.dll 
+You may need to edit GDALCore.bas, and change occurrences of gdal12.dll 
 to match what your GDAL DLL is called.  You can include a full path to the
 DLL if it can't be guaranteed to be in the current working directory of the
 application (or the windows system32 directory).  
@@ -72,7 +72,7 @@ Normally we will just register all the drivers with GDALAllRegister().
 
 Then we need to try and open the dataset.  The GDAL.OpenDS() function
 returns a GDALDataset object, so we dimension an appropriate object for
-this.  GDAL.OpenDS() is the VB6 equivelent of the GDALDataset::GDALOpen() 
+this.  GDAL.OpenDS() is the VB6 equivalent of the GDALDataset::GDALOpen() 
 function.
 
 \code
@@ -98,7 +98,7 @@ from the dataset properties.
   Print "Size: " & ds.XSize & "x" & ds.YSize & "x" & ds.BandCount
 \endcode
 
-Next we read metadata from the dataset using the VB6 equivelent of the
+Next we read metadata from the dataset using the VB6 equivalent of the
 GDALMajorObject::GetMetadata() method, and report it to the user.  Metadata
 is returned as an array of strings of "name=value" items.  Array indices 
 start at zero in the returned array.  The domain argument should normally
@@ -286,7 +286,7 @@ creation something like this:
     Next drvIndex
 \endcode
 
-Once we have the driver object, the simpliest way of creating a new file
+Once we have the driver object, the simplest way of creating a new file
 is to use CreateCopy().  This tries to create a copy of the input file
 in the new format.  A complete segment (without any error checking)
 would look like the following.  The CreateCopy() method corresponds to the
@@ -380,7 +380,7 @@ Then, if one is available, we copy the palette.
         End If
 \endcode        
 
-Finally, the meat and potatos.  We copy the image data.  We do this one
+Finally, the meat and potatoes.  We copy the image data.  We do this one
 scanline at a time so that we can support very large images without require
 large amounts of RAM.   Here we use a Double buffer for the scanline, but
 if we knew in advance the type of the image, we could dimension a buffer
@@ -508,7 +508,7 @@ latitude and longitude.
 \endcode
 
 Then we report the corner location in georeferenced, and if we have it
-geographic coordianates.  
+geographic coordinates.  
 
 \code                         
     If latlong_valid Then
