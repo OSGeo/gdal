@@ -1,11 +1,11 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
 /*!
-\page gdal_drivertut
+\page gdal_drivertut GDAL Driver Implementation Tutorial</title>
 
-<center>
-<title>GDAL Driver Implementation Tutorial</title>
-</center>
-
-<h2>Overall Approach</h2>
+\section gdal_drivertut_overall Overall Approach
 
 In general new formats are added to GDAL by implementing format specific
 drivers as subclasses of GDALDataset, and band accessors as subclasses
@@ -22,21 +22,21 @@ It is strongly advised that the <a href="gdal_datamodel.html">GDAL Data Model
 </a> description be reviewed and understood before attempting to implement a
 GDAL driver.
 
-<h2>Contents</h2>
+\section gdal_drivertut_toc Contents
 
 <ol>
-<li> <a href="#dataset">Implementing the Dataset</a>
-<li> <a href="#rasterband">Implementing the RasterBand</a>
-<li> <a href="#driver">The Driver</a>
-<li> <a href="#addingdriver">Adding Driver to GDAL Tree</a>
-<li> <a href="#georef">Adding Georeferencing</a>
-<li> <a href="#overviews">Overviews</a>
-<li> <a href="#creation">File Creation</a>
-<li> <a href="#raw">RawDataset/RawRasterBand Helper Classes</a>
-<li> <a href="#metadata">Metadata, and Other Exotic Extensions</a>
+<li> \ref gdal_drivertut_dataset
+<li> \ref gdal_drivertut_rasterband
+<li> \ref gdal_drivertut_driver
+<li> \ref gdal_drivertut_addingdriver
+<li> \ref gdal_drivertut_georef
+<li> \ref gdal_drivertut_overviews
+<li> \ref gdal_drivertut_creation
+<li> \ref gdal_drivertut_raw
+<li> \ref gdal_drivertut_metadata
 </ol>
 
-<h2><a name="dataset">Implementing the Dataset</a></h2>
+\section gdal_drivertut_dataset Implementing the Dataset
 
 We will start showing minimal implementation of a read-only driver for
 the Japanese DEM format (<a href="jdemdataset.cpp.html">jdemdataset.cpp</a>).  
@@ -58,10 +58,10 @@ class JDEMDataset : public GDALDataset
 
 In general we provide capabilities for a driver, by overriding the various
 virtual methods on the GDALDataset base class.  However, the Open() method
-is special.  This is not a virtual method on the baseclass, and we will
+is special.  This is not a virtual method on the base class, and we will
 need a freestanding function for this operation, so we declare it static. 
 Implementing it as a method in the JDEMDataset class is convenient because
-we have priveledged access to modify the contents of the database object. 
+we have privileged access to modify the contents of the database object. 
 
 The open method itself may look something like this:
 
@@ -120,7 +120,7 @@ GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 The first step in any database Open function is to verify that the file
 being passed is in fact of the type this driver is for.  It is important
 to realize that each driver's Open function is called in turn till one
-succeeds.  Drivers must quitly return NULL if the passed file is not of
+succeeds.  Drivers must quietly return NULL if the passed file is not of
 their format.  They should only produce an error if the file does appear to
 be of their supported format, but is for some reason unsupported or corrupt. 
 
@@ -178,7 +178,7 @@ format.
 
 It is important to make the <i>is this my format</i> test as stringent as
 possible.  In this particular case the test is weak, and a file that happened
-to have 19s or 20s at a few locations could be erroneously recognised as
+to have 19s or 20s at a few locations could be erroneously recognized as
 JDEM format, causing it to not be handled properly.
 
 Once we are satisfied that the file is of our format, we need to create
@@ -226,7 +226,7 @@ the SetBand() method.  We will explore the JDEMRasterBand() class shortly.
     return( poDS );
 \endcode
 
-<h2><a name="rasterband">Implementing the RasterBand</a></h2>
+\section gdal_drivertut_rasterband Implementing the RasterBand
 
 Similar to the customized JDEMDataset class subclassed from GDALDataset, 
 we also need to declare and implement a customized JDEMRasterBand derived
@@ -328,7 +328,7 @@ Key items to note are:
 
 <ul>
 <li> It is typical to cast the GDALRasterBand::poDS member to the derived 
-type of the owning dataset.  If your RasterBand class will need priveledged
+type of the owning dataset.  If your RasterBand class will need privileged
 access to the owning dataset object, ensure it is declared as a friend (omitted
 above for brevity). 
 
@@ -346,7 +346,7 @@ datasets values of 1 and 1 would indicate the block going from (128,128) to
 
 </ul>
 
-<h2><a name="driver">The Driver</a></h2>
+\section gdal_drivertut_driver The Driver
 
 While the JDEMDataset and JDEMRasterBand are now ready to use to read image
 data, it still isn't clear how the GDAL system knows about the new driver.
@@ -392,10 +392,10 @@ registering it with the GDALDriverManager().
 <li> The description is the short name for the format.  This is a unique 
 name for this format, often used to identity the driver in scripts and 
 commandline programs.  Normally 3-5 characters in length, and matching the 
-prefix of the format classes. (manditory)
+prefix of the format classes. (mandatory)
 
 <li> GDAL_DMD_LONGNAME: A longer descriptive name for the file format,
-but still no longer than 50-60 characters. (manditory)
+but still no longer than 50-60 characters. (mandatory)
 
 <li> GDAL_DMD_HELPTOPIC: The name of a help topic to display for this driver, 
 if any.  In this case JDEM format is contained within the various format 
@@ -415,7 +415,7 @@ this.  (optional)
 supported by this create when creating new datasets.  If a Create() method
 exists, these will be will supported.  If a CreateCopy() method exists, this
 will be a list of types that can be losslessly exported but it may include
-weaker datatypes than the type eventually written.  For instance, a format
+weaker data types than the type eventually written.  For instance, a format
 with a CreateCopy() method, and that always writes Float32 might also list
 Byte, Int16, and UInt16 since they can losslessly translated to Float32.  An
 example value might be "Byte Int16 UInt16". (required - if creation supported)
@@ -437,7 +437,7 @@ Could be used to cleanup data at the driver level.  Rarely used.  (optional)
 
 </ul>
 
-<h2><a name="addingdriver">Adding Driver to GDAL Tree</a></h2>
+\section gdal_drivertut_addingdriver Adding Driver to GDAL Tree
 
 Note that the GDALRegister_JDEM() method must be called by the higher
 level program in order to have access to the JDEM driver.  Normal practice
@@ -451,7 +451,7 @@ as the short name.
 from other similar directories (ie. the jdem directory). 
 
 <li> Add the module with the dataset, and rasterband implementation.  
-Generally this is called <short_name>dataset.cpp, with all the GDAL specifc
+Generally this is called <short_name>dataset.cpp, with all the GDAL specific
 code in one file, though that is not required.
 
 <li> Add the registration entry point declaration (ie. GDALRegister_JDEM()) to
@@ -471,7 +471,7 @@ the new format available in all the utilities.  The gdalinfo utility can be
 used to test that opening and reporting on the format is working, and the
 gdal_translate utility can be used to test image reading. 
 
-<h2><a name="georef">Adding Georeferencing</a></h2>
+\section gdal_drivertut_georef Adding Georeferencing
 
 Now we will take the example a step forward, adding georeferencing support. 
 We add the following two virtual method overrides to JDEMDataset, taking
@@ -485,7 +485,7 @@ base class.
 
 The implementation of GetGeoTransform() just copies the usual geotransform
 matrix into the supplied buffer.  Note that GetGeoTransform() may be called
-alot, so it isn't generally wise to do alot of computation in it.  In many
+a lot, so it isn't generally wise to do a lot of computation in it.  In many
 cases the Open() will collect the geotransform, and this method will just
 copy it over.  Also note that the geotransform return is based on an 
 anchor point at the top left corner of the top left pixel, not the center
@@ -539,7 +539,7 @@ This completes explanation of the features of the JDEM driver.  The full
 source for <a href="jdemdataset.cpp.html">jdemdataset.cpp</a> can be reviewed 
 as needed.
 
-<h2><a name="overviews">Overviews</a></h2>
+\section gdal_drivertut_overviews Overviews
 
 GDAL allows file formats to make pre-built overviews available to applications
 via the GDALRasterBand::GetOverview() and related methods.  However, 
@@ -552,9 +552,9 @@ Formats can also report that they have arbitrary overviews, by overriding
 the HasArbitraryOverviews() method on the GDALRasterBand, returning TRUE. 
 In this case the raster band object is expected to override the RasterIO()
 method itself, to implement efficient access to imagery with resampling. 
-This is also involved, and there are alot of requirements for correct
+This is also involved, and there are a lot of requirements for correct
 implementation of the RasterIO() method.  An example of this can be found
-in the ogdi and ecw formats. 
+in the OGDI and ECW formats. 
 
 However, by far the most common approach to implementing overviews is to 
 use the default support in GDAL for external overviews stored in TIFF files
@@ -572,7 +572,7 @@ This will enable default implementations for reading and creating overviews for
 the format.  It is advised that this be enabled for all simple file system
 based formats unless there is a custom overview mechanism to be tied into.
 
-<h2><a name="creation">File Creation</a></h2>
+\section gdal_drivertut_creation File Creation
 
 There are two approaches to file creation.  The first method is called the
 CreateCopy() method, and involves implementing a function that can write a
@@ -587,7 +587,7 @@ important when implementing file formats using external libraries which
 require information like colormaps, and georeferencing information at the
 point the file is created.  The other advantage of this method is that the
 CreateCopy() method can read some kinds of information, such as min/max, 
-scaling, description and GCPs for which there are no equivelent set methods.
+scaling, description and GCPs for which there are no equivalent set methods.
 
 The benefits of the second method are that applications can create an
 empty new file, and write results to it as they become available.  A complete
@@ -596,7 +596,7 @@ image of the desired data does not have to be available in advance.
 For very important formats both methods may be implemented, otherwise do 
 whichever is simpler, or provides the required capabilities. 
 
-<h3>CreateCopy</h3>
+\subsection gdal_drivertut_creation_createcopy CreateCopy
 
 The GDALDriver::CreateCopy() method call is passed through directly, so 
 that method should be consulted for details of arguments.  However, some 
@@ -605,7 +605,7 @@ things to keep in mind are:
 <ul>
 <li> If the bStrict flag is FALSE the driver should try to do something
 reasonable when it cannot exactly represent the source dataset, transforming
-data types on the fly, droping georeferencing and so forth. 
+data types on the fly, dropping georeferencing and so forth. 
 
 <li> Implementing progress reporting correctly is somewhat involved.  The
 return result of the progress function needs always to be checked for
@@ -763,7 +763,7 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 }
 \endverbatim
 
-<h3>Dynamic Creation</h3>
+\subsection gdal_drivertut_creation_create Dynamic Creation
 
 In the case of dynamic creation, there is no source dataset.  Instead the
 size, number of bands, and pixel data type of the desired file is provided
@@ -924,7 +924,7 @@ method be implemented in the raster band destructor.  This is to ensure that
 any write cache blocks for the band be flushed out before the destructor
 is called.  
 
-<h2><a name="raw">RawDataset/RawRasterBand Helper Classes</a></h2>
+\section gdal_drivertut_raw RawDataset/RawRasterBand Helper Classes
 
 Many file formats have the actual imagery data stored in a regular,
 binary, scanline oriented format.  Rather than re-implement the access 
@@ -983,14 +983,14 @@ Simple file formats utilizing the Raw services are normally placed all within
 one file in the gdal/frmts/raw directory.  There are numerous examples there
 of format implementation.<p>
 
-<h2><a name="metadata">Metadata, and Other Exotic Extensions</a></h2>
+\section gdal_drivertut_metadata Metadata, and Other Exotic Extensions
 
 There are various other items in the GDAL data model, for which virtual 
 methods exist on the GDALDataset and GDALRasterBand.  They include:
 
 <ul>
 <li> <b>Metadata</b>: Name/value text values about a dataset or band.  The
-GDALMajorObject (base class for GDALRasterBand and GDALDataset) has builtin
+GDALMajorObject (base class for GDALRasterBand and GDALDataset) has built-in
 support for holding metadata, so for read access it only needs to be
 set with calls to SetMetadataItem() during the Open().  The SAR_CEOS 
 (frmts/ceos2/sar_ceosdataset.cpp) and GeoTIFF drivers are examples of drivers
