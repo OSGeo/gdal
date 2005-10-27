@@ -1,12 +1,12 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
 /*!
 
-\page gdal_vrttut
+\page gdal_vrttut GDAL Virtual Format Tutorial
 
-<center>
-<title>GDAL Virtual Format Tutorial</title>
-</center>
-
-<h2>Introduction</h2>
+\section gdal_vrttut_intro Introduction
 
 The VRT driver is a format driver for GDAL that allows a virtual GDAL dataset
 to be composed from other GDAL datasets with repositioning, and algorithms
@@ -40,7 +40,7 @@ This tutorial will cover the .vrt file format (suitable for users editing
 .vrt files), and how .vrt files may be created and manipulated programmatically
 for developers.<p>
 
-<h2>.vrt Format</h2>
+\section gdal_vrttut_format .vrt Format
 
 Virtual files stored on disk are kept in an XML format with the following
 elements.<p>
@@ -164,7 +164,7 @@ raster band.   The default is 1.0.<p>
 \endcode
 
 <li> <b>CategoryNames</b>: This optional element contains a list of Category
-subelements with the names of the categories for classied raster band. <p>
+subelements with the names of the categories for classified raster band. <p>
 
 \code
   <CategoryNames>
@@ -218,7 +218,7 @@ and the Coefs must have Size * Size entries separated by spaces.
 
 </ul>
 
-<h2>.vrt Descriptions for Raw Files</h2>
+\section gdal_vrttut_vrt .vrt Descriptions for Raw Files
 
 So far we have described how to derive new virtual datasets from existing
 files supports by GDAL.  However, it is also common to need to utilize 
@@ -271,7 +271,7 @@ data this will be PixelOffset * rasterXSize.
 
 <li> <b>ByteOrder</b>: Defines the byte order of the data on disk.  
 Either LSB (Least Significant Byte first) such as the natural byte order
-on Intel x86 systems or MSB (Most Signficant Byte first) such as the natural
+on Intel x86 systems or MSB (Most Significant Byte first) such as the natural
 byte order on Motorola or Sparc systems.  Defaults to being the local machine
 order. 
 
@@ -328,7 +328,7 @@ Another example, in this case a 400x300 RGB pixel interleaved image.
 </VRTDataset>
 \endcode
 
-<h2>Programatic Creation of VRT Datasets</h2>
+\section gdal_vrttut_creation Programatic Creation of VRT Datasets
 
 The VRT driver supports several methods of creating VRT datasets.  As of
 GDAL 1.2.0 the vrtdataset.h include file should be installed with the core
