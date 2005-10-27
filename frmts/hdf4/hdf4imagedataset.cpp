@@ -29,6 +29,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.53  2005/10/27 15:43:13  fwarmerdam
+ * Fixed bug with NRL geotransform calculation due to nRasterXSize
+ * and nRasterYSize not having been set properly yet.
+ *
  * Revision 1.52  2005/10/13 15:21:42  fwarmerdam
  * Don't try to use papszMetadata directly.
  *
@@ -2204,6 +2208,10 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 default:
                     break;
             }
+
+            // We preset this because CaptureNRLGeoTransform needs it.
+            poDS->nRasterXSize = poDS->aiDimSizes[poDS->iXDim];
+            poDS->nRasterYSize = poDS->aiDimSizes[poDS->iYDim];
 
             // Special case projection info for NRL generated files. 
             const char *pszMapProjectionSystem =
