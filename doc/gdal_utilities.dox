@@ -1,29 +1,26 @@
-/*! 
-\page gdal_utilities
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
 
-<center>
-<title>GDAL Utilities</title>
-</center>
+/*! 
+\page gdal_utilities GDAL Utilities
 
 The following utility programs are distributed with GDAL. 
 
 <ul>
-<li> <a href="#gdalinfo">gdalinfo</a> - report information about a file.
-<li> <a href="#gdal_translate">gdal_translate</a> - Copy a raster file, with control of output format.
-<li> <a href="#gdaladdo">gdaladdo</a> - Add overviews to a file.
-<li> <a href="#gdalwarp">gdalwarp</a> - Warp an image into a new coordinate system.
-<li> <a href="#gdaltindex">gdaltindex</a> - Build a MapServer raster tileindex.
-<li> <a href="#gdal_contour">gdal_contour</a> - Contours from DEM.
-<li> <a href="#rgb2pct">rgb2pct.py</a> - Convert a 24bit RGB image to 8bit paletted.
-<li> <a href="#pct2rgb">pct2rgb.py</a> - Convert an 8bit palatted image to 24bit RGB.
-<li> <a href="#gdal_merge">gdal_merge.py</a> - Build a quick mosaic from a set of images.
-<li> <a href="#gdal-config">gdal-config</a> - Get options required to build 
-software using GDAL.
+<li> \ref gdalinfo - report information about a file.
+<li> \ref gdal_translate - Copy a raster file, with control of output format.
+<li> \ref gdaladdo - Add overviews to a file.
+<li> \ref gdalwarp - Warp an image into a new coordinate system.
+<li> \ref gdaltindex - Build a MapServer raster tileindex.
+<li> \ref gdal_contour - Contours from DEM.
+<li> \ref rgb2pct - Convert a 24bit RGB image to 8bit paletted.
+<li> \ref pct2rgb - Convert an 8bit paletted image to 24bit RGB.
+<li> \ref gdal_merge - Build a quick mosaic from a set of images.
+<li> \ref gdal-config - Get options required to build software using GDAL.
 </ul>
 
-<!-- ====================================================================== -->
-
-<h2>Creating New Files</h2>
+\section gdal_utilities_creating Creating New Files
 
 Access an existing file to read it is generally quite simple.  Just
 indicate the name of the file or dataset on the commandline.  However, 
@@ -40,8 +37,8 @@ names such as GTiff (for GeoTIFF) or HFA (for Erdas Imagine).  The list of
 all format codes can be listed with the <b>--formats</b> switch.  Only
 formats list as "(rw)" (read-write) can be written.<p>
 Many utilities default
-to creating GeoTIFF files if a format is not specified.  File extentions
-are not used to guess output format, nor are extentions generally added
+to creating GeoTIFF files if a format is not specified.  File extensions
+are not used to guess output format, nor are extensions generally added
 by GDAL if not indicated in the filename by the user. 
 </dd>
 
@@ -53,7 +50,7 @@ should be tiled.<p>
 The creation options available vary by format driver, and some simple 
 formats have no creation options at all.  A list of options supported
 for a format can be listed with the "--format <format>" commandline
-option but the web page for the format is the defininative source of 
+option but the web page for the format is the definitive source of 
 information on driver creation options.<p>
 </dd>
 
@@ -96,9 +93,7 @@ in a similar manner to WKT files, but the filename should be prefixed with
 </dd>
 </dl>
 
-<!-- ====================================================================== -->
-
-<h2>General Command Line Switches</h2>
+\section gdal_utilities_switches General Command Line Switches
 All GDAL command line utility programs support the following 
 "general" options.<p>
 
@@ -106,7 +101,7 @@ All GDAL command line utility programs support the following
 <dt> <b>--version</b></dt><dd> Report the version of GDAL and exit.</dd>
 
 <dt> <b>--formats</b></dt><dd> List all raster formats supported by this
-GDAL build (readonly and read-write) and exit.</dd>
+GDAL build (read-only and read-write) and exit.</dd>
 
 <dt> <b>--format</b> <i>format</i></dt><dd>
 List detailed information about a single format driver.  The <i>format</i> 
@@ -141,20 +136,18 @@ and exit.
 
 </dl>
 
-<!-- ====================================================================== -->
-
-\if man
 */
-/*! \page gdalinfo 
+
+/*! \page gdalinfo gdalinfo
 
 lists information about a raster dataset
+
+\if man
 \section synopsis SYNOPSIS
 \endif
 
 \htmlonly
-<h2><a name="gdalinfo">gdalinfo</a></h2>
-
-Usage: 
+Usage:
 \endhtmlonly
 
 \verbatim
@@ -196,7 +189,7 @@ the full geotransform (but not GCPs).
 <li> Band min/max values (internally known and possibly computed).
 <li> Band NODATA value.
 <li> Band overview resolutions available. 
-<li> Band unit type (ie. "meters" or "feet" for elevation bands). 
+<li> Band unit type (i.e.. "meters" or "feet" for elevation bands). 
 <li> Band pseudo-color tables. 
 </ul>
 
@@ -237,21 +230,21 @@ Center      (  456080.000, 3735960.000) (117d28'27.39"W, 33d45'52.46"N)
 Band 1 Block=512x16 Type=Byte, ColorInterp=Gray
 \endverbatim
 
-<!-- ====================================================================== -->
-
 \if man
 \section author AUTHORS
-Frank Warmerdam <warmerdam@pobox.com>
-Silke Reimer <silke@intevation.de>
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
 */
-/*! \page gdal_translate
+
+/*! \page gdal_translate gdal_translate
 
 converts raster data between different formats
+
+\if man
 \section tsynopsis SYNOPSIS
 \endif
 
 \htmlonly
-<h2><a name="gdal_translate">gdal_translate</a></h2>
 Usage:
 \endhtmlonly
 
@@ -320,9 +313,9 @@ to the output dataset.</dd>
 Add the indicated ground control point to the output dataset.  This option 
 may be provided multiple times to provide a set of GCPs. 
 </dd>
-<dt> <b>-quiet</b>:</dt><dd> Supress progress monitor and other non-error
+<dt> <b>-quiet</b>:</dt><dd> Suppress progress monitor and other non-error
 output.</dd>
-<dt> <b>-sds</b>:</dt><dd> Copy all subdatsets of this file to individual 
+<dt> <b>-sds</b>:</dt><dd> Copy all subdatasets of this file to individual 
 output files.  Use with formats like HDF or OGDI that have subdatasets.</dd>
 <dt> <i>src_dataset</i>:</dt><dd> The source file name.</dd>
 <dt> <i>dst_dataset</i>:</dt><dd> The destination file name.</dd>
@@ -340,20 +333,22 @@ Example:
 gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
 \endverbatim
 
-<!-- ====================================================================== -->
-
 \if man
 \section tauthor AUTHORS
-Frank Warmerdam <warmerdam@pobox.com>
-Silke Reimer <silke@intevation.de>
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
 */
-/*! \page gdaladdo
+
+/*! \page gdaladdo gdaladdo
+
 builds or rebuilds overview images
+
+\if man
 \section asynopsis SYNOPSIS
 \endif
 
 \htmlonly
-<h2><a name="gdaladdo">gdaladdo</a></h2>
+\section gdal_utilities_gdaladdo gdaladdo
 Usage: 
 \endhtmlonly
 
@@ -414,20 +409,21 @@ Create an external compressed GeoTIFF overview file from the ERDAS .IMG file:
 gdaladdo --config COMPRESS_OVERVIEW DEFLATE erdas.img 2 4 8 16
 \endverbatim
 
-<!-- ====================================================================== -->
-
 \if man
 \section aauthor AUTHORS
-Frank Warmerdam <warmerdam@pobox.com>
-Silke Reimer <silke@intevation.de>
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
 */
-/*! \page gdalwarp
+
+/*! \page gdalwarp gdalwarp
+
 simple image reprojection and warping utility
+
+\if man
 \section wsynopsis SYNOPSIS
 \endif
 
 \htmlonly
-<h2><a name="gdalwarp">gdalwarp</a></h2>
 Usage: 
 \endhtmlonly
 
@@ -476,7 +472,7 @@ pixels and lines</dd>
  <b>-wo</b> options may be listed.</dd>
 <dt> <b>-ot</b> <em>type</em>:</dt><dd> For the output bands to be of the indicated
  data type.</dd>
-<dt> <b>-wt</b> <em>type</em>:</dt><dd> Working pixel data type. The datatype of
+<dt> <b>-wt</b> <em>type</em>:</dt><dd> Working pixel data type. The data type of
  pixels in the source image and destination image buffers.</dd>
 <dt> <b>-rn</b>:</dt><dd> Use nearest neighbour resampling (default, fastest algorithm, worst
  interpolation quality).</dd>
@@ -536,21 +532,21 @@ projection with a command like this:<p>
 gdalwarp HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 pg-PR1B0000-2002031402_100_001_2.tif
 \endverbatim
 
-<!-- ====================================================================== -->
-
 \if man
 \section wauthor AUTHORS
-Frank Warmerdam <warmerdam@pobox.com>
-Silke Reimer <silke@intevation.de>
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
 */
-/*! \page gdaltindex
+
+/*! \page gdaltindex gdaltindex
 
 builds a shapefile as a raster tileindex
+
+\if man
 \section isynopsis SYNOPSIS
 \endif
 
 \htmlonly
-<h2><a name="gdaltindex">gdaltindex</a></h2>
 Usage: 
 \endhtmlonly
 
@@ -589,20 +585,21 @@ Example:
 gdaltindex doq_index.shp doq/*.tif
 \endverbatim
 
-<!-- ====================================================================== -->
-
 \if man
 \section wauthor AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
+\endif
 */
 
-/*! \page gdal_contour
+/*! \page gdal_contour gdal_contour
+
 builds vector contour lines from a raster elevation model
+
+\if man
 \section isynopsis SYNOPSIS
 \endif
 
 \htmlonly
-<h2><a name="gdal_contour">gdal_contour</a></h2>
 Usage: 
 \endhtmlonly
 
@@ -670,20 +667,21 @@ attribute.
 gdal_contour -a elev dem.tif contour.shp 10.0
 \endverbatim
 
-<!-- ====================================================================== -->
-
 \if man
 \section iauthor AUTHORS
-Frank Warmerdam <warmerdam@pobox.com>
-Silke Reimer <silke@intevation.de>
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
 */
-/*! \page rgb2pct.py
+
+/*! \page rgb2pct rgb2pct.py
+
 converts an image into a pseudo-colored image
+
+\if man
 \section rsynopsis SYNOPSIS
 \endif
 
 \htmlonly
-<h2><a name="rgb2pct">rgb2pct.py</a></h2>
 Usage: 
 \endhtmlonly
 
@@ -715,20 +713,21 @@ created.</dd>
 NOTE: rgb2pct.py is a Python script, and will only work if GDAL was built
 with Python support.  
 
-<!-- ====================================================================== -->
-
 \if man
 \section iauthor AUTHOR
 Frank Warmerdam <warmerdam@pobox.com>
+\endif
 */
-/*! \page pct2rgb.py
+
+/*! \page pct2rgb pct2rgb.py
 
 converts an image into a pseudo-colored image
+
+\if man
 \section rsynopsis SYNOPSIS
 \endif
 
 \htmlonly
-<h2><a name="pct2rgb">pct2rgb.py</a></h2>
 Usage: 
 \endhtmlonly
 
@@ -755,20 +754,21 @@ created.</dd>
 NOTE: rgb2pct.py is a Python script, and will only work if GDAL was built
 with Python support.
 
-<!-- ====================================================================== -->
-
 \if man
 \section rauthor AUTHORS
-Frank Warmerdam <warmerdam@pobox.com>
-Silke Reimer <silke@intevation.de>
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
 */
-/*! \page gdal_merge.py
- mosaics a set of images
+
+/*! \page gdal_merge gdal_merge.py
+
+mosaics a set of images
+
+\if man
 \section msynopsis SYNOPSIS
 \endif
 
 \htmlonly
-<h2><a name="gdal_merge">gdal_merge.py</a></h2>
 Usage:
 \endhtmlonly
 
@@ -830,21 +830,21 @@ image data is copied into it.
 NOTE: gdal_merge.py is a Python script, and will only work if GDAL was built
 with Python support.
 
-<!-- ====================================================================== -->
-
 \if man
 \section mauthor AUTHORS
-Frank Warmerdam <warmerdam@pobox.com>
-Silke Reimer <silke@intevation.de>
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
 */
-/*! \page gdal-config
+
+/*! \page gdal-config gdal-config
 
 determines various information about a GDAL installation
+
+\if man
 \section csynopsis SYNOPSIS
 \endif
 
 \htmlonly
-<h2><a name="gdal-config">gdal-config</a></h2>
 Usage:
 \endhtmlonly
 
