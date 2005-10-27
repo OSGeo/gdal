@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.54  2005/10/27 16:41:54  fwarmerdam
+ * added scale/offset/units support for selected modis products
+ *
  * Revision 1.53  2005/10/27 15:43:13  fwarmerdam
  * Fixed bug with NRL geotransform calculation due to nRasterXSize
  * and nRasterYSize not having been set properly yet.
@@ -215,6 +218,12 @@ class HDF4ImageRasterBand : public GDALRasterBand
     int         bNoDataSet;
     double      dfNoDataValue;
 
+    int         bHaveScaleAndOffset;
+    double      dfScale;
+    double      dfOffset;
+
+    CPLString   osUnitType;
+
   public:
 
                 HDF4ImageRasterBand( HDF4ImageDataset *, int, GDALDataType );
@@ -225,6 +234,9 @@ class HDF4ImageRasterBand : public GDALRasterBand
     virtual GDALColorTable *GetColorTable();
     virtual double	    GetNoDataValue( int * );
     virtual CPLErr	    SetNoDataValue( double );
+    virtual double 	    GetOffset( int *pbSuccess );
+    virtual double          GetScale( int *pbSuccess );
+    virtual const char     *GetUnitType();
 };
 
 /************************************************************************/
@@ -240,6 +252,10 @@ HDF4ImageRasterBand::HDF4ImageRasterBand( HDF4ImageDataset *poDS, int nBand,
     eDataType = eType;
     bNoDataSet = FALSE;
     dfNoDataValue = -9999.0;
+
+    bHaveScaleAndOffset = FALSE;
+    dfScale = 1.0;
+    dfOffset = 0.0;
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
@@ -566,6 +582,53 @@ CPLErr HDF4ImageRasterBand::SetNoDataValue( double dfNoData )
     dfNoDataValue = dfNoData;
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                            GetUnitType()                             */
+/************************************************************************/
+
+const char *HDF4ImageRasterBand::GetUnitType()
+
+{
+    if( osUnitType.size() > 0 )
+        return osUnitType;
+    else
+        return GDALRasterBand::GetUnitType();
+}
+
+/************************************************************************/
+/*                             GetOffset()                              */
+/************************************************************************/
+
+double HDF4ImageRasterBand::GetOffset( int *pbSuccess )
+
+{
+    if( bHaveScaleAndOffset )
+    {
+        if( pbSuccess != NULL )
+            *pbSuccess = TRUE;
+        return dfOffset;
+    }
+    else
+        return GDALRasterBand::GetOffset( pbSuccess );
+}
+
+/************************************************************************/
+/*                              GetScale()                              */
+/************************************************************************/
+
+double HDF4ImageRasterBand::GetScale( int *pbSuccess )
+
+{
+    if( bHaveScaleAndOffset )
+    {
+        if( pbSuccess != NULL )
+            *pbSuccess = TRUE;
+        return dfScale;
+    }
+    else
+        return GDALRasterBand::GetScale( pbSuccess );
 }
 
 /************************************************************************/
@@ -2219,7 +2282,9 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                   "mapProjectionSystem");
             if( pszMapProjectionSystem != NULL 
                 && EQUAL(pszMapProjectionSystem,"NRL(USGS)") )
+            {
                 poDS->CaptureNRLGeoTransform();
+            }
 
             // Special cast for coastwatch hdf files. 
             if( CSLFetchNameValue( poDS->papszGlobalMetadata, 
@@ -2439,6 +2504,41 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                   poDS->GetRasterBand(i)->SetNoDataValue(
                       atof( CSLFetchNameValue(poDS->papszLocalMetadata, 
                                               "missing_value") ) );
+              }
+          }
+
+          // this is a modis level3 convention (data from ACT)
+          // Eg data/hdf/act/modis/MODAM2004280160000.L3_NOAA_GMX
+
+          if( CSLFetchNameValue( poDS->papszLocalMetadata, 
+                                 "scalingSlope" ) 
+              && CSLFetchNameValue( poDS->papszLocalMetadata, 
+                                    "scalingIntercept" ) )
+          {
+              int i;
+              CPLString osUnits;
+              
+              if( CSLFetchNameValue( poDS->papszLocalMetadata, 
+                                     "productUnits" ) )
+              {
+                  osUnits = CSLFetchNameValue( poDS->papszLocalMetadata, 
+                                               "productUnits" );
+              }
+
+              for( i = 1; i <= poDS->nBands; i++ )
+              {
+                  HDF4ImageRasterBand *poBand = 
+                      (HDF4ImageRasterBand *) poDS->GetRasterBand(i);
+
+                  poBand->bHaveScaleAndOffset = TRUE;
+                  poBand->dfScale = 
+                      atof( CSLFetchNameValue( poDS->papszLocalMetadata, 
+                                               "scalingSlope" ) );
+                  poBand->dfOffset = 
+                      atof( CSLFetchNameValue( poDS->papszLocalMetadata, 
+                                               "scalingIntercept" ) );
+
+                  poBand->osUnitType = osUnits;
               }
           }
       }
