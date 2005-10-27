@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2005/10/27 23:12:16  fwarmerdam
+ * morphToESRI() now maps a PROJCS of Unknown to the PROJECTION value
+ *
  * Revision 1.40  2005/08/03 16:11:18  fwarmerdam
  * Added additional morphToESRI() rules to:
  *  o Change NAD27/NAD83/WGS84 GEOGCSes to GCS_ names used by ESRI.
@@ -993,26 +996,6 @@ OGRErr OGRSpatialReference::morphToESRI()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Force Unnamed to Unknown for most common locations.             */
-/* -------------------------------------------------------------------- */
-    static char *apszUnknownMapping[] = { 
-        "Unknown", "Unnamed",
-        NULL, NULL 
-    };
-
-    GetRoot()->applyRemapper( "PROJCS", 
-                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
-    GetRoot()->applyRemapper( "GEOGCS", 
-                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
-    GetRoot()->applyRemapper( "DATUM", 
-                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
-    GetRoot()->applyRemapper( "SPHEROID", 
-                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
-    GetRoot()->applyRemapper( "PRIMEM", 
-                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
-    
-
-/* -------------------------------------------------------------------- */
 /*      Translate PROJECTION keywords that are misnamed.                */
 /* -------------------------------------------------------------------- */
     GetRoot()->applyRemapper( "PROJECTION", 
@@ -1062,6 +1045,44 @@ OGRErr OGRSpatialReference::morphToESRI()
             poGeogCS->GetChild(0)->SetValue( "GCS_North_American_1983" );
             pszUTMPrefix = "NAD_1983";
         }
+
+/* -------------------------------------------------------------------- */
+/*      Force Unnamed to Unknown for most common locations.             */
+/* -------------------------------------------------------------------- */
+    static char *apszUnknownMapping[] = { 
+        "Unknown", "Unnamed",
+        NULL, NULL 
+    };
+
+    GetRoot()->applyRemapper( "PROJCS", 
+                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
+    GetRoot()->applyRemapper( "GEOGCS", 
+                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
+    GetRoot()->applyRemapper( "DATUM", 
+                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
+    GetRoot()->applyRemapper( "SPHEROID", 
+                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
+    GetRoot()->applyRemapper( "PRIMEM", 
+                              apszUnknownMapping+1, apszUnknownMapping+0, 2 );
+    
+/* -------------------------------------------------------------------- */
+/*      If the PROJCS name is unset, use the PROJECTION name in         */
+/*      place of unknown, or unnamed.  At the request of Peng Gao.      */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode *poNode;
+
+    poNode = GetAttrNode( "PROJCS" );
+    if( poNode != NULL )
+        poNode = poNode->GetChild( 0 );
+
+    if( poNode != NULL 
+        && ( EQUAL(poNode->GetValue(),"unnamed")
+             || EQUAL(poNode->GetValue(),"unknown")
+             || EQUAL(poNode->GetValue(),"") ) )
+    {
+        if( GetAttrValue( "PROJECTION", 0 ) != NULL )
+            poNode->SetValue( GetAttrValue( "PROJECTION", 0 ) );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Prepare very specific PROJCS names for UTM coordinate           */
