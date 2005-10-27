@@ -1,9 +1,11 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
 /*!
-\page gdal_building
+\page gdal_building Building GDAL From Source
 
-<center><title>Building GDAL From Source</title></center>
-
-<a name="unix"><h2>Building on Unix</h2></a>
+\section gdal_building_unix Building on Unix
 
 GDAL has been successfully built on Linux, IRIX, Solaris, BSD, and MacOS X.  
 On Unix platforms you might be able to build it as follows (assuming it is
@@ -68,15 +70,15 @@ at the bottom of gdal/GDALmake.opt, do a make clean, and make.  This will
 drop it from the build and default runtime registration. <p>
 
 <li> If you are trying to install as other than root (to your own tree
-set with --prefix) you will likelyhave problems with the python since it
+set with --prefix) you will likely have problems with the python since it
 always tries to install under the site-packages directory for the installed
-python tree.  If you don't need python support you can supress it at
+python tree.  If you don't need python support you can suppress it at
 configure using --without-python, or override the python module output
 directory at configure time with the --with-pymodir=&lt;directory&gt;
 
 </ul>
 
-<a name="win32"><h2>Building on Windows</h2></a>
+\section gdal_building_win Building on Windows
 
 GDAL can be built on Windows using MS VC++ 6.x and MS Visual Studio .NET (C++) 
 at the DOS command line.  For this to work you will normally have to have run 
@@ -115,7 +117,7 @@ Projects linking against GDAL should include the directory specified in
 INCDIR in the include path, and the directory specified in LIBDIR in their
 /LIBPATH.  To use gdal link against the gdal_i.lib stub library.  
 
-<h3>Basic Options</h3>
+\subsection gdal_building_win_basic Basic Options
 
 There are lots of options that can be tweaked by hand in the nmake.opt
 file in the GDAL root directory.  
@@ -146,7 +148,7 @@ crashes during run time.
 
 </ul>
 
-<h3>Advanced Options</h3>
+\subsection gdal_building_win_advanced Advanced Options
 
 <ul>
 
@@ -164,7 +166,7 @@ to link against the GDAL DLL instead of building built statically.
 the GDAL dll, or comment out to omit OGR formats from build.
 
 <li> <b>SETARGV</b>:  Point this to the setargv.obj file distributed with
-Visual Studio to get wildcard expanasion for commandline arguments or
+Visual Studio to get wildcard expansion for command line arguments or
 leave commented out to omit this.
 
 <li> <b>ECWDIR/ECWLIB</b>: Uncomment these to enable building with ECW
@@ -200,7 +202,7 @@ I frequently forget to update the Windows makefiles when I add new files,
 so if something comes up missing consider comparing the file lists in the
 appropriate makefile.vc against the GNUmakefile or just contact me. <p>
 
-<a name="libraries"><h2>External Libraries</h2></a>
+\section gdal_building_libraries External Libraries
 
 Several drivers require additional libraries to be installed in your system.
 These are:
@@ -211,7 +213,7 @@ These are:
 	at the <a href="http://www.ncsa.uiuc.edu/">
 	National Center for Supercomputing Applications</a>.<p>
 
-	If your OS distribution already contains prebuilded HDF library you can
+	If your OS distribution already contains prebuilt HDF library you can
 	use one from the distribution.<p>
 
 	Please note, that NCSA HDF library compiled with several defaults which is
@@ -239,23 +241,26 @@ These are:
 	ftp://ftp.remotesensing.org/gdal/jasper-1.701.0.uuid.tar.gz</a>
 
 	<li> MrSID driver needs LizardTech decoding software development kit
-	(DSDK). <b>This DSDK is not free software, you should contact
-	<a href="http://www.lizardtech.com">LizardTech</a> to obtain it.</b>
+	(DSDK). It is not free software, but you can download it without
+	charge here: <a href="http://developer.lizardtech.com/">
+	http://developer.lizardtech.com/</a>. To enable file creation
+	capability you need encoding SDK (ESDK). You should contact
+	<a href="http://www.lizardtech.com">LizardTech</a> to obtain it.
 	DSDK distributed in binary form and if you are using GCC, please,
 	ensure that you have the same compiler as was used for DSDK
 	compilation. It is C++ library, so you may get incompatibilities in
-	C++ name mangling between different GCC versions (2.95.x and 3.x).
+	C++ name mangling among different GCC versions (2.95.x and 3.x).
 
 <li> NetCDF support requires the 
 <a href="http://www.unidata.ucar.edu/packages/netcdf/">netCDF library</a>. 
 Once it is built and installed, use the "--with-netcdf=<path to install tree>"
 option to configure and build GDAL.  Link conflicts have been observed with
-the netCDF libraries, and the HDF libraries ... coexistance may not be 
+the netCDF libraries, and the HDF libraries ... coexistence may not be 
 practical.  NetCDF support has not been built or tested on Windows. <p>
 
 </ul>
 
-<a name="largefiles"><h2>Large File Support</h2></a>
+\section gdal_building_lfs Large File Support
 
 GDAL supports reading and writing large files (> 2GiB) if it is possible in your
 operating system. Notes about large file support on Linux available here: <a
