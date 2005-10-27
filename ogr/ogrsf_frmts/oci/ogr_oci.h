@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/10/27 13:42:26  fwarmerdam
+ * preliminary DeleteFeature implementation
+ *
  * Revision 1.21  2005/02/22 12:57:51  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -504,6 +507,7 @@ class OGROCITableLayer : public OGROCIWritableLayer
 
     virtual OGRErr      SetFeature( OGRFeature *poFeature );
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
+    virtual OGRErr      DeleteFeature( long nFID );
     
     virtual int         TestCapability( const char * );
 
