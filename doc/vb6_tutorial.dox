@@ -52,7 +52,7 @@ to match what your GDAL DLL is called.  You can include a full path to the
 DLL if it can't be guaranteed to be in the current working directory of the
 application (or the windows system32 directory).  
 
-You should also be able to load the "test" project from the gdal\vb6\test
+You should also be able to load the "test" project from the gdal\\vb6\\test
 directory.  The test project has test menu items roughly corresponding to
 the tasks in the following tutorial topics.  
 
