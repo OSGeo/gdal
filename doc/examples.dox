@@ -1,35 +1,27 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
 /*!
-\page gdalinfo.c
-<center>
-<title>Simple C Example: gdalinfo.c</title>
-</center>
+\page gdalinfo.c Simple C Example: gdalinfo.c
 
 \include gdalinfo.c
 */
 
 /*!
-\page gdalallregister.cpp
-<center>
-<title>Standard Driver Registration: gdalallregister.cpp</title>
-</center>
+\page gdalallregister.cpp Standard Driver Registration: gdalallregister.cpp
 
 \include gdalallregister.cpp
 */
 
 /*!
-\page jdemdataset.cpp
-<center>
-<title>Sample Driver: jdemdataset.cpp</title>
-</center>
+\page jdemdataset.cpp Sample Driver: jdemdataset.cpp
 
 \include jdemdataset.cpp
 */
 
 /*!
-\page NEWS
-<center>
-<title>NEWS</title>
-</center>
+\page NEWS NEWS
 
 \include NEWS
 */
