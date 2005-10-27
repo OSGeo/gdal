@@ -1,8 +1,9 @@
-/*!
-\page faq
- 
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
 
-<title>GDAL FAQ</title>
+/*!
+\page faq GDAL FAQ
 
 <ol>
 <!--------------------------------------------------------------------------->
@@ -29,7 +30,7 @@ To some extent this is now covered by the
 The GDAL developers find it more convenient to build with makefiles 
 and the Visual Studio NMAKE utility.  Maintaining a parallel set of project
 files for GDAL is too much work, so there are no project files directly 
-available from the maintainers.  Occationally other users do prepare such 
+available from the maintainers.  Occasionally other users do prepare such 
 project files, and you may be able to get them by asking on the gdal-dev list.
 However, I would strongly suggest you just use the NMAKE based build system.
 With debugging enabled you can still debug into GDAL with Visual Studio.<p>
@@ -67,7 +68,7 @@ cpl_config.h.vc as a guide may be useful. <p>
 
 The following terms are the same as X windows is released under, and is
 generally known as the "MIT License".  It is intended to give you permission
-to do whatever you want with the GDAL source, including building propietary
+to do whatever you want with the GDAL source, including building proprietary
 commercial software, without further permission from me, or requirement to
 distribute your source code.  A few portions of GDAL under under slightly
 different terms.  For instance the libpng, libjpeg, libtiff, and libgeotiff 
@@ -178,7 +179,7 @@ On unix-like platforms, this problem can be avoided by forcing the use
 of the default numeric locale by setting the LC_NUMERIC environment variable
 to C.
 
-eg.
+e.g.
 <pre>
 $ export LC_NUMERIC=C
 $ gdalinfo abc.tif
