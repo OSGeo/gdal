@@ -1,11 +1,13 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
 /*!
-\page download
+\page download GDAL Downloads
 
-<title>GDAL Downloads</title>
+\section download_binaries Binary Packages
 
-<h2>Binary Packages</h2>
-
-<h3>FWTools</h3>
+\subsection download_binaries_fwtools FWTools
 
 The FWTools binary releases for Linux and Windows systems include the
 full set of GDAL libraries, utilities, python support and documentation 
@@ -17,7 +19,7 @@ information is available at:
 The FWTools binaries for Linux should work on pretty much any modern
 Intel Linux system.<p>
 
-<h3>Other Binary Packages</h3>
+\subsection download_binaries_other Other Binary Packages
 
 <ol>
 
@@ -48,7 +50,7 @@ binaries</a> and
 
 </ol>
 
-<h2>Source</h2>
+\section download_sources Source
 
 GDAL source releases are available in tar.gz and zip from from the
 GDAL primary ftp site, and http mirror site:
@@ -69,7 +71,7 @@ downloaded from:
 Refer to the <a href="gdal_building.html">build instructions</a> for how to
 build GDAL from source.<p>
 
-<h3>CVS</h3>
+\subsection download_sources_cvs CVS
 
 The GDAL source is available by anonymous CVS from the cvs.maptools.org
 server:
