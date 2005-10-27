@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2005/10/27 13:42:26  fwarmerdam
+ * preliminary DeleteFeature implementation
+ *
  * Revision 1.33  2005/06/23 16:07:55  fwarmerdam
  * Use polygon instead of rect object for sdo_filter.  Apparently this is needed
  * for queries against geodetic coordinates.  Patch provided by Lorenzo
@@ -731,6 +734,56 @@ OGRErr OGROCITableLayer::SetFeature( OGRFeature *poFeature )
     oCmdStatement.Execute( oCmdText.GetString() );
 
     return CreateFeature( poFeature );
+}
+
+/************************************************************************/
+/*                           DeleteFeature()                            */
+/************************************************************************/
+
+OGRErr OGROCITableLayer::DeleteFeature( long nFID )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Do some validation.                                             */
+/* -------------------------------------------------------------------- */
+    if( pszFIDName == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "OGROCITableLayer::DeleteFeature(%d) failed because there is "
+                  "no apparent FID column on table %s.",
+                  nFID, 
+                  poFeatureDefn->GetName() );
+
+        return OGRERR_FAILURE;
+    }
+
+    if( nFID == OGRNullFID )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "OGROCITableLayer::DeleteFeature(%d) failed for Null FID", 
+                  nFID );
+
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Prepare the delete command, and execute.  We don't check the    */
+/*      error result of the execute, since attempting to Set a          */
+/*      non-existing feature may be OK.                                 */
+/* -------------------------------------------------------------------- */
+    OGROCIStringBuf     oCmdText;
+    OGROCIStatement     oCmdStatement( poDS->GetSession() );
+
+    oCmdText.Appendf( strlen(poFeatureDefn->GetName())+strlen(pszFIDName)+100,
+                      "DELETE FROM %s WHERE \"%s\" = %d",
+                      poFeatureDefn->GetName(), 
+                      pszFIDName, 
+                      nFID );
+
+    if( oCmdStatement.Execute( oCmdText.GetString() ) == CE_None )
+        return OGRERR_NONE;
+    else
+        return OGRERR_FAILURE;
 }
 
 /************************************************************************/
