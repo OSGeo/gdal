@@ -8,7 +8,7 @@ include ../GDALmake.opt
 CPPFLAGS	:=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts $(CPPFLAGS)
 DEP_LIBS	=	$(EXE_DEP_LIBS) $(XTRAOBJ)
 BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
-			gdalwarp$(EXE)
+			gdalwarp$(EXE) gdal_rasterize$(EXE)
 
 ifeq ($(OGR_ENABLED),yes)
 BIN_LIST	+= 	gdal_contour$(EXE) gdaltindex$(EXE)
@@ -38,6 +38,9 @@ gdalwarp$(EXE): gdalwarp.o $(DEP_LIBS)
 
 gdal_contour$(EXE):	gdal_contour.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdal_contour.o $(CONFIG_LIBS) -o gdal_contour$(EXE)
+
+gdal_rasterize$(EXE):	gdal_rasterize.o $(DEP_LIBS)
+	$(LD) $(LNK_FLAGS) gdal_rasterize.o $(CONFIG_LIBS) -o gdal_rasterize$(EXE)
 
 gdaltindex$(EXE):	gdaltindex.o $(DEP_LIBS)
 	$(LD) $(LNK_FLAGS) gdaltindex.o $(XTRAOBJ) $(CONFIG_LIBS) \
