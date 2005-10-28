@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/10/28 16:47:21  fwarmerdam
+ * Added OGRCleanupAll().
+ *
  * Revision 1.29  2005/10/25 19:58:27  fwarmerdam
  * added OGR_DS_GetDriver
  *
@@ -422,6 +425,7 @@ OGRDataSourceH CPL_DLL OGRGetOpenDS( int iDS );
 
 /* note: this is also declared in ogrsf_frmts.h */
 void CPL_DLL OGRRegisterAll(void);
+void CPL_DLL OGRCleanupAll(void);
 
 CPL_C_END
 
