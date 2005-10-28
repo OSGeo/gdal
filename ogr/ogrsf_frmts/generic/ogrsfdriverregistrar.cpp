@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/10/28 16:47:02  fwarmerdam
+ * Added OGRCleanupAll()
+ *
  * Revision 1.22  2005/10/25 19:59:15  fwarmerdam
  * added driver tracking on datasource
  *
@@ -99,6 +102,7 @@
 #include "ogrsf_frmts.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -167,6 +171,23 @@ OGRSFDriverRegistrar::~OGRSFDriverRegistrar()
 
     poRegistrar = NULL;
 }
+
+/************************************************************************/
+/*                           OGRCleanupAll()                            */
+/************************************************************************/
+
+void OGRCleanupAll()
+
+{
+    if( poRegistrar != NULL )
+        delete poRegistrar;
+    OSRCleanup();
+    CPLFinderClean();
+    VSICleanupFileManager();
+    CPLFreeConfig();
+    CPLCleanupTLS();
+}
+
 
 /************************************************************************/
 /*                            GetRegistrar()                            */
