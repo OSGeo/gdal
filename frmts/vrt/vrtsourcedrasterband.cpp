@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/10/28 16:59:51  pnagy
+ * Added VRTDerivedBand support
+ *
  * Revision 1.4  2005/06/28 14:51:05  fwarmerdam
  * added error reporting if there are no sources
  *
@@ -263,7 +266,8 @@ CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
 /* -------------------------------------------------------------------- */
     if( psTree == NULL || psTree->eType != CXT_Element
         || (!EQUAL(psTree->pszValue,"VRTSourcedRasterBand") 
-            && !EQUAL(psTree->pszValue,"VRTRasterBand")) )
+            && !EQUAL(psTree->pszValue,"VRTRasterBand")
+	    && !EQUAL(psTree->pszValue,"VRTDerivedRasterBand")) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Invalid node passed to VRTSourcedRasterBand::XMLInit()." );
