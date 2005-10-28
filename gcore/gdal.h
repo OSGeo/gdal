@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.101  2005/10/28 16:59:24  pnagy
+ * Added VRTDerivedBand support
+ *
  * Revision 1.100  2005/09/28 21:29:30  fwarmerdam
  * added RAT documentation
  *
@@ -402,6 +405,40 @@ void CPL_DLL CPL_STDCALL GDALFlushCache( GDALDatasetH hDS );
 /*      GDALRasterBand ... one band/channel in a dataset.               */
 /* ==================================================================== */
 
+/**
+ * SRCVAL - Macro which may be used by pixel functions to obtain
+ *          a pixel from a source buffer.
+ */
+#define SRCVAL(papoSource, eSrcType, ii) \
+      (eSrcType == GDT_Byte ? \
+          ((char *)papoSource)[ii] : \
+      (eSrcType == GDT_Float32 ? \
+          ((float *)papoSource)[ii] : \
+      (eSrcType == GDT_Float64 ? \
+          ((double *)papoSource)[ii] : \
+      (eSrcType == GDT_Int32 ? \
+          ((GInt32 *)papoSource)[ii] : \
+      (eSrcType == GDT_UInt16 ? \
+          ((GUInt16 *)papoSource)[ii] : \
+      (eSrcType == GDT_Int16 ? \
+          ((GInt16 *)papoSource)[ii] : \
+      (eSrcType == GDT_UInt32 ? \
+          ((GUInt32 *)papoSource)[ii] : \
+      (eSrcType == GDT_CInt16 ? \
+          ((GInt16 *)papoSource)[ii * 2] : \
+      (eSrcType == GDT_CInt32 ? \
+          ((GInt32 *)papoSource)[ii * 2] : \
+      (eSrcType == GDT_CFloat32 ? \
+          ((float *)papoSource)[ii * 2] : \
+      (eSrcType == GDT_CFloat64 ? \
+          ((double *)papoSource)[ii * 2] : 0)))))))))))
+
+typedef CPLErr
+(*GDALDerivedPixelFunc)(void **papoSources, int nSources, void *pData,
+			int nBufXSize, int nBufYSize,
+			GDALDataType eSrcType, GDALDataType eBufType,
+                        int nPixelSpace, int nLineSpace);
+
 GDALDataType CPL_DLL CPL_STDCALL GDALGetRasterDataType( GDALRasterBandH );
 void CPL_DLL CPL_STDCALL 
 GDALGetBlockSize( GDALRasterBandH, int * pnXSize, int * pnYSize );
@@ -487,6 +524,8 @@ GDALRasterAttributeTableH CPL_DLL CPL_STDCALL GDALGetDefaultRAT(
     GDALRasterBandH hBand );
 CPLErr CPL_DLL CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH, 
                                               GDALRasterAttributeTableH );
+CPLErr CPL_DLL CPL_STDCALL GDALAddDerivedBandPixelFunc( const char *pszName,
+                                    GDALDerivedPixelFunc pfnPixelFunc );
 
 /* -------------------------------------------------------------------- */
 /*      Helper functions.                                               */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/10/28 16:59:50  pnagy
+ * Added VRTDerivedBand support
+ *
  * Revision 1.22  2005/06/28 14:50:44  fwarmerdam
  * avoid destroy psTree in case of failure - done at higher level
  *
@@ -440,6 +443,8 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
 
             if( EQUAL(pszSubclass,"VRTSourcedRasterBand") )
                 poBand = new VRTSourcedRasterBand( this, nBands+1 );
+            else if( EQUAL(pszSubclass, "VRTDerivedRasterBand") )
+                poBand = new VRTDerivedRasterBand( this, nBands+1 );
             else if( EQUAL(pszSubclass, "VRTRawRasterBand") )
                 poBand = new VRTRawRasterBand( this, nBands+1 );
             else if( EQUAL(pszSubclass, "VRTWarpedRasterBand") )
@@ -803,9 +808,21 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
 /* ==================================================================== */
     else
     {
-        VRTSourcedRasterBand *poBand = 
-            new VRTSourcedRasterBand( this, GetRasterCount() + 1, eType, 
-                                      GetRasterXSize(), GetRasterYSize() );
+        VRTSourcedRasterBand *poBand;
+
+	/* ---- Check for our sourced band 'derived' subclass ---- */
+        if(pszSubClass != NULL && EQUAL(pszSubClass,"VRTDerivedRasterBand")) {
+	    poBand = new VRTDerivedRasterBand
+		(this, GetRasterCount() + 1, eType, 
+		 GetRasterXSize(), GetRasterYSize());
+	}
+	else {
+
+	    /* ---- Standard sourced band ---- */
+	    poBand = new VRTSourcedRasterBand
+		(this, GetRasterCount() + 1, eType, 
+		 GetRasterXSize(), GetRasterYSize());
+	}
 
         SetBand( GetRasterCount() + 1, poBand );
 

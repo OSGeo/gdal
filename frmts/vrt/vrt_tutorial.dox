@@ -438,4 +438,176 @@ changing is the data source for each band.
   }
 \endcode
 
+<h2>Using Derived Bands</h2>
+
+A specialized type of band is a 'derived' band which derives its pixel
+information from its source bands.  With this type of band you must also
+specify a pixel function, which has the responsibility of generating the
+output raster.  Pixel functions are created by an application and then
+registered with GDAL using a unique key.
+
+Using derived bands you can create VRT datasets that manipulate bands on
+the fly without having to create new band files on disk.  For example, you
+might want to generate a band using four source bands from a nine band input
+dataset (x0, x3, x4, and x8):
+
+\code
+  band_value = sqrt((x3*x3+x4*x4)/(x0*x8));
+\endcode
+
+You could write the pixel function to compute this value and then register
+it with GDAL with the name "MyFirstFunction".  Then, the following VRT XML
+could be used to display this derived band:
+
+\code
+<VRTDataset rasterXSize="1000" rasterYSize="1000">
+  <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">>
+    <Description>Magnitude</Description>
+    <PixelFunctionType>MyFirstFunction</PixelFunctionType>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">nine_band.dat</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
+      <DstRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">nine_band.dat</SourceFilename>
+      <SourceBand>4</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
+      <DstRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">nine_band.dat</SourceFilename>
+      <SourceBand>5</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
+      <DstRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">nine_band.dat</SourceFilename>
+      <SourceBand>9</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
+      <DstRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
+\endcode
+
+In addition to the subclass specification (VRTDerivedRasterBand) and
+the PixelFunctionType value, there is another new parameter that can come
+in handy: SourceTransferType.  Typically the source rasters are obtained
+using the data type of the derived band.  There might be times,
+however, when you want the pixel function to have access to
+higher resolution source data than the data type being generated.
+For example, you might have a derived band of type "Float", which takes
+a single source of type "CFloat32" or "CFloat64", and returns the imaginary
+portion.  To accomplish this, set the SourceTransferType to "CFloat64".
+Otherwise the source would be converted to "Float" prior to
+calling the pixel function, and the imaginary portion would be lost.
+
+\code
+<VRTDataset rasterXSize="1000" rasterYSize="1000">
+  <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">>
+    <Description>Magnitude</Description>
+    <PixelFunctionType>MyFirstFunction</PixelFunctionType>
+    <SourceTransferType>"CFloat64"</SourceTransferType>
+    ...
+\endcode
+
+<h3>Writing Pixel Functions</h3>
+
+To register this function with GDAL (prior to accessing any VRT datasets
+with derived bands that use this function), an application calls
+GDALAddDerivedBandPixelFunc with a key and a GDALDerivedPixelFunc:
+ 
+\code
+    GDALAddDerivedBandPixelFunc("MyFirstFunction", TestFunction);
+\endcode
+
+A good time to do this is at the beginning of an application when the
+GDAL drivers are registered.
+
+GDALDerivedPixelFunc is defined with a signature similar to IRasterIO:
+
+@param papoSources A pointer to packed rasters; one per source.  The
+datatype of all will be the same, specified in the eSrcType parameter.
+
+@param nSources The number of source rasters.
+
+@param pData The buffer into which the data should be read, or from which
+it should be written.  This buffer must contain at least nBufXSize *
+nBufYSize words of type eBufType.  It is organized in left to right,
+top to bottom pixel order.  Spacing is controlled by the nPixelSpace,
+and nLineSpace parameters.
+
+@param nBufXSize The width of the buffer image into which the desired
+region is to be read, or from which it is to be written.
+
+@param nBufYSize The height of the buffer image into which the desired
+region is to be read, or from which it is to be written.
+
+@param eSrcType The type of the pixel values in the papoSources raster
+array.
+
+@param eBufType The type of the pixel values that the pixel function must
+generate in the pData data buffer.
+
+@param nPixelSpace The byte offset from the start of one pixel value in
+pData to the start of the next pixel value within a scanline.  If
+defaulted (0) the size of the datatype eBufType is used.
+
+@param nLineSpace The byte offset from the start of one scanline in
+pData to the start of the next.
+
+@return CE_Failure on failure, otherwise CE_None.
+
+\code
+typedef CPLErr
+(*GDALDerivedPixelFunc)(void **papoSources, int nSources, void *pData,
+			int nXSize, int nYSize,
+			GDALDataType eSrcType, GDALDataType eBufType,
+                        int nPixelSpace, int nLineSpace);
+\endcode
+
+The following is an implementation of the pixel function:
+
+\code
+#include "gdal.h"
+
+CPLErr TestFunction(void **papoSources, int nSources, void *pData,
+		    int nXSize, int nYSize,
+		    GDALDataType eSrcType, GDALDataType eBufType,
+		    int nPixelSpace, int nLineSpace)
+{
+
+    int ii, iLine, iCol;
+    double pix_val;
+    double x0, x3, x4, x8;
+
+    /* ---- Init ---- */
+    if (nSources != 4) return CE_Failure;
+
+    /* ---- Set pixels ---- */
+    for( iLine = 0; iLine < nYSize; iLine++ ) {
+	for( iCol = 0; iCol < nXSize; iCol++ ) {
+	    ii = iLine * nXSize + iCol;
+
+            /* Source raster pixels may be obtained with SRCVAL macro */
+            x0 = SRCVAL(papoSources[0], eSrcType, ii);
+            x3 = SRCVAL(papoSources[1], eSrcType, ii);
+            x4 = SRCVAL(papoSources[2], eSrcType, ii);
+            x8 = SRCVAL(papoSources[3], eSrcType, ii);
+
+	    pix_val = sqrt((x3*x3+x4*x4)/(x0*x8));
+
+	    GDALCopyWords(&pix_val, GDT_Float64, 0,
+			  ((GByte *)pData) + nLineSpace * iLine +
+			  iCol * nPixelSpace, eBufType, nPixelSpace, 1);
+	}
+    }
+
+    /* ---- Return success ---- */
+    return CE_None;
+}
+\endcode
+
 */

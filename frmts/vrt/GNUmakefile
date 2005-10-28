@@ -5,7 +5,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 OBJ	=	vrtdataset.o vrtrasterband.o vrtdriver.o vrtsources.o \
 		vrtfilters.o vrtsourcedrasterband.o vrtrawrasterband.o \
-		vrtwarped.o
+		vrtwarped.o vrtderivedrasterband.o
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS) -I../raw
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/10/28 16:59:51  pnagy
+ * Added VRTDerivedBand support
+ *
  * Revision 1.20  2005/05/05 13:56:53  fwarmerdam
  * include gdal_pam.h
  *
@@ -286,17 +289,13 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
 
 class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
 {
-    int		   nSources;
-    VRTSource    **papoSources;
-
-    int            bEqualAreas;
 
     void           Initialize( int nXSize, int nYSize );
 
-    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                              void *, int, int, GDALDataType,
-                              int, int );
   public:
+    int		   nSources;
+    VRTSource    **papoSources;
+    int            bEqualAreas;
 
     		   VRTSourcedRasterBand( GDALDataset *poDS, int nBand );
                    VRTSourcedRasterBand( GDALDataType eType, 
@@ -305,6 +304,10 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
                                          GDALDataType eType, 
                                          int nXSize, int nYSize );
     virtual        ~VRTSourcedRasterBand();
+
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              int, int );
 
     virtual char      **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr      SetMetadata( char ** papszMetadata,
@@ -355,6 +358,38 @@ class CPL_DLL VRTWarpedRasterBand : public VRTRasterBand
 
     virtual int GetOverviewCount();
     virtual GDALRasterBand *GetOverview(int);
+};
+
+/************************************************************************/
+/*                         VRTDerivedRasterBand                         */
+/************************************************************************/
+
+class CPL_DLL VRTDerivedRasterBand : public VRTSourcedRasterBand
+{
+
+ public:
+    char *pszFuncName;
+    GDALDataType eSourceTransferType;
+
+    VRTDerivedRasterBand(GDALDataset *poDS, int nBand);
+    VRTDerivedRasterBand(GDALDataset *poDS, int nBand, 
+			 GDALDataType eType, int nXSize, int nYSize);
+    virtual        ~VRTDerivedRasterBand();
+
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              int, int );
+
+    static CPLErr AddPixelFunction
+	(const char *pszFuncName, GDALDerivedPixelFunc pfnPixelFunc);
+    static GDALDerivedPixelFunc GetPixelFunction(const char *pszFuncName);
+
+    void SetPixelFunctionName(const char *pszFuncName);
+    void SetSourceTransferType(GDALDataType eDataType);
+
+    virtual CPLErr         XMLInit( CPLXMLNode *, const char * );
+    virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath );
+
 };
 
 /************************************************************************/
