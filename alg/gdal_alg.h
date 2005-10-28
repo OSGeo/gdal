@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2005/10/28 18:30:28  fwarmerdam
+ * added progress func for rasterize
+ *
  * Revision 1.23  2005/10/28 17:46:29  fwarmerdam
  * Added rasterize related stuff
  *
@@ -308,7 +311,9 @@ GDALRasterizeGeometries( GDALDatasetH hDS,
                          GDALTransformerFunc pfnTransformer, 
                          void *pTransformArg, 
                          double *padfGeomBurnValue,
-                         char **papszOptions );
+                         char **papszOptions,
+                         GDALProgressFunc pfnProgress, 
+                         void * pProgressArg );
 
 CPL_C_END
                             
