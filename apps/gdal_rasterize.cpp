@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/10/28 18:31:09  fwarmerdam
+ * added -where and progress func
+ *
  * Revision 1.1  2005/10/28 17:47:50  fwarmerdam
  * New
  *
@@ -55,7 +58,7 @@ static void Usage()
         "       [-burn value] | [-a attribute_name] | [-3d]\n"
 //      "       [-of format_driver] [-co key=value]\n"       
 //      "       [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]\n"
-        "       [-l layername]* [-sql select_statement]\n"
+        "       [-l layername]* [-where expression] [-sql select_statement]\n"
         "       <src_datasource> <dst_filename>\n" );
     exit( 1 );
 }
@@ -131,7 +134,8 @@ static void ProcessLayer(
 /* -------------------------------------------------------------------- */
     GDALRasterizeGeometries( hDstDS, anBandList.size(), &(anBandList[0]), 
                              ahGeometries.size(), &(ahGeometries[0]), 
-                             NULL, NULL, &(adfFullBurnValues[0]), NULL );
+                             NULL, NULL, &(adfFullBurnValues[0]), NULL,
+                             GDALTermProgress, NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup geometries.                                             */
@@ -155,6 +159,7 @@ int main( int argc, char ** argv )
     char **papszLayers = NULL;
     const char *pszSQL = NULL;
     const char *pszBurnAttribute = NULL;
+    const char *pszWHERE = NULL;
     std::vector<int> anBandList;
     std::vector<double> adfBurnValues;
 
@@ -185,6 +190,10 @@ int main( int argc, char ** argv )
         else if( EQUAL(argv[i],"-burn") && i < argc-1 )
         {
             adfBurnValues.push_back( atof(argv[++i]) );
+        }
+        else if( EQUAL(argv[i],"-where") && i < argc-1 )
+        {
+            pszWHERE = argv[++i];
         }
         else if( EQUAL(argv[i],"-l") && i < argc-1 )
         {
@@ -264,6 +273,12 @@ int main( int argc, char ** argv )
             fprintf( stderr, "Unable to find layer %s, skipping.\n", 
                       papszLayers[i] );
             continue;
+        }
+
+        if( pszWHERE )
+        {
+            if( OGR_L_SetAttributeFilter( hLayer, pszWHERE ) != OGRERR_NONE )
+                break;
         }
 
         ProcessLayer( hLayer, hDstDS, anBandList, 
