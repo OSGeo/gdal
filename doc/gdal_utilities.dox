@@ -348,7 +348,6 @@ builds or rebuilds overview images
 \endif
 
 \htmlonly
-\section gdal_utilities_gdaladdo gdaladdo
 Usage: 
 \endhtmlonly
 
