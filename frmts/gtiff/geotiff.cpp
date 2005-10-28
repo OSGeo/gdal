@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.154  2005/10/28 03:40:19  fwarmerdam
+ * Fixed problems with odd-bits support of contiguous images.
+ *
  * Revision 1.153  2005/10/25 18:48:22  fwarmerdam
  * make sure we handle missing blocks on read: bug 975
  *
@@ -1460,7 +1463,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
 
         // bits per line rounds up to next byte boundary.
-        nBitsPerLine = nBlockXSize * poGDS->nBitsPerSample;
+        nBitsPerLine = nBlockXSize * iPixelBitSkip;
         if( (nBitsPerLine & 7) != 0 )
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
@@ -1489,7 +1492,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                         ((poGDS->pabyBlockBuf[iByte] & 0xf) << 8)
                         | (poGDS->pabyBlockBuf[iByte+1]);
                 }
-                iBitOffset += 12;
+                iBitOffset += iPixelBitSkip;
             }
         }
     }
@@ -1514,7 +1517,7 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         }
 
         // bits per line rounds up to next byte boundary.
-        nBitsPerLine = nBlockXSize * poGDS->nBitsPerSample;
+        nBitsPerLine = nBlockXSize * iPixelBitSkip;
         if( (nBitsPerLine & 7) != 0 )
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
@@ -1534,6 +1537,8 @@ CPLErr GTiffOddBitsBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                         nOutWord |= (1 << (poGDS->nBitsPerSample - 1 - iBit));
                     iBitOffset++;
                 } 
+
+                iBitOffset= iBitOffset + iPixelBitSkip - poGDS->nBitsPerSample;
                 
                 if( eDataType == GDT_Byte )
                     ((GByte *) pImage)[iPixel++] = nOutWord;
