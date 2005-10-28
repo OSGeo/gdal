@@ -14,3 +14,6 @@ gdaltindex
 gdalwarp
 gdalwarptest
 gdal_contour
+gdal_rasterize
+dumpoverviews
+multireadtest
