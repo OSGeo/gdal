@@ -30,6 +30,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2005/10/28 17:47:28  fwarmerdam
+ * GenImgTransformer now supports NULL hSrcDS.  Also now actually pulls
+ * coordinate systems from hSrcDS or hDstDS if not provided.
+ *
  * Revision 1.23  2005/08/02 22:21:06  fwarmerdam
  * Approx transformer can now own and cleanup it's subtransformer.
  * GenImg transformer now deserialized with property GTI signature.
@@ -479,14 +483,14 @@ typedef struct {
  * GDALGCPTransform().  This stage is skipped if hDstDS is NULL when the
  * transformation is created. 
  * 
- * @param hSrcDS source dataset.  
+ * @param hSrcDS source dataset, or NULL.
  * @param pszSrcWKT the coordinate system for the source dataset.  If NULL, 
  * it will be read from the dataset itself. 
  * @param hDstDS destination dataset (or NULL). 
  * @param pszDstWKT the coordinate system for the destination dataset.  If
  * NULL, and hDstDS not NULL, it will be read from the destination dataset.
  * @param bGCPUseOK TRUE if GCPs should be used if the geotransform is not
- * available. 
+ * available on the source dataset (not destination).
  * @param dfGCPErrorThreshold the maximum error allowed for the GCP model
  * to be considered valid.  Exact semantics not yet defined. 
  * @param nOrder the maximum order to use for GCP derived polynomials if 
@@ -522,13 +526,26 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 /* -------------------------------------------------------------------- */
 /*      Get forward and inverse geotransform for the source image.      */
 /* -------------------------------------------------------------------- */
-    if( GDALGetGeoTransform( hSrcDS, psInfo->adfSrcGeoTransform ) == CE_None
-        && (psInfo->adfSrcGeoTransform[0] != 0.0
-            || psInfo->adfSrcGeoTransform[1] != 1.0
-            || psInfo->adfSrcGeoTransform[2] != 0.0
-            || psInfo->adfSrcGeoTransform[3] != 0.0
-            || psInfo->adfSrcGeoTransform[4] != 0.0
-            || ABS(psInfo->adfSrcGeoTransform[5]) != 1.0) )
+    if( hSrcDS == NULL )
+    {
+        psInfo->adfSrcGeoTransform[0] = 0.0;
+        psInfo->adfSrcGeoTransform[1] = 1.0;
+        psInfo->adfSrcGeoTransform[2] = 0.0;
+        psInfo->adfSrcGeoTransform[3] = 0.0;
+        psInfo->adfSrcGeoTransform[4] = 0.0;
+        psInfo->adfSrcGeoTransform[5] = 1.0;
+        memcpy( psInfo->adfSrcInvGeoTransform, psInfo->adfSrcGeoTransform,
+                sizeof(double) * 6 );
+    }
+
+    else if( GDALGetGeoTransform( hSrcDS, psInfo->adfSrcGeoTransform ) 
+             == CE_None
+             && (psInfo->adfSrcGeoTransform[0] != 0.0
+                 || psInfo->adfSrcGeoTransform[1] != 1.0
+                 || psInfo->adfSrcGeoTransform[2] != 0.0
+                 || psInfo->adfSrcGeoTransform[3] != 0.0
+                 || psInfo->adfSrcGeoTransform[4] != 0.0
+                 || ABS(psInfo->adfSrcGeoTransform[5]) != 1.0) )
     {
         GDALInvGeoTransform( psInfo->adfSrcGeoTransform, 
                              psInfo->adfSrcInvGeoTransform );
@@ -591,7 +608,14 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
 /* -------------------------------------------------------------------- */
 /*      Setup reprojection.                                             */
 /* -------------------------------------------------------------------- */
-    if( pszSrcWKT != NULL && pszDstWKT != NULL
+    if( pszSrcWKT == NULL && hSrcDS != NULL )
+        pszSrcWKT = GDALGetProjectionRef( hSrcDS );
+
+    if( pszDstWKT == NULL && hDstDS != NULL )
+        pszDstWKT = GDALGetProjectionRef( hDstDS );
+
+    if( pszSrcWKT != NULL && strlen(pszSrcWKT) > 0 
+        && pszDstWKT != NULL && strlen(pszDstWKT) > 0 
         && !EQUAL(pszSrcWKT,pszDstWKT) )
     {
         psInfo->pReprojectArg = 
