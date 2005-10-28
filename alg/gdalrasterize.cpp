@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/10/28 18:30:28  fwarmerdam
+ * added progress func for rasterize
+ *
  * Revision 1.1  2005/10/28 17:46:08  fwarmerdam
  * New
  *
@@ -207,6 +210,14 @@ gv_rasterize_new_one_shape( unsigned char *pabyChunkBuf, int nYOff, int nYSize,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Shift to account for the buffer offset of this buffer.          */
+/* -------------------------------------------------------------------- */
+    unsigned int i;
+
+    for( i = 0; i < aPointY.size(); i++ )
+        aPointY[i] -= nYOff;
+
+/* -------------------------------------------------------------------- */
 /*      Perform the rasterization.  We assume that the vector<> will    */
 /*      be contiguous.  I'm not convinced that is guaranteed.           */
 /* -------------------------------------------------------------------- */
@@ -220,13 +231,55 @@ gv_rasterize_new_one_shape( unsigned char *pabyChunkBuf, int nYOff, int nYSize,
 /*                      GDALRasterizeGeometries()                       */
 /************************************************************************/
 
+/**
+ * Burn geometries into raster.
+ *
+ * Rasterize a list of geometric objects into a raster dataset.  The
+ * geometries are passed as an array of OGRGeometry objects.  
+ *
+ * If the geometries are in the georferenced coordinates of the raster
+ * dataset, then the pfnTransform may be passed in NULL and one will be
+ * derived internally from the geotransform of the dataset.  The transform
+ * needs to transform the geometry locations into pixel/line coordinates
+ * on the raster dataset.
+ *
+ * The output raster may be of any GDAL supported datatype, though currently
+ * internally the burning is done either as GDT_Byte or GDT_Float32.  This
+ * may be improved in the future.  An explicit list of burn values for
+ * each geometry for each band must be passed in. 
+ *
+ * Currently only polygon, multipolygon and geometrycollections of polygons
+ * or multipolygons are supported.  In the future support for points 
+ * and lines may be added.
+ *
+ * @param hDS output data, must be opened in update mode.
+ * @param nBandCount the number of bands to be updated.
+ * @param panBandList the list of bands to be updated. 
+ * @param nGeomCount the number of geometries being passed in pahGeometries.
+ * @param pahGeometries the array of geometries to burn in. 
+ * @param pfnTransformer transformation to apply to geometries to put into 
+ * pixel/line coordinates on raster.  If NULL a geotransform based one will
+ * be created internally.
+ * @param pTransformerArg callback data for transformer.
+ * @param padfGeomBurnValue the array of values to burn into the raster.  
+ * There should nBandCount values for each geometry. 
+ * @param papszOption special options controlling rasterization, currently
+ * none are defined.
+ * @param pfnProgress the progress function to report completion.
+ * @param pProgressArg callback data for progress function.
+ *
+ * @return CE_None on success or CE_Failure on error.
+ */
+
 CPLErr GDALRasterizeGeometries( GDALDatasetH hDS, 
                                 int nBandCount, int *panBandList,
                                 int nGeomCount, OGRGeometryH *pahGeometries,
                                 GDALTransformerFunc pfnTransformer, 
                                 void *pTransformArg, 
                                 double *padfGeomBurnValue,
-                                char **papszOptions )
+                                char **papszOptions,
+                                GDALProgressFunc pfnProgress, 
+                                void *pProgressArg )
 
 {
     GDALDataType   eType;
@@ -235,8 +288,11 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
     int            iY;
     GDALDataset *poDS = (GDALDataset *) hDS;
 
+    if( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
+
 /* -------------------------------------------------------------------- */
-/*      Do some rudimentary testing.                                    */
+/*      Do some rudimentary arg checking.                               */
 /* -------------------------------------------------------------------- */
     if( nBandCount == 0 || nGeomCount == 0 )
         return CE_None;
@@ -293,7 +349,11 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
 /* ==================================================================== */
     CPLErr  eErr = CE_None;
 
-    for( iY = 0; iY < poDS->GetRasterYSize(); iY += nYChunkSize )
+    pfnProgress( 0.0, NULL, pProgressArg );
+
+    for( iY = 0; 
+         iY < poDS->GetRasterYSize() && eErr == CE_None; 
+         iY += nYChunkSize )
     {
         int	nThisYChunkSize;
         int     iShape;
@@ -326,8 +386,13 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
                             pabyChunkBuf, poBand->GetXSize(), nThisYChunkSize, 
                             eType, nBandCount, panBandList,
                             0, 0, 0 );
-        if( eErr != CE_None )
-            break;
+
+        if( !pfnProgress((iY+nThisYChunkSize)/((double)poDS->GetRasterYSize()),
+                         "", pProgressArg ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            eErr = CE_Failure;
+        }
     }
     
 /* -------------------------------------------------------------------- */
@@ -338,6 +403,6 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
     if( bNeedToFreeTransformer )
         GDALDestroyTransformer( pTransformArg );
 
-    return CE_None;
+    return eErr;
 }
 
