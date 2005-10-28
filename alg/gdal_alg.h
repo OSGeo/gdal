@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/10/28 17:46:29  fwarmerdam
+ * Added rasterize related stuff
+ *
  * Revision 1.22  2005/08/02 22:19:41  fwarmerdam
  * approx transformer now can own its subtransformer
  *
@@ -106,6 +109,7 @@
 
 #include "gdal.h"
 #include "cpl_minixml.h"
+#include "ogr_api.h"
 
 CPL_C_START
 
@@ -281,6 +285,30 @@ GDALContourGenerate( GDALRasterBandH hBand,
                             int bUseNoData, double dfNoDataValue, 
                             void *hLayer, int iIDField, int iElevField,
                             GDALProgressFunc pfnProgress, void *pProgressArg );
+
+/* -------------------------------------------------------------------- */
+/*      Low level rasterizer API.                                       */
+/* -------------------------------------------------------------------- */
+typedef void (*llScanlineFunc)( void *pCBData, int nY, int nXStart, int nXEnd);
+
+
+void GDALdllImageFilledPolygon(int nRasterXSize, int nRasterYSize, 
+                               int nPartCount, int *panPartSize, 
+                               double *padfX, double *padfY,
+                               llScanlineFunc pfnScanlineFunc, void *pCBData );
+
+/* -------------------------------------------------------------------- */
+/*      High level API - GvShapes burned into GDAL raster.              */
+/* -------------------------------------------------------------------- */
+
+CPLErr CPL_DLL 
+GDALRasterizeGeometries( GDALDatasetH hDS, 
+                         int nBandCount, int *panBandList, 
+                         int nGeomCount, OGRGeometryH *pahGeometries,
+                         GDALTransformerFunc pfnTransformer, 
+                         void *pTransformArg, 
+                         double *padfGeomBurnValue,
+                         char **papszOptions );
 
 CPL_C_END
                             
