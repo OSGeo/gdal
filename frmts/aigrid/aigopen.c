@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/10/31 04:51:55  fwarmerdam
+ * upgraded to use large file API and GUInt32 for block offsets
+ *
  * Revision 1.17  2004/01/29 20:48:10  warmerda
  * Make sure that if a bare "w001001.adf" is given to AIGOpen() it will
  * work.  The name is changed to ".".
@@ -166,7 +169,7 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 /* -------------------------------------------------------------------- */
     if( AIGReadBlockIndex( pszCoverName, psInfo ) != CE_None )
     {
-        VSIFClose( psInfo->fpGrid );
+        VSIFCloseL( psInfo->fpGrid );
         
         CPLFree( psInfo );
         return NULL;
@@ -177,7 +180,7 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 /* -------------------------------------------------------------------- */
     if( AIGReadBounds( pszCoverName, psInfo ) != CE_None )
     {
-        VSIFClose( psInfo->fpGrid );
+        VSIFCloseL( psInfo->fpGrid );
         
         CPLFree( psInfo );
         return NULL;
@@ -188,7 +191,7 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 /* -------------------------------------------------------------------- */
     if( AIGReadStatistics( pszCoverName, psInfo ) != CE_None )
     {
-        VSIFClose( psInfo->fpGrid );
+        VSIFCloseL( psInfo->fpGrid );
         
         CPLFree( psInfo );
         return NULL;
@@ -290,7 +293,7 @@ CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
 void AIGClose( AIGInfo_t * psInfo )
 
 {
-    VSIFClose( psInfo->fpGrid );
+    VSIFCloseL( psInfo->fpGrid );
 
     CPLFree( psInfo->panBlockOffset );
     CPLFree( psInfo->panBlockSize );
@@ -310,7 +313,7 @@ FILE *AIGLLOpen( const char *pszFilename, const char *pszAccess )
 {
     FILE	*fp;
 
-    fp = VSIFOpen( pszFilename, pszAccess );
+    fp = VSIFOpenL( pszFilename, pszAccess );
     if( fp == NULL )
     {
         char *pszUCFilename = CPLStrdup(pszFilename);
@@ -323,7 +326,7 @@ FILE *AIGLLOpen( const char *pszFilename, const char *pszAccess )
             pszUCFilename[i] = (char) toupper(pszUCFilename[i]);
         }
         
-        fp = VSIFOpen( pszUCFilename, pszAccess );
+        fp = VSIFOpenL( pszUCFilename, pszAccess );
 
         CPLFree( pszUCFilename );
     }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2005/10/31 04:51:55  fwarmerdam
+ * upgraded to use large file API and GUInt32 for block offsets
+ *
  * Revision 1.23  2004/04/05 19:59:05  warmerda
  * Fixed 0x01 support, wasn't including nMin.
  *
@@ -582,7 +585,7 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
 /*      Read a single block of integer grid data.                       */
 /************************************************************************/
 
-CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
+CPLErr AIGReadBlock( FILE * fp, GUInt32 nBlockOffset, int nBlockSize,
                      int nBlockXSize, int nBlockYSize,
                      GInt32 *panData, int nCellType )
 
@@ -607,8 +610,8 @@ CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
 /*      Read the block into memory.                                     */
 /* -------------------------------------------------------------------- */
     pabyRaw = (GByte *) CPLMalloc(nBlockSize+2);
-    if( VSIFSeek( fp, nBlockOffset, SEEK_SET ) != 0 
-        || VSIFRead( pabyRaw, nBlockSize+2, 1, fp ) != 1 )
+    if( VSIFSeekL( fp, nBlockOffset, SEEK_SET ) != 0 
+        || VSIFReadL( pabyRaw, nBlockSize+2, 1, fp ) != 1 )
     {
         memset( panData, 0, nBlockXSize*nBlockYSize*4 );
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -805,9 +808,9 @@ CPLErr AIGReadHeader( const char * pszCoverName, AIGInfo_t * psInfo )
 /*      long.                                                           */
 /* -------------------------------------------------------------------- */
 
-    VSIFRead( abyData, 1, 308, fp );
+    VSIFReadL( abyData, 1, 308, fp );
 
-    VSIFClose( fp );
+    VSIFCloseL( fp );
     
 /* -------------------------------------------------------------------- */
 /*      Read the block size information.                                */
@@ -872,8 +875,8 @@ CPLErr AIGReadBlockIndex( const char * pszCoverName, AIGInfo_t * psInfo )
 /* -------------------------------------------------------------------- */
 /*      Get the file length (in 2 byte shorts)                          */
 /* -------------------------------------------------------------------- */
-    VSIFSeek( fp, 24, SEEK_SET );
-    VSIFRead( &nValue, 1, 4, fp );
+    VSIFSeekL( fp, 24, SEEK_SET );
+    VSIFReadL( &nValue, 1, 4, fp );
 
     nLength = CPL_MSBWORD32(nValue) * 2;
 
@@ -883,15 +886,15 @@ CPLErr AIGReadBlockIndex( const char * pszCoverName, AIGInfo_t * psInfo )
 /* -------------------------------------------------------------------- */
     psInfo->nBlocks = (nLength-100) / 8;
     panIndex = (GUInt32 *) CPLMalloc(psInfo->nBlocks * 8);
-    VSIFSeek( fp, 100, SEEK_SET );
-    VSIFRead( panIndex, 8, psInfo->nBlocks, fp );
+    VSIFSeekL( fp, 100, SEEK_SET );
+    VSIFReadL( panIndex, 8, psInfo->nBlocks, fp );
 
-    VSIFClose( fp );
+    VSIFCloseL( fp );
 
 /* -------------------------------------------------------------------- */
 /*	Allocate AIGInfo block info arrays.				*/
 /* -------------------------------------------------------------------- */
-    psInfo->panBlockOffset = (int *) CPLMalloc(4 * psInfo->nBlocks);
+    psInfo->panBlockOffset = (GUInt32 *) CPLMalloc(4 * psInfo->nBlocks);
     psInfo->panBlockSize = (int *) CPLMalloc(4 * psInfo->nBlocks);
 
 /* -------------------------------------------------------------------- */
@@ -944,9 +947,9 @@ CPLErr AIGReadBounds( const char * pszCoverName, AIGInfo_t * psInfo )
 /* -------------------------------------------------------------------- */
 /*      Get the contents - four doubles.                                */
 /* -------------------------------------------------------------------- */
-    VSIFRead( adfBound, 1, 32, fp );
+    VSIFReadL( adfBound, 1, 32, fp );
 
-    VSIFClose( fp );
+    VSIFCloseL( fp );
 
 #ifdef CPL_LSB
     CPL_SWAPDOUBLE(adfBound+0);
@@ -1004,9 +1007,9 @@ CPLErr AIGReadStatistics( const char * pszCoverName, AIGInfo_t * psInfo )
 /* -------------------------------------------------------------------- */
 /*      Get the contents - four doubles.                                */
 /* -------------------------------------------------------------------- */
-    VSIFRead( adfStats, 1, 32, fp );
+    VSIFReadL( adfStats, 1, 32, fp );
 
-    VSIFClose( fp );
+    VSIFCloseL( fp );
 
 #ifdef CPL_LSB
     CPL_SWAPDOUBLE(adfStats+0);

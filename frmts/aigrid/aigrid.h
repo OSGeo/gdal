@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/10/31 04:51:55  fwarmerdam
+ * upgraded to use large file API and GUInt32 for block offsets
+ *
  * Revision 1.12  2002/11/11 18:29:03  warmerda
  * added AIGLLOpen() to support upper case names too
  *
@@ -84,7 +87,7 @@ typedef struct {
     /* Private information */
     
     int		nBlocks;
-    int		*panBlockOffset;
+    GUInt32	*panBlockOffset;
     int		*panBlockSize;
 
     FILE	*fpGrid;	/* the w001001.adf file */
@@ -128,7 +131,7 @@ typedef struct {
 /*      Private APIs                                                    */
 /* ==================================================================== */
 
-CPLErr AIGReadBlock( FILE * fp, int nBlockOffset, int nBlockSize,
+CPLErr AIGReadBlock( FILE * fp, GUInt32 nBlockOffset, int nBlockSize,
                      int nBlockXSize, int nBlockYSize, GInt32 * panData,
                      int nCellType );
 
