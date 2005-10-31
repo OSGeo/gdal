@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2005/10/31 13:03:42  dron
+ * Check for integer overflow conditions when calculating nScanSize.
+ *
  * Revision 1.36  2005/10/11 23:34:02  fwarmerdam
  * fixed up handling of pszFilename
  *
@@ -1220,8 +1223,32 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
     poDS->sInfoHeader.iPlanes = 1;
     poDS->sInfoHeader.iBitCount = ( nBands == 3 )?24:8;
     poDS->sInfoHeader.iCompression = BMPC_RGB;
-    nScanSize = ((poDS->sInfoHeader.iWidth *
-                  poDS->sInfoHeader.iBitCount + 31) & ~31) / 8;
+
+    /* XXX: Avoid integer overflow. We can calculate size in one
+     * step using
+     *
+     *   nScanSize = ((poDS->sInfoHeader.iWidth *
+     *            poDS->sInfoHeader.iBitCount + 31) & ~31) / 8
+     *
+     * formulae, but we should check for overflow conditions
+     * during calculation.
+     */
+    nScanSize = poDS->sInfoHeader.iWidth * poDS->sInfoHeader.iBitCount + 31;
+    if ( !poDS->sInfoHeader.iWidth
+         || !poDS->sInfoHeader.iBitCount
+         || (nScanSize - 31) / poDS->sInfoHeader.iBitCount
+                != poDS->sInfoHeader.iWidth )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Wrong image parameters; "
+                  "can't allocate space for scanline buffer" );
+        VSIFCloseL( poDS->fp );
+        delete poDS;
+
+        return NULL;
+    }
+    nScanSize = (nScanSize & ~31) / 8;
+
     poDS->sInfoHeader.iSizeImage = nScanSize * poDS->sInfoHeader.iHeight;
     poDS->sInfoHeader.iXPelsPerMeter = 0;
     poDS->sInfoHeader.iYPelsPerMeter = 0;
