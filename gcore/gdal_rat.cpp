@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/11/01 22:16:36  fwarmerdam
+ * fix comments (bug 985)
+ *
  * Revision 1.5  2005/09/29 00:50:36  fwarmerdam
  * Added doc note.
  *
@@ -327,7 +330,7 @@ int GDALRasterAttributeTable::GetColOfUsage( GDALRATFieldUsage eUsage ) const
 }
 
 /************************************************************************/
-/*                        GDALRATGetUsageOfCol()                        */
+/*                        GDALRATGetColOfUsage()                        */
 /************************************************************************/
 
 int CPL_STDCALL 
@@ -940,7 +943,7 @@ int GDALRasterAttributeTable::GetRowOfValue( double dfValue ) const
 }
 
 /************************************************************************/
-/*                        GDALRATSetRowOfValue()                        */
+/*                        GDALRATGetRowOfValue()                        */
 /************************************************************************/
 
 int CPL_STDCALL 
