@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.102  2005/11/01 22:16:00  fwarmerdam
+ * fix up RAT API (bug 985)
+ *
  * Revision 1.101  2005/10/28 16:59:24  pnagy
  * Added VRTDerivedBand support
  *
@@ -657,21 +660,21 @@ GDALRATFieldType CPL_DLL CPL_STDCALL GDALRATGetTypeOfCol(
     GDALRasterAttributeTableH, int );
 
 int CPL_DLL CPL_STDCALL GDALRATGetColOfUsage( GDALRasterAttributeTableH, 
-                                              GDALRATFieldType );
+                                              GDALRATFieldUsage );
 int CPL_DLL CPL_STDCALL GDALRATGetRowCount( GDALRasterAttributeTableH );
 
 const char CPL_DLL * CPL_STDCALL GDALRATGetValueAsString( 
-    GDALRasterAttributeTableH, int );
+    GDALRasterAttributeTableH, int ,int);
 int CPL_DLL CPL_STDCALL GDALRATGetValueAsInt( 
-    GDALRasterAttributeTableH, int );
+    GDALRasterAttributeTableH, int ,int);
 double CPL_DLL CPL_STDCALL GDALRATGetValueAsDouble( 
-    GDALRasterAttributeTableH, int );
+    GDALRasterAttributeTableH, int ,int);
 
-void CPL_DLL CPL_STDCALL GDALRATSetValueAsString( GDALRasterAttributeTableH, 
+void CPL_DLL CPL_STDCALL GDALRATSetValueAsString( GDALRasterAttributeTableH, int, int,
                                                   const char * );
-void CPL_DLL CPL_STDCALL GDALRATSetValueAsInt( GDALRasterAttributeTableH, 
+void CPL_DLL CPL_STDCALL GDALRATSetValueAsInt( GDALRasterAttributeTableH, int, int,
                                                int );
-void CPL_DLL CPL_STDCALL GDALRATSetValueAsDouble( GDALRasterAttributeTableH, 
+void CPL_DLL CPL_STDCALL GDALRATSetValueAsDouble( GDALRasterAttributeTableH, int, int,
                                                   double );
 void CPL_DLL CPL_STDCALL GDALRATSetRowCount( GDALRasterAttributeTableH, 
                                              int );
@@ -683,12 +686,15 @@ CPLErr CPL_DLL CPL_STDCALL GDALRATSetLinearBinning( GDALRasterAttributeTableH,
                                                     double, double );
 int CPL_DLL CPL_STDCALL GDALRATGetLinearBinning( GDALRasterAttributeTableH, 
                                                  double *, double * );
-void CPL_DLL CPL_STDCALL GDALRATIntitializeFromColorTable(
+CPLErr CPL_DLL CPL_STDCALL GDALRATInitializeFromColorTable(
     GDALRasterAttributeTableH, GDALColorTableH );
 void CPL_DLL CPL_STDCALL GDALRATDumpReadable( GDALRasterAttributeTableH, 
                                               FILE * );
 GDALRasterAttributeTableH CPL_DLL CPL_STDCALL 
     GDALRATClone( GDALRasterAttributeTableH );
+
+int CPL_DLL CPL_STDCALL GDALRATGetRowOfValue( GDALRasterAttributeTableH , double );
+
 
 /* ==================================================================== */
 /*      GDAL Cache Management                                           */
