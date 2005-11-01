@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.74  2005/11/01 22:17:17  fwarmerdam
+ * fixed GDALSetDefaultRAT (bug 985)
+ *
  * Revision 1.73  2005/09/28 00:54:05  fwarmerdam
  * Added some RAT docs.
  *
@@ -3159,7 +3162,7 @@ CPLErr GDALRasterBand::SetDefaultRAT( const GDALRasterAttributeTable *poRAT )
 /*                         GDALSetDefaultRAT()                          */
 /************************************************************************/
 
-CPLErr CPL_STDCALL GDALGetDefaultRAT( GDALRasterBandH hBand,
+CPLErr CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH hBand,
                                       GDALRasterAttributeTableH hRAT )
 
 {
