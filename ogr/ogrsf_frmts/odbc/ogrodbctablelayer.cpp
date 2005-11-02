@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/11/02 21:58:26  fwarmerdam
+ * preliminary support for ODBC spatial querying
+ *
  * Revision 1.6  2005/09/09 05:02:12  fwarmerdam
  * added wkb support
  *
@@ -64,6 +67,7 @@ OGRODBCTableLayer::OGRODBCTableLayer( OGRODBCDataSource *poDSIn )
     pszQuery = NULL;
 
     bUpdateAccess = TRUE;
+    bHaveSpatialExtents = FALSE;
 
     iNextShapeId = 0;
 
@@ -143,6 +147,19 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszTableName,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Do we have XMIN, YMIN, XMAX, YMAX extent fields?                */
+/* -------------------------------------------------------------------- */
+    if( poFeatureDefn->GetFieldIndex( "XMIN" ) != -1 
+        && poFeatureDefn->GetFieldIndex( "XMAX" ) != -1 
+        && poFeatureDefn->GetFieldIndex( "YMIN" ) != -1 
+        && poFeatureDefn->GetFieldIndex( "YMAX" ) != -1 )
+    {
+        bHaveSpatialExtents = TRUE;
+        CPLDebug( "OGR_ODBC", "Table %s has geometry extent fields.",
+                  pszTableName );
+    }
+        
+/* -------------------------------------------------------------------- */
 /*      If we got a geometry column, does it exist?  Is it binary?      */
 /* -------------------------------------------------------------------- */
     if( pszGeomColumn != NULL )
@@ -210,9 +227,26 @@ OGRErr OGRODBCTableLayer::ResetStatement()
     poStmt = new CPLODBCStatement( poDS->GetSession() );
     poStmt->Append( "SELECT * FROM " );
     poStmt->Append( poFeatureDefn->GetName() );
+
+    /* Append attribute query if we have it */
     if( pszQuery != NULL )
         poStmt->Appendf( " WHERE %s", pszQuery );
 
+    /* If we have a spatial filter, and per record extents, query on it */
+    if( m_poFilterGeom != NULL && bHaveSpatialExtents )
+    {
+        if( pszQuery == NULL )
+            poStmt->Append( " WHERE" );
+        else
+            poStmt->Append( " AND" );
+        
+        poStmt->Appendf( " XMAX > %.8f AND XMIN < %.8f"
+                         " AND YMAX > %.8f AND YMIN < %.8f", 
+                         m_sFilterEnvelope.MinX, m_sFilterEnvelope.MaxX, 
+                         m_sFilterEnvelope.MinY, m_sFilterEnvelope.MaxY );
+    }
+
+    CPLDebug( "OGR_ODBC", "ExecuteSQL(%s)", poStmt->GetCommand() );
     if( poStmt->ExecuteSQL() )
         return OGRERR_NONE;
     else

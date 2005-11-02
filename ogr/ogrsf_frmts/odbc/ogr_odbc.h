@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/11/02 21:58:26  fwarmerdam
+ * preliminary support for ODBC spatial querying
+ *
  * Revision 1.6  2005/09/09 05:02:12  fwarmerdam
  * added wkb support
  *
@@ -113,6 +116,8 @@ class OGRODBCTableLayer : public OGRODBCLayer
     int                 bUpdateAccess;
 
     char                *pszQuery;
+
+    int                 bHaveSpatialExtents;
 
     void		ClearStatement();
     OGRErr              ResetStatement();
