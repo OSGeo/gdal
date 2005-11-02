@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/11/02 16:24:57  fwarmerdam
+ * Implement C API based version of polygonize, and fix support for C++ API.
+ *
  * Revision 1.4  2005/10/13 14:30:40  pka
  * Explicit point geometry type
  * ARC_DEGREES environment variable (Default 1 degree)
@@ -409,9 +412,34 @@ void ILI1Reader::interpolateArc(OGRLineString* line, OGRPoint *ptStart, OGRPoint
 OGRMultiPolygon* ILI1Reader::Polygonize( OGRGeometryCollection* poLines )
 {
     OGRMultiPolygon *poPolygon = new OGRMultiPolygon();
-#ifdef POLYGONIZE_AREAS
+
+#if defined(POLYGONIZE_AREAS) && defined(GEOS_C_API)
+    GEOSGeom *ahInGeoms;
+    
+    ahInGeoms = (GEOSGeom *) CPLCalloc(sizeof(void*),poLines->getNumGeometries());
+    for( int i = 0; i < poLines->getNumGeometries(); i++ )
+        ahInGeoms[i] = poLines->getGeometryRef(i)->exportToGEOS();
+
+    
+    GEOSGeom hResultGeom = GEOSPolygonize( ahInGeoms, 
+                                           poLines->getNumGeometries() );
+
+    for( int i = 0; i < poLines->getNumGeometries(); i++ )
+        GEOSGeom_destroy( ahInGeoms[i] );
+    CPLFree( ahInGeoms );
+
+    if( hResultGeom == NULL )
+        return NULL;
+
+    OGRGeometry *poMP = OGRGeometryFactory::createFromGEOS( hResultGeom );
+    
+    GEOSGeom_destroy( hResultGeom );
+
+    return (OGRMultiPolygon *) poMP;
+
+#elif defined(POLYGONIZE_AREAS)
     //CPLDebug( "OGR_ILI", "ILI1Reader::Polygonize: exportToGEOS poLines->getNumGeometries(): %d", poLines->getNumGeometries());
-    geos::Geometry *poThisGeosGeom = poLines->exportToGEOS();
+    geos::Geometry *poThisGeosGeom = (geos::Geometry *)poLines->exportToGEOS();
 
     geos::Polygonizer* polygonizer = new geos::Polygonizer();
     polygonizer->add(poThisGeosGeom);
@@ -420,13 +448,15 @@ OGRMultiPolygon* ILI1Reader::Polygonize( OGRGeometryCollection* poLines )
 
     for (unsigned i = 0; i < poOtherGeosGeom->size(); i++)
     {
-       poPolygon->addGeometryDirectly(OGRGeometryFactory::createFromGEOS( (*poOtherGeosGeom)[i] ));
+       poPolygon->addGeometryDirectly(
+          OGRGeometryFactory::createFromGEOS((GEOSGeom)(*poOtherGeosGeom)[i]));
     }
 
     delete poOtherGeosGeom;
     delete poThisGeosGeom;
     delete polygonizer;
 #endif
+
     return poPolygon;
 }
 
