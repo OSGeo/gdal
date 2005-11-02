@@ -30,6 +30,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.3  2005/11/02 19:42:25  fwarmerdam
+#  unix text format
+#
 #  Revision 1.2  2005/10/24 04:37:31  fwarmerdam
 #  use MEMO field for wkt geometry in access
 #
