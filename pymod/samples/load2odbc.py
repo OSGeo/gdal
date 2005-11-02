@@ -30,6 +30,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.4  2005/11/02 19:56:01  fwarmerdam
+#  Added extents support
+#
 #  Revision 1.3  2005/11/02 19:42:25  fwarmerdam
 #  unix text format
 #
@@ -55,6 +58,7 @@ def Usage():
 #############################################################################
 # Argument processing.
 
+extents_flag = 1
 infile = None
 outfile = None
 
@@ -98,7 +102,10 @@ except:
 
 defn = in_layer.GetLayerDefn()
 
-cmd = 'CREATE TABLE ' + layername + '( OGC_FID INTEGER, WKT_GEOMETRY MEMO ' 
+cmd = 'CREATE TABLE ' + layername + '( OGC_FID INTEGER, WKT_GEOMETRY MEMO' 
+
+if extents_flag:
+    cmd = cmd + ', XMIN NUMBER, YMIN NUMBER, XMAX NUMBER, YMAX NUMBER'
 
 for iField in range(defn.GetFieldCount()):
     fielddef = defn.GetFieldDefn(iField)
@@ -132,6 +139,11 @@ while feat is not None:
     if geom is not None:
 	cmd_start = cmd_start + ', WKT_GEOMETRY'
 	cmd_end = cmd_end + ", '" + geom.ExportToWkt() + "'"
+
+    if extents_flag and geom is not None:
+	extent = geom.GetEnvelope()
+        cmd_start = cmd_start + ', XMIN, XMAX, YMIN, YMAX'
+        cmd_end = cmd_end + (', %.7f, %.7f, %.7f, %.7f' % extent)
 
     for iField in range(defn.GetFieldCount()):
         fielddef = defn.GetFieldDefn(iField)
