@@ -84,6 +84,7 @@ docs:
 install-docs:
 	$(INSTALL_DIR) $(INST_DOCS)/ogr
 	cp html/* $(INST_DOCS)/ogr
+	cp ../doc/ogr/*.gif $(INST_DOCS)/ogr
 
 gdalso:	$(GDAL_SLIB)
 
