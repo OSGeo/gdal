@@ -46,6 +46,11 @@ is binary, or Well Known Text (WKT) otherwise.  The GEOMETRY_COLUMNS
 table should have at least the columns F_TABLE_NAME, F_GEOMETRY_COLUMN
 and GEOMETRY_TYPE. <p>
 
+If the table has a geometry column, and has fields called XMIN, YMIN, XMAX
+and YMAX then direct table queries with a spatial filter accelerate the
+spatial query.  The XMIN, YMIN, XMAX and YMAX fields should represent the
+extent of the geometry in the row in the tables coordinate system.<p>
+
 <h2>Creation Issues</h2>
 
 Currently the ODBC OGR driver is read-only, so new features, tables and
