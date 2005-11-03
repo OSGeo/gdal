@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/11/03 21:06:41  fwarmerdam
+ * Fixed last change.
+ *
  * Revision 1.9  2005/11/03 14:22:48  fwarmerdam
  * Use large file API to stat file.
  *
@@ -167,7 +170,7 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
         if( EQUAL(papszNames[i],".") || EQUAL(papszNames[i],"..") )
             continue;
 
-        if( VSIStat( oSubFilename, &sStatBuf ) != 0 
+        if( VSIStatL( oSubFilename, &sStatBuf ) != 0 
             || !VSI_ISREG(sStatBuf.st_mode) 
             || !EQUAL(CPLGetExtension(oSubFilename),"csv") )
         {
