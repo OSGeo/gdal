@@ -29,9 +29,10 @@ type of string since no field type information is available.<p>
 <h2>Format</h2>
 
 CSV files have one line for each feature (record) in the layer (table).  
-The attribute field values are separated by commas.  Lines may be terminated
-by a DOS (CR/LF) or Unix (LF) style line terminators.  Each record should
-have the same number of fields.<p>
+The attribute field values are separated by commas.  At least two fields
+per line must be present.  Lines may be terminated by a DOS (CR/LF) or
+Unix (LF) style line terminators.  Each record should have the same number
+of fields.<p>
 
 Complex attribute values (such as those containing commas, quotes or newlines) 
 may be placed in double quotes.  Any occurances of double quotes within 
