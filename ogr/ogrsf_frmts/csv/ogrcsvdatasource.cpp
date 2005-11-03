@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/11/03 14:22:48  fwarmerdam
+ * Use large file API to stat file.
+ *
  * Revision 1.8  2005/09/21 01:01:01  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -132,9 +135,9 @@ int OGRCSVDataSource::Open( const char * pszFilename, int bUpdateIn,
 /* -------------------------------------------------------------------- */
 /*      Determine what sort of object this is.                          */
 /* -------------------------------------------------------------------- */
-    VSIStatBuf sStatBuf;
+    VSIStatBufL sStatBuf;
 
-    if( VSIStat( pszFilename, &sStatBuf ) != 0 )
+    if( VSIStatL( pszFilename, &sStatBuf ) != 0 )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
