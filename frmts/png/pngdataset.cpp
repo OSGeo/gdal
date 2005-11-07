@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.35  2005/11/07 20:37:03  fwarmerdam
+ * use setjmp/longjump for error trapping
+ *
  * Revision 1.34  2005/09/15 02:37:48  fwarmerdam
  * added support NODATA_VALUES for RGB images (read and write)
  *
@@ -84,6 +87,7 @@
 #include "gdal_pam.h"
 #include "png.h"
 #include "cpl_string.h"
+#include <setjmp.h>
 
 CPL_CVSID("$Id$");
 
@@ -98,6 +102,9 @@ static void
 png_vsi_write_data(png_structp png_ptr, png_bytep data, png_size_t length);
 
 static void png_vsi_flush(png_structp png_ptr);
+
+static void png_gdal_error( png_structp png_ptr, const char *error_message );
+static void png_gdal_warning( png_structp png_ptr, const char *error_message );
 
 /************************************************************************/
 /* ==================================================================== */
@@ -143,6 +150,9 @@ class PNGDataset : public GDALPamDataset
 
     virtual CPLErr GetGeoTransform( double * );
     virtual void FlushCache( void );
+
+    // semi-private.
+    jmp_buf     sSetJmpContext;
 };
 
 /************************************************************************/
@@ -419,6 +429,10 @@ void PNGDataset::Restart()
 
     hPNG = png_create_read_struct( PNG_LIBPNG_VER_STRING, this, NULL, NULL );
 
+    png_set_error_fn( hPNG, this, png_gdal_error, png_gdal_warning );
+    if( setjmp( sSetJmpContext ) != 0 )
+        return;
+
     psPNGInfo = png_create_info_struct( hPNG );
 
     VSIFSeekL( fpImage, 0, SEEK_SET );
@@ -452,6 +466,9 @@ CPLErr PNGDataset::LoadScanline( int nLine )
     else
         nPixelOffset = 1 * GetRasterCount();
 
+    if( setjmp( sSetJmpContext ) != 0 )
+        return CE_Failure;
+
 /* -------------------------------------------------------------------- */
 /*      If the file is interlaced, we will load the entire image        */
 /*      into memory using the high level API.                           */
@@ -463,7 +480,11 @@ CPLErr PNGDataset::LoadScanline( int nLine )
         CPLAssert( pabyBuffer == NULL );
 
         if( nLastLineRead != -1 )
+        {
             Restart();
+            if( setjmp( sSetJmpContext ) != 0 )
+                return CE_Failure;
+        }
 
         nBufferStartLine = 0;
         nBufferLines = GetRasterYSize();
@@ -503,7 +524,11 @@ CPLErr PNGDataset::LoadScanline( int nLine )
 /*      to rewind and start over?                                       */
 /* -------------------------------------------------------------------- */
     if( nLine <= nLastLineRead )
+    {
         Restart();
+        if( setjmp( sSetJmpContext ) != 0 )
+            return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read till we get the desired row.                               */
@@ -637,6 +662,14 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->psPNGInfo = png_create_info_struct( poDS->hPNG );
 
 /* -------------------------------------------------------------------- */
+/*      Setup error handling.                                           */
+/* -------------------------------------------------------------------- */
+    png_set_error_fn( poDS->hPNG, poDS, png_gdal_error, png_gdal_warning );
+
+    if( setjmp( poDS->sSetJmpContext ) != 0 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
 /*	Read pre-image data after ensuring the file is rewound.         */
 /* -------------------------------------------------------------------- */
     /* we should likely do a setjmp() here */
@@ -647,13 +680,13 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
-    poDS->nRasterXSize = png_get_image_width( poDS->hPNG, poDS->psPNGInfo );
-    poDS->nRasterYSize = png_get_image_height( poDS->hPNG, poDS->psPNGInfo );
+    poDS->nRasterXSize = png_get_image_width( poDS->hPNG, poDS->psPNGInfo);
+    poDS->nRasterYSize = png_get_image_height( poDS->hPNG,poDS->psPNGInfo);
 
     poDS->nBands = png_get_channels( poDS->hPNG, poDS->psPNGInfo );
     poDS->nBitDepth = png_get_bit_depth( poDS->hPNG, poDS->psPNGInfo );
     poDS->bInterlaced = png_get_interlace_type( poDS->hPNG, poDS->psPNGInfo ) 
-        				!= PNG_INTERLACE_NONE;
+        != PNG_INTERLACE_NONE;
 
     poDS->nColorType = png_get_color_type( poDS->hPNG, poDS->psPNGInfo );
 
@@ -771,9 +804,9 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLString oNDValue;
 
             oNDValue.Printf( "%d %d %d", 
-                    trans_values->red, 
-                    trans_values->green, 
-                    trans_values->blue );
+                             trans_values->red, 
+                             trans_values->green, 
+                             trans_values->blue );
             poDS->SetMetadataItem( "NODATA_VALUES", oNDValue.c_str() );
         }
     }
@@ -1114,6 +1147,34 @@ png_vsi_write_data(png_structp png_ptr, png_bytep data, png_size_t length)
 static void png_vsi_flush(png_structp png_ptr)
 {
     VSIFFlushL( (png_FILE_p)(png_ptr->io_ptr) );
+}
+
+/************************************************************************/
+/*                           png_gdal_error()                           */
+/************************************************************************/
+
+static void png_gdal_error( png_structp png_ptr, const char *error_message )
+{
+    CPLError( CE_Failure, CPLE_AppDefined, 
+              "libpng: %s", error_message );
+
+    // We have to use longjmp instead of a C++ exception because 
+    // libpng is generally not built as C++ and so won't honour unwind
+    // semantics.  Ugg. 
+
+    PNGDataset *poDS = (PNGDataset *) png_ptr->error_ptr;
+
+    longjmp( poDS->sSetJmpContext, 1 );
+}
+
+/************************************************************************/
+/*                          png_gdal_warning()                          */
+/************************************************************************/
+
+static void png_gdal_warning( png_structp png_ptr, const char *error_message )
+{
+    CPLError( CE_Warning, CPLE_AppDefined, 
+              "libpng: %s", error_message );
 }
 
 /************************************************************************/
