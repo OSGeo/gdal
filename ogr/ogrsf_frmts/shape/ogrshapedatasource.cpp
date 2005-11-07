@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/11/07 17:05:26  fwarmerdam
+ * Ensure morphToESRI() is used on spatial reference before writing .prj file.
+ *
  * Revision 1.26  2005/01/04 03:43:22  fwarmerdam
  * added support for create/destroy spatial index sql commands
  *
@@ -623,6 +626,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
 
         /* the shape layer needs it's own copy */
         poSRS = poSRS->Clone();
+        poSRS->morphToESRI();
 
         if( poSRS->exportToWkt( &pszWKT ) == OGRERR_NONE 
             && (fp = VSIFOpen( pszPrjFile, "wt" )) != NULL )
