@@ -1,11 +1,13 @@
+#ifndef DOXYGEN_SKIP
 /*
 $Id$
-Перевод соответствует gdal_datamodel.dox,v 1.4 2005/10/26
-Перевёл Андрей Киселёв <dron@remotesensing.org>
+Translation corresponds to gdal_datamodel.dox,v 1.4 2005/10/26
+Translator Andrey Kiselev <dron@remotesensing.org>
 */
+#endif /* DOXYGEN_SKIP */
 
 /*!
-\page gdal_datamodel_ru_ru Модель данных GDAL
+\page gdal_datamodel_ru Модель данных GDAL
 
 Настоящий документ описывает модель данных, применяемую библиотекой GDAL:
 разновидности информации, которая может содержаться в источниках данных GDAL,
@@ -45,7 +47,7 @@ $Id$
 
 Дополнительные сведения об определениях координатных систем с помощью строк
 OpenGIS WKT и способах работы с ними можно найти в разделе
-<a href="osr_tutorial.html">osr_tutorial</a>, а также в документации на класс
+<a href="ogr/osr_tutorial.html">osr_tutorial</a>, а также в документации на класс
 OGRSpatialReference.
 
 Координатная система, возвращаемая методом GDALDataset::GetProjectionRef()
