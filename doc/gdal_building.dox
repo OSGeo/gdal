@@ -36,8 +36,8 @@ built-in versions of libz, libtiff, libgeotiff, libpng, libgif, and libjpeg
 if pre-installed versions are not available (or not desirable).  
 
 <li> There are quite a few optional drivers that depend on
-<a href="#libraries">external libraries</a>.
-Use "configure --help" to see the configure options.  Some optional libraries
+\ref gdal_building_libraries "external libraries".
+Use <i>configure --help</i> to see the configure options.  Some optional libraries
 include those for GRASS, FITS, OGDI, HDF4, JPEG2000 and ECW.
 
 <li> The shared library building is pretty specific to the GNU tool chain. 
@@ -46,7 +46,7 @@ finding that the .so files isn't built successfully.  You could just link
 against the static libraries (normally gdal/gdal.a gdal/ogr/ogr.a 
 gdal/frmts/o/ *.a gdal/gdal.a gdal/port/cpl.a) or you could hack LD_SHARED 
 command in gdal/GDALmake.opt to work on your platform.  For the SGI
-a value of "c++ -shared -all" is often suitable.<p>
+a value of <i>c++ -shared -all</i> is often suitable.<p>
 
 <li> GDAL, and it's utilities should now build on Cygwin and other platforms
 where shared libraries are not supported.  However, to build your own 
@@ -56,7 +56,7 @@ determine the library set.<p>
 
 <li> My "autoconf" logic that checks for libtiff, libpng and libjpeg isn't too
 savvy about versions.  If it is using pre-installed versions of these 
-libraries and this support isn't working, rerun configure with 
+libraries and this support isn't working, rerun <i>configure</i> with 
 ``--with-png=internal'', ``--with-jpeg=internal'', ``--with-geotiff=internal''
 or ``--with-libtiff=internal'' instead. <p>
 
@@ -66,8 +66,8 @@ to "ld -shared -all".<p>
 
 <li> If you find build problems with one of the format drivers that you
 don't care about, just remove the format from the GDAL_FORMATS line
-at the bottom of gdal/GDALmake.opt, do a make clean, and make.  This will
-drop it from the build and default runtime registration. <p>
+at the bottom of gdal/GDALmake.opt, do a <i>make clean</i>, and <i>make</i>.
+This will drop it from the build and default runtime registration. <p>
 
 <li> If you are trying to install as other than root (to your own tree
 set with --prefix) you will likely have problems with the python since it
