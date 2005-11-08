@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/11/08 15:29:11  fwarmerdam
+ * DLL export CSVGetField.
+ *
  * Revision 1.2  2003/06/27 16:14:22  warmerda
  * export CSV functions with CPL_DLL
  *
@@ -65,7 +68,7 @@ int CPL_DLL CSVGetFileFieldId( const char *, const char * );
 
 void CPL_DLL CSVDeaccess( const char * );
 
-const char  *CSVGetField( const char *, const char *, const char *,
+const char CPL_DLL *CSVGetField( const char *, const char *, const char *,
                                  CSVCompareCriteria, const char * );
 
 void CPL_DLL SetCSVFilenameHook( const char *(*)(const char *) );
