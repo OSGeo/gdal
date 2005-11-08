@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.61 2005/10/12 19:13:30 jlacroix Exp $
+ * $Id: mitab_feature.cpp,v 1.62 2005/11/08 22:02:36 fwarmerdam Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.62  2005/11/08 22:02:36  fwarmerdam
+ * cast strstr() results as per email from Charles Savage for VC8.
+ *
  * Revision 1.61  2005/10/12 19:13:30  jlacroix
  * bug1012 Make sure Style Units are set when seting a feature from StyleString
  *
@@ -7549,12 +7552,12 @@ void  ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
     if(pszPenName && strstr(pszPenName, "mapinfo-pen-") ||
        strstr(pszPenName, "ogr-pen-"))
     {
-        if((pszPenId = strstr(pszPenName, "mapinfo-pen-")))
+        if((pszPenId = (char *) strstr(pszPenName, "mapinfo-pen-")))
         {
             nPenId = atoi(pszPenId+12);
             SetPenPattern(nPenId);
         }
-        else if((pszPenId = strstr(pszPenName, "ogr-pen-")))
+        else if((pszPenId = (char *) strstr(pszPenName, "ogr-pen-")))
         {
             nPenId = atoi(pszPenId+8);
             if(nPenId == 0)
