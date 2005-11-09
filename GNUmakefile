@@ -126,7 +126,6 @@ docs:
 	cp data/gdalicon.png html
 	cp doc/ERMapperlogo_small.gif html
 	cp frmts/*.html frmts/*/frmt_*.html html
-	python doc/mkindex.py
 
 all:	default ogr-all
 
