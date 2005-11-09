@@ -216,10 +216,8 @@ id will be reported.  Operates exclusive of the spatial or attribute
 queries.</dd>
 </dl>
 
- Srs_def can be a full WKT definition (hard to escape properly),
- or a well known definition (ie. EPSG:4326) or a file with a WKT
- definition.
-\endverbatim
+Srs_def can be a full WKT definition (hard to escape properly), or a well
+known definition (ie. EPSG:4326) or a file with a WKT definition.
 
 Example appending to an existing layer (both flags need to be used):
 
