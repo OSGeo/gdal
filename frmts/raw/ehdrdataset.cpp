@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2005/11/10 17:36:15  dron
+ * _Always_ use 64-bit pointers when parsing header file.
+ *
  * Revision 1.28  2005/11/10 17:24:48  dron
  * Use 64-bit pointers when parsing file header.
  *
@@ -450,8 +453,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     else /* assume BIL */
     {
         nPixelOffset = nItemSize;
-        nLineOffset = nItemSize * nBands * nCols;
-        nBandOffset = nItemSize * nCols;
+        nLineOffset = (vsi_l_offset)nItemSize * nBands * nCols;
+        nBandOffset = (vsi_l_offset)nItemSize * nCols;
     }
     
 /* -------------------------------------------------------------------- */
