@@ -6,7 +6,7 @@
  * Author:   Frank Warmerdam <warmerdam@pobox.com>
  *
  ******************************************************************************
- * Copyright (c) 1999,  Les Technologies SoftMap Inc.
+ * Copyright (c) 1999,  Les Technologies SoftMap Inc. 
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2005/11/10 04:12:40  fwarmerdam
+ * The last change related to:
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=980
+ *
  * Revision 1.57  2005/11/10 04:12:14  fwarmerdam
  * Changed the translation for Oblique Stereographic from proj=stere to
  * proj=sterea.
