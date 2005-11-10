@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/11/10 21:31:48  fwarmerdam
+ * preliminary version
+ *
  * Revision 1.1  2005/11/07 04:43:05  fwarmerdam
  * New
  *
@@ -53,6 +56,14 @@
 
 #include "RxDynamicModule.h"
 #include "DbViewport.h"
+
+#ifdef notdef
+class MyServices : public ExSystemServices, public ExHostAppServices
+{
+protected:
+  ODRX_USING_HEAP_OPERATORS(ExSystemServices);
+};
+#endif
 
 /************************************************************************/
 /*                         OGRDbHostAppServices                         */
@@ -117,8 +128,26 @@ public:
     void setSystemCodePage(OdCodePageId id) 
         { CPLDebug( "DWG", "setSystemCodePage" ); }
 
-    OdString formatMessage(unsigned int id, va_list* argList = 0)
-        { return "formatMessage stubbed for now"; }
+    OdString formatMessage(unsigned int code, va_list* argList = 0)
+        { 
+            static const OdChar* message[] =
+                {
+#define OD_ERROR_DEF(cod, desc)  desc,
+#include "ErrorDefs.h"
+#undef OD_ERROR_DEF
+
+#define OD_MESSAGE_DEF(cod, desc) desc,
+#include "MessageDefs.h"
+#undef OD_MESSAGE_DEF
+                    ""// DummyLastMassage
+                };
+            OdString msg;
+            if (argList)
+                msg.formatV(message[code], *argList);
+            else 
+                msg = message[code];
+            return msg;
+        }
 
     virtual bool accessFile(const OdChar* pcFilename, int mode)
         {  
@@ -212,6 +241,7 @@ class OGRWritableDWGDataSource : public OGRDataSource
 
     OdDbDatabasePtr     pDb;
     OdDbViewportPtr 	pVp;
+    OdStaticRxObject<OGRServices> svcs;
 
   public:
                         OGRWritableDWGDataSource( const char *pszOutClass );

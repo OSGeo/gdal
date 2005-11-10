@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/11/10 21:31:48  fwarmerdam
+ * preliminary version
+ *
  * Revision 1.1  2005/11/07 04:43:24  fwarmerdam
  * New
  *
@@ -96,7 +99,14 @@ OGRWritableDWGDataSource::~OGRWritableDWGDataSource()
     else if( EQUAL(pszVersion,"18" ) )
         outVer = OdDb::vAC18;
     
-    pDb->writeFile(&fb, fileType, outVer, true);
+    try 
+    {
+        pDb->writeFile(&fb, fileType, outVer, true);
+    }
+    catch( ... )
+    {
+        printf( "Catch exception from writeFile\n" );
+    }
 
     CSLDestroy( papszOptions );
 }
@@ -114,9 +124,7 @@ int OGRWritableDWGDataSource::Create( const char *pszFilename,
     osFilename = pszFilename;
     papszOptions = CSLDuplicate( papszOptionsIn );
 
-    OdStaticRxObject<OGRServices> svcs;
-
-    //svcs.disableOutput(disableOutput);
+//    svcs.disableOutput(false);
     odInitialize(&svcs);
 
     pDb = svcs.createDatabase();
@@ -124,6 +132,8 @@ int OGRWritableDWGDataSource::Create( const char *pszFilename,
     // Set the drawing extents
     pDb->setEXTMIN(OdGePoint3d(-10000000.0, -10000000.0, -10000.0));
     pDb->setEXTMAX(OdGePoint3d(10000000.0, 10000000.0, 10000.0));
+//    pDb->setEXTMIN(OdGePoint3d(1296000, 228000, 0));
+//    pDb->setEXTMAX(OdGePoint3d(1302700, 238000, 0));
 
     // Set Creation and last update times
     OdDbDate date;
@@ -144,9 +154,15 @@ int OGRWritableDWGDataSource::Create( const char *pszFilename,
     pVp->setCenterPoint(OdGePoint3d(5.375, 4.125, 0));
     pVp->setWidth(14.63);
     pVp->setHeight(9.0);
-    pVp->setViewTarget(OdGePoint3d(0, 0, 0));
+
+//    pVp->setViewTarget(OdGePoint3d(0, 0, 0));
+//    pVp->setViewDirection(OdGeVector3d(0, 0, 1));
+//    pVp->setViewHeight(9.0);
+
+    pVp->setViewTarget(OdGePoint3d(130000, 235000, 0));
     pVp->setViewDirection(OdGeVector3d(0, 0, 1));
-    pVp->setViewHeight(9.0);
+    pVp->setViewHeight(9000.0);
+
     pVp->setLensLength(50.0);
     pVp->setViewCenter(OdGePoint2d(5.375, 4.125));
     pVp->setSnapIncrement(OdGeVector2d(0.5, 0.5));
@@ -168,12 +184,19 @@ int OGRWritableDWGDataSource::Create( const char *pszFilename,
     
     // Add the object to the table.
     newLayerId = pLayers->add(pLayer);
-    
+#ifdef notdef    
+    OdDbViewportTablePtr pVpTable = pDb->getViewportTableId().openObject(OdDb::kForWrite);
+    OdDbObjectId vpID = pVpTable->getActiveViewportId();
+    OdDbViewportTableRecordPtr vPortRec = vpID.openObject(OdDb::kForWrite);
+    vPortRec->setCenterPoint(OdGePoint2d(11.26, 4.5));
+    vPortRec->setWidth(22.53);
+    vPortRec->setHeight(9.);
+  
     OdDbCirclePtr pCircle = OdDbCircle::createObject();
     pCircle->setRadius(1.0);
     pCircle->setLayer(newLayerId, false);
     pPs->appendOdDbEntity(pCircle);
-
+#endif
     return TRUE;
 }
 
@@ -184,7 +207,10 @@ int OGRWritableDWGDataSource::Create( const char *pszFilename,
 int OGRWritableDWGDataSource::TestCapability( const char * pszCap )
 
 {
-    return FALSE;
+    if( EQUAL(pszCap,ODsCCreateLayer) )
+        return TRUE;
+    else
+        return FALSE;
 }
 
 /************************************************************************/
@@ -220,7 +246,16 @@ OGRLayer *OGRWritableDWGDataSource::CreateLayer( const char *pszLayerName,
                                                  char ** papszLayerOptions )
     
 {
-    return NULL;
+    OGRWritableDWGLayer *poLayer;
+
+    poLayer = new OGRWritableDWGLayer( pszLayerName, papszLayerOptions, 
+                                       this );
+
+    papoLayers = (OGRWritableDWGLayer **) 
+        CPLRealloc(papoLayers, sizeof(void*) * ++nLayers );
+    papoLayers[nLayers-1] = poLayer;
+
+    return poLayer;
 }
 
 
