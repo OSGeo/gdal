@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/11/10 09:19:20  osemykin
+ * fixed ReadResultDefinition() for text/wkt geometry column detecting
+ *
  * Revision 1.5  2005/09/21 00:55:42  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -141,7 +144,9 @@ OGRFeatureDefn *OGRPGResultLayer::ReadResultDefinition()
             pszFIDColumn = CPLStrdup(oField.GetNameRef());
             continue;
         }
-        else if( nTypeOID == poDS->GetGeometryOID() )
+        else if( nTypeOID == poDS->GetGeometryOID()  ||
+                 EQUAL(oField.GetNameRef(),"asEWKT") ||
+                 EQUAL(oField.GetNameRef(),"asText") )
         {
             bHasPostGISGeometry = TRUE;
             pszGeomColumn = CPLStrdup(oField.GetNameRef());
