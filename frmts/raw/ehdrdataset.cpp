@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/11/10 17:24:48  dron
+ * Use 64-bit pointers when parsing file header.
+ *
  * Revision 1.27  2005/10/04 05:25:13  fwarmerdam
  * Added support for XLLCENTER/YLLCENTER.
  *
@@ -428,20 +431,21 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Compute the line offset.                                        */
 /* -------------------------------------------------------------------- */
-    int         nItemSize = GDALGetDataTypeSize(eDataType)/8;
-    int		nLineOffset, nPixelOffset, nBandOffset;
+    int             nItemSize = GDALGetDataTypeSize(eDataType)/8;
+    int             nPixelOffset;
+    vsi_l_offset    nLineOffset, nBandOffset;
 
     if( EQUAL(szLayout,"BIP") )
     {
         nPixelOffset = nItemSize * nBands;
-        nLineOffset = nPixelOffset * nCols;
-        nBandOffset = nItemSize;
+        nLineOffset = (vsi_l_offset)nPixelOffset * nCols;
+        nBandOffset = (vsi_l_offset)nItemSize;
     }
     else if( EQUAL(szLayout,"BSQ") )
     {
         nPixelOffset = nItemSize;
-        nLineOffset = nPixelOffset * nCols;
-        nBandOffset = nLineOffset * nRows;
+        nLineOffset = (vsi_l_offset)nPixelOffset * nCols;
+        nBandOffset = (vsi_l_offset)nLineOffset * nRows;
     }
     else /* assume BIL */
     {
