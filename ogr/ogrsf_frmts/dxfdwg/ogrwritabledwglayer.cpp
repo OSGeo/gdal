@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/11/10 21:31:48  fwarmerdam
+ * preliminary version
+ *
  * Revision 1.1  2005/11/07 04:43:24  fwarmerdam
  * New
  *
@@ -159,6 +162,7 @@ OGRWritableDWGLayer::OGRWritableDWGLayer( const char *pszLayerName,
 /*      Create the starting OGRFeatureDefn.                             */
 /* -------------------------------------------------------------------- */
     poFeatureDefn = new OGRFeatureDefn( pszLayerName );
+    poFeatureDefn->Reference();
 }
 
 /************************************************************************/
@@ -265,6 +269,7 @@ OGRErr OGRWritableDWGLayer::CreateFeature( OGRFeature *poFeature )
           p2dPl->setLayer( hLayerId, false );
 
           pBlock->appendOdDbEntity(p2dPl);
+          return OGRERR_NONE;
           break;
       }
 
