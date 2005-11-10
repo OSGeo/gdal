@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2005/11/10 21:37:28  fwarmerdam
+ * added DXF/DWG support
+ *
  * Revision 1.54  2005/10/25 19:58:53  fwarmerdam
  * added driver tracking on datasource
  *
@@ -469,6 +472,7 @@ void CPL_DLL RegisterOGRILI1();
 void CPL_DLL RegisterOGRILI2();
 void CPL_DLL RegisterOGRGRASS();
 void CPL_DLL RegisterOGRPGeo();
+void CPL_DLL RegisterOGRDXFDWG();
 
 CPL_C_END
 
