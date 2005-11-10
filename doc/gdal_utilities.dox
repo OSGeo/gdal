@@ -271,8 +271,8 @@ different formats, potentially performing some operations like subsettings,
 resampling, and rescaling pixels in the process.
 
 <dl>
-<dt> <b>-ot</b>:</dt></dd> For the output bands to be of the indicated data
-type.<dd>
+<dt> <b>-ot</b>:</dt><dd> For the output bands to be of the indicated data
+type.</dd>
 <dt> <b>-not_strict</b>:</dt><dd> Be forgiving of mismatches and lost data
 when
 translating to the output format.</dd>
@@ -462,7 +462,7 @@ of a .prf file containing well known text.</dd>
 <dt> <b>-tps</b></dt><dd>Enable use of thin plate spline transformer 
 based on available GCPs.  Use this <em>instead</em> of the -order switch.</dd>
 <dt> <b>-et</b> <em>err_threshold</em>:</dt><dd> error threshold for transformation approximation (in pixel units - defaults to 0.125).</dd>
-<dt> <b>-te</b> <em>xmin ymin xmax ymax</em>:</dt></dd> set georeferenced extents of output file to be created.</dd>
+<dt> <b>-te</b> <em>xmin ymin xmax ymax</em>:</dt><dd> set georeferenced extents of output file to be created.</dd>
 <dt> <b>-tr</b> <em>xres yres</em>:</dt><dd> set output file resolution (in target georeferenced units)</dd>
 <dt> <b>-ts</b> <em>width height</em>:</dt><dd> set output file size in
 pixels and lines</dd>
