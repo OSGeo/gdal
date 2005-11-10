@@ -121,8 +121,8 @@ GDALmake.opt:	GDALmake.opt.in config.status
 docs:
 	(cd ogr; $(MAKE) docs)
 	(cd html; rm -f *.*)
-	doxygen
-	doxygen Doxyfile.man
+	doxygen Doxyfile
+	(cat Doxyfile ; echo "INPUT=doc ogr"; echo "FILE_PATTERNS=*utilities.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES") | doxygen -
 	cp data/gdalicon.png html
 	cp doc/ERMapperlogo_small.gif html
 	cp frmts/*.html frmts/*/frmt_*.html html
