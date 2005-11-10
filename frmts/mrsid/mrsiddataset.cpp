@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2005/11/10 21:05:01  fwarmerdam
+ * Applied Rostics fix for slight overview size inaccuracies
+ *
  * Revision 1.45  2005/10/17 19:30:47  fwarmerdam
  * Fixed serious bug in MrSID overview access.
  *
@@ -725,7 +728,6 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
             pData, nBufXSize, nBufYSize, eBufType, 
             nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace );
-
     CPLDebug( "MrSID", "RasterIO() - using optimized dataset level IO." );
     
 /* -------------------------------------------------------------------- */
@@ -760,13 +762,37 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 /*      The temporary buffer will generally be at a moderately          */
 /*      higher resolution than the buffer of data requested.            */
 /* -------------------------------------------------------------------- */
-    int nTmpXSize, nTmpYSize, nTmpPixelSize;
+    int  nTmpPixelSize;
     LTIPixel       oPixel( eColorSpace, nBands, eSampleType );
     
-    nTmpXSize = (int) floor( nXSize / (double) nZoomMag + 0.99 );
-    nTmpYSize = (int) floor( nYSize / (double) nZoomMag + 0.99 );
+    LT_STATUS eLTStatus;
+    unsigned int maxWidth;
+    unsigned int maxHeight;
 
-    LTISceneBuffer oLTIBuffer( oPixel, nTmpXSize, nTmpYSize, NULL );
+    eLTStatus = poImageReader->getDimsAtMag(1.0/nZoomMag,maxWidth,maxHeight);
+
+    if( !LT_SUCCESS(eLTStatus)) {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MrSIDDataset::IRasterIO(): Failed to get zoomed image dimensions.\n%s",
+    getLastStatusString( eLTStatus ) );
+    return CE_Failure;
+    }
+
+    int maxWidthAtL0 = bIsOverview?poParentDS->GetRasterXSize():this->GetRasterXSize();
+    int maxHeightAtL0 = bIsOverview?poParentDS->GetRasterYSize():this->GetRasterYSize();
+
+    int sceneUlXOff = nXOff / nZoomMag;
+    int sceneUlYOff = nYOff / nZoomMag;
+    int sceneWidth  = (int)(nXSize * maxWidth / (double)maxWidthAtL0 + 0.99);
+    int sceneHeight = (int)(nYSize * maxHeight / (double)maxHeightAtL0 + 0.99);
+
+    if( (sceneUlXOff + sceneWidth) > (int) maxWidth )
+        sceneWidth = maxWidth - sceneUlXOff;
+
+    if( (sceneUlYOff + sceneHeight) > (int) maxHeight )
+        sceneHeight = maxHeight - sceneUlYOff;
+
+    LTISceneBuffer oLTIBuffer( oPixel, sceneWidth, sceneHeight, NULL );
 
     nTmpPixelSize = GDALGetDataTypeSize( eDataType ) / 8;
 
@@ -775,8 +801,8 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     LTINavigator oNav( *poImageReader );
     
-    if( !LT_SUCCESS(oNav.setSceneAsULWH( nXOff / nZoomMag, nYOff / nZoomMag, 
-                                         nXSize / nZoomMag, nYSize / nZoomMag, 
+    if( !LT_SUCCESS(oNav.setSceneAsULWH( sceneUlXOff, sceneUlYOff, 
+                                         sceneWidth, sceneHeight, 
                                          1.0 / nZoomMag )) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -788,7 +814,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
     CPLDebug( "MrSID", 
               "Dataset:IRasterIO(%d,%d %dx%d -> %dx%d -> %dx%d, zoom=%d)",
               nXOff, nYOff, nXSize, nYSize, 
-              nTmpXSize, nTmpYSize,
+              sceneWidth, sceneHeight,
               nBufXSize, nBufYSize, 
               nZoomMag );
 
@@ -806,7 +832,6 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Read into the buffer.                                           */
 /* -------------------------------------------------------------------- */
-    LT_STATUS eLTStatus;
 
     eLTStatus = poImageReader->read(oNav.getScene(),oLTIBuffer);
     if(!LT_SUCCESS(eLTStatus) )
@@ -824,12 +849,12 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 
     for( iBufLine = 0; iBufLine < nBufYSize; iBufLine++ )
     {
-        int iTmpLine = (int) floor(((iBufLine+0.5) / nBufYSize) * nTmpYSize);
+        int iTmpLine = (int) floor(((iBufLine+0.5) / nBufYSize) * sceneHeight);
 
         for( iBufPixel = 0; iBufPixel < nBufXSize; iBufPixel++ )
         {
             int iTmpPixel = (int) 
-                floor(((iBufPixel+0.5) / nBufXSize) * nTmpXSize);
+                floor(((iBufPixel+0.5) / nBufXSize) * sceneWidth);
 
             for( int iBand = 0; iBand < nBandCount; iBand++ )
             {
@@ -842,7 +867,7 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
 
                 pabySrc = (GByte *) oLTIBuffer.getTotalBandData( 
                     panBandMap[iBand] - 1 );
-                pabySrc += (iTmpLine * nTmpXSize + iTmpPixel) * nTmpPixelSize;
+                pabySrc += (iTmpLine * sceneWidth + iTmpPixel) * nTmpPixelSize;
 
                 if( eDataType == eBufType )
                     memcpy( pabyDst, pabySrc, nTmpPixelSize );
