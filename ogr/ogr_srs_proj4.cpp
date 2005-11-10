@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2005/11/10 04:12:14  fwarmerdam
+ * Changed the translation for Oblique Stereographic from proj=stere to
+ * proj=sterea.
+ *
  * Revision 1.56  2005/09/29 20:22:26  dmorissette
  * Improved support for MapInfo modified TM projections in exportToProj4()
  * (Anthony D - MITAB bug 1155)
@@ -610,7 +614,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
-    else if( EQUAL(pszProj,"stere") 
+    else if( EQUALN(pszProj,"stere",5) /* mostly sterea */
              && CSLFetchNameValue(papszNV,"k") != NULL )
     {
         SetOS( OSR_GDV( papszNV, "lat_0", 0.0 ), 
@@ -1182,7 +1186,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     else if( EQUAL(pszProjection,SRS_PT_OBLIQUE_STEREOGRAPHIC) )
     {
         sprintf( szProj4+strlen(szProj4),
-           "+proj=stere +lat_0=%.16g +lon_0=%.16g +k=%f +x_0=%.16g +y_0=%.16g ",
+         "+proj=sterea +lat_0=%.16g +lon_0=%.16g +k=%f +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
                  - dfFromGreenwich,
