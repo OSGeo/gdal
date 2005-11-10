@@ -14,6 +14,7 @@ SUBDIRS-$(ODBC_SETTING)	+= odbc pgeo
 SUBDIRS-$(HAVE_SQLITE)	+= sqlite
 SUBDIRS-$(HAVE_GRASS)	+= grass
 SUBDIRS-$(HAVE_XERCES)	+= ili
+SUBDIRS-$(HAVE_DWGDIRECT) += dxfdwg
 
 default:	$(foreach d,$(SUBDIRS-yes),$(d)-target)
 
