@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/11/10 19:07:57  fwarmerdam
+ * -append now creates layer if it does not already exist: bug 994.
+ *
  * Revision 1.30  2005/10/16 01:59:06  cfis
  * Added declaration for OGRGeneralCmdLineProcessor to ogr_p.h, and included it into ogr2ogr.  Also changed call to CPL_DLL from CPL_STDCALL
  *
@@ -566,7 +569,7 @@ static void Usage()
             printf( "     -f \"%s\"\n", poDriver->GetName() );
     }
 
-    printf( " -append: Append to existing layer instead of creating new\n"
+    printf( " -append: Append to existing layer instead of creating new if it exists\n"
             " -update: Open existing output datasource in update mode\n"
             " -select field_list: Comma-delimited list of fields from input layer to\n"
             "                     copy to the new layer (defaults to all)\n" 
@@ -666,11 +669,28 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     
     if( poOutputSRS == NULL )
         poOutputSRS = poSrcLayer->GetSpatialRef();
+
+/* -------------------------------------------------------------------- */
+/*      Find the layer.                                                 */
+/* -------------------------------------------------------------------- */
+    poDstLayer = NULL;
+
+    for( int iLayer = 0; iLayer < poDstDS->GetLayerCount(); iLayer++ )
+    {
+        OGRLayer        *poLayer = poDstDS->GetLayer(iLayer);
+
+        if( poLayer != NULL 
+            && EQUAL(poLayer->GetLayerDefn()->GetName(),pszNewLayerName) )
+        {
+            poDstLayer = poLayer;
+            break;
+        }
+    }
     
 /* -------------------------------------------------------------------- */
-/*      Create the layer.                                               */
+/*      If the layer does not exist, then create it.                    */
 /* -------------------------------------------------------------------- */
-    if( !bAppend )
+    if( poDstLayer == NULL )
     {
         if( eGType == -2 )
             eGType = poFDefn->GetGeomType();
@@ -684,33 +704,19 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 
         if( poDstLayer == NULL )
             return FALSE;
+
+        bAppend = FALSE;
     }
+
 /* -------------------------------------------------------------------- */
-/*      Or find existing layer to append to.                            */
+/*      Otherwise we will append to it, if append was requested.        */
 /* -------------------------------------------------------------------- */
-    else
+    else if( !bAppend )
     {
-        poDstLayer = NULL;
-
-        for( int iLayer = 0; iLayer < poDstDS->GetLayerCount(); iLayer++ )
-        {
-            OGRLayer        *poLayer = poDstDS->GetLayer(iLayer);
-
-            if( poLayer != NULL 
-                && EQUAL(poLayer->GetLayerDefn()->GetName(),pszNewLayerName) )
-            {
-                poDstLayer = poLayer;
-                break;
-            }
-        }
-
-        if( poDstLayer == NULL )
-        {
-            printf( "FAILED: To find existing layer `%s' on output dataset\n"
-                    "        to append new features to.\n",
-                    pszNewLayerName );
-            return FALSE;
-        }
+        printf( "FAILED: Layer %s already exists, and -append not specified.\n"
+                "        Consider using -append, or predeleting the layer.\n",
+                pszNewLayerName );
+        return FALSE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -731,7 +737,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
             else
             {
                 printf( "Field '%s' not found in source layer.\n", 
-                         papszSelFields[iField] );
+                        papszSelFields[iField] );
                 if( !bSkipFailures )
                     return FALSE;
             }
