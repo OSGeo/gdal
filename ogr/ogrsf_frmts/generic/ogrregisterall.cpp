@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/11/10 21:36:56  fwarmerdam
+ * Added DXF/DWG support
+ *
  * Revision 1.26  2005/09/05 19:32:52  fwarmerdam
  * Added PGEO
  *
@@ -160,6 +163,9 @@ void OGRRegisterAll()
 #endif
 #ifdef OCI_ENABLED
     RegisterOGROCI();
+#endif
+#ifdef DWGDIRECT_ENABLED
+    RegisterOGRDXFDWG();
 #endif
 #ifdef GRASS_ENABLED
     RegisterOGRGRASS();
