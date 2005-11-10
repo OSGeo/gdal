@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/11/10 18:03:27  dron
+ * Added creation options descriptions in the driver's metadata.
+ *
  * Revision 1.30  2005/09/21 19:57:37  fwarmerdam
  * 2 bytes in headerbytes is enough, that is what Create() writes to the
  * image file.
@@ -1381,6 +1384,17 @@ void GDALRegister_ENVI()
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte Int16 UInt16 Int32 UInt32 "
                                    "Float32 Float64 CFloat32 CFloat64" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+"<CreationOptionList>"
+"   <Option name='SUFFIX' type='string-select'>"
+"       <Value>ADD</Value>"
+"   </Option>"
+"   <Option name='INTERLEAVE' type='string-select'>"
+"       <Value>BIP</Value>"
+"       <Value>BIL</Value>"
+"       <Value>BSQ</Value>"
+"   </Option>"
+"</CreationOptionList>" );
 
         poDriver->pfnOpen = ENVIDataset::Open;
         poDriver->pfnCreate = ENVIDataset::Create;
