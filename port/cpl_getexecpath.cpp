@@ -28,6 +28,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/11/11 14:20:59  fwarmerdam
+ * Use lower case for windows.h to allow cross compilation for windows
+ * on linux (per email from Radim).
+ *
  * Revision 1.1  2005/06/10 15:00:07  fwarmerdam
  * New
  *
@@ -39,7 +43,7 @@ CPL_CVSID("$Id$");
 
 #if defined(WIN32)
 
-#include <Windows.h>
+#include <windows.h>
 
 /************************************************************************/
 /*                           CPLGetExecPath()                           */
