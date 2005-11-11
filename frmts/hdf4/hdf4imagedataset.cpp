@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.55  2005/11/11 01:11:24  fwarmerdam
+ * Added support for Coastwatch offset/scale.
+ *
  * Revision 1.54  2005/10/27 16:41:54  fwarmerdam
  * added scale/offset/units support for selected modis products
  *
@@ -2504,6 +2507,25 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                   poDS->GetRasterBand(i)->SetNoDataValue(
                       atof( CSLFetchNameValue(poDS->papszLocalMetadata, 
                                               "missing_value") ) );
+              }
+          }
+
+          // Coastwatch offset and scale.
+          if( CSLFetchNameValue( poDS->papszLocalMetadata, "scale_factor" ) 
+              && CSLFetchNameValue( poDS->papszLocalMetadata, "add_offset" ) )
+          {
+              for( i = 1; i <= poDS->nBands; i++ )
+              {
+                  HDF4ImageRasterBand *poBand = 
+                      (HDF4ImageRasterBand *) poDS->GetRasterBand(i);
+
+                  poBand->bHaveScaleAndOffset = TRUE;
+                  poBand->dfScale = 
+                      atof( CSLFetchNameValue( poDS->papszLocalMetadata, 
+                                               "scale_factor" ) );
+                  poBand->dfOffset = -1 * poBand->dfScale * 
+                      atof( CSLFetchNameValue( poDS->papszLocalMetadata, 
+                                               "add_offset" ) );
               }
           }
 
