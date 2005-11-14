@@ -48,7 +48,7 @@ BASE_INCLUDE =	/INCLUDE:_GDALSimpleImageWarp \
 		/INCLUDE:_GDALReprojectImage \
 		/INCLUDE:_GDALComputeMedianCutPCT \
 		/INCLUDE:_GDALDitherRGB2PCT \
-		/INCLUDE:_OCTNewCoordinateTransformation@8
+		/INCLUDE:_OCTNewCoordinateTransformation
 !ENDIF
 
 LIBOBJ = port\*.obj gcore\*.obj alg\*.obj frmts\o\*.obj $(OGR_OBJ) $(VB6_OBJ)
