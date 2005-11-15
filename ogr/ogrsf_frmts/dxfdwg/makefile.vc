@@ -1,0 +1,21 @@
+
+OBJ =	ogrdwgdriver.obj ogrwritabledwgdatasource.obj \
+	ogrwritabledwglayer.obj \
+	OdFileBuf.obj 
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+DWG_INC = 	-I$(DWGDIRECT)/Include -I$(DWGDIRECT)/Include/Gi \
+	-I$(DWGDIRECT)/Include/Ge -I$(DWGDIRECT)/Include/Br \
+	-I$(DWGDIRECT)/Include/Gs -I$(DWGDIRECT)/Include/ModelerGeometry
+
+EXTRAFLAGS = -I.. -I..\.. $(DWG_INC)
+
+default:	$(OBJ)
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb
+	-del *.exe
