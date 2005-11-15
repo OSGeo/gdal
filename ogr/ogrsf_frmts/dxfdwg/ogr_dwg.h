@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/11/15 15:02:42  fwarmerdam
+ * Added ODRX_USING_HEAP_OPERATORS() definition for OGRServices.
+ *
  * Revision 1.2  2005/11/10 21:31:48  fwarmerdam
  * preliminary version
  *
@@ -66,12 +69,15 @@ protected:
 #endif
 
 /************************************************************************/
-/*                         OGRDbHostAppServices                         */
+/*                              OGRServices                             */
 /************************************************************************/
 
 class OGRServices : public OdDbHostAppServices, public OdDbSystemServices
 
 {
+protected:
+  ODRX_USING_HEAP_OPERATORS(OdDbSystemServices);
+
 public:
     virtual bool ttfFileNameByDescriptor(const OdTtfDescriptor& descr, 
                                          OdString& fileName) 
