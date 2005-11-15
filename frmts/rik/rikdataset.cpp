@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2005/11/15 01:19:30  dwallner
+ * Allow zero block offsets
+ *
  * Revision 1.13  2005/09/20 12:26:59  dwallner
  * added missing TOWGS84 in wkt
  *
@@ -331,13 +334,14 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     nBlockIndex = nBlockXOff + nBlockYOff * poRDS->nHorBlocks;
     nBlockOffset = poRDS->pOffsets[nBlockIndex];
 
-    if( nBlockIndex < (blocks - 1) )
+    nBlockSize = poRDS->nFileSize;
+    for( GUInt32 bi = nBlockIndex + 1; bi < blocks; bi++ )
     {
-        nBlockSize = poRDS->pOffsets[nBlockIndex + 1];
-    }
-    else
-    {
-        nBlockSize = poRDS->nFileSize;
+        if( poRDS->pOffsets[bi] )
+        {
+            nBlockSize = poRDS->pOffsets[bi];
+            break;
+        }
     }
     nBlockSize -= nBlockOffset;
 
@@ -345,7 +349,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     pixels = poRDS->nBlockXSize * poRDS->nBlockYSize;
 
-    if( !nBlockSize
+    if( !nBlockOffset || !nBlockSize
 #ifdef RIK_SINGLE_BLOCK
         || nBlockIndex != RIK_SINGLE_BLOCK
 #endif
@@ -1033,6 +1037,11 @@ GDALDataset *RIKDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         for( GUInt32 x = 0; x < header.iHorBlocks; x++)
         {
+            if( !offsets[x + y * header.iHorBlocks] )
+            {
+                continue;
+            }
+
             if( offsets[x + y * header.iHorBlocks] >= fileSize )
             {
                 if( !y )
