@@ -11,7 +11,7 @@ DWG_INC = 	-I$(DWGDIRECT)/Include -I$(DWGDIRECT)/Include/Gi \
 	-I$(DWGDIRECT)/Include/Ge -I$(DWGDIRECT)/Include/Br \
 	-I$(DWGDIRECT)/Include/Gs -I$(DWGDIRECT)/Include/ModelerGeometry
 
-EXTRAFLAGS = -I.. -I..\.. $(DWG_INC)
+EXTRAFLAGS = -I.. -I..\.. $(DWG_INC) -D_TOOLKIT_IN_DLL_
 
 default:	$(OBJ)
 

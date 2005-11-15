@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/11/15 23:23:38  fwarmerdam
+ * update extents, preliminary point support
+ *
  * Revision 1.3  2005/11/15 14:57:20  fwarmerdam
  * various test updates
  *
@@ -102,13 +105,43 @@ OGRWritableDWGDataSource::~OGRWritableDWGDataSource()
     else if( EQUAL(pszVersion,"18" ) )
         outVer = OdDb::vAC18;
     
+/* -------------------------------------------------------------------- */
+/*      Reset the viewports based on the available data extents.        */
+/* -------------------------------------------------------------------- */
+    try 
+    {
+        pDb->setEXTMIN(OdGePoint3d(sExtent.MinX, sExtent.MinY, 0));
+        pDb->setEXTMAX(OdGePoint3d(sExtent.MaxX, sExtent.MaxY, 0));
+
+        pVp->setCenterPoint(OdGePoint3d((sExtent.MinX + sExtent.MaxX) * 0.5,
+                                        (sExtent.MinY + sExtent.MaxY) * 0.5,
+                                        0 ) );
+        pVp->setWidth( sExtent.MaxX - sExtent.MinX );
+        pVp->setHeight( sExtent.MaxY - sExtent.MinY );
+        
+        pVm->setCenterPoint(OdGePoint3d((sExtent.MinX + sExtent.MaxX) * 0.5,
+                                        (sExtent.MinY + sExtent.MaxY) * 0.5,
+                                        0 ) );
+        pVm->setWidth( sExtent.MaxX - sExtent.MinX );
+        pVm->setHeight( sExtent.MaxY - sExtent.MinY );
+    }
+    catch( ... )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Catch exception from resetting extents." );
+    }
+        
+/* -------------------------------------------------------------------- */
+/*      Write out file.                                                 */
+/* -------------------------------------------------------------------- */
     try 
     {
         pDb->writeFile(&fb, fileType, outVer, true);
     }
     catch( ... )
     {
-        printf( "Catch exception from writeFile\n" );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Catch exception from writeFile" );
     }
 
     CSLDestroy( papszOptions );
@@ -131,10 +164,8 @@ int OGRWritableDWGDataSource::Create( const char *pszFilename,
     pDb = svcs.createDatabase();
 
     // Set the drawing extents
-//    pDb->setEXTMIN(OdGePoint3d(-10000000.0, -10000000.0, -10000.0));
-//    pDb->setEXTMAX(OdGePoint3d(10000000.0, 10000000.0, 10000.0));
-    pDb->setEXTMIN(OdGePoint3d(1296000, 228000, 0));
-    pDb->setEXTMAX(OdGePoint3d(1302700, 238000, 0));
+    pDb->setEXTMIN(OdGePoint3d(-10000000.0, -10000000.0, 0));
+    pDb->setEXTMAX(OdGePoint3d(10000000.0, 10000000.0, 0));
 
     // Set Creation and last update times
     OdDbDate date;
@@ -148,14 +179,13 @@ int OGRWritableDWGDataSource::Create( const char *pszFilename,
     pDb->setTILEMODE(1);  // 0 for paperspace, 1 for modelspace
     pDb->newRegApp("ODA");
 
-    OdDbBlockTableRecordPtr pPs = pDb->getPaperSpaceId().safeOpenObject(OdDb::kForWrite);
+/* -------------------------------------------------------------------- */
+/*      paper space viewport.                                           */
+/* -------------------------------------------------------------------- */
+    pPs = pDb->getPaperSpaceId().safeOpenObject(OdDb::kForWrite);
 
     pVp = OdDbViewport::createObject();
   
-//    pVp->setCenterPoint(OdGePoint3d(5.375, 4.125, 0));
-//    pVp->setWidth(14.63);
-//    pVp->setHeight(9.0);
-
     pVp->setCenterPoint(OdGePoint3d(1300000, 233000, 0));
     pVp->setWidth(10000);
     pVp->setHeight(10000);
@@ -172,6 +202,30 @@ int OGRWritableDWGDataSource::Create( const char *pszFilename,
 
     pPs->appendOdDbEntity(pVp);
 
+/* -------------------------------------------------------------------- */
+/*      model space viewport.                                           */
+/* -------------------------------------------------------------------- */
+    pMs = pDb->getModelSpaceId().safeOpenObject(OdDb::kForWrite);
+
+    pVm = OdDbViewport::createObject();
+  
+    pVm->setCenterPoint(OdGePoint3d(1300000, 233000, 0));
+    pVm->setWidth(10000);
+    pVm->setHeight(10000);
+
+    pVm->setViewTarget(OdGePoint3d(0, 0, 0));
+    pVm->setViewDirection(OdGeVector3d(0, 0, 1));
+    pVm->setViewHeight(9.0);
+
+    pVm->setLensLength(50.0);
+    pVm->setViewCenter(OdGePoint2d(5.375, 4.125));
+    pVm->setSnapIncrement(OdGeVector2d(0.5, 0.5));
+    pVm->setGridIncrement(OdGeVector2d(0.5, 0.5));
+    pVm->setCircleSides(OdUInt16(100));
+
+    pMs->appendOdDbEntity(pVm);
+
+#ifdef notdef
     // Add a new layer to the drawing
     OdDbLayerTablePtr pLayers;
     OdDbLayerTableRecordPtr pLayer;
@@ -185,20 +239,13 @@ int OGRWritableDWGDataSource::Create( const char *pszFilename,
     
     // Add the object to the table.
     newLayerId = pLayers->add(pLayer);
-#ifdef notdef    
-    OdDbViewportTablePtr pVpTable = pDb->getViewportTableId().openObject(OdDb::kForWrite);
-    OdDbObjectId vpID = pVpTable->getActiveViewportId();
-    OdDbViewportTableRecordPtr vPortRec = vpID.openObject(OdDb::kForWrite);
-    vPortRec->setCenterPoint(OdGePoint2d(11.26, 4.5));
-    vPortRec->setWidth(22.53);
-    vPortRec->setHeight(9.);
-#endif
   
     OdDbCirclePtr pCircle = OdDbCircle::createObject();
     pCircle->setCenter( OdGePoint3d(1300000, 233000, 0) );
     pCircle->setRadius(3000);
     pCircle->setLayer(newLayerId, false);
-    pPs->appendOdDbEntity(pCircle);
+    pMs->appendOdDbEntity(pCircle);
+#endif
 
     return TRUE;
 }
@@ -261,7 +308,21 @@ OGRLayer *OGRWritableDWGDataSource::CreateLayer( const char *pszLayerName,
     return poLayer;
 }
 
+/************************************************************************/
+/*                            ExtendExtent()                            */
+/************************************************************************/
 
+void OGRWritableDWGDataSource::ExtendExtent( OGRGeometry * poGeometry )
 
+{
+    if( poGeometry == NULL )
+        return;
+
+    OGREnvelope sThisEnvelope;
+
+    poGeometry->getEnvelope( &sThisEnvelope );
+
+    sExtent.Merge( sThisEnvelope );
+}
 
 

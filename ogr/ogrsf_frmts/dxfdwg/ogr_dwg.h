@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/11/15 23:23:38  fwarmerdam
+ * update extents, preliminary point support
+ *
  * Revision 1.3  2005/11/15 15:02:42  fwarmerdam
  * Added ODRX_USING_HEAP_OPERATORS() definition for OGRServices.
  *
@@ -203,7 +206,7 @@ class OGRWritableDWGLayer : public OGRLayer
   protected:
     OGRFeatureDefn     *poFeatureDefn;
     OdDbObjectId        hLayerId;
-    OdDbObjectId        hBlockId;
+//    OdDbObjectId        hBlockId;
     OdDbDatabasePtr     pDb;
 
     OGRWritableDWGDataSource    *poDS;
@@ -247,7 +250,15 @@ class OGRWritableDWGDataSource : public OGRDataSource
 
     OdDbDatabasePtr     pDb;
     OdDbViewportPtr 	pVp;
+    OdDbViewportPtr 	pVm;
+
+    OdDbBlockTableRecordPtr pPs;  // paper space
+    OdDbBlockTableRecordPtr pMs;  // model space
+    
     OdStaticRxObject<OGRServices> svcs;
+
+    OGREnvelope         sExtent;
+    void                ExtendExtent( OGRGeometry * );
 
   public:
                         OGRWritableDWGDataSource( const char *pszOutClass );

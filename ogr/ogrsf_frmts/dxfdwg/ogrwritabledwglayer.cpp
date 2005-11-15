@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/11/15 23:23:38  fwarmerdam
+ * update extents, preliminary point support
+ *
  * Revision 1.2  2005/11/10 21:31:48  fwarmerdam
  * preliminary version
  *
@@ -62,6 +65,7 @@
 #include "DbBlockReference.h"
 #include "DbAttribute.h"
 #include "DbAttributeDefinition.h"
+#include "DbPoint.h"
 #include "Db2dPolyline.h"
 #include "Db2dVertex.h"
 #include "Db3dPolyline.h"
@@ -149,15 +153,17 @@ OGRWritableDWGLayer::OGRWritableDWGLayer( const char *pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Create block                                                    */
 /* -------------------------------------------------------------------- */
-  OdDbBlockTablePtr pTable = pDb->getBlockTableId().safeOpenObject(OdDb::kForWrite);
-  OdDbBlockTableRecordPtr pEntry = OdDbBlockTableRecord::createObject();
+#ifdef notdef
+    OdDbBlockTablePtr pTable = pDb->getBlockTableId().safeOpenObject(OdDb::kForWrite);
+    OdDbBlockTableRecordPtr pEntry = OdDbBlockTableRecord::createObject();
   
-  // Block must have a name before adding it to the table.
-  pEntry->setName( pszLayerName );
-  
-  // Add the object to the table.
-  hBlockId = pTable->add(pEntry);
-
+    // Block must have a name before adding it to the table.
+    pEntry->setName( pszLayerName );
+    
+    // Add the object to the table.
+    hBlockId = pTable->add(pEntry);
+#endif
+    
 /* -------------------------------------------------------------------- */
 /*      Create the starting OGRFeatureDefn.                             */
 /* -------------------------------------------------------------------- */
@@ -232,15 +238,28 @@ OGRErr OGRWritableDWGLayer::CreateFeature( OGRFeature *poFeature )
 
 {
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
-    OdDbBlockTableRecordPtr pBlock = hBlockId.safeOpenObject(OdDb::kForWrite);
+//    OdDbBlockTableRecordPtr pBlock = hBlockId.safeOpenObject(OdDb::kForWrite);
 
     if( poGeom == NULL )
         return OGRERR_FAILURE;
 
+    poDS->ExtendExtent( poGeom );
+
     switch( wkbFlatten(poGeom->getGeometryType()) )
     {
       case wkbPoint:
-        return OGRERR_FAILURE;
+      {
+          OGRPoint *poOGRPoint = (OGRPoint *) poGeom;
+          OdDbPointPtr pPoint = OdDbPoint::createObject();
+ 
+          pPoint->setPosition( 
+              OdGePoint3d(poOGRPoint->getX(), poOGRPoint->getY(), 
+                          poOGRPoint->getZ() ) );
+
+          pPoint->setLayer( hLayerId, false );
+          poDS->pMs->appendOdDbEntity( pPoint );
+          return OGRERR_NONE;
+      }
 
       case wkbLineString:
       {
@@ -268,7 +287,8 @@ OGRErr OGRWritableDWGLayer::CreateFeature( OGRFeature *poFeature )
   
           p2dPl->setLayer( hLayerId, false );
 
-          pBlock->appendOdDbEntity(p2dPl);
+//          pBlock->appendOdDbEntity(p2dPl);
+          poDS->pMs->appendOdDbEntity( p2dPl );
           return OGRERR_NONE;
           break;
       }
