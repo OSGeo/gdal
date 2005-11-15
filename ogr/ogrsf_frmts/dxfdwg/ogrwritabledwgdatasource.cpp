@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/11/15 14:57:20  fwarmerdam
+ * various test updates
+ *
  * Revision 1.2  2005/11/10 21:31:48  fwarmerdam
  * preliminary version
  *
@@ -119,8 +122,6 @@ int OGRWritableDWGDataSource::Create( const char *pszFilename,
                                       char **papszOptionsIn )
 
 {
-    OdDb::SaveType fileType = OdDb::kDwg;
-
     osFilename = pszFilename;
     papszOptions = CSLDuplicate( papszOptionsIn );
 
@@ -130,10 +131,10 @@ int OGRWritableDWGDataSource::Create( const char *pszFilename,
     pDb = svcs.createDatabase();
 
     // Set the drawing extents
-    pDb->setEXTMIN(OdGePoint3d(-10000000.0, -10000000.0, -10000.0));
-    pDb->setEXTMAX(OdGePoint3d(10000000.0, 10000000.0, 10000.0));
-//    pDb->setEXTMIN(OdGePoint3d(1296000, 228000, 0));
-//    pDb->setEXTMAX(OdGePoint3d(1302700, 238000, 0));
+//    pDb->setEXTMIN(OdGePoint3d(-10000000.0, -10000000.0, -10000.0));
+//    pDb->setEXTMAX(OdGePoint3d(10000000.0, 10000000.0, 10000.0));
+    pDb->setEXTMIN(OdGePoint3d(1296000, 228000, 0));
+    pDb->setEXTMAX(OdGePoint3d(1302700, 238000, 0));
 
     // Set Creation and last update times
     OdDbDate date;
@@ -151,17 +152,17 @@ int OGRWritableDWGDataSource::Create( const char *pszFilename,
 
     pVp = OdDbViewport::createObject();
   
-    pVp->setCenterPoint(OdGePoint3d(5.375, 4.125, 0));
-    pVp->setWidth(14.63);
-    pVp->setHeight(9.0);
+//    pVp->setCenterPoint(OdGePoint3d(5.375, 4.125, 0));
+//    pVp->setWidth(14.63);
+//    pVp->setHeight(9.0);
 
-//    pVp->setViewTarget(OdGePoint3d(0, 0, 0));
-//    pVp->setViewDirection(OdGeVector3d(0, 0, 1));
-//    pVp->setViewHeight(9.0);
+    pVp->setCenterPoint(OdGePoint3d(1300000, 233000, 0));
+    pVp->setWidth(10000);
+    pVp->setHeight(10000);
 
-    pVp->setViewTarget(OdGePoint3d(130000, 235000, 0));
+    pVp->setViewTarget(OdGePoint3d(0, 0, 0));
     pVp->setViewDirection(OdGeVector3d(0, 0, 1));
-    pVp->setViewHeight(9000.0);
+    pVp->setViewHeight(9.0);
 
     pVp->setLensLength(50.0);
     pVp->setViewCenter(OdGePoint2d(5.375, 4.125));
@@ -191,12 +192,14 @@ int OGRWritableDWGDataSource::Create( const char *pszFilename,
     vPortRec->setCenterPoint(OdGePoint2d(11.26, 4.5));
     vPortRec->setWidth(22.53);
     vPortRec->setHeight(9.);
+#endif
   
     OdDbCirclePtr pCircle = OdDbCircle::createObject();
-    pCircle->setRadius(1.0);
+    pCircle->setCenter( OdGePoint3d(1300000, 233000, 0) );
+    pCircle->setRadius(3000);
     pCircle->setLayer(newLayerId, false);
     pPs->appendOdDbEntity(pCircle);
-#endif
+
     return TRUE;
 }
 
