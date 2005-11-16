@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/11/16 01:59:06  fwarmerdam
+ * minor updates
+ *
  * Revision 1.4  2005/11/15 23:23:38  fwarmerdam
  * update extents, preliminary point support
  *
@@ -125,11 +128,20 @@ OGRWritableDWGDataSource::~OGRWritableDWGDataSource()
         pVm->setWidth( sExtent.MaxX - sExtent.MinX );
         pVm->setHeight( sExtent.MaxY - sExtent.MinY );
     }
-    catch( ... )
+    catch( OdError& e )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Catch exception from resetting extents." );
+                  "resetting extents:%s", 
+                  (const char *) e.description() );
     }
+
+/* -------------------------------------------------------------------- */
+/*      Release all pointer references.                                 */
+/* -------------------------------------------------------------------- */
+    pVp->release();
+    pVm->release();
+    pPs->release();
+    pMs->release();
         
 /* -------------------------------------------------------------------- */
 /*      Write out file.                                                 */
@@ -138,10 +150,11 @@ OGRWritableDWGDataSource::~OGRWritableDWGDataSource()
     {
         pDb->writeFile(&fb, fileType, outVer, true);
     }
-    catch( ... )
+    catch( OdError& e )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Catch exception from writeFile" );
+                  "writeFile:%s", 
+                  (const char *) e.description() );
     }
 
     CSLDestroy( papszOptions );
@@ -177,7 +190,7 @@ int OGRWritableDWGDataSource::Create( const char *pszFilename,
     odDbSetTDUUPDATE(*pDb, date);
 
     pDb->setTILEMODE(1);  // 0 for paperspace, 1 for modelspace
-    pDb->newRegApp("ODA");
+//    pDb->newRegApp("ODA");
 
 /* -------------------------------------------------------------------- */
 /*      paper space viewport.                                           */
