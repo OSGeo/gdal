@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/11/16 01:59:06  fwarmerdam
+ * minor updates
+ *
  * Revision 1.3  2005/11/15 23:23:38  fwarmerdam
  * update extents, preliminary point support
  *
@@ -251,10 +254,15 @@ OGRErr OGRWritableDWGLayer::CreateFeature( OGRFeature *poFeature )
       {
           OGRPoint *poOGRPoint = (OGRPoint *) poGeom;
           OdDbPointPtr pPoint = OdDbPoint::createObject();
- 
+          OdCmColor oColor;
+          
           pPoint->setPosition( 
               OdGePoint3d(poOGRPoint->getX(), poOGRPoint->getY(), 
                           poOGRPoint->getZ() ) );
+
+          pPoint->setThickness( 1.0 );
+          oColor.setRGB( 255, 0, 0 );
+          pPoint->setColor( oColor );
 
           pPoint->setLayer( hLayerId, false );
           poDS->pMs->appendOdDbEntity( pPoint );
