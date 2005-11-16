@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.22  2005/11/16 18:30:49  fwarmerdam
+#  Fixed round off issue with output file size.
+#
 #  Revision 1.21  2005/08/18 15:45:15  fwarmerdam
 #  Added the -createonly switch.
 #
@@ -437,8 +440,8 @@ if __name__ == '__main__':
     if t_fh is None:
         geotransform = [ulx, psize_x, 0, uly, 0, psize_y]
 
-        xsize = int((lrx - ulx) / geotransform[1])
-        ysize = int((lry - uly) / geotransform[5])
+        xsize = int((lrx - ulx) / geotransform[1] + 0.5)
+        ysize = int((lry - uly) / geotransform[5] + 0.5)
 
         if separate != 0:
             bands = len(file_infos)
