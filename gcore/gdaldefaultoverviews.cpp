@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/11/17 22:02:32  fwarmerdam
+ * avoid overwriting existing .aux file, overview filename now CPLString
+ *
  * Revision 1.16  2005/10/14 21:11:28  fwarmerdam
  * avoid all-bands test for imagine files
  *
@@ -93,7 +96,6 @@ GDALDefaultOverviews::GDALDefaultOverviews()
 {
     poDS = NULL;
     poODS = NULL;
-    pszOvrFilename = NULL;
     bOvrIsAux = FALSE;
 }
 
@@ -110,7 +112,6 @@ GDALDefaultOverviews::~GDALDefaultOverviews()
         GDALClose( poODS );
         poODS = NULL;
     }
-    CPLFree( pszOvrFilename );
 }
 
 /************************************************************************/
@@ -144,28 +145,26 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
     if( pszBasename == NULL )
         pszBasename = poDS->GetDescription();
 
-    CPLFree( pszOvrFilename );
-    pszOvrFilename = (char *) CPLMalloc(strlen(pszBasename)+5);
     if( bNameIsOVR )
-        strcpy( pszOvrFilename, pszBasename );
+        osOvrFilename = pszBasename;
     else
-        sprintf( pszOvrFilename, "%s.ovr", pszBasename );
+        osOvrFilename.Printf( "%s.ovr", pszBasename );
 
-    bExists = VSIStatL( pszOvrFilename, &sStatBuf ) == 0;
+    bExists = VSIStatL( osOvrFilename, &sStatBuf ) == 0;
 
 #if !defined(WIN32)
     if( !bNameIsOVR && !bExists )
     {
-        sprintf( pszOvrFilename, "%s.OVR", pszBasename );
-        bExists = VSIStatL( pszOvrFilename, &sStatBuf ) == 0;
+        osOvrFilename.Printf( "%s.OVR", pszBasename );
+        bExists = VSIStatL( osOvrFilename, &sStatBuf ) == 0;
         if( !bExists )
-            sprintf( pszOvrFilename, "%s.ovr", pszBasename );
+            osOvrFilename.Printf( "%s.ovr", pszBasename );
     }
 #endif
 
     if( bExists )
     {
-        poODS = (GDALDataset *) GDALOpen( pszOvrFilename, poDS->GetAccess() );
+        poODS = (GDALDataset *) GDALOpen( osOvrFilename, poDS->GetAccess() );
     }
 
 /* -------------------------------------------------------------------- */
@@ -180,8 +179,7 @@ void GDALDefaultOverviews::Initialize( GDALDataset *poDSIn,
         if( poODS )
         {
             bOvrIsAux = TRUE;
-            CPLFree( pszOvrFilename );
-            pszOvrFilename = CPLStrdup(poODS->GetDescription());
+            osOvrFilename = poODS->GetDescription();
         }
     }
 }
@@ -290,9 +288,12 @@ GDALDefaultOverviews::BuildOverviews(
         bOvrIsAux = CSLTestBoolean(CPLGetConfigOption( "USE_RRD", "NO" ));
         if( bOvrIsAux )
         {
-            CPLFree( pszOvrFilename );
-            pszOvrFilename = 
-                CPLStrdup(CPLResetExtension(poDS->GetDescription(),"aux"));
+            VSIStatBufL sStatBuf;
+
+            osOvrFilename = CPLResetExtension(poDS->GetDescription(),"aux");
+
+            if( VSIStatL( osOvrFilename, &sStatBuf ) == 0 )
+                osOvrFilename.Printf( "%s.aux", poDS->GetDescription() );
         }
     }
 
@@ -313,18 +314,15 @@ GDALDefaultOverviews::BuildOverviews(
 /*      If a basename is provided, use it to override the internal      */
 /*      overview filename.                                              */
 /* -------------------------------------------------------------------- */
-    if( pszBasename == NULL && pszOvrFilename == NULL )
+    if( pszBasename == NULL && osOvrFilename.length() == 0  )
         pszBasename = poDS->GetDescription();
 
     if( pszBasename != NULL )
     {
-        CPLFree( pszOvrFilename );
-        pszOvrFilename = (char *) CPLMalloc(strlen(pszBasename)+5);
-        
         if( bOvrIsAux )
-            sprintf( pszOvrFilename, "%s.aux", pszBasename );
+            osOvrFilename.Printf( "%s.aux", pszBasename );
         else
-            sprintf( pszOvrFilename, "%s.ovr", pszBasename );
+            osOvrFilename.Printf( "%s.ovr", pszBasename );
     }
 
 /* -------------------------------------------------------------------- */
@@ -374,7 +372,7 @@ GDALDefaultOverviews::BuildOverviews(
 /* -------------------------------------------------------------------- */
     if( bOvrIsAux )
     {
-        eErr = HFAAuxBuildOverviews( pszOvrFilename, poDS, &poODS,
+        eErr = HFAAuxBuildOverviews( osOvrFilename, poDS, &poODS,
                                      nBands, panBandList,
                                      nNewOverviews, panNewOverviewList, 
                                      pszResampling, 
@@ -401,13 +399,13 @@ GDALDefaultOverviews::BuildOverviews(
             poODS = NULL;
         }
 
-        eErr = GTIFFBuildOverviews( pszOvrFilename, nBands, pahBands, 
+        eErr = GTIFFBuildOverviews( osOvrFilename, nBands, pahBands, 
                                     nNewOverviews, panNewOverviewList, 
                                     pszResampling, pfnProgress, pProgressData );
 
         if( eErr == CE_None )
         {
-            poODS = (GDALDataset *) GDALOpen( pszOvrFilename, GA_Update );
+            poODS = (GDALDataset *) GDALOpen( osOvrFilename, GA_Update );
             if( poODS == NULL )
                 eErr = CE_Failure;
         }
