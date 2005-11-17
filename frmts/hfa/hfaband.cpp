@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2005/11/17 20:50:45  fwarmerdam
+ * Fixed case where not all of red, green and blue columns
+ * are available for a color descriptor table.
+ *
  * Revision 1.48  2005/10/12 18:23:01  fwarmerdam
  * default to 64x64 blocks on overviews regardless of base layer
  *
@@ -1408,21 +1412,24 @@ CPLErr HFABand::GetPCT( int * pnColors,
                 poColumnEntry = poNode->GetNamedChild("Descriptor_Table.Blue");
             else if( iColumn == 3 ) {
                 poColumnEntry = poNode->GetNamedChild("Descriptor_Table.Opacity");
-		if( poColumnEntry == NULL ) {
-                    double  *pdAlpha = apadfPCT[iColumn];
-                    for( i = 0; i < nPCTColors; i++ )
-                        pdAlpha[i] = 1.0;
-                    continue;
-		}
 	    }
 
-            VSIFSeekL( psInfo->fp, poColumnEntry->GetIntField("columnDataPtr"),
-                       SEEK_SET );
-            VSIFReadL( apadfPCT[iColumn], sizeof(double), nPCTColors,
-                       psInfo->fp);
-
-            for( i = 0; i < nPCTColors; i++ )
-                HFAStandard( 8, apadfPCT[iColumn] + i );
+            if( poColumnEntry == NULL )
+            {
+                double  *pdCol = apadfPCT[iColumn];
+                for( i = 0; i < nPCTColors; i++ )
+                    pdCol[i] = 1.0;
+            }
+            else
+            {
+                VSIFSeekL( psInfo->fp, poColumnEntry->GetIntField("columnDataPtr"),
+                           SEEK_SET );
+                VSIFReadL( apadfPCT[iColumn], sizeof(double), nPCTColors,
+                           psInfo->fp);
+                
+                for( i = 0; i < nPCTColors; i++ )
+                    HFAStandard( 8, apadfPCT[iColumn] + i );
+            }
         }
     }
 
