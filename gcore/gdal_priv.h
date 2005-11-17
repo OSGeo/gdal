@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.70  2005/11/17 22:02:32  fwarmerdam
+ * avoid overwriting existing .aux file, overview filename now CPLString
+ *
  * Revision 1.69  2005/10/13 01:19:57  fwarmerdam
  * moved GDALMultiDomainMetadata into GDALMajorObject
  *
@@ -203,7 +206,7 @@ class CPL_DLL GDALDefaultOverviews
     GDALDataset *poDS;
     GDALDataset *poODS;
     
-    char        *pszOvrFilename;
+    CPLString  osOvrFilename;
 
     int        bOvrIsAux;
     
