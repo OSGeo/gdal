@@ -83,7 +83,9 @@ py-target:	py-module;
 endif
 
 swig-target:
+ifneq ($(BINDINGS),)
 	(cd swig; $(MAKE) build)
+endif
 
 clean:	lclean
 	(cd port; $(MAKE) clean)
@@ -92,7 +94,9 @@ clean:	lclean
 	(cd frmts; $(MAKE) clean)
 	(cd alg; $(MAKE) clean)
 	(cd apps; $(MAKE) clean)
+ifneq ($(BINDINGS),)
 	(cd swig; $(MAKE) clean)
+endif
 	(cd pymod; $(MAKE) clean)
 
 py-module:	lib-target
@@ -153,7 +157,9 @@ install-actions: install-lib
 ifneq ($(PYTHON),no)
 	(cd pymod; $(MAKE) install)
 endif
+ifneq ($(BINDINGS),)
 	(cd swig; $(MAKE) install)
+endif
 	for f in data/*.* ; do $(INSTALL_DATA) $$f $(INST_DATA) ; done
 	$(LIBTOOL_FINISH) $(INST_LIB)
 
