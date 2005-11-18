@@ -15,7 +15,7 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) $(HDF4_INCLUDE) -I. $(CPPFLAGS)
 default:	$(OBJ)
 
 clean:
-	$(RM) *.o *.a
+	$(RM) *.o *.a $(O_OBJ)
 
 install-obj:    $(SUBLIBS) $(O_OBJ)
 
