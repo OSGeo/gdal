@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/11/18 23:40:53  fwarmerdam
+ * enable support with GEOS_C_API
+ *
  * Revision 1.5  2005/11/02 16:24:57  fwarmerdam
  * Implement C API based version of polygonize, and fix support for C++ API.
  *
@@ -57,10 +60,14 @@
 #include "ili1readerp.h"
 
 #ifdef HAVE_GEOS
-#  include "geos/version.h"
-#  if GEOS_VERSION_MAJOR*100+GEOS_VERSION_MINOR*10+GEOS_VERSION_PATCH >= 210
-#    include "geos/opPolygonize.h"
+#  ifdef GEOS_C_API
 #    define POLYGONIZE_AREAS
+#  else
+#    include "geos/version.h"
+#    if GEOS_VERSION_MAJOR*100+GEOS_VERSION_MINOR*10+GEOS_VERSION_PATCH >= 210
+#      include "geos/opPolygonize.h"
+#      define POLYGONIZE_AREAS
+#    endif
 #  endif
 #endif
 
@@ -415,16 +422,17 @@ OGRMultiPolygon* ILI1Reader::Polygonize( OGRGeometryCollection* poLines )
 
 #if defined(POLYGONIZE_AREAS) && defined(GEOS_C_API)
     GEOSGeom *ahInGeoms;
+    int       i;
     
     ahInGeoms = (GEOSGeom *) CPLCalloc(sizeof(void*),poLines->getNumGeometries());
-    for( int i = 0; i < poLines->getNumGeometries(); i++ )
+    for( i = 0; i < poLines->getNumGeometries(); i++ )
         ahInGeoms[i] = poLines->getGeometryRef(i)->exportToGEOS();
 
     
     GEOSGeom hResultGeom = GEOSPolygonize( ahInGeoms, 
                                            poLines->getNumGeometries() );
 
-    for( int i = 0; i < poLines->getNumGeometries(); i++ )
+    for( i = 0; i < poLines->getNumGeometries(); i++ )
         GEOSGeom_destroy( ahInGeoms[i] );
     CPLFree( ahInGeoms );
 
