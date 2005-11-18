@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/11/18 21:26:25  fwarmerdam
+ * added geometry collection type support
+ *
  * Revision 1.4  2005/11/16 01:59:06  fwarmerdam
  * minor updates
  *
@@ -154,19 +157,32 @@ OGRWritableDWGLayer::OGRWritableDWGLayer( const char *pszLayerName,
     hLayerId = pLayers->add(pLayer);
 
 /* -------------------------------------------------------------------- */
-/*      Create block                                                    */
+/*      Check for a layer color.                                        */
 /* -------------------------------------------------------------------- */
-#ifdef notdef
-    OdDbBlockTablePtr pTable = pDb->getBlockTableId().safeOpenObject(OdDb::kForWrite);
-    OdDbBlockTableRecordPtr pEntry = OdDbBlockTableRecord::createObject();
-  
-    // Block must have a name before adding it to the table.
-    pEntry->setName( pszLayerName );
-    
-    // Add the object to the table.
-    hBlockId = pTable->add(pEntry);
-#endif
-    
+    const char *pszColor = CSLFetchNameValue(papszOptionsIn,"COLOR");
+
+    if( pszColor != NULL )
+    {
+        char **papszTokens = 
+            CSLTokenizeStringComplex( pszColor, ",", FALSE, FALSE );
+        
+        if( CSLCount( papszTokens ) != 3 )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "COLOR=%s setting not parsable.  Should be 'red,green,blue'.", 
+                      pszColor );
+        }
+        else
+        {
+            OdCmColor oColor;
+
+            oColor.setRGB( atoi(papszTokens[0]), 
+                           atoi(papszTokens[1]), 
+                           atoi(papszTokens[2]) );
+            pLayer->setColor( oColor );
+        }
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create the starting OGRFeatureDefn.                             */
 /* -------------------------------------------------------------------- */
@@ -234,35 +250,22 @@ OGRErr OGRWritableDWGLayer::CreateField( OGRFieldDefn *poField,
 }
 
 /************************************************************************/
-/*                           CreateFeature()                            */
+/*                            WriteEntity()                             */
 /************************************************************************/
 
-OGRErr OGRWritableDWGLayer::CreateFeature( OGRFeature *poFeature )
+OGRErr OGRWritableDWGLayer::WriteEntity( OGRGeometry *poGeom )
 
 {
-    OGRGeometry *poGeom = poFeature->GetGeometryRef();
-//    OdDbBlockTableRecordPtr pBlock = hBlockId.safeOpenObject(OdDb::kForWrite);
-
-    if( poGeom == NULL )
-        return OGRERR_FAILURE;
-
-    poDS->ExtendExtent( poGeom );
-
     switch( wkbFlatten(poGeom->getGeometryType()) )
     {
       case wkbPoint:
       {
           OGRPoint *poOGRPoint = (OGRPoint *) poGeom;
           OdDbPointPtr pPoint = OdDbPoint::createObject();
-          OdCmColor oColor;
           
           pPoint->setPosition( 
               OdGePoint3d(poOGRPoint->getX(), poOGRPoint->getY(), 
                           poOGRPoint->getZ() ) );
-
-          pPoint->setThickness( 1.0 );
-          oColor.setRGB( 255, 0, 0 );
-          pPoint->setColor( oColor );
 
           pPoint->setLayer( hLayerId, false );
           poDS->pMs->appendOdDbEntity( pPoint );
@@ -295,17 +298,70 @@ OGRErr OGRWritableDWGLayer::CreateFeature( OGRFeature *poFeature )
   
           p2dPl->setLayer( hLayerId, false );
 
-//          pBlock->appendOdDbEntity(p2dPl);
           poDS->pMs->appendOdDbEntity( p2dPl );
           return OGRERR_NONE;
-          break;
       }
 
       case wkbPolygon:
-        return OGRERR_FAILURE;
+      {
+          OGRPolygon *poPoly = (OGRPolygon *) poGeom;
+          int iRing;
+          OGRErr eErr;
+
+          for( iRing = -1; iRing < poPoly->getNumInteriorRings(); iRing++ )
+          {
+              OGRLinearRing *poRing;
+
+              if( iRing == -1 )
+                  poRing = poPoly->getExteriorRing();
+              else
+                  poRing = poPoly->getInteriorRing( iRing );
+
+              eErr = WriteEntity( poRing );
+              if( eErr != OGRERR_NONE )
+                  return eErr;
+          }
+          return OGRERR_NONE;
+      }
+
+      case wkbGeometryCollection:
+      case wkbMultiPolygon:
+      case wkbMultiPoint:
+      case wkbMultiLineString:
+      {
+          OGRGeometryCollection *poColl = (OGRGeometryCollection *) poGeom;
+          int iSubGeom;
+          OGRErr eErr;
+
+          for( iSubGeom=0; iSubGeom < poColl->getNumGeometries(); iSubGeom++ )
+          {
+              OGRGeometry *poGeom = poColl->getGeometryRef( iSubGeom );
+              
+              eErr = WriteEntity( poGeom );
+              if( eErr != OGRERR_NONE )
+                  return eErr;
+          }
+          return OGRERR_NONE;
+      }
 
       default:
         return OGRERR_FAILURE;
     }
-    
+}
+
+/************************************************************************/
+/*                           CreateFeature()                            */
+/************************************************************************/
+
+OGRErr OGRWritableDWGLayer::CreateFeature( OGRFeature *poFeature )
+
+{
+    OGRGeometry *poGeom = poFeature->GetGeometryRef();
+
+    if( poGeom == NULL )
+        return OGRERR_FAILURE;
+
+    poDS->ExtendExtent( poGeom );
+
+    return WriteEntity( poGeom );
 }

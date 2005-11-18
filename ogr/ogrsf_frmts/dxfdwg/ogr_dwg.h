@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/11/18 21:26:25  fwarmerdam
+ * added geometry collection type support
+ *
  * Revision 1.4  2005/11/15 23:23:38  fwarmerdam
  * update extents, preliminary point support
  *
@@ -206,12 +209,13 @@ class OGRWritableDWGLayer : public OGRLayer
   protected:
     OGRFeatureDefn     *poFeatureDefn;
     OdDbObjectId        hLayerId;
-//    OdDbObjectId        hBlockId;
     OdDbDatabasePtr     pDb;
 
     OGRWritableDWGDataSource    *poDS;
 
     char              **papszOptions;
+
+    OGRErr       WriteEntity( OGRGeometry * );
 
   public:
                         OGRWritableDWGLayer( const char *pszLayerName, 
