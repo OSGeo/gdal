@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/11/18 17:35:48  fwarmerdam
+ * Use rounding to improve calculation of text parameters in
+ * DGNCreateTextElem() as per bug:
+ * http://bugzilla.maptools.org/show_bug.cgi?id=1203
+ *
  * Revision 1.22  2005/11/18 17:16:35  fwarmerdam
  * added TextNode implementation from Ilya Beylin
  *
@@ -1456,10 +1461,10 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
     psCore->raw_data[36] = (unsigned char) nFontId;
     psCore->raw_data[37] = (unsigned char) nJustification;
 
-    nIntValue = (int) (dfLengthMult * 1000.0 / (psDGN->scale * 6.0));
+    nIntValue = (int) round(dfLengthMult * 1000.0 / (psDGN->scale * 6.0));
     DGN_WRITE_INT32( nIntValue, psCore->raw_data + 38 );
     
-    nIntValue = (int) (dfHeightMult * 1000.0 / (psDGN->scale * 6.0));
+    nIntValue = (int) round(dfHeightMult * 1000.0 / (psDGN->scale * 6.0));
     DGN_WRITE_INT32( nIntValue, psCore->raw_data + 42 );
 
     if( psDGN->dimension == 2 )
