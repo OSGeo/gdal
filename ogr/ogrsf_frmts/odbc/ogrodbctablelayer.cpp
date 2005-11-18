@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/11/18 14:32:20  fwarmerdam
+ * added debug message about fid.
+ *
  * Revision 1.7  2005/11/02 21:58:26  fwarmerdam
  * preliminary support for ODBC spatial querying
  *
@@ -115,6 +118,10 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszTableName,
             pszFIDColumn = NULL;
         }
     }
+
+    if( pszFIDColumn != NULL )
+        CPLDebug( "OGR_ODBC", "Using column %s as FID for table %s.",
+                  pszFIDColumn, pszTableName );
 
 /* -------------------------------------------------------------------- */
 /*      Have we been provided a geometry column?                        */
