@@ -1,0 +1,56 @@
+<html>
+<head>
+<title>AutoCAD DXF/DWG</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>AutoCAD DXF/DWG</h1>
+
+Writing simple AutoCAD DXF and DWG files is supported.  Reading of DXF and
+DWG files is currently not supported.  The ability to write DXF and DWG
+is only available when OGR is linked against the DWGdirect library provided
+by the <a href="http://www.opendesign.com/">Open Design Alliance</a>.  Note
+that the DWGdirect library is not open source, though the license terms are
+not terribly draconian.  Check the Open Design Alliance web site for details.
+<p>
+
+There are two distinct drivers, DXF for writing AutoCAD ASCII DXF files, 
+and DWG for writing AutoCAD binary DWG files.  However, the data model
+and behavior of both drivers is essentially identical.<p>
+
+The DXF/DWG drivers currently operate in a highly simplified manner when
+writing.  They discard all attributes, and coordinate system information.
+Features are written out as one DXF/DWG entity per simple geometry object.
+For complex geometry objects such as mutli-ring polygons, multipolygons,
+and other geometry collections, a distinct entity is written out for each
+simple geometry subcomponent.  Amoung other things, this means that the
+association between the outer and inner rings of a polygon is lost, 
+as well as the association of different geometries in a geometry collection.<p>
+
+All entities are written out in "model space".  A layer is established for
+each OGR layer written, and the entities attached to the appropriate layer.
+<p>
+
+<h2>Database Creation Options</h2>
+
+<ul>
+<li> <b>VERSION</b>=[12/13/14/15/18]: Set the format version to generate. <p>
+</ul>
+
+<h2>Layer Creation Options</h2>
+
+<ul>
+<li> <b>COLOR=r,g,b</b>: Set the color of a layer.<p>
+</ul>
+
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://www.opendesign.com/">Open Design Alliance</a> (home of 
+DWGdirect library).<p>
+</ul>
+
+</body>
+</html>
