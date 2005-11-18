@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/11/18 16:50:46  fwarmerdam
+ * added ODBC_OGR_FID config variable
+ *
  * Revision 1.12  2005/09/21 00:56:55  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -187,6 +190,24 @@ CPLErr OGRODBCLayer::BuildFeatureDefn( const char *pszLayerName,
         poFeatureDefn->AddFieldDefn( &oField );
         panFieldOrdinals[poFeatureDefn->GetFieldCount() - 1] = iCol+1;
     }
+
+/* -------------------------------------------------------------------- */
+/*      If we don't already have an FID, check if there is a special    */
+/*      FID named column available.                                     */
+/* -------------------------------------------------------------------- */
+    if( pszFIDColumn == NULL )
+    {
+        const char *pszOGR_FID = CPLGetConfigOption("ODBC_OGR_FID","OGR_FID");
+        if( poFeatureDefn->GetFieldIndex( pszOGR_FID ) != -1 )
+            pszFIDColumn = CPLStrdup(pszOGR_FID);
+    }
+
+    if( pszFIDColumn != NULL )
+        CPLDebug( "OGR_ODBC", "Using column %s as FID for table %s.",
+                  pszFIDColumn, poFeatureDefn->GetName() );
+    else
+        CPLDebug( "OGR_ODBC", "Table %s has no identified FID column.",
+                  poFeatureDefn->GetName() );
 
     return CE_None;
 }
