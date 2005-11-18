@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/11/18 14:40:10  fwarmerdam
+ * More debug info.
+ *
  * Revision 1.9  2005/11/18 14:36:11  fwarmerdam
  * More debug info on FID.
  *
@@ -119,6 +122,9 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszTableName,
         {
             CPLFree( pszFIDColumn );
             pszFIDColumn = NULL;
+
+            CPLDebug( "OGR_ODBC", "Table %s has multiple primary key fields, ignoring them all.", 
+                      pszTableName );
         }
     }
 
