@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2005/11/18 17:09:09  fwarmerdam
+ * types can go up to 128.
+ *
  * Revision 1.11  2003/05/21 03:42:01  warmerda
  * Expanded tabs
  *
@@ -97,10 +100,10 @@ int main( int argc, char ** argv )
     DGNElemCore *psElement;
     const char  *pszFilename = NULL;
     int         bSummary = FALSE, iArg, bRaw = FALSE, bReportExtents = FALSE;
-    char        achRaw[64];
+    char        achRaw[128];
     double      dfSFXMin=0.0, dfSFXMax=0.0, dfSFYMin=0.0, dfSFYMax=0.0;
 
-    memset( achRaw, 0, 64 );
+    memset( achRaw, 0, 128 );
 
     for( iArg = 1; iArg < argc; iArg++ )
     {
@@ -118,7 +121,7 @@ int main( int argc, char ** argv )
         }
         else if( strcmp(argv[iArg],"-r") == 0 && iArg < argc-1 )
         {
-            achRaw[MAX(0,MIN(63,atoi(argv[iArg+1])))] = 1;
+            achRaw[MAX(0,MIN(127,atoi(argv[iArg+1])))] = 1;
             bRaw = TRUE;
             iArg++;
         }
@@ -149,6 +152,9 @@ int main( int argc, char ** argv )
         while( (psElement=DGNReadElement(hDGN)) != NULL )
         {
             DGNDumpElement( hDGN, psElement, stdout );
+
+            CPLAssert( psElement->type >= 0 && psElement->type < 128 );
+
             if( achRaw[psElement->type] != 0 )
                 DGNDumpRawElement( hDGN, psElement, stdout );
 
