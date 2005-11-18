@@ -52,6 +52,8 @@ Release ?.??
  o Treat the most recently read color table as the global color table, 
    instead of just the first one encountered.
 
+ o Added Text Node implementation from Ilya Beylin. 
+
 
 Release 1.10
 ------------
