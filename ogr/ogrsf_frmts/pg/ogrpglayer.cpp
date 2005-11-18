@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/11/18 12:42:55  dron
+ * Handle varchar arrays when reading feature definition fields.
+ *
  * Revision 1.24  2005/10/24 23:50:16  fwarmerdam
  * fixed extraction of geomType in GeometryToHex()
  *
@@ -378,7 +381,8 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
             CPLFree( panList );
             CSLDestroy( papszTokens );
         }
-        else if( poFeatureDefn->GetFieldDefn(iOGRField)->GetType() == OFTRealList)
+        
+        else if( poFeatureDefn->GetFieldDefn(iOGRField)->GetType() == OFTRealList )
         {
             char **papszTokens;
             int nCount, i;
@@ -397,6 +401,22 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
             CPLFree( padfList );
             CSLDestroy( papszTokens );
         }
+
+        else if( poFeatureDefn->GetFieldDefn(iOGRField)->GetType() == OFTStringList )
+        {
+            char **papszTokens;
+
+            papszTokens = CSLTokenizeStringComplex( 
+                PQgetvalue( hCursorResult, iRecord, iField ),
+                "{,}", FALSE, FALSE );
+
+            if ( papszTokens )
+            {
+                poFeature->SetField( iOGRField, papszTokens );
+                CSLDestroy( papszTokens );
+            }
+        }
+
         else
         {
             poFeature->SetField( iOGRField, 

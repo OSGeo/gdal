@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2005/11/18 12:42:55  dron
+ * Handle varchar arrays when reading feature definition fields.
+ *
  * Revision 1.45  2005/10/24 23:50:50  fwarmerdam
  * moved bUseCopy test into layer on creation of first feature
  *
@@ -353,6 +356,10 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
         if( EQUAL(pszType,"varchar") || EQUAL(pszType,"text") )
         {
             oField.SetType( OFTString );
+        }
+        else if( EQUAL(pszFormatType,"character varying[]") )
+        {
+            oField.SetType( OFTStringList );
         }
         else if( EQUAL(pszType,"bpchar") )
         {
