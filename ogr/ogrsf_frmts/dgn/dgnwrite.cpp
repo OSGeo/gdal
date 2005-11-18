@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2005/11/18 22:45:01  fwarmerdam
+ * Avoid use of round(), not available on win32.
+ *
  * Revision 1.23  2005/11/18 17:35:48  fwarmerdam
  * Use rounding to improve calculation of text parameters in
  * DGNCreateTextElem() as per bug:
@@ -1461,10 +1464,10 @@ DGNCreateTextElem( DGNHandle hDGN, const char *pszText,
     psCore->raw_data[36] = (unsigned char) nFontId;
     psCore->raw_data[37] = (unsigned char) nJustification;
 
-    nIntValue = (int) round(dfLengthMult * 1000.0 / (psDGN->scale * 6.0));
+    nIntValue = (int) (dfLengthMult * 1000.0 / (psDGN->scale * 6.0) + 0.5);
     DGN_WRITE_INT32( nIntValue, psCore->raw_data + 38 );
     
-    nIntValue = (int) round(dfHeightMult * 1000.0 / (psDGN->scale * 6.0));
+    nIntValue = (int) (dfHeightMult * 1000.0 / (psDGN->scale * 6.0) + 0.5);
     DGN_WRITE_INT32( nIntValue, psCore->raw_data + 42 );
 
     if( psDGN->dimension == 2 )
