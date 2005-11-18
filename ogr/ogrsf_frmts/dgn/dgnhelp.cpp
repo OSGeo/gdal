@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/11/18 17:16:35  fwarmerdam
+ * added TextNode implementation from Ilya Beylin
+ *
  * Revision 1.24  2004/09/15 16:06:19  fwarmerdam
  * Report 3D Cell header better.
  *
@@ -811,6 +814,34 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
                    psText->length_mult,
                    psText->height_mult,
                    psText->string );
+      }
+      break;
+
+      case DGNST_TEXT_NODE:
+      {
+          DGNElemTextNode *psNode = (DGNElemTextNode *) psElement;
+
+          fprintf( fp, 
+                   "  totlength=%d, num_texts=%d\n",
+                   psNode->totlength,
+                   psNode->numelems );
+          fprintf( fp, 
+                   "  origin=(%.5f,%.5f), rotation=%f\n"
+                   "  font=%d, just=%d, length_mult=%g, height_mult=%g\n",
+                   psNode->origin.x, 
+                   psNode->origin.y, 
+                   psNode->rotation,
+                   psNode->font_id,
+                   psNode->justification,
+                   psNode->length_mult,
+                   psNode->height_mult );
+          fprintf( fp, 
+		   "  max_length=%d, used=%d,",
+		   psNode->max_length, 
+		   psNode->max_used );
+          fprintf( fp, 
+		   "  node_number=%d\n", 
+		   psNode->node_number );
       }
       break;
 
