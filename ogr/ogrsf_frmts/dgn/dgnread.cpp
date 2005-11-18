@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2005/11/18 17:43:12  fwarmerdam
+ * Added text node support in DGNGetRawExtents().
+ *
  * Revision 1.47  2005/11/18 17:16:35  fwarmerdam
  * added TextNode implementation from Ilya Beylin
  *
@@ -301,6 +304,7 @@ DGNGetRawExtents( DGNInfo *psDGN, int nType, unsigned char *pabyRawData,
       case DGNT_ELLIPSE:
       case DGNT_ARC:
       case DGNT_TEXT:
+      case DGNT_TEXT_NODE:
       case DGNT_COMPLEX_CHAIN_HEADER:
       case DGNT_COMPLEX_SHAPE_HEADER:
       case DGNT_CONE:
