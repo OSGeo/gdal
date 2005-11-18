@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/11/18 16:50:46  fwarmerdam
+ * added ODBC_OGR_FID config variable
+ *
  * Revision 1.10  2005/11/18 14:40:10  fwarmerdam
  * More debug info.
  *
@@ -127,13 +130,6 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszTableName,
                       pszTableName );
         }
     }
-
-    if( pszFIDColumn != NULL )
-        CPLDebug( "OGR_ODBC", "Using column %s as FID for table %s.",
-                  pszFIDColumn, pszTableName );
-    else
-        CPLDebug( "OGR_ODBC", "Table %s has no identified FID column.",
-                  pszTableName );
 
 /* -------------------------------------------------------------------- */
 /*      Have we been provided a geometry column?                        */
