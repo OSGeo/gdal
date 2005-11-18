@@ -28,6 +28,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2005/11/18 22:31:01  fwarmerdam
+ * Fixed problem with add_offset=0 "pixel-is-point" datasets (bug 796).
+ * Added support for attaching scale and offset to band.
+ *
  * Revision 1.2  2005/05/05 15:54:49  fwarmerdam
  * PAM Enabled
  *
@@ -276,6 +280,17 @@ GDALDataset *GMTDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = nm[1];
 
 /* -------------------------------------------------------------------- */
+/*      Fetch "z" attributes scale_factor, add_offset, and              */
+/*      node_offset.                                                    */
+/* -------------------------------------------------------------------- */
+    double scale_factor=1.0, add_offset=0.0;
+    int node_offset = 1;
+
+    nc_get_att_double( cdfid, z_id, "scale_factor", &scale_factor );
+    nc_get_att_double( cdfid, z_id, "add_offset", &add_offset );
+    nc_get_att_int( cdfid, z_id, "node_offset", &node_offset );
+
+/* -------------------------------------------------------------------- */
 /*      Get x/y range information.                                      */
 /* -------------------------------------------------------------------- */
     int x_range_id, y_range_id;
@@ -288,14 +303,33 @@ GDALDataset *GMTDataset::Open( GDALOpenInfo * poOpenInfo )
         nc_get_vara_double( cdfid, x_range_id, start, edge, x_range );
         nc_get_vara_double( cdfid, y_range_id, start, edge, y_range );
 
-        poDS->adfGeoTransform[0] = x_range[0];
-        poDS->adfGeoTransform[1] = 
-            (x_range[1] - x_range[0]) / poDS->nRasterXSize;
-        poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = y_range[1];
-        poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = 
-            (y_range[0] - y_range[1]) / poDS->nRasterYSize;
+        // Pixel is area
+        if( node_offset == 1 )
+        {
+            poDS->adfGeoTransform[0] = x_range[0];
+            poDS->adfGeoTransform[1] = 
+                (x_range[1] - x_range[0]) / poDS->nRasterXSize;
+            poDS->adfGeoTransform[2] = 0.0;
+            poDS->adfGeoTransform[3] = y_range[1];
+            poDS->adfGeoTransform[4] = 0.0;
+            poDS->adfGeoTransform[5] = 
+                (y_range[0] - y_range[1]) / poDS->nRasterYSize;
+        }
+
+        // Pixel is point - offset by half pixel. 
+        else /* node_offset == 0 */ 
+        {
+            poDS->adfGeoTransform[1] = 
+                (x_range[1] - x_range[0]) / (poDS->nRasterXSize-1);
+            poDS->adfGeoTransform[0] = 
+                x_range[0] - poDS->adfGeoTransform[1]*0.5;
+            poDS->adfGeoTransform[2] = 0.0;
+            poDS->adfGeoTransform[4] = 0.0;
+            poDS->adfGeoTransform[5] = 
+                (y_range[0] - y_range[1]) / (poDS->nRasterYSize-1);
+            poDS->adfGeoTransform[3] = 
+                y_range[1] - poDS->adfGeoTransform[5]*0.5;
+        }
     }
     else
     {
@@ -312,6 +346,12 @@ GDALDataset *GMTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->nBands = 1;
     poDS->SetBand( 1, new GMTRasterBand( poDS, z_id, 1 ));
+
+    if( scale_factor != 1.0 || add_offset != 0.0 )
+    {
+        poDS->GetRasterBand(1)->SetOffset( add_offset );
+        poDS->GetRasterBand(1)->SetScale( scale_factor );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
