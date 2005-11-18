@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2005/11/18 17:16:35  fwarmerdam
+ * added TextNode implementation from Ilya Beylin
+ *
  * Revision 1.38  2005/04/08 23:36:36  fwarmerdam
  * Fixed DGNJ_CENTER_CENTER value.
  *
@@ -297,6 +300,8 @@ typedef struct {
  *
  * Used for: DGNT_COMPLEX_CHAIN_HEADER(12), DGNT_COMPLEX_SHAPE_HEADER(14),
  *   DGNT_3DSURFACE_HEADER(18) and DGNT_3DSOLID_HEADER(19).
+ *
+ * Compatible with DGNT_TEXT_NODE (7), see DGNAddRawAttrLink()
  */
 
 typedef struct {
@@ -495,6 +500,36 @@ typedef struct {
 
 } DGNElemCone;
 
+
+/** 
+ * Text Node Header. 
+ *
+ * The core.stype code is DGNST_TEXT_NODE.
+ *
+ * Used for DGNT_TEXT_NODE (7).
+ * First fields (up to numelems) are compatible with DGNT_COMPLEX_HEADER (7),
+ * \sa DGNAddRawAttrLink()
+ */
+
+typedef struct {
+  DGNElemCore core;
+
+  int       totlength; 	 	/*!<  Total length of the node
+				      (bytes = totlength * 2 + 38) */
+  int       numelems;    	/*!<  Number of text strings */
+  int       node_number; 	/*!<  text node number */
+  short     max_length;  	/*!<  maximum length allowed, characters */
+  short     max_used;    	/*!<  maximum length used */
+  short	    font_id;     	/*!<  text font used */
+  short     justification; 	/*!<  justification type, see DGNJ_ */
+  long      line_spacing; 	/*!<  spacing between text strings */
+  double    length_mult; 	/*!<  length multiplier */
+  double    height_mult; 	/*!<  height multiplier */
+  double    rotation;    	/*!<  rotation angle (2d)*/
+  DGNPoint  origin;       	/*!<  Snap origin (as defined by user) */
+
+} DGNElemTextNode;
+
 /* -------------------------------------------------------------------- */
 /*      Structure types                                                 */
 /* -------------------------------------------------------------------- */
@@ -534,6 +569,9 @@ typedef struct {
 
 /** DGNElemCore style: Element uses DGNElemCone structure */
 #define DGNST_CONE                12
+
+/** DGNElemCore style: Element uses DGNElemTextNode structure */
+#define DGNST_TEXT_NODE           13
 
 /* -------------------------------------------------------------------- */
 /*      Element types                                                   */

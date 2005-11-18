@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/11/18 17:16:35  fwarmerdam
+ * added TextNode implementation from Ilya Beylin
+ *
  * Revision 1.21  2005/06/22 16:18:38  fwarmerdam
  * Fixed from JeffGIS for cloning DGNST_TAG_SET properly.
  *
@@ -571,6 +574,16 @@ DGNElemCore *DGNCloneElement( DGNHandle hDGNSrc, DGNHandle hDGNDst,
         memcpy( psText, psSrcElement, nSize );
 
         psClone = (DGNElemCore *) psText;
+    }
+    else if( psSrcElement->stype == DGNST_TEXT_NODE )
+    {
+        DGNElemTextNode *psNode;
+
+        psNode = (DGNElemTextNode *) 
+            CPLMalloc(sizeof(DGNElemTextNode));
+        memcpy( psNode, psSrcElement, sizeof(DGNElemTextNode) );
+
+        psClone = (DGNElemCore *) psNode;
     }
     else if( psSrcElement->stype == DGNST_COMPLEX_HEADER )
     {
@@ -2246,7 +2259,8 @@ int DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement,
 /*      If the element is a shape or chain complex header, then we      */
 /*      need to increase the total complex group size appropriately.    */
 /* -------------------------------------------------------------------- */
-    if( psElement->stype == DGNST_COMPLEX_HEADER )
+    if( psElement->stype == DGNST_COMPLEX_HEADER ||
+	psElement->stype == DGNST_TEXT_NODE )  // compatible structures
     {
         DGNElemComplexHeader *psCT = (DGNElemComplexHeader *) psElement;
 

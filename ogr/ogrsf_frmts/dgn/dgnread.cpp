@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2005/11/18 17:16:35  fwarmerdam
+ * added TextNode implementation from Ilya Beylin
+ *
  * Revision 1.46  2004/06/02 15:53:00  warmerda
  * improve divide by zero error checking
  *
@@ -181,6 +184,7 @@ static DGNElemCore *DGNParseTCB( DGNInfo * );
 static DGNElemCore *DGNParseColorTable( DGNInfo * );
 static DGNElemCore *DGNParseTagSet( DGNInfo * );
 
+
 /************************************************************************/
 /*                           DGNGotoElement()                           */
 /************************************************************************/
@@ -267,6 +271,7 @@ int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
     return TRUE;
 }
 
+
 /************************************************************************/
 /*                          DGNGetRawExtents()                          */
 /*                                                                      */
@@ -316,6 +321,7 @@ DGNGetRawExtents( DGNInfo *psDGN, int nType, unsigned char *pabyRawData,
         return FALSE;
     }
 }
+
 
 /************************************************************************/
 /*                        DGNGetElementExtents()                        */
@@ -633,6 +639,48 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       }
       break;
 
+      case DGNT_TEXT_NODE:
+      {
+          DGNElemTextNode *psNode;
+
+          psNode = (DGNElemTextNode *) CPLCalloc(sizeof(DGNElemTextNode),1);
+          psElement = (DGNElemCore *) psNode;
+          psElement->stype = DGNST_TEXT_NODE;
+          DGNParseCore( psDGN, psElement );
+
+          psNode->totlength = psDGN->abyElem[36] + psDGN->abyElem[37] * 256;
+          psNode->numelems  = psDGN->abyElem[38] + psDGN->abyElem[39] * 256;
+
+          psNode->node_number 	= psDGN->abyElem[40] + psDGN->abyElem[41] * 256;
+          psNode->max_length 	= psDGN->abyElem[42];
+          psNode->max_used 	= psDGN->abyElem[43];
+          psNode->font_id	= psDGN->abyElem[44];
+          psNode->justification	= psDGN->abyElem[45];
+          psNode->length_mult = (DGN_INT32( psDGN->abyElem + 50 ))
+              * psDGN->scale * 6.0 / 1000.0;
+          psNode->height_mult = (DGN_INT32( psDGN->abyElem + 54 ))
+              * psDGN->scale * 6.0 / 1000.0;
+
+          if( psDGN->dimension == 2 )
+	    {
+	      psNode->rotation = DGN_INT32( psDGN->abyElem + 58 ) / 360000.0;
+
+	      psNode->origin.x = DGN_INT32( psDGN->abyElem + 62 );
+	      psNode->origin.y = DGN_INT32( psDGN->abyElem + 66 );
+	    }
+	  else
+	    {
+              /* leave quaternion for later */
+
+              psNode->origin.x = DGN_INT32( psDGN->abyElem + 74 );
+              psNode->origin.y = DGN_INT32( psDGN->abyElem + 78 );
+              psNode->origin.z = DGN_INT32( psDGN->abyElem + 82 );
+	    }
+          DGNTransformPoint( psDGN, &(psNode->origin) );
+
+      }
+      break;
+
       case DGNT_GROUP_DATA:
         if( nLevel == DGN_GDL_COLOR_TABLE )
         {
@@ -765,7 +813,6 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           }
 
           DGNTransformPoint( psDGN, &(psEllipse->origin) );
-
       }
       break;
 
