@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/11/18 21:26:25  fwarmerdam
+ * added geometry collection type support
+ *
  * Revision 1.5  2005/11/16 01:59:06  fwarmerdam
  * minor updates
  *
@@ -122,11 +125,28 @@ OGRWritableDWGDataSource::~OGRWritableDWGDataSource()
         pVp->setWidth( sExtent.MaxX - sExtent.MinX );
         pVp->setHeight( sExtent.MaxY - sExtent.MinY );
         
-        pVm->setCenterPoint(OdGePoint3d((sExtent.MinX + sExtent.MaxX) * 0.5,
+        pVp->setViewCenter(OdGePoint2d((sExtent.MinX + sExtent.MaxX) * 0.5,
+                                        (sExtent.MinY + sExtent.MaxY) * 0.5));
+        pVp->setViewTarget(OdGePoint3d((sExtent.MinX + sExtent.MaxX) * 0.5,
+                                        (sExtent.MinY + sExtent.MaxY) * 0.5,
+                                        0 ) );
+        pVp->setViewDirection(OdGeVector3d(0, 0, 1));
+        pVp->setViewHeight(sExtent.MaxY - sExtent.MinY);
+
+        pVp->setCenterPoint(OdGePoint3d((sExtent.MinX + sExtent.MaxX) * 0.5,
                                         (sExtent.MinY + sExtent.MaxY) * 0.5,
                                         0 ) );
         pVm->setWidth( sExtent.MaxX - sExtent.MinX );
         pVm->setHeight( sExtent.MaxY - sExtent.MinY );
+        pVm->zoomExtents();
+
+        pVm->setViewCenter(OdGePoint2d((sExtent.MinX + sExtent.MaxX) * 0.5,
+                                        (sExtent.MinY + sExtent.MaxY) * 0.5));
+        pVm->setViewTarget(OdGePoint3d((sExtent.MinX + sExtent.MaxX) * 0.5,
+                                        (sExtent.MinY + sExtent.MaxY) * 0.5,
+                                        0 ) );
+        pVm->setViewDirection(OdGeVector3d(0, 0, 1));
+        pVm->setViewHeight(sExtent.MaxY - sExtent.MinY);
     }
     catch( OdError& e )
     {
@@ -199,7 +219,7 @@ int OGRWritableDWGDataSource::Create( const char *pszFilename,
 
     pVp = OdDbViewport::createObject();
   
-    pVp->setCenterPoint(OdGePoint3d(1300000, 233000, 0));
+    pVp->setCenterPoint(OdGePoint3d(0, 0, 0));
     pVp->setWidth(10000);
     pVp->setHeight(10000);
 
@@ -222,7 +242,7 @@ int OGRWritableDWGDataSource::Create( const char *pszFilename,
 
     pVm = OdDbViewport::createObject();
   
-    pVm->setCenterPoint(OdGePoint3d(1300000, 233000, 0));
+    pVm->setCenterPoint(OdGePoint3d(0,0,0));
     pVm->setWidth(10000);
     pVm->setHeight(10000);
 
@@ -237,28 +257,6 @@ int OGRWritableDWGDataSource::Create( const char *pszFilename,
     pVm->setCircleSides(OdUInt16(100));
 
     pMs->appendOdDbEntity(pVm);
-
-#ifdef notdef
-    // Add a new layer to the drawing
-    OdDbLayerTablePtr pLayers;
-    OdDbLayerTableRecordPtr pLayer;
-    OdDbObjectId newLayerId;
-
-    pLayers = pDb->getLayerTableId().safeOpenObject(OdDb::kForWrite);
-    pLayer = OdDbLayerTableRecord::createObject();
-    
-    // Name must be set before a table object is added to a table.
-    pLayer->setName("Layer1");
-    
-    // Add the object to the table.
-    newLayerId = pLayers->add(pLayer);
-  
-    OdDbCirclePtr pCircle = OdDbCircle::createObject();
-    pCircle->setCenter( OdGePoint3d(1300000, 233000, 0) );
-    pCircle->setRadius(3000);
-    pCircle->setLayer(newLayerId, false);
-    pMs->appendOdDbEntity(pCircle);
-#endif
 
     return TRUE;
 }
