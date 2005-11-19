@@ -1487,6 +1487,40 @@ AC_SUBST(SQLITE_INC)
 AC_SUBST(HAVE_SQLITE)
 
 dnl ---------------------------------------------------------------------------
+dnl Check for DWGdirect.
+dnl ---------------------------------------------------------------------------
+
+DWGDIRECT=
+DWG_PLT=
+
+AC_MSG_CHECKING(Checking for DWGdirect)
+AC_ARG_WITH(dwgdirect,
+    [  --with-dwgdirect[=path] Include DWG direct support],
+    ,,)
+    
+if test -z "$with_dwgdirect" -o "$with_dwgdirect" = "no"; then
+    AC_MSG_RESULT(disabled)
+    HAVE_DWGDIRECT=no
+else
+    AC_MSG_RESULT(enabled)
+
+    AC_ARG_WITH(dwgdirect,
+      [  --with-dwg-plt[=platform] DWGdirect Platform, defaults to lnxX86],
+      ,,)
+    if test "x$with_dwg_plt" != "x" ; then
+        DWG_PLT=$with_dwg_plt
+    else
+        DWG_PLT=lnxX86
+    fi
+    DWGDIRECT=$with_dwgdirect
+    HAVE_DWGDIRECT=yes
+fi
+
+dnl This is used by the GNUmakefile in frmts/dods (via GDALmake.opt)
+AC_SUBST(DWG_PLT)
+AC_SUBST(DWGDIRECT)
+
+dnl ---------------------------------------------------------------------------
 dnl Check if geos library is available.
 dnl ---------------------------------------------------------------------------
 
@@ -1627,7 +1661,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING([GDAL version])
 
-AC_ARG_WITH(gdal-ver,[  --with-gdal-ver=ARG  Override VERSION file],,)
+AC_ARG_WITH(gdal-ver,[  --with-gdal-ver=ARG  Override  VERSION file],,)
 
 if test "x$with_gdal_ver" != "x"; then
 
@@ -1822,6 +1856,7 @@ LOC_MSG([  ODBC support:              ${ODBC_SETTING}])
 LOC_MSG([  OCI support:               ${HAVE_OCI}])
 LOC_MSG([  DODS support:              ${HAVE_DODS}])
 LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
+LOC_MSG([  DWGdirect support          ${HAVE_DWGDIRECT}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS}])
 LOC_MSG()
 LOC_MSG([  Statically link PROJ.4:    ${PROJ_STATIC}])
