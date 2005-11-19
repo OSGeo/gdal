@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/11/19 00:41:31  fwarmerdam
+ * added general commandline processor
+ *
  * Revision 1.26  2005/10/20 19:54:18  fwarmerdam
  * added better cleanup logic
  *
@@ -109,6 +112,7 @@
  */
 
 #include "ogrsf_frmts.h"
+#include "ogr_p.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
@@ -147,6 +151,11 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Processing command line arguments.                              */
 /* -------------------------------------------------------------------- */
+    nArgc = OGRGeneralCmdLineProcessor( nArgc, &papszArgv, 0 );
+    
+    if( nArgc < 1 )
+        exit( -nArgc );
+
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
         if( EQUAL(papszArgv[iArg],"-ro") )
@@ -352,6 +361,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Close down.                                                     */
 /* -------------------------------------------------------------------- */
+    CSLDestroy( papszArgv );
     CSLDestroy( papszLayers );
     delete poDS;
 
