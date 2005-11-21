@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/11/21 17:06:24  fwarmerdam
+ * avoid const iterator for VC6 compatibility
+ *
  * Revision 1.2  2005/08/06 22:21:53  pka
  * Area polygonizer added
  *
@@ -575,7 +578,8 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
   // test if this is the first layer
   bool newLayer = (m_listLayer.size() == 0);
   bool newFDefn = false;
-  list<OGRLayer *>::const_reverse_iterator layerIt = m_listLayer.rbegin();
+//  list<OGRLayer *>::const_reverse_iterator layerIt = m_listLayer.rbegin();
+  list<OGRLayer *>::reverse_iterator layerIt = m_listLayer.rbegin();
   OGRLayer *curLayer;
   
   // new layer data
