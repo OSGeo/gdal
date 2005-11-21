@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/11/21 14:56:31  pka
+ * Fix for call of GetNextFeature without ResetReading (Interlis 2)
+ * Fix for polygonizer crash on Linux with GEOS 2.1.3 (Interlis 1)
+ *
  * Revision 1.3  2005/09/21 00:59:36  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -69,6 +73,7 @@ OGRILI2Layer::OGRILI2Layer( const char * pszName,
     poFeatureDefn->SetGeomType( eReqType );
 
     bWriter = bWriterIn;
+    listFeatureIt = 0;
 }
 
 /************************************************************************/
@@ -127,6 +132,7 @@ void OGRILI2Layer::ResetReading(){
 /************************************************************************/
 
 OGRFeature *OGRILI2Layer::GetNextFeature() {
+    if (listFeatureIt == 0) listFeatureIt = listFeature.begin();
     if (listFeatureIt != listFeature.end())
         return *(listFeatureIt++);
     return NULL;
