@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/11/21 14:56:31  pka
+ * Fix for call of GetNextFeature without ResetReading (Interlis 2)
+ * Fix for polygonizer crash on Linux with GEOS 2.1.3 (Interlis 1)
+ *
  * Revision 1.6  2005/11/18 23:40:53  fwarmerdam
  * enable support with GEOS_C_API
  *
@@ -460,7 +464,7 @@ OGRMultiPolygon* ILI1Reader::Polygonize( OGRGeometryCollection* poLines )
           OGRGeometryFactory::createFromGEOS((GEOSGeom)(*poOtherGeosGeom)[i]));
     }
 
-    delete poOtherGeosGeom;
+    //delete poOtherGeosGeom;
     delete poThisGeosGeom;
     delete polygonizer;
 #endif
