@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/11/22 17:01:09  fwarmerdam
+ * added SDE support
+ *
  * Revision 1.27  2005/11/10 21:36:56  fwarmerdam
  * Added DXF/DWG support
  *
@@ -163,6 +166,9 @@ void OGRRegisterAll()
 #endif
 #ifdef OCI_ENABLED
     RegisterOGROCI();
+#endif
+#ifdef SDE_ENABLED
+    RegisterOGRSDE();
 #endif
 #ifdef DWGDIRECT_ENABLED
     RegisterOGRDXFDWG();
