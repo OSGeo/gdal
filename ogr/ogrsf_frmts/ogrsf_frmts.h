@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2005/11/22 17:01:09  fwarmerdam
+ * added SDE support
+ *
  * Revision 1.55  2005/11/10 21:37:28  fwarmerdam
  * added DXF/DWG support
  *
@@ -473,6 +476,7 @@ void CPL_DLL RegisterOGRILI2();
 void CPL_DLL RegisterOGRGRASS();
 void CPL_DLL RegisterOGRPGeo();
 void CPL_DLL RegisterOGRDXFDWG();
+void CPL_DLL RegisterOGRSDE();
 
 CPL_C_END
 
