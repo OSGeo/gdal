@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/11/22 17:09:17  fwarmerdam
+ * Preinitalize poFeature in GetNextFeature().
+ *
  * Revision 1.1  2005/11/22 17:01:48  fwarmerdam
  * New
  *
@@ -188,7 +191,7 @@ void OGRSDELayer::ResetReading()
 OGRFeature *OGRSDELayer::GetNextFeature()
 
 {
-    OGRFeature  *poFeature;
+    OGRFeature  *poFeature = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Loop till we find a feature matching our criteria.              */
