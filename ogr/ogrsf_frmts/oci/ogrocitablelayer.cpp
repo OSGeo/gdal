@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2005/11/23 00:49:13  fwarmerdam
+ * Clear error if table describe fails.
+ *
  * Revision 1.34  2005/10/27 13:42:26  fwarmerdam
  * preliminary DeleteFeature implementation
  *
@@ -281,6 +284,7 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition( const char * pszTable )
                         OCI_DEFAULT, OCI_PTYPE_TABLE, poSession->hDescribe );
     if( poSession->Failed( nStatus, "OCIDescribeAny" ) )
     {
+        CPLErrorReset();
         nStatus =
             OCIDescribeAny(poSession->hSvcCtx, poSession->hError,
                            (dvoid *)pszTable, strlen(pszTable), OCI_OTYPE_NAME,
