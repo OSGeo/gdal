@@ -1526,7 +1526,7 @@ dnl XXX: All the stuff related to "Panorama" is a mess due to extremely
 dnl ugly nature of that software.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(panorama,[  --with-panorama[=ARG]     Include "Panorama" GIS support via "Panorama" SDK (ARG=path)],,)
+AC_ARG_WITH(panorama,[  --with-panorama[=ARG]   Include "Panorama" GIS support via "Panorama" SDK (ARG=path)],,)
 
 if test "$with_panorama" = "no" ; then
 
