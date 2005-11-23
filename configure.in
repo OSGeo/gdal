@@ -1520,6 +1520,39 @@ dnl This is used by the GNUmakefile in frmts/dods (via GDALmake.opt)
 AC_SUBST(DWG_PLT)
 AC_SUBST(DWGDIRECT)
 
+dnl ---------------------------------------------------------------------------
+dnl Select a Panorama Library to use, or disable driver.
+dnl XXX: All the stuff related to "Panorama" is a mess due to extremely
+dnl ugly nature of that software.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(panorama,[  --with-panorama[=ARG]     Include "Panorama" GIS support via "Panorama" SDK (ARG=path)],,)
+
+if test "$with_panorama" = "no" ; then
+
+  HAVE_PANORAMA=no
+
+  AC_MSG_NOTICE(["Panorama" GIS support disabled.])
+
+elif test "$with_panorama" = "yes" -o "$with_panorama" = "" ; then
+
+  AC_CHECK_LIB(mapacces24,mapOpenData,HAVE_PANORAMA=yes,HAVE_PANORAMA=no,)
+
+  if test "$HAVE_PANORAMA" = "yes" ; then   
+    LIBS="-lmapacces24 -L/usr/X11R6/lib -lX11 $LIBS"
+  fi
+else
+
+  HAVE_PANORAMA=yes
+  LIBS="-L$with_panorama/lib -lmapacces24 -L/usr/X11R6/lib -lX11 $LIBS"
+  PANORAMA_INC="-I$with_panorama/include $EXTRA_INCLUDES"
+
+  AC_MSG_NOTICE([using "Panorama" GIS library from $with_panorama.])
+fi
+
+AC_SUBST(HAVE_PANORAMA,$HAVE_PANORAMA)
+AC_SUBST(PANORAMA_INC,$PANORAMA_INC)
+
 dnl ---------------------------------------------------------------------
 dnl Find ESRI SDE ONLY IF REQUESTED.
 dnl ---------------------------------------------------------------------
@@ -1923,6 +1956,7 @@ LOC_MSG([  SDE support:               ${SDE_ENABLED}])
 LOC_MSG([  DODS support:              ${HAVE_DODS}])
 LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
 LOC_MSG([  DWGdirect support          ${HAVE_DWGDIRECT}])
+LOC_MSG([  PANORAMA GIS support:      ${HAVE_PANORAMA}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS}])
 LOC_MSG()
 LOC_MSG([  Statically link PROJ.4:    ${PROJ_STATIC}])

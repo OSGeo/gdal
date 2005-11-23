@@ -232,6 +232,12 @@ HAVE_DWGDIRECT = no
 endif
 
 #
+# "Panorama" GIS support.
+#
+HAVE_PANORAMA   = @HAVE_PANORAMA@
+PANORAMA_INC	= @PANORAMA_INC@
+
+#
 # FMEObjects
 #
 ifeq (@X_FME_HOME@,)
