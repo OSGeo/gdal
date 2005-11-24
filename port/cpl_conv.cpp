@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2005/11/24 19:22:54  fwarmerdam
+ * Added silly-value checks in CPLMalloc/Realloc.
+ *
  * Revision 1.47  2005/10/17 23:33:51  fwarmerdam
  * CPLFGets() - be very wary about reads ending in the middle of CRLF.
  * Was causing problems with world.mif/world.mid reading.
@@ -256,6 +259,14 @@ void *CPLMalloc( size_t nSize )
 
     if( nSize == 0 )
         return NULL;
+
+    if( nSize < 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "CPLMalloc(%d): Silly size requested.\n",
+                  nSize );
+        return NULL;
+    }
     
     pReturn = VSIMalloc( nSize );
     if( pReturn == NULL )
@@ -303,6 +314,14 @@ void * CPLRealloc( void * pData, size_t nNewSize )
         return NULL;
     }
 
+    if( nNewSize < 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "CPLRealloc(%d): Silly size requested.\n",
+                  nNewSize );
+        return NULL;
+    }
+    
     if( pData == NULL )
         pReturn = VSIMalloc( nNewSize );
     else
