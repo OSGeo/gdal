@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/11/24 20:25:32  fwarmerdam
+ * Test for hdf.adf and w001001x.adf in ::Open() method, so we don't
+ * have to suppress error messages for AIGOpen().  Added error checking
+ * in the AIGReadBlockIndex() to recognise corrupted files.
+ *
  * Revision 1.24  2005/10/31 04:51:55  fwarmerdam
  * upgraded to use large file API and GUInt32 for block offsets
  *
@@ -851,6 +856,7 @@ CPLErr AIGReadBlockIndex( const char * pszCoverName, AIGInfo_t * psInfo )
     int		nLength, i;
     GInt32	nValue;
     GUInt32	*panIndex;
+    GByte       abyHeader[8];
 
 /* -------------------------------------------------------------------- */
 /*      Open the file hdr.adf file.                                     */
@@ -871,6 +877,32 @@ CPLErr AIGReadBlockIndex( const char * pszCoverName, AIGInfo_t * psInfo )
     }
 
     CPLFree( pszHDRFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Verify the magic number.  This is often corrupted by CR/LF      */
+/*      translation.                                                    */
+/* -------------------------------------------------------------------- */
+    VSIFReadL( abyHeader, 1, 8, fp );
+    if( abyHeader[3] == 0x0D && abyHeader[4] == 0x0A )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "w001001x.adf file header has been corrupted by unix to dos text conversion." );
+        VSIFCloseL( fp );
+        return CE_Failure;
+    }
+
+    if( abyHeader[0] != 0x00
+        || abyHeader[1] != 0x00 
+        || abyHeader[2] != 0x27
+        || abyHeader[3] != 0x0A
+        || abyHeader[4] != 0xFF
+        || abyHeader[5] != 0xFF )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "w001001x.adf file header magic number is corrupt." );
+        VSIFCloseL( fp );
+        return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Get the file length (in 2 byte shorts)                          */
