@@ -28,6 +28,11 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/11/24 20:25:32  fwarmerdam
+ * Test for hdf.adf and w001001x.adf in ::Open() method, so we don't
+ * have to suppress error messages for AIGOpen().  Added error checking
+ * in the AIGReadBlockIndex() to recognise corrupted files.
+ *
  * Revision 1.25  2005/09/16 20:38:19  fwarmerdam
  * added overview support
  *
@@ -390,13 +395,45 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     AIGInfo_t	*psInfo;
+
+/* -------------------------------------------------------------------- */
+/*      If the pass name ends in .adf assume a file within the          */
+/*      coverage has been selected, and strip that off the coverage     */
+/*      name.                                                           */
+/* -------------------------------------------------------------------- */
+    CPLString osCoverName;
+
+    osCoverName = poOpenInfo->pszFilename;
+    if( osCoverName.size() > 4 
+        && EQUAL(osCoverName.c_str()+osCoverName.size()-4,".adf") )
+    {
+        osCoverName = CPLGetDirname( poOpenInfo->pszFilename );
+        if( osCoverName == "" )
+            osCoverName = ".";
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Verify that a few of the "standard" files are available.        */
+/* -------------------------------------------------------------------- */
+    VSIStatBufL sStatBuf;
+    CPLString osTestName;
+    
+    osTestName.Printf( "%s/hdr.adf", osCoverName.c_str() );
+    if( VSIStatL( osTestName, &sStatBuf ) != 0 )
+        return NULL;
+
+    osTestName.Printf( "%s/w001001x.adf", osCoverName.c_str() );
+    if( VSIStatL( osTestName, &sStatBuf ) != 0 )
+        return NULL;
+
+    osTestName.Printf( "%s/w001001.adf", osCoverName.c_str() );
+    if( VSIStatL( osTestName, &sStatBuf ) != 0 )
+        return NULL;
     
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    CPLPushErrorHandler( CPLQuietErrorHandler );
-    psInfo = AIGOpen( poOpenInfo->pszFilename, "r" );
-    CPLPopErrorHandler();
+    psInfo = AIGOpen( osCoverName.c_str(), "r" );
     
     if( psInfo == NULL )
     {
@@ -452,10 +489,9 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*	Try to read projection file.					*/
 /* -------------------------------------------------------------------- */
     const char	*pszPrjFilename;
-    VSIStatBuf   sStatBuf;
 
     pszPrjFilename = CPLFormCIFilename( psInfo->pszCoverName, "prj", "adf" );
-    if( VSIStat( pszPrjFilename, &sStatBuf ) == 0 )
+    if( VSIStatL( pszPrjFilename, &sStatBuf ) == 0 )
     {
         OGRSpatialReference	oSRS;
 
