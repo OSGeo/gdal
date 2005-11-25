@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/11/25 02:16:53  fwarmerdam
+ * Added --help-general.
+ *
  * Revision 1.27  2005/11/19 00:41:31  fwarmerdam
  * added general commandline processor
  *
@@ -382,7 +385,7 @@ int main( int nArgc, char ** papszArgv )
 static void Usage()
 
 {
-    printf( "Usage: ogrinfo [-ro] [-q] [-where restricted_where]\n"
+    printf( "Usage: ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]\n"
             "               [-spat xmin ymin xmax ymax] [-fid fid]\n"
             "               [-sql statement] [-al] [-so] [--formats]\n"
             "               datasource_name [layer [layer ...]]\n");

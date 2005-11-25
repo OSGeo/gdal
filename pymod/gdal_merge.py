@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.23  2005/11/25 02:13:36  fwarmerdam
+#  Added --help-general.
+#
 #  Revision 1.22  2005/11/16 18:30:49  fwarmerdam
 #  Fixed round off issue with output file size.
 #
@@ -297,6 +300,7 @@ def Usage():
     print '                     [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]'
     print '                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init value]'
     print '                     [-ot datatype] [-createonly] input_files'
+    print '                     [--help-general]'
     print
 
 # =============================================================================
