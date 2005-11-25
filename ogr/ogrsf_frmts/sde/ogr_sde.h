@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/11/25 05:58:27  fwarmerdam
+ * preliminary operation of feature reading
+ *
  * Revision 1.1  2005/11/22 17:01:48  fwarmerdam
  * New
  *
@@ -58,15 +61,23 @@ class OGRSDELayer : public OGRLayer
 //    OGRSpatialReference *poSRS;
 //    int                 nSRSId;
 
-    int                 iNextShapeId;
+    int                 bQueryInstalled;
+    int                 bQueryActive;
+
+    SE_STREAM           hStream;
 
     OGRSDEDataSource    *poDS;
 
     int                 iFIDColumn;
     int                 iShapeColumn;
 
+    char              **papszAllColumns;
     std::vector<int>    anFieldMap;     // SDE index of OGR field.
     std::vector<int>    anFieldTypeMap; // SDE type
+
+    int                 InstallQuery();
+    OGRFeature         *TranslateSDERecord();
+    OGRGeometry        *TranslateSDEGeometry( SE_SHAPE );
 
   public:
                         OGRSDELayer( OGRSDEDataSource * );
@@ -77,8 +88,8 @@ class OGRSDELayer : public OGRLayer
     virtual void        ResetReading();
 
     virtual OGRFeature *GetNextFeature();
-
     virtual OGRFeature *GetFeature( long nFeatureId );
+//    virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
@@ -98,7 +109,6 @@ class OGRSDEDataSource : public OGRDataSource
     char               *pszName;
 
     SE_CONNECTION       hConnection;
-    SE_STREAM           hStream;
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
@@ -125,9 +135,8 @@ class OGRSDEDataSource : public OGRDataSource
     int                 TestCapability( const char * );
 
     SE_CONNECTION       GetConnection() { return hConnection; }
-    SE_STREAM           GetStream() { return hStream; }
 
-    void                IssueSDEError( int, SE_ERROR * );
+    void                IssueSDEError( int, const char * );
 };
 
 /************************************************************************/

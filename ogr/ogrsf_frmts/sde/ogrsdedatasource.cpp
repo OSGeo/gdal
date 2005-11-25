@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/11/25 05:58:27  fwarmerdam
+ * preliminary operation of feature reading
+ *
  * Revision 1.1  2005/11/22 17:01:48  fwarmerdam
  * New
  *
@@ -75,7 +78,6 @@ OGRSDEDataSource::~OGRSDEDataSource()
 
     if( hConnection != NULL )
     {
-        SE_stream_free( hStream );
         SE_connection_free( hConnection );
     }
 
@@ -88,6 +90,26 @@ OGRSDEDataSource::~OGRSDEDataSource()
     CPLFree( panSRID );
     CPLFree( papoSRS );
 #endif
+}
+
+/************************************************************************/
+/*                           IssueSDEError()                            */
+/************************************************************************/
+
+void OGRSDEDataSource::IssueSDEError( int nErrorCode, 
+                                      const char *pszFunction )
+
+{
+    char szErrorMsg[SE_MAX_MESSAGE_LENGTH+1];
+
+    if( pszFunction == NULL )
+        pszFunction = "SDE";
+
+    SE_error_get_string( nErrorCode, szErrorMsg );
+
+    CPLError( CE_Failure, CPLE_AppDefined, 
+              "%s: %d/%s", 
+              pszFunction, nErrorCode, szErrorMsg );
 }
 
 /************************************************************************/
@@ -137,7 +159,7 @@ int OGRSDEDataSource::Open( const char * pszNewName )
 
     if( nSDEErr != SE_SUCCESS )
     {
-        IssueSDEError( nSDEErr, &sSDEErrorInfo );
+        IssueSDEError( nSDEErr, "SE_connection_create" );
         return FALSE;
     }
 
@@ -156,15 +178,6 @@ int OGRSDEDataSource::Open( const char * pszNewName )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Create stream.                                                  */
-/* -------------------------------------------------------------------- */
-    nSDEErr = SE_stream_create( hConnection, &hStream );
-    if( nSDEErr != SE_SUCCESS) {
-        IssueSDEError( nSDEErr, NULL );
-        return FALSE;
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Fetch list of spatial tables from SDE.                          */
 /* -------------------------------------------------------------------- */
     SE_REGINFO *ahTableList;
@@ -174,7 +187,7 @@ int OGRSDEDataSource::Open( const char * pszNewName )
                                              &nTableListCount );
     if( nSDEErr != SE_SUCCESS )
     {
-        IssueSDEError( nSDEErr, NULL );
+        IssueSDEError( nSDEErr, "SE_registration_get_info_list" );
         return FALSE;
     }
 
