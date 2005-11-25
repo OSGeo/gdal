@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/11/25 18:55:15  fwarmerdam
+ * layer implementation essentially complete
+ *
  * Revision 1.3  2005/11/25 05:58:27  fwarmerdam
  * preliminary operation of feature reading
  *
@@ -56,12 +59,14 @@ OGRSDELayer::OGRSDELayer( OGRSDEDataSource *poDSIn )
 
     iFIDColumn = -1;
     iShapeColumn = -1;
-//    poSRS = NULL;
+    poSRS = NULL;
     poFeatureDefn = NULL;
 
     bQueryInstalled = FALSE;
     hStream = NULL;
+    hCoordRef = NULL;
     papszAllColumns = NULL;
+    bHaveLayerInfo = FALSE;
 }
 
 /************************************************************************/
@@ -78,6 +83,9 @@ OGRSDELayer::~OGRSDELayer()
                   poFeatureDefn->GetName() );
     }
 
+    if( bHaveLayerInfo )
+        SE_layerinfo_free( hLayerInfo );
+
     if( hStream )
     {
         SE_stream_free( hStream );
@@ -86,8 +94,12 @@ OGRSDELayer::~OGRSDELayer()
 
     if( poFeatureDefn )
         poFeatureDefn->Release();
-//    if( poSRS )
-//        poSRS->Release();
+
+    if( hCoordRef )
+        SE_coordref_free( hCoordRef );
+
+    if( poSRS )
+        poSRS->Release();
 
     CSLDestroy( papszAllColumns );
 }
@@ -121,7 +133,7 @@ int OGRSDELayer::Initialize( const char *pszTableName,
     for( iCol = 0; iCol < nColumnCount; iCol++ )
     {
         OGRFieldType eOGRType = OFTIntegerList; // dummy
-        int nWidth = -1;
+        int nWidth = -1, nPrecision = -1;
 
         papszAllColumns = CSLAddString( papszAllColumns, 
                                         asColumnDefs[iCol].column_name );
@@ -131,11 +143,14 @@ int OGRSDELayer::Initialize( const char *pszTableName,
           case SE_SMALLINT_TYPE:
           case SE_INTEGER_TYPE:
             eOGRType = OFTInteger;
+            nWidth = asColumnDefs[iCol].size;
             break;
 
           case SE_FLOAT_TYPE:
           case SE_DOUBLE_TYPE:
             eOGRType = OFTReal;
+            nWidth = asColumnDefs[iCol].size;
+            nPrecision = asColumnDefs[iCol].decimal_digits;
             break;
 
           case SE_STRING_TYPE:
@@ -149,6 +164,7 @@ int OGRSDELayer::Initialize( const char *pszTableName,
 
           case SE_DATE_TYPE:
             eOGRType = OFTString;
+            nWidth = asColumnDefs[iCol].size;
             break;
 
           case SE_SHAPE_TYPE:
@@ -160,6 +176,7 @@ int OGRSDELayer::Initialize( const char *pszTableName,
                                asColumnDefs[iCol].column_name) )
                   {
                       iShapeColumn = iCol;
+                      osShapeColumnName = asColumnDefs[iCol].column_name;
                   }
               }
           }
@@ -176,7 +193,8 @@ int OGRSDELayer::Initialize( const char *pszTableName,
 
         if( nWidth != -1 )
             oField.SetWidth( nWidth );
-        // TODO: add width and precision. 
+        if( nPrecision != -1 )
+            oField.SetPrecision( nPrecision );
 
         poFeatureDefn->AddFieldDefn( &oField );
         
@@ -189,6 +207,73 @@ int OGRSDELayer::Initialize( const char *pszTableName,
     }
 
     SE_table_free_descriptions( asColumnDefs );
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                           NeedLayerInfo()                            */
+/*                                                                      */
+/*      Verify layerinfo is available, and load if not.  Loading        */
+/*      layerinfo is relatively expensive so we try to put it off as    */
+/*      long as possible.                                               */
+/************************************************************************/
+
+int OGRSDELayer::NeedLayerInfo()
+
+{
+    int nSDEErr;
+
+    if( bHaveLayerInfo )
+        return TRUE;
+
+    nSDEErr = SE_layerinfo_create( NULL, &hLayerInfo );
+    if( nSDEErr != SE_SUCCESS )
+    {
+        poDS->IssueSDEError( nSDEErr, "SE_layerinfo_create" );
+        return FALSE;
+    }
+
+    CPLDebug( "OGR_SDE", "Loading %s layerinfo.", 
+              poFeatureDefn->GetName() );
+
+    nSDEErr = SE_layer_get_info( poDS->GetConnection(), 
+                                 poFeatureDefn->GetName(), 
+                                 osShapeColumnName.c_str(),
+                                 hLayerInfo );
+    if( nSDEErr != SE_SUCCESS )
+    {
+        poDS->IssueSDEError( nSDEErr, "SE_layer_get_info" );
+        return FALSE;
+    }
+
+    bHaveLayerInfo = TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch coordinate reference system.                              */
+/* -------------------------------------------------------------------- */
+    SE_coordref_create( &hCoordRef );
+    
+    nSDEErr = SE_layerinfo_get_coordref( hLayerInfo, hCoordRef );
+    if( nSDEErr != SE_SUCCESS )
+    {
+        poDS->IssueSDEError( nSDEErr, "SE_layerinfo_get_coordref" );
+    }
+    else
+    {
+        char szWKT[4000];
+
+        nSDEErr = SE_coordref_get_description( hCoordRef, szWKT );
+        if( nSDEErr != SE_SUCCESS )
+        {
+            poDS->IssueSDEError( nSDEErr, "SE_coordref_get_description" );
+        }
+        else
+        {
+            poSRS = new OGRSpatialReference(szWKT);
+            poSRS->morphFromESRI();
+        }
+    }
 
     return TRUE;
 }
@@ -209,7 +294,7 @@ void OGRSDELayer::ResetReading()
 /*      Setup the stream with current query characteristics.            */
 /************************************************************************/
 
-int OGRSDELayer::InstallQuery()
+int OGRSDELayer::InstallQuery( int bCountingOnly )
 
 {
     int nSDEErr;
@@ -255,7 +340,8 @@ int OGRSDELayer::InstallQuery()
 /* -------------------------------------------------------------------- */
 /*      Set where clause.                                               */
 /* -------------------------------------------------------------------- */
-    nSDEErr = SE_queryinfo_set_where_clause( hQueryInfo, ""); // fill in later.
+    nSDEErr = SE_queryinfo_set_where_clause( hQueryInfo, 
+                                             osAttributeFilter.c_str() );
     if( nSDEErr != SE_SUCCESS) {
         poDS->IssueSDEError( nSDEErr, "SE_queryinfo_set_where_clause" );
         return FALSE;
@@ -271,14 +357,32 @@ int OGRSDELayer::InstallQuery()
     }    
 
 /* -------------------------------------------------------------------- */
-/*      Establish the columns to query.                                 */
+/*      Establish the columns to query.  If only counting features,     */
+/*      we will just use the FID column, otherwise we use all           */
+/*      columns.                                                        */
 /* -------------------------------------------------------------------- */
-    nSDEErr = SE_queryinfo_set_columns( hQueryInfo, CSLCount(papszAllColumns),
-                                        (const char **) papszAllColumns );
-    if( nSDEErr != SE_SUCCESS) {
-        poDS->IssueSDEError( nSDEErr, "SE_queryinfo_set_columns" );
-        return FALSE;
-    }    
+    if( bCountingOnly )
+    {
+        const char *pszFIDColName = 
+            poFeatureDefn->GetFieldDefn( iFIDColumn )->GetNameRef();
+        
+        nSDEErr = SE_queryinfo_set_columns( hQueryInfo, 1, 
+                                            (const char **) &pszFIDColName );
+        if( nSDEErr != SE_SUCCESS) {
+            poDS->IssueSDEError( nSDEErr, "SE_queryinfo_set_columns" );
+            return FALSE;
+        }    
+    }
+    else
+    {
+        nSDEErr = SE_queryinfo_set_columns( hQueryInfo, 
+                                            CSLCount(papszAllColumns),
+                                            (const char **) papszAllColumns );
+        if( nSDEErr != SE_SUCCESS) {
+            poDS->IssueSDEError( nSDEErr, "SE_queryinfo_set_columns" );
+            return FALSE;
+        }    
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Apply the query to the stream.                                  */
@@ -297,7 +401,38 @@ int OGRSDELayer::InstallQuery()
 /* -------------------------------------------------------------------- */
 /*      Setup spatial filter on stream if one is installed.             */
 /* -------------------------------------------------------------------- */
-    // TODO
+    if( m_poFilterGeom != NULL )
+    {
+        SE_FILTER sConstraint;
+        SE_ENVELOPE sEnvelope;
+        SE_SHAPE hRectShape;
+
+        NeedLayerInfo(); // need hCoordRef
+
+        SE_shape_create( hCoordRef, &hRectShape );
+        sEnvelope.minx = m_sFilterEnvelope.MinX;
+        sEnvelope.miny = m_sFilterEnvelope.MinY;
+        sEnvelope.maxx = m_sFilterEnvelope.MaxX;
+        sEnvelope.maxy = m_sFilterEnvelope.MaxY;
+        SE_shape_generate_rectangle( &sEnvelope, hRectShape );
+
+        sConstraint.filter.shape = hRectShape;
+        strcpy( sConstraint.table, poFeatureDefn->GetName() );
+        strcpy( sConstraint.column, osShapeColumnName.c_str() );
+        sConstraint.method = SM_ENVP;
+        sConstraint.filter_type = SE_SHAPE_FILTER;
+        sConstraint.truth = TRUE;
+
+        nSDEErr = SE_stream_set_spatial_constraints( hStream, SE_SPATIAL_FIRST,
+                                                     FALSE, 1, &sConstraint );
+        if( nSDEErr != SE_SUCCESS) 
+        {
+            poDS->IssueSDEError( nSDEErr, "SE_stream_set_spatial_constraints");
+            return FALSE;
+        }    
+
+        SE_shape_free( hRectShape );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Execute the query.                                              */
@@ -311,6 +446,23 @@ int OGRSDELayer::InstallQuery()
     bQueryInstalled = TRUE;
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                         SetAttributeFilter()                         */
+/************************************************************************/
+
+OGRErr OGRSDELayer::SetAttributeFilter( const char *pszQuery )
+
+{
+    if( pszQuery == NULL )
+        osAttributeFilter = "";
+    else
+        osAttributeFilter = pszQuery;
+
+    ResetReading();
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -444,6 +596,16 @@ OGRGeometry *OGRSDELayer::TranslateSDEGeometry( SE_SHAPE hShape )
           poGeom = poPoly;
       }
       break;
+
+/* -------------------------------------------------------------------- */
+/*      Report unsupported geometries.                                  */
+/* -------------------------------------------------------------------- */
+      default:
+      {
+          CPLError( CE_Warning, CPLE_NotSupported, 
+                    "Unsupported geometry type: %d", 
+                    nSDEGeomType );
+      }
     }
 
 /* -------------------------------------------------------------------- */
@@ -648,7 +810,7 @@ OGRFeature *OGRSDELayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
 /*      Make sure we have an installed query executed.                  */
 /* -------------------------------------------------------------------- */
-    if( !bQueryInstalled && !InstallQuery() )
+    if( !bQueryInstalled && !InstallQuery( FALSE ) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -679,10 +841,9 @@ OGRFeature *OGRSDELayer::GetNextFeature()
 
         if( poFeature != NULL )
         {
-            if( (m_poFilterGeom == NULL
-                 || FilterGeometry( poFeature->GetGeometryRef() ) )
-                && (m_poAttrQuery == NULL
-                    || m_poAttrQuery->Evaluate( poFeature )) )
+            if( m_poFilterGeom == NULL
+                || m_bFilterIsEnvelope
+                || FilterGeometry( poFeature->GetGeometryRef() ) )
                 return poFeature;
 
             delete poFeature;
@@ -697,60 +858,113 @@ OGRFeature *OGRSDELayer::GetNextFeature()
 OGRFeature *OGRSDELayer::GetFeature( long nFeatureId )
 
 {
-//    OGRFeature *poFeature = 
-//         SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, nFeatureId );
+    int nSDEErr;
 
-//    if( poFeature != NULL )
-//        m_nFeaturesRead++;
+/* -------------------------------------------------------------------- */
+/*      Our direct row access will terminate any active queries.        */
+/* -------------------------------------------------------------------- */
+    ResetReading(); 
 
-//    return poFeature;
+/* -------------------------------------------------------------------- */
+/*      Create stream, or reset it.                                     */
+/* -------------------------------------------------------------------- */
+    if( hStream == NULL )
+    {
+        nSDEErr = SE_stream_create( poDS->GetConnection(), &hStream );
+        if( nSDEErr != SE_SUCCESS) {
+            poDS->IssueSDEError( nSDEErr, "SE_stream_create" );
+            return FALSE;
+        }
+    }
+    else
+    {
+        nSDEErr = SE_stream_close( hStream, TRUE );
+    }
 
-    return NULL;
+/* -------------------------------------------------------------------- */
+/*      We want to fetch all the columns, just like we normally         */
+/*      would for GetNextFeature().                                     */
+/* -------------------------------------------------------------------- */
+    nSDEErr = SE_stream_fetch_row( hStream, poFeatureDefn->GetName(), 
+                                   nFeatureId, 
+                                   CSLCount( papszAllColumns ), 
+                                   (const char **) papszAllColumns );
+    if( nSDEErr != SE_SUCCESS )
+    {
+        poDS->IssueSDEError( nSDEErr, "SE_stream_fetch_row" );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We got our row, now translate it.                               */
+/* -------------------------------------------------------------------- */
+    return TranslateSDERecord();
 }
 
 /************************************************************************/
 /*                          GetFeatureCount()                           */
 /*                                                                      */
-/*      If a spatial filter is in effect, we turn control over to       */
-/*      the generic counter.  Otherwise we return the total count.      */
-/*      Eventually we should consider implementing a more efficient     */
-/*      way of counting features matching a spatial query.              */
+/*      Issue a special "counter only" query that will just fetch       */
+/*      objectids, and count the result set.  This will inherently      */
+/*      include all the spatial and attribute filtering logic in the    */
+/*      database.  It would be nice if we could also use a COUNT()      */
+/*      operator in the database.                                       */
 /************************************************************************/
 
-#ifdef notdef
 int OGRSDELayer::GetFeatureCount( int bForce )
 
 {
-    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
-        return OGRLayer::GetFeatureCount( bForce );
-    else
-        return nTotalShapeCount;
+    int nSDEErr, nFeatureCount = 0;
+
+    ResetReading();
+    if( !InstallQuery( TRUE ) )
+        return -1;
+
+    for( nSDEErr = SE_stream_fetch( hStream ); 
+         nSDEErr == SE_SUCCESS;
+         nSDEErr = SE_stream_fetch( hStream ) )
+    {
+        nFeatureCount++;
+    }
+
+    if( nSDEErr != SE_FINISHED )
+    {
+        poDS->IssueSDEError( nSDEErr, "SE_stream_fetch" );
+        return -1;
+    }
+        
+    ResetReading();
+
+    return nFeatureCount;
 }
-#endif
 
 /************************************************************************/
 /*                             GetExtent()                              */
 /************************************************************************/
 
-#ifdef notdef
 OGRErr OGRSDELayer::GetExtent (OGREnvelope *psExtent, int bForce)
 
 {
-    double adMin[4], adMax[4];
-
-    if( hSHP == NULL )
+    if( !NeedLayerInfo() )
         return OGRERR_FAILURE;
 
-    SHPGetInfo(hSHP, NULL, NULL, adMin, adMax);
+    SE_ENVELOPE  sEnvelope;
+    int nSDEErr;
 
-    psExtent->MinX = adMin[0];
-    psExtent->MinY = adMin[1];
-    psExtent->MaxX = adMax[0];
-    psExtent->MaxY = adMax[1];
+    nSDEErr = SE_layerinfo_get_envelope( hLayerInfo, &sEnvelope );
+    if( nSDEErr != SE_SUCCESS )
+    {
+        poDS->IssueSDEError( nSDEErr, "SE_layerinfo_get_envelope" );
+        return OGRERR_FAILURE;
+    }
+
+    psExtent->MinX = sEnvelope.minx;
+    psExtent->MinY = sEnvelope.miny;
+    psExtent->MaxX = sEnvelope.maxx;
+    psExtent->MaxY = sEnvelope.maxy;
 
     return OGRERR_NONE;
 }
-#endif
 
 /************************************************************************/
 /*                           TestCapability()                           */
@@ -763,7 +977,7 @@ int OGRSDELayer::TestCapability( const char * pszCap )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
-        return m_poFilterGeom == NULL;
+        return TRUE;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return TRUE;
@@ -778,10 +992,8 @@ int OGRSDELayer::TestCapability( const char * pszCap )
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
-#ifdef notdef
 OGRSpatialReference *OGRSDELayer::GetSpatialRef()
 
 {
     return poSRS;
 }
-#endif

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/11/25 18:55:15  fwarmerdam
+ * layer implementation essentially complete
+ *
  * Revision 1.2  2005/11/25 05:58:27  fwarmerdam
  * preliminary operation of feature reading
  *
@@ -44,6 +47,7 @@
 #include <sdetype.h> /* ESRI SDE Client Includes */
 #include <sdeerno.h>
 #include <vector>
+#include "cpl_string.h"
 
 /************************************************************************/
 /*                            OGRSDELayer                                */
@@ -58,26 +62,33 @@ class OGRSDELayer : public OGRLayer
     OGRFeatureDefn     *poFeatureDefn;
 
     // Layer spatial reference system, and srid.
-//    OGRSpatialReference *poSRS;
-//    int                 nSRSId;
+    OGRSpatialReference *poSRS;
+
+    CPLString           osAttributeFilter;
 
     int                 bQueryInstalled;
     int                 bQueryActive;
 
     SE_STREAM           hStream;
+    
+    int                 bHaveLayerInfo;
+    SE_LAYERINFO        hLayerInfo;
+    SE_COORDREF         hCoordRef;
 
     OGRSDEDataSource    *poDS;
 
     int                 iFIDColumn;
     int                 iShapeColumn;
+    CPLString           osShapeColumnName;
 
     char              **papszAllColumns;
     std::vector<int>    anFieldMap;     // SDE index of OGR field.
     std::vector<int>    anFieldTypeMap; // SDE type
 
-    int                 InstallQuery();
+    int                 InstallQuery( int );
     OGRFeature         *TranslateSDERecord();
     OGRGeometry        *TranslateSDEGeometry( SE_SHAPE );
+    int                 NeedLayerInfo();
 
   public:
                         OGRSDELayer( OGRSDEDataSource * );
@@ -89,11 +100,14 @@ class OGRSDELayer : public OGRLayer
 
     virtual OGRFeature *GetNextFeature();
     virtual OGRFeature *GetFeature( long nFeatureId );
-//    virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
+    virtual OGRErr      GetExtent( OGREnvelope *psExtent, int bForce );
+    virtual int         GetFeatureCount( int bForce );
+
+    virtual OGRErr      SetAttributeFilter( const char *pszQuery );
 
     OGRFeatureDefn *    GetLayerDefn() { return poFeatureDefn; }
 
-//    virtual OGRSpatialReference *GetSpatialRef();
+    virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int         TestCapability( const char * );
 };
@@ -110,18 +124,9 @@ class OGRSDEDataSource : public OGRDataSource
 
     SE_CONNECTION       hConnection;
 
-    // We maintain a list of known SRID to reduce the number of trips to
-    // the database to get SRSes.
-//    int                 nKnownSRID;
-//    int                 *panSRID;
-//    OGRSpatialReference **papoSRS;
-
   public:
                         OGRSDEDataSource();
                         ~OGRSDEDataSource();
-
-//    int                 FetchSRSId( OGRSpatialReference * poSRS );
-//    OGRSpatialReference *FetchSRS( int nSRSId );
 
     int                 Open( const char * );
     int                 OpenTable( const char *pszTableName, 
