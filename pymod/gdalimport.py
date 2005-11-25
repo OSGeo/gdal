@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.4  2005/11/25 02:15:50  fwarmerdam
+# Added --help-general in usage message.
+#
 # Revision 1.3  2004/04/02 17:40:44  warmerda
 # added GDALGeneralCmdLineProcessor() support
 #
@@ -50,7 +53,7 @@ if argv is None:
     sys.exit( 0 )
 
 if len(argv) < 2:
-    print "Usage: gdalimport.py source_file [newfile]"
+    print "Usage: gdalimport.py [--help-general] source_file [newfile]"
     sys.exit(1)
 
 def progress_cb( complete, message, cb_data ):
