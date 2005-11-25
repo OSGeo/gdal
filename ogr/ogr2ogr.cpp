@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/11/25 02:17:30  fwarmerdam
+ * Added --help-general.
+ *
  * Revision 1.31  2005/11/10 19:07:57  fwarmerdam
  * -append now creates layer if it does not already exist: bug 994.
  *
@@ -537,6 +540,8 @@ int main( int nArgc, char ** papszArgv )
 #ifdef DBMALLOC
     malloc_dump(1);
 #endif
+
+    CSLDestroy( papszArgv );
     
     return 0;
 }
@@ -552,7 +557,7 @@ static void Usage()
 
     printf( "Usage: ogr2ogr [-skipfailures] [-append] [-update] [-f format_name]\n"
             "               [-select field_list] [-where restricted_where] \n"
-            "               [-sql <sql statement>] \n" 
+            "               [-sql <sql statement>] [--help-general]\n" 
             "               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]\n"
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
             "               [[-dsco NAME=VALUE] ...] dst_datasource_name\n"
