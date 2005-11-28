@@ -1,0 +1,11 @@
+OBJ     =       ogrsdedatasource.obj ogrsdedriver.obj ogrsdelayer.obj
+EXTRAFLAGS =	-I.. -I..\.. -I$(SDE_INC)
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
