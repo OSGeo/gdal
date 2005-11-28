@@ -7,7 +7,7 @@ OBJ	=	ogrsfdriverregistrar.obj ogrlayer.obj ogr_gensql.obj \
 GDAL_ROOT	=	..\..\..
 
 EXTRAFLAGS =	-I.. -I..\.. $(OGDIDEF) $(FMEDEF) $(OCIDEF) $(PGDEF) \
-		$(ODBCDEF) $(SQLITEDEF) $(MYSQLDEF) $(ILIDEF)
+		$(ODBCDEF) $(SQLITEDEF) $(MYSQLDEF) $(ILIDEF) $(SDEDEF)
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
@@ -41,6 +41,10 @@ FMEDEF = -DFME_ENABLED
 
 !IFDEF ILI_ENABLED
 ILIDEF = -DILI_ENABLED
+!ENDIF
+
+!IFDEF SDE_ENABLED
+SDEDEF = -DSDE_ENABLED
 !ENDIF
 
 default:	$(OBJ)
