@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2005/11/28 16:18:32  osemykin
+ * TestCapability() modified for right result of SetFeature() and DeleteFeature() capabilities;
+ * Added system variable PGSQL_OGR_FID support for detecting FID column
+ *
  * Revision 1.46  2005/11/18 12:42:55  dron
  * Handle varchar arrays when reading feature definition fields.
  *
@@ -250,13 +254,19 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
     PGresult            *hResult;
     char                szCommand[1024];
     PGconn              *hPGConn = poDS->GetPGConn();
-    char                szPrimaryKey[256] = "ogc_fid";
+    char                szPrimaryKey[256];
 
     poDS->FlushSoftTransaction();
 
-/* -------------------------------------------- */
-/*          Detect table primary key            */
-/* -------------------------------------------- */
+    /* -------------------------------------------- */
+    /*          Detect table primary key            */
+    /* -------------------------------------------- */
+
+    /* -------------------------------------------- */
+    /*          Check config options                */
+    /* -------------------------------------------- */
+    sprintf( szPrimaryKey, "%s", CPLGetConfigOption( "PGSQL_OGR_FID", "ogc_fid" ) );
+
     /* TODO make changes corresponded to Frank issues
     sprintf ( szCommand,
               "SELECT a.attname "
@@ -336,6 +346,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
         {
             bHasFid = TRUE;
             pszFIDColumn = CPLStrdup(oField.GetNameRef());
+            CPLDebug("OGR_PG","Using column '%s' as FID for table '%s'", pszFIDColumn, pszTable );
             continue;
         }
         else if( EQUAL(pszType,"geometry") )
@@ -1292,18 +1303,16 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
 int OGRPGTableLayer::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,OLCSequentialWrite)
-             || EQUAL(pszCap,OLCRandomWrite) )
-        return bUpdateAccess;
+    if ( bUpdateAccess )
+    {
+        if( EQUAL(pszCap,OLCSequentialWrite) || EQUAL(pszCap,OLCCreateField) )
+            return TRUE;
 
-    else if( EQUAL(pszCap,OLCCreateField) )
-        return bUpdateAccess;
+        else if( EQUAL(pszCap,OLCRandomRead) || EQUAL(pszCap,OLCRandomWrite) )
+            return bHasFid;
+    }
 
-    else if( EQUAL(pszCap,OLCRandomRead) )
-        return bHasFid;
-
-    else
-        return OGRPGLayer::TestCapability( pszCap );
+    return OGRPGLayer::TestCapability( pszCap );
 }
 
 /************************************************************************/
