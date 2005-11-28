@@ -3,7 +3,7 @@ GDAL_ROOT	=	..\..
 DIRLIST		=	generic shape ntf sdts tiger s57 dgn mitab gml avc \
 			rec mem vrt csv \
 			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) \
-			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR)
+			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) $(SDE_DIR)
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
@@ -37,6 +37,11 @@ PG_DIR = pg
 PG_OBJ = pg\*.obj
 !ENDIF
 
+!IFDEF SDE_LIB
+SDE_DIR = sde
+SDE_OBJ = sde\*.obj
+!ENDIF
+
 !IFDEF MYSQL_INC_DIR
 MYSQL_DIR = mysql
 MYSQL_OBJ = mysql\*.obj
@@ -59,7 +64,7 @@ default:
 				 vrt\*.obj csv\*.obj rec\*.obj \
 				$(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \
 				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ) \
-				$(ILI_OBJ)
+				$(ILI_OBJ) $(SDE_OBJ)
 	lib /out:ogrsf_frmts_sup.lib \
 				 ..\..\frmts\iso8211\*.obj \
 				 ..\..\frmts\sdts\sdtsattrreader.obj \

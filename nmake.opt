@@ -167,6 +167,13 @@ OCI_LIB =	$(ORACLE_HOME)\oci\lib\msvc\ociw32.lib \
 		$(ORACLE_HOME)\oci\lib\msvc\oci.lib
 !ENDIF
 
+#SDE_ENABLED = YES
+#SDE_VERSION=90
+#SDE_SDK = C:\arcgis\arcsde
+#SDE_INC = $(SDE_SDK)\include 
+#SDE_LIB = $(SDE_SDK)\lib\jsg$(SDE_VERSION).lib $(SDE_SDK)\lib\pe$(SDE_VERSION).lib \
+#          $(SDE_SDK)\lib\sde$(SDE_VERSION).lib $(SDE_SDK)\lib\sg$(SDE_VERSION).lib      
+          
 # Uncomment for GEOS support
 #GEOS_CFLAGS = -Ic:/warmerda/geos/source/headers -DHAVE_GEOS
 #GEOS_LIB     = C:/warmerda/geos/source/geos.lib
