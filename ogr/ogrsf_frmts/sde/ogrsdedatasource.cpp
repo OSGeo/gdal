@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/11/30 01:25:58  fwarmerdam
+ * removed FetchSRSId stuff
+ *
  * Revision 1.2  2005/11/25 05:58:27  fwarmerdam
  * preliminary operation of feature reading
  *
@@ -54,10 +57,6 @@ OGRSDEDataSource::OGRSDEDataSource()
     nLayers = 0;
 
     hConnection = NULL;
-
-//    nKnownSRID = 0;
-//    panSRID = NULL;
-//    papoSRS = NULL;
 }
 
 /************************************************************************/
@@ -80,16 +79,6 @@ OGRSDEDataSource::~OGRSDEDataSource()
     {
         SE_connection_free( hConnection );
     }
-
-#ifdef notdef
-    for( i = 0; i < nKnownSRID; i++ )
-    {
-        if( papoSRS[i] != NULL )
-            papoSRS[i]->Release();
-    }
-    CPLFree( panSRID );
-    CPLFree( papoSRS );
-#endif
 }
 
 /************************************************************************/
@@ -285,176 +274,3 @@ OGRLayer *OGRSDEDataSource::GetLayer( int iLayer )
         return papoLayers[iLayer];
 }
 
-#ifdef notdef
-/************************************************************************/
-/*                              FetchSRS()                              */
-/*                                                                      */
-/*      Return a SRS corresponding to a particular id.  Note that       */
-/*      reference counting should be honoured on the returned           */
-/*      OGRSpatialReference, as handles may be cached.                  */
-/************************************************************************/
-
-OGRSpatialReference *OGRSDEDataSource::FetchSRS( int nId )
-
-{
-    if( nId < 0 )
-        return NULL;
-
-/* -------------------------------------------------------------------- */
-/*      First, we look through our SRID cache, is it there?             */
-/* -------------------------------------------------------------------- */
-    int  i;
-
-    for( i = 0; i < nKnownSRID; i++ )
-    {
-        if( panSRID[i] == nId )
-            return papoSRS[i];
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Try looking up in spatial_ref_sys table.                        */
-/* -------------------------------------------------------------------- */
-    PGresult        *hResult;
-    char            szCommand[1024];
-    OGRSpatialReference *poSRS = NULL;
-
-    SoftStartTransaction();
-
-    sprintf( szCommand,
-             "SELECT srtext FROM spatial_ref_sys "
-             "WHERE srid = %d",
-             nId );
-    hResult = PQexec(hPGConn, szCommand );
-
-    if( hResult
-        && PQresultStatus(hResult) == PGRES_TUPLES_OK
-        && PQntuples(hResult) == 1 )
-    {
-        char *pszWKT;
-
-        pszWKT = PQgetvalue(hResult,0,0);
-        poSRS = new OGRSpatialReference();
-        if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
-        {
-            delete poSRS;
-            poSRS = NULL;
-        }
-    }
-
-    PQclear( hResult );
-    SoftCommit();
-
-/* -------------------------------------------------------------------- */
-/*      Add to the cache.                                               */
-/* -------------------------------------------------------------------- */
-    panSRID = (int *) CPLRealloc(panSRID,sizeof(int) * (nKnownSRID+1) );
-    papoSRS = (OGRSpatialReference **)
-        CPLRealloc(papoSRS, sizeof(void*) * (nKnownSRID + 1) );
-    panSRID[nKnownSRID] = nId;
-    papoSRS[nKnownSRID] = poSRS;
-
-    return poSRS;
-}
-
-/************************************************************************/
-/*                             FetchSRSId()                             */
-/*                                                                      */
-/*      Fetch the id corresponding to an SRS, and if not found, add     */
-/*      it to the table.                                                */
-/************************************************************************/
-
-int OGRSDEDataSource::FetchSRSId( OGRSpatialReference * poSRS )
-
-{
-    PGresult            *hResult;
-    char                szCommand[10000];
-    char                *pszWKT = NULL;
-    int                 nSRSId;
-
-    if( poSRS == NULL )
-        return -1;
-
-/* -------------------------------------------------------------------- */
-/*      Translate SRS to WKT.                                           */
-/* -------------------------------------------------------------------- */
-    if( poSRS->exportToWkt( &pszWKT ) != OGRERR_NONE )
-        return -1;
-
-    CPLAssert( strlen(pszWKT) < sizeof(szCommand) - 500 );
-
-/* -------------------------------------------------------------------- */
-/*      Try to find in the existing table.                              */
-/* -------------------------------------------------------------------- */
-    hResult = PQexec(hPGConn, "BEGIN");
-
-    sprintf( szCommand,
-             "SELECT srid FROM spatial_ref_sys WHERE srtext = '%s'",
-             pszWKT );
-    hResult = PQexec(hPGConn, szCommand );
-
-/* -------------------------------------------------------------------- */
-/*      We got it!  Return it.                                          */
-/* -------------------------------------------------------------------- */
-    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK
-        && PQntuples(hResult) > 0 )
-    {
-        nSRSId = atoi(PQgetvalue( hResult, 0, 0 ));
-
-        PQclear( hResult );
-
-        hResult = PQexec(hPGConn, "COMMIT");
-        PQclear( hResult );
-
-        return nSRSId;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      If the command actually failed, then the metadata table is      */
-/*      likely missing. Try defining it.                                */
-/* -------------------------------------------------------------------- */
-    int         bTableMissing;
-
-    bTableMissing =
-        hResult == NULL || PQresultStatus(hResult) == PGRES_NONFATAL_ERROR;
-
-    hResult = PQexec(hPGConn, "COMMIT");
-    PQclear( hResult );
-
-    if( bTableMissing )
-    {
-        if( InitializeMetadataTables() != OGRERR_NONE )
-            return -1;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Get the current maximum srid in the srs table.                  */
-/* -------------------------------------------------------------------- */
-    hResult = PQexec(hPGConn, "BEGIN");
-    PQclear( hResult );
-
-    hResult = PQexec(hPGConn, "SELECT MAX(srid) FROM spatial_ref_sys" );
-
-    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK )
-    {
-        nSRSId = atoi(PQgetvalue(hResult,0,0)) + 1;
-        PQclear( hResult );
-    }
-    else
-        nSRSId = 1;
-
-/* -------------------------------------------------------------------- */
-/*      Try adding the SRS to the SRS table.                            */
-/* -------------------------------------------------------------------- */
-    sprintf( szCommand,
-             "INSERT INTO spatial_ref_sys (srid,srtext) VALUES (%d,'%s')",
-             nSRSId, pszWKT );
-
-    hResult = PQexec(hPGConn, szCommand );
-    PQclear( hResult );
-
-    hResult = PQexec(hPGConn, "COMMIT");
-    PQclear( hResult );
-
-    return nSRSId;
-}
-#endif
