@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/11/30 01:53:31  fwarmerdam
+ * added OGR_SDE_SEARCHORDER config option
+ *
  * Revision 1.5  2005/11/30 01:34:02  fwarmerdam
  * Ensure layerinfo is loaded for GetSpatialRef().
  *
@@ -409,6 +412,24 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
         SE_FILTER sConstraint;
         SE_ENVELOPE sEnvelope;
         SE_SHAPE hRectShape;
+        SHORT nSearchOrder = SE_SPATIAL_FIRST;
+
+        if( osAttributeFilter.size() > 0 )
+        {
+            const char *pszOrder = CPLGetConfigOption( "OGR_SDE_SEARCHORDER", 
+                                                       "ATTRIBUTE_FIRST" );
+
+            if( EQUAL(pszOrder, "ATTRIBUTE_FIRST") )
+                nSearchOrder = SE_ATTRIBUTE_FIRST;
+            else 
+            {
+                if( !EQUAL(pszOrder, "SPATIAL_FIRST") )
+                    CPLError( CE_Warning, CPLE_AppDefined, 
+                              "Unrecognised OGR_SDE_SEARCHORDER value of %s.",
+                              pszOrder );
+                nSearchOrder = SE_SPATIAL_FIRST;
+            }
+        }
 
         NeedLayerInfo(); // need hCoordRef
 
