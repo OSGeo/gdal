@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/11/30 01:34:02  fwarmerdam
+ * Ensure layerinfo is loaded for GetSpatialRef().
+ *
  * Revision 1.4  2005/11/25 18:55:15  fwarmerdam
  * layer implementation essentially complete
  *
@@ -995,5 +998,7 @@ int OGRSDELayer::TestCapability( const char * pszCap )
 OGRSpatialReference *OGRSDELayer::GetSpatialRef()
 
 {
+    NeedLayerInfo();
+
     return poSRS;
 }
