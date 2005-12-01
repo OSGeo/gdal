@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/12/01 04:50:12  fwarmerdam
+ * Fixed dependency on poOpenInfo->fp.
+ *
  * Revision 1.32  2005/12/01 04:26:15  fwarmerdam
  * Use large file API.
  *
@@ -456,7 +459,6 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Does this look like an AI grid file?                            */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 100
-        || poOpenInfo->fp == NULL
         || !( EQUALN((const char *) poOpenInfo->pabyHeader,"ncols",5) ||
               EQUALN((const char *) poOpenInfo->pabyHeader,"nrows",5) ||
               EQUALN((const char *) poOpenInfo->pabyHeader,"xllcorner",9)||
