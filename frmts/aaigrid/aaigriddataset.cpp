@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/12/01 04:26:15  fwarmerdam
+ * Use large file API.
+ *
  * Revision 1.31  2005/08/23 16:32:23  fwarmerdam
  * Fixed to support tabs for white space too.
  *
@@ -157,6 +160,14 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
     int         bNoDataSet;
     double      dfNoDataValue;
 
+    unsigned char achReadBuf[256];
+    GUIntBig    nBufferOffset;
+    int         nOffsetInBuffer;
+
+    char        Getc();
+    GUIntBig    Tell();
+    int         Seek( GUIntBig nOffset );
+
   public:
                 AAIGDataset();
                 ~AAIGDataset();
@@ -249,8 +260,8 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( panLineOffset[nBlockYOff] == 0 )
         return CE_Failure;
 
-    if( VSIFSeek( poODS->fp, (long) panLineOffset[nBlockYOff], 
-                  SEEK_SET ) != 0 )
+    
+    if( poODS->Seek( panLineOffset[nBlockYOff] ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Can't seek to offset %ld in input file to read data.",
@@ -266,7 +277,7 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         /* suck up any pre-white space. */
         do {
-            chNext = VSIFGetc( poODS->fp );
+            chNext = poODS->Getc();
         } while( isspace( chNext ) );
 
         while( !isspace(chNext)  )
@@ -280,7 +291,7 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             }
 
             szToken[iTokenChar++] = chNext;
-            chNext = VSIFGetc( poODS->fp );
+            chNext = poODS->Getc();
         }
 
         if( chNext == '\0' )
@@ -305,7 +316,7 @@ CPLErr AAIGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     
     if( nBlockYOff < poODS->nRasterYSize - 1 )
-        panLineOffset[nBlockYOff + 1] = VSIFTell( poODS->fp );
+        panLineOffset[nBlockYOff + 1] = poODS->Tell();
 
     return CE_None;
 }
@@ -366,6 +377,9 @@ AAIGDataset::AAIGDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+
+    nOffsetInBuffer = 256;
+    nBufferOffset = 0;
 }
 
 /************************************************************************/
@@ -378,10 +392,53 @@ AAIGDataset::~AAIGDataset()
     FlushCache();
 
     if( fp != NULL )
-        VSIFClose( fp );
+        VSIFCloseL( fp );
 
     CPLFree( pszProjection );
     CSLDestroy( papszPrj );
+}
+
+/************************************************************************/
+/*                                Tell()                                */
+/************************************************************************/
+
+GUIntBig AAIGDataset::Tell()
+
+{
+    return nBufferOffset + nOffsetInBuffer;
+}
+
+/************************************************************************/
+/*                                Seek()                                */
+/************************************************************************/
+
+int AAIGDataset::Seek( GUIntBig nNewOffset )
+
+{
+    nOffsetInBuffer = sizeof(achReadBuf);
+    return VSIFSeekL( fp, nNewOffset, SEEK_SET );
+}
+
+/************************************************************************/
+/*                                Getc()                                */
+/*                                                                      */
+/*      Read a single character from the input file (efficiently we     */
+/*      hope).                                                          */
+/************************************************************************/
+
+char AAIGDataset::Getc()
+
+{
+    if( nOffsetInBuffer < (int) sizeof(achReadBuf) )
+        return achReadBuf[nOffsetInBuffer++];
+
+    nBufferOffset = VSIFTellL( fp );
+    if( VSIFReadL( achReadBuf, 1, sizeof(achReadBuf), fp ) < 1 )
+        return EOF;
+
+    nOffsetInBuffer = 0;
+
+    return achReadBuf[nOffsetInBuffer++];
 }
 
 /************************************************************************/
@@ -486,9 +543,18 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     
     CSLDestroy( papszTokens );
 
-    poDS->fp = poOpenInfo->fp;
-    poOpenInfo->fp = NULL;
-    
+/* -------------------------------------------------------------------- */
+/*      Open file with large file API.                                  */
+/* -------------------------------------------------------------------- */
+    poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
+    if( poDS->fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "VSIFOpenL(%s) failed unexpectedly.", 
+                  poOpenInfo->pszFilename );
+        return NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Find the start of real data.                                    */
 /* -------------------------------------------------------------------- */
@@ -529,13 +595,13 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     char        *pszDirname, *pszBasename;
     const char  *pszPrjFilename;
-    VSIStatBuf   sStatBuf;
+    VSIStatBufL   sStatBuf;
 
     pszDirname = CPLStrdup(CPLGetPath(poOpenInfo->pszFilename));
     pszBasename = CPLStrdup(CPLGetBasename(poOpenInfo->pszFilename));
 
     pszPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prj" );
-    if( VSIStat( pszPrjFilename, &sStatBuf ) == 0 )
+    if( VSIStatL( pszPrjFilename, &sStatBuf ) == 0 )
     {
         OGRSpatialReference     oSRS;
 
@@ -615,7 +681,7 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     FILE        *fpImage;
 
-    fpImage = VSIFOpen( pszFilename, "wt" );
+    fpImage = VSIFOpenL( pszFilename, "wt" );
     if( fpImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -628,28 +694,42 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Write ASCII Grid file header                                    */
 /* -------------------------------------------------------------------- */
     double      adfGeoTransform[6];
+    char        szHeader[2000];
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
-    VSIFPrintf( fpImage, "ncols        %d\n", nXSize );
-    VSIFPrintf( fpImage, "nrows        %d\n", nYSize );
-    VSIFPrintf( fpImage, "xllcorner    %.12f\n", adfGeoTransform[0] );
-    VSIFPrintf( fpImage, "yllcorner    %.12f\n", 
-        adfGeoTransform[3]- nYSize * adfGeoTransform[1] );
-    VSIFPrintf( fpImage, "cellsize     %.12f\n", adfGeoTransform[1] );
+
+    sprintf( szHeader, 
+             "ncols        %d\n" 
+             "nrows        %d\n"
+             "xllcorner    %.12f\n"
+             "yllcorner    %.12f\n"
+             "cellsize     %.12f\n", 
+             nXSize, nYSize, 
+             adfGeoTransform[0], 
+             adfGeoTransform[3]- nYSize * adfGeoTransform[1],
+             adfGeoTransform[1] );
 
 /* -------------------------------------------------------------------- */
-/*      Loop over image, copying image data.                            */
+/*      Handle nodata (optionally).                                     */
 /* -------------------------------------------------------------------- */
-    double      *padfScanline, dfNoData;
-    int         iLine, iPixel, bSuccess;
-    CPLErr      eErr = CE_None;
-    
     GDALRasterBand * poBand = poSrcDS->GetRasterBand( 1 );
+    double dfNoData;
+    int bSuccess;
 
     // Write `nodata' value to header if it is exists in source dataset
     dfNoData = poBand->GetNoDataValue( &bSuccess );
     if ( bSuccess )
-        VSIFPrintf( fpImage, "NODATA_value %6.20g\n", dfNoData );
+        sprintf( szHeader+strlen(szHeader), "NODATA_value %6.20g\n", 
+                 dfNoData );
+    
+    VSIFWriteL( szHeader, 1, strlen(szHeader), fpImage );
+
+/* -------------------------------------------------------------------- */
+/*      Loop over image, copying image data.                            */
+/* -------------------------------------------------------------------- */
+    double      *padfScanline;
+    int         iLine, iPixel;
+    CPLErr      eErr = CE_None;
     
     // Write scanlines to output file
     padfScanline = (double *) CPLMalloc( nXSize *
@@ -666,14 +746,32 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             || poBand->GetRasterDataType() == GDT_Int32 )
         {
             for ( iPixel = 0; iPixel < nXSize; iPixel++ )
-                VSIFPrintf( fpImage, " %d", (int) padfScanline[iPixel] );
+            {
+                sprintf( szHeader, " %d", (int) padfScanline[iPixel] );
+                if( VSIFWriteL( szHeader, strlen(szHeader), 1, fpImage ) != 1 )
+                {
+                    eErr = CE_Failure;
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                              "Write failed, disk full?\n" );
+                    break;
+                }
+            }
         }
         else
         {
             for ( iPixel = 0; iPixel < nXSize; iPixel++ )
-                VSIFPrintf( fpImage, " %6.20g", padfScanline[iPixel] );
+            {
+                sprintf( szHeader, " %6.20g", padfScanline[iPixel] );
+                if( VSIFWriteL( szHeader, strlen(szHeader), 1, fpImage ) != 1 )
+                {
+                    eErr = CE_Failure;
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                              "Write failed, disk full?\n" );
+                    break;
+                }
+            }
         }
-        VSIFPrintf( fpImage, "\n" );
+        VSIFWriteL( (void *) "\n", 1, 1, fpImage );
 
         if( eErr == CE_None &&
             !pfnProgress((iLine + 1) / ((double) nYSize), NULL, pProgressData) )
@@ -685,7 +783,7 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     CPLFree( padfScanline );
-    VSIFClose( fpImage );
+    VSIFCloseL( fpImage );
 
 /* -------------------------------------------------------------------- */
 /*      Try to write projection file.                                   */
@@ -705,14 +803,14 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         pszBasename = CPLStrdup( CPLGetBasename(pszFilename) );
 
         pszPrjFilename = CPLFormFilename( pszDirname, pszBasename, "prj" );
-        fp = VSIFOpen( pszPrjFilename, "wt" );
+        fp = VSIFOpenL( pszPrjFilename, "wt" );
         
         oSRS.importFromWkt( (char **) &pszOriginalProjection );
         oSRS.morphToESRI();
         oSRS.exportToWkt( &pszESRIProjection );
-        VSIFPuts( pszESRIProjection, fp );
+        VSIFWriteL( pszESRIProjection, 1, strlen(pszESRIProjection), fp );
 
-        VSIFClose( fp );
+        VSIFCloseL( fp );
         CPLFree( pszDirname );
         CPLFree( pszBasename );
         CPLFree( pszESRIProjection );
@@ -738,9 +836,9 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 CPLErr AAIGDataset::Remove( const char * pszFilename, int bRepError )
 
 {
-    VSIStatBuf      sStat;
+    VSIStatBufL      sStat;
 
-    if( VSIStat( pszFilename, &sStat ) == 0 && VSI_ISREG( sStat.st_mode ) )
+    if( VSIStatL( pszFilename, &sStat ) == 0 && VSI_ISREG( sStat.st_mode ) )
     {
         if( VSIUnlink( pszFilename ) == 0 )
             return CE_None;
