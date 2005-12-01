@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2005/12/01 04:59:46  fwarmerdam
+ * added two point equidistant support
+ *
  * Revision 1.55  2005/10/10 14:45:47  dron
  * Added OSRImportFromPanorama()/OSRExportToPanorama() wrappers.
  *
@@ -315,6 +318,8 @@ typedef enum {
 
 #define SRS_PT_TUNISIA_MINING_GRID                                      \
                                 "Tunisia_Mining_Grid"
+#define SRS_PT_TWO_POINT_EQUIDISTANT                                    \
+                                "Two_Point_Equidistant"
 #define SRS_PT_VANDERGRINTEN    "VanDerGrinten"
 #define SRS_PT_KROVAK           "Krovak"
 
@@ -345,6 +350,10 @@ typedef enum {
 #define SRS_PP_SATELLITE_HEIGHT         "satellite_height"
 #define SRS_PP_FIPSZONE                 "fipszone"
 #define SRS_PP_ZONE                     "zone"
+#define SRS_PP_LATITUDE_OF_1ST_POINT    "Latitude_Of_1st_Point"
+#define SRS_PP_LONGITUDE_OF_1ST_POINT   "Longitude_Of_1st_Point"
+#define SRS_PP_LATITUDE_OF_2ND_POINT    "Latitude_Of_2nd_Point"
+#define SRS_PP_LONGITUDE_OF_2ND_POINT   "Longitude_Of_2nd_Point"
 
 #define SRS_UL_METER            "Meter"
 #define SRS_UL_FOOT             "Foot (International)" /* or just "FOOT"? */

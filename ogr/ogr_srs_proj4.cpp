@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2005/12/01 04:59:46  fwarmerdam
+ * added two point equidistant support
+ *
  * Revision 1.58  2005/11/10 04:12:40  fwarmerdam
  * The last change related to:
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=980
@@ -822,6 +825,16 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                 OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
+    else if( EQUAL(pszProj,"tpeqd") )
+    {
+        SetTPED( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                 OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+                 OSR_GDV( papszNV, "lat_1", 0.0 ), 
+                 OSR_GDV( papszNV, "lon_1", 0.0 )+dfFromGreenwich, 
+                 OSR_GDV( papszNV, "x_0", 0.0 ), 
+                 OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
     else
     {
         CPLDebug( "OGR_PROJ4", "Unsupported projection: %s", pszProj );
@@ -1191,6 +1204,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         sprintf( szProj4+strlen(szProj4),
          "+proj=sterea +lat_0=%.16g +lon_0=%.16g +k=%f +x_0=%.16g +y_0=%.16g ",
+//         "+proj=stere +lat_0=%.16g +lon_0=%.16g +k=%f +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
                  - dfFromGreenwich,
@@ -1521,6 +1535,22 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  - dfFromGreenwich,
                  GetNormProjParm(SRS_PP_AZIMUTH,0.0),
                  GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
+                 GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
+                 GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
+    }
+
+    else if( EQUAL(pszProjection,SRS_PT_TWO_POINT_EQUIDISTANT) )
+    {
+        sprintf( szProj4+strlen(szProj4),
+                 "+proj=tpeqd +lat_0=%.16g +lon_0=%.16g "
+                 "+lat_1=%.16g +lon_1=%.16g "
+                 "+x_0=%.16g +y_0=%.16g ",
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_1ST_POINT,0.0),
+                 GetNormProjParm(SRS_PP_LONGITUDE_OF_1ST_POINT,0.0)
+                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_LATITUDE_OF_2ND_POINT,0.0),
+                 GetNormProjParm(SRS_PP_LONGITUDE_OF_2ND_POINT,0.0)
+                 - dfFromGreenwich,
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }

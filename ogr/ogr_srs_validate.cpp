@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/12/01 04:59:46  fwarmerdam
+ * added two point equidistant support
+ *
  * Revision 1.7  2005/10/03 17:34:19  fwarmerdam
  * Added a bunch of missing definitions as per 937.
  *
@@ -87,6 +90,10 @@ static char *papszParameters[] =
     SRS_PP_RECTIFIED_GRID_ANGLE,
     SRS_PP_SATELLITE_HEIGHT,
     SRS_PP_PSEUDO_STD_PARALLEL_1,
+    SRS_PP_LATITUDE_OF_1ST_POINT,
+    SRS_PP_LONGITUDE_OF_1ST_POINT,
+    SRS_PP_LATITUDE_OF_2ND_POINT,
+    SRS_PP_LONGITUDE_OF_2ND_POINT,
     NULL
 };
 
@@ -128,6 +135,7 @@ static char *papszProjectionSupported[] =
     SRS_PT_POLYCONIC,
     SRS_PT_VANDERGRINTEN,
     SRS_PT_GEOSTATIONARY_SATELLITE,
+    SRS_PT_TWO_POINT_EQUIDISTANT,
     NULL
 };
 
@@ -398,6 +406,14 @@ static char *papszProjWithParms[] = {
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
     NULL,
+
+    SRS_PT_TWO_POINT_EQUIDISTANT,
+    SRS_PP_LATITUDE_OF_1ST_POINT,
+    SRS_PP_LONGITUDE_OF_1ST_POINT,
+    SRS_PP_LATITUDE_OF_2ND_POINT,
+    SRS_PP_LONGITUDE_OF_2ND_POINT,
+    SRS_PP_FALSE_EASTING,
+    SRS_PP_FALSE_NORTHING,
 
     NULL
 };

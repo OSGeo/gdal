@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.69  2005/12/01 04:59:45  fwarmerdam
+ * added two point equidistant support
+ *
  * Revision 1.68  2005/10/10 14:44:52  dron
  * Added exportToPanorama()/importFromPanorama() methods.
  *
@@ -466,7 +469,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetStereographic( double dfCenterLat, double dfCenterLong,
                                   double dfScale,
                                  double dfFalseEasting,double dfFalseNorthing);
-    
+
     /** Swiss Oblique Cylindrical */
     OGRErr      SetSOC( double dfLatitudeOfOrigin, double dfCentralMeridian,
                         double dfFalseEasting, double dfFalseNorthing );
@@ -491,6 +494,11 @@ class CPL_DLL OGRSpatialReference
                          double dfScale,
                          double dfFalseEasting, double dfFalseNorthing );
 
+    /** Two Point Equidistant */
+    OGRErr      SetTPED( double dfLat1, double dfLong1, 
+                         double dfLat2, double dfLong2, 
+                         double dfFalseEasting, double dfFalseNorthing );
+    
     /** VanDerGrinten */
     OGRErr      SetVDG( double dfCenterLong,
                         double dfFalseEasting, double dfFalseNorthing );
