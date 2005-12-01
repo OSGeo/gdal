@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.97  2005/12/01 04:59:46  fwarmerdam
+ * added two point equidistant support
+ *
  * Revision 1.96  2005/10/16 01:32:41  fwarmerdam
  * Apply epsilon testing to UTM zone false easting and northing.
  *
@@ -2466,6 +2469,27 @@ OGRErr OGRSpatialReference::SetTMSO( double dfCenterLat, double dfCenterLong,
     SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
     SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
     SetNormProjParm( SRS_PP_SCALE_FACTOR, dfScale );
+    SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                              SetTPED()                               */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetTPED( double dfLat1, double dfLong1, 
+                                     double dfLat2, double dfLong2,
+                                     double dfFalseEasting,
+                                     double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_TWO_POINT_EQUIDISTANT );
+    SetNormProjParm( SRS_PP_LATITUDE_OF_1ST_POINT, dfLat1 );
+    SetNormProjParm( SRS_PP_LONGITUDE_OF_1ST_POINT, dfLong1 );
+    SetNormProjParm( SRS_PP_LATITUDE_OF_2ND_POINT, dfLat2 );
+    SetNormProjParm( SRS_PP_LONGITUDE_OF_2ND_POINT, dfLong2 );
     SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
     SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
 
