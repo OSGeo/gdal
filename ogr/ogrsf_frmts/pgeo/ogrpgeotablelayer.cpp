@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/12/01 17:40:37  fwarmerdam
+ * dont try to set geometry type for layer
+ *
  * Revision 1.1  2005/09/05 19:34:17  fwarmerdam
  * New
  *
@@ -182,7 +185,18 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
         return CE_Failure;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Set geometry type.                                              */
+/*                                                                      */
+/*      ... per reports from Craig Miller, it seems we cannot really    */
+/*      trust the ShapeType value.  At the very least "line" tables     */
+/*      sometimes have multilinestrings.  So for now we just always     */
+/*      return wkbUnknown.                                              */
+/* -------------------------------------------------------------------- */
+#ifdef notdef
     poFeatureDefn->SetGeomType( eOGRType );
+#endif
+
     return CE_None;
 }
 
