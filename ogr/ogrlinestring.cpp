@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2005/12/02 11:06:51  osemykin
+ * added const for OGRLineString::getPoints(...)
+ *
  * Revision 1.51  2005/09/21 07:45:53  osemykin
  * Fixed getPoints() for support Z coordinate NULL buffer
  *
@@ -673,7 +676,7 @@ void OGRLineString::setPoints( int nPointsIn, double * padfX, double * padfY,
  * @param padfZ the Z values that go with the points (optional, may be NULL).
  */
 
-void OGRLineString::getPoints( OGRRawPoint * paoPointsOut, double * padfZ )
+void OGRLineString::getPoints( OGRRawPoint * paoPointsOut, double * padfZ ) const
 {
     if ( ! paoPointsOut )
         return;

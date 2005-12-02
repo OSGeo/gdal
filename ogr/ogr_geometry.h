@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2005/12/02 11:06:51  osemykin
+ * added const for OGRLineString::getPoints(...)
+ *
  * Revision 1.59  2005/10/21 15:58:00  fwarmerdam
  * getGEOSGeometryFactory now returns void *
  *
@@ -468,7 +471,7 @@ class CPL_DLL OGRLineString : public OGRCurve
     void        addPoint( double, double );
     void        addPoint( double, double, double );
 
-    void        getPoints( OGRRawPoint *, double * = NULL );
+    void        getPoints( OGRRawPoint *, double * = NULL ) const;
 
     void        addSubLineString( const OGRLineString *, 
                                   int nStartVertex = 0, int nEndVertex = -1 );
