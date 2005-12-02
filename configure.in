@@ -1,4 +1,4 @@
-Mdnl Disable configure caching ... it causes lots of hassles.
+dnl Disable configure caching ... it causes lots of hassles.
 define([AC_CACHE_LOAD], )
 define([AC_CACHE_SAVE], )
 
