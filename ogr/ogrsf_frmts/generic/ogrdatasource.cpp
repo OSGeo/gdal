@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2005/12/02 11:02:52  osemykin
+ * check input parameter with NULL in GetLayerByName()
+ *
  * Revision 1.23  2005/10/25 19:59:15  fwarmerdam
  * added driver tracking on datasource
  *
@@ -415,6 +418,9 @@ OGRErr OGR_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer )
 OGRLayer *OGRDataSource::GetLayerByName( const char *pszName )
 
 {
+    if ( ! pszName )
+        return NULL;
+
     int  i;
 
     /* first a case sensitive check */
