@@ -37,10 +37,14 @@ PG_DIR = pg
 PG_OBJ = pg\*.obj
 !ENDIF
 
+!IFDEF DWGDIRECT
+DWGDIR = dxfdwg
+DWG_OBJ = dxfdwg\*.obj
+!ENDIF
+
 !IFDEF SDE_LIB
 SDE_DIR = sde
 SDE_OBJ = sde\*.obj
-!ENDIF
 
 !IFDEF MYSQL_INC_DIR
 MYSQL_DIR = mysql
@@ -64,7 +68,7 @@ default:
 				 vrt\*.obj csv\*.obj rec\*.obj \
 				$(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \
 				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ) \
-				$(ILI_OBJ) $(SDE_OBJ)
+				$(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ)
 	lib /out:ogrsf_frmts_sup.lib \
 				 ..\..\frmts\iso8211\*.obj \
 				 ..\..\frmts\sdts\sdtsattrreader.obj \
