@@ -76,6 +76,12 @@ JPEG_SUPPORTED = 1
 #ECWLIB  =       $(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
 #		$(ECWDIR)\lib\NCSUtil.lib
 
+# DWG/DXF support via DWGdirect from Open Design Alliance
+
+#DWGDIRECT=C:\warmerda\DWGdirect
+#DWG_LIB_DIR=$(DWGDIRECT)\lib\VC6MD
+#DWG_LIB=$(DWG_LIB_DIR)\DD_AcisBuilder_dll.lib $(DWG_LIB_DIR)\DD_AcisRenderer_dll.lib $(DWG_LIB_DIR)\DD_Alloc_dll.lib $(DWG_LIB_DIR)\DD_BmpExport_dll.lib $(DWG_LIB_DIR)\DD_Br_dll.lib $(DWG_LIB_DIR)\DD_Db_dll.lib $(DWG_LIB_DIR)\DD_DwfExport_dll.lib $(DWG_LIB_DIR)\DD_DwfImport_dll.lib $(DWG_LIB_DIR)\DD_Ge_dll.lib $(DWG_LIB_DIR)\DD_Gi_dll.lib $(DWG_LIB_DIR)\DD_Gs_dll.lib $(DWG_LIB_DIR)\DD_ModelerGeometry_dll.lib $(DWG_LIB_DIR)\DD_Root_dll.lib $(DWG_LIB_DIR)\DD_Sm_dll.lib $(DWG_LIB_DIR)\DD_SpatialIndex_dll.lib $(DWG_LIB_DIR)\DD_VC6MD_OleDataAccess_dll.lib
+
 # Uncomment the following and update to enable OGDI support.
 #OGDIDIR =	D:\warmerda\iii\devdir
 #OGDIVER =	31
@@ -227,7 +233,7 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(OCI_LIB) $(PG_LIB) $(ODBCLIB) \
 		$(ECWLIB) $(HDF4_LIB) $(FME_LIB) $(JASPER_LIB) $(MRSID_ELIB) \
 		$(FITS_LIB) $(JPEG_LIB) $(PNG_LIB) $(NETCDF_LIB) $(PROJ4_LIB) \
 		$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
-		$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB) $(ADD_LIBS)
+		$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB) $(DWG_LIB) $(ADD_LIBS)
 
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
