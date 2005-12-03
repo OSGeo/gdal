@@ -45,6 +45,7 @@ DWG_OBJ = dxfdwg\*.obj
 !IFDEF SDE_LIB
 SDE_DIR = sde
 SDE_OBJ = sde\*.obj
+!ENDIF
 
 !IFDEF MYSQL_INC_DIR
 MYSQL_DIR = mysql
