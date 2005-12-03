@@ -2,8 +2,9 @@ GDAL_ROOT	=	..\..
 
 DIRLIST		=	generic shape ntf sdts tiger s57 dgn mitab gml avc \
 			rec mem vrt csv \
-			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) \
-			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) $(SDE_DIR)
+			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
+			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
+			$(SDE_DIR)
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
