@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2005/12/05 11:34:22  dron
+ * Handle 'double precision[]' arrays in ReadTableDefinition().
+ *
  * Revision 1.47  2005/11/28 16:18:32  osemykin
  * TestCapability() modified for right result of SetFeature() and DeleteFeature() capabilities;
  * Added system variable PGSQL_OGR_FID support for detecting FID column
@@ -409,7 +412,8 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
         {
             oField.SetType( OFTIntegerList );
         }
-        else if( EQUAL(pszFormatType,"float[]") )
+        else if( EQUAL(pszFormatType, "float[]")
+                 || EQUAL(pszFormatType, "double precision[]") )
         {
             oField.SetType( OFTRealList );
         }
