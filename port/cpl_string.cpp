@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.52  2005/12/06 07:33:12  fwarmerdam
+ * fixed support for tokenizing string with trailing delimeter, bug 945
+ *
  * Revision 1.51  2005/10/13 01:20:16  fwarmerdam
  * added CSLMerge()
  *
@@ -837,13 +840,9 @@ char ** CSLTokenizeString2( const char * pszString,
         pszToken[nTokenLen] = '\0';
 
         /*
-         * If the last token is an empty token, then we have to catch
-         * it now, otherwise we won't reenter the loop and it will be lost. 
+         * Add the token.
          */
-
-        if( (pszToken[0] != '\0' || bAllowEmptyTokens)
-            || (*pszString == '\0' && bAllowEmptyTokens
-                && strchr(pszDelimiters, *(pszString-1)) ) )
+        if( pszToken[0] != '\0' || bAllowEmptyTokens )
         {
             if( nRetLen >= nRetMax - 1 )
             {
@@ -855,6 +854,24 @@ char ** CSLTokenizeString2( const char * pszString,
             papszRetList[nRetLen++] = CPLStrdup( pszToken );
             papszRetList[nRetLen] = NULL;
         }
+    }
+
+    /*
+     * If the last token was empty, then we need to capture
+     * it now, as the loop would skip it.
+     */
+    if( *pszString == '\0' && bAllowEmptyTokens && nRetLen > 0 
+        && strchr(pszDelimiters,*(pszString-1)) != NULL )
+    {
+        if( nRetLen >= nRetMax - 1 )
+        {
+            nRetMax = nRetMax * 2 + 10;
+            papszRetList = (char **) 
+                CPLRealloc(papszRetList, sizeof(char*) * nRetMax );
+        }
+
+        papszRetList[nRetLen++] = CPLStrdup("");
+        papszRetList[nRetLen] = NULL;
     }
 
     if( papszRetList == NULL )
