@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2005/12/06 06:41:18  fwarmerdam
+ * added slightly questionable translation for method 9829 (PS Variant B
+ *
  * Revision 1.39  2005/04/06 00:02:05  fwarmerdam
  * various osr and oct functions now stdcall
  *
@@ -832,6 +835,8 @@ EPSGGetEllipsoidInfo( int nCode, char ** ppszName,
 #define SphericalOriginLong  8829
 #define InitialLongitude     8830
 #define ZoneWidth            8831
+#define PolarLatStdParallel  8832
+#define PolarLongOrigin      8833
 
 /************************************************************************/
 /*                         EPSGGetProjTRFInfo()                         */
@@ -1396,6 +1401,12 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
                         OGR_FP( NatOriginLong ) );
         break;
 #endif
+
+      case 9829: /* Polar Stereographic (Variant B) */
+          poSRS->SetPS( OGR_FP( PolarLatStdParallel ), OGR_FP(PolarLongOrigin),
+                        1.0,
+                        OGR_FP( FalseEasting ), OGR_FP( FalseNorthing ) );
+          break;
 
       default:
         CPLDebug( "EPSG", "No WKT support for projection method %d.",
