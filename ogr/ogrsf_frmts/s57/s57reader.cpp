@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2005/12/06 22:02:45  fwarmerdam
+ * dont create 3d points in AssemblePoint, bug 1010
+ *
  * Revision 1.53  2005/08/07 13:58:17  fwarmerdam
  * avoid use of std::sprintf in favor of plain sprintf
  *
@@ -1517,7 +1520,10 @@ void S57Reader::AssemblePointGeometry( DDFRecord * poFRecord,
         return;
     }
 
-    poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
+    if( dfZ == 0.0 )
+        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY ) );
+    else
+        poFeature->SetGeometryDirectly( new OGRPoint( dfX, dfY, dfZ ) );
 }
 
 /************************************************************************/
