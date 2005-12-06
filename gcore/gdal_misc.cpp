@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.75  2005/12/06 21:51:01  fwarmerdam
+ * before calling GDALOpen on a .aux file, verify it is HFA
+ *
  * Revision 1.74  2005/10/07 13:31:26  dron
  * Allow pixel width/height to be zero when rotation is present
  * (GDALReadWorldFile).
@@ -2260,10 +2263,16 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
     CPLString oAuxFilename = CPLResetExtension(pszBasename,"aux");
     CPLString oJustFile = CPLGetFilename(pszBasename); // without dir
     GDALDataset *poODS = NULL;
-        
-    if( VSIStatL( oAuxFilename, &sStatBuf ) == 0 )
+    GByte abyHeader[32];
+    FILE *fp;
+
+    fp = VSIFOpenL( oAuxFilename, "rb" );
+    if( fp != NULL )
     {
-        poODS = (GDALDataset *) GDALOpenShared( oAuxFilename, eAccess );
+       VSIFReadL( abyHeader, 1, 32, fp );
+       if( EQUALN((char *) abyHeader,"EHFA_HEADER_TAG",15) )
+          poODS =  (GDALDataset *) GDALOpenShared( oAuxFilename, eAccess );
+       VSIFCloseL( fp );
     }
 
     if( poODS != NULL )
@@ -2281,12 +2290,15 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
     {
         oAuxFilename = pszBasename;
         oAuxFilename += ".aux";
-
-        if( VSIStatL( oAuxFilename, &sStatBuf ) == 0 )
+        fp = VSIFOpenL( oAuxFilename, "rb" );
+        if( fp != NULL )
         {
-            poODS = (GDALDataset *) GDALOpen( oAuxFilename, eAccess );
+           VSIFReadL( abyHeader, 1, 32, fp );
+           if( EQUALN((char *) abyHeader,"EHFA_HEADER_TAG",15) )
+              poODS =  (GDALDataset *) GDALOpenShared( oAuxFilename, eAccess );
+           VSIFCloseL( fp );
         }
-
+ 
         if( poODS != NULL )
         {
             const char *pszDep
