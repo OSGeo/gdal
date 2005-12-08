@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/12/08 20:22:24  fwarmerdam
+ * use CPL_ODLL to optionally export ISO8211lib api
+ *
  * Revision 1.19  2004/01/06 18:59:18  warmerda
  * make enum identifiers more unique
  *
@@ -107,9 +110,9 @@ typedef enum {
 /*      mostly conveniences.                                            */
 /************************************************************************/
 
-long DDFScanInt( const char *pszString, int nMaxChars );
-int  DDFScanVariable( const char * pszString, int nMaxChars, int nDelimChar );
-char *DDFFetchVariable( const char *pszString, int nMaxChars,
+long CPL_ODLL DDFScanInt( const char *pszString, int nMaxChars );
+int  CPL_ODLL DDFScanVariable( const char * pszString, int nMaxChars, int nDelimChar );
+char CPL_ODLL *DDFFetchVariable( const char *pszString, int nMaxChars,
                         int nDelimChar1, int nDelimChar2,
                         int *pnConsumedChars );
 
@@ -136,7 +139,7 @@ class DDFField;
 
 */  
 
-class DDFModule
+class CPL_ODLL DDFModule
 {
   public:
                 DDFModule();
@@ -227,7 +230,7 @@ class DDFModule
  * as containers of the DDFSubfieldDefns.
  */
 
-class DDFFieldDefn
+class CPL_ODLL DDFFieldDefn
 {
   public:
                 DDFFieldDefn();
@@ -326,7 +329,7 @@ class DDFFieldDefn
  * data (as instances within a record).
  */
 
-class DDFSubfieldDefn
+class CPL_ODLL DDFSubfieldDefn
 {
 public:
 
@@ -433,7 +436,7 @@ private:
  * as a list of DDFField instances partitioning the raw data into fields.
  */
 
-class DDFRecord
+class CPL_ODLL DDFRecord
 {
   public:
                 DDFRecord( DDFModule * );
@@ -540,7 +543,7 @@ class DDFRecord
  * then use ExtractIntData(), ExtractFloatData() or ExtractStringData().
  */
 
-class DDFField
+class CPL_ODLL DDFField
 {
   public:
     void                Initialize( DDFFieldDefn *, const char *pszData,
