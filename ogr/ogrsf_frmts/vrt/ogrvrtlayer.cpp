@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/12/08 23:11:01  fwarmerdam
+ * added debug message if geometry not parsed successfully ... should use err
+ *
  * Revision 1.19  2005/09/21 00:54:43  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -592,6 +595,10 @@ OGRFeature *OGRVRTLayer::TranslateFeature( OGRFeature *poSrcFeat )
             OGRGeometry *poGeom = NULL;
 
             OGRGeometryFactory::createFromWkt( &pszWKT, NULL, &poGeom );
+            if( poGeom == NULL )
+                CPLDebug( "OGR_VRT", "Did not get geometry from %s",
+                          pszWKT );
+
             poDstFeat->SetGeometryDirectly( poGeom );
         }
     }
