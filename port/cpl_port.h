@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2005/12/08 20:21:10  fwarmerdam
+ * added CPL_ODLL declaration
+ *
  * Revision 1.45  2005/06/15 09:47:40  dron
  * Fixed typo.
  *
@@ -263,6 +266,13 @@ typedef unsigned long    GUIntBig;
 #else
 #  define CPL_DLL
 #endif
+#endif
+
+// Should optional (normally private) interfaces be exported?
+#ifdef CPL_OPTIONAL_APIS
+#  define CPL_ODLL CPL_DLL
+#else
+#  define CPL_ODLL
 #endif
 
 #ifndef CPL_STDCALL
