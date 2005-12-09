@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2005/12/09 18:54:35  fwarmerdam
+ * fixed ICORDS=N for NITF 1.x
+ *
  * Revision 1.38  2005/10/03 19:58:25  fwarmerdam
  * bug 920: fixed gcp related memory leak
  *
@@ -321,15 +324,17 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     nOffset += 38;
 
 /* -------------------------------------------------------------------- */
-/*      Do we have IGEOLO information?  In NITF 2.0 'N' means no        */
-/*      information, while in 2.1 this is indicated as ' ', and 'N'     */
+/*      Do we have IGEOLO information?  In NITF 2.0 (and 1.x) 'N' means */
+/*      no information, while in 2.1 this is indicated as ' ', and 'N'  */
 /*      means UTM (north).  So for 2.0 products we change 'N' to ' '    */
 /*      to conform to 2.1 conventions.                                  */
 /* -------------------------------------------------------------------- */
     psImage->chICORDS = pachHeader[nOffset++];
     psImage->bHaveIGEOLO = FALSE;
 
-    if( EQUALN(psFile->szVersion,"NITF02.0",8) && psImage->chICORDS == 'N' )
+    if( (EQUALN(psFile->szVersion,"NITF02.0",8)
+         || EQUALN(psFile->szVersion,"NITF01.",7))
+        && psImage->chICORDS == 'N' )
         psImage->chICORDS = ' ';
 
 /* -------------------------------------------------------------------- */
