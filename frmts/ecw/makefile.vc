@@ -1,5 +1,7 @@
 
-EXTRAFLAGS = 	-I$(ECWDIR)\include /DWIN32 -DFRMT_ecw -DNO_X86_MMI
+EXTRAFLAGS = 	-I$(ECWDIR)\include -I$(ECWDIR)/Source/include \
+		/D_MBCS /D_UNICODE /DUNICODE /D_WINDOWS \
+		/DLIBECWJ2 /DWIN32 /D_WINDLL -DFRMT_ecw -DNO_X86_MMI
 
 OBJ	=	ecwdataset.obj ecwcreatecopy.obj jp2userbox.obj
 
