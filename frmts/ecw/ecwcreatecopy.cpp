@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.22  2005/12/09 20:43:43  fwarmerdam
+ * create the GeoTIFF box ourselves, we think we do it better
+ *
  * Revision 1.21  2005/07/30 03:06:33  fwarmerdam
  * added LARGE_OK create option, and much improved error reporting
  *
@@ -103,6 +106,13 @@
 
 CPL_CVSID("$Id$");
 
+CPL_C_START
+CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT, 
+                                  const double *padfGeoTransform,
+                                  int nGCPCount, const GDAL_GCP *pasGCPList,
+                                  int *pnSize, unsigned char **ppabyBuffer );
+CPL_C_END
+
 #if defined(FRMT_ecw) && defined(HAVE_COMPRESS)
 
 class GDALECWCompressor : public CNCSFile {
@@ -123,6 +133,7 @@ public:
     CPLErr  CloseDown();
 
     CPLErr  PrepareCoverageBox( const char *pszWKT, double *padfGeoTransform );
+    CPLErr  PrepareGeoTIFFBox( const char *pszWKT, double *padfGeoTransform );
 
 #ifdef ECW_FW
     CNCSJP2File::CNCSJPXAssocBox  m_oGMLAssoc;
@@ -440,6 +451,57 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox( const char *pszWKT,
 
     return CE_None;
 #endif /* def ECW_FW */
+}
+
+/************************************************************************/
+/*                         PrepareGeoTIFFBox()                          */
+/************************************************************************/
+
+CPLErr GDALECWCompressor::PrepareGeoTIFFBox( const char *pszWKT,
+                                             double *padfGeoTransform )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Prepare the memory buffer containing the degenerate GeoTIFF     */
+/*      file.                                                           */
+/* -------------------------------------------------------------------- */
+    int         nGTBufSize = 0;
+    unsigned char *pabyGTBuf = NULL;
+
+    if( GTIFMemBufFromWkt( pszWKT, padfGeoTransform, 0, NULL,
+                           &nGTBufSize, &pabyGTBuf ) != CE_None )
+        return CE_Failure;
+
+    if( nGTBufSize == 0 )
+        return CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      Write to a box on the JP2 file.                                 */
+/* -------------------------------------------------------------------- */
+    JP2UserBox  *poGTData;
+    GByte *pabyUUIDBoxData;
+    int   nUUIDBoxDataLength;
+
+    static unsigned char msi_uuid2[16] =
+    {0xb1,0x4b,0xf8,0xbd,0x08,0x3d,0x4b,0x43,
+     0xa5,0xae,0x8c,0xd7,0xd5,0xa6,0xce,0x03}; 
+
+    poGTData = new JP2UserBox();
+    poGTData->m_nTBox = 'uuid';
+
+    nUUIDBoxDataLength = nGTBufSize + 16;
+    pabyUUIDBoxData = (GByte *) CPLMalloc(nUUIDBoxDataLength);
+    memcpy( pabyUUIDBoxData, msi_uuid2, 16 );
+    memcpy( pabyUUIDBoxData + 16, pabyGTBuf, nGTBufSize );
+
+    poGTData->SetData( nUUIDBoxDataLength, pabyUUIDBoxData );
+
+    CPLFree( pabyUUIDBoxData );
+    CPLFree( pabyGTBuf );
+
+    AddBox( poGTData ); // never freed?
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -843,10 +905,10 @@ CPLErr GDALECWCompressor::Initialize(
             SetParameter( 
                 CNCSJP2FileView::JP2_COMPRESS_PROGRESSION_RPCL );
 
-#ifdef ECW_FW
         pszOption = CSLFetchNameValue(papszOptions, "GEODATA_USAGE");
         if( pszOption == NULL )
-            /* do nothing special */;
+            // Default to supressing ECW SDK geodata, just use our geotiff.
+            SetGeodataUsage( JP2_GEODATA_USE_GML_ONLY );
         else if( EQUAL(pszOption,"NONE") )
             SetGeodataUsage( JP2_GEODATA_USE_NONE );
         else if( EQUAL(pszOption,"PCS_ONLY") )
@@ -859,7 +921,6 @@ CPLErr GDALECWCompressor::Initialize(
             SetGeodataUsage( JP2_GEODATA_USE_GML_PCS );
         else if( EQUAL(pszOption,"ALL") )
             SetGeodataUsage( JP2_GEODATA_USE_GML_PCS_WLD );
-#endif
 
         pszOption = CSLFetchNameValue(papszOptions, "DECOMPRESS_LAYERS");
         if( pszOption != NULL )
@@ -932,6 +993,7 @@ CPLErr GDALECWCompressor::Initialize(
 /*      Setup GML information.                                          */
 /* -------------------------------------------------------------------- */
     PrepareCoverageBox( pszWKT, padfGeoTransform );
+    PrepareGeoTIFFBox( pszWKT, padfGeoTransform );
     
 /* -------------------------------------------------------------------- */
 /*      Handle special case of a JPEG2000 data stream in another file.  */
