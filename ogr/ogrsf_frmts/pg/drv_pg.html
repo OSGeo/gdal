@@ -80,6 +80,14 @@ If the database has PostGIS types loaded (ie. the geometry type) newly
 created layers will be created with the PostGIS Geometry type.  Otherwise
 they will use OID.  
 
+By default it is assumed that text being sent to Postgres is in the UTF-8
+encoding.  This is fine for plain ASCII, but can result in errors for
+extended characters (ASCII 155+ for instance).  Whle OGR provides no direct
+control over this, you can set the PGCLIENTENCODING environment variable 
+to indicate the format being provided.  For instance, if you text is 
+LATIN1 you could set the environment variable to LATIN1 before using OGR
+and input would be assumed to be LATIN1 instead of UTF-8. <p>
+
 <h3>Dataset Creation Options</h3>
 
 None<p>
