@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2005/12/12 21:33:07  fwarmerdam
+ * remove ogr: prefix from field names: bug 1016
+ *
  * Revision 1.22  2005/07/05 19:18:58  fwarmerdam
  * Use www.w3.org not www.w3c.org.
  *
@@ -361,6 +364,8 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
             eFType = OFTString;
         
         OGRFieldDefn oField( poProperty->GetName(), eFType );
+        if ( EQUALN(oField.GetNameRef(), "ogr:", 4) )
+          oField.SetName(poProperty->GetName()+4);
         poLayer->GetLayerDefn()->AddFieldDefn( &oField );
     }
 
