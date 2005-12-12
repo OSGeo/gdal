@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/12/12 21:33:07  fwarmerdam
+ * remove ogr: prefix from field names: bug 1016
+ *
  * Revision 1.19  2005/09/21 00:59:36  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -89,6 +92,7 @@
 
 #include "ogr_gml.h"
 #include "cpl_conv.h"
+#include "cpl_port.h"
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
@@ -113,7 +117,10 @@ OGRGMLLayer::OGRGMLLayer( const char * pszName,
     
     poDS = poDSIn;
 
-    poFeatureDefn = new OGRFeatureDefn( pszName );
+    if ( EQUALN(pszName, "ogr:", 4) )
+      poFeatureDefn = new OGRFeatureDefn( pszName+4 );
+    else
+      poFeatureDefn = new OGRFeatureDefn( pszName );
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( eReqType );
 
