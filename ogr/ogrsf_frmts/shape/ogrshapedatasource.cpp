@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/12/14 16:17:52  fwarmerdam
+ * Fixed wkbMultiPolygon to map to POLYGON, not POLYGONZ.
+ *
  * Revision 1.27  2005/11/07 17:05:26  fwarmerdam
  * Ensure morphToESRI() is used on spatial reference before writing .prj file.
  *
@@ -465,7 +468,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
     else if( eType == wkbPolygon25D )
         nShapeType = SHPT_POLYGONZ;
     else if( eType == wkbMultiPolygon )
-        nShapeType = SHPT_POLYGONZ;
+        nShapeType = SHPT_POLYGON;
     else if( eType == wkbMultiPolygon25D )
         nShapeType = SHPT_POLYGONZ;
     else if( eType == wkbMultiPoint25D )
