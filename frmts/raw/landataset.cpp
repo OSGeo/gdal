@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/12/14 20:03:57  fwarmerdam
+ * Corrected byte swapping decision for 16bit images per report from Maciek.
+ *
  * Revision 1.9  2005/09/27 18:13:04  fwarmerdam
  * Only return 16 colors for 4bit files.
  *
@@ -479,7 +482,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
                                    * nPixelOffset * poDS->nRasterXSize,
                                    nPixelOffset, 
                                    poDS->nRasterXSize*nPixelOffset*nBandCount,
-                                   eDataType, FALSE, TRUE ));
+                                   eDataType, !bNeedSwap, TRUE ));
     }
 
 /* -------------------------------------------------------------------- */
