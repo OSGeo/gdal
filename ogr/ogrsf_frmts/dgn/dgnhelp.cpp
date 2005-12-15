@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/12/15 14:10:39  fwarmerdam
+ * Fixed for QuaternionToMatrix from Marius Kintel.
+ *
  * Revision 1.25  2005/11/18 17:16:35  fwarmerdam
  * added TextNode implementation from Ilya Beylin
  *
@@ -1286,7 +1289,11 @@ void DGNRotationToQuaternion( double dfRotation, int *panQuaternion )
 void DGNQuaternionToMatrix( int *quat, float *mat )
 {
   double q[4];
-  for (int i=0;i<4;i++) q[i] = 1.0 * quat[i] / (1<<31);
+
+  q[0] = 1.0 * quat[1] / (1<<31);
+  q[1] = 1.0 * quat[2] / (1<<31);
+  q[2] = 1.0 * quat[3] / (1<<31);
+  q[3] = 1.0 * quat[0] / (1<<31);
 
   mat[0*3+0] = (float) (q[0]*q[0] - q[1]*q[1] - q[2]*q[2] + q[3]*q[3]);
   mat[0*3+1] = (float) (2 * (q[2]*q[3] + q[0]*q[1]));
