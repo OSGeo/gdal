@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/12/16 01:32:26  fwarmerdam
+ * removed custom GetExtent on select layer
+ *
  * Revision 1.1  2005/09/05 19:34:17  fwarmerdam
  * New
  *
@@ -174,8 +177,6 @@ class OGRPGeoSelectLayer : public OGRPGeoLayer
     virtual OGRErr      SetAttributeFilter( const char * );
     virtual OGRFeature *GetFeature( long nFeatureId );
     
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
-
     virtual int         TestCapability( const char * );
 };
 
