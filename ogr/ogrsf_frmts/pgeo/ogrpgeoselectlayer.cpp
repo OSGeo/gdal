@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2005/12/16 01:32:26  fwarmerdam
+ * removed custom GetExtent on select layer
+ *
  * Revision 1.1  2005/09/05 19:34:17  fwarmerdam
  * New
  *
@@ -165,19 +168,6 @@ int OGRPGeoSelectLayer::TestCapability( const char * pszCap )
 
 {
     return OGRPGeoLayer::TestCapability( pszCap );
-}
-
-/************************************************************************/
-/*                             GetExtent()                              */
-/*                                                                      */
-/*      Since SELECT layers currently cannot ever have geometry, we     */
-/*      can optimize the GetExtent() method!                            */
-/************************************************************************/
-
-OGRErr OGRPGeoSelectLayer::GetExtent(OGREnvelope *, int )
-
-{
-    return OGRERR_FAILURE;
 }
 
 /************************************************************************/
