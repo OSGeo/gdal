@@ -1,3 +1,63 @@
+gdal (1.3.1-1) unstable; urgency=low
+
+  * New upstream release
+    - Don't crash on shapefiles without features (Closes: #309165)
+  * Switch to team maintenance by the Debian GIS Project
+  * Build-dep on libpq-dev | postgresql-dev for postgresql transition
+  * Remove build-dep on postgresql-client
+
+ -- Steve Halasz <debian@adkgis.org>  Wed, 14 Dec 2005 09:54:11 -0500
+
+gdal (1.2.6-1.3) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Medium-urgency upload for RC bugfix.
+  * Change package name from libgdal1c2 to libgdal1c2a for the C++ mt
+    allocator ABI change, and conflict/replace libgdal1c2 accordingly.
+    Closes: #339163.
+  * Build-depend on libgeos-dev (>= 2.1.4-2) to get the matching ABI.
+
+ -- Steve Langasek <vorlon@debian.org>  Tue, 29 Nov 2005 05:06:47 -0800
+
+gdal (1.2.6-1.2) unstable; urgency=low
+
+  * Fix broken library building introduced by my last NMU. (Closes: #322664)
+  * Moved GCC 4 patch into debian/patches/01_gcc4.patch, based on
+    patch from Stephan Hermann and Ubuntu.  Updated rules to use it.
+  * Add Conflicts and Replaces on libgdal1 for libgdal1c2 to ease upgrades.
+
+ -- Petter Reinholdtsen <pere@debian.org>  Fri, 12 Aug 2005 08:11:40 +0200
+
+gdal (1.2.6-1.1) unstable; urgency=low
+
+  * Non-maintainer upload to move to new C++ ABI. (Closes: #321587)
+  * Rename library package from libgdal1 to libgdal1c2.
+  * Add forward declaration of ILWISDataset in
+    frmts/ilwis/ilwisdataset.h to make GCC 4.0 happy.
+
+ -- Petter Reinholdtsen <pere@debian.org>  Sat,  6 Aug 2005 11:57:48 +0200
+
+gdal (1.2.6-1) unstable; urgency=high
+
+  * New upstream release
+  * Made python-gdal explicitly dependend on current gdal-version
+    (Closes: #291361)
+  * Added pct2rgb.py and gdal_merge.py to python-gdal
+  * Changed xerces dependency from libxerces21 to libxerces26
+    (Closes: #301710 and Closes: #301650)
+  * Added link from /usr/include/gdal to /usr/include (Closes:#286709).
+  * Already in 1.2.5.-1: Added geos-support
+
+ -- Silke Reimer <silke.reimer@intevation.de>  Mon,  4 Apr 2005 19:04:21 +0200
+
+gdal (1.2.5-1) unstable; urgency=low
+
+  * New upstream release (Closes: #280343)
+  * Added gdaltindex and gdal_contour in debian/gdal-bin.files 
+    (Closes: #278539)
+
+ -- Silke Reimer <silke.reimer@intevation.de>  Thu, 25 Nov 2004 18:06:07 +0100
+
 gdal (1.2.1-1) unstable; urgency=low
 
   * New upstream release (Closes: #258367)
@@ -6,8 +66,10 @@ gdal (1.2.1-1) unstable; urgency=low
   * Add support for jpeg2000 (jasper), netcdf and sqlite.
   * Move tiff support to external library (finally added to debian!)(Thanks
     Alessandro for your hint!)
+  * debian/control
+  * debian/changelog
 
- -- Silke Reimer <Silke.Reimer@intevation.de>  Mon,  9 Aug 2004 11:26:28 +0200
+ -- Silke Reimer <silke.reimer@intevation.de>  Thu, 25 Nov 2004 18:05:53 +0100
 
 gdal (1.2.0-1) unstable; urgency=low
 

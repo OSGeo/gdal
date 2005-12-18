@@ -2,9 +2,13 @@ usr/bin/gdal_translate
 usr/bin/gdalinfo
 usr/bin/gdaladdo
 usr/bin/gdalwarp
+usr/bin/gdaltindex
+usr/bin/gdal_contour
 usr/bin/ogr*
 usr/share/man/man1/gdal_translate.1
 usr/share/man/man1/gdalinfo.1
 usr/share/man/man1/gdaladdo.1
 usr/share/man/man1/gdalwarp.1
+usr/share/man/man1/gdaltindex.1
+usr/share/man/man1/gdal_contour.1
 usr/share/man/man1/ogr*.1

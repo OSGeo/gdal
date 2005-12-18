@@ -24,7 +24,7 @@ config.status:
 		--with-jasper \
 		--with-netcdf \
 		--with-xerces \
-		--with-sqlite
+		--with-geos 
 
 	# Patch the generated libtool to avoid passing -rpath when linking,
 	# and to explicitly link libraries against the libraries they
@@ -36,8 +36,13 @@ config.status:
 	mv libtool-2 libtool
 	chmod 755 libtool 
 
+patch: patch-stamp
+patch-stamp:
+	dh_testdir
+	#patch -p1 < debian/patches/01_gcc4.patch
+	touch patch-stamp
 
-build: build-stamp
+build: patch build-stamp
 build-stamp: config.status
 	dh_testdir
 
@@ -45,8 +50,16 @@ build-stamp: config.status
 	$(MAKE) docs
 
 	touch build-stamp
-
-clean:
+unpatch: patch unpatch-stamp
+unpatch-stamp:
+	dh_testdir
+	# This is here for reference. It should be inside the following
+	# conditional.
+	# patch -p1 -R < debian/patches/01_gcc4.patch ;
+	if [ -e patch-stamp ]; then \
+		rm patch-stamp ; \
+	fi
+clean: unpatch
 	# reminiscence to old procedure of building man pages, will now created
 	# by doxygen. This rm will be deleted in further releases of gdal
 	sh -c "if (test -d man/man1) then rm -r man/man1; fi"
@@ -70,6 +83,12 @@ install: build
 		"INST_DOCS=\$$(prefix)/share/doc/libgdal-doc"\
 		"INST_MAN=\$$(prefix)/share/man"
 
+	# To reach compatibility with window-version which puts gdal-header
+	# files into /usr/include/gdal. I don't want to place headerfiles directly
+	# into /usr/include/gdal to avoid incompatibility with older debian
+	# package versions
+	ln -fs . `pwd`/debian/tmp/usr/include/gdal
+
 binary-arch: build install
 	dh_testdir
 	dh_testroot
@@ -80,9 +99,9 @@ binary-arch: build install
 	dh_strip
 	dh_compress
 	dh_fixperms
-	dh_makeshlibs -V'libgdal1 (>= 1.2.0)'
+	dh_makeshlibs -V'libgdal1c2a (>= 1.2.6)'
 	dh_installdeb
-	dh_shlibdeps -l.
+	dh_shlibdeps -L libgdal1c2a -l.
 	dh_python
 	dh_gencontrol
 	dh_md5sums
