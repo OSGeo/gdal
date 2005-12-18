@@ -1,1 +1,5 @@
 usr/lib/python*
+usr/bin/gdal_merge.py
+usr/bin/pct2rgb.py
+usr/share/man/man1/gdal_merge.py.1
+usr/share/man/man1/pct2rgb.py.1
