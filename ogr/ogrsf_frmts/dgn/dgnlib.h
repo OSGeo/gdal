@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2005/12/18 22:10:12  kintel
+ * Minor doc update
+ *
  * Revision 1.39  2005/11/18 17:16:35  fwarmerdam
  * added TextNode implementation from Ilya Beylin
  *
@@ -176,7 +179,7 @@ CPL_C_START
  */
 
 typedef struct {
-    double x;   /*!< X (normally eastwards) coordinate. */
+    double x;   /*!< x (normally eastwards) coordinate. */
     double y;   /*!< y (normally northwards) coordinate. */
     double z;   /*!< z, up coordinate.  Zero for 2D objects. */
 } DGNPoint;
@@ -307,7 +310,9 @@ typedef struct {
 typedef struct {
     DGNElemCore core;
     
-    int         totlength;     /*!< Total length of surface */
+    int         totlength;     /*!< Total length of surface in words,
+                                    excluding the first 19 words
+                                    (header + totlength field) */
     int         numelems;      /*!< # of elements in surface */
     int         surftype;      /*!< surface/solid type (only used for 3D surface/solid). One of  DGNSUT_* or DGNSOT_*. */
 } DGNElemComplexHeader;
@@ -381,7 +386,9 @@ typedef struct {
 typedef struct {
     DGNElemCore core;
 
-    int         totlength;         /*!< Total length of cell */
+    int         totlength;         /*!< Total length of cell in words,
+                                        excluding the first 19 words
+                                        (header + totlength field) */
     char        name[7];           /*!< Cell name */
  unsigned short cclass;            /*!< Class bitmap */
  unsigned short levels[4];         /*!< Levels used in cell */
