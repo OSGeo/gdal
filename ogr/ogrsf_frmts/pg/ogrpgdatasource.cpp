@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2005/12/18 16:57:22  fwarmerdam
+ * added primary key constraint on ogc_fid, c/o Craig Miller
+ *
  * Revision 1.42  2005/10/25 21:59:43  fwarmerdam
  * disable setencoding for now
  *
@@ -689,15 +692,21 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     PQclear( hResult );
 
     if( !bHavePostGIS )
+    {
         sprintf( szCommand,
                  "CREATE TABLE \"%s\" ( "
                  "   OGC_FID SERIAL, "
-                 "   WKB_GEOMETRY %s )",
-                 pszLayerName, pszGeomType );
+                 "   WKB_GEOMETRY %s, "
+                 "   CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
+                 pszLayerName, pszGeomType, pszLayerName );
+    }
     else
+    {
         sprintf( szCommand,
-                 "CREATE TABLE \"%s\" ( OGC_FID SERIAL )",
-                 pszLayerName );
+                 "CREATE TABLE \"%s\" ( OGC_FID SERIAL, CONSTRAINT \"%s_pk\"
+PRIMARY KEY (OGC_FID) )",
+                 pszLayerName, pszLayerName );
+    }
 
     CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
     hResult = PQexec(hPGConn, szCommand);
@@ -743,37 +752,37 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 
         switch( wkbFlatten(eType) )
         {
-          case wkbPoint:
-            pszGeometryType = "POINT";
-            break;
+            case wkbPoint:
+                pszGeometryType = "POINT";
+                break;
 
-          case wkbLineString:
-            pszGeometryType = "LINESTRING";
-            break;
+            case wkbLineString:
+                pszGeometryType = "LINESTRING";
+                break;
 
-          case wkbPolygon:
-            pszGeometryType = "POLYGON";
-            break;
+            case wkbPolygon:
+                pszGeometryType = "POLYGON";
+                break;
 
-          case wkbMultiPoint:
-            pszGeometryType = "MULTIPOINT";
-            break;
+            case wkbMultiPoint:
+                pszGeometryType = "MULTIPOINT";
+                break;
 
-          case wkbMultiLineString:
-            pszGeometryType = "MULTILINESTRING";
-            break;
+            case wkbMultiLineString:
+                pszGeometryType = "MULTILINESTRING";
+                break;
 
-          case wkbMultiPolygon:
-            pszGeometryType = "MULTIPOLYGON";
-            break;
+            case wkbMultiPolygon:
+                pszGeometryType = "MULTIPOLYGON";
+                break;
 
-          case wkbGeometryCollection:
-            pszGeometryType = "GEOMETRYCOLLECTION";
-            break;
+            case wkbGeometryCollection:
+                pszGeometryType = "GEOMETRYCOLLECTION";
+                break;
 
-          default:
-            pszGeometryType = "GEOMETRY";
-            break;
+            default:
+                pszGeometryType = "GEOMETRY";
+                break;
 
         }
 
