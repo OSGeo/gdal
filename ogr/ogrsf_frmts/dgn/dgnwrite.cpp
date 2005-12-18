@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/12/18 22:12:49  kintel
+ * Fix for cloning DGNST_CONE
+ *
  * Revision 1.24  2005/11/18 22:45:01  fwarmerdam
  * Avoid use of round(), not available on win32.
  *
@@ -678,6 +681,15 @@ DGNElemCore *DGNCloneElement( DGNHandle hDGNSrc, DGNHandle hDGNDst,
 
         psTS->tagList = pasTagList;
         psClone = (DGNElemCore *) psTS;
+    }
+    else if( psSrcElement->stype == DGNST_CONE )
+    {
+        DGNElemCone *psCone;
+
+        psCone = (DGNElemCone *) CPLMalloc(sizeof(DGNElemCone));
+        memcpy( psCone, psSrcElement, sizeof(DGNElemCone) );
+
+        psClone = (DGNElemCore *) psCone;
     }
     else
     {
