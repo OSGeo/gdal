@@ -49,6 +49,8 @@ Release Notes
 Release ?.??
 ------------
 
+ o Fixes for uor handling in DGNCreate(). 
+
  o Treat the most recently read color table as the global color table, 
    instead of just the first one encountered.
 
