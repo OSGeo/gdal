@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/12/19 15:39:00  fwarmerdam
+ * Two fixes for uor handling in DGNCreate() as per Chris @melbpc's email.
+ *
  * Revision 1.25  2005/12/18 22:12:49  kintel
  * Fix for cloning DGNST_CONE
  *
@@ -440,12 +443,12 @@ DGNHandle
         memcpy( pabyRawTCB+1120, pszMasterUnits, 2 );
         memcpy( pabyRawTCB+1122, pszSubUnits, 2 );
 
-        DGN_WRITE_INT32( (unsigned char) nUORPerSubUnit, pabyRawTCB+1116 );
-        DGN_WRITE_INT32((unsigned char)nSubUnitsPerMasterUnit,pabyRawTCB+1112);
+        DGN_WRITE_INT32( nUORPerSubUnit, pabyRawTCB+1116 );
+        DGN_WRITE_INT32( nSubUnitsPerMasterUnit,pabyRawTCB+1112);
     }
     else
     {
-        nUORPerSubUnit = DGN_INT32( pabyRawTCB+1120 );
+        nUORPerSubUnit = DGN_INT32( pabyRawTCB+1116 );
         nSubUnitsPerMasterUnit = DGN_INT32( pabyRawTCB+1112 );
     }
 
