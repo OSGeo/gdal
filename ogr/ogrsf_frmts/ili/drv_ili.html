@@ -27,11 +27,25 @@ With the usage of unified, documented geodata and the flexible exchange possibil
 Data is read and written into transfer files which have different formats in INTERLIS 1 (.itf) and INTERLIS 2 (.xml).
 For using the INTERLIS model (.ili) a Java interpreter is needed at runtime.
 The model file can be added to the transfer file seperated by a comma.<p>
-Sample usage:
+Some possible transformations using <a href="http://www.gdal.org/ogr/ogr2ogr.html">ogr2ogr</a>.<p>
+Interlis 1 -> Shape:
 <pre>
-ogr2ogr -f "ESRI Shapefile" shp/ ili-bsp.itf,ili-bsp.ili
+ogr2ogr -f "ESRI Shapefile" shpdir ili-bsp.itf,ili-bsp.ili
+</pre>
 
-ogr2ogr -f "Interlis 1" shp/ili-bsp_ogr.itf,ili-bsp.ili ili-bsp.itf,ili-bsp.ili
+Interlis 2 -> Shape:
+<pre>
+ogr2ogr -f "ESRI Shapefile" shpdir RoadsExdm2ien.xml
+</pre>
+
+Shape -> Interlis 1:
+<pre>
+ogr2ogr -f "Interlis 1" ili-bsp.itf,ili-bsp.ili Bodenbedeckung__BoFlaechen_Form.shp
+</pre>
+
+Shape -> Interlis 2:
+<pre>
+ogr2ogr -f "Interlis 2" ili-bsp.xml Bodenbedeckung__BoFlaechen_Form.shp
 </pre>
 
 <p>

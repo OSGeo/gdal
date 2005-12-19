@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/12/19 17:33:21  pka
+ * Interlis 1: Support for 100 columns (unlimited, if model given)
+ * Interlis 1: Fixes for output
+ * Interlis: Examples in driver documentation
+ *
  * Revision 1.3  2005/09/21 00:59:36  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -65,6 +70,7 @@ OGRILI1Layer::OGRILI1Layer( const char * pszName,
     poDS = poDSIn;
 
     poFeatureDefn = new OGRFeatureDefn( pszName );
+    poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( eReqType );
 
     nFeatures = 0;
@@ -337,14 +343,7 @@ int OGRILI1Layer::TestCapability( const char * pszCap ) {
 /************************************************************************/
 
 OGRErr OGRILI1Layer::CreateField( OGRFieldDefn *poField, int bApproxOK ) {
-    OGRFieldDefn oCleanCopy( poField );
-    char *pszName = CPLStrdup( poField->GetNameRef() );
-
-    oCleanCopy.SetName( pszName );
-
-    CPLFree( pszName );
-    
-    poFeatureDefn->AddFieldDefn( &oCleanCopy );
+    poFeatureDefn->AddFieldDefn( poField );
 
     return OGRERR_NONE;
 }

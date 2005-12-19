@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/12/19 17:33:21  pka
+ * Interlis 1: Support for 100 columns (unlimited, if model given)
+ * Interlis 1: Fixes for output
+ * Interlis: Examples in driver documentation
+ *
  * Revision 1.3  2005/09/05 20:29:00  fwarmerdam
  * removed pszModelFilename from class
  *
@@ -120,7 +125,7 @@ class OGRILI1DataSource : public OGRDataSource
     int         Create( const char *pszFile, char **papszOptions );
 
     const char *GetName() { return pszName; }
-    int         GetLayerCount() { return poReader->GetLayerCount(); }
+    int         GetLayerCount() { return poReader ? poReader->GetLayerCount() : 0; }
     OGRLayer   *GetLayer( int );
 
     FILE       *GetTransferFile() { return fpTransfer; }

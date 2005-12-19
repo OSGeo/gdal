@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/12/19 17:33:21  pka
+ * Interlis 1: Support for 100 columns (unlimited, if model given)
+ * Interlis 1: Fixes for output
+ * Interlis: Examples in driver documentation
+ *
  * Revision 1.7  2005/11/21 14:56:31  pka
  * Fix for call of GetNextFeature without ResetReading (Interlis 2)
  * Fix for polygonizer crash on Linux with GEOS 2.1.3 (Interlis 1)
@@ -497,8 +502,9 @@ int ILI1Reader::ReadTable() {
           //Model not read - use heuristics
           for (fIndex=1; fIndex<CSLCount(tokens); fIndex++)
           {
-            fieldDef = new OGRFieldDefn(CPLStrdup("Field0"), OFTString);
-            *(char *)(fieldDef->GetNameRef()+strlen(fieldDef->GetNameRef())-1) = '0'+fIndex;
+            fieldDef = new OGRFieldDefn(CPLStrdup("Field00"), OFTString);
+            *(char *)(fieldDef->GetNameRef()+strlen(fieldDef->GetNameRef())-2) = '0'+fIndex/10;
+            *(char *)(fieldDef->GetNameRef()+strlen(fieldDef->GetNameRef())-1) = '0'+fIndex%10;
             featureDef->AddFieldDefn(fieldDef);
           }
         }
