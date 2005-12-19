@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/12/19 17:33:21  pka
+ * Interlis 1: Support for 100 columns (unlimited, if model given)
+ * Interlis 1: Fixes for output
+ * Interlis: Examples in driver documentation
+ *
  * Revision 1.2  2005/08/06 22:21:53  pka
  * Area polygonizer added
  *
@@ -169,10 +174,13 @@ int OGRILI2DataSource::Create( const char *pszFilename,
 
     if( pszModelFilename == NULL )
     {
+        return TRUE;
+	/*
         CPLError( CE_Warning, CPLE_OpenFailed, 
                   "Model file '%s' (%s) not found.", 
                   pszModelFilename, pszFilename, VSIStrerror( errno ) );
         return FALSE;
+	*/
     }
 
 	iom_init();
