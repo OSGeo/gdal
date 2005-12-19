@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2005/12/19 15:37:18  fwarmerdam
+ * Added CPL_DLL for some functions that were missing it.
+ *
  * Revision 1.40  2005/12/18 22:10:12  kintel
  * Minor doc update
  *
@@ -822,10 +825,10 @@ DGNElemCore CPL_DLL *
 DGNElemCore CPL_DLL *
             DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag, 
                                      GByte abyColorInfo[256][3] );
-DGNElemCore *
+DGNElemCore CPL_DLL *
 DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, int nSurfType, 
                             int nTotLength, int nNumElems );
-DGNElemCore *
+DGNElemCore CPL_DLL *
 DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType, int nSurfType,
                                  int nNumElems, DGNElemCore **papsElems );
 
@@ -836,7 +839,7 @@ DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName,
                          DGNPoint *psOrigin, double dfXScale, double dfYScale,
                          double dfRotation );
                      
-DGNElemCore *
+DGNElemCore CPL_DLL *
 DGNCreateCellHeaderFromGroup( DGNHandle hDGN, const char *pszName, 
                               short nClass, short *panLevels, 
                               int nNumElems, DGNElemCore **papsElems,
