@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2005/12/19 15:06:59  dron
+ * Remove erroneous linebreak in "CREATE TABLE" query.
+ *
  * Revision 1.43  2005/12/18 16:57:22  fwarmerdam
  * added primary key constraint on ogc_fid, c/o Craig Miller
  *
@@ -703,8 +706,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     else
     {
         sprintf( szCommand,
-                 "CREATE TABLE \"%s\" ( OGC_FID SERIAL, CONSTRAINT \"%s_pk\"
-PRIMARY KEY (OGC_FID) )",
+                 "CREATE TABLE \"%s\" ( OGC_FID SERIAL, CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
                  pszLayerName, pszLayerName );
     }
 
