@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.53  2005/12/19 20:17:21  fwarmerdam
+ * enable pszValue NULL to delete entry in CSLSetNameValue
+ *
  * Revision 1.52  2005/12/06 07:33:12  fwarmerdam
  * fixed support for tokenizing string with trailing delimeter, bug 945
  *
@@ -1200,7 +1203,7 @@ char **CSLSetNameValue(char **papszList,
     char **papszPtr;
     int nLen;
 
-    if (pszName == NULL || pszValue==NULL)
+    if (pszName == NULL )
         return papszList;
 
     nLen = strlen(pszName);
@@ -1244,6 +1247,9 @@ char **CSLSetNameValue(char **papszList,
         }
         papszPtr++;
     }
+
+    if( pszValue == NULL )
+        return papszList;
 
     /* The name does not exist yet... create a new entry
      */
