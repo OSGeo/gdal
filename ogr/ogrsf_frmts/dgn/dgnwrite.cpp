@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/12/19 15:42:17  fwarmerdam
+ * Fixed maximum number of points test in DGNCreateMultiPointElem()
+ * per email from Chris @ melbpc.
+ *
  * Revision 1.26  2005/12/19 15:39:00  fwarmerdam
  * Two fixes for uor handling in DGNCreate() as per Chris @melbpc's email.
  *
@@ -920,8 +924,8 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
 /*      Is this too many vertices to write to a single element?         */
 /* -------------------------------------------------------------------- */
-    if( (psDGN->dimension == 2 && 38 + 8 * nPointCount >= 512)
-        || (psDGN->dimension == 3 && 38 + 12 * nPointCount >= 512) )
+    if( (psDGN->dimension == 2 && 38 + 8 * nPointCount > 101)
+        || (psDGN->dimension == 3 && 38 + 12 * nPointCount > 101) )
     {
         CPLError( CE_Failure, CPLE_ElementTooBig, 
                   "Attempt to create %s element with %d points failed.\n"
