@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2005/12/19 20:20:00  fwarmerdam
+ * preliminary support for multiple input files
+ *
  * Revision 1.18  2005/09/13 01:57:31  fwarmerdam
  * Fixed usage message.
  *
@@ -55,71 +58,6 @@
  *
  * Revision 1.10  2004/10/07 15:53:42  fwarmerdam
  * added preliminary alpha band support
- *
- * Revision 1.9  2004/08/31 19:58:57  warmerda
- * Added error check if dst srs given but no source srs available.
- * http://208.24.120.44/show_bug.cgi?id=603
- *
- * Revision 1.8  2004/08/11 21:10:29  warmerda
- * Removed extra dumpopendatasets call.
- *
- * Revision 1.7  2004/08/11 20:11:24  warmerda
- * Added special VRT mode
- *
- * Revision 1.6  2004/07/28 17:56:00  warmerda
- * use return instead of exit() to avoid lame warnings on windows
- *
- * Revision 1.5  2004/04/02 17:33:22  warmerda
- * added GDALGeneralCmdLineProcessor()
- *
- * Revision 1.4  2004/04/01 19:51:18  warmerda
- * Added the -dstnodata commandline switch.
- *
- * Revision 1.3  2004/03/17 05:49:26  warmerda
- * Fixed assert check in GDALWarpCreateOutput().
- *
- * Revision 1.2  2003/09/19 17:52:21  warmerda
- * removed planned -gcp option
- *
- * Revision 1.1  2003/09/19 17:40:46  warmerda
- * Renamed from gdalwarptest.cpp to gdalwarp.cpp, replacing old gdalwarp. 
- *
- * Revision 1.12  2003/07/04 11:53:14  dron
- * Added `-rcs' option to select bicubic B-spline resampling.
- *
- * Revision 1.11  2003/06/05 16:55:42  warmerda
- * enable INIT_DEST=0 by default when creating new files
- *
- * Revision 1.10  2003/05/28 18:18:43  warmerda
- * added -q (quiet) flag
- *
- * Revision 1.9  2003/05/21 14:40:40  warmerda
- * fix error message
- *
- * Revision 1.8  2003/05/20 18:35:38  warmerda
- * added error reporting if SRS import fails
- *
- * Revision 1.7  2003/05/06 18:11:29  warmerda
- * added -multi in usage
- *
- * Revision 1.6  2003/04/23 05:18:02  warmerda
- * added -multi switch
- *
- * Revision 1.5  2003/04/21 17:21:04  warmerda
- * Fixed -wm switch.
- *
- * Revision 1.4  2003/03/28 17:43:04  warmerda
- * added -wm option to control warp memory
- *
- * Revision 1.3  2003/03/18 17:37:44  warmerda
- * add color table copying
- *
- * Revision 1.2  2003/03/02 05:24:02  warmerda
- * added -srcnodata option
- *
- * Revision 1.1  2003/02/22 02:03:41  warmerda
- * New
- *
  */
 
 #include "gdalwarper.h"
@@ -129,7 +67,7 @@
 CPL_CVSID("$Id$");
 
 static GDALDatasetH 
-GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename, 
+GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename, 
                       const char *pszFormat, const char *pszSourceSRS, 
                       const char *pszTargetSRS, int nOrder, 
                       char **papszCreateOptions, GDALDataType eDT );
@@ -155,7 +93,7 @@ static void Usage()
         "    [-wo \"NAME=VALUE\"] [-ot Byte/Int16/...] [-wt Byte/Int16]\n"
         "    [-srcnodata \"value [value...]\"] [-dstnodata \"value [value...]\"] -dstalpha\n" 
         "    [-rn] [-rb] [-rc] [-rcs] [-wm memory_in_mb] [-multi] [-q]\n"
-        "    [-of format] [-co \"NAME=VALUE\"]* srcfile dstfile\n" );
+        "    [-of format] [-co \"NAME=VALUE\"]* srcfile* dstfile\n" );
     exit( 1 );
 }
 
@@ -194,11 +132,12 @@ char *SanitizeSRS( const char *pszUserInput )
 int main( int argc, char ** argv )
 
 {
-    GDALDatasetH	hSrcDS, hDstDS;
+    GDALDatasetH	hDstDS;
     const char         *pszFormat = "GTiff";
     char               *pszTargetSRS = NULL;
     char               *pszSourceSRS = NULL;
-    const char         *pszSrcFilename = NULL, *pszDstFilename = NULL;
+    char              **papszSrcFiles = NULL;
+    const char         *pszDstFilename = NULL;
     int                 bCreateOutput = FALSE, i, nOrder = 0;
     void               *hTransformArg, *hGenImgProjArg=NULL, *hApproxArg=NULL;
     char               **papszWarpOptions = NULL;
@@ -369,58 +308,23 @@ int main( int argc, char ** argv )
 
         else if( argv[i][0] == '-' )
             Usage();
-        else if( pszSrcFilename == NULL )
-            pszSrcFilename = argv[i];
-        else if( pszDstFilename == NULL )
-            pszDstFilename = argv[i];
-        else
-            Usage();
+
+        else 
+            papszSrcFiles = CSLAddString( papszSrcFiles, argv[i] );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      The last filename in the file list is really our destination    */
+/*      file.                                                           */
+/* -------------------------------------------------------------------- */
+    if( CSLCount(papszSrcFiles) > 1 )
+    {
+        pszDstFilename = papszSrcFiles[CSLCount(papszSrcFiles)-1];
+        papszSrcFiles[CSLCount(papszSrcFiles)-1] = NULL;
     }
 
     if( pszDstFilename == NULL )
         Usage();
-
-/* -------------------------------------------------------------------- */
-/*      Open source dataset.                                            */
-/* -------------------------------------------------------------------- */
-    hSrcDS = GDALOpen( pszSrcFilename, GA_ReadOnly );
-    
-    if( hSrcDS == NULL )
-        exit( 2 );
-
-    if( pszSourceSRS == NULL )
-    {
-        if( GDALGetProjectionRef( hSrcDS ) != NULL 
-            && strlen(GDALGetProjectionRef( hSrcDS )) > 0 )
-            pszSourceSRS = CPLStrdup(GDALGetProjectionRef( hSrcDS ));
-
-        else if( GDALGetGCPProjection( hSrcDS ) != NULL
-                 && strlen(GDALGetGCPProjection(hSrcDS)) > 0 
-                 && GDALGetGCPCount( hSrcDS ) > 1 )
-            pszSourceSRS = CPLStrdup(GDALGetGCPProjection( hSrcDS ));
-        else
-            pszSourceSRS = CPLStrdup("");
-    }
-
-    if( pszTargetSRS != NULL && strlen(pszSourceSRS) == 0 )
-    {
-        fprintf( stderr, "A target coordinate system was specified, but there is no source coordinate\nsystem.  Consider using -s_srs option to provide a source coordinate system.\nOperation terminated.\n" );
-        exit( 1 );
-    }
-
-    if( pszTargetSRS == NULL )
-        pszTargetSRS = CPLStrdup(pszSourceSRS);
-
-    if( GDALGetRasterColorInterpretation( 
-            GDALGetRasterBand(hSrcDS,GDALGetRasterCount(hSrcDS)) ) 
-        == GCI_AlphaBand 
-        && !bEnableSrcAlpha )
-    {
-        bEnableSrcAlpha = TRUE;
-        printf( "Using band %d of source image as alpha.\n", 
-                GDALGetRasterCount(hSrcDS) );
-    }
-        
 
 /* -------------------------------------------------------------------- */
 /*      Does the output dataset already exist?                          */
@@ -442,9 +346,11 @@ int main( int argc, char ** argv )
 /* -------------------------------------------------------------------- */
 /*      If not, we need to create it.                                   */
 /* -------------------------------------------------------------------- */
+    int   bInitDestSetForFirst = FALSE;
+
     if( hDstDS == NULL )
     {
-        hDstDS = GDALWarpCreateOutput( hSrcDS, pszDstFilename, pszFormat, 
+        hDstDS = GDALWarpCreateOutput( papszSrcFiles, pszDstFilename,pszFormat,
                                        pszSourceSRS, pszTargetSRS, nOrder,
                                        papszCreateOptions, eOutputType );
         bCreateOutput = TRUE;
@@ -454,11 +360,13 @@ int main( int argc, char ** argv )
         {
             papszWarpOptions = CSLSetNameValue(papszWarpOptions,
                                                "INIT_DEST", "0");
+            bInitDestSetForFirst = TRUE;
         }
         else if( CSLFetchNameValue( papszWarpOptions, "INIT_DEST" ) == NULL )
         {
             papszWarpOptions = CSLSetNameValue(papszWarpOptions,
                                                "INIT_DEST", "NO_DATA" );
+            bInitDestSetForFirst = TRUE;
         }
 
         CSLDestroy( papszCreateOptions );
@@ -468,225 +376,284 @@ int main( int argc, char ** argv )
     if( hDstDS == NULL )
         exit( 1 );
 
+    if( pszTargetSRS == NULL )
+        pszTargetSRS = CPLStrdup(GDALGetProjectionRef(hDstDS));
+
+/* -------------------------------------------------------------------- */
+/*      Loop over all source files, processing each in turn.            */
+/* -------------------------------------------------------------------- */
+    int iSrc;
+
+    for( iSrc = 0; papszSrcFiles[iSrc] != NULL; iSrc++ )
+    {
+        const char *pszThisSourceSRS = pszSourceSRS;
+        GDALDatasetH hSrcDS;
+
+/* -------------------------------------------------------------------- */
+/*      Open this file.                                                 */
+/* -------------------------------------------------------------------- */
+        hSrcDS = GDALOpen( papszSrcFiles[iSrc], GA_ReadOnly );
+    
+        if( hSrcDS == NULL )
+            exit( 2 );
+
+        printf( "Processing input file %s.\n", papszSrcFiles[iSrc] );
+
+        if( pszThisSourceSRS == NULL )
+        {
+            if( GDALGetProjectionRef( hSrcDS ) != NULL 
+                && strlen(GDALGetProjectionRef( hSrcDS )) > 0 )
+                pszThisSourceSRS = GDALGetProjectionRef( hSrcDS );
+            
+            else if( GDALGetGCPProjection( hSrcDS ) != NULL
+                     && strlen(GDALGetGCPProjection(hSrcDS)) > 0 
+                     && GDALGetGCPCount( hSrcDS ) > 1 )
+                pszThisSourceSRS = GDALGetGCPProjection( hSrcDS );
+            else
+                pszThisSourceSRS = "";
+
+            if( pszTargetSRS != NULL && strlen(pszThisSourceSRS) == 0 )
+            {
+                fprintf( stderr, "A target coordinate system was specified, but there is no source coordinate\nsystem.  Consider using -s_srs option to provide a source coordinate system.\nOperation terminated.\n" );
+                exit( 1 );
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Open the first source dataset for some info.                    */
+/* -------------------------------------------------------------------- */
+        if( GDALGetRasterColorInterpretation( 
+                GDALGetRasterBand(hSrcDS,GDALGetRasterCount(hSrcDS)) ) 
+            == GCI_AlphaBand 
+            && !bEnableSrcAlpha )
+        {
+            bEnableSrcAlpha = TRUE;
+            printf( "Using band %d of source image as alpha.\n", 
+                    GDALGetRasterCount(hSrcDS) );
+        }
+
 /* -------------------------------------------------------------------- */
 /*      Create a transformation object from the source to               */
 /*      destination coordinate system.                                  */
 /* -------------------------------------------------------------------- */
-    hTransformArg = hGenImgProjArg = 
-        GDALCreateGenImgProjTransformer( hSrcDS, pszSourceSRS, 
-                                         hDstDS, pszTargetSRS, 
-                                         TRUE, 1000.0, nOrder );
-
-    if( hTransformArg == NULL )
-        exit( 1 );
-
-    pfnTransformer = GDALGenImgProjTransform;
-
-    CPLFree( pszSourceSRS );
-    pszSourceSRS = NULL;
-
-    CPLFree( pszTargetSRS );
-    pszTargetSRS = NULL;
+        hTransformArg = hGenImgProjArg = 
+            GDALCreateGenImgProjTransformer( hSrcDS, pszThisSourceSRS, 
+                                             hDstDS, pszTargetSRS, 
+                                             TRUE, 1000.0, nOrder );
+        
+        if( hTransformArg == NULL )
+            exit( 1 );
+        
+        pfnTransformer = GDALGenImgProjTransform;
 
 /* -------------------------------------------------------------------- */
 /*      Warp the transformer with a linear approximator unless the      */
 /*      acceptable error is zero.                                       */
 /* -------------------------------------------------------------------- */
-    if( dfErrorThreshold != 0.0 )
-    {
-        hTransformArg = hApproxArg = 
-            GDALCreateApproxTransformer( GDALGenImgProjTransform, 
-                                         hGenImgProjArg, dfErrorThreshold );
-        pfnTransformer = GDALApproxTransform;
-    }
+        if( dfErrorThreshold != 0.0 )
+        {
+            hTransformArg = hApproxArg = 
+                GDALCreateApproxTransformer( GDALGenImgProjTransform, 
+                                             hGenImgProjArg, dfErrorThreshold);
+            pfnTransformer = GDALApproxTransform;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Clear temporary INIT_DEST settings after the first image.       */
+/* -------------------------------------------------------------------- */
+        if( bInitDestSetForFirst && iSrc == 1 )
+            papszWarpOptions = CSLSetNameValue( papszWarpOptions, 
+                                                "INIT_DEST", NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Setup warp options.                                             */
 /* -------------------------------------------------------------------- */
-    GDALWarpOptions *psWO = GDALCreateWarpOptions();
+        GDALWarpOptions *psWO = GDALCreateWarpOptions();
 
-    psWO->papszWarpOptions = papszWarpOptions;
-    psWO->eWorkingDataType = eWorkingType;
-    psWO->eResampleAlg = eResampleAlg;
+        psWO->papszWarpOptions = CSLDuplicate(papszWarpOptions);
+        psWO->eWorkingDataType = eWorkingType;
+        psWO->eResampleAlg = eResampleAlg;
 
-    psWO->hSrcDS = hSrcDS;
-    psWO->hDstDS = hDstDS;
+        psWO->hSrcDS = hSrcDS;
+        psWO->hDstDS = hDstDS;
 
-    psWO->pfnTransformer = pfnTransformer;
-    psWO->pTransformerArg = hTransformArg;
+        psWO->pfnTransformer = pfnTransformer;
+        psWO->pTransformerArg = hTransformArg;
 
-    if( !bQuiet )
-        psWO->pfnProgress = GDALTermProgress;
+        if( !bQuiet )
+            psWO->pfnProgress = GDALTermProgress;
 
-    if( dfWarpMemoryLimit != 0.0 )
-        psWO->dfWarpMemoryLimit = dfWarpMemoryLimit;
+        if( dfWarpMemoryLimit != 0.0 )
+            psWO->dfWarpMemoryLimit = dfWarpMemoryLimit;
 
 /* -------------------------------------------------------------------- */
 /*      Setup band mapping.                                             */
 /* -------------------------------------------------------------------- */
-    if( bEnableSrcAlpha )
-        psWO->nBandCount = GDALGetRasterCount(hSrcDS) - 1;
-    else
-        psWO->nBandCount = GDALGetRasterCount(hSrcDS);
+        if( bEnableSrcAlpha )
+            psWO->nBandCount = GDALGetRasterCount(hSrcDS) - 1;
+        else
+            psWO->nBandCount = GDALGetRasterCount(hSrcDS);
 
-    psWO->panSrcBands = (int *) CPLMalloc(psWO->nBandCount*sizeof(int));
-    psWO->panDstBands = (int *) CPLMalloc(psWO->nBandCount*sizeof(int));
+        psWO->panSrcBands = (int *) CPLMalloc(psWO->nBandCount*sizeof(int));
+        psWO->panDstBands = (int *) CPLMalloc(psWO->nBandCount*sizeof(int));
 
-    for( i = 0; i < psWO->nBandCount; i++ )
-    {
-        psWO->panSrcBands[i] = i+1;
-        psWO->panDstBands[i] = i+1;
-    }
+        for( i = 0; i < psWO->nBandCount; i++ )
+        {
+            psWO->panSrcBands[i] = i+1;
+            psWO->panDstBands[i] = i+1;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Setup alpha bands used if any.                                  */
 /* -------------------------------------------------------------------- */
-    if( bEnableSrcAlpha )
-        psWO->nSrcAlphaBand = GDALGetRasterCount(hSrcDS);
+        if( bEnableSrcAlpha )
+            psWO->nSrcAlphaBand = GDALGetRasterCount(hSrcDS);
 
-    if( !bEnableDstAlpha 
-        && GDALGetRasterCount(hDstDS) == psWO->nBandCount+1 
-        && GDALGetRasterColorInterpretation( 
-            GDALGetRasterBand(hDstDS,GDALGetRasterCount(hDstDS))) 
-        == GCI_AlphaBand )
-    {
-        printf( "Using band %d of destination image as alpha.\n", 
-                GDALGetRasterCount(hDstDS) );
+        if( !bEnableDstAlpha 
+            && GDALGetRasterCount(hDstDS) == psWO->nBandCount+1 
+            && GDALGetRasterColorInterpretation( 
+                GDALGetRasterBand(hDstDS,GDALGetRasterCount(hDstDS))) 
+            == GCI_AlphaBand )
+        {
+            printf( "Using band %d of destination image as alpha.\n", 
+                    GDALGetRasterCount(hDstDS) );
                 
-        bEnableDstAlpha = TRUE;
-    }
+            bEnableDstAlpha = TRUE;
+        }
 
-    if( bEnableDstAlpha )
-        psWO->nDstAlphaBand = GDALGetRasterCount(hDstDS);
+        if( bEnableDstAlpha )
+            psWO->nDstAlphaBand = GDALGetRasterCount(hDstDS);
 
 /* -------------------------------------------------------------------- */
 /*      Setup NODATA options.                                           */
 /* -------------------------------------------------------------------- */
-    if( pszSrcNodata != NULL )
-    {
-        char **papszTokens = CSLTokenizeString( pszSrcNodata );
-        int  nTokenCount = CSLCount(papszTokens);
-
-        psWO->padfSrcNoDataReal = (double *) 
-            CPLMalloc(psWO->nBandCount*sizeof(double));
-        psWO->padfSrcNoDataImag = (double *) 
-            CPLMalloc(psWO->nBandCount*sizeof(double));
-
-        for( i = 0; i < psWO->nBandCount; i++ )
+        if( pszSrcNodata != NULL )
         {
-            if( i < nTokenCount )
+            char **papszTokens = CSLTokenizeString( pszSrcNodata );
+            int  nTokenCount = CSLCount(papszTokens);
+
+            psWO->padfSrcNoDataReal = (double *) 
+                CPLMalloc(psWO->nBandCount*sizeof(double));
+            psWO->padfSrcNoDataImag = (double *) 
+                CPLMalloc(psWO->nBandCount*sizeof(double));
+
+            for( i = 0; i < psWO->nBandCount; i++ )
             {
-                CPLStringToComplex( papszTokens[i], 
-                                    psWO->padfSrcNoDataReal + i,
-                                    psWO->padfSrcNoDataImag + i );
+                if( i < nTokenCount )
+                {
+                    CPLStringToComplex( papszTokens[i], 
+                                        psWO->padfSrcNoDataReal + i,
+                                        psWO->padfSrcNoDataImag + i );
+                }
+                else
+                {
+                    psWO->padfSrcNoDataReal[i] = psWO->padfSrcNoDataReal[i-1];
+                    psWO->padfSrcNoDataImag[i] = psWO->padfSrcNoDataImag[i-1];
+                }
             }
-            else
-            {
-                psWO->padfSrcNoDataReal[i] = psWO->padfSrcNoDataReal[i-1];
-                psWO->padfSrcNoDataImag[i] = psWO->padfSrcNoDataImag[i-1];
-            }
+
+            CSLDestroy( papszTokens );
+
+            papszWarpOptions = CSLSetNameValue(papszWarpOptions,
+                                               "UNIFIED_SRC_NODATA", "YES" );
         }
-
-        CSLDestroy( papszTokens );
-
-        papszWarpOptions = CSLSetNameValue(papszWarpOptions,
-                                           "UNIFIED_SRC_NODATA", "YES" );
-    }
 
 /* -------------------------------------------------------------------- */
 /*      If the output dataset was created, and we have a destination    */
 /*      nodata value, go through marking the bands with the information.*/
 /* -------------------------------------------------------------------- */
-    if( pszDstNodata != NULL && bCreateOutput )
-    {
-        char **papszTokens = CSLTokenizeString( pszDstNodata );
-        int  nTokenCount = CSLCount(papszTokens);
-
-        psWO->padfDstNoDataReal = (double *) 
-            CPLMalloc(psWO->nBandCount*sizeof(double));
-        psWO->padfDstNoDataImag = (double *) 
-            CPLMalloc(psWO->nBandCount*sizeof(double));
-
-        for( i = 0; i < psWO->nBandCount; i++ )
+        if( pszDstNodata != NULL && bCreateOutput )
         {
-            if( i < nTokenCount )
+            char **papszTokens = CSLTokenizeString( pszDstNodata );
+            int  nTokenCount = CSLCount(papszTokens);
+
+            psWO->padfDstNoDataReal = (double *) 
+                CPLMalloc(psWO->nBandCount*sizeof(double));
+            psWO->padfDstNoDataImag = (double *) 
+                CPLMalloc(psWO->nBandCount*sizeof(double));
+
+            for( i = 0; i < psWO->nBandCount; i++ )
             {
-                CPLStringToComplex( papszTokens[i], 
-                                    psWO->padfDstNoDataReal + i,
-                                    psWO->padfDstNoDataImag + i );
-            }
-            else
-            {
-                psWO->padfDstNoDataReal[i] = psWO->padfDstNoDataReal[i-1];
-                psWO->padfDstNoDataImag[i] = psWO->padfDstNoDataImag[i-1];
+                if( i < nTokenCount )
+                {
+                    CPLStringToComplex( papszTokens[i], 
+                                        psWO->padfDstNoDataReal + i,
+                                        psWO->padfDstNoDataImag + i );
+                }
+                else
+                {
+                    psWO->padfDstNoDataReal[i] = psWO->padfDstNoDataReal[i-1];
+                    psWO->padfDstNoDataImag[i] = psWO->padfDstNoDataImag[i-1];
+                }
+
+                if( bCreateOutput )
+                {
+                    GDALSetRasterNoDataValue( 
+                        GDALGetRasterBand( hDstDS, psWO->panDstBands[i] ), 
+                        psWO->padfDstNoDataReal[i] );
+                }
             }
 
-            if( bCreateOutput )
-            {
-                GDALSetRasterNoDataValue( 
-                    GDALGetRasterBand( hDstDS, psWO->panDstBands[i] ), 
-                    psWO->padfDstNoDataReal[i] );
-            }
+            CSLDestroy( papszTokens );
         }
-
-        CSLDestroy( papszTokens );
-    }
 
 /* -------------------------------------------------------------------- */
 /*      If we are producing VRT output, then just initialize it with    */
 /*      the warp options and write out now rather than proceeding       */
 /*      with the operations.                                            */
 /* -------------------------------------------------------------------- */
-    if( bVRT )
-    {
-        if( GDALInitializeWarpedVRT( hDstDS, psWO ) != CE_None )
-            exit( 1 );
+        if( bVRT )
+        {
+            if( GDALInitializeWarpedVRT( hDstDS, psWO ) != CE_None )
+                exit( 1 );
 
-        GDALClose( hDstDS );
-        GDALClose( hSrcDS );
+            GDALClose( hDstDS );
+            GDALClose( hSrcDS );
         
-        CSLDestroy( argv );
+            CSLDestroy( argv );
     
-        GDALDumpOpenDatasets( stderr );
+            GDALDumpOpenDatasets( stderr );
         
-        GDALDestroyDriverManager();
+            GDALDestroyDriverManager();
         
-        return 0;
-    }
+            return 0;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize and execute the warp.                                */
 /* -------------------------------------------------------------------- */
-    GDALWarpOperation oWO;
+        GDALWarpOperation oWO;
 
-    if( oWO.Initialize( psWO ) == CE_None )
-    {
-        if( bMulti )
-            oWO.ChunkAndWarpMulti( 0, 0, 
-                                   GDALGetRasterXSize( hDstDS ),
-                                   GDALGetRasterYSize( hDstDS ) );
-        else
-            oWO.ChunkAndWarpImage( 0, 0, 
-                                   GDALGetRasterXSize( hDstDS ),
-                                   GDALGetRasterYSize( hDstDS ) );
-    }
+        if( oWO.Initialize( psWO ) == CE_None )
+        {
+            if( bMulti )
+                oWO.ChunkAndWarpMulti( 0, 0, 
+                                       GDALGetRasterXSize( hDstDS ),
+                                       GDALGetRasterYSize( hDstDS ) );
+            else
+                oWO.ChunkAndWarpImage( 0, 0, 
+                                       GDALGetRasterXSize( hDstDS ),
+                                       GDALGetRasterYSize( hDstDS ) );
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    if( hApproxArg != NULL )
-        GDALDestroyApproxTransformer( hApproxArg );
+        if( hApproxArg != NULL )
+            GDALDestroyApproxTransformer( hApproxArg );
+        
+        if( hGenImgProjArg != NULL )
+            GDALDestroyGenImgProjTransformer( hGenImgProjArg );
+        
+        GDALDestroyWarpOptions( psWO );
 
-    if( hGenImgProjArg != NULL )
-        GDALDestroyGenImgProjTransformer( hGenImgProjArg );
+        GDALClose( hSrcDS );
+    }
 
 /* -------------------------------------------------------------------- */
-/*      Cleanup.                                                        */
+/*      Final Cleanup.                                                  */
 /* -------------------------------------------------------------------- */
     GDALClose( hDstDS );
-    GDALClose( hSrcDS );
-
-    GDALDestroyWarpOptions( psWO );
 
     CSLDestroy( argv );
 
@@ -705,7 +672,7 @@ int main( int argc, char ** argv )
 /************************************************************************/
 
 static GDALDatasetH 
-GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename, 
+GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename, 
                       const char *pszFormat, const char *pszSourceSRS, 
                       const char *pszTargetSRS, int nOrder,
                       char **papszCreateOptions, GDALDataType eDT )
@@ -715,11 +682,10 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
     GDALDriverH hDriver;
     GDALDatasetH hDstDS;
     void *hTransformArg;
-    double adfDstGeoTransform[6];
-    int nPixels=0, nLines=0;
-
-    if( eDT == GDT_Unknown )
-        eDT = GDALGetRasterDataType(GDALGetRasterBand(hSrcDS,1));
+    GDALColorTableH hCT = NULL;
+    double dfWrkMinX=0, dfWrkMaxX=0, dfWrkMinY=0, dfWrkMaxY=0;
+    double dfWrkResX=0, dfWrkResY=0;
+    int nDstBandCount;
 
 /* -------------------------------------------------------------------- */
 /*      Find the output driver.                                         */
@@ -760,27 +726,133 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
                              "VRTWarpedDataset" );
 
 /* -------------------------------------------------------------------- */
+/*      Loop over all input files to collect extents.                   */
+/* -------------------------------------------------------------------- */
+    int iSrc;
+
+    for( iSrc = 0; papszSrcFiles[iSrc] != NULL; iSrc++ )
+    {
+        GDALDatasetH hSrcDS;
+        const char *pszThisSourceSRS = pszSourceSRS;
+
+        hSrcDS = GDALOpen( papszSrcFiles[iSrc], GA_ReadOnly );
+        if( hSrcDS == NULL )
+            exit( 1 );
+
+        if( eDT == GDT_Unknown )
+            eDT = GDALGetRasterDataType(GDALGetRasterBand(hSrcDS,1));
+
+/* -------------------------------------------------------------------- */
+/*      If we are processing the first file, and it has a color         */
+/*      table, then we will copy it to the destination file.            */
+/* -------------------------------------------------------------------- */
+        if( iSrc == 0 )
+        {
+            nDstBandCount = GDALGetRasterCount(hSrcDS);
+            hCT = GDALGetRasterColorTable( GDALGetRasterBand(hSrcDS,1) );
+            if( hCT != NULL )
+            {
+                hCT = GDALCloneColorTable( hCT );
+                printf( "Copying color table from %s to new file.\n", 
+                        papszSrcFiles[iSrc] );
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Get the sourcesrs from the dataset, if not set already.         */
+/* -------------------------------------------------------------------- */
+        if( pszThisSourceSRS == NULL )
+        {
+            if( GDALGetProjectionRef( hSrcDS ) != NULL 
+                && strlen(GDALGetProjectionRef( hSrcDS )) > 0 )
+                pszThisSourceSRS = GDALGetProjectionRef( hSrcDS );
+            
+            else if( GDALGetGCPProjection( hSrcDS ) != NULL
+                     && strlen(GDALGetGCPProjection(hSrcDS)) > 0 
+                     && GDALGetGCPCount( hSrcDS ) > 1 )
+                pszThisSourceSRS = GDALGetGCPProjection( hSrcDS );
+            else
+                pszThisSourceSRS = "";
+        }
+
+        if( pszTargetSRS == NULL )
+            pszTargetSRS = CPLStrdup(pszThisSourceSRS);
+        
+/* -------------------------------------------------------------------- */
 /*      Create a transformation object from the source to               */
 /*      destination coordinate system.                                  */
 /* -------------------------------------------------------------------- */
-    hTransformArg = 
-        GDALCreateGenImgProjTransformer( hSrcDS, pszSourceSRS, 
-                                         NULL, pszTargetSRS, 
-                                         TRUE, 1000.0, nOrder );
-
-    if( hTransformArg == NULL )
-        return NULL;
+        hTransformArg = 
+            GDALCreateGenImgProjTransformer( hSrcDS, pszThisSourceSRS, 
+                                             NULL, pszTargetSRS, 
+                                             TRUE, 1000.0, nOrder );
+        
+        if( hTransformArg == NULL )
+            return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Get approximate output definition.                              */
 /* -------------------------------------------------------------------- */
-    if( GDALSuggestedWarpOutput( hSrcDS, 
-                                 GDALGenImgProjTransform, hTransformArg, 
-                                 adfDstGeoTransform, &nPixels, &nLines )
-        != CE_None )
-        return NULL;
+        double adfThisGeoTransform[6];
+        int    nThisPixels, nThisLines;
 
-    GDALDestroyGenImgProjTransformer( hTransformArg );
+        if( GDALSuggestedWarpOutput( hSrcDS, 
+                                     GDALGenImgProjTransform, hTransformArg, 
+                                     adfThisGeoTransform, 
+                                     &nThisPixels, &nThisLines )
+            != CE_None )
+            return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Expand the working bounds to include this region, ensure the    */
+/*      working resolution is no more than this resolution.             */
+/* -------------------------------------------------------------------- */
+        if( dfWrkMaxX == 0.0 && dfWrkMinX == 0.0 )
+        {
+            dfWrkMinX = adfThisGeoTransform[0];
+            dfWrkMaxX = adfThisGeoTransform[0] 
+                + adfThisGeoTransform[1] * nThisPixels;
+            dfWrkMaxY = adfThisGeoTransform[3];
+            dfWrkMinY = adfThisGeoTransform[3] 
+                + adfThisGeoTransform[5] * nThisLines;
+            dfWrkResX = adfThisGeoTransform[1];
+            dfWrkResY = ABS(adfThisGeoTransform[5]);
+        }
+        else
+        {
+            dfWrkMinX = MIN(dfWrkMinX,adfThisGeoTransform[0]);
+            dfWrkMaxX = MAX(dfWrkMaxX,
+                         adfThisGeoTransform[0] 
+                         + adfThisGeoTransform[1] * nThisPixels);
+            dfWrkMaxY = MAX(dfWrkMaxY,adfThisGeoTransform[3]);
+            dfWrkMinY = MIN(dfWrkMinY,
+                         adfThisGeoTransform[3] 
+                         + adfThisGeoTransform[5] * nThisLines);
+            dfWrkResX = MIN(dfWrkResX,adfThisGeoTransform[1]);
+            dfWrkResY = MIN(dfWrkResY,ABS(adfThisGeoTransform[5]));
+        }
+        
+        GDALDestroyGenImgProjTransformer( hTransformArg );
+
+        GDALClose( hSrcDS );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Turn the suggested region into a geotransform and suggested     */
+/*      number of pixels and lines.                                     */
+/* -------------------------------------------------------------------- */
+    double adfDstGeoTransform[6];
+    int nPixels, nLines;
+
+    adfDstGeoTransform[0] = dfWrkMinX;
+    adfDstGeoTransform[1] = dfWrkResX;
+    adfDstGeoTransform[2] = 0.0;
+    adfDstGeoTransform[3] = dfWrkMaxY;
+    adfDstGeoTransform[4] = 0.0;
+    adfDstGeoTransform[5] = -1 * dfWrkResY;
+
+    nPixels = (int) ((dfWrkMaxX - dfWrkMinX) / dfWrkResX + 0.5);
+    nLines = (int) ((dfWrkMaxY - dfWrkMinY) / dfWrkResY + 0.5);
 
 /* -------------------------------------------------------------------- */
 /*      Did the user override some parameters?                          */
@@ -841,8 +913,6 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Do we want to generate an alpha band in the output file?        */
 /* -------------------------------------------------------------------- */
-    int nDstBandCount = GDALGetRasterCount(hSrcDS);
-
     if( bEnableSrcAlpha )
         nDstBandCount--;
 
@@ -881,11 +951,11 @@ GDALWarpCreateOutput( GDALDatasetH hSrcDS, const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Copy the color table, if required.                              */
 /* -------------------------------------------------------------------- */
-    GDALColorTableH hCT;
-
-    hCT = GDALGetRasterColorTable( GDALGetRasterBand(hSrcDS,1) );
     if( hCT != NULL )
+    {
         GDALSetRasterColorTable( GDALGetRasterBand(hDstDS,1), hCT );
+        GDALDestroyColorTable( hCT );
+    }
 
     return hDstDS;
 }
