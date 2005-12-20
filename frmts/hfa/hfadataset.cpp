@@ -29,6 +29,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.70  2005/12/20 17:22:51  fwarmerdam
+ * Negative proZone values are apparently the FIPS code, instead of
+ * the ESRI zone numbers.  Adjust ESRIToUSGSZone() accordingly.
+ *
  * Revision 1.69  2005/10/24 14:29:58  fwarmerdam
  * Ensure that metadata dirty flags are cleared after finisheding
  * opening the dataset.
@@ -1810,6 +1814,9 @@ static int ESRIToUSGSZone( int nESRIZone )
 {
     int		nPairs = sizeof(anUsgsEsriZones) / (2*sizeof(int));
     int		i;
+
+    if( nESRIZone < 0 )
+        return ABS(nESRIZone);
 
     for( i = 0; i < nPairs; i++ )
     {
