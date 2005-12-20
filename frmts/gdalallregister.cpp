@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.82  2005/12/20 16:16:57  fwarmerdam
+ * added sgi format
+ *
  * Revision 1.81  2005/10/20 13:46:07  fwarmerdam
  * added Leveller
  *
@@ -246,6 +249,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_rik
     GDALRegister_RIK();
+#endif
+
+#ifdef FRMT_sgi
+    GDALRegister_SGI();
 #endif
 
 #ifdef FRMT_leveller
