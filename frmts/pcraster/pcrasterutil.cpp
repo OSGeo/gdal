@@ -13,9 +13,9 @@
 #define INCLUDED_ALGORITHM
 #endif
 
-#ifndef INCLUDED_LIMITS
-#include <limits>
-#define INCLUDED_LIMITS
+#ifndef INCLUDED_FLOAT
+#include <float.h>
+#define INCLUDED_FLOAT
 #endif
 
 #ifndef INCLUDED_PCRTYPES
@@ -310,8 +310,10 @@ double missingValue(CSF_CR cellRepresentation)
       break;
     }
     case CR_REAL4: {
-      assert(std::numeric_limits<REAL4>::is_iec559);
-      missingValue = -std::numeric_limits<REAL4>::max();
+      // using <limits> breaks on gcc 2.95
+      // assert(std::numeric_limits<REAL4>::is_iec559);
+      // missingValue = -std::numeric_limits<REAL4>::max();
+      missingValue = -FLT_MAX;
       break;
     }
     default: {
@@ -473,4 +475,3 @@ CSF_VS fitValueScale(CSF_VS valueScale, CSF_CR cellRepresentation)
 
   return result;
 }
-
