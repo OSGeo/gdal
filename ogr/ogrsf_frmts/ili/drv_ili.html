@@ -40,12 +40,12 @@ ogr2ogr -f "ESRI Shapefile" shpdir RoadsExdm2ien.xml
 
 Shape -> Interlis 1:
 <pre>
-ogr2ogr -f "Interlis 1" ili-bsp.itf,ili-bsp.ili Bodenbedeckung__BoFlaechen_Form.shp
+ogr2ogr -f "Interlis 1" ili-bsp.itf Bodenbedeckung__BoFlaechen_Form.shp
 </pre>
 
 Shape -> Interlis 2:
 <pre>
-ogr2ogr -f "Interlis 2" ili-bsp.xml Bodenbedeckung__BoFlaechen_Form.shp
+ogr2ogr -f "Interlis 2" LandCover.xml,RoadsExdm2ben.ili RoadsExdm2ben_10.Roads.LandCover.shp
 </pre>
 
 <p>
