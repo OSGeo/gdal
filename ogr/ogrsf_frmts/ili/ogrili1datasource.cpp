@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/12/20 16:47:04  pka
+ * Interlis 1 output without model
+ *
  * Revision 1.5  2005/10/13 14:30:40  pka
  * Explicit point geometry type
  * ARC_DEGREES environment variable (Default 1 degree)
@@ -195,10 +198,7 @@ int OGRILI1DataSource::Create( const char *pszFilename,
 
     if( osModelFilename.length() == 0 )
     {
-        CPLError( CE_Warning, CPLE_OpenFailed, 
-                  "Model filename not found in '%s'.", 
-                  pszFilename );
-        return FALSE;
+      //TODO: create automatic model
     }
 
 /* -------------------------------------------------------------------- */
@@ -225,15 +225,18 @@ int OGRILI1DataSource::Create( const char *pszFilename,
     // dumps all errors to stderr
     iom_seterrlistener(iom_stderrlistener);
 
+    IOM_BASKET model = 0;
+    if( osModelFilename.length() != 0 ) {
     // compile ili model
     char *iliFiles[1] = {(char *)osModelFilename.c_str()};
-    IOM_BASKET model=iom_compileIli(1,iliFiles);
+    model=iom_compileIli(1,iliFiles);
     if(!model){
         CPLError( CE_Warning, CPLE_OpenFailed, 
                   "iom_compileIli .", 
                   pszName, VSIStrerror( errno ) );
         iom_end();
         return FALSE;
+    }
     }
 
 /* -------------------------------------------------------------------- */
@@ -242,8 +245,8 @@ int OGRILI1DataSource::Create( const char *pszFilename,
     VSIFPrintf( fpTransfer, "SCNT\n" );
     VSIFPrintf( fpTransfer, "////\n" );
     VSIFPrintf( fpTransfer, "MTID INTERLIS1\n" );
-    const char* val = GetAttrObjName(model, "iom04.metamodel.DataModel");
-    VSIFPrintf( fpTransfer, "MODL %s\n", val );
+    const char* modelname = model ? GetAttrObjName(model, "iom04.metamodel.DataModel") : osBasename.c_str();
+    VSIFPrintf( fpTransfer, "MODL %s\n", modelname );
 
     return TRUE;
 }

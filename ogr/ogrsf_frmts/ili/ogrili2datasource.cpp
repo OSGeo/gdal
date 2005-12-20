@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/12/20 16:47:04  pka
+ * Interlis 1 output without model
+ *
  * Revision 1.3  2005/12/19 17:33:21  pka
  * Interlis 1: Support for 100 columns (unlimited, if model given)
  * Interlis 1: Fixes for output
@@ -174,13 +177,10 @@ int OGRILI2DataSource::Create( const char *pszFilename,
 
     if( pszModelFilename == NULL )
     {
-        return TRUE;
-	/*
         CPLError( CE_Warning, CPLE_OpenFailed, 
                   "Model file '%s' (%s) not found.", 
                   pszModelFilename, pszFilename, VSIStrerror( errno ) );
         return FALSE;
-	*/
     }
 
 	iom_init();
