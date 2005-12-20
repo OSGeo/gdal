@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2005/12/20 16:15:25  fwarmerdam
+ * added sgi format
+ *
  * Revision 1.40  2005/10/20 13:49:19  fwarmerdam
  * added leveller
  *
@@ -75,79 +78,6 @@
  *
  * Revision 1.25  2004/01/07 20:06:12  warmerda
  * Added netCDF register
- *
- * Revision 1.24  2003/12/13 00:00:07  jimg
- * Added GDALRegister_DODS().
- *
- * Revision 1.23  2003/12/11 06:18:43  warmerda
- * added BT driver
- *
- * Revision 1.22  2003/09/09 12:14:25  dron
- * Added PCIDSK driver.
- *
- * Revision 1.21  2003/04/23 12:24:26  dron
- * MrSID driver added, EFF removed.
- *
- * Revision 1.20  2002/12/03 19:02:39  dron
- * Added BMP driver.
- *
- * Revision 1.19  2002/12/03 04:41:16  warmerda
- * added NITF
- *
- * Revision 1.18  2002/10/03 05:41:27  warmerda
- * added GSC Geogrid format
- *
- * Revision 1.17  2002/09/26 18:10:59  warmerda
- * added JP2KAK
- *
- * Revision 1.16  2002/09/19 14:49:54  warmerda
- * added jpeg2000
- *
- * Revision 1.15  2002/08/13 16:59:53  dron
- * New driver: EOSAT FAST format
- *
- * Revision 1.14  2002/07/16 13:30:27  dron
- * New driver: HDF4 dataset.
- *
- * Revision 1.13  2002/05/08 16:33:25  dron
- * NOAA Polar Orbiter Dataset reader added
- *
- * Revision 1.12  2002/04/12 20:19:15  warmerda
- * added xpm
- *
- * Revision 1.11  2002/03/04 21:54:30  warmerda
- * added envi format
- *
- * Revision 1.10  2001/12/08 04:44:23  warmerda
- * added BSB
- *
- * Revision 1.9  2001/11/27 14:39:02  warmerda
- * added usgsdem
- *
- * Revision 1.8  2001/11/16 21:14:03  warmerda
- * added VRT dataset
- *
- * Revision 1.7  2001/09/19 15:26:14  warmerda
- * added doq2
- *
- * Revision 1.6  2001/07/05 23:53:53  nemec
- * Add FIT file format
- *
- * Revision 1.5  2001/05/15 13:20:32  warmerda
- * added fujibas
- *
- * Revision 1.4  2001/04/02 17:12:01  warmerda
- * Added ecw support.
- *
- * Revision 1.3  2001/03/12 15:17:03  warmerda
- * added aaigrid
- *
- * Revision 1.2  2001/03/06 03:53:44  sperkins
- * Added FITS format support.
- *
- * Revision 1.1  2001/02/06 16:30:05  warmerda
- * New
- *
  */
 
 #ifndef GDAL_FRMTS_H_INCLUDED
@@ -223,6 +153,7 @@ void CPL_DLL GDALRegister_HDF5Image(void);
 void CPL_DLL GDALRegister_MSGN(void);
 void CPL_DLL GDALRegister_RIK(void);
 void CPL_DLL GDALRegister_Leveller(void);
+void CPL_DLL GDALRegister_SGI(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
