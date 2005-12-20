@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2005/12/20 21:48:38  fwarmerdam
+ * Fixed last fix which seriously hosted morphToESRI().
+ *
  * Revision 1.42  2005/12/20 02:09:49  fwarmerdam
  * ESRI requires linear units.  Ensure morphToESRI() produces them.
  *
@@ -974,7 +977,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 /* -------------------------------------------------------------------- */
 /*      Fixup ordering, missing linear units, etc.                      */
 /* -------------------------------------------------------------------- */
-    eErr = morphToESRI();
+    eErr = Fixup();
     if( eErr != OGRERR_NONE )
         return eErr;
 
