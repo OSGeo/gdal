@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2005/12/20 21:49:57  fwarmerdam
+ * trim log
+ *
  * Revision 1.43  2005/12/20 21:48:38  fwarmerdam
  * Fixed last fix which seriously hosted morphToESRI().
  *
@@ -112,61 +115,6 @@
  *
  * Revision 1.19  2003/01/24 20:15:34  warmerda
  * added polar stereographic support
- *
- * Revision 1.18  2002/12/16 17:07:42  warmerda
- * dont alter projection parameter units ... ESRI was right!
- *
- * Revision 1.17  2002/12/01 21:16:21  warmerda
- * added logic to correct angular projection parameter units when needed
- *
- * Revision 1.16  2002/11/29 22:10:15  warmerda
- * added logic to map ESRI LCC to LCC1SP or LCC2SP in WKT and vice versa
- *
- * Revision 1.15  2002/11/25 03:28:16  warmerda
- * added/improved documentation
- *
- * Revision 1.14  2002/11/12 19:42:08  warmerda
- * added state plane and BNG support
- *
- * Revision 1.13  2002/04/25 20:56:28  warmerda
- * expanded tabs
- *
- * Revision 1.12  2002/03/12 18:11:38  warmerda
- * ESRI WKT false easting/northing not necessariliy in meters
- *
- * Revision 1.11  2002/03/05 14:25:14  warmerda
- * expand tabs
- *
- * Revision 1.10  2001/11/09 21:06:40  warmerda
- * stripctparms may not results in null root
- *
- * Revision 1.9  2001/10/11 19:27:54  warmerda
- * worked on esri morphing
- *
- * Revision 1.8  2001/10/10 20:42:43  warmerda
- * added ESRI WKT morphing support
- *
- * Revision 1.7  2001/07/19 18:25:07  warmerda
- * expanded tabs
- *
- * Revision 1.6  2001/07/18 05:03:05  warmerda
- * added CPL_CVSID
- *
- * Revision 1.5  2001/03/16 22:15:48  warmerda
- * added support for reading WKT in importFromEPSG
- *
- * Revision 1.4  2001/01/26 14:56:11  warmerda
- * added Transverse Mercator .prj support
- *
- * Revision 1.3  2001/01/19 21:10:46  warmerda
- * replaced tabs
- *
- * Revision 1.2  2000/11/17 17:25:37  warmerda
- * added improved utm support
- *
- * Revision 1.1  2000/11/09 06:22:15  warmerda
- * New
- *
  */
 
 #include "ogr_spatialref.h"
