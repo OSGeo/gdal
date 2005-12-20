@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.98  2005/12/20 02:08:07  fwarmerdam
+ * UTM should default to a linear units of meter.
+ *
  * Revision 1.97  2005/12/01 04:59:46  fwarmerdam
  * added two point equidistant support
  *
@@ -3777,6 +3780,8 @@ OGRErr OGRSpatialReference::SetUTM( int nZone, int bNorth )
 
         SetNode( "PROJCS", szUTMName );
     }
+
+    SetLinearUnits( SRS_UL_METER, 1.0 );
 
     return OGRERR_NONE;
 }
