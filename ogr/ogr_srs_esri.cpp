@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2005/12/20 02:09:49  fwarmerdam
+ * ESRI requires linear units.  Ensure morphToESRI() produces them.
+ *
  * Revision 1.41  2005/10/27 23:12:16  fwarmerdam
  * morphToESRI() now maps a PROJCS of Unknown to the PROJECTION value
  *
@@ -967,6 +970,13 @@ OGRErr OGRSpatialReference::morphToESRI()
 
 {
     OGRErr      eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Fixup ordering, missing linear units, etc.                      */
+/* -------------------------------------------------------------------- */
+    eErr = morphToESRI();
+    if( eErr != OGRERR_NONE )
+        return eErr;
 
 /* -------------------------------------------------------------------- */
 /*      Strip all CT parameters (AXIS, AUTHORITY, TOWGS84, etc).        */
