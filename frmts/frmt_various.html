@@ -661,20 +661,26 @@ band will attempt to return if the units are Feet ("ft") or Meters ("m").
 
 NOTE: Implemented as <tt>gdal/frmts/sdts/sdtsdataset.cpp</tt>.<p>
 
-<h2><a name="XPM">XPM - X11 Pixmap</a></h2>
+<h2><a name="SGI">SGI - SGI Image Format</a></h2>
 
-GDAL includes support for reading and writing XPM (X11 Pixmap Format) 
-image files.  These are colormapped one band images primarily used for 
-simple graphics purposes in X11 applications.  It has been incorporated in
-GDAL primarily to ease translation of GDAL images into a form useable with
-the GTK toolkit.<p>
+The SGI driver currently supports the reading of SGI Image files.<p>
 
-The XPM support does not support georeferecing (not available from XPM files)
-nor does it support XPM files with more than one character per pixel.  New
-XPM files must be colormapped or greyscale, and colortables will be reduced
-to about 70 colors automatically.<p>
+The driver currently supports 1, 2, 3, and 4 band images. The driver 
+currently supports "8 bit per channel value" images. The driver supports 
+both uncompressed and run-length encoded (RLE) images.<p>
 
-NOTE: Implemented as <tt>gdal/frmts/xpm/xpmdataset.cpp</tt>.<p>
+The GDAL SGI Driver was based on Paul Bourke's SGI image read code.<p>
+
+The driver does not currently have any image creation capabilities.<p>
+
+See Also:<p>
+
+<ul>
+<li> <a href="http://astronomy.swin.edu.au/~pbourke/dataformats/sgirgb/">Paul Bourke's SGI Image Read Code</a>
+<li> <a href="ftp://ftp.sgi.com/graphics/SGIIMAGESPEC">SGI Image File Format Document </a>
+</ul>
+
+NOTE: Implemented as <tt>gdal/frmts/sgi/sgidataset.cpp</tt>.<p>
 
 <h2><a name="WLD">WLD -- ESRI World File</a></h2>
 
@@ -705,6 +711,21 @@ You can construct that file simply by using your favorite text editor.<p>
 
 World file usually has suffix .wld, but sometimes it may has .tfw, tifw, .jgw
 or other suffixes depending on the image file it comes with.<p>
+
+<h2><a name="XPM">XPM - X11 Pixmap</a></h2>
+
+GDAL includes support for reading and writing XPM (X11 Pixmap Format) 
+image files.  These are colormapped one band images primarily used for 
+simple graphics purposes in X11 applications.  It has been incorporated in
+GDAL primarily to ease translation of GDAL images into a form useable with
+the GTK toolkit.<p>
+
+The XPM support does not support georeferecing (not available from XPM files)
+nor does it support XPM files with more than one character per pixel.  New
+XPM files must be colormapped or greyscale, and colortables will be reduced
+to about 70 colors automatically.<p>
+
+NOTE: Implemented as <tt>gdal/frmts/xpm/xpmdataset.cpp</tt>.<p>
 
 <hr>
 <a href="formats_list.html">Full list of GDAL Raster Formats</a>
