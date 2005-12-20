@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.19  2005/12/20 20:07:30  dron
+ * Added support for 16-bit data.
+ *
  * Revision 1.18  2005/09/14 13:18:32  dron
  * Avoid warnings.
  *
@@ -610,6 +613,9 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         default:
 	    poDS->eDataType = GDT_Byte;
 	    break;
+	case 16:
+	    poDS->eDataType = GDT_UInt16;
+	    break;
     }
 
 /* -------------------------------------------------------------------- */
@@ -823,9 +829,12 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
+    int	nPixelOffset = GDALGetDataTypeSize(poDS->eDataType) / 8;
+    int nLineOffset = poDS->nRasterXSize * nPixelOffset;
+
     for( i = 1; i <= poDS->nBands; i++ )
         poDS->SetBand( i, new FASTRasterBand( poDS, i, poDS->fpChannels[i - 1],
-	    0, 1, poDS->nRasterXSize, poDS->eDataType, TRUE));
+	    0, nPixelOffset, nLineOffset, poDS->eDataType, TRUE));
 
     CPLFree( pszHeader );
 
