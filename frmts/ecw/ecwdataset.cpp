@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.54  2005/12/21 15:07:56  fwarmerdam
+ * better error
+ *
  * Revision 1.53  2005/09/26 21:09:31  fwarmerdam
  * Avoid problems in deletion of the iostream.
  *
@@ -592,7 +595,8 @@ CPLErr ECWRasterBand::IReadBlock( int, int nBlockYOff, void * pImage )
         return CE_None;
 
     CPLError( CE_Failure, CPLE_AppDefined, 
-              "TryWinRasterIO() failed for blocked scanline." );
+              "TryWinRasterIO() failed for blocked scanline %d of band %d.",
+              nBlockYOff, nBand );
     return CE_Failure;
 }
 
@@ -1244,7 +1248,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
     if( poFileView == NULL )
     {
         poFileView = new CNCSFile();
-        oErr = poFileView->Open( poOpenInfo->pszFilename, FALSE );
+        oErr = poFileView->Open( (char *) poOpenInfo->pszFilename, FALSE );
         eErr = oErr.GetErrorNumber();
         CPLDebug( "ECW", "NCScbmOpenFileView(%s): eErr = %d", 
                   poOpenInfo->pszFilename, (int) eErr );
