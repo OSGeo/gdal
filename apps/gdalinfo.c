@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.42  2005/12/21 05:31:56  fwarmerdam
+ * added reporting of band image_structure metadata
+ *
  * Revision 1.41  2005/12/21 00:38:05  fwarmerdam
  * Report image_structure metadata.
  *
@@ -505,10 +508,20 @@ int main( int argc, char ** argv )
         papszMetadata = GDALGetMetadata( hBand, NULL );
         if( bShowMetadata && CSLCount(papszMetadata) > 0 )
         {
-            printf( "Metadata:\n" );
+            printf( "  Metadata:\n" );
             for( i = 0; papszMetadata[i] != NULL; i++ )
             {
-                printf( "  %s\n", papszMetadata[i] );
+                printf( "    %s\n", papszMetadata[i] );
+            }
+        }
+
+        papszMetadata = GDALGetMetadata( hBand, "IMAGE_STRUCTURE" );
+        if( bShowMetadata && CSLCount(papszMetadata) > 0 )
+        {
+            printf( "  Image Structure Metadata:\n" );
+            for( i = 0; papszMetadata[i] != NULL; i++ )
+            {
+                printf( "    %s\n", papszMetadata[i] );
             }
         }
 
