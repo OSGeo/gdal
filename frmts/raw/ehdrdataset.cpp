@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/12/21 00:41:48  fwarmerdam
+ * added support for reading/writing PIXELTYPE.
+ * Added support for reading/writing writing geotransform and projection.
+ *
  * Revision 1.29  2005/11/10 17:36:15  dron
  * _Always_ use 64-bit pointers when parsing header file.
  *
@@ -69,55 +73,6 @@
  *
  * Revision 1.16  2003/08/25 13:33:19  dron
  * Use CPLFormCIFilename() to case insensitive search for .HDR and .PRJ files.
- *
- * Revision 1.15  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.14  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.13  2002/05/22 14:09:04  warmerda
- * Add support for the nbands value as per suggestion from Brent Fraser.
- *
- * Revision 1.12  2002/01/10 14:07:57  warmerda
- * Verify that poOpenInfo->fp is not NULL in Open() as per:
- * http://bugzilla.remotesensing.org/show_bug.cgi?id=95
- *
- * Revision 1.11  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.10  2001/07/10 17:40:26  warmerda
- * Accept tab as separator.  Assume signed 16 and 32bit values.
- *
- * Revision 1.9  2001/03/23 03:25:57  warmerda
- * added support for GRID generated files, with nodata and projections
- *
- * Revision 1.8  2000/10/30 20:49:40  warmerda
- * Added error test to ensure the user isn't selecting the .hdr file
- * directly instead of the image data file.
- *
- * Revision 1.7  2000/08/15 19:28:26  warmerda
- * added help topic
- *
- * Revision 1.6  2000/07/17 17:10:24  warmerda
- * fixed default geotransform to match expected values for raw images
- *
- * Revision 1.5  2000/07/07 15:29:09  warmerda
- * Removed the restriction that all lines must have two or more tokens.
- * In Spot GeoSPOT files there are comment lines (#...) with just one
- * field on them.
- *
- * Revision 1.4  2000/06/20 17:35:58  warmerda
- * added overview support
- *
- * Revision 1.3  2000/02/28 16:32:20  warmerda
- * use SetBand method
- *
- * Revision 1.2  1999/08/12 18:23:33  warmerda
- * Added the ability to handle the NBITS and BYTEORDER flags.
- *
- * Revision 1.1  1999/07/23 19:34:34  warmerda
- * New
  */
 
 #include "rawdataset.h"
@@ -142,14 +97,19 @@ class EHdrDataset : public RawDataset
 
     int         bGotTransform;
     double      adfGeoTransform[6];
-    char	*pszProjection;
+    char       *pszProjection;
+    char      **papszHDR;
+
+    CPLErr      RewriteHDR();
 
   public:
     		EHdrDataset();
     	        ~EHdrDataset();
     
     virtual CPLErr GetGeoTransform( double * padfTransform );
+    virtual CPLErr SetGeoTransform( double *padfTransform );
     virtual const char *GetProjectionRef(void);
+    virtual CPLErr SetProjection( const char * );
     
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -172,7 +132,7 @@ EHdrDataset::EHdrDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
-
+    papszHDR = NULL;
 }
 
 /************************************************************************/
@@ -186,6 +146,7 @@ EHdrDataset::~EHdrDataset()
     if( fpImage != NULL )
         VSIFCloseL( fpImage );
     CPLFree( pszProjection );
+    CSLDestroy( papszHDR );
 }
 
 /************************************************************************/
@@ -196,6 +157,50 @@ const char *EHdrDataset::GetProjectionRef()
 
 {
     return pszProjection;
+}
+
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+CPLErr EHdrDataset::SetProjection( const char *pszSRS )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Reset coordinate system on the dataset.                         */
+/* -------------------------------------------------------------------- */
+    CPLFree( pszProjection );
+    pszProjection = CPLStrdup( pszSRS );
+
+    if( strlen(pszSRS) == 0 )
+        return CE_None;
+
+/* -------------------------------------------------------------------- */
+/*      Convert to ESRI WKT.                                            */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oSRS( pszSRS );
+    char *pszESRI_SRS = NULL;
+
+    oSRS.morphToESRI();
+    oSRS.exportToWkt( &pszESRI_SRS );
+
+/* -------------------------------------------------------------------- */
+/*      Write to .prj file.                                             */
+/* -------------------------------------------------------------------- */
+    CPLString osPrjFilename = CPLResetExtension( GetDescription(), "prj" );
+    FILE *fp;
+
+    fp = VSIFOpen( osPrjFilename.c_str(), "wt" );
+    if( fp != NULL )
+    {
+        VSIFWrite( pszESRI_SRS, 1, strlen(pszESRI_SRS), fp );
+        VSIFWrite( (void *) "\n", 1, 1, fp );
+        VSIFClose( fp );
+    }
+
+    CPLFree( pszESRI_SRS );
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -212,8 +217,105 @@ CPLErr EHdrDataset::GetGeoTransform( double * padfTransform )
     }
     else
     {
-        return GDALDataset::GetGeoTransform( padfTransform );
+        return GDALPamDataset::GetGeoTransform( padfTransform );
     }
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr EHdrDataset::SetGeoTransform( double *padfGeoTransform )
+
+{
+/* -------------------------------------------------------------------- */
+/*      We only support non-rotated images with info in the .HDR file.  */
+/* -------------------------------------------------------------------- */
+    if( padfGeoTransform[2] != 0.0 
+        || padfGeoTransform[4] != 0.0 )
+    {
+        return GDALPamDataset::SetGeoTransform( padfGeoTransform );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Record new geotransform.                                        */
+/* -------------------------------------------------------------------- */
+    bGotTransform = TRUE;
+    memcpy( adfGeoTransform, padfGeoTransform, sizeof(double) * 6 );
+
+/* -------------------------------------------------------------------- */
+/*      Strip out old geotransform keywords from HDR records.           */
+/* -------------------------------------------------------------------- */
+    int i;
+    for( i = CSLCount(papszHDR)-1; i >= 0; i-- )
+    {
+        if( EQUALN(papszHDR[i],"ul",2)
+            || EQUALN(papszHDR[i]+1,"ll",2)
+            || EQUALN(papszHDR[i],"cell",4)
+            || EQUALN(papszHDR[i]+1,"dim",3) )
+        {
+            papszHDR = CSLRemoveStrings( papszHDR, i, 1, NULL );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Set the transformation information.                             */
+/* -------------------------------------------------------------------- */
+    CPLString  oLine;
+
+    oLine.Printf( "ULXMAP         %.15g", 
+                  adfGeoTransform[0] + adfGeoTransform[1] * 0.5 );
+    papszHDR = CSLAddString( papszHDR, oLine );
+
+    oLine.Printf( "ULYMAP         %.15g", 
+                  adfGeoTransform[3] + adfGeoTransform[5] * 0.5 );
+    papszHDR = CSLAddString( papszHDR, oLine );
+
+    oLine.Printf( "XDIM           %.15g", adfGeoTransform[1] );
+    papszHDR = CSLAddString( papszHDR, oLine );
+
+    oLine.Printf( "YDIM           %.15g", fabs(adfGeoTransform[5]) );
+    papszHDR = CSLAddString( papszHDR, oLine );
+
+    return RewriteHDR();
+}
+
+/************************************************************************/
+/*                             RewriteHDR()                             */
+/************************************************************************/
+
+CPLErr EHdrDataset::RewriteHDR()
+
+{
+    CPLString osPath = CPLGetPath( GetDescription() );
+    CPLString osName = CPLGetBasename( GetDescription() );
+    CPLString osHDRFilename = CPLFormCIFilename( osPath, osName, "hdr" );
+
+/* -------------------------------------------------------------------- */
+/*      Write .hdr file.                                                */
+/* -------------------------------------------------------------------- */
+    FILE	*fp;
+    int i;
+
+    fp = VSIFOpen( osHDRFilename, "wt" );
+
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Failed to rewrite .hdr file %s.", 
+                  osHDRFilename.c_str() );
+        return CE_Failure;
+    }
+
+    for( i = 0; papszHDR[i] != NULL; i++ )
+    {
+        VSIFWrite( papszHDR[i], 1, strlen(papszHDR[i]), fp );
+        VSIFWrite( (void *) "\n", 1, 1, fp );
+    }
+
+    VSIFClose( fp );
+
+    return CE_None;
 }
 
 /************************************************************************/
@@ -267,8 +369,11 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     double		dfXDim = 1.0, dfYDim = 1.0, dfNoData = 0.0;
     int			nLineCount = 0, bNoDataSet = FALSE;
     GDALDataType	eDataType = GDT_Byte;
+    int                 nBits;
     char		chByteOrder = 'M';
+    char                chPixelType = 'U';
     char                szLayout[10] = "BIL";
+    char              **papszHDR = NULL;
 
     while( (pszLine = CPLReadLine( fp )) )
     {
@@ -276,8 +381,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
         nLineCount++;
 
-        if( nLineCount > 1000 || strlen(pszLine) > 1000 )
+        if( nLineCount > 50 || strlen(pszLine) > 1000 )
             break;
+
+        papszHDR = CSLAddString( papszHDR, pszLine );
 
         papszTokens = CSLTokenizeStringComplex( pszLine, " \t", TRUE, FALSE );
         if( CSLCount( papszTokens ) < 2 )
@@ -341,26 +448,15 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else if( EQUAL(papszTokens[0],"NBITS") )
         {
-            if( atoi(papszTokens[1]) == 16 )
-                eDataType = GDT_Int16;
-            else if( atoi(papszTokens[1]) == 32 )
-                eDataType = GDT_Float32;
-            else if( atoi(papszTokens[1]) == 64 )
-                eDataType = GDT_Float64;
+            nBits = atoi(papszTokens[1]);
+        }
+        else if( EQUAL(papszTokens[0],"PIXELTYPE") )
+        {
+            chPixelType = toupper(papszTokens[1][0]);
         }
         else if( EQUAL(papszTokens[0],"byteorder") )
         {
             chByteOrder = toupper(papszTokens[1][0]);
-
-            /*
-             * Use of LSBFIRST or MSBFIRST is considered an indication that
-             * this is actually a floating point grid.  Treat accordingly.
-             */
-            if( EQUAL(papszTokens[1],"LSBFIRST")
-                || EQUAL(papszTokens[1],"MSBFIRST") )
-            {
-                eDataType = GDT_Float32;
-            }
         }
 
         CSLDestroy( papszTokens );
@@ -375,6 +471,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( nRows == -1 || nCols == -1 )
     {
+        CSLDestroy( papszHDR );
         CPLFree( pszName );
         CPLFree( pszPath );
         return NULL;
@@ -392,6 +489,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                   "the data file (often with the extension .bil) corresponding\n"
                   "to the header file: %s\n", 
                   poOpenInfo->pszFilename );
+        CSLDestroy( papszHDR );
         CPLFree( pszName );
         CPLFree( pszPath );
         return NULL;
@@ -409,6 +507,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
+    poDS->papszHDR = papszHDR;
 
 /* -------------------------------------------------------------------- */
 /*      Open target binary file.                                        */
@@ -430,6 +529,37 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     poDS->eAccess = poOpenInfo->eAccess;
+
+/* -------------------------------------------------------------------- */
+/*      Figure out the data type.                                       */
+/* -------------------------------------------------------------------- */
+    if( nBits == 16 )
+    {
+        if( chPixelType == 'S' )
+            eDataType = GDT_Int16;
+        else
+            eDataType = GDT_UInt16;
+    }
+    else if( nBits == 32 )
+    {
+        if( chPixelType == 'S' )
+            eDataType = GDT_Int32;
+        else if( chPixelType == 'F' )
+            eDataType = GDT_Float32;
+        else
+            eDataType = GDT_UInt32;
+    }
+    else if( nBits == 8 )
+        eDataType = GDT_Byte;
+    
+    else
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "EHdr driver does not support %d NBITS value.", 
+                  nBits );
+        delete poDS;
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Compute the line offset.                                        */
@@ -607,7 +737,7 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
 /*      Verify input options.                                           */
 /* -------------------------------------------------------------------- */
     if( eType != GDT_Byte && eType != GDT_Float32 && eType != GDT_UInt16
-        && eType != GDT_Int16 )
+        && eType != GDT_Int16 && eType != GDT_Int32 && eType != GDT_UInt32 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
               "Attempt to create ESRI .hdr labelled dataset with an illegal\n"
@@ -673,6 +803,13 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
     VSIFPrintf( fp, "NBITS          %d\n", GDALGetDataTypeSize(eType) );
     VSIFPrintf( fp, "BANDROWBYTES   %d\n", nItemSize * nXSize );
     VSIFPrintf( fp, "TOTALROWBYTES  %d\n", nItemSize * nXSize * nBands );
+    
+    if( eType == GDT_Float32 )
+        VSIFPrintf( fp, "PIXELTYPE      FLOAT\n");
+    else if( eType == GDT_Int16 || eType == GDT_Int32 )
+        VSIFPrintf( fp, "PIXELTYPE      SIGNEDINT\n");
+    else
+        VSIFPrintf( fp, "PIXELTYPE      UNSIGNEDINT\n");
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
@@ -703,7 +840,7 @@ void GDALRegister_EHdr()
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#EHdr" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte Int16 UInt16 Float32" );
+                                   "Byte Int16 UInt16 Int32 UInt32 Float32" );
 
         poDriver->pfnOpen = EHdrDataset::Open;
         poDriver->pfnCreate = EHdrDataset::Create;
@@ -712,3 +849,5 @@ void GDALRegister_EHdr()
     }
 }
 
+
+//  LocalWords:  oLine
