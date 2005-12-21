@@ -141,13 +141,13 @@ USGS DOQ Standards</a><p>
 
 <h2><a name="EHdr">EHdr -- ESRI .hdr Labelled</h2>
 
-GDAL supports the ESRI .hdr labelling format for reading raw raster data
-(often referred to as ESRI BIL format) for read-only access.  Eight, sixteen
-and thirty-two bit integer raster data types are supported as well as reading
-of the affine georeferencing transform.  Reading of projection definitions
-is not supported.  Unrecognised options in the .hdr file are ignored.  To 
+GDAL supports reading and writing the ESRI .hdr labelling format,
+often referred to as ESRI BIL format.  Eight, sixteen
+and thirty-two bit integer raster data types are supported as well as 32
+bit floating point.  Coordinate systems (from a .prj file), and georeferencing
+are supported.  Unrecognised options in the .hdr file are ignored.  To 
 open a dataset select the file with the image file (often with the extension
-.bil).<p>
+.bil).  If present .clr color table files are read, but not written.<p>
 
 This driver may be sufficient to read GTOPO30, SRTM30 + SRTM90 data and Geospot products.<p>
 
