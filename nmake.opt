@@ -72,9 +72,8 @@ JPEG_SUPPORTED = 1
 #GEOTIFF_LIB =   C:/warmerda/libgeotiff/geotiff_i.lib
 
 # Uncomment the following and update to enable ECW support.
-#ECWDIR  = 	C:\warmerda\supportlibs\ECWSDK3.1b
-#ECWLIB  =       $(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
-#		$(ECWDIR)\lib\NCSUtil.lib
+#ECWDIR  = 	C:\warmerda\libecwj2-3.3
+#ECWLIB  = 	$(ECWDIR)\Source\NCSBuildQmake\Debug\libecwj2.lib
 
 # DWG/DXF support via DWGdirect from Open Design Alliance
 
