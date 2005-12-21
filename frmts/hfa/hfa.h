@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2005/12/21 05:30:45  fwarmerdam
+ * return compression type as metadata
+ *
  * Revision 1.16  2005/08/19 02:14:11  fwarmerdam
  * bug 857: add ability to set layer names
  *
@@ -198,7 +201,7 @@ CPLErr CPL_DLL HFAGetRasterInfo( HFAHandle hHFA, int *pnXSize, int *pnYSize,
                                  int *pnBands );
 CPLErr CPL_DLL HFAGetBandInfo( HFAHandle hHFA, int nBand, int * pnDataType,
                                int * pnBlockXSize, int * pnBlockYSize, 
-                               int * pnOverviews );
+                               int * pnOverviews, int *pnCompressionType );
 CPLErr CPL_DLL HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int nOverview, 
                                    int * pnXSize, int * pnYSize,
                                    int * pnBlockXSize, int * pnBlockYSize );

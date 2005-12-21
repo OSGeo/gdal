@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.71  2005/12/21 05:30:45  fwarmerdam
+ * return compression type as metadata
+ *
  * Revision 1.70  2005/12/20 17:22:51  fwarmerdam
  * Negative proZone values are apparently the FIPS code, instead of
  * the ESRI zone numbers.  Adjust ESRIToUSGSZone() accordingly.
@@ -523,6 +526,8 @@ class HFARasterBand : public GDALPamRasterBand
 HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
 
 {
+    int nCompression;
+
     if( iOverview == -1 )
         this->poDS = poDS;
     else
@@ -537,7 +542,11 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
     this->poDefaultRAT = NULL;
 
     HFAGetBandInfo( hHFA, nBand, &nHFADataType,
-                    &nBlockXSize, &nBlockYSize, &nOverviews );
+                    &nBlockXSize, &nBlockYSize, &nOverviews, &nCompression );
+    
+    if( nCompression != 0 )
+        GDALMajorObject::SetMetadataItem( "COMPRESSION", "RLC", 
+                                          "IMAGE_STRUCTURE" );
 
     switch( nHFADataType )
     {
