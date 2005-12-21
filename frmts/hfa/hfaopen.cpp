@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.49  2005/12/21 05:30:45  fwarmerdam
+ * return compression type as metadata
+ *
  * Revision 1.48  2005/10/24 14:35:55  fwarmerdam
  * Be careful not to generate a new histogram table in various
  * degenerate situations like those of zonegimg.img.
@@ -659,7 +662,6 @@ CPLErr HFAGetRasterInfo( HFAHandle hHFA, int * pnXSize, int * pnYSize,
         *pnYSize = hHFA->nYSize;
     if( pnBands != NULL )
         *pnBands = hHFA->nBands;
-
     return CE_None;
 }
 
@@ -669,7 +671,7 @@ CPLErr HFAGetRasterInfo( HFAHandle hHFA, int * pnXSize, int * pnYSize,
 
 CPLErr HFAGetBandInfo( HFAHandle hHFA, int nBand, int * pnDataType,
                        int * pnBlockXSize, int * pnBlockYSize,
-                       int * pnOverviews )
+                       int * pnOverviews, int *pnCompressionType )
 
 {
     if( nBand < 0 || nBand > hHFA->nBands )
@@ -678,17 +680,35 @@ CPLErr HFAGetBandInfo( HFAHandle hHFA, int nBand, int * pnDataType,
         return CE_Failure;
     }
 
+    HFABand *poBand = hHFA->papoBand[nBand-1];
+
     if( pnDataType != NULL )
-        *pnDataType = hHFA->papoBand[nBand-1]->nDataType;
+        *pnDataType = poBand->nDataType;
 
     if( pnBlockXSize != NULL )
-        *pnBlockXSize = hHFA->papoBand[nBand-1]->nBlockXSize;
+        *pnBlockXSize = poBand->nBlockXSize;
 
     if( pnBlockYSize != NULL )
-        *pnBlockYSize = hHFA->papoBand[nBand-1]->nBlockYSize;
+        *pnBlockYSize = poBand->nBlockYSize;
 
     if( pnOverviews != NULL )
-        *pnOverviews = hHFA->papoBand[nBand-1]->nOverviews;
+        *pnOverviews = poBand->nOverviews;
+
+
+/* -------------------------------------------------------------------- */
+/*      Get compression code from RasterDMS.                            */
+/* -------------------------------------------------------------------- */
+    if( pnCompressionType != NULL )
+    {
+        HFAEntry	*poDMS;
+    
+        *pnCompressionType = 0;
+
+        poDMS = poBand->poNode->GetNamedChild( "RasterDMS" );
+
+        if( poDMS != NULL )
+            *pnCompressionType = poDMS->GetIntField( "compressionType" );
+    }
 
     return( CE_None );
 }
