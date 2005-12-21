@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2005/12/21 01:06:29  fwarmerdam
+ * Added IMAGE_STRUCTURE COMPRESSION support.
+ *
  * Revision 1.49  2005/10/03 17:39:45  fwarmerdam
  * fixed memory leak of GCPs as per bug 920
  *
@@ -1179,6 +1182,28 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->SetMetadata( papszMergedMD );
     CSLDestroy( papszMergedMD );
+
+/* -------------------------------------------------------------------- */
+/*      Image structure metadata.                                       */
+/* -------------------------------------------------------------------- */
+    if( psImage->szIC[1] == '1' )
+        poDS->SetMetadataItem( "COMPRESSION", "BILEVEL", 
+                               "IMAGE_STRUCTURE" );
+    else if( psImage->szIC[1] == '2' )
+        poDS->SetMetadataItem( "COMPRESSION", "???", 
+                               "IMAGE_STRUCTURE" );
+    else if( psImage->szIC[1] == '3' )
+        poDS->SetMetadataItem( "COMPRESSION", "JPEG", 
+                               "IMAGE_STRUCTURE" );
+    else if( psImage->szIC[1] == '4' )
+        poDS->SetMetadataItem( "COMPRESSION", "VECTOR QUANTIZATION", 
+                               "IMAGE_STRUCTURE" );
+    else if( psImage->szIC[1] == '5' )
+        poDS->SetMetadataItem( "COMPRESSION", "LOSSLESS JPEG", 
+                               "IMAGE_STRUCTURE" );
+    else if( psImage->szIC[1] == '8' )
+        poDS->SetMetadataItem( "COMPRESSION", "JPEG2000", 
+                               "IMAGE_STRUCTURE" );
     
 /* -------------------------------------------------------------------- */
 /*      Do we have RPC info.                                            */
