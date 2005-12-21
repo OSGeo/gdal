@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.155  2005/12/21 00:36:59  fwarmerdam
+ * Added compression image_structure metadata.
+ *
  * Revision 1.154  2005/10/28 03:40:19  fwarmerdam
  * Fixed problems with odd-bits support of contiguous images.
  *
@@ -117,65 +120,6 @@
  * Use GTiffRasterBand as base for 1bit and RGB band specialized types.
  * Generalized metadata support, include band metadata.
  * Added support for offset/scale as special metadata items.
- *
- * Revision 1.127  2004/11/25 14:28:55  fwarmerdam
- * Use a more accurate format for the nodata value.
- *
- * Revision 1.126  2004/11/12 17:02:08  gwalter
- * Use GDALDuplicateGCPs instead of malloc/memcpy
- * so that GCP Id and Info are duplicated
- * properly.
- *
- * Revision 1.125  2004/11/11 21:03:38  fwarmerdam
- * dont try and write tiepoint+pixelscale for southup images, bug 666
- *
- * Revision 1.124  2004/10/27 18:17:19  fwarmerdam
- * avoid variable sized arrays, not C++ standard
- *
- * Revision 1.123  2004/10/26 23:47:28  fwarmerdam
- * Added support for writing UInt16 colortables.
- *
- * Revision 1.122  2004/10/21 15:51:06  fwarmerdam
- * Still write geotiff coordinate system info in WriteGeoTIFFInfo()
- * even if we don't have a geotransform.
- *
- * Revision 1.121  2004/10/19 13:21:12  fwarmerdam
- * Be careful to avoid unused argument warnings.
- *
- * Revision 1.120  2004/10/19 13:18:17  fwarmerdam
- * Added GetInternalHandle() method to fetch hTIFF.
- *
- * Revision 1.119  2004/10/07 20:15:03  fwarmerdam
- * various improvements to alpha handling
- *
- * Revision 1.118  2004/10/06 13:11:21  fwarmerdam
- * added BigTIFF test
- *
- * Revision 1.117  2004/09/30 19:34:04  fwarmerdam
- * Fixed memory leak of codecs info.
- *
- * Revision 1.116  2004/09/25 05:21:27  fwarmerdam
- * report only available compression types if we can query
- *
- * Revision 1.115  2004/09/24 02:48:39  fwarmerdam
- * Try to avoid unnecessary calls to TIFFReadDirectory() when scanning
- * for overviews in files with only one directory.
- *
- * Revision 1.114  2004/09/08 15:33:18  warmerda
- * allow writing of projection without geotrasnform
- *
- * Revision 1.113  2004/08/25 19:10:28  warmerda
- * Try and write out ExtraSamples values if we have extra samples.
- * Apparently this is required by the TIFF spec!
- *
- * Revision 1.112  2004/08/14 00:05:33  warmerda
- * finished changes to support external overviews if file readonly
- *
- * Revision 1.111  2004/04/29 19:58:43  warmerda
- * export GTIFGetOGISDefn, and GTIFSetFromOGISDefn
- *
- * Revision 1.110  2004/04/21 14:00:18  warmerda
- * pass GTIF pointer into GTIFGetOGISDefn
  */
 
 #include "gdal_pam.h"
@@ -3089,6 +3033,53 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
             else
                 sprintf( szWorkMDI, "%d", nResUnits );
             SetMetadataItem( "TIFFTAG_RESOLUTIONUNIT", szWorkMDI );
+        }
+
+        if( nCompression == COMPRESSION_NONE )
+            /* no compression tag */;
+        else if( nCompression == COMPRESSION_CCITTRLE )
+            SetMetadataItem( "COMPRESSION", "CCITTRLE", "IMAGE_STRUCTURE" );
+        else if( nCompression == COMPRESSION_CCITTFAX3 )
+            SetMetadataItem( "COMPRESSION", "CCITTFAX3", "IMAGE_STRUCTURE" );
+        else if( nCompression == COMPRESSION_CCITTFAX4 )
+            SetMetadataItem( "COMPRESSION", "CCITTFAX4", "IMAGE_STRUCTURE" );
+        else if( nCompression == COMPRESSION_LZW )
+            SetMetadataItem( "COMPRESSION", "LZW", "IMAGE_STRUCTURE" );
+        else if( nCompression == COMPRESSION_OJPEG )
+            SetMetadataItem( "COMPRESSION", "OJPEG", "IMAGE_STRUCTURE" );
+        else if( nCompression == COMPRESSION_JPEG )
+            SetMetadataItem( "COMPRESSION", "JPEG", "IMAGE_STRUCTURE" );
+        else if( nCompression == COMPRESSION_NEXT )
+            SetMetadataItem( "COMPRESSION", "NEXT", "IMAGE_STRUCTURE" );
+        else if( nCompression == COMPRESSION_CCITTRLEW )
+            SetMetadataItem( "COMPRESSION", "CCITTRLEW", "IMAGE_STRUCTURE" );
+        else if( nCompression == COMPRESSION_PACKBITS )
+            SetMetadataItem( "COMPRESSION", "PACKBITS", "IMAGE_STRUCTURE" );
+        else if( nCompression == COMPRESSION_THUNDERSCAN )
+            SetMetadataItem( "COMPRESSION", "THUNDERSCAN", "IMAGE_STRUCTURE" );
+        else if( nCompression == COMPRESSION_PIXARFILM )
+            SetMetadataItem( "COMPRESSION", "PIXARFILM", "IMAGE_STRUCTURE" );
+        else if( nCompression == COMPRESSION_PIXARLOG )
+            SetMetadataItem( "COMPRESSION", "PIXARLOG", "IMAGE_STRUCTURE" );
+        else if( nCompression == COMPRESSION_DEFLATE )
+            SetMetadataItem( "COMPRESSION", "DEFLATE", "IMAGE_STRUCTURE" );
+        else if( nCompression == COMPRESSION_ADOBE_DEFLATE )
+            SetMetadataItem( "COMPRESSION", "DEFLATE", "IMAGE_STRUCTURE" );
+        else if( nCompression == COMPRESSION_DCS )
+            SetMetadataItem( "COMPRESSION", "DCS", "IMAGE_STRUCTURE" );
+        else if( nCompression == COMPRESSION_JBIG )
+            SetMetadataItem( "COMPRESSION", "JBIG", "IMAGE_STRUCTURE" );
+        else if( nCompression == COMPRESSION_SGILOG )
+            SetMetadataItem( "COMPRESSION", "SGILOG", "IMAGE_STRUCTURE" );
+        else if( nCompression == COMPRESSION_SGILOG24 )
+            SetMetadataItem( "COMPRESSION", "SGILOG24", "IMAGE_STRUCTURE" );
+        else if( nCompression == COMPRESSION_JP2000 )
+            SetMetadataItem( "COMPRESSION", "JP2000", "IMAGE_STRUCTURE" );
+        else
+        {
+            CPLString oComp;
+            SetMetadataItem( "COMPRESSION", 
+                             (const char *) oComp.Printf( "%d", nCompression));
         }
 
         if( TIFFGetField( hTIFF, TIFFTAG_GDAL_METADATA, &pszText ) )
