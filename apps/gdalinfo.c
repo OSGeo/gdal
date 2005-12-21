@@ -26,6 +26,9 @@
  * serves as an early test harnass.
  *
  * $Log$
+ * Revision 1.41  2005/12/21 00:38:05  fwarmerdam
+ * Report image_structure metadata.
+ *
  * Revision 1.40  2005/10/11 11:29:09  dron
  * Include cpl_multiproc.h for CPLCleanupTLS() function.
  *
@@ -340,6 +343,19 @@ int main( int argc, char ** argv )
     }
 
 /* -------------------------------------------------------------------- */
+/*      Report "IMAGE_STRUCTURE" metadata.                              */
+/* -------------------------------------------------------------------- */
+    papszMetadata = GDALGetMetadata( hDataset, "IMAGE_STRUCTURE" );
+    if( bShowMetadata && CSLCount(papszMetadata) > 0 )
+    {
+        printf( "Image Structure Metadata:\n" );
+        for( i = 0; papszMetadata[i] != NULL; i++ )
+        {
+            printf( "  %s\n", papszMetadata[i] );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Report subdatasets.                                             */
 /* -------------------------------------------------------------------- */
     papszMetadata = GDALGetMetadata( hDataset, "SUBDATASETS" );
@@ -518,6 +534,13 @@ int main( int argc, char ** argv )
                         sEntry.c3,
                         sEntry.c4 );
             }
+        }
+
+        if( GDALGetDefaultRAT( hBand ) != NULL )
+        {
+            GDALRasterAttributeTableH hRAT = GDALGetDefaultRAT( hBand );
+            
+            GDALRATDumpReadable( hRAT, NULL );
         }
     }
 
