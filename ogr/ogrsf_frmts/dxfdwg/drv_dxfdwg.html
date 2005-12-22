@@ -20,7 +20,8 @@ and DWG for writing AutoCAD binary DWG files.  However, the data model
 and behavior of both drivers is essentially identical.<p>
 
 The DXF/DWG drivers currently operate in a highly simplified manner when
-writing.  They discard all attributes, and coordinate system information.
+writing.  They discard all coordinate system information.  Attributes are
+written as extended entity data (DXF type 1000) in the ACAD application.
 Features are written out as one DXF/DWG entity per simple geometry object.
 For complex geometry objects such as mutli-ring polygons, multipolygons,
 and other geometry collections, a distinct entity is written out for each
