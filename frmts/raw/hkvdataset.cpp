@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2005/12/22 22:08:35  gwalter
+ * Update MFF2 documentation; Atlantis->Vexcel.
+ *
  * Revision 1.36  2005/05/05 13:55:42  fwarmerdam
  * PAM Enable
  *
@@ -1888,7 +1891,7 @@ void GDALRegister_HKV()
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "Atlantis MFF2 (HKV) Raster" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-                                   "frmt_various.html#MFF2" );
+                                   "frmt_mff2.html" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte Int16 UInt16 Int32 UInt32 CInt16 CInt32 Float32 Float64 CFloat32 CFloat64" );
         

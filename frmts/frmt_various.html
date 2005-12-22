@@ -327,9 +327,9 @@ NOTE: Implemented as <tt>gdal/frmts/raw/landataset.cpp</tt><p>
 Development of this driver was financially supported by Kevin Flanders of
 (<a href="http://www.peoplegis.com">PeopleGIS</a>). <p>
 
-<h2><a name="MFF">MFF -- Atlantis MFF Raster</a></h2>
+<h2><a name="MFF">MFF -- Vexcel MFF Raster</a></h2>
 
-GDAL includes read, update, and creation support for Atlantis Scientific's
+GDAL includes read, update, and creation support for Vexcel's
 MFF raster format.  MFF dataset consist of a header file (typically with
 the extension .hdr) and a set of data files with extensions like .x00, .b00
 and so on.   To open a dataset select the .hdr file.<p>
@@ -341,7 +341,7 @@ Unrecognised keywords from the .hdr file are preserved as metadata. <p>
 
 All data types with GDAL equivelents are supported, including 8, 16, 32 and
 64 bit data precisions in integer, real and complex data types.  In addition
-tile organized files (as produced by the Atlantis SAR Processor - APP) are
+tile organized files (as produced by the Vexcel SAR Processor - APP) are
 supported for reading. <p>
 
 On creation (with a format code of MFF) a simple, ungeoreferenced raster
@@ -354,25 +354,6 @@ be manually added to the .hdr file if required.<p>
 
 NOTE: Implemented as <tt>gdal/frmts/raw/mffdataset.cpp</tt>.<p>
 
-<h2><a name="MFF2">MFF2 -- Atlantis MFF2 Image</a></h2>
-
-GDAL supports MFF2 Image raster file format for read, update, and creation.
-This format is primarily used internally to the Atlantis Scientific InSAR
-processing system.<p>
-
-To select an MFF2 dataset select the directory containing the <tt>attrib</tt>, 
-and <tt>image_data</tt> files for the dataset.<p>
-
-Currently only the UTM projection is supported (georef.projection.name = utm),
-with the affine transform computed from the lat/long control points.   In
-any event, if GCPs are available in a georef file, they are returned with 
-the dataset.<p>
-
-Newly created files (with a type of <tt>MFF2</tt>) are always just raw rasters
-with no georeferencing information.  For read, and creation all data types
-(real, integer and complex in bit depths of 8, 16, 32) should be supported. <p>
-
-NOTE: Implemented as <tt>gdal/frmts/raw/hkvdataset.cpp</tt>.<p>
 
 <h2><a name="NDF">NDF -- NLAPS Data Format</a></h2>
 
