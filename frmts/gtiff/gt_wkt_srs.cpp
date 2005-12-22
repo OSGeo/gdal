@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2005/12/22 04:14:59  fwarmerdam
+ * Added special method to massage citations coming from Imagine.
+ *
  * Revision 1.59  2005/09/13 23:55:00  fwarmerdam
  * fixed VSIUnlink prototype
  *
@@ -204,6 +207,58 @@ static void WKTMassageDatum( char ** ppszDatum )
 }
 
 /************************************************************************/
+/*                      GTIFCleanupImageineNames()                      */
+/*                                                                      */
+/*      Erdas Imagine sometimes emits big copyright messages, and       */
+/*      other stuff into citations.  These can be pretty messy when     */
+/*      turned into WKT, so we try to trim and clean the strings        */
+/*      somewhat.                                                       */
+/************************************************************************/
+
+/* For example:
+   GTCitationGeoKey (Ascii,215): "IMAGINE GeoTIFF Support\nCopyright 1991 - 2001 by ERDAS, Inc. All Rights Reserved\n@(#)$RCSfile$ $Revision$ $Date$\nProjection Name = UTM\nUnits = meters\nGeoTIFF Units = meters"
+
+   GeogCitationGeoKey (Ascii,267): "IMAGINE GeoTIFF Support\nCopyright 1991 - 2001 by ERDAS, Inc. All Rights Reserved\n@(#)$RCSfile$ $Revision$ $Date$\nUnable to match Ellipsoid (Datum) to a GeographicTypeGeoKey value\nEllipsoid = Clarke 1866\nDatum = NAD27 (CONUS)"
+
+   PCSCitationGeoKey (Ascii,214): "IMAGINE GeoTIFF Support\nCopyright 1991 - 2001 by ERDAS, Inc. All Rights Reserved\n@(#)$RCSfile$ $Revision$ $Date$\nUTM Zone 10N\nEllipsoid = Clarke 1866\nDatum = NAD27 (CONUS)"
+ 
+*/
+
+static void GTIFCleanupImagineNames( char *pszCitation )
+
+{
+    if( strstr(pszCitation,"IMAGINE GeoTIFF") == NULL )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      First, we skip past all the copyright, and RCS stuff.  We       */
+/*      assume that this will have a "$" at the end of it all.          */
+/* -------------------------------------------------------------------- */
+    char *pszSkip;
+    
+    for( pszSkip = pszCitation + strlen(pszCitation) - 1;
+         pszSkip != pszCitation && *pszSkip != '$'; 
+         pszSkip-- ) {}
+
+    if( *pszSkip == '$' )
+        pszSkip++;
+
+    memmove( pszCitation, pszSkip, strlen(pszSkip)+1 );
+
+/* -------------------------------------------------------------------- */
+/*      Convert any newlines into spaces, they really gum up the        */
+/*      WKT.                                                            */
+/* -------------------------------------------------------------------- */
+    int i;
+
+    for( i = 0; pszCitation[i] != '\0'; i++ )
+    {
+        if( pszCitation[i] == '\n' )
+            pszCitation[i] = ' ';
+    }
+}
+
+/************************************************************************/
 /*                          GTIFGetOGISDefn()                           */
 /************************************************************************/
 
@@ -250,10 +305,13 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
         }
         else
         {
-            char szPCSName[200];
+            char szPCSName[300];
             strcpy( szPCSName, "unnamed" );
             if( hGTIF != NULL )
+            {
                 GTIFKeyGet( hGTIF, GTCitationGeoKey, szPCSName, 0, sizeof(szPCSName) );
+                GTIFCleanupImagineNames( szPCSName );
+            }
             oSRS.SetNode( "PROJCS", szPCSName );
         }
     }
@@ -267,13 +325,16 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
     char	*pszSpheroidName = NULL;
     char	*pszAngularUnits = NULL;
     double	dfInvFlattening, dfSemiMajor;
-    char        szGCSName[200];
+    char        szGCSName[300];
     
     if( !GTIFGetGCSInfo( psDefn->GCS, &pszGeogName, NULL, NULL, NULL )
         && hGTIF != NULL 
         && GTIFKeyGet( hGTIF, GeogCitationGeoKey, szGCSName, 0, 
                        sizeof(szGCSName)) )
+    {
+        GTIFCleanupImagineNames( szGCSName );
         pszGeogName = CPLStrdup(szGCSName);
+    }
 
     GTIFGetDatumInfo( psDefn->Datum, &pszDatumName, NULL );
     GTIFGetPMInfo( psDefn->PM, &pszPMName, NULL );
