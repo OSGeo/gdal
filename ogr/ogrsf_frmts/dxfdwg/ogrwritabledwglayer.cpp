@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/12/22 08:18:15  fwarmerdam
+ * write attributes as extended data (DXF 1000) in ACAD app
+ *
  * Revision 1.5  2005/11/18 21:26:25  fwarmerdam
  * added geometry collection type support
  *
@@ -253,7 +256,8 @@ OGRErr OGRWritableDWGLayer::CreateField( OGRFieldDefn *poField,
 /*                            WriteEntity()                             */
 /************************************************************************/
 
-OGRErr OGRWritableDWGLayer::WriteEntity( OGRGeometry *poGeom )
+OGRErr OGRWritableDWGLayer::WriteEntity( OGRGeometry *poGeom,
+                                         OdDbObjectPtr *ppObjectRet )
 
 {
     switch( wkbFlatten(poGeom->getGeometryType()) )
@@ -269,6 +273,9 @@ OGRErr OGRWritableDWGLayer::WriteEntity( OGRGeometry *poGeom )
 
           pPoint->setLayer( hLayerId, false );
           poDS->pMs->appendOdDbEntity( pPoint );
+          
+          if( ppObjectRet != NULL )
+              *ppObjectRet = pPoint;
           return OGRERR_NONE;
       }
 
@@ -299,6 +306,10 @@ OGRErr OGRWritableDWGLayer::WriteEntity( OGRGeometry *poGeom )
           p2dPl->setLayer( hLayerId, false );
 
           poDS->pMs->appendOdDbEntity( p2dPl );
+
+          if( ppObjectRet != NULL )
+              *ppObjectRet = p2dPl;
+
           return OGRERR_NONE;
       }
 
@@ -317,10 +328,15 @@ OGRErr OGRWritableDWGLayer::WriteEntity( OGRGeometry *poGeom )
               else
                   poRing = poPoly->getInteriorRing( iRing );
 
-              eErr = WriteEntity( poRing );
+              if( iRing == -1 )
+                  eErr = WriteEntity( poRing, ppObjectRet );
+              else
+                  eErr = WriteEntity( poRing, NULL );
               if( eErr != OGRERR_NONE )
                   return eErr;
+
           }
+
           return OGRERR_NONE;
       }
 
@@ -337,7 +353,11 @@ OGRErr OGRWritableDWGLayer::WriteEntity( OGRGeometry *poGeom )
           {
               OGRGeometry *poGeom = poColl->getGeometryRef( iSubGeom );
               
-              eErr = WriteEntity( poGeom );
+              if( iSubGeom == 0 )
+                  eErr = WriteEntity( poGeom, ppObjectRet );
+              else
+                  eErr = WriteEntity( poGeom, NULL );
+                  
               if( eErr != OGRERR_NONE )
                   return eErr;
           }
@@ -357,11 +377,57 @@ OGRErr OGRWritableDWGLayer::CreateFeature( OGRFeature *poFeature )
 
 {
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
+    OGRErr eErr;
 
     if( poGeom == NULL )
         return OGRERR_FAILURE;
 
+/* -------------------------------------------------------------------- */
+/*      Keep track of file extents.                                     */
+/* -------------------------------------------------------------------- */
     poDS->ExtendExtent( poGeom );
 
-    return WriteEntity( poGeom );
+/* -------------------------------------------------------------------- */
+/*      Translate geometry.                                             */
+/* -------------------------------------------------------------------- */
+    OdDbObjectPtr pObject;
+
+    eErr = WriteEntity( poGeom, &pObject );
+    if( eErr != OGRERR_NONE )
+        return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Append attributes.                                              */
+/* -------------------------------------------------------------------- */
+    OdResBufPtr xIter = OdResBuf::newRb( 1001 ); 
+    xIter->setString( "ACAD" );
+
+    OdResBufPtr temp = xIter;
+        
+    for( int iField = 0; iField < poFeature->GetFieldCount(); iField++ )
+    {
+        if( !poFeature->IsFieldSet( iField ) )
+            continue;
+
+        CPLString sNameValue;
+        const char *pszValue = poFeature->GetFieldAsString( iField );
+        
+        while( *pszValue == ' ' )
+            pszValue++;
+
+        sNameValue.Printf( "%s=%s", 
+                           poFeature->GetFieldDefnRef( iField )->GetNameRef(),
+                           pszValue );
+
+        OdResBufPtr newRB = OdResBuf::newRb( 1000 );
+        newRB->setString( sNameValue.c_str() );
+
+        temp->setNext( newRB );
+        temp = temp->next();
+    }
+    
+    if( pObject != (const void *) NULL )
+        pObject->setXData( xIter );
+
+    return OGRERR_NONE;
 }
