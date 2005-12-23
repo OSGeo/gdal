@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.50  2005/12/23 18:54:54  fwarmerdam
+ * fixed error message when creating big files
+ *
  * Revision 1.49  2005/12/21 05:30:45  fwarmerdam
  * return compression type as metadata
  *
@@ -2524,7 +2527,10 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
         || VSIFWriteL( (void *) "", 1, 1, fpVSIL ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to extend %s to full size, likely out of disk space.\n%s", 
+                  "Failed to extend %s to full size (%g bytes),\n"
+                  "likely out of disk space.\n%s",
+                  psInfo->pszIGEFilename,
+                  (double) nTileDataSize - 1 + *pnDataOffset,
                   VSIStrerror( errno ) );
 
         VSIFCloseL( fpVSIL );
