@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2005/12/23 19:39:18  fwarmerdam
+ * fix write error formatting
+ *
  * Revision 1.49  2005/11/17 20:50:45  fwarmerdam
  * Fixed case where not all of red, green and blue columns
  * are available for a color descriptor table.
@@ -1298,7 +1301,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
         if( VSIFWriteL( pData, (size_t) nBlockSize, 1, fpData ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
-                      "Write of %d bytes at %d on %p failed.\n%s",
+                      "Write of %d bytes at %x:%x on %p failed.\n%s",
                       (int) nBlockSize, 
                       (int) (nBlockOffset >> 32),
                       (int) (nBlockOffset & 0xffffffff), 
