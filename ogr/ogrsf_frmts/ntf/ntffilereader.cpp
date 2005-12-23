@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/12/23 20:28:23  fwarmerdam
+ * patch from roger james to treat NEXTMap DTMs as Landform DTM
+ *
  * Revision 1.32  2004/11/17 19:30:15  fwarmerdam
  * further fixes to stroking 3pt arcs
  *
@@ -552,6 +555,8 @@ int NTFFileReader::Open( const char * pszFilenameIn )
         nProduct = NPC_LANDRANGER_DTM;
     else if( EQUALN(pszProduct,"L-F_PROFILE_DTM",15) )
         nProduct = NPC_LANDFORM_PROFILE_DTM;
+    else if( EQUALN(pszProduct,"NEXTMap Britian DTM",19) )
+        nProduct = NPC_LANDFORM_PROFILE_DTM; // Treat as landform
 
     if( poDS->GetOption("FORCE_GENERIC") != NULL
         && !EQUAL(poDS->GetOption("FORCE_GENERIC"),"OFF") )
