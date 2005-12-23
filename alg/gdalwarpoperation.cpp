@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2005/12/23 18:16:04  fwarmerdam
+ * added SKIP_NOSOURCE option
+ *
  * Revision 1.24  2005/09/13 01:20:16  fwarmerdam
  * added UNIFIED_SRC_NODATA mechanism
  *
@@ -668,11 +671,24 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(
     CollectChunkList( nDstXOff, nDstYOff, nDstXSize, nDstYSize );
 
 /* -------------------------------------------------------------------- */
+/*      Total up output pixels to process.                              */
+/* -------------------------------------------------------------------- */
+    int iChunk;
+    double dfTotalPixels = 0;
+
+    for( iChunk = 0; iChunk < nChunkListCount; iChunk++ )
+    {
+        int *panThisChunk = panChunkList + iChunk*8;
+        double dfChunkPixels = panThisChunk[2] * (double) panThisChunk[3];
+
+        dfTotalPixels += dfChunkPixels;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Process them one at a time, updating the progress               */
 /*      information for each region.                                    */
 /* -------------------------------------------------------------------- */
-    int iChunk;
-    double dfPixelsProcessed=0.0, dfTotalPixels = nDstXSize*(double)nDstYSize;
+    double dfPixelsProcessed=0.0;
 
     for( iChunk = 0; iChunk < nChunkListCount; iChunk++ )
     {
@@ -916,6 +932,14 @@ CPLErr GDALWarpOperation::CollectChunkList(
     
     if( eErr != CE_None )
         return eErr;
+
+/* -------------------------------------------------------------------- */
+/*      If we are allowed to drop no-source regons, do so now if       */
+/*      appropriate.                                                    */
+/* -------------------------------------------------------------------- */
+    if( (nSrcXSize == 0 || nSrcYSize == 0)
+        && CSLFetchBoolean( psOptions->papszWarpOptions, "SKIP_NOSOURCE",0 ))
+        return CE_None;
 
 /* -------------------------------------------------------------------- */
 /*      Based on the types of masks in use, how many bits will each     */
