@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2005/12/23 19:40:28  fwarmerdam
+ * better error format
+ *
  * Revision 1.50  2005/12/23 19:39:18  fwarmerdam
  * fix write error formatting
  *
@@ -1301,7 +1304,7 @@ CPLErr HFABand::SetRasterBlock( int nXBlock, int nYBlock, void * pData )
         if( VSIFWriteL( pData, (size_t) nBlockSize, 1, fpData ) != 1 )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
-                      "Write of %d bytes at %x:%x on %p failed.\n%s",
+                      "Write of %d bytes at %x:%08x on %p failed.\n%s",
                       (int) nBlockSize, 
                       (int) (nBlockOffset >> 32),
                       (int) (nBlockOffset & 0xffffffff), 
