@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/12/23 04:44:04  fwarmerdam
+ * protect CSVAccess using funcs with a mutex
+ *
  * Revision 1.14  2005/08/31 03:33:35  fwarmerdam
  * dont bother trying to make szPath in CSVFileOverride() threadlocal
  *
@@ -80,6 +83,7 @@
 
 #include "cpl_csv.h"
 #include "cpl_conv.h"
+#include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
 
@@ -116,7 +120,8 @@ typedef struct ctb {
 /* It would likely be better to share this list between threads, but
    that will require some rework. */
 
-static CPL_THREADLOCAL CSVTable *psCSVTableList = NULL;
+static void *hCSVTableMutex = NULL;
+static CSVTable *psCSVTableList = NULL;
 
 /************************************************************************/
 /*                             CSVAccess()                              */
@@ -363,6 +368,7 @@ static char *CSVFindNextLine( char *pszThisLine )
 static void CSVIngest( const char *pszFilename )
 
 {
+    CPLMutexHolder oHolder( &hCSVTableMutex );
     CSVTable *psTable = CSVAccess( pszFilename );
     int       nFileLen, i, nMaxLineCount, iLine = 0;
     char *pszThisLine;
@@ -709,6 +715,7 @@ char **CSVScanFile( const char * pszFilename, int iKeyField,
                     const char * pszValue, CSVCompareCriteria eCriteria )
 
 {
+    CPLMutexHolder oHolder( &hCSVTableMutex );
     CSVTable    *psTable;
 
 /* -------------------------------------------------------------------- */
@@ -804,6 +811,7 @@ int CSVGetFieldId( FILE * fp, const char * pszFieldName )
 int CSVGetFileFieldId( const char * pszFilename, const char * pszFieldName )
 
 {
+    CPLMutexHolder oHolder( &hCSVTableMutex );
     CSVTable    *psTable;
     int         i;
     
@@ -872,6 +880,7 @@ const char *CSVGetField( const char * pszFilename,
                          const char * pszTargetField )
 
 {
+    CPLMutexHolder oHolder( &hCSVTableMutex );
     CSVTable    *psTable;
     char        **papszRecord;
     int         iTargetField;
