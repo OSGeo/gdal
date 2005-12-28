@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/12/28 06:22:08  hobu
+ * ReadTableDefinitions() wasn't setting widths properly for varchar, char, and decimal types.
+ * Also, varchar handling case was never being selected.
+ *
  * Revision 1.9  2005/09/21 01:00:01  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -146,6 +150,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         OGRFieldDefn    oField( papszRow[0], OFTString);
 
         pszType = papszRow[1];
+        printf("checking %s of type %s...\n", papszRow[0],pszType);
         
         if( pszType == NULL )
             continue;
@@ -160,12 +165,50 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
                  || EQUAL(pszType+strlen(pszType)-4,"enum") 
                  || EQUAL(pszType+strlen(pszType)-4,"set") )
         {
+
+
+            oField.SetType( OFTString );
+            char ** papszTokens;
+
+            papszTokens = CSLTokenizeString2(pszType,"(),",0);
+            
+            /* width is the second */
+            oField.SetWidth(atoi(papszTokens[1]));
+
+            CSLDestroy( papszTokens );
             oField.SetType( OFTString );
         }
-        else if( EQUAL(pszType,"char")  )
+        else if( EQUALN(pszType,"char",4)  )
         {
             oField.SetType( OFTString );
-            /* TODO: need to work out width */
+            char ** papszTokens;
+
+            papszTokens = CSLTokenizeString2(pszType,"(),",0);
+            
+            /* width is the second */
+            oField.SetWidth(atoi(papszTokens[1]));
+
+            CSLDestroy( papszTokens );
+            oField.SetType( OFTString );
+
+        }
+        else if( EQUALN(pszType,"varchar",6)  )
+        {
+            /* 
+               pszType is usually in the form "varchar(15)" 
+               so we'll split it up and get the width and precision
+            */
+            
+            oField.SetType( OFTString );
+            char ** papszTokens;
+
+            papszTokens = CSLTokenizeString2(pszType,"(),",0);
+            
+            /* width is the second and precision is the third */
+            oField.SetWidth(atoi(papszTokens[1]));
+
+            CSLDestroy( papszTokens );
+            oField.SetType( OFTString );
         }
         else if( EQUALN(pszType,"int",3) )
         {
@@ -189,7 +232,21 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         }
         else if( EQUALN(pszType,"decimal",7) )
         {
+            /* 
+               pszType is usually in the form "decimal(15,2)" 
+               so we'll split it up and get the width and precision
+            */
             oField.SetType( OFTReal );
+            char ** papszTokens;
+
+            papszTokens = CSLTokenizeString2(pszType,"(),",0);
+            
+            /* width is the second and precision is the third */
+            oField.SetWidth(atoi(papszTokens[1]));
+            oField.SetPrecision(atoi(papszTokens[2]));
+            CSLDestroy( papszTokens );
+
+
         }
         else if( EQUAL(pszType,"float") )
         {
