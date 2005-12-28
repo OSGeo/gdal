@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/12/28 06:24:52  hobu
+ * remove debugging lint
+ *
  * Revision 1.10  2005/12/28 06:22:08  hobu
  * ReadTableDefinitions() wasn't setting widths properly for varchar, char, and decimal types.
  * Also, varchar handling case was never being selected.
@@ -150,7 +153,6 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         OGRFieldDefn    oField( papszRow[0], OFTString);
 
         pszType = papszRow[1];
-        printf("checking %s of type %s...\n", papszRow[0],pszType);
         
         if( pszType == NULL )
             continue;
@@ -204,7 +206,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 
             papszTokens = CSLTokenizeString2(pszType,"(),",0);
             
-            /* width is the second and precision is the third */
+            /* width is the second */
             oField.SetWidth(atoi(papszTokens[1]));
 
             CSLDestroy( papszTokens );
