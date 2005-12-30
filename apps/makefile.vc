@@ -61,3 +61,4 @@ clean:
 
 install:	default
 	copy *.exe $(BINDIR)
+	copy *.exe.manifest $(BINDIR)
