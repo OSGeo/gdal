@@ -165,6 +165,7 @@ install: $(GDAL_DLL) apps_dir pymod_dir
 	-mkdir $(BINDIR)
 	-mkdir $(DATADIR)
 	xcopy /y /r /d /f $(GDAL_DLL) $(BINDIR)
+	if exist $(GDAL_DLL).manifest xcopy /y /r /d /f $(GDAL_DLL).manifest $(BINDIR)
 	cd apps
 	$(MAKE) /f makefile.vc install
 	cd ..\pymod
