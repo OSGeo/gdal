@@ -84,9 +84,10 @@ OGR VRT driver, ODBC driver, MySQL driver, SQLite driver, OGR JOIN and
 OGR C API.
 <p>
 
-<li> <b><a href="http://www.globalgeo.com">Global Geomatics</a></b>: Supported
-development of GXF support.
-<p>
+<li> <b><a href="http://www.osgis.nl/">OSGIS</a></b> and the 
+<b>Dutch Directorate for Public Works and Water Management, 
+Rijkswaterstaat, Adviesdienst Geo-informatie en ICT (RWS AGI)</b>:
+Funded the DWG/DXF writing driver in OGR.<p>
 
 <li> <b><a href="http://www.geosoft.com/">Geosoft</a></b>: Supported 
 improvements to libtiff (RGBA Strip/Tile access), and the Arc/Info Binary Grid 
