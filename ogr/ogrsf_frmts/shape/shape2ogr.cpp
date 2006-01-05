@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2006/01/05 02:15:39  fwarmerdam
+ * implement DeleteFeature support
+ *
  * Revision 1.39  2005/10/12 14:50:28  fwarmerdam
  * recover gracefully from POLYGON EMPTY on write
  *
@@ -1181,6 +1184,14 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Attempt to read shape with feature id (%d) out of available"
                   " range.", iShape );
+        return NULL;
+    }
+
+    if( DBFIsRecordDeleted( hDBF, iShape ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Attempt to read shape with feature id (%d), but it is marked deleted.",
+                  iShape );
         return NULL;
     }
 
