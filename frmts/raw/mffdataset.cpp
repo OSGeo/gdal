@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/01/05 16:20:34  gwalter
+ * Atlantis->Vexcel in long name.
+ *
  * Revision 1.28  2005/05/05 13:55:42  fwarmerdam
  * PAM Enable
  *
@@ -1660,7 +1663,7 @@ void GDALRegister_MFF()
         
         poDriver->SetDescription( "MFF" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Atlantis MFF Raster" );
+                                   "Vexcel MFF Raster" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_various.html#MFF" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "hdr" );
