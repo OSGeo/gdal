@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2006/01/05 16:21:56  gwalter
+ * Added nodata write support.
+ *
  * Revision 1.37  2005/12/22 22:08:35  gwalter
  * Update MFF2 documentation; Atlantis->Vexcel.
  *
@@ -172,6 +175,8 @@ class HKVRasterBand : public RawRasterBand
                                int nLineOffset,
                                GDALDataType eDataType, int bNativeOrder );
     virtual     ~HKVRasterBand();
+
+    virtual CPLErr SetNoDataValue( double );
 };
 
 /************************************************************************/
@@ -261,6 +266,11 @@ HKVSpheroidList::~HKVSpheroidList()
 {
 }
 
+CPLErr SaveHKVAttribFile( const char *pszFilenameIn,
+                          int nXSize, int nYSize, int nBands,
+                          GDALDataType eType, int bNoDataSet,
+                          double dfNoDataValue );
+
 /************************************************************************/
 /* ==================================================================== */
 /*				HKVDataset				*/
@@ -285,6 +295,10 @@ class HKVDataset : public RawDataset
 
     CPLErr      SetGCPProjection(const char *); /* for use in CreateCopy */
 
+    GDALDataType eRasterType;
+ 
+    void SetNoDataValue( double );
+
     char        *pszProjection;
     char        *pszGCPProjection;
     double      adfGeoTransform[6];
@@ -293,6 +307,16 @@ class HKVDataset : public RawDataset
 
     int		bGeorefChanged;
     char	**papszGeoref;
+   
+   /* NOTE: The MFF2 format goes against GDAL's API in that nodata values are set
+    *       per-dataset rather than per-band.  To compromise, for writing out, the
+    *       dataset's nodata value will be set to the last value set on any of the
+    *       raster bands.
+    */
+ 
+    int         bNoDataSet;
+    int         bNoDataChanged;
+    double      dfNoDataValue;
     
   public:
     		HKVDataset();
@@ -348,6 +372,21 @@ HKVRasterBand::HKVRasterBand( HKVDataset *poDS, int nBand, FILE * fpRaw,
 }
 
 /************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+CPLErr HKVRasterBand::SetNoDataValue( double dfNewValue )
+
+{
+    HKVDataset *poHKVDS = (HKVDataset *) poDS;
+
+    (RawRasterBand *) this->SetNoDataValue( dfNewValue );
+    poHKVDS->SetNoDataValue( dfNewValue );
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                           ~HKVRasterBand()                           */
 /************************************************************************/
 
@@ -384,6 +423,9 @@ HKVDataset::HKVDataset()
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
 
+    bNoDataSet = FALSE;
+    bNoDataChanged = FALSE;
+
     /* Initialize datasets to new version; change if necessary */
     MFF2version = (float) 1.1;
 }
@@ -403,6 +445,18 @@ HKVDataset::~HKVDataset()
         pszFilename = CPLFormFilename(pszPath, "georef", NULL );
 
         CSLSave( papszGeoref, pszFilename );
+    }
+
+    if( bNoDataChanged )
+    {
+        SaveHKVAttribFile(pszPath, 
+                             this->nRasterXSize,
+                             this->nRasterYSize,
+                             this->nBands,
+                             this->eRasterType,
+                             this->bNoDataSet, 
+                             this->dfNoDataValue );
+
     }
 
     if( fpBlob != NULL )
@@ -441,6 +495,100 @@ float HKVDataset::GetVersion()
 {
     return( MFF2version );
 }
+
+/************************************************************************/
+/*                          SetNoDataValue()                            */
+/************************************************************************/
+
+void HKVDataset::SetNoDataValue( double dfNewValue )
+
+{
+
+    this->bNoDataSet = TRUE;
+    this->bNoDataChanged = TRUE;
+    this->dfNoDataValue = dfNewValue;
+}
+
+/************************************************************************/
+/*                          SaveHKVAttribFile()                            */
+/************************************************************************/
+
+CPLErr SaveHKVAttribFile( const char *pszFilenameIn,
+                                    int nXSize, int nYSize, int nBands,
+				    GDALDataType eType, int bNoDataSet,
+                                    double dfNoDataValue )
+
+{
+
+    FILE       *fp;
+    const char *pszFilename;
+
+    pszFilename = CPLFormFilename( pszFilenameIn, "attrib", NULL );
+
+    fp = VSIFOpen( pszFilename, "wt" );
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Couldn't create %s.\n", pszFilename );
+        return CE_Failure;
+    }
+    
+    fprintf( fp, "channel.enumeration = %d\n", nBands );
+    fprintf( fp, "channel.interleave = { *pixel tile sequential }\n" );
+    fprintf( fp, "extent.cols = %d\n", nXSize );
+    fprintf( fp, "extent.rows = %d\n", nYSize );
+    
+    switch( eType )
+    {
+      case GDT_Byte:
+        fprintf( fp, "pixel.encoding = "
+                 "{ *unsigned twos-complement ieee-754 }\n" );
+        break;
+
+      case GDT_UInt16:
+        fprintf( fp, "pixel.encoding = "
+                 "{ *unsigned twos-complement ieee-754 }\n" );
+        break;
+
+      case GDT_CInt16:
+      case GDT_Int16:
+        fprintf( fp, "pixel.encoding = "
+                 "{ unsigned *twos-complement ieee-754 }\n" );
+        break;
+
+      case GDT_CFloat32:
+      case GDT_Float32:
+        fprintf( fp, "pixel.encoding = "
+                 "{ unsigned twos-complement *ieee-754 }\n" );
+        break;
+
+      default:
+        CPLAssert( FALSE );
+    }
+
+    fprintf( fp, "pixel.size = %d\n", GDALGetDataTypeSize(eType) );
+    if( GDALDataTypeIsComplex( eType ) )
+        fprintf( fp, "pixel.field = { real *complex }\n" );
+    else
+        fprintf( fp, "pixel.field = { *real complex }\n" );
+
+#ifdef CPL_MSB     
+    fprintf( fp, "pixel.order = { lsbf *msbf }\n" );
+#else
+    fprintf( fp, "pixel.order = { *lsbf msbf }\n" );
+#endif
+
+    if ( bNoDataSet )
+        fprintf( fp, "pixel.no_data = %f\n", dfNoDataValue );
+
+    /* version information- only create the new style */
+    fprintf( fp, "version = 1.1");
+
+
+    VSIFClose( fp );
+    return CE_None;
+}
+
 
 /************************************************************************/
 /*                          GetProjectionRef()                          */
@@ -1479,6 +1627,8 @@ GDALDataset *HKVDataset::Open( GDALOpenInfo * poOpenInfo )
             poBand->StoreNoDataValue( dfNoDataValue );
     }
 
+    poDS->eRasterType = eType;
+
 /* -------------------------------------------------------------------- */
 /*      Process the georef file if there is one.                        */
 /* -------------------------------------------------------------------- */
@@ -1563,74 +1713,21 @@ GDALDataset *HKVDataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
 /*      Create the header file.                                         */
 /* -------------------------------------------------------------------- */
-    FILE       *fp;
-    const char *pszFilename;
+    CPLErr CEHeaderCreated;
 
-    pszFilename = CPLFormFilename( pszFilenameIn, "attrib", NULL );
-
-    fp = VSIFOpen( pszFilename, "wt" );
-    if( fp == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed, 
-                  "Couldn't create %s.\n", pszFilename );
+    CEHeaderCreated = SaveHKVAttribFile( pszFilenameIn, nXSize, nYSize, 
+                                            nBands, eType, FALSE, 0.0 ); 
+                                    
+    if (CEHeaderCreated != CE_None )
         return NULL;
-    }
-    
-    fprintf( fp, "channel.enumeration = %d\n", nBands );
-    fprintf( fp, "channel.interleave = { *pixel tile sequential }\n" );
-    fprintf( fp, "extent.cols = %d\n", nXSize );
-    fprintf( fp, "extent.rows = %d\n", nYSize );
-    
-    switch( eType )
-    {
-      case GDT_Byte:
-        fprintf( fp, "pixel.encoding = "
-                 "{ *unsigned twos-complement ieee-754 }\n" );
-        break;
-
-      case GDT_UInt16:
-        fprintf( fp, "pixel.encoding = "
-                 "{ *unsigned twos-complement ieee-754 }\n" );
-        break;
-
-      case GDT_CInt16:
-      case GDT_Int16:
-        fprintf( fp, "pixel.encoding = "
-                 "{ unsigned *twos-complement ieee-754 }\n" );
-        break;
-
-      case GDT_CFloat32:
-      case GDT_Float32:
-        fprintf( fp, "pixel.encoding = "
-                 "{ unsigned twos-complement *ieee-754 }\n" );
-        break;
-
-      default:
-        CPLAssert( FALSE );
-    }
-
-    fprintf( fp, "pixel.size = %d\n", GDALGetDataTypeSize(eType) );
-    if( GDALDataTypeIsComplex( eType ) )
-        fprintf( fp, "pixel.field = { real *complex }\n" );
-    else
-        fprintf( fp, "pixel.field = { *real complex }\n" );
-
-#ifdef CPL_MSB     
-    fprintf( fp, "pixel.order = { lsbf *msbf }\n" );
-#else
-    fprintf( fp, "pixel.order = { *lsbf msbf }\n" );
-#endif
-
-    /* version information- only create the new style */
-    fprintf( fp, "version = 1.1");
-
-
-    VSIFClose( fp );
-   
 
 /* -------------------------------------------------------------------- */
 /*      Create the blob file.                                           */
 /* -------------------------------------------------------------------- */
+
+    FILE       *fp;
+    const char *pszFilename;
+
     pszFilename = CPLFormFilename( pszFilenameIn, "image_data", NULL );
     fp = VSIFOpen( pszFilename, "wb" );
     if( fp == NULL )
@@ -1765,7 +1862,13 @@ HKVDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         int	       iYOffset, iXOffset;
         void           *pData;
         CPLErr  eErr;
+        int pbSuccess;
+        double dfSrcNoDataValue =0.0;
 
+        /* Get nodata value, if relevant */
+        dfSrcNoDataValue = poSrcBand->GetNoDataValue( &pbSuccess );
+        if ( pbSuccess )
+  	    poDS->SetNoDataValue( dfSrcNoDataValue );
 
         pData = CPLMalloc(nBlockXSize * nBlockYSize
                           * GDALGetDataTypeSize(eType) / 8);
@@ -1889,7 +1992,7 @@ void GDALRegister_HKV()
         
         poDriver->SetDescription( "MFF2" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Atlantis MFF2 (HKV) Raster" );
+                                   "Vexcel MFF2 (HKV) Raster" );
         poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
                                    "frmt_mff2.html" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
