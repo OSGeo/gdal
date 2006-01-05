@@ -199,7 +199,7 @@ set to "debug" to enable debugger support with the -g compiler switch.  On
 Windows edit the nmake.opt and ensure /Zi appears in the OPTFLAGS variable. 
 
 
-<ol>
+</ol>
 
 */
 
