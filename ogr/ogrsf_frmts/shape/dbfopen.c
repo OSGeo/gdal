@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.59 2005/03/14 15:20:28 fwarmerdam Exp $
+ * $Id: dbfopen.c,v 1.60 2006/01/05 01:27:27 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.60  2006/01/05 01:27:27  fwarmerdam
+ * added dbf deletion mark/fetch
+ *
  * Revision 1.59  2005/03/14 15:20:28  fwarmerdam
  * Fixed last change.
  *
@@ -224,7 +227,7 @@
 #include <ctype.h>
 #include <string.h>
 
-SHP_CVSID("$Id: dbfopen.c,v 1.59 2005/03/14 15:20:28 fwarmerdam Exp $")
+SHP_CVSID("$Id: dbfopen.c,v 1.60 2006/01/05 01:27:27 fwarmerdam Exp $")
 
 #ifndef FALSE
 #  define FALSE		0
@@ -1543,4 +1546,119 @@ DBFGetFieldIndex(DBFHandle psDBF, const char *pszFieldName)
             return(i);
     }
     return(-1);
+}
+
+/************************************************************************/
+/*                         DBFIsRecordDeleted()                         */
+/*                                                                      */
+/*      Returns TRUE if the indicated record is deleted, otherwise      */
+/*      it returns FALSE.                                               */
+/************************************************************************/
+
+int SHPAPI_CALL DBFIsRecordDeleted( DBFHandle psDBF, int iShape )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Verify selection.                                               */
+/* -------------------------------------------------------------------- */
+    if( iShape < 0 || iShape >= psDBF->nRecords )
+        return TRUE;
+
+/* -------------------------------------------------------------------- */
+/*	Have we read the record?					*/
+/* -------------------------------------------------------------------- */
+    if( psDBF->nCurrentRecord != iShape )
+    {
+        int		nRecordOffset;
+
+	DBFFlushRecord( psDBF );
+
+	nRecordOffset = psDBF->nRecordLength * iShape + psDBF->nHeaderLength;
+
+	if( fseek( psDBF->fp, nRecordOffset, 0 ) != 0 )
+        {
+            fprintf( stderr, "fseek(%d) failed on DBF file.\n",
+                     nRecordOffset );
+            return TRUE;
+        }
+
+	if( fread( psDBF->pszCurrentRecord, psDBF->nRecordLength, 
+                   1, psDBF->fp ) != 1 )
+        {
+            fprintf( stderr, "fread(%d) failed on DBF file.\n",
+                     psDBF->nRecordLength );
+            return TRUE;
+        }
+
+	psDBF->nCurrentRecord = iShape;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      '*' means deleted.                                              */
+/* -------------------------------------------------------------------- */
+    return psDBF->pszCurrentRecord[0] == '*';
+}
+
+/************************************************************************/
+/*                        DBFMarkRecordDeleted()                        */
+/************************************************************************/
+
+int SHPAPI_CALL DBFMarkRecordDeleted( DBFHandle psDBF, int iShape, 
+                                      int bIsDeleted )
+
+{
+    char chNewFlag;
+
+/* -------------------------------------------------------------------- */
+/*      Verify selection.                                               */
+/* -------------------------------------------------------------------- */
+    if( iShape < 0 || iShape >= psDBF->nRecords )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Is this an existing record, but different than the last one     */
+/*      we accessed?                                                    */
+/* -------------------------------------------------------------------- */
+    if( psDBF->nCurrentRecord != iShape )
+    {
+        int		nRecordOffset;
+
+	DBFFlushRecord( psDBF );
+
+	nRecordOffset = psDBF->nRecordLength * iShape + psDBF->nHeaderLength;
+
+	if( fseek( psDBF->fp, nRecordOffset, 0 ) != 0 )
+        {
+            fprintf( stderr, "fseek(%d) failed on DBF file.\n",
+                     nRecordOffset );
+            return TRUE;
+        }
+
+	if( fread( psDBF->pszCurrentRecord, psDBF->nRecordLength, 
+                   1, psDBF->fp ) != 1 )
+        {
+            fprintf( stderr, "fread(%d) failed on DBF file.\n",
+                     psDBF->nRecordLength );
+            return TRUE;
+        }
+
+	psDBF->nCurrentRecord = iShape;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Assign value, marking record as dirty if it changes.            */
+/* -------------------------------------------------------------------- */
+    if( bIsDeleted )
+        chNewFlag = '*';
+    else 
+        chNewFlag = ' ';
+
+    if( psDBF->pszCurrentRecord[0] != chNewFlag )
+    {
+        psDBF->bCurrentRecordModified = TRUE;
+        psDBF->bUpdated = TRUE;
+        psDBF->pszCurrentRecord[0] = chNewFlag;
+    }
+
+    return TRUE;
 }
