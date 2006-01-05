@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/01/05 19:51:10  fwarmerdam
+ * fixed checking of targetsrs
+ *
  * Revision 1.19  2005/12/19 20:20:00  fwarmerdam
  * preliminary support for multiple input files
  *
@@ -412,7 +415,8 @@ int main( int argc, char ** argv )
             else
                 pszThisSourceSRS = "";
 
-            if( pszTargetSRS != NULL && strlen(pszThisSourceSRS) == 0 )
+            if( pszTargetSRS != NULL && strlen(pszTargetSRS) > 0 
+                && strlen(pszThisSourceSRS) == 0 )
             {
                 fprintf( stderr, "A target coordinate system was specified, but there is no source coordinate\nsystem.  Consider using -s_srs option to provide a source coordinate system.\nOperation terminated.\n" );
                 exit( 1 );
