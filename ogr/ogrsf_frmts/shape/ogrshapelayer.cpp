@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/01/05 02:15:39  fwarmerdam
+ * implement DeleteFeature support
+ *
  * Revision 1.21  2005/09/21 00:53:20  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -363,8 +366,13 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
             if( iNextShapeId >= nTotalShapeCount )
                 return NULL;
     
-            poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
-                                           iNextShapeId++ );
+            if( DBFIsRecordDeleted( hDBF, iNextShapeId ) )
+                poFeature = NULL;
+            else
+                poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
+                                               iNextShapeId );
+
+            iNextShapeId++;
         }
 
         if( poFeature != NULL )
@@ -406,6 +414,37 @@ OGRErr OGRShapeLayer::SetFeature( OGRFeature *poFeature )
 
 {
     return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature );
+}
+
+/************************************************************************/
+/*                           DeleteFeature()                            */
+/************************************************************************/
+
+OGRErr OGRShapeLayer::DeleteFeature( long nFID )
+
+{
+    if( nFID < 0 
+        || (hSHP != NULL && nFID >= hSHP->nRecords)
+        || (hDBF != NULL && nFID >= hDBF->nRecords) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Attempt to delete shape with feature id (%d) which does "
+                  "not exist.", nFID );
+        return OGRERR_FAILURE;
+    }
+
+    if( DBFIsRecordDeleted( hDBF, nFID ) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Attempt to delete shape with feature id (%d), but it is marked deleted already.",
+                  nFID );
+        return OGRERR_FAILURE;
+    }
+
+    if( !DBFMarkRecordDeleted( hDBF, nFID, TRUE ) )
+        return OGRERR_FAILURE;
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/

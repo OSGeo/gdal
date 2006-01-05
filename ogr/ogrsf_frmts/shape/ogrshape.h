@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/01/05 02:15:39  fwarmerdam
+ * implement DeleteFeature support
+ *
  * Revision 1.18  2005/02/22 12:51:56  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -156,6 +159,7 @@ class OGRShapeLayer : public OGRLayer
 
     OGRFeature         *GetFeature( long nFeatureId );
     OGRErr              SetFeature( OGRFeature *poFeature );
+    OGRErr              DeleteFeature( long nFID );
     OGRErr              CreateFeature( OGRFeature *poFeature );
     OGRErr              SyncToDisk();
     
