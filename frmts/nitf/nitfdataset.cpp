@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2006/01/05 23:12:03  fwarmerdam
+ * Added subdataset support to access multiple images in one file.
+ *
  * Revision 1.50  2005/12/21 01:06:29  fwarmerdam
  * Added IMAGE_STRUCTURE COMPRESSION support.
  *
@@ -102,89 +105,6 @@
  *
  * Revision 1.28  2005/01/15 07:47:20  fwarmerdam
  * enable NPJE profile
- *
- * Revision 1.27  2004/12/21 04:57:36  fwarmerdam
- * added support for writing UTM ICORDS/IGEOLO values
- *
- * Revision 1.26  2004/12/20 22:32:06  fwarmerdam
- * use JP2ECW driver not ECW driver for jpeg2000 output
- *
- * Revision 1.25  2004/12/10 21:35:00  fwarmerdam
- * preliminary support for writing JPEG2000 compressed data
- *
- * Revision 1.24  2004/12/10 21:24:20  fwarmerdam
- * fix RPC offset, added ichipb metadata
- *
- * Revision 1.23  2004/09/22 19:35:06  fwarmerdam
- * Fixed bug with ysize being taken from xsize of input in CopyCreate().
- *
- * Revision 1.22  2004/07/23 20:45:50  warmerda
- * Added JPEG2000 support
- *
- * Revision 1.21  2004/05/06 14:58:06  warmerda
- * added USE00A and STDIDC parsing and reporting as metadata
- *
- * Revision 1.20  2004/04/28 15:19:00  warmerda
- * added geocentric to geodetic conversion
- *
- * Revision 1.19  2004/04/16 15:26:04  warmerda
- * completed metadata support
- *
- * Revision 1.18  2004/04/15 20:53:15  warmerda
- * Added support for geocentric coordinates, and file level metadata
- *
- * Revision 1.17  2004/04/02 20:44:37  warmerda
- * preserve APBB (actual bits per pixel) field as metadata
- *
- * Revision 1.16  2004/03/17 21:16:58  warmerda
- * Added GCP support for the corner points if they dont produce a nice geotransform
- *
- * Revision 1.15  2004/02/09 05:18:07  warmerda
- * fixed up north/south MGRS support
- *
- * Revision 1.14  2004/02/09 05:04:41  warmerda
- * added ICORDS=U (MGRS) support
- *
- * Revision 1.13  2003/09/12 22:52:25  gwalter
- * Added recognition of header file in absence of other useable georeferencing
- * information.
- *
- * Revision 1.12  2003/09/11 19:51:55  warmerda
- * avoid type casting warnings
- *
- * Revision 1.11  2003/08/21 19:25:59  warmerda
- * added overview support
- *
- * Revision 1.10  2003/08/21 15:02:38  gwalter
- * Try to find a .nfw file if no other geotransform information is found.
- *
- * Revision 1.9  2003/06/23 18:32:06  warmerda
- * dont return projectionref if we dont have a geotransform
- *
- * Revision 1.8  2003/06/03 19:44:26  warmerda
- * added RPC coefficient support
- *
- * Revision 1.7  2003/03/24 15:10:54  warmerda
- * Don't crash out if no image segments found.
- *
- * Revision 1.6  2002/12/21 18:12:10  warmerda
- * added driver metadata
- *
- * Revision 1.5  2002/12/18 20:15:43  warmerda
- * support writing IGEOLO
- *
- * Revision 1.4  2002/12/18 06:35:15  warmerda
- * implement nodata support for mapped data
- *
- * Revision 1.3  2002/12/17 21:23:15  warmerda
- * implement LUT reading and writing
- *
- * Revision 1.2  2002/12/17 05:26:26  warmerda
- * implement basic write support
- *
- * Revision 1.1  2002/12/03 04:43:41  warmerda
- * New
- *
  */
 
 #include "gdal_pam.h"
@@ -749,37 +669,58 @@ void NITFDataset::FlushCache()
 GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
+    int nIMIndex = -1;
+    const char *pszFilename = poOpenInfo->pszFilename;
+
+/* -------------------------------------------------------------------- */
+/*      Select a specific subdataset.                                   */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszFilename, "NITF_IM:",8) )
+    {
+        pszFilename += 8;
+        nIMIndex = atoi(pszFilename);
+        
+        while( *pszFilename != '\0' && *pszFilename != ':' )
+            pszFilename++;
+
+        if( *pszFilename == ':' )
+            pszFilename++;
+    }
+
 /* -------------------------------------------------------------------- */
 /*	First we check to see if the file has the expected header	*/
 /*	bytes.								*/    
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 4 )
-        return NULL;
-
-    if( !EQUALN((char *) poOpenInfo->pabyHeader,"NITF",4) 
-        && !EQUALN((char *) poOpenInfo->pabyHeader,"NSIF",4)
-        && !EQUALN((char *) poOpenInfo->pabyHeader,"NITF",4) )
-        return NULL;
-
+    else
+    {
+        if( poOpenInfo->nHeaderBytes < 4 )
+            return NULL;
+        
+        if( !EQUALN((char *) poOpenInfo->pabyHeader,"NITF",4) 
+            && !EQUALN((char *) poOpenInfo->pabyHeader,"NSIF",4)
+            && !EQUALN((char *) poOpenInfo->pabyHeader,"NITF",4) )
+            return NULL;
+    }
+        
 /* -------------------------------------------------------------------- */
 /*      Open the file with library.                                     */
 /* -------------------------------------------------------------------- */
     NITFFile *psFile;
 
-    psFile = NITFOpen( poOpenInfo->pszFilename, 
-                       poOpenInfo->eAccess == GA_Update );
+    psFile = NITFOpen( pszFilename, poOpenInfo->eAccess == GA_Update );
     if( psFile == NULL )
         return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Is there an image to operate on?                                */
 /* -------------------------------------------------------------------- */
-    int iSegment;
+    int iSegment, nThisIM = 0;
     NITFImage *psImage = NULL;
 
     for( iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
     {
-        if( EQUAL(psFile->pasSegmentInfo[iSegment].szSegmentType,"IM") )
+        if( EQUAL(psFile->pasSegmentInfo[iSegment].szSegmentType,"IM") 
+            && (nThisIM++ == nIMIndex || nIMIndex == -1) )
         {
             psImage = NITFImageAccess( psFile, iSegment );
             if( psImage == NULL )
@@ -825,14 +766,13 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     int nUsableBands = psImage->nBands;
     int		iBand;
 
-
     if( EQUAL(psImage->szIC,"C8") )
     {
         char *pszDSName = CPLStrdup( 
             CPLSPrintf( "J2K_SUBFILE:%d,%d,%s", 
                         psFile->pasSegmentInfo[iSegment].nSegmentStart,
                         psFile->pasSegmentInfo[iSegment].nSegmentSize,
-                        poOpenInfo->pszFilename ) );
+                        pszFilename ) );
 
         if( poWritableJ2KDataset != NULL )
         {
@@ -961,7 +901,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try looking for a .nfw file.                                    */
 /* -------------------------------------------------------------------- */
-    if( GDALReadWorldFile( poOpenInfo->pszFilename, "nfw", 
+    if( GDALReadWorldFile( pszFilename, "nfw", 
                            poDS->adfGeoTransform ) )
     {
         const char *pszHDR;
@@ -974,14 +914,14 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 
         /* If nfw found, try looking for a header with projection info */
         /* in space imaging style format                               */
-        pszHDR = CPLResetExtension( poOpenInfo->pszFilename, "hdr" );
+        pszHDR = CPLResetExtension( pszFilename, "hdr" );
         
         fpHDR = VSIFOpen( pszHDR, "rt" );
 
 #ifndef WIN32
         if( fpHDR == NULL )
         {
-            pszHDR = CPLResetExtension( poOpenInfo->pszFilename, "HDR" );
+            pszHDR = CPLResetExtension( pszFilename, "HDR" );
             fpHDR = VSIFOpen( pszHDR, "rt" );
         }
 #endif
@@ -1361,9 +1301,45 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      If there are multiple image segments, and we are the zeroth,    */
+/*      then setup the subdataset metadata.                             */
+/* -------------------------------------------------------------------- */
+    if( nIMIndex == -1 )
+    {
+        char **papszSubdatasets = NULL;
+        int nIMCounter = 0;
+
+        for( iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
+        {
+            if( EQUAL(psFile->pasSegmentInfo[iSegment].szSegmentType,"IM") )
+            {
+                CPLString oName;
+                CPLString oValue;
+
+                oName.Printf( "SUBDATASET_%d_NAME", nIMCounter+1 );
+                oValue.Printf( "NITF_IM:%d:%s", nIMCounter, pszFilename );
+                papszSubdatasets = CSLSetNameValue( papszSubdatasets, 
+                                                    oName, oValue );
+
+                oName.Printf( "SUBDATASET_%d_DESC", nIMCounter+1 );
+                oValue.Printf( "Image %d of %s", nIMCounter+1, pszFilename );
+                papszSubdatasets = CSLSetNameValue( papszSubdatasets, 
+                                                    oName, oValue );
+
+                nIMCounter++;
+            }
+        }
+
+        if( CSLCount(papszSubdatasets) > 2 )
+            poDS->GDALMajorObject::SetMetadata( papszSubdatasets, "SUBDATASETS" );
+        
+        CSLDestroy( papszSubdatasets );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    poDS->oOvManager.Initialize( poDS, pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
