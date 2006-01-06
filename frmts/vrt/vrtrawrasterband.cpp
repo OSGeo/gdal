@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/01/06 22:21:05  gwalter
+ * Make sure overviews are read for raw raster bands if available.
+ *
  * Revision 1.3  2004/09/29 13:25:12  fwarmerdam
  * Don't use relative path ... handle in makefile.
  *
@@ -99,6 +102,19 @@ CPLErr VRTRawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "No raw raster band configured on VRTRawRasterBand." );
         return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have overviews that would be appropriate to satisfy       */
+/*      this request?                                                   */
+/* -------------------------------------------------------------------- */
+    if( (nBufXSize < nXSize || nBufYSize < nYSize)
+        && GetOverviewCount() > 0 )
+    {
+        if( OverviewRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
+                              pData, nBufXSize, nBufYSize, 
+                              eBufType, nPixelSpace, nLineSpace ) == CE_None )
+            return CE_None;
     }
 
     return poRawRaster->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, 
