@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/01/06 19:07:37  fwarmerdam
+ * Pass wkbNone to OGRShapeLayer as the requested type when opening
+ * existing files so their type won't get reset by the "first feature"
+ * logic in CreateFeature() when appending to empty shapefiles.
+ *
  * Revision 1.28  2005/12/14 16:17:52  fwarmerdam
  * Fixed wkbMultiPolygon to map to POLYGON, not POLYGONZ.
  *
@@ -403,7 +408,7 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
     OGRShapeLayer       *poLayer;
 
     poLayer = new OGRShapeLayer( pszNewName, hSHP, hDBF, poSRS, bUpdate,
-                                 wkbUnknown );
+                                 wkbNone );
 
 
     poLayer->InitializeIndexSupport( pszNewName );
