@@ -29,11 +29,16 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/01/06 17:23:26  dron
+ * Use OGR_ENABLED macro to separate OGR formats related parts of the code.
+ *
  * Revision 1.18  2005/10/16 01:59:06  cfis
- * Added declaration for OGRGeneralCmdLineProcessor to ogr_p.h, and included it into ogr2ogr.  Also changed call to CPL_DLL from CPL_STDCALL
+ * Added declaration for OGRGeneralCmdLineProcessor to ogr_p.h, and included it
+ * into ogr2ogr.  Also changed call to CPL_DLL from CPL_STDCALL
  *
  * Revision 1.17  2005/10/16 01:51:43  cfis
- * Added #include for ogrsf_frmts.f to support the --formats command line parameter in OGRGeneralCmdLineProcessor.
+ * Added #include for ogrsf_frmts.f to support the --formats command line parameter
+ * in OGRGeneralCmdLineProcessor.
  *
  * Revision 1.16  2005/10/16 01:49:02  cfis
  * Added support for general command line processing similar to what GDAL utilities have.
@@ -558,6 +563,7 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 /* -------------------------------------------------------------------- */
 /*      --formats                                                       */
 /* -------------------------------------------------------------------- */
+#ifdef OGR_ENABLED
         else if( EQUAL(papszArgv[iArg], "--formats") )
         {
             int iDr;
@@ -575,7 +581,7 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             CSLDestroy( papszReturn );
             return 0;
         }
-
+#endif /* OGR_ENABLED */
 
 /* -------------------------------------------------------------------- */
 /*      --help-general                                                  */
@@ -583,7 +589,9 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
         else if( EQUAL(papszArgv[iArg],"--help-general") )
         {
             printf( "Generic GDAL utility command options:\n" );
+#ifdef OGR_ENABLED
             printf( "  --formats: report all configured format drivers.\n" );
+#endif /* OGR_ENABLED */
             printf( "  --optfile filename: expand an option file into the argument list.\n" );
             printf( "  --config key value: set system configuration option.\n" );
             printf( "  --debug [on/off/value]: set debug level.\n" );
