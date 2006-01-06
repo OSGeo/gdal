@@ -10,11 +10,11 @@ XTRAFLAGS =	-I..\frmts -I..\alg
 !INCLUDE ..\nmake.opt
 									-
 !IFDEF INCLUDE_OGR_FRMTS
-OGR_PROGRAMS =	gdal_contour.exe
+OGR_PROGRAMS =	gdal_contour.exe gdaltindex.exe gdal_rasterize.exe
 !ENDIF
 
 default:	gdal_translate.exe gdalinfo.exe gdaladdo.exe gdalwarp.exe \
-		gdaltindex.exe $(OGR_PROGRAMS)
+		$(OGR_PROGRAMS)
 
 all:	default gdalwarpsimple.exe
 

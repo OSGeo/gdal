@@ -8,10 +8,10 @@ include ../GDALmake.opt
 CPPFLAGS	:=	$(GDAL_INCLUDE) -I$(GDAL_ROOT)/frmts $(CPPFLAGS)
 DEP_LIBS	=	$(EXE_DEP_LIBS) $(XTRAOBJ)
 BIN_LIST	=	gdalinfo$(EXE) gdal_translate$(EXE) gdaladdo$(EXE) \
-			gdalwarp$(EXE) gdal_rasterize$(EXE)
+			gdalwarp$(EXE)
 
 ifeq ($(OGR_ENABLED),yes)
-BIN_LIST	+= 	gdal_contour$(EXE) gdaltindex$(EXE)
+BIN_LIST	+= 	gdal_contour$(EXE) gdaltindex$(EXE) gdal_rasterize$(EXE)
 endif
 
 default:	gdal-config-inst gdal-config $(BIN_LIST)
