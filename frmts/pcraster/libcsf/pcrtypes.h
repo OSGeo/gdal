@@ -89,7 +89,7 @@ namespace pcr {
      // element variable in function scope (stack-based)
      // constraint the setting to memory (m)
      // for correct alignment
-     asm ("movl $-1, %[dest]" : [dest] "=m" (v));
+     asm ("movl $-1, %0" : "=m" (v));
 #   endif
   }
   template<>
