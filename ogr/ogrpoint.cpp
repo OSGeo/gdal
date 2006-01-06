@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2006/01/06 19:04:13  fwarmerdam
+ * fix clone to preserve coordinate dimension
+ *
  * Revision 1.35  2005/09/12 01:43:40  fwarmerdam
  * ensure Z is initialized to zero in 2D constructor
  *
@@ -208,6 +211,7 @@ OGRGeometry *OGRPoint::clone() const
     OGRPoint    *poNewPoint = new OGRPoint( x, y, z );
 
     poNewPoint->assignSpatialReference( getSpatialReference() );
+    poNewPoint->setCoordinateDimension( nCoordDimension );
 
     return poNewPoint;
 }
