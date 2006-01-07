@@ -48,6 +48,10 @@ gdaltindex.exe:	gdaltindex.c $(GDALLIB) $(XTRAOBJ)
 		../ogr/ogrsf_frmts/shape/dbfopen.c \
 		$(XTRAOBJ) $(LIBS) /link $(LINKER_FLAGS)
 	
+gdal_rasterize.exe:	gdal_rasterize.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) gdal_rasterize.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+
 multireadtest.exe:	multireadtest.cpp $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) multireadtest.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
@@ -61,4 +65,4 @@ clean:
 
 install:	default
 	copy *.exe $(BINDIR)
-	copy *.exe.manifest $(BINDIR)
+#	copy *.exe.manifest $(BINDIR)
