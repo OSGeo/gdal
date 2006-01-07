@@ -111,12 +111,12 @@ install:	default
 	copy ogrinfo.exe $(BINDIR)
 	copy ogr2ogr.exe $(BINDIR)
 	copy ogrtindex.exe $(BINDIR)
-	copy *.exe.manifest $(BINDIR)
+#	copy *.exe.manifest $(BINDIR)
 
 clean:
 	-del *.obj
-    -del *.exe
-    -del *.exe.manifest
+	-del *.exe
+	-del *.exe.manifest
 	-del *.lib
 	-del *.pdb
 	-del *.ilk
