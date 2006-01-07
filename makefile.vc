@@ -27,6 +27,7 @@ OGR_BASE_INCLUDE = /INCLUDE:_OGRFeatureStylePuller \
 
 
 !IFDEF INCLUDE_OGR_FRMTS
+CPPFLAGS = $(CPPFLAGS) -DOGR_ENABLED
 OGR_OBJ = ogr\ogrsf_frmts\ogrsf_frmts.lib ogr\ogr.lib
 OGR_INCLUDE = $(OGR_BASE_INCLUDE) \
 		/INCLUDE:_OGRRegisterAll
