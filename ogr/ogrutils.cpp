@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/01/07 17:15:38  dron
+ * #include "ogrsf_frmts.h" only when compiling with the OGR formats.
+ *
  * Revision 1.19  2006/01/06 17:23:26  dron
  * Use OGR_ENABLED macro to separate OGR formats related parts of the code.
  *
@@ -90,10 +93,14 @@
  *
  */
 
+#include <ctype.h>
+
 #include "ogr_geometry.h"
 #include "ogr_p.h"
-#include "ogrsf_frmts.h"
-#include <ctype.h>
+
+#ifdef OGR_ENABLED
+# include "ogrsf_frmts.h"
+#endif /* OGR_ENABLED */
 
 CPL_CVSID("$Id$");
 
