@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/01/07 17:16:36  dron
+ * Do not include ogrsf_frmts.h.
+ *
  * Revision 1.9  2005/04/03 21:05:39  fwarmerdam
  * Fixed IN operator for Reals.
  *
@@ -62,7 +65,6 @@
 #include <assert.h>
 #include "ogr_feature.h"
 #include "ogr_p.h"
-#include "ogrsf_frmts.h" 
 #include "ogr_attrind.h"
 
 CPL_CVSID("$Id$");
