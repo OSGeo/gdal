@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2006/01/09 18:59:33  fwarmerdam
+ * ensure jp2mrsid driver support jpc (non-jP2 JPEG2000 files)
+ *
  * Revision 1.46  2005/11/10 21:05:01  fwarmerdam
  * Applied Rostics fix for slight overview size inaccuracies
  *
@@ -1176,13 +1179,28 @@ static GDALDataset *MrSIDOpen( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 #ifdef MRSID_J2K
+
+static unsigned char jpc_header[] = 
+{0xff,0x4f};
+
 static GDALDataset *JP2Open( GDALOpenInfo *poOpenInfo )
 
 {
     if( poOpenInfo->nHeaderBytes < 32 )
         return NULL;
 
-    if( !EQUALN((const char *) poOpenInfo->pabyHeader + 4, "jP  ", 4) )
+    if( memcmp( poOpenInfo->pabyHeader, jpc_header, sizeof(jpc_header) ) == 0 )
+    {
+        const char *pszExtension;
+
+        pszExtension = CPLGetExtension( poOpenInfo->pszFilename );
+        
+        if( !EQUAL(pszExtension,"jpc") && !EQUAL(pszExtension,"j2k") 
+            && !EQUAL(pszExtension,"jp2") && !EQUAL(pszExtension,"jpx") 
+            && !EQUAL(pszExtension,"j2c") )
+            return NULL;
+    }
+    else if( !EQUALN((const char *) poOpenInfo->pabyHeader + 4, "jP  ", 4) )
         return NULL;
 
     return MrSIDDataset::Open( poOpenInfo );
@@ -1205,6 +1223,11 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( EQUALN((const char *) poOpenInfo->pabyHeader + 4, "jP  ", 4) )
         bIsJP2 = TRUE;
+
+    else if( memcmp( poOpenInfo->pabyHeader, jpc_header, 
+                     sizeof(jpc_header) ) == 0 )
+        bIsJP2 = TRUE;
+
     else if ( !EQUALN((const char *) poOpenInfo->pabyHeader, "msid", 4) )
         return NULL;
 
