@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.51  2006/01/09 15:26:48  fwarmerdam
+ * fixed logic for computing spill file size
+ *
  * Revision 1.50  2005/12/23 18:54:54  fwarmerdam
  * fixed error message when creating big files
  *
@@ -85,116 +88,6 @@
  *
  * Revision 1.35  2005/01/10 17:41:27  fwarmerdam
  * added HFA compression support: bug 664
- *
- * Revision 1.34  2004/08/19 16:54:07  warmerda
- * added back in support for writing to GDAL_MetaData table
- *
- * Revision 1.33  2004/07/16 20:40:32  warmerda
- * Added a series of patches from Andreas Wimmer which:
- *  o Add lots of improved support for metadata.
- *  o Use USE_SPILL only, instead of SPILL_FILE extra creation option.
- *  o Added ability to control block sizes.
- *
- * Revision 1.32  2004/06/09 17:54:01  dron
- * Create spill files when the image becomes larger 2GB (instead of former 4GB).
- * New option SPILL_FILE=YES to force spill file generation.
- *
- * Revision 1.31  2004/02/25 18:54:03  warmerda
- * Improve the check to see if we are over 4GB to avoid ULONG_MAX
- * which may be more than 4GB on machines with large longs and to
- * account for extra auxilary data we need space for.
- *
- * Revision 1.30  2004/02/04 16:51:24  warmerda
- * We now need to hardcode the size of the #Bin_Function# since we don't know
- * the size of the BaseData in the HFASetMetadata() call.
- *
- * Revision 1.29  2003/05/21 15:35:05  warmerda
- * cleanup type conversion warnings
- *
- * Revision 1.28  2003/05/13 19:32:10  warmerda
- * support for reading and writing opacity provided by Diana Esch-Mosher
- *
- * Revision 1.27  2003/04/22 19:40:36  warmerda
- * fixed email address
- *
- * Revision 1.26  2003/04/04 16:10:24  dron
- * Use ULONG_MAX to determine maximum file size. Depends on <limits.h> now.
- *
- * Revision 1.25  2003/03/25 11:13:02  dron
- * Handle path properly in HFADelete().
- *
- * Revision 1.24  2003/03/18 21:05:31  dron
- * Added HFARemove() and HFADelete() functions.
- *
- * Revision 1.23  2003/03/13 14:38:00  warmerda
- * added USE_SPILL creation option to force use of spill file.
- *
- * Revision 1.22  2003/03/06 18:03:14  dron
- * Fixed problem with unknown field in .ige file.
- *
- * Revision 1.21  2003/03/03 15:07:55  dron
- * Improvements in multiband spill file creation.
- *
- * Revision 1.20  2003/02/27 11:13:46  dron
- * Fixed 64-bit integer constant representation for MSVC compiler.
- *
- * Revision 1.19  2003/02/23 15:50:20  dron
- * Spill file creation now really works for single band datasets.
- *
- * Revision 1.18  2003/02/22 07:23:02  dron
- * Fixes i spill file writing.
- *
- * Revision 1.17  2003/02/21 15:40:58  dron
- * Added support for writing large (>4 GB) Erdas Imagine files.
- *
- * Revision 1.16  2002/05/21 15:09:12  warmerda
- * read/write support for GDAL_MetaData table now supported
- *
- * Revision 1.15  2002/04/12 20:19:49  warmerda
- * improved debug info
- *
- * Revision 1.14  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.13  2001/01/08 14:17:27  warmerda
- * Use nDictMax for CPLMalloc().
- *
- * Revision 1.12  2001/01/03 16:20:10  warmerda
- * Converted to large file API
- *
- * Revision 1.11  2000/10/31 18:02:32  warmerda
- * Added external and unnamed overview support
- *
- * Revision 1.10  2000/10/20 04:18:15  warmerda
- * added overviews, stateplane, and u4
- *
- * Revision 1.9  2000/10/13 20:59:05  warmerda
- * fixed writing of RasterDMS dictionary types
- *
- * Revision 1.8  2000/10/12 20:23:58  warmerda
- * Fixed dictinary writing.
- *
- * Revision 1.7  2000/10/12 20:04:59  warmerda
- * split up long dictionary string
- *
- * Revision 1.6  2000/10/12 19:30:32  warmerda
- * substantially improved write support
- *
- * Revision 1.5  2000/09/29 21:42:38  warmerda
- * preliminary write support implemented
- *
- * Revision 1.4  1999/01/28 16:25:19  warmerda
- * Added implementation of HFAStandard().
- *
- * Revision 1.3  1999/01/22 17:38:47  warmerda
- * lots of additions
- *
- * Revision 1.2  1999/01/04 22:52:47  warmerda
- * field access working
- *
- * Revision 1.1  1999/01/04 05:28:13  warmerda
- * New
- *
  */
 
 #include "hfa_p.h"
@@ -2519,11 +2412,11 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 /*      Extend the file to account for all the imagery space.           */
 /* -------------------------------------------------------------------- */
     GIntBig nTileDataSize = ((GIntBig) nBytesPerBlock) 
-        * nBlocksPerRow * nBlocksPerColumn;
+        * nBlocksPerRow * nBlocksPerColumn * nLayers;
 
     *pnDataOffset = VSIFTellL( fpVSIL );
     
-    if( VSIFSeekL( fpVSIL, nTileDataSize - 1, SEEK_CUR ) != 0 
+    if( VSIFSeekL( fpVSIL, nTileDataSize - 1 + *pnDataOffset, SEEK_SET ) != 0 
         || VSIFWriteL( (void *) "", 1, 1, fpVSIL ) != 1 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
