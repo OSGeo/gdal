@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.55  2006/01/10 01:18:09  fwarmerdam
+ * Avoid const casting warning.
+ *
  * Revision 1.54  2005/12/21 15:07:56  fwarmerdam
  * better error
  *
@@ -1155,9 +1158,9 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
               return NULL;
           }
 
-          real_filename = strstr(poOpenInfo->pszFilename,",");
+          real_filename = (char *) strstr(poOpenInfo->pszFilename,",");
           if( real_filename != NULL )
-              real_filename = strstr(real_filename+1,",");
+              real_filename = (char *) strstr(real_filename+1,",");
           if( real_filename != NULL )
               real_filename++;
           else
