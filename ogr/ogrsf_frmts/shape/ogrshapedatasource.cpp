@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2006/01/10 16:37:57  fwarmerdam
+ * implemented REPACK support
+ *
  * Revision 1.29  2006/01/06 19:07:37  fwarmerdam
  * Pass wkbNone to OGRShapeLayer as the requested type when opening
  * existing files so their type won't get reset by the "first feature"
@@ -702,7 +705,8 @@ OGRLayer *OGRShapeDataSource::GetLayer( int iLayer )
 /*      SPATIAL INDEX commands.  Support forms are:                     */
 /*                                                                      */
 /*        CREATE SPATIAL INDEX ON layer_name [DEPTH n]                  */
-/*                                                                      */
+/*        DROP SPATIAL INDEX ON layer_name                              */
+/*        REPACK layer_name                                             */
 /************************************************************************/
 
 OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
@@ -710,6 +714,25 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
                                            const char *pszDialect )
 
 {
+/* ==================================================================== */
+/*      Handle command to drop a spatial index.                         */
+/* ==================================================================== */
+    if( EQUALN(pszStatement, "REPACK ", 7) )
+    {
+        OGRShapeLayer *poLayer = (OGRShapeLayer *) 
+            GetLayerByName( pszStatement + 7 );
+
+        if( poLayer != NULL )
+            poLayer->Repack();
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "No such layer as '%s' in REPACK.", 
+                      pszStatement + 7 );
+        }
+        return NULL;
+    }
+    
 /* ==================================================================== */
 /*      Handle command to drop a spatial index.                         */
 /* ==================================================================== */

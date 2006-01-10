@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/01/10 16:37:57  fwarmerdam
+ * implemented REPACK support
+ *
  * Revision 1.19  2006/01/05 02:15:39  fwarmerdam
  * implement DeleteFeature support
  *
@@ -144,6 +147,7 @@ class OGRShapeLayer : public OGRLayer
   public:
     OGRErr              CreateSpatialIndex( int nMaxDepth );
     OGRErr              DropSpatialIndex();
+    OGRErr              Repack();
 
   public:
                         OGRShapeLayer( const char * pszName,
