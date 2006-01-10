@@ -125,7 +125,14 @@ GDALmake.opt:	GDALmake.opt.in config.status
 docs:
 	(cd ogr; $(MAKE) docs)
 	(cd html; rm -f *.*)
+# Generate translated docs. Should go first, because index.html page should
+# be overwritten with the main one later
+	doxygen -w html html/header.html html/footer.html html/stylesheet.css
+	sed -e 's,iso-8859-1,koi8-r,g' html/header.html > html/header_ru.html
+	(cat Doxyfile ; echo "HTML_HEADER=html/header_ru.html"; echo "INPUT=doc/ru"; echo "OUTPUT_LANGUAGE=Russian") | doxygen -
+# Generate HTML docs
 	doxygen Doxyfile
+# Generate man pages
 	(cat Doxyfile ; echo "ENABLED_SECTIONS=man"; echo "INPUT=doc ogr"; echo "FILE_PATTERNS=*utilities.dox"; echo "GENERATE_HTML=NO"; echo "GENERATE_MAN=YES") | doxygen -
 	cp data/gdalicon.png html
 	cp doc/ERMapperlogo_small.gif html
