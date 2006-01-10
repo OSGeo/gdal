@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.28  2006/01/10 17:03:56  fwarmerdam
+ * added VSI Rename support
+ *
  * Revision 1.27  2005/10/07 00:26:27  fwarmerdam
  * add documentation
  *
@@ -237,6 +240,7 @@ char CPL_DLL   *VSIStrdup( const char * );
 int CPL_DLL VSIMkdir( const char * pathname, long mode );
 int CPL_DLL VSIRmdir( const char * pathname );
 int CPL_DLL VSIUnlink( const char * pathname );
+int CPL_DLL VSIRename( const char * oldpath, const char * newpath );
 char CPL_DLL *VSIStrerror( int );
 
 /* ==================================================================== */
