@@ -4,6 +4,8 @@
 
 /*! \mainpage GDAL - Geospatial Data Abstraction Library
 
+<center><b>Select language</b>: [English]<a href="index_ru.html">[Russian]</a></center>
+
 \htmlonly<img src="gdalicon.png" alt="GDAL">\endhtmlonly \latexonly GDAL \endlatexonly
 is a translator library for raster geospatial data formats
 that is released under an <a href="faq.html#license">X/MIT</a> style 
@@ -17,7 +19,7 @@ a similar capability for simple features vector data.
 The ref <a href="NEWS.html">NEWS</a> page describes the October 2005
 GDAL 1.3.1 release.<p>
 
-Master Page: http://www.gdal.org<br>.
+Master Page: http://www.gdal.org<br>
 Mirror Page: http://www.remotesensing.org/gdal<br>
 Mirror: http://gdal.maptools.org<br>
 Download: 
