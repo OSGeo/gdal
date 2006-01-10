@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2006/01/10 16:40:19  fwarmerdam
+ * Free panRecordsToDelete.
+ *
  * Revision 1.23  2006/01/10 16:37:57  fwarmerdam
  * implemented REPACK support
  *
@@ -1052,5 +1055,8 @@ OGRErr OGRShapeLayer::Repack()
 /*      Update total shape count.                                       */
 /* -------------------------------------------------------------------- */
     nTotalShapeCount = hDBF->nRecords;
+
+    CPLFree( panRecordsToDelete );
+
     return OGRERR_NONE;
 }
