@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/01/10 16:37:57  fwarmerdam
+ * implemented REPACK support
+ *
  * Revision 1.22  2006/01/05 02:15:39  fwarmerdam
  * implement DeleteFeature support
  *
@@ -100,6 +103,7 @@
 
 #include "ogrshape.h"
 #include "cpl_conv.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -876,5 +880,177 @@ OGRErr OGRShapeLayer::CreateSpatialIndex( int nMaxDepth )
 
     CheckForQIX();
 
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                               Repack()                               */
+/*                                                                      */
+/*      Repack the shape and dbf file, dropping deleted records.        */
+/*      FIDs may change.                                                */
+/************************************************************************/
+
+OGRErr OGRShapeLayer::Repack()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Build a list of records to be dropped.                          */
+/* -------------------------------------------------------------------- */
+    int *panRecordsToDelete = (int *) 
+        CPLMalloc(sizeof(int)*(nTotalShapeCount+1));
+    int nDeleteCount = 0;
+    int iShape;
+    OGRErr eErr = OGRERR_NONE;
+
+    for( iShape = 0; iShape < nTotalShapeCount; iShape++ )
+    {
+        if( DBFIsRecordDeleted( hDBF, iShape ) )
+            panRecordsToDelete[nDeleteCount++] = iShape;
+    }
+    panRecordsToDelete[nDeleteCount] = -1;
+
+/* -------------------------------------------------------------------- */
+/*      If there are no records marked for deletion, we take no         */
+/*      action.                                                         */
+/* -------------------------------------------------------------------- */
+    if( nDeleteCount == 0 )
+        return OGRERR_NONE;
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup any existing spatial index.  It will become             */
+/*      meaningless when the fids change.                               */
+/* -------------------------------------------------------------------- */
+    if( CheckForQIX() )
+        DropSpatialIndex();
+
+/* -------------------------------------------------------------------- */
+/*      Create a new dbf file, matching the old.                        */
+/* -------------------------------------------------------------------- */
+    DBFHandle hNewDBF;
+    CPLString oTempFile = CPLGetBasename(pszFullName);
+    oTempFile += "_packed.dbf";
+
+    hNewDBF = DBFCloneEmpty( hDBF, oTempFile );
+    if( hNewDBF == NULL )
+    {
+        CPLFree( panRecordsToDelete );
+
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Failed to create temp file %s.", 
+                  oTempFile.c_str() );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Copy over all records that are not deleted.                     */
+/* -------------------------------------------------------------------- */
+    int iDestShape = 0;
+    int iNextDeletedShape = 0;
+
+    for( iShape = 0; 
+         iShape < nTotalShapeCount && eErr == OGRERR_NONE; 
+         iShape++ )
+    {
+        if( panRecordsToDelete[iNextDeletedShape] == iShape )
+            iNextDeletedShape++;
+        else
+        {
+            void *pTuple = (void *) DBFReadTuple( hDBF, iShape );
+            if( pTuple == NULL )
+                eErr = OGRERR_FAILURE;
+            else if( !DBFWriteTuple( hNewDBF, iDestShape++, pTuple ) )
+                eErr = OGRERR_FAILURE;
+        }                           
+    }
+
+    if( eErr != OGRERR_NONE )
+    {
+        CPLFree( panRecordsToDelete );
+        VSIUnlink( oTempFile );
+        return eErr;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup the old .dbf and rename the new one.                    */
+/* -------------------------------------------------------------------- */
+
+    DBFClose( hDBF );
+    hDBF = hNewDBF;
+
+    VSIUnlink( CPLResetExtension( pszFullName, "dbf" ) );
+    if( VSIRename( oTempFile, CPLResetExtension( pszFullName, "dbf" ) ) != 0 )
+        return OGRERR_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      Now create a shapefile matching the old one.                    */
+/* -------------------------------------------------------------------- */
+    if( hSHP != NULL )
+    {
+        SHPHandle hNewSHP;
+
+        oTempFile = CPLGetBasename(pszFullName);
+        oTempFile += "_packed.shp";
+
+        hNewSHP = SHPCreate( oTempFile, hSHP->nShapeType );
+        if( hNewSHP == NULL )
+            return OGRERR_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      Copy over all records that are not deleted.                     */
+/* -------------------------------------------------------------------- */
+        iNextDeletedShape = 0;
+
+        for( iShape = 0; 
+             iShape < nTotalShapeCount && eErr == OGRERR_NONE; 
+             iShape++ )
+        {
+            if( panRecordsToDelete[iNextDeletedShape] == iShape )
+                iNextDeletedShape++;
+            else
+            {
+                SHPObject *hObject;
+
+                hObject = SHPReadObject( hSHP, iShape );
+                if( hObject == NULL )
+                    eErr = OGRERR_FAILURE;
+                else if( SHPWriteObject( hNewSHP, -1, hObject ) == -1 )
+                    eErr = OGRERR_FAILURE;
+
+                if( hObject )
+                    SHPDestroyObject( hObject );
+            }
+        }
+
+        if( eErr != OGRERR_NONE )
+        {
+            CPLFree( panRecordsToDelete );
+            VSIUnlink( CPLResetExtension( oTempFile, "shp" ) );
+            VSIUnlink( CPLResetExtension( oTempFile, "shx" ) );
+            return eErr;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup the old .shp/.shx and rename the new one.               */
+/* -------------------------------------------------------------------- */
+        SHPClose( hSHP );
+        hSHP = hNewSHP;
+
+        VSIUnlink( CPLResetExtension( pszFullName, "shp" ) );
+        VSIUnlink( CPLResetExtension( pszFullName, "shx" ) );
+
+        if( VSIRename( oTempFile, 
+                       CPLResetExtension( pszFullName, "shp" ) ) != 0 )
+            return OGRERR_FAILURE;
+    
+        oTempFile = CPLResetExtension( oTempFile, "shx" );
+        if( VSIRename( oTempFile, 
+                       CPLResetExtension( pszFullName, "shx" ) ) != 0 )
+            return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Update total shape count.                                       */
+/* -------------------------------------------------------------------- */
+    nTotalShapeCount = hDBF->nRecords;
     return OGRERR_NONE;
 }
