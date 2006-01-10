@@ -101,6 +101,12 @@ Also, .dbf files are required to have at least one field.  If none are created
 by the application an "FID" field will be automatically created and populated
 with the record number.<p>
 
+The OGR shapefile driver supports rewriting existing shapes in a shapefile
+as well as deleting shapes.  Deleted shapes are marked for deletion in 
+the .dbf file, and then ignored by OGR.  To actually remove them permanently
+(resulting in renumbering of FIDs) invoke the SQL 'REPACK <tablename>' via
+the datasource ExecuteSQL() method.<p>
+
 <h3>Dataset Creation Options</h3>
 
 None<p>
