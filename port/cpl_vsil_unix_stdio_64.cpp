@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/01/10 17:03:56  fwarmerdam
+ * added VSI Rename support
+ *
  * Revision 1.8  2005/09/11 18:01:28  fwarmerdam
  * preliminary implementatin of fully virtualized large file api
  *
@@ -120,6 +123,7 @@ public:
                                     const char *pszAccess);
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf );
     virtual int      Unlink( const char *pszFilename );
+    virtual int      Rename( const char *oldpath, const char *newpath );
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
     virtual char   **ReadDir( const char *pszDirname );
@@ -261,6 +265,17 @@ int VSIUnixStdioFilesystemHandler::Unlink( const char * pszFilename )
 
 {
     return unlink( pszFilename );
+}
+
+/************************************************************************/
+/*                               Rename()                               */
+/************************************************************************/
+
+int VSIUnixStdioFilesystemHandler::Rename( const char *oldpath,
+                                           const char *newpath )
+
+{
+    return rename( oldpath, newpath );
 }
 
 /************************************************************************/

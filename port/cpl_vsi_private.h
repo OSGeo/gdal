@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/01/10 17:03:56  fwarmerdam
+ * added VSI Rename support
+ *
  * Revision 1.4  2005/09/15 18:39:00  fwarmerdam
  * fixedup filemanager cleanup
  *
@@ -86,6 +89,8 @@ public:
     virtual char   **ReadDir( const char *pszDirname ) 
 			{ return NULL; }
     virtual          ~VSIFilesystemHandler() {}
+    virtual int      Rename( const char *oldpath, const char *newpath )
+        		{ errno=ENOENT; return -1; }
 };
 
 /************************************************************************/

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/01/10 17:03:56  fwarmerdam
+ * added VSI Rename support
+ *
  * Revision 1.4  2005/10/07 00:26:27  fwarmerdam
  * add documentation
  *
@@ -102,6 +105,37 @@ int VSIUnlink( const char * pszFilename )
         VSIFileManager::GetHandler( pszFilename );
 
     return poFSHandler->Unlink( pszFilename );
+}
+
+/************************************************************************/
+/*                             VSIRename()                              */
+/************************************************************************/
+
+/**
+ * \brief Rename a file.
+ * 
+ * Renames a file object in the file system.  It should be possible
+ * to rename a file onto a new filesystem, but it is safest if this 
+ * function is only used to rename files that remain in the same directory.
+ * 
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX rename() function.
+ *
+ * @param oldpath the name of the file to be renamed.
+ * @param newpath the name the file should be given. 
+ *
+ * @return 0 on success or -1 on an error.
+ */
+
+int VSIRename( const char * oldpath, const char * newpath )
+
+{
+    VSIFilesystemHandler *poFSHandler = 
+        VSIFileManager::GetHandler( oldpath );
+
+    return poFSHandler->Rename( oldpath, newpath );
 }
 
 /************************************************************************/
