@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/01/11 16:04:08  fwarmerdam
+ * added Rename() operator
+ *
  * Revision 1.13  2005/09/29 03:24:56  fwarmerdam
  * Don't blow a gasket if nSize is 0 in read or write.
  *
@@ -67,6 +70,7 @@ public:
                                     const char *pszAccess);
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf );
     virtual int      Unlink( const char *pszFilename );
+    virtual int      Rename( const char *oldpath, const char *newpath );
     virtual int      Mkdir( const char *pszDirname, long nMode );
     virtual int      Rmdir( const char *pszDirname );
     virtual char   **ReadDir( const char *pszDirname );
@@ -309,6 +313,17 @@ int VSIWin32FilesystemHandler::Unlink( const char * pszFilename )
 
 {
     return unlink( pszFilename );
+}
+
+/************************************************************************/
+/*                               Rename()                               */
+/************************************************************************/
+
+int VSIWin32FilesystemHandler::Rename( const char *oldpath,
+                                           const char *newpath )
+
+{
+    return rename( oldpath, newpath );
 }
 
 /************************************************************************/
