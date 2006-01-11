@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2006/01/11 03:03:19  fwarmerdam
+ * Assign .prj filename to temporary string.
+ *
  * Revision 1.30  2006/01/10 16:37:57  fwarmerdam
  * implemented REPACK support
  *
@@ -632,7 +635,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
     if( poSRS != NULL )
     {
         char    *pszWKT = NULL;
-        const char *pszPrjFile = CPLFormFilename( NULL, pszBasename, "prj");
+        CPLString osPrjFile = CPLFormFilename( NULL, pszBasename, "prj");
         FILE    *fp;
 
         /* the shape layer needs it's own copy */
@@ -640,7 +643,7 @@ OGRShapeDataSource::CreateLayer( const char * pszLayerName,
         poSRS->morphToESRI();
 
         if( poSRS->exportToWkt( &pszWKT ) == OGRERR_NONE 
-            && (fp = VSIFOpen( pszPrjFile, "wt" )) != NULL )
+            && (fp = VSIFOpen( osPrjFile, "wt" )) != NULL )
         {
             VSIFWrite( pszWKT, strlen(pszWKT), 1, fp );
             VSIFClose( fp );
