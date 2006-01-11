@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/01/11 02:35:56  fwarmerdam
+ * Fixed mutex cleanup.
+ *
  * Revision 1.6  2006/01/11 00:39:40  fwarmerdam
  * protect oFileList with a mutex (bug 1031)
  *
@@ -359,7 +362,8 @@ VSIMemFilesystemHandler::~VSIMemFilesystemHandler()
     for( iter = oFileList.begin(); iter != oFileList.end(); iter++ )
         delete iter->second;
 
-    CPLDestroyMutex( hMutex );
+    if( hMutex != NULL )
+        CPLDestroyMutex( hMutex );
     hMutex = NULL;
 }
 
