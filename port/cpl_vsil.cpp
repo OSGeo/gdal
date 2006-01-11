@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/01/11 00:29:54  fwarmerdam
+ * added brief not on multithreading
+ *
  * Revision 1.5  2006/01/10 17:03:56  fwarmerdam
  * added VSI Rename support
  *
@@ -457,6 +460,14 @@ int VSIFEofL( FILE * fp )
 /*                           VSIFileManager()                           */
 /* ==================================================================== */
 /************************************************************************/
+
+/*
+** Notes on Multithreading:
+**
+** The VSIFileManager maintains a list of file type handlers (mem, large
+** file, etc).  It should be thread safe as long as all the handlers are
+** instantiated before multiple threads begin to operate. 
+**/
 
 /************************************************************************/
 /*                           VSIFileManager()                           */
