@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2006/01/11 03:50:28  fwarmerdam
+ * Fixed usage message to make it clear the layer is optional.
+ *
  * Revision 1.32  2005/11/25 02:17:30  fwarmerdam
  * Added --help-general.
  *
@@ -562,7 +565,7 @@ static void Usage()
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
             "               [[-dsco NAME=VALUE] ...] dst_datasource_name\n"
             "               src_datasource_name\n"
-            "               [-lco NAME=VALUE] [-nln name] [-nlt type] layer [layer ...]]\n"
+            "               [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]\n"
             "\n"
             " -f format_name: output file format name, possible values are:\n");
     
