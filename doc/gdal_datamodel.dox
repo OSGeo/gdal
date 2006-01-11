@@ -122,7 +122,7 @@ kept as a list of name/value pairs.  The names are required to be well
 behaved tokens (no spaces, or odd characters).  The values can be of
 any length, and contain anything except an embedded null (ASCII zero).  
 
-The metadata handling system is well tuned to handling very large bodies
+The metadata handling system is not well tuned to handling very large bodies
 of metadata.  Handling of more than 100K of metadata for a dataset is likely
 to lead to performance degradation. 
 
@@ -137,6 +137,56 @@ including the date/time field which is returned as:
 <pre>
 TIFFTAG_DATETIME=1999:05:11 11:29:56
 </pre>
+
+Metadata is split into named groups called domains, with the default
+domain having no name (NULL or "").  Some specific domains exist for 
+special purposes.  Note that currently there is no way to enumerate all
+the domains available for a given object, but applications can "test" for
+any domains they know how to interprete. 
+
+\subsubsection gdal_datamodel_subdatasets SUBDATASETS Domain
+
+The SUBDATASETS domain holds a list of child datasets.  Normally this is
+used to provide pointers to a list of images stored within a single multi
+image file (such as HDF or NITF).  For instance, an NITF with four images
+might have the following subdataset list. 
+
+<pre>
+  SUBDATASET_1_NAME=NITF_IM:0:multi_1b.ntf
+  SUBDATASET_1_DESC=Image 1 of multi_1b.ntf
+  SUBDATASET_2_NAME=NITF_IM:1:multi_1b.ntf
+  SUBDATASET_2_DESC=Image 2 of multi_1b.ntf
+  SUBDATASET_3_NAME=NITF_IM:2:multi_1b.ntf
+  SUBDATASET_3_DESC=Image 3 of multi_1b.ntf
+  SUBDATASET_4_NAME=NITF_IM:3:multi_1b.ntf
+  SUBDATASET_4_DESC=Image 4 of multi_1b.ntf
+  SUBDATASET_5_NAME=NITF_IM:4:multi_1b.ntf
+  SUBDATASET_5_DESC=Image 5 of multi_1b.ntf
+</pre>
+
+The value of the _NAME is the string that can be passed to GDALOpen() to 
+access the file.  The _DESC value is intended to be a more user friendly
+string that can be displayed to the user in a selector. 
+
+\subsubsection gdal_datamodel_image_structure IMAGE_STRUCTURE Domain
+
+Metadata in the default domain is intended to be related to the 
+image, and not particularly related to the way the image is stored on
+disk.  That is, it is suitable for copying with the dataset when it is
+copied to a new format.  Some information of interest is closely tied
+to a particular file format and storage mechanism.  In order to prevent
+this getting copied along with datasets it is placed in a special domain
+called IMAGE_STRUCTURE that should not normally be copied to new formats. 
+
+One item that appears in the IMAGE_STRUCTURE domain is the compression
+scheme used for a fromat.  The metadata item name is COMPRESSION but the
+value can be format specific.
+
+\subsubsection gdal_datamodel_xml xml: Domains
+
+Any domain name prefixed with "xml:" is not normal name/value metadata. 
+It is a single XML document stored in one big string. 
+
 
 \section gdal_datamodel_rasterband Raster Band
 
