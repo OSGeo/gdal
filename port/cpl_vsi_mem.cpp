@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/01/11 00:39:40  fwarmerdam
+ * protect oFileList with a mutex (bug 1031)
+ *
  * Revision 1.5  2005/10/07 00:26:27  fwarmerdam
  * add documentation
  *
@@ -47,9 +50,37 @@
 
 #include "cpl_vsi_private.h"
 #include "cpl_string.h"
+#include "cpl_multiproc.h"
 #include <map>
 
 CPL_CVSID("$Id$");
+
+/*
+** Notes on Multithreading:
+**
+** VSIMemFilesystemHandler: This class maintains a mutex to protect
+** access and update of the oFileList array which has all the "files" in 
+** the memory filesystem area.  It is expected that multiple threads would
+** want to create and read different files at the same time and so might
+** collide access oFileList without the mutex.
+**
+** VSIMemFile: In theory we could allow different threads to update the
+** the same memory file, but for simplicity we restrict to single writer,
+** multiple reader as an expectation on the application code (not enforced
+** here), which means we don't need to do any protection of this class.
+**
+** VSIMemHandle: This is essentially a "current location" representing
+** on accessor to a file, and is inherently intended only to be used in 
+** a single thread. 
+**
+** In General:
+**
+** Multiple threads accessing the memory filesystem are ok as long as
+**  1) A given VSIMemHandle (ie. FILE * at app level) isn't used by multiple 
+**     threads at once. 
+**  2) A given memory file isn't accessed by more than one thread unless
+**     all threads are just reading.
+*/ 
 
 /************************************************************************/
 /* ==================================================================== */
@@ -106,7 +137,9 @@ class VSIMemFilesystemHandler : public VSIFilesystemHandler
 {
 public:
     std::map<CPLString,VSIMemFile*>   oFileList;
+    void             *hMutex;
 
+                     VSIMemFilesystemHandler();
     virtual          ~VSIMemFilesystemHandler();
 
     virtual VSIVirtualHandle *Open( const char *pszFilename, 
@@ -305,6 +338,16 @@ int VSIMemHandle::Eof()
 /************************************************************************/
 
 /************************************************************************/
+/*                      VSIMemFilesystemHandler()                       */
+/************************************************************************/
+
+VSIMemFilesystemHandler::VSIMemFilesystemHandler()
+
+{
+    hMutex = NULL;
+}
+
+/************************************************************************/
 /*                      ~VSIMemFilesystemHandler()                      */
 /************************************************************************/
 
@@ -315,6 +358,9 @@ VSIMemFilesystemHandler::~VSIMemFilesystemHandler()
 
     for( iter = oFileList.begin(); iter != oFileList.end(); iter++ )
         delete iter->second;
+
+    CPLDestroyMutex( hMutex );
+    hMutex = NULL;
 }
 
 /************************************************************************/
@@ -326,6 +372,7 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
                                const char *pszAccess )
 
 {
+    CPLMutexHolder oHolder( &hMutex );
     VSIMemFile *poFile;
 
 /* -------------------------------------------------------------------- */
@@ -384,6 +431,8 @@ int VSIMemFilesystemHandler::Stat( const char * pszFilename,
                                    VSIStatBufL * pStatBuf )
     
 {
+    CPLMutexHolder oHolder( &hMutex );
+
     if( oFileList.find(pszFilename) == oFileList.end() )
     {
         errno = ENOENT;
@@ -415,6 +464,8 @@ int VSIMemFilesystemHandler::Stat( const char * pszFilename,
 int VSIMemFilesystemHandler::Unlink( const char * pszFilename )
 
 {
+    CPLMutexHolder oHolder( &hMutex );
+
     VSIMemFile *poFile;
 
     if( oFileList.find(pszFilename) == oFileList.end() )
@@ -441,6 +492,8 @@ int VSIMemFilesystemHandler::Mkdir( const char * pszPathname,
                                     long nMode )
 
 {
+    CPLMutexHolder oHolder( &hMutex );
+
     if( oFileList.find(pszPathname) != oFileList.end() )
     {
         errno = EEXIST;
@@ -463,6 +516,8 @@ int VSIMemFilesystemHandler::Mkdir( const char * pszPathname,
 int VSIMemFilesystemHandler::Rmdir( const char * pszPathname )
 
 {
+    CPLMutexHolder oHolder( &hMutex );
+
     return Unlink( pszPathname );
 }
 
