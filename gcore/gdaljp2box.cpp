@@ -28,6 +28,11 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/01/11 06:30:18  fwarmerdam
+ * Fixed bug in ReadBox() with boxes where LBox is 1 and the length
+ * is read from the XLBox (such as GeoJP2 UUID Boxes from Erdas Imagine).
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1032
+ *
  * Revision 1.4  2005/09/14 19:26:50  fwarmerdam
  * added better debug output
  *
@@ -164,8 +169,7 @@ int GDALJP2Box::ReadBox()
     else
     {
         GByte abyXLBox[8];
-
-        if( VSIFReadL( &nLBox, 8, 1, fpVSIL ) != 1 )
+        if( VSIFReadL( abyXLBox, 8, 1, fpVSIL ) != 1 )
             return FALSE;
 
         
