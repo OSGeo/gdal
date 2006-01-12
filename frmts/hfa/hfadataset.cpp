@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.72  2006/01/12 22:15:38  fwarmerdam
+ * Fix name of albers conical equal area when writing, bug 1035.
+ *
  * Revision 1.71  2005/12/21 05:30:45  fwarmerdam
  * return compression type as metadata
  *
@@ -1512,7 +1515,7 @@ CPLErr HFADataset::WriteProjection()
     else if( EQUAL(pszProjName,SRS_PT_ALBERS_CONIC_EQUAL_AREA) )
     {
         sPro.proNumber = EPRJ_ALBERS_CONIC_EQUAL_AREA;
-        sPro.proName = "Albers Conic Equal Area";
+        sPro.proName = "Albers Conical Equal Area";
         sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_1)*D2R;
         sPro.proParams[3] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_2)*D2R;
         sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_LONGITUDE_OF_CENTER)*D2R;
