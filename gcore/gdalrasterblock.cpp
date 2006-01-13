@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/01/13 20:40:47  fwarmerdam
+ * grab mutex in raster block destructor while updating nCacheUsed.
+ *
  * Revision 1.20  2005/07/11 19:06:36  fwarmerdam
  * Removed tile ticker, and GDALRasterBlock age.
  *
@@ -274,7 +277,11 @@ GDALRasterBlock::~GDALRasterBlock()
         VSIFree( pData );
 
         nSizeInBytes = (nXSize * nYSize * GDALGetDataTypeSize(eType)+7)/8;
-        nCacheUsed -= nSizeInBytes;
+
+        {
+            CPLMutexHolderD( &hRBMutex );
+            nCacheUsed -= nSizeInBytes;
+        }
     }
 
     CPLAssert( nLockCount == 0 );
