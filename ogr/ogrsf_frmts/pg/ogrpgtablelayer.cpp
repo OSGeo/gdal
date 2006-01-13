@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2006/01/13 13:21:57  fwarmerdam
+ * Ensure that column widths for VARCHAR are used if available.  Bug 1037
+ *
  * Revision 1.48  2005/12/05 11:34:22  dron
  * Handle 'double precision[]' arrays in ReadTableDefinition().
  *
@@ -367,7 +370,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
             continue;
         }
 
-        if( EQUAL(pszType,"varchar") || EQUAL(pszType,"text") )
+        if( EQUAL(pszType,"text") )
         {
             oField.SetType( OFTString );
         }
@@ -375,7 +378,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
         {
             oField.SetType( OFTStringList );
         }
-        else if( EQUAL(pszType,"bpchar") )
+        else if( EQUAL(pszType,"bpchar") || EQUAL(pszType,"varchar") )
         {
             int nWidth;
 
@@ -384,6 +387,8 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
             {
                 if( EQUALN(pszFormatType,"character(",10) )
                     nWidth = atoi(pszFormatType+10);
+                else if( EQUALN(pszFormatType,"character varying(",18) )
+                    nWidth = atoi(pszFormatType+18);
                 else
                     nWidth = 0;
             }
