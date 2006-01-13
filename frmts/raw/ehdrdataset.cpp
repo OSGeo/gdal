@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2006/01/13 00:18:12  fwarmerdam
+ * Fixed error on failed open.
+ *
  * Revision 1.30  2005/12/21 00:41:48  fwarmerdam
  * added support for reading/writing PIXELTYPE.
  * Added support for reading/writing writing geotransform and projection.
@@ -521,7 +524,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Failed to open %s with write permission.\n%s", 
-                  VSIStrerror( errno ) );
+                  pszName, VSIStrerror( errno ) );
         delete poDS;
         CPLFree( pszName );
         CPLFree( pszPath );
