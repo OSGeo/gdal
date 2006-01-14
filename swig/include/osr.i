@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.22  2006/01/14 01:47:22  cfis
+ * Added private default constructors since SWIG 1.3.28 HEAD was incorrectly generating them.
+ *
  * Revision 1.21  2005/09/06 01:43:06  kruland
  * Include gdal_typemaps.i if no other file is specified.
  *
@@ -267,6 +270,7 @@ void OPTGetParameterInfo( char *method, char *param, char **usrname,
 %rename (SpatialReference) OSRSpatialReferenceShadow;
 class OSRSpatialReferenceShadow {
 private:
+  OSRSpatialReferenceShadow();
 public:
 %extend {
 
@@ -636,6 +640,7 @@ public:
 %rename (CoordinateTransformation) OSRCoordinateTransformationShadow;
 class OSRCoordinateTransformationShadow {
 private:
+  OSRCoordinateTransformationShadow();
 public:
 %extend {
 
