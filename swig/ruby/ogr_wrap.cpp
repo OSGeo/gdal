@@ -2200,6 +2200,9 @@ SWIGINTERN OGRGeometryShadow *new_OGRGeometryShadow(OGRwkbGeometryType type=wkbU
     // throw?
     else return 0;
   }
+
+#define output_helper SWIG_Ruby_AppendOutput
+
 SWIGINTERN OGRErr OGRGeometryShadow_ExportToWkt(OGRGeometryShadow *self,char **argout){
     return OGR_G_ExportToWkt(self, argout);
   }
@@ -3005,19 +3008,17 @@ _wrap_DataSource_delete_layer(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -3572,20 +3573,18 @@ _wrap_Layer_set_attribute_filter(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return Qnil;
@@ -3759,19 +3758,17 @@ _wrap_Layer_set_next_by_index(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -3811,19 +3808,17 @@ _wrap_Layer_set_feature(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -3863,19 +3858,17 @@ _wrap_Layer_create_feature(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -3915,19 +3908,17 @@ _wrap_Layer_delete_feature(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -3959,19 +3950,17 @@ _wrap_Layer_sync_to_disk(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -4099,29 +4088,30 @@ _wrap_Layer_get_extent(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   {
     /* %typemap(argout) (double argout[ANY]) */
-    vresult = rb_ary_new();
+    VALUE outArr = rb_ary_new();
     
     for(int i=0; i<4; i++)
     {
-      VALUE value = rb_float_new(arg2[i]);
-      rb_ary_push(vresult, value);
+      VALUE value = rb_float_new((arg2)[i]);
+      rb_ary_push(outArr, value);
     }
+    
+    /* Add the output to the result */
+    vresult = SWIG_Ruby_AppendOutput(vresult, outArr);	
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -4217,19 +4207,17 @@ _wrap_Layer_create_field(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -4261,19 +4249,17 @@ _wrap_Layer_start_transaction(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -4305,19 +4291,17 @@ _wrap_Layer_commit_transaction(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -4349,19 +4333,17 @@ _wrap_Layer_rollback_transaction(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -4589,19 +4571,17 @@ _wrap_Feature_set_geometry(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -4639,19 +4619,17 @@ _wrap_Feature_set_geometry_directly(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -5537,19 +5515,17 @@ _wrap_Feature_set_fid(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -5903,19 +5879,17 @@ _wrap_Feature_set_from(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -7251,7 +7225,6 @@ _wrap_Geometry_export_to_wkt(int argc, VALUE *argv, VALUE self) {
   
   {
     /* %typemap(in,numinputs=0) (char **argout2) ( char *argout2=0 ) */
-    
     arg2 = &argout2;
   }
   if ((argc < 0) || (argc > 0)) {
@@ -7272,29 +7245,29 @@ _wrap_Geometry_export_to_wkt(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   {
     /* %typemap(argout) (char **argout) */
-    
+    VALUE outArg;
     if ( arg2 ) {
-      vresult = rb_str_new2( *arg2 );
+      outArg = rb_str_new2( *arg2 );
     }
     else {
-      vresult = Qnil;
+      outArg = Qnil;
     }
+    
+    vresult = SWIG_Ruby_AppendOutput(vresult, outArg);
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -7345,23 +7318,21 @@ _wrap_Geometry_export_to_wkb(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   {
     /* %typemap(argout) (int *nLen, char **pBuf ) */
     vresult = rb_str_new(*arg3, *arg2);
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -7489,19 +7460,17 @@ _wrap_Geometry_add_geometry_directly(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -7541,19 +7510,17 @@ _wrap_Geometry_add_geometry(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -8692,19 +8659,17 @@ _wrap_Geometry_transform_to(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -8744,19 +8709,17 @@ _wrap_Geometry_transform(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -8921,13 +8884,16 @@ _wrap_Geometry_get_envelope(int argc, VALUE *argv, VALUE self) {
   }
   {
     /* %typemap(argout) (double argout[ANY]) */
-    vresult = rb_ary_new();
+    VALUE outArr = rb_ary_new();
     
     for(int i=0; i<4; i++)
     {
-      VALUE value = rb_float_new(arg2[i]);
-      rb_ary_push(vresult, value);
+      VALUE value = rb_float_new((arg2)[i]);
+      rb_ary_push(outArr, value);
     }
+    
+    /* Add the output to the result */
+    vresult = SWIG_Ruby_AppendOutput(vresult, outArr);	
   }
   return vresult;
 fail:
@@ -9137,19 +9103,17 @@ _wrap_set_generate_db2_v72_byte_order(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
