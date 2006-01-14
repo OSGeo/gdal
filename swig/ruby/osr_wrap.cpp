@@ -1585,6 +1585,9 @@ SWIG_AsCharPtrAndSize(VALUE obj, char** cptr, size_t* psize, int *alloc)
 
 
 
+
+#define output_helper SWIG_Ruby_AppendOutput
+
 SWIGINTERN OSRSpatialReferenceShadow *new_OSRSpatialReferenceShadow(char const *wkt=""){
     OSRSpatialReferenceShadow *sr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(wkt);
     if (sr) {
@@ -1917,7 +1920,6 @@ _wrap_get_well_known_geog_csas_wkt(int argc, VALUE *argv, VALUE self) {
   
   {
     /* %typemap(in,numinputs=0) (char **argout2) ( char *argout2=0 ) */
-    
     arg2 = &argout2;
   }
   if ((argc < 1) || (argc > 1)) {
@@ -1931,30 +1933,30 @@ _wrap_get_well_known_geog_csas_wkt(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)GetWellKnownGeogCSAsWKT((char const *)arg1,arg2);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   {
     /* %typemap(argout) (char **argout) */
-    
+    VALUE outArg;
     if ( arg2 ) {
-      vresult = rb_str_new2( *arg2 );
+      outArg = rb_str_new2( *arg2 );
     }
     else {
-      vresult = Qnil;
+      outArg = Qnil;
     }
+    
+    vresult = SWIG_Ruby_AppendOutput(vresult, outArg);
   }
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   return Qnil;
@@ -2360,21 +2362,19 @@ _wrap_SpatialReference_set_attr_value(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetAttrValue(arg1,(char const *)arg2,(char const *)arg3);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
@@ -2418,20 +2418,18 @@ _wrap_SpatialReference_set_angular_units(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetAngularUnits(arg1,(char const *)arg2,arg3);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return Qnil;
@@ -2499,20 +2497,18 @@ _wrap_SpatialReference_set_linear_units(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetLinearUnits(arg1,(char const *)arg2,arg3);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return Qnil;
@@ -2678,19 +2674,17 @@ _wrap_SpatialReference_set_utm(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetUTM(arg1,arg2,arg3);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -2754,20 +2748,18 @@ _wrap_SpatialReference_set_state_plane(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetStatePlane(arg1,arg2,arg3,(char const *)arg4,arg5);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
   return Qnil;
@@ -2793,19 +2785,17 @@ _wrap_SpatialReference_auto_identify_epsg(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_AutoIdentifyEPSG(arg1);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -2839,20 +2829,18 @@ _wrap_SpatialReference_set_projection(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetProjection(arg1,(char const *)arg2);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return Qnil;
@@ -2895,20 +2883,18 @@ _wrap_SpatialReference_set_proj_parm(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetProjParm(arg1,(char const *)arg2,arg3);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return Qnil;
@@ -2997,20 +2983,18 @@ _wrap_SpatialReference_set_norm_proj_parm(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetNormProjParm(arg1,(char const *)arg2,arg3);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return Qnil;
@@ -3130,19 +3114,17 @@ _wrap_SpatialReference_set_acea(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetACEA(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -3199,19 +3181,17 @@ _wrap_SpatialReference_set_ae(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetAE(arg1,arg2,arg3,arg4,arg5);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -3268,19 +3248,17 @@ _wrap_SpatialReference_set_cs(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetCS(arg1,arg2,arg3,arg4,arg5);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -3337,19 +3315,17 @@ _wrap_SpatialReference_set_bonne(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetBonne(arg1,arg2,arg3,arg4,arg5);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -3422,19 +3398,17 @@ _wrap_SpatialReference_set_ec(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetEC(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -3483,19 +3457,17 @@ _wrap_SpatialReference_set_eckert_iv(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetEckertIV(arg1,arg2,arg3,arg4);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -3544,19 +3516,17 @@ _wrap_SpatialReference_set_eckert_vi(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetEckertVI(arg1,arg2,arg3,arg4);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -3613,19 +3583,17 @@ _wrap_SpatialReference_set_equirectangular(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetEquirectangular(arg1,arg2,arg3,arg4,arg5);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -3677,19 +3645,17 @@ _wrap_SpatialReference_set_gs(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetGS(arg1,arg2,arg3,arg4);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -3723,20 +3689,18 @@ _wrap_SpatialReference_set_well_known_geog_cs(int argc, VALUE *argv, VALUE self)
   result = (OGRErr)OSRSpatialReferenceShadow_SetWellKnownGeogCS(arg1,(char const *)arg2);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return Qnil;
@@ -3771,20 +3735,18 @@ _wrap_SpatialReference_set_from_user_input(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetFromUserInput(arg1,(char const *)arg2);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return Qnil;
@@ -3818,19 +3780,17 @@ _wrap_SpatialReference_copy_geog_csfrom(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_CopyGeogCSFrom(arg1,arg2);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -3919,19 +3879,17 @@ _wrap_SpatialReference_set_towgs84(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetTOWGS84(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -3962,29 +3920,30 @@ _wrap_SpatialReference_get_towgs84(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_GetTOWGS84(arg1,arg2);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   {
     /* %typemap(argout) (double argout[ANY]) */
-    vresult = rb_ary_new();
+    VALUE outArr = rb_ary_new();
     
     for(int i=0; i<7; i++)
     {
-      VALUE value = rb_float_new(arg2[i]);
-      rb_ary_push(vresult, value);
+      VALUE value = rb_float_new((arg2)[i]);
+      rb_ary_push(outArr, value);
     }
+    
+    /* Add the output to the result */
+    vresult = SWIG_Ruby_AppendOutput(vresult, outArr);	
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -4094,24 +4053,22 @@ _wrap_SpatialReference_set_geog_cs(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetGeogCS(arg1,(char const *)arg2,(char const *)arg3,(char const *)arg4,arg5,arg6,(char const *)arg7,arg8,(char const *)arg9,arg10);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
   if (alloc4 == SWIG_NEWOBJ) delete[] buf4;
   if (alloc7 == SWIG_NEWOBJ) delete[] buf7;
   if (alloc9 == SWIG_NEWOBJ) delete[] buf9;
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
@@ -4152,20 +4109,18 @@ _wrap_SpatialReference_set_proj_cs(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_SetProjCS(arg1,(char const *)arg2);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return Qnil;
@@ -4199,19 +4154,17 @@ _wrap_SpatialReference_import_from_wkt(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_ImportFromWkt(arg1,arg2);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -4245,20 +4198,18 @@ _wrap_SpatialReference_import_from_proj4(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_ImportFromProj4(arg1,arg2);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return Qnil;
@@ -4292,19 +4243,17 @@ _wrap_SpatialReference_import_from_esri(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_ImportFromESRI(arg1,arg2);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -4337,19 +4286,17 @@ _wrap_SpatialReference_import_from_epsg(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_ImportFromEPSG(arg1,arg2);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -4370,7 +4317,7 @@ _wrap_SpatialReference_import_from_pci(int argc, VALUE *argv, VALUE self) {
   int res3 ;
   char *buf3 = 0 ;
   int alloc3 = 0 ;
-  double argin4[17] ;
+  double temp4[17] ;
   VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 3)) {
@@ -4395,7 +4342,7 @@ _wrap_SpatialReference_import_from_pci(int argc, VALUE *argv, VALUE self) {
   }
   if (argc > 2) {
     {
-      /* %typemap(in) (double argin4[ANY]) (double argin4[17]) */
+      /* %typemap(in) (double argin[ANY]) (double temp4[17]) */
       /* Make sure this is an array. */
       Check_Type(argv[2], T_ARRAY);
       
@@ -4410,29 +4357,30 @@ _wrap_SpatialReference_import_from_pci(int argc, VALUE *argv, VALUE self) {
         /* Get the Ruby Object */
         VALUE item = rb_ary_entry(argv[2],i);
         
-        /* Convert to double */
-        arg4[i] = NUM2DBL(item);
+        /* Convert to double and store in array*/
+        temp4[i] = NUM2DBL(item);
       }
+      
+      /* Set argument arg4 equal to the temp4 array */
+      arg4 = temp4;
     }
   }
   result = (OGRErr)OSRSpatialReferenceShadow_ImportFromPCI(arg1,(char const *)arg2,(char const *)arg3,arg4);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
@@ -4454,7 +4402,7 @@ _wrap_SpatialReference_import_from_usgs(int argc, VALUE *argv, VALUE self) {
   int ecode2 = 0 ;
   long val3 ;
   int ecode3 = 0 ;
-  double argin4[15] ;
+  double temp4[15] ;
   long val5 ;
   int ecode5 = 0 ;
   VALUE vresult = Qnil;
@@ -4481,7 +4429,7 @@ _wrap_SpatialReference_import_from_usgs(int argc, VALUE *argv, VALUE self) {
   }
   if (argc > 2) {
     {
-      /* %typemap(in) (double argin4[ANY]) (double argin4[15]) */
+      /* %typemap(in) (double argin[ANY]) (double temp4[15]) */
       /* Make sure this is an array. */
       Check_Type(argv[2], T_ARRAY);
       
@@ -4496,9 +4444,12 @@ _wrap_SpatialReference_import_from_usgs(int argc, VALUE *argv, VALUE self) {
         /* Get the Ruby Object */
         VALUE item = rb_ary_entry(argv[2],i);
         
-        /* Convert to double */
-        arg4[i] = NUM2DBL(item);
+        /* Convert to double and store in array*/
+        temp4[i] = NUM2DBL(item);
       }
+      
+      /* Set argument arg4 equal to the temp4 array */
+      arg4 = temp4;
     }
   }
   if (argc > 3) {
@@ -4511,19 +4462,17 @@ _wrap_SpatialReference_import_from_usgs(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_ImportFromUSGS(arg1,arg2,arg3,arg4,arg5);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -4557,20 +4506,18 @@ _wrap_SpatialReference_import_from_xml(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_ImportFromXML(arg1,(char const *)arg2);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
   return Qnil;
@@ -4589,7 +4536,6 @@ _wrap_SpatialReference_export_to_wkt(int argc, VALUE *argv, VALUE self) {
   
   {
     /* %typemap(in,numinputs=0) (char **argout2) ( char *argout2=0 ) */
-    
     arg2 = &argout2;
   }
   if ((argc < 0) || (argc > 0)) {
@@ -4603,29 +4549,29 @@ _wrap_SpatialReference_export_to_wkt(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_ExportToWkt(arg1,arg2);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   {
     /* %typemap(argout) (char **argout) */
-    
+    VALUE outArg;
     if ( arg2 ) {
-      vresult = rb_str_new2( *arg2 );
+      outArg = rb_str_new2( *arg2 );
     }
     else {
-      vresult = Qnil;
+      outArg = Qnil;
     }
+    
+    vresult = SWIG_Ruby_AppendOutput(vresult, outArg);
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -4646,7 +4592,6 @@ _wrap_SpatialReference_export_to_pretty_wkt(int argc, VALUE *argv, VALUE self) {
   
   {
     /* %typemap(in,numinputs=0) (char **argout2) ( char *argout2=0 ) */
-    
     arg2 = &argout2;
   }
   if ((argc < 0) || (argc > 1)) {
@@ -4667,29 +4612,29 @@ _wrap_SpatialReference_export_to_pretty_wkt(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_ExportToPrettyWkt(arg1,arg2,arg3);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   {
     /* %typemap(argout) (char **argout) */
-    
+    VALUE outArg;
     if ( arg2 ) {
-      vresult = rb_str_new2( *arg2 );
+      outArg = rb_str_new2( *arg2 );
     }
     else {
-      vresult = Qnil;
+      outArg = Qnil;
     }
+    
+    vresult = SWIG_Ruby_AppendOutput(vresult, outArg);
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -4707,7 +4652,6 @@ _wrap_SpatialReference_export_to_proj4(int argc, VALUE *argv, VALUE self) {
   
   {
     /* %typemap(in,numinputs=0) (char **argout2) ( char *argout2=0 ) */
-    
     arg2 = &argout2;
   }
   if ((argc < 0) || (argc > 0)) {
@@ -4721,29 +4665,29 @@ _wrap_SpatialReference_export_to_proj4(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_ExportToProj4(arg1,arg2);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   {
     /* %typemap(argout) (char **argout) */
-    
+    VALUE outArg;
     if ( arg2 ) {
-      vresult = rb_str_new2( *arg2 );
+      outArg = rb_str_new2( *arg2 );
     }
     else {
-      vresult = Qnil;
+      outArg = Qnil;
     }
+    
+    vresult = SWIG_Ruby_AppendOutput(vresult, outArg);
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -4765,12 +4709,10 @@ _wrap_SpatialReference_export_to_pci(int argc, VALUE *argv, VALUE self) {
   
   {
     /* %typemap(in,numinputs=0) (char **argout2) ( char *argout2=0 ) */
-    
     arg2 = &argout2;
   }
   {
     /* %typemap(in,numinputs=0) (char **argout3) ( char *argout3=0 ) */
-    
     arg3 = &argout3;
   }
   {
@@ -4788,49 +4730,56 @@ _wrap_SpatialReference_export_to_pci(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_ExportToPCI(arg1,arg2,arg3,arg4);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   {
     /* %typemap(argout) (char **argout) */
-    
+    VALUE outArg;
     if ( arg2 ) {
-      vresult = rb_str_new2( *arg2 );
+      outArg = rb_str_new2( *arg2 );
     }
     else {
-      vresult = Qnil;
+      outArg = Qnil;
     }
+    
+    vresult = SWIG_Ruby_AppendOutput(vresult, outArg);
   }
   {
     /* %typemap(argout) (char **argout) */
-    
+    VALUE outArg;
     if ( arg3 ) {
-      vresult = rb_str_new2( *arg3 );
+      outArg = rb_str_new2( *arg3 );
     }
     else {
-      vresult = Qnil;
+      outArg = Qnil;
     }
+    
+    vresult = SWIG_Ruby_AppendOutput(vresult, outArg);
   }
   {
     /* %typemap(argout) (double argout[ANY]) */
-    vresult = rb_ary_new();
+    VALUE outArr = rb_ary_new();
     
     for(int i=0; i<17; i++)
     {
-      VALUE value = rb_float_new(*arg4[i]);
-      rb_ary_push(vresult, value);
+      /* arg4 is a pointer to an array, so first dereference the array,
+             then specify the index. */
+      VALUE value = rb_float_new((*arg4)[i]);
+      rb_ary_push(outArr, value);
     }
+    
+    /* Add the output to the result */
+    vresult = SWIG_Ruby_AppendOutput(vresult, outArr);	
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -4873,17 +4822,10 @@ _wrap_SpatialReference_export_to_usgs(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_ExportToUSGS(arg1,arg2,arg3,arg4,arg5);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   if (SWIG_IsTmpObj(res2)) {
     vresult = SWIG_Ruby_AppendOutput(vresult, SWIG_From_long((*arg2)));
@@ -4899,13 +4841,18 @@ _wrap_SpatialReference_export_to_usgs(int argc, VALUE *argv, VALUE self) {
   }
   {
     /* %typemap(argout) (double argout[ANY]) */
-    vresult = rb_ary_new();
+    VALUE outArr = rb_ary_new();
     
     for(int i=0; i<15; i++)
     {
-      VALUE value = rb_float_new(*arg4[i]);
-      rb_ary_push(vresult, value);
+      /* arg4 is a pointer to an array, so first dereference the array,
+             then specify the index. */
+      VALUE value = rb_float_new((*arg4)[i]);
+      rb_ary_push(outArr, value);
     }
+    
+    /* Add the output to the result */
+    vresult = SWIG_Ruby_AppendOutput(vresult, outArr);	
   }
   if (SWIG_IsTmpObj(res5)) {
     vresult = SWIG_Ruby_AppendOutput(vresult, SWIG_From_long((*arg5)));
@@ -4913,7 +4860,12 @@ _wrap_SpatialReference_export_to_usgs(int argc, VALUE *argv, VALUE self) {
     int new_flags = SWIG_IsNewObj(res5) ? (SWIG_POINTER_OWN |  0 ) :  0 ;
     vresult = SWIG_Ruby_AppendOutput(vresult, SWIG_NewPointerObj((void*)(arg5), SWIGTYPE_p_long, new_flags));
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -4935,7 +4887,6 @@ _wrap_SpatialReference_export_to_xml(int argc, VALUE *argv, VALUE self) {
   
   {
     /* %typemap(in,numinputs=0) (char **argout2) ( char *argout2=0 ) */
-    
     arg2 = &argout2;
   }
   if ((argc < 0) || (argc > 1)) {
@@ -4956,30 +4907,30 @@ _wrap_SpatialReference_export_to_xml(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_ExportToXML(arg1,arg2,(char const *)arg3);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
   {
     /* %typemap(argout) (char **argout) */
-    
+    VALUE outArg;
     if ( arg2 ) {
-      vresult = rb_str_new2( *arg2 );
+      outArg = rb_str_new2( *arg2 );
     }
     else {
-      vresult = Qnil;
+      outArg = Qnil;
     }
+    
+    vresult = SWIG_Ruby_AppendOutput(vresult, outArg);
   }
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
   return Qnil;
@@ -5030,19 +4981,17 @@ _wrap_SpatialReference_validate(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_Validate(arg1);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -5067,19 +5016,17 @@ _wrap_SpatialReference_strip_ctparms(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_StripCTParms(arg1);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -5104,19 +5051,17 @@ _wrap_SpatialReference_fixup_ordering(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_FixupOrdering(arg1);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -5141,19 +5086,17 @@ _wrap_SpatialReference_fixup(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_Fixup(arg1);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -5178,19 +5121,17 @@ _wrap_SpatialReference_morph_to_esri(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_MorphToESRI(arg1);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -5215,19 +5156,17 @@ _wrap_SpatialReference_morph_from_esri(int argc, VALUE *argv, VALUE self) {
   result = (OGRErr)OSRSpatialReferenceShadow_MorphFromESRI(arg1);
   
   {
-    /* %typemap( out) OGRErr */
-    
-    /* If an OGRErr occurred then result will be non-zero number.
-         In that case raise an exception.  Otherwise return true to
-    	  indicate success. Note if exceptions are turned on this
-    	  code is not relevant because it won't be reached. */
+    /* %typemap(out) OGRErr */
     if (result != 0) {
       rb_raise(rb_eRuntimeError, OGRErrMessages(result));
     }
-    
-    vresult = Qtrue;
   }
-  return vresult;
+  {
+    /* %typemap(ret) OGRErr */
+    if (vresult == Qnil) {
+      vresult = INT2NUM(0);
+    }
+  }    return vresult;
 fail:
   return Qnil;
 }
@@ -5298,7 +5237,7 @@ _wrap_CoordinateTransformation_transform_point__SWIG_0(int argc, VALUE *argv, VA
   double *arg2 ;
   void *argp1 = 0 ;
   int res1 ;
-  double argin2[3] ;
+  double temp2[3] ;
   VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 1)) {
@@ -5310,7 +5249,7 @@ _wrap_CoordinateTransformation_transform_point__SWIG_0(int argc, VALUE *argv, VA
   }
   arg1 = reinterpret_cast<OSRCoordinateTransformationShadow * >(argp1);
   {
-    /* %typemap(in) (double argin2[ANY]) (double argin2[3]) */
+    /* %typemap(in) (double argin[ANY]) (double temp2[3]) */
     /* Make sure this is an array. */
     Check_Type(argv[0], T_ARRAY);
     
@@ -5325,21 +5264,27 @@ _wrap_CoordinateTransformation_transform_point__SWIG_0(int argc, VALUE *argv, VA
       /* Get the Ruby Object */
       VALUE item = rb_ary_entry(argv[0],i);
       
-      /* Convert to double */
-      arg2[i] = NUM2DBL(item);
+      /* Convert to double and store in array*/
+      temp2[i] = NUM2DBL(item);
     }
+    
+    /* Set argument arg2 equal to the temp2 array */
+    arg2 = temp2;
   }
   OSRCoordinateTransformationShadow_TransformPoint__SWIG_0(arg1,arg2);
   
   {
     /* %typemap(argout) (double argout[ANY]) */
-    vresult = rb_ary_new();
+    VALUE outArr = rb_ary_new();
     
     for(int i=0; i<3; i++)
     {
-      VALUE value = rb_float_new(arg2[i]);
-      rb_ary_push(vresult, value);
+      VALUE value = rb_float_new((arg2)[i]);
+      rb_ary_push(outArr, value);
     }
+    
+    /* Add the output to the result */
+    vresult = SWIG_Ruby_AppendOutput(vresult, outArr);	
   }
   return vresult;
 fail:
@@ -5398,13 +5343,16 @@ _wrap_CoordinateTransformation_transform_point__SWIG_1(int argc, VALUE *argv, VA
   
   {
     /* %typemap(argout) (double argout[ANY]) */
-    vresult = rb_ary_new();
+    VALUE outArr = rb_ary_new();
     
     for(int i=0; i<3; i++)
     {
-      VALUE value = rb_float_new(arg2[i]);
-      rb_ary_push(vresult, value);
+      VALUE value = rb_float_new((arg2)[i]);
+      rb_ary_push(outArr, value);
     }
+    
+    /* Add the output to the result */
+    vresult = SWIG_Ruby_AppendOutput(vresult, outArr);	
   }
   return vresult;
 fail:

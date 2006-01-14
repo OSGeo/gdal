@@ -5069,13 +5069,16 @@ _wrap_GCPsToGeoTransform(int argc, VALUE *argv, VALUE self) {
   }
   {
     /* %typemap(argout) (double argout[ANY]) */
-    vresult = rb_ary_new();
+    VALUE outArr = rb_ary_new();
     
     for(int i=0; i<6; i++)
     {
-      VALUE value = rb_float_new(arg3[i]);
-      rb_ary_push(vresult, value);
+      VALUE value = rb_float_new((arg3)[i]);
+      rb_ary_push(outArr, value);
     }
+    
+    /* Add the output to the result */
+    vresult = SWIG_Ruby_AppendOutput(vresult, outArr);	
   }
   {
     /* %typemap( freearg) (int nGCPs, GDAL_GCP const *pGCPs ) */
@@ -5417,13 +5420,16 @@ _wrap_Dataset_get_geo_transform(int argc, VALUE *argv, VALUE self) {
   }
   {
     /* %typemap(argout) (double argout[ANY]) */
-    vresult = rb_ary_new();
+    VALUE outArr = rb_ary_new();
     
     for(int i=0; i<6; i++)
     {
-      VALUE value = rb_float_new(arg2[i]);
-      rb_ary_push(vresult, value);
+      VALUE value = rb_float_new((arg2)[i]);
+      rb_ary_push(outArr, value);
     }
+    
+    /* Add the output to the result */
+    vresult = SWIG_Ruby_AppendOutput(vresult, outArr);	
   }
   return vresult;
 fail:
@@ -5438,7 +5444,7 @@ _wrap_Dataset_set_geo_transform(int argc, VALUE *argv, VALUE self) {
   CPLErr result;
   void *argp1 = 0 ;
   int res1 ;
-  double argin2[6] ;
+  double temp2[6] ;
   VALUE vresult = Qnil;
   
   if ((argc < 1) || (argc > 1)) {
@@ -5450,7 +5456,7 @@ _wrap_Dataset_set_geo_transform(int argc, VALUE *argv, VALUE self) {
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   {
-    /* %typemap(in) (double argin2[ANY]) (double argin2[6]) */
+    /* %typemap(in) (double argin[ANY]) (double temp2[6]) */
     /* Make sure this is an array. */
     Check_Type(argv[0], T_ARRAY);
     
@@ -5465,9 +5471,12 @@ _wrap_Dataset_set_geo_transform(int argc, VALUE *argv, VALUE self) {
       /* Get the Ruby Object */
       VALUE item = rb_ary_entry(argv[0],i);
       
-      /* Convert to double */
-      arg2[i] = NUM2DBL(item);
+      /* Convert to double and store in array*/
+      temp2[i] = NUM2DBL(item);
     }
+    
+    /* Set argument arg2 equal to the temp2 array */
+    arg2 = temp2;
   }
   {
     CPLErrorReset();
@@ -5671,9 +5680,9 @@ _wrap_Dataset_get_gcps(int argc, VALUE *argv, VALUE self) {
   {
     /* %typemap( argout) (int *nGCPs, GDAL_GCP const **pGCPs ) */
     
-    vresult = rb_ary_new2(*arg2);
+    /*  vresult = rb_ary_new2(*arg2);
     
-    /*  for( int i = 0; i < *arg2; i++ ) {
+      for( int i = 0; i < *arg2; i++ ) {
         GDAL_GCP *o = new_GDAL_GCP( (*arg3)[i].dfGCPX,
                                     (*arg3)[i].dfGCPY,
                                     (*arg3)[i].dfGCPZ,
@@ -5684,8 +5693,7 @@ _wrap_Dataset_get_gcps(int argc, VALUE *argv, VALUE self) {
     	
     	 rb_ary_store(vresult, i, 
     					  SWIG_NewPointerObj((void*)o, SWIGTYPE_p_GDAL_GCP,1));
-      }
-      */
+      }*/
   }
   return vresult;
 fail:
@@ -6229,14 +6237,17 @@ _wrap_Band_get_no_data_value(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap(argout) (double *val, int*hasval) */
+    /* %typemap(argout) (double *val, int *hasval) */
+    VALUE argOut;
     
     if ( !*arg3 ) {
-      vresult = Qnil;
+      argOut = Qnil;
     }
     else {
-      vresult = rb_float_new(*arg2);
+      argOut = rb_float_new(*arg2);
     }
+    
+    vresult = SWIG_Ruby_AppendOutput(vresult, argOut);
   }
   return vresult;
 fail:
@@ -6321,14 +6332,17 @@ _wrap_Band_get_minimum(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap(argout) (double *val, int*hasval) */
+    /* %typemap(argout) (double *val, int *hasval) */
+    VALUE argOut;
     
     if ( !*arg3 ) {
-      vresult = Qnil;
+      argOut = Qnil;
     }
     else {
-      vresult = rb_float_new(*arg2);
+      argOut = rb_float_new(*arg2);
     }
+    
+    vresult = SWIG_Ruby_AppendOutput(vresult, argOut);
   }
   return vresult;
 fail:
@@ -6370,14 +6384,17 @@ _wrap_Band_get_maximum(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap(argout) (double *val, int*hasval) */
+    /* %typemap(argout) (double *val, int *hasval) */
+    VALUE argOut;
     
     if ( !*arg3 ) {
-      vresult = Qnil;
+      argOut = Qnil;
     }
     else {
-      vresult = rb_float_new(*arg2);
+      argOut = rb_float_new(*arg2);
     }
+    
+    vresult = SWIG_Ruby_AppendOutput(vresult, argOut);
   }
   return vresult;
 fail:
@@ -6419,14 +6436,17 @@ _wrap_Band_get_offset(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap(argout) (double *val, int*hasval) */
+    /* %typemap(argout) (double *val, int *hasval) */
+    VALUE argOut;
     
     if ( !*arg3 ) {
-      vresult = Qnil;
+      argOut = Qnil;
     }
     else {
-      vresult = rb_float_new(*arg2);
+      argOut = rb_float_new(*arg2);
     }
+    
+    vresult = SWIG_Ruby_AppendOutput(vresult, argOut);
   }
   return vresult;
 fail:
@@ -6468,14 +6488,17 @@ _wrap_Band_get_scale(int argc, VALUE *argv, VALUE self) {
     }
   }
   {
-    /* %typemap(argout) (double *val, int*hasval) */
+    /* %typemap(argout) (double *val, int *hasval) */
+    VALUE argOut;
     
     if ( !*arg3 ) {
-      vresult = Qnil;
+      argOut = Qnil;
     }
     else {
-      vresult = rb_float_new(*arg2);
+      argOut = rb_float_new(*arg2);
     }
+    
+    vresult = SWIG_Ruby_AppendOutput(vresult, argOut);
   }
   return vresult;
 fail:
@@ -6672,13 +6695,16 @@ _wrap_Band_compute_raster_min_max(int argc, VALUE *argv, VALUE self) {
   }
   {
     /* %typemap(argout) (double argout[ANY]) */
-    vresult = rb_ary_new();
+    VALUE outArr = rb_ary_new();
     
     for(int i=0; i<2; i++)
     {
-      VALUE value = rb_float_new(arg2[i]);
-      rb_ary_push(vresult, value);
+      VALUE value = rb_float_new((arg2)[i]);
+      rb_ary_push(outArr, value);
     }
+    
+    /* Add the output to the result */
+    vresult = SWIG_Ruby_AppendOutput(vresult, outArr);	
   }
   return vresult;
 fail:
