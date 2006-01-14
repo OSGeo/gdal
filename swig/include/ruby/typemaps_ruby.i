@@ -10,6 +10,9 @@
 
  *
  * $Log$
+ * Revision 1.6  2006/01/14 19:55:47  cfis
+ * Fixed an error in accessing items in a pointer to an array of doubles.
+ *
  * Revision 1.5  2006/01/14 02:34:05  cfis
  * Updated typemaps that compile with SWIG 1.3.28 head.
  *
@@ -124,52 +127,10 @@
   $result = Qtrue;
 }
 
-/* -------------  Ruby Array  <-> Fixed Length Double Array  ----------------------*/
-%typemap(in,numinputs=0) ( double argout[ANY]) (double argout[$dim0])
+/* -------------  Array  <-> Fixed Length Double Array  ----------------------*/
+%typemap(in) (double argin[ANY]) (double temp[$dim0])
 {
-  /* %typemap(in,numinputs=0) (double argout[ANY]) */
-  $1 = argout;
-}
-
-%typemap(argout) ( double argout[ANY])
-{
-  /* %typemap(argout) (double argout[ANY]) */
-  $result = rb_ary_new();
-
-  for(int i=0; i<$dim0; i++)
-  {
-    VALUE value = rb_float_new($1[i]);
-    rb_ary_push($result, value);
-  }
-}
-
-%typemap(in,numinputs=0) ( double *argout[ANY]) (double *argout)
-{
-  /* %typemap(in,numinputs=0) (double *argout[ANY]) */
-  $1 = &argout;
-}
-
-%typemap(argout) ( double *argout[ANY])
-{
-  /* %typemap(argout) (double argout[ANY]) */
-  $result = rb_ary_new();
-
-  for(int i=0; i<$dim0; i++)
-  {
-    VALUE value = rb_float_new(*$1[i]);
-    rb_ary_push($result, value);
-  }
-}
-
-%typemap(freearg) (double *argout[ANY])
-{
-  /* %typemap( freearg) (double *argout[ANY]) */
-  CPLFree(*$1);
-}
-
-%typemap(in) (double argin[ANY]) (double argin[$dim0])
-{
-  /* %typemap(in) (double argin[ANY]) (double argin[$dim0]) */
+  /* %typemap(in) (double argin[ANY]) (double temp[$dim0]) */
   /* Make sure this is an array. */
   Check_Type($input, T_ARRAY);
 
@@ -184,9 +145,57 @@
     /* Get the Ruby Object */
     VALUE item = rb_ary_entry($input,i);
     
-    /* Convert to double */
-    $1[i] = NUM2DBL(item);
+    /* Convert to double and store in array*/
+    temp[i] = NUM2DBL(item);
   }
+  
+  /* Set argument $1 equal to the temp array */
+	$1 = temp;
+}
+
+
+%typemap(in,numinputs=0) (double argout[ANY]) (double argout[$dim0])
+{
+  /* %typemap(in,numinputs=0) (double argout[ANY]) */
+  $1 = argout;
+}
+
+%typemap(argout) (double argout[ANY])
+{
+  /* %typemap(argout) (double argout[ANY]) */
+  $result = rb_ary_new();
+
+  for(int i=0; i<$dim0; i++)
+  {
+    VALUE value = rb_float_new($1[i]);
+    rb_ary_push($result, value);
+  }
+}
+
+%typemap(in,numinputs=0) (double *argout[ANY]) (double *argout)
+{
+  /* %typemap(in,numinputs=0) (double *argout[ANY]) */
+  $1 = &argout;
+}
+
+%typemap(argout) (double *argout[ANY])
+{
+  /* %typemap(argout) (double argout[ANY]) */
+  $result = rb_ary_new();
+
+  for(int i=0; i<$dim0; i++)
+  {
+    /* $1 is a pointer to an array, so first dereference the array,
+       then specify the index. */
+    VALUE value = rb_float_new((*$1)[i]);
+    rb_ary_push($result, value);
+  }
+}
+
+%typemap(freearg) (double *argout[ANY])
+{
+  /* %typemap(freearg) (double *argout[ANY]) */
+  CPLFree(*$1);
 }
 
 /* -------------  Ruby Array  <-> integer Array  ----------------------*/
