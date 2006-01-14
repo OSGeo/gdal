@@ -10,6 +10,9 @@
 
  *
  * $Log$
+ * Revision 1.5  2006/01/14 02:34:05  cfis
+ * Updated typemaps that compile with SWIG 1.3.28 head.
+ *
  * Revision 1.4  2005/10/11 14:11:43  kruland
  * Fix memory bug in typemap(out) char **options.  The returned array of strings
  * is owned by the dataset.
@@ -65,14 +68,14 @@
  * is not set in the raster band) then Py_None is returned.  If is is != 0, then
  * the value is coerced into a long and returned.
  */
-%typemap(ruby,in,numinputs=0) (double *val, int*hasval) ( double tmpval, int tmphasval ) {
-  /* %typemap(ruby,in,numinputs=0) (double *val, int*hasval) */
+%typemap(in,numinputs=0) (double *val, int*hasval) ( double tmpval, int tmphasval ) {
+  /* %typemap(in,numinputs=0) (double *val, int*hasval) */
   $1 = &tmpval;
   $2 = &tmphasval;
 }
 
-%typemap(ruby,argout) (double *val, int*hasval) {
-  /* %typemap(ruby,argout) (double *val, int*hasval) */
+%typemap(argout) (double *val, int*hasval) {
+  /* %typemap(argout) (double *val, int*hasval) */
 
   if ( !*$2 ) {
     $result = Qnil;
@@ -91,24 +94,24 @@
  * CPLErr function_to_wrap( );
  * %clear (CPLErr); */
 
-%typemap(ruby,out) IF_ERR_RETURN_NONE
+%typemap(out) IF_ERR_RETURN_NONE
 {
-  /* %typemap(ruby,out) IF_ERR_RETURN_NONE */
+  /* %typemap(out) IF_ERR_RETURN_NONE */
   /* result = Qnil; */
 }
 
-%typemap(ruby,out) IF_FALSE_RETURN_NONE
+%typemap(out) IF_FALSE_RETURN_NONE
 {
-  /* %typemap(ruby,out) IF_FALSE_RETURN_NONE */
+  /* %typemap(out) IF_FALSE_RETURN_NONE */
   if ($1 == 0 ) {
     $result = Qnil;
   }
 }
 
 /* --------  OGR Error Handling --------------- */
-%typemap(ruby, out) OGRErr
+%typemap( out) OGRErr
 {
-  /* %typemap(ruby, out) OGRErr */
+  /* %typemap( out) OGRErr */
 
   /* If an OGRErr occurred then $1 will be non-zero number.
      In that case raise an exception.  Otherwise return true to
@@ -122,15 +125,15 @@
 }
 
 /* -------------  Ruby Array  <-> Fixed Length Double Array  ----------------------*/
-%typemap(ruby,in,numinputs=0) ( double argout[ANY]) (double argout[$dim0])
+%typemap(in,numinputs=0) ( double argout[ANY]) (double argout[$dim0])
 {
-  /* %typemap(ruby,in,numinputs=0) (double argout[ANY]) */
+  /* %typemap(in,numinputs=0) (double argout[ANY]) */
   $1 = argout;
 }
 
-%typemap(ruby,argout) ( double argout[ANY])
+%typemap(argout) ( double argout[ANY])
 {
-  /* %typemap(ruby,argout) (double argout[ANY]) */
+  /* %typemap(argout) (double argout[ANY]) */
   $result = rb_ary_new();
 
   for(int i=0; i<$dim0; i++)
@@ -140,15 +143,15 @@
   }
 }
 
-%typemap(ruby,in,numinputs=0) ( double *argout[ANY]) (double *argout)
+%typemap(in,numinputs=0) ( double *argout[ANY]) (double *argout)
 {
-  /* %typemap(ruby,in,numinputs=0) (double *argout[ANY]) */
+  /* %typemap(in,numinputs=0) (double *argout[ANY]) */
   $1 = &argout;
 }
 
-%typemap(ruby,argout) ( double *argout[ANY])
+%typemap(argout) ( double *argout[ANY])
 {
-  /* %typemap(ruby,argout) (double argout[ANY]) */
+  /* %typemap(argout) (double argout[ANY]) */
   $result = rb_ary_new();
 
   for(int i=0; i<$dim0; i++)
@@ -158,15 +161,15 @@
   }
 }
 
-%typemap(ruby,freearg) (double *argout[ANY])
+%typemap(freearg) (double *argout[ANY])
 {
-  /* %typemap(ruby, freearg) (double *argout[ANY]) */
+  /* %typemap( freearg) (double *argout[ANY]) */
   CPLFree(*$1);
 }
 
-%typemap(ruby,in) (double argin[ANY]) (double argin[$dim0])
+%typemap(in) (double argin[ANY]) (double argin[$dim0])
 {
-  /* %typemap(ruby,in) (double argin[ANY]) (double argin[$dim0]) */
+  /* %typemap(in) (double argin[ANY]) (double argin[$dim0]) */
   /* Make sure this is an array. */
   Check_Type($input, T_ARRAY);
 
@@ -187,9 +190,9 @@
 }
 
 /* -------------  Ruby Array  <-> integer Array  ----------------------*/
-%typemap(ruby,in,numinputs=1) (int nList, int* pList)
+%typemap(in,numinputs=1) (int nList, int* pList)
 {
-  /* %typemap(ruby,in,numinputs=1) (int nList, int* pList) */
+  /* %typemap(in,numinputs=1) (int nList, int* pList) */
 
   /* Make sure this is an array. */
   Check_Type($input, T_ARRAY);
@@ -208,40 +211,40 @@
   }
 }
 
-%typemap(ruby,freearg) (int nList, int* pList)
+%typemap(freearg) (int nList, int* pList)
 {
-  /* %typemap(ruby,freearg) (int nList, int* pList) */
+  /* %typemap(freearg) (int nList, int* pList) */
   if ($2) {
     free((void*) $2);
   }
 }
 
 /* -------------  Ruby String  <-> char ** with lengths ----------------------*/
-%typemap(ruby,in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen = 0, char *pBuf = 0 )
+%typemap(in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen = 0, char *pBuf = 0 )
 {
-  /* %typemap(ruby,in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen = 0, char *pBuf = 0 ) */
+  /* %typemap(in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen = 0, char *pBuf = 0 ) */
   $1 = &nLen;
   $2 = &pBuf;
 }
 
-%typemap(ruby,argout) (int *nLen, char **pBuf )
+%typemap(argout) (int *nLen, char **pBuf )
 {
-  /* %typemap(ruby,argout) (int *nLen, char **pBuf ) */
+  /* %typemap(argout) (int *nLen, char **pBuf ) */
   $result = rb_str_new(*$2, *$1);
 }
 
-%typemap(ruby,freearg) (int *nLen, char **pBuf )
+%typemap(freearg) (int *nLen, char **pBuf )
 {
-  /* %typemap(ruby,freearg) (int *nLen, char **pBuf ) */
+  /* %typemap(freearg) (int *nLen, char **pBuf ) */
   if( *$2 ) {
     free( *$2 );
   }
 }
 
 /* -------------  Ruby String  <-> char *  ----------------------*/
-%typemap(ruby,in) (int nLen, char *pBuf ) = (int LENGTH, char *STRING);
+%typemap(in) (int nLen, char *pBuf ) = (int LENGTH, char *STRING);
 
-%typemap(ruby,typecheck,precedence=SWIG_TYPECHECK_POINTER)
+%typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER)
         (int nLen, char *pBuf)
 {
   /* %typecheck(ruby,typecheck,precedence=SWIG_TYPECHECK_POINTER) (int nLen, char *pBuf) */
@@ -251,18 +254,18 @@
 
 
 /*  ---------    GDAL_GCP used in Dataset::GetGCPs( ) ----------- */
-%typemap(ruby,in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) (int nGCPs=0, GDAL_GCP *pGCPs=0 )
+%typemap(in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) (int nGCPs=0, GDAL_GCP *pGCPs=0 )
 {
-  /* %typemap(ruby, in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) */
+  /* %typemap( in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) */
   $1 = &nGCPs;
   $2 = &pGCPs;
 }
 
-%typemap(ruby,argout) (int *nGCPs, GDAL_GCP const **pGCPs )
+%typemap(argout) (int *nGCPs, GDAL_GCP const **pGCPs )
 {
-  /* %typemap(ruby, argout) (int *nGCPs, GDAL_GCP const **pGCPs ) */
+  /* %typemap( argout) (int *nGCPs, GDAL_GCP const **pGCPs ) */
 
-  $result = rb_ary_new2(*$1);
+/*  $result = rb_ary_new2(*$1);
 
   for( int i = 0; i < *$1; i++ ) {
     GDAL_GCP *o = new_GDAL_GCP( (*$2)[i].dfGCPX,
@@ -275,12 +278,12 @@
 	
 	 rb_ary_store($result, i, 
 					  SWIG_NewPointerObj((void*)o, SWIGTYPE_p_GDAL_GCP,1));
-  }
+  }*/
 }
 
-%typemap(ruby,in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) ( GDAL_GCP *tmpGCPList )
+%typemap(in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) ( GDAL_GCP *tmpGCPList )
 {
-  /* %typemap(ruby, in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) */
+  /* %typemap( in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) */
 
   /* Check if is a list */
   Check_Type($input, T_ARRAY);
@@ -304,23 +307,23 @@
   }
 }
 
-%typemap(ruby,freearg) (int nGCPs, GDAL_GCP const *pGCPs )
+%typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs )
 {
-  /* %typemap(ruby, freearg) (int nGCPs, GDAL_GCP const *pGCPs ) */
+  /* %typemap( freearg) (int nGCPs, GDAL_GCP const *pGCPs ) */
   if ($2) {
     free( (void*) $2 );
   }
 }
 
 /* ----------- Typemap for GDALColorEntry* <-> tuple -------------- */
-/*%typemap(ruby,out) GDALColorEntry*
+/*%typemap(out) GDALColorEntry*
 {*/
-  /* %typemap(ruby, out) GDALColorEntry* */
+  /* %typemap( out) GDALColorEntry* */
 
  /* $result = Py_BuildValue( "(hhhh)", (*$1).c1,(*$1).c2,(*$1).c3,(*$1).c4);
 }
 
-%typemap(ruby,in) GDALColorEntry* (GDALColorEntry ce)
+%typemap(in) GDALColorEntry* (GDALColorEntry ce)
 {*/
   /* %typemap(in) GDALColorEntry* */
 /*   ce.c4 = 255;
@@ -347,9 +350,9 @@
  * Used to convert a native dictionary/hash type into name value pairs. */
 
 /*  Hash -> char** */
-%typemap(ruby,in) char **dict
+%typemap(in) char **dict
 {
-  /* %typemap(ruby,in) char **dict */
+  /* %typemap(in) char **dict */
 
   $1 = NULL;
   
@@ -400,9 +403,9 @@
 }
 
 /* char** --> Hash */
-%typemap(ruby,out) char **dict
+%typemap(out) char **dict
 {
-  /* %typemap(ruby,out) char **dict */
+  /* %typemap(out) char **dict */
 
   /* Get a pointer to the c array */
   char **stringarray = $1;
@@ -434,16 +437,16 @@
  * Then each entry in the list must be a string and have the form:
  * "name=value" so gdal can handle it.
  */
-%typemap(ruby,typecheck,precedence=SWIG_TYPECHECK_POINTER) (char **dict)
+%typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (char **dict)
 {
-  /* %typemap(ruby,typecheck,precedence=SWIG_TYPECHECK_POINTER) (char **dict) */
+  /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (char **dict) */
   $1 = ((TYPE($input) == T_HASH) || (TYPE($input) == T_ARRAY)) ? 1 : 0;
 }
 
 
-%typemap(ruby,freearg) char **dict
+%typemap(freearg) char **dict
 {
-  /* %typemap(ruby,freearg) char **dict */
+  /* %typemap(freearg) char **dict */
   CSLDestroy( $1 );
 }
 
@@ -452,9 +455,9 @@
 
 
 /* Typemap maps char** arguments from Ruby Array  */
-%typemap(ruby,in) char **options
+%typemap(in) char **options
 {
-  /* %typemap(ruby,in) char **options */
+  /* %typemap(in) char **options */
 
   /* Check if is a list */
   Check_Type($input, T_ARRAY);
@@ -467,9 +470,9 @@
   }
 }
 
-%typemap(ruby,out) char **options
+%typemap(out) char **options
 {
-  /* %typemap(ruby,out) char **options */
+  /* %typemap(out) char **options */
 
   char **stringarray = $1;
   if ( stringarray == NULL ) {
@@ -485,9 +488,9 @@
   }
 }
 
-%typemap(ruby,freearg) char **options
+%typemap(freearg) char **options
 {
-  /* %typemap(ruby,freearg) char **options */
+  /* %typemap(freearg) char **options */
 
   CSLDestroy( $1 );
 }
@@ -496,9 +499,9 @@
  * Typemaps map mutable char ** arguments from Ruby Strings.  Does not
  * return the modified argument
  */
-%typemap(ruby,in) char ** ( char *val=0 )
+%typemap(in) char ** ( char *val=0 )
 {
-  /* %typemap(ruby,in) char ** ( char *val=0 ) */
+  /* %typemap(in) char ** ( char *val=0 ) */
 
   val = StringValuePtr($input);
   $1 = &val;
@@ -509,16 +512,16 @@
 
 /* -------------  Ruby String  <- char ** no lengths ------------------*/
 
-%typemap(ruby,in,numinputs=0) (char **argout) ( char *argout=0 )
+%typemap(in,numinputs=0) (char **argout) ( char *argout=0 )
 {
-  /* %typemap(ruby,in,numinputs=0) (char **argout) ( char *argout=0 ) */
+  /* %typemap(in,numinputs=0) (char **argout) ( char *argout=0 ) */
 
   $1 = &argout;
 }
 
-%typemap(ruby,argout) (char **argout)
+%typemap(argout) (char **argout)
 {
-  /* %typemap(ruby,argout) (char **argout) */
+  /* %typemap(argout) (char **argout) */
 	
   if ( $1 ) {
 		$result = rb_str_new2( *$1 );
@@ -528,9 +531,9 @@
   }
 }
 
-%typemap(ruby,freearg) (char **argout)
+%typemap(freearg) (char **argout)
 {
-  /* %typemap(ruby,freearg) (char **argout) */
+  /* %typemap(freearg) (char **argout) */
 
   if ( *$1 )
     CPLFree( *$1 );
@@ -545,10 +548,10 @@
  * value.
  */
 /*%define OPTIONAL_POD(type,argstring)
-%typemap(ruby,in) (type *optional_##type) ( type val )
+%typemap(in) (type *optional_##type) ( type val )
 {
 */
-  /* %typemap(ruby,in) (type *optional_##type) */
+  /* %typemap(in) (type *optional_##type) */
 /*  if ( $input == Qnil ) {
     $1 = 0;
   }
@@ -561,7 +564,7 @@
 }*/
 
 
-/*%typemap(ruby,typecheck,precedence=0) (type *optional_##type)
+/*%typemap(typecheck,precedence=0) (type *optional_##type)
 {
 */
   /* %typemap(typecheck,precedence=0) (type *optionalInt) */
@@ -576,33 +579,33 @@
 
 /* Formats the object using str and returns the string representation */
 
-%typemap(ruby,in) (tostring argin) (VALUE rubyString)
+%typemap(in) (tostring argin) (VALUE rubyString)
 {
-  /* %typemap(ruby, in) (tostring argin) */
+  /* %typemap( in) (tostring argin) */
 
   $1 = StringValuePtr($input);
 }
 
 
-%typemap(ruby,typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
+%typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
 {
-  /* %typemap(ruby,typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin) */
+  /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin) */
   $1 = 1;
 }
 
 
 /* -------------  Ruby Exception <- CPLErr  ----------------------*/
-%typemap(ruby,out) CPLErr
+%typemap(out) CPLErr
 {
-  /* %typemap(ruby,out) CPLErr */
+  /* %typemap(out) CPLErr */
   $result = ($1_type)LONG2NUM($1);
 }
 
 /* -----------  Ruby Arrays <------> XML Trees Helper Methods --------------- */
 
-%typemap(ruby,in) (CPLXMLNode* xmlnode )
+%typemap(in) (CPLXMLNode* xmlnode )
 {
-  /* %typemap(ruby,in) (CPLXMLNode* xmlnode ) */
+  /* %typemap(in) (CPLXMLNode* xmlnode ) */
   $1 = RubyArrayToXMLTree($input);
 
   if ( !$1 ) {
@@ -610,9 +613,9 @@
   }
 }
 
-%typemap(ruby,freearg) (CPLXMLNode *xmlnode)
+%typemap(freearg) (CPLXMLNode *xmlnode)
 {
-  /* %typemap(ruby,freearg) (CPLXMLNode *xmlnode) */
+  /* %typemap(freearg) (CPLXMLNode *xmlnode) */
 
   if ( $1 ) {
     CPLDestroyXMLNode( $1 );
@@ -620,16 +623,16 @@
 }
 
 
-%typemap(ruby,out,fragment="XMLTreeToPyList") (CPLXMLNode*)
+%typemap(out,fragment="XMLTreeToPyList") (CPLXMLNode*)
 {
-  /* %typemap(ruby,out) (CPLXMLNode*) */
+  /* %typemap(out) (CPLXMLNode*) */
 
   $result = XMLTreeToRubyArray($1);
 }
 
-%typemap(ruby,ret) (CPLXMLNode*)
+%typemap(ret) (CPLXMLNode*)
 {
-  /* %typemap(ruby,ret) (CPLXMLNode*) */
+  /* %typemap(ret) (CPLXMLNode*) */
   if ( $1 ) {
     CPLDestroyXMLNode( $1 );
   }
@@ -639,11 +642,11 @@
 %apply char* {tostring argin}
 %apply int* {int* optional_int};
 
-%typemap(ruby,in) GDALDataType, CPLErr, GDALPaletteInterp, GDALAccess, 
+%typemap(in) GDALDataType, CPLErr, GDALPaletteInterp, GDALAccess, 
 	GDALResampleAlg, GDALColorInterp, OGRwkbGeometryType, OGRFieldType,
 	OGRJustification, OGRwkbByteOrder
 {
-  /* %typemap(ruby,in) CPLErr */
+  /* %typemap(in) CPLErr */
   $1 = ($1_type) NUM2INT($input);
 }
 
