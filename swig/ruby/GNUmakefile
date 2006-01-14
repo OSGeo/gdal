@@ -20,7 +20,7 @@ veryclean: clean
 
 generate: ${WRAPPERS}
 
-build:
+build: ${WRAPPERS}
 	$(MAKE) -f RubyMakefile.mk build
 
 install: 
