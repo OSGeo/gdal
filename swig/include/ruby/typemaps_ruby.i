@@ -10,6 +10,9 @@
 
  *
  * $Log$
+ * Revision 1.7  2006/01/14 21:45:26  cfis
+ * Updated type maps that fix issue with returning an array of results.
+ *
  * Revision 1.6  2006/01/14 19:55:47  cfis
  * Fixed an error in accessing items in a pointer to an array of doubles.
  *
@@ -65,27 +68,30 @@
 %apply (double *OUTPUT) { double *argout };
 
 /*
- * double *val, int*hasval, is a special contrived typemap used for
+ * double *val, int *hasval, is a special contrived typemap used for
  * the RasterBand GetNoDataValue, GetMinimum, GetMaximum, GetOffset, GetScale methods.
  * In the Ruby bindings, the variable hasval is tested.  If it is 0 (is, the value
  * is not set in the raster band) then Py_None is returned.  If is is != 0, then
  * the value is coerced into a long and returned.
  */
-%typemap(in,numinputs=0) (double *val, int*hasval) ( double tmpval, int tmphasval ) {
+%typemap(in,numinputs=0) (double *val, int *hasval) (double tmpval, int tmphasval) {
   /* %typemap(in,numinputs=0) (double *val, int*hasval) */
   $1 = &tmpval;
   $2 = &tmphasval;
 }
 
-%typemap(argout) (double *val, int*hasval) {
-  /* %typemap(argout) (double *val, int*hasval) */
-
+%typemap(argout) (double *val, int *hasval) {
+  /* %typemap(argout) (double *val, int *hasval) */
+	VALUE argOut;
+	
   if ( !*$2 ) {
-    $result = Qnil;
+    argOut = Qnil;
   }
   else {
-    $result = rb_float_new(*$1);
+    argOut = rb_float_new(*$1);
   }
+  
+  $result = SWIG_AppendOutput($result, argOut);
 }
 
 /* Define a simple return code typemap which checks if the return code from
@@ -112,19 +118,20 @@
 }
 
 /* --------  OGR Error Handling --------------- */
-%typemap( out) OGRErr
+%typemap(out) OGRErr
 {
-  /* %typemap( out) OGRErr */
-
-  /* If an OGRErr occurred then $1 will be non-zero number.
-     In that case raise an exception.  Otherwise return true to
-	  indicate success. Note if exceptions are turned on this
-	  code is not relevant because it won't be reached. */
+  /* %typemap(out) OGRErr */
   if ($1 != 0) {
     rb_raise(rb_eRuntimeError, OGRErrMessages(result));
   }
+}
 
-  $result = Qtrue;
+%typemap(ret) OGRErr
+{
+  /* %typemap(ret) OGRErr */
+  if (vresult == Qnil) {
+    vresult = INT2NUM(0);
+  }
 }
 
 /* -------------  Array  <-> Fixed Length Double Array  ----------------------*/
@@ -163,13 +170,16 @@
 %typemap(argout) (double argout[ANY])
 {
   /* %typemap(argout) (double argout[ANY]) */
-  $result = rb_ary_new();
+  VALUE outArr = rb_ary_new();
 
   for(int i=0; i<$dim0; i++)
   {
-    VALUE value = rb_float_new($1[i]);
-    rb_ary_push($result, value);
+    VALUE value = rb_float_new(($1)[i]);
+    rb_ary_push(outArr, value);
   }
+  
+  /* Add the output to the result */
+  $result = SWIG_AppendOutput($result, outArr);	
 }
 
 %typemap(in,numinputs=0) (double *argout[ANY]) (double *argout)
@@ -181,15 +191,18 @@
 %typemap(argout) (double *argout[ANY])
 {
   /* %typemap(argout) (double argout[ANY]) */
-  $result = rb_ary_new();
+  VALUE outArr = rb_ary_new();
 
   for(int i=0; i<$dim0; i++)
   {
     /* $1 is a pointer to an array, so first dereference the array,
        then specify the index. */
     VALUE value = rb_float_new((*$1)[i]);
-    rb_ary_push($result, value);
+    rb_ary_push(outArr, value);
   }
+  
+  /* Add the output to the result */
+  $result = SWIG_AppendOutput($result, outArr);	
 }
 
 %typemap(freearg) (double *argout[ANY])
@@ -520,24 +533,24 @@
 
 
 /* -------------  Ruby String  <- char ** no lengths ------------------*/
-
 %typemap(in,numinputs=0) (char **argout) ( char *argout=0 )
 {
   /* %typemap(in,numinputs=0) (char **argout) ( char *argout=0 ) */
-
   $1 = &argout;
 }
 
-%typemap(argout) (char **argout)
+%typemap(argout,fragment="output_helper") char **argout
 {
   /* %typemap(argout) (char **argout) */
-	
+	VALUE outArg;
   if ( $1 ) {
-		$result = rb_str_new2( *$1 );
+		outArg = rb_str_new2( *$1 );
   }
   else {
-    $result = Qnil;
+    outArg = Qnil;
   }
+  
+  $result = SWIG_AppendOutput($result, outArg);
 }
 
 %typemap(freearg) (char **argout)
