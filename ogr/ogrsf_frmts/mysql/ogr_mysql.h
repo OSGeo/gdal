@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/01/16 16:06:48  hobu
+ * Handle geometry column
+ *
  * Revision 1.5  2005/08/30 23:53:16  fwarmerdam
  * implement binary field support
  *
@@ -71,12 +74,13 @@ class OGRMySQLLayer : public OGRLayer
     int                 iNextShapeId;
 
     OGRMySQLDataSource    *poDS;
-
+ 
     char               *pszQueryStatement;
 
     int                 nResultOffset;
 
     char                *pszGeomColumn;
+    int                 nGeomType;
 
     int                 bHasFid;
     char                *pszFIDColumn;

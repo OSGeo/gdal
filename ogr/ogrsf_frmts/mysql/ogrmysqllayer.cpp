@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/01/16 16:05:38  hobu
+ * Handle geometry column
+ *
  * Revision 1.5  2005/09/21 01:00:01  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -196,6 +199,26 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
 
         if( papszRow[iField] == NULL )
             continue;
+
+/* -------------------------------------------------------------------- */
+/*      Handle MySQL geometry                                           */
+/* -------------------------------------------------------------------- */
+        if( pszGeomColumn && EQUAL(psMSField->name,pszGeomColumn))
+        {
+
+            OGRGeometry *poGeometry = NULL;
+
+			OGRGeometryFactory::createFromWkb(
+											  (GByte *)papszRow[iField], 
+											  NULL,
+											  &poGeometry,
+											  panLengths[iField]);
+            if( poGeometry != NULL )
+                poFeature->SetGeometryDirectly( poGeometry );
+
+            continue;
+        }
+
 
 /* -------------------------------------------------------------------- */
 /*      Transfer regular data fields.                                   */
