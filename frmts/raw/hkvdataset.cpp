@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2006/01/16 20:28:56  gwalter
+ * Fixed cplusplus misuse.
+ *
  * Revision 1.38  2006/01/05 16:21:56  gwalter
  * Added nodata write support.
  *
@@ -379,8 +382,7 @@ CPLErr HKVRasterBand::SetNoDataValue( double dfNewValue )
 
 {
     HKVDataset *poHKVDS = (HKVDataset *) poDS;
-
-    (RawRasterBand *) this->SetNoDataValue( dfNewValue );
+    this->RawRasterBand::SetNoDataValue( dfNewValue );
     poHKVDS->SetNoDataValue( dfNewValue );
 
     return CE_None;
