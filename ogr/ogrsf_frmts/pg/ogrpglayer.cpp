@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2006/01/16 15:36:33  fwarmerdam
+ * disable PQfformat calls in pre7.4 client libs
+ *
  * Revision 1.26  2005/12/16 07:42:08  osemykin
  * Added regular data fields support for binary cursor
  *
@@ -370,6 +373,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
         {
             int *panList, nCount, i;
 
+#if !defined(PG_PRE74)
             if ( PQfformat( hCursorResult, iField ) == 1 ) // Binary data representation
             {
                 char * pData = PQgetvalue( hCursorResult, iRecord, iField );
@@ -401,6 +405,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                 }
             }
             else
+#endif /* notdef PG_PRE74 */
             {
                 char **papszTokens;
                 papszTokens = CSLTokenizeStringComplex(
@@ -423,6 +428,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
             int nCount, i;
             double *padfList;
 
+#if !defined(PG_PRE74)
             if ( PQfformat( hCursorResult, iField ) == 1 ) // Binary data representation
             {
                 char * pData = PQgetvalue( hCursorResult, iRecord, iField );
@@ -454,6 +460,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                 }
             }
             else
+#endif /* notdef PG_PRE74 */
             {
                 char **papszTokens;
                 papszTokens = CSLTokenizeStringComplex(
@@ -476,6 +483,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
         {
             char **papszTokens = 0;
 
+#if !defined(PG_PRE74)
             if ( PQfformat( hCursorResult, iField ) == 1 ) // Binary data representation
             {
                 char * pData = PQgetvalue( hCursorResult, iRecord, iField );
@@ -503,6 +511,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                 }
             }
             else
+#endif /* notdef PG_PRE74 */
             {
                 papszTokens = CSLTokenizeStringComplex(
                         PQgetvalue( hCursorResult, iRecord, iField ),
@@ -518,6 +527,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
 
         else
         {
+#if !defined(PG_PRE74)
             if ( PQfformat( hCursorResult, iField ) == 1 &&
                  poFeatureDefn->GetFieldDefn(iOGRField)->GetType() != OFTString ) // Binary data
             {
@@ -537,6 +547,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
                 }
             }
             else
+#endif /* notdef PG_PRE74 */
                 poFeature->SetField( iOGRField,
                                      PQgetvalue( hCursorResult, iRecord, iField ) );
         }
