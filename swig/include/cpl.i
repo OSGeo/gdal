@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.4  2006/01/16 08:07:04  cfis
+ * Exposed CPLHexToBinary and CPLHexToBinary to scripting languages.
+ *
  * Revision 1.3  2005/10/02 23:31:27  cfis
  * Updated the renames to include support for Ruby.
  *
@@ -60,6 +63,8 @@
 %rename (FindFile) CPLFindFile;
 %rename (SetConfigOption) CPLSetConfigOption;
 %rename (GetConfigOption) CPLGetConfigOption;
+%rename (CPLBinaryToHex) CPLBinaryToHex;
+%rename (CPLHexToBinary) CPLHexToBinary;
 #else
 %rename (push_error_handler) CPLPushErrorHandler;
 %rename (pop_error_handler) CPLPopErrorHandler;
@@ -73,6 +78,8 @@
 %rename (find_file) CPLFindFile;
 %rename (set_config_option) CPLSetConfigOption;
 %rename (get_config_option) CPLGetConfigOption;
+%rename (binary_to_hex) CPLBinaryToHex;
+%rename (hex_to_binary) CPLHexToBinary;
 #endif
 
 void CPLPushErrorHandler( CPLErrorHandler );
@@ -98,3 +105,8 @@ const char * CPLFindFile( const char *, const char * );
 void CPLSetConfigOption( const char *, const char * );
 
 const char * CPLGetConfigOption( const char *, const char * );
+
+/* Provide hooks to hex encoding methods */
+char *CPLBinaryToHex( int nBytes, const GByte *pabyData );
+GByte *CPLHexToBinary( const char *pszHex, int *pnBytes );
+
