@@ -10,6 +10,9 @@
 
  *
  * $Log$
+ * Revision 1.8  2006/01/16 08:06:23  cfis
+ * Added typemaps to support CPLHexToBinary and CPLHexToBinary
+ *
  * Revision 1.7  2006/01/14 21:45:26  cfis
  * Updated type maps that fix issue with returning an array of results.
  *
@@ -692,3 +695,50 @@
 	/* Subtract 2, 1 for self and 1 since argv is 0-based */
 	//rb_iv_set(argv[$argnum-2], "swig_parent_reference", self);
 //}*/
+
+
+/* -----------  GByte --------------- */
+/* Tread byte arrays as char arrays */
+
+%typemap(in,numinputs=1,fragment="SWIG_AsCharPtrAndSize") (int nBytes, const GByte *pabyData) 
+  (int res, GByte *buf = 0, size_t size = 0, int alloc = 0)  {
+
+	/*%typemap(in,numinputs=1,fragment="SWIG_AsCharPtrAndSize") (int nBytes, const GByte *pabyData) */
+  
+  res = SWIG_AsCharPtrAndSize($input, (char**)&buf, &size, &alloc);
+  if (!SWIG_IsOK(res)) {
+    %argument_fail(res, "(GByte*, int)", $symname, $argnum);
+  }
+  $1 = ($1_ltype) size - 1;				       
+  $2 = ($2_ltype) buf;					       
+}
+
+%typemap(freearg) (int nBytes, const GByte *pabyData) {
+	/* %typemap(freearg) (int nBytes, const GByte *pabyData) */
+  CPLFree(result);
+}
+
+
+%typemap(in,numinputs=1,fragment="SWIG_AsCharPtrAndSize") (const char *pszHex, int *pnBytes)
+  (int res, char *buf = 0, int size = 0, int alloc = 0)  {
+	
+	/*% typemap(in,numinputs=1,fragment="SWIG_AsCharPtrAndSize") (const char *pszHex, int *pnBytes) */
+  $2 = &size;
+  res = SWIG_AsCharPtr($input, &buf, &alloc);
+  if (!SWIG_IsOK(res)) {
+    %argument_fail(res,"$type",$symname, $argnum);
+  }
+  $1 = buf;
+}    
+
+  
+%typemap(argout) (const char *pszHex, int *pnBytes) {
+	/* %typemap(argout) (const char *pszHex, int *pnBytes) */
+  $result = SWIG_FromCharPtrAndSize((char*)result, (size_t)*$2);
+}
+
+%typemap(out) GByte*  {
+	/* %typemap(out) GByte* */
+	
+	/* Stops insertion of default type map. */
+}
