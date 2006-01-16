@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/01/16 16:04:58  hobu
+ * comment typo
+ *
  * Revision 1.5  2005/09/21 01:00:01  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -134,7 +137,7 @@ int OGRMySQLDataSource::Open( const char * pszNewName, int bUpdate,
     CPLAssert( nLayers == 0 );
 
 /* -------------------------------------------------------------------- */
-/*      Verify postgresql prefix.                                       */
+/*      Verify MySQL prefix.                                            */
 /* -------------------------------------------------------------------- */
     if( !EQUALN(pszNewName,"MYSQL:",6) )
     {
