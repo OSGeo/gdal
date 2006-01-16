@@ -32,6 +32,11 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.2  2006/01/16 16:03:38  hobu
+#  Added spatial index, geometry_columns, and spatial_ref_sys tables.
+#  Added command line switch to specify spatial column.
+#  Added rudimentary progress monitor.
+#
 #  Revision 1.1  2005/12/26 23:54:07  hobu
 #  New tool based on load2odbc.py to load an OGR layer into a MySQL table and store it as MySQL geometry
 #
@@ -50,7 +55,7 @@ import osr
 def Usage():
     print 'Usage: load2mysql.py infile mysql_dsn layer'
     print
-    print '     Example: load2mysql.py world_borders.shp MySQL:test,user=root world_borders'
+    print '     Example: load2mysql.py world_borders.shp MySQL:test,user=root world_borders SHAPE'
     sys.exit(1)
 
 #############################################################################
@@ -60,12 +65,13 @@ extents_flag = 0
 infile = None
 outfile = None
 
-if len(sys.argv) != 4:
+if len(sys.argv) != 5:
     Usage()
 
 infile = sys.argv[1]
 mysql_dsn = sys.argv[2]
 layername = sys.argv[3]
+geom_column_name = sys.argv[4]
 
 #############################################################################
 # Open the datasource to operate on.
@@ -99,7 +105,7 @@ except:
 
 defn = in_layer.GetLayerDefn()
 
-cmd = 'CREATE TABLE ' + layername + '( OGC_FID INT UNIQUE NOT NULL, WKT_GEOMETRY GEOMETRY NOT NULL' 
+cmd = 'CREATE TABLE ' + layername + '( OGC_FID INT UNIQUE NOT NULL, %s GEOMETRY NOT NULL' % geom_column_name
 
 for iField in range(defn.GetFieldCount()):
     fielddef = defn.GetFieldDefn(iField)
@@ -134,7 +140,7 @@ while feat is not None:
     geom = feat.GetGeometryRef()
     geom_statement = ''
     if geom:
-        cmd_start = cmd_start + ', WKT_GEOMETRY '
+        cmd_start = cmd_start + ', %s ' % geom_column_name
         
         geom_statement = ", GeomFromText('%s',4326)" % geom.ExportToWkt()
         
@@ -156,7 +162,6 @@ while feat is not None:
 
     cmd = cmd_start + cmd_end + ')'
 
-    #print 'ExecuteSQL: ', cmd
     out_ds.ExecuteSQL( cmd )
     if counter % 1000 == 0:
         sys.stdout.write('.')
@@ -164,13 +169,42 @@ while feat is not None:
     feat.Destroy()
     feat = in_layer.GetNextFeature()
     counter += 1
+# write a final newline for our status monitor
+sys.stdout.write('\n')
 
-cmd = 'ALTER TABLE %s ADD SPATIAL INDEX(WKT_GEOMETRY)' % layername
+# create a spatial index
+cmd = 'ALTER TABLE %s ADD SPATIAL INDEX(%s)' % (layername, geom_column_name)
 print cmd
 result = out_ds.ExecuteSQL( cmd )
-print result
+
+# create geometry_columns 
+cmd = """CREATE TABLE geometry_columns ( F_TABLE_CATALOG VARCHAR(256), F_TABLE_SCHEMA VARCHAR(256),F_TABLE_NAME VARCHAR(256) UNIQUE NOT NULL,F_GEOMETRY_COLUMN VARCHAR(256) NOT NULL,COORD_DIMENSION INT,SRID INT,TYPE VARCHAR(256) NOT NULL)
+	"""
+try:
+    out_ds.ExecuteSQL( 'drop table geometry_columns' )
+except:
+    pass
+result = out_ds.ExecuteSQL(cmd)
+
+# insert our layer into geometry_columns
+cmd = """INSERT INTO geometry_columns (F_TABLE_NAME, F_GEOMETRY_COLUMN, SRID, TYPE) values ('%s', '%s', %s, '%s')""" % (layername, geom_column_name,4326,'POLYGON')
+result = out_ds.ExecuteSQL(cmd)
+
+# create spatial_ref_sys 
+cmd = """CREATE TABLE spatial_ref_sys (SRID INT NOT NULL, AUTH_NAME VARCHAR(256), AUTH_SRID INT, SRTEXT VARCHAR(2048))"""
+try:
+    out_ds.ExecuteSQL( 'drop table spatial_ref_sys' )
+except:
+    pass
+result = out_ds.ExecuteSQL(cmd)
+
+# insert our spatial reference
+srswkt = in_layer.GetSpatialRef().ExportToWkt()
+
+cmd = """INSERT INTO spatial_ref_sys (SRID, SRTEXT) values (4326, '%s')""" % srswkt
+result = out_ds.ExecuteSQL(cmd)        
+
 #############################################################################
 # Cleanup
-
 in_ds.Destroy()
 out_ds.Destroy()
