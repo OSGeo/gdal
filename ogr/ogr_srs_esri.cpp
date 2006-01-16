@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2006/01/16 15:19:03  fwarmerdam
+ * Fixed datum.csv error message.
+ *
  * Revision 1.44  2005/12/20 21:49:57  fwarmerdam
  * trim log
  *
@@ -438,7 +441,7 @@ static void InitDatumMappingTable()
     if( nDatumCodeField == -1 || nEPSGNameField == -1 || nESRINameField == -1 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Failed to find required field in datum.csv in InitDatumMappingTable(), using default table setup." );
+                  "Failed to find required field in gdal_datum.csv in InitDatumMappingTable(), using default table setup." );
         
         papszDatumMapping = apszDefaultDatumMapping;
         return;
