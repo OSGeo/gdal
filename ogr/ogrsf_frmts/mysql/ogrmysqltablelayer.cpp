@@ -28,6 +28,14 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/01/16 16:08:39  hobu
+ * Detect geometry column.
+ * Query geometry column.
+ * Detect geometry type.
+ * Query geometry type.
+ * Detect spatial reference.
+ * Query spatial reference.
+ *
  * Revision 1.11  2005/12/28 06:24:52  hobu
  * remove debugging lint
  *
@@ -282,7 +290,11 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
             oField.SetType( OFTString );
             oField.SetWidth( 20 );
         }
-
+        else if( EQUAL(pszType, "geometry") ) 
+        {
+            pszGeomColumn = CPLStrdup(papszRow[0]);
+            continue;
+        }
         // Is this an integer primary key field?
         if( !bHasFid && papszRow[3] != NULL && EQUAL(papszRow[3],"PRI") 
             && oField.GetType() == OFTInteger )
@@ -295,15 +307,70 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         poDefn->AddFieldDefn( &oField );
     }
 
+    // set to none for now... if we have a geometry column it will be set layer.
+    poDefn->SetGeomType( wkbNone );
     mysql_free_result( hResult );
 
-/* -------------------------------------------------------------------- */
-/*      Till we support geometry, we can safely mark ourselves as       */
-/*      wkbNone.  This lets the built GetExtents() produce an           */
-/*      optimized response.                                             */
-/* -------------------------------------------------------------------- */
-    poDefn->SetGeomType( wkbNone );
 
+    if (pszGeomColumn) 
+    {
+        char*        pszType=NULL;
+        
+        // set to unknown first
+        poDefn->SetGeomType( wkbUnknown );
+        
+        sprintf(szCommand, "SELECT type FROM geometry_columns WHERE f_table_name='%s'",
+                pszTable );
+        
+        if( mysql_query( poDS->GetConn(), szCommand ) )
+        {
+            poDS->ReportError( "SELECT type from geometry_columns Failed" );
+            return FALSE;
+        }
+
+        hResult = mysql_store_result( poDS->GetConn() );
+        if( hResult == NULL )
+        {
+            poDS->ReportError( "mysql_store_result() failed on SELECT type result." );
+            return FALSE;
+        }
+        	
+        papszRow = mysql_fetch_row( hResult );
+
+        if( papszRow != NULL && papszRow[0] != NULL )
+        {
+            pszType = papszRow[0];
+
+            OGRwkbGeometryType nGeomType = wkbUnknown;
+
+            // check only standard OGC geometry types
+            if ( EQUAL(pszType, "POINT") )
+                nGeomType = wkbPoint;
+            else if ( EQUAL(pszType,"LINESTRING"))
+                nGeomType = wkbLineString;
+            else if ( EQUAL(pszType,"POLYGON"))
+                nGeomType = wkbPolygon;
+            else if ( EQUAL(pszType,"MULTIPOINT"))
+                nGeomType = wkbMultiPoint;
+            else if ( EQUAL(pszType,"MULTILINESTRING"))
+                nGeomType = wkbMultiLineString;
+            else if ( EQUAL(pszType,"MULTIPOLYGON"))
+                nGeomType = wkbMultiPolygon;
+            else if ( EQUAL(pszType,"GEOMETRYCOLLECTION"))
+                nGeomType = wkbGeometryCollection;
+
+            poDefn->SetGeomType( nGeomType );
+
+        } 
+        else 
+        {
+            poDS->ReportError( "Table did not have an entry in geometry_columns "  );
+            return FALSE;            
+        }
+        
+        mysql_free_result( hResult );   //Free our query results for finding type.
+    } 
+    
     if( bHasFid )
         CPLDebug( "MySQL", "table %s has FID column %s.",
                   pszTable, pszFIDColumn );
@@ -329,6 +396,8 @@ void OGRMySQLTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
     ResetReading();
 }
+
+
 
 /************************************************************************/
 /*                             BuildWhere()                             */
@@ -425,8 +494,13 @@ char *OGRMySQLTableLayer::BuildFields()
         if( strlen(pszFieldList) > 0 )
             strcat( pszFieldList, ", " );
 
+		/* ------------------------------------------------------------ */
+		/*      Make sure we return AsText(WKB_GEOMETRY) WKT_GEOMETRY   */
+		/*      This way the column is returned column is named         */
+		/*      correctly and the RecordToFeature machinery can get it  */
+		/* ------------------------------------------------------------ */            
         sprintf( pszFieldList+strlen(pszFieldList), 
-                 "%s", pszGeomColumn );
+                 "AsBinary(%s) %s", pszGeomColumn, pszGeomColumn );
     }
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
@@ -621,33 +695,85 @@ int OGRMySQLTableLayer::GetFeatureCount( int bForce )
 OGRSpatialReference *OGRMySQLTableLayer::GetSpatialRef()
 
 {
-#ifdef notdef
+
+
     if( nSRSId == -2 )
     {
-        PGconn          *hPGConn = poDS->GetPGConn();
-        PGresult        *hResult;
-        char            szCommand[1024];
-
-        nSRSId = -1;
-
-        poDS->SoftStartTransaction();
+	
+        MYSQL_RES    *hResult;
+        char         szCommand[1024];
+    
 
         sprintf( szCommand, 
-                 "SELECT srid FROM geometry_columns "
-                 "WHERE f_table_name = '%s'",
-                 poFeatureDefn->GetName() );
-        hResult = PQexec(hPGConn, szCommand );
-
-        if( hResult 
-            && PQresultStatus(hResult) == PGRES_TUPLES_OK 
-            && PQntuples(hResult) == 1 )
+                "SELECT srid FROM geometry_columns "
+                "WHERE f_table_name = '%s'",
+                poFeatureDefn->GetName() );
+        if( mysql_query( poDS->GetConn(), szCommand ) )
         {
-            nSRSId = atoi(PQgetvalue(hResult,0,0));
+            poDS->ReportError( "SELECT srtext Failed" );
+            return FALSE;
         }
-        PQclear( hResult );
 
-        poDS->SoftCommit();
+        hResult = mysql_store_result( poDS->GetConn() );
+        if( hResult == NULL )
+        {
+            poDS->ReportError( "mysql_store_result() failed on SELECT SRTEXT result." );
+            return FALSE;
+        }
+    
+        	
+        nSRSId = -1;
+        char **papszRow = mysql_fetch_row( hResult );
+
+        if( papszRow != NULL && papszRow[0] != NULL )
+        {
+            nSRSId = atoi(papszRow[0]);
+        }
+
+        mysql_free_result( hResult );
     }
-#endif
-    return OGRMySQLLayer::GetSpatialRef();
+
+
+
+/* -------------------------------------------------------------------- */
+/*      Try to find in the existing table.                              */
+/* -------------------------------------------------------------------- */
+    MYSQL_RES    *hResult;
+    char         szCommand[1024];
+    char  *pszWKT = NULL;
+        
+    sprintf( szCommand,
+             "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
+             nSRSId );
+    if( mysql_query( poDS->GetConn(), szCommand ) )
+    {
+        poDS->ReportError( "SELECT srid Failed" );
+        return FALSE;
+    }     
+    
+    hResult = mysql_store_result( poDS->GetConn() );
+    if( hResult == NULL )
+    {
+        poDS->ReportError( "mysql_store_result() failed on SELECT SRID result." );
+        return FALSE;
+    }   
+
+    char **papszRow = mysql_fetch_row( hResult );
+
+    if( papszRow != NULL && papszRow[0] != NULL )
+    {
+        pszWKT =papszRow[0];
+    }
+    
+    poSRS = new OGRSpatialReference();
+    if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
+    {
+        delete poSRS;
+        poSRS = NULL;
+    }
+    
+    mysql_free_result( hResult );
+    return poSRS;
+    
+    //return OGRMySQLLayer::GetSpatialRef();
 }
