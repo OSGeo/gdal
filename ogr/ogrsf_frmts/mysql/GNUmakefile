@@ -6,7 +6,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 OBJ	=	ogrmysqldriver.o ogrmysqldatasource.o \
 		ogrmysqltablelayer.o ogrmysqllayer.o ogrmysqlresultlayer.o
 
-CPPFLAGS	:=	-I.. -I../.. $(MYSQL_INC) $(CPPFLAGS)
+CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(MYSQL_INC) $(CPPFLAGS)
 
 default:	$(O_OBJ)
 
