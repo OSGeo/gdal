@@ -1281,11 +1281,8 @@ SWIG_Ruby_AppendOutput(VALUE target, VALUE o) {
 
 
 
-
-
-
   
-#define SWIG_exception(code, msg) SWIG_Error(code, msg)
+#define SWIG_exception_fail(code, msg) do { SWIG_Error(code, msg); SWIG_fail; } while(0)
 
 
   
@@ -1294,24 +1291,30 @@ SWIG_Ruby_AppendOutput(VALUE target, VALUE o) {
 
 
 
+  
+#define SWIG_exception(code, msg) do { SWIG_Error(code, msg);; } while(0)
+
+
+
 /* -------- TYPES TABLE (BEGIN) -------- */
 
 #define SWIGTYPE_p_CPLErrorHandler swig_types[0]
 #define SWIGTYPE_p_CPLXMLNode swig_types[1]
-#define SWIGTYPE_p_GDALColorEntry swig_types[2]
-#define SWIGTYPE_p_GDALColorTable swig_types[3]
-#define SWIGTYPE_p_GDALDatasetShadow swig_types[4]
-#define SWIGTYPE_p_GDALDriverShadow swig_types[5]
-#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[6]
-#define SWIGTYPE_p_GDALRasterBandShadow swig_types[7]
-#define SWIGTYPE_p_GDAL_GCP swig_types[8]
-#define SWIGTYPE_p_char swig_types[9]
-#define SWIGTYPE_p_double swig_types[10]
-#define SWIGTYPE_p_int swig_types[11]
-#define SWIGTYPE_p_p_GDAL_GCP swig_types[12]
-#define SWIGTYPE_p_p_char swig_types[13]
-static swig_type_info *swig_types[15];
-static swig_module_info swig_module = {swig_types, 14, 0, 0, 0, 0};
+#define SWIGTYPE_p_GByte swig_types[2]
+#define SWIGTYPE_p_GDALColorEntry swig_types[3]
+#define SWIGTYPE_p_GDALColorTable swig_types[4]
+#define SWIGTYPE_p_GDALDatasetShadow swig_types[5]
+#define SWIGTYPE_p_GDALDriverShadow swig_types[6]
+#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[7]
+#define SWIGTYPE_p_GDALRasterBandShadow swig_types[8]
+#define SWIGTYPE_p_GDAL_GCP swig_types[9]
+#define SWIGTYPE_p_char swig_types[10]
+#define SWIGTYPE_p_double swig_types[11]
+#define SWIGTYPE_p_int swig_types[12]
+#define SWIGTYPE_p_p_GDAL_GCP swig_types[13]
+#define SWIGTYPE_p_p_char swig_types[14]
+static swig_type_info *swig_types[16];
+static swig_module_info swig_module = {swig_types, 15, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -1790,6 +1793,17 @@ SWIG_AsVal_double (VALUE obj, double *val)
 #define SWIG_From_double   rb_float_new
 
 
+SWIGINTERN GDAL_GCP *new_GDAL_GCP(double x=0.0,double y=0.0,double z=0.0,double pixel=0.0,double line=0.0,char const *info="",char const *id=""){
+    GDAL_GCP *self = (GDAL_GCP*) CPLMalloc( sizeof( GDAL_GCP ) );
+    self->dfGCPX = x;
+    self->dfGCPY = y;
+    self->dfGCPZ = z;
+    self->dfGCPPixel = pixel;
+    self->dfGCPLine = line;
+    self->pszInfo =  CPLStrdup( (info == 0) ? "" : info );
+    self->pszId = CPLStrdup( (id==0)? "" : id );
+    return self;
+  }
 
 
 double GDAL_GCP_GCPX_get( GDAL_GCP *h ) {
@@ -2146,7 +2160,7 @@ GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
 }
 
 SWIGINTERN VALUE
-_wrap_UseExceptions(int argc, VALUE *argv, VALUE self) {
+_wrap_use_exceptions(int argc, VALUE *argv, VALUE self) {
   if ((argc < 0) || (argc > 0)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc); SWIG_fail;
   }
@@ -2159,7 +2173,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_DontUseExceptions(int argc, VALUE *argv, VALUE self) {
+_wrap_dont_use_exceptions(int argc, VALUE *argv, VALUE self) {
   if ((argc < 0) || (argc > 0)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc); SWIG_fail;
   }
@@ -2187,12 +2201,12 @@ _wrap_debug(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Debug" "', argument " "1"" of type '" "char const *""'");
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Debug" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = buf1;
   res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Debug" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Debug" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -2237,14 +2251,14 @@ _wrap_error(int argc, VALUE *argv, VALUE self) {
   if (argc > 1) {
     ecode2 = SWIG_AsVal_int(argv[1], &val2);
     if (!SWIG_IsOK(ecode2)) {
-      SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "Error" "', argument " "2"" of type '" "int""'");
+      SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "Error" "', argument " "2"" of type '" "int""'");
     } 
     arg2 = static_cast<int >(val2);
   }
   if (argc > 2) {
     res3 = SWIG_AsCharPtrAndSize(argv[2], &buf3, NULL, &alloc3);
     if (!SWIG_IsOK(res3)) {
-      SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "Error" "', argument " "3"" of type '" "char const *""'");
+      SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "Error" "', argument " "3"" of type '" "char const *""'");
     }
     arg3 = buf3;
   }
@@ -2280,7 +2294,7 @@ _wrap_push_error_handler__SWIG_0(int argc, VALUE *argv, VALUE self) {
   if (argc > 0) {
     res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "PushErrorHandler" "', argument " "1"" of type '" "char const *""'");
+      SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "PushErrorHandler" "', argument " "1"" of type '" "char const *""'");
     }
     arg1 = buf1;
   }
@@ -2317,10 +2331,10 @@ _wrap_push_error_handler__SWIG_1(int argc, VALUE *argv, VALUE self) {
     CPLErrorHandler * temp;
     int res = SWIG_ConvertPtr(argv[0], &argp, SWIGTYPE_p_CPLErrorHandler,  0 );  
     if (!SWIG_IsOK(res)) {
-      SWIG_exception(((res != SWIG_ERROR) ? res : SWIG_TypeError), "in method '" "CPLPushErrorHandler" "', argument " "1"" of type '" "CPLErrorHandler""'"); 
+      SWIG_exception_fail(((res != SWIG_ERROR) ? res : SWIG_TypeError), "in method '" "CPLPushErrorHandler" "', argument " "1"" of type '" "CPLErrorHandler""'"); 
     }  
     if (!argp) {
-      SWIG_exception(SWIG_ValueError, "invalid null reference " "in method '" "CPLPushErrorHandler" "', argument " "1"" of type '" "CPLErrorHandler""'");
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "CPLPushErrorHandler" "', argument " "1"" of type '" "CPLErrorHandler""'");
     } else {
       arg1 = *(reinterpret_cast<CPLErrorHandler * >(argp));
     }
@@ -2370,6 +2384,7 @@ SWIGINTERN VALUE _wrap_push_error_handler(int nargs, VALUE *args, VALUE self) {
     }
   }
   
+fail:
   rb_raise(rb_eArgError, "No matching function for overloaded 'push_error_handler'");
   return Qnil;
 }
@@ -2502,7 +2517,7 @@ _wrap_push_finder_location(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CPLPushFinderLocation" "', argument " "1"" of type '" "char const *""'");
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CPLPushFinderLocation" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = buf1;
   {
@@ -2580,12 +2595,12 @@ _wrap_find_file(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CPLFindFile" "', argument " "1"" of type '" "char const *""'");
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CPLFindFile" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = buf1;
   res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CPLFindFile" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CPLFindFile" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -2624,12 +2639,12 @@ _wrap_set_config_option(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CPLSetConfigOption" "', argument " "1"" of type '" "char const *""'");
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CPLSetConfigOption" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = buf1;
   res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CPLSetConfigOption" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CPLSetConfigOption" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -2669,12 +2684,12 @@ _wrap_get_config_option(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CPLGetConfigOption" "', argument " "1"" of type '" "char const *""'");
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CPLGetConfigOption" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = buf1;
   res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CPLGetConfigOption" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CPLGetConfigOption" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -2697,6 +2712,102 @@ fail:
 }
 
 
+SWIGINTERN VALUE
+_wrap_binary_to_hex(int argc, VALUE *argv, VALUE self) {
+  int arg1 ;
+  GByte *arg2 = (GByte *) 0 ;
+  char *result = 0 ;
+  int res1 ;
+  GByte *buf1 = 0 ;
+  size_t size1 = 0 ;
+  int alloc1 = 0 ;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  {
+    /*%typemap(in,numinputs=1,fragment="SWIG_AsCharPtrAndSize") (int nBytes, const GByte *pabyData) */
+    
+    res1 = SWIG_AsCharPtrAndSize(argv[0], (char**)&buf1, &size1, &alloc1);
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CPLBinaryToHex" "', argument " "1"" of type '" "(GByte*, int)""'");
+    }
+    arg1 = (int) size1 - 1;				       
+    arg2 = (GByte *) buf1;					       
+  }
+  {
+    CPLErrorReset();
+    result = (char *)CPLBinaryToHex(arg1,(GByte const *)arg2);
+    
+    CPLErr eclass = CPLGetLastErrorType();
+    if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+      SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+    }
+  }
+  vresult = SWIG_FromCharPtr(result);
+  {
+    /* %typemap(freearg) (int nBytes, const GByte *pabyData) */
+    CPLFree(result);
+  }
+  return vresult;
+fail:
+  {
+    /* %typemap(freearg) (int nBytes, const GByte *pabyData) */
+    CPLFree(result);
+  }
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_hex_to_binary(int argc, VALUE *argv, VALUE self) {
+  char *arg1 = (char *) 0 ;
+  int *arg2 = (int *) 0 ;
+  GByte *result = 0 ;
+  int res1 ;
+  char *buf1 = 0 ;
+  int size1 = 0 ;
+  int alloc1 = 0 ;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 1) || (argc > 1)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 1)",argc); SWIG_fail;
+  }
+  {
+    /*% typemap(in,numinputs=1,fragment="SWIG_AsCharPtrAndSize") (const char *pszHex, int *pnBytes) */
+    arg2 = &size1;
+    res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CPLHexToBinary" "', argument " "1"" of type '" "char const *""'");
+    }
+    arg1 = buf1;
+  }
+  {
+    CPLErrorReset();
+    result = (GByte *)CPLHexToBinary((char const *)arg1,arg2);
+    
+    CPLErr eclass = CPLGetLastErrorType();
+    if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+      SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+    }
+  }
+  {
+    /* %typemap(out) GByte* */
+    
+    /* Stops insertion of default type map. */
+  }
+  {
+    /* %typemap(argout) (const char *pszHex, int *pnBytes) */
+    vresult = SWIG_FromCharPtrAndSize((char*)result, (size_t)*arg2);
+    CPLFree(result);
+  }
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
 swig_class cMajorObject;
 
 SWIGINTERN VALUE
@@ -2712,7 +2823,7 @@ _wrap_MajorObject_get_description(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetDescription" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetDescription" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALMajorObjectShadow * >(argp1);
   {
@@ -2746,12 +2857,12 @@ _wrap_MajorObject_set_description(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetDescription" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetDescription" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALMajorObjectShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetDescription" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetDescription" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -2788,13 +2899,13 @@ _wrap_MajorObject_get_metadata_dict(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetMetadata_Dict" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetMetadata_Dict" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALMajorObjectShadow * >(argp1);
   if (argc > 0) {
     res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
     if (!SWIG_IsOK(res2)) {
-      SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetMetadata_Dict" "', argument " "2"" of type '" "char const *""'");
+      SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetMetadata_Dict" "', argument " "2"" of type '" "char const *""'");
     }
     arg2 = buf2;
   }
@@ -2859,13 +2970,13 @@ _wrap_MajorObject_get_metadata_list(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetMetadata_List" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetMetadata_List" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALMajorObjectShadow * >(argp1);
   if (argc > 0) {
     res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
     if (!SWIG_IsOK(res2)) {
-      SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetMetadata_List" "', argument " "2"" of type '" "char const *""'");
+      SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetMetadata_List" "', argument " "2"" of type '" "char const *""'");
     }
     arg2 = buf2;
   }
@@ -2920,7 +3031,7 @@ _wrap_MajorObject_set_metadata__SWIG_0(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetMetadata" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetMetadata" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALMajorObjectShadow * >(argp1);
   {
@@ -2976,7 +3087,7 @@ _wrap_MajorObject_set_metadata__SWIG_0(int argc, VALUE *argv, VALUE self) {
   if (argc > 1) {
     res3 = SWIG_AsCharPtrAndSize(argv[1], &buf3, NULL, &alloc3);
     if (!SWIG_IsOK(res3)) {
-      SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "SetMetadata" "', argument " "3"" of type '" "char const *""'");
+      SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "SetMetadata" "', argument " "3"" of type '" "char const *""'");
     }
     arg3 = buf3;
   }
@@ -3030,18 +3141,18 @@ _wrap_MajorObject_set_metadata__SWIG_1(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALMajorObjectShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetMetadata" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetMetadata" "', argument " "1"" of type '" "GDALMajorObjectShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALMajorObjectShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetMetadata" "', argument " "2"" of type '" "char *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetMetadata" "', argument " "2"" of type '" "char *""'");
   }
   arg2 = buf2;
   if (argc > 1) {
     res3 = SWIG_AsCharPtrAndSize(argv[1], &buf3, NULL, &alloc3);
     if (!SWIG_IsOK(res3)) {
-      SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "SetMetadata" "', argument " "3"" of type '" "char const *""'");
+      SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "SetMetadata" "', argument " "3"" of type '" "char const *""'");
     }
     arg3 = buf3;
   }
@@ -3121,6 +3232,7 @@ SWIGINTERN VALUE _wrap_MajorObject_set_metadata(int nargs, VALUE *args, VALUE se
     }
   }
   
+fail:
   rb_raise(rb_eArgError, "No matching function for overloaded 'MajorObject_set_metadata'");
   return Qnil;
 }
@@ -3141,7 +3253,7 @@ _wrap_Driver_short_name_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ShortName" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ShortName" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDriverShadow * >(argp1);
   {
@@ -3173,7 +3285,7 @@ _wrap_Driver_long_name_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "LongName" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "LongName" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDriverShadow * >(argp1);
   {
@@ -3205,7 +3317,7 @@ _wrap_Driver_help_topic_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "HelpTopic" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "HelpTopic" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDriverShadow * >(argp1);
   {
@@ -3225,7 +3337,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_Driver_create_(int argc, VALUE *argv, VALUE self) {
+_wrap_Driver_create(int argc, VALUE *argv, VALUE self) {
   GDALDriverShadow *arg1 = (GDALDriverShadow *) 0 ;
   char *arg2 = (char *) 0 ;
   int arg3 ;
@@ -3255,28 +3367,28 @@ _wrap_Driver_create_(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Create" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Create" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDriverShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Create" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Create" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   ecode3 = SWIG_AsVal_int(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "Create" "', argument " "3"" of type '" "int""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "Create" "', argument " "3"" of type '" "int""'");
   } 
   arg3 = static_cast<int >(val3);
   ecode4 = SWIG_AsVal_int(argv[2], &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "Create" "', argument " "4"" of type '" "int""'");
+    SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "Create" "', argument " "4"" of type '" "int""'");
   } 
   arg4 = static_cast<int >(val4);
   if (argc > 3) {
     ecode5 = SWIG_AsVal_int(argv[3], &val5);
     if (!SWIG_IsOK(ecode5)) {
-      SWIG_exception(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "Create" "', argument " "5"" of type '" "int""'");
+      SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "Create" "', argument " "5"" of type '" "int""'");
     } 
     arg5 = static_cast<int >(val5);
   }
@@ -3356,23 +3468,23 @@ _wrap_Driver_create_copy(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CreateCopy" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CreateCopy" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDriverShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CreateCopy" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CreateCopy" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   res3 = SWIG_ConvertPtr(argv[1], &argp3,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res3)) {
-    SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "CreateCopy" "', argument " "3"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "CreateCopy" "', argument " "3"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg3 = reinterpret_cast<GDALDatasetShadow * >(argp3);
   if (argc > 2) {
     ecode4 = SWIG_AsVal_int(argv[2], &val4);
     if (!SWIG_IsOK(ecode4)) {
-      SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "CreateCopy" "', argument " "4"" of type '" "int""'");
+      SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "CreateCopy" "', argument " "4"" of type '" "int""'");
     } 
     arg4 = static_cast<int >(val4);
   }
@@ -3420,7 +3532,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_Driver_delete_(int argc, VALUE *argv, VALUE self) {
+_wrap_Driver_delete(int argc, VALUE *argv, VALUE self) {
   GDALDriverShadow *arg1 = (GDALDriverShadow *) 0 ;
   char *arg2 = (char *) 0 ;
   int result;
@@ -3436,12 +3548,12 @@ _wrap_Driver_delete_(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Delete" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Delete" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDriverShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Delete" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Delete" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -3478,12 +3590,12 @@ _wrap_GCP_gcpx_set(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPX" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPX" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GCPX" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GCPX" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   {
@@ -3514,7 +3626,7 @@ _wrap_GCP_gcpx_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPX" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPX" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -3547,12 +3659,12 @@ _wrap_GCP_gcpy_set(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPY" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPY" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GCPY" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GCPY" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   {
@@ -3583,7 +3695,7 @@ _wrap_GCP_gcpy_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPY" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPY" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -3616,12 +3728,12 @@ _wrap_GCP_gcpz_set(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPZ" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPZ" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GCPZ" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GCPZ" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   {
@@ -3652,7 +3764,7 @@ _wrap_GCP_gcpz_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPZ" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPZ" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -3685,12 +3797,12 @@ _wrap_GCP_gcppixel_set(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPPixel" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPPixel" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GCPPixel" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GCPPixel" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   {
@@ -3721,7 +3833,7 @@ _wrap_GCP_gcppixel_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPPixel" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPPixel" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -3754,12 +3866,12 @@ _wrap_GCP_gcpline_set(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPLine" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPLine" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GCPLine" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GCPLine" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   {
@@ -3790,7 +3902,7 @@ _wrap_GCP_gcpline_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPLine" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GCPLine" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -3824,12 +3936,12 @@ _wrap_GCP_info_set(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Info" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Info" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Info" "', argument " "2"" of type '" "char *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Info" "', argument " "2"" of type '" "char *""'");
   }
   arg2 = buf2;
   {
@@ -3862,7 +3974,7 @@ _wrap_GCP_info_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Info" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Info" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -3896,12 +4008,12 @@ _wrap_GCP_id_set(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Id" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Id" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Id" "', argument " "2"" of type '" "char *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Id" "', argument " "2"" of type '" "char *""'");
   }
   arg2 = buf2;
   {
@@ -3934,7 +4046,7 @@ _wrap_GCP_id_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Id" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Id" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -3952,18 +4064,6 @@ fail:
   return Qnil;
 }
 
-
-SWIGINTERN void delete_GDAL_GCP(GDAL_GCP *self){
-    if ( self->pszInfo )
-      CPLFree( self->pszInfo );
-    if ( self->pszId )
-      CPLFree( self->pszId );
-    CPLFree( self );
-  }
-SWIGINTERN void
-free_GDAL_GCP(GDAL_GCP *arg1) {
-    delete_GDAL_GCP(arg1);
-}
 
 #ifdef HAVE_RB_DEFINE_ALLOC_FUNC
 SWIGINTERN VALUE
@@ -3983,15 +4083,87 @@ _wrap_GCP_allocate(VALUE self) {
   
 
 SWIGINTERN VALUE
-_wrap_new_GCP__SWIG_1(int argc, VALUE *argv, VALUE self) {
+_wrap_new_GCP(int argc, VALUE *argv, VALUE self) {
+  double arg1 = (double) 0.0 ;
+  double arg2 = (double) 0.0 ;
+  double arg3 = (double) 0.0 ;
+  double arg4 = (double) 0.0 ;
+  double arg5 = (double) 0.0 ;
+  char *arg6 = (char *) "" ;
+  char *arg7 = (char *) "" ;
   GDAL_GCP *result = 0 ;
+  double val1 ;
+  int ecode1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  double val3 ;
+  int ecode3 = 0 ;
+  double val4 ;
+  int ecode4 = 0 ;
+  double val5 ;
+  int ecode5 = 0 ;
+  int res6 ;
+  char *buf6 = 0 ;
+  int alloc6 = 0 ;
+  int res7 ;
+  char *buf7 = 0 ;
+  int alloc7 = 0 ;
   
-  if ((argc < 0) || (argc > 0)) {
+  if ((argc < 0) || (argc > 7)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc); SWIG_fail;
+  }
+  if (argc > 0) {
+    ecode1 = SWIG_AsVal_double(argv[0], &val1);
+    if (!SWIG_IsOK(ecode1)) {
+      SWIG_exception_fail(((ecode1 != SWIG_ERROR) ? ecode1 : SWIG_TypeError), "in method '" "GDAL_GCP" "', argument " "1"" of type '" "double""'");
+    } 
+    arg1 = static_cast<double >(val1);
+  }
+  if (argc > 1) {
+    ecode2 = SWIG_AsVal_double(argv[1], &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP" "', argument " "2"" of type '" "double""'");
+    } 
+    arg2 = static_cast<double >(val2);
+  }
+  if (argc > 2) {
+    ecode3 = SWIG_AsVal_double(argv[2], &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "GDAL_GCP" "', argument " "3"" of type '" "double""'");
+    } 
+    arg3 = static_cast<double >(val3);
+  }
+  if (argc > 3) {
+    ecode4 = SWIG_AsVal_double(argv[3], &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "GDAL_GCP" "', argument " "4"" of type '" "double""'");
+    } 
+    arg4 = static_cast<double >(val4);
+  }
+  if (argc > 4) {
+    ecode5 = SWIG_AsVal_double(argv[4], &val5);
+    if (!SWIG_IsOK(ecode5)) {
+      SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "GDAL_GCP" "', argument " "5"" of type '" "double""'");
+    } 
+    arg5 = static_cast<double >(val5);
+  }
+  if (argc > 5) {
+    res6 = SWIG_AsCharPtrAndSize(argv[5], &buf6, NULL, &alloc6);
+    if (!SWIG_IsOK(res6)) {
+      SWIG_exception_fail(((res6 != SWIG_ERROR) ? res6 : SWIG_TypeError), "in method '" "GDAL_GCP" "', argument " "6"" of type '" "char const *""'");
+    }
+    arg6 = buf6;
+  }
+  if (argc > 6) {
+    res7 = SWIG_AsCharPtrAndSize(argv[6], &buf7, NULL, &alloc7);
+    if (!SWIG_IsOK(res7)) {
+      SWIG_exception_fail(((res7 != SWIG_ERROR) ? res7 : SWIG_TypeError), "in method '" "GDAL_GCP" "', argument " "7"" of type '" "char const *""'");
+    }
+    arg7 = buf7;
   }
   {
     CPLErrorReset();
-    result = (GDAL_GCP *)new GDAL_GCP();
+    result = (GDAL_GCP *)new_GDAL_GCP(arg1,arg2,arg3,arg4,arg5,(char const *)arg6,(char const *)arg7);
     DATA_PTR(self) = result;
     
     CPLErr eclass = CPLGetLastErrorType();
@@ -3999,29 +4171,27 @@ _wrap_new_GCP__SWIG_1(int argc, VALUE *argv, VALUE self) {
       SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
     }
   }
+  if (alloc6 == SWIG_NEWOBJ) delete[] buf6;
+  if (alloc7 == SWIG_NEWOBJ) delete[] buf7;
   return self;
 fail:
+  if (alloc6 == SWIG_NEWOBJ) delete[] buf6;
+  if (alloc7 == SWIG_NEWOBJ) delete[] buf7;
   return Qnil;
 }
 
 
-SWIGINTERN VALUE _wrap_new_GCP(int nargs, VALUE *args, VALUE self) {
-  int argc;
-  VALUE argv[1];
-  int ii;
-  
-  argc = nargs;
-  for (ii = 0; (ii < argc) && (ii < 1); ii++) {
-    argv[ii] = args[ii];
+SWIGINTERN void delete_GDAL_GCP(GDAL_GCP *self){
+    if ( self->pszInfo )
+      CPLFree( self->pszInfo );
+    if ( self->pszId )
+      CPLFree( self->pszId );
+    CPLFree( self );
   }
-  if (argc == 0) {
-    return _wrap_new_GCP__SWIG_1(nargs, args, self);
-  }
-  
-  rb_raise(rb_eArgError, "No matching function for overloaded 'new_GCP'");
-  return Qnil;
+SWIGINTERN void
+free_GDAL_GCP(GDAL_GCP *arg1) {
+    delete_GDAL_GCP(arg1);
 }
-
 
 SWIGINTERN VALUE
 _wrap_gdal_gcp_gcpx_get(int argc, VALUE *argv, VALUE self) {
@@ -4036,7 +4206,7 @@ _wrap_gdal_gcp_gcpx_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPX_get" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPX_get" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -4069,12 +4239,12 @@ _wrap_gdal_gcp_gcpx_set(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPX_set" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPX_set" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[1], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPX_set" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPX_set" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   {
@@ -4105,7 +4275,7 @@ _wrap_gdal_gcp_gcpy_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPY_get" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPY_get" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -4138,12 +4308,12 @@ _wrap_gdal_gcp_gcpy_set(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPY_set" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPY_set" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[1], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPY_set" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPY_set" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   {
@@ -4174,7 +4344,7 @@ _wrap_gdal_gcp_gcpz_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPZ_get" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPZ_get" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -4207,12 +4377,12 @@ _wrap_gdal_gcp_gcpz_set(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPZ_set" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPZ_set" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[1], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPZ_set" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPZ_set" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   {
@@ -4243,7 +4413,7 @@ _wrap_gdal_gcp_gcppixel_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPPixel_get" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPPixel_get" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -4276,12 +4446,12 @@ _wrap_gdal_gcp_gcppixel_set(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPPixel_set" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPPixel_set" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[1], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPPixel_set" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPPixel_set" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   {
@@ -4312,7 +4482,7 @@ _wrap_gdal_gcp_gcpline_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPLine_get" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPLine_get" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -4345,12 +4515,12 @@ _wrap_gdal_gcp_gcpline_set(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPLine_set" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPLine_set" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[1], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPLine_set" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_GCPLine_set" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   {
@@ -4381,7 +4551,7 @@ _wrap_gdal_gcp_info_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_Info_get" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_Info_get" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -4415,12 +4585,12 @@ _wrap_gdal_gcp_info_set(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_Info_set" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_Info_set" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GDAL_GCP_Info_set" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GDAL_GCP_Info_set" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -4453,7 +4623,7 @@ _wrap_gdal_gcp_id_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_Id_get" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_Id_get" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -4487,12 +4657,12 @@ _wrap_gdal_gcp_id_set(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_Id_set" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_Id_set" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GDAL_GCP_Id_set" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GDAL_GCP_Id_set" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -4525,7 +4695,7 @@ _wrap_gdal_gcp_get_gcpx(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_get_GCPX" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_get_GCPX" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -4558,12 +4728,12 @@ _wrap_gdal_gcp_set_gcpx(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPX" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPX" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[1], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPX" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPX" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   {
@@ -4594,7 +4764,7 @@ _wrap_gdal_gcp_get_gcpy(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_get_GCPY" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_get_GCPY" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -4627,12 +4797,12 @@ _wrap_gdal_gcp_set_gcpy(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPY" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPY" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[1], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPY" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPY" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   {
@@ -4663,7 +4833,7 @@ _wrap_gdal_gcp_get_gcpz(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_get_GCPZ" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_get_GCPZ" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -4696,12 +4866,12 @@ _wrap_gdal_gcp_set_gcpz(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPZ" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPZ" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[1], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPZ" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPZ" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   {
@@ -4732,7 +4902,7 @@ _wrap_gdal_gcp_get_gcppixel(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_get_GCPPixel" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_get_GCPPixel" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -4765,12 +4935,12 @@ _wrap_gdal_gcp_set_gcppixel(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPPixel" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPPixel" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[1], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPPixel" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPPixel" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   {
@@ -4801,7 +4971,7 @@ _wrap_gdal_gcp_get_gcpline(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_get_GCPLine" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_get_GCPLine" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -4834,12 +5004,12 @@ _wrap_gdal_gcp_set_gcpline(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPLine" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPLine" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[1], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPLine" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GDAL_GCP_set_GCPLine" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   {
@@ -4870,7 +5040,7 @@ _wrap_gdal_gcp_get_info(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_get_Info" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_get_Info" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -4904,12 +5074,12 @@ _wrap_gdal_gcp_set_info(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_set_Info" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_set_Info" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GDAL_GCP_set_Info" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GDAL_GCP_set_Info" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -4942,7 +5112,7 @@ _wrap_gdal_gcp_get_id(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_get_Id" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_get_Id" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   {
@@ -4976,12 +5146,12 @@ _wrap_gdal_gcp_set_id(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDAL_GCP, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_set_Id" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDAL_GCP_set_Id" "', argument " "1"" of type '" "GDAL_GCP *""'"); 
   }
   arg1 = reinterpret_cast<GDAL_GCP * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GDAL_GCP_set_Id" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GDAL_GCP_set_Id" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -5002,7 +5172,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_GCPsToGeoTransform(int argc, VALUE *argv, VALUE self) {
+_wrap_gcps_to_geo_transform(int argc, VALUE *argv, VALUE self) {
   int arg1 ;
   GDAL_GCP *arg2 = (GDAL_GCP *) 0 ;
   double *arg3 ;
@@ -5048,7 +5218,7 @@ _wrap_GCPsToGeoTransform(int argc, VALUE *argv, VALUE self) {
   if (argc > 1) {
     ecode4 = SWIG_AsVal_int(argv[1], &val4);
     if (!SWIG_IsOK(ecode4)) {
-      SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "GDALGCPsToGeoTransform" "', argument " "4"" of type '" "int""'");
+      SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "GDALGCPsToGeoTransform" "', argument " "4"" of type '" "int""'");
     } 
     arg4 = static_cast<int >(val4);
   }
@@ -5113,7 +5283,7 @@ _wrap_Dataset_raster_xsize_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "RasterXSize" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "RasterXSize" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   {
@@ -5145,7 +5315,7 @@ _wrap_Dataset_raster_ysize_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "RasterYSize" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "RasterYSize" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   {
@@ -5177,7 +5347,7 @@ _wrap_Dataset_raster_count_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "RasterCount" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "RasterCount" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   {
@@ -5219,7 +5389,7 @@ _wrap_Dataset_get_driver(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetDriver" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetDriver" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   {
@@ -5254,12 +5424,12 @@ _wrap_Dataset_get_raster_band(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetRasterBand" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetRasterBand" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetRasterBand" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetRasterBand" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   {
@@ -5291,7 +5461,7 @@ _wrap_Dataset_get_projection(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetProjection" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetProjection" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   {
@@ -5323,7 +5493,7 @@ _wrap_Dataset_get_projection_ref(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetProjectionRef" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetProjectionRef" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   {
@@ -5359,12 +5529,12 @@ _wrap_Dataset_set_projection(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetProjection" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetProjection" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetProjection" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetProjection" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -5406,7 +5576,7 @@ _wrap_Dataset_get_geo_transform(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGeoTransform" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGeoTransform" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   {
@@ -5452,7 +5622,7 @@ _wrap_Dataset_set_geo_transform(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetGeoTransform" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetGeoTransform" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   {
@@ -5519,13 +5689,13 @@ _wrap_Dataset_build_overviews(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "BuildOverviews" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "BuildOverviews" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   if (argc > 0) {
     res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
     if (!SWIG_IsOK(res2)) {
-      SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "BuildOverviews" "', argument " "2"" of type '" "char const *""'");
+      SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "BuildOverviews" "', argument " "2"" of type '" "char const *""'");
     }
     arg2 = buf2;
   }
@@ -5593,7 +5763,7 @@ _wrap_Dataset_get_gcpcount(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGCPCount" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGCPCount" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   {
@@ -5625,7 +5795,7 @@ _wrap_Dataset_get_gcpprojection(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGCPProjection" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGCPProjection" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   {
@@ -5665,7 +5835,7 @@ _wrap_Dataset_get_gcps(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGCPs" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGCPs" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   {
@@ -5721,7 +5891,7 @@ _wrap_Dataset_set_gcps(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetGCPs" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetGCPs" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   {
@@ -5750,7 +5920,7 @@ _wrap_Dataset_set_gcps(int argc, VALUE *argv, VALUE self) {
   }
   res4 = SWIG_AsCharPtrAndSize(argv[1], &buf4, NULL, &alloc4);
   if (!SWIG_IsOK(res4)) {
-    SWIG_exception(((res4 != SWIG_ERROR) ? res4 : SWIG_TypeError), "in method '" "SetGCPs" "', argument " "4"" of type '" "char const *""'");
+    SWIG_exception_fail(((res4 != SWIG_ERROR) ? res4 : SWIG_TypeError), "in method '" "SetGCPs" "', argument " "4"" of type '" "char const *""'");
   }
   arg4 = buf4;
   {
@@ -5797,7 +5967,7 @@ _wrap_Dataset_flush_cache(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "FlushCache" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "FlushCache" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   {
@@ -5833,7 +6003,7 @@ _wrap_Dataset_add_band(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "AddBand" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "AddBand" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   if (argc > 0) {
@@ -5931,53 +6101,53 @@ _wrap_Dataset_write_raster(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   ecode3 = SWIG_AsVal_int(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "3"" of type '" "int""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "3"" of type '" "int""'");
   } 
   arg3 = static_cast<int >(val3);
   ecode4 = SWIG_AsVal_int(argv[2], &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "4"" of type '" "int""'");
+    SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "4"" of type '" "int""'");
   } 
   arg4 = static_cast<int >(val4);
   ecode5 = SWIG_AsVal_int(argv[3], &val5);
   if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "5"" of type '" "int""'");
+    SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "5"" of type '" "int""'");
   } 
   arg5 = static_cast<int >(val5);
   res6 = SWIG_AsCharPtrAndSize(argv[4], &buf6, &size6, &alloc6);
   if (!SWIG_IsOK(res6)) {
-    SWIG_exception(((res6 != SWIG_ERROR) ? res6 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "6"" of type '" "int""'");
+    SWIG_exception_fail(((res6 != SWIG_ERROR) ? res6 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "6"" of type '" "int""'");
   }  
   arg7 = static_cast<char * >(buf6) ;
   arg6 = static_cast<int >(size6 - 1) ;
   if (argc > 5) {
     res8 = SWIG_ConvertPtr(argv[5], &argp8,SWIGTYPE_p_int, 0 |  0 );
     if (!SWIG_IsOK(res8)) {
-      SWIG_exception(((res8 != SWIG_ERROR) ? res8 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "8"" of type '" "int *""'"); 
+      SWIG_exception_fail(((res8 != SWIG_ERROR) ? res8 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "8"" of type '" "int *""'"); 
     }
     arg8 = reinterpret_cast<int * >(argp8);
   }
   if (argc > 6) {
     res9 = SWIG_ConvertPtr(argv[6], &argp9,SWIGTYPE_p_int, 0 |  0 );
     if (!SWIG_IsOK(res9)) {
-      SWIG_exception(((res9 != SWIG_ERROR) ? res9 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "9"" of type '" "int *""'"); 
+      SWIG_exception_fail(((res9 != SWIG_ERROR) ? res9 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "9"" of type '" "int *""'"); 
     }
     arg9 = reinterpret_cast<int * >(argp9);
   }
   if (argc > 7) {
     res10 = SWIG_ConvertPtr(argv[7], &argp10,SWIGTYPE_p_int, 0 |  0 );
     if (!SWIG_IsOK(res10)) {
-      SWIG_exception(((res10 != SWIG_ERROR) ? res10 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "10"" of type '" "GDALDataType *""'"); 
+      SWIG_exception_fail(((res10 != SWIG_ERROR) ? res10 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "10"" of type '" "GDALDataType *""'"); 
     }
     arg10 = reinterpret_cast<GDALDataType * >(argp10);
   }
@@ -6048,7 +6218,7 @@ _wrap_Band_xsize_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "XSize" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "XSize" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   {
@@ -6080,7 +6250,7 @@ _wrap_Band_ysize_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "YSize" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "YSize" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   {
@@ -6112,7 +6282,7 @@ _wrap_Band_data_type_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "DataType" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "DataType" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   {
@@ -6144,7 +6314,7 @@ _wrap_Band_get_raster_color_interpretation(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetRasterColorInterpretation" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetRasterColorInterpretation" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   {
@@ -6177,7 +6347,7 @@ _wrap_Band_set_raster_color_interpretation(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetRasterColorInterpretation" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetRasterColorInterpretation" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   {
@@ -6224,7 +6394,7 @@ _wrap_Band_get_no_data_value(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetNoDataValue" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetNoDataValue" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   {
@@ -6271,12 +6441,12 @@ _wrap_Band_set_no_data_value(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetNoDataValue" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetNoDataValue" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetNoDataValue" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetNoDataValue" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   {
@@ -6319,7 +6489,7 @@ _wrap_Band_get_minimum(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetMinimum" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetMinimum" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   {
@@ -6371,7 +6541,7 @@ _wrap_Band_get_maximum(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetMaximum" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetMaximum" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   {
@@ -6423,7 +6593,7 @@ _wrap_Band_get_offset(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetOffset" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetOffset" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   {
@@ -6475,7 +6645,7 @@ _wrap_Band_get_scale(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetScale" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetScale" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   {
@@ -6519,7 +6689,7 @@ _wrap_Band_get_overview_count(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetOverviewCount" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetOverviewCount" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   {
@@ -6554,12 +6724,12 @@ _wrap_Band_get_overview(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetOverview" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetOverview" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetOverview" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetOverview" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   {
@@ -6606,34 +6776,34 @@ _wrap_Band_checksum(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Checksum" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Checksum" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   if (argc > 0) {
     ecode2 = SWIG_AsVal_int(argv[0], &val2);
     if (!SWIG_IsOK(ecode2)) {
-      SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "Checksum" "', argument " "2"" of type '" "int""'");
+      SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "Checksum" "', argument " "2"" of type '" "int""'");
     } 
     arg2 = static_cast<int >(val2);
   }
   if (argc > 1) {
     ecode3 = SWIG_AsVal_int(argv[1], &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "Checksum" "', argument " "3"" of type '" "int""'");
+      SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "Checksum" "', argument " "3"" of type '" "int""'");
     } 
     arg3 = static_cast<int >(val3);
   }
   if (argc > 2) {
     res4 = SWIG_ConvertPtr(argv[2], &argp4,SWIGTYPE_p_int, 0 |  0 );
     if (!SWIG_IsOK(res4)) {
-      SWIG_exception(((res4 != SWIG_ERROR) ? res4 : SWIG_TypeError), "in method '" "Checksum" "', argument " "4"" of type '" "int *""'"); 
+      SWIG_exception_fail(((res4 != SWIG_ERROR) ? res4 : SWIG_TypeError), "in method '" "Checksum" "', argument " "4"" of type '" "int *""'"); 
     }
     arg4 = reinterpret_cast<int * >(argp4);
   }
   if (argc > 3) {
     res5 = SWIG_ConvertPtr(argv[3], &argp5,SWIGTYPE_p_int, 0 |  0 );
     if (!SWIG_IsOK(res5)) {
-      SWIG_exception(((res5 != SWIG_ERROR) ? res5 : SWIG_TypeError), "in method '" "Checksum" "', argument " "5"" of type '" "int *""'"); 
+      SWIG_exception_fail(((res5 != SWIG_ERROR) ? res5 : SWIG_TypeError), "in method '" "Checksum" "', argument " "5"" of type '" "int *""'"); 
     }
     arg5 = reinterpret_cast<int * >(argp5);
   }
@@ -6674,13 +6844,13 @@ _wrap_Band_compute_raster_min_max(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ComputeRasterMinMax" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ComputeRasterMinMax" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   if (argc > 0) {
     ecode3 = SWIG_AsVal_int(argv[0], &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "ComputeRasterMinMax" "', argument " "3"" of type '" "int""'");
+      SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "ComputeRasterMinMax" "', argument " "3"" of type '" "int""'");
     } 
     arg3 = static_cast<int >(val3);
   }
@@ -6731,18 +6901,18 @@ _wrap_Band_fill(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Fill" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Fill" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "Fill" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "Fill" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   if (argc > 1) {
     ecode3 = SWIG_AsVal_double(argv[1], &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "Fill" "', argument " "3"" of type '" "double""'");
+      SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "Fill" "', argument " "3"" of type '" "double""'");
     } 
     arg3 = static_cast<double >(val3);
   }
@@ -6811,47 +6981,47 @@ _wrap_Band_read_raster(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ReadRaster" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ReadRaster" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "ReadRaster" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "ReadRaster" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   ecode3 = SWIG_AsVal_int(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "ReadRaster" "', argument " "3"" of type '" "int""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "ReadRaster" "', argument " "3"" of type '" "int""'");
   } 
   arg3 = static_cast<int >(val3);
   ecode4 = SWIG_AsVal_int(argv[2], &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "ReadRaster" "', argument " "4"" of type '" "int""'");
+    SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "ReadRaster" "', argument " "4"" of type '" "int""'");
   } 
   arg4 = static_cast<int >(val4);
   ecode5 = SWIG_AsVal_int(argv[3], &val5);
   if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "ReadRaster" "', argument " "5"" of type '" "int""'");
+    SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "ReadRaster" "', argument " "5"" of type '" "int""'");
   } 
   arg5 = static_cast<int >(val5);
   if (argc > 4) {
     res8 = SWIG_ConvertPtr(argv[4], &argp8,SWIGTYPE_p_int, 0 |  0 );
     if (!SWIG_IsOK(res8)) {
-      SWIG_exception(((res8 != SWIG_ERROR) ? res8 : SWIG_TypeError), "in method '" "ReadRaster" "', argument " "8"" of type '" "int *""'"); 
+      SWIG_exception_fail(((res8 != SWIG_ERROR) ? res8 : SWIG_TypeError), "in method '" "ReadRaster" "', argument " "8"" of type '" "int *""'"); 
     }
     arg8 = reinterpret_cast<int * >(argp8);
   }
   if (argc > 5) {
     res9 = SWIG_ConvertPtr(argv[5], &argp9,SWIGTYPE_p_int, 0 |  0 );
     if (!SWIG_IsOK(res9)) {
-      SWIG_exception(((res9 != SWIG_ERROR) ? res9 : SWIG_TypeError), "in method '" "ReadRaster" "', argument " "9"" of type '" "int *""'"); 
+      SWIG_exception_fail(((res9 != SWIG_ERROR) ? res9 : SWIG_TypeError), "in method '" "ReadRaster" "', argument " "9"" of type '" "int *""'"); 
     }
     arg9 = reinterpret_cast<int * >(argp9);
   }
   if (argc > 6) {
     res10 = SWIG_ConvertPtr(argv[6], &argp10,SWIGTYPE_p_int, 0 |  0 );
     if (!SWIG_IsOK(res10)) {
-      SWIG_exception(((res10 != SWIG_ERROR) ? res10 : SWIG_TypeError), "in method '" "ReadRaster" "', argument " "10"" of type '" "int *""'"); 
+      SWIG_exception_fail(((res10 != SWIG_ERROR) ? res10 : SWIG_TypeError), "in method '" "ReadRaster" "', argument " "10"" of type '" "int *""'"); 
     }
     arg10 = reinterpret_cast<int * >(argp10);
   }
@@ -6872,8 +7042,20 @@ _wrap_Band_read_raster(int argc, VALUE *argv, VALUE self) {
     /* %typemap(argout) (int *nLen, char **pBuf ) */
     vresult = rb_str_new(*arg7, *arg6);
   }
+  {
+    /* %typemap(freearg) (int *nLen, char **pBuf ) */
+    if( *arg7 ) {
+      free( *arg7 );
+    }
+  }
   return vresult;
 fail:
+  {
+    /* %typemap(freearg) (int *nLen, char **pBuf ) */
+    if( *arg7 ) {
+      free( *arg7 );
+    }
+  }
   return Qnil;
 }
 
@@ -6921,53 +7103,53 @@ _wrap_Band_write_raster(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   ecode3 = SWIG_AsVal_int(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "3"" of type '" "int""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "3"" of type '" "int""'");
   } 
   arg3 = static_cast<int >(val3);
   ecode4 = SWIG_AsVal_int(argv[2], &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "4"" of type '" "int""'");
+    SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "4"" of type '" "int""'");
   } 
   arg4 = static_cast<int >(val4);
   ecode5 = SWIG_AsVal_int(argv[3], &val5);
   if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "5"" of type '" "int""'");
+    SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "5"" of type '" "int""'");
   } 
   arg5 = static_cast<int >(val5);
   res6 = SWIG_AsCharPtrAndSize(argv[4], &buf6, &size6, &alloc6);
   if (!SWIG_IsOK(res6)) {
-    SWIG_exception(((res6 != SWIG_ERROR) ? res6 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "6"" of type '" "int""'");
+    SWIG_exception_fail(((res6 != SWIG_ERROR) ? res6 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "6"" of type '" "int""'");
   }  
   arg7 = static_cast<char * >(buf6) ;
   arg6 = static_cast<int >(size6 - 1) ;
   if (argc > 5) {
     res8 = SWIG_ConvertPtr(argv[5], &argp8,SWIGTYPE_p_int, 0 |  0 );
     if (!SWIG_IsOK(res8)) {
-      SWIG_exception(((res8 != SWIG_ERROR) ? res8 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "8"" of type '" "int *""'"); 
+      SWIG_exception_fail(((res8 != SWIG_ERROR) ? res8 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "8"" of type '" "int *""'"); 
     }
     arg8 = reinterpret_cast<int * >(argp8);
   }
   if (argc > 6) {
     res9 = SWIG_ConvertPtr(argv[6], &argp9,SWIGTYPE_p_int, 0 |  0 );
     if (!SWIG_IsOK(res9)) {
-      SWIG_exception(((res9 != SWIG_ERROR) ? res9 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "9"" of type '" "int *""'"); 
+      SWIG_exception_fail(((res9 != SWIG_ERROR) ? res9 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "9"" of type '" "int *""'"); 
     }
     arg9 = reinterpret_cast<int * >(argp9);
   }
   if (argc > 7) {
     res10 = SWIG_ConvertPtr(argv[7], &argp10,SWIGTYPE_p_int, 0 |  0 );
     if (!SWIG_IsOK(res10)) {
-      SWIG_exception(((res10 != SWIG_ERROR) ? res10 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "10"" of type '" "int *""'"); 
+      SWIG_exception_fail(((res10 != SWIG_ERROR) ? res10 : SWIG_TypeError), "in method '" "WriteRaster" "', argument " "10"" of type '" "int *""'"); 
     }
     arg10 = reinterpret_cast<int * >(argp10);
   }
@@ -7001,7 +7183,7 @@ _wrap_Band_flush_cache(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "FlushCache" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "FlushCache" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   {
@@ -7032,7 +7214,7 @@ _wrap_Band_get_raster_color_table(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetRasterColorTable" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetRasterColorTable" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   {
@@ -7067,12 +7249,12 @@ _wrap_Band_set_raster_color_table(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetRasterColorTable" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetRasterColorTable" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALRasterBandShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_GDALColorTable, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetRasterColorTable" "', argument " "2"" of type '" "GDALColorTable *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetRasterColorTable" "', argument " "2"" of type '" "GDALColorTable *""'"); 
   }
   arg2 = reinterpret_cast<GDALColorTable * >(argp2);
   {
@@ -7158,7 +7340,7 @@ _wrap_ColorTable_clone(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALColorTable, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Clone" "', argument " "1"" of type '" "GDALColorTable const *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Clone" "', argument " "1"" of type '" "GDALColorTable const *""'"); 
   }
   arg1 = reinterpret_cast<GDALColorTable * >(argp1);
   {
@@ -7190,7 +7372,7 @@ _wrap_ColorTable_get_palette_interpretation(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALColorTable, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetPaletteInterpretation" "', argument " "1"" of type '" "GDALColorTable const *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetPaletteInterpretation" "', argument " "1"" of type '" "GDALColorTable const *""'"); 
   }
   arg1 = reinterpret_cast<GDALColorTable * >(argp1);
   {
@@ -7210,7 +7392,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ColorTable_GetCount(int argc, VALUE *argv, VALUE self) {
+_wrap_ColorTable_get_count(int argc, VALUE *argv, VALUE self) {
   GDALColorTable *arg1 = (GDALColorTable *) 0 ;
   int result;
   void *argp1 = 0 ;
@@ -7222,7 +7404,7 @@ _wrap_ColorTable_GetCount(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALColorTable, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetColorEntryCount" "', argument " "1"" of type '" "GDALColorTable const *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetColorEntryCount" "', argument " "1"" of type '" "GDALColorTable const *""'"); 
   }
   arg1 = reinterpret_cast<GDALColorTable * >(argp1);
   {
@@ -7257,12 +7439,12 @@ _wrap_ColorTable_get_color_entry(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALColorTable, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetColorEntry" "', argument " "1"" of type '" "GDALColorTable *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetColorEntry" "', argument " "1"" of type '" "GDALColorTable *""'"); 
   }
   arg1 = reinterpret_cast<GDALColorTable * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetColorEntry" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetColorEntry" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   {
@@ -7300,17 +7482,17 @@ _wrap_ColorTable_get_color_entry_as_rgb(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALColorTable, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetColorEntryAsRGB" "', argument " "1"" of type '" "GDALColorTable const *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetColorEntryAsRGB" "', argument " "1"" of type '" "GDALColorTable const *""'"); 
   }
   arg1 = reinterpret_cast<GDALColorTable * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetColorEntryAsRGB" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetColorEntryAsRGB" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   res3 = SWIG_ConvertPtr(argv[1], &argp3,SWIGTYPE_p_GDALColorEntry, 0 |  0 );
   if (!SWIG_IsOK(res3)) {
-    SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "GetColorEntryAsRGB" "', argument " "3"" of type '" "GDALColorEntry *""'"); 
+    SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "GetColorEntryAsRGB" "', argument " "3"" of type '" "GDALColorEntry *""'"); 
   }
   arg3 = reinterpret_cast<GDALColorEntry * >(argp3);
   {
@@ -7346,17 +7528,17 @@ _wrap_ColorTable_set_color_entry(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALColorTable, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetColorEntry" "', argument " "1"" of type '" "GDALColorTable *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetColorEntry" "', argument " "1"" of type '" "GDALColorTable *""'"); 
   }
   arg1 = reinterpret_cast<GDALColorTable * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetColorEntry" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetColorEntry" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   res3 = SWIG_ConvertPtr(argv[1], &argp3,SWIGTYPE_p_GDALColorEntry, 0 |  0 );
   if (!SWIG_IsOK(res3)) {
-    SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "SetColorEntry" "', argument " "3"" of type '" "GDALColorEntry const *""'"); 
+    SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "SetColorEntry" "', argument " "3"" of type '" "GDALColorEntry const *""'"); 
   }
   arg3 = reinterpret_cast<GDALColorEntry * >(argp3);
   {
@@ -7375,7 +7557,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_AllRegister(int argc, VALUE *argv, VALUE self) {
+_wrap_all_register(int argc, VALUE *argv, VALUE self) {
   if ((argc < 0) || (argc > 0)) {
     rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc); SWIG_fail;
   }
@@ -7395,7 +7577,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_GetCacheMax(int argc, VALUE *argv, VALUE self) {
+_wrap_get_cache_max(int argc, VALUE *argv, VALUE self) {
   int result;
   VALUE vresult = Qnil;
   
@@ -7419,7 +7601,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_SetCacheMax(int argc, VALUE *argv, VALUE self) {
+_wrap_set_cache_max(int argc, VALUE *argv, VALUE self) {
   int arg1 ;
   int val1 ;
   int ecode1 = 0 ;
@@ -7429,7 +7611,7 @@ _wrap_SetCacheMax(int argc, VALUE *argv, VALUE self) {
   }
   ecode1 = SWIG_AsVal_int(argv[0], &val1);
   if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception(((ecode1 != SWIG_ERROR) ? ecode1 : SWIG_TypeError), "in method '" "GDALSetCacheMax" "', argument " "1"" of type '" "int""'");
+    SWIG_exception_fail(((ecode1 != SWIG_ERROR) ? ecode1 : SWIG_TypeError), "in method '" "GDALSetCacheMax" "', argument " "1"" of type '" "int""'");
   } 
   arg1 = static_cast<int >(val1);
   {
@@ -7448,7 +7630,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_GetCacheUsed(int argc, VALUE *argv, VALUE self) {
+_wrap_set_cache_used(int argc, VALUE *argv, VALUE self) {
   int result;
   VALUE vresult = Qnil;
   
@@ -7472,7 +7654,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_GetDataTypeSize(int argc, VALUE *argv, VALUE self) {
+_wrap_get_data_type_size(int argc, VALUE *argv, VALUE self) {
   GDALDataType arg1 ;
   int result;
   VALUE vresult = Qnil;
@@ -7501,7 +7683,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_DataTypeIsComplex(int argc, VALUE *argv, VALUE self) {
+_wrap_data_type_is_complex(int argc, VALUE *argv, VALUE self) {
   GDALDataType arg1 ;
   int result;
   VALUE vresult = Qnil;
@@ -7530,7 +7712,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_GetDataTypeName(int argc, VALUE *argv, VALUE self) {
+_wrap_get_data_type_name(int argc, VALUE *argv, VALUE self) {
   GDALDataType arg1 ;
   char *result = 0 ;
   VALUE vresult = Qnil;
@@ -7559,7 +7741,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_GetDataTypeByName(int argc, VALUE *argv, VALUE self) {
+_wrap_get_data_type_by_name(int argc, VALUE *argv, VALUE self) {
   char *arg1 = (char *) 0 ;
   GDALDataType result;
   int res1 ;
@@ -7572,7 +7754,7 @@ _wrap_GetDataTypeByName(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDALGetDataTypeByName" "', argument " "1"" of type '" "char const *""'");
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GDALGetDataTypeByName" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = buf1;
   {
@@ -7594,7 +7776,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_GetColorInterpretationName(int argc, VALUE *argv, VALUE self) {
+_wrap_get_color_interpretation_name(int argc, VALUE *argv, VALUE self) {
   GDALColorInterp arg1 ;
   char *result = 0 ;
   VALUE vresult = Qnil;
@@ -7623,7 +7805,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_GetPaletteInterpretationName(int argc, VALUE *argv, VALUE self) {
+_wrap_get_palette_interpretation_name(int argc, VALUE *argv, VALUE self) {
   GDALPaletteInterp arg1 ;
   char *result = 0 ;
   VALUE vresult = Qnil;
@@ -7652,7 +7834,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_DecToDMS(int argc, VALUE *argv, VALUE self) {
+_wrap_dec_to_dms(int argc, VALUE *argv, VALUE self) {
   double arg1 ;
   char *arg2 = (char *) 0 ;
   int arg3 = (int) 2 ;
@@ -7671,18 +7853,18 @@ _wrap_DecToDMS(int argc, VALUE *argv, VALUE self) {
   }
   ecode1 = SWIG_AsVal_double(argv[0], &val1);
   if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception(((ecode1 != SWIG_ERROR) ? ecode1 : SWIG_TypeError), "in method '" "GDALDecToDMS" "', argument " "1"" of type '" "double""'");
+    SWIG_exception_fail(((ecode1 != SWIG_ERROR) ? ecode1 : SWIG_TypeError), "in method '" "GDALDecToDMS" "', argument " "1"" of type '" "double""'");
   } 
   arg1 = static_cast<double >(val1);
   res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GDALDecToDMS" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GDALDecToDMS" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   if (argc > 2) {
     ecode3 = SWIG_AsVal_int(argv[2], &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "GDALDecToDMS" "', argument " "3"" of type '" "int""'");
+      SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "GDALDecToDMS" "', argument " "3"" of type '" "int""'");
     } 
     arg3 = static_cast<int >(val3);
   }
@@ -7705,7 +7887,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_PackedDMSToDec(int argc, VALUE *argv, VALUE self) {
+_wrap_packed_dms_to_dec(int argc, VALUE *argv, VALUE self) {
   double arg1 ;
   double result;
   double val1 ;
@@ -7717,7 +7899,7 @@ _wrap_PackedDMSToDec(int argc, VALUE *argv, VALUE self) {
   }
   ecode1 = SWIG_AsVal_double(argv[0], &val1);
   if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception(((ecode1 != SWIG_ERROR) ? ecode1 : SWIG_TypeError), "in method '" "GDALPackedDMSToDec" "', argument " "1"" of type '" "double""'");
+    SWIG_exception_fail(((ecode1 != SWIG_ERROR) ? ecode1 : SWIG_TypeError), "in method '" "GDALPackedDMSToDec" "', argument " "1"" of type '" "double""'");
   } 
   arg1 = static_cast<double >(val1);
   {
@@ -7737,7 +7919,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_DecToPackedDMS(int argc, VALUE *argv, VALUE self) {
+_wrap_dec_to_packed_dms(int argc, VALUE *argv, VALUE self) {
   double arg1 ;
   double result;
   double val1 ;
@@ -7749,7 +7931,7 @@ _wrap_DecToPackedDMS(int argc, VALUE *argv, VALUE self) {
   }
   ecode1 = SWIG_AsVal_double(argv[0], &val1);
   if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception(((ecode1 != SWIG_ERROR) ? ecode1 : SWIG_TypeError), "in method '" "GDALDecToPackedDMS" "', argument " "1"" of type '" "double""'");
+    SWIG_exception_fail(((ecode1 != SWIG_ERROR) ? ecode1 : SWIG_TypeError), "in method '" "GDALDecToPackedDMS" "', argument " "1"" of type '" "double""'");
   } 
   arg1 = static_cast<double >(val1);
   {
@@ -7769,7 +7951,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_ParseXMLString(int argc, VALUE *argv, VALUE self) {
+_wrap_parse_xml_string(int argc, VALUE *argv, VALUE self) {
   char *arg1 = (char *) 0 ;
   CPLXMLNode *result = 0 ;
   int res1 ;
@@ -7782,7 +7964,7 @@ _wrap_ParseXMLString(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CPLParseXMLString" "', argument " "1"" of type '" "char *""'");
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CPLParseXMLString" "', argument " "1"" of type '" "char *""'");
   }
   arg1 = buf1;
   {
@@ -7813,7 +7995,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_SerializeXMLTree(int argc, VALUE *argv, VALUE self) {
+_wrap_serialize_xml_tree(int argc, VALUE *argv, VALUE self) {
   CPLXMLNode *arg1 = (CPLXMLNode *) 0 ;
   char *result = 0 ;
   VALUE vresult = Qnil;
@@ -7897,7 +8079,7 @@ _wrap_get_driver_by_name(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetDriverByName" "', argument " "1"" of type '" "char const *""'");
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetDriverByName" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = buf1;
   {
@@ -7931,7 +8113,7 @@ _wrap_get_driver(int argc, VALUE *argv, VALUE self) {
   }
   ecode1 = SWIG_AsVal_int(argv[0], &val1);
   if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception(((ecode1 != SWIG_ERROR) ? ecode1 : SWIG_TypeError), "in method '" "GetDriver" "', argument " "1"" of type '" "int""'");
+    SWIG_exception_fail(((ecode1 != SWIG_ERROR) ? ecode1 : SWIG_TypeError), "in method '" "GetDriver" "', argument " "1"" of type '" "int""'");
   } 
   arg1 = static_cast<int >(val1);
   {
@@ -7965,7 +8147,7 @@ _wrap_open(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Open" "', argument " "1"" of type '" "char const *""'");
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Open" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = buf1;
   if (argc > 1) {
@@ -8007,7 +8189,7 @@ _wrap_open_shared(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "OpenShared" "', argument " "1"" of type '" "char const *""'");
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "OpenShared" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = buf1;
   if (argc > 1) {
@@ -8059,20 +8241,20 @@ _wrap_auto_create_warped_vrt(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "AutoCreateWarpedVRT" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "AutoCreateWarpedVRT" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
   }
   arg1 = reinterpret_cast<GDALDatasetShadow * >(argp1);
   if (argc > 1) {
     res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
     if (!SWIG_IsOK(res2)) {
-      SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "AutoCreateWarpedVRT" "', argument " "2"" of type '" "char const *""'");
+      SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "AutoCreateWarpedVRT" "', argument " "2"" of type '" "char const *""'");
     }
     arg2 = buf2;
   }
   if (argc > 2) {
     res3 = SWIG_AsCharPtrAndSize(argv[2], &buf3, NULL, &alloc3);
     if (!SWIG_IsOK(res3)) {
-      SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "AutoCreateWarpedVRT" "', argument " "3"" of type '" "char const *""'");
+      SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "AutoCreateWarpedVRT" "', argument " "3"" of type '" "char const *""'");
     }
     arg3 = buf3;
   }
@@ -8085,7 +8267,7 @@ _wrap_auto_create_warped_vrt(int argc, VALUE *argv, VALUE self) {
   if (argc > 4) {
     ecode5 = SWIG_AsVal_double(argv[4], &val5);
     if (!SWIG_IsOK(ecode5)) {
-      SWIG_exception(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "AutoCreateWarpedVRT" "', argument " "5"" of type '" "double""'");
+      SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "AutoCreateWarpedVRT" "', argument " "5"" of type '" "double""'");
     } 
     arg5 = static_cast<double >(val5);
   }
@@ -8123,6 +8305,7 @@ static void *_p_GDALRasterBandShadowTo_p_GDALMajorObjectShadow(void *x) {
 }
 static swig_type_info _swigt__p_CPLErrorHandler = {"_p_CPLErrorHandler", "CPLErrorHandler *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_CPLXMLNode = {"_p_CPLXMLNode", "CPLXMLNode *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_GByte = {"_p_GByte", "GByte *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALColorEntry = {"_p_GDALColorEntry", "GDALColorEntry *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALColorTable = {"_p_GDALColorTable", "GDALColorTable *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALDatasetShadow = {"_p_GDALDatasetShadow", "GDALDatasetShadow *", 0, 0, (void*)0, 0};
@@ -8139,6 +8322,7 @@ static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0
 static swig_type_info *swig_type_initial[] = {
   &_swigt__p_CPLErrorHandler,
   &_swigt__p_CPLXMLNode,
+  &_swigt__p_GByte,
   &_swigt__p_GDALColorEntry,
   &_swigt__p_GDALColorTable,
   &_swigt__p_GDALDatasetShadow,
@@ -8155,6 +8339,7 @@ static swig_type_info *swig_type_initial[] = {
 
 static swig_cast_info _swigc__p_CPLErrorHandler[] = {  {&_swigt__p_CPLErrorHandler, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_CPLXMLNode[] = {  {&_swigt__p_CPLXMLNode, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_GByte[] = {  {&_swigt__p_GByte, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALColorEntry[] = {  {&_swigt__p_GDALColorEntry, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALColorTable[] = {  {&_swigt__p_GDALColorTable, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALDatasetShadow[] = {  {&_swigt__p_GDALDatasetShadow, 0, 0, 0},{0, 0, 0, 0}};
@@ -8171,6 +8356,7 @@ static swig_cast_info _swigc__p_p_char[] = {  {&_swigt__p_p_char, 0, 0, 0},{0, 0
 static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_CPLErrorHandler,
   _swigc__p_CPLXMLNode,
+  _swigc__p_GByte,
   _swigc__p_GDALColorEntry,
   _swigc__p_GDALColorTable,
   _swigc__p_GDALDatasetShadow,
@@ -8362,8 +8548,8 @@ SWIGEXPORT void Init_gdal(void) {
     GDALAllRegister();
   }
   
-  rb_define_module_function(mGdal, "UseExceptions", VALUEFUNC(_wrap_UseExceptions), -1);
-  rb_define_module_function(mGdal, "DontUseExceptions", VALUEFUNC(_wrap_DontUseExceptions), -1);
+  rb_define_module_function(mGdal, "use_exceptions", VALUEFUNC(_wrap_use_exceptions), -1);
+  rb_define_module_function(mGdal, "dont_use_exceptions", VALUEFUNC(_wrap_dont_use_exceptions), -1);
   rb_define_module_function(mGdal, "debug", VALUEFUNC(_wrap_debug), -1);
   rb_define_module_function(mGdal, "error", VALUEFUNC(_wrap_error), -1);
   rb_define_module_function(mGdal, "push_error_handler", VALUEFUNC(_wrap_push_error_handler), -1);
@@ -8378,6 +8564,8 @@ SWIGEXPORT void Init_gdal(void) {
   rb_define_module_function(mGdal, "find_file", VALUEFUNC(_wrap_find_file), -1);
   rb_define_module_function(mGdal, "set_config_option", VALUEFUNC(_wrap_set_config_option), -1);
   rb_define_module_function(mGdal, "get_config_option", VALUEFUNC(_wrap_get_config_option), -1);
+  rb_define_module_function(mGdal, "binary_to_hex", VALUEFUNC(_wrap_binary_to_hex), -1);
+  rb_define_module_function(mGdal, "hex_to_binary", VALUEFUNC(_wrap_hex_to_binary), -1);
   
   cMajorObject.klass = rb_define_class_under(mGdal, "MajorObject", rb_cObject);
   SWIG_TypeClientData(SWIGTYPE_p_GDALMajorObjectShadow, (void *) &cMajorObject);
@@ -8396,11 +8584,9 @@ SWIGEXPORT void Init_gdal(void) {
   rb_define_method(cDriver.klass, "short_name", VALUEFUNC(_wrap_Driver_short_name_get), -1);
   rb_define_method(cDriver.klass, "long_name", VALUEFUNC(_wrap_Driver_long_name_get), -1);
   rb_define_method(cDriver.klass, "help_topic", VALUEFUNC(_wrap_Driver_help_topic_get), -1);
-  rb_define_method(cDriver.klass, "create_", VALUEFUNC(_wrap_Driver_create_), -1);
-  rb_define_alias(cDriver.klass, "create", "create_");
+  rb_define_method(cDriver.klass, "create", VALUEFUNC(_wrap_Driver_create), -1);
   rb_define_method(cDriver.klass, "create_copy", VALUEFUNC(_wrap_Driver_create_copy), -1);
-  rb_define_method(cDriver.klass, "delete_", VALUEFUNC(_wrap_Driver_delete_), -1);
-  rb_define_alias(cDriver.klass, "delete", "delete_");
+  rb_define_method(cDriver.klass, "delete", VALUEFUNC(_wrap_Driver_delete), -1);
   cDriver.mark = 0;
   cDriver.trackObjects = 0;
   
@@ -8453,7 +8639,7 @@ SWIGEXPORT void Init_gdal(void) {
   rb_define_module_function(mGdal, "gdal_gcp_set_info", VALUEFUNC(_wrap_gdal_gcp_set_info), -1);
   rb_define_module_function(mGdal, "gdal_gcp_get_id", VALUEFUNC(_wrap_gdal_gcp_get_id), -1);
   rb_define_module_function(mGdal, "gdal_gcp_set_id", VALUEFUNC(_wrap_gdal_gcp_set_id), -1);
-  rb_define_module_function(mGdal, "GCPsToGeoTransform", VALUEFUNC(_wrap_GCPsToGeoTransform), -1);
+  rb_define_module_function(mGdal, "gcps_to_geo_transform", VALUEFUNC(_wrap_gcps_to_geo_transform), -1);
   
   cDataset.klass = rb_define_class_under(mGdal, "Dataset", ((swig_class *) SWIGTYPE_p_GDALMajorObjectShadow->clientdata)->klass);
   SWIG_TypeClientData(SWIGTYPE_p_GDALDatasetShadow, (void *) &cDataset);
@@ -8513,28 +8699,28 @@ SWIGEXPORT void Init_gdal(void) {
   rb_define_method(cColorTable.klass, "initialize", VALUEFUNC(_wrap_new_ColorTable), -1);
   rb_define_method(cColorTable.klass, "clone", VALUEFUNC(_wrap_ColorTable_clone), -1);
   rb_define_method(cColorTable.klass, "get_palette_interpretation", VALUEFUNC(_wrap_ColorTable_get_palette_interpretation), -1);
-  rb_define_method(cColorTable.klass, "GetCount", VALUEFUNC(_wrap_ColorTable_GetCount), -1);
+  rb_define_method(cColorTable.klass, "get_count", VALUEFUNC(_wrap_ColorTable_get_count), -1);
   rb_define_method(cColorTable.klass, "get_color_entry", VALUEFUNC(_wrap_ColorTable_get_color_entry), -1);
   rb_define_method(cColorTable.klass, "get_color_entry_as_rgb", VALUEFUNC(_wrap_ColorTable_get_color_entry_as_rgb), -1);
   rb_define_method(cColorTable.klass, "set_color_entry", VALUEFUNC(_wrap_ColorTable_set_color_entry), -1);
   cColorTable.mark = 0;
   cColorTable.destroy = (void (*)(void *)) free_GDALColorTable;
   cColorTable.trackObjects = 0;
-  rb_define_module_function(mGdal, "AllRegister", VALUEFUNC(_wrap_AllRegister), -1);
-  rb_define_module_function(mGdal, "GetCacheMax", VALUEFUNC(_wrap_GetCacheMax), -1);
-  rb_define_module_function(mGdal, "SetCacheMax", VALUEFUNC(_wrap_SetCacheMax), -1);
-  rb_define_module_function(mGdal, "GetCacheUsed", VALUEFUNC(_wrap_GetCacheUsed), -1);
-  rb_define_module_function(mGdal, "GetDataTypeSize", VALUEFUNC(_wrap_GetDataTypeSize), -1);
-  rb_define_module_function(mGdal, "DataTypeIsComplex", VALUEFUNC(_wrap_DataTypeIsComplex), -1);
-  rb_define_module_function(mGdal, "GetDataTypeName", VALUEFUNC(_wrap_GetDataTypeName), -1);
-  rb_define_module_function(mGdal, "GetDataTypeByName", VALUEFUNC(_wrap_GetDataTypeByName), -1);
-  rb_define_module_function(mGdal, "GetColorInterpretationName", VALUEFUNC(_wrap_GetColorInterpretationName), -1);
-  rb_define_module_function(mGdal, "GetPaletteInterpretationName", VALUEFUNC(_wrap_GetPaletteInterpretationName), -1);
-  rb_define_module_function(mGdal, "DecToDMS", VALUEFUNC(_wrap_DecToDMS), -1);
-  rb_define_module_function(mGdal, "PackedDMSToDec", VALUEFUNC(_wrap_PackedDMSToDec), -1);
-  rb_define_module_function(mGdal, "DecToPackedDMS", VALUEFUNC(_wrap_DecToPackedDMS), -1);
-  rb_define_module_function(mGdal, "ParseXMLString", VALUEFUNC(_wrap_ParseXMLString), -1);
-  rb_define_module_function(mGdal, "SerializeXMLTree", VALUEFUNC(_wrap_SerializeXMLTree), -1);
+  rb_define_module_function(mGdal, "all_register", VALUEFUNC(_wrap_all_register), -1);
+  rb_define_module_function(mGdal, "get_cache_max", VALUEFUNC(_wrap_get_cache_max), -1);
+  rb_define_module_function(mGdal, "set_cache_max", VALUEFUNC(_wrap_set_cache_max), -1);
+  rb_define_module_function(mGdal, "set_cache_used", VALUEFUNC(_wrap_set_cache_used), -1);
+  rb_define_module_function(mGdal, "get_data_type_size", VALUEFUNC(_wrap_get_data_type_size), -1);
+  rb_define_module_function(mGdal, "data_type_is_complex", VALUEFUNC(_wrap_data_type_is_complex), -1);
+  rb_define_module_function(mGdal, "get_data_type_name", VALUEFUNC(_wrap_get_data_type_name), -1);
+  rb_define_module_function(mGdal, "get_data_type_by_name", VALUEFUNC(_wrap_get_data_type_by_name), -1);
+  rb_define_module_function(mGdal, "get_color_interpretation_name", VALUEFUNC(_wrap_get_color_interpretation_name), -1);
+  rb_define_module_function(mGdal, "get_palette_interpretation_name", VALUEFUNC(_wrap_get_palette_interpretation_name), -1);
+  rb_define_module_function(mGdal, "dec_to_dms", VALUEFUNC(_wrap_dec_to_dms), -1);
+  rb_define_module_function(mGdal, "packed_dms_to_dec", VALUEFUNC(_wrap_packed_dms_to_dec), -1);
+  rb_define_module_function(mGdal, "dec_to_packed_dms", VALUEFUNC(_wrap_dec_to_packed_dms), -1);
+  rb_define_module_function(mGdal, "parse_xml_string", VALUEFUNC(_wrap_parse_xml_string), -1);
+  rb_define_module_function(mGdal, "serialize_xml_tree", VALUEFUNC(_wrap_serialize_xml_tree), -1);
   rb_define_module_function(mGdal, "get_driver_count", VALUEFUNC(_wrap_get_driver_count), -1);
   rb_define_module_function(mGdal, "get_driver_by_name", VALUEFUNC(_wrap_get_driver_by_name), -1);
   rb_define_module_function(mGdal, "get_driver", VALUEFUNC(_wrap_get_driver), -1);
