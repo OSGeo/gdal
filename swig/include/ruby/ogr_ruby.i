@@ -6,6 +6,9 @@
 
 /*
  * $Log$
+ * Revision 1.4  2006/01/17 04:42:16  cfis
+ * Added some renames that are not covered by -autorename since they start with the text OGR.
+ *
  * Revision 1.3  2005/09/26 08:18:21  cfis
  * Moved renames to typemaps_ruby.i.  Now %include typemaps_ruby.i instead of %import (we want to inline the code).
  *
@@ -24,6 +27,13 @@
 
 /* Include exception handling code */
 %include cpl_exceptions.i
+
+/* Setup a few renames */
+%rename(get_driver_count) OGRGetDriverCount;
+%rename(get_open_dscount) OGRGetOpenDSCount;
+%rename(set_generate_db2_v72_byte_order) OGRSetGenerate_DB2_V72_BYTE_ORDER;
+%rename(register_all) OGRRegisterAll;
+
 
 %init %{
 
