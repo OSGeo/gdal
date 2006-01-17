@@ -1281,16 +1281,18 @@ SWIG_Ruby_AppendOutput(VALUE target, VALUE o) {
 
 
 
-
-
-
   
-#define SWIG_exception(code, msg) SWIG_Error(code, msg)
+#define SWIG_exception_fail(code, msg) do { SWIG_Error(code, msg); SWIG_fail; } while(0)
 
 
   
 #define SWIG_contract_assert(expr, msg) if (!(expr)) { SWIG_Error(SWIG_RuntimeError, msg); SWIG_fail; } else
 
+
+
+
+  
+#define SWIG_exception(code, msg) do { SWIG_Error(code, msg);; } while(0)
 
 
 
@@ -2427,7 +2429,7 @@ _wrap_Driver_name_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDriverShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "name" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "name" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDriverShadow * >(argp1);
   {
@@ -2467,12 +2469,12 @@ _wrap_Driver_create_data_source(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDriverShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CreateDataSource" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CreateDataSource" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDriverShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CreateDataSource" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CreateDataSource" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   if (argc > 1) {
@@ -2542,17 +2544,17 @@ _wrap_Driver_copy_data_source(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDriverShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CopyDataSource" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CopyDataSource" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDriverShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CopyDataSource" "', argument " "2"" of type '" "OGRDataSourceShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CopyDataSource" "', argument " "2"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRDataSourceShadow * >(argp2);
   res3 = SWIG_AsCharPtrAndSize(argv[1], &buf3, NULL, &alloc3);
   if (!SWIG_IsOK(res3)) {
-    SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "CopyDataSource" "', argument " "3"" of type '" "char const *""'");
+    SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "CopyDataSource" "', argument " "3"" of type '" "char const *""'");
   }
   arg3 = buf3;
   if (argc > 2) {
@@ -2621,18 +2623,18 @@ _wrap_Driver_open(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDriverShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Open" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Open" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDriverShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Open" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Open" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   if (argc > 1) {
     ecode3 = SWIG_AsVal_int(argv[1], &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "Open" "', argument " "3"" of type '" "int""'");
+      SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "Open" "', argument " "3"" of type '" "int""'");
     } 
     arg3 = static_cast<int >(val3);
   }
@@ -2671,12 +2673,12 @@ _wrap_Driver_delete_data_source(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDriverShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "DeleteDataSource" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "DeleteDataSource" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDriverShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "DeleteDataSource" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "DeleteDataSource" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -2714,12 +2716,12 @@ _wrap_Driver_test_capability(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDriverShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "TestCapability" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "TestCapability" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDriverShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "TestCapability" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "TestCapability" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -2753,7 +2755,7 @@ _wrap_Driver_get_name(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDriverShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetName" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetName" "', argument " "1"" of type '" "OGRDriverShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDriverShadow * >(argp1);
   {
@@ -2787,7 +2789,7 @@ _wrap_DataSource_name_get(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "name" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "name" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDataSourceShadow * >(argp1);
   {
@@ -2827,7 +2829,7 @@ _wrap_DataSource_get_ref_count(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetRefCount" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetRefCount" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDataSourceShadow * >(argp1);
   {
@@ -2859,7 +2861,7 @@ _wrap_DataSource_get_summary_ref_count(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetSummaryRefCount" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetSummaryRefCount" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDataSourceShadow * >(argp1);
   {
@@ -2891,7 +2893,7 @@ _wrap_DataSource_get_layer_count(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetLayerCount" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetLayerCount" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDataSourceShadow * >(argp1);
   {
@@ -2923,7 +2925,7 @@ _wrap_DataSource_get_driver(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetDriver" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetDriver" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDataSourceShadow * >(argp1);
   {
@@ -2955,7 +2957,7 @@ _wrap_DataSource_get_name(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetName" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetName" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDataSourceShadow * >(argp1);
   {
@@ -2990,12 +2992,12 @@ _wrap_DataSource_delete_layer(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "DeleteLayer" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "DeleteLayer" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDataSourceShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "DeleteLayer" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "DeleteLayer" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   {
@@ -3049,18 +3051,18 @@ _wrap_DataSource_create_layer(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CreateLayer" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CreateLayer" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDataSourceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CreateLayer" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CreateLayer" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   if (argc > 1) {
     res3 = SWIG_ConvertPtr(argv[1], &argp3,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
     if (!SWIG_IsOK(res3)) {
-      SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "CreateLayer" "', argument " "3"" of type '" "OSRSpatialReferenceShadow *""'"); 
+      SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "CreateLayer" "', argument " "3"" of type '" "OSRSpatialReferenceShadow *""'"); 
     }
     arg3 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp3);
   }
@@ -3137,17 +3139,17 @@ _wrap_DataSource_copy_layer(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CopyLayer" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CopyLayer" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDataSourceShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CopyLayer" "', argument " "2"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CopyLayer" "', argument " "2"" of type '" "OGRLayerShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRLayerShadow * >(argp2);
   res3 = SWIG_AsCharPtrAndSize(argv[1], &buf3, NULL, &alloc3);
   if (!SWIG_IsOK(res3)) {
-    SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "CopyLayer" "', argument " "3"" of type '" "char const *""'");
+    SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "CopyLayer" "', argument " "3"" of type '" "char const *""'");
   }
   arg3 = buf3;
   if (argc > 2) {
@@ -3210,12 +3212,12 @@ _wrap_DataSource_test_capability(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "TestCapability" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "TestCapability" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDataSourceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "TestCapability" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "TestCapability" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -3263,25 +3265,25 @@ _wrap_DataSource_execute_sql(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExecuteSQL" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExecuteSQL" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDataSourceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "ExecuteSQL" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "ExecuteSQL" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   if (argc > 1) {
     res3 = SWIG_ConvertPtr(argv[1], &argp3,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
     if (!SWIG_IsOK(res3)) {
-      SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "ExecuteSQL" "', argument " "3"" of type '" "OGRGeometryShadow *""'"); 
+      SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "ExecuteSQL" "', argument " "3"" of type '" "OGRGeometryShadow *""'"); 
     }
     arg3 = reinterpret_cast<OGRGeometryShadow * >(argp3);
   }
   if (argc > 2) {
     res4 = SWIG_AsCharPtrAndSize(argv[2], &buf4, NULL, &alloc4);
     if (!SWIG_IsOK(res4)) {
-      SWIG_exception(((res4 != SWIG_ERROR) ? res4 : SWIG_TypeError), "in method '" "ExecuteSQL" "', argument " "4"" of type '" "char const *""'");
+      SWIG_exception_fail(((res4 != SWIG_ERROR) ? res4 : SWIG_TypeError), "in method '" "ExecuteSQL" "', argument " "4"" of type '" "char const *""'");
     }
     arg4 = buf4;
   }
@@ -3318,12 +3320,12 @@ _wrap_DataSource_release_result_set(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ReleaseResultSet" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ReleaseResultSet" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDataSourceShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], SWIG_as_voidptrptr(&arg2), SWIGTYPE_p_OGRLayerShadow, SWIG_POINTER_DISOWN |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "ReleaseResultSet" "', argument " "2"" of type '" "OGRLayerShadow *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "ReleaseResultSet" "', argument " "2"" of type '" "OGRLayerShadow *""'");
   }
   {
     CPLErrorReset();
@@ -3354,7 +3356,7 @@ _wrap_DataSource_get_layer(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRDataSourceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetLayer" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetLayer" "', argument " "1"" of type '" "OGRDataSourceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRDataSourceShadow * >(argp1);
   arg2 = argv[0];
@@ -3389,7 +3391,7 @@ _wrap_Layer_get_ref_count(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetRefCount" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetRefCount" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   {
@@ -3422,12 +3424,12 @@ _wrap_Layer_set_spatial_filter(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetSpatialFilter" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetSpatialFilter" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetSpatialFilter" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetSpatialFilter" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRGeometryShadow * >(argp2);
   {
@@ -3468,27 +3470,27 @@ _wrap_Layer_set_spatial_filter_rect(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetSpatialFilterRect" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetSpatialFilterRect" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetSpatialFilterRect" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetSpatialFilterRect" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   ecode3 = SWIG_AsVal_double(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetSpatialFilterRect" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetSpatialFilterRect" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast<double >(val3);
   ecode4 = SWIG_AsVal_double(argv[2], &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetSpatialFilterRect" "', argument " "4"" of type '" "double""'");
+    SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetSpatialFilterRect" "', argument " "4"" of type '" "double""'");
   } 
   arg4 = static_cast<double >(val4);
   ecode5 = SWIG_AsVal_double(argv[3], &val5);
   if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetSpatialFilterRect" "', argument " "5"" of type '" "double""'");
+    SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetSpatialFilterRect" "', argument " "5"" of type '" "double""'");
   } 
   arg5 = static_cast<double >(val5);
   {
@@ -3519,7 +3521,7 @@ _wrap_Layer_get_spatial_filter(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetSpatialFilter" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetSpatialFilter" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   {
@@ -3555,12 +3557,12 @@ _wrap_Layer_set_attribute_filter(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetAttributeFilter" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetAttributeFilter" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetAttributeFilter" "', argument " "2"" of type '" "char *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetAttributeFilter" "', argument " "2"" of type '" "char *""'");
   }
   arg2 = buf2;
   {
@@ -3602,7 +3604,7 @@ _wrap_Layer_reset_reading(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ResetReading" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ResetReading" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   {
@@ -3633,7 +3635,7 @@ _wrap_Layer_get_name(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetName" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetName" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   {
@@ -3668,12 +3670,12 @@ _wrap_Layer_get_feature(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFeature" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFeature" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   ecode2 = SWIG_AsVal_long(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetFeature" "', argument " "2"" of type '" "long""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetFeature" "', argument " "2"" of type '" "long""'");
   } 
   arg2 = static_cast<long >(val2);
   {
@@ -3705,7 +3707,7 @@ _wrap_Layer_get_next_feature(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetNextFeature" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetNextFeature" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   {
@@ -3740,12 +3742,12 @@ _wrap_Layer_set_next_by_index(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetNextByIndex" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetNextByIndex" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   ecode2 = SWIG_AsVal_long(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetNextByIndex" "', argument " "2"" of type '" "long""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetNextByIndex" "', argument " "2"" of type '" "long""'");
   } 
   arg2 = static_cast<long >(val2);
   {
@@ -3790,12 +3792,12 @@ _wrap_Layer_set_feature(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetFeature" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetFeature" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetFeature" "', argument " "2"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetFeature" "', argument " "2"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRFeatureShadow * >(argp2);
   {
@@ -3840,12 +3842,12 @@ _wrap_Layer_create_feature(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CreateFeature" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CreateFeature" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CreateFeature" "', argument " "2"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CreateFeature" "', argument " "2"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRFeatureShadow * >(argp2);
   {
@@ -3890,12 +3892,12 @@ _wrap_Layer_delete_feature(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "DeleteFeature" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "DeleteFeature" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   ecode2 = SWIG_AsVal_long(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "DeleteFeature" "', argument " "2"" of type '" "long""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "DeleteFeature" "', argument " "2"" of type '" "long""'");
   } 
   arg2 = static_cast<long >(val2);
   {
@@ -3937,7 +3939,7 @@ _wrap_Layer_sync_to_disk(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SyncToDisk" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SyncToDisk" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   {
@@ -3979,7 +3981,7 @@ _wrap_Layer_get_layer_defn(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetLayerDefn" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetLayerDefn" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   {
@@ -4017,13 +4019,13 @@ _wrap_Layer_get_feature_count(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFeatureCount" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFeatureCount" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   if (argc > 0) {
     ecode2 = SWIG_AsVal_int(argv[0], &val2);
     if (!SWIG_IsOK(ecode2)) {
-      SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetFeatureCount" "', argument " "2"" of type '" "int""'");
+      SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetFeatureCount" "', argument " "2"" of type '" "int""'");
     } 
     arg2 = static_cast<int >(val2);
   }
@@ -4068,13 +4070,13 @@ _wrap_Layer_get_extent(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetExtent" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetExtent" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   if (argc > 0) {
     ecode3 = SWIG_AsVal_int(argv[0], &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "GetExtent" "', argument " "3"" of type '" "int""'");
+      SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "GetExtent" "', argument " "3"" of type '" "int""'");
     } 
     arg3 = static_cast<int >(val3);
   }
@@ -4134,12 +4136,12 @@ _wrap_Layer_test_capability(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "TestCapability" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "TestCapability" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "TestCapability" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "TestCapability" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -4182,18 +4184,18 @@ _wrap_Layer_create_field(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CreateField" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CreateField" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CreateField" "', argument " "2"" of type '" "OGRFieldDefnShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CreateField" "', argument " "2"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRFieldDefnShadow * >(argp2);
   if (argc > 1) {
     ecode3 = SWIG_AsVal_int(argv[1], &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "CreateField" "', argument " "3"" of type '" "int""'");
+      SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "CreateField" "', argument " "3"" of type '" "int""'");
     } 
     arg3 = static_cast<int >(val3);
   }
@@ -4236,7 +4238,7 @@ _wrap_Layer_start_transaction(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "StartTransaction" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "StartTransaction" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   {
@@ -4278,7 +4280,7 @@ _wrap_Layer_commit_transaction(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CommitTransaction" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CommitTransaction" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   {
@@ -4320,7 +4322,7 @@ _wrap_Layer_rollback_transaction(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "RollbackTransaction" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "RollbackTransaction" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   {
@@ -4362,7 +4364,7 @@ _wrap_Layer_get_spatial_ref(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetSpatialRef" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetSpatialRef" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   {
@@ -4394,7 +4396,7 @@ _wrap_Layer_get_feature_read(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFeatureRead" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFeatureRead" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   {
@@ -4424,7 +4426,7 @@ _wrap_Layer_each(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "each" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "each" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRLayerShadow * >(argp1);
   {
@@ -4485,7 +4487,7 @@ _wrap_new_Feature(int argc, VALUE *argv, VALUE self) {
   if (argc > 0) {
     res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_OGRFeatureDefnShadow, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "OGRFeatureShadow" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
+      SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "OGRFeatureShadow" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
     }
     arg1 = reinterpret_cast<OGRFeatureDefnShadow * >(argp1);
   }
@@ -4518,7 +4520,7 @@ _wrap_Feature_get_defn_ref(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetDefnRef" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetDefnRef" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   {
@@ -4553,12 +4555,12 @@ _wrap_Feature_set_geometry(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetGeometry" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetGeometry" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetGeometry" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetGeometry" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRGeometryShadow * >(argp2);
   {
@@ -4602,12 +4604,12 @@ _wrap_Feature_set_geometry_directly(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetGeometryDirectly" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetGeometryDirectly" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], SWIG_as_voidptrptr(&arg2), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_DISOWN |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetGeometryDirectly" "', argument " "2"" of type '" "OGRGeometryShadow *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetGeometryDirectly" "', argument " "2"" of type '" "OGRGeometryShadow *""'");
   }
   {
     CPLErrorReset();
@@ -4648,7 +4650,7 @@ _wrap_Feature_get_geometry_ref(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGeometryRef" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGeometryRef" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   {
@@ -4680,7 +4682,7 @@ _wrap_Feature_clone(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Clone" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Clone" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   {
@@ -4715,12 +4717,12 @@ _wrap_Feature_equal(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Equal" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Equal" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Equal" "', argument " "2"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Equal" "', argument " "2"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRFeatureShadow * >(argp2);
   {
@@ -4752,7 +4754,7 @@ _wrap_Feature_get_field_count(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldCount" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldCount" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   {
@@ -4787,12 +4789,12 @@ _wrap_Feature_get_field_defn_ref__SWIG_0(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldDefnRef" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldDefnRef" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetFieldDefnRef" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetFieldDefnRef" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   {
@@ -4828,12 +4830,12 @@ _wrap_Feature_get_field_defn_ref__SWIG_1(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldDefnRef" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldDefnRef" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetFieldDefnRef" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetFieldDefnRef" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -4893,6 +4895,7 @@ SWIGINTERN VALUE _wrap_Feature_get_field_defn_ref(int nargs, VALUE *args, VALUE 
     }
   }
   
+fail:
   rb_raise(rb_eArgError, "No matching function for overloaded 'Feature_get_field_defn_ref'");
   return Qnil;
 }
@@ -4914,12 +4917,12 @@ _wrap_Feature_get_field_as_string__SWIG_0(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldAsString" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldAsString" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetFieldAsString" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetFieldAsString" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   {
@@ -4955,12 +4958,12 @@ _wrap_Feature_get_field_as_string__SWIG_1(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldAsString" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldAsString" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetFieldAsString" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetFieldAsString" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -5020,6 +5023,7 @@ SWIGINTERN VALUE _wrap_Feature_get_field_as_string(int nargs, VALUE *args, VALUE
     }
   }
   
+fail:
   rb_raise(rb_eArgError, "No matching function for overloaded 'Feature_get_field_as_string'");
   return Qnil;
 }
@@ -5041,12 +5045,12 @@ _wrap_Feature_get_field_as_integer__SWIG_0(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldAsInteger" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldAsInteger" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetFieldAsInteger" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetFieldAsInteger" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   {
@@ -5082,12 +5086,12 @@ _wrap_Feature_get_field_as_integer__SWIG_1(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldAsInteger" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldAsInteger" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetFieldAsInteger" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetFieldAsInteger" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -5147,6 +5151,7 @@ SWIGINTERN VALUE _wrap_Feature_get_field_as_integer(int nargs, VALUE *args, VALU
     }
   }
   
+fail:
   rb_raise(rb_eArgError, "No matching function for overloaded 'Feature_get_field_as_integer'");
   return Qnil;
 }
@@ -5168,12 +5173,12 @@ _wrap_Feature_get_field_as_double__SWIG_0(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldAsDouble" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldAsDouble" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetFieldAsDouble" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetFieldAsDouble" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   {
@@ -5209,12 +5214,12 @@ _wrap_Feature_get_field_as_double__SWIG_1(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldAsDouble" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldAsDouble" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetFieldAsDouble" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetFieldAsDouble" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -5274,6 +5279,7 @@ SWIGINTERN VALUE _wrap_Feature_get_field_as_double(int nargs, VALUE *args, VALUE
     }
   }
   
+fail:
   rb_raise(rb_eArgError, "No matching function for overloaded 'Feature_get_field_as_double'");
   return Qnil;
 }
@@ -5295,12 +5301,12 @@ _wrap_Feature_is_field_set__SWIG_0(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "IsFieldSet" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "IsFieldSet" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "IsFieldSet" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "IsFieldSet" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   {
@@ -5336,12 +5342,12 @@ _wrap_Feature_is_field_set__SWIG_1(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "IsFieldSet" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "IsFieldSet" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "IsFieldSet" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "IsFieldSet" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -5401,6 +5407,7 @@ SWIGINTERN VALUE _wrap_Feature_is_field_set(int nargs, VALUE *args, VALUE self) 
     }
   }
   
+fail:
   rb_raise(rb_eArgError, "No matching function for overloaded 'Feature_is_field_set'");
   return Qnil;
 }
@@ -5423,12 +5430,12 @@ _wrap_Feature_get_field_index(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldIndex" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldIndex" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetFieldIndex" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetFieldIndex" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -5462,7 +5469,7 @@ _wrap_Feature_get_fid(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFID" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFID" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   {
@@ -5497,12 +5504,12 @@ _wrap_Feature_set_fid(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetFID" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetFID" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetFID" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetFID" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   {
@@ -5542,7 +5549,7 @@ _wrap_Feature_dump_readable(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "DumpReadable" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "DumpReadable" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   {
@@ -5574,12 +5581,12 @@ _wrap_Feature_unset_field__SWIG_0(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "UnsetField" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "UnsetField" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "UnsetField" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "UnsetField" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   {
@@ -5612,12 +5619,12 @@ _wrap_Feature_unset_field__SWIG_1(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "UnsetField" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "UnsetField" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "UnsetField" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "UnsetField" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -5676,6 +5683,7 @@ SWIGINTERN VALUE _wrap_Feature_unset_field(int nargs, VALUE *args, VALUE self) {
     }
   }
   
+fail:
   rb_raise(rb_eArgError, "No matching function for overloaded 'Feature_unset_field'");
   return Qnil;
 }
@@ -5699,17 +5707,17 @@ _wrap_Feature_set_field__SWIG_0(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetField" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetField" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetField" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetField" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   res3 = SWIG_AsCharPtrAndSize(argv[1], &buf3, NULL, &alloc3);
   if (!SWIG_IsOK(res3)) {
-    SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "SetField" "', argument " "3"" of type '" "char const *""'");
+    SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "SetField" "', argument " "3"" of type '" "char const *""'");
   }
   arg3 = buf3;
   {
@@ -5748,17 +5756,17 @@ _wrap_Feature_set_field__SWIG_1(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetField" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetField" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetField" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetField" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   res3 = SWIG_AsCharPtrAndSize(argv[1], &buf3, NULL, &alloc3);
   if (!SWIG_IsOK(res3)) {
-    SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "SetField" "', argument " "3"" of type '" "char const *""'");
+    SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "SetField" "', argument " "3"" of type '" "char const *""'");
   }
   arg3 = buf3;
   {
@@ -5827,6 +5835,7 @@ SWIGINTERN VALUE _wrap_Feature_set_field(int nargs, VALUE *args, VALUE self) {
     }
   }
   
+fail:
   rb_raise(rb_eArgError, "No matching function for overloaded 'Feature_set_field'");
   return Qnil;
 }
@@ -5854,18 +5863,18 @@ _wrap_Feature_set_from(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetFrom" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetFrom" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetFrom" "', argument " "2"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetFrom" "', argument " "2"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRFeatureShadow * >(argp2);
   if (argc > 1) {
     ecode3 = SWIG_AsVal_int(argv[1], &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetFrom" "', argument " "3"" of type '" "int""'");
+      SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetFrom" "', argument " "3"" of type '" "int""'");
     } 
     arg3 = static_cast<int >(val3);
   }
@@ -5908,7 +5917,7 @@ _wrap_Feature_get_style_string(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetStyleString" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetStyleString" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   {
@@ -5942,12 +5951,12 @@ _wrap_Feature_set_style_string(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetStyleString" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetStyleString" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetStyleString" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetStyleString" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -5983,12 +5992,12 @@ _wrap_Feature_get_field_type__SWIG_0(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldType" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldType" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetFieldType" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetFieldType" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   {
@@ -6028,17 +6037,17 @@ _wrap_Feature_get_field_type__SWIG_1(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldType" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldType" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetFieldType" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetFieldType" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   res3 = SWIG_AsCharPtrAndSize(argv[1], &buf3, NULL, &alloc3);
   if (!SWIG_IsOK(res3)) {
-    SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "GetFieldType" "', argument " "3"" of type '" "char const *""'");
+    SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "GetFieldType" "', argument " "3"" of type '" "char const *""'");
   }
   arg3 = buf3;
   {
@@ -6104,6 +6113,7 @@ SWIGINTERN VALUE _wrap_Feature_get_field_type(int nargs, VALUE *args, VALUE self
     }
   }
   
+fail:
   rb_raise(rb_eArgError, "No matching function for overloaded 'Feature_get_field_type'");
   return Qnil;
 }
@@ -6123,7 +6133,7 @@ _wrap_Feature_get_field(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetField" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetField" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureShadow * >(argp1);
   arg2 = argv[0];
@@ -6187,7 +6197,7 @@ _wrap_new_FeatureDefn(int argc, VALUE *argv, VALUE self) {
   if (argc > 0) {
     res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "OGRFeatureDefnShadow" "', argument " "1"" of type '" "char const *""'");
+      SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "OGRFeatureDefnShadow" "', argument " "1"" of type '" "char const *""'");
     }
     arg1 = buf1;
   }
@@ -6222,7 +6232,7 @@ _wrap_FeatureDefn_get_name(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetName" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetName" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureDefnShadow * >(argp1);
   {
@@ -6254,7 +6264,7 @@ _wrap_FeatureDefn_get_field_count(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldCount" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldCount" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureDefnShadow * >(argp1);
   {
@@ -6289,12 +6299,12 @@ _wrap_FeatureDefn_get_field_defn(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldDefn" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldDefn" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureDefnShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetFieldDefn" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetFieldDefn" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   {
@@ -6330,12 +6340,12 @@ _wrap_FeatureDefn_get_field_index(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldIndex" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldIndex" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureDefnShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetFieldIndex" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetFieldIndex" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -6370,12 +6380,12 @@ _wrap_FeatureDefn_add_field_defn(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "AddFieldDefn" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "AddFieldDefn" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureDefnShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "AddFieldDefn" "', argument " "2"" of type '" "OGRFieldDefnShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "AddFieldDefn" "', argument " "2"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRFieldDefnShadow * >(argp2);
   {
@@ -6406,7 +6416,7 @@ _wrap_FeatureDefn_get_geom_type(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGeomType" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGeomType" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureDefnShadow * >(argp1);
   {
@@ -6437,7 +6447,7 @@ _wrap_FeatureDefn_set_geom_type(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetGeomType" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetGeomType" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureDefnShadow * >(argp1);
   {
@@ -6472,7 +6482,7 @@ _wrap_FeatureDefn_get_reference_count(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFeatureDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetReferenceCount" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetReferenceCount" "', argument " "1"" of type '" "OGRFeatureDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFeatureDefnShadow * >(argp1);
   {
@@ -6536,7 +6546,7 @@ _wrap_new_FieldDefn(int argc, VALUE *argv, VALUE self) {
   if (argc > 0) {
     res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "OGRFieldDefnShadow" "', argument " "1"" of type '" "char const *""'");
+      SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "OGRFieldDefnShadow" "', argument " "1"" of type '" "char const *""'");
     }
     arg1 = buf1;
   }
@@ -6577,7 +6587,7 @@ _wrap_FieldDefn_get_name(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetName" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetName" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFieldDefnShadow * >(argp1);
   {
@@ -6609,7 +6619,7 @@ _wrap_FieldDefn_get_name_ref(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetNameRef" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetNameRef" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFieldDefnShadow * >(argp1);
   {
@@ -6643,12 +6653,12 @@ _wrap_FieldDefn_set_name(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetName" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetName" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFieldDefnShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetName" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetName" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   {
@@ -6681,7 +6691,7 @@ _wrap_FieldDefn_get_type(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetType" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetType" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFieldDefnShadow * >(argp1);
   {
@@ -6712,7 +6722,7 @@ _wrap_FieldDefn_set_type(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetType" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetType" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFieldDefnShadow * >(argp1);
   {
@@ -6747,7 +6757,7 @@ _wrap_FieldDefn_get_justify(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetJustify" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetJustify" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFieldDefnShadow * >(argp1);
   {
@@ -6778,7 +6788,7 @@ _wrap_FieldDefn_set_justify(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetJustify" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetJustify" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFieldDefnShadow * >(argp1);
   {
@@ -6813,7 +6823,7 @@ _wrap_FieldDefn_get_width(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetWidth" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetWidth" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFieldDefnShadow * >(argp1);
   {
@@ -6846,12 +6856,12 @@ _wrap_FieldDefn_set_width(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetWidth" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetWidth" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFieldDefnShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetWidth" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetWidth" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   {
@@ -6882,7 +6892,7 @@ _wrap_FieldDefn_get_precision(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetPrecision" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetPrecision" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFieldDefnShadow * >(argp1);
   {
@@ -6915,12 +6925,12 @@ _wrap_FieldDefn_set_precision(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetPrecision" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetPrecision" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFieldDefnShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetPrecision" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetPrecision" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   {
@@ -6952,7 +6962,7 @@ _wrap_FieldDefn_get_field_type_name(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRFieldDefnShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldTypeName" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetFieldTypeName" "', argument " "1"" of type '" "OGRFieldDefnShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRFieldDefnShadow * >(argp1);
   {
@@ -6997,14 +7007,14 @@ _wrap_create_geometry_from_wkb(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, &size1, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CreateGeometryFromWkb" "', argument " "1"" of type '" "int""'");
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CreateGeometryFromWkb" "', argument " "1"" of type '" "int""'");
   }  
   arg2 = static_cast<char * >(buf1) ;
   arg1 = static_cast<int >(size1 - 1) ;
   if (argc > 1) {
     res3 = SWIG_ConvertPtr(argv[1], &argp3,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
     if (!SWIG_IsOK(res3)) {
-      SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "CreateGeometryFromWkb" "', argument " "3"" of type '" "OSRSpatialReferenceShadow *""'"); 
+      SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "CreateGeometryFromWkb" "', argument " "3"" of type '" "OSRSpatialReferenceShadow *""'"); 
     }
     arg3 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp3);
   }
@@ -7049,7 +7059,7 @@ _wrap_create_geometry_from_wkt(int argc, VALUE *argv, VALUE self) {
   if (argc > 1) {
     res2 = SWIG_ConvertPtr(argv[1], &argp2,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
     if (!SWIG_IsOK(res2)) {
-      SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CreateGeometryFromWkt" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
+      SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CreateGeometryFromWkt" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
     }
     arg2 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp2);
   }
@@ -7083,7 +7093,7 @@ _wrap_create_geometry_from_gml(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CreateGeometryFromGML" "', argument " "1"" of type '" "char const *""'");
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CreateGeometryFromGML" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = buf1;
   {
@@ -7166,28 +7176,28 @@ _wrap_new_Geometry(int argc, VALUE *argv, VALUE self) {
   if (argc > 1) {
     res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
     if (!SWIG_IsOK(res2)) {
-      SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "OGRGeometryShadow" "', argument " "2"" of type '" "char *""'");
+      SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "OGRGeometryShadow" "', argument " "2"" of type '" "char *""'");
     }
     arg2 = buf2;
   }
   if (argc > 2) {
     ecode3 = SWIG_AsVal_int(argv[2], &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "OGRGeometryShadow" "', argument " "3"" of type '" "int""'");
+      SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "OGRGeometryShadow" "', argument " "3"" of type '" "int""'");
     } 
     arg3 = static_cast<int >(val3);
   }
   if (argc > 3) {
     res4 = SWIG_AsCharPtrAndSize(argv[3], &buf4, NULL, &alloc4);
     if (!SWIG_IsOK(res4)) {
-      SWIG_exception(((res4 != SWIG_ERROR) ? res4 : SWIG_TypeError), "in method '" "OGRGeometryShadow" "', argument " "4"" of type '" "char *""'");
+      SWIG_exception_fail(((res4 != SWIG_ERROR) ? res4 : SWIG_TypeError), "in method '" "OGRGeometryShadow" "', argument " "4"" of type '" "char *""'");
     }
     arg4 = buf4;
   }
   if (argc > 4) {
     res5 = SWIG_AsCharPtrAndSize(argv[4], &buf5, NULL, &alloc5);
     if (!SWIG_IsOK(res5)) {
-      SWIG_exception(((res5 != SWIG_ERROR) ? res5 : SWIG_TypeError), "in method '" "OGRGeometryShadow" "', argument " "5"" of type '" "char *""'");
+      SWIG_exception_fail(((res5 != SWIG_ERROR) ? res5 : SWIG_TypeError), "in method '" "OGRGeometryShadow" "', argument " "5"" of type '" "char *""'");
     }
     arg5 = buf5;
   }
@@ -7232,7 +7242,7 @@ _wrap_Geometry_export_to_wkt(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExportToWkt" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExportToWkt" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -7263,12 +7273,24 @@ _wrap_Geometry_export_to_wkt(int argc, VALUE *argv, VALUE self) {
     vresult = SWIG_Ruby_AppendOutput(vresult, outArg);
   }
   {
+    /* %typemap(freearg) (char **argout) */
+    
+    if ( *arg2 )
+    CPLFree( *arg2 );
+  }
+  {
     /* %typemap(ret) OGRErr */
     if (vresult == Qnil) {
       vresult = INT2NUM(0);
     }
   }    return vresult;
 fail:
+  {
+    /* %typemap(freearg) (char **argout) */
+    
+    if ( *arg2 )
+    CPLFree( *arg2 );
+  }
   return Qnil;
 }
 
@@ -7299,7 +7321,7 @@ _wrap_Geometry_export_to_wkb(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExportToWkb" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExportToWkb" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   if (argc > 0) {
@@ -7328,12 +7350,24 @@ _wrap_Geometry_export_to_wkb(int argc, VALUE *argv, VALUE self) {
     vresult = rb_str_new(*arg3, *arg2);
   }
   {
+    /* %typemap(freearg) (int *nLen, char **pBuf ) */
+    if( *arg3 ) {
+      free( *arg3 );
+    }
+  }
+  {
     /* %typemap(ret) OGRErr */
     if (vresult == Qnil) {
       vresult = INT2NUM(0);
     }
   }    return vresult;
 fail:
+  {
+    /* %typemap(freearg) (int *nLen, char **pBuf ) */
+    if( *arg3 ) {
+      free( *arg3 );
+    }
+  }
   return Qnil;
 }
 
@@ -7351,7 +7385,7 @@ _wrap_Geometry_export_to_gml(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExportToGML" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExportToGML" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -7393,23 +7427,23 @@ _wrap_Geometry_add_point(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "AddPoint" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "AddPoint" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "AddPoint" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "AddPoint" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   ecode3 = SWIG_AsVal_double(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "AddPoint" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "AddPoint" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast<double >(val3);
   if (argc > 2) {
     ecode4 = SWIG_AsVal_double(argv[2], &val4);
     if (!SWIG_IsOK(ecode4)) {
-      SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "AddPoint" "', argument " "4"" of type '" "double""'");
+      SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "AddPoint" "', argument " "4"" of type '" "double""'");
     } 
     arg4 = static_cast<double >(val4);
   }
@@ -7443,12 +7477,12 @@ _wrap_Geometry_add_geometry_directly(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "AddGeometryDirectly" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "AddGeometryDirectly" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], SWIG_as_voidptrptr(&arg2), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_DISOWN |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "AddGeometryDirectly" "', argument " "2"" of type '" "OGRGeometryShadow *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "AddGeometryDirectly" "', argument " "2"" of type '" "OGRGeometryShadow *""'");
   }
   {
     CPLErrorReset();
@@ -7492,12 +7526,12 @@ _wrap_Geometry_add_geometry(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "AddGeometry" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "AddGeometry" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "AddGeometry" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "AddGeometry" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRGeometryShadow * >(argp2);
   {
@@ -7539,7 +7573,7 @@ _wrap_Geometry_clone(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Clone" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Clone" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -7571,7 +7605,7 @@ _wrap_Geometry_get_geometry_type(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGeometryType" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGeometryType" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -7603,7 +7637,7 @@ _wrap_Geometry_get_geometry_name(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGeometryName" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGeometryName" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -7635,7 +7669,7 @@ _wrap_Geometry_get_area(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetArea" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetArea" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -7667,7 +7701,7 @@ _wrap_Geometry_get_point_count(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetPointCount" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetPointCount" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -7705,13 +7739,13 @@ _wrap_Geometry_get_x(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetX" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetX" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   if (argc > 0) {
     ecode2 = SWIG_AsVal_int(argv[0], &val2);
     if (!SWIG_IsOK(ecode2)) {
-      SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetX" "', argument " "2"" of type '" "int""'");
+      SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetX" "', argument " "2"" of type '" "int""'");
     } 
     arg2 = static_cast<int >(val2);
   }
@@ -7750,13 +7784,13 @@ _wrap_Geometry_get_y(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetY" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetY" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   if (argc > 0) {
     ecode2 = SWIG_AsVal_int(argv[0], &val2);
     if (!SWIG_IsOK(ecode2)) {
-      SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetY" "', argument " "2"" of type '" "int""'");
+      SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetY" "', argument " "2"" of type '" "int""'");
     } 
     arg2 = static_cast<int >(val2);
   }
@@ -7795,13 +7829,13 @@ _wrap_Geometry_get_z(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetZ" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetZ" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   if (argc > 0) {
     ecode2 = SWIG_AsVal_int(argv[0], &val2);
     if (!SWIG_IsOK(ecode2)) {
-      SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetZ" "', argument " "2"" of type '" "int""'");
+      SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetZ" "', argument " "2"" of type '" "int""'");
     } 
     arg2 = static_cast<int >(val2);
   }
@@ -7834,7 +7868,7 @@ _wrap_Geometry_get_geometry_count(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGeometryCount" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGeometryCount" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -7879,28 +7913,28 @@ _wrap_Geometry_set_point(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetPoint" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetPoint" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetPoint" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetPoint" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   ecode3 = SWIG_AsVal_double(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetPoint" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetPoint" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast<double >(val3);
   ecode4 = SWIG_AsVal_double(argv[2], &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetPoint" "', argument " "4"" of type '" "double""'");
+    SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetPoint" "', argument " "4"" of type '" "double""'");
   } 
   arg4 = static_cast<double >(val4);
   if (argc > 3) {
     ecode5 = SWIG_AsVal_double(argv[3], &val5);
     if (!SWIG_IsOK(ecode5)) {
-      SWIG_exception(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetPoint" "', argument " "5"" of type '" "double""'");
+      SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetPoint" "', argument " "5"" of type '" "double""'");
     } 
     arg5 = static_cast<double >(val5);
   }
@@ -7935,12 +7969,12 @@ _wrap_Geometry_get_geometry_ref(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGeometryRef" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetGeometryRef" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetGeometryRef" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "GetGeometryRef" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   {
@@ -7972,7 +8006,7 @@ _wrap_Geometry_get_boundary(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetBoundary" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetBoundary" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -8004,7 +8038,7 @@ _wrap_Geometry_convex_hull(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ConvexHull" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ConvexHull" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -8045,18 +8079,18 @@ _wrap_Geometry_buffer(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Buffer" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Buffer" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "Buffer" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "Buffer" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   if (argc > 1) {
     ecode3 = SWIG_AsVal_int(argv[1], &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "Buffer" "', argument " "3"" of type '" "int""'");
+      SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "Buffer" "', argument " "3"" of type '" "int""'");
     } 
     arg3 = static_cast<int >(val3);
   }
@@ -8092,12 +8126,12 @@ _wrap_Geometry_intersection(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Intersection" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Intersection" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Intersection" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Intersection" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRGeometryShadow * >(argp2);
   {
@@ -8117,7 +8151,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_Geometry_union_(int argc, VALUE *argv, VALUE self) {
+_wrap_Geometry_union(int argc, VALUE *argv, VALUE self) {
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *arg2 = (OGRGeometryShadow *) 0 ;
   OGRGeometryShadow *result = 0 ;
@@ -8132,12 +8166,12 @@ _wrap_Geometry_union_(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Union" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Union" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Union" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Union" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRGeometryShadow * >(argp2);
   {
@@ -8172,12 +8206,12 @@ _wrap_Geometry_difference(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Difference" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Difference" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Difference" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Difference" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRGeometryShadow * >(argp2);
   {
@@ -8212,12 +8246,12 @@ _wrap_Geometry_symmetric_difference(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SymmetricDifference" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SymmetricDifference" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SymmetricDifference" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SymmetricDifference" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRGeometryShadow * >(argp2);
   {
@@ -8252,12 +8286,12 @@ _wrap_Geometry_distance(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Distance" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Distance" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Distance" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Distance" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRGeometryShadow * >(argp2);
   {
@@ -8287,7 +8321,7 @@ _wrap_Geometry_empty(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Empty" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Empty" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -8321,12 +8355,12 @@ _wrap_Geometry_intersect(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Intersect" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Intersect" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Intersect" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Intersect" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRGeometryShadow * >(argp2);
   {
@@ -8361,12 +8395,12 @@ _wrap_Geometry_equal(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Equal" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Equal" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Equal" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Equal" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRGeometryShadow * >(argp2);
   {
@@ -8401,12 +8435,12 @@ _wrap_Geometry_disjoint(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Disjoint" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Disjoint" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Disjoint" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Disjoint" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRGeometryShadow * >(argp2);
   {
@@ -8441,12 +8475,12 @@ _wrap_Geometry_touches(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Touches" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Touches" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Touches" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Touches" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRGeometryShadow * >(argp2);
   {
@@ -8481,12 +8515,12 @@ _wrap_Geometry_crosses(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Crosses" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Crosses" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Crosses" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Crosses" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRGeometryShadow * >(argp2);
   {
@@ -8521,12 +8555,12 @@ _wrap_Geometry_within(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Within" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Within" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Within" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Within" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRGeometryShadow * >(argp2);
   {
@@ -8561,12 +8595,12 @@ _wrap_Geometry_contains(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Contains" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Contains" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Contains" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Contains" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRGeometryShadow * >(argp2);
   {
@@ -8601,12 +8635,12 @@ _wrap_Geometry_overlaps(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Overlaps" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Overlaps" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Overlaps" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Overlaps" "', argument " "2"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg2 = reinterpret_cast<OGRGeometryShadow * >(argp2);
   {
@@ -8641,12 +8675,12 @@ _wrap_Geometry_transform_to(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "TransformTo" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "TransformTo" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "TransformTo" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "TransformTo" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg2 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp2);
   {
@@ -8691,12 +8725,12 @@ _wrap_Geometry_transform(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Transform" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Transform" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OSRCoordinateTransformationShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Transform" "', argument " "2"" of type '" "OSRCoordinateTransformationShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "Transform" "', argument " "2"" of type '" "OSRCoordinateTransformationShadow *""'"); 
   }
   arg2 = reinterpret_cast<OSRCoordinateTransformationShadow * >(argp2);
   {
@@ -8738,7 +8772,7 @@ _wrap_Geometry_get_spatial_reference(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetSpatialReference" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetSpatialReference" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -8771,12 +8805,12 @@ _wrap_Geometry_assign_spatial_reference(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "AssignSpatialReference" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "AssignSpatialReference" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "AssignSpatialReference" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "AssignSpatialReference" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg2 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp2);
   {
@@ -8805,7 +8839,7 @@ _wrap_Geometry_close_rings(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CloseRings" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CloseRings" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -8824,7 +8858,7 @@ fail:
 
 
 SWIGINTERN VALUE
-_wrap_Geometry_flatten_to2d(int argc, VALUE *argv, VALUE self) {
+_wrap_Geometry_flatten_to2_d(int argc, VALUE *argv, VALUE self) {
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
   void *argp1 = 0 ;
   int res1 ;
@@ -8834,7 +8868,7 @@ _wrap_Geometry_flatten_to2d(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "FlattenTo2D" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "FlattenTo2D" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -8870,7 +8904,7 @@ _wrap_Geometry_get_envelope(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetEnvelope" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetEnvelope" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -8914,7 +8948,7 @@ _wrap_Geometry_centroid(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Centroid" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Centroid" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -8946,7 +8980,7 @@ _wrap_Geometry_wkb_size(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "WkbSize" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "WkbSize" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -8978,7 +9012,7 @@ _wrap_Geometry_get_coordinate_dimension(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetCoordinateDimension" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetCoordinateDimension" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -9010,7 +9044,7 @@ _wrap_Geometry_get_dimension(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetDimension" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetDimension" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
   }
   arg1 = reinterpret_cast<OGRGeometryShadow * >(argp1);
   {
@@ -9090,7 +9124,7 @@ _wrap_set_generate_db2_v72_byte_order(int argc, VALUE *argv, VALUE self) {
   }
   ecode1 = SWIG_AsVal_int(argv[0], &val1);
   if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception(((ecode1 != SWIG_ERROR) ? ecode1 : SWIG_TypeError), "in method '" "OGRSetGenerate_DB2_V72_BYTE_ORDER" "', argument " "1"" of type '" "int""'");
+    SWIG_exception_fail(((ecode1 != SWIG_ERROR) ? ecode1 : SWIG_TypeError), "in method '" "OGRSetGenerate_DB2_V72_BYTE_ORDER" "', argument " "1"" of type '" "int""'");
   } 
   arg1 = static_cast<int >(val1);
   {
@@ -9152,7 +9186,7 @@ _wrap_get_open_ds(int argc, VALUE *argv, VALUE self) {
   }
   ecode1 = SWIG_AsVal_int(argv[0], &val1);
   if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception(((ecode1 != SWIG_ERROR) ? ecode1 : SWIG_TypeError), "in method '" "GetOpenDS" "', argument " "1"" of type '" "int""'");
+    SWIG_exception_fail(((ecode1 != SWIG_ERROR) ? ecode1 : SWIG_TypeError), "in method '" "GetOpenDS" "', argument " "1"" of type '" "int""'");
   } 
   arg1 = static_cast<int >(val1);
   {
@@ -9191,13 +9225,13 @@ _wrap_open(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Open" "', argument " "1"" of type '" "char const *""'");
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Open" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = buf1;
   if (argc > 1) {
     ecode2 = SWIG_AsVal_int(argv[1], &val2);
     if (!SWIG_IsOK(ecode2)) {
-      SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "Open" "', argument " "2"" of type '" "int""'");
+      SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "Open" "', argument " "2"" of type '" "int""'");
     } 
     arg2 = static_cast<int >(val2);
   }
@@ -9239,13 +9273,13 @@ _wrap_open_shared(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "OpenShared" "', argument " "1"" of type '" "char const *""'");
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "OpenShared" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = buf1;
   if (argc > 1) {
     ecode2 = SWIG_AsVal_int(argv[1], &val2);
     if (!SWIG_IsOK(ecode2)) {
-      SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "OpenShared" "', argument " "2"" of type '" "int""'");
+      SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "OpenShared" "', argument " "2"" of type '" "int""'");
     } 
     arg2 = static_cast<int >(val2);
   }
@@ -9281,7 +9315,7 @@ _wrap_get_driver_by_name(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetDriverByName" "', argument " "1"" of type '" "char const *""'");
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetDriverByName" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = buf1;
   {
@@ -9315,7 +9349,7 @@ _wrap_get_driver(int argc, VALUE *argv, VALUE self) {
   }
   ecode1 = SWIG_AsVal_int(argv[0], &val1);
   if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception(((ecode1 != SWIG_ERROR) ? ecode1 : SWIG_TypeError), "in method '" "GetDriver" "', argument " "1"" of type '" "int""'");
+    SWIG_exception_fail(((ecode1 != SWIG_ERROR) ? ecode1 : SWIG_TypeError), "in method '" "GetDriver" "', argument " "1"" of type '" "int""'");
   } 
   arg1 = static_cast<int >(val1);
   {
@@ -9572,52 +9606,52 @@ SWIGEXPORT void Init_ogr(void) {
   }
   
   SWIG_RubyInitializeTrackings();
-  rb_define_const(mOgr, "Wkb25Bit", SWIG_From_int(static_cast<int >(wkb25DBit)));
-  rb_define_const(mOgr, "WkbUnknown", SWIG_From_int(static_cast<int >(0)));
-  rb_define_const(mOgr, "WkbPoint", SWIG_From_int(static_cast<int >(1)));
-  rb_define_const(mOgr, "WkbLineString", SWIG_From_int(static_cast<int >(2)));
-  rb_define_const(mOgr, "WkbPolygon", SWIG_From_int(static_cast<int >(3)));
-  rb_define_const(mOgr, "WkbMultiPoint", SWIG_From_int(static_cast<int >(4)));
-  rb_define_const(mOgr, "WkbMultiLineString", SWIG_From_int(static_cast<int >(5)));
-  rb_define_const(mOgr, "WkbMultiPolygon", SWIG_From_int(static_cast<int >(6)));
-  rb_define_const(mOgr, "WkbGeometryCollection", SWIG_From_int(static_cast<int >(7)));
-  rb_define_const(mOgr, "WkbNone", SWIG_From_int(static_cast<int >(100)));
-  rb_define_const(mOgr, "WkbLinearRing", SWIG_From_int(static_cast<int >(101)));
-  rb_define_const(mOgr, "WkbPoint25D", SWIG_From_int(static_cast<int >(wkbPoint+wkb25DBit)));
-  rb_define_const(mOgr, "WkbLineString25D", SWIG_From_int(static_cast<int >(wkbLineString+wkb25DBit)));
-  rb_define_const(mOgr, "WkbPolygon25D", SWIG_From_int(static_cast<int >(wkbPolygon+wkb25DBit)));
-  rb_define_const(mOgr, "WkbMultiPoint25D", SWIG_From_int(static_cast<int >(wkbMultiPoint+wkb25DBit)));
-  rb_define_const(mOgr, "WkbMultiLineString25D", SWIG_From_int(static_cast<int >(wkbMultiLineString+wkb25DBit)));
-  rb_define_const(mOgr, "WkbMultiPolygon25D", SWIG_From_int(static_cast<int >(wkbMultiPolygon+wkb25DBit)));
-  rb_define_const(mOgr, "WkbGeometryCollection25D", SWIG_From_int(static_cast<int >(wkbGeometryCollection+wkb25DBit)));
-  rb_define_const(mOgr, "OFTInteger", SWIG_From_int(static_cast<int >(0)));
-  rb_define_const(mOgr, "OFTIntegerList", SWIG_From_int(static_cast<int >(1)));
-  rb_define_const(mOgr, "OFTReal", SWIG_From_int(static_cast<int >(2)));
-  rb_define_const(mOgr, "OFTRealList", SWIG_From_int(static_cast<int >(3)));
-  rb_define_const(mOgr, "OFTString", SWIG_From_int(static_cast<int >(4)));
-  rb_define_const(mOgr, "OFTStringList", SWIG_From_int(static_cast<int >(5)));
-  rb_define_const(mOgr, "OFTWideString", SWIG_From_int(static_cast<int >(6)));
-  rb_define_const(mOgr, "OFTWideStringList", SWIG_From_int(static_cast<int >(7)));
-  rb_define_const(mOgr, "OFTBinary", SWIG_From_int(static_cast<int >(8)));
-  rb_define_const(mOgr, "OJUndefined", SWIG_From_int(static_cast<int >(0)));
-  rb_define_const(mOgr, "OJLeft", SWIG_From_int(static_cast<int >(1)));
-  rb_define_const(mOgr, "OJRight", SWIG_From_int(static_cast<int >(2)));
-  rb_define_const(mOgr, "WkbXDR", SWIG_From_int(static_cast<int >(0)));
-  rb_define_const(mOgr, "WkbNDR", SWIG_From_int(static_cast<int >(1)));
-  rb_define_const(mOgr, "OLCRandomRead", SWIG_FromCharPtr("RandomRead"));
-  rb_define_const(mOgr, "OLCSequentialWrite", SWIG_FromCharPtr("SequentialWrite"));
-  rb_define_const(mOgr, "OLCRandomWrite", SWIG_FromCharPtr("RandomWrite"));
-  rb_define_const(mOgr, "OLCFastSpatialFilter", SWIG_FromCharPtr("FastSpatialFilter"));
-  rb_define_const(mOgr, "OLCFastFeatureCount", SWIG_FromCharPtr("FastFeatureCount"));
-  rb_define_const(mOgr, "OLCFastGetExtent", SWIG_FromCharPtr("FastGetExtent"));
-  rb_define_const(mOgr, "OLCCreateField", SWIG_FromCharPtr("CreateField"));
-  rb_define_const(mOgr, "OLCTransactions", SWIG_FromCharPtr("Transactions"));
-  rb_define_const(mOgr, "OLCDeleteFeature", SWIG_FromCharPtr("DeleteFeature"));
-  rb_define_const(mOgr, "OLCFastSetNextByIndex", SWIG_FromCharPtr("FastSetNextByIndex"));
-  rb_define_const(mOgr, "ODsCCreateLayer", SWIG_FromCharPtr("CreateLayer"));
-  rb_define_const(mOgr, "ODsCDeleteLayer", SWIG_FromCharPtr("DeleteLayer"));
-  rb_define_const(mOgr, "ODrCCreateDataSource", SWIG_FromCharPtr("CreateDataSource"));
-  rb_define_const(mOgr, "ODrCDeleteDataSource", SWIG_FromCharPtr("DeleteDataSource"));
+  rb_define_const(mOgr, "WKB25BIT", SWIG_From_int(static_cast<int >(wkb25DBit)));
+  rb_define_const(mOgr, "WKBUNKNOWN", SWIG_From_int(static_cast<int >(0)));
+  rb_define_const(mOgr, "WKBPOINT", SWIG_From_int(static_cast<int >(1)));
+  rb_define_const(mOgr, "WKBLINESTRING", SWIG_From_int(static_cast<int >(2)));
+  rb_define_const(mOgr, "WKBPOLYGON", SWIG_From_int(static_cast<int >(3)));
+  rb_define_const(mOgr, "WKBMULTIPOINT", SWIG_From_int(static_cast<int >(4)));
+  rb_define_const(mOgr, "WKBMULTILINESTRING", SWIG_From_int(static_cast<int >(5)));
+  rb_define_const(mOgr, "WKBMULTIPOLYGON", SWIG_From_int(static_cast<int >(6)));
+  rb_define_const(mOgr, "WKBGEOMETRYCOLLECTION", SWIG_From_int(static_cast<int >(7)));
+  rb_define_const(mOgr, "WKBNONE", SWIG_From_int(static_cast<int >(100)));
+  rb_define_const(mOgr, "WKBLINEARRING", SWIG_From_int(static_cast<int >(101)));
+  rb_define_const(mOgr, "WKBPOINT25D", SWIG_From_int(static_cast<int >(wkbPoint+wkb25DBit)));
+  rb_define_const(mOgr, "WKBLINESTRING25D", SWIG_From_int(static_cast<int >(wkbLineString+wkb25DBit)));
+  rb_define_const(mOgr, "WKBPOLYGON25D", SWIG_From_int(static_cast<int >(wkbPolygon+wkb25DBit)));
+  rb_define_const(mOgr, "WKBMULTIPOINT25D", SWIG_From_int(static_cast<int >(wkbMultiPoint+wkb25DBit)));
+  rb_define_const(mOgr, "WKBMULTILINESTRING25D", SWIG_From_int(static_cast<int >(wkbMultiLineString+wkb25DBit)));
+  rb_define_const(mOgr, "WKBMULTIPOLYGON25D", SWIG_From_int(static_cast<int >(wkbMultiPolygon+wkb25DBit)));
+  rb_define_const(mOgr, "WKBGEOMETRYCOLLECTION25D", SWIG_From_int(static_cast<int >(wkbGeometryCollection+wkb25DBit)));
+  rb_define_const(mOgr, "OFTINTEGER", SWIG_From_int(static_cast<int >(0)));
+  rb_define_const(mOgr, "OFTINTEGERLIST", SWIG_From_int(static_cast<int >(1)));
+  rb_define_const(mOgr, "OFTREAL", SWIG_From_int(static_cast<int >(2)));
+  rb_define_const(mOgr, "OFTREALLIST", SWIG_From_int(static_cast<int >(3)));
+  rb_define_const(mOgr, "OFTSTRING", SWIG_From_int(static_cast<int >(4)));
+  rb_define_const(mOgr, "OFTSTRINGLIST", SWIG_From_int(static_cast<int >(5)));
+  rb_define_const(mOgr, "OFTWIDESTRING", SWIG_From_int(static_cast<int >(6)));
+  rb_define_const(mOgr, "OFTWIDESTRINGLIST", SWIG_From_int(static_cast<int >(7)));
+  rb_define_const(mOgr, "OFTBINARY", SWIG_From_int(static_cast<int >(8)));
+  rb_define_const(mOgr, "OJUNDEFINED", SWIG_From_int(static_cast<int >(0)));
+  rb_define_const(mOgr, "OJLEFT", SWIG_From_int(static_cast<int >(1)));
+  rb_define_const(mOgr, "OJRIGHT", SWIG_From_int(static_cast<int >(2)));
+  rb_define_const(mOgr, "WKBXDR", SWIG_From_int(static_cast<int >(0)));
+  rb_define_const(mOgr, "WKBNDR", SWIG_From_int(static_cast<int >(1)));
+  rb_define_const(mOgr, "OLCRANDOMREAD", SWIG_FromCharPtr("RandomRead"));
+  rb_define_const(mOgr, "OLCSEQUENTIALWRITE", SWIG_FromCharPtr("SequentialWrite"));
+  rb_define_const(mOgr, "OLCRANDOMWRITE", SWIG_FromCharPtr("RandomWrite"));
+  rb_define_const(mOgr, "OLCFASTSPATIALFILTER", SWIG_FromCharPtr("FastSpatialFilter"));
+  rb_define_const(mOgr, "OLCFASTFEATURECOUNT", SWIG_FromCharPtr("FastFeatureCount"));
+  rb_define_const(mOgr, "OLCFASTGETEXTENT", SWIG_FromCharPtr("FastGetExtent"));
+  rb_define_const(mOgr, "OLCCREATEFIELD", SWIG_FromCharPtr("CreateField"));
+  rb_define_const(mOgr, "OLCTRANSACTIONS", SWIG_FromCharPtr("Transactions"));
+  rb_define_const(mOgr, "OLCDELETEFEATURE", SWIG_FromCharPtr("DeleteFeature"));
+  rb_define_const(mOgr, "OLCFASTSETNEXTBYINDEX", SWIG_FromCharPtr("FastSetNextByIndex"));
+  rb_define_const(mOgr, "ODSCCREATELAYER", SWIG_FromCharPtr("CreateLayer"));
+  rb_define_const(mOgr, "ODSCDELETELAYER", SWIG_FromCharPtr("DeleteLayer"));
+  rb_define_const(mOgr, "ODRCCREATEDATASOURCE", SWIG_FromCharPtr("CreateDataSource"));
+  rb_define_const(mOgr, "ODRCDELETEDATASOURCE", SWIG_FromCharPtr("DeleteDataSource"));
   rb_define_module_function(mOgr, "use_exceptions", VALUEFUNC(_wrap_use_exceptions), -1);
   rb_define_module_function(mOgr, "dont_use_exceptions", VALUEFUNC(_wrap_dont_use_exceptions), -1);
   
@@ -9791,8 +9825,7 @@ SWIGEXPORT void Init_ogr(void) {
   rb_define_method(cGeometry.klass, "convex_hull", VALUEFUNC(_wrap_Geometry_convex_hull), -1);
   rb_define_method(cGeometry.klass, "buffer", VALUEFUNC(_wrap_Geometry_buffer), -1);
   rb_define_method(cGeometry.klass, "intersection", VALUEFUNC(_wrap_Geometry_intersection), -1);
-  rb_define_method(cGeometry.klass, "union_", VALUEFUNC(_wrap_Geometry_union_), -1);
-  rb_define_alias(cGeometry.klass, "union", "union_");
+  rb_define_method(cGeometry.klass, "union", VALUEFUNC(_wrap_Geometry_union), -1);
   rb_define_method(cGeometry.klass, "difference", VALUEFUNC(_wrap_Geometry_difference), -1);
   rb_define_method(cGeometry.klass, "symmetric_difference", VALUEFUNC(_wrap_Geometry_symmetric_difference), -1);
   rb_define_method(cGeometry.klass, "distance", VALUEFUNC(_wrap_Geometry_distance), -1);
@@ -9810,7 +9843,7 @@ SWIGEXPORT void Init_ogr(void) {
   rb_define_method(cGeometry.klass, "get_spatial_reference", VALUEFUNC(_wrap_Geometry_get_spatial_reference), -1);
   rb_define_method(cGeometry.klass, "assign_spatial_reference", VALUEFUNC(_wrap_Geometry_assign_spatial_reference), -1);
   rb_define_method(cGeometry.klass, "close_rings", VALUEFUNC(_wrap_Geometry_close_rings), -1);
-  rb_define_method(cGeometry.klass, "flatten_to2d", VALUEFUNC(_wrap_Geometry_flatten_to2d), -1);
+  rb_define_method(cGeometry.klass, "flatten_to2_d", VALUEFUNC(_wrap_Geometry_flatten_to2_d), -1);
   rb_define_method(cGeometry.klass, "get_envelope", VALUEFUNC(_wrap_Geometry_get_envelope), -1);
   rb_define_method(cGeometry.klass, "centroid", VALUEFUNC(_wrap_Geometry_centroid), -1);
   rb_define_method(cGeometry.klass, "wkb_size", VALUEFUNC(_wrap_Geometry_wkb_size), -1);

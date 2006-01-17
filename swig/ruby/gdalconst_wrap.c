@@ -1264,11 +1264,8 @@ SWIG_Ruby_AppendOutput(VALUE target, VALUE o) {
 
 
 
-
-
-
   
-#define SWIG_exception(code, msg) SWIG_Error(code, msg)
+#define SWIG_exception_fail(code, msg) do { SWIG_Error(code, msg); SWIG_fail; } while(0)
 
 
   
@@ -1661,65 +1658,65 @@ SWIGEXPORT void Init_gdalconst(void) {
   }
   
   SWIG_RubyInitializeTrackings();
-  rb_define_const(mGdalconst, "GDT_Unknown", SWIG_From_int((int)(GDT_Unknown)));
-  rb_define_const(mGdalconst, "GDT_Byte", SWIG_From_int((int)(GDT_Byte)));
-  rb_define_const(mGdalconst, "GDT_UInt16", SWIG_From_int((int)(GDT_UInt16)));
-  rb_define_const(mGdalconst, "GDT_Int16", SWIG_From_int((int)(GDT_Int16)));
-  rb_define_const(mGdalconst, "GDT_UInt32", SWIG_From_int((int)(GDT_UInt32)));
-  rb_define_const(mGdalconst, "GDT_Int32", SWIG_From_int((int)(GDT_Int32)));
-  rb_define_const(mGdalconst, "GDT_Float32", SWIG_From_int((int)(GDT_Float32)));
-  rb_define_const(mGdalconst, "GDT_Float64", SWIG_From_int((int)(GDT_Float64)));
-  rb_define_const(mGdalconst, "GDT_CInt16", SWIG_From_int((int)(GDT_CInt16)));
-  rb_define_const(mGdalconst, "GDT_CInt32", SWIG_From_int((int)(GDT_CInt32)));
-  rb_define_const(mGdalconst, "GDT_CFloat32", SWIG_From_int((int)(GDT_CFloat32)));
-  rb_define_const(mGdalconst, "GDT_CFloat64", SWIG_From_int((int)(GDT_CFloat64)));
-  rb_define_const(mGdalconst, "GDT_TypeCount", SWIG_From_int((int)(GDT_TypeCount)));
-  rb_define_const(mGdalconst, "GA_ReadOnly", SWIG_From_int((int)(GA_ReadOnly)));
-  rb_define_const(mGdalconst, "GA_Update", SWIG_From_int((int)(GA_Update)));
-  rb_define_const(mGdalconst, "GF_Read", SWIG_From_int((int)(GF_Read)));
-  rb_define_const(mGdalconst, "GF_Write", SWIG_From_int((int)(GF_Write)));
-  rb_define_const(mGdalconst, "GCI_Undefined", SWIG_From_int((int)(GCI_Undefined)));
-  rb_define_const(mGdalconst, "GCI_GrayIndex", SWIG_From_int((int)(GCI_GrayIndex)));
-  rb_define_const(mGdalconst, "GCI_PaletteIndex", SWIG_From_int((int)(GCI_PaletteIndex)));
-  rb_define_const(mGdalconst, "GCI_RedBand", SWIG_From_int((int)(GCI_RedBand)));
-  rb_define_const(mGdalconst, "GCI_GreenBand", SWIG_From_int((int)(GCI_GreenBand)));
-  rb_define_const(mGdalconst, "GCI_BlueBand", SWIG_From_int((int)(GCI_BlueBand)));
-  rb_define_const(mGdalconst, "GCI_AlphaBand", SWIG_From_int((int)(GCI_AlphaBand)));
-  rb_define_const(mGdalconst, "GCI_HueBand", SWIG_From_int((int)(GCI_HueBand)));
-  rb_define_const(mGdalconst, "GCI_SaturationBand", SWIG_From_int((int)(GCI_SaturationBand)));
-  rb_define_const(mGdalconst, "GCI_LightnessBand", SWIG_From_int((int)(GCI_LightnessBand)));
-  rb_define_const(mGdalconst, "GCI_CyanBand", SWIG_From_int((int)(GCI_CyanBand)));
-  rb_define_const(mGdalconst, "GCI_MagentaBand", SWIG_From_int((int)(GCI_MagentaBand)));
-  rb_define_const(mGdalconst, "GCI_YellowBand", SWIG_From_int((int)(GCI_YellowBand)));
-  rb_define_const(mGdalconst, "GCI_BlackBand", SWIG_From_int((int)(GCI_BlackBand)));
-  rb_define_const(mGdalconst, "GRA_NearestNeighbour", SWIG_From_int((int)(GRA_NearestNeighbour)));
-  rb_define_const(mGdalconst, "GRA_Bilinear", SWIG_From_int((int)(GRA_Bilinear)));
-  rb_define_const(mGdalconst, "GRA_Cubic", SWIG_From_int((int)(GRA_Cubic)));
-  rb_define_const(mGdalconst, "GRA_CubicSpline", SWIG_From_int((int)(GRA_CubicSpline)));
-  rb_define_const(mGdalconst, "GPI_Gray", SWIG_From_int((int)(GPI_Gray)));
+  rb_define_const(mGdalconst, "GDT_UNKNOWN", SWIG_From_int((int)(GDT_Unknown)));
+  rb_define_const(mGdalconst, "GDT_BYTE", SWIG_From_int((int)(GDT_Byte)));
+  rb_define_const(mGdalconst, "GDT_UINT16", SWIG_From_int((int)(GDT_UInt16)));
+  rb_define_const(mGdalconst, "GDT_INT16", SWIG_From_int((int)(GDT_Int16)));
+  rb_define_const(mGdalconst, "GDT_UINT32", SWIG_From_int((int)(GDT_UInt32)));
+  rb_define_const(mGdalconst, "GDT_INT32", SWIG_From_int((int)(GDT_Int32)));
+  rb_define_const(mGdalconst, "GDT_FLOAT32", SWIG_From_int((int)(GDT_Float32)));
+  rb_define_const(mGdalconst, "GDT_FLOAT64", SWIG_From_int((int)(GDT_Float64)));
+  rb_define_const(mGdalconst, "GDT_CINT16", SWIG_From_int((int)(GDT_CInt16)));
+  rb_define_const(mGdalconst, "GDT_CINT32", SWIG_From_int((int)(GDT_CInt32)));
+  rb_define_const(mGdalconst, "GDT_CFLOAT32", SWIG_From_int((int)(GDT_CFloat32)));
+  rb_define_const(mGdalconst, "GDT_CFLOAT64", SWIG_From_int((int)(GDT_CFloat64)));
+  rb_define_const(mGdalconst, "GDT_TYPECOUNT", SWIG_From_int((int)(GDT_TypeCount)));
+  rb_define_const(mGdalconst, "GA_READONLY", SWIG_From_int((int)(GA_ReadOnly)));
+  rb_define_const(mGdalconst, "GA_UPDATE", SWIG_From_int((int)(GA_Update)));
+  rb_define_const(mGdalconst, "GF_READ", SWIG_From_int((int)(GF_Read)));
+  rb_define_const(mGdalconst, "GF_WRITE", SWIG_From_int((int)(GF_Write)));
+  rb_define_const(mGdalconst, "GCI_UNDEFINED", SWIG_From_int((int)(GCI_Undefined)));
+  rb_define_const(mGdalconst, "GCI_GRAYINDEX", SWIG_From_int((int)(GCI_GrayIndex)));
+  rb_define_const(mGdalconst, "GCI_PALETTEINDEX", SWIG_From_int((int)(GCI_PaletteIndex)));
+  rb_define_const(mGdalconst, "GCI_REDBAND", SWIG_From_int((int)(GCI_RedBand)));
+  rb_define_const(mGdalconst, "GCI_GREENBAND", SWIG_From_int((int)(GCI_GreenBand)));
+  rb_define_const(mGdalconst, "GCI_BLUEBAND", SWIG_From_int((int)(GCI_BlueBand)));
+  rb_define_const(mGdalconst, "GCI_ALPHABAND", SWIG_From_int((int)(GCI_AlphaBand)));
+  rb_define_const(mGdalconst, "GCI_HUEBAND", SWIG_From_int((int)(GCI_HueBand)));
+  rb_define_const(mGdalconst, "GCI_SATURATIONBAND", SWIG_From_int((int)(GCI_SaturationBand)));
+  rb_define_const(mGdalconst, "GCI_LIGHTNESSBAND", SWIG_From_int((int)(GCI_LightnessBand)));
+  rb_define_const(mGdalconst, "GCI_CYANBAND", SWIG_From_int((int)(GCI_CyanBand)));
+  rb_define_const(mGdalconst, "GCI_MAGENTABAND", SWIG_From_int((int)(GCI_MagentaBand)));
+  rb_define_const(mGdalconst, "GCI_YELLOWBAND", SWIG_From_int((int)(GCI_YellowBand)));
+  rb_define_const(mGdalconst, "GCI_BLACKBAND", SWIG_From_int((int)(GCI_BlackBand)));
+  rb_define_const(mGdalconst, "GRA_NEARESTNEIGHBOUR", SWIG_From_int((int)(GRA_NearestNeighbour)));
+  rb_define_const(mGdalconst, "GRA_BILINEAR", SWIG_From_int((int)(GRA_Bilinear)));
+  rb_define_const(mGdalconst, "GRA_CUBIC", SWIG_From_int((int)(GRA_Cubic)));
+  rb_define_const(mGdalconst, "GRA_CUBICSPLINE", SWIG_From_int((int)(GRA_CubicSpline)));
+  rb_define_const(mGdalconst, "GPI_GRAY", SWIG_From_int((int)(GPI_Gray)));
   rb_define_const(mGdalconst, "GPI_RGB", SWIG_From_int((int)(GPI_RGB)));
   rb_define_const(mGdalconst, "GPI_CMYK", SWIG_From_int((int)(GPI_CMYK)));
   rb_define_const(mGdalconst, "GPI_HLS", SWIG_From_int((int)(GPI_HLS)));
-  rb_define_const(mGdalconst, "CXT_Element", SWIG_From_int((int)(CXT_Element)));
-  rb_define_const(mGdalconst, "CXT_Text", SWIG_From_int((int)(CXT_Text)));
-  rb_define_const(mGdalconst, "CXT_Attribute", SWIG_From_int((int)(CXT_Attribute)));
-  rb_define_const(mGdalconst, "CXT_Comment", SWIG_From_int((int)(CXT_Comment)));
-  rb_define_const(mGdalconst, "CXT_Literal", SWIG_From_int((int)(CXT_Literal)));
-  rb_define_const(mGdalconst, "CE_None", SWIG_From_int((int)(CE_None)));
-  rb_define_const(mGdalconst, "CE_Debug", SWIG_From_int((int)(CE_Debug)));
-  rb_define_const(mGdalconst, "CE_Warning", SWIG_From_int((int)(CE_Warning)));
-  rb_define_const(mGdalconst, "CE_Failure", SWIG_From_int((int)(CE_Failure)));
-  rb_define_const(mGdalconst, "CE_Fatal", SWIG_From_int((int)(CE_Fatal)));
-  rb_define_const(mGdalconst, "CPLE_None", SWIG_From_int((int)(CPLE_None)));
-  rb_define_const(mGdalconst, "CPLE_AppDefined", SWIG_From_int((int)(CPLE_AppDefined)));
-  rb_define_const(mGdalconst, "CPLE_OutOfMemory", SWIG_From_int((int)(CPLE_OutOfMemory)));
-  rb_define_const(mGdalconst, "CPLE_FileIO", SWIG_From_int((int)(CPLE_FileIO)));
-  rb_define_const(mGdalconst, "CPLE_OpenFailed", SWIG_From_int((int)(CPLE_OpenFailed)));
-  rb_define_const(mGdalconst, "CPLE_IllegalArg", SWIG_From_int((int)(CPLE_IllegalArg)));
-  rb_define_const(mGdalconst, "CPLE_NotSupported", SWIG_From_int((int)(CPLE_NotSupported)));
-  rb_define_const(mGdalconst, "CPLE_AssertionFailed", SWIG_From_int((int)(CPLE_AssertionFailed)));
-  rb_define_const(mGdalconst, "CPLE_NoWriteAccess", SWIG_From_int((int)(CPLE_NoWriteAccess)));
-  rb_define_const(mGdalconst, "CPLE_UserInterrupt", SWIG_From_int((int)(CPLE_UserInterrupt)));
+  rb_define_const(mGdalconst, "CXT_ELEMENT", SWIG_From_int((int)(CXT_Element)));
+  rb_define_const(mGdalconst, "CXT_TEXT", SWIG_From_int((int)(CXT_Text)));
+  rb_define_const(mGdalconst, "CXT_ATTRIBUTE", SWIG_From_int((int)(CXT_Attribute)));
+  rb_define_const(mGdalconst, "CXT_COMMENT", SWIG_From_int((int)(CXT_Comment)));
+  rb_define_const(mGdalconst, "CXT_LITERAL", SWIG_From_int((int)(CXT_Literal)));
+  rb_define_const(mGdalconst, "CE_NONE", SWIG_From_int((int)(CE_None)));
+  rb_define_const(mGdalconst, "CE_DEBUG", SWIG_From_int((int)(CE_Debug)));
+  rb_define_const(mGdalconst, "CE_WARNING", SWIG_From_int((int)(CE_Warning)));
+  rb_define_const(mGdalconst, "CE_FAILURE", SWIG_From_int((int)(CE_Failure)));
+  rb_define_const(mGdalconst, "CE_FATAL", SWIG_From_int((int)(CE_Fatal)));
+  rb_define_const(mGdalconst, "CPLE_NONE", SWIG_From_int((int)(CPLE_None)));
+  rb_define_const(mGdalconst, "CPLE_APPDEFINED", SWIG_From_int((int)(CPLE_AppDefined)));
+  rb_define_const(mGdalconst, "CPLE_OUTOFMEMORY", SWIG_From_int((int)(CPLE_OutOfMemory)));
+  rb_define_const(mGdalconst, "CPLE_FILEIO", SWIG_From_int((int)(CPLE_FileIO)));
+  rb_define_const(mGdalconst, "CPLE_OPENFAILED", SWIG_From_int((int)(CPLE_OpenFailed)));
+  rb_define_const(mGdalconst, "CPLE_ILLEGALARG", SWIG_From_int((int)(CPLE_IllegalArg)));
+  rb_define_const(mGdalconst, "CPLE_NOTSUPPORTED", SWIG_From_int((int)(CPLE_NotSupported)));
+  rb_define_const(mGdalconst, "CPLE_ASSERTIONFAILED", SWIG_From_int((int)(CPLE_AssertionFailed)));
+  rb_define_const(mGdalconst, "CPLE_NOWRITEACCESS", SWIG_From_int((int)(CPLE_NoWriteAccess)));
+  rb_define_const(mGdalconst, "CPLE_USERINTERRUPT", SWIG_From_int((int)(CPLE_UserInterrupt)));
   rb_define_const(mGdalconst, "DMD_LONGNAME", SWIG_FromCharPtr(GDAL_DMD_LONGNAME));
   rb_define_const(mGdalconst, "DMD_HELPTOPIC", SWIG_FromCharPtr(GDAL_DMD_HELPTOPIC));
   rb_define_const(mGdalconst, "DMD_MIMETYPE", SWIG_FromCharPtr(GDAL_DMD_MIMETYPE));
@@ -1728,7 +1725,7 @@ SWIGEXPORT void Init_gdalconst(void) {
   rb_define_const(mGdalconst, "DMD_CREATIONDATATYPES", SWIG_FromCharPtr(GDAL_DMD_CREATIONDATATYPES));
   rb_define_const(mGdalconst, "DCAP_CREATE", SWIG_FromCharPtr(GDAL_DCAP_CREATE));
   rb_define_const(mGdalconst, "DCAP_CREATECOPY", SWIG_FromCharPtr(GDAL_DCAP_CREATECOPY));
-  rb_define_const(mGdalconst, "CPLES_BackslashQuotable", SWIG_From_int((int)(CPLES_BackslashQuotable)));
+  rb_define_const(mGdalconst, "CPLES_BACKSLASHQUOTABLE", SWIG_From_int((int)(CPLES_BackslashQuotable)));
   rb_define_const(mGdalconst, "CPLES_XML", SWIG_From_int((int)(CPLES_XML)));
   rb_define_const(mGdalconst, "CPLES_URL", SWIG_From_int((int)(CPLES_URL)));
   rb_define_const(mGdalconst, "CPLES_SQL", SWIG_From_int((int)(CPLES_SQL)));

@@ -1281,11 +1281,8 @@ SWIG_Ruby_AppendOutput(VALUE target, VALUE o) {
 
 
 
-
-
-
   
-#define SWIG_exception(code, msg) SWIG_Error(code, msg)
+#define SWIG_exception_fail(code, msg) do { SWIG_Error(code, msg); SWIG_fail; } while(0)
 
 
   
@@ -1927,7 +1924,7 @@ _wrap_get_well_known_geog_csas_wkt(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetWellKnownGeogCSAsWKT" "', argument " "1"" of type '" "char const *""'");
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetWellKnownGeogCSAsWKT" "', argument " "1"" of type '" "char const *""'");
   }
   arg1 = buf1;
   result = (OGRErr)GetWellKnownGeogCSAsWKT((char const *)arg1,arg2);
@@ -1952,6 +1949,12 @@ _wrap_get_well_known_geog_csas_wkt(int argc, VALUE *argv, VALUE self) {
   }
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
   {
+    /* %typemap(freearg) (char **argout) */
+    
+    if ( *arg2 )
+    CPLFree( *arg2 );
+  }
+  {
     /* %typemap(ret) OGRErr */
     if (vresult == Qnil) {
       vresult = INT2NUM(0);
@@ -1959,6 +1962,12 @@ _wrap_get_well_known_geog_csas_wkt(int argc, VALUE *argv, VALUE self) {
   }    return vresult;
 fail:
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+  {
+    /* %typemap(freearg) (char **argout) */
+    
+    if ( *arg2 )
+    CPLFree( *arg2 );
+  }
   return Qnil;
 }
 
@@ -1996,7 +2005,7 @@ _wrap_GetProjectionMethodParameterList(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "OPTGetParameterList" "', argument " "1"" of type '" "char *""'");
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "OPTGetParameterList" "', argument " "1"" of type '" "char *""'");
   }
   arg1 = buf1;
   {
@@ -2039,12 +2048,12 @@ _wrap_GetProjectionMethodParamInfo(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "OPTGetParameterInfo" "', argument " "1"" of type '" "char *""'");
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "OPTGetParameterInfo" "', argument " "1"" of type '" "char *""'");
   }
   arg1 = buf1;
   res2 = SWIG_AsCharPtrAndSize(argv[1], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "OPTGetParameterInfo" "', argument " "2"" of type '" "char *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "OPTGetParameterInfo" "', argument " "2"" of type '" "char *""'");
   }
   arg2 = buf2;
   {
@@ -2061,7 +2070,7 @@ _wrap_GetProjectionMethodParamInfo(int argc, VALUE *argv, VALUE self) {
   }
   res5 = SWIG_ConvertPtr(argv[4], &argp5,SWIGTYPE_p_double, 0 |  0 );
   if (!SWIG_IsOK(res5)) {
-    SWIG_exception(((res5 != SWIG_ERROR) ? res5 : SWIG_TypeError), "in method '" "OPTGetParameterInfo" "', argument " "5"" of type '" "double *""'"); 
+    SWIG_exception_fail(((res5 != SWIG_ERROR) ? res5 : SWIG_TypeError), "in method '" "OPTGetParameterInfo" "', argument " "5"" of type '" "double *""'"); 
   }
   arg5 = reinterpret_cast<double * >(argp5);
   OPTGetParameterInfo(arg1,arg2,arg3,arg4,arg5);
@@ -2112,7 +2121,7 @@ _wrap_new_SpatialReference(int argc, VALUE *argv, VALUE self) {
   if (argc > 0) {
     res1 = SWIG_AsCharPtrAndSize(argv[0], &buf1, NULL, &alloc1);
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "OSRSpatialReferenceShadow" "', argument " "1"" of type '" "char const *""'");
+      SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "OSRSpatialReferenceShadow" "', argument " "1"" of type '" "char const *""'");
     }
     arg1 = buf1;
   }
@@ -2150,7 +2159,7 @@ _wrap_SpatialReference___str__(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "__str__" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "__str__" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (char *)OSRSpatialReferenceShadow___str__(arg1);
@@ -2179,12 +2188,12 @@ _wrap_SpatialReference_is_same(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "IsSame" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "IsSame" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "IsSame" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "IsSame" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg2 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp2);
   result = (int)OSRSpatialReferenceShadow_IsSame(arg1,arg2);
@@ -2212,12 +2221,12 @@ _wrap_SpatialReference_is_same_geog_cs(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "IsSameGeogCS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "IsSameGeogCS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "IsSameGeogCS" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "IsSameGeogCS" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg2 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp2);
   result = (int)OSRSpatialReferenceShadow_IsSameGeogCS(arg1,arg2);
@@ -2242,7 +2251,7 @@ _wrap_SpatialReference_is_geographic(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "IsGeographic" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "IsGeographic" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (int)OSRSpatialReferenceShadow_IsGeographic(arg1);
@@ -2267,7 +2276,7 @@ _wrap_SpatialReference_is_projected(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "IsProjected" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "IsProjected" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (int)OSRSpatialReferenceShadow_IsProjected(arg1);
@@ -2299,18 +2308,18 @@ _wrap_SpatialReference_get_attr_value(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetAttrValue" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetAttrValue" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetAttrValue" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetAttrValue" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   if (argc > 1) {
     ecode3 = SWIG_AsVal_int(argv[1], &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "GetAttrValue" "', argument " "3"" of type '" "int""'");
+      SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "GetAttrValue" "', argument " "3"" of type '" "int""'");
     } 
     arg3 = static_cast<int >(val3);
   }
@@ -2346,17 +2355,17 @@ _wrap_SpatialReference_set_attr_value(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetAttrValue" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetAttrValue" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetAttrValue" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetAttrValue" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   res3 = SWIG_AsCharPtrAndSize(argv[1], &buf3, NULL, &alloc3);
   if (!SWIG_IsOK(res3)) {
-    SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "SetAttrValue" "', argument " "3"" of type '" "char const *""'");
+    SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "SetAttrValue" "', argument " "3"" of type '" "char const *""'");
   }
   arg3 = buf3;
   result = (OGRErr)OSRSpatialReferenceShadow_SetAttrValue(arg1,(char const *)arg2,(char const *)arg3);
@@ -2402,17 +2411,17 @@ _wrap_SpatialReference_set_angular_units(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetAngularUnits" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetAngularUnits" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetAngularUnits" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetAngularUnits" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   ecode3 = SWIG_AsVal_double(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetAngularUnits" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetAngularUnits" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast<double >(val3);
   result = (OGRErr)OSRSpatialReferenceShadow_SetAngularUnits(arg1,(char const *)arg2,arg3);
@@ -2449,7 +2458,7 @@ _wrap_SpatialReference_get_angular_units(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetAngularUnits" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetAngularUnits" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (double)OSRSpatialReferenceShadow_GetAngularUnits(arg1);
@@ -2481,17 +2490,17 @@ _wrap_SpatialReference_set_linear_units(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetLinearUnits" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetLinearUnits" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetLinearUnits" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetLinearUnits" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   ecode3 = SWIG_AsVal_double(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetLinearUnits" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetLinearUnits" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast<double >(val3);
   result = (OGRErr)OSRSpatialReferenceShadow_SetLinearUnits(arg1,(char const *)arg2,arg3);
@@ -2528,7 +2537,7 @@ _wrap_SpatialReference_get_linear_units(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetLinearUnits" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetLinearUnits" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (double)OSRSpatialReferenceShadow_GetLinearUnits(arg1);
@@ -2553,7 +2562,7 @@ _wrap_SpatialReference_get_linear_units_name(int argc, VALUE *argv, VALUE self) 
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetLinearUnitsName" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetLinearUnitsName" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (char *)OSRSpatialReferenceShadow_GetLinearUnitsName(arg1);
@@ -2582,12 +2591,12 @@ _wrap_SpatialReference_get_authority_code(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetAuthorityCode" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetAuthorityCode" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetAuthorityCode" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetAuthorityCode" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   result = (char *)OSRSpatialReferenceShadow_GetAuthorityCode(arg1,(char const *)arg2);
@@ -2618,12 +2627,12 @@ _wrap_SpatialReference_get_authority_name(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetAuthorityName" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetAuthorityName" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetAuthorityName" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetAuthorityName" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   result = (char *)OSRSpatialReferenceShadow_GetAuthorityName(arg1,(char const *)arg2);
@@ -2656,18 +2665,18 @@ _wrap_SpatialReference_set_utm(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetUTM" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetUTM" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetUTM" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetUTM" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   if (argc > 1) {
     ecode3 = SWIG_AsVal_int(argv[1], &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetUTM" "', argument " "3"" of type '" "int""'");
+      SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetUTM" "', argument " "3"" of type '" "int""'");
     } 
     arg3 = static_cast<int >(val3);
   }
@@ -2716,32 +2725,32 @@ _wrap_SpatialReference_set_state_plane(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetStatePlane" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetStatePlane" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetStatePlane" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetStatePlane" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   if (argc > 1) {
     ecode3 = SWIG_AsVal_int(argv[1], &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetStatePlane" "', argument " "3"" of type '" "int""'");
+      SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetStatePlane" "', argument " "3"" of type '" "int""'");
     } 
     arg3 = static_cast<int >(val3);
   }
   if (argc > 2) {
     res4 = SWIG_AsCharPtrAndSize(argv[2], &buf4, NULL, &alloc4);
     if (!SWIG_IsOK(res4)) {
-      SWIG_exception(((res4 != SWIG_ERROR) ? res4 : SWIG_TypeError), "in method '" "SetStatePlane" "', argument " "4"" of type '" "char const *""'");
+      SWIG_exception_fail(((res4 != SWIG_ERROR) ? res4 : SWIG_TypeError), "in method '" "SetStatePlane" "', argument " "4"" of type '" "char const *""'");
     }
     arg4 = buf4;
   }
   if (argc > 3) {
     ecode5 = SWIG_AsVal_double(argv[3], &val5);
     if (!SWIG_IsOK(ecode5)) {
-      SWIG_exception(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetStatePlane" "', argument " "5"" of type '" "double""'");
+      SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetStatePlane" "', argument " "5"" of type '" "double""'");
     } 
     arg5 = static_cast<double >(val5);
   }
@@ -2779,7 +2788,7 @@ _wrap_SpatialReference_auto_identify_epsg(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "AutoIdentifyEPSG" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "AutoIdentifyEPSG" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (OGRErr)OSRSpatialReferenceShadow_AutoIdentifyEPSG(arg1);
@@ -2818,12 +2827,12 @@ _wrap_SpatialReference_set_projection(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetProjection" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetProjection" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetProjection" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetProjection" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   result = (OGRErr)OSRSpatialReferenceShadow_SetProjection(arg1,(char const *)arg2);
@@ -2867,17 +2876,17 @@ _wrap_SpatialReference_set_proj_parm(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetProjParm" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetProjParm" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetProjParm" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetProjParm" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   ecode3 = SWIG_AsVal_double(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetProjParm" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetProjParm" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast<double >(val3);
   result = (OGRErr)OSRSpatialReferenceShadow_SetProjParm(arg1,(char const *)arg2,arg3);
@@ -2921,18 +2930,18 @@ _wrap_SpatialReference_get_proj_parm(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetProjParm" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetProjParm" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetProjParm" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetProjParm" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   if (argc > 1) {
     ecode3 = SWIG_AsVal_double(argv[1], &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "GetProjParm" "', argument " "3"" of type '" "double""'");
+      SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "GetProjParm" "', argument " "3"" of type '" "double""'");
     } 
     arg3 = static_cast<double >(val3);
   }
@@ -2967,17 +2976,17 @@ _wrap_SpatialReference_set_norm_proj_parm(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetNormProjParm" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetNormProjParm" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetNormProjParm" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetNormProjParm" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   ecode3 = SWIG_AsVal_double(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetNormProjParm" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetNormProjParm" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast<double >(val3);
   result = (OGRErr)OSRSpatialReferenceShadow_SetNormProjParm(arg1,(char const *)arg2,arg3);
@@ -3021,18 +3030,18 @@ _wrap_SpatialReference_get_norm_proj_parm(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetNormProjParm" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetNormProjParm" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetNormProjParm" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "GetNormProjParm" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   if (argc > 1) {
     ecode3 = SWIG_AsVal_double(argv[1], &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "GetNormProjParm" "', argument " "3"" of type '" "double""'");
+      SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "GetNormProjParm" "', argument " "3"" of type '" "double""'");
     } 
     arg3 = static_cast<double >(val3);
   }
@@ -3078,37 +3087,37 @@ _wrap_SpatialReference_set_acea(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetACEA" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetACEA" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetACEA" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetACEA" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   ecode3 = SWIG_AsVal_double(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetACEA" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetACEA" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast<double >(val3);
   ecode4 = SWIG_AsVal_double(argv[2], &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetACEA" "', argument " "4"" of type '" "double""'");
+    SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetACEA" "', argument " "4"" of type '" "double""'");
   } 
   arg4 = static_cast<double >(val4);
   ecode5 = SWIG_AsVal_double(argv[3], &val5);
   if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetACEA" "', argument " "5"" of type '" "double""'");
+    SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetACEA" "', argument " "5"" of type '" "double""'");
   } 
   arg5 = static_cast<double >(val5);
   ecode6 = SWIG_AsVal_double(argv[4], &val6);
   if (!SWIG_IsOK(ecode6)) {
-    SWIG_exception(((ecode6 != SWIG_ERROR) ? ecode6 : SWIG_TypeError), "in method '" "SetACEA" "', argument " "6"" of type '" "double""'");
+    SWIG_exception_fail(((ecode6 != SWIG_ERROR) ? ecode6 : SWIG_TypeError), "in method '" "SetACEA" "', argument " "6"" of type '" "double""'");
   } 
   arg6 = static_cast<double >(val6);
   ecode7 = SWIG_AsVal_double(argv[5], &val7);
   if (!SWIG_IsOK(ecode7)) {
-    SWIG_exception(((ecode7 != SWIG_ERROR) ? ecode7 : SWIG_TypeError), "in method '" "SetACEA" "', argument " "7"" of type '" "double""'");
+    SWIG_exception_fail(((ecode7 != SWIG_ERROR) ? ecode7 : SWIG_TypeError), "in method '" "SetACEA" "', argument " "7"" of type '" "double""'");
   } 
   arg7 = static_cast<double >(val7);
   result = (OGRErr)OSRSpatialReferenceShadow_SetACEA(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
@@ -3155,27 +3164,27 @@ _wrap_SpatialReference_set_ae(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetAE" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetAE" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetAE" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetAE" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   ecode3 = SWIG_AsVal_double(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetAE" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetAE" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast<double >(val3);
   ecode4 = SWIG_AsVal_double(argv[2], &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetAE" "', argument " "4"" of type '" "double""'");
+    SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetAE" "', argument " "4"" of type '" "double""'");
   } 
   arg4 = static_cast<double >(val4);
   ecode5 = SWIG_AsVal_double(argv[3], &val5);
   if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetAE" "', argument " "5"" of type '" "double""'");
+    SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetAE" "', argument " "5"" of type '" "double""'");
   } 
   arg5 = static_cast<double >(val5);
   result = (OGRErr)OSRSpatialReferenceShadow_SetAE(arg1,arg2,arg3,arg4,arg5);
@@ -3222,27 +3231,27 @@ _wrap_SpatialReference_set_cs(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetCS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetCS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetCS" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetCS" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   ecode3 = SWIG_AsVal_double(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetCS" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetCS" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast<double >(val3);
   ecode4 = SWIG_AsVal_double(argv[2], &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetCS" "', argument " "4"" of type '" "double""'");
+    SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetCS" "', argument " "4"" of type '" "double""'");
   } 
   arg4 = static_cast<double >(val4);
   ecode5 = SWIG_AsVal_double(argv[3], &val5);
   if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetCS" "', argument " "5"" of type '" "double""'");
+    SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetCS" "', argument " "5"" of type '" "double""'");
   } 
   arg5 = static_cast<double >(val5);
   result = (OGRErr)OSRSpatialReferenceShadow_SetCS(arg1,arg2,arg3,arg4,arg5);
@@ -3289,27 +3298,27 @@ _wrap_SpatialReference_set_bonne(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetBonne" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetBonne" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetBonne" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetBonne" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   ecode3 = SWIG_AsVal_double(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetBonne" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetBonne" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast<double >(val3);
   ecode4 = SWIG_AsVal_double(argv[2], &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetBonne" "', argument " "4"" of type '" "double""'");
+    SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetBonne" "', argument " "4"" of type '" "double""'");
   } 
   arg4 = static_cast<double >(val4);
   ecode5 = SWIG_AsVal_double(argv[3], &val5);
   if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetBonne" "', argument " "5"" of type '" "double""'");
+    SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetBonne" "', argument " "5"" of type '" "double""'");
   } 
   arg5 = static_cast<double >(val5);
   result = (OGRErr)OSRSpatialReferenceShadow_SetBonne(arg1,arg2,arg3,arg4,arg5);
@@ -3362,37 +3371,37 @@ _wrap_SpatialReference_set_ec(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetEC" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetEC" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetEC" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetEC" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   ecode3 = SWIG_AsVal_double(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetEC" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetEC" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast<double >(val3);
   ecode4 = SWIG_AsVal_double(argv[2], &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetEC" "', argument " "4"" of type '" "double""'");
+    SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetEC" "', argument " "4"" of type '" "double""'");
   } 
   arg4 = static_cast<double >(val4);
   ecode5 = SWIG_AsVal_double(argv[3], &val5);
   if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetEC" "', argument " "5"" of type '" "double""'");
+    SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetEC" "', argument " "5"" of type '" "double""'");
   } 
   arg5 = static_cast<double >(val5);
   ecode6 = SWIG_AsVal_double(argv[4], &val6);
   if (!SWIG_IsOK(ecode6)) {
-    SWIG_exception(((ecode6 != SWIG_ERROR) ? ecode6 : SWIG_TypeError), "in method '" "SetEC" "', argument " "6"" of type '" "double""'");
+    SWIG_exception_fail(((ecode6 != SWIG_ERROR) ? ecode6 : SWIG_TypeError), "in method '" "SetEC" "', argument " "6"" of type '" "double""'");
   } 
   arg6 = static_cast<double >(val6);
   ecode7 = SWIG_AsVal_double(argv[5], &val7);
   if (!SWIG_IsOK(ecode7)) {
-    SWIG_exception(((ecode7 != SWIG_ERROR) ? ecode7 : SWIG_TypeError), "in method '" "SetEC" "', argument " "7"" of type '" "double""'");
+    SWIG_exception_fail(((ecode7 != SWIG_ERROR) ? ecode7 : SWIG_TypeError), "in method '" "SetEC" "', argument " "7"" of type '" "double""'");
   } 
   arg7 = static_cast<double >(val7);
   result = (OGRErr)OSRSpatialReferenceShadow_SetEC(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
@@ -3436,22 +3445,22 @@ _wrap_SpatialReference_set_eckert_iv(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetEckertIV" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetEckertIV" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetEckertIV" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetEckertIV" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   ecode3 = SWIG_AsVal_double(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetEckertIV" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetEckertIV" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast<double >(val3);
   ecode4 = SWIG_AsVal_double(argv[2], &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetEckertIV" "', argument " "4"" of type '" "double""'");
+    SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetEckertIV" "', argument " "4"" of type '" "double""'");
   } 
   arg4 = static_cast<double >(val4);
   result = (OGRErr)OSRSpatialReferenceShadow_SetEckertIV(arg1,arg2,arg3,arg4);
@@ -3495,22 +3504,22 @@ _wrap_SpatialReference_set_eckert_vi(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetEckertVI" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetEckertVI" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetEckertVI" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetEckertVI" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   ecode3 = SWIG_AsVal_double(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetEckertVI" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetEckertVI" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast<double >(val3);
   ecode4 = SWIG_AsVal_double(argv[2], &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetEckertVI" "', argument " "4"" of type '" "double""'");
+    SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetEckertVI" "', argument " "4"" of type '" "double""'");
   } 
   arg4 = static_cast<double >(val4);
   result = (OGRErr)OSRSpatialReferenceShadow_SetEckertVI(arg1,arg2,arg3,arg4);
@@ -3557,27 +3566,27 @@ _wrap_SpatialReference_set_equirectangular(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetEquirectangular" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetEquirectangular" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetEquirectangular" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetEquirectangular" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   ecode3 = SWIG_AsVal_double(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetEquirectangular" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetEquirectangular" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast<double >(val3);
   ecode4 = SWIG_AsVal_double(argv[2], &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetEquirectangular" "', argument " "4"" of type '" "double""'");
+    SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetEquirectangular" "', argument " "4"" of type '" "double""'");
   } 
   arg4 = static_cast<double >(val4);
   ecode5 = SWIG_AsVal_double(argv[3], &val5);
   if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetEquirectangular" "', argument " "5"" of type '" "double""'");
+    SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetEquirectangular" "', argument " "5"" of type '" "double""'");
   } 
   arg5 = static_cast<double >(val5);
   result = (OGRErr)OSRSpatialReferenceShadow_SetEquirectangular(arg1,arg2,arg3,arg4,arg5);
@@ -3624,22 +3633,22 @@ _wrap_SpatialReference_set_gs(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetGS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetGS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetGS" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetGS" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   ecode3 = SWIG_AsVal_double(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetGS" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetGS" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast<double >(val3);
   ecode4 = SWIG_AsVal_double(argv[2], &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetGS" "', argument " "4"" of type '" "double""'");
+    SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetGS" "', argument " "4"" of type '" "double""'");
   } 
   arg4 = static_cast<double >(val4);
   result = (OGRErr)OSRSpatialReferenceShadow_SetGS(arg1,arg2,arg3,arg4);
@@ -3678,12 +3687,12 @@ _wrap_SpatialReference_set_well_known_geog_cs(int argc, VALUE *argv, VALUE self)
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetWellKnownGeogCS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetWellKnownGeogCS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetWellKnownGeogCS" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetWellKnownGeogCS" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   result = (OGRErr)OSRSpatialReferenceShadow_SetWellKnownGeogCS(arg1,(char const *)arg2);
@@ -3724,12 +3733,12 @@ _wrap_SpatialReference_set_from_user_input(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetFromUserInput" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetFromUserInput" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetFromUserInput" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetFromUserInput" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   result = (OGRErr)OSRSpatialReferenceShadow_SetFromUserInput(arg1,(char const *)arg2);
@@ -3769,12 +3778,12 @@ _wrap_SpatialReference_copy_geog_csfrom(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CopyGeogCSFrom" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CopyGeogCSFrom" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[0], &argp2,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CopyGeogCSFrom" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "CopyGeogCSFrom" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg2 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp2);
   result = (OGRErr)OSRSpatialReferenceShadow_CopyGeogCSFrom(arg1,arg2);
@@ -3830,49 +3839,49 @@ _wrap_SpatialReference_set_towgs84(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetTOWGS84" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetTOWGS84" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   ecode2 = SWIG_AsVal_double(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetTOWGS84" "', argument " "2"" of type '" "double""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "SetTOWGS84" "', argument " "2"" of type '" "double""'");
   } 
   arg2 = static_cast<double >(val2);
   ecode3 = SWIG_AsVal_double(argv[1], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetTOWGS84" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "SetTOWGS84" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast<double >(val3);
   ecode4 = SWIG_AsVal_double(argv[2], &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetTOWGS84" "', argument " "4"" of type '" "double""'");
+    SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "SetTOWGS84" "', argument " "4"" of type '" "double""'");
   } 
   arg4 = static_cast<double >(val4);
   if (argc > 3) {
     ecode5 = SWIG_AsVal_double(argv[3], &val5);
     if (!SWIG_IsOK(ecode5)) {
-      SWIG_exception(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetTOWGS84" "', argument " "5"" of type '" "double""'");
+      SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetTOWGS84" "', argument " "5"" of type '" "double""'");
     } 
     arg5 = static_cast<double >(val5);
   }
   if (argc > 4) {
     ecode6 = SWIG_AsVal_double(argv[4], &val6);
     if (!SWIG_IsOK(ecode6)) {
-      SWIG_exception(((ecode6 != SWIG_ERROR) ? ecode6 : SWIG_TypeError), "in method '" "SetTOWGS84" "', argument " "6"" of type '" "double""'");
+      SWIG_exception_fail(((ecode6 != SWIG_ERROR) ? ecode6 : SWIG_TypeError), "in method '" "SetTOWGS84" "', argument " "6"" of type '" "double""'");
     } 
     arg6 = static_cast<double >(val6);
   }
   if (argc > 5) {
     ecode7 = SWIG_AsVal_double(argv[5], &val7);
     if (!SWIG_IsOK(ecode7)) {
-      SWIG_exception(((ecode7 != SWIG_ERROR) ? ecode7 : SWIG_TypeError), "in method '" "SetTOWGS84" "', argument " "7"" of type '" "double""'");
+      SWIG_exception_fail(((ecode7 != SWIG_ERROR) ? ecode7 : SWIG_TypeError), "in method '" "SetTOWGS84" "', argument " "7"" of type '" "double""'");
     } 
     arg7 = static_cast<double >(val7);
   }
   if (argc > 6) {
     ecode8 = SWIG_AsVal_double(argv[6], &val8);
     if (!SWIG_IsOK(ecode8)) {
-      SWIG_exception(((ecode8 != SWIG_ERROR) ? ecode8 : SWIG_TypeError), "in method '" "SetTOWGS84" "', argument " "8"" of type '" "double""'");
+      SWIG_exception_fail(((ecode8 != SWIG_ERROR) ? ecode8 : SWIG_TypeError), "in method '" "SetTOWGS84" "', argument " "8"" of type '" "double""'");
     } 
     arg8 = static_cast<double >(val8);
   }
@@ -3914,7 +3923,7 @@ _wrap_SpatialReference_get_towgs84(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetTOWGS84" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "GetTOWGS84" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (OGRErr)OSRSpatialReferenceShadow_GetTOWGS84(arg1,arg2);
@@ -3994,59 +4003,59 @@ _wrap_SpatialReference_set_geog_cs(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   res3 = SWIG_AsCharPtrAndSize(argv[1], &buf3, NULL, &alloc3);
   if (!SWIG_IsOK(res3)) {
-    SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "3"" of type '" "char const *""'");
+    SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "3"" of type '" "char const *""'");
   }
   arg3 = buf3;
   res4 = SWIG_AsCharPtrAndSize(argv[2], &buf4, NULL, &alloc4);
   if (!SWIG_IsOK(res4)) {
-    SWIG_exception(((res4 != SWIG_ERROR) ? res4 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "4"" of type '" "char const *""'");
+    SWIG_exception_fail(((res4 != SWIG_ERROR) ? res4 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "4"" of type '" "char const *""'");
   }
   arg4 = buf4;
   ecode5 = SWIG_AsVal_double(argv[3], &val5);
   if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "5"" of type '" "double""'");
+    SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "5"" of type '" "double""'");
   } 
   arg5 = static_cast<double >(val5);
   ecode6 = SWIG_AsVal_double(argv[4], &val6);
   if (!SWIG_IsOK(ecode6)) {
-    SWIG_exception(((ecode6 != SWIG_ERROR) ? ecode6 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "6"" of type '" "double""'");
+    SWIG_exception_fail(((ecode6 != SWIG_ERROR) ? ecode6 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "6"" of type '" "double""'");
   } 
   arg6 = static_cast<double >(val6);
   if (argc > 5) {
     res7 = SWIG_AsCharPtrAndSize(argv[5], &buf7, NULL, &alloc7);
     if (!SWIG_IsOK(res7)) {
-      SWIG_exception(((res7 != SWIG_ERROR) ? res7 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "7"" of type '" "char const *""'");
+      SWIG_exception_fail(((res7 != SWIG_ERROR) ? res7 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "7"" of type '" "char const *""'");
     }
     arg7 = buf7;
   }
   if (argc > 6) {
     ecode8 = SWIG_AsVal_double(argv[6], &val8);
     if (!SWIG_IsOK(ecode8)) {
-      SWIG_exception(((ecode8 != SWIG_ERROR) ? ecode8 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "8"" of type '" "double""'");
+      SWIG_exception_fail(((ecode8 != SWIG_ERROR) ? ecode8 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "8"" of type '" "double""'");
     } 
     arg8 = static_cast<double >(val8);
   }
   if (argc > 7) {
     res9 = SWIG_AsCharPtrAndSize(argv[7], &buf9, NULL, &alloc9);
     if (!SWIG_IsOK(res9)) {
-      SWIG_exception(((res9 != SWIG_ERROR) ? res9 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "9"" of type '" "char const *""'");
+      SWIG_exception_fail(((res9 != SWIG_ERROR) ? res9 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "9"" of type '" "char const *""'");
     }
     arg9 = buf9;
   }
   if (argc > 8) {
     ecode10 = SWIG_AsVal_double(argv[8], &val10);
     if (!SWIG_IsOK(ecode10)) {
-      SWIG_exception(((ecode10 != SWIG_ERROR) ? ecode10 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "10"" of type '" "double""'");
+      SWIG_exception_fail(((ecode10 != SWIG_ERROR) ? ecode10 : SWIG_TypeError), "in method '" "SetGeogCS" "', argument " "10"" of type '" "double""'");
     } 
     arg10 = static_cast<double >(val10);
   }
@@ -4096,13 +4105,13 @@ _wrap_SpatialReference_set_proj_cs(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetProjCS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "SetProjCS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   if (argc > 0) {
     res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
     if (!SWIG_IsOK(res2)) {
-      SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetProjCS" "', argument " "2"" of type '" "char const *""'");
+      SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "SetProjCS" "', argument " "2"" of type '" "char const *""'");
     }
     arg2 = buf2;
   }
@@ -4142,7 +4151,7 @@ _wrap_SpatialReference_import_from_wkt(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ImportFromWkt" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ImportFromWkt" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   {
@@ -4187,12 +4196,12 @@ _wrap_SpatialReference_import_from_proj4(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ImportFromProj4" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ImportFromProj4" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "ImportFromProj4" "', argument " "2"" of type '" "char *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "ImportFromProj4" "', argument " "2"" of type '" "char *""'");
   }
   arg2 = buf2;
   result = (OGRErr)OSRSpatialReferenceShadow_ImportFromProj4(arg1,arg2);
@@ -4231,7 +4240,7 @@ _wrap_SpatialReference_import_from_esri(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ImportFromESRI" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ImportFromESRI" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   {
@@ -4275,12 +4284,12 @@ _wrap_SpatialReference_import_from_epsg(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ImportFromEPSG" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ImportFromEPSG" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   ecode2 = SWIG_AsVal_int(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "ImportFromEPSG" "', argument " "2"" of type '" "int""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "ImportFromEPSG" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = static_cast<int >(val2);
   result = (OGRErr)OSRSpatialReferenceShadow_ImportFromEPSG(arg1,arg2);
@@ -4325,18 +4334,18 @@ _wrap_SpatialReference_import_from_pci(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ImportFromPCI" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ImportFromPCI" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "ImportFromPCI" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "ImportFromPCI" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   if (argc > 1) {
     res3 = SWIG_AsCharPtrAndSize(argv[1], &buf3, NULL, &alloc3);
     if (!SWIG_IsOK(res3)) {
-      SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "ImportFromPCI" "', argument " "3"" of type '" "char const *""'");
+      SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "ImportFromPCI" "', argument " "3"" of type '" "char const *""'");
     }
     arg3 = buf3;
   }
@@ -4412,18 +4421,18 @@ _wrap_SpatialReference_import_from_usgs(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ImportFromUSGS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ImportFromUSGS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   ecode2 = SWIG_AsVal_long(argv[0], &val2);
   if (!SWIG_IsOK(ecode2)) {
-    SWIG_exception(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "ImportFromUSGS" "', argument " "2"" of type '" "long""'");
+    SWIG_exception_fail(((ecode2 != SWIG_ERROR) ? ecode2 : SWIG_TypeError), "in method '" "ImportFromUSGS" "', argument " "2"" of type '" "long""'");
   } 
   arg2 = static_cast<long >(val2);
   if (argc > 1) {
     ecode3 = SWIG_AsVal_long(argv[1], &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "ImportFromUSGS" "', argument " "3"" of type '" "long""'");
+      SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "ImportFromUSGS" "', argument " "3"" of type '" "long""'");
     } 
     arg3 = static_cast<long >(val3);
   }
@@ -4455,7 +4464,7 @@ _wrap_SpatialReference_import_from_usgs(int argc, VALUE *argv, VALUE self) {
   if (argc > 3) {
     ecode5 = SWIG_AsVal_long(argv[3], &val5);
     if (!SWIG_IsOK(ecode5)) {
-      SWIG_exception(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "ImportFromUSGS" "', argument " "5"" of type '" "long""'");
+      SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "ImportFromUSGS" "', argument " "5"" of type '" "long""'");
     } 
     arg5 = static_cast<long >(val5);
   }
@@ -4495,12 +4504,12 @@ _wrap_SpatialReference_import_from_xml(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ImportFromXML" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ImportFromXML" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_AsCharPtrAndSize(argv[0], &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "ImportFromXML" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "ImportFromXML" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = buf2;
   result = (OGRErr)OSRSpatialReferenceShadow_ImportFromXML(arg1,(char const *)arg2);
@@ -4543,7 +4552,7 @@ _wrap_SpatialReference_export_to_wkt(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExportToWkt" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExportToWkt" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (OGRErr)OSRSpatialReferenceShadow_ExportToWkt(arg1,arg2);
@@ -4567,12 +4576,24 @@ _wrap_SpatialReference_export_to_wkt(int argc, VALUE *argv, VALUE self) {
     vresult = SWIG_Ruby_AppendOutput(vresult, outArg);
   }
   {
+    /* %typemap(freearg) (char **argout) */
+    
+    if ( *arg2 )
+    CPLFree( *arg2 );
+  }
+  {
     /* %typemap(ret) OGRErr */
     if (vresult == Qnil) {
       vresult = INT2NUM(0);
     }
   }    return vresult;
 fail:
+  {
+    /* %typemap(freearg) (char **argout) */
+    
+    if ( *arg2 )
+    CPLFree( *arg2 );
+  }
   return Qnil;
 }
 
@@ -4599,13 +4620,13 @@ _wrap_SpatialReference_export_to_pretty_wkt(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExportToPrettyWkt" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExportToPrettyWkt" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   if (argc > 0) {
     ecode3 = SWIG_AsVal_int(argv[0], &val3);
     if (!SWIG_IsOK(ecode3)) {
-      SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "ExportToPrettyWkt" "', argument " "3"" of type '" "int""'");
+      SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "ExportToPrettyWkt" "', argument " "3"" of type '" "int""'");
     } 
     arg3 = static_cast<int >(val3);
   }
@@ -4630,12 +4651,24 @@ _wrap_SpatialReference_export_to_pretty_wkt(int argc, VALUE *argv, VALUE self) {
     vresult = SWIG_Ruby_AppendOutput(vresult, outArg);
   }
   {
+    /* %typemap(freearg) (char **argout) */
+    
+    if ( *arg2 )
+    CPLFree( *arg2 );
+  }
+  {
     /* %typemap(ret) OGRErr */
     if (vresult == Qnil) {
       vresult = INT2NUM(0);
     }
   }    return vresult;
 fail:
+  {
+    /* %typemap(freearg) (char **argout) */
+    
+    if ( *arg2 )
+    CPLFree( *arg2 );
+  }
   return Qnil;
 }
 
@@ -4659,7 +4692,7 @@ _wrap_SpatialReference_export_to_proj4(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExportToProj4" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExportToProj4" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (OGRErr)OSRSpatialReferenceShadow_ExportToProj4(arg1,arg2);
@@ -4683,12 +4716,24 @@ _wrap_SpatialReference_export_to_proj4(int argc, VALUE *argv, VALUE self) {
     vresult = SWIG_Ruby_AppendOutput(vresult, outArg);
   }
   {
+    /* %typemap(freearg) (char **argout) */
+    
+    if ( *arg2 )
+    CPLFree( *arg2 );
+  }
+  {
     /* %typemap(ret) OGRErr */
     if (vresult == Qnil) {
       vresult = INT2NUM(0);
     }
   }    return vresult;
 fail:
+  {
+    /* %typemap(freearg) (char **argout) */
+    
+    if ( *arg2 )
+    CPLFree( *arg2 );
+  }
   return Qnil;
 }
 
@@ -4724,7 +4769,7 @@ _wrap_SpatialReference_export_to_pci(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExportToPCI" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExportToPCI" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (OGRErr)OSRSpatialReferenceShadow_ExportToPCI(arg1,arg2,arg3,arg4);
@@ -4775,12 +4820,44 @@ _wrap_SpatialReference_export_to_pci(int argc, VALUE *argv, VALUE self) {
     vresult = SWIG_Ruby_AppendOutput(vresult, outArr);	
   }
   {
+    /* %typemap(freearg) (char **argout) */
+    
+    if ( *arg2 )
+    CPLFree( *arg2 );
+  }
+  {
+    /* %typemap(freearg) (char **argout) */
+    
+    if ( *arg3 )
+    CPLFree( *arg3 );
+  }
+  {
+    /* %typemap(freearg) (double *argout[ANY]) */
+    CPLFree(*arg4);
+  }
+  {
     /* %typemap(ret) OGRErr */
     if (vresult == Qnil) {
       vresult = INT2NUM(0);
     }
   }    return vresult;
 fail:
+  {
+    /* %typemap(freearg) (char **argout) */
+    
+    if ( *arg2 )
+    CPLFree( *arg2 );
+  }
+  {
+    /* %typemap(freearg) (char **argout) */
+    
+    if ( *arg3 )
+    CPLFree( *arg3 );
+  }
+  {
+    /* %typemap(freearg) (double *argout[ANY]) */
+    CPLFree(*arg4);
+  }
   return Qnil;
 }
 
@@ -4816,7 +4893,7 @@ _wrap_SpatialReference_export_to_usgs(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExportToUSGS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExportToUSGS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (OGRErr)OSRSpatialReferenceShadow_ExportToUSGS(arg1,arg2,arg3,arg4,arg5);
@@ -4861,12 +4938,20 @@ _wrap_SpatialReference_export_to_usgs(int argc, VALUE *argv, VALUE self) {
     vresult = SWIG_Ruby_AppendOutput(vresult, SWIG_NewPointerObj((void*)(arg5), SWIGTYPE_p_long, new_flags));
   }
   {
+    /* %typemap(freearg) (double *argout[ANY]) */
+    CPLFree(*arg4);
+  }
+  {
     /* %typemap(ret) OGRErr */
     if (vresult == Qnil) {
       vresult = INT2NUM(0);
     }
   }    return vresult;
 fail:
+  {
+    /* %typemap(freearg) (double *argout[ANY]) */
+    CPLFree(*arg4);
+  }
   return Qnil;
 }
 
@@ -4894,13 +4979,13 @@ _wrap_SpatialReference_export_to_xml(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExportToXML" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "ExportToXML" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   if (argc > 0) {
     res3 = SWIG_AsCharPtrAndSize(argv[0], &buf3, NULL, &alloc3);
     if (!SWIG_IsOK(res3)) {
-      SWIG_exception(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "ExportToXML" "', argument " "3"" of type '" "char const *""'");
+      SWIG_exception_fail(((res3 != SWIG_ERROR) ? res3 : SWIG_TypeError), "in method '" "ExportToXML" "', argument " "3"" of type '" "char const *""'");
     }
     arg3 = buf3;
   }
@@ -4924,6 +5009,12 @@ _wrap_SpatialReference_export_to_xml(int argc, VALUE *argv, VALUE self) {
     
     vresult = SWIG_Ruby_AppendOutput(vresult, outArg);
   }
+  {
+    /* %typemap(freearg) (char **argout) */
+    
+    if ( *arg2 )
+    CPLFree( *arg2 );
+  }
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
   {
     /* %typemap(ret) OGRErr */
@@ -4932,6 +5023,12 @@ _wrap_SpatialReference_export_to_xml(int argc, VALUE *argv, VALUE self) {
     }
   }    return vresult;
 fail:
+  {
+    /* %typemap(freearg) (char **argout) */
+    
+    if ( *arg2 )
+    CPLFree( *arg2 );
+  }
   if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
   return Qnil;
 }
@@ -4950,7 +5047,7 @@ _wrap_SpatialReference_clone_geog_cs(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CloneGeogCS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "CloneGeogCS" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (OSRSpatialReferenceShadow *)OSRSpatialReferenceShadow_CloneGeogCS(arg1);
@@ -4975,7 +5072,7 @@ _wrap_SpatialReference_validate(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Validate" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Validate" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (OGRErr)OSRSpatialReferenceShadow_Validate(arg1);
@@ -5010,7 +5107,7 @@ _wrap_SpatialReference_strip_ctparms(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "StripCTParms" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "StripCTParms" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (OGRErr)OSRSpatialReferenceShadow_StripCTParms(arg1);
@@ -5045,7 +5142,7 @@ _wrap_SpatialReference_fixup_ordering(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "FixupOrdering" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "FixupOrdering" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (OGRErr)OSRSpatialReferenceShadow_FixupOrdering(arg1);
@@ -5080,7 +5177,7 @@ _wrap_SpatialReference_fixup(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Fixup" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "Fixup" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (OGRErr)OSRSpatialReferenceShadow_Fixup(arg1);
@@ -5115,7 +5212,7 @@ _wrap_SpatialReference_morph_to_esri(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "MorphToESRI" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "MorphToESRI" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (OGRErr)OSRSpatialReferenceShadow_MorphToESRI(arg1);
@@ -5150,7 +5247,7 @@ _wrap_SpatialReference_morph_from_esri(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "MorphFromESRI" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "MorphFromESRI" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   result = (OGRErr)OSRSpatialReferenceShadow_MorphFromESRI(arg1);
@@ -5206,12 +5303,12 @@ _wrap_new_CoordinateTransformation(int argc, VALUE *argv, VALUE self) {
   }
   res1 = SWIG_ConvertPtr(argv[0], &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "OSRCoordinateTransformationShadow" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "OSRCoordinateTransformationShadow" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp1);
   res2 = SWIG_ConvertPtr(argv[1], &argp2,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "OSRCoordinateTransformationShadow" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    SWIG_exception_fail(((res2 != SWIG_ERROR) ? res2 : SWIG_TypeError), "in method '" "OSRCoordinateTransformationShadow" "', argument " "2"" of type '" "OSRSpatialReferenceShadow *""'"); 
   }
   arg2 = reinterpret_cast<OSRSpatialReferenceShadow * >(argp2);
   result = (OSRCoordinateTransformationShadow *)new_OSRCoordinateTransformationShadow(arg1,arg2);
@@ -5245,7 +5342,7 @@ _wrap_CoordinateTransformation_transform_point__SWIG_0(int argc, VALUE *argv, VA
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRCoordinateTransformationShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "TransformPoint" "', argument " "1"" of type '" "OSRCoordinateTransformationShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "TransformPoint" "', argument " "1"" of type '" "OSRCoordinateTransformationShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRCoordinateTransformationShadow * >(argp1);
   {
@@ -5319,23 +5416,23 @@ _wrap_CoordinateTransformation_transform_point__SWIG_1(int argc, VALUE *argv, VA
   }
   res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_OSRCoordinateTransformationShadow, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "TransformPoint" "', argument " "1"" of type '" "OSRCoordinateTransformationShadow *""'"); 
+    SWIG_exception_fail(((res1 != SWIG_ERROR) ? res1 : SWIG_TypeError), "in method '" "TransformPoint" "', argument " "1"" of type '" "OSRCoordinateTransformationShadow *""'"); 
   }
   arg1 = reinterpret_cast<OSRCoordinateTransformationShadow * >(argp1);
   ecode3 = SWIG_AsVal_double(argv[0], &val3);
   if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "TransformPoint" "', argument " "3"" of type '" "double""'");
+    SWIG_exception_fail(((ecode3 != SWIG_ERROR) ? ecode3 : SWIG_TypeError), "in method '" "TransformPoint" "', argument " "3"" of type '" "double""'");
   } 
   arg3 = static_cast<double >(val3);
   ecode4 = SWIG_AsVal_double(argv[1], &val4);
   if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "TransformPoint" "', argument " "4"" of type '" "double""'");
+    SWIG_exception_fail(((ecode4 != SWIG_ERROR) ? ecode4 : SWIG_TypeError), "in method '" "TransformPoint" "', argument " "4"" of type '" "double""'");
   } 
   arg4 = static_cast<double >(val4);
   if (argc > 2) {
     ecode5 = SWIG_AsVal_double(argv[2], &val5);
     if (!SWIG_IsOK(ecode5)) {
-      SWIG_exception(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "TransformPoint" "', argument " "5"" of type '" "double""'");
+      SWIG_exception_fail(((ecode5 != SWIG_ERROR) ? ecode5 : SWIG_TypeError), "in method '" "TransformPoint" "', argument " "5"" of type '" "double""'");
     } 
     arg5 = static_cast<double >(val5);
   }
@@ -5415,6 +5512,7 @@ SWIGINTERN VALUE _wrap_CoordinateTransformation_transform_point(int nargs, VALUE
     }
   }
   
+fail:
   rb_raise(rb_eArgError, "No matching function for overloaded 'CoordinateTransformation_transform_point'");
   return Qnil;
 }
