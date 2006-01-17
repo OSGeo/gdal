@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2006/01/17 13:16:20  fwarmerdam
+ * as per Cees suggestions, correct handling of XLL/YLLCORNER
+ * which is not at the center of the pixel.
+ *
  * Revision 1.32  2006/01/17 12:28:27  fwarmerdam
  * Applied changes from Cees to default to signed, not unsigned and
  * for 32bit data to default to float, not integer.
@@ -373,6 +377,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     int			nRows = -1, nCols = -1, nBands = 1;
     int			nSkipBytes = 0;
     double		dfULXMap=0.5, dfULYMap = 0.5, dfYLLCorner = -123.456;
+    int                 bCenter = TRUE;
     double		dfXDim = 1.0, dfYDim = 1.0, dfNoData = 0.0;
     int			nLineCount = 0, bNoDataSet = FALSE;
     GDALDataType	eDataType = GDT_Byte;
@@ -417,6 +422,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                  || EQUAL(papszTokens[0],"xllcenter") )
         {
             dfULXMap = atof(papszTokens[1]);
+            if( EQUAL(papszTokens[0],"xllcorner") )
+                bCenter = FALSE;
         }
         else if( EQUAL(papszTokens[0],"ulymap") )
         {
@@ -426,6 +433,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                  || EQUAL(papszTokens[0],"yllcenter") )
         {
             dfYLLCorner = atof(papszTokens[1]);
+            if( EQUAL(papszTokens[0],"yllcorner") )
+                bCenter = FALSE;
         }
         else if( EQUAL(papszTokens[0],"xdim") )
         {
@@ -649,17 +658,35 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      If we didn't get bounds in the .hdr, look for a worldfile.      */
 /* -------------------------------------------------------------------- */
     if( dfYLLCorner != -123.456 )
-        dfULYMap = dfYLLCorner + (nRows-1) * dfYDim;
+    {
+        if( bCenter )
+            dfULYMap = dfYLLCorner + (nRows-1) * dfYDim;
+        else
+            dfULYMap = dfYLLCorner + nRows * dfYDim;
+    }
 
     if( dfULYMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0 )
     {
         poDS->bGotTransform = TRUE;
-        poDS->adfGeoTransform[0] = dfULXMap - dfXDim * 0.5;
-        poDS->adfGeoTransform[1] = dfXDim;
-        poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = dfULYMap + dfYDim * 0.5;
-        poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = - dfYDim;
+
+        if( bCenter )
+        {
+            poDS->adfGeoTransform[0] = dfULXMap - dfXDim * 0.5;
+            poDS->adfGeoTransform[1] = dfXDim;
+            poDS->adfGeoTransform[2] = 0.0;
+            poDS->adfGeoTransform[3] = dfULYMap + dfYDim * 0.5;
+            poDS->adfGeoTransform[4] = 0.0;
+            poDS->adfGeoTransform[5] = - dfYDim;
+        }
+        else
+        {
+            poDS->adfGeoTransform[0] = dfULXMap;
+            poDS->adfGeoTransform[1] = dfXDim;
+            poDS->adfGeoTransform[2] = 0.0;
+            poDS->adfGeoTransform[3] = dfULYMap;
+            poDS->adfGeoTransform[4] = 0.0;
+            poDS->adfGeoTransform[5] = - dfYDim;
+        }
     }
     
     if( !poDS->bGotTransform )
