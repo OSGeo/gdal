@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/01/17 13:57:58  fwarmerdam
+ * Fixed extent recording.  Y values were reversed.
+ *
  * Revision 1.2  2005/12/01 17:40:37  fwarmerdam
  * dont try to set geometry type for layer
  *
@@ -97,8 +100,8 @@ CPLErr OGRPGeoTableLayer::Initialize( const char *pszTableName,
 
     sExtent.MinX = dfExtentLeft;
     sExtent.MaxX = dfExtentRight;
-    sExtent.MinY = dfExtentTop;
-    sExtent.MaxY = dfExtentBottom;
+    sExtent.MinY = dfExtentBottom;
+    sExtent.MaxY = dfExtentTop;
 
     LookupSRID( nSRID );
 
