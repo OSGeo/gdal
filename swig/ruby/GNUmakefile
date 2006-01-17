@@ -9,7 +9,7 @@ BINDING = ruby
 include ../SWIGmake.base
 
 # Add -prefix "Gdal::" to SWIGARGS
-SWIGARGS += -prefix "gdal::"
+SWIGARGS += -autorename -prefix "gdal::"
 
 clean:
 	$(MAKE) -f RubyMakefile.mk clean
