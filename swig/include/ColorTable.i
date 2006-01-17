@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.4  2006/01/17 04:37:17  cfis
+ * Added rename section for Ruby.
+ *
  * Revision 1.3  2005/08/04 19:16:35  kruland
  * Clone() returns a newobject.  And changed some whitespace.
  *
@@ -41,7 +44,12 @@ public:
 
     GDALPaletteInterp GetPaletteInterpretation() const;
 
+#ifdef SWIGRUBY
+%rename (get_count) GetColorEntryCount;
+#else
 %rename (GetCount) GetColorEntryCount;
+#endif
+
     int           GetColorEntryCount() const;
 
     GDALColorEntry* GetColorEntry(int);
