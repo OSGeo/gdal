@@ -10,6 +10,9 @@
 
  *
  * $Log$
+ * Revision 1.9  2006/01/17 04:41:26  cfis
+ * Removed dependency on renames.i - instead use new swig -autorename directive.  Also fix a memory issue with hex_to_binary.
+ *
  * Revision 1.8  2006/01/16 08:06:23  cfis
  * Added typemaps to support CPLHexToBinary and CPLHexToBinary
  *
@@ -63,7 +66,6 @@
 	please refer to that file and to the README.typemaps file */
 
 %include typemaps.i
-%include renames.i
 %include ogr_error_map.i
 
 
@@ -735,6 +737,7 @@
 %typemap(argout) (const char *pszHex, int *pnBytes) {
 	/* %typemap(argout) (const char *pszHex, int *pnBytes) */
   $result = SWIG_FromCharPtrAndSize((char*)result, (size_t)*$2);
+  CPLFree(result);
 }
 
 %typemap(out) GByte*  {
