@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2006/01/17 12:28:27  fwarmerdam
+ * Applied changes from Cees to default to signed, not unsigned and
+ * for 32bit data to default to float, not integer.
+ *
  * Revision 1.31  2006/01/13 00:18:12  fwarmerdam
  * Fixed error on failed open.
  *
@@ -374,7 +378,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     GDALDataType	eDataType = GDT_Byte;
     int                 nBits;
     char		chByteOrder = 'M';
-    char                chPixelType = 'U';
+    char                chPixelType = 'N'; // not defined
     char                szLayout[10] = "BIL";
     char              **papszHDR = NULL;
 
@@ -538,19 +542,21 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( nBits == 16 )
     {
-        if( chPixelType == 'S' )
-            eDataType = GDT_Int16;
-        else
+        if ( chPixelType == 'U' )
             eDataType = GDT_UInt16;
+        else
+            eDataType = GDT_Int16; // default
     }
     else if( nBits == 32 )
     {
         if( chPixelType == 'S' )
             eDataType = GDT_Int32;
+        else if( chPixelType == 'U' )
+            eDataType = GDT_UInt32;
         else if( chPixelType == 'F' )
             eDataType = GDT_Float32;
         else
-            eDataType = GDT_UInt32;
+            eDataType = GDT_Float32; // apparently common usage? 
     }
     else if( nBits == 8 )
         eDataType = GDT_Byte;
