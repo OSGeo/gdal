@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.5  2006/01/17 04:38:09  cfis
+ * Switched #ifdef declarations to have a section for Ruby to be more consistent with other SWIG interface files.
+ *
  * Revision 1.4  2006/01/16 08:07:04  cfis
  * Exposed CPLHexToBinary and CPLHexToBinary to scripting languages.
  *
@@ -50,22 +53,7 @@
 
 %}
 
-#ifndef SWIGRUBY
-%rename (PushErrorHandler) CPLPushErrorHandler;
-%rename (PopErrorHandler) CPLPopErrorHandler;
-%rename (ErrorReset) CPLErrorReset;
-%rename (GetLastErrorNo) CPLGetLastErrorNo;
-%rename (GetLastErrorType) CPLGetLastErrorType;
-%rename (GetLastErrorMsg) CPLGetLastErrorMsg;
-%rename (PushFinderLocation) CPLPushFinderLocation;
-%rename (PopFinderLocation) CPLPopFinderLocation;
-%rename (FinderClean) CPLFinderClean;
-%rename (FindFile) CPLFindFile;
-%rename (SetConfigOption) CPLSetConfigOption;
-%rename (GetConfigOption) CPLGetConfigOption;
-%rename (CPLBinaryToHex) CPLBinaryToHex;
-%rename (CPLHexToBinary) CPLHexToBinary;
-#else
+#ifdef SWIGRUBY
 %rename (push_error_handler) CPLPushErrorHandler;
 %rename (pop_error_handler) CPLPopErrorHandler;
 %rename (error_reset) CPLErrorReset;
@@ -80,6 +68,21 @@
 %rename (get_config_option) CPLGetConfigOption;
 %rename (binary_to_hex) CPLBinaryToHex;
 %rename (hex_to_binary) CPLHexToBinary;
+#else
+%rename (PushErrorHandler) CPLPushErrorHandler;
+%rename (PopErrorHandler) CPLPopErrorHandler;
+%rename (ErrorReset) CPLErrorReset;
+%rename (GetLastErrorNo) CPLGetLastErrorNo;
+%rename (GetLastErrorType) CPLGetLastErrorType;
+%rename (GetLastErrorMsg) CPLGetLastErrorMsg;
+%rename (PushFinderLocation) CPLPushFinderLocation;
+%rename (PopFinderLocation) CPLPopFinderLocation;
+%rename (FinderClean) CPLFinderClean;
+%rename (FindFile) CPLFindFile;
+%rename (SetConfigOption) CPLSetConfigOption;
+%rename (GetConfigOption) CPLGetConfigOption;
+%rename (CPLBinaryToHex) CPLBinaryToHex;
+%rename (CPLHexToBinary) CPLHexToBinary;
 #endif
 
 void CPLPushErrorHandler( CPLErrorHandler );
