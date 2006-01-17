@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.39  2006/01/17 04:38:44  cfis
+ * Grouped all renames together and added section for Ruby.
+ *
  * Revision 1.38  2005/09/13 18:37:25  kruland
  * Added binding for GDALGetDriver.
  *
@@ -219,13 +222,59 @@ typedef int GDALResampleAlg;
 //************************************************************************
 %include "Driver.i"
 
+
+//************************************************************************
+//
+// Define renames.
+//
+//************************************************************************
+%rename (GCP) GDAL_GCP;
+
+#ifdef SWIGRUBY
+%rename (all_register) GDALAllRegister;
+%rename (get_cache_max) GDALGetCacheMax;
+%rename (set_cache_max) GDALSetCacheMax;
+%rename (set_cache_used) GDALGetCacheUsed;
+%rename (get_data_type_size) GDALGetDataTypeSize;
+%rename (data_type_is_complex) GDALDataTypeIsComplex;
+%rename (gcps_to_geo_transform) GDALGCPsToGeoTransform;
+%rename (get_data_type_name) GDALGetDataTypeName;
+%rename (get_data_type_by_name) GDALGetDataTypeByName;
+%rename (get_color_interpretation_name) GDALGetColorInterpretationName;
+%rename (get_palette_interpretation_name) GDALGetPaletteInterpretationName;
+%rename (dec_to_dms) GDALDecToDMS;
+%rename (packed_dms_to_dec) GDALPackedDMSToDec;
+%rename (dec_to_packed_dms) GDALDecToPackedDMS;
+%rename (parse_xml_string) CPLParseXMLString;
+%rename (serialize_xml_tree) CPLSerializeXMLTree;
+#else
+%rename (GCP) GDAL_GCP;
+%rename (GCPsToGeoTransform) GDALGCPsToGeoTransform;
+%rename (AllRegister) GDALAllRegister;
+%rename (GetCacheMax) GDALGetCacheMax;
+%rename (SetCacheMax) GDALSetCacheMax;
+%rename (GetCacheUsed) GDALGetCacheUsed;
+%rename (GetDataTypeSize) GDALGetDataTypeSize;
+%rename (DataTypeIsComplex) GDALDataTypeIsComplex;
+%rename (GCPsToGeoTransform) GDALGCPsToGeoTransform;
+%rename (GetDataTypeName) GDALGetDataTypeName;
+%rename (GetDataTypeByName) GDALGetDataTypeByName;
+%rename (GetColorInterpretationName) GDALGetColorInterpretationName;
+%rename (GetPaletteInterpretationName) GDALGetPaletteInterpretationName;
+%rename (DecToDMS) GDALDecToDMS;
+%rename (PackedDMSToDec) GDALPackedDMSToDec;
+%rename (DecToPackedDMS) GDALDecToPackedDMS;
+%rename (ParseXMLString) CPLParseXMLString;
+%rename (SerializeXMLTree) CPLSerializeXMLTree;
+#endif
+
+
 //************************************************************************
 //
 // Define the Ground Control Point structure.
 //
 //************************************************************************
 // GCP - class?  serialize() method missing.
-%rename (GCP) GDAL_GCP;
 struct GDAL_GCP {
 %extend {
 %mutable;
@@ -366,7 +415,6 @@ void GDAL_GCP_set_Id( GDAL_GCP *h, const char * val ) {
 
 %} //%inline 
 
-%rename (GCPsToGeoTransform) GDALGCPsToGeoTransform;
 %apply (IF_FALSE_RETURN_NONE) { (FALSE_IS_ERR) };
 FALSE_IS_ERR GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs, 
     	                             double argout[6], int bApproxOK = 1 ); 
@@ -406,49 +454,34 @@ FALSE_IS_ERR GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 // TermProgress
 //
 
-%rename (AllRegister) GDALAllRegister;
 void GDALAllRegister();
 
-%rename (GetCacheMax) GDALGetCacheMax;
 int GDALGetCacheMax();
 
-%rename (SetCacheMax) GDALSetCacheMax;
 void GDALSetCacheMax( int nBytes );
     
-%rename (GetCacheUsed) GDALGetCacheUsed;
 int GDALGetCacheUsed();
     
-%rename (GetDataTypeSize) GDALGetDataTypeSize;
 int GDALGetDataTypeSize( GDALDataType );
 
-%rename (DataTypeIsComplex) GDALDataTypeIsComplex;
 int GDALDataTypeIsComplex( GDALDataType );
 
-%rename (GetDataTypeName) GDALGetDataTypeName;
 const char *GDALGetDataTypeName( GDALDataType );
 
-%rename (GetDataTypeByName) GDALGetDataTypeByName;
 GDALDataType GDALGetDataTypeByName( const char * );
 
-%rename (GetColorInterpretationName) GDALGetColorInterpretationName;
 const char *GDALGetColorInterpretationName( GDALColorInterp );
 
-%rename (GetPaletteInterpretationName) GDALGetPaletteInterpretationName;
 const char *GDALGetPaletteInterpretationName( GDALPaletteInterp );
 
-%rename (DecToDMS) GDALDecToDMS;
 const char *GDALDecToDMS( double, const char *, int = 2 );
 
-%rename (PackedDMSToDec) GDALPackedDMSToDec;
 double GDALPackedDMSToDec( double );
 
-%rename (DecToPackedDMS) GDALDecToPackedDMS;
 double GDALDecToPackedDMS( double );
 
-%rename (ParseXMLString) CPLParseXMLString;
 CPLXMLNode *CPLParseXMLString( char * );
 
-%rename (SerializeXMLTree) CPLSerializeXMLTree;
 char *CPLSerializeXMLTree( CPLXMLNode *xmlnode );
 
 //************************************************************************
