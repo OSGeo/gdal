@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/01/18 16:31:24  fwarmerdam
+ * make csv table stuff thread local
+ *
  * Revision 1.15  2005/12/23 04:44:04  fwarmerdam
  * protect CSVAccess using funcs with a mutex
  *
@@ -120,9 +123,6 @@ typedef struct ctb {
 /* It would likely be better to share this list between threads, but
    that will require some rework. */
 
-static void *hCSVTableMutex = NULL;
-static CSVTable *psCSVTableList = NULL;
-
 /************************************************************************/
 /*                             CSVAccess()                              */
 /*                                                                      */
@@ -141,9 +141,24 @@ static CSVTable *CSVAccess( const char * pszFilename )
     FILE        *fp;
 
 /* -------------------------------------------------------------------- */
+/*      Fetch the table, and allocate the thread-local pointer to it    */
+/*      if there isn't already one.                                     */
+/* -------------------------------------------------------------------- */
+    CSVTable **ppsCSVTableList;
+
+    ppsCSVTableList = (CSVTable **) CPLGetTLS( CTLS_CSVTABLEPTR );
+    if( ppsCSVTableList == NULL )
+    {
+        ppsCSVTableList = (CSVTable **) CPLCalloc(1,sizeof(CSVTable*));
+        CPLSetTLS( CTLS_CSVTABLEPTR, ppsCSVTableList, TRUE );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Is the table already in the list.                               */
 /* -------------------------------------------------------------------- */
-    for( psTable = psCSVTableList; psTable != NULL; psTable = psTable->psNext )
+    for( psTable = *ppsCSVTableList; 
+         psTable != NULL; 
+         psTable = psTable->psNext )
     {
         if( EQUAL(psTable->pszFilename,pszFilename) )
         {
@@ -171,9 +186,9 @@ static CSVTable *CSVAccess( const char * pszFilename )
 
     psTable->fp = fp;
     psTable->pszFilename = CPLStrdup( pszFilename );
-    psTable->psNext = psCSVTableList;
+    psTable->psNext = *ppsCSVTableList;
     
-    psCSVTableList = psTable;
+    *ppsCSVTableList = psTable;
 
 /* -------------------------------------------------------------------- */
 /*      Read the table header record containing the field names.        */
@@ -193,12 +208,22 @@ void CSVDeaccess( const char * pszFilename )
     CSVTable    *psLast, *psTable;
     
 /* -------------------------------------------------------------------- */
+/*      Fetch the table, and allocate the thread-local pointer to it    */
+/*      if there isn't already one.                                     */
+/* -------------------------------------------------------------------- */
+    CSVTable **ppsCSVTableList;
+
+    ppsCSVTableList = (CSVTable **) CPLGetTLS( CTLS_CSVTABLEPTR );
+    if( ppsCSVTableList == NULL )
+        return;
+    
+/* -------------------------------------------------------------------- */
 /*      A NULL means deaccess all tables.                               */
 /* -------------------------------------------------------------------- */
     if( pszFilename == NULL )
     {
-        while( psCSVTableList != NULL )
-            CSVDeaccess( psCSVTableList->pszFilename );
+        while( *ppsCSVTableList != NULL )
+            CSVDeaccess( (*ppsCSVTableList)->pszFilename );
         
         return;
     }
@@ -207,7 +232,7 @@ void CSVDeaccess( const char * pszFilename )
 /*      Find this table.                                                */
 /* -------------------------------------------------------------------- */
     psLast = NULL;
-    for( psTable = psCSVTableList;
+    for( psTable = *ppsCSVTableList;
          psTable != NULL && !EQUAL(psTable->pszFilename,pszFilename);
          psTable = psTable->psNext )
     {
@@ -226,7 +251,7 @@ void CSVDeaccess( const char * pszFilename )
     if( psLast != NULL )
         psLast->psNext = psTable->psNext;
     else
-        psCSVTableList = psTable->psNext;
+        *ppsCSVTableList = psTable->psNext;
 
 /* -------------------------------------------------------------------- */
 /*      Free the table.                                                 */
@@ -368,7 +393,6 @@ static char *CSVFindNextLine( char *pszThisLine )
 static void CSVIngest( const char *pszFilename )
 
 {
-    CPLMutexHolder oHolder( &hCSVTableMutex );
     CSVTable *psTable = CSVAccess( pszFilename );
     int       nFileLen, i, nMaxLineCount, iLine = 0;
     char *pszThisLine;
@@ -715,7 +739,6 @@ char **CSVScanFile( const char * pszFilename, int iKeyField,
                     const char * pszValue, CSVCompareCriteria eCriteria )
 
 {
-    CPLMutexHolder oHolder( &hCSVTableMutex );
     CSVTable    *psTable;
 
 /* -------------------------------------------------------------------- */
@@ -811,7 +834,6 @@ int CSVGetFieldId( FILE * fp, const char * pszFieldName )
 int CSVGetFileFieldId( const char * pszFilename, const char * pszFieldName )
 
 {
-    CPLMutexHolder oHolder( &hCSVTableMutex );
     CSVTable    *psTable;
     int         i;
     
@@ -880,7 +902,6 @@ const char *CSVGetField( const char * pszFilename,
                          const char * pszTargetField )
 
 {
-    CPLMutexHolder oHolder( &hCSVTableMutex );
     CSVTable    *psTable;
     char        **papszRecord;
     int         iTargetField;
