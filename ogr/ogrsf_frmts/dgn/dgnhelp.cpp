@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2006/01/18 16:20:50  kintel
+ * Let DGNDumpElement() display surftype for 3D surfaces/solids
+ *
  * Revision 1.26  2005/12/15 14:10:39  fwarmerdam
  * Fixed for QuaternionToMatrix from Marius Kintel.
  *
@@ -856,6 +859,11 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
                    "  totlength=%d, numelems=%d\n",
                    psHdr->totlength,
                    psHdr->numelems );
+          if (psElement->type  == DGNT_3DSOLID_HEADER ||
+              psElement->type  == DGNT_3DSURFACE_HEADER) {
+            fprintf( fp, 
+                     "  surftype=%d\n", psHdr->surftype );
+          }
       }
       break;
 
