@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2006/01/18 16:01:31  kintel
+ * Bugfix: 3D surface/solid's surftype is stored as a byte value, not a word value
+ *
  * Revision 1.48  2005/11/18 17:43:12  fwarmerdam
  * Added text node support in DGNGetRawExtents().
  *
@@ -1017,7 +1020,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           // Read complex header
           psShape->totlength = psDGN->abyElem[36] + psDGN->abyElem[37] * 256;
           psShape->numelems = psDGN->abyElem[38] + psDGN->abyElem[39] * 256;
-          psShape->surftype = psDGN->abyElem[40] + psDGN->abyElem[41] * 256;
+          psShape->surftype = psDGN->abyElem[40];
         }
         break;
 
