@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2006/01/18 16:01:31  kintel
+ * Bugfix: 3D surface/solid's surftype is stored as a byte value, not a word value
+ *
  * Revision 1.27  2005/12/19 15:42:17  fwarmerdam
  * Fixed maximum number of points test in DGNCreateMultiPointElem()
  * per email from Chris @ melbpc.
@@ -1716,8 +1719,7 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
     psCore->raw_data[38] = (unsigned char) (nNumElems % 256);
     psCore->raw_data[39] = (unsigned char) (nNumElems / 256);
     if ( nType == DGNT_3DSURFACE_HEADER || nType == DGNT_3DSOLID_HEADER ) {
-      psCore->raw_data[40] = (unsigned char) (psCH->surftype % 256);
-      psCore->raw_data[41] = (unsigned char) (psCH->surftype / 256);
+      psCore->raw_data[40] = (unsigned char)psCH->surftype;
     }
 
 /* -------------------------------------------------------------------- */
