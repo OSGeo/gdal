@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/01/19 23:54:07  fwarmerdam
+ * Protect access to oFileList in VSIGetMemFileBuffer() and VSIFileFromMemBuffer().
+ *
  * Revision 1.7  2006/01/11 02:35:56  fwarmerdam
  * Fixed mutex cleanup.
  *
@@ -645,7 +648,10 @@ FILE *VSIFileFromMemBuffer( const char *pszFilename,
     poFile->nLength = nDataLength;
     poFile->nAllocLength = nDataLength;
 
-    poHandler->oFileList[poFile->osFilename] = poFile;
+    {
+        CPLMutexHolder oHolder( &poHandler->hMutex );
+        poHandler->oFileList[poFile->osFilename] = poFile;
+    }
 
     return (FILE *) poHandler->Open( pszFilename, "r+" );
 }
@@ -676,6 +682,8 @@ GByte *VSIGetMemFileBuffer( const char *pszFilename,
 {
     VSIMemFilesystemHandler *poHandler = (VSIMemFilesystemHandler *) 
         VSIFileManager::GetHandler("/vsimem/");
+
+    CPLMutexHolder oHolder( &poHandler->hMutex );
 
     if( poHandler->oFileList.find(pszFilename) == poHandler->oFileList.end() )
         return NULL;
