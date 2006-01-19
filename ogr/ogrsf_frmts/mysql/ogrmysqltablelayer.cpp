@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/01/19 06:31:44  hobu
+ * Use MBRIntersects for spatial filters.
+ * Test the envelope rather than the entire geometry.
+ *
  * Revision 1.13  2006/01/19 03:51:23  hobu
  * Handle spatial filters
  *
@@ -421,13 +425,26 @@ void OGRMySQLTableLayer::BuildWhere()
 
     if( m_poFilterGeom != NULL && pszGeomColumn )
     {
-        char* wkt;
-        m_poFilterGeom->exportToWkt(&wkt);
+        char szEnvelope[4096];
+        OGREnvelope  sEnvelope;
+        szEnvelope[0] = '\0';
+        
+        //POLYGON((MINX MINY, MAXX MINY, MAXX MAXY, MINX MAXY, MINX MINY))
+        m_poFilterGeom->getEnvelope( &sEnvelope );
+        
+        sprintf(szEnvelope,
+                "POLYGON((%.12f %.12f, %.12f %.12f, %.12f %.12f, %.12f %.12f, %.12f %.12f))",
+                sEnvelope.MinX, sEnvelope.MinY,
+                sEnvelope.MaxX, sEnvelope.MinY,
+                sEnvelope.MaxX, sEnvelope.MaxY,
+                sEnvelope.MinX, sEnvelope.MaxY,
+                sEnvelope.MinX, sEnvelope.MinY);
 
         sprintf( szWHERE,
-                 "WHERE MBRContains(GeomFromText('%s'), %s)",
-                 wkt,
+                 "WHERE MBRIntersects(GeomFromText('%s'), %s)",
+                 szEnvelope,
                  pszGeomColumn);
+
     }
 
     if( pszQuery != NULL )
