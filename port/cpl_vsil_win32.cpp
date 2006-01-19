@@ -28,6 +28,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.15  2006/01/19 13:09:06  fwarmerdam
+ * Move CPL_CVSID definition outside WIN32 #ifdef so the module
+ * won't be completely empty on non-win32 platforms.
+ *
  * Revision 1.14  2006/01/11 16:04:08  fwarmerdam
  * added Rename() operator
  *
@@ -44,9 +48,9 @@
 
 #include "cpl_vsi_private.h"
 
-#if defined(WIN32)
-
 CPL_CVSID("$Id$");
+
+#if defined(WIN32)
 
 #include <windows.h>
 #include <sys/stat.h>
