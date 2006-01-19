@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2006/01/19 03:51:23  hobu
+ * Handle spatial filters
+ *
  * Revision 1.12  2006/01/16 16:08:39  hobu
  * Detect geometry column.
  * Query geometry column.
@@ -409,18 +412,33 @@ void OGRMySQLTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 void OGRMySQLTableLayer::BuildWhere()
 
 {
+    char        szWHERE[4096];
+    
     CPLFree( pszWHERE );
     pszWHERE = NULL;
 
+    szWHERE[0] = '\0';
+
+    if( m_poFilterGeom != NULL && pszGeomColumn )
+    {
+        char* wkt;
+        m_poFilterGeom->exportToWkt(&wkt);
+
+        sprintf( szWHERE,
+                 "WHERE MBRContains(GeomFromText('%s'), %s)",
+                 wkt,
+                 pszGeomColumn);
+    }
+
     if( pszQuery != NULL )
     {
-        pszWHERE = (char *) CPLMalloc(strlen(pszQuery)+20);
-        sprintf( pszWHERE, "WHERE %s ", pszQuery );
+        if( strlen(szWHERE) == 0 )
+            sprintf( szWHERE, "WHERE %s ", pszQuery  );
+        else
+            sprintf( szWHERE+strlen(szWHERE), "&& %s ", pszQuery );
     }
-    else
-    {
-        pszWHERE = CPLStrdup("");
-    }
+
+    pszWHERE = CPLStrdup(szWHERE);
 }
 
 /************************************************************************/
