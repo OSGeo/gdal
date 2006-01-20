@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2006/01/20 16:48:33  kintel
+ * Added boundelms field to DGNElemComplexHeader
+ *
  * Revision 1.41  2005/12/19 15:37:18  fwarmerdam
  * Added CPL_DLL for some functions that were missing it.
  *
@@ -317,7 +320,11 @@ typedef struct {
                                     excluding the first 19 words
                                     (header + totlength field) */
     int         numelems;      /*!< # of elements in surface */
-    int         surftype;      /*!< surface/solid type (only used for 3D surface/solid). One of  DGNSUT_* or DGNSOT_*. */
+    int         surftype;      /*!< surface/solid type 
+                                    (only used for 3D surface/solid). 
+                                    One of  DGNSUT_* or DGNSOT_*. */
+    int         boundelms;     /*!< # of elements in each boundary
+                                    (only used for 3D surface/solid). */ 
 } DGNElemComplexHeader;
 
 /** 

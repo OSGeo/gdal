@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2006/01/20 16:48:33  kintel
+ * Added boundelms field to DGNElemComplexHeader
+ *
  * Revision 1.27  2006/01/18 16:20:50  kintel
  * Let DGNDumpElement() display surftype for 3D surfaces/solids
  *
@@ -862,7 +865,8 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
           if (psElement->type  == DGNT_3DSOLID_HEADER ||
               psElement->type  == DGNT_3DSURFACE_HEADER) {
             fprintf( fp, 
-                     "  surftype=%d\n", psHdr->surftype );
+                     "  surftype=%d, boundelms=%d\n", 
+                     psHdr->surftype, psHdr->boundelms );
           }
       }
       break;
