@@ -79,8 +79,8 @@ the web</a>.  The mailing list is also available in read-only format by NNTP at
 and by HTTP at
 <a href="http://news.gmane.org/gmane.comp.gis.gdal.devel">http://news.gmane.org/gmane.comp.gis.gdal.devel</a>.<p>
 
-Some GDAL/OGR users and developers can also often be found in the <a href=
-"irc:irc.freenode.net/#gdal">#gdal</a> IRC channel on irc.freenode.net.<p>
+Some GDAL/OGR users and developers can also often be found in the 
+<a href="irc://irc.freenode.net/#gdal">#gdal</a> IRC channel on irc.freenode.net.<p>
 
 \section index_bugs Bug Reporting
 
