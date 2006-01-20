@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/01/20 15:51:05  kintel
+ * bugfix: The size limit is the number of vertices, not the element size
+ *
  * Revision 1.28  2006/01/18 16:01:31  kintel
  * Bugfix: 3D surface/solid's surftype is stored as a byte value, not a word value
  *
@@ -927,8 +930,7 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
 /* -------------------------------------------------------------------- */
 /*      Is this too many vertices to write to a single element?         */
 /* -------------------------------------------------------------------- */
-    if( (psDGN->dimension == 2 && 38 + 8 * nPointCount > 101)
-        || (psDGN->dimension == 3 && 38 + 12 * nPointCount > 101) )
+    if( nPointCount > 101 )
     {
         CPLError( CE_Failure, CPLE_ElementTooBig, 
                   "Attempt to create %s element with %d points failed.\n"
