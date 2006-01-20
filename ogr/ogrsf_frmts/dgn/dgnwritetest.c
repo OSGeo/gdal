@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/01/20 16:58:28  kintel
+ * Changed DGNCreateComplex*() to only create complex chains/shapes, added new functions, DGNCreateSolid*() for creating 3D solids/surfaces
+ *
  * Revision 1.7  2004/03/23 16:19:28  warmerda
  * restore regular form, set color info for shape header
  *
@@ -191,7 +194,6 @@ int main( int argc, char ** argv )
 
     psLine = DGNCreateComplexHeaderFromGroup( hNewDGN, 
                                               DGNT_COMPLEX_SHAPE_HEADER,
-                                              DGNSUT_SOLID,
                                               2, psMembers );
 
     DGNUpdateElemCore( hNewDGN, psLine, 9, 0, 3, 1, 0 );

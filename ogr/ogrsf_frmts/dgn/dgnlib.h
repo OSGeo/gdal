@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2006/01/20 16:58:27  kintel
+ * Changed DGNCreateComplex*() to only create complex chains/shapes, added new functions, DGNCreateSolid*() for creating 3D solids/surfaces
+ *
  * Revision 1.42  2006/01/20 16:48:33  kintel
  * Added boundelms field to DGNElemComplexHeader
  *
@@ -833,11 +836,19 @@ DGNElemCore CPL_DLL *
             DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag, 
                                      GByte abyColorInfo[256][3] );
 DGNElemCore CPL_DLL *
-DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, int nSurfType, 
+DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, 
                             int nTotLength, int nNumElems );
 DGNElemCore CPL_DLL *
-DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType, int nSurfType,
+DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType, 
                                  int nNumElems, DGNElemCore **papsElems );
+
+DGNElemCore CPL_DLL *
+DGNCreateSolidHeaderElem( DGNHandle hDGN, int nType, int nSurfType, 
+                          int nBoundElems, int nTotLength, int nNumElems );
+DGNElemCore CPL_DLL *
+DGNCreateSolidHeaderFromGroup( DGNHandle hDGN, int nType, int nSurfType,
+                               int nBoundElems, int nNumElems, 
+                               DGNElemCore **papsElems );
 
 DGNElemCore CPL_DLL  *
 DGNCreateCellHeaderElem( DGNHandle hDGN, int nTotLength, const char *pszName, 
