@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/01/20 13:33:24  fwarmerdam
+ * Fallback to an assumption of nbits=8 if not specified.
+ *
  * Revision 1.33  2006/01/17 13:16:20  fwarmerdam
  * as per Cees suggestions, correct handling of XLL/YLLCORNER
  * which is not at the center of the pixel.
@@ -381,7 +384,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     double		dfXDim = 1.0, dfYDim = 1.0, dfNoData = 0.0;
     int			nLineCount = 0, bNoDataSet = FALSE;
     GDALDataType	eDataType = GDT_Byte;
-    int                 nBits;
+    int                 nBits = -1;
     char		chByteOrder = 'M';
     char                chPixelType = 'N'; // not defined
     char                szLayout[10] = "BIL";
@@ -567,7 +570,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         else
             eDataType = GDT_Float32; // apparently common usage? 
     }
-    else if( nBits == 8 )
+    else if( nBits == 8 || nBits == -1 )
         eDataType = GDT_Byte;
     
     else
