@@ -49,6 +49,16 @@ Release Notes
 Release ?.??
 ------------
 
+ o 3D solid/surface fixes:
+   - Fixed incorrect reading and writing of surftype field.
+   - Added boundelms field to DGNElemComplexHeader
+   - Added DGNCreateSolidHeaderElem() and DGNCreateSolidHeaderElemFromGroup()
+   - Changed DGNCreateComplexHeaderElem() and 
+     DGNCreateComplexHeaderElemFromGroup() to only support complex chains/shapes
+   - Fixed bug creating solids/surfaces: totlength was 1 word too short.
+
+ o Added support for cloning Cone elements
+
  o Fixes for uor handling in DGNCreate(). 
 
  o Treat the most recently read color table as the global color table, 
