@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2006/01/20 16:58:27  kintel
+ * Changed DGNCreateComplex*() to only create complex chains/shapes, added new functions, DGNCreateSolid*() for creating 3D solids/surfaces
+ *
  * Revision 1.30  2006/01/20 16:48:33  kintel
  * Added boundelms field to DGNElemComplexHeader
  *
@@ -1663,12 +1666,9 @@ DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag,
  * a complex element from the members more conveniently.  
  *
  * @param hDGN the file on which the element will be written.
- * @param nType DGNT_COMPLEX_CHAIN_HEADER, DGNT_COMPLEX_SHAPE_HEADER, 
- * DGNT_3DSURFACE_HEADER or DGNT_3DSOLID_HEADER.
+ * @param nType DGNT_COMPLEX_CHAIN_HEADER or DGNT_COMPLEX_SHAPE_HEADER.
  * depending on whether the list is open or closed (last point equal to last)
  * or if the object represents a surface or a solid.
- * @param nSurfType the surface/solid type, one of DGNSUT_* or DGNSOT_*. 
- * Ignored if nType is DGNT_COMPLEX_CHAIN_HEADER or DGNT_COMPLEX_SHAPE_HEADER.
  * @param nTotLength the value of the totlength field in the element.
  * @param nNumElems the number of elements in the complex group not including
  * the header element. 
@@ -1676,7 +1676,7 @@ DGNCreateColorTableElem( DGNHandle hDGN, int nScreenFlag,
  * @return the new element (DGNElemComplexHeader) or NULL on failure. 
  */
 DGNElemCore *
-DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
+DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, 
                             int nTotLength, int nNumElems )
 {
     DGNElemComplexHeader *psCH;
@@ -1684,9 +1684,7 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
     unsigned char abyRawZeroLinkage[8] = {0,0,0,0,0,0,0,0};
 
     CPLAssert( nType == DGNT_COMPLEX_CHAIN_HEADER 
-               || nType == DGNT_COMPLEX_SHAPE_HEADER
-               || nType == DGNT_3DSURFACE_HEADER 
-               || nType == DGNT_3DSOLID_HEADER );
+               || nType == DGNT_COMPLEX_SHAPE_HEADER );
 
     DGNLoadTCB( hDGN );
 
@@ -1698,6 +1696,7 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
     psCore = &(psCH->core);
 
     DGNInitializeElemCore( hDGN, psCore );
+    psCore->complex = TRUE;
     psCore->stype = DGNST_COMPLEX_HEADER;
     psCore->type = nType;
 
@@ -1706,28 +1705,19 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
 /* -------------------------------------------------------------------- */
     psCH->totlength = nTotLength - 4;
     psCH->numelems = nNumElems;
-    psCH->surftype = nSurfType;
+    psCH->surftype = 0;
     psCH->boundelms = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Setup Raw data for the complex specific portion.                */
 /* -------------------------------------------------------------------- */
-    if ( nType == DGNT_COMPLEX_CHAIN_HEADER 
-         || nType == DGNT_COMPLEX_SHAPE_HEADER ) 
-      psCore->raw_bytes = 40;
-    else 
-      psCore->raw_bytes = 42;
-
+    psCore->raw_bytes = 40;
     psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
 
     psCore->raw_data[36] = (unsigned char) ((nTotLength-4) % 256);
     psCore->raw_data[37] = (unsigned char) ((nTotLength-4) / 256);
     psCore->raw_data[38] = (unsigned char) (nNumElems % 256);
     psCore->raw_data[39] = (unsigned char) (nNumElems / 256);
-    if ( nType == DGNT_3DSURFACE_HEADER || nType == DGNT_3DSOLID_HEADER ) {
-      psCore->raw_data[40] = (unsigned char)psCH->surftype;
-      psCore->raw_data[41] = (unsigned char)psCH->boundelms - 1;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Set the core raw data.                                          */
@@ -1757,12 +1747,9 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
  * setting the level based on the level of the member elements. 
  * 
  * @param hDGN the file on which the element will be written.
- * @param nType DGNT_COMPLEX_CHAIN_HEADER, DGNT_COMPLEX_SHAPE_HEADER, 
- * DGNT_3DSURFACE_HEADER or DGNT_3DSOLID_HEADER.
+ * @param nType DGNT_COMPLEX_CHAIN_HEADER or DGNT_COMPLEX_SHAPE_HEADER.
  * depending on whether the list is open or closed (last point equal to last)
  * or if the object represents a surface or a solid.
- * @param nSurfType the surface/solid type, one of DGNSUT_* or DGNSOT_*. 
- * Ignored if nType is DGNT_COMPLEX_CHAIN_HEADER or DGNT_COMPLEX_SHAPE_HEADER.
  * @param nNumElems the number of elements in the complex group not including
  * the header element. 
  * @param papsElems array of pointers to nNumElems elements in the complex
@@ -1772,7 +1759,7 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
  */
 
 DGNElemCore *
-DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType, int nSurfType,
+DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType, 
                                  int nNumElems, DGNElemCore **papsElems )
 
 {
@@ -1830,8 +1817,188 @@ DGNCreateComplexHeaderFromGroup( DGNHandle hDGN, int nType, int nSurfType,
 /* -------------------------------------------------------------------- */
 /*      Create the corresponding complex header.                        */
 /* -------------------------------------------------------------------- */
-    psCH = DGNCreateComplexHeaderElem( hDGN, nType, nSurfType, 
-                                       nTotalLength, nNumElems );
+    psCH = DGNCreateComplexHeaderElem( hDGN, nType, nTotalLength, nNumElems );
+    DGNUpdateElemCore( hDGN, psCH, papsElems[0]->level, psCH->graphic_group,
+                       psCH->color, psCH->weight, psCH->style );
+
+    DGNWriteBounds( (DGNInfo *) hDGN, psCH, &sMin, &sMax );
+    
+    return psCH;
+}
+
+/************************************************************************/
+/*                     DGNCreateSolidHeaderElem()                       */
+/************************************************************************/
+
+/**
+ * Create 3D solid/surface.
+ *
+ * The newly created element will still need to be written to file using
+ * DGNWriteElement(). Also the level and other core values will be defaulted.
+ * Use DGNUpdateElemCore() on the element before writing to set these values.
+ *
+ * The nTotLength is the sum of the size of all elements in the solid
+ * group plus 6.  The DGNCreateSolidHeaderFromGroup() can be used to build
+ * a solid element from the members more conveniently.  
+ *
+ * @param hDGN the file on which the element will be written.
+ * @param nType DGNT_3DSURFACE_HEADER or DGNT_3DSOLID_HEADER.
+ * @param nSurfType the surface/solid type, one of DGNSUT_* or DGNSOT_*. 
+ * @param nBoundElems the number of elements in each boundary. 
+ * @param nTotLength the value of the totlength field in the element.
+ * @param nNumElems the number of elements in the solid not including
+ * the header element. 
+ *
+ * @return the new element (DGNElemComplexHeader) or NULL on failure. 
+ */
+DGNElemCore *
+DGNCreateSolidHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
+                          int nBoundElems, int nTotLength, int nNumElems )
+{
+    DGNElemComplexHeader *psCH;
+    DGNElemCore *psCore;
+    unsigned char abyRawZeroLinkage[8] = {0,0,0,0,0,0,0,0};
+
+    CPLAssert( nType == DGNT_3DSURFACE_HEADER 
+               || nType == DGNT_3DSOLID_HEADER );
+
+    DGNLoadTCB( hDGN );
+
+/* -------------------------------------------------------------------- */
+/*      Allocate element.                                               */
+/* -------------------------------------------------------------------- */
+    psCH = (DGNElemComplexHeader *) 
+        CPLCalloc( sizeof(DGNElemComplexHeader), 1 );
+    psCore = &(psCH->core);
+
+    DGNInitializeElemCore( hDGN, psCore );
+    psCore->complex = TRUE;
+    psCore->stype = DGNST_COMPLEX_HEADER;
+    psCore->type = nType;
+
+/* -------------------------------------------------------------------- */
+/*      Set solid header specific information in the structure.         */
+/* -------------------------------------------------------------------- */
+    psCH->totlength = nTotLength - 4;
+    psCH->numelems = nNumElems;
+    psCH->surftype = nSurfType;
+    psCH->boundelms = nBoundElems;
+
+/* -------------------------------------------------------------------- */
+/*      Setup Raw data for the solid specific portion.                  */
+/* -------------------------------------------------------------------- */
+    psCore->raw_bytes = 42;
+
+    psCore->raw_data = (unsigned char*) CPLCalloc(psCore->raw_bytes,1);
+
+    psCore->raw_data[36] = (unsigned char) ((nTotLength-4) % 256);
+    psCore->raw_data[37] = (unsigned char) ((nTotLength-4) / 256);
+    psCore->raw_data[38] = (unsigned char) (nNumElems % 256);
+    psCore->raw_data[39] = (unsigned char) (nNumElems / 256);
+    psCore->raw_data[40] = (unsigned char) psCH->surftype;
+    psCore->raw_data[41] = (unsigned char) psCH->boundelms - 1;
+
+/* -------------------------------------------------------------------- */
+/*      Set the core raw data.                                          */
+/* -------------------------------------------------------------------- */
+    DGNUpdateElemCoreExtended( hDGN, psCore );
+
+/* -------------------------------------------------------------------- */
+/*      Elements have to be at least 48 bytes long, so we have to       */
+/*      add a dummy bit of attribute data to fill out the length.       */
+/* -------------------------------------------------------------------- */
+    DGNAddRawAttrLink( hDGN, psCore, 8, abyRawZeroLinkage );
+    
+    return psCore;
+}
+
+/************************************************************************/
+/*                  DGNCreateSolidHeaderFromGroup()                     */
+/************************************************************************/
+
+/**
+ * Create 3D solid/surface header.
+ *
+ * This function is similar to DGNCreateSolidHeaderElem(), but it takes
+ * care of computing the total size of the set of elements being written, 
+ * and collecting the bounding extents.  It also takes care of some other
+ * convenience issues, like marking all the member elements as complex, and 
+ * setting the level based on the level of the member elements. 
+ * 
+ * @param hDGN the file on which the element will be written.
+ * @param nType DGNT_3DSURFACE_HEADER or DGNT_3DSOLID_HEADER.
+ * @param nSurfType the surface/solid type, one of DGNSUT_* or DGNSOT_*. 
+ * @param nBoundElems the number of boundary elements. 
+ * @param nNumElems the number of elements in the solid not including
+ * the header element. 
+ * @param papsElems array of pointers to nNumElems elements in the solid.
+ * Some updates may be made to these elements. 
+ *
+ * @return the new element (DGNElemComplexHeader) or NULL on failure. 
+ */
+
+DGNElemCore *
+DGNCreateSolidHeaderFromGroup( DGNHandle hDGN, int nType, int nSurfType,
+                               int nBoundElems, int nNumElems, 
+                               DGNElemCore **papsElems )
+
+{
+    int         nTotalLength = 6;
+    int         i, nLevel;
+    DGNElemCore *psCH;
+    DGNPoint    sMin = {0.0,0.0,0.0}, sMax = {0.0,0.0,0.0};
+
+    DGNLoadTCB( hDGN );
+
+    if( nNumElems < 1 || papsElems == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Need at least one element to form a solid." );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Collect the total size, and bounds.                             */
+/* -------------------------------------------------------------------- */
+    nLevel = papsElems[0]->level;
+
+    for( i = 0; i < nNumElems; i++ )
+    {
+        DGNPoint sThisMin, sThisMax;
+
+        nTotalLength += papsElems[i]->raw_bytes / 2;
+
+        papsElems[i]->complex = TRUE;
+        papsElems[i]->raw_data[0] |= 0x80;
+
+        if( papsElems[i]->level != nLevel )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Not all level values matching in a complex set group!");
+        }
+
+        DGNGetElementExtents( hDGN, papsElems[i], &sThisMin, &sThisMax );
+        if( i == 0 )
+        {
+            sMin = sThisMin;
+            sMax = sThisMax;
+        }
+        else
+        {
+            sMin.x = MIN(sMin.x,sThisMin.x);
+            sMin.y = MIN(sMin.y,sThisMin.y);
+            sMin.z = MIN(sMin.z,sThisMin.z);
+            sMax.x = MAX(sMax.x,sThisMax.x);
+            sMax.y = MAX(sMax.y,sThisMax.y);
+            sMax.z = MAX(sMax.z,sThisMax.z);
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the corresponding solid header.                          */
+/* -------------------------------------------------------------------- */
+    psCH = DGNCreateSolidHeaderElem( hDGN, nType, nSurfType, nBoundElems, 
+                                     nTotalLength, nNumElems );
     DGNUpdateElemCore( hDGN, psCH, papsElems[0]->level, psCH->graphic_group,
                        psCH->color, psCH->weight, psCH->style );
 
