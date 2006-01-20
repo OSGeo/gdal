@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2006/01/20 17:45:40  fwarmerdam
+ * Updated to new DGNCreateComplexHeaderFromGroup arg list.
+ *
  * Revision 1.35  2005/09/21 01:00:46  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -959,7 +962,7 @@ DGNElemCore **OGRDGNLayer::LineStringToElementGroup( OGRLineString *poLS,
             nGroupType = DGNT_COMPLEX_CHAIN_HEADER;
         
         papsGroup[0] = 
-            DGNCreateComplexHeaderFromGroup( hDGN, nGroupType, 0,
+            DGNCreateComplexHeaderFromGroup( hDGN, nGroupType, 
                                              iGeom, papsGroup + 1 );
     }
 
