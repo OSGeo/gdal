@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2006/01/20 16:48:33  kintel
+ * Added boundelms field to DGNElemComplexHeader
+ *
  * Revision 1.49  2006/01/18 16:01:31  kintel
  * Bugfix: 3D surface/solid's surftype is stored as a byte value, not a word value
  *
@@ -1021,6 +1024,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           psShape->totlength = psDGN->abyElem[36] + psDGN->abyElem[37] * 256;
           psShape->numelems = psDGN->abyElem[38] + psDGN->abyElem[39] * 256;
           psShape->surftype = psDGN->abyElem[40];
+          psShape->boundelms = psDGN->abyElem[41] + 1;
         }
         break;
 

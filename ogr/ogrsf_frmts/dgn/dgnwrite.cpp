@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2006/01/20 16:48:33  kintel
+ * Added boundelms field to DGNElemComplexHeader
+ *
  * Revision 1.29  2006/01/20 15:51:05  kintel
  * bugfix: The size limit is the number of vertices, not the element size
  *
@@ -1704,6 +1707,7 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
     psCH->totlength = nTotLength - 4;
     psCH->numelems = nNumElems;
     psCH->surftype = nSurfType;
+    psCH->boundelms = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Setup Raw data for the complex specific portion.                */
@@ -1722,6 +1726,7 @@ DGNCreateComplexHeaderElem( DGNHandle hDGN, int nType, int nSurfType,
     psCore->raw_data[39] = (unsigned char) (nNumElems / 256);
     if ( nType == DGNT_3DSURFACE_HEADER || nType == DGNT_3DSOLID_HEADER ) {
       psCore->raw_data[40] = (unsigned char)psCH->surftype;
+      psCore->raw_data[41] = (unsigned char)psCH->boundelms - 1;
     }
 
 /* -------------------------------------------------------------------- */
