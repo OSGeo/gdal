@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2006/01/21 03:45:58  fwarmerdam
+ * Changed to use CPLString for various command buffers in an attempt
+ * to avoid issues with limited size buffers.
+ *
  * Revision 1.49  2006/01/13 13:21:57  fwarmerdam
  * Ensure that column widths for VARCHAR are used if available.  Bug 1037
  *
@@ -114,80 +118,6 @@
  * Revision 1.24  2005/02/11 22:17:10  fwarmerdam
  * Applied fix for bug 681.  The truncation logic was kicking
  * inappropriately for integerlist and stringlist values.
- *
- * Revision 1.23  2004/11/17 17:49:27  fwarmerdam
- * implemented SetFeature and DeleteFeature methods
- *
- * Revision 1.22  2004/09/16 18:24:47  fwarmerdam
- * fixed trimming code, just truncate long text
- *
- * Revision 1.21  2004/07/10 04:47:40  warmerda
- * Ensure that setting a NULL (or empty) query reset pszQuery to NULL.
- * Use soft transactions more carefully.
- * Ensure that rings are closed on polygons.
- *
- * Revision 1.20  2004/07/09 18:36:14  warmerda
- * Fixed last fix ... put the varchar stuff in side quotes and didn't
- * address the case with no length set.
- *
- * Revision 1.19  2004/07/09 16:34:23  warmerda
- * Added patch from Markus to trim strings to allowed length.
- *
- * Revision 1.18  2004/05/08 02:14:49  warmerda
- * added GetFeature() on table, generalize FID support a bit
- *
- * Revision 1.17  2004/04/30 17:52:42  warmerda
- * added layer name laundering
- *
- * Revision 1.16  2004/04/30 00:47:31  warmerda
- * launder field name oid to oid_
- *
- * Revision 1.15  2004/03/17 06:53:28  warmerda
- * Make command string arbitrary length in BuildFullQueryStatement() as
- * per report from Stephen Frost.
- *
- * Revision 1.14  2003/09/11 20:03:36  warmerda
- * avoid warning
- *
- * Revision 1.13  2003/05/21 03:59:42  warmerda
- * expand tabs
- *
- * Revision 1.12  2003/02/01 07:55:48  warmerda
- * avoid dependence on libpq-fs.h
- *
- * Revision 1.11  2003/01/08 22:07:14  warmerda
- * Added support for integer and real list field types
- *
- * Revision 1.10  2002/12/12 14:29:28  warmerda
- * fixed bug with creating features with no geometry in PostGIS
- *
- * Revision 1.9  2002/10/20 03:45:53  warmerda
- * quote table name in feature insert, and feature count commands
- *
- * Revision 1.8  2002/10/09 18:30:10  warmerda
- * substantial upgrade to type handling, and preservations of width/precision
- *
- * Revision 1.7  2002/10/09 14:16:32  warmerda
- * changed the way that character field widths are extracted from catalog
- *
- * Revision 1.6  2002/10/04 14:03:09  warmerda
- * added column name laundering support
- *
- * Revision 1.5  2002/09/19 17:40:42  warmerda
- * Make initial ResetReading() call to set full query expression in constructor.
- *
- * Revision 1.4  2002/05/09 17:21:54  warmerda
- * Don't add trailing command if no fields to be inserted.
- *
- * Revision 1.3  2002/05/09 17:09:08  warmerda
- * Ensure nSRSId is set before creating any features.
- *
- * Revision 1.2  2002/05/09 16:48:08  warmerda
- * upgrade to quote table and field names
- *
- * Revision 1.1  2002/05/09 16:03:46  warmerda
- * New
- *
  */
 
 #include "cpl_conv.h"
@@ -210,8 +140,6 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
 {
     poDS = poDSIn;
 
-    pszQuery = NULL;
-    pszWHERE = CPLStrdup( "" );
     pszQueryStatement = NULL;
 
     bUpdateAccess = bUpdate;
@@ -242,9 +170,6 @@ OGRPGTableLayer::~OGRPGTableLayer()
 
 {
     EndCopy();
-
-    CPLFree( pszQuery );
-    CPLFree( pszWHERE );
 }
 
 /************************************************************************/
@@ -258,9 +183,9 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
 
 {
     PGresult            *hResult;
-    char                szCommand[1024];
+    CPLString           osCommand;
+    CPLString           osPrimaryKey;
     PGconn              *hPGConn = poDS->GetPGConn();
-    char                szPrimaryKey[256];
 
     poDS->FlushSoftTransaction();
 
@@ -271,9 +196,10 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
     /* -------------------------------------------- */
     /*          Check config options                */
     /* -------------------------------------------- */
-    sprintf( szPrimaryKey, "%s", CPLGetConfigOption( "PGSQL_OGR_FID", "ogc_fid" ) );
+    osPrimaryKey = CPLGetConfigOption( "PGSQL_OGR_FID", "ogc_fid" );
 
     /* TODO make changes corresponded to Frank issues
+       
     sprintf ( szCommand,
               "SELECT a.attname "
               "FROM pg_attribute a, pg_constraint c, pg_class cl "
@@ -305,7 +231,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
     {
         PQclear( hResult );
-        sprintf( szCommand,
+        osCommand.Printf(
                  "DECLARE mycursor CURSOR for "
                  "SELECT DISTINCT a.attname, t.typname, a.attlen,"
                  "       format_type(a.atttypid,a.atttypmod) "
@@ -315,7 +241,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
                  "AND a.atttypid = t.oid",
                  pszTable );
 
-        hResult = PQexec(hPGConn, szCommand );
+        hResult = PQexec(hPGConn, osCommand.c_str() );
     }
 
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
@@ -348,7 +274,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
         pszFormatType = PQgetvalue(hResult,iRecord,3);
 
         /* TODO: Add detection of other primary key to use as FID */
-        if( EQUAL(oField.GetNameRef(),szPrimaryKey) )
+        if( EQUAL(oField.GetNameRef(),osPrimaryKey) )
         {
             bHasFid = TRUE;
             pszFIDColumn = CPLStrdup(oField.GetNameRef());
@@ -460,11 +386,11 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
     // get layer geometry type (for PostGIS dataset)
     if ( bHasPostGISGeometry )
     {
-        sprintf(szCommand,
-                "SELECT type, coord_dimension FROM geometry_columns WHERE f_table_name='%s'",
-                pszTable);
+        osCommand.Printf(
+            "SELECT type, coord_dimension FROM geometry_columns WHERE f_table_name='%s'",
+            pszTable);
 
-        hResult = PQexec(hPGConn,szCommand);
+        hResult = PQexec(hPGConn,osCommand);
         if ( hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult,0,0) )
         {
             char * pszType = PQgetvalue(hResult,0,0);
@@ -529,35 +455,30 @@ void OGRPGTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 void OGRPGTableLayer::BuildWhere()
 
 {
-    char        szWHERE[4096];
-
-    CPLFree( pszWHERE );
-    pszWHERE = NULL;
-
-    szWHERE[0] = '\0';
+    osWHERE = "";
 
     if( m_poFilterGeom != NULL && bHasPostGISGeometry )
     {
         OGREnvelope  sEnvelope;
 
         m_poFilterGeom->getEnvelope( &sEnvelope );
-        sprintf( szWHERE,
-                 "WHERE %s && SetSRID('BOX3D(%.12f %.12f, %.12f %.12f)'::box3d,%d) ",
-                 pszGeomColumn,
-                 sEnvelope.MinX, sEnvelope.MinY,
-                 sEnvelope.MaxX, sEnvelope.MaxY,
-                 nSRSId );
+        osWHERE.Printf("WHERE %s && SetSRID('BOX3D(%.12f %.12f, %.12f %.12f)'::box3d,%d) ",
+                       pszGeomColumn,
+                       sEnvelope.MinX, sEnvelope.MinY,
+                       sEnvelope.MaxX, sEnvelope.MaxY,
+                       nSRSId );
     }
 
-    if( pszQuery != NULL )
+    if( strlen(osQuery) > 0 )
     {
-        if( strlen(szWHERE) == 0 )
-            sprintf( szWHERE, "WHERE %s ", pszQuery  );
-        else
-            sprintf( szWHERE+strlen(szWHERE), "AND %s ", pszQuery );
+        if( strlen(osWHERE) == 0 )
+            osWHERE.Printf( "WHERE %s ", osQuery.c_str()  );
+        else	
+        {
+            osWHERE += "AND ";
+            osWHERE += osQuery;
+        }
     }
-
-    pszWHERE = CPLStrdup(szWHERE);
 }
 
 /************************************************************************/
@@ -576,11 +497,11 @@ void OGRPGTableLayer::BuildFullQueryStatement()
     char *pszFields = BuildFields();
 
     pszQueryStatement = (char *)
-        CPLMalloc(strlen(pszFields)+strlen(pszWHERE)
+        CPLMalloc(strlen(pszFields)+strlen(osWHERE)
                   +strlen(poFeatureDefn->GetName()) + 40);
     sprintf( pszQueryStatement,
              "SELECT %s FROM \"%s\" %s",
-             pszFields, poFeatureDefn->GetName(), pszWHERE );
+             pszFields, poFeatureDefn->GetName(), osWHERE.c_str() );
 
     CPLFree( pszFields );
 }
@@ -680,12 +601,10 @@ char *OGRPGTableLayer::BuildFields()
 OGRErr OGRPGTableLayer::SetAttributeFilter( const char *pszQuery )
 
 {
-    CPLFree( this->pszQuery );
-
-    if( pszQuery == NULL || strlen(pszQuery) == 0 )
-        this->pszQuery = NULL;
+    if( pszQuery == NULL )
+        osQuery = "";
     else
-        this->pszQuery = CPLStrdup( pszQuery );
+        osQuery = pszQuery;
 
     BuildWhere();
 
@@ -703,7 +622,7 @@ OGRErr OGRPGTableLayer::DeleteFeature( long nFID )
 {
     PGconn              *hPGConn = poDS->GetPGConn();
     PGresult            *hResult;
-    char                *pszCommand;
+    CPLString            osCommand;
 
 /* -------------------------------------------------------------------- */
 /*      We can only delete features if we have a well defined FID       */
@@ -722,12 +641,8 @@ OGRErr OGRPGTableLayer::DeleteFeature( long nFID )
 /* -------------------------------------------------------------------- */
 /*      Form the statement to drop the record.                          */
 /* -------------------------------------------------------------------- */
-    pszCommand = (char *) CPLMalloc( strlen(pszFIDColumn)
-                                     + strlen(poFeatureDefn->GetName())
-                                     + 100 );
-
-    sprintf( pszCommand, "DELETE FROM \"%s\" WHERE \"%s\" = %ld",
-             poFeatureDefn->GetName(), pszFIDColumn, nFID );
+    osCommand.Printf( "DELETE FROM \"%s\" WHERE \"%s\" = %ld",
+                      poFeatureDefn->GetName(), pszFIDColumn, nFID );
 
 /* -------------------------------------------------------------------- */
 /*      Execute the insert.                                             */
@@ -738,10 +653,9 @@ OGRErr OGRPGTableLayer::DeleteFeature( long nFID )
     if( eErr != OGRERR_NONE )
         return eErr;
 
-    CPLDebug( "OGR_PG", "PQexec(%s)\n", pszCommand );
+    CPLDebug( "OGR_PG", "PQexec(%s)\n", osCommand.c_str() );
 
-    hResult = PQexec(hPGConn, pszCommand);
-    CPLFree( pszCommand );
+    hResult = PQexec(hPGConn, osCommand);
 
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
@@ -816,42 +730,37 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 {
     PGconn              *hPGConn = poDS->GetPGConn();
     PGresult            *hResult;
-    char                *pszCommand;
+    CPLString           osCommand;
     int                 i, bNeedComma = FALSE;
-    unsigned int        nCommandBufSize;;
     OGRErr              eErr;
 
     eErr = poDS->SoftStartTransaction();
     if( eErr != OGRERR_NONE )
         return eErr;
 
-    nCommandBufSize = 40000;
-    pszCommand = (char *) CPLMalloc(nCommandBufSize);
-
 /* -------------------------------------------------------------------- */
 /*      Form the INSERT command.                                        */
 /* -------------------------------------------------------------------- */
-    sprintf( pszCommand, "INSERT INTO \"%s\" (", poFeatureDefn->GetName() );
+    osCommand.Printf( "INSERT INTO \"%s\" (", poFeatureDefn->GetName() );
 
     if( bHasWkb && poFeature->GetGeometryRef() != NULL )
     {
-        strcat( pszCommand, "WKB_GEOMETRY " );
+        osCommand += "WKB_GEOMETRY ";
         bNeedComma = TRUE;
     }
 
     if( bHasPostGISGeometry && poFeature->GetGeometryRef() != NULL )
     {
-        strcat( pszCommand, pszGeomColumn );
-        strcat( pszCommand, " " );
+        osCommand = osCommand + pszGeomColumn + " ";
         bNeedComma = TRUE;
     }
 
     if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
     {
         if( bNeedComma )
-            strcat( pszCommand, ", " );
-        strcat( pszCommand, pszFIDColumn );
-        strcat( pszCommand, " " );
+            osCommand += ", ";
+        
+        osCommand = osCommand + pszFIDColumn + " ";
         bNeedComma = TRUE;
     }
 
@@ -863,13 +772,13 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
         if( !bNeedComma )
             bNeedComma = TRUE;
         else
-            strcat( pszCommand, ", " );
+            osCommand += ", ";
 
-        sprintf( pszCommand + strlen(pszCommand), "\"%s\"",
-                 poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
+        osCommand = osCommand 
+            + "\"" + poFeatureDefn->GetFieldDefn(i)->GetNameRef() + "\"";
     }
 
-    strcat( pszCommand, ") VALUES (" );
+    osCommand += ") VALUES (";
 
     /* Set the geometry */
     bNeedComma = poFeature->GetGeometryRef() != NULL;
@@ -887,44 +796,32 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             poGeom->exportToWkt( &pszWKT );
         }
 
-        if( pszWKT != NULL
-            && strlen(pszCommand) + strlen(pszWKT) > nCommandBufSize - 10000 )
-        {
-            nCommandBufSize = strlen(pszCommand) + strlen(pszWKT) + 10000;
-            pszCommand = (char *) CPLRealloc(pszCommand, nCommandBufSize );
-        }
-
         if( pszWKT != NULL )
         {
             if( poDS->sPostGISVersion.nMajor >= 1 )
-                sprintf( pszCommand + strlen(pszCommand),
-                         "GeomFromEWKT('SRID=%d;%s'::TEXT) ", nSRSId, pszWKT );
+                osCommand +=
+                    CPLString().Printf(
+                        "GeomFromEWKT('SRID=%d;%s'::TEXT) ", nSRSId, pszWKT );
             else
-                sprintf( pszCommand + strlen(pszCommand),
-                         "GeometryFromText('%s'::TEXT,%d) ", pszWKT, nSRSId );
+                osCommand += 
+                    CPLString().Printf(
+                        "GeometryFromText('%s'::TEXT,%d) ", pszWKT, nSRSId );
             OGRFree( pszWKT );
         }
         else
-            strcat( pszCommand, "''" );
+            osCommand += "''";
     }
     else if( bHasWkb && !bWkbAsOid && poFeature->GetGeometryRef() != NULL )
     {
         char    *pszBytea = GeometryToBYTEA( poFeature->GetGeometryRef() );
 
-        if( strlen(pszCommand) + strlen(pszBytea) > nCommandBufSize - 10000 )
-        {
-            nCommandBufSize = strlen(pszCommand) + strlen(pszBytea) + 10000;
-            pszCommand = (char *) CPLRealloc(pszCommand, nCommandBufSize );
-        }
-
         if( pszBytea != NULL )
         {
-            sprintf( pszCommand + strlen(pszCommand),
-                     "'%s'", pszBytea );
+            osCommand += osCommand + "'" + pszBytea + "'";
             CPLFree( pszBytea );
         }
         else
-            strcat( pszCommand, "''" );
+            osCommand += "''";
     }
     else if( bHasWkb && bWkbAsOid && poFeature->GetGeometryRef() != NULL )
     {
@@ -932,24 +829,21 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
         if( oid != 0 )
         {
-            sprintf( pszCommand + strlen(pszCommand),
-                     "'%d' ", oid );
+            osCommand += CPLString().Printf( "'%d' ", oid );
         }
         else
-            strcat( pszCommand, "''" );
+            osCommand += "''";
     }
 
     /* Set the FID */
     if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
     {
         if( bNeedComma )
-            strcat( pszCommand, ", " );
-        sprintf( pszCommand + strlen(pszCommand), "%ld ", poFeature->GetFID());
+            osCommand += ", ";
+        osCommand += CPLString().Printf( "%ld ", poFeature->GetFID() );
         bNeedComma = TRUE;
     }
 
-    /* Set the other fields */
-    int nOffset = strlen(pszCommand);
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
@@ -960,7 +854,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             continue;
 
         if( bNeedComma )
-            strcat( pszCommand+nOffset, ", " );
+            osCommand += ", ";
         else
             bNeedComma = TRUE;
 
@@ -1004,23 +898,13 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             pszStrValue = pszNeedToFree;
         }
 
-        // Grow the command buffer?
-        if( strlen(pszStrValue) + strlen(pszCommand+nOffset) + nOffset
-            > nCommandBufSize-50 )
-        {
-            nCommandBufSize = strlen(pszCommand) + strlen(pszStrValue) + 10000;
-            pszCommand = (char *) CPLRealloc(pszCommand, nCommandBufSize );
-        }
-
         if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger
                  && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTReal )
         {
             int         iChar;
 
             /* We need to quote and escape string fields. */
-            strcat( pszCommand+nOffset, "'" );
-
-            nOffset += strlen(pszCommand+nOffset);
+            osCommand += "'";
 
             for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
             {
@@ -1038,40 +922,37 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
                 if( pszStrValue[iChar] == '\\'
                     || pszStrValue[iChar] == '\'' )
                 {
-                    pszCommand[nOffset++] = '\\';
-                    pszCommand[nOffset++] = pszStrValue[iChar];
+                    osCommand += '\\';
+                    osCommand += pszStrValue[iChar];
                 }
                 else
-                    pszCommand[nOffset++] = pszStrValue[iChar];
+                    osCommand += pszStrValue[iChar];
             }
 
-            pszCommand[nOffset] = '\0';
-            strcat( pszCommand+nOffset, "'" );
+            osCommand += "'";
         }
         else
         {
-            strcat( pszCommand+nOffset, pszStrValue );
+            osCommand += pszStrValue;
         }
 
         if( pszNeedToFree )
             CPLFree( pszNeedToFree );
     }
 
-    strcat( pszCommand+nOffset, ")" );
+    osCommand += ")";
 
 /* -------------------------------------------------------------------- */
 /*      Execute the insert.                                             */
 /* -------------------------------------------------------------------- */
-    hResult = PQexec(hPGConn, pszCommand);
+    hResult = PQexec(hPGConn, osCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
-        CPLDebug( "OGR_PG", "PQexec(%s)\n", pszCommand );
+        CPLDebug( "OGR_PG", "PQexec(%s)\n", osCommand.c_str() );
 
         CPLError( CE_Failure, CPLE_AppDefined,
                   "INSERT command for new feature failed.\n%s\nCommand: %s",
-                  PQerrorMessage(hPGConn), pszCommand);
-
-        CPLFree( pszCommand );
+                  PQerrorMessage(hPGConn), osCommand.c_str() );
 
         PQclear( hResult );
 
@@ -1079,7 +960,6 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
         return OGRERR_FAILURE;
     }
-    CPLFree( pszCommand );
 
 #ifdef notdef
     /* Should we use this oid to get back the FID and assign back to the
@@ -1333,7 +1213,7 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 {
     PGconn              *hPGConn = poDS->GetPGConn();
     PGresult            *hResult;
-    char                szCommand[1024];
+    CPLString           osCommand;
     char                szFieldType[256];
     OGRFieldDefn        oField( poFieldIn );
 
@@ -1415,13 +1295,15 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     hResult = PQexec(hPGConn, "BEGIN");
     PQclear( hResult );
 
-    sprintf( szCommand, "ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s",
-             poFeatureDefn->GetName(), oField.GetNameRef(), szFieldType );
-    hResult = PQexec(hPGConn, szCommand);
+    osCommand.Printf( "ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s",
+                      poFeatureDefn->GetName(), oField.GetNameRef(), szFieldType );
+    hResult = PQexec(hPGConn, osCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "%s\n%s", szCommand, PQerrorMessage(hPGConn) );
+                  "%s\n%s", 
+                  osCommand.c_str(), 
+                  PQerrorMessage(hPGConn) );
 
         PQclear( hResult );
         hResult = PQexec( hPGConn, "ROLLBACK" );
@@ -1531,30 +1413,30 @@ int OGRPGTableLayer::GetFeatureCount( int bForce )
 /* -------------------------------------------------------------------- */
     PGconn              *hPGConn = poDS->GetPGConn();
     PGresult            *hResult;
-    char                szCommand[4096];
+    CPLString           osCommand;
     int                 nCount = 0;
 
     poDS->FlushSoftTransaction();
     hResult = PQexec(hPGConn, "BEGIN");
     PQclear( hResult );
 
-    sprintf( szCommand,
-             "DECLARE countCursor CURSOR for "
-             "SELECT count(*) FROM \"%s\" "
-             "%s",
-             poFeatureDefn->GetName(), pszWHERE );
+    osCommand.Printf(
+        "DECLARE countCursor CURSOR for "
+        "SELECT count(*) FROM \"%s\" "
+        "%s",
+        poFeatureDefn->GetName(), osWHERE.c_str() );
 
     CPLDebug( "OGR_PG", "PQexec(%s)\n",
-              szCommand );
+              osCommand.c_str() );
 
-    hResult = PQexec(hPGConn, szCommand);
+    hResult = PQexec(hPGConn, osCommand);
     PQclear( hResult );
 
     hResult = PQexec(hPGConn, "FETCH ALL in countCursor");
     if( hResult != NULL && PQresultStatus(hResult) == PGRES_TUPLES_OK )
         nCount = atoi(PQgetvalue(hResult,0,0));
     else
-        CPLDebug( "OGR_PG", "%s; failed.", szCommand );
+        CPLDebug( "OGR_PG", "%s; failed.", osCommand.c_str() );
     PQclear( hResult );
 
     hResult = PQexec(hPGConn, "CLOSE countCursor");
@@ -1623,11 +1505,12 @@ OGRErr OGRPGTableLayer::GetExtent( OGREnvelope *psExtent, int bForce )
     {
         PGconn          *hPGConn = poDS->GetPGConn();
         PGresult        *hResult;
-        char            szCommand[1024];
+        CPLString       osCommand;
 
-        sprintf( szCommand, "SELECT Extent(\"%s\") FROM \"%s\"", pszGeomColumn, poFeatureDefn->GetName() );
+        osCommand.Printf( "SELECT Extent(\"%s\") FROM \"%s\"", 
+                          pszGeomColumn, poFeatureDefn->GetName() );
 
-        hResult = PQexec( hPGConn, szCommand );
+        hResult = PQexec( hPGConn, osCommand );
         if( ! hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK || PQgetisnull(hResult,0,0) )
         {
             PQclear( hResult );
