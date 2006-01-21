@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2006/01/21 03:48:29  fwarmerdam
+ * Use CPLString for some OGRPGTableLayer buffers
+ *
  * Revision 1.23  2005/10/24 23:50:50  fwarmerdam
  * moved bUseCopy test into layer on creation of first feature
  *
@@ -106,7 +109,7 @@
 
 #include "ogrsf_frmts.h"
 #include "libpq-fe.h"
-
+#include "cpl_string.h"
 
 /************************************************************************/
 /*                            OGRPGLayer                                */
@@ -192,8 +195,8 @@ class OGRPGTableLayer : public OGRPGLayer
     char               *BuildFields(void);
     void                BuildFullQueryStatement(void);
 
-    char                *pszQuery;
-    char                *pszWHERE;
+    CPLString           osQuery;
+    CPLString           osWHERE;
 
     int                 bLaunderColumnNames;
     int                 bPreservePrecision;
