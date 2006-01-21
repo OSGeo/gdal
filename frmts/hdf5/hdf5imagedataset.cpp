@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.15  2006/01/21 17:51:50  dnadeau
+ * added find object by path where space are changed with underscore.  Fix up pszProjections problem.
+ *
  * Revision 1.14  2005/10/12 20:16:10  fwarmerdam
  * use SetMetadata()
  *
@@ -138,6 +141,9 @@ HDF5ImageDataset::HDF5ImageDataset()
 {
 
     fp=NULL;
+    nGCPCount       = -1;
+    pszProjection   = NULL;
+    pasGCPList      = NULL;
     papszName       = NULL;
     pszFilename     = NULL;
     poH5Objects     = NULL;
@@ -173,7 +179,7 @@ HDF5ImageDataset::~HDF5ImageDataset( )
                 CPLFree( pasGCPList[i].pszId );
             if( pasGCPList[i].pszInfo )
                 CPLFree( pasGCPList[i].pszInfo );
-        }
+	}
 
         CPLFree( pasGCPList );
     }
@@ -383,7 +389,6 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
 	return NULL;
     }
-
   
     /* -------------------------------------------------------------------- */
     /*    Check for drive name in windows HDF5:"D:\...                      */
@@ -430,9 +435,12 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create HDF5 Data Hierarchy in a link list                       */
 /* -------------------------------------------------------------------- */
     poDS->poH5Objects = 
-	poDS->HDF5FindDatasetObjects( poDS->poH5RootGroup, 
+	poDS->HDF5FindDatasetObjectsbyPath( poDS->poH5RootGroup, 
 				      poDS->papszName[nDatasetPos] );
 
+    if( poDS->poH5Objects == NULL ) {
+	return NULL;
+    }
 /* -------------------------------------------------------------------- */
 /*      Retrieve HDF5 data information                                  */
 /* -------------------------------------------------------------------- */
@@ -471,6 +479,8 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     
+    poDS->oSRS.SetWellKnownGeogCS( "WGS84" );
+    poDS->oSRS.exportToWkt( &poDS->pszProjection );
     poDS->CreateProjections( );
 
     poDS->SetMetadata( poDS->papszMetadata );
@@ -532,6 +542,17 @@ CPLErr HDF5ImageDataset::CreateProjections()
 /*      Create HDF5 Data Hierarchy in a link list                       */
 /* -------------------------------------------------------------------- */
     poH5Objects=HDF5FindDatasetObjects( poH5RootGroup,  "Latitude" );
+    if( !poH5Objects ) {
+	return CE_None;
+    }
+/* -------------------------------------------------------------------- */
+/*      The Lattitude and Longitude arrays must have a rank of 2 to     */
+/*      retrieve GCPs.                                                  */
+/* -------------------------------------------------------------------- */
+    if( poH5Objects->nRank != 2 ) {
+	return CE_None;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Retrieve HDF5 data information                                  */
 /* -------------------------------------------------------------------- */
@@ -604,11 +625,11 @@ CPLErr HDF5ImageDataset::CreateProjections()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-  const char *HDF5ImageDataset::GetProjectionRef( )
-
-  {
-  return pszProjection;
-  }
+const char *HDF5ImageDataset::GetProjectionRef( )
+    
+{
+    return pszProjection;
+}
 
 /************************************************************************/
 /*                          SetProjection()                             */
