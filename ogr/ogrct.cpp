@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2006/01/21 19:16:37  fwarmerdam
+ * Added LIBNAME case for cygwin.
+ *
  * Revision 1.30  2005/09/05 20:45:16  fwarmerdam
  * fail in intialize() if exportToProj4 result is empty
  *
@@ -161,6 +164,8 @@ static void         (*pfn_pj_dalloc)(void *) = NULL;
 
 #ifdef WIN32
 #  define LIBNAME      "proj.dll"
+#elif defined(__CYGWIN__)
+#  define LIBNAME      "libproj.dll"
 #elif defined(__APPLE__)
 #  define LIBNAME      "libproj.dylib"
 #else
