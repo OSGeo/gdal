@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.11  2006/01/21 17:50:45  dnadeau
+ * added find object by path where space are changed with underscore.  Create SUBSETDATA with HDF5 Path.  Dataset sometimes have the same name.
+ *
  * Revision 1.10  2005/09/15 02:37:10  fwarmerdam
  * improved file header pre-test
  *
@@ -102,7 +105,7 @@ HDF5Dataset::HDF5Dataset()
     papszMetadata       = NULL;
     poH5RootGroup       = NULL;
     pszFilename         = NULL;
-    nSubDataCount       = -1;
+    nSubDataCount       = 0;
     hHDF5               = -1;
     hDatasetID          = -1;
     hGroupID            = -1;
@@ -129,6 +132,7 @@ HDF5Dataset::~HDF5Dataset()
 	DestroyH5Objects( poH5RootGroup );
 	CPLFree( poH5RootGroup->pszName );
 	CPLFree( poH5RootGroup->pszPath );
+	CPLFree( poH5RootGroup->pszUnderscorePath );
 	CPLFree( poH5RootGroup->poHchild );
 	delete poH5RootGroup;
     }
@@ -329,22 +333,56 @@ void HDF5Dataset::DestroyH5Objects( HDF5GroupObjects *poH5Object )
 char* CreatePath( HDF5GroupObjects *poH5Object )
 {
     char pszPath[8192];
+    char pszUnderscoreSpaceInName[8192];
     char *popszPath;
+    int  i;
+    char **papszPath;
 
+/* -------------------------------------------------------------------- */
+/*      Recurse to the root path                                        */
+/* -------------------------------------------------------------------- */
     pszPath[0]='\0';
     if( poH5Object->poHparent !=NULL ) {
 	popszPath=CreatePath( poH5Object->poHparent );
 	strcpy( pszPath,popszPath );
     }
 	
-    
+/* -------------------------------------------------------------------- */
+/*      add name to the path                                            */
+/* -------------------------------------------------------------------- */
     if( !EQUAL( poH5Object->pszName,"/" ) ){
 	strcat( pszPath,"/" );
 	strcat( pszPath,poH5Object->pszName );
     }
 
-    if( poH5Object->pszPath == NULL )
+/* -------------------------------------------------------------------- */
+/*      fill up path for each object                                    */
+/* -------------------------------------------------------------------- */
+    if( poH5Object->pszPath == NULL ) {
+
+	if( strlen( poH5Object->pszName ) == 1 ) {
+	    strcat(pszPath, poH5Object->pszName );
+	    strcat(pszUnderscoreSpaceInName, poH5Object->pszName);
+	}
+	else {
+/* -------------------------------------------------------------------- */
+/*      Change space for underscore                                     */
+/* -------------------------------------------------------------------- */
+	    papszPath = CSLTokenizeString2( pszPath,
+					    " ", CSLT_HONOURSTRINGS );
+	    
+	    strcpy(pszUnderscoreSpaceInName,papszPath[0]);
+	    for( i=1; i < CSLCount( papszPath ); i++ ) {
+		strcat( pszUnderscoreSpaceInName, "_" );
+		strcat( pszUnderscoreSpaceInName, papszPath[ i ] );
+	    }
+	    CSLDestroy(papszPath);
+
+	}
+	poH5Object->pszUnderscorePath  = 
+	    (char *)strdup( pszUnderscoreSpaceInName );
 	poH5Object->pszPath  = (char *)strdup( pszPath );
+    }
 
     return( poH5Object->pszPath );
 }
@@ -640,7 +678,6 @@ herr_t HDF5AttrIterate( hid_t hH5ObjID,
 /************************************************************************/
 /*                           CreateMetadata()                           */
 /************************************************************************/
-
 CPLErr HDF5Dataset::CreateMetadata( HDF5GroupObjects *poH5Object, int nType)
 {
     hid_t	hGroupID;		/* identifier of group */
@@ -689,11 +726,47 @@ CPLErr HDF5Dataset::CreateMetadata( HDF5GroupObjects *poH5Object, int nType)
     return CE_None;
 }
 
+
+/************************************************************************/
+/*                       HDF5FindDatasetObjectsbyPath()                 */
+/*      Find object by name                                             */
+/************************************************************************/
+HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjectsbyPath
+    ( HDF5GroupObjects *poH5Objects, char* pszDatasetPath )
+{
+    int i;
+    HDF5Dataset *poDS;
+    HDF5GroupObjects *poObjectsFound;
+    poDS=this;
+    
+    if( poH5Objects->nType == H5G_DATASET &&
+       EQUAL( poH5Objects->pszUnderscorePath,pszDatasetPath ) )	{
+	    /*      printf("found it! %ld\n",(long) poH5Objects);*/
+	    return( poH5Objects );
+	}
+    
+    if( poH5Objects->nbObjs >0 )
+	for( i=0; i <poH5Objects->nbObjs; i++ )   {
+	    poObjectsFound=
+		poDS->HDF5FindDatasetObjectsbyPath( poH5Objects->poHchild+i, 
+						    pszDatasetPath );
+/* -------------------------------------------------------------------- */
+/*      Is this our dataset??                                           */
+/* -------------------------------------------------------------------- */
+	    if( poObjectsFound != NULL ) return( poObjectsFound );
+	}
+/* -------------------------------------------------------------------- */
+/*      Dataset has not been found!                                     */
+/* -------------------------------------------------------------------- */
+    return( NULL );
+    
+}
+
+
 /************************************************************************/
 /*                       HDF5FindDatasetObjects()                       */
 /*      Find object by name                                             */
 /************************************************************************/
-
 HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjects
     ( HDF5GroupObjects *poH5Objects, char* pszDatasetName )
 {
@@ -725,6 +798,7 @@ HDF5GroupObjects* HDF5Dataset::HDF5FindDatasetObjects
     return( NULL );
     
 }
+
 
 /************************************************************************/
 /*                        HDF5ListGroupObjects()                        */
@@ -776,12 +850,13 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
 	strcat( szDim,szTemp );
 	
 	sprintf( szTemp, "SUBDATASET_%d_NAME", poDS->nSubDataCount );
-	
+
+
 	poDS->papszSubDatasets =
 	    CSLSetNameValue( poDS->papszSubDatasets, szTemp,
 			    CPLSPrintf( "HDF5:\"%s\":%s",
 					poDS->pszFilename,
-					poRootGroup->pszName ) );
+					poRootGroup->pszUnderscorePath ) );
 	
 	sprintf(  szTemp, "SUBDATASET_%d_DESC", poDS->nSubDataCount++ );
 	
@@ -789,9 +864,10 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects( HDF5GroupObjects *poRootGroup,
 	    CSLSetNameValue( poDS->papszSubDatasets, szTemp,
 			    CPLSPrintf( "[%s] %s (%s)", 
 					szDim,
-					poRootGroup->pszName,
+					poRootGroup->pszUnderscorePath,
 					poDS->GetDataTypeName
 					( poRootGroup->native ) ) );
+
     }
     
     return CE_None;
