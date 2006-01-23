@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.5  2006/01/23 14:16:31  dnadeau
+ * Add pszUnderscorePath variable to HDF5Dataset class
+ *
  * Revision 1.4  2005/08/23 20:11:46  dnadeau
  * HDF5 add Metadata
  *
@@ -46,6 +49,7 @@
 typedef struct HDF5GroupObjects {
   char	       *pszName;
   char         *pszPath;
+  char         *pszUnderscorePath;
   char         *pszTemp;
   int		nType;
   int		nIndex;
@@ -89,8 +93,8 @@ class HDF5Dataset : public GDALDataset
   CPLErr HDF5ListGroupObjects(HDF5GroupObjects *, int );
   CPLErr CreateMetadata( HDF5GroupObjects *, int );
 
-  HDF5GroupObjects* HDF5FindDatasetObjects
-    (HDF5GroupObjects *, char *);
+  HDF5GroupObjects* HDF5FindDatasetObjects( HDF5GroupObjects *, char * );
+  HDF5GroupObjects* HDF5FindDatasetObjectsbyPath( HDF5GroupObjects *, char * );
   char* CreatePath(HDF5GroupObjects *);
   void DestroyH5Objects(HDF5GroupObjects *);
  
