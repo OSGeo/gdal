@@ -95,17 +95,16 @@ listed</a> using BugZilla.<p>
 <ul>
 
 <li> <a href="http://home.gdal.org/projects/index.html">My other 
-projects</a>, many of which are incorporated into GDAL or use GDAL.<p>
+projects</a>, many of which are incorporated into GDAL or use GDAL.
 
 <li> <a href="http://rgdal.sourceforge.net/">GDAL Bindings into R</a>
-by Timothy H. Keitt.<p>
+by Timothy H. Keitt.
 
 </ul>
 
 \section index_projects Projects Using GDAL
 
 <ul>
-
 <li> <a href="http://grass.itc.it/index.html">GRASS</a>: A raster/vector
 open source GIS uses GDAL for raster import (via r.in.gdal).
 <li> <a href="http://openev.sourceforge.net">OpenEV</a>: An OpenGL/GTK/Python
