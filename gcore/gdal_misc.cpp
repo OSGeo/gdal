@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.76  2006/01/23 15:23:45  fwarmerdam
+ * Modified GDALTermProgress to output "." on 2.5% intervals except
+ * integral ones.
+ *
  * Revision 1.75  2005/12/06 21:51:01  fwarmerdam
  * before calling GDALOpen on a .aux file, verify it is HFA
  *
@@ -910,11 +914,11 @@ int CPL_STDCALL GDALTermProgress( double dfComplete, const char *pszMessage,
             fprintf( stdout, "%d - done.\n", (int) floor(dfComplete*100) );
         else
         {
-            fprintf( stdout, "%d.", (int) floor(dfComplete*100) );
+            fprintf( stdout, "%d", (int) floor(dfComplete*100) );
             fflush( stdout );
         }
     }
-    else if( floor(dfLastComplete*30) != floor(dfComplete*30) )
+    else if( floor(dfLastComplete*40) != floor(dfComplete*40) )
     {
         fprintf( stdout, "." );
         fflush( stdout );
