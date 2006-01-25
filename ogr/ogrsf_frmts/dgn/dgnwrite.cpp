@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2006/01/25 16:13:52  kintel
+ * Initial support for Shared Cell Definitions
+ *
  * Revision 1.31  2006/01/20 16:58:27  kintel
  * Changed DGNCreateComplex*() to only create complex chains/shapes, added new functions, DGNCreateSolid*() for creating 3D solids/surfaces
  *
@@ -710,6 +713,15 @@ DGNElemCore *DGNCloneElement( DGNHandle hDGNSrc, DGNHandle hDGNDst,
 
         psClone = (DGNElemCore *) psCone;
     }
+    else if( psSrcElement->stype == DGNST_SHARED_CELL_DEFN )
+    {
+        DGNElemSharedCellDefn *psCH;
+
+        psCH = (DGNElemSharedCellDefn *)CPLMalloc(sizeof(DGNElemSharedCellDefn));
+        memcpy( psCH, psSrcElement, sizeof(DGNElemSharedCellDefn) );
+
+        psClone = (DGNElemCore *) psCH;
+    }
     else
     {
         CPLAssert( FALSE );
@@ -854,7 +866,7 @@ int DGNUpdateElemCoreExtended( DGNHandle hDGN, DGNElemCore *psElement )
 }
 
 /************************************************************************/
-/*                         DGNInitializeCore()                          */
+/*                         DGNInitializeElemCore()                      */
 /************************************************************************/
 
 static void DGNInitializeElemCore( DGNHandle hDGN, DGNElemCore *psElement )

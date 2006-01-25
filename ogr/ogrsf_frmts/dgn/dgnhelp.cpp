@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/01/25 16:13:52  kintel
+ * Initial support for Shared Cell Definitions
+ *
  * Revision 1.28  2006/01/20 16:48:33  kintel
  * Added boundelms field to DGNElemComplexHeader
  *
@@ -778,6 +781,14 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
                    psCell->levels[3], psCell->numwords );
           fprintf( fp, "  dispsymb=%d, description=%s\n", 
                    psCell->dispsymb, psCell->description );
+      }
+      break;
+
+      case DGNST_SHARED_CELL_DEFN:
+      {
+          DGNElemSharedCellDefn *psShared = (DGNElemSharedCellDefn *) psElement;
+
+          fprintf( fp, "  totlength=%d\n", psShared->totlength);
       }
       break;
 
