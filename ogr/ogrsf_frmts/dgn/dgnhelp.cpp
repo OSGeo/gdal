@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2006/01/25 18:31:14  kintel
+ * Added DGNT_POINT_STRING to DGNTypeToName()
+ *
  * Revision 1.29  2006/01/25 16:13:52  kintel
  * Initial support for Shared Cell Definitions
  *
@@ -1082,6 +1085,9 @@ const char *DGNTypeToName( int nType )
         
       case DGNT_LINE_STRING:
         return "Line String";
+
+      case DGNT_POINT_STRING:
+        return "Point String";
 
       case DGNT_GROUP_DATA:
         return "Group Data";
