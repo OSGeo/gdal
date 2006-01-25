@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/01/25 19:52:25  fwarmerdam
+ * default to avoiding as much mutex overhead as opposed if MUTEX_NONE defined
+ *
  * Revision 1.9  2005/08/24 22:19:27  fwarmerdam
  * added CPLCleanupTLS
  *
@@ -72,7 +75,7 @@
 #endif
 
 #if !defined(CPL_MULTIPROC_WIN32) && !defined(CPL_MULTIPROC_PTHREAD) \
- && !defined(CPL_MULTIPROC_STUB)
+ && !defined(CPL_MULTIPROC_STUB) && !defined(CPL_MULTIPROC_NONE)
 #  define CPL_MULTIPROC_STUB
 #endif
 
