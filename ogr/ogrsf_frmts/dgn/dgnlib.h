@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2006/01/25 16:13:52  kintel
+ * Initial support for Shared Cell Definitions
+ *
  * Revision 1.43  2006/01/20 16:58:27  kintel
  * Changed DGNCreateComplex*() to only create complex chains/shapes, added new functions, DGNCreateSolid*() for creating 3D solids/surfaces
  *
@@ -443,6 +446,25 @@ typedef struct {
     
 } DGNElemCellLibrary;
 
+/** 
+ * Shared Cell Definition.
+ *
+ * The core.stype code is DGNST_SHARED_CELL_DEFN.
+ *
+ * Returned for DGNT_SHARED_CELL_DEFN(2).
+ */
+
+typedef struct {
+    DGNElemCore core;
+
+    int         totlength;         /*!< Total length of cell in words,
+                                        excluding the first 19 words
+                                        (header + totlength field) */
+  // FIXME: Most of the contents of this element type is currently
+  // unknown. Please get in touch with the authors if you have
+  // information about how to decode this element.
+} DGNElemSharedCellDefn;
+
 typedef union { char *string; GInt32 integer; double real; } tagValueUnion;
 
 /** 
@@ -592,6 +614,9 @@ typedef struct {
 
 /** DGNElemCore style: Element uses DGNElemTextNode structure */
 #define DGNST_TEXT_NODE           13
+
+/** DGNElemCore style: Element uses DGNElemSharedCellDefn structure */
+#define DGNST_SHARED_CELL_DEFN         18
 
 /* -------------------------------------------------------------------- */
 /*      Element types                                                   */

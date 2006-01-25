@@ -49,6 +49,8 @@ Release Notes
 Release ?.??
 ------------
 
+ o Added initial support for Shared Cell Definition elements
+
  o 3D solid/surface fixes:
    - Fixed incorrect reading and writing of surftype field.
    - Added boundelms field to DGNElemComplexHeader

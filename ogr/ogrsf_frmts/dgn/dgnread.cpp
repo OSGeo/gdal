@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2006/01/25 16:13:52  kintel
+ * Initial support for Shared Cell Definitions
+ *
  * Revision 1.50  2006/01/20 16:48:33  kintel
  * Added boundelms field to DGNElemComplexHeader
  *
@@ -1027,7 +1030,19 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           psShape->boundelms = psDGN->abyElem[41] + 1;
         }
         break;
+      case DGNT_SHARED_CELL_DEFN:
+      {
+          DGNElemSharedCellDefn *psShared;
 
+          psShared = (DGNElemSharedCellDefn *) 
+              CPLCalloc(sizeof(DGNElemSharedCellDefn),1);
+          psElement = (DGNElemCore *) psShared;
+          psElement->stype = DGNST_SHARED_CELL_DEFN;
+          DGNParseCore( psDGN, psElement );
+
+          psShared->totlength = psDGN->abyElem[36] + psDGN->abyElem[37] * 256;
+      }
+      break;
       default:
       {
           psElement = (DGNElemCore *) CPLCalloc(sizeof(DGNElemCore),1);
