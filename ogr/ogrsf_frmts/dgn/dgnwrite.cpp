@@ -28,20 +28,8 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.32  2006/01/25 16:13:52  kintel
- * Initial support for Shared Cell Definitions
- *
- * Revision 1.31  2006/01/20 16:58:27  kintel
- * Changed DGNCreateComplex*() to only create complex chains/shapes, added new functions, DGNCreateSolid*() for creating 3D solids/surfaces
- *
- * Revision 1.30  2006/01/20 16:48:33  kintel
- * Added boundelms field to DGNElemComplexHeader
- *
- * Revision 1.29  2006/01/20 15:51:05  kintel
- * bugfix: The size limit is the number of vertices, not the element size
- *
- * Revision 1.28  2006/01/18 16:01:31  kintel
- * Bugfix: 3D surface/solid's surftype is stored as a byte value, not a word value
+ * Revision 1.33  2006/01/25 18:43:19  kintel
+ * B-Spline curve and surface support
  *
  * Revision 1.27  2005/12/19 15:42:17  fwarmerdam
  * Fixed maximum number of points test in DGNCreateMultiPointElem()
@@ -713,6 +701,59 @@ DGNElemCore *DGNCloneElement( DGNHandle hDGNSrc, DGNHandle hDGNDst,
 
         psClone = (DGNElemCore *) psCone;
     }
+    else if( psSrcElement->stype == DGNST_BSPLINE_SURFACE_HEADER )
+    {
+        DGNElemBSplineSurfaceHeader *psSurface;
+
+        psSurface = (DGNElemBSplineSurfaceHeader *) 
+          CPLMalloc(sizeof(DGNElemBSplineSurfaceHeader));
+        memcpy( psSurface, psSrcElement, sizeof(DGNElemBSplineSurfaceHeader) );
+
+        psClone = (DGNElemCore *) psSurface;
+    }
+    else if( psSrcElement->stype == DGNST_BSPLINE_CURVE_HEADER )
+    {
+        DGNElemBSplineCurveHeader *psCurve;
+
+        psCurve = (DGNElemBSplineCurveHeader *) 
+          CPLMalloc(sizeof(DGNElemBSplineCurveHeader));
+        memcpy( psCurve, psSrcElement, sizeof(DGNElemBSplineCurveHeader) );
+
+        psClone = (DGNElemCore *) psCurve;
+    }
+    else if( psSrcElement->stype == DGNST_BSPLINE_SURFACE_BOUNDARY )
+    {
+        DGNElemBSplineSurfaceBoundary *psBSB, *psSrcBSB;
+        int               nSize;
+
+        psSrcBSB = (DGNElemBSplineSurfaceBoundary *) psSrcElement;
+
+        nSize = sizeof(DGNElemBSplineSurfaceBoundary) 
+            + sizeof(DGNPoint) * (psSrcBSB->numverts-1);
+
+        psBSB = (DGNElemBSplineSurfaceBoundary *) CPLMalloc( nSize );
+        memcpy( psBSB, psSrcElement, nSize );
+
+        psClone = (DGNElemCore *) psBSB;
+    }
+    else if( psSrcElement->stype == DGNST_KNOT_WEIGHT )
+    {
+        DGNElemKnotWeight *psArray, *psSrcArray;
+        int               nSize, numelems;
+
+        // FIXME: Is it OK to assume that the # of elements corresponds
+        // directly to the element size? kintel 20051218.
+        numelems = (psSrcElement->size - 36 - psSrcElement->attr_bytes)/4;
+
+        psSrcArray = (DGNElemKnotWeight *) psSrcElement;
+
+        nSize = sizeof(DGNElemKnotWeight) + sizeof(long) * (numelems-1);
+
+        psArray = (DGNElemKnotWeight *) CPLMalloc( nSize );
+        memcpy( psArray, psSrcElement, nSize );
+
+        psClone = (DGNElemCore *) psArray;
+    }
     else if( psSrcElement->stype == DGNST_SHARED_CELL_DEFN )
     {
         DGNElemSharedCellDefn *psCH;
@@ -920,7 +961,7 @@ static void DGNWriteBounds( DGNInfo *psInfo, DGNElemCore *psElement,
  *
  * @param hDGN the file on which the element will eventually be written.
  * @param nType the type of the element to be created.  It must be one of
- * DGNT_LINE, DGNT_LINE_STRING, DGNT_SHAPE, DGNT_CURVE or DGNT_BSPLINE. 
+ * DGNT_LINE, DGNT_LINE_STRING, DGNT_SHAPE, DGNT_CURVE or DGNT_BSPLINE_POLE. 
  * @param nPointCount the number of points in the pasVertices list.
  * @param pasVertices the list of points to be written. 
  *
@@ -941,7 +982,7 @@ DGNElemCore *DGNCreateMultiPointElem( DGNHandle hDGN, int nType,
                || nType == DGNT_LINE_STRING
                || nType == DGNT_SHAPE
                || nType == DGNT_CURVE
-               || nType == DGNT_BSPLINE );
+               || nType == DGNT_BSPLINE_POLE );
 
     DGNLoadTCB( hDGN );
 
@@ -2475,7 +2516,7 @@ int DGNAddRawAttrLink( DGNHandle hDGN, DGNElemCore *psElement,
 /*      need to increase the total complex group size appropriately.    */
 /* -------------------------------------------------------------------- */
     if( psElement->stype == DGNST_COMPLEX_HEADER ||
-	psElement->stype == DGNST_TEXT_NODE )  // compatible structures
+        psElement->stype == DGNST_TEXT_NODE )  // compatible structures
     {
         DGNElemComplexHeader *psCT = (DGNElemComplexHeader *) psElement;
 

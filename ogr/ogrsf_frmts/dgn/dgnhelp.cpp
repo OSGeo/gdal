@@ -28,17 +28,8 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.30  2006/01/25 18:31:14  kintel
- * Added DGNT_POINT_STRING to DGNTypeToName()
- *
- * Revision 1.29  2006/01/25 16:13:52  kintel
- * Initial support for Shared Cell Definitions
- *
- * Revision 1.28  2006/01/20 16:48:33  kintel
- * Added boundelms field to DGNElemComplexHeader
- *
- * Revision 1.27  2006/01/18 16:20:50  kintel
- * Let DGNDumpElement() display surftype for 3D surfaces/solids
+ * Revision 1.31  2006/01/25 18:43:19  kintel
+ * B-Spline curve and surface support
  *
  * Revision 1.26  2005/12/15 14:10:39  fwarmerdam
  * Fixed for QuaternionToMatrix from Marius Kintel.
@@ -1016,6 +1007,108 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
       }
       break;
 
+      case DGNST_BSPLINE_SURFACE_HEADER:
+      {
+          DGNElemBSplineSurfaceHeader *psSpline =
+            (DGNElemBSplineSurfaceHeader *) psElement;
+
+          fprintf( fp, "  desc_words=%d, curve type=%d\n",
+                   psSpline->desc_words, psSpline->curve_type);
+
+          fprintf( fp, "  U: properties=%02x",
+                   psSpline->u_properties);
+          if (psSpline->u_properties != 0) {
+            if (psSpline->u_properties & DGNBSC_CURVE_DISPLAY) {
+              fprintf(fp, ",CURVE_DISPLAY");
+            }
+            if (psSpline->u_properties & DGNBSC_POLY_DISPLAY) {
+              fprintf(fp, ",POLY_DISPLAY");
+            }
+            if (psSpline->u_properties & DGNBSC_RATIONAL) {
+              fprintf(fp, ",RATIONAL");
+            }
+            if (psSpline->u_properties & DGNBSC_CLOSED) {
+              fprintf(fp, ",CLOSED");
+            }
+            fprintf(fp, "\n");
+          }
+          fprintf( fp, "     order=%d\n  %d poles, %d knots, %d rule lines\n",
+                   psSpline->u_order, psSpline->num_poles_u, 
+                   psSpline->num_knots_u, psSpline->rule_lines_u);
+
+          fprintf( fp, "  V: properties=%02x",
+                   psSpline->v_properties);
+          if (psSpline->v_properties != 0) {
+            if (psSpline->v_properties & DGNBSS_ARC_SPACING) {
+              fprintf(fp, ",ARC_SPACING");
+            }
+            if (psSpline->v_properties & DGNBSS_CLOSED) {
+              fprintf(fp, ",CLOSED");
+            }
+            fprintf(fp, "\n");
+          }
+          fprintf( fp, "     order=%d\n  %d poles, %d knots, %d rule lines\n",
+                   psSpline->v_order, psSpline->num_poles_v, 
+                   psSpline->num_knots_v, psSpline->rule_lines_v);
+      }
+      break;
+
+      case DGNST_BSPLINE_CURVE_HEADER:
+      {
+          DGNElemBSplineCurveHeader *psSpline =
+            (DGNElemBSplineCurveHeader *) psElement;
+
+          fprintf( fp, 
+                   "  desc_words=%d, curve type=%d\n"
+                   "  properties=%02x",
+                   psSpline->desc_words, psSpline->curve_type,
+                   psSpline->properties);
+          if (psSpline->properties != 0) {
+            if (psSpline->properties & DGNBSC_CURVE_DISPLAY) {
+              fprintf(fp, ",CURVE_DISPLAY");
+            }
+            if (psSpline->properties & DGNBSC_POLY_DISPLAY) {
+              fprintf(fp, ",POLY_DISPLAY");
+            }
+            if (psSpline->properties & DGNBSC_RATIONAL) {
+              fprintf(fp, ",RATIONAL");
+            }
+            if (psSpline->properties & DGNBSC_CLOSED) {
+              fprintf(fp, ",CLOSED");
+            }
+            fprintf(fp, "\n");
+          }
+          fprintf( fp, "  order=%d\n  %d poles, %d knots\n",
+                   psSpline->order, psSpline->num_poles, psSpline->num_knots);
+      }
+      break;
+
+      case DGNST_BSPLINE_SURFACE_BOUNDARY:
+      {
+          DGNElemBSplineSurfaceBoundary *psBounds =
+            (DGNElemBSplineSurfaceBoundary *) psElement;
+
+          fprintf( fp, "  boundary number=%d, # vertices=%d\n",
+                   psBounds->number, psBounds->numverts);
+          for (int i=0;i<psBounds->numverts;i++) {
+            fprintf( fp, "  (%.6f,%.6f)\n",
+                     psBounds->vertices[i].x,
+                     psBounds->vertices[i].y);
+          }
+      }
+      break;
+
+      case DGNST_KNOT_WEIGHT:
+      {
+          DGNElemKnotWeight *psArray = (DGNElemKnotWeight *) psElement;
+          int numelems = (psArray->core.size-36)/4;
+          for (int i=0;i<numelems;i++) {
+            fprintf(fp, "  %.6f\n", 
+                    1.0f * psArray->array[i]/ ((1L << 31) - 1));
+          }
+      }
+      break;
+
       default:
         break;
     }
@@ -1125,8 +1218,23 @@ const char *DGNTypeToName( int nType )
       case DGNT_TEXT:
         return "Text";
 
-      case DGNT_BSPLINE:
-        return "B-Spline";
+      case DGNT_BSPLINE_POLE:
+        return "B-Spline Pole";
+
+      case DGNT_BSPLINE_SURFACE_HEADER:
+        return "B-Spline Surface Header";
+
+      case DGNT_BSPLINE_SURFACE_BOUNDARY:
+        return "B-Spline Surface Boundary";
+
+      case DGNT_BSPLINE_KNOT:
+        return "B-Spline Knot";
+
+      case DGNT_BSPLINE_CURVE_HEADER:
+        return "B-Spline Curve Header";
+
+      case DGNT_BSPLINE_WEIGHT_FACTOR:
+        return "B-Spline Weight Factor";
 
       case DGNT_APPLICATION_ELEM:
         return "Application Element";

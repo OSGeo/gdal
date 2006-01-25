@@ -49,6 +49,14 @@ Release Notes
 Release ?.??
 ------------
 
+ o B-Spline support:
+   - The DGNT_BSPLINE define was bogus, replaced with DGNT_BSPLINE_POLE.
+   - Added support for the following B-Spline related elements:
+     o DGNElemBSplineSurfaceHeader (24)
+     o DGNElemBSplineCurveHeader (27)
+     o DGNElemBSplineSurfaceBoundary (25)
+     o DGNElemKnotWeight (26/28)
+
  o Added initial support for Shared Cell Definition elements
 
  o 3D solid/surface fixes:
