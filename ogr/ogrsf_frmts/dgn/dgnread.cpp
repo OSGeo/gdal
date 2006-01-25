@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2006/01/25 19:01:40  kintel
+ * bugfix: Forgot to convert KnotWeight array from int to float
+ *
  * Revision 1.54  2006/01/25 18:43:19  kintel
  * B-Spline curve and surface support
  *
@@ -1112,7 +1115,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           int numelems = (psDGN->nElemBytes - 36 - attr_bytes)/4;
 
           psArray = (DGNElemKnotWeight *)
-            CPLCalloc(sizeof(DGNElemKnotWeight) + (numelems-1)*sizeof(long), 1);
+            CPLCalloc(sizeof(DGNElemKnotWeight) + (numelems-1)*sizeof(float), 1);
 
           psElement = (DGNElemCore *) psArray;
           psElement->stype = DGNST_KNOT_WEIGHT;
@@ -1120,7 +1123,8 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
 
           // Read array
           for (int i=0;i<numelems;i++) {
-            psArray->array[i] = DGN_INT32( psDGN->abyElem + 36 + i*4 );
+            psArray->array[i] = 
+              1.0f * DGN_INT32(psDGN->abyElem + 36 + i*4) / ((1L << 31) - 1);
           }
         }
       break;
