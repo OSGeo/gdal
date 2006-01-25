@@ -58,6 +58,7 @@ Release ?.??
    - Changed DGNCreateComplexHeaderElem() and 
      DGNCreateComplexHeaderElemFromGroup() to only support complex chains/shapes
    - Fixed bug creating solids/surfaces: totlength was 1 word too short.
+   - Renamed bogus define DGNSUT_SOLID to DGNSUT_SURFACE_OF_PROJECTION
 
  o Added support for cloning Cone elements
 
