@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2006/01/25 16:21:11  kintel
+ * Removed redundant color assignment to Cell Headers in DGNProcessElement()
+ *
  * Revision 1.51  2006/01/25 16:13:52  kintel
  * Initial support for Shared Cell Definitions
  *
@@ -455,7 +458,6 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           psCell->levels[1] = psDGN->abyElem[46] + psDGN->abyElem[47] * 256;
           psCell->levels[2] = psDGN->abyElem[48] + psDGN->abyElem[49] * 256;
           psCell->levels[3] = psDGN->abyElem[50] + psDGN->abyElem[51] * 256;
-          psCell->core.color = psDGN->abyElem[35];
 
           if( psDGN->dimension == 2 )
           {
