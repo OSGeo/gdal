@@ -28,17 +28,8 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.45  2006/01/25 18:33:18  kintel
- * Renamed bogus define DGNSUT_SOLID to DGNSUT_SURFACE_OF_PROJECTION
- *
- * Revision 1.44  2006/01/25 16:13:52  kintel
- * Initial support for Shared Cell Definitions
- *
- * Revision 1.43  2006/01/20 16:58:27  kintel
- * Changed DGNCreateComplex*() to only create complex chains/shapes, added new functions, DGNCreateSolid*() for creating 3D solids/surfaces
- *
- * Revision 1.42  2006/01/20 16:48:33  kintel
- * Added boundelms field to DGNElemComplexHeader
+ * Revision 1.46  2006/01/25 18:43:19  kintel
+ * B-Spline curve and surface support
  *
  * Revision 1.41  2005/12/19 15:37:18  fwarmerdam
  * Added CPL_DLL for some functions that were missing it.
@@ -254,7 +245,7 @@ typedef struct {
  * The core.stype code is DGNST_MULTIPOINT.
  *
  * Used for: DGNT_LINE(3), DGNT_LINE_STRING(4), DGNT_SHAPE(6), DGNT_CURVE(11),
- * DGNT_BSPLINE(21)
+ * DGNT_BSPLINE_POLE(21)
  */
 
 typedef struct {
@@ -558,7 +549,7 @@ typedef struct {
 
 typedef struct {
   DGNElemCore core;
-
+ 
   int       totlength; 	 	/*!<  Total length of the node
 				      (bytes = totlength * 2 + 38) */
   int       numelems;    	/*!<  Number of text strings */
@@ -574,6 +565,90 @@ typedef struct {
   DGNPoint  origin;       	/*!<  Snap origin (as defined by user) */
 
 } DGNElemTextNode;
+
+
+/** 
+ * B-Spline Surface Header element 
+ *
+ * The core.stype code is DGNST_BSPLINE_SURFACE_HEADER.
+ *
+ * Used for: DGNT_BSPLINE_SURFACE_HEADER(24)
+ */
+typedef struct {
+  DGNElemCore core;
+
+  long desc_words;               /*!< Total length of B-Spline surface in
+                                      words, excluding the first 20 words
+                                      (header + desc_words field) */
+  unsigned char curve_type;      /*!< curve type */
+  unsigned char u_order;         /*!< B-spline U order: 2-15 */
+  unsigned short u_properties;   /*!< surface U properties: 
+                                      ORing of DGNBSC_ flags */
+  short num_poles_u;             /*!< number of poles */
+  short num_knots_u;             /*!< number of knots */
+  short rule_lines_u;            /*!< number of rule lines */
+
+  unsigned char v_order;         /*!< B-spline V order: 2-15 */
+  unsigned short v_properties;   /*!< surface V properties: 
+                                      Oring of DGNBSS_ flags */
+  short num_poles_v;             /*!< number of poles */
+  short num_knots_v;             /*!< number of knots */
+  short rule_lines_v;            /*!< number of rule lines */
+
+  short num_bounds;              /*!< number of boundaries */
+} DGNElemBSplineSurfaceHeader;
+
+/** 
+ * B-Spline Curve Header element 
+ *
+ * The core.stype code is DGNST_BSPLINE_CURVE_HEADER.
+ *
+ * Used for: DGNT_BSPLINE_CURVE_HEADER(27)
+ */
+typedef struct {
+  DGNElemCore core;
+
+  long desc_words;               /*!< Total length of B-Spline curve in words,
+                                      excluding the first 20 words
+                                      (header + desc_words field) */
+  unsigned char order;           /*!< B-spline order: 2-15 */
+  unsigned char properties;      /*!< Properties: ORing of DGNBSC_ flags */
+  unsigned char curve_type;      /*!< curve type */
+  short num_poles;               /*!< number of poles, max. 101 */
+  short num_knots;               /*!< number of knots */
+} DGNElemBSplineCurveHeader;
+
+/** 
+ * B-Spline Surface Boundary element 
+ *
+ * The core.stype code is DGNST_BSPLINE_SURFACE_BOUNDARY
+ *
+ * Used for: DGNT_BSPLINE_SURFACE_BOUNDARY(25)
+ */
+typedef struct {
+  DGNElemCore core;
+
+  short number;         /*!< boundary number */
+  short numverts;       /*!< number of boundary vertices */
+  DGNPoint vertices[1]; /*!< Array of 1 or more 2D boundary vertices
+                            (in UV space) */
+} DGNElemBSplineSurfaceBoundary;
+
+/** 
+ * B-Spline Knot/Weight element 
+ *
+ * The core.stype code is DGNST_KNOT_WEIGHT
+ *
+ * Used for: DGNT_BSPLINE_KNOT(26), DGNT_BSPLINE_WEIGHT_FACTOR(28)
+ */
+typedef struct {
+  DGNElemCore core;
+
+  float array[1];         /*!< array (variable length). Length is
+                             given in the corresponding B-Spline
+                             header. */
+} DGNElemKnotWeight;
+
 
 /* -------------------------------------------------------------------- */
 /*      Structure types                                                 */
@@ -618,36 +693,55 @@ typedef struct {
 /** DGNElemCore style: Element uses DGNElemTextNode structure */
 #define DGNST_TEXT_NODE           13
 
+/** DGNElemCore style: Element uses DGNElemBSplineSurfaceHeader structure */
+#define DGNST_BSPLINE_SURFACE_HEADER   14
+
+/** DGNElemCore style: Element uses DGNElemBSplineCurveHeader structure */
+#define DGNST_BSPLINE_CURVE_HEADER     15
+
+/** DGNElemCore style: Element uses DGNElemBSplineSurfaceBoundary structure */
+#define DGNST_BSPLINE_SURFACE_BOUNDARY 16
+
+/** DGNElemCore style: Element uses DGNElemKnotWeight structure */
+#define DGNST_KNOT_WEIGHT              17
+
 /** DGNElemCore style: Element uses DGNElemSharedCellDefn structure */
 #define DGNST_SHARED_CELL_DEFN         18
+
 
 /* -------------------------------------------------------------------- */
 /*      Element types                                                   */
 /* -------------------------------------------------------------------- */
-#define DGNT_CELL_LIBRARY          1
-#define DGNT_CELL_HEADER           2
-#define DGNT_LINE                  3
-#define DGNT_LINE_STRING           4
-#define DGNT_GROUP_DATA            5
-#define DGNT_SHAPE                 6
-#define DGNT_TEXT_NODE             7
-#define DGNT_DIGITIZER_SETUP       8
-#define DGNT_TCB                   9
-#define DGNT_LEVEL_SYMBOLOGY      10
-#define DGNT_CURVE                11
-#define DGNT_COMPLEX_CHAIN_HEADER 12
-#define DGNT_COMPLEX_SHAPE_HEADER 14
-#define DGNT_ELLIPSE              15
-#define DGNT_ARC                  16
-#define DGNT_TEXT                 17
-#define DGNT_3DSURFACE_HEADER     18
-#define DGNT_3DSOLID_HEADER       19
-#define DGNT_BSPLINE              21
-#define DGNT_CONE                 23
-#define DGNT_SHARED_CELL_DEFN     34
-#define DGNT_SHARED_CELL_ELEM     35
-#define DGNT_TAG_VALUE            37
-#define DGNT_APPLICATION_ELEM     66
+#define DGNT_CELL_LIBRARY              1
+#define DGNT_CELL_HEADER               2
+#define DGNT_LINE                      3
+#define DGNT_LINE_STRING               4
+#define DGNT_GROUP_DATA                5
+#define DGNT_SHAPE                     6
+#define DGNT_TEXT_NODE                 7
+#define DGNT_DIGITIZER_SETUP           8
+#define DGNT_TCB                       9
+#define DGNT_LEVEL_SYMBOLOGY          10
+#define DGNT_CURVE                    11
+#define DGNT_COMPLEX_CHAIN_HEADER     12
+#define DGNT_COMPLEX_SHAPE_HEADER     14
+#define DGNT_ELLIPSE                  15
+#define DGNT_ARC                      16
+#define DGNT_TEXT                     17
+#define DGNT_3DSURFACE_HEADER         18
+#define DGNT_3DSOLID_HEADER           19
+#define DGNT_BSPLINE_POLE             21
+#define DGNT_POINT_STRING             22
+#define DGNT_BSPLINE_SURFACE_HEADER   24
+#define DGNT_BSPLINE_SURFACE_BOUNDARY 25
+#define DGNT_BSPLINE_KNOT             26
+#define DGNT_BSPLINE_CURVE_HEADER     27
+#define DGNT_BSPLINE_WEIGHT_FACTOR    28
+#define DGNT_CONE                     23
+#define DGNT_SHARED_CELL_DEFN         34
+#define DGNT_SHARED_CELL_ELEM         35
+#define DGNT_TAG_VALUE                37
+#define DGNT_APPLICATION_ELEM         66
 
 /* -------------------------------------------------------------------- */
 /*      Line Styles                                                     */
@@ -768,6 +862,20 @@ typedef struct {
 #define DGNCF_USE_SEED_ORIGIN             0x02
 #define DGNCF_COPY_SEED_FILE_COLOR_TABLE  0x04
 #define DGNCF_COPY_WHOLE_SEED_FILE        0x08
+
+/* -------------------------------------------------------------------- */
+/*      B-Spline Curve flags. Also used for U-direction of surfaces     */
+/* -------------------------------------------------------------------- */
+#define DGNBSC_CURVE_DISPLAY              0x10
+#define DGNBSC_POLY_DISPLAY               0x20
+#define DGNBSC_RATIONAL                   0x40
+#define DGNBSC_CLOSED                     0x80
+
+/* -------------------------------------------------------------------- */
+/*      B-Spline Curve flags for V-direction of surfaces.               */
+/* -------------------------------------------------------------------- */
+#define DGNBSS_ARC_SPACING                0x40
+#define DGNBSS_CLOSED                     0x80
 
 /* -------------------------------------------------------------------- */
 /*      API                                                             */

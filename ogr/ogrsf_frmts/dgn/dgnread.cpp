@@ -28,20 +28,8 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.53  2006/01/25 18:37:30  kintel
- * Added element types experienced not to have a display header
- *
- * Revision 1.52  2006/01/25 16:21:11  kintel
- * Removed redundant color assignment to Cell Headers in DGNProcessElement()
- *
- * Revision 1.51  2006/01/25 16:13:52  kintel
- * Initial support for Shared Cell Definitions
- *
- * Revision 1.50  2006/01/20 16:48:33  kintel
- * Added boundelms field to DGNElemComplexHeader
- *
- * Revision 1.49  2006/01/18 16:01:31  kintel
- * Bugfix: 3D surface/solid's surftype is stored as a byte value, not a word value
+ * Revision 1.54  2006/01/25 18:43:19  kintel
+ * B-Spline curve and surface support
  *
  * Revision 1.48  2005/11/18 17:43:12  fwarmerdam
  * Added text node support in DGNGetRawExtents().
@@ -315,7 +303,9 @@ DGNGetRawExtents( DGNInfo *psDGN, int nType, unsigned char *pabyRawData,
       case DGNT_LINE_STRING:
       case DGNT_SHAPE:
       case DGNT_CURVE:
-      case DGNT_BSPLINE:
+      case DGNT_BSPLINE_POLE:
+      case DGNT_BSPLINE_SURFACE_HEADER:
+      case DGNT_BSPLINE_CURVE_HEADER:
       case DGNT_ELLIPSE:
       case DGNT_ARC:
       case DGNT_TEXT:
@@ -619,7 +609,7 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
       case DGNT_LINE_STRING:
       case DGNT_SHAPE:
       case DGNT_CURVE:
-      case DGNT_BSPLINE:
+      case DGNT_BSPLINE_POLE:
       {
           DGNElemMultiPoint *psLine;
           int                i, count;
@@ -1035,6 +1025,105 @@ static DGNElemCore *DGNProcessElement( DGNInfo *psDGN, int nType, int nLevel )
           psShape->boundelms = psDGN->abyElem[41] + 1;
         }
         break;
+      case DGNT_BSPLINE_SURFACE_HEADER:
+        {
+          DGNElemBSplineSurfaceHeader *psSpline;
+
+          psSpline = (DGNElemBSplineSurfaceHeader *)
+            CPLCalloc(sizeof(DGNElemBSplineSurfaceHeader), 1);
+          psElement = (DGNElemCore *) psSpline;
+          psElement->stype = DGNST_BSPLINE_SURFACE_HEADER;
+          DGNParseCore( psDGN, psElement );
+
+          // Read B-Spline surface header
+          psSpline->desc_words = DGN_INT32(psDGN->abyElem + 36);
+          psSpline->curve_type = psDGN->abyElem[41];
+
+          // U
+          psSpline->u_order = (psDGN->abyElem[40] & 0x0f) + 2;
+          psSpline->u_properties = psDGN->abyElem[40] & 0xf0;
+          psSpline->num_poles_u = psDGN->abyElem[42] + psDGN->abyElem[43]*256;
+          psSpline->num_knots_u = psDGN->abyElem[44] + psDGN->abyElem[45]*256;
+          psSpline->rule_lines_u = psDGN->abyElem[46] + psDGN->abyElem[47]*256;
+
+          // V
+          psSpline->v_order = (psDGN->abyElem[48] & 0x0f) + 2;
+          psSpline->v_properties = psDGN->abyElem[48] & 0xf0;
+          psSpline->num_poles_v = psDGN->abyElem[50] + psDGN->abyElem[51]*256;
+          psSpline->num_knots_v = psDGN->abyElem[52] + psDGN->abyElem[53]*256;
+          psSpline->rule_lines_v = psDGN->abyElem[54] + psDGN->abyElem[55]*256;
+
+          psSpline->num_bounds = psDGN->abyElem[56] + psDGN->abyElem[57]*556;
+        }
+      break;
+      case DGNT_BSPLINE_CURVE_HEADER:
+        {
+          DGNElemBSplineCurveHeader *psSpline;
+
+          psSpline = (DGNElemBSplineCurveHeader *)
+            CPLCalloc(sizeof(DGNElemBSplineCurveHeader), 1);
+          psElement = (DGNElemCore *) psSpline;
+          psElement->stype = DGNST_BSPLINE_CURVE_HEADER;
+          DGNParseCore( psDGN, psElement );
+
+          // Read B-Spline curve header
+          psSpline->desc_words = DGN_INT32(psDGN->abyElem + 36);
+
+          // flags
+          psSpline->order = (psDGN->abyElem[40] & 0x0f) + 2;
+          psSpline->properties = psDGN->abyElem[40] & 0xf0;
+          psSpline->curve_type = psDGN->abyElem[41];
+
+          psSpline->num_poles = psDGN->abyElem[42] + psDGN->abyElem[43]*256;
+          psSpline->num_knots = psDGN->abyElem[44] + psDGN->abyElem[45]*256;
+        }
+      break;
+      case DGNT_BSPLINE_SURFACE_BOUNDARY:
+        {
+          DGNElemBSplineSurfaceBoundary *psBounds;
+          int numverts = psDGN->abyElem[38] + psDGN->abyElem[39]*256;
+
+          psBounds = (DGNElemBSplineSurfaceBoundary *)
+            CPLCalloc(sizeof(DGNElemBSplineSurfaceBoundary)+
+                      (numverts-1)*sizeof(DGNPoint), 1);
+          psElement = (DGNElemCore *) psBounds;
+          psElement->stype = DGNST_BSPLINE_SURFACE_BOUNDARY;
+          DGNParseCore( psDGN, psElement );
+
+          // Read B-Spline surface boundary
+          psBounds->number = psDGN->abyElem[36] + psDGN->abyElem[37]*256;
+          psBounds->numverts = numverts;
+
+          for (int i=0;i<psBounds->numverts;i++) {
+            psBounds->vertices[i].x = DGN_INT32( psDGN->abyElem + 40 + i*8 );
+            psBounds->vertices[i].y = DGN_INT32( psDGN->abyElem + 44 + i*8 );
+            psBounds->vertices[i].z = 0;
+          }
+        }
+      break;
+      case DGNT_BSPLINE_KNOT:
+      case DGNT_BSPLINE_WEIGHT_FACTOR:
+        {
+          DGNElemKnotWeight *psArray;
+          // FIXME: Is it OK to assume that the # of elements corresponds
+          // directly to the element size? kintel 20051215.
+          int attr_bytes = psDGN->nElemBytes - 
+            (psDGN->abyElem[30] + psDGN->abyElem[31]*256)*2 - 32;
+          int numelems = (psDGN->nElemBytes - 36 - attr_bytes)/4;
+
+          psArray = (DGNElemKnotWeight *)
+            CPLCalloc(sizeof(DGNElemKnotWeight) + (numelems-1)*sizeof(long), 1);
+
+          psElement = (DGNElemCore *) psArray;
+          psElement->stype = DGNST_KNOT_WEIGHT;
+          DGNParseCore( psDGN, psElement );
+
+          // Read array
+          for (int i=0;i<numelems;i++) {
+            psArray->array[i] = DGN_INT32( psDGN->abyElem + 36 + i*4 );
+          }
+        }
+      break;
       case DGNT_SHARED_CELL_DEFN:
       {
           DGNElemSharedCellDefn *psShared;
@@ -1833,7 +1922,7 @@ void DGNBuildIndex( DGNInfo *psDGN )
 
         if( nType == DGNT_LINE || nType == DGNT_LINE_STRING
             || nType == DGNT_SHAPE || nType == DGNT_CURVE
-            || nType == DGNT_BSPLINE )
+            || nType == DGNT_BSPLINE_POLE )
             psEI->stype = DGNST_MULTIPOINT;
 
         else if( nType == DGNT_GROUP_DATA && nLevel == DGN_GDL_COLOR_TABLE )
