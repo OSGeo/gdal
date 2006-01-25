@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2006/01/25 18:37:30  kintel
+ * Added element types experienced not to have a display header
+ *
  * Revision 1.52  2006/01/25 16:21:11  kintel
  * Removed redundant color assignment to Cell Headers in DGNProcessElement()
  *
@@ -1197,6 +1200,9 @@ int DGNElemTypeHasDispHdr( int nElemType )
       case 50:
       case 51:
       case 57:
+      case 60:
+      case 61:
+      case 62:
       case 63:
         return FALSE;
         
