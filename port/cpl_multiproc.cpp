@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/01/25 19:52:25  fwarmerdam
+ * default to avoiding as much mutex overhead as opposed if MUTEX_NONE defined
+ *
  * Revision 1.16  2005/08/31 01:00:51  fwarmerdam
  * Fixed assert limits.
  *
@@ -84,7 +87,9 @@
 
 CPL_CVSID("$Id$");
 
-#undef DEBUG
+#if defined(CPL_MULTIPROC_STUB) && !defined(DEBUG)
+#  define MUTEX_NONE
+#endif
 
 /************************************************************************/
 /*                           CPLMutexHolder()                           */
@@ -95,10 +100,11 @@ CPLMutexHolder::CPLMutexHolder( void **phMutex, double dfWaitInSeconds,
                                 int nLineIn )
 
 {
+#ifndef MUTEX_NONE
     pszFile = pszFileIn;
     nLine = nLineIn;
 
-#ifdef DEBUG
+#ifdef DEBUG_MUTEX
     CPLDebug( "MH", "Request %p for pid %d at %d/%s", 
               *phMutex, CPLGetPID(), nLine, pszFile );
 #endif
@@ -110,13 +116,14 @@ CPLMutexHolder::CPLMutexHolder( void **phMutex, double dfWaitInSeconds,
     }
     else
     {
-#ifdef DEBUG
+#ifdef DEBUG_MUTEX
         CPLDebug( "MH", "Acquired %p for pid %d at %d/%s", 
                   *phMutex, CPLGetPID(), nLine, pszFile );
 #endif
 
         hMutex = *phMutex;
     }
+#endif /* ndef MUTEX_NONE */
 }
 
 /************************************************************************/
@@ -126,14 +133,16 @@ CPLMutexHolder::CPLMutexHolder( void **phMutex, double dfWaitInSeconds,
 CPLMutexHolder::~CPLMutexHolder()
 
 {
+#ifndef MUTEX_NONE
     if( hMutex != NULL )
     {
-#ifdef DEBUG
+#ifdef DEBUG_MUTEX
         CPLDebug( "MH", "Release %p for pid %d at %d/%s", 
                   hMutex, CPLGetPID(), nLine, pszFile );
 #endif
         CPLReleaseMutex( hMutex );
     }
+#endif /* ndef MUTEX_NONE */
 }
 
 
@@ -144,6 +153,7 @@ CPLMutexHolder::~CPLMutexHolder()
 int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
 
 {
+#ifndef MUTEX_NONE
     static void *hCOAMutex = NULL;
 
     /*
@@ -174,6 +184,7 @@ int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
         
         return bSuccess;
     }
+#endif /* ndef MUTEX_NONE */
 }
 
 /************************************************************************/
@@ -232,6 +243,7 @@ const char *CPLGetThreadingModel()
 void *CPLCreateMutex()
 
 {
+#ifndef MUTEX_NONE
     unsigned char *pabyMutex = (unsigned char *) CPLMalloc( 4 );
 
     pabyMutex[0] = 1;
@@ -240,6 +252,9 @@ void *CPLCreateMutex()
     pabyMutex[3] = 'd';
 
     return (void *) pabyMutex;
+#else
+    return (void *) 0xdeadbeef;
+#endif 
 }
 
 /************************************************************************/
@@ -249,6 +264,7 @@ void *CPLCreateMutex()
 int CPLAcquireMutex( void *hMutex, double dfWaitInSeconds )
 
 {
+#ifndef MUTEX_NONE
     unsigned char *pabyMutex = (unsigned char *) hMutex;
 
     CPLAssert( pabyMutex[1] == 'r' && pabyMutex[2] == 'e' 
@@ -257,6 +273,9 @@ int CPLAcquireMutex( void *hMutex, double dfWaitInSeconds )
     pabyMutex[0] += 1;
 
     return TRUE;
+#else
+    return TRUE;
+#endif
 }
 
 /************************************************************************/
@@ -266,6 +285,7 @@ int CPLAcquireMutex( void *hMutex, double dfWaitInSeconds )
 void CPLReleaseMutex( void *hMutex )
 
 {
+#ifndef MUTEX_NONE
     unsigned char *pabyMutex = (unsigned char *) hMutex;
 
     CPLAssert( pabyMutex[1] == 'r' && pabyMutex[2] == 'e' 
@@ -277,6 +297,7 @@ void CPLReleaseMutex( void *hMutex )
                   pabyMutex[0] );
 
     pabyMutex[0] -= 1;
+#endif
 }
 
 /************************************************************************/
@@ -286,12 +307,14 @@ void CPLReleaseMutex( void *hMutex )
 void CPLDestroyMutex( void *hMutex )
 
 {
+#ifndef MUTEX_NONE
     unsigned char *pabyMutex = (unsigned char *) hMutex;
 
     CPLAssert( pabyMutex[1] == 'r' && pabyMutex[2] == 'e' 
                && pabyMutex[3] == 'd' );
 
     CPLFree( pabyMutex );
+#endif
 }
 
 /************************************************************************/
