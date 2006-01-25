@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2006/01/25 18:33:18  kintel
+ * Renamed bogus define DGNSUT_SOLID to DGNSUT_SURFACE_OF_PROJECTION
+ *
  * Revision 1.44  2006/01/25 16:13:52  kintel
  * Initial support for Shared Cell Definitions
  *
@@ -661,7 +664,7 @@ typedef struct {
 /* -------------------------------------------------------------------- */
 /*      3D Surface Types                                                */
 /* -------------------------------------------------------------------- */
-#define DGNSUT_SOLID                    0
+#define DGNSUT_SURFACE_OF_PROJECTION    0
 #define DGNSUT_BOUNDED_PLANE            1
 #define DGNSUT_BOUNDED_PLANE2           2
 #define DGNSUT_RIGHT_CIRCULAR_CYLINDER  3
