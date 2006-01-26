@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.24  2006/01/26 23:40:39  fwarmerdam
+#  treat nodata as a float.
+#
 #  Revision 1.23  2005/11/25 02:13:36  fwarmerdam
 #  Added --help-general.
 #
@@ -366,7 +369,7 @@ if __name__ == '__main__':
 
         elif arg == '-n':
             i = i + 1
-            nodata = int(argv[i])
+            nodata = float(argv[i])
 
         elif arg == '-f':
             # for backward compatibility.
