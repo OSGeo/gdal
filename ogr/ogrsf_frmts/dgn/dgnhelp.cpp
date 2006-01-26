@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2006/01/26 20:38:18  kintel
+ * bugfix: DGNDumpElement(): Print DGNElemKnotWeight correctly
+ *
  * Revision 1.32  2006/01/26 15:59:29  kintel
  * Cosmetic: Missing newline in DGNDumpElement() when properties was 0 for B-Splines
  *
@@ -1106,8 +1109,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
           DGNElemKnotWeight *psArray = (DGNElemKnotWeight *) psElement;
           int numelems = (psArray->core.size-36)/4;
           for (int i=0;i<numelems;i++) {
-            fprintf(fp, "  %.6f\n", 
-                    1.0f * psArray->array[i]/ ((1L << 31) - 1));
+            fprintf(fp, "  %.6f\n", psArray->array[i]);
           }
       }
       break;
