@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature_mif.cpp,v 1.29 2005/10/04 19:36:10 dmorissette Exp $
+ * $Id: mitab_feature_mif.cpp,v 1.30 2006/01/26 21:26:36 fwarmerdam Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature_mif.cpp,v $
+ * Revision 1.30  2006/01/26 21:26:36  fwarmerdam
+ * fixed bug with multi character delimeters in .mid file
+ *
  * Revision 1.29  2005/10/04 19:36:10  dmorissette
  * Added support for reading collections from MIF files (bug 1126)
  *
@@ -142,6 +145,55 @@
  *                      class TABFeature
  *====================================================================*/
 
+/************************************************************************/
+/*                            MIDTokenize()                             */
+/*                                                                      */
+/*      We implement a special tokenize function so we can handle       */
+/*      multibyte delimeters (ie. MITAB bug 1266).                      */
+/*                                                                      */
+/*      http://bugzilla.maptools.org/show_bug.cgi?id=1266               */
+/************************************************************************/
+static char **MIDTokenize( const char *pszLine, const char *pszDelim )
+
+{
+    char **papszResult = NULL;
+    int iChar, iTokenChar = 0, bInQuotes = FALSE;
+    char *pszToken = (char *) CPLMalloc(strlen(pszLine)+1);
+    int nDelimLen = strlen(pszDelim);
+
+    for( iChar = 0; pszLine[iChar] != '\0'; iChar++ )
+    {
+        if( bInQuotes && pszLine[iChar] == '\\' && pszLine[iChar+1] == '"' )
+        {
+            pszToken[iTokenChar++] = '"';
+            iChar++;
+        }
+        else if( pszLine[iChar] == '"' )
+        {
+            bInQuotes = !bInQuotes;
+        }
+        else if( !bInQuotes && strncmp(pszLine+iChar,pszDelim,nDelimLen) == 0 )
+        {
+            pszToken[iTokenChar++] = '\0';
+            papszResult = CSLAddString( papszResult, pszToken );
+            
+            iChar += strlen(pszDelim) - 1;
+            iTokenChar = 0;
+        }
+        else
+        {
+            pszToken[iTokenChar++] = pszLine[iChar];
+        }
+    }
+
+    pszToken[iTokenChar++] = '\0';
+    papszResult = CSLAddString( papszResult, pszToken );
+
+    CPLFree( pszToken );
+
+    return papszResult;
+}
+
 /**********************************************************************
  *                   TABFeature::ReadRecordFromMIDFile()
  *
@@ -168,8 +220,7 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
         return -1;
     }
 
-    papszToken = CSLTokenizeStringComplex(pszLine,
-                                          fp->GetDelimiter(),TRUE,TRUE); 
+    papszToken = MIDTokenize( pszLine, fp->GetDelimiter() );
 
     // Ensure that a blank line in a mid file is treated as one field 
     // containing an empty string.
