@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2006/01/26 15:59:29  kintel
+ * Cosmetic: Missing newline in DGNDumpElement() when properties was 0 for B-Splines
+ *
  * Revision 1.31  2006/01/25 18:43:19  kintel
  * B-Spline curve and surface support
  *
@@ -1030,8 +1033,8 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             if (psSpline->u_properties & DGNBSC_CLOSED) {
               fprintf(fp, ",CLOSED");
             }
-            fprintf(fp, "\n");
           }
+          fprintf(fp, "\n");
           fprintf( fp, "     order=%d\n  %d poles, %d knots, %d rule lines\n",
                    psSpline->u_order, psSpline->num_poles_u, 
                    psSpline->num_knots_u, psSpline->rule_lines_u);
@@ -1045,8 +1048,8 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             if (psSpline->v_properties & DGNBSS_CLOSED) {
               fprintf(fp, ",CLOSED");
             }
-            fprintf(fp, "\n");
           }
+          fprintf(fp, "\n");
           fprintf( fp, "     order=%d\n  %d poles, %d knots, %d rule lines\n",
                    psSpline->v_order, psSpline->num_poles_v, 
                    psSpline->num_knots_v, psSpline->rule_lines_v);
@@ -1076,8 +1079,8 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             if (psSpline->properties & DGNBSC_CLOSED) {
               fprintf(fp, ",CLOSED");
             }
-            fprintf(fp, "\n");
           }
+          fprintf(fp, "\n");
           fprintf( fp, "  order=%d\n  %d poles, %d knots\n",
                    psSpline->order, psSpline->num_poles, psSpline->num_knots);
       }
