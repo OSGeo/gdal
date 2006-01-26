@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2006/01/26 17:20:01  fwarmerdam
+ * Changed to include <zlib.h> instead of "zlib.h" as suggested by
+ * Markus N.
+ *
  * Revision 1.14  2005/11/15 01:19:30  dwallner
  * Allow zero block offsets
  *
@@ -75,8 +79,8 @@
  */
 
 #include <float.h>
+#include <zlib.h>
 #include "gdal_pam.h"
-#include "zlib.h"
 
 CPL_CVSID("$Id$");
 
