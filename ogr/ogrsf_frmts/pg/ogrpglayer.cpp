@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2006/01/27 00:10:32  fwarmerdam
+ * added Get{FID,Geometry}Column() support
+ *
  * Revision 1.27  2006/01/16 15:36:33  fwarmerdam
  * disable PQfformat calls in pre7.4 client libs
  *
@@ -1020,4 +1023,30 @@ OGRSpatialReference *OGRPGLayer::GetSpatialRef()
     }
 
     return poSRS;
+}
+
+/************************************************************************/
+/*                            GetFIDColumn()                            */
+/************************************************************************/
+
+const char *OGRPGLayer::GetFIDColumn() 
+
+{
+    if( pszFIDColumn != NULL )
+        return pszFIDColumn;
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                         GetGeometryColumn()                          */
+/************************************************************************/
+
+const char *OGRPGLayer::GetGeometryColumn() 
+
+{
+    if( pszGeomColumn != NULL )
+        return pszGeomColumn;
+    else
+        return "";
 }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2006/01/27 00:08:36  fwarmerdam
+ * added Get{FID,Geometry}Column() support
+ *
  * Revision 1.30  2005/10/28 16:47:21  fwarmerdam
  * Added OGRCleanupAll().
  *
@@ -374,7 +377,8 @@ int    CPL_DLL OGR_L_Dereference( OGRLayerH );
 int    CPL_DLL OGR_L_GetRefCount( OGRLayerH );
 OGRErr CPL_DLL OGR_L_SyncToDisk( OGRLayerH );
 GIntBig CPL_DLL OGR_L_GetFeaturesRead( OGRLayerH );
-
+const char CPL_DLL *OGR_L_GetFIDColumn( OGRLayerH );
+const char CPL_DLL *OGR_L_GetGeometryColumn( OGRLayerH );
 /* OGRDataSource */
 
 void   CPL_DLL OGR_DS_Destroy( OGRDataSourceH );

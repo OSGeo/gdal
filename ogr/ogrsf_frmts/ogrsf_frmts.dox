@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2006/01/27 00:09:07  fwarmerdam
+ * added Get{FID,Geometry}Column() support
+ *
  * Revision 1.26  2005/10/25 19:58:53  fwarmerdam
  * added driver tracking on datasource
  *
@@ -1878,4 +1881,29 @@ form depending on the limitations of the format driver.
  @return OGRERR_NONE on success.
 
 */
+
+/**
+ \fn const char *OGRLayer::GetFIDColumn();
+
+ This method returns the name of the underlying database column
+ being used as the FID column, or "" if not supported.
+
+ This method is the same as the C function OGR_L_GetFIDColumn().
+
+ @return fid column name.
+ 
+ */
+
+/**
+ \fn const char *OGRLayer::GetGeometryColumn();
+
+ This method returns the name of the underlying database column
+ being used as the geometry column, or "" if not supported.
+
+ This method is the same as the C function OGR_L_GetFIDColumn().
+
+ @return fid column name.
+ 
+ */
+
 
