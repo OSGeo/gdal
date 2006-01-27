@@ -498,8 +498,8 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
                       GetMIFParm( papszNextField, 2, 0.0 ),
                       90.0,
                       GetMIFParm( papszNextField, 3, 1.0 ),
-                      GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv,
-                      GetMIFParm( papszNextField, 5, 0.0 ) * dfUnitsConv );
+                      GetMIFParm( papszNextField, 4, 0.0 * dfUnitsConv ),
+                      GetMIFParm( papszNextField, 5, 0.0 * dfUnitsConv ) );
         break;
 
         /*--------------------------------------------------------------
@@ -537,7 +537,7 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
                             GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv);
         break;
 
-        /*--------------------------------------------------------------
+        /*----------------------------------------------------------------
          * Transverse Mercator,(modified for Danish System 34/45 Bornholm)
          *---------------------------------------------------------------*/
       case 23:
