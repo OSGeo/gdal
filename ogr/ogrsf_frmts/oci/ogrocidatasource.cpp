@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2006/01/27 15:47:36  fwarmerdam
+ * preliminary Get{FID/Geometry}Column support
+ *
  * Revision 1.30  2005/10/11 19:23:11  fwarmerdam
  * fixed bugin DeleteLayer
  *
@@ -378,7 +381,8 @@ void OGROCIDataSource::ValidateLayer( const char *pszLayerName )
 /* -------------------------------------------------------------------- */
     OGROCITableLayer *poLayer = (OGROCITableLayer *) papoLayers[iLayer];
 
-    if( poLayer->GetFIDName() == NULL || poLayer->GetGeomName() == NULL )
+    if( strlen(poLayer->GetFIDName()) == 0 
+        || strlen(poLayer->GetGeomName()) == 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "ValidateLayer(): %s lacks a geometry or fid column.", 
@@ -394,9 +398,9 @@ void OGROCIDataSource::ValidateLayer( const char *pszLayerName )
     OGROCIStatement oValidateStmt( GetSession() );
 
     oValidateCmd.Append( "SELECT c." );
-    oValidateCmd.Append( poLayer->GetFIDName() );
+    oValidateCmd.Append( poLayer->GetFIDColumn() );
     oValidateCmd.Append( ", SDO_GEOM.VALIDATE_GEOMETRY(c." );
-    oValidateCmd.Append( poLayer->GetGeomName() );
+    oValidateCmd.Append( poLayer->GetGeomColumn() );
     oValidateCmd.Append( ", m.diminfo) from " );
     oValidateCmd.Append( poLayer->GetLayerDefn()->GetName() );
     oValidateCmd.Append( " c, user_sdo_geom_metadata m WHERE m.table_name= '");
