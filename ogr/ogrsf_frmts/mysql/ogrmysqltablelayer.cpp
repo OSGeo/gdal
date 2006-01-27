@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2006/01/27 01:08:29  fwarmerdam
+ * Various fixes for when the geometry columns or srid tables are
+ * missing.  Avoid issue errors in this case, they are optional.
+ *
  * Revision 1.14  2006/01/19 06:31:44  hobu
  * Use MBRIntersects for spatial filters.
  * Test the envelope rather than the entire geometry.
@@ -319,6 +323,14 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
     mysql_free_result( hResult );
 
 
+    if( bHasFid )
+        CPLDebug( "MySQL", "table %s has FID column %s.",
+                  pszTable, pszFIDColumn );
+    else
+        CPLDebug( "MySQL", 
+                  "table %s has no FID column, FIDs will not be reliable!",
+                  pszTable );
+
     if (pszGeomColumn) 
     {
         char*        pszType=NULL;
@@ -329,20 +341,13 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         sprintf(szCommand, "SELECT type FROM geometry_columns WHERE f_table_name='%s'",
                 pszTable );
         
-        if( mysql_query( poDS->GetConn(), szCommand ) )
-        {
-            poDS->ReportError( "SELECT type from geometry_columns Failed" );
-            return FALSE;
-        }
+        hResult = NULL;
+        if( !mysql_query( poDS->GetConn(), szCommand ) )
+            hResult = mysql_store_result( poDS->GetConn() );
 
-        hResult = mysql_store_result( poDS->GetConn() );
-        if( hResult == NULL )
-        {
-            poDS->ReportError( "mysql_store_result() failed on SELECT type result." );
-            return FALSE;
-        }
-        	
-        papszRow = mysql_fetch_row( hResult );
+        papszRow = NULL;
+        if( hResult != NULL )
+            papszRow = mysql_fetch_row( hResult );
 
         if( papszRow != NULL && papszRow[0] != NULL )
         {
@@ -369,23 +374,11 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
             poDefn->SetGeomType( nGeomType );
 
         } 
-        else 
-        {
-            poDS->ReportError( "Table did not have an entry in geometry_columns "  );
-            return FALSE;            
-        }
-        
-        mysql_free_result( hResult );   //Free our query results for finding type.
+
+        if( hResult != NULL )
+            mysql_free_result( hResult );   //Free our query results for finding type.
     } 
     
-    if( bHasFid )
-        CPLDebug( "MySQL", "table %s has FID column %s.",
-                  pszTable, pszFIDColumn );
-    else
-        CPLDebug( "MySQL", 
-                  "table %s has no FID column, FIDs will not be reliable!",
-                  pszTable );
-
     return poDefn;
 }
 
@@ -730,32 +723,22 @@ int OGRMySQLTableLayer::GetFeatureCount( int bForce )
 OGRSpatialReference *OGRMySQLTableLayer::GetSpatialRef()
 
 {
-
-
     if( nSRSId == -2 )
     {
-	
         MYSQL_RES    *hResult;
         char         szCommand[1024];
     
-
         sprintf( szCommand, 
-                "SELECT srid FROM geometry_columns "
-                "WHERE f_table_name = '%s'",
-                poFeatureDefn->GetName() );
+                 "SELECT srid FROM geometry_columns "
+                 "WHERE f_table_name = '%s'",
+                 poFeatureDefn->GetName() );
+
         if( mysql_query( poDS->GetConn(), szCommand ) )
-        {
-            poDS->ReportError( "SELECT srtext Failed" );
-            return FALSE;
-        }
+            return NULL;
 
         hResult = mysql_store_result( poDS->GetConn() );
         if( hResult == NULL )
-        {
-            poDS->ReportError( "mysql_store_result() failed on SELECT SRTEXT result." );
-            return FALSE;
-        }
-    
+            return NULL;
         	
         nSRSId = -1;
         char **papszRow = mysql_fetch_row( hResult );
@@ -767,8 +750,6 @@ OGRSpatialReference *OGRMySQLTableLayer::GetSpatialRef()
 
         mysql_free_result( hResult );
     }
-
-
 
 /* -------------------------------------------------------------------- */
 /*      Try to find in the existing table.                              */
@@ -783,7 +764,7 @@ OGRSpatialReference *OGRMySQLTableLayer::GetSpatialRef()
     if( mysql_query( poDS->GetConn(), szCommand ) )
     {
         poDS->ReportError( "SELECT srid Failed" );
-        return FALSE;
+        return NULL;
     }     
     
     hResult = mysql_store_result( poDS->GetConn() );
