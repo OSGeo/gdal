@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/01/27 00:08:36  fwarmerdam
+ * added Get{FID,Geometry}Column() support
+ *
  * Revision 1.28  2005/11/25 02:16:53  fwarmerdam
  * Added --help-general.
  *
@@ -443,6 +446,14 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
 
         printf( "Layer SRS WKT:\n%s\n", pszWKT );
         CPLFree( pszWKT );
+
+        if( strlen(poLayer->GetFIDColumn()) > 0 )
+            printf( "FID Column = %s\n", 
+                    poLayer->GetFIDColumn() );
+    
+        if( strlen(poLayer->GetGeometryColumn()) > 0 )
+            printf( "Geometry Column = %s\n", 
+                    poLayer->GetGeometryColumn() );
     
         for( int iAttr = 0; iAttr < poDefn->GetFieldCount(); iAttr++ )
         {

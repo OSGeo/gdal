@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/01/27 00:10:32  fwarmerdam
+ * added Get{FID,Geometry}Column() support
+ *
  * Revision 1.24  2006/01/21 03:48:29  fwarmerdam
  * Use CPLString for some OGRPGTableLayer buffers
  *
@@ -174,6 +177,9 @@ class OGRPGLayer : public OGRLayer
     virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int         TestCapability( const char * );
+
+    virtual const char *GetFIDColumn();
+    virtual const char *GetGeometryColumn();
 
     /* custom methods */
     virtual OGRFeature *RecordToFeature( int iRecord );

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/01/27 00:09:59  fwarmerdam
+ * added Get{FID,Geometry}Column() support
+ *
  * Revision 1.24  2005/02/22 12:47:47  fwarmerdam
  * use haveGEOS() test, instead of HAVE_GEOS
  *
@@ -917,4 +920,43 @@ GIntBig OGR_L_GetFeaturesRead( OGRLayerH hLayer )
     return ((OGRLayer *) hLayer)->GetFeaturesRead();
 }
 
+/************************************************************************/
+/*                             GetFIDColumn                             */
+/************************************************************************/
+
+const char *OGRLayer::GetFIDColumn()
+
+{
+    return "";
+}
+
+/************************************************************************/
+/*                         OGR_L_GetFIDColumn()                         */
+/************************************************************************/
+
+const char *OGR_L_GetFIDColumn( OGRLayerH hLayer )
+
+{
+    return ((OGRLayer *) hLayer)->GetFIDColumn();
+}
+
+/************************************************************************/
+/*                         GetGeometryColumn()                          */
+/************************************************************************/
+
+const char *OGRLayer::GetGeometryColumn()
+
+{
+    return "";
+}
+
+/************************************************************************/
+/*                      OGR_L_GetGeometryColumn()                       */
+/************************************************************************/
+
+const char *OGR_L_GetGeometryColumn( OGRLayerH hLayer )
+
+{
+    return ((OGRLayer *) hLayer)->GetGeometryColumn();
+}
 
