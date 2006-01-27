@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature_mif.cpp,v 1.30 2006/01/26 21:26:36 fwarmerdam Exp $
+ * $Id: mitab_feature_mif.cpp,v 1.31 2006/01/27 13:44:44 fwarmerdam Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature_mif.cpp,v $
+ * Revision 1.31  2006/01/27 13:44:44  fwarmerdam
+ * fixed Mills.mif reading, crash at file end
+ *
  * Revision 1.30  2006/01/26 21:26:36  fwarmerdam
  * fixed bug with multi character delimeters in .mid file
  *
@@ -368,8 +371,9 @@ int TABPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     // Read optional SYMBOL line...
     pszLine = fp->GetLastLine();
-    papszToken = CSLTokenizeStringComplex(pszLine," ,()\t",
-                                          TRUE,FALSE);
+    if( pszLine != NULL )
+        papszToken = CSLTokenizeStringComplex(pszLine," ,()\t",
+                                              TRUE,FALSE);
     if (CSLCount(papszToken) == 4 && EQUAL(papszToken[0], "SYMBOL") )
     {
         SetSymbolNo(atoi(papszToken[1]));
