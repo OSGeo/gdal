@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.123  2006/01/27 16:16:53  fwarmerdam
+ * use internal OGRGetDriverByName
+ *
  * Revision 1.122  2005/10/25 20:00:53  fwarmerdam
  * driver tracking on datasource now in core
  *
@@ -3486,6 +3489,7 @@ int     OGR_Dr_DeleteDataSource( OGRSFDriverH, const char * );
 OGRDataSourceH OGROpen( const char *, int, void * );
 void           OGRRegisterDriver( OGRSFDriverH );
 int            OGRGetDriverCount();
+OGRSFDriverH   OGRGetDriverByName( const char * );
 OGRSFDriverH   OGRGetDriver( int );
 OGRDataSourceH OGROpenShared( const char *, int, OGRSFDriverH * );
 int            OGRReleaseDataSource( OGRDataSourceH );

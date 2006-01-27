@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.116  2005/10/25 20:00:53  fwarmerdam
- * driver tracking on datasource now in core
+ * Revision 1.117  2006/01/27 16:16:53  fwarmerdam
+ * use internal OGRGetDriverByName
  *
  ************************************************************************/
 
@@ -11320,6 +11320,21 @@ static PyObject *_wrap_OGRGetDriverCount(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OGRGetDriverByName(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OGRSFDriverH  _result;
+    char * _arg0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OGRGetDriverByName",&_arg0)) 
+        return NULL;
+    _result = (OGRSFDriverH )OGRGetDriverByName(_arg0);
+    SWIG_MakePtr(_ptemp, (char *) _result,"_OGRSFDriverH");
+    _resultobj = Py_BuildValue("s",_ptemp);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OGRGetDriver(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     OGRSFDriverH  _result;
@@ -11620,6 +11635,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OGRReleaseDataSource", _wrap_OGRReleaseDataSource, 1 },
 	 { "OGROpenShared", _wrap_OGROpenShared, 1 },
 	 { "OGRGetDriver", _wrap_OGRGetDriver, 1 },
+	 { "OGRGetDriverByName", _wrap_OGRGetDriverByName, 1 },
 	 { "OGRGetDriverCount", _wrap_OGRGetDriverCount, 1 },
 	 { "OGRRegisterDriver", _wrap_OGRRegisterDriver, 1 },
 	 { "OGROpen", _wrap_OGROpen, 1 },

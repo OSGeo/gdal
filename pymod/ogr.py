@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.55  2006/01/27 16:16:54  fwarmerdam
+# use internal OGRGetDriverByName
+#
 # Revision 1.54  2005/10/25 20:00:53  fwarmerdam
 # driver tracking on datasource now in core
 #
@@ -357,12 +360,11 @@ def GetDriver( driver_index ):
         return Driver( dr_o )
 
 def GetDriverByName( name ):
-    count = GetDriverCount()
-    for i in range(count):
-        dr = GetDriver( i )
-        if dr.GetName() == name:
-            return dr
-    raise OGRError, 'Unable to find ogr.Driver named "%s".' % name
+    dr_o = _gdal.OGRGetDriverByName( name )
+    if dr_o is None or dr_o == 'NULL':
+        raise OGRError, 'Unable to find ogr.Driver named "%s".' % name
+    else:
+        return Driver( dr_o )
 
 def GetOpenDSCount():
     return _gdal.OGRGetOpenDSCount()
