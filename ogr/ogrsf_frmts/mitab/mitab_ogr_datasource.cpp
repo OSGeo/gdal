@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_ogr_datasource.cpp,v 1.10 2005/09/20 04:40:02 fwarmerdam Exp $
+ * $Id: mitab_ogr_datasource.cpp,v 1.11 2006/01/27 14:27:35 fwarmerdam Exp $
  *
  * Name:     mitab_ogr_datasource.cpp
  * Project:  MapInfo Mid/Mif, Tab ogr support
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_ogr_datasource.cpp,v $
+ * Revision 1.11  2006/01/27 14:27:35  fwarmerdam
+ * fixed ogr bounds setting problems (bug 1198)
+ *
  * Revision 1.10  2005/09/20 04:40:02  fwarmerdam
  * fixed CPLReadDir memory leak
  *
@@ -182,8 +185,6 @@ int OGRTABDataSource::Create( const char * pszName, char **papszOptions )
             delete poFile;
             return FALSE;
         }
-        
-        poFile->SetBounds( -30000000, -15000000, 30000000, 15000000 );
         
         m_nLayerCount = 1;
         m_papoLayers = (IMapInfoFile **) CPLMalloc(sizeof(void*));
@@ -351,7 +352,7 @@ OGRTABDataSource::CreateLayer( const char * pszLayerName,
         if( m_bSingleLayerAlreadyCreated )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
-                    "Unable to create new layers in this single file dataset.");
+                      "Unable to create new layers in this single file dataset.");
             return NULL;
         }
 
@@ -402,14 +403,13 @@ OGRTABDataSource::CreateLayer( const char * pszLayerName,
     if( poSRSIn != NULL )
         poFile->SetSpatialRef( poSRSIn );
 
-    if( poSRSIn != NULL && poSRSIn->GetRoot() != NULL
-        && EQUAL(poSRSIn->GetRoot()->GetValue(),"GEOGCS") )
+    if( !poFile->IsBoundsSet() && !m_bCreateMIF )
     {
-        poFile->SetBounds( -1000, -1000, 1000, 1000 );
-    }
-    else
-    {
-        poFile->SetBounds( -30000000, -15000000, 30000000, 15000000 );
+        if( poSRSIn != NULL && poSRSIn->GetRoot() != NULL
+            && EQUAL(poSRSIn->GetRoot()->GetValue(),"GEOGCS") )
+            poFile->SetBounds( -1000, -1000, 1000, 1000 );
+        else
+            poFile->SetBounds( -30000000, -15000000, 30000000, 15000000 );
     }
 
     return poFile;

@@ -37,9 +37,6 @@ MITAB Library - ToDo, Open Questions:
    MapInfo Versions 5.0 and up when the inside/outside ring relationship
    is not properly written.
 
- - It would be nice to use attribute indices for accelerated attribute
-   queries.
-
 
 ------------
 $Id$

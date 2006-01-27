@@ -8,19 +8,19 @@ MITAB library in your application.
 Please also visit the following URLs:
 
   - The library's web page:
-    http://pages.infinit.net/danmo/e00/index-mitab.html
+    http://mitab.maptools.org/
 
   - The OGR architecture documentation:
-    http://gdal.velocet.ca/projects/opengis/ogrhtml/ogr_arch.html
+    http://ogr.maptools.org/ogr_arch.html
 
 
 COPYRIGHT AND LICENSE TERMS:
 ----------------------------
 
 The most part of the MITAB library is 
-   Copyright (c) 1998-2000, Daniel Morissette (danmo@videotron.ca)
+   Copyright (c) 1998-2005, Daniel Morissette (morissette@dmsolutions.ca)
 it also contains parts and uses support libraries that are
-   Copyright (c) 1998-2000, Frank Warmerdam (warmerda@home.com)
+   Copyright (c) 1998-2005, Frank Warmerdam (warmerdam@pobox.com)
 and 
    Copyright (c) 1999, 2000, Stephane Villeneuve (stephane.v@videotron.ca)
 
@@ -28,8 +28,8 @@ The MITAB library, and its supporting libraries (OGR and CPL) are freely
 available under the following OpenSource license terms:
 
  **********************************************************************
- * Copyright (c) 1998-2000, Daniel Morissette
- * Copyright (c) 1998-2000, Frank Warmerdam
+ * Copyright (c) 1998-2005, Daniel Morissette
+ * Copyright (c) 1998-2005, Frank Warmerdam
  * Copyright (c) 1999,2000, Stephane Villeneuve
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -84,6 +84,9 @@ To compile the lib on Windows:
   This should automagically compile the 3 sub-directories and the test
   program (tab2tab.exe, tabdump.exe, mitabc_test.exe) in the MITAB directory.
 
+  If you plan to use MITAB from Visual Basic or non-C environments, then
+  have a look at contrib/README_VB.TXT
+
 To compile the library on Unix:
 
   The main directory contains a GNUmakefile whose default target will 
@@ -99,10 +102,25 @@ To compile the library on Unix:
 USING THE LIBRARY IN YOUR PROGRAMS:
 -----------------------------------
 
-Unfortunately there is no complete documentation for the library's API yet,
-but tab2tab.cpp is a good example that shows how to open TAB files for read
-and write.  Also, the main classes you will need to deal with live in
-the header MITAB.H.
+There are 2 interfaces to access the library:
+
+1- The C API.  The C API is a simplified interface which allows you to
+   build simple applications quickly but may not give you access to every
+   property of every object type.
+   See the C API documentation on http://mitab.maptools.org/
+   There are also interface definition files for various environments
+   in the contrib directory (mainly VB, Pascal and MapBasic... thanks to
+   Bo Thomsen)
+
+2- The C++ API will give you full access to every feature of the MapInfo
+   data model.  Unfortunately there is no complete documentation for the 
+   library's C++ classes yet, but tab2tab.cpp is a good example that 
+   shows how to open TAB files for read and write.  Also, the main 
+   classes you will need to deal with live in the header MITAB.H.
+
+
+The rest of this file covers mostly the C++ API features but may also apply
+to the C API indirectly.
 
 
 TO READ FILES:
@@ -181,6 +199,16 @@ of them:
                      left corner of the
                      text)
 
+    TABMultiPoint    OGRMultiPoint          OGRMultiPoint
+
+    TABCollection    OGRCollection with     In write mode, the geometry
+                     3 optional components: cannot be set directly as an
+                     1- 0 or 1 OGRPolygon   OGRGeometry. The following methods
+                        or OGRMultiPolygon  must be used instead:
+                     2- 0 or 1 OGRLineString     SetRegionDirectly()
+                        or OGRMultiLineString    SetPolylineDirectly()
+                     3- 0 or 1 OGRMultiPoint     SetMultiPointDirectly()
+
 
 NOTE ABOUT "\n" IN STRINGS ON TABText OBJECTS:
 ----------------------------------------------
@@ -203,5 +231,5 @@ the "\n" sequence in char attribute field values.
 
 
 ------------
-$Id: README.TXT,v 1.6 2000/10/03 22:15:40 daniel Exp $
+$Id: README.TXT,v 1.12 2005/10/07 14:00:07 dmorissette Exp $
 ------------

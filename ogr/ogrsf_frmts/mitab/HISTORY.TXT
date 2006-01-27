@@ -33,6 +33,9 @@ Version 1.5.0 ??? (CVS)
 
 - Fixed memory leak of m_pszDelimiter in mitab_middatafile.cpp.
 
+- Fixed OGR problems with setting bounds on MIF files, and wrong bounds
+  on tab files (bug 1198)
+
 
 Version 1.5.0-beta1 (2005-10-07)
 --------------------------------
@@ -696,5 +699,5 @@ Version 0.1 - (1999-12-04)
 
 
 ------------
-$Id: HISTORY.TXT,v 1.155 2006/01/27 13:54:06 fwarmerdam Exp $
+$Id: HISTORY.TXT,v 1.156 2006/01/27 14:27:35 fwarmerdam Exp $
 ------------
