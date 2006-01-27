@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/01/27 01:27:48  fwarmerdam
+ * added GetFIDColumn and GetGeometryColumn support
+ *
  * Revision 1.6  2006/01/16 16:06:48  hobu
  * Handle geometry column
  *
@@ -102,6 +105,9 @@ class OGRMySQLLayer : public OGRLayer
     virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int         TestCapability( const char * );
+
+    virtual const char *GetFIDColumn();
+    virtual const char *GetGeometryColumn();
 
     /* custom methods */
     virtual OGRFeature *RecordToFeature( char **papszRow, unsigned long * );
