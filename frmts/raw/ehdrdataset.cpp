@@ -3,10 +3,10 @@
  *
  * Project:  ESRI .hdr Driver
  * Purpose:  Implementation of EHdrDataset
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 1999, Frank Warmerdam
+ * Copyright (c) 1999, Frank Warmerdam <warmerdam@pobox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2006/01/27 18:42:08  fwarmerdam
+ * added the ability to save nodata and colortable information
+ *
  * Revision 1.34  2006/01/20 13:33:24  fwarmerdam
  * Fallback to an assumption of nbits=8 if not specified.
  *
@@ -81,12 +84,6 @@
  *
  * Revision 1.18  2004/01/04 21:17:11  warmerda
  * fixed up to preserve path in CPLFormCIFilename calls
- *
- * Revision 1.17  2003/09/26 13:49:42  warmerda
- * fixed multi band support, implement rudimentary write support
- *
- * Revision 1.16  2003/08/25 13:33:19  dron
- * Use CPLFormCIFilename() to case insensitive search for .HDR and .PRJ files.
  */
 
 #include "rawdataset.h"
@@ -112,9 +109,13 @@ class EHdrDataset : public RawDataset
     int         bGotTransform;
     double      adfGeoTransform[6];
     char       *pszProjection;
+
+    int         bHDRDirty;
     char      **papszHDR;
 
     CPLErr      RewriteHDR();
+    void        ResetKeyValue( const char *pszKey, const char *pszValue );
+    void        RewriteColorTable( GDALColorTable * );
 
   public:
     		EHdrDataset();
@@ -147,6 +148,7 @@ EHdrDataset::EHdrDataset()
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
     papszHDR = NULL;
+    bHDRDirty = FALSE;
 }
 
 /************************************************************************/
@@ -157,10 +159,108 @@ EHdrDataset::~EHdrDataset()
 
 {
     FlushCache();
+
+    if( GetAccess() == GA_Update )
+    {
+        int bNoDataSet;
+        double dfNoData;
+        RawRasterBand *poBand = (RawRasterBand *) GetRasterBand( 1 );
+
+        dfNoData = poBand->GetNoDataValue(&bNoDataSet);
+        if( bNoDataSet )
+        {
+            ResetKeyValue( "NODATA", 
+                           CPLString().Printf( "%g", dfNoData ) );
+        }
+
+        if( poBand->GetColorTable() != NULL )
+            RewriteColorTable( poBand->GetColorTable() );
+    }
+
+    if( bHDRDirty && GetAccess() == GA_Update )
+        RewriteHDR();
+
     if( fpImage != NULL )
         VSIFCloseL( fpImage );
+
     CPLFree( pszProjection );
     CSLDestroy( papszHDR );
+}
+
+/************************************************************************/
+/*                           ResetKeyValue()                            */
+/*                                                                      */
+/*      Replace or add the keyword with the indicated value in the      */
+/*      papszHDR list.                                                  */
+/************************************************************************/
+
+void EHdrDataset::ResetKeyValue( const char *pszKey, const char *pszValue )
+
+{
+    int i;
+    char szNewLine[82];
+
+    if( strlen(pszValue) > 65 )
+    {
+        CPLAssert( strlen(pszValue) <= 65 );
+        return;
+    }
+
+    sprintf( szNewLine, "%-15s%s", pszKey, pszValue );
+
+    for( i = CSLCount(papszHDR)-1; i >= 0; i-- )
+    {
+        if( EQUALN(papszHDR[i],szNewLine,strlen(pszKey)+1 ) )
+        {
+            if( strcmp(papszHDR[i],szNewLine) != 0 )
+            {
+                CPLFree( papszHDR[i] );
+                papszHDR[i] = CPLStrdup( szNewLine );
+                bHDRDirty = TRUE;
+            }
+            return;
+        }
+    }
+
+    bHDRDirty = TRUE;
+    papszHDR = CSLAddString( papszHDR, szNewLine );
+}
+
+/************************************************************************/
+/*                         RewriteColorTable()                          */
+/************************************************************************/
+
+void EHdrDataset::RewriteColorTable( GDALColorTable *poTable )
+
+{
+    CPLString osCLRFilename = CPLResetExtension( GetDescription(), "clr" );
+    FILE *fp;
+
+    fp = VSIFOpenL( osCLRFilename, "wt" );
+    if( fp != NULL )
+    {
+        int iColor;
+
+        for( iColor = 0; iColor < poTable->GetColorEntryCount(); iColor++ )
+        {
+            CPLString oLine;
+            GDALColorEntry sEntry;
+
+            poTable->GetColorEntryAsRGB( iColor, &sEntry );
+
+            // I wish we had a way to mark transparency.
+            oLine.Printf( "%3d %3d %3d %3d\n",
+                          iColor, sEntry.c1, sEntry.c2, sEntry.c3 );
+            VSIFWriteL( (void *) oLine.c_str(), 1, strlen(oLine), fp );
+        }
+        VSIFCloseL( fp );
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Unable to create color file %s.", 
+                  osCLRFilename.c_str() );
+    }
 }
 
 /************************************************************************/
@@ -258,7 +358,7 @@ CPLErr EHdrDataset::SetGeoTransform( double *padfGeoTransform )
     memcpy( adfGeoTransform, padfGeoTransform, sizeof(double) * 6 );
 
 /* -------------------------------------------------------------------- */
-/*      Strip out old geotransform keywords from HDR records.           */
+/*      Strip out all old geotransform keywords from HDR records.       */
 /* -------------------------------------------------------------------- */
     int i;
     for( i = CSLCount(papszHDR)-1; i >= 0; i-- )
@@ -275,23 +375,21 @@ CPLErr EHdrDataset::SetGeoTransform( double *padfGeoTransform )
 /* -------------------------------------------------------------------- */
 /*      Set the transformation information.                             */
 /* -------------------------------------------------------------------- */
-    CPLString  oLine;
+    CPLString  oValue;
 
-    oLine.Printf( "ULXMAP         %.15g", 
-                  adfGeoTransform[0] + adfGeoTransform[1] * 0.5 );
-    papszHDR = CSLAddString( papszHDR, oLine );
+    oValue.Printf( "%.15g", adfGeoTransform[0] + adfGeoTransform[1] * 0.5 );
+    ResetKeyValue( "ULXMAP", oValue );
+                   
+    oValue.Printf( "%.15g", adfGeoTransform[3] + adfGeoTransform[5] * 0.5 );
+    ResetKeyValue( "ULYMAP", oValue );
 
-    oLine.Printf( "ULYMAP         %.15g", 
-                  adfGeoTransform[3] + adfGeoTransform[5] * 0.5 );
-    papszHDR = CSLAddString( papszHDR, oLine );
+    oValue.Printf( "%.15g", adfGeoTransform[1] );
+    ResetKeyValue( "XDIM", oValue );
 
-    oLine.Printf( "XDIM           %.15g", adfGeoTransform[1] );
-    papszHDR = CSLAddString( papszHDR, oLine );
+    oValue.Printf( "%.15g", fabs(adfGeoTransform[5]) );
+    ResetKeyValue( "YDIM", oValue );
 
-    oLine.Printf( "YDIM           %.15g", fabs(adfGeoTransform[5]) );
-    papszHDR = CSLAddString( papszHDR, oLine );
-
-    return RewriteHDR();
+    return CE_None;
 }
 
 /************************************************************************/
@@ -328,6 +426,8 @@ CPLErr EHdrDataset::RewriteHDR()
     }
 
     VSIFClose( fp );
+
+    bHDRDirty = FALSE;
 
     return CE_None;
 }
@@ -887,6 +987,3 @@ void GDALRegister_EHdr()
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
-
-
-//  LocalWords:  oLine
