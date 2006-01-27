@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/01/27 01:27:49  fwarmerdam
+ * added GetFIDColumn and GetGeometryColumn support
+ *
  * Revision 1.6  2006/01/16 16:05:38  hobu
  * Handle geometry column
  *
@@ -341,4 +344,30 @@ OGRSpatialReference *OGRMySQLLayer::GetSpatialRef()
 #endif
 
     return NULL;
+}
+
+/************************************************************************/
+/*                            GetFIDColumn()                            */
+/************************************************************************/
+
+const char *OGRMySQLLayer::GetFIDColumn() 
+
+{
+    if( pszFIDColumn != NULL )
+        return pszFIDColumn;
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                         GetGeometryColumn()                          */
+/************************************************************************/
+
+const char *OGRMySQLLayer::GetGeometryColumn() 
+
+{
+    if( pszGeomColumn != NULL )
+        return pszGeomColumn;
+    else
+        return "";
 }
