@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_middatafile.cpp,v 1.13 2005/10/04 19:36:10 dmorissette Exp $
+ * $Id: mitab_middatafile.cpp,v 1.14 2006/01/27 13:54:06 fwarmerdam Exp $
  *
  * Name:     mitab_datfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log: mitab_middatafile.cpp,v $
+ * Revision 1.14  2006/01/27 13:54:06  fwarmerdam
+ * fixed memory leak
+ *
  * Revision 1.13  2005/10/04 19:36:10  dmorissette
  * Added support for reading collections from MIF files (bug 1126)
  *
@@ -86,7 +89,7 @@ MIDDATAFile::MIDDATAFile()
     m_fp = NULL;
     m_szLastRead[0] = '\0';
     m_szSavedLine[0] = '\0';
-    m_pszDelimiter = CPLStrdup("\t"); // Encom 2003 (was NULL)
+    m_pszDelimiter = "\t"; // Encom 2003 (was NULL)
     
     m_dfXMultiplier = 1.0;
     m_dfYMultiplier = 1.0;
