@@ -20,3 +20,7 @@ default:	$(O_OBJ)
 
 clean:
 	rm -f *.o $(O_OBJ)
+
+update:
+	copymatch.sh /u/pkg/mitab *.TXT
+	copymatch.sh /u/pkg/mitab/mitab *.cpp *.h
