@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/01/27 15:47:36  fwarmerdam
+ * preliminary Get{FID/Geometry}Column support
+ *
  * Revision 1.13  2005/09/21 00:59:36  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -764,4 +767,30 @@ int OGROCILayer::LookupTableSRID()
     }
 
     return nSRID;
+}
+
+/************************************************************************/
+/*                            GetFIDColumn()                            */
+/************************************************************************/
+
+const char *OGROCILayer::GetFIDColumn() 
+
+{
+    if( pszFIDName != NULL )
+        return pszFIDName;
+    else
+        return "";
+}
+
+/************************************************************************/
+/*                         GetGeometryColumn()                          */
+/************************************************************************/
+
+const char *OGROCILayer::GetGeometryColumn() 
+
+{
+    if( pszGeomName != NULL )
+        return pszGeomName;
+    else
+        return "";
 }

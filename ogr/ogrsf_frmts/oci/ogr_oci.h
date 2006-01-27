@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/01/27 15:47:36  fwarmerdam
+ * preliminary Get{FID/Geometry}Column support
+ *
  * Revision 1.22  2005/10/27 13:42:26  fwarmerdam
  * preliminary DeleteFeature implementation
  *
@@ -321,8 +324,8 @@ class OGROCILayer : public OGRLayer
 
     virtual int         TestCapability( const char * );
 
-    const char         *GetGeomName() { return pszGeomName; }
-    const char         *GetFIDName() { return pszFIDName; }
+    virtual const char *GetFIDColumn();
+    virtual const char *GetGeometryColumn();
 
     int                 LookupTableSRID();
 };
