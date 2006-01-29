@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2006/01/29 15:06:34  fwarmerdam
+ * documented getX, getY, getZ and getNumPoints accessors
+ *
  * Revision 1.52  2005/12/02 11:06:51  osemykin
  * added const for OGRLineString::getPoints(...)
  *
@@ -381,15 +384,64 @@ void    OGRLineString::getPoint( int i, OGRPoint * poPoint ) const
         poPoint->setZ( padfZ[i] );
 }
 
+/**
+ * \fn int OGRLineString::getNumPoints() const;
+ *
+ * Fetch vertex count.
+ *
+ * Returns the number of vertices in the line string.  
+ *
+ * @return vertex count.
+ */
+
+/**
+ * \fn double OGRLineString::getX( int iVertex ) const;
+ *
+ * Get X at vertex.
+ *
+ * Returns the X value at the indicated vertex.   If iVertex is out of range a
+ * crash may occur, no internal range checking is performed.
+ *
+ * @param iVertex the vertex to return, between 0 and getNumPoints()-1. 
+ *
+ * @return X value.
+ */
+
+/**
+ * \fn double OGRLineString::getY( int iVertex ) const;
+ *
+ * Get Y at vertex.
+ *
+ * Returns the Y value at the indicated vertex.   If iVertex is out of range a
+ * crash may occur, no internal range checking is performed.
+ *
+ * @param iVertex the vertex to return, between 0 and getNumPoints()-1. 
+ *
+ * @return X value.
+ */
+
 /************************************************************************/
 /*                                getZ()                                */
 /************************************************************************/
 
-double OGRLineString::getZ( int i ) const
+/**
+ * Get Z at vertex.
+ *
+ * Returns the Z (elevation) value at the indicated vertex.  If no Z
+ * value is available, 0.0 is returned.  If iVertex is out of range a
+ * crash may occur, no internal range checking is performed.
+ *
+ * @param iVertex the vertex to return, between 0 and getNumPoints()-1. 
+ *
+ * @return Z value.
+ */
+
+double OGRLineString::getZ( int iVertex ) const
 
 {
-    if( padfZ != NULL && i >= 0 && i < nPointCount && nCoordDimension >= 3 )
-        return( padfZ[i] );
+    if( padfZ != NULL && iVertex >= 0 && iVertex < nPointCount 
+        && nCoordDimension >= 3 )
+        return( padfZ[iVertex] );
     else
         return 0.0;
 }
