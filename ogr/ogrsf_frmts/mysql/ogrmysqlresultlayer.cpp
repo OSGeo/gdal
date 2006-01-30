@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/01/30 03:51:10  hobu
+ * some god-awful hackery, but we can do a good job of reading field definitions from a select query as well as get a spatial reference.
+ *
  * Revision 1.2  2005/09/21 01:00:01  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -91,6 +94,9 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
     int            iRawField;
 
     poDefn->Reference();
+    int width;
+    int precision;
+    char * pszGeomColumnTable;
 
     mysql_field_seek( hResultSet, 0 );
     for( iRawField = 0; 
@@ -108,36 +114,188 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
           case FIELD_TYPE_INT24:
           case FIELD_TYPE_LONGLONG:
             oField.SetType( OFTInteger );
+            width = (int)psMSField->length;
+            oField.SetWidth(width);
             poDefn->AddFieldDefn( &oField );
             break;
 
           case FIELD_TYPE_DECIMAL:
+          case FIELD_TYPE_NEWDECIMAL:
+            oField.SetType( OFTReal );
+            
+            // a bunch of hackery to munge the widths that MySQL gives 
+            // us into corresponding widths and precisions for OGR
+            precision =    (int)psMSField->decimals;
+            width = (int)psMSField->length;
+            if (!precision)
+                width=width-1;
+            width = width - precision;
+            
+            oField.SetWidth(width);
+            oField.SetPrecision(precision);
+            poDefn->AddFieldDefn( &oField );
+            break;
+
           case FIELD_TYPE_FLOAT:
           case FIELD_TYPE_DOUBLE:
+            width = (int)psMSField->length;
+            oField.SetWidth(width);
             oField.SetType( OFTReal );
             poDefn->AddFieldDefn( &oField );
             break;
 
-          case FIELD_TYPE_STRING:
+
           case FIELD_TYPE_TIMESTAMP:
           case FIELD_TYPE_DATE:
           case FIELD_TYPE_TIME:
           case FIELD_TYPE_DATETIME:
           case FIELD_TYPE_YEAR:
+          case FIELD_TYPE_STRING:
           case FIELD_TYPE_VAR_STRING:
+            oField.SetType( OFTString );
+            oField.SetWidth((int)psMSField->length);
+            poDefn->AddFieldDefn( &oField );
+            break;
+            
           case FIELD_TYPE_BLOB:
             oField.SetType( OFTString );
+            oField.SetWidth((int)psMSField->max_length);
             poDefn->AddFieldDefn( &oField );
-            // should add max length info if available.
             break;
-
+                        
+          case FIELD_TYPE_GEOMETRY:
+            pszGeomColumnTable = CPLStrdup( psMSField->table);
+            pszGeomColumn = CPLStrdup( psMSField->name);            
+            break;
+            
           default:
             // any other field we ignore. 
             break;
         }
+        
+        
+        // assume a FID name first, and if it isn't there
+        // take a field that is both not null and a primary key
+        if( EQUAL(psMSField->name,"ogc_fid") )
+        {
+            bHasFid = TRUE;
+            pszFIDColumn = CPLStrdup(oField.GetNameRef());
+            continue;
+        } else  
+        if (IS_NOT_NULL(psMSField->flags) && IS_PRI_KEY(psMSField->flags))
+        {
+           bHasFid = TRUE;
+           pszFIDColumn = CPLStrdup(oField.GetNameRef());
+           continue;
+        }
     }
 
+
     poDefn->SetGeomType( wkbNone );
+
+    if (pszGeomColumn) 
+    {
+        char*        pszType=NULL;
+        char         szCommand[1024];
+        char           **papszRow;  
+        MYSQL_RES    *hResult;     
+         
+        // set to unknown first
+        poDefn->SetGeomType( wkbUnknown );
+        
+        sprintf(szCommand, "SELECT type FROM geometry_columns WHERE f_table_name='%s'",
+                pszGeomColumnTable );
+ 
+    
+        if( hResultSet != NULL )
+            mysql_free_result( hResultSet );        
+
+        if( !mysql_query( poDS->GetConn(), szCommand ) )
+            hResultSet = mysql_store_result( poDS->GetConn() );
+
+        papszRow = NULL;
+        if( hResultSet != NULL )
+            papszRow = mysql_fetch_row( hResultSet );
+
+
+        if( papszRow != NULL && papszRow[0] != NULL )
+        {
+            pszType = papszRow[0];
+
+            OGRwkbGeometryType nGeomType = wkbUnknown;
+            
+
+            // check only standard OGC geometry types
+            if ( EQUAL(pszType, "POINT") )
+                nGeomType = wkbPoint;
+            else if ( EQUAL(pszType,"LINESTRING"))
+                nGeomType = wkbLineString;
+            else if ( EQUAL(pszType,"POLYGON"))
+                nGeomType = wkbPolygon;
+            else if ( EQUAL(pszType,"MULTIPOINT"))
+                nGeomType = wkbMultiPoint;
+            else if ( EQUAL(pszType,"MULTILINESTRING"))
+                nGeomType = wkbMultiLineString;
+            else if ( EQUAL(pszType,"MULTIPOLYGON"))
+                nGeomType = wkbMultiPolygon;
+            else if ( EQUAL(pszType,"GEOMETRYCOLLECTION"))
+                nGeomType = wkbGeometryCollection;
+
+            poDefn->SetGeomType( nGeomType );
+
+        } 
+
+        if( hResultSet != NULL )
+            mysql_free_result( hResultSet );      
+    
+        sprintf( szCommand, 
+                 "SELECT srid FROM geometry_columns "
+                 "WHERE f_table_name = '%s'",
+                 pszGeomColumnTable );
+
+        if( !mysql_query( poDS->GetConn(), szCommand ) )
+            hResultSet = mysql_store_result( poDS->GetConn() );
+
+        papszRow = NULL;
+        if( hResultSet != NULL )
+            papszRow = mysql_fetch_row( hResultSet );
+            
+
+        if( papszRow != NULL && papszRow[0] != NULL )
+        {
+            nSRSId = atoi(papszRow[0]);
+        }
+
+        if( hResultSet != NULL )
+            mysql_free_result( hResultSet );    
+            
+        sprintf( szCommand,
+             "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
+             nSRSId );
+        
+        if( !mysql_query( poDS->GetConn(), szCommand ) )
+            hResultSet = mysql_store_result( poDS->GetConn() );
+            
+        char  *pszWKT = NULL;
+        papszRow = NULL;
+        if( hResultSet != NULL )
+            papszRow = mysql_fetch_row( hResultSet );
+
+
+        if( papszRow != NULL && papszRow[0] != NULL )
+        {
+            pszWKT =papszRow[0];
+        }
+        
+        poSRS = new OGRSpatialReference();
+        if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
+        {
+            delete poSRS;
+            poSRS = NULL;
+        }
+    
+    } 
+
 
     return poDefn;
 }
@@ -182,3 +340,20 @@ int OGRMySQLResultLayer::GetFeatureCount( int bForce )
     // I wonder if we could do anything smart here...
     return OGRMySQLLayer::GetFeatureCount( bForce );
 }
+
+/************************************************************************/
+/*                           GetSpatialRef()                            */
+/*                                                                      */
+/*      We override this to try and fetch the table SRID from the       */
+/*      geometry_columns table if the srsid is -2 (meaning we           */
+/*      haven't yet even looked for it).                                */
+/************************************************************************/
+
+OGRSpatialReference *OGRMySQLResultLayer::GetSpatialRef()
+
+{
+
+    return poSRS;
+
+}
+
