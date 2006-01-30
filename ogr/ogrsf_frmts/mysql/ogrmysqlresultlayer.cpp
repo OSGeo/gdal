@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/01/30 13:36:28  fwarmerdam
+ * _NEWDECIMAL type missing on older systems
+ *
  * Revision 1.3  2006/01/30 03:51:10  hobu
  * some god-awful hackery, but we can do a good job of reading field definitions from a select query as well as get a spatial reference.
  *
@@ -120,7 +123,9 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
             break;
 
           case FIELD_TYPE_DECIMAL:
+#ifdef FIELD_TYPE_NEWDECIMAL
           case FIELD_TYPE_NEWDECIMAL:
+#endif
             oField.SetType( OFTReal );
             
             // a bunch of hackery to munge the widths that MySQL gives 
@@ -198,7 +203,6 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
         char*        pszType=NULL;
         char         szCommand[1024];
         char           **papszRow;  
-        MYSQL_RES    *hResult;     
          
         // set to unknown first
         poDefn->SetGeomType( wkbUnknown );
