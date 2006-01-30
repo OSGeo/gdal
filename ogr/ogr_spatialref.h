@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.70  2006/01/30 17:42:29  fwarmerdam
+ * Reorganize data members to be less suseptable to packing oddities,
+ * per suggestion from Ray Gardener.
+ *
  * Revision 1.69  2005/12/01 04:59:45  fwarmerdam
  * added two point equidistant support
  *
@@ -134,10 +138,10 @@ class CPL_DLL OGR_SRSNode
 {
     char        *pszValue;
 
-    int         nChildren;
     OGR_SRSNode **papoChildNodes;
-
     OGR_SRSNode *poParent;
+
+    int         nChildren;
 
     void        ClearChildren();
     int         NeedsQuoting() const;
@@ -200,14 +204,14 @@ class CPL_DLL OGR_SRSNode
 
 class CPL_DLL OGRSpatialReference
 {
-    int         nRefCount;
-
-    OGR_SRSNode *poRoot;
-
-    int         bNormInfoSet;
     double      dfFromGreenwich;
     double      dfToMeter;
     double      dfToDegrees;
+
+    OGR_SRSNode *poRoot;
+
+    int         nRefCount;
+    int         bNormInfoSet;
 
     OGRErr      ValidateProjection();
     int         IsAliasFor( const char *, const char * );
