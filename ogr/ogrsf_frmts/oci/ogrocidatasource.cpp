@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2006/01/30 19:25:09  fwarmerdam
+ * Fixed GetGeometryColumn() calls.
+ *
  * Revision 1.32  2006/01/27 15:55:56  fwarmerdam
  * few fixes for GetGeom/FIDColumn support
  *
@@ -385,7 +388,7 @@ void OGROCIDataSource::ValidateLayer( const char *pszLayerName )
     OGROCITableLayer *poLayer = (OGROCITableLayer *) papoLayers[iLayer];
 
     if( strlen(poLayer->GetFIDColumn()) == 0 
-        || strlen(poLayer->GetGeomColumn()) == 0 )
+        || strlen(poLayer->GetGeometryColumn()) == 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "ValidateLayer(): %s lacks a geometry or fid column.", 
@@ -403,7 +406,7 @@ void OGROCIDataSource::ValidateLayer( const char *pszLayerName )
     oValidateCmd.Append( "SELECT c." );
     oValidateCmd.Append( poLayer->GetFIDColumn() );
     oValidateCmd.Append( ", SDO_GEOM.VALIDATE_GEOMETRY(c." );
-    oValidateCmd.Append( poLayer->GetGeomColumn() );
+    oValidateCmd.Append( poLayer->GetGeometryColumn() );
     oValidateCmd.Append( ", m.diminfo) from " );
     oValidateCmd.Append( poLayer->GetLayerDefn()->GetName() );
     oValidateCmd.Append( " c, user_sdo_geom_metadata m WHERE m.table_name= '");
