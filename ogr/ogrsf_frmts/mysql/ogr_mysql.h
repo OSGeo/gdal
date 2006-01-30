@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/01/30 03:51:18  hobu
+ * some god-awful hackery, but we can do a good job of reading field definitions from a select query as well as get a spatial reference.
+ *
  * Revision 1.7  2006/01/27 01:27:48  fwarmerdam
  * added GetFIDColumn and GetGeometryColumn support
  *
@@ -168,7 +171,11 @@ class OGRMySQLResultLayer : public OGRMySQLLayer
     void                BuildFullQueryStatement(void);
 
     char                *pszRawStatement;
-
+    
+    // Layer spatial reference system, and srid.
+    OGRSpatialReference *poSRS;
+    int                 nSRSId;
+    
     int                 nFeatureCount;
 
   public:
@@ -178,6 +185,7 @@ class OGRMySQLResultLayer : public OGRMySQLLayer
     virtual             ~OGRMySQLResultLayer();
 
     OGRFeatureDefn     *ReadResultDefinition();
+    virtual OGRSpatialReference *GetSpatialRef();
 
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
