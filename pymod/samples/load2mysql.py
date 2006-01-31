@@ -32,6 +32,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.3  2006/01/31 02:26:48  fwarmerdam
+#  Handle NULL fields properly.
+#
 #  Revision 1.2  2006/01/16 16:03:38  hobu
 #  Added spatial index, geometry_columns, and spatial_ref_sys tables.
 #  Added command line switch to specify spatial column.
@@ -151,7 +154,9 @@ while feat is not None:
         if feat.IsFieldSet( iField ) != 0:
             cmd_start = cmd_start + ', ' + fielddef.GetName()
 
-        if fielddef.GetType() == ogr.OFTInteger:
+        if feat.IsFieldSet( iField ) == 0:
+            pass
+        elif fielddef.GetType() == ogr.OFTInteger:
             cmd_end = cmd_end + ', ' + feat.GetFieldAsString(iField)
         elif fielddef.GetType() == ogr.OFTString:
             cmd_end = cmd_end + ", '" + feat.GetFieldAsString(iField) + "'"
