@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/01/31 02:48:09  fwarmerdam
+ * Added heuristic to determine whether we have WKB or SRID+WKB.
+ *
  * Revision 1.7  2006/01/27 01:27:49  fwarmerdam
  * added GetFIDColumn and GetGeometryColumn support
  *
@@ -208,14 +211,27 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
 /* -------------------------------------------------------------------- */
         if( pszGeomColumn && EQUAL(psMSField->name,pszGeomColumn))
         {
-
             OGRGeometry *poGeometry = NULL;
 
-			OGRGeometryFactory::createFromWkb(
-											  (GByte *)papszRow[iField], 
-											  NULL,
-											  &poGeometry,
-											  panLengths[iField]);
+            if( panLengths[iField] > 9 
+                && papszRow[0][0] != 0 
+                && papszRow[0][0] != 1 )
+            {
+                OGRGeometryFactory::createFromWkb(
+                    ((GByte *)papszRow[iField]) + 4, 
+                    NULL,
+                    &poGeometry,
+                    panLengths[iField] - 4 );
+            }
+            else
+            {
+                OGRGeometryFactory::createFromWkb(
+                    (GByte *)papszRow[iField], 
+                    NULL,
+                    &poGeometry,
+                    panLengths[iField]);
+            }
+
             if( poGeometry != NULL )
                 poFeature->SetGeometryDirectly( poGeometry );
 
