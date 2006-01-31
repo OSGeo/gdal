@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/01/31 02:35:52  fwarmerdam
+ * Fixed up missing SRS handling.
+ *
  * Revision 1.4  2006/01/30 13:36:28  fwarmerdam
  * _NEWDECIMAL type missing on older systems
  *
@@ -285,14 +288,13 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
         if( hResultSet != NULL )
             papszRow = mysql_fetch_row( hResultSet );
 
-
         if( papszRow != NULL && papszRow[0] != NULL )
         {
             pszWKT =papszRow[0];
         }
         
         poSRS = new OGRSpatialReference();
-        if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
+        if( pszWKT == NULL || poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
         {
             delete poSRS;
             poSRS = NULL;
