@@ -18,7 +18,7 @@ correctly.
 
 Note, that GDAL simple affine georeference model completely unsuitable for
 the NOAA data. So you should not rely on it. It is recommended to use the
-thin spline warper (tps). Automatic image rectification can be done with
+thin plate spline warper (tps). Automatic image rectification can be done with
 ground control points (GCPs) from the input file.
 
 NOAA stores 51 GCPs per scanline both in the LAC and GAC datasets. In fact
@@ -91,13 +91,15 @@ NOAA Technical Documentation Introduction Page
 
 <li>  Excellent and complete review contained in the printed book ``The
 Advanced Very High Resolution Radiometer (AVHRR)'' by Arthur P. Cracknell,
-Taylor&Francis Ltd., 1997, ISBN 0-7484-0209-8.
+Taylor and Francis Ltd., 1997, ISBN 0-7484-0209-8.
 </a><p>
 
 <li> NOAA data can be downloaded from the 
 <a href="http://www.class.noaa.gov/">Comprehensive Large Array-data Stewardship System (CLASS)</a>
 (former SAA). Actually it is only source of Level 1b datasets for me, so my implementation
 tested with that files only. <p>
+
+<li> <a href="http://www.oso.noaa.gov/poesstatus/">NOAA spacecrafts status page</a>
 
 </ul>
 
