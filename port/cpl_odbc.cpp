@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/01/31 03:04:27  fwarmerdam
+ * Fixed null trimming to work for long unicode text strings per:
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=990
+ *
  * Revision 1.25  2005/09/24 04:58:16  fwarmerdam
  * Support SQLDriverConnect (pass opts) in EstablishSession
  *
@@ -649,8 +653,13 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         else if( nRetCode == SQL_SUCCESS_WITH_INFO  ) 
         {
             if( cbDataLen > (int) (sizeof(szWrkData)-1) )
+            {
                 cbDataLen = (int) (sizeof(szWrkData)-1);
-
+                if (nFetchType == SQL_C_CHAR) 
+                    while ((cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0)) 
+                        --cbDataLen;  // trimming the extra terminators: bug 990
+            }
+			
             m_papszColValues[iCol] = (char *) CPLMalloc(cbDataLen+1);
             memcpy( m_papszColValues[iCol], szWrkData, cbDataLen );
             m_papszColValues[iCol][cbDataLen] = '\0';
@@ -672,7 +681,11 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 
                 if( cbDataLen > (int) (sizeof(szWrkData) - 1)
                     || cbDataLen == SQL_NO_TOTAL )
+                {
                     nChunkLen = sizeof(szWrkData)-1;
+                    if (nFetchType == SQL_C_CHAR) 
+                        while ((nChunkLen > 1) && (szWrkData[nChunkLen - 1] == 0)) --nChunkLen;  // trimming the extra terminators
+                }
                 else
                     nChunkLen = cbDataLen;
                 szWrkData[nChunkLen] = '\0';
