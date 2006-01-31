@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2006/01/31 17:44:46  fwarmerdam
+ * jpc_header used even when j2k support disabled.
+ *
  * Revision 1.47  2006/01/09 18:59:33  fwarmerdam
  * ensure jp2mrsid driver support jpc (non-jP2 JPEG2000 files)
  *
@@ -1178,10 +1181,10 @@ static GDALDataset *MrSIDOpen( GDALOpenInfo * poOpenInfo )
 /*      This is just a jacket to verify that the file is JPEG2000.      */
 /************************************************************************/
 
-#ifdef MRSID_J2K
-
 static unsigned char jpc_header[] = 
 {0xff,0x4f};
+
+#ifdef MRSID_J2K
 
 static GDALDataset *JP2Open( GDALOpenInfo *poOpenInfo )
 
