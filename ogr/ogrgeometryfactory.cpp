@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/01/31 02:38:37  fwarmerdam
+ * Fixed corrupt data reporting.
+ *
  * Revision 1.28  2005/10/21 15:58:34  fwarmerdam
  * use c++ casting for GEOSGeom
  *
@@ -186,7 +189,7 @@ OGRErr OGRGeometryFactory::createFromWkb(unsigned char *pabyData,
     {
         CPLDebug( "OGR", 
                   "OGRGeometryFactory::createFromWkb() - got corrupt data.\n"
-                  "%X%X%X%X%X%X%X%X\n", 
+                  "%02X%02X%02X%02X%02X%02X%02X%02X\n", 
                   pabyData[0],
                   pabyData[1],
                   pabyData[2],
