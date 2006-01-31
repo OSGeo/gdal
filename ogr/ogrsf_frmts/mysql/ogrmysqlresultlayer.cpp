@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/01/31 03:15:42  hobu
+ * Ensure that we have an integer-like column for the FID.
+ *
  * Revision 1.5  2006/01/31 02:35:52  fwarmerdam
  * Fixed up missing SRS handling.
  *
@@ -35,7 +38,8 @@
  * _NEWDECIMAL type missing on older systems
  *
  * Revision 1.3  2006/01/30 03:51:10  hobu
- * some god-awful hackery, but we can do a good job of reading field definitions from a select query as well as get a spatial reference.
+ * some god-awful hackery, but we can do a good job of reading field definitions 
+ * from a select query as well as get a spatial reference.
  *
  * Revision 1.2  2005/09/21 01:00:01  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
@@ -67,8 +71,6 @@ OGRMySQLResultLayer::OGRMySQLResultLayer( OGRMySQLDataSource *poDSIn,
     hResultSet = hResultSetIn;
 
     BuildFullQueryStatement();
-
-//    nFeatureCount = PQntuples(hInitialResultIn);
 
     poFeatureDefn = ReadResultDefinition();
 }
@@ -136,7 +138,7 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
             precision =    (int)psMSField->decimals;
             width = (int)psMSField->length;
             if (!precision)
-                width=width-1;
+                width = width - 1;
             width = width - precision;
             
             oField.SetWidth(width);
@@ -181,16 +183,27 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
             break;
         }
         
-        
+
         // assume a FID name first, and if it isn't there
-        // take a field that is both not null and a primary key
+        // take a field that is not null, a primary key, 
+        // and is an integer-like field
         if( EQUAL(psMSField->name,"ogc_fid") )
         {
             bHasFid = TRUE;
             pszFIDColumn = CPLStrdup(oField.GetNameRef());
             continue;
         } else  
-        if (IS_NOT_NULL(psMSField->flags) && IS_PRI_KEY(psMSField->flags))
+        if (IS_NOT_NULL(psMSField->flags)
+            && IS_PRI_KEY(psMSField->flags)
+            && 
+                (
+                    psMSField->type == FIELD_TYPE_TINY
+                    || psMSField->type == FIELD_TYPE_SHORT
+                    || psMSField->type == FIELD_TYPE_LONG
+                    || psMSField->type == FIELD_TYPE_INT24
+                    || psMSField->type == FIELD_TYPE_LONGLONG
+                )
+            )
         {
            bHasFid = TRUE;
            pszFIDColumn = CPLStrdup(oField.GetNameRef());
@@ -210,7 +223,8 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
         // set to unknown first
         poDefn->SetGeomType( wkbUnknown );
         
-        sprintf(szCommand, "SELECT type FROM geometry_columns WHERE f_table_name='%s'",
+        sprintf(szCommand, 
+                "SELECT type FROM geometry_columns WHERE f_table_name='%s'",
                 pszGeomColumnTable );
  
     
@@ -319,10 +333,6 @@ void OGRMySQLResultLayer::BuildFullQueryStatement()
         pszQueryStatement = NULL;
     }
 
-    /* Eventually we should consider trying to "insert" the spatial component
-       of the query if possible within a SELECT, but for now we just use
-       the raw query directly. */
-
     pszQueryStatement = CPLStrdup(pszRawStatement);
 }
 
@@ -349,10 +359,6 @@ int OGRMySQLResultLayer::GetFeatureCount( int bForce )
 
 /************************************************************************/
 /*                           GetSpatialRef()                            */
-/*                                                                      */
-/*      We override this to try and fetch the table SRID from the       */
-/*      geometry_columns table if the srsid is -2 (meaning we           */
-/*      haven't yet even looked for it).                                */
 /************************************************************************/
 
 OGRSpatialReference *OGRMySQLResultLayer::GetSpatialRef()
