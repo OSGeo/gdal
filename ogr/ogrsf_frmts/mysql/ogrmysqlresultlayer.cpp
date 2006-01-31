@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/01/31 05:34:54  hobu
+ * move SRS fetching to mysqllayer.cpp
+ *
  * Revision 1.6  2006/01/31 03:15:42  hobu
  * Ensure that we have an integer-like column for the FID.
  *
@@ -104,7 +107,6 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
     poDefn->Reference();
     int width;
     int precision;
-    char * pszGeomColumnTable;
 
     mysql_field_seek( hResultSet, 0 );
     for( iRawField = 0; 
@@ -226,7 +228,8 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
         sprintf(szCommand, 
                 "SELECT type FROM geometry_columns WHERE f_table_name='%s'",
                 pszGeomColumnTable );
- 
+        
+
     
         if( hResultSet != NULL )
             mysql_free_result( hResultSet );        
@@ -266,54 +269,8 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
 
         } 
 
-        if( hResultSet != NULL )
-            mysql_free_result( hResultSet );      
-    
-        sprintf( szCommand, 
-                 "SELECT srid FROM geometry_columns "
-                 "WHERE f_table_name = '%s'",
-                 pszGeomColumnTable );
+        GetRawSRS();
 
-        if( !mysql_query( poDS->GetConn(), szCommand ) )
-            hResultSet = mysql_store_result( poDS->GetConn() );
-
-        papszRow = NULL;
-        if( hResultSet != NULL )
-            papszRow = mysql_fetch_row( hResultSet );
-            
-
-        if( papszRow != NULL && papszRow[0] != NULL )
-        {
-            nSRSId = atoi(papszRow[0]);
-        }
-
-        if( hResultSet != NULL )
-            mysql_free_result( hResultSet );    
-            
-        sprintf( szCommand,
-             "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
-             nSRSId );
-        
-        if( !mysql_query( poDS->GetConn(), szCommand ) )
-            hResultSet = mysql_store_result( poDS->GetConn() );
-            
-        char  *pszWKT = NULL;
-        papszRow = NULL;
-        if( hResultSet != NULL )
-            papszRow = mysql_fetch_row( hResultSet );
-
-        if( papszRow != NULL && papszRow[0] != NULL )
-        {
-            pszWKT =papszRow[0];
-        }
-        
-        poSRS = new OGRSpatialReference();
-        if( pszWKT == NULL || poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
-        {
-            delete poSRS;
-            poSRS = NULL;
-        }
-    
     } 
 
 

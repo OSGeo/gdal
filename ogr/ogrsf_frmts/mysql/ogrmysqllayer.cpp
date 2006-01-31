@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/01/31 05:35:02  hobu
+ * move SRS fetching to mysqllayer.cpp
+ *
  * Revision 1.8  2006/01/31 02:48:09  fwarmerdam
  * Added heuristic to determine whether we have WKB or SRID+WKB.
  *
@@ -103,6 +106,7 @@ OGRMySQLLayer::~OGRMySQLLayer()
     ResetReading();
 
     CPLFree( pszGeomColumn );
+    CPLFree( pszGeomColumnTable );
     CPLFree( pszFIDColumn );
     CPLFree( pszQueryStatement );
 
@@ -203,8 +207,10 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
             poFeature->SetFID( atoi(papszRow[iField]) );
         }
 
-        if( papszRow[iField] == NULL )
+        if( papszRow[iField] == NULL ) {
+            printf("FIELD %s was null\n", psMSField->name);
             continue;
+            }
 
 /* -------------------------------------------------------------------- */
 /*      Handle MySQL geometry                                           */
@@ -213,6 +219,9 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
         {
             OGRGeometry *poGeometry = NULL;
 
+ 
+            // Geometry columns selected without AsBinary() will have the 
+            // first 4 bytes contain the SRID.
             if( panLengths[iField] > 9 
                 && papszRow[0][0] != 0 
                 && papszRow[0][0] != 1 )
@@ -231,6 +240,7 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
                     &poGeometry,
                     panLengths[iField]);
             }
+
 
             if( poGeometry != NULL )
                 poFeature->SetGeometryDirectly( poGeometry );
@@ -387,3 +397,58 @@ const char *OGRMySQLLayer::GetGeometryColumn()
     else
         return "";
 }
+
+
+void OGRMySQLLayer::GetRawSRS() 
+{
+        char         szCommand[1024];
+        char           **papszRow;  
+        
+    
+        sprintf( szCommand, 
+                 "SELECT srid FROM geometry_columns "
+                 "WHERE f_table_name = '%s'",
+                 pszGeomColumnTable );
+
+        if( !mysql_query( poDS->GetConn(), szCommand ) )
+            hResultSet = mysql_store_result( poDS->GetConn() );
+
+        papszRow = NULL;
+        if( hResultSet != NULL )
+            papszRow = mysql_fetch_row( hResultSet );
+            
+
+        if( papszRow != NULL && papszRow[0] != NULL )
+        {
+            nSRSId = atoi(papszRow[0]);
+        }
+
+
+        if( hResultSet != NULL )
+            mysql_free_result( hResultSet );    
+            
+        sprintf( szCommand,
+             "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
+             nSRSId );
+        
+        if( !mysql_query( poDS->GetConn(), szCommand ) )
+            hResultSet = mysql_store_result( poDS->GetConn() );
+            
+        char  *pszWKT = NULL;
+        papszRow = NULL;
+        if( hResultSet != NULL )
+            papszRow = mysql_fetch_row( hResultSet );
+
+        if( papszRow != NULL && papszRow[0] != NULL )
+        {
+            pszWKT =papszRow[0];
+        }
+
+         poSRS = new OGRSpatialReference();
+         if( pszWKT == NULL || poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
+         {
+             delete poSRS;
+             poSRS = NULL;
+         }
+
+         }

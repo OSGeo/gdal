@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/01/31 05:35:09  hobu
+ * move SRS fetching to mysqllayer.cpp
+ *
  * Revision 1.8  2006/01/30 03:51:18  hobu
  * some god-awful hackery, but we can do a good job of reading field definitions from a select query as well as get a spatial reference.
  *
@@ -86,12 +89,14 @@ class OGRMySQLLayer : public OGRLayer
     int                 nResultOffset;
 
     char                *pszGeomColumn;
+    char                *pszGeomColumnTable;
     int                 nGeomType;
 
     int                 bHasFid;
     char                *pszFIDColumn;
 
     MYSQL_RES           *hResultSet;
+    void                GetRawSRS();
 
   public:
                         OGRMySQLLayer();
@@ -173,7 +178,6 @@ class OGRMySQLResultLayer : public OGRMySQLLayer
     char                *pszRawStatement;
     
     // Layer spatial reference system, and srid.
-    OGRSpatialReference *poSRS;
     int                 nSRSId;
     
     int                 nFeatureCount;
