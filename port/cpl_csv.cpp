@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/01/31 12:46:35  fwarmerdam
+ * Change name of bFinderInitialized.
+ *
  * Revision 1.16  2006/01/18 16:31:24  fwarmerdam
  * make csv table stuff thread local
  *
@@ -945,16 +948,16 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
     static CPL_THREADLOCAL char         szPath[512];
     FILE    *fp = NULL;
     const char *pszResult;
-    static CPL_THREADLOCAL int bFinderInitialized = FALSE;
+    static CPL_THREADLOCAL int bCSVFinderInitialized = FALSE;
 
     pszResult = CPLFindFile( "epsg_csv", pszBasename );
 
     if( pszResult != NULL )
         return pszResult;
 
-    if( !bFinderInitialized )
+    if( !bCSVFinderInitialized )
     {
-        bFinderInitialized = TRUE;
+        bCSVFinderInitialized = TRUE;
 
         if( CPLGetConfigOption("GEOTIFF_CSV",NULL) != NULL )
             CPLPushFinderLocation( CPLGetConfigOption("GEOTIFF_CSV",NULL));
