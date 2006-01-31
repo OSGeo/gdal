@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/01/31 06:17:08  hobu
+ * move SRS fetching to mysqllayer.cpp
+ *
  * Revision 1.9  2006/01/31 05:35:02  hobu
  * move SRS fetching to mysqllayer.cpp
  *
@@ -399,7 +402,7 @@ const char *OGRMySQLLayer::GetGeometryColumn()
 }
 
 
-void OGRMySQLLayer::GetRawSRS() 
+void OGRMySQLLayer::FetchSRS() 
 {
         char         szCommand[1024];
         char           **papszRow;  
@@ -443,7 +446,7 @@ void OGRMySQLLayer::GetRawSRS()
         {
             pszWKT =papszRow[0];
         }
-
+        CPLDebug("INFO:", "Created SRS from %d", nSRSId);
          poSRS = new OGRSpatialReference();
          if( pszWKT == NULL || poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
          {

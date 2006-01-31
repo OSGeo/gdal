@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/01/31 06:17:15  hobu
+ * move SRS fetching to mysqllayer.cpp
+ *
  * Revision 1.15  2006/01/27 01:08:29  fwarmerdam
  * Various fixes for when the geometry columns or srid tables are
  * missing.  Avoid issue errors in this case, they are optional.
@@ -145,6 +148,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 /*      Fire off commands to get back the schema of the table.          */
 /* -------------------------------------------------------------------- */
     sprintf( szCommand, "DESCRIBE %s", pszTable );
+    pszGeomColumnTable = CPLStrdup(pszTable);
     if( mysql_query( poDS->GetConn(), szCommand ) )
     {
         poDS->ReportError( "DESCRIBE Failed" );
@@ -723,6 +727,8 @@ int OGRMySQLTableLayer::GetFeatureCount( int bForce )
 OGRSpatialReference *OGRMySQLTableLayer::GetSpatialRef()
 
 {
+
+/* 
     if( nSRSId == -2 )
     {
         MYSQL_RES    *hResult;
@@ -739,7 +745,7 @@ OGRSpatialReference *OGRMySQLTableLayer::GetSpatialRef()
         hResult = mysql_store_result( poDS->GetConn() );
         if( hResult == NULL )
             return NULL;
-        	
+            
         nSRSId = -1;
         char **papszRow = mysql_fetch_row( hResult );
 
@@ -750,11 +756,12 @@ OGRSpatialReference *OGRMySQLTableLayer::GetSpatialRef()
 
         mysql_free_result( hResult );
     }
-
+ */
 /* -------------------------------------------------------------------- */
 /*      Try to find in the existing table.                              */
 /* -------------------------------------------------------------------- */
-    MYSQL_RES    *hResult;
+
+/*    MYSQL_RES    *hResult;
     char         szCommand[1024];
     char  *pszWKT = NULL;
         
@@ -789,6 +796,9 @@ OGRSpatialReference *OGRMySQLTableLayer::GetSpatialRef()
     }
     
     mysql_free_result( hResult );
+    return poSRS;
+    */
+    FetchSRS();
     return poSRS;
     
     //return OGRMySQLLayer::GetSpatialRef();

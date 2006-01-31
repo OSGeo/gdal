@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/01/31 06:16:57  hobu
+ * move SRS fetching to mysqllayer.cpp
+ *
  * Revision 1.9  2006/01/31 05:35:09  hobu
  * move SRS fetching to mysqllayer.cpp
  *
@@ -96,7 +99,7 @@ class OGRMySQLLayer : public OGRLayer
     char                *pszFIDColumn;
 
     MYSQL_RES           *hResultSet;
-    void                GetRawSRS();
+    void                FetchSRS();
 
   public:
                         OGRMySQLLayer();

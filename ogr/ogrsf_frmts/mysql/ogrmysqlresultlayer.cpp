@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/01/31 06:17:22  hobu
+ * move SRS fetching to mysqllayer.cpp
+ *
  * Revision 1.7  2006/01/31 05:34:54  hobu
  * move SRS fetching to mysqllayer.cpp
  *
@@ -269,7 +272,7 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
 
         } 
 
-        GetRawSRS();
+        FetchSRS();
 
     } 
 
