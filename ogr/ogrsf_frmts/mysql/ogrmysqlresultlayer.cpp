@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/02/01 01:40:09  hobu
+ * separate fetching of SRID
+ *
  * Revision 1.8  2006/01/31 06:17:22  hobu
  * move SRS fetching to mysqllayer.cpp
  *
@@ -272,8 +275,9 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
 
         } 
 
-        FetchSRS();
 
+		nSRSId = FetchSRSId();
+        FetchSRS();
     } 
 
 
