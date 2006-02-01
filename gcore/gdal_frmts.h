@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2006/02/01 17:22:19  fwarmerdam
+ * added DIPX driver
+ *
  * Revision 1.41  2005/12/20 16:15:25  fwarmerdam
  * added sgi format
  *
@@ -154,6 +157,7 @@ void CPL_DLL GDALRegister_MSGN(void);
 void CPL_DLL GDALRegister_RIK(void);
 void CPL_DLL GDALRegister_Leveller(void);
 void CPL_DLL GDALRegister_SGI(void);
+void CPL_DLL GDALRegister_DIPX(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
