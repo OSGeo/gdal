@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/02/01 01:40:09  hobu
+ * separate fetching of SRID
+ *
  * Revision 1.10  2006/01/31 06:17:08  hobu
  * move SRS fetching to mysqllayer.cpp
  *
@@ -402,34 +405,49 @@ const char *OGRMySQLLayer::GetGeometryColumn()
 }
 
 
+/************************************************************************/
+/*                         FetchSRSId()                                 */
+/************************************************************************/
+
+int OGRMySQLLayer::FetchSRSId()
+{
+	char         szCommand[1024];
+    char           **papszRow;  
+    
+		
+    sprintf( szCommand, 
+             "SELECT srid FROM geometry_columns "
+             "WHERE f_table_name = '%s'",
+             pszGeomColumnTable );
+
+    if( !mysql_query( poDS->GetConn(), szCommand ) )
+        hResultSet = mysql_store_result( poDS->GetConn() );
+
+    papszRow = NULL;
+    if( hResultSet != NULL )
+        papszRow = mysql_fetch_row( hResultSet );
+        
+
+    if( papszRow != NULL && papszRow[0] != NULL )
+    {
+        nSRSId = atoi(papszRow[0]);
+    }
+	return nSRSId;
+}
+
+/************************************************************************/
+/*                         FetchSRS()                                   */
+/************************************************************************/
+
 void OGRMySQLLayer::FetchSRS() 
 {
         char         szCommand[1024];
         char           **papszRow;  
         
-    
-        sprintf( szCommand, 
-                 "SELECT srid FROM geometry_columns "
-                 "WHERE f_table_name = '%s'",
-                 pszGeomColumnTable );
-
-        if( !mysql_query( poDS->GetConn(), szCommand ) )
-            hResultSet = mysql_store_result( poDS->GetConn() );
-
-        papszRow = NULL;
-        if( hResultSet != NULL )
-            papszRow = mysql_fetch_row( hResultSet );
-            
-
-        if( papszRow != NULL && papszRow[0] != NULL )
-        {
-            nSRSId = atoi(papszRow[0]);
-        }
-
 
         if( hResultSet != NULL )
-            mysql_free_result( hResultSet );    
-            
+            mysql_free_result( hResultSet );    			
+			
         sprintf( szCommand,
              "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
              nSRSId );
@@ -446,7 +464,7 @@ void OGRMySQLLayer::FetchSRS()
         {
             pszWKT =papszRow[0];
         }
-        CPLDebug("INFO:", "Created SRS from %d", nSRSId);
+
          poSRS = new OGRSpatialReference();
          if( pszWKT == NULL || poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
          {
@@ -454,4 +472,4 @@ void OGRMySQLLayer::FetchSRS()
              poSRS = NULL;
          }
 
-         }
+}

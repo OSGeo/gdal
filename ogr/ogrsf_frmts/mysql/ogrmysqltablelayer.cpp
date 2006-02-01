@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/02/01 01:40:09  hobu
+ * separate fetching of SRID
+ *
  * Revision 1.16  2006/01/31 06:17:15  hobu
  * move SRS fetching to mysqllayer.cpp
  *
@@ -728,78 +731,8 @@ OGRSpatialReference *OGRMySQLTableLayer::GetSpatialRef()
 
 {
 
-/* 
-    if( nSRSId == -2 )
-    {
-        MYSQL_RES    *hResult;
-        char         szCommand[1024];
-    
-        sprintf( szCommand, 
-                 "SELECT srid FROM geometry_columns "
-                 "WHERE f_table_name = '%s'",
-                 poFeatureDefn->GetName() );
-
-        if( mysql_query( poDS->GetConn(), szCommand ) )
-            return NULL;
-
-        hResult = mysql_store_result( poDS->GetConn() );
-        if( hResult == NULL )
-            return NULL;
-            
-        nSRSId = -1;
-        char **papszRow = mysql_fetch_row( hResult );
-
-        if( papszRow != NULL && papszRow[0] != NULL )
-        {
-            nSRSId = atoi(papszRow[0]);
-        }
-
-        mysql_free_result( hResult );
-    }
- */
-/* -------------------------------------------------------------------- */
-/*      Try to find in the existing table.                              */
-/* -------------------------------------------------------------------- */
-
-/*    MYSQL_RES    *hResult;
-    char         szCommand[1024];
-    char  *pszWKT = NULL;
-        
-    sprintf( szCommand,
-             "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
-             nSRSId );
-    if( mysql_query( poDS->GetConn(), szCommand ) )
-    {
-        poDS->ReportError( "SELECT srid Failed" );
-        return NULL;
-    }     
-    
-    hResult = mysql_store_result( poDS->GetConn() );
-    if( hResult == NULL )
-    {
-        poDS->ReportError( "mysql_store_result() failed on SELECT SRID result." );
-        return FALSE;
-    }   
-
-    char **papszRow = mysql_fetch_row( hResult );
-
-    if( papszRow != NULL && papszRow[0] != NULL )
-    {
-        pszWKT =papszRow[0];
-    }
-    
-    poSRS = new OGRSpatialReference();
-    if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
-    {
-        delete poSRS;
-        poSRS = NULL;
-    }
-    
-    mysql_free_result( hResult );
-    return poSRS;
-    */
+	nSRSId = FetchSRSId();
     FetchSRS();
     return poSRS;
-    
-    //return OGRMySQLLayer::GetSpatialRef();
+
 }
