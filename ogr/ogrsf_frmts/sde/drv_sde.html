@@ -1,0 +1,34 @@
+<html>
+<head>
+<title>ESRI ArcSDE</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>ESRI ArcSDE</h1>
+
+OGR optionally supports reading ESRI ArcSDE database instances.  ArcSDE is
+a middleware spatial solution for storing spatial data in a variety of backend
+relational databases.  The OGR ArcSDE driver depends on being built with the
+ESRI provided ArcSDE client libraries. <p>
+
+ArcSDE instances are accessed with a datasource name of the following
+form.  All fields are required.<p>
+
+<pre>
+  SDE:<server>,<instance>,<database>,<username>,<password>
+</pre>
+
+The OGR ArcSDE driver does not support reading CAD data (treated as BLOB
+attribute), annotation properties, measure values at vertices, or raster data.  
+The ExecuteSQL() method does <b>not</b> get passed through to the underlying 
+database.  For now it is interpreted by the limited OGR SQL handler.  
+Spatial indexes are used to accelerate spatial queries.<p>
+
+The driver has been tested with ArcSDE 9.x, and should work with newer
+versions, as well as ArcSDE 8.2 or 8.3.  Both 2D and 3D geometries are
+supported.  Curve geometries are approximated as line strings (actually 
+still TODO).<p>
+
+</body>
+</html>
