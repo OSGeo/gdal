@@ -1,5 +1,9 @@
 %module gdalconst 
 
+#if defined(SWIGJAVA)
+%include gdalconst_java.i
+#endif
+
 %{
 #include "gdal.h"
 #include "gdalwarper.h"

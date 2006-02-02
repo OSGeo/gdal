@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.23  2006/02/02 20:52:40  collinsb
+ * Added SWIG JAVA bindings
+ *
  * Revision 1.22  2006/01/14 01:47:22  cfis
  * Added private default constructors since SWIG 1.3.28 HEAD was incorrectly generating them.
  *
@@ -215,6 +218,8 @@ typedef int OGRErr;
 %include typemaps_php.i
 #elif defined(SWIGCSHARP)
 %include typemaps_csharp.i
+#elif defined(SWIGJAVA)
+%include typemaps_java.i
 #else
 %include gdal_typemaps.i
 #endif
