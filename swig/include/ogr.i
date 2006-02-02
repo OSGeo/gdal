@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.50  2006/02/02 20:52:40  collinsb
+ * Added SWIG JAVA bindings
+ *
  * Revision 1.49  2005/10/17 14:38:16  hobu
  * Implemented a poor excuse for a GetDriver method on OGRDataSourceShadow
  *
@@ -325,6 +328,8 @@ typedef void OGRFieldDefnShadow;
 %include ogr_csharp.i
 #elif defined(SWIGPERL)
 %include ogr_perl.i
+#elif defined(SWIGJAVA)
+%include typemaps_java.i
 #else
 %include gdal_typemaps.i
 #endif

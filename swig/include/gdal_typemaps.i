@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.5  2006/02/02 20:52:40  collinsb
+ * Added SWIG JAVA bindings
+ *
  * Revision 1.4  2005/09/06 01:41:06  kruland
  * Added SWIGPERL include.
  *
@@ -43,4 +46,8 @@
 
 #ifdef SWIGPERL
 %import typemaps_perl.i
+#endif
+
+#ifdef SWIGJAVA
+%import typemaps_java.i
 #endif

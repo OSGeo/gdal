@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.40  2006/02/02 20:52:40  collinsb
+ * Added SWIG JAVA bindings
+ *
  * Revision 1.39  2006/01/17 04:38:44  cfis
  * Grouped all renames together and added section for Ruby.
  *
@@ -197,6 +200,8 @@ typedef int GDALResampleAlg;
 %include "gdal_csharp.i"
 #elif defined(SWIGPERL)
 %include "gdal_perl.i"
+#elif defined(SWIGJAVA)
+%include "gdal_java.i"
 #else
 %include "gdal_typemaps.i"
 #endif
