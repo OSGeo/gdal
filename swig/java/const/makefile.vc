@@ -3,6 +3,7 @@ OBJ	=	gdalconst_wrap.obj
 GDAL_ROOT	=	..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
+!INCLUDE ..\java.opt
 
 default:	$(OBJ)
 	copy *.obj ..
@@ -10,5 +11,8 @@ default:	$(OBJ)
 clean:
 	-del *.obj
 	-del *.cs
-	-del *.c
+	-del *.cpp
+
+.cpp.obj:	
+	$(CC) $(CFLAGS) $(JAVA_INCLUDE) /c $*.cpp
 

@@ -3,6 +3,7 @@ OBJ	=	osr_wrap.obj
 GDAL_ROOT	=	..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
+!INCLUDE ..\java.opt
 
 default:	$(OBJ)
 	copy *.obj ..
@@ -12,3 +13,5 @@ clean:
 	-del *.cs
 	-del *.cpp
 
+.cpp.obj:	
+	$(CC) $(CFLAGS) $(JAVA_INCLUDE) /c $*.cpp
