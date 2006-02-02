@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.24  2006/02/02 21:09:24  collinsb
+ * Corrected wrong Java typemap filename
+ *
  * Revision 1.23  2006/02/02 20:52:40  collinsb
  * Added SWIG JAVA bindings
  *
@@ -219,7 +222,7 @@ typedef int OGRErr;
 #elif defined(SWIGCSHARP)
 %include typemaps_csharp.i
 #elif defined(SWIGJAVA)
-%include typemaps_java.i
+%include osr_java.i
 #else
 %include gdal_typemaps.i
 #endif
