@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2006/02/02 01:19:34  fwarmerdam
+ * Use EQUAL, not EQUALN for -so and -al as per bug 1052.
+ *
  * Revision 1.29  2006/01/27 00:08:36  fwarmerdam
  * added Get{FID,Geometry}Column() support
  *
@@ -205,11 +208,11 @@ int main( int nArgc, char ** papszArgv )
         {
             nRepeatCount = atoi(papszArgv[++iArg]);
         }
-        else if( EQUALN(papszArgv[iArg],"-al",2) )
+        else if( EQUAL(papszArgv[iArg],"-al") )
         {
             bAllLayers = TRUE;
         }
-        else if( EQUALN(papszArgv[iArg],"-so",2) )
+        else if( EQUAL(papszArgv[iArg],"-so") )
         {
             bSummaryOnly = TRUE;
         }
