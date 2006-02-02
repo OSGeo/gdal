@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.51  2006/02/02 21:09:24  collinsb
+ * Corrected wrong Java typemap filename
+ *
  * Revision 1.50  2006/02/02 20:52:40  collinsb
  * Added SWIG JAVA bindings
  *
@@ -329,7 +332,7 @@ typedef void OGRFieldDefnShadow;
 #elif defined(SWIGPERL)
 %include ogr_perl.i
 #elif defined(SWIGJAVA)
-%include typemaps_java.i
+%include ogr_java.i
 #else
 %include gdal_typemaps.i
 #endif
