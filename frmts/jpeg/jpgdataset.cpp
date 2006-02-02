@@ -28,6 +28,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.39  2006/02/02 01:07:36  fwarmerdam
+ * Added support for finding EXIF information when APP1 chunk appears
+ * after an APP0 JFIF chunk.  ie. albania.jpg
+ *
  * Revision 1.38  2005/10/14 21:52:26  fwarmerdam
  * Slightly safer version of last fix, retaining ASCII setting for ucomments.
  *
@@ -196,12 +200,13 @@ class JPGDataset : public GDALPamDataset
     int    nGPSOffset;
     int	   bSwabflag;
     int    nTiffDirStart;
+    int    nTIFFHEADER;
 
     CPLErr LoadScanline(int);
     void   Restart();
     
     CPLErr EXIFExtractMetadata(FILE *, int);
-    CPLErr EXIFInit(FILE *);
+    int    EXIFInit(FILE *);
     void   EXIFPrintByte(char *, const char*, TIFFDirEntry* );
     void   EXIFPrintShort(char *, const char*, TIFFDirEntry*);
     void   EXIFPrintData(char *, GUInt16, GUInt32, unsigned char* );
@@ -408,50 +413,77 @@ void JPGDataset::EXIFPrintData(char* pszData, GUInt16 type,
 /*                                                                      */
 /*           Create Metadata from Information file directory APP1       */
 /************************************************************************/
-CPLErr JPGDataset::EXIFInit(FILE *fp)
+int JPGDataset::EXIFInit(FILE *fp)
 {
-  int           one = 1;
-  TIFFHeader    hdr;
+    int           one = 1;
+    TIFFHeader    hdr;
   
-  bigendian = (*(char *)&one == 0);
+    bigendian = (*(char *)&one == 0);
 
+/* -------------------------------------------------------------------- */
+/*      Search for APP1 chunk.                                          */
+/* -------------------------------------------------------------------- */
+    GByte abyChunkHeader[10];
+    int nChunkLoc = 2;
+
+    for( ; TRUE; ) 
+    {
+        if( VSIFSeekL( fp, nChunkLoc, SEEK_SET ) != 0 )
+            return FALSE;
+
+        if( VSIFReadL( abyChunkHeader, sizeof(abyChunkHeader), 1, fp ) != 1 )
+            return FALSE;
+
+        if( abyChunkHeader[0] != 0xFF 
+            || (abyChunkHeader[1] & 0xf0) != 0xe0 )
+            return FALSE; // Not an APP chunk.
+
+        if( abyChunkHeader[1] == 0xe1 
+            && strncmp((const char *) abyChunkHeader + 4,"Exif",4) == 0 )
+        {
+            nTIFFHEADER = nChunkLoc + 10;
+            break; // APP1 - Exif
+        }
+
+        nChunkLoc += 2 + abyChunkHeader[2] * 256 + abyChunkHeader[3];
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read TIFF header                                                */
 /* -------------------------------------------------------------------- */
-  VSIFSeekL(fp, TIFFHEADER, SEEK_SET);
-  if(VSIFReadL(&hdr,1,sizeof(hdr),fp) != sizeof(hdr)) 
-      CPLError( CE_Failure, CPLE_FileIO,
-                "Failed to read %d byte from image header.",
-                sizeof(hdr));
+    VSIFSeekL(fp, nTIFFHEADER, SEEK_SET);
+    if(VSIFReadL(&hdr,1,sizeof(hdr),fp) != sizeof(hdr)) 
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to read %d byte from image header.",
+                  sizeof(hdr));
 
-  if (hdr.tiff_magic != TIFF_BIGENDIAN && hdr.tiff_magic != TIFF_LITTLEENDIAN)
-    CPLError( CE_Failure, CPLE_AppDefined,
-	      "Not a TIFF file, bad magic number %u (%#x)",
-	      hdr.tiff_magic, hdr.tiff_magic);
+    if (hdr.tiff_magic != TIFF_BIGENDIAN && hdr.tiff_magic != TIFF_LITTLEENDIAN)
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Not a TIFF file, bad magic number %u (%#x)",
+                  hdr.tiff_magic, hdr.tiff_magic);
 
-  if (hdr.tiff_magic == TIFF_BIGENDIAN)    bSwabflag = !bigendian;
-  if (hdr.tiff_magic == TIFF_LITTLEENDIAN) bSwabflag = bigendian;
-
-
-  if (bSwabflag) {
-    TIFFSwabShort(&hdr.tiff_version);
-    TIFFSwabLong(&hdr.tiff_diroff);
-  }
+    if (hdr.tiff_magic == TIFF_BIGENDIAN)    bSwabflag = !bigendian;
+    if (hdr.tiff_magic == TIFF_LITTLEENDIAN) bSwabflag = bigendian;
 
 
-  if (hdr.tiff_version != TIFF_VERSION)
-    CPLError(CE_Failure, CPLE_AppDefined,
-	     "Not a TIFF file, bad version number %u (%#x)",
-	     hdr.tiff_version, hdr.tiff_version); 
-  nTiffDirStart = hdr.tiff_diroff;
+    if (bSwabflag) {
+        TIFFSwabShort(&hdr.tiff_version);
+        TIFFSwabLong(&hdr.tiff_diroff);
+    }
 
-  CPLDebug( "JPEG", "Magic: %#x <%s-endian> Version: %#x\n",
-            hdr.tiff_magic,
-            hdr.tiff_magic == TIFF_BIGENDIAN ? "big" : "little",
-            hdr.tiff_version );
 
-  return (CE_None);
+    if (hdr.tiff_version != TIFF_VERSION)
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Not a TIFF file, bad version number %u (%#x)",
+                 hdr.tiff_version, hdr.tiff_version); 
+    nTiffDirStart = hdr.tiff_diroff;
+
+    CPLDebug( "JPEG", "Magic: %#x <%s-endian> Version: %#x\n",
+              hdr.tiff_magic,
+              hdr.tiff_magic == TIFF_BIGENDIAN ? "big" : "little",
+              hdr.tiff_version );
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -476,7 +508,7 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 /* -------------------------------------------------------------------- */
 /*      Read number of entry in directory                               */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL(fp, nOffset+TIFFHEADER, SEEK_SET);
+    VSIFSeekL(fp, nOffset+nTIFFHEADER, SEEK_SET);
 
     if(VSIFReadL(&nEntryCount,1,sizeof(GUInt16),fp) != sizeof(GUInt16)) 
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -641,7 +673,7 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
             if (data) {
                 int width = TIFFDataWidth((TIFFDataType) poTIFFDirEntry->tdir_type);
                 tsize_t cc = poTIFFDirEntry->tdir_count * width;
-                VSIFSeekL(fp,poTIFFDirEntry->tdir_offset+TIFFHEADER,SEEK_SET);
+                VSIFSeekL(fp,poTIFFDirEntry->tdir_offset+nTIFFHEADER,SEEK_SET);
                 VSIFReadL(data, 1, cc, fp);
 
                 if (bSwabflag) {
@@ -979,9 +1011,8 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Take care of EXIF Metadata                                      */
 /* -------------------------------------------------------------------- */
-    if (poOpenInfo->pabyHeader [3] == 0xe1 ) {
-        poDS->EXIFInit(poDS->fpImage);
-
+    if( poDS->EXIFInit(poDS->fpImage) )
+    {
         poDS->EXIFExtractMetadata(poDS->fpImage,poDS->nTiffDirStart);
 
         if(poDS->nExifOffset  > 0){ 
