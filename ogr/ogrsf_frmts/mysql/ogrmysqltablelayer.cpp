@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/02/02 01:24:17  hobu
+ * make sure we properly sett hResultSet to NULL after all frees.
+ *
  * Revision 1.17  2006/02/01 01:40:09  hobu
  * separate fetching of SRID
  *
@@ -327,7 +330,10 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 
     // set to none for now... if we have a geometry column it will be set layer.
     poDefn->SetGeomType( wkbNone );
-    mysql_free_result( hResult );
+
+    if( hResultSet != NULL )
+        mysql_free_result( hResultSet );
+ 		hResultSet = NULL;
 
 
     if( bHasFid )
@@ -384,6 +390,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 
         if( hResult != NULL )
             mysql_free_result( hResult );   //Free our query results for finding type.
+			hResult = NULL;
     } 
     
     return poDefn;
@@ -660,8 +667,9 @@ OGRFeature *OGRMySQLTableLayer::GetFeature( long nFeatureId )
 /* -------------------------------------------------------------------- */
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
-    mysql_free_result( hResultSet );
-    hResultSet = NULL;
+    if( hResultSet != NULL )
+        mysql_free_result( hResultSet );
+ 		hResultSet = NULL;
 
     return poFeature;
 }
@@ -714,7 +722,9 @@ int OGRMySQLTableLayer::GetFeatureCount( int bForce )
     if( papszRow != NULL && papszRow[0] != NULL )
         nCount = atoi(papszRow[0]);
 
-    mysql_free_result( hResult );
+    if( hResultSet != NULL )
+        mysql_free_result( hResultSet );
+ 		hResultSet = NULL;
     
     return nCount;
 }
