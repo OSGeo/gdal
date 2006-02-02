@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.7  2006/02/02 01:08:02  fwarmerdam
+ * Removed TIFFHEADER value ... it isn't a constant.
+ *
  * Revision 1.6  2005/09/29 01:00:48  fwarmerdam
  * enable MakerNote
  *
@@ -54,7 +57,6 @@
 #define INTEROPERABILITYOFFSET 0xA005
 #define GPSOFFSETTAG     0x8825
 #define MAXSTRINGLENGTH 65535
-#define TIFFHEADER 12
 
 
 static struct gpsname {
