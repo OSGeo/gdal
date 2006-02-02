@@ -1,40 +1,42 @@
-!INCLUDE ../../nmake.opt
+GDAL_ROOT	=	..\..
 
-#
-# Java Stuff
-JAVA_HOME = "C:\j2sdk1.4.2_06"
-JAVADOC=$(JAVA_HOME)\bin\javadoc
-JAVAC=$(JAVA_HOME)\bin\javac
-JAVA=$(JAVA_HOME)\bin\java
-JAR=$(JAVA_HOME)\bin\jar
-JAVA_INCLUDE=-I$(JAVA_HOME)\include -I$(JAVA_HOME)\include\win32
+!INCLUDE $(GDAL_ROOT)\nmake.opt
 
+!IFDEF DLLBUILD
+GDALLIB	=    $(GDAL_ROOT)\gdal_i.lib
+!ELSE
+GDALLIB	=    $(GDAL_ROOT)\gdal.lib
+!ENDIF
 
 OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
 
 all:  ogr_dir gdal_dir const_dir osr_dir
-
+	ant
 
     
 ogr_dir:
 	cd ogr
 	$(MAKE) /f makefile.vc
 	cd ..
+	link ogr_wrap.obj $(GDALLIB) /out:ogrjni.dll /DLL
 
 gdal_dir:
 	cd gdal
 	$(MAKE) /f makefile.vc
 	cd ..
+	link gdal_wrap.obj $(GDALLIB) /out:gdaljni.dll /DLL
 
 const_dir:
 	cd const
 	$(MAKE) /f makefile.vc
 	cd ..
+	link gdalconst_wrap.obj $(GDALLIB) /out:gdalconstjni.dll /DLL
 
 osr_dir:
 	cd osr
 	$(MAKE) /f makefile.vc
 	cd ..
+	link osr_wrap.obj $(GDALLIB) /out:osrjni.dll /DLL
 	
 	
 clean:
