@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/02/02 01:24:17  hobu
+ * make sure we properly sett hResultSet to NULL after all frees.
+ *
  * Revision 1.11  2006/02/01 01:40:09  hobu
  * separate fetching of SRID
  *
@@ -355,28 +358,6 @@ int OGRMySQLLayer::TestCapability( const char * pszCap )
     return FALSE;
 }
 
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRMySQLLayer::GetSpatialRef()
-
-{
-#ifdef notdef
-    if( poSRS == NULL && nSRSId > -1 )
-    {
-        poSRS = poDS->FetchSRS( nSRSId );
-        if( poSRS != NULL )
-            poSRS->Reference();
-        else
-            nSRSId = -1;
-    }
-
-    return poSRS;
-#endif
-
-    return NULL;
-}
 
 /************************************************************************/
 /*                            GetFIDColumn()                            */
@@ -414,7 +395,10 @@ int OGRMySQLLayer::FetchSRSId()
 	char         szCommand[1024];
     char           **papszRow;  
     
-		
+    if( hResultSet != NULL )
+        mysql_free_result( hResultSet );
+		hResultSet = NULL;
+				
     sprintf( szCommand, 
              "SELECT srid FROM geometry_columns "
              "WHERE f_table_name = '%s'",
@@ -444,9 +428,11 @@ void OGRMySQLLayer::FetchSRS()
         char         szCommand[1024];
         char           **papszRow;  
         
-
+		if (nSRSId == -1)
+			return;
         if( hResultSet != NULL )
-            mysql_free_result( hResultSet );    			
+            mysql_free_result( hResultSet );
+  			hResultSet = NULL;
 			
         sprintf( szCommand,
              "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
@@ -472,4 +458,29 @@ void OGRMySQLLayer::FetchSRS()
              poSRS = NULL;
          }
 
+}
+
+
+/************************************************************************/
+/*                           GetSpatialRef()                            */
+/************************************************************************/
+
+OGRSpatialReference *OGRMySQLLayer::GetSpatialRef()
+
+{
+
+#if notdef
+    if( poSRS == NULL && nSRSId > -1 )
+    {
+        poSRS = poDS->FetchSRS( nSRSId );
+        if( poSRS != NULL )
+            poSRS->Reference();
+        else
+            nSRSId = -1;
+    }
+
+    return poSRS;
+#endif
+
+    return NULL;
 }

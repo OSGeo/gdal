@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/02/02 01:24:17  hobu
+ * make sure we properly sett hResultSet to NULL after all frees.
+ *
  * Revision 1.9  2006/02/01 01:40:09  hobu
  * separate fetching of SRID
  *
@@ -238,7 +241,8 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
 
     
         if( hResultSet != NULL )
-            mysql_free_result( hResultSet );        
+            mysql_free_result( hResultSet );
+     		hResultSet = NULL;
 
         if( !mysql_query( poDS->GetConn(), szCommand ) )
             hResultSet = mysql_store_result( poDS->GetConn() );
