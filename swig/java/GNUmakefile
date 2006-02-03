@@ -43,7 +43,7 @@ install: generate
 
 
 $(JAVA_MODULES): lib%jni.so: %_wrap.o
-	$(LD_SHARED) -shared $(LDFLAGS) $(CONFIG_LIBS) $< -o $@
+	$(LD) -shared $(LDFLAGS) $(CONFIG_LIBS) $< -o $@
 
 %.o: %.cpp
 	$(CXX) -fPIC $(CFLAGS) $(GDAL_INCLUDE) $(JAVA_INCLUDE) -c $<
