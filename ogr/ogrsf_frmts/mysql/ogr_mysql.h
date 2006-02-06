@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/02/06 23:06:45  fwarmerdam
+ * undef mysql's bool
+ *
  * Revision 1.11  2006/02/01 01:40:09  hobu
  * separate fetching of SRID
  *
@@ -68,6 +71,10 @@
 
 #include <my_global.h>
 #include <mysql.h>
+
+#ifdef bool
+#undef bool
+#endif
 
 #include "ogrsf_frmts.h"
 
