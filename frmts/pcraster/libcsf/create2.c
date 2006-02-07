@@ -82,7 +82,6 @@ MAP *Rcreate(
 		goto error_notOpen;
 	}
 
-#ifdef DEBUG
 	switch(dataType) {
 	 case VS_BOOLEAN: 
 	 case VS_LDD: 
@@ -112,7 +111,6 @@ MAP *Rcreate(
 		PROG_ERROR(BAD_VALUESCALE);
 		goto error_notOpen;
 	}
-#endif
 
 	if (cellSize <= 0.0)
 	{

@@ -8,9 +8,9 @@
 // PCRaster library headers.
 
 // Module headers.
-#ifndef INCLUDED_GDAL_PRIV
+#ifndef INCLUDED_GDAL_PAM
 #include "gdal_pam.h"
-#define INCLUDED_GDAL_PRIV
+#define INCLUDED_GDAL_PAM
 #endif
 
 
