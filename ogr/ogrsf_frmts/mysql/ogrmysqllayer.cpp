@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2006/02/07 18:17:15  hobu
+ * Always return geometries as "native"
+ *
  * Revision 1.12  2006/02/02 01:24:17  hobu
  * make sure we properly sett hResultSet to NULL after all frees.
  *
@@ -231,25 +234,12 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
  
             // Geometry columns selected without AsBinary() will have the 
             // first 4 bytes contain the SRID.
-            if( panLengths[iField] > 9 
-                && papszRow[0][0] != 0 
-                && papszRow[0][0] != 1 )
-            {
+
                 OGRGeometryFactory::createFromWkb(
                     ((GByte *)papszRow[iField]) + 4, 
                     NULL,
                     &poGeometry,
                     panLengths[iField] - 4 );
-            }
-            else
-            {
-                OGRGeometryFactory::createFromWkb(
-                    (GByte *)papszRow[iField], 
-                    NULL,
-                    &poGeometry,
-                    panLengths[iField]);
-            }
-
 
             if( poGeometry != NULL )
                 poFeature->SetGeometryDirectly( poGeometry );
