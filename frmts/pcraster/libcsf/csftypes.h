@@ -91,19 +91,22 @@ typedef unsigned __int64    CSF_UINT8;
 #endif
 
 /* endian mode
- * DEFINE WITH -D
- * first probe a few:
+ * DEFINE WITH -D or find here
  */
 #ifndef CPU_BIG_ENDIAN
 # ifndef CPU_LITTLE_ENDIAN
 
-/* GDAL CPL STYLE */
-#ifdef CPL_LSB
-# define CPU_LITTLE_ENDIAN
-#endif
-#ifdef CPL_MSB
-# define CPU_BIG_ENDIAN
-#endif
+#ifdef USE_IN_GDAL
+  /* GDAL CPL STYLE */
+# ifdef CPL_LSB
+#  define CPU_LITTLE_ENDIAN
+# endif
+# ifdef CPL_MSB
+#  define CPU_BIG_ENDIAN
+# endif
+
+#else
+ /* probe a few: */
 
 #ifdef _AIX
 /* IBM AIX defines this on RS/6000 */
@@ -115,10 +118,13 @@ typedef unsigned __int64    CSF_UINT8;
 # define CPU_BIG_ENDIAN
 #endif
 
-#ifdef mips
-/* works on the SGI machines */
-# define CPU_BIG_ENDIAN
-#endif
+/*
+ * #ifdef mips
+ * worked once on the SGI machines
+ * but mips has both endian architectures
+ * # define CPU_BIG_ENDIAN
+ * #endif
+ */
 
 #ifdef __alpha
 /* DEC alpha defines this
@@ -144,6 +150,9 @@ typedef unsigned __int64    CSF_UINT8;
 /* cc and gcc defines this on HP PA risc platform */
 #  define CPU_BIG_ENDIAN
 #endif
+
+/* endif probing */
+# endif 
 
 /* endif no ENDIAN defined */
 # endif
@@ -309,8 +318,12 @@ typedef enum CSF_CR {
 
 #include <float.h> /* FLT_MIN, DBL_MAX, DBL_MAX, FLT_MAX */
 
-#define MV_INT1   ((CSF_IN_GLOBAL_NS INT1)0x80)
-#define MV_INT2   ((CSF_IN_GLOBAL_NS INT2)0x8000)
+#define MV_INT1   ((CSF_IN_GLOBAL_NS INT1)-128)
+#define MV_INT2   ((CSF_IN_GLOBAL_NS INT2)-32768)
+/* cl C4146 has it right
+  #define MV_INT4   ((CSF_IN_GLOBAL_NS INT4)-2147483648)
+   is dangerous
+ */
 #define MV_INT4   ((CSF_IN_GLOBAL_NS INT4)0x80000000L)
 
 #define MV_UINT1  ((CSF_IN_GLOBAL_NS UINT1)0xFF)

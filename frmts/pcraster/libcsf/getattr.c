@@ -1,8 +1,13 @@
 /*
  * getattr.c
 $Log$
-Revision 1.2  2005/10/03 07:22:12  kdejong
-Lots of small edits for x86-64 support, removed rcs id string.
+Revision 1.3  2006/02/07 10:17:15  kdejong
+Fixed endian compile problem
+some rcs issues of Kor, I guess
+Checked in by cees (cees@pcraster.nl) on account of Kor
+
+Revision 1.2  2005/10/03 07:23:00  kor
+Removed rcs id string
 
 Revision 1.1.1.1  2000/01/04 21:04:38  cees
 Initial import Cees

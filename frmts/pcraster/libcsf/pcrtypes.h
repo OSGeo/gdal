@@ -6,13 +6,18 @@
 #define INCLUDED_CSFTYPES
 #endif
 
+#ifndef INCLUDED_STRING
+#include <string>
+#define INCLUDED_STRING
+#endif
+
 // memset
 // use string.h not cstring
 // VC6 does not have memset in std
 // better use Ansi-C string.h to be safe
-#ifndef INCLUDED_STRING
-#include <string.h> 
-#define INCLUDED_STRING
+#ifndef INCLUDED_C_STRING
+#include <string.h>
+#define INCLUDED_C_STRING
 #endif
 
 namespace pcr {
@@ -53,6 +58,12 @@ namespace pcr {
   { return IS_MV_REAL4(&v); }
   template<> inline bool isMV(const REAL8& v)
   { return IS_MV_REAL8(&v); }
+
+template<> inline bool isMV(std::string const& string)
+{
+  return string.empty();
+}
+
  /*!
     \brief     Sets the value v to a missing value.
     \param     v value to be set.
@@ -89,7 +100,7 @@ namespace pcr {
      // element variable in function scope (stack-based)
      // constraint the setting to memory (m)
      // for correct alignment
-     asm ("movl $-1, %0" : "=m" (v));
+     asm ("movl $-1, %[dest]" : [dest] "=m" (v));
 #   endif
   }
   template<>
@@ -108,6 +119,11 @@ namespace pcr {
 #   endif
   }
 
+template<>
+inline void setMV(std::string& string)
+{
+  string.clear();
+}
 
 /*! \brief set array \a v of size \a n to all MV's
  *  the generic setMV(T& v) is implemented, the specializations
