@@ -9,3 +9,7 @@ default:	$(OBJ)
 
 clean:
 	-del *.obj *.pdb
+
+ogr_SDE.dll:	$(OBJ)
+	link /dll /out:ogr_SDE.dll $(OBJ) \
+		$(GDAL_ROOT)/gdal_i.lib $(SDE_LIB)
