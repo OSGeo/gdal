@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/02/07 01:22:57  fwarmerdam
+ * Switch XOffset and YOffset per email from Drew.
+ *
  * Revision 1.1  2006/02/01 17:22:34  fwarmerdam
  * New
  *
@@ -57,8 +60,8 @@ typedef struct {
     char	unused2[8];
     GInt32	LABL;	/* used by LABL module */
     char	HEAD;	/* used by HEAD module */
-    double      XOffset; 
     double      YOffset;
+    double      XOffset; 
     double      XPixSize;
     double      YPixSize;
     double      Matrix[4];
