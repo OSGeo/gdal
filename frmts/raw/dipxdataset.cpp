@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  GDAL
- * Purpose:  Implementation for ELAS DIPX format variant.
+ * Purpose:  Implementation for ELAS DIPEx format variant.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/02/07 21:44:43  fwarmerdam
+ * DIPX->DIPEx
+ *
  * Revision 1.2  2006/02/07 01:22:57  fwarmerdam
  * Switch XOffset and YOffset per email from Drew.
  *
@@ -42,7 +45,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
-void	GDALRegister_DIPX(void);
+void	GDALRegister_DIPEx(void);
 CPL_C_END
 
 typedef struct {
@@ -62,37 +65,37 @@ typedef struct {
     char	HEAD;	/* used by HEAD module */
     double      YOffset;
     double      XOffset; 
-    double      XPixSize;
     double      YPixSize;
+    double      XPixSize;
     double      Matrix[4];
     char        unused3[344];
     GUInt16	ColorTable[256];  /* RGB packed with 4 bits each */
     char	unused4[32];
-} DIPXHeader;
+} DIPExHeader;
 
 /************************************************************************/
 /* ==================================================================== */
-/*				DIPXDataset				*/
+/*				DIPExDataset				*/
 /* ==================================================================== */
 /************************************************************************/
 
-class DIPXRasterBand;
+class DIPExRasterBand;
 
-class DIPXDataset : public GDALPamDataset
+class DIPExDataset : public GDALPamDataset
 {
-    friend class DIPXRasterBand;
+    friend class DIPExRasterBand;
 
     FILE	*fp;
 
-    DIPXHeader  sHeader;
+    DIPExHeader  sHeader;
 
     GDALDataType eRasterDataType;
 
     double	adfGeoTransform[6];
 
   public:
-                 DIPXDataset();
-                 ~DIPXDataset();
+                 DIPExDataset();
+                 ~DIPExDataset();
 
     virtual CPLErr GetGeoTransform( double * );
 
@@ -101,16 +104,16 @@ class DIPXDataset : public GDALPamDataset
 
 /************************************************************************/
 /* ==================================================================== */
-/*                             DIPXDataset                              */
+/*                             DIPExDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
 
 /************************************************************************/
-/*                            DIPXDataset()                             */
+/*                            DIPExDataset()                             */
 /************************************************************************/
 
-DIPXDataset::DIPXDataset()
+DIPExDataset::DIPExDataset()
 
 {
     fp = NULL;
@@ -124,10 +127,10 @@ DIPXDataset::DIPXDataset()
 }
 
 /************************************************************************/
-/*                            ~DIPXDataset()                            */
+/*                            ~DIPExDataset()                            */
 /************************************************************************/
 
-DIPXDataset::~DIPXDataset()
+DIPExDataset::~DIPExDataset()
 
 {
     VSIFCloseL( fp );
@@ -138,7 +141,7 @@ DIPXDataset::~DIPXDataset()
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *DIPXDataset::Open( GDALOpenInfo * poOpenInfo )
+GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
 /* -------------------------------------------------------------------- */
@@ -157,7 +160,7 @@ GDALDataset *DIPXDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    DIPXDataset 	*poDS;
+    DIPExDataset 	*poDS;
     const char	 	*pszAccess;
 
     if( poOpenInfo->eAccess == GA_Update )
@@ -165,7 +168,7 @@ GDALDataset *DIPXDataset::Open( GDALOpenInfo * poOpenInfo )
     else
         pszAccess = "rb";
 
-    poDS = new DIPXDataset();
+    poDS = new DIPExDataset();
 
     poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, pszAccess );
     if( poDS->fp == NULL )
@@ -192,7 +195,7 @@ GDALDataset *DIPXDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Extract information of interest from the header.                */
 /* -------------------------------------------------------------------- */
-    int		nStart, nEnd, nDIPXDataType, nBytesPerSample;
+    int		nStart, nEnd, nDIPExDataType, nBytesPerSample;
     int         nLineOffset;
     
     nLineOffset = CPL_LSBWORD32( poDS->sHeader.NBPR );
@@ -207,23 +210,23 @@ GDALDataset *DIPXDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->nBands = CPL_LSBWORD32( poDS->sHeader.NC );
 
-    nDIPXDataType = (poDS->sHeader.IH19[1] & 0x7e) >> 2;
+    nDIPExDataType = (poDS->sHeader.IH19[1] & 0x7e) >> 2;
     nBytesPerSample = poDS->sHeader.IH19[0];
     
-    if( nDIPXDataType == 0 && nBytesPerSample == 1 )
+    if( nDIPExDataType == 0 && nBytesPerSample == 1 )
         poDS->eRasterDataType = GDT_Byte;
-    else if( nDIPXDataType == 1 && nBytesPerSample == 1 )
+    else if( nDIPExDataType == 1 && nBytesPerSample == 1 )
         poDS->eRasterDataType = GDT_Byte;
-    else if( nDIPXDataType == 16 && nBytesPerSample == 4 )
+    else if( nDIPExDataType == 16 && nBytesPerSample == 4 )
         poDS->eRasterDataType = GDT_Float32;
-    else if( nDIPXDataType == 17 && nBytesPerSample == 8 )
+    else if( nDIPExDataType == 17 && nBytesPerSample == 8 )
         poDS->eRasterDataType = GDT_Float64;
     else
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unrecognised image data type %d, with BytesPerSample=%d.\n",
-                  nDIPXDataType, nBytesPerSample );
+                  nDIPExDataType, nBytesPerSample );
         return NULL;
     }
     
@@ -286,7 +289,7 @@ GDALDataset *DIPXDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr DIPXDataset::GetGeoTransform( double * padfTransform )
+CPLErr DIPExDataset::GetGeoTransform( double * padfTransform )
 
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
@@ -295,23 +298,23 @@ CPLErr DIPXDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                          GDALRegister_DIPX()                        */
+/*                          GDALRegister_DIPEx()                        */
 /************************************************************************/
 
-void GDALRegister_DIPX()
+void GDALRegister_DIPEx()
 
 {
     GDALDriver	*poDriver;
 
-    if( GDALGetDriverByName( "DIPX" ) == NULL )
+    if( GDALGetDriverByName( "DIPEx" ) == NULL )
     {
         poDriver = new GDALDriver();
         
-        poDriver->SetDescription( "DIPX" );
+        poDriver->SetDescription( "DIPEx" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "DIPX" );
+                                   "DIPEx" );
         
-        poDriver->pfnOpen = DIPXDataset::Open;
+        poDriver->pfnOpen = DIPExDataset::Open;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
