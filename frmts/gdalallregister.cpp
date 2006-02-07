@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.84  2006/02/07 21:44:43  fwarmerdam
+ * DIPX->DIPEx
+ *
  * Revision 1.83  2006/02/01 17:22:19  fwarmerdam
  * added DIPX driver
  *
@@ -289,7 +292,7 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_CPG();
     GDALRegister_IDA();
     GDALRegister_NDF();
-    GDALRegister_DIPX();
+    GDALRegister_DIPEx();
 #endif
 
 #ifdef FRMT_jp2kak
