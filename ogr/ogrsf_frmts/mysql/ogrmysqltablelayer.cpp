@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/02/07 18:17:15  hobu
+ * Always return geometries as "native"
+ *
  * Revision 1.18  2006/02/02 01:24:17  hobu
  * make sure we properly sett hResultSet to NULL after all frees.
  *
@@ -542,7 +545,7 @@ char *OGRMySQLTableLayer::BuildFields()
 		/*      correctly and the RecordToFeature machinery can get it  */
 		/* ------------------------------------------------------------ */            
         sprintf( pszFieldList+strlen(pszFieldList), 
-                 "AsBinary(%s) %s", pszGeomColumn, pszGeomColumn );
+                 "%s %s", pszGeomColumn, pszGeomColumn );
     }
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
