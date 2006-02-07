@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/02/07 19:07:08  fwarmerdam
+ * applied some strategic improved outofmemory checking
+ *
  * Revision 1.21  2006/01/13 20:40:47  fwarmerdam
  * grab mutex in raster block destructor while updating nCacheUsed.
  *
@@ -429,7 +432,11 @@ CPLErr GDALRasterBlock::Internalize()
 
     pNewData = VSIMalloc( nSizeInBytes );
     if( pNewData == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory, 
+                  "Internalize failed" );
         return( CE_Failure );
+    }
 
     if( pData != NULL )
         memcpy( pNewData, pData, nSizeInBytes );

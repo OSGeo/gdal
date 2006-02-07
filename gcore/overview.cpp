@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2006/02/07 19:11:36  fwarmerdam
+ * applied some strategic improved outofmemory checking
+ *
  * Revision 1.12  2005/04/04 15:24:48  fwarmerdam
  * Most C entry points now CPL_STDCALL
  *
@@ -87,7 +90,13 @@ GDALDownsampleChunk32R( int nSrcWidth, int nSrcHeight,
     nOXSize = poOverview->GetXSize();
     nOYSize = poOverview->GetYSize();
 
-    pafDstScanline = (float *) CPLMalloc(nOXSize * sizeof(float));
+    pafDstScanline = (float *) VSIMalloc(nOXSize * sizeof(float));
+    if( pafDstScanline == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "GDALDownsampleChunk32R: Out of memory for line buffer." );
+        return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Figure out the line to start writing to, and the first line     */
@@ -188,7 +197,13 @@ GDALDownsampleChunkC32R( int nSrcWidth, int nSrcHeight,
     nOXSize = poOverview->GetXSize();
     nOYSize = poOverview->GetYSize();
 
-    pafDstScanline = (float *) CPLMalloc(nOXSize * sizeof(float) * 2);
+    pafDstScanline = (float *) VSIMalloc(nOXSize * sizeof(float) * 2);
+    if( pafDstScanline == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "GDALDownsampleChunkC32R: Out of memory for line buffer." );
+        return CE_Failure;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Figure out the line to start writing to, and the first line     */
@@ -560,13 +575,20 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
     bComplex = GDALDataTypeIsComplex(eType);
     if( bComplex )
     {
-        pafData = (float *) CPLMalloc(nWidth * 2 * sizeof(float));
+        pafData = (float *) VSIMalloc(nWidth * 2 * sizeof(float));
         eWrkType = GDT_CFloat32;
     }
     else
     {
-        pafData = (float *) CPLMalloc(nWidth * sizeof(float));
+        pafData = (float *) VSIMalloc(nWidth * sizeof(float));
         eWrkType = GDT_Float32;
+    }
+
+    if( pafData == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "GDALComputeBandStats: Out of memory for buffer." );
+        return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
@@ -707,6 +729,13 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
         {
             pafData = (float *) CPLMalloc(nWidth * sizeof(float));
             eWrkType = GDT_Float32;
+        }
+
+        if( pafData == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                      "GDALOverviewMagnitudeCorrection: Out of memory for buffer." );
+            return CE_Failure;
         }
 
         for( iLine = 0; iLine < nHeight; iLine++ )
