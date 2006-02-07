@@ -166,6 +166,7 @@ JPEG_SUPPORTED = 1
 # Add ORACLE support.
 
 #ORACLE_HOME =	C:/Software/Oracle/Product/10.1.0/db_1
+#OCI_PLUGIN = YES
 
 !IFDEF ORACLE_HOME
 OCI_LIB =	$(ORACLE_HOME)\oci\lib\msvc\ociw32.lib \
