@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.71  2006/02/07 19:07:07  fwarmerdam
+ * applied some strategic improved outofmemory checking
+ *
  * Revision 1.70  2005/11/17 22:02:32  fwarmerdam
  * avoid overwriting existing .aux file, overview filename now CPLString
  *
@@ -454,7 +457,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                      void *, int, int, GDALDataType,
                                      int, int );
 
-    void           InitBlockInfo();
+    int            InitBlockInfo();
 
     CPLErr         AdoptBlock( int, int, GDALRasterBlock * );
     GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff, int nYBlockYOff );

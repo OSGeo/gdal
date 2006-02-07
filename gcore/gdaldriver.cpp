@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2006/02/07 19:07:07  fwarmerdam
+ * applied some strategic improved outofmemory checking
+ *
  * Revision 1.38  2006/02/07 18:13:25  fwarmerdam
  * Perform graceful error recovery if line buffer allocation fails.
  *
@@ -384,7 +387,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
         pData = VSIMalloc(nXSize * GDALGetDataTypeSize(eType) / 8);
         if( pData == NULL )
         {
-            CPLError( CE_Fatal, CPLE_OutOfMemory,
+            CPLError( CE_Failure, CPLE_OutOfMemory,
                       "CreateCopy(): Out of memory allocating %d byte line buffer.\n",
                       nXSize * GDALGetDataTypeSize(eType) / 8 );
             delete poDstDS;

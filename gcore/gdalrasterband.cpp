@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.75  2006/02/07 19:07:07  fwarmerdam
+ * applied some strategic improved outofmemory checking
+ *
  * Revision 1.74  2005/11/01 22:17:17  fwarmerdam
  * fixed GDALSetDefaultRAT (bug 985)
  *
@@ -529,7 +532,8 @@ CPLErr GDALRasterBand::ReadBlock( int nXBlockOff, int nYBlockOff,
         return( CE_Failure );
     }
     
-    InitBlockInfo();
+    if( !InitBlockInfo() )
+        return CE_Failure;
 
 /* -------------------------------------------------------------------- */
 /*      Invoke underlying implementation method.                        */
@@ -645,7 +649,8 @@ CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
         return( CE_Failure );
     }
 
-    InitBlockInfo();
+    if( !InitBlockInfo() )
+        return CE_Failure;
     
 /* -------------------------------------------------------------------- */
 /*      Invoke underlying implementation method.                        */
@@ -758,11 +763,11 @@ GDALGetBlockSize( GDALRasterBandH hBand, int * pnXSize, int * pnYSize )
 /*                           InitBlockInfo()                            */
 /************************************************************************/
 
-void GDALRasterBand::InitBlockInfo()
+int GDALRasterBand::InitBlockInfo()
 
 {
     if( papoBlocks != NULL )
-        return;
+        return TRUE;
 
     CPLAssert( nBlockXSize > 0 && nBlockYSize > 0 );
 
@@ -774,7 +779,7 @@ void GDALRasterBand::InitBlockInfo()
         bSubBlockingActive = FALSE;
         
         papoBlocks = (GDALRasterBlock **)
-            CPLCalloc( sizeof(void*), nBlocksPerRow * nBlocksPerColumn );
+            VSICalloc( sizeof(void*), nBlocksPerRow * nBlocksPerColumn );
     }
     else
     {
@@ -784,8 +789,17 @@ void GDALRasterBand::InitBlockInfo()
         nSubBlocksPerColumn = (nBlocksPerColumn + SUBBLOCK_SIZE + 1)/SUBBLOCK_SIZE;
         
         papoBlocks = (GDALRasterBlock **)
-            CPLCalloc( sizeof(void*), nSubBlocksPerRow * nSubBlocksPerColumn );
+            VSICalloc( sizeof(void*), nSubBlocksPerRow * nSubBlocksPerColumn );
     }
+
+    if( papoBlocks == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "Out of memory in InitBlockInfo()." );
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /************************************************************************/
@@ -837,7 +851,14 @@ CPLErr GDALRasterBand::AdoptBlock( int nXBlockOff, int nYBlockOff,
         int nSubGridSize = 
             sizeof(GDALRasterBlock*) * SUBBLOCK_SIZE * SUBBLOCK_SIZE;
 
-        papoBlocks[nSubBlock] = (GDALRasterBlock *) CPLMalloc(nSubGridSize);
+        papoBlocks[nSubBlock] = (GDALRasterBlock *) VSIMalloc(nSubGridSize);
+        if( papoBlocks[nSubBlock] == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory,
+                      "Out of memory in AdoptBlock()." );
+            return CE_Failure;
+        }
+
         memset( papoBlocks[nSubBlock], 0, nSubGridSize );
     }
 
@@ -1212,8 +1233,6 @@ GDALRasterBlock * GDALRasterBand::GetLockedBlockRef( int nXBlockOff,
         if( poBlock->Internalize() != CE_None )
         {
             delete poBlock;
-	    CPLError( CE_Failure, CPLE_AppDefined, "Internalize failed",
-		      nXBlockOff, nYBlockOff);
             return( NULL );
         }
 
@@ -2689,7 +2708,13 @@ CPLErr
             return eErr;
     }
 
-    *ppanHistogram = (int *) CPLCalloc(sizeof(int),*pnBuckets);
+    *ppanHistogram = (int *) VSICalloc(sizeof(int),*pnBuckets);
+    if( *ppanHistogram == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OutOfMemory,
+                  "Out of memory in InitBlockInfo()." );
+        return CE_Failure;
+    }
 
     return GetHistogram( *pdfMin, *pdfMax, *pnBuckets, *ppanHistogram, 
                          TRUE, FALSE, pfnProgress, pProgressData );
