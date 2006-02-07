@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2006/02/07 18:13:25  fwarmerdam
+ * Perform graceful error recovery if line buffer allocation fails.
+ *
  * Revision 1.37  2005/10/13 01:38:29  fwarmerdam
  * Ensure "large file" stat is used in GDALDriver::Delete() so it works
  * on in-memory stuff.
@@ -378,7 +381,16 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 /* -------------------------------------------------------------------- */
         void           *pData;
 
-        pData = CPLMalloc(nXSize * GDALGetDataTypeSize(eType) / 8);
+        pData = VSIMalloc(nXSize * GDALGetDataTypeSize(eType) / 8);
+        if( pData == NULL )
+        {
+            CPLError( CE_Fatal, CPLE_OutOfMemory,
+                      "CreateCopy(): Out of memory allocating %d byte line buffer.\n",
+                      nXSize * GDALGetDataTypeSize(eType) / 8 );
+            delete poDstDS;
+            Delete( pszFilename );
+            return NULL;
+        }
 
         for( int iLine = 0; iLine < nYSize; iLine++ )
         {
@@ -386,6 +398,8 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
                                         pData, nXSize, 1, eType, 0, 0 );
             if( eErr != CE_None )
             {
+                delete poDstDS;
+                Delete( pszFilename );
                 return NULL;
             }
             
@@ -394,6 +408,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 
             if( eErr != CE_None )
             {
+                delete poDstDS;
                 return NULL;
             }
 
