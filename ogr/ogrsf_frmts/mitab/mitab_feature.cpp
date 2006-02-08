@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.62 2005/11/08 22:02:36 fwarmerdam Exp $
+ * $Id: mitab_feature.cpp,v 1.63 2006/02/08 05:02:57 dmorissette Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.63  2006/02/08 05:02:57  dmorissette
+ * Fixed crash when attempting to write TABPolyline object with an invalid
+ * geometry (GDAL bug 1059)
+ *
  * Revision 1.62  2005/11/08 22:02:36  fwarmerdam
  * cast strstr() results as per email from Charles Savage for VC8.
  *
@@ -2106,7 +2110,9 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         poPLineHdr->m_nPenId = m_nPenDefIndex;      // Pen index
 
     }
-    else if (poGeom && (wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString ||
+    else if ((m_nMapInfoType == TAB_GEOM_PLINE ||
+              m_nMapInfoType == TAB_GEOM_PLINE_C ) &&
+             poGeom && (wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString ||
                         wkbFlatten(poGeom->getGeometryType()) == wkbLineString) )
     {
         /*=============================================================
@@ -2812,7 +2818,11 @@ int TABRegion::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
      *----------------------------------------------------------------*/
     poGeom = GetGeometryRef();
 
-    if (poGeom && (wkbFlatten(poGeom->getGeometryType()) == wkbPolygon ||
+    if ((m_nMapInfoType == TAB_GEOM_REGION ||
+         m_nMapInfoType == TAB_GEOM_REGION_C ||
+         m_nMapInfoType == TAB_GEOM_V450_REGION ||
+         m_nMapInfoType == TAB_GEOM_V450_REGION_C ) &&
+        poGeom && (wkbFlatten(poGeom->getGeometryType()) == wkbPolygon ||
                    wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon))
     {
         /*=============================================================

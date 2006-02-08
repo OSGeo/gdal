@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_tabfile.cpp,v 1.58 2005/10/13 20:12:03 fwarmerdam Exp $
+ * $Id: mitab_tabfile.cpp,v 1.59 2006/02/08 05:02:58 dmorissette Exp $
  *
  * Name:     mitab_tabfile.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -32,6 +32,10 @@
  **********************************************************************
  *
  * $Log: mitab_tabfile.cpp,v $
+ * Revision 1.59  2006/02/08 05:02:58  dmorissette
+ * Fixed crash when attempting to write TABPolyline object with an invalid
+ * geometry (GDAL bug 1059)
+ *
  * Revision 1.58  2005/10/13 20:12:03  fwarmerdam
  * layers with just regions can't be set as type wkbPolygon because they may
  * have multipolygons (bug GDAL:958)
@@ -1467,6 +1471,21 @@ int TABFile::SetFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
         TABMAPObjHdr::NewObj(poFeature->ValidateMapInfoType(m_poMAPFile),
                              nFeatureId);
     TABMAPObjectBlock *poObjBlock = NULL;
+
+    
+    /*-----------------------------------------------------------------
+     * ValidateMapInfoType() may have returned TAB_GEOM_NONE if feature
+     * contained an invalid geometry for its class. Need to catch that
+     * case and return the error.
+     *----------------------------------------------------------------*/
+    if (poObjHdr->m_nType == TAB_GEOM_NONE &&
+        poFeature->GetFeatureClass() != TABFCNoGeomFeature )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Invalid geometry for feature id %d in %s",
+                 nFeatureId, m_pszFname);
+        return -1;
+    }
 
     if ( poObjHdr == NULL || m_poMAPFile == NULL ||
         m_poMAPFile->PrepareNewObj(nFeatureId, poObjHdr->m_nType) != 0 ||
