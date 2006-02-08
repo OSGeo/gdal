@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2006/02/08 06:12:07  fwarmerdam
+ * Override SetMetadata methods so that metadata can be preserved.
+ * Support saving histograms in VRT per bug 1060.
+ *
  * Revision 1.23  2005/10/28 16:59:50  pnagy
  * Added VRTDerivedBand support
  *
@@ -586,6 +590,33 @@ CPLErr VRTDataset::GetGeoTransform( double * padfGeoTransform )
         return CE_None;
     else
         return CE_Failure;
+}
+
+/************************************************************************/
+/*                            SetMetadata()                             */
+/************************************************************************/
+
+CPLErr VRTDataset::SetMetadata( char **papszMetadata, 
+                                   const char *pszDomain )
+
+{
+    SetNeedsFlush();
+
+    return GDALDataset::SetMetadata( papszMetadata, pszDomain );
+}
+
+/************************************************************************/
+/*                          SetMetadataItem()                           */
+/************************************************************************/
+
+CPLErr VRTDataset::SetMetadataItem( const char *pszName, 
+                                    const char *pszValue, 
+                                    const char *pszDomain )
+
+{
+    SetNeedsFlush();
+
+    return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
 }
 
 /************************************************************************/

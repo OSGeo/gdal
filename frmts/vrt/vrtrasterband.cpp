@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/02/08 06:12:08  fwarmerdam
+ * Override SetMetadata methods so that metadata can be preserved.
+ * Support saving histograms in VRT per bug 1060.
+ *
  * Revision 1.21  2005/05/05 13:56:14  fwarmerdam
  * moved metadata handling to PAM
  *
@@ -147,6 +151,8 @@ void VRTRasterBand::Initialize( int nXSize, int nYSize )
     papszCategoryNames = NULL;
     dfOffset = 0.0;
     dfScale = 1.0;
+
+    psSavedHistograms = NULL;
 }
 
 /************************************************************************/
@@ -193,6 +199,33 @@ CPLErr VRTRasterBand::CopyCommonInfoFrom( GDALRasterBand * poSrcBand )
         SetUnitType( poSrcBand->GetUnitType() );
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                            SetMetadata()                             */
+/************************************************************************/
+
+CPLErr VRTRasterBand::SetMetadata( char **papszMetadata, 
+                                   const char *pszDomain )
+
+{
+    ((VRTDataset *) poDS)->SetNeedsFlush();
+
+    return GDALRasterBand::SetMetadata( papszMetadata, pszDomain );
+}
+
+/************************************************************************/
+/*                          SetMetadataItem()                           */
+/************************************************************************/
+
+CPLErr VRTRasterBand::SetMetadataItem( const char *pszName, 
+                                       const char *pszValue, 
+                                       const char *pszDomain )
+
+{
+    ((VRTDataset *) poDS)->SetNeedsFlush();
+
+    return GDALRasterBand::SetMetadataItem( pszName, pszValue, pszDomain );
 }
 
 /************************************************************************/
@@ -424,6 +457,19 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
         SetColorTable( &oTable );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Histograms                                                      */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psHist = CPLGetXMLNode( psTree, "Histograms" );
+    if( psHist != NULL )
+    {
+        CPLXMLNode *psNext = psHist->psNext;
+        psHist->psNext = NULL;
+
+        psSavedHistograms = CPLCloneXMLTree( psHist );
+        psHist->psNext = psNext;
+    }
+
     return CE_None;
 }
 
@@ -489,6 +535,12 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
                                          papszCategoryNames[iEntry] );
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Histograms.                                                     */
+/* -------------------------------------------------------------------- */
+    if( psSavedHistograms != NULL )
+        CPLAddXMLChild( psTree, CPLCloneXMLTree( psSavedHistograms ) );
 
 /* -------------------------------------------------------------------- */
 /*      Color Table.                                                    */
@@ -601,4 +653,159 @@ GDALColorInterp VRTRasterBand::GetColorInterpretation()
 
 {
     return eColorInterp;
+}
+
+/************************************************************************/
+/*                            GetHistogram()                            */
+/************************************************************************/
+
+CPLErr VRTRasterBand::GetHistogram( double dfMin, double dfMax,
+                                    int nBuckets, int * panHistogram,
+                                    int bIncludeOutOfRange, int bApproxOK,
+                                    GDALProgressFunc pfnProgress, 
+                                    void *pProgressData )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Check if we have a matching histogram.                          */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psHistItem;
+
+    psHistItem = PamFindMatchingHistogram( psSavedHistograms, 
+                                           dfMin, dfMax, nBuckets, 
+                                           bIncludeOutOfRange, bApproxOK );
+    if( psHistItem != NULL )
+    {
+        int *panTempHist = NULL;
+
+        if( PamParseHistogram( psHistItem, &dfMin, &dfMax, &nBuckets, 
+                               &panTempHist,
+                               &bIncludeOutOfRange, &bApproxOK ) )
+        {
+            memcpy( panHistogram, panTempHist, sizeof(int) * nBuckets );
+            CPLFree( panTempHist );
+            return CE_None;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We don't have an existing histogram matching the request, so    */
+/*      generate one manually.                                          */
+/* -------------------------------------------------------------------- */
+    CPLErr eErr;
+
+    eErr = GDALRasterBand::GetHistogram( dfMin, dfMax, 
+                                         nBuckets, panHistogram, 
+                                         bIncludeOutOfRange, bApproxOK,
+                                         pfnProgress, pProgressData );
+
+/* -------------------------------------------------------------------- */
+/*      Save an XML description of this histogram.                      */
+/* -------------------------------------------------------------------- */
+    if( eErr == CE_None )
+    {
+        CPLXMLNode *psXMLHist;
+
+        psXMLHist = PamHistogramToXMLTree( dfMin, dfMax, nBuckets, 
+                                           panHistogram, 
+                                           bIncludeOutOfRange, bApproxOK );
+        if( psXMLHist != NULL )
+        {
+            ((VRTDataset *) poDS)->SetNeedsFlush();
+
+            if( psSavedHistograms == NULL )
+                psSavedHistograms = CPLCreateXMLNode( NULL, CXT_Element,
+                                                      "Histograms" );
+            
+            CPLAddXMLChild( psSavedHistograms, psXMLHist );
+        }
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                        SetDefaultHistogram()                         */
+/************************************************************************/
+
+CPLErr VRTRasterBand::SetDefaultHistogram( double dfMin, double dfMax, 
+                                           int nBuckets, int *panHistogram)
+
+{
+    CPLXMLNode *psNode;
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a matching histogram we should replace?              */
+/* -------------------------------------------------------------------- */
+    psNode = PamFindMatchingHistogram( psSavedHistograms, 
+                                       dfMin, dfMax, nBuckets,
+                                       TRUE, TRUE );
+    if( psNode != NULL )
+    {
+        /* blow this one away */
+        CPLRemoveXMLChild( psSavedHistograms, psNode );
+        CPLDestroyXMLNode( psNode );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Translate into a histogram XML tree.                            */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psHistItem;
+
+    psHistItem = PamHistogramToXMLTree( dfMin, dfMax, nBuckets, 
+                                        panHistogram, TRUE, FALSE );
+
+/* -------------------------------------------------------------------- */
+/*      Insert our new default histogram at the front of the            */
+/*      histogram list so that it will be the default histogram.        */
+/* -------------------------------------------------------------------- */
+    ((VRTDataset *) poDS)->SetNeedsFlush();
+
+    if( psSavedHistograms == NULL )
+        psSavedHistograms = CPLCreateXMLNode( NULL, CXT_Element,
+                                              "Histograms" );
+            
+    psHistItem->psNext = psSavedHistograms->psChild;
+    psSavedHistograms->psChild = psHistItem;
+    
+    return CE_None;
+}
+
+/************************************************************************/
+/*                        GetDefaultHistogram()                         */
+/************************************************************************/
+
+CPLErr 
+VRTRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax, 
+                                    int *pnBuckets, int **ppanHistogram, 
+                                    int bForce,
+                                    GDALProgressFunc pfnProgress, 
+                                    void *pProgressData )
+    
+{
+    if( psSavedHistograms != NULL )
+    {
+        CPLXMLNode *psXMLHist;
+
+        for( psXMLHist = psSavedHistograms->psChild;
+             psXMLHist != NULL; psXMLHist = psXMLHist->psNext )
+        {
+            int bApprox, bIncludeOutOfRange;
+
+            if( psXMLHist->eType != CXT_Element
+                || !EQUAL(psXMLHist->pszValue,"HistItem") )
+                continue;
+
+            if( PamParseHistogram( psXMLHist, pdfMin, pdfMax, pnBuckets, 
+                                   ppanHistogram, &bIncludeOutOfRange,
+                                   &bApprox ) )
+                return CE_None;
+            else
+                return CE_Failure;
+        }
+    }
+
+    return GDALRasterBand::GetDefaultHistogram( pdfMin, pdfMax, pnBuckets, 
+                                                ppanHistogram, bForce, 
+                                                pfnProgress,pProgressData);
 }

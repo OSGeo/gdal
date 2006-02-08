@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/02/08 06:12:08  fwarmerdam
+ * Override SetMetadata methods so that metadata can be preserved.
+ * Support saving histograms in VRT per bug 1060.
+ *
  * Revision 1.21  2005/10/28 16:59:51  pnagy
  * Added VRTDerivedBand support
  *
@@ -169,6 +173,10 @@ class CPL_DLL VRTDataset : public GDALDataset
     virtual CPLErr GetGeoTransform( double * );
     virtual CPLErr SetGeoTransform( double * );
 
+    virtual CPLErr SetMetadata( char **papszMD, const char *pszDomain = "" );
+    virtual CPLErr SetMetadataItem( const char *pszName, const char *pszValue,
+                                    const char *pszDomain = "" );
+
     virtual int    GetGCPCount();
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
@@ -248,6 +256,8 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     double         dfOffset;
     double         dfScale;
 
+    CPLXMLNode    *psSavedHistograms;
+
     void           Initialize( int nXSize, int nYSize );
 
   public:
@@ -275,11 +285,28 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     virtual char **GetCategoryNames();
     virtual CPLErr SetCategoryNames( char ** );
 
+    virtual CPLErr SetMetadata( char **papszMD, const char *pszDomain = "" );
+    virtual CPLErr SetMetadataItem( const char *pszName, const char *pszValue,
+                                    const char *pszDomain = "" );
+
     virtual double GetOffset( int *pbSuccess = NULL );
     CPLErr SetOffset( double );
     virtual double GetScale( int *pbSuccess = NULL );
     CPLErr SetScale( double );
     
+    virtual CPLErr  GetHistogram( double dfMin, double dfMax,
+                          int nBuckets, int * panHistogram,
+                          int bIncludeOutOfRange, int bApproxOK,
+                          GDALProgressFunc, void *pProgressData );
+
+    virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
+                                        int *pnBuckets, int ** ppanHistogram,
+                                        int bForce,
+                                        GDALProgressFunc, void *pProgressData);
+
+    virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
+                                        int nBuckets, int *panHistogram );
+
     CPLErr         CopyCommonInfoFrom( GDALRasterBand * );
 };
 
