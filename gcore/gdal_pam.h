@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/02/08 06:03:40  fwarmerdam
+ * expose some PAM histo stuff for VRT, fixed InitFromXML() hist bug
+ *
  * Revision 1.7  2005/10/13 01:19:57  fwarmerdam
  * moved GDALMultiDomainMetadata into GDALMajorObject
  *
@@ -112,8 +115,6 @@ typedef struct {
     int         nGCPCount;
     GDAL_GCP   *pasGCPList;
     char       *pszGCPProjection;
-
-    CPLXMLNode *psHistograms;
 
 } GDALDatasetPamInfo;
 
@@ -287,5 +288,17 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
 // These are mainly helper functions for internal use.
 int CPL_DLL PamApplyMetadata( CPLXMLNode *psTree, GDALMajorObject *poMO );
 CPLXMLNode CPL_DLL *PamSerializeMetadata( GDALMajorObject *poMO );
+int CPL_DLL PamParseHistogram( CPLXMLNode *psHistItem, 
+                               double *pdfMin, double *pdfMax, 
+                               int *pnBuckets, int **ppanHistogram, 
+                               int *pbIncludeOutOfRange, int *pbApproxOK );
+CPLXMLNode CPL_DLL *
+PamFindMatchingHistogram( CPLXMLNode *psSavedHistograms,
+                          double dfMin, double dfMax, int nBuckets, 
+                          int bIncludeOutOfRange, int bApproxOK );
+CPLXMLNode CPL_DLL *
+PamHistogramToXMLTree( double dfMin, double dfMax,
+                       int nBuckets, int * panHistogram,
+                       int bIncludeOutOfRange, int bApprox );
 
 #endif /* ndef GDAL_PAM_H_INCLUDED */

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2006/02/08 06:03:40  fwarmerdam
+ * expose some PAM histo stuff for VRT, fixed InitFromXML() hist bug
+ *
  * Revision 1.14  2005/10/13 01:19:58  fwarmerdam
  * moved GDALMultiDomainMetadata into GDALMajorObject
  *
@@ -429,7 +432,7 @@ CPLErr GDALPamRasterBand::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
         psHist->psNext = NULL;
 
         psPam->psSavedHistograms = CPLCloneXMLTree( psHist );
-        psHist = psNext;
+        psHist->psNext = psNext;
     }
 
 /* -------------------------------------------------------------------- */
@@ -889,118 +892,11 @@ GDALColorInterp GDALPamRasterBand::GetColorInterpretation()
         return GDALRasterBand::GetColorInterpretation();
 }
 
-#ifdef notdef
-/************************************************************************/
-/*                           GetStatistics()                            */
-/************************************************************************/
-
-CPLErr GDALPamRasterBand::GetStatistics( int bApproxOK, int bForce,
-                                         double *pdfMin, double *pdfMax, 
-                                         double *pdfMean, double *pdfStdDev )
-
-{
-    if( psPam )
-    {
-        // We have needed stats, just return them. 
-        if( ((pdfMean == NULL && pdfStdDev == NULL) || psPam->bHaveStats)
-            && psPam->bHaveMinMax )
-        {
-            if( pdfMin != NULL )
-                *pdfMin = psPam->dfMin;
-            if( pdfMax != NULL )
-                *pdfMax = psPam->dfMax;
-            if( pdfMean != NULL )
-                *pdfMean = psPam->dfMean;
-            if( pdfStdDev != NULL )
-                *pdfStdDev = psPam->dfStdDev;
-
-            return CE_None;
-        }
-
-        // We need to compute the stats, but can then record them. 
-        else
-        {
-            CPLErr eErr;
-
-            eErr = GDALRasterBand::GetStatistics( bApproxOK, bForce, 
-                                                  pdfMin, pdfMax, 
-                                                  pdfMean, pdfStdDev);
-            if( eErr == CE_None && pdfMin != NULL && pdfMax != NULL
-                && pdfMean != NULL && pdfStdDev != NULL )
-            {
-                GDALPamRasterBand::SetStatistics( *pdfMin, *pdfMax, 
-                                                  *pdfMean, *pdfStdDev );
-            }
-
-            return eErr;
-        }
-    }
-    else
-        return GDALRasterBand::GetStatistics( bApproxOK, bForce,
-                                              pdfMin, pdfMax, 
-                                              pdfMean, pdfStdDev);
-}
-
-/************************************************************************/
-/*                           SetStatistics()                            */
-/************************************************************************/
-
-CPLErr GDALPamRasterBand::SetStatistics( double dfMin, double dfMax, 
-                                         double dfMean, double dfStdDev )
-
-{
-    PamInitialize();
-
-    if( psPam )
-    {
-        psPam->bHaveMinMax = TRUE;
-        psPam->dfMin = dfMin;
-        psPam->dfMax = dfMax;
-
-        psPam->bHaveStats = TRUE;
-        psPam->dfMean = dfMean;
-        psPam->dfStdDev = dfStdDev;
-        
-        psPam->poParentDS->MarkPamDirty();
-
-        return CE_None;
-    }
-    else
-        return GDALRasterBand::SetStatistics( dfMin, dfMax, dfMean, dfStdDev);
-}
-
-/************************************************************************/
-/*                             GetMinimum()                             */
-/************************************************************************/
-
-double GDALPamRasterBand::GetMinimum( int *pbSuccess )
-
-{
-    if( psPam && psPam->bHaveMinMax )
-        return psPam->dfMin;
-    else
-        return GDALRasterBand::GetMinimum( pbSuccess );
-}
-
-/************************************************************************/
-/*                             GetMaximum()                             */
-/************************************************************************/
-
-double GDALPamRasterBand::GetMaximum( int *pbSuccess )
-
-{
-    if( psPam && psPam->bHaveMinMax )
-        return psPam->dfMax;
-    else
-        return GDALRasterBand::GetMaximum( pbSuccess );
-}
-#endif
-
 /************************************************************************/
 /*                         PamParseHistogram()                          */
 /************************************************************************/
 
-static int 
+int 
 PamParseHistogram( CPLXMLNode *psHistItem, 
                    double *pdfMin, double *pdfMax, 
                    int *pnBuckets, int **ppanHistogram, 
@@ -1041,17 +937,17 @@ PamParseHistogram( CPLXMLNode *psHistItem,
 /************************************************************************/
 /*                      PamFindMatchingHistogram()                      */
 /************************************************************************/
-static CPLXMLNode *
-PamFindMatchingHistogram( GDALRasterBandPamInfo *psPam, 
+CPLXMLNode *
+PamFindMatchingHistogram( CPLXMLNode *psSavedHistograms,
                           double dfMin, double dfMax, int nBuckets, 
                           int bIncludeOutOfRange, int bApproxOK )
 
 {
-    if( psPam == NULL || psPam->psSavedHistograms == NULL )
+    if( psSavedHistograms == NULL )
         return NULL;
 
     CPLXMLNode *psXMLHist;
-    for( psXMLHist = psPam->psSavedHistograms->psChild;
+    for( psXMLHist = psSavedHistograms->psChild;
          psXMLHist != NULL; psXMLHist = psXMLHist->psNext )
     {
         if( psXMLHist->eType != CXT_Element
@@ -1076,7 +972,7 @@ PamFindMatchingHistogram( GDALRasterBandPamInfo *psPam,
 /*                       PamHistogramToXMLTree()                        */
 /************************************************************************/
 
-static CPLXMLNode *
+CPLXMLNode *
 PamHistogramToXMLTree( double dfMin, double dfMax,
                        int nBuckets, int * panHistogram,
                        int bIncludeOutOfRange, int bApprox )
@@ -1140,7 +1036,8 @@ CPLErr GDALPamRasterBand::GetHistogram( double dfMin, double dfMax,
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psHistItem;
 
-    psHistItem = PamFindMatchingHistogram( psPam, dfMin, dfMax, nBuckets, 
+    psHistItem = PamFindMatchingHistogram( psPam->psSavedHistograms, 
+                                           dfMin, dfMax, nBuckets, 
                                            bIncludeOutOfRange, bApproxOK );
     if( psHistItem != NULL )
     {
@@ -1211,7 +1108,8 @@ CPLErr GDALPamRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
 /* -------------------------------------------------------------------- */
 /*      Do we have a matching histogram we should replace?              */
 /* -------------------------------------------------------------------- */
-    psNode = PamFindMatchingHistogram( psPam, dfMin, dfMax, nBuckets,
+    psNode = PamFindMatchingHistogram( psPam->psSavedHistograms, 
+                                       dfMin, dfMax, nBuckets,
                                        TRUE, TRUE );
     if( psNode != NULL )
     {
