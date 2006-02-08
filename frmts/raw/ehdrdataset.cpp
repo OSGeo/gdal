@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2006/02/08 17:10:52  fwarmerdam
+ * Improved NODATA precision.
+ *
  * Revision 1.35  2006/01/27 18:42:08  fwarmerdam
  * added the ability to save nodata and colortable information
  *
@@ -170,7 +173,7 @@ EHdrDataset::~EHdrDataset()
         if( bNoDataSet )
         {
             ResetKeyValue( "NODATA", 
-                           CPLString().Printf( "%g", dfNoData ) );
+                           CPLString().Printf( "%.8g", dfNoData ) );
         }
 
         if( poBand->GetColorTable() != NULL )
