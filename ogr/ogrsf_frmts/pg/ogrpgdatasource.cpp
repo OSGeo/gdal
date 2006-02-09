@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2006/02/09 05:04:03  fwarmerdam
+ * proper overriding of DeleteLayer() method
+ *
  * Revision 1.44  2005/12/19 15:06:59  dron
  * Remove erroneous linebreak in "CREATE TABLE" query.
  *
@@ -529,33 +532,19 @@ int OGRPGDataSource::OpenTable( const char *pszNewName, int bUpdate,
 /*                            DeleteLayer()                             */
 /************************************************************************/
 
-void OGRPGDataSource::DeleteLayer( const char *pszLayerName )
+int OGRPGDataSource::DeleteLayer( int iLayer )
 
 {
-    int iLayer;
-
-/* -------------------------------------------------------------------- */
-/*      Try to find layer.                                              */
-/* -------------------------------------------------------------------- */
-    for( iLayer = 0; iLayer < nLayers; iLayer++ )
-    {
-        if( EQUAL(pszLayerName,papoLayers[iLayer]->GetLayerDefn()->GetName()) )
-            break;
-    }
-
-    if( iLayer == nLayers )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Attempt to delete layer '%s', but this layer is not known to OGR.",
-                  pszLayerName );
-        return;
-    }
+    if( iLayer < 0 || iLayer >= nLayers )
+        return OGRERR_FAILURE;
 
 /* -------------------------------------------------------------------- */
 /*      Blow away our OGR structures related to the layer.  This is     */
 /*      pretty dangerous if anything has a reference to this layer!     */
 /* -------------------------------------------------------------------- */
-    CPLDebug( "OGR_PG", "DeleteLayer(%s)", pszLayerName );
+    CPLString osLayerName = papoLayers[iLayer]->GetLayerDefn()->GetName();
+
+    CPLDebug( "OGR_PG", "DeleteLayer(%s)", osLayerName.c_str() );
 
     delete papoLayers[iLayer];
     memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
@@ -575,7 +564,7 @@ void OGRPGDataSource::DeleteLayer( const char *pszLayerName )
     {
         sprintf( szCommand,
                  "SELECT DropGeometryColumn('%s','%s','wkb_geometry')",
-                 pszDBName, pszLayerName );
+                 pszDBName, osLayerName.c_str() );
 
         CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
 
@@ -583,7 +572,7 @@ void OGRPGDataSource::DeleteLayer( const char *pszLayerName )
         PQclear( hResult );
     }
 
-    sprintf( szCommand, "DROP TABLE %s", pszLayerName );
+    sprintf( szCommand, "DROP TABLE %s", osLayerName.c_str() );
     CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
     hResult = PQexec( hPGConn, szCommand );
     PQclear( hResult );
@@ -594,13 +583,15 @@ void OGRPGDataSource::DeleteLayer( const char *pszLayerName )
     hResult = PQexec(hPGConn, "BEGIN");
     PQclear( hResult );
 
-    sprintf( szCommand, "DROP SEQUENCE %s_ogc_fid_seq", pszLayerName );
+    sprintf( szCommand, "DROP SEQUENCE %s_ogc_fid_seq", osLayerName.c_str() );
     CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
     hResult = PQexec( hPGConn, szCommand );
     PQclear( hResult );
 
     hResult = PQexec(hPGConn, "COMMIT");
     PQclear( hResult );
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -641,7 +632,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
             if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
                 && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
             {
-                DeleteLayer( pszLayerName );
+                DeleteLayer( iLayer );
             }
             else
             {
@@ -850,7 +841,8 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 int OGRPGDataSource::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,ODsCCreateLayer) )
+    if( EQUAL(pszCap,ODsCCreateLayer) 
+        || EQUAL(pszCap,ODsCDeleteLayer) )
         return TRUE;
     else
         return FALSE;
@@ -1225,11 +1217,20 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
     if( EQUALN(pszSQLCommand,"DELLAYER:",9) )
     {
         const char *pszLayerName = pszSQLCommand + 9;
+        int iLayer;
 
         while( *pszLayerName == ' ' )
             pszLayerName++;
-
-        DeleteLayer( pszLayerName );
+        
+        for( iLayer = 0; iLayer < nLayers; iLayer++ )
+        {
+            if( EQUAL(papoLayers[iLayer]->GetLayerDefn()->GetName(), 
+                      pszLayerName ))
+            {
+                DeleteLayer( iLayer );
+                break;
+            }
+        }
         return NULL;
     }
 
