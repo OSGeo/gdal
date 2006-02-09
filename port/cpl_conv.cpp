@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2006/02/09 05:54:15  fwarmerdam
+ * use ll in format for long long on mac, not L
+ *
  * Revision 1.48  2005/11/24 19:22:54  fwarmerdam
  * Added silly-value checks in CPLMalloc/Realloc.
  *
@@ -1190,7 +1193,8 @@ int CPLPrintUIntBig( char *pszBuffer, GUIntBig iValue, int nMaxLen )
 #if defined(WIN32) && defined(_MSC_VER)
     sprintf( szTemp, "%*I64d", nMaxLen, iValue );
 # elif HAVE_LONG_LONG
-    sprintf( szTemp, "%*Ld", nMaxLen, iValue );
+    sprintf( szTemp, "%*lld", nMaxLen, (long long) iValue );
+//    sprintf( szTemp, "%*Ld", nMaxLen, (long long) iValue );
 #else
     sprintf( szTemp, "%*ld", nMaxLen, iValue );
 #endif
