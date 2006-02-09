@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/02/09 05:38:56  fwarmerdam
+ * Added SRID support.
+ *
  * Revision 1.3  2006/02/07 21:44:43  fwarmerdam
  * DIPX->DIPEx
  *
@@ -41,6 +44,7 @@
 
 #include "rawdataset.h"
 #include "cpl_string.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
 
@@ -60,9 +64,8 @@ typedef struct {
     char        unused1[40]; 
     GByte	IH19[4];/* data type, and size flags */
     GInt32	IH20;	/* number of secondary headers */
-    char	unused2[8];
-    GInt32	LABL;	/* used by LABL module */
-    char	HEAD;	/* used by HEAD module */
+    GInt32	SRID;	
+    char        unused2[12];
     double      YOffset;
     double      XOffset; 
     double      YPixSize;
@@ -86,6 +89,7 @@ class DIPExDataset : public GDALPamDataset
     friend class DIPExRasterBand;
 
     FILE	*fp;
+    CPLString    osSRS;
 
     DIPExHeader  sHeader;
 
@@ -99,6 +103,7 @@ class DIPExDataset : public GDALPamDataset
 
     virtual CPLErr GetGeoTransform( double * );
 
+    virtual const char *GetProjectionRef( void );
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
@@ -277,12 +282,40 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     
 /* -------------------------------------------------------------------- */
+/*      Look for SRID.                                                  */
+/* -------------------------------------------------------------------- */
+    CPL_LSBPTR32( &(poDS->sHeader.SRID) );
+    
+    if( poDS->sHeader.SRID > 0 && poDS->sHeader.SRID < 33000 )
+    {
+        OGRSpatialReference oSR;
+
+        if( oSR.importFromEPSG( poDS->sHeader.SRID ) == OGRERR_NONE )
+        {
+            char *pszWKT = NULL;
+            oSR.exportToWkt( &pszWKT );
+            poDS->osSRS = pszWKT;
+            CPLFree( pszWKT );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
 
     return( poDS );
+}
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
+
+const char *DIPExDataset::GetProjectionRef()
+
+{
+    return osSRS.c_str();
 }
 
 /************************************************************************/
