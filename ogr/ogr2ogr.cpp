@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2006/02/09 05:22:07  fwarmerdam
+ * Improve memory cleanup for leak testing.
+ *
  * Revision 1.34  2006/02/09 05:03:09  fwarmerdam
  * added -overwrite switch, using DeleteLayer()
  *
@@ -136,6 +139,7 @@
 #include "ogr_p.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_api.h"
 
 CPL_CVSID("$Id$");
 
@@ -549,12 +553,14 @@ int main( int nArgc, char ** papszArgv )
     delete poDS;
 
     CSLDestroy(papszSelFields);
+    CSLDestroy( papszArgv );
+    CSLDestroy( papszLayers );
+
+    OGRCleanupAll();
 
 #ifdef DBMALLOC
     malloc_dump(1);
 #endif
-
-    CSLDestroy( papszArgv );
     
     return 0;
 }
