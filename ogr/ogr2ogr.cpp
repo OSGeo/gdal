@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/02/09 05:03:09  fwarmerdam
+ * added -overwrite switch, using DeleteLayer()
+ *
  * Revision 1.33  2006/01/11 03:50:28  fwarmerdam
  * Fixed usage message to make it clear the layer is optional.
  *
@@ -147,7 +150,8 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            OGRSpatialReference *poOutputSRS,
                            OGRSpatialReference *poSourceSRS,
                            char **papszSelFields,
-                           int bAppend, int eGType );
+                           int bAppend, int eGType,
+                           int bOverwrite );
 
 static int bSkipFailures = FALSE;
 static int nGroupTransactions = 200;
@@ -167,7 +171,7 @@ int main( int nArgc, char ** papszArgv )
     char        **papszLayers = NULL;
     char        **papszDSCO = NULL, **papszLCO = NULL;
     int         bTransform = FALSE;
-    int         bAppend = FALSE, bUpdate = FALSE;
+    int         bAppend = FALSE, bUpdate = FALSE, bOverwrite = FALSE;
     const char  *pszOutputSRSDef = NULL;
     const char  *pszSourceSRSDef = NULL;
     OGRSpatialReference *poOutputSRS = NULL;
@@ -218,6 +222,10 @@ int main( int nArgc, char ** papszArgv )
         else if( EQUAL(papszArgv[iArg],"-append") )
         {
             bAppend = TRUE;
+        }
+        else if( EQUAL(papszArgv[iArg],"-overwrite") )
+        {
+            bOverwrite = TRUE;
         }
         else if( EQUAL(papszArgv[iArg],"-update") )
         {
@@ -479,7 +487,8 @@ int main( int nArgc, char ** papszArgv )
         {
             if( !TranslateLayer( poDS, poResultSet, poODS, papszLCO, 
                                  pszNewLayerName, bTransform, poOutputSRS,
-                                 poSourceSRS, papszSelFields, bAppend, eGType))
+                                 poSourceSRS, papszSelFields, bAppend, eGType,
+                                 bOverwrite ))
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
                           "Terminating translation prematurely after failed\n"
@@ -519,7 +528,8 @@ int main( int nArgc, char ** papszArgv )
             
             if( !TranslateLayer( poDS, poLayer, poODS, papszLCO, 
                                  pszNewLayerName, bTransform, poOutputSRS,
-                                 poSourceSRS, papszSelFields, bAppend, eGType) 
+                                 poSourceSRS, papszSelFields, bAppend, eGType,
+                                 bOverwrite ) 
                 && !bSkipFailures )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, 
@@ -578,6 +588,7 @@ static void Usage()
     }
 
     printf( " -append: Append to existing layer instead of creating new if it exists\n"
+            " -overwrite: delete the output layer and recreate it empty\n"
             " -update: Open existing output datasource in update mode\n"
             " -select field_list: Comma-delimited list of fields from input layer to\n"
             "                     copy to the new layer (defaults to all)\n" 
@@ -617,7 +628,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
                            OGRSpatialReference *poOutputSRS,
                            OGRSpatialReference *poSourceSRS,
                            char **papszSelFields,
-                           int bAppend, int eGType )
+                           int bAppend, int eGType, int bOverwrite )
 
 {
     OGRLayer    *poDstLayer;
@@ -681,9 +692,10 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Find the layer.                                                 */
 /* -------------------------------------------------------------------- */
+    int iLayer = -1;
     poDstLayer = NULL;
 
-    for( int iLayer = 0; iLayer < poDstDS->GetLayerCount(); iLayer++ )
+    for( iLayer = 0; iLayer < poDstDS->GetLayerCount(); iLayer++ )
     {
         OGRLayer        *poLayer = poDstDS->GetLayer(iLayer);
 
@@ -695,6 +707,22 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         }
     }
     
+/* -------------------------------------------------------------------- */
+/*      If the user requested overwrite, and we have the layer in       */
+/*      question we need to delete it now so it will get recreated      */
+/*      (overwritten).                                                  */
+/* -------------------------------------------------------------------- */
+    if( poDstLayer != NULL && bOverwrite )
+    {
+        if( poDstDS->DeleteLayer( iLayer ) != OGRERR_NONE )
+        {
+            fprintf( stderr, 
+                     "DeleteLayer() failed when overwrite requested.\n" );
+            return FALSE;
+        }
+        poDstLayer = NULL;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      If the layer does not exist, then create it.                    */
 /* -------------------------------------------------------------------- */
@@ -722,7 +750,7 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
     else if( !bAppend )
     {
         printf( "FAILED: Layer %s already exists, and -append not specified.\n"
-                "        Consider using -append, or predeleting the layer.\n",
+                "        Consider using -append, or -overwrite.\n",
                 pszNewLayerName );
         return FALSE;
     }
