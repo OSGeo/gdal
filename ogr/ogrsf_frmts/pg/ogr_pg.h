@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/02/09 05:04:03  fwarmerdam
+ * proper overriding of DeleteLayer() method
+ *
  * Revision 1.25  2006/01/27 00:10:32  fwarmerdam
  * added Get{FID,Geometry}Column() support
  *
@@ -302,7 +305,7 @@ class OGRPGDataSource : public OGRDataSource
 
     PGconn              *hPGConn;
 
-    void                DeleteLayer( const char *pszLayerName );
+    int                 DeleteLayer( int iLayer );
 
     Oid                 nGeometryOID;
 
