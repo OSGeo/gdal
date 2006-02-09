@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2006/02/09 05:54:52  hobu
+ * start on CreateLayer
+ *
  * Revision 1.12  2006/02/06 23:06:45  fwarmerdam
  * undef mysql's bool
  *
@@ -226,7 +229,7 @@ class OGRMySQLDataSource : public OGRDataSource
 
     MYSQL              *hConn;
 
-    void                DeleteLayer( const char *pszLayerName );
+    int                DeleteLayer( int iLayer );
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes. 
@@ -255,12 +258,12 @@ class OGRMySQLDataSource : public OGRDataSource
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
 
-#ifdef notdef
+
     virtual OGRLayer    *CreateLayer( const char *, 
                                       OGRSpatialReference * = NULL,
                                       OGRwkbGeometryType = wkbUnknown,
                                       char ** = NULL );
-#endif
+
 
     int                 TestCapability( const char * );
 

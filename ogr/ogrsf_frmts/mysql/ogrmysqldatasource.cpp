@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/02/09 05:54:52  hobu
+ * start on CreateLayer
+ *
  * Revision 1.6  2006/01/16 16:04:58  hobu
  * comment typo
  *
@@ -336,11 +339,12 @@ int OGRMySQLDataSource::OpenTable( const char *pszNewName, int bUpdate,
 int OGRMySQLDataSource::TestCapability( const char * pszCap )
 
 {
-#ifdef notdef
-    if( EQUAL(pszCap,ODsCCreateLayer) )
+	
+    if( EQUAL(pszCap, ODsCCreateLayer) )
         return TRUE;
+	if( EQUAL(pszCap, ODsCDeleteLayer))
+		return TRUE;
     else
-#endif
         return FALSE;
 }
 
@@ -813,4 +817,151 @@ void OGRMySQLDataSource::InterruptLongResult()
         poLongResultLayer->ResetReading();
         poLongResultLayer = NULL;
     }
+}
+
+
+/************************************************************************/
+/*                            DeleteLayer()                             */
+/************************************************************************/
+
+int OGRMySQLDataSource::DeleteLayer( int iLayer)
+
+{
+    if( iLayer < 0 || iLayer >= nLayers )
+        return OGRERR_FAILURE;
+/* -------------------------------------------------------------------- */
+/*      Blow away our OGR structures related to the layer.  This is     */
+/*      pretty dangerous if anything has a reference to this layer!     */
+/* -------------------------------------------------------------------- */
+    CPLString osLayerName = papoLayers[iLayer]->GetLayerDefn()->GetName();
+    
+    CPLDebug( "MYSQL", "DeleteLayer(%s)", osLayerName.c_str() );
+
+    delete papoLayers[iLayer];
+    memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
+             sizeof(void *) * (nLayers - iLayer - 1) );
+    nLayers--;
+
+/* -------------------------------------------------------------------- */
+/*      Remove from the database.                                       */
+/* -------------------------------------------------------------------- */
+	char        		szCommand[1024];
+
+	sprintf( szCommand,
+	         "DROP TABLE %s ",
+	         osLayerName.c_str() );
+
+		if( !mysql_query(GetConn(), szCommand ) ){
+
+			 if( mysql_field_count( GetConn() ) == 0 )
+		        {
+		            CPLDebug("MYSQL","Dropped table %s.", osLayerName.c_str());
+					return OGRERR_NONE;
+		        }
+		        else
+		        {
+		            ReportError( szCommand );
+					return OGRERR_FAILURE;
+		        }
+		}
+
+}
+
+
+
+
+/************************************************************************/
+/*                            CreateLayer()                             */
+/************************************************************************/
+
+OGRLayer *
+OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
+                              OGRSpatialReference *poSRS,
+                              OGRwkbGeometryType eType,
+                              char ** papszOptions )
+
+{
+    MYSQL_RES           *hResult=NULL;
+	char        		szCommand[1024];
+    const char          *pszGeomType;
+	const char			*pszGeomColumnName;
+	const char 			*pszExpectedFIDName; 
+	
+    char                *pszLayerName;
+    int                 nDimension = 3; // MySQL only supports 2d currently
+
+
+    if( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) )
+        pszLayerName = LaunderName( pszLayerNameIn );
+    else
+        pszLayerName = CPLStrdup( pszLayerNameIn );
+
+    if( wkbFlatten(eType) == eType )
+        nDimension = 2;
+CPLDebug("MYSQL:","Attempting to create layer %s.", pszLayerName);
+
+/* -------------------------------------------------------------------- */
+/*      Do we already have this layer?  If so, should we blow it        */
+/*      away?                                                           */
+/* -------------------------------------------------------------------- */
+
+    int iLayer;
+    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+    {
+        if( EQUAL(pszLayerName,papoLayers[iLayer]->GetLayerDefn()->GetName()) )
+        {
+			
+            if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
+                && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
+            {
+                DeleteLayer( iLayer );
+            }
+            else
+            {
+                CPLFree( pszLayerName );
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "Layer %s already exists, CreateLayer failed.\n"
+                          "Use the layer creation option OVERWRITE=YES to "
+                          "replace it.",
+                          pszLayerName );
+                return NULL;
+            }
+        }
+    }
+
+
+    pszGeomColumnName = CSLFetchNameValue( papszOptions, "MYSQL_GEOM_COLUMN" );
+    if (!pszGeomColumnName)
+        pszGeomColumnName="SHAPE";
+
+    pszExpectedFIDName = CSLFetchNameValue( papszOptions, "MYSQL_FID" );
+    if (!pszExpectedFIDName)
+        pszExpectedFIDName="OGR_FID";
+
+
+
+	CPLDebug("MYSQL:","Geometry Column Name %s.", pszGeomColumnName);
+	CPLDebug("MYSQL:","FID Column Name %s.", pszExpectedFIDName);
+
+    sprintf( szCommand,
+             "CREATE TABLE %s ( "
+             "   %s INT UNIQUE NOT NULL, "
+             "   %s GEOMETRY NOT NULL )",
+             pszLayerName, pszExpectedFIDName, pszGeomColumnName );
+
+
+	
+	if( !mysql_query(GetConn(), szCommand ) ){
+		 if( mysql_field_count( GetConn() ) == 0 )
+	        {
+	            CPLDebug("MYSQL","Created table %s.", pszLayerName);
+	        }
+	        else
+	        {
+	            ReportError( szCommand );
+	            return NULL;
+	        }
+	}
+		
+	return NULL;
 }
