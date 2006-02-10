@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/02/10 04:58:37  hobu
+ * InitializeMetadataTables implementation
+ *
  * Revision 1.8  2006/02/10 04:46:32  fwarmerdam
  * format cleanup
  *
@@ -364,7 +367,7 @@ OGRLayer *OGRMySQLDataSource::GetLayer( int iLayer )
         return papoLayers[iLayer];
 }
 
-#ifdef notdef
+
 /************************************************************************/
 /*                      InitializeMetadataTables()                      */
 /*                                                                      */
@@ -375,10 +378,56 @@ OGRLayer *OGRMySQLDataSource::GetLayer( int iLayer )
 OGRErr OGRMySQLDataSource::InitializeMetadataTables()
 
 {
-    // implement later.
-    return OGRERR_FAILURE;
+    char            szCommand[1024];
+    MYSQL_RES       *hResult;
+ 
+    sprintf( szCommand, "DESCRIBE geometry_columns" );
+    if( mysql_query(GetConn(), szCommand ) )
+    {
+        sprintf(szCommand,
+                "CREATE TABLE geometry_columns "
+                "( F_TABLE_CATALOG VARCHAR(256), "
+                "F_TABLE_SCHEMA VARCHAR(256), "
+                "F_TABLE_NAME VARCHAR(256) UNIQUE NOT NULL," 
+                "F_GEOMETRY_COLUMN VARCHAR(256) NOT NULL, "
+                "COORD_DIMENSION INT, "
+                "SRID INT,"
+                "TYPE VARCHAR(256) NOT NULL)");
+        mysql_query(GetConn(), szCommand );
+        CPLDebug("MYSQL","Creating geometry_columns metadata table");
+ 
+    }
+ 
+    // make sure to attempt to free results of successful describes
+    hResult = mysql_store_result( GetConn() );
+    if( hResult != NULL )
+        mysql_free_result( hResult );
+    hResult = NULL;   
+ 
+    sprintf( szCommand, "DESCRIBE spatial_ref_sys" );
+    if( mysql_query(GetConn(), szCommand ) )
+    {
+        sprintf(szCommand,
+                "CREATE TABLE spatial_ref_sys "
+                "(SRID INT NOT NULL, "
+                "AUTH_NAME VARCHAR(256), "
+                "AUTH_SRID INT, "
+                "SRTEXT VARCHAR(2048))");
+        mysql_query(GetConn(), szCommand );
+        CPLDebug("MYSQL","Creating spatial_ref_sys metadata table");
+ 
+    }    
+ 
+    // make sure to attempt to free results of successful describes
+    hResult = mysql_store_result( GetConn() );
+    if( hResult != NULL )
+        mysql_free_result( hResult );
+	hResult = NULL;
+ 
+    return OGRERR_NONE;
 }
 
+#ifdef notdef
 /************************************************************************/
 /*                              FetchSRS()                              */
 /*                                                                      */
@@ -965,6 +1014,7 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
             return NULL;
         }
     }
-		
+
+    InitializeMetadataTables();
     return NULL;
 }
