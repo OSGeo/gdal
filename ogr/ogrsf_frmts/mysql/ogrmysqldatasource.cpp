@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/02/10 04:46:32  fwarmerdam
+ * format cleanup
+ *
  * Revision 1.7  2006/02/09 05:54:52  hobu
  * start on CreateLayer
  *
@@ -845,25 +848,25 @@ int OGRMySQLDataSource::DeleteLayer( int iLayer)
 /* -------------------------------------------------------------------- */
 /*      Remove from the database.                                       */
 /* -------------------------------------------------------------------- */
-	char        		szCommand[1024];
+    char        		szCommand[1024];
 
-	sprintf( szCommand,
-	         "DROP TABLE %s ",
-	         osLayerName.c_str() );
+    sprintf( szCommand,
+             "DROP TABLE %s ",
+             osLayerName.c_str() );
 
-		if( !mysql_query(GetConn(), szCommand ) ){
+    if( !mysql_query(GetConn(), szCommand ) ){
 
-			 if( mysql_field_count( GetConn() ) == 0 )
-		        {
-		            CPLDebug("MYSQL","Dropped table %s.", osLayerName.c_str());
-					return OGRERR_NONE;
-		        }
-		        else
-		        {
-		            ReportError( szCommand );
-					return OGRERR_FAILURE;
-		        }
-		}
+        if( mysql_field_count( GetConn() ) == 0 )
+        {
+            CPLDebug("MYSQL","Dropped table %s.", osLayerName.c_str());
+            return OGRERR_NONE;
+        }
+        else
+        {
+            ReportError( szCommand );
+            return OGRERR_FAILURE;
+        }
+    }
 
 }
 
@@ -882,10 +885,10 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
 
 {
     MYSQL_RES           *hResult=NULL;
-	char        		szCommand[1024];
+    char        		szCommand[1024];
     const char          *pszGeomType;
-	const char			*pszGeomColumnName;
-	const char 			*pszExpectedFIDName; 
+    const char			*pszGeomColumnName;
+    const char 			*pszExpectedFIDName; 
 	
     char                *pszLayerName;
     int                 nDimension = 3; // MySQL only supports 2d currently
@@ -898,7 +901,7 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
 
     if( wkbFlatten(eType) == eType )
         nDimension = 2;
-CPLDebug("MYSQL:","Attempting to create layer %s.", pszLayerName);
+    CPLDebug("MYSQL:","Attempting to create layer %s.", pszLayerName);
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
@@ -940,8 +943,8 @@ CPLDebug("MYSQL:","Attempting to create layer %s.", pszLayerName);
 
 
 
-	CPLDebug("MYSQL:","Geometry Column Name %s.", pszGeomColumnName);
-	CPLDebug("MYSQL:","FID Column Name %s.", pszExpectedFIDName);
+    CPLDebug("MYSQL:","Geometry Column Name %s.", pszGeomColumnName);
+    CPLDebug("MYSQL:","FID Column Name %s.", pszExpectedFIDName);
 
     sprintf( szCommand,
              "CREATE TABLE %s ( "
@@ -951,17 +954,17 @@ CPLDebug("MYSQL:","Attempting to create layer %s.", pszLayerName);
 
 
 	
-	if( !mysql_query(GetConn(), szCommand ) ){
-		 if( mysql_field_count( GetConn() ) == 0 )
-	        {
-	            CPLDebug("MYSQL","Created table %s.", pszLayerName);
-	        }
-	        else
-	        {
-	            ReportError( szCommand );
-	            return NULL;
-	        }
-	}
+    if( !mysql_query(GetConn(), szCommand ) ){
+        if( mysql_field_count( GetConn() ) == 0 )
+        {
+            CPLDebug("MYSQL","Created table %s.", pszLayerName);
+        }
+        else
+        {
+            ReportError( szCommand );
+            return NULL;
+        }
+    }
 		
-	return NULL;
+    return NULL;
 }
