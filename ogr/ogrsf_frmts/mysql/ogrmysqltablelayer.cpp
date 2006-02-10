@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/02/10 04:21:21  fwarmerdam
+ * Reformat funky tabs.
+ *
  * Revision 1.19  2006/02/07 18:17:15  hobu
  * Always return geometries as "native"
  *
@@ -539,11 +542,11 @@ char *OGRMySQLTableLayer::BuildFields()
         if( strlen(pszFieldList) > 0 )
             strcat( pszFieldList, ", " );
 
-		/* ------------------------------------------------------------ */
-		/*      Make sure we return AsText(WKB_GEOMETRY) WKT_GEOMETRY   */
-		/*      This way the column is returned column is named         */
-		/*      correctly and the RecordToFeature machinery can get it  */
-		/* ------------------------------------------------------------ */            
+        /* ------------------------------------------------------------ */
+        /*      Make sure we return AsText(WKB_GEOMETRY) WKT_GEOMETRY   */
+        /*      This way the column is returned column is named         */
+        /*      correctly and the RecordToFeature machinery can get it  */
+        /* ------------------------------------------------------------ */            
         sprintf( pszFieldList+strlen(pszFieldList), 
                  "%s %s", pszGeomColumn, pszGeomColumn );
     }
