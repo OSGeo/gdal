@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/02/10 04:58:37  hobu
+ * InitializeMetadataTables implementation
+ *
  * Revision 1.13  2006/02/09 05:54:52  hobu
  * start on CreateLayer
  *
@@ -248,8 +251,9 @@ class OGRMySQLDataSource : public OGRDataSource
 #ifdef notdef
     int                 FetchSRSId( OGRSpatialReference * poSRS );
     OGRSpatialReference *FetchSRS( int nSRSId );
-    OGRErr              InitializeMetadataTables();
 #endif
+    OGRErr              InitializeMetadataTables();
+
 
     int                 Open( const char *, int bUpdate, int bTestOpen );
     int                 OpenTable( const char *, int bUpdate, int bTestOpen );
