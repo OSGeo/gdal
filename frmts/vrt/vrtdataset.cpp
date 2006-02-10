@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/02/10 15:02:15  fwarmerdam
+ * Write via the large file API.
+ *
  * Revision 1.24  2006/02/08 06:12:07  fwarmerdam
  * Override SetMetadata methods so that metadata can be preserved.
  * Support saving histograms in VRT per bug 1060.
@@ -185,7 +188,7 @@ void VRTDataset::FlushCache()
     /* -------------------------------------------------------------------- */
     FILE *fpVRT;
 
-    fpVRT = VSIFOpen( GetDescription(), "w" );
+    fpVRT = VSIFOpenL( GetDescription(), "w" );
     if( fpVRT == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -209,8 +212,8 @@ void VRTDataset::FlushCache()
     /* -------------------------------------------------------------------- */
     /*      Write to disk.                                                  */
     /* -------------------------------------------------------------------- */
-    VSIFWrite( pszXML, 1, strlen(pszXML), fpVRT );
-    VSIFClose( fpVRT );
+    VSIFWriteL( pszXML, 1, strlen(pszXML), fpVRT );
+    VSIFCloseL( fpVRT );
 
     CPLFree( pszXML );
 }
