@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/02/11 18:08:34  hobu
+ * Moved FetchSRS to happen on the datasource like PG
+ * Implemented CreateField for TableLayer
+ *
  * Revision 1.10  2006/02/02 01:24:17  hobu
  * make sure we properly sett hResultSet to NULL after all frees.
  *
@@ -281,7 +285,6 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
 
 
 		nSRSId = FetchSRSId();
-        FetchSRS();
     } 
 
 
@@ -329,7 +332,7 @@ int OGRMySQLResultLayer::GetFeatureCount( int bForce )
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
-OGRSpatialReference *OGRMySQLResultLayer::GetSpatialRef()
+/*OGRSpatialReference *OGRMySQLResultLayer::GetSpatialRef()
 
 {
 
@@ -337,3 +340,4 @@ OGRSpatialReference *OGRMySQLResultLayer::GetSpatialRef()
 
 }
 
+*/
