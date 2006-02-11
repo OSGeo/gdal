@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2006/02/11 18:07:26  hobu
+ * Moved FetchSRS to happen via the Datasource like PG
+ * rather than in the TableLayer and ResultLayer as before
+ * Implemented CreateField and CreateLayer
+ *
  * Revision 1.14  2006/02/10 04:58:37  hobu
  * InitializeMetadataTables implementation
  *
@@ -115,7 +120,7 @@ class OGRMySQLLayer : public OGRLayer
     char                *pszFIDColumn;
 
     MYSQL_RES           *hResultSet;
-    void                FetchSRS();
+  //  void                FetchSRS();
 	int				FetchSRSId();
 
   public:
@@ -177,12 +182,15 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
     virtual OGRErr      SetAttributeFilter( const char * );
 #ifdef notdef
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
-    
+#endif    
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
-#endif
-    
-    virtual OGRSpatialReference *GetSpatialRef();
+
+    void                SetLaunderFlag( int bFlag )
+                                { bLaunderColumnNames = bFlag; }
+    void                SetPrecisionFlag( int bFlag )
+                                { bPreservePrecision = bFlag; }    
+    //virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int         TestCapability( const char * );
 };
@@ -209,7 +217,7 @@ class OGRMySQLResultLayer : public OGRMySQLLayer
     virtual             ~OGRMySQLResultLayer();
 
     OGRFeatureDefn     *ReadResultDefinition();
-    virtual OGRSpatialReference *GetSpatialRef();
+   // virtual OGRSpatialReference *GetSpatialRef();
 
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
@@ -248,10 +256,11 @@ class OGRMySQLDataSource : public OGRDataSource
 
     MYSQL              *GetConn() { return hConn; }
 
-#ifdef notdef
+
     int                 FetchSRSId( OGRSpatialReference * poSRS );
+
     OGRSpatialReference *FetchSRS( int nSRSId );
-#endif
+
     OGRErr              InitializeMetadataTables();
 
 
