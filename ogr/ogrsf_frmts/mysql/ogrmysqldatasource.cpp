@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/02/11 18:08:03  hobu
+ * implemented CreateLayer
+ * moved FetchSRS to here like PG
+ *
  * Revision 1.9  2006/02/10 04:58:37  hobu
  * InitializeMetadataTables implementation
  *
@@ -372,7 +376,8 @@ OGRLayer *OGRMySQLDataSource::GetLayer( int iLayer )
 /*                      InitializeMetadataTables()                      */
 /*                                                                      */
 /*      Create the metadata tables (SPATIAL_REF_SYS and                 */
-/*      GEOMETRY_COLUMNS).                                              */
+/*      GEOMETRY_COLUMNS). This method "does no harm" if the tables     */
+/*      exist and can be called at will.                                */
 /************************************************************************/
 
 OGRErr OGRMySQLDataSource::InitializeMetadataTables()
@@ -427,7 +432,7 @@ OGRErr OGRMySQLDataSource::InitializeMetadataTables()
     return OGRERR_NONE;
 }
 
-#ifdef notdef
+
 /************************************************************************/
 /*                              FetchSRS()                              */
 /*                                                                      */
@@ -437,8 +442,11 @@ OGRErr OGRMySQLDataSource::InitializeMetadataTables()
 /************************************************************************/
 
 OGRSpatialReference *OGRMySQLDataSource::FetchSRS( int nId )
-
 {
+    char         szCommand[1024];
+    char           **papszRow;  
+    MYSQL_RES       *hResult;
+            
     if( nId < 0 )
         return NULL;
 
@@ -453,38 +461,43 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS( int nId )
             return papoSRS[i];
     }
 
-/* -------------------------------------------------------------------- */
-/*      Try looking up in spatial_ref_sys table.                        */
-/* -------------------------------------------------------------------- */
-    PGresult        *hResult;
-    char            szCommand[1024];
     OGRSpatialReference *poSRS = NULL;
+ 
+    // make sure to attempt to free any old results
+    hResult = mysql_store_result( GetConn() );
+    if( hResult != NULL )
+        mysql_free_result( hResult );
+    hResult = NULL;   
+                        
+    sprintf( szCommand,
+         "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
+         nId );
+    
+    if( !mysql_query( GetConn(), szCommand ) )
+        hResult = mysql_store_result( GetConn() );
         
-    SoftStartTransaction();
+    char  *pszWKT = NULL;
+    papszRow = NULL;
+    
 
-    sprintf( szCommand, 
-             "SELECT srtext FROM spatial_ref_sys "
-             "WHERE srid = %d", 
-             nId );
-    hResult = PQexec(hPGConn, szCommand );
+    if( hResult != NULL )
+        papszRow = mysql_fetch_row( hResult );
 
-    if( hResult 
-        && PQresultStatus(hResult) == PGRES_TUPLES_OK 
-        && PQntuples(hResult) == 1 )
+    if( papszRow != NULL && papszRow[0] != NULL )
     {
-        char *pszWKT;
-
-        pszWKT = PQgetvalue(hResult,0,0);
-        poSRS = new OGRSpatialReference();
-        if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
-        {
-            delete poSRS;
-            poSRS = NULL;
-        }
+        pszWKT =papszRow[0];
     }
 
-    PQclear( hResult );
-    SoftCommit();
+    if( hResult != NULL )
+        mysql_free_result( hResult );
+		hResult = NULL;
+		
+     poSRS = new OGRSpatialReference();
+     if( pszWKT == NULL || poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
+     {
+         delete poSRS;
+         poSRS = NULL;
+     }
 
 /* -------------------------------------------------------------------- */
 /*      Add to the cache.                                               */
@@ -498,6 +511,8 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS( int nId )
     return poSRS;
 }
 
+
+
 /************************************************************************/
 /*                             FetchSRSId()                             */
 /*                                                                      */
@@ -508,7 +523,9 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS( int nId )
 int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
 {
-    PGresult            *hResult;
+    char           **papszRow;  
+    MYSQL_RES       *hResult=NULL;
+    
     char                szCommand[10000];
     char                *pszWKT = NULL;
     int                 nSRSId;
@@ -527,59 +544,52 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
 /*      Try to find in the existing table.                              */
 /* -------------------------------------------------------------------- */
-    hResult = PQexec(hPGConn, "BEGIN");
-
     sprintf( szCommand, 
              "SELECT srid FROM spatial_ref_sys WHERE srtext = '%s'",
              pszWKT );
-    hResult = PQexec(hPGConn, szCommand );
-                     
-/* -------------------------------------------------------------------- */
-/*      We got it!  Return it.                                          */
-/* -------------------------------------------------------------------- */
-    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK 
-        && PQntuples(hResult) > 0 )
+
+
+
+    if( !mysql_query( GetConn(), szCommand ) )
+        hResult = mysql_store_result( GetConn() );
+
+    if (!mysql_num_rows(hResult))
     {
-        nSRSId = atoi(PQgetvalue( hResult, 0, 0 ));
+        CPLDebug("MYSQL", "No rows exist currently exist in spatial_ref_sys");
+        mysql_free_result( hResult );
+		hResult = NULL;
+    }
+    papszRow = NULL;
+    if( hResult != NULL )
+        papszRow = mysql_fetch_row( hResult );
         
-        PQclear( hResult );
-
-        hResult = PQexec(hPGConn, "COMMIT");
-        PQclear( hResult );
-
-        return nSRSId;
-    }
-    
-/* -------------------------------------------------------------------- */
-/*      If the command actually failed, then the metadata table is      */
-/*      likely missing. Try defining it.                                */
-/* -------------------------------------------------------------------- */
-    int         bTableMissing;
-
-    bTableMissing = 
-        hResult == NULL || PQresultStatus(hResult) == PGRES_NONFATAL_ERROR;
-
-    hResult = PQexec(hPGConn, "COMMIT");
-    PQclear( hResult );
-
-    if( bTableMissing )
+    if( papszRow != NULL && papszRow[0] != NULL )
     {
-        if( InitializeMetadataTables() != OGRERR_NONE )
-            return -1;
+        nSRSId = atoi(papszRow[0]);
+        if( hResult != NULL )
+            mysql_free_result( hResult );
+    		hResult = NULL;
+	    return nSRSId;
     }
+
+    if( hResult != NULL )
+        mysql_free_result( hResult );
+		hResult = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Get the current maximum srid in the srs table.                  */
 /* -------------------------------------------------------------------- */
-    hResult = PQexec(hPGConn, "BEGIN");
-    PQclear( hResult );
-
-    hResult = PQexec(hPGConn, "SELECT MAX(srid) FROM spatial_ref_sys" );
-
-    if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK )
+    sprintf( szCommand, 
+             "SELECT MAX(srid) FROM spatial_ref_sys");    
+    if( !mysql_query( GetConn(), szCommand ) )
+        hResult = mysql_store_result( GetConn() );
+        
+    if( papszRow != NULL && papszRow[0] != NULL )
     {
-        nSRSId = atoi(PQgetvalue(hResult,0,0)) + 1;
-        PQclear( hResult );
+        nSRSId = atoi(papszRow[0]);
+        if( hResult != NULL )
+            mysql_free_result( hResult );
+    		hResult = NULL;
     }
     else
         nSRSId = 1;
@@ -590,16 +600,17 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     sprintf( szCommand, 
              "INSERT INTO spatial_ref_sys (srid,srtext) VALUES (%d,'%s')",
              nSRSId, pszWKT );
-             
-    hResult = PQexec(hPGConn, szCommand );
-    PQclear( hResult );
 
-    hResult = PQexec(hPGConn, "COMMIT");
-    PQclear( hResult );
+    if( !mysql_query( GetConn(), szCommand ) )
+        hResult = mysql_store_result( GetConn() );
 
+    if( hResult != NULL )
+        mysql_free_result( hResult );
+		hResult = NULL;        
     return nSRSId;
 }
 
+#ifdef notdef
 /************************************************************************/
 /*                        SoftStartTransaction()                        */
 /*                                                                      */
@@ -935,7 +946,7 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
 {
     MYSQL_RES           *hResult=NULL;
     char        		szCommand[1024];
-    const char          *pszGeomType;
+    const char          *pszGeometryType;
     const char			*pszGeomColumnName;
     const char 			*pszExpectedFIDName; 
 	
@@ -950,7 +961,8 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
 
     if( wkbFlatten(eType) == eType )
         nDimension = 2;
-    CPLDebug("MYSQL:","Attempting to create layer %s.", pszLayerName);
+
+    CPLDebug("MYSQL","Attempting to create layer %s.", pszLayerName);
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
@@ -982,6 +994,7 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
     }
 
 
+
     pszGeomColumnName = CSLFetchNameValue( papszOptions, "MYSQL_GEOM_COLUMN" );
     if (!pszGeomColumnName)
         pszGeomColumnName="SHAPE";
@@ -992,12 +1005,12 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
 
 
 
-    CPLDebug("MYSQL:","Geometry Column Name %s.", pszGeomColumnName);
-    CPLDebug("MYSQL:","FID Column Name %s.", pszExpectedFIDName);
+    CPLDebug("MYSQL","Geometry Column Name %s.", pszGeomColumnName);
+    CPLDebug("MYSQL","FID Column Name %s.", pszExpectedFIDName);
 
     sprintf( szCommand,
              "CREATE TABLE %s ( "
-             "   %s INT UNIQUE NOT NULL, "
+             "   %s INT UNIQUE NOT NULL AUTO_INCREMENT, "
              "   %s GEOMETRY NOT NULL )",
              pszLayerName, pszExpectedFIDName, pszGeomColumnName );
 
@@ -1015,6 +1028,125 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
         }
     }
 
+    // make sure to attempt to free results of successful describes
+    hResult = mysql_store_result( GetConn() );
+    if( hResult != NULL )
+        mysql_free_result( hResult );
+    hResult = NULL;
+    
+    // Calling this does no harm
     InitializeMetadataTables();
-    return NULL;
+    
+/* -------------------------------------------------------------------- */
+/*      Try to get the SRS Id of this spatial reference system,         */
+/*      adding tot the srs table if needed.                             */
+/* -------------------------------------------------------------------- */
+    int nSRSId = -1;
+
+    if( poSRS != NULL )
+        nSRSId = FetchSRSId( poSRS );
+
+
+    /* Sometimes there is an old cruft entry in the geometry_columns
+     * table if things were not properly cleaned up before.  We make
+     * an effort to clean out such cruft.
+     */
+    sprintf( szCommand,
+             "DELETE FROM geometry_columns WHERE f_table_name = '%s'",
+             pszLayerName );
+
+    if( mysql_query(GetConn(), szCommand ) )
+    {
+        ReportError( szCommand );
+        return NULL;
+    }
+
+    // make sure to attempt to free results of successful describes
+    hResult = mysql_store_result( GetConn() );
+    if( hResult != NULL )
+        mysql_free_result( hResult );
+    hResult = NULL;   
+            
+        
+    switch( wkbFlatten(eType) )
+    {
+        case wkbPoint:
+            pszGeometryType = "POINT";
+            break;
+
+        case wkbLineString:
+            pszGeometryType = "LINESTRING";
+            break;
+
+        case wkbPolygon:
+            pszGeometryType = "POLYGON";
+            break;
+
+        case wkbMultiPoint:
+            pszGeometryType = "MULTIPOINT";
+            break;
+
+        case wkbMultiLineString:
+            pszGeometryType = "MULTILINESTRING";
+            break;
+
+        case wkbMultiPolygon:
+            pszGeometryType = "MULTIPOLYGON";
+            break;
+
+        case wkbGeometryCollection:
+            pszGeometryType = "GEOMETRYCOLLECTION";
+            break;
+
+        default:
+            pszGeometryType = "GEOMETRY";
+            break;
+
+    }
+
+    sprintf( szCommand,
+             "INSERT INTO geometry_columns "
+             " (F_TABLE_NAME, "
+             "  F_GEOMETRY_COLUMN, "
+             "  SRID, "
+             "  TYPE) values "
+             "  ('%s', '%s', %d, '%s')",
+             pszLayerName,
+             pszGeomColumnName,
+             nSRSId,
+             pszGeometryType );
+
+    if( mysql_query(GetConn(), szCommand ) )
+    {
+        ReportError( szCommand );
+        return NULL;
+    }
+
+    // make sure to attempt to free results of successful describes
+    hResult = mysql_store_result( GetConn() );
+    if( hResult != NULL )
+        mysql_free_result( hResult );
+    hResult = NULL;   
+    
+/* -------------------------------------------------------------------- */
+/*      Create the layer object.                                        */
+/* -------------------------------------------------------------------- */
+    OGRMySQLTableLayer     *poLayer;
+
+    poLayer = new OGRMySQLTableLayer( this, pszLayerName, TRUE, nSRSId );
+
+    poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
+    poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
+
+/* -------------------------------------------------------------------- */
+/*      Add layer to data source layer list.                            */
+/* -------------------------------------------------------------------- */
+    papoLayers = (OGRMySQLLayer **)
+        CPLRealloc( papoLayers,  sizeof(OGRMySQLLayer *) * (nLayers+1) );
+
+    papoLayers[nLayers++] = poLayer;
+
+    CPLFree( pszLayerName );
+
+    return poLayer;
 }
