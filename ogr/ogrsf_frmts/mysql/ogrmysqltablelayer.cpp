@@ -28,8 +28,9 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.20  2006/02/10 04:21:21  fwarmerdam
- * Reformat funky tabs.
+ * Revision 1.21  2006/02/11 18:08:34  hobu
+ * Moved FetchSRS to happen on the datasource like PG
+ * Implemented CreateField for TableLayer
  *
  * Revision 1.19  2006/02/07 18:17:15  hobu
  * Always return geometries as "native"
@@ -399,6 +400,8 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 			hResult = NULL;
     } 
     
+    // Fetch the SRID for this table now
+    nSRSId = FetchSRSId();
     return poDefn;
 }
 
@@ -542,11 +545,11 @@ char *OGRMySQLTableLayer::BuildFields()
         if( strlen(pszFieldList) > 0 )
             strcat( pszFieldList, ", " );
 
-        /* ------------------------------------------------------------ */
-        /*      Make sure we return AsText(WKB_GEOMETRY) WKT_GEOMETRY   */
-        /*      This way the column is returned column is named         */
-        /*      correctly and the RecordToFeature machinery can get it  */
-        /* ------------------------------------------------------------ */            
+		/* ------------------------------------------------------------ */
+		/*      Make sure we return AsText(WKB_GEOMETRY) WKT_GEOMETRY   */
+		/*      This way the column is returned column is named         */
+		/*      correctly and the RecordToFeature machinery can get it  */
+		/* ------------------------------------------------------------ */            
         sprintf( pszFieldList+strlen(pszFieldList), 
                  "%s %s", pszGeomColumn, pszGeomColumn );
     }
@@ -603,6 +606,105 @@ int OGRMySQLTableLayer::TestCapability( const char * pszCap )
     else 
         return OGRMySQLLayer::TestCapability( pszCap );
 }
+
+
+/************************************************************************/
+/*                            CreateField()                             */
+/************************************************************************/
+
+OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
+
+{
+
+    MYSQL_RES           *hResult=NULL;
+    char        		szCommand[1024];
+    
+    char                szFieldType[256];
+    OGRFieldDefn        oField( poFieldIn );
+
+/* -------------------------------------------------------------------- */
+/*      Do we want to "launder" the column names into Postgres          */
+/*      friendly format?                                                */
+/* -------------------------------------------------------------------- */
+    if( bLaunderColumnNames )
+    {
+        char    *pszSafeName = poDS->LaunderName( oField.GetNameRef() );
+
+        oField.SetName( pszSafeName );
+        CPLFree( pszSafeName );
+
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Work out the MySQL type.                                        */
+/* -------------------------------------------------------------------- */
+    if( oField.GetType() == OFTInteger )
+    {
+        if( oField.GetWidth() > 0 && bPreservePrecision )
+            sprintf( szFieldType, "DECIMAL(%d,0)", oField.GetWidth() );
+        else
+            strcpy( szFieldType, "INTEGER" );
+    }
+    else if( oField.GetType() == OFTReal )
+    {
+        if( oField.GetWidth() > 0 && oField.GetPrecision() > 0
+            && bPreservePrecision )
+            sprintf( szFieldType, "DOUBLE(%d,%d)",
+                     oField.GetWidth(), oField.GetPrecision() );
+        else
+            strcpy( szFieldType, "DOUBLE" );
+    }
+
+/*    else if( oField.GetType() == OFTDate )
+    {
+        sprintf( szFieldType, "DATETIME" );
+    }
+*/
+    else if( oField.GetType() == OFTString )
+    {
+        if( oField.GetWidth() == 0 || !bPreservePrecision )
+            strcpy( szFieldType, "TEXT" );
+        else
+            sprintf( szFieldType, "VARCHAR(%d)", oField.GetWidth() );
+    }
+    else if( bApproxOK )
+    {
+        CPLError( CE_Warning, CPLE_NotSupported,
+                  "Can't create field %s with type %s on PostgreSQL layers.  Creating as VARCHAR.",
+                  oField.GetNameRef(),
+                  OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
+        strcpy( szFieldType, "VARCHAR" );
+    }
+    else
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Can't create field %s with type %s on PostgreSQL layers.",
+                  oField.GetNameRef(),
+                  OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
+
+        return OGRERR_FAILURE;
+    }
+
+    sprintf( szCommand,
+             "ALTER TABLE %s ADD COLUMN %s %s",
+             poFeatureDefn->GetName(), oField.GetNameRef(), szFieldType );
+
+    if( mysql_query(poDS->GetConn(), szCommand ) )
+    {
+        poDS->ReportError( szCommand );
+        return NULL;
+    }
+
+    // make sure to attempt to free results of successful describes
+    hResult = mysql_store_result( poDS->GetConn() );
+    if( hResult != NULL )
+        mysql_free_result( hResult );
+    hResult = NULL;   
+    
+    
+    return OGRERR_NONE;
+}
+
 
 /************************************************************************/
 /*                             GetFeature()                             */
@@ -743,7 +845,7 @@ int OGRMySQLTableLayer::GetFeatureCount( int bForce )
 /*      haven't yet even looked for it).                                */
 /************************************************************************/
 
-OGRSpatialReference *OGRMySQLTableLayer::GetSpatialRef()
+/*OGRSpatialReference *OGRMySQLTableLayer::GetSpatialRef()
 
 {
 
@@ -751,4 +853,4 @@ OGRSpatialReference *OGRMySQLTableLayer::GetSpatialRef()
     FetchSRS();
     return poSRS;
 
-}
+}*/

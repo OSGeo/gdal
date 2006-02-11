@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/02/11 18:08:34  hobu
+ * Moved FetchSRS to happen on the datasource like PG
+ * Implemented CreateField for TableLayer
+ *
  * Revision 1.13  2006/02/07 18:17:15  hobu
  * Always return geometries as "native"
  *
@@ -345,10 +349,28 @@ OGRFeature *OGRMySQLLayer::GetFeature( long nFeatureId )
 int OGRMySQLLayer::TestCapability( const char * pszCap )
 
 {
-    return FALSE;
+    if( EQUAL(pszCap,OLCRandomRead) )
+        return FALSE;
+
+    else if( EQUAL(pszCap,OLCFastFeatureCount) )
+        return TRUE;
+
+    else if( EQUAL(pszCap,OLCFastSpatialFilter) )
+        return TRUE;
+
+    else if( EQUAL(pszCap,OLCTransactions) )
+        return FALSE;
+
+	else if( EQUAL(pszCap,OLCFastGetExtent) )
+		return FALSE;
+
+    else
+        return FALSE;
 }
 
 
+
+    
 /************************************************************************/
 /*                            GetFIDColumn()                            */
 /************************************************************************/
@@ -413,7 +435,7 @@ int OGRMySQLLayer::FetchSRSId()
 /*                         FetchSRS()                                   */
 /************************************************************************/
 
-void OGRMySQLLayer::FetchSRS() 
+/*void OGRMySQLLayer::FetchSRS() 
 {
         char         szCommand[1024];
         char           **papszRow;  
@@ -449,7 +471,7 @@ void OGRMySQLLayer::FetchSRS()
          }
 
 }
-
+*/
 
 /************************************************************************/
 /*                           GetSpatialRef()                            */
@@ -459,7 +481,7 @@ OGRSpatialReference *OGRMySQLLayer::GetSpatialRef()
 
 {
 
-#if notdef
+
     if( poSRS == NULL && nSRSId > -1 )
     {
         poSRS = poDS->FetchSRS( nSRSId );
@@ -470,7 +492,5 @@ OGRSpatialReference *OGRMySQLLayer::GetSpatialRef()
     }
 
     return poSRS;
-#endif
 
-    return NULL;
 }
