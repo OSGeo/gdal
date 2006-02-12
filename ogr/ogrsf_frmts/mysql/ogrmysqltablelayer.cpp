@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2006/02/12 06:17:25  hobu
+ * Implement DeleteFeature
+ *
  * Revision 1.23  2006/02/12 01:16:42  hobu
  * remove debugging lint and handle
  * double(width, precision) fields
@@ -624,6 +627,54 @@ int OGRMySQLTableLayer::TestCapability( const char * pszCap )
 
     else 
         return OGRMySQLLayer::TestCapability( pszCap );
+}
+
+
+/************************************************************************/
+/*                           DeleteFeature()                            */
+/************************************************************************/
+
+OGRErr OGRMySQLTableLayer::DeleteFeature( long nFID )
+
+{
+    MYSQL_RES           *hResult=NULL;
+    CPLString           osCommand;
+
+
+/* -------------------------------------------------------------------- */
+/*      We can only delete features if we have a well defined FID       */
+/*      column to target.                                               */
+/* -------------------------------------------------------------------- */
+    if( !bHasFid )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "DeleteFeature(%d) failed.  Unable to delete features in tables without\n"
+                  "a recognised FID column.",
+                  nFID );
+        return OGRERR_FAILURE;
+
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Form the statement to drop the record.                          */
+/* -------------------------------------------------------------------- */
+    osCommand.Printf( "DELETE FROM \"%s\" WHERE \"%s\" = %ld",
+                      poFeatureDefn->GetName(), pszFIDColumn, nFID );
+
+/* -------------------------------------------------------------------- */
+/*      Execute the delete.                                             */
+/* -------------------------------------------------------------------- */
+    if( mysql_query(poDS->GetConn(), osCommand.c_str() ) ){   
+        poDS->ReportError(  osCommand.c_str() );
+        return OGRERR_FAILURE;   
+    }
+
+    // make sure to attempt to free results of successful describes
+    hResult = mysql_store_result( poDS->GetConn() );
+    if( hResult != NULL )
+        mysql_free_result( hResult );
+    hResult = NULL;
+
 }
 
 

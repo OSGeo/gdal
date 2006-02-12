@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/02/12 06:17:25  hobu
+ * Implement DeleteFeature
+ *
  * Revision 1.16  2006/02/12 00:40:56  hobu
  * Implement a somewhat working CreateFeature
  *
@@ -184,7 +187,7 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
 
     virtual OGRErr      SetAttributeFilter( const char * );
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
-   
+    virtual OGRErr      DeleteFeature( long nFID );   
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
 
