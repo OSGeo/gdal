@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/02/12 06:22:45  hobu
+ * Implement SetFeature
+ *
  * Revision 1.24  2006/02/12 06:17:25  hobu
  * Implement DeleteFeature
  *
@@ -629,6 +632,32 @@ int OGRMySQLTableLayer::TestCapability( const char * pszCap )
         return OGRMySQLLayer::TestCapability( pszCap );
 }
 
+/************************************************************************/
+/*                             SetFeature()                             */
+/*                                                                      */
+/*      SetFeature() is implemented by dropping the old copy of the     */
+/*      feature in question (if there is one) and then creating a       */
+/*      new one with the provided feature id.                           */
+/************************************************************************/
+
+OGRErr OGRMySQLTableLayer::SetFeature( OGRFeature *poFeature )
+
+{
+    OGRErr eErr;
+
+    if( poFeature->GetFID() == OGRNullFID )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "FID required on features given to SetFeature()." );
+        return OGRERR_FAILURE;
+    }
+
+    eErr = DeleteFeature( poFeature->GetFID() );
+    if( eErr != OGRERR_NONE )
+        return eErr;
+
+    return CreateFeature( poFeature );
+}
 
 /************************************************************************/
 /*                           DeleteFeature()                            */
