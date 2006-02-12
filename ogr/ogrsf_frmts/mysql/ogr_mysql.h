@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/02/12 00:40:56  hobu
+ * Implement a somewhat working CreateFeature
+ *
  * Revision 1.15  2006/02/11 18:07:26  hobu
  * Moved FetchSRS to happen via the Datasource like PG
  * rather than in the TableLayer and ResultLayer as before
@@ -180,9 +183,8 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
     void                SetSpatialFilter( OGRGeometry * );
 
     virtual OGRErr      SetAttributeFilter( const char * );
-#ifdef notdef
     virtual OGRErr      CreateFeature( OGRFeature *poFeature );
-#endif    
+   
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
                                      int bApproxOK = TRUE );
 

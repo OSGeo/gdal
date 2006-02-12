@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/02/12 00:40:57  hobu
+ * Implement a somewhat working CreateFeature
+ *
  * Revision 1.21  2006/02/11 18:08:34  hobu
  * Moved FetchSRS to happen on the datasource like PG
  * Implemented CreateField for TableLayer
@@ -189,7 +192,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         OGRFieldDefn    oField( papszRow[0], OFTString);
 
         pszType = papszRow[1];
-        
+        CPLDebug("MYSQL","The feidel def is %s", pszType);
         if( pszType == NULL )
             continue;
 
@@ -290,8 +293,23 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         {
             oField.SetType( OFTReal );
         }
-        else if( EQUAL(pszType,"double") )
+        else if( EQUAL(pszType,"double") || EQUALN(pszType,"double",6) )
         {
+            CPLDebug("MYSQL", "Our Field Type was Double!");
+            char ** papszTokens=NULL;
+
+            papszTokens = CSLTokenizeString2(pszType,"(),",0);
+            CPLDebug("MYSQL","We tokenized our string");
+            /* width is the second and precision is the third */
+            CPLDebug("MYSQL","Tokens are %s",papszTokens[0]);
+            if (papszTokens[0] !="double")
+            {
+                CPLDebug("MYSQL","should no be here");
+                oField.SetWidth(atoi(papszTokens[1]));
+                oField.SetPrecision(atoi(papszTokens[2]));
+             
+            }
+            CSLDestroy( papszTokens );   
             oField.SetType( OFTReal );
         }
         else if( EQUAL(pszType,"decimal") )
@@ -609,6 +627,163 @@ int OGRMySQLTableLayer::TestCapability( const char * pszCap )
 
 
 /************************************************************************/
+/*                       CreateFeature()                                */
+/************************************************************************/
+OGRErr OGRMySQLTableLayer::CreateFeature( OGRFeature *poFeature )
+
+{
+    MYSQL_RES           *hResult=NULL;
+    CPLString           osCommand;
+    int                 i, bNeedComma = FALSE;
+    OGRErr              eErr;
+
+/* -------------------------------------------------------------------- */
+/*      Form the INSERT command.                                        */
+/* -------------------------------------------------------------------- */
+    osCommand.Printf( "INSERT INTO %s (", poFeatureDefn->GetName() );
+
+    if( poFeature->GetGeometryRef() != NULL )
+    {
+        osCommand = osCommand + pszGeomColumn + " ";
+        bNeedComma = TRUE;
+    }
+
+    if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
+    {
+        if( bNeedComma )
+            osCommand += ", ";
+        
+        osCommand = osCommand + pszFIDColumn + " ";
+        bNeedComma = TRUE;
+    }
+
+    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    {
+        if( !poFeature->IsFieldSet( i ) )
+            continue;
+
+        if( !bNeedComma )
+            bNeedComma = TRUE;
+        else
+            osCommand += ", ";
+
+        osCommand = osCommand 
+             + poFeatureDefn->GetFieldDefn(i)->GetNameRef();
+    }
+
+    osCommand += ") VALUES (";
+
+    // Set the geometry 
+    bNeedComma = poFeature->GetGeometryRef() != NULL;
+    if( poFeature->GetGeometryRef() != NULL)
+    {
+        char    *pszWKT = NULL;
+
+        if( poFeature->GetGeometryRef() != NULL )
+        {
+            OGRGeometry *poGeom = (OGRGeometry *) poFeature->GetGeometryRef();
+
+            poGeom->closeRings();
+           //    poGeom->setCoordinateDimension( nCoordDimension );
+
+            poGeom->exportToWkt( &pszWKT );
+        }
+
+        if( pszWKT != NULL )
+        {
+
+            osCommand += 
+                CPLString().Printf(
+                    "GeometryFromText('%s',%d) ", pszWKT, nSRSId );
+
+            OGRFree( pszWKT );
+        }
+        else
+            osCommand += "''";
+    }
+
+
+    // Set the FID 
+    if( poFeature->GetFID() != OGRNullFID && pszFIDColumn != NULL )
+    {
+        if( bNeedComma )
+            osCommand += ", ";
+        osCommand += CPLString().Printf( "%ld ", poFeature->GetFID() );
+        bNeedComma = TRUE;
+    }
+
+//CPLDebug("MYSQL","SQL: %s", osCommand.c_str());
+
+    for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
+    {
+        const char *pszStrValue = poFeature->GetFieldAsString(i);
+        char *pszNeedToFree = NULL;
+
+        if( !poFeature->IsFieldSet( i ) )
+            continue;
+
+        if( bNeedComma )
+            osCommand += ", ";
+        else
+            bNeedComma = TRUE;
+
+        if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger
+                 && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTReal )
+        {
+            int         iChar;
+
+            //We need to quote and escape string fields. 
+            osCommand += "'";
+
+            for( iChar = 0; pszStrValue[iChar] != '\0'; iChar++ )
+            {
+                if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTIntegerList
+                    && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTRealList
+                    && poFeatureDefn->GetFieldDefn(i)->GetWidth() > 0
+                    && iChar == poFeatureDefn->GetFieldDefn(i)->GetWidth() )
+                {
+                    CPLDebug( "PG",
+                              "Truncated %s field value, it was too long.",
+                              poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
+                    break;
+                }
+
+                if( pszStrValue[iChar] == '\\'
+                    || pszStrValue[iChar] == '\'' )
+                {
+                    osCommand += '\\';
+                    osCommand += pszStrValue[iChar];
+                }
+                else
+                    osCommand += pszStrValue[iChar];
+            }
+
+            osCommand += "'";
+        }
+        else
+        {
+            osCommand += pszStrValue;
+        }
+
+        if( pszNeedToFree )
+            CPLFree( pszNeedToFree );
+    }
+
+    osCommand += ")";
+    if( mysql_query(poDS->GetConn(), osCommand.c_str() ) ){   
+        poDS->ReportError(  osCommand.c_str() );
+        return OGRERR_FAILURE;   
+    }
+
+    // make sure to attempt to free results of successful describes
+    hResult = mysql_store_result( poDS->GetConn() );
+    if( hResult != NULL )
+        mysql_free_result( hResult );
+    hResult = NULL;
+    return OGRERR_NONE;
+
+}
+/************************************************************************/
 /*                            CreateField()                             */
 /************************************************************************/
 
@@ -700,7 +875,8 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     if( hResult != NULL )
         mysql_free_result( hResult );
     hResult = NULL;   
-    
+
+    poFeatureDefn->AddFieldDefn( &oField );    
     
     return OGRERR_NONE;
 }
