@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/02/12 01:16:42  hobu
+ * remove debugging lint and handle
+ * double(width, precision) fields
+ *
  * Revision 1.22  2006/02/12 00:40:57  hobu
  * Implement a somewhat working CreateFeature
  *
@@ -192,7 +196,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         OGRFieldDefn    oField( papszRow[0], OFTString);
 
         pszType = papszRow[1];
-        CPLDebug("MYSQL","The feidel def is %s", pszType);
+
         if( pszType == NULL )
             continue;
 
@@ -293,23 +297,20 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         {
             oField.SetType( OFTReal );
         }
-        else if( EQUAL(pszType,"double") || EQUALN(pszType,"double",6) )
+        else if( EQUAL(pszType,"double") )
         {
-            CPLDebug("MYSQL", "Our Field Type was Double!");
-            char ** papszTokens=NULL;
+            oField.SetType( OFTReal );
+        }
+        else if( EQUALN(pszType,"double",6) )
+        {
 
+            char ** papszTokens=NULL;
             papszTokens = CSLTokenizeString2(pszType,"(),",0);
-            CPLDebug("MYSQL","We tokenized our string");
             /* width is the second and precision is the third */
-            CPLDebug("MYSQL","Tokens are %s",papszTokens[0]);
-            if (papszTokens[0] !="double")
-            {
-                CPLDebug("MYSQL","should no be here");
-                oField.SetWidth(atoi(papszTokens[1]));
-                oField.SetPrecision(atoi(papszTokens[2]));
-             
-            }
-            CSLDestroy( papszTokens );   
+            oField.SetWidth(atoi(papszTokens[1]));
+            oField.SetPrecision(atoi(papszTokens[2]));
+            CSLDestroy( papszTokens );  
+
             oField.SetType( OFTReal );
         }
         else if( EQUAL(pszType,"decimal") )
