@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/02/12 06:07:27  hobu
+ * Make sure to create a spatial index
+ *
  * Revision 1.10  2006/02/11 18:08:03  hobu
  * implemented CreateLayer
  * moved FetchSRS to here like PG
@@ -1127,7 +1130,27 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
     if( hResult != NULL )
         mysql_free_result( hResult );
     hResult = NULL;   
-    
+
+    // Create the spatial index on the field
+    // We're doing this before we add geometry and record to the table 
+    // so this may not be exactly the best way to do it.
+    sprintf( szCommand,
+             "ALTER TABLE %s ADD SPATIAL INDEX(%s) ",
+             pszLayerName,
+             pszGeomColumnName);
+
+    if( mysql_query(GetConn(), szCommand ) )
+    {
+        ReportError( szCommand );
+        return NULL;
+    }
+
+    // make sure to attempt to free results of successful describes
+    hResult = mysql_store_result( GetConn() );
+    if( hResult != NULL )
+        mysql_free_result( hResult );
+    hResult = NULL;   
+        
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
