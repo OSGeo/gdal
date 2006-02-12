@@ -7,8 +7,9 @@
 
 <h1>MySQL</h1>
 
-This driver implements read-only access for non-spatial data in 
-<a href="http://www.mysql.org/">MySQL</a> tables.  <p>
+This driver implements read and write access for spatial data in 
+<a href="http://www.mysql.org/">MySQL</a> tables.  This functionality 
+will be available in GDAL 1.3.2.  <p>
 
 When opening a database, it's name should be specified in the form
 "MYSQL:<dbname>[,options]" where the options can include comma seperated
@@ -17,16 +18,99 @@ items like "user=*userid*", "password=*password*", "host=*host*" and
 
 As well, a "tables=*table*;*table*..." option can be
 added to restrict access to a specific list of tables in the database.  This
-option is primarily useful when a database has alot of tables, and scanning
+option is primarily useful when a database has a lot of tables, and scanning
 all their schemas would take a significant amount of time. <p>
 
 Currently all regular user tables are assumed to be layers from an OGR
 point of view, with the table names as the layer names.  Named views are
-not currently support.<p>
+not currently supported.<p>
 
 If a single integer field is a primary key, it will be used as the FID 
 otherwise the FID will be assigned sequentially, and fetches by FID will
 be extremely slow. <p>
+
+<h2>Caveats</h2>
+<ul>
+    <li>
+        In the case of a layer defined by a SQL statement, fields either named
+        "OGC_FID" or those that are defined as NOT NULL, are a PRIMARY KEY, and 
+        are an integer-like field will be assumed to be the FID.
+    </li>
+    <li>
+        Geometry fields are read from MySQL using WKB format.  Versions older than 
+        5.0.16 of MySQL are known to have issues with WKB generation and may 
+        not be supported.
+    </li>
+    <li>
+        The OGR_FID column, which can be overridden with the MYSQL_FID layer creation 
+        option, is implemented as a <b>INT UNIQUE NOT NULL AUTO_INCREMENT</b> field.  This 
+        appears to implicitly create an index on the field.
+    </li>
+    <li>
+        The geometry column, which defaults to <i>SHAPE</i> and can be overridden 
+        with the MYSQL_GEOM_COLUMN layer creation option, is created as a 
+        <b>NOT NULL</b> column.  When a table is created, a spatial index for the 
+        geometry column is also created.
+    </li>
+    <li>
+        SRS information is stored using the OGC Simple Features for SQL layout, with 
+        <i>geometry_columns</i> and <i>spatial_ref_sys</i> metadata tables being 
+        created in the specified database if they do not already exist.  The 
+        <i>spatial_ref_sys</i> table is <b>not</b> pre-populated with SRS and 
+        EPSG values like PostGIS.  If no EPSG code is found for a given table, 
+        the MAX(SRID) value will be used.
+    </li>
+		
+</ul>
+
+<h2>Creation Issues</h2>
+
+The MySQL driver does not support creation of new datasets (a database
+within MySQL), but it does allow creation of new layers within an
+existing database.<P>
+    
+By default, the MySQL driver will attempt to preserve the precision 
+of OGR features when creating and reading MySQL layers.  For integer fields 
+with a specified width, it will use <b>DECIMAL</b> as the MySQL field 
+type with a specified precision of 0.  For real fields, it will use 
+<b>DOUBLE</b> with the specified width and precision. For string fields 
+with a specified width, <b>VARCHAR</b> will be used.<p>
+
+The MySQL driver makes no allowances for character encodings at this time.<p>
+
+The MySQL driver is not transactional at this time.<p>
+
+
+
+
+    
+<h3>Layer Creation Options</h3>
+
+<ul>
+    <li>
+        <b>OVERWRITE</b>: This may be "YES" to force an existing layer of the 
+        desired name to be destroyed before creating the requested layer.
+    </li>
+    <li>
+        <b>LAUNDER</b>: This may be "YES" to force new fields created on this 
+        layer to have their field names "laundered" into a form more 
+        compatible with MySQL.  This converts to lower case and converts 
+        some special characters like "-" and "#" to "_".  If "NO" exact names 
+        are preserved.  The default value is "YES".
+    </li>
+    <li>
+        <b>PRECISION</b>: This may be "TRUE" to attempt to preserve field 
+        widths and precisions for the creation and reading of MySQL layers.
+        The default value is "TRUE".
+    </li>
+    <li>
+        <b>MYSQL_GEOM_COLUMN</b>: This option specifies the name of the 
+        geometry column.  The default value is "SHAPE".
+    </li>
+        <b>MYSQL_FID</b>: This option specifies the name of the FID column.
+        The default value is "OGR_FID"
+    </li>
+</ul>
 
 The following example datasource name opens the database schema 
 <i>westholland</i> with password <i>psv9570</i> for userid <i>root</i>
@@ -38,6 +122,35 @@ presented as a layer for use.<p>
 MYSQL:westholland,user=root,password=psv9570,port=3306,tables=bedrijven
 </pre>
 
+The following example uses ogr2ogr to create copy the world_borders layer from a shapefile 
+into a MySQL table.  It overwrites a table with the existing name <i>borders2</i>, 
+sets a layer creation option to specify the geometry column name to <i>SHAPE2</i>.
 
+<pre>
+ogr2ogr -f MySQL MySQL:test,user=root world_borders.shp -nln borders2 -update -overwrite -lco MYSQL_GEOM_COLUMN=SHAPE2 
+</pre>
+
+The following example uses ogrinfo to return some summary information about the borders2 
+layer in the test database.
+<pre>
+ogrinfo MySQL:test,user=root borders2 -so
+
+    Layer name: borders2
+    Geometry: Polygon
+    Feature Count: 3784
+    Extent: (-180.000000, -90.000000) - (180.000000, 83.623596)
+    Layer SRS WKT:
+    GEOGCS["GCS_WGS_1984",
+        DATUM["WGS_1984",
+            SPHEROID["WGS_84",6378137,298.257223563]],
+        PRIMEM["Greenwich",0],
+        UNIT["Degree",0.017453292519943295]]
+    FID Column = OGR_FID
+    Geometry Column = SHAPE2
+    cat: Real (0.0)
+    fips_cntry: String (80.0)
+    cntry_name: String (80.0)
+    area: Real (15.2)
+    pop_cntry: Real (15.2)
 </body>
 </html>
