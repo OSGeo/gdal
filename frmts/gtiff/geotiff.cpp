@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.156  2006/02/12 23:52:53  fwarmerdam
+ * Allow one or two GCPs if that is all the tiepoints there are.
+ *
  * Revision 1.155  2005/12/21 00:36:59  fwarmerdam
  * Added compression image_structure metadata.
  *
@@ -2910,7 +2913,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 /*      transform in some circumstances.                                */
 /* -------------------------------------------------------------------- */
         if( TIFFGetField(hTIFF,TIFFTAG_GEOTIEPOINTS,&nCount,&padfTiePoints )
-                 && nCount > 6 )
+            && !bGeoTransformValid )
         {
             nGCPCount = nCount / 6;
             pasGCPList = (GDAL_GCP *) CPLCalloc(sizeof(GDAL_GCP),nGCPCount);
