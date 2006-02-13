@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/02/13 17:39:31  rblazek
+ * header files moved to grass
+ *
  * Revision 1.5  2005/09/30 21:07:57  fwarmerdam
  * applied patches from bug 822, add georef support
  *
@@ -55,13 +58,13 @@ extern "C" {
 #ifdef __cplusplus
 #define class _class
 #endif
-#include <imagery.h>
+#include <grass/imagery.h>
 #ifdef __cplusplus
 #undef class
 #endif
     
-#include <gprojects.h>
-#include <gis.h>
+#include <grass/gprojects.h>
+#include <grass/gis.h>
 }
 
 #include "gdal_priv.h"
