@@ -28,6 +28,13 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/02/13 01:44:25  hobu
+ * Define an Initialize() method for TableLayer and
+ * make sure to use it when we after we construct
+ * a new one.  This is to prevent ResetReading from
+ * causing segfault in the case where we were given
+ * an invalid table name
+ *
  * Revision 1.11  2006/02/12 06:07:27  hobu
  * Make sure to create a spatial index
  *
@@ -331,9 +338,13 @@ int OGRMySQLDataSource::OpenTable( const char *pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGRMySQLLayer  *poLayer;
+    OGRMySQLTableLayer  *poLayer;
+    OGRErr eErr;
 
     poLayer = new OGRMySQLTableLayer( this, pszNewName, bUpdate );
+    eErr = poLayer->Initialize(pszNewName);
+    if (eErr == OGRERR_FAILURE)
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
@@ -917,18 +928,15 @@ int OGRMySQLDataSource::DeleteLayer( int iLayer)
              "DROP TABLE %s ",
              osLayerName.c_str() );
 
-    if( !mysql_query(GetConn(), szCommand ) ){
-
-        if( mysql_field_count( GetConn() ) == 0 )
-        {
-            CPLDebug("MYSQL","Dropped table %s.", osLayerName.c_str());
-            return OGRERR_NONE;
-        }
-        else
-        {
-            ReportError( szCommand );
-            return OGRERR_FAILURE;
-        }
+    if( !mysql_query(GetConn(), szCommand ) )
+    {
+        CPLDebug("MYSQL","Dropped table %s.", osLayerName.c_str());
+        return OGRERR_NONE;
+    }
+    else
+    {
+        ReportError( szCommand );
+        return OGRERR_FAILURE;
     }
 
 }
@@ -965,7 +973,7 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
     if( wkbFlatten(eType) == eType )
         nDimension = 2;
 
-    CPLDebug("MYSQL","Attempting to create layer %s.", pszLayerName);
+    CPLDebug("MYSQL","Creating layer %s.", pszLayerName);
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
@@ -1155,9 +1163,12 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
     OGRMySQLTableLayer     *poLayer;
+    OGRErr                  eErr;
 
     poLayer = new OGRMySQLTableLayer( this, pszLayerName, TRUE, nSRSId );
-
+    eErr = poLayer->Initialize(pszLayerName);
+    if (eErr == OGRERR_FAILURE)
+        return NULL;
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
 
