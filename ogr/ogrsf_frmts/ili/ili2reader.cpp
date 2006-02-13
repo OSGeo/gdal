@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/02/13 18:18:53  pka
+ * Interlis 2: Support for nested attributes
+ * Interlis 2: Arc interpolation
+ *
  * Revision 1.4  2006/01/11 17:36:19  pka
  * Fix for white space trimming
  * Fix in layer search
@@ -49,6 +53,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include "ilihelper.h"
 #include "ili2reader.h"
 #include "ili2readerp.h"
 
@@ -79,7 +84,7 @@ static const char *ILI2_SURFACE = "SURFACE";
 
 
 // 
-// utili2ties
+// helper functions
 // 
 int cmpStr(string s1, string s2) {
   
@@ -136,54 +141,6 @@ int getGeometryTypeOfElem(DOMElement* elem) {
   return type;
 }
 
-DOMElement* getGeometryElem(DOMElement* elem) {
-  DOMElement* geomElem = 0;
-  if (elem) {
-    if (getGeometryTypeOfElem(elem) != ILI2_STRING_TYPE) {
-      geomElem = elem;
-    } else {
-      //recursively search children
-      for (DOMElement *childElem = (DOMElement *)elem->getFirstChild();
-            geomElem == 0 && childElem && childElem->getNodeType() == DOMNode::ELEMENT_NODE;
-            childElem = (DOMElement*)childElem->getNextSibling()) {
-        geomElem = getGeometryElem(childElem);
-      }
-    }
-  }
-  return geomElem;
-}
-
-int getTypeOfGeometry(DOMElement* elem, bool parseDown) {
-  int type = ILI2_STRING_TYPE;
-  DOMElement* geomElem = getGeometryElem(elem);
-  if (geomElem) {
-    type = getGeometryTypeOfElem(geomElem);
-    //Check next sybling for collection (???)
-    DOMElement* nextElem = (DOMElement*)geomElem->getNextSibling();
-    if (nextElem) {
-      int subType = getGeometryTypeOfElem(nextElem); //recursive???
-      if (type == subType) {
-        switch (type) {
-          case ILI2_STRING_TYPE :
-          case ILI2_COORD_TYPE :
-          case ILI2_ARC_TYPE :
-          case ILI2_BOUNDARY_TYPE : 
-            break;
-          default :
-            type = ILI2_GEOMCOLL_TYPE;
-        }
-      } else {
-        if (type < subType) {
-          type |= subType;
-        } else {
-          type = ILI2_GEOMCOLL_TYPE;
-        }
-      }
-    }
-   }
-  return type;
-}
-
 char *getObjValue(DOMElement *elem) {
   DOMElement *textElem = (DOMElement *)elem->getFirstChild();
   
@@ -215,55 +172,7 @@ OGRPoint *getPoint(DOMElement *elem) {
   return pt;
 }
 
-OGRPoint *getARCCenter(OGRPoint *ptStart, OGRPoint *ptArc, OGRPoint *ptEnd) {  
-  // FIXME precision
-  double bx = ptStart->getX(); double by = ptStart->getY();
-  double cx = ptArc->getX(); double cy = ptArc->getY();
-  double dx = ptEnd->getX(); double dy = ptEnd->getY();
-  double temp, bc, cd, det, x, y;
-  
-  temp = cx*cx+cy*cy;
-  bc = (bx*bx + by*by - temp)/2.0;
-  cd = (temp - dx*dx - dy*dy)/2.0;
-  det = (bx-cx)*(cy-dy)-(cx-dx)*(by-cy);
-  
-  OGRPoint *center = new OGRPoint();
-  
-  if (fabs(det) < 1.0e-6) { // could not determin the determinante: too small
-    return center;
-  }    
-  det = 1/det;
-  x = (bc*(cy-dy)-cd*(by-cy))*det;
-  y = ((bx-cx)*cd-(cx-dx)*bc)*det;
-  
-  center->setX(x);
-  center->setY(y);
-  
-  return center;
-  //r = sqrt((x-bx)*(x-bx)+(y-by)*(y-by));
-}
-
-OGRPoint *getPointBetween(OGRPoint *center, OGRPoint *pt1, OGRPoint *pt2) {
-  // FIXME precision
-  OGRPoint *middlePoint = new OGRPoint();
-  
-  double cx = center->getX(); double cy = center->getY();
-  double px = pt1->getX(); double py = pt1->getY();
-  
-  double mx = ((px - cx)+(pt2->getX() - cx));
-  double my = ((py - cy)+(pt2->getY() - cy));
-  double mlen = sqrt(mx*mx+my*my);
-  
-  double r = sqrt((cx-px)*(cx-px)+(cy-py)*(cy-py));
-  
-  middlePoint->setX(cx + mx / mlen * r);
-  middlePoint->setY(cy + my / mlen * r);
-  //middlePoint->setZ(pt1->getZ());
-  
-  return middlePoint;
-}
-
-OGRLineString *getArc(DOMElement *elem) { // FIXME only 4 points on arc 
+OGRLineString *getArc(DOMElement *elem) {
   // elem -> ARC
   OGRLineString *ls = new OGRLineString();
   // previous point -> start point
@@ -293,22 +202,9 @@ OGRLineString *getArc(DOMElement *elem) { // FIXME only 4 points on arc
 
     arcElem = (DOMElement *)arcElem->getNextSibling();
   }
-  //ls->addPoint(ptStart);// is set before
   ptEnd->flattenTo2D();
   ptOnArc->flattenTo2D();
-  if (fabs(radius) > 0) {
-    //r = sqrt((cx-ptx)*(cx-ptx)+(cy-pty)*(cy-pty));
-    radius = fabs(radius);
-    OGRPoint *center = getARCCenter(ptStart, ptOnArc, ptEnd);  
-    ls->addPoint(getPointBetween(center, ptStart, ptOnArc));
-    ls->addPoint(ptOnArc);
-    ls->addPoint(getPointBetween(center, ptOnArc, ptEnd));
-    ls->addPoint(ptEnd);
-  } else {
-    ls->addPoint(ptOnArc);
-    ls->addPoint(ptEnd);
-  }
-  
+  interpolateArc(ls, ptStart, ptOnArc, ptEnd, PI/180);
   return ls;
 }
 
@@ -320,7 +216,7 @@ OGRLineString *getLineString(DOMElement *elem) {
   while (lineElem != NULL) {
     if (cmpStr(ILI2_COORD, XMLString::transcode(lineElem->getTagName())) == 0)
       ls->addPoint(getPoint(lineElem));
-    else if (cmpStr(ILI2_ARC, XMLString::transcode(lineElem->getTagName())) == 0) { // FIXME see getArc
+    else if (cmpStr(ILI2_ARC, XMLString::transcode(lineElem->getTagName())) == 0) {
       // end point
       OGRPoint *ptEnd = new OGRPoint();
       // point on the arc 
@@ -350,19 +246,8 @@ OGRLineString *getLineString(DOMElement *elem) {
       
       ptEnd->flattenTo2D();
       ptOnArc->flattenTo2D();
-      if (fabs(radius) > 0) {
-        OGRPoint *ptStart = getPoint((DOMElement *)lineElem->getPreviousSibling()); // COORD or ARC
-        //r = sqrt((cx-ptx)*(cx-ptx)+(cy-pty)*(cy-pty));
-        radius = fabs(radius);
-        OGRPoint *center = getARCCenter(ptStart, ptOnArc, ptEnd);  
-        ls->addPoint(getPointBetween(center, ptStart, ptOnArc));
-        ls->addPoint(ptOnArc);
-        ls->addPoint(getPointBetween(center, ptOnArc, ptEnd));
-        ls->addPoint(ptEnd);
-      } else {
-        ls->addPoint(ptOnArc);
-        ls->addPoint(ptEnd);
-      }
+      OGRPoint *ptStart = getPoint((DOMElement *)lineElem->getPreviousSibling()); // COORD or ARC
+      interpolateArc(ls, ptStart, ptOnArc, ptEnd, PI/180);
     } /* else { // FIXME StructureValue in Polyline not yet supported
     } */
         
@@ -426,7 +311,7 @@ OGRGeometry *getGeometry(DOMElement *elem, int type) {
         break;
       default : 
         if (type >= ILI2_GEOMCOLL_TYPE) {
-          int subType = getTypeOfGeometry(childElem, false);
+          int subType = getGeometryTypeOfElem(childElem); //????
           gm->addGeometry(getGeometry(childElem, subType));
         }
         break;
@@ -439,19 +324,73 @@ OGRGeometry *getGeometry(DOMElement *elem, int type) {
   return gm;
 }
 
-void addFeature(OGRFeature *feature, DOMElement *elem, int type) {
-  char *fName = XMLString::transcode(elem->getTagName());
-  int fIndex = feature->GetFieldIndex(fName);
-  
-  if (type == 0) {  
-    char * objVal = getObjValue(elem);
-    if (objVal == NULL)
-      objVal = getREFValue(elem); // only to try
-    feature->SetField(fIndex, objVal);
-  } else {
-    feature->SetGeometry(getGeometry(getGeometryElem(elem), type));
+char* fieldName(DOMElement* elem) {
+  string fullname;
+  int depth = 0;
+  for (DOMNode* node = elem; node; node = node->getParentNode()) ++depth;
+  depth-=3; //ignore root elements
+  DOMNode* elements[depth];
+  int d=0;
+  for (DOMNode* node = elem; d<depth; node = node->getParentNode()) elements[d++] = node;
+  for (int d=depth-1; d>=0; --d) {
+    if (d < depth-1) fullname += "_";
+    fullname += XMLString::transcode(elements[d]->getNodeName());
+  }
+  return CPLStrdup(fullname.c_str());
+}
+
+void setFieldDefn(OGRFeatureDefn *featureDef, DOMElement* elem) {
+  int type = 0;
+  //recursively search children
+  for (DOMElement *childElem = (DOMElement *)elem->getFirstChild();
+        type == 0 && childElem && childElem->getNodeType() == DOMNode::ELEMENT_NODE;
+        childElem = (DOMElement*)childElem->getNextSibling()) {
+    type = getGeometryTypeOfElem(childElem);
+    if (type == 0) {
+      if (childElem->getFirstChild() && childElem->getFirstChild()->getNodeType() == DOMNode::ELEMENT_NODE) {
+        setFieldDefn(featureDef, childElem);
+      } else {
+        char *fName = fieldName(childElem);
+        if (featureDef->GetFieldIndex(fName) == -1) {
+          CPLDebug( "OGR_ILI", "AddFieldDefn: %s",fName );
+          OGRFieldDefn *fieldDef = new OGRFieldDefn(fName, OFTString);
+          featureDef->AddFieldDefn(fieldDef);
+        }
+        CPLFree(fName);
+      }
+    }
   }
 }
+
+void ILI2Reader::SetFieldValues(OGRFeature *feature, DOMElement* elem) {
+  int type = 0;
+  //recursively search children
+  for (DOMElement *childElem = (DOMElement *)elem->getFirstChild();
+        type == 0 && childElem && childElem->getNodeType() == DOMNode::ELEMENT_NODE;
+        childElem = (DOMElement*)childElem->getNextSibling()) {
+    type = getGeometryTypeOfElem(childElem);
+    if (type == 0) {
+      if (childElem->getFirstChild() && childElem->getFirstChild()->getNodeType() == DOMNode::ELEMENT_NODE) {
+        SetFieldValues(feature, childElem);
+      } else {
+        char *fName = fieldName(childElem);
+        int fIndex = feature->GetFieldIndex(fName);
+        if (fIndex != -1) {
+          char * objVal = getObjValue(childElem);
+          if (objVal == NULL)
+            objVal = getREFValue(childElem); // only to try
+          feature->SetField(fIndex, objVal);
+        } else {
+          m_missAttrs.push_back(fName);
+        }
+        CPLFree(fName);
+      }
+    } else {
+      feature->SetGeometry(getGeometry(childElem, type));
+    }
+  }
+}
+
 
 //
 // ILI2Reader
@@ -586,9 +525,9 @@ int ILI2Reader::GetLayerCount() {
   return m_listLayer.size();
 }
 
+
 int ILI2Reader::AddFeature(DOMElement *elem) {
   bool newLayer = true;
-  bool newFDefn = false;
   OGRLayer *curLayer = 0;
   char *pszName = XMLString::transcode(elem->getTagName());
 
@@ -606,7 +545,7 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
   
   // add a layer
   if (newLayer) { // FIXME in Layer: SRS Writer Type datasource    
-    CPLDebug( "OGR_ILI", "Adding layer (%s).", pszName );
+    CPLDebug( "OGR_ILI", "Adding layer: %s", pszName );
     // new layer data
     OGRSpatialReference *poSRSIn = NULL; // FIXME fix values for initial layer
     int bWriterIn = 0;
@@ -616,89 +555,27 @@ int ILI2Reader::AddFeature(DOMElement *elem) {
     m_listLayer.push_back(curLayer);
   }
   
-  //
-  // define the features
-  //
-  
   // the feature and field definition
   OGRFeatureDefn *featureDef = curLayer->GetLayerDefn();
-  //OGRFeatureDefn *newFeatureDef = new OGRFeatureDefn(CPLStrdup(featureDef->GetName()));
-  OGRFieldDefn *fieldDef;
-  
-  // type of the geometry
-  int type = 0;
-  
-  // the tid
-  if (featureDef->GetFieldIndex(ILI2_TID) == -1) {      
-    // should only be true if the layer is not new
-    newFDefn = true;
-    
-    fieldDef = new OGRFieldDefn(CPLStrdup(ILI2_TID), OFTString);
-    
-    if (newLayer)
-      featureDef->AddFieldDefn(fieldDef);
-    else
-      m_missAttrs.push_back(ILI2_TID);
-      //newFeatureDef->AddFieldDefn(fieldDef);
-  } 
-  
-  // parse the element and create a feature
-  DOMElement *childElem = (DOMElement*)elem->getFirstChild();
-  while (childElem != NULL) {
-    // attributes
-    char *attr = XMLString::transcode(childElem->getTagName());
-    type = getTypeOfGeometry(childElem, false); 
-    
-    if (featureDef->GetFieldIndex(attr) == -1) {     
-      // should only be true if the layer is not new
-      newFDefn = true;
-      
-      fieldDef = new OGRFieldDefn(CPLStrdup(attr), OFTString);
-      
-      if (newLayer)
-        featureDef->AddFieldDefn(fieldDef);
-      else
-        m_missAttrs.push_back(attr);
-        //newFeatureDef->AddFieldDefn(fieldDef);
-    }
-    
-    childElem = (DOMElement *)childElem->getNextSibling();
-  } 
-  
-  //
+  if (newLayer) {
+    // the TID feature
+    OGRFieldDefn *fieldDef = new OGRFieldDefn(CPLStrdup(ILI2_TID), OFTString);
+    featureDef->AddFieldDefn(fieldDef);
+
+    setFieldDefn(featureDef, elem);
+  }
+
   // add the features
-  //
-  
-  // the feature
-  OGRFeature *feature;
-  feature = new OGRFeature(featureDef);
+  OGRFeature *feature = new OGRFeature(featureDef);
+
+  // the TID feature
   int fIndex = feature->GetFieldIndex(ILI2_TID);
   char *fChVal = XMLString::transcode(elem->getAttribute(XMLString::transcode(ILI2_TID)));
-  
-  /*
-  if (!newLayer && newFDefn) {
-    for (int i = 0; i < newFeatureDef->GetFieldCount(); i++) {
-    CPLError( CE_Warning, CPLE_NotSupported, 
-              "Failed to add new definition to an existing layer (TID: '%s'), attributes not saved: %s", 
-              fChVal, newFeatureDef->GetFieldDefn(i)->GetNameRef() );
-    }
-  }
-  */
-  
   feature->SetField(fIndex, CPLStrdup(fChVal));
   
-  // parse the element and create a feature
-  childElem = (DOMElement*)elem->getFirstChild();
-  while (childElem != NULL) {   
-    
-    type = getTypeOfGeometry(childElem, false); 
-    addFeature(feature, childElem, type);
-    
-    childElem = (DOMElement*)childElem->getNextSibling();
-  } 
-  
+  SetFieldValues(feature, elem);
   curLayer->SetFeature(feature);
-    
+
   return 0;
 }
 

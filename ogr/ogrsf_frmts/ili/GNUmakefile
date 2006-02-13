@@ -7,7 +7,7 @@ include $(GDAL_ROOT)/GDALmake.opt
 
 CORE_OBJ =	 ili1reader.o ili2reader.o ili2handler.o
 
-OGR_OBJ =	iomhelper.o ogrili1driver.o ogrili1datasource.o ogrili1layer.o ogrili2driver.o ogrili2datasource.o ogrili2layer.o
+OGR_OBJ =	iomhelper.o ilihelper.o ogrili1driver.o ogrili1datasource.o ogrili1layer.o ogrili2driver.o ogrili2datasource.o ogrili2layer.o
 
 OBJ =	$(CORE_OBJ) $(OGR_OBJ)
 
