@@ -28,25 +28,43 @@ Data is read and written into transfer files which have different formats in INT
 For using the INTERLIS model (.ili) a Java interpreter is needed at runtime.
 The model file can be added to the transfer file seperated by a comma.<p>
 Some possible transformations using <a href="http://www.gdal.org/ogr/ogr2ogr.html">ogr2ogr</a>.<p>
+<ul>
+<li>
 Interlis 1 -> Shape:
 <pre>
 ogr2ogr -f "ESRI Shapefile" shpdir ili-bsp.itf,ili-bsp.ili
 </pre>
+</li>
 
+<li>
 Interlis 2 -> Shape:
 <pre>
 ogr2ogr -f "ESRI Shapefile" shpdir RoadsExdm2ien.xml
 </pre>
+</li>
 
+<li>
 Shape -> Interlis 1:
 <pre>
 ogr2ogr -f "Interlis 1" ili-bsp.itf Bodenbedeckung__BoFlaechen_Form.shp
 </pre>
+</li>
 
+<li>
 Shape -> Interlis 2:
 <pre>
 ogr2ogr -f "Interlis 2" LandCover.xml,RoadsExdm2ben.ili RoadsExdm2ben_10.Roads.LandCover.shp
 </pre>
+</li>
+
+<li>
+Incremental import from Interlis 1 into PostGIS:
+<pre>
+ogr2ogr -f PostgreSQL PG:dbname=warmerda av_fixpunkte_ohne_LFPNachfuehrung.itf,av.ili -lco OVERWRITE=yes
+ogr2ogr -f PostgreSQL PG:dbname=warmerda av_fixpunkte_mit_LFPNachfuehrung.itf,av.ili -append
+</pre>
+</li>
+</ul>
 
 <p>
 

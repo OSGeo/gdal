@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/02/13 18:18:53  pka
+ * Interlis 2: Support for nested attributes
+ * Interlis 2: Arc interpolation
+ *
  * Revision 1.3  2005/10/09 22:59:57  pka
  * ARC interpolation (Interlis 1)
  *
@@ -73,8 +77,6 @@ public:
     int          ReadFeatures();
     int          ReadTable();
     OGRGeometry  *ReadGeom(char **stgeom, OGRwkbGeometryType eType);
-    static double getPhi(OGRPoint *center, OGRPoint *pt);
-    void         interpolateArc(OGRLineString* line, OGRPoint *ptStart, OGRPoint *ptOnArc, OGRPoint *ptEnd);
     char         **ReadParseLine();
 
     void         AddLayer( OGRLayer * poNewLayer );    

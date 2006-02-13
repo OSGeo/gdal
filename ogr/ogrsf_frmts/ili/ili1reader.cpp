@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/02/13 18:18:53  pka
+ * Interlis 2: Support for nested attributes
+ * Interlis 2: Arc interpolation
+ *
  * Revision 1.8  2005/12/19 17:33:21  pka
  * Interlis 1: Support for 100 columns (unlimited, if model given)
  * Interlis 1: Fixes for output
@@ -64,6 +68,7 @@
 #include "ogr_api.h"
 #include "ogr_geos.h"
 
+#include "ilihelper.h"
 #include "iomhelper.h"
 #include "ili1reader.h"
 #include "ili1readerp.h"
@@ -86,11 +91,6 @@
 #  warning Interlis 1 Area polygonizing disabled. Needs GEOS >= 2.1.0
 #  define AREA_TYPE wkbMultiLineString
 #endif
-
-#ifndef PI
-#define PI  3.1415926535897932384626433832795
-#endif
-
 
 CPL_CVSID("$Id$");
 
@@ -384,47 +384,6 @@ int ILI1Reader::AddIliGeom(OGRFeature *feature, int iField, long fpos)
     return TRUE;
 }
 
-OGRPoint *getARCCenter(OGRPoint *ptStart, OGRPoint *ptArc, OGRPoint *ptEnd); //from ILI2 driver
-
-double ILI1Reader::getPhi(OGRPoint *center, OGRPoint *pt) {
-  double cx = center->getX(); double cy = center->getY();
-  double px = pt->getX(); double py = pt->getY();
-  double r = sqrt((cx-px)*(cx-px)+(cy-py)*(cy-py));
-  double phi = acos((px-cx)/r);
-  return (py>cy) ? phi : -phi;
-}
-
-void ILI1Reader::interpolateArc(OGRLineString* line, OGRPoint *ptStart, OGRPoint *ptOnArc, OGRPoint *ptEnd) {
-  OGRPoint *center = getARCCenter(ptStart, ptOnArc, ptEnd);
-
-  double cx = center->getX(); double cy = center->getY();
-  double px = ptOnArc->getX(); double py = ptOnArc->getY();
-  double r = sqrt((cx-px)*(cx-px)+(cy-py)*(cy-py));
-
-  double phiPtStart = getPhi(center, ptStart);
-  double phiPtOnArc = getPhi(center, ptOnArc);
-  double phiPtEnd = getPhi(center, ptEnd);
-
-  int pointCnt = 0;
-  double deltaPhi = phiPtOnArc - phiPtStart;
-  if (deltaPhi < 0) deltaPhi += 2*PI;
-  if (deltaPhi < PI) {
-    if (phiPtEnd < phiPtStart) phiPtEnd += 2*PI;
-    for (double angle = phiPtStart+arcIncr; angle<phiPtEnd; angle += arcIncr) {
-      line->addPoint(center->getX()+r*cos(angle), center->getY()+r*sin(angle), 0);
-      ++pointCnt;
-    }
-  } else {
-    if (phiPtEnd > phiPtStart) phiPtStart += 2*PI;
-    for (double angle = phiPtStart-arcIncr; angle>phiPtEnd; angle -= arcIncr) {
-      line->addPoint(center->getX()+r*cos(angle), center->getY()+r*sin(angle), 0);
-      ++pointCnt;
-    }
-  }
-  if (pointCnt == 0) line->addPoint(ptOnArc);
-  delete center;
-}
-
 OGRMultiPolygon* ILI1Reader::Polygonize( OGRGeometryCollection* poLines )
 {
     OGRMultiPolygon *poPolygon = new OGRMultiPolygon();
@@ -625,7 +584,7 @@ OGRGeometry *ILI1Reader::ReadGeom(char **stgeom, OGRwkbGeometryType eType) {
       {
         if (isArc) {
           endPoint.setX(atof(tokens[1])); endPoint.setY(atof(tokens[2]));
-          interpolateArc(ogrLine, &ogrPoint, &arcPoint, &endPoint);
+          interpolateArc(ogrLine, &ogrPoint, &arcPoint, &endPoint, arcIncr);
         }
         ogrPoint.setX(atof(tokens[1])); ogrPoint.setY(atof(tokens[2])); isArc = FALSE;
         ogrLine->addPoint(&ogrPoint);
