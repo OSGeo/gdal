@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.73  2006/02/13 22:42:35  fwarmerdam
+ * Fixed metadata related memory leak.
+ *
  * Revision 1.72  2006/01/12 22:15:38  fwarmerdam
  * Fix name of albers conical equal area when writing, bug 1035.
  *
@@ -1250,9 +1253,10 @@ GDALRasterAttributeTable *HFARasterBand::ReadNamedRAT( const char *pszName )
             double dfMin = poDTChild->GetDoubleField( "minLimit" );
             int    nBinCount = poDTChild->GetIntField( "numBins" );
 
-            CPLAssert( nBinCount == nRowCount );
-
-            poRAT->SetLinearBinning( dfMin, (dfMax-dfMin) / (nBinCount-1) );
+            if( nBinCount == nRowCount 
+                && dfMax != dfMin && nBinCount != 0 )
+                poRAT->SetLinearBinning( dfMin, 
+                                         (dfMax-dfMin) / (nBinCount-1) );
         }
 
         if( !EQUAL(poDTChild->GetType(),"Edsc_Column") )
@@ -2334,7 +2338,10 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
 
         char **papszMD = HFAGetMetadata( hHFA, i+1 );
         if( papszMD != NULL )
+        {
             poBand->SetMetadata( papszMD );
+            CSLDestroy( papszMD );
+        }
         
         poBand->ReadAuxMetadata();
     }
