@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.56  2006/02/13 23:00:55  fwarmerdam
+ * cleanup up mutex when the driver is unloaded.
+ *
  * Revision 1.55  2006/01/10 01:18:09  fwarmerdam
  * Avoid const casting warning.
  *
@@ -1625,6 +1628,13 @@ void GDALDeregister_ECW( GDALDriver * )
         CSLDestroy( gpapszCSLookup );
         gpapszCSLookup = NULL;
         gnTriedCSFile = FALSE;
+
+        if( hECWDatasetMutex != NULL )
+        {
+            CPLDestroyMutex( hECWDatasetMutex );
+            hECWDatasetMutex = NULL;
+        }
+
         NCSecwShutdown();
     }
 }
