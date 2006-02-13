@@ -4,6 +4,7 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRMySQLLayer class.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Author:   Howard Butler, hobu@hobu.net
  *
  ******************************************************************************
  * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
@@ -28,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2006/02/13 04:15:04  hobu
+ * major formatting cleanup
+ * Added myself as an author
+ *
  * Revision 1.14  2006/02/11 18:08:34  hobu
  * Moved FetchSRS to happen on the datasource like PG
  * Implemented CreateField for TableLayer
@@ -223,9 +228,11 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
             poFeature->SetFID( atoi(papszRow[iField]) );
         }
 
-        if( papszRow[iField] == NULL ) {
-            printf("FIELD %s was null\n", psMSField->name);
-            continue;
+        if( papszRow[iField] == NULL ) 
+            {
+                CPLDebug("MYSQL", "%s was null for %d", psMSField->name,
+                                                        iNextShapeId);
+                continue;
             }
 
 /* -------------------------------------------------------------------- */
@@ -234,16 +241,13 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
         if( pszGeomColumn && EQUAL(psMSField->name,pszGeomColumn))
         {
             OGRGeometry *poGeometry = NULL;
-
- 
-            // Geometry columns selected without AsBinary() will have the 
-            // first 4 bytes contain the SRID.
-
-                OGRGeometryFactory::createFromWkb(
-                    ((GByte *)papszRow[iField]) + 4, 
-                    NULL,
-                    &poGeometry,
-                    panLengths[iField] - 4 );
+            
+            // Geometry columns will have the first 4 bytes contain the SRID.
+            OGRGeometryFactory::createFromWkb(
+                ((GByte *)papszRow[iField]) + 4, 
+                NULL,
+                &poGeometry,
+                panLengths[iField] - 4 );
 
             if( poGeometry != NULL )
                 poFeature->SetGeometryDirectly( poGeometry );
@@ -428,50 +432,14 @@ int OGRMySQLLayer::FetchSRSId()
     {
         nSRSId = atoi(papszRow[0]);
     }
+
+    // make sure to free our results
+    if( hResultSet != NULL )
+        mysql_free_result( hResultSet );
+		hResultSet = NULL;
+        
 	return nSRSId;
 }
-
-/************************************************************************/
-/*                         FetchSRS()                                   */
-/************************************************************************/
-
-/*void OGRMySQLLayer::FetchSRS() 
-{
-        char         szCommand[1024];
-        char           **papszRow;  
-        
-		if (nSRSId == -1)
-			return;
-        if( hResultSet != NULL )
-            mysql_free_result( hResultSet );
-  			hResultSet = NULL;
-			
-        sprintf( szCommand,
-             "SELECT srtext FROM spatial_ref_sys WHERE srid = %d",
-             nSRSId );
-        
-        if( !mysql_query( poDS->GetConn(), szCommand ) )
-            hResultSet = mysql_store_result( poDS->GetConn() );
-            
-        char  *pszWKT = NULL;
-        papszRow = NULL;
-        if( hResultSet != NULL )
-            papszRow = mysql_fetch_row( hResultSet );
-
-        if( papszRow != NULL && papszRow[0] != NULL )
-        {
-            pszWKT =papszRow[0];
-        }
-
-         poSRS = new OGRSpatialReference();
-         if( pszWKT == NULL || poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
-         {
-             delete poSRS;
-             poSRS = NULL;
-         }
-
-}
-*/
 
 /************************************************************************/
 /*                           GetSpatialRef()                            */
