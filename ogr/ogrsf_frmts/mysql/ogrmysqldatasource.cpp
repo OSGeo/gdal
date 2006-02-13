@@ -4,6 +4,7 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRMySQLDataSource class.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Author:   Howard Butler, hobu@hobu.net
  *
  ******************************************************************************
  * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
@@ -28,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2006/02/13 04:15:04  hobu
+ * major formatting cleanup
+ * Added myself as an author
+ *
  * Revision 1.12  2006/02/13 01:44:25  hobu
  * Define an Initialize() method for TableLayer and
  * make sure to use it when we after we construct
@@ -110,8 +115,6 @@ OGRMySQLDataSource::~OGRMySQLDataSource()
 
 {
     int         i;
-
-//    FlushSoftTransaction();
 
     InterruptLongResult();
 
@@ -319,6 +322,8 @@ int OGRMySQLDataSource::Open( const char * pszNewName, int bUpdate,
          papszTableNames != NULL && papszTableNames[iRecord] != NULL;
          iRecord++ )
     {
+        //  FIXME: This should be fixed to deal with tables 
+        //  for which we can't open because the name is bad/ 
         OpenTable( papszTableNames[iRecord], bUpdate, FALSE );
     }
 
@@ -417,7 +422,7 @@ OGRErr OGRMySQLDataSource::InitializeMetadataTables()
  
     }
  
-    // make sure to attempt to free results of successful describes
+    // make sure to attempt to free results of successful queries
     hResult = mysql_store_result( GetConn() );
     if( hResult != NULL )
         mysql_free_result( hResult );
@@ -437,7 +442,7 @@ OGRErr OGRMySQLDataSource::InitializeMetadataTables()
  
     }    
  
-    // make sure to attempt to free results of successful describes
+    // make sure to attempt to free results of successful queries
     hResult = mysql_store_result( GetConn() );
     if( hResult != NULL )
         mysql_free_result( hResult );
@@ -502,9 +507,11 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS( int nId )
         pszWKT =papszRow[0];
     }
 
+    // make sure to attempt to free results of successful queries
+    hResult = mysql_store_result( GetConn() );
     if( hResult != NULL )
         mysql_free_result( hResult );
-		hResult = NULL;
+	hResult = NULL;
 		
      poSRS = new OGRSpatialReference();
      if( pszWKT == NULL || poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
@@ -586,9 +593,11 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 	    return nSRSId;
     }
 
+    // make sure to attempt to free results of successful queries
+    hResult = mysql_store_result( GetConn() );
     if( hResult != NULL )
         mysql_free_result( hResult );
-		hResult = NULL;
+	hResult = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Get the current maximum srid in the srs table.                  */
@@ -618,9 +627,12 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     if( !mysql_query( GetConn(), szCommand ) )
         hResult = mysql_store_result( GetConn() );
 
+    // make sure to attempt to free results of successful queries
+    hResult = mysql_store_result( GetConn() );
     if( hResult != NULL )
         mysql_free_result( hResult );
-		hResult = NULL;        
+	hResult = NULL;
+           
     return nSRSId;
 }
 
@@ -906,6 +918,7 @@ int OGRMySQLDataSource::DeleteLayer( int iLayer)
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return OGRERR_FAILURE;
+        
 /* -------------------------------------------------------------------- */
 /*      Blow away our OGR structures related to the layer.  This is     */
 /*      pretty dangerous if anything has a reference to this layer!     */
@@ -1024,8 +1037,6 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
              "   %s INT UNIQUE NOT NULL AUTO_INCREMENT, "
              "   %s GEOMETRY NOT NULL )",
              pszLayerName, pszExpectedFIDName, pszGeomColumnName );
-
-
 	
     if( !mysql_query(GetConn(), szCommand ) ){
         if( mysql_field_count( GetConn() ) == 0 )
@@ -1039,7 +1050,7 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
         }
     }
 
-    // make sure to attempt to free results of successful describes
+    // make sure to attempt to free results of successful queries
     hResult = mysql_store_result( GetConn() );
     if( hResult != NULL )
         mysql_free_result( hResult );
@@ -1058,7 +1069,7 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
         nSRSId = FetchSRSId( poSRS );
 
 
-    /* Sometimes there is an old cruft entry in the geometry_columns
+    /* Sometimes there is an old crufty entry in the geometry_columns
      * table if things were not properly cleaned up before.  We make
      * an effort to clean out such cruft.
      */
@@ -1072,7 +1083,7 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
         return NULL;
     }
 
-    // make sure to attempt to free results of successful describes
+    // make sure to attempt to free results of successful queries
     hResult = mysql_store_result( GetConn() );
     if( hResult != NULL )
         mysql_free_result( hResult );
@@ -1133,7 +1144,7 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
         return NULL;
     }
 
-    // make sure to attempt to free results of successful describes
+    // make sure to attempt to free results of successful queries
     hResult = mysql_store_result( GetConn() );
     if( hResult != NULL )
         mysql_free_result( hResult );
@@ -1153,7 +1164,7 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
         return NULL;
     }
 
-    // make sure to attempt to free results of successful describes
+    // make sure to attempt to free results of successful queries
     hResult = mysql_store_result( GetConn() );
     if( hResult != NULL )
         mysql_free_result( hResult );

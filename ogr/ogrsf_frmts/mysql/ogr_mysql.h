@@ -4,6 +4,7 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Declarations for MySQL OGR Driver Classes.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Author:   Howard Butler, hobu@hobu.net
  *
  ******************************************************************************
  * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
@@ -28,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/02/13 04:15:04  hobu
+ * major formatting cleanup
+ * Added myself as an author
+ *
  * Revision 1.19  2006/02/13 01:44:25  hobu
  * Define an Initialize() method for TableLayer and
  * make sure to use it when we after we construct
@@ -65,7 +70,8 @@
  * move SRS fetching to mysqllayer.cpp
  *
  * Revision 1.8  2006/01/30 03:51:18  hobu
- * some god-awful hackery, but we can do a good job of reading field definitions from a select query as well as get a spatial reference.
+ * some god-awful hackery, but we can do a good job of reading 
+ * field definitions from a select query as well as get a spatial reference.
  *
  * Revision 1.7  2006/01/27 01:27:48  fwarmerdam
  * added GetFIDColumn and GetGeometryColumn support
@@ -133,8 +139,8 @@ class OGRMySQLLayer : public OGRLayer
     char                *pszFIDColumn;
 
     MYSQL_RES           *hResultSet;
-  //  void                FetchSRS();
-	int				FetchSRSId();
+
+	int                 FetchSRSId();
 
   public:
                         OGRMySQLLayer();
@@ -187,6 +193,7 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
                         ~OGRMySQLTableLayer();
 
     OGRErr              Initialize(const char* pszTableName);
+    
     virtual OGRFeature *GetFeature( long nFeatureId );
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
@@ -205,7 +212,6 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
                                 { bLaunderColumnNames = bFlag; }
     void                SetPrecisionFlag( int bFlag )
                                 { bPreservePrecision = bFlag; }    
-    //virtual OGRSpatialReference *GetSpatialRef();
 
     virtual int         TestCapability( const char * );
 };
@@ -220,7 +226,7 @@ class OGRMySQLResultLayer : public OGRMySQLLayer
 
     char                *pszRawStatement;
     
-    // Layer spatial reference system, and srid.
+    // Layer srid.
     int                 nSRSId;
     
     int                 nFeatureCount;
@@ -232,7 +238,7 @@ class OGRMySQLResultLayer : public OGRMySQLLayer
     virtual             ~OGRMySQLResultLayer();
 
     OGRFeatureDefn     *ReadResultDefinition();
-   // virtual OGRSpatialReference *GetSpatialRef();
+
 
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
@@ -244,7 +250,7 @@ class OGRMySQLResultLayer : public OGRMySQLLayer
 
 class OGRMySQLDataSource : public OGRDataSource
 {
-    OGRMySQLLayer        **papoLayers;
+    OGRMySQLLayer       **papoLayers;
     int                 nLayers;
     
     char               *pszName;
@@ -278,14 +284,12 @@ class OGRMySQLDataSource : public OGRDataSource
 
     OGRErr              InitializeMetadataTables();
 
-
     int                 Open( const char *, int bUpdate, int bTestOpen );
     int                 OpenTable( const char *, int bUpdate, int bTestOpen );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
-
 
     virtual OGRLayer    *CreateLayer( const char *, 
                                       OGRSpatialReference * = NULL,

@@ -4,6 +4,7 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRMySQLResultLayer class.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Author:   Howard Butler, hobu@hobu.net
  *
  ******************************************************************************
  * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
@@ -28,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/02/13 04:15:04  hobu
+ * major formatting cleanup
+ * Added myself as an author
+ *
  * Revision 1.11  2006/02/11 18:08:34  hobu
  * Moved FetchSRS to happen on the datasource like PG
  * Implemented CreateField for TableLayer
@@ -169,7 +174,6 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
             poDefn->AddFieldDefn( &oField );
             break;
 
-
           case FIELD_TYPE_TIMESTAMP:
           case FIELD_TYPE_DATE:
           case FIELD_TYPE_TIME:
@@ -198,7 +202,6 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
             break;
         }
         
-
         // assume a FID name first, and if it isn't there
         // take a field that is not null, a primary key, 
         // and is an integer-like field
@@ -241,9 +244,7 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
         sprintf(szCommand, 
                 "SELECT type FROM geometry_columns WHERE f_table_name='%s'",
                 pszGeomColumnTable );
-        
 
-    
         if( hResultSet != NULL )
             mysql_free_result( hResultSet );
      		hResultSet = NULL;
@@ -261,7 +262,6 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
             pszType = papszRow[0];
 
             OGRwkbGeometryType nGeomType = wkbUnknown;
-            
 
             // check only standard OGC geometry types
             if ( EQUAL(pszType, "POINT") )
@@ -282,7 +282,6 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
             poDefn->SetGeomType( nGeomType );
 
         } 
-
 
 		nSRSId = FetchSRSId();
     } 
@@ -325,19 +324,6 @@ int OGRMySQLResultLayer::GetFeatureCount( int bForce )
 
 {
     // I wonder if we could do anything smart here...
+    // ... not till MySQL grows up (HB)
     return OGRMySQLLayer::GetFeatureCount( bForce );
 }
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-/*OGRSpatialReference *OGRMySQLResultLayer::GetSpatialRef()
-
-{
-
-    return poSRS;
-
-}
-
-*/

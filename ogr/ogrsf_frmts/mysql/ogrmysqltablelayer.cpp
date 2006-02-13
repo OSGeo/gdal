@@ -4,6 +4,7 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRMySQLTableLayer class.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Author:   Howard Butler, hobu@hobu.net
  *
  ******************************************************************************
  * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
@@ -28,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2006/02/13 04:15:04  hobu
+ * major formatting cleanup
+ * Added myself as an author
+ *
  * Revision 1.26  2006/02/13 01:44:25  hobu
  * Define an Initialize() method for TableLayer and
  * make sure to use it when we after we construct
@@ -162,6 +167,14 @@ OGRMySQLTableLayer::~OGRMySQLTableLayer()
 }
 
 
+/************************************************************************/
+/*                        Initialize()                                  */
+/*                                                                      */
+/*      Make sure we only do a ResetReading once we really have a       */
+/*      FieldDefn.  Otherwise, we'll segfault.  After you construct     */
+/*      the MySQLTableLayer, make sure to do pLayer->Initialize()       */
+/************************************************************************/
+
 OGRErr  OGRMySQLTableLayer::Initialize(const char * pszTableName)
 {
     poFeatureDefn = ReadTableDefinition( pszTableName );
@@ -175,6 +188,7 @@ OGRErr  OGRMySQLTableLayer::Initialize(const char * pszTableName)
         return OGRERR_FAILURE;
     }
 }
+
 /************************************************************************/
 /*                        ReadTableDefinition()                         */
 /*                                                                      */
@@ -327,7 +341,11 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         }
         else if( EQUALN(pszType,"double",6) )
         {
-
+            // double can also be double(15,2)
+            // so we'll handle this case here after 
+            // we check for just a regular double 
+            // without a width and precision specified
+            
             char ** papszTokens=NULL;
             papszTokens = CSLTokenizeString2(pszType,"(),",0);
             /* width is the second and precision is the third */
@@ -384,7 +402,6 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
     if( hResultSet != NULL )
         mysql_free_result( hResultSet );
  		hResultSet = NULL;
-
 
     if( bHasFid )
         CPLDebug( "MySQL", "table %s has FID column %s.",
@@ -590,9 +607,9 @@ char *OGRMySQLTableLayer::BuildFields()
             strcat( pszFieldList, ", " );
 
 		/* ------------------------------------------------------------ */
-		/*      Make sure we return AsText(WKB_GEOMETRY) WKT_GEOMETRY   */
-		/*      This way the column is returned column is named         */
-		/*      correctly and the RecordToFeature machinery can get it  */
+		/*      Geometry returned from MySQL is as WKB, with the        */
+        /*      first 4 bytes being an int that defines the SRID        */
+        /*      and the rest being the WKB.                             */
 		/* ------------------------------------------------------------ */            
         sprintf( pszFieldList+strlen(pszFieldList), 
                  "%s %s", pszGeomColumn, pszGeomColumn );
@@ -696,8 +713,8 @@ OGRErr OGRMySQLTableLayer::DeleteFeature( long nFID )
     if( !bHasFid )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "DeleteFeature(%d) failed.  Unable to delete features in tables without\n"
-                  "a recognised FID column.",
+                  "DeleteFeature(%d) failed.  Unable to delete features "
+                  "in tables without\n a recognised FID column.",
                   nFID );
         return OGRERR_FAILURE;
 
@@ -706,9 +723,9 @@ OGRErr OGRMySQLTableLayer::DeleteFeature( long nFID )
 /* -------------------------------------------------------------------- */
 /*      Form the statement to drop the record.                          */
 /* -------------------------------------------------------------------- */
-    osCommand.Printf( "DELETE FROM \"%s\" WHERE \"%s\" = %ld",
+    osCommand.Printf( "DELETE FROM %s WHERE %s = %ld",
                       poFeatureDefn->GetName(), pszFIDColumn, nFID );
-
+                      
 /* -------------------------------------------------------------------- */
 /*      Execute the delete.                                             */
 /* -------------------------------------------------------------------- */
@@ -717,11 +734,12 @@ OGRErr OGRMySQLTableLayer::DeleteFeature( long nFID )
         return OGRERR_FAILURE;   
     }
 
-    // make sure to attempt to free results of successful describes
+    // make sure to attempt to free results of successful queries
     hResult = mysql_store_result( poDS->GetConn() );
     if( hResult != NULL )
         mysql_free_result( hResult );
     hResult = NULL;
+    
     return OGRERR_NONE;
 }
 
@@ -729,6 +747,7 @@ OGRErr OGRMySQLTableLayer::DeleteFeature( long nFID )
 /************************************************************************/
 /*                       CreateFeature()                                */
 /************************************************************************/
+
 OGRErr OGRMySQLTableLayer::CreateFeature( OGRFeature *poFeature )
 
 {
@@ -781,9 +800,8 @@ OGRErr OGRMySQLTableLayer::CreateFeature( OGRFeature *poFeature )
         if( poFeature->GetGeometryRef() != NULL )
         {
             OGRGeometry *poGeom = (OGRGeometry *) poFeature->GetGeometryRef();
-
+            
             poGeom->closeRings();
-
             poGeom->exportToWkt( &pszWKT );
         }
 
@@ -838,7 +856,7 @@ OGRErr OGRMySQLTableLayer::CreateFeature( OGRFeature *poFeature )
                     && poFeatureDefn->GetFieldDefn(i)->GetWidth() > 0
                     && iChar == poFeatureDefn->GetFieldDefn(i)->GetWidth() )
                 {
-                    CPLDebug( "PG",
+                    CPLDebug( "MYSQL",
                               "Truncated %s field value, it was too long.",
                               poFeatureDefn->GetFieldDefn(i)->GetNameRef() );
                     break;
@@ -871,11 +889,12 @@ OGRErr OGRMySQLTableLayer::CreateFeature( OGRFeature *poFeature )
         return OGRERR_FAILURE;   
     }
 
-    // make sure to attempt to free results of successful describes
+    // make sure to attempt to free results of successful queries
     hResult = mysql_store_result( poDS->GetConn() );
     if( hResult != NULL )
         mysql_free_result( hResult );
     hResult = NULL;
+    
     return OGRERR_NONE;
 
 }
@@ -941,7 +960,7 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     else if( bApproxOK )
     {
         CPLError( CE_Warning, CPLE_NotSupported,
-                  "Can't create field %s with type %s on PostgreSQL layers.  Creating as VARCHAR.",
+                  "Can't create field %s with type %s on MySQL layers.  Creating as VARCHAR.",
                   oField.GetNameRef(),
                   OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
         strcpy( szFieldType, "VARCHAR" );
@@ -949,7 +968,7 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     else
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Can't create field %s with type %s on PostgreSQL layers.",
+                  "Can't create field %s with type %s on MySQL layers.",
                   oField.GetNameRef(),
                   OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
 
@@ -966,7 +985,7 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
         return OGRERR_FAILURE;
     }
 
-    // make sure to attempt to free results of successful describes
+    // make sure to attempt to free results of successful queries
     hResult = mysql_store_result( poDS->GetConn() );
     if( hResult != NULL )
         mysql_free_result( hResult );
