@@ -28,6 +28,13 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/02/13 01:44:25  hobu
+ * Define an Initialize() method for TableLayer and
+ * make sure to use it when we after we construct
+ * a new one.  This is to prevent ResetReading from
+ * causing segfault in the case where we were given
+ * an invalid table name
+ *
  * Revision 1.25  2006/02/12 06:22:45  hobu
  * Implement SetFeature
  *
@@ -139,10 +146,7 @@ OGRMySQLTableLayer::OGRMySQLTableLayer( OGRMySQLDataSource *poDSIn,
 
     nSRSId = nSRSIdIn;
 
-    poFeatureDefn = ReadTableDefinition( pszTableName );
-    
-    ResetReading();
-
+    poFeatureDefn = NULL;
     bLaunderColumnNames = TRUE;
 }
 
@@ -157,6 +161,20 @@ OGRMySQLTableLayer::~OGRMySQLTableLayer()
     CPLFree( pszWHERE );
 }
 
+
+OGRErr  OGRMySQLTableLayer::Initialize(const char * pszTableName)
+{
+    poFeatureDefn = ReadTableDefinition( pszTableName );
+    if (poFeatureDefn)
+    {
+        ResetReading();
+        return OGRERR_NONE;
+    }
+    else
+    {
+        return OGRERR_FAILURE;
+    }
+}
 /************************************************************************/
 /*                        ReadTableDefinition()                         */
 /*                                                                      */
@@ -555,6 +573,7 @@ char *OGRMySQLTableLayer::BuildFields()
 
     if( bHasFid )
         nSize += strlen(pszFIDColumn);
+        
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
         nSize += strlen(poFeatureDefn->GetFieldDefn(i)->GetNameRef()) + 4;
@@ -703,7 +722,7 @@ OGRErr OGRMySQLTableLayer::DeleteFeature( long nFID )
     if( hResult != NULL )
         mysql_free_result( hResult );
     hResult = NULL;
-
+    return OGRERR_NONE;
 }
 
 
@@ -716,7 +735,6 @@ OGRErr OGRMySQLTableLayer::CreateFeature( OGRFeature *poFeature )
     MYSQL_RES           *hResult=NULL;
     CPLString           osCommand;
     int                 i, bNeedComma = FALSE;
-    OGRErr              eErr;
 
 /* -------------------------------------------------------------------- */
 /*      Form the INSERT command.                                        */
@@ -765,7 +783,6 @@ OGRErr OGRMySQLTableLayer::CreateFeature( OGRFeature *poFeature )
             OGRGeometry *poGeom = (OGRGeometry *) poFeature->GetGeometryRef();
 
             poGeom->closeRings();
-           //    poGeom->setCoordinateDimension( nCoordDimension );
 
             poGeom->exportToWkt( &pszWKT );
         }
@@ -792,8 +809,6 @@ OGRErr OGRMySQLTableLayer::CreateFeature( OGRFeature *poFeature )
         osCommand += CPLString().Printf( "%ld ", poFeature->GetFID() );
         bNeedComma = TRUE;
     }
-
-//CPLDebug("MYSQL","SQL: %s", osCommand.c_str());
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
@@ -948,7 +963,7 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     if( mysql_query(poDS->GetConn(), szCommand ) )
     {
         poDS->ReportError( szCommand );
-        return NULL;
+        return OGRERR_FAILURE;
     }
 
     // make sure to attempt to free results of successful describes
@@ -1094,20 +1109,3 @@ int OGRMySQLTableLayer::GetFeatureCount( int bForce )
     return nCount;
 }
 
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/*                                                                      */
-/*      We override this to try and fetch the table SRID from the       */
-/*      geometry_columns table if the srsid is -2 (meaning we           */
-/*      haven't yet even looked for it).                                */
-/************************************************************************/
-
-/*OGRSpatialReference *OGRMySQLTableLayer::GetSpatialRef()
-
-{
-
-	nSRSId = FetchSRSId();
-    FetchSRS();
-    return poSRS;
-
-}*/

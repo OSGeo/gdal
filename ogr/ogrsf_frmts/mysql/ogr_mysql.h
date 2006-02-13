@@ -28,8 +28,12 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.18  2006/02/12 06:22:45  hobu
- * Implement SetFeature
+ * Revision 1.19  2006/02/13 01:44:25  hobu
+ * Define an Initialize() method for TableLayer and
+ * make sure to use it when we after we construct
+ * a new one.  This is to prevent ResetReading from
+ * causing segfault in the case where we were given
+ * an invalid table name
  *
  * Revision 1.17  2006/02/12 06:17:25  hobu
  * Implement DeleteFeature
@@ -182,6 +186,7 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
                                          int bUpdate, int nSRSId = -2 );
                         ~OGRMySQLTableLayer();
 
+    OGRErr              Initialize(const char* pszTableName);
     virtual OGRFeature *GetFeature( long nFeatureId );
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
