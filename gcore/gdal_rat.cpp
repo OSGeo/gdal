@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/02/13 17:22:54  fwarmerdam
+ * Avoid large amounts of linked list walking adding rows when
+ * serializing RAT.
+ *
  * Revision 1.6  2005/11/01 22:16:36  fwarmerdam
  * fix comments (bug 985)
  *
@@ -1297,10 +1301,16 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
 /*      Write out each row.                                             */
 /* -------------------------------------------------------------------- */
     int iRow;
+    CPLXMLNode *psTail = NULL;
 
     for( iRow = 0; iRow < nRowCount; iRow++ )
     {
-        psRow = CPLCreateXMLNode( psTree, CXT_Element, "Row" );
+        psRow = CPLCreateXMLNode( NULL, CXT_Element, "Row" );
+        if( psTail == NULL )
+            CPLAddXMLChild( psTree, psRow );
+        else
+            psTail->psNext = psRow;
+        psTail = psRow;
 
         sprintf( szValue, "%d", iRow );
         CPLCreateXMLNode( 
