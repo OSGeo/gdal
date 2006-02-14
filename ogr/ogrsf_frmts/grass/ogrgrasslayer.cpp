@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/02/14 13:01:49  rblazek
+ * dont kill on win
+ *
  * Revision 1.2  2005/09/21 00:59:36  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -299,6 +302,9 @@ bool OGRGRASSLayer::StopDbDriver()
     // we have to use kill
     CPLDebug ( "GRASS", "driver PID = %d", poDriver->pid ); 
 
+#if defined(_WIN32) || defined(__WIN32__)
+    db_close_database_shutdown_driver ( poDriver );
+#else
     if ( kill (poDriver->pid, SIGINT) != 0 ) 
     {
 	if ( kill (poDriver->pid, SIGKILL) != 0 ) 
@@ -307,7 +313,7 @@ bool OGRGRASSLayer::StopDbDriver()
 		      "driver pid = %d", poDriver->pid );
 	}
     }
-    //db_close_database_shutdown_driver ( poDriver );
+#endif
 	    
     bCursorOpened = false;
     
