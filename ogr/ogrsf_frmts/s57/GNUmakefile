@@ -13,7 +13,8 @@ OBJ	=	ogrs57driver.o ogrs57datasource.o ogrs57layer.o \
 
 CPPFLAGS	:=	-I.. -I../.. -I$(ISODIR) $(GDAL_INCLUDE) $(CPPFLAGS)
 
-LIBS	:=	$(GDAL_LIB) $(ISOLIB) $(LIBS) 
+#LIBS	:=	$(GDAL_LIB) $(ISOLIB) $(LIBS) 
+LIBS	:=	$(GDAL_LIB) $(LIBS) 
 
 default:	$(O_OBJ)
 
