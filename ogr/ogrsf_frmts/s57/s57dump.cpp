@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/02/14 19:11:10  fwarmerdam
+ * fixup build
+ *
  * Revision 1.16  2003/11/12 21:23:12  warmerda
  * updates to new featuredefn generators
  *
@@ -140,7 +143,7 @@ int main( int nArgc, char ** papszArgv )
     S57ClassRegistrar   oRegistrar;
     int                 bRegistrarLoaded;
 
-    bRegistrarLoaded = oRegistrar.LoadInfo( pszDataPath, TRUE );
+    bRegistrarLoaded = oRegistrar.LoadInfo( pszDataPath, NULL, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Get a list of candidate files.                                  */
