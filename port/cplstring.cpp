@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/02/14 22:45:47  fwarmerdam
+ * fixed up vsnprintf handling for win32, returns -1 on overrun
+ *
  * Revision 1.2  2005/09/15 00:29:11  fwarmerdam
  * fixed typo.
  *
@@ -90,15 +93,17 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 /* -------------------------------------------------------------------- */
 #else
     char szModestBuffer[500];
-
-    if( vsnprintf( szModestBuffer, sizeof(szModestBuffer), pszFormat, args )
-        >= (int) sizeof(szModestBuffer)-1 )
+    int nPR;
+    
+    nPR = vsnprintf( szModestBuffer, sizeof(szModestBuffer), pszFormat, args );
+    if( nPR == -1 || nPR >= (int) sizeof(szModestBuffer)-1 )
     {
         int nWorkBufferSize = 2000;
         char *pszWorkBuffer = (char *) CPLMalloc(nWorkBufferSize);
 
-        while( vsnprintf( pszWorkBuffer, nWorkBufferSize, pszFormat, args )
-               >= nWorkBufferSize-1 )
+        while( (nPR=vsnprintf( pszWorkBuffer, nWorkBufferSize, pszFormat,args))
+               >= nWorkBufferSize-1 
+               || nPR == -1 )
         {
             nWorkBufferSize *= 4;
             pszWorkBuffer = (char *) CPLRealloc(pszWorkBuffer, 
