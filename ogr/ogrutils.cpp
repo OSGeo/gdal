@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/02/15 04:25:37  fwarmerdam
+ * added date support
+ *
  * Revision 1.20  2006/01/07 17:15:38  dron
  * #include "ogrsf_frmts.h" only when compiling with the OGR formats.
  *
@@ -619,4 +622,186 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
     *ppapszArgv = papszReturn;
 
     return CSLCount( *ppapszArgv );
+}
+
+/************************************************************************/
+/*                            OGRParseDate()                            */
+/*                                                                      */
+/*      Parse a variety of text date formats into an OGRField.          */
+/************************************************************************/
+
+/**
+ * Parse date string.
+ *
+ * This function attempts to parse a date string in a variety of formats
+ * into the OGRField.Date format suitable for use with OGR.  Generally 
+ * speaking this function is expecting values like:
+ * 
+ *   YYYY-MM-DD HH:MM:SS+nn
+ *
+ * The seconds may also have a decimal portion (which is ignored).  And
+ * just dates (YYYY-MM-DD) or just times (HH:MM:SS) are also supported. 
+ * The date may also be in YYYY/MM/DD format.  If the year is less than 100
+ * and greater than 30 a "1900" century value will be set.  If it is less than
+ * 30 and greater than -1 then a "2000" century value will be set.  In 
+ * the future this function may be generalized, and additional control 
+ * provided through nOptions, but an nOptions value of "0" should always do
+ * a reasonable default form of processing.
+ *
+ * The value of psField will be indeterminate if the function fails (returns
+ * FALSE).  
+ *
+ * @param pszInput the input date string.
+ * @param psField the OGRField that will be updated with the parsed result.
+ * @param nOptions parsing options, for now always 0. 
+ *
+ * @return TRUE if apparently successful or FALSE on failure.
+ */
+
+int OGRParseDate( const char *pszInput, OGRField *psField, int nOptions )
+
+{
+    int bGotSomething = FALSE;
+
+    psField->Date.Year = 0;
+    psField->Date.Month = 0;
+    psField->Date.Day = 0;
+    psField->Date.Hour = 0;
+    psField->Date.Minute = 0;
+    psField->Date.Second = 0;
+    psField->Date.TZFlag = 0;
+    
+/* -------------------------------------------------------------------- */
+/*      Do we have a date?                                              */
+/* -------------------------------------------------------------------- */
+    while( *pszInput == ' ' )
+        pszInput++;
+    
+    if( strstr(pszInput,"-") != NULL || strstr(pszInput,"/") != NULL )
+    {
+        psField->Date.Year = atoi(pszInput);
+        if( psField->Date.Year < 100 && psField->Date.Year >= 30 )
+            psField->Date.Year += 1900;
+        else if( psField->Date.Year < 30 && psField->Date.Year >= 0 )
+            psField->Date.Year += 2000;
+
+        while( *pszInput >= '0' && *pszInput <= '9' ) 
+            pszInput++;
+        if( *pszInput != '-' && *pszInput != '/' )
+            return FALSE;
+        else 
+            pszInput++;
+
+        psField->Date.Month = atoi(pszInput);
+        if( psField->Date.Month > 12 )
+            return FALSE;
+
+        while( *pszInput >= '0' && *pszInput <= '9' ) 
+            pszInput++;
+        if( *pszInput != '-' && *pszInput != '/' )
+            return FALSE;
+        else 
+            pszInput++;
+
+        psField->Date.Day = atoi(pszInput);
+        if( psField->Date.Day > 31 )
+            return FALSE;
+
+        while( *pszInput >= '0' && *pszInput <= '9' )
+            pszInput++;
+
+        bGotSomething = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a time?                                              */
+/* -------------------------------------------------------------------- */
+    while( *pszInput == ' ' )
+        pszInput++;
+    
+    if( strstr(pszInput,":") != NULL )
+    {
+        psField->Date.Hour = atoi(pszInput);
+        if( psField->Date.Hour > 23 )
+            return FALSE;
+
+        while( *pszInput >= '0' && *pszInput <= '9' ) 
+            pszInput++;
+        if( *pszInput != ':' )
+            return FALSE;
+        else 
+            pszInput++;
+
+        psField->Date.Minute = atoi(pszInput);
+        if( psField->Date.Minute > 59 )
+            return FALSE;
+
+        while( *pszInput >= '0' && *pszInput <= '9' ) 
+            pszInput++;
+        if( *pszInput != ':' )
+            return FALSE;
+        else 
+            pszInput++;
+
+        psField->Date.Second = atoi(pszInput);
+        if( psField->Date.Second > 59 )
+            return FALSE;
+
+        while( *pszInput >= '0' && *pszInput <= '9' 
+               || *pszInput == '.' )
+            pszInput++;
+
+        bGotSomething = TRUE;
+    }
+
+    // No date or time!
+    if( !bGotSomething )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a timezone?                                          */
+/* -------------------------------------------------------------------- */
+    while( *pszInput == ' ' )
+        pszInput++;
+    
+    if( *pszInput == '-' || *pszInput == '+' )
+    {
+        // +HH integral offset
+        if( strlen(pszInput) <= 3 )
+            psField->Date.TZFlag = 100 + atoi(pszInput) * 4;
+
+        else if( pszInput[3] == ':'  // +HH:MM offset
+                 && atoi(pszInput+4) % 15 == 0 )
+        {
+            psField->Date.TZFlag = 100 
+                + atoi(pszInput+1) * 4
+                + (atoi(pszInput+4) / 15);
+
+            if( pszInput[0] == '-' )
+                psField->Date.TZFlag = -1 * (psField->Date.TZFlag - 100) + 100;
+        }
+        else if( isdigit(pszInput[3]) && isdigit(pszInput[4])  // +HHMM offset
+                 && atoi(pszInput+3) % 15 == 0 )
+        {
+            psField->Date.TZFlag = 100 
+                + CPLScanLong(pszInput+1,2) * 4
+                + (atoi(pszInput+3) / 15);
+
+            if( pszInput[0] == '-' )
+                psField->Date.TZFlag = -1 * (psField->Date.TZFlag - 100) + 100;
+        }
+        else if( isdigit(pszInput[3]) && pszInput[4] == '\0'  // +HMM offset
+                 && atoi(pszInput+2) % 15 == 0 )
+        {
+            psField->Date.TZFlag = 100 
+                + CPLScanLong(pszInput+1,1) * 4
+                + (atoi(pszInput+2) / 15);
+
+            if( pszInput[0] == '-' )
+                psField->Date.TZFlag = -1 * (psField->Date.TZFlag - 100) + 100;
+        }
+        // otherwise ignore any timezone info.
+    }
+
+    return TRUE;
 }

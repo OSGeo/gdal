@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/02/15 04:26:55  fwarmerdam
+ * added date support
+ *
  * Revision 1.24  2006/01/10 16:40:19  fwarmerdam
  * Free panRecordsToDelete.
  *
@@ -673,6 +676,14 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
         else
             iNewField = DBFAddField( hDBF, poField->GetNameRef(), FTString, 
                                      poField->GetWidth(), 0 );
+
+        if( iNewField != -1 )
+            poFeatureDefn->AddFieldDefn( poField );
+    }
+    else if( poField->GetType() == OFTDate )
+    {
+        iNewField =
+            DBFAddNativeFieldType( hDBF, poField->GetNameRef(), 'D', 8, 0 );
 
         if( iNewField != -1 )
             poFeatureDefn->AddFieldDefn( poField );

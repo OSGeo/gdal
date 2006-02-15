@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/02/15 04:25:37  fwarmerdam
+ * added date support
+ *
  * Revision 1.9  2003/05/28 19:16:42  warmerda
  * fixed up argument names and stuff for docs
  *
@@ -380,6 +383,9 @@ const char * OGRFieldDefn::GetFieldTypeName( OGRFieldType eType )
 
       case OFTBinary:
         return "Binary";
+
+      case OFTDate:
+        return "Date";
 
       default:
         CPLAssert( FALSE );

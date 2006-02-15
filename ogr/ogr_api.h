@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2006/02/15 04:25:37  fwarmerdam
+ * added date support
+ *
  * Revision 1.31  2006/01/27 00:08:36  fwarmerdam
  * added Get{FID,Geometry}Column() support
  *
@@ -324,6 +327,9 @@ const char CPL_DLL *OGR_F_GetFieldAsString( OGRFeatureH, int );
 const int CPL_DLL *OGR_F_GetFieldAsIntegerList( OGRFeatureH, int, int * );
 const double CPL_DLL *OGR_F_GetFieldAsDoubleList( OGRFeatureH, int, int * );
 char  CPL_DLL **OGR_F_GetFieldAsStringList( OGRFeatureH, int );
+GByte CPL_DLL *OGR_F_GetFieldAsBinary( OGRFeatureH, int, int * );
+int   CPL_DLL  OGR_F_GetFieldAsDate( OGRFeatureH, int, int *, int *, int *,
+                                     int *, int *, int *, int * );
 
 void   CPL_DLL OGR_F_SetFieldInteger( OGRFeatureH, int, int );
 void   CPL_DLL OGR_F_SetFieldDouble( OGRFeatureH, int, double );
@@ -332,6 +338,9 @@ void   CPL_DLL OGR_F_SetFieldIntegerList( OGRFeatureH, int, int, int * );
 void   CPL_DLL OGR_F_SetFieldDoubleList( OGRFeatureH, int, int, double * );
 void   CPL_DLL OGR_F_SetFieldStringList( OGRFeatureH, int, char ** );
 void   CPL_DLL OGR_F_SetFieldRaw( OGRFeatureH, int, OGRField * );
+void   CPL_DLL OGR_F_SetFieldBinary( OGRFeatureH, int, int, GByte * );
+void   CPL_DLL OGR_F_SetFieldDate( OGRFeatureH, int, 
+                                   int, int, int, int, int, int, int );
 
 long   CPL_DLL OGR_F_GetFID( OGRFeatureH );
 OGRErr CPL_DLL OGR_F_SetFID( OGRFeatureH, long );

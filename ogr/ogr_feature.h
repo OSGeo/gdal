@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2006/02/15 04:25:37  fwarmerdam
+ * added date support
+ *
  * Revision 1.31  2005/09/21 00:50:08  fwarmerdam
  * Added Release
  *
@@ -304,7 +307,11 @@ class CPL_DLL OGRFeature
     const int          *GetFieldAsIntegerList( int i, int *pnCount );
     const double       *GetFieldAsDoubleList( int i, int *pnCount );
     char              **GetFieldAsStringList( int i );
-    GByte               *GetFieldAsBinary( int i, int *pnCount );
+    GByte              *GetFieldAsBinary( int i, int *pnCount );
+    int                 GetFieldAsDate( int i, 
+                                        int *pnYear, int *pnMonth, int *pnDay,
+                                        int *pnHour, int *pnMinute, int *pnSecond, 
+                                        int *pnTZFlag );
 
     int                 GetFieldAsInteger( const char *pszFName )
                       { return GetFieldAsInteger( GetFieldIndex(pszFName) ); }
@@ -331,6 +338,9 @@ class CPL_DLL OGRFeature
     void                SetField( int i, char ** papszValues );
     void                SetField( int i, OGRField * puValue );
     void                SetField( int i, int nCount, GByte * pabyBinary );
+    void                SetField( int i, int nYear, int nMonth, int nDay,
+                                  int nHour=0, int nMinute=0, int nSecond=0, 
+                                  int nTZFlag = 0 );
 
     void                SetField( const char *pszFName, int nValue )
                            { SetField( GetFieldIndex(pszFName), nValue ); }
@@ -348,6 +358,13 @@ class CPL_DLL OGRFeature
                            { SetField( GetFieldIndex(pszFName), papszValues); }
     void                SetField( const char *pszFName, OGRField * puValue )
                            { SetField( GetFieldIndex(pszFName), puValue ); }
+    void                SetField( const char *pszFName, 
+                                  int nYear, int nMonth, int nDay,
+                                  int nHour=0, int nMinute=0, int nSecond=0, 
+                                  int nTZFlag = 0 )
+                           { SetField( GetFieldIndex(pszFName), 
+                                       nYear, nMonth, nDay, 
+                                       nHour, nMinute, nSecond, nTZFlag ); }
 
     long                GetFID() { return nFID; }
     virtual OGRErr      SetFID( long nFID );
