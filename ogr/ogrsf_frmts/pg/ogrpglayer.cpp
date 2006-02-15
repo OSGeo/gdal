@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/02/15 04:26:17  fwarmerdam
+ * added date support
+ *
  * Revision 1.28  2006/01/27 00:10:32  fwarmerdam
  * added Get{FID,Geometry}Column() support
  *
@@ -528,6 +531,25 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
             }
         }
 
+        else if( poFeatureDefn->GetFieldDefn(iOGRField)->GetType() == OFTDate )
+        {
+#if !defined(PG_PRE74)
+            if ( PQfformat( hCursorResult, iField ) == 1 ) // Binary data
+            {
+                CPLDebug( "PG", "Binary DATE format not yet implemented." );
+            }
+            else
+#endif /* notdef PG_PRE74 */
+            {
+                OGRField  sFieldValue;
+
+                if( OGRParseDate( PQgetvalue( hCursorResult, iRecord, iField ),
+                                  &sFieldValue, 0 ) )
+                {
+                    poFeature->SetField( iOGRField, &sFieldValue );
+                }
+            }
+        }
         else
         {
 #if !defined(PG_PRE74)

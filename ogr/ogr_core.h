@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/02/15 04:25:37  fwarmerdam
+ * added date support
+ *
  * Revision 1.28  2005/08/30 23:52:35  fwarmerdam
  * implement preliminary OFTBinary support
  *
@@ -260,7 +263,8 @@ typedef enum
   /** Array of strings */                       OFTStringList = 5,
   /** Double byte string (unsupported) */       OFTWideString = 6,
   /** List of wide strings (unsupported) */     OFTWideStringList = 7,
-  /** Raw Binary data (unsupported) */          OFTBinary = 8
+  /** Raw Binary data */                        OFTBinary = 8,
+  /** Date */                                   OFTDate = 9,
 } OGRFieldType;
 
 /**
@@ -322,7 +326,21 @@ typedef union {
         int     nMarker1;
         int     nMarker2;
     } Set;
+
+    struct {
+        GInt16  Year;
+        GByte   Month;
+        GByte   Day;
+        GByte   Hour;
+        GByte   Minute;
+        GByte   Second;
+        GByte   TZFlag; /* 0=unknown, 1=localtime(ambiguous), 
+                           100=GMT, 104=GMT+1, 80=GMT-5, etc */
+    } Date;
 } OGRField;
+
+int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput, 
+                          int nOptions );
 
 /* -------------------------------------------------------------------- */
 /*      Constants from ogrsf_frmts.h for capabilities.                  */

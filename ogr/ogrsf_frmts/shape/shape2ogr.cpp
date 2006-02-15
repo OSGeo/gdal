@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2006/02/15 04:26:55  fwarmerdam
+ * added date support
+ *
  * Revision 1.40  2006/01/05 02:15:39  fwarmerdam
  * implement DeleteFeature support
  *
@@ -1103,7 +1106,9 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
         int             nWidth, nPrecision;
         DBFFieldType    eDBFType;
         OGRFieldDefn    oField("", OFTInteger);
+        char            chNativeType;
 
+        chNativeType = DBFGetNativeFieldType( hDBF, iField );
         eDBFType = DBFGetFieldInfo( hDBF, iField, szFieldName,
                                     &nWidth, &nPrecision );
 
@@ -1111,7 +1116,9 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
         oField.SetWidth( nWidth );
         oField.SetPrecision( nPrecision );
 
-        if( eDBFType == FTDouble )
+        if( chNativeType == 'D' )
+            oField.SetType( OFTDate );
+        else if( eDBFType == FTDouble )
             oField.SetType( OFTReal );
         else if( eDBFType == FTInteger )
             oField.SetType( OFTInteger );
@@ -1226,6 +1233,21 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                                                          iField ) );
             break;
 
+          case OFTDate:
+          {
+              OGRField sFld;
+              int nFullDate = 
+                  DBFReadIntegerAttribute( hDBF, iShape, iField );
+              
+              memset( &sFld, 0, sizeof(sFld) );
+              sFld.Date.Year = nFullDate / 10000;
+              sFld.Date.Month = (nFullDate / 100) % 100;
+              sFld.Date.Day = nFullDate % 100;
+              
+              poFeature->SetField( iField, &sFld );
+          }
+          break;
+
           default:
             CPLAssert( FALSE );
         }
@@ -1331,6 +1353,19 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
             DBFWriteDoubleAttribute( hDBF, poFeature->GetFID(), iField, 
                                      poFeature->GetFieldAsDouble(iField) );
             break;
+
+          case OFTDate:
+          {
+              int  nYear, nMonth, nDay;
+
+              if( poFeature->GetFieldAsDate( iField, &nYear, &nMonth, &nDay,
+                                             NULL, NULL, NULL, NULL ) )
+              {
+                  DBFWriteIntegerAttribute( hDBF, poFeature->GetFID(), iField, 
+                                            nYear*10000 + nMonth*100 + nDay );
+              }
+          }
+          break;
 
           default:
             CPLAssert( FALSE );

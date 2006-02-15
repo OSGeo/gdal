@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2006/02/15 04:26:17  fwarmerdam
+ * added date support
+ *
  * Revision 1.26  2006/02/09 05:04:03  fwarmerdam
  * proper overriding of DeleteLayer() method
  *
@@ -160,6 +163,8 @@ class OGRPGLayer : public OGRLayer
 
     int                 bHasFid;
     char                *pszFIDColumn;
+
+    int                 ParsePGDate( const char *, OGRField * );
 
   public:
                         OGRPGLayer();

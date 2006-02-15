@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2006/02/15 04:26:17  fwarmerdam
+ * added date support
+ *
  * Revision 1.50  2006/01/21 03:45:58  fwarmerdam
  * Changed to use CPLString for various command buffers in an attempt
  * to avoid issues with limited size buffers.
@@ -361,15 +364,22 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
         {
             oField.SetType( OFTReal );
         }
-        else if( EQUAL(pszType, "date") )
+        else if( EQUALN(pszType, "timestamp",9) )
         {
-            oField.SetType( OFTString );
-            oField.SetWidth( 10 );
+            oField.SetType( OFTDate );
         }
-        else if( EQUAL(pszType, "time") )
+        else if( EQUALN(pszType, "date",4) )
         {
-            oField.SetType( OFTString );
-            oField.SetWidth( 8 );
+            oField.SetType( OFTDate );
+        }
+        else if( EQUALN(pszType, "time",4) )
+        {
+            oField.SetType( OFTDate );
+        }
+        else
+        {
+            CPLDebug( "PG", "Field %s is of unknown type %s.", 
+                      oField.GetNameRef(), pszType );
         }
 
         poDefn->AddFieldDefn( &oField );
@@ -1269,6 +1279,10 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     else if( oField.GetType() == OFTRealList )
     {
         strcpy( szFieldType, "FLOAT8[]" );
+    }
+    else if( oField.GetType() == OFTDate )
+    {
+        strcpy( szFieldType, "timestamp with time zone" );
     }
     else if( bApproxOK )
     {
