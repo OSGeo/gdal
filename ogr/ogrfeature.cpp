@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/02/15 20:30:51  fwarmerdam
+ * added date support
+ *
  * Revision 1.33  2005/09/21 00:50:26  fwarmerdam
  * release OGRFeatureDefn on feature destruction
  *
@@ -66,33 +69,6 @@
  *
  * Revision 1.21  2002/04/24 20:00:30  warmerda
  * fix clone to copy fid as well
- *
- * Revision 1.20  2001/11/09 15:02:40  warmerda
- * dump render style
- *
- * Revision 1.19  2001/11/01 16:54:16  warmerda
- * added DestroyFeature
- *
- * Revision 1.18  2001/07/18 05:03:05  warmerda
- * added CPL_CVSID
- *
- * Revision 1.17  2001/06/01 14:32:27  warmerda
- * added CreateFeature factory method
- *
- * Revision 1.16  2001/02/06 14:14:09  warmerda
- * fixed up documentation
- *
- * Revision 1.15  2000/08/25 20:17:34  danmo
- * Init m_poStyleTable=NULL in constructor
- *
- * Revision 1.14  2000/08/18 21:26:53  svillene
- * Add representation
- *
- * Revision 1.13  2000/06/09 21:15:39  warmerda
- * fixed field copying
- *
- * Revision 1.12  1999/11/26 03:05:38  warmerda
- * added unset field support
  */
 
 #include "ogr_feature.h"
@@ -1023,6 +999,40 @@ const char *OGRFeature::GetFieldAsString( int iField )
         
         return szTempBuffer;
     }
+    else if( poFDefn->GetType() == OFTDate )
+    {
+        sprintf( szTempBuffer, "%4d/%02d/%02d %2d:%02d:%02d", 
+                 pauFields[iField].Date.Year,
+                 pauFields[iField].Date.Month,
+                 pauFields[iField].Date.Day,
+                 pauFields[iField].Date.Hour,
+                 pauFields[iField].Date.Minute,
+                 pauFields[iField].Date.Second );
+        
+        if( pauFields[iField].Date.TZFlag > 1 )
+        {
+            int nOffset = (pauFields[iField].Date.TZFlag - 100) * 15;
+            int nHours = (int) (nOffset / 60);  // round towards zero
+            int nMinutes = ABS(nOffset - nHours * 60);
+
+            if( nOffset < 0 )
+            {
+                strcat( szTempBuffer, "-" );
+                nHours = ABS(nHours);
+            }
+            else
+                strcat( szTempBuffer, "+" );
+
+            if( nMinutes == 0 )
+                sprintf( szTempBuffer+strlen(szTempBuffer), 
+                         "%02d", nHours );
+            else
+                sprintf( szTempBuffer+strlen(szTempBuffer), 
+                         "%02d%02d", nHours, nMinutes );
+        }
+
+        return szTempBuffer;
+    }
     else if( poFDefn->GetType() == OFTIntegerList )
     {
         char    szItem[32];
@@ -1449,6 +1459,106 @@ GByte *OGR_F_GetFieldAsBinary( OGRFeatureH hFeat, int iField, int *pnBytes )
 }
 
 /************************************************************************/
+/*                           GetFieldAsDate()                           */
+/************************************************************************/
+
+/**
+ * Fetch field value as date.
+ *
+ * Currently this method only works for OFTDate fields.
+ *
+ * This method is the same as the C function OGR_F_GetFieldAsDate().
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ * @param int pnYear (including century)
+ * @param int pnMonth (1-12)
+ * @param int pnDay (1-31)
+ * @param int pnHour (0-23)
+ * @param int pnMinute (0-59)
+ * @param int pnSecond (0-59)
+ * @param int pnTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
+ *
+ * @return TRUE on success or FALSE on failure.
+ */
+
+int OGRFeature::GetFieldAsDate( int iField,
+                                int *pnYear, int *pnMonth, int *pnDay,
+                                int *pnHour, int *pnMinute, int *pnSecond,
+                                int *pnTZFlag )
+
+{
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
+
+    CPLAssert( poFDefn != NULL || iField == -1 );
+    if( poFDefn == NULL )
+        return FALSE;
+    
+    if( !IsFieldSet(iField) )
+        return FALSE;
+    
+    if( poFDefn->GetType() == OFTDate )
+    {
+        if( pnYear )
+            *pnYear = pauFields[iField].Date.Year;
+        if( pnMonth )
+            *pnMonth = pauFields[iField].Date.Month;
+        if( pnDay )
+            *pnDay = pauFields[iField].Date.Day;
+        if( pnHour )
+            *pnHour = pauFields[iField].Date.Hour;
+        if( pnMinute )
+            *pnMinute = pauFields[iField].Date.Minute;
+        if( pnSecond )
+            *pnSecond = pauFields[iField].Date.Second;
+        if( pnTZFlag )
+            *pnTZFlag = pauFields[iField].Date.TZFlag;
+        
+        return TRUE;
+    }
+    else
+    {
+        return FALSE;
+    }
+}
+
+/************************************************************************/
+/*                        OGR_F_GetFieldAsDate()                        */
+/************************************************************************/
+
+/**
+ * Fetch field value as date.
+ *
+ * Currently this method only works for OFTDate fields.
+ *
+ * This function is the same as the C++ method 
+ * OGRFeature::GetFieldAsDate().
+ *
+ * @param hFeat handle to the feature that owned the field.
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ * @param int pnYear (including century)
+ * @param int pnMonth (1-12)
+ * @param int pnDay (1-31)
+ * @param int pnHour (0-23)
+ * @param int pnMinute (0-59)
+ * @param int pnSecond (0-59)
+ * @param int pnTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
+ *
+ * @return TRUE on success or FALSE on failure.
+ */
+
+int OGR_F_GetFieldAsDate( OGRFeatureH hFeat, int iField,
+                             int *pnYear, int *pnMonth, int *pnDay,
+                             int *pnHour, int *pnMinute, int *pnSecond,
+                             int *pnTZFlag )
+
+{
+    return ((OGRFeature *)hFeat)->GetFieldAsDate( iField,
+                                                  pnYear, pnMonth, pnDay,
+                                                  pnHour, pnMinute, pnSecond,
+                                                  pnTZFlag );
+}
+
+/************************************************************************/
 /*                              SetField()                              */
 /************************************************************************/
 
@@ -1641,6 +1751,13 @@ void OGRFeature::SetField( int iField, const char * pszValue )
     else if( poFDefn->GetType() == OFTReal )
     {
         pauFields[iField].Real = atof(pszValue);
+    }
+    else if( poFDefn->GetType() == OFTDate )
+    {
+        OGRField sWrkField;
+
+        if( OGRParseDate( pszValue, &sWrkField, 0 ) )
+            memcpy( pauFields+iField, &sWrkField, sizeof(sWrkField));
     }
     else
         /* do nothing for other field types */;
@@ -1912,6 +2029,77 @@ void OGR_F_SetFieldBinary( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 
 /**
+ * Set field to date.
+ *
+ * This method currently only has an effect of OFTDate fields.
+ *
+ * This method is the same as the C function OGR_F_SetFieldDate().
+ *
+ * @param iField the field to set, from 0 to GetFieldCount()-1.
+ * @param nYear (including century)
+ * @param nMonth (1-12)
+ * @param nDay (1-31)
+ * @param nHour (0-23)
+ * @param nMinute (0-59)
+ * @param nSecond (0-59)
+ * @param nTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
+ */
+
+void OGRFeature::SetField( int iField, int nYear, int nMonth, int nDay,
+                           int nHour, int nMinute, int nSecond, 
+                           int nTZFlag )
+
+{
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
+
+    CPLAssert( poFDefn != NULL || iField == -1 );
+    if( poFDefn == NULL )
+        return;
+    
+    if( poFDefn->GetType() == OFTDate )
+    {
+        pauFields[iField].Date.Year = nYear;
+        pauFields[iField].Date.Month = nMonth;
+        pauFields[iField].Date.Day = nDay;
+        pauFields[iField].Date.Hour = nHour;
+        pauFields[iField].Date.Minute = nMinute;
+        pauFields[iField].Date.Second = nSecond;
+        pauFields[iField].Date.TZFlag = nTZFlag;
+    }
+}
+
+/************************************************************************/
+/*                        OGR_F_SetFieldDate()                          */
+/************************************************************************/
+
+/**
+ * Set field to date.
+ *
+ * This method currently only has an effect of OFTDate fields.
+ *
+ * @param hFeat handle to the feature that owned the field.
+ * @param iField the field to set, from 0 to GetFieldCount()-1.
+ * @param nYear (including century)
+ * @param nMonth (1-12)
+ * @param nDay (1-31)
+ * @param nHour (0-23)
+ * @param nMinute (0-59)
+ * @param nSecond (0-59)
+ * @param nTZFlag (0=unknown, 1=localtime, 100=GMT, see data model for details)
+ */
+
+void OGR_F_SetFieldDate( OGRFeatureH hFeat, int iField, 
+                         int nBytes, GByte *pabyData )
+
+{
+    ((OGRFeature *)hFeat)->SetField( iField, nBytes, pabyData );
+}
+
+/************************************************************************/
+/*                              SetField()                              */
+/************************************************************************/
+
+/**
  * Set field.
  *
  * The passed value OGRField must be of exactly the same type as the
@@ -1954,6 +2142,10 @@ void OGRFeature::SetField( int iField, OGRField * puValue )
             pauFields[iField] = *puValue;
         else
             pauFields[iField].String = CPLStrdup( puValue->String );
+    }
+    else if( poFDefn->GetType() == OFTDate )
+    {
+        memcpy( pauFields+iField, puValue, sizeof(OGRField) );
     }
     else if( poFDefn->GetType() == OFTIntegerList )
     {
