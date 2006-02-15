@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.46 2005/02/11 17:17:46 fwarmerdam Exp $
+ * $Id: shpopen.c,v 1.48 2006/01/26 15:07:32 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -34,6 +34,13 @@
  ******************************************************************************
  *
  * $Log: shpopen.c,v $
+ * Revision 1.48  2006/01/26 15:07:32  fwarmerdam
+ * add bMeasureIsUsed flag from Craig Bruce: Bug 1249
+ *
+ * Revision 1.47  2006/01/04 20:07:23  fwarmerdam
+ * In SHPWriteObject() make sure that the record length is updated
+ * when rewriting an existing record.
+ *
  * Revision 1.46  2005/02/11 17:17:46  fwarmerdam
  * added panPartStart[0] validation
  *
@@ -188,7 +195,7 @@
 #include <string.h>
 #include <stdio.h>
 
-SHP_CVSID("$Id: shpopen.c,v 1.46 2005/02/11 17:17:46 fwarmerdam Exp $")
+SHP_CVSID("$Id: shpopen.c,v 1.48 2006/01/26 15:07:32 fwarmerdam Exp $")
 
 typedef unsigned char uchar;
 
@@ -910,6 +917,7 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
     psObject = (SHPObject *) calloc(1,sizeof(SHPObject));
     psObject->nSHPType = nSHPType;
     psObject->nShapeId = nShapeId;
+    psObject->bMeasureIsUsed = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*	Establish whether this shape type has M, and Z values.		*/
@@ -1001,6 +1009,8 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
             if( padfM != NULL && bHasM )
                 psObject->padfM[i] = padfM[i];
         }
+        if( padfM != NULL && bHasM )
+            psObject->bMeasureIsUsed = TRUE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1178,13 +1188,14 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
         /*
          * Write the M values, if any.
          */
-        if( psObject->nSHPType == SHPT_POLYGONM
+        if( psObject->bMeasureIsUsed
+            && (psObject->nSHPType == SHPT_POLYGONM
             || psObject->nSHPType == SHPT_ARCM
 #ifndef DISABLE_MULTIPATCH_MEASURE            
             || psObject->nSHPType == SHPT_MULTIPATCH
 #endif            
             || psObject->nSHPType == SHPT_POLYGONZ
-            || psObject->nSHPType == SHPT_ARCZ )
+            || psObject->nSHPType == SHPT_ARCZ) )
         {
             ByteCopy( &(psObject->dfMMin), pabyRec + nRecordSize, 8 );
             if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
@@ -1249,8 +1260,9 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
             }
         }
 
-        if( psObject->nSHPType == SHPT_MULTIPOINTZ
-            || psObject->nSHPType == SHPT_MULTIPOINTM )
+        if( psObject->bMeasureIsUsed
+            && (psObject->nSHPType == SHPT_MULTIPOINTZ
+            || psObject->nSHPType == SHPT_MULTIPOINTM) )
         {
             ByteCopy( &(psObject->dfMMin), pabyRec + nRecordSize, 8 );
             if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
@@ -1291,8 +1303,9 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
             nRecordSize += 8;
         }
         
-        if( psObject->nSHPType == SHPT_POINTZ
-            || psObject->nSHPType == SHPT_POINTM )
+        if( psObject->bMeasureIsUsed
+            && (psObject->nSHPType == SHPT_POINTZ
+            || psObject->nSHPType == SHPT_POINTM) )
         {
             ByteCopy( psObject->padfM, pabyRec + nRecordSize, 8 );
             if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
@@ -1331,6 +1344,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     else
     {
         nRecordOffset = psSHP->panRecOffset[nShapeId];
+        psSHP->panRecSize[nShapeId] = nRecordSize-8;
     }
     
 /* -------------------------------------------------------------------- */
@@ -1450,6 +1464,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 /* -------------------------------------------------------------------- */
     psShape = (SHPObject *) calloc(1,sizeof(SHPObject));
     psShape->nShapeId = hEntity;
+    psShape->bMeasureIsUsed = FALSE;
 
     memcpy( &psShape->nSHPType, psSHP->pabyRec + 8, 4 );
     if( bBigEndian ) SwapWord( 4, &(psShape->nSHPType) );
@@ -1590,8 +1605,8 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
                         psSHP->pabyRec + nOffset + 16 + i*8, 8 );
                 if( bBigEndian ) SwapWord( 8, psShape->padfM + i );
             }
+            psShape->bMeasureIsUsed = TRUE;
         }
-        
     }
 
 /* ==================================================================== */
@@ -1678,6 +1693,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
                         psSHP->pabyRec + nOffset + 16 + i*8, 8 );
                 if( bBigEndian ) SwapWord( 8, psShape->padfM + i );
             }
+            psShape->bMeasureIsUsed = TRUE;
         }
     }
 
@@ -1727,6 +1743,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             memcpy( psShape->padfM, psSHP->pabyRec + nOffset, 8 );
         
             if( bBigEndian ) SwapWord( 8, psShape->padfM );
+            psShape->bMeasureIsUsed = TRUE;
         }
 
 /* -------------------------------------------------------------------- */
