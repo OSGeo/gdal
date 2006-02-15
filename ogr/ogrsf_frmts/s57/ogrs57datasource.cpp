@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2006/02/15 18:04:45  fwarmerdam
+ * implemented DSID feature support
+ *
  * Revision 1.27  2005/09/21 00:54:43  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -291,6 +294,11 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
             CSLSetNameValue( papszReaderOptions, S57O_RETURN_LINKAGES,
                              GetOption(S57O_RETURN_LINKAGES) );
                                               
+    if( GetOption(S57O_RETURN_DSID) != NULL )
+        papszReaderOptions = 
+            CSLSetNameValue( papszReaderOptions, S57O_RETURN_DSID,
+                             GetOption(S57O_RETURN_DSID) );
+                                              
     poModule->SetOptions( papszReaderOptions );
     CSLDestroy( papszReaderOptions );
 
@@ -311,6 +319,18 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
     papoModules = (S57Reader **) CPLMalloc(sizeof(void*));
     papoModules[0] = poModule;
     
+/* -------------------------------------------------------------------- */
+/*      Add the header layers if they are called for.                   */
+/* -------------------------------------------------------------------- */
+    if( GetOption( S57O_RETURN_DSID ) == NULL 
+        || CSLTestBoolean(GetOption( S57O_RETURN_DSID )) )
+    {
+        OGRFeatureDefn  *poDefn;
+
+        poDefn = S57GenerateDSIDFeatureDefn();
+        AddLayer( new OGRS57Layer( this, poDefn ) );
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Add the primitive layers if they are called for.                */
 /* -------------------------------------------------------------------- */

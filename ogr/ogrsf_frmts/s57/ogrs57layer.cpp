@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/02/15 18:04:45  fwarmerdam
+ * implemented DSID feature support
+ *
  * Revision 1.15  2005/09/21 00:54:43  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -113,6 +116,8 @@ OGRS57Layer::OGRS57Layer( OGRS57DataSource *poDSIn,
         nRCNM = RCNM_VE;
     else if( EQUAL(poDefnIn->GetName(),OGRN_VF) )
         nRCNM = RCNM_VF;
+    else if( EQUAL(poDefnIn->GetName(),"DSID") )
+        nRCNM = RCNM_DSID;
     else 
         nRCNM = 100;  /* feature */
 }

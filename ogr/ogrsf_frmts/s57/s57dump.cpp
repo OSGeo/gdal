@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/02/15 18:04:45  fwarmerdam
+ * implemented DSID feature support
+ *
  * Revision 1.17  2006/02/14 19:11:10  fwarmerdam
  * fixup build
  *
@@ -237,6 +240,8 @@ int main( int nArgc, char ** papszArgv )
                 S57GenerateVectorPrimitiveFeatureDefn( RCNM_VF, nOptionFlags));
         }
     
+        oReader.AddFeatureDefn( S57GenerateDSIDFeatureDefn() );
+
         OGRFeature      *poFeature;
         int             nFeatures = 0;
         DDFModule       oUpdate;
