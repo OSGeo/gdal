@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.56  2006/02/15 04:21:29  fwarmerdam
+# added OFTDate support
+#
 # Revision 1.55  2006/01/27 16:16:54  fwarmerdam
 # use internal OGRGetDriverByName
 #
@@ -278,6 +281,7 @@ OFTStringList = 5
 OFTWideString = 6
 OFTWideStringList = 7
 OFTBinary = 8
+OFTDate = 9
 
 # OGRJustification
 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.124  2006/02/15 04:21:30  fwarmerdam
+ * added OFTDate support
+ *
  * Revision 1.123  2006/01/27 16:16:53  fwarmerdam
  * use internal OGRGetDriverByName
  *
@@ -3367,6 +3370,7 @@ py_OGR_F_GetField(PyObject *self, PyObject *args) {
                        OGR_F_GetFieldAsDouble( hFeat, iField ) );
 	    break;
           case OFTString:
+          case OFTDate:
             result = Py_BuildValue( "s", 
                        OGR_F_GetFieldAsString( hFeat, iField ) );
 	    break;
