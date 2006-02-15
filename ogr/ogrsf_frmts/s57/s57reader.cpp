@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2006/02/15 18:04:45  fwarmerdam
+ * implemented DSID feature support
+ *
  * Revision 1.54  2005/12/06 22:02:45  fwarmerdam
  * dont create 3d points in AssemblePoint, bug 1010
  *
@@ -55,143 +58,6 @@
  *
  * Revision 1.46  2004/06/23 19:46:51  warmerda
  * fixed logic of APPLY updates logic
- *
- * Revision 1.45  2004/06/01 14:51:19  warmerda
- * expand tabs
- *
- * Revision 1.44  2003/11/17 20:10:46  warmerda
- * added support for writing FFPT linkages
- *
- * Revision 1.43  2003/11/12 21:23:40  warmerda
- * updates to new featuredefn generators
- *
- * Revision 1.42  2003/09/15 20:53:06  warmerda
- * fleshed out feature writing
- *
- * Revision 1.41  2003/09/12 21:18:06  warmerda
- * fixed width of AGEN field
- *
- * Revision 1.40  2003/09/09 18:11:17  warmerda
- * capture TOPI field from VRPT
- *
- * Revision 1.39  2003/09/09 16:44:51  warmerda
- * fix sounding support in ReadVector()
- *
- * Revision 1.38  2003/09/05 19:12:05  warmerda
- * added RETURN_PRIMITIVES support to get low level prims
- *
- * Revision 1.37  2003/01/02 21:45:23  warmerda
- * move OGRBuildPolygonsFromEdges into C API
- *
- * Revision 1.36  2002/10/28 22:31:00  warmerda
- * allow wkbMultiPoint25D for SOUNDG
- *
- * Revision 1.35  2002/05/14 20:34:27  warmerda
- * added PRESERVE_EMPTY_NUMBERS support
- *
- * Revision 1.34  2002/03/05 14:25:43  warmerda
- * expanded tabs
- *
- * Revision 1.33  2002/02/22 22:23:38  warmerda
- * added tolerances when assembling polygons
- *
- * Revision 1.32  2001/12/19 22:44:53  warmerda
- * added ADD_SOUNDG_DEPTH support
- *
- * Revision 1.31  2001/12/17 22:36:12  warmerda
- * added readFeature() method
- *
- * Revision 1.30  2001/12/14 19:40:18  warmerda
- * added optimized feature counting, and extents collection
- *
- * Revision 1.29  2001/09/12 17:09:44  warmerda
- * add auto-update support
- *
- * Revision 1.28  2001/09/04 16:21:11  warmerda
- * improved handling of corrupt line geometries
- *
- * Revision 1.27  2001/08/30 21:18:35  warmerda
- * removed debug info
- *
- * Revision 1.26  2001/08/30 21:06:55  warmerda
- * expand tabs
- *
- * Revision 1.25  2001/08/30 21:05:32  warmerda
- * added support for generic object if not recognised
- *
- * Revision 1.24  2001/08/30 14:55:23  warmerda
- * Treat SAT_LIST attributes as strings.
- *
- * Revision 1.23  2001/08/30 03:48:43  warmerda
- * preliminary implementation of S57 Update Support
- *
- * Revision 1.22  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.21  2001/01/22 18:00:03  warmerda
- * Don't completely flip out if there is other than one spatial linkage for
- * in AssemblePointGeometry().  Record 577 of CA49995B.000 (newfiles) has this.
- *
- * Revision 1.20  2000/09/28 16:30:31  warmerda
- * avoid warnings
- *
- * Revision 1.19  2000/09/13 19:19:24  warmerda
- * added checking on NATF:ATTL values
- *
- * Revision 1.18  2000/06/16 18:10:05  warmerda
- * expanded tabs
- *
- * Revision 1.17  2000/06/16 18:00:58  warmerda
- * Fixed AssembleArea() to support multiple FSPT fields
- *
- * Revision 1.16  2000/06/07 21:34:04  warmerda
- * fixed problem with corrupt datasets with an ATTL value of zero
- *
- * Revision 1.15  1999/12/22 15:37:05  warmerda
- * removed abort
- *
- * Revision 1.14  1999/11/26 19:09:29  warmerda
- * Swapped XY for soundings.
- *
- * Revision 1.13  1999/11/26 16:17:58  warmerda
- * added DSNM
- *
- * Revision 1.12  1999/11/26 15:20:54  warmerda
- * Fixed multipoint.
- *
- * Revision 1.11  1999/11/26 15:17:01  warmerda
- * fixed lname to lnam
- *
- * Revision 1.10  1999/11/26 15:08:38  warmerda
- * added setoptions, and LNAM support
- *
- * Revision 1.9  1999/11/26 13:50:34  warmerda
- * added NATF support
- *
- * Revision 1.8  1999/11/26 13:26:03  warmerda
- * fixed up sounding support
- *
- * Revision 1.7  1999/11/25 20:53:49  warmerda
- * added sounding and S57_SPLIT_MULTIPOINT support
- *
- * Revision 1.6  1999/11/18 19:01:25  warmerda
- * expanded tabs
- *
- * Revision 1.5  1999/11/18 18:58:16  warmerda
- * make permissive of missing geometry so that update files work
- *
- * Revision 1.4  1999/11/16 21:47:32  warmerda
- * updated class occurance collection
- *
- * Revision 1.3  1999/11/08 22:23:00  warmerda
- * added object class support
- *
- * Revision 1.2  1999/11/04 21:19:13  warmerda
- * added polygon support
- *
- * Revision 1.1  1999/11/03 22:12:43  warmerda
- * New
- *
  */
 
 #include "s57.h"
@@ -230,6 +96,10 @@ S57Reader::S57Reader( const char * pszFilename )
     nNextVCIndex = 0;
     nNextVEIndex = 0;
     nNextVFIndex = 0;
+    nNextDSIDIndex = 0;
+
+    poDSIDRecord = NULL;
+    poDSPMRecord = NULL;
 
     iPointOffset = 0;
     poMultiPoint = NULL;
@@ -308,6 +178,7 @@ int S57Reader::Open( int bTestOpen )
     nNextVCIndex = 0;
     nNextVEIndex = 0;
     nNextVFIndex = 0;
+    nNextDSIDIndex = 0;
     
     return TRUE;
 }
@@ -326,6 +197,17 @@ void S57Reader::Close()
         oVE_Index.Clear();
         oVF_Index.Clear();
         oFE_Index.Clear();
+
+        if( poDSIDRecord != NULL )
+        {
+            delete poDSIDRecord;
+            poDSIDRecord = NULL;
+        }
+        if( poDSPMRecord != NULL )
+        {
+            delete poDSPMRecord;
+            poDSPMRecord = NULL;
+        }
 
         ClearPendingMultiPoint();
 
@@ -437,16 +319,22 @@ void S57Reader::SetOptions( char ** papszOptionsIn )
         nOptionFlags &= ~S57M_PRESERVE_EMPTY_NUMBERS;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_RETURN_PRIMITIVES );
-    if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
+    if( pszOptionValue != NULL && CSLTestBoolean(pszOptionValue) )
         nOptionFlags |= S57M_RETURN_PRIMITIVES;
     else
         nOptionFlags &= ~S57M_RETURN_PRIMITIVES;
 
     pszOptionValue = CSLFetchNameValue( papszOptions, S57O_RETURN_LINKAGES );
-    if( pszOptionValue != NULL && !EQUAL(pszOptionValue,"OFF") )
+    if( pszOptionValue != NULL && CSLTestBoolean(pszOptionValue) )
         nOptionFlags |= S57M_RETURN_LINKAGES;
     else
         nOptionFlags &= ~S57M_RETURN_LINKAGES;
+
+    pszOptionValue = CSLFetchNameValue( papszOptions, S57O_RETURN_DSID );
+    if( pszOptionValue == NULL || CSLTestBoolean(pszOptionValue) )
+        nOptionFlags |= S57M_RETURN_DSID;
+    else
+        nOptionFlags &= ~S57M_RETURN_DSID;
 }
 
 /************************************************************************/
@@ -472,6 +360,7 @@ void S57Reader::Rewind()
     nNextVCIndex = 0;
     nNextVEIndex = 0;
     nNextVFIndex = 0;
+    nNextDSIDIndex = 0;
 }
 
 /************************************************************************/
@@ -526,12 +415,6 @@ void S57Reader::Ingest()
             }
         }
 
-        else if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"DSPM") )
-        {
-            nCOMF = MAX(1,poRecord->GetIntSubfield( "DSPM",0, "COMF",0));
-            nSOMF = MAX(1,poRecord->GetIntSubfield( "DSPM",0, "SOMF",0));
-        }
-
         else if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"FRID") )
         {
             int         nRCID = poRecord->GetIntSubfield( "FRID",0, "RCID",0);
@@ -544,6 +427,28 @@ void S57Reader::Ingest()
             CPLFree( pszDSNM );
             pszDSNM =
                 CPLStrdup(poRecord->GetStringSubfield( "DSID", 0, "DSNM", 0 ));
+
+            if( nOptionFlags & S57M_RETURN_DSID )
+            {
+                if( poDSIDRecord != NULL )
+                    delete poDSIDRecord;
+
+                poDSIDRecord = poRecord->Clone();
+            }
+        }
+
+        else if( EQUAL(poKeyField->GetFieldDefn()->GetName(),"DSPM") )
+        {
+            nCOMF = MAX(1,poRecord->GetIntSubfield( "DSPM",0, "COMF",0));
+            nSOMF = MAX(1,poRecord->GetIntSubfield( "DSPM",0, "SOMF",0));
+
+            if( nOptionFlags & S57M_RETURN_DSID )
+            {
+                if( poDSPMRecord != NULL )
+                    delete poDSPMRecord;
+
+                poDSPMRecord = poRecord->Clone();
+            }
         }
 
         else
@@ -578,6 +483,8 @@ void S57Reader::SetNextFEIndex( int nNewIndex, int nRCNM )
         nNextVEIndex = nNewIndex;
     else if( nRCNM == RCNM_VF )
         nNextVFIndex = nNewIndex;
+    else if( nRCNM == RCNM_DSID )
+        nNextDSIDIndex = nNewIndex;
     else
     {
         if( nNextFEIndex != nNewIndex )
@@ -602,6 +509,8 @@ int S57Reader::GetNextFEIndex( int nRCNM )
         return nNextVEIndex;
     else if( nRCNM == RCNM_VF )
         return nNextVFIndex;
+    else if( nRCNM == RCNM_DSID )
+        return nNextDSIDIndex;
     else
         return nNextFEIndex;
 }
@@ -631,6 +540,16 @@ OGRFeature * S57Reader::ReadNextFeature( OGRFeatureDefn * poTarget )
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Next vector feature?                                            */
+/* -------------------------------------------------------------------- */
+    if( (nOptionFlags & S57M_RETURN_DSID) 
+        && nNextDSIDIndex == 0 
+        && (poTarget == NULL || EQUAL(poTarget->GetName(),"DSID")) )
+    {
+        return ReadDSID();
+    }
+        
 /* -------------------------------------------------------------------- */
 /*      Next vector feature?                                            */
 /* -------------------------------------------------------------------- */
@@ -1110,6 +1029,137 @@ void S57Reader::GenerateFSPTAttributes( DDFRecord * poRecord,
     CPLFree( panUSAG );
     CPLFree( panMASK );
 }
+
+/************************************************************************/
+/*                              ReadDSID()                              */
+/************************************************************************/
+
+OGRFeature *S57Reader::ReadDSID()
+
+{
+    if( poDSIDRecord == NULL && poDSPMRecord == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Find the feature definition to use.                             */
+/* -------------------------------------------------------------------- */
+    OGRFeatureDefn *poFDefn = NULL;
+
+    for( int i = 0; i < nFDefnCount; i++ )
+    {
+        if( EQUAL(papoFDefnList[i]->GetName(),"DSID") )              
+        {
+            poFDefn = papoFDefnList[i];
+            break;
+        }
+    }
+    
+    if( poFDefn == NULL )
+    {
+        CPLAssert( FALSE );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create feature.                                                 */
+/* -------------------------------------------------------------------- */
+    OGRFeature *poFeature = new OGRFeature( poFDefn );
+
+/* -------------------------------------------------------------------- */
+/*      Apply DSID values.                                              */
+/* -------------------------------------------------------------------- */
+    if( poDSIDRecord != NULL )
+    {
+        poFeature->SetField( "DSID_EXPP",
+                     poDSIDRecord->GetIntSubfield( "DSID", 0, "EXPP", 0 ));
+        poFeature->SetField( "DSID_INTU",
+                     poDSIDRecord->GetIntSubfield( "DSID", 0, "INTU", 0 ));
+        poFeature->SetField( "DSID_DSNM",
+                     poDSIDRecord->GetStringSubfield( "DSID", 0, "DSNM", 0 ));
+        poFeature->SetField( "DSID_EDTN",
+                     poDSIDRecord->GetStringSubfield( "DSID", 0, "EDTN", 0 ));
+        poFeature->SetField( "DSID_UPDN",
+                     poDSIDRecord->GetStringSubfield( "DSID", 0, "UPDN", 0 ));
+        poFeature->SetField( "DSID_UADT",
+                     poDSIDRecord->GetStringSubfield( "DSID", 0, "UADT", 0 ));
+        poFeature->SetField( "DSID_ISDT",
+                     poDSIDRecord->GetStringSubfield( "DSID", 0, "ISDT", 0 ));
+        poFeature->SetField( "DSID_STED",
+                     poDSIDRecord->GetFloatSubfield( "DSID", 0, "STED", 0 ));
+        poFeature->SetField( "DSID_PRSP",
+                     poDSIDRecord->GetIntSubfield( "DSID", 0, "PRSP", 0 ));
+        poFeature->SetField( "DSID_PSDN",
+                     poDSIDRecord->GetStringSubfield( "DSID", 0, "PSDN", 0 ));
+        poFeature->SetField( "DSID_PRED",
+                     poDSIDRecord->GetStringSubfield( "DSID", 0, "PRED", 0 ));
+        poFeature->SetField( "DSID_PROF",
+                     poDSIDRecord->GetIntSubfield( "DSID", 0, "PROF", 0 ));
+        poFeature->SetField( "DSID_AGEN",
+                     poDSIDRecord->GetIntSubfield( "DSID", 0, "AGEN", 0 ));
+        poFeature->SetField( "DSID_COMT",
+                     poDSIDRecord->GetStringSubfield( "DSID", 0, "COMT", 0 ));
+
+/* -------------------------------------------------------------------- */
+/*      Apply DSSI values.                                              */
+/* -------------------------------------------------------------------- */
+        poFeature->SetField( "DSSI_DSTR",
+                     poDSIDRecord->GetIntSubfield( "DSSI", 0, "DSTR", 0 ));
+        poFeature->SetField( "DSSI_AALL",
+                     poDSIDRecord->GetIntSubfield( "DSSI", 0, "AALL", 0 ));
+        poFeature->SetField( "DSSI_NALL",
+                     poDSIDRecord->GetIntSubfield( "DSSI", 0, "NALL", 0 ));
+        poFeature->SetField( "DSSI_NOMR",
+                     poDSIDRecord->GetIntSubfield( "DSSI", 0, "NOMR", 0 ));
+        poFeature->SetField( "DSSI_NOCR",
+                     poDSIDRecord->GetIntSubfield( "DSSI", 0, "NOCR", 0 ));
+        poFeature->SetField( "DSSI_NOGR",
+                     poDSIDRecord->GetIntSubfield( "DSSI", 0, "NOGR", 0 ));
+        poFeature->SetField( "DSSI_NOLR",
+                     poDSIDRecord->GetIntSubfield( "DSSI", 0, "NOLR", 0 ));
+        poFeature->SetField( "DSSI_NOIN",
+                     poDSIDRecord->GetIntSubfield( "DSSI", 0, "NOIN", 0 ));
+        poFeature->SetField( "DSSI_NOCN",
+                     poDSIDRecord->GetIntSubfield( "DSSI", 0, "NOCN", 0 ));
+        poFeature->SetField( "DSSI_NOED",
+                     poDSIDRecord->GetIntSubfield( "DSSI", 0, "NOED", 0 ));
+        poFeature->SetField( "DSSI_NOFA",
+                     poDSIDRecord->GetIntSubfield( "DSSI", 0, "NOFA", 0 ));
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Apply DSPM record.                                              */
+/* -------------------------------------------------------------------- */
+    if( poDSPMRecord != NULL )
+    {
+        poFeature->SetField( "DSPM_HDAT",
+                      poDSPMRecord->GetIntSubfield( "DSPM", 0, "HDAT", 0 ));
+        poFeature->SetField( "DSPM_VDAT",
+                      poDSPMRecord->GetIntSubfield( "DSPM", 0, "VDAT", 0 ));
+        poFeature->SetField( "DSPM_SDAT",
+                      poDSPMRecord->GetIntSubfield( "DSPM", 0, "SDAT", 0 ));
+        poFeature->SetField( "DSPM_CSCL",
+                      poDSPMRecord->GetIntSubfield( "DSPM", 0, "CSCL", 0 ));
+        poFeature->SetField( "DSPM_DUNI",
+                      poDSPMRecord->GetIntSubfield( "DSPM", 0, "DUNI", 0 ));
+        poFeature->SetField( "DSPM_HUNI",
+                      poDSPMRecord->GetIntSubfield( "DSPM", 0, "HUNI", 0 ));
+        poFeature->SetField( "DSPM_PUNI",
+                      poDSPMRecord->GetIntSubfield( "DSPM", 0, "PUNI", 0 ));
+        poFeature->SetField( "DSPM_COUN",
+                      poDSPMRecord->GetIntSubfield( "DSPM", 0, "COUN", 0 ));
+        poFeature->SetField( "DSPM_COMF",
+                      poDSPMRecord->GetIntSubfield( "DSPM", 0, "COMF", 0 ));
+        poFeature->SetField( "DSPM_SOMF",
+                      poDSPMRecord->GetIntSubfield( "DSPM", 0, "SOMF", 0 ));
+        poFeature->SetField( "DSPM_COMT",
+                      poDSPMRecord->GetStringSubfield( "DSPM", 0, "COMT", 0 ));
+    }
+
+    poFeature->SetFID( nNextDSIDIndex++ );
+
+    return poFeature;
+}
+
 
 /************************************************************************/
 /*                             ReadVector()                             */

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2006/02/15 18:04:45  fwarmerdam
+ * implemented DSID feature support
+ *
  * Revision 1.31  2005/07/30 17:22:52  fwarmerdam
  * added profile to LoadInfo
  *
@@ -59,70 +62,6 @@
  *
  * Revision 1.22  2003/08/21 21:25:30  warmerda
  * Rodney Jensen: Addd FindRecordByObjl()
- *
- * Revision 1.21  2002/10/28 22:30:24  warmerda
- * tab expanded
- *
- * Revision 1.20  2002/05/14 20:34:27  warmerda
- * added PRESERVE_EMPTY_NUMBERS support
- *
- * Revision 1.19  2002/03/05 14:25:43  warmerda
- * expanded tabs
- *
- * Revision 1.18  2002/02/18 21:26:34  warmerda
- * removed declaration for OGRBuildPolygonFromEdges
- *
- * Revision 1.17  2001/12/19 22:44:53  warmerda
- * added ADD_SOUNDG_DEPTH support
- *
- * Revision 1.16  2001/12/17 22:35:16  warmerda
- * added ReadFeature method
- *
- * Revision 1.15  2001/12/14 19:40:18  warmerda
- * added optimized feature counting, and extents collection
- *
- * Revision 1.14  2001/09/12 17:03:21  warmerda
- * auto update support
- *
- * Revision 1.13  2001/08/30 21:18:39  warmerda
- * fixed typedef
- *
- * Revision 1.12  2001/08/30 21:06:55  warmerda
- * expand tabs
- *
- * Revision 1.11  2001/08/30 03:48:43  warmerda
- * preliminary implementation of S57 Update Support
- *
- * Revision 1.10  2000/06/16 18:10:05  warmerda
- * expanded tabs
- *
- * Revision 1.9  1999/11/26 16:17:58  warmerda
- * added DSNM
- *
- * Revision 1.8  1999/11/26 15:08:38  warmerda
- * added setoptions, and LNAM support
- *
- * Revision 1.7  1999/11/25 20:53:49  warmerda
- * added sounding and S57_SPLIT_MULTIPOINT support
- *
- * Revision 1.6  1999/11/18 19:01:25  warmerda
- * expanded tabs
- *
- * Revision 1.5  1999/11/18 18:58:37  warmerda
- * added s57FileCollector()
- *
- * Revision 1.4  1999/11/16 21:47:32  warmerda
- * updated class occurance collection
- *
- * Revision 1.3  1999/11/08 22:23:00  warmerda
- * added object class support
- *
- * Revision 1.2  1999/11/04 21:19:13  warmerda
- * added polygon support
- *
- * Revision 1.1  1999/11/03 22:12:43  warmerda
- * New
- *
  */
 
 #ifndef _S57_H_INCLUDED
@@ -147,6 +86,7 @@ char **S57FileCollector( const char * pszDataset );
 #define S57O_PRESERVE_EMPTY_NUMBERS "PRESERVE_EMPTY_NUMBERS"
 #define S57O_RETURN_PRIMITIVES "RETURN_PRIMITIVES"
 #define S57O_RETURN_LINKAGES "RETURN_LINKAGES"
+#define S57O_RETURN_DSID     "RETURN_DSID"
 
 #define S57M_UPDATES                    0x01
 #define S57M_LNAM_REFS                  0x02
@@ -155,6 +95,7 @@ char **S57FileCollector( const char * pszDataset );
 #define S57M_PRESERVE_EMPTY_NUMBERS     0x10
 #define S57M_RETURN_PRIMITIVES          0x20
 #define S57M_RETURN_LINKAGES            0x40
+#define S57M_RETURN_DSID                0x80
 
 /* -------------------------------------------------------------------- */
 /*      RCNM values.                                                    */
@@ -166,6 +107,8 @@ char **S57FileCollector( const char * pszDataset );
 #define RCNM_VC         120     /* Connected Node */
 #define RCNM_VE         130     /* Edge */
 #define RCNM_VF         140     /* Face */
+
+#define RCNM_DSID       10
 
 #define OGRN_VI         "IsolatedNode"
 #define OGRN_VC         "ConnectedNode"
@@ -257,8 +200,6 @@ public:
 
 };
 
-
-
 /************************************************************************/
 /*                            DDFRecordIndex                            */
 /*                                                                      */
@@ -341,6 +282,10 @@ class CPL_DLL S57Reader
     int                 nNextFEIndex;
     DDFRecordIndex      oFE_Index;
 
+    int                 nNextDSIDIndex;
+    DDFRecord           *poDSIDRecord;
+    DDFRecord           *poDSPMRecord;
+
     char                **papszOptions;
 
     int                 nOptionFlags; 
@@ -395,6 +340,7 @@ class CPL_DLL S57Reader
     OGRFeature          *ReadNextFeature( OGRFeatureDefn * = NULL );
     OGRFeature          *ReadFeature( int nFID, OGRFeatureDefn * = NULL );
     OGRFeature          *ReadVector( int nFID, int nRCNM );
+    OGRFeature          *ReadDSID( void );
 
     int                 GetNextFEIndex( int nRCNM = 100 );
     void                SetNextFEIndex( int nNewIndex, int nRCNM = 100 );
@@ -404,7 +350,6 @@ class CPL_DLL S57Reader
     int                 CollectClassList( int *, int);
 
     OGRErr              GetExtent( OGREnvelope *psExtent, int bForce );
-
  };
 
 /************************************************************************/
@@ -453,5 +398,6 @@ OGRFeatureDefn CPL_DLL *S57GenerateGeomFeatureDefn( OGRwkbGeometryType, int );
 OGRFeatureDefn CPL_DLL *S57GenerateObjectClassDefn( S57ClassRegistrar *, 
                                                     int, int );
 OGRFeatureDefn CPL_DLL  *S57GenerateVectorPrimitiveFeatureDefn( int, int );
+OGRFeatureDefn CPL_DLL  *S57GenerateDSIDFeatureDefn( void );
 
 #endif /* ndef _S57_H_INCLUDED */
