@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.52  2006/02/15 04:19:51  fwarmerdam
+ * Added OFTDate.
+ *
  * Revision 1.51  2006/02/02 21:09:24  collinsb
  * Corrected wrong Java typemap filename
  *
@@ -296,6 +299,7 @@ typedef void OGRFieldDefnShadow;
 %constant OFTWideString = 6;
 %constant OFTWideStringList = 7;
 %constant OFTBinary = 8;
+%constant OFTDate = 8;
 
 %constant OJUndefined = 0;
 %constant OJLeft = 1;
