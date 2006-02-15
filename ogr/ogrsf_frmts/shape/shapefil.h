@@ -37,8 +37,14 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.15  2006/01/05 02:14:55  fwarmerdam
- * updated
+ * Revision 1.16  2006/02/15 01:35:00  fwarmerdam
+ * update
+ *
+ * Revision 1.33  2006/02/15 01:14:30  fwarmerdam
+ * added DBFAddNativeFieldType
+ *
+ * Revision 1.32  2006/01/26 15:07:32  fwarmerdam
+ * add bMeasureIsUsed flag from Craig Bruce: Bug 1249
  *
  * Revision 1.31  2006/01/05 01:27:27  fwarmerdam
  * added dbf deletion mark/fetch
@@ -243,6 +249,8 @@ typedef struct
     double	dfYMax;
     double	dfZMax;
     double	dfMMax;
+
+    int		bMeasureIsUsed;
 } SHPObject;
 
 /* -------------------------------------------------------------------- */
@@ -408,6 +416,10 @@ int	SHPAPI_CALL
 int	SHPAPI_CALL
       DBFAddField( DBFHandle hDBF, const char * pszFieldName,
                    DBFFieldType eType, int nWidth, int nDecimals );
+
+int	SHPAPI_CALL
+      DBFAddNativeFieldType( DBFHandle hDBF, const char * pszFieldName,
+                             char chType, int nWidth, int nDecimals );
 
 DBFFieldType SHPAPI_CALL
       DBFGetFieldInfo( DBFHandle psDBF, int iField, 
