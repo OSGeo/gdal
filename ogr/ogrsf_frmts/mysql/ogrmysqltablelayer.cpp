@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2006/02/16 17:21:00  fwarmerdam
+ * Added date support.
+ *
  * Revision 1.27  2006/02/13 04:15:04  hobu
  * major formatting cleanup
  * Added myself as an author
@@ -359,25 +362,17 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         {
             oField.SetType( OFTReal );
         }
-        else if( EQUAL(pszType, "date") ) 
+        else if( EQUAL(pszType, "date") 
+                 || EQUAL(pszType, "time") 
+                 || EQUAL(pszType, "datetime") 
+                 || EQUAL(pszType, "timestamp"))
+        {
+            oField.SetType( OFTDate );
+        }
+        else if( EQUAL(pszType, "year") )  
         {
             oField.SetType( OFTString );
             oField.SetWidth( 10 );
-        }
-        else if( EQUAL(pszType, "time") ) 
-        {
-            oField.SetType( OFTString );
-            oField.SetWidth( 10 );
-        }
-        else if( EQUAL(pszType, "year") ) 
-        {
-            oField.SetType( OFTString );
-            oField.SetWidth( 10 );
-        }
-        else if( EQUAL(pszType, "datetime") ) 
-        {
-            oField.SetType( OFTString );
-            oField.SetWidth( 20 );
         }
         else if( EQUAL(pszType, "geometry") ) 
         {
@@ -399,9 +394,11 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
     // set to none for now... if we have a geometry column it will be set layer.
     poDefn->SetGeomType( wkbNone );
 
-    if( hResultSet != NULL )
-        mysql_free_result( hResultSet );
- 		hResultSet = NULL;
+    if( hResult != NULL )
+    {
+        mysql_free_result( hResult );
+        hResultSet = NULL;
+    }
 
     if( bHasFid )
         CPLDebug( "MySQL", "table %s has FID column %s.",
@@ -945,11 +942,11 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
             strcpy( szFieldType, "DOUBLE" );
     }
 
-/*    else if( oField.GetType() == OFTDate )
+    else if( oField.GetType() == OFTDate )
     {
         sprintf( szFieldType, "DATETIME" );
     }
-*/
+
     else if( oField.GetType() == OFTString )
     {
         if( oField.GetWidth() == 0 || !bPreservePrecision )
@@ -960,10 +957,10 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     else if( bApproxOK )
     {
         CPLError( CE_Warning, CPLE_NotSupported,
-                  "Can't create field %s with type %s on MySQL layers.  Creating as VARCHAR.",
+                  "Can't create field %s with type %s on MySQL layers.  Creating as TEXT.",
                   oField.GetNameRef(),
                   OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
-        strcpy( szFieldType, "VARCHAR" );
+        strcpy( szFieldType, "TEXT" );
     }
     else
     {
