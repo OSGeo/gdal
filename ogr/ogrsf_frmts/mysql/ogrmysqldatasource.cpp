@@ -29,6 +29,13 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2006/02/16 18:00:11  fwarmerdam
+ * Don't make F_TABLE_NAME, it doesn't work on MySQL 4.x
+ * Set COORD_DIMENSION.  Leave SRID NULL if not known.  Support wkbNone
+ * in CreateLayer() as having no geometry field.  Added support for
+ * SPATIAL_INDEX creation option to disable spatial index and associated
+ * NOT NULL constraint.
+ *
  * Revision 1.14  2006/02/16 16:28:00  fwarmerdam
  * Improved InitializeMetadataTables() error reporting, and removed
  * UNIQUE constraint on F_TABLE_NAME as it causes problems in mysql 4.x
@@ -1035,8 +1042,6 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
         }
     }
 
-
-
     pszGeomColumnName = CSLFetchNameValue( papszOptions, "MYSQL_GEOM_COLUMN" );
     if (!pszGeomColumnName)
         pszGeomColumnName="SHAPE";
@@ -1046,21 +1051,29 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
         pszExpectedFIDName="OGR_FID";
 
 
-
     CPLDebug("MYSQL","Geometry Column Name %s.", pszGeomColumnName);
     CPLDebug("MYSQL","FID Column Name %s.", pszExpectedFIDName);
 
-    sprintf( szCommand,
-             "CREATE TABLE %s ( "
-             "   %s INT UNIQUE NOT NULL AUTO_INCREMENT, "
-             "   %s GEOMETRY NOT NULL )",
-             pszLayerName, pszExpectedFIDName, pszGeomColumnName );
+    if( wkbFlatten(eType) == wkbNone )
+    {
+        sprintf( szCommand,
+                 "CREATE TABLE %s ( "
+                 "   %s INT UNIQUE NOT NULL AUTO_INCREMENT )",
+                 pszLayerName, pszExpectedFIDName );
+    }
+    else
+    {
+        sprintf( szCommand,
+                 "CREATE TABLE %s ( "
+                 "   %s INT UNIQUE NOT NULL AUTO_INCREMENT, "
+                 "   %s GEOMETRY NOT NULL )",
+                 pszLayerName, pszExpectedFIDName, pszGeomColumnName );
+    }
 	
-    if( !mysql_query(GetConn(), szCommand ) ){
+    if( !mysql_query(GetConn(), szCommand ) )
+    {
         if( mysql_field_count( GetConn() ) == 0 )
-        {
             CPLDebug("MYSQL","Created table %s.", pszLayerName);
-        }
         else
         {
             ReportError( szCommand );
@@ -1086,11 +1099,12 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
     if( poSRS != NULL )
         nSRSId = FetchSRSId( poSRS );
 
-
-    /* Sometimes there is an old crufty entry in the geometry_columns
-     * table if things were not properly cleaned up before.  We make
-     * an effort to clean out such cruft.
-     */
+/* -------------------------------------------------------------------- */
+/*      Sometimes there is an old crufty entry in the geometry_columns  */
+/*      table if things were not properly cleaned up before.  We make   */
+/*      an effort to clean out such cruft.                              */
+/*                                                                      */
+/* -------------------------------------------------------------------- */
     sprintf( szCommand,
              "DELETE FROM geometry_columns WHERE f_table_name = '%s'",
              pszLayerName );
@@ -1106,87 +1120,122 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
     if( hResult != NULL )
         mysql_free_result( hResult );
     hResult = NULL;   
-            
         
-    switch( wkbFlatten(eType) )
+/* -------------------------------------------------------------------- */
+/*      Attempt to add this table to the geometry_columns table, if     */
+/*      it is a spatial layer.                                          */
+/* -------------------------------------------------------------------- */
+    if( eType != wkbNone )
     {
-        case wkbPoint:
+        int nCoordDimension;
+        if( eType == wkbFlatten(eType) )
+            nCoordDimension = 2;
+        else
+            nCoordDimension = 3;
+
+        switch( wkbFlatten(eType) )
+        {
+          case wkbPoint:
             pszGeometryType = "POINT";
             break;
 
-        case wkbLineString:
+          case wkbLineString:
             pszGeometryType = "LINESTRING";
             break;
 
-        case wkbPolygon:
+          case wkbPolygon:
             pszGeometryType = "POLYGON";
             break;
 
-        case wkbMultiPoint:
+          case wkbMultiPoint:
             pszGeometryType = "MULTIPOINT";
             break;
 
-        case wkbMultiLineString:
+          case wkbMultiLineString:
             pszGeometryType = "MULTILINESTRING";
             break;
 
-        case wkbMultiPolygon:
+          case wkbMultiPolygon:
             pszGeometryType = "MULTIPOLYGON";
             break;
 
-        case wkbGeometryCollection:
+          case wkbGeometryCollection:
             pszGeometryType = "GEOMETRYCOLLECTION";
             break;
 
-        default:
+          default:
             pszGeometryType = "GEOMETRY";
             break;
 
+        }
+
+        if( nSRSId == -1 )
+            sprintf( szCommand,
+                     "INSERT INTO geometry_columns "
+                     " (F_TABLE_NAME, "
+                     "  F_GEOMETRY_COLUMN, "
+                     "  COORD_DIMENSION, "
+                     "  TYPE) values "
+                     "  ('%s', '%s', %d, '%s')",
+                     pszLayerName,
+                     pszGeomColumnName,
+                     nCoordDimension,
+                     pszGeometryType );
+        else
+            sprintf( szCommand,
+                     "INSERT INTO geometry_columns "
+                     " (F_TABLE_NAME, "
+                     "  F_GEOMETRY_COLUMN, "
+                     "  COORD_DIMENSION, "
+                     "  SRID, "
+                     "  TYPE) values "
+                     "  ('%s', '%s', %d, %d, '%s')",
+                     pszLayerName,
+                     pszGeomColumnName,
+                     nCoordDimension,
+                     nSRSId,
+                     pszGeometryType );
+
+        if( mysql_query(GetConn(), szCommand ) )
+        {
+            ReportError( szCommand );
+            return NULL;
+        }
+
+        // make sure to attempt to free results of successful queries
+        hResult = mysql_store_result( GetConn() );
+        if( hResult != NULL )
+            mysql_free_result( hResult );
+        hResult = NULL;   
     }
 
-    sprintf( szCommand,
-             "INSERT INTO geometry_columns "
-             " (F_TABLE_NAME, "
-             "  F_GEOMETRY_COLUMN, "
-             "  SRID, "
-             "  TYPE) values "
-             "  ('%s', '%s', %d, '%s')",
-             pszLayerName,
-             pszGeomColumnName,
-             nSRSId,
-             pszGeometryType );
+/* -------------------------------------------------------------------- */
+/*      Create the spatial index.                                       */
+/*                                                                      */
+/*      We're doing this before we add geometry and record to the table */
+/*      so this may not be exactly the best way to do it.               */
+/* -------------------------------------------------------------------- */
+    const char *pszSI = CSLFetchNameValue( papszOptions, "SPATIAL_INDEX" );
 
-    if( mysql_query(GetConn(), szCommand ) )
+    if( eType != wkbNone && (pszSI == NULL || CSLTestBoolean(pszSI)) )
     {
-        ReportError( szCommand );
-        return NULL;
+        sprintf( szCommand,
+                 "ALTER TABLE %s ADD SPATIAL INDEX(%s) ",
+                 pszLayerName,
+                 pszGeomColumnName);
+
+        if( mysql_query(GetConn(), szCommand ) )
+        {
+            ReportError( szCommand );
+            return NULL;
+        }
+
+        // make sure to attempt to free results of successful queries
+        hResult = mysql_store_result( GetConn() );
+        if( hResult != NULL )
+            mysql_free_result( hResult );
+        hResult = NULL;   
     }
-
-    // make sure to attempt to free results of successful queries
-    hResult = mysql_store_result( GetConn() );
-    if( hResult != NULL )
-        mysql_free_result( hResult );
-    hResult = NULL;   
-
-    // Create the spatial index on the field
-    // We're doing this before we add geometry and record to the table 
-    // so this may not be exactly the best way to do it.
-    sprintf( szCommand,
-             "ALTER TABLE %s ADD SPATIAL INDEX(%s) ",
-             pszLayerName,
-             pszGeomColumnName);
-
-    if( mysql_query(GetConn(), szCommand ) )
-    {
-        ReportError( szCommand );
-        return NULL;
-    }
-
-    // make sure to attempt to free results of successful queries
-    hResult = mysql_store_result( GetConn() );
-    if( hResult != NULL )
-        mysql_free_result( hResult );
-    hResult = NULL;   
         
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
@@ -1198,6 +1247,7 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
     eErr = poLayer->Initialize(pszLayerName);
     if (eErr == OGRERR_FAILURE)
         return NULL;
+
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
 
