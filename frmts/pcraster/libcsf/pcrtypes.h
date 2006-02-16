@@ -122,7 +122,8 @@ template<> inline bool isMV(std::string const& string)
 template<>
 inline void setMV(std::string& string)
 {
-  string.clear();
+//  string.clear();
+  string = "";
 }
 
 /*! \brief set array \a v of size \a n to all MV's
