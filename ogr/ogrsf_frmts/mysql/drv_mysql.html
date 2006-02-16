@@ -9,7 +9,7 @@
 
 This driver implements read and write access for spatial data in 
 <a href="http://www.mysql.org/">MySQL</a> tables.  This functionality 
-will be available in GDAL 1.3.2.  <p>
+was introduced in GDAL/OGR 1.3.2.  <p>
 
 When opening a database, it's name should be specified in the form
 "MYSQL:<dbname>[,options]" where the options can include comma seperated
@@ -37,20 +37,21 @@ be extremely slow. <p>
         are an integer-like field will be assumed to be the FID.
     </li>
     <li>
-        Geometry fields are read from MySQL using WKB format.  Versions older than 
-        5.0.16 of MySQL are known to have issues with WKB generation and may 
-        not be supported.
+        Geometry fields are read from MySQL using WKB format.  Versions older 
+        than 5.0.16 of MySQL are known to have issues with some WKB 
+        generation and may not work properly.
     </li>
     <li>
-        The OGR_FID column, which can be overridden with the MYSQL_FID layer creation 
-        option, is implemented as a <b>INT UNIQUE NOT NULL AUTO_INCREMENT</b> field.  This 
+        The OGR_FID column, which can be overridden with the MYSQL_FID layer 
+        creation option, is implemented as a 
+        <b>INT UNIQUE NOT NULL AUTO_INCREMENT</b> field.  This 
         appears to implicitly create an index on the field.
     </li>
     <li>
         The geometry column, which defaults to <i>SHAPE</i> and can be overridden 
         with the MYSQL_GEOM_COLUMN layer creation option, is created as a 
-        <b>NOT NULL</b> column.  When a table is created, a spatial index for the 
-        geometry column is also created.
+        <b>NOT NULL</b> column in unless SPATIAL_INDEX is disabled.  By default
+        a spatial index is created at the point the table is created.
     </li>
     <li>
         SRS information is stored using the OGC Simple Features for SQL layout, with 
@@ -107,8 +108,13 @@ The MySQL driver is not transactional at this time.<p>
         <b>MYSQL_GEOM_COLUMN</b>: This option specifies the name of the 
         geometry column.  The default value is "SHAPE".
     </li>
+    <li>
         <b>MYSQL_FID</b>: This option specifies the name of the FID column.
         The default value is "OGR_FID"
+    </li>
+    <li>
+        <b>SPATIAL_INDEX</b>: May be "NO" to stop automatic creation of 
+a spatial index on the geometry column, allowing NULL geometries and possibly faster loading. 
     </li>
 </ul>
 
@@ -122,9 +128,10 @@ presented as a layer for use.<p>
 MYSQL:westholland,user=root,password=psv9570,port=3306,tables=bedrijven
 </pre>
 
-The following example uses ogr2ogr to create copy the world_borders layer from a shapefile 
-into a MySQL table.  It overwrites a table with the existing name <i>borders2</i>, 
-sets a layer creation option to specify the geometry column name to <i>SHAPE2</i>.
+The following example uses ogr2ogr to create copy the world_borders layer 
+from a shapefile into a MySQL table.  It overwrites a table with the existing 
+name <i>borders2</i>, sets a layer creation option to specify the geometry 
+column name to <i>SHAPE2</i>.
 
 <pre>
 ogr2ogr -f MySQL MySQL:test,user=root world_borders.shp -nln borders2 -update -overwrite -lco MYSQL_GEOM_COLUMN=SHAPE2 
