@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/02/16 20:59:32  fwarmerdam
+ * added ENGINE layer creation option
+ *
  * Revision 1.15  2006/02/16 18:00:11  fwarmerdam
  * Don't make F_TABLE_NAME, it doesn't work on MySQL 4.x
  * Set COORD_DIMENSION.  Leave SRID NULL if not known.  Support wkbNone
@@ -661,130 +664,6 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     return nSRSId;
 }
 
-#ifdef notdef
-/************************************************************************/
-/*                        SoftStartTransaction()                        */
-/*                                                                      */
-/*      Create a transaction scope.  If we already have a               */
-/*      transaction active this isn't a real transaction, but just      */
-/*      an increment to the scope count.                                */
-/************************************************************************/
-
-OGRErr OGRMySQLDataSource::SoftStartTransaction()
-
-{
-    nSoftTransactionLevel++;
-
-    if( nSoftTransactionLevel == 1 )
-    {
-        PGresult            *hResult;
-        PGconn          *hPGConn = GetPGConn();
-
-        //CPLDebug( "OGR_MYSQL", "BEGIN Transaction" );
-        hResult = PQexec(hPGConn, "BEGIN");
-
-        if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
-        {
-            CPLDebug( "OGR_MYSQL", "BEGIN Transaction failed:\n%s",
-                      PQerrorMessage( hPGConn ) );
-            return OGRERR_FAILURE;
-        }
-
-        PQclear( hResult );
-    }
-
-    return OGRERR_NONE;
-}
-
-/************************************************************************/
-/*                             SoftCommit()                             */
-/*                                                                      */
-/*      Commit the current transaction if we are at the outer           */
-/*      scope.                                                          */
-/************************************************************************/
-
-OGRErr OGRMySQLDataSource::SoftCommit()
-
-{
-    if( nSoftTransactionLevel <= 0 )
-    {
-        CPLDebug( "OGR_MYSQL", "SoftCommit() with no transaction active." );
-        return OGRERR_FAILURE;
-    }
-
-    nSoftTransactionLevel--;
-
-    if( nSoftTransactionLevel == 0 )
-    {
-        PGresult            *hResult;
-        PGconn          *hPGConn = GetPGConn();
-
-        //CPLDebug( "OGR_MYSQL", "COMMIT Transaction" );
-        hResult = PQexec(hPGConn, "COMMIT");
-
-        if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
-        {
-            CPLDebug( "OGR_MYSQL", "COMMIT Transaction failed:\n%s",
-                      PQerrorMessage( hPGConn ) );
-            return OGRERR_FAILURE;
-        }
-
-        PQclear( hResult );
-    }
-
-    return OGRERR_NONE;
-}
-
-/************************************************************************/
-/*                            SoftRollback()                            */
-/*                                                                      */
-/*      Force a rollback of the current transaction if there is one,    */
-/*      even if we are nested several levels deep.                      */
-/************************************************************************/
-
-OGRErr OGRMySQLDataSource::SoftRollback()
-
-{
-    if( nSoftTransactionLevel <= 0 )
-    {
-        CPLDebug( "OGR_MYSQL", "SoftRollback() with no transaction active." );
-        return OGRERR_FAILURE;
-    }
-
-    nSoftTransactionLevel = 0;
-
-    PGresult            *hResult;
-    PGconn              *hPGConn = GetPGConn();
-    
-    hResult = PQexec(hPGConn, "ROLLBACK");
-    
-    if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
-        return OGRERR_FAILURE;
-    
-    PQclear( hResult );
-
-    return OGRERR_NONE;
-}
-
-/************************************************************************/
-/*                        FlushSoftTransaction()                        */
-/*                                                                      */
-/*      Force the unwinding of any active transaction, and it's         */
-/*      commit.                                                         */
-/************************************************************************/
-
-OGRErr OGRMySQLDataSource::FlushSoftTransaction()
-
-{
-    if( nSoftTransactionLevel <= 0 )
-        return OGRERR_NONE;
-
-    nSoftTransactionLevel = 1;
-
-    return SoftCommit();
-}
-#endif
-
 /************************************************************************/
 /*                             ExecuteSQL()                             */
 /************************************************************************/
@@ -979,9 +858,6 @@ int OGRMySQLDataSource::DeleteLayer( int iLayer)
 
 }
 
-
-
-
 /************************************************************************/
 /*                            CreateLayer()                             */
 /************************************************************************/
@@ -1069,6 +945,12 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
                  "   %s GEOMETRY NOT NULL )",
                  pszLayerName, pszExpectedFIDName, pszGeomColumnName );
     }
+
+    if( CSLFetchNameValue( papszOptions, "ENGINE" ) != NULL )
+    {
+        strcat( szCommand, " ENGINE = " );
+        strcat( szCommand, CSLFetchNameValue( papszOptions, "ENGINE" ) );
+    }
 	
     if( !mysql_query(GetConn(), szCommand ) )
     {
@@ -1079,6 +961,11 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
             ReportError( szCommand );
             return NULL;
         }
+    }
+    else
+    {
+        ReportError( szCommand );
+        return NULL;
     }
 
     // make sure to attempt to free results of successful queries
@@ -1135,37 +1022,37 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
 
         switch( wkbFlatten(eType) )
         {
-          case wkbPoint:
-            pszGeometryType = "POINT";
-            break;
+            case wkbPoint:
+                pszGeometryType = "POINT";
+                break;
 
-          case wkbLineString:
-            pszGeometryType = "LINESTRING";
-            break;
+            case wkbLineString:
+                pszGeometryType = "LINESTRING";
+                break;
 
-          case wkbPolygon:
-            pszGeometryType = "POLYGON";
-            break;
+            case wkbPolygon:
+                pszGeometryType = "POLYGON";
+                break;
 
-          case wkbMultiPoint:
-            pszGeometryType = "MULTIPOINT";
-            break;
+            case wkbMultiPoint:
+                pszGeometryType = "MULTIPOINT";
+                break;
 
-          case wkbMultiLineString:
-            pszGeometryType = "MULTILINESTRING";
-            break;
+            case wkbMultiLineString:
+                pszGeometryType = "MULTILINESTRING";
+                break;
 
-          case wkbMultiPolygon:
-            pszGeometryType = "MULTIPOLYGON";
-            break;
+            case wkbMultiPolygon:
+                pszGeometryType = "MULTIPOLYGON";
+                break;
 
-          case wkbGeometryCollection:
-            pszGeometryType = "GEOMETRYCOLLECTION";
-            break;
+            case wkbGeometryCollection:
+                pszGeometryType = "GEOMETRYCOLLECTION";
+                break;
 
-          default:
-            pszGeometryType = "GEOMETRY";
-            break;
+            default:
+                pszGeometryType = "GEOMETRY";
+                break;
 
         }
 
