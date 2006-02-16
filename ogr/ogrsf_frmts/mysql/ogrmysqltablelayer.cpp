@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/02/16 17:56:03  fwarmerdam
+ * Use COORD_DIMENSION when working out layer geometry type.
+ *
  * Revision 1.28  2006/02/16 17:21:00  fwarmerdam
  * Added date support.
  *
@@ -415,7 +418,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         // set to unknown first
         poDefn->SetGeomType( wkbUnknown );
         
-        sprintf(szCommand, "SELECT type FROM geometry_columns WHERE f_table_name='%s'",
+        sprintf(szCommand, "SELECT type, coord_dimension FROM geometry_columns WHERE f_table_name='%s'",
                 pszTable );
         
         hResult = NULL;
@@ -447,6 +450,9 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
                 nGeomType = wkbMultiPolygon;
             else if ( EQUAL(pszType,"GEOMETRYCOLLECTION"))
                 nGeomType = wkbGeometryCollection;
+
+            if( papszRow[1] != NULL && atoi(papszRow[1]) == 3 )
+                nGeomType = (OGRwkbGeometryType) (nGeomType | wkb25DBit);
 
             poDefn->SetGeomType( nGeomType );
 
