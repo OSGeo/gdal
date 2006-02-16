@@ -8,6 +8,9 @@
  *
  *
  * $Log$
+ * Revision 1.2  2006/02/16 17:21:12  collinsb
+ * Updates to Java bindings to keep the code from halting execution if the native libraries cannot be found.
+ *
  * Revision 1.1  2006/02/02 20:56:07  collinsb
  * Added Java specific typemap code
  *
@@ -50,42 +53,6 @@
     return $jnicall;
   }
 
-
-/*
-%typemap(in) (GDALColorEntry *) (GDALColorEntry tmp) {
-  /* %typemap(in) (GDALColorEntry *) (GDALColorEntry tmp) * /
-  $1 = NULL;
-  int *colorptr = 0;
-
-  colorptr = (int *)jenv->GetIntArrayElements($input, 0);
-  tmp.c1 = (short)colorptr[0];
-  tmp.c2 = (short)colorptr[1];
-  tmp.c3 = (short)colorptr[2];
-  tmp.c4 = (short)colorptr[3];
-  printf( "  %d, %d, %d, %d\n",
-                    tmp.c1, tmp.c2, tmp.c3, tmp.c4 );
-  $1 = &tmp;
-}
-
-%typemap(out) (GDALColorEntry *) {
-  /* %typemap(out) (GDALColorEntry *) * /
-  int colorptr[4];
-  colorptr[0] = $1->c1;
-  colorptr[1] = $1->c2;
-  colorptr[2] = $1->c3;
-  colorptr[3] = $1->c4;
-  $result = jenv->NewIntArray(4);
-  jenv->SetIntArrayRegion($result, 0, 4, (const jint*)colorptr);
-}
-
-%typemap(jni) (GDALColorEntry *) "jintArray"
-%typemap(jtype) (GDALColorEntry *) "int[]"
-%typemap(jstype) (GDALColorEntry *) "int[]"
-%typemap(javain) (GDALColorEntry *) "$javainput"
-%typemap(javaout) (GDALColorEntry *) {
-    return $jnicall;
-  }
-*/
 
 
 %typemap(in) (GDALColorEntry *) (GDALColorEntry tmp) {

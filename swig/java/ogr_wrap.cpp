@@ -1791,6 +1791,19 @@ JNIEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_OFTBinary_1get(JNIEnv *jenv, jcl
 }
 
 
+JNIEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_OFTDate_1get(JNIEnv *jenv, jclass jcls) {
+    jint jresult = 0 ;
+    int result;
+    
+    (void)jenv;
+    (void)jcls;
+    result = (int) 8;
+    
+    jresult = (jint)result; 
+    return jresult;
+}
+
+
 JNIEXPORT jint JNICALL Java_org_gdal_ogr_ogrJNI_OJUndefined_1get(JNIEnv *jenv, jclass jcls) {
     jint jresult = 0 ;
     int result;

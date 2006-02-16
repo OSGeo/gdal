@@ -51,7 +51,8 @@ public class ColorTable {
       reds[i] = (byte)entry.getRed();
       greens[i] = (byte)entry.getGreen();
       blues[i] = (byte)entry.getBlue();
-      alphas[i] = (byte)entry.getAlpha();
+      byte alpha = (byte)entry.getAlpha();
+      alphas[i] = (alpha != -1) ? alpha : 0;
     }
     return new IndexColorModel(bits, size, reds, greens, blues, alphas);
   }

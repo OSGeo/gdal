@@ -93,15 +93,22 @@ class osrJNI {
   public final static native double SRS_WGS84_SEMIMAJOR_get();
   public final static native double SRS_WGS84_INVFLATTENING_get();
 
- static {
+  private static boolean available = false;
+
+  static {
     try {
-        System.loadLibrary("osrjni");
+      System.loadLibrary("osrjni");
+      available = true;
     } catch (UnsatisfiedLinkError e) {
-    	System.err.println("Native library load failed.");
-    	System.err.println(e);
-    	System.exit(1);
+      available = false;
+      System.err.println("Native library load failed.");
+      System.err.println(e);
     }
- }
+  }
+  
+  public static boolean isAvailable() {
+    return available;
+  }
 
   public final static native int GetWellKnownGeogCSAsWKT(String jarg1, String[] jarg2);
   public final static native String[] GetProjectionMethods();

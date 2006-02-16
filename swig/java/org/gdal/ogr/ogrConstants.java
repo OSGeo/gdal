@@ -38,6 +38,7 @@ public interface ogrConstants {
   public final static int OFTWideString = ogrJNI.OFTWideString_get();
   public final static int OFTWideStringList = ogrJNI.OFTWideStringList_get();
   public final static int OFTBinary = ogrJNI.OFTBinary_get();
+  public final static int OFTDate = ogrJNI.OFTDate_get();
   public final static int OJUndefined = ogrJNI.OJUndefined_get();
   public final static int OJLeft = ogrJNI.OJLeft_get();
   public final static int OJRight = ogrJNI.OJRight_get();
