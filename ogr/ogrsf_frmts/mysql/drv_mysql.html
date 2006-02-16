@@ -116,6 +116,9 @@ The MySQL driver is not transactional at this time.<p>
         <b>SPATIAL_INDEX</b>: May be "NO" to stop automatic creation of 
 a spatial index on the geometry column, allowing NULL geometries and possibly faster loading. 
     </li>
+    <li>
+        <b>ENGINE</b>: Optionally specify database engine to use.  In MySQL 4.x this must be set to MyISAM for spatial tables.
+    </li>
 </ul>
 
 The following example datasource name opens the database schema 
