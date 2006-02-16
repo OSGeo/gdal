@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/02/16 16:28:00  fwarmerdam
+ * Improved InitializeMetadataTables() error reporting, and removed
+ * UNIQUE constraint on F_TABLE_NAME as it causes problems in mysql 4.x
+ *
  * Revision 1.13  2006/02/13 04:15:04  hobu
  * major formatting cleanup
  * Added myself as an author
@@ -404,6 +408,7 @@ OGRErr OGRMySQLDataSource::InitializeMetadataTables()
 {
     char            szCommand[1024];
     MYSQL_RES       *hResult;
+    OGRErr	    eErr = OGRERR_NONE;
  
     sprintf( szCommand, "DESCRIBE geometry_columns" );
     if( mysql_query(GetConn(), szCommand ) )
@@ -412,21 +417,28 @@ OGRErr OGRMySQLDataSource::InitializeMetadataTables()
                 "CREATE TABLE geometry_columns "
                 "( F_TABLE_CATALOG VARCHAR(256), "
                 "F_TABLE_SCHEMA VARCHAR(256), "
-                "F_TABLE_NAME VARCHAR(256) UNIQUE NOT NULL," 
+                "F_TABLE_NAME VARCHAR(256) NOT NULL," 
                 "F_GEOMETRY_COLUMN VARCHAR(256) NOT NULL, "
                 "COORD_DIMENSION INT, "
                 "SRID INT,"
                 "TYPE VARCHAR(256) NOT NULL)");
-        mysql_query(GetConn(), szCommand );
-        CPLDebug("MYSQL","Creating geometry_columns metadata table");
+        if( mysql_query(GetConn(), szCommand ) )
+        {
+            ReportError( szCommand );
+            eErr = OGRERR_FAILURE;
+        }
+        else
+            CPLDebug("MYSQL","Creating geometry_columns metadata table");
  
     }
  
     // make sure to attempt to free results of successful queries
     hResult = mysql_store_result( GetConn() );
     if( hResult != NULL )
+    {
         mysql_free_result( hResult );
-    hResult = NULL;   
+        hResult = NULL;   
+    }
  
     sprintf( szCommand, "DESCRIBE spatial_ref_sys" );
     if( mysql_query(GetConn(), szCommand ) )
@@ -437,20 +449,26 @@ OGRErr OGRMySQLDataSource::InitializeMetadataTables()
                 "AUTH_NAME VARCHAR(256), "
                 "AUTH_SRID INT, "
                 "SRTEXT VARCHAR(2048))");
-        mysql_query(GetConn(), szCommand );
-        CPLDebug("MYSQL","Creating spatial_ref_sys metadata table");
+        if( mysql_query(GetConn(), szCommand ) )
+        {
+            ReportError( szCommand );
+            eErr = OGRERR_FAILURE;
+        }
+        else
+            CPLDebug("MYSQL","Creating spatial_ref_sys metadata table");
  
     }    
  
     // make sure to attempt to free results of successful queries
     hResult = mysql_store_result( GetConn() );
     if( hResult != NULL )
+    {
         mysql_free_result( hResult );
-	hResult = NULL;
+        hResult = NULL;
+    }
  
-    return OGRERR_NONE;
+    return eErr;
 }
-
 
 /************************************************************************/
 /*                              FetchSRS()                              */
