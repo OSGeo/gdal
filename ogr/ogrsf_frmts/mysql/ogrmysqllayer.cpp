@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/02/16 16:53:57  fwarmerdam
+ * Remove debug statement for null attributes,  it is way overkill.
+ *
  * Revision 1.15  2006/02/13 04:15:04  hobu
  * major formatting cleanup
  * Added myself as an author
@@ -229,11 +232,11 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
         }
 
         if( papszRow[iField] == NULL ) 
-            {
-                CPLDebug("MYSQL", "%s was null for %d", psMSField->name,
-                                                        iNextShapeId);
-                continue;
-            }
+        {
+//            CPLDebug("MYSQL", "%s was null for %d", psMSField->name,
+//                     iNextShapeId);
+            continue;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Handle MySQL geometry                                           */
