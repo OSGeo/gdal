@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/02/16 17:21:53  fwarmerdam
+ * improve initialization
+ *
  * Revision 1.16  2006/02/16 16:53:57  fwarmerdam
  * Remove debug statement for null attributes,  it is way overkill.
  *
@@ -97,6 +100,8 @@ OGRMySQLLayer::OGRMySQLLayer()
     poDS = NULL;
 
     pszGeomColumn = NULL;
+    pszGeomColumnTable = NULL;
+    pszFIDColumn = NULL;
     pszQueryStatement = NULL;
 
     bHasFid = FALSE;
