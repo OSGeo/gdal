@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.27  2006/02/16 05:14:46  fwarmerdam
+ * Fixed byte swapping of NOAA9 GCPS.
+ *
  * Revision 1.26  2005/07/31 01:00:08  fwarmerdam
  * Moved CPL_LSB variables into #ifdef.
  *
@@ -560,8 +563,8 @@ void L1BDataset::FetchNOAA9GCPs( GDAL_GCP *pasGCPList,
         GInt16  nRawX = piRecordHeader[j++];
 
 #ifdef CPL_LSB
-        CPL_SWAP32PTR( &nRawX );
-        CPL_SWAP32PTR( &nRawY );
+        CPL_SWAP16PTR( &nRawX );
+        CPL_SWAP16PTR( &nRawY );
 #endif
         pasGCPList[nGCPCount].dfGCPY = nRawY / 128.0;
         pasGCPList[nGCPCount].dfGCPX = nRawX / 128.0;
@@ -571,6 +574,7 @@ void L1BDataset::FetchNOAA9GCPs( GDAL_GCP *pasGCPList,
             || pasGCPList[nGCPCount].dfGCPY < -90
             || pasGCPList[nGCPCount].dfGCPY > 90)
             continue;
+
         pasGCPList[nGCPCount].dfGCPZ = 0.0;
         pasGCPList[nGCPCount].dfGCPPixel = dfPixel;
         dfPixel += (iLocationIndicator == DESCEND)?dfGCPStep:-dfGCPStep;
