@@ -8,6 +8,9 @@
  *
  *
  * $Log$
+ * Revision 1.2  2006/02/16 17:21:12  collinsb
+ * Updates to Java bindings to keep the code from halting execution if the native libraries cannot be found.
+ *
  * Revision 1.1  2006/02/02 20:56:07  collinsb
  * Added Java specific typemap code
  *
@@ -15,15 +18,22 @@
 */
 
 %pragma(java) jniclasscode=%{
- static {
+  private static boolean available = false;
+
+  static {
     try {
-        System.loadLibrary("gdaljni");
+      System.loadLibrary("gdaljni");
+      available = true;
     } catch (UnsatisfiedLinkError e) {
-    	System.err.println("Native library load failed.");
-    	System.err.println(e);
-    	System.exit(1);
+      available = false;
+      System.err.println("Native library load failed.");
+      System.err.println(e);
     }
- }
+  }
+  
+  public static boolean isAvailable() {
+    return available;
+  }
 %}
 
 
@@ -74,7 +84,8 @@ import java.awt.Color;
       reds[i] = (byte)entry.getRed();
       greens[i] = (byte)entry.getGreen();
       blues[i] = (byte)entry.getBlue();
-      alphas[i] = (byte)entry.getAlpha();
+      byte alpha = (byte)entry.getAlpha();
+      alphas[i] = (alpha != -1) ? alpha : 0;
     }
     return new IndexColorModel(bits, size, reds, greens, blues, alphas);
   }

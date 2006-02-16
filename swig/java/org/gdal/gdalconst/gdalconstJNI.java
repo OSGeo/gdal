@@ -10,15 +10,22 @@ package org.gdal.gdalconst;
 
 class gdalconstJNI {
 
- static {
+  private static boolean available = false;
+
+  static {
     try {
-        System.loadLibrary("gdalconstjni");
+      System.loadLibrary("gdalconstjni");
+      available = true;
     } catch (UnsatisfiedLinkError e) {
-    	System.err.println("Native library load failed.");
-    	System.err.println(e);
-    	System.exit(1);
+      available = false;
+      System.err.println("Native library load failed.");
+      System.err.println(e);
     }
- }
+  }
+  
+  public static boolean isAvailable() {
+    return available;
+  }
 
   public final static native int GDT_Unknown_get();
   public final static native int GDT_Byte_get();

@@ -36,6 +36,7 @@ class ogrJNI {
   public final static native int OFTWideString_get();
   public final static native int OFTWideStringList_get();
   public final static native int OFTBinary_get();
+  public final static native int OFTDate_get();
   public final static native int OJUndefined_get();
   public final static native int OJLeft_get();
   public final static native int OJRight_get();
@@ -56,15 +57,22 @@ class ogrJNI {
   public final static native String ODrCCreateDataSource_get();
   public final static native String ODrCDeleteDataSource_get();
 
- static {
+  private static boolean available = false;
+
+  static {
     try {
-        System.loadLibrary("ogrjni");
+      System.loadLibrary("ogrjni");
+      available = true;
     } catch (UnsatisfiedLinkError e) {
-    	System.err.println("Native library load failed.");
-    	System.err.println(e);
-    	System.exit(1);
+      available = false;
+      System.err.println("Native library load failed.");
+      System.err.println(e);
     }
- }
+  }
+  
+  public static boolean isAvailable() {
+    return available;
+  }
 
   public final static native String Driver_name_get(long jarg1);
   public final static native long Driver_CreateDataSource(long jarg1, String jarg2, java.util.Vector jarg3);

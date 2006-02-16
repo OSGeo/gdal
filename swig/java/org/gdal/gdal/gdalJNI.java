@@ -10,15 +10,22 @@ package org.gdal.gdal;
 
 class gdalJNI {
 
- static {
+  private static boolean available = false;
+
+  static {
     try {
-        System.loadLibrary("gdaljni");
+      System.loadLibrary("gdaljni");
+      available = true;
     } catch (UnsatisfiedLinkError e) {
-    	System.err.println("Native library load failed.");
-    	System.err.println(e);
-    	System.exit(1);
+      available = false;
+      System.err.println("Native library load failed.");
+      System.err.println(e);
     }
- }
+  }
+  
+  public static boolean isAvailable() {
+    return available;
+  }
 
   public final static native void Debug(String jarg1, String jarg2);
   public final static native void Error(int jarg1, int jarg2, String jarg3);
