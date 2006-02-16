@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/02/16 14:29:12  fwarmerdam
+ * applied some portability fixes for VC6
+ *
  * Revision 1.5  2006/02/13 18:18:53  pka
  * Interlis 2: Support for nested attributes
  * Interlis 2: Arc interpolation
@@ -327,12 +330,18 @@ OGRGeometry *getGeometry(DOMElement *elem, int type) {
 char* fieldName(DOMElement* elem) {
   string fullname;
   int depth = 0;
-  for (DOMNode* node = elem; node; node = node->getParentNode()) ++depth;
+  DOMNode *node;
+  for (node = elem; node; node = node->getParentNode()) ++depth;
   depth-=3; //ignore root elements
-  DOMNode* elements[depth];
+
+// We cannot do this sort of dynamic stack alloc on MSVC6.
+//  DOMNode* elements[depth];
+  DOMNode* elements[1000];
+  CPLAssert( depth < sizeof(elements) / sizeof(DOMNode*) );
+
   int d=0;
-  for (DOMNode* node = elem; d<depth; node = node->getParentNode()) elements[d++] = node;
-  for (int d=depth-1; d>=0; --d) {
+  for (node = elem; d<depth; node = node->getParentNode()) elements[d++] = node;
+  for (d=depth-1; d>=0; --d) {
     if (d < depth-1) fullname += "_";
     fullname += XMLString::transcode(elements[d]->getNodeName());
   }
