@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.157  2006/02/17 15:46:06  fwarmerdam
+ * Ensure that an image is considered paletted if it has a palette,
+ * even if the photometric interpretation is wrong.
+ *
  * Revision 1.156  2006/02/12 23:52:53  fwarmerdam
  * Allow one or two GCPs if that is all the tiepoints there are.
  *
@@ -366,9 +370,11 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
 /* -------------------------------------------------------------------- */
 /*      Try to work out band color interpretation.                      */
 /* -------------------------------------------------------------------- */
-    if( poDS->nPhotometric == PHOTOMETRIC_RGB 
-        || (poDS->nPhotometric == PHOTOMETRIC_YCBCR 
-            && poDS->nCompression == COMPRESSION_JPEG ) )
+    if( poDS->poColorTable != NULL && nBand == 1 ) 
+        eBandInterp = GCI_PaletteIndex;
+    else if( poDS->nPhotometric == PHOTOMETRIC_RGB 
+             || (poDS->nPhotometric == PHOTOMETRIC_YCBCR 
+                 && poDS->nCompression == COMPRESSION_JPEG ) )
     {
         if( nBand == 1 )
             eBandInterp = GCI_RedBand;
@@ -422,8 +428,6 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
     }
     else if( poDS->nPhotometric == PHOTOMETRIC_MINISBLACK && nBand == 1 )
         eBandInterp = GCI_GrayIndex;
-    else if( poDS->nPhotometric == PHOTOMETRIC_PALETTE && nBand == 1 ) 
-        eBandInterp = GCI_PaletteIndex;
     else
     {
         uint16 *v;
@@ -2756,36 +2760,12 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
               && nBitsPerSample != 128 )
         bTreatAsOdd = TRUE;
 
-
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
-    for( int iBand = 0; iBand < nBands; iBand++ )
-    {
-        if( bTreatAsRGBA )
-            SetBand( iBand+1, new GTiffRGBABand( this, iBand+1 ) );
-        else if( bTreatAsBitmap )
-            SetBand( iBand+1, new GTiffBitmapBand( this, iBand+1 ) );
-        else if( bTreatAsOdd )
-            SetBand( iBand+1, new GTiffOddBitsBand( this, iBand+1 ) );
-        else
-            SetBand( iBand+1, new GTiffRasterBand( this, iBand+1 ) );
-    }
-
-    if( GetRasterBand(1)->GetRasterDataType() == GDT_Unknown )
-    {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "Unsupported TIFF configuration." );
-        return CE_Failure;
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Capture the color table if there is one.                        */
 /* -------------------------------------------------------------------- */
     unsigned short	*panRed, *panGreen, *panBlue;
 
-    if( nPhotometric != PHOTOMETRIC_PALETTE 
-        || bTreatAsRGBA 
+    if( bTreatAsRGBA 
         || TIFFGetField( hTIFF, TIFFTAG_COLORMAP, 
                          &panRed, &panGreen, &panBlue) == 0 )
     {
@@ -2832,6 +2812,28 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
         }
     }
     
+/* -------------------------------------------------------------------- */
+/*      Create band information objects.                                */
+/* -------------------------------------------------------------------- */
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+        if( bTreatAsRGBA )
+            SetBand( iBand+1, new GTiffRGBABand( this, iBand+1 ) );
+        else if( bTreatAsBitmap )
+            SetBand( iBand+1, new GTiffBitmapBand( this, iBand+1 ) );
+        else if( bTreatAsOdd )
+            SetBand( iBand+1, new GTiffOddBitsBand( this, iBand+1 ) );
+        else
+            SetBand( iBand+1, new GTiffRasterBand( this, iBand+1 ) );
+    }
+
+    if( GetRasterBand(1)->GetRasterDataType() == GDT_Unknown )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "Unsupported TIFF configuration." );
+        return CE_Failure;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Get the transform or gcps from the GeoTIFF file.                */
 /* -------------------------------------------------------------------- */
