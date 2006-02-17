@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.23  2006/02/17 17:37:41  fwarmerdam
+ * Removed class qualifier on constructor of FITRasterBand.
+ *
  * Revision 1.22  2005/07/05 17:10:52  fwarmerdam
  * give swap funcs unique names
  *
@@ -174,8 +177,8 @@ class FITRasterBand : public GDALPamRasterBand
 
 public:
 
-    FITRasterBand::FITRasterBand( FITDataset *, int );
-	~FITRasterBand();
+    FITRasterBand( FITDataset *, int );
+    ~FITRasterBand();
     
     // should override RasterIO eventually.
     
