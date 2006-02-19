@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2006/02/19 22:36:46  fwarmerdam
+ * avoid swap words unused warning
+ *
  * Revision 1.39  2005/12/09 18:54:35  fwarmerdam
  * fixed ICORDS=N for NITF 1.x
  *
@@ -164,8 +167,10 @@
 CPL_CVSID("$Id$");
 
 static char *NITFTrimWhite( char * );
+#ifdef CPL_LSB
 static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
                            int nWordSkip );
+#endif
 
 /************************************************************************/
 /*                          NITFImageAccess()                           */
@@ -1526,6 +1531,7 @@ char *NITFTrimWhite( char *pszTarget )
 /*                           NITFSwapWords()                            */
 /************************************************************************/
 
+#ifdef CPL_LSB
 static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
                            int nWordSkip )
 
@@ -1600,6 +1606,8 @@ static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
         CPLAssert( FALSE );
     }
 }
+
+#endif /* def CPL_LSB */
 
 /************************************************************************/
 /*                           NITFReadRPC00B()                           */
