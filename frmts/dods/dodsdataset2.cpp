@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.7  2006/02/19 16:22:20  fwarmerdam
+ * Added nodata support
+ *
  * Revision 1.6  2005/07/18 14:13:12  fwarmerdam
  * bug 891: added DEFAULT_BASETYPE_FACTORY define for 3.5.x compatability
  *
@@ -279,6 +282,8 @@ private:
     int    bTranspose;
     int    bFlipX;
     int    bFlipY;
+		int    bNoDataSet;
+    double dfNoDataValue;
 
     void            HarvestDAS();
 
@@ -292,6 +297,8 @@ public:
     virtual CPLErr IReadBlock(int, int, void *);
     virtual GDALColorInterp GetColorInterpretation();
     virtual GDALColorTable *GetColorTable();
+		virtual CPLErr          SetNoDataValue( double );
+    virtual double          GetNoDataValue( int * );
 };
 
 /************************************************************************/
@@ -1266,6 +1273,13 @@ void DODSRasterBand::HarvestDAS()
     if( oValue != "" )
         SetDescription( oValue.c_str() );
 
+/* --- */
+/* missing_value */
+/* --- */
+    oValue = poBandInfo->get_attr( "missing_value" );
+    if( oValue != "" )
+        SetNoDataValue( atof(oValue.c_str()) );
+
 /* -------------------------------------------------------------------- */
 /*      Collect color table                                             */
 /* -------------------------------------------------------------------- */
@@ -1576,6 +1590,32 @@ GDALColorTable *DODSRasterBand::GetColorTable()
 
 {
     return poCT;
+}
+
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+CPLErr DODSRasterBand::SetNoDataValue( double dfNoData )
+
+{
+    bNoDataSet = TRUE;
+    dfNoDataValue = dfNoData;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double DODSRasterBand::GetNoDataValue( int * pbSuccess )
+
+{
+    if( pbSuccess )
+        *pbSuccess = bNoDataSet;
+
+    return dfNoDataValue;
 }
 
 /************************************************************************/
