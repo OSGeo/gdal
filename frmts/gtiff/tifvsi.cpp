@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/02/19 22:29:37  fwarmerdam
+ * added sys/errno.h for macos x
+ *
  * Revision 1.3  2005/10/13 19:44:25  fwarmerdam
  * Improve open error reporting.
  *
@@ -44,6 +47,8 @@
 /*
  * TIFF Library UNIX-specific Routines.
  */
+#include <stdio.h>
+#include <sys/errno.h>
 #include "tiffio.h"
 #include "cpl_vsi.h"
 
