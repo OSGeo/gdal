@@ -1,0 +1,27 @@
+#
+# WCELIBCEX (Windows CE C Library Extension) makefile for Windows CE build
+#
+  
+!INCLUDE ..\nmake-wince.opt
+
+WCELIBCEX_CFLAGS = $(CFLAGS) /I "."
+
+OBJ = *.obj
+LIB = wcelibcex.lib
+
+# Compilation Output
+
+default: $(LIB)
+
+.c.obj:
+	$(CC) $(WCELIBCEX_CFLAGS) /c $*.c
+
+$(LIB):	$(OBJ)
+	link.exe -lib /out:$(LIB) $(OBJ)
+
+clean:
+	del $(OBJ)
+	del $(LIB)
+	del *.pdb
+
+# DO NOT DELETE
