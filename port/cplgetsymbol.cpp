@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2006/02/19 21:54:34  mloskot
+ * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
+ *
  * Revision 1.14  2004/11/11 20:40:38  fwarmerdam
  * Check for variant of symbol with a leading underscore on Mach-O/Apple
  * systems.  Patch by John Hayes / Lizardtech.
@@ -173,7 +176,11 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
 #define GOT_GETSYMBOL
 
-#include <windows.h>
+#if defined(WIN32CE)
+#  include "cpl_win32ce_api.h"
+#else
+#  include <windows.h>
+#endif
 
 /************************************************************************/
 /*                            CPLGetSymbol()                            */
@@ -206,6 +213,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 }
 
 #endif /* def _WIN32 */
+
 
 /* ==================================================================== */
 /*      Dummy implementation.                                           */

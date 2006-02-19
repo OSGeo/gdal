@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/02/19 21:54:34  mloskot
+ * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
+ *
  * Revision 1.2  2005/11/11 14:20:59  fwarmerdam
  * Use lower case for windows.h to allow cross compilation for windows
  * on linux (per email from Radim).
@@ -41,18 +44,25 @@
 
 CPL_CVSID("$Id$");
 
-#if defined(WIN32)
+#if defined(WIN32) || defined(WIN32CE)
 
-#include <windows.h>
+#if defined(WIN32CE)
+#  include "cpl_win32ce_api.h"
+#else
+#  include <windows.h>
+#endif
 
 /************************************************************************/
 /*                           CPLGetExecPath()                           */
 /************************************************************************/
 
 int CPLGetExecPath( char *pszPathBuf, int nMaxLength )
-
 {
+#ifndef WIN32CE
     if( GetModuleFileName( NULL, pszPathBuf, nMaxLength ) == 0 )
+#else
+    if( CE_GetModuleFileNameA( NULL, pszPathBuf, nMaxLength ) == 0 )
+#endif
         return FALSE;
     else
         return TRUE;

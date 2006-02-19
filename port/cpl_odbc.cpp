@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2006/02/19 21:54:34  mloskot
+ * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
+ *
  * Revision 1.26  2006/01/31 03:04:27  fwarmerdam
  * Fixed null trimming to work for long unicode text strings per:
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=990
@@ -121,6 +124,9 @@
 #include "cpl_odbc.h"
 #include "cpl_vsi.h"
 #include "cpl_string.h"
+
+
+#ifndef WIN32CE /* ODBC is not supported on Windows CE. */
 
 CPL_CVSID("$Id$");
 
@@ -1388,3 +1394,5 @@ CPLString CPLODBCStatement::GetTypeName( int nTypeCode )
         return osResult;
     }
 }
+
+#endif /* #ifndef WIN32CE */

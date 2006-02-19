@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/02/19 21:54:34  mloskot
+ * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
+ *
  * Revision 1.5  2006/01/10 17:03:56  fwarmerdam
  * added VSI Rename support
  *
@@ -49,6 +52,12 @@
 #define CPL_VSI_VIRTUAL_H_INCLUDED
 
 #include "cpl_vsi.h"
+
+#if defined(WIN32CE)
+#  include "cpl_wince.h"
+#  include <wce_errno.h>
+#  pragma warning(disable:4786) /* Remove annoying warnings in eVC++ and VC++ 6.0 */
+#endif
 
 #include <map>
 #include <vector>

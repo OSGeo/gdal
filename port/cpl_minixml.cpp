@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.40  2006/02/19 21:54:34  mloskot
+ * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
+ *
  * Revision 1.39  2005/10/07 00:03:29  fwarmerdam
  * improve documentation
  *
@@ -168,6 +171,13 @@
 
 CPL_CVSID("$Id$");
 
+/*
+ * XXX - mloskot - TokenType renamed to XMLTokenType 
+ * It's required because of names conflict with TokenType
+ * defined in <winnt.h> from Windows CE SDK.
+ */
+
+
 typedef enum {
     TNone,
     TString, 
@@ -179,15 +189,14 @@ typedef enum {
     TQuestionClose,
     TComment,
     TLiteral
-} TokenType;
+} XMLTokenType;
 
 typedef struct {
     const char *pszInput;
     int        nInputOffset;
     int        nInputLine;
-
     int        bInElement;
-    TokenType  eTokenType;
+    XMLTokenType  eTokenType;
     char       *pszToken;
     int        nTokenMaxSize;
     int        nTokenSize;
@@ -198,6 +207,7 @@ typedef struct {
 
     CPLXMLNode *psFirstNode;
 } ParseContext;
+
 
 /************************************************************************/
 /*                              ReadChar()                              */
@@ -268,7 +278,7 @@ static void AddToToken( ParseContext *psContext, char chNewChar )
 /*                             ReadToken()                              */
 /************************************************************************/
 
-static TokenType ReadToken( ParseContext *psContext )
+static XMLTokenType ReadToken( ParseContext *psContext )
 
 {
     char        chNext;
@@ -1894,7 +1904,6 @@ int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
  */
 
 void CPLCleanXMLElementName( char *pszTarget )
-
 {
     if( pszTarget == NULL )
         return;
@@ -1912,4 +1921,3 @@ void CPLCleanXMLElementName( char *pszTarget )
         }
     }
 }
-

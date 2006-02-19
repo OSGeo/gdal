@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2006/02/19 21:54:34  mloskot
+ * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
+ *
  * Revision 1.49  2006/02/09 05:54:15  fwarmerdam
  * use ll in format for long long on mac, not L
  *
@@ -185,6 +188,11 @@
 #include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$");
+
+#if defined(WIN32CE)
+#  include "cpl_wince.h"
+#  include <wce_errno.h>
+#endif
 
 static void *hConfigMutex = NULL;
 static volatile char **papszConfigOptions = NULL;
@@ -1357,6 +1365,8 @@ int CPLPrintDouble( char *pszBuffer, const char *pszFormat,
  * @return Number of characters printed.
  */
 
+#ifndef WIN32CE /* XXX - mloskot - strftime is not available yet. */
+
 int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
                   const struct tm *poBrokenTime, char *pszLocale )
 {
@@ -1390,6 +1400,8 @@ int CPLPrintTime( char *pszBuffer, int nMaxLen, const char *pszFormat,
 
     return nChars;
 }
+
+#endif
 
 /************************************************************************/
 /*                       CPLVerifyConfiguration()                       */
@@ -1443,9 +1455,11 @@ CPLGetConfigOption( const char *pszKey, const char *pszDefault )
         pszResult = CSLFetchNameValue( (char **) papszConfigOptions, pszKey );
     }
 
+#if !defined(WIN32CE) 
     if( pszResult == NULL )
         pszResult = getenv( pszKey );
-
+#endif
+    
     if( pszResult == NULL )
         return pszDefault;
     else
