@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2006/02/19 21:54:34  mloskot
+ * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
+ *
  * Revision 1.14  2005/09/05 20:18:43  fwarmerdam
  * added binary column support
  *
@@ -77,6 +80,8 @@
 #define CPL_ODBC_H_INCLUDED
 
 #include "cpl_port.h"
+
+#ifndef WIN32CE /* ODBC is not supported on Windows CE. */
 
 #ifdef WIN32
 #  include <windows.h>
@@ -215,6 +220,8 @@ class CPL_DLL CPLODBCStatement {
 
     int            CollectResultsInfo();
 };
+
+#endif /* #ifndef WIN32CE */
 
 #endif
 

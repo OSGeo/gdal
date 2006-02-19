@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/02/19 21:54:34  mloskot
+ * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
+ *
  * Revision 1.9  2006/01/10 17:03:56  fwarmerdam
  * added VSI Rename support
  *
@@ -60,7 +63,7 @@
 
 #include "cpl_port.h"
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(WIN32CE)
 
 #include "cpl_vsi_private.h"
 #include "cpl_string.h"

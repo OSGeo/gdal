@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/02/19 21:54:34  mloskot
+ * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
+ *
  * Revision 1.8  2006/01/19 23:54:07  fwarmerdam
  * Protect access to oFileList in VSIGetMemFileBuffer() and VSIFileFromMemBuffer().
  *
@@ -54,10 +57,20 @@
  *
  */
 
+/* Remove annoying warnings in eVC++ and VC++ 6.0 */
+#if defined(WIN32CE)
+#  pragma warning(disable:4786)
+#endif
+
 #include "cpl_vsi_private.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
 #include <map>
+
+#if defined(WIN32CE)
+#  include <wce_errno.h>
+#endif
+
 
 CPL_CVSID("$Id$");
 

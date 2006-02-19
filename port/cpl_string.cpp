@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.54  2006/02/19 21:54:34  mloskot
+ * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
+ *
  * Revision 1.53  2005/12/19 20:17:21  fwarmerdam
  * enable pszValue NULL to delete entry in CSLSetNameValue
  *
@@ -212,6 +215,11 @@
 
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+
+#if defined(WIN32CE)
+#  include <wce_errno.h>
+#  include <wce_string.h>
+#endif
 
 CPL_CVSID("$Id$");
 

@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/02/19 21:54:34  mloskot
+ * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
+ *
  * Revision 1.22  2005/10/13 01:20:16  fwarmerdam
  * added CSLMerge()
  *
@@ -201,14 +204,46 @@ CPL_C_END
 
 #include <string>
 
-using std::string;
+/*
+ * Simple trick to avoid "using" declaration in header for new compilers
+ * but make it still working with old compilers which throw C2614 errors.
+ *
+ * Define MSVC_OLD_STUPID_BEHAVIOUR
+ * for old compilers: VC++ 5 and 6 as well as eVC++ 3 and 4.
+ */
 
-class CPL_DLL CPLString : public string
+/*
+ * Detect old MSVC++ compiler <= 6.0
+ * 1200 - VC++ 6.0
+ * 1200-1202 - eVC++ 4.0
+ */
+#if (_MSC_VER <= 1202)
+#  define MSVC_OLD_STUPID_BEHAVIOUR
+#endif
+ 
+
+/* Avoid C2614 errors */
+#ifdef MSVC_OLD_STUPID_BEHAVIOUR
+    using std::string;
+# define std_string string
+#else
+# define std_string std::string
+#endif 
+
+/* Remove annoying warnings in eVC++ and VC++ 6.0 */
+#if defined(WIN32CE)
+#  pragma warning(disable:4786)
+#endif
+
+
+
+
+class CPL_DLL CPLString : public std_string
 {
 public:
     CPLString(void) {}
-    CPLString( const std::string &oStr ) : string( oStr ) {}
-    CPLString( const char *pszStr ) : string( pszStr ) {}
+    CPLString( const std::string &oStr ) : std_string( oStr ) {}
+    CPLString( const char *pszStr ) : std_string( pszStr ) {}
     
     operator const char* (void) const { return c_str(); }
 

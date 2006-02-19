@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.33  2006/02/19 21:54:34  mloskot
+ * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
+ *
  * Revision 1.32  2005/07/25 18:09:10  fwarmerdam
  * Made pfnErrorHandler static.
  *
@@ -133,6 +136,11 @@
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
 
+#if defined(WIN32CE)
+#  include "cpl_wince.h"
+#  include <wce_stdlib.h>
+#endif
+ 
 #define TIMESTAMP_DEBUG
 
 CPL_CVSID("$Id$");

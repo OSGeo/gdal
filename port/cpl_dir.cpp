@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/02/19 21:54:34  mloskot
+ * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
+ *
  * Revision 1.5  2002/03/28 14:52:32  warmerda
  * moved docs to non-WIN32 section
  *
@@ -51,13 +54,19 @@
 
 CPL_CVSID("$Id$");
 
-#ifdef WIN32
+#if defined(WIN32) || defined(WIN32CE)
 
 /*=====================================================================
                    WIN32 / MSVC++ implementation
  *====================================================================*/
 
-#include <io.h>
+#ifndef WIN32CE
+#  include <io.h>
+#else
+#  include <wce_io.h>
+#endif
+ 
+
 
 /**********************************************************************
  *                          CPLReadDir()

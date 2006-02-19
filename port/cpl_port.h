@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2006/02/19 21:54:34  mloskot
+ * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
+ *
  * Revision 1.46  2005/12/08 20:21:10  fwarmerdam
  * added CPL_ODLL declaration
  *
@@ -152,13 +155,21 @@
 /* ==================================================================== */
 /*      We will use WIN32 as a standard windows define.                 */
 /* ==================================================================== */
-#if defined(_WIN32) && !defined(WIN32)
+#if defined(_WIN32) && !defined(WIN32) && !defined(_WIN32_WCE)
 #  define WIN32
 #endif
 
-#if defined(_WINDOWS) && !defined(WIN32)
+#if defined(_WINDOWS) && !defined(WIN32) && !defined(_WIN32_WCE)
 #  define WIN32
 #endif
+
+/* ==================================================================== */
+/*      We will use WIN32CE as a standard Windows CE (Mobile) define.   */
+/* ==================================================================== */
+#if defined(_WIN32_WCE)
+#  define WIN32CE
+#endif
+
 
 #include "cpl_config.h"
 
@@ -169,6 +180,7 @@
 
 #ifdef unix
 #  undef WIN32
+#  undef WIN32CE
 #endif
 
 #if defined(VSI_NEED_LARGEFILE64_SOURCE) && !defined(_LARGEFILE64_SOURCE)
@@ -185,8 +197,18 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
-#include <errno.h>
-#include <time.h>
+
+#if !defined(WIN32CE)
+#  include <time.h>
+#else
+#  include <wce_time.h>
+#  include <wce_errno.h>
+#endif
+
+
+#if defined(HAVE_ERRNO_H)
+#  include <errno.h>
+#endif 
 
 #ifdef HAVE_LOCALE_H
 #  include <locale.h>
@@ -320,7 +342,7 @@ typedef unsigned long    GUIntBig;
 #endif
 
 #ifndef EQUAL
-#ifdef WIN32
+#if defined(WIN32) || defined(WIN32CE)
 #  define EQUALN(a,b,n)           (strnicmp(a,b,n)==0)
 #  define EQUAL(a,b)              (stricmp(a,b)==0)
 #else

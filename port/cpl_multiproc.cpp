@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/02/19 21:54:34  mloskot
+ * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
+ *
  * Revision 1.17  2006/01/25 19:52:25  fwarmerdam
  * default to avoiding as much mutex overhead as opposed if MUTEX_NONE defined
  *
@@ -83,7 +86,12 @@
 
 #include "cpl_multiproc.h"
 #include "cpl_conv.h"
-#include <time.h>
+
+#if !defined(WIN32CE)
+#  include <time.h>
+#else
+#  include <wce_time.h>
+#endif
 
 CPL_CVSID("$Id$");
 
@@ -462,8 +470,8 @@ void CPLCleanupTLS()
 
 #endif /* def CPL_MULTIPROC_STUB */
 
-#ifdef CPL_MULTIPROC_WIN32
-#include <windows.h>
+#if defined(CPL_MULTIPROC_WIN32)
+
 
   /************************************************************************/
   /* ==================================================================== */
@@ -472,6 +480,14 @@ void CPLCleanupTLS()
   /*    WIN32 Implementation of multiprocessing functions.                */
   /* ==================================================================== */
   /************************************************************************/
+
+#include <windows.h>
+
+/* windows.h header must be included above following lines. */
+#if defined(WIN32CE)
+#  include "cpl_win32ce_api.h"
+#  define TLS_OUT_OF_INDEXES ((DWORD)0xFFFFFFFF)
+#endif
 
 
 /************************************************************************/
@@ -709,7 +725,6 @@ void CPLCleanupTLS()
 
 {
     void **papTLSList;
-    int i;
 
     if( !bTLSKeySetup )
         return;
@@ -991,7 +1006,7 @@ static void **CPLGetTLSList()
 void *CPLGetTLS( int nIndex )
 
 {
-    void **papTLSList = CPLGetTLSList();
+    void** papTLSList = CPLGetTLSList();
 
     CPLAssert( nIndex >= 0 && nIndex < CTLS_MAX );
 

@@ -32,6 +32,9 @@
  * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.29  2006/02/19 21:54:34  mloskot
+ * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
+ *
  * Revision 1.28  2006/01/10 17:03:56  fwarmerdam
  * added VSI Rename support
  *
@@ -144,11 +147,20 @@
 /* -------------------------------------------------------------------- */
 /*      We need access to ``struct stat''.                              */
 /* -------------------------------------------------------------------- */
-#ifndef _WIN32
+
+/* Unix */
+#if !defined(_WIN32) && !defined(_WIN32_WCE)
 #  include <unistd.h>
 #endif
-#if !defined(macos_pre10)
+
+/* Windows */
+#if !defined(macos_pre10) && !defined(_WIN32_WCE)
 #  include <sys/stat.h>
+#endif
+
+/* Windows CE */
+#if defined(_WIN32_WCE)
+#  include <wce_stat.h>
 #endif
 
 CPL_C_START

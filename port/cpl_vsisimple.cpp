@@ -30,6 +30,9 @@
  *    instance validation of access strings to fopen().
  * 
  * $Log$
+ * Revision 1.19  2006/02/19 21:54:34  mloskot
+ * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
+ *
  * Revision 1.18  2005/09/11 18:01:28  fwarmerdam
  * preliminary implementatin of fully virtualized large file api
  *
@@ -86,6 +89,8 @@
  *
  */
 
+#include "cpl_config.h"
+#include "cpl_port.h"
 #include "cpl_vsi.h"
 #include "cpl_error.h"
 
@@ -93,15 +98,27 @@ CPL_CVSID("$Id$");
 
 /* for stat() */
 
-#ifndef WIN32
+/* Unix or Windows NT/2000/XP */
+#if !defined(WIN32) && !defined(WIN32CE)
 #  include <unistd.h>
-#else
+#elif !defined(WIN32CE) /* not Win32 platform */
 #  include <io.h>
 #  include <fcntl.h>
 #  include <direct.h>
 #endif
-#include <sys/stat.h>
-#include <time.h>
+
+/* Windows CE or other platforms */
+#if defined(WIN32CE)
+#  include <wce_io.h>
+#  include <wce_stat.h>
+#  include <wce_stdio.h>
+#  include <wce_string.h>
+#  include <wce_time.h>
+# define time wce_time
+#else
+#  include <sys/stat.h>
+#  include <time.h>
+#endif
 
 /************************************************************************/
 /*                              VSIFOpen()                              */

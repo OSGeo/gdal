@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/02/19 21:54:34  mloskot
+ * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
+ *
  * Revision 1.15  2006/01/19 13:09:06  fwarmerdam
  * Move CPL_CVSID definition outside WIN32 #ifdef so the module
  * won't be completely empty on non-win32 platforms.
@@ -53,13 +56,23 @@ CPL_CVSID("$Id$");
 #if defined(WIN32)
 
 #include <windows.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <io.h>
-#include <fcntl.h>
-#include <direct.h>
-
 #include "cpl_string.h"
+
+
+#if !defined(WIN32CE)
+#  include <sys/stat.h>
+#  include <sys/types.h>
+#  include <io.h>
+#  include <fcntl.h>
+#  include <direct.h>
+#else
+#  include <wce_io.h>
+#  include <wce_errno.h>
+#  include <wce_stdio.h>
+#  include <wce_stat.h>
+#  include "cpl_win32ce_api.h"
+#endif
+
 
 /************************************************************************/
 /* ==================================================================== */
@@ -264,7 +277,7 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
                                                    const char *pszAccess )
 
 {
-    DWORD dwDesiredAccess, dwCreationDisposition;
+    DWORD dwDesiredAccess, dwCreationDisposition, dwFlagsAndAttributes;
     HANDLE hFile;
 
     if( strchr(pszAccess, '+') != NULL || strchr(pszAccess, 'w') != 0 )
@@ -276,13 +289,19 @@ VSIVirtualHandle *VSIWin32FilesystemHandler::Open( const char *pszFilename,
         dwCreationDisposition = CREATE_ALWAYS;
     else
         dwCreationDisposition = OPEN_EXISTING;
-        
+
+    dwFlagsAndAttributes = (dwDesiredAccess == GENERIC_READ) ? 
+                FILE_ATTRIBUTE_READONLY : FILE_ATTRIBUTE_NORMAL, 
+    
+#ifndef WIN32CE
     hFile = CreateFile( pszFilename, dwDesiredAccess, 
                         FILE_SHARE_READ | FILE_SHARE_WRITE, 
-                        NULL, dwCreationDisposition, 
-                        (dwDesiredAccess == GENERIC_READ) ? 
-                        FILE_ATTRIBUTE_READONLY : FILE_ATTRIBUTE_NORMAL, 
-                        NULL );
+                        NULL, dwCreationDisposition,  dwFlagsAndAttributes, NULL );
+#else
+    hFile = CE_CreateFileA( pszFilename, dwDesiredAccess, 
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, 
+                        NULL, dwCreationDisposition,  dwFlagsAndAttributes, NULL );
+#endif
 
     if( hFile == INVALID_HANDLE_VALUE )
     {
