@@ -24,6 +24,9 @@
 /* Define to 1 if you have the <float.h> header file. */
 #undef HAVE_FLOAT_H
 
+/* Define to 1 if you have the <errno.h> header file. */
+#undef HAVE_ERRNO_H
+
 /* Define as 0 or 1 according to the floating point format suported by the
    machine */
 #undef HAVE_IEEEFP

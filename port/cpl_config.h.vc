@@ -36,6 +36,8 @@
 
 #define HAVE_FLOAT_H 1
 
+#define HAVE_ERRNO_H 1
+
 /* Define to 1 if you have the `localtime_r' function. */
 #undef HAVE_LOCALTIME_R
 
