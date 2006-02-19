@@ -1,0 +1,18 @@
+#
+# CPL (Common Portability Library) makefile
+#
+
+RES = Version.res
+
+GDAL_ROOT = ..
+
+!INCLUDE ..\nmake-wince.opt
+
+default:	$(RES)
+
+clean:
+	-del *.res
+
+Version.res:	
+	rc -fo Version.res -r -I..\port Version.rc
+
