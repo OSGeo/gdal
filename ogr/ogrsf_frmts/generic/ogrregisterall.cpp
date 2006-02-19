@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/02/19 21:39:13  mloskot
+ * All RegisterOGR* calls wrapped with #ifdef *_ENABLED checks
+ * NOTE: Makefiles need to be updated to define/check those macros too. makefile.evc4 for Windows CE has been updated.
+ *
  * Revision 1.28  2005/11/22 17:01:09  fwarmerdam
  * added SDE support
  *
@@ -123,23 +127,48 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 void OGRRegisterAll()
-
 {
     OGRSFDriverRegistrar::GetRegistrar()->AutoLoadDrivers();
 
+#ifdef SHAPE_ENABLED
     RegisterOGRShape();
-    RegisterOGRNTF();
-    RegisterOGRSDTS();
-    RegisterOGRTiger();
-    RegisterOGRS57();
+#endif
+#ifdef TAB_ENABLED
     RegisterOGRTAB();
+#endif
+#ifdef NTF_ENABLED
+    RegisterOGRNTF();
+#endif
+#ifdef SDTS_ENABLED
+    RegisterOGRSDTS();
+#endif
+#ifdef TIGER_ENABLED
+    RegisterOGRTiger();
+#endif
+#ifdef S57_ENABLED
+    RegisterOGRS57();
+#endif
+#ifdef DGN_ENABLED
     RegisterOGRDGN();
+#endif
+#ifdef VRT_ENABLED
     RegisterOGRVRT();
+#endif
+#ifdef AVCBIN_ENABLED
     RegisterOGRAVCBin();
+#endif
+#ifdef REC_ENABLED
     RegisterOGRREC();
+#endif
+#ifdef MEM_ENABLED
     RegisterOGRMEM();
+#endif
+#ifdef CSV_ENABLED
     RegisterOGRCSV();
+#endif
+#ifdef GML_ENABLED
     RegisterOGRGML();
+#endif
 #ifdef ILI_ENABLED
     RegisterOGRILI1();
     RegisterOGRILI2();
@@ -152,9 +181,10 @@ void OGRRegisterAll()
 #endif
 #ifdef ODBC_ENABLED
     RegisterOGRODBC();
+#endif    
+#ifdef PGEO_ENABLED
     RegisterOGRPGeo();
 #endif
-//    RegisterOGRE00();
 #ifdef OGDI_ENABLED
     RegisterOGROGDI();
 #endif
@@ -179,5 +209,8 @@ void OGRRegisterAll()
 #ifdef FME_ENABLED
     RegisterOGRFME();
 #endif
-}
+    
+//    RegisterOGRE00();
+
+} /* OGRRegisterAll */
 
