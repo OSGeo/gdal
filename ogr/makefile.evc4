@@ -1,0 +1,95 @@
+
+LINKFLAGS =	/Zi /MTd
+EXTRAFLAGS =	/I"$(MSDASDK)\inc" \
+		/I"ogrsf_frmts" \
+		/I. \
+		$(PROJ_FLAGS) $(PROJ_INCLUDE) $(GEOS_CFLAGS)
+
+GDAL_ROOT = 	..
+
+!INCLUDE $(GDAL_ROOT)\nmake-wince.opt
+
+ALL_LIBS =	$(GDAL_ROOT)/$(WCELIBCEX_DIR)/wcelibex.lib \
+	       	$(GDAL_ROOT)/port/cpl.lib \
+		$(EXTERNAL_LIBS) $(LIBS)
+
+OGR_FRMTS =	ogrsf_frmts\ogrsf_frmts.lib
+
+OBJ_OGR	=	ogr_api.obj \
+		ogr_fromepsg.obj \
+		ogr_opt.obj \
+		ogr_srs_dict.obj \
+		ogr_srs_esri.obj \
+		ogr_srs_pci.obj \
+		ogr_srs_proj4.obj \
+		ogr_srs_usgs.obj \
+		ogr_srs_validate.obj \
+		ogr_srs_xml.obj \
+		ogr_srsnode.obj \
+		ograssemblepolygon.obj \
+		ogrcurve.obj \
+		ogrct.obj \
+		ogrfeature.obj \
+		ogrfeaturedefn.obj \
+		ogrfeaturequery.obj \
+		ogrfeaturestyle.obj \
+		ogrfielddefn.obj \
+		ogrgeometry.obj \
+		ogrgeometrycollection.obj \
+		ogrgeometryfactory.obj \
+	       	ogrlinearring.obj \
+		ogrlinestring.obj \
+	       	ogrpoint.obj \
+		ogrpolygon.obj \
+		ogrmultilinestring.obj \
+                ogrmultipoint.obj \
+		ogrmultipolygon.obj \
+		ogrspatialreference.obj \
+		ogrutils.obj \
+		ogr2gmlgeometry.obj \
+		gml2ogrgeometry.obj \
+		swq.obj \
+
+!IFDEF DLLBUILD
+LINKARGS =	..\gdal_i.lib $(LIBS)
+DEPLIBS	=	..\gdal_i.lib
+!ELSE
+LINKARGS =	$(OBJ_OGR) $(OGR_FRMTS) $(ALL_LIBS)
+DEPLIBS	=	$(OGR_FRMTS)
+!ENDIF
+
+default:        ogr.lib 
+
+ogrsf_frmts\ogrsf_frmts.lib:
+
+sublibs:	frmts
+
+frmts:
+	cd ogrsf_frmts
+	$(MAKE) /f makefile.evc4
+	cd ..
+
+all:	frmts default
+
+geometryidl.h: geometryidl.idl spatialreferenceidl.h
+	midl geometryidl.idl
+
+spatialreferenceidl.h: spatialreferenceidl.idl
+	midl spatialreferenceidl.idl
+
+ogr.lib:	$(OBJ_OGR)
+	lib /out:ogr.lib $(OBJ_OGR)
+
+clean:
+	-del *.obj
+	-del *.lib
+	-del *.pdb
+	-del *.ilk
+
+allclean:	clean
+	cd ogrsf_frmts
+	$(MAKE) /f makefile.evc4 clean
+	cd ..
+
+
+

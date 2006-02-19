@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2006/02/19 21:00:04  mloskot
+ * [WCE]
+ * + Add main makefile.evc for Windows CE target build
+ * * Minor changes in ogrct.cpp and swq.c for Windows CE target
+ *
  * Revision 1.31  2006/01/21 19:16:37  fwarmerdam
  * Added LIBNAME case for cygwin.
  *
@@ -124,6 +129,7 @@
  */
 
 #include "ogr_spatialref.h"
+#include "cpl_port.h"
 #include "cpl_error.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
@@ -162,7 +168,7 @@ static char        *(*pfn_pj_strerrno)(int) = NULL;
 static char        *(*pfn_pj_get_def)(projPJ,int) = NULL;
 static void         (*pfn_pj_dalloc)(void *) = NULL;
 
-#ifdef WIN32
+#if defined(WIN32) || defined(WIN32CE)
 #  define LIBNAME      "proj.dll"
 #elif defined(__CYGWIN__)
 #  define LIBNAME      "libproj.dll"
@@ -226,8 +232,10 @@ static int LoadProjLibrary()
 
     bTriedToLoad = TRUE;
 
+#if !defined(WIN32CE)
     if( getenv("PROJSO") != NULL )
         pszLibName = getenv("PROJSO");
+#endif
 
 #ifdef PROJ_STATIC
     pfn_pj_init = pj_init;

@@ -19,6 +19,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2006/02/19 21:00:04  mloskot
+ * [WCE]
+ * + Add main makefile.evc for Windows CE target build
+ * * Minor changes in ogrct.cpp and swq.c for Windows CE target
+ *
  * Revision 1.26  2005/08/03 13:31:36  fwarmerdam
  * Added ILIKE, but LIKE and ILIKE are both still case insensitive.
  *
@@ -125,9 +130,12 @@
 #  define FALSE 0
 #endif
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_WIN32_WCE)
 #  define strcasecmp stricmp
+#elif defined(_WIN32_WCE)
+#  define strcasecmp _stricmp
 #endif
+
 
 static char     swq_error[1024];
 
