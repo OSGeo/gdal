@@ -1,0 +1,10 @@
+*Rel
+*Dbg
+*.dll
+*.exp
+*.ilk
+*.lib
+*.pdb
+*.vcb
+*.vcl
+*.vco
