@@ -1,0 +1,84 @@
+# $Id$
+#
+# GDAL/OGR main makefile for Windows CE target
+#
+# Note: Currently only OGR build is supported. GDAL is not included.
+#
+
+GDAL_ROOT = .
+
+!INCLUDE $(GDAL_ROOT)\nmake-wince.opt
+
+OGR_OBJ = ogr\ogrsf_frmts\generic\*.obj \
+	  ogr\ogrsf_frmts\mitab\*.obj \
+	  ogr\ogrsf_frmts\shape\*.obj \
+	  ogr\*.obj
+
+LIBOBJ = $(WCELIBCEX_DIR)\*.obj port\*.obj $(OGR_OBJ)
+
+DISTDIR	= $(GDAL_OUTPUT)_$(VERSION)
+
+default:	wcelibcex_dir port_dir gcore_dir ogr_dir $(GDAL_DLL)
+
+lib:
+	if exist $(GDAL_LIB) del $(GDAL_LIB)
+	lib /out:$(GDAL_LIB) $(LIBOBJ)
+
+clean:	
+	cd $(WCELIBCEX_DIR)
+	$(MAKE) /f makefile.evc4 clean
+	cd ..
+	cd port
+	$(MAKE) /f makefile.evc4 clean
+	cd ..
+	cd gcore
+	$(MAKE) /f makefile.evc4 clean
+	cd ..
+	cd ogr
+	$(MAKE) /f makefile.evc4 allclean
+	cd ..
+	if exist $(GDAL_LIB) del $(GDAL_LIB)
+	if exist $(GDAL_DLL) del $(GDAL_DLL)
+	if exist $(GDAL_I_LIB) del $(GDAL_OUTPUT)_i.*
+	-del *.ilk
+	-del *.pdb
+
+wcelibcex_dir:
+	cd $(WCELIBCEX_DIR)
+	$(MAKE) /f makefile.evc4
+	cd ..
+	
+port_dir:
+	cd port
+	$(MAKE) /f makefile.evc4
+	cd ..
+	
+gcore_dir:
+	cd gcore
+	$(MAKE) /f makefile.evc4
+	cd ..
+
+ogr_dir:      wcelibcex_dir port_dir gcore_dir
+	cd ogr
+	$(MAKE) /f makefile.evc4 ogr.lib frmts
+	cd ..
+
+lib_dist:	default
+	rm -rf $(DISTDIR)
+	mkdir $(DISTDIR)
+	cp $(GDAL_LIB) $(DISTDIR)
+	cp $(GDAL_I_LIB) $(DISTDIR)
+	cp $(WCELIBCEX_DIR)\*.h \
+		port\*.h ogr\*.h \
+		ogr\ogrsf_frmts\ogrsf_frmts.h \
+		$(DISTDIR)
+	zip -r $(DISTDIR).zip $(DISTDIR)
+
+$(GDAL_DLL):	lib
+	link /dll /debug \
+		$(LIBOBJ) \
+		$(LINKER_FLAGS) \
+		$(EXTERNAL_LIBS) "gcore\Version.res" \
+		/out:$(GDAL_DLL) /implib:$(GDAL_I_LIB)
+
+
