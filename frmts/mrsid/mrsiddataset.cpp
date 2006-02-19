@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2006/02/19 03:01:24  fwarmerdam
+ * Improved error checking in writer code.
+ *
  * Revision 1.48  2006/01/31 17:44:46  fwarmerdam
  * jpc_header used even when j2k support disabled.
  *
@@ -780,8 +783,8 @@ CPLErr MrSIDDataset::IRasterIO( GDALRWFlag eRWFlag,
     if( !LT_SUCCESS(eLTStatus)) {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "MrSIDDataset::IRasterIO(): Failed to get zoomed image dimensions.\n%s",
-    getLastStatusString( eLTStatus ) );
-    return CE_Failure;
+                  getLastStatusString( eLTStatus ) );
+        return CE_Failure;
     }
 
     int maxWidthAtL0 = bIsOverview?poParentDS->GetRasterXSize():this->GetRasterXSize();
@@ -1550,6 +1553,8 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
 { 
     const char* pszVersion = CSLFetchNameValue(papszOptions, "VERSION");
+    LT_STATUS eStat;
+
 #ifdef DEBUG
     bool bMeter = false;
 #else
@@ -1567,10 +1572,24 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
       
         // Create the file.                                               
         MrSIDDummyImageReader oImageReader( poSrcDS );
-        oImageReader.initialize();
+        eStat = oImageReader.initialize();
+        if( eStat != LT_STS_Success )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "MrSIDDummyImageReader.Initialize failed.\n%s",
+                      getLastStatusString( eStat ) );
+            return NULL;
+        }
       
         MG2ImageWriter oImageWriter(&oImageReader);
-        oImageWriter.initialize();
+        eStat = oImageWriter.initialize();
+        if( eStat != LT_STS_Success )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "MG3ImageWriter.initialize() failed.\n%s",
+                      getLastStatusString( eStat ) );
+            return NULL;
+        }
 
         oImageWriter.setUsageMeterEnabled(bMeter);
    
@@ -1592,7 +1611,14 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
       
         // write the scene
         const LTIScene oScene( 0, 0, nXSize, nYSize, 1.0 );
-        oImageWriter.write( oScene );
+        eStat = oImageWriter.write( oScene );
+        if( eStat != LT_STS_Success )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "MG2ImageWriter.write() failed.\n%s",
+                      getLastStatusString( eStat ) );
+            return NULL;
+        }
     }
     // Output Mrsid Version 3 file.
     else
@@ -1605,10 +1631,24 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
       
         // Create the file.   
         MrSIDDummyImageReader oImageReader( poSrcDS );
-        oImageReader.initialize();
+        eStat = oImageReader.initialize();
+        if( eStat != LT_STS_Success )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "MrSIDDummyImageReader.Initialize failed.\n%s",
+                      getLastStatusString( eStat ) );
+            return NULL;
+        }
       
         MG3ImageWriter oImageWriter(&oImageReader);
-        oImageWriter.initialize();
+        eStat = oImageWriter.initialize();
+        if( eStat != LT_STS_Success )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "MG3ImageWriter.initialize() failed.\n%s",
+                      getLastStatusString( eStat ) );
+            return NULL;
+        }
       
         // Set 64-bit Interface for large files.
         oImageWriter.setFileStream64(true);
@@ -1638,7 +1678,14 @@ MrSIDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	
         // write the scene
         const LTIScene oScene( 0, 0, nXSize, nYSize, 1.0 );
-        oImageWriter.write( oScene );
+        eStat = oImageWriter.write( oScene );
+        if( eStat != LT_STS_Success )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "MG2ImageWriter.write() failed.\n%s",
+                      getLastStatusString( eStat ) );
+            return NULL;
+        }
     }
   
 /* -------------------------------------------------------------------- */
@@ -1672,16 +1719,31 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     int nXSize = poSrcDS->GetRasterXSize();
     int nYSize = poSrcDS->GetRasterYSize();
+    LT_STATUS  eStat;
       
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
         return NULL;
       
     // Create the file.   
     MrSIDDummyImageReader oImageReader( poSrcDS );
-    oImageReader.initialize();
+    eStat = oImageReader.initialize();
+    if( eStat != LT_STS_Success )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MrSIDDummyImageReader.Initialize failed.\n%s",
+                  getLastStatusString( eStat ) );
+        return NULL;
+    }
       
     J2KImageWriter oImageWriter(&oImageReader);
-    oImageWriter.initialize();
+    eStat = oImageWriter.initialize();
+    if( eStat != LT_STS_Success )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "J2KImageWriter.Initialize failed.\n%s",
+                  getLastStatusString( eStat ) );
+        return NULL;
+    }
       
     // Set 64-bit Interface for large files.
     oImageWriter.setFileStream64(true);
@@ -1705,7 +1767,14 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 	
     // write the scene
     const LTIScene oScene( 0, 0, nXSize, nYSize, 1.0 );
-    oImageWriter.write( oScene );
+    eStat = oImageWriter.write( oScene );
+    if( eStat != LT_STS_Success )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "J2KImageWriter.write() failed.\n%s",
+                  getLastStatusString( eStat ) );
+        return NULL;
+    }
   
 /* -------------------------------------------------------------------- */
 /*      Re-open dataset, and copy any auxilary pam information.         */
