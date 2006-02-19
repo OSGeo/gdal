@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/02/19 22:33:20  fwarmerdam
+ * undo last change, needs to be handled elsewhere
+ *
  * Revision 1.4  2006/02/19 22:29:37  fwarmerdam
  * added sys/errno.h for macos x
  *
@@ -47,8 +50,6 @@
 /*
  * TIFF Library UNIX-specific Routines.
  */
-#include <stdio.h>
-#include <sys/errno.h>
 #include "tiffio.h"
 #include "cpl_vsi.h"
 
