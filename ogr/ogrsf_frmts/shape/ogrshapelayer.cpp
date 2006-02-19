@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/02/19 21:42:05  mloskot
+ * [WCE] Include wce_errno.h - a specific errno.h version for Windows CE
+ *
  * Revision 1.25  2006/02/15 04:26:55  fwarmerdam
  * added date support
  *
@@ -110,6 +113,10 @@
 #include "ogrshape.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+#if defined(_WIN32_WCE)
+#  include <wce_errno.h>
+#endif
 
 CPL_CVSID("$Id$");
 
