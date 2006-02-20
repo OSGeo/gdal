@@ -89,7 +89,7 @@ TAB_SUPPORTED	= 1
 # Paths
 STLPORT_USE	= 1
 STLPORT_DIR	= C:\STLport-5.0.0
-WCELIBCEX_DIR	= wcelibcex
+WCELIBCEX_DIR	= wince\wcelibcex
 
 ########### END OF STUFF THAT NORMALLY NEEDS TO BE UPDATED ##################
 

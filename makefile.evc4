@@ -27,7 +27,7 @@ lib:
 clean:	
 	cd $(WCELIBCEX_DIR)
 	$(MAKE) /f makefile.evc4 clean
-	cd ..
+	cd ..\..
 	cd port
 	$(MAKE) /f makefile.evc4 clean
 	cd ..
@@ -46,7 +46,7 @@ clean:
 wcelibcex_dir:
 	cd $(WCELIBCEX_DIR)
 	$(MAKE) /f makefile.evc4
-	cd ..
+	cd ..\..
 	
 port_dir:
 	cd port
