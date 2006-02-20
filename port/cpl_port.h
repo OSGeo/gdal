@@ -42,6 +42,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2006/02/20 00:59:58  fwarmerdam
+ * Avoid deprecation of some common functions with VS8.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1083
+ *
  * Revision 1.47  2006/02/19 21:54:34  mloskot
  * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
  *
@@ -359,6 +363,15 @@ char * strdup (char *instr);
 
 #ifndef CPL_THREADLOCAL 
 #  define CPL_THREADLOCAL 
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      The following apparently allow you to use strcpy() and other    */
+/*      functions judged "unsafe" by microsoft in VS 8 (2005).          */
+/* -------------------------------------------------------------------- */
+#ifdef _MSC_VER
+#  define _CRT_SECURE_NO_DEPRECATE
+#  define _CRS_NONSTDC_NO_DEPRECATE
 #endif
 
 /* -------------------------------------------------------------------- */
