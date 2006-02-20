@@ -1,8 +1,10 @@
 #
 # WCELIBCEX (Windows CE C Library Extension) makefile for Windows CE build
 #
+
+GDAL_ROOT = ..\..
   
-!INCLUDE ..\nmake-wince.opt
+!INCLUDE $(GDAL_ROOT)\nmake-wince.opt
 
 WCELIBCEX_CFLAGS = $(CFLAGS) /I "."
 
