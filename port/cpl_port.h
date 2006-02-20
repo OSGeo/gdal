@@ -42,6 +42,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2006/02/20 01:03:01  fwarmerdam
+ * Fixed last change.
+ *
  * Revision 1.48  2006/02/20 00:59:58  fwarmerdam
  * Avoid deprecation of some common functions with VS8.
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=1083
@@ -371,7 +374,7 @@ char * strdup (char *instr);
 /* -------------------------------------------------------------------- */
 #ifdef _MSC_VER
 #  define _CRT_SECURE_NO_DEPRECATE
-#  define _CRS_NONSTDC_NO_DEPRECATE
+#  define _CRT_NONSTDC_NO_DEPRECATE
 #endif
 
 /* -------------------------------------------------------------------- */
