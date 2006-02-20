@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.41  2006/02/20 00:42:35  fwarmerdam
+ * Trim.
+ *
  * Revision 1.40  2006/02/19 21:54:34  mloskot
  * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
  *
@@ -76,91 +79,6 @@
  *
  * Revision 1.28  2004/01/29 15:29:28  warmerda
  * Added CPLCleanXMLElementName
- *
- * Revision 1.27  2003/12/04 15:46:51  warmerda
- * Added CPLAddXMLSibling()
- *
- * Revision 1.26  2003/12/04 15:19:43  warmerda
- * Added "=" support for "sidesearching" in a document.
- *
- * Revision 1.25  2003/11/07 19:40:19  warmerda
- * ensure CPLGetXMLValue() works for nodes with attributes
- *
- * Revision 1.24  2003/11/05 20:14:21  warmerda
- * added lots of documentation
- *
- * Revision 1.23  2003/05/21 03:32:43  warmerda
- * expand tabs
- *
- * Revision 1.22  2003/04/05 07:12:25  dron
- * Completed security audit.
- *
- * Revision 1.21  2003/03/28 17:38:39  warmerda
- * Added NULL check in CPLParseXMLString().
- *
- * Revision 1.20  2003/03/28 05:05:18  warmerda
- * Completed security audit. Several bugs related to possible buffer
- * overruns correct, notably with regard to CPLError() calls.
- *
- * Revision 1.19  2003/03/27 18:12:41  warmerda
- * Added NULL pszNameSpace support in namespace stripper (all namespaces).
- * Added XML file read/write functions.
- *
- * Revision 1.18  2003/03/24 16:47:30  warmerda
- * Added CPLStripXMLNamespace().
- * CPLAddXMLChild() will now ensure that attributes are inserted before
- * non-attributes nodes.
- *
- * Revision 1.17  2003/02/14 18:44:29  warmerda
- * proper tokens may include a dash
- *
- * Revision 1.16  2002/11/16 20:42:40  warmerda
- * improved inline comments
- *
- * Revision 1.15  2002/11/16 20:38:34  warmerda
- * added support for literals like DOCTYPE
- *
- * Revision 1.14  2002/07/16 15:06:26  warmerda
- * ensure that attributes are serialized properly regardless of their order
- *
- * Revision 1.13  2002/07/09 20:25:25  warmerda
- * expand tabs
- *
- * Revision 1.12  2002/05/28 18:54:05  warmerda
- * added escaping/unescaping support
- *
- * Revision 1.11  2002/05/24 04:09:10  warmerda
- * added clone and SetXMLValue functions
- *
- * Revision 1.10  2002/04/01 16:08:21  warmerda
- * allow periods in tokens
- *
- * Revision 1.9  2002/03/07 22:19:20  warmerda
- * don't do operations within CPLAssert(), in UnreadChar()
- *
- * Revision 1.8  2002/03/05 14:26:57  warmerda
- * expanded tabs
- *
- * Revision 1.7  2002/01/23 20:45:05  warmerda
- * handle <?...?> and comment elements
- *
- * Revision 1.6  2002/01/22 18:54:48  warmerda
- * ensure text is property initialized when serializing
- *
- * Revision 1.5  2002/01/16 03:58:51  warmerda
- * support single quotes as well as double quotes
- *
- * Revision 1.4  2001/12/06 18:13:49  warmerda
- * added CPLAddXMLChild and CPLCreateElmentAndValue
- *
- * Revision 1.3  2001/11/16 21:20:16  warmerda
- * fixed typo
- *
- * Revision 1.2  2001/11/16 20:29:58  warmerda
- * fixed lost char in normal CString tokens
- *
- * Revision 1.1  2001/11/16 15:39:48  warmerda
- * New
  */
 
 #include <ctype.h>
@@ -170,13 +88,6 @@
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$");
-
-/*
- * XXX - mloskot - TokenType renamed to XMLTokenType 
- * It's required because of names conflict with TokenType
- * defined in <winnt.h> from Windows CE SDK.
- */
-
 
 typedef enum {
     TNone,
