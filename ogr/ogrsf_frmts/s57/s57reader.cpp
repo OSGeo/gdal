@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2006/02/20 17:58:28  fwarmerdam
+ * Update DSID_UPDN to reflect the updates applied.  Other DSID fields are not
+ * updated.
+ *
  * Revision 1.55  2006/02/15 18:04:45  fwarmerdam
  * implemented DSID feature support
  *
@@ -100,6 +104,7 @@ S57Reader::S57Reader( const char * pszFilename )
 
     poDSIDRecord = NULL;
     poDSPMRecord = NULL;
+    szUPDNUpdate[0] = '\0';
 
     iPointOffset = 0;
     poMultiPoint = NULL;
@@ -1078,8 +1083,12 @@ OGRFeature *S57Reader::ReadDSID()
                      poDSIDRecord->GetStringSubfield( "DSID", 0, "DSNM", 0 ));
         poFeature->SetField( "DSID_EDTN",
                      poDSIDRecord->GetStringSubfield( "DSID", 0, "EDTN", 0 ));
-        poFeature->SetField( "DSID_UPDN",
+        if( strlen(szUPDNUpdate) > 0 )
+            poFeature->SetField( "DSID_UPDN", szUPDNUpdate );
+        else
+            poFeature->SetField( "DSID_UPDN",
                      poDSIDRecord->GetStringSubfield( "DSID", 0, "UPDN", 0 ));
+        
         poFeature->SetField( "DSID_UADT",
                      poDSIDRecord->GetStringSubfield( "DSID", 0, "UADT", 0 ));
         poFeature->SetField( "DSID_ISDT",
@@ -2503,7 +2512,11 @@ int S57Reader::ApplyUpdates( DDFModule *poUpdateModule )
 
         else if( EQUAL(pszKey,"DSID") )
         {
-            /* ignore */;
+            if( poDSIDRecord != NULL )
+            {
+                strcpy( szUPDNUpdate, 
+                        poRecord->GetStringSubfield( "DSID", 0, "UPDN", 0 ) );
+            }
         }
 
         else
