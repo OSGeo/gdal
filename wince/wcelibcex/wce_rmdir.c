@@ -69,8 +69,7 @@ int wce_rmdir(const char *filename)
 
     /* Covert filename buffer to Unicode. */
 	len = MultiByteToWideChar (CP_ACP, 0, filename, -1, NULL, 0) ;
-    widestr = malloc(len);
-	
+	widestr = (wchar_t*)malloc(sizeof(wchar_t) * len);
 	MultiByteToWideChar( CP_ACP, 0, filename, -1, widestr, len);
 	
 	/* Delete file using Win32 CE API call */

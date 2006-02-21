@@ -1,6 +1,9 @@
  /**********************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/02/21 19:37:06  mloskot
+ * [WCE] Small fixes related to char <-> wide-char string conversions
+ *
  * Revision 1.1  2006/02/19 21:50:56  mloskot
  * [WCE] non-Unicode wrappers around Unicode-only Windows CE API
  *
@@ -28,7 +31,7 @@ HMODULE CE_LoadLibraryA(LPCSTR lpLibFileName)
 
     /* Covert filename buffer to Unicode. */
     nLen = MultiByteToWideChar (CP_ACP, 0, lpLibFileName, -1, NULL, 0) ;
-    pszWideStr = (LPTSTR)malloc(nLen);
+    pszWideStr = (wchar_t*)malloc(sizeof(wchar_t) * nLen);
     MultiByteToWideChar(CP_ACP, 0, lpLibFileName, -1, pszWideStr, nLen);
 
     hLib = LoadLibraryW(pszWideStr);
@@ -48,7 +51,7 @@ FARPROC CE_GetProcAddressA(HMODULE hModule, LPCSTR lpProcName)
 
     /* Covert filename buffer to Unicode. */
     nLen = MultiByteToWideChar (CP_ACP, 0, lpProcName, -1, NULL, 0) ;
-    pszWideStr = (LPTSTR)malloc(nLen);
+    pszWideStr = (wchar_t*)malloc(sizeof(wchar_t) * nLen);
     MultiByteToWideChar(CP_ACP, 0, lpProcName, -1, pszWideStr, nLen);
 
     proc = GetProcAddressW(hModule, pszWideStr);
@@ -91,7 +94,7 @@ HANDLE CE_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess,
     
     /* Covert filename buffer to Unicode. */
     nLen = MultiByteToWideChar (CP_ACP, 0, lpFileName, -1, NULL, 0) ;
-    pszWideStr = (wchar_t*)malloc(nLen);
+    pszWideStr = (wchar_t*)malloc(sizeof(wchar_t) * nLen);
     MultiByteToWideChar(CP_ACP, 0, lpFileName, -1, pszWideStr, nLen);
 
     hFile = CreateFileW(pszWideStr, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
