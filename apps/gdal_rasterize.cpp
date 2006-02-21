@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/02/21 20:26:59  fwarmerdam
+ * Fixed last fix.
+ *
  * Revision 1.3  2006/02/21 15:14:28  fwarmerdam
  * Don't crash if less -burn options provided than -b options.
  *
@@ -118,7 +121,7 @@ static void ProcessLayer(
         {
             if( adfBurnValues.size() > 0 )
                 adfFullBurnValues.push_back( 
-                    adfBurnValues[MIN(iBand,anBurnValues.size()-1)] );
+                    adfBurnValues[MIN(iBand,adfBurnValues.size()-1)] );
             else if( b3D )
             {
                 // TODO: get geometry "z" value 
