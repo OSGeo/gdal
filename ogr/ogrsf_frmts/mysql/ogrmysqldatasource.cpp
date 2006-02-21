@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/02/21 03:50:11  fwarmerdam
+ * Fixed selection of new SRID values when no match is found.
+ *
  * Revision 1.16  2006/02/16 20:59:32  fwarmerdam
  * added ENGINE layer creation option
  *
@@ -597,8 +600,6 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
              "SELECT srid FROM spatial_ref_sys WHERE srtext = '%s'",
              pszWKT );
 
-
-
     if( !mysql_query( GetConn(), szCommand ) )
         hResult = mysql_store_result( GetConn() );
 
@@ -606,7 +607,7 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     {
         CPLDebug("MYSQL", "No rows exist currently exist in spatial_ref_sys");
         mysql_free_result( hResult );
-		hResult = NULL;
+        hResult = NULL;
     }
     papszRow = NULL;
     if( hResult != NULL )
@@ -617,15 +618,15 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         nSRSId = atoi(papszRow[0]);
         if( hResult != NULL )
             mysql_free_result( hResult );
-    		hResult = NULL;
-	    return nSRSId;
+        hResult = NULL;
+        return nSRSId;
     }
 
     // make sure to attempt to free results of successful queries
     hResult = mysql_store_result( GetConn() );
     if( hResult != NULL )
         mysql_free_result( hResult );
-	hResult = NULL;
+    hResult = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Get the current maximum srid in the srs table.                  */
@@ -633,14 +634,17 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     sprintf( szCommand, 
              "SELECT MAX(srid) FROM spatial_ref_sys");    
     if( !mysql_query( GetConn(), szCommand ) )
+    {
         hResult = mysql_store_result( GetConn() );
+        papszRow = mysql_fetch_row( hResult );
+    }
         
     if( papszRow != NULL && papszRow[0] != NULL )
     {
-        nSRSId = atoi(papszRow[0]);
+        nSRSId = atoi(papszRow[0]) + 1;
         if( hResult != NULL )
             mysql_free_result( hResult );
-    		hResult = NULL;
+        hResult = NULL;
     }
     else
         nSRSId = 1;
@@ -659,7 +663,7 @@ int OGRMySQLDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     hResult = mysql_store_result( GetConn() );
     if( hResult != NULL )
         mysql_free_result( hResult );
-	hResult = NULL;
+    hResult = NULL;
            
     return nSRSId;
 }
