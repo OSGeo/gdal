@@ -1,0 +1,165 @@
+$Id$
+=============================================================================
+GDAL/OGR port for Window CE
+Mateusz Loskot, mateusz@loskot.net
+=============================================================================
+
+GDAL/OGR for Windows CE features:
+- all base OGR API and modules (port, ogr)
+- subset of OGR drivers (ogr\ogrsf_frmts): generic, mitab, shape
+- wcelibcex - extension to C library on Windows CE
+
+Features not included in GDAL/OGR for Windows CE:
+- in fact, this port does not include rasters support
+- GEOS has not been ported yet, so OGR for Windows CE
+  compiles without GEOS support (work is in progres)
+- OGR drivers not listed in features list above
+
+I'd like to thank:
+==================
+- Frank Warmerdam for GDAL/OGR and priceless support he provide me
+- Taxus SI Ltd. from Poland for their great support
+- Users from IRC #gdal channel
+- All users, testers and contributors
+
+=============================================================================
+Content of gdal\wince directory:
+=============================================================================
+
+- wcelibcex
+  Windows CE C Library Extensions provide some functions missing in
+  the standard C library on Windows CE devices, e.g. time, ctime, mkdir, etc.
+  It will be hosted as a separate project:
+  http://sourceforge.net/projects/wcelibcex
+
+- wce_test_lib
+  Sample application to test gdalce.lib - static library - build with
+  makefile.evc4.
+
+- wce_test_dll
+  Sample application to test gdalce.dll - DLL - build with makefile.evc4.
+  NOTE: Currently, DLL produced that way seems to be broken and can not
+  be loaded properly. So, if you are NMake/Makefiles guru you're
+  welcome to fix it. Thanks in advance!
+
+- evc4_gdalce_lib*
+  Project file for eMbedded Visual C++ 4.0 to build GDAL/OGR as a static
+  library.
+  
+- evc4_gdalce_lib_test*
+  eMbedded Visual C++ 4.0 project of sample application to test static
+  library built using evc4_gdalce_lib project.
+
+- evc4_gdalce_dll*
+  Project file for eMbedded Visual C++ 4.0 to build GDAL/OGR as a DLL.
+  
+- evc4_gdalce_dll_test*
+  eMbedded Visual C++ 4.0 project of sample application to test DLL built
+  using evc4_gdalce_dll project.
+
+(***) Project files for eMbedded Visual C++ 4.0 are not compatible
+      between versions 3.0 and 4.0. So, in order to build GDAL/OGR
+      using eVC++ 3.0 you have to create project files from scratch.
+
+=============================================================================
+Building GDAL/OGR for Windows CE .NET:
+=============================================================================
+
+Note: Windows CE .NET is a version 4.0 - 4.2 and it's only a name, so 
+there is no .NET Framework dependency! Starting from Windows CE 5.0,
+Microsoft has removed .NET from the name of the system.
+
+Requirements:
+=============
+
+First, you need to install following software on your machine:
+
+0. Compilation box running Windows NT/2000/XP 
+
+1. Microsoft eMbedded Visual C++ 4.0 - it's free
+http://www.microsoft.com/downloads/details.aspx?FamilyID=1DACDB3D-50D1-41B2-A107-FA75AE960856
+
+2. Microsoft eMbedded Visual C++ 4.0 Service Pack 3
+http://www.microsoft.com/downloads/details.aspx?familyid=5BB36F3E-5B3D-419A-9610-2FE53815AE3B
+
+3. The Run-time Type Information library for the Pocket PC 2003 SDK
+http://support.microsoft.com/default.aspx?scid=kb;[LN];830482
+
+4. I also recommend to use STLport
+Here is some introduction: 
+http://mateusz.loskot.net/2005/12/25/how-to-use-stlport-with-evc/
+it refers to my article on http://www.pocketpcdn.com
+
+Building with makefiles:
+========================
+
+1. Open command line (cmd.exe) on your Windows box
+and go to gdal sources directory e.g. C:\gdal
+
+2. Run configuration script for ARM target. It's default location is:
+C:\Program Files\Microsoft eMbedded C++ 4.0\EVC\wce420\bin\WCEARMV4.BAT
+
+Now, runs some commands to check if everything is configured well: 
+
+C:\gdal>clarm.exe /?
+Microsoft (R) C/C++ Optimizing Compiler Version 12.20.9615 for ARM
+Copyright (C) Microsoft Corp 1984-2002. All rights reserved.
+
+C:\gdal>echo %PLATFORM%
+POCKET PC 2003
+
+C:\gdal>echo %OSVERSION%
+WCE420
+
+3. Build
+C:\gdal>nmake /f makefile.evc4
+
+4. If everything went without any errors you should have
+following files in gdal root directory (C:\gdal):
+gdalce.lib - static library (PREFERED)
+gdalce13.dll - Dynamic-Link Library (DLL) (See IMPORTANT note)
+gdalce_i.exp - export file for DLL
+gdalce_i.lib - import library for DLL
+
+(***) IMPORTANT!
+Currently gdalce13.dll built with NMake seems to be broken.
+So, if you want to use GDAL/OGR for Windows CE as DLL please
+use eVC++ 4.0 project file from evc4_gdalce_dll directory at the moment.
+This issue is known and waiting for fix :-)
+
+Summary of building GDAL/OGR for Windows CE:
+============================================
+1. Static Library:
+- using makefile.evc4
+- using eVC++ 4.0 project file in evc4_gdalce_lib directory
+2. DLL:
+- using eVC++ 4.0 project file in evc4_gdalce_dll directory
+- building with makefile.evc4 is currently broken 
+
+
+=============================================================================
+How can I report a bug?
+=============================================================================
+
+Visit Bugzilla on http://bugzilla.remotesensing.org
+
+Bug Writing Guidelines:
+http://bugzilla.remotesensing.org/page.cgi?id=bug-writing.html
+
+=============================================================================
+How can I contribute?
+=============================================================================
+
+- you can build GDAL/OGR for Windows CE and report problems if any
+- you can try build/port new OGR drivers
+- you can test GDAL/OGR on different Windows CE devices
+- you can write sample applications using GDAL/OGR
+- if you have found a bug, please report it
+
+=============================================================================
+All questions and comments are welcome!
+=============================================================================
+Mailing list: gdal-dev@lists.maptools.org
+You can catch me on mateusz@loskot.net
+
+
