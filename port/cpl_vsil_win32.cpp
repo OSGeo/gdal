@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/02/21 20:32:45  fwarmerdam
+ * use CPLString instead of string
+ *
  * Revision 1.16  2006/02/19 21:54:34  mloskot
  * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
  *
@@ -415,7 +418,7 @@ char **VSIWin32FilesystemHandler::ReadDir( const char *pszPath )
 void VSIInstallLargeFileHandler()
 
 {
-    VSIFileManager::InstallHandler( string(""), 
+    VSIFileManager::InstallHandler( CPLString(""), 
                                     new VSIWin32FilesystemHandler );
 }
 
