@@ -14,7 +14,6 @@ The following utility programs are distributed with GDAL.
 <li> \ref gdalwarp - Warp an image into a new coordinate system.
 <li> \ref gdaltindex - Build a MapServer raster tileindex.
 <li> \ref gdal_contour - Contours from DEM.
-<li> \ref gdal_rasterize - Burn polygons into rasters.
 <li> \ref rgb2pct - Convert a 24bit RGB image to 8bit paletted.
 <li> \ref pct2rgb - Convert an 8bit paletted image to 24bit RGB.
 <li> \ref gdal_merge - Build a quick mosaic from a set of images.
@@ -708,36 +707,41 @@ This program burns vector polygons into the raster band(s) of a raster
 image.  Vectors are read from OGR supported vector formats. 
 
 <dl>
-<dt> <b>-s_srs</b> <em>srs def</em>:</dt><dd> source spatial reference
- set. The coordinate systems that can be passed are anything supported
- by the OGRSpatialReference.SetFromUserInput() call, which includes
- EPSG PCS and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above),
- or the name of a .prf file containing well known text.</dd>
-</dl
+<dt> <b>-b</b> <em>band</em>: </dt><dd> 
+The band(s) to burn values into.  Multiple -b arguments may be used to burn 
+into a list of bands.  The default is to burn into band 1.</dd>
 
-<dt> <b>-b</b> <em>band</em>:</dt><dd> picks a particular band to get the DEM from.  Defaults to band 1.</dd>
+<dt> <b>-burn</b> <em>value</em>: </dt><dd> 
+A fixed value to burn into a band for all objects.  A list of -burn options 
+can be supplied, one per band being written to.</dd>
 
-<dt> <b>-a</b> <em>name</em>:</dt><dd>provides a name for the attribute in which to put the elevation. If not provided no elevation attribute is attached. </dd>
-<dt> <b>-3d</b>:</dt> <dd>
-      Force production of 3D vectors instead of 2D.  Includes elevation at
-      every vertex.</dd>
+<dt> <b>-a</b> <em>attribute_name</em>: </dt><dd> 
+Identifies an attribute field on the features to be used for a burn in value.
+The value will be burned into all output bands.</dd>
 
-<dt> <b>-inodata</b>:</dt> <dd> Ignore any nodata value implied in the dataset - treat all values as valid.</dd>
+<dt> <b>-3d</b>: </dt><dd> 
+Indicates that a burn value should be extracted from the "Z" values of the 
+feature (not yet implemented).</dd>
 
-<dt> <b>-snodata</b> <em>value</em>:</dt><dd>
- Input pixel value to treat as "nodata". </dd>
+<dt> <b>-l</b> <em>layername</em>: </dt><dd> 
+Indicates the layer(s) from the datasource that will be used for input 
+features.  May be specified multiple times, but at least one layer name or a -sql option must be specified.</dd>
 
-<dt> <b>-f</b> <em>format</em>:</dt> <dd>
-create output in a particular format, default is shapefiles.</dd>
+<dt> <b>-where</b> <em>expression</em>: </dt><dd> 
+An optional SQL WHERE style query expression to be applied to select features 
+to burn in from the input layer(s). </dd>
 
-<dt> <b>-i</b> <em>interval</em>:</dt><dd>
- elevation interval between contours.</dd>
+<dt> <b>-sql</b> <em>select_statement</em>: </dt><dd> 
+An SQL statement to be evaluated against the datasource to produce a
+virtual layer of features to be burned in.</dd>
 
-<dt> <b>-off</b> <em>offset</em>:</dt><dd>
- Offset from zero relative to which to interpret intervals.</dd>
+<dt> <em>src_datasource</em>: </dt><dd> 
+Any OGR supported readable datasource.</dd>
 
-<dt> <b>-fl</b> <em>level</em>:</dt>
-<dd> Name one or more "fixed levels" to extract.</dd>
+<dt> <em>dst_filename</em>: </dt><dd> 
+The GDAL supported output file.  Must support update mode access.  Currently 
+gdal_rasterize cannot create new output files though that may be added eventually.</dd>
+
 </dl>
 
 \if man
@@ -748,17 +752,23 @@ create output in a particular format, default is shapefiles.</dd>
 Example:
 \endhtmlonly
 
-This would create 10meter contours from the DEM data in dem.tif and produce
-a shapefile in contour.shp/shx/dbf with the contour elevations in the "elev"
-attribute.
+The following would burn all polygons from mask.shp into the RGB TIFF
+file work.tif with the color red (RGB = 255,0,0).  
 
 \verbatim
-gdal_contour -a elev dem.tif contour.shp 10.0
+gdal_rasterize -b 1 -b 2 -b 3 -burn 255 -burn 0 -burn 0 -l mask mask.shp work.tif
+\endverbatim
+
+The following would burn all "class A" buildings into the output elevation
+file, pulling the top elevation from the ROOF_H attribute.
+
+\verbatim
+gdal_rasterize -a ROOF_H -where 'class="A"' -l footprints footprints.shp city_dem.tif
 \endverbatim
 
 \if man
 \section iauthor AUTHORS
-Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+Frank Warmerdam <warmerdam@pobox.com>
 \endif
 */
 
