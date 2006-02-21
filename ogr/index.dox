@@ -56,9 +56,9 @@ a viewer that will display OGR supported vector files.<p>
 The source code for this effort is intended to be available as OpenSource
 using an X Consortium style license.  The OGR library is currently a 
 loosely coupled subcomponent of the 
-<a href="http://www.remotesensing.org/gdal">GDAL</a> library, so you get all
+<a href="http://www.gdal.org/">GDAL</a> library, so you get all
 of GDAL for the price of OGR, though you can build and use just the OGR 
-components.  See the <a href="http://www.remotesensing.org/gdal">GDAL</a> 
+components.  See the <a href="http://www.gdal.org/">GDAL</a> 
 page for the most recently released source including 
 <a href="http://gdal.maptools.org/dl/daily">nightly CVS snapshots</a>. 
 <p>
@@ -70,16 +70,11 @@ OGR bugs <a href="http://bugzilla.remotesensing.org/enter_bug.cgi?product=GDAL&c
 
 <h2>Mailing List</h2>
 
-The <a href="mailto:gdal-dev@remotesensing.org">gdal-dev@remotesensing.org</a> 
+The <a href="mailto:gdal-dev@lists.maptools.org">gdal-dev@lists.maptools.org</a> 
 mailing list can be used for discussion of development and user issues related 
 to OGR and related technologies. Subscriptions can be done, and archives 
-reviewed <a href="http://remotesensing.org/mailman/listinfo/gdal-dev/">on
+reviewed <a href="http://lists.maptools.org/mailman/listinfo/gdal-dev/">on
 the web</a>.<p>
-
-A separate list, <a 
-href="http://groups.yahoo.com/group/sfcom-dev/">sfcom-dev@yahoogroups.com</a> 
-is maintained primarily for discussion of issues related to implementing
-Simple Features for COM and the OGC Simple Features OLE DB provider.<p>
 
 <h2>Alternative Bindings for the OGR API</h2>
 
@@ -143,10 +138,6 @@ drivers.<p>
 
 <li> Ned Harding of <a href="http://www.extendthereach.com/">SRC</a> for
 funding the Oracle Spatial driver.<p>
-
-<li> <a href="http://www.imagelinks.com">ImageLinks</a> who support <a
-href="http://www.remotesensing.org/">RemoteSensing.org</a> where OGR 
-(and GDAL) are hosted.<p>
 
 <li> Adam Gawne-Cain, and Martin Daly of
 <a href="http://www.cadcorp.co.uk">Cadcorp</a>
