@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2006/02/21 22:42:11  fwarmerdam
+ * Added ESDK 6 support.
+ *
  * Revision 1.49  2006/02/19 03:01:24  fwarmerdam
  * Improved error checking in writer code.
  *
@@ -161,10 +164,16 @@ CPL_C_END
 #include "lti_metadataDatabase.h"
 #include "lti_metadataRecord.h"
 #include "lti_utils.h"
+#include "lti_version.h"
 #include "MrSIDImageReader.h"
 
 #ifdef MRSID_J2K
 #  include "J2KImageReader.h"
+#endif
+
+// Are we using version 6 or newer?
+#if defined(LTI_SDK_MAJOR) && LTI_SDK_MAJOR >= 6
+#  define MRSID_POST5
 #endif
 
 #ifdef MRSID_ESDK
@@ -173,8 +182,13 @@ CPL_C_END
 # include "MG2ImageWriter.h"
 # include "MG2WriterParams.h"
 # ifdef MRSID_J2K
-#   include "J2KImageWriter.h"
-#   include "J2KWriterParams.h"
+#   ifdef MRSID_POST5
+#     include "JP2WriterManager.h"
+#     include "JPCWriterParams.h"
+#   else
+#     include "J2KImageWriter.h"
+#     include "J2KWriterParams.h"
+#   endif
 # endif
 #endif /* MRSID_ESDK */
 
@@ -1735,7 +1749,11 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         return NULL;
     }
       
+#ifdef MRSID_POST5
+    JP2WriterManager oImageWriter(&oImageReader);
+#else
     J2KImageWriter oImageWriter(&oImageReader);
+#endif
     eStat = oImageWriter.initialize();
     if( eStat != LT_STS_Success )
     {
