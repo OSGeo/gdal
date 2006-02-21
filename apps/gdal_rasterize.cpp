@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/02/21 15:14:28  fwarmerdam
+ * Don't crash if less -burn options provided than -b options.
+ *
  * Revision 1.2  2005/10/28 18:31:09  fwarmerdam
  * added -where and progress func
  *
@@ -114,7 +117,8 @@ static void ProcessLayer(
         for( unsigned int iBand = 0; iBand < anBandList.size(); iBand++ )
         {
             if( adfBurnValues.size() > 0 )
-                adfFullBurnValues.push_back( adfBurnValues[iBand] );
+                adfFullBurnValues.push_back( 
+                    adfBurnValues[MIN(iBand,anBurnValues.size()-1)] );
             else if( b3D )
             {
                 // TODO: get geometry "z" value 
@@ -226,6 +230,9 @@ int main( int argc, char ** argv )
         fprintf( stdout, "To many of -3d, -burn and -a specified.\n" );
         exit( 1 );
     }
+
+    if( anBandList.size() == 0 )
+        anBandList.push_back( 1 );
 
 /* -------------------------------------------------------------------- */
 /*      Open source vector dataset.                                     */
