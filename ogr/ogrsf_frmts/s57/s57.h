@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2006/02/21 04:14:15  fwarmerdam
+ * szUPDN addition
+ *
  * Revision 1.32  2006/02/15 18:04:45  fwarmerdam
  * implemented DSID feature support
  *
@@ -285,6 +288,7 @@ class CPL_DLL S57Reader
     int                 nNextDSIDIndex;
     DDFRecord           *poDSIDRecord;
     DDFRecord           *poDSPMRecord;
+    char                szUPDNUpdate[10];
 
     char                **papszOptions;
 
