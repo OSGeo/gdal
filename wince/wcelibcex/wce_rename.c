@@ -68,12 +68,12 @@ int wce_rename(const char *oldfile, const char *newfile)
 
     /* Old filename */
     lenold = MultiByteToWideChar (CP_ACP, 0, oldfile, -1, NULL, 0) ;
-    wsold = malloc(lenold);
+    wsold = (wchar_t*)malloc(sizeof(wchar_t) * lenold);
     MultiByteToWideChar( CP_ACP, 0, oldfile, -1, wsold, lenold);
     
     /* New filename */
     lennew = MultiByteToWideChar (CP_ACP, 0, newfile, -1, NULL, 0) ;
-    wsnew = malloc(lennew);
+    wsnew = (wchar_t*)malloc(sizeof(wchar_t) * lennew);
     MultiByteToWideChar(CP_ACP, 0, newfile, -1, wsnew, lennew);
 
     /* Delete file using Win32 CE API call */
