@@ -1,0 +1,3 @@
+- Fix issue with building DLL using makefile
+- Port OGR driver for CSV
+- Port OGR driver for GML
