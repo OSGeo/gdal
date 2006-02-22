@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2006/02/22 01:37:57  fwarmerdam
+ * added support for 32bit images with bitfields compression (pgao)
+ *
  * Revision 1.37  2005/10/31 13:03:42  dron
  * Check for integer overflow conditions when calculating nScanSize.
  *
@@ -1118,7 +1121,8 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int             iBand;
 
-    if ( poDS->sInfoHeader.iCompression == BMPC_RGB )
+    if ( poDS->sInfoHeader.iCompression == BMPC_RGB
+    ||   poDS->sInfoHeader.iCompression == BMPC_BITFIELDS )
     {
         for( iBand = 1; iBand <= poDS->nBands; iBand++ )
             poDS->SetBand( iBand, new BMPRasterBand( poDS, iBand ) );
