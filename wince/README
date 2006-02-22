@@ -82,10 +82,17 @@ http://www.microsoft.com/downloads/details.aspx?FamilyID=1DACDB3D-50D1-41B2-A107
 2. Microsoft eMbedded Visual C++ 4.0 Service Pack 3
 http://www.microsoft.com/downloads/details.aspx?familyid=5BB36F3E-5B3D-419A-9610-2FE53815AE3B
 
-3. The Run-time Type Information library for the Pocket PC 2003 SDK
+3. SDK for Windows Mobile 2003-based Pocket PCs
+http://www.microsoft.com/downloads/details.aspx?FamilyId=9996B314-0364-4623-9EDE-0B5FBB133652
+
+Note: I have only tested OGR port with Pocket PC 2003 SDK but there should not be any
+problem with building it using other Windows CE SDKs. If you've managed to build OGR port
+using other SDKs pleaes let me know.
+
+4. The Run-time Type Information library for the Pocket PC 2003 SDK
 http://support.microsoft.com/default.aspx?scid=kb;[LN];830482
 
-4. I also recommend to use STLport
+5. I also recommend to use STLport
 Here is some introduction: 
 http://mateusz.loskot.net/2005/12/25/how-to-use-stlport-with-evc/
 it refers to my article on http://www.pocketpcdn.com
