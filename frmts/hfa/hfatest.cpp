@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/02/22 14:48:46  fwarmerdam
+ * Added compression type to HFAGetBandInfo
+ *
  * Revision 1.9  2003/09/15 20:48:40  warmerda
  * added demonstration of direct access
  *
@@ -154,10 +157,10 @@ int main( int argc, char ** argv )
         {
             int	nDataType, nColors, nOverviews, iOverview;
             double	*padfRed, *padfGreen, *padfBlue, *padfAlpha;
-            int nBlockXSize, nBlockYSize;
+            int nBlockXSize, nBlockYSize, nCompressionType;
         
             HFAGetBandInfo( hHFA, i, &nDataType, &nBlockXSize, &nBlockYSize, 
-                            &nOverviews );
+                            &nOverviews, &nCompressionType );
             printf( "Band %d: %dx%d tiles, type = %d\n",
                     i, nBlockXSize, nBlockYSize, nDataType );
 
