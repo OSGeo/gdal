@@ -1,0 +1,14 @@
+GDAL_ROOT = ..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+OBJ	= IdrisiRasterDoc.obj IdrisiRasterProj.obj IdrisiRasterUtils.obj
+
+EXTRAFLAGS = -I..\raw -I$(RST_DIR) -D_USE_MATH_DEFINES
+
+default:	$(OBJ)
+    lib /out:rstlib.lib $(OBJ)
+	copy *.obj ..\..\o
+
+clean:
+	-del *.obj

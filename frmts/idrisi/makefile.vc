@@ -1,0 +1,19 @@
+GDAL_ROOT = ..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+OBJ	= idrisiDataset.obj
+
+EXTRAFLAGS = -I..\raw -I$(RST_DIR) -D_USE_MATH_DEFINES
+
+default:	$(OBJ)
+	copy *.obj ..\o
+	cd rstlib
+	$(MAKE) /f makefile.vc
+	cd ..
+	
+clean:
+	-del *.obj
+	cd rstlib
+	$(MAKE) /f makefile.vc clean
+	cd ..
