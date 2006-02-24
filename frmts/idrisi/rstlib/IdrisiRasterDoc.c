@@ -130,8 +130,10 @@ rst_Doc * ReadImgDoc(const char *fileName)
 		ReadcommentsLines(stream, &imgDoc->lineages_count, &imgDoc->lineages, LABEL_DOC_lineages);
 		ReadcommentsLines(stream, &imgDoc->comments_count, &imgDoc->comments, LABEL_DOC_comments);
 		fclose(stream);
+		return imgDoc;
 	}
-	return imgDoc;
+	else
+		return NULL;
 }
 void WriteImgDoc(rst_Doc *imgDoc, char *fileName)
 {
