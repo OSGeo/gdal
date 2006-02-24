@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/02/24 15:59:24  fwarmerdam
+ * Added error checking on record buffer memory allocation.
+ *
  * Revision 1.28  2005/10/16 04:09:20  fwarmerdam
  * Avoid warnings in sprintf()s.
  *
@@ -532,7 +535,15 @@ int DDFRecord::ReadHeader()
         int nFieldEntryWidth = _sizeFieldLength + _sizeFieldPos + _sizeFieldTag;
         nFieldCount = 0;
         int i=0;
-        char *tmpBuf = (char*)CPLMalloc(nFieldEntryWidth);
+        char *tmpBuf = (char*)VSIMalloc(nFieldEntryWidth);
+
+        if( tmpBuf == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, 
+                      "Attempt to allocate %d byte ISO8211 record buffer failed.", 
+                      nFieldEntryWidth );
+            return FALSE;
+        }
       
         // while we're not at the end, store this entry,
         // and keep on reading...
