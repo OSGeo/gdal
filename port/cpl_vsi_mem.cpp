@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/02/24 23:06:18  mloskot
+ * Fix missing namespace in string type usage
+ * Bug reported by Thom DeCarlo in the [Gdal-dev] problem compiling with VS.NET post on the list.
+ *
  * Revision 1.9  2006/02/19 21:54:34  mloskot
  * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
  *
@@ -609,9 +613,8 @@ char **VSIMemFilesystemHandler::ReadDir( const char *pszPath )
  */
 
 void VSIInstallMemFileHandler()
-
 {
-    VSIFileManager::InstallHandler( string("/vsimem/"), 
+    VSIFileManager::InstallHandler( std::string("/vsimem/"), 
                                     new VSIMemFilesystemHandler );
 }
 
