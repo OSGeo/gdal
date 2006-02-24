@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2006/02/24 15:57:11  fwarmerdam
+ * Added CATD open check to make sure this is a CATD file before reading
+ * any records.  Mainly intended to avoid problems with ADRG files.
+ *
  * Revision 1.14  2003/02/06 03:18:34  warmerda
  * fixed memory leak of pszFullPath
  *
@@ -157,6 +161,16 @@ int SDTS_CATD::Read( const char * pszFilename )
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
     if( !oCATDFile.Open( pszFilename ) )
+        return FALSE;
+
+    CPLErrorReset();  // clear any ADRG "unrecognised data_struct_code" errors
+
+/* -------------------------------------------------------------------- */
+/*      Does this file have a CATD field?  If not, it isn't an SDTS     */
+/*      record and we won't even try reading the first record for       */
+/*      fear it will we a huge honking ADRG data record or something.   */
+/* -------------------------------------------------------------------- */
+    if( oCATDFile.FindFieldDefn( "CATD" ) == NULL )
         return FALSE;
     
 /* -------------------------------------------------------------------- */
