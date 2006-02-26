@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/02/26 05:29:12  fwarmerdam
+ * added LCC1SP
+ *
  * Revision 1.7  2005/05/11 14:37:25  fwarmerdam
  * add id on projectedcrs
  *
@@ -658,6 +661,26 @@ static CPLXMLNode *exportProjCSToXML( const OGRSpatialReference *poSRS )
     {
         AddValueIDWithURN( psConv, "gml:usesMethod", "EPSG", "method", 
                            9807 );
+
+        addProjArg( poSRS, psConv, "Angular", 0.0,
+                    8801, SRS_PP_LATITUDE_OF_ORIGIN );
+        addProjArg( poSRS, psConv, "Angular", 0.0,
+                    8802, SRS_PP_CENTRAL_MERIDIAN );
+        addProjArg( poSRS, psConv, "Unitless", 1.0,
+                    8805, SRS_PP_SCALE_FACTOR );
+        addProjArg( poSRS, psConv, "Linear", 0.0,
+                    8806, SRS_PP_FALSE_EASTING );
+        addProjArg( poSRS, psConv, "Linear", 0.0,
+                    8807, SRS_PP_FALSE_NORTHING );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Lambert Conformal Conic                                         */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) )
+    {
+        AddValueIDWithURN( psConv, "gml:usesMethod", "EPSG", "method", 
+                           9801 );
 
         addProjArg( poSRS, psConv, "Angular", 0.0,
                     8801, SRS_PP_LATITUDE_OF_ORIGIN );
