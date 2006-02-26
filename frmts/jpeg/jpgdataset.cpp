@@ -28,6 +28,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.40  2006/02/26 14:32:32  fwarmerdam
+ * Added accelerated dataset rasterio for common case c/o Mike Mazzella.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1046
+ *
  * Revision 1.39  2006/02/02 01:07:36  fwarmerdam
  * Added support for finding EXIF information when APP1 chunk appears
  * after an APP0 JFIF chunk.  ie. albania.jpg
@@ -216,6 +220,10 @@ class JPGDataset : public GDALPamDataset
   public:
                  JPGDataset();
                  ~JPGDataset();
+
+    virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
+                                   void *, int, int, GDALDataType,
+                                   int, int *, int, int, int );
 
     virtual CPLErr GetGeoTransform( double * );
     static GDALDataset *Open( GDALOpenInfo * );
@@ -945,6 +953,65 @@ CPLErr JPGDataset::GetGeoTransform( double * padfTransform )
     }
     else 
         return GDALPamDataset::GetGeoTransform( padfTransform );
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/*                                                                      */
+/*      Checks for what might be the most common read case              */
+/*      (reading an entire interleaved, 8bit, RGB JPEG), and            */
+/*      optimizes for that case                                         */
+/************************************************************************/
+
+CPLErr JPGDataset::IRasterIO( GDALRWFlag eRWFlag, 
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              void *pData, int nBufXSize, int nBufYSize, 
+                              GDALDataType eBufType,
+                              int nBandCount, int *panBandMap, 
+                              int nPixelSpace, int nLineSpace, int nBandSpace )
+
+{
+    if((eRWFlag == GF_Read) &&
+       (nBandCount == 3) &&
+       (nBands == 3) &&
+       (nXOff == 0) && (nXOff == 0) &&
+       (nXSize == nBufXSize) && (nXSize == nRasterXSize) &&
+       (nYSize == nBufYSize) && (nYSize == nRasterYSize) &&
+       (eBufType == GDT_Byte) && (sDInfo.data_precision != 12) &&
+       /*(nPixelSpace >= 3)*/(nPixelSpace > 3) &&
+       (nLineSpace == (nPixelSpace*nXSize)) &&
+       (nBandSpace == 1) &&
+       (pData != NULL) &&
+       (panBandMap != NULL) &&
+       (panBandMap[0] == 1) && (panBandMap[1] == 2) && (panBandMap[2] == 3))
+    {
+        Restart();
+        int y;
+        CPLErr tmpError;
+        int x;
+
+        // handles copy with padding case
+        for(y = 0; y < nYSize; ++y)
+        {
+            tmpError = LoadScanline(y);
+            if(tmpError != CE_None) return tmpError;
+
+            for(x = 0; x < nXSize; ++x)
+            {
+                tmpError = LoadScanline(y);
+                if(tmpError != CE_None) return tmpError;
+                memcpy(&(((GByte*)pData)[(y*nLineSpace) + (x*nPixelSpace)]), 
+                       (const GByte*)&(pabyScanline[x*3]), 3);
+            }
+        }
+
+        return CE_None;
+    }
+
+    return GDALPamDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                     pData, nBufXSize, nBufYSize, eBufType, 
+                                     nBandCount, panBandMap, 
+                                     nPixelSpace, nLineSpace, nBandSpace);
 }
 
 /************************************************************************/
