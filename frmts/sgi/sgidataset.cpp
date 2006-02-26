@@ -31,6 +31,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/02/26 14:26:10  fwarmerdam
+ * Optimizations from Mike.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1046
+ *
  * Revision 1.1  2005/12/20 16:20:31  fwarmerdam
  * New
  *
@@ -158,21 +162,16 @@ static void ImageGetRow(ImageRec* image, unsigned char* buf, int y, int z)
             }
             if(pixel & 0x80)
             {
-                while(count--)
-                {
-                    *oPtr++ = *iPtr++;
-                    ++xsizeCount;
-                }
+	      memcpy(oPtr, iPtr, count);
+	      iPtr += count;
             }
             else
             {
                 pixel = *iPtr++;
-                while(count--)
-                {
-                    *oPtr++ = pixel;
-                    ++xsizeCount;
-                }
+		memset(oPtr, pixel, count);
             }
+	    oPtr += count;
+	    xsizeCount += count;
         }
     }
     else
@@ -203,16 +202,10 @@ class SGIDataset : public GDALPamDataset
     int	   bGeoTransformValid;
     double adfGeoTransform[6];
 
-    int    nLoadedScanline;
-    GByte* pabyScanline;
-
     char** papszMetadata;
     char** papszSubDatasets;
 
     ImageRec image;
-
-    CPLErr LoadScanline(int, int);
-    void Restart();
 
 public:
     SGIDataset();
@@ -273,9 +266,6 @@ CPLErr SGIRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
 {
     SGIDataset* poGDS = (SGIDataset*) poDS;
-    CPLErr      eErr;
-    int         nXSize = GetXSize();
-    int         nWordSize = GDALGetDataTypeSize(eDataType) / 8;
     
     CPLAssert(nBlockXOff == 0);
     if(nBlockXOff != 0)
@@ -285,16 +275,9 @@ CPLErr SGIRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Load the desired scanline into the working buffer.              */
+/*      Load the desired data into the working buffer.              */
 /* -------------------------------------------------------------------- */
-    eErr = poGDS->LoadScanline(nBlockYOff, nBand-1);
-    if(eErr != CE_None)
-        return eErr;
-
-/* -------------------------------------------------------------------- */
-/*      Transfer between the working buffer the the callers buffer.     */
-/* -------------------------------------------------------------------- */
-    memcpy(pImage, poGDS->pabyScanline, nXSize * nWordSize);
+    ImageGetRow(&(poGDS->image), (unsigned char*)pImage, nBlockYOff, nBand-1);
 
     return CE_None;
 }
@@ -354,8 +337,6 @@ GDALColorInterp SGIRasterBand::GetColorInterpretation()
 SGIDataset::SGIDataset()
   : fpImage(NULL),
     bGeoTransformValid(FALSE),
-    nLoadedScanline(-1),
-    pabyScanline(NULL),
     papszMetadata(NULL),
     papszSubDatasets(NULL)
 {
@@ -379,7 +360,6 @@ SGIDataset::~SGIDataset()
     if(fpImage != NULL)
         VSIFCloseL(fpImage);
 
-    if(pabyScanline != NULL) CPLFree(pabyScanline);
     if(papszMetadata != NULL) CSLDestroy(papszMetadata);
 
     if(image.tmp != NULL) CPLFree(image.tmp);
@@ -388,46 +368,6 @@ SGIDataset::~SGIDataset()
     if(image.tmpB != NULL) CPLFree(image.tmpB);
     if(image.rowSize != NULL) CPLFree(image.rowSize);
     if(image.rowStart != NULL) CPLFree(image.rowStart);
-}
-/************************************************************************/
-/*                            LoadScanline()                            */
-/************************************************************************/
-
-CPLErr SGIDataset::LoadScanline(int iLine, int bandId)
-
-{
-    if(nLoadedScanline == iLine)
-        return CE_None;
-
-    if(pabyScanline == NULL)
-    {
-        pabyScanline = (GByte*)CPLMalloc(GetRasterCount() * GetRasterXSize());
-        memset(pabyScanline, 0, GetRasterCount() * GetRasterXSize());
-    }
-
-    if(iLine < nLoadedScanline)
-        Restart();
-
-    while(nLoadedScanline < iLine)
-    {
-        ImageGetRow(&image,pabyScanline,iLine,bandId);
-        nLoadedScanline++;
-    }
-
-    return CE_None;
-}
-
-/************************************************************************/
-/*                              Restart()                               */
-/*                                                                      */
-/*      Restart compressor at the beginning of the file.                */
-/************************************************************************/
-
-void SGIDataset::Restart()
-
-{
-    VSIFSeekL(fpImage, image.rleEnd, SEEK_SET);
-    nLoadedScanline = -1;
 }
 
 /************************************************************************/
@@ -530,12 +470,12 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
     if((poDS->image.tmp == NULL) || (poDS->image.tmpR == NULL) ||
        (poDS->image.tmpG == NULL) || (poDS->image.tmpB == NULL))
     {
-        if(poDS->image.tmp != NULL) {delete [] poDS->image.tmp; poDS->image.tmp = NULL;}
-        if(poDS->image.tmpR != NULL) {delete [] poDS->image.tmpR; poDS->image.tmpR = NULL;}
-        if(poDS->image.tmpG != NULL) {delete [] poDS->image.tmpG; poDS->image.tmpG = NULL;}
-        if(poDS->image.tmpB != NULL) {delete [] poDS->image.tmpB; poDS->image.tmpB = NULL;}
-        CPLError(CE_Failure, CPLE_OpenFailed, "ran out of memory in sgidataset.cpp");
-        return NULL;
+      if(poDS->image.tmp != NULL) {CPLFree(poDS->image.tmp); poDS->image.tmp = NULL;}
+      if(poDS->image.tmpR != NULL) {CPLFree(poDS->image.tmpR); poDS->image.tmpR = NULL;}
+      if(poDS->image.tmpG != NULL) {CPLFree(poDS->image.tmpG); poDS->image.tmpG = NULL;}
+      if(poDS->image.tmpB != NULL) {CPLFree(poDS->image.tmpB); poDS->image.tmpB = NULL;}
+      CPLError(CE_Failure, CPLE_OpenFailed, "ran out of memory in sgidataset.cpp");
+      return NULL;
     }
     memset(poDS->image.tmp, 0, poDS->image.xsize*numItems);
     memset(poDS->image.tmpR, 0, poDS->image.xsize*numItems);
@@ -551,12 +491,12 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
         memset(poDS->image.rowSize, 0, x);
         if(poDS->image.rowStart == NULL || poDS->image.rowSize == NULL)
         {
-            if(poDS->image.tmp != NULL) {delete [] poDS->image.tmp; poDS->image.tmp = NULL;}
-            if(poDS->image.tmpR != NULL) {delete [] poDS->image.tmpR; poDS->image.tmpR = NULL;}
-            if(poDS->image.tmpG != NULL) {delete [] poDS->image.tmpG; poDS->image.tmpG = NULL;}
-            if(poDS->image.tmpB != NULL) {delete [] poDS->image.tmpB; poDS->image.tmpB = NULL;}
-            CPLError(CE_Failure, CPLE_OpenFailed, "ran out of memory in sgidataset.cpp");
-            return NULL;
+	  if(poDS->image.tmp != NULL) {CPLFree(poDS->image.tmp); poDS->image.tmp = NULL;}
+	  if(poDS->image.tmpR != NULL) {CPLFree(poDS->image.tmpR); poDS->image.tmpR = NULL;}
+	  if(poDS->image.tmpG != NULL) {CPLFree(poDS->image.tmpG); poDS->image.tmpG = NULL;}
+	  if(poDS->image.tmpB != NULL) {CPLFree(poDS->image.tmpB); poDS->image.tmpB = NULL;}
+	  CPLError(CE_Failure, CPLE_OpenFailed, "ran out of memory in sgidataset.cpp");
+	  return NULL;
         }
         poDS->image.rleEnd = 512 + (2 * x);
         VSIFSeekL(poDS->fpImage, 512, SEEK_SET);
