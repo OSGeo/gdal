@@ -170,14 +170,14 @@ char * ReadProjSystem(char *fileName)
 
 	imgDoc = ReadImgDoc(fileName);
 
-	if (strcmp(imgDoc->ref_system, VALUE_DOC_LATLONG) == 0)
+	if (stricmp(imgDoc->ref_system, VALUE_DOC_LATLONG) == 0)
 	{
 		strcpy(projected_cs, "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",6378137.0,298.257223563]],PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]]");
 		FreeImgDoc(imgDoc);
 		return projected_cs;
 	}
 	else
-	if (strcmp(imgDoc->ref_system, VALUE_DOC_PLANE) == 0)
+	if (stricmp(imgDoc->ref_system, VALUE_DOC_PLANE) == 0)
 	{
 		strcpy(projected_cs, "GEOGCS[\"unnamed\",DATUM[\"unknown\",SPHEROID[\"unretrievable - using WGS84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"unknown\",0.0174532925199433]]");
 		FreeImgDoc(imgDoc);
@@ -226,7 +226,7 @@ char * ReadProjSystem(char *fileName)
 		DEGREE2METERS
 		);
 
-	if (strcmp(imgRef->projection, "none") == 0)
+	if (stricmp(imgRef->projection, "none") == 0)
 	{
 		FreeImgRef(imgRef);
 		return geoegraphic_cs;	
@@ -269,8 +269,6 @@ void WriteProjSystem(char *peString, char *fileName)
 	unsigned int i;
 	unsigned int match = FALSE;
 
-	printf("peString=%s\n", peString);
-
 	if (strncmp(peString, "PROJCS", 6) == 0)
 	{
 		imgRef = CreateImgRef();
@@ -299,43 +297,30 @@ void WriteProjSystem(char *peString, char *fileName)
 			unitName				= ReadParameterString(peString, "UNIT");
 			for (i = 0; i < REFNAMESARRAYCOUNT; i++)
 			{
-printf("%s <=> %s", projName, rstRefNames[i].esriName);
 				if (strcmp(projName, rstRefNames[i].esriName) == 0)
 				{
-printf("11");
 					imgRef->RefName->name = allocTextString(rstRefNames[i].name);
 					imgRef->RefName->esriName = allocTextString(rstRefNames[i].esriName);
 					break;
 				}
 			}
-printf("12");
 			for (i = 0; i < UNITSARRAYCOUNT; i++)
 			{
-printf("13");
 				if (stricmp(unitName, rstUnits[i].name) == 0)
 				{
-printf("14");
 					imgRef->Unit->name = allocTextString(rstUnits[i].name);
 					imgRef->Unit->esriName = allocTextString(rstUnits[i].esriName);
 					imgRef->Unit->meters = rstUnits[i].meters;
 					break;
 				}
 			}
-printf("15");
 			imgRef->Datum = (rst_Datum * ) CALLOC((size_t) sizeof(rst_Datum), 1);
-printf("16");
 			imgRef->Datum->name = ReadParameterString(peString, "SPHEROID");;
-printf("17");
 			imgRef->Datum->esriName = ReadParameterString(peString, "DATUM");
-printf("18");
 			imgRef->Datum->ellipsoidName = ReadParameterString(peString, "SPHEROID");
-printf("19");
 			sprintf(aux, "SPHEROID[\"%s", imgRef->Datum->ellipsoidName);
-printf("20");
 			imgRef->majorSemiAxis = ReadParameterFloat(peString, aux);
-printf("21");
 			imgRef->minorSemiAxis = -1 * ((imgRef->majorSemiAxis / INVERSEFLATTENING) - imgRef->majorSemiAxis);
-printf("22");
 
 			WriteimgRef(imgRef, refFile);
 		}
