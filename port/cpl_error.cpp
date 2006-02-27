@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/02/27 02:40:11  fwarmerdam
+ * Dynamically grow error buffer.
+ *
  * Revision 1.33  2006/02/19 21:54:34  mloskot
  * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
  *
@@ -59,77 +62,7 @@
  *
  * Revision 1.24  2003/04/04 14:16:07  dron
  * Use _vsnprintf() in Windows environment.
- *
- * Revision 1.23  2002/10/23 20:19:37  warmerda
- * Modify log file naming convention as per patch from Dale.
- *
- * Revision 1.22  2002/08/01 20:02:54  warmerda
- * added CPL_LOG_ERRORS support
- *
- * Revision 1.21  2001/12/14 19:45:17  warmerda
- * Avoid use of errno in prototype.
- *
- * Revision 1.20  2001/11/27 17:01:06  warmerda
- * added timestamp to debug messages
- *
- * Revision 1.19  2001/11/15 16:11:08  warmerda
- * use vsnprintf() for debug calls if it is available
- *
- * Revision 1.18  2001/11/02 22:07:58  warmerda
- * added logging error handler
- *
- * Revision 1.17  2001/07/18 04:00:49  warmerda
- * added CPL_CVSID
- *
- * Revision 1.16  2001/02/15 16:30:57  warmerda
- * fixed initialization of fpLog
- *
- * Revision 1.15  2001/01/19 21:16:41  warmerda
- * expanded tabs
- *
- * Revision 1.14  2000/11/30 17:30:10  warmerda
- * added CPLGetLastErrorType
- *
- * Revision 1.13  2000/03/31 14:37:48  warmerda
- * only use vsnprintf where available
- *
- * Revision 1.12  2000/03/31 14:11:55  warmerda
- * added CPLErrorV
- *
- * Revision 1.11  2000/01/10 17:35:45  warmerda
- * added push down stack of error handlers
- *
- * Revision 1.10  1999/11/23 04:16:56  danmo
- * Fixed var. initialization that failed to compile as C
- *
- * Revision 1.9  1999/09/03 17:03:45  warmerda
- * Completed partial help line.
- *
- * Revision 1.8  1999/07/23 14:27:47  warmerda
- * CPLSetErrorHandler returns old handler
- *
- * Revision 1.7  1999/06/27 16:50:52  warmerda
- * added support for CPL_DEBUG and CPL_LOG variables
- *
- * Revision 1.6  1999/06/26 02:46:11  warmerda
- * Fixed initialization of debug messages.
- *
- * Revision 1.5  1999/05/20 14:59:05  warmerda
- * added CPLDebug()
- *
- * Revision 1.4  1999/05/20 02:54:38  warmerda
- * Added API documentation
- *
- * Revision 1.3  1998/12/15 19:02:27  warmerda
- * Avoid use of errno as a variable
- *
- * Revision 1.2  1998/12/06 02:52:52  warmerda
- * Implement assert support
- *
- * Revision 1.1  1998/12/03 18:26:02  warmerda
- * New
- *
- **********************************************************************/
+ */
 
 #include "cpl_error.h"
 #include "cpl_vsi.h"
@@ -148,6 +81,12 @@ CPL_CVSID("$Id$");
 static void *hErrorMutex = NULL;
 static CPLErrorHandler pfnErrorHandler = CPLDefaultErrorHandler;
 
+#if !defined(HAVE_VSNPRINTF)
+#  define DEFAULT_LAST_ERR_MSG_SIZE 20000
+#else
+#  define DEFAULT_LAST_ERR_MSG_SIZE 500
+#endif
+
 typedef struct errHandler
 {
     struct errHandler   *psNext;
@@ -155,11 +94,11 @@ typedef struct errHandler
 } CPLErrorHandlerNode;
 
 typedef struct {
-    char    szLastErrMsg[2000];
     int     nLastErrNo;
     CPLErr  eLastErrType;
-    
     CPLErrorHandlerNode *psHandlerStack;
+    int     nLastErrMsgMax;
+    char    szLastErrMsg[DEFAULT_LAST_ERR_MSG_SIZE];
 } CPLErrorContext;
 
 /************************************************************************/
@@ -176,6 +115,7 @@ static CPLErrorContext *CPLGetErrorContext()
     {
         psCtx = (CPLErrorContext *) CPLCalloc(sizeof(CPLErrorContext),1);
         psCtx->eLastErrType = CE_None;
+        psCtx->nLastErrMsgMax = sizeof(psCtx->szLastErrMsg);
         CPLSetTLS( CTLS_ERRORCONTEXT, psCtx, TRUE );
     }
 
@@ -238,17 +178,33 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
 {
     CPLErrorContext *psCtx = CPLGetErrorContext();
 
-    /* Expand the error message 
-     */
+/* -------------------------------------------------------------------- */
+/*      Expand the error message                                        */
+/* -------------------------------------------------------------------- */
 #if defined(HAVE_VSNPRINTF)
-    vsnprintf( psCtx->szLastErrMsg, sizeof(psCtx->szLastErrMsg), fmt, args );
+    {
+        int nPR;
+
+        while( ((nPR = vsnprintf( psCtx->szLastErrMsg, 
+                                 psCtx->nLastErrMsgMax, fmt, args )) == -1
+                || nPR >= psCtx->nLastErrMsgMax-1)
+               && psCtx->nLastErrMsgMax < 1000000 )
+        {
+            psCtx->nLastErrMsgMax *= 3;
+            psCtx = (CPLErrorContext *) 
+                CPLRealloc(psCtx, sizeof(CPLErrorContext) - DEFAULT_LAST_ERR_MSG_SIZE + psCtx->nLastErrMsgMax + 1);
+            CPLSetTLS( CTLS_ERRORCONTEXT, psCtx, TRUE );
+            printf( "Grew error buffer.\n" );
+        }
+    }
 #else
     vsprintf( psCtx->szLastErrMsg, fmt, args);
 #endif
 
-    /* If the user provided his own error handling function, then call
-     * it, otherwise print the error to stderr and return.
-     */
+/* -------------------------------------------------------------------- */
+/*      If the user provided his own error handling function, then      */
+/*      call it, otherwise print the error to stderr and return.        */
+/* -------------------------------------------------------------------- */
     psCtx->nLastErrNo = err_no;
     psCtx->eLastErrType = eErrClass;
 
