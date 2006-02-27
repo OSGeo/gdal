@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2006/02/27 02:29:13  hobu
+ * Provide a good error message when we try to insert a feature
+ * that is larger than the max_allowed_packet
+ *
  * Revision 1.29  2006/02/16 17:56:03  fwarmerdam
  * Use COORD_DIMENSION when working out layer geometry type.
  *
@@ -887,8 +891,30 @@ OGRErr OGRMySQLTableLayer::CreateFeature( OGRFeature *poFeature )
     }
 
     osCommand += ")";
-    if( mysql_query(poDS->GetConn(), osCommand.c_str() ) ){   
-        poDS->ReportError(  osCommand.c_str() );
+    
+    int nQueryResult = mysql_query(poDS->GetConn(), osCommand.c_str() );
+    
+    if( nQueryResult ){   
+        int eErrorCode = mysql_errno(poDS->GetConn());
+        if (eErrorCode == 1153) {//ER_NET_PACKET_TOO_LARGE)
+            poDS->ReportError("CreateFeature failed because the MySQL server " \
+                              "cannot read the entire query statement.  Increase " \
+                              "the size of statements your server will allow by " \
+                              "altering the 'max_allowed_packet' parameter in "\
+                              "your MySQL server configuration.");
+        }
+        else
+        {
+        CPLDebug("MYSQL","Error number %d", eErrorCode);
+            poDS->ReportError(  osCommand.c_str() );
+        }
+
+        // make sure to attempt to free results
+        hResult = mysql_store_result( poDS->GetConn() );
+        if( hResult != NULL )
+            mysql_free_result( hResult );
+        hResult = NULL;
+            
         return OGRERR_FAILURE;   
     }
 

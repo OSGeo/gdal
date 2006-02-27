@@ -70,10 +70,10 @@ be extremely slow. <p>
 	<li>
 	    The MySQL driver opens a connection to the database using CLIENT_INTERACTIVE mode.
 	    You can adjust this setting (interactive_timeout) in your mysql.ini or mysql.cnf 
-	    file to your liking.
+	    file of your server to your liking.
 	</li>
 	<li>
-	    Geometries can be very large, and we are using WKT to insert them into the database.  
+	    We are using WKT to insert geometries into the database.  
 	    If you are inserting big geometries, you will need to be aware of the <i>max_allowed_packet</i> 
 	    parameter in the MySQL configuration.  By default it is set to 1M, but this will not 
 	    be large enough for really big geometries.  If you get an error message like: 
