@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.35  2006/02/27 23:24:13  fwarmerdam
+ * Removed printf about growing error buffer.
+ *
  * Revision 1.34  2006/02/27 02:40:11  fwarmerdam
  * Dynamically grow error buffer.
  *
@@ -53,7 +56,7 @@
  *
  * Revision 1.27  2003/05/27 20:44:16  warmerda
  * use VSI time services
- *
+ * 
  * Revision 1.26  2003/05/08 21:51:14  warmerda
  * added CPL{G,S}etConfigOption() usage
  *
@@ -194,7 +197,6 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
             psCtx = (CPLErrorContext *) 
                 CPLRealloc(psCtx, sizeof(CPLErrorContext) - DEFAULT_LAST_ERR_MSG_SIZE + psCtx->nLastErrMsgMax + 1);
             CPLSetTLS( CTLS_ERRORCONTEXT, psCtx, TRUE );
-            printf( "Grew error buffer.\n" );
         }
     }
 #else
