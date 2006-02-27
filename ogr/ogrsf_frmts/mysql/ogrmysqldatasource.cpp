@@ -29,6 +29,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/02/27 00:29:27  hobu
+ * Allow the setting of timeouts via environment variable.
+ * Connect with CLIENT_INTERACTIVE mode.
+ * Tweak the error message in ReportError to make sure
+ * we can see what MySQL tells us (bug 1087).
+ *
  * Revision 1.17  2006/02/21 03:50:11  fwarmerdam
  * Fixed selection of new SRID values when no match is found.
  *
@@ -163,7 +169,7 @@ void OGRMySQLDataSource::ReportError( const char *pszDescription )
 {
     if( pszDescription )
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s\n%s", pszDescription, mysql_error( hConn ) );
+                  "%s MySQL error message: %s", mysql_error( hConn ),pszDescription );
     else
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s", mysql_error( hConn ) );
@@ -263,6 +269,18 @@ int OGRMySQLDataSource::Open( const char * pszNewName, int bUpdate,
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
     hConn = mysql_init( NULL );
+
+
+/* -------------------------------------------------------------------- */
+/*      Set the timeout for the connection if the users has specified.  */
+/* -------------------------------------------------------------------- */
+
+    const char *pszTimeoutLength = 
+        CPLGetConfigOption( "MYSQL_TIMEOUT", "0" );  
+
+    unsigned int timeout = atoi(pszTimeoutLength);        
+    mysql_options(hConn, MYSQL_OPT_CONNECT_TIMEOUT, (char*)&timeout);
+    
     if( hConn == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -275,7 +293,7 @@ int OGRMySQLDataSource::Open( const char * pszNewName, int bUpdate,
                                oUser.length() ? oUser.c_str() : NULL,
                                oPassword.length() ? oPassword.c_str() : NULL,
                                oDB.length() ? oDB.c_str() : NULL,
-                               nPort, NULL, 0 ) == NULL )
+                               nPort, NULL, CLIENT_INTERACTIVE ) == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "MySQL connect failed for: %s\n%s", 
