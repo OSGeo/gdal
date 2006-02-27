@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/02/27 01:52:50  hobu
+ * tweak error message
+ *
  * Revision 1.18  2006/02/27 00:29:27  hobu
  * Allow the setting of timeouts via environment variable.
  * Connect with CLIENT_INTERACTIVE mode.
@@ -169,7 +172,9 @@ void OGRMySQLDataSource::ReportError( const char *pszDescription )
 {
     if( pszDescription )
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "%s MySQL error message: %s", mysql_error( hConn ),pszDescription );
+                  "MySQL error message:%s Description: %s", 
+                  mysql_error( hConn ), 
+                  pszDescription );
     else
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s", mysql_error( hConn ) );
