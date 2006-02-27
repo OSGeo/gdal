@@ -28,15 +28,18 @@
 *
 */
 
-typedef	unsigned char uint8;	// Idrisi's metadata calls it byte
-typedef	signed short int16;		// Idrisi's metadata calls it integer
-typedef float float32;			// Idrisi's metadata calls it real
+typedef	unsigned char uint8;	
+typedef	signed short  int16;		
+typedef float         float32;			
+
+typedef uint8   idrisi_byte;
+typedef int16   idrisi_integer;
+typedef float32 idrisi_real;
 
 #include "gdal_priv.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_spatialref.h"
-#include "rawdataset.h"
 
 CPL_C_START
 #include "IdrisiRasterDoc.h"
@@ -48,21 +51,21 @@ void	GDALRegister_IDRISI(void);
 CPL_C_END
 
 class IdrisiDataset;
-class IdririRasterBand;
+class IdrisiRasterBand;
 
-class IdrisiDataset : public RawDataset
+class IdrisiDataset : public GDALDataset
 {
-	friend class IdrisiDatasetBand;
+	friend class IdrisiRasterBand;
 
-	FILE *fpImage;
+	FILE *fp;
 	rst_Doc *imgDoc;
 	char *pszFilename;
 	char *pszGeoRef;
 	double adfGeoTransform[6];
 
 public:
-		IdrisiDataset();
-		~IdrisiDataset();
+	IdrisiDataset();
+	~IdrisiDataset();
 
 	static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
 	static GDALDataset *Create(const char *pszFilename,
@@ -76,34 +79,39 @@ public:
 	virtual CPLErr SetGeoTransform(double * padfTransform);
 	virtual const char *GetProjectionRef(void);
 	virtual CPLErr  SetProjection(const char * pszProjString);
-	virtual char **GetCategoryNames();
-	virtual CPLErr SetCategoryNames(char **);
 };
 
-class IdrisiDatasetBand : public RawRasterBand
+class IdrisiRasterBand : public GDALRasterBand
 {
 	friend class IdrisiDataset;
 
-public:
-		IdrisiDatasetBand(GDALDataset *poDS, 
-			int nBand,
-			FILE * fpRaw, 
-			vsi_l_offset nImgOffset,
-			int nPixelOffset, 
-			int nLineOffset,
-			GDALDataType eDataType);
-		~IdrisiDatasetBand();
+	int nRecordSize;
+	GByte *pabyScan;
 
+public:
+	IdrisiRasterBand(IdrisiDataset *poDS, int nChannel);
+	~IdrisiRasterBand();
+
+	virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage);
+	virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage);
 	virtual GDALColorTable *GetColorTable();
 	virtual GDALColorInterp GetColorInterpretation();
 	virtual CPLErr SetColorTable(GDALColorTable *SetColorTable); 
 	virtual CPLErr SetColorInterpretation(GDALColorInterp);
+	virtual char **GetCategoryNames();
+	virtual CPLErr SetCategoryNames(char **);
 };
+
+//  ----------------------------------------------------------------------------
+//  //  //
+//	//			Implementation of IdrisiDataset
+//
+//  ----------------------------------------------------------------------------
 
 IdrisiDataset::IdrisiDataset()
 {
 	pszFilename = NULL;
-	fpImage = NULL;
+	fp = NULL;
 	pszGeoRef = NULL;
 	imgDoc = NULL;
 
@@ -126,6 +134,8 @@ IdrisiDataset::~IdrisiDataset()
 
 GDALDataset *IdrisiDataset::Open(GDALOpenInfo * poOpenInfo)
 {
+	CPLDebug("RST", "Begin: IdrisiDataset::Open");
+
 	if (poOpenInfo->fp == NULL)
 		return NULL;
 
@@ -146,6 +156,43 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo * poOpenInfo)
 		return NULL;
 	}
 
+	CPLDebug("RST", "OK: Check the documentation file .rdc");
+
+	// -------------------------------------------------------------------- 
+	//      Check the file size
+	// -------------------------------------------------------------------- 
+
+	int nFileSize;
+	int nExpcSize;
+
+    VSIFSeek(poOpenInfo->fp, 0, SEEK_END);
+    nFileSize = VSIFTell(poOpenInfo->fp);
+	VSIRewind(poOpenInfo->fp);
+
+	switch (imgDoc->data_type)
+	{
+	case RST_DT_BYTE:
+		nExpcSize = imgDoc->rows * imgDoc->columns * sizeof(uint8);
+		break;
+	case RST_DT_INTEGER:			
+		nExpcSize = imgDoc->rows * imgDoc->columns * sizeof(int16);
+		break;
+	case RST_DT_REAL:				
+		nExpcSize = imgDoc->rows * imgDoc->columns * sizeof(float32);
+		break;
+	case RST_DT_RGB24:			
+		nExpcSize = imgDoc->rows * imgDoc->columns * sizeof(uint8) * 3;
+		break;
+	};
+
+	if (nFileSize != nExpcSize)
+	{
+		CPLFree(imgDoc);
+		return NULL;
+	}
+
+	CPLDebug("RST", "OK: Check the file size");
+
 	// -------------------------------------------------------------------- 
 	//      Create a corresponding GDALDataset
 	// -------------------------------------------------------------------- 
@@ -154,9 +201,11 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo * poOpenInfo)
 
 	poDS = new IdrisiDataset();
 
-	poDS->fpImage = poOpenInfo->fp;
+	poDS->fp = poOpenInfo->fp;
 	poOpenInfo->fp = NULL;
 	
+	CPLDebug("RST", "OK: Create a corresponding GDALDataset");
+
 	// -------------------------------------------------------------------- 
 	//      Load information from documentation
 	// -------------------------------------------------------------------- 
@@ -168,6 +217,8 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo * poOpenInfo)
 	poDS->nRasterYSize = poDS->imgDoc->rows;
 	poDS->eAccess = poOpenInfo->eAccess;
 
+	CPLDebug("RST", "OK: Load information from documentation");
+
 	// -------------------------------------------------------------------- 
 	//      Create band information
 	// -------------------------------------------------------------------- 
@@ -176,25 +227,24 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo * poOpenInfo)
 	{
 	case RST_DT_BYTE:
 		poDS->nBands = 1;
-		poDS->SetBand(1, new IdrisiDatasetBand(poDS, 1, poDS->fpImage, 0, 1, poDS->nRasterXSize, GDT_Byte));
+		poDS->SetBand(1, new IdrisiRasterBand(poDS, 1));
 		break;
 	case RST_DT_INTEGER:			
 		poDS->nBands = 1;
-		poDS->SetBand(1, new IdrisiDatasetBand(poDS, 1, poDS->fpImage, 0, 1, poDS->nRasterXSize * sizeof(int16), GDT_Int16));
+		poDS->SetBand(1, new IdrisiRasterBand(poDS, 1));
 		break;
 	case RST_DT_REAL:				
 		poDS->nBands = 1;
-		poDS->SetBand(1, new IdrisiDatasetBand(poDS, 1, poDS->fpImage, 0, 1, poDS->nRasterXSize * sizeof(float32), GDT_Float32));
+		poDS->SetBand(1, new IdrisiRasterBand(poDS, 1));
 		break;
 	case RST_DT_RGB24:			
 		poDS->nBands = 3;
-		poDS->SetBand(3, new IdrisiDatasetBand(poDS, 1, poDS->fpImage, 0, 3, poDS->nRasterXSize * 3, GDT_Byte));
-		poDS->SetBand(2, new IdrisiDatasetBand(poDS, 2, poDS->fpImage, 1, 3, poDS->nRasterXSize * 3, GDT_Byte));
-		poDS->SetBand(1, new IdrisiDatasetBand(poDS, 3, poDS->fpImage, 2, 3, poDS->nRasterXSize * 3, GDT_Byte));
-		// There is something wrong here, the only way to get the colors right is by inverting the order
-		// in the nNewBand or int the nImgOffset above, but that is not true. Idrisi really uses the BGR order.
-		// That issue supoused to be solved by GetColorInterpretation, but changing that function has no effect.
+		poDS->SetBand(1, new IdrisiRasterBand(poDS, 1));
+		poDS->SetBand(2, new IdrisiRasterBand(poDS, 2));
+		poDS->SetBand(3, new IdrisiRasterBand(poDS, 3));
 	};
+
+	CPLDebug("RST", "OK: Create band information");
 
 	// -------------------------------------------------------------------- 
 	//      Load the transformation matrix
@@ -207,11 +257,17 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo * poOpenInfo)
 	poDS->adfGeoTransform[4] = 0.0;
 	poDS->adfGeoTransform[5] = (imgDoc->min_Y - imgDoc->max_Y) / (imgDoc->unit_dist * imgDoc->rows);
 
+	CPLDebug("RST", "OK: Load the transformation matrix");
+
 	// -------------------------------------------------------------------- 
 	//      Load Geographic Reference
 	// -------------------------------------------------------------------- 
 
 	poDS->pszGeoRef = CPLStrdup(ReadProjSystem(poDS->pszFilename));
+
+	CPLDebug("RST", "OK: Load Geographic Reference");
+
+	CPLDebug("RST", "End: IdrisiDataset::Open");
 
 	return (poDS);
 }
@@ -223,6 +279,8 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename,
 								   GDALDataType eType,
 								   char** papszOptions)
 {
+	CPLDebug("RST", "Begin: IdrisiDataset.Create");
+
 	// -------------------------------------------------------------------- 
 	//      Check input options
 	// -------------------------------------------------------------------- 
@@ -247,6 +305,8 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename,
 				nBands, GDALGetDataTypeName(eType) );
 			return NULL;
 		}
+
+	CPLDebug("RST", "OK: Check input options");
 
 	// ---------------------------------------------------------------- 
 	//  Create the header file
@@ -273,6 +333,8 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename,
 
 	CPLFree(imgDoc);
 
+	CPLDebug("RST", "OK: Create the header file");
+
 	// ---------------------------------------------------------------- 
 	//  Create an empty data file
 	// ---------------------------------------------------------------- 
@@ -288,6 +350,10 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename,
         return NULL;
     }
     VSIFCloseL(fp);
+
+	CPLDebug("RST", "OK: Create an empty data file");
+
+	CPLDebug("RST", "End: IdrisiDataset.Create");
 
 	return (GDALDataset *) GDALOpen(pszFilename, GA_Update);
 }
@@ -339,44 +405,101 @@ CPLErr IdrisiDataset::SetProjection(const char * pszProjString)
 	return CE_None;
 }
 
-CPLErr IdrisiDatasetBand::SetColorInterpretation(GDALColorInterp)
+//  ----------------------------------------------------------------------------
+//  //  //
+//	//			Implementation of IdrisiRasterBand
+//
+//  ----------------------------------------------------------------------------
+
+IdrisiRasterBand::IdrisiRasterBand(IdrisiDataset *poDS, int nChannel)
+{
+	this->poDS = poDS;
+	this->nBand = nBand;
+
+	switch (poDS->imgDoc->data_type)
+	{
+	case RST_DT_BYTE:
+		eDataType = GDT_Byte;
+		break;
+	case RST_DT_INTEGER:			
+		eDataType = GDT_Int16;
+		break;
+	case RST_DT_REAL:				
+		eDataType = GDT_Float32;
+		break;
+	case RST_DT_RGB24:			
+		eDataType = GDT_Byte;
+		break;
+	};
+
+    nBlockYSize = 1;
+    nBlockXSize = poDS->GetRasterXSize();
+	nRecordSize = poDS->GetRasterXSize() * GDALGetDataTypeSize(eDataType) / 8 * poDS->nBands;
+
+    pabyScan = (GByte *) CPLMalloc(nRecordSize);
+
+}
+
+IdrisiRasterBand::~IdrisiRasterBand()
+{
+	CPLFree(pabyScan);
+}
+
+CPLErr IdrisiRasterBand::IReadBlock(int nBlockXOff, 
+									int nBlockYOff,
+									void *pImage)
+{
+	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+
+	VSIFSeek(poGDS->fp, nRecordSize * nBlockYOff, SEEK_SET);
+
+	VSIFRead(pabyScan, 1, nRecordSize, poGDS->fp);
+
+	if (poGDS->nBands == 3) 
+	{
+		for (int i = 0; i < nBlockXSize; i++)
+		{
+			((uint8 *) pImage)[i] = (uint8) pabyScan[(i * 3) + (3 - this->nBand)];
+		}
+	}
+	else
+	{
+		memcpy(pImage, pabyScan, nRecordSize);
+	}
+
+	return CE_None;
+}
+
+CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff, 
+									int nBlockYOff,
+									void *pImage)
+{
+	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+
+	VSIFSeek(poGDS->fp, nRecordSize * nBlockYOff, SEEK_SET);
+
+	if (poGDS->nBands == 3) 
+	{
+		for (int i = 0; i < nBlockXSize; i++)
+		{
+			(uint8) pabyScan[(i * 3) + (3 - this->nBand)] = ((uint8 *) pImage)[i];
+		}
+	}
+	else
+	{
+		memcpy(pabyScan, pImage, nRecordSize);
+	}
+
+	VSIFWrite(pabyScan, 1, nRecordSize, poGDS->fp);
+
+	return CE_None;
+}
+CPLErr IdrisiRasterBand::SetColorInterpretation(GDALColorInterp)
 {
 	return CE_None;
 }
 
-char **IdrisiDataset::GetCategoryNames()
-{
-	return (char **) NULL;
-}
-
-CPLErr IdrisiDataset::SetCategoryNames(char **)
-{
-	return CE_None;
-}
-
-IdrisiDatasetBand::IdrisiDatasetBand(GDALDataset *poDS, 
-									 int nBand,
-									 FILE * fpRaw, 
-									 vsi_l_offset nImgOffset,                   
-									 int nPixelOffset, 
-									 int nLineOffset,
-									 GDALDataType eDataType) : 
-RawRasterBand(poDS, 
-			  nBand, 
-			  fpRaw, 
-			  nImgOffset, 
-			  nPixelOffset,
-			  nLineOffset,
-			  eDataType, 
-			  TRUE)
-{
-}
-
-IdrisiDatasetBand::~IdrisiDatasetBand()
-{
-}
-
-GDALColorTable *IdrisiDatasetBand::GetColorTable()
+GDALColorTable *IdrisiRasterBand::GetColorTable()
 {
 	IdrisiDataset *poPDS = (IdrisiDataset *) poDS;
 
@@ -403,7 +526,7 @@ GDALColorTable *IdrisiDatasetBand::GetColorTable()
 	*/
 }
 
-GDALColorInterp IdrisiDatasetBand::GetColorInterpretation()
+GDALColorInterp IdrisiRasterBand::GetColorInterpretation()
 {
 	IdrisiDataset *poPDS = (IdrisiDataset *) poDS;
 
@@ -426,10 +549,48 @@ GDALColorInterp IdrisiDatasetBand::GetColorInterpretation()
 	return GCI_Undefined;
 }
 
-CPLErr IdrisiDatasetBand::SetColorTable(GDALColorTable *aColorTable)
+CPLErr IdrisiRasterBand::SetColorTable(GDALColorTable *aColorTable)
 {
 	IdrisiDataset *poPDS = (IdrisiDataset *) poDS;
 
+	return CE_None;
+}
+
+char **IdrisiRasterBand::GetCategoryNames()
+{
+	CPLDebug("RST", "Begin: GetCategoryNames");
+
+	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+
+	char **papszCategoryNames;
+	char buf[5];
+	unsigned int i, j;
+
+	papszCategoryNames = (char **) CPLMalloc(poGDS->imgDoc->legend_cats + 1);
+
+	for (i = 0, j = 0; i < poGDS->imgDoc->legend_cats; i++)
+	{
+		CPLDebug("RST", "i = %d, j = %d, code[j] = %d", i, j, poGDS->imgDoc->codes[j]);
+		if (i == poGDS->imgDoc->codes[j]) 
+		{
+			papszCategoryNames[i] = CPLStrdup(poGDS->imgDoc->categories[i]);
+			j++;
+		}
+		else
+		{
+			papszCategoryNames[i] = CPLStrdup("");
+		}
+	}
+
+	papszCategoryNames[poGDS->imgDoc->legend_cats] = NULL;
+
+	CPLDebug("RST", "End: GetCategoryNames");
+
+	return (char **) papszCategoryNames;
+}
+
+CPLErr IdrisiRasterBand::SetCategoryNames(char **)
+{
 	return CE_None;
 }
 
@@ -437,7 +598,7 @@ void GDALRegister_IDRISI()
 {
 	GDALDriver  *poDriver;
 
-	if( GDALGetDriverByName("IDRISI") == NULL )
+	if (GDALGetDriverByName("IDRISI") == NULL)
 	{
 		poDriver = new GDALDriver();
 
