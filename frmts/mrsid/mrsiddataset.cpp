@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2006/02/28 19:30:55  fwarmerdam
+ * Use LTI_COLORSPACE_MULTISPECTRAL for anything other than 1 or 3 bands.
+ *
  * Revision 1.50  2006/02/21 22:42:11  fwarmerdam
  * Added ESDK 6 support.
  *
@@ -1426,17 +1429,17 @@ LT_STATUS MrSIDDummyImageReader::initialize()
         return LT_STS_Failure;
     
     lt_uint16 nBands = (lt_uint16)poDS->GetRasterCount();
-    LTIColorSpace eColorSpase = LTI_COLORSPACE_RGB;
+    LTIColorSpace eColorSpace = LTI_COLORSPACE_RGB;
     switch ( nBands )
     {
         case 1:
-            eColorSpase = LTI_COLORSPACE_GRAYSCALE;
+            eColorSpace = LTI_COLORSPACE_GRAYSCALE;
             break;
         case 3:
-            eColorSpase = LTI_COLORSPACE_RGB;
+            eColorSpace = LTI_COLORSPACE_RGB;
             break;
         default:
-            eColorSpase = LTI_COLORSPACE_RGB;
+            eColorSpace = LTI_COLORSPACE_MULTISPECTRAL;
             break;
     }
     
@@ -1467,7 +1470,7 @@ LT_STATUS MrSIDDummyImageReader::initialize()
             break;
     }
 
-    poPixel = new LTIPixel( eColorSpase, nBands, eSampleType );
+    poPixel = new LTIPixel( eColorSpace, nBands, eSampleType );
     if ( !LT_SUCCESS(setPixelProps(*poPixel)) )
         return LT_STS_Failure;
 
