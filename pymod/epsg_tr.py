@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.14  2006/02/28 05:36:13  fwarmerdam
+# Added some comments in proj.4 output.  Not sure how this got lost.
+#
 # Revision 1.13  2004/11/01 17:25:39  fwarmerdam
 # ensure SQL and PROJ.4 strings are SQL escaped for PostGIS
 #
@@ -120,12 +123,14 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
             if name is None:
                 name = prj_srs.GetAttrValue('GEOGCS')
 
-            print '# '+name
+            if name is None:
+                name = 'Unknown'
             
+            print '# %s' % name
             if err == 0 and string.find(out_string,'+proj=') > -1:
                 print '<%s> %s <>' % (str(code), out_string)
             else:
-                print '# Unable to translate coordinate system into PROJ.4 format.'
+                print '# Unable to translate coordinate system EPSG:%d into PROJ.4 format.' % code
                 print '#'
 
         if output_format == '-postgis':
