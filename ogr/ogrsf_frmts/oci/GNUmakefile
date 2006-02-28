@@ -8,7 +8,7 @@ OBJ	=	oci_utils.o ogrocisession.o ogrocistatement.o \
 		ogrocitablelayer.o ogrociselectlayer.o ogrocistringbuf.o \
 		ogrociwritablelayer.o ogrociloaderlayer.o
 
-CPPFLAGS	:=	-I.. -I../.. $(OCI_INCLUDE) $(CPPFLAGS)
+CPPFLAGS	:=	$(GDAL_INCLUDE) $(OCI_INCLUDE) $(CPPFLAGS)
 
 default:	$(O_OBJ)
 
