@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2006/02/28 05:04:18  fwarmerdam
+ * Reduced default GetFieldAsString() format to %.15g to avoid introducing
+ * partially fake digits.
+ *
  * Revision 1.34  2006/02/15 20:30:51  fwarmerdam
  * added date support
  *
@@ -993,7 +997,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
                      poFDefn->GetWidth(), poFDefn->GetPrecision() );
         }
         else
-            strcpy( szFormat, "%.16g" );
+            strcpy( szFormat, "%.15g" );
         
         sprintf( szTempBuffer, szFormat, pauFields[iField].Real );
         
