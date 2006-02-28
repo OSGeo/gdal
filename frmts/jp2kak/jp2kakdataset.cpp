@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.31  2006/02/28 18:04:50  fwarmerdam
+ * Make sure tiles get closed in case of an exception.
+ *
  * Revision 1.30  2006/02/19 22:37:52  fwarmerdam
  * avoid warning with kakadu 4
  *
@@ -682,12 +685,21 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 pabyDest = ((GByte *)pImage) 
                     + (offset.x + offset.y*nBlockXSize) * nWordSize;
 
-                if( tile.get_ycc() && nBand < 4 )
-                    ProcessYCbCrTile( tile, pabyDest, offset.x, offset.y );
-                else
-                    ProcessTile( tile, pabyDest, offset.x, offset.y );
-            
-                tile.close();
+                try 
+                {
+
+                    if( tile.get_ycc() && nBand < 4 )
+                        ProcessYCbCrTile( tile, pabyDest, offset.x, offset.y );
+                    else
+                        ProcessTile( tile, pabyDest, offset.x, offset.y );
+                    tile.close();
+                }
+                catch( ... )
+                {
+                    tile.close();
+                    return CE_Failure;
+                }
+
             }
         }
 
