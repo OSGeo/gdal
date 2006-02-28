@@ -87,6 +87,7 @@ class IdrisiRasterBand : public GDALRasterBand
 
 	int nRecordSize;
 	GByte *pabyScan;
+	GDALColorTable *poColorTable;
 
 public:
 	IdrisiRasterBand(IdrisiDataset *poDS, int nChannel);
@@ -159,50 +160,27 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo * poOpenInfo)
 	CPLDebug("RST", "OK: Check the documentation file .rdc");
 
 	// -------------------------------------------------------------------- 
-	//      Check the file size
-	// -------------------------------------------------------------------- 
-
-	int nFileSize;
-	int nExpcSize;
-
-    VSIFSeek(poOpenInfo->fp, 0, SEEK_END);
-    nFileSize = VSIFTell(poOpenInfo->fp);
-	VSIRewind(poOpenInfo->fp);
-
-	switch (imgDoc->data_type)
-	{
-	case RST_DT_BYTE:
-		nExpcSize = imgDoc->rows * imgDoc->columns * sizeof(uint8);
-		break;
-	case RST_DT_INTEGER:			
-		nExpcSize = imgDoc->rows * imgDoc->columns * sizeof(int16);
-		break;
-	case RST_DT_REAL:				
-		nExpcSize = imgDoc->rows * imgDoc->columns * sizeof(float32);
-		break;
-	case RST_DT_RGB24:			
-		nExpcSize = imgDoc->rows * imgDoc->columns * sizeof(uint8) * 3;
-		break;
-	};
-
-	if (nFileSize != nExpcSize)
-	{
-		CPLFree(imgDoc);
-		return NULL;
-	}
-
-	CPLDebug("RST", "OK: Check the file size");
-
-	// -------------------------------------------------------------------- 
 	//      Create a corresponding GDALDataset
 	// -------------------------------------------------------------------- 
 
 	IdrisiDataset *poDS;
 
 	poDS = new IdrisiDataset();
+    poDS->eAccess = poOpenInfo->eAccess;
 
-	poDS->fp = poOpenInfo->fp;
-	poOpenInfo->fp = NULL;
+    if (poOpenInfo->eAccess == GA_ReadOnly )
+	{
+		poDS->fp = poOpenInfo->fp;
+ 		poOpenInfo->fp = NULL;
+	}
+	else
+	{
+		poDS->fp = VSIFOpenL(poOpenInfo->pszFilename, "r+b");
+ 		poOpenInfo->fp = NULL;
+	}
+
+	if (! poDS->fp)
+        return NULL;
 	
 	CPLDebug("RST", "OK: Create a corresponding GDALDataset");
 
@@ -366,6 +344,8 @@ CPLErr  IdrisiDataset::GetGeoTransform(double * padfTransform)
 
 CPLErr  IdrisiDataset::SetGeoTransform(double * padfTransform)
 {
+	CPLDebug("RST", "Begin: IdrisiDataset::SetGeoTransform");
+
 	if (padfTransform[2] != 0.0 || padfTransform[4] != 0.0)
 	{
 		CPLError( CE_Failure, CPLE_AppDefined,
@@ -385,6 +365,8 @@ CPLErr  IdrisiDataset::SetGeoTransform(double * padfTransform)
 	imgDoc->unit_dist = 1.0;
 
 	WriteImgDoc(imgDoc, (char *) pszFilename);
+
+	CPLDebug("RST", "End: IdrisiDataset::SetGeoTransform");
 
 	return CE_None;
 }
@@ -416,6 +398,12 @@ IdrisiRasterBand::IdrisiRasterBand(IdrisiDataset *poDS, int nChannel)
 	this->poDS = poDS;
 	this->nBand = nBand;
 
+    poColorTable = NULL;
+
+	// -------------------------------------------------------------------- 
+	//      Set Data Type
+	// -------------------------------------------------------------------- 
+
 	switch (poDS->imgDoc->data_type)
 	{
 	case RST_DT_BYTE:
@@ -432,16 +420,45 @@ IdrisiRasterBand::IdrisiRasterBand(IdrisiDataset *poDS, int nChannel)
 		break;
 	};
 
-    nBlockYSize = 1;
+	// -------------------------------------------------------------------- 
+	//      Set Dimension
+	// -------------------------------------------------------------------- 
+
+	nBlockYSize = 1;
     nBlockXSize = poDS->GetRasterXSize();
 	nRecordSize = poDS->GetRasterXSize() * GDALGetDataTypeSize(eDataType) / 8 * poDS->nBands;
 
     pabyScan = (GByte *) CPLMalloc(nRecordSize);
 
+	// -------------------------------------------------------------------- 
+	//      Set Color Table only form thematic images
+	// -------------------------------------------------------------------- 
+
+	if ((poDS->imgDoc->data_type == RST_DT_BYTE) && (poDS->imgDoc->legend_cats != 0))
+	{
+		poColorTable = new GDALColorTable();
+		double colorTable[3][256];
+		ReadPalette(poDS->pszFilename, 0, colorTable[0], 256, TRUE);
+		ReadPalette(poDS->pszFilename, 1, colorTable[1], 256, TRUE);
+		ReadPalette(poDS->pszFilename, 2, colorTable[2], 256, TRUE);
+		GDALColorEntry oEntry;
+		for (int i = 0; i < 256; i++)
+		{
+			oEntry.c1 = (short) (255 * colorTable[0][i]);
+			oEntry.c2 = (short) (255 * colorTable[1][i]);
+			oEntry.c3 = (short) (255 * colorTable[2][i]);
+			oEntry.c4 = 255;                      
+			poColorTable->SetColorEntry(i, &oEntry);
+		}
+	}
+
 }
 
 IdrisiRasterBand::~IdrisiRasterBand()
 {
+    if( poColorTable != NULL )
+        delete poColorTable;
+
 	CPLFree(pabyScan);
 }
 
@@ -451,9 +468,9 @@ CPLErr IdrisiRasterBand::IReadBlock(int nBlockXOff,
 {
 	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
-	VSIFSeek(poGDS->fp, nRecordSize * nBlockYOff, SEEK_SET);
+	VSIFSeekL(poGDS->fp, nRecordSize * nBlockYOff, SEEK_SET);
 
-	VSIFRead(pabyScan, 1, nRecordSize, poGDS->fp);
+	VSIFReadL(pabyScan, 1, nRecordSize, poGDS->fp);
 
 	if (poGDS->nBands == 3) 
 	{
@@ -476,7 +493,7 @@ CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff,
 {
 	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
-	VSIFSeek(poGDS->fp, nRecordSize * nBlockYOff, SEEK_SET);
+	VSIFSeekL(poGDS->fp, nRecordSize * nBlockYOff, SEEK_SET);
 
 	if (poGDS->nBands == 3) 
 	{
@@ -490,7 +507,14 @@ CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff,
 		memcpy(pabyScan, pImage, nRecordSize);
 	}
 
-	VSIFWrite(pabyScan, 1, nRecordSize, poGDS->fp);
+	if (VSIFWriteL(pabyScan, 1, nRecordSize, poGDS->fp) < nRecordSize)
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+			"Can't write (%s) block with X offset %d and Y offset %d.\n%s", 
+			poGDS->pszFilename, nBlockXOff, nBlockYOff,
+            VSIStrerror(errno));
+        return CE_Failure;
+    }
 
 	return CE_None;
 }
@@ -501,29 +525,7 @@ CPLErr IdrisiRasterBand::SetColorInterpretation(GDALColorInterp)
 
 GDALColorTable *IdrisiRasterBand::GetColorTable()
 {
-	IdrisiDataset *poPDS = (IdrisiDataset *) poDS;
-
-	return (GDALColorTable *) NULL;
-	/*
-	double colorTableRed[256];
-	double colorTableGreen[256];
-	double colorTableBlue[256];
-
-	ReadPalette(poDS->pszFilename, 0, colorTableRed, 255, FALSE);
-	ReadPalette(poDS->pszFilename, 1, colorTableGreen, 255, FALSE);
-	ReadPalette(poDS->pszFilename, 2, colorTableBlue, 255, FALSE);
-
-	GDALColorEntry oEntry;
-
-	for (int i = 0; i < 255; i++)
-	{
-	oEntry.c1 = (short) colorTableRed[i];
-	oEntry.c2 = (short) colorTableGreen[i];
-	oEntry.c3 = (short) colorTableBlue[i];
-	oEntry.c4 = 255;                      
-	poDS->poColorTable->SetColorEntry(i, &oEntry);
-	}
-	*/
+    return poColorTable;
 }
 
 GDALColorInterp IdrisiRasterBand::GetColorInterpretation()
@@ -551,35 +553,63 @@ GDALColorInterp IdrisiRasterBand::GetColorInterpretation()
 
 CPLErr IdrisiRasterBand::SetColorTable(GDALColorTable *aColorTable)
 {
+	/*
 	IdrisiDataset *poPDS = (IdrisiDataset *) poDS;
+	GDALColorEntry oEntry;
+	double colorTable[3][256];
 
+	poColorTable->GetColorEntryAsRGB(i, oEntry);
+
+		ReadPalette(poDS->pszFilename, 0, colorTable[0], 256, TRUE);
+		ReadPalette(poDS->pszFilename, 1, colorTable[1], 256, TRUE);
+		ReadPalette(poDS->pszFilename, 2, colorTable[2], 256, TRUE);
+		GDALColorEntry oEntry;
+		for (int i = 0; i < 256; i++)
+		{
+			oEntry.c1 = (short) (255 * colorTable[0][i]);
+			oEntry.c2 = (short) (255 * colorTable[1][i]);
+			oEntry.c3 = (short) (255 * colorTable[2][i]);
+			oEntry.c4 = 255;                      
+			poColorTable->SetColorEntry(i, &oEntry);
+		}
+	}
+
+
+			ReadPalette(poDS->pszFilename, 1, colorTable[1], 256, TRUE);
+
+	for (int i = 0; i < 256; i++)
+	{
+		colorTable[i] = aColorTable[i] / 255;
+	}
+
+	WritePalette(poDS->pszFilename, (this->nBand - 1), colorTable, 255);
+*/
 	return CE_None;
 }
 
 char **IdrisiRasterBand::GetCategoryNames()
 {
-	CPLDebug("RST", "Begin: GetCategoryNames");
-
 	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
+	if (poGDS->imgDoc->legend_cats == 0) 
+		return (char **) NULL;
+
+	CPLDebug("RST", "Begin: GetCategoryNames");
+
 	char **papszCategoryNames;
-	char buf[5];
 	unsigned int i, j;
 
 	papszCategoryNames = (char **) CPLMalloc(poGDS->imgDoc->legend_cats + 1);
 
 	for (i = 0, j = 0; i < poGDS->imgDoc->legend_cats; i++)
 	{
-		CPLDebug("RST", "i = %d, j = %d, code[j] = %d", i, j, poGDS->imgDoc->codes[j]);
 		if (i == poGDS->imgDoc->codes[j]) 
 		{
-			papszCategoryNames[i] = CPLStrdup(poGDS->imgDoc->categories[i]);
+			papszCategoryNames[i] = CPLStrdup(poGDS->imgDoc->categories[j]);
 			j++;
 		}
 		else
-		{
 			papszCategoryNames[i] = CPLStrdup("");
-		}
 	}
 
 	papszCategoryNames[poGDS->imgDoc->legend_cats] = NULL;
