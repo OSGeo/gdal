@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/03/01 19:40:40  fwarmerdam
+ * Change MYSQL_GEOM_COLUMN to GEOMETRY_NAME.
+ *
  * Revision 1.19  2006/02/27 01:52:50  hobu
  * tweak error message
  *
@@ -945,7 +948,7 @@ OGRMySQLDataSource::CreateLayer( const char * pszLayerNameIn,
         }
     }
 
-    pszGeomColumnName = CSLFetchNameValue( papszOptions, "MYSQL_GEOM_COLUMN" );
+    pszGeomColumnName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
     if (!pszGeomColumnName)
         pszGeomColumnName="SHAPE";
 
