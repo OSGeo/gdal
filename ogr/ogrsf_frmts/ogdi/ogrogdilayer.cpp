@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/03/01 14:10:50  fwarmerdam
+ * Removed optimization in GetNextFeature() that was breaking things in some
+ * cases, such as when an attribute restriction was in place.
+ *
  * Revision 1.10  2005/09/21 00:55:42  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -185,7 +189,6 @@ void OGROGDILayer::ResetReading()
     }
 
     m_iNextShapeId = 0;
-
 }
 
 /************************************************************************/
@@ -199,13 +202,10 @@ OGRFeature *OGROGDILayer::GetNextFeature()
     ecs_Result  *psResult;
     int         i;
 
-  TryAgain:
-    if (m_nTotalShapeCount != -1 && m_iNextShapeId >= m_nTotalShapeCount )
-        return NULL;
-        
 /* -------------------------------------------------------------------- */
 /*      Retrieve object from OGDI server and create new feature         */
 /* -------------------------------------------------------------------- */
+  TryAgain:
     psResult = cln_GetNextObject(m_nClientID);
     if (! ECSSUCCESS(psResult))
     {
