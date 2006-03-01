@@ -272,7 +272,7 @@ PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
 ac_unique_file="Makefile.in"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LD_SHARED SO_EXT CXX_PIC C_PIC CXX_WFLAGS C_WFLAGS GDAL_CONFIG GDAL_INC AUTOLOAD_DIR GRASS_INCLUDE GRASS_GISBASE LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB CXX_PIC C_PIC LD_SHARED SO_EXT CXX_WFLAGS C_WFLAGS GDAL_CONFIG GDAL_INC AUTOLOAD_DIR GRASS_INCLUDE GRASS_GISBASE LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -2614,6 +2614,25 @@ else
 fi
 
 
+	echo 'void f(){}' > conftest.c
+	if test -z "`${CC-cc} -fPIC -c conftest.c 2>&1`"; then
+	  C_PIC=-fPIC
+	else
+	  C_PIC=
+	fi
+	if test -z "`${CXX-g++} -fPIC -c conftest.c 2>&1`"; then
+	  CXX_PIC=-fPIC
+	else
+	  CXX_PIC=
+	fi
+	rm -f conftest*
+
+	CXX_PIC=$CXX_PIC
+
+	C_PIC=$C_PIC
+
+
+
   echo 'void g(); int main(){ g(); return 0; }' > conftest1.c
 
   echo '#include <stdio.h>' > conftest2.c
@@ -2752,25 +2771,6 @@ fi;
   LD_SHARED=$LD_SHARED
 
   SO_EXT=$SO_EXT
-
-
-
-	echo 'void f(){}' > conftest.c
-	if test -z "`${CC-cc} -fPIC -c conftest.c 2>&1`"; then
-	  C_PIC=-fPIC
-	else
-	  C_PIC=
-	fi
-	if test -z "`${CXX-g++} -fPIC -c conftest.c 2>&1`"; then
-	  CXX_PIC=-fPIC
-	else
-	  CXX_PIC=
-	fi
-	rm -f conftest*
-
-	CXX_PIC=$CXX_PIC
-
-	C_PIC=$C_PIC
 
 
 
@@ -3620,10 +3620,10 @@ s,@CXXFLAGS@,$CXXFLAGS,;t t
 s,@ac_ct_CXX@,$ac_ct_CXX,;t t
 s,@RANLIB@,$RANLIB,;t t
 s,@ac_ct_RANLIB@,$ac_ct_RANLIB,;t t
-s,@LD_SHARED@,$LD_SHARED,;t t
-s,@SO_EXT@,$SO_EXT,;t t
 s,@CXX_PIC@,$CXX_PIC,;t t
 s,@C_PIC@,$C_PIC,;t t
+s,@LD_SHARED@,$LD_SHARED,;t t
+s,@SO_EXT@,$SO_EXT,;t t
 s,@CXX_WFLAGS@,$CXX_WFLAGS,;t t
 s,@C_WFLAGS@,$C_WFLAGS,;t t
 s,@GDAL_CONFIG@,$GDAL_CONFIG,;t t

@@ -13,8 +13,8 @@ AC_PROG_CC
 AC_PROG_CXX
 
 AC_PROG_RANLIB
-AC_LD_SHARED
 AC_COMPILER_PIC
+AC_LD_SHARED
 AC_COMPILER_WFLAGS
 
 dnl ---------------------------------------------------------------------------
