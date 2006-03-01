@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2006/03/01 03:12:51  fwarmerdam
+ * added method 9823 (Equirectangular/Plate Caree/Equidistant Cylindrical
+ *
  * Revision 1.40  2005/12/06 06:41:18  fwarmerdam
  * added slightly questionable translation for method 9829 (PS Variant B
  *
@@ -1395,12 +1398,11 @@ static OGRErr SetEPSGProjCS( OGRSpatialReference * poSRS, int nPCSCode )
                         OGR_FP( FalseOriginNorthing ) );
         break;
 
-#ifdef notdef
-      case 9823: /* Equidistant Cylindrical / Plate Carre */
-        poSRS->SetACEA( OGR_FP( NatOriginLat ),
-                        OGR_FP( NatOriginLong ) );
+      case 9823: /* Equidistant Cylindrical / Plate Carre / Equirectangular */
+        poSRS->SetEquirectangular( OGR_FP( NatOriginLat ),
+                                   OGR_FP( NatOriginLong ), 
+                                   0.0, 0.0 );
         break;
-#endif
 
       case 9829: /* Polar Stereographic (Variant B) */
           poSRS->SetPS( OGR_FP( PolarLatStdParallel ), OGR_FP(PolarLongOrigin),
