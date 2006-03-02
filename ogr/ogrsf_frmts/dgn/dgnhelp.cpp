@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/03/02 12:21:56  dron
+ * Two format strings fixed.
+ *
  * Revision 1.33  2006/01/26 20:38:18  kintel
  * bugfix: DGNDumpElement(): Print DGNElemKnotWeight correctly
  *
@@ -1018,7 +1021,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
           DGNElemBSplineSurfaceHeader *psSpline =
             (DGNElemBSplineSurfaceHeader *) psElement;
 
-          fprintf( fp, "  desc_words=%d, curve type=%d\n",
+          fprintf( fp, "  desc_words=%ld, curve type=%d\n",
                    psSpline->desc_words, psSpline->curve_type);
 
           fprintf( fp, "  U: properties=%02x",
@@ -1065,7 +1068,7 @@ void DGNDumpElement( DGNHandle hDGN, DGNElemCore *psElement, FILE *fp )
             (DGNElemBSplineCurveHeader *) psElement;
 
           fprintf( fp, 
-                   "  desc_words=%d, curve type=%d\n"
+                   "  desc_words=%ld, curve type=%d\n"
                    "  properties=%02x",
                    psSpline->desc_words, psSpline->curve_type,
                    psSpline->properties);
