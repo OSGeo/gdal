@@ -68,6 +68,19 @@ on GDAL improvement efforts not focused on any particular client project.<p>
 <li> <a href="classGDALRasterBand.html">GDALRasterBand</a>
 </ul>
 
+\section bindings GDAL In Other Languages
+
+The following bindings of GDAL in other languages are available:
+
+<ul>
+<li> <a href="http://map.hut.fi/gdal-perl/">Perl</a>
+<li> <a href="gdal_tutorial.htmll">Python</a> (examples in standard tutorial)
+<li> <a href="vb6_tutorial.html">VB6 Bindings</a> (not using SWIG)
+<li> Ruby (no docs, but see gdalautotest/ruby for examples)
+<li> Java (no docs ...)
+<li> C# (not really working fully yet)
+</ul>
+
 \section index_maillist Mailing List
 
 The <a href="mailto:gdal-dev@lists.maptools.org">gdal-dev@lists.maptools.org</a>
