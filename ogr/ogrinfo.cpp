@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2006/03/02 15:42:52  fwarmerdam
+ * Accept -so or -summary.
+ *
  * Revision 1.30  2006/02/02 01:19:34  fwarmerdam
  * Use EQUAL, not EQUALN for -so and -al as per bug 1052.
  *
@@ -212,7 +215,8 @@ int main( int nArgc, char ** papszArgv )
         {
             bAllLayers = TRUE;
         }
-        else if( EQUAL(papszArgv[iArg],"-so") )
+        else if( EQUAL(papszArgv[iArg],"-so") 
+                 || EQUAL(papszArgv[iArg],"-summary")  )
         {
             bSummaryOnly = TRUE;
         }
