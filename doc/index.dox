@@ -68,8 +68,6 @@ on GDAL improvement efforts not focused on any particular client project.<p>
 <li> <a href="classGDALRasterBand.html">GDALRasterBand</a>
 </ul>
 
-\section bindings GDAL In Other Languages
-
 \section index_maillist Mailing List
 
 The <a href="mailto:gdal-dev@lists.maptools.org">gdal-dev@lists.maptools.org</a>
