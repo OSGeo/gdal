@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2006/03/02 12:12:15  dron
+ * Avoid warnings.
+ *
  * Revision 1.38  2006/02/22 01:37:57  fwarmerdam
  * added support for 32bit images with bitfields compression (pgao)
  *
@@ -348,9 +351,11 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDS, int nBand )
         ((poDS->GetRasterXSize() * poDS->sInfoHeader.iBitCount + 31) & ~31) / 8;
     nBlockYSize = 1;
 
+#ifdef DEBUG
     CPLDebug( "BMP",
               "Band %d: set nBlockXSize=%d, nBlockYSize=%d, nScanSize=%d",
               nBand, nBlockXSize, nBlockYSize, nScanSize );
+#endif
 
     pabyScan = (GByte *) CPLMalloc( nScanSize );
 }
@@ -689,10 +694,12 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
     pabyComprBuf = (GByte *) CPLMalloc( iComprSize );
     pabyUncomprBuf = (GByte *) CPLMalloc( iUncomprSize );
 
+#ifdef DEBUG
     CPLDebug( "BMP", "RLE compression detected." );
     CPLDebug ( "BMP", "Size of compressed buffer %ld bytes,"
                " size of uncompressed buffer %ld bytes.",
                iComprSize, iUncomprSize );
+#endif
 
     VSIFSeekL( poDS->fp, poDS->sFileHeader.iOffBits, SEEK_SET );
     VSIFReadL( pabyComprBuf, 1, iComprSize, poDS->fp );
@@ -974,9 +981,12 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
     CPL_SWAP32PTR( &poDS->sFileHeader.iOffBits );
 #endif
     poDS->sFileHeader.iSize = sStat.st_size;
+
+#ifdef DEBUG
     CPLDebug( "BMP", "File size %d bytes.", poDS->sFileHeader.iSize );
     CPLDebug( "BMP", "Image offset 0x%x bytes from file start.",
               poDS->sFileHeader.iOffBits );
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Read the BMPInfoHeader.                                         */
@@ -1058,6 +1068,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
+#ifdef DEBUG
     CPLDebug( "BMP", "Windows Device Independent Bitmap parameters:\n"
               " info header size: %d bytes\n"
               " width: %d\n height: %d\n planes: %d\n bpp: %d\n"
@@ -1069,6 +1080,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
               poDS->sInfoHeader.iCompression, poDS->sInfoHeader.iSizeImage,
               poDS->sInfoHeader.iXPelsPerMeter, poDS->sInfoHeader.iYPelsPerMeter,
               poDS->sInfoHeader.iClrUsed, poDS->sInfoHeader.iClrImportant );
+#endif
 
     poDS->nRasterXSize = poDS->sInfoHeader.iWidth;
     poDS->nRasterYSize = (poDS->sInfoHeader.iHeight > 0)?
@@ -1237,11 +1249,12 @@ GDALDataset *BMPDataset::Create( const char * pszFilename,
      * formulae, but we should check for overflow conditions
      * during calculation.
      */
-    nScanSize = poDS->sInfoHeader.iWidth * poDS->sInfoHeader.iBitCount + 31;
+    nScanSize =
+        (GUInt32)poDS->sInfoHeader.iWidth * poDS->sInfoHeader.iBitCount + 31;
     if ( !poDS->sInfoHeader.iWidth
          || !poDS->sInfoHeader.iBitCount
          || (nScanSize - 31) / poDS->sInfoHeader.iBitCount
-                != poDS->sInfoHeader.iWidth )
+                != (GUInt32)poDS->sInfoHeader.iWidth )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Wrong image parameters; "
