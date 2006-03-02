@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2006/03/02 05:38:41  fwarmerdam
+ * Added support for writing geometry collections
+ *
  * Revision 1.36  2006/01/20 17:45:40  fwarmerdam
  * Updated to new DGNCreateComplexHeaderFromGroup arg list.
  *
@@ -66,80 +69,6 @@
  *
  * Revision 1.24  2003/01/02 21:45:23  warmerda
  * move OGRBuildPolygonsFromEdges into C API
- *
- * Revision 1.23  2002/11/11 20:34:22  warmerda
- * added create support
- *
- * Revision 1.22  2002/10/29 19:45:29  warmerda
- * OGR driver now always builds an index if any features are to be read.  This
- * is primarily done to ensure that color tables appearing late in the file
- * will still affect feature elements occuring before them ... such as with
- * the m_epoche.dgn file.  Also implement fast feature counting and spatial
- * extents support based on the index.
- *
- * Revision 1.21  2002/05/31 19:03:46  warmerda
- * removed old CollectLines code
- *
- * Revision 1.20  2002/05/31 16:57:21  warmerda
- * made Text, MSLink and EntityNum attributes available
- *
- * Revision 1.19  2002/03/27 21:36:50  warmerda
- * added implementation of GetFeature()
- *
- * Revision 1.18  2002/02/22 22:18:44  warmerda
- * added support for commplex shapes
- *
- * Revision 1.17  2002/02/20 22:27:35  warmerda
- * fixed problem with units on text height for very small values
- *
- * Revision 1.16  2002/01/21 21:36:16  warmerda
- * removed DGNid
- *
- * Revision 1.15  2002/01/21 20:55:10  warmerda
- * use dgnlib spatial filtering support
- *
- * Revision 1.14  2002/01/18 18:52:21  warmerda
- * set rotation angle for labels
- *
- * Revision 1.13  2002/01/15 06:39:56  warmerda
- * remove _gv_color, flesh out pen and brush style settings
- *
- * Revision 1.12  2002/01/09 14:12:12  warmerda
- * Treat SHAPE elements as polygon geometries, not linestrings.
- *
- * Revision 1.11  2001/11/09 18:14:36  warmerda
- * added size info for LABELs
- *
- * Revision 1.10  2001/11/09 15:59:23  warmerda
- * set style information for text, drop _gv_ogrfs
- *
- * Revision 1.9  2001/11/06 14:44:41  warmerda
- * Removed printf() statement.
- *
- * Revision 1.8  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.7  2001/06/19 15:50:23  warmerda
- * added feature attribute query support
- *
- * Revision 1.6  2001/03/07 19:29:46  warmerda
- * added support for stroking curves
- *
- * Revision 1.5  2001/03/07 15:20:13  warmerda
- * Only apply the _gv_color property if the color lookup is successful.
- *
- * Revision 1.4  2001/01/16 21:19:29  warmerda
- * Added preliminary text support
- *
- * Revision 1.3  2001/01/16 18:11:12  warmerda
- * majorly extended, added arc support
- *
- * Revision 1.2  2000/12/28 21:29:17  warmerda
- * use stype field
- *
- * Revision 1.1  2000/11/28 19:03:47  warmerda
- * New
- *
  */
 
 #include "ogr_dgn.h"
@@ -1040,22 +969,36 @@ OGRErr OGRDGNLayer::CreateFeature( OGRFeature *poFeature )
                   "Attempt to create feature on read-only DGN file." );
         return OGRERR_FAILURE;
     }
-
-/* -------------------------------------------------------------------- */
-/*      Translate the geometry.                                         */
-/* -------------------------------------------------------------------- */
-    DGNElemCore **papsGroup = NULL;
-    OGRGeometry *poGeom = poFeature->GetGeometryRef();
-    int i;
-    const char *pszStyle = poFeature->GetStyleString();
-
-    if( poGeom == NULL )
+    
+    if( poFeature->GetGeometryRef() == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Features with empty, geometry collection geometries not\n"
                   "supported in DGN format." );
         return OGRERR_FAILURE;
     }
+
+    return CreateFeatureWithGeom( poFeature, poFeature->GetGeometryRef() );
+}
+
+/************************************************************************/
+/*                       CreateFeatureWithGeom()                        */
+/*                                                                      */
+/*      Create an element or element group from a given geometry and    */
+/*      the given feature.  This method recurses to handle              */
+/*      collections as essentially independent features.                */
+/************************************************************************/
+
+OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
+                                           OGRGeometry *poGeom)
+
+{
+/* -------------------------------------------------------------------- */
+/*      Translate the geometry.                                         */
+/* -------------------------------------------------------------------- */
+    DGNElemCore **papsGroup = NULL;
+    int i;
+    const char *pszStyle = poFeature->GetStyleString();
 
     if( wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
     {
@@ -1096,15 +1039,23 @@ OGRErr OGRDGNLayer::CreateFeature( OGRFeature *poFeature )
         papsGroup = LineStringToElementGroup( poPoly->getExteriorRing(),
                                               DGNT_SHAPE );
     }
-    else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon )
+    else if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon 
+             || wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint
+             || wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString
+             || wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection)
     {
-        OGRMultiPolygon *poMP = ((OGRMultiPolygon *) poGeom);
-        OGRPolygon *poPoly = (OGRPolygon *) poMP->getGeometryRef(0);
+        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
+        int iGeom;
 
-        // Ignore everything but the outer ring of the first polygon.
-        if( poPoly != NULL )
-            papsGroup = LineStringToElementGroup( poPoly->getExteriorRing(),
-                                                  DGNT_SHAPE );
+        for( iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
+        {
+            OGRErr eErr = CreateFeatureWithGeom( poFeature, 
+                                                 poGC->getGeometryRef(iGeom) );
+            if( eErr != OGRERR_NONE )
+                return eErr;
+        }
+
+        return OGRERR_NONE;
     }
     else
     {
