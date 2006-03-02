@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2006/03/02 00:16:06  fwarmerdam
+ * Applied change to GEOMETRY_NAME creation option.
+ *
  * Revision 1.45  2006/02/09 05:04:03  fwarmerdam
  * proper overriding of DeleteLayer() method
  *
@@ -563,8 +566,8 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
     if( bHavePostGIS )
     {
         sprintf( szCommand,
-                 "SELECT DropGeometryColumn('%s','%s','wkb_geometry')",
-                 pszDBName, osLayerName.c_str() );
+                 "SELECT DropGeometryColumn('%s','%s',(SELECT f_geometry_column from geometry_columns where f_table_name='%s' order by f_geometry_column limit 1))",
+                 pszDBName, osLayerName.c_str(), osLayerName.c_str() );
 
         CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
 
@@ -727,9 +730,16 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     if( bHavePostGIS )
     {
         const char *pszGeometryType;
-
+        const char *pszGFldName;
+ 
         if( CSLFetchNameValue( papszOptions, "DIM") != NULL )
             nDimension = atoi(CSLFetchNameValue( papszOptions, "DIM"));
+
+	/** rgp added this **/
+        if( CSLFetchNameValue( papszOptions, "GEOMETRY_NAME") != NULL )
+            pszGFldName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME");
+	else
+	    pszGFldName = "wkb_geometry";
 
         /* Sometimes there is an old cruft entry in the geometry_columns
          * table if things were not properly cleaned up before.  We make
@@ -780,8 +790,8 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
         }
 
         sprintf( szCommand,
-                 "select AddGeometryColumn('%s','%s','wkb_geometry',%d,'%s',%d)",
-                 pszDBName, pszLayerName, nSRSId, pszGeometryType,
+                 "select AddGeometryColumn('%s','%s','%s',%d,'%s',%d)",
+                 pszDBName, pszLayerName, pszGFldName, nSRSId, pszGeometryType,
                  nDimension );
 
         CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
