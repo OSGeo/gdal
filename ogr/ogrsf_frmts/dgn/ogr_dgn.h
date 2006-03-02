@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/03/02 05:38:41  fwarmerdam
+ * Added support for writing geometry collections
+ *
  * Revision 1.10  2005/02/22 12:54:50  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -97,6 +100,8 @@ class OGRDGNLayer : public OGRLayer
     int                 bHaveSimpleQuery;
     OGRFeature         *poEvalFeature;
 
+    OGRErr              CreateFeatureWithGeom( OGRFeature *, OGRGeometry * );
+
   public:
                         OGRDGNLayer( const char * pszName, DGNHandle hDGN,
                                      int bUpdate );
@@ -116,6 +121,7 @@ class OGRDGNLayer : public OGRLayer
     int                 TestCapability( const char * );
 
     OGRErr              CreateFeature( OGRFeature *poFeature );
+
 };
 
 /************************************************************************/
