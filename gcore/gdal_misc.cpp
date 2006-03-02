@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.77  2006/03/02 11:33:31  dron
+ * Unused variable in GDALFindAssociatedAuxFile() removed.
+ *
  * Revision 1.76  2006/01/23 15:23:45  fwarmerdam
  * Modified GDALTermProgress to output "." on 2.5% intervals except
  * integral ones.
@@ -2263,7 +2266,6 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
 /*      file.  Check that we are the dependent file of the aux          */
 /*      file.                                                           */
 /* -------------------------------------------------------------------- */
-    VSIStatBufL sStatBuf;
     CPLString oAuxFilename = CPLResetExtension(pszBasename,"aux");
     CPLString oJustFile = CPLGetFilename(pszBasename); // without dir
     GDALDataset *poODS = NULL;
