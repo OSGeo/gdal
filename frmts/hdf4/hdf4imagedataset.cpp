@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.56  2006/03/02 12:16:01  dron
+ * Avoid warnings.
+ *
  * Revision 1.55  2005/11/11 01:11:24  fwarmerdam
  * Added support for Coastwatch offset/scale.
  *
@@ -1404,7 +1407,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int32       iAttribute, nValues, iAttrNumType;
     char        szAttrName[MAX_NC_NAME];
-    double      dfNoData;
+    double      dfNoData = 0.0;
     int         bNoDataSet = FALSE;
     
 /* -------------------------------------------------------------------- */
@@ -2598,7 +2601,7 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     HDF4ImageDataset    *poDS;
     const char          *pszSDSName;
     int                 iBand;
-    int32               iSDS, aiDimSizes[MAX_VAR_DIMS];
+    int32               iSDS = -1, aiDimSizes[MAX_VAR_DIMS];
 
     poDS = new HDF4ImageDataset();
 
