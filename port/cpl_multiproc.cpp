@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/03/02 11:31:35  dron
+ * CPLCreateOrAcquireMutex() should return a value.
+ *
  * Revision 1.18  2006/02/19 21:54:34  mloskot
  * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
  *
@@ -193,6 +196,8 @@ int CPLCreateOrAcquireMutex( void **phMutex, double dfWaitInSeconds )
         return bSuccess;
     }
 #endif /* ndef MUTEX_NONE */
+
+    return TRUE;
 }
 
 /************************************************************************/
