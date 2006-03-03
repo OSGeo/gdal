@@ -151,8 +151,8 @@ Interactive data fusion and visual analysis tool.
 Desktop Package.
 <li> <a href="http://www.spaceyes.com/">SpaceEyes3D</a>: Commercial 
 3D visualization software for cartographic data.
-
-
+<li> <a href="http://www.mapwindow.org/">MapWindow</a>: open source
+ActiveX control with GIS functionality.
 </ul>
 
 */
