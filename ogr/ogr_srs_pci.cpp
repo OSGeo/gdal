@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/03/03 18:34:17  fwarmerdam
+ * Don't require pszUnits to be passed in, and don't assume METER if it isn't.
+ *
  * Revision 1.7  2006/03/03 18:30:37  fwarmerdam
  * Added ellipsoid definition to ellipsoid tables so we can support
  * those without EPSG equivs (ie. E019).
@@ -396,9 +399,6 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         bProjAllocated = TRUE;
     }
 
-    if( pszUnits == NULL )
-        pszUnits = "METRE";
-
 /* -------------------------------------------------------------------- */
 /*      Operate on the basis of the projection name.                    */
 /* -------------------------------------------------------------------- */
@@ -709,7 +709,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 /* -------------------------------------------------------------------- */
 /*      Grid units translation                                          */
 /* -------------------------------------------------------------------- */
-    if( IsLocal() || IsProjected() )
+    if( (IsLocal() || IsProjected()) && pszUnits )
     {
         if( EQUAL( pszUnits, "METRE" ) )
             SetLinearUnits( SRS_UL_METER, 1.0 );
