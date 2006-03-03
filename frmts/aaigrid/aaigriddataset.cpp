@@ -28,6 +28,11 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/03/03 04:01:52  fwarmerdam
+ * Added support for DX and DY instead of CELLSIZE as apparently is produced
+ * by Golden Surfer ascii grids.
+ * http://bugs.mapwindow.org/show_bug.cgi?id=88
+ *
  * Revision 1.33  2005/12/01 04:50:12  fwarmerdam
  * Fixed dependency on poOpenInfo->fp.
  *
@@ -465,6 +470,8 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
               EQUALN((const char *) poOpenInfo->pabyHeader,"yllcorner",9)||
               EQUALN((const char *) poOpenInfo->pabyHeader,"xllcenter",9)||
               EQUALN((const char *) poOpenInfo->pabyHeader,"yllcenter",9)||
+              EQUALN((const char *) poOpenInfo->pabyHeader,"dx",2)||
+              EQUALN((const char *) poOpenInfo->pabyHeader,"dy",2)||
               EQUALN((const char *) poOpenInfo->pabyHeader,"cellsize",8)) )
         return NULL;
 
@@ -482,7 +489,7 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Parse the header.                                               */
 /* -------------------------------------------------------------------- */
-    double dfCellSize;
+    double dfCellDX, dfCellDY;
 
     if ( (i = CSLFindString( papszTokens, "ncols" )) < 0 )
     {
@@ -498,43 +505,53 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = atoi(papszTokens[i + 1]);
     if ( (i = CSLFindString( papszTokens, "cellsize" )) < 0 )
     {
-        CSLDestroy( papszTokens );
-        return NULL;
+        int iDX, iDY;
+        if( (iDX = CSLFindString(papszTokens,"dx")) < 0 
+            || (iDY = CSLFindString(papszTokens,"dy")) < 0 )
+        {
+            CSLDestroy( papszTokens );
+            return NULL;
+        }
+
+        dfCellDX = atof( papszTokens[iDX+1] );
+        dfCellDY = atof( papszTokens[iDY+1] );
     }    
-    dfCellSize = atof( papszTokens[i + 1] );
+    else
+        dfCellDX = dfCellDY = atof( papszTokens[i + 1] );
+
     if ((i = CSLFindString( papszTokens, "xllcorner" )) >= 0 &&
         (j = CSLFindString( papszTokens, "yllcorner" )) >= 0 )
     {
         poDS->adfGeoTransform[0] = atof( papszTokens[i + 1] );
-        poDS->adfGeoTransform[1] = dfCellSize;
+        poDS->adfGeoTransform[1] = dfCellDX;
         poDS->adfGeoTransform[2] = 0.0;
         poDS->adfGeoTransform[3] = atof( papszTokens[j + 1] )
-            + poDS->nRasterYSize * dfCellSize;
+            + poDS->nRasterYSize * dfCellDY;
         poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = - dfCellSize;
+        poDS->adfGeoTransform[5] = - dfCellDY;
     }
     else if ((i = CSLFindString( papszTokens, "xllcenter" )) >= 0 &&
              (j = CSLFindString( papszTokens, "yllcenter" )) >= 0 )
     {
         poDS->SetMetadataItem( GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT );
 
-        poDS->adfGeoTransform[0] = atof(papszTokens[i + 1]) - 0.5 * dfCellSize;
-        poDS->adfGeoTransform[1] = dfCellSize;
+        poDS->adfGeoTransform[0] = atof(papszTokens[i + 1]) - 0.5 * dfCellDX;
+        poDS->adfGeoTransform[1] = dfCellDX;
         poDS->adfGeoTransform[2] = 0.0;
         poDS->adfGeoTransform[3] = atof( papszTokens[j + 1] )
-            - 0.5 * dfCellSize
-            + poDS->nRasterYSize * dfCellSize ;
+            - 0.5 * dfCellDY
+            + poDS->nRasterYSize * dfCellDY;
         poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = - dfCellSize;
+        poDS->adfGeoTransform[5] = - dfCellDY;
     }
     else
     {
         poDS->adfGeoTransform[0] = 0.0;
-        poDS->adfGeoTransform[1] = dfCellSize;
+        poDS->adfGeoTransform[1] = dfCellDX;
         poDS->adfGeoTransform[2] = 0.0;
         poDS->adfGeoTransform[3] = 0.0;
         poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = - dfCellSize;
+        poDS->adfGeoTransform[5] = - dfCellDY;
     }
 
     if( (i = CSLFindString( papszTokens, "NODATA_value" )) >= 0 )
@@ -700,16 +717,30 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
 
-    sprintf( szHeader, 
-             "ncols        %d\n" 
-             "nrows        %d\n"
-             "xllcorner    %.12f\n"
-             "yllcorner    %.12f\n"
-             "cellsize     %.12f\n", 
-             nXSize, nYSize, 
-             adfGeoTransform[0], 
-             adfGeoTransform[3]- nYSize * adfGeoTransform[1],
-             adfGeoTransform[1] );
+    if( ABS(adfGeoTransform[1]+adfGeoTransform[5]) < 0.0000001 )
+        sprintf( szHeader, 
+                 "ncols        %d\n" 
+                 "nrows        %d\n"
+                 "xllcorner    %.12f\n"
+                 "yllcorner    %.12f\n"
+                 "cellsize     %.12f\n", 
+                 nXSize, nYSize, 
+                 adfGeoTransform[0], 
+                 adfGeoTransform[3]- nYSize * adfGeoTransform[1],
+                 adfGeoTransform[1] );
+    else
+        sprintf( szHeader, 
+                 "ncols        %d\n" 
+                 "nrows        %d\n"
+                 "xllcorner    %.12f\n"
+                 "yllcorner    %.12f\n"
+                 "dx           %.12f\n"
+                 "dy           %.12f\n", 
+                 nXSize, nYSize, 
+                 adfGeoTransform[0], 
+                 adfGeoTransform[3]- nYSize * adfGeoTransform[1],
+                 adfGeoTransform[1],
+                 fabs(adfGeoTransform[5]) );
 
 /* -------------------------------------------------------------------- */
 /*      Handle nodata (optionally).                                     */
