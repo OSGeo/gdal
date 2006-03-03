@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2006/03/03 04:30:13  fwarmerdam
+ * added XMLPROFILE creation option
+ *
  * Revision 1.51  2006/02/28 19:30:55  fwarmerdam
  * Use LTI_COLORSPACE_MULTISPECTRAL for anything other than 1 or 3 bands.
  *
@@ -1786,6 +1789,20 @@ JP2CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if( pszValue != NULL )
         oImageWriter.params().setCompressionRatio( atof(pszValue) );
 	
+    pszValue = CSLFetchNameValue(papszOptions, "XMLPROFILE");
+    if( pszValue != NULL )
+    {
+        LTFileSpec xmlprofile(pszValue);
+        eStat = oImageWriter.params().readProfile(xmlprofile);
+        if( eStat != LT_STS_Success )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "JPCWriterParams.readProfile failed.\n%s",
+                      getLastStatusString( eStat ) );
+            return NULL;
+        }
+    }
+
     // write the scene
     const LTIScene oScene( 0, 0, nXSize, nYSize, 1.0 );
     eStat = oImageWriter.write( oScene );
@@ -1878,6 +1895,7 @@ void GDALRegister_MrSID()
 "<CreationOptionList>"
 "   <Option name='COMPRESSION' type='double' description='Set compression ratio (0.0 default is meant to be lossless)'/>"
 "   <Option name='WORLDFILE' type='boolean' description='Write out world file'/>"
+"   <Option name='XMLPROFILE' type='string' description='Use named xml profile file'/>"
 "</CreationOptionList>" );
 
         poDriver->pfnCreateCopy = JP2CreateCopy;
