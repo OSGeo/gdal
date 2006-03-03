@@ -29,6 +29,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/03/03 18:30:37  fwarmerdam
+ * Added ellipsoid definition to ellipsoid tables so we can support
+ * those without EPSG equivs (ie. E019).
+ * Support "Geosys" values without the earth model pre-formatted properly
+ * such as "SIN E019" instead of "SIN         E019".
+ *
  * Revision 1.6  2004/01/31 09:51:40  dron
  * Fixed projection parameters number mismatch; more datums added.
  *
@@ -57,91 +63,93 @@ CPL_CVSID("$Id$");
 typedef struct 
 {
     const char  *pszPCIDatum;
-    int   nEPSGCode;
+    int    nEPSGCode;
+    double dfSemiMajor;
+    double dfSemiMinor;
 } PCIDatums;
 
 static PCIDatums aoDatums[] =
 {
-    { "D-01", 4267 },   // NAD27 (USA, NADCON)
-    { "D-03", 4267 },   // NAD27 (Canada, NTv1)
-    { "D-02", 4269 },   // NAD83 (USA, NADCON)
-    { "D-04", 4269 },   // NAD83 (Canada, NTv1)
-    { "D000", 4326 },   // WGS 1984
-    { "D001", 4322 },   // WGS 1972
-    { "D008", 4296 },   // Sudan
-    { "D013", 4601 },   // Antigua Island Astro 1943
-    { "D029", 4202 },   // Australian Geodetic 1966
-    { "D030", 4203 },   // Australian Geodetic 1984
-    { "D033", 4216 },   // Bermuda 1957
-    { "D034", 4165 },   // Bissau
-    { "D036", 4219 },   // Bukit Rimpah
-    { "D038", 4221 },   // Campo Inchauspe
-    { "D040", 4222 },   // Cape
-    { "D042", 4223 },   // Carthage
-    { "D044", 4224 },   // Chua Astro
-    { "D045", 4225 },   // Corrego Alegre
-    { "D046", 4155 },   // Dabola (Guinea)
-    { "D066", 4272 },   // Geodetic Datum 1949 (New Zealand)
-    { "D071", 4255 },   // Herat North (Afghanistan)
-    { "D077", 4239},    // Indian 1954 (Thailand, Vietnam)
-    { "D078", 4240 },   // Indian 1975 (Thailand)
-    { "D083", 4244 },   // Kandawala (Sri Lanka)
-    { "D085", 4245 },   // Kertau 1948 (West Malaysia & Singapore)
-    { "D088", 4250 },   // Leigon (Ghana)
-    { "D089", 4251 },   // Liberia 1964 (Liberia)
-    { "D092", 4256 },   // Mahe 1971 (Mahe Island)
-    { "D093", 4262 },   // Massawa (Ethiopia (Eritrea))
-    { "D094", 4261 },   // Merchich (Morocco)
-    { "D098", 4604 },   // Montserrat Island Astro 1958 (Montserrat (Leeward Islands))
-    { "D139", 4282 },   // Pointe Noire 1948 (Congo)
-    { "D140", 4615 },   // Porto Santo 1936 (Porto Santo, Madeira Islands)
-    { "D151", 4139 },   // Puerto Rico (Puerto Rico, Virgin Islands)
-    { "D153", 4287 },   // Qornoq (Greenland (South))
-    { "D158", 4292 },   // Sapper Hill 1943 (East Falkland Island)
-    { "D159", 4293 },   // Schwarzeck (Namibia)
-    { "D160", 4616 },   // Selvagem Grande 1938 (Salvage Islands)
-    { "D176", 4297 },   // Tananarive Observatory 1925 (Madagascar)
-    { "D177", 4298 },   // Timbalai 1948 (Brunei, East Malaysia (Sabah, Sarawak))
-    { "D187", 4309 },   // Yacare (Uruguay)
-    { "D188", 4311 },   // Zanderij (Suriname)
-    { "D401", 4124 },   // RT90 (Sweden)
-    { "D501", 4312 },   // MGI (Hermannskogel, Austria)
+    { "D-01", 4267, 0, 0 },   // NAD27 (USA, NADCON)
+    { "D-03", 4267, 0, 0 },   // NAD27 (Canada, NTv1)
+    { "D-02", 4269, 0, 0 },   // NAD83 (USA, NADCON)
+    { "D-04", 4269, 0, 0 },   // NAD83 (Canada, NTv1)
+    { "D000", 4326, 0, 0 },   // WGS 1984
+    { "D001", 4322, 0, 0 },   // WGS 1972
+    { "D008", 4296, 0, 0 },   // Sudan
+    { "D013", 4601, 0, 0 },   // Antigua Island Astro 1943
+    { "D029", 4202, 0, 0 },   // Australian Geodetic 1966
+    { "D030", 4203, 0, 0 },   // Australian Geodetic 1984
+    { "D033", 4216, 0, 0 },   // Bermuda 1957
+    { "D034", 4165, 0, 0 },   // Bissau
+    { "D036", 4219, 0, 0 },   // Bukit Rimpah
+    { "D038", 4221, 0, 0 },   // Campo Inchauspe
+    { "D040", 4222, 0, 0 },   // Cape
+    { "D042", 4223, 0, 0 },   // Carthage
+    { "D044", 4224, 0, 0 },   // Chua Astro
+    { "D045", 4225, 0, 0 },   // Corrego Alegre
+    { "D046", 4155, 0, 0 },   // Dabola (Guinea)
+    { "D066", 4272, 0, 0 },   // Geodetic Datum 1949 (New Zealand)
+    { "D071", 4255, 0, 0 },   // Herat North (Afghanistan)
+    { "D077", 4239, 0, 0 },   // Indian 1954 (Thailand, Vietnam)
+    { "D078", 4240, 0, 0 },   // Indian 1975 (Thailand)
+    { "D083", 4244, 0, 0 },   // Kandawala (Sri Lanka)
+    { "D085", 4245, 0, 0 },   // Kertau 1948 (West Malaysia & Singapore)
+    { "D088", 4250, 0, 0 },   // Leigon (Ghana)
+    { "D089", 4251, 0, 0 },   // Liberia 1964 (Liberia)
+    { "D092", 4256, 0, 0 },   // Mahe 1971 (Mahe Island)
+    { "D093", 4262, 0, 0 },   // Massawa (Ethiopia (Eritrea))
+    { "D094", 4261, 0, 0 },   // Merchich (Morocco)
+    { "D098", 4604, 0, 0 },   // Montserrat Island Astro 1958 (Montserrat (Leeward Islands))
+    { "D139", 4282, 0, 0 },   // Pointe Noire 1948 (Congo)
+    { "D140", 4615, 0, 0 },   // Porto Santo 1936 (Porto Santo, Madeira Islands)
+    { "D151", 4139, 0, 0 },   // Puerto Rico (Puerto Rico, Virgin Islands)
+    { "D153", 4287, 0, 0 },   // Qornoq (Greenland (South))
+    { "D158", 4292, 0, 0 },   // Sapper Hill 1943 (East Falkland Island)
+    { "D159", 4293, 0, 0 },   // Schwarzeck (Namibia)
+    { "D160", 4616, 0, 0 },   // Selvagem Grande 1938 (Salvage Islands)
+    { "D176", 4297, 0, 0 },   // Tananarive Observatory 1925 (Madagascar)
+    { "D177", 4298, 0, 0 },   // Timbalai 1948 (Brunei, East Malaysia (Sabah, Sarawak))
+    { "D187", 4309, 0, 0 },   // Yacare (Uruguay)
+    { "D188", 4311, 0, 0 },   // Zanderij (Suriname)
+    { "D401", 4124, 0, 0 },   // RT90 (Sweden)
+    { "D501", 4312, 0, 0 },   // MGI (Hermannskogel, Austria)
     { NULL, 0 }
 };
 
 static PCIDatums aoEllips[] =
 {
-    { "E000", 7008 },   // Clarke, 1866 (NAD1927)
-    { "E001", 7034 },   // Clarke, 1880
-    { "E002", 7004 },   // Bessel, 1841
-    // FIXME: New International, 1967 --- skipped
-    { "E004", 7022 },   // International, 1924 (Hayford, 1909)
-    { "E005", 7043 },   // WGS, 1972
-    { "E006", 7042 },   // Everest, 1830 --- skipped
-    // FIXME: WGS, 1966 --- skipped
-    { "E008", 7019 },   // GRS, 1980 (NAD1983)
-    { "E009", 7001 },   // Airy, 1830
-    { "E010", 7018 },   // Modified Everest --- skipped
-    { "E011", 7002 },   // Modified Airy
-    { "E012", 7030 },   // WGS, 1984 (GPS)
-    // FIXME: Southeast Asia --- skipped
-    { "E014", 7003 },   // Australian National, 1965
-    { "E015", 7024 },   // Krassovsky, 1940
-    // FIXME: Hough --- skipped
-    // FIXME: Mercury, 1960 --- skipped
-    // FIXME: Modified Mercury, 1968 --- skipped
-    // FIXME: Sphere, rad 6370997 m (normal sphere) --- skipped
-    { "E333", 7046 },    // Bessel 1841 (Japan By Law)
-    // FIXME: D-PAF (Orbits) --- skipped
-    { "E900", 7006 },   // Bessel, 1841 (Namibia)
-    { "E901", 7044 },   // Everest, 1956
-    // Everest, 1969 --- skipped
-    { "E903", 7016 },   // Everest (Sabah & Sarawak)
-    { "E904", 7020 },   // Helmert, 1906
-    // FIXME: SGS 85 --- skipped
-    // FIXME: WGS 60 --- skipped
-    { "E907", 7036 },   // South American, 1969
-    { "E910", 7041 },   // ATS77
+    { "E000", 7008, 0, 0 },   // Clarke, 1866 (NAD1927)
+    { "E001", 7034, 0, 0 },   // Clarke, 1880
+    { "E002", 7004, 0, 0 },   // Bessel, 1841
+    { "E003", 0, 6378157.5,6356772.2 },   // New International, 1967
+    { "E004", 7022, 0, 0 },   // International, 1924 (Hayford, 1909)
+    { "E005", 7043, 0, 0 },   // WGS, 1972
+    { "E006", 7042, 0, 0 },   // Everest, 1830
+    { "E007", 0, 6378145.,6356759.769356 }, // WGS, 1966
+    { "E008", 7019, 0, 0 },   // GRS, 1980 (NAD1983)
+    { "E009", 7001, 0, 0 },   // Airy, 1830
+    { "E010", 7018, 0, 0 },   // Modified Everest 
+    { "E011", 7002, 0, 0 },   // Modified Airy
+    { "E012", 7030, 0, 0 },   // WGS, 1984 (GPS)
+    { "E013", 0, 6378155.,6356773.3205 }, // Southeast Asia
+    { "E014", 7003, 0, 0 },   // Australian National, 1965
+    { "E015", 7024, 0, 0 },   // Krassovsky, 1940
+    { "E016", 0, 6378270.,6356794.343479 }, // Hough
+    { "E017", 0, 6378166.,6356784.283666 }, // Mercury, 1960
+    { "E018", 0, 6378150.,6356768.337303 }, //  Modified Mercury, 1968
+    { "E019", 0, 6370997.,6370997.}, // normal sphere
+    { "E333", 7046, 0, 0 },    // Bessel 1841 (Japan By Law)
+    { "E600", 0, 6378144.0,6356759.0 }, // D-PAF (Orbits)
+    { "E900", 7006, 0, 0 },   // Bessel, 1841 (Namibia)
+    { "E901", 7044, 0, 0 },   // Everest, 1956
+    { "E902", 0, 6377295.664,6356094.667915 }, // Everest, 1969
+    { "E903", 7016, 0, 0 },   // Everest (Sabah & Sarawak)
+    { "E904", 7020, 0, 0 },   // Helmert, 1906
+    { "E905", 0, 6378136.,6356751.301569 }, // SGS 85
+    { "E906", 0, 6378165.,6356783.286959 }, // WGS 60
+    { "E907", 7036, 0, 0 },   // South American, 1969
+    { "E910", 7041, 0, 0 },   // ATS77
     { NULL, 0 }
 };
 
@@ -364,7 +372,7 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
                                            double *padfPrjParams )
 
 {
-    if( pszProj == NULL || strlen( pszProj ) < 16 )
+    if( pszProj == NULL )
         return OGRERR_CORRUPT_DATA;
 
 #ifdef DEBUG
@@ -545,18 +553,45 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         SetLocalCS( pszProj );
     }
 
-/* -------------------------------------------------------------------- */
-/*      Try to translate the datum/spheroid.                            */
-/* -------------------------------------------------------------------- */
+/* ==================================================================== */
+/*      Translate the datum/spheroid.                                   */
+/* ==================================================================== */
 
-    if ( !IsLocal() )
+/* -------------------------------------------------------------------- */
+/*      Extract and "normalize" the earthmodel to look like E001,       */
+/*      D-02 or D109.                                                   */
+/* -------------------------------------------------------------------- */
+    char szEarthModel[5];
+    const char *pszEM;
+
+    strcpy( szEarthModel, "" );
+    pszEM = pszProj + strlen(pszProj) - 1;
+    while( pszEM != pszProj )
+    {
+        if( *pszEM == 'e' || *pszEM == 'E' || *pszEM == 'd' || *pszEM == 'D' )
+        {
+            int nCode = atoi(pszEM+1);
+
+            if( nCode >= -99 && nCode <= 999 )
+                sprintf( szEarthModel, "%c%03d", toupper(*pszEM), nCode );
+
+            break;
+        }
+
+        pszEM--;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      We have an earthmodel string, look it up in the datum list.     */
+/* -------------------------------------------------------------------- */
+    if( strlen(szEarthModel) > 0 && (IsProjected() || IsGeographic()) )
     {
         PCIDatums   *paoDatum = aoDatums;
 
         // Search for matching datum
         while ( paoDatum->pszPCIDatum )
         {
-            if( EQUALN( pszProj + 12, paoDatum->pszPCIDatum, 4 ) )
+            if( EQUALN( szEarthModel, paoDatum->pszPCIDatum, 4 ) )
             {
                 OGRSpatialReference oGCS;
                 oGCS.importFromEPSG( paoDatum->nEPSGCode );
@@ -566,6 +601,9 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
             paoDatum++;
         }
 
+/* -------------------------------------------------------------------- */
+/*      If not, look in the ellipsoid list.                             */
+/* -------------------------------------------------------------------- */
         if ( !paoDatum->pszPCIDatum )  // No matching; search for ellipsoids
         {
             paoDatum = aoEllips;
@@ -578,7 +616,8 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
             while ( paoDatum->pszPCIDatum )
             {
-                if( EQUALN( pszProj + 12, paoDatum->pszPCIDatum, 4 ) )
+                if( EQUALN( szEarthModel, paoDatum->pszPCIDatum, 4 ) 
+                    && paoDatum->nEPSGCode != 0 )
                 {
                     char    *pszName = NULL;
                     double  dfSemiMajor;
@@ -601,10 +640,32 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 
                     break;
                 }
+                else if( EQUALN( szEarthModel, paoDatum->pszPCIDatum, 4 ) )
+                {
+                    double      dfInvFlattening;
+
+                    if( ABS(paoDatum->dfSemiMajor - paoDatum->dfSemiMinor) 
+                        < 0.01 )
+                        dfInvFlattening = 0.0;
+                    else
+                        dfInvFlattening = paoDatum->dfSemiMajor 
+                            / (paoDatum->dfSemiMajor-paoDatum->dfSemiMinor);
+
+                    SetGeogCS( "Unknown datum based upon the custom spheroid",
+                               "Not specified (based on custom spheroid)",
+                               CPLString().Printf( "PCI Ellipse %s", 
+                                                   szEarthModel),
+                               paoDatum->dfSemiMajor, dfInvFlattening,
+                               NULL, 0, NULL, 0 );
+                    break;
+                }
                 paoDatum++;
             }
         }
 
+/* -------------------------------------------------------------------- */
+/*      Custom spheroid.                                                */
+/* -------------------------------------------------------------------- */
         if ( !paoDatum->pszPCIDatum )      // Didn't found matches
         {
 #ifdef DEBUG
