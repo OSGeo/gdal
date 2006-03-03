@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.78  2006/03/03 19:43:44  fwarmerdam
+ * added --locale switch to force a locale
+ *
  * Revision 1.77  2006/03/02 11:33:31  dron
  * Unused variable in GDALFindAssociatedAuxFile() removed.
  *
@@ -2141,6 +2144,14 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             printf( "  --help-general: report detailed help on general options.\n" );
             CSLDestroy( papszReturn );
             return 0;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      --locale                                                        */
+/* -------------------------------------------------------------------- */
+        else if( EQUAL(papszArgv[iArg],"--locale") && iArg < nArgc-1 )
+        {
+            setlocale( LC_ALL, papszArgv[++iArg] );
         }
 
 /* -------------------------------------------------------------------- */
