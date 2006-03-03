@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/03/03 18:35:40  fwarmerdam
+ * Added comment.
+ *
  * Revision 1.8  2006/03/03 18:34:17  fwarmerdam
  * Don't require pszUnits to be passed in, and don't assume METER if it isn't.
  *
@@ -519,6 +522,8 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
         
         SetStatePlane( iZone, bNAD83 );
     }
+
+    // FIXME: Add SPIF and SPAF?  (state plane international or american feet)
 
     else if( EQUALN( pszProj, "TM", 2 ) )
     {
