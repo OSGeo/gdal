@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2006/03/03 19:40:53  fwarmerdam
+ * added CPLLocaleC class
+ *
  * Revision 1.39  2005/09/11 21:08:21  fwarmerdam
  * added CPLReadLineL
  *
@@ -273,5 +276,21 @@ void CPL_DLL CPLStringToComplex( const char *pszString,
 /* -------------------------------------------------------------------- */
 int CPL_DLL CPLUnlinkTree( const char * );
 CPL_C_END
+
+/* -------------------------------------------------------------------- */
+/*      C++ object for temporariliy forcing a LC_NUMERIC locale to "C". */
+/* -------------------------------------------------------------------- */
+#ifdef __cplusplus
+
+class CPLLocaleC
+{
+  private:
+    char *pszOldLocale;
+
+  public:
+    CPLLocaleC();
+    ~CPLLocaleC();
+};
+#endif /* def __cplusplus */
 
 #endif /* ndef CPL_CONV_H_INCLUDED */

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2006/03/03 19:40:53  fwarmerdam
+ * added CPLLocaleC class
+ *
  * Revision 1.50  2006/02/19 21:54:34  mloskot
  * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
  *
@@ -2090,3 +2093,38 @@ int CPLUnlinkTree( const char *pszPath )
         return 1000;
     }
 }
+
+/************************************************************************/
+/* ==================================================================== */
+/*                              CPLLocaleC                              */
+/* ==================================================================== */
+/************************************************************************/
+
+#include <locale.h>
+
+/************************************************************************/
+/*                             CPLLocaleC()                             */
+/************************************************************************/
+
+CPLLocaleC::CPLLocaleC()
+
+{
+    pszOldLocale = strdup(setlocale(LC_NUMERIC,NULL));
+    if( setlocale(LC_NUMERIC,"C") == NULL )
+        pszOldLocale = NULL;
+}
+
+/************************************************************************/
+/*                            ~CPLLocaleC()                             */
+/************************************************************************/
+
+CPLLocaleC::~CPLLocaleC()
+
+{
+    if( pszOldLocale != NULL )
+    {
+        setlocale( LC_NUMERIC, pszOldLocale );
+        CPLFree( pszOldLocale );
+    }
+}
+
