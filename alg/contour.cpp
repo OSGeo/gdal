@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/03/03 03:49:38  fwarmerdam
+ * Do not perterb nodata values even if they fall on a contour interval.
+ *
  * Revision 1.5  2003/10/16 17:47:06  warmerda
  * Added algorithm details to GDALContourGenerate().
  *
@@ -688,6 +691,9 @@ CPLErr GDALContourGenerator::FeedLine( double *padfScanline )
 
     for( iPixel = 0; iPixel < nWidth; iPixel++ )
     {
+        if( bNoDataActive && padfThisLine[iPixel] == dfNoDataValue )
+            continue;
+
         double dfLevel = (padfThisLine[iPixel] - dfContourOffset) 
             / dfContourInterval;
 
