@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2006/03/03 02:35:23  fwarmerdam
+ * Be careful in constructor about zero band images.
+ *
  * Revision 1.36  2006/02/08 17:10:52  fwarmerdam
  * Improved NODATA precision.
  *
@@ -163,7 +166,7 @@ EHdrDataset::~EHdrDataset()
 {
     FlushCache();
 
-    if( GetAccess() == GA_Update )
+    if( nBands > 0 && GetAccess() == GA_Update )
     {
         int bNoDataSet;
         double dfNoData;
@@ -178,10 +181,10 @@ EHdrDataset::~EHdrDataset()
 
         if( poBand->GetColorTable() != NULL )
             RewriteColorTable( poBand->GetColorTable() );
-    }
 
-    if( bHDRDirty && GetAccess() == GA_Update )
-        RewriteHDR();
+        if( bHDRDirty )
+            RewriteHDR();
+    }
 
     if( fpImage != NULL )
         VSIFCloseL( fpImage );
