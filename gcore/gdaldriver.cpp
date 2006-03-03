@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2006/03/03 19:44:45  fwarmerdam
+ * force C numeric locale in select locations
+ *
  * Revision 1.39  2006/02/07 19:07:07  fwarmerdam
  * applied some strategic improved outofmemory checking
  *
@@ -153,6 +156,8 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
                                   GDALDataType eType, char ** papszParmList )
 
 {
+    CPLLocaleC  oLocaleForcer;
+
     /* notdef: should add a bunch of error checking here */
 
     if( pfnCreate == NULL )
@@ -252,6 +257,8 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
                                      void * pProgressData )
 
 {
+    CPLLocaleC  oLocaleForcer;
+
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 

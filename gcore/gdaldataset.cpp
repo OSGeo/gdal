@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2006/03/03 19:44:45  fwarmerdam
+ * force C numeric locale in select locations
+ *
  * Revision 1.56  2005/09/23 20:52:55  fwarmerdam
  * avoid issuing NotSupported errors if GMO_IGNORE_UNIMPLEMENTED is set
  *
@@ -1681,6 +1684,7 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
     int         iDriver;
     GDALDriverManager *poDM = GetGDALDriverManager();
     GDALOpenInfo oOpenInfo( pszFilename, eAccess );
+    CPLLocaleC  oLocaleForcer;
 
     CPLErrorReset();
     
@@ -1808,6 +1812,7 @@ void CPL_STDCALL GDALClose( GDALDatasetH hDS )
     GDALDataset *poDS = (GDALDataset *) hDS;
     int         i;
     CPLMutexHolderD( &hDLMutex );
+    CPLLocaleC  oLocaleForcer;
 
 /* -------------------------------------------------------------------- */
 /*      If this file is in the shared dataset list then dereference     */
