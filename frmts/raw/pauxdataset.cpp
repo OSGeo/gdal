@@ -3,7 +3,7 @@
  *
  * Project:  PCI .aux Driver
  * Purpose:  Implementation of PAuxDataset
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2006/03/03 18:37:46  fwarmerdam
+ * PCI2WKT changed to use OGRSpatialReference::ImportFromPCI().
+ *
  * Revision 1.31  2005/10/06 16:32:37  fwarmerdam
  * Bug 947: Don't issue an error if there is no RawDefinition in .aux,
  * just ignore it.
@@ -76,52 +79,6 @@
  *
  * Revision 1.16  2001/12/12 18:15:46  warmerda
  * preliminary update for large raw file support
- *
- * Revision 1.15  2001/12/12 03:15:31  warmerda
- * avoid leaks
- *
- * Revision 1.14  2001/12/08 04:46:16  warmerda
- * added support for color table
- *
- * Revision 1.13  2001/11/11 23:51:00  warmerda
- * added required class keyword to friend declarations
- *
- * Revision 1.12  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.11  2001/07/12 14:46:00  warmerda
- * added limited gcp and projection read support
- *
- * Revision 1.10  2001/05/15 13:59:24  warmerda
- * allow opening by selecting the .aux file
- *
- * Revision 1.9  2000/10/06 15:29:27  warmerda
- * added PAuxRasterBand, implemented nodata support
- *
- * Revision 1.8  2000/09/15 15:14:12  warmerda
- * fixed geotransform[5] calculation
- *
- * Revision 1.7  2000/09/15 14:09:56  warmerda
- * Added support for geotransforms.
- *
- * Revision 1.6  2000/06/20 17:35:58  warmerda
- * added overview support
- *
- * Revision 1.5  2000/03/13 14:34:42  warmerda
- * avoid const problem on write
- *
- * Revision 1.4  2000/02/28 16:32:20  warmerda
- * use SetBand method
- *
- * Revision 1.3  2000/01/06 14:39:30  warmerda
- * Improved error reporting.
- *
- * Revision 1.2  1999/08/13 03:27:14  warmerda
- * fixed byte order handling
- *
- * Revision 1.1  1999/08/13 02:36:14  warmerda
- * New
- *
  */
 
 #include "rawdataset.h"
@@ -445,104 +402,47 @@ PAuxDataset::~PAuxDataset()
 /************************************************************************/
 
 char *PAuxDataset::PCI2WKT( const char *pszGeosys, 
-                            const char * /*pszProjParms*/ )
+                            const char *pszProjParms )
 
 {
-    char	szEarthModel[8];
-    char	szGeosysBase[16];
-    char	chRow = ' ';
-    int		nZone = 0;
-    const char *pszWellKnownGeogCS;
     OGRSpatialReference oSRS;
-    char	*pszResult = NULL;
+
+    while( *pszGeosys == ' ' )
+        pszGeosys++;
 
 /* -------------------------------------------------------------------- */
-/*      Parse the geosys string.                                        */
-/*                                                                      */
-/*      eg.                                                             */
-/*      "UTM      11 E000"                                              */
-/*      "LONG        D-02"                                              */
-/*      "METER           "                                              */
+/*      Parse projection parameters array.                              */
 /* -------------------------------------------------------------------- */
-    char	**papszTokens;
+    double adfProjParms[16];
+    
+    memset( adfProjParms, 0, sizeof(adfProjParms) );
 
-    papszTokens = CSLTokenizeString( pszGeosys );
-    if( CSLCount(papszTokens) == 1 )
+    if( pszProjParms != NULL )
     {
-        strcpy( szGeosysBase, papszTokens[0] );
-        szEarthModel[0] = '\0';
-    }
-    else if( CSLCount(papszTokens) == 2 )
-    {
-        strncpy( szGeosysBase, papszTokens[0], sizeof(szGeosysBase) );
-        strncpy( szEarthModel, papszTokens[1], sizeof(szEarthModel) );
-    }
-    else if( CSLCount(papszTokens) == 3 )
-    {
-        strncpy( szGeosysBase, papszTokens[0], sizeof(szGeosysBase) );
-        nZone = atoi(papszTokens[1]);
-        strncpy( szEarthModel, papszTokens[2], sizeof(szEarthModel) );
-    }
-    else if( CSLCount(papszTokens) == 4 )
-    {
-        strncpy( szGeosysBase, papszTokens[0], sizeof(szGeosysBase) );
-        nZone = atoi(papszTokens[1]);
-        chRow = papszTokens[2][0];
-        strncpy( szEarthModel, papszTokens[3], sizeof(szEarthModel) );
-    }
-    else
-    {
-        strcpy( szGeosysBase, "METER" );
-        szEarthModel[0] = '\0';
-    }
+        char **papszTokens;
+        int i;
 
-    CSLDestroy( papszTokens );
+        papszTokens = CSLTokenizeString( pszProjParms );
+        
+        for( i=0; papszTokens != NULL && papszTokens[i] != NULL && i < 16; i++)
+            adfProjParms[i] = atof(papszTokens[i]);
 
-/* -------------------------------------------------------------------- */
-/*      Translate the earth model to a well known geographic            */
-/*      coordinate system.  Very simple for now.                        */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(szEarthModel,"E000")
-        || EQUAL(szEarthModel,"D-01")
-        || EQUAL(szEarthModel,"D-03") )
-        pszWellKnownGeogCS = "NAD27";
-    else if( EQUAL(szEarthModel,"E008")
-        || EQUAL(szEarthModel,"D-02")
-        || EQUAL(szEarthModel,"D-04") )
-        pszWellKnownGeogCS = "NAD83";
-    else if( EQUAL(szEarthModel,"D000")
-             || EQUAL(szEarthModel,"E012") )
-        pszWellKnownGeogCS = "WGS84";
-    else
-        pszWellKnownGeogCS = "WGS84";
-
-/* -------------------------------------------------------------------- */
-/*      Translate known projections.                                    */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(szGeosysBase,"LONG") )
-    {
-        /* do nothing, geogcs set later */
+        CSLDestroy( papszTokens );
     }
-    else if( EQUAL(szGeosysBase,"UTM") )
+    
+/* -------------------------------------------------------------------- */
+/*      Convert to SRS.                                                 */
+/* -------------------------------------------------------------------- */
+    if( oSRS.importFromPCI( pszGeosys, NULL, adfProjParms ) == OGRERR_NONE )
     {
-        /* should be checking row for southern hemisphere! */
-        oSRS.SetUTM( nZone );
+        char *pszResult = NULL;
+
+        oSRS.exportToWkt( &pszResult );
+
+        return pszResult;
     }
     else
-        oSRS.SetLocalCS( szGeosysBase );
-
-/* -------------------------------------------------------------------- */
-/*      Apply geographic coordinate system.                             */
-/* -------------------------------------------------------------------- */
-    if( !oSRS.IsLocal() )
-        oSRS.SetWellKnownGeogCS( pszWellKnownGeogCS );
-
-/* -------------------------------------------------------------------- */
-/*      Get out the result.                                             */
-/* -------------------------------------------------------------------- */
-    oSRS.exportToWkt( &pszResult );
-
-    return pszResult;
+        return NULL;
 }
 
 /************************************************************************/
