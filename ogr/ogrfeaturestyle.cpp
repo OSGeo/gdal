@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2006/03/03 20:39:31  fwarmerdam
+ * Fixed memory leak in GetStyleString()
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1103
+ *
  * Revision 1.14  2005/10/12 19:16:59  jlacroix
  * Add comment in the OGRStyleTool::Parse function
  *
@@ -745,15 +749,14 @@ void OGRStyleTool::SetStyleString(const char *pszStyleString)
 const char *OGRStyleTool::GetStyleString( OGRStyleParamId *pasStyleParam ,
                             OGRStyleValue *pasStyleValue, int nSize)
 {
-    int i;
-    GBool bFound;
-
-    char *pszCurrent = NULL;
-    const char *pszClass;
-    
-    pszCurrent = (char *)CPLCalloc(nSize, 20 * sizeof(char));
     if (IsStyleModified())
     {
+        int i;
+        GBool bFound;
+        const char *pszClass;
+        char szCurrent[25];
+        szCurrent[0] = '\0';
+    
         CPLFree(m_pszStyleString);
         
         switch (GetType())
@@ -774,7 +777,7 @@ const char *OGRStyleTool::GetStyleString( OGRStyleParamId *pasStyleParam ,
             pszClass = "UNKNOWN(";
         }
 
-        strcat(pszCurrent,pszClass);
+        strcat(szCurrent,pszClass);
 
         bFound = FALSE;
         for (i=0;i< nSize;i++)
@@ -783,21 +786,21 @@ const char *OGRStyleTool::GetStyleString( OGRStyleParamId *pasStyleParam ,
               continue;
 
             if (bFound)
-              strcat(pszCurrent,",");
+              strcat(szCurrent,",");
             bFound = TRUE;
             
-            strcat(pszCurrent,pasStyleParam[i].pszToken);
-            strcat(pszCurrent,":");
+            strcat(szCurrent,pasStyleParam[i].pszToken);
+            strcat(szCurrent,":");
             switch (pasStyleParam[i].eType)
             {
               case OGRSTypeString:
-                strcat(pszCurrent,pasStyleValue[i].pszValue);
+                strcat(szCurrent,pasStyleValue[i].pszValue);
                 break;
               case OGRSTypeDouble:
-                strcat(pszCurrent,CPLSPrintf("%f",pasStyleValue[i].dfValue));
+                strcat(szCurrent,CPLSPrintf("%f",pasStyleValue[i].dfValue));
                 break;
               case OGRSTypeInteger:
-                strcat(pszCurrent,CPLSPrintf("%d",pasStyleValue[i].nValue));
+                strcat(szCurrent,CPLSPrintf("%d",pasStyleValue[i].nValue));
                 break;
               default:
                 break;
@@ -806,29 +809,29 @@ const char *OGRStyleTool::GetStyleString( OGRStyleParamId *pasStyleParam ,
               switch (pasStyleValue[i].eUnit)
               {
                 case OGRSTUGround:
-                  strcat(pszCurrent,"g");
+                  strcat(szCurrent,"g");
                   break;
                 case OGRSTUPixel:
-                  strcat(pszCurrent,"px");
+                  strcat(szCurrent,"px");
                   break;
                 case OGRSTUPoints:
-                  strcat(pszCurrent,"pt");
+                  strcat(szCurrent,"pt");
                   break;
                 case OGRSTUCM:
-                  strcat(pszCurrent,"cm");
+                  strcat(szCurrent,"cm");
                   break;
                 case OGRSTUInches:
-                  strcat(pszCurrent,"in");
+                  strcat(szCurrent,"in");
                   break;
                 case OGRSTUMM:
-                  //strcat(pszCurrent,"mm");
+                  //strcat(szCurrent,"mm");
                 default:
                   break;    //imp
               }
         }
-        strcat(pszCurrent,")");
+        strcat(szCurrent,")");
 
-        m_pszStyleString = CPLStrdup(pszCurrent);
+        m_pszStyleString = CPLStrdup(szCurrent);
 
         m_bModified = FALSE;
     }
@@ -836,10 +839,10 @@ const char *OGRStyleTool::GetStyleString( OGRStyleParamId *pasStyleParam ,
     return m_pszStyleString;
 }   
 
-/****************************************************************************/
-/*                       int OGRStyleTool::GetRGBFromString()               */
-/*                                                                          */
-/****************************************************************************/
+/************************************************************************/
+/*                          GetRGBFromString()                          */
+/************************************************************************/
+
 GBool OGRStyleTool::GetRGBFromString(const char *pszColor, int &nRed, 
                                      int &nGreen ,int & nBlue, 
                                      int &nTransparance)
@@ -857,11 +860,14 @@ GBool OGRStyleTool::GetRGBFromString(const char *pszColor, int &nRed,
      return FALSE;
 }
 
-/****************************************************************************/
-/*                       OGRSTClassId OGRStyleTool::GetSpecificId           */
-/*     return -1, if the wanted type is not found, ex:                      */
-/*    if you want ogr-pen value, pszWanted should be ogr-pen(case sensitive)*/
-/****************************************************************************/
+/************************************************************************/
+/*                           GetSpecificId()                            */
+/*                                                                      */
+/*      return -1, if the wanted type is not found, ex:                 */
+/*      if you want ogr-pen value, pszWanted should be ogr-pen(case     */
+/*      sensitive)                                                      */
+/************************************************************************/
+
 int OGRStyleTool::GetSpecificId(const char *pszId, const char *pszWanted)
 {
     const char *pszRealWanted = pszWanted;
@@ -887,31 +893,26 @@ int OGRStyleTool::GetSpecificId(const char *pszId, const char *pszWanted)
 
 }
 
-/****************************************************************************/
-/*                       OGRSTClassId OGRStyleTool::GetType()               */
-/*                                                                          */
-/****************************************************************************/
+/************************************************************************/
+/*                              GetType()                               */
+/************************************************************************/
 OGRSTClassId OGRStyleTool::GetType()
 {
     return m_eClassId;
 }
     
-/****************************************************************************/
-/*        void OGRStyleTool::SetUnit(OGRSTUnitId,double dfScale)            */
-/*                                                                          */
-/****************************************************************************/
+/************************************************************************/
+/*                              SetUnit()                               */
+/************************************************************************/
 void OGRStyleTool::SetUnit(OGRSTUnitId eUnit,double dfScale)
 {
     m_dfScale = dfScale;
     m_eUnit = eUnit;
 }
 
-/****************************************************************************/
-/*              GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,        */
-/*                        OGRStyleValue *pasValue,                          */
-/*                        int nCount)                                       */
-/*                                                                          */
-/****************************************************************************/
+/************************************************************************/
+/*                               Parse()                                */
+/************************************************************************/
 GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
                           OGRStyleValue *pasValue,
                           int nCount)
@@ -1071,10 +1072,10 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
     return TRUE;
 }
 
-/****************************************************************************/
-/*     void OGRStyleTool::SetInternalInputUnitFromParam(char *pszString)    */
-/*                                                                          */
-/****************************************************************************/
+/************************************************************************/
+/*                   SetInternalInputUnitFromParam()                    */
+/************************************************************************/
+
 void OGRStyleTool::SetInternalInputUnitFromParam(char *pszString)
 {
 
@@ -1128,12 +1129,9 @@ void OGRStyleTool::SetInternalInputUnitFromParam(char *pszString)
     SetUnit(OGRSTUMM);
 }
 
-/****************************************************************************/
-/*   double OGRStyleTool::ComputeWithUnit(double dfValue,                   */
-/*                                          OGRSTUnitId eInputUnit)         */
-/*                                                                          */
-/*                                                                          */
-/****************************************************************************/
+/************************************************************************/
+/*                          ComputeWithUnit()                           */
+/************************************************************************/
 double OGRStyleTool::ComputeWithUnit(double dfValue, OGRSTUnitId eInputUnit)
 {
     OGRSTUnitId eOutputUnit = GetUnit();
@@ -1194,21 +1192,17 @@ double OGRStyleTool::ComputeWithUnit(double dfValue, OGRSTUnitId eInputUnit)
     return dfNewValue;
 }
 
-/****************************************************************************/
-/*   int   OGRStyleTool::ComputeWithUnit(int nValue, OGRSTUnitId eUnit)     */
-/*                                                                          */
-/****************************************************************************/
+/************************************************************************/
+/*                          ComputeWithUnit()                           */
+/************************************************************************/
 int   OGRStyleTool::ComputeWithUnit(int nValue, OGRSTUnitId eUnit)
 {
     return (int) ComputeWithUnit((double )nValue, eUnit);
 }
 
-/****************************************************************************/
-/*       const char *OGRStyleTool::GetParamStr(OGRStyleParamId sStyleParam ,*/
-/*                                    OGRStyleValue sStyleValue,            */
-/*                                    GBool &bValueIsNull)                  */
-/*                                                                          */
-/****************************************************************************/
+/************************************************************************/
+/*                            GetParamStr()                             */
+/************************************************************************/
 const char *OGRStyleTool::GetParamStr(OGRStyleParamId &sStyleParam ,
                                       OGRStyleValue &sStyleValue,
                                       GBool &bValueIsNull)
