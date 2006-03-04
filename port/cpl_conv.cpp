@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2006/03/04 00:46:43  mloskot
+ * [WCE] CPLLocaleC class excluded from compilation for Windows CE
+ *
  * Revision 1.51  2006/03/03 19:40:53  fwarmerdam
  * added CPLLocaleC class
  *
@@ -2099,6 +2102,7 @@ int CPLUnlinkTree( const char *pszPath )
 /*                              CPLLocaleC                              */
 /* ==================================================================== */
 /************************************************************************/
+#ifndef WIN32CE
 
 #include <locale.h>
 
@@ -2127,4 +2131,6 @@ CPLLocaleC::~CPLLocaleC()
         CPLFree( pszOldLocale );
     }
 }
+
+#endif /* ndef WIN32CE */
 
