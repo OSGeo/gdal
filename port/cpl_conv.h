@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2006/03/04 00:46:43  mloskot
+ * [WCE] CPLLocaleC class excluded from compilation for Windows CE
+ *
  * Revision 1.40  2006/03/03 19:40:53  fwarmerdam
  * added CPLLocaleC class
  *
@@ -280,6 +283,8 @@ CPL_C_END
 /* -------------------------------------------------------------------- */
 /*      C++ object for temporariliy forcing a LC_NUMERIC locale to "C". */
 /* -------------------------------------------------------------------- */
+#ifndef WIN32CE
+
 #ifdef __cplusplus
 
 class CPLLocaleC
@@ -291,6 +296,9 @@ class CPLLocaleC
     CPLLocaleC();
     ~CPLLocaleC();
 };
+
 #endif /* def __cplusplus */
+
+#endif /* ndef WIN32CE */
 
 #endif /* ndef CPL_CONV_H_INCLUDED */
