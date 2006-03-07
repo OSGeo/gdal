@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2006/03/07 07:00:47  fwarmerdam
+ * added preliminary logic to interpolate arcs in area boundaries
+ *
  * Revision 1.56  2006/02/20 17:58:28  fwarmerdam
  * Update DSID_UPDN to reflect the updates applied.  Other DSID fields are not
  * updated.
@@ -73,6 +76,10 @@
 #include <fstream>
 
 CPL_CVSID("$Id$");
+
+#ifndef PI
+#define PI  3.14159265358979323846
+#endif
 
 /************************************************************************/
 /*                             S57Reader()                              */
@@ -1402,6 +1409,115 @@ int S57Reader::FetchPoint( int nRCNM, int nRCID,
 }
 
 /************************************************************************/
+/*                  S57StrokeArcToOGRGeometry_Angles()                  */
+/************************************************************************/
+
+static OGRLineString *
+S57StrokeArcToOGRGeometry_Angles( double dfCenterX, double dfCenterY, 
+                                  double dfRadius, 
+                                  double dfStartAngle, double dfEndAngle,
+                                  int nVertexCount )
+
+{
+    OGRLineString      *poLine = new OGRLineString;
+    double             dfArcX, dfArcY, dfSlice;
+    int                iPoint;
+
+    nVertexCount = MAX(2,nVertexCount);
+    dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
+
+    poLine->setNumPoints( nVertexCount );
+        
+    for( iPoint=0; iPoint < nVertexCount; iPoint++ )
+    {
+        double      dfAngle;
+
+        dfAngle = (dfStartAngle + iPoint * dfSlice) * PI / 180.0;
+            
+        dfArcX = dfCenterX + cos(dfAngle) * dfRadius;
+        dfArcY = dfCenterY + sin(dfAngle) * dfRadius;
+
+        poLine->setPoint( iPoint, dfArcX, dfArcY );
+    }
+
+    return poLine;
+}
+
+
+/************************************************************************/
+/*                  S57StrokeArcToOGRGeometry_Points()                  */
+/************************************************************************/
+
+static OGRLineString *
+S57StrokeArcToOGRGeometry_Points( double dfStartX, double dfStartY,
+                                  double dfCenterX, double dfCenterY,
+                                  double dfEndX, double dfEndY,
+                                  int nVertexCount )
+    
+{
+    double      dfStartAngle, dfEndAngle;
+    double      dfRadius;
+
+    if( dfStartX == dfEndX && dfStartY == dfEndY )
+    {
+        dfStartAngle = 0.0;
+        dfEndAngle = 360.0;
+    }
+    else
+    {
+        double  dfDeltaX, dfDeltaY;
+
+        dfDeltaX = dfStartX - dfCenterX;
+        dfDeltaY = dfStartY - dfCenterY;
+        dfStartAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
+
+        dfDeltaX = dfEndX - dfCenterX;
+        dfDeltaY = dfEndY - dfCenterY;
+        dfEndAngle = atan2(dfDeltaY,dfDeltaX) * 180.0 / PI;
+
+#ifdef notdef
+        if( dfStartAngle > dfAlongAngle && dfAlongAngle > dfEndAngle )
+        {
+            double dfTempAngle;
+
+            dfTempAngle = dfStartAngle;
+            dfStartAngle = dfEndAngle;
+            dfEndAngle = dfTempAngle;
+        }
+#endif
+
+        while( dfStartAngle < dfEndAngle )
+            dfStartAngle += 360.0;
+
+//        while( dfAlongAngle < dfStartAngle )
+//            dfAlongAngle += 360.0;
+
+//        while( dfEndAngle < dfAlongAngle )
+//            dfEndAngle += 360.0;
+
+        if( dfEndAngle - dfStartAngle > 360.0 )
+        {
+            double dfTempAngle;
+
+            dfTempAngle = dfStartAngle;
+            dfStartAngle = dfEndAngle;
+            dfEndAngle = dfTempAngle;
+
+            while( dfEndAngle < dfStartAngle )
+                dfStartAngle -= 360.0;
+        }
+    }
+
+    dfRadius = sqrt( (dfCenterX - dfStartX) * (dfCenterX - dfStartX)
+                     + (dfCenterY - dfStartY) * (dfCenterY - dfStartY) );
+    
+    return S57StrokeArcToOGRGeometry_Angles( dfCenterX, dfCenterY, 
+                                             dfRadius, 
+                                             dfStartAngle, dfEndAngle,
+                                             nVertexCount );
+}
+
+/************************************************************************/
 /*                             FetchLine()                              */
 /************************************************************************/
 
@@ -1412,8 +1528,12 @@ int S57Reader::FetchLine( DDFRecord *poSRecord,
 {
     int             nVCount;
     DDFField        *poSG2D = poSRecord->FindField( "SG2D" );
+    DDFField        *poAR2D = poSRecord->FindField( "AR2D" );
     DDFSubfieldDefn *poXCOO=NULL, *poYCOO=NULL;
     int bStandardFormat = TRUE;
+
+    if( poSG2D == NULL && poAR2D != NULL )
+        poSG2D = poAR2D;
 
 /* -------------------------------------------------------------------- */
 /*      Get some basic definitions.                                     */
@@ -1534,6 +1654,30 @@ int S57Reader::FetchLine( DDFRecord *poSRecord,
             poLine->setPoint( nVBase, dfX, dfY );
 
             nVBase += iDirection;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If this is actually an arc, turn the start, end and center      */
+/*      of rotation into a "stroked" arc linestring.                    */
+/* -------------------------------------------------------------------- */
+    if( poAR2D != NULL && poLine->getNumPoints() >= 3 )
+    {
+        OGRLineString *poArc;
+        int i, iLast = poLine->getNumPoints() - 1;
+        
+        poArc = S57StrokeArcToOGRGeometry_Points( 
+            poLine->getX(iLast-0), poLine->getY(iLast-0), 
+            poLine->getX(iLast-1), poLine->getY(iLast-1),
+            poLine->getX(iLast-2), poLine->getY(iLast-2),
+            30 );
+
+        if( poArc != NULL )
+        {
+            for( i = 0; i < poArc->getNumPoints(); i++ )
+                poLine->setPoint( iLast-2+i, poArc->getX(i), poArc->getY(i) );
+
+            delete poArc;
         }
     }
 
@@ -1724,7 +1868,11 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
         int             nVCount;
         int             nStart, nEnd, nInc;
         DDFField        *poSG2D = poSRecord->FindField( "SG2D" );
+        DDFField        *poAR2D = poSRecord->FindField( "AR2D" );
         DDFSubfieldDefn *poXCOO=NULL, *poYCOO=NULL;
+
+        if( poSG2D == NULL && poAR2D != NULL )
+            poSG2D = poAR2D;
 
         if( poSG2D != NULL )
         {
@@ -1788,12 +1936,12 @@ void S57Reader::AssembleLineGeometry( DDFRecord * poFRecord,
             int         nBytesRemaining;
 
             pachData = poSG2D->GetSubfieldData(poXCOO,&nBytesRemaining,i);
-                
+            
             dfX = poXCOO->ExtractIntData(pachData,nBytesRemaining,NULL)
-                / (double) nCOMF;
-
+                    / (double) nCOMF;
+            
             pachData = poSG2D->GetSubfieldData(poYCOO,&nBytesRemaining,i);
-
+            
             dfY = poXCOO->ExtractIntData(pachData,nBytesRemaining,NULL)
                 / (double) nCOMF;
                 
