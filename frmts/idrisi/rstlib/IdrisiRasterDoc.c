@@ -13,8 +13,8 @@ rst_Doc * CreateImgDoc()
 	strcpy(imgDoc->file_type, VALUE_DOC_BYNARY);
 	imgDoc->columns = 0;
 	imgDoc->rows = 0;
-	strcpy(imgDoc->ref_system, VALUE_DOC_PLANE);
-	strcpy(imgDoc->ref_units, VALUE_DOC_METER);
+    strcpy(imgDoc->ref_system, VALUE_DOC_LATLONG);
+    strcpy(imgDoc->ref_units, VALUE_DOC_DEGREE);
 	imgDoc->unit_dist = 1.0;
 	imgDoc->min_X = 0.0;
 	imgDoc->max_X = 0.0;
@@ -237,6 +237,8 @@ long ReadPalette(const char* fileName,
 		else
 			strcpy(smpFile, GetFromUserPreference("DefaultQuantPal"));
 	}
+
+	CPLDebug("RST", "Pallet FileName = %s", smpFile);
 
 	if (PathFileExists(smpFile) == TRUE)
 	{
