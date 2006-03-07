@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/03/07 07:00:21  fwarmerdam
+ * fixed quirk with attribute file lookup for profiles
+ *
  * Revision 1.16  2005/08/30 17:57:34  fwarmerdam
  * allow directly set profile names too
  *
@@ -338,6 +341,10 @@ int S57ClassRegistrar::LoadInfo( const char * pszDirectory,
     else if ( EQUAL(pszProfile, "Inland_Waterways") )
     {
        sprintf( szTargetFile, "s57attributes_%s.csv", "iw" );
+    }
+    else if( strlen(pszProfile) > 0 )
+    {
+       sprintf( szTargetFile, "s57attributes_%s.csv", pszProfile );
     }
     else
     {
