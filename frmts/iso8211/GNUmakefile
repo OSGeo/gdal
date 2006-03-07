@@ -2,7 +2,7 @@ GDAL_ROOT	=	../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 
-VERSION =	1.2
+VERSION =	1.3
 DISTDIR =	iso8211lib-$(VERSION)
 WEB_DIR =	/u/www/projects/iso8211
 
@@ -68,6 +68,7 @@ dist:	docs
 	cp $(GDAL_ROOT)/port/{cpl_error*,cpl_port*,cpl_string*} $(DISTDIR)
 	cp $(GDAL_ROOT)/port/{cpl_vsisimple.cpp,cpl_config.h.in} $(DISTDIR)
 	cp $(GDAL_ROOT)/port/{cpl_vsi.h,cpl_conv.*} $(DISTDIR)
+	cp $(GDAL_ROOT)/port/cpl_config.h.vc $(DISTDIR)
 	rm $(DISTDIR)/*.o
 	tar czf $(DISTDIR).tar.gz $(DISTDIR)
 	zip -r $(DISTDIR).zip $(DISTDIR)
