@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2006/03/07 04:21:34  fwarmerdam
+ * Added support for AR2D which has repeating structures with substructures
+ *
  * Revision 1.23  2005/10/17 14:51:24  fwarmerdam
  * Removed extra newlines from error messages.
  *
@@ -543,15 +546,41 @@ int DDFFieldDefn::BuildSubfields()
     char        **papszSubfieldNames;
     const char  *pszSublist = _arrayDescr;
 
+/* -------------------------------------------------------------------- */
+/*      It is valid to define a field with _arrayDesc                   */
+/*      '*STPT!CTPT!ENPT*YCOO!XCOO' and formatControls '(2b24)'.        */
+/*      This basically indicates that there are 3 (YCOO,XCOO)           */
+/*      structures named STPT, CTPT and ENPT.  But we can't handle      */
+/*      such a case gracefully here, so we just ignore the              */
+/*      "structure names" and treat such a thing as a repeating         */
+/*      YCOO/XCOO array.  This occurs with the AR2D field of some       */
+/*      AML S-57 files for instance.                                    */
+/*                                                                      */
+/*      We accomplish this by ignoring everything before the last       */
+/*      '*' in the subfield list.                                       */
+/* -------------------------------------------------------------------- */
+    if( strrchr(pszSublist, '*') != NULL )
+        pszSublist = strrchr(pszSublist,'*');
+
+/* -------------------------------------------------------------------- */
+/*      Strip off the repeating marker, when it occurs, but mark our    */
+/*      field as repeating.                                             */
+/* -------------------------------------------------------------------- */
     if( pszSublist[0] == '*' )
     {
         bRepeatingSubfields = TRUE;
         pszSublist++;
     }
 
+/* -------------------------------------------------------------------- */
+/*      split list of fields .                                          */
+/* -------------------------------------------------------------------- */
     papszSubfieldNames = CSLTokenizeStringComplex( pszSublist, "!",
                                                    FALSE, FALSE );
 
+/* -------------------------------------------------------------------- */
+/*      minimally initialize the subfields.  More will be done later.   */
+/* -------------------------------------------------------------------- */
     int nSFCount = CSLCount( papszSubfieldNames );
     for( int iSF = 0; iSF < nSFCount; iSF++ )
     {
