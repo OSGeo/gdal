@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.36  2006/03/07 22:05:32  fwarmerdam
+ * fix up docs a bit
+ *
  * Revision 1.35  2006/02/27 23:24:13  fwarmerdam
  * Removed printf about growing error buffer.
  *
@@ -594,7 +597,7 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, int nError,
  * a temporary local error handler, such as CPLQuietErrorHandler() to suppress
  * error reporting in a limited segment of code. 
  *
- * @param pfnErrorHandler new error handler function.
+ * @param pfnErrorHandlerNew new error handler function.
  * @return returns the previously installed error handler.
  */ 
 
@@ -639,7 +642,7 @@ CPLSetErrorHandler( CPLErrorHandler pfnErrorHandlerNew )
  * The CPLSetErrorHandler() docs have further information on how 
  * CPLError handlers work.
  *
- * @param pfnErrorHandler new error handler function.
+ * @param pfnErrorHandlerNew new error handler function.
  */
 
 void CPL_STDCALL CPLPushErrorHandler( CPLErrorHandler pfnErrorHandlerNew )
