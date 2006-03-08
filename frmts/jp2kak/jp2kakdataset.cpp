@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.32  2006/03/08 15:35:18  fwarmerdam
+ * Fixed problem with bIsJPX test.
+ *
  * Revision 1.31  2006/02/28 18:04:50  fwarmerdam
  * Make sure tiles get closed in case of an exception.
  *
@@ -1795,14 +1798,16 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 #ifdef KAKADU42
     jpx_family_tgt         jpx_family;
     jpx_target             jpx_out;
-    int                    bIsJPX = !EQUAL(CPLGetExtension(pszFilename),"jpf")
+    int			   bIsJPX = !EQUAL(CPLGetExtension(pszFilename),"jpf");
+#else
+    int                    bIsJPX = FALSE;
 #endif
 
     kdu_compressed_target *poOutputFile = NULL;
     jp2_target             jp2_out;
     kdu_simple_file_target jpc_out;
     int                    bIsJP2 = !EQUAL(CPLGetExtension(pszFilename),"jpc")
-                           && !bIsJP2;
+                           && !bIsJPX;
     kdu_codestream         oCodeStream;
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
