@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/03/08 00:22:46  fwarmerdam
+ * preliminary update to support rowid-less tables
+ *
  * Revision 1.6  2005/11/30 01:53:31  fwarmerdam
  * added OGR_SDE_SEARCHORDER config option
  *
@@ -64,6 +67,8 @@ OGRSDELayer::OGRSDELayer( OGRSDEDataSource *poDSIn )
     poDS = poDSIn;
 
     iFIDColumn = -1;
+    nNextFID = 0;
+
     iShapeColumn = -1;
     poSRS = NULL;
     poFeatureDefn = NULL;
@@ -292,6 +297,7 @@ void OGRSDELayer::ResetReading()
 
 {
     bQueryInstalled = FALSE;
+    nNextFID = 0;
 }
 
 /************************************************************************/
@@ -367,7 +373,7 @@ int OGRSDELayer::InstallQuery( int bCountingOnly )
 /*      we will just use the FID column, otherwise we use all           */
 /*      columns.                                                        */
 /* -------------------------------------------------------------------- */
-    if( bCountingOnly )
+    if( bCountingOnly && iFIDColumn != -1 )
     {
         const char *pszFIDColName = 
             poFeatureDefn->GetFieldDefn( iFIDColumn )->GetNameRef();
@@ -792,7 +798,8 @@ OGRFeature *OGRSDELayer::TranslateSDERecord()
 /* -------------------------------------------------------------------- */
     if( iFIDColumn != -1 )
         poFeat->SetFID( poFeat->GetFieldAsInteger( iFIDColumn ) );
-
+    else
+        poFeat->SetFID( nNextFID++ );
 
 /* -------------------------------------------------------------------- */
 /*      Fetch geometry.                                                 */
@@ -883,6 +890,9 @@ OGRFeature *OGRSDELayer::GetFeature( long nFeatureId )
 
 {
     int nSDEErr;
+    
+    if( iFIDColumn == -1 )
+        return OGRLayer::GetFeature( nFeatureId );
 
 /* -------------------------------------------------------------------- */
 /*      Our direct row access will terminate any active queries.        */
@@ -998,7 +1008,7 @@ int OGRSDELayer::TestCapability( const char * pszCap )
 
 {
     if( EQUAL(pszCap,OLCRandomRead) )
-        return TRUE;
+        return iFIDColumn != -1;
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return TRUE;

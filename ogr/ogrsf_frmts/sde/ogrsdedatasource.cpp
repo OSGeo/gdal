@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/03/08 00:22:46  fwarmerdam
+ * preliminary update to support rowid-less tables
+ *
  * Revision 1.3  2005/11/30 01:25:58  fwarmerdam
  * removed FetchSRSId stuff
  *
@@ -206,14 +209,14 @@ int OGRSDEDataSource::Open( const char * pszNewName )
                                                &nFIDColType );
         
         if( nFIDColType == SE_REGISTRATION_ROW_ID_COLUMN_TYPE_NONE
-            ||strlen(szIDColName) == 0 )
+            || strlen(szIDColName) == 0 )
         {
             CPLDebug( "OGR_SDE", "Unable to determine FID column for %s.", 
                       szTableName );
-            continue;
+            OpenTable( szTableName, NULL, NULL );
         }
-        
-        OpenTable( szTableName, szIDColName, NULL );
+        else
+            OpenTable( szTableName, szIDColName, NULL );
     }
  
     return nLayers > 0;
