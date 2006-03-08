@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/03/08 00:22:46  fwarmerdam
+ * preliminary update to support rowid-less tables
+ *
  * Revision 1.3  2005/11/25 18:55:15  fwarmerdam
  * layer implementation essentially complete
  *
@@ -78,6 +81,8 @@ class OGRSDELayer : public OGRLayer
     OGRSDEDataSource    *poDS;
 
     int                 iFIDColumn;
+    int                 nNextFID;
+
     int                 iShapeColumn;
     CPLString           osShapeColumnName;
 
