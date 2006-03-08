@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/03/08 04:17:24  fwarmerdam
+ * added logic to check RTC records when classifying version
+ *
  * Revision 1.21  2005/04/06 16:05:29  fwarmerdam
  * added spatialmetadata (RTM) support
  *
@@ -778,6 +781,8 @@ class OGRTigerDataSource : public OGRDataSource
     TigerVersion        nVersion;
 
     int                 bWriteMode;
+
+    TigerVersion        TigerCheckVersion( TigerVersion, const char * );
 
   public:
                         OGRTigerDataSource();
