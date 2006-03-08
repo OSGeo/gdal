@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/03/08 04:17:24  fwarmerdam
+ * added logic to check RTC records when classifying version
+ *
  * Revision 1.33  2005/04/06 16:05:29  fwarmerdam
  * added spatialmetadata (RTM) support
  *
@@ -222,15 +225,15 @@ TigerVersion TigerClassifyVersion( int nVersionCode )
         nVersion = TIGER_1999;
     else if( nVersionCode >=   10 /*0010*/ && nVersionCode <=   11 /*0011*/ )
         nVersion = TIGER_2000_Redistricting;
-    else if( nVersionCode >=  103 /*0103*/ && nVersionCode <=  108 /*0108*/ )
+    else if( nVersionCode >=  103 /*0103*/ && nVersionCode <= 108 /*0108*/ )
         nVersion = TIGER_2000_Census;
-    else if( nVersionCode >=  203 /*0203*/ && nVersionCode <=  205 /*0205*/ )
+    else if( nVersionCode >=  203 /*0302*/ && nVersionCode <= 205 /*0502*/ )
         nVersion = TIGER_UA2000;
-    else if( nVersionCode >=  206 /*0206*/ && nVersionCode < 300 /* 2003 */ )
+    else if( nVersionCode >=  210 /*1002*/ && nVersionCode <= 306 /*0603*/)
         nVersion = TIGER_2002;
-    else if( nVersionCode >=  300 /*0300*/ && nVersionCode <= 400 )
+    else if( nVersionCode >=  312 /*1203*/ && nVersionCode <= 403 /*0304*/)
         nVersion = TIGER_2003;
-    else if( nVersionCode >=  400 )
+    else if( nVersionCode >=  404 )
         nVersion = TIGER_2004;
 
     return nVersion;
@@ -258,6 +261,52 @@ char * TigerVersionString( TigerVersion nVersion )
   if (nVersion == TIGER_2004) { return "TIGER_2004"; }
   if (nVersion == TIGER_Unknown) { return "TIGER_Unknown"; }
   return "???";
+}
+
+/************************************************************************/
+/*                         TigerCheckVersion()                          */
+/*                                                                      */
+/*      Some tiger products seem to be generated with version info      */
+/*      that doesn't match the tiger specs.  We can sometimes           */
+/*      recognise the wrongness by checking the record length of        */
+/*      some well known changing files and adjusting the version        */
+/*      based on this.                                                  */
+/************************************************************************/
+
+TigerVersion OGRTigerDataSource::TigerCheckVersion( TigerVersion nOldVersion, 
+                                                    const char *pszFilename )
+
+{
+    if( nOldVersion != TIGER_2002 )
+        return nOldVersion;
+
+    CPLString osRTCFilename = BuildFilename( pszFilename, "C" );
+    FILE *fp = VSIFOpen( osRTCFilename, "rb" );
+
+    if( fp == NULL )
+        return nOldVersion;
+    
+    char        szHeader[115];
+
+    if( VSIFRead( szHeader, sizeof(szHeader)-1, 1, fp ) < 1 )
+    {
+        VSIFClose( fp );
+        return nOldVersion;
+    }
+
+    VSIFClose( fp );
+    
+/* -------------------------------------------------------------------- */
+/*      Is the record length 112?  If so, it is an older version        */
+/*      than 2002.                                                      */
+/* -------------------------------------------------------------------- */
+    if( szHeader[112] == 10 || szHeader[112] == 13 )
+    {
+        CPLDebug( "TIGER", "Forcing version back to UA2000 since RTC records are short." );
+        return TIGER_UA2000;
+    }
+    else
+        return nOldVersion;
 }
 
 /************************************************************************/
@@ -465,13 +514,13 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
         {
             char        szHeader[500];
             FILE        *fp;
-            char        *pszFilename, *pszRecStart = NULL;
+            char        *pszRecStart = NULL;
             int         bIsGDT = FALSE;
+            CPLString   osFilename;
 
-            pszFilename = BuildFilename( papszFileList[i], "1" );
+            osFilename = BuildFilename( papszFileList[i], "1" );
 
-            fp = VSIFOpen( pszFilename, "rb" );
-            CPLFree( pszFilename );
+            fp = VSIFOpen( osFilename, "rb" );
             if( fp == NULL )
                 continue;
             
@@ -509,6 +558,7 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
 
             nVersionCode = atoi(TigerFileBase::GetField( pszRecStart, 2, 5 ));
             nVersion = TigerClassifyVersion( nVersionCode );
+            nVersion = TigerCheckVersion( nVersion, papszFileList[i] );
 
             CPLDebug( "OGR", "Tiger Version Code=%d, Classified as %s ", 
                       nVersionCode, TigerVersionString(nVersion) );
