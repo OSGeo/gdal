@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/03/08 21:50:14  dron
+ * Do not forget to mark header dirty when changed.
+ *
  * Revision 1.8  2005/10/19 16:39:31  dron
  * Export projection info in newly created datasets.
  *
@@ -502,6 +505,8 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
             return CE_Failure;
         }
         poGDS->paiTiles[2 * nTile] = VSIFTellL( poGDS->fp );
+
+        poGDS->bHeaderDirty = TRUE;
     }
 
     if ( nLastTileXBytes
@@ -597,8 +602,7 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Can't write block with X offset %d and Y offset %d.\n%s",
-                      nBlockXOff, nBlockYOff,
-                      VSIStrerror( errno ) );
+                      nBlockXOff, nBlockYOff, VSIStrerror( errno ) );
             CPLFree( pabyTile );
             return CE_Failure;
         }
@@ -606,6 +610,8 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     
     poGDS->paiTiles[2 * nTile + 1] = nTileBytes;
     CPLFree( pabyTile );
+
+    poGDS->bHeaderDirty = TRUE;
 
     return CE_None;
 }
@@ -902,6 +908,8 @@ CPLErr RMFDataset::WriteHeader()
 /*  Write out the block table.                                          */
 /* -------------------------------------------------------------------- */
     VSIFWriteL( paiTiles, 1, sHeader.nTileTblSize, fp );
+
+    bHeaderDirty = FALSE;
 
     return CE_None;
 }
