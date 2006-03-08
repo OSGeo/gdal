@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/03/08 21:53:40  dron
+ * Mark header dirty when color table changed.
+ *
  * Revision 1.9  2006/03/08 21:50:14  dron
  * Do not forget to mark header dirty when changed.
  *
@@ -653,6 +656,8 @@ CPLErr RMFRasterBand::SetColorTable( GDALColorTable *poColorTable )
                 poGDS->pabyColorTable[i * 4 + 2] = (GByte) oEntry.c3; // Blue
                 poGDS->pabyColorTable[i * 4 + 3] = 0;
             }
+
+            poGDS->bHeaderDirty = TRUE;
         }
     }
     else
