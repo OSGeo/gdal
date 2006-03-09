@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2006/03/09 03:12:16  fwarmerdam
+ * Increase default space for RRDNamesList.
+ *
  * Revision 1.51  2005/12/23 19:40:28  fwarmerdam
  * better error format
  *
@@ -1656,7 +1659,7 @@ int HFABand::CreateOverview( int nOverviewLevel )
         poRRDNamesList = new HFAEntry( psInfo, "RRDNamesList", 
                                        "Eimg_RRDNamesList", 
                                        poNode );
-        poRRDNamesList->MakeData( 23+16+8+ 500 /* hack for growth room*/ );
+        poRRDNamesList->MakeData( 23+16+8+ 3000 /* hack for growth room*/ );
 
         /* we need to hardcode file offset into the data, so locate it now */
         poRRDNamesList->SetPosition();
