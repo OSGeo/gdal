@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/03/09 10:46:48  dron
+ * Typo fixed.
+ *
  * Revision 1.2  2005/10/19 16:32:20  dron
  * Export projection info in newly created datasets.
  *
@@ -450,7 +453,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
         else
         {
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Wrong datum code %d. Supported datums are 0--%d only.\n"
+                      "Wrong datum code %d. Supported datums are 1--%d only.\n"
                       "Setting WGS84 as a fallback.",
                       iDatum, NUMBER_OF_DATUMS - 1 );
             SetWellKnownGeogCS( "WGS84" );
