@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/03/09 22:50:43  fwarmerdam
+ * Added  support for multipolygons
+ *
  * Revision 1.7  2006/03/08 00:22:46  fwarmerdam
  * preliminary update to support rowid-less tables
  *
@@ -583,47 +586,61 @@ OGRGeometry *OGRSDELayer::TranslateSDEGeometry( SE_SHAPE hShape )
       break;
 
 /* -------------------------------------------------------------------- */
-/*      Handle polygon.  Each subpart is a ring.                        */
+/*      Handle polygon and multipolygon.  Each subpart is a ring.       */
 /* -------------------------------------------------------------------- */
       case SG_AREA_SHAPE:
+      case SG_MULTI_AREA_SHAPE:
       {
-          OGRPolygon *poPoly = new OGRPolygon();
-          int iVert, iSubPart;
+          int iPart;
+          OGRMultiPolygon *poMP = NULL;
 
-          CPLAssert( nPartCount == 1 );
+          if( nSDEGeomType == SG_MULTI_AREA_SHAPE )
+              poMP = new OGRMultiPolygon();
 
-          for( iSubPart = 0; iSubPart < nSubPartCount; iSubPart++ )
+          for( iPart = 0; iPart < nPartCount; iPart++ )
           {
-              OGRLinearRing *poRing = new OGRLinearRing();
-              int nRingVertCount; 
-
-              if( iSubPart == nSubPartCount-1 )
-                  nRingVertCount = nPointCount - panSubParts[iSubPart];
-              else
-                  nRingVertCount = 
-                      panSubParts[iSubPart+1] - panSubParts[iSubPart];
+              OGRPolygon *poPoly = new OGRPolygon();
+              int iVert, iSubPart;
               
-              poRing->setNumPoints( nRingVertCount );
-              
-              for( iVert=0; iVert < nRingVertCount; iVert++ )
+              for( iSubPart = 0; iSubPart < nSubPartCount; iSubPart++ )
               {
-                  if( padfZ )
-                      poRing->setPoint( 
-                          iVert, 
-                          pasPoints[iVert+panSubParts[iSubPart]].x,
-                          pasPoints[iVert+panSubParts[iSubPart]].y,
-                          padfZ[iVert+panSubParts[iSubPart]] );
+                  OGRLinearRing *poRing = new OGRLinearRing();
+                  int nRingVertCount; 
+                  
+                  if( iSubPart == nSubPartCount-1 )
+                      nRingVertCount = nPointCount - panSubParts[iSubPart];
                   else
-                      poRing->setPoint( 
-                          iVert, 
-                          pasPoints[iVert+panSubParts[iSubPart]].x,
-                          pasPoints[iVert+panSubParts[iSubPart]].y );
+                      nRingVertCount = 
+                          panSubParts[iSubPart+1] - panSubParts[iSubPart];
+                  
+                  poRing->setNumPoints( nRingVertCount );
+                  
+                  for( iVert=0; iVert < nRingVertCount; iVert++ )
+                  {
+                      if( padfZ )
+                          poRing->setPoint( 
+                              iVert, 
+                              pasPoints[iVert+panSubParts[iSubPart]].x,
+                              pasPoints[iVert+panSubParts[iSubPart]].y,
+                              padfZ[iVert+panSubParts[iSubPart]] );
+                      else
+                          poRing->setPoint( 
+                              iVert, 
+                              pasPoints[iVert+panSubParts[iSubPart]].x,
+                              pasPoints[iVert+panSubParts[iSubPart]].y );
+                  }
+                  
+                  poPoly->addRingDirectly( poRing );
               }
 
-              poPoly->addRingDirectly( poRing );
+              if( poMP )
+                  poMP->addGeometryDirectly( poPoly );
+              else
+                  poGeom = poPoly;
           }
 
-          poGeom = poPoly;
+          if( poMP )
+              poGeom = poMP;
       }
       break;
 
