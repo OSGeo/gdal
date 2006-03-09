@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/03/09 10:41:15  dron
+ * Fixed problem with writing incomplete last blocks.
+ *
  * Revision 1.10  2006/03/08 21:53:40  dron
  * Mark header dirty when color table changed.
  *
@@ -263,6 +266,8 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     GUInt32     nTileBytes = poGDS->paiTiles[2 * nTile + 1];
     GUInt32     i, nCurBlockYSize;
 
+    memset( pImage, 0, nBlockBytes );
+
     if ( poGDS->sHeader.nLastTileHeight
          && (GUInt32) nBlockYOff == poGDS->nYTiles - 1 )
         nCurBlockYSize = poGDS->sHeader.nLastTileHeight;
@@ -274,10 +279,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         // XXX: We will not report error here, because file just may be
 	// in update state and data for this block will be available later
         if( poGDS->eAccess == GA_Update )
-        {
-            memset( pImage, 0, nBlockBytes );
             return CE_None;
-        }
         else
         {
             CPLError( CE_Failure, CPLE_FileIO,
@@ -300,10 +302,7 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             // XXX
             if( poGDS->eAccess == GA_Update )
-            {
-                memset( pImage, 0, nBlockBytes );
                 return CE_None;
-            }
             else
             {
                 CPLError( CE_Failure, CPLE_FileIO,
@@ -347,7 +346,6 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             // XXX
             if( poGDS->eAccess == GA_Update )
             {
-                memset( pImage, 0, nBlockBytes );
                 CPLFree( pabyTile );
                 return CE_None;
             }
@@ -540,15 +538,54 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     {
         GUInt32 iRow;
 
-        for ( iRow = 0; iRow < nCurBlockYSize; iRow++ )
+        if ( poGDS->nBands == 1 )
         {
-            memcpy( pabyTile + iRow * nLastTileXBytes,
-                     (GByte*)pImage + nBlockXSize * iRow * nDataSize,
-                     nLastTileXBytes );
+            for ( iRow = 0; iRow < nCurBlockYSize; iRow++ )
+            {
+                memcpy( pabyTile + iRow * nLastTileXBytes,
+                         (GByte*)pImage + nBlockXSize * iRow * nDataSize,
+                         nLastTileXBytes );
+            }
+        }
+        else
+        {
+            memset( pabyTile, 0, nTileBytes );
+            if ( poGDS->paiTiles[2 * nTile + 1] )
+            {
+                VSIFReadL( pabyTile, 1, nTileBytes, poGDS->fp );
+                VSIFSeekL( poGDS->fp, poGDS->paiTiles[2 * nTile], SEEK_SET );
+            }
+
+            for ( iRow = 0; iRow < nCurBlockYSize; iRow++ )
+            {
+                for ( iInPixel = 0, iOutPixel = iBytesPerSample - nBand;
+                      iOutPixel < nLastTileXBytes;
+                      iInPixel++, iOutPixel += poGDS->nBands )
+                    (pabyTile + iRow * nLastTileXBytes)[iOutPixel] =
+                        ((GByte *) pImage + nBlockXSize * iRow * nDataSize)[iInPixel];
+            }
         }
     }
     else
-        memcpy( pabyTile, pImage, nTileBytes );
+    {
+        if ( poGDS->nBands == 1 )
+            memcpy( pabyTile, pImage, nTileBytes );
+        else
+        {
+            memset( pabyTile, 0, nTileBytes );
+            if ( poGDS->paiTiles[2 * nTile + 1] )
+            {
+                VSIFReadL( pabyTile, 1, nTileBytes, poGDS->fp );
+                VSIFSeekL( poGDS->fp, poGDS->paiTiles[2 * nTile], SEEK_SET );
+            }
+
+            for ( iInPixel = 0, iOutPixel = iBytesPerSample - nBand;
+                  iOutPixel < nTileBytes;
+                  iInPixel++, iOutPixel += poGDS->nBands )
+                pabyTile[iOutPixel] = ((GByte *) pImage)[iInPixel];
+
+        }
+    }
     
 #ifdef CPL_MSB
     if ( poGDS->eRMFType == RMFT_MTW )
@@ -575,40 +612,13 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     }
 #endif
 
-    if ( poGDS->nBands == 1 )
+    if ( VSIFWriteL( pabyTile, 1, nTileBytes, poGDS->fp ) < nTileBytes )
     {
-        if ( VSIFWriteL( pabyTile, 1, nTileBytes, poGDS->fp ) < nTileBytes )
-        {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Can't write block with X offset %d and Y offset %d.\n%s",
-                      nBlockXOff, nBlockYOff,
-                      VSIStrerror( errno ) );
-            return CE_Failure;
-        }
-    }
-    else
-    {
-
-        memset( pabyTile, 0, nTileBytes );
-        
-        if ( poGDS->paiTiles[2 * nTile + 1] )
-        {
-            VSIFReadL( pabyTile, 1, nTileBytes, poGDS->fp );
-            VSIFSeekL( poGDS->fp, poGDS->paiTiles[2 * nTile], SEEK_SET );
-        }
-
-        for ( iInPixel = 0, iOutPixel = iBytesPerSample - nBand;
-              iInPixel < nBlockSize; iInPixel++, iOutPixel += poGDS->nBands )
-            pabyTile[iOutPixel] = ((GByte *) pImage)[iInPixel];
-
-        if ( VSIFWriteL( pabyTile, 1, nTileBytes, poGDS->fp ) < nTileBytes )
-        {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Can't write block with X offset %d and Y offset %d.\n%s",
-                      nBlockXOff, nBlockYOff, VSIStrerror( errno ) );
-            CPLFree( pabyTile );
-            return CE_Failure;
-        }
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Can't write block with X offset %d and Y offset %d.\n%s",
+                  nBlockXOff, nBlockYOff, VSIStrerror( errno ) );
+        CPLFree( pabyTile );
+        return CE_Failure;
     }
     
     poGDS->paiTiles[2 * nTile + 1] = nTileBytes;
