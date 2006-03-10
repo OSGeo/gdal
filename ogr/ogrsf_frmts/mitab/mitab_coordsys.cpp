@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_coordsys.cpp,v 1.33 2005/09/29 20:13:57 dmorissette Exp $
+ * $Id: mitab_coordsys.cpp,v 1.34 2006/03/10 19:50:45 fwarmerdam Exp $
  *
  * Name:     mitab_coordsys.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -31,6 +31,11 @@
  **********************************************************************
  *
  * $Log: mitab_coordsys.cpp,v $
+ * Revision 1.34  2006/03/10 19:50:45  fwarmerdam
+ * Coordsys false easting and northing are in the units of the coordsys, not
+ * necessarily meters.  Adjusted mitab_coordsys.cpp to reflect this.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1113
+ *
  * Revision 1.33  2005/09/29 20:13:57  dmorissette
  * MITABCoordSys2SpatialRef() patches from Anthony D (bug 1155):
  * Improved support for modified TM projections 21-24.
@@ -84,60 +89,6 @@
  *
  * Revision 1.18  2001/01/19 21:56:18  warmerda
  * added untested support for Swiss Oblique Mercator
- *
- * Revision 1.17  2000/12/05 14:55:27  daniel
- * Added some missing unit name aliases in MITABSpatialRef2CoordSys()
- *
- * Revision 1.16  2000/10/16 21:44:50  warmerda
- * added nonearth support
- *
- * Revision 1.15  2000/10/12 22:01:01  daniel
- * Fixed test on number of bound params in MITABExtractCoordSysBounds()
- *
- * Revision 1.14  2000/09/28 16:39:44  warmerda
- * avoid warnings for unused, and unitialized variables
- *
- * Revision 1.13  2000/08/29 22:30:45  daniel
- * Made MITABCoordSys2SpatialRef() return NULL for a NonEarth coordsys since
- * returning an empty SpatialRef created confusion between LatLon and NonEarth
- *
- * Revision 1.12  2000/03/27 03:31:15  daniel
- * Fixed parsing of CoordSys NonEarth broken by previous change
- *
- * Revision 1.11  2000/03/19 23:26:27  daniel
- * Made MITABCoordSys2SpatialRef() remove leading spaces in coordsys string
- * and produce a CPLError() if it fails parsing string.
- *
- * Revision 1.10  2000/02/07 17:43:37  daniel
- * Fixed offset in parsing of custom datum string in SetSpatialRef()
- *
- * Revision 1.9  2000/01/15 22:30:43  daniel
- * Switch to MIT/X-Consortium OpenSource license
- *
- * Revision 1.8  2000/01/14 14:53:32  warmerda
- * fixed generation of MIF %d datum names
- *
- * Revision 1.7  1999/12/19 17:35:16  daniel
- * Fixed memory leaks
- *
- * Revision 1.6  1999/11/20 04:53:41  daniel
- * Fixed warning on return value in MITABExtractCoordSysBounds()
- *
- * Revision 1.5  1999/11/12 05:51:57  daniel
- * Added MITABExtractCoordSysBounds()
- *
- * Revision 1.4  1999/11/11 02:55:25  warmerda
- * fixed problems with stereographic and survey ft
- *
- * Revision 1.3  1999/11/10 20:13:12  warmerda
- * implement spheroid table
- *
- * Revision 1.2  1999/11/10 02:19:05  warmerda
- * fixed up datum support when reading MIF coord sys
- *
- * Revision 1.1  1999/11/09 22:29:38  warmerda
- * New
- *
  **********************************************************************/
 
 #include "mitab.h"
@@ -410,7 +361,11 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Handle the PROJCS style projections, but add the datum later.   */
+/*      Handle the PROJCS style projections, but add the datum          */
+/*      later.                                                          */
+/*                                                                      */
+/*      Note that per GDAL bug 1113 the false easting and north are     */
+/*      in local units, not necessarily meters.                         */
 /* -------------------------------------------------------------------- */
     switch( nProjection )
     {
@@ -441,8 +396,8 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
       case 2:
         poSR->SetCEA( GetMIFParm( papszNextField, 1, 0.0 ),
                       GetMIFParm( papszNextField, 0, 0.0 ),
-                      GetMIFParm( papszNextField, 2, 0.0 ) * dfUnitsConv,
-                      GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv );
+                      GetMIFParm( papszNextField, 2, 0.0 ),
+                      GetMIFParm( papszNextField, 3, 0.0 ) );
         break;
 
         /*--------------------------------------------------------------
@@ -453,8 +408,8 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
                       GetMIFParm( papszNextField, 3, 0.0 ),
                       GetMIFParm( papszNextField, 1, 0.0 ),
                       GetMIFParm( papszNextField, 0, 0.0 ),
-                      GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv,
-                      GetMIFParm( papszNextField, 5, 0.0 ) * dfUnitsConv );
+                      GetMIFParm( papszNextField, 4, 0.0 ),
+                      GetMIFParm( papszNextField, 5, 0.0 ) );
         break;
 
         /*--------------------------------------------------------------
@@ -485,8 +440,8 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
                      GetMIFParm( papszNextField, 3, 0.0 ),
                      GetMIFParm( papszNextField, 1, 0.0 ),
                      GetMIFParm( papszNextField, 0, 0.0 ),
-                     GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv,
-                     GetMIFParm( papszNextField, 5, 0.0 ) * dfUnitsConv );
+                     GetMIFParm( papszNextField, 4, 0.0 ),
+                     GetMIFParm( papszNextField, 5, 0.0 ) );
         break;
 
         /*--------------------------------------------------------------
@@ -498,8 +453,8 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
                       GetMIFParm( papszNextField, 2, 0.0 ),
                       90.0,
                       GetMIFParm( papszNextField, 3, 1.0 ),
-                      GetMIFParm( papszNextField, 4, 0.0 * dfUnitsConv ),
-                      GetMIFParm( papszNextField, 5, 0.0 * dfUnitsConv ) );
+                      GetMIFParm( papszNextField, 4, 0.0 ),
+                      GetMIFParm( papszNextField, 5, 0.0 ) );
         break;
 
         /*--------------------------------------------------------------
@@ -509,8 +464,8 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
         poSR->SetTM( GetMIFParm( papszNextField, 1, 0.0 ),
                      GetMIFParm( papszNextField, 0, 0.0 ),
                      GetMIFParm( papszNextField, 2, 1.0 ),
-                     GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv,
-                     GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv );
+                     GetMIFParm( papszNextField, 3, 0.0 ),
+                     GetMIFParm( papszNextField, 4, 0.0 ) );
         break;
 
         /*----------------------------------------------------------------
@@ -521,8 +476,8 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
                             GetMIFParm( papszNextField, 1, 0.0 ),
                             GetMIFParm( papszNextField, 0, 0.0 ),
                             GetMIFParm( papszNextField, 2, 1.0 ),
-                            GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv,
-                            GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv);
+                            GetMIFParm( papszNextField, 3, 0.0 ),
+                            GetMIFParm( papszNextField, 4, 0.0 ));
         break;
 
         /*--------------------------------------------------------------
@@ -533,8 +488,8 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
                             GetMIFParm( papszNextField, 1, 0.0 ),
                             GetMIFParm( papszNextField, 0, 0.0 ),
                             GetMIFParm( papszNextField, 2, 1.0 ),
-                            GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv,
-                            GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv);
+                            GetMIFParm( papszNextField, 3, 0.0 ),
+                            GetMIFParm( papszNextField, 4, 0.0 ));
         break;
 
         /*----------------------------------------------------------------
@@ -545,8 +500,8 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
                             GetMIFParm( papszNextField, 1, 0.0 ),
                             GetMIFParm( papszNextField, 0, 0.0 ),
                             GetMIFParm( papszNextField, 2, 1.0 ),
-                            GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv,
-                            GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv);
+                            GetMIFParm( papszNextField, 3, 0.0 ),
+                            GetMIFParm( papszNextField, 4, 0.0 ));
         break;
 
         /*--------------------------------------------------------------
@@ -557,8 +512,8 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
                             GetMIFParm( papszNextField, 1, 0.0 ),
                             GetMIFParm( papszNextField, 0, 0.0 ),
                             GetMIFParm( papszNextField, 2, 1.0 ),
-                            GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv,
-                            GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv);
+                            GetMIFParm( papszNextField, 3, 0.0 ),
+                            GetMIFParm( papszNextField, 4, 0.0 ));
         break;
 
         /*--------------------------------------------------------------
@@ -569,8 +524,8 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
                        GetMIFParm( papszNextField, 3, 0.0 ),
                        GetMIFParm( papszNextField, 1, 0.0 ),
                        GetMIFParm( papszNextField, 0, 0.0 ),
-                       GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv,
-                       GetMIFParm( papszNextField, 5, 0.0 ) * dfUnitsConv );
+                       GetMIFParm( papszNextField, 4, 0.0 ),
+                       GetMIFParm( papszNextField, 5, 0.0 ) );
         break;
 
         /*--------------------------------------------------------------
@@ -642,8 +597,8 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
       case 18:
         poSR->SetNZMG( GetMIFParm( papszNextField, 1, 0.0 ),
                        GetMIFParm( papszNextField, 0, 0.0 ),
-                       GetMIFParm( papszNextField, 2, 0.0 ) * dfUnitsConv,
-                       GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv );
+                       GetMIFParm( papszNextField, 2, 0.0 ),
+                       GetMIFParm( papszNextField, 3, 0.0 ) );
         break;
 
         /*--------------------------------------------------------------
@@ -654,8 +609,8 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
                        GetMIFParm( papszNextField, 3, 0.0 ),
                        GetMIFParm( papszNextField, 1, 0.0 ),
                        GetMIFParm( papszNextField, 0, 0.0 ),
-                       GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv,
-                       GetMIFParm( papszNextField, 5, 0.0 ) * dfUnitsConv );
+                       GetMIFParm( papszNextField, 4, 0.0 ),
+                       GetMIFParm( papszNextField, 5, 0.0 ) );
         break;
 
         /*--------------------------------------------------------------
@@ -667,8 +622,8 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
             GetMIFParm( papszNextField, 1, 0.0 ),
             GetMIFParm( papszNextField, 0, 0.0 ),
             GetMIFParm( papszNextField, 2, 1.0 ),
-            GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv,
-            GetMIFParm( papszNextField, 4, 0.0 ) * dfUnitsConv );
+            GetMIFParm( papszNextField, 3, 0.0 ),
+            GetMIFParm( papszNextField, 4, 0.0 ) );
         break;
 
         /*--------------------------------------------------------------
@@ -677,8 +632,8 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
       case 25:
         poSR->SetSOC( GetMIFParm( papszNextField, 1, 0.0 ),
                       GetMIFParm( papszNextField, 0, 0.0 ),
-                      GetMIFParm( papszNextField, 2, 0.0 ) * dfUnitsConv,
-                      GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv );
+                      GetMIFParm( papszNextField, 2, 0.0 ),
+                      GetMIFParm( papszNextField, 3, 0.0 ) );
         break;
 
         /*--------------------------------------------------------------
@@ -696,8 +651,8 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
       case 27:
         poSR->SetPolyconic( GetMIFParm( papszNextField, 1, 0.0 ), 
                             GetMIFParm( papszNextField, 0, 0.0 ),
-                          GetMIFParm( papszNextField, 2, 0.0 ) * dfUnitsConv,
-                          GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv );
+                          GetMIFParm( papszNextField, 2, 0.0 ),
+                          GetMIFParm( papszNextField, 3, 0.0 ) );
         break;
 
         /*--------------------------------------------------------------
@@ -707,8 +662,8 @@ OGRSpatialReference *MITABCoordSys2SpatialRef( const char * pszCoordSys )
         poSR->SetCS( 
             GetMIFParm( papszNextField, 1, 0.0 ),
             GetMIFParm( papszNextField, 0, 0.0 ),
-            GetMIFParm( papszNextField, 2, 0.0 ) * dfUnitsConv,
-            GetMIFParm( papszNextField, 3, 0.0 ) * dfUnitsConv );
+            GetMIFParm( papszNextField, 2, 0.0 ),
+            GetMIFParm( papszNextField, 3, 0.0 ) );
         break;
 
       default:
@@ -921,8 +876,8 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
         parms[2] = poSR->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
         parms[3] = poSR->GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
-        parms[4] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[5] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[4] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[5] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 6;
     }
 
@@ -967,8 +922,8 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
         parms[2] = poSR->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
         parms[3] = poSR->GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
-        parms[4] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[5] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[4] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[5] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 6;
     }
 
@@ -986,8 +941,8 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
         parms[2] = poSR->GetProjParm(SRS_PP_AZIMUTH,0.0);
         parms[3] = poSR->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-        parms[4] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[5] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[4] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[5] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 6;
     }
 
@@ -1010,8 +965,8 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSR->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
         parms[3] = poSR->GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
-        parms[4] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[5] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[4] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[5] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 6;
     }
 
@@ -1022,8 +977,8 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSR->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
         parms[3] = poSR->GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
-        parms[4] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[5] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[4] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[5] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 6;
     }
 
@@ -1060,8 +1015,8 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         nProjection = 25;
         parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        parms[2] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[2] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 4;
     }
 
@@ -1085,8 +1040,8 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSR->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[4] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[4] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 5;
     }
 
@@ -1096,8 +1051,8 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSR->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[4] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[4] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 5;
     }
 
@@ -1108,8 +1063,8 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
        parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
        parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
        parms[2] = poSR->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-       parms[3] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-       parms[4] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+       parms[3] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+       parms[4] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
        nParmCount = 5;
     }
 
@@ -1120,8 +1075,8 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
        parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
        parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
        parms[2] = poSR->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-       parms[3] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-       parms[4] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+       parms[3] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+       parms[4] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
        nParmCount = 5;
     }
 
@@ -1132,8 +1087,8 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
        parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
        parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
        parms[2] = poSR->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-       parms[3] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-       parms[4] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+       parms[3] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+       parms[4] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
        nParmCount = 5;
     }
 
@@ -1144,8 +1099,8 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
        parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
        parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
        parms[2] = poSR->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-       parms[3] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-       parms[4] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+       parms[3] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+       parms[4] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
        nParmCount = 5;
     }
 
@@ -1154,8 +1109,8 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         nProjection = 30;
         parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        parms[2] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[2] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 4;
     }
 
@@ -1164,8 +1119,8 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         nProjection = 18;
         parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        parms[2] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[2] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 4;
     }
 
@@ -1174,8 +1129,8 @@ char *MITABSpatialRef2CoordSys( OGRSpatialReference * poSR )
         nProjection = 27;
         parms[0] = poSR->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSR->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        parms[2] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[2] = poSR->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[3] = poSR->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
         nParmCount = 4;
     }
 
