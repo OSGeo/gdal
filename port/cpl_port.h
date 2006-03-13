@@ -42,6 +42,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2006/03/13 20:58:32  mloskot
+ * Test if macros _CRT_SECURE_NO_DEPRECATE and  _CRT_NONSTDC_NO_DEPRECATE
+ * are already defined, to get rid of warnings
+ *
  * Revision 1.49  2006/02/20 01:03:01  fwarmerdam
  * Fixed last change.
  *
@@ -373,9 +377,14 @@ char * strdup (char *instr);
 /*      functions judged "unsafe" by microsoft in VS 8 (2005).          */
 /* -------------------------------------------------------------------- */
 #ifdef _MSC_VER
-#  define _CRT_SECURE_NO_DEPRECATE
-#  define _CRT_NONSTDC_NO_DEPRECATE
+#  ifndef _CRT_SECURE_NO_DEPRECATE
+#    define _CRT_SECURE_NO_DEPRECATE
+#  endif
+#  ifndef _CRT_NONSTDC_NO_DEPRECATE
+#    define _CRT_NONSTDC_NO_DEPRECATE
+#  endif
 #endif
+
 
 /* -------------------------------------------------------------------- */
 /*      Handle isnan() and isinf().  Note that isinf() and isnan()      */
