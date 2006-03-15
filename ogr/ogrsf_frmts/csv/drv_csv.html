@@ -23,8 +23,16 @@ The OGR CSV driver supports reading and writing.  Because the CSV format
 has variable length text lines, reading is done sequentially.  Reading 
 features in random order will generally be very slow.  OGR CSV layer never
 have any geometry on features, nor do they have an associated coordinate
-system.  The OGR CSV driver also returns all attribute columns with a 
-type of string since no field type information is available.<p>
+system.  The OGR CSV driver returns all attribute columns with a  type of
+string if no field type information file (with .csvt extension) is
+available.<p>
+
+Limited type recognition can be done for Integer, Real and String
+columns through a descriptive file with same name as the CSV file,
+but .csvt extension. In a single line the types for each column
+have to be listed: double quoted and comma
+separated (e.g., "Integer","String"). The driver will then use these types
+as specified for the csv columns.<p>
 
 <h2>Format</h2>
 
