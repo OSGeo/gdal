@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/03/15 15:12:21  fwarmerdam
+ * Make sure that csvt column type parsing is case insensitive.
+ *
  * Revision 1.6  2005/09/21 01:01:01  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -143,16 +146,16 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 /* -------------------------------------------------------------------- */
     char** papszFieldTypes = NULL;
     if (!bNew) {
-      char* dname = strdup(CPLGetDirname(pszFilename));
-      char* fname = strdup(CPLGetBasename(pszFilename));
-      FILE* fpCSVT = fopen(CPLFormFilename(dname, fname, ".csvt"), "r");
-      free(dname);
-      free(fname);
-      if (fpCSVT!=NULL) {
-        VSIRewind(fpCSVT);
-        papszFieldTypes = CSVReadParseLine(fpCSVT);
-        fclose(fpCSVT);
-      }
+        char* dname = strdup(CPLGetDirname(pszFilename));
+        char* fname = strdup(CPLGetBasename(pszFilename));
+        FILE* fpCSVT = fopen(CPLFormFilename(dname, fname, ".csvt"), "r");
+        free(dname);
+        free(fname);
+        if (fpCSVT!=NULL) {
+            VSIRewind(fpCSVT);
+            papszFieldTypes = CSVReadParseLine(fpCSVT);
+            fclose(fpCSVT);
+        }
     }
     
 
@@ -184,12 +187,12 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
 
         OGRFieldDefn oField(pszFieldName, OFTString);
         if (papszFieldTypes!=NULL && iField<CSLCount(papszFieldTypes)) {
-          if (!strcmp(papszFieldTypes[iField], "Integer"))
-            oField.SetType(OFTInteger);
-          else if (!strcmp(papszFieldTypes[iField], "Real"))
-            oField.SetType(OFTReal);
-          else if (!strcmp(papszFieldTypes[iField], "String"))
-            oField.SetType(OFTString);
+            if (EQUAL(papszFieldTypes[iField], "Integer"))
+                oField.SetType(OFTInteger);
+            else if (EQUAL(papszFieldTypes[iField], "Real"))
+                oField.SetType(OFTReal);
+            else if (EQUAL(papszFieldTypes[iField], "String"))
+                oField.SetType(OFTString);
         }
 
         poFeatureDefn->AddFieldDefn( &oField );
@@ -472,4 +475,3 @@ void OGRCSVLayer::SetCRLF( int bNewValue )
 {
     bUseCRLF = bNewValue;
 }
-
