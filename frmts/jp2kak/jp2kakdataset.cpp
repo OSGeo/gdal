@@ -28,6 +28,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.33  2006/03/16 17:11:39  fwarmerdam
+ * Catch exceptions in allocator.finalize() to catch common out of memory
+ * condition.
+ *
  * Revision 1.32  2006/03/08 15:35:18  fwarmerdam
  * Fixed problem with bIsJPX test.
  *
@@ -1926,7 +1930,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     oCodeStream.access_siz()->finalize_all();
-        
+
 /* -------------------------------------------------------------------- */
 /*      Some JP2 specific parameters.                                   */
 /* -------------------------------------------------------------------- */
@@ -2064,11 +2068,20 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         engines[c] = kdu_analysis(res,&allocator,bReversible,1.0F,roi_node);
     }
 
-    allocator.finalize();
+    try
+    {
+        allocator.finalize();
 
-    for (c=0; c < num_components; c++)
-        lines[c].create();
-
+        for (c=0; c < num_components; c++)
+            lines[c].create();
+    }
+    catch( ... )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "allocate.finalize() failed, likely out of memory for compression information." );
+        return NULL;
+    }
+        
 /* -------------------------------------------------------------------- */
 /*      Write whole image.  Write 1024 lines of each component, then    */
 /*      go back to the first, and do again.  This gives the rate        */
