@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2006/03/17 01:29:33  hobu
+ * Was too greedy on setting widths and precisions and
+ * we were picking up columns of type "text" and setting a
+ * width when they don't have one.
+ *
  * Revision 1.30  2006/02/27 02:29:13  hobu
  * Provide a good error message when we try to insert a feature
  * that is larger than the max_allowed_packet
@@ -187,7 +192,7 @@ OGRMySQLTableLayer::~OGRMySQLTableLayer()
 
 OGRErr  OGRMySQLTableLayer::Initialize(const char * pszTableName)
 {
-    poFeatureDefn = ReadTableDefinition( pszTableName );
+    poFeatureDefn = ReadTableDefinition( pszTableName );   
     if (poFeatureDefn)
     {
         ResetReading();
@@ -254,22 +259,11 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
             oField.SetType( OFTBinary );
         }
         else if( EQUAL(pszType,"varchar") 
-                 || (strlen(pszType)>3 && EQUAL(pszType+strlen(pszType)-4,"text"))
                  || EQUAL(pszType+strlen(pszType)-4,"enum") 
                  || EQUAL(pszType+strlen(pszType)-4,"set") )
         {
-
-
             oField.SetType( OFTString );
-            char ** papszTokens;
 
-            papszTokens = CSLTokenizeString2(pszType,"(),",0);
-            
-            /* width is the second */
-            oField.SetWidth(atoi(papszTokens[1]));
-
-            CSLDestroy( papszTokens );
-            oField.SetType( OFTString );
         }
         else if( EQUALN(pszType,"char",4)  )
         {
@@ -284,6 +278,11 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
             CSLDestroy( papszTokens );
             oField.SetType( OFTString );
 
+        }
+        
+        if(strlen(pszType)>3 && EQUAL(pszType+strlen(pszType)-4,"text"))
+        {
+            oField.SetType( OFTString );            
         }
         else if( EQUALN(pszType,"varchar",6)  )
         {
@@ -435,6 +434,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 
         if( papszRow != NULL && papszRow[0] != NULL )
         {
+
             pszType = papszRow[0];
 
             OGRwkbGeometryType nGeomType = wkbUnknown;
@@ -466,9 +466,9 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
             mysql_free_result( hResult );   //Free our query results for finding type.
 			hResult = NULL;
     } 
-    
+ 
     // Fetch the SRID for this table now
-    nSRSId = FetchSRSId();
+    nSRSId = FetchSRSId(); 
     return poDefn;
 }
 
