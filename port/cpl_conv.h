@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2006/03/18 16:36:15  dron
+ * Added ASCII to floating point number conversion functions.
+ *
  * Revision 1.41  2006/03/04 00:46:43  mloskot
  * [WCE] CPLLocaleC class excluded from compilation for Windows CE
  *
@@ -167,6 +170,19 @@ char CPL_DLL *CPLStrdup( const char * );
 char CPL_DLL *CPLFGets( char *, int, FILE *);
 const char CPL_DLL *CPLReadLine( FILE * );
 const char CPL_DLL *CPLReadLineL( FILE * );
+
+/* -------------------------------------------------------------------- */
+/*      Convert ASCII string to floationg point number                  */
+/*      (THESE FUNCTIONS ARE NOT LOCALE AWARE!).                        */
+/* -------------------------------------------------------------------- */
+double CPL_DLL CPLAtof(const char *);
+double CPL_DLL CPLAtofDelim(const char *, char);
+double CPL_DLL CPLStrtod(const char *, char **);
+double CPL_DLL CPLStrtodDelim(const char *, char **, char);
+float CPL_DLL CPLStrtof(const char *, char **);
+float CPL_DLL CPLStrtofDelim(const char *, char **, char);
+long double CPL_DLL CPLStrtold(const char *, char **);
+long double CPL_DLL CPLStrtoldDelim(const char *, char **, char);
 
 /* -------------------------------------------------------------------- */
 /*      Read a numeric value from an ASCII character string.            */
