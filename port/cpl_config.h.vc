@@ -3,11 +3,17 @@
 #undef HAVE_DOPRNT
 
 /* Define if you have the vprintf function.  */
-#define HAVE_VPRINTF
-#define HAVE_VSNPRINTF
-#define HAVE_SNPRINTF
+#define HAVE_VPRINTF 1
+#define HAVE_VSNPRINTF 1
+#define HAVE_SNPRINTF 1
 #define vsnprintf _vsnprintf
 #define snprintf _snprintf
+
+/* Define to 1 if you have the `copysign' function. */
+#define HAVE_COPYSIGN
+#define copysign _copysign
+#define copysignf _copysign
+#define copysignl _copysign
 
 /* Define if you have the ANSI C header files.  */
 #ifndef STDC_HEADERS

@@ -1,5 +1,8 @@
 /* port/cpl_config.h.in.  Generated from configure.in by autoheader.  */
 
+/* Define if you want to use pthreads based multiprocessing support */
+#undef CPL_MULTIPROC_PTHREAD
+
 /* --prefix directory for GDAL install */
 #undef GDAL_PREFIX
 
@@ -8,6 +11,12 @@
 
 /* Define to 1 if you have the `atoll' function. */
 #undef HAVE_ATOLL
+
+/* Define to 1 if you have the `copysign' function. */
+#undef HAVE_COPYSIGN
+
+/* Define to 1 if you have the <csf.h> header file. */
+#undef HAVE_CSF_H
 
 /* Define to 1 if you have the <dbmalloc.h> header file. */
 #undef HAVE_DBMALLOC_H
@@ -18,14 +27,14 @@
 /* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
 #undef HAVE_DOPRNT
 
+/* Define to 1 if you have the <errno.h> header file. */
+#undef HAVE_ERRNO_H
+
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
 /* Define to 1 if you have the <float.h> header file. */
 #undef HAVE_FLOAT_H
-
-/* Define to 1 if you have the <errno.h> header file. */
-#undef HAVE_ERRNO_H
 
 /* Define as 0 or 1 according to the floating point format suported by the
    machine */
@@ -51,6 +60,12 @@
 
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
+
+/* Define to 1 if you have the `pq' library (-lpq). */
+#undef HAVE_LIBPQ
+
+/* Define to 1 if you have the `rt' library (-lrt). */
+#undef HAVE_LIBRT
 
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
@@ -97,11 +112,23 @@
 /* Define to 1 if you have the `vprintf' function. */
 #undef HAVE_VPRINTF
 
-/* Define to 1 if you have the `vsnprintf' function. */
-#undef HAVE_VSNPRINTF
-
 /* Set the native cpu bit order (FILLORDER_LSB2MSB or FILLORDER_MSB2LSB) */
 #undef HOST_FILLORDER
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
 
 /* The size of a `int', as computed by sizeof. */
 #undef SIZEOF_INT
@@ -118,20 +145,14 @@
 /* Define to 1, if you have GNU C compiler */
 #undef USE_GNUCC
 
-/* Define to 1, if you have fseek64 */
+/* Define to name of 64bit fopen function */
+#undef VSI_FOPEN64
+
+/* Define to name of 64bit fseek func */
 #undef VSI_FSEEK64
 
-/* Define to 1, if you have ftell64 */
+/* Define to name of 64bit ftell func */
 #undef VSI_FTELL64
-
-/* Define to 1, if you have ftell64 */
-#undef VSI_STAT64
-
-/* Define to 1, if you have ftell64 */
-#undef VSI_STAT64_T
-
-/* Define to 1, if you have ftell64 */
-#undef VSI_FOPEN64
 
 /* Define to 1, if you have 64 bit STDIO API */
 #undef VSI_LARGE_API_SUPPORTED
@@ -139,9 +160,12 @@
 /* Define to 1, if you have LARGEFILE64_SOURCE */
 #undef VSI_NEED_LARGEFILE64_SOURCE
 
-/* Define to 1, if you want to use pthreads based multiprocessing support */
-#undef CPL_MULTIPROC_PTHREAD
+/* Define to name of 64bit stat function */
+#undef VSI_STAT64
 
-/* Define if your processor stores words with the most significant byte
+/* Define to name of 64bit stat structure */
+#undef VSI_STAT64_T
+
+/* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
 #undef WORDS_BIGENDIAN
