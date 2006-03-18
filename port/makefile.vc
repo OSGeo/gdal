@@ -6,6 +6,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_error.obj \
 		cpl_string.obj \
 		cplstring.obj \
+		cpl_strtod.obj \
 		cpl_vsisimple.obj \
 		cplgetsymbol.obj \
 		cpl_dir.obj \
