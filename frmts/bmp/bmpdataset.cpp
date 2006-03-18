@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2006/03/18 18:43:03  dron
+ * Fixed absolute mode decoding of RLE comressed images.
+ *
  * Revision 1.39  2006/03/02 12:12:15  dron
  * Avoid warnings.
  *
@@ -747,7 +750,7 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
                     iLength = pabyComprBuf[i++];
                     for ( k = 0; k < iLength && j < iUncomprSize && i < iComprSize; k++ )
                         pabyUncomprBuf[j++] = pabyComprBuf[i++];
-                    if ( k & 0x01 )
+                    if ( i & 0x01 )
                         i++;
                 }
             }
@@ -803,7 +806,7 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
                         else
                             pabyUncomprBuf[j++] = (pabyComprBuf[i] & 0xF0) >> 4;
                     }
-                    if ( k & 0x01 )
+                    if ( i & 0x01 )
                         i++;
                 }
             }
