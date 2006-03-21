@@ -4,7 +4,7 @@
  * Project:  Common Portability Library
  * Purpose:  Functions for reading and scaning CSV (comma separated,
  *           variable length text files holding tables) files.  
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/03/21 20:11:54  fwarmerdam
+ * fixup headers a bit
+ *
  * Revision 1.3  2005/11/08 15:29:11  fwarmerdam
  * DLL export CSVGetField.
  *

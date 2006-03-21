@@ -1,4 +1,12 @@
 /******************************************************************************
+ * $Id$
+ *
+ * Project:  CPL - Common Portability Library
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Purpose:  Include file defining Virtual File System (VSI) functions, a
+ *           layer over POSIX file and other system services. 
+ *
+ ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -19,19 +27,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
- *
- * cpl_vsi.h
- *
- * Include file defining the Virtual System Interface (VSI) functions.  This
- * should normally be included by all translators using VSI functions for
- * accessing system services.  It is also used by the GDAL core, and can be
- * used by higher level applications which adhere to VSI use.
- *
- * Most VSI functions are direct analogs of Posix C library functions.
- * VSI exists to allow ``hooking'' these functions to provide application
- * specific checking, io redirection and so on. 
  * 
  * $Log$
+ * Revision 1.30  2006/03/21 20:11:54  fwarmerdam
+ * fixup headers a bit
+ *
  * Revision 1.29  2006/02/19 21:54:34  mloskot
  * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
  *
@@ -73,52 +73,6 @@
  *
  * Revision 1.16  2003/05/27 20:44:40  warmerda
  * added VSI io debugging macros
- *
- * Revision 1.15  2002/06/17 14:10:14  warmerda
- * no stat64 on Win32
- *
- * Revision 1.14  2002/06/17 14:00:16  warmerda
- * segregate VSIStatL() and VSIStatBufL.
- *
- * Revision 1.13  2002/06/15 02:13:13  aubin
- * remove debug test for 64bit compile
- *
- * Revision 1.12  2002/06/15 00:07:23  aubin
- * mods to enable 64bit file i/o
- *
- * Revision 1.11  2001/04/30 18:19:06  warmerda
- * avoid stat on macos_pre10
- *
- * Revision 1.10  2001/01/19 21:16:41  warmerda
- * expanded tabs
- *
- * Revision 1.9  2001/01/03 17:41:44  warmerda
- * added #define for VSIFFlushL
- *
- * Revision 1.8  2001/01/03 16:17:50  warmerda
- * added large file API
- *
- * Revision 1.7  2000/12/14 18:29:48  warmerda
- * added VSIMkdir
- *
- * Revision 1.6  2000/01/25 03:11:03  warmerda
- * added unlink and mkdir
- *
- * Revision 1.5  1999/05/23 02:43:57  warmerda
- * Added documentation block.
- *
- * Revision 1.4  1999/02/25 04:48:11  danmo
- * Added VSIStat() macros specific to _WIN32 (for MSVC++)
- *
- * Revision 1.3  1999/01/28 18:31:25  warmerda
- * Test on _WIN32 rather than WIN32.  It seems to be more reliably defined.
- *
- * Revision 1.2  1998/12/04 21:42:57  danmo
- * Added #ifndef WIN32 arounf #include <unistd.h>
- *
- * Revision 1.1  1998/12/03 18:26:02  warmerda
- * New
- *
  */
 
 #ifndef CPL_VSI_H_INCLUDED
