@@ -3,7 +3,7 @@
  *
  * Project:  GDAL Utilities
  * Purpose:  Commandline application to build overviews. 
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/03/21 21:34:43  fwarmerdam
+ * cleanup headers
+ *
  * Revision 1.11  2005/09/15 18:28:47  fwarmerdam
  * Cleanup on exit more carefully.
  *
