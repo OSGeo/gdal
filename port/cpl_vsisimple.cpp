@@ -1,4 +1,11 @@
 /******************************************************************************
+ * $Id$
+ *
+ * Project:  Common Portability Library
+ * Purpose:  Simple implementation of POSIX VSI functions.
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *
+ ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,16 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * cpl_vsisimple.cpp
- *
- * This is a simple implementation (direct to Posix) of the Virtual System
- * Interface (VSI).  See cpl_vsi.h.
- *
- * TODO:
- *  - add some assertions to ensure that arguments are widely legal.  For
- *    instance validation of access strings to fopen().
- * 
  * $Log$
+ * Revision 1.20  2006/03/21 20:11:54  fwarmerdam
+ * fixup headers a bit
+ *
  * Revision 1.19  2006/02/19 21:54:34  mloskot
  * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
  *
@@ -68,25 +69,6 @@
  *
  * Revision 1.7  2001/01/03 05:33:17  warmerda
  * added VSIFlush
- *
- * Revision 1.6  2000/12/14 18:29:48  warmerda
- * added VSIMkdir
- *
- * Revision 1.5  2000/01/26 19:06:29  warmerda
- * fix up mkdir/unlink for windows
- *
- * Revision 1.4  2000/01/25 03:11:03  warmerda
- * added unlink and mkdir
- *
- * Revision 1.3  1998/12/14 04:50:33  warmerda
- * Avoid C++ comments so it will be C compilable as well.
- *
- * Revision 1.2  1998/12/04 21:42:57  danmo
- * Added #ifndef WIN32 arounf #include <unistd.h>
- *
- * Revision 1.1  1998/12/03 18:26:03  warmerda
- * New
- *
  */
 
 #include "cpl_config.h"

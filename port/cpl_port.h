@@ -3,24 +3,11 @@
  *
  * Project:  CPL - Common Portability Library
  * Author:   Frank Warmerdam, warmerdam@pobox.com
- * Purpose:  
- * Include file providing low level portability services for CPL.  This
- * should be the first include file for any CPL based code.  It provides the
- * following:
- *
- * o Includes some standard system include files, such as stdio, and stdlib.
- *
- * o Defines CPL_C_START, CPL_C_END macros.
- *
- * o Ensures that some other standard macros like NULL are defined.
- *
- * o Defines some portability stuff like CPL_MSB, or CPL_LSB.
- *
- * o Ensures that core types such as GBool, GInt32, GInt16, GUInt32, 
- *   GUInt16, and GByte are defined.
+ * Purpose:  Include file providing low level portability services for CPL.  
+ *           This should be the first include file for any CPL based code.  
  *
  ******************************************************************************
- * Copyright (c) 1998, Frank Warmerdam
+ * Copyright (c) 1998, 2005, Frank Warmerdam <warmerdam@pobox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2006/03/21 20:11:54  fwarmerdam
+ * fixup headers a bit
+ *
  * Revision 1.50  2006/03/13 20:58:32  mloskot
  * Test if macros _CRT_SECURE_NO_DEPRECATE and  _CRT_NONSTDC_NO_DEPRECATE
  * are already defined, to get rid of warnings
@@ -86,63 +76,6 @@
  *
  * Revision 1.37  2005/03/01 19:57:55  fwarmerdam
  * Added CPLIsNan and CPLIsInf macros.
- *
- * Revision 1.36  2004/01/06 21:42:32  warmerda
- * "Fix" for bug 455 related to CPL_IS_LSB macro.
- *
- * Revision 1.35  2003/12/11 03:16:02  warmerda
- * Added CPL_IS_LSB macro with value 0 (MSB) or 1 (LSB).
- *
- * Revision 1.34  2003/09/08 11:11:05  dron
- * Include time.h and locale.h.
- *
- * Revision 1.33  2003/05/12 14:52:56  warmerda
- * Use _MSC_VER to test for Microsoft Visual C++ compiler.
- *
- * Revision 1.32  2002/10/24 20:24:40  warmerda
- * avoid using variable names likely to conflict in macros
- *
- * Revision 1.31  2002/07/15 13:31:46  warmerda
- * CPL_SWAPDOUBLE had alignment problem, use CPL_SWAP64PTR
- *
- * Revision 1.30  2002/04/18 18:55:06  dron
- * added <ctype.h> at the list of standard include files
- *
- * Revision 1.29  2002/01/17 01:40:27  warmerda
- * added _LARGEFILE64_SOURCE support
- *
- * Revision 1.28  2001/08/30 21:20:49  warmerda
- * expand tabs
- *
- * Revision 1.27  2001/07/18 04:00:49  warmerda
- * added CPL_CVSID
- *
- * Revision 1.26  2001/06/21 21:17:26  warmerda
- * added irix 64bit file api support
- *
- * Revision 1.25  2001/04/30 18:18:38  warmerda
- * added macos support, standard header
- *
- * Revision 1.24  2001/01/19 21:16:41  warmerda
- * expanded tabs
- *
- * Revision 1.23  2001/01/13 04:06:39  warmerda
- * added strings.h on AIX as per patch from Dale.
- *
- * Revision 1.22  2001/01/03 16:18:07  warmerda
- * added GUIntBig
- *
- * Revision 1.21  2000/10/20 04:20:33  warmerda
- * added SWAP16PTR macros
- *
- * Revision 1.20  2000/10/13 17:32:42  warmerda
- * check for unix instead of IGNORE_WIN32
- *
- * Revision 1.19  2000/09/25 19:58:43  warmerda
- * ensure win32 doesn't get defined in Cygnus builds
- *
- * Revision 1.18  2000/07/20 13:15:03  warmerda
- * don't redeclare CPL_DLL
  */
 
 #ifndef CPL_BASE_H_INCLUDED

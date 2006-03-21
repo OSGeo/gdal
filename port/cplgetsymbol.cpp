@@ -3,7 +3,7 @@
  *
  * Project:  Common Portability Library
  * Purpose:  Fetch a function pointer from a shared library / DLL.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/03/21 20:11:54  fwarmerdam
+ * fixup headers a bit
+ *
  * Revision 1.15  2006/02/19 21:54:34  mloskot
  * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
  *

@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.24  2006/03/21 20:11:54  fwarmerdam
+ * fixup headers a bit
+ *
  * Revision 1.23  2006/02/19 21:54:34  mloskot
  * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
  *
@@ -61,43 +64,6 @@
  *
  * Revision 1.13  2003/01/30 19:15:55  warmerda
  * added some docs
- *
- * Revision 1.12  2002/07/12 22:37:05  warmerda
- * added CSLFetchBoolean
- *
- * Revision 1.11  2002/05/28 18:53:43  warmerda
- * added XML escaping support
- *
- * Revision 1.10  2002/04/26 14:55:26  warmerda
- * Added CPLEscapeString() and CPLUnescapeString() (unescape untested)
- *
- * Revision 1.9  2002/03/05 14:26:57  warmerda
- * expanded tabs
- *
- * Revision 1.8  2002/01/16 03:59:28  warmerda
- * added CPLTokenizeString2
- *
- * Revision 1.7  2000/10/06 15:19:03  warmerda
- * added CPLSetNameValueSeparator
- *
- * Revision 1.6  2000/04/26 18:25:10  warmerda
- * implement CPL_DLL
- *
- * Revision 1.5  2000/03/30 05:38:48  warmerda
- * added CPLParseNameValue
- *
- * Revision 1.4  1999/06/26 14:05:19  warmerda
- * Added CSLFindString().
- *
- * Revision 1.3  1999/02/17 01:41:58  warmerda
- * Added CSLGetField
- *
- * Revision 1.2  1998/12/04 21:40:42  danmo
- * Added more Name=Value manipulation fuctions
- *
- * Revision 1.1  1998/12/03 18:26:02  warmerda
- * New
- *
  **********************************************************************/
 
 #ifndef _CPL_STRING_H_INCLUDED

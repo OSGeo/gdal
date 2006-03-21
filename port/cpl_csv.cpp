@@ -3,7 +3,7 @@
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  CSV (comma separated value) file access.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/03/21 20:11:54  fwarmerdam
+ * fixup headers a bit
+ *
  * Revision 1.17  2006/01/31 12:46:35  fwarmerdam
  * Change name of bFinderInitialized.
  *

@@ -1,4 +1,12 @@
 /******************************************************************************
+ * $Id$
+ *
+ * Name:     cpl_win_api.h
+ * Project:  CPL - Common Portability Library
+ * Purpose:  Windows CE specific declarations.
+ * Author:   Mateusz £oskot, mloskot@taxussi.com.pl
+ *
+ ******************************************************************************
  * Copyright (c) 2006, Mateusz £oskot
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -19,16 +27,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
- * $Id$
- *
- * Name:     cpl_win_api.h
- * Project:  CPL - Common Portability Library
- * Purpose:  Windows CE specific declarations.
- * Author:   Mateusz £oskot, mloskot@taxussi.com.pl
- *
- ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/03/21 20:11:54  fwarmerdam
+ * fixup headers a bit
+ *
  * Revision 1.2  2006/02/21 19:48:43  mloskot
  * [WCE] Added copyright note
  *
