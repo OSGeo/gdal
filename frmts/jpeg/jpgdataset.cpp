@@ -28,6 +28,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.41  2006/03/21 19:46:37  fwarmerdam
+ * Avoid calling jpeg_finish_compress() if there was an error or
+ * libjpeg is likely to issue an error and call exit()!
+ *
  * Revision 1.40  2006/02/26 14:32:32  fwarmerdam
  * Added accelerated dataset rasterio for common case c/o Mike Mazzella.
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=1046
@@ -1366,7 +1370,8 @@ JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     CPLFree( pabyScanline );
 
-    jpeg_finish_compress( &sCInfo );
+    if( eErr == CE_None )
+        jpeg_finish_compress( &sCInfo );
     jpeg_destroy_compress( &sCInfo );
 
     VSIFCloseL( fpImage );
