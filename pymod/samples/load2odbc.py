@@ -30,6 +30,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.5  2006/03/21 22:03:45  fwarmerdam
+#  added -where option
+#
 #  Revision 1.4  2005/11/02 19:56:01  fwarmerdam
 #  Added extents support
 #
@@ -51,7 +54,7 @@ import sys
 
 #############################################################################
 def Usage():
-    print 'Usage: load2odbc.py infile odbc_dsn layer'
+    print 'Usage: load2odbc.py [-where attr_filter] infile odbc_dsn layer'
     print
     sys.exit(1)
 
@@ -60,14 +63,28 @@ def Usage():
 
 extents_flag = 1
 infile = None
-outfile = None
+odbc_dsn = None
+layername = None
+attr_filter = None
 
-if len(sys.argv) != 4:
+i = 1
+while i < len(sys.argv):
+    if sys.argv[i] == '-where':
+        i = i + 1
+        attr_filter = sys.argv[i]
+    elif infile is None:
+        infile = sys.argv[i]
+    elif odbc_dsn is None:
+        odbc_dsn = sys.argv[i]
+    elif layername is None:
+        layername = sys.argv[i]
+    else:
+        Usage()
+
+    i = i + 1
+
+if layername is None:
     Usage()
-
-infile = sys.argv[1]
-odbc_dsn = sys.argv[2]
-layername = sys.argv[3]
 
 #############################################################################
 # Open the datasource to operate on.
@@ -80,23 +97,33 @@ if in_layer is None:
     print 'Did not find layer: ', layername
     sys.exit( 1 )
 
+if attr_filter is not None:
+    in_layer.SetAttributeFilter( attr_filter )
+
 #############################################################################
 #	Connect to ODBC DSN.
 
-if len(odbc_dsn) < 6 or odbc_dsn[:5] != 'ODBC:':
-    odbc_dsn = 'ODBC:' + odbc_dsn
+if odbc_dsn == 'stdout':
+    out_ds = None
+else:
+    if len(odbc_dsn) < 6 or odbc_dsn[:5] != 'ODBC:':
+        odbc_dsn = 'ODBC:' + odbc_dsn
 
-out_ds = ogr.Open( odbc_dsn )
+    out_ds = ogr.Open( odbc_dsn )
 
-if out_ds is None:
-    print 'Unable to connect to ' + odbc_dsn 
-    sys.exit(1)
+    if out_ds is None:
+        print 'Unable to connect to ' + odbc_dsn 
+        sys.exit(1)
 
 #############################################################################
 #	Fetch layer definition, and defined output table on the same basis.
 
 try:
-    out_ds.ExecuteSQL( 'drop table ' + layername )
+    cmd = 'drop table ' + layername
+    if out_ds is None:
+        print cmd
+    else:
+        out_ds.ExecuteSQL( cmd )
 except:
     pass
 
@@ -120,10 +147,14 @@ for iField in range(defn.GetFieldCount()):
 	cmd = cmd + ' TEXT' 
 
 cmd = cmd + ')'
-print 'ExecuteSQL: ', cmd
-result = out_ds.ExecuteSQL( cmd )
-if result is not None:
-    out_ds.ReleaseResultSet( result )
+
+if out_ds is None:
+    print cmd
+else:
+    print 'ExecuteSQL: ', cmd
+    result = out_ds.ExecuteSQL( cmd )
+    if result is not None:
+        out_ds.ReleaseResultSet( result )
 
 #############################################################################
 # Read all features in the line layer, holding just the geometry in a hash
@@ -161,8 +192,11 @@ while feat is not None:
 
     cmd = cmd_start + cmd_end + ')'
 
-    print 'ExecuteSQL: ', cmd
-    out_ds.ExecuteSQL( cmd )
+    if out_ds is None:
+        print cmd
+    else:
+        print 'ExecuteSQL: ', cmd
+        out_ds.ExecuteSQL( cmd )
 
     feat.Destroy()
     feat = in_layer.GetNextFeature()
@@ -171,4 +205,5 @@ while feat is not None:
 # Cleanup
 
 in_ds.Destroy()
-out_ds.Destroy()
+if out_ds is not None:
+    out_ds.Destroy()
