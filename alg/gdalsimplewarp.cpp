@@ -6,8 +6,7 @@
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 2002, i3 - information integration and imaging 
- *                          Fort Collin, CO
+ * Copyright (c) 2002, i3 - information integration and imaging, Fort Collin,CO
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/03/21 20:56:00  fwarmerdam
+ * cleanup headers
+ *
  * Revision 1.8  2005/04/04 15:24:16  fwarmerdam
  * added CPL_STDCALL to some functions
  *
