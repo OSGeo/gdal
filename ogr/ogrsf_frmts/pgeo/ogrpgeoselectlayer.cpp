@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/03/21 18:50:56  fwarmerdam
+ * dont report SetAttributeFilter error if clearing
+ *
  * Revision 1.2  2005/12/16 01:32:26  fwarmerdam
  * removed custom GetExtent on select layer
  *
@@ -154,10 +157,17 @@ OGRFeature *OGRPGeoSelectLayer::GetFeature( long nFeatureId )
 OGRErr OGRPGeoSelectLayer::SetAttributeFilter( const char *pszQuery )
 
 {
-    CPLError( CE_Failure, CPLE_AppDefined, 
-              "SetAttributeFilter() not supported on ExecuteSQL() results." );
-
-    return OGRERR_UNSUPPORTED_OPERATION;
+    if( pszQuery != NULL && strlen(pszQuery) > 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "SetAttributeFilter() not supported on ExecuteSQL() results." );
+        
+        return OGRERR_UNSUPPORTED_OPERATION;
+    }
+    else
+    {
+        return OGRERR_NONE;
+    }
 }
 
 /************************************************************************/
