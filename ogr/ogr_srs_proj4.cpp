@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2006/03/21 15:12:22  fwarmerdam
+ * Fixed support for +R parameter.
+ *
  * Revision 1.60  2005/12/13 15:57:28  dron
  * Export scale coefficient when exporting to stereographic projection.
  *
@@ -925,12 +928,21 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         dfSemiMajor = OSR_GDV( papszNV, "a", 0.0 );
         if( dfSemiMajor == 0.0 )
         {
-            CPLDebug( "OGR_PROJ4", "Can't find ellipse definition, default to WGS84:\n%s", 
-                      pszProj4 );
-
-            dfSemiMajor = SRS_WGS84_SEMIMAJOR;
-            dfSemiMinor = -1.0;
-            dfInvFlattening = SRS_WGS84_INVFLATTENING;
+            dfSemiMajor = OSR_GDV( papszNV, "R", 0.0 );
+            if( dfSemiMajor != 0.0 )
+            {
+                dfSemiMinor = -1.0;
+                dfInvFlattening = 0.0;
+            }
+            else
+            {
+                CPLDebug( "OGR_PROJ4", "Can't find ellipse definition, default to WGS84:\n%s", 
+                          pszProj4 );
+                
+                dfSemiMajor = SRS_WGS84_SEMIMAJOR;
+                dfSemiMinor = -1.0;
+                dfInvFlattening = SRS_WGS84_INVFLATTENING;
+            }
         }
         else
         {
