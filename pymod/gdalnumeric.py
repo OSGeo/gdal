@@ -4,7 +4,7 @@
 #  Name:     gdalconst.py
 #  Project:  GDAL Python Interface
 #  Purpose:  GDAL/numpy integration.
-#  Author:   Frank Warmerdam, warmerda@home.com
+#  Author:   Frank Warmerdam, warmerdam@pobox.com
 # 
 #******************************************************************************
 #  Copyright (c) 2000, Frank Warmerdam
@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.17  2006/03/21 21:54:00  fwarmerdam
+# fixup headers
+#
 # Revision 1.16  2005/01/24 20:15:24  fwarmerdam
 # added UnsignedInt16 hack for backward compatibility
 #

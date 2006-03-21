@@ -4,7 +4,7 @@
  * Name:     gdal.i
  * Project:  GDAL Python Interface
  * Purpose:  GDAL Core SWIG Interface declarations.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.125  2006/03/21 21:54:00  fwarmerdam
+ * fixup headers
+ *
  * Revision 1.124  2006/02/15 04:21:30  fwarmerdam
  * added OFTDate support
  *

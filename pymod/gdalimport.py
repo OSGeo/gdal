@@ -5,7 +5,7 @@
 #  Name:     gdalimport
 #  Project:  GDAL Python Interface
 #  Purpose:  Import a GDAL supported file to Tiled GeoTIFF, and build overviews
-#  Author:   Frank Warmerdam, warmerda@home.com
+#  Author:   Frank Warmerdam, warmerdam@pobox.com
 # 
 #******************************************************************************
 #  Copyright (c) 2000, Frank Warmerdam
@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.5  2006/03/21 21:54:00  fwarmerdam
+# fixup headers
+#
 # Revision 1.4  2005/11/25 02:15:50  fwarmerdam
 # Added --help-general in usage message.
 #
