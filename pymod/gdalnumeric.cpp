@@ -3,7 +3,7 @@
  *
  * Project:  GDAL Python Bindings
  * Purpose:  GDAL/numpy bindings (all custom)
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  **********************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/03/21 21:59:55  fwarmerdam
+ * fixup headers
+ *
  * Revision 1.2  2001/07/18 04:45:29  warmerda
  * added CPL_CVSID
  *
