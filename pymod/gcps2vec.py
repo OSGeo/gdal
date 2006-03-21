@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.2  2006/03/21 21:54:00  fwarmerdam
+# fixup headers
+#
 # Revision 1.1  2005/02/07 14:36:12  fwarmerdam
 # New
 #
@@ -49,6 +52,7 @@ def Usage():
 format = 'GML'
 in_file = None
 out_file = None
+pixel_out = 0
 
 gdal.AllRegister()
 argv = gdal.GeneralCmdLineProcessor( sys.argv )
@@ -62,6 +66,9 @@ while i < len(argv):
 
     if arg == '-of':
         format = argv[i]
+
+    if arg == '-p':
+        pixel_out = 1
 
     elif in_file is None:
         in_file = argv[i]
@@ -109,11 +116,18 @@ srs = None
 
 layer = ds.CreateLayer( 'gcps', srs, geom_type = ogr.wkbPoint25D )
 
-fd = ogr.FieldDefn( 'Pixel', ogr.OFTReal )
-layer.CreateField( fd )
+if pixel_out == 0:
+    fd = ogr.FieldDefn( 'Pixel', ogr.OFTReal )
+    layer.CreateField( fd )
 
-fd = ogr.FieldDefn( 'Line', ogr.OFTReal )
-layer.CreateField( fd )
+    fd = ogr.FieldDefn( 'Line', ogr.OFTReal )
+    layer.CreateField( fd )
+else:
+    fd = ogr.FieldDefn( 'X', ogr.OFTReal )
+    layer.CreateField( fd )
+
+    fd = ogr.FieldDefn( 'Y', ogr.OFTReal )
+    layer.CreateField( fd )
 
 fd = ogr.FieldDefn( 'Id', ogr.OFTString )
 layer.CreateField( fd )
@@ -130,14 +144,20 @@ for gcp in gcps:
     feat = ogr.Feature( layer.GetLayerDefn() )
 
     geom = ogr.Geometry( ogr.wkbPoint25D )
-    geom.SetPoint( 0, gcp.GCPX, gcp.GCPY, gcp.GCPZ )
-    feat.SetGeometryDirectly( geom )
 
-    feat.SetField( 'Pixel', gcp.GCPPixel )
-    feat.SetField( 'Line',  gcp.GCPLine )
+    if pixel_out == 0:
+        feat.SetField( 'Pixel', gcp.GCPPixel )
+        feat.SetField( 'Line',  gcp.GCPLine )
+        geom.SetPoint( 0, gcp.GCPX, gcp.GCPY, gcp.GCPZ )
+    else:
+        feat.SetField( 'X', gcp.GCPX )
+        feat.SetField( 'Y',  gcp.GCPY )
+        geom.SetPoint( 0, gcp.GCPPixel, gcp.GCPLine )
+        
     feat.SetField( 'Id',    gcp.Id )
     feat.SetField( 'Info',  gcp.Info )
 
+    feat.SetGeometryDirectly( geom )
     layer.CreateFeature( feat )
 
 feat = None

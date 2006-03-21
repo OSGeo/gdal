@@ -4,7 +4,7 @@
 #  Name:     gdalconst.py
 #  Project:  GDAL Python Interface
 #  Purpose:  GDAL Constants Definitions
-#  Author:   Frank Warmerdam, warmerda@home.com
+#  Author:   Frank Warmerdam, warmerdam@pobox.com
 # 
 #******************************************************************************
 #  Copyright (c) 2000, Frank Warmerdam
@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.11  2006/03/21 21:54:00  fwarmerdam
+# fixup headers
+#
 # Revision 1.10  2004/11/01 17:25:28  fwarmerdam
 # added CPL Escape functions
 #

@@ -3,7 +3,7 @@
  *
  * Project:  GDAL Python Bindings
  * Purpose:  Implementation of NumPy arrays as a GDALDataset.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/03/21 21:54:00  fwarmerdam
+ * fixup headers
+ *
  * Revision 1.10  2003/12/11 17:20:44  gwalter
  * Added UInt16 and UInt32 to list of recognized NumPy types.
  *

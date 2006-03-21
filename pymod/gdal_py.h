@@ -4,7 +4,7 @@
  * Project:  GDAL Python Bindings
  * Purpose:  Declarations of entry points in source files other than that
  *           generated from gdal.i.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/03/21 21:54:00  fwarmerdam
+ * fixup headers
+ *
  * Revision 1.3  2003/09/26 15:58:58  warmerda
  * keep track if we used internal defs
  *
