@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/03/21 21:34:43  fwarmerdam
+ * cleanup headers
+ *
  * Revision 1.20  2006/01/05 19:51:10  fwarmerdam
  * fixed checking of targetsrs
  *
@@ -558,7 +561,7 @@ int main( int argc, char ** argv )
 
             CSLDestroy( papszTokens );
 
-            papszWarpOptions = CSLSetNameValue(papszWarpOptions,
+            psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions,
                                                "UNIFIED_SRC_NODATA", "YES" );
         }
 

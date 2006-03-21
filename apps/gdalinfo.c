@@ -1,4 +1,11 @@
-/* ****************************************************************************
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  GDAL Utilities
+ * Purpose:  Commandline application to list info about a file.
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *
+ * ****************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,12 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  * ****************************************************************************
  *
- * gdalinfo.c
- *
- * Simple application for dumping all the data about a dataset.  Mainly
- * serves as an early test harnass.
- *
  * $Log$
+ * Revision 1.43  2006/03/21 21:34:43  fwarmerdam
+ * cleanup headers
+ *
  * Revision 1.42  2005/12/21 05:31:56  fwarmerdam
  * added reporting of band image_structure metadata
  *
