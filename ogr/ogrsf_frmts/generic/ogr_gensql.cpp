@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/03/21 18:46:28  fwarmerdam
+ * Don't report debug message if setting NULL spatial filter.
+ *
  * Revision 1.15  2005/09/21 01:01:28  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -779,10 +782,12 @@ OGRGeometry *OGRGenSQLResultsLayer::GetSpatialFilter()
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
 
-void OGRGenSQLResultsLayer::SetSpatialFilter( OGRGeometry * )
+void OGRGenSQLResultsLayer::SetSpatialFilter( OGRGeometry *poFilter )
 
 {
-    CPLDebug( "OGRGenSQLResultsLayer", "SetSpatialFilter called and ignored.");
+    if( poFilter != NULL )
+        CPLDebug( "OGRGenSQLResultsLayer", 
+                  "SetSpatialFilter called and ignored.");
 }
 
 /************************************************************************/
