@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/03/21 18:50:56  fwarmerdam
+ * dont report SetAttributeFilter error if clearing
+ *
  * Revision 1.2  2005/02/22 12:53:56  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -153,10 +156,17 @@ OGRFeature *OGRODBCSelectLayer::GetFeature( long nFeatureId )
 OGRErr OGRODBCSelectLayer::SetAttributeFilter( const char *pszQuery )
 
 {
-    CPLError( CE_Failure, CPLE_AppDefined, 
-              "SetAttributeFilter() not supported on ExecuteSQL() results." );
-
-    return OGRERR_UNSUPPORTED_OPERATION;
+    if( pszQuery != NULL && strlen(pszQuery) > 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "SetAttributeFilter() not supported on ExecuteSQL() results." );
+        
+        return OGRERR_UNSUPPORTED_OPERATION;
+    }
+    else
+    {
+        return OGRERR_NONE;
+    }
 }
 
 /************************************************************************/
