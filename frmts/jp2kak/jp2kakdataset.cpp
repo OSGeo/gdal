@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.35  2006/03/22 19:50:38  fwarmerdam
+ * Trim history.
+ *
  * Revision 1.34  2006/03/22 19:50:00  fwarmerdam
  * Preliminary support for output with tiling.
  *
@@ -76,90 +79,6 @@
  *
  * Revision 1.19  2004/01/12 19:50:09  warmerda
  * Disable jpip support on 4.1 till I get around to fixing it up.
- *
- * Revision 1.18  2003/12/05 21:28:45  warmerda
- * Added Kakadu 4.1 support.
- *
- * Revision 1.17  2003/10/14 17:46:15  warmerda
- * Added world file support.
- *
- * Revision 1.16  2003/09/11 20:09:42  warmerda
- * ensure pszExtension is initialized
- *
- * Revision 1.15  2003/08/07 16:16:18  warmerda
- * added proper setting of band color interpretation
- *
- * Revision 1.14  2003/07/17 15:04:43  warmerda
- * Fixed problem with non-JPIP JP2 introduced when adding JPIP support.
- *
- * Revision 1.13  2003/07/08 19:12:41  warmerda
- * JPIP support now working ... at least sometimes
- *
- * Revision 1.12  2003/07/04 18:00:42  warmerda
- * first crack at JPIP client side support.
- *
- * Revision 1.11  2003/06/26 15:54:30  warmerda
- * upgraded to work with Kakadu 4.0.2
- *
- * Revision 1.10  2003/06/12 20:21:52  warmerda
- * Don't depend on .jp2 extension for JP2 files, trust 16bit magic header.
- * Still requires a known extension for JPC streams *and* now tests the two
- * byte magic header.
- *
- * Revision 1.9  2003/05/28 18:18:14  warmerda
- * debugging report for YCbCr processing added
- *
- * Revision 1.8  2003/05/13 14:00:13  warmerda
- * added mimetype and extension
- *
- * Revision 1.7  2003/05/02 18:36:59  warmerda
- * added Clayers and FLUSH keywords
- *
- * Revision 1.6  2003/04/17 16:47:42  warmerda
- * added ROI processing while encoding
- *
- * Revision 1.5  2003/04/16 19:55:35  warmerda
- * added esoteric creation options
- *
- * Revision 1.4  2003/04/16 17:48:23  warmerda
- * Additional of rudimentary JP2 palette support.
- *
- * Revision 1.3  2003/02/09 21:31:40  warmerda
- * Added support for debug fileio.  Fixed setting of ORGgen_plt.
- *
- * Revision 1.2  2003/01/31 20:32:42  warmerda
- * added fixes for computing target layer_bytes[] for large input images
- *
- * Revision 1.1  2003/01/30 19:09:24  warmerda
- * Migrated to jp2kak directory.
- *
- * Revision 1.9  2002/11/30 16:54:46  warmerda
- * ensure we don't initialize from missing resolution levels
- *
- * Revision 1.8  2002/11/23 18:54:17  warmerda
- * added CREATIONDATATYPES metadata for drivers
- *
- * Revision 1.7  2002/11/21 15:34:09  warmerda
- * Made substantial improvements to improve flushing ability.
- *
- * Revision 1.6  2002/11/03 01:38:20  warmerda
- * Implemented YCbCr read support.
- *
- * Revision 1.5  2002/10/31 18:51:05  warmerda
- * added 16bit and 32bit floating point support
- *
- * Revision 1.4  2002/10/21 18:06:57  warmerda
- * fixed multi-component write support
- *
- * Revision 1.3  2002/10/10 21:07:06  warmerda
- * added support for writing GeoJP2 section
- *
- * Revision 1.2  2002/10/08 23:02:39  warmerda
- * added create support, and GeoJP2 read support
- *
- * Revision 1.1  2002/09/23 12:46:55  warmerda
- * New
- *
  */
 
 #include "gdal_pam.h"
