@@ -56,14 +56,10 @@ A value of 100 will result in use of the lossless compression algorithm .
 Actual final image size may not exactly match that requested depending on 
 various factors.<P>
 
-<li> <b>BLOCKXSIZE=n</b>: Set the tile width to use.  By default the image 
-is one big tile unless it is larger than two gigapixels in which case it is 
-split up.
+<li> <b>BLOCKXSIZE=n</b>: Set the tile width to use.  Defaults to 20000.
 <p>
 
-<li> <b>BLOCKYSIZE=n</b>: Set the tile height to use.  By default the image 
-is one big tile unless it is larger than two gigapixels in which case it is 
-split up.
+<li> <b>BLOCKYSIZE=n</b>: Set the tile height to use.  Defaults to image height.
 <p>
 
 <li> <b>LAYERS=n</b>: Control the number of layers produced.  These are 
