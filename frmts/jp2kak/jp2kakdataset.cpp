@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.34  2006/03/22 19:50:00  fwarmerdam
+ * Preliminary support for output with tiling.
+ *
  * Revision 1.33  2006/03/16 17:11:39  fwarmerdam
  * Catch exceptions in allocator.finalize() to catch common out of memory
  * condition.
@@ -1658,6 +1661,193 @@ void JP2KAKWriteGeoTIFFInfo( jp2_target *jp2_out, GDALDataset *poSrcDS )
 }
 
 /************************************************************************/
+/*                     JP2KAKCreateCopy_WriteTile()                     */
+/************************************************************************/
+
+static int 
+JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
+                            kdu_roi_image *poROIImage, 
+                            int nXOff, int nYOff, int nXSize, int nYSize,
+                            int bReversible, GDALDataType eType,
+                            kdu_codestream &oCodeStream, int bFlushEnabled,
+                            kdu_long *layer_bytes, int layer_count,
+                            GDALProgressFunc pfnProgress, void * pProgressData)
+
+{                                       
+/* -------------------------------------------------------------------- */
+/*      Create one big tile, and a compressing engine, and line         */
+/*      buffer for each component.                                      */
+/* -------------------------------------------------------------------- */
+    int c, num_components = oTile.get_num_components(); 
+    kdu_push_ifc  *engines = new kdu_push_ifc[num_components];
+    kdu_line_buf  *lines = new kdu_line_buf[num_components];
+    kdu_sample_allocator allocator;
+    for (c=0; c < num_components; c++)
+    {
+        kdu_resolution res = oTile.access_component(c).access_resolution(); 
+        kdu_roi_node *roi_node = NULL;
+
+        if( poROIImage != NULL )
+        {
+            kdu_dims  dims;
+            
+            res.get_dims(dims);
+            roi_node = poROIImage->acquire_node(c,dims);
+        }
+
+        lines[c].pre_create(&allocator,nXSize,bReversible,bReversible);
+        engines[c] = kdu_analysis(res,&allocator,bReversible,1.0F,roi_node);
+    }
+
+    try
+    {
+        allocator.finalize();
+
+        for (c=0; c < num_components; c++)
+            lines[c].create();
+    }
+    catch( ... )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "allocate.finalize() failed, likely out of memory for compression information." );
+        return FALSE;
+    }
+        
+/* -------------------------------------------------------------------- */
+/*      Write whole image.  Write 1024 lines of each component, then    */
+/*      go back to the first, and do again.  This gives the rate        */
+/*      computing machine all components to make good estimates.        */
+/* -------------------------------------------------------------------- */
+    int  iLine, iLinesWritten = 0;
+#define CHUNK_SIZE  1024
+
+    GByte *pabyBuffer = (GByte *) 
+        CPLMalloc(nXSize * (GDALGetDataTypeSize(eType)/8) );
+
+    CPLAssert( !oTile.get_ycc() );
+
+    for( iLine = 0; iLine < nYSize; iLine += CHUNK_SIZE )
+    {
+        for (c=0; c < num_components; c++)
+        {
+            GDALRasterBand *poBand = poSrcDS->GetRasterBand( c+1 );
+            int iSubline = 0;
+        
+            for( iSubline = iLine; 
+                 iSubline < iLine+CHUNK_SIZE && iSubline < nYSize;
+                 iSubline++ )
+            {
+                if( poBand->RasterIO( GF_Read, 
+                                      nXOff, nYOff+iSubline, nXSize, 1, 
+                                      (void *) pabyBuffer, nXSize, 1, eType,
+                                      0, 0 ) == CE_Failure )
+                    return FALSE;
+
+                if( bReversible && eType == GDT_Byte )
+                {
+                    kdu_sample16 *dest = lines[c].get_buf16();
+                    kdu_byte *sp = pabyBuffer;
+                
+                    for (int n=nXSize; n > 0; n--, dest++, sp++)
+                        dest->ival = ((kdu_int16)(*sp)) - 128;
+                }
+                else if( bReversible && eType == GDT_Int16 )
+                {
+                    kdu_sample16 *dest = lines[c].get_buf16();
+                    GInt16 *sp = (GInt16 *) pabyBuffer;
+                
+                    for (int n=nXSize; n > 0; n--, dest++, sp++)
+                        dest->ival = *sp;
+                }
+                else if( bReversible && eType == GDT_UInt16 )
+                {
+                    kdu_sample16 *dest = lines[c].get_buf16();
+                    GUInt16 *sp = (GUInt16 *) pabyBuffer;
+                
+                    for (int n=nXSize; n > 0; n--, dest++, sp++)
+                        dest->ival = *sp - 32767;
+                }
+                else if( eType == GDT_Byte )
+                {
+                    kdu_sample32 *dest = lines[c].get_buf32();
+                    kdu_byte *sp = pabyBuffer;
+                
+                    for (int n=nXSize; n > 0; n--, dest++, sp++)
+                        dest->fval = (float) 
+                            ((((kdu_int16)(*sp))-128.0) * 0.00390625);
+                }
+                else if( eType == GDT_Int16 )
+                {
+                    kdu_sample32 *dest = lines[c].get_buf32();
+                    GInt16  *sp = (GInt16 *) pabyBuffer;
+                
+                    for (int n=nXSize; n > 0; n--, dest++, sp++)
+                        dest->fval = (float) 
+                            (((kdu_int16)(*sp)) * 0.0000152588);
+                }
+                else if( eType == GDT_UInt16 )
+                {
+                    kdu_sample32 *dest = lines[c].get_buf32();
+                    GUInt16  *sp = (GUInt16 *) pabyBuffer;
+                
+                    for (int n=nXSize; n > 0; n--, dest++, sp++)
+                        dest->fval = (float) 
+                            (((int)(*sp) - 32768) * 0.0000152588);
+                }
+                else if( eType == GDT_Float32 )
+                {
+                    kdu_sample32 *dest = lines[c].get_buf32();
+                    float  *sp = (float *) pabyBuffer;
+                
+                    for (int n=nXSize; n > 0; n--, dest++, sp++)
+                        dest->fval = *sp;  /* scale it? */
+                }
+
+                engines[c].push(lines[c],true);
+
+                iLinesWritten++;
+
+                if( !pfnProgress( iLinesWritten 
+                                  / (double) (num_components * nYSize),
+                                  NULL, pProgressData ) )
+                {
+                    return FALSE;
+                }
+            }
+        }
+
+        if( oCodeStream.ready_for_flush() && bFlushEnabled )
+        {
+            CPLDebug( "JP2KAK", 
+                      "Calling oCodeStream.flush() at line %d",
+                      MIN(nYSize,iLine+CHUNK_SIZE) );
+            
+            oCodeStream.flush( layer_bytes, layer_count );
+        }
+        else if( bFlushEnabled )
+            CPLDebug( "JP2KAK", 
+                      "read_for_flush() is false at line %d.",
+                      iLine );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup resources.                                              */
+/* -------------------------------------------------------------------- */
+    for( c = 0; c < num_components; c++ )
+        engines[c].destroy();
+
+    delete[] engines;
+    delete[] lines;
+
+    CPLFree( pabyBuffer );
+
+    if( poROIImage != NULL )
+        delete poROIImage;
+
+    return TRUE;
+}
+
+/************************************************************************/
 /*                             CreateCopy()                             */
 /************************************************************************/
 
@@ -1669,6 +1859,8 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 {
     int	   nXSize = poSrcDS->GetRasterXSize();
     int    nYSize = poSrcDS->GetRasterYSize();
+    int    nTileXSize = nXSize;
+    int    nTileYSize = nYSize;
     bool   bReversible = false;
     int    bFlushEnabled = CSLFetchBoolean( papszOptions, "FLUSH", TRUE );
 
@@ -1772,10 +1964,27 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         layer_bytes[layer_count-1] = (kdu_long) dfLayerBytes;
 
         CPLDebug( "JP2KAK", "layer_bytes[] = %g\n", 
-                (double) layer_bytes[layer_count-1] );
+                  (double) layer_bytes[layer_count-1] );
     }
     else
         bReversible = true;
+
+/* -------------------------------------------------------------------- */
+/*      Do we want to use more than one tile?                           */
+/* -------------------------------------------------------------------- */
+    if( nXSize * (double) nYSize > 2000000000.0 )
+    {
+        // default to two giga-pixel strips if the image is very large.
+        nTileYSize = 2000000000 / nXSize;
+    }
+
+    if( CSLFetchNameValue( papszOptions, "BLOCKXSIZE" ) != NULL )
+        nTileXSize = MIN(nXSize,
+                         atoi(CSLFetchNameValue( papszOptions, "BLOCKXSIZE")));
+
+    if( CSLFetchNameValue( papszOptions, "BLOCKYSIZE" ) != NULL )
+        nTileYSize = MIN(nYSize,
+                         atoi(CSLFetchNameValue( papszOptions, "BLOCKYSIZE")));
 
 /* -------------------------------------------------------------------- */
 /*      Establish the general image parameters.                         */
@@ -1790,6 +1999,14 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         oSizeParams.set( Ssigned, 0, 0, false );
     else
         oSizeParams.set( Ssigned, 0, 0, true );
+
+    if( nTileXSize != nXSize || nTileYSize != nYSize )
+    {
+        oSizeParams.set( Stiles, 0, 0, nTileYSize );
+        oSizeParams.set( Stiles, 0, 1, nTileXSize );
+        
+        CPLDebug( "JP2KAK", "Stiles=%d,%d", nTileYSize, nTileXSize );
+    }
 
     kdu_params *poSizeRef = &oSizeParams; poSizeRef->finalize();
 
@@ -1811,7 +2028,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     jp2_target             jp2_out;
     kdu_simple_file_target jpc_out;
     int                    bIsJP2 = !EQUAL(CPLGetExtension(pszFilename),"jpc")
-                           && !bIsJPX;
+        && !bIsJPX;
     kdu_codestream         oCodeStream;
 
     if( !pfnProgress( 0.0, NULL, pProgressData ) )
@@ -1980,7 +2197,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         GDALColorTable *poCT = poPrototypeBand->GetColorTable();
         int  iColor, nCount = poCT->GetColorEntryCount();
         kdu_int32 *panLUT = (kdu_int32 *) 
-            		CPLMalloc(sizeof(kdu_int32) * nCount * 3);
+            CPLMalloc(sizeof(kdu_int32) * nCount * 3);
         
         oJP2Palette = jp2_out.access_palette();
         oJP2Palette.init( 3, nCount );
@@ -2046,178 +2263,68 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Create one big tile, and a compressing engine, and line         */
 /*      buffer for each component.                                      */
 /* -------------------------------------------------------------------- */
-    kdu_tile oTile = oCodeStream.open_tile(kdu_coords(0,0));
-    int c, num_components = oTile.get_num_components(); 
-    kdu_push_ifc  *engines = new kdu_push_ifc[num_components];
-    kdu_line_buf  *lines = new kdu_line_buf[num_components];
-    kdu_sample_allocator allocator;
-    for (c=0; c < num_components; c++)
+    int iTileXOff, iTileYOff;
+    double dfPixelsDone = 0.0;
+    double dfPixelsTotal = nXSize * (double) nYSize;
+    
+    for( iTileYOff = 0; iTileYOff < nYSize; iTileYOff += nTileYSize )
     {
-        kdu_resolution res = oTile.access_component(c).access_resolution(); 
-        kdu_roi_node *roi_node = NULL;
-
-        if( poROIImage != NULL )
+        for( iTileXOff = 0; iTileXOff < nXSize; iTileXOff += nTileXSize )
         {
-            kdu_dims  dims;
-            
-            res.get_dims(dims);
-            roi_node = poROIImage->acquire_node(c,dims);
-        }
+            kdu_tile oTile = oCodeStream.open_tile(
+                kdu_coords(iTileXOff/nTileXSize,iTileYOff/nTileYSize));
+            int nThisTileXSize, nThisTileYSize;
 
-        lines[c].pre_create(&allocator,nXSize,bReversible,bReversible);
-        engines[c] = kdu_analysis(res,&allocator,bReversible,1.0F,roi_node);
-    }
+            // ---------------------------------------------------------------
+            // Is this a partial tile on the right or bottom?
+            if( iTileXOff + nTileXSize < nXSize )
+                nThisTileXSize = nTileXSize;
+            else
+                nThisTileXSize = nXSize - iTileXOff;
+    
+            if( iTileYOff + nTileYSize < nYSize )
+                nThisTileYSize = nTileYSize;
+            else
+                nThisTileYSize = nYSize - iTileYOff;
 
-    try
-    {
-        allocator.finalize();
+            // ---------------------------------------------------------------
+            // Setup scaled progress monitor
 
-        for (c=0; c < num_components; c++)
-            lines[c].create();
-    }
-    catch( ... )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "allocate.finalize() failed, likely out of memory for compression information." );
-        return NULL;
-    }
-        
-/* -------------------------------------------------------------------- */
-/*      Write whole image.  Write 1024 lines of each component, then    */
-/*      go back to the first, and do again.  This gives the rate        */
-/*      computing machine all components to make good estimates.        */
-/* -------------------------------------------------------------------- */
-    int  iLine, iLinesWritten = 0;
-#define CHUNK_SIZE  1024
+            void *pScaledProgressData;
+            double dfPixelsDoneAfter = 
+                dfPixelsDone + (nThisTileXSize * (double) nThisTileYSize);
 
-    GByte *pabyBuffer = (GByte *) 
-        CPLMalloc(nXSize * (GDALGetDataTypeSize(eType)/8) );
-
-    CPLAssert( !oTile.get_ycc() );
-
-    for( iLine = 0; iLine < nYSize; iLine += CHUNK_SIZE )
-    {
-        for (c=0; c < num_components; c++)
-        {
-            GDALRasterBand *poBand = poSrcDS->GetRasterBand( c+1 );
-            int iSubline = 0;
-        
-            for( iSubline = iLine; 
-                 iSubline < iLine+CHUNK_SIZE && iSubline < nYSize;
-                 iSubline++ )
+            pScaledProgressData = 
+                GDALCreateScaledProgress( dfPixelsDone / dfPixelsTotal,
+                                          dfPixelsDoneAfter / dfPixelsTotal,
+                                          pfnProgress, pProgressData );
+            if( !JP2KAKCreateCopy_WriteTile( poSrcDS, oTile, poROIImage, 
+                                             iTileXOff, iTileYOff, 
+                                             nThisTileXSize, nThisTileYSize, 
+                                             bReversible, eType,
+                                             oCodeStream, bFlushEnabled,
+                                             layer_bytes, layer_count,
+                                             GDALScaledProgress, 
+                                             pScaledProgressData ) )
             {
-                poBand->RasterIO( GF_Read, 0, iSubline, nXSize, 1, 
-                                  (void *) pabyBuffer, nXSize, 1, eType,
-                                  0, 0 );
+                GDALDestroyScaledProgress( pScaledProgressData );
 
-                if( bReversible && eType == GDT_Byte )
-                {
-                    kdu_sample16 *dest = lines[c].get_buf16();
-                    kdu_byte *sp = pabyBuffer;
-                
-                    for (int n=nXSize; n > 0; n--, dest++, sp++)
-                        dest->ival = ((kdu_int16)(*sp)) - 128;
-                }
-                else if( bReversible && eType == GDT_Int16 )
-                {
-                    kdu_sample16 *dest = lines[c].get_buf16();
-                    GInt16 *sp = (GInt16 *) pabyBuffer;
-                
-                    for (int n=nXSize; n > 0; n--, dest++, sp++)
-                        dest->ival = *sp;
-                }
-                else if( bReversible && eType == GDT_UInt16 )
-                {
-                    kdu_sample16 *dest = lines[c].get_buf16();
-                    GUInt16 *sp = (GUInt16 *) pabyBuffer;
-                
-                    for (int n=nXSize; n > 0; n--, dest++, sp++)
-                        dest->ival = *sp - 32767;
-                }
-                else if( eType == GDT_Byte )
-                {
-                    kdu_sample32 *dest = lines[c].get_buf32();
-                    kdu_byte *sp = pabyBuffer;
-                
-                    for (int n=nXSize; n > 0; n--, dest++, sp++)
-                        dest->fval = (float) 
-                            ((((kdu_int16)(*sp))-128.0) * 0.00390625);
-                }
-                else if( eType == GDT_Int16 )
-                {
-                    kdu_sample32 *dest = lines[c].get_buf32();
-                    GInt16  *sp = (GInt16 *) pabyBuffer;
-                
-                    for (int n=nXSize; n > 0; n--, dest++, sp++)
-                        dest->fval = (float) 
-                            (((kdu_int16)(*sp)) * 0.0000152588);
-                }
-                else if( eType == GDT_UInt16 )
-                {
-                    kdu_sample32 *dest = lines[c].get_buf32();
-                    GUInt16  *sp = (GUInt16 *) pabyBuffer;
-                
-                    for (int n=nXSize; n > 0; n--, dest++, sp++)
-                        dest->fval = (float) 
-                            (((int)(*sp) - 32768) * 0.0000152588);
-                }
-                else if( eType == GDT_Float32 )
-                {
-                    kdu_sample32 *dest = lines[c].get_buf32();
-                    float  *sp = (float *) pabyBuffer;
-                
-                    for (int n=nXSize; n > 0; n--, dest++, sp++)
-                        dest->fval = *sp;  /* scale it? */
-                }
-
-                engines[c].push(lines[c],true);
-
-                iLinesWritten++;
-                if( !pfnProgress( iLinesWritten 
-                                  / (double) (num_components * nYSize),
-                                  NULL, pProgressData ) )
-                {
-                    oCodeStream.destroy();
-                    poOutputFile->close();
-                    VSIUnlink( pszFilename );
-                    return NULL;
-                }
+                oCodeStream.destroy();
+                poOutputFile->close();
+                VSIUnlink( pszFilename );
+                return NULL;
             }
-        }
 
-        if( oCodeStream.ready_for_flush() && bFlushEnabled )
-        {
-            CPLDebug( "JP2KAK", 
-                      "Calling oCodeStream.flush() at line %d",
-                      MIN(nYSize,iLine+CHUNK_SIZE) );
-            
-            oCodeStream.flush( layer_bytes, layer_count );
+            GDALDestroyScaledProgress( pScaledProgressData );
+            dfPixelsDone = dfPixelsDoneAfter;
+
+            oTile.close();
         }
-        else if( bFlushEnabled )
-            CPLDebug( "JP2KAK", 
-                      "read_for_flush() is false at line %d.",
-                      iLine );
     }
-
-/* -------------------------------------------------------------------- */
-/*      Cleanup resources.                                              */
-/* -------------------------------------------------------------------- */
-    for( c = 0; c < num_components; c++ )
-        engines[c].destroy();
-
-    delete[] engines;
-    delete[] lines;
-
-    CPLFree( pabyBuffer );
-
-    if( poROIImage != NULL )
-        delete poROIImage;
-
+    
 /* -------------------------------------------------------------------- */
 /*      Finish flushing out results.                                    */
 /* -------------------------------------------------------------------- */
-    oTile.close();
-    
     oCodeStream.flush(layer_bytes, layer_count);
     oCodeStream.destroy();
 
@@ -2276,6 +2383,8 @@ void GDALRegister_JP2KAK()
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
 "<CreationOptionList>"
 "   <Option name='QUALITY' type='integer' description='1-100, 100 is lossless'/>"
+"   <Option name='BLOCKXSIZE' type='int' description='Tile Width'/>"
+"   <Option name='BLOCKYSIZE' type='int' description='Tile Height'/>"
 "   <Option name='LAYERS' type='integer'/>"
 "   <Option name='ROI' type='string'/>"
 "   <Option name='Corder' type='string'/>"
