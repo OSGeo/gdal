@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.36  2006/03/22 20:05:26  fwarmerdam
+ * changed default tilesize rules, now tilexsize is at most 20K
+ *
  * Revision 1.35  2006/03/22 19:50:38  fwarmerdam
  * Trim history.
  *
@@ -1891,10 +1894,11 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Do we want to use more than one tile?                           */
 /* -------------------------------------------------------------------- */
-    if( nXSize * (double) nYSize > 2000000000.0 )
+    if( nTileXSize > 25000 )
     {
-        // default to two giga-pixel strips if the image is very large.
-        nTileYSize = 2000000000 / nXSize;
+        // Don't generate tiles that are terrible wide by default, as
+        // they consume alot of memory for the compression engine.
+        nTileXSize = 20000;
     }
 
     if( CSLFetchNameValue( papszOptions, "BLOCKXSIZE" ) != NULL )
