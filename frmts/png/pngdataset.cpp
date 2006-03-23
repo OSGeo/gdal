@@ -43,6 +43,10 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.36  2006/03/23 20:38:44  fwarmerdam
+ * Don't try to destroy NULL png struct.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1136
+ *
  * Revision 1.35  2005/11/07 20:37:03  fwarmerdam
  * use setjmp/longjump for error trapping
  *
@@ -369,7 +373,8 @@ PNGDataset::~PNGDataset()
 {
     FlushCache();
 
-    png_destroy_read_struct( &hPNG, &psPNGInfo, NULL );
+    if( hPNG != NULL )
+        png_destroy_read_struct( &hPNG, &psPNGInfo, NULL );
 
     if( fpImage )
         VSIFCloseL( fpImage );
