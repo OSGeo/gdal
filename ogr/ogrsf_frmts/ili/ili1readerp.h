@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/03/23 18:04:39  pka
+ * Add polygon geometry to area layer
+ * Performance improvement area polygonizer
+ *
  * Revision 1.4  2006/02/13 18:18:53  pka
  * Interlis 2: Support for nested attributes
  * Interlis 2: Arc interpolation
@@ -64,6 +68,9 @@ private:
     FILE         *fpItf;
     int          nLayers;
     OGRLayer     **papoLayers;
+    int          nAreaLayers;
+    OGRLayer     **papoAreaLayers;
+    OGRLayer     **papoAreaLineLayers;
     OGRILI1Layer *curLayer;
     double       arcIncr;
 
@@ -79,9 +86,11 @@ public:
     OGRGeometry  *ReadGeom(char **stgeom, OGRwkbGeometryType eType);
     char         **ReadParseLine();
 
-    void         AddLayer( OGRLayer * poNewLayer );    
+    void         AddLayer( OGRLayer * poNewLayer );
+    void         AddAreaLayer( OGRLayer * poAreaLayer,  OGRLayer * poLineLayer );
     int          AddIliGeom(OGRFeature *feature, int iField, long fpos);
     OGRMultiPolygon* Polygonize( OGRGeometryCollection* poLines );
+    void         PolygonizeAreaLayers();
     OGRLayer     *GetLayer( int );
     OGRLayer     *GetLayerByName( const char* );
     int          GetLayerCount();
@@ -89,7 +98,7 @@ public:
     const char*  GetLayerNameString(const char* topicname, const char* tablename);
     const char*  GetLayerName(IOM_BASKET model, IOM_OBJECT table);
     void         AddCoord(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT modelele, IOM_OBJECT typeobj);
-    void         AddGeomTable(const char* datalayername, const char* geomname, OGRwkbGeometryType eType);
+    OGRLayer*    AddGeomTable(const char* datalayername, const char* geomname, OGRwkbGeometryType eType);
     void         AddField(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT obj);
     unsigned int GetCoordDim(IOM_BASKET model, IOM_OBJECT typeobj);
 };

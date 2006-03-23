@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/03/23 18:04:39  pka
+ * Add polygon geometry to area layer
+ * Performance improvement area polygonizer
+ *
  * Revision 1.9  2006/02/13 18:18:53  pka
  * Interlis 2: Support for nested attributes
  * Interlis 2: Arc interpolation
@@ -85,11 +89,8 @@
 #  endif
 #endif
 
-#ifdef POLYGONIZE_AREAS
-#  define AREA_TYPE wkbGeometryCollection
-#else
+#ifndef POLYGONIZE_AREAS
 #  warning Interlis 1 Area polygonizing disabled. Needs GEOS >= 2.1.0
-#  define AREA_TYPE wkbMultiLineString
 #endif
 
 CPL_CVSID("$Id$");
@@ -105,6 +106,9 @@ ILI1Reader::ILI1Reader() {
   fpItf = NULL;
   nLayers = 0;
   papoLayers = NULL;
+  nAreaLayers = 0;
+  papoAreaLayers = NULL;
+  papoAreaLineLayers = NULL;
   SetArcDegrees(1);
 }
 
@@ -161,7 +165,7 @@ void ILI1Reader::AddCoord(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT modelele
   }
 }
 
-void ILI1Reader::AddGeomTable(const char* datalayername, const char* geomname, OGRwkbGeometryType eType) {
+OGRLayer* ILI1Reader::AddGeomTable(const char* datalayername, const char* geomname, OGRwkbGeometryType eType) {
   static char layername[512];
   layername[0] = '\0';
   strcat(layername, datalayername);
@@ -174,6 +178,7 @@ void ILI1Reader::AddGeomTable(const char* datalayername, const char* geomname, O
   geomlayer->GetLayerDefn()->AddFieldDefn(&fieldDef);
   OGRFieldDefn fieldDef2("ILI_Geometry", OFTString); //in write mode only?
   geomlayer->GetLayerDefn()->AddFieldDefn(&fieldDef2);
+  return geomlayer;
 }
 
 void ILI1Reader::AddField(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT obj) {
@@ -186,7 +191,10 @@ void ILI1Reader::AddField(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT obj) {
     if (controlPointDomain) {
       AddCoord(layer, model, obj, GetTypeObj(model, controlPointDomain));
     }
-    AddGeomTable(layer->GetLayerDefn()->GetName(), iom_getattrvalue(obj, "name"), AREA_TYPE);
+    OGRLayer* areaLineLayer = AddGeomTable(layer->GetLayerDefn()->GetName(), iom_getattrvalue(obj, "name"), wkbMultiLineString);
+#ifdef POLYGONIZE_AREAS
+    AddAreaLayer(layer, areaLineLayer);
+#endif
   } else if (EQUAL(typenam, "iom04.metamodel.PolylineType") ) {
     layer->GetLayerDefn()->SetGeomType(wkbMultiLineString);
   } else if (EQUAL(typenam, "iom04.metamodel.CoordType")) {
@@ -331,9 +339,10 @@ int ILI1Reader::ReadFeatures() {
       }
       else if (EQUAL(firsttok, "TABL"))
       {
-        CPLDebug( "OGR_ILI", "Reading table (%s).", CSLGetField(tokens, 1) );
+        CPLDebug( "OGR_ILI", "Reading table %s.", GetLayerNameString(topic, CSLGetField(tokens, 1)) );
         curLayer = (OGRILI1Layer*)GetLayerByName(GetLayerNameString(topic, CSLGetField(tokens, 1)));
         if (curLayer == NULL) { //create one
+          CPLDebug( "OGR_ILI", "No model found, using default field names." );
           OGRSpatialReference *poSRSIn = NULL;
           int bWriterIn = 0;
           OGRwkbGeometryType eReqType = wkbUnknown;
@@ -354,6 +363,7 @@ int ILI1Reader::ReadFeatures() {
       }
       else if (EQUAL(firsttok, "ENDE"))
       {
+        PolygonizeAreaLayers();
         return TRUE;
       }
       else
@@ -414,12 +424,11 @@ OGRMultiPolygon* ILI1Reader::Polygonize( OGRGeometryCollection* poLines )
     return (OGRMultiPolygon *) poMP;
 
 #elif defined(POLYGONIZE_AREAS)
-    //CPLDebug( "OGR_ILI", "ILI1Reader::Polygonize: exportToGEOS poLines->getNumGeometries(): %d", poLines->getNumGeometries());
-    geos::Geometry *poThisGeosGeom = (geos::Geometry *)poLines->exportToGEOS();
-
+    int i;
     geos::Polygonizer* polygonizer = new geos::Polygonizer();
-    polygonizer->add(poThisGeosGeom);
-    //CPLDebug( "OGR_ILI", "ILI1Reader::Polygonize: polygonizer->getPolygons");
+    for (i=0; i<poLines->getNumGeometries(); i++)
+        polygonizer->add((geos::Geometry *)poLines->getGeometryRef(i)->exportToGEOS());
+
     vector<geos::Polygon*> *poOtherGeosGeom = polygonizer->getPolygons();
 
     for (unsigned i = 0; i < poOtherGeosGeom->size(); i++)
@@ -429,12 +438,99 @@ OGRMultiPolygon* ILI1Reader::Polygonize( OGRGeometryCollection* poLines )
     }
 
     //delete poOtherGeosGeom;
-    delete poThisGeosGeom;
     delete polygonizer;
 #endif
 
     return poPolygon;
 }
+
+
+void ILI1Reader::PolygonizeAreaLayers()
+{
+    for(int iLayer = 0; iLayer < nAreaLayers; iLayer++ )
+    {
+      OGRLayer *poAreaLayer = papoAreaLayers[iLayer];
+      OGRLayer *poLineLayer = papoAreaLineLayers[iLayer];
+
+      //add all lines from poLineLayer to collection
+      OGRGeometryCollection *gc = new OGRGeometryCollection();
+      poLineLayer->ResetReading();
+      while (OGRFeature *feature = poLineLayer->GetNextFeature())
+          gc->addGeometry(feature->GetGeometryRef());
+
+      //polygonize lines
+      CPLDebug( "OGR_ILI", "Polygonizing layer %s with %d multilines", poAreaLayer->GetLayerDefn()->GetName(), gc->getNumGeometries());
+      OGRMultiPolygon* polys = Polygonize( gc );
+
+      //associate polygon feature with data row according to centroid
+      int i;
+      OGRPolygon emptyPoly;
+#if defined(POLYGONIZE_AREAS) && defined(GEOS_C_API)
+      GEOSGeom *ahInGeoms;
+      ahInGeoms = (GEOSGeom *) CPLCalloc(sizeof(void*),polys->getNumGeometries());
+      for( i = 0; i < polys->getNumGeometries(); i++ )
+      {
+          ahInGeoms[i] = polys->getGeometryRef(i)->exportToGEOS();
+          if (!GEOSisValid(ahInGeoms[i]) ahInGeoms[i] = NULL;
+      }
+      poAreaLayer->ResetReading();
+      while (OGRFeature *feature = poAreaLayer->GetNextFeature())
+      {
+        GEOSGeom point = (GEOSGeom)feature->GetGeometryRef()->exportToGEOS();
+        for (i = 0; i < polys->getNumGeometries(); i++ )
+        {
+          if (ahInGeoms[i] && GEOSWithin(point, ahInGeoms[i]))
+          {
+            feature->SetGeometry( polys->getGeometryRef(i) );
+            break;
+          }
+        }
+        if (i == polys->getNumGeometries())
+        {
+          CPLDebug( "OGR_ILI", "Association between area and point failed.");
+          feature->SetGeometry( &emptyPoly );
+        }
+        GEOSGeom_destroy( point );
+      }
+      poAreaLayer->GetLayerDefn()->SetGeomType(wkbPolygon);
+      for( i = 0; i < polys->getNumGeometries(); i++ )
+          GEOSGeom_destroy( ahInGeoms[i] );
+      CPLFree( ahInGeoms );
+#elif defined(POLYGONIZE_AREAS)
+      geos::Geometry **ahInGeoms;
+      ahInGeoms = (geos::Geometry **) CPLCalloc(sizeof(void*),polys->getNumGeometries());
+      for( i = 0; i < polys->getNumGeometries(); i++ )
+      {
+          ahInGeoms[i] = (geos::Geometry *)polys->getGeometryRef(i)->exportToGEOS();
+          if (!ahInGeoms[i]->isValid()) ahInGeoms[i] = NULL;
+      }
+      poAreaLayer->ResetReading();
+      while (OGRFeature *feature = poAreaLayer->GetNextFeature())
+      {
+        geos::Geometry *point = (geos::Geometry *)feature->GetGeometryRef()->exportToGEOS();
+        for (i = 0; i < polys->getNumGeometries(); i++ )
+        {
+          if (ahInGeoms[i] && point->within(ahInGeoms[i]))
+          {
+            feature->SetGeometry( polys->getGeometryRef(i) );
+            break;
+          }
+        }
+        if (i == polys->getNumGeometries())
+        {
+          CPLDebug( "OGR_ILI", "Association between area and point failed.");
+          feature->SetGeometry( &emptyPoly );
+        }
+        delete point;
+      }
+      poAreaLayer->GetLayerDefn()->SetGeomType(wkbPolygon);
+      for( i = 0; i < polys->getNumGeometries(); i++ )
+          delete ahInGeoms[i];
+      CPLFree( ahInGeoms );
+#endif
+    }
+}
+
 
 int ILI1Reader::ReadTable() {
     
@@ -498,31 +594,7 @@ int ILI1Reader::ReadTable() {
         {
           AddIliGeom(feature, featureDef->GetFieldCount()-1, fpos);
         }
-        if (featureDef->GetGeomType() == wkbGeometryCollection) //AREA
-        {
-          featureDef->SetGeomType(wkbPolygon);
-          OGRGeometryCollection *gc = (OGRGeometryCollection *)geom;
-          if (gc->getNumGeometries() > 0)
-          {
-            OGRMultiPolygon* polys = Polygonize( gc );
-            for (int i = 0; i < polys->getNumGeometries(); i++)
-            {
-              if (i>0)
-              {
-                feature = new OGRFeature(featureDef);
-                curLayer->AddFeature(feature);
-              }
-              feature->SetGeometry( polys->getGeometryRef(i) );
-              //TODO: associate polygon feature with data row according to centroid
-            }
-          }
-          return TRUE; //ETAB
-        }
-        else
-        {
-          feature->SetGeometry(geom);
-        }
-
+        feature->SetGeometry(geom);
       }
       else if (EQUAL(firsttok, "ELIN"))
       {
@@ -668,6 +740,24 @@ void ILI1Reader::AddLayer( OGRLayer * poNewLayer )
 }
 
 /************************************************************************/
+/*                              AddAreaLayer()                              */
+/************************************************************************/
+
+void ILI1Reader::AddAreaLayer( OGRLayer * poAreaLayer,  OGRLayer * poLineLayer )
+
+{
+    ++nAreaLayers;
+
+    papoAreaLayers = (OGRLayer **)
+        CPLRealloc( papoAreaLayers, sizeof(void*) * nAreaLayers );
+    papoAreaLineLayers = (OGRLayer **)
+        CPLRealloc( papoAreaLineLayers, sizeof(void*) * nAreaLayers );
+    
+    papoAreaLayers[nAreaLayers-1] = poAreaLayer;
+    papoAreaLineLayers[nAreaLayers-1] = poLineLayer;
+}
+
+/************************************************************************/
 /*                              GetLayer()                              */
 /************************************************************************/
 
@@ -691,7 +781,6 @@ OGRLayer *ILI1Reader::GetLayerByName( const char* pszLayerName )
     }
     return NULL;
 }
-
 
 /************************************************************************/
 /*                           GetLayerCount()                            */
