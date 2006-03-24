@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/03/24 17:51:00  fwarmerdam
+ * Fixed syntax error with GEOS_C_API case.
+ *
  * Revision 1.10  2006/03/23 18:04:39  pka
  * Add polygon geometry to area layer
  * Performance improvement area polygonizer
@@ -471,7 +474,7 @@ void ILI1Reader::PolygonizeAreaLayers()
       for( i = 0; i < polys->getNumGeometries(); i++ )
       {
           ahInGeoms[i] = polys->getGeometryRef(i)->exportToGEOS();
-          if (!GEOSisValid(ahInGeoms[i]) ahInGeoms[i] = NULL;
+          if (!GEOSisValid(ahInGeoms[i])) ahInGeoms[i] = NULL;
       }
       poAreaLayer->ResetReading();
       while (OGRFeature *feature = poAreaLayer->GetNextFeature())
