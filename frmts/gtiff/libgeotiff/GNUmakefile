@@ -1,5 +1,5 @@
 
-include ../../GDALmake.opt
+include ../../../GDALmake.opt
 
 OBJ	= \
 	xtiff.o \

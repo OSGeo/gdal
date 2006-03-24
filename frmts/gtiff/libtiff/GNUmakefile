@@ -1,5 +1,5 @@
 
-include ../../GDALmake.opt
+include ../../../GDALmake.opt
 
 OBJ	= \
 	tif_aux.o \
