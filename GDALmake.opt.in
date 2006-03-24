@@ -1,3 +1,4 @@
+GDAL_ROOT	=	@abs_top_builddir@
 top_builddir	=	$(GDAL_ROOT)
 
 #

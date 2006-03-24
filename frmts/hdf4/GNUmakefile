@@ -1,6 +1,5 @@
-GDAL_ROOT	=	../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 OBJ	=	hdf4dataset.o hdf4imagedataset.o
 

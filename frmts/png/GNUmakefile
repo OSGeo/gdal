@@ -1,6 +1,5 @@
-GDAL_ROOT	=	../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 ifeq ($(PNG_SETTING),internal)
 XTRA_OPT =	-DPNG_NO_GLOBAL_ARRAYS -Ilibpng

@@ -1,7 +1,6 @@
 
-GDAL_ROOT	=	../../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../../GDALmake.opt
 
 OBJ	=	ntffilereader.o ntfrecord.o ogrntfdatasource.o \
 		ogrntfdriver.o ogrntflayer.o ntf_estlayers.o \

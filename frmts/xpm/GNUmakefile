@@ -1,8 +1,7 @@
-GDAL_ROOT	=	../..
 
 OBJ	=	xpmdataset.o
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 XTRAOPTS = -I../mem
 

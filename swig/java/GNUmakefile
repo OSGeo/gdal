@@ -1,5 +1,4 @@
 
-GDAL_ROOT = ../..
 
 include $(GDAL_ROOT)/GDALmake.opt
 include java.opt

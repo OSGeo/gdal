@@ -1,10 +1,9 @@
 
-GDAL_ROOT	=	../..
 
 OBJ	=	sar_ceosdataset.o \
 		ceosrecipe.o ceossar.o ceos.o link.o
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 
 CPPFLAGS	:=	-I../raw $(GDAL_INCLUDE) $(CPPFLAGS)

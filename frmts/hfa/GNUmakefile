@@ -1,7 +1,6 @@
 
-GDAL_ROOT	=	../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 HFAOBJ  =	hfaopen.o hfaentry.o hfadictionary.o hfafield.o hfatype.o \
 		hfaband.o hfacompress.o
@@ -19,18 +18,18 @@ clean:
 	rm -f *.o hfatest img2tif $(O_OBJ)
 
 %.o:	addtiffo_src/%.cpp
-	$(CXX) -c -I$(GDAL_ROOT)/gcore -I$(GDAL_ROOT)/port $(ALL_C_FLAGS) \
+	$(CXX) -c -I../../gcore -I../../port $(ALL_C_FLAGS) \
 		addtiffo_src/$*.cpp -o $*.o
 
 
 hfatest:	hfatest.o $(HFAOBJ)
-	$(LD) hfatest.o $(HFAOBJ) $(GDAL_ROOT)/port/*.o $(LIBS) -o hfatest
+	$(LD) hfatest.o $(HFAOBJ) ../../port/*.o $(LIBS) -o hfatest
 
 img2tif:	img2tif.cpp imggeotiff.c geoextra.c \
 		tif_overview.o rawblockedimage.o $(HFAOBJ)
 	$(LD) $(ALL_C_FLAGS) -I../gtiff/libtiff -I../gtiff/libgeotiff \
 		img2tif.cpp imggeotiff.c geoextra.c \
-		$(HFAOBJ) $(GDAL_ROOT)/port/*.o $(LIBS) \
+		$(HFAOBJ) ../../port/*.o $(LIBS) \
 		tif_overview.o rawblockedimage.o\
 		../gtiff/libgeotiff/*.o \
 		../gtiff/libtiff/*.o \
@@ -58,8 +57,8 @@ img2tif-dist:
 	cp img2tif_build.sh img2tif_dist/build.sh
 	cp buildwin.bat img2tif_dist
 	mkdir img2tif_dist/port
-	cp $(GDAL_ROOT)/port/cpl_{config.h.vc,vsil_win32.cpp} img2tif_dist/port
-	cp $(GDAL_ROOT)/port/cpl_{path.cpp,conv.cpp,conv.h,error.cpp,error.h,port.h,string.cpp,string.h,vsi.h,vsisimple.cpp,config.h,cpl_csv.cpp,cpl_findfile.cpp} img2tif_dist/port
+	cp ../../port/cpl_{config.h.vc,vsil_win32.cpp} img2tif_dist/port
+	cp ../../port/cpl_{path.cpp,conv.cpp,conv.h,error.cpp,error.h,port.h,string.cpp,string.h,vsi.h,vsisimple.cpp,config.h,cpl_csv.cpp,cpl_findfile.cpp} img2tif_dist/port
 	mkdir img2tif_dist/libtiff
 	cp ../gtiff/libtiff/*.{c,h} img2tif_dist/libtiff
 	mkdir img2tif_dist/libgeotiff

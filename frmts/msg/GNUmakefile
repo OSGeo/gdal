@@ -1,8 +1,7 @@
-GDAL_ROOT	=	../..
 
 VPATH = PublicDecompWT/DISE/:PublicDecompWT/COMP/Src/:PublicDecompWT/COMP/WT/Src/
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 OBJ1=$(patsubst %.cpp,%.o,$(wildcard PublicDecompWT/COMP/WT/Src/*.cpp))
 OBJ2=$(patsubst %.cpp,%.o,$(wildcard PublicDecompWT/COMP/Src/*.cpp))

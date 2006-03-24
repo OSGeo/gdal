@@ -1,6 +1,5 @@
-GDAL_ROOT	=	../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 ifeq ($(LIBZ_SETTING),internal)
 XTRA_OPT =	-I../zlib

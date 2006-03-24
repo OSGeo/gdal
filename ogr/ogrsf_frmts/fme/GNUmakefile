@@ -1,7 +1,6 @@
 
-GDAL_ROOT	=	../../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../../GDALmake.opt
 
 OBJ	=	ogrfmecacheindex.o ogrfmedatasource.o ogrfmedriver.o \
 		ogrfmelayer.o ogrfmelayercached.o ogrfmelayerdb.o \

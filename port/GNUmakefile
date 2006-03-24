@@ -2,7 +2,6 @@
 # CPL (Common Portability Library) makefile
 #
 
-GDAL_ROOT = ..
 
 ifneq ($(wildcard ../GDALmake.op?),)
 include ../GDALmake.opt

@@ -1,7 +1,6 @@
 
-GDAL_ROOT	=	../../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../../GDALmake.opt
 
 OBJ	=	ogrsfdriverregistrar.o ogrlayer.o ogrdatasource.o \
 		ogrsfdriver.o ogrregisterall.o ogr_gensql.o \
@@ -79,5 +78,5 @@ default:	$(O_OBJ)
 clean:
 	rm -f *.o $(O_OBJ)
 
-$(O_OBJ):	$(GDAL_ROOT)/GDALmake.opt
+$(O_OBJ):	../../../GDALmake.opt
 

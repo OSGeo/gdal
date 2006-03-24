@@ -1,6 +1,5 @@
-GDAL_ROOT	=	../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 OBJ	=	geotiff.o gt_wkt_srs.o gt_overview.o \
 		tif_ovrcache.o tif_overview.o tif_float.o tifvsi.o
@@ -28,15 +27,15 @@ clean:
 	(cd libgeotiff; $(MAKE) clean)
 
 gt_test:	gt_test.o gt_gs.o cpl_csv.o
-	$(CC) gt_test.o gt_gs.o cpl_csv.o $(GDAL_ROOT)/port/*.o \
+	$(CC) gt_test.o gt_gs.o cpl_csv.o ../../port/*.o \
 		libgeotiff/libgeotiff.a libtiff/libtiff.a $(LIBS) -o gt_test
 
 gt_write:	gt_write.o gt_gs.o cpl_csv.o
-	$(CC) gt_write.o gt_gs.o cpl_csv.o $(GDAL_ROOT)/port/*.o \
+	$(CC) gt_write.o gt_gs.o cpl_csv.o ../../port/*.o \
 		libgeotiff/libgeotiff.a libtiff/libtiff.a $(LIBS) -o gt_write
 
 epsg_to_wkt:	epsg_to_wkt.o gt_wkt_srs.o 
-	$(CXX) epsg_to_wkt.o gt_wkt_srs.o $(GDAL_ROOT)/port/*.o \
+	$(CXX) epsg_to_wkt.o gt_wkt_srs.o ../../port/*.o \
 	    libgeotiff/libgeotiff.a libtiff/libtiff.a \
 	    $(GDAL_LIB) $(LIBS) -o epsg_to_wkt
 

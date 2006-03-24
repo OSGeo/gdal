@@ -1,4 +1,3 @@
-GDAL_ROOT	=	../..
 
 CURL_LIB = -lcurl
 #OTHER_OPTS :=	$(OTHER_OPTS) -DHAVE_CURL
