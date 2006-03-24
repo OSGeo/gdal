@@ -1,7 +1,6 @@
 
-GDAL_ROOT	=	../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 OBJ	=	adler32.o compress.o crc32.o deflate.o gzio.o \
 		infblock.o infcodes.o inffast.o inflate.o \

@@ -1,5 +1,4 @@
 
-GDAL_ROOT	=	.
 WEB_DIR		= $(HOME)/www/gdal
 
 include GDALmake.opt

@@ -1,7 +1,6 @@
 
-GDAL_ROOT	=	../../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../../GDALmake.opt
 
 OBJ	=	ogrpgeodatasource.o ogrpgeolayer.o ogrpgeodriver.o \
 		ogrpgeotablelayer.o ogrpgeoselectlayer.o

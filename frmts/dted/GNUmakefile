@@ -1,7 +1,6 @@
 
-GDAL_ROOT	=	../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 OBJ	=	dted_api.o dteddataset.o dted_create.o dted_ptstream.o
 

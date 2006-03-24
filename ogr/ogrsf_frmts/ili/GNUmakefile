@@ -1,9 +1,8 @@
 
-GDAL_ROOT	=	../../..
 
 SUBDIRS-yes     := iom
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../../GDALmake.opt
 
 CORE_OBJ =	 ili1reader.o ili2reader.o ili2handler.o
 

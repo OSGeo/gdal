@@ -1,6 +1,5 @@
-GDAL_ROOT      =       ../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 OBJ    =       msgndataset.o msg_basic_types.o msg_reader_core.o
 

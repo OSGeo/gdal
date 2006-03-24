@@ -1,7 +1,6 @@
 
-GDAL_ROOT	=	../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 OBJ	=	dodsdataset2.o 
 

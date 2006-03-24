@@ -3,9 +3,8 @@
 POSTGIS_INC     =-I/path/to/your/postgis/headers
 # END OF USER CONFIGURATION 
 
-GDAL_ROOT	=	../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 OBJ	=	pgchipdataset.o pgchiprasterband.o pgchiputilities.o
 

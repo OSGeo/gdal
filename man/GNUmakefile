@@ -1,4 +1,3 @@
-GDAL_ROOT	=	..
 
 MAN1_FILES	=	$(wildcard man1/*.1)
 

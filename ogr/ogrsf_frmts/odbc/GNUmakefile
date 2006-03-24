@@ -1,7 +1,6 @@
 
-GDAL_ROOT	=	../../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../../GDALmake.opt
 
 OBJ	=	ogrodbcdatasource.o ogrodbclayer.o ogrodbcdriver.o \
 		ogrodbctablelayer.o ogrodbcselectlayer.o

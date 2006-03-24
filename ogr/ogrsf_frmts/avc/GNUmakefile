@@ -1,7 +1,6 @@
 
-GDAL_ROOT	=	../../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../../GDALmake.opt
 
 OGR_OBJ =	ogravcbindriver.o ogravcbindatasource.o ogravcbinlayer.o \
 		ogravclayer.o ogravcdatasource.o

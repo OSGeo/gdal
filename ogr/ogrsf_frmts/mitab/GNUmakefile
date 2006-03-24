@@ -1,7 +1,6 @@
 
-GDAL_ROOT	=	../../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../../GDALmake.opt
 
 OBJ	=	mitab_rawbinblock.o mitab_mapheaderblock.o \
 		mitab_mapindexblock.o mitab_mapobjectblock.o \

@@ -4,9 +4,8 @@ WEB_DIR =	/u/www/projects/sdts
 
 SHPDIR		=	../shapelib
 ISO8211DIR	=	../iso8211
-GDAL_ROOT	=	../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 OBJ	=	sdtsiref.o sdtscatd.o sdtslinereader.o sdtslib.o \
 		sdtspointreader.o sdtsattrreader.o sdtstransfer.o \
@@ -58,10 +57,10 @@ dist:	docs
 	rm $(DISTDIR)/sdtsdataset.cpp
 	cp $(ISO8211DIR)/{*.cpp,*.h} $(DISTDIR)
 	rm configure
-	cp $(GDAL_ROOT)/port/{cpl_error*,cpl_port*,cpl_string*} $(DISTDIR)
-	cp $(GDAL_ROOT)/port/{cpl_vsisimple.cpp,cpl_config.h.in} $(DISTDIR)
-	cp $(GDAL_ROOT)/port/{cpl_vsi.h,cpl_conv.*,cpl_path.cpp} $(DISTDIR)
-	cp $(GDAL_ROOT)/port/cpl_config.h.in $(DISTDIR)/cpl_config.h
+	cp ../../port/{cpl_error*,cpl_port*,cpl_string*} $(DISTDIR)
+	cp ../../port/{cpl_vsisimple.cpp,cpl_config.h.in} $(DISTDIR)
+	cp ../../port/{cpl_vsi.h,cpl_conv.*,cpl_path.cpp} $(DISTDIR)
+	cp ../../port/cpl_config.h.in $(DISTDIR)/cpl_config.h
 	cp $(SHPDIR)/{shpopen.c,dbfopen.c,shapefil.h} $(DISTDIR)
 	rm $(DISTDIR)/*.o
 	tar czf $(DISTDIR).tar.gz $(DISTDIR)

@@ -1,4 +1,3 @@
-GDAL_ROOT	=	..
 
 include ../GDALmake.opt
 

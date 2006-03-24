@@ -1,7 +1,6 @@
 
-GDAL_ROOT	=	../../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../../GDALmake.opt
 
 OBJ	=	shape2ogr.o shpopen.o dbfopen.o shptree.o \
 		ogrshapedriver.o ogrshapedatasource.o ogrshapelayer.o

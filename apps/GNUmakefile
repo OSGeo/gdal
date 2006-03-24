@@ -1,7 +1,6 @@
 # We get a full absolute path to the tree in this case so that when we
 # generate the various paths in the local gdal-config file they will work
 # from anywhere in the filesystem. 
-GDAL_ROOT	=	$(shell (cd ..; pwd))
 
 include ../GDALmake.opt
 

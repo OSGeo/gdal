@@ -1,9 +1,8 @@
 
-GDAL_ROOT	=	../..
 
 VERSION =	1.3
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 OBJ	=	bsb_read.o bsbdataset.o
 
@@ -29,10 +28,10 @@ dist:
 	rm $(DISTDIR)/bsbdataset.cpp
 	cp Makefile.dist $(DISTDIR)/Makefile
 	cp README.dist $(DISTDIR)/README
-	cp $(GDAL_ROOT)/port/{cpl_error*,cpl_port*,cpl_string*} $(DISTDIR)
-	cp $(GDAL_ROOT)/port/{cpl_vsisimple.cpp,cpl_config.h.in} $(DISTDIR)
-	cp $(GDAL_ROOT)/port/{cpl_vsi.h,cpl_conv.*,cpl_path.cpp} $(DISTDIR)
-	cp $(GDAL_ROOT)/port/cpl_config.h.in $(DISTDIR)/cpl_config.h
+	cp ../../port/{cpl_error*,cpl_port*,cpl_string*} $(DISTDIR)
+	cp ../../port/{cpl_vsisimple.cpp,cpl_config.h.in} $(DISTDIR)
+	cp ../../port/{cpl_vsi.h,cpl_conv.*,cpl_path.cpp} $(DISTDIR)
+	cp ../../port/cpl_config.h.in $(DISTDIR)/cpl_config.h
 	rm $(DISTDIR)/*.o
 	tar czf $(DISTDIR).tar.gz $(DISTDIR)
 	zip -r $(DISTDIR).zip $(DISTDIR)

@@ -1,14 +1,13 @@
 
-GDAL_ROOT	=	../../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../../GDALmake.opt
 
 MIN_OBJ	=	dgnopen.o dgnread.o dgnfloat.o dgnhelp.o dgnwrite.o dgnstroke.o
 OBJ =	ogrdgndriver.o ogrdgndatasource.o ogrdgnlayer.o $(MIN_OBJ)
 
 CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 
-CPL_DIR	=	$(GDAL_ROOT)/port
+CPL_DIR	=	../../../port
 
 WEB_DIR =	$(HOME)/dgnlib-web
 DIST_REV =	1.10

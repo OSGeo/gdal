@@ -1,12 +1,11 @@
-GDAL_ROOT	=	../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 VERSION =	1.3
 DISTDIR =	iso8211lib-$(VERSION)
 WEB_DIR =	/u/www/projects/iso8211
 
-CPPFLAGS	:=	-I. -I$(GDAL_ROOT)/port $(CPPFLAGS)
+CPPFLAGS	:=	-I. -I../../port $(CPPFLAGS)
 
 ISOLIB = libiso8211.a
 OBJ =	ddfmodule.o ddfutils.o ddffielddefn.o ddfrecord.o ddffield.o \
@@ -65,10 +64,10 @@ dist:	docs
 	autoconf
 	cp *.cpp *.h configure Makefile.in $(DISTDIR)
 	rm configure
-	cp $(GDAL_ROOT)/port/{cpl_error*,cpl_port*,cpl_string*} $(DISTDIR)
-	cp $(GDAL_ROOT)/port/{cpl_vsisimple.cpp,cpl_config.h.in} $(DISTDIR)
-	cp $(GDAL_ROOT)/port/{cpl_vsi.h,cpl_conv.*} $(DISTDIR)
-	cp $(GDAL_ROOT)/port/cpl_config.h.vc $(DISTDIR)
+	cp ../../port/{cpl_error*,cpl_port*,cpl_string*} $(DISTDIR)
+	cp ../../port/{cpl_vsisimple.cpp,cpl_config.h.in} $(DISTDIR)
+	cp ../../port/{cpl_vsi.h,cpl_conv.*} $(DISTDIR)
+	cp ../../port/cpl_config.h.vc $(DISTDIR)
 	rm $(DISTDIR)/*.o
 	tar czf $(DISTDIR).tar.gz $(DISTDIR)
 	zip -r $(DISTDIR).zip $(DISTDIR)

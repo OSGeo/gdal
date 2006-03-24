@@ -1,7 +1,6 @@
 
-GDAL_ROOT	=	../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 GDAL_OBJ	=	nitfdataset.o
 NITFLIB_OBJ	=	nitffile.o nitfimage.o mgrs.o

@@ -1,11 +1,10 @@
-GDAL_ROOT	=	../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 OBJ	=	mrsiddataset.o
 
 ifeq ($(GEOTIFF_SETTING),internal)
-GEOTIFF_INCLUDE	=	-I$(GDAL_ROOT)/frmts/gtiff/libgeotiff
+GEOTIFF_INCLUDE	=	-I../../frmts/gtiff/libgeotiff
 endif
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(MRSID_FLAGS) $(MRSID_INCLUDE) $(GEOTIFF_INCLUDE) $(CPPFLAGS)

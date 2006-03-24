@@ -1,6 +1,5 @@
-GDAL_ROOT	=	../../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 OBJ	= \
 	xtiff.o \
@@ -34,7 +33,7 @@ clean:
 install-obj:	$(O_OBJ)
 
 ../../o/%.o:	%.c
-	$(CC) -c -I$(GDAL_ROOT)/port $(ALL_C_FLAGS) $< -o $@
+	$(CC) -c -I../../port $(ALL_C_FLAGS) $< -o $@
 
 #
 # Updating to the latest libgeotiff involves copying all matching source

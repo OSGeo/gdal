@@ -1,7 +1,6 @@
 
-GDAL_ROOT	=	../../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../../GDALmake.opt
 
 OBJ	=	oci_utils.o ogrocisession.o ogrocistatement.o \
 		ogrocidriver.o ogrocidatasource.o ogrocilayer.o \

@@ -1,6 +1,5 @@
-GDAL_ROOT	=	../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 ifeq ($(GIF_SETTING),internal)
 XTRA_OPT =	-Ilibungif

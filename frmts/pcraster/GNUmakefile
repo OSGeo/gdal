@@ -1,6 +1,5 @@
-GDAL_ROOT	=	../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 CPPFLAGS := $(XTRA_OPT) $(GDAL_INCLUDE) $(CPPFLAGS)
 

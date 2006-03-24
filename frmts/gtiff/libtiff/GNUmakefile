@@ -1,6 +1,5 @@
-GDAL_ROOT	=	../../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 OBJ	= \
 	tif_aux.o \
@@ -77,4 +76,4 @@ import:
 install-obj:	$(O_OBJ)
 
 ../../o/%.o:	%.c
-	$(CC) -c -I$(GDAL_ROOT)/port $(ALL_C_FLAGS) $< -o $@
+	$(CC) -c -I../../port $(ALL_C_FLAGS) $< -o $@

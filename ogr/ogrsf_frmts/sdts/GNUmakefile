@@ -1,16 +1,15 @@
 
-GDAL_ROOT	=	../../..
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../../GDALmake.opt
 
 OBJ	=	ogrsdtsdriver.o ogrsdtsdatasource.o ogrsdtslayer.o
 
 FRMTSLIB = 	../ogr.a
 
-ISODIR	=	$(GDAL_ROOT)/frmts/iso8211
+ISODIR	=	../../../frmts/iso8211
 ISOLIB  =	$(ISODIR)/libiso8211.a
 
-SDTSDIR = 	$(GDAL_ROOT)/frmts/sdts
+SDTSDIR = 	../../../frmts/sdts
 SDTSLIB =	$(SDTSDIR)/libsdts_al.a
 
 CPPFLAGS :=	-I.. -I../.. -I$(SDTSDIR) -I$(ISODIR) $(GDAL_INCLUDE) $(CPPFLAGS)
