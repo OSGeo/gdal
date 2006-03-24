@@ -1,6 +1,6 @@
 
 
-include ../../../GDALmake.opt
+include ../../../../GDALmake.opt
 
 OBJ =	iom_attr.o iom_basket.o iom_error.o iom_file.o iom_iterator.o iom_object.o iom_utilities.o iom_value.o \
     reader.o tags.o ustrings.o writer.o
