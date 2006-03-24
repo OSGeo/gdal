@@ -104,7 +104,7 @@ GDAL_INCLUDE	=	-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore \
 			-I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts
 
 # libtool targets and help variables
-LIBGDAL	:=	$(GDAL_ROOT)/libgdal.la
+LIBGDAL	:=		libgdal.la
 LIBGDAL_CURRENT	:=	10
 LIBGDAL_REVISION	:=	0
 LIBGDAL_AGE	:=	9
@@ -298,9 +298,9 @@ GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 xpm \
 #
 
 ifeq ($(HAVE_LIBTOOL), yes)
-CONFIG_LIBS	=	$(LIBGDAL)
+CONFIG_LIBS	=	$(GDAL_ROOT)/$(LIBGDAL)
 CONFIG_LIBS_INS	=	-L$(INST_LIB) -lgdal
-EXE_DEP_LIBS	=	$(LIBGDAL)
+EXE_DEP_LIBS	=	$(GDAL_ROOT)/$(LIBGDAL)
 SO_EXT		=	la
 else
 
