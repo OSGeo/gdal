@@ -10,19 +10,24 @@ CPPFLAGS	:=	-I.. -I../.. $(GDAL_INCLUDE) $(CPPFLAGS)
 CPL_DIR	=	../../../port
 
 WEB_DIR =	$(HOME)/dgnlib-web
-DIST_REV =	1.10
+DIST_REV =	1.11
 DIST_DIR =	dgnlib-$(DIST_REV)
 DIST_FILE = 	dgnlib-$(DIST_REV).zip
 DIST_FILES =	dgnread.cpp dgnopen.cpp dgnlib.h dgnlibp.h dgnfloat.cpp \
-		dgnstroke.cpp dgnwrite.cpp dgnhelp.cpp README \
+		dgnstroke.cpp dgnwrite.cpp dgnhelp.cpp \
 		dgnwritetest.c dgndump.c \
 		\
-		$(CPL_DIR)/cpl_config.h $(CPL_DIR)/cpl_port.h \
+		dist/Makefile dist/Makefile.vc dist/cpl_config.h \
+		dist/README \
+		\
+		$(CPL_DIR)/cpl_port.h \
 		$(CPL_DIR)/cpl_vsi.h $(CPL_DIR)/cpl_vsisimple.cpp \
 		$(CPL_DIR)/cpl_conv.h $(CPL_DIR)/cpl_conv.cpp \
 		$(CPL_DIR)/cpl_error.h $(CPL_DIR)/cpl_error.cpp \
 		$(CPL_DIR)/cpl_string.h $(CPL_DIR)/cpl_string.cpp \
-		$(CPL_DIR)/cpl_config.h.vc
+		$(CPL_DIR)/cpl_config.h.vc $(CPL_DIR)/cpl_vsil_simple.cpp \
+		$(CPL_DIR)/cpl_path.cpp $(CPL_DIR)/cpl_dir.cpp \
+		$(CPL_DIR)/cpl_multiproc.h $(CPL_DIR)/cpl_multiproc.cpp
 
 default:	$(O_OBJ)
 
@@ -31,7 +36,7 @@ clean:
 	rm -f dgndump dgnwritetest
 
 dgndump:	dgndump.c $(MIN_OBJ)
-	$(CXX) $(CPPFLAGS) $(CFLAGS) dgndump.c $(MIN_OBJ) $(GDAL_LIB) -ldl -lm -o dgndump 
+	$(CXX) $(CPPFLAGS) $(CFLAGS) dgndump.c $(MIN_OBJ) $(GDAL_LIB) -ldl -lm -lpthread -o dgndump 
 
 dgnwritetest:	dgnwritetest.c $(MIN_OBJ)
 	$(CXX) $(CPPFLAGS) $(CFLAGS) dgnwritetest.c $(MIN_OBJ) $(GDAL_LIB) -ldl \
@@ -40,12 +45,10 @@ dgnwritetest:	dgnwritetest.c $(MIN_OBJ)
 docs:
 	doxygen
 
-dist:
+zip:
 	rm -rf $(DIST_DIR)
 	mkdir $(DIST_DIR)
 	cp $(DIST_FILES) $(DIST_DIR)
-	cp Makefile.dist $(DIST_DIR)/Makefile
-	cp Makefile.vc.dist $(DIST_DIR)/Makefile.vc
 	zip -r $(DIST_FILE) $(DIST_DIR)
 
 web-docs-update:	docs
