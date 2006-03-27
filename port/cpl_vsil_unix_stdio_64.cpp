@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/03/27 15:24:41  fwarmerdam
+ * buffer in FWrite is const
+ *
  * Revision 1.10  2006/02/19 21:54:34  mloskot
  * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
  *
@@ -146,7 +149,7 @@ class VSIUnixStdioHandle : public VSIVirtualHandle
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
     virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t    Write( void *pBuffer, size_t nSize, size_t nMemb );
+    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
     virtual int       Eof();
     virtual int       Flush();
     virtual int       Close();
@@ -206,7 +209,8 @@ size_t VSIUnixStdioHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIUnixStdioHandle::Write( void * pBuffer, size_t nSize, size_t nCount )
+size_t VSIUnixStdioHandle::Write( const void * pBuffer, size_t nSize, 
+                                  size_t nCount )
 
 {
     return fwrite( pBuffer, nSize, nCount, fp );

@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.31  2006/03/27 15:24:41  fwarmerdam
+ * buffer in FWrite is const
+ *
  * Revision 1.30  2006/03/21 20:11:54  fwarmerdam
  * fixup headers a bit
  *
@@ -133,7 +136,7 @@ void CPL_DLL    VSIRewind( FILE * );
 void CPL_DLL    VSIFFlush( FILE * );
 
 size_t CPL_DLL  VSIFRead( void *, size_t, size_t, FILE * );
-size_t CPL_DLL  VSIFWrite( void *, size_t, size_t, FILE * );
+size_t CPL_DLL  VSIFWrite( const void *, size_t, size_t, FILE * );
 char CPL_DLL   *VSIFGets( char *, int, FILE * );
 int CPL_DLL     VSIFPuts( const char *, FILE * );
 int CPL_DLL     VSIFPrintf( FILE *, const char *, ... );
@@ -177,7 +180,7 @@ int CPL_DLL     VSIFSeekL( FILE *, vsi_l_offset, int );
 vsi_l_offset CPL_DLL VSIFTellL( FILE * );
 void CPL_DLL    VSIRewindL( FILE * );
 size_t CPL_DLL  VSIFReadL( void *, size_t, size_t, FILE * );
-size_t CPL_DLL  VSIFWriteL( void *, size_t, size_t, FILE * );
+size_t CPL_DLL  VSIFWriteL( const void *, size_t, size_t, FILE * );
 int CPL_DLL     VSIFEofL( FILE * );
 int CPL_DLL    VSIFFlushL( FILE * );
 

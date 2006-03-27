@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/03/27 15:24:41  fwarmerdam
+ * buffer in FWrite is const
+ *
  * Revision 1.20  2006/03/21 20:11:54  fwarmerdam
  * fixup headers a bit
  *
@@ -201,7 +204,7 @@ size_t VSIFRead( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
 /*                             VSIFWrite()                              */
 /************************************************************************/
 
-size_t VSIFWrite( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
+size_t VSIFWrite( const void *pBuffer, size_t nSize, size_t nCount, FILE * fp )
 
 {
     size_t nResult = fwrite( pBuffer, nSize, nCount, fp );

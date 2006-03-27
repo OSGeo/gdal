@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/03/27 15:24:41  fwarmerdam
+ * buffer in FWrite is const
+ *
  * Revision 1.10  2006/02/24 23:06:18  mloskot
  * Fix missing namespace in string type usage
  * Bug reported by Thom DeCarlo in the [Gdal-dev] problem compiling with VS.NET post on the list.
@@ -145,7 +148,7 @@ class VSIMemHandle : public VSIVirtualHandle
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
     virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t    Write( void *pBuffer, size_t nSize, size_t nMemb );
+    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
     virtual int       Eof();
     virtual int       Close();
 };
@@ -327,7 +330,7 @@ size_t VSIMemHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIMemHandle::Write( void * pBuffer, size_t nSize, size_t nCount )
+size_t VSIMemHandle::Write( const void * pBuffer, size_t nSize, size_t nCount )
 
 {
     int nBytesToWrite = nSize * nCount; 
