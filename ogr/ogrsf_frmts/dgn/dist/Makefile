@@ -13,3 +13,6 @@ dgndump:	dgndump.c $(OBJ)
 
 dgnwritetest:	dgnwritetest.c $(OBJ)
 	$(CXX) dgndump.c $(OBJ) -o dgnwritetest
+
+clean:
+	rm -f *.o dgndump dgnwritetest
