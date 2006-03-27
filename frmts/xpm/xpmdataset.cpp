@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.12  2006/03/27 17:57:31  fwarmerdam
+ * Added check for static keyword.  Ivan encountered "XPM" in a raw image.
+ *
  * Revision 1.11  2005/05/05 15:54:49  fwarmerdam
  * PAM Enabled
  *
@@ -120,10 +123,12 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      First we check to see if the file has the expected header       */
 /*      bytes.  For now we expect the XPM file to start with a line     */
-/*      containing the letters XPM.                                     */
+/*      containing the letters XPM, and to have "static" in the         */
+/*      header.                                                         */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 32 
-        || strstr((const char *) poOpenInfo->pabyHeader,"XPM") == NULL )
+        || strstr((const char *) poOpenInfo->pabyHeader,"XPM") == NULL 
+        || strstr((const char *) poOpenInfo->pabyHeader,"status") == NULL )
         return NULL;
 
     if( poOpenInfo->eAccess == GA_Update )
