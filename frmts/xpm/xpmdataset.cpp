@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.13  2006/03/27 17:58:12  fwarmerdam
+ * Fixed last change.
+ *
  * Revision 1.12  2006/03/27 17:57:31  fwarmerdam
  * Added check for static keyword.  Ivan encountered "XPM" in a raw image.
  *
@@ -128,7 +131,7 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 32 
         || strstr((const char *) poOpenInfo->pabyHeader,"XPM") == NULL 
-        || strstr((const char *) poOpenInfo->pabyHeader,"status") == NULL )
+        || strstr((const char *) poOpenInfo->pabyHeader,"static") == NULL )
         return NULL;
 
     if( poOpenInfo->eAccess == GA_Update )
