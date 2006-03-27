@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/03/27 15:24:41  fwarmerdam
+ * buffer in FWrite is const
+ *
  * Revision 1.17  2006/02/21 20:32:45  fwarmerdam
  * use CPLString instead of string
  *
@@ -110,7 +113,7 @@ class VSIWin32Handle : public VSIVirtualHandle
     virtual int       Seek( vsi_l_offset nOffset, int nWhence );
     virtual vsi_l_offset Tell();
     virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb );
-    virtual size_t    Write( void *pBuffer, size_t nSize, size_t nMemb );
+    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb );
     virtual int       Eof();
     virtual int       Flush();
     virtual int       Close();
@@ -233,13 +236,14 @@ size_t VSIWin32Handle::Read( void * pBuffer, size_t nSize, size_t nCount )
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIWin32Handle::Write( void * pBuffer, size_t nSize, size_t nCount )
+size_t VSIWin32Handle::Write( const void *pBuffer, size_t nSize, size_t nCount)
 
 {
     DWORD       dwSizeWritten;
     size_t      nResult;
 
-    if( !WriteFile(hFile,pBuffer,(DWORD)(nSize*nCount),&dwSizeWritten,NULL) )
+    if( !WriteFile(hFile, (void *)pBuffer,
+                   (DWORD)(nSize*nCount),&dwSizeWritten,NULL) )
         nResult = 0;
     else if( nSize == 0)
         nResult = 0;
