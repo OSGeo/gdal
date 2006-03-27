@@ -470,12 +470,12 @@ In C++:
 \code
 #include "cpl_string.h"
 ...
-    const char **papszOptions = NULL;
+    char **papszOptions = NULL;
     
     papszOptions = CSLSetNameValue( papszOptions, "TILED", "YES" );
     papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "PACKBITS" );
     poDstDS = poDriver->CreateCopy( pszDstFilename, poSrcDS, FALSE, 
-                                    papzOptions, GDALTermProgress, NULL );
+                                    papszOptions, GDALTermProgress, NULL );
     if( poDstDS != NULL )
         delete poDstDS;
 \endcode
@@ -484,12 +484,12 @@ In C:
 \code
 #include "cpl_string.h"
 ...
-    const char **papszOptions = NULL;
+    char **papszOptions = NULL;
     
     papszOptions = CSLSetNameValue( papszOptions, "TILED", "YES" );
     papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "PACKBITS" );
     hDstDS = GDALCreateCopy( hDriver, pszDstFilename, hSrcDS, FALSE, 
-                             papzOptions, GDALTermProgres, NULL );
+                             papszOptions, GDALTermProgres, NULL );
     if( hDstDS != NULL )
         GDALClose( hDstDS );
 \endcode
