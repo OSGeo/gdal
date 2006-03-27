@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/03/27 18:36:17  fwarmerdam
+ * VSIFWriteL has const buffer now
+ *
  * Revision 1.6  2006/01/11 00:29:54  fwarmerdam
  * added brief not on multithreading
  *
@@ -419,7 +422,7 @@ size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
  * @return number of objects successfully written.
  */
 
-size_t VSIFWriteL( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
+size_t VSIFWriteL( const void *pBuffer, size_t nSize, size_t nCount, FILE *fp )
 
 {
     VSIVirtualHandle *poFileHandle = (VSIVirtualHandle *) fp;
