@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/03/28 16:07:14  pka
+ * Optional model file for Interlis 2 reader
+ *
  * Revision 1.3  2005/08/06 22:21:53  pka
  * Area polygonizer added
  *
@@ -57,11 +60,12 @@ public:
     virtual     ~IILI2Reader();
 
     virtual void SetSourceFile( const char *pszFilename ) = 0;
-    
+    virtual int  ReadModel( const char *pszModelFilename ) = 0;
     virtual int  SaveClasses( const char *pszFilename ) = 0;
     
     virtual std::list<OGRLayer *> GetLayers() = 0;
     virtual int GetLayerCount() = 0;
+    virtual void SetArcDegrees(double newArcDegrees) = 0;
 };
 
 IILI2Reader *CreateILI2Reader();

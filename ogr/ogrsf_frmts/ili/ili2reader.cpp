@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/03/28 16:07:14  pka
+ * Optional model file for Interlis 2 reader
+ *
  * Revision 1.6  2006/02/16 14:29:12  fwarmerdam
  * applied some portability fixes for VC6
  *
@@ -57,6 +60,7 @@
 #include "cpl_string.h"
 
 #include "ilihelper.h"
+#include "iomhelper.h"
 #include "ili2reader.h"
 #include "ili2readerp.h"
 
@@ -175,7 +179,7 @@ OGRPoint *getPoint(DOMElement *elem) {
   return pt;
 }
 
-OGRLineString *getArc(DOMElement *elem) {
+OGRLineString *ILI2Reader::getArc(DOMElement *elem) {
   // elem -> ARC
   OGRLineString *ls = new OGRLineString();
   // previous point -> start point
@@ -207,7 +211,7 @@ OGRLineString *getArc(DOMElement *elem) {
   }
   ptEnd->flattenTo2D();
   ptOnArc->flattenTo2D();
-  interpolateArc(ls, ptStart, ptOnArc, ptEnd, PI/180);
+  interpolateArc(ls, ptStart, ptOnArc, ptEnd, arcIncr);
   return ls;
 }
 
@@ -284,7 +288,7 @@ OGRPolygon *getPolygon(DOMElement *elem) {
   return pg;
 }
 
-OGRGeometry *getGeometry(DOMElement *elem, int type) {
+OGRGeometry *ILI2Reader::getGeometry(DOMElement *elem, int type) {
   OGRGeometryCollection *gm = new OGRGeometryCollection();
 
   DOMElement *childElem = elem;
@@ -327,6 +331,116 @@ OGRGeometry *getGeometry(DOMElement *elem, int type) {
   return gm;
 }
 
+const char* ILI2Reader::GetLayerName(IOM_BASKET model, IOM_OBJECT table) {
+    static char layername[512];
+    IOM_OBJECT topic = GetAttrObj(model, table, "container");
+    layername[0] = '\0';
+    strcat(layername, iom_getattrvalue(GetAttrObj(model, topic, "container"), "name"));
+    strcat(layername, ".");
+    strcat(layername, iom_getattrvalue(topic, "name"));
+    strcat(layername, ".");
+    strcat(layername, iom_getattrvalue(table, "name"));
+    return layername;
+}
+
+void ILI2Reader::AddField(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT obj) {
+  const char* typenam = "Reference";
+  if (EQUAL(iom_getobjecttag(obj),"iom04.metamodel.LocalAttribute")) typenam = GetTypeName(model, obj);
+  if (EQUAL(typenam, "iom04.metamodel.SurfaceType")) {
+  } else if (EQUAL(typenam, "iom04.metamodel.AreaType")) {
+  } else if (EQUAL(typenam, "iom04.metamodel.PolylineType") ) {
+  } else if (EQUAL(typenam, "iom04.metamodel.CoordType")) {
+  } else {
+    OGRFieldDefn fieldDef(iom_getattrvalue(obj, "name"), OFTString);
+    layer->GetLayerDefn()->AddFieldDefn(&fieldDef);
+    CPLDebug( "OGR_ILI", "Field %s (Table %s): %s", fieldDef.GetNameRef(), layer->GetLayerDefn()->GetName(), typenam);
+  }
+}
+
+int ILI2Reader::ReadModel(const char *pszModelFilename) {
+
+  IOM_BASKET model;
+  IOM_ITERATOR modelelei;
+  IOM_OBJECT modelele;
+
+  iom_init();
+
+  // set error listener to a iom provided one, that just 
+  // dumps all errors to stderr
+  iom_seterrlistener(iom_stderrlistener);
+
+  // compile ili model
+  char *iomarr[1] = {(char *)pszModelFilename};
+  model=iom_compileIli(1, iomarr);
+  if(!model){
+    fprintf(stderr,"iom_compileIli() failed\n");
+    iom_end();
+    return FALSE;
+  }
+
+  // read tables
+  modelelei=iom_iteratorobject(model);
+  modelele=iom_nextobject(modelelei);
+  while(modelele){
+    const char *tag=iom_getobjecttag(modelele);
+    if (tag && EQUAL(tag,"iom04.metamodel.Table")) {
+      const char* topic = iom_getattrvalue(GetAttrObj(model, modelele, "container"), "name");
+      if (!EQUAL(topic, "INTERLIS")) {
+        const char* layername = GetLayerName(model, modelele);
+        OGRLayer* layer = new OGRILI2Layer(layername, NULL, 0, wkbUnknown, NULL);
+        m_listLayer.push_back(layer);
+        CPLDebug( "OGR_ILI", "Reading table model (%s).", layername );
+
+        // read fields
+        IOM_OBJECT fields[255];
+        IOM_OBJECT roledefs[255];
+        memset(fields, 0, 255);
+        memset(roledefs, 0, 255);
+        int maxIdx = -1;
+        IOM_ITERATOR fieldit=iom_iteratorobject(model);
+        for (IOM_OBJECT fieldele=iom_nextobject(fieldit); fieldele; fieldele=iom_nextobject(fieldit)){
+          const char *etag=iom_getobjecttag(fieldele);
+          if (etag && (EQUAL(etag,"iom04.metamodel.ViewableAttributesAndRoles"))) {
+            IOM_OBJECT table = GetAttrObj(model, fieldele, "viewable");
+            if (table == modelele) {
+              IOM_OBJECT obj = GetAttrObj(model, fieldele, "attributesAndRoles");
+              int ili1AttrIdx = GetAttrObjPos(fieldele, "attributesAndRoles")-1;
+              if (EQUAL(iom_getobjecttag(obj),"iom04.metamodel.RoleDef")) {
+                int ili1AttrIdx = atoi(iom_getattrvalue(GetAttrObj(model, obj, "oppend"), "ili1AttrIdx"));
+                roledefs[ili1AttrIdx] = obj;
+              } else {
+                fields[ili1AttrIdx] = obj;
+              }
+              if (ili1AttrIdx > maxIdx) maxIdx = ili1AttrIdx;
+              //CPLDebug( "OGR_ILI", "Field %s Pos: %d", iom_getattrvalue(obj, "name"), ili1AttrIdx);
+            }
+          }
+          iom_releaseobject(fieldele);
+        }
+        iom_releaseiterator(fieldit);
+
+        for (int i=0; i<=maxIdx; i++) {
+          IOM_OBJECT obj = fields[i];
+          IOM_OBJECT roleobj = roledefs[i];
+          if (roleobj) AddField(layer, model, roleobj);
+          if (obj) AddField(layer, model, obj);
+        }
+      }
+    }
+    iom_releaseobject(modelele);
+
+    modelele=iom_nextobject(modelelei);
+  }
+
+  iom_releaseiterator(modelelei);
+
+  iom_releasebasket(model);
+
+  iom_end();
+
+  return 0;
+}
+
 char* fieldName(DOMElement* elem) {
   string fullname;
   int depth = 0;
@@ -348,7 +462,7 @@ char* fieldName(DOMElement* elem) {
   return CPLStrdup(fullname.c_str());
 }
 
-void setFieldDefn(OGRFeatureDefn *featureDef, DOMElement* elem) {
+void ILI2Reader::setFieldDefn(OGRFeatureDefn *featureDef, DOMElement* elem) {
   int type = 0;
   //recursively search children
   for (DOMElement *childElem = (DOMElement *)elem->getFirstChild();
@@ -421,6 +535,10 @@ ILI2Reader::~ILI2Reader() {
     CPLFree( m_pszFilename );
 
     CleanupParser();
+}
+
+void ILI2Reader::SetArcDegrees(double arcDegrees) {
+  arcIncr = arcDegrees*PI/180;
 }
 
 void ILI2Reader::SetSourceFile( const char *pszFilename ) {

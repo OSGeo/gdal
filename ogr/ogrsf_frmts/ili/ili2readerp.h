@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/03/28 16:07:14  pka
+ * Optional model file for Interlis 2 reader
+ *
  * Revision 1.3  2006/02/13 18:18:53  pka
  * Interlis 2: Support for nested attributes
  * Interlis 2: Arc interpolation
@@ -130,6 +133,7 @@ private:
     ILI2Handler *m_poILI2Handler;
     SAX2XMLReader *m_poSAXReader;
     int      m_bReadStarted;
+    double   arcIncr;
     
     std::list<OGRLayer *> m_listLayer;
 
@@ -137,7 +141,9 @@ public:
              ILI2Reader();
             ~ILI2Reader();
 
+    void     SetArcDegrees(double arcDegrees);
     void     SetSourceFile( const char *pszFilename );
+    int      ReadModel( const char *pszModelFilename );
     int      SaveClasses( const char *pszFile );
     
     std::list<OGRLayer *> GetLayers();
@@ -145,6 +151,11 @@ public:
     
     int      AddFeature(DOMElement *elem);
     void     SetFieldValues(OGRFeature *feature, DOMElement* elem);
+    const char* GetLayerName(IOM_BASKET model, IOM_OBJECT table);
+    void     AddField(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT obj);
+    OGRLineString *getArc(DOMElement *elem);
+    OGRGeometry *getGeometry(DOMElement *elem, int type);
+    void     setFieldDefn(OGRFeatureDefn *featureDef, DOMElement* elem);
 };
 
 #endif

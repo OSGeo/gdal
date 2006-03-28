@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/03/28 16:07:14  pka
+ * Optional model file for Interlis 2 reader
+ *
  * Revision 1.4  2005/12/20 16:47:04  pka
  * Interlis 1 output without model
  *
@@ -100,12 +103,21 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
 {
     FILE        *fp;
     char        szHeader[1000];
+    std::string osModelFilename;
 
-    
+    char **filenames = CSLTokenizeString2( pszNewName, ",", 0 );
+
+    pszName = CPLStrdup( filenames[0] );
+
+    if( CSLCount(filenames) > 1 )
+        osModelFilename = filenames[1];
+
+    CSLDestroy( filenames );
+
 /* -------------------------------------------------------------------- */
 /*      Open the source file.                                           */
 /* -------------------------------------------------------------------- */
-    fp = VSIFOpen( pszNewName, "r" );
+    fp = VSIFOpen( pszName, "r" );
     if( fp == NULL )
     {
         if( !bTestOpen )
@@ -150,15 +162,20 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
         return FALSE;
     }
 
-    poReader->SetSourceFile( pszNewName );
-    
-    pszName = CPLStrdup( pszNewName );
+    if (osModelFilename.length() > 0 )
+        poReader->ReadModel( osModelFilename.c_str() );
 
-  poReader->SaveClasses( pszNewName );  
-  
-  listLayer = poReader->GetLayers();
-  
-    
+    if( getenv( "ARC_DEGREES" ) != NULL ) {
+      //No better way to pass arguments to the reader (it could even be an -lco arg)
+      poReader->SetArcDegrees( atoi( getenv("ARC_DEGREES") ) );
+    }
+
+    poReader->SetSourceFile( pszName );
+
+    poReader->SaveClasses( pszName );
+
+    listLayer = poReader->GetLayers();
+
     return TRUE;
 }
 
