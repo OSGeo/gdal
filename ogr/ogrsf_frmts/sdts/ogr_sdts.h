@@ -4,7 +4,7 @@
  * Project:  STS Translator
  * Purpose:  Definition of classes finding SDTS support into OGRDriver
  *           framework.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999,  Frank Warmerdam
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/03/28 23:17:06  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.5  2005/02/22 12:53:19  fwarmerdam
  * use OGRLayer base spatial filter support
  *
