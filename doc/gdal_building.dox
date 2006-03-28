@@ -80,13 +80,17 @@ directory at configure time with the --with-pymodir=&lt;directory&gt;
 
 \section gdal_building_win Building on Windows
 
-GDAL can be built on Windows using MS VC++ 6.x and MS Visual Studio .NET (C++).
+GDAL can be built on Win32 platforms using MS VC++ 6.x and MS Visual Studio 
+.NET (C++). 
 The source distribution includes NMAKE compatible makefiles for use from
 the command shell.   For those wanting Visual Studio 7.1 Solution files 
 (instead of the command line nmake files), Ben Discoe normally makes them 
 available on the <a href="http://vterrain.org/Distrib/gdal.html">VTerrain
 site</a>.  Only the nmake file approach is directly supported by the GDAL
 maintainer.<p>
+
+Windows CE is also supported by an alternate set of build files. See 
+<a href="wince.html">GDAL for Windows CE</a> for details.
 
 For command line builds you will normally have to have run 
 the VCVAR32.BAT script that comes with the compiler.  For VC 6.x this might be
