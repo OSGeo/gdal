@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements OGRPGDataSource class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2006/03/28 23:06:57  fwarmerdam
+ * fixed contact info
+ *
  * Revision 1.46  2006/03/02 00:16:06  fwarmerdam
  * Applied change to GEOMETRY_NAME creation option.
  *

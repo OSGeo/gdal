@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Private definitions for OGR/PostgreSQL driver.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2006/03/28 23:06:57  fwarmerdam
+ * fixed contact info
+ *
  * Revision 1.27  2006/02/15 04:26:17  fwarmerdam
  * added date support
  *
