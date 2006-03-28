@@ -3,7 +3,7 @@
  *
  * Project:  GDAL Core
  * Purpose:  Color table implementation.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  **********************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.6  2006/03/28 14:49:56  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.5  2005/09/05 19:29:29  fwarmerdam
  * minor formatting fix
  *

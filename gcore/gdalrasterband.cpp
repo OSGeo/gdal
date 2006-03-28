@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.76  2006/03/28 14:49:56  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.75  2006/02/07 19:07:07  fwarmerdam
  * applied some strategic improved outofmemory checking
  *
@@ -97,101 +100,6 @@
  *
  * Revision 1.53  2005/01/04 21:14:01  fwarmerdam
  * added GDAL_FORCE_CACHING config variable
- *
- * Revision 1.52  2004/12/02 20:32:28  fwarmerdam
- * added AdviseRead methods
- *
- * Revision 1.51  2004/11/23 04:07:29  fwarmerdam
- * Added warning on the BuildOverviews() method.
- *
- * Revision 1.50  2004/09/28 12:53:33  fwarmerdam
- * Fixed example.
- *
- * Revision 1.49  2004/09/02 16:03:57  warmerda
- * Fixed another bug in the GetBlock() example.
- *
- * Revision 1.48  2004/06/04 14:55:16  warmerda
- * Fixed doc error.
- *
- * Revision 1.47  2004/04/29 13:42:41  warmerda
- * added C Offset/Scale entry points
- *
- * Revision 1.46  2004/04/06 19:19:30  dron
- * Added GDALRasterBand::IsBlockCached() method.
- *
- * Revision 1.45  2003/09/23 15:51:10  warmerda
- * Fixed two doc errors in ReadBlock() docs.
- * http://bugzilla.remotesensing.org/show_bug.cgi?id=397
- *
- * Revision 1.44  2003/08/08 01:58:56  warmerda
- * Fixed progress monitor percentage in GetHistogram as per Peter Lenson's
- * suggestion.
- *
- * Revision 1.43  2003/05/21 04:43:29  warmerda
- * avoid warnings about unused formal parameters
- *
- * Revision 1.42  2003/05/06 05:20:38  sperkins
- * cleaned up comments
- *
- * Revision 1.41  2003/05/06 05:13:36  sperkins
- * added Fill() and GDALFillRaster()
- *
- * Revision 1.40  2003/05/02 19:47:57  warmerda
- * added C GetBandNumber and GetBandDataset entry points
- *
- * Revision 1.39  2003/04/30 17:13:48  warmerda
- * added docs for many C functions
- *
- * Revision 1.38  2003/04/25 19:49:18  warmerda
- * added bJustInitialize flag for fetching blocks
- *
- * Revision 1.37  2003/03/20 22:10:53  warmerda
- * added support for reporting cache thrashing
- *
- * Revision 1.36  2003/02/20 18:34:12  warmerda
- * added GDALGetRasterAccess()
- *
- * Revision 1.35  2002/12/18 15:19:26  warmerda
- * added errors in some unimplemented methods
- *
- * Revision 1.34  2002/11/11 16:02:06  dron
- * More error messages added.
- *
- * Revision 1.33  2002/10/17 17:55:31  warmerda
- * Minor improvement to RasterIO() docs.
- *
- * Revision 1.32  2002/09/15 15:32:50  dron
- * Added InitBlockInfo() call to ReadBlock() and WriteBlock() functions.
- *
- * Revision 1.31  2002/08/14 12:33:34  warmerda
- * Validate eRWFlag.
- *
- * Revision 1.30  2002/07/09 20:33:12  warmerda
- * expand tabs
- *
- * Revision 1.29  2002/05/29 15:58:26  warmerda
- * removed GetDescription(), added SetColorInterpretation()
- *
- * Revision 1.28  2002/05/28 18:55:08  warmerda
- * added GetDataset()
- *
- * Revision 1.27  2002/03/01 14:29:09  warmerda
- * added GetBand() method on GDALRasterBand
- *
- * Revision 1.26  2001/12/07 15:29:45  warmerda
- * added InitBlockInfo() in GetHistogram()
- *
- * Revision 1.25  2001/10/18 14:35:22  warmerda
- * avoid conflicts between parameters and member data
- *
- * Revision 1.24  2001/10/17 16:20:45  warmerda
- * make histograming work with complex data (r(treat as magnitude)
- *
- * Revision 1.23  2001/07/18 04:04:30  warmerda
- * added CPL_CVSID
- *
- * Revision 1.22  2001/07/05 13:13:40  warmerda
- * added UnitType from C support
  */
 
 #include "gdal_priv.h"

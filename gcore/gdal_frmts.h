@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2006/03/28 14:49:56  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.43  2006/02/07 21:44:43  fwarmerdam
  * DIPX->DIPEx
  *
@@ -161,6 +164,7 @@ void CPL_DLL GDALRegister_RIK(void);
 void CPL_DLL GDALRegister_Leveller(void);
 void CPL_DLL GDALRegister_SGI(void);
 void CPL_DLL GDALRegister_DIPEx(void);
+void CPL_DLL GDALRegister_ISIS2(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

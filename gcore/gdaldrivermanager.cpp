@@ -1,4 +1,11 @@
 /******************************************************************************
+ * $Id$
+ *
+ * Project:  GDAL Core
+ * Purpose:  Implementation of GDALDriverManager class.
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *
+ ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,11 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * gdaldrivermanager.cpp
- *
- * The GDALDriverManager class from gdal_priv.h.
- * 
  * $Log$
+ * Revision 1.32  2006/03/28 14:49:56  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.31  2005/09/15 18:39:43  fwarmerdam
  * cleanup TLS and VSI with driver manager
  *
@@ -76,49 +82,6 @@
  *
  * Revision 1.15  2003/04/30 17:13:48  warmerda
  * added docs for many C functions
- *
- * Revision 1.14  2002/12/03 04:41:41  warmerda
- * call CPLFinderClean() to cleanup memory
- *
- * Revision 1.13  2002/10/21 18:05:42  warmerda
- * added AutoSkipDrivers() method on driver manager
- *
- * Revision 1.12  2002/09/04 06:52:35  warmerda
- * added GDALDestroyDriverManager
- *
- * Revision 1.11  2002/07/09 20:33:12  warmerda
- * expand tabs
- *
- * Revision 1.10  2002/06/12 21:13:27  warmerda
- * use metadata based driver info
- *
- * Revision 1.9  2002/05/14 21:38:32  warmerda
- * make INST_DATA overidable with binary patch
- *
- * Revision 1.8  2001/07/18 04:04:30  warmerda
- * added CPL_CVSID
- *
- * Revision 1.7  2000/08/29 21:09:15  warmerda
- * added logic to push INST_DATA on data file search stack
- *
- * Revision 1.6  2000/04/22 12:25:41  warmerda
- * Documented AutoLoadDrivers().
- *
- * Revision 1.5  2000/04/04 23:44:29  warmerda
- * added AutoLoadDrivers() to GDALDriverManager
- *
- * Revision 1.4  2000/03/06 02:21:39  warmerda
- * added GDALRegisterDriver func
- *
- * Revision 1.3  1999/10/21 13:24:08  warmerda
- * Added documentation and C callable functions.
- *
- * Revision 1.2  1998/12/31 18:53:33  warmerda
- * Add GDALGetDriverByName
- *
- * Revision 1.1  1998/12/03 18:32:01  warmerda
- * New
- *
  */
 
 #include "gdal_priv.h"
