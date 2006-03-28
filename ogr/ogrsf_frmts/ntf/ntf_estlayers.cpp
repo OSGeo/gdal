@@ -5,7 +5,7 @@
  * Purpose:  NTFFileReader methods related to establishing the schemas
  *           of features that could occur in this product and the functions
  *           for actually performing the NTFRecord to OGRFeature conversion.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/03/28 22:59:55  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.20  2005/09/21 00:59:55  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
