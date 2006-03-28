@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2006/03/28 14:49:56  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.40  2006/03/03 19:44:45  fwarmerdam
  * force C numeric locale in select locations
  *
@@ -64,39 +67,6 @@
  *
  * Revision 1.29  2003/04/30 17:13:48  warmerda
  * added docs for many C functions
- *
- * Revision 1.28  2002/09/11 14:17:23  warmerda
- * copy ct/metadata/description for bands in CreateCopy()
- *
- * Revision 1.27  2002/09/06 01:28:30  warmerda
- * fixed logic for setting descriptions in created files
- *
- * Revision 1.26  2002/09/04 06:52:05  warmerda
- * added unload driver support to GDALDriver
- *
- * Revision 1.25  2002/07/09 20:33:12  warmerda
- * expand tabs
- *
- * Revision 1.24  2002/06/12 21:13:27  warmerda
- * use metadata based driver info
- *
- * Revision 1.23  2001/12/15 15:47:54  warmerda
- * don't replace existing descriptions
- *
- * Revision 1.22  2001/12/15 15:42:27  warmerda
- * *** empty log message ***
- *
- * Revision 1.21  2001/10/05 20:35:26  warmerda
- * CreateCopy() won't try to write default geotransform
- *
- * Revision 1.20  2001/09/24 15:58:27  warmerda
- * improved progress reporting in createcopy
- *
- * Revision 1.19  2001/07/18 04:04:30  warmerda
- * added CPL_CVSID
- *
- * Revision 1.18  2001/02/15 16:30:34  warmerda
- * added create debug message
  */
 
 #include "gdal_priv.h"

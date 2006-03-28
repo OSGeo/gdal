@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2006/03/28 14:49:56  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.32  2005/06/26 00:16:51  fwarmerdam
  * Performance improvements to GDALCopyWords() from Steve Sproule (Vexcel).
  *
@@ -75,59 +78,6 @@
  *
  * Revision 1.18  2003/02/07 16:44:25  dron
  * IRasterIO() improved to cast several pixels per time.
- *
- * Revision 1.17  2002/11/11 16:02:06  dron
- * More error messages added.
- *
- * Revision 1.16  2002/07/09 20:33:12  warmerda
- * expand tabs
- *
- * Revision 1.15  2002/05/31 22:18:50  warmerda
- * Ensure that GDALCopyWords() rounds off (nearest) rather than rounding
- * down copying from float to integer outputs, and uses floor() when assigning
- * to signed integer output to ensure consistent rounding behaviour across 0.
- *
- * Revision 1.14  2001/07/18 04:04:31  warmerda
- * added CPL_CVSID
- *
- * Revision 1.13  2000/08/16 15:50:52  warmerda
- * fixed some bugs with floating (datasetless) bands
- *
- * Revision 1.12  2000/07/13 13:08:53  warmerda
- * fixed GDALSwapWords with skip value different from word size
- *
- * Revision 1.11  2000/06/05 17:24:05  warmerda
- * added real complex support
- *
- * Revision 1.10  2000/05/15 14:33:49  warmerda
- * don't crash on read failure
- *
- * Revision 1.9  2000/04/04 15:25:13  warmerda
- * Fixed embarrasing bug in GDALCopyWords() for some cases.
- *
- * Revision 1.8  2000/03/06 18:57:07  warmerda
- * Fixed bug in 1:1 special case code.
- *
- * Revision 1.7  2000/03/06 02:22:13  warmerda
- * added overview support
- *
- * Revision 1.6  1999/11/23 18:44:10  warmerda
- * Fixed GDALCopyWords!
- *
- * Revision 1.5  1999/07/23 19:36:09  warmerda
- * added support for data type translation and a swapping function
- *
- * Revision 1.4  1999/01/11 15:38:38  warmerda
- * Added optimized case for simple 1:1 copies.
- *
- * Revision 1.3  1999/01/02 21:14:01  warmerda
- * Added write support
- *
- * Revision 1.2  1998/12/31 18:54:25  warmerda
- * Implement initial GDALRasterBlock support, and block cache
- *
- * Revision 1.1  1998/12/06 22:15:42  warmerda
- * New
  */
 
 #include "gdal_priv.h"
@@ -165,6 +115,10 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
         && nBufXSize == nXSize 
         && nBufYSize == nYSize )
     {
+//        printf( "IRasterIO(%d,%d,%d,%d) rw=%d case 1\n", 
+//                nXOff, nYOff, nXSize, nYSize, 
+//                (int) eRWFlag );
+
         for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff++ )
         {
             int         nSrcByteOffset;
@@ -259,6 +213,10 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             && */ nXSize == nBufXSize
          && nYSize == nBufYSize )    
     {
+//        printf( "IRasterIO(%d,%d,%d,%d) rw=%d case 2\n", 
+//                nXOff, nYOff, nXSize, nYSize, 
+//                (int) eRWFlag );
+
 /* -------------------------------------------------------------------- */
 /*      Loop over buffer computing source locations.                    */
 /* -------------------------------------------------------------------- */
@@ -290,6 +248,13 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                     && nYOff + nYSize >= (nLBlockY+1) * nBlockYSize
                     && nXOff <= nLBlockX * nBlockXSize
                     && nXOff + nXSize >= (nLBlockX+1) * nBlockXSize;
+
+//                printf( "bJustInitialize = %d (%d,%d,%d,%d)\n", 
+//                        bJustInitialize,
+//                        nYOff, nYSize, 
+//                        nLBlockY, nBlockYSize );
+//                bJustInitialize = FALSE;
+                
 
 /* -------------------------------------------------------------------- */
 /*      Ensure we have the appropriate block loaded.                    */
@@ -374,6 +339,10 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
 /*      Loop over buffer computing source locations.                    */
 /* -------------------------------------------------------------------- */
+//    printf( "IRasterIO(%d,%d,%d,%d) rw=%d case 3\n", 
+//            nXOff, nYOff, nXSize, nYSize, 
+//            (int) eRWFlag );
+
     for( iBufYOff = 0; iBufYOff < nBufYSize; iBufYOff++ )
     {
         int     iBufOffset, iSrcOffset;

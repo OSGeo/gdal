@@ -3,7 +3,7 @@
  *
  * Project:  GDAL Core
  * Purpose:  Helper code to implement overview support in different drivers.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/03/28 14:49:56  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.13  2006/02/07 19:11:36  fwarmerdam
  * applied some strategic improved outofmemory checking
  *
