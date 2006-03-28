@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/03/28 15:03:47  fwarmerdam
+ * make sure we reset the region if currentindex is not zero
+ *
  * Revision 1.20  2004/12/02 20:31:03  fwarmerdam
  * upgraded with support for advise api
  *
@@ -489,7 +492,7 @@ CPLErr OGDIRasterBand::EstablishAccess( int nXOff, int nYOff,
         dfNSTolerance = sWin.ns_res * 0.001;
     }
 
-    if( poODS->nCurrentIndex == -1 
+    if( poODS->nCurrentIndex != 0
         || ABS(sWin.west - poODS->sCurrentBounds.west) > 0.0001 
         || ABS(sWin.east - poODS->sCurrentBounds.east) > 0.0001 
         || ABS(sWin.north - (poODS->sCurrentBounds.north - poODS->nCurrentIndex * poODS->sCurrentBounds.ns_res)) > dfNSTolerance 
