@@ -1297,14 +1297,15 @@ else
     XERCES_INCLUDE="-I$with_xerces/include -I$with_xerces/include/xercesc"
   fi
 
-  echo '#include <util/PlatformUtils.hpp>' > conftest.cpp
-  echo '#ifdef XERCES_CPP_NAMESPACE_USE' >> conftest.cpp
-  echo 'XERCES_CPP_NAMESPACE_USE' >> conftest.cpp
+  echo '#include <util/XercesDefs.hpp>' >> conftest.cpp
+  echo '#include <util/PlatformUtils.hpp>' >> conftest.cpp
+  echo '#if (_XERCES_VERSION >= 20200)' >> conftest.cpp
+  echo '    XERCES_CPP_NAMESPACE_USE' >> conftest.cpp
   echo '#endif' >> conftest.cpp
   echo 'int main() {  XMLPlatformUtils::Initialize(); }' >> conftest.cpp
   CMD="${CXX} ${XERCES_INCLUDE} ${CPPFLAGS} -o conftest conftest.cpp $LIBS"
 
-  if test -z "`$CMD 2>&1 | grep -v warning`" ; then
+  if test -z "`$CMD 2>&1 | grep -v warning | grep -v skipping`" ; then
     HAVE_XERCES=yes
     AC_MSG_RESULT([yes])
   else
