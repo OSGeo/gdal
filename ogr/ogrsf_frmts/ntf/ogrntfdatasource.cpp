@@ -3,7 +3,7 @@
  *
  * Project:  UK NTF Reader
  * Purpose:  Implements OGRNTFDataSource class
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/03/28 22:59:55  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.16  2005/09/21 00:59:55  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *

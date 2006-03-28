@@ -3,7 +3,7 @@
  *
  * Project:  NTF Translator
  * Purpose:  Handle NTF products that aren't recognised generically.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/03/28 22:59:55  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.19  2002/10/29 03:28:59  warmerda
  * fixed 2.5D flag
  *
