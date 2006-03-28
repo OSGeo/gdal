@@ -7,7 +7,7 @@
 
 \section wince_overview Overview
 
-This document is devoted to give some overview of the GDAL port for Windows CE operting system. The OGR port is the first attempt to get GDAL library working on Windows CE.
+This document is devoted to give some overview of the GDAL port for Windows CE operating system. The OGR port is the first attempt to get GDAL library working on Windows CE.
 
 \section wince_status Current Status
 
@@ -24,19 +24,19 @@ List of GDAL features ported to Windows CE:
 	<li><a href="ogr/drv_shapefile.html">Shape</a></li>
     </ul>
 </li>
-<li><a href="http://sourceforge.net/projects/wcelibcex/">WCELibCEx</a> - extensions for C library available on Windows CE operting system<br />This is a separate project derived from the work made on GDAL port for Windwos CE.</li>
+<li><a href="http://sourceforge.net/projects/wcelibcex/">WCELibCEx</a> - extensions for C library available on Windows CE operating system<br />This is a separate project derived from the work made on GDAL port for Windows CE.</li>
 </ul>
 
 List of features not included in the GDAL port for Windows CE:
 <ul>
     <li>Raster data support</li>
-    <li><a href="http://geos.refractions.net">GEOS</a> has not been ported yet, so OGR for Windows CE compiles without GEOS support (work in progres)</li>
+    <li><a href="http://geos.refractions.net">GEOS</a> has not been ported yet, so OGR for Windows CE compiles without GEOS support (work in progress)</li>
     <li><a href="ogr/ogr_formats.html">OGR drivers</a> not listed in the features list above</li>
 </ul>
 
 \section wince_platforms Supported Platforms
 
-GDAL port for Windows CE has been tested on Windows Mobile for Pocket PC 2003 operting system (see \ref wince_wince). It is based on Windows CE 4.2 .NET version. There should be no problems with running it on systems based on latest Windows CE 5.0.
+GDAL port for Windows CE has been tested on Windows Mobile for Pocket PC 2003 operating system (see \ref wince_wince). It is based on Windows CE 4.2 .NET version. There should be no problems with running it on systems based on latest Windows CE 5.0.
 
 The GDAL port was tested with following compiler for Windows CE devices (see \ref wince_msvc):
 <ul>
@@ -46,14 +46,14 @@ The GDAL port was tested with following compiler for Windows CE devices (see \re
 
 \subsection wince_wince About Windows CE
 
-<a href="http://www.microsoft.com/windows/embedded/default.mspx">Windows CE</a> is one of two embedded operting systems create by Microsoft. The second is <a href="http://msdn.microsoft.com/embedded/windowsxpembedded/default.aspx">Windows XP Embedded</a>. The GDAL port is dedicated to the first one - Windows CE system. It may work on Windows XP Embedded as well but I have not tested it. (If you're interested in differences between those two systems, look at the <a href="http://www.embeddedtechnologyjournal.com/articles_2005/20051004_msft.htm">Comparing Windows CE and Windows XP Embedded</a> by Mike Hall.)
+<a href="http://www.microsoft.com/windows/embedded/default.mspx">Windows CE</a> is one of two embedded operating systems create by Microsoft. The second is <a href="http://msdn.microsoft.com/embedded/windowsxpembedded/default.aspx">Windows XP Embedded</a>. The GDAL port is dedicated to the first one - Windows CE system. It may work on Windows XP Embedded as well but I have not tested it. (If you're interested in differences between those two systems, look at the <a href="http://www.embeddedtechnologyjournal.com/articles_2005/20051004_msft.htm">Comparing Windows CE and Windows XP Embedded</a> by Mike Hall.)
 
 So, remember, in order use GDAL port you will need a mobile device running Windows CE.
 
 Now, a few words about Windows CE and derived systems versions.
-Usually, users are quite confused about all those different versions of Windwos CE and derived systems. In fact, the idea is quite simple.
+Usually, users are quite confused about all those different versions of Windows CE and derived systems. In fact, the idea is quite simple.
 Windows CE is a name of base operating system and can be seen as equivalent of Windows NT for Windows on desktop. All desktop versions like Windows 2000 or XP are still Windows NT systems.
-Windows CE is highly modular system and can be used as a base operating system by everyone who wants to build his own system. Microsoft provides a few official preconfigured versions and called them Windows Mobile. Now, you have a few versions of Windows Mobile:
+Windows CE is highly modular system and can be used as a base operating system by everyone who wants to build his own system. Microsoft provides a few officially configured versions and called them Windows Mobile. Now, you have a few versions of Windows Mobile:
 <ul>
     <li>Windows Mobile for Pocket PC</li>
     <li>Windows Mobile for Smartphone</li>
@@ -69,7 +69,7 @@ As I said, I tested GDAL port on Windows CE 4.2. That means it will work on:
 
 It's also expected to work on latest Windows Mobile 5.0.
 
-For better understanding of versioning of Windows CE, please take a look at these web sites:
+For better understanding of versions of Windows CE, please take a look at these web sites:
 <ul>
     <li><a href="http://channel9.msdn.com/wiki/default.aspx/Channel9.WindowsMobileFeedback">What's the Windows Mobile platform?</a></li>
     <li><a href="http://en.wikipedia.org/wiki/Image:Windows_CE_Timeline.png">Windows CE Timeline</a></li>
@@ -92,7 +92,7 @@ This section explains how to build GDAL for Windows CE as a library. There are n
 
 GDAL port for Windows CE is available from the official CVS repository. Follow instructions in CVS section on the <a href="http://www.gdal.org/download.html#download_sources_cvs">GDAL download page</a>.
 
-After you checkout GDAL sources, you will get also <em>gdal\wince</em> directory. This direcory consists of all files related to Window CE port.
+After you checkout GDAL sources, you will get also <em>gdal\wince</em> directory. This directory consists of all files related to Window CE port.
 
 Now, the first thing you should do is to read <em>gdal/wince/README</em> file. There you will find all details about content of <em>gdal/wince</em> directory and building instructions.
 
@@ -158,7 +158,7 @@ So, just open workspace file (\em .vcw) you want to use in the eVC++ IDE and bui
 
 \subsection wince_howto_build_vc2005_proj Building GDAL port using VC++ 2005 project file
 
-Recently, I also added project file to bulild GDAL for Windows CE using Visual C++ 2005. This project file is available in the <em>gdal/wince/msvc8_gdalce_lib</em> directory. Sibling test project is available in the <em>gdal/wince/msvc8_gdalce_lib_test</em>.
+Recently, I also added project file to build GDAL for Windows CE using Visual C++ 2005. This project file is available in the <em>gdal/wince/msvc8_gdalce_lib</em> directory. Sibling test project is available in the <em>gdal/wince/msvc8_gdalce_lib_test</em>.
 
 \section wince_help How can I help?
 
