@@ -387,10 +387,18 @@ the file has existing overview levels at a level selected, those levels will
 be recomputed and rewritten in place.
 
 Some format drivers do not support overviews at all.  Many format drivers
-store overviews in a secondary file with the extension .ovr.  The GeoTIFF
-driver stores overviews internally to the file operated on. That file may
-be compressed. It is controlled via the COMPRESS_OVERVIEW system option.
-All compression methods, supported by the GeoTIFF driver, available here.<p>
+store overviews in a secondary file with the extension .ovr that is actually
+in TIFF format.  The GeoTIFF driver stores overviews internally to the file 
+operated on. 
+
+Overviews created in TIFF format may be compressed using the COMPRESS_OVERVIEW 
+configuration option.  All compression methods, supported by the GeoTIFF 
+driver, available here. (eg --config COMPRESS_OVERVIEW DEFLATE)
+
+Most drivers also support an alternate overview format using Erdas Imagine 
+format.  To trigger this use the USE_RRD=YES configuration option.  This will 
+place the overviews in an associated .aux file suitable for direct use with 
+Imagine or ArcGIS as well as GDAL applications.  (eg --config USE_RRD YES)
 
 \if man
 \section aexample EXAMPLE
@@ -410,6 +418,12 @@ Create an external compressed GeoTIFF overview file from the ERDAS .IMG file:
 
 \verbatim
 gdaladdo --config COMPRESS_OVERVIEW DEFLATE erdas.img 2 4 8 16
+\endverbatim
+
+Create an Erdas Imagine format overviews for the indicated JPEG file:
+
+\verbatim
+gdaladdo --config USE_RRD YES airphoto.jpg 3 9 27 81
 \endverbatim
 
 \if man
