@@ -3,7 +3,7 @@
  *
  * Project:  GDAL Core
  * Purpose:  Helper code to implement overview support in different drivers.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/03/28 14:49:16  fwarmerdam
+ * reopen overview file in update mode if needed when building overviews
+ *
  * Revision 1.17  2005/11/17 22:02:32  fwarmerdam
  * avoid overwriting existing .aux file, overview filename now CPLString
  *
@@ -295,6 +298,17 @@ GDALDefaultOverviews::BuildOverviews(
             if( VSIStatL( osOvrFilename, &sStatBuf ) == 0 )
                 osOvrFilename.Printf( "%s.aux", poDS->GetDescription() );
         }
+    }
+/* -------------------------------------------------------------------- */
+/*      If we already have the overviews open, but they are             */
+/*      read-only, then try and reopen them read-write.                 */
+/* -------------------------------------------------------------------- */
+    else if( poODS->GetAccess() == GA_ReadOnly )
+    {
+        GDALClose( poODS );
+        poODS = (GDALDataset *) GDALOpen( osOvrFilename, GA_Update );
+        if( poODS == NULL )
+            return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
