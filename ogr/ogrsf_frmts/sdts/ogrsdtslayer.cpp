@@ -3,7 +3,7 @@
  *
  * Project:  SDTSReader
  * Purpose:  Implements OGRSDTSLayer class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/03/28 23:17:06  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.13  2005/09/21 00:54:43  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *

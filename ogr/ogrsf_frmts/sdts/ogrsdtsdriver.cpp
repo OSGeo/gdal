@@ -3,7 +3,7 @@
  *
  * Project:  SDTS Translator
  * Purpose:  Implements OGRSDTSDriver
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/03/28 23:17:06  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.4  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
