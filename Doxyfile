@@ -794,7 +794,7 @@ MAN_OUTPUT             = man
 # The MAN_EXTENSION tag determines the extension that is added to 
 # the generated man pages (default is the subroutine's section .3)
 
-MAN_EXTENSION          = .3
+MAN_EXTENSION          = .1
 
 # If the MAN_LINKS tag is set to YES and Doxygen generates man output, 
 # then it will generate one additional man file for each entity 
