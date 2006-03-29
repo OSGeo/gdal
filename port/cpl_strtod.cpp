@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/03/29 10:58:30  dron
+ * Declare nan/nanf/nanl functions if not declared in system headers.
+ *
  * Revision 1.1  2006/03/18 16:35:35  dron
  * New.
  *
@@ -161,6 +164,8 @@
 
 #include "cpl_conv.h"
 
+CPL_CVSID("$Id$");
+
 /* defines */
 
 /* SIG_MAX: the maximum number of significant digits we have. The maximum
@@ -213,14 +218,26 @@
 
 #ifndef HAVE_NAN
 # define nan(tagp) strtod("NAN(tagp)", NULL)
+#else
+# if defined(HAVE_DECL_NAN) && !HAVE_DECL_NAN
+extern  double nan(const char *);
+# endif
 #endif /* HAVE_NAN */
 
 #ifndef HAVE_NANF
 # define nanf(tagp) strtof("NAN(tagp)", NULL)
+#else
+# if defined(HAVE_DECL_NANF) && !HAVE_DECL_NANF
+extern  float nanf(const char *);
+# endif
 #endif /* HAVE_NANF */
 
 #ifndef HAVE_NANL
 # define nanl(tagp) strtold("NAN(tagp)", NULL)
+#else
+# if defined(HAVE_DECL_NANL) && !HAVE_DECL_NANL
+extern  long double nanl(const char *);
+# endif
 #endif /* HAVE_NANL */
 
 /* _Memcasecmp: return a case-insensitive comparison of two areas of
