@@ -1,6 +1,0 @@
-#include "resource.h"
-
-IDR_GRIDCOVERAGEFACTORYIMPL REGISTRY DISCARDABLE    "GridCoverageFactoryImpl.rgs"
-
-1 TYPELIB "Cover.tlb"
-
