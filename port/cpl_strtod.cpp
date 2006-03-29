@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/03/29 14:30:13  dron
+ * Added forgotten extern "C" statements.
+ *
  * Revision 1.2  2006/03/29 10:58:30  dron
  * Declare nan/nanf/nanl functions if not declared in system headers.
  *
@@ -220,7 +223,9 @@ CPL_CVSID("$Id$");
 # define nan(tagp) strtod("NAN(tagp)", NULL)
 #else
 # if defined(HAVE_DECL_NAN) && !HAVE_DECL_NAN
+CPL_C_START
 extern  double nan(const char *);
+CPL_C_END
 # endif
 #endif /* HAVE_NAN */
 
@@ -228,7 +233,9 @@ extern  double nan(const char *);
 # define nanf(tagp) strtof("NAN(tagp)", NULL)
 #else
 # if defined(HAVE_DECL_NANF) && !HAVE_DECL_NANF
+CPL_C_START
 extern  float nanf(const char *);
+CPL_C_END
 # endif
 #endif /* HAVE_NANF */
 
@@ -236,7 +243,9 @@ extern  float nanf(const char *);
 # define nanl(tagp) strtold("NAN(tagp)", NULL)
 #else
 # if defined(HAVE_DECL_NANL) && !HAVE_DECL_NANL
+CPL_C_START
 extern  long double nanl(const char *);
+CPL_C_END
 # endif
 #endif /* HAVE_NANL */
 
