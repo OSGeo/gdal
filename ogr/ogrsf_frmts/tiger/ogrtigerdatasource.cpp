@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2006/03/29 00:46:07  fwarmerdam
+ * avoid CPLString for now for use in FME
+ *
  * Revision 1.34  2006/03/08 04:17:24  fwarmerdam
  * added logic to check RTC records when classifying version
  *
@@ -280,8 +283,9 @@ TigerVersion OGRTigerDataSource::TigerCheckVersion( TigerVersion nOldVersion,
     if( nOldVersion != TIGER_2002 )
         return nOldVersion;
 
-    CPLString osRTCFilename = BuildFilename( pszFilename, "C" );
-    FILE *fp = VSIFOpen( osRTCFilename, "rb" );
+    char *pszRTCFilename = BuildFilename( pszFilename, "C" );
+    FILE *fp = VSIFOpen( pszRTCFilename, "rb" );
+    CPLFree( pszRTCFilename );
 
     if( fp == NULL )
         return nOldVersion;
@@ -516,11 +520,13 @@ int OGRTigerDataSource::Open( const char * pszFilename, int bTestOpen,
             FILE        *fp;
             char        *pszRecStart = NULL;
             int         bIsGDT = FALSE;
-            CPLString   osFilename;
+            char       *pszFilename;
 
-            osFilename = BuildFilename( papszFileList[i], "1" );
+            pszFilename = BuildFilename( papszFileList[i], "1" );
 
-            fp = VSIFOpen( osFilename, "rb" );
+            fp = VSIFOpen( pszFilename, "rb" );
+            CPLFree( pszFilename );
+
             if( fp == NULL )
                 continue;
             
