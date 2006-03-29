@@ -1,4 +1,4 @@
-/* $Id: tif_compress.c,v 1.10 2005/06/28 15:15:58 dron Exp $ */
+/* $Id: tif_compress.c,v 1.12 2006/03/25 03:09:24 joris Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -37,10 +37,10 @@ TIFFNoEncode(TIFF* tif, const char* method)
 	const TIFFCodec* c = TIFFFindCODEC(tif->tif_dir.td_compression);
 
 	if (c) { 
-	        TIFFError(tif->tif_name, "%s %s encoding is not implemented",
+			TIFFErrorExt(tif->tif_clientdata, tif->tif_name, "%s %s encoding is not implemented",
                           c->name, method);
 	} else { 
-		TIFFError(tif->tif_name,
+		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
 			  "Compression scheme %u %s encoding is not implemented",
 		    tif->tif_dir.td_compression, method);
 	}
@@ -74,10 +74,10 @@ TIFFNoDecode(TIFF* tif, const char* method)
 	const TIFFCodec* c = TIFFFindCODEC(tif->tif_dir.td_compression);
 
 	if (c)
-		TIFFError(tif->tif_name, "%s %s decoding is not implemented",
+		TIFFErrorExt(tif->tif_clientdata, tif->tif_name, "%s %s decoding is not implemented",
 		    c->name, method);
 	else
-		TIFFError(tif->tif_name,
+		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
 		    "Compression scheme %u %s decoding is not implemented",
 		    tif->tif_dir.td_compression, method);
 	return (-1);
@@ -108,7 +108,7 @@ int
 _TIFFNoSeek(TIFF* tif, uint32 off)
 {
 	(void) off;
-	TIFFError(tif->tif_name,
+	TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
 	    "Compression algorithm does not support random access");
 	return (0);
 }
@@ -144,7 +144,7 @@ _TIFFSetDefaultCompressionState(TIFF* tif)
 	tif->tif_cleanup = _TIFFvoid;
 	tif->tif_defstripsize = _TIFFDefaultStripSize;
 	tif->tif_deftilesize = _TIFFDefaultTileSize;
-	tif->tif_flags &= ~TIFF_NOBITREV;
+	tif->tif_flags &= ~(TIFF_NOBITREV|TIFF_NOREADRAW);
 }
 
 int
@@ -204,7 +204,7 @@ TIFFRegisterCODEC(uint16 scheme, const char* name, TIFFInitMethod init)
 		cd->next = registeredCODECS;
 		registeredCODECS = cd;
 	} else {
-		TIFFError("TIFFRegisterCODEC",
+		TIFFErrorExt(0, "TIFFRegisterCODEC",
 		    "No space to register compression scheme %s", name);
 		return NULL;
 	}
@@ -223,7 +223,7 @@ TIFFUnRegisterCODEC(TIFFCodec* c)
 			_TIFFfree(cd);
 			return;
 		}
-	TIFFError("TIFFUnRegisterCODEC",
+	TIFFErrorExt(0, "TIFFUnRegisterCODEC",
 	    "Cannot remove compression scheme %s; not registered", c->name);
 }
 

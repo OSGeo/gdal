@@ -1,4 +1,4 @@
-/* $Id: tiffiop.h,v 1.40 2005/07/28 14:49:37 dron Exp $ */
+/* $Id: tiffiop.h,v 1.47 2006/03/25 03:09:24 joris Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -60,9 +60,9 @@ extern void *lfind(const void *, const void *, size_t *, size_t,
 #include "tiffio.h"
 #include "tif_dir.h"
 
-typedef double dblparam_t;
-
-#define GLOBALDATA(TYPE,NAME)	extern TYPE NAME
+#ifndef STRIP_SIZE_DEFAULT
+# define STRIP_SIZE_DEFAULT 8192
+#endif
 
 #define    streq(a,b)      (strcmp(a,b) == 0)
 
@@ -114,6 +114,8 @@ struct tiff {
 #define	TIFF_STRIPCHOP		0x8000	/* enable strip chopping support */
 #define	TIFF_HEADERONLY		0x10000	/* read header only, do not process */
 					/* the first directory */
+#define TIFF_NOREADRAW		0x20000 /* skip reading of raw uncompressed */
+					/* image data */
 	toff_t		tif_diroff;	/* file offset of current directory */
 	toff_t		tif_nextdiroff;	/* file offset of following directory */
 	toff_t*		tif_dirlist;	/* list of offsets to already seen */
@@ -229,6 +231,8 @@ struct tiff {
 #define TIFFmax(A,B) ((A)>(B)?(A):(B))
 #define TIFFmin(A,B) ((A)<(B)?(A):(B))
 
+#define TIFFArrayCount(a) (sizeof (a) / sizeof ((a)[0]))
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -247,8 +251,8 @@ extern	void _TIFFSwab24BitData(TIFF*, tidata_t, tsize_t);
 extern	void _TIFFSwab32BitData(TIFF*, tidata_t, tsize_t);
 extern	void _TIFFSwab64BitData(TIFF*, tidata_t, tsize_t);
 extern	int TIFFFlushData1(TIFF*);
-extern	void TIFFFreeDirectory(TIFF*);
 extern	int TIFFDefaultDirectory(TIFF*);
+extern	void _TIFFSetDefaultCompressionState(TIFF*);
 extern	int TIFFSetCompressionScheme(TIFF*, int);
 extern	int TIFFSetDefaultCompressionState(TIFF*);
 extern	uint32 _TIFFDefaultStripSize(TIFF*, uint32);
@@ -265,8 +269,10 @@ extern	void _TIFFsetDoubleArray(double**, double*, uint32);
 extern	void _TIFFprintAscii(FILE*, const char*);
 extern	void _TIFFprintAsciiTag(FILE*, const char*, const char*);
 
-GLOBALDATA(TIFFErrorHandler,_TIFFwarningHandler);
-GLOBALDATA(TIFFErrorHandler,_TIFFerrorHandler);
+extern	TIFFErrorHandler _TIFFwarningHandler;
+extern	TIFFErrorHandler _TIFFerrorHandler;
+extern	TIFFErrorHandlerExt _TIFFwarningHandlerExt;
+extern	TIFFErrorHandlerExt _TIFFerrorHandlerExt;
 
 extern	tdata_t _TIFFCheckMalloc(TIFF*, size_t, size_t, const char*);
 
