@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/03/29 01:08:34  fwarmerdam
+ * added validation and xml reporting (optional)
+ *
  * Revision 1.9  2004/09/23 16:11:14  fwarmerdam
  * Cleanup memory at end.
  *
@@ -63,7 +66,7 @@
 void Usage()
 
 {
-    printf( "testepsg [-t src_def trg_def x y]* [def]*\n" );
+    printf( "testepsg [-xml] [-t src_def trg_def x y z]* [def]*\n" );
     printf( "  -t: transform a coordinate from source GCS/PCS to target GCS/PCS\n" );
     printf( "\n" );
     printf( "def's  on their own are translated to WKT & XML and printed.\n" );
@@ -76,17 +79,22 @@ int main( int nArgc, char ** papszArgv )
 {
     OGRSpatialReference oSRS;
     int i;
+    int bReportXML = FALSE;
 
     if( nArgc < 2 )
         Usage();
 
     for( i = 1; i < nArgc; i++ )
     {
-        if( EQUAL(papszArgv[i],"-t") && i < nArgc - 4 )
+        if( EQUAL(papszArgv[i],"-xml") )
+            bReportXML = TRUE;
+        
+        else if( EQUAL(papszArgv[i],"-t") && i < nArgc - 4 )
         {
             OGRSpatialReference oSourceSRS, oTargetSRS;
             OGRCoordinateTransformation *poCT;
-            double                      x, y;
+            double                      x, y, z_orig, z;
+            int                         nArgsUsed = 4;
             
             if( oSourceSRS.SetFromUserInput(papszArgv[i+1]) != OGRERR_NONE )
             {
@@ -107,16 +115,25 @@ int main( int nArgc, char ** papszArgv )
                                                       &oTargetSRS );
             x = atof( papszArgv[i+3] );
             y = atof( papszArgv[i+4] );
+            if( i < nArgc - 5 
+                && (atof(papszArgv[i+5]) > 0.0 || papszArgv[i+5][0] == '0') )
+            {
+                z_orig = z = atof(papszArgv[i+5]);
+                nArgsUsed++;
+            }
+            else
+                z_orig = z = 0;
             
-            if( poCT == NULL || !poCT->Transform( 1, &x, &y ) )
+            if( poCT == NULL || !poCT->Transform( 1, &x, &y, &z ) )
                 printf( "Transformation failed.\n" );
             else
-                printf( "(%f,%f) -> (%f,%f)\n", 
+                printf( "(%f,%f,%f) -> (%f,%f,%f)\n", 
                         atof( papszArgv[i+3] ),
                         atof( papszArgv[i+4] ),
-                        x, y );
+                        z_orig, 
+                        x, y, z );
             
-            i += 4;
+            i += nArgsUsed;
         }
         else 
         {
@@ -127,6 +144,11 @@ int main( int nArgc, char ** papszArgv )
             else
             {
                 char  *pszWKT = NULL;
+
+                if( oSRS.Validate() != OGRERR_NONE )
+                    printf( "Validate Fails.\n" );
+                else
+                    printf( "Validate Succeeds.\n" );
                 
                 oSRS.exportToPrettyWkt( &pszWKT, FALSE );
                 printf( "WKT[%s] =\n%s\n", 
@@ -166,20 +188,21 @@ int main( int nArgc, char ** papszArgv )
                 CPLFree( pszWKT );
 
 
-#ifdef notdef
-                char       *pszRawXML;
-                printf( "\n------------------------\n\n" );
-                if( oSRS.exportToXML(&pszRawXML) == OGRERR_NONE )
+                if( bReportXML )
                 {
-                    printf( "XML[%s] =\n%s\n", 
-                            papszArgv[i], pszRawXML );
-                    CPLFree( pszRawXML );
+                    char       *pszRawXML;
+                    if( oSRS.exportToXML(&pszRawXML) == OGRERR_NONE )
+                    {
+                        printf( "XML[%s] =\n%s\n", 
+                                papszArgv[i], pszRawXML );
+                        CPLFree( pszRawXML );
+                    }
+                    else
+                    {
+                        printf( "XML translation failed\n" );
+                    }
                 }
-                else
-                {
-                    printf( "XML translation failed\n" );
-                }
-#endif
+
                 printf( "\n" );
             }
         }
