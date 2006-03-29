@@ -21,6 +21,17 @@
 /* Define to 1 if you have the <dbmalloc.h> header file. */
 #undef HAVE_DBMALLOC_H
 
+/* Define to 1 if you have the declaration of `nan', and to 0 if you don't. */
+#undef HAVE_DECL_NAN
+
+/* Define to 1 if you have the declaration of `nanf', and to 0 if you don't.
+   */
+#undef HAVE_DECL_NANF
+
+/* Define to 1 if you have the declaration of `nanl', and to 0 if you don't.
+   */
+#undef HAVE_DECL_NANL
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
