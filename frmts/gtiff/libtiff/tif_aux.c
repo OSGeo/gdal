@@ -1,4 +1,4 @@
-/* $Id: tif_aux.c,v 1.12 2005/07/28 17:46:52 dron Exp $ */
+/* $Id: tif_aux.c,v 1.19 2006/02/07 10:41:30 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -36,7 +36,7 @@
 tdata_t
 _TIFFCheckMalloc(TIFF* tif, size_t nmemb, size_t elem_size, const char* what)
 {
-	tdata_t *cp = NULL;
+	tdata_t cp = NULL;
 	tsize_t	bytes = nmemb * elem_size;
 
 	/*
@@ -46,8 +46,8 @@ _TIFFCheckMalloc(TIFF* tif, size_t nmemb, size_t elem_size, const char* what)
 		cp = _TIFFmalloc(bytes);
 
 	if (cp == NULL)
-		TIFFError(tif->tif_name, "No space %s", what);
-	
+		TIFFErrorExt(tif->tif_clientdata, tif->tif_name, "No space %s", what);
+
 	return (cp);
 }
 
@@ -90,35 +90,6 @@ bad:
 		_TIFFfree(tf[2]);
 	tf[0] = tf[1] = tf[2] = 0;
 	return 0;
-}
-
-static int
-TIFFDefaultRefBlackWhite(TIFFDirectory* td)
-{
-	int i;
-
-	if (!(td->td_refblackwhite = (float *)_TIFFmalloc(6*sizeof (float))))
-		return 0;
-        if (td->td_photometric == PHOTOMETRIC_YCBCR) {
-		/*
-		 * YCbCr (Class Y) images must have the ReferenceBlackWhite
-		 * tag set. Fix the broken images, which lacks that tag.
-		 */
-		td->td_refblackwhite[0] = 0.0F;
-		td->td_refblackwhite[1] = td->td_refblackwhite[3] =
-			td->td_refblackwhite[5] = 255.0F;
-		td->td_refblackwhite[2] = td->td_refblackwhite[4] = 128.0F;
-	} else {
-		/*
-		 * Assume RGB (Class R)
-		 */
-		for (i = 0; i < 3; i++) {
-		    td->td_refblackwhite[2*i+0] = 0;
-		    td->td_refblackwhite[2*i+1] =
-			    (float)((1L<<td->td_bitspersample)-1L);
-		}
-	}
-	return 1;
 }
 
 /*
@@ -174,17 +145,17 @@ TIFFVGetFieldDefaulted(TIFF* tif, ttag_t tag, va_list ap)
                 {
 			TIFFPredictorState* sp = (TIFFPredictorState*) tif->tif_data;
 			*va_arg(ap, uint16*) = (uint16) sp->predictor;
-			return (1);
+			return 1;
                 }
 	case TIFFTAG_DOTRANGE:
 		*va_arg(ap, uint16 *) = 0;
 		*va_arg(ap, uint16 *) = (1<<td->td_bitspersample)-1;
 		return (1);
 	case TIFFTAG_INKSET:
-		*va_arg(ap, uint16 *) = td->td_inkset;
-		return (1);
+		*va_arg(ap, uint16 *) = INKSET_CMYK;
+		return 1;
 	case TIFFTAG_NUMBEROFINKS:
-		*va_arg(ap, uint16 *) = td->td_ninks;
+		*va_arg(ap, uint16 *) = 4;
 		return (1);
 	case TIFFTAG_EXTRASAMPLES:
 		*va_arg(ap, uint16 *) = td->td_extrasamples;
@@ -208,18 +179,12 @@ TIFFVGetFieldDefaulted(TIFF* tif, ttag_t tag, va_list ap)
 		*va_arg(ap, uint32 *) = td->td_imagedepth;
 		return (1);
 	case TIFFTAG_YCBCRCOEFFICIENTS:
-		if (!td->td_ycbcrcoeffs) {
-			td->td_ycbcrcoeffs = (float *)
-			    _TIFFmalloc(3*sizeof (float));
-			if (!td->td_ycbcrcoeffs)
-				return (0);
+		{
 			/* defaults are from CCIR Recommendation 601-1 */
-			td->td_ycbcrcoeffs[0] = 0.299f;
-			td->td_ycbcrcoeffs[1] = 0.587f;
-			td->td_ycbcrcoeffs[2] = 0.114f;
+			static float ycbcrcoeffs[] = { 0.299f, 0.587f, 0.114f };
+			*va_arg(ap, float **) = ycbcrcoeffs;
+			return 1;
 		}
-		*va_arg(ap, float **) = td->td_ycbcrcoeffs;
-		return (1);
 	case TIFFTAG_YCBCRSUBSAMPLING:
 		*va_arg(ap, uint16 *) = td->td_ycbcrsubsampling[0];
 		*va_arg(ap, uint16 *) = td->td_ycbcrsubsampling[1];
@@ -228,25 +193,21 @@ TIFFVGetFieldDefaulted(TIFF* tif, ttag_t tag, va_list ap)
 		*va_arg(ap, uint16 *) = td->td_ycbcrpositioning;
 		return (1);
 	case TIFFTAG_WHITEPOINT:
-		if (!td->td_whitepoint) {
-			td->td_whitepoint = (float *)
-				_TIFFmalloc(2 * sizeof (float));
-			if (!td->td_whitepoint)
-				return (0);
-			/* TIFF 6.0 specification says that it is no default
+		{
+			static float whitepoint[2];
+
+			/* TIFF 6.0 specification tells that it is no default
 			   value for the WhitePoint, but AdobePhotoshop TIFF
 			   Technical Note tells that it should be CIE D50. */
-			td->td_whitepoint[0] =
-				D50_X0 / (D50_X0 + D50_Y0 + D50_Z0);
-			td->td_whitepoint[1] =
-				D50_Y0 / (D50_X0 + D50_Y0 + D50_Z0);
+			whitepoint[0] =	D50_X0 / (D50_X0 + D50_Y0 + D50_Z0);
+			whitepoint[1] =	D50_Y0 / (D50_X0 + D50_Y0 + D50_Z0);
+			*va_arg(ap, float **) = whitepoint;
+			return 1;
 		}
-		*va_arg(ap, float **) = td->td_whitepoint;
-		return (1);
 	case TIFFTAG_TRANSFERFUNCTION:
 		if (!td->td_transferfunction[0] &&
 		    !TIFFDefaultTransferFunction(td)) {
-			TIFFError(tif->tif_name, "No space for \"TransferFunction\" tag");
+			TIFFErrorExt(tif->tif_clientdata, tif->tif_name, "No space for \"TransferFunction\" tag");
 			return (0);
 		}
 		*va_arg(ap, uint16 **) = td->td_transferfunction[0];
@@ -256,12 +217,35 @@ TIFFVGetFieldDefaulted(TIFF* tif, ttag_t tag, va_list ap)
 		}
 		return (1);
 	case TIFFTAG_REFERENCEBLACKWHITE:
-		if (!td->td_refblackwhite && !TIFFDefaultRefBlackWhite(td))
-			return (0);
-		*va_arg(ap, float **) = td->td_refblackwhite;
-		return (1);
+		{
+			int i;
+			static float ycbcr_refblackwhite[] = 
+			{ 0.0F, 255.0F, 128.0F, 255.0F, 128.0F, 255.0F };
+			static float rgb_refblackwhite[6];
+
+			for (i = 0; i < 3; i++) {
+				rgb_refblackwhite[2 * i + 0] = 0.0F;
+				rgb_refblackwhite[2 * i + 1] =
+					(float)((1L<<td->td_bitspersample)-1L);
+			}
+			
+			if (td->td_photometric == PHOTOMETRIC_YCBCR) {
+				/*
+				 * YCbCr (Class Y) images must have the
+				 * ReferenceBlackWhite tag set. Fix the
+				 * broken images, which lacks that tag.
+				 */
+				*va_arg(ap, float **) = ycbcr_refblackwhite;
+			} else {
+				/*
+				 * Assume RGB (Class R)
+				 */
+				*va_arg(ap, float **) = rgb_refblackwhite;
+			}
+			return 1;
+		}
 	}
-	return (0);
+	return 0;
 }
 
 /*

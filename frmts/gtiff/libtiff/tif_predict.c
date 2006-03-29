@@ -1,4 +1,4 @@
-/* $Id: tif_predict.c,v 1.9 2005/06/03 07:58:54 dron Exp $ */
+/* $Id: tif_predict.c,v 1.11 2006/03/03 14:10:09 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -61,7 +61,7 @@ PredictorSetup(TIFF* tif)
 		case PREDICTOR_HORIZONTAL:
 			if (td->td_bitspersample != 8
 			    && td->td_bitspersample != 16) {
-				TIFFError(module,
+				TIFFErrorExt(tif->tif_clientdata, module,
     "Horizontal differencing \"Predictor\" not supported with %d-bit samples",
 					  td->td_bitspersample);
 				return 0;
@@ -69,14 +69,14 @@ PredictorSetup(TIFF* tif)
 			break;
 		case PREDICTOR_FLOATINGPOINT:
 			if (td->td_sampleformat != SAMPLEFORMAT_IEEEFP) {
-				TIFFError(module,
+				TIFFErrorExt(tif->tif_clientdata, module,
 	"Floating point \"Predictor\" not supported with %d data format",
 					  td->td_sampleformat);
 				return 0;
 			}
 			break;
 		default:
-			TIFFError(module,
+			TIFFErrorExt(tif->tif_clientdata, module,
 				  "\"Predictor\" value %d not supported",
 				  sp->predictor);
 			return 0;
@@ -339,6 +339,7 @@ PredictorDecodeRow(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 	assert(sp != NULL);
 	assert(sp->coderow != NULL);
 	assert(sp->pfunc != NULL);
+
 	if ((*sp->coderow)(tif, op0, occ0, s)) {
 		(*sp->pfunc)(tif, op0, occ0);
 		return 1;
@@ -360,6 +361,7 @@ PredictorDecodeTile(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 
 	assert(sp != NULL);
 	assert(sp->codetile != NULL);
+
 	if ((*sp->codetile)(tif, op0, occ0, s)) {
 		tsize_t rowsize = sp->rowsize;
 		assert(rowsize > 0);
@@ -481,7 +483,8 @@ PredictorEncodeRow(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 	assert(sp != NULL);
 	assert(sp->pfunc != NULL);
 	assert(sp->coderow != NULL);
-/* XXX horizontal differencing alters user's data XXX */
+
+	/* XXX horizontal differencing alters user's data XXX */
 	(*sp->pfunc)(tif, bp, cc);
 	return (*sp->coderow)(tif, bp, cc, s);
 }
@@ -496,6 +499,7 @@ PredictorEncodeTile(TIFF* tif, tidata_t bp0, tsize_t cc0, tsample_t s)
 	assert(sp != NULL);
 	assert(sp->pfunc != NULL);
 	assert(sp->codetile != NULL);
+
 	rowsize = sp->rowsize;
 	assert(rowsize > 0);
 	while ((long)cc > 0) {
@@ -519,6 +523,9 @@ PredictorVSetField(TIFF* tif, ttag_t tag, va_list ap)
 {
 	TIFFPredictorState *sp = PredictorState(tif);
 
+	assert(sp != NULL);
+	assert(sp->vsetparent != NULL);
+
 	switch (tag) {
 	case TIFFTAG_PREDICTOR:
 		sp->predictor = (uint16) va_arg(ap, int);
@@ -535,6 +542,9 @@ static int
 PredictorVGetField(TIFF* tif, ttag_t tag, va_list ap)
 {
 	TIFFPredictorState *sp = PredictorState(tif);
+
+	assert(sp != NULL);
+	assert(sp->vgetparent != NULL);
 
 	switch (tag) {
 	case TIFFTAG_PREDICTOR:
@@ -570,6 +580,8 @@ TIFFPredictorInit(TIFF* tif)
 {
 	TIFFPredictorState* sp = PredictorState(tif);
 
+	assert(sp != 0);
+
 	/*
 	 * Merge codec-specific tag information and
 	 * override parent get/set field methods.
@@ -592,6 +604,22 @@ TIFFPredictorInit(TIFF* tif)
 
 	sp->predictor = 1;			/* default value */
 	sp->pfunc = NULL;			/* no predictor routine */
+	return 1;
+}
+
+int
+TIFFPredictorCleanup(TIFF* tif)
+{
+	TIFFPredictorState* sp = PredictorState(tif);
+
+	assert(sp != 0);
+
+	tif->tif_tagmethods.vgetfield = sp->vgetparent;
+	tif->tif_tagmethods.vsetfield = sp->vsetparent;
+	tif->tif_tagmethods.printdir = sp->printdir;
+	tif->tif_setupdecode = sp->setupdecode;
+	tif->tif_setupencode = sp->setupencode;
+
 	return 1;
 }
 

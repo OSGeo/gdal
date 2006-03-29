@@ -92,6 +92,11 @@ TIFFXYZToRGB(TIFFCIELabToRGB *cielab, float X, float Y, float Z,
 	Yg = TIFFmax(Yg, cielab->display.d_Y0G);
 	Yb = TIFFmax(Yb, cielab->display.d_Y0B);
 
+	/* Avoid overflow in case of wrong input values */
+	Yr = TIFFmin(Yr, cielab->display.d_YCR);
+	Yg = TIFFmin(Yg, cielab->display.d_YCG);
+	Yb = TIFFmin(Yb, cielab->display.d_YCB);
+
 	/* Turn luminosity to colour value. */
 	i = (int)((Yr - cielab->display.d_Y0R) / cielab->rstep);
 	i = TIFFmin(cielab->range, i);
@@ -172,13 +177,14 @@ TIFFCIELabToRGBInit(TIFFCIELabToRGB* cielab,
 #define	ONE_HALF		((int32)(1<<(SHIFT-1)))
 #define	Code2V(c, RB, RW, CR)	((((c)-(int32)(RB))*(float)(CR))/(float)(((RW)-(RB)) ? ((RW)-(RB)) : 1))
 #define	CLAMP(f,min,max)	((f)<(min)?(min):(f)>(max)?(max):(f))
+#define HICLAMP(f,max)		((f)>(max)?(max):(f))
 
 void
 TIFFYCbCrtoRGB(TIFFYCbCrToRGB *ycbcr, uint32 Y, int32 Cb, int32 Cr,
 	       uint32 *r, uint32 *g, uint32 *b)
 {
 	/* XXX: Only 8-bit YCbCr input supported for now */
-	Y = CLAMP(Y, 0, 255), Cb = CLAMP(Cb, 0, 255), Cr = CLAMP(Cr, 0, 255);
+	Y = HICLAMP(Y, 255), Cb = CLAMP(Cb, 0, 255), Cr = CLAMP(Cr, 0, 255);
 
 	*r = ycbcr->clamptab[ycbcr->Y_tab[Y] + ycbcr->Cr_r_tab[Cr]];
 	*g = ycbcr->clamptab[ycbcr->Y_tab[Y]
@@ -259,6 +265,7 @@ TIFFYCbCrToRGBInit(TIFFYCbCrToRGB* ycbcr, float *luma, float *refBlackWhite)
 
     return 0;
 }
+#undef	HICLAMP
 #undef	CLAMP
 #undef	Code2V
 #undef	SHIFT

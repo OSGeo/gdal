@@ -1,4 +1,4 @@
-/* $Id: tif_predict.h,v 1.2 2005/04/14 11:57:30 dron Exp $ */
+/* $Id: tif_predict.h,v 1.3 2006/03/03 14:10:09 dron Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler
@@ -55,6 +55,7 @@ typedef struct {
 extern "C" {
 #endif
 extern	int TIFFPredictorInit(TIFF*);
+extern	int TIFFPredictorCleanup(TIFF*);
 #if defined(__cplusplus)
 }
 #endif

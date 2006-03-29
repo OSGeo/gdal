@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.19 2005/10/15 15:57:54 fwarmerdam Exp $ */
+/* $Id: tif_write.c,v 1.21 2006/02/27 14:29:20 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -69,7 +69,7 @@ TIFFWriteScanline(TIFF* tif, tdata_t buf, uint32 row, tsample_t sample)
 	 */
 	if (row >= td->td_imagelength) {	/* extend image */
 		if (td->td_planarconfig == PLANARCONFIG_SEPARATE) {
-			TIFFError(tif->tif_name,
+			TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
 		"Can not change \"ImageLength\" when using separate planes");
 			return (-1);
 		}
@@ -81,7 +81,7 @@ TIFFWriteScanline(TIFF* tif, tdata_t buf, uint32 row, tsample_t sample)
 	 */
 	if (td->td_planarconfig == PLANARCONFIG_SEPARATE) {
 		if (sample >= td->td_samplesperpixel) {
-			TIFFError(tif->tif_name,
+			TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
 			    "%d: Sample out of range, max %d",
 			    sample, td->td_samplesperpixel);
 			return (-1);
@@ -89,6 +89,15 @@ TIFFWriteScanline(TIFF* tif, tdata_t buf, uint32 row, tsample_t sample)
 		strip = sample*td->td_stripsperimage + row/td->td_rowsperstrip;
 	} else
 		strip = row / td->td_rowsperstrip;
+	/*
+	 * Check strip array to make sure there's space. We don't support
+	 * dynamically growing files that have data organized in separate
+	 * bitplanes because it's too painful.  In that case we require that
+	 * the imagelength be set properly before the first write (so that the
+	 * strips array will be fully allocated above).
+	 */
+	if (strip >= td->td_nstrips && !TIFFGrowStrips(tif, 1, module))
+		return (-1);
 	if (strip != tif->tif_curstrip) {
 		/*
 		 * Changing strips -- flush any data present.
@@ -97,9 +106,9 @@ TIFFWriteScanline(TIFF* tif, tdata_t buf, uint32 row, tsample_t sample)
 			return (-1);
 		tif->tif_curstrip = strip;
 		/*
-		 * Watch out for a growing image.  The value of
-		 * strips/image will initially be 1 (since it
-		 * can't be deduced until the imagelength is known).
+		 * Watch out for a growing image.  The value of strips/image
+		 * will initially be 1 (since it can't be deduced until the
+		 * imagelength is known).
 		 */
 		if (strip >= td->td_stripsperimage && imagegrew)
 			td->td_stripsperimage =
@@ -128,17 +137,6 @@ TIFFWriteScanline(TIFF* tif, tdata_t buf, uint32 row, tsample_t sample)
 			return (-1);
 		tif->tif_flags |= TIFF_POSTENCODE;
 	}
-	/*
-	 * Check strip array to make sure there's space.
-	 * We don't support dynamically growing files that
-	 * have data organized in separate bitplanes because
-	 * it's too painful.  In that case we require that
-	 * the imagelength be set properly before the first
-	 * write (so that the strips array will be fully
-	 * allocated above).
-	 */
-	if (strip >= td->td_nstrips && !TIFFGrowStrips(tif, 1, module))
-		return (-1);
 	/*
 	 * Ensure the write is either sequential or at the
 	 * beginning of a strip (or that we can randomly
@@ -200,7 +198,7 @@ TIFFWriteEncodedStrip(TIFF* tif, tstrip_t strip, tdata_t data, tsize_t cc)
 	 */
 	if (strip >= td->td_nstrips) {
 		if (td->td_planarconfig == PLANARCONFIG_SEPARATE) {
-			TIFFError(tif->tif_name,
+			TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
 		"Can not grow image by strips when using separate planes");
 			return ((tsize_t) -1);
 		}
@@ -283,7 +281,7 @@ TIFFWriteRawStrip(TIFF* tif, tstrip_t strip, tdata_t data, tsize_t cc)
 	 */
 	if (strip >= td->td_nstrips) {
 		if (td->td_planarconfig == PLANARCONFIG_SEPARATE) {
-			TIFFError(tif->tif_name,
+			TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
 		"Can not grow image by strips when using separate planes");
 			return ((tsize_t) -1);
 		}
@@ -347,7 +345,7 @@ TIFFWriteEncodedTile(TIFF* tif, ttile_t tile, tdata_t data, tsize_t cc)
 		return ((tsize_t) -1);
 	td = &tif->tif_dir;
 	if (tile >= td->td_nstrips) {
-		TIFFError(module, "%s: Tile %lu out of range, max %lu",
+		TIFFErrorExt(tif->tif_clientdata, module, "%s: Tile %lu out of range, max %lu",
 		    tif->tif_name, (unsigned long) tile, (unsigned long) td->td_nstrips);
 		return ((tsize_t) -1);
 	}
@@ -433,7 +431,7 @@ TIFFWriteRawTile(TIFF* tif, ttile_t tile, tdata_t data, tsize_t cc)
 	if (!WRITECHECKTILES(tif, module))
 		return ((tsize_t) -1);
 	if (tile >= tif->tif_dir.td_nstrips) {
-		TIFFError(module, "%s: Tile %lu out of range, max %lu",
+		TIFFErrorExt(tif->tif_clientdata, module, "%s: Tile %lu out of range, max %lu",
 		    tif->tif_name, (unsigned long) tile,
 		    (unsigned long) tif->tif_dir.td_nstrips);
 		return ((tsize_t) -1);
@@ -489,12 +487,12 @@ int
 TIFFWriteCheck(TIFF* tif, int tiles, const char* module)
 {
 	if (tif->tif_mode == O_RDONLY) {
-		TIFFError(module, "%s: File not open for writing",
+		TIFFErrorExt(tif->tif_clientdata, module, "%s: File not open for writing",
 		    tif->tif_name);
 		return (0);
 	}
 	if (tiles ^ isTiled(tif)) {
-		TIFFError(tif->tif_name, tiles ?
+		TIFFErrorExt(tif->tif_clientdata, tif->tif_name, tiles ?
 		    "Can not write tiles to a stripped image" :
 		    "Can not write scanlines to a tiled image");
 		return (0);
@@ -511,7 +509,7 @@ TIFFWriteCheck(TIFF* tif, int tiles, const char* module)
 	 * the image's length to be changed).
 	 */
 	if (!TIFFFieldSet(tif, FIELD_IMAGEDIMENSIONS)) {
-		TIFFError(module,
+		TIFFErrorExt(tif->tif_clientdata, module,
 		    "%s: Must set \"ImageWidth\" before writing data",
 		    tif->tif_name);
 		return (0);
@@ -526,7 +524,7 @@ TIFFWriteCheck(TIFF* tif, int tiles, const char* module)
 		tif->tif_dir.td_planarconfig = PLANARCONFIG_CONTIG;
 	} else {
 		if (!TIFFFieldSet(tif, FIELD_PLANARCONFIG)) {
-			TIFFError(module,
+			TIFFErrorExt(tif->tif_clientdata, module,
 		    "%s: Must set \"PlanarConfiguration\" before writing data",
 			    tif->tif_name);
 			return (0);
@@ -534,7 +532,7 @@ TIFFWriteCheck(TIFF* tif, int tiles, const char* module)
 	}
 	if (tif->tif_dir.td_stripoffset == NULL && !TIFFSetupStrips(tif)) {
 		tif->tif_dir.td_nstrips = 0;
-		TIFFError(module, "%s: No space for %s arrays",
+		TIFFErrorExt(tif->tif_clientdata, module, "%s: No space for %s arrays",
 		    tif->tif_name, isTiled(tif) ? "tile" : "strip");
 		return (0);
 	}
@@ -572,7 +570,7 @@ TIFFWriteBufferSetup(TIFF* tif, tdata_t bp, tsize_t size)
 	if (bp == NULL) {
 		bp = _TIFFmalloc(size);
 		if (bp == NULL) {
-			TIFFError(module, "%s: No space for output buffer",
+			TIFFErrorExt(tif->tif_clientdata, module, "%s: No space for output buffer",
 			    tif->tif_name);
 			return (0);
 		}
@@ -607,7 +605,7 @@ TIFFGrowStrips(TIFF* tif, int delta, const char* module)
 		if (new_stripbytecount)
 			_TIFFfree(new_stripbytecount);
 		td->td_nstrips = 0;
-		TIFFError(module, "%s: No space to expand strip arrays",
+		TIFFErrorExt(tif->tif_clientdata, module, "%s: No space to expand strip arrays",
 			  tif->tif_name);
 		return (0);
 	}
@@ -667,7 +665,7 @@ TIFFAppendToStrip(TIFF* tif, tstrip_t strip, tidata_t data, tsize_t cc)
 			}
 
 			if (!SeekOK(tif, td->td_stripoffset[strip])) {
-				TIFFError(module,
+				TIFFErrorExt(tif->tif_clientdata, module,
 					  "%s: Seek error at scanline %lu",
 					  tif->tif_name,
 					  (unsigned long)tif->tif_row);
@@ -680,7 +678,7 @@ TIFFAppendToStrip(TIFF* tif, tstrip_t strip, tidata_t data, tsize_t cc)
 	}
 
 	if (!WriteOK(tif, data, cc)) {
-		TIFFError(module, "%s: Write error at scanline %lu",
+		TIFFErrorExt(tif->tif_clientdata, module, "%s: Write error at scanline %lu",
 		    tif->tif_name, (unsigned long) tif->tif_row);
 		return (0);
 	}

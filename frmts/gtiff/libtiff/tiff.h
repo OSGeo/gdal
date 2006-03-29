@@ -1,4 +1,4 @@
-/* $Id: tiff.h,v 1.38 2005/07/26 10:33:57 dron Exp $ */
+/* $Id: tiff.h,v 1.42 2005/12/23 15:10:45 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -50,7 +50,8 @@
 
 #define	TIFF_BIGENDIAN		0x4d4d
 #define	TIFF_LITTLEENDIAN	0x4949
-
+#define	MDI_LITTLEENDIAN        0x5045
+#define	MDI_BIGENDIAN           0x4550
 /*
  * Intrinsic data types required by the file format:
  *
@@ -575,6 +576,72 @@ typedef	enum {
 #define TIFFTAG_SGILOGENCODE		65561 /* SGILog data encoding control*/
 #define     SGILOGENCODE_NODITHER	0     /* do not dither encoded values*/
 #define     SGILOGENCODE_RANDITHER	1     /* randomly dither encd values */
+
+/*
+ * EXIF tags
+ */
+#define EXIFTAG_EXPOSURETIME		33434	/* Exposure time */
+#define EXIFTAG_FNUMBER			33437	/* F number */
+#define EXIFTAG_EXPOSUREPROGRAM		34850	/* Exposure program */
+#define EXIFTAG_SPECTRALSENSITIVITY	34852	/* Spectral sensitivity */
+#define EXIFTAG_ISOSPEEDRATINGS		34855	/* ISO speed rating */
+#define EXIFTAG_OECF			34856	/* Optoelectric conversion
+						   factor */
+#define EXIFTAG_EXIFVERSION		36864	/* Exif version */
+#define EXIFTAG_DATETIMEORIGINAL	36867	/* Date and time of original
+						   data generation */
+#define EXIFTAG_DATETIMEDIGITIZED	36868	/* Date and time of digital
+						   data generation */
+#define EXIFTAG_COMPONENTSCONFIGURATION	37121	/* Meaning of each component */
+#define EXIFTAG_COMPRESSEDBITSPERPIXEL	37122	/* Image compression mode */
+#define EXIFTAG_SHUTTERSPEEDVALUE	37377	/* Shutter speed */
+#define EXIFTAG_APERTUREVALUE		37378	/* Aperture */
+#define EXIFTAG_BRIGHTNESSVALUE		37379	/* Brightness */
+#define EXIFTAG_EXPOSUREBIASVALUE	37380	/* Exposure bias */
+#define EXIFTAG_MAXAPERTUREVALUE	37381	/* Maximum lens aperture */
+#define EXIFTAG_SUBJECTDISTANCE		37382	/* Subject distance */
+#define EXIFTAG_METERINGMODE		37383	/* Metering mode */
+#define EXIFTAG_LIGHTSOURCE		37384	/* Light source */
+#define EXIFTAG_FLASH			37385	/* Flash */
+#define EXIFTAG_FOCALLENGTH		37386	/* Lens focal length */
+#define EXIFTAG_SUBJECTAREA		37396	/* Subject area */
+#define EXIFTAG_MAKERNOTE		37500	/* Manufacturer notes */
+#define EXIFTAG_USERCOMMENT		37510	/* User comments */
+#define EXIFTAG_SUBSECTIME		37520	/* DateTime subseconds */
+#define EXIFTAG_SUBSECTIMEORIGINAL	37521	/* DateTimeOriginal subseconds */
+#define EXIFTAG_SUBSECTIMEDIGITIZED	37522	/* DateTimeDigitized subseconds */
+#define EXIFTAG_FLASHPIXVERSION		40960	/* Supported Flashpix version */
+#define EXIFTAG_COLORSPACE		40961	/* Color space information */
+#define EXIFTAG_PIXELXDIMENSION		40962	/* Valid image width */
+#define EXIFTAG_PIXELYDIMENSION		40963	/* Valid image height */
+#define EXIFTAG_RELATEDSOUNDFILE	40964	/* Related audio file */
+#define EXIFTAG_FLASHENERGY		41483	/* Flash energy */
+#define EXIFTAG_SPATIALFREQUENCYRESPONSE 41484	/* Spatial frequency response */
+#define EXIFTAG_FOCALPLANEXRESOLUTION	41486	/* Focal plane X resolution */
+#define EXIFTAG_FOCALPLANEYRESOLUTION	41487	/* Focal plane Y resolution */
+#define EXIFTAG_FOCALPLANERESOLUTIONUNIT 41488	/* Focal plane resolution unit */
+#define EXIFTAG_SUBJECTLOCATION		41492	/* Subject location */
+#define EXIFTAG_EXPOSUREINDEX		41493	/* Exposure index */
+#define EXIFTAG_SENSINGMETHOD		41495	/* Sensing method */
+#define EXIFTAG_FILESOURCE		41728	/* File source */
+#define EXIFTAG_SCENETYPE		41729	/* Scene type */
+#define EXIFTAG_CFAPATTERN		41730	/* CFA pattern */
+#define EXIFTAG_CUSTOMRENDERED		41985	/* Custom image processing */
+#define EXIFTAG_EXPOSUREMODE		41986	/* Exposure mode */
+#define EXIFTAG_WHITEBALANCE		41987	/* White balance */
+#define EXIFTAG_DIGITALZOOMRATIO	41988	/* Digital zoom ratio */
+#define EXIFTAG_FOCALLENGTHIN35MMFILM	41989	/* Focal length in 35 mm film */
+#define EXIFTAG_SCENECAPTURETYPE	41990	/* Scene capture type */
+#define EXIFTAG_GAINCONTROL		41991	/* Gain control */
+#define EXIFTAG_CONTRAST		41992	/* Contrast */
+#define EXIFTAG_SATURATION		41993	/* Saturation */
+#define EXIFTAG_SHARPNESS		41994	/* Sharpness */
+#define EXIFTAG_DEVICESETTINGDESCRIPTION 41995	/* Device settings description */
+#define EXIFTAG_SUBJECTDISTANCERANGE	41996	/* Subject distance range */
+#define EXIFTAG_GAINCONTROL		41991	/* Gain control */
+#define EXIFTAG_GAINCONTROL		41991	/* Gain control */
+#define EXIFTAG_IMAGEUNIQUEID		42016	/* Unique image ID */
+
 #endif /* _TIFF_ */
 
 /* vim: set ts=8 sts=8 sw=8 noet: */

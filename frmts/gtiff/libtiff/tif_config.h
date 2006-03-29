@@ -23,7 +23,7 @@
 
 /* Pick up YCbCr subsampling info from the JPEG data stream to support files
    lacking the tag (default enabled). */
-#define CHECK_JPEG_YCBCR_SUBSAMPLING 1
+//#define CHECK_JPEG_YCBCR_SUBSAMPLING 1
 
 /* Treat extra sample as alpha (default enabled). The RGBA interface will
    treat a fourth sample with no EXTRASAMPLE_ value as being ASSOCALPHA. Many
