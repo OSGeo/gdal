@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.74  2006/03/29 14:24:04  fwarmerdam
+ * added preliminary nodata support (readonly)
+ *
  * Revision 1.73  2006/02/13 22:42:35  fwarmerdam
  * Fixed metadata related memory leak.
  *
@@ -510,6 +513,7 @@ class HFARasterBand : public GDALPamRasterBand
 
     virtual double GetMinimum( int *pbSuccess = NULL );
     virtual double GetMaximum(int *pbSuccess = NULL );
+    virtual double GetNoDataValue( int *pbSuccess = NULL );
 
     virtual CPLErr SetMetadata( char **, const char * = "" );
     virtual CPLErr SetMetadataItem( const char *, const char *, const char * = "" );
@@ -799,6 +803,24 @@ void HFARasterBand::ReadAuxMetadata()
         SetMetadataItem( "STATISTICS_HISTOBINVALUES", pszBinValues );
         CPLFree( pszBinValues );
     }
+}
+
+/************************************************************************/
+/*                             GetNoData()                              */
+/************************************************************************/
+
+double HFARasterBand::GetNoDataValue( int *pbSuccess )
+
+{
+    double dfNoData;
+
+    if( HFAGetBandNoData( hHFA, nBand, &dfNoData ) )
+    {
+        *pbSuccess = TRUE;
+        return dfNoData;
+    }
+    else
+        return GDALPamRasterBand::GetNoDataValue( pbSuccess );
 }
 
 /************************************************************************/

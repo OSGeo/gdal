@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/03/29 14:24:04  fwarmerdam
+ * added preliminary nodata support (readonly)
+ *
  * Revision 1.18  2005/10/02 15:14:48  fwarmerdam
  * fixed size for <8bit basedata items
  *
@@ -799,6 +802,65 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
       }
       break;
 
+      case 'b':
+      {
+          GInt32 nRows, nColumns;
+          GInt16 nBaseItemType;
+        
+          memcpy( &nRows, pabyData, 4 );
+          HFAStandard( 4, &nRows );
+          memcpy( &nColumns, pabyData+4, 4 );
+          HFAStandard( 4, &nColumns );
+          memcpy( &nBaseItemType, pabyData+8, 2 );
+          HFAStandard( 2, &nBaseItemType );
+
+          pabyData += 10;
+
+          CPLAssert( nRows >= 1 && nColumns >= 1 );
+
+          if( nBaseItemType == EPT_u8 )
+          {
+              dfDoubleRet = pabyData[0];
+              nIntRet = pabyData[0];
+          }
+          else if( nBaseItemType == EPT_s16 )
+          {
+              GInt16  nValue;
+              
+              memcpy( &nValue, pabyData, 2 );
+              HFAStandard( 2, &nValue );
+
+              dfDoubleRet = nValue;
+              nIntRet = nValue;
+          }
+          else if( nBaseItemType == EPT_u16 )
+          {
+              GUInt16  nValue;
+              
+              memcpy( &nValue, pabyData, 2 );
+              HFAStandard( 2, &nValue );
+
+              dfDoubleRet = nValue;
+              nIntRet = nValue;
+          }
+          else if( nBaseItemType == EPT_f32 )
+          {
+              float fValue;
+              
+              memcpy( &fValue, pabyData, 4 );
+              HFAStandard( 4, &fValue );
+
+              dfDoubleRet = fValue;
+              nIntRet = (int) fValue;
+          }
+          else
+          {
+              CPLAssert( FALSE );
+              return NULL;
+          }
+      }
+      break;
+
       case 'o':
         if( poItemObjectType != NULL )
         {
@@ -825,10 +887,10 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
             if( pszField != NULL && strlen(pszField) > 0 )
             {
                 return( poItemObjectType->
-                            ExtractInstValue( pszField, pabyRawData,
-                                              nDataOffset + nExtraOffset,
-                                              nDataSize - nExtraOffset,
-                                              chReqType ) );
+                        ExtractInstValue( pszField, pabyRawData,
+                                          nDataOffset + nExtraOffset,
+                                          nDataSize - nExtraOffset,
+                                          chReqType ) );
             }
         }
         break;
@@ -895,7 +957,7 @@ int HFAField::GetInstBytes( GByte * pabyData )
     else
         nCount = 1;
 
-    if( chItemType == 'b' && nCount != 0 )
+    if( chItemType == 'b' && nCount != 0 ) // BASEDATA
     {
         GInt32 nRows, nColumns;
         GInt16 nBaseItemType;
