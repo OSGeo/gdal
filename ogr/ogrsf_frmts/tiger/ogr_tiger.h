@@ -4,7 +4,7 @@
  *
  * Project:  TIGER/Line Translator
  * Purpose:  Main declarations for Tiger translator.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/03/29 00:46:20  fwarmerdam
+ * update contact info
+ *
  * Revision 1.22  2006/03/08 04:17:24  fwarmerdam
  * added logic to check RTC records when classifying version
  *

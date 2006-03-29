@@ -3,7 +3,7 @@
  *
  * Project:  TIGER/Line Translator
  * Purpose:  Implements TigerPIP, providing access to .RTP files.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/03/29 00:46:20  fwarmerdam
+ * update contact info
+ *
  * Revision 1.11  2005/09/21 00:53:19  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
