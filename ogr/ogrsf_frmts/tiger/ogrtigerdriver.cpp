@@ -3,7 +3,7 @@
  *
  * Project:  TIGER/Line Translator
  * Purpose:  Implements OGRTigerDriver
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/03/29 00:46:20  fwarmerdam
+ * update contact info
+ *
  * Revision 1.6  2001/07/18 04:55:16  warmerda
  * added CPL_CSVID
  *
