@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/03/29 14:24:04  fwarmerdam
+ * added preliminary nodata support (readonly)
+ *
  * Revision 1.17  2005/12/21 05:30:45  fwarmerdam
  * return compression type as metadata
  *
@@ -202,6 +205,7 @@ CPLErr CPL_DLL HFAGetRasterInfo( HFAHandle hHFA, int *pnXSize, int *pnYSize,
 CPLErr CPL_DLL HFAGetBandInfo( HFAHandle hHFA, int nBand, int * pnDataType,
                                int * pnBlockXSize, int * pnBlockYSize, 
                                int * pnOverviews, int *pnCompressionType );
+int    CPL_DLL HFAGetBandNoData( HFAHandle hHFA, int nBand, double *pdfValue );
 CPLErr CPL_DLL HFAGetOverviewInfo( HFAHandle hHFA, int nBand, int nOverview, 
                                    int * pnXSize, int * pnYSize,
                                    int * pnBlockXSize, int * pnBlockYSize );

@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.52  2006/03/29 14:24:04  fwarmerdam
+ * added preliminary nodata support (readonly)
+ *
  * Revision 1.51  2006/01/09 15:26:48  fwarmerdam
  * fixed logic for computing spill file size
  *
@@ -607,6 +610,27 @@ CPLErr HFAGetBandInfo( HFAHandle hHFA, int nBand, int * pnDataType,
     }
 
     return( CE_None );
+}
+
+/************************************************************************/
+/*                          HFAGetBandNoData()                          */
+/*                                                                      */
+/*      returns TRUE if value is set, otherwise FALSE.                  */
+/************************************************************************/
+
+int HFAGetBandNoData( HFAHandle hHFA, int nBand, double *pdfNoData )
+
+{
+    if( nBand < 0 || nBand > hHFA->nBands )
+    {
+        CPLAssert( FALSE );
+        return CE_Failure;
+    }
+
+    HFABand *poBand = hHFA->papoBand[nBand-1];
+
+    *pdfNoData = poBand->dfNoData;
+    return poBand->bNoDataSet;
 }
 
 /************************************************************************/

@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2006/03/29 14:24:04  fwarmerdam
+ * added preliminary nodata support (readonly)
+ *
  * Revision 1.23  2005/09/15 20:36:42  fwarmerdam
  * added HFACreateDependent
  *
@@ -236,6 +239,9 @@ class HFABand
 
     int		nBlocksPerRow;
     int		nBlocksPerColumn;
+
+    int         bNoDataSet;
+    double      dfNoData;
 
     int		nOverviews;
     HFABand     **papoOverviews;

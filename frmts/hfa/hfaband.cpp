@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2006/03/29 14:24:04  fwarmerdam
+ * added preliminary nodata support (readonly)
+ *
  * Revision 1.52  2006/03/09 03:12:16  fwarmerdam
  * Increase default space for RRDNamesList.
  *
@@ -229,6 +232,23 @@ HFABand::HFABand( HFAInfo_t * psInfoIn, HFAEntry * poNodeIn )
     papoOverviews = NULL;
 
     fpExternal = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Check for nodata.  This is really an RDO (ESRI Raster Data      */
+/*      Objects?), not used by Imagine itself.                          */
+/* -------------------------------------------------------------------- */
+    HFAEntry	*poNDNode = poNode->GetNamedChild("Eimg_NonInitializedValue");
+    
+    if( poNDNode != NULL )
+    {
+        bNoDataSet = TRUE;
+        dfNoData = poNDNode->GetDoubleField( "valueBD" );
+    }
+    else
+    {
+        bNoDataSet = FALSE;
+        dfNoData = 0.0;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Does this band have overviews?  Try to find them.               */
