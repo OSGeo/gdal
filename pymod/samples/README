@@ -40,3 +40,6 @@ rel.py			Script to produce a shaded relief image from the
 			elevation data.
 
 gdal_vrtmerge.py        Similar to gdal_merge.py, but produces a VRT file. 
+
+vec_tr.py               Example of applying some algorithm to all the 
+                        geometries in the file, such as a fixed offset.
