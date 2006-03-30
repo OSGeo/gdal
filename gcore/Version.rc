@@ -5,6 +5,9 @@
  * Purpose:  GDAL DLL registration information. 
  * Author:   Martin Daly (Cadcorp)
  *
+ * Copyright assignment provided by Martin Daly by email, "Be my guest.  Fame!  
+ * At last!  Best not let it go to my head, eh?"
+ *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
  *
@@ -27,6 +30,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.6  2006/03/30 15:42:55  fwarmerdam
+ * Added explicit not on right to use.
+ *
  * Revision 1.5  2006/03/28 14:49:56  fwarmerdam
  * updated contact info
  *
