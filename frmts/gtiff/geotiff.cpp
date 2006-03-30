@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.158  2006/03/30 16:49:09  fwarmerdam
+ * Reorder setfield calls to put jpeg stuff pretty late.  This helps resolve
+ * problems producing ycbcr jpeg files.
+ * Also added support for unpacking YCbCr subsampled data in IReadBlock(),
+ * and broader support for the CONVERT_YCBCR_TO_RGB config option.
+ *
  * Revision 1.157  2006/02/17 15:46:06  fwarmerdam
  * Ensure that an image is considered paletted if it has a palette,
  * even if the photometric interpretation is wrong.
@@ -374,7 +380,9 @@ GTiffRasterBand::GTiffRasterBand( GTiffDataset *poDS, int nBand )
         eBandInterp = GCI_PaletteIndex;
     else if( poDS->nPhotometric == PHOTOMETRIC_RGB 
              || (poDS->nPhotometric == PHOTOMETRIC_YCBCR 
-                 && poDS->nCompression == COMPRESSION_JPEG ) )
+                 && poDS->nCompression == COMPRESSION_JPEG 
+                 && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+                                                       "YES") )) )
     {
         if( nBand == 1 )
             eBandInterp = GCI_RedBand;
@@ -536,6 +544,43 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( eErr != CE_None )
         return eErr;
 
+/* -------------------------------------------------------------------- */
+/*      Special case for YCbCr subsampled data.                         */
+/* -------------------------------------------------------------------- */
+    if( (eBandInterp == GCI_YCbCr_YBand 
+         || eBandInterp == GCI_YCbCr_CbBand
+         ||  eBandInterp == GCI_YCbCr_CrBand)
+        && poGDS->nBitsPerSample == 8 )
+    {
+	uint16 hs, vs;
+        int iX, iY;
+
+	TIFFGetFieldDefaulted( poGDS->hTIFF, TIFFTAG_YCBCRSUBSAMPLING, 
+                               &hs, &vs);
+        
+        for( iY = 0; iY < nBlockYSize; iY++ )
+        {
+            for( iX = 0; iX < nBlockXSize; iX++ )
+            {
+                int iBlock = (iY / vs) * (nBlockXSize/hs) + (iX / hs);
+                GByte *pabySrcBlock = poGDS->pabyBlockBuf + 
+                    (vs * hs + 2) * iBlock;
+                
+                if( eBandInterp == GCI_YCbCr_YBand )
+                    ((GByte *)pImage)[iY*nBlockXSize + iX] = 
+                        pabySrcBlock[(iX % hs) + (iY % vs) * hs];
+                else if( eBandInterp == GCI_YCbCr_CbBand )
+                    ((GByte *)pImage)[iY*nBlockXSize + iX] = 
+                        pabySrcBlock[vs * hs + 0];
+                else if( eBandInterp == GCI_YCbCr_CrBand )
+                    ((GByte *)pImage)[iY*nBlockXSize + iX] = 
+                        pabySrcBlock[vs * hs + 1];
+            }
+        }
+
+        return CE_None;
+    }
+        
 /* -------------------------------------------------------------------- */
 /*      Handle simple case of eight bit data, and pixel interleaving.   */
 /* -------------------------------------------------------------------- */
@@ -1676,7 +1721,10 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId )
 /*      This is rather overkill, but relatively harmless so we do it    */
 /*      here to be sure.                                                */
 /* -------------------------------------------------------------------- */
-    if( nCompression == COMPRESSION_JPEG && nPhotometric == PHOTOMETRIC_YCBCR )
+    if( nCompression == COMPRESSION_JPEG 
+        && nPhotometric == PHOTOMETRIC_YCBCR 
+        && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+                                              "YES") ) )
     {
         TIFFSetField(hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
     }
@@ -3339,14 +3387,6 @@ TIFF *GTiffCreate( const char * pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Setup some standard flags.                                      */
 /* -------------------------------------------------------------------- */
-    TIFFSetField( hTIFF, TIFFTAG_COMPRESSION, nCompression );
-    if ( nCompression == COMPRESSION_LZW ||
-         nCompression == COMPRESSION_ADOBE_DEFLATE )
-        TIFFSetField( hTIFF, TIFFTAG_PREDICTOR, nPredictor );
-    if( nCompression == COMPRESSION_JPEG 
-        && nJpegQuality != -1 )
-        TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, nJpegQuality );
-        
     TIFFSetField( hTIFF, TIFFTAG_IMAGEWIDTH, nXSize );
     TIFFSetField( hTIFF, TIFFTAG_IMAGELENGTH, nYSize );
     TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE, GDALGetDataTypeSize(eType) );
@@ -3494,6 +3534,17 @@ TIFF *GTiffCreate( const char * pszFilename,
         TIFFSetField( hTIFF, TIFFTAG_ROWSPERSTRIP, nRowsPerStrip );
     }
     
+/* -------------------------------------------------------------------- */
+/*      Set compression related tags.                                   */
+/* -------------------------------------------------------------------- */
+    TIFFSetField( hTIFF, TIFFTAG_COMPRESSION, nCompression );
+    if ( nCompression == COMPRESSION_LZW ||
+         nCompression == COMPRESSION_ADOBE_DEFLATE )
+        TIFFSetField( hTIFF, TIFFTAG_PREDICTOR, nPredictor );
+    if( nCompression == COMPRESSION_JPEG 
+        && nJpegQuality != -1 )
+        TIFFSetField( hTIFF, TIFFTAG_JPEGQUALITY, nJpegQuality );
+        
     return( hTIFF );
 }
 
@@ -3675,6 +3726,35 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
     }
 
+/* -------------------------------------------------------------------- */
+/*      If the output is jpeg compressed, and the input is RGB make     */
+/*      sure we note that.                                              */
+/* -------------------------------------------------------------------- */
+    uint16      nCompression;
+
+    if( !TIFFGetField( hTIFF, TIFFTAG_COMPRESSION, &(nCompression) ) )
+        nCompression = COMPRESSION_NONE;
+
+    if( nCompression == COMPRESSION_JPEG )
+    {
+        if( nBands >= 3 
+            && (poSrcDS->GetRasterBand(1)->GetColorInterpretation() 
+                == GCI_YCbCr_YBand)
+            && (poSrcDS->GetRasterBand(2)->GetColorInterpretation() 
+                == GCI_YCbCr_CbBand)
+            && (poSrcDS->GetRasterBand(3)->GetColorInterpretation() 
+                == GCI_YCbCr_CrBand) )
+        {
+            /* do nothing ... */
+        }
+        else
+        {
+            /* we assume RGB if it isn't explicitly YCbCr */
+            CPLDebug( "GTiff", "Setting JPEGCOLORMODE_RGB" );
+            TIFFSetField( hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB );
+        }
+    }
+        
 /* -------------------------------------------------------------------- */
 /*      Does the source image consist of one band, with a palette?      */
 /*      If so, copy over.                                               */
