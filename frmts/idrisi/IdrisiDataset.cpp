@@ -133,6 +133,8 @@ private:
     char **papszRDC;
     double adfGeoTransform[6];
 
+    char *pszProjection;
+
 protected:
     GDALColorTable *poColorTable;
 
@@ -208,6 +210,7 @@ IdrisiDataset::IdrisiDataset()
     fp = NULL;
     papszRDC = NULL;
     pszDocFilename = NULL;
+    pszProjection = NULL;
     poColorTable = new GDALColorTable();
 
     adfGeoTransform[0] = 0.0;
@@ -225,14 +228,20 @@ IdrisiDataset::~IdrisiDataset()
     if (papszRDC != NULL)
     {
         if (eAccess == GA_Update)
-        {
             CSLSave(papszRDC, pszDocFilename);
-        }
+
         CSLDestroy(papszRDC);
     }
 
-    delete poColorTable;
+    if( poColorTable )
+        delete poColorTable;
+
     CPLFree(pszFilename);
+    CPLFree(pszDocFilename);
+    CPLFree(pszProjection);
+    
+    if( fp != NULL )
+        VSIFCloseL( fp );
 }
 
 GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
@@ -278,12 +287,10 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->eAccess == GA_ReadOnly )
     {
         poDS->fp = VSIFOpenL(poDS->pszFilename, "rb");
-        poOpenInfo->fp = NULL;
     } 
     else 
     {
         poDS->fp = VSIFOpenL(poDS->pszFilename, "r+b");
-        poOpenInfo->fp = NULL;
     }
 
     if (poDS->fp == NULL)
@@ -789,7 +796,10 @@ const char *IdrisiDataset::GetProjectionRef(void)
 {        
     //CPLDebug(extRST, "GetProjectionRef");
 
-    char *pszProjection;
+    // Clear last value.
+    CPLFree( pszProjection );
+    pszProjection = NULL;
+
     char *pszRefSystem;
 
     pszRefSystem = TrimL(CSLFetchNameValue(papszRDC, rdcREF_SYSTEM));
@@ -928,7 +938,7 @@ CPLErr IdrisiRasterBand::IReadBlock(int nBlockXOff,
         return CE_Failure;
     }
 
-    if (VSIFReadL(pabyScanLine, 1, nRecordSize, poGDS->fp) < nRecordSize)
+    if( (int) VSIFReadL(pabyScanLine, 1, nRecordSize, poGDS->fp) < nRecordSize)
     {
         CPLError(CE_Failure, CPLE_FileIO, 
             "Can't read (%s) block with X offset %d and Y offset %d.\n%s", 
@@ -978,7 +988,7 @@ CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff,
 
     VSIFSeekL(poGDS->fp, nRecordSize * nBlockYOff, SEEK_SET);
 
-    if (VSIFWriteL(pabyScanLine, 1, nRecordSize, poGDS->fp) < nRecordSize)
+    if( (int) VSIFWriteL(pabyScanLine, 1, nRecordSize, poGDS->fp) < nRecordSize)
     {
         CPLError(CE_Failure, CPLE_FileIO, 
             "Can't write (%s) block with X offset %d and Y offset %d.\n%s", 
@@ -1296,6 +1306,9 @@ CPLErr IdrisiRasterBand::SetStatistics(double dfMin, double dfMax, double dfMean
 char *TrimL(const char *pszText)
 {
     int i;
+
+    if( pszText == NULL )
+        return "";
 
     for (i = 0; (pszText[i] == ' ') && (pszText[i] != '\0'); i++);
 
