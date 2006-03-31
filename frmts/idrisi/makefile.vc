@@ -4,7 +4,7 @@ GDAL_ROOT = ..\..
 
 OBJ	= idrisiDataset.obj
 
-EXTRAFLAGS = -I.\rstlib -I$(RST_DIR) -D_USE_MATH_DEFINES
+EXTRAFLAGS = -D_USE_MATH_DEFINES
 
 default:	$(OBJ)
 	copy *.obj ..\o
