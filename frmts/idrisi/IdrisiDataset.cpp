@@ -204,6 +204,9 @@ public:
 //	                    Implementation of IdrisiDataset                       //
 //  ------------------------------------------------------------------------  //
 
+/************************************************************************/
+/*                           IdrisiDataset()                            */
+/************************************************************************/
 IdrisiDataset::IdrisiDataset()
 {
     pszFilename = NULL;
@@ -221,6 +224,9 @@ IdrisiDataset::IdrisiDataset()
     adfGeoTransform[5] = 1.0;
 }
 
+/************************************************************************/
+/*                           ~IdrisiDataset()                           */
+/************************************************************************/
 IdrisiDataset::~IdrisiDataset()
 {
     FlushCache();
@@ -243,6 +249,10 @@ IdrisiDataset::~IdrisiDataset()
     if( fp != NULL )
         VSIFCloseL( fp );
 }
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
 
 GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
 {
@@ -411,6 +421,10 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
     return (poDS);
 }
 
+/************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
+
 GDALDataset *IdrisiDataset::Create(const char *pszFilename,
                                    int nXSize, 
                                    int nYSize, 
@@ -521,6 +535,10 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename,
 
     return (IdrisiDataset *) GDALOpen(pszFilename, GA_Update);
 }
+
+/************************************************************************/
+/*                             CreateCopy()                             */
+/************************************************************************/
 
 GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename, 
                                        GDALDataset *poSrcDS,
@@ -742,6 +760,10 @@ GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
     return poDS;
 }
 
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
 CPLErr  IdrisiDataset::GetGeoTransform(double * padfTransform)
 {    
     //CPLDebug(extRST, "GetGeoTransform");
@@ -750,6 +772,10 @@ CPLErr  IdrisiDataset::GetGeoTransform(double * padfTransform)
 
     return CE_None;
 }
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
 
 CPLErr  IdrisiDataset::SetGeoTransform(double * padfGeoTransform)
 {    
@@ -780,6 +806,10 @@ CPLErr  IdrisiDataset::SetGeoTransform(double * padfGeoTransform)
 
     return CE_None;
 }
+
+/************************************************************************/
+/*                          GetProjectionRef()                          */
+/************************************************************************/
 
 const char *IdrisiDataset::GetProjectionRef(void)
 {        
@@ -834,6 +864,10 @@ const char *IdrisiDataset::GetProjectionRef(void)
     return pszProjection;
 }
 
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
 CPLErr IdrisiDataset::SetProjection(const char *pszProjString)
 {   
     //CPLDebug(extRST, "SetProjection");
@@ -885,6 +919,10 @@ CPLErr IdrisiDataset::SetProjection(const char *pszProjString)
 //	                    Implementation of IdrisiRasterBand                    //
 //  ------------------------------------------------------------------------  //
 
+/************************************************************************/
+/*                          IdrisiRasterBand()                          */
+/************************************************************************/
+
 IdrisiRasterBand::IdrisiRasterBand(IdrisiDataset *poDS, 
                                    int nBand, 
                                    GDALDataType eDataType)
@@ -908,10 +946,18 @@ IdrisiRasterBand::IdrisiRasterBand(IdrisiDataset *poDS,
     pabyScanLine = (GByte *) CPLMalloc(nRecordSize);
 }
 
+/************************************************************************/
+/*                         ~IdrisiRasterBand()                          */
+/************************************************************************/
+
 IdrisiRasterBand::~IdrisiRasterBand()
 {
     CPLFree(pabyScanLine);
 }
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
 
 CPLErr IdrisiRasterBand::IReadBlock(int nBlockXOff, 
                                     int nBlockYOff,
@@ -951,6 +997,10 @@ CPLErr IdrisiRasterBand::IReadBlock(int nBlockXOff,
     return CE_None;
 }
 
+/************************************************************************/
+/*                            IWriteBlock()                             */
+/************************************************************************/
+
 CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff, 
                                      int nBlockYOff,
                                      void *pImage)
@@ -988,6 +1038,10 @@ CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff,
     return CE_None;
 }
 
+/************************************************************************/
+/*                             GetMinimum()                             */
+/************************************************************************/
+
 double IdrisiRasterBand::GetMinimum(int *pbSuccess)
 {      
     //CPLDebug(extRST, "GetMinimum");
@@ -1005,6 +1059,10 @@ double IdrisiRasterBand::GetMinimum(int *pbSuccess)
 
     return adfMinValue[this->nBand - 1];
 }
+
+/************************************************************************/
+/*                             GetMaximum()                             */
+/************************************************************************/
 
 double IdrisiRasterBand::GetMaximum(int *pbSuccess)
 {      
@@ -1024,6 +1082,10 @@ double IdrisiRasterBand::GetMaximum(int *pbSuccess)
     return adfMaxValue[this->nBand - 1];
 }
 
+/************************************************************************/
+/*                           GetStatistics()                            */
+/************************************************************************/
+
 CPLErr IdrisiRasterBand::GetStatistics(int bApproxOK, int bForce,
                                        double *pdfMin, double *pdfMax, 
                                        double *pdfMean, double *padfStdDev)
@@ -1037,6 +1099,10 @@ CPLErr IdrisiRasterBand::GetStatistics(int bApproxOK, int bForce,
 
     return CE_Warning;
 }
+
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
 
 double IdrisiRasterBand::GetNoDataValue(int *pbSuccess)
 {      
@@ -1065,6 +1131,10 @@ double IdrisiRasterBand::GetNoDataValue(int *pbSuccess)
     return dfNoData;
 }
 
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
 GDALColorInterp IdrisiRasterBand::GetColorInterpretation()
 {               
     //CPLDebug(extRST, "GetColorInterpretation");
@@ -1090,6 +1160,10 @@ GDALColorInterp IdrisiRasterBand::GetColorInterpretation()
     //CPLDebug(extRST, "GrayIndex");
     return GCI_GrayIndex;
 }
+
+/************************************************************************/
+/*                          GetCategoryNames()                          */
+/************************************************************************/
 
 char **IdrisiRasterBand::GetCategoryNames()
 {      
@@ -1123,6 +1197,10 @@ char **IdrisiRasterBand::GetCategoryNames()
     return papszCategoryNames;
 }
 
+/************************************************************************/
+/*                           GetColroTable()                            */
+/************************************************************************/
+
 GDALColorTable *IdrisiRasterBand::GetColorTable()
 {               
     IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
@@ -1138,6 +1216,10 @@ GDALColorTable *IdrisiRasterBand::GetColorTable()
         return poGDS->poColorTable;
     }
 }
+
+/************************************************************************/
+/*                          SetCategoryNames()                          */
+/************************************************************************/
 
 CPLErr IdrisiRasterBand::SetCategoryNames(char **papszCategoryNames)
 {      
@@ -1171,6 +1253,10 @@ CPLErr IdrisiRasterBand::SetCategoryNames(char **papszCategoryNames)
     return CE_None;
 }
 
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
 CPLErr IdrisiRasterBand::SetNoDataValue(double dfNoDataValue)
 {      
     //CPLDebug(extRST, "SetNoDataValue = %lf", dfNoDataValue);
@@ -1190,6 +1276,10 @@ CPLErr IdrisiRasterBand::SetNoDataValue(double dfNoDataValue)
 
     return CE_None;
 }
+
+/************************************************************************/
+/*                           SetColorTable()                            */
+/************************************************************************/
 
 CPLErr IdrisiRasterBand::SetColorTable(GDALColorTable *poColorTable)
 {      
@@ -1248,6 +1338,10 @@ CPLErr IdrisiRasterBand::SetColorTable(GDALColorTable *poColorTable)
     return CE_None;
 }
 
+/************************************************************************/
+/*                            SetUnitType()                             */
+/************************************************************************/
+
 CPLErr IdrisiRasterBand::SetUnitType(const char *pszUnitType)
 {      
     //CPLDebug(extRST, "SetUnitType");
@@ -1265,6 +1359,10 @@ CPLErr IdrisiRasterBand::SetUnitType(const char *pszUnitType)
 
     return CE_None;
 }
+
+/************************************************************************/
+/*                           SetStatistics()                            */
+/************************************************************************/
 
 CPLErr IdrisiRasterBand::SetStatistics(double dfMin, double dfMax, double dfMean, double dfStdDev)
 {      
@@ -1298,6 +1396,10 @@ CPLErr IdrisiRasterBand::SetStatistics(double dfMin, double dfMax, double dfMean
     return CE_None;
 }
 
+/************************************************************************/
+/*                               TrimL()                                */
+/************************************************************************/
+
 char *TrimL(const char *pszText)
 {
     int i;
@@ -1312,6 +1414,10 @@ char *TrimL(const char *pszText)
     return pszResult;
 }
 
+/************************************************************************/
+/*                             FileExists()                             */
+/************************************************************************/
+
 bool FileExists(const char *pszFilename)
 {
     FILE *fp;
@@ -1325,6 +1431,10 @@ bool FileExists(const char *pszFilename)
 
     return exist;
 }
+
+/************************************************************************/
+/*                        GDALRegister_IDRISI()                         */
+/************************************************************************/
 
 void GDALRegister_IDRISI()
 {
