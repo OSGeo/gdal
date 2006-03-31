@@ -4,7 +4,7 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Classes for manipulating simple features that is not specific
  *           to a particular interface technology.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2006/03/31 17:57:32  fwarmerdam
+ * header updates
+ *
  * Revision 1.60  2005/12/02 11:06:51  osemykin
  * added const for OGRLineString::getPoints(...)
  *

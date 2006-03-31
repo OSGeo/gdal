@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRFeatureDefn class implementation.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/03/31 17:57:32  fwarmerdam
+ * header updates
+ *
  * Revision 1.13  2005/09/21 00:51:59  fwarmerdam
  * Added Release
  *
