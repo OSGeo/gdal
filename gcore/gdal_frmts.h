@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2006/03/31 02:59:15  fwarmerdam
+ * added idrisi
+ *
  * Revision 1.44  2006/03/28 14:49:56  fwarmerdam
  * updated contact info
  *
@@ -165,6 +168,7 @@ void CPL_DLL GDALRegister_Leveller(void);
 void CPL_DLL GDALRegister_SGI(void);
 void CPL_DLL GDALRegister_DIPEx(void);
 void CPL_DLL GDALRegister_ISIS2(void);
+void CPL_DLL GDALRegister_IDRISI(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
