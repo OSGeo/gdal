@@ -87,7 +87,7 @@ Note: all the following are build options, not required.
 
 * Various contributed, but mostly FrankW. 
 * All copyright held by FrankW. 
-* Version.rc contributed without copyright notice by Martin Daly, clarification requested. 
+* Version.rc contributed without copyright notice by Martin Daly, clarification requested.  Martin explicitly agreed by email, notice applied, all ok. 
 
 === gdal/alg ===
 
@@ -112,6 +112,8 @@ Note: all the following are build options, not required.
 * ellipsoid.csv, gcs.csv, gdal_datum.csv, pcs.csv, prime_meridian.csv, projop_wparm.csv, unit_of_measure.csv: Derived from EPSG.  Redistribution may violate the EPSG "distribute as a whole" requirement. 
 * seed_2d.dgn, seed_3d.dgn: Exact source of these files is unclear. 
 * NTS-50kindex.csv: Provided by Matt Wilkie, derived from NRCan dataset, rights unclear. 
+
+'''TO_RESOLVE'''
 
 === gdal/apps === 
 
@@ -151,11 +153,166 @@ Note: all the following are build options, not required.
 
 * all written by FrankW, clean. 
 
+=== gdal/ogr/ogrsf_rmts/generic ===
+
+* Some files here (and elsewhere in OGR) copyright Softmap Inc (but MIT/X). 
+
+=== gdal/ogr/ogrsf_frmts/avc ===
+
+* Some copyright Daniel Morissette, MIT/X.
+* Included copy of dbfopen.h from Shapelib.  We really ought to reference the one in ../shape. 
+
+=== gdal/ogr/ogrsf_rmts/csv ===
+
+* drv_*.html not copyright. 
+
+=== gdal/ogr/ogrsf_rmts/dgn ===
+
+* Copyright Avenza Systems (MIT/X).
+* dgn_pge.cpp, dgn_pge.h, pge_test.cpp, vbe_pge.cpp: copyright Pacific Gas and Electric, all rights reserved!  '''TO_RESOLVE'''
+* web/* docs lack any copyright message.  The isff.txt originally came from Intergraph and dgn.html is a reformatted version of that.  Perhaps these ought to move out of GDAL CVS tree  '''TO_RESOLVE'''
+
+=== gdal/ogr/ogrsf_frmts/dods ===
+
+* all FrankW, clean.
+
+=== gdal/ogr/ogrsf_frmts/dxfdwg ===
+
+* OdFileBuf.h, OdFileBuf.cpp is derived from DWGdirect source code.  No copyright message! '''TO_RESOLVE'''
+
+=== gdal/ogr/ogrsf_frmts/fme ===
+
+* All code is Copyright Safe Software, "All Rights Reserved"! '''TO_RESOLVE'''
+
+=== gdal/ogr/ogrsf_frmts/gml ===
+
+* All FrankW, clean.
+
+
+=== gdal/ogr/ogrsf_frmts/grass ===
+
+* copyright Radim Blazek, MIT/X. 
+
+=== gdal/ogr/ogrsf_frmts/ili ===
+
+* ili level code copyright Pirmin Kalberer (Sourcepole), MIT/X. 
+* iom/ili2c.jar is ambiguous.  '''TO_RESOLVE'''
+* iom source code is all LGPL (per iom/README.src.txt) but none of the
+  source files have a copyright or license header.  '''TO_RESOLVE'''
+
+=== gdal/ogr/ogrsf_frmts/mem ===
+
+* All FrankW, clean.
+
+=== gdal/ogr/ogrsf_frmts/mitab ===
+
+* Copyright Daniel Morissette, Stepane Villeneuve, Frank Warmerdam (MIT/X). 
+* Some code derived from MapServer with credit in headers, no problem forseen.
+* All clean.
+
+=== gdal/ogr/ogrsf_frmts/mysql ===
+
+* FrankW, clean. 
+* Howard Butler is co-author of some modules (but copyright all FrankW). 
+
+=== gdal/ogr/ogrsf_frmts/ntf ===
+
+* FrankW, clean.
+
+=== gdal/ogr/ogrsf_frmts/oci ===
+
+* FrankW, clean.
+
+=== gdal/ogr/ogrsf_frmts/odbc ===
+
+* FrankW, clean.
+
+=== gdal/ogr/ogrsf_frmts/ogdi ===
+
+* Copyright Daniel Morrissette, MIT/X.
+
+=== gdal/ogr/ogrsf_frmts/pg ===
+
+* FrankW, clean.
+
+=== gdal/ogr/ogrsf_frmts/pgeo ===
+
+* FrankW, clean.
+
+=== gdal/ogr/ogrsf_frmts/rec ===
+
+* FrankW, clean.
+
+=== gdal/ogr/ogrsf_frmts/s57 ===
+
+* added copyright messages to s57tables.h (derived from s57objectclasses.csv).
+* FrankW, clean.
+
+=== gdal/ogr/ogrsf_frmts/sde ===
+
+* FrankW, clean.
+
+=== gdal/ogr/ogrsf_frmts/sdts ===
+
+* FrankW, clean.
+
+=== gdal/ogr/ogrsf_frmts/shape ===
+
+* inline copy of Shapelib which is dual licensed MIT/X and LGPL. 
+* Note, Shapelib code was written while I was at PCI, but permission was given to release it as open source. 
+* Some (OGR) code is Copyright Softmap Inc, MIT/X. 
+
+=== gdal/ogr/ogrsf_frmts/sqlite ===
+
+* FrankW, clean.
+
+=== gdal/ogr/ogrsf_frmts/tiger ===
+
+* Copyright mostly FrankW, but also Mark Phillips, clean.
+
+=== gdal/ogr/ogrsf_frmts/vrt ===
+
+* FrankW, clean.
+
+=== gdal/ogr/ogrsf_frmts ===
+
+* Some copyright softmap Inc, all MIT/X.
+
+=== gdal/ogr ===
+
+* SpatialReferenceIdl.idl, GeometryIdl.idl, CoverageIdl.idl: From OGC spec package I believe.  '''TO_RESOLVE'''
+* ogr_capi_test.c: no copyright message, written by Daniel Morissette. Added copyright.
+* oledbgis.h: No copyright message, mostly OGC spec constants. 
+* swq.h, swq.c: Has alternate form of MIT/X license (should review). '''TO_RESOLVE'''
+* Copyright holders include Frank Warmerdam, Daniel Morissette, Softmap Inc., Stephane Villeneuve., Andrey Kiselev, Information Interoperability Institute
+
+
+=== gdal/ogr/wcts ===
+
+* FrankW, clean.
+* No copyrights on xml sample docs (protocol messages), but also all authored under the normal terms.
+* No copyright message for html docs.
+
+=== gdal/ogr/ccclient, gdal/ogr/ccdriver ===
+
+* Removed all contents since they are of no modern use, and may have included outside source.
+
+=== gdal/ogr/sfcom_oledb ===
+
+* sfcom_oledb/ICommandWidthParametersImpl.h: Provided by ESRI without clear copyright/license terms.  '''TO_RESOLVE'''
+* atl_net/ICRRowsetImpl.h,IFRowsetImpl.h,CCRRowsetImpl.h,SFAccessorImpl.h: Modified form of code from ATLDB.H, properly credited in the header. Copyright claim is dubious. '''TO_RESOLVE'''
+* atl_net/IColumnsRowsetImpl.h: Derived from code for article by Len Holgate, JetByte Limited.  It is not clear if the code is properly licensed, though it is attributed. '''TO_RESOLVE'''
+* Similar issues to above in atl_vc6 directory.
+* Code Copyright Softmap, FrankW, 
+* Some files lack headers (mostly MS Visual Studio generated files). 
+
+=== gdal/ogr/sfcom_serv === 
+
+* Obsolete code, all deleted from CVS.
+
 === TODO ===
 
 * gdal/*.*
 * gdal/frmts
-* gdal/ogr
 * gdal/swig
-* gdal/rfc
 
