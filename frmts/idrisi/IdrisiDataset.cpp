@@ -1015,8 +1015,8 @@ CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff,
     {
         if (nBand > 1) 
         {
-            VSIFReadL(pabyScanLine, 1, nRecordSize, poGDS->fp);
             VSIFSeekL(poGDS->fp, nRecordSize * nBlockYOff, SEEK_SET);
+            VSIFReadL(pabyScanLine, 1, nRecordSize, poGDS->fp);
         }
         int i, j;
         for (i = 0, j = (3 - nBand); i < nBlockXSize; i++, j += 3)
