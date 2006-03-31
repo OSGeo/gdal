@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Various classid objects for ``well known'' SF COM classes.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/03/31 17:44:20  fwarmerdam
+ * header updates
+ *
  * Revision 1.1  1999/05/17 14:40:10  warmerda
  * New
  *

@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Formal test harnass for OGRLayer implementations.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/03/31 17:44:20  fwarmerdam
+ * header updates
+ *
  * Revision 1.10  2001/07/18 05:03:05  warmerda
  * added CPL_CVSID
  *

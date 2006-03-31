@@ -4,7 +4,7 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  SFCDatasource class, client side abstraction for OLE DB
  *           SFCOM datasource based on OLE DB CDataSource template. 
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Les Technologies SoftMap Inc.
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/03/31 17:44:20  fwarmerdam
+ * header updates
+ *
  * Revision 1.10  2001/11/01 17:07:30  warmerda
  * lots of changes, including support for executing commands
  *

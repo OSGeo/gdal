@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Mainline for dumping stuff from an SFCOM OLEDB provider.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/03/31 17:44:20  fwarmerdam
+ * header updates
+ *
  * Revision 1.13  2002/08/07 21:38:33  warmerda
  * improve usage message
  *

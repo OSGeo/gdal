@@ -5,7 +5,7 @@
  * Purpose:  Implements the SFCTable class, a spatially extended table
  *           ATL CTable<CDynamicAccessor>.
  *
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/03/31 17:44:20  fwarmerdam
+ * header updates
+ *
  * Revision 1.15  2002/08/07 21:38:10  warmerda
  * avoid local new/delete on OGRFeatureDefn
  *

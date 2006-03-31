@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Simple Features Provider Enumerator (SFCEnumerator)
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Les Technologies SoftMap Inc.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/03/31 17:44:20  fwarmerdam
+ * header updates
+ *
  * Revision 1.3  1999/07/07 19:39:20  warmerda
  * added OpenAny()
  *

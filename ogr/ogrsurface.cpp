@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRSurface class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/03/31 17:44:20  fwarmerdam
+ * header updates
+ *
  * Revision 1.2  2005/04/06 20:43:00  fwarmerdam
  * fixed a variety of method signatures for documentation
  *
