@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  OLE DB support functions. 
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/03/31 17:44:20  fwarmerdam
+ * header updates
+ *
  * Revision 1.11  2001/11/09 19:09:03  warmerda
  * added VARIANTToString... does not appear to work
  *

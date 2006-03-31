@@ -3,7 +3,7 @@
  *
  * Project: OpenGIS Simple Features Reference Implementation
  * Purpose: SFCDataSource implementation.
- * Author:  Frank Warmerdam, warmerda@home.com
+ * Author:  Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/03/31 17:44:20  fwarmerdam
+ * header updates
+ *
  * Revision 1.9  2001/11/01 17:07:30  warmerda
  * lots of changes, including support for executing commands
  *
