@@ -1,0 +1,76 @@
+Image File (.rst) -- File Structure
+
+Use
+
+Image files are the data files most commonly used in IDRISI. They store the raster data layers used in analyses. 
+
+File Contents
+
+Image files contain the attribute value of each pixel in the image.
+
+Creation
+
+Image files are created by most IDRISI modules. A variety of non-IDRISI format raster data may also be converted to Image files using the File/Import modules.
+
+Structure and Examples
+
+While the logical structure of an Image file is a grid, the actual structure, as it is stored, is a single long column of numbers. For instance, an image consisting of 3 rows by 5 columns is stored as a single column of 15 numbers. It is the Image Documentation file that allows IDRISI modules to construct the grid from this list. An image that looks like this:
+
+10	15	9	10	1
+1	14	10	11	13
+14	13	11	10	12
+
+has an image file that looks like this:
+
+10
+15
+9
+10
+1
+1
+14
+10
+11
+13
+14
+13
+11
+10
+12
+
+The numbers in an image file may be integer, byte or real. This is termed the data type.
+
+1. Integers are whole numbers within the range  - 32768 to + 32767. 
+2. Byte values are positive integer numbers ranging from 0 to 255. 
+3. Real numbers have a fractional part, or are whole numbers outside the integer range. 
+
+The real data types can store values within a range of ± 1 x 10 to the power of 38 with a precision of 7 significant figures. IDRISI supports the standard IEEE 4-byte real number format. 
+Two other data types are supported by Idrisi32. These are RGB8 and RGB24. Both of these are produced by the COMPOSITE module. An RGB8 file has byte data values, but these values have special meaning. The RGB24 data type indicates a band-interleaved-by-pixel format that is displayed in true color. For more information on both RGB8 and RGB24 files, see COMPOSITE.
+
+Image files may be stored in ASCII, binary or packed binary file types. The module CONVERT may be used to change data or file type. However, most routines in IDRISI expect the binary format only. 
+
+The packed binary format is a special data compression format for binary integer or byte data. The compression technique used is run-length encoding. The number of occurrences of a value is given, followed by that value, and so on. The run proceeds from left to right and may carry over from the last cell of one row to the first cell of the next row. Primarily, the packed binary format will only save space when there are several cells with identical values next to one another. If there are not sufficient repeating values, the packed binary file may actually be larger than the same file stored as regular binary. 
+
+The following image would require 15 bytes if stored as a byte binary file.
+
+10	10	10	10	10
+10	9	9	10	11
+11	9	9	9	9
+
+Converting the file to packed binary would yield the following file, which would require only 10 bytes of disk space:
+
+6
+10
+2
+9
+1 
+10
+2
+11
+4
+9
+
+Note
+
+In versions of IDRISI prior to idrisi32, these files had an .img extension. The image file structure is identical to that of earlier versions.
+
