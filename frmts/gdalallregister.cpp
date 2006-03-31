@@ -25,6 +25,9 @@
  * Main format registration function.
  * 
  * $Log$
+ * Revision 1.85  2006/03/31 02:59:57  fwarmerdam
+ * added idrisi
+ *
  * Revision 1.84  2006/02/07 21:44:43  fwarmerdam
  * DIPX->DIPEx
  *
@@ -330,6 +333,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_msgn
     GDALRegister_MSGN();
+#endif
+
+#ifdef FRMT_idrisi
+    GDALRegister_IDRISI();
 #endif
 
 /* -------------------------------------------------------------------- */
