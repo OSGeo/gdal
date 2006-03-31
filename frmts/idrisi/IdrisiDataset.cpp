@@ -342,81 +342,70 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
     CPLFree(pszDataType);
 
     // -------------------------------------------------------------------- 
-    //      Update Access will get more information by calling Set's methods 
-    // -------------------------------------------------------------------- 
-
-    if (poDS->eAccess == GA_Update)
-    {
-        return (poDS);
-    }
-
-    // -------------------------------------------------------------------- 
     //      Load the transformation matrix
+    //
+    //	Newly "Created" files may not have values. 
     // -------------------------------------------------------------------- 
 
-    double dfMinX, dfMaxX, dfMinY, dfMaxY, dfUnit, dfXPixSz, dfYPixSz;
+    if( !EQUAL(TrimL(CSLFetchNameValue(papszRDC, rdcMIN_X)),"") )
+    {
+        double dfMinX, dfMaxX, dfMinY, dfMaxY, dfUnit, dfXPixSz, dfYPixSz;
 
-    sscanf(CSLFetchNameValue(papszRDC, rdcMIN_X),    "%lf", &dfMinX);
-    sscanf(CSLFetchNameValue(papszRDC, rdcMAX_X),    "%lf", &dfMaxX);
-    sscanf(CSLFetchNameValue(papszRDC, rdcMIN_Y),    "%lf", &dfMinY);
-    sscanf(CSLFetchNameValue(papszRDC, rdcMAX_Y),    "%lf", &dfMaxY);
-    sscanf(CSLFetchNameValue(papszRDC, rdcUNIT_DIST),"%lf", &dfUnit);
+        sscanf(CSLFetchNameValue(papszRDC, rdcMIN_X),    "%lf", &dfMinX);
+        sscanf(CSLFetchNameValue(papszRDC, rdcMAX_X),    "%lf", &dfMaxX);
+        sscanf(CSLFetchNameValue(papszRDC, rdcMIN_Y),    "%lf", &dfMinY);
+        sscanf(CSLFetchNameValue(papszRDC, rdcMAX_Y),    "%lf", &dfMaxY);
+        sscanf(CSLFetchNameValue(papszRDC, rdcUNIT_DIST),"%lf", &dfUnit);
 
-    dfMinX = dfMinX * dfUnit; 
-    dfMaxX = dfMaxX * dfUnit; 
-    dfMinY = dfMinY * dfUnit; 
-    dfMaxY = dfMaxY * dfUnit;
+        dfMinX = dfMinX * dfUnit; 
+        dfMaxX = dfMaxX * dfUnit; 
+        dfMinY = dfMinY * dfUnit; 
+        dfMaxY = dfMaxY * dfUnit;
 
-    dfYPixSz = (dfMinY - dfMaxY) / poDS->nRasterYSize;
-    dfXPixSz = (dfMaxX - dfMinX) / poDS->nRasterXSize;
+        dfYPixSz = (dfMinY - dfMaxY) / poDS->nRasterYSize;
+        dfXPixSz = (dfMaxX - dfMinX) / poDS->nRasterXSize;
 
-    poDS->adfGeoTransform[0] = dfMinX - (dfXPixSz / 2);
-    poDS->adfGeoTransform[1] = dfXPixSz;
-    poDS->adfGeoTransform[2] = 0.0;
-    poDS->adfGeoTransform[3] = dfMaxY + (dfYPixSz / 2);
-    poDS->adfGeoTransform[4] = 0.0;
-    poDS->adfGeoTransform[5] = dfYPixSz;
+        poDS->adfGeoTransform[0] = dfMinX - (dfXPixSz / 2);
+        poDS->adfGeoTransform[1] = dfXPixSz;
+        poDS->adfGeoTransform[2] = 0.0;
+        poDS->adfGeoTransform[3] = dfMaxY + (dfYPixSz / 2);
+        poDS->adfGeoTransform[4] = 0.0;
+        poDS->adfGeoTransform[5] = dfYPixSz;
+    }
 
     //CPLDebug(extRST, "Open: Load the transformation matrix %.8g,%.8g,%.8g,%.8g,%.8g,%.8g,%.8g", dfMinX, dfMaxX, dfMinY, dfMaxY, dfUnit, dfXPixSz, dfYPixSz);
 
     // -------------------------------------------------------------------- 
-    //      That's all the information for a RGB24
-    // -------------------------------------------------------------------- 
-
-    if (poDS->nBands == 3)
-    {
-        return (poDS);
-    }
-
-    // -------------------------------------------------------------------- 
     //      Set Color Table in the presence of a smp file
     // -------------------------------------------------------------------- 
-
-    const char *pszSMPFilename;
-    pszSMPFilename = CPLResetExtension(poDS->pszFilename, extSMP);
-
-    FILE *fpSMP;
-    if ((fpSMP = VSIFOpenL(pszSMPFilename, "rb")) != NULL )
+    if (poDS->nBands != 3)
     {
-        //CPLDebug(extRST, "Open: Load Color Table from = %s", pszSMPFilename);
+        const char *pszSMPFilename;
+        pszSMPFilename = CPLResetExtension(poDS->pszFilename, extSMP);
 
-        double dfMaxValue;
-        sscanf(CSLFetchNameValue(papszRDC, rdcMAX_VALUE),    " %lf", &dfMaxValue);
-
-        VSIFSeekL(fpSMP, smpHEADERSIZE, SEEK_SET);
-        GDALColorEntry oEntry;
-        unsigned char aucRGB[3];
-        int i = 0;
-        while ((VSIFReadL(&aucRGB, sizeof(aucRGB), 1, fpSMP)) && (i <= dfMaxValue))
+        FILE *fpSMP;
+        if ((fpSMP = VSIFOpenL(pszSMPFilename, "rb")) != NULL )
         {
-            oEntry.c1 = (short) aucRGB[0];
-            oEntry.c2 = (short) aucRGB[1];
-            oEntry.c3 = (short) aucRGB[2];
-            oEntry.c4 = (short) 255;                      
-            poDS->poColorTable->SetColorEntry(i, &oEntry);
-            i++;
+            //CPLDebug(extRST, "Open: Load Color Table from = %s", pszSMPFilename);
+
+            double dfMaxValue;
+            sscanf(CSLFetchNameValue(papszRDC, rdcMAX_VALUE),    " %lf", &dfMaxValue);
+
+            VSIFSeekL(fpSMP, smpHEADERSIZE, SEEK_SET);
+            GDALColorEntry oEntry;
+            unsigned char aucRGB[3];
+            int i = 0;
+            while ((VSIFReadL(&aucRGB, sizeof(aucRGB), 1, fpSMP)) && (i <= dfMaxValue))
+            {
+                oEntry.c1 = (short) aucRGB[0];
+                oEntry.c2 = (short) aucRGB[1];
+                oEntry.c3 = (short) aucRGB[2];
+                oEntry.c4 = (short) 255;                      
+                poDS->poColorTable->SetColorEntry(i, &oEntry);
+                i++;
+            }
+            VSIFCloseL(fpSMP);
         }
-        VSIFCloseL(fpSMP);
     }
 
     return (poDS);
@@ -1011,6 +1000,9 @@ double IdrisiRasterBand::GetMinimum(int *pbSuccess)
 
     //CPLDebug(extRST, "GetMinimum of Band (%d) = %lf", nBand, adfMinValue[nBand - 1]);
 
+    if( pbSuccess )
+        *pbSuccess = TRUE;
+
     return adfMinValue[this->nBand - 1];
 }
 
@@ -1025,6 +1017,9 @@ double IdrisiRasterBand::GetMaximum(int *pbSuccess)
         &adfMaxValue[0], &adfMaxValue[1], &adfMaxValue[2]);
 
     //CPLDebug(extRST, "GetMaximum of Band (%d) = %lf", nBand, adfMaxValue[nBand - 1]);
+
+    if( pbSuccess )
+        *pbSuccess = TRUE;
 
     return adfMaxValue[this->nBand - 1];
 }
