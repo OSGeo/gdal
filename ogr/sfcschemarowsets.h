@@ -6,7 +6,7 @@
  *           Generally application code shouldn't need to include this file
  *           directly or indirectly.  It exists mostly to support the other
  *           SFC class implementations.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Les Technologies SoftMap Inc.
@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/03/31 17:57:32  fwarmerdam
+ * header updates
+ *
  * Revision 1.3  2001/11/01 17:06:31  warmerda
  * convert use of CRestrictions to deriving from CSchemaRowset
  *

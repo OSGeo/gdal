@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Simple client for translating between formats.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2006/03/31 17:57:32  fwarmerdam
+ * header updates
+ *
  * Revision 1.35  2006/02/09 05:22:07  fwarmerdam
  * Improve memory cleanup for leak testing.
  *

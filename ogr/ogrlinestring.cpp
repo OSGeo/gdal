@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The OGRLineString geometry class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2006/03/31 17:57:32  fwarmerdam
+ * header updates
+ *
  * Revision 1.53  2006/01/29 15:06:34  fwarmerdam
  * documented getX, getY, getZ and getNumPoints accessors
  *

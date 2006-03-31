@@ -4,7 +4,7 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  SFCTable class, client side abstraction for an OLE DB spatial
  *           table based on ATL CTable. 
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Les Technologies SoftMap Inc.
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/03/31 17:57:32  fwarmerdam
+ * header updates
+ *
  * Revision 1.9  2001/11/01 17:05:01  warmerda
  * various old additions
  *
