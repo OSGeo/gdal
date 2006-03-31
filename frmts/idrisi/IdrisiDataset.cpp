@@ -1335,7 +1335,7 @@ void GDALRegister_IDRISI()
 
         poDriver->SetDescription("RST");
         poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, rstVERSION);
-        poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_various.html#IDRISI");
+        poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_Idrisi.html");
         poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, extRST);
         poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte Int16 Float32");
         poDriver->pfnOpen = IdrisiDataset::Open;
