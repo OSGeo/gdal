@@ -86,6 +86,7 @@ CPL_C_END
 #define rdcVALUE_ERROR	"value error "
 #define rdcFLAG_VALUE	"flag value  "
 #define rdcFLAG_DEFN	"flag def'n  "
+#define rdcFLAG_DEFN2	"flag def`n  "
 #define rdcLEGEND_CATS	"legend cats "
 #define rdcLINEAGES		"lineage     "
 #define rdcCOMMENTS		"comment     "
@@ -110,7 +111,7 @@ CPL_C_END
 char *TrimL(const char *pszText);
 
 //----- check if file exists:
-bool FileExists(const char *pszFilename)
+bool FileExists(const char *pszFilename);
 
 //----- classes pre-definition:
 class IdrisiDataset;
@@ -1051,7 +1052,12 @@ double IdrisiRasterBand::GetNoDataValue(int *pbSuccess)
     char *pszFlagDefn;
 
     sscanf(CSLFetchNameValue(poGDS->papszRDC, rdcFLAG_VALUE), " %lf", &dfNoData);
-    pszFlagDefn = TrimL(CSLFetchNameValue(poGDS->papszRDC, rdcFLAG_DEFN));
+    if( CSLFetchNameValue(poGDS->papszRDC, rdcFLAG_DEFN) != NULL )
+        pszFlagDefn = TrimL(CSLFetchNameValue(poGDS->papszRDC, rdcFLAG_DEFN));
+    else if( CSLFetchNameValue(poGDS->papszRDC, rdcFLAG_DEFN2) != NULL )
+        pszFlagDefn = TrimL(CSLFetchNameValue(poGDS->papszRDC, rdcFLAG_DEFN2));
+    else
+        pszFlagDefn = CPLStrdup("");
 
     if (pbSuccess)
     {
@@ -1079,19 +1085,14 @@ GDALColorInterp IdrisiRasterBand::GetColorInterpretation()
         case 3: return GCI_RedBand;
         }
     }
-    else 
+    else if (poGDS->poColorTable->GetColorEntryCount() > 0)
     {
-        if (poGDS->poColorTable->GetColorEntryCount() > 0)
-        {
-            //CPLDebug(extRST, "Palette");
-            return GCI_PaletteIndex;
-        }
-        else
-        {
-            //CPLDebug(extRST, "GrayIndex");
-            return GCI_GrayIndex;
-        }
+        //CPLDebug(extRST, "Palette");
+        return GCI_PaletteIndex;
     }
+
+    //CPLDebug(extRST, "GrayIndex");
+    return GCI_GrayIndex;
 }
 
 char **IdrisiRasterBand::GetCategoryNames()
