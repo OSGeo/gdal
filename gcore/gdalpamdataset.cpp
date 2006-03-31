@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/03/31 14:25:10  fwarmerdam
+ * avoiding cloning from missing source bands
+ *
  * Revision 1.16  2005/10/14 21:10:16  fwarmerdam
  * avoid error if .aux.xml file does not exist
  *
@@ -671,8 +674,12 @@ CPLErr GDALPamDataset::CloneInfo( GDALDataset *poSrcDS, int nCloneFlags )
 
             // we really should be testing if poBand is a really derived
             // from PamRasterBand or not. 
-
-            poBand->CloneInfo( poSrcDS->GetRasterBand(iBand+1), nCloneFlags );
+            
+            if( poSrcDS->GetRasterCount() >= iBand+1 )
+                poBand->CloneInfo( poSrcDS->GetRasterBand(iBand+1), 
+                                   nCloneFlags );
+            else
+                CPLDebug( "GDALPamDataset", "Skipping CloneInfo for band not in source, this is a bit unusual!" );
         }
     }
 
