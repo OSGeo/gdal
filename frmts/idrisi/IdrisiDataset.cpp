@@ -425,29 +425,14 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename,
     // -------------------------------------------------------------------- 
     //      Check input options
     // -------------------------------------------------------------------- 
-    if (eType != GDT_Byte && 
-        eType != GDT_Int16 && 
-        eType != GDT_UInt16 && 
-        eType != GDT_UInt32 && 
-        eType != GDT_Int32 && 
-        eType != GDT_Float32 &&
-        eType != GDT_Float64)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-            "Attempt to create IDRISI dataset with an illegal\n"
-            "data type (%s).\n",
-            GDALGetDataTypeName(eType));
-        return NULL;
-    }
-
     if (nBands != 1) 
     {
         if (! (nBands == 3 && eType == GDT_Byte))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                "Attempt to create IDRISI dataset with an illegal\n"
-                "number of bands (%d) to data type (%s).\n",
-                nBands, GDALGetDataTypeName(eType));
+                     "Attempt to create IDRISI dataset with an illegal\n"
+                     "number of bands (%d) to data type (%s).\n",
+                     nBands, GDALGetDataTypeName(eType));
             return NULL;
         }
     }
@@ -462,18 +447,25 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename,
 
     switch (eType)
     {	
-    case GDT_Byte:
+      case GDT_Byte:
         if (nBands == 1)
             pszDataType = CPLStrdup(rstBYTE);
         else
             pszDataType = CPLStrdup(rstRGB24);
         break;
-    case GDT_Int16:
+      case GDT_Int16:
         pszDataType = CPLStrdup(rstINTEGER);
         break;
-    case GDT_Float32:				
+      case GDT_Float32:				
         pszDataType = CPLStrdup(rstREAL);
         break;
+      default:
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Attempt to create IDRISI dataset with an illegal\n"
+                 "data type (%s).\n",
+                 GDALGetDataTypeName(eType));
+        return NULL;
+
     };
 
     char **papszRDC;
@@ -526,7 +518,7 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename,
     if (fp == NULL)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-            "Attempt to create file %s' failed.\n", pszFilename);
+                 "Attempt to create file %s' failed.\n", pszFilename);
         return NULL;
     }
     VSIFCloseL(fp);
@@ -685,7 +677,7 @@ GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
             poBand->SetColorTable(poSrcBand->GetColorTable());
         }
         poSrcBand->GetStatistics(false, true, &dfMin, &dfMax, NULL, NULL);
-        poBand->SetStatistics(dfMin, dfMax, NULL, NULL);
+        poBand->SetStatistics(dfMin, dfMax, 0.0, 0.0);
         poBand->SetNoDataValue(poSrcBand->GetNoDataValue(NULL));
     }
 
@@ -819,8 +811,9 @@ const char *IdrisiDataset::GetProjectionRef(void)
     }
     else if (EQUALN(pszRefSystem, rstUTM, 3))
     {
-        uint8 nZone;
-        char cNorth;
+        int	nZone;
+        char 	cNorth;
+
         sscanf(pszRefSystem, rstUTM, &nZone, &cNorth);
         oSRS.SetProjCS(pszRefSystem);
         oSRS.SetWellKnownGeogCS("WGS84");
@@ -918,8 +911,6 @@ IdrisiRasterBand::IdrisiRasterBand(IdrisiDataset *poDS,
 
 IdrisiRasterBand::~IdrisiRasterBand()
 {
-    IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
-
     CPLFree(pabyScanLine);
 }
 
@@ -1304,7 +1295,9 @@ CPLErr IdrisiRasterBand::SetStatistics(double dfMin, double dfMax, double dfMean
 
 char *TrimL(const char *pszText)
 {
-    for (int i = 0; (pszText[i] == ' ') && (pszText[i] != '\0'); i++);
+    int i;
+
+    for (i = 0; (pszText[i] == ' ') && (pszText[i] != '\0'); i++);
 
     char *pszResult = CPLStrdup(&pszText[i]);
 
