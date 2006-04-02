@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2006/04/02 18:47:39  fwarmerdam
+ * added detailed date type support
+ *
  * Revision 1.29  2006/02/15 04:26:17  fwarmerdam
  * added date support
  *
@@ -375,7 +378,10 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
         if( PQgetisnull( hCursorResult, iRecord, iField ) )
             continue;
 
-        if( poFeatureDefn->GetFieldDefn(iOGRField)->GetType() == OFTIntegerList)
+        OGRFieldType eOGRType = 
+            poFeatureDefn->GetFieldDefn(iOGRField)->GetType();
+
+        if( eOGRType == OFTIntegerList)
         {
             int *panList, nCount, i;
 
@@ -429,7 +435,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
             CPLFree( panList );
         }
 
-        else if( poFeatureDefn->GetFieldDefn(iOGRField)->GetType() == OFTRealList )
+        else if( eOGRType == OFTRealList )
         {
             int nCount, i;
             double *padfList;
@@ -485,7 +491,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
             CPLFree( padfList );
         }
 
-        else if( poFeatureDefn->GetFieldDefn(iOGRField)->GetType() == OFTStringList )
+        else if( eOGRType == OFTStringList )
         {
             char **papszTokens = 0;
 
@@ -531,7 +537,9 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
             }
         }
 
-        else if( poFeatureDefn->GetFieldDefn(iOGRField)->GetType() == OFTDate )
+        else if( eOGRType == OFTDate 
+                 || eOGRType == OFTTime 
+                 || eOGRType == OFTDateTime )
         {
 #if !defined(PG_PRE74)
             if ( PQfformat( hCursorResult, iField ) == 1 ) // Binary data
@@ -554,16 +562,16 @@ OGRFeature *OGRPGLayer::RecordToFeature( int iRecord )
         {
 #if !defined(PG_PRE74)
             if ( PQfformat( hCursorResult, iField ) == 1 &&
-                 poFeatureDefn->GetFieldDefn(iOGRField)->GetType() != OFTString ) // Binary data
+                 eOGRType != OFTString ) // Binary data
             {
-                if ( poFeatureDefn->GetFieldDefn(iOGRField)->GetType() == OFTInteger )
+                if ( eOGRType == OFTInteger )
                 {
                     int nVal;
                     memcpy( &nVal, PQgetvalue( hCursorResult, iRecord, iField ), sizeof(int) );
                     CPL_MSBPTR32(&nVal);
                     poFeature->SetField( iOGRField, nVal );
                 }
-                else if ( poFeatureDefn->GetFieldDefn(iOGRField)->GetType() == OFTReal )
+                else if ( eOGRType == OFTReal )
                 {
                     double dfVal;
                     memcpy( &dfVal, PQgetvalue( hCursorResult, iRecord, iField ), sizeof(double) );
