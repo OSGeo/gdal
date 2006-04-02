@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.53  2006/04/02 18:34:33  fwarmerdam
+ * Added OFTTime and OFTDateTime.
+ *
  * Revision 1.52  2006/02/15 04:19:51  fwarmerdam
  * Added OFTDate.
  *
@@ -299,7 +302,9 @@ typedef void OGRFieldDefnShadow;
 %constant OFTWideString = 6;
 %constant OFTWideStringList = 7;
 %constant OFTBinary = 8;
-%constant OFTDate = 8;
+%constant OFTDate = 9;
+%constant OFTTime = 10;
+%constant OFTDateTime = 11;
 
 %constant OJUndefined = 0;
 %constant OJLeft = 1;
