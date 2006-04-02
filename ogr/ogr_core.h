@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2006/04/02 18:25:59  fwarmerdam
+ * added OFTDateTime, and OFTTime support
+ *
  * Revision 1.29  2006/02/15 04:25:37  fwarmerdam
  * added date support
  *
@@ -265,6 +268,8 @@ typedef enum
   /** List of wide strings (unsupported) */     OFTWideStringList = 7,
   /** Raw Binary data */                        OFTBinary = 8,
   /** Date */                                   OFTDate = 9,
+  /** Time */                                   OFTTime = 10,
+  /** Date and Time */                          OFTDateTime = 11
 } OGRFieldType;
 
 /**

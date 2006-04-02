@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Class for representing a whole feature, and layer schemas.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2006/04/02 18:25:59  fwarmerdam
+ * added OFTDateTime, and OFTTime support
+ *
  * Revision 1.32  2006/02/15 04:25:37  fwarmerdam
  * added date support
  *
@@ -308,10 +311,10 @@ class CPL_DLL OGRFeature
     const double       *GetFieldAsDoubleList( int i, int *pnCount );
     char              **GetFieldAsStringList( int i );
     GByte              *GetFieldAsBinary( int i, int *pnCount );
-    int                 GetFieldAsDate( int i, 
-                                        int *pnYear, int *pnMonth, int *pnDay,
-                                        int *pnHour, int *pnMinute, int *pnSecond, 
-                                        int *pnTZFlag );
+    int                 GetFieldAsDateTime( int i, 
+                                     int *pnYear, int *pnMonth, int *pnDay,
+                                     int *pnHour, int *pnMinute, int *pnSecond, 
+                                     int *pnTZFlag );
 
     int                 GetFieldAsInteger( const char *pszFName )
                       { return GetFieldAsInteger( GetFieldIndex(pszFName) ); }
