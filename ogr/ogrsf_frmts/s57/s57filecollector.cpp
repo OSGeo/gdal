@@ -5,7 +5,7 @@
  * Purpose:  Implements S57FileCollector() function.  This function collects
  *           a list of S-57 data files based on the contents of a directory,
  *           catalog file, or direct reference to an S-57 file.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/04/02 18:48:26  fwarmerdam
+ * contact info updated
+ *
  * Revision 1.6  2002/02/08 16:18:41  warmerda
  * ensure that catalog logic knows about ENC_ROOT directories
  *

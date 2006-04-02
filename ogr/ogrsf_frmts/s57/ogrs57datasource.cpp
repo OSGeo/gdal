@@ -3,7 +3,7 @@
  *
  * Project:  S-57 Translator
  * Purpose:  Implements OGRS57DataSource class
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/04/02 18:48:26  fwarmerdam
+ * contact info updated
+ *
  * Revision 1.28  2006/02/15 18:04:45  fwarmerdam
  * implemented DSID feature support
  *

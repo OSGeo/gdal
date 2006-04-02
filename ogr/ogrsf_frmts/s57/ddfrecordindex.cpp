@@ -5,7 +5,7 @@
  * Purpose:  Implements DDFRecordIndex class.  This class is used to cache
  *           ISO8211 records for spatial objects so they can be efficiently
  *           assembled later as features.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, 2001, Frank Warmerdam
@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/04/02 18:48:26  fwarmerdam
+ * contact info updated
+ *
  * Revision 1.10  2004/08/30 20:08:34  warmerda
  * added support for client info stored with records
  *

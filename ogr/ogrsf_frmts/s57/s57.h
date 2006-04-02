@@ -5,7 +5,7 @@
  * Purpose:  Declarations for S-57 translator not including the
  *           binding onto OGRLayer/DataSource/Driver which are found in
  *           ogr_s57.h.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/04/02 18:48:26  fwarmerdam
+ * contact info updated
+ *
  * Revision 1.33  2006/02/21 04:14:15  fwarmerdam
  * szUPDN addition
  *
