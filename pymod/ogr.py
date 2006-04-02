@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.57  2006/04/02 18:33:14  fwarmerdam
+# added OFTTime and OFTDateTime.
+#
 # Revision 1.56  2006/02/15 04:21:29  fwarmerdam
 # added OFTDate support
 #
@@ -282,6 +285,8 @@ OFTWideString = 6
 OFTWideStringList = 7
 OFTBinary = 8
 OFTDate = 9
+OFTTime = 10
+OFTDateTime = 11
 
 # OGRJustification
 
