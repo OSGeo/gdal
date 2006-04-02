@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.65 2006/02/15 01:14:30 fwarmerdam Exp $
+ * $Id: dbfopen.c,v 1.66 2006/03/29 18:26:20 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.66  2006/03/29 18:26:20  fwarmerdam
+ * fixed bug with size of pachfieldtype in dbfcloneempty
+ *
  * Revision 1.65  2006/02/15 01:14:30  fwarmerdam
  * added DBFAddNativeFieldType
  *
@@ -82,7 +85,7 @@
 #include <ctype.h>
 #include <string.h>
 
-SHP_CVSID("$Id: dbfopen.c,v 1.65 2006/02/15 01:14:30 fwarmerdam Exp $")
+SHP_CVSID("$Id: dbfopen.c,v 1.66 2006/03/29 18:26:20 fwarmerdam Exp $")
 
 #ifndef FALSE
 #  define FALSE		0
@@ -1343,8 +1346,8 @@ DBFCloneEmpty(DBFHandle psDBF, const char * pszFilename )
    memcpy ( newDBF->panFieldSize, psDBF->panFieldSize, sizeof(int) * psDBF->nFields );
    newDBF->panFieldDecimals = (int *) malloc ( sizeof(int) * psDBF->nFields );
    memcpy ( newDBF->panFieldDecimals, psDBF->panFieldDecimals, sizeof(int) * psDBF->nFields );
-   newDBF->pachFieldType = (char *) malloc ( sizeof(int) * psDBF->nFields );
-   memcpy ( newDBF->pachFieldType, psDBF->pachFieldType, sizeof(int) * psDBF->nFields );
+   newDBF->pachFieldType = (char *) malloc ( sizeof(char) * psDBF->nFields );
+   memcpy ( newDBF->pachFieldType, psDBF->pachFieldType, sizeof(char)*psDBF->nFields );
 
    newDBF->bNoHeader = TRUE;
    newDBF->bUpdated = TRUE;
