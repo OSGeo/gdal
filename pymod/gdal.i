@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.126  2006/04/02 18:32:11  fwarmerdam
+ * Added ofttime, oftdatetime support.
+ *
  * Revision 1.125  2006/03/21 21:54:00  fwarmerdam
  * fixup headers
  *
@@ -3374,6 +3377,8 @@ py_OGR_F_GetField(PyObject *self, PyObject *args) {
 	    break;
           case OFTString:
           case OFTDate:
+          case OFTTime:
+          case OFTDateTime:
             result = Py_BuildValue( "s", 
                        OGR_F_GetFieldAsString( hFeat, iField ) );
 	    break;
