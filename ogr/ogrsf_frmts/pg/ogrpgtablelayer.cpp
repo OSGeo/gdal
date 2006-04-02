@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2006/04/02 18:47:39  fwarmerdam
+ * added detailed date type support
+ *
  * Revision 1.51  2006/02/15 04:26:17  fwarmerdam
  * added date support
  *
@@ -366,7 +369,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
         }
         else if( EQUALN(pszType, "timestamp",9) )
         {
-            oField.SetType( OFTDate );
+            oField.SetType( OFTDateTime );
         }
         else if( EQUALN(pszType, "date",4) )
         {
@@ -374,7 +377,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
         }
         else if( EQUALN(pszType, "time",4) )
         {
-            oField.SetType( OFTDate );
+            oField.SetType( OFTTime );
         }
         else
         {
@@ -1281,6 +1284,14 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
         strcpy( szFieldType, "FLOAT8[]" );
     }
     else if( oField.GetType() == OFTDate )
+    {
+        strcpy( szFieldType, "date" );
+    }
+    else if( oField.GetType() == OFTTime )
+    {
+        strcpy( szFieldType, "time" );
+    }
+    else if( oField.GetType() == OFTDateTime )
     {
         strcpy( szFieldType, "timestamp with time zone" );
     }
