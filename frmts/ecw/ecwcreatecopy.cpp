@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/04/02 15:27:16  fwarmerdam
+ * Fixed char* / const char * problem for VS8.
+ *
  * Revision 1.22  2005/12/09 20:43:43  fwarmerdam
  * create the GeoTIFF box ourselves, we think we do it better
  *
@@ -1003,7 +1006,7 @@ CPLErr GDALECWCompressor::Initialize(
     if( EQUALN(pszFilename,"J2K_SUBFILE:",12) )
     {
         int  subfile_offset=-1, subfile_size=-1;
-        char *real_filename = NULL;
+        const char *real_filename = NULL;
 
         if( sscanf( pszFilename, "J2K_SUBFILE:%d,%d", 
                     &subfile_offset, &subfile_size ) != 2 )
