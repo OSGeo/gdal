@@ -33,8 +33,8 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.119  2006/03/22 04:08:25  fwarmerdam
- * update
+ * Revision 1.120  2006/04/02 18:55:26  fwarmerdam
+ * updated
  *
  ************************************************************************/
 
@@ -3234,6 +3234,8 @@ py_OGR_F_GetField(PyObject *self, PyObject *args) {
 	    break;
           case OFTString:
           case OFTDate:
+          case OFTTime:
+          case OFTDateTime:
             result = Py_BuildValue( "s", 
                        OGR_F_GetFieldAsString( hFeat, iField ) );
 	    break;
