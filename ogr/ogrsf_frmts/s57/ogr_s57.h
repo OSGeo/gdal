@@ -4,7 +4,7 @@
  * Project:  S-57 Translator
  * Purpose:  Declarations for classes binding S57 support onto OGRLayer,
  *           OGRDataSource and OGRDriver.  See also s57.h.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/04/02 18:48:26  fwarmerdam
+ * contact info updated
+ *
  * Revision 1.10  2005/02/22 12:53:12  fwarmerdam
  * use OGRLayer base spatial filter support
  *

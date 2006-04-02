@@ -3,7 +3,7 @@
  *
  * Project:  S-57 Translator
  * Purpose:  Implements OGRS57Driver
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/04/02 18:48:26  fwarmerdam
+ * contact info updated
+ *
  * Revision 1.8  2005/07/30 17:23:05  fwarmerdam
  * added profile to LoadInfo
  *

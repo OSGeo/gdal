@@ -4,7 +4,7 @@
  * Project:  S-57 Translator
  * Purpose:  Implements S57ClassRegistrar class for keeping track of
  *           information on S57 object classes.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/04/02 18:48:26  fwarmerdam
+ * contact info updated
+ *
  * Revision 1.17  2006/03/07 07:00:21  fwarmerdam
  * fixed quirk with attribute file lookup for profiles
  *
