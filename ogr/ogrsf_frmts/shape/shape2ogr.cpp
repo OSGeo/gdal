@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2006/04/02 18:46:54  fwarmerdam
+ * updated date support
+ *
  * Revision 1.41  2006/02/15 04:26:55  fwarmerdam
  * added date support
  *
@@ -1358,8 +1361,8 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
           {
               int  nYear, nMonth, nDay;
 
-              if( poFeature->GetFieldAsDate( iField, &nYear, &nMonth, &nDay,
-                                             NULL, NULL, NULL, NULL ) )
+              if( poFeature->GetFieldAsDateTime( iField, &nYear, &nMonth, &nDay,
+                                                 NULL, NULL, NULL, NULL ) )
               {
                   DBFWriteIntegerAttribute( hDBF, poFeature->GetFID(), iField, 
                                             nYear*10000 + nMonth*100 + nDay );
