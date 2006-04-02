@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2006/04/02 18:46:54  fwarmerdam
+ * updated date support
+ *
  * Revision 1.26  2006/02/19 21:42:05  mloskot
  * [WCE] Include wce_errno.h - a specific errno.h version for Windows CE
  *
@@ -689,6 +692,18 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
     }
     else if( poField->GetType() == OFTDate )
     {
+        iNewField =
+            DBFAddNativeFieldType( hDBF, poField->GetNameRef(), 'D', 8, 0 );
+
+        if( iNewField != -1 )
+            poFeatureDefn->AddFieldDefn( poField );
+    }
+    else if( poField->GetType() == OFTDateTime )
+    {
+        CPLError( CE_Warning, CPLE_NotSupported,
+                  "Field %s create as date field, though DateTime requested.\n",
+                  poField->GetNameRef() );
+
         iNewField =
             DBFAddNativeFieldType( hDBF, poField->GetNameRef(), 'D', 8, 0 );
 
