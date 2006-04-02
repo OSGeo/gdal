@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/04/02 14:45:38  fwarmerdam
+ * Avoid VS8 problem with const char * / char *.
+ *
  * Revision 1.3  2006/03/29 14:30:13  dron
  * Added forgotten extern "C" statements.
  *
@@ -441,7 +444,7 @@ _Stold (const char *s, char **endptr, long double *pld, char **pnan,
 		buf[nsig++] = *sc - '0';
 	      else
 		{
-		  p = strchr (hexits, tolower (*sc));
+		  p = (char *) strchr (hexits, tolower (*sc));
 		  buf[nsig++] = p - hexits;
 		}
 	    }
