@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/04/02 18:25:59  fwarmerdam
+ * added OFTDateTime, and OFTTime support
+ *
  * Revision 1.10  2006/02/15 04:25:37  fwarmerdam
  * added date support
  *
@@ -386,6 +389,12 @@ const char * OGRFieldDefn::GetFieldTypeName( OGRFieldType eType )
 
       case OFTDate:
         return "Date";
+
+      case OFTTime:
+        return "Time";
+
+      case OFTDateTime:
+        return "DateTime";
 
       default:
         CPLAssert( FALSE );
