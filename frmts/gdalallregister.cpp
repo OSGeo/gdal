@@ -1,4 +1,11 @@
 /******************************************************************************
+ * $Id$
+ *
+ * Project:  GDAL Core
+ * Purpose:  Implementation of GDALAllRegister(), primary format registration.
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *
+ ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,11 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * gdalallregister.cpp
- *
- * Main format registration function.
- * 
  * $Log$
+ * Revision 1.86  2006/04/03 23:25:10  fwarmerdam
+ * Fixup header formatting.
+ *
  * Revision 1.85  2006/03/31 02:59:57  fwarmerdam
  * added idrisi
  *
@@ -296,6 +302,7 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_IDA();
     GDALRegister_NDF();
     GDALRegister_DIPEx();
+    GDALRegister_ISIS2();
 #endif
 
 #ifdef FRMT_jp2kak
