@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.2  2006/04/03 01:46:18  fwarmerdam
+# Added somenew projections
+#
 # Revision 1.1  2003/06/19 17:53:34  warmerda
 # New
 #
@@ -63,10 +66,11 @@ def load_dict( filename ):
 ##############################################################################
 # Mainline
 
-dir = 'M:/software/ER Viewer 2.0c/GDT_Data/'
+#dir = 'M:/software/ER Viewer 2.0c/GDT_Data/'
+dir = '/u/data/ecw/gdt/'
 
-dict_list = [ 'tranmerc', 'lamcon2', 'utm', 'albersea', 'mercator', 'lambert2',
-	      'obmerc_b', 'datum_sp' ]
+dict_list = [ 'tranmerc', 'lambert1', 'lamcon2', 'utm', 'albersea', 'mercator',
+	      'obmerc_b', 'grinten', 'cassini', 'lambazea', 'datum_sp' ]
 
 dict_dict = {}
 
@@ -80,11 +84,14 @@ pfile.readline()
 for line in pfile.readlines():
     try:
         tokens = string.split(string.strip(line),',')
+        if len(tokens) < 3:
+            continue
+        
 	for i in range(len(tokens)):
 	    tokens[i] = string.strip(tokens[i])
 
   	id = tokens[0]
-	type = tokens[1]
+        type = tokens[1]
 
 	lsize = float(tokens[2])
 	lsize_str = tokens[2]
@@ -96,14 +103,28 @@ for line in pfile.readlines():
 	# Handle translation of the projection parameters.
 
 	if type != 'utm':
-	    fe = float(dline[1])*lsize
-	    fn = float(dline[2])*lsize
+	    fn = float(dline[1])*lsize
+	    fe = float(dline[2])*lsize
 
         if type == 'tranmerc':
 	    srs.SetTM( r2d(dline[5]), r2d(dline[4]), float(dline[3]), fe, fn )
 
 	elif type == 'mercator':
 	    srs.SetMercator( r2d(dline[5]), r2d(dline[4]), float(dline[3]), fe, fn )
+
+	elif type == 'grinten':
+	    srs.SetVDG( r2d(dline[3]), fe, fn )
+
+	elif type == 'cassini':
+	    srs.SetCS( r2d(dline[4]), r2d(dline[3]), fe, fn )
+
+	elif type == 'lambazea':
+	    srs.SetLAEA( r2d(dline[5]), r2d(dline[4]),
+                         fe, fn )
+
+	elif type == 'lambert1':
+	    srs.SetLCC1SP( r2d(dline[5]), r2d(dline[4]),
+                           float(dline[3]), fe, fn )
 
 	elif type == 'lamcon2':
 	    srs.SetLCC( r2d(dline[7]), r2d(dline[8]), 
