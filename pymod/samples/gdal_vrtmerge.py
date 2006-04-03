@@ -237,8 +237,8 @@ if __name__ == '__main__':
 
 	geotransform = (ulx, psize_x, 0.0, uly, 0.0, psize_y)
 
-	xsize = int((lrx - ulx) / geotransform[1])
-	ysize = int((lry - uly) / geotransform[5])
+	xsize = int(((lrx - ulx) / geotransform[1]) + 0.5)
+	ysize = int(((lry - uly) / geotransform[5]) + 0.5)
 
 	if separate:
 		bands = len(file_infos)
