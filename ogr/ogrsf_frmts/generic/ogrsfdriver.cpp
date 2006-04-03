@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  The generic portions of the OGRSFDriver class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/04/03 01:48:28  fwarmerdam
+ * fixup contact info
+ *
  * Revision 1.6  2003/05/21 04:54:29  warmerda
  * avoid warnings about unused formal parameters and possibly uninit variables
  *

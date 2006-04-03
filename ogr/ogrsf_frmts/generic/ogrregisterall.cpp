@@ -3,7 +3,7 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Function to register all known OGR drivers.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2006/04/03 01:48:28  fwarmerdam
+ * fixup contact info
+ *
  * Revision 1.29  2006/02/19 21:39:13  mloskot
  * All RegisterOGR* calls wrapped with #ifdef *_ENABLED checks
  * NOTE: Makefiles need to be updated to define/check those macros too. makefile.evc4 for Windows CE has been updated.
