@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/04/03 18:08:42  fwarmerdam
+ * Preinitialize working buffer for filtering to zero.
+ *
  * Revision 1.5  2004/08/11 18:46:45  warmerda
  * pass pszVRTPath through serialize methods
  *
@@ -202,8 +205,8 @@ VRTFilteredSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
     GByte *pabyWorkData;
 
     pabyWorkData = (GByte *) 
-        VSIMalloc( nExtraXSize * nExtraYSize 
-                   * (GDALGetDataTypeSize(eOperDataType) / 8) );
+        VSICalloc( nExtraXSize * nExtraYSize,
+                   (GDALGetDataTypeSize(eOperDataType) / 8) );
     
     if( pabyWorkData == NULL )
     {
