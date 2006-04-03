@@ -2,7 +2,7 @@
 include ../../GDALmake.opt
 
 AIGOBJ  =	gridlib.o aigopen.o aigccitt.o
-OBJ	=	aigdataset.o giodataset.o $(AIGOBJ)
+OBJ	=	aigdataset.o $(AIGOBJ)
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
