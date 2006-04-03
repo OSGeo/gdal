@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.h,v 1.11 2004/02/03 17:19:50 warmerda Exp $
+ * $Id: geo_normalize.h,v 1.12 2005/08/26 16:08:14 fwarmerdam Exp $
  *
  * Project:  libgeotiff
  * Purpose:  Include file related to geo_normalize.c containing Code to
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log: geo_normalize.h,v $
+ * Revision 1.12  2005/08/26 16:08:14  fwarmerdam
+ * Include void in empty argument list for prototype.
+ *
  * Revision 1.11  2004/02/03 17:19:50  warmerda
  * export GTIFAngleToDD() - used by GDAL mrsiddataset.cpp
  *
@@ -192,7 +195,7 @@ double CPL_DLL GTIFAngleToDD( double dfAngle, int nUOMAngle );
 
 /* this should be used to free strings returned by GTIFGet... funcs */
 void CPL_DLL GTIFFreeMemory( char * );
-void CPL_DLL GTIFDeaccessCSV();
+void CPL_DLL GTIFDeaccessCSV( void );
 
 int CPL_DLL GTIFGetDefn( GTIF *psGTIF, GTIFDefn * psDefn );
 void CPL_DLL GTIFPrintDefn( GTIFDefn *, FILE * );
