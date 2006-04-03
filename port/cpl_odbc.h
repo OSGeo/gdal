@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/04/03 23:08:58  fwarmerdam
+ * Use SQLULEN by default now.
+ *
  * Revision 1.15  2006/02/19 21:54:34  mloskot
  * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
  *
@@ -100,7 +103,7 @@
 class CPLODBCStatement;
 
 
-#ifdef SQLULEN
+#if !defined(MISSING_SQLULEN)
 /* ODBC types to support 64 bit compilation */
 #  define _SQLULEN SQLULEN
 #  define _SQLLEN  SQLLEN
