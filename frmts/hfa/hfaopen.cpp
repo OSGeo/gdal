@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.53  2006/04/03 04:34:19  fwarmerdam
+ * added support for reading affine polynomial transforms as geotransform
+ *
  * Revision 1.52  2006/03/29 14:24:04  fwarmerdam
  * added preliminary nodata support (readonly)
  *
@@ -805,6 +808,59 @@ int HFAGetDataTypeBits( int nDataType )
 }
 
 /************************************************************************/
+/*                         HFAGetDataTypeName()                         */
+/************************************************************************/
+
+const char *HFAGetDataTypeName( int nDataType )
+
+{
+    switch( nDataType )
+    {
+      case EPT_u1:
+        return "u1";
+
+      case EPT_u2:
+        return "u2";
+
+      case EPT_u4:
+        return "u4";
+
+      case EPT_u8:
+        return "u8";
+
+      case EPT_s8:
+        return "s8";
+
+      case EPT_u16:
+        return "u16";
+
+      case EPT_s16:
+        return "s16";
+
+      case EPT_u32:
+        return "u32";
+
+      case EPT_s32:
+        return "s32";
+
+      case EPT_f32:
+        return "f32";
+
+      case EPT_f64:
+        return "f64";
+
+      case EPT_c64:
+        return "c64";
+
+      case EPT_c128:
+        return "c128";
+
+      default:
+        return "unknown";
+    }
+}
+
+/************************************************************************/
 /*                           HFAGetMapInfo()                            */
 /************************************************************************/
 
@@ -860,6 +916,99 @@ const Eprj_MapInfo *HFAGetMapInfo( HFAHandle hHFA )
    hHFA->pMapInfo = (void *) psMapInfo;
 
    return psMapInfo;
+}
+
+/************************************************************************/
+/*                       int HFAGetGeoTransform()                       */
+/************************************************************************/
+
+int HFAGetGeoTransform( HFAHandle hHFA, double *padfGeoTransform )
+
+{
+    const Eprj_MapInfo *psMapInfo = HFAGetMapInfo( hHFA );
+
+    padfGeoTransform[0] = 0.0;
+    padfGeoTransform[1] = 1.0;
+    padfGeoTransform[2] = 0.0;
+    padfGeoTransform[3] = 0.0;
+    padfGeoTransform[4] = 0.0;
+    padfGeoTransform[5] = 1.0;
+
+/* -------------------------------------------------------------------- */
+/*      Simple (north up) MapInfo approach.                             */
+/* -------------------------------------------------------------------- */
+    if( psMapInfo != NULL )
+    {
+        padfGeoTransform[0] = psMapInfo->upperLeftCenter.x
+            - psMapInfo->pixelSize.width*0.5;
+        padfGeoTransform[1] = psMapInfo->pixelSize.width;
+        padfGeoTransform[2] = 0.0;
+        if( psMapInfo->upperLeftCenter.y > psMapInfo->lowerRightCenter.y )
+            padfGeoTransform[5] = - psMapInfo->pixelSize.height;
+        else
+            padfGeoTransform[5] = psMapInfo->pixelSize.height;
+
+        padfGeoTransform[3] = psMapInfo->upperLeftCenter.y
+            - padfGeoTransform[5]*0.5;
+        padfGeoTransform[4] = 0.0;
+
+        // special logic to fixup odd angular units.
+        if( EQUAL(psMapInfo->units,"ds") )
+        {
+            padfGeoTransform[0] /= 3600.0;
+            padfGeoTransform[1] /= 3600.0;
+            padfGeoTransform[2] /= 3600.0;
+            padfGeoTransform[3] /= 3600.0;
+            padfGeoTransform[4] /= 3600.0;
+            padfGeoTransform[5] /= 3600.0;
+        }
+
+        return TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try for a MapToPixelXForm affine polynomial supporting          */
+/*      rotated and sheared affine transformations.                     */
+/* -------------------------------------------------------------------- */
+    HFAEntry *poXForm0 = 
+        hHFA->papoBand[0]->poNode->GetNamedChild( "MapToPixelXForm.XForm0" );
+    
+    if( poXForm0 == NULL )
+        return FALSE;
+
+    if( poXForm0->GetIntField( "order" ) != 1
+        || poXForm0->GetIntField( "numdimtransform" ) != 2
+        || poXForm0->GetIntField( "numdimpolynomial" ) != 2
+        || poXForm0->GetIntField( "termcount" ) != 3 )
+        return FALSE;
+
+    // we should check that the exponent list is 0 0 1 0 0 1 but
+    // we don't because we are lazy 
+
+    // fetch geotransform values.
+
+    padfGeoTransform[0] = 
+        poXForm0->GetDoubleField( "polycoefvector[0]" );
+    padfGeoTransform[1] = 
+        poXForm0->GetDoubleField( "polycoefmtx[0]" );
+    padfGeoTransform[2] = 
+        poXForm0->GetDoubleField( "polycoefmtx[1]" );
+    padfGeoTransform[3] = 
+        poXForm0->GetDoubleField( "polycoefvector[1]" );
+    padfGeoTransform[4] = 
+        poXForm0->GetDoubleField( "polycoefmtx[2]" );
+    padfGeoTransform[5] = 
+        poXForm0->GetDoubleField( "polycoefmtx[3]" );
+
+    // Adjust origin from center of top left pixel to top left corner
+    // of top left pixel.
+    
+    padfGeoTransform[0] -= padfGeoTransform[1] * 0.5;
+    padfGeoTransform[0] -= padfGeoTransform[2] * 0.5;
+    padfGeoTransform[3] -= padfGeoTransform[4] * 0.5;
+    padfGeoTransform[3] -= padfGeoTransform[5] * 0.5;
+
+    return TRUE;
 }
 
 /************************************************************************/
