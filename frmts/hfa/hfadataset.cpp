@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.75  2006/04/03 04:34:19  fwarmerdam
+ * added support for reading affine polynomial transforms as geotransform
+ *
  * Revision 1.74  2006/03/29 14:24:04  fwarmerdam
  * added preliminary nodata support (readonly)
  *
@@ -2297,43 +2300,7 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Get geotransform.                                               */
 /* -------------------------------------------------------------------- */
-    const Eprj_MapInfo  *psMapinfo = HFAGetMapInfo( hHFA );
-
-    if( psMapinfo == NULL )
-    {
-        poDS->adfGeoTransform[0] = 0.0;
-        poDS->adfGeoTransform[1] = 1.0;
-        poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = 0.0;
-        poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = 1.0;
-    }
-    else
-    {
-        poDS->adfGeoTransform[0] = psMapinfo->upperLeftCenter.x
-            - psMapinfo->pixelSize.width*0.5;
-        poDS->adfGeoTransform[1] = psMapinfo->pixelSize.width;
-        poDS->adfGeoTransform[2] = 0.0;
-        if( psMapinfo->upperLeftCenter.y > psMapinfo->lowerRightCenter.y )
-            poDS->adfGeoTransform[5] = - psMapinfo->pixelSize.height;
-        else
-            poDS->adfGeoTransform[5] = psMapinfo->pixelSize.height;
-
-        poDS->adfGeoTransform[3] = psMapinfo->upperLeftCenter.y
-            - poDS->adfGeoTransform[5]*0.5;
-        poDS->adfGeoTransform[4] = 0.0;
-
-        // special logic to fixup odd angular units.
-        if( EQUAL(psMapinfo->units,"ds") )
-        {
-            poDS->adfGeoTransform[0] /= 3600.0;
-            poDS->adfGeoTransform[1] /= 3600.0;
-            poDS->adfGeoTransform[2] /= 3600.0;
-            poDS->adfGeoTransform[3] /= 3600.0;
-            poDS->adfGeoTransform[4] /= 3600.0;
-            poDS->adfGeoTransform[5] /= 3600.0;
-        }
-    }
+    HFAGetGeoTransform( hHFA, poDS->adfGeoTransform );
 
 /* -------------------------------------------------------------------- */
 /*      Get the projection.                                             */

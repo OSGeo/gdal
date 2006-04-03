@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/04/03 04:34:19  fwarmerdam
+ * added support for reading affine polynomial transforms as geotransform
+ *
  * Revision 1.18  2006/03/29 14:24:04  fwarmerdam
  * added preliminary nodata support (readonly)
  *
@@ -194,6 +197,7 @@ CPLErr  CPL_DLL HFAFlush( HFAHandle );
 int CPL_DLL HFACreateOverview( HFAHandle hHFA, int nBand, int nOverviewLevel);
 
 const Eprj_MapInfo CPL_DLL *HFAGetMapInfo( HFAHandle );
+int CPL_DLL HFAGetGeoTransform( HFAHandle, double* );
 CPLErr CPL_DLL HFASetMapInfo( HFAHandle, const Eprj_MapInfo * );
 const Eprj_Datum CPL_DLL *HFAGetDatum( HFAHandle );
 CPLErr CPL_DLL HFASetDatum( HFAHandle, const Eprj_Datum * );
@@ -223,6 +227,7 @@ CPLErr CPL_DLL HFASetOverviewRasterBlock(
 const char * HFAGetBandName( HFAHandle hHFA, int nBand );
 void HFASetBandName( HFAHandle hHFA, int nBand, const char *pszName );
 int     CPL_DLL HFAGetDataTypeBits( int );
+const char CPL_DLL *HFAGetDataTypeName( int );
 CPLErr	CPL_DLL HFAGetPCT( HFAHandle, int, int *, 
                            double **, double **, double ** , double **);
 CPLErr  CPL_DLL HFASetPCT( HFAHandle, int, int, double *, double *, double *, double * );
