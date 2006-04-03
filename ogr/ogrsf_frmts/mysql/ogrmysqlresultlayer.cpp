@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/04/03 01:48:53  fwarmerdam
+ * improve date support
+ *
  * Revision 1.13  2006/02/16 17:22:31  fwarmerdam
  * added date support
  *
@@ -177,11 +180,21 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
             poDefn->AddFieldDefn( &oField );
             break;
 
-          case FIELD_TYPE_TIMESTAMP:
           case FIELD_TYPE_DATE:
-          case FIELD_TYPE_TIME:
-          case FIELD_TYPE_DATETIME:
             oField.SetType( OFTDate );
+            oField.SetWidth(0);
+            poDefn->AddFieldDefn( &oField );
+            break;
+
+          case FIELD_TYPE_TIME:
+            oField.SetType( OFTTime );
+            oField.SetWidth(0);
+            poDefn->AddFieldDefn( &oField );
+            break;
+
+          case FIELD_TYPE_TIMESTAMP:
+          case FIELD_TYPE_DATETIME:
+            oField.SetType( OFTDateTime );
             oField.SetWidth(0);
             poDefn->AddFieldDefn( &oField );
             break;
