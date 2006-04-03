@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/04/03 04:33:16  fwarmerdam
+ * Report basedata type.  Support reading basedata as a 1D array.  Fix
+ * bug in basedata reading ... wasn't skippig 2 byte code before data.
+ *
  * Revision 1.19  2006/03/29 14:24:04  fwarmerdam
  * added preliminary nodata support (readonly)
  *
@@ -813,21 +817,25 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           HFAStandard( 4, &nColumns );
           memcpy( &nBaseItemType, pabyData+8, 2 );
           HFAStandard( 2, &nBaseItemType );
+          // We ignore the 2 byte objecttype value. 
 
-          pabyData += 10;
+          if( nIndexValue < 0 || nIndexValue >= nRows * nColumns )
+              return NULL;
+
+          pabyData += 12;
 
           CPLAssert( nRows >= 1 && nColumns >= 1 );
 
           if( nBaseItemType == EPT_u8 )
           {
-              dfDoubleRet = pabyData[0];
-              nIntRet = pabyData[0];
+              dfDoubleRet = pabyData[nIndexValue];
+              nIntRet = pabyData[nIndexValue];
           }
           else if( nBaseItemType == EPT_s16 )
           {
               GInt16  nValue;
               
-              memcpy( &nValue, pabyData, 2 );
+              memcpy( &nValue, pabyData + 2*nIndexValue, 2 );
               HFAStandard( 2, &nValue );
 
               dfDoubleRet = nValue;
@@ -837,7 +845,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           {
               GUInt16  nValue;
               
-              memcpy( &nValue, pabyData, 2 );
+              memcpy( &nValue, pabyData + 2*nIndexValue, 2 );
               HFAStandard( 2, &nValue );
 
               dfDoubleRet = nValue;
@@ -847,11 +855,21 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           {
               float fValue;
               
-              memcpy( &fValue, pabyData, 4 );
+              memcpy( &fValue, pabyData + 4*nIndexValue, 4 );
               HFAStandard( 4, &fValue );
 
               dfDoubleRet = fValue;
               nIntRet = (int) fValue;
+          }
+          else if( nBaseItemType == EPT_f64 )
+          {
+              double dfValue;
+              
+              memcpy( &dfValue, pabyData+8*nIndexValue, 8 );
+              HFAStandard( 8, &dfValue );
+
+              dfDoubleRet = dfValue;
+              nIntRet = (int) dfValue;
           }
           else
           {
@@ -1008,6 +1026,17 @@ int HFAField::GetInstCount( GByte * pabyData )
 {
     if( chPointer == '\0' )
         return nItemCount;
+    else if( chItemType == 'b' )
+    {
+        GInt32 nRows, nColumns;
+
+        memcpy( &nRows, pabyData+8, 4 );
+        HFAStandard( 4, &nRows );
+        memcpy( &nColumns, pabyData+12, 4 );
+        HFAStandard( 4, &nColumns );
+
+        return nRows * nColumns;
+    }
     else
     {
         GInt32 nCount;
@@ -1091,8 +1120,8 @@ void HFAField::DumpInstValue( FILE *fpOut,
               memcpy( &nBaseItemType, pabyData+16, 2 );
               HFAStandard( 2, &nBaseItemType );
               
-              VSIFPrintf( fpOut, "%dx%d basedata of type %d\n",
-                          nRows, nColumns, nBaseItemType );
+              VSIFPrintf( fpOut, "%dx%d basedata of type %s\n",
+                          nRows, nColumns, HFAGetDataTypeName(nBaseItemType) );
           }
           break;
 
