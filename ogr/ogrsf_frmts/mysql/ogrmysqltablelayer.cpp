@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2006/04/03 01:48:53  fwarmerdam
+ * improve date support
+ *
  * Revision 1.31  2006/03/17 01:29:33  hobu
  * Was too greedy on setting widths and precisions and
  * we were picking up columns of type "text" and setting a
@@ -368,12 +371,18 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
         {
             oField.SetType( OFTReal );
         }
-        else if( EQUAL(pszType, "date") 
-                 || EQUAL(pszType, "time") 
-                 || EQUAL(pszType, "datetime") 
-                 || EQUAL(pszType, "timestamp"))
+        else if( EQUAL(pszType, "date") )
         {
             oField.SetType( OFTDate );
+        }
+        else if( EQUAL(pszType, "time") )
+        {
+            oField.SetType( OFTTime );
+        }
+        else if( EQUAL(pszType, "datetime") 
+                 || EQUAL(pszType, "timestamp") )
+        {
+            oField.SetType( OFTDateTime );
         }
         else if( EQUAL(pszType, "year") )  
         {
@@ -976,7 +985,17 @@ OGRErr OGRMySQLTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
 
     else if( oField.GetType() == OFTDate )
     {
+        sprintf( szFieldType, "DATE" );
+    }
+
+    else if( oField.GetType() == OFTDateTime )
+    {
         sprintf( szFieldType, "DATETIME" );
+    }
+
+    else if( oField.GetType() == OFTTime )
+    {
+        sprintf( szFieldType, "TIME" );
     }
 
     else if( oField.GetType() == OFTString )
