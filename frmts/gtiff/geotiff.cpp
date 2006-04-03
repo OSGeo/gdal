@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.159  2006/04/03 02:05:12  fwarmerdam
+ * Pass GeoTransform and projection requests on to GDALPamDataset if
+ * we don't have information from the TIFF file.
+ *
  * Revision 1.158  2006/03/30 16:49:09  fwarmerdam
  * Reorder setfield calls to put jpeg stuff pretty late.  This helps resolve
  * problems producing ycbcr jpeg files.
@@ -547,6 +551,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Special case for YCbCr subsampled data.                         */
 /* -------------------------------------------------------------------- */
+#ifdef notdef
     if( (eBandInterp == GCI_YCbCr_YBand 
          || eBandInterp == GCI_YCbCr_CbBand
          ||  eBandInterp == GCI_YCbCr_CrBand)
@@ -580,6 +585,7 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         return CE_None;
     }
+#endif
         
 /* -------------------------------------------------------------------- */
 /*      Handle simple case of eight bit data, and pixel interleaving.   */
@@ -4254,7 +4260,12 @@ const char *GTiffDataset::GetProjectionRef()
 
 {
     if( nGCPCount == 0 )
-        return( pszProjection );
+    {
+        if( EQUAL(pszProjection,"") )
+            return GDALPamDataset::GetProjectionRef();
+        else
+            return( pszProjection );
+    }
     else
         return "";
 }
@@ -4298,7 +4309,7 @@ CPLErr GTiffDataset::GetGeoTransform( double * padfTransform )
     if( bGeoTransformValid )
         return CE_None;
     else
-        return CE_Failure;
+        return GDALPamDataset::GetGeoTransform( padfTransform );
 }
 
 /************************************************************************/
