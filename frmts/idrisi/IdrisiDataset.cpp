@@ -994,6 +994,11 @@ CPLErr IdrisiRasterBand::IReadBlock(int nBlockXOff,
         memcpy(pImage, pabyScanLine, nRecordSize);
     }
 
+#ifdef CPL_MSB    
+    if( eDataType == GDT_Float32 )
+        GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4 );
+#endif
+
     return CE_None;
 }
 
@@ -1006,6 +1011,12 @@ CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff,
                                      void *pImage)
 {
     IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+
+#ifdef CPL_MSB    
+    // Swap in input buffer if needed.
+    if( eDataType == GDT_Float32 )
+        GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4 );
+#endif
 
     if (poGDS->nBands == 1)
     {
@@ -1024,6 +1035,12 @@ CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff,
             pabyScanLine[j] = ((uint8 *) pImage)[i];
         }
     }
+
+#ifdef CPL_MSB    
+    // Swap input buffer back to original form.
+    if( eDataType == GDT_Float32 )
+        GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4 );
+#endif
 
     VSIFSeekL(poGDS->fp, nRecordSize * nBlockYOff, SEEK_SET);
 
