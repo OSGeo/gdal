@@ -3,7 +3,7 @@
  *
  * Project:  CEOS Translator
  * Purpose:  Test mainline.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/04/04 00:34:40  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.3  2001/11/07 14:11:25  warmerda
  * changed to just dump records
  *

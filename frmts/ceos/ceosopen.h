@@ -4,7 +4,7 @@
  * Project:  CEOS Translator
  * Purpose:  Public (C callable) interface for CEOS and related formats such
  *           as Spot CAP.   This stuff can be used independently of GDAL.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/04/04 00:34:40  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.1  1999/05/05 17:32:38  warmerda
  * New
  *
