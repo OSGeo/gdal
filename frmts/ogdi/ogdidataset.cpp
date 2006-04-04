@@ -4,7 +4,7 @@
  * Name:     ogdidataset.cpp
  * Project:  OGDI Bridge
  * Purpose:  Main driver for OGDI.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/04/04 05:03:38  fwarmerdam
+ * Update contact info.
+ *
  * Revision 1.21  2006/03/28 15:03:47  fwarmerdam
  * make sure we reset the region if currentindex is not zero
  *
