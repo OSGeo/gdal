@@ -3,7 +3,7 @@
  *
  * Project:  ISO 8211 Access
  * Purpose:  Implements the DDFSubfieldDefn class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/04/04 04:24:07  fwarmerdam
+ * update contact info
+ *
  * Revision 1.13  2004/01/06 19:07:14  warmerda
  * Added braces within complex case in switch for HP/UX compatibility.
  *

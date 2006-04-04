@@ -3,7 +3,7 @@
  *
  * Project:  ISO 8211 Access
  * Purpose:  Implements the DDFField class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/04/04 04:24:06  fwarmerdam
+ * update contact info
+ *
  * Revision 1.16  2003/07/03 15:38:46  warmerda
  * some write capabilities added
  *

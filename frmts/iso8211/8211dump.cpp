@@ -3,7 +3,7 @@
  *
  * Project:  SDTS Translator
  * Purpose:  Dump 8211 file in verbose form - just a junk program. 
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/04/04 04:24:06  fwarmerdam
+ * update contact info
+ *
  * Revision 1.6  2003/11/11 20:53:53  warmerda
  * Report file offset before each record dumped.
  *
