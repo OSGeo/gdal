@@ -7,7 +7,7 @@
  *           Robert Soricone (rsoricone@usgs.gov)
  *
  ******************************************************************************
- * Copyright (c) 20062, Frank Warmerdam <warmerdam@pobox.com>
+ * Copyright (c) 2006, Frank Warmerdam <warmerdam@pobox.com>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.2  2006/04/04 04:34:12  fwarmerdam
+ * Fixed copyright date.
+ *
  * Revision 1.1  2006/04/04 04:33:29  fwarmerdam
  * New
  *
