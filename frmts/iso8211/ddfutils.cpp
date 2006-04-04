@@ -3,7 +3,7 @@
  *
  * Project:  ISO 8211 Access
  * Purpose:  Various utility functions.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/04/04 04:24:07  fwarmerdam
+ * update contact info
+ *
  * Revision 1.6  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *

@@ -3,7 +3,7 @@
  *
  * Project:  SDTS Translator
  * Purpose:  Example program dumping data in 8211 data to stdout.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/04/04 04:24:06  fwarmerdam
+ * update contact info
+ *
  * Revision 1.7  2003/08/21 21:22:46  warmerda
  * Special reporting facilities for the S-57 LNAM and NAME bitfields (provided
  * by Rodney Jensen).
