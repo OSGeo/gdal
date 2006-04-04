@@ -3,7 +3,7 @@
  *
  * Project:  GXF Reader
  * Purpose:  GXF-3 access function declarations.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1998, Global Geomatics
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/04/04 17:25:27  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.7  1999/10/29 17:30:40  warmerda
  * added prototype
  *
