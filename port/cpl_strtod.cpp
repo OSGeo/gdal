@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/04/04 16:11:06  fwarmerdam
+ * temporarily avoid use of long double math funcs not on macos 10.3
+ *
  * Revision 1.4  2006/04/02 14:45:38  fwarmerdam
  * Avoid VS8 problem with const char * / char *.
  *
@@ -273,13 +276,19 @@ _Memcasecmp (const void *s1, const void *s2, size_t n)
 static int
 _Ldmul(long double *px, long double y)
 {
+#ifdef HAVE_FREXPL
   int lexp;
   long double ld;
-  
+
   ld = frexpl(*px, &lexp) * y;
   errno = 0;
   *px = ldexpl(ld, lexp);	/* ldexpl can overflow */
   return errno != 0 ? -1 : 0;
+
+#else
+  *px = *px * y;
+  return 0;
+#endif
 }  
   
 /* _Ldtento: compute x * 10^n, paranoid style */
@@ -509,7 +518,11 @@ _Stold (const char *s, char **endptr, long double *pld, char **pnan,
   if (base == 10)
     *pld = _Ldtento (x, sexp);
   else
+#ifdef HAVE_FREXPL
     *pld = ldexpl (x, (int) (sexp) << 2);
+#else
+    *pld = ldexp (x, (int) (sexp) << 2);
+#endif
   if (sign == '-')
     *pld = -*pld;
   return FP_NORMAL;
@@ -772,7 +785,11 @@ long double CPLStrtoldDelim(const char *nptr, char **endptr, char point)
     case FP_ZERO:
       return 0.0;
     case FP_NAN:
+#ifdef HAVE_FREXPL
       ld = copysignl (nanl (nan_arg), ld);
+#else
+      ld = copysign (nan (nan_arg), ld);
+#endif
       if (nan_arg != 0)
 	free (nan_arg);
       return ld;
