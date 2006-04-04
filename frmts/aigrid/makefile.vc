@@ -1,6 +1,5 @@
 
-OBJ	=	aigdataset.obj giodataset.obj aigopen.obj gridlib.obj \
-		aigccitt.obj
+OBJ	=	aigdataset.obj aigopen.obj gridlib.obj aigccitt.obj
 
 GDAL_ROOT	=	..\..
 
