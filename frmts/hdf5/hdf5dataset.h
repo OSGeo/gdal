@@ -6,7 +6,7 @@
  * Author:   Denis Nadeau (denis.nadeau@gmail.com)
  *
  ******************************************************************************
- * Copyright (c) 2005
+ * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.6  2006/04/04 03:27:19  fwarmerdam
+ * Fixed copyright holder line.
+ *
  * Revision 1.5  2006/01/23 14:16:31  dnadeau
  * Add pszUnderscorePath variable to HDF5Dataset class
  *
