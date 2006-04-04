@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2006/04/04 14:38:47  fwarmerdam
+ * Use CPLGetConfigOption() instead of getenv() for PROJSO.
+ *
  * Revision 1.32  2006/02/19 21:00:04  mloskot
  * [WCE]
  * + Add main makefile.evc for Windows CE target build
@@ -233,8 +236,8 @@ static int LoadProjLibrary()
     bTriedToLoad = TRUE;
 
 #if !defined(WIN32CE)
-    if( getenv("PROJSO") != NULL )
-        pszLibName = getenv("PROJSO");
+    if( CPLGetConfigOption("PROJSO",NULL) != NULL )
+        pszLibName = CPLGetConfigOption("PROJSO",NULL);
 #endif
 
 #ifdef PROJ_STATIC
