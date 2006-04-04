@@ -3,7 +3,7 @@
  *
  * Project:  Erdas Imagine (.img) Translator
  * Purpose:  Mapping Imagine georeferencing to GeoTIFF georeferencing.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Intergraph Corporation
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/04/04 03:31:13  fwarmerdam
+ * Fixed contact info.
+ *
  * Revision 1.5  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *
