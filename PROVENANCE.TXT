@@ -310,6 +310,198 @@ Note: all the following are build options, not required.
 
 * Obsolete code, all deleted from CVS.
 
+=== gdal/frmts/aaigrid ===
+
+* FrankW, clean.
+
+=== gdal/frmts/aigrid ===
+
+* aigccitt.c: Derived from libtiff - MIT/X. 
+* FrankW, clean.
+
+=== gdal/frmts/airsar ===
+
+* FrankW, clean.
+
+=== gdal/frmts/bmp ===
+
+* AndreyK, clean.
+
+=== gdal/frmts/bsb ===
+
+* FrankW, Mike Higgins, clean. 
+
+NOTE: This code is implemented on the basis of work by Mike Higgins.  The 
+BSB format is subject to US patent 5,727,090; however, that patent 
+apparently only covers *writing* BSB files, not reading them, so this code 
+should not be affected.  
+
+See [http://home.gdal.org/projects/bsb/ipi.html]
+
+=== gdal/frmts/ceos === 
+
+* FrankW, clean.
+
+=== gdal/frmts/ceos2 ===
+
+* Atlantis Scientific (now Microsoft), clean.
+
+=== gdal/frmts/dods ===
+
+* OPeNDAP Inc/FrankW, clean.
+
+=== gdal/frmts/dted === 
+
+* FrankW, clean.
+
+=== gdal/frmts/ecw === 
+
+* FrankW, clean.
+
+=== gdal/frmts/elas ===
+
+* FrankW, clean.
+
+=== gdal/frmts/envisat ===
+
+* Atlantis Scientific (Microsoft), clean.
+
+=== gdal/frmts/fit ===
+
+* Keyhole (Google), clean.
+
+=== gdal/frmts/fits ===
+
+* Simon Perkins (LANL), clean.
+
+=== gdal/frmts/gif ===
+
+* FrankW, clean.
+* Contains a copy of libungif with ambigious licensing terms. '''TO_RESOLVE'''
+
+=== gdal/frmts/grass ===
+
+* Frank, clean
+* Added copyright header to dist/configure.in
+
+=== gdal/frmts/gtiff ===
+
+* tif_float.c: Industrial Light and Magic - MIT/X style, but with a credit requirement. '''TO_RESOLVE'''
+* tif_memio.c: FrankW, Mike Johnson and MancTec AB - MIT/X. 
+* Contains copy of libtiff, license terms explicit in source files. 
+* Contains copy of libgeotiff, license terms not made clear.  '''TO_RESOLVE'''
+
+=== gdal/frmts/gxf ===
+
+* README states:
+  Gilles Clement of Global Geomatics approved this support library
+  for general OpenSource release six months after it was released
+  as part of OGDI.  This should be approximately September of 1999. 
+
+* Frank, clean. 
+
+=== gdal/frmts/hdf4 ===
+
+* AndreyK, clean.
+* embedded copy of HDF-EOS library with these apparent terms:  
+
+ Copyright (C) 1996 Hughes and Applied Research Corporation
+
+ Permission to use, modify, and distribute this software and its documentation 
+ for any purpose without fee is hereby granted, provided that the above 
+ copyright notice appear in all copies and that both that copyright notice and 
+ this permission notice appear in supporting documentation.
+
+We should look into credit requirement.  '''TO_RESOLVE'''
+
+* Some files in hdf-eos directory lack copyright notices, and look to be derived from public domain GCTP package from USGS. 
+
+=== gdal/frmts/hdf5 ===
+
+* FrankW, clean.
+
+=== gdal/frmts/hdf ===
+
+* geoextra.c: Derived by public domain contribution to libgeotiff from PCI but the terms are not clear.  (this also affects libgeotiff) '''TO_RESOLVE'''
+* Mostly copyright Intergraph Corporation, clean. 
+* hfacompress.cpp: Sam Gillingham, clean.
+
+=== gdal/frmts/idrisi ===
+
+* Ivan Lucena (Clark University), clean.
+* READMEs for rdc and rst format don't have any copyright details. 
+
+=== gdal/frmts/ilwis ===
+
+* ITC, clean.
+* Fixed ilwiscoordinatesystem.cpp header after review of cvs log.
+
+=== gdal/frmts/iso8211 ===
+
+* FrankW, clean.
+
+=== gdal/frmts/jdem ===
+
+* FrankW, clean.
+
+=== gdal/frmts/jp2kak ===
+
+* dbg_file_source.h: Derived from Kakadu, no copyright or other history. '''TO_RESOLVE'''
+* jp2kak_roi.h: Derived from Kakadu with proper credit.  But re-copyrighted FrankW improperly.  '''TO_RESOLVE'''
+* Otherwise FrankW, clean.
+
+=== gdal/frmts/jpeg ===
+
+* FrankW, clean.
+* Contains embedded copy of libjpeg - copyright/license notice README was missing and has been added.
+
+=== gdal/frmts/jpeg2000 ===
+
+* AndreyK, clean.
+
+=== gdal/frmts/l1b ===
+
+* AndreyK, clean.
+
+=== gdal/frmts/leveller ===
+
+* Daylon Graphics, clean.
+
+=== gdal/frmts/mem ===
+
+* FrankW, clean.
+
+=== gdal/frmts/mrsid ===
+
+* AndreyK, clean.
+
+=== gdal/frmts/msg ===
+
+* xritheaderparser.cpp, xritheaderparser.h: Copyright ITC and R. Alblas and released under the GPL.  '''TO_RESOLVE'''
+* the rest, ITC, clean
+
+=== gdal/frmts/msgn ===
+
+* msg_basic_types.{cpp,h}, msg_reader_core.{cpp,h}: Added copyright headers with explicit permission from Frans van den Bergh, the author/copyright holder.
+
+=== gdal/frmts/netcdf ===
+
+* FrankW, clean.
+
+=== gdal/frmts/nitf ===
+
+* mgrs.h, mgrs.c: Derived from Geotrans (public domain), not current copyright header.
+* The rest is FrankW, clean.
+
+=== gdal/frmts/ogdi ===
+
+* FrankW, clean.
+
+=== gdal/frmts/pcidsk ===
+
+* AndreyK/FrankW, clean.
+
+
 === TODO ===
 
 * gdal/*.*
