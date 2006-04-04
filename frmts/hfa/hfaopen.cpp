@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.54  2006/04/04 17:10:07  fwarmerdam
+ * Figured out the proper way to use the MapToPixelXForm stuff.
+ *
  * Revision 1.53  2006/04/03 04:34:19  fwarmerdam
  * added support for reading affine polynomial transforms as geotransform
  *
@@ -98,6 +101,7 @@
 
 #include "hfa_p.h"
 #include "cpl_conv.h"
+#include "gdal_alg.h"
 #include <limits.h>
 
 CPL_CVSID("$Id$");
@@ -986,19 +990,18 @@ int HFAGetGeoTransform( HFAHandle hHFA, double *padfGeoTransform )
     // we don't because we are lazy 
 
     // fetch geotransform values.
+    double adfXForm[6];
 
-    padfGeoTransform[0] = 
-        poXForm0->GetDoubleField( "polycoefvector[0]" );
-    padfGeoTransform[1] = 
-        poXForm0->GetDoubleField( "polycoefmtx[0]" );
-    padfGeoTransform[2] = 
-        poXForm0->GetDoubleField( "polycoefmtx[1]" );
-    padfGeoTransform[3] = 
-        poXForm0->GetDoubleField( "polycoefvector[1]" );
-    padfGeoTransform[4] = 
-        poXForm0->GetDoubleField( "polycoefmtx[2]" );
-    padfGeoTransform[5] = 
-        poXForm0->GetDoubleField( "polycoefmtx[3]" );
+    adfXForm[0] = poXForm0->GetDoubleField( "polycoefvector[0]" );
+    adfXForm[1] = poXForm0->GetDoubleField( "polycoefmtx[0]" );
+    adfXForm[4] = poXForm0->GetDoubleField( "polycoefmtx[1]" );
+    adfXForm[3] = poXForm0->GetDoubleField( "polycoefvector[1]" );
+    adfXForm[2] = poXForm0->GetDoubleField( "polycoefmtx[2]" );
+    adfXForm[5] = poXForm0->GetDoubleField( "polycoefmtx[3]" );
+
+    // invert
+
+    GDALInvGeoTransform( adfXForm, padfGeoTransform );
 
     // Adjust origin from center of top left pixel to top left corner
     // of top left pixel.
