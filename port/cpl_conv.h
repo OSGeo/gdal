@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2006/04/04 15:37:19  fwarmerdam
+ * Removed long double strtod functions.
+ *
  * Revision 1.42  2006/03/18 16:36:15  dron
  * Added ASCII to floating point number conversion functions.
  *
@@ -181,8 +184,6 @@ double CPL_DLL CPLStrtod(const char *, char **);
 double CPL_DLL CPLStrtodDelim(const char *, char **, char);
 float CPL_DLL CPLStrtof(const char *, char **);
 float CPL_DLL CPLStrtofDelim(const char *, char **, char);
-long double CPL_DLL CPLStrtold(const char *, char **);
-long double CPL_DLL CPLStrtoldDelim(const char *, char **, char);
 
 /* -------------------------------------------------------------------- */
 /*      Read a numeric value from an ASCII character string.            */
