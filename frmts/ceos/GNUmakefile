@@ -9,7 +9,7 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 default:	$(OBJ)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)
 
 ceostest:	ceostest.o ceosopen.o
 	$(CXX) ceostest.o ceosopen.o ../../port/*.o $(LIBS) -o ceostest

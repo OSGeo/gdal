@@ -3,7 +3,7 @@
  *
  * Project:  CEOS Translator
  * Purpose:  GDALDataset driver for CEOS translator.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/04/04 00:34:39  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.10  2005/05/05 14:01:36  fwarmerdam
  * PAM Enable
  *

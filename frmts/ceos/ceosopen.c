@@ -3,7 +3,7 @@
  *
  * Project:  CEOS Translator
  * Purpose:  Implementation of non-GDAL dependent CEOS support.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/04/04 00:34:40  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.4  2003/07/08 15:34:04  warmerda
  * avoid warnings
  *
