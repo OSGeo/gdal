@@ -1,10 +1,10 @@
 /******************************************************************************
  *
  * Purpose: Translation from ILWIS coordinate system information.
- * Author:   
+ * Author:   Lichun Wang, lichun@itc.nl
  *
  ******************************************************************************
- * Copyright (c) 2004, 
+ * Copyright (c) 2004, ITC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,6 +26,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/04/04 03:34:52  fwarmerdam
+ * fixed up header after review of log history
+ *
  * Revision 1.5  2005/09/14 13:37:18  dron
  * Avoid warnings.
  *
