@@ -3,7 +3,7 @@
  *
  * Project:  GXF Reader
  * Purpose:  Handle GXF to PROJ.4 projection transformation.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1998, Global Geomatics
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/04/04 17:25:27  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.3  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *

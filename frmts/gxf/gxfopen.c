@@ -3,7 +3,7 @@
  *
  * Project:  GXF Reader
  * Purpose:  Majority of Geosoft GXF reading code.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1998, Global Geomatics
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/04/04 17:25:27  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.15  2004/08/23 14:24:14  warmerda
  * Added GXFClose() on failed open to recover resources.
  *

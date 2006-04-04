@@ -3,7 +3,7 @@
  *
  * Project:  GXF Reader
  * Purpose:  Handle GXF to OGC WKT projection transformation.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/04/04 17:25:27  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.3  2004/04/07 02:08:11  warmerda
  * SPHEROID belongs inside DATUM
  *
