@@ -3,7 +3,7 @@
  *
  * Project:  Memory Array Translator
  * Purpose:  Declaration of MEMDataset, and MEMRasterBand.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2006/04/04 04:42:39  fwarmerdam
+ * update contact info
+ *
  * Revision 1.12  2005/05/19 20:39:54  dron
  * Derive the MEMRasterBand from GDALPamRasterBand.
  *
