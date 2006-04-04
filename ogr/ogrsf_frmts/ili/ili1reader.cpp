@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/04/04 15:31:30  pka
+ * No copy of original geometry on windows (file position errors)
+ *
  * Revision 1.11  2006/03/24 17:51:00  fwarmerdam
  * Fixed syntax error with GEOS_C_API case.
  *
@@ -381,6 +384,9 @@ int ILI1Reader::ReadFeatures() {
 
 int ILI1Reader::AddIliGeom(OGRFeature *feature, int iField, long fpos)
 {
+#if defined(_WIN32) || defined(__WIN32__)
+    //Other positions on Windows !?
+#else
     long nBlockLen = VSIFTell( fpItf )-fpos;
     VSIFSeek( fpItf, fpos, SEEK_SET );
 
@@ -394,6 +400,7 @@ int ILI1Reader::AddIliGeom(OGRFeature *feature, int iField, long fpos)
     }
     pszRawData[nBlockLen]= '\0';
     feature->SetField(iField, pszRawData);
+#endif
     return TRUE;
 }
 
