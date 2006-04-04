@@ -3,7 +3,7 @@
  *
  * Project:  DTED Translator
  * Purpose:  Public (C callable) interface for DTED/CDED reading.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/04/04 01:00:44  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.10  2004/04/14 19:47:29  warmerda
  * added better boundary support, and trimming
  *

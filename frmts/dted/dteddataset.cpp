@@ -3,7 +3,7 @@
  *
  * Project:  DTED Translator
  * Purpose:  GDALDataset driver for DTED translator.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/04/04 01:00:44  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.17  2006/03/27 14:52:46  fwarmerdam
  * Added overview support.
  *

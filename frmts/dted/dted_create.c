@@ -3,7 +3,7 @@
  *
  * Project:  DTED Translator
  * Purpose:  Implementation of DTEDCreate() portion of DTED API.
- * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Author:   Frank Warmerdam, warmerdamm@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2001, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/04/04 01:00:44  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.11  2004/05/13 00:28:57  gwalter
  * Fix latitude/longitude mixup in header.
  *
