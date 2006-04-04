@@ -3,7 +3,7 @@
  *
  * Project:  Memory Array Translator
  * Purpose:  Complete implementation.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/04/04 04:42:39  fwarmerdam
+ * update contact info
+ *
  * Revision 1.21  2005/03/08 16:35:05  fwarmerdam
  * Fixed memory leak.
  *
