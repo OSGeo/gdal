@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.160  2006/04/05 04:16:44  fwarmerdam
+ * Report error on an attempt to create an uncompressed TIFF file larger
+ * than 4GB.
+ *
  * Revision 1.159  2006/04/03 02:05:12  fwarmerdam
  * Pass GeoTransform and projection requests on to GDALPamDataset if
  * we don't have information from the TIFF file.
@@ -3375,6 +3379,23 @@ TIFF *GTiffCreate( const char * pszFilename,
     pszValue = CSLFetchNameValue( papszParmList, "JPEG_QUALITY" );
     if( pszValue  != NULL )
         nJpegQuality = atoi( pszValue );
+
+/* -------------------------------------------------------------------- */
+/*      Check if we are producing an uncompressed file and it is        */
+/*      certain to be larger than 4GB.                                  */
+/* -------------------------------------------------------------------- */
+    if( nCompression == COMPRESSION_NONE )
+    {
+        if( nXSize * ((double)nYSize) * nBands * (GDALGetDataTypeSize(eType)/8)
+            > 4000000000.0 )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "A %d pixels x %d lines x %d bands %s image would be larger than 4GB\n"
+                      "but this is the largest size a TIFF can be.  Creation failed.",
+                      nXSize, nYSize, nBands, GDALGetDataTypeName(eType) );
+            return NULL;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
