@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2006/04/05 20:34:57  fwarmerdam
+ * ensure only-dbf errors are cleared: Bug 1115
+ *
  * Revision 1.32  2006/03/28 23:22:08  fwarmerdam
  * update contact info
  *
@@ -81,56 +84,6 @@
  *
  * Revision 1.16  2003/03/04 05:49:05  warmerda
  * added attribute indexing support
- *
- * Revision 1.15  2002/08/12 14:16:10  warmerda
- * Only recognise .dbf files if the file is directly named with the right
- * extension, or if it is in a directory, and there is no like-named .tab file.
- * http://www2.dmsolutions.on.ca:8003/bugzilla/show_bug.cgi?id=1271
- *
- * Revision 1.14  2002/04/17 15:41:05  warmerda
- * Tread multipolygons as shape type polygon.
- *
- * Revision 1.13  2002/04/17 15:40:27  warmerda
- * Added support for 2.5D polygons.
- *
- * Revision 1.12  2002/04/05 20:28:35  warmerda
- * ensure that eType is set properly if SHPT= options given
- *
- * Revision 1.11  2002/03/27 21:04:38  warmerda
- * Added support for reading, and creating lone .dbf files for wkbNone geometry
- * layers.  Added support for creating a single .shp file instead of a directory
- * if a path ending in .shp is passed to the data source create method.
- *
- * Revision 1.10  2001/12/12 17:24:08  warmerda
- * use CPLStat, not VSIStat
- *
- * Revision 1.9  2001/12/12 02:51:07  warmerda
- * avoid memory leaks
- *
- * Revision 1.8  2001/12/11 21:45:36  warmerda
- * fixed unlikely memory leak of pszWKT
- *
- * Revision 1.7  2001/09/04 15:35:14  warmerda
- * add support for deferring geometry type selection till first feature
- *
- * Revision 1.6  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.5  2001/03/16 22:16:10  warmerda
- * added support for ESRI .prj files
- *
- * Revision 1.4  2000/11/02 16:26:12  warmerda
- * fixed geometry type message
- *
- * Revision 1.3  2000/08/29 15:11:47  warmerda
- * added Z types for SHPT
- *
- * Revision 1.2  2000/03/14 21:37:16  warmerda
- * added SHPT= option support
- *
- * Revision 1.1  1999/11/04 21:16:11  warmerda
- * New
- *
  */
 
 #include "ogrshape.h"
@@ -358,15 +311,30 @@ int OGRShapeDataSource::OpenFile( const char *pszNewName, int bUpdate,
 /*      SHPOpen() should include better (CPL based) error reporting,    */
 /*      and we should be trying to distinquish at this point whether    */
 /*      failure is a result of trying to open a non-shapefile, or       */
-/*      whether it was a shapefile and we want to report the error up.  */
+/*      whether it was a shapefile and we want to report the error      */
+/*      up.                                                             */
+/*                                                                      */
+/*      Care is taken to suppress the error and only reissue it if      */
+/*      we think it is appropriate.                                     */
 /* -------------------------------------------------------------------- */
+    CPLPushErrorHandler( CPLQuietErrorHandler );
     if( bUpdate )
         hSHP = SHPOpen( pszNewName, "r+" );
     else
         hSHP = SHPOpen( pszNewName, "r" );
+    CPLPopErrorHandler();
 
-    if( hSHP == NULL && !EQUAL(CPLGetExtension(pszNewName),"dbf") )
+    if( hSHP == NULL 
+        && (!EQUAL(CPLGetExtension(pszNewName),"dbf") 
+            || strstr(CPLGetLastErrorMsg(),".shp") == NULL) )
+    {
+        CPLString osMsg = CPLGetLastErrorMsg();
+
+        CPLError( CE_Failure, CPLE_OpenFailed, "%s", osMsg.c_str() );
+
         return FALSE;
+    }
+    CPLErrorReset();
     
 /* -------------------------------------------------------------------- */
 /*      Open the .dbf file, if it exists.  To open a dbf file, the      */
