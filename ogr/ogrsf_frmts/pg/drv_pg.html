@@ -47,13 +47,9 @@ calls in the normal SQL sense.<p>
 
 <li> The type recognition logic is currently somewhat impoverished.  
 The types "INT*" and "NUMERIC(width,0)" are mapped to integer, the types
-"FLOAT*" and "NUMERIC(width,precision>0)" are mapped to real, and all other
+"FLOAT*" and "NUMERIC(width,precision>0)" are mapped to real, date, time, 
+timestamp and datetime are handled as date types and all other
 types are just treated as strings. <p>
-
-<li> BYTEA fields in PostgreSQL version preceeding 7.1
-don't support more than 8K in a record, so significant sized geometries
-on a feature will trigger an errow about the INSERT command being to big
-for the buffer.  Upgrade to 7.1.x!<P>
 
 <li> A sequence object called <tablename>_ogc_fid_seq is created for new
 tables (layer), and must be dropped separately from the table when cleaning
