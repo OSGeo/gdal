@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2006/04/05 03:15:13  fwarmerdam
+ * use CPLString for command buffer to handle large commands
+ *
  * Revision 1.30  2006/04/02 18:47:39  fwarmerdam
  * added detailed date type support
  *
@@ -597,7 +600,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 
 {
     PGconn      *hPGConn = poDS->GetPGConn();
-    char        szCommand[4096];
+    CPLString   osCommand;
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to establish an initial query?                       */
@@ -610,19 +613,19 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
         poDS->SoftStartTransaction();
 
         if ( poDS->bUseBinaryCursor )
-            sprintf( szCommand, "DECLARE %s BINARY CURSOR for %s",
-                     pszCursorName, pszQueryStatement );
+            osCommand.Printf( "DECLARE %s BINARY CURSOR for %s",
+                              pszCursorName, pszQueryStatement );
         else
-            sprintf( szCommand, "DECLARE %s CURSOR for %s",
-                     pszCursorName, pszQueryStatement );
+            osCommand.Printf( "DECLARE %s CURSOR for %s",
+                              pszCursorName, pszQueryStatement );
 
-        CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
+        CPLDebug( "OGR_PG", "PQexec(%s)", osCommand.c_str() );
 
-        hCursorResult = PQexec(hPGConn, szCommand );
+        hCursorResult = PQexec(hPGConn, osCommand );
         PQclear( hCursorResult );
 
-        sprintf( szCommand, "FETCH %d in %s", CURSOR_PAGE, pszCursorName );
-        hCursorResult = PQexec(hPGConn, szCommand );
+        osCommand.Printf( "FETCH %d in %s", CURSOR_PAGE, pszCursorName );
+        hCursorResult = PQexec(hPGConn, osCommand );
 
         bCursorActive = TRUE;
 
@@ -647,8 +650,8 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
     {
         PQclear( hCursorResult );
 
-        sprintf( szCommand, "FETCH %d in %s", CURSOR_PAGE, pszCursorName );
-        hCursorResult = PQexec(hPGConn, szCommand );
+        osCommand.Printf( "FETCH %d in %s", CURSOR_PAGE, pszCursorName );
+        hCursorResult = PQexec(hPGConn, osCommand );
 
         nResultOffset = 0;
     }
@@ -663,9 +666,9 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 
         if( bCursorActive )
         {
-            sprintf( szCommand, "CLOSE %s", pszCursorName );
+            osCommand.Printf( "CLOSE %s", pszCursorName );
 
-            hCursorResult = PQexec(hPGConn, szCommand);
+            hCursorResult = PQexec(hPGConn, osCommand);
             PQclear( hCursorResult );
         }
 
