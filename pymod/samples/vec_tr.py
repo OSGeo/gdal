@@ -29,6 +29,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.2  2006/04/05 14:38:56  fwarmerdam
+#  Removed old srs junk, not used.
+#
 #  Revision 1.1  2006/03/30 18:58:04  fwarmerdam
 #  New
 #
@@ -118,9 +121,6 @@ in_defn = in_layer.GetLayerDefn()
 
 #############################################################################
 #	Create output file with similar information.
-
-nad83 = osr.SpatialReference()
-nad83.SetFromUserInput('NAD83')
 
 shp_driver = ogr.GetDriverByName( 'ESRI Shapefile' )
 shp_driver.DeleteDataSource( outfile )
