@@ -6,7 +6,7 @@
  *           definitions and OpenGIS WKT SRS format.  This code is
  *           deliberately GDAL free, and it is intended to be moved into
  *           libgeotiff someday if possible.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2006/04/05 00:06:14  fwarmerdam
+ * fix contact info
+ *
  * Revision 1.60  2005/12/22 04:14:59  fwarmerdam
  * Added special method to massage citations coming from Imagine.
  *
