@@ -344,7 +344,7 @@ See [http://home.gdal.org/projects/bsb/ipi.html]
 
 === gdal/frmts/ceos2 ===
 
-* Atlantis Scientific (now Microsoft), clean.
+* Atlantis Scientific (now Vexcel Canada), clean.
 
 === gdal/frmts/dods ===
 
@@ -364,7 +364,7 @@ See [http://home.gdal.org/projects/bsb/ipi.html]
 
 === gdal/frmts/envisat ===
 
-* Atlantis Scientific (Microsoft), clean.
+* Atlantis Scientific (now Vexcel Canada), clean.
 
 === gdal/frmts/fit ===
 
