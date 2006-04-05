@@ -3,7 +3,7 @@
  *
  * Project:  EPSG To WKT Translator
  * Purpose:  Mainline for EPSG to WKT Translator
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/04/05 00:06:14  fwarmerdam
+ * fix contact info
+ *
  * Revision 1.3  2001/07/18 04:51:56  warmerda
  * added CPL_CVSID
  *

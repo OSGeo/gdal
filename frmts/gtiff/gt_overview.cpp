@@ -4,7 +4,7 @@
  * Project:  GeoTIFF Driver
  * Purpose:  Code to build overviews of external databases as a TIFF file. 
  *           Only used by the GDALDefaultOverviews::BuildOverviews() method.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/04/05 00:06:14  fwarmerdam
+ * fix contact info
+ *
  * Revision 1.13  2005/05/22 16:58:12  dron
  * Added PlanarConfiguration parameter to the TIFF_WriteOverview().
  *
