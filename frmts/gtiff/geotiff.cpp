@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.161  2006/04/05 21:08:16  fwarmerdam
+ * Added NBITS metadata on bands.
+ * Apply PAM projection and geotransform information (if available) in
+ * preference to what is available in the GeoTIFF file.
+ *
  * Revision 1.160  2006/04/05 04:16:44  fwarmerdam
  * Report error on an attempt to create an uncompressed TIFF file larger
  * than 4GB.
@@ -246,6 +251,8 @@ class GTiffDataset : public GDALPamDataset
     double      dfNoDataValue;
 
     int 	bMetadataChanged;
+
+    void        ApplyPamInfo();
 
   public:
                  GTiffDataset();
@@ -2546,7 +2553,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
     if( (poOpenInfo->pabyHeader[0] != 'I' || poOpenInfo->pabyHeader[1] != 'I')
-     && (poOpenInfo->pabyHeader[0] != 'M' || poOpenInfo->pabyHeader[1] != 'M'))
+        && (poOpenInfo->pabyHeader[0] != 'M' || poOpenInfo->pabyHeader[1] != 'M'))
         return NULL;
 
     if( poOpenInfo->pabyHeader[2] == 43 && poOpenInfo->pabyHeader[3] == 0 )
@@ -2599,8 +2606,37 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
+    poDS->ApplyPamInfo();
 
     return poDS;
+}
+
+/************************************************************************/
+/*                            ApplyPamInfo()                            */
+/*                                                                      */
+/*      PAM Information, if available, overrides the GeoTIFF            */
+/*      geotransform and projection definition.  Check for them         */
+/*      now.                                                            */
+/************************************************************************/
+
+void GTiffDataset::ApplyPamInfo()
+
+{
+    double adfPamGeoTransform[6];
+
+    if( GDALPamDataset::GetGeoTransform( adfPamGeoTransform ) == CE_None )
+    {
+        memcpy( adfGeoTransform, adfPamGeoTransform, sizeof(double)*6 );
+        bGeoTransformValid = TRUE;
+    }
+
+    const char *pszPamSRS = GDALPamDataset::GetProjectionRef();
+
+    if( pszPamSRS != NULL && strlen(pszPamSRS) > 0 )
+    {
+        CPLFree( pszProjection );
+        pszProjection = CPLStrdup( pszPamSRS );
+    }
 }
 
 /************************************************************************/
@@ -2783,11 +2819,11 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 /* -------------------------------------------------------------------- */
     if( !bTreatAsBitmap && !(nBitsPerSample > 8) 
         && nPhotometric == PHOTOMETRIC_CIELAB ||
-           nPhotometric == PHOTOMETRIC_LOGL ||
-           nPhotometric == PHOTOMETRIC_LOGLUV ||
-           ( nPhotometric == PHOTOMETRIC_YCBCR 
-            && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
-                                                  "YES") ))  )
+        nPhotometric == PHOTOMETRIC_LOGL ||
+        nPhotometric == PHOTOMETRIC_LOGLUV ||
+        ( nPhotometric == PHOTOMETRIC_YCBCR 
+          && CSLTestBoolean( CPLGetConfigOption("CONVERT_YCBCR_TO_RGB",
+                                                "YES") ))  )
     {
         char	szMessage[1024];
 
@@ -3034,7 +3070,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
         
 /* -------------------------------------------------------------------- */
 /*      If we didn't get a geotiff projection definition, but we did    */
-/*      get one from the .tag file, use that instead.                   */
+/*      get one from the .tab file, use that instead.                   */
 /* -------------------------------------------------------------------- */
         if( pszTabWKT != NULL 
             && (pszProjection == NULL || pszProjection[0] == '\0') )
@@ -3145,6 +3181,13 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
                              (const char *) oComp.Printf( "%d", nCompression));
         }
 
+        if( nBitsPerSample < 8 )
+        {
+            for (int i = 0; i < nBands; ++i)
+                GetRasterBand(i+1)->SetMetadataItem( "NBITS", 
+                    CPLString().Printf( "%ld", nBitsPerSample ) );
+        }
+        
         if( TIFFGetField( hTIFF, TIFFTAG_GDAL_METADATA, &pszText ) )
         {
             CPLXMLNode *psRoot = CPLParseXMLString( pszText );
@@ -4326,11 +4369,11 @@ CPLErr GTiffDataset::GetGeoTransform( double * padfTransform )
 
 {
     memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
-
-    if( bGeoTransformValid )
-        return CE_None;
+    
+    if( !bGeoTransformValid )
+        return CE_Failure;
     else
-        return GDALPamDataset::GetGeoTransform( padfTransform );
+        return CE_None;
 }
 
 /************************************************************************/
