@@ -29,6 +29,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.3  2006/04/05 15:26:53  fwarmerdam
+#  Fix feature leak.
+#
 #  Revision 1.2  2006/04/05 14:38:56  fwarmerdam
 #  Removed old srs junk, not used.
 #
@@ -156,6 +159,7 @@ while in_feat is not None:
     out_feat.SetGeometryDirectly( geom )
 
     shp_layer.CreateFeature( out_feat )
+    out_feat.Destroy()
 
     in_feat.Destroy()
     in_feat = in_layer.GetNextFeature()
