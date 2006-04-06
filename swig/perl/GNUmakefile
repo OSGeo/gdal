@@ -33,3 +33,6 @@ build:  Makefile_gdal
 
 install: Makefile_gdal build
 	make -f Makefile_gdal install
+
+test: Makefile_gdal
+	make -f Makefile_gdal test

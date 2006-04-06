@@ -5,15 +5,15 @@ use gdal;
 use gdalconst;
 use osr;
 use ogr;
-use vars qw/$loaded $verbose @types %pack_types %types @fails/;
+use vars qw/%known_driver $loaded $verbose @types %pack_types %types @fails/;
 
 $loaded = 1;
 
-$verbose = 0;
+$verbose = $ENV{VERBOSE};
 
 # tests:
 #
-# for explicitly specified raster types: 
+# for pre-tested GDAL drivers: 
 #   Create dataset
 #   Get/SetGeoTransform
 #   Get/SetNoDataValue
@@ -26,7 +26,7 @@ $verbose = 0;
 # not yet tested:
 #   Overviews
 #
-# for all available OGR drivers:
+# for pre-tested OGR drivers:
 #   Create datasource
 #   Create layer
 #   Create field
@@ -46,6 +46,21 @@ $verbose = 0;
 
 #system "rm -rf tmp_ds_*";
 
+%known_driver = ('VRT' => 1,'GTiff' => 1,'NITF' => 1,'HFA' => 1,'SAR_CEOS' => 1,
+		 'CEOS' => 1,'ELAS' => 1,'AIG' => 1,'AAIGrid' => 1,'SDTS' => 1,
+		 'OGDI' => 1,'DTED' => 1,'PNG' => 1,'JPEG' => 1,'MEM' => 1,
+		 'JDEM' => 1,'GIF' => 1,'ESAT' => 1,'BSB' => 1,'XPM' => 1,
+		 'BMP' => 1,'AirSAR' => 1,'RS2' => 1,'PCIDSK' => 1,'PCRaster' => 1,
+		 'ILWIS' => 1,'RIK' => 1,'SGI' => 1,'Leveller' => 1,'GMT' => 1,
+		 'netCDF' => 1,'PNM' => 1,'DOQ1' => 1,'DOQ2' => 1,'ENVI' => 1,
+		 'EHdr' => 1,'PAux' => 1,'MFF' => 1,'MFF2' => 1,'FujiBAS' => 1,
+		 'GSC' => 1,'FAST' => 1,'BT' => 1,'LAN' => 1,'CPG' => 1,'IDA' => 1,
+		 'NDF' => 1,'DIPEx' => 1,'ISIS2' => 1,'L1B' => 1,'FIT' => 1,'RMF' => 1,
+		 'RST' => 1,'USGSDEM' => 1,'GXF' => 1,'ESRI Shapefile' => 1,
+		 'MapInfo File' => 1,'UK .NTF' => 1,'SDTS' => 1,'TIGER' => 1,
+		 'S57' => 1,'DGN' => 1,'VRT' => 1,'AVCBin' => 1,'REC' => 1,
+		 'Memory' => 1,'CSV' => 1,'GML' => 1,'OGDI' => 1,'PostgreSQL' => 1);
+
 @types = ('GDT_Byte','GDT_UInt16','GDT_Int16','GDT_UInt32','GDT_Int32',
 	  'GDT_Float32','GDT_Float64','GDT_CInt16','GDT_CInt32','GDT_CFloat32','GDT_CFloat64');
 
@@ -58,14 +73,14 @@ $verbose = 0;
 
 for (@types) {$types{$_} = eval "\$gdalconst::$_"};
 
-my %no_colortable = map {$_=>1} ('ELAS','BMP','ILWIS','BT','RMF','NITF');
+my %no_colortable = map {$_=>1} ('NITF','ELAS','BMP','ILWIS','BT','RMF','RST');
 
 my %no_nodatavalue = map {$_=>1} ('NITF','HFA','ELAS','BMP','ILWIS','BT','IDA','RMF');
 
 my %no_geotransform = map {$_=>1} ('NITF','PAux','PNM','MFF','ENVI','BMP','EHdr');
 
 my %no_setgcp = map {$_=>1} ('HFA','ELAS','MEM','BMP','PCIDSK','ILWIS','PNM','ENVI',
-			     'NITF','EHdr','MFF','MFF2','BT','IDA','RMF');
+			     'NITF','EHdr','MFF','MFF2','BT','IDA','RMF','RST');
 
 my %no_open = map {$_=>1} ('VRT','MEM','ILWIS','MFF2');
 
@@ -110,6 +125,8 @@ sub gdal_tests {
 	}
 
 	my $name = $driver->{ShortName};
+#	print "$name\n";
+	mytest('skipped: not tested',undef,$name,'test') unless $known_driver{$name};
 
         next if $name eq 'MFF2'; # does not work probably because of changes in hkvdataset.cpp
 	
@@ -190,8 +207,9 @@ sub gdal_tests {
 		mytest($value == 5,"$value != 5",$name,$type,'Get/SetNoDataValue');
 	    }
 	    
-	    if ($no_nodatavalue{$driver->{ShortName}} or
-		($driver->{ShortName} eq 'GTiff' and ($type ne 'Byte' or $type ne 'UInt16')))
+	    if ($no_colortable{$driver->{ShortName}} 
+		or ($driver->{ShortName} eq 'GTiff' and ($type ne 'Byte' or $type ne 'UInt16'))
+		)
 	    {
 		mytest('skipped',undef,$name,$type,'Colortable');
 		
@@ -303,6 +321,8 @@ sub ogr_tests {
 	    next;
 	}
 	my $name = $driver->{name};
+#	print "$name\n";
+	mytest('skipped: not tested',undef,$name,'test') unless $known_driver{$name};
 	
 	if (!$driver->TestCapability($ogr::ODrCCreateDataSource)) {
 	    mytest('skipped: no capability',undef,$name,'datasource create');
@@ -355,6 +375,11 @@ sub ogr_tests {
 		mytest("skipped, no test yet",undef,$name,$type,'layer create');
 		next;
 	    }
+
+	    if ($name eq 'MapInfo File' and $type eq 'wkbMultiLineString') {
+		mytest("skipped, no test",undef,$name,$type,'layer create');
+		next;
+	    }
 	    
 	    my $layer;
 	    eval {
@@ -389,10 +414,30 @@ sub ogr_tests {
 		my $feature = new ogr::Feature($schema);
 		
 		my $t = $type eq 'wkbUnknown' ? $ogr::wkbPolygon : $types{$type};
-		
+
 		my $geom = new ogr::Geometry($t);
+
+		if ($type eq 'wkbMultiPoint') {
+
+		    for (0..1) {
+			my $g = new ogr::Geometry($ogr::wkbPoint);
+			test_geom($g,$name,'wkbPoint','create');
+			$geom->AddGeometry($g);
+		    }
+
+		} elsif ($type eq 'wkbMultiLineString') {
+
+		    for (0..1) {
+			my $g = new ogr::Geometry($ogr::wkbLineString);
+			test_geom($g,$name,'wkbLineString','create');
+			$geom->AddGeometry($g);
+		    }
+
+		} else {
 		
-		test_geom($geom,$name,$type,'create');
+		    test_geom($geom,$name,$type,'create');
+
+		}
 		
 		$feature->SetGeometry($geom);
 		
@@ -464,7 +509,30 @@ sub ogr_tests {
 			    my $t = $type eq 'wkbUnknown' ? $ogr::wkbPolygon : $types{$type};
 			    my $t2 = $geom->GetGeometryType;
 			    mytest($t == $t2,"$t != $t2",$name,$type,'geom open');
-			    test_geom($geom,$name,$type,'open');
+
+			    if ($type eq 'wkbMultiPoint') {
+
+				my $gn = $geom->GetGeometryCount;
+				mytest($gn == 2,"$gn != 2",$name,$type,'geom count');
+
+				for my $i (0..1) {
+				    my $g = $geom->GetGeometryRef($i);
+				    test_geom($g,$name,'wkbPoint','open');
+				}
+
+			    } elsif ($type eq 'wkbMultiLineString') {
+
+				my $gn = $geom->GetGeometryCount;
+				mytest($gn == 2,"$gn != 2",$name,$type,'geom count');
+
+				for my $i (0..1) {
+				    my $g = $geom->GetGeometryRef($i);
+				    test_geom($g,$name,'wkbLineString','open');
+				}
+				
+			    } else {
+				test_geom($geom,$name,$type,'open');
+			    }
 			}
 			
 			$i = 0;
@@ -539,17 +607,12 @@ sub test_geom {
 		$r->AddPoint(@$pt);
 	    }
 	    $geom->AddGeometry($r);
-	    
-#	    $r->DISOWN;
-#	    $geom->AddGeometryDirectly($r);
-
 	    $geom->CloseRings; # this overwrites the last point
 	} else {
 	    mytest($gn == 1,"$gn != 1",$name,$type,'geom count');
 	    my $r = $geom->GetGeometryRef(0);
 	    $pc = $r->GetPointCount;
 	    mytest($pc == 6,"$pc != 6",$name,$type,'point count');
-#	    @pts = reverse @pts if ($name eq 'MapInfo File');
 	    for my $cxy (@pts) {
 		my @xy = ($r->GetX($i),$r->GetY($i)); $i++;
 		mytest(cmp_ar(2,\@xy,$cxy),"(@xy) != (@$cxy)",$name,$type,"get point $i");
