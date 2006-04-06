@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.37  2006/04/06 18:54:51  fwarmerdam
+ * Added NBITS metadata item.
+ *
  * Revision 1.36  2006/03/23 20:38:44  fwarmerdam
  * Don't try to destroy NULL png struct.
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=1136
@@ -578,6 +581,15 @@ void PNGDataset::CollectMetadata()
 {
     int   nTextCount;
     png_textp text_ptr;
+
+    if( nBitDepth < 8 )
+    {
+        for( int iBand = 0; iBand < nBands; iBand++ )
+        {
+            GetRasterBand(iBand+1)->SetMetadataItem( "NBITS", 
+                         CPLString().Printf( "%ld", nBitDepth ) );
+        }
+    }
 
     if( png_get_text( hPNG, psPNGInfo, &text_ptr, &nTextCount ) == 0 )
         return;
