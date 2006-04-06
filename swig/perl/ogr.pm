@@ -110,6 +110,7 @@ sub DESTROY {
 *GetRefCount = *ogrc::DataSource_GetRefCount;
 *GetSummaryRefCount = *ogrc::DataSource_GetSummaryRefCount;
 *GetLayerCount = *ogrc::DataSource_GetLayerCount;
+*GetDriver = *ogrc::DataSource_GetDriver;
 *GetName = *ogrc::DataSource_GetName;
 *DeleteLayer = *ogrc::DataSource_DeleteLayer;
 *CreateLayer = *ogrc::DataSource_CreateLayer;
@@ -436,6 +437,9 @@ package ogr;
 *OFTWideString = *ogrc::OFTWideString;
 *OFTWideStringList = *ogrc::OFTWideStringList;
 *OFTBinary = *ogrc::OFTBinary;
+*OFTDate = *ogrc::OFTDate;
+*OFTTime = *ogrc::OFTTime;
+*OFTDateTime = *ogrc::OFTDateTime;
 *OJUndefined = *ogrc::OJUndefined;
 *OJLeft = *ogrc::OJLeft;
 *OJRight = *ogrc::OJRight;
