@@ -1,8 +1,3 @@
-<<<<<<< gdal.pod
-__END__
-
-# documentation is a good thing.
-
 =head1 NAME
 
 gdal - A part of the Perl interface to the GDAL library.
@@ -21,9 +16,9 @@ read/write.
 
 =head1 STATUS
 
-This modules is early beta quality. As most of the names and calling
+This module is beta quality. As most of the names and calling
 conventions come directly from the underlying GDAL library they are
-quite stable and will continue to work like the do now. However, many
+quite stable and will continue to work like they do now. However, many
 things could, should, and will be made more perlish.
 
 Generally, those methods which are documented, have been tested. If
@@ -220,7 +215,9 @@ Superclass of gdal::Driver, gdal::Dataset, and gdal::Band
 
 =item GetRasterBand
 
-  $band = $dataset->GetRasterBand($i);
+  for $i (1..$dataset->RasterCount) {
+    $band = $dataset->GetRasterBand($i);
+  }
 
 =item GetProjection
 
@@ -238,7 +235,8 @@ Superclass of gdal::Driver, gdal::Dataset, and gdal::Band
 
 =item SetGeoTransform
 
-  $dataset->SetGeoTransform($transform);
+  @transform = ($minX, $dx, 0, $maxY, 0, $dy);
+  $dataset->SetGeoTransform(\@transform);
 
 =item BuildOverviews
 
@@ -333,7 +331,7 @@ See also the example below.
 =item WriteRaster
 
   SWITCH: for ($band->{DataType}) {
-    if ($_ == $gdalconst::$GDT_Byte) { $type = 'c'; last SWITCH; }
+    if ($_ == $gdalconst::$GDT_Byte) { $type = 'C'; last SWITCH; }
     if ($_ == $gdalconst::$GDT_Int16) { $type = 's'; last SWITCH; }
     if ($_ == $gdalconst::$GDT_Int32) { $type = 'i'; last SWITCH; }
     $nothing = 1;
@@ -346,6 +344,8 @@ See also the example below.
     $band->WriteRaster( $xoff, $yoff, $width, $height, $buf );
 
   }
+
+  The $type chars are listed in the documentation for "pack" in man perlfunc.
 
 =item FlushCache
 
@@ -430,7 +430,7 @@ give undefined/uninitialized variables to methods.
 
 =head1 SEE ALSO
 
-L<perl>(1), L<gdalconst>(3pm), L<osr>(3pm), L<ogr>(3pm).
+L<perl>(1), L<perlfunc>(1), L<gdalconst>(3pm), L<osr>(3pm), L<ogr>(3pm).
 
 http://www.gdal.org
 
@@ -446,7 +446,7 @@ warmerdam at pobox.com
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2005 by the GDAL bindings team.
+Copyright 2005-2006 by the GDAL bindings team.
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -462,5 +462,3 @@ You should have received a copy of the GNU Library General Public
 License along with this library; if not, write to the 
 Free Software Foundation, Inc., 59 Temple Place - Suite 330, 
 Boston, MA  02111-1307  USA.
-=======
-__END__
