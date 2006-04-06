@@ -61,6 +61,8 @@ package gdal;
 *FindFile = *gdalc::FindFile;
 *SetConfigOption = *gdalc::SetConfigOption;
 *GetConfigOption = *gdalc::GetConfigOption;
+*CPLBinaryToHex = *gdalc::CPLBinaryToHex;
+*CPLHexToBinary = *gdalc::CPLHexToBinary;
 *GDAL_GCP_GCPX_get = *gdalc::GDAL_GCP_GCPX_get;
 *GDAL_GCP_GCPX_set = *gdalc::GDAL_GCP_GCPX_set;
 *GDAL_GCP_GCPY_get = *gdalc::GDAL_GCP_GCPY_get;
@@ -137,7 +139,7 @@ sub ACQUIRE {
 ############# Class : gdal::Driver ##############
 
 package gdal::Driver;
-@ISA = qw( gdal::MajorObject gdal );
+@ISA = qw( gdal gdal::MajorObject );
 %OWNER = ();
 %ITERATORS = ();
 *swig_ShortName_get = *gdalc::Driver_ShortName_get;
@@ -215,7 +217,7 @@ sub ACQUIRE {
 ############# Class : gdal::Dataset ##############
 
 package gdal::Dataset;
-@ISA = qw( gdal::MajorObject gdal );
+@ISA = qw( gdal gdal::MajorObject );
 %OWNER = ();
 %ITERATORS = ();
 *swig_RasterXSize_get = *gdalc::Dataset_RasterXSize_get;
@@ -266,7 +268,7 @@ sub ACQUIRE {
 ############# Class : gdal::Band ##############
 
 package gdal::Band;
-@ISA = qw( gdal::MajorObject gdal );
+@ISA = qw( gdal gdal::MajorObject );
 %OWNER = ();
 %ITERATORS = ();
 *swig_XSize_get = *gdalc::Band_XSize_get;
