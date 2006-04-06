@@ -36,3 +36,17 @@ install: Makefile_gdal build
 
 test: Makefile_gdal
 	make -f Makefile_gdal test
+
+gdal.pod.html: gdal.pod
+	pod2html gdal.pod > gdal.pod.html
+
+gdalconst.pod.html: gdalconst.pod
+	pod2html gdalconst.pod > gdalconst.pod.html
+
+ogr.pod.html: ogr.pod
+	pod2html ogr.pod > ogr.pod.html
+
+osr.pod.html: osr.pod
+	pod2html osr.pod > osr.pod.html
+
+pod2html: gdal.pod.html gdalconst.pod.html ogr.pod.html osr.pod.html
