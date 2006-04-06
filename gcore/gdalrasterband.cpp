@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.77  2006/04/06 02:03:46  fwarmerdam
+ * Removed/corrected references to GetBlockRef().
+ *
  * Revision 1.76  2006/03/28 14:49:56  fwarmerdam
  * updated contact info
  *
@@ -335,7 +338,7 @@ GDALRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
  *
  * This method is the same as the C GDALReadBlock() function.
  *
- * See the GetBlockRef() method for a way of accessing internally cached
+ * See the GetLockedBlockRef() method for a way of accessing internally cached
  * block oriented data without an extra copy into an application buffer.
  *
  * @param nXBlockOff the horizontal block offset, with zero indicating
@@ -915,7 +918,7 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nBlockXOff value (%d) in "
-                        "GDALRasterBand::GetBlockRef()\n",
+                        "GDALRasterBand::FlushBlock()\n",
                   nXBlockOff );
 
         return( CE_Failure );
@@ -925,7 +928,7 @@ CPLErr GDALRasterBand::FlushBlock( int nXBlockOff, int nYBlockOff )
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nBlockYOff value (%d) in "
-                        "GDALRasterBand::GetBlockRef()\n",
+                        "GDALRasterBand::FlushBlock()\n",
                   nYBlockOff );
 
         return( CE_Failure );
@@ -1029,7 +1032,7 @@ GDALRasterBlock *GDALRasterBand::TryGetLockedBlockRef( int nXBlockOff,
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nBlockXOff value (%d) in "
-                        "GDALRasterBand::GetBlockRef()\n",
+                        "GDALRasterBand::TryGetLockedBlockRef()\n",
                   nXBlockOff );
 
         return( NULL );
@@ -1039,7 +1042,7 @@ GDALRasterBlock *GDALRasterBand::TryGetLockedBlockRef( int nXBlockOff,
     {
         CPLError( CE_Failure, CPLE_IllegalArg,
                   "Illegal nBlockYOff value (%d) in "
-                        "GDALRasterBand::GetBlockRef()\n",
+                        "GDALRasterBand::TryGetLockedBlockRef()\n",
                   nYBlockOff );
 
         return( NULL );
@@ -1098,7 +1101,7 @@ GDALRasterBlock *GDALRasterBand::TryGetLockedBlockRef( int nXBlockOff,
  * caller release this lock (with GDALRasterBlock::DropLock()) or else
  * severe problems may result.
  *
- * Note that calling GetBlockRef() on a previously uncached band will
+ * Note that calling GetLockedBlockRef() on a previously uncached band will
  * enable caching.
  * 
  * @param nBlockXOff the horizontal block offset, with zero indicating
