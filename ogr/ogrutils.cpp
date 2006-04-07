@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/04/07 06:29:07  fwarmerdam
+ * Added support for parsing coordinates starting with a bare decimal from WKT.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1150
+ *
  * Revision 1.22  2006/03/31 17:44:20  fwarmerdam
  * header updates
  *
@@ -324,8 +328,8 @@ const char * OGRWktReadPoints( const char * pszInput,
         pszInput = OGRWktReadToken( pszInput, szTokenX );
         pszInput = OGRWktReadToken( pszInput, szTokenY );
 
-        if( (!isdigit(szTokenX[0]) && szTokenX[0] != '-')
-            || (!isdigit(szTokenY[0]) && szTokenY[0] != '-') )
+        if( (!isdigit(szTokenX[0]) && szTokenX[0] != '-' && szTokenX[0] != '.' )
+            || (!isdigit(szTokenY[0]) && szTokenY[0] != '-' && szTokenY[0] != '.') )
             return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -355,7 +359,7 @@ const char * OGRWktReadPoints( const char * pszInput,
 /* -------------------------------------------------------------------- */
         pszInput = OGRWktReadToken( pszInput, szDelim );
 
-        if( isdigit(szDelim[0]) || szDelim[0] == '-' )
+        if( isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' )
         {
             if( *ppadfZ == NULL )
             {
