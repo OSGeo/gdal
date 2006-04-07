@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.37  2006/04/07 05:36:26  fwarmerdam
+ * use new ReadAndParse() method
+ *
  * Revision 1.36  2006/03/22 20:05:26  fwarmerdam
  * changed default tilesize rules, now tilexsize is at most 20K
  *
@@ -1304,21 +1307,8 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         if( poOpenInfo->fp != NULL )
         {
             GDALJP2Metadata oJP2Geo;
-            FILE *fpLL;
         
-            fpLL = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-        
-            if( fpLL != NULL )
-            {
-                oJP2Geo.ReadBoxes( fpLL );
-                VSIFCloseL( fpLL );
-            
-                //poDS->papszGMLMetadata = CSLDuplicate(oJP2Geo.papszGMLMetadata);
-            }
-        
-            if( oJP2Geo.ParseJP2GeoTIFF() 
-                || oJP2Geo.ParseGMLCoverageDesc() 
-                || oJP2Geo.ParseMSIG() )
+            if( oJP2Geo.ReadAndParse( poOpenInfo->pszFilename ) )
             {
                 poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
                 poDS->bGeoTransformValid = TRUE;
@@ -1329,13 +1319,6 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
                 oJP2Geo.pasGCPList = NULL;
             }
         }
-
-/* -------------------------------------------------------------------- */
-/*      Check for world file.                                           */
-/* -------------------------------------------------------------------- */
-        poDS->bGeoTransformValid |= 
-            GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
-                               poDS->adfGeoTransform );
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
