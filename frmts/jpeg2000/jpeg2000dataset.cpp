@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.21  2006/04/07 05:37:51  fwarmerdam
+ * modify to use GDALJP2Metadata class
+ *
  * Revision 1.20  2005/05/05 15:54:48  fwarmerdam
  * PAM Enabled
  *
@@ -92,6 +95,7 @@
 
 #include "gdal_pam.h"
 #include "cpl_string.h"
+#include "gdaljp2metadata.h"
 
 #include <jasper/jasper.h>
 
@@ -104,9 +108,6 @@ CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT,
                                   const double *padfGeoTransform,
                                   int nGCPCount, const GDAL_GCP *pasGCPList,
                                   int *pnSize, unsigned char **ppabyBuffer );
-CPLErr CPL_DLL GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer, 
-                          char **ppszWKT, double *padfGeoTransform,
-                          int *pnGCPCount, GDAL_GCP **ppasGCPList );
 #endif
 CPL_C_END
 
@@ -706,30 +707,6 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
                               iBand, paiDepth[iBand], pabSignedness[iBand] );
                 }
                 break;
-#ifdef HAVE_JASPER_UUID
-                case JP2_BOX_UUID: // Box for custom data
-                CPLDebug( "JPEG2000", "UUID box found. Length=%d", box->len );
-                if( memcmp( box->data.uuid.uuid, msi_uuid2, 16 ) == 0 )
-                {
-                    CPLDebug( "JPEG2000", "GeoTIFF info found." );
-                    if( box->data.uuid.data != NULL )
-                    {
-                        if ( poDS->pszProjection )
-                        {
-                            CPLFree( poDS->pszProjection );
-                            poDS->pszProjection = NULL;
-                        }
-                        GTIFWktFromMemBuf( box->data.uuid.data_len,
-                            box->data.uuid.data,
-                            &(poDS->pszProjection), poDS->adfGeoTransform,
-                            &(poDS->nGCPCount), &(poDS->pasGCPList) );
-                        CPLDebug( "JPEG2000", "Got projection: %s",
-                              poDS->pszProjection );
-                        poDS->bGeoTransformValid = TRUE;
-                    }
-                }
-                break;
-#endif
             }
             jp2_box_destroy( box );
             box = 0;
@@ -787,13 +764,19 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLFree( pabSignedness );
 
 /* -------------------------------------------------------------------- */
-/*      Check for world file.                                           */
+/*      Check for georeferencing information.                           */
 /* -------------------------------------------------------------------- */
-    if( !poDS->bGeoTransformValid )
+    GDALJP2Metadata oJP2Geo;
+    
+    if( oJP2Geo.ReadAndParse( poOpenInfo->pszFilename ) )
     {
-        poDS->bGeoTransformValid = 
-            GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
-                               poDS->adfGeoTransform );
+        poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
+        poDS->bGeoTransformValid = oJP2Geo.bHaveGeoTransform;
+        memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform, 
+                sizeof(double) * 6 );
+        poDS->nGCPCount = oJP2Geo.nGCPCount;
+        poDS->pasGCPList = oJP2Geo.pasGCPList;
+        oJP2Geo.pasGCPList = NULL;
     }
 
 /* -------------------------------------------------------------------- */
