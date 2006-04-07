@@ -27,6 +27,8 @@ clean:
 docs:	
 	(cd ..; $(MAKE) docs)
 
+gdal_misc.o:	gdal_misc.cpp gdal_version.h
+
 gdaldrivermanager.o:	gdaldrivermanager.cpp ../GDALmake.opt
 	$(CXX) -c $(GDAL_INCLUDE) $(CXXFLAGS) -DINST_DATA=\"$(INST_DATA)\" \
 		$*.cpp -o $*.o
