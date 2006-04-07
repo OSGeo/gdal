@@ -28,6 +28,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.57  2006/04/07 05:50:07  fwarmerdam
+ * Modified to use GDALJP2Metadata to read all the various kinds of jpeg2000
+ * georeferencing information, including world files.
+ *
  * Revision 1.56  2006/02/13 23:00:55  fwarmerdam
  * cleanup up mutex when the driver is unloaded.
  *
@@ -1354,24 +1358,11 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
     if( fpVSIL == NULL )
     {
         GDALJP2Metadata oJP2Geo;
-        FILE *fpLL;
-        
-        fpLL = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-        
-        if( fpLL != NULL )
-        {
-            oJP2Geo.ReadBoxes( fpLL );
-            VSIFCloseL( fpLL );
-            
-            poDS->papszGMLMetadata = CSLDuplicate(oJP2Geo.papszGMLMetadata);
-        }
-        
-        if( oJP2Geo.ParseJP2GeoTIFF() 
-            || oJP2Geo.ParseGMLCoverageDesc() 
-            || oJP2Geo.ParseMSIG() )
+
+        if( oJP2Geo.ReadAndParse( poOpenInfo->pszFilename ) )
         {
             poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
-            poDS->bGeoTransformValid = TRUE;
+            poDS->bGeoTransformValid = oJP2Geo.bHaveGeoTransform;
             memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform, 
                     sizeof(double) * 6 );
             poDS->nGCPCount = oJP2Geo.nGCPCount;
@@ -1385,15 +1376,19 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Check for world file.                                           */
+/*      Check for world file for ecw files.                             */
 /* -------------------------------------------------------------------- */
-    poDS->bGeoTransformValid |= 
-        GDALReadWorldFile( poOpenInfo->pszFilename, ".eww", 
-                           poDS->adfGeoTransform )
-        || GDALReadWorldFile( poOpenInfo->pszFilename, ".ecww", 
-                              poDS->adfGeoTransform )
-        || GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
-                              poDS->adfGeoTransform );
+    if( !poDS->bGeoTransformValid 
+        && EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"ecw") )
+    {
+        poDS->bGeoTransformValid |= 
+            GDALReadWorldFile( poOpenInfo->pszFilename, ".eww", 
+                               poDS->adfGeoTransform )
+            || GDALReadWorldFile( poOpenInfo->pszFilename, ".ecww", 
+                                  poDS->adfGeoTransform )
+            || GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+                                  poDS->adfGeoTransform );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
