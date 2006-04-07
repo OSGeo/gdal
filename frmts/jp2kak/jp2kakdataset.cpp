@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.38  2006/04/07 14:42:49  fwarmerdam
+ * Overide builtin georeferencing with PAM info.
+ *
  * Revision 1.37  2006/04/07 05:36:26  fwarmerdam
  * use new ReadAndParse() method
  *
@@ -186,6 +189,8 @@ class JP2KAKDataset : public GDALPamDataset
 
     int		   nGCPCount;
     GDAL_GCP       *pasGCPList;
+
+    void           PamOverride();
 
   public:
                 JP2KAKDataset();
@@ -1326,6 +1331,11 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetDescription( poOpenInfo->pszFilename );
         poDS->TryLoadXML();
 
+/* -------------------------------------------------------------------- */
+/*      Do we have PAM information to override other geo-info?          */
+/* -------------------------------------------------------------------- */
+        poDS->PamOverride();
+
         return( poDS );
     }
 
@@ -1339,6 +1349,44 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
             delete poDS;
 
         return NULL;
+    }
+}
+
+/************************************************************************/
+/*                            PamOverride()                             */
+/*                                                                      */
+/*      Override geolocation information from PAM if there is PAM       */
+/*      geolocation information.                                        */
+/************************************************************************/
+
+void JP2KAKDataset::PamOverride()
+
+{
+    if( strlen(GDALPamDataset::GetProjectionRef()) > 0 )
+    {
+        CPLFree( pszProjection );
+        pszProjection = CPLStrdup(GDALPamDataset::GetProjectionRef());
+    }
+
+    double adfPamGT[6];
+    if( GDALPamDataset::GetGeoTransform( adfPamGT ) == CE_None )
+    {
+        memcpy( adfGeoTransform, adfPamGT, sizeof(double) * 6 );
+        bGeoTransformValid = TRUE;
+    }
+
+    if( GDALPamDataset::GetGCPCount() > 0 )
+    {
+        if( nGCPCount > 0 )
+        {
+            GDALDeinitGCPs( nGCPCount, pasGCPList );
+            CPLFree( pasGCPList );
+        }
+
+        nGCPCount = GDALPamDataset::GetGCPCount();
+        pasGCPList = GDALDuplicateGCPs( nGCPCount, GDALPamDataset::GetGCPs() );
+        CPLFree( pszProjection );
+        pszProjection = CPLStrdup(GDALPamDataset::GetGCPProjection());
     }
 }
 
