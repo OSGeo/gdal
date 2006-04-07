@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/04/07 13:12:16  fwarmerdam
+ * Fix merging of band metadata.
+ *
  * Revision 1.17  2006/03/31 14:25:10  fwarmerdam
  * avoiding cloning from missing source bands
  *
@@ -1014,7 +1017,7 @@ CPLErr GDALPamDataset::TryLoadAux()
         if( CSLCount(papszMD) > 0 )
         {
             char **papszMerged = 
-                CSLMerge( CSLDuplicate(GetMetadata()), papszMD );
+                CSLMerge( CSLDuplicate(poBand->GetMetadata()), papszMD );
             poBand->SetMetadata( papszMerged );
             CSLDestroy( papszMerged );
         }
