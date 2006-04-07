@@ -28,6 +28,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/04/07 05:35:25  fwarmerdam
+ * Added ReadAndParse() method, which includes worldfile reading.
+ * Actually set HaveGeoTransform flag properly.
+ *
  * Revision 1.3  2005/07/05 22:09:00  fwarmerdam
  * add preliminary support for MSIG boxes
  *
@@ -127,6 +131,8 @@ class CPL_DLL GDALJP2Metadata
     int     ParseJP2GeoTIFF();
     int     ParseMSIG();
     int     ParseGMLCoverageDesc();
+
+    int     ReadAndParse( const char *pszFilename );
 };
 
 #endif /* ndef _JP2READER_H_INCLUDED */

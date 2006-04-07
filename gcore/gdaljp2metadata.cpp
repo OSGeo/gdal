@@ -28,6 +28,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/04/07 05:35:25  fwarmerdam
+ * Added ReadAndParse() method, which includes worldfile reading.
+ * Actually set HaveGeoTransform flag properly.
+ *
  * Revision 1.5  2005/07/05 22:09:00  fwarmerdam
  * add preliminary support for MSIG boxes
  *
@@ -79,7 +83,6 @@ CPL_C_END
 GDALJP2Metadata::GDALJP2Metadata()
 
 {
-    bHaveGeoTransform = FALSE;
     pszProjection = NULL;
 
     nGCPCount = 0;
@@ -93,7 +96,7 @@ GDALJP2Metadata::GDALJP2Metadata()
     nMSIGSize = 0;
     pabyMSIGData = NULL;
 
-    
+    bHaveGeoTransform = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;
@@ -118,6 +121,58 @@ GDALJP2Metadata::~GDALJP2Metadata()
 
     CPLFree( pabyGeoTIFFData );
     CPLFree( pabyMSIGData );
+}
+
+/************************************************************************/
+/*                            ReadAndParse()                            */
+/*                                                                      */
+/*      Read a JP2 file and try to collect georeferencing               */
+/*      information from the various available forms.  Returns TRUE     */
+/*      if anything useful is found.                                    */
+/************************************************************************/
+
+int GDALJP2Metadata::ReadAndParse( const char *pszFilename )
+
+{
+    FILE *fpLL;
+        
+    fpLL = VSIFOpenL( pszFilename, "rb" );
+        
+    if( fpLL == NULL )
+    {
+        CPLDebug( "GDALJP2Metadata", "Could not even open %s.", 
+                  pszFilename );
+
+        return FALSE;
+    }
+
+    ReadBoxes( fpLL );
+    VSIFCloseL( fpLL );
+            
+/* -------------------------------------------------------------------- */
+/*      Try JP2GeoTIFF, GML and finally MSIG to get something.          */
+/* -------------------------------------------------------------------- */
+    if( !ParseJP2GeoTIFF() && !ParseGMLCoverageDesc() )
+        ParseMSIG();
+
+/* -------------------------------------------------------------------- */
+/*      If we still don't have a geotransform, look for a world         */
+/*      file.                                                           */
+/* -------------------------------------------------------------------- */
+    if( !bHaveGeoTransform )
+    {
+        bHaveGeoTransform = 
+            GDALReadWorldFile( pszFilename, NULL, adfGeoTransform )
+            || GDALReadWorldFile( pszFilename, ".wld", adfGeoTransform );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Return success either either of projection or geotransform      */
+/*      or gcps.                                                        */
+/* -------------------------------------------------------------------- */
+    return bHaveGeoTransform
+        || nGCPCount > 0 
+        || (pszProjection != NULL && strlen(pszProjection) > 0);
 }
 
 /************************************************************************/
@@ -232,7 +287,6 @@ int GDALJP2Metadata::ReadBoxes( FILE *fpVSIL )
     return TRUE;
 }
 
-
 /************************************************************************/
 /*                          ParseJP2GeoTIFF()                           */
 /************************************************************************/
@@ -262,6 +316,14 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
         CPLDebug( "GDALJP2Metadata", 
                   "Got projection from GeoJP2 (geotiff) box: %s", 
                  pszProjection );
+
+    if( adfGeoTransform[0] != 0 
+        || adfGeoTransform[1] != 1 
+        || adfGeoTransform[2] != 0
+        || adfGeoTransform[3] != 0 
+        || adfGeoTransform[4] != 0
+        || adfGeoTransform[5] != 1 )
+        bHaveGeoTransform = TRUE;
 
     return bSuccess;;
 }
@@ -299,6 +361,8 @@ int GDALJP2Metadata::ParseMSIG()
     adfGeoTransform[0] -= 0.5 * adfGeoTransform[2];
     adfGeoTransform[3] -= 0.5 * adfGeoTransform[4];
     adfGeoTransform[3] -= 0.5 * adfGeoTransform[5];
+
+    bHaveGeoTransform = TRUE;
 
     return TRUE;
 }
@@ -553,6 +617,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         adfGeoTransform[4] = atof(papszOffset2Tokens[0]);
         adfGeoTransform[5] = atof(papszOffset2Tokens[1]);
         bSuccess = TRUE;
+        bHaveGeoTransform = TRUE;
     }
 
     CSLDestroy( papszOffset1Tokens );
