@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/04/08 06:14:31  fwarmerdam
+ * added proper (I believe) support for spatial and attribute filter on gensql layers
+ *
  * Revision 1.7  2005/02/02 20:00:29  fwarmerdam
  * added SetNextByIndex support
  *
@@ -71,8 +74,6 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
 
     OGRLayer   **papoTableLayers;
 
-    OGRGeometry *poSpatialFilter;
-
     OGRFeatureDefn *poDefn;
 
     int         PrepareSummary();
@@ -105,11 +106,6 @@ class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
     virtual     ~OGRGenSQLResultsLayer();
 
     virtual OGRGeometry *GetSpatialFilter();
-    virtual void        SetSpatialFilter( OGRGeometry * );
-
-#ifdef notdef
-    virtual OGRErr      SetAttributeFilter( const char * );
-#endif
 
     virtual void        ResetReading();
     virtual OGRFeature *GetNextFeature();
