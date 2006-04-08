@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/04/08 05:37:23  fwarmerdam
+ * Avoid memory leak of fieldtypes.
+ *
  * Revision 1.7  2006/03/15 15:12:21  fwarmerdam
  * Make sure that csvt column type parsing is case insensitive.
  *
@@ -199,6 +202,7 @@ OGRCSVLayer::OGRCSVLayer( const char *pszLayerNameIn,
     }
 
     CSLDestroy( papszTokens );
+    CSLDestroy( papszFieldTypes );
 }
 
 /************************************************************************/
