@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/04/08 06:14:31  fwarmerdam
+ * added proper (I believe) support for spatial and attribute filter on gensql layers
+ *
  * Revision 1.16  2006/03/21 18:46:28  fwarmerdam
  * Don't report debug message if setting NULL spatial filter.
  *
@@ -113,9 +116,7 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
     papoExtraDS = NULL;
 
     if( poSpatFilter != NULL )
-        this->poSpatialFilter = poSpatFilter->clone();
-    else
-        this->poSpatialFilter = NULL;
+        SetSpatialFilter( poSpatFilter );
 
 /* -------------------------------------------------------------------- */
 /*      Identify all the layers involved in the SELECT.                 */
@@ -314,7 +315,7 @@ void OGRGenSQLResultsLayer::ResetReading()
     {
         poSrcLayer->SetAttributeFilter( psSelectInfo->whole_where_clause );
         
-        poSrcLayer->SetSpatialFilter( poSpatialFilter );
+        poSrcLayer->SetSpatialFilter( m_poFilterGeom );
         
         poSrcLayer->ResetReading();
     }
@@ -389,8 +390,10 @@ int OGRGenSQLResultsLayer::GetFeatureCount( int bForce )
 
     if( psSelectInfo->query_mode != SWQM_RECORDSET )
         return 1;
-    else
+    else if( m_poAttrQuery == NULL )
         return poSrcLayer->GetFeatureCount( bForce );
+    else
+        return OGRLayer::GetFeatureCount( bForce );
 }
 
 /************************************************************************/
@@ -448,7 +451,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
 /* -------------------------------------------------------------------- */
     poSrcLayer->SetAttributeFilter( psSelectInfo->whole_where_clause );
     
-    poSrcLayer->SetSpatialFilter( poSpatialFilter );
+    poSrcLayer->SetSpatialFilter( m_poFilterGeom );
         
     poSrcLayer->ResetReading();
 
@@ -681,23 +684,34 @@ OGRFeature *OGRGenSQLResultsLayer::GetNextFeature()
 /* -------------------------------------------------------------------- */
 /*      Handle ordered sets.                                            */
 /* -------------------------------------------------------------------- */
-    if( panFIDIndex != NULL )
-        return GetFeature( nNextIndexFID++ );
+    while( TRUE )
+    {
+        OGRFeature *poFeature;
 
-/* -------------------------------------------------------------------- */
-/*      Regular result sets.  Extract the desired fields from the       */
-/*      source feature into the destination feature.                    */
-/* -------------------------------------------------------------------- */
-    OGRFeature *poSrcFeat = poSrcLayer->GetNextFeature();
+        if( panFIDIndex != NULL )
+            poFeature =  GetFeature( nNextIndexFID++ );
+        else
+        {
+            OGRFeature *poSrcFeat = poSrcLayer->GetNextFeature();
 
-    if( poSrcFeat == NULL )
-        return NULL;
+            if( poSrcFeat == NULL )
+                return NULL;
+            
+            poFeature = TranslateFeature( poSrcFeat );
+            delete poSrcFeat;
+        }
 
-    OGRFeature *poDstFeat = TranslateFeature( poSrcFeat );
+        if( poFeature == NULL )
+            return NULL;
 
-    delete poSrcFeat;
+        if( m_poAttrQuery == NULL
+            || m_poAttrQuery->Evaluate( poFeature ) )
+            return poFeature;
 
-    return poDstFeat;
+        delete poFeature;
+    }
+
+    return NULL;
 }
 
 /************************************************************************/
@@ -776,18 +790,6 @@ OGRGeometry *OGRGenSQLResultsLayer::GetSpatialFilter()
 
 {
     return NULL;
-}
-
-/************************************************************************/
-/*                          SetSpatialFilter()                          */
-/************************************************************************/
-
-void OGRGenSQLResultsLayer::SetSpatialFilter( OGRGeometry *poFilter )
-
-{
-    if( poFilter != NULL )
-        CPLDebug( "OGRGenSQLResultsLayer", 
-                  "SetSpatialFilter called and ignored.");
 }
 
 /************************************************************************/
