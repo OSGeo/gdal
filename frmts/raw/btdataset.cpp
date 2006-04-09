@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/04/09 04:22:28  fwarmerdam
+ * Implement GetUnitType() support when reading, from Ray Gardner.
+ *
  * Revision 1.7  2005/05/05 13:55:41  fwarmerdam
  * PAM Enable
  *
@@ -65,6 +68,47 @@ CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
+/*                              BTDataset                               */
+/* ==================================================================== */
+/************************************************************************/
+
+class BTDataset : public GDALPamDataset
+{
+    FILE        *fpImage;       // image data file.
+
+    int         bGeoTransformValid;
+    double      adfGeoTransform[6];
+
+    char        *pszProjection;
+    
+    double      dfVScale;
+
+    int         nVersionCode;  // version times 10.
+
+    int         bHeaderModified;
+    unsigned char abyHeader[256];
+
+  public:
+    float        m_fVscale;
+
+                BTDataset();
+                ~BTDataset();
+
+    virtual const char *GetProjectionRef(void);
+    virtual CPLErr SetProjection( const char * );
+    virtual CPLErr GetGeoTransform( double * );
+    virtual CPLErr SetGeoTransform( double * );
+
+    virtual void   FlushCache();
+
+    static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Create( const char * pszFilename,
+                                int nXSize, int nYSize, int nBands,
+                                GDALDataType eType, char ** papszOptions );
+};
+
+/************************************************************************/
+/* ==================================================================== */
 /*                            BTRasterBand                              */
 /* ==================================================================== */
 /************************************************************************/
@@ -80,6 +124,8 @@ class BTRasterBand : public GDALRasterBand
 
     virtual CPLErr IReadBlock( int, int, void * );
     virtual CPLErr IWriteBlock( int, int, void * );
+
+    virtual const char* GetUnitType();
 };
 
 
@@ -228,43 +274,40 @@ CPLErr BTRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
+/*                            GetUnitType()                             */
+/************************************************************************/
+
+static bool approx_equals(float a, float b)
+{
+    const float epsilon = (float)1e-5;
+    return (fabs(a-b) <= epsilon);
+}
+
+const char* BTRasterBand::GetUnitType(void)
+{
+    const BTDataset& ds = *(BTDataset*)poDS;
+    float f = ds.m_fVscale;
+    if(f == 1.0f)
+        return "m";
+    if(approx_equals(f, 0.3048f))
+        return "ft";
+    if(approx_equals(f, 1200.0f/3937.0f))
+        return "sft";
+
+    // todo: the BT spec allows for any value for
+    // ds.m_fVscale, so rigorous adherence would
+    // require testing for all possible units you
+    // may want to support, such as km, yards, miles, etc.
+    // But m/ft/sft seem to be the top three.
+
+    return "";
+} 
+
+/************************************************************************/
 /* ==================================================================== */
 /*                              BTDataset                               */
 /* ==================================================================== */
 /************************************************************************/
-
-class BTDataset : public GDALPamDataset
-{
-    FILE        *fpImage;       // image data file.
-
-    int         bGeoTransformValid;
-    double      adfGeoTransform[6];
-
-    char        *pszProjection;
-    
-    double      dfVScale;
-
-    int         nVersionCode;  // version times 10.
-
-    int         bHeaderModified;
-    unsigned char abyHeader[256];
-
-  public:
-                BTDataset();
-                ~BTDataset();
-
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
-    virtual CPLErr GetGeoTransform( double * );
-    virtual CPLErr SetGeoTransform( double * );
-
-    virtual void   FlushCache();
-
-    static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
-                                GDALDataType eType, char ** papszOptions );
-};
 
 /************************************************************************/
 /*                             BTDataset()                              */
@@ -539,6 +582,16 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
                   nDataSize );
         return NULL;
     }
+
+    /*
+        rcg, apr 7/06: read offset 62 for vert. units.
+        If zero, assume 1.0 as per spec.
+
+    */
+    memcpy( &poDS->m_fVscale, poDS->abyHeader + 62, 4 );
+    CPL_LSBPTR32(&poDS->m_fVscale);
+    if(poDS->m_fVscale == 0.0f)
+        poDS->m_fVscale = 1.0f; 
 
 /* -------------------------------------------------------------------- */
 /*      Try to read a .prj file if it is indicated.                     */
