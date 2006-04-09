@@ -40,7 +40,7 @@
 #include <windows.h>
 
 /*******************************************************************************
-* wce_filetime_to_time - Convert FILETIME to time as time_t value
+* wceex_filetime_to_time - Convert FILETIME to time as time_t value
 *
 * Description:
 *
@@ -51,7 +51,7 @@
 *   encoded as a value of type time_t. 
 *       
 *******************************************************************************/
-time_t wce_filetime_to_time(const FILETIME * pft)
+time_t wceex_filetime_to_time(const FILETIME * pft)
 {
     SYSTEMTIME st;
     FILETIME lft;
@@ -70,12 +70,12 @@ time_t wce_filetime_to_time(const FILETIME * pft)
         return (time_t)-1;
     }
 
-    return wce_local_to_time(&st);
+    return wceex_local_to_time(&st);
 }
 
 
 /*******************************************************************************
-* wce_local_to_time - Convert broken-down local time to value of type time_t
+* wceex_local_to_time - Convert broken-down local time to value of type time_t
 *
 * Description:
 *
@@ -86,14 +86,14 @@ time_t wce_filetime_to_time(const FILETIME * pft)
 *   encoded as a value of type time_t. 
 *       
 *******************************************************************************/
-time_t wce_local_to_time(const SYSTEMTIME *st)
+time_t wceex_local_to_time(const SYSTEMTIME *st)
 {
     if (st == NULL)
     {
         return (time_t)-1;
     }
  
-    return wce_local_to_time_r(st->wYear - TM_YEAR_BASE,
+    return wceex_local_to_time_r(st->wYear - TM_YEAR_BASE,
                                st->wMonth - 1,
                                st->wDay, st->wHour,
                                st->wMinute,
@@ -101,7 +101,7 @@ time_t wce_local_to_time(const SYSTEMTIME *st)
 }
 
 /*******************************************************************************
-* wce_local_to_time - Convert broken-down local time to value of type time_t
+* wceex_local_to_time - Convert broken-down local time to value of type time_t
 *
 * Description:
 *
@@ -118,7 +118,7 @@ time_t wce_local_to_time(const SYSTEMTIME *st)
 *   encoded as a value of type time_t. 
 *       
 *******************************************************************************/
-time_t wce_local_to_time_r(int year, int mon, int day, int hour, int min, int sec)
+time_t wceex_local_to_time_r(int year, int mon, int day, int hour, int min, int sec)
 {
     struct tm tmbuff = { 0 };
 
@@ -133,6 +133,6 @@ time_t wce_local_to_time_r(int year, int mon, int day, int hour, int min, int se
     tmbuff.tm_yday = 0;
 
     /* Convert tm struct to time_tUTC */
-    return wce_mktime(&tmbuff);
+    return wceex_mktime(&tmbuff);
 }
 

@@ -32,8 +32,8 @@
  * Taxus SI Ltd.
  * http://www.taxussi.com.pl
  */
-#ifndef _WCE_TIMESYS_H
-#define _WCE_TIMESYS_H  1
+#ifndef WCEEX_TIMESYS_H
+#define WCEEX_TIMESYS_H  1
 
 #ifndef _WIN32_WCE
 # error "Only Windows CE target compilation supported"
@@ -48,12 +48,12 @@ extern "C" {
 
 /* Function declarations. */
 
-time_t wce_filetime_to_time(const FILETIME * filetime);
-time_t wce_local_to_time(const SYSTEMTIME *systemtime);
-time_t wce_local_to_time_r(int year, int mon, int day, int hour, int min, int sec);
+time_t wceex_filetime_to_time(const FILETIME * filetime);
+time_t wceex_local_to_time(const SYSTEMTIME *systemtime);
+time_t wceex_local_to_time_r(int year, int mon, int day, int hour, int min, int sec);
 
 #ifdef __cplusplus
 }
 #endif  /* __cplusplus */
 
-#endif /* #ifndef _WCE_TIMESYS_H */
+#endif /* #ifndef WCEEX_TIMESYS_H */

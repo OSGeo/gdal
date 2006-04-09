@@ -38,12 +38,12 @@
 #include <windows.h>
 
 /* Function used intenally to convert struct tm to a time_t value. */
-static time_t __wce_mktime_internal(struct tm *tmbuff, time_t _loctime_offset);
+static time_t __wceex_mktime_internal(struct tm *tmbuff, time_t _loctime_offset);
 
 /*******************************************************************************
-* wce_mktime - Convert local time to calendar value in seconds since epoch.
+* wceex_mktime - Convert local time to calendar value in seconds since epoch.
 *******************************************************************************/
-time_t wce_mktime(struct tm *tmbuff)
+time_t wceex_mktime(struct tm *tmbuff)
 {
     time_t offset;
     TIME_ZONE_INFORMATION tzi;
@@ -60,12 +60,12 @@ time_t wce_mktime(struct tm *tmbuff)
         }
 	}
 
-    return __wce_mktime_internal(tmbuff, offset);
+    return __wceex_mktime_internal(tmbuff, offset);
 }
 
 
 /*******************************************************************************
-* wce_gmmktime - Get Unix timestamp for a GMT date
+* wceex_gmmktime - Get Unix timestamp for a GMT date
 *
 * Description:
 *   Given a struct tm representing a calendar time in UTC, convert it to
@@ -78,13 +78,13 @@ time_t wce_mktime(struct tm *tmbuff)
 *   Value of time if success, otherwise (time_t)-1 is returned.
 *       
 *******************************************************************************/
-time_t wce_gmmktime(struct tm *tmbuff)
+time_t wceex_gmmktime(struct tm *tmbuff)
 {
-    return __wce_mktime_internal(tmbuff, 0);
+    return __wceex_mktime_internal(tmbuff, 0);
 }
 
 /*******************************************************************************
-* __wce_mktime_internal - Convert struct tm to a time_t value.
+* __wceex_mktime_internal - Convert struct tm to a time_t value.
 *
 * Description:
 *   Use offset as difference in seconds between local time and UTC time.
@@ -96,7 +96,7 @@ time_t wce_gmmktime(struct tm *tmbuff)
 
 static const int MONTHDAYS[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
-static time_t __wce_mktime_internal(struct tm *tmbuff, time_t _loctime_offset)
+static time_t __wceex_mktime_internal(struct tm *tmbuff, time_t _loctime_offset)
 {
     time_t tres;
     int doy;

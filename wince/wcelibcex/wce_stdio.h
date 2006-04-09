@@ -33,8 +33,8 @@
  * http://www.taxussi.com.pl
  *
  */
-#ifndef _WCE_STDIO_H
-#define _WCE_STDIO_H    1
+#ifndef WCEEX_STDIO_H
+#define WCEEX_STDIO_H    1
 
 #if !defined(_WIN32_WCE)
 # error "Only Winddows CE target is supported!"
@@ -48,13 +48,13 @@ extern "C" {
 
 /* Functions declarations */
 
-int wce_rename(const char *oldfile, const char *newfile);
-int wce_unlink(const char *filename);
-void wce_rewind(FILE *stream);
+int wceex_rename(const char *oldfile, const char *newfile);
+int wceex_unlink(const char *filename);
+void wceex_rewind(FILE *stream);
 
 
 #ifdef __cplusplus
 }
 #endif  /* __cplusplus */
 
-#endif /* #ifndef _WCE_STDIO_H */
+#endif /* #ifndef WCEEX_STDIO_H */

@@ -39,7 +39,7 @@
 #include <windows.h>
 
 /*******************************************************************************
-* wce_rmdir - Remove empty directory from filesystem.
+* wceex_rmdir - Remove empty directory from filesystem.
 *
 * Description:
 *
@@ -61,7 +61,7 @@
 *   IEEE 1003.1, 2004 Edition
 *
 *******************************************************************************/
-int wce_rmdir(const char *filename)
+int wceex_rmdir(const char *filename)
 {
     int res;    
     size_t len;

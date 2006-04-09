@@ -33,8 +33,8 @@
  * http://www.taxussi.com.pl
  *
  */
-#ifndef _WCE_STAT_H
-#define _WCE_STAT_H 1
+#ifndef WCEEX_STAT_H
+#define WCEEX_STAT_H 1
 
 #if !defined(_WIN32_WCE)
 # error "Only Winddows CE target is supported!"
@@ -127,11 +127,11 @@ struct stat
  * File functions declarations.
  */
 
-int wce_stat(const char *filename, struct stat *buf);
-/* XXX - mloskot - int wce_fstat(int filedes, struct stat *buf); */
+int wceex_stat(const char *filename, struct stat *buf);
+/* XXX - mloskot - int wceex_fstat(int filedes, struct stat *buf); */
 
-int wce_mkdir(const char *filename);
-int wce_rmdir(const char *filename);
+int wceex_mkdir(const char *filename);
+int wceex_rmdir(const char *filename);
 
 
 
@@ -139,4 +139,4 @@ int wce_rmdir(const char *filename);
 }
 #endif  /* __cplusplus */
 
-#endif /* #ifndef _WCE_STAT_H */
+#endif /* #ifndef WCEEX_STAT_H */

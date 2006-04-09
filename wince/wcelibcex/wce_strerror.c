@@ -51,7 +51,7 @@
 *   Otherwise, an error number shall be returned to indicate
 *   the error.
 ********************************************************************/
-char * wce_strerror(int errnum)
+char * wceex_strerror(int errnum)
 {
 	return ""; /* dummy error message */
 }

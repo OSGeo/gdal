@@ -39,7 +39,7 @@
 #include <windows.h>
 
 /*******************************************************************************
-* wce_findclose - XXX
+* wceex_findclose - XXX
 *
 * Description:
 *
@@ -54,7 +54,7 @@
 *   IEEE 1003.1, 2004 Edition
 *   
 *******************************************************************************/
-int wce_findclose(intptr_t hFile)
+int wceex_findclose(intptr_t hFile)
 {
     if(!FindClose((HANDLE)hFile))
 	{
@@ -66,7 +66,7 @@ int wce_findclose(intptr_t hFile)
 }
 
 /*******************************************************************************
-* wce_findfirst - XXX
+* wceex_findfirst - XXX
 *
 * Description:
 *
@@ -81,7 +81,7 @@ int wce_findclose(intptr_t hFile)
 *   IEEE 1003.1, 2004 Edition
 *
 *******************************************************************************/
-intptr_t wce_findfirst(const char *filespec, struct _finddata_t *fileinfo)
+intptr_t wceex_findfirst(const char *filespec, struct _finddata_t *fileinfo)
 {
     WIN32_FIND_DATA wfd;
     HANDLE          hFile;
@@ -116,9 +116,9 @@ intptr_t wce_findfirst(const char *filespec, struct _finddata_t *fileinfo)
     }
     
     fileinfo->attrib = (wfd.dwFileAttributes == FILE_ATTRIBUTE_NORMAL) ? 0 : wfd.dwFileAttributes;
-    fileinfo->time_create  = wce_filetime_to_time(&wfd.ftCreationTime);
-    fileinfo->time_access  = wce_filetime_to_time(&wfd.ftLastAccessTime);
-    fileinfo->time_write   = wce_filetime_to_time(&wfd.ftLastWriteTime);
+    fileinfo->time_create  = wceex_filetime_to_time(&wfd.ftCreationTime);
+    fileinfo->time_access  = wceex_filetime_to_time(&wfd.ftLastAccessTime);
+    fileinfo->time_write   = wceex_filetime_to_time(&wfd.ftLastWriteTime);
     
     fileinfo->size = wfd.nFileSizeLow;
     wcstombs(fileinfo->name, wfd.cFileName, wcslen(wfd.cFileName) + 1);
@@ -127,7 +127,7 @@ intptr_t wce_findfirst(const char *filespec, struct _finddata_t *fileinfo)
 }
 
 /*******************************************************************************
-* wce_findnext - XXX
+* wceex_findnext - XXX
 *
 * Description:
 *
@@ -142,7 +142,7 @@ intptr_t wce_findfirst(const char *filespec, struct _finddata_t *fileinfo)
 *   IEEE 1003.1, 2004 Edition
 *
 *******************************************************************************/
-int wce_findnext(intptr_t handle, struct _finddata_t *fileinfo)
+int wceex_findnext(intptr_t handle, struct _finddata_t *fileinfo)
 {
     WIN32_FIND_DATA wfd;
     DWORD           err;
@@ -171,9 +171,9 @@ int wce_findnext(intptr_t handle, struct _finddata_t *fileinfo)
     }
     
     fileinfo->attrib = (wfd.dwFileAttributes == FILE_ATTRIBUTE_NORMAL)? 0 : wfd.dwFileAttributes;
-    fileinfo->time_create  = wce_filetime_to_time(&wfd.ftCreationTime);
-    fileinfo->time_access  = wce_filetime_to_time(&wfd.ftLastAccessTime);
-    fileinfo->time_write   = wce_filetime_to_time(&wfd.ftLastWriteTime);
+    fileinfo->time_create  = wceex_filetime_to_time(&wfd.ftCreationTime);
+    fileinfo->time_access  = wceex_filetime_to_time(&wfd.ftLastAccessTime);
+    fileinfo->time_write   = wceex_filetime_to_time(&wfd.ftLastWriteTime);
     
     fileinfo->size = wfd.nFileSizeLow;
     wcstombs(fileinfo->name, wfd.cFileName, wcslen(wfd.cFileName)+1);

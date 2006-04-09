@@ -37,7 +37,7 @@
 #include <windows.h>
 
 /*******************************************************************************
-* wce_abort - Generate abnormal process termination.
+* wceex_abort - Generate abnormal process termination.
 *
 * Description:
 *
@@ -54,7 +54,7 @@
 *   IEEE 1003.1, 2004 Edition
 *
 *******************************************************************************/
-void wce_abort(void)
+void wceex_abort(void)
 {
     /* No return */
     TerminateProcess(GetCurrentProcess(), 0);

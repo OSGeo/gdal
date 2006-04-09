@@ -37,7 +37,7 @@
 #include <windows.h>
 
 /*******************************************************************************
-* wce_rewind - Reset the file position indicator in a stream
+* wceex_rewind - Reset the file position indicator in a stream
 *
 * Description:
 *
@@ -60,7 +60,7 @@
 *   IEEE 1003.1, 2004 Edition
 *
 *******************************************************************************/
-void wce_rewind(FILE * fp)
+void wceex_rewind(FILE * fp)
 {
     /* HANDLE is a typedef of void* */
     HANDLE hFile = (void*)fp;

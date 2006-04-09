@@ -29,6 +29,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/04/09 16:48:18  mloskot
+ * [WCE] Changed names of all WCECLIBEX functions
+ * according to following pattern: wce_xxx -> wceex_xxx.
+ * Reason: MFC on WCE includes functions named as wce_time, etc.
+ * Preparation to renamed WCECLIBEX files.
+ *
  * Revision 1.4  2006/03/21 20:11:54  fwarmerdam
  * fixup headers a bit
  *
@@ -42,6 +48,7 @@
  * [WCE] non-Unicode wrappers around Unicode-only Windows CE API
  *
  ******************************************************************************/
+#include "cpl_port.h"
 #include "cpl_win32ce_api.h"
 
 #ifdef WIN32CE

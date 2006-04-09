@@ -37,7 +37,7 @@
 #include <windows.h>
 
 /*******************************************************************************
-* wce_unlink -remove a directory entry.
+* wceex_unlink -remove a directory entry.
 *
 * Return:
 *
@@ -48,7 +48,7 @@
 *   IEEE 1003.1, 2004 Edition
 *
 *******************************************************************************/
-int wce_unlink(const char *filename)
+int wceex_unlink(const char *filename)
 {
     int res;
     int len;

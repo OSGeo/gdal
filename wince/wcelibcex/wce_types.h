@@ -32,8 +32,8 @@
  * Taxus SI Ltd.
  * http://www.taxussi.com.pl
  */
-#ifndef _WCE_SYS_TYPES_H
-#define _WCE_SYS_TYPES_H 1
+#ifndef WCEEX_SYS_TYPES_H
+#define WCEEX_SYS_TYPES_H 1
 
 #if !defined(_WIN32_WCE)
 # error "Only Winddows CE target is supported!"
@@ -54,4 +54,4 @@ typedef long    time_t;		/* Time value as number of seconds of the Epoch. */
 }
 #endif  /* __cplusplus */
 
-#endif /* #ifndef _WCE_SYS_TYPES_H */
+#endif /* #ifndef WCEEX_SYS_TYPES_H */

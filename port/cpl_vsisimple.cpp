@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/04/09 16:48:18  mloskot
+ * [WCE] Changed names of all WCECLIBEX functions
+ * according to following pattern: wce_xxx -> wceex_xxx.
+ * Reason: MFC on WCE includes functions named as wce_time, etc.
+ * Preparation to renamed WCECLIBEX files.
+ *
  * Revision 1.21  2006/03/27 15:24:41  fwarmerdam
  * buffer in FWrite is const
  *
@@ -99,7 +105,7 @@ CPL_CVSID("$Id$");
 #  include <wce_stdio.h>
 #  include <wce_string.h>
 #  include <wce_time.h>
-# define time wce_time
+# define time wceex_time
 #else
 #  include <sys/stat.h>
 #  include <time.h>

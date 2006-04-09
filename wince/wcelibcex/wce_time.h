@@ -33,8 +33,8 @@
  * http://www.taxussi.com.pl
  *
  */
-#ifndef _WCE_TIME_H
-#define _WCE_TIME_H 1
+#ifndef WCEEX_TIME_H
+#define WCEEX_TIME_H 1
 
 #if !defined(_WIN32_WCE)
 # error "Only Winddows CE target is supported!"
@@ -106,18 +106,18 @@ Also, there are 97 leap days in every such 400 years interval
     Time functions
 *******************************************************************************/
 
-time_t wce_time(time_t *timer);
-time_t wce_mktime(struct tm *tmbuff);
-time_t wce_gmmktime(struct tm *tmbuff);
+time_t wceex_time(time_t *timer);
+time_t wceex_mktime(struct tm *tmbuff);
+time_t wceex_gmmktime(struct tm *tmbuff);
 
-struct tm * wce_localtime(const time_t *timer);
-struct tm * wce_gmtime(const time_t *timer);
+struct tm * wceex_localtime(const time_t *timer);
+struct tm * wceex_gmtime(const time_t *timer);
 
-char * wce_ctime(const time_t *timer);
-char * wce_ctime_r(const time_t *timer, char *buf);
+char * wceex_ctime(const time_t *timer);
+char * wceex_ctime_r(const time_t *timer, char *buf);
 
-char * wce_asctime(const struct tm *tmbuff);
-char * wce_asctime_r(const struct tm *tbuff, char *buff);
+char * wceex_asctime(const struct tm *tmbuff);
+char * wceex_asctime_r(const struct tm *tbuff, char *buff);
 
 
 /*******************************************************************************
@@ -125,7 +125,7 @@ char * wce_asctime_r(const struct tm *tbuff, char *buff);
 *******************************************************************************/
  
 /* Internal function to get time value from tm struc. */
-extern time_t __wce_mktime_utc(struct tm *tmbuff);
+extern time_t __wceex_mktime_utc(struct tm *tmbuff);
 
 
 
@@ -133,5 +133,5 @@ extern time_t __wce_mktime_utc(struct tm *tmbuff);
 }
 #endif  /* __cplusplus */
 
-#endif /* #ifndef _WCE_TIME_H */
+#endif /* #ifndef WCEEX_TIME_H */
 
