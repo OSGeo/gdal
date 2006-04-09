@@ -44,11 +44,11 @@
 ********************************************************************************/
 
 /* Return mode of file. */
-static unsigned short __wce_get_file_mode(const char* name, int attr);
+static unsigned short __wceex_get_file_mode(const char* name, int attr);
 
 
 /*******************************************************************************
-* wce_stat - Get file attributes for file and store them in buffer.
+* wceex_stat - Get file attributes for file and store them in buffer.
 *
 * Description:
 *
@@ -66,7 +66,7 @@ static unsigned short __wce_get_file_mode(const char* name, int attr);
 *   IEEE Std 1003.1, 2004 Edition
 *
 *******************************************************************************/
-int wce_stat(const char* filename, struct stat *buffer)
+int wceex_stat(const char* filename, struct stat *buffer)
 {
     HANDLE findhandle;
     WIN32_FIND_DATA findbuf;
@@ -95,7 +95,7 @@ int wce_stat(const char* filename, struct stat *buffer)
             findbuf.nFileSizeLow = 0;
             findbuf.cFileName[0] = '\0';
 
-            buffer->st_mtime = wce_local_to_time_r(1980 - TM_YEAR_BASE, 0, 1, 0, 0, 0);
+            buffer->st_mtime = wceex_local_to_time_r(1980 - TM_YEAR_BASE, 0, 1, 0, 0, 0);
             buffer->st_atime = buffer->st_mtime;
             buffer->st_ctime = buffer->st_mtime;
         }
@@ -123,7 +123,7 @@ int wce_stat(const char* filename, struct stat *buffer)
             return( -1 );
         }
 
-        buffer->st_mtime = wce_local_to_time(&SystemTime);
+        buffer->st_mtime = wceex_local_to_time(&SystemTime);
 
         //Time od last access of file
         if(findbuf.ftLastAccessTime.dwLowDateTime || findbuf.ftLastAccessTime.dwHighDateTime)
@@ -135,7 +135,7 @@ int wce_stat(const char* filename, struct stat *buffer)
                 FindClose( findhandle );
                 return( -1 );
             }
-            buffer->st_atime = wce_local_to_time(&SystemTime);
+            buffer->st_atime = wceex_local_to_time(&SystemTime);
         }
         else
         {
@@ -153,7 +153,7 @@ int wce_stat(const char* filename, struct stat *buffer)
                 FindClose( findhandle );
                 return( -1 );
             }
-            buffer->st_ctime = wce_local_to_time(&SystemTime);
+            buffer->st_ctime = wceex_local_to_time(&SystemTime);
         }
         else
         {
@@ -165,7 +165,7 @@ int wce_stat(const char* filename, struct stat *buffer)
     }
 
     //file mode
-    buffer->st_mode = __wce_get_file_mode(filename, findbuf.dwFileAttributes);
+    buffer->st_mode = __wceex_get_file_mode(filename, findbuf.dwFileAttributes);
 
     //file size
     buffer->st_size = findbuf.nFileSizeLow;
@@ -194,7 +194,7 @@ int wce_stat(const char* filename, struct stat *buffer)
 
 #define __DOSMODE_MASK  0xff
 
-static unsigned short __wce_get_file_mode(const char* filename, int attr)
+static unsigned short __wceex_get_file_mode(const char* filename, int attr)
 {
     unsigned short file_mode;
     unsigned mode;

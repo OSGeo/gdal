@@ -37,7 +37,7 @@
 #include <windows.h>
 
 /*******************************************************************************
-* wce_rename - rename a file
+* wceex_rename - rename a file
 *
 * Description:
 *
@@ -56,7 +56,7 @@
 *   IEEE 1003.1, 2004 Edition
 *
 *******************************************************************************/
-int wce_rename(const char *oldfile, const char *newfile)
+int wceex_rename(const char *oldfile, const char *newfile)
 {
     int res;    
     size_t lenold;

@@ -85,16 +85,16 @@
   Local time functions
 *******************************************************************************/
 
-struct tm * __wce_offtime(const time_t *timer, long tzoffset);
+struct tm * __wceex_offtime(const time_t *timer, long tzoffset);
 
 /*******************************************************************************
-* wce_localtime - Convert time_t value to tm struct.
+* wceex_localtime - Convert time_t value to tm struct.
 *
 * Description:
 *   Use offset as difference in seconds between local time and UTC time.
 *
 *******************************************************************************/
-struct tm * wce_localtime(const time_t *timer)
+struct tm * wceex_localtime(const time_t *timer)
 {
     register struct tm *tmp;
 
@@ -113,13 +113,13 @@ struct tm * wce_localtime(const time_t *timer)
 	}
     
     tzoffset *= -1;
-    tmp = __wce_offtime(timer, tzoffset);
+    tmp = __wceex_offtime(timer, tzoffset);
 
     return tmp;
 }
 
 /*******************************************************************************
-* wce_gmtime - Convert time_t value to tm struct.
+* wceex_gmtime - Convert time_t value to tm struct.
 *
 * Description:
 *   This function is similar to localtime, except that the broken-down
@@ -127,17 +127,17 @@ struct tm * wce_localtime(const time_t *timer)
 *   rather than relative to a local time zone.
 *
 *******************************************************************************/
-struct tm * wce_gmtime(const time_t *timer)
+struct tm * wceex_gmtime(const time_t *timer)
 {
     register struct tm *tmp;
 
-    tmp = __wce_offtime(timer, 0L);
+    tmp = __wceex_offtime(timer, 0L);
 
     return tmp;
 }
 
 /*******************************************************************************
-* __wce_offtime - Convert time_t value to tm struct.
+* __wceex_offtime - Convert time_t value to tm struct.
 *
 * Description:
 *   Use offset as difference in seconds between local time and UTC time.
@@ -152,7 +152,7 @@ static int	mon_lengths[2][MONS_PER_YEAR] =
 static int	year_lengths[2] = { DAYS_PER_NYEAR, DAYS_PER_LYEAR };
 
 
-struct tm * __wce_offtime(const time_t *timer, long tzoffset)
+struct tm * __wceex_offtime(const time_t *timer, long tzoffset)
 {
     register struct tm *tmp;
     register long		days;

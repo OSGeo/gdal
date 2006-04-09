@@ -38,7 +38,7 @@
 #include <windows.h>
 
 /*******************************************************************************
-* wce_time - Return the value of time in seconds since the Epoch.
+* wceex_time - Return the value of time in seconds since the Epoch.
 *
 * Description:
 *   The timer argument points to an area where the return value is also stored.
@@ -50,7 +50,7 @@
 * Reference:
 *   IEEE Standard and an Open Group Technical Standard 1003.1, 2004 Edition
 *******************************************************************************/
-time_t wce_time(time_t *timer)
+time_t wceex_time(time_t *timer)
 {
     time_t t;
     struct tm tmbuff;
@@ -72,10 +72,10 @@ time_t wce_time(time_t *timer)
     tmbuff.tm_sec = st.wSecond;
     tmbuff.tm_isdst = 0;    /* Always 0 for UTC time. */
     tmbuff.tm_wday = st.wDayOfWeek;
-    tmbuff.tm_yday = 0;     /* Value is set by wce_gmmktime */
+    tmbuff.tm_yday = 0;     /* Value is set by wceex_gmmktime */
 
     /* Convert tm struct to time_tUTC */
-    t = wce_gmmktime(&tmbuff);
+    t = wceex_gmmktime(&tmbuff);
 
     /* Assign time value. */
     if (timer != NULL)
@@ -86,7 +86,7 @@ time_t wce_time(time_t *timer)
 	return t;
 }
 /*******************************************************************************
-* _wce_tm_to_time_t - Convert time from tm struct format to time_t value.
+* _wceex_tm_to_time_t - Convert time from tm struct format to time_t value.
 *
 * Description:
 *   The tmbuff points to structure that contains broken-down time.
@@ -99,7 +99,7 @@ time_t wce_time(time_t *timer)
 * Reference:
 *   IEEE Standard and an Open Group Technical Standard 1003.1, 2004 Edition
 *******************************************************************************/
-time_t __wce_tm_to_time_t(const struct tm *tmbuff)
+time_t __wceex_tm_to_time_t(const struct tm *tmbuff)
 {
     time_t timer;
 

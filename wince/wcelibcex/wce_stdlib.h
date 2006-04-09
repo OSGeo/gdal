@@ -33,8 +33,8 @@
  * http://www.taxussi.com.pl
  *
  */
-#ifndef _WCE_STDLIB_H
-#define _WCE_STDLIB_H 1
+#ifndef WCEEX_STDLIB_H
+#define WCEEX_STDLIB_H 1
 
 #if !defined(_WIN32_WCE)
 # error "Only Winddows CE target is supported!"
@@ -46,7 +46,7 @@ extern "C" {
 
 
 /* Generate an abnormal process abort. */
-void wce_abort(void);
+void wceex_abort(void);
 
 
 #ifdef __cplusplus
@@ -54,4 +54,4 @@ void wce_abort(void);
 #endif  /* __cplusplus */
 
 
-#endif /* #ifndef _WCE_STDLIB_H */
+#endif /* #ifndef WCEEX_STDLIB_H */

@@ -52,7 +52,7 @@ static const char __wce_asc_format[] = "%.3s %.3s %02d %.2d:%.2d:%.2d %d\n";
 
 
 /*******************************************************************************
-* wce_asctime - Convert date and time to a string
+* wceex_asctime - Convert date and time to a string
 *
 * Description:
 *
@@ -74,14 +74,14 @@ static const char __wce_asc_format[] = "%.3s %.3s %02d %.2d:%.2d:%.2d %d\n";
 *   The GNU C Library Manual
 * 
 *******************************************************************************/
-char * wce_asctime(const struct tm *tmbuff)
+char * wceex_asctime(const struct tm *tmbuff)
 {
-    return wce_asctime_r(tmbuff, __wce_asc_result);
+    return wceex_asctime_r(tmbuff, __wce_asc_result);
 }
 
 
 /*******************************************************************************
-* wce_asctime_r - Convert date and time to a string
+* wceex_asctime_r - Convert date and time to a string
 *
 * Description:
 *
@@ -103,7 +103,7 @@ char * wce_asctime(const struct tm *tmbuff)
 *   The GNU C Library Manual
 * 
 *******************************************************************************/
-char * wce_asctime_r(const struct tm *tmbuff, char *buff) 
+char * wceex_asctime_r(const struct tm *tmbuff, char *buff) 
 {
     int res;
     static char wday_short[7][3] = {

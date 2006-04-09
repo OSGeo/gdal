@@ -130,7 +130,7 @@
 				Name="VCCLCompilerTool"
 				ExecutionBucket="7"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\port,..\..\ogr,..\..\ogr\ogrsf_frmts,..\..\wince\wcelibcex"
+				AdditionalIncludeDirectories="..\..\port;..\..\ogr;..\..\ogr\ogrsf_frmts;..\..\wince\wcelibcex;D:\__projects\geos\_cvs\geos\source\headers"
 				PreprocessorDefinitions="DEBUG;_WIN32_WCE=$(CEVER);$(CePlatform);ARM;_ARM_;ARMV4;UNDER_CE=$(CEVER);UNICODE;_LIB"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
@@ -141,6 +141,7 @@
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
+				EnableFloatingPointEmulation="false"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -156,7 +157,8 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(PlatformName)\$(ConfigurationName)\msvc8_gdalce_lib.lib"
+				OutputFile="$(PlatformName)\$(ConfigurationName)\gdalce.lib"
+				AdditionalLibraryDirectories="&quot;D:\__projects\geos\_cvs\msvc80ce\Pocket PC 2003 (ARMV4)\Debug&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -3326,6 +3328,10 @@
 								UsePrecompiledHeader="0"
 							/>
 						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\..\ogr\ogrsf_frmts\shape\LICENSE.LGPL"
+						>
 					</File>
 					<File
 						RelativePath="..\..\ogr\ogrsf_frmts\shape\ogrshape.h"

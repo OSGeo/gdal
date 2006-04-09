@@ -38,7 +38,7 @@
 #include <stdlib.h>
 
 /*******************************************************************************
-* wce_ctime - Convert a time value to a date and time string
+* wceex_ctime - Convert a time value to a date and time string
 *
 * Description:
 *
@@ -58,14 +58,14 @@
 *   The GNU C Library Manual
 * 
 *******************************************************************************/
-char * wce_ctime(const time_t *timer)
+char * wceex_ctime(const time_t *timer)
 {
-   return wce_asctime(wce_localtime(timer));
+   return wceex_asctime(wceex_localtime(timer));
 }
  
 
 /*******************************************************************************
-* wce_ctime_r - Convert a time value to a date and time string
+* wceex_ctime_r - Convert a time value to a date and time string
 *
 * Description:
 *
@@ -88,7 +88,7 @@ char * wce_ctime(const time_t *timer)
 *   The GNU C Library Manual
 * 
 *******************************************************************************/
-char * wce_ctime_r(const time_t *timer, char *buf)
+char * wceex_ctime_r(const time_t *timer, char *buf)
 {
   /*
   XXX - mloskot - it's waiting for localtime_r function.

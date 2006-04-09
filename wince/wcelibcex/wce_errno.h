@@ -33,8 +33,8 @@
  * http://www.taxussi.com.pl
  *
  */
-#ifndef _WCE_ERRNO_H
-#define _WCE_ERRNO_H	1
+#ifndef WCEEX_ERRNO_H
+#define WCEEX_ERRNO_H	1
 
 #if !defined(_WIN32_WCE)
 # error "Only Winddows CE target is supported!"
@@ -101,5 +101,5 @@ extern int errno;
 }
 #endif  /* __cplusplus */
 
-#endif /* #ifndef _WCE_ERRNO_H */
+#endif /* #ifndef WCEEX_ERRNO_H */
 

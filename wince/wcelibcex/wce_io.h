@@ -33,8 +33,8 @@
  * http://www.taxussi.com.pl
  *
  */
-#ifndef _WCE_IO_H
-#define _WCE_IO_H 1
+#ifndef WCEEX_IO_H
+#define WCEEX_IO_H 1
 
 #if !defined(_WIN32_WCE)
 # error "Only Winddows CE target is supported!"
@@ -91,13 +91,13 @@ struct _finddata_t
     I/O Functions
 *******************************************************************************/
 
-intptr_t wce_findfirst(const char *filespec, struct _finddata_t *fileinfo);
-int      wce_findnext(intptr_t handle, struct _finddata_t *fileinfo);
-int      wce_findclose(intptr_t hFile);
+intptr_t wceex_findfirst(const char *filespec, struct _finddata_t *fileinfo);
+int      wceex_findnext(intptr_t handle, struct _finddata_t *fileinfo);
+int      wceex_findclose(intptr_t hFile);
 
 
 #ifdef __cplusplus
 }
 #endif  /* __cplusplus */
 
-#endif /* #ifndef _WCE_IO_H */
+#endif /* #ifndef WCEEX_IO_H */

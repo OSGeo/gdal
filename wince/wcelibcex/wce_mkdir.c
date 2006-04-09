@@ -37,7 +37,7 @@
 #include <windows.h>
 
 /*******************************************************************************
-* wce_mkdir - Make a directory.
+* wceex_mkdir - Make a directory.
 *
 * Description:
 *
@@ -56,7 +56,7 @@
 * Reference:
 *   IEEE 1003.1, 2004 Edition
 *******************************************************************************/
-int wce_mkdir(const char *filename)
+int wceex_mkdir(const char *filename)
 {
     int res;    
     size_t len;

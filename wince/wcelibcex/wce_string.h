@@ -33,8 +33,8 @@
  * http://www.taxussi.com.pl
  *
  */
-#ifndef _WCE_STRING_H
-#define _WCE_STRING_H	1
+#ifndef WCEEX_STRING_H
+#define WCEEX_STRING_H	1
 
 #if !defined(_WIN32_WCE)
 # error "Only Winddows CE target is supported!"
@@ -48,12 +48,12 @@ extern "C" {
 
 /* Function declarations */
 
-char * strerror(int errnum);
+char * wceex_strerror(int errnum);
 
 
 #ifdef __cplusplus
 }
 #endif  /* __cplusplus */
 
-#endif /* #ifndef _WCE_STRING_H */
+#endif /* #ifndef WCEEX_STRING_H */
 
