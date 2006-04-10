@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/04/10 02:13:02  fwarmerdam
+ * Changed type translations per email from Mario.
+ *
  * Revision 1.1  2003/07/11 13:27:50  warmerda
  * New
  *
@@ -82,13 +85,13 @@ int RECGetFieldDefinition( FILE *fp, char *pszFieldname,
 
     // Is this an real, integer or string field?  Default to string.
     nTypeCode = atoi(RECGetField(pszLine,33,4));
-    if( nTypeCode == 12 )
+    if( nTypeCode == 0 )
         eFType = OFTInteger;
     else if( nTypeCode > 100 && nTypeCode < 120 )
     {
         eFType = OFTReal;
     }
-    else if( nTypeCode == 0 || nTypeCode == 6 || nTypeCode == 102 )
+    else if( nTypeCode == 6 )
     {
         if( *pnWidth < 3 )
             eFType = OFTInteger;
