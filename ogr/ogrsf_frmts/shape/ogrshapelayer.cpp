@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2006/04/10 17:00:35  fwarmerdam
+ * Report ability to delete features in TestCapability.
+ *
  * Revision 1.27  2006/04/02 18:46:54  fwarmerdam
  * updated date support
  *
@@ -614,6 +617,9 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
 
     else if( EQUAL(pszCap,OLCFastFeatureCount) )
         return m_poFilterGeom == NULL;
+
+    else if( EQUAL(pszCap,OLCDeleteFeature) )
+        return TRUE;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )
         return FALSE;
