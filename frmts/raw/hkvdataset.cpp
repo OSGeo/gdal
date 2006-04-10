@@ -3,7 +3,7 @@
  *
  * Project:  GView
  * Purpose:  Implementation of Atlantis HKV labelled blob support
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2006/04/10 16:27:16  fwarmerdam
+ * Fixed contact info.
+ *
  * Revision 1.39  2006/01/16 20:28:56  gwalter
  * Fixed cplusplus misuse.
  *

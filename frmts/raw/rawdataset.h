@@ -2,9 +2,9 @@
  * $Id$
  *
  * Project:  Raw Translator
- * Purpose:  Implementation of RawDataset class.  Indented to be subclassed
+ * Purpose:  Implementation of RawDataset class.  Intented to be subclassed
  *           by other raw formats.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/04/10 16:28:33  fwarmerdam
+ * Fixed contact info.
+ *
  * Revision 1.17  2005/05/05 13:55:42  fwarmerdam
  * PAM Enable
  *
