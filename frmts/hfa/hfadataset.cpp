@@ -29,6 +29,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.76  2006/04/10 14:34:06  fwarmerdam
+ * Make sure that overviews are treated according to their own intrinsic type,
+ * not just the type of the base band which may differ in some circumstances.
+ *
  * Revision 1.75  2006/04/03 04:34:19  fwarmerdam
  * added support for reading affine polynomial transforms as geotransform
  *
@@ -903,16 +907,21 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     CPLErr	eErr;
+    int         nThisDataType = nHFADataType; // overview may differ.
 
     if( nThisOverview == -1 )
         eErr = HFAGetRasterBlock( hHFA, nBand, nBlockXOff, nBlockYOff,
                                   pImage );
     else
+    {
         eErr =  HFAGetOverviewRasterBlock( hHFA, nBand, nThisOverview,
                                            nBlockXOff, nBlockYOff,
                                            pImage );
+        nThisDataType = 
+            hHFA->papoBand[nBand-1]->papoOverviews[nThisOverview]->nDataType;
+    }
 
-    if( eErr == CE_None && nHFADataType == EPT_u4 )
+    if( eErr == CE_None && nThisDataType == EPT_u4 )
     {
         GByte	*pabyData = (GByte *) pImage;
 
@@ -922,7 +931,7 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             pabyData[ii+1] = (pabyData[ii>>1] & 0xf0) >> 4;
         }
     }
-    if( eErr == CE_None && nHFADataType == EPT_u1 )
+    if( eErr == CE_None && nThisDataType == EPT_u1)
     {
         GByte	*pabyData = (GByte *) pImage;
 
