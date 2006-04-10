@@ -3,7 +3,7 @@
  *
  * Project:  SDTS Translator
  * Purpose:  Include file for entire SDTS Abstraction Layer functions.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/04/10 16:34:18  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.25  2001/09/10 19:27:36  warmerda
  * added GetMinMax() and raster data types
  *

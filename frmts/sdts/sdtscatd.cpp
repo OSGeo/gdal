@@ -4,7 +4,7 @@
  * Project:  SDTS Translator
  * Purpose:  Implementation of SDTS_CATD and SDTS_CATDEntry classes for
  *           reading CATD files.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/04/10 16:34:18  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.15  2006/02/24 15:57:11  fwarmerdam
  * Added CATD open check to make sure this is a CATD file before reading
  * any records.  Mainly intended to avoid problems with ADRG files.

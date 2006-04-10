@@ -3,7 +3,7 @@
  *
  * Project:  SDTS Translator
  * Purpose:  GDALDataset driver for SDTS Raster translator.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/04/10 16:34:18  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.16  2005/05/05 15:54:49  fwarmerdam
  * PAM Enabled
  *
