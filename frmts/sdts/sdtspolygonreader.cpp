@@ -3,7 +3,7 @@
  *
  * Project:  SDTS Translator
  * Purpose:  Implementation of SDTSPolygonReader and SDTSRawPolygon classes.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/04/10 16:34:19  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.13  2004/04/29 13:45:48  warmerda
  * fixed bug with assembling polygons if edges not read
  *

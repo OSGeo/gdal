@@ -3,7 +3,7 @@
  *
  * Project:  SDTS Translator
  * Purpose:  Implementation of SDTSAttrReader class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/04/10 16:34:18  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.11  2001/07/18 04:51:57  warmerda
  * added CPL_CVSID
  *

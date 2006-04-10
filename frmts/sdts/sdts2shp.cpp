@@ -3,7 +3,7 @@
  *
  * Project:  SDTS Translator
  * Purpose:  Mainline for converting to ArcView Shapefiles.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/04/10 16:34:18  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.15  2003/10/06 14:35:21  warmerda
  * added support for secondary attribute tables.
  *

@@ -3,7 +3,7 @@
  *
  * Project:  SDTS Translator
  * Purpose:  Implementation of SDTSRasterReader class.
- * Author:   Frank Warmerdam, warmerda@home.com
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/04/10 16:34:19  fwarmerdam
+ * updated contact info
+ *
  * Revision 1.11  2003/02/06 03:19:21  warmerda
  * dont bomb if FMT, UNIT or ATLB missing
  *
