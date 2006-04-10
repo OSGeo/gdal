@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.162  2006/04/10 15:52:23  fwarmerdam
+ * Fixed min-is-white color table for less than 8bit data.
+ *
  * Revision 1.161  2006/04/05 21:08:16  fwarmerdam
  * Added NBITS metadata on bands.
  * Apply PAM projection and geotransform information (if available) in
@@ -2876,7 +2879,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
 	    for ( iColor = 0; iColor < nColorCount; iColor++ )
 	    {
 		oEntry.c1 = oEntry.c2 = oEntry.c3 = 
-                    (short) (nColorCount - 1 - iColor);
+                    (255 * (nColorCount - 1 - iColor)) / (nColorCount-1);
 		oEntry.c4 = 255;
 		poColorTable->SetColorEntry( iColor, &oEntry );
 	    }
