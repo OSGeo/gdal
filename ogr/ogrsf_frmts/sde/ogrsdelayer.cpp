@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/04/11 01:26:10  fwarmerdam
+ * First draft multipoint support, fixing multipolygons.
+ *
  * Revision 1.8  2006/03/09 22:50:43  fwarmerdam
  * Added  support for multipolygons
  *
@@ -552,10 +555,36 @@ OGRGeometry *OGRSDELayer::TranslateSDEGeometry( SE_SHAPE hShape )
       case SG_POINT_SHAPE:
       {
           CPLAssert( nPointCount == 1 );
+          CPLAssert( nSubPartCount == 1 );
+          CPLAssert( nPartCount == 1 );
           if( padfZ )
               poGeom = new OGRPoint( pasPoints[0].x, pasPoints[0].y, padfZ[0] );
           else
               poGeom = new OGRPoint( pasPoints[0].x, pasPoints[0].y );
+      }
+      break;
+
+/* -------------------------------------------------------------------- */
+/*      Handle simple point.                                            */
+/* -------------------------------------------------------------------- */
+      case SG_MULTI_POINT_SHAPE:
+      {
+          OGRMultiPoint *poMP = new OGRMultiPoint();
+          int iPart;
+
+          CPLAssert( nPartCount == nSubPartCount ); // one vertex per point.
+          CPLAssert( nPointCount == nPartCount );
+
+          for( iPart = 0; iPart < nPartCount; iPart++ )
+          {
+              if( padfZ != NULL )
+                  poMP->addGeometryDirectly( new OGRPoint( pasPoints[iPart].x,
+                                                           pasPoints[iPart].y,
+                                                           padfZ[iPart] ) );
+              else
+                  poMP->addGeometryDirectly( new OGRPoint( pasPoints[iPart].x,
+                                                           pasPoints[iPart].y ) );
+          }
       }
       break;
 
@@ -601,8 +630,14 @@ OGRGeometry *OGRSDELayer::TranslateSDEGeometry( SE_SHAPE hShape )
           {
               OGRPolygon *poPoly = new OGRPolygon();
               int iVert, iSubPart;
+              nNextSubPart;
+
+              if( iPart == nPartCount-1 )
+                  nNextSubPart = nSubPartCount;
+              else
+                  nNextSubPart = panPart[iPart+1];
               
-              for( iSubPart = 0; iSubPart < nSubPartCount; iSubPart++ )
+              for( iSubPart = panPart[iPart]; iSubPart < nNextSubPart; iSubPart++ )
               {
                   OGRLinearRing *poRing = new OGRLinearRing();
                   int nRingVertCount; 
