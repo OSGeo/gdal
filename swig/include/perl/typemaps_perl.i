@@ -4,6 +4,9 @@
 
 /*
  * $Log$
+ * Revision 1.12  2006/04/11 12:47:55  ajolma
+ * removed now deprecated "perl5," from typemaps
+ *
  * Revision 1.11  2005/10/11 14:11:42  kruland
  * Fix memory bug in typemap(out) char **options.  The returned array of strings
  * is owned by the dataset.
@@ -62,24 +65,24 @@
  * is not set in the raster band) then Py_None is returned.  If is is != 0, then
  * the value is coerced into a long and returned.
  */
-%typemap(perl5,in,numinputs=0) (double *val, int *hasval) ( double tmpval, int tmphasval ) {
-  /* %typemap(perl5,in,numinputs=0) (double *val, int *hasval) */
+%typemap(in,numinputs=0) (double *val, int *hasval) ( double tmpval, int tmphasval ) {
+  /* %typemap(in,numinputs=0) (double *val, int *hasval) */
   $1 = &tmpval;
   $2 = &tmphasval;
 }
-%typemap(perl5,argout) (double *val, int *hasval) {
-  /* %typemap(perl5,argout) (double *val, int *hasval) */
+%typemap(argout) (double *val, int *hasval) {
+  /* %typemap(argout) (double *val, int *hasval) */
   $result = sv_newmortal();
   if ( *$2 )
     sv_setnv($result, *$1);
   argvi++;
 }
 /* if the call to the fct failed, return an undef */
-%typemap(perl5,out) IF_FALSE_RETURN_NONE
+%typemap(out) IF_FALSE_RETURN_NONE
 {
   /* %typemap(out) IF_FALSE_RETURN_NONE */
 }
-%typemap(perl5,ret) IF_FALSE_RETURN_NONE
+%typemap(ret) IF_FALSE_RETURN_NONE
 {
  /* %typemap(ret) IF_FALSE_RETURN_NONE */
   if ($1 == 0 ) {
@@ -141,35 +144,35 @@ CreateArrayFromDoubleArray( double *first, unsigned int size ) {
 }
 %}
 
-%typemap(perl5,in,numinputs=0) ( double argout[ANY]) (double argout[$dim0])
+%typemap(in,numinputs=0) ( double argout[ANY]) (double argout[$dim0])
 {
   /* %typemap(in,numinputs=0) (double argout[ANY]) */
   $1 = argout;
 }
-%typemap(perl5,argout,fragment="CreateArrayFromDoubleArray") ( double argout[ANY])
+%typemap(argout,fragment="CreateArrayFromDoubleArray") ( double argout[ANY])
 {
   /* %typemap(argout) (double argout[ANY]) */
   $result = CreateArrayFromDoubleArray( $1, $dim0 );
   argvi++;
 }
 
-%typemap(perl5,in,numinputs=0) ( double *argout[ANY]) (double *argout)
+%typemap(in,numinputs=0) ( double *argout[ANY]) (double *argout)
 {
   /* %typemap(in,numinputs=0) (double *argout[ANY]) */
   $1 = &argout;
 }
-%typemap(perl5,argout,fragment="CreateArrayFromDoubleArray") ( double *argout[ANY])
+%typemap(argout,fragment="CreateArrayFromDoubleArray") ( double *argout[ANY])
 {
   /* %typemap(argout) (double *argout[ANY]) */
   $result = CreateArrayFromDoubleArray( *$1, $dim0 );
   argvi++;
 }
-%typemap(perl5,freearg) (double *argout[ANY])
+%typemap(freearg) (double *argout[ANY])
 {
   /* %typemap(freearg) (double *argout[ANY]) */
   CPLFree(*$1);
 }
-%typemap(perl5,in) (double argin[ANY]) (double argin[$dim0])
+%typemap(in) (double argin[ANY]) (double argin[$dim0])
 {
   /* %typemap(in) (double argin[ANY]) */
   if (! (SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV))) {
@@ -192,7 +195,7 @@ CreateArrayFromDoubleArray( double *first, unsigned int size ) {
 /*
  *  Typemap for counted arrays of ints <- PySequence
  */
-%typemap(perl5,in,numinputs=1) (int nList, int* pList)
+%typemap(in,numinputs=1) (int nList, int* pList)
 {
   /* %typemap(in,numinputs=1) (int nList, int* pList) */
   if (! (SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV))) {
@@ -207,7 +210,7 @@ CreateArrayFromDoubleArray( double *first, unsigned int size ) {
     $2[i] =  SvIV(*sv);
   }
 }
-%typemap(perl5,freearg) (int nList, int* pList)
+%typemap(freearg) (int nList, int* pList)
 {
   /* %typemap(freearg) (int nList, int* pList) */
   if ($2) {
@@ -233,26 +236,26 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
  * This typemap has a typecheck also since the WriteRaster()
  * methods are overloaded.
  */
-%typemap(perl5,in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen = 0, char *pBuf = 0 )
+%typemap(in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen = 0, char *pBuf = 0 )
 {
   /* %typemap(in,numinputs=0) (int *nLen, char **pBuf ) */
   $1 = &nLen;
   $2 = &pBuf;
 }
-%typemap(perl5,argout) (int *nLen, char **pBuf )
+%typemap(argout) (int *nLen, char **pBuf )
 {
   /* %typemap(argout) (int *nLen, char **pBuf ) */
   $result = sv_2mortal(newSVpv( *$2, *$1 ));
   argvi++;
 }
-%typemap(perl5,freearg) (int *nLen, char **pBuf )
+%typemap(freearg) (int *nLen, char **pBuf )
 {
   /* %typemap(freearg) (int *nLen, char **pBuf ) */
   if( *$1 ) {
     free( *$2 );
   }
 }
-%typemap(perl5,in,numinputs=1) (int nLen, char *pBuf )
+%typemap(in,numinputs=1) (int nLen, char *pBuf )
 {
   /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
   if (!SvPOK($input)) {
@@ -267,13 +270,13 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
 /*
  * Typemap argout of GDAL_GCP* used in Dataset::GetGCPs( )
  */
-%typemap(perl5,in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) (int nGCPs=0, GDAL_GCP *pGCPs=0 )
+%typemap(in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) (int nGCPs=0, GDAL_GCP *pGCPs=0 )
 {
   /* %typemap(in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) */
   $1 = &nGCPs;
   $2 = &pGCPs;
 }
-%typemap(perl5,argout) (int *nGCPs, GDAL_GCP const **pGCPs )
+%typemap(argout) (int *nGCPs, GDAL_GCP const **pGCPs )
 {
   /* %typemap(argout) (int *nGCPs, GDAL_GCP const **pGCPs ) */
   AV *dict = (AV*)sv_2mortal((SV*)newAV());
@@ -292,7 +295,7 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
   $result = newRV_noinc((SV*)dict);
   argvi++;
 }
-%typemap(perl5,in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) ( GDAL_GCP *tmpGCPList )
+%typemap(in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) ( GDAL_GCP *tmpGCPList )
 {
   /* %typemap(in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) */
   if (! (SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV))) {
@@ -314,7 +317,7 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
     ++tmpGCPList;
   }
 }
-%typemap(perl5,freearg) (int nGCPs, GDAL_GCP const *pGCPs )
+%typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs )
 {
   /* %typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs ) */
   if ($2) {
@@ -326,9 +329,9 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
  * Typemap for GDALColorEntry* <-> AV
  * GDALColorEntry* may be a return value and both input and output param
  */
-%typemap(perl5,out) GDALColorEntry*
+%typemap(out) GDALColorEntry*
 {
-  /* %typemap(perl5,out) GDALColorEntry* */
+  /* %typemap(out) GDALColorEntry* */
   if (result == NULL)
     croak("GetColorEntry failed at index %i",result);
   $result = sv_newmortal();
@@ -340,14 +343,14 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
   $result = sv_newmortal();
   sv_setiv(ST(argvi++), (IV) result->c4);
 }
-%typemap(perl5,in,numinputs=0) GDALColorEntry*(GDALColorEntry e)
+%typemap(in,numinputs=0) GDALColorEntry*(GDALColorEntry e)
 {
-  /* %typemap(perl5,in,numinputs=0) GDALColorEntry*(GDALColorEntry e) */
+  /* %typemap(in,numinputs=0) GDALColorEntry*(GDALColorEntry e) */
   $1 = &e;
 }
-%typemap(perl5,argout) GDALColorEntry*
+%typemap(argout) GDALColorEntry*
 {
-  /* %typemap(perl5,argout) GDALColorEntry* */
+  /* %typemap(argout) GDALColorEntry* */
   if (result == FALSE)
     croak("GetColorEntryAsRGB failed at index %i",result);
   argvi--;
@@ -360,13 +363,13 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
   $result = sv_newmortal();
   sv_setiv(ST(argvi++), (IV) e3.c4);
 }
-%typemap(perl5,argout) const GDALColorEntry*
+%typemap(argout) const GDALColorEntry*
 {
-  /* %typemap(perl5,argout) const GDALColorEntry* */
+  /* %typemap(argout) const GDALColorEntry* */
 }
-%typemap(perl5,in,numinputs=1) const GDALColorEntry*(GDALColorEntry e)
+%typemap(in,numinputs=1) const GDALColorEntry*(GDALColorEntry e)
 {
-  /* %typemap(perl5,in,numinputs=1) const GDALColorEntry*(GDALColorEntry e) */
+  /* %typemap(in,numinputs=1) const GDALColorEntry*(GDALColorEntry e) */
   $1 = &e3;
   if (! (SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV))) {
     croak("argument is not an array ref");
@@ -391,12 +394,12 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
 /*
  * Typemap char ** <-> HV *
  */
-%typemap(perl5,typecheck,precedence=SWIG_TYPECHECK_POINTER) (char **dict)
+%typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (char **dict)
 {
   /* %typecheck(SWIG_TYPECHECK_POINTER) (char **dict) */
   $1 = (SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVHV)) ? 1 : 0;
 }
-%typemap(perl5,in) char **dict
+%typemap(in) char **dict
 {
   /* %typemap(in) char **dict */
   HV *hv = (HV*)SvRV($input);
@@ -409,7 +412,7 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
     $1 = CSLAddNameValue( $1, key, SvPV_nolen(sv) );
   }
 }
-%typemap(perl5,out) char **dict
+%typemap(out) char **dict
 {
   /* %typemap(out) char **dict */
   char **stringarray = $1;
@@ -429,7 +432,7 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
   $result = newRV_noinc((SV*)hv);
   argvi++;
 }
-%typemap(perl5,freearg) char **dict
+%typemap(freearg) char **dict
 {
   /* %typemap(freearg) char **dict */
   CSLDestroy( $1 );
@@ -438,7 +441,7 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
 /*
  * Typemap char **options <-> AV
  */
-%typemap(perl5,in) char **options
+%typemap(in) char **options
 {
   /* %typemap(in) char **options */
   if ( ! (SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)) ) {
@@ -451,12 +454,12 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
     $1 = CSLAddString( $1, pszItem );
   }
 }
-%typemap(perl5,freearg) char **options
+%typemap(freearg) char **options
 {
   /* %typemap(freearg) char **options */
   CSLDestroy( $1 );
 }
-%typemap(perl5,out) char **options
+%typemap(out) char **options
 {
   /* %typemap(out) char ** -> ( string ) */
   AV* av = (AV*)sv_2mortal((SV*)newAV());
@@ -474,7 +477,7 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
  * Typemaps map mutable char ** arguments from AV.  Does not
  * return the modified argument
  */
-%typemap(perl5,in) (char **ignorechange) ( char *val )
+%typemap(in) (char **ignorechange) ( char *val )
 {
   /* %typemap(in) (char **ignorechange) */
   val = SvPV_nolen($input);
@@ -484,12 +487,12 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
 /*
  * Typemap for char **argout.
  */
-%typemap(perl5,in,numinputs=0) (char **argout) ( char *argout=0 )
+%typemap(in,numinputs=0) (char **argout) ( char *argout=0 )
 {
   /* %typemap(in,numinputs=0) (char **argout) */
   $1 = &argout;
 }
-%typemap(perl5,argout) (char **argout)
+%typemap(argout) (char **argout)
 {
   /* %typemap(argout) (char **argout) */
   $result = sv_newmortal();
@@ -497,7 +500,7 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
     sv_setpv($result, *$1);
   argvi++;
 }
-%typemap(perl5,freearg) (char **argout)
+%typemap(freearg) (char **argout)
 {
   /* %typemap(freearg) (char **argout) */
   if ( *$1 )
@@ -510,7 +513,7 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
  * is NULL then the function needs to define a default
  * value.
  */
-%typemap(perl5,in) (int *optional_int) ( int val )
+%typemap(in) (int *optional_int) ( int val )
 {
   /* %typemap(in) (int *optional_int) */
   if ( !SvOK($input) ) {
@@ -528,12 +531,12 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
  * Formats the object using str and returns the string representation
  */
 
-%typemap(perl5,in) (tostring argin)
+%typemap(in) (tostring argin)
 {
   /* %typemap(in) (tostring argin) */
   $1 = SvPV_nolen( $input ); 
 }
-%typemap(perl5,typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
+%typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
 {
   /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin) */
   $1 = 1;
@@ -547,7 +550,7 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
  * If UseExceptions ==0, then return the rc.
  * If UseExceptions ==1, then if rc >= CE_Failure, raise an exception.
  */
-%typemap(perl5,out) CPLErr
+%typemap(out) CPLErr
 {
   /* %typemap(out) CPLErr */
   $result = sv_2mortal(newSViv($1));
@@ -558,7 +561,7 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
  * Typemap for OGRErr.
  */
 %import "ogr_error_map.i"
-%typemap(perl5,out,fragment="OGRErrMessages") OGRErr
+%typemap(out,fragment="OGRErrMessages") OGRErr
 {
   /* %typemap(out) OGRErr */
   if ( result != 0 ) {
@@ -603,9 +606,9 @@ static CPLXMLNode *AVToXMLTree( AV *av )
 }
 %}
 
-%typemap(perl5,in,fragment="AVToXMLTree") (CPLXMLNode* xmlnode )
+%typemap(in,fragment="AVToXMLTree") (CPLXMLNode* xmlnode )
 {
-  /* %typemap(perl5,in) (CPLXMLNode* xmlnode ) */
+  /* %typemap(in) (CPLXMLNode* xmlnode ) */
   if ( ! (SvROK($input) && (SvTYPE(SvRV($input))==SVt_PVAV)) ) {
     croak("argument is not an array ref");
     SWIG_fail;
@@ -614,9 +617,9 @@ static CPLXMLNode *AVToXMLTree( AV *av )
   $1 = AVToXMLTree( av );
   if ( !$1 ) SWIG_fail;
 }
-%typemap(perl5,freearg) (CPLXMLNode *xmlnode)
+%typemap(freearg) (CPLXMLNode *xmlnode)
 {
-  /* %typemap(perl5,freearg) (CPLXMLNode *xmlnode) */
+  /* %typemap(freearg) (CPLXMLNode *xmlnode) */
   if ( $1 ) CPLDestroyXMLNode( $1 );
 }
 
@@ -651,14 +654,14 @@ static AV *XMLTreeToAV( CPLXMLNode *psTree )
 }
 %}
 
-%typemap(perl5,out,fragment="XMLTreeToAV") (CPLXMLNode*)
+%typemap(out,fragment="XMLTreeToAV") (CPLXMLNode*)
 {
-  /* %typemap(perl5,out) (CPLXMLNode*) */
+  /* %typemap(out) (CPLXMLNode*) */
   $result = newRV_noinc((SV*)XMLTreeToAV( $1 ));
   argvi++;
 }
-%typemap(perl5,ret) (CPLXMLNode*)
+%typemap(ret) (CPLXMLNode*)
 {
-  /* %typemap(perl5,ret) (CPLXMLNode*) */
+  /* %typemap(ret) (CPLXMLNode*) */
   if ( $1 ) CPLDestroyXMLNode( $1 );
 }
