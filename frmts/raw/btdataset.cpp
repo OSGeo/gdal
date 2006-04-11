@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/04/11 00:33:15  fwarmerdam
+ * Added SetUnitType(), contributed by Ray Gardener.
+ *
  * Revision 1.8  2006/04/09 04:22:28  fwarmerdam
  * Implement GetUnitType() support when reading, from Ray Gardner.
  *
@@ -74,6 +77,8 @@ CPL_C_END
 
 class BTDataset : public GDALPamDataset
 {
+    friend class BTRasterBand;
+
     FILE        *fpImage;       // image data file.
 
     int         bGeoTransformValid;
@@ -88,8 +93,9 @@ class BTDataset : public GDALPamDataset
     int         bHeaderModified;
     unsigned char abyHeader[256];
 
-  public:
     float        m_fVscale;
+
+  public:
 
                 BTDataset();
                 ~BTDataset();
@@ -126,6 +132,7 @@ class BTRasterBand : public GDALRasterBand
     virtual CPLErr IWriteBlock( int, int, void * );
 
     virtual const char* GetUnitType();
+    virtual CPLErr SetUnitType(const char*);
 };
 
 
@@ -301,6 +308,34 @@ const char* BTRasterBand::GetUnitType(void)
     // But m/ft/sft seem to be the top three.
 
     return "";
+} 
+
+/************************************************************************/
+/*                            SetUnitType()                             */
+/************************************************************************/
+
+CPLErr BTRasterBand::SetUnitType(const char* psz)
+{
+    BTDataset& ds = *(BTDataset*)poDS;
+    if(EQUAL(psz, "m"))
+        ds.m_fVscale = 1.0f;
+    else if(EQUAL(psz, "ft"))
+        ds.m_fVscale = 0.3048f;
+    else if(EQUAL(psz, "sft"))
+        ds.m_fVscale = 1200.0f / 3937.0f;
+    else
+        return CE_Failure;
+
+
+    float fScale = ds.m_fVscale;
+
+    CPL_LSBPTR32(&fScale);
+
+    // Update header's elevation scale field.
+    memcpy(ds.abyHeader + 62, &fScale, sizeof(fScale));
+
+    ds.bHeaderModified = TRUE;
+    return CE_None;
 } 
 
 /************************************************************************/
