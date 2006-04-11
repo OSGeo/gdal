@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/04/11 02:31:32  fwarmerdam
+ * added multilinestring
+ *
  * Revision 1.10  2006/04/11 01:37:53  fwarmerdam
  * fixed up typos
  *
@@ -615,6 +618,53 @@ OGRGeometry *OGRSDELayer::TranslateSDEGeometry( SE_SHAPE hShape )
           }
 
           poGeom = poLine;
+      }
+      break;
+
+/* -------------------------------------------------------------------- */
+/*      Handle multi line.                                              */
+/* -------------------------------------------------------------------- */
+      case SG_MULTI_LINE_SHAPE:
+      case SG_MULTI_SIMPLE_LINE_SHAPE:
+      {
+          OGRMultiLineString *poMLS = new OGRMultiLineString();
+	  int iPart;
+
+          CPLAssert( nPartCount == nSubPartCount );
+              
+          for( iPart = 0; iPart < nPartCount; iPart++ )
+          {
+              OGRLineString *poLine = new OGRLineString();
+              int i, nLineVertCount;
+
+              CPLAssert( panParts[iPart] == iPart ); // 1:1 correspondance
+          
+              if( iPart == nPartCount-1 )
+                  nLineVertCount = nPointCount - panSubParts[iPart];
+              else
+                  nLineVertCount = panSubParts[iPart+1] - panSubParts[iPart];
+
+              poLine->setNumPoints( nPointCount );
+              
+              for( i = 0; i < nLineVertCount; i++ )
+              {
+                  int iVert = i + panSubParts[iPart];
+
+                  if( padfZ )
+                      poLine->setPoint( i, 
+                                        pasPoints[iVert].x, 
+                                        pasPoints[iVert].y, 
+                                        padfZ[iVert] );
+                  else
+                      poLine->setPoint( i, 
+                                        pasPoints[iVert].x, 
+                                        pasPoints[iVert].y );
+              }
+
+              poMLS->addGeometryDirectly( poLine );
+          }
+
+          poGeom = poMLS;
       }
       break;
 
