@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/04/11 01:59:18  fwarmerdam
+ * Optimize convertion to well known text for very large numbers of lines or
+ * very long strings.
+ *
  * Revision 1.15  2006/03/31 17:44:20  fwarmerdam
  * header updates
  *
@@ -320,18 +324,22 @@ OGRErr OGRMultiLineString::exportToWkt( char ** ppszDstText ) const
 /* -------------------------------------------------------------------- */
 /*      Build up the string, freeing temporary strings as we go.        */
 /* -------------------------------------------------------------------- */
-    strcpy( *ppszDstText, "MULTILINESTRING (" );
+    char *pszAppendPoint = *ppszDstText;
+
+    strcpy( pszAppendPoint, "MULTILINESTRING (" );
 
     for( iLine = 0; iLine < getNumGeometries(); iLine++ )
     {                                                           
         if( iLine > 0 )
-            strcat( *ppszDstText, "," );
+            strcat( pszAppendPoint, "," );
         
-        strcat( *ppszDstText, papszLines[iLine] + 11 );
+        strcat( pszAppendPoint, papszLines[iLine] + 11 );
+        pszAppendPoint += strlen(pszAppendPoint);
+
         VSIFree( papszLines[iLine] );
     }
 
-    strcat( *ppszDstText, ")" );
+    strcat( pszAppendPoint, ")" );
 
     CPLFree( papszLines );
 
