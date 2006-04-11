@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2006/04/11 18:45:41  fwarmerdam
+ * Fixed definition of a chain.
+ *
  * Revision 1.57  2006/03/31 17:44:20  fwarmerdam
  * header updates
  *
@@ -368,7 +371,7 @@ typedef enum {
 #define SRS_UL_LINK             "Link"          /* Based on US Foot */
 #define SRS_UL_LINK_CONV                    "0.20116684023368047"
 #define SRS_UL_CHAIN            "Chain"         /* based on US Foot */
-#define SRS_UL_CHAIN_CONV                   "2.0116684023368047"
+#define SRS_UL_CHAIN_CONV                   "20.116684023368047"
 #define SRS_UL_ROD              "Rod"           /* based on US Foot */
 #define SRS_UL_ROD_CONV                     "5.02921005842012"
 
