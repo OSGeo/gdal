@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/04/11 01:37:53  fwarmerdam
+ * fixed up typos
+ *
  * Revision 1.9  2006/04/11 01:26:10  fwarmerdam
  * First draft multipoint support, fixing multipolygons.
  *
@@ -585,6 +588,7 @@ OGRGeometry *OGRSDELayer::TranslateSDEGeometry( SE_SHAPE hShape )
                   poMP->addGeometryDirectly( new OGRPoint( pasPoints[iPart].x,
                                                            pasPoints[iPart].y ) );
           }
+          poGeom = poMP;
       }
       break;
 
@@ -630,14 +634,14 @@ OGRGeometry *OGRSDELayer::TranslateSDEGeometry( SE_SHAPE hShape )
           {
               OGRPolygon *poPoly = new OGRPolygon();
               int iVert, iSubPart;
-              nNextSubPart;
+              int nNextSubPart;
 
               if( iPart == nPartCount-1 )
                   nNextSubPart = nSubPartCount;
               else
-                  nNextSubPart = panPart[iPart+1];
+                  nNextSubPart = panParts[iPart+1];
               
-              for( iSubPart = panPart[iPart]; iSubPart < nNextSubPart; iSubPart++ )
+              for( iSubPart = panParts[iPart]; iSubPart < nNextSubPart; iSubPart++ )
               {
                   OGRLinearRing *poRing = new OGRLinearRing();
                   int nRingVertCount; 
