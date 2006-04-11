@@ -9,7 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.55  2006/04/11 12:48:52  ajolma
+ * swig 1.3.29 _does_ have DISOWN for Perl
+ *
  * Revision 1.54  2006/04/06 20:45:47  ajolma
+ *
  * swig/Perl does not use *DISOWN, so I added another solution
  *
  * Revision 1.53  2006/04/02 18:34:33  fwarmerdam
@@ -504,9 +508,7 @@ public:
     return OGR_DS_TestCapability(self, cap);
   }
 
-#ifndef SWIGPERL
   %newobject ExecuteSQL;
-#endif
   %feature( "kwargs" ) ExecuteSQL;
   OGRLayerShadow *ExecuteSQL(const char* statement,
                         OGRGeometryShadow* geom=NULL,
@@ -518,15 +520,11 @@ public:
     return layer;
   }
   
-#ifndef SWIGPERL
 %apply SWIGTYPE *DISOWN {OGRLayerShadow *layer};
-#endif
   void ReleaseResultSet(OGRLayerShadow *layer){
     OGR_DS_ReleaseResultSet(self, layer);
   }
-#ifndef SWIGPERL
 %clear OGRLayerShadow *layer;
-#endif
 
 } /* %extend */
 
@@ -680,25 +678,11 @@ public:
   }
 
 /* The feature takes over owernship of the geometry. */
-#ifdef SWIGPERL
-  OGRErr _SetGeometryDirectly(OGRGeometryShadow* geom) {
-    return OGR_F_SetGeometryDirectly(self, geom);
-  }
-  %perlcode %{
-    package ogr::Feature;
-    sub SetGeometryDirectly(OGRGeometryShadow* geom) {
-      my ($self, $geom) = @_;
-      $geom->DISOWN();
-      $self->_SetGeometryDirectly($geom);
-    }
-  %}
-#else
 %apply SWIGTYPE *DISOWN {OGRGeometryShadow *geom};
   OGRErr SetGeometryDirectly(OGRGeometryShadow* geom) {
     return OGR_F_SetGeometryDirectly(self, geom);
   }
 %clear OGRGeometryShadow *geom;
-#endif
   
   /* Feature owns its geometry */
   OGRGeometryShadow *GetGeometryRef() {
@@ -1080,25 +1064,11 @@ public:
   }
 
 /* The geometry now owns an inner geometry */
-#ifdef SWIGPERL
-  OGRErr _AddGeometryDirectly(OGRGeometryShadow* other) {
-    return OGR_G_AddGeometryDirectly(self, other);
-  }
-  %perlcode %{
-    package ogr::Geometry;
-    sub AddGeometryDirectly(OGRGeometryShadow* other) {
-      my ($self, $other) = @_;
-      $other->DISOWN();
-      $self->_AddGeometryDirectly($other);
-    }
-  %}
-#else
 %apply SWIGTYPE *DISOWN {OGRGeometryShadow* other};
   OGRErr AddGeometryDirectly( OGRGeometryShadow* other ) {
     return OGR_G_AddGeometryDirectly( self, other );
   }
 %clear OGRGeometryShadow* other;
-#endif
 
   OGRErr AddGeometry( OGRGeometryShadow* other ) {
     return OGR_G_AddGeometry( self, other );
