@@ -400,6 +400,7 @@ INPUT                  = port \
                          frmts/gdalallregister.cpp \
                          alg \
                          frmts/vrt \
+			 rfc \
                          doc
 
 # If the value of the INPUT tag contains directories, you can use the 
