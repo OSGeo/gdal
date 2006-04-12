@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/04/12 15:10:40  fwarmerdam
+ * argument to InsertString should be const
+ *
  * Revision 1.24  2006/03/21 20:11:54  fwarmerdam
  * fixup headers a bit
  *
@@ -120,7 +123,7 @@ int CPL_DLL CSLSave(char **papszStrList, const char *pszFname);
 char CPL_DLL **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo, 
                          char **papszNewLines);
 char CPL_DLL **CSLInsertString(char **papszStrList, int nInsertAtLineNo, 
-                        char *pszNewLine);
+                               const char *pszNewLine);
 char CPL_DLL **CSLRemoveStrings(char **papszStrList, int nFirstLineToDelete,
                          int nNumToRemove, char ***ppapszRetStrings);
 int CPL_DLL CSLFindString( char **, const char * );

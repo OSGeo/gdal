@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.55  2006/04/12 15:10:40  fwarmerdam
+ * argument to InsertString should be const
+ *
  * Revision 1.54  2006/02/19 21:54:34  mloskot
  * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
  *
@@ -590,13 +593,13 @@ char **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo,
  * Returns the modified StringList.
  **********************************************************************/
 char **CSLInsertString(char **papszStrList, int nInsertAtLineNo, 
-                           char *pszNewLine)
+                       const char *pszNewLine)
 {
     char *apszList[2];
 
     /* Create a temporary StringList and call CSLInsertStrings()
      */
-    apszList[0] = pszNewLine;
+    apszList[0] = (char *) pszNewLine;
     apszList[1] = NULL;
 
     return CSLInsertStrings(papszStrList, nInsertAtLineNo, apszList);
