@@ -10,23 +10,23 @@
 is a translator library for raster geospatial data formats
 that is released under an <a href="faq.html#license">X/MIT</a> style 
 <a href="http://www.opensource.org/">
-Open Source</a> license.  As a library, it presents a
-<a href="gdal_datamodel.html"> single abstract data
-model</a> to the calling application for all supported formats.
-The related <a href="ogr">OGR</a> 
-library (which lives within the GDAL source tree) provides
-a similar capability for simple features vector data.
-The ref <a href="NEWS.html">NEWS</a> page describes the October 2005
-GDAL 1.3.1 release.<p>
+Open Source</a> license by the <a href="http://www.osgeo.org/">Open Source
+Geospatial Foundation</a>.  As a library, it presents a
+\link gdal_datamodel.html single abstract data model\endlink 
+to the calling application for all supported formats.  It also comes with a variety
+of useful \link gdal_utilities.html commandline utilties\endlink
+for data translation and processing.  The \link NEWS.html NEWS\endlink 
+page describes the October 2005 GDAL 1.3.1 release.
 
-Master Page: http://www.gdal.org<br>
-Mirror Page: http://www.remotesensing.org/gdal<br>
-Mirror: http://gdal.maptools.org<br>
+The related <a href="ogr">OGR</a> library (which lives within the GDAL source tree) 
+provides a similar capability for simple features vector data.
+
+Master: http://www.gdal.org<br>
+Mirrors: http://gdal.osgeo.org, http://gdal.maptools.org<br>
 Download: 
-<a href="http://www.gdal.org/dl">http at gdal.org</a>,
-<a href="ftp://ftp.remotesensing.org/gdal">ftp at remotesensing.org</a>,
-<a href="http://gdal.maptools.org/dl">http at maptools.org</a><br>
-Primary Maintainer: <a href="http://pobox.com/~warmerdam">Frank Warmerdam</a>.<p>
+ <a href="http://www.gdal.org/dl">http at gdal.org</a>,
+ <a href="ftp://ftp.remotesensing.org/gdal">ftp at remotesensing.org</a>,
+ <a href="https://gdal.osgeo.org/servlets/ProjectDocumentList?folderID=40&expandFolder=40&folderID=0">http at osgeo.org</a>
 
 \section index_primary_sponsor Primary Sponsor
 
@@ -46,27 +46,28 @@ on GDAL improvement efforts not focused on any particular client project.<p>
 \section index_userdocs User Oriented Documentation
 
 <ul>
-<li> <a href="download.html">Downloads - Source and Binaries</a>
-<li> <a href="formats_list.html">Supported Formats</a>
-<li> <a href="gdal_utilities.html">GDAL Utility Programs</a>
-<li> <a href="faq.html">GDAL FAQ</a>
-<li> <a href="gdal_datamodel.html">GDAL Data Model</a>
-<li> <a href="credits.html">Acknowledgements and Credits</a>
+<li> \link download.html Downloads\endlink - Source and Binaries</a>
+<li> \link formats_list.html Supported Formats\endlink
+<li> \link gdal_utilities.html GDAL Utility Programs\endlink
+<li> \link faq.html GDAL FAQ\endlink
+<li> \link gdal_datamodel.html GDAL Data Model\endlink
+<li> \link governance.html GDAL/OGR Governance and Community Participation\endlink
+<li> \link credits.html Acknowledgements and Credits\endlink
 </ul>
 
 \section index_devdocs Developer Oriented Documentation
 
 <ul>
-<li> <a href="gdal_building.html">Building GDAL From Source</a>
-<li> <a href="hierarchy.html">API Reference Documentation</a> 
-<li> <a href="gdal_tutorial.html">GDAL API Tutorial</a>
-<li> <a href="gdal_drivertut.html">GDAL Driver Implementation Tutorial</a>
-<li> <a href="warptut.html">GDAL Warp API Tutorial</a>
-<li> <a href="ogr/osr_tutorial.html">OGRSpatialReference Tutorial</a>
-<li> <a href="gdal_8h.html">gdal.h</a> - the GDAL C API.
-<li> <a href="classGDALDataset.html">GDALDataset</a>
-<li> <a href="classGDALRasterBand.html">GDALRasterBand</a>
-<li> <a href="wince.html">GDAL for Windows CE</a>
+<li> \link gdal_building.html Building GDAL From Source\endlink
+<li> \link hierarchy.html API Reference Documentation\endlink
+<li> \link gdal_tutorial.html GDAL API Tutorial\endlink
+<li> \link gdal_drivertut.html GDAL Driver Implementation Tutorial\endlink
+<li> \link warptut.html GDAL Warp API Tutorial\endlink
+<li> \link ogr/osr_tutorial.html OGRSpatialReference Tutorial\endlink
+<li> \link gdal.h\endlink - the GDAL C API.
+<li> \link GDALDataset\endlink
+<li> \link GDALRasterBand\endlink
+<li> \link wince.html GDAL for Windows CE\endlink
 </ul>
 
 \section index_maillist Mailing List
@@ -109,8 +110,6 @@ by Timothy H. Keitt.
 \section index_projects Projects Using GDAL
 
 <ul>
-<li> <a href="http://home.gdal.org/projects/index.html">My other 
-projects</a>, many of which are incorporated into GDAL or use GDAL.
 <li> <a href="http://grass.itc.it/index.html">GRASS</a>: A raster/vector
 open source GIS uses GDAL for raster import (via r.in.gdal).
 <li> <a href="http://openev.sourceforge.net">OpenEV</a>: An OpenGL/GTK/Python
