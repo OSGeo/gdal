@@ -64,7 +64,7 @@ on GDAL improvement efforts not focused on any particular client project.<p>
 <li> \link gdal_drivertut.html GDAL Driver Implementation Tutorial\endlink
 <li> \link warptut.html GDAL Warp API Tutorial\endlink
 <li> \link ogr/osr_tutorial.html OGRSpatialReference Tutorial\endlink
-<li> \link gdal.h\endlink - the GDAL C API.
+<li> \link gdal.h gdal.h the GDAL C API\endlink
 <li> \link GDALDataset\endlink
 <li> \link GDALRasterBand\endlink
 <li> \link wince.html GDAL for Windows CE\endlink
