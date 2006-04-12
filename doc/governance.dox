@@ -1,0 +1,43 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
+/*!
+\page governance Governance and Community Participation
+
+\section osgeo OSGeo Project Membership
+
+Traditionally GDAL has been lead by Frank Warmerdam, the original author of
+much of GDAL/OGR, though with contributions and input from a variety of people. 
+As of February 2006 GDAL/OGR became a founding project of the 
+<a href="http://www.osgeo.org/">Open Source Geospatial Foundation (OSGeo)</a> 
+and began a transition to a more community oriented governance model - in keeping
+with OSGeo expectations. 
+
+Membership as an OSGeo project provides assurances that a variety of best practices
+are being employed by the GDAL/OGR project, and that users and contributors can
+be assured of responsible project operation and continuity of the project.   In
+particular:
+
+<ul>
+
+<li> A consensus oriented Project Management Committee will be in charge of the project.
+<li> Project source code and contributions will be vetted to ensure code is properly
+made available, protecting contributors and users of GDAL/OGR. 
+
+<li> Systems infrastructure is provided by the foundation, with responsible backup and
+redundancy to minimize disruptions. 
+
+</ul>
+
+\section pmc Project Management Committee
+
+As of April 2006 (following the GDAL/OGR 1.3.2 release) the project has been 
+placed in the hands of a Project Steering Committee consisting of Frank Warmerdam,
+Andrey Kiselev, Daniel Morissette and Howard Butler.  This project steering 
+committee operates under the rules of \link rfc1_pmc.html GDAL/OGR RFC 1\endlink. 
+
+Note that discussion of proposals to the PMC take place on gdal-dev, and input
+from all subscribers is welcome.  
+
+*/
