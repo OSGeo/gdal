@@ -1,0 +1,96 @@
+/*!
+\page rfc1_pmc RFC 1: Project Management Committee Guidelines
+
+Author: Frank Warmerdam<br>
+Contact: warmerdam@pobox.com<br>
+Status: Proposed<br>
+
+\section summary Summary
+
+This document describes how the GDAL/OGR Project Management Committee
+determines membership, and makes decisions on GDAL/OGR project issues.
+
+In brief the committee votes on proposals on gdal-dev.  Proposals are 
+available for review for at least two days, and a single veto is sufficient 
+to delay progress though ultimately a majority of members can pass a proposal.
+
+\section detailed_process Detailed Process
+
+<ol>
+
+<li> Proposals are written up and submitted on the gdal-dev mailing
+list for discussion and voting, by any interested party, not just 
+committee members.
+
+<li> Proposals need to be available for review for at least two business
+days before a final decision can be made. 
+
+<li> Respondents may vote "+1" to indicate support for the proposal and a 
+willingness to support implementation. 
+
+<li> Respondents may vote "-1" to veto a proposal, but must provide clear
+reasoning and alternate approaches to resolving the problem within the two
+days.
+
+<li> A vote of -0 indicates mild disagreement, but has no effect.  A 0 
+indicates no opinion.  A +0 indicate mild support, but has no effect. 
+
+<li> Anyone may comment on proposals on the list, but only members of the
+Project Management Committee's votes will be counted. 
+
+<li> A proposal will be accepted if it receives +2 (including the proposer)
+and no vetos (-1). 
+
+<li> If a proposal is vetoed, and it cannot be revised to satisfy all parties, 
+then it can be resubmitted for an override vote in which a majority of all 
+eligible voters indicating +1 is sufficient to pass it.  Note that this is 
+a majority of all committee members, not just those who actively vote. 
+
+<li> Upon completion of discussion and voting the proposer should announce
+whether they are proceeding (proposal accepted) or are withdrawing their 
+proposal (vetoed). 
+
+<li> The Chair gets a vote.
+
+<li> The Chair is responsible for keeping track of who is a member of
+the Project Management Committee. 
+
+<li> Addition and removal of members from the committee, as well as selection
+of a Chair should be handled as a proposal to the committee.  The 
+selection of a new Chair also requires approval of the OSGeo board. 
+
+<li> The Chair adjudicates in cases of disputes about voting.
+
+</ol>
+
+\section when_vote When is Vote Required?
+
+<ul>
+<li> Anything that could cause backward compatability issues. 
+<li> Adding substantial amounts of new code. 
+<li> Changing inter-subsystem APIs, or objects. 
+<li> Issues of procedure.
+<li> When releases should take place.
+<li> Anything that might be controversial. 
+</ul>
+
+\section observations Observations
+
+<ul>
+<li> The Chair is the ultimate adjudicator if things break down.
+
+<li> The absolute majority rule can be used to override an obstructionist
+veto, but it is intended that in normal circumstances vetoers need to be
+convinced to withdraw their veto.  We are trying to reach consensus.
+</ul>
+
+
+\section bootstraping Bootstrapping
+
+Frank Warmerdam is declared initial Chair of the Project Management Committee.
+
+Daniel Morissette, Frank Warmerdam, Andrey Kiselev and Howard Butler are 
+declared to be the founding Project Management Committee.
+
+*/
+ 
