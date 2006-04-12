@@ -134,6 +134,7 @@ private:
     double adfGeoTransform[6];
 
     char *pszProjection;
+    char **papszCategoryNames;
 
 protected:
     GDALColorTable *poColorTable;
@@ -215,6 +216,7 @@ IdrisiDataset::IdrisiDataset()
     pszDocFilename = NULL;
     pszProjection = NULL;
     poColorTable = new GDALColorTable();
+    papszCategoryNames = NULL;
 
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -245,6 +247,7 @@ IdrisiDataset::~IdrisiDataset()
     CPLFree(pszFilename);
     CPLFree(pszDocFilename);
     CPLFree(pszProjection);
+    CSLDestroy( papszCategoryNames );
     
     if( fp != NULL )
         VSIFCloseL( fp );
@@ -356,8 +359,8 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
     //
     //	Newly "Created" files may not have values. 
     // -------------------------------------------------------------------- 
-
-    if( !EQUAL(TrimL(CSLFetchNameValue(papszRDC, rdcMIN_X)),"") )
+    char *pszMinX = TrimL(CSLFetchNameValue(papszRDC, rdcMIN_X));
+    if( !EQUAL(pszMinX,"") )
     {
         double dfMinX, dfMaxX, dfMinY, dfMaxY, dfUnit, dfXPixSz, dfYPixSz;
 
@@ -382,6 +385,7 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = dfYPixSz;
     }
+    CPLFree( pszMinX );
 
     //CPLDebug(extRST, "Open: Load the transformation matrix %.8g,%.8g,%.8g,%.8g,%.8g,%.8g,%.8g", dfMinX, dfMaxX, dfMinY, dfMaxY, dfUnit, dfXPixSz, dfYPixSz);
 
@@ -415,6 +419,29 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
                 i++;
             }
             VSIFCloseL(fpSMP);
+        }
+    }
+
+    // -------------------------------------------------------------------- 
+    //      Check for category names.
+    // -------------------------------------------------------------------- 
+    int nCatCount, i;
+    sscanf(CSLFetchNameValue(poDS->papszRDC, rdcLEGEND_CATS),  " %d", &nCatCount);
+
+    for (i = 0; i < nCatCount; i++)
+    {
+        char *pszLabel = (char*) CSLFetchNameValue(poDS->papszRDC, 
+                                                   CPLSPrintf(rdcCODE_N, i));
+
+        if (pszLabel == NULL)
+            poDS->papszCategoryNames = CSLAddString(poDS->papszCategoryNames, "");
+        else
+        {
+            if( *pszLabel == ' ' )
+                pszLabel++;
+
+            poDS->papszCategoryNames = CSLAddString(poDS->papszCategoryNames, 
+                                                    pszLabel);
         }
     }
 
@@ -514,6 +541,7 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename,
     CSLSetNameValueSeparator(papszRDC, ": ");
     CSLSave(papszRDC, pszDocFilename);
     CSLDestroy(papszRDC);
+    CPLFree( pszDataType );
 
     // ---------------------------------------------------------------- 
     //  Create an empty data file
@@ -853,13 +881,20 @@ const char *IdrisiDataset::GetProjectionRef(void)
     }
     else
     {
-        oSRS.SetWellKnownGeogCS("WGS84");
-        oSRS.exportToWkt(&pszProjection);
+        char* pszUnits = TrimL(CSLFetchNameValue(papszRDC, rdcREF_UNITS));
+        if (EQUAL(pszUnits, "deg"))
+        {
+            oSRS.SetWellKnownGeogCS("WGS84");
+            oSRS.exportToWkt(&pszProjection);
+        }
 
-        //CPLDebug(extRST, "Reference System not supported yet =%s", pszRefSystem);
+        CPLFree( pszUnits );
     }
 
     CPLFree(pszRefSystem);
+
+    if( pszProjection == NULL )
+        pszProjection = CPLStrdup(pszProjection);
 
     return pszProjection;
 }
@@ -1184,38 +1219,13 @@ GDALColorInterp IdrisiRasterBand::GetColorInterpretation()
 
 char **IdrisiRasterBand::GetCategoryNames()
 {      
-    //CPLDebug(extRST, "GetCategoryNames");
-
     IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
-    char **papszCategoryNames;
-
-    int nCount;
-    sscanf(CSLFetchNameValue(poGDS->papszRDC, rdcLEGEND_CATS),  " %d", &nCount);
-
-    papszCategoryNames = NULL;
-
-    for (int i = 0; i < nCount; i++)
-    {
-        char *pszLabel = (char*) CSLFetchNameValue(poGDS->papszRDC, CPLSPrintf(rdcCODE_N, i));
-        if (pszLabel == NULL)
-        {
-            papszCategoryNames = CSLAddString(papszCategoryNames, "");
-        }
-        else
-        {
-            papszCategoryNames = CSLAddString(papszCategoryNames, pszLabel);
-        }
-        CPLFree(pszLabel);
-    }
-    
-    //CPLDebug(extRST, "Categories Counter = %d", CSLCount(papszCategoryNames));
-
-    return papszCategoryNames;
+    return poGDS->papszCategoryNames;
 }
 
 /************************************************************************/
-/*                           GetColroTable()                            */
+/*                           GetColorTable()                            */
 /************************************************************************/
 
 GDALColorTable *IdrisiRasterBand::GetColorTable()
@@ -1255,17 +1265,20 @@ CPLErr IdrisiRasterBand::SetCategoryNames(char **papszCategoryNames)
     int index = CSLFindString(poGDS->papszRDC, 
         CPLSPrintf("%s: %d", rdcLEGEND_CATS,nCount));
 
-    char *pszName;
-    char *pszNameValue;
-
     for (int i = 0; i < nCount; i++)
     {
-        pszName = CPLStrdup(CPLSPrintf("%s: %d", rdcCODE_N, i));
-        pszNameValue = CPLStrdup(CPLSPrintf("%s: %s", pszName, papszCategoryNames[i]));
-        CSLInsertString(poGDS->papszRDC, (index + i + 1), pszNameValue);
-        CPLFree(pszName);
-        CPLFree(pszNameValue);
+        CPLString osNameValue;
+
+        osNameValue.Printf( rdcCODE_N, i );
+        osNameValue += ": ";
+        osNameValue += papszCategoryNames[i];
+
+        poGDS->papszRDC = 
+            CSLInsertString(poGDS->papszRDC, (index + i + 1), osNameValue );
     }
+
+    CSLDestroy( poGDS->papszCategoryNames );
+    poGDS->papszCategoryNames = CSLDuplicate(papszCategoryNames);
 
     return CE_None;
 }
@@ -1282,13 +1295,17 @@ CPLErr IdrisiRasterBand::SetNoDataValue(double dfNoDataValue)
 
     if (dfNoDataValue == -9999.0)
     {
-        CSLSetNameValue(poGDS->papszRDC, rdcFLAG_VALUE, " none");
-        CSLSetNameValue(poGDS->papszRDC, rdcFLAG_DEFN,  " none");
+        poGDS->papszRDC = 
+            CSLSetNameValue(poGDS->papszRDC, rdcFLAG_VALUE, " none");
+        poGDS->papszRDC = 
+            CSLSetNameValue(poGDS->papszRDC, rdcFLAG_DEFN,  " none");
     }
     else
     {
-        CSLSetNameValue(poGDS->papszRDC, rdcFLAG_VALUE, CPLSPrintf(" %.8g", dfNoDataValue));
-        CSLSetNameValue(poGDS->papszRDC, rdcFLAG_DEFN,  " missing data");
+        poGDS->papszRDC = 
+            CSLSetNameValue(poGDS->papszRDC, rdcFLAG_VALUE, CPLSPrintf(" %.8g", dfNoDataValue));
+        poGDS->papszRDC = 
+            CSLSetNameValue(poGDS->papszRDC, rdcFLAG_DEFN,  " missing data");
     }
 
     return CE_None;
@@ -1367,11 +1384,14 @@ CPLErr IdrisiRasterBand::SetUnitType(const char *pszUnitType)
 
     if (strlen(pszUnitType) == 0)
     {
-        CSLSetNameValue(poGDS->papszRDC, rdcVALUE_UNITS, " unspecified");
+        poGDS->papszRDC = 
+            CSLSetNameValue(poGDS->papszRDC, rdcVALUE_UNITS, " unspecified");
     }
     else
     {
-        CSLSetNameValue(poGDS->papszRDC, rdcVALUE_UNITS, CPLSPrintf(" %s", pszUnitType));
+        poGDS->papszRDC = 
+            CSLSetNameValue(poGDS->papszRDC, rdcVALUE_UNITS, 
+                            CPLSPrintf(" %s", pszUnitType));
     }
 
     return CE_None;
@@ -1398,17 +1418,25 @@ CPLErr IdrisiRasterBand::SetStatistics(double dfMin, double dfMax, double dfMean
 
     if (poGDS->nBands == 3)
     {
-        CSLSetNameValue(poGDS->papszRDC, rdcMIN_VALUE,   CPLSPrintf(" %.8g %.8g %.8g", adfMin[0], adfMin[1], adfMin[2]));
-        CSLSetNameValue(poGDS->papszRDC, rdcMAX_VALUE,   CPLSPrintf(" %.8g %.8g %.8g", adfMax[0], adfMax[1], adfMax[2]));
-        CSLSetNameValue(poGDS->papszRDC, rdcDISPLAY_MIN, CPLSPrintf(" %.8g %.8g %.8g", adfMin[0], adfMin[1], adfMin[2]));
-        CSLSetNameValue(poGDS->papszRDC, rdcDISPLAY_MAX, CPLSPrintf(" %.8g %.8g %.8g", adfMax[0], adfMax[1], adfMax[2]));
+        poGDS->papszRDC = 
+            CSLSetNameValue(poGDS->papszRDC, rdcMIN_VALUE,   CPLSPrintf(" %.8g %.8g %.8g", adfMin[0], adfMin[1], adfMin[2]));
+        poGDS->papszRDC = 
+            CSLSetNameValue(poGDS->papszRDC, rdcMAX_VALUE,   CPLSPrintf(" %.8g %.8g %.8g", adfMax[0], adfMax[1], adfMax[2]));
+        poGDS->papszRDC = 
+            CSLSetNameValue(poGDS->papszRDC, rdcDISPLAY_MIN, CPLSPrintf(" %.8g %.8g %.8g", adfMin[0], adfMin[1], adfMin[2]));
+        poGDS->papszRDC = 
+            CSLSetNameValue(poGDS->papszRDC, rdcDISPLAY_MAX, CPLSPrintf(" %.8g %.8g %.8g", adfMax[0], adfMax[1], adfMax[2]));
     }
     else
     {
-        CSLSetNameValue(poGDS->papszRDC, rdcMIN_VALUE,   CPLSPrintf(" %.8g", adfMin[0]));
-        CSLSetNameValue(poGDS->papszRDC, rdcMAX_VALUE,   CPLSPrintf(" %.8g", adfMax[0]));
-        CSLSetNameValue(poGDS->papszRDC, rdcDISPLAY_MIN, CPLSPrintf(" %.8g", adfMin[0]));
-        CSLSetNameValue(poGDS->papszRDC, rdcDISPLAY_MAX, CPLSPrintf(" %.8g", adfMax[0]));
+        poGDS->papszRDC = 
+            CSLSetNameValue(poGDS->papszRDC, rdcMIN_VALUE,   CPLSPrintf(" %.8g", adfMin[0]));
+        poGDS->papszRDC = 
+            CSLSetNameValue(poGDS->papszRDC, rdcMAX_VALUE,   CPLSPrintf(" %.8g", adfMax[0]));
+        poGDS->papszRDC = 
+            CSLSetNameValue(poGDS->papszRDC, rdcDISPLAY_MIN, CPLSPrintf(" %.8g", adfMin[0]));
+        poGDS->papszRDC = 
+            CSLSetNameValue(poGDS->papszRDC, rdcDISPLAY_MAX, CPLSPrintf(" %.8g", adfMax[0]));
     }
     return CE_None;
 }
@@ -1422,7 +1450,7 @@ char *TrimL(const char *pszText)
     int i;
 
     if( pszText == NULL )
-        return "";
+        return CPLStrdup("");
 
     for (i = 0; (pszText[i] == ' ') && (pszText[i] != '\0'); i++);
 
