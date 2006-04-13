@@ -1,0 +1,32 @@
+.TH "rgb2pct" 1 "13 Apr 2006" "GDAL" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+rgb2pct \- rgb2pct.py
+converts an image into a pseudo-colored image
+.SH "SYNOPSIS"
+.PP
+.PP
+.PP
+.nf
+rgb2pct.py [-n colors] [-of format] source_file dest_file
+.fi
+.PP
+.SH "DESCRIPTION"
+.PP
+This utility will compute an optimal pseudo-color table for a given RGB image using a median cut algorithm on a downsampled RGB histogram. Then it converts the image into a pseudo-colored image using the color table. This conversion utilizes Floyd-Steinberg dithering (error diffusion) to maximize output image visual quality.
+.PP
+.IP "\fB\fB-n\fP \fIcolors\fP:\fP" 1c
+Select the number of colors in the generated color table. Defaults to 256. Must be between 2 and 256.  
+.IP "\fB\fB-of\fP \fIformat\fP:\fP" 1c
+Format to generated (defaults to GeoTIFF). Same semantics as the \fB-of\fP flag for gdal_translate. Only output formats supporting pseudocolor tables should be used.  
+.IP "\fB\fIsource_file\fP:\fP" 1c
+The input RGB file.  
+.IP "\fB\fIdest_file\fP:\fP" 1c
+The output pseudo-colored file that will be created. 
+.PP
+.PP
+NOTE: rgb2pct.py is a Python script, and will only work if GDAL was built with Python support.
+.SH "AUTHORS"
+.PP
+Frank Warmerdam <warmerdam@pobox.com> 
