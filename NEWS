@@ -1,4 +1,120 @@
 
+GDAL/OGR 1.3.2 - General Changes
+--------------------------------
+
+WinCE Porting:
+ - Support for MS WinCE new for this release.
+
+Java SWIG Bindings: 
+ - Preliminary support implemented.
+
+
+GDAL 1.3.2 - Overview of Changes
+--------------------------------
+
+Locale: 
+ - Force numeric locale to "C" at a few strategic points.
+
+Idrisi Driver:
+ - New for 1.3.2. 
+ - Includes reading and writing. 
+ - Limited coordinate system support.
+
+DIPEx Driver: 
+ - New for GDAL 1.3.2 (related to ELAS format).
+
+Leveller Driver:
+ - New for GDAL 1.3.2. 
+
+NetCDF Driver:
+ - Improved autoidentification of x, y dimensions.
+ - Improved CF support.
+
+JPEG2000 (JasPer) Driver:
+ - Use GDALJP2Metadata to support various kinds of georeferencing. 
+
+JPEG2000 (JP2KAK) Driver:
+ - Support writing tiles outputs so that very large images can be written.
+
+GeoTIFF Driver:
+ - Report error when attempting to create >4GB uncompressed file.
+ - Updated to latest libtiff, now supports "old jpeg" fairly well. 
+ - Improved support for subsampled YCbCr images. 
+
+Imagine (HFA) Driver:
+ - Support reading affine polynomial transforms as geotransform. 
+ - Support overviews of different type than base band.
+ - Support reading RDO style "nodata" indicator.
+
+PCI Aux Driver:
+ - Support projections requiring parameters. 
+
+MrSID Driver;
+ - Fixed problem with writing files other than 1 or 3 bands.
+ - Support ESDK 6.x. 
+
+BMP Driver:
+ - Added support for 32bit images with bitfields compression.
+
+gdal_rasterize Utility:
+ - New for GDAL 1.3.2. 
+ - Rasterize OGR polygons into a raster. 
+
+
+OGR 1.3.2 - Overview of Changes
+-------------------------------
+
+OGRFeature:
+ - Added support for OFTDate, OFTTime and OFTDateTime field types. 
+ - Also applied to a few drivers (shapefile, mysql, postgres)
+
+OGRLayer:
+ - GetFIDColumn() and GetGeometryColumn() added.
+
+Generic OGR SQL:
+ - Proper support for spatial and attribute filters installed on 
+   OGR SQL resultsets. 
+
+OGRSpatialReference:
+ - Upgraded data files to EPSG 6.9
+
+PostGIS Driver:
+ - Include proj4text in new spatial_ref_sys entries.
+ - Fixed support for very large queries.
+ - Fixed DeleteLayer() implementation.
+ - Added COPY support for accerated loading.
+
+MySQL Driver:
+ - Added read and write support for Spatial types. 
+ - Support spatial_ref_sys and geometry_columns tables.
+ - Various other improvements (dates, smallint, tinyint, etc)
+
+ArcSDE Driver:
+ - New for 1.3.2. 
+ - Read-only support for all geometry types. 
+ - Supports coordinate systems.
+ - Requires SDE C API from ESRI.
+
+Shapefile Driver:
+ - Avoid posting errors when .dbf's without .shps are opened.
+ - Added pseudo-SQL REPACK command after deleting features.
+ - Implement DeleteFeature()
+
+S-57 Driver:
+ - Added support for Arcs. 
+ - Added special DSID_DSSI feature class to capture header info.
+
+DGN Driver:
+ - Support writing geometry collections.
+
+DWG/DXF Driver:
+ - New for OGR 1.3.2
+ - Only supports writing DWG and DXF.
+ - Depends on DWGdirect library.
+
+
+===============================================================================
+
 GDAL 1.3.1 - Overview of Changes
 --------------------------------
 
@@ -69,8 +185,6 @@ ODBC Driver:
 
 S57 Driver:
  - Added support for Inland Waterways, and Additional Military Layers profiles
-
-
 
 
 ===============================================================================
