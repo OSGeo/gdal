@@ -28,6 +28,11 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.58  2006/04/13 15:20:27  fwarmerdam
+ * Fixed bug in non-direct case with buffer/request different sizes
+ * and more than one band.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1148
+ *
  * Revision 1.57  2006/04/07 05:50:07  fwarmerdam
  * Modified to use GDALJP2Metadata to read all the various kinds of jpeg2000
  * georeferencing information, including world files.
@@ -512,7 +517,6 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* -------------------------------------------------------------------- */
     double  	dfSrcYInc = (double)nNewYSize / nBufYSize;
     double  	dfSrcXInc = (double)nNewXSize / nBufXSize;
-    int      	nBufDataSize = GDALGetDataTypeSize( eBufType ) / 8;
     int      	iSrcLine, iDstLine;
 
     for( iSrcLine = 0, iDstLine = 0; iDstLine < nBufYSize; iDstLine++ )
@@ -558,7 +562,7 @@ CPLErr ECWRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                        + nRawPixelSize*((int)(iPixel*dfSrcXInc)),
                                        poGDS->eRasterDataType, nRawPixelSize,
                                        (GByte *)pData + iDstLineOff
-				       + iPixel * nBufDataSize,
+				       + iPixel * nPixelSpace,
                                        eBufType, nPixelSpace, 1 );
                     }
 		}
