@@ -6,6 +6,10 @@
  * Author:   Trent Hare (thare@usgs.gov),
  *           Robert Soricone (rsoricone@usgs.gov)
  *
+ * NOTE: Original code authored by Trent and Robert and placed in the public 
+ * domain as per US government policy.  I have (within my rights) appropriated 
+ * it and placed it under the following license.  This is not intended to 
+ * diminish Trent and Roberts contribution. 
  ******************************************************************************
  * Copyright (c) 2006, Frank Warmerdam <warmerdam@pobox.com>
  * 
@@ -28,6 +32,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.3  2006/04/13 16:39:35  fwarmerdam
+ * added more notes on copyright
+ *
  * Revision 1.2  2006/04/04 04:34:12  fwarmerdam
  * Fixed copyright date.
  *
