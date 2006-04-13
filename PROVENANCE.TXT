@@ -534,10 +534,103 @@ We should look into credit requirement.  '''TO_RESOLVE'''
 
 * AndreyK/FrankW, clean.
 
+=== gdal/frmts/pcraster ===
+
+* Kor de Jong holds copyright.
+* Some missing headers (pcrasterdataset.h, pcrastermisc.cpp, pcrasterrasterband.cpp, pcpcrasterutil.cpp, pcrasterutil.h
+* libcsf: license and copyright implicit in AUTHORS and COPYING documents. '''TO_RESOLVE'''
+* libcsf COPYING indicates an MIT-like agreement but with more explicit requirements
+  for notice in binaries. '''TO_RESOLVE'''
+
+ Copyright (c) 1997-2003, Utrecht University
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above
+   copyright notice, this list of conditions and the following
+   disclaimer in the documentation and/or other materials provided
+   with the distribution.
+
+ * Neither the name of Utrecht University nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+=== gdal/frmts/pgchip ===
+
+* Benjamin Simon, clean.
+
+=== gdal/frmts/png ===
+
+* FrankW, clean.
+* includes copy of libpng. 
+* libpng has a roughly MIT-like license but with explicit indication that notice is only required in source distributions.   http://www.gdal.org/srctree/frmts/png/libpng/LICENSE
+
+=== gdal/frmts/raw ===
+
+* FrankW, Derrick J Brashear, AndreyK, clean.
+
+=== gdal/frmts/rik ===
+
+* Daniel Wallner, clean.
+
+=== gdal/frmts/rmf ===
+
+* AndreyK, clean.
+
+=== gdal/frmts/rs2 ===
+
+* FrankW, clean.
+
+=== gdal/frmts/sdts ===
+
+* FrankW, clean.
+
+=== gdal/frmts/sgi ===
+
+* FrankW, clean.
+* Original SGI code used with permission of Paul Bourke. 
+
+=== gdal/frmts/usgsdem ===
+
+* FrankW, clean.
+
+=== gdal/frmts/vrt ===
+
+* FrankW, Vexcel, clean.
+
+=== gdal/frmts/xpm ===
+
+* FrankW, clean.
+
+=== gdal/frmts/zlib ===
+
+* Using external zlib library
+* README includes the license (same as libpng). 
+
+=== gdal ===
+
+* aclocal.m4 and configure.in have copyright/license headers. 
+* Various readme's, Doxyfile, Makefiles, scripts without any licensing info.
 
 === TODO ===
 
-* gdal/*.*
-* gdal/frmts
 * gdal/swig
 
