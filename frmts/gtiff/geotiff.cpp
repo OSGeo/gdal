@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.163  2006/04/13 16:38:16  fwarmerdam
+ * Added USE_RRD support.
+ *
  * Revision 1.162  2006/04/10 15:52:23  fwarmerdam
  * Fixed min-is-white color table for less than 8bit data.
  *
@@ -1966,6 +1969,16 @@ CPLErr GTiffDataset::IBuildOverviews(
                   "File open for read-only accessing, "
                   "creating overviews externally." );
 
+        return GDALDataset::IBuildOverviews( 
+            pszResampling, nOverviews, panOverviewList, 
+            nBands, panBandList, pfnProgress, pProgressData );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If RRD overviews requested, then invoke generic handling.       */
+/* -------------------------------------------------------------------- */
+    if( CSLTestBoolean(CPLGetConfigOption( "USE_RRD", "NO" )) )
+    {
         return GDALDataset::IBuildOverviews( 
             pszResampling, nOverviews, panOverviewList, 
             nBands, panBandList, pfnProgress, pProgressData );
