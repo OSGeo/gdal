@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/04/13 19:03:26  fwarmerdam
+ * fixed a flaw in yesterdays fix
+ *
  * Revision 1.16  2006/04/13 03:16:01  fwarmerdam
  * keep track if an object is PAM enabled, bug 1135
  *
@@ -261,7 +264,7 @@ void GDALPamRasterBand::PamInitialize()
 
     GDALPamDataset *poParentDS = (GDALPamDataset *) GetDataset();
 
-    if( poParentDS != NULL || !(poParentDS->GetMOFlags() | GMO_PAM_CLASS) )
+    if( poParentDS == NULL || !(poParentDS->GetMOFlags() | GMO_PAM_CLASS) )
         return;
 
     poParentDS->PamInitialize();
