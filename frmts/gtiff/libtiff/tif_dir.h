@@ -1,4 +1,4 @@
-/* $Id: tif_dir.h,v 1.28 2005/12/26 14:31:25 dron Exp $ */
+/* $Id: tif_dir.h,v 1.29 2006/04/04 02:00:08 joris Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -38,44 +38,47 @@ typedef	struct {
 	/* bit vector of fields that are set */
 	unsigned long	td_fieldsset[FIELD_SETLONGS];
 
-	uint32	td_imagewidth, td_imagelength, td_imagedepth;
-	uint32	td_tilewidth, td_tilelength, td_tiledepth;
-	uint32	td_subfiletype;
-	uint16	td_bitspersample;
-	uint16	td_sampleformat;
-	uint16	td_compression;
-	uint16	td_photometric;
-	uint16	td_threshholding;
-	uint16	td_fillorder;
-	uint16	td_orientation;
-	uint16	td_samplesperpixel;
-	uint32	td_rowsperstrip;
-	uint16	td_minsamplevalue, td_maxsamplevalue;
-	double	td_sminsamplevalue, td_smaxsamplevalue;
-	float	td_xresolution, td_yresolution;
-	uint16	td_resolutionunit;
-	uint16	td_planarconfig;
-	float	td_xposition, td_yposition;
-	uint16	td_pagenumber[2];
-	uint16*	td_colormap[3];
-	uint16	td_halftonehints[2];
-	uint16	td_extrasamples;
-	uint16*	td_sampleinfo;
-	tstrip_t td_stripsperimage;
-	tstrip_t td_nstrips;		/* size of offset & bytecount arrays */
-	uint32*	td_stripoffset;
-	uint32*	td_stripbytecount;
-	int	td_stripbytecountsorted; /* is the bytecount array sorted ascending? */
-	uint16	td_nsubifd;
-	uint32*	td_subifd;
+	uint32  td_imagewidth, td_imagelength, td_imagedepth;
+	uint32  td_tilewidth, td_tilelength, td_tiledepth;
+	uint32  td_subfiletype;
+	uint16  td_bitspersample;
+	uint16  td_sampleformat;
+	uint16  td_compression;
+	uint16  td_photometric;
+	uint16  td_threshholding;
+	uint16  td_fillorder;
+	uint16  td_orientation;
+	uint16  td_samplesperpixel;
+	uint32  td_rowsperstrip;
+	uint16  td_minsamplevalue, td_maxsamplevalue;
+	double  td_sminsamplevalue, td_smaxsamplevalue;
+	float   td_xresolution, td_yresolution;
+	uint16  td_resolutionunit;
+	uint16  td_planarconfig;
+	float   td_xposition, td_yposition;
+	uint16  td_pagenumber[2];
+	uint16* td_colormap[3];
+	uint16  td_halftonehints[2];
+	uint16  td_extrasamples;
+	uint16* td_sampleinfo;
+	/* even though the name is misleading, td_stripsperimage is the number
+	 * of striles (=strips or tiles) per plane, and td_nstrips the total
+	 * number of striles */
+	tstrile_t td_stripsperimage;
+	tstrile_t td_nstrips;            /* size of offset & bytecount arrays */
+	toff_t* td_stripoffset;
+	toff_t* td_stripbytecount;
+	int     td_stripbytecountsorted; /* is the bytecount array sorted ascending? */
+	uint16  td_nsubifd;
+	uint32* td_subifd;
 	/* YCbCr parameters */
-	uint16	td_ycbcrsubsampling[2];
-	uint16	td_ycbcrpositioning;
+	uint16  td_ycbcrsubsampling[2];
+	uint16  td_ycbcrpositioning;
 	/* Colorimetry parameters */
-	uint16*	td_transferfunction[3];
+	uint16* td_transferfunction[3];
 	/* CMYK parameters */
-	int	td_inknameslen;
-	char*	td_inknames;
+	int     td_inknameslen;
+	char*   td_inknames;
 
 	int     td_customValueCount;
         TIFFTagValue *td_customValues;

@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.83 2006/03/25 03:09:24 joris Exp $ */
+/* $Id: tif_dirread.c,v 1.84 2006/04/04 02:00:08 joris Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -41,6 +41,7 @@ extern	void TIFFCvtIEEEFloatToNative(TIFF*, uint32, float*);
 extern	void TIFFCvtIEEEDoubleToNative(TIFF*, uint32, double*);
 #endif
 
+static  TIFFDirEntry* TIFFReadDirectoryFind(TIFFDirEntry* dir, uint16 dircount, uint16 tagid);
 static	int EstimateStripByteCounts(TIFF*, TIFFDirEntry*, uint16);
 static	void MissingRequired(TIFF*, const char*);
 static	int CheckDirCount(TIFF*, TIFFDirEntry*, uint32);
@@ -362,6 +363,29 @@ TIFFReadDirectory(TIFF* tif)
 	}
 
 	/*
+	 * Joris: OJPEG hack:
+	 * If a) compression is OJPEG, b) planarconfig tag says it's separate,
+	 * c) strip offsets/bytecounts tag are both present and d) both contain exactly
+	 * one value, then we consistently find that the buggy implementation of the
+	 * buggy compression scheme matches contig planarconfig best. So we 'fix-up' the tag
+	 * here
+	 */
+	if ((td->td_compression==COMPRESSION_OJPEG) &&
+	    (td->td_planarconfig==PLANARCONFIG_SEPARATE))
+	{
+		dp=TIFFReadDirectoryFind(dir,dircount,TIFFTAG_STRIPOFFSETS);
+		if ((dp!=0) && (dp->tdir_count==1))
+		{
+			dp=TIFFReadDirectoryFind(dir,dircount,TIFFTAG_STRIPBYTECOUNTS);
+			if ((dp!=0) && (dp->tdir_count==1))
+			{
+				td->td_planarconfig=PLANARCONFIG_CONTIG;
+				TIFFWarningExt(tif->tif_clientdata,"TIFFReadDirectory","Planarconfig tag value assumed incorrect, assuming data is contig instead of chunky");
+			}
+		}
+	}
+
+	/*
 	 * Allocate directory structure and setup defaults.
 	 */
 	if (!TIFFFieldSet(tif, FIELD_IMAGEDIMENSIONS)) {
@@ -369,7 +393,7 @@ TIFFReadDirectory(TIFF* tif)
 		goto bad;
 	}
 	/* 
- 	 * Setup appropriate structures (by strip or by tile)
+	 * Setup appropriate structures (by strip or by tile)
 	 */
 	if (!TIFFFieldSet(tif, FIELD_TILEDIMENSIONS)) {
 		td->td_nstrips = TIFFNumberOfStrips(tif);
@@ -391,9 +415,22 @@ TIFFReadDirectory(TIFF* tif)
 	if (td->td_planarconfig == PLANARCONFIG_SEPARATE)
 		td->td_stripsperimage /= td->td_samplesperpixel;
 	if (!TIFFFieldSet(tif, FIELD_STRIPOFFSETS)) {
-		MissingRequired(tif,
-				isTiled(tif) ? "TileOffsets" : "StripOffsets");
-		goto bad;
+		if ((td->td_compression==COMPRESSION_OJPEG) &&
+		    (isTiled(tif)==0) &&
+		    (td->td_nstrips==1)) {
+			/*
+			 * Joris: OJPEG hack:
+			 * If a) compression is OJPEG, b) it's not a tiled TIFF,
+			 * and c) the number of strips is 1, then we tolerate the
+			 * absence of stripoffsets tag, because, presumably, all
+			 * required data is in the JpegInterchangeFormat stream
+			 */
+			TIFFSetFieldBit(tif, FIELD_STRIPOFFSETS);
+		} else {
+			MissingRequired(tif,
+			    isTiled(tif) ? "TileOffsets" : "StripOffsets");
+			goto bad;
+		}
 	}
 
 	/*
@@ -529,6 +566,57 @@ TIFFReadDirectory(TIFF* tif)
 		}
 	}
 	/*
+	 * Joris: OJPEG hack:
+	 * - If a) compression is OJPEG, and b) photometric tag is missing,
+	 * then we consistently find that photometric should be YCbCr
+	 * - If a) compression is OJPEG, and b) photometric tag says it's RGB,
+	 * then we consistently find that the buggy implementation of the
+	 * buggy compression scheme matches photometric YCbCr instead.
+	 * - If a) compression is OJPEG, and b) bitspersample tag is missing,
+	 * then we consistently find bitspersample should be 8.
+	 * - If a) compression is OJPEG, b) samplesperpixel tag is missing,
+	 * and c) photometric is RGB or YCbCr, then we consistently find
+	 * samplesperpixel should be 3
+	 * - If a) compression is OJPEG, b) samplesperpixel tag is missing,
+	 * and c) photometric is MINISWHITE or MINISBLACK, then we consistently
+	 * find samplesperpixel should be 3
+	 */
+	if (td->td_compression==COMPRESSION_OJPEG)
+	{
+		if (!TIFFFieldSet(tif,FIELD_PHOTOMETRIC))
+		{
+			TIFFWarningExt(tif->tif_clientdata,"TIFFReadDirectory","Photometric tag is missing, assuming data is YCbCr");
+			if (!TIFFSetField(tif,TIFFTAG_PHOTOMETRIC,PHOTOMETRIC_YCBCR))
+				goto bad;
+		}
+		else if (td->td_photometric==PHOTOMETRIC_RGB)
+		{
+			td->td_photometric=PHOTOMETRIC_YCBCR;
+			TIFFWarningExt(tif->tif_clientdata,"TIFFReadDirectory","Photometric tag value assumed incorrect, assuming data is YCbCr instead of RGB");
+		}
+		if (!TIFFFieldSet(tif,FIELD_BITSPERSAMPLE))
+		{
+			TIFFWarningExt(tif->tif_clientdata,"TIFFReadDirectory","BitsPerSample tag is missing, assuming 8 bits per sample");
+			if (!TIFFSetField(tif,TIFFTAG_BITSPERSAMPLE,8))
+				goto bad;
+		}
+		if (!TIFFFieldSet(tif,FIELD_SAMPLESPERPIXEL))
+		{
+			if ((td->td_photometric==PHOTOMETRIC_RGB) || (td->td_photometric==PHOTOMETRIC_YCBCR))
+			{
+				TIFFWarningExt(tif->tif_clientdata,"TIFFReadDirectory","SamplesPerPixel tag is missing, assuming correct SamplesPerPixel value is 3");
+				if (!TIFFSetField(tif,TIFFTAG_SAMPLESPERPIXEL,3))
+					goto bad;
+			}
+			else if ((td->td_photometric==PHOTOMETRIC_MINISWHITE) || (td->td_photometric==PHOTOMETRIC_MINISBLACK))
+			{
+				TIFFWarningExt(tif->tif_clientdata,"TIFFReadDirectory","SamplesPerPixel tag is missing, assuming correct SamplesPerPixel value is 1");
+				if (!TIFFSetField(tif,TIFFTAG_SAMPLESPERPIXEL,1))
+					goto bad;
+			}
+		}
+	}
+	/*
 	 * Verify Palette image has a Colormap.
 	 */
 	if (td->td_photometric == PHOTOMETRIC_PALETTE &&
@@ -537,76 +625,84 @@ TIFFReadDirectory(TIFF* tif)
 		goto bad;
 	}
 	/*
-	 * Attempt to deal with a missing StripByteCounts tag.
+	 * Joris: OJPEG hack:
+	 * We do no further messing with strip/tile offsets/bytecounts in OJPEG
+	 * TIFFs
 	 */
-	if (!TIFFFieldSet(tif, FIELD_STRIPBYTECOUNTS)) {
+	if (td->td_compression!=COMPRESSION_OJPEG)
+	{
 		/*
-		 * Some manufacturers violate the spec by not giving
-		 * the size of the strips.  In this case, assume there
-		 * is one uncompressed strip of data.
+		 * Attempt to deal with a missing StripByteCounts tag.
 		 */
-		if ((td->td_planarconfig == PLANARCONFIG_CONTIG &&
-		    td->td_nstrips > 1) ||
-		    (td->td_planarconfig == PLANARCONFIG_SEPARATE &&
-		     td->td_nstrips != td->td_samplesperpixel)) {
-		    MissingRequired(tif, "StripByteCounts");
-		    goto bad;
-		}
-		TIFFWarningExt(tif->tif_clientdata, module,
-			"%s: TIFF directory is missing required "
-			"\"%s\" field, calculating from imagelength",
-			tif->tif_name,
-		        _TIFFFieldWithTag(tif,TIFFTAG_STRIPBYTECOUNTS)->field_name);
-		if (EstimateStripByteCounts(tif, dir, dircount) < 0)
-		    goto bad;
-/* 
- * Assume we have wrong StripByteCount value (in case of single strip) in
- * following cases:
- *   - it is equal to zero along with StripOffset;
- *   - it is larger than file itself (in case of uncompressed image);
- *   - it is smaller than the size of the bytes per row multiplied on the
- *     number of rows.  The last case should not be checked in the case of
- *     writing new image, because we may do not know the exact strip size
- *     until the whole image will be written and directory dumped out.
- */
-#define	BYTECOUNTLOOKSBAD \
-    ( (td->td_stripbytecount[0] == 0 && td->td_stripoffset[0] != 0) || \
-      (td->td_compression == COMPRESSION_NONE && \
-       td->td_stripbytecount[0] > TIFFGetFileSize(tif) - td->td_stripoffset[0]) || \
-      (tif->tif_mode == O_RDONLY && \
-       td->td_compression == COMPRESSION_NONE && \
-       td->td_stripbytecount[0] < TIFFScanlineSize(tif) * td->td_imagelength) )
+		if (!TIFFFieldSet(tif, FIELD_STRIPBYTECOUNTS)) {
+			/*
+			 * Some manufacturers violate the spec by not giving
+			 * the size of the strips.  In this case, assume there
+			 * is one uncompressed strip of data.
+			 */
+			if ((td->td_planarconfig == PLANARCONFIG_CONTIG &&
+			    td->td_nstrips > 1) ||
+			    (td->td_planarconfig == PLANARCONFIG_SEPARATE &&
+			     td->td_nstrips != td->td_samplesperpixel)) {
+			    MissingRequired(tif, "StripByteCounts");
+			    goto bad;
+			}
+			TIFFWarningExt(tif->tif_clientdata, module,
+				"%s: TIFF directory is missing required "
+				"\"%s\" field, calculating from imagelength",
+				tif->tif_name,
+				_TIFFFieldWithTag(tif,TIFFTAG_STRIPBYTECOUNTS)->field_name);
+			if (EstimateStripByteCounts(tif, dir, dircount) < 0)
+			    goto bad;
+		/*
+		 * Assume we have wrong StripByteCount value (in case of single strip) in
+		 * following cases:
+		 *   - it is equal to zero along with StripOffset;
+		 *   - it is larger than file itself (in case of uncompressed image);
+		 *   - it is smaller than the size of the bytes per row multiplied on the
+		 *     number of rows.  The last case should not be checked in the case of
+		 *     writing new image, because we may do not know the exact strip size
+		 *     until the whole image will be written and directory dumped out.
+		 */
+		#define	BYTECOUNTLOOKSBAD \
+		    ( (td->td_stripbytecount[0] == 0 && td->td_stripoffset[0] != 0) || \
+		      (td->td_compression == COMPRESSION_NONE && \
+		       td->td_stripbytecount[0] > TIFFGetFileSize(tif) - td->td_stripoffset[0]) || \
+		      (tif->tif_mode == O_RDONLY && \
+		       td->td_compression == COMPRESSION_NONE && \
+		       td->td_stripbytecount[0] < TIFFScanlineSize(tif) * td->td_imagelength) )
 
-	} else if (td->td_nstrips == 1 
-                   && td->td_stripoffset[0] != 0 
-                   && BYTECOUNTLOOKSBAD) {
-		/*
-		 * XXX: Plexus (and others) sometimes give a value of zero for
-		 * a tag when they don't know what the correct value is!  Try
-		 * and handle the simple case of estimating the size of a one
-		 * strip image.
-		 */
-		TIFFWarningExt(tif->tif_clientdata, module,
-	"%s: Bogus \"%s\" field, ignoring and calculating from imagelength",
-                            tif->tif_name,
-		            _TIFFFieldWithTag(tif,TIFFTAG_STRIPBYTECOUNTS)->field_name);
-		if(EstimateStripByteCounts(tif, dir, dircount) < 0)
-		    goto bad;
-	} else if (td->td_planarconfig == PLANARCONFIG_CONTIG
-		   && td->td_nstrips > 2
-		   && td->td_compression == COMPRESSION_NONE
-		   && td->td_stripbytecount[0] != td->td_stripbytecount[1]) {
-		/*
-		 * XXX: Some vendors fill StripByteCount array with absolutely
-		 * wrong values (it can be equal to StripOffset array, for
-		 * example). Catch this case here.
-		 */
-		TIFFWarningExt(tif->tif_clientdata, module,
-	"%s: Wrong \"%s\" field, ignoring and calculating from imagelength",
-                            tif->tif_name,
-		            _TIFFFieldWithTag(tif,TIFFTAG_STRIPBYTECOUNTS)->field_name);
-		if (EstimateStripByteCounts(tif, dir, dircount) < 0)
-		    goto bad;
+		} else if (td->td_nstrips == 1
+			   && td->td_stripoffset[0] != 0
+			   && BYTECOUNTLOOKSBAD) {
+			/*
+			 * XXX: Plexus (and others) sometimes give a value of zero for
+			 * a tag when they don't know what the correct value is!  Try
+			 * and handle the simple case of estimating the size of a one
+			 * strip image.
+			 */
+			TIFFWarningExt(tif->tif_clientdata, module,
+		"%s: Bogus \"%s\" field, ignoring and calculating from imagelength",
+				    tif->tif_name,
+				    _TIFFFieldWithTag(tif,TIFFTAG_STRIPBYTECOUNTS)->field_name);
+			if(EstimateStripByteCounts(tif, dir, dircount) < 0)
+			    goto bad;
+		} else if (td->td_planarconfig == PLANARCONFIG_CONTIG
+			   && td->td_nstrips > 2
+			   && td->td_compression == COMPRESSION_NONE
+			   && td->td_stripbytecount[0] != td->td_stripbytecount[1]) {
+			/*
+			 * XXX: Some vendors fill StripByteCount array with absolutely
+			 * wrong values (it can be equal to StripOffset array, for
+			 * example). Catch this case here.
+			 */
+			TIFFWarningExt(tif->tif_clientdata, module,
+		"%s: Wrong \"%s\" field, ignoring and calculating from imagelength",
+				    tif->tif_name,
+				    _TIFFFieldWithTag(tif,TIFFTAG_STRIPBYTECOUNTS)->field_name);
+			if (EstimateStripByteCounts(tif, dir, dircount) < 0)
+			    goto bad;
+		}
 	}
 	if (dir) {
 		_TIFFfree((char *)dir);
@@ -688,7 +784,20 @@ bad:
 	return (0);
 }
 
-/* 
+static TIFFDirEntry*
+TIFFReadDirectoryFind(TIFFDirEntry* dir, uint16 dircount, uint16 tagid)
+{
+	TIFFDirEntry* m;
+	uint16 n;
+	for (m=dir, n=0; n<dircount; m++, n++)
+	{
+		if (m->tdir_tag==tagid)
+			return(m);
+	}
+	return(0);
+}
+
+/*
  * Read custom directory from the arbitarry offset.
  * The code is very similar to TIFFReadDirectory().
  */

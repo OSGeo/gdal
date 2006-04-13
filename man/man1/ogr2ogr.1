@@ -1,4 +1,4 @@
-.TH "ogr2ogr" 1 "7 Aug 2005" "Doxygen" \" -*- nroff -*-
+.TH "ogr2ogr" 1 "13 Apr 2006" "GDAL" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -9,7 +9,6 @@ converts simple features data between file formats
 .PP
 .PP
 .nf
-
 Usage: ogr2ogr [-skipfailures] [-append] [-update] [-f format_name]
                [-select field_list] [-where restricted_where] 
                [-sql <sql statement>] 
@@ -18,6 +17,7 @@ Usage: ogr2ogr [-skipfailures] [-append] [-update] [-f format_name]
                [[-dsco NAME=VALUE] ...] dst_datasource_name
                src_datasource_name
                [-lco NAME=VALUE] [-nln name] [-nlt type] layer [layer ...]]
+.fi
 .PP
 .SH "DESCRIPTION"
 .PP
@@ -27,14 +27,15 @@ This program can be used to convert simple features data between file formats pe
 output file format name, some possible values are: 
 .PP
 .nf
-
      -f "ESRI Shapefile"
      -f "TIGER"
      -f "MapInfo File"
      -f "GML"
      -f "PostgreSQL"
 	 
+.fi
 .PP
+  
 .IP "\fB\fB-append\fP:\fP" 1c
 Append to existing layer instead of creating new 
 .IP "\fB\fB-update\fP:\fP" 1c
@@ -65,14 +66,14 @@ Override source SRS
 If provided, only the feature with this feature id will be reported. Operates exclusive of the spatial or attribute queries. 
 .PP
 .PP
-Srs_def can be a full WKT definition (hard to escape properly), or a well known definition (ie. EPSG:4326) or a file with a WKT definition. 
+Srs_def can be a full WKT definition (hard to escape properly), or a well known definition (ie. EPSG:4326) or a file with a WKT definition.
 .PP
 Example appending to an existing layer (both flags need to be used):
 .PP
 .PP
 .nf
-
 % ogr2ogr -update -append -f PostgreSQL PG:dbname=warmerda abc.tab
+.fi
 .PP
 .PP
 More examples are given in the individual format pages.

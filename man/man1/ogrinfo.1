@@ -1,4 +1,4 @@
-.TH "ogrinfo" 1 "7 Aug 2005" "Doxygen" \" -*- nroff -*-
+.TH "ogrinfo" 1 "13 Apr 2006" "GDAL" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -9,11 +9,11 @@ lists information about an OGR supported data source
 .PP
 .PP
 .nf
-
 ogrinfo [-ro] [-q] [-where restricted_where]
                [-spat xmin ymin xmax ymax] [-fid fid]
                [-sql statement] [-al] [-so] [--formats]
                datasource_name [layer [layer ...]]
+.fi
 .PP
 .SH "DESCRIPTION"
 .PP
@@ -51,7 +51,6 @@ Geometries are reported in OGC WKT format.
 Example reporting all layers in an NTF file: 
 .PP
 .nf
-
 % ogrinfo wrk/SHETLAND_ISLANDS.NTF
 INFO: Open of `wrk/SHETLAND_ISLANDS.NTF'
 using driver `UK .NTF' successful.
@@ -60,12 +59,12 @@ using driver `UK .NTF' successful.
 3: BL2000_COLLECTIONS (None)
 4: FEATURE_CLASSES (None)
 
+.fi
 .PP
 .PP
 Example using an attribute query is used to restrict the output of the features in a layer: 
 .PP
 .nf
-
 % ogrinfo -ro -where 'GLOBAL_LINK_ID=185878' wrk/SHETLAND_ISLANDS.NTF BL2000_LINK
 INFO: Open of `wrk/SHETLAND_ISLANDS.NTF'
 using driver `UK .NTF' successful.
@@ -119,6 +118,7 @@ OGRFeature(BL2000_LINK):2
   1069117.600,419794.100 1069115.100,419796.300 1069109.100,419801.800
   1069106.800,419805.000  1069107.300)
 
+.fi
 .PP
 .SH "AUTHORS"
 .PP

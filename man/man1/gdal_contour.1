@@ -1,18 +1,19 @@
-.TH "gdal_contour" 1 "7 Aug 2005" "Doxygen" \" -*- nroff -*-
+.TH "gdal_contour" 1 "13 Apr 2006" "GDAL" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-gdal_contour \- builds vector contour lines from a raster elevation model 
+gdal_contour \- gdal_contour
+builds vector contour lines from a raster elevation model
 .SH "SYNOPSIS"
 .PP
 .PP
 .PP
 .nf
-
 Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]
                     [-snodata n] [-f <formatname>] [-i <interval>]
                     [-off <offset>] [-fl <level> <level>...]
-                    <src_filename> <dst_filename> <interval>
+                    <src_filename> <dst_filename> 
+.fi
 .PP
 .SH "DESCRIPTION"
 .PP
@@ -54,9 +55,9 @@ This would create 10meter contours from the DEM data in dem.tif and produce a sh
 .PP
 .PP
 .nf
-
 gdal_contour -a elev dem.tif contour.shp 10.0
+.fi
 .PP
 .SH "AUTHORS"
 .PP
-Frank Warmerdam <warmerdam@pobox.com> Silke Reimer <silke@intevation.de> 
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de> 

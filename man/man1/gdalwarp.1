@@ -1,21 +1,22 @@
-.TH "gdalwarp" 1 "7 Aug 2005" "Doxygen" \" -*- nroff -*-
+.TH "gdalwarp" 1 "13 Apr 2006" "GDAL" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-gdalwarp \- simple image reprojection and warping utility 
+gdalwarp \- gdalwarp
+simple image reprojection and warping utility
 .SH "SYNOPSIS"
 .PP
 .PP
 .PP
 .nf
-
 gdalwarp 
     [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]
     [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]
-	[-wo "NAME=VALUE"] [-ot Byte/Int16/...] [-wt Byte/Int16]
-    [-srcnodata value [value...]] [-dstnodata value [value...]]
+    [-wo "NAME=VALUE"] [-ot Byte/Int16/...] [-wt Byte/Int16]
+    [-srcnodata "value [value...]"] [-dstnodata "value [value...]"]
     [-rn] [-rb] [-rc] [-rcs] [-wm memory_in_mb] [-multi] [-q]
     [-of format] [-co "NAME=VALUE"]* srcfile dstfile
+.fi
 .PP
 .SH "DESCRIPTION"
 .PP
@@ -31,7 +32,8 @@ order of polynomial used for warping (1 to 3). The default is to select a polyno
 Enable use of thin plate spline transformer based on available GCPs. Use this \fIinstead\fP of the -order switch. 
 .IP "\fB\fB-et\fP \fIerr_threshold\fP:\fP" 1c
 error threshold for transformation approximation (in pixel units - defaults to 0.125). 
-.IP "\fB\fB-te\fP \fIxmin ymin xmax ymax\fP: set georeferenced extents of output file to be created. \fP" 1c
+.IP "\fB\fB-te\fP \fIxmin ymin xmax ymax\fP:\fP" 1c
+set georeferenced extents of output file to be created. 
 .IP "\fB\fB-tr\fP \fIxres yres\fP:\fP" 1c
 set output file resolution (in target georeferenced units) 
 .IP "\fB\fB-ts\fP \fIwidth height\fP:\fP" 1c
@@ -41,7 +43,7 @@ Set a warp options. There is a \fClist\fP of available ones. Multiple \fB-wo\fP 
 .IP "\fB\fB-ot\fP \fItype\fP:\fP" 1c
 For the output bands to be of the indicated data type. 
 .IP "\fB\fB-wt\fP \fItype\fP:\fP" 1c
-Working pixel data type. The datatype of pixels in the source image and destination image buffers. 
+Working pixel data type. The data type of pixels in the source image and destination image buffers. 
 .IP "\fB\fB-rn\fP:\fP" 1c
 Use nearest neighbour resampling (default, fastest algorithm, worst interpolation quality). 
 .IP "\fB\fB-rb\fP:\fP" 1c
@@ -51,9 +53,9 @@ Use cubic resampling.
 .IP "\fB\fB-rcs\fP:\fP" 1c
 Use cubic spline resampling (slowest algorithm). 
 .IP "\fB\fB-srcnodata\fP \fIvalue [value...]\fP:\fP" 1c
-Set nodata masking values for input bands (different values can be supplied for each band). Masked values will not be used in interpolation. 
+Set nodata masking values for input bands (different values can be supplied for each band). If more than one value is supplied all values should be quoted to keep them together as a single operating system argument. Masked values will not be used in interpolation. 
 .IP "\fB\fB-dstnodata\fP \fIvalue [value...]\fP:\fP" 1c
-Set nodata values for output bands (different values can be supplied for each band). New files will be initialized to this value and if possible the nodata value will be recorded in the output file. 
+Set nodata values for output bands (different values can be supplied for each band). If more than one value is supplied all values should be quoted to keep them together as a single operating system argument. New files will be initialized to this value and if possible the nodata value will be recorded in the output file. 
 .IP "\fB\fB-wm\fP \fImemory_in_mb\fP:\fP" 1c
 Set the amount of memory (in megabytes) that the warp API is allowed to use for caching. 
 .IP "\fB\fB-multi\fP:\fP" 1c
@@ -78,17 +80,17 @@ For instance, an eight bit spot scene stored in GeoTIFF with control points mapp
 .PP
 .PP
 .nf
-
 gdalwarp -t_srs '+proj=utm +zone=11 +datum=WGS84' raw_spot.tif utm11.tif
+.fi
 .PP
 .PP
 For instance, the second channel of an ASTER image stored in HDF with control points mapping the corners to lat/long could be warped to a UTM projection with a command like this:
 .PP
 .PP
 .nf
-
 gdalwarp HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 pg-PR1B0000-2002031402_100_001_2.tif
+.fi
 .PP
 .SH "AUTHORS"
 .PP
-Frank Warmerdam <warmerdam@pobox.com> Silke Reimer <silke@intevation.de> 
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de> 
