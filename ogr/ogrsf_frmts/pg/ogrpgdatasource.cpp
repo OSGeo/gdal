@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2006/04/13 03:36:59  fwarmerdam
+ * When adding records to spatial_ref_sys, ensure that proj4text is
+ * also added!  http://bugzilla.remotesensing.org/show_bug.cgi?id=1146
+ *
  * Revision 1.47  2006/03/28 23:06:57  fwarmerdam
  * fixed contact info
  *
@@ -994,6 +998,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
     CPLAssert( strlen(pszWKT) < sizeof(szCommand) - 500 );
 
+
 /* -------------------------------------------------------------------- */
 /*      Try to find in the existing table.                              */
 /* -------------------------------------------------------------------- */
@@ -1003,6 +1008,8 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
              "SELECT srid FROM spatial_ref_sys WHERE srtext = '%s'",
              pszWKT );
     hResult = PQexec(hPGConn, szCommand );
+    CPLFree( pszWKT );  // CM:  Added to prevent mem leaks
+    pszWKT = NULL;      // CM:  Added
 
 /* -------------------------------------------------------------------- */
 /*      We got it!  Return it.                                          */
@@ -1057,9 +1064,29 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
 /*      Try adding the SRS to the SRS table.                            */
 /* -------------------------------------------------------------------- */
+    if( poSRS->exportToWkt( &pszWKT ) != OGRERR_NONE )
+    {
+        return -1;
+    }
+
+    CPLAssert( strlen(pszWKT) < sizeof(szCommand) - 500 );
+
+    char    *pszProj4 = NULL;
+    if( poSRS->exportToProj4( &pszProj4 ) != OGRERR_NONE )
+    {
+        CPLFree( pszWKT );  // Prevent mem leaks
+        pszWKT = NULL;
+		
+        return -1;
+    }
+
     sprintf( szCommand,
-             "INSERT INTO spatial_ref_sys (srid,srtext) VALUES (%d,'%s')",
-             nSRSId, pszWKT );
+             "INSERT INTO spatial_ref_sys (srid,srtext,proj4text) VALUES (%d,'%s','%s')",
+             nSRSId, pszWKT, pszProj4 );
+	
+    // Free everything that was allocated.
+    CPLFree( pszProj4 );
+    CPLFree( pszWKT);
 
     hResult = PQexec(hPGConn, szCommand );
     PQclear( hResult );
