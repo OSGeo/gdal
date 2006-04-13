@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2006/04/13 03:57:40  hobu
+ * add William's patches for tinyint and smallint detection (bug 1155)
+ *
  * Revision 1.32  2006/04/03 01:48:53  fwarmerdam
  * improve date support
  *
@@ -305,15 +308,15 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
             CSLDestroy( papszTokens );
             oField.SetType( OFTString );
         }
-        else if( EQUALN(pszType,"int",3) )
+        else if( EQUALN(pszType,"int", 3) )
         {
             oField.SetType( OFTInteger );
         }
-        else if( EQUAL(pszType,"tinyint") )
+        else if( EQUALN(pszType,"tinyint", 7) )
         {
             oField.SetType( OFTInteger );
         }
-        else if( EQUAL(pszType,"smallint") )
+        else if( EQUALN(pszType,"smallint", 8) )
         {
             oField.SetType( OFTInteger );
         }
@@ -343,7 +346,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 
 
         }
-        else if( EQUAL(pszType,"float") )
+        else if( EQUALN(pszType,"float", 5) )
         {
             oField.SetType( OFTReal );
         }
