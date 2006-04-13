@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/04/13 16:41:03  fwarmerdam
+ * improved success reporting, preliminary srcrect support
+ *
  * Revision 1.7  2005/09/05 19:35:10  fwarmerdam
  * Added shape support
  *
@@ -86,6 +89,9 @@ class OGRVRTLayer : public OGRLayer
 
     char                *pszAttrFilter;
 
+    int                 bSrcClip;
+    OGRGeometry         *poSrcRegion;
+
     int                 iFIDField; // -1 means pass through. 
 
     // Geometry interpretation related.
@@ -103,7 +109,7 @@ class OGRVRTLayer : public OGRLayer
     OGRFeature         *TranslateFeature( OGRFeature * );
     OGRErr              createFromShapeBin( GByte *, OGRGeometry **, int );
 
-    void                ResetSourceReading();
+    int                 ResetSourceReading();
 
   public:
                         OGRVRTLayer();

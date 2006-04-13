@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/04/13 16:41:03  fwarmerdam
+ * improved success reporting, preliminary srcrect support
+ *
  * Revision 1.20  2005/12/08 23:11:01  fwarmerdam
  * added debug message if geometry not parsed successfully ... should use err
  *
@@ -139,6 +142,9 @@ OGRVRTLayer::OGRVRTLayer()
 
     bNeedReset = TRUE;
     bSrcLayerFromSQL = FALSE;
+
+    bSrcClip = FALSE;
+    poSrcRegion = NULL;
 }
 
 /************************************************************************/
@@ -171,6 +177,10 @@ OGRVRTLayer::~OGRVRTLayer()
 
     CPLFree( panSrcField );
     CPLFree( pabDirectCopy );
+    CPLFree( pszAttrFilter );
+
+    if( poSrcRegion != NULL )
+        delete poSrcRegion;
 }
 
 /************************************************************************/
@@ -442,6 +452,38 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
          }
      }
      
+/* -------------------------------------------------------------------- */
+/*      Do we have a SrcRegion?                                         */
+/* -------------------------------------------------------------------- */
+#ifdef notdef
+     CPLXMLNode *psSRNode = CPLGetXMLNode( psLTree, "SrcRegion" );
+
+     if( pszLayerSRS != NULL )
+     {
+         if( EQUAL(pszLayerSRS,"NULL") )
+             poSRS = NULL;
+         else
+         {
+             OGRSpatialReference oSRS;
+
+             if( oSRS.SetFromUserInput( pszLayerSRS ) != OGRERR_NONE )
+             {
+                 CPLError( CE_Failure, CPLE_AppDefined, 
+                           "Failed to import LayerSRS `%s'.", pszLayerSRS );
+                 return FALSE;
+             }
+             poSRS = oSRS.Clone();
+         }
+     }
+
+     else
+     {
+         if( poSrcLayer->GetSpatialRef() != NULL )
+             poSRS = poSrcLayer->GetSpatialRef()->Clone();
+         else
+             poSRS = NULL;
+     }
+#endif
      return TRUE;
 }
 
@@ -459,9 +501,11 @@ void OGRVRTLayer::ResetReading()
 /*                         ResetSourceReading()                         */
 /************************************************************************/
 
-void OGRVRTLayer::ResetSourceReading()
+int OGRVRTLayer::ResetSourceReading()
 
 {
+    int bSuccess = TRUE;
+
 /* -------------------------------------------------------------------- */
 /*      Do we want to let source layer do spatial restriction?          */
 /* -------------------------------------------------------------------- */
@@ -484,29 +528,27 @@ void OGRVRTLayer::ResetSourceReading()
                  pszYField, m_sFilterEnvelope.MaxY );
 
     }
-    else
-        poSrcLayer->SetAttributeFilter( NULL );
 
 /* -------------------------------------------------------------------- */
 /*      Install spatial + attr filter query on source layer.            */
 /* -------------------------------------------------------------------- */
     if( pszFilter == NULL && pszAttrFilter == NULL )
-        poSrcLayer->SetAttributeFilter( NULL );
+        bSuccess = (poSrcLayer->SetAttributeFilter( NULL ) == CE_None);
 
     else if( pszFilter != NULL && pszAttrFilter == NULL )
-        poSrcLayer->SetAttributeFilter( pszFilter );
+        bSuccess = (poSrcLayer->SetAttributeFilter( pszFilter ) == CE_None);
 
     else if( pszFilter == NULL && pszAttrFilter != NULL )
-        poSrcLayer->SetAttributeFilter( pszAttrFilter );
+        bSuccess = (poSrcLayer->SetAttributeFilter( pszAttrFilter ) == CE_None);
 
     else
     {
-        std::string osMerged = pszFilter;
+        CPLString osMerged = pszFilter;
 
         osMerged += " AND ";
         osMerged += pszAttrFilter;
 
-        poSrcLayer->SetAttributeFilter( osMerged.c_str() );
+        bSuccess = (poSrcLayer->SetAttributeFilter(osMerged) == CE_None);
     }
 
     CPLFree( pszFilter );
@@ -517,6 +559,8 @@ void OGRVRTLayer::ResetSourceReading()
     poSrcLayer->SetSpatialFilter( NULL );
     poSrcLayer->ResetReading();
     bNeedReset = FALSE;
+
+    return bSuccess;
 }
 
 /************************************************************************/
@@ -530,7 +574,10 @@ OGRFeature *OGRVRTLayer::GetNextFeature()
         return NULL;
 
     if( bNeedReset )
-        ResetSourceReading();
+    {
+        if( !ResetSourceReading() )
+            return NULL;
+    }
 
     for( ; TRUE; )
     {
