@@ -158,7 +158,7 @@ name <i>borders2</i>, sets a layer creation option to specify the geometry
 column name to <i>SHAPE2</i>.
 
 <pre>
-ogr2ogr -f MySQL MySQL:test,user=root world_borders.shp -nln borders2 -update -overwrite -lco MYSQL_GEOM_COLUMN=SHAPE2 
+ogr2ogr -f MySQL MySQL:test,user=root world_borders.shp -nln borders2 -update -overwrite -lco GEOMETRY_NAME=SHAPE2 
 </pre>
 
 The following example uses ogrinfo to return some summary information about the borders2 
