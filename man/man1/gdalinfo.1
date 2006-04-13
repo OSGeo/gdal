@@ -1,15 +1,16 @@
-.TH "gdalinfo" 1 "7 Aug 2005" "Doxygen" \" -*- nroff -*-
+.TH "gdalinfo" 1 "13 Apr 2006" "GDAL" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-gdalinfo \- lists information about a raster dataset 
+gdalinfo \- gdalinfo
+lists information about a raster dataset
 .SH "SYNOPSIS"
 .PP
 .PP
 .PP
 .nf
-
 gdalinfo [-mm] [-nogcp] [-nomd] datasetname
+.fi
 .PP
 .SH "DESCRIPTION"
 .PP
@@ -54,7 +55,7 @@ Band NODATA value.
 .IP "\(bu" 2
 Band overview resolutions available. 
 .IP "\(bu" 2
-Band unit type (ie. 'meters' or 'feet' for elevation bands). 
+Band unit type (i.e.. 'meters' or 'feet' for elevation bands). 
 .IP "\(bu" 2
 Band pseudo-color tables. 
 .PP
@@ -63,7 +64,6 @@ Band pseudo-color tables.
 .PP
 .PP
 .nf
-
 gdalinfo ~/openev/utm.tif 
 Driver: GTiff/GeoTIFF
 Size is 512, 512
@@ -90,7 +90,8 @@ Upper Right (  471440.000, 3751320.000) (117d18'32.07"W, 33d54'13.08"N)
 Lower Right (  471440.000, 3720600.000) (117d18'28.50"W, 33d37'35.61"N)
 Center      (  456080.000, 3735960.000) (117d28'27.39"W, 33d45'52.46"N)
 Band 1 Block=512x16 Type=Byte, ColorInterp=Gray
+.fi
 .PP
 .SH "AUTHORS"
 .PP
-Frank Warmerdam <warmerdam@pobox.com> Silke Reimer <silke@intevation.de> 
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de> 
