@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/04/13 03:16:01  fwarmerdam
+ * keep track if an object is PAM enabled, bug 1135
+ *
  * Revision 1.15  2006/02/08 06:03:40  fwarmerdam
  * expose some PAM histo stuff for VRT, fixed InitFromXML() hist bug
  *
@@ -91,6 +94,7 @@ GDALPamRasterBand::GDALPamRasterBand()
 
 {
     psPam = NULL;
+    SetMOFlags( GetMOFlags() | GMO_PAM_CLASS );
 }
 
 /************************************************************************/
@@ -257,7 +261,7 @@ void GDALPamRasterBand::PamInitialize()
 
     GDALPamDataset *poParentDS = (GDALPamDataset *) GetDataset();
 
-    if( poParentDS == NULL )
+    if( poParentDS != NULL || !(poParentDS->GetMOFlags() | GMO_PAM_CLASS) )
         return;
 
     poParentDS->PamInitialize();

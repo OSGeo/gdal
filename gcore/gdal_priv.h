@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.72  2006/04/13 03:16:01  fwarmerdam
+ * keep track if an object is PAM enabled, bug 1135
+ *
  * Revision 1.71  2006/02/07 19:07:07  fwarmerdam
  * applied some strategic improved outofmemory checking
  *
@@ -133,6 +136,7 @@ class GDALRasterAttributeTable;
 #define GMO_SUPPORT_MD           0x0004
 #define GMO_SUPPORT_MDMD         0x0008
 #define GMO_MD_DIRTY             0x0010
+#define GMO_PAM_CLASS            0x0020
 
 /************************************************************************/
 /*                       GDALMultiDomainMetadata                        */

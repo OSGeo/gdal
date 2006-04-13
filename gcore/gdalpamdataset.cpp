@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/04/13 03:16:01  fwarmerdam
+ * keep track if an object is PAM enabled, bug 1135
+ *
  * Revision 1.18  2006/04/07 13:12:16  fwarmerdam
  * Fix merging of band metadata.
  *
@@ -101,6 +104,7 @@ GDALPamDataset::GDALPamDataset()
 {
     nPamFlags = 0;
     psPam = NULL;
+    SetMOFlags( GetMOFlags() | GMO_PAM_CLASS );
 }
 
 /************************************************************************/
@@ -675,9 +679,9 @@ CPLErr GDALPamDataset::CloneInfo( GDALDataset *poSrcDS, int nCloneFlags )
             GDALPamRasterBand *poBand = (GDALPamRasterBand *)
                 GetRasterBand(iBand+1);
 
-            // we really should be testing if poBand is a really derived
-            // from PamRasterBand or not. 
-            
+            if( !(poBand->GetMOFlags() | GMO_PAM_CLASS) )
+                continue;
+
             if( poSrcDS->GetRasterCount() >= iBand+1 )
                 poBand->CloneInfo( poSrcDS->GetRasterBand(iBand+1), 
                                    nCloneFlags );
