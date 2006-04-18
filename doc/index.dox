@@ -46,8 +46,8 @@ on GDAL improvement efforts not focused on any particular client project.<p>
 \section index_userdocs User Oriented Documentation
 
 <ul>
-<li> \link download.html Downloads\endlink - Source and Binaries</a>
-<li> \link formats_list.html Supported Formats\endlink
+<li> \link download.html Downloads\endlink - Source and Binaries
+<li> <a href="formats_list.html">Supported Formats</a>
 <li> \link gdal_utilities.html GDAL Utility Programs\endlink
 <li> \link faq.html GDAL FAQ\endlink
 <li> \link gdal_datamodel.html GDAL Data Model\endlink
