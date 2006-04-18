@@ -28,6 +28,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.59  2006/04/18 19:32:58  fwarmerdam
+ * Don't predicate all cleanup in Deregister() on gpaspzCSLookup.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1156
+ *
  * Revision 1.58  2006/04/13 15:20:27  fwarmerdam
  * Fixed bug in non-direct case with buffer/request different sizes
  * and more than one band.
@@ -1628,14 +1632,15 @@ void GDALDeregister_ECW( GDALDriver * )
         gpapszCSLookup = NULL;
         gnTriedCSFile = FALSE;
 
-        if( hECWDatasetMutex != NULL )
-        {
-            CPLDestroyMutex( hECWDatasetMutex );
-            hECWDatasetMutex = NULL;
-        }
-
-        NCSecwShutdown();
     }
+
+    if( hECWDatasetMutex != NULL )
+    {
+        CPLDestroyMutex( hECWDatasetMutex );
+        hECWDatasetMutex = NULL;
+    }
+
+    NCSecwShutdown();
 }
 
 /************************************************************************/
