@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.24  2006/04/19 14:21:47  fwarmerdam
+ * defer initialization till we need it, since shutdown is expensive
+ *
  * Revision 1.23  2006/04/02 15:27:16  fwarmerdam
  * Fixed char* / const char * problem for VS8.
  *
@@ -115,6 +118,8 @@ CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT,
                                   int nGCPCount, const GDAL_GCP *pasGCPList,
                                   int *pnSize, unsigned char **ppabyBuffer );
 CPL_C_END
+
+void ECWInitialize( void );
 
 #if defined(FRMT_ecw) && defined(HAVE_COMPRESS)
 
@@ -1101,6 +1106,8 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                int bIsJPEG2000 )
 
 {
+    ECWInitialize();
+
 /* -------------------------------------------------------------------- */
 /*      Get various values from the source dataset.                     */
 /* -------------------------------------------------------------------- */
@@ -1605,6 +1612,8 @@ ECWCreateJPEG2000(const char *pszFilename, int nXSize, int nYSize, int nBands,
                   GDALDataType eType, char **papszOptions )
 
 {
+    ECWInitialize();
+
     return new ECWWriteDataset( pszFilename, nXSize, nYSize, nBands, 
                                 eType, papszOptions, TRUE );
 }
@@ -1618,6 +1627,8 @@ ECWCreateECW( const char *pszFilename, int nXSize, int nYSize, int nBands,
               GDALDataType eType, char **papszOptions )
 
 {
+    ECWInitialize();
+
     return new ECWWriteDataset( pszFilename, nXSize, nYSize, nBands, 
                                 eType, papszOptions, FALSE );
 }

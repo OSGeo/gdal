@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.60  2006/04/19 14:21:47  fwarmerdam
+ * defer initialization till we need it, since shutdown is expensive
+ *
  * Revision 1.59  2006/04/18 19:32:58  fwarmerdam
  * Don't predicate all cleanup in Deregister() on gpaspzCSLookup.
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=1156
@@ -186,6 +189,7 @@ static unsigned char jp2_header[] =
 static int    gnTriedCSFile = FALSE;
 static char **gpapszCSLookup = NULL;
 static void *hECWDatasetMutex = NULL;
+static int    bNCSInitialized = FALSE;
 
 CPL_C_START
 CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT, 
@@ -196,6 +200,8 @@ CPLErr CPL_DLL GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
                           char **ppszWKT, double *padfGeoTransform,
                           int *pnGCPCount, GDAL_GCP **ppasGCPList );
 CPL_C_END
+
+void ECWInitialize( void );
 
 /************************************************************************/
 /* ==================================================================== */
@@ -241,7 +247,6 @@ class CPL_DLL ECWDataset : public GDALPamDataset
                                 GByte *, int, int, GDALDataType,
                                 int, int *, int, int, int );
     CPLErr      LoadNextLine();
-
 
   public:
     		ECWDataset();
@@ -669,19 +674,6 @@ ECWDataset::~ECWDataset()
         CPLFree( pasGCPList );
     }
 
-    if( hECWDatasetMutex == NULL )
-    {
-        hECWDatasetMutex = CPLCreateMutex();
-    }
-    else if( !CPLAcquireMutex( hECWDatasetMutex, 60.0 ) )
-    {
-        CPLDebug( "ECW", "Failed to acquire mutex in 60s." );
-    }
-    else
-    {
-        CPLDebug( "ECW", "Got mutex." );
-    }
-
 /* -------------------------------------------------------------------- */
 /*      Release / dereference iostream.                                 */
 /* -------------------------------------------------------------------- */
@@ -691,6 +683,8 @@ ECWDataset::~ECWDataset()
     // object, we must decrement the nFileViewCount attribute of the underlying
     // VSIIOStream object, and only delete the VSIIOStream object when 
     // nFileViewCount is equal to zero.
+
+    CPLMutexHolder oHolder( &hECWDatasetMutex );
 
     if( poFileView != NULL )
     {
@@ -705,8 +699,6 @@ ECWDataset::~ECWDataset()
                 delete poUnderlyingIOStream;
         }
     }
-
-    CPLReleaseMutex( hECWDatasetMutex );
 }
 
 /************************************************************************/
@@ -1149,6 +1141,8 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
     int              i;
     FILE            *fpVSIL = NULL;
     VSIIOStream *poIOStream = NULL;
+
+    ECWInitialize();
 
 /* -------------------------------------------------------------------- */
 /*      This will disable automatic conversion of YCbCr to RGB by       */
@@ -1620,6 +1614,26 @@ void ECWDataset::ECW2WKTProjection()
 #endif /* def FRMT_ecw */
 
 /************************************************************************/
+/*                           ECWInitialize()                            */
+/*                                                                      */
+/*      Initialize NCS library.  We try to defer this as late as        */
+/*      possible since de-initializing it seems to be expensive/slow    */
+/*      on some system.                                                 */
+/************************************************************************/
+
+void ECWInitialize()
+
+{
+    CPLMutexHolder oHolder( &hECWDatasetMutex );
+
+    if( bNCSInitialized )
+        return;
+
+    NCSecwInit();
+    bNCSInitialized = TRUE;
+}
+
+/************************************************************************/
 /*                         GDALDeregister_ECW()                         */
 /************************************************************************/
 
@@ -1631,7 +1645,12 @@ void GDALDeregister_ECW( GDALDriver * )
         CSLDestroy( gpapszCSLookup );
         gpapszCSLookup = NULL;
         gnTriedCSFile = FALSE;
+    }
 
+    if( bNCSInitialized )
+    {
+        bNCSInitialized = FALSE;
+        NCSecwShutdown();
     }
 
     if( hECWDatasetMutex != NULL )
@@ -1639,8 +1658,6 @@ void GDALDeregister_ECW( GDALDriver * )
         CPLDestroyMutex( hECWDatasetMutex );
         hECWDatasetMutex = NULL;
     }
-
-    NCSecwShutdown();
 }
 
 /************************************************************************/
@@ -1657,8 +1674,6 @@ void GDALRegister_ECW()
     {
         poDriver = new GDALDriver();
         
-        NCSecwInit();
-
         poDriver->SetDescription( "ECW" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
                                    "ERMapper Compressed Wavelets" );
