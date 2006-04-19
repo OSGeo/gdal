@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.55  2006/04/19 14:07:03  fwarmerdam
+ * do not attempt to use papoBand[0] if there are zero bands
+ *
  * Revision 1.54  2006/04/04 17:10:07  fwarmerdam
  * Figured out the proper way to use the MapToPixelXForm stuff.
  *
@@ -974,6 +977,9 @@ int HFAGetGeoTransform( HFAHandle hHFA, double *padfGeoTransform )
 /*      Try for a MapToPixelXForm affine polynomial supporting          */
 /*      rotated and sheared affine transformations.                     */
 /* -------------------------------------------------------------------- */
+    if( hHFA->nBands == 0 )
+        return FALSE;
+
     HFAEntry *poXForm0 = 
         hHFA->papoBand[0]->poNode->GetNamedChild( "MapToPixelXForm.XForm0" );
     
