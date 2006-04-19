@@ -21,6 +21,9 @@ clean:
 	-del *.obj *.pdb
 	-del *.exe
 
+ogr_OCI.dll:	$(OBJ)
+	link /dll /out:ogr_OCI.dll $(OBJ) \
+		$(GDAL_ROOT)/gdal_i.lib $(OCI_LIB)
 
 ocitest.exe:	$(LL_OBJ) ocitest.obj
 	cl /Zi ocitest.obj $(LL_OBJ) \
