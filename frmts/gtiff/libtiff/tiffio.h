@@ -98,7 +98,7 @@ typedef	void* thandle_t;	/* client data handle */
 #endif /* USE_WIN32_FILEIO */
 
 #ifndef NULL
-# define NULL	(void *)0
+# define NULL	0
 #endif
 
 /*
