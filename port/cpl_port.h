@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2006/04/19 01:59:18  fwarmerdam
+ * move deprecate declarations before system include files
+ *
  * Revision 1.51  2006/03/21 20:11:54  fwarmerdam
  * fixup headers a bit
  *
@@ -112,6 +115,19 @@
 /* ==================================================================== */
 #if defined(_WIN32_WCE)
 #  define WIN32CE
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      The following apparently allow you to use strcpy() and other    */
+/*      functions judged "unsafe" by microsoft in VS 8 (2005).          */
+/* -------------------------------------------------------------------- */
+#ifdef _MSC_VER
+#  ifndef _CRT_SECURE_NO_DEPRECATE
+#    define _CRT_SECURE_NO_DEPRECATE
+#  endif
+#  ifndef _CRT_NONSTDC_NO_DEPRECATE
+#    define _CRT_NONSTDC_NO_DEPRECATE
+#  endif
 #endif
 
 
@@ -304,20 +320,6 @@ char * strdup (char *instr);
 #ifndef CPL_THREADLOCAL 
 #  define CPL_THREADLOCAL 
 #endif
-
-/* -------------------------------------------------------------------- */
-/*      The following apparently allow you to use strcpy() and other    */
-/*      functions judged "unsafe" by microsoft in VS 8 (2005).          */
-/* -------------------------------------------------------------------- */
-#ifdef _MSC_VER
-#  ifndef _CRT_SECURE_NO_DEPRECATE
-#    define _CRT_SECURE_NO_DEPRECATE
-#  endif
-#  ifndef _CRT_NONSTDC_NO_DEPRECATE
-#    define _CRT_NONSTDC_NO_DEPRECATE
-#  endif
-#endif
-
 
 /* -------------------------------------------------------------------- */
 /*      Handle isnan() and isinf().  Note that isinf() and isnan()      */
