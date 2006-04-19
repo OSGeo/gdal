@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.77  2006/04/19 14:07:43  fwarmerdam
+ * do not create a dataset for a zero band or zero pixel file
+ *
  * Revision 1.76  2006/04/10 14:34:06  fwarmerdam
  * Make sure that overviews are treated according to their own intrinsic type,
  * not just the type of the base band which may differ in some circumstances.
@@ -2305,6 +2308,24 @@ GDALDataset *HFADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     HFAGetRasterInfo( hHFA, &poDS->nRasterXSize, &poDS->nRasterYSize,
                       &poDS->nBands );
+
+    if( poDS->nBands == 0 )
+    {
+        delete poDS;
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to open %s, it has zero usable bands.",
+                  poOpenInfo->pszFilename );
+        return NULL;
+    }
+
+    if( poDS->nRasterXSize == 0 || poDS->nRasterYSize == 0 )
+    {
+        delete poDS;
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unable to open %s, it has no pixels.",
+                  poOpenInfo->pszFilename );
+        return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Get geotransform.                                               */
