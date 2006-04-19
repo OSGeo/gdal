@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.42  2006/04/19 02:00:20  fwarmerdam
+ * moved ctype.h after cpl include files for VS2005
+ *
  * Revision 1.41  2006/02/20 00:42:35  fwarmerdam
  * Trim.
  *
@@ -81,11 +84,11 @@
  * Added CPLCleanXMLElementName
  */
 
-#include <ctype.h>
 #include "cpl_minixml.h"
 #include "cpl_error.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include <ctype.h>
 
 CPL_CVSID("$Id$");
 
