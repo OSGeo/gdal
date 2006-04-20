@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.25  2006/04/20 13:27:57  fwarmerdam
+#  Added error checks on Driver's Create support and success of Create.
+#
 #  Revision 1.24  2006/01/26 23:40:39  fwarmerdam
 #  treat nodata as a float.
 #
@@ -416,6 +419,11 @@ if __name__ == '__main__':
         print 'Format driver %s not found, pick a supported driver.' % format
         sys.exit( 1 )
 
+    DriverMD = Driver.GetMetadata()
+    if not DriverMD.has_key('DCAP_CREATE'):
+        print 'Format driver %s does not support creation and piecewise writing.\nPlease select a format that does, such as GTiff (the default) or HFA (Erdas Imagine).' % format
+        sys.exit( 1 )
+
     # Collect information on all the source files.
     file_infos = names_to_fileinfos( names )
 
@@ -457,6 +465,10 @@ if __name__ == '__main__':
 
         t_fh = Driver.Create( out_file, xsize, ysize, bands,
                               band_type, create_options )
+        if t_fh is None:
+            print 'Creation failed, terminating gdal_merge.'
+            sys.exit( 1 )
+            
         t_fh.SetGeoTransform( geotransform )
         t_fh.SetProjection( file_infos[0].projection )
 
