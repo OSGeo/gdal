@@ -9,6 +9,6 @@ CXXFLAGS	+=	-g -O2
 default:	$(OBJ)
 
 clean:
-	rm -f *.o
+	rm -f $(OBJ) $(O_OBJ)
 
 install-obj:	$(O_OBJ)
