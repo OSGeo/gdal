@@ -29,17 +29,22 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2006/04/20 13:45:13  dron
+ * Definitions for for_init() and inv_init() changed to be fully compatible
+ * with HDF-EOS code.
+ *
  * Revision 1.2  2006/04/06 14:22:02  dron
  * Added explicit copyright statement.
  *
  */
 
-#include <ogr_srs_api.h>
+#include "ogr_srs_api.h"
+#include "mfhdf.h"
 
 static int iOutsys, iOutzone, iOutdatum, iInsys, iInzone, iIndatum;
 static double *pdfOutparm, *pdfInparm;
 
-int osr_for(
+int32 osr_for(
 double lon,			/* (I) Longitude 		*/
 double lat,			/* (I) Latitude 		*/
 double *x,			/* (O) X projection coordinate 	*/
@@ -70,15 +75,15 @@ double *y)			/* (O) Y projection coordinate 	*/
     return 0;
 }
 
-int for_init(
-int outsys,		/* output system code				*/
-int outzone,		/* output zone number				*/
-double *outparm,	/* output array of projection parameters	*/
-int outdatum,		/* output datum					*/
+void for_init(
+int32 outsys,		/* output system code				*/
+int32 outzone,		/* output zone number				*/
+float64 *outparm,	/* output array of projection parameters	*/
+int32 outdatum,		/* output datum					*/
 char *fn27,		/* NAD 1927 parameter file			*/
 char *fn83,		/* NAD 1983 parameter file			*/
-int *iflg,		/* status flag					*/
-int (*for_trans[])(double, double, double *, double *))
+int32 *iflg,		/* status flag					*/
+int32 (*for_trans[])(double, double, double *, double *))
                         /* forward function pointer			*/
 {
     iflg = 0;
@@ -91,7 +96,7 @@ int (*for_trans[])(double, double, double *, double *))
     return 0;
 }
 
-int osr_inv(
+int32 osr_inv(
 double x,			/* (O) X projection coordinate 	*/
 double y,			/* (O) Y projection coordinate 	*/
 double *lon,			/* (I) Longitude 		*/
@@ -121,15 +126,15 @@ double *lat)			/* (I) Latitude 		*/
     return 0;
 }
 
-int inv_init(
-int insys,		/* input system code				*/
-int inzone,		/* input zone number				*/
-double *inparm,	        /* input array of projection parameters         */
-int indatum,	        /* input datum code			        */
+void inv_init(
+int32 insys,		/* input system code				*/
+int32 inzone,		/* input zone number				*/
+float64 *inparm,	/* input array of projection parameters         */
+int32 indatum,	        /* input datum code			        */
 char *fn27,		/* NAD 1927 parameter file			*/
 char *fn83,		/* NAD 1983 parameter file			*/
-int *iflg,		/* status flag					*/
-int (*inv_trans[])(double, double, double*, double*))	
+int32 *iflg,		/* status flag					*/
+int32 (*inv_trans[])(double, double, double*, double*))	
                         /* inverse function pointer			*/
 {
     iflg = 0;
