@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.87  2006/04/20 13:51:51  fwarmerdam
+ * added terragen support
+ *
  * Revision 1.86  2006/04/03 23:25:10  fwarmerdam
  * Fixup header formatting.
  *
@@ -272,6 +275,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_leveller
     GDALRegister_Leveller();
+#endif
+
+#ifdef FRMT_terragen
+    GDALRegister_Terragen();
 #endif
 
 #ifdef FRMT_netcdf
