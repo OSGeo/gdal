@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2006/04/20 13:36:53  fwarmerdam
+ * Added terragen.
+ *
  * Revision 1.45  2006/03/31 02:59:15  fwarmerdam
  * added idrisi
  *
@@ -169,6 +172,7 @@ void CPL_DLL GDALRegister_SGI(void);
 void CPL_DLL GDALRegister_DIPEx(void);
 void CPL_DLL GDALRegister_ISIS2(void);
 void CPL_DLL GDALRegister_IDRISI(void);
+void CPL_DLL GDALRegister_Terragen(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
