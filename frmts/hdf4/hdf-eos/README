@@ -5,7 +5,6 @@ GDapi.c,
 SWapi.c,
 HDFEOSVersion.h,
 HdfEosDef.h,
-cfortHdf.h,
 ease.h
 
 and have the following copyright notice:

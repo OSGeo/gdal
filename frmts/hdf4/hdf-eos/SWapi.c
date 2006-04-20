@@ -67,7 +67,6 @@ June 05, 2003 Abe Taaheri / Bruce Beaumont
 
 #include "mfhdf.h"
 #include "hcomp.h"
-#include "cfortHdf.h"
 #include "HdfEosDef.h"
 #include <math.h>
 
@@ -12159,98 +12158,3 @@ SWgeomapinfo(int32 swathID, char *geodim)
     return (status);
 }
 
-
-/* HDF types used in FORTRAN bindings */
- 
-#if defined(DEC_ALPHA) || defined(IRIX) || defined(UNICOS) || defined(LINUX64) || defined(IA64) || defined(MACINTOSH) || defined(IBM6000)
- 
-#define INT32  INT
-#define INT32V INTV
-#define PINT32 PINT
- 
-#else
- 
-#define INT32  LONG
-#define INT32V LONGV
-#define PINT32 PLONG
- 
-#endif
- 
-/* FORTRAN bindings */
- 
-FCALLSCFUN2(INT32, SWopen, SWOPEN, swopen, STRING, INT)
-FCALLSCFUN2(INT32, SWcreate, SWCREATE, swcreate, INT32, STRING)
-FCALLSCFUN2(INT32, SWattach, SWATTACH, swattach, INT32, STRING)
-FCALLSCFUN3(INT, SWdefdim, SWDEFDIM, swdefdim, INT32, STRING, INT32)
-FCALLSCFUN5(INT, SWdefdimmap, SWDEFMAP, swdefmap, INT32, STRING, STRING,
-            INT32, INT32)
-FCALLSCFUN4(INT, SWdefidxmap, SWDEFIMAP, swdefimap, INT32, STRING, STRING,
-            INT32V)
-FCALLSCFUN5(INT, SWdefgfld, SWDEFGFLD, swdefgfld, INT32, STRING, STRING,
-            INT32, INT32)
-FCALLSCFUN5(INT, SWdefdfld, SWDEFDFLD, swdefdfld, INT32, STRING, STRING,
-            INT32, INT32)
-FCALLSCFUN3(INT, SWdefcomp, SWDEFCOMP, swdefcomp, INT32, INT32, INTV)
-FCALLSCFUN4(INT, SWwrgmeta, SWWRGMETA, swwrgmeta, INT32, STRING, STRING,
-            INT32)
-FCALLSCFUN4(INT, SWwrdmeta, SWWRDMETA, swwrdmeta, INT32, STRING, STRING,
-            INT32)
-FCALLSCFUN6(INT, SWwrfld, SWWRFLD, swwrfld, INT32, STRING, INT32V,
-            INT32V, INT32V, PVOID)
-FCALLSCFUN6(INT, SWrdfld, SWRDFLD, swrdfld, INT32, STRING, INT32V,
-            INT32V, INT32V, PVOID)
-FCALLSCFUN3(INT, SWsetfillvalue, SWSETFILL, swsetfill, INT32, STRING, PVOID)
-FCALLSCFUN3(INT, SWgetfillvalue, SWGETFILL, swgetfill, INT32, STRING, PVOID)
-FCALLSCFUN5(INT, SWwriteattr, SWWRATTR, swwrattr, INT32, STRING, INT32,
-            INT32, PVOID)
-FCALLSCFUN3(INT, SWreadattr, SWRDATTR, swrdattr, INT32, STRING, PVOID)
-FCALLSCFUN4(INT, SWattrinfo, SWATTRINFO, swattrinfo, INT32, STRING,
-            PINT32, PINT32)
-FCALLSCFUN3(INT32, SWinqattrs, SWINQATTRS, swinqattrs, INT32, PSTRING,
-            PINT32)
-FCALLSCFUN3(INT32, SWinqdims, SWINQDIMS, swinqdims, INT32, PSTRING,
-            INT32V)
-FCALLSCFUN4(INT32, SWinqmaps, SWINQMAPS, swinqmaps, INT32, PSTRING,
-            INT32V, INT32V)
-FCALLSCFUN5(INT32, SWupdateidxmap, SWUPIMAP, swupimap,INT32, INT32,
-            INT32V, INT32V, INT32V)
-FCALLSCFUN2(INT, SWupdatescene, SWUPSCENE, swupscene,INT32, INT32)
-FCALLSCFUN2(INT, SWgeomapinfo, SWGMAPINFO, swgmapinfo, INT32, STRING)
-FCALLSCFUN3(INT32, SWinqidxmaps, SWINQIMAPS, swinqimaps, INT32, STRING,
-            INT32V)
-FCALLSCFUN4(INT32, SWinqgeofields, SWINQGFLDS, swinqgflds, INT32,
-            PSTRING, INT32V, INT32V)
-FCALLSCFUN4(INT32, SWinqdatafields, SWINQDFLDS, swinqdflds, INT32,
-            PSTRING, INT32V, INT32V)
-FCALLSCFUN3(INT32, SWinqswath, SWINQSWATH, swinqswath, STRING, PSTRING,
-            PINT32)
-FCALLSCFUN3(INT32, SWnentries, SWNENTRIES, swnentries, INT32,
-            INT32, PINT32)
-FCALLSCFUN2(INT32, SWdiminfo, SWNDIMINFO, swdiminfo, INT32, STRING)
-FCALLSCFUN5(INT, SWmapinfo, SWNMAPINFO, swmapinfo, INT32, STRING, STRING,
-            PINT32, PINT32)
-FCALLSCFUN4(INT32, SWidxmapinfo, SWIMAPINFO, swimapinfo, INT32, STRING,
-            STRING, INT32V)
-FCALLSCFUN4(INT, SWcompinfo, SWCOMPINFO, swcompinfo, INT32, STRING,
-            PINT32, INTV)
-FCALLSCFUN6(INT, SWfldinfo, SWFLDINFO, swfldinfo, INT32, STRING, PINT32,
-            INT32V, PINT32, PSTRING)
-FCALLSCFUN4(INT32, SWdefboxregion, SWDEFBOXREG, swdefboxreg, INT32,
-            DOUBLEV, DOUBLEV, INT32)
-FCALLSCFUN6(INT32, SWregionindex, SWREGIDX, swregidx, INT32, DOUBLEV,
-	    DOUBLEV, INT32, STRING, INT32V)
-FCALLSCFUN4(INT32, SWdefvrtreg, SWDEFVRTREG, swdefvrtreg, INT32,
-            INT32, STRING, DOUBLEV)
-FCALLSCFUN4(INT32, SWdeftimeperiod, SWDEFTMEPER, swdeftmeper, INT32,
-            DOUBLE, DOUBLE, INT32)
-FCALLSCFUN7(INT, SWreginfo, SWREGINFO, swreginfo, INT32, INT32, STRING,
-            PINT32, PINT32, INT32V, PINT32)
-FCALLSCFUN7(INT, SWperinfo, SWPERINFO, swperinfo, INT32, INT32, STRING,
-            PINT32, PINT32, INT32V, PINT32)
-FCALLSCFUN5(INT, SWextractregion, SWEXTREG, swextreg, INT32, INT32,
-            STRING, INT32, PVOID)
-FCALLSCFUN5(INT, SWextractperiod, SWEXTPER, swextper, INT32, INT32,
-            STRING, INT32, PVOID)
-FCALLSCFUN1(INT32, SWdupregion, SWDUPREG, swdupreg, INT32)
-FCALLSCFUN1(INT, SWdetach, SWDETACH, swdetach, INT32)
-FCALLSCFUN1(INT, SWclose, SWCLOSE, swclose, INT32)
