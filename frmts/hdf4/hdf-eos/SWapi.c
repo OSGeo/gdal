@@ -384,8 +384,8 @@ SWcreate(int32 fid, char *swathname)
 
 		/* Establish Swath in Structural MetaData Block */
 		/* -------------------------------------------- */
-		sprintf(utlbuf, "%s%d%s%s%s",
-			"\tGROUP=SWATH_", nSwath + 1,
+		sprintf(utlbuf, "%s%ld%s%s%s",
+			"\tGROUP=SWATH_", (long)nSwath + 1,
 			"\n\t\tSwathName=\"", swathname, "\"\n");
 
 		strcat(utlbuf, "\t\tGROUP=Dimension\n");
@@ -400,8 +400,8 @@ SWcreate(int32 fid, char *swathname)
 		strcat(utlbuf, "\t\tEND_GROUP=DataField\n");
 		strcat(utlbuf, "\t\tGROUP=MergedFields\n");
 		strcat(utlbuf, "\t\tEND_GROUP=MergedFields\n");
-		sprintf(utlbuf2, "%s%d%s",
-			"\tEND_GROUP=SWATH_", nSwath + 1, "\n");
+		sprintf(utlbuf2, "%s%ld%s",
+			"\tEND_GROUP=SWATH_", (long)nSwath + 1, "\n");
 		strcat(utlbuf, utlbuf2);
 
 
@@ -2426,8 +2426,8 @@ SWdefinefield(int32 swathID, char *fieldtype, char *fieldname, char *dimlist,
 ** see ncr 26314.  DaW  Apr 2000
 */
 
-	    if ((intn) strlen(fieldname) > VSNAMELENMAX && rank == 1 ||
-		(intn) strlen(fieldname) > (256 - 7) && rank > 1)
+	    if (((intn) strlen(fieldname) > VSNAMELENMAX && rank == 1) ||
+		((intn) strlen(fieldname) > (256 - 7) && rank > 1))
 	    {
 		status = -1;
 		HEpush(DFE_GENAPP, "SWdefinefield", __FILE__, __LINE__);
@@ -7944,8 +7944,8 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
 			/* Compute start & edge from index mappings */
 			/* ---------------------------------------- */
                         if (SWXRegion[regionID]->scanflag == 1 &&
-                            strcmp(fieldname, "Latitude") == 0 ||
-                            strcmp(fieldname, "Longitude") == 0)
+                            (strcmp(fieldname, "Latitude") == 0 ||
+                             strcmp(fieldname, "Longitude") == 0))
                         {
                            if (land_status == 0)
                               status = SWreadattr(swathID, "scene_count", &scene_cnt);
@@ -8037,8 +8037,8 @@ SWextractregion(int32 swathID, int32 regionID, char *fieldname,
 
                         }
                         else if(SWXRegion[regionID]->scanflag == 1 &&
-                        strcmp(fieldname, "scene_center_latitude") == 0 ||
-                        strcmp(fieldname, "scene_center_longitude") == 0)
+                                (strcmp(fieldname, "scene_center_latitude") == 0 ||
+                                 strcmp(fieldname, "scene_center_longitude") == 0))
                         {
                            if (land_status == 0)
                               status = SWreadattr(swathID, "scene_count", &scene_cnt);
@@ -11141,8 +11141,8 @@ SWdetach(int32 swathID)
 		     */
 		    if (k == 0 && cmbfldcnt > 0)
 		    {
-			sprintf(dimbuf2, "%s%s_%d", "MRGDIM:",
-				swathname, dims[0]);
+			sprintf(dimbuf2, "%s%s_%ld", "MRGDIM:",
+				swathname, (long)dims[0]);
 		    }
 		    else
 		    {
