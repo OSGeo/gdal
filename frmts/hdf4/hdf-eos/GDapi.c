@@ -82,6 +82,11 @@ Jun  05, 2003 Bruce Beaumont / Abe Taaheri
 #include <math.h>
 #include "HdfEosDef.h"
 
+extern  void for_init(int32, int32, float64 *, int32, char *, char *, int32 *,
+                      int32 (*for_trans[])());
+extern  void inv_init(int32, int32, float64 *, int32, char *, char *, int32 *,
+                      int32 (*inv_trans[])());
+
 #define	GDIDOFFSET 4194304
 #define SQUARE(x)       ((x) * (x))   /* x**2 */
 #define M_PI1		3.14159265358979323846
@@ -5975,7 +5980,7 @@ GDdetach(int32 gridID)
 
 		    if (GDXSDcomb[5 * j] != 0 &&
 			strcmp(dimbuf1 + slen1[0],
-			       dimbuf2 + slen2[0]) == 0 &
+			       dimbuf2 + slen2[0]) == 0 &&
 			match[1] == GDXSDcomb[5 * j + 1] &&
 			match[2] == GDXSDcomb[5 * j + 2] &&
 			match[3] == GDXSDcomb[5 * j + 3] &&
@@ -7593,7 +7598,7 @@ GDrs2ll(int32 projcode, float64 projparm[],
     if (projcode == GCTP_BCEA)
     {
 	
-	inv_init(projcode, NULL, projparm, NULL, NULL, NULL,
+	inv_init(projcode, 0, projparm, 0, NULL, NULL,
 		 &errorcode, inv_trans);
 	
 	/* Report error if any */
