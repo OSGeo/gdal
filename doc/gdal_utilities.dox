@@ -274,16 +274,17 @@ different formats, potentially performing some operations like subsettings,
 resampling, and rescaling pixels in the process.
 
 <dl>
-<dt> <b>-ot</b>:</dt><dd> For the output bands to be of the indicated data
-type.</dd>
+<dt> <b>-ot</b>: <i>type</i></dt><dd> For the output bands to be of the
+indicated data type.</dd>
 <dt> <b>-not_strict</b>:</dt><dd> Be forgiving of mismatches and lost data
 when
 translating to the output format.</dd>
 <dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format.  The default is 
 GeoTIFF (GTiff).  Use the short format name.</dd>
-<dt> <b>-b</b> <i>band</i>:</dt><dd> Select an input band <i>band</i> for output.
-Bands are numbered from 1 Multiple -b switches may be used to select a set
-of input bands to write to the output file, or to reorder bands.</dd>
+<dt> <b>-b</b> <i>band</i>:</dt><dd> Select an input band <i>band</i> for
+output. Bands are numbered from 1 Multiple <b>-b</b> switches may be used
+to select a set of input bands to write to the output file, or to reorder
+bands.</dd>
 <dt> <b>-outsize</b> <i>xsize[%] ysize[%]</i>:</dt><dd> Set the size of the output
 file.  Outsize is in pixels and lines unless '%' is attached in which case it
 is as a fraction of the input image size.</dd>
