@@ -414,40 +414,7 @@ See [http://home.gdal.org/projects/bsb/ipi.html]
 
 We should look into credit requirement.  '''TO_RESOLVE'''
 
-* Some files in hdf-eos directory lack copyright notices, and look to be derived from public domain GCTP package from USGS. 
-
-* The cfortHdf.h is derived from cfortran.h which contains the following very onerous information: '''TO_RESOLVE'''
-
-    6)  Copyright notice for cfortran.h                                         
- 
-        The majority of the HDFEOS functions are written in C.                  
-        These C-based tools include the file cfortran.h, using it to            
-        generate machine-independent FORTRAN bindings. The cfortran.h           
-        facility includes the following notice which must accompany             
-        distributions that use it:                                              
- 
- THIS PACKAGE, I.E. CFORTRAN.H, THIS DOCUMENT, AND THE CFORTRAN.H EXAMPLE        
- PROGRAMS ARE PROPERTY OF THE AUTHOR WHO RESERVES ALL RIGHTS. THIS PACKAGE AND   
- THE CODE IT PRODUCES MAY BE FREELY DISTRIBUTED WITHOUT FEES, SUBJECT TO THE     
- FOLLOWING RESTRICTIONS:                                                         
- - YOU MUST ACCOMPANY ANY COPIES OR DISTRIBUTION WITH THIS (UNALTERED) NOTICE.   
- - YOU MAY NOT RECEIVE MONEY FOR THE DISTRIBUTION OR FOR ITS MEDIA               
-   (E.G. TAPE, DISK, COMPUTER, PAPER.)                                           
- - YOU MAY NOT PREVENT OTHERS FROM COPYING IT FREELY.                            
- - YOU MAY NOT DISTRIBUTE MODIFIED VERSIONS WITHOUT CLEARLY DOCUMENTING YOUR     
-   CHANGES AND NOTIFYING THE AUTHOR.                                             
- - YOU MAY NOT MISREPRESENTED THE ORIGIN OF THIS SOFTWARE, EITHER BY EXPLICIT    
-   CLAIM OR BY OMISSION.                                                         
- 
- THE INTENT OF THE ABOVE TERMS IS TO ENSURE THAT THE CFORTRAN.H PACKAGE NOT BE   
- USED FOR PROFIT MAKING ACTIVITIES UNLESS SOME ROYALTY ARRANGEMENT IS ENTERED    
- INTO WITH ITS AUTHOR.                                                           
- 
- THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER          
- EXPRESSED OR IMPLIED. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE  
- SOFTWARE IS WITH YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST  
- OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION. THE AUTHOR IS NOT RESPONSIBLE 
- FOR ANY SUPPORT OR SERVICE OF THE CFORTRAN.H PACKAGE.
+* cfortHdf.h had "cfortran.h" strings, and has been removed.
 
 === gdal/frmts/hdf5 ===
 
