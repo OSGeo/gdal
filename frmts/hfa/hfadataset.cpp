@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.78  2006/04/20 19:14:22  fwarmerdam
+ * Don't return null transform as if it were a valid geotransform.
+ *
  * Revision 1.77  2006/04/19 14:07:43  fwarmerdam
  * do not create a dataset for a zero band or zero pixel file
  *
@@ -2462,9 +2465,18 @@ CPLErr HFADataset::SetMetadataItem( const char *pszTag, const char *pszValue,
 CPLErr HFADataset::GetGeoTransform( double * padfTransform )
 
 {
-    memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
-
-    return CE_None;
+    if( adfGeoTransform[0] != 0.0
+        || adfGeoTransform[1] != 1.0
+        || adfGeoTransform[2] != 0.0
+        || adfGeoTransform[3] != 0.0
+        || adfGeoTransform[4] != 0.0
+        || adfGeoTransform[5] != 1.0 )
+    {
+        memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
+        return CE_None;
+    }
+    else
+        return GDALPamDataset::GetGeoTransform( padfTransform );
 }
 
 /************************************************************************/
