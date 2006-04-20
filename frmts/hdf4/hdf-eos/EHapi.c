@@ -14,7 +14,6 @@ this permission notice appear in supporting documentation.
 
 #include <errno.h>
 #include "mfhdf.h"
-#include "cfortHdf.h"
 #include "HdfEosDef.h"
 
 /* Set maximun number of HDF-EOS files to HDF limit (MAX_FILE) */
@@ -41,21 +40,9 @@ int32 EHXsdTable[NEOSHDF];
 
 #define MAX_RETRIES 10
 
-/* HDF types used in FORTRAN bindings */
-
-#if defined(DEC_ALPHA) || defined(IRIX) || defined(UNICOS) || defined(LINUX64) || defined(IA64) || defined(MACINTOSH) || defined(IBM6000)
-
 #define INT32  INT
 #define INT32V INTV
 #define PINT32 PINT
-
-#else
-
-#define INT32  LONG
-#define INT32V LONGV
-#define PINT32 PLONG
-
-#endif
 
 /* Function Prototypes */
 intn EHmetalist(char *, char *);
@@ -592,10 +579,6 @@ EHidinfo(int32 fid, int32 * HDFfid, int32 * sdInterfaceID)
 }
 
 
-/* FORTRAN binding */
-
-FCALLSCFUN3(INT, EHidinfo, EHIDINFO, ehidinfo, INT32, PINT32,
-	    PINT32)
 
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
@@ -720,10 +703,6 @@ EHgetversion(int32 fid, char *version)
     return (status);
 }
 
-
-/* FORTRAN binding */
-
-FCALLSCFUN2(INT, EHgetversion, EHGETVER, ehgetver, INT32, PSTRING)
 
 
 
@@ -857,10 +836,6 @@ EHconvAng(float64 inAngle, intn code)
     }
     return (outAngle);
 }
-
-/* Wrapper to FORTRAN routine */
-/* -------------------------- */
-FCALLSCFUN2(DOUBLE, EHconvAng, EHCONVANG, ehconvang, DOUBLE, INT)
 
 
 
