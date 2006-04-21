@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2006/04/21 02:44:35  fwarmerdam
+ * Fixed bogota meridian sign (west, not east).
+ *
  * Revision 1.61  2006/03/21 15:12:22  fwarmerdam
  * Fixed support for +R parameter.
  *
@@ -478,7 +481,7 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         }
         else if( EQUAL(pszPM,"bogota") )
         {
-            dfFromGreenwich = CPLDMSToDec( "74d04'51.3\"E" );
+            dfFromGreenwich = CPLDMSToDec( "74d04'51.3\"W" );
             nPMCode = 8904;
         }
         else if( EQUAL(pszPM,"madrid") )
