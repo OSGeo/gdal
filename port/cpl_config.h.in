@@ -15,6 +15,9 @@
 /* Define to 1 if you have the `copysign' function. */
 #undef HAVE_COPYSIGN
 
+/* Define to 1 if you have the `copysignf' function. */
+#undef HAVE_COPYSIGNF
+
 /* Define to 1 if you have the <csf.h> header file. */
 #undef HAVE_CSF_H
 
@@ -27,10 +30,6 @@
 /* Define to 1 if you have the declaration of `nanf', and to 0 if you don't.
    */
 #undef HAVE_DECL_NANF
-
-/* Define to 1 if you have the declaration of `nanl', and to 0 if you don't.
-   */
-#undef HAVE_DECL_NANL
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
@@ -96,9 +95,6 @@
 /* Define to 1 if you have the `nanf' function. */
 #undef HAVE_NANF
 
-/* Define to 1 if you have the `nanl' function. */
-#undef HAVE_NANL
-
 /* Define to 1 if you have the <png.h> header file. */
 #undef HAVE_PNG_H
 
@@ -119,9 +115,6 @@
 
 /* Define to 1 if you have the `strtof' function. */
 #undef HAVE_STRTOF
-
-/* Define to 1 if you have the `strtold' function. */
-#undef HAVE_STRTOLD
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/04/21 14:43:52  dron
+ * Added test for copysignf() presence.
+ *
  * Revision 1.6  2006/04/21 12:50:09  dron
  * Eliminated all the code related to long double floats.
  *
@@ -219,6 +222,10 @@ CPL_CVSID("$Id$");
 /* Declare C99 floating point functions, if they are missing in <math.h>.
  * For the moment we do not have an actual replacements for these functions
  * and suppose they are exist, even not declared in <math.h>. */
+
+#ifndef HAVE_COPYSIGNF
+# define copysignf copysign
+#endif /* HAVE_COPYSIGNF */
 
 #ifndef HAVE_STRTOF
 # define strtof strtod
