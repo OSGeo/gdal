@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/04/21 12:50:09  dron
+ * Eliminated all the code related to long double floats.
+ *
  * Revision 1.5  2006/04/04 16:11:06  fwarmerdam
  * temporarily avoid use of long double math funcs not on macos 10.3
  *
@@ -52,8 +55,8 @@
    
    DESCRIPTION:
    
-   The strtod, strtof, and strtold functions convert the initial portion of the
-   string pointed to by nptr to double, float, and long double representations,
+   The strtod and strtof functions convert the initial portion of the
+   string pointed to by nptr to double and float representations,
    respectively. First, they decompose the input string into three parts: an
    initial, possibly empty, sequence of white-space characters (as specified by
    the isspace function), a subject sequence resembling a floating-point
@@ -221,10 +224,6 @@ CPL_CVSID("$Id$");
 # define strtof strtod
 #endif /* HAVE_STRTOF */
 
-#ifndef HAVE_STRTOLD
-# define strtold strtod
-#endif /* HAVE_STRTOLD */
-
 #ifndef HAVE_NAN
 # define nan(tagp) strtod("NAN(tagp)", NULL)
 #else
@@ -245,16 +244,6 @@ CPL_C_END
 # endif
 #endif /* HAVE_NANF */
 
-#ifndef HAVE_NANL
-# define nanl(tagp) strtold("NAN(tagp)", NULL)
-#else
-# if defined(HAVE_DECL_NANL) && !HAVE_DECL_NANL
-CPL_C_START
-extern  long double nanl(const char *);
-CPL_C_END
-# endif
-#endif /* HAVE_NANL */
-
 /* _Memcasecmp: return a case-insensitive comparison of two areas of
    memory. */
 static int
@@ -274,28 +263,22 @@ _Memcasecmp (const void *s1, const void *s2, size_t n)
 
 /* _Ldmul: multiply y by *px with checking */
 static int
-_Ldmul(long double *px, long double y)
+_Ldmul(double *px, double y)
 {
-#ifdef HAVE_FREXPL
   int lexp;
-  long double ld;
+  double ld;
 
-  ld = frexpl(*px, &lexp) * y;
+  ld = frexp(*px, &lexp) * y;
   errno = 0;
-  *px = ldexpl(ld, lexp);	/* ldexpl can overflow */
+  *px = ldexp(ld, lexp);	/* ldexpl can overflow */
   return errno != 0 ? -1 : 0;
-
-#else
-  *px = *px * y;
-  return 0;
-#endif
 }  
   
 /* _Ldtento: compute x * 10^n, paranoid style */
-static long double
-_Ldtento(long double x, int n)
+static double
+_Ldtento(double x, int n)
 {
-  long double factor, fac10;
+  double factor, fac10;
   int errx;
   unsigned nu;
   
@@ -330,11 +313,11 @@ _Ldtento(long double x, int n)
 
 /* _Stold: return the classification of the floating-point number (FP_ZERO
    if there's no number; if there's a zero, return FP_NORMAL). 
-   The pld parameter is a possibly-returned long double;
+   The pld parameter is a possibly-returned double;
    the pnan parameter is the n-char-sequence returned if we're
    returning FP_NAN; point is a symbol used as a decimal delimiter. */
 static int
-_Stold (const char *s, char **endptr, long double *pld, char **pnan,
+_Stold (const char *s, char **endptr, double *pld, char **pnan,
         const char point)
 {
   static const char hexits[] = {
@@ -344,7 +327,7 @@ _Stold (const char *s, char **endptr, long double *pld, char **pnan,
   char *sc;
   char buf[SIG_MAX];
   char sign;
-  long double x, fac, facpow;
+  double x, fac, facpow;
   int ndigit, nsig, nzero, olead, opoint, base;
   size_t m;
   char *p;
@@ -461,7 +444,7 @@ _Stold (const char *s, char **endptr, long double *pld, char **pnan,
     }
   if (ndigit == 0)
     {
-      /* no digits? return not-a-long double */
+      /* no digits? return not-a-double */
       if (endptr)
 	*endptr = (char *) s;
       return FP_ZERO;
@@ -480,7 +463,7 @@ _Stold (const char *s, char **endptr, long double *pld, char **pnan,
 	*pl = *pl * base + *pc++;
     }
   fac = facpow = (base == 10) ? 1e8L : +4294967296.0L;
-  for (x = (long double) *lo, n = 0; ++n <= (nsig >> 3);)
+  for (x = (double) *lo, n = 0; ++n <= (nsig >> 3);)
     {
       if (lo[n] != 0UL)
 	x += fac * lo[n];
@@ -622,28 +605,21 @@ double CPLAtof(const char *nptr)
  */
 double CPLStrtodDelim(const char *nptr, char **endptr, char point)
 {
-  long double ld;
+  double ld;
   char *nan_arg = 0;
-  double d;
 
   switch (_Stold(nptr, endptr, &ld, &nan_arg, point))
     {
     case FP_NORMAL:
     default:
-      if ((ld < 0.0L ? -ld : ld) > DBL_MAX)
-	{
-	  errno = ERANGE;
-	  return (ld < 0.0L) ? -HUGE_VAL : HUGE_VAL;
-	}
-      else
-	return (double) ld;
+      return ld;
     case FP_ZERO:
       return 0.0;
     case FP_NAN:
-      d = copysign (nan (nan_arg), (double) ld);
+      ld = copysign (nan (nan_arg), ld);
       if (nan_arg != 0)
 	free (nan_arg);
-      return d;
+      return ld;
     case FP_INFINITE:
       return ld < 0.0L ? -HUGE_VAL : HUGE_VAL;
     }
@@ -698,7 +674,7 @@ double CPLStrtod(const char *nptr, char **endptr)
  */
 float CPLStrtofDelim(const char *nptr, char **endptr, char point)
 {
-  long double ld;
+  double ld;
   char *nan_arg = 0;
   float f;
 
@@ -749,79 +725,6 @@ float CPLStrtofDelim(const char *nptr, char **endptr, char point)
 float CPLStrtof(const char *nptr, char **endptr)
 {
     return CPLStrtofDelim(nptr, endptr, '.');
-}
-
-/************************************************************************/
-/*                          CPLStrtodDelim()                            */
-/************************************************************************/
-
-/**
- * Converts ASCII string to floating point number using specified delimiter.
- *
- * This function converts the initial portion of the string pointed to by
- * nptr to long double floating point representation. This function does the
- * same as standard strtold(3), but does not take locale in account. Instead
- * of locale defined decimal delimiter you can specify your own one. Also see
- * notes for CPLAtof() function.
- *
- * @param nptr Pointer to string to convert.
- * @param endptr If is not NULL, a pointer to the character after the last
- * character used in the conversion is stored in the location referenced
- * by endptr.
- * @param point Decimal delimiter.
- *
- * @return Converted value, if any.
- */
-long double CPLStrtoldDelim(const char *nptr, char **endptr, char point)
-{
-  long double ld;
-  char *nan_arg = 0;
-
-  switch (_Stold(nptr, endptr, &ld, &nan_arg, point))
-    {
-    case FP_NORMAL:
-    default:
-      return ld;
-    case FP_ZERO:
-      return 0.0;
-    case FP_NAN:
-#ifdef HAVE_FREXPL
-      ld = copysignl (nanl (nan_arg), ld);
-#else
-      ld = copysign (nan (nan_arg), ld);
-#endif
-      if (nan_arg != 0)
-	free (nan_arg);
-      return ld;
-    case FP_INFINITE:
-      return ld < 0.0L ? -HUGE_VALL : HUGE_VALL;
-    }
-}
-
-/************************************************************************/
-/*                             CPLStrtold()                             */
-/************************************************************************/
-
-/**
- * Converts ASCII string to floating point number.
- *
- * This function converts the initial portion of the string pointed to by nptr
- * to long double floating point representation. This function does the same
- * as standard strtold(3), but does not take locale in account. That means,
- * the decimal delimiter is always '.' (decimal point). Use CPLStrtoldDelim()
- * function if you want to specify custom delimiter. Also see notes for
- * CPLAtof() function.
- *
- * @param nptr Pointer to string to convert.
- * @param endptr If is not NULL, a pointer to the character after the last
- * character used in the conversion is stored in the location referenced
- * by endptr.
- *
- * @return Converted value, if any.
- */
-long double CPLStrtold(const char * nptr, char ** endptr)
-{
-    return CPLStrtoldDelim(nptr, endptr, '.');
 }
 
 /* END OF FILE */
