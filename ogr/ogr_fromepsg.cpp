@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2006/04/21 04:10:07  fwarmerdam
+ * added deprecated PCS name if it is deprecated
+ *
  * Revision 1.41  2006/03/01 03:12:51  fwarmerdam
  * added method 9823 (Equirectangular/Plate Caree/Equidistant Cylindrical
  *
@@ -980,10 +983,23 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
 /* -------------------------------------------------------------------- */
     if( ppszEPSGName != NULL )
     {
-        *ppszEPSGName =
-            CPLStrdup( CSLGetField( papszRecord,
-                                    CSVGetFileFieldId(pszFilename,
-                                                      "COORD_REF_SYS_NAME") ));
+        CPLString osPCSName = 
+            CSLGetField( papszRecord,
+                         CSVGetFileFieldId(pszFilename,
+                                           "COORD_REF_SYS_NAME"));
+            
+        const char *pszDeprecated = 
+            CSLGetField( papszRecord,
+                         CSVGetFileFieldId(pszFilename,
+                                           "DEPRECATED") );
+
+        printf( "Name = %s, Deprecated = %s\n", 
+                osPCSName.c_str(), pszDeprecated );
+
+        if( pszDeprecated != NULL && *pszDeprecated == '1' )
+            osPCSName += " (deprecated)";
+
+        *ppszEPSGName = CPLStrdup(osPCSName);
     }
 
 /* -------------------------------------------------------------------- */
