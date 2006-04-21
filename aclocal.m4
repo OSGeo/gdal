@@ -451,7 +451,7 @@ AC_DEFUN(AM_PATH_PYTHON,
      PYTHON=no
   fi
 
-  ARCH=`uname -i`
+  ARCH=`uname -i 2>/dev/null`
   PYLIB=lib
   if test "$ARCH" = "x86_64" ; then
     PYLIB=lib64
