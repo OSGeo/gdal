@@ -117,10 +117,10 @@ dnl Checks for library functions.
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(snprintf vsnprintf)
 AC_CHECK_FUNCS(atoll)
-AC_CHECK_FUNCS(copysign strtof strtold nan nanf nanl)
+AC_CHECK_FUNCS(copysign strtof strtold nan nanf)
 
 dnl Check for declarations
-AC_CHECK_DECLS([nan, nanf, nanl])
+AC_CHECK_DECLS([nan, nanf])
 
 dnl Make sure at least these are checked under C++.  Prototypes missing on 
 dnl some platforms.
