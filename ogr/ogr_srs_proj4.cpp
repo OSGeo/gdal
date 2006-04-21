@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2006/04/21 03:33:23  fwarmerdam
+ * Per bug 811 we should not actually be adjusting the central meridian or
+ * other longitudes.  They are relative to the geogcs prime meridian in
+ * WKT and PROJ.4 format.  Ugg.
+ *
  * Revision 1.62  2006/04/21 02:44:35  fwarmerdam
  * Fixed bogota meridian sign (west, not east).
  *
@@ -1136,8 +1141,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         sprintf( szProj4+strlen(szProj4),
            "+proj=cea +lon_0=%.16g +lat_ts=%.16g +x_0=%.16g +y_0=%.16g ",
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0) 
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
@@ -1147,8 +1151,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         sprintf( szProj4+strlen(szProj4),
            "+proj=bonne +lon_0=%.16g +lat_1=%.16g +x_0=%.16g +y_0=%.16g ",
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0) 
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
@@ -1159,8 +1162,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         sprintf( szProj4+strlen(szProj4),
            "+proj=cass +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1170,8 +1172,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         sprintf( szProj4+strlen(szProj4),
                  "+proj=nzmg +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1199,8 +1200,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
             sprintf( szProj4+strlen(szProj4),
              "+proj=tmerc +lat_0=%.16g +lon_0=%.16g +k=%f +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
@@ -1211,8 +1211,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         sprintf( szProj4+strlen(szProj4),
            "+proj=merc +lat_ts=%.16g +lon_0=%.16g +k=%f +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
@@ -1224,8 +1223,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
          "+proj=sterea +lat_0=%.16g +lon_0=%.16g +k=%f +x_0=%.16g +y_0=%.16g ",
 //         "+proj=stere +lat_0=%.16g +lon_0=%.16g +k=%f +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
@@ -1236,8 +1234,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         sprintf( szProj4+strlen(szProj4),
            "+proj=stere +lat_0=%.16g +lon_0=%.16g +k=%f +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
@@ -1250,8 +1247,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                      "+proj=stere +lat_0=90 +lat_ts=%.16g +lon_0=%.16g "
                      "+k=%.16g +x_0=%.16g +y_0=%.16g ",
                      GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,90.0),
-                     GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                     - dfFromGreenwich,
+                     GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                      GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                      GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
@@ -1260,8 +1256,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                      "+proj=stere +lat_0=-90 +lat_ts=%.16g +lon_0=%.16g "
                      "+k=%.16g +x_0=%.16g +y_0=%.16g ",
                      GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,-90.0),
-                     GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                     - dfFromGreenwich,
+                     GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                      GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                      GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
@@ -1272,8 +1267,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         sprintf( szProj4+strlen(szProj4),
                  "+proj=eqc +lat_ts=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1283,8 +1277,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         sprintf( szProj4+strlen(szProj4),
                  "+proj=gnom +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1294,8 +1287,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         sprintf( szProj4+strlen(szProj4),
                  "+proj=ortho +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1305,8 +1297,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         sprintf( szProj4+strlen(szProj4),
                  "+proj=laea +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1316,8 +1307,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         sprintf( szProj4+strlen(szProj4),
                  "+proj=aeqd +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1328,8 +1318,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  "+proj=eqdc +lat_0=%.16g +lon_0=%.16g +lat_1=%.16g +lat_2=%.16g"
                  " +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0),
-                 GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0),
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1341,8 +1330,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         sprintf( szProj4+strlen(szProj4),
                 "+proj=mill +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g +R_A ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1351,8 +1339,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         sprintf( szProj4+strlen(szProj4),
                  "+proj=moll +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1370,8 +1357,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         sprintf( szProj4+strlen(szProj4),
                  "+proj=eck6 +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1381,8 +1367,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
         sprintf( szProj4+strlen(szProj4),
                  "+proj=poly +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1395,8 +1380,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0),
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1405,8 +1389,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         sprintf( szProj4+strlen(szProj4),
                  "+proj=robin +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1415,8 +1398,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         sprintf( szProj4+strlen(szProj4),
                  "+proj=vandg +lon_0=%.16g +x_0=%.16g +y_0=%.16g +R_A ",
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1425,8 +1407,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         sprintf( szProj4+strlen(szProj4),
                  "+proj=sinu +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
-                 GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1435,8 +1416,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         sprintf( szProj4+strlen(szProj4),
                  "+proj=gall +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1445,8 +1425,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         sprintf( szProj4+strlen(szProj4),
                  "+proj=goode +lon_0=%.16g +x_0=%.16g +y_0=%.16g ",
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1455,8 +1434,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     {
         sprintf( szProj4+strlen(szProj4),
                  "+proj=geos +lon_0=%.16g +h=%.16g +x_0=%.16g +y_0=%.16g ",
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_SATELLITE_HEIGHT,35785831.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
@@ -1471,8 +1449,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0),
                  GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0),
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1484,8 +1461,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  " +k_0=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
@@ -1505,8 +1481,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                      "+proj=somerc +lat_0=%.16g +lon_0=%.16g"
                      " +x_0=%.16g +y_0=%.16g ",
                      GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                     GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                     - dfFromGreenwich,
+                     GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                      GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
         }
@@ -1516,8 +1491,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                      "+proj=omerc +lat_0=%.16g +lonc=%.16g +alpha=%.16g"
                      " +k=%.16g +x_0=%.16g +y_0=%.16g ",
                      GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                     GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                     - dfFromGreenwich,
+                     GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                      GetNormProjParm(SRS_PP_AZIMUTH,0.0),
                      GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                      GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1534,11 +1508,9 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  " +k=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
                  GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_1,0.0),
-                 GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_1,0.0),
                  GetNormProjParm(SRS_PP_LATITUDE_OF_POINT_2,0.0),
-                 GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_2,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_LONGITUDE_OF_POINT_2,0.0),
                  GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
@@ -1550,8 +1522,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  "+proj=krovak +lat_0=%.16g +lon_0=%.16g +alpha=%.16g"
                  " +k=%.16g +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0),
-                 GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER,0.0),
                  GetNormProjParm(SRS_PP_AZIMUTH,0.0),
                  GetNormProjParm(SRS_PP_SCALE_FACTOR,1.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
@@ -1565,11 +1536,9 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  "+lat_1=%.16g +lon_1=%.16g "
                  "+x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_1ST_POINT,0.0),
-                 GetNormProjParm(SRS_PP_LONGITUDE_OF_1ST_POINT,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_LONGITUDE_OF_1ST_POINT,0.0),
                  GetNormProjParm(SRS_PP_LATITUDE_OF_2ND_POINT,0.0),
-                 GetNormProjParm(SRS_PP_LONGITUDE_OF_2ND_POINT,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_LONGITUDE_OF_2ND_POINT,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
@@ -1581,8 +1550,7 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
                  "+proj=somerc +lat_0=%.16g +lon_0=%.16g"
                  " +x_0=%.16g +y_0=%.16g ",
                  GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0),
-                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0)
-                 - dfFromGreenwich,
+                 GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0),
                  GetNormProjParm(SRS_PP_FALSE_EASTING,0.0),
                  GetNormProjParm(SRS_PP_FALSE_NORTHING,0.0) );
     }
