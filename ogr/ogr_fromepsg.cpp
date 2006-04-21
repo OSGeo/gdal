@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2006/04/21 04:12:29  fwarmerdam
+ * Removed debugging printf.
+ *
  * Revision 1.42  2006/04/21 04:10:07  fwarmerdam
  * added deprecated PCS name if it is deprecated
  *
@@ -992,9 +995,6 @@ EPSGGetPCSInfo( int nPCSCode, char **ppszEPSGName,
             CSLGetField( papszRecord,
                          CSVGetFileFieldId(pszFilename,
                                            "DEPRECATED") );
-
-        printf( "Name = %s, Deprecated = %s\n", 
-                osPCSName.c_str(), pszDeprecated );
 
         if( pszDeprecated != NULL && *pszDeprecated == '1' )
             osPCSName += " (deprecated)";
