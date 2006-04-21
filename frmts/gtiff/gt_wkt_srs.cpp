@@ -31,6 +31,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2006/04/21 12:31:29  fwarmerdam
+ * Ensure all of adfParms[] is initialized per:
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1164
+ *
  * Revision 1.61  2006/04/05 00:06:14  fwarmerdam
  * fix contact info
  *
@@ -400,6 +404,9 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
 
         for( i = 0; i < MIN(10,psDefn->nParms); i++ )
             adfParm[i] = psDefn->ProjParm[i];
+
+        for( ; i < 10; i++ )
+            adfParm[i] = 0.0;
 
         adfParm[0] /= psDefn->UOMAngleInDegrees;
         adfParm[1] /= psDefn->UOMAngleInDegrees;
