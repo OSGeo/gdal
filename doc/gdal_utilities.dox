@@ -293,26 +293,25 @@ input pixels values from the range <i>src_min</i> to <i>src_max</i> to
 the range <i>dst_min</i> to <i>dst_max</i>.  If omitted the output range is
 0 to 255.  If omitted the input range is automatically computed from the
 source data.</dd>
-<dt> <b>-srcwin</b> <i>xoff yoff xsize ysize</i>:</dt><dd> Selects a subwindow from the source image for copying based on pixel/line location.  </dd>
-<dt> <b>-projwin</b> <i>ulx uly lrx lry</i>:</dt><dd> Selects a subwindow from the
-source image for copying (like -srcwin) but with the corners given in 
-georeferenced coordinates. </dd>
-<dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> Override the projection for the output
-file.  The srs_def may be any of the usual GDAL/OGR forms, complete WKT, 
-PROJ.4, EPSG:n or a file containing the wkt. </dd>
+<dt> <b>-srcwin</b> <i>xoff yoff xsize ysize</i>:</dt><dd> Selects a subwindow
+from the source image for copying based on pixel/line location.  </dd>
+<dt> <b>-projwin</b> <i>ulx uly lrx lry</i>:</dt><dd> Selects a subwindow from
+the source image for copying (like <b>-srcwin</b>) but with the corners given
+in georeferenced coordinates. </dd>
+<dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> Override the projection for the
+output file.  The <i>srs_def</i> may be any of the usual GDAL/OGR forms,
+complete WKT, PROJ.4, EPSG:n or a file containing the WKT. </dd>
 <dt> <b>-a_ullr</b> <i>ulx uly lrx lry</i>:</dt><dd>
 Assign/override the georeferenced bounds of the output file.  This assigns 
 georeferenced bounds to the output file, ignoring what would have been derived 
 from the source file.</dd>
 <dt> <b>-a_nodata</b> <i>value</i>:</dt><dd>
 Assign a specified nodata value to output bands.</dd>
-<dt> <b>-mo</b> <i>"KEY=VALUE"</i>:</dt><dd> passes a metadata key and value to set
-on the output dataset if possible.</dd>
-<dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> passes a creation option to the output
-format driver.  Multiple <b>-co</b> options may be listed.  See format 
+<dt> <b>-mo</b> <i>"META-TAG=VALUE"</i>:</dt><dd> Passes a metadata key and
+value to set on the output dataset if possible.</dd>
+<dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> Passes a creation option to the
+output format driver.  Multiple <b>-co</b> options may be listed.  See format 
 specific documentation for legal creation options for each format.</dd>
-<dt> <b>-mo</b> <i>"META-TAG=VALUE"</i>:</dt><dd> Add the indicated metadata values
-to the output dataset.</dd>
 <dt> <b>-gcp</b> <i>pixel line easting northing</i>:</dt><dd>
 Add the indicated ground control point to the output dataset.  This option 
 may be provided multiple times to provide a set of GCPs. 
