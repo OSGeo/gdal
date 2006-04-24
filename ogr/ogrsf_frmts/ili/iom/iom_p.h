@@ -1,3 +1,22 @@
+/* This file is part of the iom project.
+ * For more information, please see <http://www.interlis.ch>.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+
 #ifndef IOM_IOM_P_H
 #define IOM_IOM_P_H
 
@@ -18,14 +37,16 @@
 #include <xercesc/framework/XMLBuffer.hpp>
 #include <xercesc/util/StringPool.hpp>
 #include <xercesc/framework/XMLPScanToken.hpp>
-#include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/sax2/SAX2XMLReader.hpp>
 #include <xercesc/sax2/DefaultHandler.hpp>
 #include <xercesc/framework/XMLFormatter.hpp>
 #include <xercesc/framework/LocalFileFormatTarget.hpp>
+#include <xercesc/util/TransService.hpp>
 #include <iom/iom.h>
 #ifdef _MSC_VER
 #include <crtdbg.h>
+// signed/unsigned mismatch
+#pragma warning(default: 4018)
 #endif
 
 #ifdef _DEBUG
@@ -42,6 +63,7 @@
 #endif
 
 XERCES_CPP_NAMESPACE_USE
+
 
 class XmlWrtAttr {
 private:
@@ -61,6 +83,8 @@ private:
 	XMLFormatter *out;
 	XMLFormatTarget* destination;
 public:
+	~XmlWriter();
+	XmlWriter();
 	void open(const char *filename);
 	void startElement(int tagid,XmlWrtAttr attrv[],int attrc);
 	void endElement(int tagid);
@@ -192,6 +216,7 @@ private:
 public:
 		void setHeadSecVersion(const XMLCh *version);
 		const char *getHeadSecVersion_c();
+		const XMLCh *getHeadSecVersion();
 
 private:
 		XMLCh *headsender_w;
@@ -219,6 +244,7 @@ private:
 		typedef std::map<int,attrv_type> tagv_type;
 		tagv_type tagList;		
 		void buildTagList();
+		int getQualifiedTypeName(IomObject &aclass);
 
 private:
 public:
@@ -439,13 +465,13 @@ public:
 		int freeRef(){useCount--;return useCount;}
 private:
 		IomFile basketv;
-		int basketi;
+		std::vector<IomBasket>::size_type basketi;
 public:
 		iom_iterator(IomFile file);
 		IomBasket next_basket();
 private:
 		IomBasket objectv;
-		int objecti;
+		std::vector<IomObject>::size_type objecti;
 public:
 		iom_iterator(IomBasket basket);
 		IomObject next_object();
@@ -590,9 +616,11 @@ public:
 	static int get_C3();
 	static int get_A1();
 	static int get_A2();
+	static int get_iom04_metamodel_AssociationDef();
 	static int get_R();
 	static int get_lineattr();
 	static int get_TRANSFER();
+	static int get_iom04_metamodel_Table();
 	static int get_DATASECTION();
 	static int get_HEADERSECTION();
 	static int get_ALIAS();
@@ -615,6 +643,42 @@ public:
 	static int get_container();
 	static int get_iom04_metamodel_TransferDescription();
 	static int get_name();
+	static void clear();
+private:
+	static int COORD;
+	static int ARC;
+	static int C1;
+	static int C2;
+	static int C3;
+	static int A1;
+	static int A2;
+	static int iom04_metamodel_AssociationDef;
+	static int R;
+	static int lineattr;
+	static int TRANSFER;
+	static int iom04_metamodel_Table;
+	static int DATASECTION;
+	static int HEADERSECTION;
+	static int ALIAS;
+	static int COMMENT;
+	static int CLIPPED;
+	static int LINEATTR;
+	static int SEGMENTS;
+	static int segment;
+	static int SURFACE;
+	static int surface;
+	static int boundary;
+	static int BOUNDARY;
+	static int polyline;
+	static int POLYLINE;
+	static int sequence;
+	static int MULTISURFACE;
+	static int iom04_metamodel_ViewableAttributesAndRoles;
+	static int viewable;
+	static int attributesAndRoles;
+	static int container;
+	static int iom04_metamodel_TransferDescription;
+	static int name;
 };
 class ustrings {
 public:
@@ -643,6 +707,9 @@ public:
 	static const XMLCh*  get_INITIAL();
 
 };
+
+char *iom_toUTF8(const XMLCh *src);
+XMLCh *iom_fromUTF8(const char *src);
 
 // ---------------------------------------------------------------------------
 //  This is a simple class that lets us do easy (though not terribly efficient)

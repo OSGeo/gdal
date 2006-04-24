@@ -1,3 +1,22 @@
+/* This file is part of the iom project.
+ * For more information, please see <http://www.interlis.ch>.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+
 /** @file
  * adapter to xml writer
  * @defgroup writer xml writer functions
@@ -12,6 +31,7 @@
 #include <xercesc/framework/LocalFileFormatTarget.hpp>
 #include <iom/iom_p.h>
 #include <algorithm>
+#include <string>
 
 /** gets the xml representaion of a consistency value.
  */
@@ -427,7 +447,10 @@ void iom_file::writeAttrs(XmlWriter &out, IomObject &obj)
 	tagv_type::iterator tag=tagList.find(obj->getTag());
 	// class not found?
 	if(tag==tagList.end()){
-		iom_issueerr("unknown type");
+		std::string msg="unknown type <";
+		msg+=+obj->getTag_c();
+		msg+=">";
+		iom_issueerr(msg.c_str());
 		// write all attributes
 		for(int attri=0;attri<obj->getAttrCount();attri++){
 			int attr=obj->getAttrName(attri);
@@ -436,7 +459,7 @@ void iom_file::writeAttrs(XmlWriter &out, IomObject &obj)
 	}else{
 		// class found
 		attrv_type attrv=tag->second;
-		for(unsigned int attri=0;attri<attrv.size();attri++){
+		for(attrv_type::size_type attri=0;attri<attrv.size();attri++){
 			int attr=attrv[attri].second;
 			writeAttr(out, obj,attr);
 		}
@@ -508,7 +531,7 @@ int iom_file::save()
 			ind++;
 
 			// write all baskets
-			for(unsigned int basketi=0;basketi<basketv.size();basketi++){
+			for(std::vector<IomBasket>::size_type basketi=0;basketi<basketv.size();basketi++){
 				IomBasket basket=basketv.at(basketi);
 				const XMLCh *topics=basket->getTopics();
 				const XMLCh *kind=encodeBasketKind(basket->getKind());
@@ -524,6 +547,10 @@ int iom_file::save()
 					,XmlWrtAttr(consistency ? ustrings::get_CONSISTENCY():0,consistency)
 				};
 				out.printIndent(ind);
+				if(basket->getTag()==0){
+					iom_issueerr("basket requires a TOPIC name");
+					return IOM_ERR_ILLEGALSTATE;
+				}
 				out.startElement(basket->getTag(),basketAttr,sizeof(basketAttr)/sizeof(basketAttr[0]));out.printNewLine();
 				{
 					ind++;
@@ -564,46 +591,64 @@ int iom_file::save()
 	return 0;
 }
 
-void iom_file::buildTagList()
+int iom_file::getQualifiedTypeName(IomObject &aclass)
 {
 	static const XMLCh  period[] =
 	{
 		chPeriod,  chNull
 	};
+	IomObject topic=ilibasket->getObject(aclass->getAttrObj(tags::get_container(),0)->getRefOid());
+	IomObject model=ilibasket->getObject(topic->getAttrObj(tags::get_container(),0)->getRefOid());
+	// class at model level?
+	XMLCh *qname;
+	if(model->getTag()==tags::get_iom04_metamodel_TransferDescription()){
+		const XMLCh *modelName=topic->getAttrValue(tags::get_name());
+		const XMLCh *className=aclass->getAttrValue(tags::get_name());
+		int qnLen=XMLString::stringLen(modelName)+1+XMLString::stringLen(className)+1;
+		qname=dbgnew XMLCh[qnLen];
+		XMLString::copyString(qname,modelName);
+		XMLString::catString(qname,period);
+		XMLString::catString(qname,className);
+	}else{
+		const XMLCh *modelName=model->getAttrValue(tags::get_name());
+		const XMLCh *topicName=topic->getAttrValue(tags::get_name());
+		const XMLCh *className=aclass->getAttrValue(tags::get_name());
+		int qnLen=XMLString::stringLen(modelName)+1+XMLString::stringLen(topicName)+1+XMLString::stringLen(className)+1;
+		qname=dbgnew XMLCh[qnLen];
+		XMLString::copyString(qname,modelName);
+		XMLString::catString(qname,period);
+		XMLString::catString(qname,topicName);
+		XMLString::catString(qname,period);
+		XMLString::catString(qname,className);
+	}
+	int classId=ParserHandler::getTagId(qname);
+	delete[] qname;
+	return classId;
+}
+
+void iom_file::buildTagList()
+{
 	// for all links class--(attribute|role)
 	IomIterator obji=new iom_iterator(ilibasket);
 	IomObject obj;
 	while(!(obj=obji->next_object()).isNull()){
-		if(obj->getTag()==tags::get_iom04_metamodel_ViewableAttributesAndRoles()){
+		if(obj->getTag()==tags::get_iom04_metamodel_Table() || obj->getTag()==tags::get_iom04_metamodel_AssociationDef()){
+			// get qualified name of class
+			int classId=getQualifiedTypeName(obj);
+			// add to tag list
+			tagv_type::iterator tag=tagList.find(classId);
+			if(tag==tagList.end()){
+				// not found, add empty attr list
+				attrv_type attrv;
+				tagList[classId]=attrv;
+			}else{
+				// found, don't change
+			}
+		}else if(obj->getTag()==tags::get_iom04_metamodel_ViewableAttributesAndRoles()){
 			// get class
 			IomObject aclass=ilibasket->getObject(obj->getAttrObj(tags::get_viewable(),0)->getRefOid());
 			// get qualified name of class
-			IomObject topic=ilibasket->getObject(aclass->getAttrObj(tags::get_container(),0)->getRefOid());
-			IomObject model=ilibasket->getObject(topic->getAttrObj(tags::get_container(),0)->getRefOid());
-			// class at model level?
-			XMLCh *qname;
-			if(model->getTag()==tags::get_iom04_metamodel_TransferDescription()){
-				const XMLCh *modelName=topic->getAttrValue(tags::get_name());
-				const XMLCh *className=aclass->getAttrValue(tags::get_name());
-				int qnLen=XMLString::stringLen(modelName)+1+XMLString::stringLen(className)+1;
-		        qname=dbgnew XMLCh[qnLen];
-				XMLString::copyString(qname,modelName);
-				XMLString::catString(qname,period);
-				XMLString::catString(qname,className);
-			}else{
-				const XMLCh *modelName=model->getAttrValue(tags::get_name());
-				const XMLCh *topicName=topic->getAttrValue(tags::get_name());
-				const XMLCh *className=aclass->getAttrValue(tags::get_name());
-				int qnLen=XMLString::stringLen(modelName)+1+XMLString::stringLen(topicName)+1+XMLString::stringLen(className)+1;
-		        qname=dbgnew XMLCh[qnLen];
-				XMLString::copyString(qname,modelName);
-				XMLString::catString(qname,period);
-				XMLString::catString(qname,topicName);
-				XMLString::catString(qname,period);
-				XMLString::catString(qname,className);
-			}
-			int classId=ParserHandler::getTagId(qname);
-			delete[] qname;
+			int classId=getQualifiedTypeName(aclass);
 			// get attribute or role
 			IomObject leafref=obj->getAttrObj(tags::get_attributesAndRoles(),0);
 			// get name
@@ -731,19 +776,11 @@ void XmlWriter::open(const char *filename)
     );
 	*/
 	destination=new LocalFileFormatTarget(filename); 
-
-#if XERCES_VERSION_MAJOR == 2 && XERCES_VERSION_MINOR < 3
-	out= new XMLFormatter(gUTF8
-                 ,destination
-                 ,XMLFormatter::NoEscapes
-                 ,XMLFormatter::UnRep_CharRef);
-#else
 	out= new XMLFormatter(gUTF8
                  ,gXMLDecl_ver10
                  ,destination
                  ,XMLFormatter::NoEscapes
                  ,XMLFormatter::UnRep_CharRef);
-#endif
 
     out->setUnRepFlags(XMLFormatter::UnRep_CharRef);
 
@@ -793,12 +830,24 @@ void XmlWriter::characters(const XMLCh *const chars)
     //fFormatter->setUnRepFlags(XMLFormatter::UnRep_CharRef);
 	out->formatBuf(chars, XMLString::stringLen(chars), XMLFormatter::CharEscapes);
 }
-
+XmlWriter::XmlWriter()
+: out(0)
+, destination(0)
+{
+}
+XmlWriter::~XmlWriter()
+{
+	close();
+}
 void XmlWriter::close()
 {
 	//fclose(out);out=0;
-	delete destination;destination=0;
-	delete out;out=0;
+	if(destination){
+		delete destination;destination=0;
+	}
+	if(out){
+		delete out;out=0;
+	}
 }
 
 void XmlWriter::printNewLine()

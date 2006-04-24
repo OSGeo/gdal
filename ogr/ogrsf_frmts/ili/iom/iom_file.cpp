@@ -1,3 +1,22 @@
+/* This file is part of the iom project.
+ * For more information, please see <http://www.interlis.ch>.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+
 /** @file
  * implementation of object file
  * @defgroup file file level functions
@@ -15,6 +34,7 @@
  */
 extern "C" IOM_FILE iom_open(const char *filename,int flags,const char *model)
 {
+	//__asm { int 3 };
 	IomFile ret(dbgnew iom_file());
 	ret->setFilename(filename);
 	if(iom_fileexists(filename)){
@@ -41,6 +61,7 @@ extern "C" IOM_FILE iom_open(const char *filename,int flags,const char *model)
  */
 extern "C" int iom_save(IOM_FILE file)
 {
+	//__asm { int 3 };
 	return file->save();
 }
 
@@ -153,6 +174,19 @@ extern "C" const char *iom_getheadversion(IOM_FILE file)
 {
 	return file->getHeadSecVersion_c();
 }
+/** gets the content of the VERSION element in the headersection.
+ */
+extern "C" const char *iom_getheadversionUTF8(IOM_FILE file)
+{
+	static char *value=0;
+	if(value){
+		XMLString::release(&value);
+	}
+	const XMLCh *ret=file->getHeadSecVersion();
+	if(!ret)return 0;
+	value=iom_toUTF8(ret);
+	return value;
+}
 
 /** gets the content of the SENDER element in the headersection.
  */
@@ -161,11 +195,33 @@ extern "C" const char *iom_getheadsender(IOM_FILE file)
 	return file->getHeadSecSender_c();
 }
 
+/** gets the content of the SENDER element in the headersection.
+ */
+extern "C" const char *iom_getheadsenderUTF8(IOM_FILE file)
+{
+	static char *value=0;
+	if(value){
+		XMLString::release(&value);
+	}
+	const XMLCh *ret=file->getHeadSecSender();
+	if(!ret)return 0;
+	value=iom_toUTF8(ret);
+	return value;
+}
+
 /** sets the content of the SENDER element in the headersection.
  */
 extern "C" void iom_setheadsender(IOM_FILE file,const char *sender)
 {
 	file->setHeadSecSender(X(sender));
+}
+/** sets the content of the SENDER element in the headersection.
+ */
+extern "C" void iom_setheadsenderUTF8(IOM_FILE file,const char *sender)
+{
+	XMLCh *unicodeForm=iom_fromUTF8(sender);
+	file->setHeadSecSender(unicodeForm);
+	XMLString::release(&unicodeForm);
 }
 
 /** gets the content of the COMMENT element in the headersection.
@@ -174,6 +230,19 @@ extern "C" const char *iom_getheadcomment(IOM_FILE file)
 {
 	return file->getHeadSecComment_c();
 }
+/** gets the content of the COMMENT element in the headersection.
+ */
+extern "C" const char *iom_getheadcommentUTF8(IOM_FILE file)
+{
+	static char *value=0;
+	if(value){
+		XMLString::release(&value);
+	}
+	const XMLCh *ret=file->getHeadSecComment();
+	if(!ret)return 0;
+	value=iom_toUTF8(ret);
+	return value;
+}
 
 /** sets the content of the COMMENT element in the headersection.
  */
@@ -181,15 +250,23 @@ extern "C" void iom_setheadcomment(IOM_FILE file,const char *comment)
 {
 	file->setHeadSecComment(X(comment));
 }
+/** sets the content of the COMMENT element in the headersection.
+ */
+extern "C" void iom_setheadcommentUTF8(IOM_FILE file,const char *comment)
+{
+	XMLCh *unicodeForm=iom_fromUTF8(comment);
+	file->setHeadSecComment(unicodeForm);
+	XMLString::release(&unicodeForm);
+}
 
 /** @}
  */
 
 iom_file::iom_file()
-: useCount(0)
-, filename(0)
-, parser(0)
+: parser(0)
 , handler(0)
+, filename(0)
+, useCount(0)
 , headversion_w(0)
 , headversion_c(0)
 , headsender_w(0)
@@ -268,6 +345,10 @@ const char *iom_file::getHeadSecVersion_c()
 		headversion_c=XMLString::transcode(headversion_w);
 	}
 	return headversion_c;
+}
+const XMLCh *iom_file::getHeadSecVersion()
+{
+	return headversion_w;
 }
 
 void iom_file::setHeadSecSender(const XMLCh *sender)
