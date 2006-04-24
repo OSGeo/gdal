@@ -33,6 +33,7 @@ define([AC_CACHE_SAVE], )
 
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(GDALmake.opt.in)
+AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_HEADER(port/cpl_config.h)
 
 dnl We require autoconf 2.52+ for libtool support on cygwin/mingw hosts
