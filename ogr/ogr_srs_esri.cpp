@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2006/04/24 23:21:07  fwarmerdam
+ * fixup some common ellipsoid names (from pgao)
+ *
  * Revision 1.46  2006/03/31 17:44:20  fwarmerdam
  * header updates
  *
@@ -322,6 +325,23 @@ static int anUsgsEsriZones[] =
 };
 
 void OGREPSGDatumNameMassage( char ** ppszDatum );
+
+/************************************************************************/
+/*                           RemapSpheroidName()                        */
+/*                                                                      */
+/*      Convert Spheroid name to ESRI style name                        */
+/************************************************************************/
+
+static const char* RemapSpheroidName(const char* pszName)
+{
+  if (strcmp(pszName, "WGS 84") == 0)
+    return "WGS 1984";
+
+  if (strcmp(pszName, "WGS 72") == 0)
+    return "WGS 1972";
+
+  return pszName;
+}
 
 /************************************************************************/
 /*                           ESRIToUSGSZone()                           */
@@ -1129,7 +1149,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 
     if( poSpheroid != NULL )
     {
-        char *pszNewValue = CPLStrdup(poSpheroid->GetValue());
+        char *pszNewValue = CPLStrdup(RemapSpheroidName(poSpheroid->GetValue()));
 
         MorphNameToESRI( &pszNewValue );
 
