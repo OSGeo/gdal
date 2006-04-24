@@ -1,3 +1,22 @@
+/* This file is part of the iom project.
+ * For more information, please see <http://www.interlis.ch>.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+
 /** @file
  * implementation of object object
  * @defgroup object object level functions
@@ -85,6 +104,13 @@ extern "C" IOM_OID iom_getobjectrefbid(IOM_OBJECT object){
 	return object->getRefBid_c();
 }
 
+/** sets the bid of the referenced object.
+ */
+extern "C" void iom_setobjectrefbid(IOM_OBJECT object,IOM_OID refbid)
+{
+	object->setRefBid(X(refbid));
+}
+
 /** gets the ORDER_POS of the referenced object.
 */
 extern "C" unsigned int iom_getobjectreforderpos(IOM_OBJECT object)
@@ -127,22 +153,23 @@ extern "C" void iom_setobjectconsistency(IOM_OBJECT object,int consistency){
  */
 
 iom_object::iom_object()
-	: basket(0)
-	,useCount(0)
+	:useCount(0)
+	, basket(0)
+	,consistency(IOM_COMPLETE)
+	,operation(IOM_OP_INSERT)
 	,tag(0)
 	,tag_c(0)
+	,xmlLine(0)
+	,xmlCol(0)
 	,oid_w(0)
 	,oid_c(0)
 	,bid_w(0)
 	,bid_c(0)
-	,xmlLine(0)
-	,xmlCol(0)
 	,refOid_w(0)
 	,refOid_c(0)
 	,refBid_w(0)
 	,refBid_c(0)
 	, refOrderPos(0)
-	,consistency(IOM_COMPLETE)
 {
 }
 iom_object::~iom_object()

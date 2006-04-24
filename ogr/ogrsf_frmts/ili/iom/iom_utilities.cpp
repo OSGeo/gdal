@@ -1,3 +1,21 @@
+/* This file is part of the iom project.
+ * For more information, please see <http://www.interlis.ch>.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 /** @file
  * implementation of utility functions
  * @defgroup utilities utility functions
@@ -11,12 +29,14 @@
 #include <iom/iom_p.h>
 
 
-#ifdef WIN32
+
+
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#ifdef _MSC_VER
 #define stat _stat
 #else
-#include <sys/stat.h>
 #include <unistd.h>
 #endif
 
@@ -105,12 +125,14 @@ static void _searchenv(const char *name, const char *envname, char *hitfile)
 
 
 static char *tmpdir=0;
-
+static XMLTranscoder *utf8_transcoder=0;
 
 /** Perform iom library initialization.
  */
 extern "C" void iom_init()
 {
+	//__asm { int 3 };
+
 	try {
            XMLPlatformUtils::Initialize();
     }
@@ -120,6 +142,51 @@ extern "C" void iom_init()
         XMLString::release(&message);
         return;
     }
+    XMLTransService::Codes resCode;
+    utf8_transcoder = XMLPlatformUtils::fgTransService->makeNewTranscoderFor
+    (
+        "UTF-8"
+        , resCode
+        , 16 * 1024
+    );
+	tags::clear();
+
+}
+
+/** transcode a xerces unicode string to an utf8 encoded one.
+*/
+char *iom_toUTF8(const XMLCh *src)
+{
+	unsigned int srcLen=XMLString::stringLen(src);
+	int destLen=srcLen+10;
+	char *dest;
+	dest=dbgnew char[destLen+1];
+	unsigned int eaten;
+	unsigned int endDest;
+	endDest=utf8_transcoder->transcodeTo(src,srcLen,(unsigned char *)dest,destLen,eaten,XMLTranscoder::UnRep_RepChar);
+	while(eaten<srcLen){
+		delete[] dest;
+		destLen=destLen+srcLen-eaten+10;
+		dest=dbgnew char[destLen+1];
+		endDest=utf8_transcoder->transcodeTo(src,srcLen,(unsigned char *)dest,destLen,eaten,XMLTranscoder::UnRep_RepChar);
+	}
+	dest[endDest]=0;
+	return dest;
+}
+
+/** transcode an utf8 encoded string to a xerces unicode one.
+*/
+XMLCh *iom_fromUTF8(const char *src)
+{
+	int srcLen=XMLString::stringLen(src);
+	int destLen=srcLen;
+	XMLCh *dest=dbgnew XMLCh[destLen+1];
+	unsigned char *charSizes=dbgnew unsigned char[destLen];
+	unsigned int eaten;
+	unsigned int endDest=utf8_transcoder->transcodeFrom((unsigned char *)src,srcLen,dest,destLen,eaten,charSizes);
+	dest[endDest]=0;
+	delete[] charSizes;
+	return dest;
 }
 
 /** Perform iom library termination.
@@ -129,6 +196,7 @@ extern "C" void iom_end()
 
 	ParserHandler::at_iom_end();
 	ErrorUtility::at_iom_end();
+	tags::clear();
 	XMLPlatformUtils::Terminate();
 }
 
@@ -181,6 +249,13 @@ extern "C" int iom_fileexists(const char *filename)
 		return true;
 	}
 	return false;
+}
+
+/** Returns the current time in milliseconds.
+ */
+extern "C" unsigned long iom_currentmilis()
+{
+	return XMLPlatformUtils::getCurrentMillis();
 }
 
 /**

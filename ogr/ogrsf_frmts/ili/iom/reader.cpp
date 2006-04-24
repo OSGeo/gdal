@@ -1,3 +1,22 @@
+/* This file is part of the iom project.
+ * For more information, please see <http://www.interlis.ch>.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+
 /** @file
  * adapter to xml parser 
  * @defgroup reader xml reader functions
@@ -80,17 +99,17 @@ void iom_file::setFilename(const char *filename1)
 
 Element::Element()
 	: object(0)
-	, bid(0)
-	, oid(0)
 	, propertyName(0)
+	, oid(0)
+	, bid(0)
 	, orderPos(0)
 {
 }
 Element::Element(const Element& src) 
 	: object(src.object)
-	, bid(XMLString::replicate(src.bid))
-	, oid(XMLString::replicate(src.oid))
 	, propertyName(src.propertyName)
+	, oid(XMLString::replicate(src.oid))
+	, bid(XMLString::replicate(src.bid))
 	, orderPos(src.orderPos)
 {
 }
@@ -159,22 +178,25 @@ static const XMLCh* stripX(const XMLCh* value)
 	return value;
 }
 
-ParserHandler::ParserHandler(struct iom_file *inputfile,const char* model1) :
-  skip(0)
-  ,level(0)
-  ,state(BEFORE_TRANSFER)
+ParserHandler::ParserHandler(struct iom_file *inputfile,const char* model1) 
+	: locator(0)
 	,file(inputfile)
+	,model(model1 ? strdup(model1) : 0)
+	,skip(0)
+	,level(0)
+	,state(BEFORE_TRANSFER)
 	,dataContainer(0)
 	,object(0)
-	,model(model1 ? strdup(model1) : 0)
-	, locator(0)
 {
 	//  setupTag2MetaobjMapping();
 }
 
 ParserHandler::~ParserHandler()
 {
-	free(model);model=0;
+	if(model){
+		free(model);
+		model=0;
+	}
 }
 
 bool xisClassDef(int tag)
@@ -220,7 +242,7 @@ void  ParserHandler::startElement (const XMLCh *const uri
 		if(state==BEFORE_DATASECTION && tag==tags::get_HEADERSECTION()){
 			const XMLCh* sender=0;
 			const XMLCh* version=0;
-			for(int attri=0;attri<attrs.getLength();attri++){
+			for(unsigned int attri=0;attri<attrs.getLength();attri++){
 				if(!XMLString::compareString(attrs.getLocalName(attri),ustrings::get_SENDER())){
 					sender=attrs.getValue(attri);
 				}
@@ -257,7 +279,7 @@ void  ParserHandler::startElement (const XMLCh *const uri
     	if(state==BEFORE_BASKET){
 			const XMLCh* bid=0;
 			const XMLCh* consistency=0;
-			for(int attri=0;attri<attrs.getLength();attri++){
+			for(unsigned int attri=0;attri<attrs.getLength();attri++){
 				if(!XMLString::compareString(attrs.getLocalName(attri),ustrings::get_BID())){
 					bid=attrs.getValue(attri);
 				}
@@ -469,7 +491,7 @@ void  ParserHandler::startElement (const XMLCh *const uri
 			const XMLCh* oid=0;
 			const XMLCh* objBid=0;
 			const XMLCh* consistency=0;
-			for(int attri=0;attri<attrs.getLength();attri++){
+			for(unsigned int attri=0;attri<attrs.getLength();attri++){
 				if(!XMLString::compareString(attrs.getLocalName(attri),ustrings::get_TID())){
 					oid=attrs.getValue(attri);
 				}
@@ -532,7 +554,7 @@ void  ParserHandler::startElement (const XMLCh *const uri
 			const XMLCh* oid=0;
 			const XMLCh* objBid=0;
 			unsigned int orderPos=0;
-			for(int attri=0;attri<attrs.getLength();attri++){
+			for(unsigned int attri=0;attri<attrs.getLength();attri++){
 				if(!XMLString::compareString(attrs.getLocalName(attri),ustrings::get_REF())){
 					oid=attrs.getValue(attri);
 				}

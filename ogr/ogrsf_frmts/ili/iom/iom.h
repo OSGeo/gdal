@@ -1,3 +1,22 @@
+/* This file is part of the iom project.
+ * For more information, please see <http://www.interlis.ch>.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+
 #ifndef IOM_IOM_H
 #define IOM_IOM_H
 
@@ -104,6 +123,7 @@ void iom_settmpdir(const char *dirname);
 char *iom_gettmpnam();
 char *iom_searchenv(const char *filename, const char *varname);
 int iom_fileexists(const char *filename);
+unsigned long iom_currentmilis();
 
 // error message handling
 void iom_stderrlistener(IOM_OBJECT errobj);
@@ -129,22 +149,28 @@ IOM_BASKET iom_nextbasket(IOM_ITERATOR iterator);
 
 // get infos from headersection 
 const char *iom_getheadversion(IOM_FILE file);
+const char *iom_getheadversionUTF8(IOM_FILE file);
 const char *iom_getheadsender(IOM_FILE file);
+const char *iom_getheadsenderUTF8(IOM_FILE file);
 void iom_setheadsender(IOM_FILE file,const char *sender);
+void iom_setheadsenderUTF8(IOM_FILE file,const char *sender);
 const char *iom_getheadcomment(IOM_FILE file);
+const char *iom_getheadcommentUTF8(IOM_FILE file);
 void iom_setheadcomment(IOM_FILE file,const char *comment);
-
-// release handle
-int iom_releasebasket(IOM_BASKET basket);
+void iom_setheadcommentUTF8(IOM_FILE file,const char *comment);
 
 // gets the basket with a given bid or 0
 IOM_BASKET iom_getbasket(IOM_FILE file,IOM_OID oid);
+
 
 // Basket in eine andere Datei verschieben
 int iom_relocatebasket(IOM_FILE newfile,IOM_BASKET basket);
 
 // create a new basket
 IOM_BASKET iom_newbasket(IOM_FILE file);
+// release handle
+int iom_releasebasket(IOM_BASKET basket);
+
 
 // Basket löschen (Basket aus Datei entfernen)
 int iom_deletebasket(IOM_BASKET basket);
@@ -194,6 +220,7 @@ void iom_setobjectoid(IOM_OBJECT object,IOM_OID oid);
 IOM_OID iom_getobjectrefoid(IOM_OBJECT object);
 IOM_OID iom_getobjectrefbid(IOM_OBJECT object);
 void iom_setobjectrefoid(IOM_OBJECT object,IOM_OID refoid);
+void iom_setobjectrefbid(IOM_OBJECT object,IOM_OID refbid);
 
 // gets/sets the ORDER_POS of the referenced object
 unsigned int iom_getobjectreforderpos(IOM_OBJECT object);
@@ -212,6 +239,7 @@ int iom_getxmlelecount(IOM_OBJECT object);
 IOM_TAG iom_getxmleleattrname(IOM_OBJECT object,int index);
 int iom_getxmlelevalueidx(IOM_OBJECT object,int index);
 char *iom_getxmleleprim(IOM_OBJECT object,int index);
+char *iom_getxmleleprimUTF8(IOM_OBJECT object,int index);
 IOM_OBJECT iom_getxmleleobj(IOM_OBJECT object,int index);
 
 // gets/sets attribute values of an object
@@ -219,9 +247,12 @@ int iom_getattrcount(IOM_OBJECT object);
 IOM_TAG iom_getattrname(IOM_OBJECT object,int index);
 int iom_getattrvaluecount(IOM_OBJECT object,IOM_TAG attrName);
 char *iom_getattrvalue(IOM_OBJECT object,IOM_TAG attrName);
+char *iom_getattrvalueUTF8(IOM_OBJECT object,IOM_TAG attrName);
 void iom_setattrvalue(IOM_OBJECT object,IOM_TAG attrName,const char *value);
+void iom_setattrvalueUTF8(IOM_OBJECT object,IOM_TAG attrName,const char *value);
 void iom_setattrundefined(IOM_OBJECT object,IOM_TAG attrName);
 char *iom_getattrprim(IOM_OBJECT object,IOM_TAG attrName,int index);
+char *iom_getattrprimUTF8(IOM_OBJECT object,IOM_TAG attrName,int index);
 IOM_OBJECT iom_getattrobj(IOM_OBJECT object,IOM_TAG attrName,int index);
 IOM_OBJECT iom_changeattrobj(IOM_OBJECT object,IOM_TAG attrName,int index,IOM_TAG type);
 IOM_OBJECT iom_insertattrobj(IOM_OBJECT object,IOM_TAG attrName,int index,IOM_TAG type);

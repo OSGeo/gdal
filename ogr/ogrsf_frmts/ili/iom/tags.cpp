@@ -1,286 +1,362 @@
+/* This file is part of the iom project.
+ * For more information, please see <http://www.interlis.ch>.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+
 #include <iom/iom_p.h>
+
+	int tags::COORD=0;
+	int tags::ARC=0;
+	int tags::C1=0;
+	int tags::C2=0;
+	int tags::C3=0;
+	int tags::A1=0;
+	int tags::A2=0;
+	int tags::iom04_metamodel_AssociationDef=0;
+	int tags::R=0;
+	int tags::lineattr=0;
+	int tags::TRANSFER=0;
+	int tags::iom04_metamodel_Table=0;
+	int tags::DATASECTION=0;
+	int tags::HEADERSECTION=0;
+	int tags::ALIAS=0;
+	int tags::COMMENT=0;
+	int tags::CLIPPED=0;
+	int tags::LINEATTR=0;
+	int tags::SEGMENTS=0;
+	int tags::segment=0;
+	int tags::SURFACE=0;
+	int tags::surface=0;
+	int tags::boundary=0;
+	int tags::BOUNDARY=0;
+	int tags::polyline=0;
+	int tags::POLYLINE=0;
+	int tags::sequence=0;
+	int tags::MULTISURFACE=0;
+	int tags::iom04_metamodel_ViewableAttributesAndRoles=0;
+	int tags::viewable=0;
+	int tags::attributesAndRoles=0;
+	int tags::container=0;
+	int tags::iom04_metamodel_TransferDescription=0;
+	int tags::name=0;
+
+void tags::clear()
+{
+	COORD=0;
+	ARC=0;
+	C1=0;
+	C2=0;
+	C3=0;
+	A1=0;
+	A2=0;
+	iom04_metamodel_AssociationDef=0;
+	R=0;
+	lineattr=0;
+	TRANSFER=0;
+	iom04_metamodel_Table=0;
+	DATASECTION=0;
+	HEADERSECTION=0;
+	ALIAS=0;
+	COMMENT=0;
+	CLIPPED=0;
+	LINEATTR=0;
+	SEGMENTS=0;
+	segment=0;
+	SURFACE=0;
+	surface=0;
+	boundary=0;
+	BOUNDARY=0;
+	polyline=0;
+	POLYLINE=0;
+	sequence=0;
+	MULTISURFACE=0;
+	iom04_metamodel_ViewableAttributesAndRoles=0;
+	viewable=0;
+	attributesAndRoles=0;
+	container=0;
+	iom04_metamodel_TransferDescription=0;
+	name=0;
+}
 
 int tags::get_ARC()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("ARC");
+	if(!ARC){
+		ARC=ParserHandler::getTagId("ARC");
 	}
-	return ret;
+	return ARC;
 }
 
 int tags::get_COORD()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("COORD");
+	if(!COORD){
+		COORD=ParserHandler::getTagId("COORD");
 	}
-	return ret;
+	return COORD;
 }
 
 int tags::get_C1()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("C1");
+	if(!C1){
+		C1=ParserHandler::getTagId("C1");
 	}
-	return ret;
+	return C1;
 }
 
 int tags::get_C2()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("C2");
+	if(!C2){
+		C2=ParserHandler::getTagId("C2");
 	}
-	return ret;
+	return C2;
 }
 
 int tags::get_C3()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("C3");
+	if(!C3){
+		C3=ParserHandler::getTagId("C3");
 	}
-	return ret;
+	return C3;
 }
 
 int tags::get_A1()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("A1");
+	if(!A1){
+		A1=ParserHandler::getTagId("A1");
 	}
-	return ret;
+	return A1;
 }
 
 int tags::get_A2()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("A2");
+	if(!A2){
+		A2=ParserHandler::getTagId("A2");
 	}
-	return ret;
+	return A2;
+}
+
+int tags::get_iom04_metamodel_AssociationDef()
+{
+	if(!iom04_metamodel_AssociationDef){
+		iom04_metamodel_AssociationDef=ParserHandler::getTagId("iom04.metamodel.AssociationDef");
+	}
+	return iom04_metamodel_AssociationDef;
 }
 
 int tags::get_R()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("R");
+	if(!R){
+		R=ParserHandler::getTagId("R");
 	}
-	return ret;
+	return R;
 }
 
 int tags::get_lineattr()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("lineattr");
+	if(!lineattr){
+		lineattr=ParserHandler::getTagId("lineattr");
 	}
-	return ret;
+	return lineattr;
 }
 
 int tags::get_TRANSFER()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("TRANSFER");
+	if(!TRANSFER){
+		TRANSFER=ParserHandler::getTagId("TRANSFER");
 	}
-	return ret;
+	return TRANSFER;
+}
+
+int tags::get_iom04_metamodel_Table()
+{
+	if(!iom04_metamodel_Table){
+		iom04_metamodel_Table=ParserHandler::getTagId("iom04.metamodel.Table");
+	}
+	return iom04_metamodel_Table;
 }
 
 int tags::get_DATASECTION()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("DATASECTION");
+	if(!DATASECTION){
+		DATASECTION=ParserHandler::getTagId("DATASECTION");
 	}
-	return ret;
+	return DATASECTION;
 }
 
 int tags::get_HEADERSECTION()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("HEADERSECTION");
+	if(!HEADERSECTION){
+		HEADERSECTION=ParserHandler::getTagId("HEADERSECTION");
 	}
-	return ret;
+	return HEADERSECTION;
 }
 
 int tags::get_ALIAS()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("ALIAS");
+	if(!ALIAS){
+		ALIAS=ParserHandler::getTagId("ALIAS");
 	}
-	return ret;
+	return ALIAS;
 }
 
 int tags::get_COMMENT()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("COMMENT");
+	if(!COMMENT){
+		COMMENT=ParserHandler::getTagId("COMMENT");
 	}
-	return ret;
+	return COMMENT;
 }
 
 int tags::get_CLIPPED()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("CLIPPED");
+	if(!CLIPPED){
+		CLIPPED=ParserHandler::getTagId("CLIPPED");
 	}
-	return ret;
+	return CLIPPED;
 }
 
 int tags::get_LINEATTR()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("LINEATTR");
+	if(!LINEATTR){
+		LINEATTR=ParserHandler::getTagId("LINEATTR");
 	}
-	return ret;
+	return LINEATTR;
 }
 
 int tags::get_SEGMENTS()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("SEGMENTS");
+	if(!SEGMENTS){
+		SEGMENTS=ParserHandler::getTagId("SEGMENTS");
 	}
-	return ret;
+	return SEGMENTS;
 }
 
 int tags::get_segment()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("segment");
+	if(!segment){
+		segment=ParserHandler::getTagId("segment");
 	}
-	return ret;
+	return segment;
 }
 
 
 int tags::get_SURFACE()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("SURFACE");
+	if(!SURFACE){
+		SURFACE=ParserHandler::getTagId("SURFACE");
 	}
-	return ret;
+	return SURFACE;
 }
 
 int tags::get_surface()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("surface");
+	if(!surface){
+		surface=ParserHandler::getTagId("surface");
 	}
-	return ret;
+	return surface;
 }
 
 int tags::get_boundary()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("boundary");
+	if(!boundary){
+		boundary=ParserHandler::getTagId("boundary");
 	}
-	return ret;
+	return boundary;
 }
 
 int tags::get_BOUNDARY()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("BOUNDARY");
+	if(!BOUNDARY){
+		BOUNDARY=ParserHandler::getTagId("BOUNDARY");
 	}
-	return ret;
+	return BOUNDARY;
 }
 
 int tags::get_polyline()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("polyline");
+	if(!polyline){
+		polyline=ParserHandler::getTagId("polyline");
 	}
-	return ret;
+	return polyline;
 }
 
 int tags::get_POLYLINE()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("POLYLINE");
+	if(!POLYLINE){
+		POLYLINE=ParserHandler::getTagId("POLYLINE");
 	}
-	return ret;
+	return POLYLINE;
 }
 
 int tags::get_sequence()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("sequence");
+	if(!sequence){
+		sequence=ParserHandler::getTagId("sequence");
 	}
-	return ret;
+	return sequence;
 }
 
 int tags::get_MULTISURFACE()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("MULTISURFACE");
+	if(!MULTISURFACE){
+		MULTISURFACE=ParserHandler::getTagId("MULTISURFACE");
 	}
-	return ret;
+	return MULTISURFACE;
 }
 
 int tags::get_iom04_metamodel_ViewableAttributesAndRoles()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("iom04.metamodel.ViewableAttributesAndRoles");
+	if(!iom04_metamodel_ViewableAttributesAndRoles){
+		iom04_metamodel_ViewableAttributesAndRoles=ParserHandler::getTagId("iom04.metamodel.ViewableAttributesAndRoles");
 	}
-	return ret;
+	return iom04_metamodel_ViewableAttributesAndRoles;
 }
 
 int tags::get_viewable()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("viewable");
+	if(!viewable){
+		viewable=ParserHandler::getTagId("viewable");
 	}
-	return ret;
+	return viewable;
 }
 int tags::get_attributesAndRoles()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("attributesAndRoles");
+	if(!attributesAndRoles){
+		attributesAndRoles=ParserHandler::getTagId("attributesAndRoles");
 	}
-	return ret;
+	return attributesAndRoles;
 }
 int tags::get_container()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("container");
+	if(!container){
+		container=ParserHandler::getTagId("container");
 	}
-	return ret;
+	return container;
 }
 int tags::get_iom04_metamodel_TransferDescription()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("iom04.metamodel.TransferDescription");
+	if(!iom04_metamodel_TransferDescription){
+		iom04_metamodel_TransferDescription=ParserHandler::getTagId("iom04.metamodel.TransferDescription");
 	}
-	return ret;
+	return iom04_metamodel_TransferDescription;
 }
 int tags::get_name()
 {
-	static int ret=0;
-	if(!ret){
-		ret=ParserHandler::getTagId("name");
+	if(!name){
+		name=ParserHandler::getTagId("name");
 	}
-	return ret;
+	return name;
 }
