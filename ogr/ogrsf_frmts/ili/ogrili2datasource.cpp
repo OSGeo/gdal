@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/04/24 16:49:48  pka
+ * Fixed polyline feature with coordinate attribute
+ * Float support for ARC_DEGREES
+ *
  * Revision 1.5  2006/03/28 16:07:14  pka
  * Optional model file for Interlis 2 reader
  *
@@ -167,7 +171,7 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
 
     if( getenv( "ARC_DEGREES" ) != NULL ) {
       //No better way to pass arguments to the reader (it could even be an -lco arg)
-      poReader->SetArcDegrees( atoi( getenv("ARC_DEGREES") ) );
+      poReader->SetArcDegrees( atof( getenv("ARC_DEGREES") ) );
     }
 
     poReader->SetSourceFile( pszName );

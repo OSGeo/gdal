@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2006/04/24 16:49:48  pka
+ * Fixed polyline feature with coordinate attribute
+ * Float support for ARC_DEGREES
+ *
  * Revision 1.12  2006/04/04 15:31:30  pka
  * No copy of original geometry on windows (file position errors)
  *
@@ -162,12 +166,11 @@ const char* ILI1Reader::GetLayerName(IOM_BASKET model, IOM_OBJECT table) {
 }
 
 void ILI1Reader::AddCoord(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT modelele, IOM_OBJECT typeobj) {
-  layer->GetLayerDefn()->SetGeomType(wkbPoint);
   unsigned int dim = ::GetCoordDim(model, typeobj);
   for (unsigned int i=0; i<dim; i++) {
     OGRFieldDefn fieldDef(CPLSPrintf("%s_%d", iom_getattrvalue(modelele, "name"), i), OFTReal);
     layer->GetLayerDefn()->AddFieldDefn(&fieldDef);
-    CPLDebug( "OGR_ILI", "Field %s (Table %s): %s", fieldDef.GetNameRef(), layer->GetLayerDefn()->GetName(), iom_getobjecttag(typeobj));
+    CPLDebug( "OGR_ILI", "Field %s: OFTReal", fieldDef.GetNameRef());
   }
 }
 
@@ -190,12 +193,14 @@ OGRLayer* ILI1Reader::AddGeomTable(const char* datalayername, const char* geomna
 void ILI1Reader::AddField(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT obj) {
   const char* typenam = "Reference";
   if (EQUAL(iom_getobjecttag(obj),"iom04.metamodel.LocalAttribute")) typenam = GetTypeName(model, obj);
+  CPLDebug( "OGR_ILI", "Field %s: %s", iom_getattrvalue(obj, "name"), typenam);
   if (EQUAL(typenam, "iom04.metamodel.SurfaceType")) {
     AddGeomTable(layer->GetLayerDefn()->GetName(), iom_getattrvalue(obj, "name"), wkbPolygon);
   } else if (EQUAL(typenam, "iom04.metamodel.AreaType")) {
     IOM_OBJECT controlPointDomain = GetAttrObj(model, GetTypeObj(model, obj), "controlPointDomain");
     if (controlPointDomain) {
       AddCoord(layer, model, obj, GetTypeObj(model, controlPointDomain));
+      layer->GetLayerDefn()->SetGeomType(wkbPoint);
     }
     OGRLayer* areaLineLayer = AddGeomTable(layer->GetLayerDefn()->GetName(), iom_getattrvalue(obj, "name"), wkbMultiLineString);
 #ifdef POLYGONIZE_AREAS
@@ -205,10 +210,10 @@ void ILI1Reader::AddField(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT obj) {
     layer->GetLayerDefn()->SetGeomType(wkbMultiLineString);
   } else if (EQUAL(typenam, "iom04.metamodel.CoordType")) {
     AddCoord(layer, model, obj, GetTypeObj(model, obj));
+    if (layer->GetLayerDefn()->GetGeomType() == wkbUnknown) layer->GetLayerDefn()->SetGeomType(wkbPoint);
   } else {
     OGRFieldDefn fieldDef(iom_getattrvalue(obj, "name"), OFTString);
     layer->GetLayerDefn()->AddFieldDefn(&fieldDef);
-    CPLDebug( "OGR_ILI", "Field %s (Table %s): %s", fieldDef.GetNameRef(), layer->GetLayerDefn()->GetName(), typenam);
   }
 }
 
@@ -249,7 +254,7 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
         OGRILI1DataSource *poDSIn = NULL;
         OGRLayer* layer = new OGRILI1Layer(layername, poSRSIn, bWriterIn, eReqType, poDSIn);
         AddLayer(layer);
-        CPLDebug( "OGR_ILI", "Reading table model (%s).", layername );
+        CPLDebug( "OGR_ILI", "Reading table model '%s'", layername );
 
         // read fields
         IOM_OBJECT fields[255];
@@ -345,7 +350,7 @@ int ILI1Reader::ReadFeatures() {
       }
       else if (EQUAL(firsttok, "TABL"))
       {
-        CPLDebug( "OGR_ILI", "Reading table %s.", GetLayerNameString(topic, CSLGetField(tokens, 1)) );
+        CPLDebug( "OGR_ILI", "Reading table '%s'", GetLayerNameString(topic, CSLGetField(tokens, 1)) );
         curLayer = (OGRILI1Layer*)GetLayerByName(GetLayerNameString(topic, CSLGetField(tokens, 1)));
         if (curLayer == NULL) { //create one
           CPLDebug( "OGR_ILI", "No model found, using default field names." );
