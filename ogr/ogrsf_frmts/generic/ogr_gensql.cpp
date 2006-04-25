@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/04/25 23:03:17  fwarmerdam
+ * Use sizeof(long) in memcpy on index list.  Causes serious problem
+ * with orderby on 64bit systems.
+ *
  * Revision 1.17  2006/04/08 06:14:31  fwarmerdam
  * added proper (I believe) support for spatial and attribute filter on gensql layers
  *
@@ -993,7 +997,7 @@ void OGRGenSQLResultsLayer::SortIndexSection( OGRField *pasIndexFields,
 
     /* Copy the merge list back into the main index */
 
-    memcpy( panFIDIndex + nStart, panMerged, sizeof(int) * nEntries );
+    memcpy( panFIDIndex + nStart, panMerged, sizeof(long) * nEntries );
     CPLFree( panMerged );
 }
 
