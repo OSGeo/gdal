@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.33  2006/04/25 14:29:28  fwarmerdam
+ * Avoid warning.
+ *
  * Revision 1.32  2005/05/17 19:04:47  fwarmerdam
  * Make sure nodata value is set after copycommoninfo.
  *
@@ -245,7 +248,7 @@ static int ProxyMain( int argc, char ** argv )
     GDAL_GCP            *pasGCPs = NULL;
     int                 iSrcFileArg = -1, iDstFileArg = -1;
     int                 bCopySubDatasets = FALSE;
-    double              adfULLR[4];
+    double              adfULLR[4] = { 0,0,0,0 };
     int                 bSetNoData = FALSE;
     double		dfNoDataReal = 0.0;
 
