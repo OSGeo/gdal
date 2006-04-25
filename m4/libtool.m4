@@ -4327,6 +4327,7 @@ libext="$libext"
 
 # Shared library suffix (normally ".so").
 shrext_cmds='$shrext_cmds'
+shrext='$shrext_cmds'
 
 # Executable file suffix (normally "").
 exeext="$exeext"
