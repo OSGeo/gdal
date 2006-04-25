@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/04/25 14:28:33  fwarmerdam
+ * Check for no usable sources, avoid warning.
+ *
  * Revision 1.21  2006/03/21 21:34:43  fwarmerdam
  * cleanup headers
  *
@@ -692,7 +695,7 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
     GDALColorTableH hCT = NULL;
     double dfWrkMinX=0, dfWrkMaxX=0, dfWrkMinY=0, dfWrkMaxY=0;
     double dfWrkResX=0, dfWrkResY=0;
-    int nDstBandCount;
+    int nDstBandCount = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Find the output driver.                                         */
@@ -842,6 +845,16 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
         GDALDestroyGenImgProjTransformer( hTransformArg );
 
         GDALClose( hSrcDS );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Did we have any usable sources?                                 */
+/* -------------------------------------------------------------------- */
+    if( nDstBandCount == 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "No usable source images." );
+        return NULL;
     }
 
 /* -------------------------------------------------------------------- */
