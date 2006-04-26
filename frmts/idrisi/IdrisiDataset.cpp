@@ -2,10 +2,10 @@
 *
 * Project:  Idrisi Raster Image File Driver
 * Purpose:  Read/write Idrisi Raster Image Format RST
-* Author:   Ivan Lucena, ilucena@clarku.edu
+* Author:   Ivan Lucena, ivan@ilucena.net
 *
 ******************************************************************************
-* Copyright (c) 2005, Ivan Lucena
+* Copyright (c) 2006, Ivan Lucena
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -38,29 +38,23 @@ typedef unsigned long	uint32;
 #include "gdal_priv.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_csv.h"
 #include "ogr_spatialref.h"
+#include "gdal_pam.h"
 
 CPL_C_START
 void GDALRegister_IDRISI(void);
 CPL_C_END
 
+//----- Safe numeric conversion, NULL as zero
+#define atoi_nz(s) (s == NULL ? (int)      0 : atoi(s))
+#define atof_nz(s) (s == NULL ? (double) 0.0 : atof(s))
+
 //----- file extensions:
 #define extRST          "rst"
 #define extRDC          "rdc"
 #define extSMP          "smp"
-
-//----- ".rst" contains the data file in binary format;
-//   one band data types uint8, int16, float32 or
-//   one rgb band interlaced by pixel of Blue, Green, Red in 3 x uint8
-
-//----- ".rdc" documentation file, metadata, text format;
-//   11 position for field name completed with spaces;
-//   " : " separator;
-//   field value.
-
-//----- ".smp" palette, color table, binary format;
-//    18 bytes of header folowed by 255 occurences of
-//    Blue, Green, Red in 3 x uint8.
+#define extREF          "ref"
 
 //----- field names on rdc file:
 #define rdcFILE_FORMAT	"file format "
@@ -92,28 +86,118 @@ CPL_C_END
 #define rdcCOMMENTS		"comment     "
 #define rdcCODE_N		"code %6d "
 
+//----- ".ref" file field names:
+#define refREF_SYSTEM   "ref. system "
+#define refPROJECTION   "projection  "
+#define refDATUM        "datum       " 
+#define refDELTA_WGS84  "delta WGS84 " 
+#define refELLIPSOID    "ellipsoid   "
+#define refMAJOR_SAX    "major s-ax  " 
+#define refMINOR_SAX    "minor s-ax  "
+#define refORIGIN_LONG  "origin long "
+#define refORIGIN_LAT   "origin lat  "
+#define refORIGIN_X     "origin X    "
+#define refORIGIN_Y     "origin Y    "
+#define refSCALE_FAC    "scale fac   "
+#define refUNITS        "units       "
+#define refPARAMETERS   "parameters  "
+#define refSTANDL_1     "stand ln 1  "
+#define refSTANDL_2     "stand ln 2  "
+
 //----- standard values:
 #define rstVERSION      "Idrisi Raster A.1"
 #define rstBYTE         "byte"
 #define rstINTEGER      "integer"
 #define rstREAL         "real"
 #define rstRGB24        "rgb24"
-#define rstLATLONG      "latlong"
 #define rstDEGREE       "degree"
-#define rstPLANE        "plane"
 #define rstMETER        "meter"
+#define rstLATLONG      "latlong"
+#define rstPLANE        "plane"
 #define rstUTM          "utm-%d%c"
+#define rstSPC			"spc%2d%2s%d"
 
 //----- palette file (.smp) header size:
 #define smpHEADERSIZE	18
 
-//----- remove left (' ')`s:
-char *TrimL(const char *pszText);
-
 //----- check if file exists:
 bool FileExists(const char *pszFilename);
 
-//----- classes pre-definition:
+//----- Reference Table
+struct ReferenceTab {
+	int nCode;
+	char *pszName;
+};
+
+//----- USA State's reference table to EPSG PCS Code
+static ReferenceTab aoUSStateTable[] = {
+	{101,     "AL"},
+	{201,     "AZ"},
+	{301,     "AR"},
+	{401,     "CA"},
+	{501,     "CO"},
+	{600,     "CT"},
+	{700,     "DE"},
+	{901,     "FL"},
+	{1001,    "GA"},
+	{1101,    "ID"},
+	{1201,    "IL"},
+	{1301,    "IN"},
+	{1401,    "IA"},
+	{1501,    "KS"},
+	{1601,    "KY"},
+	{1701,    "LA"},
+	{1801,    "ME"},
+	{1900,    "MD"},
+	{2001,    "MA"},
+	{2111,    "MI"},
+	{2201,    "MN"},
+	{2301,    "MS"},
+	{2401,    "MO"},
+	{2500,    "MT"},
+	{2600,    "NE"},
+	{2701,    "NV"},
+	{2800,    "NH"},
+	{2900,    "NJ"},
+	{3001,    "NM"},
+	{3101,    "NY"},
+	{3200,    "NC"},
+	{3301,    "ND"},
+	{3401,    "OH"},
+	{3501,    "OK"},
+	{3601,    "OR"},
+	{3701,    "PA"},
+	{3800,    "RI"},
+	{3900,    "SC"},
+	{4001,    "SD"},
+	{4100,    "TN"},
+	{4201,    "TX"},
+	{4301,    "UT"},
+	{4400,    "VT"},
+	{4501,    "VA"},
+	{4601,    "WA"},
+	{4701,    "WV"},
+	{4801,    "WV"},
+	{4901,    "WY"},
+	{5001,    "AK"},
+	{5101,    "HI"},
+	{5200,    "PR"}
+};
+#define US_STATE_COUNT (sizeof(aoUSStateTable) / sizeof(ReferenceTab))
+
+//----- Import geo reference from Idrisi
+OGRErr CPL_DLL OSRImportFromIdrisi(OGRSpatialReferenceH hSRS, 
+								   const char *pszRefSystem, 
+								   const char *pszRefUnits, 
+								   char **papszRefFile = NULL);
+
+//----- Export geo reference to Idrisi
+OGRErr CPL_DLL OSRExportToIdrisi(OGRSpatialReferenceH hSRS, 
+								 char **pszRefSystem, 
+								 char **pszRefUnit, 
+								 char ***papszRefFile);
+
+//----- Classes pre-definition:
 class IdrisiDataset;
 class IdrisiRasterBand;
 
@@ -121,84 +205,83 @@ class IdrisiRasterBand;
 //	    Idrisi GDALDataset
 //  ----------------------------------------------------------------------------
 
-class IdrisiDataset : public GDALDataset
+class IdrisiDataset : public GDALPamDataset
 {
-    friend class IdrisiRasterBand;
+	friend class IdrisiRasterBand;
 
 private:
-    FILE *fp;
+	FILE *fp;
 
-    char *pszFilename;
-    char *pszDocFilename;
-    char **papszRDC;
-    double adfGeoTransform[6];
+	char *pszFilename;
+	char *pszDocFilename;
+	char **papszRDC;
+	double adfGeoTransform[6];
 
-    char *pszProjection;
-    char **papszCategoryNames;
+	char *pszProjection;
+	char **papszCategories;
+	char *pszUnitType;
 
 protected:
-    GDALColorTable *poColorTable;
+	GDALColorTable *poColorTable;
 
 public:
-    IdrisiDataset();
-    ~IdrisiDataset();
+	IdrisiDataset();
+	~IdrisiDataset();
 
-    static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
-    static GDALDataset *Create(const char *pszFilename,
-        int nXSize,
-        int nYSize,
-        int nBands, 
-        GDALDataType eType,
-        char **papszParmList);
-    static GDALDataset *CreateCopy(const char *pszFilename, 
-        GDALDataset *poSrcDS,
-        int bStrict,
-        char **papszOptions,
-        GDALProgressFunc pfnProgress, 
-        void * pProgressData);
+	static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
+	static GDALDataset *Create(const char *pszFilename,
+		int nXSize,
+		int nYSize,
+		int nBands, 
+		GDALDataType eType,
+		char **papszParmList);
+	static GDALDataset *CreateCopy(const char *pszFilename, 
+		GDALDataset *poSrcDS,
+		int bStrict,
+		char **papszOptions,
+		GDALProgressFunc pfnProgress, 
+		void * pProgressData);
 
-    virtual CPLErr GetGeoTransform(double *padfTransform);
-    virtual CPLErr SetGeoTransform(double *padfTransform);
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection(const char *pszProjString);
+	virtual CPLErr GetGeoTransform(double *padfTransform);
+	virtual CPLErr SetGeoTransform(double *padfTransform);
+	virtual const char *GetProjectionRef(void);
+	virtual CPLErr SetProjection(const char *pszProjString);
 };
 
 //  ----------------------------------------------------------------------------
-//	    Idrisi GDALRasterBand
+//	    Idrisi GDALPamRasterBand
 //  ----------------------------------------------------------------------------
 
-class IdrisiRasterBand : public GDALRasterBand
+class IdrisiRasterBand : public GDALPamRasterBand
 {
-    friend class IdrisiDataset;
+	friend class IdrisiDataset;
 
 private:
-    int nRecordSize;
-    GByte *pabyScanLine;
+	int nRecordSize;
+	GByte *pabyScanLine; 
 
 public:
-    IdrisiRasterBand(IdrisiDataset *poDS, 
-        int nBand, 
-        GDALDataType eDataType);
-    ~IdrisiRasterBand();
+	IdrisiRasterBand(IdrisiDataset *poDS, 
+		int nBand, 
+		GDALDataType eDataType);
+	~IdrisiRasterBand();
 
-    virtual double GetNoDataValue(int *pbSuccess = NULL);
-    virtual double GetMinimum(int *pbSuccess = NULL);
-    virtual double GetMaximum(int *pbSuccess = NULL);
-    virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage);
-    virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage);
-    virtual GDALColorTable *GetColorTable();
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual char **GetCategoryNames();
-    virtual CPLErr GetStatistics(int bApproxOK, int bForce,
-        double *pdfMin, double *pdfMax, 
-        double *pdfMean, double *padfStdDev);
+	virtual double GetNoDataValue(int *pbSuccess = NULL);
+	virtual double GetMinimum(int *pbSuccess = NULL);
+	virtual double GetMaximum(int *pbSuccess = NULL);
+	virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage);
+	virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage);
+	virtual GDALColorTable *GetColorTable();
+	virtual GDALColorInterp GetColorInterpretation();
+	virtual char **GetCategoryNames();
+	virtual const char *GetUnitType();
 
-    virtual CPLErr SetCategoryNames(char **papszCategoryNames);
-    virtual CPLErr SetNoDataValue(double dfNoDataValue);
-    virtual CPLErr SetColorTable(GDALColorTable *poColorTable); 
-    virtual CPLErr SetUnitType(const char *pszUnitType);
-    virtual CPLErr SetStatistics(double dfMin, double dfMax, 
-        double dfMean, double dfStdDev);
+	virtual CPLErr SetCategoryNames(char **papszCategoryNames);
+	virtual CPLErr SetNoDataValue(double dfNoDataValue);
+	virtual CPLErr SetColorTable(GDALColorTable *poColorTable); 
+	virtual CPLErr SetUnitType(const char *pszUnitType);
+	virtual CPLErr SetStatistics(double dfMin, double dfMax, 
+		double dfMean, double dfStdDev);
 };
 
 //  ------------------------------------------------------------------------  //
@@ -208,49 +291,55 @@ public:
 /************************************************************************/
 /*                           IdrisiDataset()                            */
 /************************************************************************/
+
 IdrisiDataset::IdrisiDataset()
 {
-    pszFilename = NULL;
-    fp = NULL;
-    papszRDC = NULL;
-    pszDocFilename = NULL;
-    pszProjection = NULL;
-    poColorTable = new GDALColorTable();
-    papszCategoryNames = NULL;
+	pszFilename = NULL;
+	fp = NULL;
+	papszRDC = NULL;
+	pszDocFilename = NULL;
+	pszProjection = NULL;
+	poColorTable = new GDALColorTable();
+	papszCategories = NULL;
+	pszUnitType = NULL;
 
-    adfGeoTransform[0] = 0.0;
-    adfGeoTransform[1] = 1.0;
-    adfGeoTransform[2] = 0.0;
-    adfGeoTransform[3] = 0.0;
-    adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 1.0;
+	adfGeoTransform[0] = 0.0;
+	adfGeoTransform[1] = 1.0;
+	adfGeoTransform[2] = 0.0;
+	adfGeoTransform[3] = 0.0;
+	adfGeoTransform[4] = 0.0;
+	adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
 /*                           ~IdrisiDataset()                           */
 /************************************************************************/
+
 IdrisiDataset::~IdrisiDataset()
 {
-    FlushCache();
+	FlushCache();
 
-    if (papszRDC != NULL)
-    {
-        if (eAccess == GA_Update)
-            CSLSave(papszRDC, pszDocFilename);
+	if (papszRDC != NULL)
+	{
+		if (eAccess == GA_Update)
+		{
+			CSLSetNameValueSeparator(papszRDC, ": ");
+			CSLSave(papszRDC, pszDocFilename);
+		}
+		CSLDestroy(papszRDC);
+	}
 
-        CSLDestroy(papszRDC);
-    }
+	if (poColorTable)
+		delete poColorTable;
 
-    if( poColorTable )
-        delete poColorTable;
+	CPLFree(pszFilename);
+	CPLFree(pszDocFilename);
+	CPLFree(pszProjection);
+	CSLDestroy(papszCategories);
+	CPLFree(pszUnitType);
 
-    CPLFree(pszFilename);
-    CPLFree(pszDocFilename);
-    CPLFree(pszProjection);
-    CSLDestroy( papszCategoryNames );
-    
-    if( fp != NULL )
-        VSIFCloseL( fp );
+	if (fp != NULL)
+		VSIFCloseL(fp);
 }
 
 /************************************************************************/
@@ -259,193 +348,226 @@ IdrisiDataset::~IdrisiDataset()
 
 GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if ((poOpenInfo->fp == NULL) || 
-        (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), extRST) == FALSE))
-        return NULL;
+	if ((poOpenInfo->fp == NULL) || 
+		(EQUAL(CPLGetExtension(poOpenInfo->pszFilename), extRST) == FALSE))
+		return NULL;
 
-    // -------------------------------------------------------------------- 
-    //      Check the documentation file .rdc
-    // -------------------------------------------------------------------- 
+	// -------------------------------------------------------------------- 
+	//      Check the documentation file .rdc
+	// -------------------------------------------------------------------- 
 
-    const char *pszDocFilename;
-    char **papszRDC;
+	const char *pszLDocFilename = CPLResetExtension(poOpenInfo->pszFilename, extRDC);
 
-    pszDocFilename = CPLResetExtension(poOpenInfo->pszFilename, extRDC);
-    papszRDC = CSLLoad(pszDocFilename);
+	char **papszLRDC = CSLLoad(pszLDocFilename);
 
-    //CPLDebug(extRST, "Open: Check the documentation file %s", pszDocFilename);
+	CSLSetNameValueSeparator(papszLRDC, ":");
 
-    char *pszVersion = TrimL(CSLFetchNameValue(papszRDC, rdcFILE_FORMAT));
+	const char *pszVersion = CSLFetchNameValue(papszLRDC, rdcFILE_FORMAT);
 
-    if (EQUAL(pszVersion, rstVERSION) == FALSE)
-    {
-        CSLDestroy(papszRDC);
-        CPLFree(pszVersion);
-        return NULL;
-    }
-    CPLFree(pszVersion);
+	if (EQUAL(pszVersion, rstVERSION) == FALSE)
+	{
+		CSLDestroy(papszLRDC);
+		return NULL;
+	}
 
-    // -------------------------------------------------------------------- 
-    //      Create a corresponding GDALDataset                   
-    // -------------------------------------------------------------------- 
+	// -------------------------------------------------------------------- 
+	//      Create a corresponding GDALDataset                   
+	// -------------------------------------------------------------------- 
 
-    //CPLDebug(extRST, "Open: Create a corresponding GDALDataset, Access = %d", poOpenInfo->eAccess);
+	IdrisiDataset *poDS;
 
-    IdrisiDataset *poDS;
+	poDS = new IdrisiDataset();
+	poDS->eAccess = poOpenInfo->eAccess;
+	poDS->pszFilename = CPLStrdup(poOpenInfo->pszFilename);
 
-    poDS = new IdrisiDataset();
-    poDS->eAccess = poOpenInfo->eAccess;
-    poDS->pszFilename = CPLStrdup(poOpenInfo->pszFilename);
+	if (poOpenInfo->eAccess == GA_ReadOnly )
+	{
+		poDS->fp = VSIFOpenL(poDS->pszFilename, "rb");
+	} 
+	else 
+	{
+		poDS->fp = VSIFOpenL(poDS->pszFilename, "r+b");
+	}
 
-    if (poOpenInfo->eAccess == GA_ReadOnly )
-    {
-        poDS->fp = VSIFOpenL(poDS->pszFilename, "rb");
-    } 
-    else 
-    {
-        poDS->fp = VSIFOpenL(poDS->pszFilename, "r+b");
-    }
+	if (poDS->fp == NULL)
+	{
+		CSLDestroy(papszLRDC);
+		return NULL;
+	}
 
-    if (poDS->fp == NULL)
-        return NULL;
+	poDS->pszDocFilename = CPLStrdup(pszLDocFilename);
+	poDS->papszRDC = CSLDuplicate(papszLRDC);
+	CSLDestroy(papszLRDC);
 
-    poDS->pszDocFilename = CPLStrdup(pszDocFilename);
-    poDS->papszRDC = papszRDC;
+	// -------------------------------------------------------------------- 
+	//      Load information from rdc
+	// -------------------------------------------------------------------- 
 
-    // -------------------------------------------------------------------- 
-    //      Load information from rdc
-    // -------------------------------------------------------------------- 
+	poDS->nRasterXSize = atoi_nz(CSLFetchNameValue(poDS->papszRDC, rdcCOLUMNS));
+	poDS->nRasterYSize = atoi_nz(CSLFetchNameValue(poDS->papszRDC, rdcROWS));
 
-    sscanf(CSLFetchNameValue(papszRDC, rdcCOLUMNS), "%d", &poDS->nRasterXSize);
-    sscanf(CSLFetchNameValue(papszRDC, rdcROWS),    "%d", &poDS->nRasterYSize);
+	// -------------------------------------------------------------------- 
+	//      Create band information
+	// -------------------------------------------------------------------- 
 
-    //CPLDebug(extRST, "Open: Load information from rdc (%d,%d)", poDS->nRasterXSize, poDS->nRasterYSize);
+	const char *pszDataType = CSLFetchNameValue(poDS->papszRDC, rdcDATA_TYPE);
 
-    // -------------------------------------------------------------------- 
-    //      Create band information
-    // -------------------------------------------------------------------- 
+	if (EQUAL(pszDataType, rstBYTE))
+	{
+		poDS->nBands = 1;
+		poDS->SetBand(1, new IdrisiRasterBand(poDS, 1, GDT_Byte));
+	}
+	if (EQUAL(pszDataType, rstINTEGER))
+	{
+		poDS->nBands = 1;
+		poDS->SetBand(1, new IdrisiRasterBand(poDS, 1, GDT_Int16));
+	}
+	if (EQUAL(pszDataType, rstREAL))
+	{
+		poDS->nBands = 1;
+		poDS->SetBand(1, new IdrisiRasterBand(poDS, 1, GDT_Float32));
+	}
+	if (EQUAL(pszDataType, rstRGB24))
+	{
+		poDS->nBands = 3;
+		poDS->SetBand(1, new IdrisiRasterBand(poDS, 1, GDT_Byte));
+		poDS->SetBand(2, new IdrisiRasterBand(poDS, 2, GDT_Byte));
+		poDS->SetBand(3, new IdrisiRasterBand(poDS, 3, GDT_Byte));
+	}
 
-    char *pszDataType = TrimL(CSLFetchNameValue(papszRDC, rdcDATA_TYPE));
+	// -------------------------------------------------------------------- 
+	//      Load the transformation matrix
+	// -------------------------------------------------------------------- 
 
-    //CPLDebug(extRST, "Open: Create band information data type = %s", pszDataType);
+	const char *pszMinX = CSLFetchNameValue(poDS->papszRDC, rdcMIN_X);
 
-    if (EQUAL(pszDataType, rstBYTE))
-    {
-        poDS->nBands = 1;
-        poDS->SetBand(1, new IdrisiRasterBand(poDS, 1, GDT_Byte));
-    }
-    if (EQUAL(pszDataType, rstINTEGER))
-    {
-        poDS->nBands = 1;
-        poDS->SetBand(1, new IdrisiRasterBand(poDS, 1, GDT_Int16));
-    }
-    if (EQUAL(pszDataType, rstREAL))
-    {
-        poDS->nBands = 1;
-        poDS->SetBand(1, new IdrisiRasterBand(poDS, 1, GDT_Float32));
-    }
-    if (EQUAL(pszDataType, rstRGB24))
-    {
-        poDS->nBands = 3;
-        poDS->SetBand(1, new IdrisiRasterBand(poDS, 1, GDT_Byte));
-        poDS->SetBand(2, new IdrisiRasterBand(poDS, 2, GDT_Byte));
-        poDS->SetBand(3, new IdrisiRasterBand(poDS, 3, GDT_Byte));
-    }
+	if (strlen(pszMinX) > 0)
+	{
+		double dfMinX, dfMaxX, dfMinY, dfMaxY, dfUnit, dfXPixSz, dfYPixSz;
 
-    CPLFree(pszDataType);
+		dfMinX = atof_nz(CSLFetchNameValue(poDS->papszRDC, rdcMIN_X));
+		dfMaxX = atof_nz(CSLFetchNameValue(poDS->papszRDC, rdcMAX_X));
+		dfMinY = atof_nz(CSLFetchNameValue(poDS->papszRDC, rdcMIN_Y));
+		dfMaxY = atof_nz(CSLFetchNameValue(poDS->papszRDC, rdcMAX_Y));
+		dfUnit = atof_nz(CSLFetchNameValue(poDS->papszRDC, rdcUNIT_DIST));
 
-    // -------------------------------------------------------------------- 
-    //      Load the transformation matrix
-    //
-    //	Newly "Created" files may not have values. 
-    // -------------------------------------------------------------------- 
-    char *pszMinX = TrimL(CSLFetchNameValue(papszRDC, rdcMIN_X));
-    if( !EQUAL(pszMinX,"") )
-    {
-        double dfMinX, dfMaxX, dfMinY, dfMaxY, dfUnit, dfXPixSz, dfYPixSz;
+		dfMinX = dfMinX * dfUnit; 
+		dfMaxX = dfMaxX * dfUnit; 
+		dfMinY = dfMinY * dfUnit; 
+		dfMaxY = dfMaxY * dfUnit;
 
-        sscanf(CSLFetchNameValue(papszRDC, rdcMIN_X),    "%lf", &dfMinX);
-        sscanf(CSLFetchNameValue(papszRDC, rdcMAX_X),    "%lf", &dfMaxX);
-        sscanf(CSLFetchNameValue(papszRDC, rdcMIN_Y),    "%lf", &dfMinY);
-        sscanf(CSLFetchNameValue(papszRDC, rdcMAX_Y),    "%lf", &dfMaxY);
-        sscanf(CSLFetchNameValue(papszRDC, rdcUNIT_DIST),"%lf", &dfUnit);
+		dfYPixSz = (dfMinY - dfMaxY) / poDS->nRasterYSize;
+		dfXPixSz = (dfMaxX - dfMinX) / poDS->nRasterXSize;
 
-        dfMinX = dfMinX * dfUnit; 
-        dfMaxX = dfMaxX * dfUnit; 
-        dfMinY = dfMinY * dfUnit; 
-        dfMaxY = dfMaxY * dfUnit;
+		poDS->adfGeoTransform[0] = dfMinX - (dfXPixSz / 2);
+		poDS->adfGeoTransform[1] = dfXPixSz;
+		poDS->adfGeoTransform[2] = 0.0;
+		poDS->adfGeoTransform[3] = dfMaxY + (dfYPixSz / 2);
+		poDS->adfGeoTransform[4] = 0.0;
+		poDS->adfGeoTransform[5] = dfYPixSz;
+	}
 
-        dfYPixSz = (dfMinY - dfMaxY) / poDS->nRasterYSize;
-        dfXPixSz = (dfMaxX - dfMinX) / poDS->nRasterXSize;
+	// -------------------------------------------------------------------- 
+	//      Set Color Table in the presence of a smp file
+	// -------------------------------------------------------------------- 
 
-        poDS->adfGeoTransform[0] = dfMinX - (dfXPixSz / 2);
-        poDS->adfGeoTransform[1] = dfXPixSz;
-        poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = dfMaxY + (dfYPixSz / 2);
-        poDS->adfGeoTransform[4] = 0.0;
-        poDS->adfGeoTransform[5] = dfYPixSz;
-    }
-    CPLFree( pszMinX );
+	if (poDS->nBands != 3)
+	{
+		const char *pszSMPFilename = CPLResetExtension(poDS->pszFilename, extSMP);
+		FILE *fpSMP;
+		if ((fpSMP = VSIFOpenL(pszSMPFilename, "rb")) != NULL )
+		{
+			double dfMaxValue = atof_nz(CSLFetchNameValue(poDS->papszRDC, rdcMAX_VALUE));
+			VSIFSeekL(fpSMP, smpHEADERSIZE, SEEK_SET);
+			GDALColorEntry oEntry;
+			unsigned char aucRGB[3];
+			int i = 0;
+			while ((VSIFReadL(&aucRGB, sizeof(aucRGB), 1, fpSMP)) && (i <= dfMaxValue))
+			{
+				oEntry.c1 = (short) aucRGB[0];
+				oEntry.c2 = (short) aucRGB[1];
+				oEntry.c3 = (short) aucRGB[2];
+				oEntry.c4 = (short) 255;                      
+				poDS->poColorTable->SetColorEntry(i, &oEntry);
+				i++;
+			}
+			VSIFCloseL(fpSMP);
+		}
+	}
 
-    //CPLDebug(extRST, "Open: Load the transformation matrix %.8g,%.8g,%.8g,%.8g,%.8g,%.8g,%.8g", dfMinX, dfMaxX, dfMinY, dfMaxY, dfUnit, dfXPixSz, dfYPixSz);
+	// -------------------------------------------------------------------- 
+	//      Check for Unit Type
+	// -------------------------------------------------------------------- 
 
-    // -------------------------------------------------------------------- 
-    //      Set Color Table in the presence of a smp file
-    // -------------------------------------------------------------------- 
-    if (poDS->nBands != 3)
-    {
-        const char *pszSMPFilename;
-        pszSMPFilename = CPLResetExtension(poDS->pszFilename, extSMP);
+	const char *pszValueUnit = CSLFetchNameValue(poDS->papszRDC, rdcVALUE_UNITS);
 
-        FILE *fpSMP;
-        if ((fpSMP = VSIFOpenL(pszSMPFilename, "rb")) != NULL )
-        {
-            //CPLDebug(extRST, "Open: Load Color Table from = %s", pszSMPFilename);
+	if (pszValueUnit == NULL)
+		poDS->pszUnitType = CPLStrdup("unspecified");
+	else
+	{
+		if (EQUALN(pszValueUnit, "meter", 4))
+		{
+			poDS->pszUnitType = CPLStrdup("m");
+		}
+		else if (EQUALN(pszValueUnit, "feet", 4))
+		{
+			poDS->pszUnitType = CPLStrdup("ft");
+		}
+		else
+			poDS->pszUnitType = CPLStrdup(pszValueUnit);
+	}
 
-            double dfMaxValue;
-            sscanf(CSLFetchNameValue(papszRDC, rdcMAX_VALUE),    " %lf", &dfMaxValue);
+	// -------------------------------------------------------------------- 
+	//      Check for category names.
+	// -------------------------------------------------------------------- 
 
-            VSIFSeekL(fpSMP, smpHEADERSIZE, SEEK_SET);
-            GDALColorEntry oEntry;
-            unsigned char aucRGB[3];
-            int i = 0;
-            while ((VSIFReadL(&aucRGB, sizeof(aucRGB), 1, fpSMP)) && (i <= dfMaxValue))
-            {
-                oEntry.c1 = (short) aucRGB[0];
-                oEntry.c2 = (short) aucRGB[1];
-                oEntry.c3 = (short) aucRGB[2];
-                oEntry.c4 = (short) 255;                      
-                poDS->poColorTable->SetColorEntry(i, &oEntry);
-                i++;
-            }
-            VSIFCloseL(fpSMP);
-        }
-    }
+	int nCatCount = atoi_nz(CSLFetchNameValue(poDS->papszRDC, rdcLEGEND_CATS));
 
-    // -------------------------------------------------------------------- 
-    //      Check for category names.
-    // -------------------------------------------------------------------- 
-    int nCatCount, i;
-    sscanf(CSLFetchNameValue(poDS->papszRDC, rdcLEGEND_CATS),  " %d", &nCatCount);
+	if (nCatCount > 0)
+	{
+		// ----------------------------------------------------------------
+		//      Sequentialize categories names, from 0 to the last "code n"
+		// ----------------------------------------------------------------
 
-    for (i = 0; i < nCatCount; i++)
-    {
-        char *pszLabel = (char*) CSLFetchNameValue(poDS->papszRDC, 
-                                                   CPLSPrintf(rdcCODE_N, i));
+		int nCode = 0;
+		int nCount = 0;
+		int nLine = -1;
+		for (int i = 0; (i < CSLCount(poDS->papszRDC)) && (nLine == -1); i++)
+			if (EQUALN(poDS->papszRDC[i], rdcLEGEND_CATS, 11))
+				nLine = i;
+		if (nLine > 0)
+		{
+			sscanf(poDS->papszRDC[++nLine], rdcCODE_N, &nCode);
+			for (int i = 0; (i < 255) && (nCount < nCatCount); i++)
+			{
+				if (i == nCode)
+				{
+					poDS->papszCategories = CSLAddString(poDS->papszCategories, 
+						CPLParseNameValue(poDS->papszRDC[nLine], NULL));
+					nCount++;
+					if (nCount < nCatCount)
+						sscanf(poDS->papszRDC[++nLine], rdcCODE_N, &nCode);
+				}
+				else
+					poDS->papszCategories = CSLAddString(poDS->papszCategories, "");
+			}
+		}
+	}
 
-        if (pszLabel == NULL)
-            poDS->papszCategoryNames = CSLAddString(poDS->papszCategoryNames, "");
-        else
-        {
-            if( *pszLabel == ' ' )
-                pszLabel++;
+	/* -------------------------------------------------------------------- */
+	/*      Check for external overviews.                                   */
+	/* -------------------------------------------------------------------- */
 
-            poDS->papszCategoryNames = CSLAddString(poDS->papszCategoryNames, 
-                                                    pszLabel);
-        }
-    }
+	poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
 
-    return (poDS);
+	/* -------------------------------------------------------------------- */
+	/*      Initialize any PAM information.                                 */
+	/* -------------------------------------------------------------------- */
+
+	poDS->SetDescription(poOpenInfo->pszFilename);
+	poDS->TryLoadXML();
+
+	return (poDS);
 }
 
 /************************************************************************/
@@ -453,115 +575,111 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 GDALDataset *IdrisiDataset::Create(const char *pszFilename,
-                                   int nXSize, 
-                                   int nYSize, 
-                                   int nBands, 
-                                   GDALDataType eType,
-                                   char** papszOptions)
+								   int nXSize, 
+								   int nYSize, 
+								   int nBands, 
+								   GDALDataType eType,
+								   char** papszOptions)
 {
-    // -------------------------------------------------------------------- 
-    //      Check input options
-    // -------------------------------------------------------------------- 
-    if (nBands != 1) 
-    {
-        if (! (nBands == 3 && eType == GDT_Byte))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Attempt to create IDRISI dataset with an illegal\n"
-                     "number of bands (%d) to data type (%s).\n",
-                     nBands, GDALGetDataTypeName(eType));
-            return NULL;
-        }
-    }
+	// -------------------------------------------------------------------- 
+	//      Check input options
+	// -------------------------------------------------------------------- 
 
-    // ---------------------------------------------------------------- 
-    //  Create the header file with minimun information
-    // ---------------------------------------------------------------- 
+	if (nBands != 1) 
+	{
+		if (! (nBands == 3 && eType == GDT_Byte))
+		{
+			CPLError(CE_Failure, CPLE_AppDefined,
+				"Attempt to create IDRISI dataset with an illegal\n"
+				"number of bands (%d) to data type (%s).\n",
+				nBands, GDALGetDataTypeName(eType));
+			return NULL;
+		}
+	}
 
-    //CPLDebug(extRST, "create: Create the header file");
+	// ---------------------------------------------------------------- 
+	//  Create the header file with minimun information
+	// ---------------------------------------------------------------- 
 
-    char *pszDataType;
+	const char *pszLDataType;
 
-    switch (eType)
-    {	
-      case GDT_Byte:
-        if (nBands == 1)
-            pszDataType = CPLStrdup(rstBYTE);
-        else
-            pszDataType = CPLStrdup(rstRGB24);
-        break;
-      case GDT_Int16:
-        pszDataType = CPLStrdup(rstINTEGER);
-        break;
-      case GDT_Float32:				
-        pszDataType = CPLStrdup(rstREAL);
-        break;
-      default:
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Attempt to create IDRISI dataset with an illegal\n"
-                 "data type (%s).\n",
-                 GDALGetDataTypeName(eType));
-        return NULL;
+	switch (eType)
+	{	
+	case GDT_Byte:
+		if (nBands == 1)
+			pszLDataType = rstBYTE;
+		else
+			pszLDataType = rstRGB24;
+		break;
+	case GDT_Int16:
+		pszLDataType = rstINTEGER;
+		break;
+	case GDT_Float32:				
+		pszLDataType = rstREAL;
+		break;
+	default:
+		CPLError(CE_Failure, CPLE_AppDefined,
+			"Attempt to create IDRISI dataset with an illegal\n"
+			"data type (%s).\n",
+			GDALGetDataTypeName(eType));
+		return NULL;
 
-    };
+	};
 
-    char **papszRDC;
+	char **papszLRDC;
 
-    papszRDC = NULL;
-    papszRDC = CSLAddNameValue(papszRDC, rdcFILE_FORMAT,   rstVERSION);
-    papszRDC = CSLAddNameValue(papszRDC, rdcFILE_TITLE,    "");
-    papszRDC = CSLAddNameValue(papszRDC, rdcDATA_TYPE,     pszDataType);
-    papszRDC = CSLAddNameValue(papszRDC, rdcFILE_TYPE,     "binary");
-    papszRDC = CSLAddNameValue(papszRDC, rdcCOLUMNS,       CPLSPrintf("%d", nXSize));
-    papszRDC = CSLAddNameValue(papszRDC, rdcROWS,          CPLSPrintf("%d", nYSize));
-    papszRDC = CSLAddNameValue(papszRDC, rdcREF_SYSTEM,    "");
-    papszRDC = CSLAddNameValue(papszRDC, rdcREF_UNITS,     "");
-    papszRDC = CSLAddNameValue(papszRDC, rdcUNIT_DIST,     "1");
-    papszRDC = CSLAddNameValue(papszRDC, rdcMIN_X,         "");
-    papszRDC = CSLAddNameValue(papszRDC, rdcMAX_X,         "");
-    papszRDC = CSLAddNameValue(papszRDC, rdcMIN_Y,         "");
-    papszRDC = CSLAddNameValue(papszRDC, rdcMAX_Y,         "");
-    papszRDC = CSLAddNameValue(papszRDC, rdcPOSN_ERROR,    "unspecified");
-    papszRDC = CSLAddNameValue(papszRDC, rdcRESOLUTION,    "");
-    papszRDC = CSLAddNameValue(papszRDC, rdcMIN_VALUE,     "");
-    papszRDC = CSLAddNameValue(papszRDC, rdcMAX_VALUE,     "");
-    papszRDC = CSLAddNameValue(papszRDC, rdcDISPLAY_MIN,   "");
-    papszRDC = CSLAddNameValue(papszRDC, rdcDISPLAY_MAX,   "");
-    papszRDC = CSLAddNameValue(papszRDC, rdcVALUE_UNITS,   "unspecified");
-    papszRDC = CSLAddNameValue(papszRDC, rdcVALUE_ERROR,   "unspecified");
-    papszRDC = CSLAddNameValue(papszRDC, rdcFLAG_VALUE,    "none");
-    papszRDC = CSLAddNameValue(papszRDC, rdcFLAG_DEFN,     "none");
-    papszRDC = CSLAddNameValue(papszRDC, rdcLEGEND_CATS,   "0");
-    papszRDC = CSLAddNameValue(papszRDC, rdcLINEAGES,      " ");
-    papszRDC = CSLAddNameValue(papszRDC, rdcCOMMENTS,      " ");
+	papszLRDC = NULL;
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcFILE_FORMAT,   rstVERSION);
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcFILE_TITLE,    "");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcDATA_TYPE,     pszLDataType);
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcFILE_TYPE,     "binary");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcCOLUMNS,       CPLSPrintf("%d", nXSize));
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcROWS,          CPLSPrintf("%d", nYSize));
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcREF_SYSTEM,    "");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcREF_UNITS,     "");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcUNIT_DIST,     "1");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcMIN_X,         "");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcMAX_X,         "");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcMIN_Y,         "");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcMAX_Y,         "");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcPOSN_ERROR,    "unspecified");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcRESOLUTION,    "");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcMIN_VALUE,     "");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcMAX_VALUE,     "");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcDISPLAY_MIN,   "");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcDISPLAY_MAX,   "");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcVALUE_UNITS,   "unspecified");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcVALUE_ERROR,   "unspecified");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcFLAG_VALUE,    "none");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcFLAG_DEFN,     "none");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcLEGEND_CATS,   "0");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcLINEAGES,      "");
+	papszLRDC = CSLAddNameValue(papszLRDC, rdcCOMMENTS,      "");
 
-    const char *pszDocFilename;
-    pszDocFilename = CPLResetExtension(pszFilename, extRDC);
+	const char *pszLDocFilename;
+	pszLDocFilename = CPLResetExtension(pszFilename, extRDC);
 
-    CSLSetNameValueSeparator(papszRDC, ": ");
-    CSLSave(papszRDC, pszDocFilename);
-    CSLDestroy(papszRDC);
-    CPLFree( pszDataType );
+	CSLSetNameValueSeparator(papszLRDC, ": ");
+	CSLSave(papszLRDC, pszLDocFilename);
+	CSLDestroy(papszLRDC);
 
-    // ---------------------------------------------------------------- 
-    //  Create an empty data file
-    // ---------------------------------------------------------------- 
+	// ---------------------------------------------------------------- 
+	//  Create an empty data file
+	// ---------------------------------------------------------------- 
 
-    //CPLDebug(extRST, "create: Create an empty data file");
+	FILE *fp;
 
-    FILE *fp;
+	fp = VSIFOpenL(pszFilename, "wb+");
 
-    fp = VSIFOpenL(pszFilename, "wb+");
+	if (fp == NULL)
+	{
+		CPLError(CE_Failure, CPLE_OpenFailed,
+			"Attempt to create file %s' failed.\n", pszFilename);
+		return NULL;
+	}
+	VSIFCloseL(fp);
 
-    if (fp == NULL)
-    {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Attempt to create file %s' failed.\n", pszFilename);
-        return NULL;
-    }
-    VSIFCloseL(fp);
-
-    return (IdrisiDataset *) GDALOpen(pszFilename, GA_Update);
+	return (IdrisiDataset *) GDALOpen(pszFilename, GA_Update);
 }
 
 /************************************************************************/
@@ -569,223 +687,221 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename,
 /************************************************************************/
 
 GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename, 
-                                       GDALDataset *poSrcDS,
-                                       int bStrict,
-                                       char **papszOptions,
-                                       GDALProgressFunc pfnProgress, 
-                                       void *pProgressData)
+									   GDALDataset *poSrcDS,
+									   int bStrict,
+									   char **papszOptions,
+									   GDALProgressFunc pfnProgress, 
+									   void *pProgressData)
 {
-    if( !pfnProgress( 0.0, NULL, pProgressData ) )
-        return NULL;
+	if (!pfnProgress( 0.0, NULL, pProgressData))
+		return NULL;
 
-    // -------------------------------------------------------------------------
-    //      Check number of bands
-    // -------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
+	//      Check number of bands
+	// -------------------------------------------------------------------------
 
-    if  (((poSrcDS->GetRasterCount() == 1) ||
-        ((poSrcDS->GetRasterCount() == 3) &&
-        ((poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte) &&
-        (poSrcDS->GetRasterBand(2)->GetRasterDataType() == GDT_Byte) &&
-        (poSrcDS->GetRasterBand(3)->GetRasterDataType() == GDT_Byte)))) == FALSE)
-    {
+	if  (((poSrcDS->GetRasterCount() == 1) ||
+		((poSrcDS->GetRasterCount() == 3) &&
+		((poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte) &&
+		(poSrcDS->GetRasterBand(2)->GetRasterDataType() == GDT_Byte) &&
+		(poSrcDS->GetRasterBand(3)->GetRasterDataType() == GDT_Byte)))) == FALSE)
+	{
 
-        CPLError(CE_Failure, CPLE_AppDefined,
-            "Attempt IDRISI dataset with an illegal\n"
-            "number of bands (%s).\n",
-            poSrcDS->GetRasterCount());
-        return NULL;
-    }
+		CPLError(CE_Failure, CPLE_AppDefined,
+			"Attempt IDRISI dataset with an illegal\n"
+			"number of bands (%s).\n",
+			poSrcDS->GetRasterCount());
+		return NULL;
+	}
 
-    // -------------------------------------------------------------------------
-    //      Check Data types
-    // -------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
+	//      Check Data types
+	// -------------------------------------------------------------------------
 
-    for (int i = 1; i <= poSrcDS->GetRasterCount(); i++)
-    {
-        GDALDataType eType = poSrcDS->GetRasterBand(i)->GetRasterDataType();
+	for (int i = 1; i <= poSrcDS->GetRasterCount(); i++)
+	{
+		GDALDataType eType = poSrcDS->GetRasterBand(i)->GetRasterDataType();
 
-        if (eType != GDT_Byte && 
-            eType != GDT_Int16 && 
-            eType != GDT_UInt16 && 
-            eType != GDT_UInt32 && 
-            eType != GDT_Int32 && 
-            eType != GDT_Float32 &&
-            eType != GDT_Float64)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                "Attempt to create IDRISI dataset with an illegal\n"
-                "data type (%s).\n",
-                GDALGetDataTypeName(eType));
-            return NULL;
-        }
-    }
+		if (eType != GDT_Byte && 
+			eType != GDT_Int16 && 
+			eType != GDT_UInt16 && 
+			eType != GDT_UInt32 && 
+			eType != GDT_Int32 && 
+			eType != GDT_Float32 &&
+			eType != GDT_Float64)
+		{
+			CPLError(CE_Failure, CPLE_AppDefined,
+				"Attempt to create IDRISI dataset with an illegal\n"
+				"data type (%s).\n",
+				GDALGetDataTypeName(eType));
+			return NULL;
+		}
+	}
 
-    // --------------------------------------------------------------------
-    //      Define data type 
-    // --------------------------------------------------------------------
+	// --------------------------------------------------------------------
+	//      Define data type 
+	// --------------------------------------------------------------------
 
-    GDALRasterBand *poBand = poSrcDS->GetRasterBand(1);
-    GDALDataType eType = poBand->GetRasterDataType();
+	GDALRasterBand *poBand = poSrcDS->GetRasterBand(1);
+	GDALDataType eType = poBand->GetRasterDataType();
 
-    double dfMin, dfMax;
+	double dfMin;
+	double dfMax;
+	double dfMean;
+	double dfStdDev = -1;
 
-    if (bStrict == TRUE)
-    {
-        poBand->GetStatistics(FALSE, TRUE, &dfMin, &dfMax, NULL, NULL);
-    }
-    else
-    {
-        dfMin = poBand->GetMinimum();
-        dfMax = poBand->GetMaximum();
-    }
+	if (bStrict == TRUE)
+	{
+		poBand->GetStatistics(FALSE, TRUE, &dfMin, &dfMax, &dfMean, &dfStdDev);
+	}
+	else
+	{
+		dfMin = poBand->GetMinimum();
+		dfMax = poBand->GetMaximum();
+	}
 
-    if ((eType == GDT_Byte) || 
-        (eType == GDT_Int16) || 
-        (eType == GDT_Float32))
-    {
-        //CPLDebug(extRST, "createcopy: Keep the same data type %s", GDALGetDataTypeName(eType));
-    }
-    else
-    {
-        if (eType == GDT_Float64)
-        {
-            eType = GDT_Float32;
-            //CPLDebug(extRST, "createcopy: Change (1) from %s to %s", GDALGetDataTypeName(poBand->GetRasterDataType()), GDALGetDataTypeName(eType));
-        }
-        else
-        {
-            if ((dfMin < (double) SHRT_MIN) || 
-                (dfMax > (double) SHRT_MAX))
-            {
-                eType = GDT_Float32; 
-                //CPLDebug(extRST, "createcopy: Change (2) from %s to %s", GDALGetDataTypeName(poBand->GetRasterDataType()), GDALGetDataTypeName(eType));
-            }
-            else
-            {
-                eType = GDT_Int16;
-                //CPLDebug(extRST, "createcopy: Change (3) from %s to %s", GDALGetDataTypeName(poBand->GetRasterDataType()), GDALGetDataTypeName(eType));
-            }
-        }
-    }
+	if ( ! ((eType == GDT_Byte) || 
+		(eType == GDT_Int16) || 
+		(eType == GDT_Float32)))
+	{
+		if (eType == GDT_Float64)
+		{
+			eType = GDT_Float32;
+		}
+		else
+		{
+			if ((dfMin < (double) SHRT_MIN) || 
+				(dfMax > (double) SHRT_MAX))
+			{
+				eType = GDT_Float32; 
+			}
+			else
+			{
+				eType = GDT_Int16;
+			}
+		}
+	}
 
-    // --------------------------------------------------------------------
-    //      Create the dataset
-    // --------------------------------------------------------------------
-    //CPLDebug(extRST, "createcopy: Create the dataset");
+	// --------------------------------------------------------------------
+	//      Create the dataset
+	// --------------------------------------------------------------------
 
-    IdrisiDataset *poDS;
+	IdrisiDataset *poDS;
 
-    poDS = (IdrisiDataset *) IdrisiDataset::Create(pszFilename, 
-        poSrcDS->GetRasterXSize(), 
-        poSrcDS->GetRasterYSize(), 
-        poSrcDS->GetRasterCount(), 
-        eType, 
-        papszOptions);
+	poDS = (IdrisiDataset *) IdrisiDataset::Create(pszFilename, 
+		poSrcDS->GetRasterXSize(), 
+		poSrcDS->GetRasterYSize(), 
+		poSrcDS->GetRasterCount(), 
+		eType, 
+		papszOptions);
 
-    if (poDS == NULL)
-        return NULL;
+	if (poDS == NULL)
+		return NULL;
 
-    // --------------------------------------------------------------------
-    //      Copy information to the dataset
-    // --------------------------------------------------------------------
+	// --------------------------------------------------------------------
+	//      Copy information to the dataset
+	// --------------------------------------------------------------------
 
-    //CPLDebug(extRST, "createcopy: Copy information to the dataset");
+	double adfGeoTransform[6];
 
-    double adfGeoTransform[6];
+	poDS->SetProjection(poSrcDS->GetProjectionRef());
+	poSrcDS->GetGeoTransform(adfGeoTransform);
+	poDS->SetGeoTransform(adfGeoTransform);
 
-    poDS->SetProjection(poSrcDS->GetProjectionRef());
-    poSrcDS->GetGeoTransform(adfGeoTransform);
-    poDS->SetGeoTransform(adfGeoTransform);
+	// --------------------------------------------------------------------
+	//      Copy information to the raster band
+	// --------------------------------------------------------------------
 
-    // --------------------------------------------------------------------
-    //      Copy information to the raster band
-    // --------------------------------------------------------------------
+	GDALRasterBand *poSrcBand;
+	int bHasNoDataValue;
+	double dfNoDataValue;
 
-    //CPLDebug(extRST, "createcopy: Copy information to (%d) raster band(s)", poDS->nBands);
+	for (int i = 1; i <= poDS->nBands; i++)
+	{
+		poSrcBand = poSrcDS->GetRasterBand(i);
+		poBand = poDS->GetRasterBand(i);
 
-    GDALRasterBand *poSrcBand;
+		if (i == 1)
+		{
+			poBand->SetCategoryNames(poSrcBand->GetCategoryNames());
+			poBand->SetUnitType(poSrcBand->GetUnitType());
+			poBand->SetColorTable(poSrcBand->GetColorTable());
+		}
+		poSrcBand->GetStatistics(false, true, &dfMin, &dfMax, &dfMean, &dfStdDev);
+		poBand->SetStatistics(dfMin, dfMax, dfMean, dfStdDev);
+		dfNoDataValue = poSrcBand->GetNoDataValue(&bHasNoDataValue);
+		if (bHasNoDataValue)
+			poBand->SetNoDataValue(dfNoDataValue);
+	}
 
-    for (int i = 1; i <= poDS->nBands; i++)
-    {
-        poSrcBand = poSrcDS->GetRasterBand(i);
-        poBand = poDS->GetRasterBand(i);
+	// --------------------------------------------------------------------
+	//      Copy image data
+	// --------------------------------------------------------------------
 
-        //CPLDebug(extRST, "createcopy: Set values on Band %d", i);
+	int nXSize = poDS->GetRasterXSize();
+	int nYSize = poDS->GetRasterYSize();
+	int nBlockXSize, nBlockYSize;
 
-        if (i == 1)
-        {
-            poBand->SetCategoryNames(poSrcBand->GetCategoryNames());
-            poBand->SetUnitType(poSrcBand->GetUnitType());
-            poBand->SetColorTable(poSrcBand->GetColorTable());
-        }
-        poSrcBand->GetStatistics(false, true, &dfMin, &dfMax, NULL, NULL);
-        poBand->SetStatistics(dfMin, dfMax, 0.0, 0.0);
-        poBand->SetNoDataValue(poSrcBand->GetNoDataValue(NULL));
-    }
+	poDS->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
 
-    // --------------------------------------------------------------------
-    //      Copy image data
-    // --------------------------------------------------------------------
+	for (int iBand = 1; iBand <= poSrcDS->GetRasterCount(); iBand++)
+	{
+		GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(iBand);
+		GDALRasterBand *poDstBand = poDS->GetRasterBand(iBand);
 
-    //CPLDebug(extRST, "createcopy: Copy image data"); 
+		int	iYOffset, iXOffset;
+		void *pData;
+		CPLErr eErr = CE_None;
 
-    int nXSize = poDS->GetRasterXSize();
-    int nYSize = poDS->GetRasterYSize();
-    int nBlockXSize, nBlockYSize;
+		pData = CPLMalloc(nBlockXSize * nBlockYSize * GDALGetDataTypeSize(eType) / 8);
 
-    poDS->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+		for (iYOffset = 0; iYOffset < nYSize; iYOffset += nBlockYSize)
+		{
+			for (iXOffset = 0; iXOffset < nXSize; iXOffset += nBlockXSize)
+			{
+				eErr = poSrcBand->RasterIO(GF_Read, 
+					iXOffset, iYOffset, 
+					nBlockXSize, nBlockYSize,
+					pData, nBlockXSize, nBlockYSize,
+					eType, 0, 0);
+				if (eErr != CE_None)
+				{
+					return NULL;
+				}
+				eErr = poDstBand->RasterIO(GF_Write, 
+					iXOffset, iYOffset, 
+					nBlockXSize, nBlockYSize,
+					pData, nBlockXSize, nBlockYSize,
+					eType, 0, 0);
+				if (eErr != CE_None)
+				{
+					return NULL;
+				}
+			}
+			if ((eErr == CE_None) && (! pfnProgress(
+				(iYOffset + 1) / (double) nYSize, NULL, pProgressData)))
+			{
+				eErr = CE_Failure;
+				CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated CreateCopy()");
+			}
+		}
+		CPLFree(pData);
+	}
 
-    for (int iBand = 1; iBand <= poSrcDS->GetRasterCount(); iBand++)
-    {
-        GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(iBand);
-        GDALRasterBand *poDstBand = poDS->GetRasterBand(iBand);
+	// --------------------------------------------------------------------
+	//      Save Lineage information
+	// --------------------------------------------------------------------
 
-        int	iYOffset, iXOffset;
-        void *pData;
-        CPLErr eErr = CE_None;
+	poDS->papszRDC = CSLSetNameValue(poDS->papszRDC, rdcLINEAGES, 
+		CPLSPrintf("Generated by GDAL, source = (%s)", poSrcDS->GetDescription()));
 
-        pData = CPLMalloc(nBlockXSize * nBlockYSize * GDALGetDataTypeSize(eType) / 8);
+	// --------------------------------------------------------------------
+	//      Finalize
+	// --------------------------------------------------------------------
 
-        for (iYOffset = 0; iYOffset < nYSize; iYOffset += nBlockYSize)
-        {
-            for (iXOffset = 0; iXOffset < nXSize; iXOffset += nBlockXSize)
-            {
-                eErr = poSrcBand->RasterIO(GF_Read, 
-                    iXOffset, iYOffset, 
-                    nBlockXSize, nBlockYSize,
-                    pData, nBlockXSize, nBlockYSize,
-                    eType, 0, 0);
-                if (eErr != CE_None)
-                {
-                    return NULL;
-                }
-                eErr = poDstBand->RasterIO(GF_Write, 
-                    iXOffset, iYOffset, 
-                    nBlockXSize, nBlockYSize,
-                    pData, nBlockXSize, nBlockYSize,
-                    eType, 0, 0);
-                if (eErr != CE_None)
-                {
-                    return NULL;
-                }
-            }
-            if ((eErr == CE_None) && (! pfnProgress(
-                (iYOffset + 1) / (double) nYSize, NULL, pProgressData)))
-            {
-                eErr = CE_Failure;
-                CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated CreateCopy()" );
-            }
-        }
-        CPLFree(pData);
-    }
+	poDS->FlushCache();
 
-    // --------------------------------------------------------------------
-    //      Finalize
-    // --------------------------------------------------------------------
-
-    poDS->FlushCache();
-
-    return poDS;
+	return poDS;
 }
 
 /************************************************************************/
@@ -793,12 +909,11 @@ GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
 /************************************************************************/
 
 CPLErr  IdrisiDataset::GetGeoTransform(double * padfTransform)
-{    
-    //CPLDebug(extRST, "GetGeoTransform");
+{
+	if (GDALPamDataset::GetGeoTransform(padfTransform) != CE_None)
+		memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
 
-    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6 );
-
-    return CE_None;
+	return CE_None;
 }
 
 /************************************************************************/
@@ -807,32 +922,30 @@ CPLErr  IdrisiDataset::GetGeoTransform(double * padfTransform)
 
 CPLErr  IdrisiDataset::SetGeoTransform(double * padfGeoTransform)
 {    
-    //CPLDebug(extRST, "SetGeoTransform");
+	if (padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0)
+	{
+		CPLError(CE_Failure, CPLE_AppDefined,
+			"Attempt to set rotated geotransform on Idrisi Raster file.\n"
+			"Idrisi Raster does not support rotation.\n");
+		return CE_Failure;
+	}
 
-    if (padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-            "Attempt to set rotated geotransform on Idrisi Raster file.\n"
-            "Idrisi Raster does not support rotation.\n");
-        return CE_Failure;
-    }
+	double dfMinX, dfMaxX, dfMinY, dfMaxY, dfXPixSz, dfYPixSz;
 
-    double dfMinX, dfMaxX, dfMinY, dfMaxY, dfXPixSz, dfYPixSz;
+	dfXPixSz = padfGeoTransform[1];
+	dfYPixSz = padfGeoTransform[5];
+	dfMinX   = padfGeoTransform[0] + (dfXPixSz / 2);
+	dfMaxX   = (dfXPixSz * nRasterXSize) + dfMinX;
+	dfMaxY   = padfGeoTransform[3] - (dfYPixSz / 2);
+	dfMinY   = (dfYPixSz * nRasterYSize) + dfMaxY;
 
-    dfXPixSz = padfGeoTransform[1];
-    dfYPixSz = padfGeoTransform[5];
-    dfMinX   = padfGeoTransform[0] + (dfXPixSz / 2);
-    dfMaxX   = (dfXPixSz * nRasterXSize) + dfMinX;
-    dfMaxY   = padfGeoTransform[3] - (dfYPixSz / 2);
-    dfMinY   = (dfYPixSz * nRasterYSize) + dfMaxY;
+	CSLSetNameValue(papszRDC, rdcMIN_X,      CPLSPrintf("%.8g", dfMinX));
+	CSLSetNameValue(papszRDC, rdcMAX_X,      CPLSPrintf("%.8g", dfMaxX));
+	CSLSetNameValue(papszRDC, rdcMIN_Y,      CPLSPrintf("%.8g", dfMinY));
+	CSLSetNameValue(papszRDC, rdcMAX_Y,      CPLSPrintf("%.8g", dfMaxY));
+	CSLSetNameValue(papszRDC, rdcRESOLUTION, CPLSPrintf("%.8g", -dfYPixSz));
 
-    CSLSetNameValue(papszRDC, rdcMIN_X,      CPLSPrintf(" %.8g", dfMinX));
-    CSLSetNameValue(papszRDC, rdcMAX_X,      CPLSPrintf(" %.8g", dfMaxX));
-    CSLSetNameValue(papszRDC, rdcMIN_Y,      CPLSPrintf(" %.8g", dfMinY));
-    CSLSetNameValue(papszRDC, rdcMAX_Y,      CPLSPrintf(" %.8g", dfMaxY));
-    CSLSetNameValue(papszRDC, rdcRESOLUTION, CPLSPrintf(" %.8g", -dfYPixSz));
-
-    return CE_None;
+	return CE_None;
 }
 
 /************************************************************************/
@@ -840,63 +953,55 @@ CPLErr  IdrisiDataset::SetGeoTransform(double * padfGeoTransform)
 /************************************************************************/
 
 const char *IdrisiDataset::GetProjectionRef(void)
-{        
-    //CPLDebug(extRST, "GetProjectionRef");
+{
+	const char *pszPamSRS = GDALPamDataset::GetProjectionRef();
 
-    // Clear last value.
-    CPLFree( pszProjection );
-    pszProjection = NULL;
+	if (pszPamSRS != NULL && strlen(pszPamSRS) > 0)
+		return pszPamSRS;
 
-    char *pszRefSystem;
+	if (pszProjection == NULL)
+	{    
+		const char *pszRefSystem = CSLFetchNameValue(papszRDC, rdcREF_SYSTEM);
+		const char *pszRefUnit = CSLFetchNameValue(papszRDC, rdcREF_UNITS);
+		const char *pszFName = CPLSPrintf("%s/%s.ref", CPLGetDirname(pszFilename), pszRefSystem);
+		char **papszRefFile;
 
-    pszRefSystem = TrimL(CSLFetchNameValue(papszRDC, rdcREF_SYSTEM));
+		// ------------------------------------------------------------------
+		//  Check if the Projection name refers to the name of a ".ref" file.
+		// ------------------------------------------------------------------
 
-    OGRSpatialReference oSRS;
+		if (FileExists(pszFName) == FALSE)
+		{
+			pszFName = NULL;
+			const char *pszIdrisiDir = CPLGetConfigOption("IDRISIDIR", NULL);
+			if ((pszIdrisiDir) != NULL)
+			{
+				pszFName = CPLSPrintf("%s/georef/%s.ref", pszIdrisiDir, pszRefSystem);
+				if (FileExists(pszFName) == FALSE)
+					pszFName = NULL;
+			}
+		}
 
-    if (EQUAL(pszRefSystem, rstPLANE))
-    {
-        pszProjection = CPLStrdup("");
+		// ------------------------------------------------------------------
+		//  Reads the reference file
+		// ------------------------------------------------------------------
 
-        //CPLDebug(extRST, "No Reference System available (%s)", pszRefSystem);
-    }
-    else if (EQUAL(pszRefSystem, rstLATLONG))
-    {
-        oSRS.SetWellKnownGeogCS("WGS84");
-        oSRS.exportToWkt(&pszProjection);
+		if (pszFName != NULL)
+		{
+			papszRefFile = CSLLoad(pszFName);
+			CSLSetNameValueSeparator(papszRefFile, ":");
+		}
+		else
+			papszRefFile = NULL;
 
-        //CPLDebug(extRST, "Reference System = %s", pszRefSystem);
-    }
-    else if (EQUALN(pszRefSystem, rstUTM, 3))
-    {
-        int	nZone;
-        char 	cNorth;
+		OGRSpatialReference oSRS;
+		OSRImportFromIdrisi(&oSRS, pszRefSystem, pszRefUnit, papszRefFile);
+		oSRS.exportToWkt(&pszProjection);
 
-        sscanf(pszRefSystem, rstUTM, &nZone, &cNorth);
-        oSRS.SetProjCS(pszRefSystem);
-        oSRS.SetWellKnownGeogCS("WGS84");
-        oSRS.SetUTM(nZone, (cNorth == 'n'));
-        oSRS.exportToWkt(&pszProjection);
+		CSLDestroy(papszRefFile);
+	}
 
-        //CPLDebug(extRST, "UTM Reference System = %s, Zone = %d, %c", pszRefSystem, nZone, cNorth);
-    }
-    else
-    {
-        char* pszUnits = TrimL(CSLFetchNameValue(papszRDC, rdcREF_UNITS));
-        if (EQUAL(pszUnits, "deg"))
-        {
-            oSRS.SetWellKnownGeogCS("WGS84");
-            oSRS.exportToWkt(&pszProjection);
-        }
-
-        CPLFree( pszUnits );
-    }
-
-    CPLFree(pszRefSystem);
-
-    if( pszProjection == NULL )
-        pszProjection = CPLStrdup(pszProjection);
-
-    return pszProjection;
+	return pszProjection;
 }
 
 /************************************************************************/
@@ -905,49 +1010,79 @@ const char *IdrisiDataset::GetProjectionRef(void)
 
 CPLErr IdrisiDataset::SetProjection(const char *pszProjString)
 {   
-    //CPLDebug(extRST, "SetProjection");
+	OGRSpatialReference oSRS;
 
-    OGRSpatialReference oSRS;
+	oSRS.importFromWkt((char **) &pszProjString);
 
-    oSRS.importFromWkt((char **) &pszProjString);
+	if (oSRS.IsProjected() && oSRS.GetAttrValue("PROJCS") != NULL)
+	{
+		// ------------------------------------------------------------------
+		//	Check if the input projection comes from another RST file.
+		// ------------------------------------------------------------------
 
-    if (strstr("GEOGCS", pszProjString) == NULL)
-    {
-        CSLSetNameValue(papszRDC, rdcREF_SYSTEM, CPLSPrintf(" %s", rstPLANE));
-        CSLSetNameValue(papszRDC, rdcREF_UNITS,  CPLSPrintf(" %s", rstMETER));
+		const char *pszRefSystem = oSRS.GetAttrValue("PROJCS");
+		const char *pszFName = CPLSPrintf("%s/%s.ref", CPLGetDirname(pszFilename), pszRefSystem);
 
-        //CPLDebug(extRST, "No Reference, assuming = plane");
-    }
-    else if (oSRS.IsProjected() == FALSE)
-    {
-        CSLSetNameValue(papszRDC, rdcREF_SYSTEM, CPLSPrintf(" %s", rstLATLONG));
-        CSLSetNameValue(papszRDC, rdcREF_UNITS,  CPLSPrintf(" %s", rstDEGREE));
+		if (FileExists(pszFName) == FALSE)
+		{
+			pszFName = NULL;
+			const char *pszIdrisiDir = CPLGetConfigOption("IDRISIDIR", NULL);
+			if ((pszIdrisiDir) != NULL)
+			{
+				pszFName = CPLSPrintf("%s/georef/%s.ref", pszIdrisiDir, pszRefSystem);
+				if (FileExists(pszFName) == FALSE)
+					pszFName = NULL;
+			}
+		}
 
-        //CPLDebug(extRST, "No Projection, assuming = latlong");
-    }
-    else
-    {
-        const char * pszProjName = NULL;
-        pszProjName = oSRS.GetAttrValue("PROJECTION");
-		if (oSRS.GetUTMZone() == 0)
-        {
-            CSLSetNameValue(papszRDC, rdcREF_SYSTEM, CPLSPrintf(" %s", rstLATLONG));
-            CSLSetNameValue(papszRDC, rdcREF_UNITS,  CPLSPrintf(" %s", rstDEGREE));
+		// ------------------------------------------------------------------
+		//  Check if the Projection name refers to the name of a ".ref" file.
+		// ------------------------------------------------------------------
 
-            //CPLDebug(extRST, "Reference System not supported, assuming latlong");
-        }
-        else
-        {
-            const char *pszRefSystem;
-            pszRefSystem = CPLSPrintf(rstUTM, oSRS.GetUTMZone(), 
-                (oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING) == 0 ? 'n' : 's'));
-            CSLSetNameValue(papszRDC, rdcREF_SYSTEM, CPLSPrintf(" %s", pszRefSystem));
-            CSLSetNameValue(papszRDC, rdcREF_UNITS,  CPLSPrintf(" %s", rstMETER));
-            //CPLDebug(extRST, "Reference System = %s", pszRefSystem);
-        }
-    }
+		if (pszFName != NULL)
+		{
+			char *pszRefUnit = CPLStrdup(oSRS.GetAttrValue("UNIT", 0));
+			if (EQUALN(pszRefUnit, "metre", 5))
+			{
+				(pszRefUnit)[3] = 'e';
+				(pszRefUnit)[4] = 'r';
+			}
+			CSLSetNameValue(papszRDC, rdcREF_SYSTEM, CPLSPrintf("%s", pszRefSystem));
+			CSLSetNameValue(papszRDC, rdcREF_UNITS,  CPLSPrintf("%s", pszRefUnit));
+			CPLFree(pszRefUnit);
+			return CE_None;
+		}
+	}
 
-    return CE_None;
+	char *pszRefSystem = NULL;
+	char *pszRefUnit = NULL;
+	char **papszRefFile = NULL;
+
+	OSRExportToIdrisi(&oSRS, &pszRefSystem, &pszRefUnit, &papszRefFile);
+
+	if (papszRefFile != NULL)
+	{
+		// ------------------------------------------------------------------
+		// Save the suggested .ref file in to the documentation sections
+		// ------------------------------------------------------------------
+
+		int nLine = -1;
+		for (int i = 0; i < CSLCount(papszRDC) && nLine == -1; i++)
+			if (EQUALN(papszRDC[i], rdcCOMMENTS, 12))
+				nLine = i;
+		for (int i = 0; i < CSLCount(papszRefFile); i++)
+			papszRDC = CSLInsertString(papszRDC, nLine++, 
+			CPLSPrintf("%-.12s: %s", rdcCOMMENTS, papszRefFile[i]));
+	}
+
+	CSLSetNameValue(papszRDC, rdcREF_SYSTEM, CPLSPrintf("%s", pszRefSystem));
+	CSLSetNameValue(papszRDC, rdcREF_UNITS,  CPLSPrintf("%s", pszRefUnit));
+
+	CSLDestroy(papszRefFile);
+	CPLFree(pszRefSystem);
+	CPLFree(pszRefUnit);
+
+	return CE_None;
 }
 
 //  ------------------------------------------------------------------------  //
@@ -959,26 +1094,26 @@ CPLErr IdrisiDataset::SetProjection(const char *pszProjString)
 /************************************************************************/
 
 IdrisiRasterBand::IdrisiRasterBand(IdrisiDataset *poDS, 
-                                   int nBand, 
-                                   GDALDataType eDataType)
+								   int nBand, 
+								   GDALDataType eDataType)
 {
-    this->poDS = poDS;
-    this->nBand = nBand;
-    this->eDataType = eDataType;
+	this->poDS = poDS;
+	this->nBand = nBand;
+	this->eDataType = eDataType;
 
-    // -------------------------------------------------------------------- 
-    //      Set Dimension
-    // -------------------------------------------------------------------- 
+	// -------------------------------------------------------------------- 
+	//      Set Dimension
+	// -------------------------------------------------------------------- 
 
-    nBlockYSize = 1;
-    nBlockXSize = poDS->GetRasterXSize();
+	nBlockYSize = 1;
+	nBlockXSize = poDS->GetRasterXSize();
 
-    // -------------------------------------------------------------------- 
-    //      Get ready for reading and writing
-    // -------------------------------------------------------------------- 
+	// -------------------------------------------------------------------- 
+	//      Get ready for reading and writing
+	// -------------------------------------------------------------------- 
 
-    nRecordSize = poDS->GetRasterXSize() * GDALGetDataTypeSize(eDataType) / 8 * poDS->nBands;
-    pabyScanLine = (GByte *) CPLMalloc(nRecordSize);
+	nRecordSize = poDS->GetRasterXSize() * GDALGetDataTypeSize(eDataType) / 8 * poDS->nBands;
+	pabyScanLine = (GByte *) CPLMalloc(nRecordSize);
 }
 
 /************************************************************************/
@@ -987,7 +1122,7 @@ IdrisiRasterBand::IdrisiRasterBand(IdrisiDataset *poDS,
 
 IdrisiRasterBand::~IdrisiRasterBand()
 {
-    CPLFree(pabyScanLine);
+	CPLFree(pabyScanLine);
 }
 
 /************************************************************************/
@@ -995,46 +1130,46 @@ IdrisiRasterBand::~IdrisiRasterBand()
 /************************************************************************/
 
 CPLErr IdrisiRasterBand::IReadBlock(int nBlockXOff, 
-                                    int nBlockYOff,
-                                    void *pImage)
+									int nBlockYOff,
+									void *pImage)
 {
-    IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
-    if (VSIFSeekL(poGDS->fp, nRecordSize * nBlockYOff, SEEK_SET) < 0)
-    {
-        CPLError(CE_Failure, CPLE_FileIO, 
-            "Can't seek (%s) block with X offset %d and Y offset %d.\n%s", 
-            poGDS->pszFilename, nBlockXOff, nBlockYOff, VSIStrerror(errno));
-        return CE_Failure;
-    }
+	if (VSIFSeekL(poGDS->fp, nRecordSize * nBlockYOff, SEEK_SET) < 0)
+	{
+		CPLError(CE_Failure, CPLE_FileIO, 
+			"Can't seek (%s) block with X offset %d and Y offset %d.\n%s", 
+			poGDS->pszFilename, nBlockXOff, nBlockYOff, VSIStrerror(errno));
+		return CE_Failure;
+	}
 
-    if( (int) VSIFReadL(pabyScanLine, 1, nRecordSize, poGDS->fp) < nRecordSize)
-    {
-        CPLError(CE_Failure, CPLE_FileIO, 
-            "Can't read (%s) block with X offset %d and Y offset %d.\n%s", 
-            poGDS->pszFilename, nBlockXOff, nBlockYOff, VSIStrerror(errno));
-        return CE_Failure;
-    }
+	if( (int) VSIFReadL(pabyScanLine, 1, nRecordSize, poGDS->fp) < nRecordSize)
+	{
+		CPLError(CE_Failure, CPLE_FileIO, 
+			"Can't read (%s) block with X offset %d and Y offset %d.\n%s", 
+			poGDS->pszFilename, nBlockXOff, nBlockYOff, VSIStrerror(errno));
+		return CE_Failure;
+	}
 
-    if (poGDS->nBands == 3) 
-    {
-        int i, j;
-        for (i = 0, j = (3 - nBand); i < nBlockXSize; i++, j += 3)
-        {
-            ((uint8 *) pImage)[i] = pabyScanLine[j];
-        }
-    }
-    else
-    {
-        memcpy(pImage, pabyScanLine, nRecordSize);
-    }
+	if (poGDS->nBands == 3) 
+	{
+		int i, j;
+		for (i = 0, j = (3 - nBand); i < nBlockXSize; i++, j += 3)
+		{
+			((uint8 *) pImage)[i] = pabyScanLine[j];
+		}
+	}
+	else
+	{
+		memcpy(pImage, pabyScanLine, nRecordSize);
+	}
 
 #ifdef CPL_MSB    
-    if( eDataType == GDT_Float32 )
-        GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4 );
+	if( eDataType == GDT_Float32 )
+		GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4 );
 #endif
 
-    return CE_None;
+	return CE_None;
 }
 
 /************************************************************************/
@@ -1042,52 +1177,52 @@ CPLErr IdrisiRasterBand::IReadBlock(int nBlockXOff,
 /************************************************************************/
 
 CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff, 
-                                     int nBlockYOff,
-                                     void *pImage)
+									 int nBlockYOff,
+									 void *pImage)
 {
-    IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
 #ifdef CPL_MSB    
-    // Swap in input buffer if needed.
-    if( eDataType == GDT_Float32 )
-        GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4 );
+	// Swap in input buffer if needed.
+	if( eDataType == GDT_Float32 )
+		GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4 );
 #endif
 
-    if (poGDS->nBands == 1)
-    {
-        memcpy(pabyScanLine, pImage, nRecordSize);
-    }
-    else
-    {
-        if (nBand > 1) 
-        {
-            VSIFSeekL(poGDS->fp, nRecordSize * nBlockYOff, SEEK_SET);
-            VSIFReadL(pabyScanLine, 1, nRecordSize, poGDS->fp);
-        }
-        int i, j;
-        for (i = 0, j = (3 - nBand); i < nBlockXSize; i++, j += 3)
-        {
-            pabyScanLine[j] = ((uint8 *) pImage)[i];
-        }
-    }
+	if (poGDS->nBands == 1)
+	{
+		memcpy(pabyScanLine, pImage, nRecordSize);
+	}
+	else
+	{
+		if (nBand > 1) 
+		{
+			VSIFSeekL(poGDS->fp, nRecordSize * nBlockYOff, SEEK_SET);
+			VSIFReadL(pabyScanLine, 1, nRecordSize, poGDS->fp);
+		}
+		int i, j;
+		for (i = 0, j = (3 - nBand); i < nBlockXSize; i++, j += 3)
+		{
+			pabyScanLine[j] = ((uint8 *) pImage)[i];
+		}
+	}
 
 #ifdef CPL_MSB    
-    // Swap input buffer back to original form.
-    if( eDataType == GDT_Float32 )
-        GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4 );
+	// Swap input buffer back to original form.
+	if( eDataType == GDT_Float32 )
+		GDALSwapWords( pImage, 4, nBlockXSize * nBlockYSize, 4 );
 #endif
 
-    VSIFSeekL(poGDS->fp, nRecordSize * nBlockYOff, SEEK_SET);
+	VSIFSeekL(poGDS->fp, nRecordSize * nBlockYOff, SEEK_SET);
 
-    if( (int) VSIFWriteL(pabyScanLine, 1, nRecordSize, poGDS->fp) < nRecordSize)
-    {
-        CPLError(CE_Failure, CPLE_FileIO, 
-            "Can't write (%s) block with X offset %d and Y offset %d.\n%s", 
-            poGDS->pszFilename, nBlockXOff, nBlockYOff, VSIStrerror(errno));
-        return CE_Failure;
-    }
+	if( (int) VSIFWriteL(pabyScanLine, 1, nRecordSize, poGDS->fp) < nRecordSize)
+	{
+		CPLError(CE_Failure, CPLE_FileIO, 
+			"Can't write (%s) block with X offset %d and Y offset %d.\n%s", 
+			poGDS->pszFilename, nBlockXOff, nBlockYOff, VSIStrerror(errno));
+		return CE_Failure;
+	}
 
-    return CE_None;
+	return CE_None;
 }
 
 /************************************************************************/
@@ -1096,20 +1231,16 @@ CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff,
 
 double IdrisiRasterBand::GetMinimum(int *pbSuccess)
 {      
-    //CPLDebug(extRST, "GetMinimum");
+	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
-    IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+	double adfMinValue[3];
+	sscanf(CSLFetchNameValue(poGDS->papszRDC, rdcMIN_VALUE), "%lf %lf %lf", 
+		&adfMinValue[0], &adfMinValue[1], &adfMinValue[2]);
 
-    double adfMinValue[3];
-    sscanf(CSLFetchNameValue(poGDS->papszRDC, rdcMIN_VALUE), "%lf %lf %lf", 
-        &adfMinValue[0], &adfMinValue[1], &adfMinValue[2]);
+	if (pbSuccess)
+		*pbSuccess = TRUE;
 
-    //CPLDebug(extRST, "GetMinimum of Band (%d) = %lf", nBand, adfMinValue[nBand - 1]);
-
-    if( pbSuccess )
-        *pbSuccess = TRUE;
-
-    return adfMinValue[this->nBand - 1];
+	return adfMinValue[this->nBand - 1];
 }
 
 /************************************************************************/
@@ -1118,38 +1249,16 @@ double IdrisiRasterBand::GetMinimum(int *pbSuccess)
 
 double IdrisiRasterBand::GetMaximum(int *pbSuccess)
 {      
-    //CPLDebug(extRST, "GetMaximum");
+	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
-    IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+	double adfMaxValue[3];
+	sscanf(CSLFetchNameValue(poGDS->papszRDC, rdcMAX_VALUE), "%lf %lf %lf", 
+		&adfMaxValue[0], &adfMaxValue[1], &adfMaxValue[2]);
 
-    double adfMaxValue[3];
-    sscanf(CSLFetchNameValue(poGDS->papszRDC, rdcMAX_VALUE), "%lf %lf %lf", 
-        &adfMaxValue[0], &adfMaxValue[1], &adfMaxValue[2]);
+	if (pbSuccess)
+		*pbSuccess = TRUE;
 
-    //CPLDebug(extRST, "GetMaximum of Band (%d) = %lf", nBand, adfMaxValue[nBand - 1]);
-
-    if( pbSuccess )
-        *pbSuccess = TRUE;
-
-    return adfMaxValue[this->nBand - 1];
-}
-
-/************************************************************************/
-/*                           GetStatistics()                            */
-/************************************************************************/
-
-CPLErr IdrisiRasterBand::GetStatistics(int bApproxOK, int bForce,
-                                       double *pdfMin, double *pdfMax, 
-                                       double *pdfMean, double *padfStdDev)
-{      
-    //CPLDebug(extRST, "GetStatistics");
-
-    *pdfMin = GetMinimum();
-    *pdfMax = GetMaximum();
-    pdfMean = NULL;
-    padfStdDev = NULL;
-
-    return CE_Warning;
+	return adfMaxValue[this->nBand - 1];
 }
 
 /************************************************************************/
@@ -1158,129 +1267,32 @@ CPLErr IdrisiRasterBand::GetStatistics(int bApproxOK, int bForce,
 
 double IdrisiRasterBand::GetNoDataValue(int *pbSuccess)
 {      
-    //CPLDebug(extRST, "GetNoDataValue");
+	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
-    IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+	double dfNoData;
+	const char *pszFlagDefn;
 
-    double dfNoData;
-    char *pszFlagDefn;
+	if (CSLFetchNameValue(poGDS->papszRDC, rdcFLAG_DEFN) != NULL)
+		pszFlagDefn = CSLFetchNameValue(poGDS->papszRDC, rdcFLAG_DEFN);
+	else if (CSLFetchNameValue(poGDS->papszRDC, rdcFLAG_DEFN2) != NULL)
+		pszFlagDefn = CSLFetchNameValue(poGDS->papszRDC, rdcFLAG_DEFN2);
 
-    sscanf(CSLFetchNameValue(poGDS->papszRDC, rdcFLAG_VALUE), " %lf", &dfNoData);
-    if( CSLFetchNameValue(poGDS->papszRDC, rdcFLAG_DEFN) != NULL )
-        pszFlagDefn = TrimL(CSLFetchNameValue(poGDS->papszRDC, rdcFLAG_DEFN));
-    else if( CSLFetchNameValue(poGDS->papszRDC, rdcFLAG_DEFN2) != NULL )
-        pszFlagDefn = TrimL(CSLFetchNameValue(poGDS->papszRDC, rdcFLAG_DEFN2));
-    else
-        pszFlagDefn = CPLStrdup("");
+	// --------------------------------------------------------------------------
+	// If Flag_Def is not "none", Flag_Value means "background" or "missing data"
+	// --------------------------------------------------------------------------
 
-    if (pbSuccess)
-    {
-        *pbSuccess = (! EQUAL(pszFlagDefn, "none"));
-    }
+	if (! EQUAL(pszFlagDefn, "none"))
+	{
+		dfNoData = atof_nz(CSLFetchNameValue(poGDS->papszRDC, rdcFLAG_VALUE));
+		*pbSuccess = TRUE;
+	}
+	else
+	{
+		dfNoData = -9999.0;    /* this value should be ignored */
+		*pbSuccess = FALSE;
+	}
 
-    CPLFree(pszFlagDefn);
-
-    return dfNoData;
-}
-
-/************************************************************************/
-/*                       GetColorInterpretation()                       */
-/************************************************************************/
-
-GDALColorInterp IdrisiRasterBand::GetColorInterpretation()
-{               
-    //CPLDebug(extRST, "GetColorInterpretation");
-
-    IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
-
-    if (poGDS->nBands == 3)
-    {
-        //CPLDebug(extRST, "RGB = %d", nBand);
-        switch (nBand)
-        {
-        case 1: return GCI_BlueBand;
-        case 2: return GCI_GreenBand;
-        case 3: return GCI_RedBand;
-        }
-    }
-    else if (poGDS->poColorTable->GetColorEntryCount() > 0)
-    {
-        //CPLDebug(extRST, "Palette");
-        return GCI_PaletteIndex;
-    }
-
-    //CPLDebug(extRST, "GrayIndex");
-    return GCI_GrayIndex;
-}
-
-/************************************************************************/
-/*                          GetCategoryNames()                          */
-/************************************************************************/
-
-char **IdrisiRasterBand::GetCategoryNames()
-{      
-    IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
-
-    return poGDS->papszCategoryNames;
-}
-
-/************************************************************************/
-/*                           GetColorTable()                            */
-/************************************************************************/
-
-GDALColorTable *IdrisiRasterBand::GetColorTable()
-{               
-    IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
-
-    //CPLDebug(extRST, "GetColorTable, Count = %d", poGDS->poColorTable->GetColorEntryCount());
-
-    if (poGDS->poColorTable->GetColorEntryCount() == 0)
-    {
-        return NULL;
-    }
-    else
-    {
-        return poGDS->poColorTable;
-    }
-}
-
-/************************************************************************/
-/*                          SetCategoryNames()                          */
-/************************************************************************/
-
-CPLErr IdrisiRasterBand::SetCategoryNames(char **papszCategoryNames)
-{      
-    //CPLDebug(extRST, "SetCategoryNames Count = %d", CSLCount(papszCategoryNames));
-
-    int nCount = CSLCount(papszCategoryNames);
-
-    if (nCount == 0)
-        return CE_None;
-
-    IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
-
-    poGDS->papszRDC = CSLSetNameValue(poGDS->papszRDC, 
-        rdcLEGEND_CATS, CPLSPrintf(" %d", nCount));
-
-    int index = CSLFindString(poGDS->papszRDC, 
-        CPLSPrintf("%s: %d", rdcLEGEND_CATS,nCount));
-
-    for (int i = 0; i < nCount; i++)
-    {
-        CPLString osNameValue;
-
-        osNameValue.Printf( rdcCODE_N, i );
-        osNameValue += ": ";
-        osNameValue += papszCategoryNames[i];
-
-        poGDS->papszRDC = 
-            CSLInsertString(poGDS->papszRDC, (index + i + 1), osNameValue );
-    }
-
-    CSLDestroy( poGDS->papszCategoryNames );
-    poGDS->papszCategoryNames = CSLDuplicate(papszCategoryNames);
-
-    return CE_None;
+	return dfNoData;
 }
 
 /************************************************************************/
@@ -1289,26 +1301,121 @@ CPLErr IdrisiRasterBand::SetCategoryNames(char **papszCategoryNames)
 
 CPLErr IdrisiRasterBand::SetNoDataValue(double dfNoDataValue)
 {      
-    //CPLDebug(extRST, "SetNoDataValue = %lf", dfNoDataValue);
+	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
-    IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+	poGDS->papszRDC = 
+		CSLSetNameValue(poGDS->papszRDC, rdcFLAG_VALUE, CPLSPrintf("%.8g", dfNoDataValue));
+	poGDS->papszRDC = 
+		CSLSetNameValue(poGDS->papszRDC, rdcFLAG_DEFN,  "missing data");
 
-    if (dfNoDataValue == -9999.0)
-    {
-        poGDS->papszRDC = 
-            CSLSetNameValue(poGDS->papszRDC, rdcFLAG_VALUE, " none");
-        poGDS->papszRDC = 
-            CSLSetNameValue(poGDS->papszRDC, rdcFLAG_DEFN,  " none");
-    }
-    else
-    {
-        poGDS->papszRDC = 
-            CSLSetNameValue(poGDS->papszRDC, rdcFLAG_VALUE, CPLSPrintf(" %.8g", dfNoDataValue));
-        poGDS->papszRDC = 
-            CSLSetNameValue(poGDS->papszRDC, rdcFLAG_DEFN,  " missing data");
-    }
+	return CE_None;
+}
 
-    return CE_None;
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp IdrisiRasterBand::GetColorInterpretation()
+{               
+	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+
+	if (poGDS->nBands == 3)
+	{
+		switch (nBand)
+		{
+		case 1: return GCI_BlueBand;
+		case 2: return GCI_GreenBand;
+		case 3: return GCI_RedBand;
+		}
+	}
+	else if (poGDS->poColorTable->GetColorEntryCount() > 0)
+	{
+		return GCI_PaletteIndex;
+	}
+	return GCI_GrayIndex;
+}
+
+/************************************************************************/
+/*                          GetCategoryNames()                          */
+/************************************************************************/
+
+char **IdrisiRasterBand::GetCategoryNames()
+{      
+	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+
+	return poGDS->papszCategories;
+}
+
+/************************************************************************/
+/*                          SetCategoryNames()                          */
+/************************************************************************/
+
+CPLErr IdrisiRasterBand::SetCategoryNames(char **papszCategoryNames)
+{      
+	int nCatCount = CSLCount(papszCategoryNames);
+
+	if (nCatCount == 0)
+		return CE_None;
+
+	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+
+	CSLDestroy(poGDS->papszCategories);
+	poGDS->papszCategories = CSLDuplicate(papszCategoryNames);
+
+	// ------------------------------------------------------
+	//		Search for the "Legend cats  : N" line
+	// ------------------------------------------------------
+
+	int nLine = -1;
+	for (int i = 0; (i < CSLCount(poGDS->papszRDC)) && (nLine == -1); i++)
+		if (EQUALN(poGDS->papszRDC[i], rdcLEGEND_CATS, 12))
+			nLine = i;
+
+	if (nLine < 0)
+		return CE_None;
+
+	int nCount = atoi_nz(CSLFetchNameValue(poGDS->papszRDC, rdcLEGEND_CATS));
+
+	// ------------------------------------------------------
+	//		Delte old instance of the categoty names
+	// ------------------------------------------------------
+
+	if (nCount > 0)
+        poGDS->papszRDC = CSLRemoveStrings(poGDS->papszRDC, nLine + 1, nCount, NULL);
+
+	nCount = 0;
+
+	for (int i = 0; i < nCatCount; i++)
+	{
+		if ((strlen(papszCategoryNames[i]) > 0))
+		{
+			poGDS->papszRDC = CSLInsertString(poGDS->papszRDC, (nLine + nCount + 1), 
+				CPLSPrintf("%s:%s", CPLSPrintf(rdcCODE_N, i), papszCategoryNames[i]));
+			nCount++;
+		}
+	}
+
+	CSLSetNameValue(poGDS->papszRDC, rdcLEGEND_CATS, CPLSPrintf("%d", nCount));
+
+	return CE_None;
+}
+
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable *IdrisiRasterBand::GetColorTable()
+{               
+	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+
+	if (poGDS->poColorTable->GetColorEntryCount() == 0)
+	{
+		return NULL;
+	}
+	else
+	{
+		return poGDS->poColorTable;
+	}
 }
 
 /************************************************************************/
@@ -1317,59 +1424,68 @@ CPLErr IdrisiRasterBand::SetNoDataValue(double dfNoDataValue)
 
 CPLErr IdrisiRasterBand::SetColorTable(GDALColorTable *poColorTable)
 {      
-    //CPLDebug(extRST, "SetColorTable");
+	if (poColorTable == NULL)
+	{
+		return CE_None;
+	}
 
-    if (poColorTable == NULL)
-    {
-        return CE_None;
-    }
+	if (poColorTable->GetColorEntryCount() == 0)
+	{
+		return CE_None;
+	}
 
-    if (poColorTable->GetColorEntryCount() == 0)
-    {
-        return CE_None;
-    }
+	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
-    IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+	const char *pszSMPFilename;
+	pszSMPFilename = CPLResetExtension(poGDS->pszFilename, extSMP);
+	FILE *fpSMP;
 
-    const char *pszSMPFilename;
-    pszSMPFilename = CPLResetExtension(poGDS->pszFilename, extSMP);
-    FILE *fpSMP;
+	if ((fpSMP = VSIFOpenL(pszSMPFilename, "w")) != NULL )
+	{
+		VSIFWriteL("[Idrisi]", 8, 1, fpSMP);
+		uint8 nPlatform = 1;    VSIFWriteL(&nPlatform, 1, 1, fpSMP);
+		uint8 nVersion = 11;    VSIFWriteL(&nVersion, 1, 1, fpSMP);
+		uint8 nDepth = 8;       VSIFWriteL(&nDepth, 1, 1, fpSMP);
+		uint8 nHeadSz = 18;     VSIFWriteL(&nHeadSz, 1, 1, fpSMP);
+		uint16 nCount = 255;    VSIFWriteL(&nCount, 2, 1, fpSMP);
+		uint16 nMix = 0;        VSIFWriteL(&nMix, 2, 1, fpSMP);
+		uint16 nMax = 255;      VSIFWriteL(&nMax, 2, 1, fpSMP);
 
-    if ((fpSMP = VSIFOpenL(pszSMPFilename, "w")) != NULL )
-    {
-        VSIFWriteL("[Idrisi]", 8, 1, fpSMP);
-        uint8 nPlatform = 1;    VSIFWriteL(&nPlatform, 1, 1, fpSMP);
-        uint8 nVersion = 11;    VSIFWriteL(&nVersion, 1, 1, fpSMP);
-        uint8 nDepth = 8;       VSIFWriteL(&nDepth, 1, 1, fpSMP);
-        uint8 nHeadSz = 18;     VSIFWriteL(&nHeadSz, 1, 1, fpSMP);
-        uint16 nCount = 255;    VSIFWriteL(&nCount, 2, 1, fpSMP);
-        uint16 nMix = 0;        VSIFWriteL(&nMix, 2, 1, fpSMP);
-        uint16 nMax = 255;      VSIFWriteL(&nMax, 2, 1, fpSMP);
+		GDALColorEntry oEntry;
+		uint8 aucRGB[3];
 
-        GDALColorEntry oEntry;
-        uint8 aucRGB[3];
+		for (int i = 0; i < poColorTable->GetColorEntryCount(); i++)
+		{
+			poColorTable->GetColorEntryAsRGB( i, &oEntry );
+			aucRGB[0] = (short) oEntry.c1;
+			aucRGB[1] = (short) oEntry.c2;
+			aucRGB[2] = (short) oEntry.c3;
+			VSIFWriteL(&aucRGB, 3, 1, fpSMP);
+		}
+		/* smp files always have 256 occurences */
+		for (int i = poColorTable->GetColorEntryCount(); i <= 255; i++)
+		{
+			poColorTable->GetColorEntryAsRGB( i, &oEntry );
+			aucRGB[0]= (short) 0;
+			aucRGB[1]= (short) 0;
+			aucRGB[2]= (short) 0;
+			VSIFWriteL(&aucRGB, 3, 1, fpSMP);
+		}
+		VSIFCloseL(fpSMP);
+	}
 
-        for (int i = 0; i < poColorTable->GetColorEntryCount(); i++)
-        {
-            poColorTable->GetColorEntryAsRGB( i, &oEntry );
-            aucRGB[0]= (short) oEntry.c1;
-            aucRGB[1]= (short) oEntry.c2;
-            aucRGB[2]= (short) oEntry.c3;
-            VSIFWriteL(&aucRGB, 3, 1, fpSMP);
-        }
-        /* smp files always have 256 occurences */
-        for (int i = poColorTable->GetColorEntryCount(); i <= 255; i++)
-        {
-            poColorTable->GetColorEntryAsRGB( i, &oEntry );
-            aucRGB[0]= (short) 0;
-            aucRGB[1]= (short) 0;
-            aucRGB[2]= (short) 0;
-            VSIFWriteL(&aucRGB, 3, 1, fpSMP);
-        }
-        VSIFCloseL(fpSMP);
-    }
+	return CE_None;
+}
 
-    return CE_None;
+/************************************************************************/
+/*                           GetUnitType()                              */
+/************************************************************************/
+
+const char *IdrisiRasterBand::GetUnitType()
+{
+	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+
+	return poGDS->pszUnitType;
 }
 
 /************************************************************************/
@@ -1378,23 +1494,20 @@ CPLErr IdrisiRasterBand::SetColorTable(GDALColorTable *poColorTable)
 
 CPLErr IdrisiRasterBand::SetUnitType(const char *pszUnitType)
 {      
-    //CPLDebug(extRST, "SetUnitType");
+	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
-    IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+	if (strlen(pszUnitType) == 0)
+	{
+		poGDS->papszRDC = 
+			CSLSetNameValue(poGDS->papszRDC, rdcVALUE_UNITS, "unspecified");
+	}
+	else
+	{
+		poGDS->papszRDC = 
+			CSLSetNameValue(poGDS->papszRDC, rdcVALUE_UNITS, pszUnitType);
+	}
 
-    if (strlen(pszUnitType) == 0)
-    {
-        poGDS->papszRDC = 
-            CSLSetNameValue(poGDS->papszRDC, rdcVALUE_UNITS, " unspecified");
-    }
-    else
-    {
-        poGDS->papszRDC = 
-            CSLSetNameValue(poGDS->papszRDC, rdcVALUE_UNITS, 
-                            CPLSPrintf(" %s", pszUnitType));
-    }
-
-    return CE_None;
+	return CE_None;
 }
 
 /************************************************************************/
@@ -1403,60 +1516,41 @@ CPLErr IdrisiRasterBand::SetUnitType(const char *pszUnitType)
 
 CPLErr IdrisiRasterBand::SetStatistics(double dfMin, double dfMax, double dfMean, double dfStdDev)
 {      
-    //CPLDebug(extRST, "SetStatistics dfMin=%f dfMax=%f", dfMin, dfMax);
+	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
-    IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
+	double adfMin[3] = {0.0, 0.0, 0.0};
+	double adfMax[3] = {0.0, 0.0, 0.0};
 
-    double adfMin[3] = {0.0, 0.0, 0.0};
-    double adfMax[3] = {0.0, 0.0, 0.0};
+	sscanf(CSLFetchNameValue(poGDS->papszRDC, rdcMIN_VALUE), "%lf %lf %lf", &adfMin[0], &adfMin[1], &adfMin[2]);
+	sscanf(CSLFetchNameValue(poGDS->papszRDC, rdcMAX_VALUE), "%lf %lf %lf", &adfMax[0], &adfMax[1], &adfMax[2]);
 
-    sscanf(CSLFetchNameValue(poGDS->papszRDC, rdcMIN_VALUE), "%lf %lf %lf", &adfMin[0], &adfMin[1], &adfMin[2]);
-    sscanf(CSLFetchNameValue(poGDS->papszRDC, rdcMAX_VALUE), "%lf %lf %lf", &adfMax[0], &adfMax[1], &adfMax[2]);
+	adfMin[nBand - 1] = dfMin;
+	adfMax[nBand - 1] = dfMax;
 
-    adfMin[nBand - 1] = dfMin;
-    adfMax[nBand - 1] = dfMax;
+	if (poGDS->nBands == 3)
+	{
+		poGDS->papszRDC = 
+			CSLSetNameValue(poGDS->papszRDC, rdcMIN_VALUE,   CPLSPrintf("%.8g %.8g %.8g", adfMin[0], adfMin[1], adfMin[2]));
+		poGDS->papszRDC = 
+			CSLSetNameValue(poGDS->papszRDC, rdcMAX_VALUE,   CPLSPrintf("%.8g %.8g %.8g", adfMax[0], adfMax[1], adfMax[2]));
+		poGDS->papszRDC = 
+			CSLSetNameValue(poGDS->papszRDC, rdcDISPLAY_MIN, CPLSPrintf("%.8g %.8g %.8g", adfMin[0], adfMin[1], adfMin[2]));
+		poGDS->papszRDC = 
+			CSLSetNameValue(poGDS->papszRDC, rdcDISPLAY_MAX, CPLSPrintf("%.8g %.8g %.8g", adfMax[0], adfMax[1], adfMax[2]));
+	}
+	else
+	{
+		poGDS->papszRDC = 
+			CSLSetNameValue(poGDS->papszRDC, rdcMIN_VALUE,   CPLSPrintf("%.8g", adfMin[0]));
+		poGDS->papszRDC = 
+			CSLSetNameValue(poGDS->papszRDC, rdcMAX_VALUE,   CPLSPrintf("%.8g", adfMax[0]));
+		poGDS->papszRDC = 
+			CSLSetNameValue(poGDS->papszRDC, rdcDISPLAY_MIN, CPLSPrintf("%.8g", adfMin[0]));
+		poGDS->papszRDC = 
+			CSLSetNameValue(poGDS->papszRDC, rdcDISPLAY_MAX, CPLSPrintf("%.8g", adfMax[0]));
+	}
 
-    if (poGDS->nBands == 3)
-    {
-        poGDS->papszRDC = 
-            CSLSetNameValue(poGDS->papszRDC, rdcMIN_VALUE,   CPLSPrintf(" %.8g %.8g %.8g", adfMin[0], adfMin[1], adfMin[2]));
-        poGDS->papszRDC = 
-            CSLSetNameValue(poGDS->papszRDC, rdcMAX_VALUE,   CPLSPrintf(" %.8g %.8g %.8g", adfMax[0], adfMax[1], adfMax[2]));
-        poGDS->papszRDC = 
-            CSLSetNameValue(poGDS->papszRDC, rdcDISPLAY_MIN, CPLSPrintf(" %.8g %.8g %.8g", adfMin[0], adfMin[1], adfMin[2]));
-        poGDS->papszRDC = 
-            CSLSetNameValue(poGDS->papszRDC, rdcDISPLAY_MAX, CPLSPrintf(" %.8g %.8g %.8g", adfMax[0], adfMax[1], adfMax[2]));
-    }
-    else
-    {
-        poGDS->papszRDC = 
-            CSLSetNameValue(poGDS->papszRDC, rdcMIN_VALUE,   CPLSPrintf(" %.8g", adfMin[0]));
-        poGDS->papszRDC = 
-            CSLSetNameValue(poGDS->papszRDC, rdcMAX_VALUE,   CPLSPrintf(" %.8g", adfMax[0]));
-        poGDS->papszRDC = 
-            CSLSetNameValue(poGDS->papszRDC, rdcDISPLAY_MIN, CPLSPrintf(" %.8g", adfMin[0]));
-        poGDS->papszRDC = 
-            CSLSetNameValue(poGDS->papszRDC, rdcDISPLAY_MAX, CPLSPrintf(" %.8g", adfMax[0]));
-    }
-    return CE_None;
-}
-
-/************************************************************************/
-/*                               TrimL()                                */
-/************************************************************************/
-
-char *TrimL(const char *pszText)
-{
-    int i;
-
-    if( pszText == NULL )
-        return CPLStrdup("");
-
-    for (i = 0; (pszText[i] == ' ') && (pszText[i] != '\0'); i++);
-
-    char *pszResult = CPLStrdup(&pszText[i]);
-
-    return pszResult;
+	return GDALRasterBand::SetStatistics(dfMin, dfMax, dfMean, dfStdDev);
 }
 
 /************************************************************************/
@@ -1465,16 +1559,420 @@ char *TrimL(const char *pszText)
 
 bool FileExists(const char *pszFilename)
 {
-    FILE *fp;
+	FILE *fp;
 
-    bool exist = ((fp = VSIFOpenL(pszFilename, "rb")) != NULL);
+	bool exist = ((fp = VSIFOpenL(pszFilename, "rb")) != NULL);
 
-    if (exist)
-    {
-        VSIFCloseL(fp);
-    }
+	if (exist)
+	{
+		VSIFCloseL(fp);
+	}
 
-    return exist;
+	return exist;
+}
+
+/************************************************************************/
+/*                        OSRImportFromIdrisi()                         */
+/************************************************************************/
+
+/**
+* \brief Import Idrisi Geo Reference
+*
+* This functions tries to interpret the "ref. system" information and
+* process the well known codifications, like UTM-30N and SPC83MA1, 
+* otherwise it tries to process the RefFile file content.
+*
+* User defined or unsupported codifications points to a ".ref" file
+* generally in the software installation folder "/Georef" or in the
+* same folder as the ".rst" file. 
+*
+* @param poSRS the Spatial Reference Object.
+* @param pszRefSystem the Idrisi Referense system name
+* @param pszRefUnits the Reference system unit
+* @param papszRefFile the StringList with the content of a reference file
+*/
+
+OGRErr CPL_DLL OSRImportFromIdrisi(OGRSpatialReferenceH hSRS, 
+								   const char *pszRefSystem, 
+								   const char *pszRefUnits, 
+								   char **papszRefFile)
+{
+	OGRSpatialReference *poSRS = ((OGRSpatialReference *) hSRS);
+
+	char pszRefCode[81];
+	int i;
+
+	// ---------------------------------------------------------
+	// Lowercase the reference in order make the sscanf to works
+ 	// ---------------------------------------------------------
+
+	for (i = 0; pszRefSystem[i] != '\0' && i < 80; i++)
+		pszRefCode[i] = tolower(pszRefSystem[i]);
+
+	pszRefCode[i] = '\0';
+
+	// ---------------------------------------------------------
+	// Check the well known codified reference names
+ 	// ---------------------------------------------------------
+
+	if (EQUAL(pszRefSystem, rstPLANE))
+	{
+		poSRS->SetLocalCS("Unknown");
+		return OGRERR_NONE;
+	}
+
+	if (EQUAL(pszRefSystem, rstLATLONG))
+	{
+		poSRS->SetWellKnownGeogCS("WGS84");
+		return OGRERR_NONE;
+	}
+
+	if (EQUALN(pszRefSystem, rstUTM, 3))
+	{
+		int	nZone;
+		char cNorth;
+
+		sscanf(pszRefCode, rstUTM, &nZone, &cNorth);
+
+		poSRS->SetProjCS(pszRefCode);
+		poSRS->SetWellKnownGeogCS("WGS84");
+		poSRS->SetUTM(nZone, (cNorth == 'n'));
+		return OGRERR_NONE;
+	}
+
+	if (EQUALN(pszRefSystem, rstSPC, 3))
+	{
+		int nNAD;
+		int nZone;
+		char szState[3];
+
+		sscanf(pszRefCode, rstSPC, &nNAD, szState, &nZone);
+
+		int nSPCCode = -1;
+		for (int i = 0; (i < US_STATE_COUNT) && (nSPCCode == -1); i++)
+		{
+			if (EQUAL(szState, aoUSStateTable[i].pszName))
+				nSPCCode = aoUSStateTable[i].nCode;
+		}
+		if (nSPCCode == -1)
+			poSRS->SetWellKnownGeogCS(CPLSPrintf("NAD%d", nNAD));
+		else
+		{
+			if (nZone == 1)
+				nZone = nSPCCode;
+			else
+				nZone = nSPCCode + nZone - 1;
+			poSRS->SetStatePlane(nZone, (nNAD == 83));
+			poSRS->SetProjCS(pszRefCode);
+		}
+		return OGRERR_NONE;
+	}
+
+	if (papszRefFile == NULL)
+	{
+		// ------------------------------------------
+		// Can't identify just by the reference name
+		// Assumming a default WGS84 projection (deg)
+		// ------------------------------------------
+		poSRS->SetWellKnownGeogCS("WGS84");
+		if (! EQUAL(pszRefUnits, "deg"))
+			poSRS->SetProjCS("Unknown");
+		return OGRERR_NONE;
+	}
+
+	// ---------------------------------------------------------
+	//		Read the ".ref" content
+	// ---------------------------------------------------------
+
+	const char *pszProj;
+	const char *pszRefSys;
+	const char *pszDatum;
+	const char *pszEllipsoid;
+	double dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing,
+		dfSemiMajor, dfSemiMinor;
+	double dfStdP1, dfStdP2;
+
+	pszRefSys     	= CSLFetchNameValue(papszRefFile, refREF_SYSTEM);
+	pszProj			= CSLFetchNameValue(papszRefFile, refPROJECTION);
+	pszDatum		= CSLFetchNameValue(papszRefFile, refDATUM);
+	pszEllipsoid	= CSLFetchNameValue(papszRefFile, refELLIPSOID);
+	dfCenterLat		= atof_nz(CSLFetchNameValue(papszRefFile, refORIGIN_LAT));
+	dfCenterLong	= atof_nz(CSLFetchNameValue(papszRefFile, refORIGIN_LONG));
+	dfSemiMajor		= atof_nz(CSLFetchNameValue(papszRefFile, refMAJOR_SAX));
+	dfSemiMinor		= atof_nz(CSLFetchNameValue(papszRefFile, refMINOR_SAX));
+	dfFalseEasting	= atof_nz(CSLFetchNameValue(papszRefFile, refORIGIN_X));
+	dfFalseNorthing	= atof_nz(CSLFetchNameValue(papszRefFile, refORIGIN_Y));
+	dfStdP1			= atof_nz(CSLFetchNameValue(papszRefFile, refSTANDL_1));
+	dfStdP2			= atof_nz(CSLFetchNameValue(papszRefFile, refSTANDL_2));
+
+	if (EQUAL(CSLFetchNameValue(papszRefFile, refSCALE_FAC), "na"))
+		dfScale		= 1.0;
+	else
+		dfScale		= atof_nz(CSLFetchNameValue(papszRefFile, refSCALE_FAC));
+
+	if (EQUAL(pszProj,"Transverse Mercator"))
+	{
+		poSRS->SetTM(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
+		poSRS->SetProjCS(pszProj);	
+	}
+	else if (EQUAL(pszProj, "Lambert Conformal Conic"))
+	{
+		poSRS->SetLCC(dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing);
+		poSRS->SetProjCS(pszProj);	
+	}
+	else if (EQUAL(pszProj, "Lambert North Polar Azimuthal Equal Area"))
+	{
+		poSRS->SetLAEA(dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing);
+		poSRS->SetProjCS(pszProj);	
+	}
+	else if (EQUAL(pszProj, "Lambert South Polar Azimuthal Equal Area"))
+	{
+		poSRS->SetLAEA(dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing);
+		poSRS->SetProjCS(pszProj);	
+	}
+	else if (EQUAL(pszProj, "North Polar Stereographic"))
+	{
+		poSRS->SetPS(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
+		poSRS->SetProjCS(pszProj);	
+	}
+	else if (EQUAL(pszProj, "South Polar Stereographic"))
+	{
+		poSRS->SetPS(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
+		poSRS->SetProjCS(pszProj);	
+	}
+	else if (EQUAL(pszProj, "Transverse Stereographic"))
+	{
+		poSRS->SetStereographic(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
+		poSRS->SetProjCS(pszProj);	
+	}
+	else if (EQUAL(pszProj, "Oblique Stereographic"))
+	{
+		poSRS->SetOS(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
+		poSRS->SetProjCS(pszProj);	
+	}
+	else if (EQUAL(pszProj, "SetSinusoidal"))
+	{
+		poSRS->SetSinusoidal(dfCenterLong, dfFalseEasting, dfFalseNorthing);
+		poSRS->SetProjCS(pszProj);	
+	}
+	else if (EQUAL(pszProj, "Alber''s Equal Area Conic"))
+	{
+		poSRS->SetACEA(dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing);
+		poSRS->SetProjCS(pszProj);	
+	}
+
+	//------------------------------------------------------------
+	//		Try to match Datum using Approximated String option
+	//------------------------------------------------------------
+
+	int nEPSG = atoi_nz(CSVGetField(CSVFilename("gcs.csv"), 
+		"COORD_REF_SYS_NAME", 
+		pszDatum, 
+		CC_ApproxString,
+		"COORD_REF_SYS_CODE"));
+
+	if (nEPSG != 0)
+	{
+		OGRSpatialReference oGCS;
+		oGCS.importFromEPSG(nEPSG);
+		poSRS->CopyGeogCSFrom(&oGCS);
+	}
+	else
+	{
+		//------------------------------------------------------------
+		//		No match
+		//------------------------------------------------------------
+
+		poSRS->SetGeogCS(
+			CPLSPrintf(
+			"Unknown datum based upon the ellipsoid %s", pszEllipsoid),
+			CPLSPrintf(
+			"Not specified (based on the spheroid %s)", pszDatum),
+			pszEllipsoid, 
+			dfSemiMajor, 
+			-1.0 / (dfSemiMinor / dfSemiMajor - 1.0));
+		poSRS->SetAuthority("SPHEROID", "EPSG", nEPSG);
+	}
+
+	return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                        OSRExportToIdrisi()                           */
+/************************************************************************/
+
+/**
+* \brief Export Idrisi Geo Reference
+* 
+* Idrisi store in the RDC documentation file, field "ref. system",
+* the name of the reference file (.ref) that contains the geo reference
+* paramters. Those file are usually located at the software installation
+* folders or in the same folder as the rst file.
+*
+* @param poSRS the Spatial Reference Object.
+* @param pszRefSystem the Idrisi Referense system name
+* @param pszRefUnits the Reference system unit
+* @param papszRefFile the StringList with the content of a reference file
+*/
+
+OGRErr CPL_DLL OSRExportToIdrisi(OGRSpatialReferenceH hSRS, 
+								 char **pszRefSystem, 
+								 char **pszRefUnit, 
+								 char ***papszRefFile)
+{
+	OGRSpatialReference *poSRS = ((OGRSpatialReference *) hSRS);
+
+	const char  *pszProjection = poSRS->GetAttrValue("PROJECTION");
+
+	CSLDestroy(*papszRefFile);
+
+	if (poSRS->IsLocal())
+	{
+		*pszRefSystem = CPLStrdup(rstPLANE);
+		*pszRefUnit   = CPLStrdup(rstMETER);
+
+		return OGRERR_NONE;
+	}
+
+	if (pszProjection == NULL)
+	{
+#ifdef DEBUG
+		CPLDebug("RST", "Empty projection definition, considered as LatLong" );
+#endif
+		*pszRefSystem = CPLStrdup(rstLATLONG);
+		*pszRefUnit   = CPLStrdup(poSRS->GetAttrValue("UNIT", 0));
+
+		return OGRERR_NONE;
+	}
+
+	// -----------------------------------------------------
+	//      Check for UTM
+	// -----------------------------------------------------
+
+	if (EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR))
+	{
+		int nZone = poSRS->GetUTMZone();
+
+		if ((nZone != 0) && (EQUAL(poSRS->GetAttrValue( "DATUM" ), SRS_DN_WGS84)))
+		{
+			double dfNorth = poSRS->GetNormProjParm(SRS_PP_FALSE_NORTHING);
+			*pszRefSystem  = CPLStrdup(CPLSPrintf(rstUTM, nZone, (dfNorth == 0.0 ? 'n' : 's')));
+			*pszRefUnit    = CPLStrdup(rstMETER);
+
+			return OGRERR_NONE;
+		}
+	}
+
+	// -----------------------------------------------------
+	//      Check for State Plane
+	// -----------------------------------------------------
+
+	if ((EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP)) ||
+		(EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP)) ||
+		(EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR)))
+	{
+		// -----------------------------------------------------------------------------
+		// This technique uses the reverse process of SetStatePlane (ogr_fromEPSG.cpp):
+		// Get the ID from [PROJCS[...AUTHORITY["EPSG","26986"]] => 26986
+		// Get the PSCode from satateplane.cvs => "2001,Massachusetts,Mainland,,,26986"
+		// -----------------------------------------------------------------------------
+
+		char *pszID;
+		char *pszPCSCode;
+
+		pszID = CPLStrdup(poSRS->GetAuthorityCode("PROJCS"));
+		if (strlen(pszID) > 0)
+		{
+
+			pszPCSCode = CPLStrdup(CSVGetField(CSVFilename("stateplane.csv"),
+				"EPSG_PCS_CODE", pszID, CC_Integer, "ID"));
+			if (strlen(pszPCSCode) > 0)
+			{
+				int nNADYear	= 83;
+				char *pszState	= NULL;
+				int nZone		= pszPCSCode[strlen(pszPCSCode) - 1] - '0';
+				int nPCSCode	= atoi_nz(pszPCSCode);
+				if (nZone == 0)
+					nZone = 1;
+				if (nPCSCode > 10000)
+				{
+					nNADYear = 27;
+					nPCSCode -= 10000;
+				}
+				for (int i = 0; (i < US_STATE_COUNT) && (pszState == NULL); i++)
+				{
+					if (nPCSCode == aoUSStateTable[i].nCode)
+						pszState = aoUSStateTable[i].pszName;
+				}
+				CPLFree(*pszRefSystem);
+				CPLFree(*pszRefUnit);
+				*pszRefSystem	= CPLStrdup(CPLSPrintf(rstSPC, nNADYear, pszState, nZone));
+				*pszRefUnit		= CPLStrdup(poSRS->GetAttrValue("UNIT", 0));
+				if (EQUALN(*pszRefUnit, "metre", 5))
+				{
+					(*pszRefUnit)[3] = 'e';
+					(*pszRefUnit)[4] = 'r';
+				}
+				CPLFree(pszPCSCode);
+				CPLFree(pszID);
+				return OGRERR_NONE;
+			}
+			CPLFree(pszPCSCode);
+		}
+		CPLFree(pszID);
+	}
+
+	// ---------------------------------------------------------
+	//		Generate the ".ref" content
+	// ---------------------------------------------------------
+
+	double padfCoef[3];
+	poSRS->GetTOWGS84(padfCoef, 3);
+
+	*papszRefFile = CSLAddNameValue(*papszRefFile, refREF_SYSTEM, 
+		poSRS->GetAttrValue("GEOGCS", 0));
+	*papszRefFile = CSLAddNameValue(*papszRefFile, refPROJECTION, 
+		poSRS->GetAttrValue("PROJCS", 0));
+	*papszRefFile = CSLAddNameValue(*papszRefFile, refDATUM,      
+		poSRS->GetAttrValue("DATUM",  0));
+	*papszRefFile = CSLAddNameValue(*papszRefFile, refDELTA_WGS84, 
+		CPLSPrintf("%.2g %.2g %.2g", padfCoef[0], padfCoef[1], padfCoef[2]));
+	*papszRefFile = CSLAddNameValue(*papszRefFile, refELLIPSOID,  
+		poSRS->GetAttrValue("SPHEROID", 0));
+	*papszRefFile = CSLAddNameValue(*papszRefFile, refMAJOR_SAX,  
+		CPLSPrintf("%.8g", poSRS->GetSemiMajor(NULL)));
+	*papszRefFile = CSLAddNameValue(*papszRefFile, refMINOR_SAX,  
+		CPLSPrintf("%.8g", poSRS->GetSemiMinor(NULL)));
+	*papszRefFile = CSLAddNameValue(*papszRefFile, refORIGIN_LAT, 
+		CPLSPrintf("%.8g", poSRS->GetProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0, NULL)));
+	*papszRefFile = CSLAddNameValue(*papszRefFile, refORIGIN_LONG,
+		CPLSPrintf("%.8g", poSRS->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0, NULL)));
+	*papszRefFile = CSLAddNameValue(*papszRefFile, refORIGIN_X, 
+		CPLSPrintf("%.8g", poSRS->GetProjParm(SRS_PP_FALSE_EASTING, 0.0, NULL)));
+	*papszRefFile = CSLAddNameValue(*papszRefFile, refORIGIN_Y, 
+		CPLSPrintf("%.8g", poSRS->GetProjParm(SRS_PP_FALSE_NORTHING, 0.0, NULL)));
+	*papszRefFile = CSLAddNameValue(*papszRefFile, refSCALE_FAC, 
+		CPLSPrintf("%.8g", poSRS->GetProjParm(SRS_PP_SCALE_FACTOR, 0.0, NULL)));
+	*papszRefFile = CSLAddNameValue(*papszRefFile, refUNITS, 
+		poSRS->GetAttrValue("UNIT", 0));
+
+	double dfStdP1 = poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0, NULL);
+	double dfStdP2 = poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0, NULL);
+
+	if ((dfStdP1 == 0.0) && (dfStdP2 == 0.0))
+		*papszRefFile = CSLAddNameValue(*papszRefFile, refPARAMETERS, "0");
+	else
+	{
+		*papszRefFile = CSLAddNameValue(*papszRefFile, refPARAMETERS, "2");
+		*papszRefFile = CSLAddNameValue(*papszRefFile, refSTANDL_1,   CPLSPrintf("%.8g", dfStdP1));
+		*papszRefFile = CSLAddNameValue(*papszRefFile, refSTANDL_2,   CPLSPrintf("%.8g", dfStdP1));
+	}
+	CSLSetNameValueSeparator(*papszRefFile, ": ");
+
+	*pszRefSystem = CPLStrdup(rstLATLONG);
+	*pszRefUnit   = CPLStrdup(poSRS->GetAttrValue("UNIT", 0));
+
+	return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -1483,21 +1981,21 @@ bool FileExists(const char *pszFilename)
 
 void GDALRegister_IDRISI()
 {
-    GDALDriver  *poDriver;
+	GDALDriver  *poDriver;
 
-    if (GDALGetDriverByName("RST") == NULL)
-    {
-        poDriver = new GDALDriver();
+	if (GDALGetDriverByName("RST") == NULL)
+	{
+		poDriver = new GDALDriver();
 
-        poDriver->SetDescription("RST");
-        poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, rstVERSION);
-        poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_Idrisi.html");
-        poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, extRST);
-        poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte Int16 Float32");
-        poDriver->pfnOpen = IdrisiDataset::Open;
-        poDriver->pfnCreate	= IdrisiDataset::Create;
-        poDriver->pfnCreateCopy = IdrisiDataset::CreateCopy;
+		poDriver->SetDescription("RST");
+		poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, rstVERSION);
+		poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_Idrisi.html");
+		poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, extRST);
+		poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte Int16 Float32");
+		poDriver->pfnOpen = IdrisiDataset::Open;
+		poDriver->pfnCreate	= IdrisiDataset::Create;
+		poDriver->pfnCreateCopy = IdrisiDataset::CreateCopy;
 
-        GetGDALDriverManager()->RegisterDriver(poDriver);
-    }
+		GetGDALDriverManager()->RegisterDriver(poDriver);
+	}
 }
