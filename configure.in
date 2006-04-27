@@ -272,12 +272,10 @@ else
 
   AC_MSG_RESULT([yes])
 
-  PG_EXTRA_DEC=
+  PG_EXTRA_DEC=""
   AC_CHECK_LIB(pq,PQputCopyData,,PG_EXTRA_DEC=-DPG_PRE74,)
 
   PG_INC="-I`$PG_CONFIG --includedir` $PG_EXTRA_DEC"
-  
-
 fi
 
 AC_SUBST(HAVE_PG,$HAVE_PG)
