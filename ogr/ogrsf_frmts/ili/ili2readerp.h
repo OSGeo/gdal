@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/04/27 16:37:19  pka
+ * Ili2 model reader fix
+ * Support for multiple Ili2 models
+ *
  * Revision 1.4  2006/03/28 16:07:14  pka
  * Optional model file for Interlis 2 reader
  *
@@ -143,7 +147,7 @@ public:
 
     void     SetArcDegrees(double arcDegrees);
     void     SetSourceFile( const char *pszFilename );
-    int      ReadModel( const char *pszModelFilename );
+    int      ReadModel( char **modelFilenames );
     int      SaveClasses( const char *pszFile );
     
     std::list<OGRLayer *> GetLayers();

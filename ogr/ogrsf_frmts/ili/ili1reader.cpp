@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/04/27 16:37:19  pka
+ * Ili2 model reader fix
+ * Support for multiple Ili2 models
+ *
  * Revision 1.13  2006/04/24 16:49:48  pka
  * Fixed polyline feature with coordinate attribute
  * Float support for ARC_DEGREES
@@ -196,6 +200,8 @@ void ILI1Reader::AddField(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT obj) {
   CPLDebug( "OGR_ILI", "Field %s: %s", iom_getattrvalue(obj, "name"), typenam);
   if (EQUAL(typenam, "iom04.metamodel.SurfaceType")) {
     AddGeomTable(layer->GetLayerDefn()->GetName(), iom_getattrvalue(obj, "name"), wkbPolygon);
+    //TODO: combine geometry and attribute layer
+    //TODO: add line attributes to geometry
   } else if (EQUAL(typenam, "iom04.metamodel.AreaType")) {
     IOM_OBJECT controlPointDomain = GetAttrObj(model, GetTypeObj(model, obj), "controlPointDomain");
     if (controlPointDomain) {
@@ -233,7 +239,7 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
   char *iomarr[1] = {(char *)pszModelFilename};
   model=iom_compileIli(1, iomarr);
   if(!model){
-    fprintf(stderr,"iom_compileIli() failed\n");
+    CPLError( CE_Failure, CPLE_FileIO, "iom_compileIli failed." );
     iom_end();
     return FALSE;
   }
@@ -271,8 +277,8 @@ int ILI1Reader::ReadModel(const char *pszModelFilename) {
               IOM_OBJECT obj = GetAttrObj(model, fieldele, "attributesAndRoles");
               int ili1AttrIdx = GetAttrObjPos(fieldele, "attributesAndRoles")-1;
               if (EQUAL(iom_getobjecttag(obj),"iom04.metamodel.RoleDef")) {
-                int ili1AttrIdx = atoi(iom_getattrvalue(GetAttrObj(model, obj, "oppend"), "ili1AttrIdx"));
-                roledefs[ili1AttrIdx] = obj;
+                int ili1AttrIdxOppend = atoi(iom_getattrvalue(GetAttrObj(model, obj, "oppend"), "ili1AttrIdx"));
+                if (ili1AttrIdxOppend>=0) roledefs[ili1AttrIdxOppend] = obj;
               } else {
                 fields[ili1AttrIdx] = obj;
               }
