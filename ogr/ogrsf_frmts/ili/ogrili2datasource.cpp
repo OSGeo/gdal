@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/04/27 16:37:19  pka
+ * Ili2 model reader fix
+ * Support for multiple Ili2 models
+ *
  * Revision 1.6  2006/04/24 16:49:48  pka
  * Fixed polyline feature with coordinate attribute
  * Float support for ARC_DEGREES
@@ -107,16 +111,14 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
 {
     FILE        *fp;
     char        szHeader[1000];
-    std::string osModelFilename;
 
+    char **modelFilenames = NULL;
     char **filenames = CSLTokenizeString2( pszNewName, ",", 0 );
 
     pszName = CPLStrdup( filenames[0] );
 
     if( CSLCount(filenames) > 1 )
-        osModelFilename = filenames[1];
-
-    CSLDestroy( filenames );
+        modelFilenames = &filenames[1];
 
 /* -------------------------------------------------------------------- */
 /*      Open the source file.                                           */
@@ -166,8 +168,10 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
         return FALSE;
     }
 
-    if (osModelFilename.length() > 0 )
-        poReader->ReadModel( osModelFilename.c_str() );
+    if (modelFilenames)
+        poReader->ReadModel( modelFilenames );
+
+    CSLDestroy( filenames );
 
     if( getenv( "ARC_DEGREES" ) != NULL ) {
       //No better way to pass arguments to the reader (it could even be an -lco arg)

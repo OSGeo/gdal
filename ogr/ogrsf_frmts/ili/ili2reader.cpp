@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/04/27 16:37:19  pka
+ * Ili2 model reader fix
+ * Support for multiple Ili2 models
+ *
  * Revision 1.7  2006/03/28 16:07:14  pka
  * Optional model file for Interlis 2 reader
  *
@@ -353,11 +357,11 @@ void ILI2Reader::AddField(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT obj) {
   } else {
     OGRFieldDefn fieldDef(iom_getattrvalue(obj, "name"), OFTString);
     layer->GetLayerDefn()->AddFieldDefn(&fieldDef);
-    CPLDebug( "OGR_ILI", "Field %s (Table %s): %s", fieldDef.GetNameRef(), layer->GetLayerDefn()->GetName(), typenam);
+    CPLDebug( "OGR_ILI", "Field %s: %s", fieldDef.GetNameRef(), typenam);
   }
 }
 
-int ILI2Reader::ReadModel(const char *pszModelFilename) {
+int ILI2Reader::ReadModel(char **modelFilenames) {
 
   IOM_BASKET model;
   IOM_ITERATOR modelelei;
@@ -369,11 +373,10 @@ int ILI2Reader::ReadModel(const char *pszModelFilename) {
   // dumps all errors to stderr
   iom_seterrlistener(iom_stderrlistener);
 
-  // compile ili model
-  char *iomarr[1] = {(char *)pszModelFilename};
-  model=iom_compileIli(1, iomarr);
+  // compile ili models
+  model=iom_compileIli(CSLCount(modelFilenames), modelFilenames);
   if(!model){
-    fprintf(stderr,"iom_compileIli() failed\n");
+    CPLError( CE_Failure, CPLE_FileIO, "iom_compileIli failed." );
     iom_end();
     return FALSE;
   }
@@ -389,7 +392,7 @@ int ILI2Reader::ReadModel(const char *pszModelFilename) {
         const char* layername = GetLayerName(model, modelele);
         OGRLayer* layer = new OGRILI2Layer(layername, NULL, 0, wkbUnknown, NULL);
         m_listLayer.push_back(layer);
-        CPLDebug( "OGR_ILI", "Reading table model (%s).", layername );
+        CPLDebug( "OGR_ILI", "Reading table model '%s'", layername );
 
         // read fields
         IOM_OBJECT fields[255];
@@ -406,7 +409,7 @@ int ILI2Reader::ReadModel(const char *pszModelFilename) {
               IOM_OBJECT obj = GetAttrObj(model, fieldele, "attributesAndRoles");
               int ili1AttrIdx = GetAttrObjPos(fieldele, "attributesAndRoles")-1;
               if (EQUAL(iom_getobjecttag(obj),"iom04.metamodel.RoleDef")) {
-                int ili1AttrIdx = atoi(iom_getattrvalue(GetAttrObj(model, obj, "oppend"), "ili1AttrIdx"));
+                //??ili1AttrIdx = atoi(iom_getattrvalue(GetAttrObj(model, obj, "oppend"), "ili1AttrIdx"));
                 roledefs[ili1AttrIdx] = obj;
               } else {
                 fields[ili1AttrIdx] = obj;
