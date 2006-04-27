@@ -66,7 +66,7 @@ selection of a new Chair also requires approval of the OSGeo board.
 \section when_vote When is Vote Required?
 
 <ul>
-<li> Anything that could cause backward compataiility issues. 
+<li> Anything that could cause backward compatibility issues. 
 <li> Adding substantial amounts of new code. 
 <li> Changing inter-subsystem APIs, or objects. 
 <li> Issues of procedure.
