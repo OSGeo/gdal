@@ -1649,7 +1649,9 @@ OGRErr CPL_DLL OSRImportFromIdrisi(OGRSpatialReferenceH hSRS,
 		sscanf(pszRefCode, rstSPC, &nNAD, szState, &nZone);
 
 		int nSPCCode = -1;
-		for (int i = 0; (i < US_STATE_COUNT) && (nSPCCode == -1); i++)
+		for (unsigned int i = 0; 
+                     (i < US_STATE_COUNT) && (nSPCCode == -1); 
+                     i++)
 		{
 			if (EQUAL(szState, aoUSStateTable[i].pszName))
 				nSPCCode = aoUSStateTable[i].nCode;
@@ -1899,7 +1901,7 @@ OGRErr CPL_DLL OSRExportToIdrisi(OGRSpatialReferenceH hSRS,
 					nNADYear = 27;
 					nPCSCode -= 10000;
 				}
-				for (int i = 0; (i < US_STATE_COUNT) && (pszState == NULL); i++)
+				for (unsigned int i = 0; (i < US_STATE_COUNT) && (pszState == NULL); i++)
 				{
 					if (nPCSCode == aoUSStateTable[i].nCode)
 						pszState = aoUSStateTable[i].pszName;
