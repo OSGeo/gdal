@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2006/04/28 04:21:57  fwarmerdam
+ * make sure pszInfo is dynamically allocated in gcps
+ *
  * Revision 1.62  2006/04/21 12:31:29  fwarmerdam
  * Ensure all of adfParms[] is initialized per:
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=1164
@@ -1706,7 +1709,7 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
 
             sprintf( szID, "%d", iGCP+1 );
             psGCP->pszId = CPLStrdup( szID );
-            psGCP->pszInfo = "";
+            psGCP->pszInfo = CPLStrdup("");
             psGCP->dfGCPPixel = padfTiePoints[iGCP*6+0];
             psGCP->dfGCPLine = padfTiePoints[iGCP*6+1];
             psGCP->dfGCPX = padfTiePoints[iGCP*6+3];
