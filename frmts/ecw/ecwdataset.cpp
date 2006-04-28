@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.61  2006/04/28 02:40:18  fwarmerdam
+ * Fix some problems with GCP handling.
+ *
  * Revision 1.60  2006/04/19 14:21:47  fwarmerdam
  * defer initialization till we need it, since shutdown is expensive
  *
@@ -1370,6 +1373,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->nGCPCount = oJP2Geo.nGCPCount;
             poDS->pasGCPList = oJP2Geo.pasGCPList;
             oJP2Geo.pasGCPList = NULL;
+            oJP2Geo.nGCPCount = 0;
         }
         else
         {
@@ -1408,7 +1412,10 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo )
 int ECWDataset::GetGCPCount()
 
 {
-    return nGCPCount;
+    if( nGCPCount != 0 )
+        return nGCPCount;
+    else
+        return GDALPamDataset::GetGCPCount();
 }
 
 /************************************************************************/
@@ -1431,7 +1438,10 @@ const char *ECWDataset::GetGCPProjection()
 const GDAL_GCP *ECWDataset::GetGCPs()
 
 {
-    return pasGCPList;
+    if( nGCPCount != 0 )
+        return pasGCPList;
+    else
+        return GDALPamDataset::GetGCPs();
 }
 
 /************************************************************************/
@@ -1496,7 +1506,7 @@ char **ECWDataset::GetMetadata( const char *pszDomain )
 
 {
     if( pszDomain == NULL || !EQUAL(pszDomain,"GML") )
-        return GDALDataset::GetMetadata( pszDomain );
+        return GDALPamDataset::GetMetadata( pszDomain );
     else
         return papszGMLMetadata;
 }
