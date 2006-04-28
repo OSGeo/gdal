@@ -1,6 +1,6 @@
 
 
-include $(GDAL_ROOT)/GDALmake.opt
+include ../../GDALmake.opt
 
 all: build
 
