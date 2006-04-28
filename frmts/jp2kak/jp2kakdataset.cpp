@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.39  2006/04/28 04:21:14  fwarmerdam
+ * cleanup GCPs
+ *
  * Revision 1.38  2006/04/07 14:42:49  fwarmerdam
  * Overide builtin georeferencing with PAM info.
  *
@@ -913,6 +916,12 @@ JP2KAKDataset::~JP2KAKDataset()
 
     CPLFree( pszProjection );
     
+    if( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+    }
+
     if( poInput != NULL )
     {
         oCodeStream.destroy();
@@ -1322,6 +1331,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->nGCPCount = oJP2Geo.nGCPCount;
                 poDS->pasGCPList = oJP2Geo.pasGCPList;
                 oJP2Geo.pasGCPList = NULL;
+                oJP2Geo.nGCPCount = 0;
             }
         }
 
