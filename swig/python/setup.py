@@ -109,7 +109,7 @@ elif sys.platform == 'cygwin':
     print "\nINCLUDE_FILES:",include_files
 else:
     libraries = ['gdal']
-    library_dirs = ['../../']
+    library_dirs = ['../../', '../../.libs']
     extra_link_args = []
 
 
