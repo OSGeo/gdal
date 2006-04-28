@@ -197,6 +197,12 @@ OGRErr CPL_DLL OSRExportToIdrisi(OGRSpatialReferenceH hSRS,
 								 char **pszRefUnit, 
 								 char ***papszRefFile);
 
+//----- Specialized version of SetAuthority that accept non-numeric codes
+OGRErr OSRSetAuthorityLabel( OGRSpatialReferenceH hSRS, 
+                        const char *pszTargetKey,
+                        const char *pszAuthority, 
+                        const char *pszLabel )
+
 //----- Classes pre-definition:
 class IdrisiDataset;
 class IdrisiRasterBand;
@@ -285,7 +291,7 @@ public:
 };
 
 //  ------------------------------------------------------------------------  //
-//	                    Implementation of IdrisiDataset                       //
+//	                    Implementation of IdrisiDataset						  //
 //  ------------------------------------------------------------------------  //
 
 /************************************************************************/
@@ -1020,8 +1026,15 @@ CPLErr IdrisiDataset::SetProjection(const char *pszProjString)
 		//	Check if the input projection comes from another RST file.
 		// ------------------------------------------------------------------
 
-		const char *pszRefSystem = oSRS.GetAttrValue("PROJCS");
-		const char *pszFName = CPLSPrintf("%s/%s.ref", CPLGetDirname(pszFilename), pszRefSystem);
+		const char *pszRefSystem = NULL;
+		const char *pszFName = NULL;
+
+		if (oSRS.GetAuthorityName("PROJCS") != NULL
+	       && EQUAL(oSRS.GetAuthorityName("PROJCS"), "IDRISI"))
+		{
+			pszRefSystem = oSRS.GetAuthorityCode("PROJCS");
+			pszFName = CPLSPrintf("%s/%s.ref", CPLGetDirname(pszFilename), pszRefSystem);
+		}
 
 		if (FileExists(pszFName) == FALSE)
 		{
@@ -1034,10 +1047,6 @@ CPLErr IdrisiDataset::SetProjection(const char *pszProjString)
 					pszFName = NULL;
 			}
 		}
-
-		// ------------------------------------------------------------------
-		//  Check if the Projection name refers to the name of a ".ref" file.
-		// ------------------------------------------------------------------
 
 		if (pszFName != NULL)
 		{
@@ -1617,7 +1626,6 @@ OGRErr CPL_DLL OSRImportFromIdrisi(OGRSpatialReferenceH hSRS,
 
 	if (EQUAL(pszRefSystem, rstPLANE))
 	{
-		poSRS->SetLocalCS("Unknown");
 		return OGRERR_NONE;
 	}
 
@@ -1634,9 +1642,9 @@ OGRErr CPL_DLL OSRImportFromIdrisi(OGRSpatialReferenceH hSRS,
 
 		sscanf(pszRefCode, rstUTM, &nZone, &cNorth);
 
-		poSRS->SetProjCS(pszRefCode);
 		poSRS->SetWellKnownGeogCS("WGS84");
 		poSRS->SetUTM(nZone, (cNorth == 'n'));
+	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
 		return OGRERR_NONE;
 	}
 
@@ -1665,7 +1673,7 @@ OGRErr CPL_DLL OSRImportFromIdrisi(OGRSpatialReferenceH hSRS,
 			else
 				nZone = nSPCCode + nZone - 1;
 			poSRS->SetStatePlane(nZone, (nNAD == 83));
-			poSRS->SetProjCS(pszRefCode);
+		    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
 		}
 		return OGRERR_NONE;
 	}
@@ -1676,9 +1684,10 @@ OGRErr CPL_DLL OSRImportFromIdrisi(OGRSpatialReferenceH hSRS,
 		// Can't identify just by the reference name
 		// Assumming a default WGS84 projection (deg)
 		// ------------------------------------------
-		poSRS->SetWellKnownGeogCS("WGS84");
-		if (! EQUAL(pszRefUnits, "deg"))
-			poSRS->SetProjCS("Unknown");
+
+		if (EQUALN(pszRefUnits, rstDEGREE, 3))
+		  poSRS->SetWellKnownGeogCS("WGS84");
+
 		return OGRERR_NONE;
 	}
 
@@ -1715,27 +1724,27 @@ OGRErr CPL_DLL OSRImportFromIdrisi(OGRSpatialReferenceH hSRS,
 	if (EQUAL(pszProj,"Transverse Mercator"))
 	{
 		poSRS->SetTM(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
-		poSRS->SetProjCS(pszProj);	
+	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
 	}
 	else if (EQUAL(pszProj, "Lambert Conformal Conic"))
 	{
 		poSRS->SetLCC(dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing);
-		poSRS->SetProjCS(pszProj);	
+	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
 	}
 	else if (EQUAL(pszProj, "Lambert North Polar Azimuthal Equal Area"))
 	{
 		poSRS->SetLAEA(dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing);
-		poSRS->SetProjCS(pszProj);	
+	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
 	}
 	else if (EQUAL(pszProj, "Lambert South Polar Azimuthal Equal Area"))
 	{
 		poSRS->SetLAEA(dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing);
-		poSRS->SetProjCS(pszProj);	
+	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
 	}
 	else if (EQUAL(pszProj, "North Polar Stereographic"))
 	{
 		poSRS->SetPS(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
-		poSRS->SetProjCS(pszProj);	
+	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
 	}
 	else if (EQUAL(pszProj, "South Polar Stereographic"))
 	{
@@ -1745,22 +1754,22 @@ OGRErr CPL_DLL OSRImportFromIdrisi(OGRSpatialReferenceH hSRS,
 	else if (EQUAL(pszProj, "Transverse Stereographic"))
 	{
 		poSRS->SetStereographic(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
-		poSRS->SetProjCS(pszProj);	
+	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
 	}
 	else if (EQUAL(pszProj, "Oblique Stereographic"))
 	{
 		poSRS->SetOS(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
-		poSRS->SetProjCS(pszProj);	
+	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
 	}
 	else if (EQUAL(pszProj, "SetSinusoidal"))
 	{
 		poSRS->SetSinusoidal(dfCenterLong, dfFalseEasting, dfFalseNorthing);
-		poSRS->SetProjCS(pszProj);	
+	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
 	}
 	else if (EQUAL(pszProj, "Alber''s Equal Area Conic"))
 	{
 		poSRS->SetACEA(dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing);
-		poSRS->SetProjCS(pszProj);	
+	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
 	}
 
 	//------------------------------------------------------------
@@ -1778,6 +1787,7 @@ OGRErr CPL_DLL OSRImportFromIdrisi(OGRSpatialReferenceH hSRS,
 		OGRSpatialReference oGCS;
 		oGCS.importFromEPSG(nEPSG);
 		poSRS->CopyGeogCSFrom(&oGCS);
+	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
 	}
 	else
 	{
@@ -1793,7 +1803,7 @@ OGRErr CPL_DLL OSRImportFromIdrisi(OGRSpatialReferenceH hSRS,
 			pszEllipsoid, 
 			dfSemiMajor, 
 			-1.0 / (dfSemiMinor / dfSemiMajor - 1.0));
-		poSRS->SetAuthority("SPHEROID", "EPSG", nEPSG);
+	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
 	}
 
 	return OGRERR_NONE;
@@ -1931,10 +1941,14 @@ OGRErr CPL_DLL OSRExportToIdrisi(OGRSpatialReferenceH hSRS,
 	double padfCoef[3];
 	poSRS->GetTOWGS84(padfCoef, 3);
 
+	if (poSRS->GetAttrValue("PROJCS", 0) == NULL)
+		*papszRefFile = CSLAddNameValue(*papszRefFile, refPROJECTION, "none");
+	else
+		*papszRefFile = CSLAddNameValue(*papszRefFile, refPROJECTION, 
+			poSRS->GetAttrValue("PROJCS", 0));
+
 	*papszRefFile = CSLAddNameValue(*papszRefFile, refREF_SYSTEM, 
 		poSRS->GetAttrValue("GEOGCS", 0));
-	*papszRefFile = CSLAddNameValue(*papszRefFile, refPROJECTION, 
-		poSRS->GetAttrValue("PROJCS", 0));
 	*papszRefFile = CSLAddNameValue(*papszRefFile, refDATUM,      
 		poSRS->GetAttrValue("DATUM",  0));
 	*papszRefFile = CSLAddNameValue(*papszRefFile, refDELTA_WGS84, 
@@ -1971,10 +1985,77 @@ OGRErr CPL_DLL OSRExportToIdrisi(OGRSpatialReferenceH hSRS,
 	}
 	CSLSetNameValueSeparator(*papszRefFile, ": ");
 
-	*pszRefSystem = CPLStrdup(rstLATLONG);
-	*pszRefUnit   = CPLStrdup(poSRS->GetAttrValue("UNIT", 0));
+	// ------------------------------------------------------------------
+	// Assumes LATLONG only when UNIT is degree, and all else are Unknown
+	// ------------------------------------------------------------------
+
+	const char* szUnit = poSRS->GetAttrValue("UNIT", 0);
+
+	if (szUnit && EQUAL(szUnit, rstDEGREE))
+	{
+		*pszRefSystem = CPLStrdup(rstLATLONG);
+		*pszRefUnit   = CPLStrdup(szUnit);
+	}
+	else
+	{
+		*pszRefSystem = CPLStrdup(rstPLANE);
+		*pszRefUnit   = CPLStrdup(rstMETER);
+	}
 
 	return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          OSRSetAuthorityLabel()                      */
+/************************************************************************/
+
+/**
+ * Set the authority string label for a node.
+ *
+ * @param pszTargetKey the partial or complete path to the node to 
+ * set an authority on.  ie. "PROJCS", "GEOGCS" or "GEOGCS|UNIT".
+ *
+ * @param pszAuthority authority name, such as "IDRISI".
+ * @param pszLabel string for value with this authority, such as "utm-30n".
+ *
+ * @return OGRERR_NONE on success.
+ */
+
+OGRErr OSRSetAuthorityLabel(OGRSpatialReferenceH hSRS, 
+							const char *pszTargetKey,
+							const char *pszAuthority, 
+							const char *pszLabel)
+{
+	OGRSpatialReference *poSRS = ((OGRSpatialReference *) hSRS);
+
+/* -------------------------------------------------------------------- */
+/*      Find the node below which the authority should be put.          */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode  *poNode = poSRS->GetAttrNode( pszTargetKey );
+
+    if( poNode == NULL )
+        return OGRERR_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      If there is an existing AUTHORITY child blow it away before     */
+/*      trying to set a new one.                                        */
+/* -------------------------------------------------------------------- */
+    int iOldChild = poNode->FindChild( "AUTHORITY" );
+    if( iOldChild != -1 )
+        poNode->DestroyChild( iOldChild );
+
+/* -------------------------------------------------------------------- */
+/*      Create a new authority label.                                   */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode *poAuthNode;
+
+    poAuthNode = new OGR_SRSNode( "AUTHORITY" );
+    poAuthNode->AddChild( new OGR_SRSNode( pszAuthority ) );
+    poAuthNode->AddChild( new OGR_SRSNode( pszLabel ) );
+    
+    poNode->AddChild( poAuthNode );
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
