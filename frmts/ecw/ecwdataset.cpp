@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.62  2006/04/28 04:22:32  fwarmerdam
+ * make PAM fallbacks work properly
+ *
  * Revision 1.61  2006/04/28 02:40:18  fwarmerdam
  * Fix some problems with GCP handling.
  *
@@ -1428,7 +1431,7 @@ const char *ECWDataset::GetGCPProjection()
     if( nGCPCount > 0 )
         return pszProjection;
     else
-        return "";
+        return GDALPamDataset::GetGCPProjection();
 }
 
 /************************************************************************/
