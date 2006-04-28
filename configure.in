@@ -1149,7 +1149,13 @@ else
       AC_MSG_RESULT([found MrSID ESDK version 4.x or newer.])
       MRSID_FLAGS="-DMRSID_ESDK $MRSID_FLAGS"
       MRSID_INCLUDE="-I$with_mrsid/include/mrsid_writers -I$with_mrsid/include/j2k_writers $MRSID_INCLUDE"
-      MRSID_LIBS="-lltiesdk -lcryptopp -lxmlparse $MRSID_LIBS"
+      if test -r $with_mrsid/3rd-party/lib/Release/libcryptopp.a ; then
+        MRSID_LIBS="-lltiesdk -lcryptopp -lxmlparse $MRSID_LIBS"
+      else
+        MRSID_LIBS="-lltiesdk -lxmlparse $MRSID_LIBS"
+      fi
+    else
+      AC_MSG_RESULT([no encoding support.])
     fi
 
     AC_MSG_CHECKING([for MrSID JPEG2000 support])
@@ -1175,7 +1181,7 @@ else
     fi
 
     if test -r "$with_mrsid/lib/libltidsdk.a" ; then
-      MRSID_LIBS="-L$with_mrsid/lib -L$with_mrsid/3rd-party/lib/Release $MRSID_LIBS"
+      MRSID_LIBS="-L$with_mrsid/lib -L$with_mrsid/3rd-party/lib $MRSID_LIBS"
     else
       MRSID_LIBS="-L$with_mrsid/lib/Release -L$with_mrsid/3rd-party/lib/Release $MRSID_LIBS"
     fi
@@ -1183,7 +1189,8 @@ else
     LIBS="$MRSID_LIBS $LIBS" 
   else
     HAVE_MRSID=no
-    AC_MSG_ERROR([not found.])
+    AC_MSG_RESULT([not found.])
+    AC_MSG_ERROR([  MrSID requested, but components not found.])
   fi
 fi
 
