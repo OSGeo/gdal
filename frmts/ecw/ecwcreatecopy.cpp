@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/04/28 04:18:18  fwarmerdam
+ * Added support for writing GCPs in GeoTIFF box.
+ *
  * Revision 1.24  2006/04/19 14:21:47  fwarmerdam
  * defer initialization till we need it, since shutdown is expensive
  *
@@ -137,11 +140,13 @@ public:
                         int nXSize, int nYSize, int nBands, 
                         GDALDataType eType, 
                         const char *pszWKT, double *padfGeoTransform,
+                        int nGCPCount, const GDAL_GCP *pasGCPList,
                         int bIsJPEG2000 );
     CPLErr  CloseDown();
 
     CPLErr  PrepareCoverageBox( const char *pszWKT, double *padfGeoTransform );
-    CPLErr  PrepareGeoTIFFBox( const char *pszWKT, double *padfGeoTransform );
+    CPLErr  PrepareGeoTIFFBox( const char *pszWKT, double *padfGeoTransform,
+                               int nGCPCount, const GDAL_GCP *pasGCPList );
 
 #ifdef ECW_FW
     CNCSJP2File::CNCSJPXAssocBox  m_oGMLAssoc;
@@ -466,7 +471,9 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox( const char *pszWKT,
 /************************************************************************/
 
 CPLErr GDALECWCompressor::PrepareGeoTIFFBox( const char *pszWKT,
-                                             double *padfGeoTransform )
+                                             double *padfGeoTransform,
+                                             int nGCPCount, 
+                                             const GDAL_GCP *pasGCPList )
 
 {
 /* -------------------------------------------------------------------- */
@@ -476,7 +483,7 @@ CPLErr GDALECWCompressor::PrepareGeoTIFFBox( const char *pszWKT,
     int         nGTBufSize = 0;
     unsigned char *pabyGTBuf = NULL;
 
-    if( GTIFMemBufFromWkt( pszWKT, padfGeoTransform, 0, NULL,
+    if( GTIFMemBufFromWkt( pszWKT, padfGeoTransform, nGCPCount, pasGCPList,
                            &nGTBufSize, &pabyGTBuf ) != CE_None )
         return CE_Failure;
 
@@ -704,6 +711,7 @@ CPLErr GDALECWCompressor::Initialize(
     int nXSize, int nYSize, int nBands, 
     GDALDataType eType, 
     const char *pszWKT, double *padfGeoTransform,
+    int nGCPCount, const GDAL_GCP *pasGCPList,
     int bIsJPEG2000 )
 
 {
@@ -1001,7 +1009,8 @@ CPLErr GDALECWCompressor::Initialize(
 /*      Setup GML information.                                          */
 /* -------------------------------------------------------------------- */
     PrepareCoverageBox( pszWKT, padfGeoTransform );
-    PrepareGeoTIFFBox( pszWKT, padfGeoTransform );
+    PrepareGeoTIFFBox( pszWKT, padfGeoTransform,
+                       nGCPCount, pasGCPList );
     
 /* -------------------------------------------------------------------- */
 /*      Handle special case of a JPEG2000 data stream in another file.  */
@@ -1121,6 +1130,9 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
 
+    if( poSrcDS->GetGCPCount() > 0 )
+        pszWKT = poSrcDS->GetGCPProjection();
+
 /* -------------------------------------------------------------------- */
 /*      Setup the compressor.                                           */
 /* -------------------------------------------------------------------- */
@@ -1135,7 +1147,10 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( oCompressor.Initialize( pszFilename, papszOptions, 
                                 nXSize, nYSize, nBands,
-                                eType, pszWKT, adfGeoTransform, bIsJPEG2000 )
+                                eType, pszWKT, adfGeoTransform, 
+                                poSrcDS->GetGCPCount(), 
+                                poSrcDS->GetGCPs(),
+                                bIsJPEG2000 )
         != CE_None )
         return NULL;
 
@@ -1450,6 +1465,7 @@ CPLErr ECWWriteDataset::Crystalize()
                                    nRasterXSize, nRasterYSize, nBands, 
                                    eDataType, 
                                    pszProjection, adfGeoTransform, 
+                                   0, NULL,
                                    bIsJPEG2000 );
 
     if( eErr == CE_None )
