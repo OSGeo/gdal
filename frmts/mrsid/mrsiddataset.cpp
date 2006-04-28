@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2006/04/28 18:56:21  fwarmerdam
+ * fixed up v5/v6 compatibility
+ *
  * Revision 1.52  2006/03/03 04:30:13  fwarmerdam
  * added XMLPROFILE creation option
  *
@@ -156,7 +159,6 @@ CPL_C_END
 // Key Macros from Makefile:
 //   MRSID_ESDK: Means we have the encoding SDK (version 5 or newer required)
 //   MRSID_J2K: Means we are enabling MrSID SDK JPEG2000 support. 
-//   MRSID_HAVE_GETWKT: 
 
 #include "lt_types.h"
 #include "lt_base.h"
@@ -170,11 +172,17 @@ CPL_C_END
 #include "lti_metadataDatabase.h"
 #include "lti_metadataRecord.h"
 #include "lti_utils.h"
-#include "lti_version.h"
+#include "lt_utilStatus.h"
 #include "MrSIDImageReader.h"
 
 #ifdef MRSID_J2K
 #  include "J2KImageReader.h"
+#endif
+
+// It seems that LT_STS_UTIL_TimeUnknown was added in version 6, also
+// the first version with lti_version.h
+#ifdef LT_STS_UTIL_TimeUnknown
+#  include "lti_version.h"
 #endif
 
 // Are we using version 6 or newer?
@@ -197,6 +205,10 @@ CPL_C_END
 #   endif
 # endif
 #endif /* MRSID_ESDK */
+
+#ifdef MRSID_POST5
+#  define MRSID_HAVE_GETWKT
+#endif
 
 LT_USE_NAMESPACE(LizardTech)
 
