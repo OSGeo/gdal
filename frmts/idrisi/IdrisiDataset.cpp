@@ -199,9 +199,9 @@ OGRErr CPL_DLL OSRExportToIdrisi(OGRSpatialReferenceH hSRS,
 
 //----- Specialized version of SetAuthority that accept non-numeric codes
 OGRErr OSRSetAuthorityLabel( OGRSpatialReferenceH hSRS, 
-                        const char *pszTargetKey,
-                        const char *pszAuthority, 
-                        const char *pszLabel )
+                             const char *pszTargetKey,
+                             const char *pszAuthority, 
+                             const char *pszLabel );
 
 //----- Classes pre-definition:
 class IdrisiDataset;
