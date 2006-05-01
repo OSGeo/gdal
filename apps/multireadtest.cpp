@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/05/01 13:37:11  fwarmerdam
+ * Cleanup on exit to facility leak and corruption testing.
+ *
  * Revision 1.3  2006/03/21 21:34:43  fwarmerdam
  * cleanup headers
  *
@@ -36,6 +39,7 @@
 #include "gdal.h"
 #include "gdal_alg.h"
 #include "cpl_multiproc.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$");
 
@@ -152,6 +156,10 @@ int main( int argc, char ** argv )
     CPLReleaseMutex( pGlobalMutex );
 
     printf( "All threads complete.\n" );
+    
+    CSLDestroy( argv );
+    
+    GDALDestroyDriverManager();
 }
 
 
