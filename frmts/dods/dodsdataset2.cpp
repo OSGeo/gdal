@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.8  2006/05/01 16:21:26  fwarmerdam
+ * update to work with libdap 1.6.2
+ *
  * Revision 1.7  2006/02/19 16:22:20  fwarmerdam
  * Added nodata support
  *
@@ -58,8 +61,6 @@
 
 #include <debug.h>
 
-#define DEFAULT_BASETYPE_FACTORY
-
 #include <BaseType.h>		// DODS
 #include <Byte.h>
 #include <Int16.h>
@@ -78,6 +79,7 @@
 #include <AISConnect.h>		
 #include <DDS.h>
 #include <DAS.h>
+#include <BaseTypeFactory.h>
 #include <Error.h>
 #include <escaping.h>
 
@@ -220,7 +222,8 @@ private:
     string oWKT;		//< Constructed WKT string
 
     DAS    oDAS;
-    DDS    oDDS;
+    DDS   *poDDS;
+    BaseTypeFactory *poBaseTypeFactory;
 
     AISConnect *connect_to_server() throw(Error);
 
@@ -255,7 +258,7 @@ public:
     /// Return the data source URL
     string GetUrl() { return oURL; }
     DAS &GetDAS() { return oDAS; }
-    DDS &GetDDS() { return oDDS; }
+    DDS &GetDDS() { return *poDDS; }
 };
 
 /************************************************************************/
@@ -323,6 +326,8 @@ DODSDataset::DODSDataset()
     bGotGeoTransform = FALSE;
 
     poConnect = NULL;
+    poBaseTypeFactory = new BaseTypeFactory();
+    poDDS = new DDS( poBaseTypeFactory );
 }
 
 /************************************************************************/
@@ -334,6 +339,11 @@ DODSDataset::~DODSDataset()
 {
     if( poConnect )
         delete poConnect;
+
+    if( poDDS )
+        delete poDDS;
+    if( poBaseTypeFactory )
+        delete poBaseTypeFactory;
 }
 
 /************************************************************************/
@@ -449,7 +459,7 @@ char **DODSDataset::CollectBandsFromDDS()
     DDS::Vars_iter v_i;
     char **papszResultList = NULL;
 
-    for( v_i = oDDS.var_begin(); v_i != oDDS.var_end(); v_i++ )
+    for( v_i = poDDS->var_begin(); v_i != poDDS->var_end(); v_i++ )
     {
         BaseType *poVar = *v_i;
         papszResultList = CollectBandsFromDDSVar( poVar->name(), 
@@ -851,7 +861,7 @@ void DODSDataset::HarvestMaps( string oVarName, string oCE )
 /* -------------------------------------------------------------------- */
 /*      Request data from server.                                       */
 /* -------------------------------------------------------------------- */
-    DataDDS data;
+    DataDDS data( poBaseTypeFactory );
     
     GetConnect()->request_data(data, constraint );
 
@@ -916,6 +926,7 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
         && !EQUALN(poOpenInfo->pszFilename,"https://",8) )
         return NULL;
 
+    
     DODSDataset *poDS = new DODSDataset();
 
     poDS->nRasterXSize = 0;
@@ -947,7 +958,7 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
 /* -------------------------------------------------------------------- */
 	poDS->poConnect = poDS->connect_to_server();
 	poDS->poConnect->request_das(poDS->oDAS);
-	poDS->poConnect->request_dds(poDS->oDDS);
+	poDS->poConnect->request_dds(*(poDS->poDDS));
 
 /* -------------------------------------------------------------------- */
 /*      If we are given a constraint/projection list, then parse it     */
@@ -1391,7 +1402,7 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 /*      Request data from server.                                       */
 /* -------------------------------------------------------------------- */
     try {
-        DataDDS data;
+        DataDDS data( poDODS->poBaseTypeFactory );
 
         poDODS->GetConnect()->request_data(data, final_constraint );
 
