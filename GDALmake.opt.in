@@ -75,13 +75,11 @@ ifneq (,$(findstring gprof,$(CFG)))
 C_ODFLAGS =	$(CXX_PROFFLAGS)
 CXX_ODFLAGS =	$(C_PROFFLAGS)
 LNK_FLAGS =	-pg
-LIBS		:= $(filter-out -ldbmalloc,$(LIBS))
 endif
 
 ifeq ($(CFG),)
 C_ODFLAGS =	$(C_OPTFLAGS)
 CXX_ODFLAGS =	$(CXX_OPTFLAGS)
-LIBS		:= $(filter-out -ldbmalloc,$(LIBS))
 endif
 
 CPPFLAGS	= @CPPFLAGS@ -I$(GDAL_ROOT)/port @EXTRA_INCLUDES@
