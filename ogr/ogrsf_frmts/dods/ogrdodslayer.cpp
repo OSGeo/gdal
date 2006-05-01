@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/05/01 16:27:33  fwarmerdam
+ * updated to work with libdap 1.6.2
+ *
  * Revision 1.8  2005/09/21 01:00:29  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -83,6 +86,8 @@ OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
     poOGRLayerInfo = poOGRLayerInfoIn;
     bKnowExtent = FALSE;
 
+    poDataDDS = new DataDDS( poDSIn->poBTF );
+
 /* ==================================================================== */
 /*      Harvest some metadata if available.                             */
 /* ==================================================================== */
@@ -127,10 +132,6 @@ OGRDODSLayer::OGRDODSLayer( OGRDODSDataSource *poDSIn,
 /*      need to find the super sequence so we can do the layered        */
 /*      stepping.                                                       */
 /* ==================================================================== */
-    
-    
-    
-
 }
 
 /************************************************************************/
@@ -172,6 +173,7 @@ OGRDODSLayer::~OGRDODSLayer()
     if( poConnection != NULL )
         delete poConnection;
 
+    delete poDataDDS;
 }
 
 /************************************************************************/
@@ -247,7 +249,7 @@ int OGRDODSLayer::ProvideDataDDS()
                   (poDS->oProjection + poDS->oConstraints).c_str() );
 
         // We may need to use custom constraints here. 
-        poConnection->request_data( oDataDDS, 
+        poConnection->request_data( *poDataDDS, 
                                     poDS->oProjection + poDS->oConstraints );
     }
     catch (Error &e)
@@ -258,7 +260,7 @@ int OGRDODSLayer::ProvideDataDDS()
         return FALSE;
     }
 
-    poTargetVar = oDataDDS.var( pszTarget );
+    poTargetVar = poDataDDS->var( pszTarget );
 
     return poTargetVar != NULL;
 }

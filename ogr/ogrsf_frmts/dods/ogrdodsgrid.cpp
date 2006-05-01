@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/05/01 16:27:33  fwarmerdam
+ * updated to work with libdap 1.6.2
+ *
  * Revision 1.7  2005/09/21 01:00:28  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -90,7 +93,7 @@ OGRDODSGridLayer::OGRDODSGridLayer( OGRDODSDataSource *poDSIn,
 /* -------------------------------------------------------------------- */
 /*      Fetch the target variable.                                      */
 /* -------------------------------------------------------------------- */
-    BaseType *poTargVar = poDS->oDDS.var( pszTargetIn );
+    BaseType *poTargVar = poDS->poDDS->var( pszTargetIn );
 
     if( poTargVar->type() == dods_grid_c )
     {
@@ -145,7 +148,7 @@ OGRDODSGridLayer::OGRDODSGridLayer( OGRDODSDataSource *poDSIn,
              dv_i != poExtraContainers->attr_end(); dv_i++ )
         {
             const char *pszTargetName=poExtraContainers->get_attr(dv_i).c_str();
-            BaseType *poExtraTarget = poDS->oDDS.var( pszTargetName );
+            BaseType *poExtraTarget = poDS->poDDS->var( pszTargetName );
 
             if( poExtraTarget == NULL )
             {
@@ -560,7 +563,7 @@ int OGRDODSGridLayer::ProvideDataDDS()
     for( iArray=0; iArray < nArrayRefCount; iArray++ )
     {
         OGRDODSArrayRef *poRef = paoArrayRefs + iArray;
-        BaseType *poTarget = oDataDDS.var( poRef->pszName );
+        BaseType *poTarget = poDataDDS->var( poRef->pszName );
 
         // Reset ref array pointer to point in DataDDS result.
         if( poTarget->type() == dods_grid_c )

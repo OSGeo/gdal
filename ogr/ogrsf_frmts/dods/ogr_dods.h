@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/05/01 16:27:33  fwarmerdam
+ * updated to work with libdap 1.6.2
+ *
  * Revision 1.10  2005/07/18 14:12:59  fwarmerdam
  * bug 891: added DEFAULT_BASETYPE_FACTORY define for 3.5.x compatability
  *
@@ -97,6 +100,7 @@
 #include <AISConnect.h>		
 #include <DDS.h>
 #include <DAS.h>
+#include <BaseTypeFactory.h>
 #include <Error.h>
 #include <escaping.h>
 
@@ -153,7 +157,7 @@ class OGRDODSLayer : public OGRLayer
     int                 bDataLoaded;
 
     AISConnect         *poConnection;
-    DataDDS             oDataDDS;
+    DataDDS            *poDataDDS;
 
     BaseType           *poTargetVar;
     
@@ -333,7 +337,8 @@ class OGRDODSDataSource : public OGRDataSource
     AISConnect         *poConnection;
 
     DAS                 oDAS;
-    DDS                 oDDS;
+    DDS                 *poDDS;
+    BaseTypeFactory     *poBTF;
 
     string              oBaseURL;
     string              oProjection;
