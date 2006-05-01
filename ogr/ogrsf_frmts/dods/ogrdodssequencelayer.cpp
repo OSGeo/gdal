@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/05/01 16:27:33  fwarmerdam
+ * updated to work with libdap 1.6.2
+ *
  * Revision 1.7  2005/09/21 01:00:29  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -92,7 +95,7 @@ OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn,
 /* -------------------------------------------------------------------- */
 /*      Fetch the target variable.                                      */
 /* -------------------------------------------------------------------- */
-    Sequence *seq = dynamic_cast<Sequence *>(poDS->oDDS.var( pszTargetIn ));
+    Sequence *seq = dynamic_cast<Sequence *>(poDS->poDDS->var( pszTargetIn ));
 
     poTargetVar = seq;
     poSuperSeq = FindSuperSequence( seq );
@@ -130,16 +133,16 @@ OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn,
         else
             oSSTargName = "impossiblexxx";
 
-        if( poDS->oDDS.var( oTargName + ".lon" ) != NULL 
-            && poDS->oDDS.var( oTargName + ".lat" ) != NULL )
+        if( poDS->poDDS->var( oTargName + ".lon" ) != NULL 
+            && poDS->poDDS->var( oTargName + ".lat" ) != NULL )
         {
             oXField.Initialize( (oTargName + ".lon").c_str(), "dds",
                                 poTargetVar, poSuperSeq );
             oYField.Initialize( (oTargName + ".lat").c_str(), "dds",
                                 poTargetVar, poSuperSeq );
         }
-        else if( poDS->oDDS.var( oSSTargName + ".lon" ) != NULL 
-                 && poDS->oDDS.var( oSSTargName + ".lat" ) != NULL )
+        else if( poDS->poDDS->var( oSSTargName + ".lon" ) != NULL 
+                 && poDS->poDDS->var( oSSTargName + ".lat" ) != NULL )
         {
             oXField.Initialize( (oSSTargName + ".lon").c_str(), "dds",
                                 poTargetVar, poSuperSeq );
@@ -344,7 +347,7 @@ BaseType *OGRDODSSequenceLayer::GetFieldValue( OGRDODSFieldDefn *poFDefn,
     else if( poSuperSeq != NULL && poFDefn->bRelativeToSuperSequence )
         return poSuperSeq->var_value( iLastSuperSeq, poFDefn->pszFieldName );
     else
-        return oDataDDS.var( poFDefn->pszFieldName );
+        return poDataDDS->var( poFDefn->pszFieldName );
 }
 
 /************************************************************************/

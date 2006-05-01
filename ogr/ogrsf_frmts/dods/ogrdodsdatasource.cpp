@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/05/01 16:27:33  fwarmerdam
+ * updated to work with libdap 1.6.2
+ *
  * Revision 1.8  2004/04/02 17:43:17  warmerda
  * improved error message
  *
@@ -70,6 +73,9 @@ OGRDODSDataSource::OGRDODSDataSource()
     papoLayers = NULL;
     nLayers = 0;
     poConnection = NULL;
+
+    poBTF = new BaseTypeFactory();
+    poDDS = new DDS( poBTF );
 }
 
 /************************************************************************/
@@ -90,6 +96,9 @@ OGRDODSDataSource::~OGRDODSDataSource()
 
     if( poConnection != NULL )
         delete poConnection;
+
+    delete poDDS;
+    delete poBTF;
 }
 
 /************************************************************************/
@@ -198,7 +207,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
     try
     {
         poConnection->request_das( oDAS );
-        poConnection->request_dds( oDDS, oProjection + oConstraints );
+        poConnection->request_dds( *poDDS, oProjection + oConstraints );
     }
     catch (Error &e) 
     {
@@ -221,7 +230,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
         {
             AttrTable *poAttr = oDAS.get_attr_table( dv_i );
             string target_container = poAttr->get_attr( "target_container" );
-            BaseType *poVar = oDDS.var( target_container.c_str() );
+            BaseType *poVar = poDDS->var( target_container.c_str() );
             
             if( poVar == NULL )
             {
@@ -252,7 +261,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
     {
         DDS::Vars_iter v_i;
 
-        for( v_i = oDDS.var_begin(); v_i != oDDS.var_end(); v_i++ )
+        for( v_i = poDDS->var_begin(); v_i != poDDS->var_end(); v_i++ )
         {
             BaseType *poVar = *v_i;
             
