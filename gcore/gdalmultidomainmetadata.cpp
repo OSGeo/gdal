@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/05/01 13:45:18  fwarmerdam
+ * fixed memory leak in SetMetadata
+ *
  * Revision 1.6  2005/10/13 01:19:57  fwarmerdam
  * moved GDALMultiDomainMetadata into GDALMajorObject
  *
@@ -142,6 +145,7 @@ CPLErr GDALMultiDomainMetadata::SetMetadata( char **papszMetadata,
     }
     else
     {
+        CSLDestroy( papapszMetadataLists[iDomain] );
         papapszMetadataLists[iDomain] = CSLDuplicate( papszMetadata );
     }
 
