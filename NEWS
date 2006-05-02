@@ -56,9 +56,14 @@ MrSID Driver;
 BMP Driver:
  - Added support for 32bit images with bitfields compression.
 
+DODS Driver:
+ - Upgraded to support libdap 3.6.x. 
+ - Upgraded to support [-x][-y] to flip image.
+
 gdal_rasterize Utility:
  - New for GDAL 1.3.2. 
  - Rasterize OGR polygons into a raster. 
+
 
 
 OGR 1.3.2 - Overview of Changes
