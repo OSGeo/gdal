@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.9  2006/05/02 17:46:32  fwarmerdam
+ * Added [-x] and [-y] clues for x/y flipping.
+ *
  * Revision 1.8  2006/05/01 16:21:26  fwarmerdam
  * update to work with libdap 1.6.2
  *
@@ -187,17 +190,30 @@ static string StripQuotes( string oInput )
 /*      eg. GetDimension("[1][y][x]","y") -> 1                          */
 /************************************************************************/
 
-static int GetDimension( string oCE, const char *pszDimName )
+static int GetDimension( string oCE, const char *pszDimName,
+                         int *pnDirection )
 
 {
     int iCount = 0, i;
     const char *pszCE = oCE.c_str();
+
+    if( pnDirection != NULL )
+        *pnDirection = 1;
 
     for( i = 0; pszCE[i] != '\0'; i++ )
     {
         if( pszCE[i] == '[' && pszCE[i+1] == pszDimName[0] )
             return iCount;
 
+        else if( pszCE[i] == '[' 
+                 && pszCE[i+1] == '-'
+                 && pszCE[i+2] == pszDimName[0] )
+        {
+            if( pnDirection != NULL )
+                *pnDirection = -1;
+
+            return iCount;
+        }
         else if( pszCE[i] == '[' )
             iCount++;
     }
@@ -410,11 +426,22 @@ string DODSDataset::SubConstraint( string raw_constraint,
                                    string y_constraint )
 
 {
-    string::size_type x_off, y_off;
+    string::size_type x_off, y_off, x_len=3, y_len=3;
     string final_constraint;
 
     x_off = raw_constraint.find( "[x]" );
+    if( x_off == string::npos )
+    {
+        x_off = raw_constraint.find( "[-x]" );
+        x_len = 4;
+    }
+
     y_off = raw_constraint.find( "[y]" );
+    if( y_off == string::npos )
+    {
+        y_off = raw_constraint.find( "[-y]" );
+        y_len = 4;
+    }
 
     CPLAssert( x_off != string::npos && y_off != string::npos );
 
@@ -422,16 +449,16 @@ string DODSDataset::SubConstraint( string raw_constraint,
         final_constraint = 
             raw_constraint.substr( 0, x_off )
             + x_constraint
-            + raw_constraint.substr( x_off + 3, y_off - x_off - 3 )
+            + raw_constraint.substr( x_off + x_len, y_off - x_off - x_len )
             + y_constraint
-            + raw_constraint.substr( y_off + 3 );
+            + raw_constraint.substr( y_off + y_len );
     else
         final_constraint = 
             raw_constraint.substr( 0, y_off )
             + y_constraint
-            + raw_constraint.substr( y_off + 3, x_off - y_off - 3 )
+            + raw_constraint.substr( y_off + y_len, x_off - y_off - y_len )
             + x_constraint
-            + raw_constraint.substr( x_off + 3 );
+            + raw_constraint.substr( x_off + x_len );
 
     return final_constraint;
 }
@@ -811,8 +838,8 @@ void DODSDataset::HarvestMaps( string oVarName, string oCE )
 /*      Get the map arrays for x and y.                                 */
 /* -------------------------------------------------------------------- */
     Array *poXMap = NULL, *poYMap = NULL;
-    int iXDim = GetDimension( oCE, "x" );
-    int iYDim = GetDimension( oCE, "y" );
+    int iXDim = GetDimension( oCE, "x", NULL );
+    int iYDim = GetDimension( oCE, "y", NULL );
     int iMap;
     Grid::Map_iter iterMap;
     
@@ -1137,8 +1164,9 @@ DODSRasterBand::DODSRasterBand(DODSDataset *poDSIn, string oVarNameIn,
         throw Error("Variable does not have even 2 dimensions.  For now this is required." );
     }
 
-    int iXDim = GetDimension( oCE, "x" );
-    int iYDim = GetDimension( oCE, "y" );
+    int nXDir = 1, nYDir = 1;
+    int iXDim = GetDimension( oCE, "x", &nXDir );
+    int iYDim = GetDimension( oCE, "y", &nYDir );
 
     if( iXDim == -1 || iYDim == -1 )
     {
@@ -1152,6 +1180,9 @@ DODSRasterBand::DODSRasterBand(DODSDataset *poDSIn, string oVarNameIn,
     nRasterYSize = poArray->dimension_size( y_dim ) / nOverviewFactor;
 
     bTranspose = iXDim < iYDim;
+
+    bFlipX = (nXDir == -1);
+    bFlipY = (nYDir == -1);
 
 /* -------------------------------------------------------------------- */
 /*      Decide on a block size.  We aim for a block size of roughly     */
