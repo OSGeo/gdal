@@ -29,8 +29,8 @@
  ******************************************************************************
  * 
  * $Log$
- * Revision 1.56  2006/03/02 12:16:01  dron
- * Avoid warnings.
+ * Revision 1.57  2006/05/02 16:42:49  fwarmerdam
+ * fix to preserve backslashes when parsing, and various initializations
  *
  * Revision 1.55  2005/11/11 01:11:24  fwarmerdam
  * Added support for Coastwatch offset/scale.
@@ -1362,7 +1362,7 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     poOpenInfo->fp = NULL;
 
     papszSubdatasetName = CSLTokenizeString2( poOpenInfo->pszFilename,
-                                              ":", CSLT_HONOURSTRINGS );
+                                              ":", CSLT_HONOURSTRINGS | CSLT_PRESERVEESCAPES);
     if ( CSLCount( papszSubdatasetName ) != 4
          && CSLCount( papszSubdatasetName ) != 5 )
     {
@@ -1583,9 +1583,11 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  Fetch geolocation fields.                                           */
 /* -------------------------------------------------------------------- */
-                    char    szXGeo[8192], szYGeo[8192];
-                    char    szPixel[8192], szLine[8192];
-                    char    szGeoDimList[8192];
+                    char    szXGeo[8192] = "";
+                    char    szYGeo[8192] = "";
+                    char    szPixel[8192]= "";
+                    char    szLine[8192] = "";
+                    char    szGeoDimList[8192] = "";
                     int32   nDataFields, nDimMaps;
                     void    *pLat = NULL, *pLong = NULL;
                     void    *pLatticeX = NULL, *pLatticeY = NULL;
@@ -1700,10 +1702,11 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                   papszGeolocations[i], szGeoDimList );
 #endif
 
-                        nXPoints = aiDimSizes[CSLFindString( papszGeoDimList,
-                                                             szXGeo )];
-                        nYPoints = aiDimSizes[CSLFindString( papszGeoDimList,
-                                                             szYGeo )];
+                        if (szXGeo[0] == 0 || szYGeo[0] == 0)
+                          return NULL;
+
+                        nXPoints = aiDimSizes[CSLFindString( papszGeoDimList, szXGeo )];
+                        nYPoints = aiDimSizes[CSLFindString( papszGeoDimList, szYGeo )];
 
                         if ( EQUAL(szPixel, papszDimList[poDS->iXDim]) )
                         {
@@ -2601,7 +2604,8 @@ GDALDataset *HDF4ImageDataset::Create( const char * pszFilename,
     HDF4ImageDataset    *poDS;
     const char          *pszSDSName;
     int                 iBand;
-    int32               iSDS = -1, aiDimSizes[MAX_VAR_DIMS];
+    int32               iSDS = -1;
+    int32               aiDimSizes[MAX_VAR_DIMS];
 
     poDS = new HDF4ImageDataset();
 
