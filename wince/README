@@ -134,6 +134,18 @@ So, if you want to use GDAL/OGR for Windows CE as DLL please
 use eVC++ 4.0 project file from evc4_gdalce_dll directory at the moment.
 This issue is known and waiting for fix :-)
 
+Building with project files:
+============================
+
+In order to build GDAL/OGR for Windows CE using eVC++ 4.0 or VC++ 2005  project files,
+just open appropriate workspace/project files with IDE you're using.
+
+Frist, remember, to rename port/cpl_config.h.evc4 file to read as port/cpl_config.h.
+
+If eVC++/VC++ can't recognize project files correctly, then check if .vcw/.vcp/.sln/.vcproj files
+include Windows-like end lines - CR/LF.
+If those files include only LF, then you can open/save them using Notepad editor to fix it.
+
 Summary of building GDAL/OGR for Windows CE:
 ============================================
 1. Static Library:
