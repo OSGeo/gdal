@@ -199,9 +199,9 @@ OGRErr CPL_DLL OSRExportToIdrisi(OGRSpatialReferenceH hSRS,
 
 //----- Specialized version of SetAuthority that accept non-numeric codes
 OGRErr OSRSetAuthorityLabel( OGRSpatialReferenceH hSRS, 
-                             const char *pszTargetKey,
-                             const char *pszAuthority, 
-                             const char *pszLabel );
+                        const char *pszTargetKey,
+                        const char *pszAuthority,
+                        const char *pszLabel );
 
 //----- Classes pre-definition:
 class IdrisiDataset;
@@ -1030,21 +1030,21 @@ CPLErr IdrisiDataset::SetProjection(const char *pszProjString)
 		const char *pszFName = NULL;
 
 		if (oSRS.GetAuthorityName("PROJCS") != NULL
-	       && EQUAL(oSRS.GetAuthorityName("PROJCS"), "IDRISI"))
+			&& EQUAL(oSRS.GetAuthorityName("PROJCS"), "IDRISI"))
 		{
 			pszRefSystem = oSRS.GetAuthorityCode("PROJCS");
 			pszFName = CPLSPrintf("%s/%s.ref", CPLGetDirname(pszFilename), pszRefSystem);
-		}
 
-		if (FileExists(pszFName) == FALSE)
-		{
-			pszFName = NULL;
-			const char *pszIdrisiDir = CPLGetConfigOption("IDRISIDIR", NULL);
-			if ((pszIdrisiDir) != NULL)
+			if (FileExists(pszFName) == FALSE)
 			{
-				pszFName = CPLSPrintf("%s/georef/%s.ref", pszIdrisiDir, pszRefSystem);
-				if (FileExists(pszFName) == FALSE)
-					pszFName = NULL;
+				pszFName = NULL;
+				const char *pszIdrisiDir = CPLGetConfigOption("IDRISIDIR", NULL);
+				if ((pszIdrisiDir) != NULL)
+				{
+					pszFName = CPLSPrintf("%s/georef/%s.ref", pszIdrisiDir, pszRefSystem);
+					if (FileExists(pszFName) == FALSE)
+						pszFName = NULL;
+				}
 			}
 		}
 
@@ -1079,9 +1079,14 @@ CPLErr IdrisiDataset::SetProjection(const char *pszProjString)
 		for (int i = 0; i < CSLCount(papszRDC) && nLine == -1; i++)
 			if (EQUALN(papszRDC[i], rdcCOMMENTS, 12))
 				nLine = i;
-		for (int i = 0; i < CSLCount(papszRefFile); i++)
-			papszRDC = CSLInsertString(papszRDC, nLine++, 
-			CPLSPrintf("%-.12s: %s", rdcCOMMENTS, papszRefFile[i]));
+		if (nLine > 0)
+		{
+			papszRDC = CSLSetNameValue(papszRDC, rdcCOMMENTS, 
+				"Suggested reference file. (Delete this line and save as <name>.ref)");
+			for (int i = 0; i < CSLCount(papszRefFile); i++)
+				papszRDC = CSLInsertString(papszRDC, ++nLine, 
+				CPLSPrintf("%-.12s: %s", rdcCOMMENTS, papszRefFile[i]));
+		}
 	}
 
 	CSLSetNameValue(papszRDC, rdcREF_SYSTEM, CPLSPrintf("%s", pszRefSystem));
