@@ -45,20 +45,7 @@ commiters (ie. libtiff, geotiff, etc).
 SVN does not support history insertion in source files, and to keep the
 old history listings around without keeping them up to date would be very
 confusing.  So it is proposed that Frank Warmerdam write a script to strip
-$Log$
-Revision 1.3  2006/05/04 13:25:18  fwarmerdam
-Various updates to details.
-
-Revision 1.2  2006/05/04 13:17:10  fwarmerdam
-fix typo.
-
-Revision 1.1  2006/05/04 02:27:47  fwarmerdam
-New
-
-Revision 1.1  2006/05/04 02:24:38  fwarmerdam
-New
- style history out of GDAL/OGR source files.  Headers can be expected
-to change from something like this:
+the history logs out.  Changing this:
 
 \verbatim
 /******************************************************************************
@@ -72,19 +59,7 @@ to change from something like this:
  * Copyright (c) 2000, Frank Warmerdam
 ...
  ******************************************************************************
- * $Log$
- * Revision 1.3  2006/05/04 13:25:18  fwarmerdam
- * Various updates to details.
- *
- * Revision 1.2  2006/05/04 13:17:10  fwarmerdam
- * fix typo.
- *
- * Revision 1.1  2006/05/04 02:27:47  fwarmerdam
- * New
- *
- * Revision 1.1  2006/05/04 02:24:38  fwarmerdam
- * New
- *
+ * $Lcg: RFC2_SVN.dox,v $
  * Revision 1.6  2006/03/28 14:49:56  fwarmerdam
  * updated contact info
  *
