@@ -36,6 +36,9 @@ SVN does not support history insertion in source files, and to keep the
 old history listings around without keeping them up to date would be very
 confusing.  So it is proposed that Frank Warmerdam write a script to strip
 $Log$
+Revision 1.2  2006/05/04 13:17:10  fwarmerdam
+fix typo.
+
 Revision 1.1  2006/05/04 02:27:47  fwarmerdam
 New
 
@@ -57,6 +60,9 @@ to change from something like this:
 ...
  ******************************************************************************
  * $Log$
+ * Revision 1.2  2006/05/04 13:17:10  fwarmerdam
+ * fix typo.
+ *
  * Revision 1.1  2006/05/04 02:27:47  fwarmerdam
  * New
  *
@@ -98,7 +104,7 @@ CPL_CVSID("$Id$");
 \section branch Branch for 1.3
 
 Once the headers have been updated appropriately, a 1.3 branch will be
-establish in subversion.  The intent is that further 1.3.x releases would
+established in subversion.  The intent is that further 1.3.x releases would
 be made against this "stable branch" while trunk work is towards a 1.4.0 
 release targetted for around the time of the OSGeo conference.
 
