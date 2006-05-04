@@ -1,0 +1,106 @@
+/*!
+\page rfc2_svn RFC 2: Migration to OSGeo Subversion Repository
+
+Author: Frank Warmerdam<br>
+Contact: warmerdam@pobox.com<br>
+Status: Proposed<br>
+
+\section summary Summary
+
+It is proposed that the GDAL source tree be moved a subversion repository
+in such a manner as to preserve the history existing in the CVS repository.
+A 1.3.x branch will be created after automatic updating of the header format.
+
+\section details Details
+
+<ol>
+<li> The conversion will be done by Howard Butler using the cvs2svn tool. 
+
+<li> At least 24 hours notice will be provided before the transition starts to 
+allow committers to commit any outstanding work that is ready to into the
+repository.
+
+<li> When the conversion starts, the GDAL (and gdalautotest) trees will be
+removed from cvs.maptools.org to avoid any confusion. 
+
+<li> Frank Warmerdam will be responsible for updating the source control 
+information in the documentation. 
+
+<li> All source files in SVN will be created with the svn:keywords property set to "Author Id URL Date Revision". 
+
+</ol>
+
+\section header Header Format
+
+SVN does not support history insertion in source files, and to keep the
+old history listings around without keeping them up to date would be very
+confusing.  So it is proposed that Frank Warmerdam write a script to strip
+$Log$
+Revision 1.1  2006/05/04 02:27:47  fwarmerdam
+New
+
+Revision 1.1  2006/05/04 02:24:38  fwarmerdam
+New
+ style history out of GDAL/OGR source files.  Headers can be expected
+to change from something like this:
+
+\verbatim
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  GDAL Core
+ * Purpose:  Color table implementation.
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *
+ ******************************************************************************
+ * Copyright (c) 2000, Frank Warmerdam
+...
+ ******************************************************************************
+ * $Log$
+ * Revision 1.1  2006/05/04 02:27:47  fwarmerdam
+ * New
+ *
+ * Revision 1.1  2006/05/04 02:24:38  fwarmerdam
+ * New
+ *
+ * Revision 1.6  2006/03/28 14:49:56  fwarmerdam
+ * updated contact info
+ *
+ * Revision 1.5  2005/09/05 19:29:29  fwarmerdam
+ * minor formatting fix
+ */
+
+#include "gdal_priv.h"
+
+CPL_CVSID("$Id$");
+\endverbatim
+
+to this:
+
+\verbatim
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  GDAL Core
+ * Purpose:  Color table implementation.
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *
+ ******************************************************************************
+ * Copyright (c) 2000, Frank Warmerdam
+...
+ *****************************************************************************/
+
+#include "gdal_priv.h"
+
+CPL_CVSID("$Id$");
+\endverbatim
+
+\section branch Branch for 1.3
+
+Once the headers have been updated appropriately, a 1.3 branch will be
+establish in subversion.  The intent is that further 1.3.x releases would
+be made against this "stable branch" while trunk work is towards a 1.4.0 
+release targetted for around the time of the OSGeo conference.
+
+*/
+ 
