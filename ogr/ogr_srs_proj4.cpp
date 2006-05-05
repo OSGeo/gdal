@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2006/05/05 17:02:54  fwarmerdam
+ * Added Krovak PROJ.4 to WKT translation.
+ *
  * Revision 1.63  2006/04/21 03:33:23  fwarmerdam
  * Per bug 811 we should not actually be adjusting the central meridian or
  * other longitudes.  They are relative to the geogcs prime meridian in
@@ -837,6 +840,17 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
                 OSR_GDV( papszNV, "k", 1.0 ), 
                 OSR_GDV( papszNV, "x_0", 0.0 ), 
                 OSR_GDV( papszNV, "y_0", 0.0 ) );
+    }
+
+    else if( EQUAL(pszProj,"krovak") )
+    {
+        SetKrovak( OSR_GDV( papszNV, "lat_0", 0.0 ), 
+                   OSR_GDV( papszNV, "lon_0", 0.0 )+dfFromGreenwich, 
+                   OSR_GDV( papszNV, "alpha", 0.0 ), 
+                   0.0, // pseudo_standard_parallel_1
+                   OSR_GDV( papszNV, "k", 1.0 ), 
+                   OSR_GDV( papszNV, "x_0", 0.0 ), 
+                   OSR_GDV( papszNV, "y_0", 0.0 ) );
     }
 
     else if( EQUAL(pszProj,"tpeqd") )
