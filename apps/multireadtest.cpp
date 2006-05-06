@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/05/06 16:42:12  fwarmerdam
+ * Ensure checksum error is reported more loudly.
+ *
  * Revision 1.4  2006/05/01 13:37:11  fwarmerdam
  * Cleanup on exit to facility leak and corruption testing.
  *
@@ -194,7 +197,7 @@ static void WorkerFunc( void * )
 
             if( nMyChecksum != nChecksum )
             {
-                printf( "Checksum error in worker thread.\n" );
+                printf( "Checksum ERROR in worker thread!\n" );
                 break;
             }
         }
