@@ -822,7 +822,7 @@ GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
 	int bHasNoDataValue;
 	double dfNoDataValue;
 
-	for (int i = 1; i <= poDS->nBands; i++)
+	for (i = 1; i <= poDS->nBands; i++)
 	{
 		poSrcBand = poSrcDS->GetRasterBand(i);
 		poBand = poDS->GetRasterBand(i);
@@ -1076,7 +1076,8 @@ CPLErr IdrisiDataset::SetProjection(const char *pszProjString)
 		// ------------------------------------------------------------------
 
 		int nLine = -1;
-		for (int i = 0; i < CSLCount(papszRDC) && nLine == -1; i++)
+                int i;
+		for (i = 0; i < CSLCount(papszRDC) && nLine == -1; i++)
 			if (EQUALN(papszRDC[i], rdcCOMMENTS, 12))
 				nLine = i;
 		if (nLine > 0)
@@ -1399,7 +1400,7 @@ CPLErr IdrisiRasterBand::SetCategoryNames(char **papszCategoryNames)
 
 	nCount = 0;
 
-	for (int i = 0; i < nCatCount; i++)
+	for (i = 0; i < nCatCount; i++)
 	{
 		if ((strlen(papszCategoryNames[i]) > 0))
 		{
@@ -1477,7 +1478,7 @@ CPLErr IdrisiRasterBand::SetColorTable(GDALColorTable *poColorTable)
 			VSIFWriteL(&aucRGB, 3, 1, fpSMP);
 		}
 		/* smp files always have 256 occurences */
-		for (int i = poColorTable->GetColorEntryCount(); i <= 255; i++)
+		for (i = poColorTable->GetColorEntryCount(); i <= 255; i++)
 		{
 			poColorTable->GetColorEntryAsRGB( i, &oEntry );
 			aucRGB[0]= (short) 0;
