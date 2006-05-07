@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/05/07 04:04:02  fwarmerdam
+ * fixed serious multithreading issue with ExtractInstValue (bug 1132)
+ *
  * Revision 1.24  2006/03/29 14:24:04  fwarmerdam
  * added preliminary nodata support (readonly)
  *
@@ -292,7 +295,7 @@ class HFAEntry
 
     void	LoadData();
 
-    void	*GetFieldValue( const char *, char );
+    int 	GetFieldValue( const char *, char, void * );
     CPLErr      SetFieldValue( const char *, char, void * );
 
 public:
@@ -370,9 +373,9 @@ class HFAField
 
     void	Dump( FILE * );
 
-    void	*ExtractInstValue( const char * pszField, int nIndexValue,
+    int 	ExtractInstValue( const char * pszField, int nIndexValue,
                      GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
-                     char chReqType );
+                     char chReqType, void *pReqReturn );
 
     CPLErr      SetInstValue( const char * pszField, int nIndexValue,
                      GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
@@ -415,9 +418,9 @@ class HFAType
     int		GetInstBytes( GByte * pabyData );
     int         GetInstCount( const char *pszField, 
                           GByte *pabyData, GUInt32 nDataOffset, int nDataSize);
-    void	*ExtractInstValue( const char * pszField,
-                           GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
-                               char chReqType );
+    int         ExtractInstValue( const char * pszField,
+                                  GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
+                               char chReqType, void *pReqReturn );
     CPLErr      SetInstValue( const char * pszField,
                            GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
                            char chReqType, void * pValue );

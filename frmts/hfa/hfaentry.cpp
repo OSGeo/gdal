@@ -33,6 +33,9 @@
  * Implementation of the HFAEntry class.
  *
  * $Log$
+ * Revision 1.14  2006/05/07 04:04:03  fwarmerdam
+ * fixed serious multithreading issue with ExtractInstValue (bug 1132)
+ *
  * Revision 1.13  2005/08/19 02:14:11  fwarmerdam
  * bug 857: add ability to set layer names
  *
@@ -420,8 +423,8 @@ HFAEntry *HFAEntry::GetNamedChild( const char * pszName )
 /*                           GetFieldValue()                            */
 /************************************************************************/
         
-void *HFAEntry::GetFieldValue( const char * pszFieldPath,
-                               char chReqType )
+int HFAEntry::GetFieldValue( const char * pszFieldPath,
+                             char chReqType, void *pReqReturn )
 
 {
     HFAEntry	*poEntry = this;
@@ -433,7 +436,7 @@ void *HFAEntry::GetFieldValue( const char * pszFieldPath,
     {
         poEntry = GetNamedChild( pszFieldPath );
         if( poEntry == NULL )
-            return NULL;
+            return FALSE;
         
         pszFieldPath = strchr(pszFieldPath,':') + 1;
     }
@@ -444,18 +447,19 @@ void *HFAEntry::GetFieldValue( const char * pszFieldPath,
     LoadData();
 
     if( pabyData == NULL )
-        return NULL;
+        return FALSE;
     
     if( poType == NULL )
-        return NULL;
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Extract the instance information.                               */
 /* -------------------------------------------------------------------- */
 
+
     return( poType->ExtractInstValue( pszFieldPath,
                                       pabyData, nDataPos, nDataSize,
-                                      chReqType ) );
+                                      chReqType, pReqReturn ) );
 }
 
 /************************************************************************/
@@ -505,10 +509,9 @@ int HFAEntry::GetFieldCount( const char * pszFieldPath, CPLErr *peErr )
 GInt32 HFAEntry::GetIntField( const char * pszFieldPath, CPLErr *peErr )
 
 {
-    void	*pRetData;
+    GInt32	nIntValue;
 
-    pRetData = GetFieldValue( pszFieldPath, 'i' );
-    if( pRetData == NULL )
+    if( !GetFieldValue( pszFieldPath, 'i', &nIntValue ) )
     {
         if( peErr != NULL )
             *peErr = CE_Failure;
@@ -520,7 +523,7 @@ GInt32 HFAEntry::GetIntField( const char * pszFieldPath, CPLErr *peErr )
         if( peErr != NULL )
             *peErr = CE_None;
 
-        return *((GInt32 *) pRetData);
+        return nIntValue;
     }
 }
 
@@ -559,10 +562,9 @@ GIntBig HFAEntry::GetBigIntField( const char *pszFieldPath, CPLErr *peErr )
 double HFAEntry::GetDoubleField( const char * pszFieldPath, CPLErr *peErr )
 
 {
-    void	*pRetData;
+    double dfDoubleValue;
 
-    pRetData = GetFieldValue( pszFieldPath, 'd' );
-    if( pRetData == NULL )
+    if( !GetFieldValue( pszFieldPath, 'd', &dfDoubleValue ) )
     {
         if( peErr != NULL )
             *peErr = CE_Failure;
@@ -574,7 +576,7 @@ double HFAEntry::GetDoubleField( const char * pszFieldPath, CPLErr *peErr )
         if( peErr != NULL )
             *peErr = CE_None;
 
-        return *((double *) pRetData);
+        return dfDoubleValue;
     }
 }
 
@@ -585,10 +587,9 @@ double HFAEntry::GetDoubleField( const char * pszFieldPath, CPLErr *peErr )
 const char *HFAEntry::GetStringField( const char * pszFieldPath, CPLErr *peErr)
 
 {
-    void	*pRetData;
+    char *pszResult = NULL;
 
-    pRetData = GetFieldValue( pszFieldPath, 's' );
-    if( pRetData == NULL )
+    if( !GetFieldValue( pszFieldPath, 's', &pszResult ) )
     {
         if( peErr != NULL )
             *peErr = CE_Failure;
@@ -600,7 +601,7 @@ const char *HFAEntry::GetStringField( const char * pszFieldPath, CPLErr *peErr)
         if( peErr != NULL )
             *peErr = CE_None;
 
-        return (char *) pRetData;
+        return pszResult;
     }
 }
 

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/05/07 04:04:03  fwarmerdam
+ * fixed serious multithreading issue with ExtractInstValue (bug 1132)
+ *
  * Revision 1.20  2006/04/03 04:33:16  fwarmerdam
  * Report basedata type.  Support reading basedata as a 1D array.  Fix
  * bug in basedata reading ... wasn't skippig 2 byte code before data.
@@ -667,15 +670,15 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 /*      substructure.                                                   */
 /************************************************************************/
 
-void *
+int
 HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
                            GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
-                           char chReqType )
+                           char chReqType, void *pReqReturn )
 
 {
     char		*pszStringRet = NULL;
-    static int		nIntRet = 0;
-    static double	dfDoubleRet = 0.0;
+    int			nIntRet = 0;
+    double		dfDoubleRet = 0.0;
     int			nInstItemCount = GetInstCount( pabyData );
     GByte		*pabyRawData = NULL;
 
@@ -685,7 +688,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 /*      Eventually this will have to account for variable fields.       */
 /* -------------------------------------------------------------------- */
     if( nIndexValue < 0 || nIndexValue >= nInstItemCount )
-        return NULL;
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*	If this field contains a pointer, then we will adjust the	*/
@@ -719,7 +722,10 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
 /*      handled as a special case.                                      */
 /* -------------------------------------------------------------------- */
     if( (chItemType == 'c' || chItemType == 'C') && chReqType == 's' )
-        return( pabyData );
+    {
+        *((GByte **)pReqReturn) = pabyData;
+        return( pabyData != NULL );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Handle by type.                                                 */
@@ -820,7 +826,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           // We ignore the 2 byte objecttype value. 
 
           if( nIndexValue < 0 || nIndexValue >= nRows * nColumns )
-              return NULL;
+              return FALSE;
 
           pabyData += 12;
 
@@ -874,7 +880,7 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
           else
           {
               CPLAssert( FALSE );
-              return NULL;
+              return FALSE;
           }
       }
       break;
@@ -908,13 +914,13 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
                         ExtractInstValue( pszField, pabyRawData,
                                           nDataOffset + nExtraOffset,
                                           nDataSize - nExtraOffset,
-                                          chReqType ) );
+                                          chReqType, pReqReturn ) );
             }
         }
         break;
 
       default:
-        return NULL;
+        return FALSE;
         break;
     }
 
@@ -925,24 +931,34 @@ HFAField::ExtractInstValue( const char * pszField, int nIndexValue,
     {
         if( pszStringRet == NULL )
         {
-            static char	szNumber[28];
+            static char	szNumber[28]; // This is NOT threadsafe.
 
             sprintf( szNumber, "%d", nIntRet );
             pszStringRet = szNumber;
         }
         
-        return( pszStringRet );
+        *((char **) pReqReturn) = pszStringRet;
+        return( TRUE );
     }
     else if( chReqType == 'd' )
-        return( &dfDoubleRet );
+    {
+        *((double *)pReqReturn) = dfDoubleRet;
+        return( TRUE );
+    }
     else if( chReqType == 'i' )
-        return( &nIntRet );
+    {
+        *((int *) pReqReturn) = nIntRet;
+        return( TRUE );
+    }
     else if( chReqType == 'p' )
-        return( pabyRawData );
+    {
+        *((GByte **) pReqReturn) = pabyRawData;
+        return( TRUE );
+    }
     else
     {
         CPLAssert( FALSE );
-        return NULL;
+        return FALSE;
     }
 }
 
@@ -1068,10 +1084,9 @@ void HFAField::DumpInstValue( FILE *fpOut,
 /* -------------------------------------------------------------------- */
     if( (chItemType == 'c' || chItemType == 'C') && nEntries > 0 )
     {
-        pReturn = ExtractInstValue( NULL, 0,
-                                    pabyData, nDataOffset, nDataSize,
-                                    's' );
-        if( pReturn != NULL )
+        if( ExtractInstValue( NULL, 0,
+                              pabyData, nDataOffset, nDataSize,
+                              's', &pReturn ) )
             VSIFPrintf( fpOut, "%s%s = `%s'\n",
                         pszPrefix, pszFieldName,
                         (char *) pReturn );
@@ -1097,15 +1112,16 @@ void HFAField::DumpInstValue( FILE *fpOut,
         {
           case 'f':
           case 'd':
-            pReturn = ExtractInstValue( NULL, iEntry,
-                                        pabyData, nDataOffset, nDataSize,
-                                        'd' );
-            if( pReturn != NULL )
-                VSIFPrintf( fpOut, "%f\n",
-                            *((double *) pReturn) );
-            else
-                VSIFPrintf( fpOut, "(access failed)\n" );
-            break;
+          {
+              double  dfValue;
+              if( ExtractInstValue( NULL, iEntry,
+                                    pabyData, nDataOffset, nDataSize,
+                                    'd', &dfValue ) )
+                  VSIFPrintf( fpOut, "%f\n", dfValue );
+              else
+                  VSIFPrintf( fpOut, "(access failed)\n" );
+          }
+          break;
 
           case 'b':
           {
@@ -1126,22 +1142,18 @@ void HFAField::DumpInstValue( FILE *fpOut,
           break;
 
           case 'e':
-            pReturn = ExtractInstValue( NULL, iEntry,
-                                        pabyData, nDataOffset, nDataSize,
-                                        's' );
-            if( pReturn != NULL )
-                VSIFPrintf( fpOut, "%s\n",
-                            (char *) pReturn );
+            if( ExtractInstValue( NULL, iEntry,
+                                  pabyData, nDataOffset, nDataSize,
+                                  's', &pReturn ) )
+                VSIFPrintf( fpOut, "%s\n", (char *) pReturn );
             else
                 VSIFPrintf( fpOut, "(access failed)\n" );
             break;
 
           case 'o':
-            pReturn = ExtractInstValue( NULL, iEntry,
-                                        pabyData, nDataOffset, nDataSize,
-                                        'p' );
-
-            if( pReturn == NULL )
+            if( !ExtractInstValue( NULL, iEntry,
+                                   pabyData, nDataOffset, nDataSize,
+                                   'p', &pReturn ) )
             {
                 VSIFPrintf( fpOut, "(access failed)\n" );
             }
@@ -1164,15 +1176,17 @@ void HFAField::DumpInstValue( FILE *fpOut,
             break;
 
           default:
-            pReturn = ExtractInstValue( NULL, iEntry,
-                                        pabyData, nDataOffset, nDataSize,
-                                        'i' );
-            if( pReturn != NULL )
-                VSIFPrintf( fpOut, "%d\n",
-                            *((int *) pReturn) );
-            else
-                VSIFPrintf( fpOut, "(access failed)\n" );
-            break;
+          {
+              GInt32 nIntValue;
+
+              if( ExtractInstValue( NULL, iEntry,
+                                    pabyData, nDataOffset, nDataSize,
+                                    'i', &nIntValue ) )
+                  VSIFPrintf( fpOut, "%d\n", nIntValue );
+              else
+                  VSIFPrintf( fpOut, "(access failed)\n" );
+          }
+          break;
         }
     }
 
