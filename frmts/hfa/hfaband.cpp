@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2006/05/07 04:04:03  fwarmerdam
+ * fixed serious multithreading issue with ExtractInstValue (bug 1132)
+ *
  * Revision 1.53  2006/03/29 14:24:04  fwarmerdam
  * added preliminary nodata support (readonly)
  *
@@ -196,6 +199,7 @@
 
 #include "hfa_p.h"
 #include "cpl_conv.h"
+
 /* include the compression code */
 
 CPL_CVSID("$Id$");

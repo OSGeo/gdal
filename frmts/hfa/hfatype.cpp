@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/05/07 04:04:03  fwarmerdam
+ * fixed serious multithreading issue with ExtractInstValue (bug 1132)
+ *
  * Revision 1.10  2005/05/13 02:45:16  fwarmerdam
  * fixed GetInstCount() error return
  *
@@ -373,10 +376,10 @@ HFAType::GetInstCount( const char * pszFieldPath,
 /*                                                the third abc struct. */
 /************************************************************************/
 
-void *
+int
 HFAType::ExtractInstValue( const char * pszFieldPath,
                            GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
-                           char chReqType )
+                           char chReqType, void *pReqReturn )
 
 {
     int		nArrayIndex = 0, nNameLen, iField, nByteOffset;
@@ -429,7 +432,7 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
     }
 
     if( iField == nFields )
-        return NULL;
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Extract this field value, and return.                           */
@@ -439,7 +442,7 @@ HFAType::ExtractInstValue( const char * pszFieldPath,
                               pabyData + nByteOffset,
                               nDataOffset + nByteOffset,
                               nDataSize - nByteOffset,
-                              chReqType ) );
+                              chReqType, pReqReturn ) );
 }
 
 
