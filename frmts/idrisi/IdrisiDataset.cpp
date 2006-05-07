@@ -1,39 +1,31 @@
 /*****************************************************************************
-*
-* Project:  Idrisi Raster Image File Driver
-* Purpose:  Read/write Idrisi Raster Image Format RST
-* Author:   Ivan Lucena, ivan@ilucena.net
-*
-******************************************************************************
-* Copyright (c) 2006, Ivan Lucena
-*
-* Permission is hereby granted, free of charge, to any person obtaining a
-* copy of this software and associated documentation files (the "Software"),
-* to deal in the Software without restriction, including without limitation
-* the rights to use, copy, modify, merge, publish, distribute, sublicense,
-* and/or sell copies of the Software, and to permit persons to whom the
-* Software is furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included
-* in all copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-* OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-* THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-* DEALINGS IN THE SOFTWARE.
-******************************************************************************
-*
-*/
-
-typedef	unsigned char	uint8;	
-typedef	signed short	int16;		
-typedef	unsigned short	uint16;
-typedef float			float32;			
-typedef long			int32;
-typedef unsigned long	uint32;
+ * $Id$
+ *
+ * Project:  Idrisi Raster Image File Driver
+ * Purpose:  Read/write Idrisi Raster Image Format RST
+ * Author:   Ivan Lucena, ivan@ilucena.net
+ *
+ ******************************************************************************
+ * Copyright (c) 2006, Ivan Lucena
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *****************************************************************************/
 
 #include "gdal_priv.h"
 #include "cpl_conv.h"
@@ -41,6 +33,8 @@ typedef unsigned long	uint32;
 #include "cpl_csv.h"
 #include "ogr_spatialref.h"
 #include "gdal_pam.h"
+
+CPL_CVSID("$Id$");
 
 CPL_C_START
 void GDALRegister_IDRISI(void);
@@ -1171,7 +1165,7 @@ CPLErr IdrisiRasterBand::IReadBlock(int nBlockXOff,
 		int i, j;
 		for (i = 0, j = (3 - nBand); i < nBlockXSize; i++, j += 3)
 		{
-			((uint8 *) pImage)[i] = pabyScanLine[j];
+			((GByte *) pImage)[i] = pabyScanLine[j];
 		}
 	}
 	else
@@ -1217,7 +1211,7 @@ CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff,
 		int i, j;
 		for (i = 0, j = (3 - nBand); i < nBlockXSize; i++, j += 3)
 		{
-			pabyScanLine[j] = ((uint8 *) pImage)[i];
+			pabyScanLine[j] = ((GByte *) pImage)[i];
 		}
 	}
 
@@ -1458,16 +1452,16 @@ CPLErr IdrisiRasterBand::SetColorTable(GDALColorTable *poColorTable)
 	if ((fpSMP = VSIFOpenL(pszSMPFilename, "w")) != NULL )
 	{
 		VSIFWriteL("[Idrisi]", 8, 1, fpSMP);
-		uint8 nPlatform = 1;    VSIFWriteL(&nPlatform, 1, 1, fpSMP);
-		uint8 nVersion = 11;    VSIFWriteL(&nVersion, 1, 1, fpSMP);
-		uint8 nDepth = 8;       VSIFWriteL(&nDepth, 1, 1, fpSMP);
-		uint8 nHeadSz = 18;     VSIFWriteL(&nHeadSz, 1, 1, fpSMP);
-		uint16 nCount = 255;    VSIFWriteL(&nCount, 2, 1, fpSMP);
-		uint16 nMix = 0;        VSIFWriteL(&nMix, 2, 1, fpSMP);
-		uint16 nMax = 255;      VSIFWriteL(&nMax, 2, 1, fpSMP);
+		GByte nPlatform = 1;    VSIFWriteL(&nPlatform, 1, 1, fpSMP);
+		GByte nVersion = 11;    VSIFWriteL(&nVersion, 1, 1, fpSMP);
+		GByte nDepth = 8;       VSIFWriteL(&nDepth, 1, 1, fpSMP);
+		GByte nHeadSz = 18;     VSIFWriteL(&nHeadSz, 1, 1, fpSMP);
+		GUInt16 nCount = 255;    VSIFWriteL(&nCount, 2, 1, fpSMP);
+		GUInt16 nMix = 0;        VSIFWriteL(&nMix, 2, 1, fpSMP);
+		GUInt16 nMax = 255;      VSIFWriteL(&nMax, 2, 1, fpSMP);
 
 		GDALColorEntry oEntry;
-		uint8 aucRGB[3];
+		GByte aucRGB[3];
 
 		for (int i = 0; i < poColorTable->GetColorEntryCount(); i++)
 		{
