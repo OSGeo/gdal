@@ -717,8 +717,9 @@ GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
 	// -------------------------------------------------------------------------
 	//      Check Data types
 	// -------------------------------------------------------------------------
+        int i;
 
-	for (int i = 1; i <= poSrcDS->GetRasterCount(); i++)
+	for ( i = 1; i <= poSrcDS->GetRasterCount(); i++)
 	{
 		GDALDataType eType = poSrcDS->GetRasterBand(i)->GetRasterDataType();
 
@@ -1375,8 +1376,8 @@ CPLErr IdrisiRasterBand::SetCategoryNames(char **papszCategoryNames)
 	//		Search for the "Legend cats  : N" line
 	// ------------------------------------------------------
 
-	int nLine = -1;
-	for (int i = 0; (i < CSLCount(poGDS->papszRDC)) && (nLine == -1); i++)
+	int i, nLine = -1;
+	for (i = 0; (i < CSLCount(poGDS->papszRDC)) && (nLine == -1); i++)
 		if (EQUALN(poGDS->papszRDC[i], rdcLEGEND_CATS, 12))
 			nLine = i;
 
@@ -1462,8 +1463,9 @@ CPLErr IdrisiRasterBand::SetColorTable(GDALColorTable *poColorTable)
 
 		GDALColorEntry oEntry;
 		GByte aucRGB[3];
+                int i;
 
-		for (int i = 0; i < poColorTable->GetColorEntryCount(); i++)
+		for (i = 0; i < poColorTable->GetColorEntryCount(); i++)
 		{
 			poColorTable->GetColorEntryAsRGB( i, &oEntry );
 			aucRGB[0] = (short) oEntry.c1;
