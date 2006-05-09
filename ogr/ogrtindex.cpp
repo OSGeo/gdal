@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/05/09 22:48:15  mloskot
+ * Fixed Bug 1144 in ogrtindex utility.
+ *
  * Revision 1.3  2005/07/15 15:06:52  fwarmerdam
  * Set default location field width to 200.
  *
@@ -43,6 +46,8 @@
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+
+#include <cassert>
 
 CPL_CVSID("$Id$");
 
@@ -188,7 +193,9 @@ int main( int nArgc, char ** papszArgv )
 /* ==================================================================== */
 /*      Process each input datasource in turn.                          */
 /* ==================================================================== */
-    for(; nFirstSourceDataset < nArgc; nFirstSourceDataset++ )
+	OGRFeatureDefn* poFeatureDefn = NULL;
+
+	for(; nFirstSourceDataset < nArgc; nFirstSourceDataset++ )
     {
         OGRDataSource       *poDS;
 
@@ -231,6 +238,49 @@ int main( int nArgc, char ** papszArgv )
 
             if( !bRequested )
                 continue;
+
+/* -------------------------------------------------------------------- */
+/*		Check if all layers in dataset have the same attributes	schema. */
+/* -------------------------------------------------------------------- */
+			if( poFeatureDefn == NULL )
+			{
+				poFeatureDefn = poLayer->GetLayerDefn()->Clone();
+			}
+			else
+			{
+				OGRFeatureDefn* poFeatureDefnCur = poLayer->GetLayerDefn();
+				assert(NULL != poFeatureDefnCur);
+
+				int fieldCount = poFeatureDefnCur->GetFieldCount();
+
+				if( fieldCount != poFeatureDefn->GetFieldCount())
+				{
+					printf( "Number of attributes of subsequent layers does not match ... terminating.\n" );
+					delete poDstDS;
+					exit( 1 );
+				}
+				
+				for( int fn = 0; fn < poFeatureDefnCur->GetFieldCount(); fn++ )
+				{
+ 					OGRFieldDefn* poField = poFeatureDefn->GetFieldDefn(fn);
+ 					OGRFieldDefn* poFieldCur = poFeatureDefnCur->GetFieldDefn(fn);
+
+					/* XXX - Should those pointers be checked against NULL? */ 
+					assert(NULL != poField);
+					assert(NULL != poFieldCur);
+
+					if( poField->GetType() != poFieldCur->GetType() 
+						|| poField->GetWidth() != poFieldCur->GetWidth() 
+						|| poField->GetPrecision() != poFieldCur->GetPrecision() 
+						|| !EQUAL( poField->GetNameRef(), poFieldCur->GetNameRef() ) )
+					{
+						printf( "Schema of attributes of subsequent layers does not match ... terminating.\n" );
+						delete poDstDS;
+						exit( 1 );
+					}
+				}
+			}
+
 
 /* -------------------------------------------------------------------- */
 /*      Get layer extents, and create a corresponding polygon           */
@@ -282,9 +332,10 @@ int main( int nArgc, char ** papszArgv )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Close tile index.                                               */
+/*      Close tile index and clear buffers.                             */
 /* -------------------------------------------------------------------- */
     delete poDstDS;
+	delete poFeatureDefn;
 
     return 0;
 }
