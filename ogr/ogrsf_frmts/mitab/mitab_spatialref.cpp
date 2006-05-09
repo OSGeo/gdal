@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_spatialref.cpp,v 1.44 2005/09/29 20:15:36 dmorissette Exp $
+ * $Id: mitab_spatialref.cpp,v 1.45 2006/05/09 20:21:29 fwarmerdam Exp $
  *
  * Name:     mitab_spatialref.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,11 @@
  **********************************************************************
  *
  * $Log: mitab_spatialref.cpp,v $
+ * Revision 1.45  2006/05/09 20:21:29  fwarmerdam
+ * Coordsys false easting and northing are in the units of the coordsys, not
+ * necessarily meters.  Adjusted mitab_spatialref.cpp to reflect this.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1113
+ *
  * Revision 1.44  2005/09/29 20:15:36  dmorissette
  * More improvements to handling of modified TM projections 21-24.
  * Added correct name stings to all datum definitions (Anthony D, bug 1155)
@@ -585,8 +590,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
       case 2:
         m_poSpatialRef->SetCEA( sTABProj.adProjParams[1],
                                 sTABProj.adProjParams[0],
-                                sTABProj.adProjParams[2] * dfConv,
-                                sTABProj.adProjParams[3] * dfConv );
+                                sTABProj.adProjParams[2],
+                                sTABProj.adProjParams[3] );
         break;
 
         /*--------------------------------------------------------------
@@ -597,8 +602,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                                 sTABProj.adProjParams[3],
                                 sTABProj.adProjParams[1],
                                 sTABProj.adProjParams[0],
-                                sTABProj.adProjParams[4] * dfConv,
-                                sTABProj.adProjParams[5] * dfConv );
+                                sTABProj.adProjParams[4],
+                                sTABProj.adProjParams[5] );
         break;
 
         /*--------------------------------------------------------------
@@ -629,8 +634,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                                sTABProj.adProjParams[3],
                                sTABProj.adProjParams[1],
                                sTABProj.adProjParams[0],
-                               sTABProj.adProjParams[4] * dfConv,
-                               sTABProj.adProjParams[5] * dfConv );
+                               sTABProj.adProjParams[4],
+                               sTABProj.adProjParams[5] );
         break;
 
         /*--------------------------------------------------------------
@@ -642,8 +647,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                                 sTABProj.adProjParams[2],
                                 90.0, 
                                 sTABProj.adProjParams[3],
-                                sTABProj.adProjParams[4] * dfConv,
-                                sTABProj.adProjParams[5] * dfConv );
+                                sTABProj.adProjParams[4],
+                                sTABProj.adProjParams[5] );
         break;
 
         /*--------------------------------------------------------------
@@ -653,8 +658,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
         m_poSpatialRef->SetTM( sTABProj.adProjParams[1],
                                sTABProj.adProjParams[0],
                                sTABProj.adProjParams[2],
-                               sTABProj.adProjParams[3] * dfConv,
-                               sTABProj.adProjParams[4] * dfConv );
+                               sTABProj.adProjParams[3],
+                               sTABProj.adProjParams[4] );
         break;
 
         /*----------------------------------------------------------------
@@ -665,8 +670,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                                        sTABProj.adProjParams[1],
                                        sTABProj.adProjParams[0],
                                        sTABProj.adProjParams[2],
-                                       sTABProj.adProjParams[3] * dfConv,
-                                       sTABProj.adProjParams[4] * dfConv );
+                                       sTABProj.adProjParams[3],
+                                       sTABProj.adProjParams[4] );
          break;
 
         /*--------------------------------------------------------------
@@ -677,8 +682,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                                        sTABProj.adProjParams[1],
                                        sTABProj.adProjParams[0],
                                        sTABProj.adProjParams[2],
-                                       sTABProj.adProjParams[3] * dfConv,
-                                       sTABProj.adProjParams[4] * dfConv );
+                                       sTABProj.adProjParams[3],
+                                       sTABProj.adProjParams[4] );
          break;
 
         /*----------------------------------------------------------------
@@ -689,8 +694,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                                        sTABProj.adProjParams[1],
                                        sTABProj.adProjParams[0],
                                        sTABProj.adProjParams[2],
-                                       sTABProj.adProjParams[3] * dfConv,
-                                       sTABProj.adProjParams[4] * dfConv );
+                                       sTABProj.adProjParams[3],
+                                       sTABProj.adProjParams[4] );
          break;
 
         /*--------------------------------------------------------------
@@ -701,8 +706,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                                        sTABProj.adProjParams[1],
                                        sTABProj.adProjParams[0],
                                        sTABProj.adProjParams[2],
-                                       sTABProj.adProjParams[3] * dfConv,
-                                       sTABProj.adProjParams[4] * dfConv );
+                                       sTABProj.adProjParams[3],
+                                       sTABProj.adProjParams[4] );
          break;
 
         /*--------------------------------------------------------------
@@ -713,8 +718,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                                  sTABProj.adProjParams[3],
                                  sTABProj.adProjParams[1],
                                  sTABProj.adProjParams[0],
-                                 sTABProj.adProjParams[4] * dfConv,
-                                 sTABProj.adProjParams[5] * dfConv );
+                                 sTABProj.adProjParams[4],
+                                 sTABProj.adProjParams[5] );
         break;
 
         /*--------------------------------------------------------------
@@ -783,8 +788,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
       case 18:
         m_poSpatialRef->SetNZMG( sTABProj.adProjParams[1],
                                  sTABProj.adProjParams[0],
-                                 sTABProj.adProjParams[2] * dfConv,
-                                 sTABProj.adProjParams[3] * dfConv );
+                                 sTABProj.adProjParams[2],
+                                 sTABProj.adProjParams[3] );
         break;
 
         /*--------------------------------------------------------------
@@ -795,8 +800,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
                                  sTABProj.adProjParams[3],
                                  sTABProj.adProjParams[1],
                                  sTABProj.adProjParams[0],
-                                 sTABProj.adProjParams[4] * dfConv,
-                                 sTABProj.adProjParams[5] * dfConv );
+                                 sTABProj.adProjParams[4],
+                                 sTABProj.adProjParams[5] );
         break;
 
         /*--------------------------------------------------------------
@@ -807,8 +812,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
         m_poSpatialRef->SetStereographic( sTABProj.adProjParams[1],
                                           sTABProj.adProjParams[0],
                                           sTABProj.adProjParams[2],
-                                          sTABProj.adProjParams[3] * dfConv,
-                                          sTABProj.adProjParams[4] * dfConv );
+                                          sTABProj.adProjParams[3],
+                                          sTABProj.adProjParams[4] );
         break;
 
         /*--------------------------------------------------------------
@@ -817,8 +822,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
       case 25:
         m_poSpatialRef->SetSOC( sTABProj.adProjParams[1],
                                 sTABProj.adProjParams[0],
-                                sTABProj.adProjParams[2] * dfConv,
-                                sTABProj.adProjParams[3] * dfConv );
+                                sTABProj.adProjParams[2],
+                                sTABProj.adProjParams[3] );
         break;
 
         /*--------------------------------------------------------------
@@ -836,8 +841,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
       case 27:
         m_poSpatialRef->SetPolyconic( sTABProj.adProjParams[1],
                                       sTABProj.adProjParams[0],
-                                      sTABProj.adProjParams[2] * dfConv,
-                                      sTABProj.adProjParams[3] * dfConv );
+                                      sTABProj.adProjParams[2],
+                                      sTABProj.adProjParams[3] );
         break;
 
         /*--------------------------------------------------------------
@@ -846,8 +851,8 @@ OGRSpatialReference *TABFile::GetSpatialRef()
       case 30:
         m_poSpatialRef->SetCS( sTABProj.adProjParams[1],
                                sTABProj.adProjParams[0],
-                               sTABProj.adProjParams[2] * dfConv,
-                               sTABProj.adProjParams[3] * dfConv );
+                               sTABProj.adProjParams[2],
+                               sTABProj.adProjParams[3] );
         break;
 
       default:
@@ -1144,8 +1149,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
-        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
     }
 
     else if( EQUAL(pszProjection,SRS_PT_AZIMUTHAL_EQUIDISTANT) )
@@ -1185,8 +1190,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
-        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
     }
 
     else if( EQUAL(pszProjection,SRS_PT_GALL_STEREOGRAPHIC) )
@@ -1202,8 +1207,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_CENTER,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_AZIMUTH,0.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
     }
 
     else if( EQUAL(pszProjection,SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
@@ -1224,8 +1229,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
-        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
     }
 
     else if( EQUAL(pszProjection,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP_BELGIUM) )
@@ -1235,8 +1240,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_1,0.0);
         parms[3] = poSpatialRef->GetProjParm(SRS_PP_STANDARD_PARALLEL_2,0.0);
-        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[5] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
     }
 
     else if( EQUAL(pszProjection,SRS_PT_MERCATOR_1SP) )
@@ -1267,8 +1272,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         sTABProj.nProjId = 18;
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
     }
 
     else if( EQUAL(pszProjection,SRS_PT_SWISS_OBLIQUE_CYLINDRICAL) )
@@ -1276,8 +1281,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         sTABProj.nProjId = 25;
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
     }
 
     else if( EQUAL(pszProjection,SRS_PT_ROBINSON) )
@@ -1298,8 +1303,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
     }
 
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR) )
@@ -1308,8 +1313,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
     }
 
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_MI_21) ) // Encom 2003
@@ -1318,8 +1323,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
     }
 
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_MI_22) ) // Encom 2003
@@ -1328,8 +1333,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
     }
 
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_MI_23) ) // Encom 2003
@@ -1338,8 +1343,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
     }
 
     else if( EQUAL(pszProjection,SRS_PT_TRANSVERSE_MERCATOR_MI_24) ) // Encom 2003
@@ -1348,8 +1353,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
         parms[2] = poSpatialRef->GetProjParm(SRS_PP_SCALE_FACTOR,1.0);
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) / dfLinearConv;
-        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) / dfLinearConv;
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[4] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
     }
 
     else if( EQUAL(pszProjection,SRS_PT_CASSINI_SOLDNER) )
@@ -1357,10 +1362,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         sTABProj.nProjId = 30;
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) 
-            / dfLinearConv;
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) 
-            / dfLinearConv;
+        parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
     }
 
     else if( EQUAL(pszProjection,SRS_PT_NEW_ZEALAND_MAP_GRID) )
@@ -1368,10 +1371,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         sTABProj.nProjId = 18;
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) 
-            / dfLinearConv;
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) 
-            / dfLinearConv;
+        parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
     }
 
     else if( EQUAL(pszProjection,SRS_PT_POLYCONIC) )
@@ -1379,10 +1380,8 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
         sTABProj.nProjId = 27;
         parms[0] = poSpatialRef->GetProjParm(SRS_PP_CENTRAL_MERIDIAN,0.0);
         parms[1] = poSpatialRef->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN,0.0);
-        parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0) 
-            / dfLinearConv;
-        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0) 
-            / dfLinearConv;
+        parms[2] = poSpatialRef->GetProjParm(SRS_PP_FALSE_EASTING,0.0);
+        parms[3] = poSpatialRef->GetProjParm(SRS_PP_FALSE_NORTHING,0.0);
     }
 
     /* ==============================================================
