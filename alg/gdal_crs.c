@@ -51,6 +51,9 @@
  ***************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/05/10 19:24:46  fwarmerdam
+ * avoid processing HUGE_VAL coordinates
+ *
  * Revision 1.8  2004/12/26 16:12:21  fwarmerdam
  * thin plate spline support now implemented
  *
@@ -305,6 +308,12 @@ int GDALGCPTransform( void *pTransformArg, int bDstToSrc,
     
     for( i = 0; i < nPointCount; i++ )
     {
+        if( x[i] == HUGE_VAL || y[i] == HUGE_VAL )
+        {
+            panSuccess[i] = FALSE;
+            continue;
+        }
+
         if( bDstToSrc )
         {
             CRS_georef( x[i], y[i], x + i, y + i, 
