@@ -102,7 +102,7 @@ Next we read metadata from the dataset using the VB6 equivalent of the
 GDALMajorObject::GetMetadata() method, and report it to the user.  Metadata
 is returned as an array of strings of "name=value" items.  Array indices 
 start at zero in the returned array.  The domain argument should normally
-be vbNullString though in specialize circumstances other domains might
+be vbNullString though in specialized circumstances other domains might
 apply.
 
 \code
@@ -167,7 +167,7 @@ and make other use of it.
 
 GDALDataset objects have one or more raster bands associated with them.
 GDALRasterBand objects can have metadata (accessed the same as on the
-GDALDataset) as well as an array of pixel values, and various specialize
+GDALDataset) as well as an array of pixel values, and various specialized
 metadata items like data type, color interpretation, offset/scale.   Here
 we report a few of the items.  
 
@@ -238,7 +238,7 @@ indexes are zero based).
 
     err = band.RasterIO(GDAL.GF_Read, 0, 0, ds.XSize, 1, RawData)
     if err = 0 Then
-      Print "    Data: " & RawData(1) & " " & RawData(10)
+      Print "    Data: " & RawData(1) & " " & RawData(9)
     End If
 \endcode
 
