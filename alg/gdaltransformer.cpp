@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/05/10 19:25:33  fwarmerdam
+ * avoid processing HUGE_VAL
+ *
  * Revision 1.24  2005/10/28 17:47:28  fwarmerdam
  * GenImgTransformer now supports NULL hSrcDS.  Also now actually pulls
  * coordinate systems from hSrcDS or hDstDS if not provided.
@@ -785,6 +788,12 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
         {
             double dfNewX, dfNewY;
             
+            if( padfX[i] == HUGE_VAL || padfY[i] == HUGE_VAL )
+            {
+                panSuccess[i] = FALSE;
+                continue;
+            }
+
             dfNewX = padfGeoTransform[0]
                 + padfX[i] * padfGeoTransform[1]
                 + padfY[i] * padfGeoTransform[2];
@@ -857,6 +866,9 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
         for( i = 0; i < nPointCount; i++ )
         {
             double dfNewX, dfNewY;
+
+            if( !panSuccess[i] )
+                continue;
             
             dfNewX = padfGeoTransform[0]
                 + padfX[i] * padfGeoTransform[1]
