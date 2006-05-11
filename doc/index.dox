@@ -46,28 +46,28 @@ on GDAL improvement efforts not focused on any particular client project.<p>
 \section index_userdocs User Oriented Documentation
 
 <ul>
-<li> \link download.html Downloads\endlink - Source and Binaries
+<li> <a href="download.html">Downloads</a> - Source and Binaries
 <li> <a href="formats_list.html">Supported Formats</a>
-<li> \link gdal_utilities.html GDAL Utility Programs\endlink
-<li> \link faq.html GDAL FAQ\endlink
-<li> \link gdal_datamodel.html GDAL Data Model\endlink
-<li> \link governance.html GDAL/OGR Governance and Community Participation\endlink
-<li> \link credits.html Acknowledgements and Credits\endlink
+<li> <a href="gdal_utilities.html">GDAL Utility Programs</a>
+<li> <a href="faq.html">GDAL FAQ</a>
+<li> <a href="gdal_datamodel.html">GDAL Data Model</a>
+<li> <a href="governance.html">GDAL/OGR Governance and Community Participation</a>
+<li> <a href="credits.html">Acknowledgements and Credits</a>
 </ul>
 
 \section index_devdocs Developer Oriented Documentation
 
 <ul>
-<li> \link gdal_building.html Building GDAL From Source\endlink
-<li> \link hierarchy.html API Reference Documentation\endlink
-<li> \link gdal_tutorial.html GDAL API Tutorial\endlink
-<li> \link gdal_drivertut.html GDAL Driver Implementation Tutorial\endlink
-<li> \link warptut.html GDAL Warp API Tutorial\endlink
-<li> \link ogr/osr_tutorial.html OGRSpatialReference Tutorial\endlink
-<li> \link gdal.h gdal.h the GDAL C API\endlink
-<li> \link GDALDataset\endlink
-<li> \link GDALRasterBand\endlink
-<li> \link wince.html GDAL for Windows CE\endlink
+<li> <a href="gdal_building.html">Building GDAL From Source</a>
+<li> <a href="hierarchy.html">API Reference Documentation</a>
+<li> <a href="gdal_tutorial.html">GDAL API Tutorial</a>
+<li> <a href="gdal_drivertut.html">GDAL Driver Implementation Tutorial</a>
+<li> <a href="warptut.html">GDAL Warp API Tutorial</a>
+<li> <a href="ogr/osr_tutorial.html">OGRSpatialReference Tutorial</a>
+<li> <a href="gdal_8h.html">GDAL C API</a>
+<li> <a href="classGDALDataset.html">GDALDataset</a>
+<li> <a href="classGDALRasterBand.html">GDALRasterBand</a>
+<li> <a href="wince.html">GDAL for Windows CE</a>
 </ul>
 
 \section index_maillist Mailing List
