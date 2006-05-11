@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.164  2006/05/11 18:34:00  fwarmerdam
+ * Clear image buffer to zero on read if LoadBlockBuf() fails.
+ *
  * Revision 1.163  2006/04/13 16:38:16  fwarmerdam
  * Added USE_RRD support.
  *
@@ -563,7 +566,12 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     eErr = poGDS->LoadBlockBuf( nBlockId );
     if( eErr != CE_None )
+    {
+        memset( pImage, 0,
+                nBlockXSize * nBlockYSize
+                * GDALGetDataTypeSize(eDataType) / 8 );
         return eErr;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Special case for YCbCr subsampled data.                         */
