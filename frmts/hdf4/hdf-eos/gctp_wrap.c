@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.4  2006/05/11 17:42:26  dron
+ * Avoid warnings.
+ *
  * Revision 1.3  2006/04/20 13:45:13  dron
  * Definitions for for_init() and inv_init() changed to be fully compatible
  * with HDF-EOS code.
@@ -92,8 +95,6 @@ int32 (*for_trans[])(double, double, double *, double *))
     pdfOutparm = outparm;
     iOutdatum = outdatum;
     for_trans[iOutsys] = osr_for;
-
-    return 0;
 }
 
 int32 osr_inv(
@@ -143,7 +144,5 @@ int32 (*inv_trans[])(double, double, double*, double*))
     pdfInparm = inparm; 
     iIndatum = indatum;
     inv_trans[insys] = osr_inv;
-
-    return 0;
 }
 
