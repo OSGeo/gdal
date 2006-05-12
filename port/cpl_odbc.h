@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/05/12 15:22:23  fwarmerdam
+ * on MSVC 6 we sometimes dont have SQLULEN
+ *
  * Revision 1.16  2006/04/03 23:08:58  fwarmerdam
  * Use SQLULEN by default now.
  *
@@ -102,6 +105,13 @@
 
 class CPLODBCStatement;
 
+/* On MSVC SQLULEN is missing in some cases (ie. VC6)
+** but it is always a #define so test this way.   On Unix
+** it is a typedef so we can't always do this.
+*/
+#if defined(_MSC_VER) && !defined(SQLULEN)
+#  define MISSING_SQLULEN
+#endif
 
 #if !defined(MISSING_SQLULEN)
 /* ODBC types to support 64 bit compilation */
