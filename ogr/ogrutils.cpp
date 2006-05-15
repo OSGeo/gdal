@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2006/05/15 16:55:43  fwarmerdam
+ * improve debugging output
+ *
  * Revision 1.23  2006/04/07 06:29:07  fwarmerdam
  * Added support for parsing coordinates starting with a bare decimal from WKT.
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=1150
@@ -286,6 +289,7 @@ const char * OGRWktReadPoints( const char * pszInput,
                                int * pnPointsRead )
 
 {
+    const char *pszOrigInput = pszInput;
     *pnPointsRead = 0;
 
     if( pszInput == NULL )
@@ -381,8 +385,8 @@ const char * OGRWktReadPoints( const char * pszInput,
         {
             CPLDebug( "OGR",
                       "Corrupt input in OGRWktReadPoints()\n"
-                      "Got `%s' when expecting `,' or `)'.\n",
-                      szDelim );
+                      "Got `%s' when expecting `,' or `)', near `%s' in %s.\n",
+                      szDelim, pszInput, pszOrigInput );
             return NULL;
         }
         
