@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/05/15 18:48:20  fwarmerdam
+ * support SetAttributeFilter() on ExecuteSQL resultsets
+ *
  * Revision 1.6  2005/02/22 12:50:31  fwarmerdam
  * use OGRLayer base spatial filter support
  *
@@ -166,7 +169,6 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
 
-    virtual OGRErr      SetAttributeFilter( const char * );
     virtual OGRFeature *GetFeature( long nFeatureId );
     
     virtual int         TestCapability( const char * );
