@@ -53,6 +53,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/05/15 19:18:14  fwarmerdam
+ * include string.h
+ *
  * Revision 1.1  1999/11/29 21:33:22  warmerda
  * New
  *
@@ -85,6 +88,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "tiffio.h"
 #include "rawblockedimage.h"
