@@ -330,19 +330,18 @@ associated with the layer it will be written to.
         poFeature->SetField( "Name", szName );
 \endcode
 
-We create a local geometry object, and assign it directly to the feature.
+We create a local geometry object, and assign its copy (indirectly) to the feature.
 The OGRFeature::SetGeometryDirectly() differs from OGRFeature::SetGeometry()
 in that the direct method gives ownership of the geometry to the feature. 
 This is generally more efficient as it avoids an extra deep object copy
 of the geometry.
 
 \code
-	OGRPoint *poPoint = new OGRPoint();
+	OGRPoint pt;
+	pt.setX( x );
+	pt.setY( y );
 	
-  	poPoint->setX( x );
-        poPoint->setY( y );
- 
-        poFeature->SetGeometryDirectly( poPoint ); 
+	poFeature->SetGeometry( &pt ); 
 \endcode
 
 Now we create a feature in the file.  The OGRLayer::CreateFeature() does not
@@ -354,8 +353,8 @@ take ownership of our feature so we clean it up when done with it.
 	   printf( "Failed to create feature in shapefile.\n" );
            exit( 1 );
         }
-
-        delete poFeature;
+	
+	OGRFeature::DestroyFeature( poFeature );
    }
 \endcode
 
@@ -426,12 +425,12 @@ int main()
 	poFeature = new OGRFeature( poLayer->GetLayerDefn() );
         poFeature->SetField( "Name", szName );
 
-	OGRPoint *poPoint = new OGRPoint();
+	OGRPoint pt;
 	
-  	poPoint->setX( x );
-        poPoint->setY( y );
+  	pt.setX( x );
+        pt.setY( y );
  
-        poFeature->SetGeometryDirectly( poPoint ); 
+        poFeature->SetGeometry( &pt ); 
 
 	if( poLayer->CreateFeature( poFeature ) != OGRERR_NONE )
         {
@@ -439,7 +438,7 @@ int main()
            exit( 1 );
         }
 
-        delete poFeature;
+         OGRFeature::DestroyFeature( poFeature );
     }
 
     OGRDataSource::DestroyDataSource( poDS );
