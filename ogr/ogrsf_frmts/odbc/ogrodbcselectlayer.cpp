@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/05/15 18:14:31  fwarmerdam
+ * Use generic mechanism for SetAttributeFilter() (bug 1185)
+ *
  * Revision 1.3  2006/03/21 18:50:56  fwarmerdam
  * dont report SetAttributeFilter error if clearing
  *
@@ -147,26 +150,6 @@ OGRFeature *OGRODBCSelectLayer::GetFeature( long nFeatureId )
 
 {
     return OGRODBCLayer::GetFeature( nFeatureId );
-}
-
-/************************************************************************/
-/*                         SetAttributeFilter()                         */
-/************************************************************************/
-
-OGRErr OGRODBCSelectLayer::SetAttributeFilter( const char *pszQuery )
-
-{
-    if( pszQuery != NULL && strlen(pszQuery) > 0 )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "SetAttributeFilter() not supported on ExecuteSQL() results." );
-        
-        return OGRERR_UNSUPPORTED_OPERATION;
-    }
-    else
-    {
-        return OGRERR_NONE;
-    }
 }
 
 /************************************************************************/
