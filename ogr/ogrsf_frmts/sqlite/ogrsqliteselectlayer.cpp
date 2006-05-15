@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/05/15 18:48:21  fwarmerdam
+ * support SetAttributeFilter() on ExecuteSQL resultsets
+ *
  * Revision 1.5  2006/03/21 18:50:56  fwarmerdam
  * dont report SetAttributeFilter error if clearing
  *
@@ -112,26 +115,6 @@ OGRFeature *OGRSQLiteSelectLayer::GetFeature( long nFeatureId )
 
 {
     return OGRSQLiteLayer::GetFeature( nFeatureId );
-}
-
-/************************************************************************/
-/*                         SetAttributeFilter()                         */
-/************************************************************************/
-
-OGRErr OGRSQLiteSelectLayer::SetAttributeFilter( const char *pszQuery )
-
-{
-    if( pszQuery != NULL && strlen(pszQuery) > 0 )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, 
-                  "SetAttributeFilter() not supported on ExecuteSQL() results." );
-        
-        return OGRERR_UNSUPPORTED_OPERATION;
-    }
-    else
-    {
-        return OGRERR_NONE;
-    }
 }
 
 /************************************************************************/
