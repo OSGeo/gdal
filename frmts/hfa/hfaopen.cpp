@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.56  2006/05/15 15:31:54  fwarmerdam
+ * avoid dependence on GDAL for GDALInvertGeoTransform
+ *
  * Revision 1.55  2006/04/19 14:07:03  fwarmerdam
  * do not attempt to use papoBand[0] if there are zero bands
  *
@@ -104,7 +107,7 @@
 
 #include "hfa_p.h"
 #include "cpl_conv.h"
-#include "gdal_alg.h"
+//#include "gdal_alg.h"
 #include <limits.h>
 
 CPL_CVSID("$Id$");
@@ -926,6 +929,40 @@ const Eprj_MapInfo *HFAGetMapInfo( HFAHandle hHFA )
 }
 
 /************************************************************************/
+/*                        HFAInvGeoTransform()                          */
+/************************************************************************/
+
+static int HFAInvGeoTransform( double *gt_in, double *gt_out )
+
+{
+    double	det, inv_det;
+
+    /* we assume a 3rd row that is [1 0 0] */
+
+    /* Compute determinate */
+
+    det = gt_in[1] * gt_in[5] - gt_in[2] * gt_in[4];
+
+    if( fabs(det) < 0.000000000000001 )
+        return 0;
+
+    inv_det = 1.0 / det;
+
+    /* compute adjoint, and devide by determinate */
+
+    gt_out[1] =  gt_in[5] * inv_det;
+    gt_out[4] = -gt_in[4] * inv_det;
+
+    gt_out[2] = -gt_in[2] * inv_det;
+    gt_out[5] =  gt_in[1] * inv_det;
+
+    gt_out[0] = ( gt_in[2] * gt_in[3] - gt_in[0] * gt_in[5]) * inv_det;
+    gt_out[3] = (-gt_in[1] * gt_in[3] + gt_in[0] * gt_in[4]) * inv_det;
+
+    return 1;
+}
+
+/************************************************************************/
 /*                       int HFAGetGeoTransform()                       */
 /************************************************************************/
 
@@ -1007,7 +1044,7 @@ int HFAGetGeoTransform( HFAHandle hHFA, double *padfGeoTransform )
 
     // invert
 
-    GDALInvGeoTransform( adfXForm, padfGeoTransform );
+    HFAInvGeoTransform( adfXForm, padfGeoTransform );
 
     // Adjust origin from center of top left pixel to top left corner
     // of top left pixel.
