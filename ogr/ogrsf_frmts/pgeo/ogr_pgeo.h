@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/05/15 18:54:43  fwarmerdam
+ * support SetAttributeFilter on ExecuteSQL resultset
+ *
  * Revision 1.2  2005/12/16 01:32:26  fwarmerdam
  * removed custom GetExtent on select layer
  *
@@ -174,7 +177,6 @@ class OGRPGeoSelectLayer : public OGRPGeoLayer
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
 
-    virtual OGRErr      SetAttributeFilter( const char * );
     virtual OGRFeature *GetFeature( long nFeatureId );
     
     virtual int         TestCapability( const char * );
