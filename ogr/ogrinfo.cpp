@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2006/05/15 18:28:48  fwarmerdam
+ * allow attribute filter on -sql requests
+ *
  * Revision 1.32  2006/03/31 17:44:20  fwarmerdam
  * header updates
  *
@@ -318,13 +321,14 @@ int main( int nArgc, char ** papszArgv )
 
         nRepeatCount = 0;  // skip layer reporting.
 
-        if( pszWHERE != NULL )
-            printf( "-where clause ignored in combination with -sql.\n" );
         if( CSLCount(papszLayers) > 0 )
             printf( "layer names ignored in combination with -sql.\n" );
         
         poResultSet = poDS->ExecuteSQL( pszSQLStatement, poSpatialFilter, 
                                         pszDialect );
+
+        if( pszWHERE != NULL )
+            poResultSet->SetAttributeFilter( pszWHERE );
 
         if( poResultSet != NULL )
         {
