@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/05/15 18:14:30  fwarmerdam
+ * Use generic mechanism for SetAttributeFilter() (bug 1185)
+ *
  * Revision 1.7  2005/11/02 21:58:26  fwarmerdam
  * preliminary support for ODBC spatial querying
  *
@@ -178,7 +181,6 @@ class OGRODBCSelectLayer : public OGRODBCLayer
     virtual void        ResetReading();
     virtual int         GetFeatureCount( int );
 
-    virtual OGRErr      SetAttributeFilter( const char * );
     virtual OGRFeature *GetFeature( long nFeatureId );
     
     virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE);
