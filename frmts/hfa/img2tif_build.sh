@@ -2,11 +2,11 @@
 
 BLDDIR=`pwd`
 CC=gcc
-CPPC=gcc
+CPPC=g++
 CFLAGS="-O -I$BLDDIR/hfa -I$BLDDIR/libtiff -I$BLDDIR/libgeotiff -I$BLDDIR/port"
 
-LINK=gcc
-XTRALIBS="-lm"
+LINK=g++
+XTRALIBS="-lm -lpthread"
 
 
 for FILE in *.c */*.c ; do
