@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/05/15 18:04:32  fwarmerdam
+ * added 'secret' useSpatialSubquery attribute on GeometryField
+ *
  * Revision 1.21  2006/04/13 16:41:03  fwarmerdam
  * improved success reporting, preliminary srcrect support
  *
@@ -131,6 +134,7 @@ OGRVRTLayer::OGRVRTLayer()
     poSrcLayer = NULL;
     poSRS = NULL;
 
+    bUseSpatialSubquery = FALSE;
     iFIDField = -1;
 
     eGeometryType = VGS_Direct;
@@ -394,6 +398,11 @@ int OGRVRTLayer::Initialize( CPLXMLNode *psLTree, const char *pszVRTDirectory )
      else if( EQUAL(pszEncoding,"PointFromColumns") )
      {
          eGeometryType = VGS_PointFromColumns;
+         bUseSpatialSubquery = 
+             CSLTestBoolean(
+                 CPLGetXMLValue(psLTree, 
+                                "GeometryField.useSpatialSubquery",
+                                "TRUE"));
 
          iGeomXField = poSrcLayer->GetLayerDefn()->GetFieldIndex(
              CPLGetXMLValue( psLTree, "GeometryField.x", "missing" ) );
@@ -510,8 +519,7 @@ int OGRVRTLayer::ResetSourceReading()
 /*      Do we want to let source layer do spatial restriction?          */
 /* -------------------------------------------------------------------- */
     char *pszFilter = NULL;
-    if( m_poFilterGeom && m_bFilterIsEnvelope 
-        && eGeometryType == VGS_PointFromColumns )
+    if( m_poFilterGeom && m_bFilterIsEnvelope && bUseSpatialSubquery )
     {
         const char *pszXField, *pszYField;
 
