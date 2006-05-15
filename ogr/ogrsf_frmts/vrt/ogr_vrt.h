@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/05/15 18:04:32  fwarmerdam
+ * added 'secret' useSpatialSubquery attribute on GeometryField
+ *
  * Revision 1.8  2006/04/13 16:41:03  fwarmerdam
  * improved success reporting, preliminary srcrect support
  *
@@ -100,7 +103,9 @@ class OGRVRTLayer : public OGRLayer
     int                 iGeomField; 
 
                         // VGS_PointFromColumn
-    int                 iGeomXField, iGeomYField, iGeomZField; 
+    int                 iGeomXField, iGeomYField, iGeomZField;
+
+    int                 bUseSpatialSubquery;
 
     // Attribute Mapping
     int                *panSrcField;
