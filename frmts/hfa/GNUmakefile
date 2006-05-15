@@ -58,15 +58,15 @@ img2tif-dist:
 	cp buildwin.bat img2tif_dist
 	mkdir img2tif_dist/port
 	cp ../../port/cpl_{config.h.vc,vsil_win32.cpp} img2tif_dist/port
-	cp ../../port/cpl_{path.cpp,conv.cpp,conv.h,error.cpp,error.h,port.h,string.cpp,string.h,vsi.h,vsisimple.cpp,config.h,cpl_csv.cpp,cpl_findfile.cpp} img2tif_dist/port
+	cp ../../port/cpl_{path.cpp,conv.cpp,conv.h,error.cpp,error.h,port.h,string.cpp,string.h,vsi.h,vsisimple.cpp,config.h,csv.h,csv.cpp,findfile.cpp,multiproc.h,multiproc.cpp,vsil.cpp,vsil_unix_stdio_64.cpp,vsi_mem.cpp,vsi_private.h,dir.cpp} img2tif_dist/port
 	mkdir img2tif_dist/libtiff
 	cp ../gtiff/libtiff/*.{c,h} img2tif_dist/libtiff
 	mkdir img2tif_dist/libgeotiff
 	cp ../gtiff/libgeotiff/*.{c,h,inc} img2tif_dist/libgeotiff
 	mkdir img2tif_dist/hfa
 	cp hfaopen.cpp hfaentry.cpp hfadictionary.cpp hfafield.cpp \
-	   hfatype.cpp hfaband.cpp  \
+	   hfatype.cpp hfaband.cpp hfacompress.cpp \
 	   hfa.h hfa_p.h img2tif_dist/hfa 
-	cp BUILD.TXT hfatest.cpp img2tif.cpp imggeotiff.c \
+	cp BUILD.TXT hfatest.cpp img2tif.cpp imggeotiff.cpp \
 	   addtiffo_src/tif_overview.cpp addtiffo_src/rawblocked* \
 	   img2tif_dist
