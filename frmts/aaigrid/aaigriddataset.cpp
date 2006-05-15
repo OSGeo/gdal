@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.35  2006/05/15 21:41:49  mloskot
+ * Fixed bug 1071.
+ *
  * Revision 1.34  2006/03/03 04:01:52  fwarmerdam
  * Added support for DX and DY instead of CELLSIZE as apparently is produced
  * by Golden Surfer ascii grids.
@@ -460,6 +463,9 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     GDALDataType eDataType;
     char        **papszTokens;
 
+    CPLDebug( "GDAL", "AAIGDataset::Open() with dataset: %s.\n",
+            poOpenInfo->pszFilename );
+
 /* -------------------------------------------------------------------- */
 /*      Does this look like an AI grid file?                            */
 /* -------------------------------------------------------------------- */
@@ -565,6 +571,7 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open file with large file API.                                  */
 /* -------------------------------------------------------------------- */
+
     poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
     if( poDS->fp == NULL )
     {
@@ -572,7 +579,7 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
                   "VSIFOpenL(%s) failed unexpectedly.", 
                   poOpenInfo->pszFilename );
         return NULL;
-    }
+    } 
 
 /* -------------------------------------------------------------------- */
 /*      Find the start of real data.                                    */
@@ -587,22 +594,51 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
                       "Couldn't find data values in ASCII Grid file.\n" );
             return NULL;                        
         }
-
+        
         if( poOpenInfo->pabyHeader[i-1] == '\n' 
             || poOpenInfo->pabyHeader[i-2] == '\n' )
         {
             if( !isalpha(poOpenInfo->pabyHeader[i]) )
             {
                 nStartOfData = i;
-                if( strstr((const char *)poOpenInfo->pabyHeader+i,".") != NULL)
-                    eDataType = GDT_Float32;
-                else
-                    eDataType = GDT_Int16;
 
+				/* Beginning of real data found. */
                 break;
             }
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Recognize the type of data.										*/
+/* -------------------------------------------------------------------- */
+
+    CPLAssert( NULL != poDS->fp );
+
+    /* Default value type. */
+    eDataType = GDT_Int16; 
+
+    /* Allocate 100K chunk + 1 extra byte for NULL character. */
+    const size_t nChunkSize = 1024 * 100;
+    GByte* pabyChunk = (GByte *) CPLCalloc( nChunkSize + 1, sizeof(GByte) );
+    pabyChunk[nChunkSize] = '\0';
+
+    VSIFSeekL( poDS->fp, nStartOfData, SEEK_SET );
+	
+    /* Scan for dot in subsequent chunks of data. */
+    while( !VSIFEofL( poDS->fp) )
+    {
+        VSIFReadL( pabyChunk, sizeof(GByte), nChunkSize, poDS->fp );
+        CPLAssert( pabyChunk[nChunkSize] == '\0' );
+        
+        if( strchr( (const char *)pabyChunk, '.' ) != NULL )
+        {
+            eDataType = GDT_Float32;
+            break;
+        }
+    }
+    
+    /* Deallocate chunk. */
+    VSIFree( pabyChunk );
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
