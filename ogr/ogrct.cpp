@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/05/15 18:34:56  fwarmerdam
+ * added check for HUGE_VAL failures
+ *
  * Revision 1.33  2006/04/04 14:38:47  fwarmerdam
  * Use CPLGetConfigOption() instead of getenv() for PROJSO.
  *
@@ -657,8 +660,11 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
     {
         for( i = 0; i < nCount; i++ )
         {
-            x[i] *= dfSourceToRadians;
-            y[i] *= dfSourceToRadians;
+            if( x[i] != HUGE_VAL )
+            {
+                x[i] *= dfSourceToRadians;
+                y[i] *= dfSourceToRadians;
+            }
         }
     }
 
