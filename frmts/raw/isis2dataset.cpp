@@ -32,6 +32,11 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.4  2006/05/16 03:26:11  fwarmerdam
+ * First pass complete.  Now using more generalized keyword handling.
+ * Also fixed up some issues with the projection and the projection
+ * put into place.
+ *
  * Revision 1.3  2006/04/13 16:39:35  fwarmerdam
  * added more notes on copyright
  *
@@ -101,7 +106,7 @@ class ISIS2Dataset : public RawDataset
     int         bGotTransform;
     double      adfGeoTransform[6];
   
-    char	*pszProjection;
+    CPLString   osProjection;
 
     int parse_label(const char *file, char *keyword, char *value);
     int strstrip(char instr[], char outstr[], int position);
@@ -134,7 +139,6 @@ public:
 ISIS2Dataset::ISIS2Dataset()
 {
     fpImage = NULL;
-    pszProjection = CPLStrdup("");
     bGotTransform = FALSE;
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -154,7 +158,6 @@ ISIS2Dataset::~ISIS2Dataset()
     FlushCache();
     if( fpImage != NULL )
         VSIFCloseL( fpImage );
-    CPLFree( pszProjection );
 }
 
 /************************************************************************/
@@ -164,7 +167,10 @@ ISIS2Dataset::~ISIS2Dataset()
 const char *ISIS2Dataset::GetProjectionRef()
 
 {
-    return pszProjection;
+    if( strlen(osProjection) > 0 )
+        return osProjection;
+    else
+        return GDALPamDataset::GetProjectionRef();
 }
 
 /************************************************************************/
@@ -181,7 +187,7 @@ CPLErr ISIS2Dataset::GetGeoTransform( double * padfTransform )
     }
     else
     {
-        return GDALDataset::GetGeoTransform( padfTransform );
+        return GDALPamDataset::GetGeoTransform( padfTransform );
     }
 }
 
@@ -259,13 +265,13 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     int	bNoDataSet = FALSE;
     char chByteOrder = 'M';  //default to MSB
     char szLayout[10] = "BSQ"; //default to band seq.
-    char target_name[60]; //planet name
+    const char *target_name; //planet name
     //projection parameters
     float xulcenter = 0.0;
     float yulcenter = 0.0;
-    char map_proj_name[60];
+    const char *map_proj_name;
     int	bProjectionSet = TRUE;
-    char proj_target_name[80]; 
+    char proj_target_name[200]; 
     char datum_name[60];  
     char sphere_name[60];
     char bIsGeographic = TRUE;
@@ -286,70 +292,51 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     s_iy = atoi(poDS->GetKeywordSub( "QUBE.SUFFIX_ITEMS", 2 ));
     s_iz = atoi(poDS->GetKeywordSub( "QUBE.SUFFIX_ITEMS", 3 ));
      
-    if( s_ix != 0 || s_iy != 0 || s_iz != 0 ) {
-        printf( "*** ISIS 2 cube file has invalid SUFFIX_ITEMS parameters:\n");
-        printf( "*** gdal isis2 driver requires (0, 0, 0), thus no sideplanes or backplanes");
-        printf( "found: (%i, %i, %i)\n\n", s_ix, s_iy, s_iz );
-        printf( "exit status 1\n\n" );
-        exit(1);
+    if( s_ix != 0 || s_iy != 0 || s_iz != 0 ) 
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "*** ISIS 2 cube file has invalid SUFFIX_ITEMS parameters:\n"
+                  "*** gdal isis2 driver requires (0, 0, 0), thus no sideplanes or backplanes\n"
+                  "found: (%i, %i, %i)\n\n", s_ix, s_iy, s_iz );
+        return NULL;
     } 
+
     /**************** end SUFFIX_ITEM check ***********************/
     
     
     /***********   Grab layout type (BSQ, BIP, BIL) ************/
     //  AXIS_NAME = (SAMPLE,LINE,BAND)
     /***********************************************************/
-#ifdef notdef
-    i = poDS->parse_label(pszCUBFilename, "AXIS_NAME", value);
-    if (i == FALSE) {
-        printf("\nAXIS_NAME not found. Abort\n\n");
-        exit(1);
-    }
+    const char *value;
+
+    value = poDS->GetKeyword( "QUBE.AXIS_NAME", "" );
     if (EQUAL(value,"(SAMPLE,LINE,BAND)") )
         strcpy(szLayout,"BSQ");
     else if (EQUAL(value,"(BAND,LINE,SAMPLE)") )
         strcpy(szLayout,"BIP");
-    else if (EQUAL(value,"(SAMPLE,BAND,LINE)") )
+    else if (EQUAL(value,"(SAMPLE,BAND,LINE)") || EQUAL(value,"") )
         strcpy(szLayout,"BSQ");
     else {
-        printf( "%s layout not supported. Abort\n\n", value);
-        exit(1);
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "%s layout not supported. Abort\n\n", value);
+        return NULL;
     }
 
     /***********   Grab samples lines band ************/
-    i = poDS->parse_label(pszCUBFilename, "CORE_ITEMS", value);
-    if (i == FALSE) {
-        printf("\nCORE_ITEMS not found. Abort\n\n");
-        exit(1);
-    }
-    i = poDS->strstrip(value,value_strip,1);
-    nCols = atoi(value_strip);
-    i = poDS->strstrip(value,value_strip,2);
-    nRows = atoi(value_strip);
-    i = poDS->strstrip(value,value_strip,3);
-    nBands = atoi(value_strip);
+    nCols = atoi(poDS->GetKeywordSub("QUBE.CORE_ITEMS",1));
+    nRows = atoi(poDS->GetKeywordSub("QUBE.CORE_ITEMS",2));
+    nBands = atoi(poDS->GetKeywordSub("QUBE.CORE_ITEMS",3));
     
     /***********   Grab Qube record bytes  **********/
-    i = poDS->parse_label(pszCUBFilename, "RECORD_BYTES", value);
-    if (i == FALSE) 
-    {
-        printf("\nRECORD_BYTES not found. Abort\n\n");
-        exit(1);
-    } else {
-        record_bytes = atoi(value);
-    }
+    record_bytes = atoi(poDS->GetKeyword("RECORD_BYTES"));
+
     if (nQube > 0)
         nSkipBytes = (nQube - 1) * record_bytes;     
     else
         nSkipBytes = 0;     
      
     /********   Grab format type - isis2 only supports 8,16,32 *******/
-    i = poDS->parse_label(pszCUBFilename, "CORE_ITEM_BYTES", value);
-    if (i == FALSE) {
-        printf("\nCORE_ITEM_BYTES not found. Abort\n\n");
-        exit(1);
-    }
-    itype = atoi(value);
+    itype = atoi(poDS->GetKeyword("QUBE.CORE_ITEM_BYTES",""));
     switch(itype) {
       case 1 :
         eDataType = GDT_Byte;
@@ -372,104 +359,75 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     /***********   Grab samples lines band ************/
-    i = poDS->parse_label(pszCUBFilename, "CORE_ITEM_TYPE", value);
-    if (i == FALSE) {
-        printf("\nCORE_ITEM_TYPE not found. Abort\n\n");
-        exit(1);
-    }
-    if ( (EQUAL(value,"PC_INTEGER")) || 
-         (EQUAL(value,"PC_UNSIGNED_INTEGER")) || 
-         (EQUAL(value,"PC_REAL")) ) {
+    value = poDS->GetKeyword( "QUBE.CORE_ITEM_TYPE" );
+    if( (EQUAL(value,"PC_INTEGER")) || 
+        (EQUAL(value,"PC_UNSIGNED_INTEGER")) || 
+        (EQUAL(value,"PC_REAL")) ) {
         chByteOrder = 'I';
     }
     
     /***********   Grab Cellsize ************/
-    i = poDS->parse_label(pszCUBFilename, "MAP_SCALE", value);
-    if (i) {
+    value = poDS->GetKeyword("QUBE.IMAGE_MAP_PROJECTION.MAP_SCALE");
+    if (strlen(value) > 0 ) {
         dfXDim = (float) atof(value) * 1000.0; /* convert from km to m */
         dfYDim = (float) atof(value) * 1000.0 * -1;
     }
     
     /***********   Grab LINE_PROJECTION_OFFSET ************/
-    i = poDS->parse_label(pszCUBFilename, "LINE_PROJECTION_OFFSET", value);
-    if (i) {
+    value = poDS->GetKeyword("QUBE.IMAGE_MAP_PROJECTION.LINE_PROJECTION_OFFSET");
+    if (strlen(value) > 0) {
         yulcenter = (float) atof(value);
         yulcenter = ((yulcenter) * dfYDim);
         dfULYMap = yulcenter - (dfYDim/2);
     }
      
     /***********   Grab SAMPLE_PROJECTION_OFFSET ************/
-    i = poDS->parse_label(pszCUBFilename, "SAMPLE_PROJECTION_OFFSET", value);
-    if (i) {
+    value = poDS->GetKeyword("QUBE.IMAGE_MAP_PROJECTION.SAMPLE_PROJECTION_OFFSET");
+    if( strlen(value) > 0 ) {
         xulcenter = (float) atof(value);
-        xulcenter = ((yulcenter) * dfXDim);
+        xulcenter = ((xulcenter) * dfXDim);
         dfULXMap = xulcenter - (dfXDim/2);
     }
      
     /***********  Grab TARGET_NAME  ************/
     /**** This is the planets name i.e. MARS ***/
-    i = poDS->parse_label(pszCUBFilename, "TARGET_NAME", target_name);
-    if (i) {
-        //printf("ISIS 2 Target Name: %s\n", target_name);
-    }
+    target_name = poDS->GetKeyword("QUBE.TARGET_NAME");
      
     /***********   Grab MAP_PROJECTION_TYPE ************/
-    i = poDS->parse_label(pszCUBFilename, "MAP_PROJECTION_TYPE", map_proj_name);
-    if (i) {
-        //printf("ISIS 2 projection: %s\n", map_proj_name);
-    }
+    map_proj_name = 
+        poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.MAP_PROJECTION_TYPE");
      
     /***********   Grab SEMI-MAJOR ************/
-    i = poDS->parse_label(pszCUBFilename, "A_AXIS_RADIUS", value);
-    if (i) {
-        semi_major = (double) atof(value);
-        printf("SemiMajor: %f\n", semi_major); 
-    }
+    semi_major = 
+        atof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.A_AXIS_RADIUS"));
 
     /***********   Grab semi-minor ************/
-    i = poDS->parse_label(pszCUBFilename, "C_AXIS_RADIUS", value);
-    if (i) {
-        semi_major = (double) atof(value);
-        printf("SemiMinor: %f\n", semi_major); 
-    }
+    semi_minor = 
+        atof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.C_AXIS_RADIUS"));
 
     /***********   Grab CENTER_LAT ************/
-    i = poDS->parse_label(pszCUBFilename, "CENTER_LATITUDE", value);
-    if (i) {
-        center_lat = (float) atof(value); 
-        printf("center_lat: %f\n", center_lat); 
-    }
+    center_lat = 
+        atof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.CENTER_LATITUDE"));
 
     /***********   Grab CENTER_LON ************/
-    i = poDS->parse_label(pszCUBFilename, "CENTER_LONGITUDE", value);
-    if (i) {
-        center_lon = (float) atof(value);
-        printf("center_lon: %f\n", center_lon); 
-    }
+    center_lon = 
+        atof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.CENTER_LONGITUDE"));
 
     /***********   Grab 1st std parallel ************/
-    i = poDS->parse_label(pszCUBFilename, "FIRST_STANDARD_PARALLEL", value);
-    if (i) {
-        first_std_parallel = (float) atof(value);
-        printf("first std par: %f\n", center_lon);
-    }
+    first_std_parallel = 
+        atof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.FIRST_STANDARD_PARALLEL"));
 
     /***********   Grab 2nd std parallel ************/
-    i = poDS->parse_label(pszCUBFilename, "SECOND_STANDARD_PARALLEL", value);
-    if (i) {
-        second_std_parallel = (float) atof(value);
-        printf("second std par: %f\n", second_std_parallel);
-    }
+    second_std_parallel = 
+        atof(poDS->GetKeyword( "QUBE.IMAGE_MAP_PROJECTION.SECOND_STANDARD_PARALLEL"));
      
     /*** grab  PROJECTION_LATITUDE_TYPE = "PLANETOCENTRIC" ****/
     // Need to further study how ocentric/ographic will effect the gdal library.
     // So far we will use this fact to define a sphere or ellipse for some projections
     // Frank - may need to talk this over
-    i = poDS->parse_label(pszCUBFilename, "PROJECTION_LATITUDE_TYPE", value);
-    if (i) {
-        if (EQUAL( value, "\"PLANETOCENTRIC\"" ))
-            bIsGeographic = FALSE; 
-    }
+    value = poDS->GetKeyword("CUBE.IMAGE_MAP_PROJECTION.PROJECTION_LATITUDE_TYPE");
+    if (EQUAL( value, "\"PLANETOCENTRIC\"" ))
+        bIsGeographic = FALSE; 
      
     //Set oSRS projection and parameters
     if ((EQUAL( map_proj_name, "\"EQUIRECTANGULAR_CYLINDRICAL\"" )) ||
@@ -536,21 +494,30 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 	     (EQUAL( map_proj_name, "\"ORTHOGRAPHIC\"" )) || 
 	     (EQUAL( map_proj_name, "\"SINUSOIDAL\"" )) ) { //flattening = 1.0 for sphere
             oSRS.SetGeogCS( proj_target_name, datum_name, sphere_name,
-                            semi_major, 1.0, "Reference_Meridian", 0.0, "degree" );
+                            semi_major*1000, 0.0, 
+                            "Reference_Meridian", 0.0 );
             //Here isis2 uses the polar radius to define m/p, so we should use the polar radius for body
         } else if  (EQUAL( map_proj_name, "\"POLAR_STEREOGRAPHIC\"" )) { 
-            //flattening = 1.0 for sphere using minor axis
             oSRS.SetGeogCS( proj_target_name, datum_name, sphere_name,
-                            semi_minor, 1.0, "Reference_Meridian", 0.0, "degree" );
+                            semi_minor*1000.0, 1.0, 
+                            "Reference_Meridian", 0.0 );
         } else { //ellipse => Mercator, Transverse Mercator, Lambert Conformal
             if (bIsGeographic) {
                 oSRS.SetGeogCS( proj_target_name, datum_name, sphere_name,
-                                semi_major, iflattening, "Reference_Meridian", 0.0, "degree" );
-            } else { //we have Ocentric so use a sphere! I hope... So flattening is 1.0
+                                semi_major*1000, iflattening, 
+                                "Reference_Meridian", 0.0 );
+            } else { //we have Ocentric so use a sphere! I hope... 
                 oSRS.SetGeogCS( proj_target_name, datum_name, sphere_name,
-                                semi_major, 1.0, "Reference_Meridian", 0.0, "degree" );
+                                semi_major*1000, 0.0, 
+                                "Reference_Meridian", 0.0 );
             }
         }
+
+        // translate back into a projection string.
+        char *pszResult = NULL;
+        oSRS.exportToWkt( &pszResult );
+        poDS->osProjection = pszResult;
+        CPLFree( pszResult );
     }
 
 /* END ISIS2 Label Read */
@@ -559,19 +526,21 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*     Is the CUB detached - if so, reset name to binary file?          */
 /* -------------------------------------------------------------------- */
+#ifdef notdef
     // Frank - is this correct?
     //The extension already added on so don't add another. But is this needed?
     char *pszPath = CPLStrdup( CPLGetPath( poOpenInfo->pszFilename ) );
     char *pszName = CPLStrdup( CPLGetBasename( poOpenInfo->pszFilename ) );
     if (bIsDetached)
         pszCUBFilename = CPLFormCIFilename( pszPath, detachedCub, "" );
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Did we get the required keywords?  If not we return with        */
 /*      this never having been considered to be a match. This isn't     */
 /*      an error!                                                       */
 /* -------------------------------------------------------------------- */
-    if( nRows == -1 || nCols == -1 )
+    if( nRows < 1 || nCols < 1 || nBands < 1 )
     {
         return NULL;
     }
@@ -585,8 +554,6 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open target binary file.                                        */
 /* -------------------------------------------------------------------- */
-    
-    //printf("psztarget: %s\n", pszFilename);
     
     if( poOpenInfo->eAccess == GA_ReadOnly )
         poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
@@ -632,6 +599,8 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
+    int i;
+
     poDS->nBands = nBands;;
     for( i = 0; i < poDS->nBands; i++ )
     {
@@ -657,12 +626,11 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for a .prj file. For isis2 I would like to keep this in   */
 /* -------------------------------------------------------------------- */
+    CPLString osPath, osName;
 
-    pszPath = CPLStrdup( CPLGetPath( poOpenInfo->pszFilename ) );
-    pszName = CPLStrdup( CPLGetBasename(poOpenInfo->pszFilename) );
-    const char  *pszPrjFile = CPLFormCIFilename( pszPath, pszName, "prj" );
-    CPLFree( pszPath );
-    CPLFree( pszName );
+    osPath = CPLGetPath( poOpenInfo->pszFilename );
+    osName = CPLGetBasename(poOpenInfo->pszFilename);
+    const char  *pszPrjFile = CPLFormCIFilename( osPath, osName, "prj" );
 
     fp = VSIFOpen( pszPrjFile, "r" );
     if( fp != NULL )
@@ -676,8 +644,10 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
         if( oSRS.importFromESRI( papszLines ) == OGRERR_NONE )
         {
-            CPLFree( poDS->pszProjection );
-            oSRS.exportToWkt( &(poDS->pszProjection) );
+            char *pszResult = NULL;
+            oSRS.exportToWkt( &pszResult );
+            poDS->osProjection = pszResult;
+            CPLFree( pszResult );
         }
 
         CSLDestroy( papszLines );
@@ -709,7 +679,6 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
-#endif
 
     return( poDS );
 }
@@ -856,7 +825,6 @@ int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix )
         else
         {
             osName = pszPathPrefix + osName;
-            printf( "%s=%s\n", osName.c_str(), osValue.c_str() );
             papszKeywordList = CSLSetNameValue( papszKeywordList, 
                                                 osName, osValue );
         }
@@ -880,6 +848,10 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue )
         return FALSE;
 
     SkipWhite();
+
+    if( EQUAL(osName,"END") )
+        return TRUE;
+
     if( *pszHeaderNext != '=' )
         return FALSE;
     
@@ -891,17 +863,16 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue )
 
     if( *pszHeaderNext == '(' )
     {
-        osValue = "";
+        CPLString osWord;
 
-        // TODO: Fix to capture, removing white space, honours strings.
-        while( *pszHeaderNext != ')' )
+        while( ReadWord( osWord ) )
         {
-            if( *pszHeaderNext == '\0' )
-                return FALSE;
-               
-            *pszHeaderNext++;
+            SkipWhite();
+
+            osValue += osWord;
+            if( osWord[strlen(osWord)-1] == ')' )
+                break;
         }
-        pszHeaderNext++;
 
         return TRUE;
     }
