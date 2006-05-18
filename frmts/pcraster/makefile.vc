@@ -6,7 +6,7 @@ OBJ = pcrasterdataset.obj pcrastermisc.obj pcrasterutil.obj \
 	pcrasterrasterband.obj
 
 !IFNDEF PCRASTER_EXTERNAL_LIB
-EXTRAFLAGS = 	-Ilibcsf
+EXTRAFLAGS = 	-Ilibcsf -DUSE_IN_GDAL
 !ENDIF
 
 GDAL_ROOT	=	..\..
