@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2006/05/19 05:13:11  fwarmerdam
+ * Remove debug stuff.
+ *
  * Revision 1.57  2006/05/19 04:53:41  fwarmerdam
  * Update to debug output.
  *
@@ -1025,11 +1028,6 @@ char *MrSIDDataset::SerializeMetadataRec( const LTIMetadataRecord *poMetadataRec
 int MrSIDDataset::GetMetadataElement( const char *pszKey, void *pValue,
                                       int iLength )
 {
-    if( strstr(pszKey,"::308") != NULL )
-    {
-        printf( "Trying %s.\n", pszKey );
-    }
-
     if ( !poMetadata->has( pszKey ) )
         return FALSE;
 
@@ -1038,11 +1036,6 @@ int MrSIDDataset::GetMetadataElement( const char *pszKey, void *pValue,
 
     if ( !poMetadataRec->isScalar() )
 	return FALSE;
-
-    if( strstr(pszKey,"::308") != NULL )
-    {
-        printf( "%s is scalar!\n", pszKey );
-    }
 
     // XXX: return FALSE if we have more than one element in metadata record
     int iSize;
