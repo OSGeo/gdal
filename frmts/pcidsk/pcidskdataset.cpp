@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/05/19 00:14:44  fwarmerdam
+ * fixed handling of bands per pixel type counts (bug 1188)
+ *
  * Revision 1.18  2005/10/18 18:15:55  fwarmerdam
  * avoid very long string constant
  *
@@ -1292,19 +1295,19 @@ GDALDataset *PCIDSKDataset::Create( const char * pszFilename,
     if ( eType == GDT_Byte )
         sprintf( szTemp + 464, "%4d", nBands );
     else
-        CPLPrintStringFill( szTemp + 464, "", 4 );
+        CPLPrintStringFill( szTemp + 464, "   0", 4 );
     if ( eType == GDT_Int16 )
         sprintf( szTemp + 468, "%4d", nBands );
     else
-        CPLPrintStringFill( szTemp + 468, "", 4 );
+        CPLPrintStringFill( szTemp + 468, "   0", 4 );
     if ( eType == GDT_UInt16 )
         sprintf( szTemp + 472, "%4d", nBands );
     else
-        CPLPrintStringFill( szTemp + 472, "", 4 );
+        CPLPrintStringFill( szTemp + 472, "   0", 4 );
     if ( eType == GDT_Float32 )
         sprintf( szTemp + 476, "%4d", nBands );
     else
-        CPLPrintStringFill( szTemp + 476, "", 4 );
+        CPLPrintStringFill( szTemp + 476, "   0", 4 );
     CPLPrintStringFill( szTemp + 480, "", 32 );
     
     VSIFSeekL( fp, 0, SEEK_SET );
