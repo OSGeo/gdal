@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2006/05/19 04:32:43  fwarmerdam
+ * moved the mrsidcommon.h stuff out of the MRSID_ESDK ifdef.
+ *
  * Revision 1.55  2006/05/19 02:56:29  fwarmerdam
  * added temporary debugging stuff.
  *
@@ -1394,200 +1397,6 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
     return( poDS );
 }
 
-#ifdef MRSID_ESDK
-
-/************************************************************************/
-/* ==================================================================== */
-/*                        MrSIDDummyImageReader                         */
-/*                                                                      */
-/*  This is a helper class to wrap GDAL calls in MrSID interface.       */
-/* ==================================================================== */
-/************************************************************************/
-
-class MrSIDDummyImageReader : public LTIImageReader
-{
-  public:
-
-    MrSIDDummyImageReader( GDALDataset *poSrcDS );
-    ~MrSIDDummyImageReader();
-    LT_STATUS           initialize();
-    lt_int64            getPhysicalFileSize(void) const { return 0; };
-
-  private:
-    GDALDataset         *poDS;
-    GDALDataType        eDataType;
-    LTIDataType         eSampleType;
-    const LTIPixel      *poPixel;
-    
-    double              adfGeoTransform[6];
-
-    virtual LT_STATUS   decodeStrip( LTISceneBuffer& stripBuffer,
-                                     const LTIScene& stripScene );
-    virtual LT_STATUS   decodeBegin( const LTIScene& scene )
-                            { return LT_STS_Success; };
-    virtual LT_STATUS   decodeEnd() { return LT_STS_Success; };
-};
-
-/************************************************************************/
-/*                        MrSIDDummyImageReader()                       */
-/************************************************************************/
-
-MrSIDDummyImageReader::MrSIDDummyImageReader( GDALDataset *poSrcDS ) :
-                                            LTIImageReader(), poDS(poSrcDS)
-{
-    poPixel = NULL;
-}
-
-/************************************************************************/
-/*                        ~MrSIDDummyImageReader()                      */
-/************************************************************************/
-
-MrSIDDummyImageReader::~MrSIDDummyImageReader()
-{
-    if ( poPixel )
-        delete poPixel;
-}
-
-/************************************************************************/
-/*                             initialize()                             */
-/************************************************************************/
-
-LT_STATUS MrSIDDummyImageReader::initialize()
-{
-    if ( !LT_SUCCESS(LTIImageReader::initialize()) )
-        return LT_STS_Failure;
-    
-    lt_uint16 nBands = (lt_uint16)poDS->GetRasterCount();
-    LTIColorSpace eColorSpace = LTI_COLORSPACE_RGB;
-    switch ( nBands )
-    {
-        case 1:
-            eColorSpace = LTI_COLORSPACE_GRAYSCALE;
-            break;
-        case 3:
-            eColorSpace = LTI_COLORSPACE_RGB;
-            break;
-        default:
-            eColorSpace = LTI_COLORSPACE_MULTISPECTRAL;
-            break;
-    }
-    
-    eDataType = poDS->GetRasterBand(1)->GetRasterDataType();
-    switch ( eDataType )
-    {
-        case GDT_UInt16:
-            eSampleType = LTI_DATATYPE_UINT16;
-            break;
-        case GDT_Int16:
-            eSampleType = LTI_DATATYPE_SINT16;
-            break;
-        case GDT_UInt32:
-            eSampleType = LTI_DATATYPE_UINT32;
-            break;
-        case GDT_Int32:
-            eSampleType = LTI_DATATYPE_SINT32;
-            break;
-        case GDT_Float32:
-            eSampleType = LTI_DATATYPE_FLOAT32;
-            break;
-        case GDT_Float64:
-            eSampleType = LTI_DATATYPE_FLOAT64;
-            break;
-        case GDT_Byte:
-        default:
-            eSampleType = LTI_DATATYPE_UINT8;
-            break;
-    }
-
-    poPixel = new LTIPixel( eColorSpace, nBands, eSampleType );
-    if ( !LT_SUCCESS(setPixelProps(*poPixel)) )
-        return LT_STS_Failure;
-
-    if ( !LT_SUCCESS(setDimensions(poDS->GetRasterXSize(),
-                                   poDS->GetRasterYSize())) )
-        return LT_STS_Failure;
-
-    if ( poDS->GetGeoTransform( adfGeoTransform ) == CE_None )
-    {
-#ifdef MRSID_SDK_40
-        LTIGeoCoord oGeo( adfGeoTransform[0] + adfGeoTransform[1] / 2,
-                          adfGeoTransform[3] + adfGeoTransform[5] / 2,
-                          adfGeoTransform[1], adfGeoTransform[5],
-                          adfGeoTransform[2], adfGeoTransform[4], NULL,
-                          poDS->GetProjectionRef() );
-#else
-        LTIGeoCoord oGeo( adfGeoTransform[0] + adfGeoTransform[1] / 2,
-                          adfGeoTransform[3] + adfGeoTransform[5] / 2,
-                          adfGeoTransform[1], adfGeoTransform[5],
-                          adfGeoTransform[2], adfGeoTransform[4], 
-                          poDS->GetProjectionRef() );
-#endif
-        if ( !LT_SUCCESS(setGeoCoord( oGeo )) )
-            return LT_STS_Failure;
-    }
-
-    /*int     bSuccess;
-    double  dfNoDataValue = poDS->GetNoDataValue( &bSuccess );
-    if ( bSuccess )
-    {
-        LTIPixel    oNoDataPixel( *poPixel );
-        lt_uint16   iBand;
-
-        for (iBand = 0; iBand < (lt_uint16)poDS->GetRasterCount(); iBand++)
-            oNoDataPixel.setSampleValueFloat32( iBand, dfNoDataValue );
-        if ( !LT_SUCCESS(setNoDataPixel( &oNoDataPixel )) )
-            return LT_STS_Failure;
-    }*/
-
-    setDefaultDynamicRange();
-    setClassicalMetadata();
-
-    return LT_STS_Success;
-}
-
-/************************************************************************/
-/*                             decodeStrip()                            */
-/************************************************************************/
-
-LT_STATUS MrSIDDummyImageReader::decodeStrip(LTISceneBuffer& stripData,
-                                             const LTIScene& stripScene)
-{
-    const lt_int32  nXOff = stripScene.getUpperLeftCol();
-    const lt_int32  nYOff = stripScene.getUpperLeftRow();
-    const lt_int32  nBufXSize = stripScene.getNumCols();
-    const lt_int32  nBufYSize = stripScene.getNumRows();
-    const lt_uint16 nBands = poPixel->getNumBands();
-
-    void    *pData = CPLMalloc(nBufXSize * nBufYSize * poPixel->getNumBytes());
-    if ( !pData )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "MrSIDDummyImageReader::decodeStrip(): "
-                  "Cannot allocate enough space for scene buffer" );
-        return LT_STS_Failure;
-    }
-
-    poDS->RasterIO( GF_Read, nXOff, nYOff, nBufXSize, nBufYSize, 
-                    pData, nBufXSize, nBufYSize, eDataType, nBands, NULL, 
-                    0, 0, 0 );
-    stripData.importDataBSQ( pData );
-
-    CPLFree( pData );
-
-    return LT_STS_Success;
-}
-
-
-/************************************************************************/
-/*                             FlushCache()                             */
-/************************************************************************/
-
-void MrSIDDataset::FlushCache()
-
-{
-    GDALDataset::FlushCache();
-}
-
 /************************************************************************/
 /*                    EPSGProjMethodToCTProjMethod()                    */
 /*                                                                      */
@@ -2853,6 +2662,200 @@ char *MrSIDDataset::GetOGISDefn( GTIFDefn *psDefn )
         return pszWKT;
     else
         return NULL;
+}
+
+#ifdef MRSID_ESDK
+
+/************************************************************************/
+/* ==================================================================== */
+/*                        MrSIDDummyImageReader                         */
+/*                                                                      */
+/*  This is a helper class to wrap GDAL calls in MrSID interface.       */
+/* ==================================================================== */
+/************************************************************************/
+
+class MrSIDDummyImageReader : public LTIImageReader
+{
+  public:
+
+    MrSIDDummyImageReader( GDALDataset *poSrcDS );
+    ~MrSIDDummyImageReader();
+    LT_STATUS           initialize();
+    lt_int64            getPhysicalFileSize(void) const { return 0; };
+
+  private:
+    GDALDataset         *poDS;
+    GDALDataType        eDataType;
+    LTIDataType         eSampleType;
+    const LTIPixel      *poPixel;
+    
+    double              adfGeoTransform[6];
+
+    virtual LT_STATUS   decodeStrip( LTISceneBuffer& stripBuffer,
+                                     const LTIScene& stripScene );
+    virtual LT_STATUS   decodeBegin( const LTIScene& scene )
+                            { return LT_STS_Success; };
+    virtual LT_STATUS   decodeEnd() { return LT_STS_Success; };
+};
+
+/************************************************************************/
+/*                        MrSIDDummyImageReader()                       */
+/************************************************************************/
+
+MrSIDDummyImageReader::MrSIDDummyImageReader( GDALDataset *poSrcDS ) :
+                                            LTIImageReader(), poDS(poSrcDS)
+{
+    poPixel = NULL;
+}
+
+/************************************************************************/
+/*                        ~MrSIDDummyImageReader()                      */
+/************************************************************************/
+
+MrSIDDummyImageReader::~MrSIDDummyImageReader()
+{
+    if ( poPixel )
+        delete poPixel;
+}
+
+/************************************************************************/
+/*                             initialize()                             */
+/************************************************************************/
+
+LT_STATUS MrSIDDummyImageReader::initialize()
+{
+    if ( !LT_SUCCESS(LTIImageReader::initialize()) )
+        return LT_STS_Failure;
+    
+    lt_uint16 nBands = (lt_uint16)poDS->GetRasterCount();
+    LTIColorSpace eColorSpace = LTI_COLORSPACE_RGB;
+    switch ( nBands )
+    {
+        case 1:
+            eColorSpace = LTI_COLORSPACE_GRAYSCALE;
+            break;
+        case 3:
+            eColorSpace = LTI_COLORSPACE_RGB;
+            break;
+        default:
+            eColorSpace = LTI_COLORSPACE_MULTISPECTRAL;
+            break;
+    }
+    
+    eDataType = poDS->GetRasterBand(1)->GetRasterDataType();
+    switch ( eDataType )
+    {
+        case GDT_UInt16:
+            eSampleType = LTI_DATATYPE_UINT16;
+            break;
+        case GDT_Int16:
+            eSampleType = LTI_DATATYPE_SINT16;
+            break;
+        case GDT_UInt32:
+            eSampleType = LTI_DATATYPE_UINT32;
+            break;
+        case GDT_Int32:
+            eSampleType = LTI_DATATYPE_SINT32;
+            break;
+        case GDT_Float32:
+            eSampleType = LTI_DATATYPE_FLOAT32;
+            break;
+        case GDT_Float64:
+            eSampleType = LTI_DATATYPE_FLOAT64;
+            break;
+        case GDT_Byte:
+        default:
+            eSampleType = LTI_DATATYPE_UINT8;
+            break;
+    }
+
+    poPixel = new LTIPixel( eColorSpace, nBands, eSampleType );
+    if ( !LT_SUCCESS(setPixelProps(*poPixel)) )
+        return LT_STS_Failure;
+
+    if ( !LT_SUCCESS(setDimensions(poDS->GetRasterXSize(),
+                                   poDS->GetRasterYSize())) )
+        return LT_STS_Failure;
+
+    if ( poDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+    {
+#ifdef MRSID_SDK_40
+        LTIGeoCoord oGeo( adfGeoTransform[0] + adfGeoTransform[1] / 2,
+                          adfGeoTransform[3] + adfGeoTransform[5] / 2,
+                          adfGeoTransform[1], adfGeoTransform[5],
+                          adfGeoTransform[2], adfGeoTransform[4], NULL,
+                          poDS->GetProjectionRef() );
+#else
+        LTIGeoCoord oGeo( adfGeoTransform[0] + adfGeoTransform[1] / 2,
+                          adfGeoTransform[3] + adfGeoTransform[5] / 2,
+                          adfGeoTransform[1], adfGeoTransform[5],
+                          adfGeoTransform[2], adfGeoTransform[4], 
+                          poDS->GetProjectionRef() );
+#endif
+        if ( !LT_SUCCESS(setGeoCoord( oGeo )) )
+            return LT_STS_Failure;
+    }
+
+    /*int     bSuccess;
+    double  dfNoDataValue = poDS->GetNoDataValue( &bSuccess );
+    if ( bSuccess )
+    {
+        LTIPixel    oNoDataPixel( *poPixel );
+        lt_uint16   iBand;
+
+        for (iBand = 0; iBand < (lt_uint16)poDS->GetRasterCount(); iBand++)
+            oNoDataPixel.setSampleValueFloat32( iBand, dfNoDataValue );
+        if ( !LT_SUCCESS(setNoDataPixel( &oNoDataPixel )) )
+            return LT_STS_Failure;
+    }*/
+
+    setDefaultDynamicRange();
+    setClassicalMetadata();
+
+    return LT_STS_Success;
+}
+
+/************************************************************************/
+/*                             decodeStrip()                            */
+/************************************************************************/
+
+LT_STATUS MrSIDDummyImageReader::decodeStrip(LTISceneBuffer& stripData,
+                                             const LTIScene& stripScene)
+{
+    const lt_int32  nXOff = stripScene.getUpperLeftCol();
+    const lt_int32  nYOff = stripScene.getUpperLeftRow();
+    const lt_int32  nBufXSize = stripScene.getNumCols();
+    const lt_int32  nBufYSize = stripScene.getNumRows();
+    const lt_uint16 nBands = poPixel->getNumBands();
+
+    void    *pData = CPLMalloc(nBufXSize * nBufYSize * poPixel->getNumBytes());
+    if ( !pData )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "MrSIDDummyImageReader::decodeStrip(): "
+                  "Cannot allocate enough space for scene buffer" );
+        return LT_STS_Failure;
+    }
+
+    poDS->RasterIO( GF_Read, nXOff, nYOff, nBufXSize, nBufYSize, 
+                    pData, nBufXSize, nBufYSize, eDataType, nBands, NULL, 
+                    0, 0, 0 );
+    stripData.importDataBSQ( pData );
+
+    CPLFree( pData );
+
+    return LT_STS_Success;
+}
+
+
+/************************************************************************/
+/*                             FlushCache()                             */
+/************************************************************************/
+
+void MrSIDDataset::FlushCache()
+
+{
+    GDALDataset::FlushCache();
 }
 
 /************************************************************************/
