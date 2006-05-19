@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2006/05/19 04:53:41  fwarmerdam
+ * Update to debug output.
+ *
  * Revision 1.56  2006/05/19 04:32:43  fwarmerdam
  * moved the mrsidcommon.h stuff out of the MRSID_ESDK ifdef.
  *
@@ -1022,7 +1025,7 @@ char *MrSIDDataset::SerializeMetadataRec( const LTIMetadataRecord *poMetadataRec
 int MrSIDDataset::GetMetadataElement( const char *pszKey, void *pValue,
                                       int iLength )
 {
-    if( strstr(pszKey,"::3080::") != NULL )
+    if( strstr(pszKey,"::308") != NULL )
     {
         printf( "Trying %s.\n", pszKey );
     }
@@ -1036,7 +1039,7 @@ int MrSIDDataset::GetMetadataElement( const char *pszKey, void *pValue,
     if ( !poMetadataRec->isScalar() )
 	return FALSE;
 
-    if( strstr(pszKey,"::3080::") != NULL )
+    if( strstr(pszKey,"::308") != NULL )
     {
         printf( "%s is scalar!\n", pszKey );
     }
