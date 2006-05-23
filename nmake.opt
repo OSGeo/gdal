@@ -22,8 +22,14 @@ SWIG = D:\swig\swig-1.3.25\swig.exe
 #OPTFLAGS=	/nologo /MD /EHsc /Ox
 OPTFLAGS=	/nologo /MD /EHsc /Zi /Fd$(GDAL_ROOT)\gdal.pdb
 
+# Uncomment the following if you are building for 64-bit windows
+# (x64). You'll need to have PATH, INCLUDE and LIB set up for 64-bit
+# compiles.
+#WIN64=YES
+
 # If you don't want some entry points to have STDCALL conventions, 
-# comment out the following and add -DCPL_DISABLE_STDCALL in OPTFLAGS
+# comment out the following and add -DCPL_DISABLE_STDCALL in OPTFLAGS.
+# This option has no effect on 64-bit windows.
 STDCALL=YES
 
 # Version number embedded in DLL name. 
@@ -149,8 +155,8 @@ JPEG_SUPPORTED = 1
 #FME_DIR =	d:\Software\fme
 
 # Uncomment the following to enable FITS format support
-#FITS_DIR =	"D:\Users\154712\My Documents\Visual Studio Projects\cfitsio"
-#FITS_LIB =	$(FITS_DIR)\cfitsio.lib
+#FITS_INC_DIR =	c:\dev32\usr\include\cfitsio
+#FITS_LIB =	c:\dev32\usr\lib\cfitsio.lib
 
 # Uncomment the following to enable NetCDF format.
 #NETCDF_SETTING=yes
@@ -228,6 +234,14 @@ ODBCLIB = odbc32.lib
 !IFNDEF MRSID_PLUGIN
 MRSID_ELIB = $(MRSID_LIB)
 !ENDIF
+!ENDIF
+
+# Under win64, symbols for function names lack the underscore prefix
+# present on win32. Also the STDCALL calling convention is not used.
+!IFDEF WIN64
+!UNDEF STDCALL
+!ELSE
+SYM_PREFIX=_
 !ENDIF
 
 EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(OCI_LIB) $(PG_LIB) $(ODBCLIB) \
