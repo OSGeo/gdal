@@ -1,7 +1,7 @@
 
 OBJ	=	fitsdataset.obj
 
-EXTRAFLAGS = 	-I$(FITS_DIR) -DFRMT_fits 
+EXTRAFLAGS = 	-I$(FITS_INC_DIR) -DFRMT_fits 
 
 GDAL_ROOT	=	..\..
 
