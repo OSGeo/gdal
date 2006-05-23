@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/05/23 23:05:20  mloskot
+ * Added CPL_DEBUG diagnostics and variables initialization to ogrinfo.cpp.
+ *
  * Revision 1.33  2006/05/15 18:28:48  fwarmerdam
  * allow attribute filter on -sql requests
  *
@@ -264,8 +267,8 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Open data source.                                               */
 /* -------------------------------------------------------------------- */
-    OGRDataSource       *poDS;
-    OGRSFDriver         *poDriver;
+    OGRDataSource       *poDS = NULL;
+    OGRSFDriver         *poDriver = NULL;
 
     poDS = OGRSFDriverRegistrar::Open( pszDataSource, !bReadOnly, &poDriver );
     if( poDS == NULL && !bReadOnly )
@@ -297,12 +300,14 @@ int main( int nArgc, char ** papszArgv )
         exit( 1 );
     }
 
+    CPLAssert( poDriver != NULL);
+
 /* -------------------------------------------------------------------- */
 /*      Some information messages.                                      */
 /* -------------------------------------------------------------------- */
     if( bVerbose )
         printf( "INFO: Open of `%s'\n"
-                "using driver `%s' successful.\n",
+                "      using driver `%s' successful.\n",
                 pszDataSource, poDriver->GetName() );
 
     if( bVerbose && !EQUAL(pszDataSource,poDS->GetName()) )
@@ -340,6 +345,8 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Process each data source layer.                                 */
 /* -------------------------------------------------------------------- */
+    CPLDebug( "OGR", "GetLayerCount() = %d\n", poDS->GetLayerCount() );
+
     for( int iRepeat = 0; iRepeat < nRepeatCount; iRepeat++ )
     {
         for( int iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
