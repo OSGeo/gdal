@@ -1,6 +1,7 @@
 ID
 GDALmake.opt
 config.status
+config.log
 autom4te.cache
 libtool
 man
