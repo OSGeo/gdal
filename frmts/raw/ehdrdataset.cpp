@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2006/05/24 22:26:20  fwarmerdam
+ * added support for reading and writing NBITS=1-7 files
+ *
  * Revision 1.37  2006/03/03 02:35:23  fwarmerdam
  * Be careful in constructor about zero band images.
  *
@@ -108,8 +111,12 @@ CPL_C_END
 /* ==================================================================== */
 /************************************************************************/
 
+class EHdrRasterBand;
+
 class EHdrDataset : public RawDataset
 {
+    friend class EHdrRasterBand;
+
     FILE	*fpImage;	// image data file.
 
     int         bGotTransform;
@@ -121,6 +128,7 @@ class EHdrDataset : public RawDataset
 
     CPLErr      RewriteHDR();
     void        ResetKeyValue( const char *pszKey, const char *pszValue );
+    const char *GetKeyValue( const char *pszKey, const char *pszDefault = "" );
     void        RewriteColorTable( GDALColorTable * );
 
   public:
@@ -136,7 +144,205 @@ class EHdrDataset : public RawDataset
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
+    static GDALDataset *CreateCopy( const char * pszFilename, 
+                                    GDALDataset * poSrcDS, 
+                                    int bStrict, char ** papszOptions,
+                                    GDALProgressFunc pfnProgress,
+                                    void * pProgressData );
 };
+
+/************************************************************************/
+/* ==================================================================== */
+/*                          EHdrRasterBand                              */
+/* ==================================================================== */
+/************************************************************************/
+
+class EHdrRasterBand : public GDALPamRasterBand
+{
+    EHdrDataset   *poEDS;
+    int            nBits;
+    long           nStartBit;
+    int            nPixelOffsetBits;
+    int            nLineOffsetBits;
+
+  public:
+
+                   EHdrRasterBand( EHdrDataset *poDS );
+
+    virtual CPLErr IReadBlock( int, int, void * );
+    virtual CPLErr IWriteBlock( int, int, void * );
+};
+
+/************************************************************************/
+/*                           EHdrRasterBand()                           */
+/************************************************************************/
+
+EHdrRasterBand::EHdrRasterBand( EHdrDataset *poDS )
+
+{
+    poEDS = poDS;
+    eDataType = GDT_Byte;
+
+    nBits = atoi(poEDS->GetKeyValue("NBITS","1"));
+    nStartBit = atoi(poDS->GetKeyValue("SKIPBYTES")) * 8;
+    nPixelOffsetBits = nBits;
+    nLineOffsetBits = atoi(poDS->GetKeyValue("TOTALROWBYTES")) * 8;
+    if( nLineOffsetBits == 0 )
+        nLineOffsetBits = nPixelOffsetBits * poEDS->GetRasterXSize();
+
+    nBlockXSize = poDS->GetRasterXSize();
+    nBlockYSize = 1;
+
+    SetMetadataItem( "NBITS", 
+                     CPLString().Printf( "%ld", nBits ) );
+}
+
+/************************************************************************/
+/*                             IReadBlock()                             */
+/************************************************************************/
+
+CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                   void * pImage )
+
+{
+    vsi_l_offset   nLineStart;
+    unsigned int   nLineBytes;
+    int            iBitOffset;
+    GByte         *pabyBuffer;
+
+/* -------------------------------------------------------------------- */
+/*      Establish desired position.                                     */
+/* -------------------------------------------------------------------- */
+    nLineBytes = (nPixelOffsetBits*nBlockXSize + 7)/8;
+    nLineStart = (nStartBit + ((vsi_l_offset)nLineOffsetBits) * nBlockYOff) / 8;
+    iBitOffset = 
+        (nStartBit + ((vsi_l_offset)nLineOffsetBits) * nBlockYOff) % 8;
+
+/* -------------------------------------------------------------------- */
+/*      Read data into buffer.                                          */
+/* -------------------------------------------------------------------- */
+    pabyBuffer = (GByte *) CPLCalloc(nLineBytes,1);
+
+    if( VSIFSeekL( poEDS->fpImage, nLineStart, SEEK_SET ) != 0 
+        || VSIFReadL( pabyBuffer, 1, nLineBytes, poEDS->fpImage ) != nLineBytes )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to read %d bytes at offset %d.\n%s",
+                  nLineBytes, nLineStart, 
+                  VSIStrerror( errno ) );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Copy data, promoting to 8bit.                                   */
+/* -------------------------------------------------------------------- */
+    int iPixel = 0, iX;
+
+    for( iX = 0; iX < nBlockXSize; iX++ )
+    {
+        int  nOutWord = 0, iBit;
+
+        for( iBit = 0; iBit < nBits; iBit++ )
+        {
+            if( pabyBuffer[iBitOffset>>3]  & (0x80 >>(iBitOffset & 7)) )
+                nOutWord |= (1 << (nBits - 1 - iBit));
+            iBitOffset++;
+        } 
+
+        iBitOffset = iBitOffset + nPixelOffsetBits - nBits;
+                
+        ((GByte *) pImage)[iPixel++] = nOutWord;
+    }
+
+    CPLFree( pabyBuffer );
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            IWriteBlock()                             */
+/************************************************************************/
+
+CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
+                                   void * pImage )
+
+{
+    vsi_l_offset   nLineStart;
+    unsigned int   nLineBytes;
+    int            iBitOffset;
+    GByte         *pabyBuffer;
+
+/* -------------------------------------------------------------------- */
+/*      Establish desired position.                                     */
+/* -------------------------------------------------------------------- */
+    nLineBytes = (nPixelOffsetBits*nBlockXSize + 7)/8;
+    nLineStart = (nStartBit + ((vsi_l_offset)nLineOffsetBits) * nBlockYOff) / 8;
+    iBitOffset = 
+        (nStartBit + ((vsi_l_offset)nLineOffsetBits) * nBlockYOff) % 8;
+
+/* -------------------------------------------------------------------- */
+/*      Read data into buffer.                                          */
+/* -------------------------------------------------------------------- */
+    pabyBuffer = (GByte *) CPLCalloc(nLineBytes,1);
+
+    if( VSIFSeekL( poEDS->fpImage, nLineStart, SEEK_SET ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to read %d bytes at offset %d.\n%s",
+                  nLineBytes, nLineStart, 
+                  VSIStrerror( errno ) );
+        return CE_Failure;
+    }
+
+    VSIFReadL( pabyBuffer, 1, nLineBytes, poEDS->fpImage );
+
+/* -------------------------------------------------------------------- */
+/*      Copy data, promoting to 8bit.                                   */
+/* -------------------------------------------------------------------- */
+    int iPixel = 0, iX;
+
+    for( iX = 0; iX < nBlockXSize; iX++ )
+    {
+        int iBit;
+        int  nOutWord = ((GByte *) pImage)[iPixel++];
+
+        for( iBit = 0; iBit < nBits; iBit++ )
+        {
+            if( nOutWord & (1 << (nBits - 1 - iBit)) )
+                pabyBuffer[iBitOffset>>3] |= (0x80 >>(iBitOffset & 7));
+            else
+                pabyBuffer[iBitOffset>>3] &= ~((0x80 >>(iBitOffset & 7)));
+
+            iBitOffset++;
+        } 
+
+        iBitOffset = iBitOffset + nPixelOffsetBits - nBits;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write the data back out.                                        */
+/* -------------------------------------------------------------------- */
+    if( VSIFSeekL( poEDS->fpImage, nLineStart, SEEK_SET ) != 0 
+        || VSIFWriteL( pabyBuffer, 1, nLineBytes, poEDS->fpImage ) != nLineBytes )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "Failed to write %d bytes at offset %d.\n%s",
+                  nLineBytes, nLineStart, 
+                  VSIStrerror( errno ) );
+        return CE_Failure;
+    }
+
+    CPLFree( pabyBuffer );
+
+    return CE_None;
+}
+
+
+/************************************************************************/
+/* ==================================================================== */
+/*				EHdrDataset				*/
+/* ==================================================================== */
+/************************************************************************/
 
 /************************************************************************/
 /*                            EHdrDataset()                             */
@@ -191,6 +397,32 @@ EHdrDataset::~EHdrDataset()
 
     CPLFree( pszProjection );
     CSLDestroy( papszHDR );
+}
+
+/************************************************************************/
+/*                            GetKeyValue()                             */
+/************************************************************************/
+
+const char *EHdrDataset::GetKeyValue( const char *pszKey, 
+                                      const char *pszDefault )
+
+{
+    int i;
+
+    for( i = 0; papszHDR[i] != NULL; i++ )
+    {
+        if( EQUALN(pszKey,papszHDR[i],strlen(pszKey))
+            && isspace(papszHDR[i][strlen(pszKey)]) )
+        {
+            const char *pszValue = papszHDR[i] + strlen(pszKey);
+            while( isspace(*pszValue) )
+                pszValue++;
+            
+            return pszValue;
+        }
+    }
+
+    return pszDefault;
 }
 
 /************************************************************************/
@@ -678,6 +910,9 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else if( nBits == 8 || nBits == -1 )
         eDataType = GDT_Byte;
+
+    else if( nBits < 8 && nBits >= 1 )
+        eDataType = GDT_Byte;
     
     else
     {
@@ -720,22 +955,31 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nBands = nBands;
     for( i = 0; i < poDS->nBands; i++ )
     {
-        RawRasterBand	*poBand;
+        GDALRasterBand	*poBand;
 
-        poBand = 
-            new RawRasterBand( poDS, i+1, poDS->fpImage,
-                               nSkipBytes + nBandOffset * i, 
-                               nPixelOffset, nLineOffset, eDataType,
+        if( nBits >= 8 )
+        {
+            
+            poBand = 
+                new RawRasterBand( poDS, i+1, poDS->fpImage,
+                                   nSkipBytes + nBandOffset * i, 
+                                   nPixelOffset, nLineOffset, eDataType,
 #ifdef CPL_LSB                               
-                               chByteOrder == 'I' || chByteOrder == 'L',
+                                   chByteOrder == 'I' || chByteOrder == 'L',
 #else
-                               chByteOrder == 'M',
+                                   chByteOrder == 'M',
 #endif        
-                               TRUE );
+                                   TRUE );
 
-        if( bNoDataSet )
-            poBand->StoreNoDataValue( dfNoData );
+            if( bNoDataSet )
+                ((RawRasterBand *) poBand)->StoreNoDataValue( dfNoData );
 
+        }
+        else
+        {
+            poBand = new EHdrRasterBand( poDS );
+        }
+            
         poDS->SetBand( i+1, poBand );
     }
 
@@ -875,7 +1119,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 GDALDataset *EHdrDataset::Create( const char * pszFilename,
                                   int nXSize, int nYSize, int nBands,
                                   GDALDataType eType,
-                                  char ** /* papszParmList */ )
+                                  char **papszParmList )
 
 {
 /* -------------------------------------------------------------------- */
@@ -934,20 +1178,29 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
         CPLFree( pszHdrFilename );
         return NULL;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Decide how many bits the file should have.                      */
+/* -------------------------------------------------------------------- */
+    int nRowBytes;
+    int nBits = GDALGetDataTypeSize(eType);
+
+    if( CSLFetchNameValue( papszParmList, "NBITS" ) != NULL )
+        nBits = atoi(CSLFetchNameValue( papszParmList, "NBITS" ));
+
+    nRowBytes = (nBits * nXSize + 7) / 8;
     
 /* -------------------------------------------------------------------- */
 /*      Write out the raw definition for the dataset as a whole.        */
 /* -------------------------------------------------------------------- */
-    int nItemSize = GDALGetDataTypeSize(eType) / 8;
-
     VSIFPrintf( fp, "BYTEORDER      I\n" );
     VSIFPrintf( fp, "LAYOUT         BIL\n" );
     VSIFPrintf( fp, "NROWS          %d\n", nYSize );
     VSIFPrintf( fp, "NCOLS          %d\n", nXSize );
     VSIFPrintf( fp, "NBANDS         %d\n", nBands );
-    VSIFPrintf( fp, "NBITS          %d\n", GDALGetDataTypeSize(eType) );
-    VSIFPrintf( fp, "BANDROWBYTES   %d\n", nItemSize * nXSize );
-    VSIFPrintf( fp, "TOTALROWBYTES  %d\n", nItemSize * nXSize * nBands );
+    VSIFPrintf( fp, "NBITS          %d\n", nBits );
+    VSIFPrintf( fp, "BANDROWBYTES   %d\n", nRowBytes );
+    VSIFPrintf( fp, "TOTALROWBYTES  %d\n", nRowBytes * nBands );
     
     if( eType == GDT_Float32 )
         VSIFPrintf( fp, "PIXELTYPE      FLOAT\n");
@@ -966,6 +1219,39 @@ GDALDataset *EHdrDataset::Create( const char * pszFilename,
     return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
 }
 
+/************************************************************************/
+/*                             CreateCopy()                             */
+/************************************************************************/
+
+GDALDataset *EHdrDataset::CreateCopy( const char * pszFilename, 
+                                      GDALDataset * poSrcDS, 
+                                      int bStrict, char ** papszOptions,
+                                      GDALProgressFunc pfnProgress,
+                                      void * pProgressData )
+
+{
+    char **papszAdjustedOptions = CSLDuplicate( papszOptions );
+    GDALDataset *poOutDS;
+
+    if( poSrcDS->GetRasterBand(1)->GetMetadataItem( "NBITS" ) != NULL 
+        && CSLFetchNameValue( papszOptions, "NBITS" ) == NULL )
+    {
+        papszAdjustedOptions = 
+            CSLSetNameValue( papszAdjustedOptions, 
+                             "NBITS", 
+                             poSrcDS->GetRasterBand(1)->GetMetadataItem("NBITS") );
+    }
+    
+    GDALDriver	*poDriver = (GDALDriver *) GDALGetDriverByName( "EHdr" );
+
+    poOutDS = poDriver->DefaultCreateCopy( pszFilename, poSrcDS, bStrict,
+                                           papszAdjustedOptions, 
+                                           pfnProgress, pProgressData );
+    CSLDestroy( papszAdjustedOptions );
+
+    return poOutDS;
+}
+    
 /************************************************************************/
 /*                         GDALRegister_EHdr()                          */
 /************************************************************************/
@@ -987,8 +1273,14 @@ void GDALRegister_EHdr()
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte Int16 UInt16 Int32 UInt32 Float32" );
 
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>"
+"   <Option name='NBITS' type='int' description='Special pixel bits (1-7)'/>"
+"</CreationOptionList>" );
+
         poDriver->pfnOpen = EHdrDataset::Open;
         poDriver->pfnCreate = EHdrDataset::Create;
+        poDriver->pfnCreateCopy = EHdrDataset::CreateCopy;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
