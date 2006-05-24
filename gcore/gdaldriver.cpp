@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2006/05/24 22:25:33  fwarmerdam
+ * split off DefaultCreateCopy() method.
+ *
  * Revision 1.41  2006/03/28 14:49:56  fwarmerdam
  * updated contact info
  *
@@ -184,78 +187,19 @@ GDALCreate( GDALDriverH hDriver, const char * pszFilename,
 }
 
 /************************************************************************/
-/*                             CreateCopy()                             */
+/*                         DefaultCreateCopy()                          */
 /************************************************************************/
 
-/**
- * Create a copy of a dataset.
- *
- * This method will attempt to create a copy of a raster dataset with the
- * indicated filename, and in this drivers format.  Band number, size, 
- * type, projection, geotransform and so forth are all to be copied from
- * the provided template dataset.  
- *
- * Note that many sequential write once formats (such as JPEG and PNG) don't
- * implement the Create() method but do implement this CreateCopy() method.
- * If the driver doesn't implement CreateCopy(), but does implement Create()
- * then the default CreateCopy() mechanism built on calling Create() will
- * be used.                                                             
- *
- * It is intended that CreateCopy() would often be used with a source dataset
- * which is a virtual dataset allowing configuration of band types, and
- * other information without actually duplicating raster data.  This virtual
- * dataset format hasn't yet been implemented at the time of this documentation
- * being written. 
- *
- * @param pszFilename the name for the new dataset. 
- * @param poSrcDS the dataset being duplicated. 
- * @param bStrict TRUE if the copy must be strictly equivelent, or more
- * normally FALSE indicating that the copy may adapt as needed for the 
- * output format. 
- * @param papszOptions additional format dependent options controlling 
- * creation of the output file. 
- * @param pfnProgress a function to be used to report progress of the copy.
- * @param pProgressData application data passed into progress function.
- *
- * @return a pointer to the newly created dataset (may be read-only access).
- */
-
-GDALDataset *GDALDriver::CreateCopy( const char * pszFilename, 
-                                     GDALDataset * poSrcDS, 
-                                     int bStrict, char ** papszOptions,
-                                     GDALProgressFunc pfnProgress,
-                                     void * pProgressData )
+GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename, 
+                                            GDALDataset * poSrcDS, 
+                                            int bStrict, char ** papszOptions,
+                                            GDALProgressFunc pfnProgress,
+                                            void * pProgressData )
 
 {
-    CPLLocaleC  oLocaleForcer;
-
     if( pfnProgress == NULL )
         pfnProgress = GDALDummyProgress;
 
-/* -------------------------------------------------------------------- */
-/*      If the format provides a CreateCopy() method use that,          */
-/*      otherwise fallback to the internal implementation using the     */
-/*      Create() method.                                                */
-/* -------------------------------------------------------------------- */
-    if( pfnCreateCopy != NULL )
-    {
-        GDALDataset *poDstDS;
-
-        poDstDS = pfnCreateCopy( pszFilename, poSrcDS, bStrict, papszOptions,
-                                 pfnProgress, pProgressData );
-        if( poDstDS != NULL )
-        {
-            if( poDstDS->GetDescription() == NULL 
-                || strlen(poDstDS->GetDescription()) > 0 )
-                poDstDS->SetDescription( pszFilename );
-
-            if( poDstDS->poDriver == NULL )
-                poDstDS->poDriver = this;
-        }
-
-        return poDstDS;
-    }
-    
 /* -------------------------------------------------------------------- */
 /*      Create destination dataset.                                     */
 /* -------------------------------------------------------------------- */
@@ -407,6 +351,83 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
     }
 
     return poDstDS;
+}
+
+/************************************************************************/
+/*                             CreateCopy()                             */
+/************************************************************************/
+
+/**
+ * Create a copy of a dataset.
+ *
+ * This method will attempt to create a copy of a raster dataset with the
+ * indicated filename, and in this drivers format.  Band number, size, 
+ * type, projection, geotransform and so forth are all to be copied from
+ * the provided template dataset.  
+ *
+ * Note that many sequential write once formats (such as JPEG and PNG) don't
+ * implement the Create() method but do implement this CreateCopy() method.
+ * If the driver doesn't implement CreateCopy(), but does implement Create()
+ * then the default CreateCopy() mechanism built on calling Create() will
+ * be used.                                                             
+ *
+ * It is intended that CreateCopy() would often be used with a source dataset
+ * which is a virtual dataset allowing configuration of band types, and
+ * other information without actually duplicating raster data.  This virtual
+ * dataset format hasn't yet been implemented at the time of this documentation
+ * being written. 
+ *
+ * @param pszFilename the name for the new dataset. 
+ * @param poSrcDS the dataset being duplicated. 
+ * @param bStrict TRUE if the copy must be strictly equivelent, or more
+ * normally FALSE indicating that the copy may adapt as needed for the 
+ * output format. 
+ * @param papszOptions additional format dependent options controlling 
+ * creation of the output file. 
+ * @param pfnProgress a function to be used to report progress of the copy.
+ * @param pProgressData application data passed into progress function.
+ *
+ * @return a pointer to the newly created dataset (may be read-only access).
+ */
+
+GDALDataset *GDALDriver::CreateCopy( const char * pszFilename, 
+                                     GDALDataset * poSrcDS, 
+                                     int bStrict, char ** papszOptions,
+                                     GDALProgressFunc pfnProgress,
+                                     void * pProgressData )
+
+{
+    CPLLocaleC  oLocaleForcer;
+
+    if( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
+
+/* -------------------------------------------------------------------- */
+/*      If the format provides a CreateCopy() method use that,          */
+/*      otherwise fallback to the internal implementation using the     */
+/*      Create() method.                                                */
+/* -------------------------------------------------------------------- */
+    if( pfnCreateCopy != NULL )
+    {
+        GDALDataset *poDstDS;
+
+        poDstDS = pfnCreateCopy( pszFilename, poSrcDS, bStrict, papszOptions,
+                                 pfnProgress, pProgressData );
+        if( poDstDS != NULL )
+        {
+            if( poDstDS->GetDescription() == NULL 
+                || strlen(poDstDS->GetDescription()) > 0 )
+                poDstDS->SetDescription( pszFilename );
+
+            if( poDstDS->poDriver == NULL )
+                poDstDS->poDriver = this;
+        }
+
+        return poDstDS;
+    }
+    else
+        return DefaultCreateCopy( pszFilename, poSrcDS, bStrict, 
+                                  papszOptions, pfnProgress, pProgressData );
 }
 
 /************************************************************************/

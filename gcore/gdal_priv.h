@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.73  2006/05/24 22:25:33  fwarmerdam
+ * split off DefaultCreateCopy() method.
+ *
  * Revision 1.72  2006/04/13 03:16:01  fwarmerdam
  * keep track if an object is PAM enabled, bug 1135
  *
@@ -607,6 +610,11 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                                      int, char **,
                                      GDALProgressFunc pfnProgress, 
                                      void * pProgressData );
+    
+    GDALDataset         *DefaultCreateCopy( const char *, GDALDataset *, 
+                                            int, char **,
+                                            GDALProgressFunc pfnProgress, 
+                                            void * pProgressData );
     
 /* -------------------------------------------------------------------- */
 /*      The following are semiprivate, not intended to be accessed      */
