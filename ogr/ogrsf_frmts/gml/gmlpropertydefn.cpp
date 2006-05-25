@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/05/25 02:35:15  fwarmerdam
+ * capture maximum string length in scan pass (Peter Rushforth)
+ *
  * Revision 1.2  2004/01/19 16:54:44  warmerda
  * added logic to capture field types
  *
@@ -54,6 +57,7 @@ GMLPropertyDefn::GMLPropertyDefn( const char *pszName,
     else
         m_pszSrcElement = NULL;
     m_eType = GMLPT_Untyped;
+    m_nWidth = 0; 
 }
 
 /************************************************************************/
@@ -96,7 +100,14 @@ void GMLPropertyDefn::AnalysePropertyValue( const char *pszValue )
 /*      give up on changing.                                            */
 /* -------------------------------------------------------------------- */
     if( m_eType == GMLPT_String )
+    {
+        /* grow the Width to the length of the string passed in */
+        int nWidth;
+        nWidth = strlen(pszValue);
+        if ( m_nWidth < nWidth ) 
+            SetWidth( nWidth );
         return;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If it is a zero length string, just return.  We can't deduce    */

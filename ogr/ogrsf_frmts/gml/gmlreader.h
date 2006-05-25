@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/05/25 02:35:15  fwarmerdam
+ * capture maximum string length in scan pass (Peter Rushforth)
+ *
  * Revision 1.9  2005/01/27 04:05:35  fwarmerdam
  * added ParseXSD
  *
@@ -77,6 +80,7 @@ class CPL_DLL GMLPropertyDefn
 {
     char             *m_pszName;
     GMLPropertyType   m_eType;
+    int               m_nWidth;
     char             *m_pszSrcElement;
 
 public:
@@ -88,7 +92,8 @@ public:
 
     GMLPropertyType GetType() { return m_eType; } const
     void        SetType( GMLPropertyType eType ) { m_eType = eType; }
-
+    void        SetWidth( int nWidth) { m_nWidth = nWidth; }
+    int         GetWidth() { return m_nWidth; }
     void        SetSrcElement( const char *pszSrcElement );
     const char *GetSrcElement() { return m_pszSrcElement; }
 
