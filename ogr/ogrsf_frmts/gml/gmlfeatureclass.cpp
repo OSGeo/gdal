@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/05/25 02:35:15  fwarmerdam
+ * capture maximum string length in scan pass (Peter Rushforth)
+ *
  * Revision 1.5  2003/09/11 20:01:21  warmerda
  * removed unused variable
  *
@@ -338,8 +341,11 @@ int GMLFeatureClass::InitializeFromXML( CPLXMLNode *psRoot )
             
             if( EQUAL(pszType,"Untyped") )
                 poPDefn->SetType( GMLPT_Untyped );
-            else if( EQUAL(pszType,"String") )
+            else if( EQUAL(pszType,"String") ) 
+            {
                 poPDefn->SetType( GMLPT_String );
+                poPDefn->SetWidth( atoi( CPLGetXMLValue( psThis, "Width", "0" ) ) );
+            }
             else if( EQUAL(pszType,"Integer") )
                 poPDefn->SetType( GMLPT_Integer );
             else if( EQUAL(pszType,"Real") )
@@ -458,6 +464,12 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
         }
 
         CPLCreateXMLElementAndValue( psPDefnNode, "Type", pszTypeName );
+        if( EQUAL(pszTypeName,"String") )
+        {
+            char szMaxLength[48];
+            sprintf(szMaxLength, "%d", poPDefn->GetWidth());
+            CPLCreateXMLElementAndValue ( psPDefnNode, "Width", szMaxLength );
+        }
     }
 
     return psRoot;

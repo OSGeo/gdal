@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2006/05/25 02:35:15  fwarmerdam
+ * capture maximum string length in scan pass (Peter Rushforth)
+ *
  * Revision 1.23  2005/12/12 21:33:07  fwarmerdam
  * remove ogr: prefix from field names: bug 1016
  *
@@ -366,6 +369,9 @@ OGRGMLLayer *OGRGMLDataSource::TranslateGMLSchema( GMLFeatureClass *poClass )
         OGRFieldDefn oField( poProperty->GetName(), eFType );
         if ( EQUALN(oField.GetNameRef(), "ogr:", 4) )
           oField.SetName(poProperty->GetName()+4);
+        if( poProperty->GetWidth() > 0 )
+            oField.SetWidth( poProperty->GetWidth() );
+
         poLayer->GetLayerDefn()->AddFieldDefn( &oField );
     }
 
