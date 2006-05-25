@@ -14,4 +14,4 @@ clean:
 install-obj:	$(O_OBJ)
 
 install:
-	$(INSTALL_DATA) memdataset.h $(INST_INCLUDE)
+	$(INSTALL_DATA) memdataset.h $(DESTDIR)$(INST_INCLUDE)

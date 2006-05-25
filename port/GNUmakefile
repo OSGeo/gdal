@@ -25,7 +25,7 @@ clean:
 	$(RM) *.o $(LIB)
 
 install:
-	for f in *.h ; do $(INSTALL_DATA) $$f $(INST_INCLUDE) ; done
+	for f in *.h ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done
 
 xmlreformat:	xmlreformat.o 
 	$(CXX) $(CXXFLAGS) xmlreformat.o $(CONFIG_LIBS) -o xmlreformat
