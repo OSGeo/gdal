@@ -81,9 +81,9 @@ docs:
 	cp ogr_feature_style.html html
 
 install-docs:
-	$(INSTALL_DIR) $(INST_DOCS)/ogr
-	cp html/* $(INST_DOCS)/ogr
-	cp ../doc/ogr/*.gif $(INST_DOCS)/ogr
+	$(INSTALL_DIR) $(DESTDIR)$(INST_DOCS)/ogr
+	cp html/* $(DESTDIR)$(INST_DOCS)/ogr
+	cp ../doc/ogr/*.gif $(DESTDIR)$(INST_DOCS)/ogr
 
 gdalso:	$(GDAL_SLIB)
 
@@ -123,14 +123,14 @@ reg-test2:
 
 ifeq ($(OGR_ENABLED),yes)
 install-full:	apps
-	$(INSTALL) ogr2ogr $(INST_BIN)
-	$(INSTALL) ogrinfo $(INST_BIN)
-	$(INSTALL) ogrtindex $(INST_BIN)
+	$(INSTALL) ogr2ogr $(DESTDIR)$(INST_BIN)
+	$(INSTALL) ogrinfo $(DESTDIR)$(INST_BIN)
+	$(INSTALL) ogrtindex $(DESTDIR)$(INST_BIN)
 else
 install-full:
 endif
 
 install:	install-full
 	for f in $(INST_H_FILES) ; \
-	    do $(INSTALL_DATA) $$f $(INST_INCLUDE) ; \
+	    do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; \
 	done

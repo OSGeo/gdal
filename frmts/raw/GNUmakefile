@@ -20,4 +20,4 @@ install-obj:	$(O_OBJ)
 $(OBJ) $(O_OBJ):	rawdataset.h
 
 install:
-	$(INSTALL_DATA) rawdataset.h $(INST_INCLUDE)
+	$(INSTALL_DATA) rawdataset.h $(DESTDIR)$(INST_INCLUDE)

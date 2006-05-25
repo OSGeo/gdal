@@ -34,4 +34,4 @@ gdaldrivermanager.o:	gdaldrivermanager.cpp ../GDALmake.opt
 		$*.cpp -o $*.o
 
 install:
-	for f in *.h ; do $(INSTALL_DATA) $$f $(INST_INCLUDE) ; done
+	for f in *.h ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done

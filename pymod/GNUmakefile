@@ -44,9 +44,9 @@ $(GDALMODULE).la:	$(OBJ:.o=.lo) $(EXE_DEP_LIBS)
 
 # special care is taken so that python scripts are installed as executables
 install:	$(GDALMODULE_SO)
-	$(INSTALL_DIR) $(INST_PYMOD)
-	$(INSTALL_LIB) $(GDALMODULE_SO) $(INST_PYMOD)
-	for f in $(PY_COMMANDS) ; do $(INSTALL) $$f $(INST_BIN) ; done
-	for f in $(PY_MODULES) ; do $(INSTALL_DATA) $$f $(INST_PYMOD) ; done
+	$(INSTALL_DIR) $(DESTDIR)$(INST_PYMOD)
+	$(INSTALL_LIB) $(GDALMODULE_SO) $(DESTDIR)$(INST_PYMOD)
+	for f in $(PY_COMMANDS) ; do $(INSTALL) $$f $(DESTDIR)$(INST_BIN) ; done
+	for f in $(PY_MODULES) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_PYMOD) ; done
 	# ugh! spurius relinking leaves a file owned by root into .libs/.
 	rm -f .libs/*.soT
