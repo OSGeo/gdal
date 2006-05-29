@@ -11,10 +11,7 @@ OGR_OBJ =	iomhelper.o ilihelper.o ogrili1driver.o ogrili1datasource.o ogrili1lay
 OBJ =	$(CORE_OBJ) $(OGR_OBJ)
 
 ifeq ($(HAVE_GEOS),yes)
-CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_INC) $(CPPFLAGS)
-endif
-ifeq ($(HAVE_GEOS),c_api)
-CPPFLAGS 	:=	-DHAVE_GEOS=1 -DGEOS_C_API=1 $(GEOS_INC) $(CPPFLAGS)
+CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_CFLAGS) $(CPPFLAGS)
 endif
 
 CPPFLAGS :=	-I.. -I../.. $(GDAL_INCLUDE) $(XERCES_INCLUDE) $(CPPFLAGS)

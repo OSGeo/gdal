@@ -8,10 +8,7 @@ INST_H_FILES	=	ogr_core.h ogr_feature.h ogr_geometry.h ogr_p.h \
 		ogr_featurestyle.h ogr_api.h
 
 ifeq ($(HAVE_GEOS),yes)
-CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_INC) $(CPPFLAGS)
-endif
-ifeq ($(HAVE_GEOS),c_api)
-CPPFLAGS 	:=	-DHAVE_GEOS=1 -DGEOS_C_API=1 $(GEOS_INC) $(CPPFLAGS)
+CPPFLAGS 	:=	-DHAVE_GEOS=1 $(GEOS_CFLAGS) $(CPPFLAGS)
 endif
 
 CPPFLAGS	:=	-Iogrsf_frmts -I. $(GDAL_INCLUDE) $(PROJ_INCLUDE) $(PROJ_FLAGS) $(CPPFLAGS)
