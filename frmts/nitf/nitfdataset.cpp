@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2006/05/29 19:42:29  fwarmerdam
+ * Return SLOC_ROW and SLOC_COL instead of X/Y the wrong way around.
+ *
  * Revision 1.52  2006/05/29 19:33:15  fwarmerdam
  * added CGM read support via metadata
  *
@@ -1525,22 +1528,22 @@ void NITFDataset::InitializeCGMMetadata()
         if( achSubheader[nSTYPEOffset] != 'C' )
             continue;
 
-        char szSLOC_X[6], szSLOC_Y[6];
+        char szSLOC_R[6], szSLOC_C[6];
 
-        strncpy( szSLOC_X, achSubheader + nSTYPEOffset + 20, 5 );
-        strncpy( szSLOC_Y, achSubheader + nSTYPEOffset + 20 + 5, 5 );
+        strncpy( szSLOC_R, achSubheader + nSTYPEOffset + 20, 5 );
+        strncpy( szSLOC_C, achSubheader + nSTYPEOffset + 20 + 5, 5 );
         
-        szSLOC_X[5] = '\0';
-        szSLOC_Y[5] = '\0';
+        szSLOC_R[5] = '\0';
+        szSLOC_C[5] = '\0';
 
         papszCGMMetadata = 
             CSLSetNameValue( papszCGMMetadata, 
-                             CPLString().Printf("SEGMENT_%d_SLOC_X", iCGM), 
-                             szSLOC_X );
+                             CPLString().Printf("SEGMENT_%d_SLOC_ROW", iCGM), 
+                             szSLOC_R );
         papszCGMMetadata = 
             CSLSetNameValue( papszCGMMetadata, 
-                             CPLString().Printf("SEGMENT_%d_SLOC_Y", iCGM), 
-                             szSLOC_Y );
+                             CPLString().Printf("SEGMENT_%d_SLOC_COL", iCGM), 
+                             szSLOC_C );
 
 /* -------------------------------------------------------------------- */
 /*      Load the raw CGM data itself.                                   */
