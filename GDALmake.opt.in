@@ -188,7 +188,7 @@ OCI_INCLUDE	= @OCI_INCLUDE@
 # GEOS Support
 
 HAVE_GEOS       =       @HAVE_GEOS@
-GEOS_INC        =       @GEOS_INC@
+GEOS_CFLAGS     =       @GEOS_CFLAGS@
 
 # GRASS Support
 
