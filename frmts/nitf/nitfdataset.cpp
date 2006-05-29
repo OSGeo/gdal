@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2006/05/29 19:33:15  fwarmerdam
+ * added CGM read support via metadata
+ *
  * Revision 1.51  2006/01/05 23:12:03  fwarmerdam
  * Added subdataset support to access multiple images in one file.
  *
@@ -150,6 +153,10 @@ class NITFDataset : public GDALPamDataset
     GDAL_GCP    *pasGCPList;
     char        *pszGCPProjection;
 
+    char       **papszCGMMetadata;
+
+    void         InitializeCGMMetadata();
+
   public:
                  NITFDataset();
                  ~NITFDataset();
@@ -172,6 +179,9 @@ class NITFDataset : public GDALPamDataset
     virtual const char *GetGCPProjection();
     virtual const GDAL_GCP *GetGCPs();
 
+    virtual char      **GetMetadata( const char * pszDomain = "" );
+    virtual const char *GetMetadataItem( const char * pszName,
+                                         const char * pszDomain = "" );
     virtual void   FlushCache();
 
     static GDALDataset *Open( GDALOpenInfo * );
@@ -571,6 +581,8 @@ NITFDataset::NITFDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+
+    papszCGMMetadata = NULL;
 }
 
 /************************************************************************/
@@ -647,6 +659,7 @@ NITFDataset::~NITFDataset()
         NITFPatchImageLength( GetDescription(), nImageStart, nPixelCount );
     }
 
+    CSLDestroy( papszCGMMetadata );
 }
 
 /************************************************************************/
@@ -1458,6 +1471,149 @@ const char *NITFDataset::GetProjectionRef()
     else
         return "";
 }
+
+/************************************************************************/
+/*                       InitializeCGMMetadata()                        */
+/************************************************************************/
+
+void NITFDataset::InitializeCGMMetadata()
+
+{
+    int iSegment;
+    int iCGM = 0;
+
+    if( papszCGMMetadata != NULL )
+        return;
+
+    papszCGMMetadata = 
+        CSLSetNameValue( papszCGMMetadata, "SEGMENT_COUNT", "0" );
+
+/* ==================================================================== */
+/*      Process all graphics segments.                                  */
+/* ==================================================================== */
+    for( iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
+    {
+        NITFSegmentInfo *psSegment = psFile->pasSegmentInfo + iSegment;
+
+        if( !EQUAL(psSegment->szSegmentType,"GR") 
+            && !EQUAL(psSegment->szSegmentType,"SY") )
+            continue;
+
+/* -------------------------------------------------------------------- */
+/*      Load the graphic subheader.                                     */
+/* -------------------------------------------------------------------- */
+        char achSubheader[298];
+        int  nSTYPEOffset;
+
+        if( VSIFSeekL( psFile->fp, psSegment->nSegmentHeaderStart, 
+                       SEEK_SET ) != 0 
+            || VSIFReadL( achSubheader, 1, sizeof(achSubheader), 
+                          psFile->fp ) < 258 )
+        {
+            CPLError( CE_Warning, CPLE_FileIO, 
+                      "Failed to read graphic subheader at %d.", 
+                      psSegment->nSegmentHeaderStart );
+            return;
+        }
+
+        // NITF 2.0. (also works for NITF 2.1)
+        nSTYPEOffset = 200;
+        if( EQUALN(achSubheader+193,"999998",6) )
+            nSTYPEOffset += 40;
+
+        // We don't want bitmaps or anything other than cgm for now.
+        if( achSubheader[nSTYPEOffset] != 'C' )
+            continue;
+
+        char szSLOC_X[6], szSLOC_Y[6];
+
+        strncpy( szSLOC_X, achSubheader + nSTYPEOffset + 20, 5 );
+        strncpy( szSLOC_Y, achSubheader + nSTYPEOffset + 20 + 5, 5 );
+        
+        szSLOC_X[5] = '\0';
+        szSLOC_Y[5] = '\0';
+
+        papszCGMMetadata = 
+            CSLSetNameValue( papszCGMMetadata, 
+                             CPLString().Printf("SEGMENT_%d_SLOC_X", iCGM), 
+                             szSLOC_X );
+        papszCGMMetadata = 
+            CSLSetNameValue( papszCGMMetadata, 
+                             CPLString().Printf("SEGMENT_%d_SLOC_Y", iCGM), 
+                             szSLOC_Y );
+
+/* -------------------------------------------------------------------- */
+/*      Load the raw CGM data itself.                                   */
+/* -------------------------------------------------------------------- */
+        char *pabyCGMData, *pszEscapedCGMData;
+
+        pabyCGMData = (char *) CPLCalloc(1,psSegment->nSegmentSize);
+        if( VSIFSeekL( psFile->fp, psSegment->nSegmentStart, 
+                       SEEK_SET ) != 0 
+            || VSIFReadL( pabyCGMData, 1, psSegment->nSegmentSize, 
+                          psFile->fp ) != psSegment->nSegmentSize )
+        {
+            CPLError( CE_Warning, CPLE_FileIO, 
+                      "Failed to read %d bytes of graphic data at %d.", 
+                      psSegment->nSegmentSize,
+                      psSegment->nSegmentStart );
+            return;
+        }
+
+        pszEscapedCGMData = CPLEscapeString( pabyCGMData, 
+                                             psSegment->nSegmentSize, 
+                                             CPLES_BackslashQuotable );
+
+        papszCGMMetadata = 
+            CSLSetNameValue( papszCGMMetadata, 
+                             CPLString().Printf("SEGMENT_%d_DATA", iCGM), 
+                             pszEscapedCGMData );
+        CPLFree( pszEscapedCGMData );
+        CPLFree( pabyCGMData );
+
+        iCGM++;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Record the CGM segment count.                                   */
+/* -------------------------------------------------------------------- */
+    papszCGMMetadata = 
+        CSLSetNameValue( papszCGMMetadata, 
+                         "SEGMENT_COUNT", 
+                         CPLString().Printf( "%d", iCGM ) );
+}
+
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
+
+char **NITFDataset::GetMetadata( const char * pszDomain )
+
+{
+    if( pszDomain == NULL || !EQUAL(pszDomain,"CGM") )
+        return GDALPamDataset::GetMetadata( pszDomain );
+
+    InitializeCGMMetadata();
+
+    return papszCGMMetadata;
+}
+
+/************************************************************************/
+/*                          GetMetadataItem()                           */
+/************************************************************************/
+
+const char *NITFDataset::GetMetadataItem(const char * pszName,
+                                         const char * pszDomain )
+
+{
+    if( pszDomain == NULL || !EQUAL(pszDomain,"CGM") )
+        return GDALPamDataset::GetMetadataItem( pszName, pszDomain );
+
+    InitializeCGMMetadata();
+
+    return CSLFetchNameValue( papszCGMMetadata, pszName );
+}
+
 
 /************************************************************************/
 /*                            GetGCPCount()                             */
