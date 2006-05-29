@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/05/29 17:32:15  fwarmerdam
+ * added preliminary support for controlling longitude wrapping on input dataset
+ *
  * Revision 1.22  2006/04/25 14:28:33  fwarmerdam
  * Check for no usable sources, avoid warning.
  *
@@ -71,9 +74,11 @@
 
 #include "gdalwarper.h"
 #include "cpl_string.h"
-#include "ogr_srs_api.h"
+#include "ogr_spatialref.h"
 
 CPL_CVSID("$Id$");
+
+static CPLString InsertCenterLong( GDALDatasetH hDS, CPLString osWKT );
 
 static GDALDatasetH 
 GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename, 
@@ -395,8 +400,11 @@ int main( int argc, char ** argv )
 
     for( iSrc = 0; papszSrcFiles[iSrc] != NULL; iSrc++ )
     {
-        const char *pszThisSourceSRS = pszSourceSRS;
+        CPLString osThisSourceSRS;
         GDALDatasetH hSrcDS;
+       
+        if( pszSourceSRS != NULL )
+            osThisSourceSRS = pszSourceSRS;
 
 /* -------------------------------------------------------------------- */
 /*      Open this file.                                                 */
@@ -408,21 +416,21 @@ int main( int argc, char ** argv )
 
         printf( "Processing input file %s.\n", papszSrcFiles[iSrc] );
 
-        if( pszThisSourceSRS == NULL )
+        if( strlen(osThisSourceSRS) == 0 )
         {
             if( GDALGetProjectionRef( hSrcDS ) != NULL 
                 && strlen(GDALGetProjectionRef( hSrcDS )) > 0 )
-                pszThisSourceSRS = GDALGetProjectionRef( hSrcDS );
+                osThisSourceSRS = GDALGetProjectionRef( hSrcDS );
             
             else if( GDALGetGCPProjection( hSrcDS ) != NULL
                      && strlen(GDALGetGCPProjection(hSrcDS)) > 0 
                      && GDALGetGCPCount( hSrcDS ) > 1 )
-                pszThisSourceSRS = GDALGetGCPProjection( hSrcDS );
+                osThisSourceSRS = GDALGetGCPProjection( hSrcDS );
             else
-                pszThisSourceSRS = "";
+                osThisSourceSRS = "";
 
             if( pszTargetSRS != NULL && strlen(pszTargetSRS) > 0 
-                && strlen(pszThisSourceSRS) == 0 )
+                && strlen(osThisSourceSRS) == 0 )
             {
                 fprintf( stderr, "A target coordinate system was specified, but there is no source coordinate\nsystem.  Consider using -s_srs option to provide a source coordinate system.\nOperation terminated.\n" );
                 exit( 1 );
@@ -430,7 +438,7 @@ int main( int argc, char ** argv )
         }
 
 /* -------------------------------------------------------------------- */
-/*      Open the first source dataset for some info.                    */
+/*      Do we have a source alpha band?                                 */
 /* -------------------------------------------------------------------- */
         if( GDALGetRasterColorInterpretation( 
                 GDALGetRasterBand(hSrcDS,GDALGetRasterCount(hSrcDS)) ) 
@@ -443,11 +451,22 @@ int main( int argc, char ** argv )
         }
 
 /* -------------------------------------------------------------------- */
+/*      If the source coordinate system is geographic, try and          */
+/*      insert a CENTER_LONG extension parameter on the GEOGCS to       */
+/*      handle wrapping better.                                         */
+/* -------------------------------------------------------------------- */
+        if( EQUALN(osThisSourceSRS.c_str(),"GEOGCS[",7) )
+        {
+            osThisSourceSRS = 
+                InsertCenterLong( hSrcDS, osThisSourceSRS );
+        }
+
+/* -------------------------------------------------------------------- */
 /*      Create a transformation object from the source to               */
 /*      destination coordinate system.                                  */
 /* -------------------------------------------------------------------- */
         hTransformArg = hGenImgProjArg = 
-            GDALCreateGenImgProjTransformer( hSrcDS, pszThisSourceSRS, 
+            GDALCreateGenImgProjTransformer( hSrcDS, osThisSourceSRS, 
                                              hDstDS, pszTargetSRS, 
                                              TRUE, 1000.0, nOrder );
         
@@ -980,3 +999,81 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
     return hDstDS;
 }
     
+/************************************************************************/
+/*                          InsertCenterLong()                          */
+/*                                                                      */
+/*      Insert a CENTER_LONG Extension entry on a GEOGCS to indicate    */
+/*      the center longitude of the dataset for wrapping purposes.      */
+/************************************************************************/
+
+static CPLString InsertCenterLong( GDALDatasetH hDS, CPLString osWKT )
+
+{								        
+    if( !EQUALN(osWKT.c_str(), "GEOGCS[", 7) )
+        return osWKT;
+    
+    if( strstr(osWKT,"EXTENSION[\"CENTER_LONG") != NULL )
+        return osWKT;
+
+/* -------------------------------------------------------------------- */
+/*      For now we only do this if we have a geotransform since         */
+/*      other forms require a bunch of extra work.                      */
+/* -------------------------------------------------------------------- */
+    double   adfGeoTransform[6];
+
+    if( GDALGetGeoTransform( hDS, adfGeoTransform ) != CE_None )
+        return osWKT;
+
+/* -------------------------------------------------------------------- */
+/*      Compute min/max longitude based on testing the four corners.    */
+/* -------------------------------------------------------------------- */
+    double dfMinLong, dfMaxLong;
+    int nXSize = GDALGetRasterXSize( hDS );
+    int nYSize = GDALGetRasterYSize( hDS );
+
+    dfMinLong = 
+        MIN(MIN(adfGeoTransform[0] + 0 * adfGeoTransform[1]
+                + 0 * adfGeoTransform[2],
+                adfGeoTransform[0] + nXSize * adfGeoTransform[1]
+                + 0 * adfGeoTransform[2]),
+            MIN(adfGeoTransform[0] + 0 * adfGeoTransform[1]
+                + nYSize * adfGeoTransform[2],
+                adfGeoTransform[0] + nXSize * adfGeoTransform[1]
+                + nYSize * adfGeoTransform[2]));
+    dfMaxLong = 
+        MAX(MAX(adfGeoTransform[0] + 0 * adfGeoTransform[1]
+                + 0 * adfGeoTransform[2],
+                adfGeoTransform[0] + nXSize * adfGeoTransform[1]
+                + 0 * adfGeoTransform[2]),
+            MAX(adfGeoTransform[0] + 0 * adfGeoTransform[1]
+                + nYSize * adfGeoTransform[2],
+                adfGeoTransform[0] + nXSize * adfGeoTransform[1]
+                + nYSize * adfGeoTransform[2]));
+
+    if( dfMaxLong - dfMinLong > 360.0 )
+        return osWKT;
+
+/* -------------------------------------------------------------------- */
+/*      Insert center long.                                             */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oSRS( osWKT );
+    double dfCenterLong = (dfMaxLong + dfMinLong) / 2.0;
+    OGR_SRSNode *poExt;
+
+    poExt  = new OGR_SRSNode( "EXTENSION" );
+    poExt->AddChild( new OGR_SRSNode( "CENTER_LONG" ) );
+    poExt->AddChild( new OGR_SRSNode( CPLString().Printf("%g",dfCenterLong) ));
+    
+    oSRS.GetRoot()->AddChild( poExt );
+
+/* -------------------------------------------------------------------- */
+/*      Convert back to wkt.                                            */
+/* -------------------------------------------------------------------- */
+    char *pszWKT = NULL;
+    oSRS.exportToWkt( &pszWKT );
+    
+    osWKT = pszWKT;
+    CPLFree( pszWKT );
+
+    return osWKT;
+}
