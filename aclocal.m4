@@ -12,4 +12,5 @@
 # PARTICULAR PURPOSE.
 
 m4_include([m4/acinclude.m4])
+m4_include([m4/geos.m4])
 m4_include([m4/libtool.m4])

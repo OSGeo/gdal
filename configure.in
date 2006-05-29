@@ -254,7 +254,7 @@ if test "$PG_CONFIG" = "no" ; then
   PG_LIB=
   PG_INC=
 
-  AC_MSG_RESULT([no])LIBZ
+  AC_MSG_RESULT([no])
 
 else
   if test -d $PG_CONFIG ; then
@@ -1515,7 +1515,7 @@ else
     else
         LIBS="$LIBS -L$with_sqlite/lib -lsqlite3"
         SQLITE_INC="-I$with_sqlite/include"
-        AC_MSG_RESULT(setting DODS root directory to $with_sqlite)_
+        AC_MSG_RESULT(setting DODS root directory to $with_sqlite)
     fi
     HAVE_SQLITE=yes
 fi
@@ -1660,56 +1660,19 @@ dnl ---------------------------------------------------------------------------
 dnl Check if geos library is available.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(geos,[  --with-geos[=ARG]       Include GEOS support (ARG=yes, no or geos-config path)],,)
+GEOS_INIT(2.0.0)
+case ${GEOS_VERSION} in 
+ 2*)
+  AC_MSG_NOTICE([using GEOS 2.x C++ API])
+  ;;
 
-if test "$with_geos" = "no" ; then
-
-  AC_MSG_RESULT([GEOS support disabled])
-  GEOS_CONFIG=no
-
-elif test "$with_geos" = "yes" -o "$with_geos" = "" ; then
-  AC_PATH_PROG(GEOS_CONFIG, geos-config, no)
-
-else
-
-  if test "`basename xx/$with_geos`" = "geos-config" ; then
-    AC_MSG_RESULT([GEOS enabled with provided geos-config])
-    GEOS_CONFIG="$with_geos"
-  else
-    AC_MSG_ERROR([--with-geos should have yes, no or a path to geos-config])
-  fi
-
-fi
-
-if test "$GEOS_CONFIG" != "no" ; then
-
-  VERSION=`$GEOS_CONFIG --version`
-  case ${VERSION} in 
-   1*)
-    AC_MSG_ERROR([geos-config reports version $VERSION, need at least 2.0 or configure --without-geos])
-    ;;
-
-   2*)
-    LIBS="`$GEOS_CONFIG --libs` $LIBS"
-    GEOS_INC=-I"`$GEOS_CONFIG --includes`"
-    HAVE_GEOS=yes
-    AC_MSG_NOTICE([  using GEOS 2.x C++ API])
-    ;;
-
-    *) 
-    LIBS="`$GEOS_CONFIG --libs` -lgeos_c $LIBS"
-    GEOS_INC=-I"`$GEOS_CONFIG --includes`"
-    HAVE_GEOS=c_api
-    AC_MSG_NOTICE([  using GEOS 3.x+ C API])
-    ;;
-  esac
-
-else
-  HAVE_GEOS=no
-fi
-
-AC_SUBST(HAVE_GEOS,$HAVE_GEOS)
-AC_SUBST(GEOS_INC,$GEOS_INC)
+  *)
+  GEOS_LIBS="${GEOS_LIBS} -lgeos_c"
+  GEOS_CFLAGS="-DGEOS_C_API=1 ${GEOS_CFLAGS}"
+  AC_MSG_NOTICE([using GEOS 3.x+ C API])
+  ;;
+esac
+LIBS="$GEOS_LIBS $LIBS"
 
 dnl ---------------------------------------------------------------------------
 dnl PROJ.4 related stuff.
