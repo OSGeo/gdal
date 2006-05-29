@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2006/05/29 17:31:13  fwarmerdam
+ * added preliminary longitude wrap control
+ *
  * Revision 1.34  2006/05/15 18:34:56  fwarmerdam
  * added check for HUGE_VAL failures
  *
@@ -195,6 +198,8 @@ class OGRProj4CT : public OGRCoordinateTransformation
     int         bSourceLatLong;
     double      dfSourceToRadians;
     double      dfSourceFromRadians;
+    int         bSourceWrap;
+    double      dfSourceWrapLong;
     
 
     OGRSpatialReference *poSRSTarget;
@@ -202,6 +207,8 @@ class OGRProj4CT : public OGRCoordinateTransformation
     int         bTargetLatLong;
     double      dfTargetToRadians;
     double      dfTargetFromRadians;
+    int         bTargetWrap;
+    double      dfTargetWrapLong;
 
     int         nErrorCount;
 
@@ -424,7 +431,7 @@ OGRProj4CT::OGRProj4CT()
     poSRSTarget = NULL;
     psPJSource = NULL;
     psPJTarget = NULL;
-
+    
     nErrorCount = 0;
 }
 
@@ -481,6 +488,8 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
 /* -------------------------------------------------------------------- */
     dfSourceToRadians = DEG_TO_RAD;
     dfSourceFromRadians = RAD_TO_DEG;
+    bSourceWrap = FALSE;
+    dfSourceWrapLong = 0.0;
 
     if( bSourceLatLong )
     {
@@ -497,6 +506,8 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
 
     dfTargetToRadians = DEG_TO_RAD;
     dfTargetFromRadians = RAD_TO_DEG;
+    bTargetWrap = FALSE;
+    dfTargetWrapLong = 0.0;
 
     if( bTargetLatLong )
     {
@@ -511,6 +522,43 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Preliminary logic to setup wrapping.                            */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode *poExt;
+
+    if( CPLGetConfigOption( "CENTER_LONG", NULL ) != NULL )
+    {
+        bSourceWrap = bTargetWrap = TRUE;
+        dfSourceWrapLong = dfTargetWrapLong = 
+            atof(CPLGetConfigOption( "CENTER_LONG", "" ));
+        CPLDebug( "OGRCT", "Wrap at %g.", dfSourceWrapLong );
+    }
+
+    
+    poExt = poSRSSource->GetAttrNode( "GEOGCS|EXTENSION" );
+    if( poExt )
+    {
+        if( poExt->GetChildCount() == 2 
+            && EQUAL(poExt->GetChild(0)->GetValue(),"CENTER_LONG") )
+        {
+            bSourceWrap = TRUE;
+            dfSourceWrapLong = atof(poExt->GetChild(1)->GetValue());
+            CPLDebug( "OGRCT", "Wrap source at %g.", dfSourceWrapLong );
+        }
+    }
+
+    poExt = poSRSTarget->GetAttrNode( "GEOGCS|EXTENSION" );
+    if( poExt )
+    {
+        if( poExt->GetChildCount() == 2 
+            && EQUAL(poExt->GetChild(0)->GetValue(),"CENTER_LONG") )
+        {
+            bTargetWrap = TRUE;
+            dfTargetWrapLong = atof(poExt->GetChild(1)->GetValue());
+            CPLDebug( "OGRCT", "Wrap target at %g.", dfTargetWrapLong );
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Establish PROJ.4 handle for source if projection.               */
@@ -658,6 +706,20 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
 /* -------------------------------------------------------------------- */
     if( bSourceLatLong )
     {
+        if( bSourceWrap )
+        {
+            for( i = 0; i < nCount; i++ )
+            {
+                if( x[i] != HUGE_VAL && y[i] != HUGE_VAL )
+                {
+                    if( x[i] < dfSourceWrapLong - 180.0 )
+                        x[i] += 360.0;
+                    else if( x[i] > dfSourceWrapLong + 180 )
+                        x[i] -= 360.0;
+                }
+            }
+        }
+
         for( i = 0; i < nCount; i++ )
         {
             if( x[i] != HUGE_VAL )
@@ -719,6 +781,20 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
             {
                 x[i] *= dfTargetFromRadians;
                 y[i] *= dfTargetFromRadians;
+            }
+        }
+
+        if( bTargetWrap )
+        {
+            for( i = 0; i < nCount; i++ )
+            {
+                if( x[i] != HUGE_VAL && y[i] != HUGE_VAL )
+                {
+                    if( x[i] < dfTargetWrapLong - 180.0 )
+                        x[i] += 360.0;
+                    else if( x[i] > dfTargetWrapLong + 180 )
+                        x[i] -= 360.0;
+                }
             }
         }
     }
