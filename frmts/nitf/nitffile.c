@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/05/29 19:17:19  fwarmerdam
+ * NITF 2.0 can have LA (label) segments in NUMX place.  Handle appropriately.
+ *
  * Revision 1.21  2005/09/21 16:11:21  fwarmerdam
  * Compute complexity level (Brent Fraser)
  *
@@ -298,7 +301,8 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 
     nOffset = NITFCollectSegmentInfo( psFile, nOffset, "GR", 4, 6, &nNextData);
 
-    nOffset += 3; /* NUMX reserved field */
+    /* LA Called NUMX in NITF 2.1 */
+    nOffset = NITFCollectSegmentInfo( psFile, nOffset, "LA", 4, 3, &nNextData);
 
     nOffset = NITFCollectSegmentInfo( psFile, nOffset, "TX", 4, 5, &nNextData);
 
