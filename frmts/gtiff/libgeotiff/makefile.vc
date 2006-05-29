@@ -1,5 +1,5 @@
 
-EXTRAFLAGS =	-I..\libtiff
+EXTRAFLAGS =	-I..\libtiff -DBUILD_AS_DLL
 
 OBJ	= \
 	xtiff.obj \
