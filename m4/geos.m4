@@ -1,3 +1,34 @@
+dnl ***************************************************************************
+dnl $Id$
+dnl
+dnl Project:  GDAL
+dnl Purpose:  Test for GEOS library presence
+dnl Author:   Andrey Kiselev, dron@ak4719.spb.edu
+dnl	      Ideas borrowed from the old GDAL test and from the macro
+dnl           supplied with GEOS package.
+dnl
+dnl ***************************************************************************
+dnl Copyright (c) 2006, Andrey Kiselev
+dnl
+dnl Permission is hereby granted, free of charge, to any person obtaining a
+dnl copy of this software and associated documentation files (the "Software"),
+dnl to deal in the Software without restriction, including without limitation
+dnl the rights to use, copy, modify, merge, publish, distribute, sublicense,
+dnl and/or sell copies of the Software, and to permit persons to whom the
+dnl Software is furnished to do so, subject to the following conditions:
+dnl
+dnl The above copyright notice and this permission notice shall be included
+dnl in all copies or substantial portions of the Software.
+dnl
+dnl THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+dnl OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+dnl FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+dnl THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+dnl LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+dnl FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+dnl DEALINGS IN THE SOFTWARE.
+dnl ***************************************************************************
+
 dnl
 dnl GEOS_INIT (MINIMUM_VERSION)
 dnl
@@ -79,10 +110,17 @@ AC_DEFUN([GEOS_INIT],[
       GEOS_CFLAGS="`${GEOS_CONFIG} --cflags`"
       GEOS_VERSION="`${GEOS_CONFIG} --version`"
 
+      AC_MSG_CHECKING(for geos::Coordinate::getNull() in -lgeos)
       ax_save_LIBS="${LIBS}"
       LIBS=${GEOS_LIBS}
-      AC_CHECK_LIB(geos, main, HAVE_GEOS=yes, HAVE_GEOS=no,)
-      LIBS=${ax_save_LIBS}
+      ax_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${GEOS_CFLAGS}"
+      AC_LANG_PUSH(C++)
+      AC_TRY_COMPILE([#include "geos/geom.h"], [geos::Coordinate::getNull()], HAVE_GEOS=yes, HAVE_GEOS=no)
+      AC_LANG_POP()
+      CFLAGS="${ax_save_CFLAGS}"
+      LIBS="${ax_save_LIBS}"
+      AC_MSG_RESULT($HAVE_GEOS)
 
     fi
 
