@@ -66,12 +66,12 @@ AC_CHECK_LIB(dl,dlopen,,,)
 dnl Needed on Solaris. 
 AC_CHECK_LIB(rt,nanosleep,,,)
 
-dnl We don't need to add math library at all targets
-case "$target_os" in
+dnl We don't need to add math library to all targets
+case "${host_os}" in
     cygwin* | mingw32* | beos* | darwin*)
         ;;
     *)
-	AC_CHECK_LIB(m,main,,,)
+	AC_CHECK_LIB(m,sin,,,)
         ;;
 esac
 
