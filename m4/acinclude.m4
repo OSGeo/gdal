@@ -91,28 +91,22 @@ dnl ---------------------------------------------------------------------------
 
 AC_DEFUN(AC_UNIX_STDIO_64,
 [
-  AC_ARG_WITH(unix_stdio_64,[  --with-unix-stdio-64[=ARG] Utilize 64 stdio api (yes/no)],,)
+  AC_ARG_WITH(unix-stdio-64,[  --with-unix-stdio-64[=ARG] Utilize 64 stdio api (yes/no)],,)
 
   AC_MSG_CHECKING([for 64bit file io])
 
-  if test "$with_unix_stdio_64" = "yes" ; then
+  if test x"$with_unix_stdio_64" = x"yes" ; then
     VSI_FTELL64=ftell64
     VSI_FSEEK64=fseek64
-    VSI_STAT64_T=stat64
-    VSI_STAT64=stat64
-    VSI_FOPEN64=fopen64
   fi
 
-  if test "$with_unix_stdio_64" = "" ; then
+  if test x"$with_unix_stdio_64" = x"" ; then
     echo '#include <stdio.h>' > conftest.cpp
     echo 'int main() { long long off=0; fseek64(NULL, SEEK_SET, off); off = ftell64(NULL); return 0; }' >> conftest.c
     if test -z "`${CC} -o conftest conftest.c 2>&1`" ; then
       with_unix_stdio_64=yes
       VSI_FTELL64=ftell64
       VSI_FSEEK64=fseek64
-      VSI_STAT64_T=stat64
-      VSI_STAT64=stat64
-      VSI_FOPEN64=fopen64
     fi
     rm -f conftest*
   fi
@@ -121,16 +115,13 @@ AC_DEFUN(AC_UNIX_STDIO_64,
   dnl these functions seem to exist on Linux, but aren't normally defined
   dnl by stdio.h.  With CXX (C++) this becomes a fatal error.
 
-  if test "$with_unix_stdio_64" = "" ; then
+  if test x"$with_unix_stdio_64" = x"" ; then
     echo '#include <stdio.h>' > conftest.c
     echo 'int main() { long long off=0; fseeko64(NULL, SEEK_SET, off); off = ftello64(NULL); return 0; }' >> conftest.c
     if test -z "`${CXX} -o conftest conftest.c 2>&1`" ; then
       with_unix_stdio_64=yes
       VSI_FTELL64=ftello64
       VSI_FSEEK64=fseeko64
-      VSI_STAT64_T=stat64
-      VSI_STAT64=stat64
-      VSI_FOPEN64=fopen64
     fi
     rm -f conftest*
   fi
@@ -138,7 +129,7 @@ AC_DEFUN(AC_UNIX_STDIO_64,
   dnl This is much like the first test, but we predefine _LARGEFILE64_SOURCE 
   dnl before including stdio.h.  This should work on Linux 2.4 series systems.
 
-  if test "$with_unix_stdio_64" = "" ; then
+  if test x"$with_unix_stdio_64" = x"" ; then
     echo '#define _LARGEFILE64_SOURCE' > conftest.c
     echo '#include <stdio.h>' >> conftest.c
     echo 'int main() { long long off=0; fseeko64(NULL, SEEK_SET, off); off = ftello64(NULL); return 0; }' >> conftest.c
@@ -146,33 +137,31 @@ AC_DEFUN(AC_UNIX_STDIO_64,
       with_unix_stdio_64=yes
       VSI_FTELL64=ftello64
       VSI_FSEEK64=fseeko64
-      VSI_STAT64_T=stat64
-      VSI_STAT64=stat64
-      VSI_FOPEN64=fopen64
-      AC_DEFINE(VSI_NEED_LARGEFILE64_SOURCE, 1, [Define to 1, if you have
-      LARGEFILE64_SOURCE])
+      AC_DEFINE(VSI_NEED_LARGEFILE64_SOURCE, 1, [Define to 1, if you have LARGEFILE64_SOURCE])
     fi
     rm -f conftest*
   fi
 
   dnl Test special MacOS (Darwin) case. 
 
-  if test ! -z "`uname | grep Darwin`" \
-          -a "$with_unix_stdio_64" = "" ; then
-      with_unix_stdio_64=yes
-      VSI_FTELL64=ftello
-      VSI_FSEEK64=fseeko
-      VSI_STAT64_T=stat
-      VSI_STAT64=stat
-      VSI_FOPEN64=fopen
+  if test x"$with_unix_stdio_64" = x"" ; then
+    case "${host_os}" in
+      darwin*)
+        with_unix_stdio_64=yes
+        VSI_FTELL64=ftello
+        VSI_FSEEK64=fseeko
+        ;;
+    esac
   fi
 
-  if test "$with_unix_stdio_64" = "yes" ; then
+  if test x"$with_unix_stdio_64" = x"yes" ; then
     AC_MSG_RESULT([yes])
 
+    AC_CHECK_FUNC(stat64, VSI_STAT64=stat64 VSI_STAT64_T=stat64, VSI_STAT64=stat VSI_STAT64_T=stat)
+    AC_CHECK_FUNC(fopen64, VSI_FOPEN64=fopen64, VSI_FOPEN64=fopen)
+
     AC_DEFINE(UNIX_STDIO_64, 1, [Define to 1 if you have fseek64, ftell64])
-    AC_DEFINE(VSI_LARGE_API_SUPPORTED, 1, [Define to 1, if you have 64 bit
-    STDIO API])
+    AC_DEFINE(VSI_LARGE_API_SUPPORTED, 1, [Define to 1, if you have 64 bit STDIO API])
 
     export VSI_FTELL64 VSI_FSEEK64 VSI_STAT64 VSI_STAT64_T VSI_OPEN64
     AC_DEFINE_UNQUOTED(VSI_FTELL64,$VSI_FTELL64, [Define to name of 64bit ftell func])
