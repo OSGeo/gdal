@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2006/05/30 18:40:36  fwarmerdam
+ * Allow nitf files without image data to be opened.
+ *
  * Revision 1.53  2006/05/29 19:42:29  fwarmerdam
  * Return SLOC_ROW and SLOC_COL instead of X/Y the wrong way around.
  *
@@ -753,12 +756,10 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     if( psImage == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, 
+        CPLError( CE_Warning, CPLE_AppDefined, 
                   "The file %s appears to be an NITF file, but no image\n"
-                  "blocks were found on it.  GDAL cannot utilize non-image\n"
-                  "NITF files.", 
+                  "blocks were found on it.", 
                   poOpenInfo->pszFilename );
-        return NULL;
     }
     
 /* -------------------------------------------------------------------- */
@@ -772,17 +773,28 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->psImage = psImage;
     poDS->eAccess = poOpenInfo->eAccess;
 
-    poDS->nRasterXSize = psImage->nCols;
-    poDS->nRasterYSize = psImage->nRows;
+    if( psImage )
+    {
+        poDS->nRasterXSize = psImage->nCols;
+        poDS->nRasterYSize = psImage->nRows;
+    }
+    else
+    {
+        poDS->nRasterXSize = 1;
+        poDS->nRasterYSize = 1;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If the image is JPEG2000 (C8) compressed, we will need to       */
 /*      open the image data as a JPEG2000 dataset.                      */
 /* -------------------------------------------------------------------- */
-    int nUsableBands = psImage->nBands;
+    int nUsableBands = 0;
     int		iBand;
 
-    if( EQUAL(psImage->szIC,"C8") )
+    if( psImage )
+        nUsableBands = psImage->nBands;
+
+    if( psImage != NULL && EQUAL(psImage->szIC,"C8") )
     {
         char *pszDSName = CPLStrdup( 
             CPLSPrintf( "J2K_SUBFILE:%d,%d,%s", 
@@ -863,7 +875,11 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRSWork;
 
-    if( psImage->chICORDS == 'G'  )
+    if( psImage == NULL )
+    {
+        /* nothing */
+    }
+    else if( psImage->chICORDS == 'G'  )
     {
         CPLFree( poDS->pszProjection );
         poDS->pszProjection = NULL;
@@ -917,8 +933,9 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try looking for a .nfw file.                                    */
 /* -------------------------------------------------------------------- */
-    if( GDALReadWorldFile( pszFilename, "nfw", 
-                           poDS->adfGeoTransform ) )
+    if( psImage
+        && GDALReadWorldFile( pszFilename, "nfw", 
+                              poDS->adfGeoTransform ) )
     {
         const char *pszHDR;
         FILE *fpHDR;
@@ -996,7 +1013,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     int nGCPCount = 0;
     GDAL_GCP    *psGCPs = NULL;
 
-    if( ( poDS->bGotGeoTransform == FALSE ) && ( psImage->chICORDS != ' ' ) )
+    if( psImage && !poDS->bGotGeoTransform && psImage->chICORDS != ' ' )
     {
         nGCPCount = 4;
 
@@ -1027,9 +1044,14 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Convert the GCPs into a geotransform definition, if possible.   */
 /* -------------------------------------------------------------------- */
-    if(  ( poDS->bGotGeoTransform == FALSE ) && nGCPCount > 0 && 
-         GDALGCPsToGeoTransform( nGCPCount, psGCPs, 
-                                 poDS->adfGeoTransform, TRUE ) )
+    if( !psImage )
+    {
+        /* nothing */
+    }
+    else if( poDS->bGotGeoTransform == FALSE 
+             && nGCPCount > 0 
+             && GDALGCPsToGeoTransform( nGCPCount, psGCPs, 
+                                   poDS->adfGeoTransform, TRUE ) )
     {	
         poDS->bGotGeoTransform = TRUE;
     } 
@@ -1098,51 +1120,57 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // File and Image level metadata.
     papszMergedMD = CSLDuplicate( poDS->psFile->papszMetadata );
-    papszMergedMD = CSLInsertStrings( papszMergedMD, 
-                                      CSLCount( papszMergedMD ),
-                                      psImage->papszMetadata );
 
-    // Comments.
-    if( psImage->pszComments != NULL && strlen(psImage->pszComments) != 0 )
-        papszMergedMD = CSLSetNameValue( 
-            papszMergedMD, "NITF_IMAGE_COMMENTS", psImage->pszComments );
-
-    // Compression code. 
-    papszMergedMD = CSLSetNameValue( papszMergedMD, "NITF_IC", 
-                                     psImage->szIC );
-
-    // IMODE
-    char szIMODE[2];
-    szIMODE[0] = psImage->chIMODE;
-    szIMODE[1] = '\0';
-    papszMergedMD = CSLSetNameValue( papszMergedMD, "NITF_IMODE", szIMODE );
-
-    // USE00A 
-    papszUSE00A_MD = NITFReadUSE00A( psImage );
-    if( papszUSE00A_MD != NULL )
+    if( psImage )
     {
         papszMergedMD = CSLInsertStrings( papszMergedMD, 
-                                          CSLCount( papszUSE00A_MD ),
-                                          papszUSE00A_MD );
-        CSLDestroy( papszUSE00A_MD );
-    }
-    
-    papszUSE00A_MD = NITFReadSTDIDC( psImage );
-    if( papszUSE00A_MD != NULL )
-    {
-        papszMergedMD = CSLInsertStrings( papszMergedMD, 
-                                          CSLCount( papszUSE00A_MD ),
-                                          papszUSE00A_MD );
-        CSLDestroy( papszUSE00A_MD );
-    }
+                                          CSLCount( papszMergedMD ),
+                                          psImage->papszMetadata );
 
+        // Comments.
+        if( psImage->pszComments != NULL && strlen(psImage->pszComments) != 0 )
+            papszMergedMD = CSLSetNameValue( 
+                papszMergedMD, "NITF_IMAGE_COMMENTS", psImage->pszComments );
+        
+        // Compression code. 
+        papszMergedMD = CSLSetNameValue( papszMergedMD, "NITF_IC", 
+                                         psImage->szIC );
+        
+        // IMODE
+        char szIMODE[2];
+        szIMODE[0] = psImage->chIMODE;
+        szIMODE[1] = '\0';
+        papszMergedMD = CSLSetNameValue( papszMergedMD, "NITF_IMODE", szIMODE );
+        
+        // USE00A 
+        papszUSE00A_MD = NITFReadUSE00A( psImage );
+        if( papszUSE00A_MD != NULL )
+        {
+            papszMergedMD = CSLInsertStrings( papszMergedMD, 
+                                              CSLCount( papszUSE00A_MD ),
+                                              papszUSE00A_MD );
+            CSLDestroy( papszUSE00A_MD );
+        }
+        
+        papszUSE00A_MD = NITFReadSTDIDC( psImage );
+        if( papszUSE00A_MD != NULL )
+        {
+            papszMergedMD = CSLInsertStrings( papszMergedMD, 
+                                              CSLCount( papszUSE00A_MD ),
+                                              papszUSE00A_MD );
+            CSLDestroy( papszUSE00A_MD );
+        }
+    }
+        
     poDS->SetMetadata( papszMergedMD );
     CSLDestroy( papszMergedMD );
 
 /* -------------------------------------------------------------------- */
 /*      Image structure metadata.                                       */
 /* -------------------------------------------------------------------- */
-    if( psImage->szIC[1] == '1' )
+    if( psImage == NULL )
+        /* do nothing */;
+    else if( psImage->szIC[1] == '1' )
         poDS->SetMetadataItem( "COMPRESSION", "BILEVEL", 
                                "IMAGE_STRUCTURE" );
     else if( psImage->szIC[1] == '2' )
@@ -1166,7 +1194,8 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     NITFRPC00BInfo sRPCInfo;
 
-    if( NITFReadRPC00B( psImage, &sRPCInfo ) && sRPCInfo.SUCCESS )
+    if( psImage
+        && NITFReadRPC00B( psImage, &sRPCInfo ) && sRPCInfo.SUCCESS )
     {
         char szValue[1280];
         int  i;
@@ -1247,7 +1276,8 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     NITFICHIPBInfo sChipInfo;
 
-    if( NITFReadICHIPB( psImage, &sChipInfo ) && sChipInfo.XFRM_FLAG == 0 )
+    if( psImage
+        && NITFReadICHIPB( psImage, &sChipInfo ) && sChipInfo.XFRM_FLAG == 0 )
     {
         char szValue[1280];
 
