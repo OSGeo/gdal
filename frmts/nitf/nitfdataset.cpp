@@ -8,6 +8,9 @@
  ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam
  *
+ * Portions Copyright (c) Her majesty the Queen in right of Canada as
+ * represented by the Minister of National Defence, 2006.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -28,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2006/05/31 01:16:30  fwarmerdam
+ * added very preliminary C3/JPEG read support
+ *
  * Revision 1.54  2006/05/30 18:40:36  fwarmerdam
  * Allow nitf files without image data to be opened.
  *
@@ -149,6 +155,8 @@ class NITFDataset : public GDALPamDataset
 
     GDALDataset *poJ2KDataset;
     int         bJP2Writing;
+
+    GDALDataset *poJPEGDataset;
 
     int         bGotGeoTransform;
     double      adfGeoTransform[6];
@@ -665,6 +673,22 @@ NITFDataset::~NITFDataset()
         NITFPatchImageLength( GetDescription(), nImageStart, nPixelCount );
     }
 
+/* -------------------------------------------------------------------- */
+/*      If we have a jpeg output file, make sure it gets closed         */
+/*      and flushed out.                                                */
+/* -------------------------------------------------------------------- */
+    if( poJPEGDataset != NULL )
+    {
+        int i;
+
+        GDALClose( (GDALDatasetH) poJPEGDataset );
+        
+        // the bands are really jpeg bands ... remove them 
+        // from the NITF list so they won't get destroyed twice.
+        for( i = 0; i < nBands && papoBands != NULL; i++ )
+            papoBands[i] = NULL;
+    }
+
     CSLDestroy( papszCGMMetadata );
 }
 
@@ -857,17 +881,77 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
+/*      If the image is JPEG (C3) compressed, we will need to open      */
+/*      the image data as a JPEG dataset.                               */
+/* -------------------------------------------------------------------- */
+    else if( EQUAL(psImage->szIC,"C3") )
+    {
+        char *pszDSName = CPLStrdup( 
+            CPLSPrintf( "JPEG_SUBFILE:%d,%d,%s", 
+                        psFile->pasSegmentInfo[iSegment].nSegmentStart,
+                        psFile->pasSegmentInfo[iSegment].nSegmentSize,
+                        poOpenInfo->pszFilename ) );
+
+        CPLDebug( "GDAL", 
+                  "NITFDataset::Open() as IC=C3 (JPEG compressed)\n");
+
+        poDS->poJPEGDataset = (GDALDataset *) GDALOpen( pszDSName, GA_ReadOnly );
+        CPLFree( pszDSName );
+
+        if( poDS->poJPEGDataset == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Unable to open JPEG image within NITF file.\n"
+                      "Is the JPEG driver available?" );
+            delete poDS;
+            return NULL;
+        }
+
+        if( poDS->poJPEGDataset->GetRasterCount() < nUsableBands )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "JPEG data stream has less useful bands than expected, likely\n"
+                      "because some channels have differing resolutions." );
+            
+            nUsableBands = poDS->poJPEGDataset->GetRasterCount();
+        }
+
+        // Force NITF derived color space info 
+        for( iBand = 0; iBand < nUsableBands; iBand++ )
+        {
+            NITFBandInfo *psBandInfo = psImage->pasBandInfo + iBand;
+            GDALRasterBand *poBand=poDS->poJPEGDataset->GetRasterBand(iBand+1);
+            
+            if( EQUAL(psBandInfo->szIREPBAND,"R") )
+                poBand->SetColorInterpretation( GCI_RedBand );
+            if( EQUAL(psBandInfo->szIREPBAND,"G") )
+                poBand->SetColorInterpretation( GCI_GreenBand );
+            if( EQUAL(psBandInfo->szIREPBAND,"B") )
+                poBand->SetColorInterpretation( GCI_BlueBand );
+            if( EQUAL(psBandInfo->szIREPBAND,"M") )
+                poBand->SetColorInterpretation( GCI_GrayIndex );
+            if( EQUAL(psBandInfo->szIREPBAND,"Y") )
+                poBand->SetColorInterpretation( GCI_YCbCr_YBand );
+            if( EQUAL(psBandInfo->szIREPBAND,"Cb") )
+                poBand->SetColorInterpretation( GCI_YCbCr_CbBand );
+            if( EQUAL(psBandInfo->szIREPBAND,"Cr") )
+                poBand->SetColorInterpretation( GCI_YCbCr_CrBand );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
     for( iBand = 0; iBand < nUsableBands; iBand++ )
     {
-        if( poDS->poJ2KDataset == NULL )
-            poDS->SetBand( iBand+1, new NITFRasterBand( poDS, iBand+1 ) );
-        else
-        {
+        if( poDS->poJ2KDataset != NULL )
             poDS->SetBand( iBand+1, 
                            poDS->poJ2KDataset->GetRasterBand(iBand+1) );
-        }
+        else if( poDS->poJPEGDataset != NULL )
+            poDS->SetBand( iBand+1, 
+                           poDS->poJPEGDataset->GetRasterBand(iBand+1) );
+        else
+            poDS->SetBand( iBand+1, new NITFRasterBand( poDS, iBand+1 ) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1051,7 +1135,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     else if( poDS->bGotGeoTransform == FALSE 
              && nGCPCount > 0 
              && GDALGCPsToGeoTransform( nGCPCount, psGCPs, 
-                                   poDS->adfGeoTransform, TRUE ) )
+                                        poDS->adfGeoTransform, TRUE ) )
     {	
         poDS->bGotGeoTransform = TRUE;
     } 
@@ -1412,6 +1496,11 @@ CPLErr NITFDataset::AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
                                         nBufXSize, nBufYSize, eDT, 
                                         nBandCount, panBandList, 
                                         papszOptions);
+    else if( poJPEGDataset != NULL )
+        return poJPEGDataset->AdviseRead( nXOff, nYOff, nXSize, nYSize, 
+                                          nBufXSize, nBufYSize, eDT, 
+                                          nBandCount, panBandList, 
+                                          papszOptions);
     else
         return poJ2KDataset->AdviseRead( nXOff, nYOff, nXSize, nYSize, 
                                          nBufXSize, nBufYSize, eDT, 
@@ -1431,13 +1520,18 @@ CPLErr NITFDataset::IRasterIO( GDALRWFlag eRWFlag,
                                int nPixelSpace, int nLineSpace, int nBandSpace)
     
 {
-    if( poJ2KDataset == NULL )
-        return GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+    if( poJ2KDataset != NULL )
+        return poJ2KDataset->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                        pData, nBufXSize, nBufYSize, eBufType,
                                        nBandCount, panBandMap, 
                                        nPixelSpace, nLineSpace, nBandSpace );
-    else
-        return poJ2KDataset->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+    else if( poJPEGDataset != NULL )
+        return poJPEGDataset->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                        pData, nBufXSize, nBufYSize, eBufType,
+                                        nBandCount, panBandMap, 
+                                        nPixelSpace, nLineSpace, nBandSpace );
+    else 
+        return GDALDataset::IRasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                        pData, nBufXSize, nBufYSize, eBufType,
                                        nBandCount, panBandMap, 
                                        nPixelSpace, nLineSpace, nBandSpace );
