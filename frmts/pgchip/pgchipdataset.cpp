@@ -954,21 +954,21 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
         
     // Copy header into result string 
     for(j=0;j<(int)sizeof(PGCHIP);j++){
-        deparse_hex( ((unsigned char *) header)[j], (unsigned char *)&result[j*2]);  
+        pgch_deparse_hex( header[j], (unsigned char*)&(result[j*2]));
     }  
     
     // Copy Palette into result string if required
     int offsetPalette = (int)sizeof(PGCHIP) * 2;
     if(nColorType == PGCHIP_COLOR_TYPE_PALETTE && sizePalette>0){
         for(j=0;j<sizePalette;j++){
-            deparse_hex( ((unsigned char *) pPalette)[j], (unsigned char *)&result[offsetPalette + (j*2)]);     
+            pgch_deparse_hex( pPalette[j], (unsigned char *)&result[offsetPalette + (j*2)]);     
         }                   
     }
     
     // Copy data into result string
     int offsetData = offsetPalette + sizePalette * 2;
     for(j=0;j<(nYSize * lineSize);j++){
-         deparse_hex( ((unsigned char *) data)[j], (unsigned char *)&result[offsetData + (j*2)]);
+         pgch_deparse_hex( data[j], (unsigned char *)&result[offsetData + (j*2)]);
     }
    
     

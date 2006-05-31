@@ -37,6 +37,7 @@
 #include "liblwgeom.h"
 
 // External functions (what's again the reason for using explicit hex form ?)
+extern void pgch_deparse_hex(unsigned char in, unsigned char *out);
 extern void deparse_hex_string(unsigned char *strOut,char *strIn,int length);
 extern void parse_hex_string(unsigned char *strOut,char *strIn,int length);
 
