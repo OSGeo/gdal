@@ -238,9 +238,11 @@ dnl ---------------------------------------------------------------------------
 
 PG_CONFIG=no
 
-AC_ARG_WITH(pg,[  --with-pg[=ARG]         Include PostgreSQL OGR Support (ARG=path to pg_config)],,)
+AC_ARG_WITH(pg,
+	    AS_HELP_STRING([--with-pg[=ARG]],
+	       [Include PostgreSQL OGR Support (ARG=path to pg_config)]),,)
 
-if test "$with_pg" = "yes" -o "$with_pg" = "" ; then
+if test "x$with_pg" = "xyes" -o "x$with_pg" = "x" ; then
   AC_PATH_PROG(PG_CONFIG, pg_config, no)
 else 
   PG_CONFIG=$with_pg
@@ -248,7 +250,7 @@ fi
 
 AC_MSG_CHECKING([for PostgreSQL])
 
-if test "$PG_CONFIG" = "no" ; then
+if test "x$PG_CONFIG" = "xno" ; then
 
   HAVE_PG=no
   PG_LIB=
@@ -257,25 +259,29 @@ if test "$PG_CONFIG" = "no" ; then
   AC_MSG_RESULT([no])
 
 else
-  if test -d $PG_CONFIG ; then
+  if test -d ${PG_CONFIG} ; then
       AC_MSG_RESULT([no])
       AC_MSG_ERROR([--with-pg argument is a directory.  It should be the path to the pg_config script, often somewhere like /usr/local/pgsql/bin/pg_config.])
   fi
 
-  if test \! -x $PG_CONFIG ; then
+  if test \! -x ${PG_CONFIG} ; then
       AC_MSG_RESULT([no])
       AC_MSG_ERROR([--with-pg argument is a not an executable file.  It should be the path to the pg_config script, often somewhere like /usr/local/pgsql/bin/pg_config.])
   fi
 
-  HAVE_PG=yes
-  LIBS="-L`$PG_CONFIG --libdir` -lpq $LIBS"
-
   AC_MSG_RESULT([yes])
 
-  PG_EXTRA_DEC=""
-  AC_CHECK_LIB(pq,PQputCopyData,,PG_EXTRA_DEC=-DPG_PRE74,)
+  AC_CHECK_LIB(pq,PQconnectdb,HAVE_PG=yes,HAVE_PG=no,)
+  
+  if test "${HAVE_PG}" = "yes" ; then
+    LIBS="-L`$PG_CONFIG --libdir` -lpq $LIBS"
+    PG_INC="-I`$PG_CONFIG --includedir`"
 
-  PG_INC="-I`$PG_CONFIG --includedir` $PG_EXTRA_DEC"
+    PG_EXTRA_DEC=""
+    AC_CHECK_LIB(pq,PQputCopyData,,PG_EXTRA_DEC=-DPG_PRE74,)
+    PG_INC="${PG_INC} ${PG_EXTRA_DEC}"
+  fi
+
 fi
 
 AC_SUBST(HAVE_PG,$HAVE_PG)
@@ -1661,18 +1667,21 @@ dnl Check if geos library is available.
 dnl ---------------------------------------------------------------------------
 
 GEOS_INIT(2.0.0)
-case ${GEOS_VERSION} in 
- 2*)
-  AC_MSG_NOTICE([using GEOS 2.x C++ API])
-  ;;
+if test "${HAVE_GEOS}" = "yes" ; then
+   case "${GEOS_VERSION}" in 
+   2*)
+    AC_MSG_NOTICE([using GEOS 2.x C++ API])
+    ;;
 
-  *)
-  GEOS_LIBS="${GEOS_LIBS} -lgeos_c"
-  GEOS_CFLAGS="-DGEOS_C_API=1 ${GEOS_CFLAGS}"
-  AC_MSG_NOTICE([using GEOS 3.x+ C API])
-  ;;
-esac
-LIBS="$GEOS_LIBS $LIBS"
+    *)
+    GEOS_LIBS="${GEOS_LIBS} -lgeos_c"
+    GEOS_CFLAGS="-DGEOS_C_API=1 ${GEOS_CFLAGS}"
+    AC_MSG_NOTICE([using GEOS 3.x+ C API])
+    ;;
+  esac
+  
+  LIBS="${GEOS_LIBS} ${LIBS}"
+fi
 
 dnl ---------------------------------------------------------------------------
 dnl PROJ.4 related stuff.
