@@ -40,7 +40,7 @@
 /* ==================================================================== */
 /************************************************************************/
 
-void deparse_hex(unsigned char str, unsigned char *result){
+void pgch_deparse_hex(unsigned char str, unsigned char *result){
 
 	int	input_high;
 	int  input_low;
@@ -285,6 +285,6 @@ void deparse_hex_string(unsigned char *strOut,char *strIn,int length){
     int i;
     
     for(i=0;i<length;i++)
-        deparse_hex(strIn[i],&strOut[i]);
+        pgch_deparse_hex(strIn[i],&strOut[i]);
 
 }
