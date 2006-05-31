@@ -271,7 +271,10 @@ else
 
   AC_MSG_RESULT([yes])
 
+  ax_save_LIBS="${LIBS}"
+  LIBS="-L`$PG_CONFIG --libdir` -lpq"
   AC_CHECK_LIB(pq,PQconnectdb,HAVE_PG=yes,HAVE_PG=no,)
+  LIBS="${ax_save_LIBS}"
   
   if test "${HAVE_PG}" = "yes" ; then
     LIBS="-L`$PG_CONFIG --libdir` -lpq $LIBS"
