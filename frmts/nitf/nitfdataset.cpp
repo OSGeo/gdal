@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2006/05/31 18:30:04  fwarmerdam
+ * Fixed initialization of poJPEGDataset.
+ *
  * Revision 1.55  2006/05/31 01:16:30  fwarmerdam
  * added very preliminary C3/JPEG read support
  *
@@ -584,6 +587,7 @@ NITFDataset::NITFDataset()
     pszProjection = CPLStrdup("");
     poJ2KDataset = NULL;
     bJP2Writing = FALSE;
+    poJPEGDataset = NULL;
 
     nGCPCount = 0;
     pasGCPList = NULL;
