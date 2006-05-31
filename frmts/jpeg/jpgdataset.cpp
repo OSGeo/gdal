@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.43  2006/05/31 01:28:30  fwarmerdam
+ * Disable PAM support for subfiles.
+ *
  * Revision 1.42  2006/05/31 01:17:57  fwarmerdam
  * Added support for JPEG_SUBFILE handling.
  * Added preliminary support for pre-setting default NITF quantization and
@@ -1454,7 +1457,9 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
     poDS->SetDescription( poOpenInfo->pszFilename );
-    poDS->TryLoadXML();
+    
+    if( !bIsSubfile )
+        poDS->TryLoadXML();
 
 /* -------------------------------------------------------------------- */
 /*      Check for world file.                                           */
