@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2006/05/31 18:40:25  fwarmerdam
+ * Fixed problem with jpeg in later IM segments.
+ *
  * Revision 1.56  2006/05/31 18:30:04  fwarmerdam
  * Fixed initialization of poJPEGDataset.
  *
@@ -894,7 +897,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLSPrintf( "JPEG_SUBFILE:%d,%d,%s", 
                         psFile->pasSegmentInfo[iSegment].nSegmentStart,
                         psFile->pasSegmentInfo[iSegment].nSegmentSize,
-                        poOpenInfo->pszFilename ) );
+                        pszFilename ) );
 
         CPLDebug( "GDAL", 
                   "NITFDataset::Open() as IC=C3 (JPEG compressed)\n");
