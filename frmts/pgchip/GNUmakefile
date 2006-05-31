@@ -9,7 +9,7 @@ include ../../GDALmake.opt
 OBJ	=	pgchipdataset.o pgchiprasterband.o pgchiputilities.o
 
 
-CPPFLAGS	:=	$(XTRA_OPT) $(PG_INC) $(POSTGIS_INC) $(GDAL_INCLUDE) $(CPPFLAGS )
+CPPFLAGS	:= -Wall -g $(XTRA_OPT) $(PG_INC) $(POSTGIS_INC) $(GDAL_INCLUDE) $(CPPFLAGS )
 
 default:	$(OBJ)
 

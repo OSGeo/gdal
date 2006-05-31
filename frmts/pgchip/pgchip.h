@@ -94,7 +94,7 @@ class PGCHIPDataset : public GDALDataset{
     
     static GDALDataset *Open( GDALOpenInfo * );
     
-    void        printChipInfo();
+    static void        printChipInfo(const CHIP& chip);
 
     CPLErr 	GetGeoTransform( double * padfTransform );
     virtual CPLErr      SetGeoTransform( double * );

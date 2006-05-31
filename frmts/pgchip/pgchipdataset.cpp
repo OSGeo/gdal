@@ -34,6 +34,8 @@
 
 #include "pgchip.h"
 
+/* Define to enable debugging info */
+/*#define PGCHIP_DEBUG 1*/
 
 CPL_C_START
 void	GDALRegister_PGCHIP(void);
@@ -85,14 +87,8 @@ PGCHIPDataset::~PGCHIPDataset(){
     CPLFree(pszConnectionString);
     CPLFree(pszDBName);
     CPLFree(pszName);
-
-    
-    if(PGCHIP->data)
-        CPLFree(PGCHIP->data);
-        
-    if(PGCHIP)
-        CPLFree(PGCHIP);
-    
+    //CPLFree(PGCHIP->data); ?? 
+    CPLFree(PGCHIP);
 }
 
 /************************************************************************/
@@ -199,7 +195,7 @@ CPLErr PGCHIPDataset::SetProjection( const char * pszNewProjection ){
         return CE_Failure;
     }
     
-    CPLFree( pszProjection );
+    CPLFree( pszProjection ); pszProjection = NULL;
         
 /* -------------------------------------------------------------------- */
 /*      Reading SRID                                                    */
@@ -440,6 +436,10 @@ GDALDataset *PGCHIPDataset::Open( GDALOpenInfo * poOpenInfo ){
     
     // Chip assigment
     poDS->PGCHIP = (CHIP *)chipdata;
+
+#ifdef PGCHIP_DEBUG
+    poDS->printChipInfo(*(poDS->PGCHIP));
+#endif
            
     if( hResult )
         PQclear( hResult );
@@ -705,7 +705,7 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
     else        
         pszName = CPLStrdup("unknown_layer");
             
-    CPLFree(layerName);
+    CPLFree(layerName); layerName = NULL;
     
     
     // First allocation is small
@@ -745,7 +745,7 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
     else {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s", PQerrorMessage(hPGConn) );
-        CPLFree(szCommand);
+        CPLFree(szCommand); szCommand = NULL;
         return NULL;
     }
     
@@ -833,7 +833,7 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
     int		bHaveNoData = FALSE;
     double	dfNoDataValue = -1;
     int nbColors = 0,bFoundTrans = FALSE;
-    int sizePalette = 0;
+    size_t sizePalette = 0;
     
     if( nColorType == PGCHIP_COLOR_TYPE_PALETTE )
     {
@@ -893,7 +893,7 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
     
     // PGCHIP.size changes if there is a palette.
     // Is calculated by Postgis when inserting anyway
-    PGCHIP.size = sizeof(CHIP) + (nYSize * nXSize * storageChunk * nBands) + sizePalette;
+    PGCHIP.size = sizeof(CHIP) - sizeof(void*) + (nYSize * nXSize * storageChunk * nBands) + sizePalette;
     
     switch(storageChunk*nBands){
         case 1 :
@@ -911,13 +911,16 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
             break;   
     }
     
+#ifdef PGCHIP_DEBUG
+    PGCHIPDataset::printChipInfo(PGCHIP);
+#endif
                 
 /* -------------------------------------------------------------------- */
 /*      Loop over image                                                 */
 /* -------------------------------------------------------------------- */
        
     CPLErr      eErr;
-    int lineSize = nXSize * storageChunk * nBands;
+    size_t lineSize = nXSize * storageChunk * nBands;
     
     // allocating data buffer
     GByte *data = (GByte *) CPLMalloc( nYSize * lineSize);
@@ -941,10 +944,10 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
 /* -------------------------------------------------------------------- */    
     
     char *result;
-    int j=0;
+    size_t j=0;
     
     // Calculating result length (*2 -> Hex form, +1 -> end string) 
-    int size_result = (PGCHIP.size * 2) + 1;
+    size_t size_result = (PGCHIP.size * 2) + 1;
         
     // memory allocation
     result = (char *) CPLMalloc( size_result * sizeof(char));
@@ -953,12 +956,12 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
     GByte *header = (GByte *)&PGCHIP;
         
     // Copy header into result string 
-    for(j=0;j<(int)sizeof(PGCHIP);j++){
+    for(j=0; j<sizeof(PGCHIP)-sizeof(void*); j++) {
         pgch_deparse_hex( header[j], (unsigned char*)&(result[j*2]));
     }  
     
     // Copy Palette into result string if required
-    int offsetPalette = (int)sizeof(PGCHIP) * 2;
+    size_t offsetPalette = (sizeof(PGCHIP)-sizeof(void*)) * 2;
     if(nColorType == PGCHIP_COLOR_TYPE_PALETTE && sizePalette>0){
         for(j=0;j<sizePalette;j++){
             pgch_deparse_hex( pPalette[j], (unsigned char *)&result[offsetPalette + (j*2)]);     
@@ -966,7 +969,7 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
     }
     
     // Copy data into result string
-    int offsetData = offsetPalette + sizePalette * 2;
+    size_t offsetData = offsetPalette + sizePalette * 2;
     for(j=0;j<(nYSize * lineSize);j++){
          pgch_deparse_hex( data[j], (unsigned char *)&result[offsetData + (j*2)]);
     }
@@ -1005,17 +1008,17 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
     else {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s", PQerrorMessage(hPGConn) );
-        CPLFree(szCommand);
+        CPLFree(szCommand); szCommand = NULL;
         return NULL;
     }
         
     hResult = PQexec(hPGConn, "COMMIT");
     PQclear( hResult );
             
-    CPLFree( szCommand );
-    CPLFree( pPalette );
-    CPLFree( data );       
-    CPLFree( result );
+    CPLFree( szCommand ); szCommand = NULL;
+    CPLFree( pPalette ); pPalette = NULL;
+    CPLFree( data ); data = NULL;
+    CPLFree( result ); result = NULL;
              
     return (GDALDataset *)GDALOpen(pszFilename,GA_Update);
 }
@@ -1024,20 +1027,20 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
 /************************************************************************/
 /*                          Display CHIP information                    */
 /************************************************************************/
-void     PGCHIPDataset::printChipInfo(){
+void     PGCHIPDataset::printChipInfo(const CHIP& c){
 
-    if(this->PGCHIP != NULL){
+    //if(this->PGCHIP != NULL){
         printf("\n---< CHIP INFO >----\n");
-        printf("CHIP.datatype = %d\n",this->PGCHIP->datatype);
-        printf("CHIP.compression = %d\n",this->PGCHIP->compression);
-        printf("CHIP.size = %d\n",this->PGCHIP->size);
-        printf("CHIP.factor = %f\n",this->PGCHIP->factor);
-        printf("CHIP.width = %d\n",this->PGCHIP->width);
-        printf("CHIP.height = %d\n",this->PGCHIP->height);
-        printf("CHIP.nBands = %d\n",(int)this->PGCHIP->future[0]);
-        printf("CHIP.nBitDepth = %d\n",(int)this->PGCHIP->future[1]);
+        printf("CHIP.datatype = %d\n", c.datatype);
+        printf("CHIP.compression = %d\n", c.compression);
+        printf("CHIP.size = %d\n", c.size);
+        printf("CHIP.factor = %f\n", c.factor);
+        printf("CHIP.width = %d\n", c.width);
+        printf("CHIP.height = %d\n", c.height);
+        printf("CHIP.future[0] (nBands?) = %d\n", (int)c.future[0]);
+        printf("CHIP.future[1] (nBitDepth?) = %d\n", (int)c.future[1]);
         printf("--------------------\n");
-     }
+     //}
 }
 
 
