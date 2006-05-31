@@ -8,6 +8,9 @@
  ******************************************************************************
  * Copyright (c) 2000, Frank Warmerdam
  *
+ * Portions Copyright (c) Her majesty the Queen in right of Canada as
+ * represented by the Minister of National Defence, 2006.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -28,6 +31,11 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.42  2006/05/31 01:17:57  fwarmerdam
+ * Added support for JPEG_SUBFILE handling.
+ * Added preliminary support for pre-setting default NITF quantization and
+ * huffman tables.
+ *
  * Revision 1.41  2006/03/21 19:46:37  fwarmerdam
  * Avoid calling jpeg_finish_compress() if there was an error or
  * libjpeg is likely to issue an error and call exit()!
@@ -197,6 +205,8 @@ class JPGDataset : public GDALPamDataset
     double adfGeoTransform[6];
 
     FILE   *fpImage;
+    int    nSubfileOffset;
+
     int    nLoadedScanline;
     GByte  *pabyScanline;
 
@@ -219,7 +229,7 @@ class JPGDataset : public GDALPamDataset
     void   EXIFPrintShort(char *, const char*, TIFFDirEntry*);
     void   EXIFPrintData(char *, GUInt16, GUInt32, unsigned char* );
 
-    
+    void   LoadDefaultTables(int);
 
   public:
                  JPGDataset();
@@ -242,6 +252,8 @@ class JPGDataset : public GDALPamDataset
 class JPGRasterBand : public GDALPamRasterBand
 {
     friend class JPGDataset;
+
+    JPGDataset 	   *poGDS;
 
   public:
 
@@ -734,7 +746,8 @@ CPLErr JPGDataset::EXIFExtractMetadata(FILE *fp, int nOffset)
 JPGRasterBand::JPGRasterBand( JPGDataset *poDS, int nBand )
 
 {
-    this->poDS = poDS;
+    this->poDS = poGDS = poDS;
+
     this->nBand = nBand;
     if( poDS->sDInfo.data_precision == 12 )
         eDataType = GDT_UInt16;
@@ -753,7 +766,6 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                   void * pImage )
 
 {
-    JPGDataset	*poGDS = (JPGDataset *) poDS;
     CPLErr      eErr;
     int         nXSize = GetXSize();
     int         nWordSize = GDALGetDataTypeSize(eDataType) / 8;
@@ -821,8 +833,6 @@ CPLErr JPGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 GDALColorInterp JPGRasterBand::GetColorInterpretation()
 
 {
-    JPGDataset	*poGDS = (JPGDataset *) poDS;
-
     if( poGDS->nBands == 1 )
         return GCI_GrayIndex;
 
@@ -917,6 +927,180 @@ CPLErr JPGDataset::LoadScanline( int iLine )
 }
 
 /************************************************************************/
+/*                         LoadDefaultTables()                          */
+/************************************************************************/
+
+const static int Q1table[256] = 
+{
+    8,
+    72, 
+    72, 
+    72,
+
+    72,
+    72,
+    72,
+    72,
+    72,
+    72,
+    78,
+    74, 
+    76,
+    74,
+    78,
+    89,
+    81,
+    84,
+    84,
+    81,
+    89,
+    106,
+
+    93,
+    94,
+    99,
+    94,
+    93,
+    106,
+    129,
+    111,
+    108,
+    116,
+    116,
+    108,
+    111,
+    129,
+    135,
+    128,
+    136,
+    145,
+    
+    136,
+    128,
+    135,
+    155,
+    160,
+    177,
+    177,
+    160,
+    155,
+    193,
+    213,
+    228,
+    213,
+    193,
+    255,
+    255,
+    255,
+    255
+};
+
+static const int AC_BITS[16] = 
+{ 0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 125 };
+
+static const int AC_HUFFVAL[256] = {
+    0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,          
+    0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61, 0x07,
+    0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xA1, 0x08,
+    0x23, 0x42, 0xB1, 0xC1, 0x15, 0x52, 0xD1, 0xF0,
+    0x24, 0x33, 0x62, 0x72, 0x82, 0x09, 0x0A, 0x16,
+    0x17, 0x18, 0x19, 0x1A, 0x25, 0x26, 0x27, 0x28,
+    0x29, 0x2A, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
+    0x3A, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49,
+    0x4A, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59,
+    0x5A, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69,
+    0x6A, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79,
+    0x7A, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89,
+    0x8A, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98,
+    0x99, 0x9A, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7,
+    0xA8, 0xA9, 0xAA, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6,
+    0xB7, 0xB8, 0xB9, 0xBA, 0xC2, 0xC3, 0xC4, 0xC5,
+    0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xD2, 0xD3, 0xD4,
+    0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xE1, 0xE2,
+    0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA,
+    0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8,
+    0xF9, 0xFA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+static const int DC_BITS[16] = 
+{ 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 };
+
+static const int DC_HUFFVAL[256] = {
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 
+    0x08, 0x09, 0x0A, 0x0B };
+
+
+void JPGDataset::LoadDefaultTables( int n )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Load quantization table (current loading Q1 table info "0"      */
+/*      component).                                                     */
+/* -------------------------------------------------------------------- */
+    int i;
+    JQUANT_TBL  *quant_ptr;
+
+    if (sDInfo.quant_tbl_ptrs[n] == NULL)
+        sDInfo.quant_tbl_ptrs[n] = 
+            jpeg_alloc_quant_table((j_common_ptr) &(sDInfo));
+    
+    quant_ptr = sDInfo.quant_tbl_ptrs[n];	/* quant_ptr is JQUANT_TBL* */
+    for (i = 0; i < 64; i++) {
+        /* Qtable[] is desired quantization table, in natural array order */
+        quant_ptr->quantval[i] = Q1table[i];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Load AC huffman table.                                          */
+/* -------------------------------------------------------------------- */
+    JHUFF_TBL  *huff_ptr;
+
+    if (sDInfo.ac_huff_tbl_ptrs[n] == NULL)
+        sDInfo.ac_huff_tbl_ptrs[n] =
+            jpeg_alloc_huff_table((j_common_ptr)&sDInfo);
+
+    huff_ptr = sDInfo.ac_huff_tbl_ptrs[n];	/* huff_ptr is JHUFF_TBL* */
+
+    for (i = 1; i <= 16; i++) {
+        /* counts[i] is number of Huffman codes of length i bits, i=1..16 */
+        huff_ptr->bits[i] = AC_BITS[i-1];
+    }
+
+    for (i = 0; i < 256; i++) {
+        /* symbols[] is the list of Huffman symbols, in code-length order */
+        huff_ptr->huffval[i] = AC_HUFFVAL[i];
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Load DC huffman table.                                          */
+/* -------------------------------------------------------------------- */
+    if (sDInfo.dc_huff_tbl_ptrs[n] == NULL)
+        sDInfo.dc_huff_tbl_ptrs[n] =
+            jpeg_alloc_huff_table((j_common_ptr)&sDInfo);
+
+    huff_ptr = sDInfo.dc_huff_tbl_ptrs[n];	/* huff_ptr is JHUFF_TBL* */
+
+    for (i = 1; i <= 16; i++) {
+        /* counts[i] is number of Huffman codes of length i bits, i=1..16 */
+        huff_ptr->bits[i] = DC_BITS[i-1];
+    }
+
+    for (i = 0; i < 256; i++) {
+        /* symbols[] is the list of Huffman symbols, in code-length order */
+        huff_ptr->huffval[i] = DC_HUFFVAL[i];
+    }
+
+}
+
+/************************************************************************/
 /*                              Restart()                               */
 /*                                                                      */
 /*      Restart compressor at the beginning of the file.                */
@@ -929,7 +1113,15 @@ void JPGDataset::Restart()
     jpeg_destroy_decompress( &sDInfo );
     jpeg_create_decompress( &sDInfo );
 
-    VSIRewindL( fpImage );
+    LoadDefaultTables( 0 );
+    LoadDefaultTables( 1 );
+    LoadDefaultTables( 2 );
+    LoadDefaultTables( 3 );
+
+/* -------------------------------------------------------------------- */
+/*      restart io.                                                     */
+/* -------------------------------------------------------------------- */
+    VSIFSeekL( fpImage, nSubfileOffset, SEEK_SET );
 
     jpeg_vsiio_src( &sDInfo, fpImage );
     jpeg_read_header( &sDInfo, TRUE );
@@ -1025,32 +1217,111 @@ CPLErr JPGDataset::IRasterIO( GDALRWFlag eRWFlag,
 GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
+    int    bIsSubfile = FALSE;
+    GByte  *pabyHeader = NULL;
+    int    subfile_offset = 0, subfile_size;
+    int    nHeaderBytes = poOpenInfo->nHeaderBytes;
+    const char *real_filename;
+    GByte abySubfileHeader[16];
+
+/* -------------------------------------------------------------------- */
+/*      If it is a subfile, read the JPEG header.                       */
+/* -------------------------------------------------------------------- */
+    if( ( poOpenInfo->fp == NULL ) &&
+        ( EQUALN(poOpenInfo->pszFilename,"JPEG_SUBFILE:",13) ) )
+    {
+        /* static GByte abySubfileHeader[16]; */
+        FILE *file;
+
+        if( sscanf( poOpenInfo->pszFilename, "JPEG_SUBFILE:%d,%d", 
+                    &subfile_offset, &subfile_size ) != 2 )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Corrupt subfile definition: %s", 
+                      poOpenInfo->pszFilename );
+            return NULL;
+        }
+
+        real_filename = strstr(poOpenInfo->pszFilename,",");
+        if( real_filename != NULL )
+            real_filename = strstr(real_filename+1,",");
+        if( real_filename != NULL )
+            real_filename++;
+        else
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Could not find filename in subfile definition.");
+            return NULL;
+        }
+
+        CPLDebug( "JPG",
+                  "real_filename %s, offset=%d, size=%d\n", 
+                  real_filename, subfile_offset, subfile_size);
+
+        file = VSIFOpenL( real_filename, "rb" );
+        if( file == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Unable to open compressed data file %s",
+                      real_filename);
+            return NULL;
+        }
+
+        /* seek to beginning of JPEG data */
+        if( VSIFSeekL( file, subfile_offset, SEEK_SET ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Unable to seek in file %s",
+                      real_filename);
+            return NULL;
+        }
+
+        /* read header, then close file */
+        nHeaderBytes = VSIFReadL(abySubfileHeader, 1, (size_t) 16, file);
+        VSIFCloseL(file);
+
+        pabyHeader = abySubfileHeader;
+
+        bIsSubfile = TRUE;
+    }
+    else
+    {
+        pabyHeader = poOpenInfo->pabyHeader;
+    }
+
 /* -------------------------------------------------------------------- */
 /*	First we check to see if the file has the expected header	*/
 /*	bytes.								*/    
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 10 )
+    if( nHeaderBytes < 10 )
         return NULL;
 
-    if( poOpenInfo->pabyHeader[0] != 0xff
-        || poOpenInfo->pabyHeader[1] != 0xd8
-        || poOpenInfo->pabyHeader[2] != 0xff )
+    if( pabyHeader[0] != 0xff
+        || pabyHeader[1] != 0xd8
+        || pabyHeader[2] != 0xff )
         return NULL;
 
-    if( poOpenInfo->pabyHeader[3] == 0xe0
-        && poOpenInfo->pabyHeader[6] == 'J'
-        && poOpenInfo->pabyHeader[7] == 'F'
-        && poOpenInfo->pabyHeader[8] == 'I'
-        && poOpenInfo->pabyHeader[9] == 'F' )
+    if( pabyHeader[3] == 0xe0
+        && pabyHeader[6] == 'J'
+        && pabyHeader[7] == 'F'
+        && pabyHeader[8] == 'I'
+        && pabyHeader[9] == 'F' )
         /* OK */;
-    else if( poOpenInfo->pabyHeader[3] == 0xe1
-             && poOpenInfo->pabyHeader[6] == 'E'
-             && poOpenInfo->pabyHeader[7] == 'x'
-             && poOpenInfo->pabyHeader[8] == 'i'
-             && poOpenInfo->pabyHeader[9] == 'f' )
+    else if( pabyHeader[3] == 0xe1
+             && pabyHeader[6] == 'E'
+             && pabyHeader[7] == 'x'
+             && pabyHeader[8] == 'i'
+             && pabyHeader[9] == 'f' )
+        /* OK */;
+    else if( pabyHeader[3] == 0xe6
+             && pabyHeader[6] == 'N'
+             && pabyHeader[7] == 'I'
+             && pabyHeader[8] == 'T'
+             && pabyHeader[9] == 'F' )
         /* OK */;
     else
         return NULL;
+
 
     if( poOpenInfo->eAccess == GA_Update )
     {
@@ -1070,7 +1341,15 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open the file using the large file api.                         */
 /* -------------------------------------------------------------------- */
-    poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    if (bIsSubfile)
+    {
+        poDS->fpImage = VSIFOpenL( real_filename, "rb" );
+    }
+    else
+    {
+        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+    }
+    
     if( poDS->fpImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -1105,9 +1384,19 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     jpeg_create_decompress( &(poDS->sDInfo) );
 
 /* -------------------------------------------------------------------- */
+/*      Preload default NITF JPEG quantization tables.                  */
+/* -------------------------------------------------------------------- */
+    poDS->LoadDefaultTables( 0 );
+    poDS->LoadDefaultTables( 1 );
+    poDS->LoadDefaultTables( 2 );
+    poDS->LoadDefaultTables( 3 );
+
+/* -------------------------------------------------------------------- */
 /*	Read pre-image data after ensuring the file is rewound.         */
 /* -------------------------------------------------------------------- */
-    VSIFSeekL( poDS->fpImage, 0, SEEK_SET );
+    poDS->nSubfileOffset = subfile_offset;
+
+    VSIFSeekL( poDS->fpImage, poDS->nSubfileOffset, SEEK_SET );
 
     jpeg_vsiio_src( &(poDS->sDInfo), poDS->fpImage );
     jpeg_read_header( &(poDS->sDInfo), TRUE );
