@@ -33,6 +33,7 @@
  */
 
 #include "pgchip.h"
+#include <cassert>
 
 /* Define to enable debugging info */
 /*#define PGCHIP_DEBUG 1*/
@@ -277,10 +278,10 @@ GDALDataset *PGCHIPDataset::Open( GDALOpenInfo * poOpenInfo ){
 
     char                szCommand[1024];
     PGresult            *hResult = NULL;
-    PGCHIPDataset 	*poDS = NULL;
+    PGCHIPDataset 	    *poDS = NULL;
     char                *chipStringHex;
 
-    unsigned char        *chipdata;
+    unsigned char       *chipdata;
     char                *layerName;
     int                 t;
        
@@ -400,17 +401,17 @@ GDALDataset *PGCHIPDataset::Open( GDALOpenInfo * poOpenInfo ){
             
     
 /* -------------------------------------------------------------------- */
-/*      Read the chip header                                            */
+/*      Read the chip                                                   */
 /* -------------------------------------------------------------------- */
-    
-    
+
+
     hResult = PQexec(poDS->hPGConn, "BEGIN");
     
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
     {
         PQclear( hResult );
         sprintf( szCommand, 
-                 "SELECT raster FROM %s",
+                 "SELECT raster FROM %s LIMIT 1",
                  poDS->pszName);
                          
         hResult = PQexec(poDS->hPGConn,szCommand);
@@ -431,7 +432,7 @@ GDALDataset *PGCHIPDataset::Open( GDALOpenInfo * poOpenInfo ){
     chipdata = (unsigned char *) CPLMalloc(stringlen/2);
                       	
     for (t=0;t<stringlen/2;t++){
-	chipdata[t] = parse_hex( &chipStringHex[t*2]) ;
+	    chipdata[t] = parse_hex( &chipStringHex[t*2]) ;
     }
     
     // Chip assigment
@@ -447,6 +448,28 @@ GDALDataset *PGCHIPDataset::Open( GDALOpenInfo * poOpenInfo ){
     hResult = PQexec(poDS->hPGConn, "COMMIT");
     PQclear( hResult );
     
+/* -------------------------------------------------------------------- */
+/*      Verify that there's no unknown field set.                       */
+/* -------------------------------------------------------------------- */
+
+    if ( poDS->PGCHIP->future[0] != 0 ||
+         poDS->PGCHIP->future[1] != 0 ||
+         poDS->PGCHIP->future[2] != 0 ||
+         poDS->PGCHIP->future[3] != 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Unsupported CHIP format (future field bytes != 0)\n");
+        delete poDS;
+        return NULL;
+    }
+
+    if ( poDS->PGCHIP->compression != 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Compressed CHIP unsupported\n");
+        delete poDS;
+        return NULL;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Set some information from the file that is of interest.         */
@@ -454,9 +477,34 @@ GDALDataset *PGCHIPDataset::Open( GDALOpenInfo * poOpenInfo ){
 
     poDS->nRasterXSize = poDS->PGCHIP->width;
     poDS->nRasterYSize = poDS->PGCHIP->height;
-    poDS->nBands = (int)poDS->PGCHIP->future[0];
-    poDS->nBitDepth = (int)poDS->PGCHIP->future[1];
-    poDS->nColorType = (int)poDS->PGCHIP->future[2];
+    poDS->nBands = 1; // (int)poDS->PGCHIP->future[0];
+    //poDS->nBitDepth = (int)poDS->PGCHIP->future[1];
+    poDS->nColorType = PGCHIP_COLOR_TYPE_GRAY; //(int)poDS->PGCHIP->future[2];
+
+    switch (poDS->PGCHIP->datatype)
+    {
+        case 5: // 24bit integer
+            poDS->nBitDepth = 24;
+            break;
+        case 6: // 16bit integer
+            poDS->nBitDepth = 16;
+            break;
+        case 8:
+            poDS->nBitDepth = 8;
+            break;
+        case 1: // float32
+        case 7: // 16bit ???
+        case 101: // float32 (NDR)
+        case 105: // 24bit integer (NDR)
+        case 106: // 16bit integer (NDR)
+        case 107: // 16bit ??? (NDR)
+        case 108: // 8bit ??? (NDR) [ doesn't make sense ]
+        default :
+             CPLError( CE_Failure, CPLE_AppDefined,
+                "Under development : CHIP datatype %d unsupported.\n",
+                poDS->PGCHIP->datatype);
+            break;   
+    }
     
         
 /* -------------------------------------------------------------------- */
@@ -470,6 +518,7 @@ GDALDataset *PGCHIPDataset::Open( GDALOpenInfo * poOpenInfo ){
 /*      Is there a palette?  Note: we should also read back and         */
 /*      apply transparency values if available.                         */
 /* -------------------------------------------------------------------- */
+    assert (poDS->nColorType != PGCHIP_COLOR_TYPE_PALETTE);
     if( poDS->nColorType == PGCHIP_COLOR_TYPE_PALETTE )
     {
         unsigned char *pPalette;
@@ -494,7 +543,7 @@ GDALDataset *PGCHIPDataset::Open( GDALOpenInfo * poOpenInfo ){
             poDS->poColorTable->SetColorEntry( iColor, &oEntry );
         }
     }
-    
+
     return( poDS );
 }
 
@@ -881,32 +930,32 @@ static GDALDataset * PGCHIPCreateCopy( const char * pszFilename, GDALDataset *po
     
     PGCHIP.factor = 1.0;
     PGCHIP.endian_hint = 1;
-    PGCHIP.compression = nbColors; // To cope with palette extra information  : <header><palette><data>
+    PGCHIP.compression = 0; // nbColors; // To cope with palette extra information  : <header><palette><data>
     PGCHIP.height = nYSize;
     PGCHIP.width = nXSize;
     PGCHIP.SRID = SRID;
-    PGCHIP.future[0] = nBands; //nBands is stored in future variable
-    PGCHIP.future[1] = nBitDepth; //nBitDepth is stored in future variable
-    PGCHIP.future[2] = nColorType; //nBitDepth is stored in future variable
-    PGCHIP.future[3] = nbColors; // Useless as we store nbColors in the "compression" integer
+    PGCHIP.future[0] = 0; // nBands; //nBands is stored in future variable
+    PGCHIP.future[1] = 0; // nBitDepth; //nBitDepth is stored in future variable
+    PGCHIP.future[2] = 0; // nColorType; //nBitDepth is stored in future variable
+    PGCHIP.future[3] = 0; // nbColors; // Useless as we store nbColors in the "compression" integer
     PGCHIP.data = NULL; // Serialized Form
     
     // PGCHIP.size changes if there is a palette.
     // Is calculated by Postgis when inserting anyway
     PGCHIP.size = sizeof(CHIP) - sizeof(void*) + (nYSize * nXSize * storageChunk * nBands) + sizePalette;
     
-    switch(storageChunk*nBands){
-        case 1 :
-            PGCHIP.datatype = 8;
+    switch(nBitDepth)
+    {
+        case 8:
+            PGCHIP.datatype = 8; // NDR|XDR ?
             break;
-        case 2 :
-            PGCHIP.datatype = 6;
+        case 16:
+            PGCHIP.datatype = 6; // NDR|XDR ?
             break;
-        case 4 :
-            // Postgis sets data_size to 4 by default anyway
-            PGCHIP.datatype = 0;
+        case 24:
+            PGCHIP.datatype = 5; // NDR|XDR ?
             break;
-        default :
+        default:
              CPLError( CE_Failure, CPLE_AppDefined,"Under development : ERROR STORAGE CHUNK SIZE NOT SUPPORTED\n");
             break;   
     }
@@ -1037,8 +1086,8 @@ void     PGCHIPDataset::printChipInfo(const CHIP& c){
         printf("CHIP.factor = %f\n", c.factor);
         printf("CHIP.width = %d\n", c.width);
         printf("CHIP.height = %d\n", c.height);
-        printf("CHIP.future[0] (nBands?) = %d\n", (int)c.future[0]);
-        printf("CHIP.future[1] (nBitDepth?) = %d\n", (int)c.future[1]);
+        //printf("CHIP.future[0] (nBands?) = %d\n", (int)c.future[0]);
+        //printf("CHIP.future[1] (nBitDepth?) = %d\n", (int)c.future[1]);
         printf("--------------------\n");
      //}
 }

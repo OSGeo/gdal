@@ -39,6 +39,7 @@
 /************************************************************************/
 
 #include "pgchip.h"
+#include <cassert>
 
 
 /************************************************************************/
@@ -90,25 +91,25 @@ CPLErr PGCHIPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     else
         nPixelSize = 1;
     
-    nPixelOffset = poGDS->nBands * nPixelSize;
     nXSize = GetXSize();
     bandSize = nPixelSize * nXSize;
     int sizePalette = 0;        
     
-    if(poGDS->PGCHIP->future[2] == PGCHIP_COLOR_TYPE_PALETTE){
+    if(poGDS->nColorType == PGCHIP_COLOR_TYPE_PALETTE){
         sizePalette = (int)poGDS->PGCHIP->compression * sizeof(pgchip_color);
     }
     
     // Determine size of whole Image Data
-    chipDataSize = poGDS->PGCHIP->size - sizeof(CHIP) - sizePalette;
+    chipDataSize = poGDS->PGCHIP->size - (sizeof(CHIP)-sizeof(void*)) - sizePalette;
     
+//printf("sizePalette: %d\n", sizePalette);
     
 /* -------------------------------------------------------------------- */
 /*      Reading Chip (first pas only)                                   */
 /* -------------------------------------------------------------------- */
     
-    if(poGDS->PGCHIP->data == NULL){
-    
+    if(poGDS->PGCHIP == NULL){
+
         hResult = PQexec(hPGConn, "BEGIN");
     
         if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
@@ -146,29 +147,46 @@ CPLErr PGCHIPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      Extracting band from pointer                                    */
 /* -------------------------------------------------------------------- */
      
-     if(poGDS->PGCHIP->data){
-     
                
-        if( nPixelSize == 1 ){
-        
-            char *bufferData = ((char *)poGDS->PGCHIP->data) + (nBlockYOff * poGDS->nBands * bandSize) + ((nBand-1) * nPixelSize);
-                
-            for(i = 0; i < nXSize; i++ ){
-                ((char *) pImage)[i] = bufferData[i*nPixelOffset];
-            }
+//printf("About to IReadBlock nBlockXOff: %d  nBlockYOff: %d, pixelSize: %d, pixelOffset:%d nXSize: %d, bandSize:%d\n", nBlockXOff, nBlockYOff, nPixelSize, nPixelOffset, nXSize, bandSize);
+
+    char* dataptr = (char*)&(poGDS->PGCHIP->data);
+    size_t bandoffset = nBlockYOff * bandSize + nBlockXOff * nPixelSize;
+
+    // This is for supporting nBands > 1
+    nPixelOffset = poGDS->nBands * nPixelSize;
+
+    if( nPixelSize == 1 ){
+    
+        char *bufferData = (char*)(dataptr + bandoffset);
+            
+        for(i = 0; i < nXSize; i++ ){
+            ((char *) pImage)[i] = bufferData[i*nPixelOffset];
         }
-        else {
-        
-            GUInt16 *bufferData = (GUInt16 *)(((char *)poGDS->PGCHIP->data) + (nBlockYOff * poGDS->nBands * bandSize) + ((nBand-1) * nPixelSize));
-             
-            for(i = 0; i < nXSize; i++ ){
-                
-                ((GUInt16 *) pImage)[i] = bufferData[i*poGDS->nBands];
-                
-            }
+    }
+    else {
+
+        assert (nPixelSize==2);
+    
+        //GUInt16 *bufferData = (GUInt16 *)((char*)(dataptr + bandoffset));
+         
+        for(i = 0; i < nXSize; i++ )
+        {
+            // I'm not sure what we need this for
+            size_t offset = i*nPixelOffset;
+
+#if 0
+            printf("Reading from ptr %p at offset %d (%d total offset - %d)\n",
+                bufferData, offset,
+                (char*)&(bufferData[offset])-dataptr,
+                bandoffset+offset);
+#endif
+            
+            ((GUInt16 *) pImage)[i] = dataptr[bandoffset+offset];
+            
         }
+    }
      
-     }  
          
     return CE_None;
 }
