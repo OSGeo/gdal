@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/06/01 12:15:39  mloskot
+ * Added CPLODBCDriverInstaller utility class to CPL.
+ *
  * Revision 1.17  2006/05/12 15:22:23  fwarmerdam
  * on MSVC 6 we sometimes dont have SQLULEN
  *
@@ -95,13 +98,99 @@
 
 #include <sql.h>
 #include <sqlext.h>
+#include <odbcinst.h>
 #include "cpl_string.h"
 
+#ifdef PATH_MAX
+#  define ODBC_FILENAME_MAX PATH_MAX
+#else
+#  define ODBC_FILENAME_MAX (255 + 1) /* Max path length */
+#endif
+
+ 
 /**
  * \file cpl_odbc.h
  *
  * ODBC Abstraction Layer (C++).
  */
+
+/**
+ * A class providing functions to install or remove ODBC driver.
+ */
+class CPL_DLL CPLODBCDriverInstaller
+{
+    char m_szPathOut[ODBC_FILENAME_MAX];
+    char m_szError[SQL_MAX_MESSAGE_LENGTH];
+    DWORD m_nErrorCode;
+    DWORD m_nUsageCount;
+
+  public:
+    
+    // Default constructor.
+    CPLODBCDriverInstaller();
+
+
+    /**
+     * Installs ODBC driver or updates definition of already installed driver.
+     * Interanally, it calls ODBC's SQLInstallDriverEx function.
+     * 
+     * @param pszDriver - The driver definition as a list of keyword-value
+     * pairs describing the driver (See ODBC API Reference).
+     *
+     * @param pszPathIn - Full path of the target directory of the installation,
+     * or a null pointer (for unixODBC, NULL is passed).
+     *
+     * @param fRequest - The fRequest argument must contain one of
+     * the following values:
+     * ODBC_INSTALL_COMPLETE - (default) complete the installation request
+     * ODBC_INSTALL_INQUIRY - inquire about where a driver can be installed
+     *
+     * @return TRUE indicates success, FALSE if it fails.
+     */
+    int InstallDriver( const char* pszDriver, const char* pszPathIn,
+            WORD fRequest = ODBC_INSTALL_COMPLETE );
+
+    /**
+     * Removes or changes information about the driver from
+     * the Odbcinst.ini entry in the system information.
+     *
+     * @param pszDriverName - The name of the driver as registered in
+     * the Odbcinst.ini key of the system information.
+     * 
+     * @param fRemoveDSN - TRUE: Remove DSNs associated with the driver 
+     * specified in lpszDriver. FALSE: Do not remove DSNs associated
+     * with the driver specified in lpszDriver. 
+     *
+     * @return The function returns TRUE if it is successful,
+     * FALSE if it fails. If no entry exists in the system information
+     * when this function is called, the function returns FALSE.
+     * In order to obtain usage count value, call GetUsageCount().
+     */
+    int RemoveDriver( const char* pszDriverName, int fRemoveDSN = FALSE );
+
+
+    // The usage count of the driver after this function has been called
+    int GetUsageCount() const {  return m_nUsageCount; }
+
+
+    // Path of the target directory where the driver should be installed.
+    // For details, see ODBC API Reference and lpszPathOut
+    // parameter of SQLInstallDriverEx 
+    const char* GetPathOut() const { return m_szPathOut; }
+
+
+    // If InstallDriver returns FALSE, then GetLastError then
+    // error message can be obtained by calling this function.
+    // Internally, it calls ODBC's SQLInstallerError function.
+    const char* GetLastError() const { return m_szError; }
+   
+
+    // If InstallDriver returns FALSE, then GetLastErrorCode then
+    // error code can be obtained by calling this function.
+    // Internally, it calls ODBC's SQLInstallerError function.
+    // See ODBC API Reference for possible error flags.
+    DWORD GetLastErrorCode() const { return m_nErrorCode; }
+};
 
 class CPLODBCStatement;
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2006/06/01 12:15:39  mloskot
+ * Added CPLODBCDriverInstaller utility class to CPL.
+ *
  * Revision 1.27  2006/02/19 21:54:34  mloskot
  * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
  *
@@ -124,11 +127,76 @@
 #include "cpl_odbc.h"
 #include "cpl_vsi.h"
 #include "cpl_string.h"
+#include "cpl_error.h"
 
 
 #ifndef WIN32CE /* ODBC is not supported on Windows CE. */
 
 CPL_CVSID("$Id$");
+
+/************************************************************************/
+/*                           CPLODBCDriverInstaller()                   */
+/************************************************************************/
+
+CPLODBCDriverInstaller::CPLODBCDriverInstaller()
+    : m_nUsageCount(0)
+{
+    memset( m_szPathOut, '\0', ODBC_FILENAME_MAX );
+    memset( m_szError, '\0', SQL_MAX_MESSAGE_LENGTH );
+}
+
+/************************************************************************/
+/*                           InstallDriver()                            */
+/************************************************************************/
+
+int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
+        const char* pszPathIn, WORD fRequest )
+{
+    CPLAssert( NULL != pszDriver ); 
+
+    if ( FALSE == SQLInstallDriverEx( pszDriver, NULL, m_szPathOut,
+                    ODBC_FILENAME_MAX, NULL, fRequest,
+                    &m_nUsageCount ) )
+    {
+        const WORD nErrorNum = 1; // TODO - a function param?
+
+        // Retrieve error code and message
+        RETCODE cRet = SQLInstallerError( nErrorNum, &m_nErrorCode,
+                        m_szError, SQL_MAX_MESSAGE_LENGTH, NULL );
+
+        CPLAssert( SQL_SUCCESS == cRet || SQL_SUCCESS_WITH_INFO == cRet );
+        
+        return FALSE;
+    }
+
+    // SUCCESS
+    return TRUE;
+}
+
+/************************************************************************/
+/*                           RemoveDriver()                             */
+/************************************************************************/
+
+int CPLODBCDriverInstaller::RemoveDriver( const char* pszDriverName, int fRemoveDSN )
+{
+    CPLAssert( NULL != pszDriverName ); 
+
+    if ( FALSE == SQLRemoveDriver( pszDriverName, fRemoveDSN, &m_nUsageCount ) )
+    {
+         const WORD nErrorNum = 1; // TODO - a function param?
+
+        // Retrieve error code and message
+        RETCODE cRet = SQLInstallerError( nErrorNum, &m_nErrorCode,
+                        m_szError, SQL_MAX_MESSAGE_LENGTH, NULL );
+
+        CPLAssert( SQL_SUCCESS == cRet || SQL_SUCCESS_WITH_INFO == cRet );
+
+        return FALSE;
+   }
+
+    // SUCCESS
+    return TRUE;
+}
 
 /************************************************************************/
 /*                           CPLODBCSession()                           */
