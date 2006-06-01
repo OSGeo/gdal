@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2006/06/01 03:25:41  fwarmerdam
+ * Added support for multi-blocked jpeg compressed files.
+ *
  * Revision 1.57  2006/05/31 18:40:25  fwarmerdam
  * Fixed problem with jpeg in later IM segments.
  *
@@ -176,6 +179,15 @@ class NITFDataset : public GDALPamDataset
     char       **papszCGMMetadata;
 
     void         InitializeCGMMetadata();
+
+
+    int         *panJPEGBlockOffset;
+    GByte       *pabyJPEGBlock;
+
+    CPLErr       ScanJPEGBlocks( void );
+    CPLErr       ReadJPEGBlock( int, int );
+
+    CPLString    osNITFFilename;
 
   public:
                  NITFDataset();
@@ -347,6 +359,25 @@ CPLErr NITFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 {
     int  nBlockResult;
+    NITFDataset *poGDS = (NITFDataset *) poDS;
+
+/* -------------------------------------------------------------------- */
+/*      Special case for JPEG blocks.                                   */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(psImage->szIC,"C3") )
+    {
+        CPLErr eErr = poGDS->ReadJPEGBlock( nBlockXOff, nBlockYOff );
+        int nBlockBandSize = psImage->nBlockWidth*psImage->nBlockHeight;
+
+        if( eErr != CE_None )
+            return eErr;
+
+        memcpy( pImage, 
+                poGDS->pabyJPEGBlock + (nBand - 1) * nBlockBandSize, 
+                nBlockBandSize );
+
+        return eErr;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Read the line/block                                             */
@@ -592,6 +623,9 @@ NITFDataset::NITFDataset()
     bJP2Writing = FALSE;
     poJPEGDataset = NULL;
 
+    panJPEGBlockOffset = NULL;
+    pabyJPEGBlock = NULL;
+
     nGCPCount = 0;
     pasGCPList = NULL;
     pszGCPProjection = NULL;
@@ -697,6 +731,8 @@ NITFDataset::~NITFDataset()
     }
 
     CSLDestroy( papszCGMMetadata );
+    CPLFree( panJPEGBlockOffset );
+    CPLFree( pabyJPEGBlock );
 }
 
 /************************************************************************/
@@ -803,6 +839,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->psFile = psFile;
     poDS->psImage = psImage;
     poDS->eAccess = poOpenInfo->eAccess;
+    poDS->osNITFFilename = pszFilename;
 
     if( psImage )
     {
@@ -891,7 +928,10 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      If the image is JPEG (C3) compressed, we will need to open      */
 /*      the image data as a JPEG dataset.                               */
 /* -------------------------------------------------------------------- */
-    else if( EQUAL(psImage->szIC,"C3") )
+    else if( psImage != NULL
+             && EQUAL(psImage->szIC,"C3") 
+             && psImage->nBlocksPerRow == 1
+             && psImage->nBlocksPerColumn == 1 )
     {
         char *pszDSName = CPLStrdup( 
             CPLSPrintf( "JPEG_SUBFILE:%d,%d,%s", 
@@ -1780,6 +1820,143 @@ const GDAL_GCP *NITFDataset::GetGCPs()
 
 {
     return pasGCPList;
+}
+
+/************************************************************************/
+/*                           ScanJPEGBlocks()                           */
+/************************************************************************/
+
+CPLErr NITFDataset::ScanJPEGBlocks()
+
+{
+    int iBlock;
+
+/* -------------------------------------------------------------------- */
+/*      Allocate offset array                                           */
+/* -------------------------------------------------------------------- */
+    panJPEGBlockOffset = (int *) 
+        CPLCalloc(sizeof(int),
+                  psImage->nBlocksPerRow*psImage->nBlocksPerColumn+1);
+    panJPEGBlockOffset[0] = 
+        psFile->pasSegmentInfo[psImage->iSegment].nSegmentStart;
+    for( iBlock = psImage->nBlocksPerRow * psImage->nBlocksPerColumn - 1;
+         iBlock > 0; iBlock-- )
+        panJPEGBlockOffset[iBlock] = -1;
+    
+/* -------------------------------------------------------------------- */
+/*      Scan through the whole image data stream identifying all        */
+/*      block boundaries.  Each block starts with 0xFFD8 (SOI).         */
+/*      They also end with 0xFFD9, but we don't currently look for      */
+/*      that.                                                           */
+/* -------------------------------------------------------------------- */
+    int iNextBlock = 1;
+    int iSegOffset = 2;
+    int iSegSize = psFile->pasSegmentInfo[psImage->iSegment].nSegmentSize;
+    GByte abyBlock[512];
+
+    while( iSegOffset < iSegSize-1 )
+    {
+        int nReadSize = MIN((int)sizeof(abyBlock),iSegSize - iSegOffset);
+        int i;
+
+        if( VSIFSeekL( psFile->fp, panJPEGBlockOffset[0] + iSegOffset, 
+                       SEEK_SET ) != 0 )
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "Seek error to jpeg data stream." );
+            return CE_Failure;
+        }
+        
+        if( VSIFReadL( abyBlock, 1, nReadSize, psFile->fp ) < (size_t)nReadSize)
+        {
+            CPLError( CE_Failure, CPLE_FileIO, 
+                      "Read error to jpeg data stream." );
+            return CE_Failure;
+        }
+        
+        for( i = 0; i < nReadSize-1; i++ )
+        {
+            if( abyBlock[i] == 0xff && abyBlock[i+1] == 0xd8 )
+            {
+                CPLAssert( iNextBlock 
+                          <= psImage->nBlocksPerRow*psImage->nBlocksPerColumn );
+
+                panJPEGBlockOffset[iNextBlock++] 
+                    = panJPEGBlockOffset[0] + iSegOffset + i; 
+            }
+        }
+
+        iSegOffset += nReadSize - 1;
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                           ReadJPEGBlock()                            */
+/************************************************************************/
+
+CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
+
+{
+    CPLErr eErr;
+
+/* -------------------------------------------------------------------- */
+/*      If this is our first request, do a scan for block boundaries.   */
+/* -------------------------------------------------------------------- */
+    if( panJPEGBlockOffset == NULL )
+    {
+        eErr = ScanJPEGBlocks();
+        if( eErr != CE_None )
+            return eErr;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*    Allocate image data block (where the uncompressed image will go)  */
+/* -------------------------------------------------------------------- */
+    if( pabyJPEGBlock == NULL )
+    {
+        // this is really 8bit only for now. 
+        pabyJPEGBlock = (GByte *) 
+            CPLCalloc(psImage->nBands,
+                      psImage->nBlockWidth * psImage->nBlockHeight);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Read JPEG Chunk.                                                */
+/* -------------------------------------------------------------------- */
+    CPLString osFilename;
+    int iBlock = iBlockX + iBlockY * psImage->nBlocksPerRow;
+    GDALDataset *poDS;
+    int anBands[3] = { 1, 2, 3 };
+
+    osFilename.Printf( "JPEG_SUBFILE:%d,%d,%s", 
+                       panJPEGBlockOffset[iBlock], 0, 
+                       osNITFFilename.c_str() );
+
+    poDS = (GDALDataset *) GDALOpen( osFilename, GA_ReadOnly );
+    if( poDS == NULL )
+        return CE_Failure;
+
+    if( poDS->GetRasterXSize() != psImage->nBlockWidth
+        || poDS->GetRasterYSize() != psImage->nBlockHeight )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "JPEG block %d not same size as NITF blocksize.", 
+                  iBlock );
+        return CE_Failure;
+    }
+                       
+    eErr = poDS->RasterIO( GF_Read, 
+                           0, 0, 
+                           psImage->nBlockWidth, psImage->nBlockHeight,
+                           pabyJPEGBlock, 
+                           psImage->nBlockWidth, psImage->nBlockHeight,
+                           GDT_Byte, psImage->nBands, anBands, 0, 0, 0 );
+
+    delete poDS;
+
+    return eErr;
 }
 
 /************************************************************************/
