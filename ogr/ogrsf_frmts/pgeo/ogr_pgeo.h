@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/06/01 14:49:06  mloskot
+ * Added automatic installation of the MDB Tools driver for PGeo. The driver is installed before opening PGeo dataset.
+ *
  * Revision 1.3  2006/05/15 18:54:43  fwarmerdam
  * support SetAttributeFilter on ExecuteSQL resultset
  *
@@ -226,6 +229,13 @@ class OGRPGeoDataSource : public OGRDataSource
 
 class OGRPGeoDriver : public OGRSFDriver
 {
+    CPLString   osDriverFile;
+
+    bool        InstallMdbDriver();
+    bool        LibraryExists( const char* pszLibPath );
+    bool        FindDriverLib();
+    CPLString   FindDefaultLib(const char* pszLibName);
+
   public:
                 ~OGRPGeoDriver();
                 
