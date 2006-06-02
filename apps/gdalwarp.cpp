@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2006/06/02 17:31:49  fwarmerdam
+ * Modified -ts to allow width or height to be zero meaning, it should
+ * be computed to retain square pixels.
+ *
  * Revision 1.23  2006/05/29 17:32:15  fwarmerdam
  * added preliminary support for controlling longitude wrapping on input dataset
  *
@@ -934,6 +938,50 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
         adfDstGeoTransform[5] = -dfYRes;
 
         nPixels = nForcePixels;
+        nLines = nForceLines;
+    }
+
+    else if( nForcePixels != 0 )
+    {
+        if( dfMinX == 0.0 && dfMinY == 0.0 && dfMaxX == 0.0 && dfMaxY == 0.0 )
+        {
+            dfMinX = adfDstGeoTransform[0];
+            dfMaxX = adfDstGeoTransform[0] + adfDstGeoTransform[1] * nPixels;
+            dfMaxY = adfDstGeoTransform[3];
+            dfMinY = adfDstGeoTransform[3] + adfDstGeoTransform[5] * nLines;
+        }
+
+        dfXRes = (dfMaxX - dfMinX) / nForcePixels;
+        dfYRes = dfXRes;
+
+        adfDstGeoTransform[0] = dfMinX;
+        adfDstGeoTransform[3] = dfMaxY;
+        adfDstGeoTransform[1] = dfXRes;
+        adfDstGeoTransform[5] = -dfYRes;
+
+        nPixels = nForcePixels;
+        nLines = (int) ((dfMaxY - dfMinY + (dfYRes/2.0)) / dfYRes);
+    }
+
+    else if( nForceLines != 0 )
+    {
+        if( dfMinX == 0.0 && dfMinY == 0.0 && dfMaxX == 0.0 && dfMaxY == 0.0 )
+        {
+            dfMinX = adfDstGeoTransform[0];
+            dfMaxX = adfDstGeoTransform[0] + adfDstGeoTransform[1] * nPixels;
+            dfMaxY = adfDstGeoTransform[3];
+            dfMinY = adfDstGeoTransform[3] + adfDstGeoTransform[5] * nLines;
+        }
+
+        dfYRes = (dfMaxY - dfMinY) / nForceLines;
+        dfXRes = dfYRes;
+
+        adfDstGeoTransform[0] = dfMinX;
+        adfDstGeoTransform[3] = dfMaxY;
+        adfDstGeoTransform[1] = dfXRes;
+        adfDstGeoTransform[5] = -dfYRes;
+
+        nPixels = (int) ((dfMaxX - dfMinX + (dfXRes/2.0)) / dfXRes);
         nLines = nForceLines;
     }
 
