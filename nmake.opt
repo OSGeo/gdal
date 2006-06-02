@@ -227,7 +227,7 @@ GDALLIB	=    $(GDAL_ROOT)/gdal.lib
 !ENDIF
 
 !IFDEF ODBC_SUPPORTED
-ODBCLIB = odbc32.lib
+ODBCLIB = odbc32.lib odbccp32.lib user32.lib
 !ENDIF
 
 !IFDEF MRSID_DIR
