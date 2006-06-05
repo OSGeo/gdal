@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.88  2006/06/05 18:44:47  fwarmerdam
+ * Moved RIK down near the bottom since the test appears to be weak.
+ *
  * Revision 1.87  2006/04/20 13:51:51  fwarmerdam
  * added terragen support
  *
@@ -265,10 +268,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_ILWIS();
 #endif
 
-#ifdef FRMT_rik
-    GDALRegister_RIK();
-#endif
-
 #ifdef FRMT_sgi
     GDALRegister_SGI();
 #endif
@@ -357,6 +356,10 @@ void CPL_STDCALL GDALAllRegister()
 /*      Our test for the following is weak or expensive so we try       */
 /*      them last.                                                      */
 /* -------------------------------------------------------------------- */
+#ifdef FRMT_rik
+    GDALRegister_RIK();
+#endif
+
 #ifdef FRMT_usgsdem
     GDALRegister_USGSDEM();
 #endif
