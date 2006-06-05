@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2006/06/05 18:53:28  mloskot
+ * Added usage of ODBCSYSINI env to CPLODBCDriverInstaller.
+ *
  * Revision 1.29  2006/06/05 15:52:29  mloskot
  * Added option to the ODBC wrapper to list views together with tables.
  *
@@ -157,19 +160,57 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
 {
     CPLAssert( NULL != pszDriver ); 
 
+    // Try to install driver to system-wide location
     if ( FALSE == SQLInstallDriverEx( pszDriver, NULL, m_szPathOut,
                     ODBC_FILENAME_MAX, NULL, fRequest,
                     &m_nUsageCount ) )
     {
         const WORD nErrorNum = 1; // TODO - a function param?
+        RETCODE cRet = SQL_ERROR;
 
-        // Retrieve error code and message
-        RETCODE cRet = SQLInstallerError( nErrorNum, &m_nErrorCode,
+        cRet = SQLInstallerError( nErrorNum, &m_nErrorCode,
                         m_szError, SQL_MAX_MESSAGE_LENGTH, NULL );
-
         CPLAssert( SQL_SUCCESS == cRet || SQL_SUCCESS_WITH_INFO == cRet );
-        
-        return FALSE;
+
+        if ( ODBC_ERROR_INVALID_PATH == m_nErrorCode )
+        {
+            // Failure is likely related to no write permissions to
+            // system-wide default location, so try to install to HOME
+           
+            // Read HOME location
+            char* pszEnvHome = NULL;
+            pszEnvHome = getenv("HOME");
+
+            CPLAssert( NULL != pszEnvHome );
+            CPLDebug( "ODBC", "HOME=%s", pszEnvHome );
+
+            // Set ODBCSYSINI variable pointing to HOME location
+            char* pszEnvIni = (char *)CPLMalloc( strlen(pszEnvHome) + 12 );
+
+            sprintf( pszEnvIni, "ODBCSYSINI=%s", pszEnvHome );
+            putenv( pszEnvIni );
+
+            CPLDebug( "ODBC", pszEnvIni );
+            CPLFree( pszEnvIni );
+            
+            // Try to install ODBC driver in new location
+            if ( FALSE == SQLInstallDriverEx( pszDriver, NULL, m_szPathOut,
+                    ODBC_FILENAME_MAX, NULL, fRequest,
+                    &m_nUsageCount ) )
+            {
+                cRet = SQLInstallerError( nErrorNum, &m_nErrorCode,
+                                m_szError, SQL_MAX_MESSAGE_LENGTH, NULL );
+                CPLAssert( SQL_SUCCESS == cRet || SQL_SUCCESS_WITH_INFO == cRet );
+
+                // FAIL
+                return FALSE;
+            }
+        }
+        else
+        {
+            // FAIL
+            return FALSE;
+        }
     }
 
     // SUCCESS
