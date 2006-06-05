@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/06/05 19:06:38  fwarmerdam
+ * fixed problem with handling ofz for lines
+ *
  * Revision 1.4  2005/09/29 19:49:48  fwarmerdam
  * dont try to translate GUID SRTEXT entries
  *
@@ -520,7 +523,7 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
                 OGRLineString *poLine = new OGRLineString();
                 *ppoGeom = poLine;
 
-                poLine->setPoints( nPoints, padfX, padfY, padfX );
+                poLine->setPoints( nPoints, padfX, padfY, padfZ );
             }
 
 /* -------------------------------------------------------------------- */
@@ -711,7 +714,7 @@ OGRErr OGRPGeoLayer::createFromShapeBin( GByte *pabyShape,
         if( nSHPType == SHPT_POINTZ )
         {
             memcpy( &dfZ, pabyShape + 4 + 16, 8 );
-            CPL_LSBPTR64( &dfY );
+            CPL_LSBPTR64( &dfZ );
         }
 
         *ppoGeom = new OGRPoint( dfX, dfY, dfZ );
