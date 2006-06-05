@@ -1387,6 +1387,7 @@ if test "$with_odbc" = "no" ; then
 elif test "$with_odbc" = "yes" -o "$with_odbc" = "" ; then
 
   AC_CHECK_LIB(odbc,SQLConnect,ODBC_SETTING=yes,ODBC_SETTING=no,)
+  AC_CHECK_LIB(odbcinst,SQLInstallDriverEx,ODBC_SETTING=yes,ODBC_SETTING=no,)
 
   if test "$ODBC_SETTING" = "yes" ; then
     if test -f /usr/local/include/sql.h -o -f /usr/include/sql.h ; then
@@ -1398,13 +1399,13 @@ elif test "$with_odbc" = "yes" -o "$with_odbc" = "" ; then
   fi
 
   if test "$ODBC_SETTING" = "yes"  ; then   
-    LIBS="-lodbc $LIBS"
+    LIBS="-lodbc -lodbcinst $LIBS"
   fi
 
 else
 
   ODBC_SETTING=yes
-  LIBS="-L$with_odbc -L$with_odbc/lib -lodbc $LIBS"
+  LIBS="-L$with_odbc -L$with_odbc/lib -lodbc -lodbcinst $LIBS"
   EXTRA_INCLUDES="-I$with_odbc -I$with_odbc/include $EXTRA_INCLUDES"
 
   echo "using odbc library from $with_odbc."
