@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/06/05 15:52:29  mloskot
+ * Added option to the ODBC wrapper to list views together with tables.
+ *
  * Revision 1.28  2006/06/01 12:15:39  mloskot
  * Added CPLODBCDriverInstaller utility class to CPL.
  *
@@ -1321,6 +1324,9 @@ int CPLODBCStatement::GetTables( const char *pszCatalog,
                                  const char *pszSchema )
 
 {
+    CPLDebug( "ODBC", "CatalogNameL: %s\nSchema name: %s\n",
+                pszCatalog, pszSchema );
+
 /* -------------------------------------------------------------------- */
 /*      Fetch columns resultset for this table.                         */
 /* -------------------------------------------------------------------- */
@@ -1328,7 +1334,7 @@ int CPLODBCStatement::GetTables( const char *pszCatalog,
                            (SQLCHAR *) pszCatalog, SQL_NTS,
                            (SQLCHAR *) pszSchema, SQL_NTS,
                            (SQLCHAR *) NULL, SQL_NTS,
-                           (SQLCHAR *) "TABLE", SQL_NTS ) ) )
+                           (SQLCHAR *) "'TABLE','VIEW'", SQL_NTS ) ) )
         return FALSE;
     else
         return CollectResultsInfo();
