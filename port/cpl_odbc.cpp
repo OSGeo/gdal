@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2006/06/05 20:15:52  mloskot
+ * Fixed problem with /odbcinst.ini requirements.
+ *
  * Revision 1.30  2006/06/05 18:53:28  mloskot
  * Added usage of ODBCSYSINI env to CPLODBCDriverInstaller.
  *
@@ -167,47 +170,35 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
     {
         const WORD nErrorNum = 1; // TODO - a function param?
         RETCODE cRet = SQL_ERROR;
+        
+        // Failure is likely related to no write permissions to
+        // system-wide default location, so try to install to HOME
+       
+        // Read HOME location
+        char* pszEnvHome = NULL;
+        pszEnvHome = getenv("HOME");
 
-        cRet = SQLInstallerError( nErrorNum, &m_nErrorCode,
-                        m_szError, SQL_MAX_MESSAGE_LENGTH, NULL );
-        CPLAssert( SQL_SUCCESS == cRet || SQL_SUCCESS_WITH_INFO == cRet );
+        CPLAssert( NULL != pszEnvHome );
+        CPLDebug( "ODBC", "HOME=%s", pszEnvHome );
 
-        if ( ODBC_ERROR_INVALID_PATH == m_nErrorCode )
+        // Set ODBCSYSINI variable pointing to HOME location
+        char* pszEnvIni = (char *)CPLMalloc( strlen(pszEnvHome) + 12 );
+
+        sprintf( pszEnvIni, "ODBCSYSINI=%s", pszEnvHome );
+        putenv( pszEnvIni );
+
+        CPLDebug( "ODBC", pszEnvIni );
+        //CPLFree( pszEnvIni );
+        
+        // Try to install ODBC driver in new location
+        if ( FALSE == SQLInstallDriverEx( pszDriver, NULL, m_szPathOut,
+                ODBC_FILENAME_MAX, NULL, fRequest,
+                &m_nUsageCount ) )
         {
-            // Failure is likely related to no write permissions to
-            // system-wide default location, so try to install to HOME
-           
-            // Read HOME location
-            char* pszEnvHome = NULL;
-            pszEnvHome = getenv("HOME");
+            cRet = SQLInstallerError( nErrorNum, &m_nErrorCode,
+                            m_szError, SQL_MAX_MESSAGE_LENGTH, NULL );
+            CPLAssert( SQL_SUCCESS == cRet || SQL_SUCCESS_WITH_INFO == cRet );
 
-            CPLAssert( NULL != pszEnvHome );
-            CPLDebug( "ODBC", "HOME=%s", pszEnvHome );
-
-            // Set ODBCSYSINI variable pointing to HOME location
-            char* pszEnvIni = (char *)CPLMalloc( strlen(pszEnvHome) + 12 );
-
-            sprintf( pszEnvIni, "ODBCSYSINI=%s", pszEnvHome );
-            putenv( pszEnvIni );
-
-            CPLDebug( "ODBC", pszEnvIni );
-            CPLFree( pszEnvIni );
-            
-            // Try to install ODBC driver in new location
-            if ( FALSE == SQLInstallDriverEx( pszDriver, NULL, m_szPathOut,
-                    ODBC_FILENAME_MAX, NULL, fRequest,
-                    &m_nUsageCount ) )
-            {
-                cRet = SQLInstallerError( nErrorNum, &m_nErrorCode,
-                                m_szError, SQL_MAX_MESSAGE_LENGTH, NULL );
-                CPLAssert( SQL_SUCCESS == cRet || SQL_SUCCESS_WITH_INFO == cRet );
-
-                // FAIL
-                return FALSE;
-            }
-        }
-        else
-        {
             // FAIL
             return FALSE;
         }
