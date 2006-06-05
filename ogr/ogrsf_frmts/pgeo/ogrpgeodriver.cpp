@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/06/05 20:37:42  mloskot
+ * Added guards to not to run ODBC driver installation for PGeo on Win32 platforms.
+ *
  * Revision 1.3  2006/06/01 14:49:06  mloskot
  * Added automatic installation of the MDB Tools driver for PGeo. The driver is installed before opening PGeo dataset.
  *
@@ -77,6 +80,7 @@ OGRDataSource *OGRPGeoDriver::Open( const char * pszFilename,
         && !EQUAL(CPLGetExtension(pszFilename),"mdb") )
         return NULL;
 
+#ifndef WIN32
     // Try to register MDB Tools driver
     //
     // ODBCINST.INI NOTE:
@@ -92,11 +96,13 @@ OGRDataSource *OGRPGeoDriver::Open( const char * pszFilename,
     if ( !InstallMdbDriver() )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
-                  "Unable to locate and install MDB Tools driver for ODBC!\n" );
+                  "Unable to install MDB driver for ODBC!\n" );
         return NULL;
     }
 
     CPLDebug( "PGeo", "MDB Tools driver installed successfully!");
+
+#endif /* ndef WIN32 */
 
     // Open data source
     poDS = new OGRPGeoDataSource();
@@ -119,6 +125,12 @@ int OGRPGeoDriver::TestCapability( const char * pszCap )
 {
     return FALSE;
 }
+
+
+/*
+ * START OF UNIX-only features.
+ */
+#ifndef WIN32
 
 /************************************************************************/
 /*                           InstallMdbDriver()                         */
@@ -239,6 +251,11 @@ bool OGRPGeoDriver::LibraryExists(const char* pszLibPath)
 
     return false;
 }
+
+#endif /* ndef WIN32 */
+/*
+ * END OF UNIX-only features
+ */
 
 /************************************************************************/
 /*                           RegisterOGRODBC()                          */
