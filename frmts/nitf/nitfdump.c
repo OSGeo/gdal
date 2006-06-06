@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/06/06 17:09:27  fwarmerdam
+ * added various extra reporting
+ *
  * Revision 1.7  2004/05/06 14:58:06  warmerda
  * added USE00A and STDIDC parsing and reporting as metadata
  *
@@ -67,137 +70,44 @@ int main( int nArgc, char ** papszArgv )
 
 {
     NITFFile	*psFile;
-    int          iSegment;
+    int          iSegment, iFile;
     char         szTemp[100];
 
     if( nArgc < 2 )
     {
-        printf( "Usage: nitfdump <nitf_filename>\n" );
+        printf( "Usage: nitfdump <nitf_filename>*\n" );
         exit( 1 );
     }
 
+/* ==================================================================== */
+/*      Loop over all files.                                            */
+/* ==================================================================== */
+    for( iFile = 1; iFile < nArgc; iFile++ )
+    {
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    psFile = NITFOpen( papszArgv[1], FALSE );
-    if( psFile == NULL )
-        exit( 2 );
+        psFile = NITFOpen( papszArgv[iFile], FALSE );
+        if( psFile == NULL )
+            exit( 2 );
+
+        printf( "Dump for %s\n", papszArgv[iFile] );
 
 /* -------------------------------------------------------------------- */
 /*      Dump first TRE list.                                            */
 /* -------------------------------------------------------------------- */
-    if( psFile->pachTRE != NULL )
-    {
-        int nTREBytes = psFile->nTREBytes;
-        const char *pszTREData = psFile->pachTRE;
-
-
-        printf( "File TREs:" );
-
-        while( nTREBytes > 10 )
+        if( psFile->pachTRE != NULL )
         {
-            int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
+            int nTREBytes = psFile->nTREBytes;
+            const char *pszTREData = psFile->pachTRE;
 
-            printf( " %6.6s(%d)", pszTREData, nThisTRESize );
-            pszTREData += nThisTRESize + 11;
-            nTREBytes -= (nThisTRESize + 11);
-        }
-        printf( "\n" );
-    }
 
-/* -------------------------------------------------------------------- */
-/*      Report info from location table, if found.                      */
-/* -------------------------------------------------------------------- */
-    if( psFile->nLocCount > 0 )
-    {
-        int i;
-        printf( "Location Table\n" );
-        for( i = 0; i < psFile->nLocCount; i++ )
-        {
-            printf( "  LocId=%d, Offset=%d, Size=%d\n", 
-                    psFile->pasLocations[i].nLocId,
-                    psFile->pasLocations[i].nLocOffset,
-                    psFile->pasLocations[i].nLocSize );
-        }
-        printf( "\n" );
-    }
+            printf( "File TREs:" );
 
-/* -------------------------------------------------------------------- */
-/*      Dump Metadata                                                   */
-/* -------------------------------------------------------------------- */
-    DumpMetadata( "File Metadata:", "  ", psFile->papszMetadata );
-
-/* -------------------------------------------------------------------- */
-/*      Dump general info about segments.                               */
-/* -------------------------------------------------------------------- */
-    for( iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
-    {
-        NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + iSegment;
-
-        printf( "Segment %d (Type=%s):\n", 
-                iSegment + 1, psSegInfo->szSegmentType );
-
-        printf( "  HeaderStart=%d, HeaderSize=%d, DataStart=%d, DataSize=%d\n",
-                psSegInfo->nSegmentHeaderStart,
-                psSegInfo->nSegmentHeaderSize, 
-                psSegInfo->nSegmentStart,
-                psSegInfo->nSegmentSize );
-        printf( "\n" );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Report details of images.                                       */
-/* -------------------------------------------------------------------- */
-    for( iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
-    {
-        NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + iSegment;
-        NITFImage *psImage;
-        NITFRPC00BInfo sRPCInfo;
-        int iBand;
-        char **papszMD;
-
-        if( !EQUAL(psSegInfo->szSegmentType,"IM") )
-            continue;
-        
-        psImage = NITFImageAccess( psFile, iSegment );
-        if( psImage == NULL )
-        {
-            printf( "NITFAccessImage(%d) failed!\n", iSegment );
-            continue;
-        }
-
-        printf( "Image Segment %d, %dPx%dLx%dB x %dbits:\n", 
-                iSegment, psImage->nRows, psImage->nCols, psImage->nBands,
-                psImage->nBitsPerSample );
-        printf( "  PVTYPE=%s, IREP=%s, ICAT=%s, IMODE=%c, IC=%s, COMRAT=%s, ICORDS=%c\n", 
-                psImage->szPVType, psImage->szIREP, psImage->szICAT,
-                psImage->chIMODE, psImage->szIC, psImage->szCOMRAT,
-                psImage->chICORDS );
-        if( psImage->chICORDS != ' ' )
-        {
-            printf( "  UL=(%g,%g), UR=(%g,%g)\n  LL=(%g,%g), LR=(%g,%g)\n", 
-                    psImage->dfULX, psImage->dfULY,
-                    psImage->dfURX, psImage->dfURY,
-                    psImage->dfLLX, psImage->dfLLY,
-                    psImage->dfLRX, psImage->dfLRY );
-        }
-
-        printf( "  %d x %d blocks of size %d x %d\n",
-                psImage->nBlocksPerRow, psImage->nBlocksPerColumn,
-                psImage->nBlockWidth, psImage->nBlockHeight );
-        
-        if( psImage->pachTRE != NULL )
-        {
-            int nTREBytes = psImage->nTREBytes;
-            const char *pszTREData = psImage->pachTRE;
-            
-            
-            printf( "  Image TREs:" );
-            
             while( nTREBytes > 10 )
             {
                 int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
-                
+
                 printf( " %6.6s(%d)", pszTREData, nThisTRESize );
                 pszTREData += nThisTRESize + 11;
                 nTREBytes -= (nThisTRESize + 11);
@@ -205,44 +115,145 @@ int main( int nArgc, char ** papszArgv )
             printf( "\n" );
         }
 
-        if( strlen(psImage->pszComments) > 0 )
-            printf( "  Comments:\n%s\n", psImage->pszComments );
-
-        for( iBand = 0; iBand < psImage->nBands; iBand++ )
+/* -------------------------------------------------------------------- */
+/*      Report info from location table, if found.                      */
+/* -------------------------------------------------------------------- */
+        if( psFile->nLocCount > 0 )
         {
-            NITFBandInfo *psBandInfo = psImage->pasBandInfo + iBand;
-
-            printf( "  Band %d: IREPBAND=%s, ISUBCAT=%s, %d LUT entries.\n",
-                    iBand + 1, psBandInfo->szIREPBAND, psBandInfo->szISUBCAT,
-                    psBandInfo->nSignificantLUTEntries );
+            int i;
+            printf( "Location Table\n" );
+            for( i = 0; i < psFile->nLocCount; i++ )
+            {
+                printf( "  LocId=%d, Offset=%d, Size=%d\n", 
+                        psFile->pasLocations[i].nLocId,
+                        psFile->pasLocations[i].nLocOffset,
+                        psFile->pasLocations[i].nLocSize );
+            }
+            printf( "\n" );
         }
 
-        if( NITFReadRPC00B( psImage, &sRPCInfo ) )
+/* -------------------------------------------------------------------- */
+/*      Dump Metadata                                                   */
+/* -------------------------------------------------------------------- */
+        DumpMetadata( "File Metadata:", "  ", psFile->papszMetadata );
+
+/* -------------------------------------------------------------------- */
+/*      Dump general info about segments.                               */
+/* -------------------------------------------------------------------- */
+        for( iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
         {
-            DumpRPC( psImage, &sRPCInfo );
+            NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + iSegment;
+
+            printf( "Segment %d (Type=%s):\n", 
+                    iSegment + 1, psSegInfo->szSegmentType );
+
+            printf( "  HeaderStart=%d, HeaderSize=%d, DataStart=%d, DataSize=%d\n",
+                    psSegInfo->nSegmentHeaderStart,
+                    psSegInfo->nSegmentHeaderSize, 
+                    psSegInfo->nSegmentStart,
+                    psSegInfo->nSegmentSize );
+            printf( "\n" );
         }
 
-        papszMD = NITFReadUSE00A( psImage );
-        if( papszMD != NULL )
+/* -------------------------------------------------------------------- */
+/*      Report details of images.                                       */
+/* -------------------------------------------------------------------- */
+        for( iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
         {
-            DumpMetadata( "  USE00A TRE:", "    ", papszMD );
-            CSLDestroy( papszMD );
-        }
+            NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + iSegment;
+            NITFImage *psImage;
+            NITFRPC00BInfo sRPCInfo;
+            int iBand;
+            char **papszMD;
 
-        papszMD = NITFReadSTDIDC( psImage );
-        if( papszMD != NULL )
-        {
-            DumpMetadata( "  STDIDC TRE:", "    ", papszMD );
-            CSLDestroy( papszMD );
-        }
+            if( !EQUAL(psSegInfo->szSegmentType,"IM") )
+                continue;
+        
+            psImage = NITFImageAccess( psFile, iSegment );
+            if( psImage == NULL )
+            {
+                printf( "NITFAccessImage(%d) failed!\n", iSegment );
+                continue;
+            }
 
-        DumpMetadata( "  Image Metadata:", "    ", psImage->papszMetadata );
-    }
+            printf( "Image Segment %d, %dPx%dLx%dB x %dbits:\n", 
+                    iSegment, psImage->nRows, psImage->nCols, psImage->nBands,
+                    psImage->nBitsPerSample );
+            printf( "  PVTYPE=%s, IREP=%s, ICAT=%s, IMODE=%c, IC=%s, COMRAT=%s, ICORDS=%c\n", 
+                    psImage->szPVType, psImage->szIREP, psImage->szICAT,
+                    psImage->chIMODE, psImage->szIC, psImage->szCOMRAT,
+                    psImage->chICORDS );
+            if( psImage->chICORDS != ' ' )
+            {
+                printf( "  UL=(%g,%g), UR=(%g,%g)\n  LL=(%g,%g), LR=(%g,%g)\n", 
+                        psImage->dfULX, psImage->dfULY,
+                        psImage->dfURX, psImage->dfURY,
+                        psImage->dfLLX, psImage->dfLLY,
+                        psImage->dfLRX, psImage->dfLRY );
+            }
+
+            printf( "  %d x %d blocks of size %d x %d\n",
+                    psImage->nBlocksPerRow, psImage->nBlocksPerColumn,
+                    psImage->nBlockWidth, psImage->nBlockHeight );
+        
+            if( psImage->pachTRE != NULL )
+            {
+                int nTREBytes = psImage->nTREBytes;
+                const char *pszTREData = psImage->pachTRE;
+            
+            
+                printf( "  Image TREs:" );
+            
+                while( nTREBytes > 10 )
+                {
+                    int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
+                
+                    printf( " %6.6s(%d)", pszTREData, nThisTRESize );
+                    pszTREData += nThisTRESize + 11;
+                    nTREBytes -= (nThisTRESize + 11);
+                }
+                printf( "\n" );
+            }
+
+            if( strlen(psImage->pszComments) > 0 )
+                printf( "  Comments:\n%s\n", psImage->pszComments );
+
+            for( iBand = 0; iBand < psImage->nBands; iBand++ )
+            {
+                NITFBandInfo *psBandInfo = psImage->pasBandInfo + iBand;
+
+                printf( "  Band %d: IREPBAND=%s, ISUBCAT=%s, %d LUT entries.\n",
+                        iBand + 1, psBandInfo->szIREPBAND, psBandInfo->szISUBCAT,
+                        psBandInfo->nSignificantLUTEntries );
+            }
+
+            if( NITFReadRPC00B( psImage, &sRPCInfo ) )
+            {
+                DumpRPC( psImage, &sRPCInfo );
+            }
+
+            papszMD = NITFReadUSE00A( psImage );
+            if( papszMD != NULL )
+            {
+                DumpMetadata( "  USE00A TRE:", "    ", papszMD );
+                CSLDestroy( papszMD );
+            }
+
+            papszMD = NITFReadSTDIDC( psImage );
+            if( papszMD != NULL )
+            {
+                DumpMetadata( "  STDIDC TRE:", "    ", papszMD );
+                CSLDestroy( papszMD );
+            }
+
+            DumpMetadata( "  Image Metadata:", "    ", psImage->papszMetadata );
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Close.                                                          */
 /* -------------------------------------------------------------------- */
-    NITFClose( psFile );
+        NITFClose( psFile );
+    }
 
     exit( 0 );
 }
