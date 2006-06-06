@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/06/06 12:13:11  fwarmerdam
+ * Cast CPLMalloc() result.
+ *
  * Revision 1.3  2006/02/14 22:45:47  fwarmerdam
  * fixed up vsnprintf handling for win32, returns -1 on overrun
  *
@@ -78,7 +81,7 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 /* -------------------------------------------------------------------- */
 
 #if !defined(HAVE_VSNPRINTF)
-    char *pszBuffer = CPLMalloc(30000);
+    char *pszBuffer = (char *) CPLMalloc(30000);
     if( vsprintf( pszBuffer, pszFormat, args) > 29998 )
     {
         CPLError( CE_Fatal, CPLE_AppDefined, 
