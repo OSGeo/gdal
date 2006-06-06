@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.79  2006/06/06 19:13:34  fwarmerdam
+ * Added support (from Peng Gao) to unpack EPT_u2 raster data.
+ *
  * Revision 1.78  2006/04/20 19:14:22  fwarmerdam
  * Don't return null transform as if it were a valid geotransform.
  *
@@ -574,6 +577,7 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
     switch( nHFADataType )
     {
       case EPT_u1:
+      case EPT_u2:
       case EPT_u4:
       case EPT_u8:
       case EPT_s8:
@@ -933,8 +937,22 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         for( int ii = nBlockXSize * nBlockYSize - 2; ii >= 0; ii -= 2 )
         {
-            pabyData[ii] = pabyData[ii>>1] & 0x0f;
-            pabyData[ii+1] = (pabyData[ii>>1] & 0xf0) >> 4;
+            int k = ii>>1;
+            pabyData[ii]   = (pabyData[k]) & 0xf;
+            pabyData[ii+1] = (pabyData[k]>>4) & 0xf;
+        }
+    }
+    if( eErr == CE_None && nThisDataType == EPT_u2 )
+    {
+        GByte	*pabyData = (GByte *) pImage;
+
+        for( int ii = nBlockXSize * nBlockYSize - 4; ii >= 0; ii -= 4 )
+        {
+            int k = ii>>2;
+            pabyData[ii]   = (pabyData[k]) & 0x3;
+            pabyData[ii+1] = (pabyData[k]>>2) & 0x3;
+            pabyData[ii+2] = (pabyData[k]>>4) & 0x3;
+            pabyData[ii+3] = (pabyData[k]>>6) & 0x3;
         }
     }
     if( eErr == CE_None && nThisDataType == EPT_u1)
