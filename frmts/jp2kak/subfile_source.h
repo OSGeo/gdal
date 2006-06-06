@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.3  2006/06/06 12:23:32  fwarmerdam
+ * Fixed real_filename "skip comma" logic.
+ *
  * Revision 1.2  2004/07/29 16:37:56  warmerda
  * fixed parsing of subfile definition to handle spaces properly
  *
@@ -76,7 +79,7 @@ class subfile_source : public kdu_compressed_source {
           if( real_filename != NULL )
               real_filename = strstr(real_filename+1,",");
           if( real_filename != NULL )
-              real_filename = real_filename++;
+              real_filename++;
           else
           {
               kdu_error e;
