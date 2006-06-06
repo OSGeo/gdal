@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/06/06 17:49:07  pka
+ * STL compatibility (Bug 1178)
+ *
  * Revision 1.4  2005/11/21 14:56:31  pka
  * Fix for call of GetNextFeature without ResetReading (Interlis 2)
  * Fix for polygonizer crash on Linux with GEOS 2.1.3 (Interlis 1)
@@ -73,7 +76,6 @@ OGRILI2Layer::OGRILI2Layer( const char * pszName,
     poFeatureDefn->SetGeomType( eReqType );
 
     bWriter = bWriterIn;
-    listFeatureIt = 0;
 }
 
 /************************************************************************/
@@ -116,6 +118,7 @@ void OGRILI2Layer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
 OGRErr OGRILI2Layer::SetFeature (OGRFeature *poFeature) {
     listFeature.push_back(poFeature);
+    if (listFeature.size() == 1) ResetReading();
     return OGRERR_NONE;
 }
 
@@ -132,7 +135,6 @@ void OGRILI2Layer::ResetReading(){
 /************************************************************************/
 
 OGRFeature *OGRILI2Layer::GetNextFeature() {
-    if (listFeatureIt == 0) listFeatureIt = listFeature.begin();
     if (listFeatureIt != listFeature.end())
         return *(listFeatureIt++);
     return NULL;
