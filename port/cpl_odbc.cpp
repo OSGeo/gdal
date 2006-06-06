@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2006/06/06 16:25:22  mloskot
+ * Fixed memory 4-5 leaks in CPL ODBC and OGR drivers.
+ *
  * Revision 1.31  2006/06/05 20:15:52  mloskot
  * Fixed problem with /odbcinst.ini requirements.
  *
@@ -1165,6 +1168,9 @@ void CPLODBCStatement::Clear()
 
         CPLFree( m_papszColValues );
         m_papszColValues = NULL;
+
+        CPLFree( m_panColValueLengths );
+        m_panColValueLengths = NULL;
     }
 
 }

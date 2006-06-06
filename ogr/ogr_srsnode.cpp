@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2006/06/06 16:25:22  mloskot
+ * Fixed memory 4-5 leaks in CPL ODBC and OGR drivers.
+ *
  * Revision 1.26  2003/05/28 19:16:42  warmerda
  * fixed up argument names and stuff for docs
  *
@@ -717,7 +720,10 @@ OGRErr OGR_SRSNode::importFromWkt( char ** ppszInput )
 
             eErr = poNewChild->importFromWkt( (char **) &pszInput );
             if( eErr != OGRERR_NONE )
+            {
+                delete poNewChild;
                 return eErr;
+            }
 
             AddChild( poNewChild );
             
