@@ -25,7 +25,14 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- *****************************************************************************/
+ *****************************************************************************
+ *
+ * $Log$
+ * Revision 1.28  2006/06/06 18:34:01  ilucena
+ * Projection system and image extent error fixed
+ *
+ *
+ */
 
 #include "gdal_priv.h"
 #include "cpl_conv.h"
@@ -459,10 +466,10 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
 		dfYPixSz = (dfMinY - dfMaxY) / poDS->nRasterYSize;
 		dfXPixSz = (dfMaxX - dfMinX) / poDS->nRasterXSize;
 
-		poDS->adfGeoTransform[0] = dfMinX - (dfXPixSz / 2);
+		poDS->adfGeoTransform[0] = dfMinX;
 		poDS->adfGeoTransform[1] = dfXPixSz;
 		poDS->adfGeoTransform[2] = 0.0;
-		poDS->adfGeoTransform[3] = dfMaxY + (dfYPixSz / 2);
+		poDS->adfGeoTransform[3] = dfMaxY;
 		poDS->adfGeoTransform[4] = 0.0;
 		poDS->adfGeoTransform[5] = dfYPixSz;
 	}
@@ -935,9 +942,9 @@ CPLErr  IdrisiDataset::SetGeoTransform(double * padfGeoTransform)
 
 	dfXPixSz = padfGeoTransform[1];
 	dfYPixSz = padfGeoTransform[5];
-	dfMinX   = padfGeoTransform[0] + (dfXPixSz / 2);
+	dfMinX   = padfGeoTransform[0];
 	dfMaxX   = (dfXPixSz * nRasterXSize) + dfMinX;
-	dfMaxY   = padfGeoTransform[3] - (dfYPixSz / 2);
+	dfMaxY   = padfGeoTransform[3];
 	dfMinY   = (dfYPixSz * nRasterYSize) + dfMaxY;
 
 	CSLSetNameValue(papszRDC, rdcMIN_X,      CPLSPrintf("%.8g", dfMinX));
@@ -1836,7 +1843,7 @@ OGRErr CPL_DLL OSRExportToIdrisi(OGRSpatialReferenceH hSRS,
 {
 	OGRSpatialReference *poSRS = ((OGRSpatialReference *) hSRS);
 
-	const char  *pszProjection = poSRS->GetAttrValue("PROJECTION");
+	const char *pszProjection = poSRS->GetAttrValue("PROJECTION");
 
 	CSLDestroy(*papszRefFile);
 
@@ -1847,14 +1854,14 @@ OGRErr CPL_DLL OSRExportToIdrisi(OGRSpatialReferenceH hSRS,
 
 		return OGRERR_NONE;
 	}
-
+    
 	if (pszProjection == NULL)
 	{
 #ifdef DEBUG
 		CPLDebug("RST", "Empty projection definition, considered as LatLong" );
 #endif
 		*pszRefSystem = CPLStrdup(rstLATLONG);
-		*pszRefUnit   = CPLStrdup(poSRS->GetAttrValue("UNIT", 0));
+		*pszRefUnit   = CPLStrdup(rstDEGREE);
 
 		return OGRERR_NONE;
 	}
@@ -1996,7 +2003,7 @@ OGRErr CPL_DLL OSRExportToIdrisi(OGRSpatialReferenceH hSRS,
 	if (szUnit && EQUAL(szUnit, rstDEGREE))
 	{
 		*pszRefSystem = CPLStrdup(rstLATLONG);
-		*pszRefUnit   = CPLStrdup(szUnit);
+		*pszRefUnit   = CPLStrdup(rstDEGREE);
 	}
 	else
 	{
