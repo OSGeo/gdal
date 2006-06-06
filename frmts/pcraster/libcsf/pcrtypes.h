@@ -145,7 +145,7 @@ template<typename T>
     void setMVMemSet(T *v, size_t n) {
       memset(v,MV_UINT1,n*sizeof(T));
     }
- };
+ }
 
 # define PCR_DEF_SETMV_MEMSET(type)    \
   template<>                           \
