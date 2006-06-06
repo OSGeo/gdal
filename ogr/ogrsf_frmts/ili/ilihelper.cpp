@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/06/06 17:01:52  pka
+ * Join surface layer geometry to data layer
+ * Improved arc interpolation
+ *
  * Revision 1.1  2006/02/13 18:18:53  pka
  * Interlis 2: Support for nested attributes
  * Interlis 2: Arc interpolation
@@ -94,23 +98,30 @@ void interpolateArc(OGRLineString* line, OGRPoint *ptStart, OGRPoint *ptOnArc, O
   double phiPtOnArc = getPhi(center, ptOnArc);
   double phiPtEnd = getPhi(center, ptEnd);
 
-  int pointCnt = 0;
-  double deltaPhi = phiPtOnArc - phiPtStart;
+  double deltaPhi = phiPtEnd - phiPtStart;
   if (deltaPhi < 0) deltaPhi += 2*PI;
-  if (deltaPhi < PI) {
+  if (deltaPhi < PI) { //clockwise, if phiPtEnd - phiPtStart < PI
     if (phiPtEnd < phiPtStart) phiPtEnd += 2*PI;
-    for (double angle = phiPtStart+arcIncr; angle<phiPtEnd; angle += arcIncr) {
-      line->addPoint(center->getX()+r*cos(angle), center->getY()+r*sin(angle), 0);
-      ++pointCnt;
+    if (phiPtOnArc < phiPtStart) phiPtOnArc += 2*PI;
+    for (double angle = phiPtStart; angle<phiPtEnd; angle += arcIncr) {
+      if (angle != phiPtStart && angle != phiPtEnd)
+        line->addPoint(center->getX()+r*cos(angle), center->getY()+r*sin(angle), 0);
+      //add ptOnArc, if angle < phiPtOnArc < angle + arcIncr
+      if (angle < phiPtOnArc && angle + arcIncr > phiPtOnArc)
+        line->addPoint(ptOnArc);
     }
   } else {
-    if (phiPtEnd > phiPtStart) phiPtStart += 2*PI;
-    for (double angle = phiPtStart-arcIncr; angle>phiPtEnd; angle -= arcIncr) {
-      line->addPoint(center->getX()+r*cos(angle), center->getY()+r*sin(angle), 0);
-      ++pointCnt;
+    if (phiPtStart < phiPtEnd) phiPtStart += 2*PI;
+    if (phiPtOnArc < phiPtEnd) phiPtOnArc += 2*PI;
+    for (double angle = phiPtStart; angle>phiPtEnd; angle -= arcIncr) {
+      if (angle != phiPtStart && angle != phiPtEnd)
+        line->addPoint(center->getX()+r*cos(angle), center->getY()+r*sin(angle), 0);
+      //add ptOnArc, if angle > phiPtOnArc > angle - arcIncr
+      if (angle > phiPtOnArc && angle - arcIncr < phiPtOnArc)
+        line->addPoint(ptOnArc);
     }
   }
-  if (pointCnt == 0) line->addPoint(ptOnArc);
+  line->addPoint(ptEnd);
   delete center;
 }
 

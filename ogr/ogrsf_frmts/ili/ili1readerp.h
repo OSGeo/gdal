@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/06/06 17:01:52  pka
+ * Join surface layer geometry to data layer
+ * Improved arc interpolation
+ *
  * Revision 1.5  2006/03/23 18:04:39  pka
  * Add polygon geometry to area layer
  * Performance improvement area polygonizer
@@ -71,6 +75,9 @@ private:
     int          nAreaLayers;
     OGRLayer     **papoAreaLayers;
     OGRLayer     **papoAreaLineLayers;
+    int          nSurfaceLayers;
+    OGRLayer     **papoSurfaceLayers;
+    OGRLayer     **papoSurfacePolyLayers;
     OGRILI1Layer *curLayer;
     double       arcIncr;
 
@@ -88,9 +95,11 @@ public:
 
     void         AddLayer( OGRLayer * poNewLayer );
     void         AddAreaLayer( OGRLayer * poAreaLayer,  OGRLayer * poLineLayer );
+    void         AddSurfaceLayer( OGRLayer * poDataLayer,  OGRLayer * poPolyLayer );
     int          AddIliGeom(OGRFeature *feature, int iField, long fpos);
     OGRMultiPolygon* Polygonize( OGRGeometryCollection* poLines );
     void         PolygonizeAreaLayers();
+    void         JoinSurfaceLayers();
     OGRLayer     *GetLayer( int );
     OGRLayer     *GetLayerByName( const char* );
     int          GetLayerCount();

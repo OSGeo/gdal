@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2006/06/06 17:01:52  pka
+ * Join surface layer geometry to data layer
+ * Improved arc interpolation
+ *
  * Revision 1.14  2006/04/27 16:37:19  pka
  * Ili2 model reader fix
  * Support for multiple Ili2 models
@@ -123,6 +127,9 @@ ILI1Reader::ILI1Reader() {
   nAreaLayers = 0;
   papoAreaLayers = NULL;
   papoAreaLineLayers = NULL;
+  nSurfaceLayers = 0;
+  papoSurfaceLayers = NULL;
+  papoSurfacePolyLayers = NULL;
   SetArcDegrees(1);
 }
 
@@ -199,8 +206,8 @@ void ILI1Reader::AddField(OGRLayer* layer, IOM_BASKET model, IOM_OBJECT obj) {
   if (EQUAL(iom_getobjecttag(obj),"iom04.metamodel.LocalAttribute")) typenam = GetTypeName(model, obj);
   CPLDebug( "OGR_ILI", "Field %s: %s", iom_getattrvalue(obj, "name"), typenam);
   if (EQUAL(typenam, "iom04.metamodel.SurfaceType")) {
-    AddGeomTable(layer->GetLayerDefn()->GetName(), iom_getattrvalue(obj, "name"), wkbPolygon);
-    //TODO: combine geometry and attribute layer
+    OGRLayer* polyLayer = AddGeomTable(layer->GetLayerDefn()->GetName(), iom_getattrvalue(obj, "name"), wkbPolygon);
+    AddSurfaceLayer(layer, polyLayer);
     //TODO: add line attributes to geometry
   } else if (EQUAL(typenam, "iom04.metamodel.AreaType")) {
     IOM_OBJECT controlPointDomain = GetAttrObj(model, GetTypeObj(model, obj), "controlPointDomain");
@@ -380,6 +387,7 @@ int ILI1Reader::ReadFeatures() {
       }
       else if (EQUAL(firsttok, "ENDE"))
       {
+        JoinSurfaceLayers();
         PolygonizeAreaLayers();
         return TRUE;
       }
@@ -549,6 +557,28 @@ void ILI1Reader::PolygonizeAreaLayers()
           delete ahInGeoms[i];
       CPLFree( ahInGeoms );
 #endif
+    }
+}
+
+
+void ILI1Reader::JoinSurfaceLayers()
+{
+    for(int iLayer = 0; iLayer < nSurfaceLayers; iLayer++ )
+    {
+      OGRLayer *poSurfaceLayer = papoSurfaceLayers[iLayer];
+      OGRLayer *poPolyLayer = papoSurfacePolyLayers[iLayer];
+
+      poSurfaceLayer->GetLayerDefn()->SetGeomType(poPolyLayer->GetLayerDefn()->GetGeomType());
+      poSurfaceLayer->ResetReading();
+      poPolyLayer->ResetReading();
+      while (OGRFeature *feature = poSurfaceLayer->GetNextFeature()) {
+        //Assume same sequence -> Dangerous?
+        OGRFeature *polyfeature = poPolyLayer->GetNextFeature();
+        if (polyfeature) { //&& EQUAL(feature->GetFieldAsString(0), polyfeature->GetFieldAsString(0))
+          feature->SetGeometry(polyfeature->GetGeometryRef());
+        }
+
+      }
     }
 }
 
@@ -776,6 +806,24 @@ void ILI1Reader::AddAreaLayer( OGRLayer * poAreaLayer,  OGRLayer * poLineLayer )
     
     papoAreaLayers[nAreaLayers-1] = poAreaLayer;
     papoAreaLineLayers[nAreaLayers-1] = poLineLayer;
+}
+
+/************************************************************************/
+/*                              AddSurfaceLayer()                              */
+/************************************************************************/
+
+void ILI1Reader::AddSurfaceLayer( OGRLayer * poDataLayer,  OGRLayer * poPolyLayer )
+
+{
+    ++nSurfaceLayers;
+
+    papoSurfaceLayers = (OGRLayer **)
+        CPLRealloc( papoSurfaceLayers, sizeof(void*) * nSurfaceLayers );
+    papoSurfacePolyLayers = (OGRLayer **)
+        CPLRealloc( papoSurfacePolyLayers, sizeof(void*) * nSurfaceLayers );
+    
+    papoSurfaceLayers[nSurfaceLayers-1] = poDataLayer;
+    papoSurfacePolyLayers[nSurfaceLayers-1] = poPolyLayer;
 }
 
 /************************************************************************/
