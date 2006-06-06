@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/06/06 16:25:22  mloskot
+ * Fixed memory 4-5 leaks in CPL ODBC and OGR drivers.
+ *
  * Revision 1.5  2006/06/05 19:06:38  fwarmerdam
  * fixed problem with handling ofz for lines
  *
@@ -92,14 +95,15 @@ OGRPGeoLayer::~OGRPGeoLayer()
         poStmt = NULL;
     }
 
-    if( pszGeomColumn != NULL )
-        CPLFree( pszGeomColumn );
-
     if( poFeatureDefn != NULL )
     {
         poFeatureDefn->Release();
         poFeatureDefn = NULL;
     }
+
+    CPLFree( pszGeomColumn );
+    CPLFree( panFieldOrdinals ); 
+    CPLFree( pszFIDColumn );
 
     if( poSRS != NULL )
     {
