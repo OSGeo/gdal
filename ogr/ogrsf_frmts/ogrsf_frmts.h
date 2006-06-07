@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2006/06/07 14:39:09  mloskot
+ * Added new KML (Beta) driver to OGR. Thanks to Christopher Condit - the author of KML drvier.
+ *
  * Revision 1.57  2006/01/27 00:09:07  fwarmerdam
  * added Get{FID,Geometry}Column() support
  *
@@ -343,6 +346,7 @@ void CPL_DLL RegisterOGRMySQL();
 void CPL_DLL RegisterOGROCI();
 void CPL_DLL RegisterOGRDGN();
 void CPL_DLL RegisterOGRGML();
+void CPL_DLL RegisterOGRKML();
 void CPL_DLL RegisterOGRAVCBin();
 void CPL_DLL RegisterOGRAVCE00();
 void CPL_DLL RegisterOGRFME();

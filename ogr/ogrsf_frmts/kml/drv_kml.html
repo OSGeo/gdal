@@ -1,0 +1,44 @@
+<html>
+<head>
+<title>KML - Keyhole Markup Language</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>KML - Keyhole Markup Language</h1>
+
+<p>OGR has limited support for KML writing and no support
+for reading KML. OGR generates KML 2.0. 
+The KML driver has no coordinate system support at this time.<p>
+
+<h2>Creation Issues</h2>
+<p>KML is mix of formatting and feature data. When writing KML, attributes are added to
+the output with the following HTML structure:
+<pre>&lt;b>Attribute name&lt;/b>: Attribute content</pre>
+</p>
+<p>On export all layers are written to a single KML file wrapped in a single
+folder element. In the future support could be added for layers ending up in
+separate folder elements.</p>
+
+<h2>Example</h2>
+<p>The ogr2ogr utility can be used to dump the results of a Oracle query to
+KML:
+
+<pre>
+ogr2ogr -f KML output.kml OCI:usr/pwd@db my_feature -where "id = 0"
+</pre>
+The ogr2ogr utility can be used to dump the results of a PostGIS query to
+KML:
+
+<pre>
+ogr2ogr -f KML output.kml PG:'host=myserver dbname=warmerda' -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
+</pre>
+</p>
+<h2>See Also</h2>
+<ul>
+<li> <a href="http://earth.google.com/kml/kml_intro.html">KML 2.0 Specification</a></li>
+<li> <a href="http://www.keyhole.com/kml/kml_tut.html">KML 2.0 Tutorial</a></li>
+</ul>
+
+</body>
+</html>
