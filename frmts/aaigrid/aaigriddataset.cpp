@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.36  2006/06/07 14:36:04  fwarmerdam
+ * Added handling of "DS" units for geographic coordinate systems.
+ *
  * Revision 1.35  2006/05/15 21:41:49  mloskot
  * Fixed bug 1071.
  *
@@ -149,6 +152,9 @@ CPL_CVSID("$Id$");
 CPL_C_START
 void    GDALRegister_AAIGrid(void);
 CPL_C_END
+
+static const char*OSR_GDS( char **papszNV, const char * pszField, 
+                           const char *pszDefaultValue );
 
 /************************************************************************/
 /* ==================================================================== */
@@ -664,6 +670,19 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if( oSRS.importFromESRI( poDS->papszPrj ) == OGRERR_NONE )
         {
+            // If geographic values are in seconds, we must transform. 
+            // Is there a code for minutes too? 
+            if( oSRS.IsGeographic() 
+                && EQUAL(OSR_GDS( poDS->papszPrj, "Units", ""), "DS") )
+            {
+                poDS->adfGeoTransform[0] /= 3600.0;
+                poDS->adfGeoTransform[1] /= 3600.0;
+                poDS->adfGeoTransform[2] /= 3600.0;
+                poDS->adfGeoTransform[3] /= 3600.0;
+                poDS->adfGeoTransform[4] /= 3600.0;
+                poDS->adfGeoTransform[5] /= 3600.0;
+            }
+
             CPLFree( poDS->pszProjection );
             oSRS.exportToWkt( &(poDS->pszProjection) );
         }
@@ -938,6 +957,43 @@ CPLErr AAIGDataset::Delete( const char *pszFilename )
 {
     Remove( CPLResetExtension( pszFilename, "prj" ), FALSE );
     return Remove( pszFilename, TRUE );
+}
+
+/************************************************************************/
+/*                              OSR_GDS()                               */
+/************************************************************************/
+
+static const char*OSR_GDS( char **papszNV, const char * pszField, 
+                           const char *pszDefaultValue )
+
+{
+    int         iLine;
+
+    if( papszNV == NULL || papszNV[0] == NULL )
+        return pszDefaultValue;
+
+    for( iLine = 0; 
+         papszNV[iLine] != NULL && 
+             !EQUALN(papszNV[iLine],pszField,strlen(pszField));
+         iLine++ ) {}
+
+    if( papszNV[iLine] == NULL )
+        return pszDefaultValue;
+    else
+    {
+        static char     szResult[80];
+        char    **papszTokens;
+        
+        papszTokens = CSLTokenizeString(papszNV[iLine]);
+
+        if( CSLCount(papszTokens) > 1 )
+            strncpy( szResult, papszTokens[1], sizeof(szResult));
+        else
+            strncpy( szResult, pszDefaultValue, sizeof(szResult));
+        
+        CSLDestroy( papszTokens );
+        return szResult;
+    }
 }
 
 /************************************************************************/
