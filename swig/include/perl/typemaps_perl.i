@@ -4,6 +4,9 @@
 
 /*
  * $Log$
+ * Revision 1.13  2006/06/07 16:06:49  ajolma
+ * prefer CPLGetLastErrorMsg() in OGRErr
+ *
  * Revision 1.12  2006/04/11 12:47:55  ajolma
  * removed now deprecated "perl5," from typemaps
  *
@@ -565,6 +568,7 @@ CreateArrayFromIntegerArray( double *first, unsigned int size ) {
 {
   /* %typemap(out) OGRErr */
   if ( result != 0 ) {
+    if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
     croak( OGRErrMessages(result) );
   }
 }
