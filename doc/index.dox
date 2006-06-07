@@ -14,7 +14,7 @@ Open Source</a> license by the <a href="http://www.osgeo.org/">Open Source
 Geospatial Foundation</a>.  As a library, it presents a
 \link gdal_datamodel.html single abstract data model\endlink 
 to the calling application for all supported formats.  It also comes with a variety
-of useful \link gdal_utilities.html commandline utilties\endlink
+of useful \link gdal_utilities.html commandline utilities\endlink
 for data translation and processing.  The \link NEWS.html NEWS\endlink 
 page describes the May 2006 GDAL 1.3.2 release.
 
