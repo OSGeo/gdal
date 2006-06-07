@@ -1,0 +1,17 @@
+
+LL_OBJ	=	kmlfeatureclass.obj kmlfeature.obj		
+OGR_OBJ	=	ogrkmldriver.obj ogrkmldatasource.obj ogrkmllayer.obj
+
+OBJ	=	$(LL_OBJ) $(OGR_OBJ)
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS =	-I.. -I..\..
+
+default:	$(OBJ)
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb

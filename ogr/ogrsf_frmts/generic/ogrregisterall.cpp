@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2006/06/07 14:39:09  mloskot
+ * Added new KML (Beta) driver to OGR. Thanks to Christopher Condit - the author of KML drvier.
+ *
  * Revision 1.30  2006/04/03 01:48:28  fwarmerdam
  * fixup contact info
  *
@@ -171,6 +174,9 @@ void OGRRegisterAll()
 #endif
 #ifdef GML_ENABLED
     RegisterOGRGML();
+#endif
+#ifdef KML_ENABLED
+    RegisterOGRKML();
 #endif
 #ifdef ILI_ENABLED
     RegisterOGRILI1();
