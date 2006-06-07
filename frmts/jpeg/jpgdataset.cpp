@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.44  2006/06/07 20:45:19  fwarmerdam
+ * Added setjmp() based error trapping when reading
+ *
  * Revision 1.43  2006/05/31 01:28:30  fwarmerdam
  * Disable PAM support for subfiles.
  *
@@ -175,6 +178,8 @@
 #include "cpl_string.h"
 #include "gdalexif.h"
 
+#include <setjmp.h>
+
 
 CPL_CVSID("$Id$");
 
@@ -203,6 +208,7 @@ class JPGDataset : public GDALPamDataset
 
     struct jpeg_decompress_struct sDInfo;
     struct jpeg_error_mgr sJErr;
+    jmp_buf setjmp_buffer;
 
     int	   bGeoTransformValid;
     double adfGeoTransform[6];
@@ -234,6 +240,7 @@ class JPGDataset : public GDALPamDataset
 
     void   LoadDefaultTables(int);
 
+    static void ErrorExit(j_common_ptr cinfo);
   public:
                  JPGDataset();
                  ~JPGDataset();
@@ -265,7 +272,6 @@ class JPGRasterBand : public GDALPamRasterBand
     virtual CPLErr IReadBlock( int, int, void * );
     virtual GDALColorInterp GetColorInterpretation();
 };
-
 
 /************************************************************************/
 /*                         EXIFPrintByte()                              */
@@ -900,6 +906,7 @@ JPGDataset::~JPGDataset()
     if( papszMetadata != NULL )
       CSLDestroy( papszMetadata );
 }
+
 /************************************************************************/
 /*                            LoadScanline()                            */
 /************************************************************************/
@@ -913,6 +920,10 @@ CPLErr JPGDataset::LoadScanline( int iLine )
     if( pabyScanline == NULL )
         pabyScanline = (GByte *)
             CPLMalloc(GetRasterCount() * GetRasterXSize() * 2);
+
+    // setup to trap a fatal error.
+    if (setjmp(setjmp_buffer)) 
+        return CE_Failure;
 
     if( iLine < nLoadedScanline )
         Restart();
@@ -1224,7 +1235,7 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     GByte  *pabyHeader = NULL;
     int    subfile_offset = 0, subfile_size;
     int    nHeaderBytes = poOpenInfo->nHeaderBytes;
-    const char *real_filename;
+    const char *real_filename = poOpenInfo->pszFilename;
     GByte abySubfileHeader[16];
 
 /* -------------------------------------------------------------------- */
@@ -1322,9 +1333,11 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
              && pabyHeader[8] == 'T'
              && pabyHeader[9] == 'F' )
         /* OK */;
+    else if( subfile_offset != 0 )
+        /* ok - we don't require app segment on "subfiles" which 
+           can be just part of a multi-image stream - ie. in nitf files */;
     else
         return NULL;
-
 
     if( poOpenInfo->eAccess == GA_Update )
     {
@@ -1344,22 +1357,18 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Open the file using the large file api.                         */
 /* -------------------------------------------------------------------- */
-    if (bIsSubfile)
-    {
-        poDS->fpImage = VSIFOpenL( real_filename, "rb" );
-    }
-    else
-    {
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    }
+    poDS->fpImage = VSIFOpenL( real_filename, "rb" );
     
     if( poDS->fpImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "VSIFOpenL(%s) failed unexpectedly in jpgdataset.cpp", 
-                  poOpenInfo->pszFilename );
+                  real_filename );
         return NULL;
     }
+
+    poDS->nSubfileOffset = subfile_offset;
+    VSIFSeekL( poDS->fpImage, poDS->nSubfileOffset, SEEK_SET );
 
 /* -------------------------------------------------------------------- */
 /*      Take care of EXIF Metadata                                      */
@@ -1383,6 +1392,8 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->eAccess = GA_ReadOnly;
 
     poDS->sDInfo.err = jpeg_std_error( &(poDS->sJErr) );
+    poDS->sJErr.error_exit = JPGDataset::ErrorExit;
+    poDS->sDInfo.client_data = (void *) poDS;
 
     jpeg_create_decompress( &(poDS->sDInfo) );
 
@@ -1395,10 +1406,16 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->LoadDefaultTables( 3 );
 
 /* -------------------------------------------------------------------- */
+/*      If a fatal error occurs after this, we will return NULL but     */
+/*      not try to cleanup.  Cleaning up after a longjmp() can be       */
+/*      pretty risky.                                                   */
+/* -------------------------------------------------------------------- */
+    if (setjmp(poDS->setjmp_buffer)) 
+        return NULL;
+
+/* -------------------------------------------------------------------- */
 /*	Read pre-image data after ensuring the file is rewound.         */
 /* -------------------------------------------------------------------- */
-    poDS->nSubfileOffset = subfile_offset;
-
     VSIFSeekL( poDS->fpImage, poDS->nSubfileOffset, SEEK_SET );
 
     jpeg_vsiio_src( &(poDS->sDInfo), poDS->fpImage );
@@ -1473,6 +1490,25 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
                               poDS->adfGeoTransform );
 
     return poDS;
+}
+
+/************************************************************************/
+/*                             ErrorExit()                              */
+/************************************************************************/
+
+void JPGDataset::ErrorExit(j_common_ptr cinfo)
+{
+    JPGDataset *poDS = (JPGDataset *) cinfo->client_data;
+    char buffer[JMSG_LENGTH_MAX];
+
+    /* Create the message */
+    (*cinfo->err->format_message) (cinfo, buffer);
+
+    CPLError( CE_Failure, CPLE_AppDefined,
+              "libjpeg: %s", buffer );
+
+    /* Return control to the setjmp point */
+    longjmp(poDS->setjmp_buffer, 1);
 }
 
 /************************************************************************/
