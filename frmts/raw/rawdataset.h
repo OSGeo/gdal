@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/06/08 10:33:11  dron
+ * Make RawRasterBand::IRasterIO() protected method.
+ *
  * Revision 1.18  2006/04/10 16:28:33  fwarmerdam
  * Fixed contact info.
  *
@@ -147,11 +150,13 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
     CPLErr      AccessBlock( vsi_l_offset nBlockOff, int nBlockSize,
                              void * pData );
     int         IsLineLoaded( int nLineOff, int nLines );
+    void        Initialize();
+
+  protected:
+
     virtual CPLErr  IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
                               int, int );
-
-    void        Initialize();
 
   public:
 
