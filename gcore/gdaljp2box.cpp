@@ -28,6 +28,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/06/08 18:47:42  fwarmerdam
+ * Fixed nBoxLength sizeof test, should be 8 bytes, not 64 bits.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1199
+ *
  * Revision 1.5  2006/01/11 06:30:18  fwarmerdam
  * Fixed bug in ReadBox() with boxes where LBox is 1 and the length
  * is read from the XLBox (such as GeoJP2 UUID Boxes from Erdas Imagine).
@@ -173,7 +177,7 @@ int GDALJP2Box::ReadBox()
             return FALSE;
 
         
-        if( sizeof(nBoxLength) == 64 )
+        if( sizeof(nBoxLength) == 8 )
         {
             CPL_MSBPTR64( abyXLBox );
             memcpy( &nBoxLength, abyXLBox, 8 );
