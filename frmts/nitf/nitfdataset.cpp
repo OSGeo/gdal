@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2006/06/08 02:56:04  fwarmerdam
+ * added logic to find Q level and use for jpeg compression
+ *
  * Revision 1.58  2006/06/01 03:25:41  fwarmerdam
  * Added support for multi-blocked jpeg compressed files.
  *
@@ -183,7 +186,9 @@ class NITFDataset : public GDALPamDataset
 
     int         *panJPEGBlockOffset;
     GByte       *pabyJPEGBlock;
+    int          nQLevel;
 
+    int          ScanJPEGQLevel( void );
     CPLErr       ScanJPEGBlocks( void );
     CPLErr       ReadJPEGBlock( int, int );
 
@@ -625,6 +630,7 @@ NITFDataset::NITFDataset()
 
     panJPEGBlockOffset = NULL;
     pabyJPEGBlock = NULL;
+    nQLevel = 0;
 
     nGCPCount = 0;
     pasGCPList = NULL;
@@ -933,8 +939,11 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
              && psImage->nBlocksPerRow == 1
              && psImage->nBlocksPerColumn == 1 )
     {
+        poDS->nQLevel = poDS->ScanJPEGQLevel();
+
         char *pszDSName = CPLStrdup( 
-            CPLSPrintf( "JPEG_SUBFILE:%d,%d,%s", 
+            CPLSPrintf( "JPEG_SUBFILE:Q%d,%d,%d,%s", 
+                        poDS->nQLevel,
                         psFile->pasSegmentInfo[iSegment].nSegmentStart,
                         psFile->pasSegmentInfo[iSegment].nSegmentSize,
                         pszFilename ) );
@@ -1823,6 +1832,42 @@ const GDAL_GCP *NITFDataset::GetGCPs()
 }
 
 /************************************************************************/
+/*                           ScanJPEGQLevel()                           */
+/*                                                                      */
+/*      Search the NITF APP header in the jpeg data stream to find      */
+/*      out what predefined Q level tables should be used (or -1 if     */
+/*      they are inline).                                               */
+/************************************************************************/
+
+int NITFDataset::ScanJPEGQLevel()
+
+{
+    GByte abyHeader[40];
+
+    if( VSIFSeekL( psFile->fp, 
+                   psFile->pasSegmentInfo[psImage->iSegment].nSegmentStart,
+                   SEEK_SET ) != 0 )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Seek error to jpeg data stream." );
+        return 0;
+    }
+        
+    if( VSIFReadL( abyHeader, 1, sizeof(abyHeader), psFile->fp ) 
+        < sizeof(abyHeader) )
+    {
+        CPLError( CE_Failure, CPLE_FileIO, 
+                  "Read error to jpeg data stream." );
+        return 0;
+    }
+
+    if( !EQUAL((char *)abyHeader+6,"NITF") )
+        return 0;
+
+    return abyHeader[22];
+}
+
+/************************************************************************/
 /*                           ScanJPEGBlocks()                           */
 /************************************************************************/
 
@@ -1830,6 +1875,8 @@ CPLErr NITFDataset::ScanJPEGBlocks()
 
 {
     int iBlock;
+
+    nQLevel = ScanJPEGQLevel();
 
 /* -------------------------------------------------------------------- */
 /*      Allocate offset array                                           */
@@ -1930,7 +1977,8 @@ CPLErr NITFDataset::ReadJPEGBlock( int iBlockX, int iBlockY )
     GDALDataset *poDS;
     int anBands[3] = { 1, 2, 3 };
 
-    osFilename.Printf( "JPEG_SUBFILE:%d,%d,%s", 
+    osFilename.Printf( "JPEG_SUBFILE:Q%d,%d,%d,%s", 
+                       nQLevel,
                        panJPEGBlockOffset[iBlock], 0, 
                        osNITFFilename.c_str() );
 
