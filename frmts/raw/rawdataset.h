@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/06/08 14:35:15  fwarmerdam
+ * IRasterio now only protected so it can be overridden
+ *
  * Revision 1.19  2006/06/08 10:33:11  dron
  * Make RawRasterBand::IRasterIO() protected method.
  *
@@ -120,6 +123,7 @@ class CPL_DLL RawDataset : public GDALPamDataset
 
 class CPL_DLL RawRasterBand : public GDALPamRasterBand
 {
+protected:
     friend class RawDataset;
 
     FILE	*fpRaw;
@@ -151,8 +155,6 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
                              void * pData );
     int         IsLineLoaded( int nLineOff, int nLines );
     void        Initialize();
-
-  protected:
 
     virtual CPLErr  IRasterIO( GDALRWFlag, int, int, int, int,
                               void *, int, int, GDALDataType,
