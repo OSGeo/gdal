@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.44  2006/06/08 16:40:53  fwarmerdam
+ * Added support for reporting extra metadata domains
+ *
  * Revision 1.43  2006/03/21 21:34:43  fwarmerdam
  * cleanup headers
  *
@@ -177,8 +180,8 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
 void Usage()
 
 {
-    printf( "Usage: gdalinfo [--help-general] [-mm] [-nogcp] [-nomd] "
-            "datasetname\n");
+    printf( "Usage: gdalinfo [--help-general] [-mm] [-nogcp] [-nomd]\n"
+            "                [-mdd domain]* datasetname\n" );
     exit( 1 );
 }
 
@@ -197,8 +200,9 @@ int main( int argc, char ** argv )
     char		**papszMetadata;
     int                 bComputeMinMax = FALSE, bSample = FALSE;
     int                 bShowGCPs = TRUE, bShowMetadata = TRUE ;
-    int                 bStats = FALSE;
+    int                 bStats = FALSE, iMDD;
     const char          *pszFilename = NULL;
+    char              **papszExtraMDDomains = NULL;
 
     GDALAllRegister();
 
@@ -221,6 +225,9 @@ int main( int argc, char ** argv )
             bShowGCPs = FALSE;
         else if( EQUAL(argv[i], "-nomd") )
             bShowMetadata = FALSE;
+        else if( EQUAL(argv[i], "-mdd") && i < argc-1 )
+            papszExtraMDDomains = CSLAddString( papszExtraMDDomains,
+                                                argv[++i] );
         else if( argv[i][0] == '-' )
             Usage();
         else if( pszFilename == NULL )
@@ -347,6 +354,19 @@ int main( int argc, char ** argv )
         for( i = 0; papszMetadata[i] != NULL; i++ )
         {
             printf( "  %s\n", papszMetadata[i] );
+        }
+    }
+
+    for( iMDD = 0; iMDD < CSLCount(papszExtraMDDomains); iMDD++ )
+    {
+        papszMetadata = GDALGetMetadata( hDataset, papszExtraMDDomains[iMDD] );
+        if( bShowMetadata && CSLCount(papszMetadata) > 0 )
+        {
+            printf( "Metadata (%s):\n", papszExtraMDDomains[iMDD]);
+            for( i = 0; papszMetadata[i] != NULL; i++ )
+            {
+                printf( "  %s\n", papszMetadata[i] );
+            }
         }
     }
 
@@ -563,7 +583,8 @@ int main( int argc, char ** argv )
     }
 
     GDALClose( hDataset );
-
+    
+    CSLDestroy( papszExtraMDDomains );
     CSLDestroy( argv );
     
     GDALDumpOpenDatasets( stderr );
