@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.45  2006/06/08 02:55:19  fwarmerdam
+ * provide for selecting Q1-5 in JPEG_SUBFILE names
+ *
  * Revision 1.44  2006/06/07 20:45:19  fwarmerdam
  * Added setjmp() based error trapping when reading
  *
@@ -120,58 +123,6 @@
  * Revision 1.18  2005/02/25 15:17:35  fwarmerdam
  * Use dataset io to fetch to provide (potentially) faster interleaved
  * reads.
- *
- * Revision 1.17  2003/10/31 00:58:55  warmerda
- * Added support for .jpgw as per request from Markus.
- *
- * Revision 1.16  2003/04/04 13:45:12  warmerda
- * Made casting to JSAMPLE explicit.
- *
- * Revision 1.15  2002/11/23 18:57:06  warmerda
- * added CREATIONOPTIONS metadata on driver
- *
- * Revision 1.14  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.13  2002/07/13 04:16:39  warmerda
- * added WORLDFILE support
- *
- * Revision 1.12  2002/06/20 19:57:04  warmerda
- * ensure GetGeoTransform always sets geotransform.
- *
- * Revision 1.11  2002/06/18 02:50:20  warmerda
- * fixed multiline string constants
- *
- * Revision 1.10  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.9  2001/12/11 16:50:16  warmerda
- * try to push green and blue values into cache when reading red
- *
- * Revision 1.8  2001/11/11 23:51:00  warmerda
- * added required class keyword to friend declarations
- *
- * Revision 1.7  2001/08/22 17:11:30  warmerda
- * added support for .wld world files
- *
- * Revision 1.6  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.5  2001/06/01 14:13:12  warmerda
- * Improved magic number testing.
- *
- * Revision 1.4  2001/05/01 18:18:28  warmerda
- * added world file support
- *
- * Revision 1.3  2001/01/12 21:19:25  warmerda
- * added progressive support
- *
- * Revision 1.2  2000/07/07 15:11:01  warmerda
- * added QUALITY=n creation option
- *
- * Revision 1.1  2000/04/28 20:57:57  warmerda
- * New
- *
  */
 
 #include "gdal_pam.h"
@@ -238,6 +189,7 @@ class JPGDataset : public GDALPamDataset
     void   EXIFPrintShort(char *, const char*, TIFFDirEntry*);
     void   EXIFPrintData(char *, GUInt16, GUInt32, unsigned char* );
 
+    int    nQLevel;
     void   LoadDefaultTables(int);
 
     static void ErrorExit(j_common_ptr cinfo);
@@ -946,67 +898,49 @@ CPLErr JPGDataset::LoadScanline( int iLine )
 
 const static int Q1table[256] = 
 {
-    8,
-    72, 
-    72, 
-    72,
-
-    72,
-    72,
-    72,
-    72,
-    72,
-    72,
-    78,
-    74, 
-    76,
-    74,
-    78,
-    89,
-    81,
-    84,
-    84,
-    81,
-    89,
-    106,
-
-    93,
-    94,
-    99,
-    94,
-    93,
-    106,
-    129,
-    111,
-    108,
-    116,
-    116,
-    108,
-    111,
-    129,
-    135,
-    128,
-    136,
-    145,
-    
-    136,
-    128,
-    135,
-    155,
-    160,
-    177,
-    177,
-    160,
-    155,
-    193,
-    213,
-    228,
-    213,
-    193,
-    255,
-    255,
-    255,
+    8,    72,     72,     72,    72,    72,    72,    72,    72,    72,
+    78,    74,     76,    74,    78,    89,    81,    84,    84,    81,
+    89,    106,    93,    94,    99,    94,    93,    106,    129,    111,
+    108,    116,    116,    108,    111,    129,    135,    128,    136,    
+    145,    136,    128,    135,    155,    160,    177,    177,    160,
+    155,    193,    213,    228,    213,    193,    255,    255,    255,    
     255
+};
+
+const static int Q2table[64] = 
+{ 
+    8, 36, 36, 36,
+    36, 36, 36, 36, 36, 36, 39, 37, 38, 37, 39, 45, 41, 42, 42, 41, 45, 53,
+    47, 47, 50, 47, 47, 53, 65, 56, 54, 59, 59, 54, 56, 65, 68, 64, 69, 73,
+    69, 64, 68, 78, 81, 89, 89, 81, 78, 98,108,115,108, 98,130,144,144,130,
+    178,190,178,243,243,255
+};
+
+const static int Q3table[64] = 
+{ 
+     8, 10, 10, 10,
+    10, 10, 10, 10, 10, 10, 11, 10, 11, 10, 11, 13, 11, 12, 12, 11, 13, 15, 
+    13, 13, 14, 13, 13, 15, 18, 16, 15, 16, 16, 15, 16, 18, 19, 18, 19, 21, 
+    19, 18, 19, 22, 23, 25, 25, 23, 22, 27, 30, 32, 30, 27, 36, 40, 40, 36, 
+    50, 53, 50, 68, 68, 91 
+}; 
+
+const static int Q4table[64] = 
+{
+    8, 7, 7, 7,
+    7, 7, 7, 7, 7, 7, 8, 7, 8, 7, 8, 9, 8, 8, 8, 8, 9, 11, 
+    9, 9, 10, 9, 9, 11, 13, 11, 11, 12, 12, 11, 11, 13, 14, 13, 14, 15, 
+    14, 13, 14, 16, 16, 18, 18, 16, 16, 20, 22, 23, 22, 20, 26, 29, 29, 26, 
+    36, 38, 36, 49, 49, 65
+};
+
+const static int Q5table[64] = 
+{
+    4, 4, 4, 4, 
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6,
+    5, 5, 6, 5, 5, 6, 7, 6, 6, 6, 6, 6, 6, 7, 8, 7, 8, 8, 
+    8, 7, 8, 9, 9, 10, 10, 9, 9, 11, 12, 13, 12, 11, 14, 16, 16, 14, 
+    20, 21, 20, 27, 27, 36
 };
 
 static const int AC_BITS[16] = 
@@ -1055,12 +989,28 @@ static const int DC_HUFFVAL[256] = {
 void JPGDataset::LoadDefaultTables( int n )
 
 {
+    if( nQLevel < 1 )
+        return;
+
 /* -------------------------------------------------------------------- */
-/*      Load quantization table (current loading Q1 table info "0"      */
-/*      component).                                                     */
+/*      Load quantization table						*/
 /* -------------------------------------------------------------------- */
     int i;
     JQUANT_TBL  *quant_ptr;
+    const int *panQTable;
+
+    if( nQLevel == 1 )
+        panQTable = Q1table;
+    else if( nQLevel == 2 )
+        panQTable = Q2table;
+    else if( nQLevel == 3 )
+        panQTable = Q3table;
+    else if( nQLevel == 4 )
+        panQTable = Q4table;
+    else if( nQLevel == 5 )
+        panQTable = Q5table;
+    else
+        return;
 
     if (sDInfo.quant_tbl_ptrs[n] == NULL)
         sDInfo.quant_tbl_ptrs[n] = 
@@ -1069,7 +1019,7 @@ void JPGDataset::LoadDefaultTables( int n )
     quant_ptr = sDInfo.quant_tbl_ptrs[n];	/* quant_ptr is JQUANT_TBL* */
     for (i = 0; i < 64; i++) {
         /* Qtable[] is desired quantization table, in natural array order */
-        quant_ptr->quantval[i] = Q1table[i];
+        quant_ptr->quantval[i] = panQTable[i];
     }
 
 /* -------------------------------------------------------------------- */
@@ -1237,6 +1187,7 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     int    nHeaderBytes = poOpenInfo->nHeaderBytes;
     const char *real_filename = poOpenInfo->pszFilename;
     GByte abySubfileHeader[16];
+    int nQLevel = -1;
 
 /* -------------------------------------------------------------------- */
 /*      If it is a subfile, read the JPEG header.                       */
@@ -1246,9 +1197,16 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         /* static GByte abySubfileHeader[16]; */
         FILE *file;
+        int bScan;
 
-        if( sscanf( poOpenInfo->pszFilename, "JPEG_SUBFILE:%d,%d", 
-                    &subfile_offset, &subfile_size ) != 2 )
+        if( EQUALN(poOpenInfo->pszFilename,"JPEG_SUBFILE:Q",14) )
+            bScan = sscanf( poOpenInfo->pszFilename, "JPEG_SUBFILE:Q%d,%d,%d", 
+                            &nQLevel, &subfile_offset, &subfile_size ) == 3;
+        else
+            bScan = sscanf( poOpenInfo->pszFilename, "JPEG_SUBFILE:%d,%d", 
+                            &subfile_offset, &subfile_size ) == 2;
+
+        if( !bScan ) 
         {
             CPLError( CE_Failure, CPLE_OpenFailed, 
                       "Corrupt subfile definition: %s", 
@@ -1258,6 +1216,8 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
 
         real_filename = strstr(poOpenInfo->pszFilename,",");
         if( real_filename != NULL )
+            real_filename = strstr(real_filename+1,",");
+        if( real_filename != NULL && nQLevel != -1 )
             real_filename = strstr(real_filename+1,",");
         if( real_filename != NULL )
             real_filename++;
@@ -1353,6 +1313,7 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
     JPGDataset 	*poDS;
 
     poDS = new JPGDataset();
+    poDS->nQLevel = nQLevel;
 
 /* -------------------------------------------------------------------- */
 /*      Open the file using the large file api.                         */
