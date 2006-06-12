@@ -1,0 +1,315 @@
+<html>
+<head>
+<title>NetCDF network Common Data Form</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>NetCDF: Network Common Data Form</h1>
+
+
+This format is supported for read and write access. 
+
+NetCDF is an interface for 
+array-oriented data access and is used for representing scientific data.<p>
+
+
+The fill value metadata or missing_value backward compatibililty is preserved 
+as NODATA value when available.
+<p>
+
+NOTE: Implemented as <tt>gdal/frmts/netcdf/netcdfdataset.cpp</tt>.<p>
+
+<h2> Multiple Image Handling (Subdatasets)</h2>
+
+Nework Command Data Form is a container for several different arrays most
+used for storing scientific dataset. One netCDF file may 
+contain several datasets. They may differ in size, number of dimensions and 
+may represent data for different regions.
+<p>
+If the file contains only one netCDF array which appears to be an image, 
+it may be accessed directly, but if the file contains multiple images it may 
+be necessary to import the file via a two step process. <p>
+<p>
+The first step is to get a report of the components images (dataset) in the 
+file using gdalinfo, and then to import the desired images using 
+gdal_translate.  The gdalinfo utility lists all multidimensional subdatasets 
+from the input netCDF file. 
+<p>
+The name of individual images are assigned to the SUBDATASET_n_NAME 
+metadata item. The description for each image is found in the 
+SUBDATASET_n_DESC metadata item. For netCDF images will follow this format:
+
+<i>NETCDF:filename:variable_name</i><p>
+
+where <i>filename</i> is the name of the input file, and
+<i>variable_name</i> is the dataset selected withing the file.<p>
+
+On the second step you provide this name for <b>gdalinfo</b> to get information
+about the dataset or
+
+<b>gdal_translate</b> to read dataset.<p>
+
+For example, we want to read data from a netCDF file:<p>
+<pre>
+$ gdalinfo sst.nc
+Driver: netCDF/Network Common Data Format
+Size is 512, 512
+Coordinate System is `'
+Metadata:
+  NC_GLOBAL#title=IPSL  model output prepared for IPCC Fourth Assessment SRES A2 experiment
+  NC_GLOBAL#institution=IPSL (Institut Pierre Simon Laplace, Paris, France)
+  NC_GLOBAL#source=IPSL-CM4_v1 (2003) : atmosphere : LMDZ (IPSL-CM4_IPCC, 96x71x19) ; ocean ORCA2 (ipsl_cm4_v1_8, 2x2L31); sea ice LIM (ipsl_cm4_v
+  NC_GLOBAL#contact=Sebastien Denvil, sebastien.denvil@ipsl.jussieu.fr
+  NC_GLOBAL#project_id=IPCC Fourth Assessment
+  NC_GLOBAL#table_id=Table O1 (13 November 2004)
+  NC_GLOBAL#experiment_id=SRES A2 experiment
+  NC_GLOBAL#realization=1
+  NC_GLOBAL#cmor_version=9.600000e-01
+  NC_GLOBAL#Conventions=CF-1.0
+  NC_GLOBAL#history=YYYY/MM/JJ: data generated; YYYY/MM/JJ+1 data transformed  At 16:37:23 on 01/11/2005, CMOR rewrote data to comply with CF standards and IPCC Fourth Assessment requirements
+  NC_GLOBAL#references=Dufresne et al, Journal of Climate, 2015, vol XX, p 136
+  NC_GLOBAL#comment=Test drive
+Subdatasets:
+  SUBDATASET_1_NAME=NETCDF:"sst.nc":lon_bnds
+  SUBDATASET_1_DESC=[180x2] lon_bnds (64-bit floating-point)
+  SUBDATASET_2_NAME=NETCDF:"sst.nc":lat_bnds
+  SUBDATASET_2_DESC=[170x2] lat_bnds (64-bit floating-point)
+  SUBDATASET_3_NAME=NETCDF:"sst.nc":time_bnds
+  SUBDATASET_3_DESC=[24x2] time_bnds (64-bit floating-point)
+  SUBDATASET_4_NAME=NETCDF:"sst.nc":tos
+  SUBDATASET_4_DESC=[24x170x180] sea_surface_temperature (32-bit floating-point)Corner Coordinates:
+Upper Left  (    0.0,    0.0)
+Lower Left  (    0.0,  512.0)
+Upper Right (  512.0,    0.0)
+Lower Right (  512.0,  512.0)
+Center      (  256.0,  256.0)
+</pre>
+
+This netCDF files contain 4 datasets, lon_bnds, lat_bnds, tim_bnds and tos.
+
+Now select the subdataset, described as:
+
+<tt><p>NETCDF:"sst.nc":tos<p>
+[24x17x180]  sea_surface_temperature (32-bit floating-point) </tt><p>
+and get the information about the number of bands there is inside this 
+variable.
+
+<pre>
+$ gdalinfo NETCDF:"sst.nc":tos
+Driver: netCDF/Network Common Data Format
+Size is 180, 170
+Coordinate System is `'
+Origin = (1.000000,-79.500000)
+Pixel Size = (1.98888889,0.99411765)
+Metadata:
+  NC_GLOBAL#title=IPSL  model output prepared for IPCC Fourth Assessment SRES A2 experiment
+  NC_GLOBAL#institution=IPSL (Institut Pierre Simon Laplace, Paris, France)
+</pre>
+.... More metadata
+<pre>
+  time#standard_name=time
+  time#long_name=time
+  time#units=days since 2001-1-1
+  time#axis=T
+  time#calendar=360_day
+  time#bounds=time_bnds
+  time#original_units=seconds since 2001-1-1
+Corner Coordinates:
+Upper Left  (   1.0000000, -79.5000000)
+Lower Left  (   1.0000000,  89.5000000)
+Upper Right (     359.000,     -79.500)
+Lower Right (     359.000,      89.500)
+Center      ( 180.0000000,   5.0000000)
+Band 1 Block=180x1 Type=Float32, ColorInterp=Undefined
+  NoData Value=1e+20
+  Metadata:
+    NETCDF_VARNAME=tos
+    NETCDF_DIMENSION_time=15
+    NETCDF_time_units=days since 2001-1-1
+Band 2 Block=180x1 Type=Float32, ColorInterp=Undefined
+  NoData Value=1e+20
+  Metadata:
+    NETCDF_VARNAME=tos
+    NETCDF_DIMENSION_time=45
+    NETCDF_time_units=days since 2001-1-1
+</pre>
+.... More Bands
+<pre>
+Band 22 Block=180x1 Type=Float32, ColorInterp=Undefined
+  NoData Value=1e+20
+  Metadata:
+    NETCDF_VARNAME=tos
+    NETCDF_DIMENSION_time=645
+    NETCDF_time_units=days since 2001-1-1
+Band 23 Block=180x1 Type=Float32, ColorInterp=Undefined
+  NoData Value=1e+20
+  Metadata:
+    NETCDF_VARNAME=tos
+    NETCDF_DIMENSION_time=675
+    NETCDF_time_units=days since 2001-1-1
+Band 24 Block=180x1 Type=Float32, ColorInterp=Undefined
+  NoData Value=1e+20
+  Metadata:
+    NETCDF_VARNAME=tos
+    NETCDF_DIMENSION_time=705
+    NETCDF_time_units=days since 2001-1-1
+</pre>
+
+gdalinfo display the number of bands into this subdataset.  
+There are metadata attached to each band. 
+
+In this example, the metadata informs us
+that each band correspond to an array of monthly sea surface temperature 
+from January 2001.  There are 24 months of data in this subdataset.
+
+You may also use <b>gdal_translate</b> for reading the subdataset.<p>
+
+Note that you should provide exactly the contents of the line marked 
+<b>SUBDATASET_n_NAME</b> to GDAL, including the <b>NETCDF:</b> prefix.<p>
+
+The <b>NETCDF</b> prefix must be first.  It triggers the subdataset netCDF driver.
+
+This driver is intended only for importing remote sensing and geospatial 
+datasets in form of raster images. If you want explore all data contained in 
+netCDF file you should use another tools. 
+
+<h2>Dimension</h2>
+
+The netCDF driver assume that data follows the CF-1 convention from 
+<a href="http://www.unidata.ucar.edu/software/netcdf/docs/conventions.html">UNIDATA </A>
+
+The dimensions inside the NetCDF file use the following rules: (Z,Y,X).  
+If there are more than 3 
+dimensions, the driver will merge them into bands. For example if you have
+an 4 dimension arrays of the type (P, T, Y, X).  The driver will multiply the
+last 2 dimensions (P*T).  The driver will display the bands in the following
+order.  It will first increment T and then P. Metadata 
+will be displayed on each band with its corresponding T and P values.
+
+<h2>Georeference</h2>
+
+There is no universal way of storing georeferencing in netCDF files. 
+
+The driver first tries to follow the CF-1 Convention from UNIDATA looking for
+the Metadata named "grid_mapping". 
+
+If "grid_mapping" is not present, the driver will try to find an 
+lat/lon grid array to set geotransform array.  The NetCDF driver verifies 
+that the Lat/Lon array is equally space.<p>
+
+If those 2 mehtods fail, NetCDF driver will try to read the following 
+metadata directly and set up georefenrencing.
+<ul>
+    <li>spatial_ref (Well Known Text)
+</ul>
+<ul>
+    <li>GeoTransform (GeoTransform array)
+</ul>
+or,
+<ul>
+    <li>Northernmost_Northing
+    <li>Southernmost_Northing
+    <li>Easternmost_Easting
+    <li>Westernmost_Easting
+</ul>
+
+<h2>Creation Issues</h2>
+
+This driver supports creation of netCDF file following the CF-1 convention. 
+You may create set of 2D datasets.  Each variable array is named
+Band1, Band2, ... BandN. <p>
+
+Each band will have metadata tied to it giving a short description of
+the data it contains. 
+
+
+<h2>GDAL NetCDF Metadata</h2>
+
+All netCDF attributes are transparently translated as GDAL metadata. <p>
+The translation follow these directives:<p>
+<ul>
+<li>Global NetCDF metatadata have a <b>NC_GLOBAL</b> tag prefixed.<p>
+<li>Dataset metadata have their <b>variable name</b> prefixed.<p>
+<li>Each prefix is followed by a <b>#</b> sign. <p>
+<li>The NetCDF attribute follows the form: <b>name=value</b>.<p>
+</ul>
+
+Example:<p>
+<pre>
+$ gdalinfo NETCDF:"sst.nc":tos
+Driver: netCDF/Network Common Data Format
+Size is 180, 170
+Coordinate System is `'
+Origin = (1.000000,-79.500000)
+Pixel Size = (1.98888889,0.99411765)
+Metadata:
+</pre>
+NetCDF global attributes<p>
+<pre>
+  NC_GLOBAL#title=IPSL  model output prepared for IPCC Fourth Assessment SRES A2 experiment
+</pre>
+Variables attributes for: tos, lon, lat and time
+<pre>
+  tos#standard_name=sea_surface_temperature
+  tos#long_name=Sea Surface Temperature
+  tos#units=K
+  tos#cell_methods=time: mean (interval: 30 minutes)
+  tos#_FillValue=1.000000e+20
+  tos#missing_value=1.000000e+20
+  tos#original_name=sosstsst
+  tos#original_units=degC
+  tos#history= At   16:37:23 on 01/11/2005: CMOR altered the data in the following ways: added 2.73150E+02 to yield output units;  Cyclical dimension was output starting at a different lon;
+  lon#standard_name=longitude
+  lon#long_name=longitude
+  lon#units=degrees_east
+  lon#axis=X
+  lon#bounds=lon_bnds
+  lon#original_units=degrees_east
+  lat#standard_name=latitude
+  lat#long_name=latitude
+  lat#units=degrees_north
+  lat#axis=Y
+  lat#bounds=lat_bnds
+  lat#original_units=degrees_north
+  time#standard_name=time
+  time#long_name=time
+  time#units=days since 2001-1-1
+  time#axis=T
+  time#calendar=360_day
+  time#bounds=time_bnds
+  time#original_units=seconds since 2001-1-1
+</pre>
+
+<h2>Driver building</h2>
+
+This driver is compiled with the  UNIDATA netCDF library.<p>
+
+You need to download or compile the netCDF library before 
+configuring  GDAL with netCDF support. <p>
+
+
+Please note that with <b>CygWIN</b> you need to be sure that the DLLs 
+are executable, or GDAL will not execute.
+<pre>
+chmod a+rx [NetCDF DLLs]
+</pre>
+
+The netCDF DLLs directory <b>must be</b> to be in your <b>PATH</b>.
+
+
+<h2>See Also:</h2>
+<ul>
+<li>
+<a href="http://www.cgd.ucar.edu/cms/eaton/cf-metadata/index.html">NetCDF CF-1.0 convention </a>
+<li><a href="http://www.unidata.ucar.edu/downloads/netcdf/index.jsp">NetCDF compiled libraries</a>
+<li><a href="http://www.unidata.ucar.edu/software/netcdf/docs/">NetCDF Documentation</A>
+</ul>
+<hr>
+<a href="formats_list.html">Full list of GDAL Raster Formats</a>
+
+
+</body>
+</html>
+
+
