@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2006/06/16 22:47:57  fwarmerdam
+ * Fixed construction of WKB that was broken in switch to use CPLString.
+ * per http://bugzilla.remotesensing.org/show_bug.cgi?id=1203
+ *
  * Revision 1.52  2006/04/02 18:47:39  fwarmerdam
  * added detailed date type support
  *
@@ -830,7 +834,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
         if( pszBytea != NULL )
         {
-            osCommand += osCommand + "'" + pszBytea + "'";
+            osCommand = osCommand + "'" + pszBytea + "'";
             CPLFree( pszBytea );
         }
         else
