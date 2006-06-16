@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/06/16 22:52:18  fwarmerdam
+ * Added logic to assign spatial reference to geometries per email on
+ * gdal-dev from Cho Hyun-Kee.
+ *
  * Revision 1.28  2006/04/10 17:00:35  fwarmerdam
  * Report ability to delete features in TestCapability.
  *
@@ -400,6 +404,9 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
 
         if( poFeature != NULL )
         {
+            if( poFeature->GetGeometryRef() != NULL )
+                poFeature->GetGeometryRef()->assignSpatialReference( poSRS );
+
             m_nFeaturesRead++;
 
             if( (m_poFilterGeom == NULL
@@ -422,9 +429,14 @@ OGRFeature *OGRShapeLayer::GetFeature( long nFeatureId )
 {
     OGRFeature *poFeature = 
          SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, nFeatureId );
-    
+
     if( poFeature != NULL )
+    {
+        if( poFeature->GetGeometryRef() != NULL )
+            poFeature->GetGeometryRef()->assignSpatialReference( poSRS );
+
         m_nFeaturesRead++;
+    }
 
     return poFeature;
 }
