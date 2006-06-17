@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.67 2006/06/17 00:24:53 fwarmerdam Exp $
+ * $Id: dbfopen.c,v 1.69 2006/06/17 15:34:32 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -34,6 +34,12 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.69  2006/06/17 15:34:32  fwarmerdam
+ * disallow creating fields wider than 255
+ *
+ * Revision 1.68  2006/06/17 15:12:40  fwarmerdam
+ * Fixed C++ style comments.
+ *
  * Revision 1.67  2006/06/17 00:24:53  fwarmerdam
  * Don't treat non-zero decimals values as high order byte for length
  * for strings.  It causes serious corruption for some files.
@@ -90,7 +96,7 @@
 #include <ctype.h>
 #include <string.h>
 
-SHP_CVSID("$Id: dbfopen.c,v 1.67 2006/06/17 00:24:53 fwarmerdam Exp $")
+SHP_CVSID("$Id: dbfopen.c,v 1.69 2006/06/17 15:34:32 fwarmerdam Exp $")
 
 #ifndef FALSE
 #  define FALSE		0
@@ -416,12 +422,14 @@ DBFOpen( const char * pszFilename, const char * pszAccess )
 	    psDBF->panFieldSize[iField] = pabyFInfo[16];
 	    psDBF->panFieldDecimals[iField] = 0;
 
-// The following seemed to be used sometimes to handle files with long
-// string fields, but in other cases (such as bug 1202) the decimals field
-// just seems to indicate some sort of preferred formatting, not very
-// wide fields.  So I have disabled this code.  FrankW.
-//	    psDBF->panFieldSize[iField] = pabyFInfo[16] + pabyFInfo[17]*256;
-//	    psDBF->panFieldDecimals[iField] = 0;
+/*
+** The following seemed to be used sometimes to handle files with long
+** string fields, but in other cases (such as bug 1202) the decimals field
+** just seems to indicate some sort of preferred formatting, not very
+** wide fields.  So I have disabled this code.  FrankW.
+	    psDBF->panFieldSize[iField] = pabyFInfo[16] + pabyFInfo[17]*256;
+	    psDBF->panFieldDecimals[iField] = 0;
+*/
 	}
 
 	psDBF->pachFieldType[iField] = (char) pabyFInfo[11];
@@ -531,7 +539,7 @@ DBFCreate( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*	Create the info structure.					*/
 /* -------------------------------------------------------------------- */
-    psDBF = (DBFHandle) malloc(sizeof(DBFInfo));
+    psDBF = (DBFHandle) calloc(1,sizeof(DBFInfo));
 
     psDBF->fp = fp;
     psDBF->nRecords = 0;
@@ -605,6 +613,9 @@ DBFAddNativeFieldType(DBFHandle psDBF, const char * pszFieldName,
 
     if( nWidth < 1 )
         return -1;
+
+    if( nWidth > 255 )
+        nWidth = 255;
 
 /* -------------------------------------------------------------------- */
 /*      SfRealloc all the arrays larger to hold the additional field      */
