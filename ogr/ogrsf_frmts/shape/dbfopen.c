@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.69 2006/06/17 15:34:32 fwarmerdam Exp $
+ * $Id: dbfopen.c,v 1.70 2006/06/17 17:47:05 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -34,6 +34,9 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.70  2006/06/17 17:47:05  fwarmerdam
+ * use calloc() for dbfinfo in DBFCreate
+ *
  * Revision 1.69  2006/06/17 15:34:32  fwarmerdam
  * disallow creating fields wider than 255
  *
@@ -96,7 +99,7 @@
 #include <ctype.h>
 #include <string.h>
 
-SHP_CVSID("$Id: dbfopen.c,v 1.69 2006/06/17 15:34:32 fwarmerdam Exp $")
+SHP_CVSID("$Id: dbfopen.c,v 1.70 2006/06/17 17:47:05 fwarmerdam Exp $")
 
 #ifndef FALSE
 #  define FALSE		0
