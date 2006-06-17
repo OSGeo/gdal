@@ -37,8 +37,8 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.16  2006/02/15 01:35:00  fwarmerdam
- * update
+ * Revision 1.17  2006/06/17 00:27:26  fwarmerdam
+ * updated
  *
  * Revision 1.33  2006/02/15 01:14:30  fwarmerdam
  * added DBFAddNativeFieldType
@@ -387,6 +387,9 @@ typedef	struct
     int		nCurrentRecord;
     int		bCurrentRecordModified;
     char	*pszCurrentRecord;
+
+    int         nWorkFieldLength;
+    char        *pszWorkField;
     
     int		bNoHeader;
     int		bUpdated;
