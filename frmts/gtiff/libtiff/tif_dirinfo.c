@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.62 2006/02/07 10:45:38 dron Exp $ */
+/* $Id: tif_dirinfo.c,v 1.63 2006/06/03 15:28:33 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -823,8 +823,8 @@ _TIFFCreateAnonFieldInfo(TIFF *tif, ttag_t tag, TIFFDataType field_type)
 	_TIFFmemset( fld, 0, sizeof(TIFFFieldInfo) );
 
 	fld->field_tag = tag;
-	fld->field_readcount = TIFF_VARIABLE;
-	fld->field_writecount = TIFF_VARIABLE;
+	fld->field_readcount = TIFF_VARIABLE2;
+	fld->field_writecount = TIFF_VARIABLE2;
 	fld->field_type = field_type;
 	fld->field_bit = FIELD_CUSTOM;
 	fld->field_oktochange = TRUE;

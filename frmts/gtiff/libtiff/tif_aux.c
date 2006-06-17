@@ -1,4 +1,4 @@
-/* $Id: tif_aux.c,v 1.19 2006/02/07 10:41:30 dron Exp $ */
+/* $Id: tif_aux.c,v 1.20 2006/06/08 14:24:13 dron Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -34,7 +34,8 @@
 #include <math.h>
 
 tdata_t
-_TIFFCheckMalloc(TIFF* tif, size_t nmemb, size_t elem_size, const char* what)
+_TIFFCheckRealloc(TIFF* tif, tdata_t buffer,
+		  size_t nmemb, size_t elem_size, const char* what)
 {
 	tdata_t cp = NULL;
 	tsize_t	bytes = nmemb * elem_size;
@@ -43,12 +44,19 @@ _TIFFCheckMalloc(TIFF* tif, size_t nmemb, size_t elem_size, const char* what)
 	 * XXX: Check for integer overflow.
 	 */
 	if (nmemb && elem_size && bytes / elem_size == nmemb)
-		cp = _TIFFmalloc(bytes);
+		cp = _TIFFrealloc(buffer, bytes);
 
 	if (cp == NULL)
-		TIFFErrorExt(tif->tif_clientdata, tif->tif_name, "No space %s", what);
+		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
+			     "No space %s", what);
 
-	return (cp);
+	return cp;
+}
+
+tdata_t
+_TIFFCheckMalloc(TIFF* tif, size_t nmemb, size_t elem_size, const char* what)
+{
+	return _TIFFCheckRealloc(tif, NULL, nmemb, elem_size, what);
 }
 
 static int

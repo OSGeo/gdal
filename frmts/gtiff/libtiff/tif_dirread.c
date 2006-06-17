@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.84 2006/04/04 02:00:08 joris Exp $ */
+/* $Id: tif_dirread.c,v 1.86 2006/06/17 17:20:49 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -41,9 +41,11 @@ extern	void TIFFCvtIEEEFloatToNative(TIFF*, uint32, float*);
 extern	void TIFFCvtIEEEDoubleToNative(TIFF*, uint32, double*);
 #endif
 
-static  TIFFDirEntry* TIFFReadDirectoryFind(TIFFDirEntry* dir, uint16 dircount, uint16 tagid);
+static  TIFFDirEntry* TIFFReadDirectoryFind(TIFFDirEntry* dir,
+					    uint16 dircount, uint16 tagid);
 static	int EstimateStripByteCounts(TIFF*, TIFFDirEntry*, uint16);
 static	void MissingRequired(TIFF*, const char*);
+static	int TIFFCheckDirOffset(TIFF*);
 static	int CheckDirCount(TIFF*, TIFFDirEntry*, uint32);
 static	tsize_t TIFFFetchData(TIFF*, TIFFDirEntry*, char*);
 static	tsize_t TIFFFetchString(TIFF*, TIFFDirEntry*, char*);
@@ -82,32 +84,21 @@ TIFFReadDirectory(TIFF* tif)
 	uint16 dircount;
 	toff_t nextdiroff;
 	int diroutoforderwarning = 0;
-	toff_t* new_dirlist;
 
 	tif->tif_diroff = tif->tif_nextdiroff;
 	if (tif->tif_diroff == 0)		/* no more directories */
 		return (0);
 
 	/*
+	 * XXX: Check offset to prevent IFD looping.
+	 */
+	if (!TIFFCheckDirOffset(tif))
+		return 0;
+	/*
 	 * XXX: Trick to prevent IFD looping. The one can create TIFF file
 	 * with looped directory pointers. We will maintain a list of already
 	 * seen directories and check every IFD offset against this list.
 	 */
-	for (n = 0; n < tif->tif_dirnumber; n++) {
-		if (tif->tif_dirlist[n] == tif->tif_diroff)
-			return (0);
-	}
-	tif->tif_dirnumber++;
-	new_dirlist = (toff_t *)_TIFFrealloc(tif->tif_dirlist,
-					tif->tif_dirnumber * sizeof(toff_t));
-	if (!new_dirlist) {
-		TIFFErrorExt(tif->tif_clientdata, module,
-			  "%s: Failed to allocate space for IFD list",
-			  tif->tif_name);
-		return (0);
-	}
-	tif->tif_dirlist = new_dirlist;
-	tif->tif_dirlist[tif->tif_dirnumber - 1] = tif->tif_diroff;
 
 	/*
 	 * Cleanup any previous compression state.
@@ -690,11 +681,14 @@ TIFFReadDirectory(TIFF* tif)
 		} else if (td->td_planarconfig == PLANARCONFIG_CONTIG
 			   && td->td_nstrips > 2
 			   && td->td_compression == COMPRESSION_NONE
-			   && td->td_stripbytecount[0] != td->td_stripbytecount[1]) {
+			   && td->td_stripbytecount[0] != td->td_stripbytecount[1]
+                           && td->td_stripbytecount[0] != 0 
+                           && td->td_stripbytecount[1] != 0 ) {
 			/*
-			 * XXX: Some vendors fill StripByteCount array with absolutely
-			 * wrong values (it can be equal to StripOffset array, for
-			 * example). Catch this case here.
+			 * XXX: Some vendors fill StripByteCount array with 
+                         * absolutely wrong values (it can be equal to 
+                         * StripOffset array, for example). Catch this case 
+                         * here.
 			 */
 			TIFFWarningExt(tif->tif_clientdata, module,
 		"%s: Wrong \"%s\" field, ignoring and calculating from imagelength",
@@ -1025,6 +1019,11 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16 dircount)
                                                                > filesize)
 			td->td_stripbytecount[i] =
 			    filesize - td->td_stripoffset[i];
+	} else if( isTiled(tif) ) {
+		uint32 bytespertile = TIFFTileSize(tif);
+
+		for (i = 0; i < td->td_nstrips; i++)
+                    td->td_stripbytecount[i] = bytespertile;
 	} else {
 		uint32 rowbytes = TIFFScanlineSize(tif);
 		uint32 rowsperstrip = td->td_imagelength/td->td_stripsperimage;
@@ -1048,10 +1047,49 @@ MissingRequired(TIFF* tif, const char* tagname)
 }
 
 /*
- * Check the count field of a directory
- * entry against a known value.  The caller
- * is expected to skip/ignore the tag if
- * there is a mismatch.
+ * Check the directory offset against the list of already seen directory
+ * offsets. This is a trick to prevent IFD looping. The one can create TIFF
+ * file with looped directory pointers. We will maintain a list of already
+ * seen directories and check every IFD offset against that list.
+ */
+static int
+TIFFCheckDirOffset(TIFF* tif)
+{
+	uint16 n;
+
+	for (n = 0; n < tif->tif_dirnumber && tif->tif_dirlist; n++) {
+		if (tif->tif_dirlist[n] == tif->tif_diroff)
+			return 0;
+	}
+
+	tif->tif_dirnumber++;
+
+	if (tif->tif_dirnumber > tif->tif_dirlistsize) {
+		toff_t* new_dirlist;
+
+		/*
+		 * XXX: Reduce memory allocation granularity of the dirlist
+		 * array.
+		 */
+		new_dirlist = (toff_t *)_TIFFCheckRealloc(tif,
+							  tif->tif_dirlist,
+							  tif->tif_dirnumber,
+							  2 * sizeof(toff_t),
+							  "for IFD list");
+		if (!new_dirlist)
+			return 0;
+		tif->tif_dirlistsize = 2 * tif->tif_dirnumber;
+		tif->tif_dirlist = new_dirlist;
+	}
+
+	tif->tif_dirlist[tif->tif_dirnumber - 1] = tif->tif_diroff;
+
+	return 1;
+}
+
+/*
+ * Check the count field of a directory entry against a known value.  The
+ * caller is expected to skip/ignore the tag if there is a mismatch.
  */
 static int
 CheckDirCount(TIFF* tif, TIFFDirEntry* dir, uint32 count)

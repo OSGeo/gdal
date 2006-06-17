@@ -1,4 +1,4 @@
-/* $Id: tif_print.c,v 1.35 2006/03/13 07:53:28 dron Exp $ */
+/* $Id: tif_print.c,v 1.36 2006/06/03 15:28:33 bfriesen Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -509,7 +509,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
             for(i = 0; i < count; i++) {
                 ttag_t  tag = TIFFGetTagListEntry(tif, i);
                 const TIFFFieldInfo *fip;
-                uint16 value_count;
+                uint32 value_count;
                 int mem_alloc = 0;
                 void *raw_data;
 
