@@ -1,4 +1,4 @@
-/* $Id: tiffio.h,v 1.53 2006/04/11 13:33:19 joris Exp $ */
+/* $Id: tiffio.h,v 1.54 2006/04/13 03:25:53 joris Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -98,7 +98,7 @@ typedef	void* thandle_t;	/* client data handle */
 #endif /* USE_WIN32_FILEIO */
 
 #ifndef NULL
-# define NULL	0
+# define NULL	(void *)0
 #endif
 
 /*
@@ -354,6 +354,7 @@ extern	int TIFFReadCustomDirectory(TIFF*, toff_t, const TIFFFieldInfo[],
 extern	int TIFFReadEXIFDirectory(TIFF*, toff_t);
 extern	tsize_t TIFFScanlineSize(TIFF*);
 extern	tsize_t TIFFOldScanlineSize(TIFF*);
+extern	tsize_t TIFFNewScanlineSize(TIFF*);
 extern	tsize_t TIFFRasterScanlineSize(TIFF*);
 extern	tsize_t TIFFStripSize(TIFF*);
 extern	tsize_t TIFFRawStripSize(TIFF*, tstrip_t);

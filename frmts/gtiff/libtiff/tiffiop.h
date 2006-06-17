@@ -1,4 +1,4 @@
-/* $Id: tiffiop.h,v 1.47 2006/03/25 03:09:24 joris Exp $ */
+/* $Id: tiffiop.h,v 1.48 2006/06/08 14:27:17 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -120,6 +120,7 @@ struct tiff {
 	toff_t		tif_nextdiroff;	/* file offset of following directory */
 	toff_t*		tif_dirlist;	/* list of offsets to already seen */
 					/* directories to prevent IFD looping */
+	tsize_t		tif_dirlistsize;/* number of entires in offset list */
 	uint16		tif_dirnumber;  /* number of already seen directories */
 	TIFFDirectory	tif_dir;	/* internal rep of current directory */
 	TIFFHeader	tif_header;	/* file's header block */
@@ -275,6 +276,7 @@ extern	TIFFErrorHandlerExt _TIFFwarningHandlerExt;
 extern	TIFFErrorHandlerExt _TIFFerrorHandlerExt;
 
 extern	tdata_t _TIFFCheckMalloc(TIFF*, size_t, size_t, const char*);
+extern	tdata_t _TIFFCheckRealloc(TIFF*, tdata_t, size_t, size_t, const char*);
 
 extern	int TIFFInitDumpMode(TIFF*, int);
 #ifdef PACKBITS_SUPPORT
