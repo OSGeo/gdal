@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: dbfopen.c,v 1.66 2006/03/29 18:26:20 fwarmerdam Exp $
+ * $Id: dbfopen.c,v 1.67 2006/06/17 00:24:53 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of .dbf access API documented in dbf_api.html.
@@ -34,6 +34,11 @@
  ******************************************************************************
  *
  * $Log: dbfopen.c,v $
+ * Revision 1.67  2006/06/17 00:24:53  fwarmerdam
+ * Don't treat non-zero decimals values as high order byte for length
+ * for strings.  It causes serious corruption for some files.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1202
+ *
  * Revision 1.66  2006/03/29 18:26:20  fwarmerdam
  * fixed bug with size of pachfieldtype in dbfcloneempty
  *
@@ -85,7 +90,7 @@
 #include <ctype.h>
 #include <string.h>
 
-SHP_CVSID("$Id: dbfopen.c,v 1.66 2006/03/29 18:26:20 fwarmerdam Exp $")
+SHP_CVSID("$Id: dbfopen.c,v 1.67 2006/06/17 00:24:53 fwarmerdam Exp $")
 
 #ifndef FALSE
 #  define FALSE		0
@@ -296,7 +301,7 @@ DBFOpen( const char * pszFilename, const char * pszAccess )
 {
     DBFHandle		psDBF;
     unsigned char		*pabyBuf;
-    int			nFields, nHeadLen, nRecLen, iField, i;
+    int			nFields, nHeadLen, iField, i;
     char		*pszBasename, *pszFullname;
 
 /* -------------------------------------------------------------------- */
@@ -368,11 +373,11 @@ DBFOpen( const char * pszFilename, const char * pszAccess )
      pabyBuf[4] + pabyBuf[5]*256 + pabyBuf[6]*256*256 + pabyBuf[7]*256*256*256;
 
     psDBF->nHeaderLength = nHeadLen = pabyBuf[8] + pabyBuf[9]*256;
-    psDBF->nRecordLength = nRecLen = pabyBuf[10] + pabyBuf[11]*256;
+    psDBF->nRecordLength = pabyBuf[10] + pabyBuf[11]*256;
     
     psDBF->nFields = nFields = (nHeadLen - 32) / 32;
 
-    psDBF->pszCurrentRecord = (char *) malloc(nRecLen);
+    psDBF->pszCurrentRecord = (char *) malloc(psDBF->nRecordLength);
 
 /* -------------------------------------------------------------------- */
 /*  Read in Field Definitions                                           */
@@ -408,8 +413,15 @@ DBFOpen( const char * pszFilename, const char * pszAccess )
 	}
 	else
 	{
-	    psDBF->panFieldSize[iField] = pabyFInfo[16] + pabyFInfo[17]*256;
+	    psDBF->panFieldSize[iField] = pabyFInfo[16];
 	    psDBF->panFieldDecimals[iField] = 0;
+
+// The following seemed to be used sometimes to handle files with long
+// string fields, but in other cases (such as bug 1202) the decimals field
+// just seems to indicate some sort of preferred formatting, not very
+// wide fields.  So I have disabled this code.  FrankW.
+//	    psDBF->panFieldSize[iField] = pabyFInfo[16] + pabyFInfo[17]*256;
+//	    psDBF->panFieldDecimals[iField] = 0;
 	}
 
 	psDBF->pachFieldType[iField] = (char) pabyFInfo[11];
@@ -457,6 +469,9 @@ DBFClose(DBFHandle psDBF)
         free( psDBF->panFieldDecimals );
         free( psDBF->pachFieldType );
     }
+
+    if( psDBF->pszWorkField != NULL )
+        free( psDBF->pszWorkField );
 
     free( psDBF->pszHeader );
     free( psDBF->pszCurrentRecord );
@@ -672,7 +687,6 @@ static void *DBFReadAttribute(DBFHandle psDBF, int hEntity, int iField,
     void	*pReturnField = NULL;
 
     static double dDoubleField;
-    static char szStringField[257];
 
 /* -------------------------------------------------------------------- */
 /*      Verify selection.                                               */
@@ -692,21 +706,34 @@ static void *DBFReadAttribute(DBFHandle psDBF, int hEntity, int iField,
     pabyRec = (unsigned char *) psDBF->pszCurrentRecord;
 
 /* -------------------------------------------------------------------- */
+/*      Ensure we have room to extract the target field.                */
+/* -------------------------------------------------------------------- */
+    if( psDBF->panFieldSize[iField] >= psDBF->nWorkFieldLength )
+    {
+        psDBF->nWorkFieldLength = psDBF->panFieldSize[iField] + 100;
+        if( psDBF->pszWorkField == NULL )
+            psDBF->pszWorkField = (char *) malloc(psDBF->nWorkFieldLength);
+        else
+            psDBF->pszWorkField = (char *) realloc(psDBF->pszWorkField,
+                                                   psDBF->nWorkFieldLength);
+    }
+
+/* -------------------------------------------------------------------- */
 /*	Extract the requested field.					*/
 /* -------------------------------------------------------------------- */
-    strncpy( szStringField, 
+    strncpy( psDBF->pszWorkField,
 	     ((const char *) pabyRec) + psDBF->panFieldOffset[iField],
 	     psDBF->panFieldSize[iField] );
-    szStringField[psDBF->panFieldSize[iField]] = '\0';
+    psDBF->pszWorkField[psDBF->panFieldSize[iField]] = '\0';
 
-    pReturnField = szStringField;
+    pReturnField = psDBF->pszWorkField;
 
 /* -------------------------------------------------------------------- */
 /*      Decode the field.                                               */
 /* -------------------------------------------------------------------- */
     if( chReqType == 'N' )
     {
-        dDoubleField = atof(szStringField);
+        dDoubleField = atof(psDBF->pszWorkField);
 
 	pReturnField = &dDoubleField;
     }
@@ -719,7 +746,7 @@ static void *DBFReadAttribute(DBFHandle psDBF, int hEntity, int iField,
     {
         char	*pchSrc, *pchDst;
 
-        pchDst = pchSrc = szStringField;
+        pchDst = pchSrc = psDBF->pszWorkField;
         while( *pchSrc == ' ' )
             pchSrc++;
 
@@ -727,7 +754,7 @@ static void *DBFReadAttribute(DBFHandle psDBF, int hEntity, int iField,
             *(pchDst++) = *(pchSrc++);
         *pchDst = '\0';
 
-        while( pchDst != szStringField && *(--pchDst) == ' ' )
+        while( pchDst != psDBF->pszWorkField && *(--pchDst) == ' ' )
             *pchDst = '\0';
     }
 #endif
