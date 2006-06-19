@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/06/19 23:19:45  mloskot
+ * Added new functions OGRLinearRing::isPointInRing and OGRPolygon::IsPointOnSurface.
+ *
  * Revision 1.19  2006/03/31 17:44:20  fwarmerdam
  * header updates
  *
@@ -428,4 +431,69 @@ double OGRLinearRing::get_Area() const
                          - paoPoints[0].x * paoPoints[nPointCount-1].y );
 
     return fabs(dfAreaSum);
+}
+
+/************************************************************************/
+/*                              isPointInRing()                         */
+/************************************************************************/
+
+OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint) const
+{
+    if ( NULL == poPoint )
+    {
+        CPLDebug( "OGR", "OGRLinearRing::isPointInRing(const  OGRPoint* poPoint) - passed point is NULL!" );
+        return 0;
+    }
+
+    CPLDebug( "OGR", "OGRLinearRing::isPointInRing(): passed point: (%.8f,%.8f)",
+              poPoint->getX(), poPoint->getY() );
+
+    const int iNumPoints = getNumPoints();
+
+    // Simple validation
+    if ( iNumPoints < 4 )
+        return 0;
+
+    const double dfTestX = poPoint->getX();
+    const double dfTestY = poPoint->getY();
+
+    // Fast test if point is inside extent of the ring
+    OGREnvelope extent;
+    getEnvelope(&extent);
+    if ( !( dfTestX >= extent.MinX && dfTestX <= extent.MaxX
+         && dfTestY >= extent.MinY && dfTestY <= extent.MaxY ) )
+    {
+        CPLDebug( "OGR", "OGRLinearRing::isPointInRing(): passed point is out of extent of ring" );
+        return 0;
+    }
+
+	// For every point p in ring,
+    // test if ray starting from given point crosses segment (p - 1, p)
+    int iNumCrossings = 0;
+
+    for ( int iPoint = 1; iPoint < iNumPoints; iPoint++ ) 
+    {
+        const int iPointPrev = iPoint - 1;
+
+        const double x1 = getX(iPoint) - dfTestX;
+        const double y1 = getY(iPoint) - dfTestY;
+
+        const double x2 = getX(iPointPrev) - dfTestX;
+        const double y2 = getY(iPointPrev) - dfTestY;
+
+        if( ( ( y1 > 0 ) && ( y2 <= 0 ) ) || ( ( y2 > 0 ) && ( y1 <= 0 ) ) ) 
+        {
+            // Check if ray intersects with segment of the ring
+            const double dfIntersection = ( x1 * y2 - x2 * y1 ) / (y2 - y1);
+            if ( 0.0 < dfIntersection )
+            {
+                // Count intersections
+                iNumCrossings++;
+            }
+        }
+    }
+
+    // If iNumCrossings number is even, given point is outside the ring,
+    // when the crossings number is odd, the point is inside the ring.
+    return ( ( iNumCrossings % 2 ) == 1 ? 1 : 0 );
 }

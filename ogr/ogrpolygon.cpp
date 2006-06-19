@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2006/06/19 23:19:45  mloskot
+ * Added new functions OGRLinearRing::isPointInRing and OGRPolygon::IsPointOnSurface.
+ *
  * Revision 1.39  2006/03/31 17:57:32  fwarmerdam
  * header updates
  *
@@ -932,6 +935,8 @@ int OGRPolygon::PointOnSurface( OGRPoint * ) const
     return OGRERR_FAILURE;
 }
 
+
+
 /************************************************************************/
 /*                            getEnvelope()                             */
 /************************************************************************/
@@ -1030,6 +1035,25 @@ OGRErr OGRPolygon::transform( OGRCoordinateTransformation *poCT )
 #endif
 }
 
+/************************************************************************/
+/*                           IsPointOnSurface()                           */
+/************************************************************************/
+
+OGRBoolean OGRPolygon::IsPointOnSurface( const OGRPoint * pt) const
+{
+    if ( NULL == pt)
+        return 0;
+
+    for( int iRing = 0; iRing < nRingCount; iRing++ )
+    {
+        if ( papoRings[iRing]->isPointInRing(pt) )
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
 
 /************************************************************************/
 /*                             closeRings()                             */
