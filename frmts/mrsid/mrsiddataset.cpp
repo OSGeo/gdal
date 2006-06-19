@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2006/06/19 04:06:29  fwarmerdam
+ * Avoid memory leak when getWKT() is available.
+ *
  * Revision 1.58  2006/05/19 05:13:11  fwarmerdam
  * Remove debug stuff.
  *
@@ -1186,7 +1189,10 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
 	const LTIGeoCoord& oGeo = poImageReader->getGeoCoord();
 	
 	if( oGeo.getWKT() )
+        {
+            CPLFree( pszProjection );
             pszProjection =  CPLStrdup( oGeo.getWKT() );
+        }
     }
 #endif // HAVE_MRSID_GETWKT
 
