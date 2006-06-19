@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/06/19 12:31:00  dron
+ * Fixed handling 16-bit packed images; fixes in multiband last-tile writing.
+ *
  * Revision 1.11  2006/03/09 10:41:15  dron
  * Fixed problem with writing incomplete last blocks.
  *
@@ -198,10 +201,10 @@ class RMFRasterBand : public GDALRasterBand
 
   protected:
 
-    unsigned int    iBytesPerSample;
-    GUInt32         nBlockSize, nBlockBytes;
-    GUInt32         nLastTileXBytes;
-    int             nDataSize;
+    GUInt32     nBytesPerPixel;
+    GUInt32     nBlockSize, nBlockBytes;
+    GUInt32     nLastTileXBytes;
+    GUInt32     nDataSize;
 
   public:
 
@@ -224,13 +227,13 @@ RMFRasterBand::RMFRasterBand( RMFDataset *poDS, int nBand,
 {
     this->poDS = poDS;
     this->nBand = nBand;
-    eDataType = eType;
-    iBytesPerSample = poDS->sHeader.nBitDepth / 8;
 
+    eDataType = eType;
+    nBytesPerPixel = poDS->sHeader.nBitDepth / 8;
+    nDataSize = GDALGetDataTypeSize( eDataType ) / 8;
     nBlockXSize = poDS->sHeader.nTileWidth;
     nBlockYSize = poDS->sHeader.nTileHeight;
     nBlockSize = nBlockXSize * nBlockYSize;
-    nDataSize = GDALGetDataTypeSize( eDataType ) / 8;
     nBlockBytes = nBlockSize * nDataSize;
     nLastTileXBytes =
         (poDS->GetRasterXSize() % poDS->sHeader.nTileWidth) * nDataSize;
@@ -239,10 +242,10 @@ RMFRasterBand::RMFRasterBand( RMFDataset *poDS, int nBand,
     CPLDebug( "RMF",
               "Band %d: tile width is %d, tile height is %d, "
               " last tile width %d, last tile height %d, "
-              "bytes per sample is %d, data type size is %d",
+              "bytes per pixel is %d, data type size is %d",
               nBand, nBlockXSize, nBlockYSize,
               poDS->sHeader.nLastTileWidth, poDS->sHeader.nLastTileHeight,
-              iBytesPerSample, nDataSize );
+              nBytesPerPixel, nDataSize );
 #endif
 }
 
@@ -308,7 +311,9 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Can't read from offset %ld in input file.",
                           poGDS->paiTiles[2 * nTile] );
-                return CE_Failure;
+                // XXX: Do not fail here, just return empty block and continue
+                // reading.
+                return CE_None;
             }
         }
 
@@ -354,41 +359,51 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Can't read from offset %ld in input file.",
                           poGDS->paiTiles[2 * nTile] );
+                // XXX: Do not fail here, just return empty block and continue
+                // reading.
                 CPLFree( pabyTile );
-                return CE_Failure;
+                return CE_None;
             }
         }
 
         if ( poGDS->sHeader.nBitDepth == 24 || poGDS->sHeader.nBitDepth == 32 )
         {
-            GUInt32 nTileSize = nTileBytes / iBytesPerSample;
+            GUInt32 nTileSize = nTileBytes / nBytesPerPixel;
+
+            if ( nTileSize > nBlockSize )
+                nTileSize = nBlockSize;
+
             for ( i = 0; i < nTileSize; i++ )
             {
                 // Colour triplets in RMF file organized in reverse order:
-                // blue, green, red. When we have 32-bit BMP the forth byte
+                // blue, green, red. When we have 32-bit RMF the forth byte
                 // in quadriplet should be discarded as it has no meaning.
                 // That is why we always use 3 byte count in the following
                 // pabyTemp index.
                 ((GByte *) pImage)[i] =
-                    pabyTile[i * iBytesPerSample + 3 - nBand];
+                    pabyTile[i * nBytesPerPixel + 3 - nBand];
             }
         }
 
         else if ( poGDS->sHeader.nBitDepth == 16 )
         {
-            for ( i = 0; i < nBlockSize; i++ )
+            GUInt32 nTileSize = nTileBytes / nBytesPerPixel;
+
+            if ( nTileSize > nBlockSize )
+                nTileSize = nBlockSize;
+
+            for ( i = 0; i < nTileSize; i++ )
             {
                 switch ( nBand )
                 {
                     case 1:
-                    ((GByte *) pImage)[i] = pabyTile[i + 1] & 0x1F;
+                    ((GByte *) pImage)[i] = (GByte)((((GUInt16*)pabyTile)[i] & 0x7c00) >> 7);
                     break;
                     case 2:
-                    ((GByte *) pImage)[i] = ((pabyTile[i] & 0x03) << 3) |
-                                            ((pabyTile[i + 1] & 0xE0) >> 5);
+                    ((GByte *) pImage)[i] = (GByte)((((GUInt16*)pabyTile)[i] & 0x03e0) >> 2);
                     break;
                     case 3:
-                    ((GByte *) pImage)[i] = (pabyTile[i] & 0x7c) >> 2;
+                    ((GByte *) pImage)[i] = (GByte)(((GUInt16*)pabyTile)[i] & 0x1F) << 3;
                     break;
                     default:
                     break;
@@ -558,10 +573,10 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
             for ( iRow = 0; iRow < nCurBlockYSize; iRow++ )
             {
-                for ( iInPixel = 0, iOutPixel = iBytesPerSample - nBand;
-                      iOutPixel < nLastTileXBytes;
+                for ( iInPixel = 0, iOutPixel = nBytesPerPixel - nBand;
+                      iOutPixel < nLastTileXBytes * poGDS->nBands;
                       iInPixel++, iOutPixel += poGDS->nBands )
-                    (pabyTile + iRow * nLastTileXBytes)[iOutPixel] =
+                    (pabyTile + iRow * nLastTileXBytes * poGDS->nBands)[iOutPixel] =
                         ((GByte *) pImage + nBlockXSize * iRow * nDataSize)[iInPixel];
             }
         }
@@ -579,7 +594,7 @@ CPLErr RMFRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                 VSIFSeekL( poGDS->fp, poGDS->paiTiles[2 * nTile], SEEK_SET );
             }
 
-            for ( iInPixel = 0, iOutPixel = iBytesPerSample - nBand;
+            for ( iInPixel = 0, iOutPixel = nBytesPerPixel - nBand;
                   iOutPixel < nTileBytes;
                   iInPixel++, iOutPixel += poGDS->nBands )
                 pabyTile[iOutPixel] = ((GByte *) pImage)[iInPixel];
@@ -1131,13 +1146,12 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
                 {
                     // Allocate memory for colour table and read it
                     poDS->nColorTableSize = 1 << poDS->sHeader.nBitDepth;
-                    if ( poDS->nColorTableSize * 4
-                         > poDS->sHeader.nClrTblSize )
+                    if ( poDS->nColorTableSize * 4 > poDS->sHeader.nClrTblSize )
                     {
                         CPLDebug( "RMF",
-                                "Wrong color table size. Expected %d, got %d.",
-                                poDS->nColorTableSize * 4,
-                                poDS->sHeader.nClrTblSize );
+                                  "Wrong color table size. Expected %d, got %d.",
+                                  poDS->nColorTableSize * 4,
+                                  poDS->sHeader.nClrTblSize );
                         delete poDS;
                         return NULL;
                     }
@@ -1146,8 +1160,7 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
                     if ( VSIFSeekL( poDS->fp, poDS->sHeader.nClrTblOffset,
                                     SEEK_SET ) < 0 )
                     {
-                        CPLDebug( "RMF",
-                                  "Can't seek to color table location." );
+                        CPLDebug( "RMF", "Can't seek to color table location." );
                         delete poDS;
                         return NULL;
                     }
