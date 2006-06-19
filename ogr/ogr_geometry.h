@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2006/06/19 23:19:45  mloskot
+ * Added new functions OGRLinearRing::isPointInRing and OGRPolygon::IsPointOnSurface.
+ *
  * Revision 1.61  2006/03/31 17:57:32  fwarmerdam
  * header updates
  *
@@ -524,6 +527,7 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     virtual int isClockwise() const;
     virtual void closeRings();
     virtual double get_Area() const;
+    OGRBoolean isPointInRing(const OGRPoint* pt) const;
     
     // IWks Interface - Note this isnt really a first class object
     // for the purposes of WKB form.  These methods always fail since this
@@ -609,6 +613,8 @@ class CPL_DLL OGRPolygon : public OGRSurface
     int         getNumInteriorRings() const;
     OGRLinearRing *getInteriorRing( int );
     const OGRLinearRing *getInteriorRing( int ) const;
+
+    OGRBoolean IsPointOnSurface( const OGRPoint * ) const;
 
     virtual void closeRings();
 };
