@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.25  2006/06/20 07:33:17  ajolma
+ * SetLinearUnits should call OSRSetLinearUnits
+ *
  * Revision 1.24  2006/02/02 21:09:24  collinsb
  * Corrected wrong Java typemap filename
  *
@@ -105,7 +108,11 @@
  *
 */
 
+#ifdef SWIGPERL
+%module "Geo::GDAL::osr"
+#else
 %module osr
+#endif
 
 %feature("compactdefaultargs");
 
@@ -385,7 +392,7 @@ public:
   }
 
   OGRErr SetLinearUnits( const char*name, double to_meters ) {
-    return OSRSetAngularUnits( self, name, to_meters );
+    return OSRSetLinearUnits( self, name, to_meters );
   }
 
   double GetLinearUnits() {
