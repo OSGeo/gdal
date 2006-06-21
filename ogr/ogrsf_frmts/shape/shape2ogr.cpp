@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2006/06/21 20:43:02  fwarmerdam
+ * support datasets without dbf: bug 1211
+ *
  * Revision 1.42  2006/04/02 18:46:54  fwarmerdam
  * updated date support
  *
@@ -1197,7 +1200,7 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
         return NULL;
     }
 
-    if( DBFIsRecordDeleted( hDBF, iShape ) )
+    if( hDBF && DBFIsRecordDeleted( hDBF, iShape ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Attempt to read shape with feature id (%d), but it is marked deleted.",

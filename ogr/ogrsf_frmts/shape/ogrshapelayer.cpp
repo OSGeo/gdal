@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2006/06/21 20:43:02  fwarmerdam
+ * support datasets without dbf: bug 1211
+ *
  * Revision 1.29  2006/06/16 22:52:18  fwarmerdam
  * Added logic to assign spatial reference to geometries per email on
  * gdal-dev from Cho Hyun-Kee.
@@ -393,7 +396,7 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
             if( iNextShapeId >= nTotalShapeCount )
                 return NULL;
     
-            if( DBFIsRecordDeleted( hDBF, iNextShapeId ) )
+            if( hDBF && DBFIsRecordDeleted( hDBF, iNextShapeId ) )
                 poFeature = NULL;
             else
                 poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn,
@@ -465,6 +468,15 @@ OGRErr OGRShapeLayer::DeleteFeature( long nFID )
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Attempt to delete shape with feature id (%d) which does "
                   "not exist.", nFID );
+        return OGRERR_FAILURE;
+    }
+
+    if( !hDBF )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Attempt to delete shape in shapefile with no .dbf file.\n"
+                  "Deletion is done by marking record deleted in dbf\n"
+                  "and is not supported without a .dbf file." );
         return OGRERR_FAILURE;
     }
 
