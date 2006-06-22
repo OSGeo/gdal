@@ -35,6 +35,9 @@
  *      Heckbert, SIGGRAPH proceedings, 1982, pp. 297-307.
  * 
  * $Log$
+ * Revision 1.7  2006/06/22 18:45:06  fwarmerdam
+ * Made sure alpha is set to 255.
+ *
  * Revision 1.6  2005/04/04 15:24:16  fwarmerdam
  * added CPL_STDCALL to some functions
  *
@@ -295,6 +298,7 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
         sEntry.c1 = (GByte) (((ptr->rmin + ptr->rmax) << COLOR_SHIFT) / 2);
         sEntry.c2 = (GByte) (((ptr->gmin + ptr->gmax) << COLOR_SHIFT) / 2);
         sEntry.c3 = (GByte) (((ptr->bmin + ptr->bmax) << COLOR_SHIFT) / 2);
+        sEntry.c4 = 255;
         GDALSetColorEntry( hColorTable, i, &sEntry );
     }
     
