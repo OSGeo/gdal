@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/06/22 20:02:18  fwarmerdam
+ * use GDALMultiDomainMetadata (de)serialize logic
+ *
  * Revision 1.22  2006/02/08 06:12:08  fwarmerdam
  * Override SetMetadata methods so that metadata can be preserved.
  * Support saving histograms in VRT per bug 1060.
@@ -375,7 +378,7 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
 /* -------------------------------------------------------------------- */
 /*      Apply any band level metadata.                                  */
 /* -------------------------------------------------------------------- */
-    PamApplyMetadata( psTree, this );
+    oMDMD.XMLInit( psTree, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Collect various other items of metadata.                        */
@@ -495,7 +498,7 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
     if( nBand > 0 )
         CPLSetXMLValue( psTree, "#band", CPLSPrintf( "%d", GetBand() ) );
 
-    psMD = PamSerializeMetadata( this );
+    psMD = oMDMD.Serialize();
     if( psMD != NULL )
         CPLAddXMLChild( psTree, psMD );
 

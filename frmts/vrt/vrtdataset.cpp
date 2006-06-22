@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/06/22 20:02:18  fwarmerdam
+ * use GDALMultiDomainMetadata (de)serialize logic
+ *
  * Revision 1.25  2006/02/10 15:02:15  fwarmerdam
  * Write via the large file API.
  *
@@ -260,10 +263,10 @@ CPLXMLNode *VRTDataset::SerializeToXML( const char *pszVRTPath )
                                     adfGeoTransform[5] ) );
     }
 
-    /* -------------------------------------------------------------------- */
-    /*      Metadata                                                        */
-    /* -------------------------------------------------------------------- */
-    psMD = PamSerializeMetadata( this );
+/* -------------------------------------------------------------------- */
+/*      Metadata                                                        */
+/* -------------------------------------------------------------------- */
+    psMD = oMDMD.Serialize();
     if( psMD != NULL )
         CPLAddXMLChild( psDSTree, psMD );
 
@@ -431,7 +434,7 @@ CPLErr VRTDataset::XMLInit( CPLXMLNode *psTree, const char *pszVRTPath )
 /* -------------------------------------------------------------------- */
 /*      Apply any dataset level metadata.                               */
 /* -------------------------------------------------------------------- */
-    PamApplyMetadata( psTree, this );
+    oMDMD.XMLInit( psTree, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
