@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/06/22 03:07:53  fwarmerdam
+ * Fix gmljp2 parsing to offset origin by half pixel when computing geotransform
+ *
  * Revision 1.7  2006/06/22 01:33:40  fwarmerdam
  * added support for preparing writable gml and geotiff boxes
  *
@@ -619,6 +622,13 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         adfGeoTransform[3] = poOriginGeometry->getY();
         adfGeoTransform[4] = atof(papszOffset2Tokens[0]);
         adfGeoTransform[5] = atof(papszOffset2Tokens[1]);
+
+        // offset from center of pixel.
+        adfGeoTransform[0] -= adfGeoTransform[1]*0.5;
+        adfGeoTransform[0] -= adfGeoTransform[2]*0.5;
+        adfGeoTransform[3] -= adfGeoTransform[4]*0.5;
+        adfGeoTransform[3] -= adfGeoTransform[5]*0.5;
+
         bSuccess = TRUE;
         bHaveGeoTransform = TRUE;
     }
