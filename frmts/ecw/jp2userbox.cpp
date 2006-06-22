@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/06/22 01:34:46  fwarmerdam
+ * use GDALJP2Metadata to prepare geotiff and gml boxes
+ *
  * Revision 1.1  2005/04/02 21:14:57  fwarmerdam
  * New
  *
@@ -67,7 +70,7 @@ JP2UserBox::~JP2UserBox()
 /*                              SetData()                               */
 /************************************************************************/
 
-void JP2UserBox::SetData( int nLengthIn, unsigned char *pabyDataIn )
+void JP2UserBox::SetData( int nLengthIn, const unsigned char *pabyDataIn )
 
 {
     if( pabyData != NULL )

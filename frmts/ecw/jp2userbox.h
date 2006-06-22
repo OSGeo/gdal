@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/06/22 01:34:46  fwarmerdam
+ * use GDALJP2Metadata to prepare geotiff and gml boxes
+ *
  * Revision 1.1  2005/04/02 21:14:57  fwarmerdam
  * New
  *
@@ -57,7 +60,7 @@ public:
                               CNCSJPCIOStream &Stream);
     virtual void UpdateXLBox(void);
 
-    void    SetData( int nDataLength, unsigned char *pabyDataIn );
+    void    SetData( int nDataLength, const unsigned char *pabyDataIn );
     
     int     GetDataLength() { return nDataLength; }
     unsigned char *GetData() { return pabyData; }

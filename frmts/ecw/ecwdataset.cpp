@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.63  2006/06/22 01:34:46  fwarmerdam
+ * use GDALJP2Metadata to prepare geotiff and gml boxes
+ *
  * Revision 1.62  2006/04/28 04:22:32  fwarmerdam
  * make PAM fallbacks work properly
  *
@@ -1749,6 +1752,8 @@ void GDALRegister_JP2ECW()
 "   <Option name='PROJ' type='string' description='ERMapper Projection Name'/>"
 "   <Option name='DATUM' type='string' description='ERMapper Datum Name' />"
 "   <Option name='LARGE_OK' type='boolean' description='Enable compressing 500+MB files'/>"
+"   <Option name='GeoJP2' type='boolean' description='defaults to ON'/>"
+"   <Option name='GMLJP2' type='boolean' description='defaults to ON'/>"
 "   <Option name='PROFILE' type='string-select'>"
 "       <Value>BASELINE_0</Value>"
 "       <Value>BASELINE_1</Value>"
