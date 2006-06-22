@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/06/22 01:34:46  fwarmerdam
+ * use GDALJP2Metadata to prepare geotiff and gml boxes
+ *
  * Revision 1.25  2006/04/28 04:18:18  fwarmerdam
  * Added support for writing GCPs in GeoTIFF box.
  *
@@ -112,6 +115,7 @@
 #include "cpl_conv.h"
 #include "vsiiostream.h"
 #include "jp2userbox.h"
+#include "gdaljp2metadata.h"
 
 CPL_CVSID("$Id$");
 
@@ -145,8 +149,7 @@ public:
     CPLErr  CloseDown();
 
     CPLErr  PrepareCoverageBox( const char *pszWKT, double *padfGeoTransform );
-    CPLErr  PrepareGeoTIFFBox( const char *pszWKT, double *padfGeoTransform,
-                               int nGCPCount, const GDAL_GCP *pasGCPList );
+    CPLErr  WriteJP2Box( GDALJP2Box * );
 
 #ifdef ECW_FW
     CNCSJP2File::CNCSJPXAssocBox  m_oGMLAssoc;
@@ -467,54 +470,26 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox( const char *pszWKT,
 }
 
 /************************************************************************/
-/*                         PrepareGeoTIFFBox()                          */
+/*                            WriteJP2Box()                             */
 /************************************************************************/
 
-CPLErr GDALECWCompressor::PrepareGeoTIFFBox( const char *pszWKT,
-                                             double *padfGeoTransform,
-                                             int nGCPCount, 
-                                             const GDAL_GCP *pasGCPList )
+CPLErr GDALECWCompressor::WriteJP2Box( GDALJP2Box * poBox )
 
 {
-/* -------------------------------------------------------------------- */
-/*      Prepare the memory buffer containing the degenerate GeoTIFF     */
-/*      file.                                                           */
-/* -------------------------------------------------------------------- */
-    int         nGTBufSize = 0;
-    unsigned char *pabyGTBuf = NULL;
+    JP2UserBox  *poECWBox;
 
-    if( GTIFMemBufFromWkt( pszWKT, padfGeoTransform, nGCPCount, pasGCPList,
-                           &nGTBufSize, &pabyGTBuf ) != CE_None )
-        return CE_Failure;
-
-    if( nGTBufSize == 0 )
+    if( poBox == NULL )
         return CE_None;
 
-/* -------------------------------------------------------------------- */
-/*      Write to a box on the JP2 file.                                 */
-/* -------------------------------------------------------------------- */
-    JP2UserBox  *poGTData;
-    GByte *pabyUUIDBoxData;
-    int   nUUIDBoxDataLength;
+    poECWBox = new JP2UserBox();
+    memcpy( &(poECWBox->m_nTBox), poBox->GetType(), 4 );
 
-    static unsigned char msi_uuid2[16] =
-    {0xb1,0x4b,0xf8,0xbd,0x08,0x3d,0x4b,0x43,
-     0xa5,0xae,0x8c,0xd7,0xd5,0xa6,0xce,0x03}; 
+    poECWBox->SetData( poBox->GetDataLength(), 
+                       poBox->GetWritableData() );
 
-    poGTData = new JP2UserBox();
-    poGTData->m_nTBox = 'uuid';
+    AddBox( poECWBox ); // never freed?
 
-    nUUIDBoxDataLength = nGTBufSize + 16;
-    pabyUUIDBoxData = (GByte *) CPLMalloc(nUUIDBoxDataLength);
-    memcpy( pabyUUIDBoxData, msi_uuid2, 16 );
-    memcpy( pabyUUIDBoxData + 16, pabyGTBuf, nGTBufSize );
-
-    poGTData->SetData( nUUIDBoxDataLength, pabyUUIDBoxData );
-
-    CPLFree( pabyUUIDBoxData );
-    CPLFree( pabyGTBuf );
-
-    AddBox( poGTData ); // never freed?
+    delete poBox;
 
     return CE_None;
 }
@@ -923,8 +898,8 @@ CPLErr GDALECWCompressor::Initialize(
 
         pszOption = CSLFetchNameValue(papszOptions, "GEODATA_USAGE");
         if( pszOption == NULL )
-            // Default to supressing ECW SDK geodata, just use our geotiff.
-            SetGeodataUsage( JP2_GEODATA_USE_GML_ONLY );
+            // Default to supressing ECW SDK geodata, just use our own stuff.
+            SetGeodataUsage( JP2_GEODATA_USE_NONE );
         else if( EQUAL(pszOption,"NONE") )
             SetGeodataUsage( JP2_GEODATA_USE_NONE );
         else if( EQUAL(pszOption,"PCS_ONLY") )
@@ -1006,12 +981,19 @@ CPLErr GDALECWCompressor::Initialize(
               szProjection, szDatum );
 
 /* -------------------------------------------------------------------- */
-/*      Setup GML information.                                          */
+/*      Setup GML and GeoTIFF information.                              */
 /* -------------------------------------------------------------------- */
-    PrepareCoverageBox( pszWKT, padfGeoTransform );
-    PrepareGeoTIFFBox( pszWKT, padfGeoTransform,
-                       nGCPCount, pasGCPList );
-    
+    GDALJP2Metadata oJP2MD;
+
+    oJP2MD.SetProjection( pszWKT );
+    oJP2MD.SetGeoTransform( padfGeoTransform );
+    oJP2MD.SetGCPs( nGCPCount, pasGCPList );
+
+    if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) )
+        WriteJP2Box( oJP2MD.CreateGMLJP2(nXSize,nYSize) );
+    if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) )
+        WriteJP2Box( oJP2MD.CreateJP2GeoTIFF() );
+
 /* -------------------------------------------------------------------- */
 /*      Handle special case of a JPEG2000 data stream in another file.  */
 /* -------------------------------------------------------------------- */
