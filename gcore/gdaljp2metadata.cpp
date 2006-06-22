@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/06/22 01:33:40  fwarmerdam
+ * added support for preparing writable gml and geotiff boxes
+ *
  * Revision 1.6  2006/04/07 05:35:25  fwarmerdam
  * Added ReadAndParse() method, which includes worldfile reading.
  * Actually set HaveGeoTransform flag properly.
@@ -670,4 +673,239 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 
     return pszProjection != NULL && bSuccess;
 }
+
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+void GDALJP2Metadata::SetProjection( const char *pszWKT )
+
+{
+    CPLFree( pszProjection );
+    pszProjection = CPLStrdup(pszWKT);
+}
+
+/************************************************************************/
+/*                              SetGCPs()                               */
+/************************************************************************/
+
+void GDALJP2Metadata::SetGCPs( int nCount, const GDAL_GCP *pasGCPsIn )
+
+{
+    if( nGCPCount > 0 )
+    {
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
+        CPLFree( pasGCPList );
+    }
+
+    nGCPCount = nCount;
+    pasGCPList = GDALDuplicateGCPs(nGCPCount, pasGCPsIn);
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+void GDALJP2Metadata::SetGeoTransform( double *padfGT )
+
+{
+    memcpy( adfGeoTransform, padfGT, sizeof(double) * 6 );
+}
+
+/************************************************************************/
+/*                          CreateJP2GeoTIFF()                          */
+/************************************************************************/
+
+GDALJP2Box *GDALJP2Metadata::CreateJP2GeoTIFF()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Prepare the memory buffer containing the degenerate GeoTIFF     */
+/*      file.                                                           */
+/* -------------------------------------------------------------------- */
+    int         nGTBufSize = 0;
+    unsigned char *pabyGTBuf = NULL;
+
+    if( GTIFMemBufFromWkt( pszProjection, adfGeoTransform, 
+                           nGCPCount, pasGCPList,
+                           &nGTBufSize, &pabyGTBuf ) != CE_None )
+        return NULL;
+
+    if( nGTBufSize == 0 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Write to a box on the JP2 file.                                 */
+/* -------------------------------------------------------------------- */
+    GDALJP2Box *poBox;
+
+    poBox = GDALJP2Box::CreateUUIDBox( msi_uuid2, nGTBufSize, pabyGTBuf );
+    
+    CPLFree( pabyGTBuf );
+
+    return poBox;
+}
+
+/************************************************************************/
+/*                         PrepareCoverageBox()                         */
+/************************************************************************/
+
+GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Try do determine a PCS or GCS code we can use.                  */
+/* -------------------------------------------------------------------- */
+    OGRSpatialReference oSRS;
+    char *pszWKTCopy = (char *) pszProjection;
+    int nEPSGCode = 0;
+    char szSRSName[100];
+
+    if( oSRS.importFromWkt( &pszWKTCopy ) != OGRERR_NONE )
+        return NULL;
+
+    if( oSRS.IsProjected() )
+    {
+        const char *pszAuthName = oSRS.GetAuthorityName( "PROJCS" );
+
+        if( pszAuthName != NULL && EQUAL(pszAuthName,"epsg") )
+        {
+            nEPSGCode = atoi(oSRS.GetAuthorityCode( "PROJCS" ));
+        }
+    }
+    else if( oSRS.IsGeographic() )
+    {
+        const char *pszAuthName = oSRS.GetAuthorityName( "GEOGCS" );
+
+        if( pszAuthName != NULL && EQUAL(pszAuthName,"epsg") )
+        {
+            nEPSGCode = atoi(oSRS.GetAuthorityCode( "GEOGCS" ));
+        }
+    }
+
+    if( nEPSGCode != 0 )
+        sprintf( szSRSName, "urn:ogc:def:crs:EPSG::%d", nEPSGCode );
+    else
+        strcpy( szSRSName, 
+                "gmljp2://xml/CRSDictionary.gml#ogrcrs1" );
+
+/* -------------------------------------------------------------------- */
+/*      For now we hardcode for a minimal instance format.              */
+/* -------------------------------------------------------------------- */
+    CPLString osDoc;
+
+    osDoc.Printf( 
+"<gml:FeatureCollection\n"
+"   xmlns:gml=\"http://www.opengis.net/gml\"\n"
+"   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+"   xsi:schemaLocation=\"http://www.opengis.net/gml http://www.math.ubc.ca/~burggraf/gml/gml4jp2.xsd\">\n"
+"  <gml:boundedBy>\n"
+"    <gml:Null>withheld</gml:Null>\n"
+"  </gml:boundedBy>\n"
+"  <gml:featureMember>\n"
+"    <gml:FeatureCollection>\n"
+"      <gml:featureMember>\n"
+"        <gml:RectifiedGridCoverage dimension=\"2\" gml:id=\"RGC0001\">\n"
+"          <gml:rectifiedGridDomain>\n"
+"            <gml:RectifiedGrid dimension=\"2\">\n"
+"              <gml:limits>\n"
+"                <gml:GridEnvelope>\n"
+"                  <gml:low>0 0</gml:low>\n"
+"                  <gml:high>%d %d</gml:high>\n"
+"                </gml:GridEnvelope>\n"
+"              </gml:limits>\n"
+"              <gml:axisName>x</gml:axisName>\n"
+"              <gml:axisName>y</gml:axisName>\n"
+"              <gml:origin>\n"
+"                <gml:Point gml:id=\"P0001\" srsName=\"%s\">\n"
+"                  <gml:pos>%.15g %.15g</gml:pos>\n"
+"                </gml:Point>\n"
+"              </gml:origin>\n"
+"              <gml:offsetVector srsName=\"%s\">%.15g %.15g</gml:offsetVector>\n"
+"              <gml:offsetVector srsName=\"%s\">%.15g %.15g</gml:offsetVector>\n"
+"            </gml:RectifiedGrid>\n"
+"          </gml:rectifiedGridDomain>\n"
+"          <gml:rangeSet>\n"
+"            <gml:File>\n"
+"              <gml:fileName>urn:ogc:tc:gmljp2:codestream:0</gml:fileName>\n"
+"              <gml:fileStructure>Record Interleaved</gml:fileStructure>\n"
+"            </gml:File>\n"
+"          </gml:rangeSet>\n"
+"        </gml:RectifiedGridCoverage>\n"
+"      </gml:featureMember>\n"
+"    </gml:FeatureCollection>\n"
+"  </gml:featureMember>\n"
+"</gml:FeatureCollection>\n",
+             nXSize-1, nYSize-1, szSRSName,
+             adfGeoTransform[0] + adfGeoTransform[1] * 0.5
+                                + adfGeoTransform[4] * 0.5, 
+             adfGeoTransform[3] + adfGeoTransform[2] * 0.5
+                                + adfGeoTransform[5] * 0.5,
+             szSRSName, 
+             adfGeoTransform[1], adfGeoTransform[2],
+             szSRSName,
+             adfGeoTransform[4], adfGeoTransform[5] );
+
+/* -------------------------------------------------------------------- */
+/*      If we need a user defined CRSDictionary entry, prepare it       */
+/*      here.                                                           */
+/* -------------------------------------------------------------------- */
+    CPLString osDictBox;
+
+    if( nEPSGCode == 0 )
+    {
+        char *pszGMLDef = NULL;
+
+        if( oSRS.exportToXML( &pszGMLDef, NULL ) == OGRERR_NONE )
+        {
+            osDictBox.Printf(  
+"<gml:Dictionary gml:id=\"CRSU1\" \n"
+"        xmlns:gml=\"http://www.opengis.net/gml\"\n"
+"        xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n"
+"        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n"
+"  <gml:dictionaryEntry>\n"
+"%s\n"
+"  </gml:dictionaryEntry>\n"
+"</gml:Dictionary>\n",
+                     pszGMLDef );
+        }
+        CPLFree( pszGMLDef );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Setup the gml.data label.                                       */
+/* -------------------------------------------------------------------- */
+    GDALJP2Box *apoGMLBoxes[5];
+    int nGMLBoxes = 0;
+
+    apoGMLBoxes[nGMLBoxes++] = GDALJP2Box::CreateLblBox( "gml.data" );
+
+/* -------------------------------------------------------------------- */
+/*      Setup gml.root-instance.                                        */
+/* -------------------------------------------------------------------- */
+    apoGMLBoxes[nGMLBoxes++] = 
+        GDALJP2Box::CreateLabelledXMLAssoc( "gml.root-instance", osDoc );
+
+/* -------------------------------------------------------------------- */
+/*      Add optional dictionary.                                        */
+/* -------------------------------------------------------------------- */
+    if( strlen(osDictBox) > 0 )
+        apoGMLBoxes[nGMLBoxes++] = 
+            GDALJP2Box::CreateLabelledXMLAssoc( "CRSDictionary.gml",
+                                                osDictBox );
+        
+/* -------------------------------------------------------------------- */
+/*      Bundle gml.data boxes into an association.                      */
+/* -------------------------------------------------------------------- */
+    GDALJP2Box *poGMLData = GDALJP2Box::CreateAsocBox( nGMLBoxes, apoGMLBoxes);
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup working boxes.                                          */
+/* -------------------------------------------------------------------- */
+    while( nGMLBoxes > 0 )
+        delete apoGMLBoxes[--nGMLBoxes];
+
+    return poGMLData;
+}
+
 
