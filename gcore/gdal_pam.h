@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/06/22 20:02:50  fwarmerdam
+ * removed old pam metadata (de)serialize funcs
+ *
  * Revision 1.8  2006/02/08 06:03:40  fwarmerdam
  * expose some PAM histo stuff for VRT, fixed InitFromXML() hist bug
  *
@@ -286,8 +289,6 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
 };
 
 // These are mainly helper functions for internal use.
-int CPL_DLL PamApplyMetadata( CPLXMLNode *psTree, GDALMajorObject *poMO );
-CPLXMLNode CPL_DLL *PamSerializeMetadata( GDALMajorObject *poMO );
 int CPL_DLL PamParseHistogram( CPLXMLNode *psHistItem, 
                                double *pdfMin, double *pdfMax, 
                                int *pnBuckets, int **ppanHistogram, 

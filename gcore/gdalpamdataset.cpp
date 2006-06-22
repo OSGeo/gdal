@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/06/22 20:02:50  fwarmerdam
+ * removed old pam metadata (de)serialize funcs
+ *
  * Revision 1.19  2006/04/13 03:16:01  fwarmerdam
  * keep track if an object is PAM enabled, bug 1135
  *
@@ -873,74 +876,6 @@ CPLErr GDALPamDataset::SetMetadataItem( const char *pszName,
         MarkPamDirty();
 
     return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
-}
-
-/************************************************************************/
-/*                          PAMApplyMetadata()                          */
-/************************************************************************/
-int PamApplyMetadata( CPLXMLNode *psTree, GDALMajorObject *poMO )
-
-{
-    char **papszMD = NULL;
-    CPLXMLNode *psMetadata = CPLGetXMLNode( psTree, "Metadata" );
-    CPLXMLNode *psMDI;
-
-    if( psMetadata == NULL )
-        return FALSE;
-
-    /* Format is <MDI key="...">value_Text</MDI> */
-
-    for( psMDI = psMetadata->psChild; psMDI != NULL; psMDI = psMDI->psNext )
-    {
-        if( !EQUAL(psMDI->pszValue,"MDI") || psMDI->eType != CXT_Element 
-            || psMDI->psChild == NULL || psMDI->psChild->psNext == NULL 
-            || psMDI->psChild->eType != CXT_Attribute
-            || psMDI->psChild->psChild == NULL )
-            continue;
-
-        papszMD = 
-            CSLSetNameValue( papszMD, psMDI->psChild->psChild->pszValue, 
-                             psMDI->psChild->psNext->pszValue );
-    }
-
-    poMO->SetMetadata( papszMD );
-    CSLDestroy( papszMD );
-
-    return papszMD != NULL;
-}
-
-/************************************************************************/
-/*                        PAMSerializeMetadata()                        */
-/************************************************************************/
-
-CPLXMLNode *PamSerializeMetadata( GDALMajorObject *poMO )
-
-{
-    char **papszMD = poMO->GetMetadata();
-
-    if( papszMD == NULL || CSLCount(papszMD) == 0 )
-        return NULL;
-
-    CPLXMLNode *psMD;
-
-    psMD = CPLCreateXMLNode( NULL, CXT_Element, "Metadata" );
-
-    for( int i = 0; papszMD[i] != NULL; i++ )
-    {
-        const char *pszRawValue;
-        char *pszKey;
-        CPLXMLNode *psMDI;
-
-        pszRawValue = CPLParseNameValue( papszMD[i], &pszKey );
-
-        psMDI = CPLCreateXMLNode( psMD, CXT_Element, "MDI" );
-        CPLSetXMLValue( psMDI, "#key", pszKey );
-        CPLCreateXMLNode( psMDI, CXT_Text, pszRawValue );
-
-        CPLFree( pszKey );
-    }
-
-    return psMD;
 }
 
 /************************************************************************/
