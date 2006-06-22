@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/06/22 20:28:09  fwarmerdam
+ * capture xml boxes on the main pass through the file
+ *
  * Revision 1.5  2006/06/22 01:33:40  fwarmerdam
  * added support for preparing writable gml and geotiff boxes
  *
@@ -130,9 +133,9 @@ private:
     int    nMSIGSize;
     GByte  *pabyMSIGData;
 
+public:
     char   **papszGMLMetadata;
     
-public:
     int     bHaveGeoTransform;
     double  adfGeoTransform[6];
 

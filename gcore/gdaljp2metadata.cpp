@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/06/22 20:28:09  fwarmerdam
+ * capture xml boxes on the main pass through the file
+ *
  * Revision 1.8  2006/06/22 03:07:53  fwarmerdam
  * Fix gmljp2 parsing to offset origin by half pixel when computing geotransform
  *
@@ -235,6 +238,7 @@ int GDALJP2Metadata::ReadBoxes( FILE *fpVSIL )
 
 {
     GDALJP2Box oBox( fpVSIL );
+    int iBox = 0;
 
     oBox.ReadFirst(); 
 
@@ -285,6 +289,21 @@ int GDALJP2Metadata::ReadBoxes( FILE *fpVSIL )
                 }
                 CPLFree( pszLabel );
             }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Process simple xml boxes.                                       */
+/* -------------------------------------------------------------------- */
+        if( EQUAL(oBox.GetType(),"xml ") )
+        {
+            CPLString osBoxName;
+            char *pszXML = (char *) oBox.ReadBoxData();
+
+            osBoxName.Printf( "BOX_%d", iBox++ );
+            
+            papszGMLMetadata = CSLSetNameValue( papszGMLMetadata, 
+                                                osBoxName, pszXML );
+            CPLFree( pszXML );
         }
 
         oBox.ReadNext();
