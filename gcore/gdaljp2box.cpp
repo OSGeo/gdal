@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/06/22 01:33:40  fwarmerdam
+ * added support for preparing writable gml and geotiff boxes
+ *
  * Revision 1.6  2006/06/08 18:47:42  fwarmerdam
  * Fixed nBoxLength sizeof test, should be 8 bytes, not 64 bits.
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=1199
@@ -68,6 +71,8 @@ GDALJP2Box::GDALJP2Box( FILE *fpIn )
     nBoxOffset = -1;
     nDataOffset = -1;
     nBoxLength = 0;
+    
+    pabyData = NULL;
 }
 
 /************************************************************************/
@@ -77,6 +82,7 @@ GDALJP2Box::GDALJP2Box( FILE *fpIn )
 GDALJP2Box::~GDALJP2Box()
 
 {
+    CPLFree( pabyData );
 }
 
 /************************************************************************/
@@ -281,3 +287,155 @@ int GDALJP2Box::DumpReadable( FILE *fpOut )
     }
     return 0;
 }
+
+/************************************************************************/
+/*                              SetType()                               */
+/************************************************************************/
+
+void GDALJP2Box::SetType( const char *pszType )
+
+{
+    CPLAssert( strlen(pszType) == 4 );
+
+    szBoxType[0] = pszType[3];
+    szBoxType[1] = pszType[2];
+    szBoxType[2] = pszType[1];
+    szBoxType[3] = pszType[0];
+    szBoxType[4] = '\0';
+}
+
+/************************************************************************/
+/*                          SetWritableData()                           */
+/************************************************************************/
+
+void GDALJP2Box::SetWritableData( int nLength, const GByte *pabyDataIn )
+
+{
+    CPLFree( pabyData );
+    
+    pabyData = (GByte *) CPLMalloc(nLength);
+    memcpy( pabyData, pabyDataIn, nLength );
+
+    nBoxOffset = -9; // virtual offsets for data length computation.
+    nDataOffset = -1;
+    
+    nBoxLength = 8 + nLength;
+}
+
+/************************************************************************/
+/*                           CreateUUIDBox()                            */
+/************************************************************************/
+
+GDALJP2Box *GDALJP2Box::CreateUUIDBox( 
+    const GByte *pabyUUID, int nDataSize, GByte *pabyData )
+
+{
+    GDALJP2Box *poBox;
+
+    poBox = new GDALJP2Box();
+    poBox->SetType( "uuid" );
+    memcpy( poBox->abyUUID, pabyUUID, 16 );
+
+    GByte *pabyMergedData = (GByte *) CPLMalloc(16+nDataSize);
+    memcpy( pabyMergedData, pabyUUID, 16 );
+    memcpy( pabyMergedData+16, pabyData, nDataSize );
+    
+    poBox->SetWritableData( 16 + nDataSize, pabyMergedData );
+    
+    CPLFree( pabyMergedData );
+
+    return poBox;
+}
+
+/************************************************************************/
+/*                           CreateAsocBox()                            */
+/************************************************************************/
+
+GDALJP2Box *GDALJP2Box::CreateAsocBox( int nCount, GDALJP2Box **papoBoxes )
+
+
+{
+    int nDataSize=0, iBox;
+    GByte *pabyCompositeData, *pabyNext;
+
+/* -------------------------------------------------------------------- */
+/*      Compute size of data area of asoc box.                          */
+/* -------------------------------------------------------------------- */
+    for( iBox = 0; iBox < nCount; iBox++ )
+        nDataSize += 8 + papoBoxes[iBox]->GetDataLength();
+
+    pabyNext = pabyCompositeData = (GByte *) CPLMalloc(nDataSize);
+
+/* -------------------------------------------------------------------- */
+/*      Copy subboxes headers and data into buffer.                     */
+/* -------------------------------------------------------------------- */
+    for( iBox = 0; iBox < nCount; iBox++ )
+    {
+        GUInt32   nLBox, nTBox;
+
+        nLBox = CPL_MSBWORD32(papoBoxes[iBox]->nBoxLength);
+        memcpy( pabyNext, &nLBox, 4 );
+        pabyNext += 4;
+
+        memcpy( &nTBox, papoBoxes[iBox]->szBoxType, 4 );
+        nTBox = CPL_MSBWORD32( nTBox );
+        memcpy( pabyNext, &nTBox, 4 );
+        pabyNext += 4;
+
+        memcpy( pabyNext, papoBoxes[iBox]->pabyData, 
+                papoBoxes[iBox]->GetDataLength() );
+        pabyNext += papoBoxes[iBox]->GetDataLength();
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Create asoc box.                                                */
+/* -------------------------------------------------------------------- */
+    GDALJP2Box *poAsoc = new GDALJP2Box();
+
+    poAsoc->SetType( "asoc" );
+    poAsoc->SetWritableData( nDataSize, pabyCompositeData );
+    
+    CPLFree( pabyCompositeData );
+
+    return poAsoc;
+}
+
+/************************************************************************/
+/*                            CreateLblBox()                            */
+/************************************************************************/
+
+GDALJP2Box *GDALJP2Box::CreateLblBox( const char *pszLabel )
+
+{
+    GDALJP2Box *poBox;
+
+    poBox = new GDALJP2Box();
+    poBox->SetType( "lbl " );
+    poBox->SetWritableData( strlen(pszLabel)+1, (const GByte *) pszLabel );
+
+    return poBox;
+}
+
+/************************************************************************/
+/*                       CreateLabelledXMLAssoc()                       */
+/************************************************************************/
+
+GDALJP2Box *GDALJP2Box::CreateLabelledXMLAssoc( const char *pszLabel,
+                                                const char *pszXML )
+
+{
+    GDALJP2Box oLabel, oXML;
+    GDALJP2Box *aoList[2];
+
+    oLabel.SetType( "lbl " );
+    oLabel.SetWritableData( strlen(pszLabel)+1, (const GByte *) pszLabel );
+
+    oXML.SetType( "xml " );
+    oXML.SetWritableData( strlen(pszXML)+1, (const GByte *) pszXML );
+
+    aoList[0] = &oLabel;
+    aoList[1] = &oXML;
+    
+    return CreateAsocBox( 2, aoList );
+}
+
