@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.41  2006/06/22 20:29:41  fwarmerdam
+ * added support for reading and writing mainline xml boxes via metadata
+ *
  * Revision 1.40  2006/06/22 01:40:22  fwarmerdam
  * added gmljp2 and geojp2 creation options, use GDALJP2Metadata for boxes
  *
@@ -1330,6 +1333,30 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
                 oJP2Geo.pasGCPList = NULL;
                 oJP2Geo.nGCPCount = 0;
             }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have any XML boxes we would like to treat as special      */
+/*      domain metadata?                                                */
+/* -------------------------------------------------------------------- */
+            int iBox;
+
+            for( iBox = 0; oJP2Geo.papszGMLMetadata[iBox] != NULL; iBox++ )
+            {
+                char *pszName = NULL;
+                const char *pszXML = 
+                    CPLParseNameValue( oJP2Geo.papszGMLMetadata[iBox], 
+                                       &pszName );
+                CPLString osDomain;
+                char *apszMDList[2];
+
+                osDomain.Printf( "xml:%s", pszName );
+                apszMDList[0] = (char *) pszXML;
+                apszMDList[1] = NULL;
+
+                poDS->GDALPamDataset::SetMetadata( apszMDList, osDomain );
+
+                CPLFree( pszName );
+            }
         }
 
 /* -------------------------------------------------------------------- */
@@ -2210,6 +2237,30 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             JP2KAKWriteBox( &jp2_out, oJP2MD.CreateGMLJP2(nXSize,nYSize) );
         if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) )
             JP2KAKWriteBox( &jp2_out, oJP2MD.CreateJP2GeoTIFF() );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Do we have any XML boxes we want to preserve?                   */
+/* -------------------------------------------------------------------- */
+    int iBox;
+    
+    for( iBox = 0; TRUE; iBox++ )
+    {
+        CPLString oName;
+        char **papszMD;
+
+        oName.Printf( "xml:BOX_%d", iBox );
+        papszMD = poSrcDS->GetMetadata( oName );
+        
+        if( papszMD == NULL || CSLCount(papszMD) != 1 )
+            break;
+
+        GDALJP2Box *poXMLBox = new GDALJP2Box();
+
+        poXMLBox->SetType( "xml " );
+        poXMLBox->SetWritableData( strlen(papszMD[0])+1, 
+                                   (GByte *) papszMD[0] );
+        JP2KAKWriteBox( &jp2_out, poXMLBox );
     }
 
 /* -------------------------------------------------------------------- */
