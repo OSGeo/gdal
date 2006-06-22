@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.40  2006/06/22 01:40:22  fwarmerdam
+ * added gmljp2 and geojp2 creation options, use GDALJP2Metadata for boxes
+ *
  * Revision 1.39  2006/04/28 04:21:14  fwarmerdam
  * cleanup GCPs
  *
@@ -155,12 +158,6 @@ static int kakadu_initialized = FALSE;
 static void
 transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
                GDALDataType eOutType );
-
-static const unsigned int jp2_uuid_box_type = 0x75756964;
-
-static unsigned char msi_uuid2[16] =
-{0xb1,0x4b,0xf8,0xbd,0x08,0x3d,0x4b,0x43,
- 0xa5,0xae,0x8c,0xd7,0xd5,0xa6,0xce,0x03}; 
 
 static unsigned char jp2_header[] = 
 {0x00,0x00,0x00,0x0c,0x6a,0x50,0x20,0x20,0x0d,0x0a,0x87,0x0a};
@@ -1569,58 +1566,41 @@ transfer_bytes(kdu_byte *dest, kdu_line_buf &src, int gap, int precision,
 }
 
 /************************************************************************/
-/*                       JP2KAKWriteGeoTIFFInfo()                       */
+/*                           JP2KAKWriteBox()                           */
+/*                                                                      */
+/*      Write out the passed box and delete it.                         */
 /************************************************************************/
 
-void JP2KAKWriteGeoTIFFInfo( jp2_target *jp2_out, GDALDataset *poSrcDS )
+static void JP2KAKWriteBox( jp2_target *jp2_out, GDALJP2Box *poBox )
 
 {
-/* -------------------------------------------------------------------- */
-/*      Prepare the memory buffer containing the degenerate GeoTIFF     */
-/*      file.                                                           */
-/* -------------------------------------------------------------------- */
-    const char *pszWKT;
-    double	adfGeoTransform[6];
-    int         nGTBufSize = 0;
-    unsigned char *pabyGTBuf = NULL;
+    GUInt32 nBoxType;
 
-    if( GDALGetGCPCount( poSrcDS ) > 0 )
-        pszWKT = poSrcDS->GetGCPProjection();
-    else
-        pszWKT = poSrcDS->GetProjectionRef();
-
-    poSrcDS->GetGeoTransform(adfGeoTransform);
-
-    if( GTIFMemBufFromWkt( pszWKT, adfGeoTransform, 
-                           poSrcDS->GetGCPCount(), poSrcDS->GetGCPs(), 
-                           &nGTBufSize, &pabyGTBuf ) != CE_None )
+    if( poBox == NULL )
         return;
 
-    if( nGTBufSize == 0 )
-        return;
-
+    memcpy( &nBoxType, poBox->GetType(), 4 );
+    
 /* -------------------------------------------------------------------- */
 /*      Write to a box on the JP2 file.                                 */
 /* -------------------------------------------------------------------- */
 #ifdef KAKADU4
-    jp2_out->open_next( jp2_uuid_box_type );
+    jp2_out->open_next( nBoxType );
 
-    jp2_out->write( (kdu_byte *) msi_uuid2, sizeof(msi_uuid2) );
-
-    jp2_out->write( (kdu_byte *) pabyGTBuf, nGTBufSize );
+    jp2_out->write( (kdu_byte *) poBox->GetWritableData(), 
+                    poBox->GetDataLength() );
 
     jp2_out->close();
 #else
-    jp2_output_box &uuid_box = jp2_out->open_box( jp2_uuid_box_type );
+    jp2_output_box &uuid_box = jp2_out->open_box( nBoxType );
 
-    uuid_box.write( (kdu_byte *) msi_uuid2, sizeof(msi_uuid2) );
-
-    uuid_box.write( (kdu_byte *) pabyGTBuf, nGTBufSize );
+    uuid_box.write( (kdu_byte *) poBox->GetWritableData(), 
+                    poBox->GetDataLength() );
 
     uuid_box.close();
 #endif
 
-    CPLFree( pabyGTBuf );
+    delete poBox;
 }
 
 /************************************************************************/
@@ -2198,8 +2178,8 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 #endif
 
 /* -------------------------------------------------------------------- */
-/*      Set the GeoTIFF box if georeferencing is available, and this    */
-/*      is a JP2 file.                                                  */
+/*      Set the GeoTIFF and GML boxes if georeferencing is available,   */
+/*      and this is a JP2 file.                                         */
 /* -------------------------------------------------------------------- */
     double	adfGeoTransform[6];
     if( bIsJP2
@@ -2212,7 +2192,24 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                  || ABS(adfGeoTransform[5]) != 1.0))
             || poSrcDS->GetGCPCount() > 0) )
     {
-        JP2KAKWriteGeoTIFFInfo( &jp2_out, poSrcDS );
+        GDALJP2Metadata oJP2MD;
+
+        if( poSrcDS->GetGCPCount() > 0 )
+        {
+            oJP2MD.SetProjection( poSrcDS->GetGCPProjection() );
+            oJP2MD.SetGCPs( poSrcDS->GetGCPCount(), poSrcDS->GetGCPs() );
+        }
+        else
+        {
+            oJP2MD.SetProjection( poSrcDS->GetProjectionRef() );
+            oJP2MD.SetGeoTransform( adfGeoTransform );
+        }
+
+        
+        if( CSLFetchBoolean( papszOptions, "GMLJP2", TRUE ) )
+            JP2KAKWriteBox( &jp2_out, oJP2MD.CreateGMLJP2(nXSize,nYSize) );
+        if( CSLFetchBoolean( papszOptions, "GeoJP2", TRUE ) )
+            JP2KAKWriteBox( &jp2_out, oJP2MD.CreateJP2GeoTIFF() );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2349,6 +2346,8 @@ void GDALRegister_JP2KAK()
 "   <Option name='QUALITY' type='integer' description='1-100, 100 is lossless'/>"
 "   <Option name='BLOCKXSIZE' type='int' description='Tile Width'/>"
 "   <Option name='BLOCKYSIZE' type='int' description='Tile Height'/>"
+"   <Option name='GeoJP2' type='boolean' description='defaults to ON'/>"
+"   <Option name='GMLJP2' type='boolean' description='defaults to ON'/>"
 "   <Option name='LAYERS' type='integer'/>"
 "   <Option name='ROI' type='string'/>"
 "   <Option name='Corder' type='string'/>"
