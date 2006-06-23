@@ -4,10 +4,10 @@
  * Project:  Raster Matrix Format
  * Purpose:  Read/write raster files used in GIS "Integration"
  *           (also known as "Panorama" GIS). 
- * Author:   Andrey Kiselev, dron@remotesensing.org
+ * Author:   Andrey Kiselev, dron@ak4719.spb.edu
  *
  ******************************************************************************
- * Copyright (c) 2005, Andrey Kiselev <dron@remotesensing.org>
+ * Copyright (c) 2005, Andrey Kiselev <dron@ak4719.spb.edu>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2006/06/23 12:28:24  dron
+ * Use Pulkovo, 1942 datum and Krassovsky ellipsoid when reading projection
+ * from RMF file.
+ *
  * Revision 1.12  2006/06/19 12:31:00  dron
  * Fixed handling 16-bit packed images; fixes in multiband last-tile writing.
  *
@@ -1230,7 +1234,9 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         OGRSpatialReference oSRS;
 
-        oSRS.importFromPanorama( poDS->sHeader.iProjection, 0, 0, 0,
+        // XXX: Ellipsoid and datum are not specified in RMF file, but they
+        // are always Krassovsky/Pulkovo, 1942.
+        oSRS.importFromPanorama( poDS->sHeader.iProjection, 1, 1, 0,
                                  poDS->sHeader.dfStdP1, poDS->sHeader.dfStdP2,
                                  poDS->sHeader.dfCenterLat,
                                  poDS->sHeader.dfCenterLong );
