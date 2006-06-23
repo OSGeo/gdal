@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2006/06/23 02:01:07  mloskot
+ * Fixed 2 memory leaks in ogr2ogr.cpp and ogrct.cpp files. Updated OGRCreateCoordinateTransformation docs.
+ *
  * Revision 1.35  2006/05/29 17:31:13  fwarmerdam
  * added preliminary longitude wrap control
  *
@@ -367,6 +370,9 @@ OCTDestroyCoordinateTransformation( OGRCoordinateTransformationH hCT )
  * Create transformation object.
  *
  * This is the same as the C function OCTNewCoordinateTransformation().
+ *
+ * Input spatial reference system objects are assigned 
+ * by copy (calling clone() method) and no ownership transfer occurs.
  *
  * The delete operator, or OCTDestroyCoordinateTransformation() should
  * be used to destroy transformation objects. 
