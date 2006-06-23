@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/06/23 00:53:12  mloskot
+ * Removed redundant spaces from value of xsi:schemaLocation attribute in GML output.
+ *
  * Revision 1.24  2006/05/25 02:35:15  fwarmerdam
  * capture maximum string length in scan pass (Peter Rushforth)
  *
@@ -439,7 +442,7 @@ int OGRGMLDataSource::Create( const char *pszFilename,
 
         VSIFPrintf( fpOutput, 
               "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
-              "     xsi:schemaLocation=\"http://ogr.maptools.org/ %s\"\n", 
+              "     xsi:schemaLocation=\"http://ogr.maptools.org/%s\"\n", 
                     CPLResetExtension( pszBasename, "xsd" ) );
         CPLFree( pszBasename );
     }
