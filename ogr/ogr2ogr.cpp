@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2006/06/23 02:01:07  mloskot
+ * Fixed 2 memory leaks in ogr2ogr.cpp and ogrct.cpp files. Updated OGRCreateCoordinateTransformation docs.
+ *
  * Revision 1.36  2006/03/31 17:57:32  fwarmerdam
  * header updates
  *
@@ -552,6 +555,8 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Close down.                                                     */
 /* -------------------------------------------------------------------- */
+    delete poOutputSRS;
+    delete poSourceSRS;
     delete poODS;
     delete poDS;
 
@@ -901,6 +906,11 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
 
     if( nGroupTransactions )
         poDstLayer->CommitTransaction();
+
+/* -------------------------------------------------------------------- */
+/*      Cleaning                                                        */
+/* -------------------------------------------------------------------- */
+    delete poCT;
 
     return TRUE;
 }
