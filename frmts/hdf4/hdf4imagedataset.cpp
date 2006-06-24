@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.58  2006/06/24 17:13:58  dron
+ * Fixed handling of non-image bands of Hyperion sensor.
+ *
  * Revision 1.57  2006/05/02 16:42:49  fwarmerdam
  * fix to preserve backslashes when parsing, and various initializations
  *
@@ -2372,9 +2375,18 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     if ( poDS->iSubdatasetType == HYPERION_L1 )
     {
         // XXX: Hyperion SDSs has Height x Bands x Width dimensions scheme
-        poDS->nBands = poDS->aiDimSizes[1];
-        poDS->nRasterXSize = poDS->aiDimSizes[2];
-        poDS->nRasterYSize = poDS->aiDimSizes[0];
+        if ( poDS->iRank > 2 )
+        {
+            poDS->nBands = poDS->aiDimSizes[1];
+            poDS->nRasterXSize = poDS->aiDimSizes[2];
+            poDS->nRasterYSize = poDS->aiDimSizes[0];
+        }
+        else
+        {
+            poDS->nBands = poDS->aiDimSizes[0];
+            poDS->nRasterXSize = poDS->aiDimSizes[1];
+            poDS->nRasterYSize = 1;
+        }
     }
 
 /* -------------------------------------------------------------------- */
