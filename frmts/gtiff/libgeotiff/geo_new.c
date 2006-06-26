@@ -13,6 +13,13 @@
  *    7 July,  1995      Greg Martin             Fix index
  *
  * $Log: geo_new.c,v $
+ * Revision 1.12  2006/06/26 20:03:37  fwarmerdam
+ * If the ascii parameters list is too short for the declared size
+ * of an ascii parameter, but it doesn't start off the end of the
+ * available string then just trim the length.  This is to make the
+ * ESRI sample data file 34105h2.tif work properly.  I wish we had
+ * a way of issuing warnings!
+ *
  * Revision 1.11  2004/04/27 21:32:08  warmerda
  * Allow GTIFNew(NULL) to work
  *
@@ -221,6 +228,12 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
                    which we lose in the low level reading code.  
                    If this is the case, drop the extra character */
                 count--;
+            }
+            else if (offset < tempData->tk_asciiParamsLength
+                     && offset + count > tempData->tk_asciiParamsLength )
+            {
+                count = tempData->tk_asciiParamsLength - offset;
+                /* issue warning... if we could */
             }
             else if (offset + count > tempData->tk_asciiParamsLength)
                 return (0);
