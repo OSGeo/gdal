@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2006/06/26 19:42:21  fwarmerdam
+ * added proper polar stereographic translation
+ *
  * Revision 1.47  2006/04/24 23:21:07  fwarmerdam
  * fixup some common ellipsoid names (from pgao)
  *
@@ -155,6 +158,10 @@ static char *apszAlbersMapping[] = {
     NULL, NULL };
 
 static char *apszMercatorMapping[] = {
+    SRS_PP_STANDARD_PARALLEL_1, SRS_PP_LATITUDE_OF_ORIGIN,
+    NULL, NULL };
+
+static char *apszPolarStereographicMapping[] = {
     SRS_PP_STANDARD_PARALLEL_1, SRS_PP_LATITUDE_OF_ORIGIN,
     NULL, NULL };
 
@@ -980,6 +987,29 @@ OGRErr OGRSpatialReference::morphToESRI()
                  "Hotine_Oblique_Mercator_Azimuth_Center" );
 
         /* ideally we should strip out of the rectified_grid_angle */
+        pszProjection = GetAttrValue("PROJECTION");
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Polar_Stereographic maps to ESRI codes                          */
+/*      Stereographic_South_Pole or Stereographic_North_Pole based      */
+/*      on latitude.                                                    */
+/* -------------------------------------------------------------------- */
+    if( pszProjection != NULL
+        && EQUAL(pszProjection,SRS_PT_POLAR_STEREOGRAPHIC) )
+    {
+        if( GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0 ) < 0.0 )
+        {
+            SetNode( "PROJCS|PROJECTION", 
+                     "Stereographic_South_Pole" );
+            pszProjection = GetAttrValue("PROJECTION");
+        }
+        else
+        {
+            SetNode( "PROJCS|PROJECTION", 
+                     "Stereographic_North_Pole" );
+            pszProjection = GetAttrValue("PROJECTION");
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -987,6 +1017,7 @@ OGRErr OGRSpatialReference::morphToESRI()
 /* -------------------------------------------------------------------- */
     GetRoot()->applyRemapper( "PROJECTION", 
                               apszProjMapping+1, apszProjMapping, 2 );
+    pszProjection = GetAttrValue("PROJECTION");
 
 /* -------------------------------------------------------------------- */
 /*      Translate DATUM keywords that are misnamed.                     */
@@ -1136,7 +1167,15 @@ OGRErr OGRSpatialReference::morphToESRI()
 
     if( pszProjection != NULL && EQUAL(pszProjection,"Mercator") )
         GetRoot()->applyRemapper( 
-            "PARAMETER", apszAlbersMapping + 1, apszAlbersMapping + 0, 2 );
+            "PARAMETER", apszMercatorMapping + 1, apszMercatorMapping + 0, 2 );
+
+    if( pszProjection != NULL 
+        && EQUALN(pszProjection,"Stereographic_",14)
+        && EQUALN(pszProjection+strlen(pszProjection)-5,"_Pole",5) )
+        GetRoot()->applyRemapper( 
+            "PARAMETER", 
+            apszPolarStereographicMapping + 1, 
+            apszPolarStereographicMapping + 0, 2 );
 
 /* -------------------------------------------------------------------- */
 /*      Convert SPHEROID name to use underscores instead of spaces.     */
@@ -1280,7 +1319,7 @@ OGRErr OGRSpatialReference::morphFromESRI()
     }
 
 /* -------------------------------------------------------------------- */
-/*      Remap albers and Mercator parameters.                           */
+/*      Remap Albers, Mercator and Polar Stereographic parameters.      */
 /* -------------------------------------------------------------------- */
     if( pszProjection != NULL && EQUAL(pszProjection,"Albers") )
         GetRoot()->applyRemapper( 
@@ -1289,6 +1328,25 @@ OGRErr OGRSpatialReference::morphFromESRI()
     if( pszProjection != NULL && EQUAL(pszProjection,"Mercator") )
         GetRoot()->applyRemapper( 
             "PARAMETER", apszMercatorMapping + 0, apszMercatorMapping + 1, 2 );
+
+    if( pszProjection != NULL 
+        && EQUALN(pszProjection,"Stereographic_",14) 
+        && EQUALN(pszProjection+strlen(pszProjection)-5,"_Pole",5) )
+        GetRoot()->applyRemapper( 
+            "PARAMETER", 
+            apszPolarStereographicMapping + 0, 
+            apszPolarStereographicMapping + 1, 2 );
+
+/* -------------------------------------------------------------------- */
+/*      Remap south and north polar stereographic to one value.         */
+/* -------------------------------------------------------------------- */
+    if( pszProjection != NULL
+        && EQUALN(pszProjection,"Stereographic_",14)
+        && EQUALN(pszProjection+strlen(pszProjection)-5,"_Pole",5) )
+    {
+        SetNode( "PROJCS|PROJECTION", SRS_PT_POLAR_STEREOGRAPHIC );
+        pszProjection = GetAttrValue("PROJECTION");
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Translate PROJECTION keywords that are misnamed.                */
