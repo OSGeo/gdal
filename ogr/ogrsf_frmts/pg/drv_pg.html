@@ -19,9 +19,9 @@ any other options and defaults
 that would apply to it, apply to the name here.  The PG: prefix is used
 to mark the name as a postgres connection string.<p>
 
-Currently all regular user tables are assumed to be layers from an OGR
-point of view, with the table names as the layer names.  Named views are
-not currently supported.<p>
+If the <i>geometry_columns</i> table exists, then all listed tables and
+named views will be treated as OGR layers.  Otherwise all regular user tables
+will be treated as layers.<p>
 
 Regular (non-spatial) tables can be accessed, and will return features with
 attributes, but not geometry.  If the table has a "wkb_geometry" field, it will
