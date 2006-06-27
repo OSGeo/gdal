@@ -1754,7 +1754,7 @@ SWIGINTERN double OSRSpatialReferenceShadow_GetAngularUnits(OSRSpatialReferenceS
     return OSRGetAngularUnits( self, 0 );
   }
 SWIGINTERN OGRErr OSRSpatialReferenceShadow_SetLinearUnits(OSRSpatialReferenceShadow *self,char const *name,double to_meters){
-    return OSRSetAngularUnits( self, name, to_meters );
+    return OSRSetLinearUnits( self, name, to_meters );
   }
 SWIGINTERN double OSRSpatialReferenceShadow_GetLinearUnits(OSRSpatialReferenceShadow *self){
     // Return code ignored.
@@ -1995,6 +1995,7 @@ XS(_wrap_GetWellKnownGeogCSAsWKT) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -2460,6 +2461,7 @@ XS(_wrap_SpatialReference_SetAttrValue) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -2514,6 +2516,7 @@ XS(_wrap_SpatialReference_SetAngularUnits) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -2596,6 +2599,7 @@ XS(_wrap_SpatialReference_SetLinearUnits) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -2785,6 +2789,7 @@ XS(_wrap_SpatialReference_SetUTM) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -2861,6 +2866,7 @@ XS(_wrap_SpatialReference_SetStatePlane) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -2902,6 +2908,7 @@ XS(_wrap_SpatialReference_AutoIdentifyEPSG) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -2944,6 +2951,7 @@ XS(_wrap_SpatialReference_SetProjection) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -2996,6 +3004,7 @@ XS(_wrap_SpatialReference_SetProjParm) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -3101,6 +3110,7 @@ XS(_wrap_SpatialReference_SetNormProjParm) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -3237,6 +3247,7 @@ XS(_wrap_SpatialReference_SetACEA) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -3314,6 +3325,7 @@ XS(_wrap_SpatialReference_SetAE) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -3387,6 +3399,7 @@ XS(_wrap_SpatialReference_SetCS) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -3460,6 +3473,7 @@ XS(_wrap_SpatialReference_SetBonne) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -3549,6 +3563,7 @@ XS(_wrap_SpatialReference_SetEC) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -3618,6 +3633,7 @@ XS(_wrap_SpatialReference_SetEckertIV) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -3681,6 +3697,7 @@ XS(_wrap_SpatialReference_SetEckertVI) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -3752,6 +3769,7 @@ XS(_wrap_SpatialReference_SetEquirectangular) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -3817,6 +3835,7 @@ XS(_wrap_SpatialReference_SetGS) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -3865,6 +3884,7 @@ XS(_wrap_SpatialReference_SetWellKnownGeogCS) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -3909,6 +3929,7 @@ XS(_wrap_SpatialReference_SetFromUserInput) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -3952,6 +3973,7 @@ XS(_wrap_SpatialReference_CopyGeogCSFrom) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4051,6 +4073,7 @@ XS(_wrap_SpatialReference_SetTOWGS84) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4104,6 +4127,7 @@ XS(_wrap_SpatialReference_GetTOWGS84) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4229,6 +4253,7 @@ XS(_wrap_SpatialReference_SetGeogCS) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4291,6 +4316,7 @@ XS(_wrap_SpatialReference_SetProjCS) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4333,6 +4359,7 @@ XS(_wrap_SpatialReference_ImportFromWkt) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4377,6 +4404,7 @@ XS(_wrap_SpatialReference_ImportFromProj4) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4419,6 +4447,7 @@ XS(_wrap_SpatialReference_ImportFromESRI) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4462,6 +4491,7 @@ XS(_wrap_SpatialReference_ImportFromEPSG) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4539,6 +4569,7 @@ XS(_wrap_SpatialReference_ImportFromPCI) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4628,6 +4659,7 @@ XS(_wrap_SpatialReference_ImportFromUSGS) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4678,6 +4710,7 @@ XS(_wrap_SpatialReference_ImportFromXML) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4719,6 +4752,7 @@ XS(_wrap_SpatialReference_ExportToWkt) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4785,6 +4819,7 @@ XS(_wrap_SpatialReference_ExportToPrettyWkt) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4843,6 +4878,7 @@ XS(_wrap_SpatialReference_ExportToProj4) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4911,6 +4947,7 @@ XS(_wrap_SpatialReference_ExportToPCI) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -5009,6 +5046,7 @@ XS(_wrap_SpatialReference_ExportToUSGS) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -5096,6 +5134,7 @@ XS(_wrap_SpatialReference_ExportToXML) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -5176,6 +5215,7 @@ XS(_wrap_SpatialReference_Validate) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -5209,6 +5249,7 @@ XS(_wrap_SpatialReference_StripCTParms) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -5242,6 +5283,7 @@ XS(_wrap_SpatialReference_FixupOrdering) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -5275,6 +5317,7 @@ XS(_wrap_SpatialReference_Fixup) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -5308,6 +5351,7 @@ XS(_wrap_SpatialReference_MorphToESRI) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -5341,6 +5385,7 @@ XS(_wrap_SpatialReference_MorphFromESRI) {
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }

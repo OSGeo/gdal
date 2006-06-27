@@ -562,6 +562,18 @@ sub ogr_tests {
 	}
 		
     }
+
+    # test CreateGeometryFromWkt
+    my $g;
+    eval {
+	$g = ogr::CreateGeometryFromWkt("POINT(1,2)");
+    };
+    mytest($@ eq "RuntimeError OGR Error: Corrupt data\n","error message '$@' not what I expected",'CreateGeometryFromWkt');
+    eval {
+	$g = ogr::CreateGeometryFromWkt("POINT(1 2)");
+    };
+    mytest($@ eq "","",'CreateGeometryFromWkt');
+
 }
 
 sub test_geom {

@@ -2096,8 +2096,10 @@ SWIGINTERN char const *OGRFieldDefnShadow_GetFieldTypeName(OGRFieldDefnShadow *s
                                       reference,
                                       &geom,
                                       len );
-    if (err != 0 )
+    if (err != 0 ) {
+       CPLError(CE_Failure, err, "%s", OGRErrMessages(err));
        return NULL;
+    }
     return (OGRGeometryShadow*) geom;
   }
  
@@ -2109,8 +2111,10 @@ SWIGINTERN char const *OGRFieldDefnShadow_GetFieldTypeName(OGRFieldDefnShadow *s
     OGRErr err = OGR_G_CreateFromWkt(val,
                                       reference,
                                       &geom);
-    if (err != 0 )
+    if (err != 0 ) {
+       CPLError(CE_Failure, err, "%s", OGRErrMessages(err));
        return NULL;
+    }
     return (OGRGeometryShadow*) geom;
   }
  
@@ -2277,6 +2281,9 @@ SWIGINTERN int OGRGeometryShadow_WkbSize(OGRGeometryShadow *self){
 SWIGINTERN int OGRGeometryShadow_GetCoordinateDimension(OGRGeometryShadow *self){
     return OGR_G_GetCoordinateDimension(self);
   }
+SWIGINTERN void OGRGeometryShadow_SetCoordinateDimension(OGRGeometryShadow *self,int dimension){
+    OGR_G_SetCoordinateDimension(self, dimension);
+  }
 SWIGINTERN int OGRGeometryShadow_GetDimension(OGRGeometryShadow *self){
     return OGR_G_GetDimension(self);
   }
@@ -2401,7 +2408,10 @@ XS(_wrap_Driver_name_get) {
       result = (char *)OGRDriverShadow_name_get(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_FromCharPtr(result); argvi++ ;
@@ -2460,7 +2470,10 @@ XS(_wrap_Driver_CreateDataSource) {
       result = (OGRDataSourceShadow *)OGRDriverShadow_CreateDataSource(arg1,(char const *)arg2,arg3);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDataSourceShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -2537,7 +2550,10 @@ XS(_wrap_Driver_CopyDataSource) {
       result = (OGRDataSourceShadow *)OGRDriverShadow_CopyDataSource(arg1,arg2,(char const *)arg3,arg4);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDataSourceShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -2603,7 +2619,10 @@ XS(_wrap_Driver_Open) {
       result = (OGRDataSourceShadow *)OGRDriverShadow_Open(arg1,(char const *)arg2,arg3);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDataSourceShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -2651,7 +2670,10 @@ XS(_wrap_Driver_DeleteDataSource) {
       result = (int)OGRDriverShadow_DeleteDataSource(arg1,(char const *)arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -2697,7 +2719,10 @@ XS(_wrap_Driver_TestCapability) {
       result = (bool)OGRDriverShadow_TestCapability(arg1,(char const *)arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_bool  SWIG_PERL_CALL_ARGS_1(static_cast< bool >(result)); argvi++ ;
@@ -2734,7 +2759,10 @@ XS(_wrap_Driver_GetName) {
       result = (char *)OGRDriverShadow_GetName(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_FromCharPtr(result); argvi++ ;
@@ -2769,7 +2797,10 @@ XS(_wrap_DataSource_name_get) {
       result = (char *)OGRDataSourceShadow_name_get(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_FromCharPtr(result); argvi++ ;
@@ -2804,7 +2835,10 @@ XS(_wrap_delete_DataSource) {
       
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -2839,7 +2873,10 @@ XS(_wrap_DataSource_GetRefCount) {
       result = (int)OGRDataSourceShadow_GetRefCount(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -2874,7 +2911,10 @@ XS(_wrap_DataSource_GetSummaryRefCount) {
       result = (int)OGRDataSourceShadow_GetSummaryRefCount(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -2909,7 +2949,10 @@ XS(_wrap_DataSource_GetLayerCount) {
       result = (int)OGRDataSourceShadow_GetLayerCount(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -2944,7 +2987,10 @@ XS(_wrap_DataSource_GetDriver) {
       result = (OGRDriverShadow *)OGRDataSourceShadow_GetDriver(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDriverShadow, 0 | SWIG_SHADOW); argvi++ ;
@@ -2979,7 +3025,10 @@ XS(_wrap_DataSource_GetName) {
       result = (char *)OGRDataSourceShadow_GetName(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_FromCharPtr(result); argvi++ ;
@@ -3022,12 +3071,16 @@ XS(_wrap_DataSource_DeleteLayer) {
       result = (OGRErr)OGRDataSourceShadow_DeleteLayer(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -3108,7 +3161,10 @@ XS(_wrap_DataSource_CreateLayer) {
       result = (OGRLayerShadow *)OGRDataSourceShadow_CreateLayer(arg1,(char const *)arg2,arg3,arg4,arg5);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRLayerShadow, 0 | SWIG_SHADOW); argvi++ ;
@@ -3189,7 +3245,10 @@ XS(_wrap_DataSource_CopyLayer) {
       result = (OGRLayerShadow *)OGRDataSourceShadow_CopyLayer(arg1,arg2,(char const *)arg3,arg4);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRLayerShadow, 0 | SWIG_SHADOW); argvi++ ;
@@ -3246,7 +3305,10 @@ XS(_wrap_DataSource_GetLayerByIndex) {
       result = (OGRLayerShadow *)OGRDataSourceShadow_GetLayerByIndex(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRLayerShadow, 0 | SWIG_SHADOW); argvi++ ;
@@ -3292,7 +3354,10 @@ XS(_wrap_DataSource_GetLayerByName) {
       result = (OGRLayerShadow *)OGRDataSourceShadow_GetLayerByName(arg1,(char const *)arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRLayerShadow, 0 | SWIG_SHADOW); argvi++ ;
@@ -3338,7 +3403,10 @@ XS(_wrap_DataSource_TestCapability) {
       result = (bool)OGRDataSourceShadow_TestCapability(arg1,(char const *)arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_bool  SWIG_PERL_CALL_ARGS_1(static_cast< bool >(result)); argvi++ ;
@@ -3405,7 +3473,10 @@ XS(_wrap_DataSource_ExecuteSQL) {
       result = (OGRLayerShadow *)OGRDataSourceShadow_ExecuteSQL(arg1,(char const *)arg2,arg3,(char const *)arg4);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRLayerShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -3451,7 +3522,10 @@ XS(_wrap_DataSource_ReleaseResultSet) {
       OGRDataSourceShadow_ReleaseResultSet(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -3488,7 +3562,10 @@ XS(_wrap_Layer_GetRefCount) {
       result = (int)OGRLayerShadow_GetRefCount(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -3530,7 +3607,10 @@ XS(_wrap_Layer_SetSpatialFilter) {
       OGRLayerShadow_SetSpatialFilter(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -3598,7 +3678,10 @@ XS(_wrap_Layer_SetSpatialFilterRect) {
       OGRLayerShadow_SetSpatialFilterRect(arg1,arg2,arg3,arg4,arg5);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -3641,7 +3724,10 @@ XS(_wrap_Layer_GetSpatialFilter) {
       result = (OGRGeometryShadow *)OGRLayerShadow_GetSpatialFilter(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, 0 | SWIG_SHADOW); argvi++ ;
@@ -3685,12 +3771,16 @@ XS(_wrap_Layer_SetAttributeFilter) {
       result = (OGRErr)OGRLayerShadow_SetAttributeFilter(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -3726,7 +3816,10 @@ XS(_wrap_Layer_ResetReading) {
       OGRLayerShadow_ResetReading(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -3761,7 +3854,10 @@ XS(_wrap_Layer_GetName) {
       result = (char *)OGRLayerShadow_GetName(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_FromCharPtr(result); argvi++ ;
@@ -3804,7 +3900,10 @@ XS(_wrap_Layer_GetFeature) {
       result = (OGRFeatureShadow *)OGRLayerShadow_GetFeature(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFeatureShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -3841,7 +3940,10 @@ XS(_wrap_Layer_GetNextFeature) {
       result = (OGRFeatureShadow *)OGRLayerShadow_GetNextFeature(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFeatureShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -3884,12 +3986,16 @@ XS(_wrap_Layer_SetNextByIndex) {
       result = (OGRErr)OGRLayerShadow_SetNextByIndex(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -3934,12 +4040,16 @@ XS(_wrap_Layer_SetFeature) {
       result = (OGRErr)OGRLayerShadow_SetFeature(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -3984,12 +4094,16 @@ XS(_wrap_Layer_CreateFeature) {
       result = (OGRErr)OGRLayerShadow_CreateFeature(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4034,12 +4148,16 @@ XS(_wrap_Layer_DeleteFeature) {
       result = (OGRErr)OGRLayerShadow_DeleteFeature(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4076,12 +4194,16 @@ XS(_wrap_Layer_SyncToDisk) {
       result = (OGRErr)OGRLayerShadow_SyncToDisk(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4116,7 +4238,10 @@ XS(_wrap_Layer_GetLayerDefn) {
       result = (OGRFeatureDefnShadow *)OGRLayerShadow_GetLayerDefn(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFeatureDefnShadow, 0 | SWIG_SHADOW); argvi++ ;
@@ -4161,7 +4286,10 @@ XS(_wrap_Layer_GetFeatureCount) {
       result = (int)OGRLayerShadow_GetFeatureCount(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -4214,12 +4342,16 @@ XS(_wrap_Layer_GetExtent) {
       result = (OGRErr)OGRLayerShadow_GetExtent(arg1,arg2,arg3);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4272,7 +4404,10 @@ XS(_wrap_Layer_TestCapability) {
       result = (bool)OGRLayerShadow_TestCapability(arg1,(char const *)arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_bool  SWIG_PERL_CALL_ARGS_1(static_cast< bool >(result)); argvi++ ;
@@ -4327,12 +4462,16 @@ XS(_wrap_Layer_CreateField) {
       result = (OGRErr)OGRLayerShadow_CreateField(arg1,arg2,arg3);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4371,12 +4510,16 @@ XS(_wrap_Layer_StartTransaction) {
       result = (OGRErr)OGRLayerShadow_StartTransaction(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4411,12 +4554,16 @@ XS(_wrap_Layer_CommitTransaction) {
       result = (OGRErr)OGRLayerShadow_CommitTransaction(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4451,12 +4598,16 @@ XS(_wrap_Layer_RollbackTransaction) {
       result = (OGRErr)OGRLayerShadow_RollbackTransaction(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4491,7 +4642,10 @@ XS(_wrap_Layer_GetSpatialRef) {
       result = (OSRSpatialReferenceShadow *)OGRLayerShadow_GetSpatialRef(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSRSpatialReferenceShadow, 0 | SWIG_SHADOW); argvi++ ;
@@ -4526,7 +4680,10 @@ XS(_wrap_Layer_GetFeatureRead) {
       result = OGRLayerShadow_GetFeatureRead(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj((new GIntBig(static_cast< const GIntBig& >(result))), SWIGTYPE_p_GIntBig, SWIG_POINTER_OWN | 0); argvi++ ;
@@ -4561,7 +4718,10 @@ XS(_wrap_delete_Feature) {
       
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -4598,7 +4758,10 @@ XS(_wrap_new_Feature) {
       result = (OGRFeatureShadow *)new_OGRFeatureShadow(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFeatureShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -4633,7 +4796,10 @@ XS(_wrap_Feature_GetDefnRef) {
       result = (OGRFeatureDefnShadow *)OGRFeatureShadow_GetDefnRef(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFeatureDefnShadow, 0 | SWIG_SHADOW); argvi++ ;
@@ -4676,12 +4842,16 @@ XS(_wrap_Feature_SetGeometry) {
       result = (OGRErr)OGRFeatureShadow_SetGeometry(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4724,12 +4894,16 @@ XS(_wrap_Feature_SetGeometryDirectly) {
       result = (OGRErr)OGRFeatureShadow_SetGeometryDirectly(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -4766,7 +4940,10 @@ XS(_wrap_Feature_GetGeometryRef) {
       result = (OGRGeometryShadow *)OGRFeatureShadow_GetGeometryRef(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, 0 | SWIG_SHADOW); argvi++ ;
@@ -4801,7 +4978,10 @@ XS(_wrap_Feature_Clone) {
       result = (OGRFeatureShadow *)OGRFeatureShadow_Clone(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFeatureShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -4844,7 +5024,10 @@ XS(_wrap_Feature_Equal) {
       result = (bool)OGRFeatureShadow_Equal(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_bool  SWIG_PERL_CALL_ARGS_1(static_cast< bool >(result)); argvi++ ;
@@ -4881,7 +5064,10 @@ XS(_wrap_Feature_GetFieldCount) {
       result = (int)OGRFeatureShadow_GetFieldCount(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -4924,7 +5110,10 @@ XS(_wrap_Feature_GetFieldDefnRef__SWIG_0) {
       result = (OGRFieldDefnShadow *)OGRFeatureShadow_GetFieldDefnRef__SWIG_0(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFieldDefnShadow, 0 | SWIG_SHADOW); argvi++ ;
@@ -4970,7 +5159,10 @@ XS(_wrap_Feature_GetFieldDefnRef__SWIG_1) {
       result = (OGRFieldDefnShadow *)OGRFeatureShadow_GetFieldDefnRef__SWIG_1(arg1,(char const *)arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFieldDefnShadow, 0 | SWIG_SHADOW); argvi++ ;
@@ -5095,7 +5287,10 @@ XS(_wrap_Feature_GetFieldAsString__SWIG_0) {
       result = (char *)OGRFeatureShadow_GetFieldAsString__SWIG_0(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_FromCharPtr(result); argvi++ ;
@@ -5141,7 +5336,10 @@ XS(_wrap_Feature_GetFieldAsString__SWIG_1) {
       result = (char *)OGRFeatureShadow_GetFieldAsString__SWIG_1(arg1,(char const *)arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_FromCharPtr(result); argvi++ ;
@@ -5266,7 +5464,10 @@ XS(_wrap_Feature_GetFieldAsInteger__SWIG_0) {
       result = (int)OGRFeatureShadow_GetFieldAsInteger__SWIG_0(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -5312,7 +5513,10 @@ XS(_wrap_Feature_GetFieldAsInteger__SWIG_1) {
       result = (int)OGRFeatureShadow_GetFieldAsInteger__SWIG_1(arg1,(char const *)arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -5437,7 +5641,10 @@ XS(_wrap_Feature_GetFieldAsDouble__SWIG_0) {
       result = (double)OGRFeatureShadow_GetFieldAsDouble__SWIG_0(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_double  SWIG_PERL_CALL_ARGS_1(static_cast< double >(result)); argvi++ ;
@@ -5483,7 +5690,10 @@ XS(_wrap_Feature_GetFieldAsDouble__SWIG_1) {
       result = (double)OGRFeatureShadow_GetFieldAsDouble__SWIG_1(arg1,(char const *)arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_double  SWIG_PERL_CALL_ARGS_1(static_cast< double >(result)); argvi++ ;
@@ -5608,7 +5818,10 @@ XS(_wrap_Feature_IsFieldSet__SWIG_0) {
       result = (bool)OGRFeatureShadow_IsFieldSet__SWIG_0(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_bool  SWIG_PERL_CALL_ARGS_1(static_cast< bool >(result)); argvi++ ;
@@ -5654,7 +5867,10 @@ XS(_wrap_Feature_IsFieldSet__SWIG_1) {
       result = (bool)OGRFeatureShadow_IsFieldSet__SWIG_1(arg1,(char const *)arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_bool  SWIG_PERL_CALL_ARGS_1(static_cast< bool >(result)); argvi++ ;
@@ -5780,7 +5996,10 @@ XS(_wrap_Feature_GetFieldIndex) {
       result = (int)OGRFeatureShadow_GetFieldIndex(arg1,(char const *)arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -5817,7 +6036,10 @@ XS(_wrap_Feature_GetFID) {
       result = (int)OGRFeatureShadow_GetFID(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -5860,12 +6082,16 @@ XS(_wrap_Feature_SetFID) {
       result = (OGRErr)OGRFeatureShadow_SetFID(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -5901,7 +6127,10 @@ XS(_wrap_Feature_DumpReadable) {
       OGRFeatureShadow_DumpReadable(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -5943,7 +6172,10 @@ XS(_wrap_Feature_UnsetField__SWIG_0) {
       OGRFeatureShadow_UnsetField__SWIG_0(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -5988,7 +6220,10 @@ XS(_wrap_Feature_UnsetField__SWIG_1) {
       OGRFeatureShadow_UnsetField__SWIG_1(arg1,(char const *)arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -6117,7 +6352,10 @@ XS(_wrap_Feature_SetField__SWIG_0) {
       OGRFeatureShadow_SetField__SWIG_0(arg1,arg2,(char const *)arg3);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -6167,7 +6405,10 @@ XS(_wrap_Feature_SetField__SWIG_1) {
       OGRFeatureShadow_SetField__SWIG_1(arg1,(char const *)arg2,(char const *)arg3);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -6322,12 +6563,16 @@ XS(_wrap_Feature_SetFrom) {
       result = (OGRErr)OGRFeatureShadow_SetFrom(arg1,arg2,arg3);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -6366,7 +6611,10 @@ XS(_wrap_Feature_GetStyleString) {
       result = (char *)OGRFeatureShadow_GetStyleString(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_FromCharPtr(result); argvi++ ;
@@ -6409,7 +6657,10 @@ XS(_wrap_Feature_SetStyleString) {
       OGRFeatureShadow_SetStyleString(arg1,(char const *)arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -6454,7 +6705,10 @@ XS(_wrap_Feature_GetFieldType__SWIG_0) {
       result = (OGRFieldType)OGRFeatureShadow_GetFieldType__SWIG_0(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -6509,7 +6763,10 @@ XS(_wrap_Feature_GetFieldType__SWIG_1) {
       result = (OGRFieldType)OGRFeatureShadow_GetFieldType__SWIG_1(arg1,(char const *)arg2,(char const *)arg3);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -6636,7 +6893,10 @@ XS(_wrap_delete_FeatureDefn) {
       
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -6674,7 +6934,10 @@ XS(_wrap_new_FeatureDefn) {
       result = (OGRFeatureDefnShadow *)new_OGRFeatureDefnShadow((char const *)arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFeatureDefnShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -6709,7 +6972,10 @@ XS(_wrap_FeatureDefn_GetName) {
       result = (char *)OGRFeatureDefnShadow_GetName(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_FromCharPtr(result); argvi++ ;
@@ -6744,7 +7010,10 @@ XS(_wrap_FeatureDefn_GetFieldCount) {
       result = (int)OGRFeatureDefnShadow_GetFieldCount(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -6787,7 +7056,10 @@ XS(_wrap_FeatureDefn_GetFieldDefn) {
       result = (OGRFieldDefnShadow *)OGRFeatureDefnShadow_GetFieldDefn(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFieldDefnShadow, 0 | SWIG_SHADOW); argvi++ ;
@@ -6833,7 +7105,10 @@ XS(_wrap_FeatureDefn_GetFieldIndex) {
       result = (int)OGRFeatureDefnShadow_GetFieldIndex(arg1,(char const *)arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -6877,7 +7152,10 @@ XS(_wrap_FeatureDefn_AddFieldDefn) {
       OGRFeatureDefnShadow_AddFieldDefn(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -6914,7 +7192,10 @@ XS(_wrap_FeatureDefn_GetGeomType) {
       result = (OGRwkbGeometryType)OGRFeatureDefnShadow_GetGeomType(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -6956,7 +7237,10 @@ XS(_wrap_FeatureDefn_SetGeomType) {
       OGRFeatureDefnShadow_SetGeomType(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -6993,7 +7277,10 @@ XS(_wrap_FeatureDefn_GetReferenceCount) {
       result = (int)OGRFeatureDefnShadow_GetReferenceCount(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -7028,7 +7315,10 @@ XS(_wrap_delete_FieldDefn) {
       
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -7076,7 +7366,10 @@ XS(_wrap_new_FieldDefn) {
       result = (OGRFieldDefnShadow *)new_OGRFieldDefnShadow((char const *)arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRFieldDefnShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -7113,7 +7406,10 @@ XS(_wrap_FieldDefn_GetName) {
       result = (char *)OGRFieldDefnShadow_GetName(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_FromCharPtr(result); argvi++ ;
@@ -7148,7 +7444,10 @@ XS(_wrap_FieldDefn_GetNameRef) {
       result = (char *)OGRFieldDefnShadow_GetNameRef(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_FromCharPtr(result); argvi++ ;
@@ -7191,7 +7490,10 @@ XS(_wrap_FieldDefn_SetName) {
       OGRFieldDefnShadow_SetName(arg1,(char const *)arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -7228,7 +7530,10 @@ XS(_wrap_FieldDefn_GetType) {
       result = (OGRFieldType)OGRFieldDefnShadow_GetType(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -7270,7 +7575,10 @@ XS(_wrap_FieldDefn_SetType) {
       OGRFieldDefnShadow_SetType(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -7307,7 +7615,10 @@ XS(_wrap_FieldDefn_GetJustify) {
       result = (OGRJustification)OGRFieldDefnShadow_GetJustify(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -7349,7 +7660,10 @@ XS(_wrap_FieldDefn_SetJustify) {
       OGRFieldDefnShadow_SetJustify(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -7386,7 +7700,10 @@ XS(_wrap_FieldDefn_GetWidth) {
       result = (int)OGRFieldDefnShadow_GetWidth(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -7428,7 +7745,10 @@ XS(_wrap_FieldDefn_SetWidth) {
       OGRFieldDefnShadow_SetWidth(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -7465,7 +7785,10 @@ XS(_wrap_FieldDefn_GetPrecision) {
       result = (int)OGRFieldDefnShadow_GetPrecision(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -7507,7 +7830,10 @@ XS(_wrap_FieldDefn_SetPrecision) {
       OGRFieldDefnShadow_SetPrecision(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -7552,7 +7878,10 @@ XS(_wrap_FieldDefn_GetFieldTypeName) {
       result = (char *)OGRFieldDefnShadow_GetFieldTypeName(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_FromCharPtr(result); argvi++ ;
@@ -7603,7 +7932,10 @@ XS(_wrap_CreateGeometryFromWkb) {
       result = (OGRGeometryShadow *)CreateGeometryFromWkb(arg1,arg2,arg3);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -7647,7 +7979,10 @@ XS(_wrap_CreateGeometryFromWkt) {
       result = (OGRGeometryShadow *)CreateGeometryFromWkt(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -7685,7 +8020,10 @@ XS(_wrap_CreateGeometryFromGML) {
       result = (OGRGeometryShadow *)CreateGeometryFromGML((char const *)arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -7720,7 +8058,10 @@ XS(_wrap_delete_Geometry) {
       
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -7800,7 +8141,10 @@ XS(_wrap_new_Geometry) {
       result = (OGRGeometryShadow *)new_OGRGeometryShadow(arg1,arg2,arg3,arg4,arg5);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -7849,12 +8193,16 @@ XS(_wrap_Geometry_ExportToWkt) {
       result = (OGRErr)OGRGeometryShadow_ExportToWkt(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -7925,12 +8273,16 @@ XS(_wrap_Geometry_ExportToWkb) {
       result = (OGRErr)OGRGeometryShadow_ExportToWkb(arg1,arg2,arg3,arg4);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -7984,7 +8336,10 @@ XS(_wrap_Geometry_ExportToGML) {
       result = (char *)OGRGeometryShadow_ExportToGML(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_FromCharPtr(result); argvi++ ;
@@ -8044,7 +8399,10 @@ XS(_wrap_Geometry_AddPoint) {
       OGRGeometryShadow_AddPoint(arg1,arg2,arg3,arg4);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -8091,12 +8449,16 @@ XS(_wrap_Geometry_AddGeometryDirectly) {
       result = (OGRErr)OGRGeometryShadow_AddGeometryDirectly(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -8141,12 +8503,16 @@ XS(_wrap_Geometry_AddGeometry) {
       result = (OGRErr)OGRGeometryShadow_AddGeometry(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -8183,7 +8549,10 @@ XS(_wrap_Geometry_Clone) {
       result = (OGRGeometryShadow *)OGRGeometryShadow_Clone(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -8218,7 +8587,10 @@ XS(_wrap_Geometry_GetGeometryType) {
       result = (OGRwkbGeometryType)OGRGeometryShadow_GetGeometryType(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -8253,7 +8625,10 @@ XS(_wrap_Geometry_GetGeometryName) {
       result = (char *)OGRGeometryShadow_GetGeometryName(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_FromCharPtr(result); argvi++ ;
@@ -8288,7 +8663,10 @@ XS(_wrap_Geometry_GetArea) {
       result = (double)OGRGeometryShadow_GetArea(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_double  SWIG_PERL_CALL_ARGS_1(static_cast< double >(result)); argvi++ ;
@@ -8323,7 +8701,10 @@ XS(_wrap_Geometry_GetPointCount) {
       result = (int)OGRGeometryShadow_GetPointCount(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -8368,7 +8749,10 @@ XS(_wrap_Geometry_GetX) {
       result = (double)OGRGeometryShadow_GetX(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_double  SWIG_PERL_CALL_ARGS_1(static_cast< double >(result)); argvi++ ;
@@ -8415,7 +8799,10 @@ XS(_wrap_Geometry_GetY) {
       result = (double)OGRGeometryShadow_GetY(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_double  SWIG_PERL_CALL_ARGS_1(static_cast< double >(result)); argvi++ ;
@@ -8462,7 +8849,10 @@ XS(_wrap_Geometry_GetZ) {
       result = (double)OGRGeometryShadow_GetZ(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_double  SWIG_PERL_CALL_ARGS_1(static_cast< double >(result)); argvi++ ;
@@ -8499,7 +8889,10 @@ XS(_wrap_Geometry_GetGeometryCount) {
       result = (int)OGRGeometryShadow_GetGeometryCount(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -8567,7 +8960,10 @@ XS(_wrap_Geometry_SetPoint) {
       OGRGeometryShadow_SetPoint(arg1,arg2,arg3,arg4,arg5);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -8618,7 +9014,10 @@ XS(_wrap_Geometry_GetGeometryRef) {
       result = (OGRGeometryShadow *)OGRGeometryShadow_GetGeometryRef(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, 0 | SWIG_SHADOW); argvi++ ;
@@ -8655,7 +9054,10 @@ XS(_wrap_Geometry_GetBoundary) {
       result = (OGRGeometryShadow *)OGRGeometryShadow_GetBoundary(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -8690,7 +9092,10 @@ XS(_wrap_Geometry_ConvexHull) {
       result = (OGRGeometryShadow *)OGRGeometryShadow_ConvexHull(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -8743,7 +9148,10 @@ XS(_wrap_Geometry_Buffer) {
       result = (OGRGeometryShadow *)OGRGeometryShadow_Buffer(arg1,arg2,arg3);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -8790,7 +9198,10 @@ XS(_wrap_Geometry_Intersection) {
       result = (OGRGeometryShadow *)OGRGeometryShadow_Intersection(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -8835,7 +9246,10 @@ XS(_wrap_Geometry_Union) {
       result = (OGRGeometryShadow *)OGRGeometryShadow_Union(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -8880,7 +9294,10 @@ XS(_wrap_Geometry_Difference) {
       result = (OGRGeometryShadow *)OGRGeometryShadow_Difference(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -8925,7 +9342,10 @@ XS(_wrap_Geometry_SymmetricDifference) {
       result = (OGRGeometryShadow *)OGRGeometryShadow_SymmetricDifference(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -8970,7 +9390,10 @@ XS(_wrap_Geometry_Distance) {
       result = (double)OGRGeometryShadow_Distance(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_double  SWIG_PERL_CALL_ARGS_1(static_cast< double >(result)); argvi++ ;
@@ -9006,7 +9429,10 @@ XS(_wrap_Geometry_Empty) {
       OGRGeometryShadow_Empty(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -9049,7 +9475,10 @@ XS(_wrap_Geometry_Intersect) {
       result = (bool)OGRGeometryShadow_Intersect(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_bool  SWIG_PERL_CALL_ARGS_1(static_cast< bool >(result)); argvi++ ;
@@ -9094,7 +9523,10 @@ XS(_wrap_Geometry_Equal) {
       result = (bool)OGRGeometryShadow_Equal(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_bool  SWIG_PERL_CALL_ARGS_1(static_cast< bool >(result)); argvi++ ;
@@ -9139,7 +9571,10 @@ XS(_wrap_Geometry_Disjoint) {
       result = (bool)OGRGeometryShadow_Disjoint(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_bool  SWIG_PERL_CALL_ARGS_1(static_cast< bool >(result)); argvi++ ;
@@ -9184,7 +9619,10 @@ XS(_wrap_Geometry_Touches) {
       result = (bool)OGRGeometryShadow_Touches(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_bool  SWIG_PERL_CALL_ARGS_1(static_cast< bool >(result)); argvi++ ;
@@ -9229,7 +9667,10 @@ XS(_wrap_Geometry_Crosses) {
       result = (bool)OGRGeometryShadow_Crosses(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_bool  SWIG_PERL_CALL_ARGS_1(static_cast< bool >(result)); argvi++ ;
@@ -9274,7 +9715,10 @@ XS(_wrap_Geometry_Within) {
       result = (bool)OGRGeometryShadow_Within(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_bool  SWIG_PERL_CALL_ARGS_1(static_cast< bool >(result)); argvi++ ;
@@ -9319,7 +9763,10 @@ XS(_wrap_Geometry_Contains) {
       result = (bool)OGRGeometryShadow_Contains(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_bool  SWIG_PERL_CALL_ARGS_1(static_cast< bool >(result)); argvi++ ;
@@ -9364,7 +9811,10 @@ XS(_wrap_Geometry_Overlaps) {
       result = (bool)OGRGeometryShadow_Overlaps(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_bool  SWIG_PERL_CALL_ARGS_1(static_cast< bool >(result)); argvi++ ;
@@ -9409,12 +9859,16 @@ XS(_wrap_Geometry_TransformTo) {
       result = (OGRErr)OGRGeometryShadow_TransformTo(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -9459,12 +9913,16 @@ XS(_wrap_Geometry_Transform) {
       result = (OGRErr)OGRGeometryShadow_Transform(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -9501,7 +9959,10 @@ XS(_wrap_Geometry_GetSpatialReference) {
       result = (OSRSpatialReferenceShadow *)OGRGeometryShadow_GetSpatialReference(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSRSpatialReferenceShadow, 0 | SWIG_SHADOW); argvi++ ;
@@ -9543,7 +10004,10 @@ XS(_wrap_Geometry_AssignSpatialReference) {
       OGRGeometryShadow_AssignSpatialReference(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -9579,7 +10043,10 @@ XS(_wrap_Geometry_CloseRings) {
       OGRGeometryShadow_CloseRings(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -9613,7 +10080,10 @@ XS(_wrap_Geometry_FlattenTo2D) {
       OGRGeometryShadow_FlattenTo2D(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -9653,7 +10123,10 @@ XS(_wrap_Geometry_GetEnvelope) {
       OGRGeometryShadow_GetEnvelope(arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -9695,7 +10168,10 @@ XS(_wrap_Geometry_Centroid) {
       result = (OGRGeometryShadow *)OGRGeometryShadow_Centroid(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -9730,7 +10206,10 @@ XS(_wrap_Geometry_WkbSize) {
       result = (int)OGRGeometryShadow_WkbSize(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -9765,13 +10244,63 @@ XS(_wrap_Geometry_GetCoordinateDimension) {
       result = (int)OGRGeometryShadow_GetCoordinateDimension(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
     
     XSRETURN(argvi);
   fail:
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_Geometry_SetCoordinateDimension) {
+  {
+    OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+    int arg2 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 2) || (items > 2)) {
+      SWIG_croak("Usage: Geometry_SetCoordinateDimension(self,dimension);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_SetCoordinateDimension" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Geometry_SetCoordinateDimension" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+    {
+      CPLErrorReset();
+      OGRGeometryShadow_SetCoordinateDimension(arg1,arg2);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
     
     SWIG_croak_null();
   }
@@ -9800,7 +10329,10 @@ XS(_wrap_Geometry_GetDimension) {
       result = (int)OGRGeometryShadow_GetDimension(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -9827,7 +10359,10 @@ XS(_wrap_GetDriverCount) {
       result = (int)OGRGetDriverCount();
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -9852,7 +10387,10 @@ XS(_wrap_GetOpenDSCount) {
       result = (int)OGRGetOpenDSCount();
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
@@ -9885,12 +10423,16 @@ XS(_wrap_SetGenerate_DB2_V72_BYTE_ORDER) {
       result = (OGRErr)OGRSetGenerate_DB2_V72_BYTE_ORDER(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
         croak( OGRErrMessages(result) );
       }
     }
@@ -9916,7 +10458,10 @@ XS(_wrap_RegisterAll) {
       OGRRegisterAll();
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     
@@ -9949,7 +10494,10 @@ XS(_wrap_GetOpenDS) {
       result = (OGRDataSourceShadow *)GetOpenDS(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDataSourceShadow, 0 | SWIG_SHADOW); argvi++ ;
@@ -9995,7 +10543,10 @@ XS(_wrap_Open) {
       result = (OGRDataSourceShadow *)Open((char const *)arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDataSourceShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -10043,7 +10594,10 @@ XS(_wrap_OpenShared) {
       result = (OGRDataSourceShadow *)OpenShared((char const *)arg1,arg2);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDataSourceShadow, SWIG_OWNER | SWIG_SHADOW); argvi++ ;
@@ -10081,7 +10635,10 @@ XS(_wrap_GetDriverByName) {
       result = (OGRDriverShadow *)GetDriverByName((char const *)arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDriverShadow, 0 | SWIG_SHADOW); argvi++ ;
@@ -10116,7 +10673,10 @@ XS(_wrap_GetDriver) {
       result = (OGRDriverShadow *)GetDriver(arg1);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
-        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
       }
     }
     ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRDriverShadow, 0 | SWIG_SHADOW); argvi++ ;
@@ -10354,6 +10914,7 @@ static swig_command_info swig_commands[] = {
 {"ogrc::Geometry_Centroid", _wrap_Geometry_Centroid},
 {"ogrc::Geometry_WkbSize", _wrap_Geometry_WkbSize},
 {"ogrc::Geometry_GetCoordinateDimension", _wrap_Geometry_GetCoordinateDimension},
+{"ogrc::Geometry_SetCoordinateDimension", _wrap_Geometry_SetCoordinateDimension},
 {"ogrc::Geometry_GetDimension", _wrap_Geometry_GetDimension},
 {"ogrc::GetDriverCount", _wrap_GetDriverCount},
 {"ogrc::GetOpenDSCount", _wrap_GetOpenDSCount},
