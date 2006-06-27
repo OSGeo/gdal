@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2006/06/27 14:10:04  fwarmerdam
+ * Always set style string even if just clearing in SetFrom().
+ *
  * Revision 1.37  2006/06/27 14:05:53  fwarmerdam
  * Support NULL setting a null style string.
  *
@@ -2568,8 +2571,7 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
 /* -------------------------------------------------------------------- */
 /*      Copy feature style string.                                      */
 /* -------------------------------------------------------------------- */
-    if( poSrcFeature->GetStyleString() != NULL )
-        SetStyleString( poSrcFeature->GetStyleString() );
+    SetStyleString( poSrcFeature->GetStyleString() );
 
 /* -------------------------------------------------------------------- */
 /*      Set the fields by name.                                         */
