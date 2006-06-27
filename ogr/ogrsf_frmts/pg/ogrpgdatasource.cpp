@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2006/06/27 10:20:59  osemykin
+ * Added OGRPGDataSource::GetLayerByName(const char * pszName)
+ *
  * Revision 1.48  2006/04/13 03:36:59  fwarmerdam
  * When adding records to spatial_ref_sys, ensure that proj4text is
  * also added!  http://bugzilla.remotesensing.org/show_bug.cgi?id=1146
@@ -877,6 +880,45 @@ OGRLayer *OGRPGDataSource::GetLayer( int iLayer )
     else
         return papoLayers[iLayer];
 }
+
+/************************************************************************/
+/*                           GetLayerByName()                           */
+/************************************************************************/
+
+OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
+
+{
+    if ( ! pszName )
+        return NULL;
+
+    int  i;
+    
+    int count = GetLayerCount();
+    /* first a case sensitive check */
+    for( i = 0; i < count; i++ )
+    {
+        OGRLayer *poLayer = GetLayer(i);
+
+        if( strcmp( pszName, poLayer->GetLayerDefn()->GetName() ) == 0 )
+            return poLayer;
+    }
+        
+    /* then case insensitive */
+    for( i = 0; i < count; i++ )
+    {
+        OGRLayer *poLayer = GetLayer(i);
+
+        if( EQUAL( pszName, poLayer->GetLayerDefn()->GetName() ) )
+            return poLayer;
+    }
+    
+    OpenTable( pszName, TRUE, FALSE );
+    
+    if(GetLayerCount() == count+1) return GetLayer(count);
+
+    return NULL;
+}
+
 
 /************************************************************************/
 /*                        OGRPGNoticeProcessor()                        */
