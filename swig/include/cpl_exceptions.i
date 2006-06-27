@@ -10,6 +10,9 @@
  * This is not thread safe.
  *
  * $Log$
+ * Revision 1.5  2006/06/27 12:54:34  ajolma
+ * Perl seems to need SWIG_exception_fail
+ *
  * Revision 1.4  2005/09/30 20:21:31  kruland
  * Removed the file global variable bUseExceptions.
  *
@@ -55,6 +58,10 @@ void DontUseExceptions() {
     $action
     CPLErr eclass = CPLGetLastErrorType();
     if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+#if defined(SWIGPERL)
+      SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+#else
       SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+#endif
     }
 }
