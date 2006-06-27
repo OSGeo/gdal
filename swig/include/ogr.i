@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.56  2006/06/27 12:47:28  ajolma
+ * Error reporting in CreateGeometry, added SetCoordinateDimension
+ *
  * Revision 1.55  2006/04/11 12:48:52  ajolma
  * swig 1.3.29 _does_ have DISOWN for Perl
  *
@@ -976,8 +979,10 @@ public:
                                       reference,
                                       &geom,
                                       len );
-    if (err != 0 )
+    if (err != 0 ) {
+       CPLError(CE_Failure, err, "%s", OGRErrMessages(err));
        return NULL;
+    }
     return (OGRGeometryShadow*) geom;
   }
  
@@ -994,8 +999,10 @@ public:
     OGRErr err = OGR_G_CreateFromWkt(val,
                                       reference,
                                       &geom);
-    if (err != 0 )
+    if (err != 0 ) {
+       CPLError(CE_Failure, err, "%s", OGRErrMessages(err));
        return NULL;
+    }
     return (OGRGeometryShadow*) geom;
   }
  
@@ -1241,6 +1248,10 @@ public:
   
   int GetCoordinateDimension() {
     return OGR_G_GetCoordinateDimension(self);
+  }
+
+  void SetCoordinateDimension(int dimension) {
+    OGR_G_SetCoordinateDimension(self, dimension);
   }
   
   int GetDimension() {
