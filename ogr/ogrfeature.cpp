@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2006/06/27 14:05:53  fwarmerdam
+ * Support NULL setting a null style string.
+ *
  * Revision 1.36  2006/04/02 18:25:59  fwarmerdam
  * added OFTDateTime, and OFTTime support
  *
@@ -2673,10 +2676,7 @@ OGRErr OGR_F_SetFrom( OGRFeatureH hFeat, OGRFeatureH hOtherFeat,
 
 const char *OGRFeature::GetStyleString()
 {
-    if (m_pszStyleString)
-      return m_pszStyleString;
-    else
-      return NULL;
+    return m_pszStyleString;
 }
 
 /************************************************************************/
@@ -2716,10 +2716,13 @@ const char *OGR_F_GetStyleString( OGRFeatureH hFeat )
 void OGRFeature::SetStyleString(const char *pszString)
 {
     if (m_pszStyleString)
-      CPLFree(m_pszStyleString);
+    {
+        CPLFree(m_pszStyleString);
+        m_pszStyleString = NULL;
+    }
     
-    m_pszStyleString = CPLStrdup(pszString);
-    
+    if( pszString )
+        m_pszStyleString = CPLStrdup(pszString);
 }
 
 /************************************************************************/
