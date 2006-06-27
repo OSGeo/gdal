@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2006/06/27 14:54:16  fwarmerdam
+ * ensure setCoordinateDimension(2) clears z
+ *
  * Revision 1.37  2006/03/31 17:44:20  fwarmerdam
  * header updates
  *
@@ -270,6 +273,19 @@ void OGRPoint::flattenTo2D()
 {
     z = 0;
     nCoordDimension = 2;
+}
+
+/************************************************************************/
+/*                       setCoordinateDimension()                       */
+/************************************************************************/
+
+void OGRPoint::setCoordinateDimension( int nNewDimension )
+
+{
+    nCoordDimension = nNewDimension;
+    
+    if( nCoordDimension == 2 )
+        z = 0;
 }
 
 /************************************************************************/
