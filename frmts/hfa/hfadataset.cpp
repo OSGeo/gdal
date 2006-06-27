@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.80  2006/06/27 01:19:32  fwarmerdam
+ * Form histograms metadata more efficiently for large histograms.
+ *
  * Revision 1.79  2006/06/06 19:13:34  fwarmerdam
  * Added support (from Peng Gao) to unpack EPT_u2 raster data.
  *
@@ -790,6 +793,7 @@ void HFARasterBand::ReadAuxMetadata()
         }
         unsigned int nBufSize = 1024;
         char * pszBinValues = (char *)CPLMalloc( nBufSize );
+        int    nBinValuesLen = 0;
         pszBinValues[0] = 0;
         for ( int nBin = 0; nBin < nNumBins; ++nBin )
         {
@@ -809,13 +813,14 @@ void HFARasterBand::ReadAuxMetadata()
                 HFAStandard( nBinSize, &nValue );
                 snprintf( szBuf, 31, "%d", nValue );
             }
-            if ( ( strlen( pszBinValues ) + strlen( szBuf ) + 2 ) > nBufSize )
+            if ( ( nBinValuesLen + strlen( szBuf ) + 2 ) > nBufSize )
             {
                 nBufSize *= 2;
-                pszBinValues = (char *)realloc( pszBinValues, nBufSize );
+                pszBinValues = (char *)CPLRealloc( pszBinValues, nBufSize );
             }
-            strcat( pszBinValues, szBuf );
-            strcat( pszBinValues, "|" );
+            strcat( pszBinValues+nBinValuesLen, szBuf );
+            strcat( pszBinValues+nBinValuesLen, "|" );
+            nBinValuesLen += strlen(pszBinValues+nBinValuesLen);
         }
         SetMetadataItem( "STATISTICS_HISTOBINVALUES", pszBinValues );
         CPLFree( pszBinValues );
