@@ -1,6 +1,6 @@
 use ExtUtils::MakeMaker;
 
-$ExtUtils::MakeMaker::Verbose = 1;
+$ExtUtils::MakeMaker::Verbose = 0;
 
 $libdir='';
 

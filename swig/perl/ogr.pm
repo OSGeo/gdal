@@ -400,6 +400,7 @@ sub new {
 *Centroid = *ogrc::Geometry_Centroid;
 *WkbSize = *ogrc::Geometry_WkbSize;
 *GetCoordinateDimension = *ogrc::Geometry_GetCoordinateDimension;
+*SetCoordinateDimension = *ogrc::Geometry_SetCoordinateDimension;
 *GetDimension = *ogrc::Geometry_GetDimension;
 sub DISOWN {
     my $self = shift;
