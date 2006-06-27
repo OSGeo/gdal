@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/06/27 10:20:59  osemykin
+ * Added OGRPGDataSource::GetLayerByName(const char * pszName)
+ *
  * Revision 1.28  2006/03/28 23:06:57  fwarmerdam
  * fixed contact info
  *
@@ -327,7 +330,7 @@ class OGRPGDataSource : public OGRDataSource
 
   public:
     PGver               sPostGISVersion;
-    
+
     int                 bUseBinaryCursor;
 
   public:
@@ -346,6 +349,7 @@ class OGRPGDataSource : public OGRDataSource
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
+    OGRLayer            *GetLayerByName(const char * pszName);
 
     virtual OGRLayer    *CreateLayer( const char *,
                                       OGRSpatialReference * = NULL,
