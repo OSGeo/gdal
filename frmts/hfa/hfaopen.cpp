@@ -35,6 +35,10 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.57  2006/06/27 01:26:44  fwarmerdam
+ * When creating a .rrd file, it's dependent file should be the original
+ * file, not the .aux file.
+ *
  * Revision 1.56  2006/05/15 15:31:54  fwarmerdam
  * avoid dependence on GDAL for GDALInvertGeoTransform
  *
@@ -327,14 +331,22 @@ HFAInfo_t *HFACreateDependent( HFAInfo_t *psBase )
 
 /* -------------------------------------------------------------------- */
 /*      Add the DependentFile node with the pointer back to the         */
-/*      parent.                                                         */
+/*      parent.  When working from an .aux file we really want the      */
+/*      .rrd to point back to the original file, not the .aux file.     */
 /* -------------------------------------------------------------------- */
+    HFAEntry  *poEntry = psBase->poRoot->GetNamedChild("DependentFile");
+    const char *pszDependentFile = NULL;
+    if( poEntry != NULL )
+        pszDependentFile = poEntry->GetStringField( "dependent.string" );
+    if( pszDependentFile == NULL )
+        pszDependentFile = psBase->pszFilename;
+    
     HFAEntry *poDF = new HFAEntry( psDep, "DependentFile", 
                                    "Eimg_DependentFile", psDep->poRoot );
 
-    poDF->MakeData( strlen(psBase->pszFilename) + 50 );
+    poDF->MakeData( strlen(pszDependentFile) + 50 );
     poDF->SetPosition();
-    poDF->SetStringField( "dependent.string", psBase->pszFilename );
+    poDF->SetStringField( "dependent.string", pszDependentFile );
     
     return psDep;
 }
