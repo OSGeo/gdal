@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.41  2006/06/27 13:15:32  ajolma
+ * removed throw from GDALAutoCreateWarpedVRT
+ *
  * Revision 1.40  2006/02/02 20:52:40  collinsb
  * Added SWIG JAVA bindings
  *
@@ -560,7 +563,7 @@ GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
                                                    maxerror,
                                                    0 );
   if (ds == 0) {
-    throw CPLGetLastErrorMsg();
+    /*throw CPLGetLastErrorMsg(); causes a SWIG_exception later*/
   }
   return ds;
   
