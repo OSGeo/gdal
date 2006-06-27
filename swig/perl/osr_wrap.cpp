@@ -1930,7 +1930,8 @@ SWIGINTERN OGRErr OSRSpatialReferenceShadow_MorphFromESRI(OSRSpatialReferenceSha
 SWIGINTERN OSRCoordinateTransformationShadow *new_OSRCoordinateTransformationShadow(OSRSpatialReferenceShadow *src,OSRSpatialReferenceShadow *dst){
     OSRCoordinateTransformationShadow *obj = (OSRCoordinateTransformationShadow*) OCTNewCoordinateTransformation( src, dst );
     if (obj == 0 ) {
-      throw "Failed to create coordinate transformation";
+      CPLError(CE_Failure, 1, "Failed to create coordinate transformation");
+      return NULL;
     }
     return obj;
   }
