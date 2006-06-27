@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.27  2006/06/27 13:14:49  ajolma
+ * removed throw from OSRCoordinateTransformationShadow
+ *
  * Revision 1.26  2006/06/27 12:48:44  ajolma
  * Geo::GDAL namespace had creeped in too early
  *
@@ -665,7 +668,8 @@ public:
   OSRCoordinateTransformationShadow( OSRSpatialReferenceShadow *src, OSRSpatialReferenceShadow *dst ) {
     OSRCoordinateTransformationShadow *obj = (OSRCoordinateTransformationShadow*) OCTNewCoordinateTransformation( src, dst );
     if (obj == 0 ) {
-      throw "Failed to create coordinate transformation";
+      CPLError(CE_Failure, 1, "Failed to create coordinate transformation");
+      return NULL;
     }
     return obj;
   }
