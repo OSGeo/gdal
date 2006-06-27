@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2006/06/27 14:54:16  fwarmerdam
+ * ensure setCoordinateDimension(2) clears z
+ *
  * Revision 1.62  2006/06/19 23:19:45  mloskot
  * Added new functions OGRLinearRing::isPointInRing and OGRPolygon::IsPointOnSurface.
  *
@@ -376,6 +379,7 @@ class CPL_DLL OGRPoint : public OGRGeometry
     double      getZ() const { return z; }
 
     // Non standard
+    virtual void setCoordinateDimension( int nDimension ); 
     void        setX( double xIn ) { x = xIn; }
     void        setY( double yIn ) { y = yIn; }
     void        setZ( double zIn ) { z = zIn; nCoordDimension=3; }
