@@ -12,6 +12,7 @@ for my $lib ('gdal','gdalconst','ogr','osr') {
 		   LD => "g++",
 		   MAKEFILE => 'Makefile_'.$lib,
 		   LIBS => "$libdir -L../../.libs -lgdal",
+		   CCFLAGS => "-fpic", # needed for SELinux
 		   INC => '-I../../gcore -I../../alg -I../../ogr -I../../port',
 		   OBJECT => $lib.'_wrap.o'
 		   );

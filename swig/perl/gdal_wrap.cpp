@@ -2223,7 +2223,7 @@ GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
                                                    maxerror,
                                                    0 );
   if (ds == 0) {
-    throw CPLGetLastErrorMsg();
+    /*throw CPLGetLastErrorMsg(); causes a SWIG_exception later*/
   }
   return ds;
   
