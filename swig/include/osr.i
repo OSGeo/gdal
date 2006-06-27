@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.26  2006/06/27 12:48:44  ajolma
+ * Geo::GDAL namespace had creeped in too early
+ *
  * Revision 1.25  2006/06/20 07:33:17  ajolma
  * SetLinearUnits should call OSRSetLinearUnits
  *
@@ -108,7 +111,7 @@
  *
 */
 
-#ifdef SWIGPERL
+#ifdef SWIGPERL_USE_THIS_LATER
 %module "Geo::GDAL::osr"
 #else
 %module osr
