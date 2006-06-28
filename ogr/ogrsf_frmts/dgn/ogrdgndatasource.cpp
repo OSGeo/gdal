@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/06/28 13:49:55  fwarmerdam
+ * Changed default uorpersu, and su-per-mu (related to bug 376).
+ *
  * Revision 1.11  2004/08/17 21:00:21  warmerda
  * Fixed last fix so that short files aren't even passed to DGNTestOpen().
  *
@@ -226,7 +229,7 @@ OGRLayer *OGRDGNDataSource::CreateLayer( const char *pszLayerName,
 {
     const char *pszSeed, *pszMasterUnit = "m", *pszSubUnit = "cm";
     const char *pszValue;
-    int nUORPerSU=100, nSUPerMU=1;
+    int nUORPerSU=1, nSUPerMU=100;
     int nCreationFlags = 0, b3DRequested;
     double dfOriginX = -21474836.0,  /* default origin centered on zero */
            dfOriginY = -21474836.0,  /* with two decimals of precision */
