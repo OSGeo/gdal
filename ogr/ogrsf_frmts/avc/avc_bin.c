@@ -1,14 +1,14 @@
 /**********************************************************************
- * $Id: avc_bin.c,v 1.26 2004/02/28 06:35:49 warmerda Exp $
+ * $Id: avc_bin.c,v 1.28 2006/06/14 16:31:28 daniel Exp $
  *
  * Name:     avc_bin.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
  * Language: ANSI C
  * Purpose:  Binary files access functions.
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2005, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log: avc_bin.c,v $
+ * Revision 1.28  2006/06/14 16:31:28  daniel
+ * Added support for AVCCoverPC2 type (bug 1491)
+ *
+ * Revision 1.27  2005/06/03 03:49:58  daniel
+ * Update email address, website url, and copyright dates
+ *
  * Revision 1.26  2004/02/28 06:35:49  warmerda
  * Fixed AVCBinReadObject() index support to use 'x' or 'X' for index
  * depending on the case of the original name.
@@ -174,7 +180,7 @@ AVCBinFile *AVCBinReadOpen(const char *pszPath, const char *pszName,
      *----------------------------------------------------------------*/
     if (eFileType == AVCFileTABLE)
     {
-        if (eCoverType == AVCCoverPC)
+        if (eCoverType == AVCCoverPC || eCoverType == AVCCoverPC2)
             return _AVCBinReadOpenDBFTable(pszPath, pszName);
         else
             return _AVCBinReadOpenTable(pszPath, pszName, 
@@ -372,8 +378,9 @@ int _AVCBinReadHeader(AVCRawBinFile *psFile, AVCBinHeader *psHeader,
     int nStatus = 0;
 
     /*-----------------------------------------------------------------
-     * For AVCCoverPC coverages, there is a first 256 bytes header
-     * that we just skip and that precedes the 100 bytes header block.
+     * For AVCCoverPC coverages (files without hte .adf extension), 
+     * there is a first 256 bytes header that we just skip and that 
+     * precedes the 100 bytes header block.
      *
      * In AVCCoverV7, we only have the 100 bytes header.
      *----------------------------------------------------------------*/
@@ -431,7 +438,8 @@ int AVCBinReadRewind(AVCBinFile *psFile)
      * For AVCCoverPC coverages, there is a first 256 bytes header
      * that we just skip and that precedes the 100 bytes header block.
      *
-     * In AVCCoverV7 and AVCCoverWeird, we only find the 100 bytes header.
+     * In AVCCoverV7, AVCCoverPC2 and AVCCoverWeird, we only find the 
+     * 100 bytes header.
      *
      * Note: it is the call to _AVCBinReadHeader() that takes care
      * of skipping the first 256 bytes header if necessary.
@@ -713,6 +721,7 @@ void *AVCBinReadNextObject(AVCBinFile *psFile)
 AVCField *AVCBinReadNextTableRec(AVCBinFile *psFile)
 {
     if (psFile->eCoverType != AVCCoverPC &&
+        psFile->eCoverType != AVCCoverPC2 &&
         psFile->eFileType == AVCFileTABLE &&
         psFile->hdr.psTableDef->numRecords > 0 &&
         ! AVCRawBinEOF(psFile->psRawBinFile) &&
@@ -724,7 +733,8 @@ AVCField *AVCBinReadNextTableRec(AVCBinFile *psFile)
     {
         return psFile->cur.pasFields;
     }
-    else if (psFile->eCoverType == AVCCoverPC &&
+    else if ((psFile->eCoverType == AVCCoverPC ||
+              psFile->eCoverType == AVCCoverPC2 ) &&
              psFile->eFileType == AVCFileTABLE &&
              psFile->hdr.psTableDef->numRecords > 0 &&
              _AVCBinReadNextDBFTableRec(psFile->hDBFFile, 

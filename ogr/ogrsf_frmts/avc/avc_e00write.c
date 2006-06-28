@@ -1,12 +1,12 @@
 /**********************************************************************
- * $Id: avc_e00write.c,v 1.16 2002/08/27 15:46:15 daniel Exp $
+ * $Id: avc_e00write.c,v 1.20 2006/06/27 18:38:43 dmorissette Exp $
  *
  * Name:     avc_e00write.c
  * Project:  Arc/Info vector coverage (AVC)  E00->BIN conversion library
  * Language: ANSI C
  * Purpose:  Functions to create a binary coverage from a stream of
  *           ASCII E00 lines.
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
  * Copyright (c) 1999-2001, Daniel Morissette
@@ -31,6 +31,18 @@
  **********************************************************************
  *
  * $Log: avc_e00write.c,v $
+ * Revision 1.20  2006/06/27 18:38:43  dmorissette
+ * Cleaned up E00 reading (bug 1497, patch from James F.)
+ *
+ * Revision 1.19  2006/06/14 16:31:28  daniel
+ * Added support for AVCCoverPC2 type (bug 1491)
+ *
+ * Revision 1.18  2006/03/02 22:46:26  daniel
+ * Accept empty subclass names for TX6/TX7 sections (bug 1261)
+ *
+ * Revision 1.17  2005/06/03 03:49:59  daniel
+ * Update email address, website url, and copyright dates
+ *
  * Revision 1.16  2002/08/27 15:46:15  daniel
  * Applied fix made in GDAL/OGR by 'aubin' (moved include ctype.h after avc.h)
  *
@@ -294,7 +306,7 @@ AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
         return NULL;
     }
 
-    if (psInfo->eCoverType == AVCCoverPC)
+    if (psInfo->eCoverType == AVCCoverPC || psInfo->eCoverType == AVCCoverPC2)
     {
         /*-------------------------------------------------------------
          * No 'info' directory is required for PC coverages
@@ -573,7 +585,15 @@ int  _AVCE00WriteCreateCoverFile(AVCE00WritePtr psInfo, AVCFileType eType,
       case AVCFileTX6:
       /* For TX6/TX7: the filename is subclass_name.txt 
        */
-        if (strlen(pszLine) > 30 || strchr(pszLine, ' ') != NULL)
+
+        /* See bug 1261: It seems that empty subclass names are valid
+         * for TX7. In this case we'll default the filename to txt.txt
+         */
+        if (pszLine[0] == '\0')
+        {
+            strcpy(szFname, "txt.txt");
+        }
+        else if (strlen(pszLine) > 30 || strchr(pszLine, ' ') != NULL)
             CPLError(CE_Failure, CPLE_IllegalArg, 
                      "Invalid TX6/TX7 subclass name \"%s\"", pszLine);
         else
@@ -601,7 +621,8 @@ int  _AVCE00WriteCreateCoverFile(AVCE00WritePtr psInfo, AVCFileType eType,
          * but we need to rename the table and the system attributes 
          * based on the new coverage name.
          *------------------------------------------------------------*/
-        if (psInfo->eCoverType != AVCCoverPC)
+        if (psInfo->eCoverType != AVCCoverPC && 
+            psInfo->eCoverType != AVCCoverPC2)
             pszPath = psInfo->pszInfoPath;
         _AVCE00WriteRenameTable(psTableDef, psInfo->pszCoverName);
         break;
@@ -694,6 +715,11 @@ void  _AVCE00WriteCloseCoverFile(AVCE00WritePtr psInfo)
  **********************************************************************/
 int     AVCE00WriteNextLine(AVCE00WritePtr psInfo, const char *pszLine)
 {
+    /*-----------------------------------------------------------------
+     * TODO: Update this call to use _AVCE00ReadNextLineE00(), if
+     * possible.
+     *----------------------------------------------------------------*/
+
     int nStatus = 0;
 
     CPLErrorReset();
@@ -917,7 +943,7 @@ int     AVCE00DeleteCoverage(const char *pszCoverToDelete)
      * Get the list of info files (ARC????) to delete and delete them
      * (No 'info' directory for PC coverages)
      *----------------------------------------------------------------*/
-    if (nStatus == 0 && eCoverType != AVCCoverPC)
+    if (nStatus == 0 && eCoverType != AVCCoverPC && eCoverType != AVCCoverPC2)
     {
         papszTables = AVCBinReadListTables(pszInfoPath, pszCoverName, 
                                            &papszFiles, eCoverType,

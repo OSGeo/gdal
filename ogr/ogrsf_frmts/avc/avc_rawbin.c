@@ -1,14 +1,14 @@
 /**********************************************************************
- * $Id: avc_rawbin.c,v 1.12 2004/08/19 23:41:04 warmerda Exp $
+ * $Id: avc_rawbin.c,v 1.13 2005/06/03 03:49:59 daniel Exp $
  *
  * Name:     avc_rawbin.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
  * Language: ANSI C
  * Purpose:  Raw Binary file access functions.
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2005, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: avc_rawbin.c,v $
+ * Revision 1.13  2005/06/03 03:49:59  daniel
+ * Update email address, website url, and copyright dates
+ *
  * Revision 1.12  2004/08/19 23:41:04  warmerda
  * fixed pointer aliasing optimization bug
  *

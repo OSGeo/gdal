@@ -1,14 +1,14 @@
 /**********************************************************************
- * $Id: avc_misc.c,v 1.8 2004/08/31 21:00:20 warmerda Exp $
+ * $Id: avc_misc.c,v 1.9 2005/06/03 03:49:59 daniel Exp $
  *
  * Name:     avc_misc.c
  * Project:  Arc/Info vector coverage (AVC)  BIN<->E00 conversion library
  * Language: ANSI C
  * Purpose:  Misc. functions used by several parts of the library
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2005, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: avc_misc.c,v $
+ * Revision 1.9  2005/06/03 03:49:59  daniel
+ * Update email address, website url, and copyright dates
+ *
  * Revision 1.8  2004/08/31 21:00:20  warmerda
  * Applied Carl Anderson's patch to reduce the amount of stating while
  * trying to discover filename "case" on Unix in AVCAdjustCaseSensitiveFilename.
