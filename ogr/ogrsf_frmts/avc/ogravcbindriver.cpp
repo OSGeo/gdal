@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/06/28 13:31:32  fwarmerdam
+ * added E00 support (James E. Flemer <jflemer@alum.rpi.edu>)
+ *
  * Revision 1.2  2002/02/14 14:36:05  warmerda
  * don't indicate create ability
  *
@@ -68,20 +71,30 @@ OGRDataSource *OGRAVCBinDriver::Open( const char * pszFilename,
 
 {
     OGRAVCBinDataSource	*poDS;
+    OGRAVCE00DataSource *poDSE00;
 
     if( bUpdate )
         return NULL;
 
     poDS = new OGRAVCBinDataSource();
 
-    if( !poDS->Open( pszFilename, TRUE )
-        || poDS->GetLayerCount() == 0 )
+    if( poDS->Open( pszFilename, TRUE )
+        && poDS->GetLayerCount() > 0 )
     {
-        delete poDS;
-        return NULL;
-    }
-    else
         return poDS;
+    }
+    delete poDS;
+
+    poDSE00 = new OGRAVCE00DataSource();
+
+    if( poDSE00->Open( pszFilename, TRUE )
+        && poDSE00->GetLayerCount() > 0 )
+    {
+        return poDSE00;
+    }
+    delete poDSE00;
+
+    return NULL;
 }
 
 /************************************************************************/

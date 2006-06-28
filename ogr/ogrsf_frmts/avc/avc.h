@@ -1,11 +1,11 @@
 /**********************************************************************
- * $Id: avc.h,v 1.17 2004/02/11 05:49:44 daniel Exp $
+ * $Id: avc.h,v 1.22 2006/06/27 18:38:43 dmorissette Exp $
  *
  * Name:     avc.h
  * Project:  Arc/Info Vector coverage (AVC) BIN<->E00 conversion library
  * Language: ANSI C
  * Purpose:  Header file containing all definitions for the library.
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
  * Copyright (c) 1999-2001, Daniel Morissette
@@ -30,6 +30,23 @@
  **********************************************************************
  *
  * $Log: avc.h,v $
+ * Revision 1.22  2006/06/27 18:38:43  dmorissette
+ * Cleaned up E00 reading (bug 1497, patch from James F.)
+ *
+ * Revision 1.21  2006/06/16 11:48:11  daniel
+ * New functions to read E00 files directly as opposed to translating to
+ * binary coverage. Used in the implementation of E00 read support in OGR.
+ * Contributed by James E. Flemer. (bug 1497)
+ *
+ * Revision 1.20  2006/06/14 16:31:28  daniel
+ * Added support for AVCCoverPC2 type (bug 1491)
+ *
+ * Revision 1.19  2005/06/03 03:49:58  daniel
+ * Update email address, website url, and copyright dates
+ *
+ * Revision 1.18  2005/06/03 03:29:16  daniel
+ * Ready for 1.3.0 release
+ *
  * Revision 1.17  2004/02/11 05:49:44  daniel
  * Added support for deleted flag in arc.dir (bug 2332)
  *
@@ -98,7 +115,7 @@ CPL_C_START
 /*---------------------------------------------------------------------
  * Current version of the AVCE00 library... always useful!
  *--------------------------------------------------------------------*/
-#define AVC_VERSION "1.2.1 (2001-11-25)"
+#define AVC_VERSION "2.0.0-dev (2006-06-16)"
 
 
 /* Coverage precision
@@ -147,6 +164,7 @@ typedef enum
     AVCCoverTypeUnknown = 0,
     AVCCoverV7,
     AVCCoverPC,
+    AVCCoverPC2,   /* Unknown version... hybrid between V7 and PC !!! */
     AVCCoverWeird  /* Unknown version... hybrid between V7 and PC !!! */
 } AVCCoverType;
 
@@ -161,10 +179,10 @@ typedef enum
 
 /* Macros to establish byte ordering for each coverage type
  * The rule until now: all coverage types use big endian (Motorola ordering)
- * except PC Arc/Info coverages.
+ * except PC Arc/Info coverages variant 1 (AVCCoverPC).
  */
 #define AVC_COVER_BYTE_ORDER(cover_type)  \
-   ((cover_type) == AVCCoverPC ? AVCLittleEndian : AVCBigEndian )
+   (((cover_type) == AVCCoverPC ) ? AVCLittleEndian : AVCBigEndian )
 
 /*=====================================================================
                         Structures
@@ -403,7 +421,7 @@ typedef struct AVCBinFile_t
     char          *pszFilename;
     AVCRawBinFile *psIndexFile;   /* Index file, Write mode only */
 
-    DBFHandle     hDBFFile;       /* Used for AVCCoverPC DBF TABLES only */
+    DBFHandle     hDBFFile;       /* Used for AVCCoverPC/PC2 DBF TABLES only */
     int           nCurDBFRecord;  /* 0-based record index in DBF file */
 
     AVCCoverType  eCoverType;
@@ -470,6 +488,8 @@ typedef struct AVCE00ParseInfo_t
     int         nPrecision;     /* AVC_SINGLE/DOUBLE_PREC       */
     int         iCurItem;
     int         numItems;
+    int         nStartLineNum;
+    int         nCurLineNum;
 
     int         nCurObjectId;
     GBool       bForceEndOfSection;  /* For sections that don't have an */
@@ -513,7 +533,9 @@ typedef struct AVCE00Section_t
 {
     AVCFileType eType;        /* File Type                      */
     char        *pszName;     /* E00 section or Table Name      */
-    char        *pszFilename; /* Binary file filename           */
+    char        *pszFilename; /* Binary/E00 file filename       */
+    int         nLineNum;     /* E00 line number                */
+    int         nFeatureCount;
 }AVCE00Section;
 
 typedef struct AVCE00ReadInfo_t
@@ -549,6 +571,34 @@ typedef struct AVCE00ReadInfo_t
     AVCDBCSInfo *psDBCSInfo;
 
 } *AVCE00ReadPtr;
+
+typedef struct AVCE00ReadInfoE00_t
+{
+    char        *pszCoverPath;
+    char        *pszCoverName;
+
+    AVCE00ParseInfo *hParseInfo;
+    AVCFileType  eCurFileType;
+
+    /* pasSections is built when the coverage is opened and describes
+     * the sections in the E00 file.
+     */
+    AVCE00Section *pasSections;
+    int            numSections;
+
+    /* If bReadAllSections=TRUE then reading automatically continues to
+     * the next section when a section finishes. (This is the default)
+     * Otherwise, you can use AVCE00ReadGotoSectionE00() to read one
+     * section at a time.
+     */ 
+    GBool         bReadAllSections;
+
+    /* File handle of the E00 file currently being processed
+     */
+    FILE          *hFile;
+
+} *AVCE00ReadE00Ptr;
+
 
 /* E00 generation steps... tells the AVCE00Read*() functions which
  * parts of the given E00 file are currently being processed.
@@ -762,6 +812,19 @@ int  AVCPrintRealValue(char *pszBuf, int nPrecision, AVCFileType eType,
 /*=====================================================================
               Function prototypes (THE PUBLIC ONES)
  =====================================================================*/
+
+/*---------------------------------------------------------------------
+ * Functions to read E00
+ *--------------------------------------------------------------------*/
+AVCE00ReadE00Ptr AVCE00ReadOpenE00(const char *pszE00FileName);
+void             AVCE00ReadCloseE00(AVCE00ReadE00Ptr psRead);
+int              AVCE00ReadRewindE00(AVCE00ReadE00Ptr psRead);
+void            *AVCE00ReadNextObjectE00(AVCE00ReadE00Ptr psRead);
+
+AVCE00Section  *AVCE00ReadSectionsListE00(AVCE00ReadE00Ptr psRead, int *numSect);
+int             AVCE00ReadGotoSectionE00(AVCE00ReadE00Ptr psRead, 
+                                         AVCE00Section *psSect,
+                                         GBool bContinue);
 
 /*---------------------------------------------------------------------
  * Functions to make a binary coverage appear as E00

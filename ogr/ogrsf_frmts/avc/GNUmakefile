@@ -3,7 +3,8 @@
 include ../../../GDALmake.opt
 
 OGR_OBJ =	ogravcbindriver.o ogravcbindatasource.o ogravcbinlayer.o \
-		ogravclayer.o ogravcdatasource.o
+		ogravclayer.o ogravcdatasource.o \
+		ogravce00layer.o ogravce00datasource.o 
 
 AVC_OBJ	=	avc_bin.o avc_binwr.o avc_e00gen.o avc_e00parse.o \
 		avc_e00write.o avc_e00read.o avc_mbyte.o avc_misc.o \
