@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2006/06/28 10:46:17  dron
+ * Make OGRGeometry::dumpReadable() the const method.
+ *
  * Revision 1.63  2006/06/27 14:54:16  fwarmerdam
  * ensure setCoordinateDimension(2) clears z
  *
@@ -296,7 +299,7 @@ class CPL_DLL OGRGeometry
     // non-standard
     virtual OGRwkbGeometryType getGeometryType() const = 0;
     virtual const char *getGeometryName() const = 0;
-    virtual void   dumpReadable( FILE *, const char * = NULL );
+    virtual void   dumpReadable( FILE *, const char * = NULL ) const;
     virtual void   flattenTo2D() = 0;
     virtual char * exportToGML() const;
     virtual GEOSGeom exportToGEOS() const;

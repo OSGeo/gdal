@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2006/06/28 10:46:17  dron
+ * Make OGRGeometry::dumpReadable() the const method.
+ *
  * Revision 1.35  2006/03/31 17:57:32  fwarmerdam
  * header updates
  *
@@ -191,7 +194,7 @@ OGRGeometry::~OGRGeometry()
  * @param pszPrefix the prefix to put on each line of output.
  */
 
-void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix )
+void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix ) const
 
 {
     char        *pszWkt = NULL;
