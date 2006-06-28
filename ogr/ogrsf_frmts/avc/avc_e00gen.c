@@ -1,14 +1,14 @@
 /**********************************************************************
- * $Id: avc_e00gen.c,v 1.15 2004/08/19 17:48:20 warmerda Exp $
+ * $Id: avc_e00gen.c,v 1.17 2006/06/14 15:01:33 daniel Exp $
  *
  * Name:     avc_e00gen.c
  * Project:  Arc/Info vector coverage (AVC)  BIN->E00 conversion library
  * Language: ANSI C
  * Purpose:  Functions to generate ASCII E00 lines form binary structures.
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2005, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log: avc_e00gen.c,v $
+ * Revision 1.17  2006/06/14 15:01:33  daniel
+ * Remove any embeded '\0' from data line in AVCE00GenTableRec()
+ *
+ * Revision 1.16  2005/06/03 03:49:58  daniel
+ * Update email address, website url, and copyright dates
+ *
  * Revision 1.15  2004/08/19 17:48:20  warmerda
  * Avoid uninitialized variable warnings.
  *
@@ -1304,7 +1310,7 @@ const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
             if (nType ==  AVC_FT_DATE || nType == AVC_FT_CHAR ||
                 nType == AVC_FT_FIXINT )
             {
-                strncpy(pszBuf2, pasFields[i].pszStr, nSize);
+                memcpy(pszBuf2, pasFields[i].pszStr, nSize * sizeof(char));
                 pszBuf2 += nSize;
             }
 #ifdef AVC_MAP_TYPE40_TO_DOUBLE
@@ -1383,6 +1389,18 @@ const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
         }
 
         *pszBuf2 = '\0';
+
+	/* Make sure that we remove any embedded NUL characters from the
+	 * data line before returning it, otherwise we may be accidentally
+	 * truncating results.
+	 */
+	while ( --pszBuf2 >= psInfo->pszBuf+81 )
+	{
+            if ( *pszBuf2 == '\0' )
+            {
+                *pszBuf2 = ' ';
+            }
+	}
     }
 
     if (psInfo->iCurItem < psInfo->numItems)

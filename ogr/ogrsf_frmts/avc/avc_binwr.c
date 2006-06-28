@@ -1,10 +1,10 @@
-/* $Id: avc_binwr.c,v 1.15 2001/07/06 05:09:33 daniel Exp $
+/* $Id: avc_binwr.c,v 1.17 2006/06/14 16:31:28 daniel Exp $
  *
  * Name:     avc_binwr.c
  * Project:  Arc/Info vector coverage (AVC)  E00->BIN conversion library
  * Language: ANSI C
  * Purpose:  Binary files access functions (write mode).
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
  * Copyright (c) 1999-2001, Daniel Morissette
@@ -29,6 +29,12 @@
  **********************************************************************
  *
  * $Log: avc_binwr.c,v $
+ * Revision 1.17  2006/06/14 16:31:28  daniel
+ * Added support for AVCCoverPC2 type (bug 1491)
+ *
+ * Revision 1.16  2005/06/03 03:49:58  daniel
+ * Update email address, website url, and copyright dates
+ *
  * Revision 1.15  2001/07/06 05:09:33  daniel
  * Removed #ifdef around fseek to fix NT4 drive problem since ANSI-C requires
  * an fseek() between read and write operations so this applies to Unix too.
@@ -1653,7 +1659,7 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
     char         *pszFname = NULL, szInfoFile[8]="";
     int          i, nTableIndex = 0;
 
-    if (eCoverType == AVCCoverPC)
+    if (eCoverType == AVCCoverPC || eCoverType == AVCCoverPC2)
         return _AVCBinWriteCreateDBFTable(pszInfoPath, pszCoverName,
                                           psSrcTableDef, eCoverType, 
                                           nPrecision, psDBCSInfo);
@@ -2311,7 +2317,7 @@ int AVCBinWriteTableRec(AVCBinFile *psFile, AVCField *pasFields)
         psFile->hdr.psTableDef->numRecords == 0)
         return -1;
 
-    if (psFile->eCoverType == AVCCoverPC)
+    if (psFile->eCoverType == AVCCoverPC || psFile->eCoverType == AVCCoverPC2)
         return _AVCBinWriteDBFTableRec(psFile->hDBFFile, 
                                        psFile->hdr.psTableDef->numFields,
                                        psFile->hdr.psTableDef->pasFieldDef,

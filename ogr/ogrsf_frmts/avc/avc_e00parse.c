@@ -1,14 +1,14 @@
 /**********************************************************************
- * $Id: avc_e00parse.c,v 1.13 2002/08/27 15:43:02 daniel Exp $
+ * $Id: avc_e00parse.c,v 1.18 2006/06/27 18:06:34 dmorissette Exp $
  *
  * Name:     avc_e00parse.c
  * Project:  Arc/Info vector coverage (AVC)  E00->BIN conversion library
  * Language: ANSI C
  * Purpose:  Functions to parse ASCII E00 lines and fill binary structures.
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2005, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,23 @@
  **********************************************************************
  *
  * $Log: avc_e00parse.c,v $
+ * Revision 1.18  2006/06/27 18:06:34  dmorissette
+ * Applied patch for EOP processing from James F. (bug 1497)
+ *
+ * Revision 1.17  2006/06/19 14:35:47  dmorissette
+ * New patch from James F. for E00 read support in OGR (bug 1497)
+ *
+ * Revision 1.16  2006/06/16 11:48:11  daniel
+ * New functions to read E00 files directly as opposed to translating to
+ * binary coverage. Used in the implementation of E00 read support in OGR.
+ * Contributed by James E. Flemer. (bug 1497)
+ *
+ * Revision 1.15  2006/03/02 22:46:26  daniel
+ * Accept empty subclass names for TX6/TX7 sections (bug 1261)
+ *
+ * Revision 1.14  2005/06/03 03:49:58  daniel
+ * Update email address, website url, and copyright dates
+ *
  * Revision 1.13  2002/08/27 15:43:02  daniel
  * Small typo in type 40 fix (forgot to commit to CVS on 2002-08-05)
  *
@@ -285,6 +302,11 @@ AVCFileType  AVCE00ParseSuperSectionHeader(AVCE00ParseInfo  *psInfo,
         return AVCFileUnknown;
 
     /*-----------------------------------------------------------------
+     * Record the start of the supersection (for faster seeking)
+     *----------------------------------------------------------------*/
+    psInfo->nStartLineNum = psInfo->nCurLineNum;
+
+    /*-----------------------------------------------------------------
      * OK, we have a valid new section header. Set the precision and 
      * get ready to read objects from it.
      *----------------------------------------------------------------*/
@@ -298,6 +320,7 @@ AVCFileType  AVCE00ParseSuperSectionHeader(AVCE00ParseInfo  *psInfo,
                  "Parse Error: Invalid section header line (\"%s\")!", 
                  pszLine);
         psInfo->eSuperSectionType = AVCFileUnknown;
+        /* psInfo->nStartLineNum = -1; */
     }
 
     return psInfo->eSuperSectionType;
@@ -322,6 +345,7 @@ GBool  AVCE00ParseSuperSectionEnd(AVCE00ParseInfo  *psInfo,
           EQUALN(pszLine, "EOI", 3) )  ) )
     {
         psInfo->eSuperSectionType = AVCFileUnknown;
+        /* psInfo->nStartLineNum = -1; */
         return TRUE;
     }
 
@@ -411,11 +435,25 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
          *        sure we don't catch that second line as the beginning
          *        of a new RPL sub-section.
          *------------------------------------------------------------*/
-        if (strlen(pszLine) > 0 && !isspace(pszLine[0]) && 
-            !EQUALN(pszLine, "JABBERWOCKY", 11) &&
-            !EQUALN(pszLine, "EOI", 3) &&
-            ! ( psInfo->eSuperSectionType == AVCFileRPL &&
-                EQUALN(pszLine, " 0.00000", 6)  ) )
+
+        if (psInfo->eSuperSectionType == AVCFileTX6 && strlen(pszLine)==0)
+        {
+            /* See bug 1261: It seems that empty subclass names are valid
+             * for TX7. We don't know if that's valid for other supersection
+             * types, so we'll handle this as a specific case just for TX7
+             */
+            eNewType = psInfo->eSuperSectionType;
+        }
+        else if (strlen(pszLine) > 0 && !isspace(pszLine[0]) && 
+                 !EQUALN(pszLine, "JABBERWOCKY", 11) &&
+                 !EQUALN(pszLine, "EOI", 3) &&
+                 ! ( psInfo->eSuperSectionType == AVCFileRPL &&
+                     EQUALN(pszLine, " 0.00000", 6)  ) )
+        {
+            eNewType = psInfo->eSuperSectionType;
+        }
+        else if (strlen(pszLine) == 0 &&
+            psInfo->eSuperSectionType == AVCFileTX6)
         {
             eNewType = psInfo->eSuperSectionType;
         }
@@ -462,10 +500,6 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
     }
     else if (eNewType == AVCFilePRJ)
     {
-        psInfo->cur.psTol = (AVCTol*)CPLCalloc(1, sizeof(AVCTol));
-    }
-    else if (eNewType == AVCFilePRJ)
-    {
         psInfo->cur.papszPrj = NULL;
     }
     else if (eNewType == AVCFileTXT ||
@@ -490,12 +524,20 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
         eNewType = AVCFileUnknown;
     }
 
-    /*-----------------------------------------------------------------
-     * Keep track of section header line... this is used for some file
-     * types, specially the ones enclosed inside supersections.
-     *----------------------------------------------------------------*/
-    CPLFree(psInfo->pszSectionHdrLine);
-    psInfo->pszSectionHdrLine = CPLStrdup(pszLine);
+    if (eNewType != AVCFileUnknown)
+    {
+        /*-----------------------------------------------------------------
+         * Record the start of the section (for faster seeking)
+         *----------------------------------------------------------------*/
+        psInfo->nStartLineNum = psInfo->nCurLineNum;
+
+        /*-----------------------------------------------------------------
+         * Keep track of section header line... this is used for some file
+         * types, specially the ones enclosed inside supersections.
+         *----------------------------------------------------------------*/
+        CPLFree(psInfo->pszSectionHdrLine);
+        psInfo->pszSectionHdrLine = CPLStrdup(pszLine);
+    }
 
     psInfo->eFileType = eNewType;
 
@@ -528,8 +570,7 @@ GBool  AVCE00ParseSectionEnd(AVCE00ParseInfo  *psInfo, const char *pszLine,
            psInfo->eFileType == AVCFileTXT ||
            psInfo->eFileType == AVCFileTX6 ||
            psInfo->eFileType == AVCFileRXP )  && 
-          EQUALN(pszLine, "        -1         0", 20)  ) ||
-         ( psInfo->eFileType == AVCFilePRJ && EQUALN(pszLine, "EOP", 3) ) )
+          EQUALN(pszLine, "        -1         0", 20)  ) )
     {
         /* Reset ParseInfo only if explicitly requested. 
          */
@@ -1206,7 +1247,7 @@ char  **AVCE00ParseNextPrjLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         /*-------------------------------------------------------------
          * We reached end of section... return the PRJ.
          *------------------------------------------------------------*/
-        psInfo->bForceEndOfSection = FALSE;
+        psInfo->bForceEndOfSection = TRUE;
         return psInfo->cur.papszPrj;
     }
 

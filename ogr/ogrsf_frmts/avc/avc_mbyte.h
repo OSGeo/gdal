@@ -1,14 +1,14 @@
 /**********************************************************************
- * $Id: avc_mbyte.h,v 1.2 2000/09/22 19:45:21 daniel Exp $
+ * $Id: avc_mbyte.h,v 1.3 2005/06/03 03:49:59 daniel Exp $
  *
  * Name:     avc.h
  * Project:  Arc/Info Vector coverage (AVC) BIN<->E00 conversion library
  * Language: ANSI C
  * Purpose:  Header file containing all definitions for the library.
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, dmorissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 1999, 2000, Daniel Morissette
+ * Copyright (c) 1999-2005, Daniel Morissette
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: avc_mbyte.h,v $
+ * Revision 1.3  2005/06/03 03:49:59  daniel
+ * Update email address, website url, and copyright dates
+ *
  * Revision 1.2  2000/09/22 19:45:21  daniel
  * Switch to MIT-style license
  *
