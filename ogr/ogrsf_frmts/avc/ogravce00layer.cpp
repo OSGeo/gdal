@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/06/28 14:39:56  fwarmerdam
+ * avoid use of non-portable strcasestr
+ *
  * Revision 1.2  2006/06/28 13:32:44  fwarmerdam
  * make sure James is listed as an author
  *
@@ -393,13 +396,27 @@ int OGRAVCE00Layer::CheckSetupTable(AVCE00Section *psTblSectionIn)
         break;
     }
 
-    if (pszTableType == NULL ||
-        !strcasestr(psTblSectionIn->pszName, pszTableType))
-    {
+/* -------------------------------------------------------------------- */
+/*      Is the table type found anywhere in the section pszName?  Do    */
+/*      a case insensitive check.                                       */
+/* -------------------------------------------------------------------- */
+    if( pszTableType == NULL )
         return FALSE;
+    
+    int iCheckOff;
+    for( iCheckOff = 0; 
+         psTblSectionIn->pszName[iCheckOff] != '\0'; 
+         iCheckOff++ )
+    {
+        if( EQUALN(psTblSectionIn->pszName + iCheckOff, 
+                   pszTableType, strlen(pszTableType) ) )
+            break;
     }
 
-	psTableSection = psTblSectionIn;
+    if( psTblSectionIn->pszName[iCheckOff] == '\0' )
+        return FALSE;
+
+    psTableSection = psTblSectionIn;
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the table.                                          */
