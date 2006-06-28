@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/06/28 13:31:32  fwarmerdam
+ * added E00 support (James E. Flemer <jflemer@alum.rpi.edu>)
+ *
  * Revision 1.5  2005/09/21 01:00:55  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -103,7 +106,7 @@ class OGRAVCDataSource : public OGRDataSource
 		        OGRAVCDataSource();
     			~OGRAVCDataSource();
 
-    OGRSpatialReference *GetSpatialRef();
+    virtual OGRSpatialReference *GetSpatialRef();
 
     const char          *GetCoverageName();
 };
@@ -202,12 +205,24 @@ class OGRAVCBinDriver : public OGRSFDriver
 /************************************************************************/
 /*                            OGRAVCE00Layer                            */
 /************************************************************************/
-#ifdef notdef
 class OGRAVCE00Layer : public OGRAVCLayer
 {
     AVCE00Section       *psSection;
-    AVCBinFile          *hFile;
+    AVCE00ReadE00Ptr    psRead;
+    OGRAVCE00Layer      *poArcLayer;
+    int                 nFeatureCount;
+    int                 bNeedReset;
+    int                 nNextFID;
 
+    AVCE00Section       *psTableSection;
+    AVCE00ReadE00Ptr    psTableRead;
+    char                *pszTableFilename;
+    int                 nTablePos;
+    int                 nTableBaseField;
+    int                 nTableAttrIndex;
+
+    int                 FormPolygonGeometry( OGRFeature *poFeature,
+                                             AVCPal *psPAL );
   public:
                         OGRAVCE00Layer( OGRAVCDataSource *poDS,
                                         AVCE00Section *psSectionIn );
@@ -216,7 +231,39 @@ class OGRAVCE00Layer : public OGRAVCLayer
 
     void		ResetReading();
     OGRFeature *	GetNextFeature();
+    OGRFeature *GetFeature( long nFID );
+    int GetFeatureCount(int bForce);
+    int CheckSetupTable(AVCE00Section *psTblSectionIn);
+    int AppendTableFields( OGRFeature *poFeature );
 };
-#endif
+
+/************************************************************************/
+/*                         OGRAVCE00DataSource                          */
+/************************************************************************/
+
+class OGRAVCE00DataSource : public OGRAVCDataSource
+{
+    int nLayers;
+    char *pszName;
+    AVCE00ReadE00Ptr psE00;
+    OGRAVCE00Layer **papoLayers;
+
+  protected:
+    int CheckAddTable(AVCE00Section *psTblSection);
+
+  public:
+    OGRAVCE00DataSource();
+    ~OGRAVCE00DataSource();
+
+    int Open(const char *, int bTestOpen);
+
+    AVCE00ReadE00Ptr GetInfo() { return psE00; }
+    const char *GetName() { return pszName; }
+    int GetLayerCount() { return nLayers; }
+
+    OGRLayer *GetLayer( int );
+    int TestCapability( const char * );
+    virtual OGRSpatialReference *GetSpatialRef();
+};
 
 #endif /* _OGR_AVC_H_INCLUDED */

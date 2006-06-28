@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/06/28 13:31:32  fwarmerdam
+ * added E00 support (James E. Flemer <jflemer@alum.rpi.edu>)
+ *
  * Revision 1.9  2005/09/21 01:00:55  fwarmerdam
  * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
  *
@@ -134,10 +137,10 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
             poFeatureDefn->SetGeomType( wkbLineString );
 
             OGRFieldDefn	oUserId( "UserId", OFTInteger );
-            OGRFieldDefn	oFNode( "FNODE#", OFTInteger );
-            OGRFieldDefn	oTNode( "TNODE#", OFTInteger );
-            OGRFieldDefn	oLPoly( "LPOLY#", OFTInteger );
-            OGRFieldDefn	oRPoly( "RPOLY#", OFTInteger );
+            OGRFieldDefn	oFNode( "FNODE_", OFTInteger );
+            OGRFieldDefn	oTNode( "TNODE_", OFTInteger );
+            OGRFieldDefn	oLPoly( "LPOLY_", OFTInteger );
+            OGRFieldDefn	oRPoly( "RPOLY_", OFTInteger );
 
             poFeatureDefn->AddFieldDefn( &oUserId );
             poFeatureDefn->AddFieldDefn( &oFNode );
