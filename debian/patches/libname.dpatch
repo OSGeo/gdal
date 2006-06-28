@@ -1,0 +1,49 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## libname.dpatch by Francesco Paolo Lovergine <frankie@debian.org>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad gdal-1.3.2~/GDALmake.opt.in gdal-1.3.2/GDALmake.opt.in
+--- gdal-1.3.2~/GDALmake.opt.in	2006-06-20 14:53:51.000000000 +0200
++++ gdal-1.3.2/GDALmake.opt.in	2006-06-20 15:05:19.000000000 +0200
+@@ -102,7 +102,7 @@
+ 			-I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts
+ 
+ # libtool targets and help variables
+-LIBGDAL	:=		libgdal.la
++LIBGDAL	:=		libgdal1.3.2.la
+ LIBGDAL_CURRENT	:=	11
+ LIBGDAL_REVISION	:=	0
+ LIBGDAL_AGE	:=	10
+@@ -110,9 +110,9 @@
+ # native build targets and variables
+ GDAL_VER	=	@GDAL_VER@
+ 
+-GDAL_LIB	= 	$(GDAL_ROOT)/libgdal.a
+-GDAL_SLIB	=	$(GDAL_ROOT)/libgdal.$(SO_EXT)
+-GDAL_SLIB_LINK	=	-L$(GDAL_ROOT) -lgdal
++GDAL_LIB	= 	$(GDAL_ROOT)/libgdal1.3.2.a
++GDAL_SLIB	=	$(GDAL_ROOT)/libgdal1.3.2.$(SO_EXT)
++GDAL_SLIB_LINK	=	-L$(GDAL_ROOT) -lgdal1.3.2
+ 
+ #
+ # OGR/PostgreSQL support.
+@@ -298,14 +298,14 @@
+ 
+ ifeq ($(HAVE_LIBTOOL), yes)
+ CONFIG_LIBS	=	$(GDAL_ROOT)/$(LIBGDAL)
+-CONFIG_LIBS_INS	=	-L$(INST_LIB) -lgdal
++CONFIG_LIBS_INS	=	-L$(INST_LIB) -lgdal1.3.2
+ EXE_DEP_LIBS	=	$(GDAL_ROOT)/$(LIBGDAL)
+ SO_EXT		=	la
+ else
+ 
+ ifeq ($(HAVE_LD_SHARED),yes)
+ CONFIG_LIBS	=	$(GDAL_SLIB_LINK) $(LIBS)
+-CONFIG_LIBS_INS	=	-L$(INST_LIB) -lgdal
++CONFIG_LIBS_INS	=	-L$(INST_LIB) -lgdal1.3.2
+ EXE_DEP_LIBS	=	$(GDAL_SLIB)
+ else
+ CONFIG_LIBS	=	$(GDAL_LIBS) $(LIBS)

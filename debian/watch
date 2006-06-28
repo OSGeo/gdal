@@ -1,6 +1,2 @@
-# Example watch control file for uscan
-# Rename this file to "watch" and then you can run the "uscan" command
-# to check for upstream updates and more.
-# Site Version Action
 version=2
 ftp://ftp.remotesensing.org/pub/gdal/gdal-(.*)\.tar\.gz debian uupdate

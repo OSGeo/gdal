@@ -10,10 +10,14 @@
 # This is the debhelper compatibility version to use.
 export DH_COMPAT=4
 
+# dpatch targets
+include /usr/share/dpatch/dpatch.make
+
 # extract the non-prefix part of INST_PYMOD
 inst_pymod=$(shell awk -F '/usr' '/INST_PYMOD/ {print $$2}' GDALmake.opt)
 
-config.status:
+configure: configure-stamp
+configure-stamp: patch-stamp
 	dh_testdir
 
 	./configure --prefix=/usr \
@@ -24,7 +28,8 @@ config.status:
 		--with-jasper \
 		--with-netcdf \
 		--with-xerces \
-		--with-geos 
+		--with-geos \
+		--with-mysql
 
 	# Patch the generated libtool to avoid passing -rpath when linking,
 	# and to explicitly link libraries against the libraries they
@@ -36,30 +41,19 @@ config.status:
 	mv libtool-2 libtool
 	chmod 755 libtool 
 
-patch: patch-stamp
-patch-stamp:
-	dh_testdir
-	#patch -p1 < debian/patches/01_gcc4.patch
-	touch patch-stamp
+	touch configure-stamp
 
-build: patch build-stamp
-build-stamp: config.status
+build: configure-stamp build-stamp
+build-stamp: 
 	dh_testdir
 
 	$(MAKE)
 	$(MAKE) docs
 
 	touch build-stamp
-unpatch: patch unpatch-stamp
-unpatch-stamp:
-	dh_testdir
-	# This is here for reference. It should be inside the following
-	# conditional.
-	# patch -p1 -R < debian/patches/01_gcc4.patch ;
-	if [ -e patch-stamp ]; then \
-		rm patch-stamp ; \
-	fi
-clean: unpatch
+
+clean: clean-unpatched unpatch
+clean-unpatched:
 	# reminiscence to old procedure of building man pages, will now created
 	# by doxygen. This rm will be deleted in further releases of gdal
 	sh -c "if (test -d man/man1) then rm -r man/man1; fi"
@@ -71,7 +65,7 @@ clean: unpatch
 
 	dh_clean build-stamp configure-stamp
 
-install: build
+install: 
 	dh_testdir
 	dh_testroot
 	dh_clean -k
@@ -89,7 +83,7 @@ install: build
 	# package versions
 	ln -fs . `pwd`/debian/tmp/usr/include/gdal
 
-binary-arch: build install
+binary-common: 
 	dh_testdir
 	dh_testroot
 	dh_movefiles
@@ -99,13 +93,19 @@ binary-arch: build install
 	dh_strip
 	dh_compress
 	dh_fixperms
-	dh_makeshlibs -V'libgdal1c2a (>= 1.2.6)'
+	dh_makeshlibs
 	dh_installdeb
-	dh_shlibdeps -L libgdal1c2a -l.
+	dh_shlibdeps -L libgdal1-1.3.1 -l debian/libgdal1-1.3.1/usr/lib
 	dh_python
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
 
-binary: binary-arch
-.PHONY: build clean binary-arch binary install
+binary-arch: build install
+	$(MAKE) -f debian/rules DH_OPTIONS=-a binary-common
+
+binary-indep: build install
+	$(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
+
+binary: binary-arch binary-indep
+.PHONY: build clean binary-arch binary-indep binary-common binary install patch unpatch clean-unpatched
