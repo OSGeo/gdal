@@ -4,6 +4,7 @@
  * Project:  OGR
  * Purpose:  Implements OGRAVCE00Layer class.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *           James Flemer <jflemer@alum.rpi.edu>
  *
  ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam <warmerdam@pobox.com>
@@ -29,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/06/28 13:32:44  fwarmerdam
+ * make sure James is listed as an author
+ *
  * Revision 1.1  2006/06/28 13:30:20  fwarmerdam
  * New
  *
