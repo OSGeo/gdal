@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.37  2006/06/29 20:02:40  fwarmerdam
+ * Use va_copy when re-using va_args multiple times.  Needed on AMD64 Linux.
+ *
  * Revision 1.36  2006/03/07 22:05:32  fwarmerdam
  * fix up docs a bit
  *
@@ -190,17 +193,32 @@ void    CPLErrorV(CPLErr eErrClass, int err_no, const char *fmt, va_list args )
 #if defined(HAVE_VSNPRINTF)
     {
         int nPR;
+        va_list wrk_args;
+
+#ifdef va_copy
+        va_copy( wrk_args, args );
+#else
+        wrk_args = args;
+#endif
 
         while( ((nPR = vsnprintf( psCtx->szLastErrMsg, 
-                                 psCtx->nLastErrMsgMax, fmt, args )) == -1
+                                 psCtx->nLastErrMsgMax, fmt, wrk_args )) == -1
                 || nPR >= psCtx->nLastErrMsgMax-1)
                && psCtx->nLastErrMsgMax < 1000000 )
         {
+#ifdef va_copy
+            va_end( wrk_args );
+            va_copy( wrk_args, args );
+#else
+            wrk_args = args;
+#endif
             psCtx->nLastErrMsgMax *= 3;
             psCtx = (CPLErrorContext *) 
                 CPLRealloc(psCtx, sizeof(CPLErrorContext) - DEFAULT_LAST_ERR_MSG_SIZE + psCtx->nLastErrMsgMax + 1);
             CPLSetTLS( CTLS_ERRORCONTEXT, psCtx, TRUE );
         }
+
+        va_end( wrk_args );
     }
 #else
     vsprintf( psCtx->szLastErrMsg, fmt, args);
