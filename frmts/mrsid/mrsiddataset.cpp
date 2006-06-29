@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2006/06/29 02:31:27  fwarmerdam
+ * try to manage new/delete issues across dll boundaries better: bug 1213
+ *
  * Revision 1.59  2006/06/19 04:06:29  fwarmerdam
  * Avoid memory leak when getWKT() is available.
  *
@@ -160,6 +163,8 @@
  * Initial support for MrSID Encoding SDK.
  */
 
+#define NO_DELETE
+
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
@@ -229,6 +234,58 @@ CPL_C_END
 #endif
 
 LT_USE_NAMESPACE(LizardTech)
+
+/* -------------------------------------------------------------------- */
+/*      Various wrapper templates used to force new/delete to happen    */
+/*      in the same heap.  See bug 1213 and MSDN knowledgebase          */
+/*      article 122675.                                                 */
+/* -------------------------------------------------------------------- */
+
+template <class T>
+class LTIDLLPixel : public T
+{
+public:
+   LTIDLLPixel(LTIColorSpace colorSpace,
+            lt_uint16 numBands,
+            LTIDataType dataType) : T(colorSpace,numBands,dataType) {}
+   virtual ~LTIDLLPixel() {};
+};
+
+template <class T>
+class LTIDLLReader : public T
+{
+public:
+   LTIDLLReader(const LTFileSpec& fileSpec,
+                bool useWorldFile = false) : T(fileSpec, useWorldFile) {}
+   virtual ~LTIDLLReader() {};
+};
+
+template <class T>
+class LTIDLLNavigator : public T
+{
+public:
+   LTIDLLNavigator(const LTIImage& image ) : T(image) {}
+   virtual ~LTIDLLNavigator() {};
+};
+
+template <class T>
+class LTIDLLBuffer : public T
+{
+public:
+   LTIDLLBuffer(const LTIPixel& pixelProps,
+                  lt_uint32 totalNumCols,
+                  lt_uint32 totalNumRows,
+                  void** data ) : T(pixelProps,totalNumCols,totalNumRows,data) {}
+   virtual ~LTIDLLBuffer() {};
+};
+
+template <class T>
+class LTIDLLCopy : public T
+{
+public:
+   LTIDLLCopy(const T& original) : T(original) {}
+   virtual ~LTIDLLCopy() {};
+};
 
 /************************************************************************/
 /* ==================================================================== */
@@ -360,8 +417,8 @@ MrSIDRasterBand::MrSIDRasterBand( MrSIDDataset *poDS, int nBand )
 //#endif
 
     nBlockSize = nBlockXSize * nBlockYSize;
-    poPixel = new LTIPixel( poDS->eColorSpace, poDS->nBands,
-                            poDS->eSampleType );
+    poPixel = new LTIDLLPixel<LTIPixel>( poDS->eColorSpace, poDS->nBands,
+                                         poDS->eSampleType );
 
 
 /* -------------------------------------------------------------------- */
@@ -483,7 +540,7 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         if ( !poGDS->poBuffer )
         {
             poGDS->poBuffer =
-                new LTISceneBuffer( *poPixel, nBlockXSize, nBlockYSize, NULL );
+                new LTIDLLBuffer<LTISceneBuffer>( *poPixel, nBlockXSize, nBlockYSize, NULL );
         }
 
         if(!LT_SUCCESS(poGDS->poImageReader->read(poGDS->poLTINav->getScene(),
@@ -736,8 +793,12 @@ MrSIDDataset::~MrSIDDataset()
 
     if ( poImageReader && !bIsOverview )
         delete poImageReader;
+
+// Avoid deleting: see bug 1213.
+#ifndef WIN32
     if ( poLTINav )
         delete poLTINav;
+#endif
     if ( poBuffer )
         delete poBuffer;
     if ( poMetadata )
@@ -1113,7 +1174,7 @@ CPLErr MrSIDDataset::OpenZoomLevel( lt_int32 iZoom )
 
     try
     {
-        poLTINav = new LTINavigator( *poImageReader );
+        poLTINav = new LTIDLLNavigator<LTINavigator>( *poImageReader );
     }
     catch ( ... )
     {
@@ -1303,10 +1364,10 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS = new MrSIDDataset();
 #ifdef MRSID_J2K
     if ( bIsJP2 )
-        poDS->poImageReader = new J2KImageReader( oFileSpec, true );
+        poDS->poImageReader = new LTIDLLReader<J2KImageReader>( oFileSpec, true );
     else
 #endif
-        poDS->poImageReader = new MrSIDImageReader( oFileSpec );
+        poDS->poImageReader = new LTIDLLReader<MrSIDImageReader>( oFileSpec, false );
 
     if ( !LT_SUCCESS( poDS->poImageReader->initialize() ) )
     {
@@ -1320,8 +1381,8 @@ GDALDataset *MrSIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read metadata.                                                  */
 /* -------------------------------------------------------------------- */
-    poDS->poMetadata =
-        new LTIMetadataDatabase( poDS->poImageReader->getMetadata() );
+    poDS->poMetadata = new LTIDLLCopy<LTIMetadataDatabase>(
+        poDS->poImageReader->getMetadata() );
     const GUInt32       iNumRecs = poDS->poMetadata->getIndexCount();
     GUInt32             i;
 
@@ -2771,7 +2832,7 @@ LT_STATUS MrSIDDummyImageReader::initialize()
             break;
     }
 
-    poPixel = new LTIPixel( eColorSpace, nBands, eSampleType );
+    poPixel = new LTIDLLPixel<LTIPixel>( eColorSpace, nBands, eSampleType );
     if ( !LT_SUCCESS(setPixelProps(*poPixel)) )
         return LT_STS_Failure;
 
