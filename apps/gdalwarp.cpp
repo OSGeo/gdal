@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/06/29 21:10:29  fwarmerdam
+ * Avoid a few memory leaks.
+ *
  * Revision 1.24  2006/06/02 17:31:49  fwarmerdam
  * Modified -ts to allow width or height to be zero meaning, it should
  * be computed to retain square pixels.
@@ -155,7 +158,7 @@ int main( int argc, char ** argv )
     char               *pszTargetSRS = NULL;
     char               *pszSourceSRS = NULL;
     char              **papszSrcFiles = NULL;
-    const char         *pszDstFilename = NULL;
+    char               *pszDstFilename = NULL;
     int                 bCreateOutput = FALSE, i, nOrder = 0;
     void               *hTransformArg, *hGenImgProjArg=NULL, *hApproxArg=NULL;
     char               **papszWarpOptions = NULL;
@@ -687,8 +690,12 @@ int main( int argc, char ** argv )
 /*      Final Cleanup.                                                  */
 /* -------------------------------------------------------------------- */
     GDALClose( hDstDS );
-
+    
+    CPLFree( pszTargetSRS );
+    CPLFree( pszDstFilename );
     CSLDestroy( argv );
+    CSLDestroy( papszSrcFiles );
+    CSLDestroy( papszWarpOptions );
 
     GDALDumpOpenDatasets( stderr );
 
