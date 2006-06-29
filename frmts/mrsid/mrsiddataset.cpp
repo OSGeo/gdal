@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2006/06/29 23:23:37  fwarmerdam
+ * Keep track of templated object pointers better.
+ *
  * Revision 1.60  2006/06/29 02:31:27  fwarmerdam
  * try to manage new/delete issues across dll boundaries better: bug 1213
  *
@@ -303,11 +306,11 @@ class MrSIDDataset : public GDALPamDataset
     LTIGeoFileImageWriter *poImageWriter;
 #endif
 
-    LTINavigator        *poLTINav;
-    LTIMetadataDatabase *poMetadata;
+    LTIDLLNavigator<LTINavigator>  *poLTINav;
+    LTIDLLCopy<LTIMetadataDatabase> *poMetadata;
     const LTIPixel      *poNDPixel;
 
-    LTISceneBuffer      *poBuffer;
+    LTIDLLBuffer<LTISceneBuffer>  *poBuffer;
     int                 nBlockXSize, nBlockYSize;
     int                 bPrevBlockRead;
     int                 nPrevBlockXOff, nPrevBlockYOff;
@@ -541,6 +544,8 @@ CPLErr MrSIDRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         {
             poGDS->poBuffer =
                 new LTIDLLBuffer<LTISceneBuffer>( *poPixel, nBlockXSize, nBlockYSize, NULL );
+//            poGDS->poBuffer =
+//                new LTISceneBuffer( *poPixel, nBlockXSize, nBlockYSize, NULL );
         }
 
         if(!LT_SUCCESS(poGDS->poImageReader->read(poGDS->poLTINav->getScene(),
@@ -791,18 +796,15 @@ MrSIDDataset::~MrSIDDataset()
         delete poImageWriter;
 #endif
 
-    if ( poImageReader && !bIsOverview )
-        delete poImageReader;
-
-// Avoid deleting: see bug 1213.
-#ifndef WIN32
-    if ( poLTINav )
-        delete poLTINav;
-#endif
     if ( poBuffer )
         delete poBuffer;
     if ( poMetadata )
         delete poMetadata;
+    if ( poLTINav )
+        delete poLTINav;
+    if ( poImageReader && !bIsOverview )
+        delete poImageReader;
+
     if ( pszProjection )
         CPLFree( pszProjection );
     if ( psDefn )
