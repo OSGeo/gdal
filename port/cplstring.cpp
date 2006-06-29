@@ -28,6 +28,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/06/29 19:03:50  fwarmerdam
+ * Fix subtle problem with varargs and re-using args on the amd64
+ * platform (and in general posix environment).
+ *
  * Revision 1.4  2006/06/06 12:13:11  fwarmerdam
  * Cast CPLMalloc() result.
  *
@@ -97,13 +101,27 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 #else
     char szModestBuffer[500];
     int nPR;
+    va_list wrk_args;
+
+#ifdef va_copy
+    va_copy( wrk_args, args );
+#else
+    wrk_args = args;
+#endif
     
-    nPR = vsnprintf( szModestBuffer, sizeof(szModestBuffer), pszFormat, args );
+    nPR = vsnprintf( szModestBuffer, sizeof(szModestBuffer), pszFormat, 
+                     wrk_args );
     if( nPR == -1 || nPR >= (int) sizeof(szModestBuffer)-1 )
     {
         int nWorkBufferSize = 2000;
         char *pszWorkBuffer = (char *) CPLMalloc(nWorkBufferSize);
 
+#ifdef va_copy
+        va_end( wrk_args );
+        va_copy( wrk_args, args );
+#else
+        wrk_args = args;
+#endif
         while( (nPR=vsnprintf( pszWorkBuffer, nWorkBufferSize, pszFormat,args))
                >= nWorkBufferSize-1 
                || nPR == -1 )
@@ -119,6 +137,7 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
     {
         *this = szModestBuffer;
     }
+    va_end( wrk_args );
 #endif
 
     return *this;
