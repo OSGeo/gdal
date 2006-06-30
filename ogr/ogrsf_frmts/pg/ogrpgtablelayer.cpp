@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2006/06/30 09:20:19  mloskot
+ * Fixed null dates issue reported by Aaron Koning. Fixed zero-fill of year value in OGRFeature::GetFieldAsString. Added assertions and NULL pointer tests.
+ *
  * Revision 1.53  2006/06/16 22:47:57  fwarmerdam
  * Fixed construction of WKB that was broken in switch to use CPLString.
  * per http://bugzilla.remotesensing.org/show_bug.cgi?id=1203
@@ -132,6 +135,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_error.h"
 #include "ogr_pg.h"
 
 CPL_CVSID("$Id$");
@@ -454,12 +458,14 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
 void OGRPGTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
 {
-    if( !InstallFilter( poGeomIn ) )
-        return;
+    if( InstallFilter( poGeomIn ) )
+    {
+        CPLAssert( NULL != poGeomIn );
 
-    BuildWhere();
+        BuildWhere();
 
-    ResetReading();
+        ResetReading();
+    }
 }
 
 /************************************************************************/
@@ -701,13 +707,20 @@ OGRErr OGRPGTableLayer::DeleteFeature( long nFID )
 OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
 
 {
-    OGRErr eErr;
+    OGRErr eErr(OGRERR_FAILURE);
+
+    if( NULL == poFeature )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "NULL pointer to OGRFeature passed to SetFeature()." );
+        return eErr;
+    }
 
     if( poFeature->GetFID() == OGRNullFID )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "FID required on features given to SetFeature()." );
-        return OGRERR_FAILURE;
+        return eErr;
     }
 
     eErr = DeleteFeature( poFeature->GetFID() );
@@ -720,8 +733,16 @@ OGRErr OGRPGTableLayer::SetFeature( OGRFeature *poFeature )
 /************************************************************************/
 /*                           CreateFeature()                            */
 /************************************************************************/
+
 OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
-{
+{ 
+    if( NULL == poFeature )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "NULL pointer to OGRFeature passed to CreateFeature()." );
+        return OGRERR_FAILURE;
+    }
+
     // We avoid testing the config option too often. 
     if( bUseCopy == USE_COPY_UNSET )
         bUseCopy = CSLTestBoolean( CPLGetConfigOption( "PG_USE_COPY", "NO") );
@@ -742,18 +763,29 @@ OGRErr OGRPGTableLayer::CreateFeature( OGRFeature *poFeature )
 /************************************************************************/
 /*                       CreateFeatureViaInsert()                       */
 /************************************************************************/
+
 OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
 {
     PGconn              *hPGConn = poDS->GetPGConn();
-    PGresult            *hResult;
+    PGresult            *hResult = NULL;
     CPLString           osCommand;
-    int                 i, bNeedComma = FALSE;
-    OGRErr              eErr;
+    int                 i = 0;
+    int                 bNeedComma = FALSE;
+    OGRErr              eErr = OGRERR_FAILURE;
+    
+    if( NULL == poFeature )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "NULL pointer to OGRFeature passed to CreateFeatureViaInsert()." );
+        return eErr;
+    }
 
     eErr = poDS->SoftStartTransaction();
     if( eErr != OGRERR_NONE )
+    {
         return eErr;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Form the INSERT command.                                        */
@@ -864,6 +896,10 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 
     for( i = 0; i < poFeatureDefn->GetFieldCount(); i++ )
     {
+        // Flag indicating NULL or not-a-date date value
+        // e.g. 0000-00-00 - there is no year 0
+        OGRBoolean bIsDateNull = FALSE;
+
         const char *pszStrValue = poFeature->GetFieldAsString(i);
         char *pszNeedToFree = NULL;
 
@@ -915,8 +951,19 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
             pszStrValue = pszNeedToFree;
         }
 
+        // Check if date is NULL: 0000-00-00
+        if( poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDate )
+        {
+            if( EQUALN( pszStrValue, "0000", 4 ) )
+            {
+                pszStrValue = "NULL";
+                bIsDateNull = TRUE;
+            }
+        }
+
         if( poFeatureDefn->GetFieldDefn(i)->GetType() != OFTInteger
-                 && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTReal )
+            && poFeatureDefn->GetFieldDefn(i)->GetType() != OFTReal
+            && !bIsDateNull )
         {
             int         iChar;
 
@@ -943,7 +990,9 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
                     osCommand += pszStrValue[iChar];
                 }
                 else
+                {
                     osCommand += pszStrValue[iChar];
+                }
             }
 
             osCommand += "'";
