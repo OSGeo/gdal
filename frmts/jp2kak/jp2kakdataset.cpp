@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.44  2006/06/30 04:29:07  fwarmerdam
+ * Use 2048x128 blocking by default instead of 512x128.
+ *
  * Revision 1.43  2006/06/30 04:20:47  fwarmerdam
  * Added special case for YCbCr processing, to push the other band
  * results into the block cache to speed up performance.
@@ -365,10 +368,10 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
     this->nRasterYSize = band_dims.size.y;
 
 /* -------------------------------------------------------------------- */
-/*      Use a 512x128 "virtual" block size unless the file is small.    */
+/*      Use a 2048x128 "virtual" block size unless the file is small.    */
 /* -------------------------------------------------------------------- */
-    if( nRasterXSize >= 1024 )
-        nBlockXSize = 512;
+    if( nRasterXSize >= 2048 )
+        nBlockXSize = 2048;
     else
         nBlockXSize = nRasterXSize;
     
