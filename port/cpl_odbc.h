@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/06/30 18:15:35  dron
+ * Avoid warnings on win64 target.
+ *
  * Revision 1.19  2006/06/30 18:00:20  dron
  * Do not define MISSING_SQLULEN on MSVC/x64 target.
  *
@@ -266,13 +269,13 @@ class CPL_DLL CPLODBCStatement {
     short         *m_panColNullable;
 
     char         **m_papszColValues;
-    int           *m_panColValueLengths;
+    _SQLLEN        *m_panColValueLengths;
     
     int            Failed( int );
 
-    char          *m_pszStatement;
-    int            m_nStatementMax;
-    int            m_nStatementLen;
+    char           *m_pszStatement;
+    size_t         m_nStatementMax;
+    size_t         m_nStatementLen;
 
   public:
     CPLODBCStatement( CPLODBCSession * );
