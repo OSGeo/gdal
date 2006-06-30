@@ -10,6 +10,10 @@ APPOBJ  = $(KAKDIR)/apps/make/args.o $(KAKDIR)/apps/make/image_in.o \
 	$(KAKDIR)/apps/make/image_out.o $(KAKDIR)/apps/make/jp2.o \
 	$(KAKDIR)/apps/make/mj2.o $(KAKDIR)/apps/make/palette.o \
 	$(KAKDIR)/apps/make/roi_sources.o 
+
+# The following are just for Kakadu 5.1 or later.
+APPOBJ +=	$(KAKDIR)/apps/make/kdu_tiff.o $(KAKDIR)/apps/make/jpx.o
+
 INSTOBJ = $(foreach d,$(APPOBJ),../o/$(notdir $(d)))
 
 #CXXFLAGS :=	$(CXXFLAGS) -DFILEIO_DEBUG
