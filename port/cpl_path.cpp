@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/06/30 18:18:17  dron
+ * Avoid warnings.
+ *
  * Revision 1.20  2006/06/30 15:54:30  dron
  * Avoid warnings on win/64.
  *
@@ -311,7 +314,7 @@ const char *CPLGetFilename( const char *pszFullFilename )
 const char *CPLGetBasename( const char *pszFullFilename )
 
 {
-    int     iFileStart = CPLFindFilenameStart( pszFullFilename );
+    size_t  iFileStart = CPLFindFilenameStart( pszFullFilename );
     size_t  iExtStart, nLength;
     char    *pszStaticResult = CPLGetStaticResult();
 
@@ -359,7 +362,7 @@ const char *CPLGetBasename( const char *pszFullFilename )
 const char *CPLGetExtension( const char *pszFullFilename )
 
 {
-    int     iFileStart = CPLFindFilenameStart( pszFullFilename );
+    size_t  iFileStart = CPLFindFilenameStart( pszFullFilename );
     size_t  iExtStart;
     char    *pszStaticResult = CPLGetStaticResult();
 

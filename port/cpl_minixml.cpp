@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.44  2006/06/30 18:18:17  dron
+ * Avoid warnings.
+ *
  * Revision 1.43  2006/06/30 14:25:24  dron
  * Avoid warnings on win/64.
  *
@@ -1717,7 +1720,7 @@ CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
         VSIFCloseL( fp );
         return NULL;
     }
-    if( (int) VSIFReadL( pszDoc, 1, (size_t)nLen, fp ) < nLen )
+    if( VSIFReadL( pszDoc, 1, (size_t)nLen, fp ) < nLen )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "VSIFRead() result short of expected %d bytes from %.500s.", 
@@ -1758,7 +1761,7 @@ int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
 {
     char    *pszDoc;
     FILE    *fp;
-    size_t  nLength;
+    vsi_l_offset nLength;
 
 /* -------------------------------------------------------------------- */
 /*      Serialize document.                                             */
@@ -1783,7 +1786,7 @@ int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Write file.                                                     */
 /* -------------------------------------------------------------------- */
-    if( (int) VSIFWriteL( pszDoc, 1, nLength, fp ) != nLength )
+    if( VSIFWriteL( pszDoc, 1, nLength, fp ) != nLength )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "Failed to write whole XML document (%.500s).",

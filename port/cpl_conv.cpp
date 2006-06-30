@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2006/06/30 18:18:17  dron
+ * Avoid warnings.
+ *
  * Revision 1.53  2006/06/30 14:55:10  dron
  * Avoid some warnings on win/64.
  *
@@ -682,7 +685,7 @@ const char *CPLReadLineL( FILE * fp )
 /*      the line.                                                       */
 /* -------------------------------------------------------------------- */
     char *pszRLBuffer;
-    const int nChunkSize = 40;
+    const size_t nChunkSize = 40;
     char szChunk[nChunkSize];
     size_t nChunkBytesRead = 0;
     int nBufLength = 0;
