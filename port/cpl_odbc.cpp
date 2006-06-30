@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2006/06/30 18:15:35  dron
+ * Avoid warnings on win64 target.
+ *
  * Revision 1.32  2006/06/06 16:25:22  mloskot
  * Fixed memory 4-5 leaks in CPL ODBC and OGR drivers.
  *
@@ -361,7 +364,7 @@ int CPLODBCSession::EstablishSession( const char *pszDSN,
         CPLDebug( "ODBC", "SQLDriverConnect(%s)", pszDSN );
         bFailed = Failed(
             SQLDriverConnect( m_hDBC, NULL, 
-                              (SQLCHAR *) pszDSN, strlen(pszDSN), 
+                              (SQLCHAR *) pszDSN, (SQLSMALLINT)strlen(pszDSN), 
                               (SQLCHAR *) szOutConnString, 
                               sizeof(szOutConnString), 
                               &nOutConnStringLen, SQL_DRIVER_NOPROMPT ) );
@@ -515,7 +518,7 @@ int CPLODBCStatement::CollectResultsInfo()
 /* -------------------------------------------------------------------- */
     m_papszColNames = (char **) VSICalloc(sizeof(char *),(m_nColCount+1));
     m_papszColValues = (char **) VSICalloc(sizeof(char *),(m_nColCount+1));
-    m_panColValueLengths = (int *) VSICalloc(sizeof(int),(m_nColCount+1));
+    m_panColValueLengths = (_SQLLEN *) VSICalloc(sizeof(int),(m_nColCount+1));
 
     m_panColType = (short *) VSICalloc(sizeof(short),m_nColCount);
     m_panColSize = (_SQLULEN *) VSICalloc(sizeof(_SQLULEN),m_nColCount);
@@ -779,7 +782,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 
             while( TRUE )
             {
-                int nChunkLen;
+                _SQLLEN nChunkLen;
 
                 nRetCode = SQLGetData( m_hStmt, (SQLUSMALLINT) iCol+1, 
                                        nFetchType,
@@ -823,7 +826,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         if( nFetchType == SQL_C_CHAR && m_papszColValues[iCol] != NULL )
         {
             char *pszTarget = m_papszColValues[iCol];
-            int iEnd = strlen(pszTarget) - 1;
+            size_t iEnd = strlen(pszTarget) - 1;
 
             while( iEnd >= 0 && pszTarget[iEnd] == ' ' )
                 pszTarget[iEnd--] = '\0';
@@ -906,7 +909,7 @@ int CPLODBCStatement::GetColDataLength( int iCol )
     if( iCol < 0 || iCol >= m_nColCount )
         return 0;
     else if( m_papszColValues[iCol] != NULL )
-        return m_panColValueLengths[iCol];
+        return (int)m_panColValueLengths[iCol];
     else
         return 0;
 }
@@ -984,7 +987,7 @@ int CPLODBCStatement::Failed( int nResultCode )
 void CPLODBCStatement::Append( const char *pszText )
 
 {
-    int  nTextLen = strlen(pszText);
+    size_t  nTextLen = strlen(pszText);
 
     if( m_nStatementMax < m_nStatementLen + nTextLen + 1 )
     {
@@ -1021,8 +1024,8 @@ void CPLODBCStatement::Append( const char *pszText )
 void CPLODBCStatement::AppendEscaped( const char *pszText )
 
 {
-    int  iIn, iOut ,nTextLen = strlen(pszText);
-    char *pszEscapedText = (char *) VSIMalloc(nTextLen*2 + 1);
+    size_t  iIn, iOut ,nTextLen = strlen(pszText);
+    char    *pszEscapedText = (char *) VSIMalloc(nTextLen*2 + 1);
 
     for( iIn = 0, iOut = 0; iIn < nTextLen; iIn++ )
     {
