@@ -28,6 +28,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.43  2006/06/30 04:20:47  fwarmerdam
+ * Added special case for YCbCr processing, to push the other band
+ * results into the block cache to speed up performance.
+ *
  * Revision 1.42  2006/06/30 00:26:38  fwarmerdam
  * fix for files without any xml/gml metadata
  *
@@ -222,6 +226,8 @@ class JP2KAKRasterBand : public GDALPamRasterBand
 {
     friend class JP2KAKDataset;
 
+    JP2KAKDataset *poBaseDS;
+
     int         nDiscardLevels; 
 
     kdu_dims 	band_dims; 
@@ -242,7 +248,7 @@ class JP2KAKRasterBand : public GDALPamRasterBand
   public:
 
     		JP2KAKRasterBand( int, int, kdu_codestream, int, kdu_client *,
-                                  jp2_channels );
+                                  jp2_channels, JP2KAKDataset * );
     		~JP2KAKRasterBand();
     
     virtual CPLErr IReadBlock( int, int, void * );
@@ -257,9 +263,8 @@ class JP2KAKRasterBand : public GDALPamRasterBand
 
     void        ApplyPalette( jp2_palette oJP2Palette );
     void        ProcessYCbCrTile(kdu_tile tile, GByte *pabyBuffer, 
-                                 int nTileXOff, int nTileYOff );
-    void        ProcessTile(kdu_tile tile, GByte *pabyBuffer, 
-                            int nTileXOff, int nTileYOff );
+                                 int nBlockXOff, int nBlockYOff );
+    void        ProcessTile(kdu_tile tile, GByte *pabyBuffer );
 };
 
 /************************************************************************/
@@ -328,10 +333,13 @@ private:
 JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
                                     kdu_codestream oCodeStream,
                                     int nResCount, kdu_client *jpip_client,
-                                    jp2_channels oJP2Channels )
+                                    jp2_channels oJP2Channels,
+                                    JP2KAKDataset *poBaseDSIn )
 
 {
     this->nBand = nBand;
+    this->poBaseDS = poBaseDSIn;
+
     bYCbCrReported = FALSE;
 
     if( oCodeStream.get_bit_depth(nBand-1) == 16
@@ -502,7 +510,8 @@ JP2KAKRasterBand::JP2KAKRasterBand( int nBand, int nDiscardLevels,
                                 sizeof(void*) * nOverviewCount );
                 papoOverviewBand[nOverviewCount-1] = 
                     new JP2KAKRasterBand( nBand, nDiscard, oCodeStream, 0,
-                                          jpip_client, oJP2Channels );
+                                          jpip_client, oJP2Channels,
+                                          poBaseDS );
             }
             else
             {
@@ -633,11 +642,11 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
                 try 
                 {
-
                     if( tile.get_ycc() && nBand < 4 )
-                        ProcessYCbCrTile( tile, pabyDest, offset.x, offset.y );
+                        ProcessYCbCrTile( tile, pabyDest, 
+                                          nBlockXOff, nBlockYOff );
                     else
-                        ProcessTile( tile, pabyDest, offset.x, offset.y );
+                        ProcessTile( tile, pabyDest );
                     tile.close();
                 }
                 catch( ... )
@@ -667,8 +676,7 @@ CPLErr JP2KAKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /*      buffer.                                                         */
 /************************************************************************/
 
-void JP2KAKRasterBand::ProcessTile( kdu_tile tile, GByte *pabyDest, 
-                                    int /*nTileXOff*/, int /*nTileYOff*/ )
+void JP2KAKRasterBand::ProcessTile( kdu_tile tile, GByte *pabyDest )
 
 {
     // Open tile-components and create processing engines and resources
@@ -720,7 +728,7 @@ void JP2KAKRasterBand::ProcessTile( kdu_tile tile, GByte *pabyDest,
 /************************************************************************/
 
 void JP2KAKRasterBand::ProcessYCbCrTile( kdu_tile tile, GByte *pabyDest, 
-                                         int /*nTileXOff*/, int /*nTileYOff*/ )
+                                         int nTileXOff, int nTileYOff )
 
 {
     // Open tile-components and create processing engines and resources
@@ -737,12 +745,62 @@ void JP2KAKRasterBand::ProcessYCbCrTile( kdu_tile tile, GByte *pabyDest,
     int  nWordSize = GDALGetDataTypeSize( eDataType ) / 8;
     int  iComp;
 
+/* -------------------------------------------------------------------- */
+/*      Report if we are doing ycbcr processing, but only report        */
+/*      once.                                                           */
+/* -------------------------------------------------------------------- */
     if( !bYCbCrReported && nBand == 1 )
     {
         bYCbCrReported = TRUE;
         CPLDebug( "JP2KAK", "Using ProcessYCbCrTile() for this dataset." );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Fetch the other color component blocks, so we can fill all      */
+/*      three blocks at once.                                           */
+/* -------------------------------------------------------------------- */
+    int iBand;
+    GByte *apabyBandDest[3];
+    GDALRasterBlock *apoBlocks[3] = { NULL, NULL, NULL };
+
+    for( iBand=0; iBand < 3; iBand++ )
+    {
+        if( nBand == iBand+1 )
+            apabyBandDest[iBand] = pabyDest;
+        else
+        {
+            GDALRasterBand *poBaseBand = poBaseDS->GetRasterBand(iBand+1);
+            JP2KAKRasterBand *poBand;
+
+            if( nDiscardLevels == 0 )
+                poBand = (JP2KAKRasterBand *) poBaseBand;
+            else
+            {
+                int iOver;
+
+                for( iOver = 0; iOver < poBaseBand->GetOverviewCount(); iOver++ )
+                {
+                    poBand = (JP2KAKRasterBand *) 
+                        poBaseBand->GetOverview( iOver );
+                    if( poBand->nDiscardLevels == nDiscardLevels )
+                        break;
+                }
+                if( iOver == poBaseBand->GetOverviewCount() )
+                {
+                    CPLAssert( FALSE );
+                    return;
+                }
+            }
+
+            apoBlocks[iBand] = 
+                poBand->GetLockedBlockRef( nTileXOff, nTileYOff, TRUE );
+            apabyBandDest[iBand] = (GByte *) apoBlocks[iBand]->GetDataRef();
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Setup decoders.                                                 */
+/* -------------------------------------------------------------------- */
     res.get_dims(dims);
     
     bool use_shorts = (comp[0].get_bit_depth(true) <= 16);
@@ -765,8 +823,10 @@ void JP2KAKRasterBand::ProcessYCbCrTile( kdu_tile tile, GByte *pabyDest,
     for( iComp = 0; iComp < 3; iComp++ )
         line[iComp].create(); // Grabs resources from the allocator.
 
-    // Now walk through the lines of the buffer, recovering them from the
-    // relevant tile-component processing engines.
+/* -------------------------------------------------------------------- */
+/*      Now walk through the lines of the buffer, recovering them from the*/
+/*      relevant tile-component processing engines.                     */
+/* -------------------------------------------------------------------- */
 
     for( int y = 0; y < dims.size.y; y++ )
     {
@@ -776,13 +836,23 @@ void JP2KAKRasterBand::ProcessYCbCrTile( kdu_tile tile, GByte *pabyDest,
 
         kdu_convert_ycc_to_rgb(line[0], line[1], line[2]);
 
-        transfer_bytes(pabyDest + y * nBlockXSize * nWordSize,
-                       line[nBand-1], nWordSize, bit_depth, eDataType );
+        for( iBand = 0; iBand < 3; iBand++ )
+            transfer_bytes(apabyBandDest[iBand] + y * nBlockXSize * nWordSize,
+                           line[iBand], nWordSize, bit_depth, eDataType );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Cleanup and release band locks.                                 */
+/* -------------------------------------------------------------------- */
     engine[0].destroy();
     engine[1].destroy();
     engine[2].destroy();
+
+    for( iBand = 0; iBand < 3; iBand++ )
+    {
+        if( apoBlocks[iBand] != NULL )
+            apoBlocks[iBand]->DropLock();
+    }
 }
 
 /************************************************************************/
@@ -1310,7 +1380,7 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             JP2KAKRasterBand *poBand = 
                 new JP2KAKRasterBand(iBand,0,poDS->oCodeStream, nResCount,
-                                     jpip_client, oJP2Channels );
+                                     jpip_client, oJP2Channels, poDS );
 
             if( iBand == 1 && oJP2Palette.exists() )
                 poBand->ApplyPalette( oJP2Palette );
