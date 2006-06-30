@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2006/06/30 19:23:18  fwarmerdam
+ * install error handlers for in-memory geotiff handling (bug 1216)
+ *
  * Revision 1.63  2006/04/28 04:21:57  fwarmerdam
  * make sure pszInfo is dynamically allocated in gcps
  *
@@ -107,6 +110,7 @@
 CPL_CVSID("$Id$");
 
 CPL_C_START
+void GTiffOneTimeInit();
 int CPL_DLL VSIFCloseL( FILE * );
 int CPL_DLL VSIUnlink( const char * );
 FILE CPL_DLL *VSIFileFromMemBuffer( const char *pszFilename, 
@@ -1631,6 +1635,8 @@ CPLErr GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
     GTIFDefn	sGTIFDefn;
     const static char *pszFilename = "/vsimem/wkt_from_mem_buf.tif";
 
+//    GTiffOneTimeInit();
+
 /* -------------------------------------------------------------------- */
 /*      Create a memory file from the buffer.                           */
 /* -------------------------------------------------------------------- */
@@ -1754,6 +1760,8 @@ CPLErr GTIFMemBufFromWkt( const char *pszWKT, const double *padfGeoTransform,
     TIFF        *hTIFF;
     GTIF 	*hGTIF;
     const static char *pszFilename = "/vsimem/wkt_from_mem_buf.tif";
+
+//    GTiffOneTimeInit();
 
 /* -------------------------------------------------------------------- */
 /*      Initialize access to the memory geotiff structure.              */

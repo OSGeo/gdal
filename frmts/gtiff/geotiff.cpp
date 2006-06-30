@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.165  2006/06/30 19:23:18  fwarmerdam
+ * install error handlers for in-memory geotiff handling (bug 1216)
+ *
  * Revision 1.164  2006/05/11 18:34:00  fwarmerdam
  * Clear image buffer to zero on read if LoadBlockBuf() fails.
  *
@@ -178,9 +181,9 @@ int  CPL_DLL   GTIFSetFromOGISDefn( GTIF *, const char * );
 const char * GDALDefaultCSVFilename( const char *pszBasename );
 GUInt32 HalfToFloat( GUInt16 );
 GUInt32 TripleToFloat( GUInt32 );
+void    GTiffOneTimeInit();
 CPL_C_END
 
-static void GTiffOneTimeInit();
 #define TIFFTAG_GDAL_METADATA  42112
 #define TIFFTAG_GDAL_NODATA    42113
 
@@ -3677,7 +3680,6 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
     poDS->eAccess = GA_Update;
     poDS->bNewDataset = TRUE;
     poDS->bCrystalized = FALSE;
-    poDS->pszProjection = CPLStrdup("");
     poDS->nSamplesPerPixel = (uint16) nBands;
 
     TIFFGetField( hTIFF, TIFFTAG_SAMPLEFORMAT, &(poDS->nSampleFormat) );
@@ -4617,7 +4619,7 @@ static void GTiffTagExtender(TIFF *tif)
 /*      don't use it.                                                   */
 /************************************************************************/
 
-static void GTiffOneTimeInit()
+void GTiffOneTimeInit()
 
 {
     static int bOneTimeInitDone = FALSE;
