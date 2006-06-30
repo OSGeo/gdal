@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/06/30 18:00:20  dron
+ * Do not define MISSING_SQLULEN on MSVC/x64 target.
+ *
  * Revision 1.18  2006/06/01 12:15:39  mloskot
  * Added CPLODBCDriverInstaller utility class to CPL.
  *
@@ -198,7 +201,7 @@ class CPLODBCStatement;
 ** but it is always a #define so test this way.   On Unix
 ** it is a typedef so we can't always do this.
 */
-#if defined(_MSC_VER) && !defined(SQLULEN)
+#if defined(_MSC_VER) && !defined(SQLULEN) && !defined(_WIN64)
 #  define MISSING_SQLULEN
 #endif
 
