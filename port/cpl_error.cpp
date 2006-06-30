@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.38  2006/06/30 15:03:49  dron
+ * Avoid warnings on win/64.
+ *
  * Revision 1.37  2006/06/29 20:02:40  fwarmerdam
  * Use va_copy when re-using va_args multiple times.  Needed on AMD64 Linux.
  *
@@ -296,7 +299,7 @@ void CPLDebug( const char * pszCategory, const char * pszFormat, ... )
 
     if( !EQUAL(pszDebug,"ON") && !EQUAL(pszDebug,"") )
     {
-        int            i, nLen = strlen(pszCategory);
+        size_t  i, nLen = strlen(pszCategory);
 
         for( i = 0; pszDebug[i] != '\0'; i++ )
         {
@@ -547,7 +550,7 @@ void CPL_STDCALL CPLLoggingErrorHandler( CPLErr eErrClass, int nError,
                 }
                 else
                 {
-                    int pos = 0;
+                    size_t pos = 0;
                     char *cpl_log_base = strdup(cpl_log);
                     pos = strcspn(cpl_log_base, ".");
                     if (pos > 0)
