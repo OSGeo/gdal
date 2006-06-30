@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2006/06/30 14:55:10  dron
+ * Avoid some warnings on win/64.
+ *
  * Revision 1.52  2006/03/04 00:46:43  mloskot
  * [WCE] CPLLocaleC class excluded from compilation for Windows CE
  *
@@ -681,9 +684,9 @@ const char *CPLReadLineL( FILE * fp )
     char *pszRLBuffer;
     const int nChunkSize = 40;
     char szChunk[nChunkSize];
-    int nChunkBytesRead = 0;
+    size_t nChunkBytesRead = 0;
     int nBufLength = 0;
-    int nChunkBytesConsumed = 0;
+    size_t nChunkBytesConsumed = 0;
 
     while( TRUE )
     {
@@ -762,7 +765,7 @@ const char *CPLReadLineL( FILE * fp )
 /* -------------------------------------------------------------------- */
     if( nChunkBytesConsumed < nChunkBytesRead )
     {
-        int nBytesToPush = nChunkBytesRead - nChunkBytesConsumed;
+        size_t nBytesToPush = nChunkBytesRead - nChunkBytesConsumed;
         
         VSIFSeekL( fp, VSIFTellL( fp ) - nBytesToPush, SEEK_SET );
     }
