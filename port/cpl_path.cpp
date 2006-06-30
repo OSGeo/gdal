@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/06/30 15:54:30  dron
+ * Avoid warnings on win/64.
+ *
  * Revision 1.19  2005/07/11 13:52:03  fwarmerdam
  * use new TLS support for static buffer
  *
@@ -131,7 +134,7 @@ static char *CPLGetStaticResult()
 static int CPLFindFilenameStart( const char * pszFilename )
 
 {
-    int         iFileStart;
+    size_t  iFileStart;
 
     for( iFileStart = strlen(pszFilename);
          iFileStart > 0
@@ -139,7 +142,7 @@ static int CPLFindFilenameStart( const char * pszFilename )
              && pszFilename[iFileStart-1] != '\\';
          iFileStart-- ) {}
 
-    return iFileStart;
+    return (int)iFileStart;
 }
 
 /************************************************************************/
@@ -308,9 +311,9 @@ const char *CPLGetFilename( const char *pszFullFilename )
 const char *CPLGetBasename( const char *pszFullFilename )
 
 {
-    int iFileStart = CPLFindFilenameStart( pszFullFilename );
-    int iExtStart, nLength;
-    char *pszStaticResult = CPLGetStaticResult();
+    int     iFileStart = CPLFindFilenameStart( pszFullFilename );
+    size_t  iExtStart, nLength;
+    char    *pszStaticResult = CPLGetStaticResult();
 
     for( iExtStart = strlen(pszFullFilename);
          iExtStart > iFileStart && pszFullFilename[iExtStart] != '.';
@@ -356,9 +359,9 @@ const char *CPLGetBasename( const char *pszFullFilename )
 const char *CPLGetExtension( const char *pszFullFilename )
 
 {
-    int iFileStart = CPLFindFilenameStart( pszFullFilename );
-    int iExtStart;
-    char *pszStaticResult = CPLGetStaticResult();
+    int     iFileStart = CPLFindFilenameStart( pszFullFilename );
+    size_t  iExtStart;
+    char    *pszStaticResult = CPLGetStaticResult();
 
     for( iExtStart = strlen(pszFullFilename);
          iExtStart > iFileStart && pszFullFilename[iExtStart] != '.';
@@ -391,8 +394,8 @@ const char *CPLGetExtension( const char *pszFullFilename )
 const char *CPLResetExtension( const char *pszPath, const char *pszExt )
 
 {
-    char *pszStaticResult = CPLGetStaticResult();
-    int         i;
+    char    *pszStaticResult = CPLGetStaticResult();
+    size_t  i;
 
 /* -------------------------------------------------------------------- */
 /*      First, try and strip off any existing extension.                */
@@ -702,7 +705,7 @@ const char *CPLExtractRelativePath( const char *pszBaseDir,
                                     int *pbGotRelative )
 
 {
-    int nBasePathLen;
+    size_t nBasePathLen;
 
 /* -------------------------------------------------------------------- */
 /*      If we don't have a basedir, then we can't relativize the path.  */
