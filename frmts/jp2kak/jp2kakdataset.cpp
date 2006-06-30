@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.42  2006/06/30 00:26:38  fwarmerdam
+ * fix for files without any xml/gml metadata
+ *
  * Revision 1.41  2006/06/22 20:29:41  fwarmerdam
  * added support for reading and writing mainline xml boxes via metadata
  *
@@ -1340,7 +1343,10 @@ GDALDataset *JP2KAKDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
             int iBox;
 
-            for( iBox = 0; oJP2Geo.papszGMLMetadata[iBox] != NULL; iBox++ )
+            for( iBox = 0; 
+                 oJP2Geo.papszGMLMetadata
+                     && oJP2Geo.papszGMLMetadata[iBox] != NULL; 
+                 iBox++ )
             {
                 char *pszName = NULL;
                 const char *pszXML = 
