@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/06/30 15:05:46  dron
+ * Avoid macro redefinition.
+ *
  * Revision 1.7  2006/04/21 14:43:52  dron
  * Added test for copysignf() presence.
  *
@@ -223,7 +226,7 @@ CPL_CVSID("$Id$");
  * For the moment we do not have an actual replacements for these functions
  * and suppose they are exist, even not declared in <math.h>. */
 
-#ifndef HAVE_COPYSIGNF
+#if !defined(HAVE_COPYSIGNF) && !defined(copysignf)
 # define copysignf copysign
 #endif /* HAVE_COPYSIGNF */
 
