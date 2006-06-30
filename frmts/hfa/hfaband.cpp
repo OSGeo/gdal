@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2006/06/30 21:15:57  fwarmerdam
+ * Check for success of SetStringField() on RRDNamesList.
+ *
  * Revision 1.54  2006/05/07 04:04:03  fwarmerdam
  * fixed serious multithreading issue with ExtractInstValue (bug 1132)
  *
@@ -1603,10 +1606,8 @@ int HFABand::CreateOverview( int nOverviewLevel )
 
 {
 
-    char *pszLayerName;
+    CPLString osLayerName;
     int    nOXSize, nOYSize;
-
-    pszLayerName = (char *) CPLMalloc(strlen(psInfo->pszFilename) + 128);
 
     nOXSize = (psInfo->nXSize + nOverviewLevel - 1) / nOverviewLevel;
     nOYSize = (psInfo->nYSize + nOverviewLevel - 1) / nOverviewLevel;
@@ -1662,15 +1663,15 @@ int HFABand::CreateOverview( int nOverviewLevel )
 /* -------------------------------------------------------------------- */
 /*      Create the layer.                                               */
 /* -------------------------------------------------------------------- */
-    sprintf( pszLayerName, "_ss_%d_", nOverviewLevel );
+    osLayerName.Printf( "_ss_%d_", nOverviewLevel );
 
-    if( !HFACreateLayer( psRRDInfo, poParent, pszLayerName, 
+    if( !HFACreateLayer( psRRDInfo, poParent, osLayerName, 
                          TRUE, 64, FALSE, bCreateLargeRaster,	
                          nOXSize, nOYSize, nDataType, NULL,
                          nValidFlagsOffset, nDataOffset, 1, 0 ) )
         return -1;
     
-    HFAEntry *poOverLayer = poParent->GetNamedChild( pszLayerName );
+    HFAEntry *poOverLayer = poParent->GetNamedChild( osLayerName );
     if( poOverLayer == NULL )
         return -1;
 
@@ -1700,14 +1701,13 @@ int HFABand::CreateOverview( int nOverviewLevel )
 
     sprintf( szName, "nameList[%d].string", iNextName );
 
-    sprintf( pszLayerName, "%s(:%s:_ss_%d_)", 
-             psRRDInfo->pszFilename, poNode->GetName(), nOverviewLevel );
+    osLayerName.Printf( "%s(:%s:_ss_%d_)", 
+                        psRRDInfo->pszFilename, poNode->GetName(), 
+                        nOverviewLevel );
 
-    // TODO: Need to add to end of array.
-    // TODO: Need to check that this fits into the data area of this entry.
-    poRRDNamesList->SetStringField( szName, pszLayerName );
-
-    CPLFree( pszLayerName );
+    // TODO: Need to add to end of array (thats pretty hard).
+    if( poRRDNamesList->SetStringField( szName, osLayerName ) != CE_None )
+        return -1;
 
 /* -------------------------------------------------------------------- */
 /*      Add to the list of overviews for this band.                     */
