@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.56  2006/06/30 14:58:22  dron
+ * Avoid warnings on win/64.
+ *
  * Revision 1.55  2006/04/12 15:10:40  fwarmerdam
  * argument to InsertString should be const
  *
@@ -1038,7 +1041,7 @@ int CSLFetchBoolean( char **papszStrList, const char *pszKey, int bDefault )
  **********************************************************************/
 const char *CSLFetchNameValue(char **papszStrList, const char *pszName)
 {
-    int nLen;
+    size_t nLen;
 
     if (papszStrList == NULL || pszName == NULL)
         return NULL;
@@ -1132,7 +1135,7 @@ const char *CPLParseNameValue(const char *pszNameValue, char **ppszKey )
  **********************************************************************/
 char **CSLFetchNameValueMultiple(char **papszStrList, const char *pszName)
 {
-    int nLen;
+    size_t nLen;
     char **papszValues = NULL;
 
     if (papszStrList == NULL || pszName == NULL)
@@ -1212,7 +1215,7 @@ char **CSLSetNameValue(char **papszList,
                        const char *pszName, const char *pszValue)
 {
     char **papszPtr;
-    int nLen;
+    size_t nLen;
 
     if (pszName == NULL )
         return papszList;
@@ -1727,7 +1730,8 @@ char *CPLBinaryToHex( int nBytes, const GByte *pabyData )
 GByte *CPLHexToBinary( const char *pszHex, int *pnBytes )
 
 {
-    int iSrc = 0, iDst = 0, nHexLen = strlen(pszHex);
+    int     iSrc = 0, iDst = 0;
+    size_t  nHexLen = strlen(pszHex);
 
     GByte *pabyWKB;
 
