@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2006/06/30 12:53:40  mloskot
+ * Revert latest fix with GeometryToHex to GeometryToBYTEA change. GeometryToHex requires PostGIS to work well.
+ *
  * Revision 1.55  2006/06/30 11:02:03  mloskot
  * Fixed incorrect usage of GeometryToHex in OGRPGTableLayer::CreateFeatureViaCopy. This issue caused ogr_pg_12 test case failure.
  *
@@ -483,6 +486,8 @@ void OGRPGTableLayer::BuildWhere()
 
     if( m_poFilterGeom != NULL && bHasPostGISGeometry )
     {
+        CPLDebug( "PG", "bHasPostGISGeometry == TRUE" );
+
         OGREnvelope  sEnvelope;
 
         m_poFilterGeom->getEnvelope( &sEnvelope );
@@ -496,13 +501,22 @@ void OGRPGTableLayer::BuildWhere()
     if( strlen(osQuery) > 0 )
     {
         if( strlen(osWHERE) == 0 )
+        {
             osWHERE.Printf( "WHERE %s ", osQuery.c_str()  );
+        }
         else	
         {
             osWHERE += "AND ";
             osWHERE += osQuery;
         }
     }
+
+    // XXX - mloskot - some debugging logic, can be removed
+    if( bHasPostGISGeometry )
+        CPLDebug( "PG", "OGRPGTableLayer::BuildWhere returns: %s",
+                  osWHERE.c_str() );
+    else
+        CPLDebug( "PG", "PostGIS is NOT available!" );
 }
 
 /************************************************************************/
@@ -1056,7 +1070,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
         poGeometry->closeRings();
         poGeometry->setCoordinateDimension( nCoordDimension );
 
-        pszGeom = GeometryToBYTEA( poGeometry );
+        pszGeom = GeometryToHex( poGeometry, nSRSId );
         nCommandBufSize = nCommandBufSize + strlen(pszGeom);
     }
 
