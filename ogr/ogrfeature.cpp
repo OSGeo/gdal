@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2006/06/30 09:20:19  mloskot
+ * Fixed null dates issue reported by Aaron Koning. Fixed zero-fill of year value in OGRFeature::GetFieldAsString. Added assertions and NULL pointer tests.
+ *
  * Revision 1.38  2006/06/27 14:10:04  fwarmerdam
  * Always set style string even if just clearing in SetFrom().
  *
@@ -1014,7 +1017,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
     }
     else if( poFDefn->GetType() == OFTDateTime )
     {
-        sprintf( szTempBuffer, "%4d/%02d/%02d %2d:%02d:%02d", 
+        sprintf( szTempBuffer, "%04d/%02d/%02d %2d:%02d:%02d", 
                  pauFields[iField].Date.Year,
                  pauFields[iField].Date.Month,
                  pauFields[iField].Date.Day,
@@ -1048,7 +1051,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
     }
     else if( poFDefn->GetType() == OFTDate )
     {
-        sprintf( szTempBuffer, "%4d/%02d/%02d", 
+        sprintf( szTempBuffer, "%04d/%02d/%02d", 
                  pauFields[iField].Date.Year,
                  pauFields[iField].Date.Month,
                  pauFields[iField].Date.Day );

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2006/06/30 09:20:20  mloskot
+ * Fixed null dates issue reported by Aaron Koning. Fixed zero-fill of year value in OGRFeature::GetFieldAsString. Added assertions and NULL pointer tests.
+ *
  * Revision 1.43  2006/06/21 20:43:02  fwarmerdam
  * support datasets without dbf: bug 1211
  *
@@ -1123,7 +1126,17 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
         oField.SetPrecision( nPrecision );
 
         if( chNativeType == 'D' )
+        {
+            /* XXX - mloskot:
+             * Shapefile date has following 8-chars long format: 20060101.
+             * OGR splits it as YYYY/MM/DD, so 2 additional characters are required.
+             * Is this correct assumtion? What about time part of date?
+             * Shouldn't this format look as datetime: YYYY/MM/DD HH:MM:SS
+             * with 4 additional characters?
+             */
+            oField.SetWidth( nWidth + 2 );
             oField.SetType( OFTDate );
+        }
         else if( eDBFType == FTDouble )
             oField.SetType( OFTReal );
         else if( eDBFType == FTInteger )
