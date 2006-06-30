@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/06/30 21:23:11  fwarmerdam
+ * added checking when setting data to avoid writing past end of buffer
+ *
  * Revision 1.21  2006/05/07 04:04:03  fwarmerdam
  * fixed serious multithreading issue with ExtractInstValue (bug 1132)
  *
@@ -460,6 +463,15 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
         else
             nCount = nIndexValue+1;
 
+        if( (int) nCount + 8 > nDataSize )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Attempt to extend field %s in node past end of data,\n"
+                      "not currently supported.",
+                      pszField );
+            return CE_Failure;
+        }
+
         nOffset = nCount;
         HFAStandard( 4, &nOffset );
         memcpy( pabyData, &nOffset, 4 );
@@ -494,6 +506,15 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
         }
         else
             nBytesToCopy = nBytes;
+
+        if( nBytesToCopy > nDataSize )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Attempt to extend field %s in node past end of data,\n"
+                      "not currently supported.",
+                      pszField );
+            return CE_Failure;
+        }
 
         memset( pabyData, 0, nBytesToCopy );
 
@@ -544,6 +565,15 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
     {
       case 'c':
       case 'C':
+        if( nIndexValue + 1 > nDataSize )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Attempt to extend field %s in node past end of data,\n"
+                      "not currently supported.",
+                      pszField );
+              return CE_Failure;
+        }
+
         if( chReqType == 's' )
             pabyData[nIndexValue] = ((char *) pValue)[0];
         else
@@ -568,6 +598,15 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
 
           unsigned short nNumber = (unsigned short) nIntValue;
 
+          if( nIndexValue*2 + 2 > nDataSize )
+          {
+              CPLError( CE_Failure, CPLE_AppDefined,
+                        "Attempt to extend field %s in node past end of data,\n"
+                        "not currently supported.",
+                        pszField );
+              return CE_Failure;
+          }
+
           HFAStandard( 2, &nNumber );
           memcpy( pabyData + nIndexValue*2, &nNumber, 2 );
       }
@@ -576,6 +615,15 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
       case 'S':
       {
           short nNumber;
+
+          if( nIndexValue*2 + 2 > nDataSize )
+          {
+              CPLError( CE_Failure, CPLE_AppDefined,
+                        "Attempt to extend field %s in node past end of data,\n"
+                        "not currently supported.",
+                        pszField );
+              return CE_Failure;
+          }
 
           nNumber = (short) nIntValue;
           HFAStandard( 2, &nNumber );
@@ -588,6 +636,15 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
       {
           GUInt32	nNumber = nIntValue;
 
+          if( nIndexValue*4 + 4 > nDataSize )
+          {
+              CPLError( CE_Failure, CPLE_AppDefined,
+                        "Attempt to extend field %s in node past end of data,\n"
+                        "not currently supported.",
+                        pszField );
+              return CE_Failure;
+          }
+
           HFAStandard( 4, &nNumber );
           memcpy( pabyData + nIndexValue*4, &nNumber, 4 );
       }
@@ -597,6 +654,15 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
       {
           GInt32	nNumber = nIntValue;
           
+          if( nIndexValue*4 + 4 > nDataSize )
+          {
+              CPLError( CE_Failure, CPLE_AppDefined,
+                        "Attempt to extend field %s in node past end of data,\n"
+                        "not currently supported.",
+                        pszField );
+              return CE_Failure;
+          }
+
           HFAStandard( 4, &nNumber );
           memcpy( pabyData + nIndexValue*4, &nNumber, 4 );
       }
@@ -606,6 +672,15 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
       {
           float		fNumber = (float) dfDoubleValue;
           
+          if( nIndexValue*4 + 4 > nDataSize )
+          {
+              CPLError( CE_Failure, CPLE_AppDefined,
+                        "Attempt to extend field %s in node past end of data,\n"
+                        "not currently supported.",
+                        pszField );
+              return CE_Failure;
+          }
+
           HFAStandard( 4, &fNumber );
           memcpy( pabyData + nIndexValue*4, &fNumber, 4 );
       }
@@ -615,6 +690,15 @@ HFAField::SetInstValue( const char * pszField, int nIndexValue,
       {
           double	dfNumber = dfDoubleValue;
           
+          if( nIndexValue*8 + 8 > nDataSize )
+          {
+              CPLError( CE_Failure, CPLE_AppDefined,
+                        "Attempt to extend field %s in node past end of data,\n"
+                        "not currently supported.",
+                        pszField );
+              return CE_Failure;
+          }
+
           HFAStandard( 8, &dfNumber );
           memcpy( pabyData + nIndexValue*8, &dfNumber, 8 );
       }
