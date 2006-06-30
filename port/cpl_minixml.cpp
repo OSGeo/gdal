@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.43  2006/06/30 14:25:24  dron
+ * Avoid warnings on win/64.
+ *
  * Revision 1.42  2006/04/19 02:00:20  fwarmerdam
  * moved ctype.h after cpl include files for VS2005
  *
@@ -112,8 +115,8 @@ typedef struct {
     int        bInElement;
     XMLTokenType  eTokenType;
     char       *pszToken;
-    int        nTokenMaxSize;
-    int        nTokenSize;
+    size_t     nTokenMaxSize;
+    size_t     nTokenSize;
 
     int        nStackMaxSize;
     int        nStackSize;
@@ -755,7 +758,7 @@ CPLXMLNode *CPLParseXMLString( const char *pszString )
 /*                            _GrowBuffer()                             */
 /************************************************************************/
 
-static void _GrowBuffer( unsigned int nNeeded, 
+static void _GrowBuffer( size_t nNeeded, 
                          char **ppszText, unsigned int *pnMaxLength )
 
 {
@@ -1684,10 +1687,10 @@ void CPLStripXMLNamespace( CPLXMLNode *psRoot,
 CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
 
 {
-    FILE        *fp;
-    int nLen;
-    char *pszDoc;
-    CPLXMLNode *psTree;
+    FILE            *fp;
+    vsi_l_offset    nLen;
+    char            *pszDoc;
+    CPLXMLNode      *psTree;
 
 /* -------------------------------------------------------------------- */
 /*      Read the file.                                                  */
@@ -1704,7 +1707,7 @@ CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
     nLen = VSIFTellL( fp );
     VSIFSeekL( fp, 0, SEEK_SET );
     
-    pszDoc = (char *) VSIMalloc(nLen+1);
+    pszDoc = (char *) VSIMalloc((size_t)nLen + 1);
     if( pszDoc == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory, 
@@ -1714,7 +1717,7 @@ CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
         VSIFCloseL( fp );
         return NULL;
     }
-    if( (int) VSIFReadL( pszDoc, 1, nLen, fp ) < nLen )
+    if( (int) VSIFReadL( pszDoc, 1, (size_t)nLen, fp ) < nLen )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
                   "VSIFRead() result short of expected %d bytes from %.500s.", 
@@ -1753,9 +1756,9 @@ CPLXMLNode *CPLParseXMLFile( const char *pszFilename )
 int CPLSerializeXMLTreeToFile( CPLXMLNode *psTree, const char *pszFilename )
 
 {
-    char *pszDoc;
-    FILE *fp;
-    int  nLength;
+    char    *pszDoc;
+    FILE    *fp;
+    size_t  nLength;
 
 /* -------------------------------------------------------------------- */
 /*      Serialize document.                                             */

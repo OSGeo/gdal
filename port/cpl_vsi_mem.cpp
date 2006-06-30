@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/06/30 14:25:24  dron
+ * Avoid warnings on win/64.
+ *
  * Revision 1.11  2006/03/27 15:24:41  fwarmerdam
  * buffer in FWrite is const
  *
@@ -228,7 +231,7 @@ bool VSIMemFile::SetLength( vsi_l_offset nNewLength )
         GByte *pabyNewData;
         vsi_l_offset nNewAlloc = (nNewLength + nNewLength / 10) + 5000;
 
-        pabyNewData = (GByte *) CPLRealloc(pabyData, nNewAlloc);
+        pabyNewData = (GByte *) CPLRealloc(pabyData, (size_t)nNewAlloc);
         if( pabyNewData == NULL )
             return false;
 
@@ -312,7 +315,8 @@ vsi_l_offset VSIMemHandle::Tell()
 size_t VSIMemHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
 {
-    int nBytesToRead = nSize * nCount; 
+    // FIXME: Integer overflow check should be placed here:
+    size_t nBytesToRead = nSize * nCount; 
 
     if( nBytesToRead + nOffset > poFile->nLength )
     {
@@ -320,7 +324,7 @@ size_t VSIMemHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
         nCount = nBytesToRead / nSize;
     }
 
-    memcpy( pBuffer, poFile->pabyData + nOffset, nBytesToRead );
+    memcpy( pBuffer, poFile->pabyData + nOffset, (size_t)nBytesToRead );
     nOffset += nBytesToRead;
 
     return nCount;
@@ -333,7 +337,8 @@ size_t VSIMemHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 size_t VSIMemHandle::Write( const void * pBuffer, size_t nSize, size_t nCount )
 
 {
-    int nBytesToWrite = nSize * nCount; 
+    // FIXME: Integer overflow check should be placed here:
+    size_t nBytesToWrite = nSize * nCount; 
 
     if( nBytesToWrite + nOffset > poFile->nLength )
     {
