@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2006/06/30 11:02:03  mloskot
+ * Fixed incorrect usage of GeometryToHex in OGRPGTableLayer::CreateFeatureViaCopy. This issue caused ogr_pg_12 test case failure.
+ *
  * Revision 1.54  2006/06/30 09:20:19  mloskot
  * Fixed null dates issue reported by Aaron Koning. Fixed zero-fill of year value in OGRFeature::GetFieldAsString. Added assertions and NULL pointer tests.
  *
@@ -460,8 +463,6 @@ void OGRPGTableLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 {
     if( InstallFilter( poGeomIn ) )
     {
-        CPLAssert( NULL != poGeomIn );
-
         BuildWhere();
 
         ResetReading();
@@ -1050,12 +1051,12 @@ OGRErr OGRPGTableLayer::CreateFeatureViaCopy( OGRFeature *poFeature )
     OGRGeometry *poGeometry = (OGRGeometry *) poFeature->GetGeometryRef();
     
     char *pszGeom = NULL;
-    if ( poGeometry )
+    if ( NULL != poGeometry )
     {
         poGeometry->closeRings();
         poGeometry->setCoordinateDimension( nCoordDimension );
 
-        pszGeom = GeometryToHex( poGeometry, nSRSId );
+        pszGeom = GeometryToBYTEA( poGeometry );
         nCommandBufSize = nCommandBufSize + strlen(pszGeom);
     }
 
