@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-VERSION =	1.3
+VERSION =	1.4
 DISTDIR =	iso8211lib-$(VERSION)
 WEB_DIR =	/u/www/projects/iso8211
 
@@ -50,32 +50,29 @@ docs:
 	rm -rf html
 	mkdir html
 	doxygen
-	rm html/index.html
-	cp html/ISO8211Lib.html html/index.html
 
 dist:	docs
 	rm -rf $(DISTDIR)
 	mkdir $(DISTDIR)
 	mkdir $(DISTDIR)/html
 	cp html/* $(DISTDIR)/html
-#	mkdir $(DISTDIR)/testdata
-#	cp testdata/*.* $(DISTDIR)/testdata
-#	cp teststream.sh teststream.out $(DISTDIR)
 	autoconf
 	cp *.cpp *.h configure Makefile.in $(DISTDIR)
 	rm configure
-	cp ../../port/{cpl_error*,cpl_port*,cpl_string*} $(DISTDIR)
+	cp ../../port/{cpl_error{.h,.cpp},cpl_port.h,cpl_string.{h,cpp}} $(DISTDIR)
 	cp ../../port/{cpl_vsisimple.cpp,cpl_config.h.in} $(DISTDIR)
-	cp ../../port/{cpl_vsi.h,cpl_conv.*} $(DISTDIR)
+	cp ../../port/{cpl_multiproc.cpp,cpl_multiproc.h} $(DISTDIR)
+	cp ../../port/{cpl_vsi.h,cpl_conv.{cpp,h},cpl_path.cpp} $(DISTDIR)
+	cp ../../port/cpl_{vsil.cpp,vsi_mem.cpp,vsil_win32.cpp} $(DISTDIR)
+	cp ../../port/cpl_{vsil_unix_stdio_64.cpp,dir.cpp} $(DISTDIR)
+	cp ../../port/cpl_{multiproc.{cpp,h},vsi_private.h} $(DISTDIR)
 	cp ../../port/cpl_config.h.vc $(DISTDIR)
-	rm $(DISTDIR)/*.o
 	tar czf $(DISTDIR).tar.gz $(DISTDIR)
 	zip -r $(DISTDIR).zip $(DISTDIR)
 
 update-web:	dist docs
 	cp html/* $(WEB_DIR)
 	cp $(DISTDIR).tar.gz $(DISTDIR).zip $(WEB_DIR)
-	cp $(DISTDIR).tar.gz $(DISTDIR).zip /u/ftp/pub/outgoing
 
 
 test:	8211dump
