@@ -7,7 +7,7 @@ AC_PROG_CXX
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(fcntl.h unistd.h)
+AC_CHECK_HEADERS(assert.h fcntl.h unistd.h dbmalloc.h dlfcn.h stdint.h limits.h locale.h values.h float.h errno.h)
 
 dnl Checks for library functions.
 AC_C_BIGENDIAN
