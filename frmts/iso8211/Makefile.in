@@ -2,7 +2,9 @@
 OBJ =	ddfmodule.o ddfutils.o ddffielddefn.o ddfrecord.o ddffield.o \
 	ddfsubfielddefn.o \
 	\
-	cpl_error.o cpl_vsisimple.o cpl_string.o cpl_conv.o
+	cpl_error.o cpl_vsisimple.o cpl_string.o cpl_conv.o cpl_multiproc.o \
+	cpl_vsil.o cpl_vsi_mem.o cpl_vsil_unix_stdio_64.o cpl_dir.o \
+	cpl_conv.o cpl_path.o
 
 CXXFLAGS = @CXXFLAGS@ @CXX_WFLAGS@
 LIBS 	= @LIBS@ -lm
