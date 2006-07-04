@@ -1,8 +1,4 @@
-/*! \page ISO8211Lib
-
-<center>
-<title>ISO8211Lib</title>
-</center>
+/*! \mainpage ISO8211Lib
 
 <h2>Introduction</h2>
 
@@ -18,7 +14,7 @@ introduce it here, with reference to the library classes representing
 the components.<p>
 
 An 8211 file (DDFModule) 
-consists of a series of logical records.  The first record
+consists of a series of logical records.  The fiarst record
 is special, and is called the DDR (Data Description Record).  It basically
 contains definitions of all the data objects (fields or DDFFieldDefn objects) 
 that can occur on the following data records.<p>
@@ -148,21 +144,13 @@ The precise license text is:<p>
 
 <li> First, fetch the source.  The most recent source should be accessable at
 an url such as 
-<a href="http://gdal.velocet.ca/projects/iso8211/iso8211lib-1.2.tar.gz">
-http://gdal.velocet.ca/projects/iso8211/iso8211lib-1.2.tar.gz</a>, or
-by ftp from 
-<a href="ftp://gdal.velocet.ca/pub/outgoing/iso8211lib-1.2.tar.gz">
-ftp://gdal.velocet.ca/pub/outgoing/iso8211lib-1.2.tar.gz</a>.<p>
+<a href="http://home.gdal.org/projects/iso8211/iso8211lib-1.4.zip">
+http://home.gdal.org/projects/iso8211/iso8211lib-1.4.zip</a>.<p>
 
 <li> Untar the source.<p>
 <code>
-% gzip -d iso8211lib-1.2.tar.gz
-% tar xzvf iso8211lib-1.2.tar.gz
+% unzip iso8211lib-1.4.zip
 </code>
-
-If for some reason you don't have gzip, or tar (perhaps you work on Windows)
-just <a href="mailto:warmerdam@pobox.com">let me know</a>, 
-and I will prepare a zip or similar archive of the source.<p>
 
 <li> On unix you can now type ``configure'' to establish configuration 
 options.<p>
