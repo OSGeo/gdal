@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2006/07/06 21:49:31  mloskot
+ * Fixed deallocation of GEOS geometries in ogr/ogrgeometry.cpp.
+ *
  * Revision 1.37  2006/07/06 19:06:42  mloskot
  * Added implementation of OGRGeometry::Distance with GEOS C API. Fixed GEOS_INIT macro in m4/geos.m4
  *
@@ -1479,14 +1482,16 @@ double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
     {
         double dfDistance = 0.0;
         int bIsErr = GEOSDistance( hThis, hOther, &dfDistance );
+
+        delete hThis;
+        delete hOther;
+
         if ( bIsErr > 0 ) 
         {
             return dfDistance;
         }
-
-        delete hThis;
-        delete hOther;
     }
+
 #else /* GEOS_C_API */
 
     CPLDebug( "OGR", "OGRGeometry::Distance - using GEOS C++ API" );
