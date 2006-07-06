@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/07/06 20:29:14  fwarmerdam
+ * added GDALSuggestedWarpOutput2() to return raw extents
+ *
  * Revision 1.24  2005/10/28 18:30:28  fwarmerdam
  * added progress func for rasterize
  *
@@ -241,6 +244,14 @@ GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
                          void *pTransformArg,
                          double *padfGeoTransformOut, 
                          int *pnPixels, int *pnLines );
+CPLErr CPL_DLL CPL_STDCALL
+GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS, 
+                          GDALTransformerFunc pfnTransformer,
+                          void *pTransformArg,
+                          double *padfGeoTransformOut, 
+                          int *pnPixels, int *pnLines,
+                          double *padfExtents, 
+                          int nOptions );
 
 CPLXMLNode CPL_DLL *
 GDALSerializeTransformer( GDALTransformerFunc pfnFunc, void *pTransformArg );

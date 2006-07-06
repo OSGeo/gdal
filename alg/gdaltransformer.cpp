@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/07/06 20:29:14  fwarmerdam
+ * added GDALSuggestedWarpOutput2() to return raw extents
+ *
  * Revision 1.25  2006/05/10 19:25:33  fwarmerdam
  * avoid processing HUGE_VAL
  *
@@ -237,6 +240,67 @@ GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
                          int *pnPixels, int *pnLines )
 
 {
+    double adfExtent[4];
+
+    return GDALSuggestedWarpOutput2( hSrcDS, pfnTransformer, pTransformArg, 
+                                     padfGeoTransformOut, pnPixels, pnLines, 
+                                     adfExtent, 0 );
+}
+
+/************************************************************************/
+/*                      GDALSuggestedWarpOutput2()                      */
+/************************************************************************/
+
+/**
+ * Suggest output file size.
+ *
+ * This function is used to suggest the size, and georeferenced extents
+ * appropriate given the indicated transformation and input file.  It walks
+ * the edges of the input file (approximately 20 sample points along each
+ * edge) transforming into output coordinates in order to get an extents box.
+ *
+ * Then a resolution is computed with the intent that the length of the
+ * distance from the top left corner of the output imagery to the bottom right
+ * corner would represent the same number of pixels as in the source image. 
+ * Note that if the image is somewhat rotated the diagonal taken isnt of the
+ * whole output bounding rectangle, but instead of the locations where the
+ * top/left and bottom/right corners transform.  The output pixel size is 
+ * always square.  This is intended to approximately preserve the resolution
+ * of the input data in the output file. 
+ * 
+ * The values returned in padfGeoTransformOut, pnPixels and pnLines are
+ * the suggested number of pixels and lines for the output file, and the
+ * geotransform relating those pixels to the output georeferenced coordinates.
+ *
+ * The trickiest part of using the function is ensuring that the 
+ * transformer created is from source file pixel/line coordinates to 
+ * output file georeferenced coordinates.  This can be accomplished with 
+ * GDALCreateGenImProjTransformer() by passing a NULL for the hDstDS.  
+ *
+ * @param hSrcDS the input image (it is assumed the whole input images is
+ * being transformed). 
+ * @param pfnTransformer the transformer function.
+ * @param pTransformArg the callback data for the transformer function.
+ * @param padfGeoTransformOut the array of six doubles in which the suggested
+ * geotransform is returned. 
+ * @param pnPixels int in which the suggest pixel width of output is returned.
+ * @param pnLines int in which the suggest pixel height of output is returned.
+ * @param padfExtent Four entry array to return extents as (xmin, ymin, xmax, ymax). 
+ * @param nOptions Options, currently always zero.
+ *
+ * @return CE_None if successful or CE_Failure otherwise. 
+ */
+
+
+CPLErr CPL_STDCALL
+GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS, 
+                          GDALTransformerFunc pfnTransformer, 
+                          void *pTransformArg, 
+                          double *padfGeoTransformOut, 
+                          int *pnPixels, int *pnLines,
+                          double *padfExtent, int nOptions )
+
+{
 /* -------------------------------------------------------------------- */
 /*      Setup sample points all around the edge of the input raster.    */
 /* -------------------------------------------------------------------- */
@@ -403,6 +467,14 @@ GDALSuggestedWarpOutput( GDALDatasetH hSrcDS,
     }
 
     dfDiagonalDist = sqrt( dfDeltaX * dfDeltaX + dfDeltaY * dfDeltaY );
+
+/* -------------------------------------------------------------------- */
+/*      Return raw extents.                                             */
+/* -------------------------------------------------------------------- */
+    padfExtent[0] = dfMinXOut;
+    padfExtent[1] = dfMinYOut;
+    padfExtent[2] = dfMaxXOut;
+    padfExtent[3] = dfMaxYOut;
     
 /* -------------------------------------------------------------------- */
 /*      Compute a pixel size from this.                                 */
