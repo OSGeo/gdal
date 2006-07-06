@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2006/07/06 19:06:42  mloskot
+ * Added implementation of OGRGeometry::Distance with GEOS C API. Fixed GEOS_INIT macro in m4/geos.m4
+ *
  * Revision 1.36  2006/06/28 10:46:17  dron
  * Make OGRGeometry::dumpReadable() the const method.
  *
@@ -1362,7 +1365,11 @@ GEOSGeom OGRGeometry::exportToGEOS() const
               "GEOS support not enabled." );
     return NULL;
 
-#elif GEOS_C_API
+#else
+#ifdef GEOS_C_API 
+
+    CPLDebug( "OGR", "OGRGeometry::exportToGEOS - using GEOS C API" );
+
     static int bGEOSInitialized = FALSE;
 
     if( !bGEOSInitialized )
@@ -1383,7 +1390,10 @@ GEOSGeom OGRGeometry::exportToGEOS() const
     CPLFree( pabyData );
 
     return hGeom;
-#else
+
+#else /* GEOS_C_API */
+
+    CPLDebug( "OGR", "OGRGeometry::exportToGEOS - using GEOS C++ API" );
 
     char *pszWKT = NULL;
     geos::WKTReader   geosWktReader( (geos::GeometryFactory *) 
@@ -1410,6 +1420,8 @@ GEOSGeom OGRGeometry::exportToGEOS() const
         delete e;
         return NULL;
     }
+
+#endif /* GEOS_C_API */
 
 #endif /* HAVE_GEOS */
 }
@@ -1439,40 +1451,69 @@ GEOSGeom OGRGeometry::exportToGEOS() const
 double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
 
 {
+    if( NULL == poOtherGeom )
+    {
+        CPLDebug( "OGR", "OGRGeometry::Distance called with NULL geometry pointer" );
+        return -1.0;
+    }
+
 #ifndef HAVE_GEOS
 
     CPLError( CE_Failure, CPLE_NotSupported, 
               "GEOS support not enabled." );
     return -1.0;
 
-#elif GEOS_C_API 
-
-    CPLError( CE_Failure, CPLE_NotSupported, 
-              "GEOS C API does not include DistanceOp." );
-    return -1.0;
-
 #else
-    geos::Geometry *poThis, *poOther;
+#ifdef GEOS_C_API 
 
-    poThis = (geos::Geometry *) exportToGEOS();
-    poOther = (geos::Geometry *) poOtherGeom->exportToGEOS();
+    CPLDebug( "OGR", "OGRGeometry::Distance - using GEOS C API" );
+
+    // GEOSGeom is a pointer
+    GEOSGeom hThis = NULL;
+    GEOSGeom hOther = NULL;
+
+    hOther = poOtherGeom->exportToGEOS();
+    hThis = exportToGEOS();
+   
+    if( hThis != NULL && hOther != NULL )
+    {
+        double dfDistance = 0.0;
+        int bIsErr = GEOSDistance( hThis, hOther, &dfDistance );
+        if ( bIsErr > 0 ) 
+        {
+            return dfDistance;
+        }
+
+        delete hThis;
+        delete hOther;
+    }
+#else /* GEOS_C_API */
+
+    CPLDebug( "OGR", "OGRGeometry::Distance - using GEOS C++ API" );
+
+    geos::Geometry *poThis = NULL;
+    geos::Geometry *poOther = NULL;
+
+    poThis = static_cast<geos::Geometry*>( exportToGEOS() );
+    poOther = static_cast<geos::Geometry*>( poOtherGeom->exportToGEOS() );
 
     if( poThis != NULL && poOther != NULL )
     {
+        // Warning! No error is returned.
         geos::DistanceOp oDistOp( poThis, poOther );
-        double dfDistance;
 
+        double dfDistance = 0.0;
         dfDistance = oDistOp.distance();
-        
+
         delete poThis;
         delete poOther;
 
         return dfDistance;
     }
-    else
-    {
-        return -1.0;
-    }
+#endif /* ! GEOS_C_API */
+
+    /* CALCULATIONS ERROR */
+    return -1.0;
 
 #endif /* HAVE_GEOS */
 }
@@ -1603,6 +1644,9 @@ OGRGeometry *OGRGeometry::getBoundary() const
     return NULL;
 
 #elif GEOS_C_API
+    
+    CPLDebug( "OGR", "OGRGeometry::getBoundary- using GEOS C API" );
+
     GEOSGeom hGeosGeom, hGeosProduct = NULL;
     OGRGeometry *poOGRProduct = NULL;
 
@@ -1622,6 +1666,9 @@ OGRGeometry *OGRGeometry::getBoundary() const
     return poOGRProduct;
 
 #else
+
+    CPLDebug( "OGR", "OGRGeometry::getBoundary- using GEOS C++ API" );
+
     geos::Geometry *poSrcGeosGeom;
     OGRGeometry *poResultOGRGeom = NULL;
 

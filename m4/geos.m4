@@ -59,12 +59,17 @@ AC_DEFUN([GEOS_INIT],[
 
   else
 
-   if test "`basename xx/$with_geos`" = "geos-config" ; then
-      AC_MSG_NOTICE([GEOS enabled with provided geos-config])
-      GEOS_CONFIG="$with_geos"
-    else
-      AC_MSG_ERROR([--with-geos should have yes, no or a path to geos-config])
-    fi
+   ac_geos_config=`basename $with_geos`
+   ac_geos_config_dir=`dirname $with_geos`
+
+   AC_CHECK_PROG(
+        GEOS_CONFIG,
+        $ac_geos_config,
+        $with_geos,
+        [no],
+        [$ac_geos_config_dir],
+        []
+   )
 
   fi
 
@@ -88,14 +93,12 @@ AC_DEFUN([GEOS_INIT],[
     req_micro=`echo $min_geos_version | \
        sed 's/\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\).*/\3/'`
       
-
     version_ok="no"
-    if test $req_major -le $geos_major_version; then
-       if test $req_minor -le $geos_minor_version; then
-          if test $req_micro -le $geos_micro_version; then
-             version_ok="yes"
-          fi
-       fi
+    ac_req_version=`expr $req_major \* 100000 \+  $req_minor \* 100 \+ $req_micro`
+    ac_geos_version=`expr $geos_major_version \* 100000 \+  $geos_minor_version \* 100 \+ $geos_micro_version`
+
+    if test $ac_req_version -le $ac_geos_version; then
+        version_ok="yes"
     fi
 
     if test $version_ok = "no"; then
