@@ -1672,19 +1672,11 @@ dnl ---------------------------------------------------------------------------
 dnl Check if geos library is available.
 dnl ---------------------------------------------------------------------------
 
-GEOS_INIT(2.0.0)
+GEOS_INIT(2.2.0)
 if test "${HAVE_GEOS}" = "yes" ; then
-   case "${GEOS_VERSION}" in 
-   2*)
-    AC_MSG_NOTICE([using GEOS 2.x C++ API])
-    ;;
-
-    *)
-    GEOS_LIBS="${GEOS_LIBS} -lgeos_c"
-    GEOS_CFLAGS="-DGEOS_C_API=1 ${GEOS_CFLAGS}"
-    AC_MSG_NOTICE([using GEOS 3.x+ C API])
-    ;;
-  esac
+  GEOS_LIBS="${GEOS_LIBS} -lgeos_c"
+  GEOS_CFLAGS="-DGEOS_C_API=1 ${GEOS_CFLAGS}"
+  AC_MSG_NOTICE([using GEOS 2.2.x+ C API])
   
   LIBS="${GEOS_LIBS} ${LIBS}"
 fi
