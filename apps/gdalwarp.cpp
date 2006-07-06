@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/07/06 20:30:11  fwarmerdam
+ * use GDALSuggestedWarpOutput2() to avoid approximation implicit in using gt
+ *
  * Revision 1.25  2006/06/29 21:10:29  fwarmerdam
  * Avoid a few memory leaks.
  *
@@ -834,13 +837,14 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
 /*      Get approximate output definition.                              */
 /* -------------------------------------------------------------------- */
         double adfThisGeoTransform[6];
+        double adfExtent[4];
         int    nThisPixels, nThisLines;
 
-        if( GDALSuggestedWarpOutput( hSrcDS, 
-                                     GDALGenImgProjTransform, hTransformArg, 
-                                     adfThisGeoTransform, 
-                                     &nThisPixels, &nThisLines )
-            != CE_None )
+        if( GDALSuggestedWarpOutput2( hSrcDS, 
+                                      GDALGenImgProjTransform, hTransformArg, 
+                                      adfThisGeoTransform, 
+                                      &nThisPixels, &nThisLines, 
+                                      adfExtent, 0 ) != CE_None )
             return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -849,25 +853,19 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
 /* -------------------------------------------------------------------- */
         if( dfWrkMaxX == 0.0 && dfWrkMinX == 0.0 )
         {
-            dfWrkMinX = adfThisGeoTransform[0];
-            dfWrkMaxX = adfThisGeoTransform[0] 
-                + adfThisGeoTransform[1] * nThisPixels;
-            dfWrkMaxY = adfThisGeoTransform[3];
-            dfWrkMinY = adfThisGeoTransform[3] 
-                + adfThisGeoTransform[5] * nThisLines;
+            dfWrkMinX = adfExtent[0];
+            dfWrkMaxX = adfExtent[2];
+            dfWrkMaxY = adfExtent[3];
+            dfWrkMinY = adfExtent[1];
             dfWrkResX = adfThisGeoTransform[1];
             dfWrkResY = ABS(adfThisGeoTransform[5]);
         }
         else
         {
-            dfWrkMinX = MIN(dfWrkMinX,adfThisGeoTransform[0]);
-            dfWrkMaxX = MAX(dfWrkMaxX,
-                         adfThisGeoTransform[0] 
-                         + adfThisGeoTransform[1] * nThisPixels);
-            dfWrkMaxY = MAX(dfWrkMaxY,adfThisGeoTransform[3]);
-            dfWrkMinY = MIN(dfWrkMinY,
-                         adfThisGeoTransform[3] 
-                         + adfThisGeoTransform[5] * nThisLines);
+            dfWrkMinX = MIN(dfWrkMinX,adfExtent[0]);
+            dfWrkMaxX = MAX(dfWrkMaxX,adfExtent[2]);
+            dfWrkMaxY = MAX(dfWrkMaxY,adfExtent[3]);
+            dfWrkMinY = MIN(dfWrkMinY,adfExtent[1]);
             dfWrkResX = MIN(dfWrkResX,adfThisGeoTransform[1]);
             dfWrkResY = MIN(dfWrkResY,ABS(adfThisGeoTransform[5]));
         }
@@ -930,10 +928,10 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
     {
         if( dfMinX == 0.0 && dfMinY == 0.0 && dfMaxX == 0.0 && dfMaxY == 0.0 )
         {
-            dfMinX = adfDstGeoTransform[0];
-            dfMaxX = adfDstGeoTransform[0] + adfDstGeoTransform[1] * nPixels;
-            dfMaxY = adfDstGeoTransform[3];
-            dfMinY = adfDstGeoTransform[3] + adfDstGeoTransform[5] * nLines;
+            dfMinX = dfWrkMinX;
+            dfMaxX = dfWrkMaxX;
+            dfMaxY = dfWrkMaxY;
+            dfMinY = dfWrkMinY;
         }
 
         dfXRes = (dfMaxX - dfMinX) / nForcePixels;
@@ -952,10 +950,10 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
     {
         if( dfMinX == 0.0 && dfMinY == 0.0 && dfMaxX == 0.0 && dfMaxY == 0.0 )
         {
-            dfMinX = adfDstGeoTransform[0];
-            dfMaxX = adfDstGeoTransform[0] + adfDstGeoTransform[1] * nPixels;
-            dfMaxY = adfDstGeoTransform[3];
-            dfMinY = adfDstGeoTransform[3] + adfDstGeoTransform[5] * nLines;
+            dfMinX = dfWrkMinX;
+            dfMaxX = dfWrkMaxX;
+            dfMaxY = dfWrkMaxY;
+            dfMinY = dfWrkMinY;
         }
 
         dfXRes = (dfMaxX - dfMinX) / nForcePixels;
@@ -974,10 +972,10 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
     {
         if( dfMinX == 0.0 && dfMinY == 0.0 && dfMaxX == 0.0 && dfMaxY == 0.0 )
         {
-            dfMinX = adfDstGeoTransform[0];
-            dfMaxX = adfDstGeoTransform[0] + adfDstGeoTransform[1] * nPixels;
-            dfMaxY = adfDstGeoTransform[3];
-            dfMinY = adfDstGeoTransform[3] + adfDstGeoTransform[5] * nLines;
+            dfMinX = dfWrkMinX;
+            dfMaxX = dfWrkMaxX;
+            dfMaxY = dfWrkMaxY;
+            dfMinY = dfWrkMinY;
         }
 
         dfYRes = (dfMaxY - dfMinY) / nForceLines;
