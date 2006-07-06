@@ -1461,6 +1461,8 @@ AC_ARG_WITH(dods_root,
 
 if test -z "$with_dods_root" -o "$with_dods_root" = "no"; then
     AC_MSG_RESULT(disabled)
+elif test "$with_dods_root" = "yes" ; then
+    AC_MSG_ERROR([--with-dods-root requires path to dods root as argument])
 else
     DODS_LIB=$with_dods_root/lib
     DODS_INC="-I$with_dods_root/include -I$with_dods_root/include/libdap -I$with_dods_root/include/dap"
