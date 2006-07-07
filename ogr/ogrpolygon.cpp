@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2006/07/07 00:05:46  mloskot
+ * Removed GEOS C++ API usage from OGR and autotools.
+ *
  * Revision 1.40  2006/06/19 23:19:45  mloskot
  * Added new functions OGRLinearRing::isPointInRing and OGRPolygon::IsPointOnSurface.
  *
@@ -154,10 +157,6 @@
 #include "ogr_p.h"
 #include "ogr_geos.h"
 #include "ogr_api.h"
-
-#if defined(HAVE_GEOS) && !defined(GEOS_C_API)
-#  include "geos/geosAlgorithm.h"
-#endif
 
 CPL_CVSID("$Id$");
 
@@ -836,8 +835,10 @@ int OGRPolygon::Centroid( OGRPoint *poPoint ) const
     
     return OGRERR_FAILURE;
 
-#elif GEOS_C_API
-    GEOSGeom hThisGeosGeom = NULL, hOtherGeosGeom = NULL;
+#else
+
+    GEOSGeom hThisGeosGeom = NULL;
+    GEOSGeom hOtherGeosGeom = NULL;
     
     hThisGeosGeom = exportToGEOS();
 
@@ -858,29 +859,6 @@ int OGRPolygon::Centroid( OGRPoint *poPoint ) const
 	poPoint->setY( poCentroid->getY() );
 
         delete poCentroid;
-
-    	return OGRERR_NONE;
-    }
-    else
-    {
-    	return OGRERR_FAILURE;
-    }
-
-#else
-    geos::Geometry *poThisGeosGeom, *poOtherGeosGeom = 0;
-    
-    poThisGeosGeom = (geos::Geometry *) exportToGEOS();
-
-    if( poThisGeosGeom != NULL )
-    {
-    	poOtherGeosGeom = poThisGeosGeom->getCentroid();
-
-	poPoint->setX( poOtherGeosGeom->getCoordinate()->x );
-	poPoint->setY( poOtherGeosGeom->getCoordinate()->y );
-	poPoint->setZ( poOtherGeosGeom->getCoordinate()->z );
-
-    	delete poThisGeosGeom;
-    	delete poOtherGeosGeom;
 
     	return OGRERR_NONE;
     }
