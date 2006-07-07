@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2006/07/07 15:09:12  fwarmerdam
+ * improve handling of empty linearrings and polygons in aggregates
+ *
  * Revision 1.54  2006/03/31 17:57:32  fwarmerdam
  * header updates
  *
@@ -1106,7 +1109,9 @@ OGRErr OGRLineString::exportToWkt( char ** ppszDstText ) const
 /* -------------------------------------------------------------------- */
     if( nPointCount == 0 )
     {
-        *ppszDstText = CPLStrdup("LINESTRING EMPTY");
+        CPLString osEmpty;
+        osEmpty.Printf("%s EMPTY",getGeometryName());
+        *ppszDstText = CPLStrdup(osEmpty);
         return OGRERR_NONE;
     }
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/07/07 15:09:12  fwarmerdam
+ * improve handling of empty linearrings and polygons in aggregates
+ *
  * Revision 1.15  2006/03/31 17:44:20  fwarmerdam
  * header updates
  *
@@ -313,14 +316,8 @@ OGRErr OGRMultiPolygon::exportToWkt( char ** ppszDstText ) const
 
 {
     char        **papszLines;
-    int         iLine, nCumulativeLength = 0;
+    int         iLine, nCumulativeLength = 0, nValidPolys=0;
     OGRErr      eErr;
-
-    if( getNumGeometries() == 0 )
-    {
-        *ppszDstText = CPLStrdup("MULTIPOLYGON EMPTY");
-        return OGRERR_NONE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Build a list of strings containing the stuff for each ring.     */
@@ -333,10 +330,28 @@ OGRErr OGRMultiPolygon::exportToWkt( char ** ppszDstText ) const
         if( eErr != OGRERR_NONE )
             return eErr;
 
-        CPLAssert( EQUALN(papszLines[iLine],"POLYGON (", 9) );
+        if( !EQUALN(papszLines[iLine],"POLYGON (", 9) )
+        {
+            CPLDebug( "OGR", "OGRMultiPolygon::exportToWkt() - skipping %s.",
+                      papszLines[iLine] );
+            CPLFree( papszLines[iLine] );
+            papszLines[iLine] = NULL;
+            continue;
+        }
+        
         nCumulativeLength += strlen(papszLines[iLine] + 8);
+        nValidPolys++;
     }
     
+/* -------------------------------------------------------------------- */
+/*      Return MULTIPOLYGON EMPTY if we get no valid polygons.          */
+/* -------------------------------------------------------------------- */
+    if( nValidPolys == 0 )
+    {
+        *ppszDstText = CPLStrdup("MULTIPOLYGON EMPTY");
+        return OGRERR_NONE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Allocate exactly the right amount of space for the              */
 /*      aggregated string.                                              */
@@ -353,6 +368,9 @@ OGRErr OGRMultiPolygon::exportToWkt( char ** ppszDstText ) const
 
     for( iLine = 0; iLine < getNumGeometries(); iLine++ )
     {                                                           
+        if( papszLines[iLine] == NULL )
+            continue;
+
         if( iLine > 0 )
             strcat( *ppszDstText, "," );
         
