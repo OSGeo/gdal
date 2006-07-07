@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2006/07/07 00:05:46  mloskot
+ * Removed GEOS C++ API usage from OGR and autotools.
+ *
  * Revision 1.29  2006/01/31 02:38:37  fwarmerdam
  * Fixed corrupt data reporting.
  *
@@ -831,49 +834,31 @@ OGRGeometryFactory::createFromGEOS( GEOSGeom geosGeom )
               "GEOS support not enabled." );
     return NULL;
 
-#elif defined(GEOS_C_API)
-    size_t nSize;
-    unsigned char *pabyBuf;
+#else
+
+    size_t nSize = 0;
+    unsigned char *pabyBuf = NULL;
     OGRGeometry *poGeometry = NULL;
 
     pabyBuf = GEOSGeomToWKB_buf( geosGeom, &nSize );
     if( pabyBuf == NULL || nSize == 0 )
+    {
         return NULL;
+    }
 
     if( OGRGeometryFactory::createFromWkb( (unsigned char *) pabyBuf, 
                                            NULL, &poGeometry, (int) nSize )
         != OGRERR_NONE )
+    {
         poGeometry = NULL;
+    }
 
     if( pabyBuf != NULL )
+    {
         free( pabyBuf );
+    }
 
     return poGeometry;
-#else
-    geos::WKTWriter oWKTWriter;
-    string oWKT;
-
-    try 
-    {
-        oWKT = oWKTWriter.write( (geos::Geometry *) geosGeom );
-    }
-    catch( geos::GEOSException *e )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "GEOSException: %s", 
-                  e->toString().c_str() );
-
-        delete e;
-        return NULL;
-    }
-
-    OGRGeometry *poGeom = NULL;
-    char *pszWKT = (char *) oWKT.c_str();
-
-    if( createFromWkt( &pszWKT, NULL, &poGeom ) != OGRERR_NONE )
-        return NULL;
-    else
-        return poGeom;
 
 #endif /* HAVE_GEOS */
 }
@@ -885,16 +870,9 @@ OGRGeometryFactory::createFromGEOS( GEOSGeom geosGeom )
 void *OGRGeometryFactory::getGEOSGeometryFactory() 
 
 {
-#if defined(HAVE_GEOS) && !defined(GEOS_C_API)
-    static geos::GeometryFactory *poSavedFactory = NULL;
-
-    if( poSavedFactory == NULL )
-        poSavedFactory = new geos::GeometryFactory();
-
-    return poSavedFactory;
-#else
+    // XXX - mloskot - What to do with this call
+    // after GEOS C++ API has been stripped?
     return NULL;
-#endif
 }
 
 /************************************************************************/

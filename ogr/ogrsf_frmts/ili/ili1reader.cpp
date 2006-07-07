@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/07/07 00:05:46  mloskot
+ * Removed GEOS C++ API usage from OGR and autotools.
+ *
  * Revision 1.15  2006/06/06 17:01:52  pka
  * Join surface layer geometry to data layer
  * Improved arc interpolation
@@ -96,15 +99,7 @@
 #include "ili1readerp.h"
 
 #ifdef HAVE_GEOS
-#  ifdef GEOS_C_API
-#    define POLYGONIZE_AREAS
-#  else
-#    include "geos/version.h"
-#    if GEOS_VERSION_MAJOR*100+GEOS_VERSION_MINOR*10+GEOS_VERSION_PATCH >= 210
-#      include "geos/opPolygonize.h"
-#      define POLYGONIZE_AREAS
-#    endif
-#  endif
+#  define POLYGONIZE_AREAS
 #endif
 
 #ifndef POLYGONIZE_AREAS
@@ -427,9 +422,9 @@ OGRMultiPolygon* ILI1Reader::Polygonize( OGRGeometryCollection* poLines )
 {
     OGRMultiPolygon *poPolygon = new OGRMultiPolygon();
 
-#if defined(POLYGONIZE_AREAS) && defined(GEOS_C_API)
-    GEOSGeom *ahInGeoms;
-    int       i;
+#if defined(POLYGONIZE_AREAS)
+    GEOSGeom *ahInGeoms = NULL;
+    int       i = 0;
     
     ahInGeoms = (GEOSGeom *) CPLCalloc(sizeof(void*),poLines->getNumGeometries());
     for( i = 0; i < poLines->getNumGeometries(); i++ )
@@ -452,22 +447,6 @@ OGRMultiPolygon* ILI1Reader::Polygonize( OGRGeometryCollection* poLines )
 
     return (OGRMultiPolygon *) poMP;
 
-#elif defined(POLYGONIZE_AREAS)
-    int i;
-    geos::Polygonizer* polygonizer = new geos::Polygonizer();
-    for (i=0; i<poLines->getNumGeometries(); i++)
-        polygonizer->add((geos::Geometry *)poLines->getGeometryRef(i)->exportToGEOS());
-
-    vector<geos::Polygon*> *poOtherGeosGeom = polygonizer->getPolygons();
-
-    for (unsigned i = 0; i < poOtherGeosGeom->size(); i++)
-    {
-       poPolygon->addGeometryDirectly(
-          OGRGeometryFactory::createFromGEOS((GEOSGeom)(*poOtherGeosGeom)[i]));
-    }
-
-    //delete poOtherGeosGeom;
-    delete polygonizer;
 #endif
 
     return poPolygon;
@@ -494,8 +473,9 @@ void ILI1Reader::PolygonizeAreaLayers()
       //associate polygon feature with data row according to centroid
       int i;
       OGRPolygon emptyPoly;
-#if defined(POLYGONIZE_AREAS) && defined(GEOS_C_API)
-      GEOSGeom *ahInGeoms;
+#if defined(POLYGONIZE_AREAS)
+      GEOSGeom *ahInGeoms = NULL;
+
       ahInGeoms = (GEOSGeom *) CPLCalloc(sizeof(void*),polys->getNumGeometries());
       for( i = 0; i < polys->getNumGeometries(); i++ )
       {
@@ -524,37 +504,6 @@ void ILI1Reader::PolygonizeAreaLayers()
       poAreaLayer->GetLayerDefn()->SetGeomType(wkbPolygon);
       for( i = 0; i < polys->getNumGeometries(); i++ )
           GEOSGeom_destroy( ahInGeoms[i] );
-      CPLFree( ahInGeoms );
-#elif defined(POLYGONIZE_AREAS)
-      geos::Geometry **ahInGeoms;
-      ahInGeoms = (geos::Geometry **) CPLCalloc(sizeof(void*),polys->getNumGeometries());
-      for( i = 0; i < polys->getNumGeometries(); i++ )
-      {
-          ahInGeoms[i] = (geos::Geometry *)polys->getGeometryRef(i)->exportToGEOS();
-          if (!ahInGeoms[i]->isValid()) ahInGeoms[i] = NULL;
-      }
-      poAreaLayer->ResetReading();
-      while (OGRFeature *feature = poAreaLayer->GetNextFeature())
-      {
-        geos::Geometry *point = (geos::Geometry *)feature->GetGeometryRef()->exportToGEOS();
-        for (i = 0; i < polys->getNumGeometries(); i++ )
-        {
-          if (ahInGeoms[i] && point->within(ahInGeoms[i]))
-          {
-            feature->SetGeometry( polys->getGeometryRef(i) );
-            break;
-          }
-        }
-        if (i == polys->getNumGeometries())
-        {
-          CPLDebug( "OGR_ILI", "Association between area and point failed.");
-          feature->SetGeometry( &emptyPoly );
-        }
-        delete point;
-      }
-      poAreaLayer->GetLayerDefn()->SetGeomType(wkbPolygon);
-      for( i = 0; i < polys->getNumGeometries(); i++ )
-          delete ahInGeoms[i];
       CPLFree( ahInGeoms );
 #endif
     }

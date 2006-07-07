@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/07/07 00:05:46  mloskot
+ * Removed GEOS C++ API usage from OGR and autotools.
+ *
  * Revision 1.2  2005/10/20 19:55:29  fwarmerdam
  * added GEOS C API support
  *
@@ -38,19 +41,11 @@
  *
  */
 
-#ifndef _OGR_GEOS_H_INCLUDED
-#define _OGR_GEOS_H_INCLUDED
+#ifndef OGR_GEOS_H_INCLUDED
+#define OGR_GEOS_H_INCLUDED
 
 #ifdef HAVE_GEOS 
-
-#ifdef GEOS_C_API
-#  include "geos_c.h"
-#else
-#  include "geos/geom.h"
-#  include "geos/io.h"
-#  include "geos/util.h"
-#endif
-
+#  include <geos_c.h>
 #else
 
 namespace geos { 
@@ -59,4 +54,4 @@ namespace geos {
 
 #endif
 
-#endif /* ndef _OGR_GEOS_H_INCLUDED */
+#endif /* ndef OGR_GEOS_H_INCLUDED */
