@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2006/07/07 05:05:57  fwarmerdam
+ * use GEOSGeom_destroy() in Distance()
+ *
  * Revision 1.39  2006/07/07 00:05:46  mloskot
  * Removed GEOS C++ API usage from OGR and autotools.
  *
@@ -1421,8 +1424,8 @@ double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
         bIsErr = GEOSDistance( hThis, hOther, &dfDistance );
     }
 
-    delete hThis;
-    delete hOther;
+    GEOSGeom_destroy( hThis );
+    GEOSGeom_destroy( hOther );
 
     if ( bIsErr > 0 ) 
     {
