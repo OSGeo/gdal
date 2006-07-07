@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2006/07/07 15:09:12  fwarmerdam
+ * improve handling of empty linearrings and polygons in aggregates
+ *
  * Revision 1.41  2006/07/07 00:05:46  mloskot
  * Removed GEOS C++ API usage from OGR and autotools.
  *
@@ -754,17 +757,8 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText ) const
 
 {
     char        **papszRings;
-    int         iRing, nCumulativeLength = 0;
+    int         iRing, nCumulativeLength = 0, nNonEmptyRings = 0;
     OGRErr      eErr;
-
-/* -------------------------------------------------------------------- */
-/*      Handle special empty case.                                      */
-/* -------------------------------------------------------------------- */
-    if( nRingCount == 0 )
-    {
-        *ppszDstText = CPLStrdup("POLYGON EMPTY");
-        return OGRERR_NONE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Build a list of strings containing the stuff for each ring.     */
@@ -774,19 +768,37 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText ) const
     for( iRing = 0; iRing < nRingCount; iRing++ )
     {
         papoRings[iRing]->setCoordinateDimension( getCoordinateDimension() );
+        if( papoRings[iRing]->getNumPoints() == 0 )
+        {
+            papszRings[iRing] = NULL;
+            continue;
+        }
+
         eErr = papoRings[iRing]->exportToWkt( &(papszRings[iRing]) );
         if( eErr != OGRERR_NONE )
             return eErr;
 
         CPLAssert( EQUALN(papszRings[iRing],"LINEARRING (", 12) );
         nCumulativeLength += strlen(papszRings[iRing] + 11);
+
+        nNonEmptyRings++;
     }
     
+/* -------------------------------------------------------------------- */
+/*      If we have no valid rings, return POLYGON EMPTY.                */
+/* -------------------------------------------------------------------- */
+    if( nNonEmptyRings == 0 )
+    {
+        CPLFree( papszRings );
+        *ppszDstText = CPLStrdup("POLYGON EMPTY");
+        return OGRERR_NONE;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Allocate exactly the right amount of space for the              */
 /*      aggregated string.                                              */
 /* -------------------------------------------------------------------- */
-    *ppszDstText = (char *) VSIMalloc(nCumulativeLength + nRingCount + 11);
+    *ppszDstText = (char *) VSIMalloc(nCumulativeLength + nNonEmptyRings + 11);
 
     if( *ppszDstText == NULL )
         return OGRERR_NOT_ENOUGH_MEMORY;
@@ -798,6 +810,9 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText ) const
 
     for( iRing = 0; iRing < nRingCount; iRing++ )
     {                                                           
+        if( papszRings[iRing] == NULL )
+            continue;
+
         if( iRing > 0 )
             strcat( *ppszDstText, "," );
         
