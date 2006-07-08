@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.45  2006/07/08 19:24:46  fwarmerdam
+ * added some extra options for Norman Barker.
+ *
  * Revision 1.44  2006/06/30 04:29:07  fwarmerdam
  * Use 2048x128 blocking by default instead of 512x128.
  *
@@ -1720,7 +1723,8 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                             int bReversible, GDALDataType eType,
                             kdu_codestream &oCodeStream, int bFlushEnabled,
                             kdu_long *layer_bytes, int layer_count,
-                            GDALProgressFunc pfnProgress, void * pProgressData)
+                            GDALProgressFunc pfnProgress, void * pProgressData,
+                            bool bComseg )
 
 {                                       
 /* -------------------------------------------------------------------- */
@@ -1871,7 +1875,8 @@ JP2KAKCreateCopy_WriteTile( GDALDataset *poSrcDS, kdu_tile &oTile,
                       "Calling oCodeStream.flush() at line %d",
                       MIN(nYSize,iLine+CHUNK_SIZE) );
             
-            oCodeStream.flush( layer_bytes, layer_count );
+            oCodeStream.flush( layer_bytes, layer_count, NULL,
+                               true, bComseg );
         }
         else if( bFlushEnabled )
             CPLDebug( "JP2KAK", 
@@ -2037,6 +2042,13 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                          atoi(CSLFetchNameValue( papszOptions, "BLOCKYSIZE")));
 
 /* -------------------------------------------------------------------- */
+/*      Do we want a comment segment emitted?                           */
+/* -------------------------------------------------------------------- */
+    bool bComseg;
+
+    bComseg = CSLFetchBoolean( papszOptions, "COMSEG", TRUE );
+
+/* -------------------------------------------------------------------- */
 /*      Establish the general image parameters.                         */
 /* -------------------------------------------------------------------- */
     siz_params  oSizeParams;
@@ -2171,11 +2183,15 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     char *apszParms[] = { "Corder", "PCRL", 
                           "Cprecincts", "{512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}",
                           "ORGgen_plt", "yes", 
+                          "ORGgen_tlm", NULL,
+                          "Qguard", NULL, 
                           "Cmodes", NULL, 
                           "Clevels", NULL,
+                          "Cblk", NULL,
                           "Rshift", NULL,
                           "Rlevels", NULL,
                           "Rweight", NULL,
+                          "Sprofile", NULL,
                           NULL, NULL };
 
     for( iParm = 0; apszParms[iParm] != NULL; iParm += 2 )
@@ -2396,7 +2412,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                              oCodeStream, bFlushEnabled,
                                              layer_bytes, layer_count,
                                              GDALScaledProgress, 
-                                             pScaledProgressData ) )
+                                             pScaledProgressData, bComseg ) )
             {
                 GDALDestroyScaledProgress( pScaledProgressData );
 
@@ -2416,7 +2432,7 @@ JP2KAKCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Finish flushing out results.                                    */
 /* -------------------------------------------------------------------- */
-    oCodeStream.flush(layer_bytes, layer_count);
+    oCodeStream.flush(layer_bytes, layer_count, NULL, true, bComseg );
     oCodeStream.destroy();
 
     CPLFree( layer_bytes );
@@ -2480,11 +2496,15 @@ void GDALRegister_JP2KAK()
 "   <Option name='GMLJP2' type='boolean' description='defaults to ON'/>"
 "   <Option name='LAYERS' type='integer'/>"
 "   <Option name='ROI' type='string'/>"
+"   <Option name='COMSEG' type='boolean' />"
 "   <Option name='Corder' type='string'/>"
 "   <Option name='Cprecincts' type='string'/>"
-"   <Option name='ORGgen_plt' type='string'/>"
 "   <Option name='Cmodes' type='string'/>"
 "   <Option name='Clevels' type='string'/>"
+"   <Option name='ORGgen_plt' type='string'/>"
+"   <Option name='ORGgen_tlm' type='string'/>"
+"   <Option name='Qguard' type='integer'/>"
+"   <Option name='Sprofile' type='integer'/>"
 "   <Option name='Rshift' type='string'/>"
 "   <Option name='Rlevels' type='string'/>"
 "   <Option name='Rweight' type='string'/>"
