@@ -13,8 +13,36 @@ For a complete change history, please see the CVS log comments.
 CHANGES - Current Version:
 --------------------------
 
-Version 1.5.0 ??? (CVS)
---------------------------------
+- Added mapping for datum name "North_American_Datum_1927". 
+
+- Fixed problem with uninitialized affine parameters written to .MAP header, 
+  resulting in files not readable in MapInfo, introduced by bug 1155 in 
+  MITAB 1.5.0 (bug 1254, 1319)
+
+- Fixed problem writing PLINE MULTIPLE to TAB format introduced in
+  MITAB 1.5.0 (bug 1466).
+
+- tab2tab: Set dataset bounds only after setting spatialref to prevent
+  default coordsys bounds from taking precedence when bounds are 
+  available in source dataset (bug 1511)
+
+- Coordsys false easting and northing are in the units of the coordsys, not
+  necessarily meters.  Adjusted mitab_coordsys.cpp to reflect this. 
+  http://bugzilla.remotesensing.org/show_bug.cgi?id=1113
+
+- Similar problem in mitab_spatialref.cpp for TAB files also fixed. 
+  http://bugzilla.remotesensing.org/show_bug.cgi?id=1113
+
+
+
+Version 1.5.0 (2006-02-16)
+--------------------------
+
+- Updated contrib/mitab_dyn.pas with new C API functions. Note that other
+  definition files for VB and .NET have *not* been updated for this release.
+
+- Fixed crash when attempting to write TABPolyline object with an invalid
+  geometry (GDAL bug 1059)
 
 - cast strstr() results as per email from Charles Savage for VC8.
 
@@ -699,5 +727,5 @@ Version 0.1 - (1999-12-04)
 
 
 ------------
-$Id: HISTORY.TXT,v 1.156 2006/01/27 14:27:35 fwarmerdam Exp $
+$Id: HISTORY.TXT,v 1.164 2006/07/10 17:58:48 fwarmerdam Exp $
 ------------

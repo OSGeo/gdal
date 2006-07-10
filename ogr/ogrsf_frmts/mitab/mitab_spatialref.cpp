@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_spatialref.cpp,v 1.45 2006/05/09 20:21:29 fwarmerdam Exp $
+ * $Id: mitab_spatialref.cpp,v 1.47 2006/07/10 17:58:48 fwarmerdam Exp $
  *
  * Name:     mitab_spatialref.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log: mitab_spatialref.cpp,v $
+ * Revision 1.47  2006/07/10 17:58:48  fwarmerdam
+ * North_American_Datum_1927 support
+ *
+ * Revision 1.46  2006/07/07 19:41:32  dmorissette
+ * Fixed problem with uninitialized sTABProj.nAffineFlag (bug 1254,1319)
+ *
  * Revision 1.45  2006/05/09 20:21:29  fwarmerdam
  * Coordsys false easting and northing are in the units of the coordsys, not
  * necessarily meters.  Adjusted mitab_spatialref.cpp to reflect this.
@@ -256,6 +262,7 @@ MapInfoDatumInfo asDatumInfoList[] =
 {60, "Nahrwan_Saudi_Arabia",        6, -231, -196, 482, 0, 0, 0, 0, 0},
 {61, "Naparima_1972",               4, -2,   374,  172, 0, 0, 0, 0, 0},
 {62, "NAD_1927",                    7, -8,   160,  176, 0, 0, 0, 0, 0},
+{62, "North_American_Datum_1927",   7, -8,   160,  176, 0, 0, 0, 0, 0},
 {63, "NAD_27_Alaska",               7, -5,   135,  172, 0, 0, 0, 0, 0},
 {64, "NAD_27_Bahamas",              7, -4,   154,  178, 0, 0, 0, 0, 0},
 {65, "NAD_27_San_Salvador",         7, 1,    140,  165, 0, 0, 0, 0, 0},
@@ -1103,7 +1110,6 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
     sTABProj.adDatumParams[3] = 0.0;
     sTABProj.adDatumParams[4] = 0.0;
 
-#ifdef MITAB_AFFINE_PARAMS  // See MITAB bug 1155
     // Encom 2003
     sTABProj.nAffineFlag   = 0;
     sTABProj.nAffineUnits  = 7;
@@ -1113,7 +1119,6 @@ int TABFile::SetSpatialRef(OGRSpatialReference *poSpatialRef)
     sTABProj.dAffineParamD = 0.0;
     sTABProj.dAffineParamE = 0.0;
     sTABProj.dAffineParamF = 0.0;
-#endif // MITAB_AFFINE_PARAMS
     
     /*-----------------------------------------------------------------
      * Get the linear units and conversion.

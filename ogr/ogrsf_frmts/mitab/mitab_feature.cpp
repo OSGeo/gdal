@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.63 2006/02/08 05:02:57 dmorissette Exp $
+ * $Id: mitab_feature.cpp,v 1.64 2006/06/29 19:49:35 dmorissette Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.64  2006/06/29 19:49:35  dmorissette
+ * Fixed problem writing PLINE MULTIPLE to TAB format introduced in
+ * MITAB 1.5.0 (bug 1466).
+ *
  * Revision 1.63  2006/02/08 05:02:57  dmorissette
  * Fixed crash when attempting to write TABPolyline object with an invalid
  * geometry (GDAL bug 1059)
@@ -2110,8 +2114,10 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         poPLineHdr->m_nPenId = m_nPenDefIndex;      // Pen index
 
     }
-    else if ((m_nMapInfoType == TAB_GEOM_PLINE ||
-              m_nMapInfoType == TAB_GEOM_PLINE_C ) &&
+    else if ((m_nMapInfoType == TAB_GEOM_MULTIPLINE ||
+                  m_nMapInfoType == TAB_GEOM_MULTIPLINE_C ||
+                  m_nMapInfoType == TAB_GEOM_V450_MULTIPLINE ||
+                  m_nMapInfoType == TAB_GEOM_V450_MULTIPLINE_C) &&
              poGeom && (wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString ||
                         wkbFlatten(poGeom->getGeometryType()) == wkbLineString) )
     {
