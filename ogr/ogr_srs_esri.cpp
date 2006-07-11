@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2006/07/11 18:37:54  fwarmerdam
+ * fixed up equidistant conic transformation per files from Delorme
+ *
  * Revision 1.48  2006/06/26 19:42:21  fwarmerdam
  * added proper polar stereographic translation
  *
@@ -155,6 +158,11 @@ static char *apszAlbersMapping[] = {
     SRS_PP_CENTRAL_MERIDIAN, SRS_PP_LONGITUDE_OF_CENTER, 
     SRS_PP_LATITUDE_OF_ORIGIN, SRS_PP_LATITUDE_OF_CENTER,
     "Central_Parallel", SRS_PP_LATITUDE_OF_CENTER,
+    NULL, NULL };
+
+static char *apszECMapping[] = {
+    SRS_PP_CENTRAL_MERIDIAN, SRS_PP_LONGITUDE_OF_CENTER, 
+    SRS_PP_LATITUDE_OF_ORIGIN, SRS_PP_LATITUDE_OF_CENTER, 
     NULL, NULL };
 
 static char *apszMercatorMapping[] = {
@@ -1165,6 +1173,11 @@ OGRErr OGRSpatialReference::morphToESRI()
         GetRoot()->applyRemapper( 
             "PARAMETER", apszAlbersMapping + 1, apszAlbersMapping + 0, 2 );
 
+    if( pszProjection != NULL 
+        && EQUAL(pszProjection,SRS_PT_EQUIDISTANT_CONIC) )
+        GetRoot()->applyRemapper( 
+            "PARAMETER", apszECMapping + 1, apszECMapping + 0, 2 );
+
     if( pszProjection != NULL && EQUAL(pszProjection,"Mercator") )
         GetRoot()->applyRemapper( 
             "PARAMETER", apszMercatorMapping + 1, apszMercatorMapping + 0, 2 );
@@ -1324,6 +1337,11 @@ OGRErr OGRSpatialReference::morphFromESRI()
     if( pszProjection != NULL && EQUAL(pszProjection,"Albers") )
         GetRoot()->applyRemapper( 
             "PARAMETER", apszAlbersMapping + 0, apszAlbersMapping + 1, 2 );
+
+    if( pszProjection != NULL 
+        && EQUAL(pszProjection,SRS_PT_EQUIDISTANT_CONIC) )
+        GetRoot()->applyRemapper( 
+            "PARAMETER", apszECMapping + 0, apszECMapping + 1, 2 );
 
     if( pszProjection != NULL && EQUAL(pszProjection,"Mercator") )
         GetRoot()->applyRemapper( 
