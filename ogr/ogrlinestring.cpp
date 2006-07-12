@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2006/07/12 11:53:27  mloskot
+ * Fixed Bug 1195 and Bug 1230.
+ *
  * Revision 1.55  2006/07/07 15:09:12  fwarmerdam
  * improve handling of empty linearrings and polygons in aggregates
  *
@@ -904,19 +907,42 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
 /* -------------------------------------------------------------------- */
 /*      Get the vertex.                                                 */
 /* -------------------------------------------------------------------- */
-    int         i;
+    int i = 0;
+    int nBytesToCopy = 0;
+    int nBytesAvailable = nSize;
     
     if( bIs3D )
     {
         for( i = 0; i < nPointCount; i++ )
         {
+            nBytesToCopy = 24 * nPointCount;
+            if( nBytesAvailable < nBytesToCopy)
+            {
+                CPLDebug ("OGR", "OGRLinearRing points buffer is too small! \
+                          \n\tWKB stream may be corrupted or it is a EWKB stream which is not supported");
+
+                return OGRERR_NOT_ENOUGH_DATA;
+            }
+            nBytesAvailable -= nBytesToCopy;
+
             memcpy( paoPoints + i, pabyData + 9 + i*24, 16 );
             memcpy( padfZ + i, pabyData + 9 + 16 + i*24, 8 );
         }
     }
     else
     {
-        memcpy( paoPoints, pabyData + 9, 16 * nPointCount );
+        nBytesToCopy = 16 * nPointCount;
+
+        if( nBytesAvailable < nBytesToCopy)
+        {
+            CPLDebug ("OGR", "OGRLineString points buffer is too small! \
+                      \n\tWKB stream may be corrupted or it is a EWKB stream which is not supported");
+
+            return OGRERR_NOT_ENOUGH_DATA;
+        }
+
+
+        memcpy( paoPoints, pabyData + 9, nBytesToCopy );
     }
     
 /* -------------------------------------------------------------------- */

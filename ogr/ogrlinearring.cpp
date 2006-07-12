@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/07/12 11:53:27  mloskot
+ * Fixed Bug 1195 and Bug 1230.
+ *
  * Revision 1.20  2006/06/19 23:19:45  mloskot
  * Added new functions OGRLinearRing::isPointInRing and OGRPolygon::IsPointOnSurface.
  *
@@ -217,6 +220,7 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D,
     if( OGR_SWAP( eByteOrder ) )
         nNewNumPoints = CPL_SWAP32(nNewNumPoints);
 
+    /* (Re)Allocation of paoPoints buffer. */
     setNumPoints( nNewNumPoints );
 
     if( b3D )
@@ -227,14 +231,37 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D,
 /* -------------------------------------------------------------------- */
 /*      Get the vertices                                                */
 /* -------------------------------------------------------------------- */
-    int i;
+    int i = 0;
+    int nBytesToCopy = 0;
 
     if( !b3D )
-        memcpy( paoPoints, pabyData + 4, 16 * nPointCount );
+    {
+        nBytesToCopy = 16 * nPointCount;
+
+        if( nBytesAvailable < nBytesToCopy)
+        {
+            CPLDebug ("OGR", "OGRLinearRing points buffer is too small! \
+                      \n\tWKB stream may be corrupted or it is a EWKB stream which is not supported");
+
+            return OGRERR_NOT_ENOUGH_DATA;
+        }
+
+        memcpy( paoPoints, pabyData + 4, nBytesToCopy );
+    }
     else
     {
         for( int i = 0; i < nPointCount; i++ )
         {
+            nBytesToCopy = 24 * nPointCount;
+            if( nBytesAvailable < nBytesToCopy)
+            {
+                CPLDebug ("OGR", "OGRLinearRing points buffer is too small! \
+                          \n\tWKB stream may be corrupted or it is a EWKB stream which is not supported");
+
+                return OGRERR_NOT_ENOUGH_DATA;
+            }
+            nBytesAvailable -= nBytesToCopy;
+
             memcpy( &(paoPoints[i].x), pabyData + 4 + 24 * i, 8 );
             memcpy( &(paoPoints[i].y), pabyData + 4 + 24 * i + 8, 8 );
             memcpy( padfZ + i, pabyData + 4 + 24 * i + 16, 8 );
