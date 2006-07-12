@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/07/12 04:24:14  fwarmerdam
+ * More fixes in vPrintf().
+ *
  * Revision 1.5  2006/06/29 19:03:50  fwarmerdam
  * Fix subtle problem with varargs and re-using args on the amd64
  * platform (and in general posix environment).
@@ -122,13 +125,19 @@ CPLString &CPLString::vPrintf( const char *pszFormat, va_list args )
 #else
         wrk_args = args;
 #endif
-        while( (nPR=vsnprintf( pszWorkBuffer, nWorkBufferSize, pszFormat,args))
+        while( (nPR=vsnprintf( pszWorkBuffer, nWorkBufferSize, pszFormat,wrk_args))
                >= nWorkBufferSize-1 
                || nPR == -1 )
         {
             nWorkBufferSize *= 4;
             pszWorkBuffer = (char *) CPLRealloc(pszWorkBuffer, 
                                                 nWorkBufferSize );
+#ifdef va_copy
+            va_end( wrk_args );
+            va_copy( wrk_args, args );
+#else
+            wrk_args = args;
+#endif
         }
         *this = pszWorkBuffer;
         CPLFree( pszWorkBuffer );
