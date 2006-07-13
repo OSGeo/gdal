@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/07/13 15:28:28  fwarmerdam
+ * Increase size of histogram encoding buffer for very large images.
+ *
  * Revision 1.17  2006/04/13 19:03:26  fwarmerdam
  * fixed a flaw in yesterdays fix
  *
@@ -985,7 +988,7 @@ PamHistogramToXMLTree( double dfMin, double dfMax,
                        int bIncludeOutOfRange, int bApprox )
 
 {
-    char *pszHistCounts = (char *) CPLMalloc(8 * nBuckets + 10);
+    char *pszHistCounts = (char *) CPLMalloc(12 * nBuckets + 10);
     int iBucket, iHistOffset;
     CPLXMLNode *psXMLHist;
     CPLString oFmt;
