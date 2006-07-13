@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.167  2006/07/13 17:11:53  dron
+ * Do not allow setting incorrect PhotometricInterpretation.
+ *
  * Revision 1.166  2006/07/13 16:58:13  dron
  * Do not crash in case of wrong tile size parameters supplied.
  *
@@ -3555,6 +3558,16 @@ TIFF *GTiffCreate( const char * pszFilename,
                       "PHOTOMETRIC=%s value not recognised, ignoring.\n"
                       "Set the Photometric Interpretation as MINISBLACK.", 
                       pszValue );
+            TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
+        }
+
+        if ( nBands < nSamplesAccountedFor )
+        {
+            CPLError( CE_Warning, CPLE_IllegalArg, 
+                      "PHOTOMETRIC=%s value does not correspond to number "
+                      "of bands (%d), ignoring.\n"
+                      "Set the Photometric Interpretation as MINISBLACK.", 
+                      pszValue, nBands );
             TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK );
         }
     }
