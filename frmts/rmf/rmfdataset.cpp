@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/07/13 15:58:13  dron
+ * Properly set the resolution field depending on pixel size in SetGeoTransform().
+ *
  * Revision 1.13  2006/06/23 12:28:24  dron
  * Use Pulkovo, 1942 datum and Krassovsky ellipsoid when reading projection
  * from RMF file.
@@ -792,6 +795,8 @@ CPLErr RMFDataset::SetGeoTransform( double * padfTransform )
 {
     memcpy( adfGeoTransform, padfTransform, sizeof(double) * 6 );
     sHeader.dfPixelSize = adfGeoTransform[1];
+    if ( sHeader.dfPixelSize != 0.0 )
+        sHeader.dfResolution = sHeader.dfScale / sHeader.dfPixelSize;
     sHeader.dfLLX = adfGeoTransform[0];
     sHeader.dfLLY = adfGeoTransform[3] - nRasterYSize * sHeader.dfPixelSize;
     sHeader.iGeorefFlag = 1;
