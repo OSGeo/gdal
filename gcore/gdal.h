@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.103  2006/07/13 15:27:14  fwarmerdam
+ * Implement ComputeStatistics method
+ *
  * Revision 1.102  2005/11/01 22:16:00  fwarmerdam
  * fix up RAT API (bug 985)
  *
@@ -482,6 +485,14 @@ double CPL_DLL CPL_STDCALL GDALGetRasterMaximum( GDALRasterBandH, int *pbSuccess
 CPLErr CPL_DLL CPL_STDCALL GDALGetRasterStatistics( 
     GDALRasterBandH, int bApproxOK, int bForce, 
     double *pdfMin, double *pdfMax, double *pdfMean, double *pdfStdDev );
+CPLErr CPL_DLL CPL_STDCALL GDALComputeRasterStatistics( 
+    GDALRasterBandH, int bApproxOK, 
+    double *pdfMin, double *pdfMax, double *pdfMean, double *pdfStdDev,
+    GDALProgressFunc pfnProgress, void *pProgressData );
+CPLErr CPL_DLL CPL_STDCALL GDALSetRasterStatistics( 
+    GDALRasterBandH hBand, 
+    double dfMin, double dfMax, double dfMean, double dfStdDev );
+
 const char CPL_DLL * CPL_STDCALL GDALGetRasterUnitType( GDALRasterBandH );
 double CPL_DLL CPL_STDCALL GDALGetRasterOffset( GDALRasterBandH, int *pbSuccess );
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterOffset( GDALRasterBandH hBand, double dfNewOffset);
