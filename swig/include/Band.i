@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.21  2006/07/13 16:05:53  fwarmerdam
+ * Added GetStatistics() and SetStatistics().
+ *
  * Revision 1.20  2005/09/02 16:19:23  kruland
  * Major reorganization to accomodate multiple language bindings.
  * Each language binding can define renames and supplemental code without
@@ -185,6 +188,16 @@ public:
     *val = GDALGetRasterScale( self, hasval );
   }
 
+  CPLErr GetStatistics( int approx_ok, int force, 
+                      double *min, double *max, double *mean, double *stddev ){
+    return GDALGetRasterStatistics( self, approx_ok, force, 
+				    min, max, mean, stddev );
+  }
+
+  CPLErr SetStatistics( double min, double max, double mean, double stddev ) {
+    return GDALSetRasterStatistics( self, min, max, mean, stddev );
+  }
+
   int GetOverviewCount() {
     return GDALGetOverviewCount( self );
   }
@@ -262,7 +275,9 @@ public:
 /* ReadAsArray */
 /* WriteArray */
 /* GetHistogram */
-/* ComputeBandStats */
+/* GetStatistics */
+/* SetStatistics */
+/* ComputeStatistics */
 /* AdviseRead */
 
 } /* %extend */
