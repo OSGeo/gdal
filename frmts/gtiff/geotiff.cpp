@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.166  2006/07/13 16:58:13  dron
+ * Do not crash in case of wrong tile size parameters supplied.
+ *
  * Revision 1.165  2006/06/30 19:23:18  fwarmerdam
  * install error handlers for in-memory geotiff handling (bug 1216)
  *
@@ -4067,15 +4070,24 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         GByte   *pabyTile;
         int     nTilesDone = 0, nPixelSize;
 
-        TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &nBlockXSize );
-        TIFFGetField( hTIFF, TIFFTAG_TILELENGTH, &nBlockYSize );
-        
-        nTilesAcross = (nXSize+nBlockXSize-1) / nBlockXSize;
-        nTilesDown = (nYSize+nBlockYSize-1) / nBlockYSize;
+        if ( !TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &nBlockXSize )
+             || !TIFFGetField( hTIFF, TIFFTAG_TILELENGTH, &nBlockYSize )
+             || nBlockXSize == 0
+             || nBlockYSize == 0 )
+        {
+            eErr = CE_Failure;
+            CPLError( CE_Failure, CPLE_UserInterrupt,
+                      "Bad tile width/length parameters; copying failed" );
+        }
+        else
+        {
+            nTilesAcross = (nXSize+nBlockXSize-1) / nBlockXSize;
+            nTilesDown = (nYSize+nBlockYSize-1) / nBlockYSize;
 
-        nPixelSize = GDALGetDataTypeSize(eType) / 8;
-        nTileSize =  nPixelSize * nBlockXSize * nBlockYSize;
-        pabyTile = (GByte *) CPLMalloc(nTileSize);
+            nPixelSize = GDALGetDataTypeSize(eType) / 8;
+            nTileSize =  nPixelSize * nBlockXSize * nBlockYSize;
+            pabyTile = (GByte *) CPLMalloc(nTileSize);
+        }
 
         for(iBand = 0; eErr == CE_None && iBand < nBands; iBand++ )
         {
@@ -4197,16 +4209,25 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         GByte   *pabyTile;
         int     nTilesDone = 0, nPixelSize;
 
-        TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &nBlockXSize );
-        TIFFGetField( hTIFF, TIFFTAG_TILELENGTH, &nBlockYSize );
-        
-        nTilesAcross = (nXSize+nBlockXSize-1) / nBlockXSize;
-        nTilesDown = (nYSize+nBlockYSize-1) / nBlockYSize;
+        if ( !TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &nBlockXSize )
+             || !TIFFGetField( hTIFF, TIFFTAG_TILELENGTH, &nBlockYSize )
+             || nBlockXSize == 0
+             || nBlockYSize == 0 )
+        {
+            eErr = CE_Failure;
+            CPLError( CE_Failure, CPLE_UserInterrupt,
+                      "Bad tile width/length parameters; copying failed" );
+        }
+        else
+        {
+            nTilesAcross = (nXSize+nBlockXSize-1) / nBlockXSize;
+            nTilesDown = (nYSize+nBlockYSize-1) / nBlockYSize;
 
-        nElemSize = GDALGetDataTypeSize(eType) / 8;
-        nPixelSize = nElemSize * nBands;
-        nTileSize =  nPixelSize * nBlockXSize * nBlockYSize;
-        pabyTile = (GByte *) CPLMalloc(nTileSize);
+            nElemSize = GDALGetDataTypeSize(eType) / 8;
+            nPixelSize = nElemSize * nBands;
+            nTileSize =  nPixelSize * nBlockXSize * nBlockYSize;
+            pabyTile = (GByte *) CPLMalloc(nTileSize);
+        }
 
         for( iTileY = 0; 
              eErr == CE_None && iTileY < nTilesDown; 
@@ -4748,7 +4769,8 @@ void GDALRegister_GTiff()
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/tiff" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "tif" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
-                                   "Byte UInt16 Int16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64" );
+                                   "Byte UInt16 Int16 UInt32 Int32 Float32 "
+                                   "Float64 CInt16 CInt32 CFloat32 CFloat64" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
                                    szCreateOptions );
 
