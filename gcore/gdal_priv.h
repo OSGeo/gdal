@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.74  2006/07/13 15:27:14  fwarmerdam
+ * Implement ComputeStatistics method
+ *
  * Revision 1.73  2006/05/24 22:25:33  fwarmerdam
  * split off DefaultCreateCopy() method.
  *
@@ -519,6 +522,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr GetStatistics( int bApproxOK, int bForce,
                                   double *pdfMin, double *pdfMax, 
                                   double *pdfMean, double *padfStdDev );
+    virtual CPLErr ComputeStatistics( int bApproxOK, 
+                                      double *pdfMin, double *pdfMax, 
+                                      double *pdfMean, double *padfStdDev,
+                                      GDALProgressFunc, void *pProgressData );
     virtual CPLErr SetStatistics( double dfMin, double dfMax, 
                                   double dfMean, double dfStdDev );
 

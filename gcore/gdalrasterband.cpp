@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.78  2006/07/13 15:27:14  fwarmerdam
+ * Implement ComputeStatistics method
+ *
  * Revision 1.77  2006/04/06 02:03:46  fwarmerdam
  * Removed/corrected references to GetBlockRef().
  *
@@ -2736,6 +2739,8 @@ GDALRasterAdviseRead( GDALRasterBandH hRB,
  * will generally cache statistics in the .pam file allowing fast fetch
  * after the first request. 
  *
+ * This method is the same as the C function GDALGetRasterStatistics().
+ *
  * @param bApproxOK If TRUE statistics may be computed based on overviews
  * or a subset of all tiles. 
  * 
@@ -2803,6 +2808,78 @@ CPLErr GDALRasterBand::GetStatistics( int bApproxOK, int bForce,
     }
     
 /* -------------------------------------------------------------------- */
+/*      Either return without results, or force computation.            */
+/* -------------------------------------------------------------------- */
+    if( !bForce )
+        return CE_Warning;
+    else
+        return ComputeStatistics( bApproxOK, 
+                                  pdfMin, pdfMax, pdfMean, pdfStdDev,
+                                  GDALDummyProgress, NULL );
+}
+
+/************************************************************************/
+/*                      GDALGetRasterStatistics()                       */
+/************************************************************************/
+
+CPLErr CPL_STDCALL GDALGetRasterStatistics( 
+        GDALRasterBandH hBand, int bApproxOK, int bForce, 
+        double *pdfMin, double *pdfMax, double *pdfMean, double *pdfStdDev )
+
+{
+    return ((GDALRasterBand *) hBand)->GetStatistics( 
+        bApproxOK, bForce, pdfMin, pdfMax, pdfMean, pdfStdDev );
+}
+
+/************************************************************************/
+/*                         ComputeStatistics()                          */
+/************************************************************************/
+
+/**
+ * Compute image statistics. 
+ *
+ * Returns the minimum, maximum, mean and standard deviation of all
+ * pixel values in this band.  If approximate statistics are sufficient,
+ * the bApproxOK flag can be set to true in which case overviews, or a
+ * subset of image tiles may be used in computing the statistics.  
+ *
+ * Once computed, the statistics will generally be "set" back on the 
+ * raster band using SetStatistics(). 
+ *
+ * This method is the same as the C function GDALComputeRasterStatistics().
+ *
+ * @param bApproxOK If TRUE statistics may be computed based on overviews
+ * or a subset of all tiles. 
+ * 
+ * @param pdfMin Location into which to load image minimum (may be NULL).
+ *
+ * @param pdfMax Location into which to load image maximum (may be NULL).-
+ *
+ * @param pdfMean Location into which to load image mean (may be NULL).
+ *
+ * @param pdfStdDev Location into which to load image standard deviation 
+ * (may be NULL).
+ *
+ * @param pfnProgress a function to call to report progress, or NULL.
+ *
+ * @param pProgressData application data to pass to the progress function.
+ *
+ * @return CE_None on success, or CE_Failure if an error occurs or processing
+ * is terminated by the user.
+ */
+
+CPLErr 
+GDALRasterBand::ComputeStatistics( int bApproxOK,
+                                   double *pdfMin, double *pdfMax, 
+                                   double *pdfMean, double *pdfStdDev,
+                                   GDALProgressFunc pfnProgress, 
+                                   void *pProgressData )
+
+{
+    if( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
+
+/* -------------------------------------------------------------------- */
 /*      If we have overview bands, use them for min/max.                */
 /* -------------------------------------------------------------------- */
     if( bApproxOK )
@@ -2812,23 +2889,29 @@ CPLErr GDALRasterBand::GetStatistics( int bApproxOK, int bForce,
         poBand = (GDALRasterBand *) GDALGetRasterSampleOverview( this, 2500 );
 
         if( poBand != this )
-            return poBand->GetStatistics( bApproxOK, bForce, pdfMin, pdfMax, 
-                                          pdfMean, pdfStdDev );
+            return poBand->ComputeStatistics( FALSE,  
+                                              pdfMin, pdfMax, 
+                                              pdfMean, pdfStdDev,
+                                              pfnProgress, pProgressData );
     }
-    
-
-    if( !bForce )
-        return CE_Warning;
 
 /* -------------------------------------------------------------------- */
 /*      Figure out the ratio of blocks we will read to get an           */
 /*      approximate value.                                              */
 /* -------------------------------------------------------------------- */
+    double      dfMin=0.0, dfMax=0.0;
     int         nBlockXSize, nBlockYSize;
     int         nBlocksPerRow, nBlocksPerColumn;
-    int         nSampleRate, nSampleCount = 0;
+    int         nSampleRate;
     int         bGotNoDataValue, bFirstValue = TRUE;
     double      dfNoDataValue, dfSum=0.0, dfSum2=0.0;
+    GIntBig     nSampleCount = 0;
+
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        return CE_Failure;
+    }
 
     dfNoDataValue = GetNoDataValue( &bGotNoDataValue );
 
@@ -2935,6 +3018,19 @@ CPLErr GDALRasterBand::GetStatistics( int bApproxOK, int bForce,
         }
 
         poBlock->DropLock();
+
+        if( !pfnProgress( iSampleBlock / ((double) (nBlocksPerRow*nBlocksPerColumn)),
+                          "Compute Statistics", pProgressData ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+            return CE_Failure;
+        }
+    }
+
+    if( !pfnProgress( 1.0, "Compute Statistics", pProgressData ) )
+    {
+        CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
+        return CE_Failure;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2971,21 +3067,47 @@ CPLErr GDALRasterBand::GetStatistics( int bApproxOK, int bForce,
 }
 
 /************************************************************************/
-/*                      GDALGetRasterStatistics()                       */
+/*                    GDALComputeRasterStatistics()                     */
 /************************************************************************/
 
-CPLErr CPL_STDCALL GDALGetRasterStatistics( 
-        GDALRasterBandH hBand, int bApproxOK, int bForce, 
-        double *pdfMin, double *pdfMax, double *pdfMean, double *pdfStdDev )
+CPLErr CPL_STDCALL GDALComputeRasterStatistics( 
+        GDALRasterBandH hBand, int bApproxOK, 
+        double *pdfMin, double *pdfMax, double *pdfMean, double *pdfStdDev,
+        GDALProgressFunc pfnProgress, void *pProgressData )
 
 {
-    return ((GDALRasterBand *) hBand)->GetStatistics( 
-        bApproxOK, bForce, pdfMin, pdfMax, pdfMean, pdfStdDev );
+    return ((GDALRasterBand *) hBand)->ComputeStatistics( 
+        bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev,
+        pfnProgress, pProgressData );
 }
 
 /************************************************************************/
 /*                           SetStatistics()                            */
 /************************************************************************/
+
+/**
+ * Set statistics on band.
+ *
+ * This method can be used to store min/max/mean/standard deviation
+ * statistics on a raster band.  
+ *
+ * The default implementation stores them as metadata, and will only work 
+ * on formats that can save arbitrary metadata.  This method cannot detect
+ * whether metadata will be properly saved and so may return CE_None even
+ * if the statistics will never be saved.
+ *
+ * This method is the same as the C function GDALSetRasterStatistics().
+ * 
+ * @param dfMin minimum pixel value.
+ * 
+ * @param dfMax maximum pixel value.
+ *
+ * @param dfMean mean (average) of all pixel values.		
+ *
+ * @param dfStdDev Standard deviation of all pixel values.
+ *
+ * @return CE_None on success or CE_Failure on failure. 
+ */
 
 CPLErr GDALRasterBand::SetStatistics( double dfMin, double dfMax, 
                                       double dfMean, double dfStdDev )
@@ -3006,6 +3128,19 @@ CPLErr GDALRasterBand::SetStatistics( double dfMin, double dfMax,
     SetMetadataItem( "STATISTICS_STDDEV", szValue );
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                      GDALSetRasterStatistics()                       */
+/************************************************************************/
+
+CPLErr CPL_STDCALL GDALSetRasterStatistics( 
+        GDALRasterBandH hBand,  
+        double dfMin, double dfMax, double dfMean, double dfStdDev )
+
+{
+    return ((GDALRasterBand *) hBand)->SetStatistics( 
+        dfMin, dfMax, dfMean, dfStdDev );
 }
 
 /************************************************************************/
