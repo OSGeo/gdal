@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/07/14 20:30:25  mloskot
+ * Fixed new issue related to Bug 1195. Fixed Bug 313.
+ *
  * Revision 1.21  2006/07/12 11:53:27  mloskot
  * Fixed Bug 1195 and Bug 1230.
  *
@@ -220,6 +223,23 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D,
     if( OGR_SWAP( eByteOrder ) )
         nNewNumPoints = CPL_SWAP32(nNewNumPoints);
 
+    /* Check if the wkb stream buffer is big enough to store
+     * fetched number of points.
+     * 3 - min number of points in a ring
+     * 16 or 24 - size of point structure
+     */
+    size_t nPointSize = (b3D ? 24 : 16);
+    size_t nBufferMinSize = 3 * nPointSize * nNewNumPoints;
+
+    if( nBufferMinSize > nBytesAvailable )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Length of input WKB is too small (%u < %u)  \
+                  \n\tWKB stream may be corrupted or it is a EWKB stream which is not supported",
+                  nBytesAvailable, nBufferMinSize );
+        return OGRERR_NOT_ENOUGH_DATA;
+    }
+
     /* (Re)Allocation of paoPoints buffer. */
     setNumPoints( nNewNumPoints );
 
@@ -240,9 +260,9 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D,
 
         if( nBytesAvailable < nBytesToCopy)
         {
-            CPLDebug ("OGR", "OGRLinearRing points buffer is too small! \
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "WKB buffer with OGRLinearRing points is too small! \
                       \n\tWKB stream may be corrupted or it is a EWKB stream which is not supported");
-
             return OGRERR_NOT_ENOUGH_DATA;
         }
 
@@ -255,9 +275,9 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D,
             nBytesToCopy = 24 * nPointCount;
             if( nBytesAvailable < nBytesToCopy)
             {
-                CPLDebug ("OGR", "OGRLinearRing points buffer is too small! \
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "WKB buffer with OGRLinearRing points is too small! \
                           \n\tWKB stream may be corrupted or it is a EWKB stream which is not supported");
-
                 return OGRERR_NOT_ENOUGH_DATA;
             }
             nBytesAvailable -= nBytesToCopy;
