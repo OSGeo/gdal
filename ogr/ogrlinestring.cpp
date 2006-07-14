@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2006/07/14 20:30:25  mloskot
+ * Fixed new issue related to Bug 1195. Fixed Bug 313.
+ *
  * Revision 1.56  2006/07/12 11:53:27  mloskot
  * Fixed Bug 1195 and Bug 1230.
  *
@@ -872,7 +875,8 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
 /*      one byte.                                                       */
 /* -------------------------------------------------------------------- */
     OGRwkbGeometryType eGeometryType;
-    int                bIs3D;
+    int bIs3D = FALSE;
+    int nBytesAvailable = nSize;
 
     if( eByteOrder == wkbNDR )
     {
@@ -896,6 +900,26 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
     
     if( OGR_SWAP( eByteOrder ) )
         nNewNumPoints = CPL_SWAP32(nNewNumPoints);
+    
+    if( OGR_SWAP( eByteOrder ) )
+        nNewNumPoints = CPL_SWAP32(nNewNumPoints);
+
+    /* Check if the wkb stream buffer is big enough to store
+     * fetched number of points.
+     * 2 - min number of points in a linestring
+     * 16 or 24 - size of point structure
+     */
+    size_t nPointSize = (bIs3D ? 24 : 16);
+    size_t nBufferMinSize = 2 * nPointSize * nNewNumPoints;
+
+    if( nBufferMinSize > nBytesAvailable )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Length of input WKB is too small (%u < %u)  \
+                  \n\tWKB stream may be corrupted or it is a EWKB stream which is not supported",
+                  nBytesAvailable, nBufferMinSize );
+        return OGRERR_NOT_ENOUGH_DATA;
+    }
 
     setNumPoints( nNewNumPoints );
     
@@ -909,20 +933,21 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
 /* -------------------------------------------------------------------- */
     int i = 0;
     int nBytesToCopy = 0;
-    int nBytesAvailable = nSize;
     
     if( bIs3D )
     {
         for( i = 0; i < nPointCount; i++ )
         {
             nBytesToCopy = 24 * nPointCount;
+
             if( nBytesAvailable < nBytesToCopy)
             {
-                CPLDebug ("OGR", "OGRLinearRing points buffer is too small! \
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          "WKB buffer with OGRLineString points is too small! \
                           \n\tWKB stream may be corrupted or it is a EWKB stream which is not supported");
-
                 return OGRERR_NOT_ENOUGH_DATA;
             }
+
             nBytesAvailable -= nBytesToCopy;
 
             memcpy( paoPoints + i, pabyData + 9 + i*24, 16 );
@@ -935,9 +960,9 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
 
         if( nBytesAvailable < nBytesToCopy)
         {
-            CPLDebug ("OGR", "OGRLineString points buffer is too small! \
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "WKB buffer with OGRLineString points is too small! \
                       \n\tWKB stream may be corrupted or it is a EWKB stream which is not supported");
-
             return OGRERR_NOT_ENOUGH_DATA;
         }
 
