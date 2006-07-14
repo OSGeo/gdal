@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2006/07/14 16:18:40  fwarmerdam
+ * --formats now handled by generic argument processor.
+ *
  * Revision 1.34  2006/05/23 23:05:20  mloskot
  * Added CPL_DEBUG diagnostics and variables initialization to ogrinfo.cpp.
  *
@@ -228,25 +231,6 @@ int main( int nArgc, char ** papszArgv )
                  || EQUAL(papszArgv[iArg],"-summary")  )
         {
             bSummaryOnly = TRUE;
-        }
-        else if( EQUAL(papszArgv[iArg],"--formats") )
-        {
-            OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
-        
-            printf( "Loaded OGR Format Drivers:\n" );
-
-            for( int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++ )
-            {
-                OGRSFDriver *poDriver = poR->GetDriver(iDriver);
-
-                if( poDriver->TestCapability( ODrCCreateDataSource ) )
-                    printf( "  -> \"%s\" (read/write)\n", 
-                            poDriver->GetName() );
-                else
-                    printf( "  -> \"%s\" (readonly)\n", 
-                            poDriver->GetName() );
-            }
-            exit( 0 );
         }
         else if( papszArgv[iArg][0] == '-' )
         {
