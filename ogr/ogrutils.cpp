@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/07/14 16:18:02  fwarmerdam
+ * Include readonly/readwrite info in --formats list.
+ *
  * Revision 1.24  2006/05/15 16:55:43  fwarmerdam
  * improve debugging output
  *
@@ -596,7 +599,13 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             for( iDr = 0; iDr < poR->GetDriverCount(); iDr++ )
             {
                 OGRSFDriver *poDriver = poR->GetDriver(iDr);
-                printf( "  %s\n", poDriver->GetName());
+
+                if( poDriver->TestCapability( ODrCCreateDataSource ) )
+                    printf( "  -> \"%s\" (read/write)\n", 
+                            poDriver->GetName() );
+                else
+                    printf( "  -> \"%s\" (readonly)\n", 
+                            poDriver->GetName() );
             }
 
             CSLDestroy( papszReturn );
