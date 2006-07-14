@@ -584,7 +584,8 @@ raster.  This output is suitable for use with UMN MapServer as a raster
 tileindex. 
 
 <ul>
-<li> The shapefile (index_file) will be created if it doesn't already exist.
+<li> The shapefile (index_file) will be created if it doesn't already exist, 
+otherwise it will append to the existing file.
 <li> The default tile index field is 'location'.
 <li> Raster filenames will be put in the file exactly as they are specified
 on the commandline.
