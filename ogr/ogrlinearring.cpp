@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/07/15 09:12:44  mloskot
+ * New fixes related to Bug 1195. Recent fixes had minor bugs. NOTE: OGR autotests are failing so they may need some changes (in progress).
+ *
  * Revision 1.22  2006/07/14 20:30:25  mloskot
  * Fixed new issue related to Bug 1195. Fixed Bug 313.
  *
@@ -225,18 +228,18 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D,
 
     /* Check if the wkb stream buffer is big enough to store
      * fetched number of points.
-     * 3 - min number of points in a ring
      * 16 or 24 - size of point structure
      */
     size_t nPointSize = (b3D ? 24 : 16);
-    size_t nBufferMinSize = 3 * nPointSize * nNewNumPoints;
+    size_t nBufferMinSize = nPointSize * nNewNumPoints;
+   
+    CPLDebug( "OGR", "WKB Buffer check:\n\tnNewNumPoints=%d\n\tnBufferMinSize=%u\n\tnBytesAvailable=%d\n",
+              nNewNumPoints, nBufferMinSize, nBytesAvailable);
 
     if( nBufferMinSize > nBytesAvailable )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Length of input WKB is too small (%u < %u)  \
-                  \n\tWKB stream may be corrupted or it is a EWKB stream which is not supported",
-                  nBytesAvailable, nBufferMinSize );
+                  "Length of input WKB is too small" );
         return OGRERR_NOT_ENOUGH_DATA;
     }
 
@@ -257,12 +260,15 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D,
     if( !b3D )
     {
         nBytesToCopy = 16 * nPointCount;
+        
+        CPLDebug( "OGR", "3D WKB Bytes copying:\n\tBytesToCopy=%d\n\tnBytesAvailable=%d\n",
+                  nBytesToCopy, nBytesAvailable );
 
         if( nBytesAvailable < nBytesToCopy)
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "WKB buffer with OGRLinearRing points is too small! \
-                      \n\tWKB stream may be corrupted or it is a EWKB stream which is not supported");
+                      \n\tWKB stream may be corrupted or it is EWKB stream which is not supported");
             return OGRERR_NOT_ENOUGH_DATA;
         }
 
@@ -272,12 +278,16 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D,
     {
         for( int i = 0; i < nPointCount; i++ )
         {
-            nBytesToCopy = 24 * nPointCount;
+            nBytesToCopy = 24;
+
+            CPLDebug( "OGR", "3D WKB Bytes copying:\n\tBytesToCopy=%d\n\tnBytesAvailable=%d\n",
+                      nBytesToCopy, nBytesAvailable );
+
             if( nBytesAvailable < nBytesToCopy)
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "WKB buffer with OGRLinearRing points is too small! \
-                          \n\tWKB stream may be corrupted or it is a EWKB stream which is not supported");
+                          \n\tWKB stream may be corrupted or it is EWKB stream which is not supported");
                 return OGRERR_NOT_ENOUGH_DATA;
             }
             nBytesAvailable -= nBytesToCopy;
