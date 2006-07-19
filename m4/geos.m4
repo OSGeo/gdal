@@ -107,22 +107,11 @@ AC_DEFUN([GEOS_INIT],[
        AC_MSG_ERROR([geos-config reports version ${geos_major_version}.${geos_minor_version}.${geos_micro_version}, need at least $min_geos_version or configure --without-geos])
     else
       
-      AC_MSG_RESULT(yes)
       HAVE_GEOS="yes"
       GEOS_LIBS="`${GEOS_CONFIG} --libs`"
       GEOS_CFLAGS="`${GEOS_CONFIG} --cflags`"
       GEOS_VERSION="`${GEOS_CONFIG} --version`"
 
-      AC_MSG_CHECKING(for geos::Coordinate::getNull() in -lgeos)
-      ax_save_LIBS="${LIBS}"
-      LIBS=${GEOS_LIBS}
-      ax_save_CFLAGS="${CFLAGS}"
-      CFLAGS="${GEOS_CFLAGS}"
-      AC_LANG_PUSH(C++)
-      AC_TRY_COMPILE([#include "geos/geom.h"], [geos::Coordinate::getNull()], HAVE_GEOS=yes, HAVE_GEOS=no)
-      AC_LANG_POP()
-      CFLAGS="${ax_save_CFLAGS}"
-      LIBS="${ax_save_LIBS}"
       AC_MSG_RESULT($HAVE_GEOS)
 
     fi
