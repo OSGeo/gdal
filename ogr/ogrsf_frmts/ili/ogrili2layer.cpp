@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/07/20 23:22:22  mloskot
+ * Fixed Bug 1247 reported by John Johnson. Thanks to John.
+ *
  * Revision 1.5  2006/06/06 17:49:07  pka
  * STL compatibility (Bug 1178)
  *
@@ -118,7 +121,6 @@ void OGRILI2Layer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
 OGRErr OGRILI2Layer::SetFeature (OGRFeature *poFeature) {
     listFeature.push_back(poFeature);
-    if (listFeature.size() == 1) ResetReading();
     return OGRERR_NONE;
 }
 
