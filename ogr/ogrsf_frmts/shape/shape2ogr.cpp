@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2006/07/20 12:50:52  mloskot
+ * Refactored shape2ogr.cpp file. Added comments related to Bug 1217 (not fixed yet, see the bug report).
+ *
  * Revision 1.44  2006/06/30 09:20:20  mloskot
  * Fixed null dates issue reported by Aaron Koning. Fixed zero-fill of year value in OGRFeature::GetFieldAsString. Added assertions and NULL pointer tests.
  *
@@ -264,10 +267,13 @@ inline bool RingExtent::contains( const RingExtent &extent )
 /************************************************************************/
 void RingStartEnd ( SHPObject *psShape, int ring, int *start, int *end )
 {
-    if( psShape->panPartStart == NULL ) {
-	*start = 0;
+    if( psShape->panPartStart == NULL )
+    {
+	    *start = 0;
         *end = psShape->nVertices - 1;
-    } else {
+    }
+    else
+    {
         if( ring == psShape->nParts - 1 )
             *end = psShape->nVertices - 1;
         else
@@ -302,27 +308,37 @@ int RingDirection ( SHPObject *Shape, int ring )
 
     /* Find the lowest rightmost vertex */
     v = start;  
-    for ( i = start + 1; i < end; i++ ) { /* => v < end */
-	if ( y[i] < y[v] || ( y[i] == y[v] && x[i] > x[v] ) ) {
-	    v = i;
-	}
+    for ( i = start + 1; i < end; i++ )
+    {
+        /* => v < end */
+        if ( y[i] < y[v] || ( y[i] == y[v] && x[i] > x[v] ) )
+        {
+            v = i;
+        }
     }
     
     /* Vertices may be duplicate, we have to go to nearest different in each direction */
     /* preceding */
     next = v - 1;
-    while ( 1 ) {
-	if ( next < start ) 
-	    next = end - 1; 
+    while ( 1 )
+    {
+        if ( next < start ) 
+        {
+            next = end - 1; 
+        }
 
         if( !epsilonEqual(x[next], x[v], EPSILON) 
             || !epsilonEqual(y[next], y[v], EPSILON) )
-	    break;
+        {
+            break;
+        }
 
-	if ( next == v ) /* So we cannot get into endless loop */
-	    break;
+        if ( next == v ) /* So we cannot get into endless loop */
+        {
+            break;
+        }
 
-	next--;
+        next--;
     }
 	    
     dx0 = x[next] - x[v];
@@ -331,19 +347,27 @@ int RingDirection ( SHPObject *Shape, int ring )
     
     /* following */
     next = v + 1;
-    while ( 1 ) {
-	if ( next >= end ) 
-	    next = start; 
+    while ( 1 )
+    {
+        if ( next >= end ) 
+        {
+            next = start; 
+        }
 
         if ( !epsilonEqual(x[next], x[v], EPSILON) 
              || !epsilonEqual(y[next], y[v], EPSILON) )
-	    break;
+        {
+            break;
+        }
 
-	if ( next == v ) /* So we cannot get into endless loop */
-	    break;
+        if ( next == v ) /* So we cannot get into endless loop */
+        {
+            break;
+        }
 
-	next++;
+        next++;
     }
+
     dx1 = x[next] - x[v];
     dy1 = y[next] - y[v];
 
@@ -443,15 +467,18 @@ OGRLinearRing * CreateLinearRing ( SHPObject *psShape, int ring )
 /************************************************************************/
 
 OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
-
 {
+    CPLDebug( "Shape", "SHPReadOGRObject( iShape=%d )\n", iShape );
+
     SHPObject   *psShape;
     OGRGeometry *poOGR = NULL;
 
     psShape = SHPReadObject( hSHP, iShape );
 
     if( psShape == NULL )
+    {
         return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Point.                                                          */
@@ -462,8 +489,11 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
     {
         poOGR = new OGRPoint( psShape->padfX[0], psShape->padfY[0],
                               psShape->padfZ[0] );
+
         if( psShape->nSHPType == SHPT_POINT )
+        {
             poOGR->setCoordinateDimension( 2 );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -566,91 +596,133 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
              || psShape->nSHPType == SHPT_POLYGONM
              || psShape->nSHPType == SHPT_POLYGONZ )
     {
-        int     iRing;
+        int iRing;
         
-	if ( psShape->nParts == 1 ) { /* Surely outer ring */
-            OGRPolygon *poOGRPoly;
-	    OGRLinearRing       *poRing;
+        CPLDebug( "Shape", "Shape type: polygon with nParts=%d \n", psShape->nParts );
 
-	    poOGR = poOGRPoly = new OGRPolygon();
-	    poRing = CreateLinearRing ( psShape, 0 );
-	    poOGRPoly->addRingDirectly( poRing );
-	} else {
-	    int nOuter = 0; /* Number of outer rings */ 
-	    int *direction; /* ring direction (1 CW,outer, -1 CCW, inner) */ 
-	    int *outer;     /* list of outer rings */ 
-            /* outer ring index for inner rings, -1 for outer rings */ 
-	    int *outside;   
+        if ( psShape->nParts == 1 )
+        {
+            /* Surely outer ring */
+            OGRPolygon *poOGRPoly = NULL;
+            OGRLinearRing *poRing = NULL;
 
-	    direction = (int *) CPLMalloc( psShape->nParts * sizeof(int) );
-	    outer = (int *) CPLMalloc( psShape->nParts * sizeof(int) );
-	    outside = (int *) CPLMalloc( psShape->nParts * sizeof(int) );
-	    
-	    /* First distinguish outer from inner rings */
-	    for( iRing = 0; iRing < psShape->nParts; iRing++ ) {
-		direction[iRing] = RingDirection ( psShape, iRing);
-		if ( direction[iRing] == 1 ) {
-		    outer[nOuter] = iRing;
-		    nOuter++;
-		}
-		outside[iRing] = -1;
-	    }
+            poOGR = poOGRPoly = new OGRPolygon();
+            poRing = CreateLinearRing ( psShape, 0 );
+            poOGRPoly->addRingDirectly( poRing );
+        }
+        else
+        {
+            /* Multipart polygon. */
 
-	    if ( nOuter == 1 ) { 
-                /* one outer ring? we do not need to check anything as we assume that shapefile is valid
-                   ie. if there is one outer ring then all inner rings are inside */
-                for( iRing = 0; iRing < psShape->nParts; iRing++ ) {
-                    if ( direction[iRing] == -1 ) {
+            int nOuter = 0;         /* Number of outer rings */ 
+            int *direction = NULL;  /* ring direction (1 CW,outer, -1 CCW, inner) */ 
+            int *outer = NULL;      /* list of outer rings */ 
+                
+            /* Outer ring index for inner rings, -1 for outer rings */ 
+            int *outside = NULL;   
+
+            direction = (int *) CPLMalloc( psShape->nParts * sizeof(int) );
+            outer = (int *) CPLMalloc( psShape->nParts * sizeof(int) );
+            outside = (int *) CPLMalloc( psShape->nParts * sizeof(int) );
+            
+            /* First distinguish outer from inner rings */
+            for( iRing = 0; iRing < psShape->nParts; iRing++ )
+            {
+                direction[iRing] = RingDirection ( psShape, iRing);
+                if ( direction[iRing] == 1 )
+                {
+                    outer[nOuter] = iRing;
+                    nOuter++;
+                }
+                outside[iRing] = -1;
+            }
+
+            if ( nOuter == 1 )
+            { 
+                /* One outer ring?
+                 * we do not need to check anything as we assume that shapefile is valid
+                 * ie. if there is one outer ring then all inner rings are inside.
+                 */
+                for( iRing = 0; iRing < psShape->nParts; iRing++ )
+                {
+                    if ( direction[iRing] == -1 )
+                    {
                         outside[iRing] = outer[ 0 ];
                     }
                 }
             }
-            else {
-                /* calculate ring extents */
-                RingExtent *extents = new RingExtent[ psShape->nParts ]; /* ring extents */
+            else
+            {
+                /* Calculate ring extents */
+                RingExtent *extents = new RingExtent[ psShape->nParts ];
 
-                for( iRing = 0; iRing < psShape->nParts; iRing++ ) {
-                    int  start, end;
+                for( iRing = 0; iRing < psShape->nParts; iRing++ )
+                {
+                    int start = 0;
+                    int end = 0;
                     RingStartEnd ( psShape, iRing, &start, &end );
                     extents[ iRing ].calculate( end-start, psShape->padfX + start, psShape->padfY + start );
                 }
-                int oRing; /* outer ring index */
-                /* This loops tries to assign inner to outr rings. The fundamental assumption is */
-                /* that if the extent of an inner ring is contained in the extent of exactly one outer */
-                /* ring then this inner ring is inside the outer ring. Otherwise that shapefile is */
-                /* broken.. */
-                for( iRing = 0; iRing < psShape->nParts; iRing++ ) {
-                    if ( direction[ iRing ] != 1 ) { /* inner ring */                    
+
+                /* Outer ring index */
+                int oRing;
+
+                /* This loops tries to assign inner to outer rings.
+                 * The fundamental assumption is that if the extent of an inner ring is contained
+                 * in the extent of exactly one outer ring then this inner ring is inside the outer ring.
+                 * Otherwise that shapefile is broken.
+                 *
+                 * XXX - mloskot - This loop does incorrect classification, see Bug 1217
+                 */
+                for( iRing = 0; iRing < psShape->nParts; iRing++ )
+                {
+                    if ( direction[ iRing ] != 1 )
+                    {
+                        /* Inner ring */
+
                         /* Find the outer ring for iRing */
-                        for( oRing = 0; oRing < nOuter; oRing++ ) {
-                            if ( extents[ outer[ oRing ] ].contains( extents[ iRing ] ) ) {
-                                /* the outer ring contains the inner ring, we have to execute some 
-                                   additional tests */ 
-                                if ( outside[ iRing ] == -1 ) {
+                        for( oRing = 0; oRing < nOuter; oRing++ )
+                        {
+                            if ( extents[ outer[ oRing ] ].contains( extents[ iRing ] ) )
+                            {
+                                /* The outer ring contains the inner ring, we have to execute
+                                 * some additional tests.
+                                 */ 
+                                if ( outside[ iRing ] == -1 )
+                                {
                                     /* this is the first outer ring, assume it containes this inner iRing */
                                     outside[ iRing ] = outer[ oRing ];
                                 }
-                                else { 
-                                    /* this is another outer ring, which contains iRing, have to distinguish
-                                       between this and previous outer rings using RingInPoint. Here is a place
-                                       for some optimization as sometimes we may check the same ring many times*/
+                                else
+                                { 
+                                    /* This is another outer ring, which contains iRing, have to distinguish
+                                     * between this and previous outer rings using RingInPoint.
+                                     * Here is a place for some optimization as sometimes we may check
+                                     * the same ring many times.
+                                     */
                                     if ( !RingInRing( psShape, outside[ iRing ], iRing ) )
+                                    {
                                         outside[ iRing ] = outer[ oRing ];
+                                    }
                                 }                            
                             }
                         }
                     }
-                }                    
+                }
+
+                /* Destroy ring extents object. */
                 delete[] extents;
             }
-            /* The inner rings are preliminary sorted, but: */
-            /* - Some of them are not assigned to any outer ring. Probably broken shapefile */
-            /* - Some inner rings are assigned to outer rings using extents only. */
-            /*     Additional geometry tests are ommited here due to perfomance penalties.*/
 
-            /* promote any unassigned inner rings to be outside rings */
-            
-            for ( iRing = 0; iRing < psShape->nParts; iRing++ ) { /* outer rings */
+            /* The inner rings are preliminary sorted, but:
+             * - Some of them are not assigned to any outer ring. Probably broken shapefile
+             * - Some inner rings are assigned to outer rings using extents only.
+             * Additional geometry tests are ommited here due to perfomance penalties.
+             * Promote any unassigned inner rings to be outside rings.
+             */
+            for ( iRing = 0; iRing < psShape->nParts; iRing++ )
+            {
+                /* Outer rings */
                 if( direction[iRing] != 1 && outside[iRing] == -1 )
                 {
                     direction[iRing] = 1; /* this isn't exactly true! */
@@ -658,57 +730,72 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
                 }
             }
 
-	    if ( nOuter == 1 ) { /* One outer ring and more inner rings */
-		OGRPolygon    *poOGRPoly;
-	        OGRLinearRing *poRing;
+            if ( nOuter == 1 )
+            {
+                /* One outer ring and more inner rings */
+                OGRPolygon    *poOGRPoly = NULL;
+                OGRLinearRing *poRing = NULL;
 
-		/* Outer */
-	        poOGR = poOGRPoly = new OGRPolygon();
-		poRing = CreateLinearRing ( psShape, outer[0] );
-	        poOGRPoly->addRingDirectly( poRing );
+                /* Outer */
+                poOGR = poOGRPoly = new OGRPolygon();
+                poRing = CreateLinearRing ( psShape, outer[0] );
+                poOGRPoly->addRingDirectly( poRing );
 
-		/* Inner */
-		for( iRing = 0; iRing < psShape->nParts; iRing++ ) {
-		    if ( direction[iRing] == -1 ) {
-			poRing = CreateLinearRing ( psShape, iRing );
-			poOGRPoly->addRingDirectly( poRing );
-		    }
-		}
-	    } else { 
-		OGRGeometryCollection *poOGRGeCo;
+                /* Inner */
+                for( iRing = 0; iRing < psShape->nParts; iRing++ )
+                {
+                    if ( direction[iRing] == -1 )
+                    {
+                        poRing = CreateLinearRing ( psShape, iRing );
+                        poOGRPoly->addRingDirectly( poRing );
+                    }
+                }
+            }
+            else
+            { 
+                OGRGeometryCollection *poOGRGeCo = NULL;
 
-		poOGR = poOGRGeCo = new OGRMultiPolygon();
+                poOGR = poOGRGeCo = new OGRMultiPolygon();
 
-	        for ( iRing = 0; iRing < nOuter; iRing++ ) { /* outer rings */
-		    int oRing; 
+                for ( iRing = 0; iRing < nOuter; iRing++ )
+                {
+                    /* Outer rings */
+                    int oRing; 
 
-		    OGRPolygon    *poOGRPoly;
-		    OGRLinearRing *poRing;
+                    OGRPolygon    *poOGRPoly = NULL;
+                    OGRLinearRing *poRing = NULL;
 
-		    oRing = outer[iRing];
+                    oRing = outer[iRing];
 
-		    /* Outer */
-		    poOGRPoly = new OGRPolygon();
-		    poRing = CreateLinearRing ( psShape, oRing );
-		    poOGRPoly->addRingDirectly( poRing );
+                    /* Outer */
+                    poOGRPoly = new OGRPolygon();
+                    poRing = CreateLinearRing ( psShape, oRing );
+                    poOGRPoly->addRingDirectly( poRing );
 
-		    /* Inner */
-		    for( int iRing2 = 0; iRing2 < psShape->nParts; iRing2++ ) {
-			if ( outside[iRing2] == oRing ) {
-			    poRing = CreateLinearRing ( psShape, iRing2 );
-			    poOGRPoly->addRingDirectly( poRing );
-			}
-		    }
+                    /* Inner */
+                    for( int iRing2 = 0; iRing2 < psShape->nParts; iRing2++ )
+                    {
+                        if ( outside[iRing2] == oRing )
+                        {
+                            poRing = CreateLinearRing ( psShape, iRing2 );
+                            poOGRPoly->addRingDirectly( poRing );
+                        }
+                    }
+                    
                     poOGRGeCo->addGeometryDirectly (poOGRPoly);
-		}
-	    }
+                }
+            }
+
             CPLFree( direction );
             CPLFree( outer );
             CPLFree( outside );
-	}
+
+        } /* End of multipart polygon processing. */
 
         if( psShape->nSHPType == SHPT_POLYGON )
+        {
             poOGR->setCoordinateDimension( 2 );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -718,7 +805,10 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
     else
     {
         if( psShape->nSHPType != SHPT_NULL )
+        {
             CPLDebug( "OGR", "Unsupported shape type in SHPReadOGRObject()" );
+        }
+
         /* nothing returned */
     }
     
