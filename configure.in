@@ -1675,10 +1675,7 @@ dnl ---------------------------------------------------------------------------
 GEOS_INIT(2.2.0)
 if test "${HAVE_GEOS}" = "yes" ; then
 
-  GEOS_LIBS="${GEOS_LIBS} -lgeos_c"
-  GEOS_CFLAGS="${GEOS_CFLAGS}"
   AC_MSG_NOTICE([using GEOS 2.2.x+ C API])
-  
   LIBS="${GEOS_LIBS} ${LIBS}"
 fi
 

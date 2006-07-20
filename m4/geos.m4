@@ -60,7 +60,7 @@ AC_DEFUN([GEOS_INIT],[
   else
 
    ac_geos_config=`basename $with_geos`
-   ac_geos_config_dir=`dirname $with_geos`
+   ac_geos_config_dir=dir=`AS_DIRNAME(["$with_geos"])`
 
    AC_CHECK_PROG(
         GEOS_CONFIG,
@@ -99,6 +99,7 @@ AC_DEFUN([GEOS_INIT],[
 
     if test $ac_req_version -le $ac_geos_version; then
         version_ok="yes"
+        AC_MSG_RESULT([yes])
     fi
 
     if test $version_ok = "no"; then
@@ -107,12 +108,32 @@ AC_DEFUN([GEOS_INIT],[
        AC_MSG_ERROR([geos-config reports version ${geos_major_version}.${geos_minor_version}.${geos_micro_version}, need at least $min_geos_version or configure --without-geos])
     else
       
-      HAVE_GEOS="yes"
-      GEOS_LIBS="`${GEOS_CONFIG} --libs`"
+      HAVE_GEOS="no"
+
+      GEOS_LIBS="`${GEOS_CONFIG} --libs` -lgeos_c"
       GEOS_CFLAGS="`${GEOS_CONFIG} --cflags`"
       GEOS_VERSION="`${GEOS_CONFIG} --version`"
 
-      AC_MSG_RESULT($HAVE_GEOS)
+      dnl XXX - mloskot - commented in rev 1.4
+      dnl AC_MSG_CHECKING(for geos::Coordinate::getNull() in -lgeos)
+      dnl AC_LANG_PUSH(C++)
+      dnl AC_TRY_COMPILE([#include "geos/geom.h"], [geos::Coordinate::getNull()], HAVE_GEOS=yes, HAVE_GEOS=no)
+      dnl AC_LANG_POP()
+
+      ax_save_LIBS="${LIBS}"
+      LIBS=${GEOS_LIBS}
+      ax_save_CFLAGS="${CFLAGS}"
+      CFLAGS="${GEOS_CFLAGS}"
+
+      AC_CHECK_LIB([geos_c],
+        [GEOSversion],
+        [HAVE_GEOS="yes"],
+        [HAVE_GEOS="no"],
+        []
+      )
+
+      CFLAGS="${ax_save_CFLAGS}"
+      LIBS="${ax_save_LIBS}"
 
     fi
 
