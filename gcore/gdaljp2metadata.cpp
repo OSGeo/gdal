@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/07/20 03:39:37  fwarmerdam
+ * Updates to gmljp2 formatting suggested by Glen Thompson.
+ *
  * Revision 1.9  2006/06/22 20:28:09  fwarmerdam
  * capture xml boxes on the main pass through the file
  *
@@ -827,7 +830,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 "<gml:FeatureCollection\n"
 "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
 "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
-"   xsi:schemaLocation=\"http://www.opengis.net/gml http://www.math.ubc.ca/~burggraf/gml/gml4jp2.xsd\">\n"
+"   xsi:schemaLocation=\"http://www.opengeospatial.net/gml http://schemas.opengis.net/gml/3.1.1/profiles/gmlJP2Profile/1.0.0/gmlJP2/Profile.xsd\">\n"
 "  <gml:boundedBy>\n"
 "    <gml:Null>withheld</gml:Null>\n"
 "  </gml:boundedBy>\n"
@@ -856,7 +859,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2( int nXSize, int nYSize )
 "          </gml:rectifiedGridDomain>\n"
 "          <gml:rangeSet>\n"
 "            <gml:File>\n"
-"              <gml:fileName>urn:ogc:tc:gmljp2:codestream:0</gml:fileName>\n"
+"              <gml:fileName>gmljp2://codestream/0</gml:fileName>\n"
 "              <gml:fileStructure>Record Interleaved</gml:fileStructure>\n"
 "            </gml:File>\n"
 "          </gml:rangeSet>\n"
