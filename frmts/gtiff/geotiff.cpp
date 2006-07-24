@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.168  2006/07/24 13:55:36  fwarmerdam
+ * Allow creation of files of up to 4200000000 worth of imagery.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1241
+ *
  * Revision 1.167  2006/07/13 17:11:53  dron
  * Do not allow setting incorrect PhotometricInterpretation.
  *
@@ -3463,7 +3467,7 @@ TIFF *GTiffCreate( const char * pszFilename,
     if( nCompression == COMPRESSION_NONE )
     {
         if( nXSize * ((double)nYSize) * nBands * (GDALGetDataTypeSize(eType)/8)
-            > 4000000000.0 )
+            > 4200000000.0 )
         {
             CPLError( CE_Failure, CPLE_AppDefined, 
                       "A %d pixels x %d lines x %d bands %s image would be larger than 4GB\n"
