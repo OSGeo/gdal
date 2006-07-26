@@ -3,7 +3,7 @@
 
 Author: Frank Warmerdam<br>
 Contact: warmerdam@pobox.com<br>
-Status: Proposed<br>
+Status: Adopted (implementation delayed)<br>
 
 \section summary Summary
 
@@ -25,7 +25,7 @@ removed from cvs.maptools.org, and archived to avoid any confusion.
 
 <li> Frank Warmerdam will modify the "daily cvs snapshot" capability to work from SVN.
 
-<li> Frank Warmerdam will be responsible for updating the source control 
+<li> Frank will be responsible for updating the source control 
 information in the documentation. 
 
 <li> All source files in SVN will have the svn:keywords property set to "Id"
