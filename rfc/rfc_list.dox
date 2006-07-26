@@ -5,11 +5,13 @@ A list of all GDAL/OGR RFC documents, with status.
 
 <ul>
 
-<li> \link rfc1_pmc RFC 1: Project Management Committee Guidelines\endlink (Proposed)
+<li> \link rfc1_pmc RFC 1: Project Management Committee Guidelines\endlink (Adopted)
 
-<li> \link rfc2_svn RFC 2: Migration to OSGeo Subversion Repository\endlink (Proposed)
+<li> \link rfc2_svn RFC 2: Migration to OSGeo Subversion Repository\endlink (Implementation)
 
-<li> \link rfc3_commiters RFC 3: GDAL Commiter Guidelines\endlink (Proposed)
+<li> \link rfc3_commiters RFC 3: GDAL Commiter Guidelines\endlink (Development)
+
+<li> \link rfc4_geolocate RFC 4: Geolocation Arrays\endlink (Development)
 
 </ul>
 
