@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2006/07/26 11:08:06  mloskot
+ * Fixed Bug 1250. Thanks to Bart van den Eijnden for reporting it.
+ *
  * Revision 1.30  2006/06/21 20:43:02  fwarmerdam
  * support datasets without dbf: bug 1211
  *
@@ -668,6 +671,8 @@ int OGRShapeLayer::TestCapability( const char * pszCap )
 OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
 
 {
+    CPLAssert( NULL != poField );
+
     int         iNewField;
     if( GetFeatureCount(TRUE) != 0 )
     {
@@ -681,7 +686,29 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Can't create fields on a read-only shapefile layer.\n");
         return OGRERR_FAILURE;
+
     }
+
+/* -------------------------------------------------------------------- */
+/*      Normalize field name                                            */
+/* -------------------------------------------------------------------- */
+        
+    char * pszNewFieldName = NULL;
+
+    size_t nNameSize = strlen( poField->GetNameRef() );
+    pszNewFieldName = CPLScanString( poField->GetNameRef(),
+                                     nNameSize, TRUE, TRUE);
+
+    CPLDebug( "Shape", "Normalized field name: %s", pszNewFieldName );
+
+    // Set field name with normalized value
+    poField->SetName( pszNewFieldName );
+
+    CPLFree( pszNewFieldName );
+
+/* -------------------------------------------------------------------- */
+/*      Add field to layer                                              */
+/* -------------------------------------------------------------------- */
 
     if( poField->GetType() == OFTInteger )
     {
@@ -750,7 +777,9 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
     }
 
     if( iNewField != -1 )
+    {
         return OGRERR_NONE;
+    }
     else        
     {
         CPLError( CE_Failure, CPLE_AppDefined,
