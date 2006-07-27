@@ -18,7 +18,7 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
     if( poSRSIn == NULL )
         poSRS = NULL;
     else
-        poSRS = poSRSIn->Clone();
+        poSRS = poSRSIn->Clone();        
     
     iNextKMLId = 0;
     nTotalKMLCount = -1;
@@ -31,7 +31,7 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
 
     bWriter = bWriterIn;
 
-    poFClass = NULL;
+    poFClass = NULL;    
 }
 
 /************************************************************************/
@@ -106,7 +106,54 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature *poFeature )
 
     if( poFeature->GetFID() == OGRNullFID )
         poFeature->SetFID( iNextKMLId++ );
+            
+        
+    // First find and write the name element
+    if (NULL != poDS->GetNameField())
+    {
+        for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+        {        
+            OGRFieldDefn *poField = poFeatureDefn->GetFieldDefn( iField );
+
+            if ( poFeature->IsFieldSet( iField ) && 
+                !strcmp(poField->GetNameRef(), poDS->GetNameField()))
+            {           
+                const char *pszRaw = poFeature->GetFieldAsString( iField );
+                while( *pszRaw == ' ' )
+                pszRaw++;
+
+                char *pszEscaped = CPLEscapeString( pszRaw, -1, CPLES_XML );
+
+                VSIFPrintf( fp, "      <name>%s</name>\n", pszEscaped);
+                CPLFree( pszEscaped );   
+            }    
+        }
+    }
     
+	VSIFPrintf( fp, "    <description><![CDATA[\n" );
+    // Write all "set" fields that aren't being used for the name element
+    for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
+    {        
+        OGRFieldDefn *poField = poFeatureDefn->GetFieldDefn( iField );
+
+        if( poFeature->IsFieldSet( iField ) && 
+            (NULL == poDS->GetNameField() ||
+            strcmp(poField->GetNameRef(), poDS->GetNameField()))        )
+        {
+            const char *pszRaw = poFeature->GetFieldAsString( iField );
+
+            while( *pszRaw == ' ' )
+                pszRaw++;
+
+            char *pszEscaped = CPLEscapeString( pszRaw, -1, CPLES_XML );
+
+            VSIFPrintf( fp, "      <b>%s:</b> <i>%s</i><br />\n", 
+                        poField->GetNameRef(), pszEscaped);
+            CPLFree( pszEscaped );
+        }
+    }
+	VSIFPrintf( fp, "   ]]></description>" );
+	
     // Write out Geometry - for now it isn't indented properly.
     if( poFeature->GetGeometryRef() != NULL )
     {
@@ -123,29 +170,7 @@ OGRErr OGRKMLLayer::CreateFeature( OGRFeature *poFeature )
         poFeature->GetGeometryRef()->getEnvelope( &sGeomBounds );
         poDS->GrowExtents( &sGeomBounds );
     }
-
-	VSIFPrintf( fp, "    <description><![CDATA[\n" );
-    // Write all "set" fields. 
-    for( int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++ )
-    {        
-        OGRFieldDefn *poField = poFeatureDefn->GetFieldDefn( iField );
-
-        if( poFeature->IsFieldSet( iField ) )
-        {
-            const char *pszRaw = poFeature->GetFieldAsString( iField );
-
-            while( *pszRaw == ' ' )
-                pszRaw++;
-
-            char *pszEscaped = CPLEscapeString( pszRaw, -1, CPLES_XML );
-
-            VSIFPrintf( fp, "      <b>%s:</b> <i>%s</i><br />\n", 
-                        poField->GetNameRef(), pszEscaped);
-            CPLFree( pszEscaped );
-        }
-    }
-	VSIFPrintf( fp, "   ]]></description>" );
-	
+    
 	if ( (wkbPolygon == poFeatureDefn->GetGeomType() ) ||
 		 (wkbMultiPolygon == poFeatureDefn->GetGeomType() ) ||
 		 (wkbLineString == poFeatureDefn->GetGeomType() ) ||

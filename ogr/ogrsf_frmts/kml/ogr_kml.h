@@ -64,6 +64,9 @@ class OGRKMLDataSource : public OGRDataSource
     
     OGRKMLLayer         *TranslateKMLSchema( KMLFeatureClass * );
 
+    //The name of the field to use for 
+    char                *pszNameField;
+    
     char               **papszCreateOptions;
 
     // output related parameters 
@@ -78,6 +81,7 @@ class OGRKMLDataSource : public OGRDataSource
 
     void                InsertHeader();
 
+    
   public:
                         OGRKMLDataSource();
                         ~OGRKMLDataSource();
@@ -86,6 +90,7 @@ class OGRKMLDataSource : public OGRDataSource
     int                 Create( const char *pszFile, char **papszOptions );
 
     const char          *GetName() { return pszName; }
+    const char          *GetNameField() { return pszNameField; }
     int                 GetLayerCount() { return nLayers; }
     OGRLayer            *GetLayer( int );
 
@@ -100,6 +105,7 @@ class OGRKMLDataSource : public OGRDataSource
     //IKMLReader          *GetReader() { return poReader; }
 
     void                GrowExtents( OGREnvelope *psGeomBounds );
+    
 };
 
 /************************************************************************/
