@@ -16,9 +16,16 @@ The KML driver has no coordinate system support at this time.<p>
 the output with the following HTML structure:
 <pre>&lt;b>Attribute name&lt;/b>: Attribute content</pre>
 </p>
-<p>On export all layers are written to a single KML file wrapped in a single
-folder element. In the future support could be added for layers ending up in
-separate folder elements.</p>
+<p>The OGR KML driver supports multiple layers of data.  
+Each input layer is translated into a separate KML "Folder" element.</p>
+<h2>Creation Options</h2>
+<p>The following creation options are supported:
+<ul>
+<li><b>NameField</b>: Allows you to specify the field to use for the KML &lt;name> element.
+<pre>ogr2ogr -f KML output.kml input.shp -dsco NameField=RegionName</pre>
+</li>
+</ul>
+</p>
 
 <h2>Example</h2>
 The ogr2ogr utility can be used to dump the results of a PostGIS query to

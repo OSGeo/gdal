@@ -25,7 +25,7 @@ OGRKMLDataSource::~OGRKMLDataSource()
     if( fpOutput != NULL )
     {
         VSIFPrintf( fpOutput, "%s", 
-                    "</Folder></kml>\n" );
+                    "</Folder></Document></kml>\n" );
         
         if( fpOutput != stdout )
             VSIFClose( fpOutput );
@@ -33,6 +33,7 @@ OGRKMLDataSource::~OGRKMLDataSource()
 
     CSLDestroy( papszCreateOptions );
     CPLFree( pszName );
+    CPLFree( pszNameField );
 
     for( int i = 0; i < nLayers; i++ )
     {
@@ -120,11 +121,15 @@ int OGRKMLDataSource::Create( const char *pszFilename,
         return FALSE;
     }
 
+    pszNameField = (char *)CSLFetchNameValue(papszOptions, "NameField");
+    CPLDebug("KML", "Using the field '%s' for name element", pszNameField);
+    
 /* -------------------------------------------------------------------- */
 /*      Create the output file.                                         */
 /* -------------------------------------------------------------------- */
     pszName = CPLStrdup( pszFilename );
 
+    
     if( EQUAL(pszFilename,"stdout") )
         fpOutput = stdout;
     else
@@ -141,13 +146,11 @@ int OGRKMLDataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
 /*      Write out "standard" header.                                    */
 /* -------------------------------------------------------------------- */
-    VSIFPrintf( fpOutput, "%s", 
-                "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" );	
+    VSIFPrintf( fpOutput, "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" );	
 
     nSchemaInsertLocation = VSIFTell( fpOutput );
-
-    VSIFPrintf( fpOutput, "%s", 
-                "<kml xmlns=\"http://earth.google.com/kml/2.0\">\n<Folder>" );
+    
+    VSIFPrintf( fpOutput, "<kml xmlns=\"http://earth.google.com/kml/2.0\">\n<Document>" );
 
     return TRUE;
 }
@@ -178,6 +181,13 @@ OGRKMLDataSource::CreateLayer( const char * pszLayerName,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Close the previous layer (if there is one open)         */
+/* -------------------------------------------------------------------- */
+    if (GetLayerCount() > 0)
+        VSIFPrintf( fpOutput, "</Folder>\n");
+
+    
+/* -------------------------------------------------------------------- */
 /*      Ensure name is safe as an element name.                         */
 /* -------------------------------------------------------------------- */
     char *pszCleanLayerName = CPLStrdup( pszLayerName );
@@ -189,14 +199,13 @@ OGRKMLDataSource::CreateLayer( const char * pszLayerName,
                   "Layer name '%s' adjusted to '%s' for XML validity.",
                   pszLayerName, pszCleanLayerName );
     }
-
+    VSIFPrintf( fpOutput, "<Folder><name>%s</name>\n", pszCleanLayerName);
+    
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
     OGRKMLLayer *poLayer;
-
     poLayer = new OGRKMLLayer( pszCleanLayerName, poSRS, TRUE, eType, this );
-
     CPLFree( pszCleanLayerName );
 
 /* -------------------------------------------------------------------- */
