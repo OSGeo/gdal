@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/07/27 13:40:47  fwarmerdam
+ * Handle method/parameter values encoded directly in the urn.
+ * Allow usesValue as well as usesParameterValue.
+ *
  * Revision 1.8  2006/02/26 05:29:12  fwarmerdam
  * added LCC1SP
  *
@@ -865,11 +869,101 @@ static void importXMLAuthority( CPLXMLNode *psSrcXML,
 }
 
 /************************************************************************/
+/*                           ParseOGCDefURN()                           */
+/*                                                                      */
+/*      Parse out fields from a URN of the form:                        */
+/*        urn:ogc:def:parameter:EPSG:6.3:9707                           */
+/************************************************************************/
+
+static int ParseOGCDefURN( const char *pszURN, 
+                           CPLString *poObjectType,
+                           CPLString *poAuthority,
+                           CPLString *poVersion, 
+                           CPLString *poValue )
+
+{
+    if( poObjectType != NULL )
+        *poObjectType = "";
+
+    if( poAuthority != NULL )
+        *poAuthority = "";
+
+    if( poVersion != NULL )
+        *poVersion = "";
+
+    if( poValue != NULL )
+        *poValue = "";
+
+    if( pszURN == NULL || !EQUALN(pszURN,"urn:ogc:def:",12) )
+        return FALSE;
+
+    char **papszTokens = CSLTokenizeStringComplex( pszURN + 12, ":", 
+                                                   FALSE, TRUE );
+
+    if( CSLCount(papszTokens) != 4 )
+    {
+        CSLDestroy( papszTokens );
+        return FALSE;
+    }
+
+    if( poObjectType != NULL )
+        *poObjectType = papszTokens[0];
+
+    if( poAuthority != NULL )
+        *poAuthority = papszTokens[1];
+
+    if( poVersion != NULL )
+        *poVersion = papszTokens[2];
+
+    if( poValue != NULL )
+        *poValue = papszTokens[3];
+
+    CSLDestroy( papszTokens );
+    return TRUE;
+}
+
+/************************************************************************/
+/*                       getEPSGObjectCodeValue()                       */
+/*                                                                      */
+/*      Fetch a code value from the indicated node.  Should work on     */
+/*      something of the form <elem xlink:href="urn:...:n" /> or        */
+/*      something of the form <elem xlink:href="urn:...:">n</a>.        */
+/************************************************************************/
+
+static int getEPSGObjectCodeValue( CPLXMLNode *psNode, 
+                                   const char *pszEPSGObjectType, /*"method" */
+                                   int nDefault )
+
+{
+    if( psNode == NULL )
+        return nDefault;
+    
+    CPLString osObjectType, osAuthority, osValue;
+    
+    if( !ParseOGCDefURN( CPLGetXMLValue( psNode, "href", NULL ),
+                         &osObjectType, &osAuthority, NULL, &osValue ) )
+        return nDefault;
+
+    if( !EQUAL(osAuthority,"EPSG") 
+        || !EQUAL(osObjectType, pszEPSGObjectType) )
+        return nDefault;
+
+    if( strlen(osValue) > 0 )
+        return atoi(osValue);
+
+    const char *pszValue = CPLGetXMLValue( psNode, "", NULL);
+    if( pszValue != NULL )
+        return atoi(pszValue);
+    else
+        return nDefault;
+}
+
+/************************************************************************/
 /*                         getProjectionParm()                          */
 /************************************************************************/
 
 static double getProjectionParm( CPLXMLNode *psRootNode, 
-                                  int nParameterCode, 
+                                 int nParameterCode, 
                                  const char * /*pszMeasureType */, 
                                  double dfDefault )
 
@@ -880,12 +974,16 @@ static double getProjectionParm( CPLXMLNode *psRootNode,
          psUsesParameter != NULL;
          psUsesParameter = psUsesParameter->psNext )
     {
-        if( psUsesParameter->eType != CXT_Element
-            || !EQUAL(psUsesParameter->pszValue,"usesParameterValue") )
+        if( psUsesParameter->eType != CXT_Element )
             continue;
 
-        if( atoi(CPLGetXMLValue( psUsesParameter, "valueOfParameter", "0" ))
-            == nParameterCode )
+        if( !EQUAL(psUsesParameter->pszValue,"usesParameterValue") 
+            && !EQUAL(psUsesParameter->pszValue,"usesValue") )
+            continue;
+
+        if( getEPSGObjectCodeValue( CPLGetXMLNode(psUsesParameter,
+                                                  "valueOfParameter"),
+                                    "parameter", 0 ) == nParameterCode )
         {
             const char *pszValue = CPLGetXMLValue( psUsesParameter, "value", 
                                                    NULL );
@@ -1120,13 +1218,10 @@ static OGRErr importProjCSFromXML( OGRSpatialReference *poSRS,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Determine the conversion method in effect.  We really ought     */
-/*      to  check the xlink:href URN to see if this is an EPSG          */
-/*      method value, but it is unlikely that other code spaces will    */
-/*      conflict.                                                       */
+/*      Determine the conversion method in effect.                      */
 /* -------------------------------------------------------------------- */
-    int nMethod = atoi(
-        CPLGetXMLValue( psConv, "usesMethod", "0" ) );
+    int nMethod = getEPSGObjectCodeValue( CPLGetXMLNode( psConv, "usesMethod"),
+                                          "method", 0 );
     
 /* -------------------------------------------------------------------- */
 /*      Transverse Mercator.                                            */
