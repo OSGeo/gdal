@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/07/27 19:03:23  fwarmerdam
+ * Modified to place code in xml:href instead of element value per
+ * email from Sean Forde.
+ *
  * Revision 1.9  2006/07/27 13:40:47  fwarmerdam
  * Handle method/parameter values encoded directly in the urn.
  * Allow usesValue as well as usesParameterValue.
@@ -194,13 +198,10 @@ AddValueIDWithURN( CPLXMLNode *psTarget,
                    const char *pszVersion = "" )
     
 {
-    char szCode[128];
     CPLXMLNode *psElement;
 
-    sprintf( szCode, "%d", nCode );
-
-    psElement = CPLCreateXMLElementAndValue( psTarget, pszElement, szCode );
-    addURN( psElement, pszAuthority, pszObjectType, 0, pszVersion );
+    psElement = CPLCreateXMLNode( psTarget, CXT_Element, pszElement );
+    addURN( psElement, pszAuthority, pszObjectType, nCode, pszVersion );
 
     return psElement;
 }
