@@ -102,7 +102,10 @@ All GDAL command line utility programs support the following
 <dt> <b>--version</b></dt><dd> Report the version of GDAL and exit.</dd>
 
 <dt> <b>--formats</b></dt><dd> List all raster formats supported by this
-GDAL build (read-only and read-write) and exit.</dd>
+GDAL build (read-only and read-write) and exit. The format support is indicated
+ as follows: 'ro' is read-only driver; 
+'rw' is read or write (ie. supports CreateCopy);
+'rw+' is read, write and update (ie. supports Create).</dd>
 
 <dt> <b>--format</b> <i>format</i></dt><dd>
 List detailed information about a single format driver.  The <i>format</i> 
@@ -1072,11 +1075,9 @@ modules using GDAL.</dd>
 <dt> <b>--version</b>:</dt><dd> Reports the GDAL version.</dd>
 <dt> <b>--ogr-enabled</b>:</dt><dd> Reports "yes" or "no" to standard output depending
 on whether OGR is built into GDAL.</dd>
-<dt> <b>--formats</b>:</dt><dd> Reports which formats are configured into GDAL to
-stdout.</dd>
+<dt> <b>--formats</b>:</dt><dd> Reports which formats are configured into GDAL 
+to stdout.  
+</dd>
 </dl>
 
 */
-
-
-
