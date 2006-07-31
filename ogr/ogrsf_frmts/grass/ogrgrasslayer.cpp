@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/07/31 15:49:30  fwarmerdam
+ * Try and enable datetime support per email from Markus.  Not tested yet.
+ *
  * Revision 1.3  2006/02/14 13:01:49  rblazek
  * dont kill on win
  *
@@ -160,7 +163,7 @@ OGRGRASSLayer::OGRGRASSLayer( int layerIndex,  struct Map_info * map )
 			    ogrFtype = OFTString;
 			    break; 
 			 case DB_C_TYPE_DATETIME:
-			    ogrFtype = OFTString;
+			    ogrFtype = OFTDateTime;
 			    break; 
 		    }
 
