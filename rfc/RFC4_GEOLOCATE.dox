@@ -32,6 +32,8 @@ pixels and lines.
 <li> X_BAND: band number within X_DATASET.
 <li> Y_DATASET: dataset name (defaults to same dataset if not specified)
 <li> Y_BAND: band number within Y_DATASET.
+<li> Z_DATASET: dataset name (defaults to same dataset if not specified)
+<li> Z_BAND: band number within Z_DATASET. (optional)
 <li> PIXEL_OFFSET: pixel offset into geo-located data of left geolocation pixel
 <li> LINE_OFFSET: line offset into geo-located data of top geolocation pixel
 <li> PIXEL_STEP: each geolocation pixel represents this many geolocated pixels.
