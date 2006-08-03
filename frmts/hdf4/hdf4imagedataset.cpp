@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.60  2006/08/03 14:21:09  dron
+ * Use right Long/Lat dimensions when GEOLOCATION records created.
+ *
  * Revision 1.59  2006/08/02 14:40:47  fwarmerdam
  * Isolate SWATH geolocation/gcp support in a method.  Incorporate support
  * for subsetting GCPs.  Add support for exposing swath geolocation arrays
@@ -1375,7 +1378,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
     int32   nXPoints, nYPoints;
     int32   nStrBufSize;
     int32   aiDimSizes[MAX_VAR_DIMS];
-    int     i, j, iDataSize, iPixelDim, iLineDim;
+    int     i, j, iDataSize, iPixelDim, iLineDim, iLongDim, iLatDim;
     int32   *paiRank = NULL, *paiNumType = NULL,
         *paiOffset = NULL, *paiIncrement = NULL;
     char    **papszGeolocations = NULL, **papszDimMap = NULL;
@@ -1538,6 +1541,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
         iDataSize = GetDataTypeSize( iNumType );
         if ( strstr( papszGeolocations[i], "Latitude" ) )
         {
+            iLatDim = i;
             nLatCount = nXPoints * nYPoints;
             pLat = CPLMalloc( nLatCount * iDataSize );
             if (SWreadfield( hSW, papszGeolocations[i], NULL,
@@ -1552,6 +1556,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
         }
         else if ( strstr( papszGeolocations[i], "Longitude" ) )
         {
+            iLongDim = i;
             nLongCount = nXPoints * nYPoints;
             pLong = CPLMalloc( nLongCount * iDataSize );
             if (SWreadfield( hSW, papszGeolocations[i], NULL,
@@ -1856,12 +1861,14 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
         SetMetadataItem( "SRS", pszGCPProjection, "GEOLOCATION" );
         
         osWrk.Printf( "HDF4_EOS:EOS_SWATH_GEOL:\"%s\":%s:%s", 
-                      pszFilename, pszSubdatasetName, papszGeolocations[1] );
+                      pszFilename, pszSubdatasetName,
+                      papszGeolocations[iLongDim] );
         SetMetadataItem( "X_DATASET", osWrk, "GEOLOCATION" );
         SetMetadataItem( "X_BAND", "1" , "GEOLOCATION" );
 
         osWrk.Printf( "HDF4_EOS:EOS_SWATH_GEOL:\"%s\":%s:%s", 
-                      pszFilename, pszSubdatasetName, papszGeolocations[0] );
+                      pszFilename, pszSubdatasetName,
+                      papszGeolocations[iLatDim] );
         SetMetadataItem( "Y_DATASET", osWrk, "GEOLOCATION" );
         SetMetadataItem( "Y_BAND", "1" , "GEOLOCATION" );
 
@@ -2071,6 +2078,16 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
 
                 // Search for the "XDim" and "YDim" names or take the last
                 // two dimensions as X and Y sizes
+                /* FIXME: this heuristic does not work in all cases. Should be
+                 * thought out very carefully.
+                 *
+                  for ( i = 0; i < nDimCount; i++ )
+                  {
+                  if ( EQUALN( papszDimList[i], "X", 1 ) )
+                  poDS->iXDim = i;
+                  else if ( EQUALN( papszDimList[i], "Y", 1 ) )
+                  poDS->iYDim = i;
+                  }*/
                 poDS->iXDim = nDimCount - 1;
                 poDS->iYDim = nDimCount - 2;
                 if( nDimCount >= 3 )
@@ -2081,14 +2098,6 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                           "X dimension is %d, Y dimension is %d",
                           poDS->iXDim, poDS->iYDim );
 #endif
-
-                /*for ( i = 0; i < nDimCount; i++ )
-                  {
-                  if ( EQUALN( papszDimList[i], "X", 1 ) )
-                  poDS->iXDim = i;
-                  else if ( EQUALN( papszDimList[i], "Y", 1 ) )
-                  poDS->iYDim = i;
-                  }*/
 
 /* -------------------------------------------------------------------- */
 /*  Fetch NODATA value.                                                 */
