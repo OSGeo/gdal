@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.17  2006/08/03 11:47:38  dron
+ * Added EOS_SWATH_GEOL subdataset type.
+ *
  * Revision 1.16  2005/04/25 20:04:43  dron
  * Make more functions constant.
  *
@@ -97,6 +100,7 @@ typedef enum			// Types of data products:
     GDAL_HDF4,			// HDF written by GDAL
     EOS_GRID,                   // HDF-EOS Grid
     EOS_SWATH,                  // HDF-EOS Swath
+    EOS_SWATH_GEOL,             // HDF-EOS Swath Geolocation Array
     SEAWIFS_L1A,		// SeaWiFS Level-1A Data
     SEAWIFS_L2,			// SeaWiFS Level-2 Data
     SEAWIFS_L3,			// SeaWiFS Level-3 Standard Mapped Image
