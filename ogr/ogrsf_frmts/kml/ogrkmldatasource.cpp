@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/08/04 19:36:03  fwarmerdam
+ * Initialize pszNameField.
+ *
  * Revision 1.3  2006/07/27 19:53:01  mloskot
  * Added common file header to KML driver source files.
  *
@@ -44,6 +47,7 @@
 OGRKMLDataSource::OGRKMLDataSource()
 {
     pszName = NULL;
+    pszNameField = NULL;
     papoLayers = NULL;
     nLayers = 0;
     
