@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.22  2006/08/05 00:58:31  fwarmerdam
+ * Added GetBlockSize().
+ *
  * Revision 1.21  2006/07/13 16:05:53  fwarmerdam
  * Added GetStatistics() and SetStatistics().
  *
@@ -155,6 +158,9 @@ public:
   GDALDataType DataType;
 %mutable;
 
+  void GetBlockSize(int *OUTPUT, int *OUTPUT) {
+      GDALGetBlockSize(self, blockXSize, blockYSize);
+  }
 
   GDALColorInterp GetRasterColorInterpretation() {
     return GDALGetRasterColorInterpretation( self );
