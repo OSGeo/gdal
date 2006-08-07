@@ -28,6 +28,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.24  2006/08/07 18:35:25  dnadeau
+ * Also check if latitude is equally spaced before setting projection for lat lon
+ * array case.
+ *
  * Revision 1.23  2006/04/28 19:28:45  dnadeau
  * CreateCopy added.
  * Generate CF compliant netCDF files.
@@ -1091,6 +1095,9 @@ void netCDFDataset::SetProjection( int var )
 	pdfXCoord = (double *) CPLCalloc( xdim, sizeof(double) );
 	pdfYCoord = (double *) CPLCalloc( ydim, sizeof(double) );
     
+/* -------------------------------------------------------------------- */
+/*      Is pixel spacing is uniform accross the map?                    */
+/* -------------------------------------------------------------------- */
 	start[0] = 0;
 	edge[0]  = xdim;
 	
@@ -1101,9 +1108,10 @@ void netCDFDataset::SetProjection( int var )
                                      start, edge, pdfYCoord);
 
 /* -------------------------------------------------------------------- */
-/*      Is pixel spacing is uniform accross the map?                    */
+/*      Check Longitude                                                 */
 /* -------------------------------------------------------------------- */
-	nSpacingBegin   = (int) poDS->rint((pdfXCoord[1]-pdfXCoord[0]) * 1000); 
+
+	nSpacingBegin   = (int) poDS->rint((pdfXCoord[1]-pdfXCoord[0]) * 1000);
 	
 	nSpacingMiddle  = (int) poDS->rint((pdfXCoord[xdim / 2] - 
 				      pdfXCoord[(xdim / 2) + 1]) * 1000);
@@ -1114,23 +1122,50 @@ void netCDFDataset::SetProjection( int var )
 	if( ( abs( nSpacingBegin ) == abs( nSpacingLast )) &&
 	    ( abs( nSpacingBegin ) == abs( nSpacingMiddle )) &&
 	    ( abs( nSpacingMiddle ) == abs( nSpacingLast )) ) {
+
+/* -------------------------------------------------------------------- */
+/*      Longitude is equaly spaced, check lattitde                      */
+/* -------------------------------------------------------------------- */
+	    nSpacingBegin   = (int) poDS->rint((pdfYCoord[1]-pdfYCoord[0]) * 
+					       1000); 
 	    
+	    nSpacingMiddle  = (int) poDS->rint((pdfYCoord[ydim / 2] - 
+						pdfYCoord[(ydim / 2) + 1]) * 
+					       1000);
+	    
+	    nSpacingLast    = (int) poDS->rint((pdfYCoord[ydim - 2] - 
+						pdfYCoord[ydim-1]) * 
+					       1000);
+	    
+
+	    if( ( abs( nSpacingBegin ) == abs( nSpacingLast )) &&
+		( abs( nSpacingBegin ) == abs( nSpacingMiddle )) &&
+		( abs( nSpacingMiddle ) == abs( nSpacingLast )) ) {
+/* -------------------------------------------------------------------- */
+/*      We have gridded data s we can set the Gereferencing info.       */
+/* -------------------------------------------------------------------- */
+
 /* -------------------------------------------------------------------- */
 /*      Enable GeoTransform                                             */
 /* -------------------------------------------------------------------- */
- 	    poDS->bGotGeoTransform = TRUE;
+		    poDS->bGotGeoTransform = TRUE;
+		    
+		    poDS->adfGeoTransform[0] = pdfXCoord[0];
+		    poDS->adfGeoTransform[3] = pdfYCoord[0];
+		    poDS->adfGeoTransform[2] = 0;
+		    poDS->adfGeoTransform[4] = 0;
+		    poDS->adfGeoTransform[1] = (( pdfXCoord[xdim-1] - 
+						  pdfXCoord[0] ) / 
+						poDS->nRasterXSize);
 
-	    poDS->adfGeoTransform[0] = pdfXCoord[0];
-	    poDS->adfGeoTransform[3] = pdfYCoord[0];
-	    poDS->adfGeoTransform[2] = 0;
-	    poDS->adfGeoTransform[4] = 0;
-	    poDS->adfGeoTransform[1] = (( pdfXCoord[xdim-1] - pdfXCoord[0] ) / 
-					poDS->nRasterXSize);
-	    poDS->adfGeoTransform[5] = (( pdfYCoord[ydim-1] - pdfYCoord[0] ) / 
-					poDS->nRasterYSize);
-	    oSRS.exportToWkt( &(poDS->pszProjection) );
-	    
-	} 
+		    poDS->adfGeoTransform[5] = (( pdfYCoord[ydim-1] - 
+						  pdfYCoord[0] ) / 
+						poDS->nRasterYSize);
+
+		    oSRS.exportToWkt( &(poDS->pszProjection) );
+		    
+	    } 
+	}
 	CPLFree( pdfXCoord );
 	CPLFree( pdfYCoord );
 
