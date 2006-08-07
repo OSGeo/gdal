@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2006/08/07 15:20:08  fwarmerdam
+ * Ensure that comment lines in color table are ignored.
+ *
  * Revision 1.39  2006/06/07 16:19:41  fwarmerdam
  * Substantial update merging raw and 1-7bit bands through EHdrRasterBand
  * derived from RawRasterBand, but with access methods overridden for 1-7bit
@@ -1297,6 +1300,9 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
             const char  *pszLine = CPLReadLine(fp);
             if ( !pszLine )
                 break;
+
+            if( *pszLine == '#' )
+                continue;
 
             char	**papszValues = CSLTokenizeString2(pszLine, "\t ",
                                                            CSLT_HONOURSTRINGS);
