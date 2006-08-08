@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/08/08 03:16:01  fwarmerdam
+ * preliminary geoloc support
+ *
  * Revision 1.25  2006/07/06 20:29:14  fwarmerdam
  * added GDALSuggestedWarpOutput2() to return raw extents
  *
@@ -211,6 +214,17 @@ GDALCreateRPCTransformer( GDALRPCInfo *psRPC, int bReversed,
                           double dfPixErrThreshold );
 void CPL_DLL GDALDestroyRPCTransformer( void *pTransformArg );
 int CPL_DLL GDALRPCTransform( 
+    void *pTransformArg, int bDstToSrc, int nPointCount,
+    double *x, double *y, double *z, int *panSuccess );
+
+/* Geolocation transformer */
+
+void CPL_DLL *
+GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS, 
+                             char **papszGeolocationInfo,
+                             int bReversed );
+void CPL_DLL GDALDestroyGeoLocTransformer( void *pTransformArg );
+int CPL_DLL GDALGeoLocTransform( 
     void *pTransformArg, int bDstToSrc, int nPointCount,
     double *x, double *y, double *z, int *panSuccess );
 

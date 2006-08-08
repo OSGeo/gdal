@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2006/08/08 03:16:01  fwarmerdam
+ * preliminary geoloc support
+ *
  * Revision 1.26  2006/07/06 20:29:14  fwarmerdam
  * added GDALSuggestedWarpOutput2() to return raw extents
  *
@@ -340,6 +343,8 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
 
     CPLAssert( nSamplePoints == 84 );
 
+    memset( abSuccess, 1, sizeof(abSuccess) );
+
 /* -------------------------------------------------------------------- */
 /*      Transform them to the output coordinate system.                 */
 /* -------------------------------------------------------------------- */
@@ -516,6 +521,7 @@ typedef struct {
     void     *pSrcGCPTransformArg;
     void     *pSrcRPCTransformArg;
     void     *pSrcTPSTransformArg;
+    void     *pSrcGeoLocTransformArg;
 
     void     *pReprojectArg;
 
@@ -668,6 +674,18 @@ GDALCreateGenImgProjTransformer( GDALDatasetH hSrcDS, const char *pszSrcWKT,
         }
     }
 
+    else if( (papszMD = GDALGetMetadata( hSrcDS, "GEOLOCATION" )) != NULL )
+    {
+        psInfo->pSrcGeoLocTransformArg = 
+            GDALCreateGeoLocTransformer( hSrcDS, papszMD, FALSE );
+
+        if( psInfo->pSrcGeoLocTransformArg == NULL )
+        {
+            GDALDestroyGenImgProjTransformer( psInfo );
+            return NULL;
+        }
+    }
+
     else
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -779,6 +797,9 @@ void GDALDestroyGenImgProjTransformer( void *hTransformArg )
     if( psInfo->pSrcTPSTransformArg != NULL )
         GDALDestroyTPSTransformer( psInfo->pSrcTPSTransformArg );
 
+    if( psInfo->pSrcGeoLocTransformArg != NULL )
+        GDALDestroyGeoLocTransformer( psInfo->pSrcGeoLocTransformArg );
+
     if( psInfo->pDstGCPTransformArg != NULL )
         GDALDestroyGCPTransformer( psInfo->pDstGCPTransformArg );
 
@@ -813,6 +834,7 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
     void *pGCPTransformArg;
     void *pRPCTransformArg;
     void *pTPSTransformArg;
+    void *pGeoLocTransformArg;
 
 /* -------------------------------------------------------------------- */
 /*      Convert from src (dst) pixel/line to src (dst)                  */
@@ -824,6 +846,7 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
         pGCPTransformArg = psInfo->pDstGCPTransformArg;
         pRPCTransformArg = NULL;
         pTPSTransformArg = NULL;
+        pGeoLocTransformArg = NULL;
     }
     else
     {
@@ -831,6 +854,7 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
         pGCPTransformArg = psInfo->pSrcGCPTransformArg;
         pRPCTransformArg = psInfo->pSrcRPCTransformArg;
         pTPSTransformArg = psInfo->pSrcTPSTransformArg;
+        pGeoLocTransformArg = psInfo->pSrcGeoLocTransformArg;
     }
 
     if( pGCPTransformArg != NULL )
@@ -852,6 +876,13 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
         if( !GDALRPCTransform( pRPCTransformArg, FALSE, 
                                nPointCount, padfX, padfY, padfZ,
                                panSuccess ) )
+            return FALSE;
+    }
+    else if( pGeoLocTransformArg != NULL )
+    {
+        if( !GDALGeoLocTransform( pGeoLocTransformArg, FALSE, 
+                                  nPointCount, padfX, padfY, padfZ,
+                                  panSuccess ) )
             return FALSE;
     }
     else 
@@ -903,6 +934,7 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
         pGCPTransformArg = psInfo->pSrcGCPTransformArg;
         pRPCTransformArg = psInfo->pSrcRPCTransformArg;
         pTPSTransformArg = psInfo->pSrcTPSTransformArg;
+        pGeoLocTransformArg = psInfo->pSrcGeoLocTransformArg;
     }
     else
     {
@@ -910,6 +942,7 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
         pGCPTransformArg = psInfo->pDstGCPTransformArg;
         pRPCTransformArg = NULL;
         pTPSTransformArg = NULL;
+        pGeoLocTransformArg = NULL;
     }
         
     if( pGCPTransformArg != NULL )
@@ -931,6 +964,13 @@ int GDALGenImgProjTransform( void *pTransformArg, int bDstToSrc,
         if( !GDALRPCTransform( pRPCTransformArg, TRUE,
                                nPointCount, padfX, padfY, padfZ,
                                panSuccess ) )
+            return FALSE;
+    }
+    else if( pGeoLocTransformArg != NULL )
+    {
+        if( !GDALGeoLocTransform( pGeoLocTransformArg, TRUE,
+                                  nPointCount, padfX, padfY, padfZ,
+                                  panSuccess ) )
             return FALSE;
     }
     else
