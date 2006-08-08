@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2006/08/08 03:04:14  fwarmerdam
+ * Don't write EOF1 record, it only belongs on tapes.
+ *
  * Revision 1.12  2006/04/04 01:00:44  fwarmerdam
  * updated contact info
  *
@@ -313,14 +316,6 @@ const char *DTEDCreate( const char *pszFilename, int nLevel,
         if( VSIFWrite( achRecord, nYSize*2 + 12, 1, fp ) != 1 )
             return "Data record write failed.";
     }
-
-/* -------------------------------------------------------------------- */
-/*      Write EOF.                                                      */
-/* -------------------------------------------------------------------- */
-    DTEDFormat( achRecord, "EOF1" );
-    
-    if( VSIFWrite( achRecord, 4, 1, fp ) != 1 )
-        return "EOF record write failed.";
 
     VSIFClose( fp );
 
