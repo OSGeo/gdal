@@ -28,6 +28,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.20  2006/08/09 12:13:21  dron
+ * Fixes to handle more non-standard datasets as per bug
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=988
+ *
  * Revision 1.19  2005/12/20 20:07:30  dron
  * Added support for 16-bit data.
  *
@@ -117,46 +121,49 @@ CPL_C_END
 #define ADM_STD_HEADER_SIZE	4608    // XXX: Format specification says it
 #define ADM_HEADER_SIZE		5000    // should be 4608, but some vendors
                                         // ship broken large datasets.
+#define ADM_MIN_HEADER_SIZE     1536    // ...and sometimes it can be
+                                        // even 1/3 of standard size
 
-#define ACQUISITION_DATE        "ACQUISITION DATE ="
+#define ACQUISITION_DATE        "ACQUISITION DATE"
 #define ACQUISITION_DATE_SIZE   8
 
-#define SATELLITE_NAME          "SATELLITE ="
+#define SATELLITE_NAME          "SATELLITE"
 #define SATELLITE_NAME_SIZE     10
 
-#define SENSOR_NAME             "SENSOR ="
+#define SENSOR_NAME             "SENSOR"
 #define SENSOR_NAME_SIZE        10
 
-#define FILENAME                "FILENAME ="
+#define FILENAME                "FILENAME"
 #define FILENAME_SIZE           29
 
-#define PIXELS                  "PIXELS PER LINE ="
+#define PIXELS                  "PIXELS PER LINE"
 #define PIXELS_SIZE             5
 
-#define LINES                   "LINES PER BAND ="
+#define LINES1                  "LINES PER BAND"
+#define LINES2                  "LINES PER IMAGE"
 #define LINES_SIZE              5
 
-#define BITS_PER_PIXEL          "OUTPUT BITS PER PIXEL ="
+#define BITS_PER_PIXEL          "OUTPUT BITS PER PIXEL"
 #define BITS_PER_PIXEL_SIZE     2
 
-#define PROJECTION_NAME         "MAP PROJECTION ="
+#define PROJECTION_NAME         "MAP PROJECTION"
 #define PROJECTION_NAME_SIZE    4
 
-#define ELLIPSOID_NAME          "ELLIPSOID ="
+#define ELLIPSOID_NAME          "ELLIPSOID"
 #define ELLIPSOID_NAME_SIZE     18
 
-#define DATUM_NAME              "DATUM ="
+#define DATUM_NAME              "DATUM"
 #define DATUM_NAME_SIZE         6
 
-#define ZONE_NUMBER             "USGS MAP ZONE ="
+#define ZONE_NUMBER             "USGS MAP ZONE"
 #define ZONE_NUMBER_SIZE        6
 
-#define USGS_PARAMETERS         "USGS PROJECTION PARAMETERS ="
+#define USGS_PARAMETERS         "USGS PROJECTION PARAMETERS"
 
-#define CORNER_UPPER_LEFT       "UL ="
-#define CORNER_UPPER_RIGHT      "UR ="
-#define CORNER_LOWER_LEFT       "LL ="
-#define CORNER_LOWER_RIGHT      "LR ="
+#define CORNER_UPPER_LEFT       "UL"
+#define CORNER_UPPER_RIGHT      "UR"
+#define CORNER_LOWER_LEFT       "LL"
+#define CORNER_LOWER_RIGHT      "LR"
 #define CORNER_VALUE_SIZE       13
 
 #define VALUE_SIZE              24
@@ -407,7 +414,14 @@ static char *GetValue( const char *pszString, const char *pszName,
 
     if ( pszTemp )
     {
+        // Skip the parameter name
         pszTemp += strlen( pszName );
+        fprintf(stderr, "pszTemp=%s\n", pszTemp);
+        // Skip whitespaces and equal signs
+        while ( *pszTemp == ' ' )
+            pszTemp++;
+        while ( *pszTemp == '=' )
+            pszTemp++;
         pszTemp = CPLScanString( pszTemp, iValueSize, TRUE, iNormalize );
     }
 
@@ -501,6 +515,8 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
     if( !EQUALN((const char *) poOpenInfo->pabyHeader + 52,
+		"ACQUISITION DATE =", 18)
+        && !EQUALN((const char *) poOpenInfo->pabyHeader + 36,
 		"ACQUISITION DATE =", 18) )
         return NULL;
     
@@ -525,7 +541,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
  
     VSIFSeek( poDS->fpHeader, 0, SEEK_SET );
     nBytesRead = VSIFRead( pszHeader, 1, ADM_HEADER_SIZE, poDS->fpHeader );
-    if ( nBytesRead < ADM_STD_HEADER_SIZE )
+    if ( nBytesRead < ADM_MIN_HEADER_SIZE )
     {
 	CPLDebug( "FAST", "Header file too short. Reading failed" );
 	delete poDS;
@@ -585,10 +601,9 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     // Read number of pixels/lines and bit depth
-    pszTemp = strstr( pszHeader, PIXELS );
+    pszTemp = GetValue( pszHeader, PIXELS, PIXELS_SIZE, TRUE );
     if ( pszTemp )
-        poDS->nRasterXSize = CPLScanLong( pszTemp + strlen(PIXELS),
-                                          PIXELS_SIZE );
+        poDS->nRasterXSize = atoi( pszTemp );
     else
     {
         CPLDebug( "FAST", "Failed to find number of pixels in line." );
@@ -596,9 +611,11 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 	return NULL;
     }
 
-    pszTemp = strstr( pszHeader, LINES );
+    pszTemp = GetValue( pszHeader, LINES1, LINES_SIZE, TRUE );
+    if ( !pszTemp )
+        pszTemp = GetValue( pszHeader, LINES2, LINES_SIZE, TRUE );
     if ( pszTemp )
-        poDS->nRasterYSize = CPLScanLong( pszTemp + strlen(LINES), LINES_SIZE );
+        poDS->nRasterYSize = atoi( pszTemp );
     else
     {
         CPLDebug( "FAST", "Failed to find number of lines in raster." );
@@ -606,17 +623,22 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 	return NULL;
     }
 
-    pszTemp = strstr( pszHeader, BITS_PER_PIXEL );
-    switch( CPLScanLong(pszTemp+strlen(BITS_PER_PIXEL), BITS_PER_PIXEL_SIZE) )
+    pszTemp = GetValue( pszHeader, BITS_PER_PIXEL, BITS_PER_PIXEL_SIZE, TRUE );
+    if ( pszTemp )
     {
-	case 8:
-        default:
-	    poDS->eDataType = GDT_Byte;
-	    break;
-	case 16:
-	    poDS->eDataType = GDT_UInt16;
-	    break;
+        switch( atoi(pszTemp) )
+        {
+            case 8:
+            default:
+                poDS->eDataType = GDT_Byte;
+                break;
+            case 16:
+                poDS->eDataType = GDT_UInt16;
+                break;
+        }
     }
+    else
+        poDS->eDataType = GDT_Byte;
 
 /* -------------------------------------------------------------------- */
 /*  Read radiometric record.    					*/
