@@ -3,10 +3,10 @@
  *
  * Project:  EOSAT FAST Format reader
  * Purpose:  Reads Landsat FAST-L7A, IRS 1C/1D
- * Author:   Andrey Kiselev, dron@at1895.spb.edu
+ * Author:   Andrey Kiselev, dron@ak4719.spb.edu
  *
  ******************************************************************************
- * Copyright (c) 2002, Andrey Kiselev <dron@at1895.spb.edu>
+ * Copyright (c) 2002, Andrey Kiselev <dron@ak4719.spb.edu>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.21  2006/08/10 11:39:36  dron
+ * Fixed problem with GAINES/BIASES field. In addition to
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=988
+ *
  * Revision 1.20  2006/08/09 12:13:21  dron
  * Fixes to handle more non-standard datasets as per bug
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=988
@@ -67,44 +71,6 @@
  *
  * Revision 1.8  2003/10/05 15:31:00  dron
  * TM projection support implemented.
- *
- * Revision 1.7  2003/07/08 21:10:19  warmerda
- * avoid warnings
- *
- * Revision 1.6  2003/03/14 17:28:10  dron
- * CPLFormCIFilename() used instead of CPLFormFilename() for FAST-L7 datasets.
- *
- * Revision 1.5  2003/03/05 15:49:59  dron
- * Fixed typo when reading SENSOR metadata record.
- *
- * Revision 1.4  2003/02/18 15:07:49  dron
- * IRS-1C/1D support added.
- *
- * Revision 1.3  2003/02/14 21:05:40  warmerda
- * Don't use path for rawdataset.h.
- *
- * Revision 1.2  2002/12/30 14:55:01  dron
- * SetProjCS() removed, added unit setting.
- *
- * Revision 1.1  2002/10/05 12:35:31  dron
- * FAST driver moved to the RAW directory.
- *
- * Revision 1.5  2002/10/04 16:06:06  dron
- * Some redundancy removed.
- *
- * Revision 1.4  2002/10/04 12:33:02  dron
- * Added calibration coefficients extraction.
- *
- * Revision 1.3  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.2  2002/08/15 09:35:50  dron
- * Fixes in georeferencing
- *
- * Revision 1.1  2002/08/13 16:55:41  dron
- * Initial release
- *
- *
  */
 
 #include "cpl_string.h"
@@ -416,12 +382,12 @@ static char *GetValue( const char *pszString, const char *pszName,
     {
         // Skip the parameter name
         pszTemp += strlen( pszName );
-        fprintf(stderr, "pszTemp=%s\n", pszTemp);
         // Skip whitespaces and equal signs
         while ( *pszTemp == ' ' )
             pszTemp++;
         while ( *pszTemp == '=' )
             pszTemp++;
+
         pszTemp = CPLScanString( pszTemp, iValueSize, TRUE, iNormalize );
     }
 
@@ -601,9 +567,12 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
     // Read number of pixels/lines and bit depth
-    pszTemp = GetValue( pszHeader, PIXELS, PIXELS_SIZE, TRUE );
+    pszTemp = GetValue( pszHeader, PIXELS, PIXELS_SIZE, FALSE );
     if ( pszTemp )
+    {
         poDS->nRasterXSize = atoi( pszTemp );
+        CPLFree( pszTemp );
+    }
     else
     {
         CPLDebug( "FAST", "Failed to find number of pixels in line." );
@@ -611,11 +580,14 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 	return NULL;
     }
 
-    pszTemp = GetValue( pszHeader, LINES1, LINES_SIZE, TRUE );
+    pszTemp = GetValue( pszHeader, LINES1, LINES_SIZE, FALSE );
     if ( !pszTemp )
-        pszTemp = GetValue( pszHeader, LINES2, LINES_SIZE, TRUE );
+        pszTemp = GetValue( pszHeader, LINES2, LINES_SIZE, FALSE );
     if ( pszTemp )
+    {
         poDS->nRasterYSize = atoi( pszTemp );
+        CPLFree( pszTemp );
+    }
     else
     {
         CPLDebug( "FAST", "Failed to find number of lines in raster." );
@@ -623,7 +595,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 	return NULL;
     }
 
-    pszTemp = GetValue( pszHeader, BITS_PER_PIXEL, BITS_PER_PIXEL_SIZE, TRUE );
+    pszTemp = GetValue( pszHeader, BITS_PER_PIXEL, BITS_PER_PIXEL_SIZE, FALSE );
     if ( pszTemp )
     {
         switch( atoi(pszTemp) )
@@ -636,6 +608,7 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
                 poDS->eDataType = GDT_UInt16;
                 break;
         }
+        CPLFree( pszTemp );
     }
     else
         poDS->eDataType = GDT_Byte;
@@ -643,32 +616,46 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*  Read radiometric record.    					*/
 /* -------------------------------------------------------------------- */
+    char    *pszFirst, *pszSecond;
+
     // Read gains and biases. This is a trick!
     pszTemp = strstr( pszHeader, "BIASES" );// It may be "BIASES AND GAINS"
                                             // or "GAINS AND BIASES"
+    if ( pszTemp > strstr( pszHeader, "GAINS" ) )
+    {
+        pszFirst = "GAIN%d";
+        pszSecond = "BIAS%d";
+    }
+    else
+    {
+        pszFirst = "BIAS%d";
+        pszSecond = "GAIN%d";
+    }
+
     // Now search for the first number occurance after that string
     for ( i = 1; i <= poDS->nBands; i++ )
     {
-        char *pszValue = NULL;
+        char    *pszValue = NULL;
+        size_t  nValueLen = VALUE_SIZE;
 
         pszTemp = strpbrk( pszTemp, "-.0123456789" );
         if ( pszTemp )
         {
-            pszValue = CPLScanString( pszTemp, VALUE_SIZE, TRUE, TRUE );
-            poDS->SetMetadataItem( CPLSPrintf("BIAS%d", i ), pszValue );
-        }
-        pszTemp += VALUE_SIZE;
-        if ( pszValue )
+            nValueLen = strspn( pszTemp, "+-.0123456789" );
+            pszValue = CPLScanString( pszTemp, nValueLen, TRUE, TRUE );
+            poDS->SetMetadataItem( CPLSPrintf(pszFirst, i ), pszValue );
             CPLFree( pszValue );
+        }
+        pszTemp += nValueLen;
         pszTemp = strpbrk( pszTemp, "-.0123456789" );
         if ( pszTemp )
         {
-            pszValue = CPLScanString( pszTemp, VALUE_SIZE, TRUE, TRUE );
-            poDS->SetMetadataItem( CPLSPrintf("GAIN%d", i ), pszValue );
-        }
-        pszTemp += VALUE_SIZE;
-        if ( pszValue )
+            nValueLen = strspn( pszTemp, "+-.0123456789" );
+            pszValue = CPLScanString( pszTemp, nValueLen, TRUE, TRUE );
+            poDS->SetMetadataItem( CPLSPrintf(pszSecond, i ), pszValue );
             CPLFree( pszValue );
+        }
+        pszTemp += nValueLen;
     }
 
 /* -------------------------------------------------------------------- */
