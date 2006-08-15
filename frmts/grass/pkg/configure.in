@@ -130,7 +130,7 @@ if test "$with_grass" != "yes" ; then
     GRASS_INCLUDE="-I$with_grass/include"
     GRASS_GISBASE="$with_grass"
   else
-    AC_MSG_ERROR([--with-grass=$with_grass requested, but libraries not found!])
+    AC_MSG_ERROR([--with-grass=$with_grass requested, but libraries not found!  Perhaps you need to set LD_LIBRARY_PATH to include $with_grass/lib?])
   fi
 fi
 
