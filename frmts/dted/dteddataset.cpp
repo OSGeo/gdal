@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/08/15 19:53:17  fwarmerdam
+ * DTED elevations are apparently always in meters.  Return this as the units.
+ * Per suggestion from Ray Gardener.
+ *
  * Revision 1.18  2006/04/04 01:00:44  fwarmerdam
  * updated contact info
  *
@@ -136,6 +140,8 @@ class DTEDRasterBand : public GDALPamRasterBand
     
     virtual CPLErr IReadBlock( int, int, void * );
     virtual double  GetNoDataValue( int *pbSuccess = NULL );
+
+    virtual const char* GetUnitType() { return "m"; }
 };
 
 
