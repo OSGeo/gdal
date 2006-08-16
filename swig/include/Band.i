@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.23  2006/08/16 14:41:01  fwarmerdam
+ * Fix up GetBlockSize().
+ *
  * Revision 1.22  2006/08/05 00:58:31  fwarmerdam
  * Added GetBlockSize().
  *
@@ -158,8 +161,10 @@ public:
   GDALDataType DataType;
 %mutable;
 
-  void GetBlockSize(int *OUTPUT, int *OUTPUT) {
-      GDALGetBlockSize(self, blockXSize, blockYSize);
+%apply (int *OUTPUT){int *pnBlockXSize, int *pnBlockYSize}
+
+  void GetBlockSize(int *pnBlockXSize, int *pnBlockYSize) {
+      GDALGetBlockSize(self, pnBlockXSize, pnBlockYSize);
   }
 
   GDALColorInterp GetRasterColorInterpretation() {
