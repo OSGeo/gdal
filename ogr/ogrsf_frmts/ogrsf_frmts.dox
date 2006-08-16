@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2006/08/16 16:04:43  hobu
+ * typo
+ *
  * Revision 1.27  2006/01/27 00:09:07  fwarmerdam
  * added Get{FID,Geometry}Column() support
  *
@@ -189,7 +192,7 @@
   <b>Example:</b>
 
   <pre>
-    OGRDataSourceH	*hDS;
+    OGRDataSourceH	hDS;
     OGRSFDriverH        *pahDriver;
 
     hDS = OGROpen( "polygon.shp", 0, pahDriver );
