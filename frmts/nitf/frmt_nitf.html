@@ -16,8 +16,11 @@ at this time.  The read support test has been tested on CIB and CADRG RPF
 products.<p>
 
 NITF files can contain several images as well as other layers such as 
-graphics (CGM) and text.  Currently GDAL will only read the first image.  All
-other images and auxilary information are ignored.<p>
+graphics (CGM) and text.  Currently GDAL defaults to reading the first image,
+but additional images will be made available as sub-datasets (see the 
+<a href="gdal_datamodel.html">GDAL Data Model</a> for details).  
+CGM data is made available as special format metadata in the CGM metadata
+domain.  All other auxilary information is ignored.<p>
 
 Color tables for pseudocolored images are read.  In some cases nodata values
 may be identified.  Lat/Long extents are read from the IGEOLO information in 
