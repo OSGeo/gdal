@@ -30,6 +30,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2006/08/18 14:52:57  fwarmerdam
+ * don't try to fetch features if we have no statement.  It likely means
+ * we ran out of features already.
+ *
  * Revision 1.14  2006/01/27 15:47:36  fwarmerdam
  * preliminary Get{FID/Geometry}Column support
  *
@@ -192,6 +196,13 @@ OGRFeature *OGROCILayer::GetNextRawFeature()
         if( !ExecuteQuery(pszQueryStatement) )
             return NULL;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Have we run out of query results, such that we have no          */
+/*      statement left?                                                 */
+/* -------------------------------------------------------------------- */
+    if( poStatement == NULL )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Are we in some sort of error condition?                         */
