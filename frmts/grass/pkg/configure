@@ -2942,7 +2942,7 @@ if test "${ac_cv_lib_grass_gis_G_asprintf+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgrass_gis -L$with_grass/lib -lgrass_datetime -lgrass_gproj -lgrass_vect $LIBS"
+LIBS="-lgrass_gis -L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect -lgrass_dbmibase -lgrass_dbmiclient -lgrass_dgl -lgrass_dig2 -lgrass_rtree -lgrass_linkm $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -3008,12 +3008,12 @@ fi
 
 
   if test "$GRASS_SETTING" = "grass57+" ; then
-    LIBS="-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect -lgrass_dbmibase -lgrass_dbmiclient $LIBS"
+    LIBS="-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect -lgrass_dbmibase -lgrass_dbmiclient -lgrass_dgl -lgrass_dig2 -lgrass_rtree -lgrass_linkm $LIBS"
     GRASS_INCLUDE="-I$with_grass/include"
     GRASS_GISBASE="$with_grass"
   else
-    { { echo "$as_me:$LINENO: error: --with-grass=$with_grass requested, but libraries not found!" >&5
-echo "$as_me: error: --with-grass=$with_grass requested, but libraries not found!" >&2;}
+    { { echo "$as_me:$LINENO: error: --with-grass=$with_grass requested, but libraries not found!  Perhaps you need to set LD_LIBRARY_PATH to include $with_grass/lib?" >&5
+echo "$as_me: error: --with-grass=$with_grass requested, but libraries not found!  Perhaps you need to set LD_LIBRARY_PATH to include $with_grass/lib?" >&2;}
    { (exit 1); exit 1; }; }
   fi
 fi
