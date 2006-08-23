@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/08/23 19:12:08  fwarmerdam
+ * Don't require a valid file handle.
+ *
  * Revision 1.17  2006/04/10 16:34:18  fwarmerdam
  * updated contact info
  *
@@ -174,7 +177,7 @@ GDALDataset *SDTSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     char        *pachLeader = (char *) poOpenInfo->pabyHeader;
     
-    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 24 )
+    if( poOpenInfo->nHeaderBytes < 24 )
         return NULL;
 
     if( pachLeader[5] != '1' && pachLeader[5] != '2' && pachLeader[5] != '3' )
