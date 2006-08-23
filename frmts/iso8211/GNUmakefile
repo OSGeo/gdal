@@ -73,6 +73,8 @@ dist:	docs
 update-web:	dist docs
 	cp html/* $(WEB_DIR)
 	cp $(DISTDIR).tar.gz $(DISTDIR).zip $(WEB_DIR)
+	scp html/* $(DISTDIR).tar.gz $(DISTDIR).zip \
+		warmerda@www.gdal.org:home.gdal.org/projects/iso8211
 
 
 test:	8211dump
