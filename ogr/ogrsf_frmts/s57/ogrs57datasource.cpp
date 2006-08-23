@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2006/08/23 19:16:32  fwarmerdam
+ * use VSI-L api
+ *
  * Revision 1.29  2006/04/02 18:48:26  fwarmerdam
  * contact info updated
  *
@@ -240,21 +243,21 @@ int OGRS57DataSource::Open( const char * pszFilename, int bTestOpen )
         FILE    *fp;
         char    pachLeader[10];
 
-        fp = VSIFOpen( pszFilename, "rb" );
+        fp = VSIFOpenL( pszFilename, "rb" );
         if( fp == NULL )
             return FALSE;
         
-        if( VSIFRead( pachLeader, 1, 10, fp ) != 10
+        if( VSIFReadL( pachLeader, 1, 10, fp ) != 10
             || (pachLeader[5] != '1' && pachLeader[5] != '2'
                 && pachLeader[5] != '3' )
             || pachLeader[6] != 'L'
             || (pachLeader[8] != '1' && pachLeader[8] != ' ') )
         {
-            VSIFClose( fp );
+            VSIFCloseL( fp );
             return FALSE;
         }
 
-        VSIFClose( fp );
+        VSIFCloseL( fp );
     }
 
 /* -------------------------------------------------------------------- */
