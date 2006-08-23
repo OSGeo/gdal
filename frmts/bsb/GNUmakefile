@@ -13,7 +13,7 @@ CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 default:	$(OBJ)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(O_OBJ)
 
 bsb2raw:	bsb2raw.o bsb_read.o
 	$(CXX) bsb2raw.o bsb_read.o $(GDAL_LIB) $(LIBS) -o bsb2raw
