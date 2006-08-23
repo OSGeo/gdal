@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.17  2006/08/23 17:29:46  fwarmerdam
+ * added virtual io api support
+ *
  * Revision 1.16  2005/10/15 19:51:37  fwarmerdam
  * added NOS/GEO GCP support c/o Karl Palsson
  *
@@ -452,7 +455,7 @@ GDALDataset *BSBDataset::Open( GDALOpenInfo * poOpenInfo )
     int		i;
     bool        isNos = false;
 
-    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 1000 )
+    if( poOpenInfo->nHeaderBytes < 1000 )
         return NULL;
 
     for( i = 0; i < poOpenInfo->nHeaderBytes - 4; i++ )
