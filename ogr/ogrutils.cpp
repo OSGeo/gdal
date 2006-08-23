@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/08/23 19:18:58  fwarmerdam
+ * added -mempreload option
+ *
  * Revision 1.25  2006/07/14 16:18:02  fwarmerdam
  * Include readonly/readwrite info in --formats list.
  *
@@ -516,6 +519,52 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             CPLSetConfigOption( papszArgv[iArg+1], papszArgv[iArg+2] );
 
             iArg += 2;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      --mempreload                                                    */
+/* -------------------------------------------------------------------- */
+        else if( EQUAL(papszArgv[iArg],"--mempreload") )
+        {
+            int i;
+
+            if( iArg + 1 >= nArgc )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "--mempreload option given without directory path.");
+                CSLDestroy( papszReturn );
+                return -1;
+            }
+            
+            char **papszFiles = CPLReadDir( papszArgv[iArg+1] );
+            if( CSLCount(papszFiles) == 0 )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "--mempreload given invalid or empty directory.");
+                CSLDestroy( papszReturn );
+                return -1;
+            }
+                
+            for( i = 0; papszFiles[i] != NULL; i++ )
+            {
+                CPLString osOldPath, osNewPath;
+                
+                if( EQUAL(papszFiles[i],".") || EQUAL(papszFiles[i],"..") )
+                    continue;
+
+                osOldPath = CPLFormFilename( papszArgv[iArg+1], 
+                                             papszFiles[i], NULL );
+                osNewPath = CPLFormFilename( "/vsimem", papszFiles[i], NULL );
+
+                CPLDebug( "VSI", "Preloading %s to %s.", 
+                          osOldPath.c_str(), osNewPath.c_str() );
+
+                if( CPLCopyFile( osNewPath, osOldPath ) != 0 )
+                    return -1;
+            }
+            
+            CSLDestroy( papszFiles );
+            iArg += 1;
         }
 
 /* -------------------------------------------------------------------- */
