@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2006/08/23 15:09:46  fwarmerdam
+ * Added --mempreload support, and VSICopyFile
+ *
  * Revision 1.54  2006/06/30 18:18:17  dron
  * Avoid warnings.
  *
@@ -2102,6 +2105,59 @@ int CPLUnlinkTree( const char *pszPath )
         return 1000;
     }
 }
+
+/************************************************************************/
+/*                            CPLCopyFile()                             */
+/************************************************************************/
+
+int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
+
+{
+    FILE *fpOld, *fpNew;
+    GByte *pabyBuffer;
+    size_t nBufferSize;
+    size_t nBytesRead;
+
+/* -------------------------------------------------------------------- */
+/*      Open old and new file.                                          */
+/* -------------------------------------------------------------------- */
+    fpOld = VSIFOpenL( pszOldPath, "rb" );
+    if( fpOld == NULL )
+        return -1;
+
+    fpNew = VSIFOpenL( pszNewPath, "wb" );
+    if( fpNew == NULL )
+        return -1;
+
+/* -------------------------------------------------------------------- */
+/*      Prepare buffer.                                                 */
+/* -------------------------------------------------------------------- */
+    nBufferSize = 1024 * 1024;
+    pabyBuffer = (GByte *) CPLMalloc(nBufferSize);
+
+/* -------------------------------------------------------------------- */
+/*      Copy file over till we run out of stuff.                        */
+/* -------------------------------------------------------------------- */
+    do { 
+        nBytesRead = VSIFReadL( pabyBuffer, 1, nBufferSize, fpOld );
+        if( nBytesRead < 0 )
+            return -1;
+
+        if( VSIFWriteL( pabyBuffer, 1, nBytesRead, fpNew ) < nBytesRead )
+            return -1;
+    } while( nBytesRead == nBufferSize );
+
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    VSIFCloseL( fpNew );
+    VSIFCloseL( fpOld );
+
+    CPLFree( pabyBuffer );
+
+    return 0;
+}
+
 
 /************************************************************************/
 /* ==================================================================== */

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2006/08/23 15:09:46  fwarmerdam
+ * Added --mempreload support, and VSICopyFile
+ *
  * Revision 1.43  2006/04/04 15:37:19  fwarmerdam
  * Removed long double strtod functions.
  *
@@ -295,6 +298,8 @@ void CPL_DLL CPLStringToComplex( const char *pszString,
 /*      Misc other functions.                                           */
 /* -------------------------------------------------------------------- */
 int CPL_DLL CPLUnlinkTree( const char * );
+int CPL_DLL CPLCopyFile( const char *pszNewPath, const char *pszOldPath );
+
 CPL_C_END
 
 /* -------------------------------------------------------------------- */
