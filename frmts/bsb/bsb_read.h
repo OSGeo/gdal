@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/08/23 17:29:46  fwarmerdam
+ * added virtual io api support
+ *
  * Revision 1.5  2002/11/04 04:26:45  warmerda
  * preliminary work on write support
  *
@@ -54,6 +57,13 @@ CPL_C_START
 
 typedef struct {
     FILE        *fp;
+
+
+    GByte       *pabyBuffer;
+    int         nBufferOffset;
+    int         nBufferSize;
+    int         nBufferAllocation;
+    int         nSavedCharacter;
 
     int		nXSize;
     int         nYSize;
