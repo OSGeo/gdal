@@ -123,10 +123,10 @@ fi
 
 if test "$with_grass" != "yes" ; then
 
-  AC_CHECK_LIB(grass_gis,G_asprintf,GRASS_SETTING=grass57+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_datetime -lgrass_gproj -lgrass_vect)
+  AC_CHECK_LIB(grass_gis,G_asprintf,GRASS_SETTING=grass57+,GRASS_SETTING=no,-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect -lgrass_dbmibase -lgrass_dbmiclient -lgrass_dgl -lgrass_dig2 -lgrass_rtree -lgrass_linkm)
    
   if test "$GRASS_SETTING" = "grass57+" ; then   
-    LIBS="-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect -lgrass_dbmibase -lgrass_dbmiclient $LIBS"
+    LIBS="-L$with_grass/lib -lgrass_I -lgrass_vask -lgrass_gmath -lgrass_gis -lgrass_datetime -lgrass_gproj -lgrass_vect -lgrass_dbmibase -lgrass_dbmiclient -lgrass_dgl -lgrass_dig2 -lgrass_rtree -lgrass_linkm $LIBS"
     GRASS_INCLUDE="-I$with_grass/include"
     GRASS_GISBASE="$with_grass"
   else
