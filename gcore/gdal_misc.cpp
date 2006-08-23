@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.79  2006/08/23 15:09:46  fwarmerdam
+ * Added --mempreload support, and VSICopyFile
+ *
  * Revision 1.78  2006/03/03 19:43:44  fwarmerdam
  * added --locale switch to force a locale
  *
@@ -1894,6 +1897,7 @@ GDALGCPsToGeoTransform( int nGCPCount, const GDAL_GCP *pasGCPs,
  *  --optfile filename: expand an option file into the argument list. 
  *  --config key value: set system configuration option. 
  *  --debug [on/off/value]: set debug level.
+ *  --mempreload dir: preload directory contents into /vsimem
  *  --help-general: report detailed help on general options. 
  *
  * The argument array is replaced "in place" and should be freed with 
@@ -1962,6 +1966,52 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
             CPLSetConfigOption( papszArgv[iArg+1], papszArgv[iArg+2] );
 
             iArg += 2;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      --mempreload                                                    */
+/* -------------------------------------------------------------------- */
+        else if( EQUAL(papszArgv[iArg],"--mempreload") )
+        {
+            int i;
+
+            if( iArg + 1 >= nArgc )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "--mempreload option given without directory path.");
+                CSLDestroy( papszReturn );
+                return -1;
+            }
+            
+            char **papszFiles = CPLReadDir( papszArgv[iArg+1] );
+            if( CSLCount(papszFiles) == 0 )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, 
+                          "--mempreload given invalid or empty directory.");
+                CSLDestroy( papszReturn );
+                return -1;
+            }
+                
+            for( i = 0; papszFiles[i] != NULL; i++ )
+            {
+                CPLString osOldPath, osNewPath;
+                
+                if( EQUAL(papszFiles[i],".") || EQUAL(papszFiles[i],"..") )
+                    continue;
+
+                osOldPath = CPLFormFilename( papszArgv[iArg+1], 
+                                             papszFiles[i], NULL );
+                osNewPath = CPLFormFilename( "/vsimem", papszFiles[i], NULL );
+
+                CPLDebug( "VSI", "Preloading %s to %s.", 
+                          osOldPath.c_str(), osNewPath.c_str() );
+
+                if( CPLCopyFile( osNewPath, osOldPath ) != 0 )
+                    return -1;
+            }
+            
+            CSLDestroy( papszFiles );
+            iArg += 1;
         }
 
 /* -------------------------------------------------------------------- */
