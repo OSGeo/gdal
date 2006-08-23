@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/08/23 19:17:37  fwarmerdam
+ * use VSI-L api for virtual access
+ *
  * Revision 1.7  2006/04/04 04:24:06  fwarmerdam
  * update contact info
  *
@@ -112,14 +115,14 @@ int main( int nArgc, char ** papszArgv )
     oModule.Dump( stdout );
     long nStartLoc;
 
-    nStartLoc = VSIFTell( oModule.GetFP() );
+    nStartLoc = VSIFTellL( oModule.GetFP() );
     for( poRecord = oModule.ReadRecord();
          poRecord != NULL; poRecord = oModule.ReadRecord() )
     {
         printf( "File Offset: %ld\n", nStartLoc );
         poRecord->Dump( stdout );
 
-        nStartLoc = VSIFTell( oModule.GetFP() );
+        nStartLoc = VSIFTellL( oModule.GetFP() );
     }
 
     oModule.Close();

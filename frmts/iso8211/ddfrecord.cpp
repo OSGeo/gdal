@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2006/08/23 19:17:37  fwarmerdam
+ * use VSI-L api for virtual access
+ *
  * Revision 1.29  2006/02/24 15:59:24  fwarmerdam
  * Added error checking on record buffer memory allocation.
  *
@@ -226,12 +229,12 @@ int DDFRecord::Read()
 /* -------------------------------------------------------------------- */
     size_t      nReadBytes;
 
-    nReadBytes = VSIFRead( pachData + nFieldOffset, 1,
-                           nDataSize - nFieldOffset,
-                           poModule->GetFP() );
+    nReadBytes = VSIFReadL( pachData + nFieldOffset, 1,
+                            nDataSize - nFieldOffset,
+                            poModule->GetFP() );
     if( nReadBytes != (size_t) (nDataSize - nFieldOffset)
         && nReadBytes == 0
-        && VSIFEof( poModule->GetFP() ) )
+        && VSIFEofL( poModule->GetFP() ) )
     {
         return FALSE;
     }
@@ -296,12 +299,12 @@ int DDFRecord::Write()
 /* -------------------------------------------------------------------- */
 /*      Write the leader.                                               */
 /* -------------------------------------------------------------------- */
-    VSIFWrite( szLeader, nLeaderSize, 1, poModule->GetFP() );
+    VSIFWriteL( szLeader, nLeaderSize, 1, poModule->GetFP() );
 
 /* -------------------------------------------------------------------- */
 /*      Write the remainder of the record.                              */
 /* -------------------------------------------------------------------- */
-    VSIFWrite( pachData, nDataSize, 1, poModule->GetFP() );
+    VSIFWriteL( pachData, nDataSize, 1, poModule->GetFP() );
     
     return TRUE;
 }
@@ -352,8 +355,8 @@ int DDFRecord::ReadHeader()
     char        achLeader[nLeaderSize];
     int         nReadBytes;
 
-    nReadBytes = VSIFRead(achLeader,1,nLeaderSize,poModule->GetFP());
-    if( nReadBytes == 0 && VSIFEof( poModule->GetFP() ) )
+    nReadBytes = VSIFReadL(achLeader,1,nLeaderSize,poModule->GetFP());
+    if( nReadBytes == 0 && VSIFEofL( poModule->GetFP() ) )
     {
         return FALSE;
     }
@@ -418,7 +421,7 @@ int DDFRecord::ReadHeader()
         nDataSize = _recLength - nLeaderSize;
         pachData = (char *) CPLMalloc(nDataSize);
 
-        if( VSIFRead( pachData, 1, nDataSize, poModule->GetFP()) !=
+        if( VSIFReadL( pachData, 1, nDataSize, poModule->GetFP()) !=
             (size_t) nDataSize )
         {
             CPLError( CE_Failure, CPLE_FileIO, 
@@ -436,7 +439,7 @@ int DDFRecord::ReadHeader()
             nDataSize++;
             pachData = (char *) CPLRealloc(pachData,nDataSize);
             
-            if( VSIFRead( pachData + nDataSize - 1, 1, 1, poModule->GetFP() )
+            if( VSIFReadL( pachData + nDataSize - 1, 1, 1, poModule->GetFP() )
                 != 1 )
             {
                 CPLError( CE_Failure, CPLE_FileIO, 
@@ -550,7 +553,7 @@ int DDFRecord::ReadHeader()
         do {
             // read an Entry:
             if(nFieldEntryWidth != 
-               (int) VSIFRead(tmpBuf, 1, nFieldEntryWidth, poModule->GetFP())) {
+               (int) VSIFReadL(tmpBuf, 1, nFieldEntryWidth, poModule->GetFP())) {
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Data record is short on DDF file.");
                 return FALSE;
@@ -590,7 +593,7 @@ int DDFRecord::ReadHeader()
 
             // read an Entry:
             if(nFieldLength != 
-               (int) VSIFRead(tmpBuf, 1, nFieldLength, poModule->GetFP())) {
+               (int) VSIFReadL(tmpBuf, 1, nFieldLength, poModule->GetFP())) {
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Data record is short on DDF file.");
                 return FALSE;

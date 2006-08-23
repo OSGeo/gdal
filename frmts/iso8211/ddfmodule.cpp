@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/08/23 19:17:37  fwarmerdam
+ * use VSI-L api for virtual access
+ *
  * Revision 1.16  2005/10/13 22:02:39  fwarmerdam
  * dont add fields that fail to initialize
  *
@@ -152,7 +155,7 @@ void DDFModule::Close()
 /* -------------------------------------------------------------------- */
     if( fpDDF != NULL )
     {
-        VSIFClose( fpDDF );
+        VSIFCloseL( fpDDF );
         fpDDF = NULL;
     }
 
@@ -223,7 +226,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    fpDDF = VSIFOpen( pszFilename, "rb" );
+    fpDDF = VSIFOpenL( pszFilename, "rb" );
 
     if( fpDDF == NULL )
     {
@@ -239,9 +242,9 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 /* -------------------------------------------------------------------- */
     char        achLeader[nLeaderSize];
     
-    if( VSIFRead( achLeader, 1, nLeaderSize, fpDDF ) != nLeaderSize )
+    if( VSIFReadL( achLeader, 1, nLeaderSize, fpDDF ) != nLeaderSize )
     {
-        VSIFClose( fpDDF );
+        VSIFCloseL( fpDDF );
         fpDDF = NULL;
 
         if( !bFailQuietly )
@@ -307,7 +310,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 /* -------------------------------------------------------------------- */
     if( !bValid )
     {
-        VSIFClose( fpDDF );
+        VSIFCloseL( fpDDF );
         fpDDF = NULL;
 
         if( !bFailQuietly )
@@ -326,7 +329,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
     pachRecord = (char *) CPLMalloc(_recLength);
     memcpy( pachRecord, achLeader, nLeaderSize );
 
-    if( VSIFRead( pachRecord+nLeaderSize, 1, _recLength-nLeaderSize, fpDDF )
+    if( VSIFReadL( pachRecord+nLeaderSize, 1, _recLength-nLeaderSize, fpDDF )
         != _recLength - nLeaderSize )
     {
         if( !bFailQuietly )
@@ -385,7 +388,7 @@ int DDFModule::Open( const char * pszFilename, int bFailQuietly )
 /*      Record the current file offset, the beginning of the first      */
 /*      data record.                                                    */
 /* -------------------------------------------------------------------- */
-    nFirstRecordOffset = VSIFTell( fpDDF );
+    nFirstRecordOffset = VSIFTellL( fpDDF );
     
     return TRUE;
 }
@@ -430,7 +433,7 @@ int DDFModule::Create( const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Create the file on disk.                                        */
 /* -------------------------------------------------------------------- */
-    fpDDF = VSIFOpen( pszFilename, "wb+" );
+    fpDDF = VSIFOpenL( pszFilename, "wb+" );
     if( fpDDF == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
@@ -479,7 +482,7 @@ int DDFModule::Create( const char *pszFilename )
     sprintf( achLeader+21, "%1d", (int) _sizeFieldPos );
     achLeader[22] = '0';
     sprintf( achLeader+23, "%1d", (int) _sizeFieldTag );
-    VSIFWrite( achLeader, 24, 1, fpDDF );
+    VSIFWriteL( achLeader, 24, 1, fpDDF );
 
 /* -------------------------------------------------------------------- */
 /*      Write out directory entries.                                    */
@@ -498,11 +501,11 @@ int DDFModule::Create( const char *pszFilename )
                  "%04d", nOffset );
         nOffset += nLength;
 
-        VSIFWrite( achDirEntry, 11, 1, fpDDF );
+        VSIFWriteL( achDirEntry, 11, 1, fpDDF );
     }
 
     char chUT = DDF_FIELD_TERMINATOR;
-    VSIFWrite( &chUT, 1, 1, fpDDF );
+    VSIFWriteL( &chUT, 1, 1, fpDDF );
 
 /* -------------------------------------------------------------------- */
 /*      Write out the field descriptions themselves.                    */
@@ -513,7 +516,7 @@ int DDFModule::Create( const char *pszFilename )
         int nLength;
 
         papoFieldDefns[iField]->GenerateDDREntry( &pachData, &nLength );
-        VSIFWrite( pachData, nLength, 1, fpDDF );
+        VSIFWriteL( pachData, nLength, 1, fpDDF );
         CPLFree( pachData );
     }
     
@@ -751,7 +754,7 @@ void DDFModule::Rewind( long nOffset )
     if( fpDDF == NULL )
         return;
     
-    VSIFSeek( fpDDF, nOffset, SEEK_SET );
+    VSIFSeekL( fpDDF, nOffset, SEEK_SET );
 
     if( nOffset == nFirstRecordOffset && poRecord != NULL )
         poRecord->Clear();
