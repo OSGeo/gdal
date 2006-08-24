@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.37  2006/08/24 18:17:14  fwarmerdam
+ * Removed noisy debug statement.
+ *
  * Revision 1.36  2006/06/07 14:36:04  fwarmerdam
  * Added handling of "DS" units for geographic coordinate systems.
  *
@@ -468,9 +471,6 @@ GDALDataset *AAIGDataset::Open( GDALOpenInfo * poOpenInfo )
     int         i, j;
     GDALDataType eDataType;
     char        **papszTokens;
-
-    CPLDebug( "GDAL", "AAIGDataset::Open() with dataset: %s.\n",
-            poOpenInfo->pszFilename );
 
 /* -------------------------------------------------------------------- */
 /*      Does this look like an AI grid file?                            */
