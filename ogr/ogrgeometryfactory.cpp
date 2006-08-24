@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2006/08/24 19:32:21  hobu
+ * a little example for OGR_G_CreateFromWkt
+ *
  * Revision 1.30  2006/07/07 00:05:46  mloskot
  * Removed GEOS C++ API usage from OGR and autotools.
  *
@@ -306,6 +309,20 @@ OGRErr CPL_DLL OGR_G_CreateFromWkb( unsigned char *pabyData,
  * @param ppoReturn the newly created geometry object will be assigned to the
  *                  indicated pointer on return.  This will be NULL if the
  *                  method fails. 
+ *
+ *  <b>Example:</b>
+ *
+ *  <pre>
+ *    const char* wkt= "POINT(0 0)";
+ *  
+ *    // cast because OGR_G_CreateFromWkt will move the pointer 
+ *    char* pszWkt = (char*) wkt.c_str(); 
+ *    OGRSpatialReferenceH ref = OSRNewSpatialReference(NULL);
+ *    OGRGeometryH new_geom;
+ *    OGRErr err = OGR_G_CreateFromWkt(&pszWkt, ref, &new_geom);
+ *  </pre>
+ *
+ *
  *
  * @return OGRERR_NONE if all goes well, otherwise any of
  * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
