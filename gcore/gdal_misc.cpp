@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.80  2006/08/25 18:26:11  fwarmerdam
+ * Ensure we always use /vsimem/ even on windows.
+ *
  * Revision 1.79  2006/08/23 15:09:46  fwarmerdam
  * Added --mempreload support, and VSICopyFile
  *
@@ -2001,7 +2004,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 
                 osOldPath = CPLFormFilename( papszArgv[iArg+1], 
                                              papszFiles[i], NULL );
-                osNewPath = CPLFormFilename( "/vsimem", papszFiles[i], NULL );
+                osNewPath.Printf( "/vsimem/%s", papszFiles[i] );
 
                 CPLDebug( "VSI", "Preloading %s to %s.", 
                           osOldPath.c_str(), osNewPath.c_str() );
