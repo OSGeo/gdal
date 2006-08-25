@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2006/08/25 18:27:29  fwarmerdam
+ * Use /vsimem/ prefix for memory filesystem.
+ *
  * Revision 1.26  2006/08/23 19:18:58  fwarmerdam
  * added -mempreload option
  *
@@ -554,7 +557,7 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 
                 osOldPath = CPLFormFilename( papszArgv[iArg+1], 
                                              papszFiles[i], NULL );
-                osNewPath = CPLFormFilename( "/vsimem", papszFiles[i], NULL );
+                osNewPath.Printf( "/vsimem/%s", papszFiles[i] );
 
                 CPLDebug( "VSI", "Preloading %s to %s.", 
                           osOldPath.c_str(), osNewPath.c_str() );
