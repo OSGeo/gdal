@@ -29,6 +29,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.61  2006/08/25 15:11:37  fwarmerdam
+ * Fixed problem with poDS->iNumType getting reset improperly for
+ * swath datasets (related to geolocation refactoring).
+ *
  * Revision 1.60  2006/08/03 14:21:09  dron
  * Use right Long/Lat dimensions when GEOLOCATION records created.
  *
@@ -1370,6 +1374,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
     char    szLine[8192] = "";
     char    *pszGeoList = NULL;
     char    szGeoDimList[8192] = "";
+    int32   iWrkNumType;
     int32   nDataFields, nDimMaps;
     void    *pLat = NULL, *pLong = NULL;
     void    *pLatticeX = NULL, *pLatticeY = NULL;
@@ -1511,7 +1516,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
         char    **papszGeoDimList = NULL;
 
         SWfieldinfo( hSW, papszGeolocations[i], &iRank,
-                     aiDimSizes, &iNumType, szGeoDimList );
+                     aiDimSizes, &iWrkNumType, szGeoDimList );
         papszGeoDimList = CSLTokenizeString2( szGeoDimList,
                                               ",", CSLT_HONOURSTRINGS );
 
@@ -1538,7 +1543,7 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
             iLineDim = 1;
         }
 
-        iDataSize = GetDataTypeSize( iNumType );
+        iDataSize = GetDataTypeSize( iWrkNumType );
         if ( strstr( papszGeolocations[i], "Latitude" ) )
         {
             iLatDim = i;
@@ -1799,10 +1804,10 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
                 int iGeoOff =  i * nXPoints + j;
  
                 pasGCPList[iGCP].dfGCPX =
-                    AnyTypeToDouble(iNumType,
+                    AnyTypeToDouble(iWrkNumType,
                                     (void *)((char*)pLong+ iGeoOff*iDataSize));
                 pasGCPList[iGCP].dfGCPY =
-                    AnyTypeToDouble(iNumType,
+                    AnyTypeToDouble(iWrkNumType,
                                     (void *)((char*)pLat + iGeoOff*iDataSize));
                                 
                 // GCPs in Level 1A/1B dataset are in geocentric
