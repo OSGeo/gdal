@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2006/08/26 17:11:38  pka
+ * Added support for using schemas (-lco SCHEMA)
+ * Closes http://bugzilla.remotesensing.org/show_bug.cgi?id=522
+ *
  * Revision 1.49  2006/06/27 10:20:59  osemykin
  * Added OGRPGDataSource::GetLayerByName(const char * pszName)
  *
@@ -246,6 +250,7 @@ OGRPGDataSource::~OGRPGDataSource()
     CPLFree( papoSRS );
 }
 
+
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
@@ -281,7 +286,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     if( hPGConn == NULL || PQstatus(hPGConn) == CONNECTION_BAD )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "PGconnectcb failed.\n%s",
+                  "PQconnectdb failed.\n%s",
                   PQerrorMessage(hPGConn) );
         PQfinish(hPGConn);
         hPGConn = NULL;
@@ -449,14 +454,14 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         if ( bHavePostGIS )
             hResult = PQexec(hPGConn,
                              "DECLARE mycursor CURSOR for "
-                             "SELECT c.relname FROM pg_class c, geometry_columns g "
-                             "WHERE (c.relkind in ('r','v') AND c.relname !~ '^pg' "
-                             "AND c.relname::TEXT = g.f_table_name::TEXT)" );
+                             "SELECT c.relname, n.nspname FROM pg_class c, pg_namespace n, geometry_columns g "
+                             "WHERE (c.relkind in ('r','v') AND c.relname !~ '^pg' AND c.relnamespace=n.oid "
+                             "AND c.relname::TEXT = g.f_table_name::TEXT AND n.nspname = g.f_table_schema)" );
         else
             hResult = PQexec(hPGConn,
                              "DECLARE mycursor CURSOR for "
-                             "SELECT relname FROM pg_class "
-                             "WHERE (relkind in ('r','v') AND relname !~ '^pg')" );
+                             "SELECT c.relname, n.nspname FROM pg_class c, pg_namespace n "
+                             "WHERE (c.relkind in ('r','v') AND c.relname !~ '^pg' AND c.relnamespace=n.oid)" );
     }
 
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
@@ -488,6 +493,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
         papszTableNames = CSLAddString(papszTableNames,
                                        PQgetvalue(hResult, iRecord, 0));
+
     }
 
 /* -------------------------------------------------------------------- */
@@ -502,7 +508,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
     PQclear( hResult );
 
 /* -------------------------------------------------------------------- */
-/*      Get the schema of the available tables.                         */
+/*      Register the available tables.                                  */
 /* -------------------------------------------------------------------- */
     for( iRecord = 0;
          papszTableNames != NULL && papszTableNames[iRecord] != NULL;
@@ -513,6 +519,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
     CSLDestroy( papszTableNames );
 
+/* -------------------------------------------------------------------- */
     return nLayers > 0 || bUpdate;
 }
 
@@ -559,6 +566,8 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
 
     CPLDebug( "OGR_PG", "DeleteLayer(%s)", osLayerName.c_str() );
 
+    papoLayers[iLayer]->ResetReading(); //Set schema search_path, if necessary
+
     delete papoLayers[iLayer];
     memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
              sizeof(void *) * (nLayers - iLayer - 1) );
@@ -576,8 +585,8 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
     if( bHavePostGIS )
     {
         sprintf( szCommand,
-                 "SELECT DropGeometryColumn('%s','%s',(SELECT f_geometry_column from geometry_columns where f_table_name='%s' order by f_geometry_column limit 1))",
-                 pszDBName, osLayerName.c_str(), osLayerName.c_str() );
+                 "SELECT DropGeometryColumn(current_schema()::text,'%s',(SELECT f_geometry_column from geometry_columns where f_table_name='%s' order by f_geometry_column limit 1))",
+                 osLayerName.c_str(), osLayerName.c_str() );
 
         CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
 
@@ -622,6 +631,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     char                szCommand[1024];
     const char          *pszGeomType;
     char                *pszLayerName;
+    const char          *pszSchemaName;
     int                 nDimension = 3;
 
     if( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) )
@@ -631,6 +641,26 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 
     if( wkbFlatten(eType) == eType )
         nDimension = 2;
+
+/* -------------------------------------------------------------------- */
+/*      Set the default schema for the layers.                          */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue( papszOptions, "SCHEMA" ) != NULL )
+    {
+        pszSchemaName = CSLFetchNameValue( papszOptions, "SCHEMA" );
+        sprintf( szCommand,
+                 "SET search_path=%s,public",
+                 pszSchemaName );
+
+        CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
+
+        hResult = PQexec( hPGConn, szCommand );
+        PQclear( hResult );
+    }
+    else
+    {
+       pszSchemaName = pszDBName; // Backwards compatiblity - AddGeometryColumn defaults to current_schema()
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
@@ -697,6 +727,8 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 /* -------------------------------------------------------------------- */
     hResult = PQexec(hPGConn, "BEGIN");
     PQclear( hResult );
+
+
 
     if( !bHavePostGIS )
     {
@@ -801,7 +833,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 
         sprintf( szCommand,
                  "select AddGeometryColumn('%s','%s','%s',%d,'%s',%d)",
-                 pszDBName, pszLayerName, pszGFldName, nSRSId, pszGeometryType,
+                 pszSchemaName, pszLayerName, pszGFldName, nSRSId, pszGeometryType,
                  nDimension );
 
         CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );

@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2006/08/26 17:11:38  pka
+ * Added support for using schemas (-lco SCHEMA)
+ * Closes http://bugzilla.remotesensing.org/show_bug.cgi?id=522
+ *
  * Revision 1.56  2006/06/30 12:53:40  mloskot
  * Revert latest fix with GeometryToHex to GeometryToBYTEA change. GeometryToHex requires PostGIS to work well.
  *
@@ -167,6 +171,8 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
     iNextShapeId = 0;
 
     nSRSId = nSRSIdIn;
+
+    pszSchemaName = NULL;
 
     poFeatureDefn = ReadTableDefinition( pszTableName );
 
@@ -410,6 +416,23 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
     hResult = PQexec(hPGConn, "COMMIT");
     PQclear( hResult );
 
+    // get the schema name
+    osCommand.Printf(
+              "SELECT n.nspname "
+              "FROM pg_class c, pg_namespace n  "
+              "WHERE c.relname = '%s' "
+              "AND c.relkind in ('r','v') "
+              "AND c.relnamespace=n.oid",
+              pszTable );
+
+    hResult = PQexec(hPGConn,osCommand);
+    if ( hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult,0,0) )
+    {
+        pszSchemaName = CPLStrdup(PQgetvalue(hResult,0,0));
+
+        PQclear( hResult );
+    }
+
     // get layer geometry type (for PostGIS dataset)
     if ( bHasPostGISGeometry )
     {
@@ -455,6 +478,38 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
     }
 
     return poDefn;
+}
+
+/************************************************************************/
+/*                          SetSchemaSearchPath()                       */
+/************************************************************************/
+
+void OGRPGTableLayer::SetSchemaSearchPath()
+{
+    PGresult            *hResult;
+    CPLString           osCommand;
+    PGconn              *hPGConn = poDS->GetPGConn();
+    int set_search_path = FALSE; //only if pszSchemaName != current_schema()
+
+    hResult = PQexec( hPGConn, "SELECT current_schema()" );
+    if ( hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult,0,0) )
+    {
+        set_search_path = !EQUAL(pszSchemaName,PQgetvalue(hResult,0,0));
+
+        PQclear( hResult );
+    }
+
+    if (set_search_path)
+    {
+        osCommand.Printf(
+                  "SET search_path=%s,public",
+                  pszSchemaName );
+
+        CPLDebug( "OGR_PG", "PGexec(%s)", osCommand.c_str() );
+
+        hResult = PQexec( hPGConn, osCommand );
+        PQclear( hResult );
+    }
 }
 
 /************************************************************************/
@@ -552,6 +607,8 @@ void OGRPGTableLayer::ResetReading()
 
 {
     bUseCopy = USE_COPY_UNSET;
+
+    SetSchemaSearchPath();
 
     BuildFullQueryStatement();
 
@@ -1508,6 +1565,8 @@ int OGRPGTableLayer::GetFeatureCount( int bForce )
     PGresult            *hResult;
     CPLString           osCommand;
     int                 nCount = 0;
+
+    SetSchemaSearchPath();
 
     poDS->FlushSoftTransaction();
     hResult = PQexec(hPGConn, "BEGIN");
