@@ -107,7 +107,17 @@ FLOAT8, INTEGER and VARCHAR will be used instead.  The default is "YES".<p>
 Important to set to 2 for 2D layers with PostGIS 1.0+ as it has constraints
 on the geometry dimension during loading.<p>
 <li> <b>GEOMETRY_NAME</b>: Set name of geometry column in new table.  If 
-omitted it defaults to wkb_geometry.
+omitted it defaults to wkb_geometry.<p>
+<li> <b>SCHEMA</b>: Set name of schema for new table. Sets search_path to schema,public.
+More than one layers with the same name in different schemas ist not supported.<p>
+</ul>
+
+<h3>Environment variables</h3>
+
+<ul>
+<li><b>PG_USE_COPY</b>: This may be "YES" for using COPY for inserting data to Postgresql.
+COPY is less robust than INSERT, but signficantly faster.</li><p>
+<li><b>PGSQL_OGR_FID</b>: Set name of primary key instead of 'ogc_fid'.</li><p>
 </ul>
 
 <h3>Example</h3>

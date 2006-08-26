@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2006/08/26 17:11:38  pka
+ * Added support for using schemas (-lco SCHEMA)
+ * Closes http://bugzilla.remotesensing.org/show_bug.cgi?id=522
+ *
  * Revision 1.29  2006/06/27 10:20:59  osemykin
  * Added OGRPGDataSource::GetLayerByName(const char * pszName)
  *
@@ -215,6 +219,8 @@ class OGRPGTableLayer : public OGRPGLayer
     char               *BuildFields(void);
     void                BuildFullQueryStatement(void);
 
+    char               *pszSchemaName;
+
     CPLString           osQuery;
     CPLString           osWHERE;
 
@@ -252,6 +258,8 @@ public:
     virtual int         TestCapability( const char * );
 
 	virtual OGRErr		GetExtent( OGREnvelope *psExtent, int bForce );
+
+    virtual void        SetSchemaSearchPath();
 
     // follow methods are not base class overrides
     void                SetLaunderFlag( int bFlag )
