@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2006/08/28 15:25:49  fwarmerdam
+ * No need for null tests before delete!
+ *
  * Revision 1.42  2006/08/28 15:24:40  fwarmerdam
  * Ensure SetGeometryDirectly() doesn't assume an existing geometry on feature.
  *
@@ -351,9 +354,7 @@ OGRFeatureDefnH OGR_F_GetDefnRef( OGRFeatureH hFeat )
 OGRErr OGRFeature::SetGeometryDirectly( OGRGeometry * poGeomIn )
 
 {
-    if( poGeometry != NULL )
-        delete poGeometry;
-
+    delete poGeometry;
     poGeometry = poGeomIn;
 
     // I should be verifying that the geometry matches the defn's type.
@@ -414,8 +415,7 @@ OGRErr OGR_F_SetGeometryDirectly( OGRFeatureH hFeat, OGRGeometryH hGeom )
 OGRErr OGRFeature::SetGeometry( OGRGeometry * poGeomIn )
 
 {
-    if( poGeometry != NULL )
-        delete poGeometry;
+    delete poGeometry;
 
     if( poGeomIn != NULL )
         poGeometry = poGeomIn->clone();
