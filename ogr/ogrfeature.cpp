@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2006/08/28 14:00:02  mloskot
+ * Added stronger test of Shapefile reading failures, e.g. truncated files.
+ * The problem was discovered by Tim Sutton and reported here https://svn.qgis.org/trac/ticket/200
+ *
  * Revision 1.39  2006/06/30 09:20:19  mloskot
  * Fixed null dates issue reported by Aaron Koning. Fixed zero-fill of year value in OGRFeature::GetFieldAsString. Added assertions and NULL pointer tests.
  *
@@ -339,12 +343,17 @@ OGRFeatureDefnH OGR_F_GetDefnRef( OGRFeatureH hFeat )
 OGRErr OGRFeature::SetGeometryDirectly( OGRGeometry * poGeomIn )
 
 {
-    if( poGeometry != NULL )
-        delete poGeometry;
+    if( NULL == poGeomIn )
+    {
+        // TODO - mloskot: Is this error code OK?
+        return OGRERR_CORRUPT_DATA;
+    }
 
+    // Deallocate previous and assign new geometry
+    delete poGeometry;
     poGeometry = poGeomIn;
 
-    // I should be verifying that the geometry matches the defn's type.
+    // TODO - I should be verifying that the geometry matches the defn's type.
     
     return OGRERR_NONE;
 }

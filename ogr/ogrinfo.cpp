@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2006/08/28 14:00:02  mloskot
+ * Added stronger test of Shapefile reading failures, e.g. truncated files.
+ * The problem was discovered by Tim Sutton and reported here https://svn.qgis.org/trac/ticket/200
+ *
  * Revision 1.35  2006/07/14 16:18:40  fwarmerdam
  * --formats now handled by generic argument processor.
  *
@@ -422,6 +426,8 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
 /* -------------------------------------------------------------------- */
 /*      Report various overall information.                             */
 /* -------------------------------------------------------------------- */
+    CPLDebug("INFO", "---------- General Layer Report ----------"); 
+
     printf( "\n" );
     
     printf( "Layer name: %s\n", poDefn->GetName() );
@@ -452,6 +458,9 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
         printf( "Layer SRS WKT:\n%s\n", pszWKT );
         CPLFree( pszWKT );
 
+    
+        CPLDebug("\nINFO", "---------- Geometry Column Report ----------\n"); 
+
         if( strlen(poLayer->GetFIDColumn()) > 0 )
             printf( "FID Column = %s\n", 
                     poLayer->GetFIDColumn() );
@@ -459,7 +468,7 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
         if( strlen(poLayer->GetGeometryColumn()) > 0 )
             printf( "Geometry Column = %s\n", 
                     poLayer->GetGeometryColumn() );
-    
+
         for( int iAttr = 0; iAttr < poDefn->GetFieldCount(); iAttr++ )
         {
             OGRFieldDefn    *poField = poDefn->GetFieldDefn( iAttr );
@@ -475,7 +484,9 @@ static void ReportOnLayer( OGRLayer * poLayer, const char *pszWHERE,
 /* -------------------------------------------------------------------- */
 /*      Read, and dump features.                                        */
 /* -------------------------------------------------------------------- */
-    OGRFeature  *poFeature;
+    CPLDebug("\nINFO", "---------- Features Dump ----------\n"); 
+
+    OGRFeature  *poFeature = NULL;
 
     if( nFetchFID == OGRNullFID && !bSummaryOnly )
     {
