@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2006/08/28 14:00:02  mloskot
+ * Added stronger test of Shapefile reading failures, e.g. truncated files.
+ * The problem was discovered by Tim Sutton and reported here https://svn.qgis.org/trac/ticket/200
+ *
  * Revision 1.45  2006/07/20 12:50:52  mloskot
  * Refactored shape2ogr.cpp file. Added comments related to Bug 1217 (not fixed yet, see the bug report).
  *
@@ -1313,8 +1317,28 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 
     OGRFeature  *poFeature = new OGRFeature( poDefn );
 
+/* -------------------------------------------------------------------- */
+/*      Fetch geometry from Shapefile to OGRFeature.                    */
+/* -------------------------------------------------------------------- */
     if( hSHP != NULL )
-        poFeature->SetGeometryDirectly( SHPReadOGRObject( hSHP, iShape ) );
+    {
+        OGRGeometry* poGeometry = NULL;
+        poGeometry = SHPReadOGRObject( hSHP, iShape );
+        if( NULL == poGeometry )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Couldn't read geometry from shape with feature id (%d), likely data is corrupted.",
+                      iShape );
+
+            return NULL;
+        }
+
+        poFeature->SetGeometryDirectly( poGeometry );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Fetch feature attributes to OGRFeature fields.                  */
+/* -------------------------------------------------------------------- */
 
     for( int iField = 0; iField < poDefn->GetFieldCount(); iField++ )
     {

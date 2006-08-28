@@ -1452,6 +1452,11 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
         || fread( psSHP->pabyRec, psSHP->panRecSize[hEntity]+8, 1, 
                   psSHP->fpSHP ) != 1 )
     {
+        /*
+         * TODO - mloskot: Consider detailed diagnostics of shape file,
+         * for example to detect if file is truncated.
+         */
+
 #ifdef USE_CPL
         CPLError( CE_Failure, CPLE_FileIO, 
                 "Error in fseek() or fread() reading object from .shp file." );
