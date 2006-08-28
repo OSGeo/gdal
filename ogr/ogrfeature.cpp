@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2006/08/28 15:24:40  fwarmerdam
+ * Ensure SetGeometryDirectly() doesn't assume an existing geometry on feature.
+ *
  * Revision 1.41  2006/08/28 15:17:57  mloskot
  * Added comment about NULL values passed to SetGeometry* functions. Added assert to GetNextFeature() of shape driver.
  *
@@ -348,11 +351,12 @@ OGRFeatureDefnH OGR_F_GetDefnRef( OGRFeatureH hFeat )
 OGRErr OGRFeature::SetGeometryDirectly( OGRGeometry * poGeomIn )
 
 {
-    // Deallocate previous and assign new geometry
-    delete poGeometry;
+    if( poGeometry != NULL )
+        delete poGeometry;
+
     poGeometry = poGeomIn;
 
-    // TODO - I should be verifying that the geometry matches the defn's type.
+    // I should be verifying that the geometry matches the defn's type.
     
     return OGRERR_NONE;
 }
