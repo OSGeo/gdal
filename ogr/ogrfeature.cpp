@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2006/08/28 15:17:57  mloskot
+ * Added comment about NULL values passed to SetGeometry* functions. Added assert to GetNextFeature() of shape driver.
+ *
  * Revision 1.40  2006/08/28 14:00:02  mloskot
  * Added stronger test of Shapefile reading failures, e.g. truncated files.
  * The problem was discovered by Tim Sutton and reported here https://svn.qgis.org/trac/ticket/200
@@ -333,7 +336,9 @@ OGRFeatureDefnH OGR_F_GetDefnRef( OGRFeatureH hFeat )
  *
  * This method is the same as the C function OGR_F_SetGeometryDirectly().
  *
- * @param poGeomIn new geometry to apply to feature.
+ * @param poGeomIn new geometry to apply to feature. Passing NULL value here
+ * is correct and it will result in deallocation of currently assigned geometry
+ * without assigning new one.
  *
  * @return OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if
  * the geometry type is illegal for the OGRFeatureDefn (checking not yet
@@ -343,12 +348,6 @@ OGRFeatureDefnH OGR_F_GetDefnRef( OGRFeatureH hFeat )
 OGRErr OGRFeature::SetGeometryDirectly( OGRGeometry * poGeomIn )
 
 {
-    if( NULL == poGeomIn )
-    {
-        // TODO - mloskot: Is this error code OK?
-        return OGRERR_CORRUPT_DATA;
-    }
-
     // Deallocate previous and assign new geometry
     delete poGeometry;
     poGeometry = poGeomIn;
@@ -399,7 +398,9 @@ OGRErr OGR_F_SetGeometryDirectly( OGRFeatureH hFeat, OGRGeometryH hGeom )
  *
  * This method is the same as the C function OGR_F_SetGeometry().
  *
- * @param poGeomIn new geometry to apply to feature.
+ * @param poGeomIn new geometry to apply to feature. Passing NULL value here
+ * is correct and it will result in deallocation of currently assigned geometry
+ * without assigning new one.
  *
  * @return OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if
  * the geometry type is illegal for the OGRFeatureDefn (checking not yet
