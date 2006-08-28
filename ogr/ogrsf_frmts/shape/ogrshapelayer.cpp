@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2006/08/28 15:17:57  mloskot
+ * Added comment about NULL values passed to SetGeometry* functions. Added assert to GetNextFeature() of shape driver.
+ *
  * Revision 1.32  2006/08/28 14:27:51  mloskot
  * Added additional tests to ogrshapelayer.cpp supplementary to my last commit.
  *
@@ -435,11 +438,9 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
     }        
 
     /*
-     * TODO - mloskot: Should we set here strong assertion?
-     *
      * NEVER SHOULD GET HERE
      */
-    return NULL;
+    CPLAssert(!"OGRShapeLayer::GetNextFeature(): Execution never should get here!");
 }
 
 /************************************************************************/
