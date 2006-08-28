@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2006/08/28 14:27:51  mloskot
+ * Added additional tests to ogrshapelayer.cpp supplementary to my last commit.
+ *
  * Revision 1.31  2006/07/26 11:08:06  mloskot
  * Fixed Bug 1250. Thanks to Bart van den Eijnden for reporting it.
  *
@@ -368,7 +371,7 @@ OGRErr OGRShapeLayer::SetNextByIndex( long nIndex )
 OGRFeature *OGRShapeLayer::GetNextFeature()
 
 {
-    OGRFeature  *poFeature;
+    OGRFeature  *poFeature = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Collect a matching list if we have attribute or spatial         */
@@ -389,7 +392,9 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
         if( panMatchingFIDs != NULL )
         {
             if( panMatchingFIDs[iMatchingFID] == OGRNullFID )
+            {
                 return NULL;
+            }
 
             poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, 
                                            panMatchingFIDs[iMatchingFID++] );
@@ -397,7 +402,9 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
         else
         {
             if( iNextShapeId >= nTotalShapeCount )
+            {
                 return NULL;
+            }
     
             if( hDBF && DBFIsRecordDeleted( hDBF, iNextShapeId ) )
                 poFeature = NULL;
@@ -411,19 +418,28 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
         if( poFeature != NULL )
         {
             if( poFeature->GetGeometryRef() != NULL )
+            {
                 poFeature->GetGeometryRef()->assignSpatialReference( poSRS );
+            }
 
             m_nFeaturesRead++;
 
-            if( (m_poFilterGeom == NULL
-                 || FilterGeometry( poFeature->GetGeometryRef() ) )
-                && (m_poAttrQuery == NULL
-                    || m_poAttrQuery->Evaluate( poFeature )) )
+            if( (m_poFilterGeom == NULL || FilterGeometry( poFeature->GetGeometryRef() ) )
+                && (m_poAttrQuery == NULL || m_poAttrQuery->Evaluate( poFeature )) )
+            {
                 return poFeature;
+            }
 
             delete poFeature;
         }
     }        
+
+    /*
+     * TODO - mloskot: Should we set here strong assertion?
+     *
+     * NEVER SHOULD GET HERE
+     */
+    return NULL;
 }
 
 /************************************************************************/
@@ -433,8 +449,8 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
 OGRFeature *OGRShapeLayer::GetFeature( long nFeatureId )
 
 {
-    OGRFeature *poFeature = 
-         SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, nFeatureId );
+    OGRFeature *poFeature = NULL;
+    poFeature = SHPReadOGRFeature( hSHP, hDBF, poFeatureDefn, nFeatureId );
 
     if( poFeature != NULL )
     {
@@ -442,9 +458,14 @@ OGRFeature *OGRShapeLayer::GetFeature( long nFeatureId )
             poFeature->GetGeometryRef()->assignSpatialReference( poSRS );
 
         m_nFeaturesRead++;
+    
+        return poFeature;
     }
 
-    return poFeature;
+    /*
+     * Reading shape feature failed.
+     */
+    return NULL;
 }
 
 /************************************************************************/
