@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/08/29 22:38:29  fwarmerdam
+ * Added support for saving and load papszWarpOptions.
+ *
  * Revision 1.19  2005/04/11 17:20:40  fwarmerdam
  * ensure dstnodata is duplicate in clonewarpoptions: bug 821
  *
@@ -846,6 +849,27 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
         GDALGetDataTypeName( psWO->eWorkingDataType ) );
 
 /* -------------------------------------------------------------------- */
+/*      Name/value warp options.                                        */
+/* -------------------------------------------------------------------- */
+    int iWO;
+
+    for( iWO = 0; psWO->papszWarpOptions != NULL 
+             && psWO->papszWarpOptions[iWO] != NULL; iWO++ )
+    {
+        char *pszName = NULL;
+        const char *pszValue = 
+            CPLParseNameValue( psWO->papszWarpOptions[iWO], &pszName );
+
+        CPLXMLNode *psOption = 
+            CPLCreateXMLElementAndValue( 
+                psTree, "Option", pszValue );
+
+        CPLCreateXMLNode( 
+            CPLCreateXMLNode( psOption, CXT_Attribute, "name" ),
+            CXT_Text, pszName );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Source and Destination Data Source                              */
 /* -------------------------------------------------------------------- */
     if( psWO->hSrcDS != NULL )
@@ -1002,6 +1026,28 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
         GDALGetDataTypeByName(
             CPLGetXMLValue(psTree,"WorkingDataType","Unknown"));
 
+/* -------------------------------------------------------------------- */
+/*      Name/value warp options.                                        */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psItem; 
+
+    for( psItem = psTree->psChild; psItem != NULL; psItem = psItem->psNext )
+    {
+        if( psItem->eType == CXT_Element 
+            && EQUAL(psItem->pszValue,"Option") )
+        {
+            const char *pszName = CPLGetXMLValue(psItem, "Name", NULL );
+            const char *pszValue = CPLGetXMLValue(psItem, "", NULL );
+
+            if( pszName != NULL && pszValue != NULL )
+            {
+                psWO->papszWarpOptions = 
+                    CSLSetNameValue( psWO->papszWarpOptions, 
+                                     pszName, pszValue );
+            }
+        }
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Source Dataset.                                                 */
 /* -------------------------------------------------------------------- */
