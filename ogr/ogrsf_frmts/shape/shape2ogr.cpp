@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2006/09/02 19:56:20  mloskot
+ * Re-enabled reading NULL geometries from shapefile
+ * (was broken in shape2ogr.cpp, rev 1.46)
+ *
  * Revision 1.46  2006/08/28 14:00:02  mloskot
  * Added stronger test of Shapefile reading failures, e.g. truncated files.
  * The problem was discovered by Tim Sutton and reported here https://svn.qgis.org/trac/ticket/200
@@ -472,7 +476,7 @@ OGRLinearRing * CreateLinearRing ( SHPObject *psShape, int ring )
 
 OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
 {
-    CPLDebug( "Shape", "SHPReadOGRObject( iShape=%d )\n", iShape );
+    // CPLDebug( "Shape", "SHPReadOGRObject( iShape=%d )\n", iShape );
 
     SHPObject   *psShape;
     OGRGeometry *poOGR = NULL;
@@ -1324,14 +1328,15 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
     {
         OGRGeometry* poGeometry = NULL;
         poGeometry = SHPReadOGRObject( hSHP, iShape );
-        if( NULL == poGeometry )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, 
-                      "Couldn't read geometry from shape with feature id (%d), likely data is corrupted.",
-                      iShape );
 
-            return NULL;
-        }
+        /*
+         * NOTE - mloskot:
+         * Two possibilities are expected here (bot hare tested by GDAL Autotests):
+         * 1. Read valid geometry and assign it directly.
+         * 2. Read and assign null geometry if it can not be read correctly from a shapefile
+         *
+         * It's NOT required here to test poGeometry == NULL.
+         */
 
         poFeature->SetGeometryDirectly( poGeometry );
     }

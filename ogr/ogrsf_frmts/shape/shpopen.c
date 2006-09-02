@@ -1458,8 +1458,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
          */
 
 #ifdef USE_CPL
-        CPLError( CE_Failure, CPLE_FileIO, 
-                "Error in fseek() or fread() reading object from .shp file." );
+        CPLDebug( "Shape", "Error in fseek() or fread() reading object from .shp file." );
 #endif
         return NULL;
     }
