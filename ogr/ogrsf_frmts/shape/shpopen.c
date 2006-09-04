@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: shpopen.c,v 1.48 2006/01/26 15:07:32 fwarmerdam Exp $
+ * $Id: shpopen.c,v 1.51 2006/09/04 15:24:01 fwarmerdam Exp $
  *
  * Project:  Shapelib
  * Purpose:  Implementation of core Shapefile read/write functions.
@@ -33,7 +33,18 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  *
- * $Log$
+ * $Log: shpopen.c,v $
+ * Revision 1.51  2006/09/04 15:24:01  fwarmerdam
+ * Fixed up log message for 1.49.
+ *
+ * Revision 1.50  2006/09/04 15:21:39  fwarmerdam
+ * fix of last fix
+ *
+ * Revision 1.49  2006/09/04 15:21:00  fwarmerdam
+ * MLoskot: Added stronger test of Shapefile reading failures, e.g. truncated
+ * files.  The problem was discovered by Tim Sutton and reported here
+ *   https://svn.qgis.org/trac/ticket/200
+ *
  * Revision 1.48  2006/01/26 15:07:32  fwarmerdam
  * add bMeasureIsUsed flag from Craig Bruce: Bug 1249
  *
@@ -195,7 +206,7 @@
 #include <string.h>
 #include <stdio.h>
 
-SHP_CVSID("$Id: shpopen.c,v 1.48 2006/01/26 15:07:32 fwarmerdam Exp $")
+SHP_CVSID("$Id: shpopen.c,v 1.51 2006/09/04 15:24:01 fwarmerdam Exp $")
 
 typedef unsigned char uchar;
 
