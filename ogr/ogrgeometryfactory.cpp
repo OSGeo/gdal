@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2006/09/05 15:54:54  fwarmerdam
+ * Fixed docs on nBytes for createFromWkb().
+ *
  * Revision 1.31  2006/08/24 19:32:21  hobu
  * a little example for OGR_G_CreateFromWkt
  *
@@ -160,7 +163,7 @@ CPL_CVSID("$Id$");
  * @param ppoReturn the newly created geometry object will be assigned to the
  *                  indicated pointer on return.  This will be NULL in case
  *                  of failure.
- * @param nBytes the number of bytes available in pabyData, or zero if it isn't
+ * @param nBytes the number of bytes available in pabyData, or -1 if it isn't
  *               known.
  *
  * @return OGRERR_NONE if all goes well, otherwise any of
