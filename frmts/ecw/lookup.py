@@ -29,6 +29,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.3  2006/09/05 01:23:38  fwarmerdam
+# do not alter linear projection parameter units (bug 1280)
+#
 # Revision 1.2  2006/04/03 01:46:18  fwarmerdam
 # Added somenew projections
 #
@@ -103,8 +106,8 @@ for line in pfile.readlines():
 	# Handle translation of the projection parameters.
 
 	if type != 'utm':
-	    fn = float(dline[1])*lsize
-	    fe = float(dline[2])*lsize
+	    fn = float(dline[1])
+	    fe = float(dline[2])
 
         if type == 'tranmerc':
 	    srs.SetTM( r2d(dline[5]), r2d(dline[4]), float(dline[3]), fe, fn )
