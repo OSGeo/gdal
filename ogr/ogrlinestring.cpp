@@ -28,8 +28,13 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2006/09/05 12:14:28  mloskot
+ * Fixed nBytesAvailable tests inside importFromWkb()
+ * in OGRLineString and OGRLinearRing classes.
+ *
  * Revision 1.58  2006/07/15 09:12:44  mloskot
- * New fixes related to Bug 1195. Recent fixes had minor bugs. NOTE: OGR autotests are failing so they may need some changes (in progress).
+ * New fixes related to Bug 1195. Recent fixes had minor bugs.
+ * NOTE: OGR autotests are failing so they may need some changes (in progress).
  *
  * Revision 1.57  2006/07/14 20:30:25  mloskot
  * Fixed new issue related to Bug 1195. Fixed Bug 313.
@@ -914,7 +919,7 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
     CPLDebug( "OGR", "WKB Buffer check:\n\tnNewNumPoints=%d\n\tnBufferMinSize=%u\n\tnBytesAvailable=%d\n",
               nNewNumPoints, nBufferMinSize, nBytesAvailable);
 
-    if( nBufferMinSize > nBytesAvailable )
+    if( nBufferMinSize > nBytesAvailable && nBytesAvailable > 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Length of input WKB is too small" );
