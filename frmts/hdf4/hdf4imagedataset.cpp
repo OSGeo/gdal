@@ -4,10 +4,10 @@
  * Project:  Hierarchical Data Format Release 4 (HDF4)
  * Purpose:  Read subdatasets of HDF4 file.
  *           This driver initially based on code supplied by Markus Neteler
- * Author:   Andrey Kiselev, dron@remotesensing.org
+ * Author:   Andrey Kiselev, dron@ak4719.spb.edu
  *
  ******************************************************************************
- * Copyright (c) 2002, Andrey Kiselev <dron@remotesensing.org>
+ * Copyright (c) 2002, Andrey Kiselev <dron@ak4719.spb.edu>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.62  2006/09/05 16:44:10  dron
+ * Support for 4D HDF-EOS Grid datasets.
+ *
  * Revision 1.61  2006/08/25 15:11:37  fwarmerdam
  * Fixed problem with poDS->iNumType getting reset improperly for
  * swath datasets (related to geolocation refactoring).
@@ -182,7 +185,7 @@ class HDF4ImageDataset : public HDF4Dataset
                 iInterlaceMode, iPalInterlaceMode, iPalDataType;
     int32       nComps, nPalEntries;
     int32       aiDimSizes[MAX_VAR_DIMS];
-    int         iXDim, iYDim, iBandDim;
+    int         iXDim, iYDim, iBandDim, i4Dim;
     char        **papszLocalMetadata;
 #define    N_COLOR_ENTRIES    256
     uint8       aiPaletteData[N_COLOR_ENTRIES][3]; // XXX: Static array for now
@@ -403,6 +406,23 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                             poGDS->pszSubdatasetName );
                             switch ( poGDS->iRank )
                             {
+                                case 4: // 4Dim: volume
+                                    aiStart[poGDS->i4Dim] =
+                                        (nBand - 1)
+                                        / poGDS->aiDimSizes[poGDS->iBandDim];
+                                    aiEdges[poGDS->i4Dim] = 1;
+
+                                    aiStart[poGDS->iBandDim] =
+                                        (nBand - 1)
+                                        % poGDS->aiDimSizes[poGDS->iBandDim];
+                                    aiEdges[poGDS->iBandDim] = 1;
+                                
+                                    aiStart[poGDS->iYDim] = nBlockYOff;
+                                    aiEdges[poGDS->iYDim] = nBlockYSize;
+                                
+                                    aiStart[poGDS->iXDim] = nBlockXOff;
+                                    aiEdges[poGDS->iXDim] = nBlockXSize;
+                                    break;
                                 case 3: // 3Dim: volume
                                     aiStart[poGDS->iBandDim] = nBand - 1;
                                     aiEdges[poGDS->iBandDim] = 1;
@@ -2186,30 +2206,38 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                                                    CSLT_HONOURSTRINGS );
                 nDimCount = CSLCount( papszDimList );
 
-                // Search for the "Bands" name or take the first dimension
-                // as a number of bands
+                // Search for the "Band" word in the name of dimension
+                // or take the first one as a number of bands
                 if ( poDS->iRank == 2 )
                     poDS->nBands = 1;
                 else
                 {
-                    poDS->nBands = poDS->aiDimSizes[0];
                     for ( i = 0; i < nDimCount; i++ )
                     {
-                        if ( EQUALN( papszDimList[i], "Band", 4 ) )
+                        if ( strstr( papszDimList[i], "Band" ) )
                         {
+                            poDS->iBandDim = i;
                             poDS->nBands = poDS->aiDimSizes[i];
+                            // Handle 4D datasets
+                            if ( poDS->iRank > 3 && i < nDimCount - 1 )
+                            {
+                                // FIXME: is there a better way to search for
+                                // the 4th dimension?
+                                poDS->i4Dim = i + 1;
+                                poDS->nBands *= poDS->aiDimSizes[poDS->i4Dim];
+                            }
                             break;
                         }
                     }
+
+                    if ( i == nDimCount )
+                            poDS->nBands = poDS->aiDimSizes[0];
                 }
 
                 // Search for the "XDim" and "YDim" names or take the last
                 // two dimensions as X and Y sizes
                 poDS->iXDim = nDimCount - 1;
                 poDS->iYDim = nDimCount - 2;
-
-                if( nDimCount >= 3 )
-                    poDS->iBandDim = nDimCount - 3;
 
                 for ( i = 0; i < nDimCount; i++ )
                 {
