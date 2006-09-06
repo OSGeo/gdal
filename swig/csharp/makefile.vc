@@ -1,14 +1,35 @@
+#
+# makefile.vc - MSVC++ makefile for the C#/GDAL extension
+#
+# This VC++ makefile will build the GDAL C# interface assemblies 
+#
+# To use the makefile:
+#  - Open a DOS prompt window
+#  - Run the VCVARS32.BAT script to initialize the VC++ environment variables
+#  - Start the build with:  nmake /f makefile.vc
+#
+# $Id$
+#
+
 !INCLUDE ../../nmake.opt
 
+#Uncomment the following line if you want to compile with MONO on windows
+#MONO = YES
+
+!IFDEF MONO
+CSC = mcs
+!ELSE
+CSC = csc
+!ENDIF
 
 OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
 
 
 all: sign ogr_dir gdal_dir osr_dir const_dir
-    csc /debug:full /target:library /out:gdal_ogr_csharp.dll ogr\*.cs
-    csc /debug:full /target:library /out:gdal_gdal_csharp.dll gdal\*.cs 
-    csc /debug:full /target:library /out:gdal_gdalconst_csharp.dll const\*.cs
-    csc /debug:full /target:library /out:gdal_osr_csharp.dll osr\*.cs 
+    $(CSC) /debug:full /target:library /out:gdal_ogr_csharp.dll ogr\*.cs
+    $(CSC) /debug:full /target:library /out:gdal_gdal_csharp.dll gdal\*.cs 
+    $(CSC) /debug:full /target:library /out:gdal_gdalconst_csharp.dll const\*.cs
+    $(CSC) /debug:full /target:library /out:gdal_osr_csharp.dll osr\*.cs 
     link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) ogr_wrap.obj \
 		$(EXTERNAL_LIBS) ..\..\gdal.lib\
 		 /out:gdal_ogr_wrap.dll $(LINKER_FLAGS)
@@ -44,6 +65,20 @@ osr_dir:
 	$(MAKE) /f makefile.vc
 	cd ..
 	
+interface:
+	cd const
+    $(SWIG) -csharp -namespace GDAL -dllimport gdal_gdalconst_wrap -o gdalconst_wrap.c ../../include/gdalconst.i
+	cd ..
+	cd gdal
+	$(SWIG) -c++ -csharp -namespace GDAL  -dllimport gdal_gdal_wrap -I../../include/csharp -o gdal_wrap.cpp ../../include/gdal.i
+	cd ..
+	cd osr
+	$(SWIG) -c++ -csharp -namespace OSR  -dllimport gdal_osr_wrap -I../../include/csharp -o osr_wrap.cpp ../../include/osr.i
+	cd ..
+	cd ogr
+	$(SWIG) -c++ -csharp -namespace OGR  -dllimport ../osr/gdal_osr_wrap -I../../include/csharp -o ../osr/osr_wrap.cpp ../../include/osr.i
+	$(SWIG) -c++ -csharp -namespace OGR -dllimport gdal_ogr_wrap -I../../include/csharp -o ogr_wrap.cpp ../../include/ogr.i	
+	cd ..
 	
 clean:	
 	cd gdal
