@@ -1,0 +1,8 @@
+#
+# csharp.opt - C# specific user definied options
+#
+# $Id$
+#
+
+#Uncomment the following line if you want to compile with MONO on windows
+#MONO = YES
