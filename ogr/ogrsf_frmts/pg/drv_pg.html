@@ -33,6 +33,9 @@ is used as a source of OGC WKB geometry.<p>
 If there is an "ogc_fid" field, it will be used to set the feature id of
 the features, and not treated as a regular field. <p>
 
+The layer name may be of the form "schema.table". The schema must exist, and the 
+user needs to have write permissions for the target and the public schema.<p>
+
 The PostgreSQL driver passes SQL statements directly to PostgreSQL rather
 than evaluating them internally when using the ExecuteSQL() call on the
 OGRDataSource, or the -sql command option to ogr2ogr.  Attribute query
@@ -52,8 +55,7 @@ timestamp and datetime are handled as date types and all other
 types are just treated as strings. <p>
 
 <li> A sequence object called <tablename>_ogc_fid_seq is created for new
-tables (layer), and must be dropped separately from the table when cleaning
-up.<p>
+tables (layer)<p>
 
 <li> Sequential reading is done within a single transaction.  Any attempts
 to write to a layer within a sequential read will likely result in a "BEGIN"
@@ -108,8 +110,8 @@ Important to set to 2 for 2D layers with PostGIS 1.0+ as it has constraints
 on the geometry dimension during loading.<p>
 <li> <b>GEOMETRY_NAME</b>: Set name of geometry column in new table.  If 
 omitted it defaults to wkb_geometry.<p>
-<li> <b>SCHEMA</b>: Set name of schema for new table. Sets search_path to schema,public.
-More than one layers with the same name in different schemas ist not supported.<p>
+<li> <b>SCHEMA</b>: Set name of schema for new table.
+Using the same layer name in different schemas ist supported, but not in the public schema and others.<p>
 </ul>
 
 <h3>Environment variables</h3>

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2006/09/07 14:01:56  pka
+ * Support for layers named "schema.table"
+ *
  * Revision 1.57  2006/08/26 17:11:38  pka
  * Added support for using schemas (-lco SCHEMA)
  * Closes http://bugzilla.remotesensing.org/show_bug.cgi?id=522
@@ -158,7 +161,8 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
-                                  const char * pszTableName,
+                                  const char * pszTableNameIn,
+                                  const char * pszSchemaNameIn,
                                   int bUpdate, int nSRSIdIn )
 
 {
@@ -172,9 +176,15 @@ OGRPGTableLayer::OGRPGTableLayer( OGRPGDataSource *poDSIn,
 
     nSRSId = nSRSIdIn;
 
-    pszSchemaName = NULL;
+    pszTableName = CPLStrdup( pszTableNameIn );
+    if (pszSchemaNameIn)
+      pszSchemaName = CPLStrdup( pszSchemaNameIn );
+    else
+      pszSchemaName = NULL;
 
-    poFeatureDefn = ReadTableDefinition( pszTableName );
+    pszSqlTableName = (char*)CPLMalloc(255); //set in ReadTableDefinition
+
+    poFeatureDefn = ReadTableDefinition( pszTableName, pszSchemaName );
 
     ResetReading();
 
@@ -196,6 +206,9 @@ OGRPGTableLayer::~OGRPGTableLayer()
 
 {
     EndCopy();
+    CPLFree( pszSqlTableName );
+    CPLFree( pszTableName );
+    CPLFree( pszSchemaName );
 }
 
 /************************************************************************/
@@ -205,12 +218,14 @@ OGRPGTableLayer::~OGRPGTableLayer()
 /*      catalog.                                                        */
 /************************************************************************/
 
-OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
+OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTableIn,
+                                                      const char * pszSchemaNameIn )
 
 {
     PGresult            *hResult;
     CPLString           osCommand;
     CPLString           osPrimaryKey;
+    CPLString           osCurrentSchema;
     PGconn              *hPGConn = poDS->GetPGConn();
 
     poDS->FlushSoftTransaction();
@@ -224,6 +239,18 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
     /* -------------------------------------------- */
     osPrimaryKey = CPLGetConfigOption( "PGSQL_OGR_FID", "ogc_fid" );
 
+    // 
+    /* -------------------------------------------- */
+    /*          Get the current schema              */
+    /* -------------------------------------------- */
+    hResult = PQexec(hPGConn,"SELECT current_schema()");
+    if ( hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult,0,0) )
+    {
+        osCurrentSchema = PQgetvalue(hResult,0,0);
+
+        PQclear( hResult );
+    }
+
     /* TODO make changes corresponded to Frank issues
        
     sprintf ( szCommand,
@@ -232,7 +259,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
               "WHERE c.contype='p' AND c.conrelid=cl.oid "
               "AND a.attnum = c.conkey[1] AND a.attrelid=cl.oid "
               "AND cl.relname = '%s'",
-              pszTable );
+              pszTableIn );
 
     hResult = PQexec(hPGConn, szCommand );
 
@@ -250,22 +277,29 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
     }*/
 
 /* -------------------------------------------------------------------- */
-/*      Fire off commands to get back the schema of the table.          */
+/*      Fire off commands to get back the columns of the table.          */
 /* -------------------------------------------------------------------- */
     hResult = PQexec(hPGConn, "BEGIN");
 
     if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
     {
         PQclear( hResult );
+
+        CPLString osSchemaClause;
+        if (pszSchemaNameIn)
+          osSchemaClause.Printf("AND n.nspname='%s'", pszSchemaNameIn);
+
         osCommand.Printf(
                  "DECLARE mycursor CURSOR for "
                  "SELECT DISTINCT a.attname, t.typname, a.attlen,"
                  "       format_type(a.atttypid,a.atttypmod) "
-                 "FROM pg_class c, pg_attribute a, pg_type t "
+                 "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n "
                  "WHERE c.relname = '%s' "
                  "AND a.attnum > 0 AND a.attrelid = c.oid "
-                 "AND a.atttypid = t.oid",
-                 pszTable );
+                 "AND a.atttypid = t.oid "
+                 "AND c.relnamespace=n.oid "
+                 "%s",
+                 pszTableIn, osSchemaClause.c_str());
 
         hResult = PQexec(hPGConn, osCommand.c_str() );
     }
@@ -286,7 +320,20 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
 /* -------------------------------------------------------------------- */
 /*      Parse the returned table information.                           */
 /* -------------------------------------------------------------------- */
-    OGRFeatureDefn *poDefn = new OGRFeatureDefn( pszTable );
+    char szLayerName[256];
+    if ( pszSchemaNameIn && osCurrentSchema != pszSchemaNameIn )
+    {
+        sprintf( szLayerName, "%s.%s", pszSchemaNameIn, pszTableIn );
+        sprintf( pszSqlTableName, "%s.\"%s\"", pszSchemaNameIn, pszTableIn );
+    }
+    else
+    {
+        //no prefix for current_schema in layer name, for backwards compatibility
+        strcpy( szLayerName, pszTableIn );
+        sprintf( pszSqlTableName, "\"%s\"", pszTableIn );
+    }
+
+    OGRFeatureDefn *poDefn = new OGRFeatureDefn( szLayerName );
     int            iRecord;
 
     poDefn->Reference();
@@ -304,7 +351,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
         {
             bHasFid = TRUE;
             pszFIDColumn = CPLStrdup(oField.GetNameRef());
-            CPLDebug("OGR_PG","Using column '%s' as FID for table '%s'", pszFIDColumn, pszTable );
+            CPLDebug("OGR_PG","Using column '%s' as FID for table '%s'", pszFIDColumn, pszTableIn );
             continue;
         }
         else if( EQUAL(pszType,"geometry") )
@@ -416,29 +463,12 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
     hResult = PQexec(hPGConn, "COMMIT");
     PQclear( hResult );
 
-    // get the schema name
-    osCommand.Printf(
-              "SELECT n.nspname "
-              "FROM pg_class c, pg_namespace n  "
-              "WHERE c.relname = '%s' "
-              "AND c.relkind in ('r','v') "
-              "AND c.relnamespace=n.oid",
-              pszTable );
-
-    hResult = PQexec(hPGConn,osCommand);
-    if ( hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult,0,0) )
-    {
-        pszSchemaName = CPLStrdup(PQgetvalue(hResult,0,0));
-
-        PQclear( hResult );
-    }
-
     // get layer geometry type (for PostGIS dataset)
     if ( bHasPostGISGeometry )
     {
         osCommand.Printf(
             "SELECT type, coord_dimension FROM geometry_columns WHERE f_table_name='%s'",
-            pszTable);
+            pszTableIn);
 
         hResult = PQexec(hPGConn,osCommand);
         if ( hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult,0,0) )
@@ -468,7 +498,7 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
                 nGeomType = (OGRwkbGeometryType) (nGeomType | wkb25DBit);
 
             CPLDebug("OGR_PG","Layer '%s' geometry type: %s:%s, Dim=%d",
-                     pszTable, pszType, OGRGeometryTypeToName(nGeomType),
+                     pszTableIn, pszType, OGRGeometryTypeToName(nGeomType),
                      nCoordDimension );
 
             poDefn->SetGeomType( nGeomType );
@@ -478,38 +508,6 @@ OGRFeatureDefn *OGRPGTableLayer::ReadTableDefinition( const char * pszTable )
     }
 
     return poDefn;
-}
-
-/************************************************************************/
-/*                          SetSchemaSearchPath()                       */
-/************************************************************************/
-
-void OGRPGTableLayer::SetSchemaSearchPath()
-{
-    PGresult            *hResult;
-    CPLString           osCommand;
-    PGconn              *hPGConn = poDS->GetPGConn();
-    int set_search_path = FALSE; //only if pszSchemaName != current_schema()
-
-    hResult = PQexec( hPGConn, "SELECT current_schema()" );
-    if ( hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult,0,0) )
-    {
-        set_search_path = !EQUAL(pszSchemaName,PQgetvalue(hResult,0,0));
-
-        PQclear( hResult );
-    }
-
-    if (set_search_path)
-    {
-        osCommand.Printf(
-                  "SET search_path=%s,public",
-                  pszSchemaName );
-
-        CPLDebug( "OGR_PG", "PGexec(%s)", osCommand.c_str() );
-
-        hResult = PQexec( hPGConn, osCommand );
-        PQclear( hResult );
-    }
 }
 
 /************************************************************************/
@@ -591,10 +589,10 @@ void OGRPGTableLayer::BuildFullQueryStatement()
 
     pszQueryStatement = (char *)
         CPLMalloc(strlen(pszFields)+strlen(osWHERE)
-                  +strlen(poFeatureDefn->GetName()) + 40);
+                  +strlen(pszSqlTableName) + 40);
     sprintf( pszQueryStatement,
-             "SELECT %s FROM \"%s\" %s",
-             pszFields, poFeatureDefn->GetName(), osWHERE.c_str() );
+             "SELECT %s FROM %s %s",
+             pszFields, pszSqlTableName, osWHERE.c_str() );
 
     CPLFree( pszFields );
 }
@@ -607,8 +605,6 @@ void OGRPGTableLayer::ResetReading()
 
 {
     bUseCopy = USE_COPY_UNSET;
-
-    SetSchemaSearchPath();
 
     BuildFullQueryStatement();
 
@@ -736,8 +732,8 @@ OGRErr OGRPGTableLayer::DeleteFeature( long nFID )
 /* -------------------------------------------------------------------- */
 /*      Form the statement to drop the record.                          */
 /* -------------------------------------------------------------------- */
-    osCommand.Printf( "DELETE FROM \"%s\" WHERE \"%s\" = %ld",
-                      poFeatureDefn->GetName(), pszFIDColumn, nFID );
+    osCommand.Printf( "DELETE FROM %s WHERE \"%s\" = %ld",
+                      pszSqlTableName, pszFIDColumn, nFID );
 
 /* -------------------------------------------------------------------- */
 /*      Execute the insert.                                             */
@@ -862,7 +858,7 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Form the INSERT command.                                        */
 /* -------------------------------------------------------------------- */
-    osCommand.Printf( "INSERT INTO \"%s\" (", poFeatureDefn->GetName() );
+    osCommand.Printf( "INSERT INTO %s (", pszSqlTableName );
 
     if( bHasWkb && poFeature->GetGeometryRef() != NULL )
     {
@@ -1445,8 +1441,8 @@ OGRErr OGRPGTableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK )
     hResult = PQexec(hPGConn, "BEGIN");
     PQclear( hResult );
 
-    osCommand.Printf( "ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s",
-                      poFeatureDefn->GetName(), oField.GetNameRef(), szFieldType );
+    osCommand.Printf( "ALTER TABLE %s ADD COLUMN \"%s\" %s",
+                      pszSqlTableName, oField.GetNameRef(), szFieldType );
     hResult = PQexec(hPGConn, osCommand);
     if( PQresultStatus(hResult) != PGRES_COMMAND_OK )
     {
@@ -1501,8 +1497,8 @@ OGRFeature *OGRPGTableLayer::GetFeature( long nFeatureId )
 
     sprintf( pszCommand,
              "DECLARE getfeaturecursor CURSOR for "
-             "SELECT %s FROM \"%s\" WHERE %s = %ld",
-             pszFieldList, poFeatureDefn->GetName(), pszFIDColumn,
+             "SELECT %s FROM %s WHERE %s = %ld",
+             pszFieldList, pszSqlTableName, pszFIDColumn,
              nFeatureId );
     CPLFree( pszFieldList );
 
@@ -1566,17 +1562,15 @@ int OGRPGTableLayer::GetFeatureCount( int bForce )
     CPLString           osCommand;
     int                 nCount = 0;
 
-    SetSchemaSearchPath();
-
     poDS->FlushSoftTransaction();
     hResult = PQexec(hPGConn, "BEGIN");
     PQclear( hResult );
 
     osCommand.Printf(
         "DECLARE countCursor CURSOR for "
-        "SELECT count(*) FROM \"%s\" "
+        "SELECT count(*) FROM %s "
         "%s",
-        poFeatureDefn->GetName(), osWHERE.c_str() );
+        pszSqlTableName, osWHERE.c_str() );
 
     CPLDebug( "OGR_PG", "PQexec(%s)\n",
               osCommand.c_str() );
@@ -1623,8 +1617,8 @@ OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
 
         sprintf( szCommand,
                  "SELECT srid FROM geometry_columns "
-                 "WHERE f_table_name = '%s'",
-                 poFeatureDefn->GetName() );
+                 "WHERE f_table_name = '%s' AND f_schema_name = '%s'",
+                 pszTableName, pszSchemaName );
         hResult = PQexec(hPGConn, szCommand );
 
         if( hResult
@@ -1659,8 +1653,8 @@ OGRErr OGRPGTableLayer::GetExtent( OGREnvelope *psExtent, int bForce )
         PGresult        *hResult;
         CPLString       osCommand;
 
-        osCommand.Printf( "SELECT Extent(\"%s\") FROM \"%s\"", 
-                          pszGeomColumn, poFeatureDefn->GetName() );
+        osCommand.Printf( "SELECT Extent(\"%s\") FROM %s", 
+                          pszGeomColumn, pszSqlTableName );
 
         hResult = PQexec( hPGConn, osCommand );
         if( ! hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK || PQgetisnull(hResult,0,0) )
@@ -1725,12 +1719,12 @@ OGRErr OGRPGTableLayer::StartCopy()
 
     char *pszFields = BuildCopyFields();
 
-    int size = strlen(pszFields) +  strlen(poFeatureDefn->GetName()) + 100;
+    int size = strlen(pszFields) +  strlen(pszSqlTableName) + 100;
     char *pszCommand = (char *) CPLMalloc(size);
 
     sprintf( pszCommand,
-             "COPY \"%s\" (%s) FROM STDIN;",
-             poFeatureDefn->GetName(), pszFields );
+             "COPY %s (%s) FROM STDIN;",
+             pszSqlTableName, pszFields );
 
     CPLFree( pszFields );
 
