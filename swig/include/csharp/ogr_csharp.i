@@ -4,6 +4,9 @@
 
 /*
  * $Log$
+ * Revision 1.3  2006/09/07 10:26:31  tamas
+ * Added default exception support
+ *
  * Revision 1.2  2005/09/06 01:51:04  kruland
  * Removed GetDriverByName, GetDriver, Open, OpenShared because they are defined
  * in ogr now.
@@ -14,6 +17,8 @@
  * having to have a lot of conditionals in the main interface definition files.
  *
  */
+ 
+%include cpl_exceptions.i
 
 %rename (GetFieldType) GetType;
 %rename (GetDriverCount) OGRGetDriverCount;
