@@ -40,6 +40,7 @@ all: sign ogr_dir gdal_dir osr_dir const_dir
     link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) osr_wrap.obj \
 		$(EXTERNAL_LIBS) ..\..\gdal.lib\
 		 /out:gdal_osr_wrap.dll $(LINKER_FLAGS)
+
 sign:
     sn -k gdal.snk
     
@@ -77,6 +78,9 @@ interface:
 	$(SWIG) -c++ -csharp -namespace OGR  -dllimport ../osr/gdal_osr_wrap -I../../include/csharp -o ../osr/osr_wrap.cpp ../../include/osr.i
 	$(SWIG) -c++ -csharp -namespace OGR -dllimport gdal_ogr_wrap -I../../include/csharp -o ogr_wrap.cpp ../../include/ogr.i	
 	cd ..
+
+samples:
+    $(CSC) /r:gdal_ogr_csharp.dll /out:ogrinfo.exe apps\ogrinfo.cs
 	
 clean:	
 	cd gdal
