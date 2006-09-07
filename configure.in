@@ -77,7 +77,7 @@ esac
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(assert.h fcntl.h unistd.h dbmalloc.h dlfcn.h stdint.h limits.h locale.h values.h float.h errno.h)
+AC_CHECK_HEADERS(assert.h fcntl.h unistd.h dbmalloc.h dlfcn.h stdint.h limits.h locale.h values.h float.h errno.h direct.h)
 
 AC_C_BIGENDIAN
 
@@ -119,6 +119,7 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(snprintf vsnprintf)
 AC_CHECK_FUNCS(atoll)
 AC_CHECK_FUNCS(copysign copysignf strtof nan nanf)
+AC_CHECK_FUNCS(getcwd)
 
 dnl Check for declarations
 AC_CHECK_DECLS([nan, nanf])
@@ -1572,32 +1573,25 @@ AC_SUBST(DWGDIRECT)
 
 dnl ---------------------------------------------------------------------------
 dnl Select a Panorama Library to use, or disable driver.
-dnl XXX: All the stuff related to "Panorama" is a mess due to extremely
-dnl ugly nature of that software.
 dnl ---------------------------------------------------------------------------
 
+HAVE_PANORAMA=no
 AC_ARG_WITH(panorama,[  --with-panorama[=ARG]   Include "Panorama" GIS support via "Panorama" SDK (ARG=path)],,)
 
 if test "$with_panorama" = "no" ; then
 
-  HAVE_PANORAMA=no
-
   AC_MSG_NOTICE(["Panorama" GIS support disabled.])
 
-elif test "$with_panorama" = "yes" -o "$with_panorama" = "" ; then
-
-  AC_CHECK_LIB(mapacces24,mapOpenData,HAVE_PANORAMA=yes,HAVE_PANORAMA=no,)
-
-  if test "$HAVE_PANORAMA" = "yes" ; then   
-    LIBS="-lmapacces24 -L/usr/X11R6/lib -lX11 $LIBS"
-  fi
 else
 
-  HAVE_PANORAMA=yes
-  LIBS="-L$with_panorama/lib -lmapacces24 -L/usr/X11R6/lib -lX11 $LIBS"
-  PANORAMA_INC="-I$with_panorama/include $EXTRA_INCLUDES"
+  if test -r "$with_panorama/include/mapapi.h" ; then   
 
-  AC_MSG_NOTICE([using "Panorama" GIS library from $with_panorama.])
+    HAVE_PANORAMA=yes
+    PANORAMA_INC="-I$with_panorama/include $EXTRA_INCLUDES"
+    AC_MSG_NOTICE([using "Panorama" GIS library from $with_panorama.])
+
+  fi
+
 fi
 
 AC_SUBST(HAVE_PANORAMA,$HAVE_PANORAMA)
