@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2006/09/07 14:01:56  pka
+ * Support for layers named "schema.table"
+ *
  * Revision 1.50  2006/08/26 17:11:38  pka
  * Added support for using schemas (-lco SCHEMA)
  * Closes http://bugzilla.remotesensing.org/show_bug.cgi?id=522
@@ -481,6 +484,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /*      Parse the returned table list                                   */
 /* -------------------------------------------------------------------- */
     char        **papszTableNames=NULL;
+    char        **papszSchemaNames=NULL;
     int           iRecord;
 
     for( iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
@@ -493,6 +497,8 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
         papszTableNames = CSLAddString(papszTableNames,
                                        PQgetvalue(hResult, iRecord, 0));
+        papszSchemaNames = CSLAddString(papszSchemaNames,
+                                       PQgetvalue(hResult, iRecord, 1));
 
     }
 
@@ -514,7 +520,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
          papszTableNames != NULL && papszTableNames[iRecord] != NULL;
          iRecord++ )
     {
-        OpenTable( papszTableNames[iRecord], bUpdate, FALSE );
+        OpenTable( papszTableNames[iRecord], papszSchemaNames[iRecord], bUpdate, FALSE );
     }
 
     CSLDestroy( papszTableNames );
@@ -527,22 +533,22 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 /*                             OpenTable()                              */
 /************************************************************************/
 
-int OGRPGDataSource::OpenTable( const char *pszNewName, int bUpdate,
+int OGRPGDataSource::OpenTable( const char *pszNewName, const char *pszSchemaName, int bUpdate,
                                 int bTestOpen )
 
 {
 /* -------------------------------------------------------------------- */
 /*      Create the layer object.                                        */
 /* -------------------------------------------------------------------- */
-    OGRPGLayer  *poLayer;
+    OGRPGTableLayer  *poLayer;
 
-    poLayer = new OGRPGTableLayer( this, pszNewName, bUpdate );
+    poLayer = new OGRPGTableLayer( this, pszNewName, pszSchemaName, bUpdate );
 
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
 /* -------------------------------------------------------------------- */
-    papoLayers = (OGRPGLayer **)
-        CPLRealloc( papoLayers,  sizeof(OGRPGLayer *) * (nLayers+1) );
+    papoLayers = (OGRPGTableLayer **)
+        CPLRealloc( papoLayers,  sizeof(OGRPGTableLayer *) * (nLayers+1) );
     papoLayers[nLayers++] = poLayer;
 
     return TRUE;
@@ -563,10 +569,10 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
 /*      pretty dangerous if anything has a reference to this layer!     */
 /* -------------------------------------------------------------------- */
     CPLString osLayerName = papoLayers[iLayer]->GetLayerDefn()->GetName();
+    CPLString osTableName = papoLayers[iLayer]->GetTableName();
+    CPLString osSchemaName = papoLayers[iLayer]->GetSchemaName();
 
     CPLDebug( "OGR_PG", "DeleteLayer(%s)", osLayerName.c_str() );
-
-    papoLayers[iLayer]->ResetReading(); //Set schema search_path, if necessary
 
     delete papoLayers[iLayer];
     memmove( papoLayers + iLayer, papoLayers + iLayer + 1,
@@ -585,8 +591,8 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
     if( bHavePostGIS )
     {
         sprintf( szCommand,
-                 "SELECT DropGeometryColumn(current_schema()::text,'%s',(SELECT f_geometry_column from geometry_columns where f_table_name='%s' order by f_geometry_column limit 1))",
-                 osLayerName.c_str(), osLayerName.c_str() );
+                 "SELECT DropGeometryColumn('%s','%s',(SELECT f_geometry_column from geometry_columns where f_table_name='%s' and f_table_schema='%s' order by f_geometry_column limit 1))",
+                 osSchemaName.c_str(), osTableName.c_str(), osTableName.c_str(), osSchemaName.c_str() );
 
         CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
 
@@ -594,18 +600,7 @@ int OGRPGDataSource::DeleteLayer( int iLayer )
         PQclear( hResult );
     }
 
-    sprintf( szCommand, "DROP TABLE %s", osLayerName.c_str() );
-    CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
-    hResult = PQexec( hPGConn, szCommand );
-    PQclear( hResult );
-
-    hResult = PQexec(hPGConn, "COMMIT");
-    PQclear( hResult );
-
-    hResult = PQexec(hPGConn, "BEGIN");
-    PQclear( hResult );
-
-    sprintf( szCommand, "DROP SEQUENCE %s_ogc_fid_seq", osLayerName.c_str() );
+    sprintf( szCommand, "DROP TABLE %s.\"%s\" CASCADE", osSchemaName.c_str(), osTableName.c_str() );
     CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
     hResult = PQexec( hPGConn, szCommand );
     PQclear( hResult );
@@ -631,7 +626,8 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     char                szCommand[1024];
     const char          *pszGeomType;
     char                *pszLayerName;
-    const char          *pszSchemaName;
+    const char          *pszTableName;
+    char                *pszSchemaName;
     int                 nDimension = 3;
 
     if( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) )
@@ -642,24 +638,43 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     if( wkbFlatten(eType) == eType )
         nDimension = 2;
 
+    /* Postgres Schema handling:
+       Extract schema name from input layer name or passed with -lco SCHEMA.
+       Set layer name to "schema.table" or to "table" if schema == current_schema()
+       Usage without schema name is backwards compatible
+    */
+    pszTableName = strstr(pszLayerNameIn,".");
+    if ( pszTableName != NULL )
+    {
+      int length = pszTableName-pszLayerNameIn;
+      pszSchemaName = (char*)CPLMalloc(length);
+      strncpy(pszSchemaName, pszLayerNameIn, length);
+      pszSchemaName[length] = '\0';
+      ++pszTableName; //skip "."
+    }
+    else
+    {
+      pszSchemaName = NULL;
+      pszTableName = pszLayerNameIn;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Set the default schema for the layers.                          */
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue( papszOptions, "SCHEMA" ) != NULL )
     {
-        pszSchemaName = CSLFetchNameValue( papszOptions, "SCHEMA" );
-        sprintf( szCommand,
-                 "SET search_path=%s,public",
-                 pszSchemaName );
-
-        CPLDebug( "OGR_PG", "PGexec(%s)", szCommand );
-
-        hResult = PQexec( hPGConn, szCommand );
-        PQclear( hResult );
+        pszSchemaName = CPLStrdup(CSLFetchNameValue( papszOptions, "SCHEMA" ));
     }
-    else
+
+    if ( pszSchemaName == NULL )
     {
-       pszSchemaName = pszDBName; // Backwards compatiblity - AddGeometryColumn defaults to current_schema()
+      //pszSchemaName = current_schema()
+      hResult = PQexec(hPGConn,"SELECT current_schema()");
+      if ( hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult,0,0) )
+      {
+          pszSchemaName = CPLStrdup(PQgetvalue(hResult,0,0));
+          PQclear( hResult );
+      }
     }
 
 /* -------------------------------------------------------------------- */
@@ -679,12 +694,13 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
             }
             else
             {
-                CPLFree( pszLayerName );
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Layer %s already exists, CreateLayer failed.\n"
                           "Use the layer creation option OVERWRITE=YES to "
                           "replace it.",
                           pszLayerName );
+                CPLFree( pszLayerName );
+                CPLFree( pszSchemaName );
                 return NULL;
             }
         }
@@ -709,6 +725,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                   "Creation of layer %s with GEOM_TYPE %s has failed.",
                   pszLayerName, pszGeomType );
         CPLFree( pszLayerName );
+        CPLFree( pszSchemaName );
         return NULL;
     }
 
@@ -733,17 +750,17 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     if( !bHavePostGIS )
     {
         sprintf( szCommand,
-                 "CREATE TABLE \"%s\" ( "
+                 "CREATE TABLE %s.\"%s\" ( "
                  "   OGC_FID SERIAL, "
                  "   WKB_GEOMETRY %s, "
                  "   CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
-                 pszLayerName, pszGeomType, pszLayerName );
+                 pszSchemaName, pszTableName, pszGeomType, pszTableName );
     }
     else
     {
         sprintf( szCommand,
-                 "CREATE TABLE \"%s\" ( OGC_FID SERIAL, CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
-                 pszLayerName, pszLayerName );
+                 "CREATE TABLE %s.\"%s\" ( OGC_FID SERIAL, CONSTRAINT \"%s_pk\" PRIMARY KEY (OGC_FID) )",
+                 pszSchemaName, pszTableName, pszTableName );
     }
 
     CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
@@ -752,13 +769,11 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s\n%s", szCommand, PQerrorMessage(hPGConn) );
-
         CPLFree( pszLayerName );
-
+        CPLFree( pszSchemaName );
         PQclear( hResult );
         hResult = PQexec( hPGConn, "ROLLBACK" );
         PQclear( hResult );
-
         return NULL;
     }
 
@@ -777,7 +792,6 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
         if( CSLFetchNameValue( papszOptions, "DIM") != NULL )
             nDimension = atoi(CSLFetchNameValue( papszOptions, "DIM"));
 
-	/** rgp added this **/
         if( CSLFetchNameValue( papszOptions, "GEOMETRY_NAME") != NULL )
             pszGFldName = CSLFetchNameValue( papszOptions, "GEOMETRY_NAME");
 	else
@@ -788,8 +802,8 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
          * an effort to clean out such cruft.
          */
         sprintf( szCommand,
-                 "DELETE FROM geometry_columns WHERE f_table_name = '%s'",
-                 pszLayerName );
+                 "DELETE FROM geometry_columns WHERE f_table_name = '%s' AND f_table_schema = '%s'",
+                 pszTableName, pszSchemaName );
 
         CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
         hResult = PQexec(hPGConn, szCommand);
@@ -833,7 +847,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 
         sprintf( szCommand,
                  "select AddGeometryColumn('%s','%s','%s',%d,'%s',%d)",
-                 pszSchemaName, pszLayerName, pszGFldName, nSRSId, pszGeometryType,
+                 pszSchemaName, pszTableName, pszGFldName, nSRSId, pszGeometryType,
                  nDimension );
 
         CPLDebug( "OGR_PG", "PQexec(%s)", szCommand );
@@ -847,6 +861,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
                       pszLayerName );
 
             CPLFree( pszLayerName );
+            CPLFree( pszSchemaName );
 
             PQclear( hResult );
 
@@ -868,7 +883,7 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 /* -------------------------------------------------------------------- */
     OGRPGTableLayer     *poLayer;
 
-    poLayer = new OGRPGTableLayer( this, pszLayerName, TRUE, nSRSId );
+    poLayer = new OGRPGTableLayer( this, pszTableName, pszSchemaName, TRUE, nSRSId );
 
     poLayer->SetLaunderFlag( CSLFetchBoolean(papszOptions,"LAUNDER",TRUE) );
     poLayer->SetPrecisionFlag( CSLFetchBoolean(papszOptions,"PRECISION",TRUE));
@@ -876,12 +891,13 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 /* -------------------------------------------------------------------- */
 /*      Add layer to data source layer list.                            */
 /* -------------------------------------------------------------------- */
-    papoLayers = (OGRPGLayer **)
-        CPLRealloc( papoLayers,  sizeof(OGRPGLayer *) * (nLayers+1) );
+    papoLayers = (OGRPGTableLayer **)
+        CPLRealloc( papoLayers,  sizeof(OGRPGTableLayer *) * (nLayers+1) );
 
     papoLayers[nLayers++] = poLayer;
 
     CPLFree( pszLayerName );
+    CPLFree( pszSchemaName );
 
     return poLayer;
 }
@@ -929,7 +945,7 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
     /* first a case sensitive check */
     for( i = 0; i < count; i++ )
     {
-        OGRLayer *poLayer = GetLayer(i);
+        OGRPGTableLayer *poLayer = papoLayers[i];
 
         if( strcmp( pszName, poLayer->GetLayerDefn()->GetName() ) == 0 )
             return poLayer;
@@ -938,13 +954,13 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszName )
     /* then case insensitive */
     for( i = 0; i < count; i++ )
     {
-        OGRLayer *poLayer = GetLayer(i);
+        OGRPGTableLayer *poLayer = papoLayers[i];
 
         if( EQUAL( pszName, poLayer->GetLayerDefn()->GetName() ) )
             return poLayer;
     }
     
-    OpenTable( pszName, TRUE, FALSE );
+    OpenTable( pszName, NULL, TRUE, FALSE );
     
     if(GetLayerCount() == count+1) return GetLayer(count);
 

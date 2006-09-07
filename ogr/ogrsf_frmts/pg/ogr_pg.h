@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2006/09/07 14:01:56  pka
+ * Support for layers named "schema.table"
+ *
  * Revision 1.30  2006/08/26 17:11:38  pka
  * Added support for using schemas (-lco SCHEMA)
  * Closes http://bugzilla.remotesensing.org/show_bug.cgi?id=522
@@ -213,13 +216,16 @@ class OGRPGTableLayer : public OGRPGLayer
 {
     int                 bUpdateAccess;
 
-    OGRFeatureDefn     *ReadTableDefinition(const char *);
+    OGRFeatureDefn     *ReadTableDefinition(const char * pszTableName,
+                                            const char * pszSchemaName);
 
     void                BuildWhere(void);
     char               *BuildFields(void);
     void                BuildFullQueryStatement(void);
 
+    char               *pszTableName;
     char               *pszSchemaName;
+    char               *pszSqlTableName;
 
     CPLString           osQuery;
     CPLString           osWHERE;
@@ -234,7 +240,8 @@ class OGRPGTableLayer : public OGRPGLayer
     char                *BuildCopyFields(void);
 public:
                         OGRPGTableLayer( OGRPGDataSource *,
-                                         const char * pszName,
+                                         const char * pszTableName,
+                                         const char * pszSchemaName,
                                          int bUpdate, int nSRSId = -2 );
                         ~OGRPGTableLayer();
 
@@ -259,7 +266,8 @@ public:
 
 	virtual OGRErr		GetExtent( OGREnvelope *psExtent, int bForce );
 
-    virtual void        SetSchemaSearchPath();
+    const char*         GetTableName() { return pszTableName; }
+    const char*         GetSchemaName() { return pszSchemaName; }
 
     // follow methods are not base class overrides
     void                SetLaunderFlag( int bFlag )
@@ -311,7 +319,7 @@ class OGRPGDataSource : public OGRDataSource
         int nRelease;
     } PGver;
 
-    OGRPGLayer        **papoLayers;
+    OGRPGTableLayer   **papoLayers;
     int                 nLayers;
 
     char               *pszName;
@@ -352,7 +360,7 @@ class OGRPGDataSource : public OGRDataSource
     OGRErr              InitializeMetadataTables();
 
     int                 Open( const char *, int bUpdate, int bTestOpen );
-    int                 OpenTable( const char *, int bUpdate, int bTestOpen );
+    int                 OpenTable( const char * pszTableName, const char * pszSchemaName, int bUpdate, int bTestOpen );
 
     const char          *GetName() { return pszName; }
     int                 GetLayerCount() { return nLayers; }
