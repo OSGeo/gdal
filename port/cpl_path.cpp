@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/09/07 18:11:10  dron
+ * Added CPLGetCurrentDir().
+ *
  * Revision 1.21  2006/06/30 18:18:17  dron
  * Avoid warnings.
  *
@@ -377,6 +380,41 @@ const char *CPLGetExtension( const char *pszFullFilename )
     pszStaticResult[CPL_PATH_BUF_SIZE - 1] = '\0';
 
     return pszStaticResult;
+}
+
+/************************************************************************/
+/*                         CPLGetCurrentDir()                           */
+/************************************************************************/
+
+/**
+ * Get the current working directory name.
+ *
+ * @return a pointer to buffer, containing current working directory path
+ * or NULL in case of error.  User is responsible to free that buffer
+ * after usage with CPLFree() function.
+ **/
+
+char *CPLGetCurrentDir()
+
+{
+    size_t  nPathMax;
+    char    *pszDirPath;
+
+# ifdef _MAX_PATH
+    nPathMax = _MAX_PATH;
+# elif PATH_MAX
+    nPathMax = PATH_MAX;
+# else
+    nPathMax = 8192;
+# endif
+
+    pszDirPath = (char*)CPLMalloc( nPathMax );
+    if ( !pszDirPath )
+        return NULL;
+
+#ifdef HAVE_GETCWD
+    return getcwd( pszDirPath, nPathMax );
+#endif /* HAVE_GETCWD */
 }
 
 /************************************************************************/
@@ -773,3 +811,4 @@ const char *CPLExtractRelativePath( const char *pszBaseDir,
 
     return pszTarget + nBasePathLen + 1;
 }
+
