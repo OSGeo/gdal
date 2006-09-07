@@ -12,9 +12,7 @@
 #
 
 !INCLUDE ../../nmake.opt
-
-#Uncomment the following line if you want to compile with MONO on windows
-#MONO = YES
+!INCLUDE csharp.opt
 
 !IFDEF MONO
 CSC = mcs
@@ -104,3 +102,4 @@ clean:
 	-del *.cs
 	-del *.cpp
 	-del *.lib
+	-del *.mdb
