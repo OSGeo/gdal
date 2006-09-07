@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2006/09/07 18:11:10  dron
+ * Added CPLGetCurrentDir().
+ *
  * Revision 1.44  2006/08/23 15:09:46  fwarmerdam
  * Added --mempreload support, and VSICopyFile
  *
@@ -233,6 +236,7 @@ const char CPL_DLL *CPLGetDirname( const char * );
 const char CPL_DLL *CPLGetFilename( const char * );
 const char CPL_DLL *CPLGetBasename( const char * );
 const char CPL_DLL *CPLGetExtension( const char * );
+char       CPL_DLL *CPLGetCurrentDir();
 const char CPL_DLL *CPLFormFilename( const char *pszPath,
                                      const char *pszBasename,
                                      const char *pszExtension );

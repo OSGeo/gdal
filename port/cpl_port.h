@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2006/09/07 18:11:10  dron
+ * Added CPLGetCurrentDir().
+ *
  * Revision 1.52  2006/04/19 01:59:18  fwarmerdam
  * move deprecate declarations before system include files
  *
@@ -174,6 +177,10 @@
 #  include <locale.h>
 #endif
 
+#ifdef HAVE_DIRECT_H
+#  include <direct.h>
+#endif
+
 #ifdef _AIX
 #  include <strings.h>
 #endif
@@ -298,7 +305,7 @@ typedef unsigned long    GUIntBig;
 /*      effects.                                                        */
 /* -------------------------------------------------------------------- */
 #ifndef CPLIsEqual
-#  define CPLIsEqual(x,y) (fabs(fabs(x) - fabs(y)) < 0.0000000000001 ? 1 : 0)
+#  define CPLIsEqual(x,y) (fabs(fabs(x) - fabs(y)) < 0.0000000000001)
 #endif
 
 #ifndef EQUAL

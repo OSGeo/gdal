@@ -15,6 +15,9 @@
 #define copysignf _copysign
 #define copysignl _copysign
 
+#define HAVE_GETCWD 1
+#define getcwd _getcwd
+
 /* Define if you have the ANSI C header files.  */
 #ifndef STDC_HEADERS
 #  define STDC_HEADERS
@@ -44,6 +47,11 @@
 
 #define HAVE_ERRNO_H 1
 
+#define HAVE_SEARCH_H 1
+
+/* Define to 1 if you have the <direct.h> header file. */
+#define HAVE_DIRECT_H
+
 /* Define to 1 if you have the `localtime_r' function. */
 #undef HAVE_LOCALTIME_R
 
@@ -51,8 +59,6 @@
 #undef HAVE_DBMALLOC_H
 #undef HAVE_LIBDBMALLOC
 #undef WORDS_BIGENDIAN
-
-#define HAVE_SEARCH_H
 
 /* The size of a `int', as computed by sizeof. */
 #define SIZEOF_INT 4
