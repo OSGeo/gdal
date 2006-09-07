@@ -1,14 +1,17 @@
 /******************************************************************************
  * $Id$
  *
- * Name:     typemaps_cshar.i
+ * Name:     typemaps_csharp.i
  * Project:  GDAL SWIG Interface
  * Purpose:  Typemaps for C# bindings
- * Author:   Howard Butler
+ * Author:   Howard Butler, Tamas Szekeres
  *
 
  *
  * $Log$
+ * Revision 1.7  2006/09/07 10:25:45  tamas
+ * Corrected default typemaps to eliminate warnings at the interface creation
+ *
  * Revision 1.6  2005/08/19 13:42:39  kruland
  * Fix problem in a double[ANY] typemap which prevented compilation of wrapper.
  *
@@ -39,21 +42,21 @@
 
 /* CSHARP TYPEMAPS */
 
-%typemap(csharp,in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen, char *pBuf )
+%typemap(in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen, char *pBuf )
 {
-  /* %typemap(csharp, in,numinputs=0) (int *nLen, char **pBuf ) */
+  /* %typemap(in,numinputs=0) (int *nLen, char **pBuf ) */
   $1 = &nLen;
   $2 = &pBuf;
 }
 
-%typemap(csharp,argout) (int *nLen, char **pBuf )
+%typemap(argout) (int *nLen, char **pBuf )
 {
   /* %typemap(argout) (int *nLen, char **pBuf ) */
 
 }
-%typemap(csharp,freearg) (int *nLen, char **pBuf )
+%typemap(freearg) (int *nLen, char **pBuf )
 {
-  /* %typemap(csharp,freearg) (int *nLen, char **pBuf ) */
+  /* %typemap(freearg) (int *nLen, char **pBuf ) */
   if( $1 ) {
     free( *$2 );
   }
@@ -82,52 +85,63 @@ OGRErrMessages( int rc ) {
   }
 }
 %}
-%typemap(csharp,in,numinputs=1) (int nLen, char *pBuf )
-{
-  /* %typemap(csharp, in,numinputs=1) (int nLen, char *pBuf ) */
 
+%fragment("t_output_helper","header") %{
+  /* TODO */
+%}
+
+%typemap(in,numinputs=1) (int nLen, char *pBuf )
+{
+  /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
+  /*TODO*/
+	$2 = $null;
+    $1 = $null;
 }
 
 
-%typemap(csharp,in) (tostring argin) (string str)
+%typemap(in) (tostring argin) (string str)
 {
-  /* %typemap(csharp,in) (tostring argin) */
-
+  /* %typemap(in) (tostring argin) */
 }
 
-%typemap(csharp,in) (char **ignorechange) ( char *val )
+%typemap(in) (char **ignorechange) ( char *val )
 {
-  /* %typemap(csharp, in) (char **ignorechange) */
-
+  /* %typemap(in) (char **ignorechange) */
+	/*TODO*/
+	$1 = $null;
 }
 
-%typemap(csharp, out,fragment="OGRErrMessages") OGRErr
+%typemap(out,fragment="OGRErrMessages",canthrow=1) OGRErr
 {
-  /* %typemap(csharp, out) OGRErr */
-  
+  /* %typemap(out) OGRErr */
+  if (result != 0) {
+	SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, OGRErrMessages(result));
+    return $null;
+  }
+  $result = result;
 }
-%typemap(csharp, ret) OGRErr
+%typemap(ret) OGRErr
 {
-  /* %typemap(csharp, ret) OGRErr */
+  /* %typemap(ret) OGRErr */
 
 }
 
 
 /* GDAL Typemaps */
 
-%typemap(csharp,out) IF_ERR_RETURN_NONE
+%typemap(out) IF_ERR_RETURN_NONE
 {
-  /* %typemap(csharp,out) IF_ERR_RETURN_NONE */
+  /* %typemap(out) IF_ERR_RETURN_NONE */
 
 }
-%typemap(csharp,ret) IF_ERR_RETURN_NONE
+%typemap(ret) IF_ERR_RETURN_NONE
 {
- /* %typemap(csharp,ret) IF_ERR_RETURN_NONE */
+ /* %typemap(ret) IF_ERR_RETURN_NONE */
 
 }
-%typemap(csharp,out) IF_FALSE_RETURN_NONE
+%typemap(out) IF_FALSE_RETURN_NONE
 {
-  /* %typemap(csharp,out) IF_FALSE_RETURN_NONE */
+  /* %typemap(out) IF_FALSE_RETURN_NONE */
 
 }
 %typemap(ret) IF_FALSE_RETURN_NONE
@@ -136,15 +150,15 @@ OGRErrMessages( int rc ) {
 
 }
 
-%typemap(csharp,in,numargs=1) (int nList, int* pList)
+%typemap(in,numargs=1) (int nList, int* pList)
 {
   /* %typemap(in,numargs=1) (int nList, int* pList)*/
   /* check if is List */
 
 }
-%typemap(csharp,freearg) (int nList, int* pList)
+%typemap(freearg) (int nList, int* pList)
 {
-  /* %typemap(python,freearg) (int nList, int* pList) */
+  /* %typemap(freearg) (int nList, int* pList) */
   if ($2) {
     free((void*) $2);
   }
@@ -154,35 +168,36 @@ OGRErrMessages( int rc ) {
 /*
  * Typemap char ** -> dict
  */
-%typemap(csharp,out) char **dict
+%typemap(out) char **dict
 {
   /* %typemap(out) char ** -> to hash */
-
+  /*TODO*/
+	$result = $null;
 }
 
 /*
  * Typemap char **<- dict
  */
-%typemap(csharp,in) char **dict
+%typemap(in) char **dict
 {
   /* %typemap(in) char **dict */
 
 }
-%typemap(csharp,freearg) char **dict
+%typemap(freearg) char **dict
 {
-  /* %typemap(csharp,freearg) char **dict */
+  /* %typemap(freearg) char **dict */
   CSLDestroy( $1 );
 }
 
 %define OPTIONAL_POD(type,argstring)
-%typemap(csharp,in) (type *optional_##type) ( type val )
+%typemap(in) (type *optional_##type) ( type val )
 {
-  /* %typemap(csharp,in) (type *optional_##type) */
+  /* %typemap(in) (type *optional_##type) */
 
 }
-%typemap(csharp,typecheck,precedence=0) (type *optional_##type)
+%typemap(typecheck,precedence=0) (type *optional_##type)
 {
-  /* %typemap(csharp,typecheck,precedence=0) (type *optionalInt) */
+  /* %typemap(typecheck,precedence=0) (type *optionalInt) */
 
 }
 %enddef
@@ -192,37 +207,38 @@ OPTIONAL_POD(int,i);
 /*
  * Typemap maps char** arguments from Python Sequence Object
  */
-%typemap(csharp,in) char **options
+%typemap(in) char **options
 {
   /* %typemap(in) char **options */
   /* Check if is a list */
 
 }
-%typemap(csharp,freearg) char **options
+%typemap(freearg) char **options
 {
   /* %typemap(freearg) char **options */
   CSLDestroy( $1 );
 }
-%typemap(csharp,out) char **options
+%typemap(out) char **options
 {
   /* %typemap(out) char ** -> ( string ) */
-
+  /*TODO*/
+  $result = $null;
 }
 
 /*
  * Typemap for char **argout. 
  */
-%typemap(csharp,in,numinputs=0) (char **argout) ( char *argout=0 )
+%typemap(in,numinputs=0) (char **argout) ( char *argout=0 )
 {
   /* %typemap(in,numinputs=0) (char **argout) */
 
 }
-%typemap(csharp,argout,fragment="t_output_helper") (char **argout)
+%typemap(argout,fragment="t_output_helper") (char **argout)
 {
   /* %typemap(argout) (char **argout) */
 
 }
-%typemap(csharp,freearg) (char **argout)
+%typemap(freearg) (char **argout)
 {
   /* %typemap(freearg) (char **argout) */
 
@@ -237,32 +253,32 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
 }
 %}
 
-%typemap(csharp,in,numinputs=0) ( double argout[ANY]) (double argout[$dim0])
+%typemap(in,numinputs=0) ( double argout[ANY]) (double argout[$dim0])
 {
   /* %typemap(in,numinputs=0) (double argout[ANY]) */
-
+  $1 = argout;
 }
-%typemap(csharp,argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double argout[ANY])
+%typemap(argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double argout[ANY])
 {
   /* %typemap(argout) (double argout[ANY]) */
 
 }
-%typemap(csharp,in,numinputs=0) ( double *argout[ANY]) (double *argout[$dim0])
+%typemap(in,numinputs=0) ( double *argout[ANY]) (double *argout[$dim0])
 {
   /* %typemap(in,numinputs=0) (double *argout[ANY]) */
-
+  $1 = (double**)&argout;
 }
-%typemap(csharp,argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double *argout[ANY])
+%typemap(argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double *argout[ANY])
 {
   /* %typemap(argout) (double *argout[ANY]) */
 
 }
-%typemap(csharp,freearg) (double *argout[ANY])
+%typemap(freearg) (double *argout[ANY])
 {
   /* %typemap(freearg) (double *argout[ANY]) */
 
 }
-%typemap(csharp,in) (double argin[ANY]) (double argin[$dim0])
+%typemap(in) (double argin[ANY]) (double argin[$dim0])
 {
   /* %typemap(in) (double argin[ANY]) */
 
