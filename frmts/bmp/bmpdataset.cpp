@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2006/09/07 04:40:40  fwarmerdam
+ * Generally disable most of the chatty debug messages.
+ *
  * Revision 1.40  2006/03/18 18:43:03  dron
  * Fixed absolute mode decoding of RLE comressed images.
  *
@@ -354,7 +357,7 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDS, int nBand )
         ((poDS->GetRasterXSize() * poDS->sInfoHeader.iBitCount + 31) & ~31) / 8;
     nBlockYSize = 1;
 
-#ifdef DEBUG
+#ifdef BMP_DEBUG
     CPLDebug( "BMP",
               "Band %d: set nBlockXSize=%d, nBlockYSize=%d, nScanSize=%d",
               nBand, nBlockXSize, nBlockYSize, nScanSize );
@@ -985,7 +988,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 #endif
     poDS->sFileHeader.iSize = sStat.st_size;
 
-#ifdef DEBUG
+#ifdef BMP_DEBUG
     CPLDebug( "BMP", "File size %d bytes.", poDS->sFileHeader.iSize );
     CPLDebug( "BMP", "Image offset 0x%x bytes from file start.",
               poDS->sFileHeader.iOffBits );
@@ -1071,7 +1074,7 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-#ifdef DEBUG
+#ifdef BMP_DEBUG
     CPLDebug( "BMP", "Windows Device Independent Bitmap parameters:\n"
               " info header size: %d bytes\n"
               " width: %d\n height: %d\n planes: %d\n bpp: %d\n"
