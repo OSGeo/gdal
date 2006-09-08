@@ -75,7 +75,7 @@ interface:
 	$(SWIG) -c++ -csharp -namespace OSR  -dllimport gdal_osr_wrap -I../../include/csharp -o osr_wrap.cpp ../../include/osr.i
 	cd ..
 	cd ogr
-	$(SWIG) -c++ -csharp -namespace OGR  -dllimport ../osr/gdal_osr_wrap -I../../include/csharp -o ../osr/osr_wrap.cpp ../../include/osr.i
+	$(SWIG) -c++ -csharp -namespace OGR  -dllimport gdal_osr_wrap -I../../include/csharp -o osr_wrap.cpp ../../include/osr.i
 	$(SWIG) -c++ -csharp -namespace OGR -dllimport gdal_ogr_wrap -I../../include/csharp -o ogr_wrap.cpp ../../include/ogr.i	
 	cd ..
 
@@ -107,3 +107,4 @@ clean:
 	-del *.cpp
 	-del *.lib
 	-del *.mdb
+	-del *.exe
