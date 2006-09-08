@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.8  2006/09/08 16:31:42  tamas
+ * Typemap for char **argout
+ *
  * Revision 1.7  2006/09/07 10:25:45  tamas
  * Corrected default typemaps to eliminate warnings at the interface creation
  *
@@ -113,11 +116,7 @@ OGRErrMessages( int rc ) {
 
 %typemap(out,fragment="OGRErrMessages",canthrow=1) OGRErr
 {
-  /* %typemap(out) OGRErr */
-  if (result != 0) {
-	SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, OGRErrMessages(result));
-    return $null;
-  }
+  /* %typemap(out,fragment="OGRErrMessages",canthrow=1) OGRErr */
   $result = result;
 }
 %typemap(ret) OGRErr
@@ -228,22 +227,28 @@ OPTIONAL_POD(int,i);
 /*
  * Typemap for char **argout. 
  */
-%typemap(in,numinputs=0) (char **argout) ( char *argout=0 )
+%typemap(imtype) (char **argout) "out string"
+%typemap(cstype) (char **argout) "out string"
+%typemap(csin) (char** argout) "out $csinput"
+  
+%typemap(in) (char **argout)
 {
-  /* %typemap(in,numinputs=0) (char **argout) */
-
+  /* %typemap(in) (char **argout) */
+	$1 = ($1_ltype)$input;
 }
-%typemap(argout,fragment="t_output_helper") (char **argout)
+%typemap(argout) (char **argout)
 {
   /* %typemap(argout) (char **argout) */
-
+  char* temp_string;
+  temp_string = SWIG_csharp_string_callback(*$1);
+  if (*$1)
+		free(*$1);
+  *$1 = temp_string;
 }
 %typemap(freearg) (char **argout)
 {
   /* %typemap(freearg) (char **argout) */
-
 }
-
 
 %fragment("CreateTupleFromDoubleArray","header") %{
 static int
