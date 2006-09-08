@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2006/09/08 15:27:05  fwarmerdam
+ * fixed type of return dataset list in GDALGetOpenDatasets()
+ *
  * Revision 1.57  2006/03/03 19:44:45  fwarmerdam
  * force C numeric locale in select locations
  *
@@ -1539,10 +1542,10 @@ GDALDataset **GDALDataset::GetOpenDatasets( int *pnCount )
  * @see GDALDataset::GetOpenDatasets()
  */
 
-void CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH ***hDS, int *pnCount )
+void CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH **ppahDSList, int *pnCount )
 
 {
-    *hDS = (GDALDatasetH **) GDALDataset::GetOpenDatasets( pnCount);
+    *ppahDSList = (GDALDatasetH *) GDALDataset::GetOpenDatasets( pnCount);
 }
 
 /************************************************************************/

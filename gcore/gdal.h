@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.104  2006/09/08 15:27:05  fwarmerdam
+ * fixed type of return dataset list in GDALGetOpenDatasets()
+ *
  * Revision 1.103  2006/07/13 15:27:14  fwarmerdam
  * Implement ComputeStatistics method
  *
@@ -403,7 +406,7 @@ int CPL_DLL CPL_STDCALL GDALDereferenceDataset( GDALDatasetH );
 CPLErr CPL_DLL CPL_STDCALL
 GDALBuildOverviews( GDALDatasetH, const char *, int, int *,
                     int, int *, GDALProgressFunc, void * );
-void CPL_DLL CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH ***hDS, int *pnCount );
+void CPL_DLL CPL_STDCALL GDALGetOpenDatasets( GDALDatasetH **hDS, int *pnCount );
 int CPL_DLL CPL_STDCALL GDALGetAccess( GDALDatasetH hDS );
 void CPL_DLL CPL_STDCALL GDALFlushCache( GDALDatasetH hDS );
 
