@@ -58,7 +58,6 @@ class OGRInfo {
 				Console.WriteLine( "FAILURE: Couldn't fetch advertised layer " + iLayer );
 				System.Environment.Exit(-1);
 			}
-			Console.WriteLine(layer.GetName());
 			ReportLayer(layer);
 		}
 	}
@@ -66,17 +65,27 @@ class OGRInfo {
 	{
 		FeatureDefn def = layer.GetLayerDefn();
 		Console.WriteLine( "Layer name: " + def.GetName() );
-		//poDefn->GetGeomType()
 		Console.WriteLine( "Feature Count: " + layer.GetFeatureCount(1) );
 		Console.WriteLine( "Extent: " + layer.GetExtent(1) );
-
+		
+		/* -------------------------------------------------------------------- */
+		/*      Reading the spatial reference                                   */
+		/* -------------------------------------------------------------------- */
 		SpatialReference sr = layer.GetSpatialRef();
-		string srs_wkt = "(unknown)";
-		if ( sr != null )
-			//sr.ExportToPrettyWkt( 1 );
+		string srs_wkt;
+		if ( sr != null ) 
+		{
+			sr.ExportToPrettyWkt( out srs_wkt, 1 );
+		}
+		else
+			srs_wkt = "(unknown)";
+
 
         Console.WriteLine( "Layer SRS WKT: " + srs_wkt );
 
+		/* -------------------------------------------------------------------- */
+		/*      Reading the fields                                              */
+		/* -------------------------------------------------------------------- */
 		Console.WriteLine("Field definition:");
 		for( int iAttr = 0; iAttr < def.GetFieldCount(); iAttr++ )
 		{
@@ -88,6 +97,47 @@ class OGRInfo {
 				fdef.GetPrecision() + ")");
 		}
 
-	
+		/* -------------------------------------------------------------------- */
+		/*      Reading the shapes                                              */
+		/* -------------------------------------------------------------------- */
+		Console.WriteLine( "" );
+		Feature feat;
+		while( (feat = layer.GetNextFeature()) != null )
+		{
+			ReportFeature(feat, def);
+			feat.Dispose();
+		}
+	}
+
+	public static void ReportFeature(Feature feat, FeatureDefn def)
+	{
+		Console.WriteLine( "Feature(" + def.GetName() + "): " + feat.GetFID() );
+		for( int iField = 0; iField < feat.GetFieldCount(); iField++ )
+		{
+			FieldDefn fdef = def.GetFieldDefn( iField );
+            
+			Console.Write( fdef.GetNameRef() + " (" +
+				fdef.GetFieldTypeName(fdef.GetFieldType()) + ") = ");
+
+			if( feat.IsFieldSet( iField ) )
+				Console.WriteLine( feat.GetFieldAsString( iField ) );
+			else
+				Console.WriteLine( "(null)" );
+            
+		}
+
+		if( feat.GetStyleString() != null )
+			Console.WriteLine( "  Style = " + feat.GetStyleString() );
+    
+		Geometry geom = feat.GetGeometryRef();
+		if( geom != null )
+			Console.Write( "  " + geom.GetGeometryName() + 
+				"(" + geom.GetGeometryType() + ")" );
+
+		string geom_wkt;
+		geom.ExportToWkt(out geom_wkt);
+		Console.WriteLine( "  " + geom_wkt );
+
+		Console.WriteLine( "" );
 	}
 }
