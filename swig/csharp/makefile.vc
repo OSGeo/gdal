@@ -23,7 +23,9 @@ CSC = csc
 OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
 
 
-all: sign ogr_dir gdal_dir osr_dir const_dir
+all: sign ogr_dir gdal_dir osr_dir const_dir gdal_csharp samples
+
+gdal_csharp:
     $(CSC) /debug:full /target:library /out:gdal_ogr_csharp.dll ogr\*.cs
     $(CSC) /debug:full /target:library /out:gdal_gdal_csharp.dll gdal\*.cs 
     $(CSC) /debug:full /target:library /out:gdal_gdalconst_csharp.dll const\*.cs
@@ -81,6 +83,14 @@ interface:
 
 samples:
     $(CSC) /r:gdal_ogr_csharp.dll /out:ogrinfo.exe apps\ogrinfo.cs
+    $(CSC) /r:gdal_osr_csharp.dll /out:OSRTransform.exe apps\OSRTransform.cs
+    
+test:
+!IFDEF MONO
+	mono OSRTransform.exe
+!ELSE
+	OSRTransform.exe
+!ENDIF
 	
 clean:	
 	cd gdal
