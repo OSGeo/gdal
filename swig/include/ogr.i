@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.57  2006/09/09 17:52:28  tamas
+ * Added OGREnvelope for the C# bindings
+ *
  * Revision 1.56  2006/06/27 12:47:28  ajolma
  * Error reporting in CreateGeometry, added SetCoordinateDimension
  *
@@ -366,6 +369,21 @@ typedef void OGRFieldDefnShadow;
 %import osr.i
 
 /************************************************************************/
+/*                               OGREnvelope                            */
+/************************************************************************/
+
+#if defined(SWIGCSHARP)
+%rename (Envelope) OGREnvelope;
+typedef struct
+{
+    double      MinX;
+    double      MaxX;
+    double      MinY;
+    double      MaxY;
+} OGREnvelope;
+#endif
+
+/************************************************************************/
 /*                              OGRDriver                               */
 /************************************************************************/
 
@@ -614,10 +632,17 @@ public:
     return OGR_L_GetFeatureCount(self, force);
   }
   
+#if defined(SWIGCSHARP)
+  %feature( "kwargs" ) GetExtent;
+  OGRErr GetExtent(OGREnvelope* extent, int force=1) {
+    return OGR_L_GetExtent(self, extent, force);
+  }
+#else
   %feature( "kwargs" ) GetExtent;
   OGRErr GetExtent(double argout[4], int force=1) {
     return OGR_L_GetExtent(self, (OGREnvelope*)argout, force);
   }
+#endif
 
   bool TestCapability(const char* cap) {
     return OGR_L_TestCapability(self, cap);
@@ -1230,10 +1255,16 @@ public:
   void FlattenTo2D() {
     OGR_G_FlattenTo2D(self);
   }
-    
+
+#if defined(SWIGCSHARP)  
+  void GetEnvelope(OGREnvelope *env) {
+    OGR_G_GetEnvelope(self, env);
+  }
+#else
   void GetEnvelope(double argout[4]) {
     OGR_G_GetEnvelope(self, (OGREnvelope*)argout);
   }
+#endif  
 
   %newobject Centroid;
   OGRGeometryShadow* Centroid() {
