@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/09/09 04:18:36  fwarmerdam
+ * implement SetMetadataItem() support for sources
+ *
  * Revision 1.5  2005/10/28 16:59:51  pnagy
  * Added VRTDerivedBand support
  *
@@ -543,6 +546,41 @@ char **VRTSourcedRasterBand::GetMetadata( const char *pszDomain )
 }
 
 /************************************************************************/
+/*                          SetMetadataItem()                           */
+/************************************************************************/
+
+CPLErr VRTSourcedRasterBand::SetMetadataItem( const char *pszName, 
+                                              const char *pszValue, 
+                                              const char *pszDomain )
+
+{
+    CPLDebug( "VRT", "VRTSourcedRasterBand::SetMetadataItem(%s,%s,%s)\n",
+              pszName, pszValue, pszDomain );
+              
+    if( pszDomain != NULL
+        && EQUAL(pszDomain,"new_vrt_sources") )
+    {
+        VRTDriver *poDriver = (VRTDriver *) GDALGetDriverByName( "VRT" );
+
+        CPLXMLNode *psTree = CPLParseXMLString( pszValue );
+        VRTSource *poSource;
+        
+        if( psTree == NULL )
+            return CE_Failure;
+        
+        poSource = poDriver->ParseSource( psTree, NULL );
+        CPLDestroyXMLNode( psTree );
+        
+        if( poSource != NULL )
+            return AddSource( poSource );
+        else
+            return CE_Failure;
+    }
+    else
+        return VRTRasterBand::SetMetadataItem( pszName, pszValue, pszDomain );
+}
+
+/************************************************************************/
 /*                            SetMetadata()                             */
 /************************************************************************/
 
@@ -591,6 +629,6 @@ CPLErr VRTSourcedRasterBand::SetMetadata( char **papszNewMD, const char *pszDoma
         return CE_None;
     }
     else
-        return GDALRasterBand::SetMetadata( papszNewMD, pszDomain );
+        return VRTRasterBand::SetMetadata( papszNewMD, pszDomain );
 }
 
