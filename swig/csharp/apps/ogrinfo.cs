@@ -66,7 +66,10 @@ class OGRInfo {
 		FeatureDefn def = layer.GetLayerDefn();
 		Console.WriteLine( "Layer name: " + def.GetName() );
 		Console.WriteLine( "Feature Count: " + layer.GetFeatureCount(1) );
-		Console.WriteLine( "Extent: " + layer.GetExtent(1) );
+		Envelope ext = new Envelope();
+		layer.GetExtent(ext, 1);
+		Console.WriteLine( "Extent: " + ext.MinX + "," + ext.MaxX + "," +
+			ext.MinY + "," + ext.MaxY);
 		
 		/* -------------------------------------------------------------------- */
 		/*      Reading the spatial reference                                   */
@@ -131,8 +134,13 @@ class OGRInfo {
     
 		Geometry geom = feat.GetGeometryRef();
 		if( geom != null )
-			Console.Write( "  " + geom.GetGeometryName() + 
+			Console.WriteLine( "  " + geom.GetGeometryName() + 
 				"(" + geom.GetGeometryType() + ")" );
+
+		Envelope env = new Envelope();
+		geom.GetEnvelope(env);
+		Console.WriteLine( "   ENVELOPE: " + env.MinX + "," + env.MaxX + "," +
+			env.MinY + "," + env.MaxY);
 
 		string geom_wkt;
 		geom.ExportToWkt(out geom_wkt);
