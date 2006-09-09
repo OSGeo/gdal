@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/09/09 04:18:36  fwarmerdam
+ * implement SetMetadataItem() support for sources
+ *
  * Revision 1.22  2006/02/08 06:12:08  fwarmerdam
  * Override SetMetadata methods so that metadata can be preserved.
  * Support saving histograms in VRT per bug 1060.
@@ -339,6 +342,9 @@ class CPL_DLL VRTSourcedRasterBand : public VRTRasterBand
     virtual char      **GetMetadata( const char * pszDomain = "" );
     virtual CPLErr      SetMetadata( char ** papszMetadata,
                                      const char * pszDomain = "" );
+    virtual CPLErr      SetMetadataItem( const char * pszName,
+                                         const char * pszValue,
+                                         const char * pszDomain = "" );
 
     virtual CPLErr         XMLInit( CPLXMLNode *, const char * );
     virtual CPLXMLNode *   SerializeToXML( const char *pszVRTPath );
