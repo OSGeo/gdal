@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.9  2006/09/09 17:54:37  tamas
+ * Typemaps for double arrays
+ *
  * Revision 1.8  2006/09/08 16:31:42  tamas
  * Typemap for char **argout
  *
@@ -87,10 +90,6 @@ OGRErrMessages( int rc ) {
     return "OGR Error %d: Unknown";
   }
 }
-%}
-
-%fragment("t_output_helper","header") %{
-  /* TODO */
 %}
 
 %typemap(in,numinputs=1) (int nLen, char *pBuf )
@@ -204,24 +203,18 @@ OGRErrMessages( int rc ) {
 OPTIONAL_POD(int,i);
 
 /*
- * Typemap maps char** arguments from Python Sequence Object
+ * Typemap for char** options
  */
 %typemap(in) char **options
 {
   /* %typemap(in) char **options */
   /* Check if is a list */
-
+  $1 = ($1_ltype)$input;
 }
 %typemap(freearg) char **options
 {
   /* %typemap(freearg) char **options */
-  CSLDestroy( $1 );
-}
-%typemap(out) char **options
-{
-  /* %typemap(out) char ** -> ( string ) */
-  /*TODO*/
-  $result = $null;
+  //CSLDestroy( $1 );
 }
 
 /*
@@ -250,30 +243,25 @@ OPTIONAL_POD(int,i);
   /* %typemap(freearg) (char **argout) */
 }
 
-%fragment("CreateTupleFromDoubleArray","header") %{
-static int
-CreateTupleFromDoubleArray( double *first, unsigned int size ) {
-  
-  return 1;
-}
-%}
+/*
+ * Typemap for double argout[ANY]. 
+ */
+%typemap(imtype) (double argout[ANY]) "double[]"
+%typemap(cstype) (double argout[ANY]) "double[]"
+%typemap(csin) (double argout[ANY]) "$csinput"
 
-%typemap(in,numinputs=0) ( double argout[ANY]) (double argout[$dim0])
+%typemap(in) (double argout[ANY])
 {
-  /* %typemap(in,numinputs=0) (double argout[ANY]) */
-  $1 = argout;
+  /* %typemap(in) (double argout[ANY]) */
+  $1 = ($1_ltype)$input;
 }
-%typemap(argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double argout[ANY])
-{
-  /* %typemap(argout) (double argout[ANY]) */
 
-}
 %typemap(in,numinputs=0) ( double *argout[ANY]) (double *argout[$dim0])
 {
   /* %typemap(in,numinputs=0) (double *argout[ANY]) */
   $1 = (double**)&argout;
 }
-%typemap(argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double *argout[ANY])
+%typemap(argout) ( double *argout[ANY])
 {
   /* %typemap(argout) (double *argout[ANY]) */
 
@@ -283,8 +271,50 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
   /* %typemap(freearg) (double *argout[ANY]) */
 
 }
-%typemap(in) (double argin[ANY]) (double argin[$dim0])
+
+/*
+ * Typemap for double argin[ANY]. 
+ */
+
+%typemap(imtype) (double argin[ANY])  "double[]"
+%typemap(cstype) (double argin[ANY]) "double[]"
+%typemap(csin) (double argin[ANY])  "$csinput"
+
+%typemap(in) (double argin[ANY])
 {
   /* %typemap(in) (double argin[ANY]) */
+  $1 = ($1_ltype)$input;
+}
 
+/*
+ * Typemap for double inout[ANY]. 
+ */
+
+%typemap(imtype) (double inout[ANY])  "double[]"
+%typemap(cstype) (double inout[ANY]) "double[]"
+%typemap(csin) (double inout[ANY])  "$csinput"
+
+%typemap(in) (double inout[ANY])
+{
+  /* %typemap(in) (double inout[ANY]) */
+  $1 = ($1_ltype)$input;
+}
+
+%typemap(argout) (double inout[ANY])
+{
+  /* %typemap(argout) (double inout[ANY]) */
+}
+
+/*
+ * Typemap for double *defaultval. 
+ */
+
+%typemap(imtype) (double *defaultval)  "ref double"
+%typemap(cstype) (double *defaultval) "ref double"
+%typemap(csin) (double *defaultval)  "ref $csinput"
+
+%typemap(in) (double *defaultval)
+{
+  /* %typemap(in) (double inout[ANY]) */
+  $1 = ($1_ltype)$input;
 }
