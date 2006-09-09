@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/09/09 04:19:10  fwarmerdam
+ * improve error reporting when parsing VRT sources
+ *
  * Revision 1.7  2004/08/11 18:45:56  warmerda
  * Use CopyCommonInfoFrom method
  *
@@ -132,7 +135,11 @@ VRTSource *VRTDriver::ParseSource( CPLXMLNode *psSrc, const char *pszVRTPath )
     const char *pszParserFunc;
 
     if( psSrc == NULL || psSrc->eType != CXT_Element )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Corrupt or empty VRT source XML document." );
         return NULL;
+    }
 
     pszParserFunc = CSLFetchNameValue( papszSourceParsers, psSrc->pszValue );
     if( pszParserFunc == NULL )
