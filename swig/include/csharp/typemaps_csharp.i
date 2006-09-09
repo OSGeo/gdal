@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.10  2006/09/09 21:06:32  tamas
+ * Added preliminary SWIGTYPE *DISOWN support.
+ *
  * Revision 1.9  2006/09/09 17:54:37  tamas
  * Typemaps for double arrays
  *
@@ -318,3 +321,13 @@ OPTIONAL_POD(int,i);
   /* %typemap(in) (double inout[ANY]) */
   $1 = ($1_ltype)$input;
 }
+
+%typemap(cscode) SWIGTYPE %{
+  internal static HandleRef getCPtrAndDisown($csclassname obj) {
+    obj.swigCMemOwn = false;
+    return getCPtr(obj);
+  }
+%}
+
+%typemap(csin) SWIGTYPE *DISOWN "$csclassname.getCPtrAndDisown($csinput)"
+
