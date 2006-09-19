@@ -9,7 +9,7 @@ EXTRAFLAGS = 	-I..\raw
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 default:	$(OBJ)
-	copy *.obj ..\o
+	xcopy /D  /Y *.obj ..\o
 
 clean:
 	-del *.obj

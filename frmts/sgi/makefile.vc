@@ -7,7 +7,7 @@ OBJ	=    sgidataset.obj
 EXTRAFLAGS = -I./
 
 default:	$(OBJ)
-	copy *.obj ..\o
+	xcopy /D  /Y *.obj ..\o
 
 clean:
 	-del *.obj

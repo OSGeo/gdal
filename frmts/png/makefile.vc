@@ -13,7 +13,7 @@ EXTRAFLAGS = 	-I..\zlib -Ilibpng
 !ENDIF
 
 default:	$(OBJ)
-	copy *.obj ..\o
+	xcopy /D  /Y *.obj ..\o
 !IFNDEF PNG_EXTERNAL_LIB
 	cd libpng
 	$(MAKE) /f makefile.vc

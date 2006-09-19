@@ -7,7 +7,7 @@ OBJ	=	hdf4dataset.obj hdf4imagedataset.obj
 EXTRAFLAGS = 	-I$(HDF4_DIR)\include -Ihdf-eos -DFRMT_hdf4 
 
 default:	$(OBJ)
-	copy *.obj ..\o
+	xcopy /D  /Y *.obj ..\o
 	cd  hdf-eos
 	$(MAKE) /f makefile.vc
 

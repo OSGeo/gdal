@@ -7,7 +7,7 @@ OBJ	=	jpeg2000dataset.obj
 EXTRAFLAGS = 	$(JASPER_INCLUDE) /DWIN32 -DFRMT_jpeg2000
 
 default:	$(OBJ)
-	copy *.obj ..\o
+	xcopy /D  /Y *.obj ..\o
 
 clean:
 	-del *.obj

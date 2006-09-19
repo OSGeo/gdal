@@ -9,7 +9,7 @@ GDAL_ROOT	=	..\..\..
 EXTRAFLAGS = 	-I$(HDF4_DIR)\include -I.\ -DFRMT_hdf4 -DWIN32
 
 default:	$(OBJ)
-	copy *.obj ..\..\o
+	xcopy /D  /Y *.obj ..\..\o
 
 clean:
 	-del *.obj

@@ -13,7 +13,7 @@ EXTRAFLAGS = 	-Ilibjpeg
 
 
 default:	$(OBJ)
-	copy *.obj ..\o
+	xcopy /D  /Y *.obj ..\o
 !IFNDEF JPEG_EXTERNAL_LIB
 	cd libjpeg
 	$(MAKE) /f makefile.vc

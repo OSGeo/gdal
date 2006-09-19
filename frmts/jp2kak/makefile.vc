@@ -7,7 +7,7 @@ OBJ	=	jp2kakdataset.obj
 EXTRAFLAGS = 	-I$(KAKDIR) /DKDU_PENTIUM_MSVC /GX
 
 default:	$(OBJ) kakinstall
-	copy *.obj ..\o
+	xcopy /D  /Y *.obj ..\o
 
 kakinstall:
 	copy $(KAKDIR)\*.obj ..\o

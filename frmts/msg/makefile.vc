@@ -8,7 +8,7 @@ GDAL_ROOT	=	..\..
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 default:	$(OBJ) waveletlib
-	copy *.obj ..\o
+	xcopy /D  /Y *.obj ..\o
 
 waveletlib:
 	cd PublicDecompWT\COMP\WT\Src \

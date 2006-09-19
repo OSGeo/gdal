@@ -24,7 +24,7 @@ SUB_GEOTIFF_TARGET =	geotiff
 
 
 default:	$(OBJ) $(SUB_TIFF_TARGET) $(SUB_GEOTIFF_TARGET)
-	copy *.obj ..\o
+	xcopy /D  /Y *.obj ..\o
 
 tiff:
 	cd libtiff

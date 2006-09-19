@@ -7,7 +7,7 @@ OBJ	=	netcdfdataset.obj gmtdataset.obj
 EXTRAFLAGS = 	/I$(NETCDF_INC_DIR)
 
 default:	$(OBJ)
-	copy *.obj ..\o
+	xcopy /D  /Y *.obj ..\o
 
 clean:
 	-del *.obj

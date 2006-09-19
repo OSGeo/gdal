@@ -17,7 +17,7 @@ GDAL_ROOT	=	..\..\..
 
 default:	$(OBJ)
         lib /out:libjpeg.lib $(OBJ)
-	copy *.obj ..\..\o
+	xcopy /D  /Y *.obj ..\..\o
 
 clean:
 	-del *.obj
