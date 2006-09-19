@@ -22,7 +22,7 @@ GDAL_ROOT	=	..\..\..
 
 
 default:	$(OBJ)
-	copy *.obj ..\..\o
+	xcopy /D  /Y *.obj ..\..\o
 
 clean:
 	-del *.obj

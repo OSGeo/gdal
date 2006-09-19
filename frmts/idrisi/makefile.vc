@@ -7,7 +7,7 @@ OBJ	= idrisiDataset.obj
 EXTRAFLAGS = -D_USE_MATH_DEFINES
 
 default:	$(OBJ)
-	copy *.obj ..\o
+	xcopy /D  /Y *.obj ..\o
 	cd ..
 	
 clean:

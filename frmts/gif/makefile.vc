@@ -9,7 +9,7 @@ EXTRAFLAGS = 	-Ilibungif
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
 default:	$(OBJ)
-	copy *.obj ..\o
+	xcopy /D  /Y *.obj ..\o
 	cd libungif
 	$(MAKE) /f makefile.vc
 	cd ..

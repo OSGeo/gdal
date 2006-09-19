@@ -10,7 +10,7 @@ GDAL_ROOT	=	..\..
 EXTRAFLAGS = 	-I..\raw
 
 default:	$(OBJ)
-	copy *.obj ..\o
+	xcopy /D  /Y *.obj ..\o
 
 clean:
 	-del *.obj

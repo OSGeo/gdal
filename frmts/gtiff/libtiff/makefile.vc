@@ -53,7 +53,7 @@ JPEG_FLAGS =	-I..\..\jpeg\libjpeg -DJPEG_SUPPORT
 
 
 default:	$(OBJ)
-	copy *.obj ..\..\o
+	xcopy /D  /Y *.obj ..\..\o
 
 clean:
 	del *.obj

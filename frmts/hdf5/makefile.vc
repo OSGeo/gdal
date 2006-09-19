@@ -7,7 +7,7 @@ OBJ	=	hdf5dataset.obj  hdf5imagedataset.obj
 EXTRAFLAGS = 	-I$(HDF5_DIR)\include -DFRMT_hdf5 -DWIN32 -D_HDF5USEDLL_ 
 
 default:	$(OBJ)
-	copy *.obj ..\o
+	xcopy /D  /Y *.obj ..\o
 
 clean:
 	-del *.obj
