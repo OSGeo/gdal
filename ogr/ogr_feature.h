@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/09/20 13:01:51  osemykin
+ * Make the functions GetFieldAsStringList(...) and IsFieldSet(...) const
+ *
  * Revision 1.33  2006/04/02 18:25:59  fwarmerdam
  * added OFTDateTime, and OFTTime support
  *
@@ -294,7 +297,7 @@ class CPL_DLL OGRFeature
     int                 GetFieldIndex( const char * pszName)
                                       { return poDefn->GetFieldIndex(pszName);}
 
-    int                 IsFieldSet( int iField )
+    int                 IsFieldSet( int iField ) const
                         { return
                               pauFields[iField].Set.nMarker1 != OGRUnsetMarker
                            || pauFields[iField].Set.nMarker2 != OGRUnsetMarker;
@@ -309,7 +312,7 @@ class CPL_DLL OGRFeature
     const char         *GetFieldAsString( int i );
     const int          *GetFieldAsIntegerList( int i, int *pnCount );
     const double       *GetFieldAsDoubleList( int i, int *pnCount );
-    char              **GetFieldAsStringList( int i );
+    char              **GetFieldAsStringList( int i ) const;
     GByte              *GetFieldAsBinary( int i, int *pnCount );
     int                 GetFieldAsDateTime( int i, 
                                      int *pnYear, int *pnMonth, int *pnDay,

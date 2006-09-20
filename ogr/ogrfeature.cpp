@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2006/09/20 13:01:51  osemykin
+ * Make the functions GetFieldAsStringList(...) and IsFieldSet(...) const
+ *
  * Revision 1.43  2006/08/28 15:25:49  fwarmerdam
  * No need for null tests before delete!
  *
@@ -1390,7 +1393,7 @@ const double *OGR_F_GetFieldAsDoubleList( OGRFeatureH hFeat, int iField,
  * modified, or freed.  It's lifetime may be very brief.
  */
 
-char **OGRFeature::GetFieldAsStringList( int iField )
+char **OGRFeature::GetFieldAsStringList( int iField ) const
 
 {
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
