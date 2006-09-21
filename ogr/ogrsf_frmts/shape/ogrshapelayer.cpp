@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/09/21 21:04:42  fwarmerdam
+ * Don't put out "normalization" messages unless something is changing.
+ *
  * Revision 1.33  2006/08/28 15:17:57  mloskot
  * Added comment about NULL values passed to SetGeometry* functions. Added assert to GetNextFeature() of shape driver.
  *
@@ -721,7 +724,10 @@ OGRErr OGRShapeLayer::CreateField( OGRFieldDefn *poField, int bApproxOK )
     pszNewFieldName = CPLScanString( poField->GetNameRef(),
                                      nNameSize, TRUE, TRUE);
 
-    CPLDebug( "Shape", "Normalized field name: %s", pszNewFieldName );
+    if( !EQUAL(poField->GetNameRef(),pszNewFieldName) )
+        CPLDebug( "Shape", "Normalized field name: '%s' to '%s'", 
+                  poField->GetNameRef(),
+                  pszNewFieldName );
 
     // Set field name with normalized value
     poField->SetName( pszNewFieldName );
