@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2006/09/21 16:51:10  osemykin
+ * nBytesAvailable fixes as in OGRLinearRing::importFromWkb()
+ *
  * Revision 1.59  2006/09/05 12:14:28  mloskot
  * Fixed nBytesAvailable tests inside importFromWkb()
  * in OGRLineString and OGRLinearRing classes.
@@ -948,15 +951,15 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
             CPLDebug( "OGR", "3D WKB Bytes copying:\n\tBytesToCopy=%d\n\tnBytesAvailable=%d\n",
                       nBytesToCopy, nBytesAvailable );
 
-            if( nBytesAvailable < nBytesToCopy)
+            if( nBytesToCopy > nBytesAvailable && nBytesAvailable > 0 )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "WKB buffer with OGRLineString points is too small! \
                           \n\tWKB stream may be corrupted or it is EWKB stream which is not supported");
                 return OGRERR_NOT_ENOUGH_DATA;
             }
-
-            nBytesAvailable -= nBytesToCopy;
+            if ( nBytesAvailable > 0 )
+                nBytesAvailable -= nBytesToCopy;
 
             memcpy( paoPoints + i, pabyData + 9 + i*24, 16 );
             memcpy( padfZ + i, pabyData + 9 + 16 + i*24, 8 );
@@ -969,7 +972,7 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
         CPLDebug( "OGR", "WKB Bytes copying:\n\tBytesToCopy=%d\n\tnBytesAvailable=%d\n",
                   nBytesToCopy, nBytesAvailable );
 
-        if( nBytesAvailable < nBytesToCopy)
+        if( nBytesToCopy > nBytesAvailable && nBytesAvailable > 0 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "WKB buffer with OGRLineString points is too small! \
