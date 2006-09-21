@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2006/09/21 20:58:47  fwarmerdam
+ * Comment out noisy debug message.
+ *
  * Revision 1.47  2006/09/02 19:56:20  mloskot
  * Re-enabled reading NULL geometries from shapefile
  * (was broken in shape2ogr.cpp, rev 1.46)
@@ -606,7 +609,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape )
     {
         int iRing;
         
-        CPLDebug( "Shape", "Shape type: polygon with nParts=%d \n", psShape->nParts );
+        //CPLDebug( "Shape", "Shape type: polygon with nParts=%d \n", psShape->nParts );
 
         if ( psShape->nParts == 1 )
         {
