@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/09/21 07:55:22  dron
+ * Fixed typo in documentation.
+ *
  * Revision 1.7  2006/03/27 18:36:17  fwarmerdam
  * VSIFWriteL has const buffer now
  *
@@ -255,7 +258,7 @@ FILE *VSIFOpenL( const char * pszFilename, const char * pszAccess )
  *
  * Analog of the POSIX fclose() function.
  *
- * @param fp file handle opened with VSIOpenL().
+ * @param fp file handle opened with VSIFOpenL().
  *
  * @return 0 on success or -1 on failure.
  */
@@ -285,7 +288,7 @@ int VSIFCloseL( FILE * fp )
  *
  * Analog of the POSIX fseek() call.
  *
- * @param fp file handle opened with VSIOpenL(). 
+ * @param fp file handle opened with VSIFOpenL(). 
  * @param nOffset offset in bytes.
  * @param nWhence one of SEEK_SET, SEEK_CUR or SEEK_END.
  *
@@ -315,7 +318,7 @@ int VSIFSeekL( FILE * fp, vsi_l_offset nOffset, int nWhence )
  *
  * Analog of the POSIX ftell() call.
  *
- * @param fp file handle opened with VSIOpenL(). 
+ * @param fp file handle opened with VSIFOpenL(). 
  *
  * @return file offset in bytes.
  */
@@ -353,7 +356,7 @@ void VSIRewindL( FILE * fp )
  *
  * Analog of the POSIX fflush() call.
  *
- * @param fp file handle opened with VSIOpenL(). 
+ * @param fp file handle opened with VSIFOpenL(). 
  *
  * @return 0 on success or -1 on error.
  */
@@ -385,7 +388,7 @@ int VSIFFlushL( FILE * fp )
  * nCount * nSize bytes in size. 
  * @param nSize size of objects to read in bytes.
  * @param nCount number of objects to read.
- * @param fp file handle opened with VSIOpenL(). 
+ * @param fp file handle opened with VSIFOpenL(). 
  *
  * @return number of objects successfully read. 
  */
@@ -417,7 +420,7 @@ size_t VSIFReadL( void * pBuffer, size_t nSize, size_t nCount, FILE * fp )
  * nCount * nSize bytes in size. 
  * @param nSize size of objects to read in bytes.
  * @param nCount number of objects to read.
- * @param fp file handle opened with VSIOpenL(). 
+ * @param fp file handle opened with VSIFOpenL(). 
  *
  * @return number of objects successfully written.
  */
@@ -445,7 +448,7 @@ size_t VSIFWriteL( const void *pBuffer, size_t nSize, size_t nCount, FILE *fp )
  *
  * Analog of the POSIX feof() call.
  *
- * @param fp file handle opened with VSIOpenL(). 
+ * @param fp file handle opened with VSIFOpenL(). 
  *
  * @return TRUE if at EOF else FALSE.
  */
