@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/09/22 12:21:12  dron
+ * CPLIsFilenameRelative(): on Windows forward slashes can be used in file paths.
+ *
  * Revision 1.22  2006/09/07 18:11:10  dron
  * Added CPLGetCurrentDir().
  *
@@ -706,7 +709,9 @@ const char *CPLProjectRelativeFilename( const char *pszProjectDir,
 int CPLIsFilenameRelative( const char *pszFilename )
 
 {
-    if( (strlen(pszFilename) > 2 && strncmp(pszFilename+1,":\\",2) == 0)
+    if( (strlen(pszFilename) > 2
+         && (strncmp(pszFilename+1,":\\",2) == 0
+             || strncmp(pszFilename+1,":/",2) == 0))
         || pszFilename[0] == '\\'
         || pszFilename[0] == '/' )
         return FALSE;
