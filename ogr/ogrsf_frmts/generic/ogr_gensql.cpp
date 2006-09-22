@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/09/22 05:52:34  fwarmerdam
+ * improve handling of summaries on empty datasets (bug 1298)
+ *
  * Revision 1.18  2006/04/25 23:03:17  fwarmerdam
  * Use sizeof(long) in memcpy on index list.  Causes serious problem
  * with orderby on 64bit systems.
@@ -536,7 +539,8 @@ int OGRGenSQLResultsLayer::PrepareSummary()
 /*      Now apply the values to the summary feature.  If we are in      */
 /*      DISTINCT_LIST mode we don't do this step.                       */
 /* -------------------------------------------------------------------- */
-    if( psSelectInfo->query_mode == SWQM_SUMMARY_RECORD )
+    if( psSelectInfo->query_mode == SWQM_SUMMARY_RECORD 
+        && psSelectInfo->column_summary != NULL )
     {
         for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
         {
@@ -732,7 +736,7 @@ OGRFeature *OGRGenSQLResultsLayer::GetFeature( long nFID )
 /* -------------------------------------------------------------------- */
     if( psSelectInfo->query_mode == SWQM_SUMMARY_RECORD )
     {
-        if( !PrepareSummary() || nFID != 0 )
+        if( !PrepareSummary() || nFID != 0 || poSummaryFeature == NULL )
             return NULL;
         else
             return poSummaryFeature->Clone();
@@ -747,6 +751,9 @@ OGRFeature *OGRGenSQLResultsLayer::GetFeature( long nFID )
             return NULL;
 
         swq_summary *psSummary = psSelectInfo->column_summary + 0;
+
+        if( psSummary == NULL )
+            return NULL;
 
         if( nFID < 0 || nFID >= psSummary->count )
             return NULL;
