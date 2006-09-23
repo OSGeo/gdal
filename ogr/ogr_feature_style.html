@@ -10,12 +10,14 @@
 OGR - Feature Style Specification</H1></CENTER>
 
 <CENTER>
-  <H2>DRAFT V0.009 - 2005/03/11</H2>
+  <H2>DRAFT V0.010 - 2006/09/23</H2>
 </CENTER>
 
 <HR WIDTH=50%>
 <H2>REVISION HISTORY</H2>
 <UL>
+<LI><B>Version 0.010 - 2006-09-23- Andrey Kiselev</B><BR>
+    Added label styles 'w', 'st', 'h', 'm:h', 'm:a', 'p:{10,11,12}'
 <LI><B>Version 0.009 - 2005-03-11- Frank Warmerdam</B><BR>
     Remove reference to OGRWin, move into ogr distribution
 <LI><B>Version 0.008 - 2001-03-21- Frank Warmerdam</B><BR>
@@ -757,27 +759,52 @@ such as halo and box.</TD>
   </TR>
 
   <TR>
+    <TD ALIGN=CENTER>h</TD>
+    <TD><B>Shadow Color</B> - Color of the text shadow.</TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>w</TD>
+    <TD><B>Stretch</B> - The stretch factor changes the width of all 
+	    characters in the font by factor percent. For example, setting
+	    factor to 150 results in all characters in the font being 1.5
+	    times (ie. 150%) wider. The default stretch factor is 100.</TD>
+  </TR>
+
+  <TR>
+    <TD ALIGN=CENTER>st</TD>
+    <TD><B>Strike out text</B></TD>
+  </TR>
+
+  <TR>
     <TD ALIGN=CENTER>m</TD>
     <TD><B>Label Placement Mode</B> - How is the text drawn relative to the
 feature's geometry.
 <BR>
-      "m:p" - The default, simple label attached to a point or to the first
+	"m:p" - The default, simple label attached to a point or to the first
 vertex of a polyline.
 <BR>
-      "m:l" - Text is attached to the last vertex of a polyline. A PEN tool
+	"m:l" - Text is attached to the last vertex of a polyline. A PEN tool
 can be combined with this LABEL tool to draw the polyline as a leader to
 the label.
 <BR>
-      "m:s" - Strech text string along polyline, with an equal spacing between
+	"m:s" - Strech text string along polyline, with an equal spacing between
 each character.
 <BR>
-      "m:m" - Place text as a single label at the middle of a polyline (based
+	"m:m" - Place text as a single label at the middle of a polyline (based
 on total line length).
 <BR>
-      "m:w" - One word per line segment in a polyline.
+	"m:w" - One word per line segment in a polyline.
 <BR>
-      <FONT COLOR="#FF0000">Note: Should we really allow that many placement
-modes???</FONT></TD>
+<BR>
+	"m:h" - Every word of text attached to polyline is placed horizontally
+in its segment, anchor point is a center of segment.
+<BR>
+<BR>
+	"m:a" - Every word of text attached to polyline is stretched to fit
+the segment of polyline and placed along that segment. The anchor point is
+a start of a segment.
+<BR>
   </TR>
 
   <TR>
@@ -785,9 +812,13 @@ modes???</FONT></TD>
     <TD>
       <TABLE BORDER=0 WIDTH="100%" >
         <TR>
-          <TD><B>Anchor Position</B> - A value from 1 to 9 defining the label's position
-relative to the point to which it is attached: </TD>
-          <TD><IMG SRC="style_textanchor.gif" HEIGHT=139 WIDTH=131></TD>
+	  <TD><B>Anchor Position</B> - A value from 1 to 12 defining the
+		  label's position relative to the point to which it is
+		  attached. There are four vertical alignmend modes:
+		  <i>baseline</i>, <i>center</i>, <i>top</i> and <i>bottom</i>;
+		  and three horizontal modes: <i>left</i>, <i>center</i> and
+		  <i>right</i>. See the scheme: </TD>
+          <TD><IMG SRC="style_textanchor.gif"></TD>
         </TR>
       </TABLE>
     </TD>
