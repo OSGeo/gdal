@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/09/23 15:27:52  dron
+ * Added new label styles:  'w', 'st', 'h', 'm:h', 'm:a', 'p:{10,11,12}'.
+ *
  * Revision 1.15  2006/03/03 20:39:31  fwarmerdam
  * Fixed memory leak in GetStyleString()
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=1103
@@ -146,9 +149,27 @@ OGRStyleParamId asStyleLabel[] = {{OGRSTLabelFontName,"f",FALSE,OGRSTypeString},
                                   {OGRSTLabelItalic,"it",FALSE,OGRSTypeInteger},
                                   {OGRSTLabelUnderline,"un",FALSE,
                                    OGRSTypeInteger},
-                                  {OGRSTLabelPriority,"l",FALSE,OGRSTypeInteger
-                                  }};
+                                  {OGRSTLabelPriority,"l",FALSE,
+                                   OGRSTypeInteger},
+                                  {OGRSTLabelStrikeout,"st",FALSE,
+                                   OGRSTypeInteger},
+                                  {OGRSTLabelStretch,"w",TRUE, OGRSTypeDouble},
+                                  {OGRSTLabelAdjHor,"ah",FALSE,
+                                   OGRSTypeString},
+                                  {OGRSTLabelAdjVert,"av",FALSE,
+                                   OGRSTypeString},
+                                  {OGRSTLabelHColor,"h",FALSE,OGRSTypeString}
+                                 };
 
+OGRStyleParamId asStyleVector[] = {{OGRSTVectorId,"id",FALSE,OGRSTypeString},
+                                  {OGRSTVectorNotCompress,"nc",FALSE,OGRSTypeInteger},
+				  {OGRSTVectorSprain,"sp",FALSE,OGRSTypeInteger},
+				  {OGRSTVectorNotBend,"nb",FALSE,OGRSTypeInteger},
+				  {OGRSTVectorMirroring,"m",FALSE,OGRSTypeInteger},
+				  {OGRSTVectorCentering,"c",FALSE,OGRSTypeInteger},
+                                  {OGRSTVectorPriority,"l",FALSE,
+                                   OGRSTypeInteger}
+                                 };
 
 /* ======================================================================== */
 /* OGRStyleMgr                                                              */
@@ -465,6 +486,8 @@ OGRStyleTool *OGRStyleMgr::CreateStyleToolFromStyleString(const char *
         poStyleTool = new OGRStyleSymbol();
     else if (EQUAL(papszToken[0],"LABEL"))
         poStyleTool = new OGRStyleLabel();
+    else if (EQUAL(papszToken[0],"VECTOR"))
+        poStyleTool = new OGRStyleVector();
     else 
         poStyleTool = NULL;
 
@@ -773,6 +796,9 @@ const char *OGRStyleTool::GetStyleString( OGRStyleParamId *pasStyleParam ,
           case OGRSTCLabel:
             pszClass = "LABEL(";
             break;
+          case OGRSTCVector:
+            pszClass = "VECTOR(";
+            break;
           default:
             pszClass = "UNKNOWN(";
         }
@@ -1003,6 +1029,17 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
         {
             CPLError(CE_Failure, CPLE_AppDefined, 
                      "Error in the Type of StyleTool %s should be a LABEL Type\n",
+                     papszToken[0]);
+            CSLDestroy( papszToken );
+            CSLDestroy( papszToken2 );
+            return FALSE;
+        }
+        break;
+      case OGRSTCVector:
+        if (!EQUAL(papszToken[0],"VECTOR"))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, 
+                     "Error in the Type of StyleTool %s should be a VECTOR Type\n",
                      papszToken[0]);
             CSLDestroy( papszToken );
             CSLDestroy( papszToken2 );
@@ -1798,3 +1835,93 @@ const char *OGRStyleLabel::GetStyleString()
                                         (int)OGRSTLabelLast);
 }
  
+
+/****************************************************************************/
+/*                      OGRStyleVector::OGRStyleVector()                    */
+/*                                                                          */
+/****************************************************************************/
+OGRStyleVector::OGRStyleVector() : OGRStyleTool(OGRSTCVector)
+{
+    m_pasStyleValue = (OGRStyleValue *)CPLCalloc(OGRSTVectorLast, 
+                                                 sizeof(OGRStyleValue));
+}
+
+/****************************************************************************/
+/*                      OGRStyleVector::~OGRStyleVector()                   */
+/*                                                                          */
+/****************************************************************************/
+OGRStyleVector::~OGRStyleVector()
+{
+    for (int i = 0; i < OGRSTVectorLast; i++)
+    {
+        if (m_pasStyleValue[i].pszValue != NULL)
+        {
+            CPLFree(m_pasStyleValue[i].pszValue);
+            m_pasStyleValue[i].pszValue = NULL;
+        }
+    }
+
+    CPLFree(m_pasStyleValue);
+}
+
+/************************************************************************/
+/*                               Parse()                                */
+/************************************************************************/
+GBool OGRStyleVector::Parse()
+{ return OGRStyleTool::Parse(asStyleVector,m_pasStyleValue,
+                             (int)OGRSTVectorLast);
+}
+
+/************************************************************************/
+/*                            GetParamStr()                             */
+/************************************************************************/
+const char *OGRStyleVector::GetParamStr(OGRSTVectorParam eParam, GBool &bValueIsNull)
+{   return OGRStyleTool::GetParamStr(asStyleVector[eParam],
+                                     m_pasStyleValue[eParam],
+                                     bValueIsNull);
+}
+/************************************************************************/
+/*                            GetParamNum()                             */
+/************************************************************************/
+int OGRStyleVector::GetParamNum(OGRSTVectorParam eParam,GBool &bValueIsNull)
+{  return OGRStyleTool::GetParamNum(asStyleVector[eParam],
+                                    m_pasStyleValue[eParam],bValueIsNull);
+}
+/************************************************************************/
+/*                            GetParamDbl()                             */
+/************************************************************************/
+double OGRStyleVector::GetParamDbl(OGRSTVectorParam eParam,GBool &bValueIsNull)
+{  return OGRStyleTool::GetParamDbl(asStyleVector[eParam],
+                                    m_pasStyleValue[eParam],bValueIsNull);
+}
+/************************************************************************/
+/*                            SetParamStr()                             */
+/************************************************************************/
+void OGRStyleVector::SetParamStr(OGRSTVectorParam eParam, const char *pszParamString)
+{   OGRStyleTool::SetParamStr(asStyleVector[eParam],m_pasStyleValue[eParam],
+                              pszParamString);
+}
+/************************************************************************/
+/*                            SetParamNum()                             */
+/************************************************************************/
+void OGRStyleVector::SetParamNum(OGRSTVectorParam eParam, int nParam)
+{  
+	OGRStyleTool::SetParamNum(asStyleVector[eParam],
+                             m_pasStyleValue[eParam],nParam);
+printf("added new value for vector: %s --- %d", asStyleVector[eParam].pszToken, nParam);
+}
+
+/************************************************************************/
+/*                            SetParamDbl()                             */
+/************************************************************************/
+void OGRStyleVector::SetParamDbl(OGRSTVectorParam eParam, double dfParam)
+{   OGRStyleTool::SetParamDbl(asStyleVector[eParam],
+                              m_pasStyleValue[eParam],dfParam);
+}
+/************************************************************************/
+/*                           GetStyleString()                           */
+/************************************************************************/
+const char *OGRStyleVector::GetStyleString()
+{   return OGRStyleTool::GetStyleString(asStyleVector,m_pasStyleValue,
+                                        (int)OGRSTVectorLast);
+}

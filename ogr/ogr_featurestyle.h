@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/09/23 15:27:52  dron
+ * Added new label styles:  'w', 'st', 'h', 'm:h', 'm:a', 'p:{10,11,12}'.
+ *
  * Revision 1.8  2004/12/02 18:24:12  fwarmerdam
  * added support for fontname on symbol, per bug 684
  *
@@ -68,7 +71,8 @@ typedef enum ogr_style_tool_class_id
     OGRSTCPen,
     OGRSTCBrush,
     OGRSTCSymbol,
-    OGRSTCLabel
+    OGRSTCLabel,
+    OGRSTCVector
 } OGRSTClassId;
 
 typedef enum ogr_style_tool_units_id
@@ -145,9 +149,27 @@ typedef enum ogr_style_tool_param_label_id
     OGRSTLabelItalic,
     OGRSTLabelUnderline,
     OGRSTLabelPriority,
+    OGRSTLabelStrikeout,
+    OGRSTLabelStretch,
+    OGRSTLabelAdjHor,
+    OGRSTLabelAdjVert,
+    OGRSTLabelHColor,
     OGRSTLabelLast
               
 } OGRSTLabelParam;
+
+typedef enum ogr_style_tool_param_vector_id
+{  
+    OGRSTVectorId = 0,
+    OGRSTVectorNotCompress,
+    OGRSTVectorSprain,
+    OGRSTVectorNotBend,
+    OGRSTVectorMirroring,
+    OGRSTVectorCentering,
+    OGRSTVectorPriority,
+    OGRSTVectorLast
+              
+} OGRSTVectorParam;
 
 typedef enum ogr_style_type
 {
@@ -502,6 +524,16 @@ public:
     void SetUnderline(GBool bUnderline){SetParamNum(OGRSTLabelUnderline,bUnderline);}
     int  Priority(GBool &bDefault){return GetParamNum(OGRSTLabelPriority,bDefault);}
     void SetPriority(int nPriority){SetParamNum(OGRSTLabelPriority,nPriority);}
+    GBool Strikeout(GBool &bDefault){return GetParamNum(OGRSTLabelStrikeout,bDefault);}
+    void SetStrikeout(GBool bStrikeout){SetParamNum(OGRSTLabelStrikeout,bStrikeout);}
+    double Stretch(GBool &bDefault){return GetParamDbl(OGRSTLabelStretch,bDefault);}
+    void SetStretch(double dfStretch){SetParamDbl(OGRSTLabelStretch,dfStretch);}
+    const char *AdjustmentHor(GBool &bDefault){return GetParamStr(OGRSTLabelAdjHor,bDefault);}
+    void SetAdjustmentHor(const char *pszAdjustmentHor){SetParamStr(OGRSTLabelAdjHor,pszAdjustmentHor);}
+    const char *AdjustmentVert(GBool &bDefault){return GetParamStr(OGRSTLabelAdjVert,bDefault);}
+    void SetAdjustmentVert(const char *pszAdjustmentVert){SetParamStr(OGRSTLabelAdjHor,pszAdjustmentVert);}
+    const char *ShadowColor(GBool &bDefault){return GetParamStr(OGRSTLabelHColor,bDefault);}
+    void SetShadowColor(const char *pszShadowColor){SetParamStr(OGRSTLabelHColor,pszShadowColor);}
     
     /*****************************************************************/
     
@@ -515,18 +547,48 @@ public:
      const char *GetStyleString();
 };
 
+extern OGRStyleParamId CPL_DLL asStyleVector[];
+
+class CPL_DLL OGRStyleVector : public OGRStyleTool
+{
+public:
+
+    OGRStyleValue    *m_pasStyleValue;
+
+    OGRStyleVector();
+    virtual ~OGRStyleVector();
+
+    /*****************************************************************/
+    /* Explicite fct for all parameters defined in the Drawing tools */
+    /*****************************************************************/
+    
+    const char *Id(GBool &bDefault){return GetParamStr(OGRSTVectorId,bDefault);}
+    void  SetId(const char *pszId){ SetParamStr(OGRSTVectorId,pszId);}
+    int  Priority(GBool &bDefault){return GetParamNum(OGRSTVectorPriority,bDefault);}
+    void SetPriority(int nPriority){SetParamNum(OGRSTVectorPriority,nPriority);}
+    
+
+    GBool NotCompress(GBool &bDefault){return GetParamNum(OGRSTVectorNotCompress,bDefault);}
+    void SetNotCompress(GBool bNotCompress){SetParamNum(OGRSTVectorNotCompress,bNotCompress);}
+    GBool Sprain(GBool &bDefault){return GetParamNum(OGRSTVectorSprain,bDefault);}
+    void SetSprain(GBool bSprain){SetParamNum(OGRSTVectorSprain,bSprain);}
+    GBool NotBend(GBool &bDefault){return GetParamNum(OGRSTVectorNotBend,bDefault);}
+    void SetNotBend(GBool bNotBend){SetParamNum(OGRSTVectorNotBend,bNotBend);}
+    GBool Mirroring(GBool &bDefault){return GetParamNum(OGRSTVectorMirroring,bDefault);}
+    void SetMirroring(GBool bMirroring){SetParamNum(OGRSTVectorMirroring,bMirroring);}
+    GBool Centering(GBool &bDefault){return GetParamNum(OGRSTVectorCentering,bDefault);}
+    void SetCentering(GBool bCentering){SetParamNum(OGRSTVectorCentering,bCentering);}
+
+    /*****************************************************************/
+    
+     GBool Parse();
+     const char *GetParamStr(OGRSTVectorParam eParam, GBool &bValueIsNull);
+     int GetParamNum(OGRSTVectorParam eParam,GBool &bValueIsNull);
+     double GetParamDbl(OGRSTVectorParam eParam,GBool &bValueIsNull);
+     void SetParamStr(OGRSTVectorParam eParam, const char *pszParamString);
+     void SetParamNum(OGRSTVectorParam eParam, int nParam);
+     void SetParamDbl(OGRSTVectorParam eParam, double dfParam);
+     const char *GetStyleString();
+};
+
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
