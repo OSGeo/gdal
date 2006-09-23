@@ -13,6 +13,8 @@ A list of all GDAL/OGR RFC documents, with status.
 
 <li> \link rfc4_geolocate RFC 4: Geolocation Arrays\endlink (Development)
 
+<li> \link rfc4_unicode RFC 5: Unicode support in GDAL\endlink (Development)
+
 </ul>
 
 */
