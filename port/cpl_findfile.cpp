@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/09/23 23:05:22  fwarmerdam
+ * Honour GDAL_DATA when initializing finder.
+ *
  * Revision 1.11  2006/03/21 20:11:54  fwarmerdam
  * fixup headers a bit
  *
@@ -84,12 +87,21 @@ static void CPLFinderInit()
     {
         bFinderInitialized = TRUE;
         CPLPushFileFinder( CPLDefaultFindFile );
-#ifdef GDAL_PREFIX
-        CPLPushFinderLocation( GDAL_PREFIX "/share/gdal" );
-#else
-        CPLPushFinderLocation( "/usr/local/share/gdal" );
-#endif
+
         CPLPushFinderLocation( "." );
+
+        if( CPLGetConfigOption( "GDAL_DATA", NULL ) != NULL )
+        {
+            CPLPushFinderLocation( CPLGetConfigOption( "GDAL_DATA", NULL ) );
+        }
+        else
+        {
+#ifdef GDAL_PREFIX
+            CPLPushFinderLocation( GDAL_PREFIX "/share/gdal" );
+#else
+            CPLPushFinderLocation( "/usr/local/share/gdal" );
+#endif
+        }
     }
 }
 
