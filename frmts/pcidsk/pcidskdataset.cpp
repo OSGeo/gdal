@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/09/24 05:10:04  fwarmerdam
+ * We must never create pcidsk files with other than big endian
+ * order for image data.  It turns out the byte swapping flag is
+ * only used for file interleaved data!
+ *
  * Revision 1.19  2006/05/19 00:14:44  fwarmerdam
  * fixed handling of bands per pixel type counts (bug 1188)
  *
@@ -1351,14 +1356,7 @@ GDALDataset *PCIDSKDataset::Create( const char * pszFilename,
         CPLPrintStringFill( szTemp + 184, "", 8 );
         CPLPrintStringFill( szTemp + 192, "", 8 );
         CPLPrintStringFill( szTemp + 200, " ", 1 );
-#ifdef CPL_MSB
-        CPLPrintStringFill( szTemp + 201, "N", 1 );
-#else
-        if ( eType == GDT_Byte )
-            CPLPrintStringFill( szTemp + 201, "N", 1 );
-        else
-            CPLPrintStringFill( szTemp + 201, "S", 1 );
-#endif
+        CPLPrintStringFill( szTemp + 201, "N", 1 ); // only N is supported!
         CPLPrintStringFill( szTemp + 202, "", 48 );
         CPLPrintStringFill( szTemp + 250, "", 32 );
         CPLPrintStringFill( szTemp + 282, "", 8 );
