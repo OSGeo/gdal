@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.81  2006/09/25 19:15:25  fwarmerdam
+ * Modified the findauxfile logic to use an .aux file even if the
+ * dependent filename doesn't match as long as the dependent file
+ * does not exist.  In this caes we assume the files were renamed.
+ *
  * Revision 1.80  2006/08/25 18:26:11  fwarmerdam
  * Ensure we always use /vsimem/ even on windows.
  *
@@ -2328,7 +2333,9 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
 /* -------------------------------------------------------------------- */
 /*      We didn't find that, so try and find a corresponding aux        */
 /*      file.  Check that we are the dependent file of the aux          */
-/*      file.                                                           */
+/*      file, or if we aren't verify that the dependent file does       */
+/*      not exist, likely mean it is us but some sort of renaming       */
+/*      has occured.                                                    */
 /* -------------------------------------------------------------------- */
     CPLString oAuxFilename = CPLResetExtension(pszBasename,"aux");
     CPLString oJustFile = CPLGetFilename(pszBasename); // without dir
@@ -2339,23 +2346,53 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
     fp = VSIFOpenL( oAuxFilename, "rb" );
     if( fp != NULL )
     {
-       VSIFReadL( abyHeader, 1, 32, fp );
-       if( EQUALN((char *) abyHeader,"EHFA_HEADER_TAG",15) )
-          poODS =  (GDALDataset *) GDALOpenShared( oAuxFilename, eAccess );
-       VSIFCloseL( fp );
+        VSIFReadL( abyHeader, 1, 32, fp );
+        if( EQUALN((char *) abyHeader,"EHFA_HEADER_TAG",15) )
+            poODS =  (GDALDataset *) GDALOpenShared( oAuxFilename, eAccess );
+        VSIFCloseL( fp );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Try replacing extension with .aux                               */
+/* -------------------------------------------------------------------- */
     if( poODS != NULL )
     {
         const char *pszDep
             = poODS->GetMetadataItem( "HFA_DEPENDENT_FILE", "HFA" );
-        if( pszDep == NULL || !EQUAL(pszDep,oJustFile) )
+        if( pszDep == NULL  )
         {
+            CPLDebug( "AUX", 
+                      "Found %s but it has no dependent file, ignoring.",
+                      oAuxFilename.c_str() );
             GDALClose( poODS );
             poODS = NULL;
         }
+        else if( !EQUAL(pszDep,oJustFile) )
+        {
+            VSIStatBufL sStatBuf;
+
+            if( VSIStatL( pszDep, &sStatBuf ) == 0 )
+            {
+                CPLDebug( "AUX", "%s is for file %s, not %s, ignoring.",
+                          oAuxFilename.c_str(), 
+                          pszDep, oJustFile.c_str() );
+                GDALClose( poODS );
+                poODS = NULL;
+            }
+            else
+            {
+                CPLDebug( "AUX", "%s is for file %s, not %s, but since\n"
+                          "%s does not exist, we will use .aux file as our own.",
+                          oAuxFilename.c_str(), 
+                          pszDep, oJustFile.c_str(),
+                          pszDep );
+            }
+        }
     }
         
+/* -------------------------------------------------------------------- */
+/*      Try appending .aux to the end of the filename.                  */
+/* -------------------------------------------------------------------- */
     if( poODS == NULL )
     {
         oAuxFilename = pszBasename;
@@ -2363,20 +2400,44 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
         fp = VSIFOpenL( oAuxFilename, "rb" );
         if( fp != NULL )
         {
-           VSIFReadL( abyHeader, 1, 32, fp );
-           if( EQUALN((char *) abyHeader,"EHFA_HEADER_TAG",15) )
-              poODS =  (GDALDataset *) GDALOpenShared( oAuxFilename, eAccess );
-           VSIFCloseL( fp );
+            VSIFReadL( abyHeader, 1, 32, fp );
+            if( EQUALN((char *) abyHeader,"EHFA_HEADER_TAG",15) )
+                poODS =  (GDALDataset *) GDALOpenShared( oAuxFilename, eAccess );
+            VSIFCloseL( fp );
         }
  
         if( poODS != NULL )
         {
             const char *pszDep
                 = poODS->GetMetadataItem( "HFA_DEPENDENT_FILE", "HFA" );
-            if( pszDep == NULL || !EQUAL(pszDep,oJustFile) )
+            if( pszDep == NULL  )
             {
+                CPLDebug( "AUX", 
+                          "Found %s but it has no dependent file, ignoring.",
+                          oAuxFilename.c_str() );
                 GDALClose( poODS );
                 poODS = NULL;
+            }
+            else if( !EQUAL(pszDep,oJustFile) )
+            {
+                VSIStatBufL sStatBuf;
+
+                if( VSIStatL( pszDep, &sStatBuf ) == 0 )
+                {
+                    CPLDebug( "AUX", "%s is for file %s, not %s, ignoring.",
+                              oAuxFilename.c_str(), 
+                              pszDep, oJustFile.c_str() );
+                    GDALClose( poODS );
+                    poODS = NULL;
+                }
+                else
+                {
+                    CPLDebug( "AUX", "%s is for file %s, not %s, but since\n"
+                              "%s does not exist, we will use .aux file as our own.",
+                              oAuxFilename.c_str(), 
+                              pszDep, oJustFile.c_str(),
+                              pszDep );
+                }
             }
         }
     }
