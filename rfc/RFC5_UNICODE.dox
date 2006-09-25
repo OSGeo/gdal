@@ -14,7 +14,7 @@ Status: Development<br>
 This document contains proposal on how to make GDAL core locale independent
 preserving support for native character sets.
 
-\section rfc4_metadata Main concepts
+\section rfc5_main Main concepts
 
 GDAL should be modified in a way to support three following main ideas:
 
