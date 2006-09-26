@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/09/26 09:49:17  dron
+ * 'Stretch' parameter is not georeferenced.
+ *
  * Revision 1.16  2006/09/23 15:27:52  dron
  * Added new label styles:  'w', 'st', 'h', 'm:h', 'm:a', 'p:{10,11,12}'.
  *
@@ -153,7 +156,7 @@ OGRStyleParamId asStyleLabel[] = {{OGRSTLabelFontName,"f",FALSE,OGRSTypeString},
                                    OGRSTypeInteger},
                                   {OGRSTLabelStrikeout,"st",FALSE,
                                    OGRSTypeInteger},
-                                  {OGRSTLabelStretch,"w",TRUE, OGRSTypeDouble},
+                                  {OGRSTLabelStretch,"w",FALSE, OGRSTypeDouble},
                                   {OGRSTLabelAdjHor,"ah",FALSE,
                                    OGRSTypeString},
                                   {OGRSTLabelAdjVert,"av",FALSE,
