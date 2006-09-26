@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.38  2006/09/26 18:15:47  fwarmerdam
+ * Emit CELLSIZE when adfGeoTransform[5] is positive.
+ *
  * Revision 1.37  2006/08/24 18:17:14  fwarmerdam
  * Removed noisy debug statement.
  *
@@ -772,7 +775,8 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
 
-    if( ABS(adfGeoTransform[1]+adfGeoTransform[5]) < 0.0000001 )
+    if( ABS(adfGeoTransform[1]+adfGeoTransform[5]) < 0.0000001 
+        || ABS(adfGeoTransform[1]-adfGeoTransform[5]) < 0.0000001 )
         sprintf( szHeader, 
                  "ncols        %d\n" 
                  "nrows        %d\n"
