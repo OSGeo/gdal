@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/09/26 00:47:48  fwarmerdam
+ * Don't try to parse non-element children in XMLInit().  Forgive me Matt!
+ *
  * Revision 1.6  2006/09/09 04:18:36  fwarmerdam
  * implement SetMetadataItem() support for sources
  *
@@ -288,7 +291,10 @@ CPLErr VRTSourcedRasterBand::XMLInit( CPLXMLNode * psTree,
          psChild = psChild->psNext)
     {
         VRTSource *poSource;
-        
+
+        if( psChild->eType != CXT_Element )
+            continue;
+
         CPLErrorReset();
         poSource = poDriver->ParseSource( psChild, pszVRTPath );
         if( poSource != NULL )
