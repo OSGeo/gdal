@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/09/27 15:20:49  fwarmerdam
+ * Don't try to translate band-less files.
+ *
  * Revision 1.33  2006/04/25 14:29:28  fwarmerdam
  * Avoid warning.
  *
@@ -553,6 +556,13 @@ static int ProxyMain( int argc, char ** argv )
     if( nBandCount == 0 )
     {
         nBandCount = GDALGetRasterCount( hDataset );
+        if( nBandCount == 0 )
+        {
+            fprintf( stderr, "Input file has no bands, and so cannot be translated.\n" );
+            GDALDestroyDriverManager();
+            exit(1 );
+        }
+
         panBandList = (int *) CPLMalloc(sizeof(int)*nBandCount);
         for( i = 0; i < nBandCount; i++ )
             panBandList[i] = i+1;
