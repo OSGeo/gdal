@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.82  2006/09/27 12:51:15  dron
+ * Added search for uppercase .AUX suffixes in GDALFindAssociatedAuxFile().
+ *
  * Revision 1.81  2006/09/25 19:15:25  fwarmerdam
  * Modified the findauxfile logic to use an .aux file even if the
  * dependent filename doesn't match as long as the dependent file
@@ -2327,7 +2330,10 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
                                         GDALAccess eAccess )
 
 {
-    if( EQUAL(CPLGetExtension(pszBasename),"aux") )
+    const char *pszAuxSuffixLC = "aux";
+    const char *pszAuxSuffixUC = "AUX";
+
+    if( EQUAL(CPLGetExtension(pszBasename), pszAuxSuffixLC) )
         return NULL;
 
 /* -------------------------------------------------------------------- */
@@ -2337,13 +2343,19 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
 /*      not exist, likely mean it is us but some sort of renaming       */
 /*      has occured.                                                    */
 /* -------------------------------------------------------------------- */
-    CPLString oAuxFilename = CPLResetExtension(pszBasename,"aux");
+    CPLString oAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixLC);
     CPLString oJustFile = CPLGetFilename(pszBasename); // without dir
     GDALDataset *poODS = NULL;
     GByte abyHeader[32];
     FILE *fp;
 
     fp = VSIFOpenL( oAuxFilename, "rb" );
+    if ( fp == NULL )
+    {
+        // Can't found file with lower case suffix. Try the upper case one.
+        oAuxFilename = CPLResetExtension(pszBasename, pszAuxSuffixUC);
+        fp = VSIFOpenL( oAuxFilename, "rb" );
+    }
     if( fp != NULL )
     {
         VSIFReadL( abyHeader, 1, 32, fp );
@@ -2396,13 +2408,20 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
     if( poODS == NULL )
     {
         oAuxFilename = pszBasename;
-        oAuxFilename += ".aux";
+        oAuxFilename += pszAuxSuffixLC;
         fp = VSIFOpenL( oAuxFilename, "rb" );
+        if ( fp == NULL )
+        {
+            // Can't found file with lower case suffix. Try the upper case one.
+            oAuxFilename = pszBasename;
+            oAuxFilename += pszAuxSuffixUC;
+            fp = VSIFOpenL( oAuxFilename, "rb" );
+        }
         if( fp != NULL )
         {
             VSIFReadL( abyHeader, 1, 32, fp );
             if( EQUALN((char *) abyHeader,"EHFA_HEADER_TAG",15) )
-                poODS =  (GDALDataset *) GDALOpenShared( oAuxFilename, eAccess );
+                poODS = (GDALDataset *) GDALOpenShared( oAuxFilename, eAccess );
             VSIFCloseL( fp );
         }
  
