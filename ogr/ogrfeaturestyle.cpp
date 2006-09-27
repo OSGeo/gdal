@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/09/27 20:20:58  fwarmerdam
+ * Extend szCurrent[] buffer size.  I should use CPLString, but I can't
+ * seem to form a test case to try out complex changes.  (bug 1310)
+ *
  * Revision 1.17  2006/09/26 09:49:17  dron
  * 'Stretch' parameter is not georeferenced.
  *
@@ -780,7 +784,7 @@ const char *OGRStyleTool::GetStyleString( OGRStyleParamId *pasStyleParam ,
         int i;
         GBool bFound;
         const char *pszClass;
-        char szCurrent[25];
+        char szCurrent[255];
         szCurrent[0] = '\0';
     
         CPLFree(m_pszStyleString);
