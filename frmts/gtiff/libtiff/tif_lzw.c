@@ -1,4 +1,4 @@
-/* $Id: tif_lzw.c,v 1.28 2006/03/16 12:38:24 dron Exp $ */
+/* $Id: tif_lzw.c,v 1.29 2006/09/27 22:39:00 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -251,6 +251,9 @@ LZWPreDecode(TIFF* tif, tsample_t s)
 
 	(void) s;
 	assert(sp != NULL);
+        if( sp->dec_codetab == NULL )
+            LZWSetupDecode( tif );
+
 	/*
 	 * Check for old bit-reversed codes.
 	 */
@@ -350,6 +353,7 @@ LZWDecode(TIFF* tif, tidata_t op0, tsize_t occ0, tsample_t s)
 
 	(void) s;
 	assert(sp != NULL);
+        assert(sp->dec_codetab != NULL);
 	/*
 	 * Restart interrupted output operation.
 	 */
@@ -734,6 +738,10 @@ LZWPreEncode(TIFF* tif, tsample_t s)
 
 	(void) s;
 	assert(sp != NULL);
+        
+        if( sp->enc_hashtab == NULL )
+            LZWSetupEncode( tif );
+
 	sp->lzw_nbits = BITS_MIN;
 	sp->lzw_maxcode = MAXCODE(BITS_MIN);
 	sp->lzw_free_ent = CODE_FIRST;
@@ -803,6 +811,9 @@ LZWEncode(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 	(void) s;
 	if (sp == NULL)
 		return (0);
+
+        assert(sp->enc_hashtab != NULL);
+
 	/*
 	 * Load local state.
 	 */
