@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.169  2006/09/27 15:27:46  fwarmerdam
+ * Don't crash if there are no bands on input datasource.
+ *
  * Revision 1.168  2006/07/24 13:55:36  fwarmerdam
  * Allow creation of files of up to 4200000000 worth of imagery.
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=1241
@@ -3762,10 +3765,18 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int		nYSize = poSrcDS->GetRasterYSize();
     int		nBands = poSrcDS->GetRasterCount();
     int         iBand;
-    GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
     CPLErr      eErr = CE_None;
     uint16	nPlanarConfig;
+
+    if( poSrcDS->GetRasterCount() == 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unable to export GeoTIFF files with zero bands." );
+        return NULL;
+    }
         
+    GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
+
 /* -------------------------------------------------------------------- */
 /*      Check, whether all bands in input dataset has the same type.    */
 /* -------------------------------------------------------------------- */
