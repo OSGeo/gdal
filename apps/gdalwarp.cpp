@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2006/09/27 13:06:13  dron
+ * Memory leak fixed.
+ *
  * Revision 1.26  2006/07/06 20:30:11  fwarmerdam
  * use GDALSuggestedWarpOutput2() to avoid approximation implicit in using gt
  *
@@ -819,7 +822,7 @@ GDALWarpCreateOutput( char **papszSrcFiles, const char *pszFilename,
         }
 
         if( pszTargetSRS == NULL )
-            pszTargetSRS = CPLStrdup(pszThisSourceSRS);
+            pszTargetSRS = pszThisSourceSRS;
         
 /* -------------------------------------------------------------------- */
 /*      Create a transformation object from the source to               */
