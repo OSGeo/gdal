@@ -26,6 +26,9 @@
 ###############################################################################
 # 
 #  $Log$
+#  Revision 1.26  2006/09/28 03:41:30  fwarmerdam
+#  existing output file needs to be opened in update mode!
+#
 #  Revision 1.25  2006/04/20 13:27:57  fwarmerdam
 #  Added error checks on Driver's Create support and success of Create.
 #
@@ -448,7 +451,7 @@ if __name__ == '__main__':
 
     # Try opening as an existing file.
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-    t_fh = gdal.Open( out_file, gdal.GA_ReadOnly )
+    t_fh = gdal.Open( out_file, gdal.GA_Update )
     gdal.PopErrorHandler()
     
     # Create output file if it does not already exist.
