@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2006/09/28 13:20:13  fwarmerdam
+ * Change createlayer assertion to a regular runtime check and error.
+ *
  * Revision 1.37  2006/06/23 02:01:07  mloskot
  * Fixed 2 memory leaks in ogr2ogr.cpp and ogrct.cpp files. Updated OGRCreateCoordinateTransformation docs.
  *
@@ -745,7 +748,14 @@ static int TranslateLayer( OGRDataSource *poSrcDS,
         if( eGType == -2 )
             eGType = poFDefn->GetGeomType();
 
-        CPLAssert( poDstDS->TestCapability( ODsCCreateLayer ) );
+        if( !poDstDS->TestCapability( ODsCCreateLayer ) )
+        {
+            fprintf( stderr, 
+              "Layer %s not found, and CreateLayer not supported by driver.", 
+                     pszNewLayerName );
+            return FALSE;
+        }
+
         CPLErrorReset();
 
         poDstLayer = poDstDS->CreateLayer( pszNewLayerName, poOutputSRS,
