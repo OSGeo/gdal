@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.81  2006/10/02 13:52:37  fwarmerdam
+ * Added WGS72 support per issue 441 from Sanz, provided by Phil Barker.
+ *
  * Revision 1.80  2006/06/27 01:19:32  fwarmerdam
  * Form histograms metadata more efficiently for large histograms.
  *
@@ -232,6 +235,7 @@ static const char *apszDatumMap[] = {
     "NAD27", "North_American_Datum_1927",
     "NAD83", "North_American_Datum_1983",
     "WGS 84", "WGS_1984",
+    "WGS 1972", "WGS_1972",
     NULL, NULL
 };
 
@@ -1521,6 +1525,11 @@ CPLErr HFADataset::WriteProjection()
                 break;
             }
         }
+
+        /* try to morph WGS84 varients to "WGS 84" (bug 1281) */
+        if( EQUALN(sDatum.datumname,"wgs",3) 
+            && strstr(sDatum.datumname,"84") != NULL )
+            sDatum.datumname = "WGS 84";
 
         if( poGeogSRS->GetTOWGS84( sDatum.params ) == OGRERR_NONE )
             sDatum.type = EPRJ_DATUM_PARAMETRIC;
