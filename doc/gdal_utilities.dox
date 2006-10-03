@@ -688,7 +688,7 @@ a shapefile in contour.shp/shx/dbf with the contour elevations in the "elev"
 attribute.
 
 \verbatim
-gdal_contour -a elev dem.tif contour.shp 10.0
+gdal_contour -a elev dem.tif contour.shp -i 10.0
 \endverbatim
 
 \if man
