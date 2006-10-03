@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/10/03 14:07:44  dron
+ * Rename open() function to mapOpen() to avoid clashing with system functions.
+ *
  * Revision 1.9  2005/05/05 15:54:49  fwarmerdam
  * PAM Enabled
  *
@@ -39,7 +42,7 @@
  *
  * Revision 1.6  2004/11/13 19:00:55  fwarmerdam
  * Don't blow an assertion if we don't have enough header data, just
- * return NULL (in open()).
+ * return NULL (in mapOpen()).
  *
  * Revision 1.5  2004/11/13 12:08:44  kdejong
  * Reading files with other cell representations than UINT1, INT4 or REAL4 will keep their original cell representation in memory.
@@ -132,7 +135,7 @@ GDALDataset* PCRasterDataset::open(GDALOpenInfo* info)
       mode = M_READ_WRITE;
     }
 
-    MAP* map = ::open(info->pszFilename, mode);
+    MAP* map = mapOpen(info->pszFilename, mode);
 
     if(map) {
       dataset = new PCRasterDataset(map);
