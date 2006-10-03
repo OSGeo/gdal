@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.24  2006/10/03 02:41:53  fwarmerdam
+ * Fixed file handle leak per email from Ray Gardener.
+ *
  * Revision 1.23  2006/02/17 17:37:41  fwarmerdam
  * Removed class qualifier on constructor of FITRasterBand.
  *
@@ -877,6 +880,8 @@ FITDataset::~FITDataset()
     FlushCache();
     if (info)
         delete(info);
+    if(fp)
+        VSIFCloseL(fp);
 }
 
 // simple guard object to delete memory 
