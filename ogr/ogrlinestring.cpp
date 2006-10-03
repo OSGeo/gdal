@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2006/10/03 09:23:55  dron
+ * Removed too verbosive debug output.
+ *
  * Revision 1.60  2006/09/21 16:51:10  osemykin
  * nBytesAvailable fixes as in OGRLinearRing::importFromWkb()
  *
@@ -919,9 +922,6 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
     size_t nPointSize = (bIs3D ? 24 : 16);
     size_t nBufferMinSize = nPointSize * nNewNumPoints;
 
-    CPLDebug( "OGR", "WKB Buffer check:\n\tnNewNumPoints=%d\n\tnBufferMinSize=%u\n\tnBytesAvailable=%d\n",
-              nNewNumPoints, nBufferMinSize, nBytesAvailable);
-
     if( nBufferMinSize > nBytesAvailable && nBytesAvailable > 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -948,9 +948,6 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
         {
             nBytesToCopy = 24;
 
-            CPLDebug( "OGR", "3D WKB Bytes copying:\n\tBytesToCopy=%d\n\tnBytesAvailable=%d\n",
-                      nBytesToCopy, nBytesAvailable );
-
             if( nBytesToCopy > nBytesAvailable && nBytesAvailable > 0 )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
@@ -968,9 +965,6 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
     else
     {
         nBytesToCopy = 16 * nPointCount;
-
-        CPLDebug( "OGR", "WKB Bytes copying:\n\tBytesToCopy=%d\n\tnBytesAvailable=%d\n",
-                  nBytesToCopy, nBytesAvailable );
 
         if( nBytesToCopy > nBytesAvailable && nBytesAvailable > 0 )
         {
