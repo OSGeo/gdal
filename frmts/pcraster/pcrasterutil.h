@@ -57,7 +57,7 @@ void               alterToStdMV        (void* buffer,
                                         CSF_CR cellRepresentation,
                                         double missingValue);
 
-MAP*               open                (std::string const& filename,
+MAP*               mapOpen             (std::string const& filename,
                                         MOPEN_PERM mode);
 
 CSF_VS             fitValueScale       (CSF_VS valueScale,

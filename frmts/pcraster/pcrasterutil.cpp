@@ -335,7 +335,7 @@ double missingValue(CSF_CR cellRepresentation)
   \warning   .
   \sa        .
 */
-MAP* open(std::string const& filename, MOPEN_PERM mode)
+MAP* mapOpen(std::string const& filename, MOPEN_PERM mode)
 {
   MAP* map = Mopen(filename.c_str(), mode);
 
