@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2006/10/04 19:10:31  fwarmerdam
+ * Make sure we don't crash if the VQ LUTs were not successfully loaded.
+ *
  * Revision 1.40  2006/02/19 22:36:46  fwarmerdam
  * avoid swap words unused warning
  *
@@ -1032,6 +1035,13 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
     else if( EQUAL(psImage->szIC,"C4") || EQUAL(psImage->szIC,"M4") )
     {
         GByte abyVQCoded[6144];
+
+        if( psImage->psFile->apanVQLUT[0] == NULL )
+        {
+            CPLError( CE_Failure, CPLE_NotSupported, 
+                      "File lacks VQ LUTs, unable to decode imagery." );
+            return BLKREAD_FAIL;
+        }
 
         /* Read the codewords */
         if( VSIFSeekL(psImage->psFile->fp, psImage->panBlockStart[iFullBlock], 
