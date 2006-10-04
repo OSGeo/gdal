@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2006/10/04 17:22:42  fwarmerdam
+ * Added WCS.
+ *
  * Revision 1.46  2006/04/20 13:36:53  fwarmerdam
  * Added terragen.
  *
@@ -173,6 +176,7 @@ void CPL_DLL GDALRegister_DIPEx(void);
 void CPL_DLL GDALRegister_ISIS2(void);
 void CPL_DLL GDALRegister_IDRISI(void);
 void CPL_DLL GDALRegister_Terragen(void);
+void CPL_DLL GDALRegister_WCS(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
