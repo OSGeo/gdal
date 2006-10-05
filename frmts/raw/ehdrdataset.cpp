@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2006/10/05 15:29:09  fwarmerdam
+ * Don't depend on poOpenInfo->fp being non-NULL or else large files
+ * won't work on some systems.
+ *
  * Revision 1.40  2006/08/07 15:20:08  fwarmerdam
  * Ensure that comment lines in color table are ignored.
  *
@@ -911,7 +915,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*	We assume the user is pointing to the binary (ie. .bil) file.	*/
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->fp == NULL )
+    if( poOpenInfo->nHeaderBytes < 2 )
         return NULL;
 
 /* -------------------------------------------------------------------- */
