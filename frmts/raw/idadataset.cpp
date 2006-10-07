@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/10/07 01:59:40  fwarmerdam
+ * Added support for reading .clr file.
+ *
  * Revision 1.9  2005/09/14 01:12:00  fwarmerdam
  * Fixed creation data types and help link.
  *
@@ -59,6 +62,7 @@
 
 #include "rawdataset.h"
 #include "ogr_spatialref.h"
+#include "gdal_rat.h"
 
 CPL_CVSID("$Id$");
 
@@ -109,6 +113,8 @@ class IDADataset : public RawDataset
 
     GByte       abyHeader[512];
     int         bHeaderDirty;
+
+    void        ReadColorTable();
     
   public:
     		IDADataset();
@@ -139,10 +145,16 @@ class IDARasterBand : public RawRasterBand
 {
     friend class IDADataset;
 
+    GDALRasterAttributeTable *poRAT;
+    GDALColorTable       *poColorTable;
+
   public:
     		IDARasterBand( IDADataset *poDSIn, FILE *fpRaw, int nXSize );
     virtual     ~IDARasterBand();
 
+    virtual const GDALRasterAttributeTable *GetDefaultRAT();
+    virtual GDALColorInterp GetColorInterpretation();
+    virtual GDALColorTable *GetColorTable();
     virtual double GetOffset( int *pbSuccess = NULL );
     virtual CPLErr SetOffset( double dfNewValue );
     virtual double GetScale( int *pbSuccess = NULL );
@@ -160,6 +172,8 @@ IDARasterBand::IDARasterBand( IDADataset *poDSIn,
                          GDT_Byte, FALSE, FALSE )
 
 {
+    poColorTable = NULL;
+    poRAT = NULL;
 }
 
 /************************************************************************/
@@ -169,6 +183,8 @@ IDARasterBand::IDARasterBand( IDADataset *poDSIn,
 IDARasterBand::~IDARasterBand()
 
 {
+    delete poColorTable;
+    delete poRAT;
 }
 
 /************************************************************************/
@@ -257,6 +273,45 @@ CPLErr IDARasterBand::SetScale( double dfNewValue )
     poIDS->bHeaderDirty = TRUE;
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable *IDARasterBand::GetColorTable()
+
+{
+    if( poColorTable )
+        return poColorTable;
+    else
+        return RawRasterBand::GetColorTable();
+}
+
+/************************************************************************/
+/*                       GetColorInterpretation()                       */
+/************************************************************************/
+
+GDALColorInterp IDARasterBand::GetColorInterpretation()
+
+{
+    if( poColorTable )
+        return GCI_PaletteIndex;
+    else
+        return RawRasterBand::GetColorInterpretation();
+}
+
+/************************************************************************/
+/*                           GetDefaultRAT()                            */
+/************************************************************************/
+
+const GDALRasterAttributeTable *IDARasterBand::GetDefaultRAT() 
+
+{
+    if( poRAT )
+        return poRAT;
+    else
+        return RawRasterBand::GetDefaultRAT();
 }
 
 /************************************************************************/
@@ -533,6 +588,127 @@ CPLErr IDADataset::SetProjection( const char *pszWKTIn )
 }
 
 /************************************************************************/
+/*                           ReadColorTable()                           */
+/************************************************************************/
+
+void IDADataset::ReadColorTable()
+
+{
+/* -------------------------------------------------------------------- */
+/*      Decide what .clr file to look for and try to open.              */
+/* -------------------------------------------------------------------- */
+    CPLString osCLRFilename;
+
+    osCLRFilename = CPLGetConfigOption( "IDA_COLOR_FILE", "" );
+    if( strlen(osCLRFilename) == 0 )
+        osCLRFilename = CPLResetExtension(GetDescription(), "clr" );
+
+
+    FILE *fp = VSIFOpen( osCLRFilename, "r" );
+    if( fp == NULL )
+    {
+        osCLRFilename = CPLResetExtension(osCLRFilename, "CLR" );
+        fp = VSIFOpen( osCLRFilename, "r" );
+    }
+
+    if( fp == NULL )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Skip first line, with the column titles.                        */
+/* -------------------------------------------------------------------- */
+    CPLReadLine( fp );
+
+/* -------------------------------------------------------------------- */
+/*      Create a RAT to populate.                                       */
+/* -------------------------------------------------------------------- */
+    GDALRasterAttributeTable *poRAT = new GDALRasterAttributeTable();
+
+    poRAT->CreateColumn( "FROM", GFT_Integer, GFU_Min );
+    poRAT->CreateColumn( "TO", GFT_Integer, GFU_Max );
+    poRAT->CreateColumn( "RED", GFT_Integer, GFU_Red );
+    poRAT->CreateColumn( "GREEN", GFT_Integer, GFU_Green );
+    poRAT->CreateColumn( "BLUE", GFT_Integer, GFU_Blue );
+    poRAT->CreateColumn( "LEGEND", GFT_String, GFU_Name );
+
+/* -------------------------------------------------------------------- */
+/*      Apply lines.                                                    */
+/* -------------------------------------------------------------------- */
+    const char *pszLine = CPLReadLine( fp );
+    int iRow = 0;
+
+    while( pszLine != NULL )
+    {
+        char **papszTokens = 
+            CSLTokenizeStringComplex( pszLine, " \t", FALSE, FALSE );
+        
+        if( CSLCount( papszTokens ) >= 5 )
+        {
+            poRAT->SetValue( iRow, 0, atoi(papszTokens[0]) );
+            poRAT->SetValue( iRow, 1, atoi(papszTokens[1]) );
+            poRAT->SetValue( iRow, 2, atoi(papszTokens[2]) );
+            poRAT->SetValue( iRow, 3, atoi(papszTokens[3]) );
+            poRAT->SetValue( iRow, 4, atoi(papszTokens[4]) );
+
+            // find name, first nonspace after 5th token. 
+            const char *pszName = pszLine;
+
+            // skip from
+            while( *pszName == ' ' || *pszName == '\t' )
+                pszName++;
+            while( *pszName != ' ' && *pszName != '\t' && *pszName != '\0' )
+                pszName++;
+            
+            // skip to
+            while( *pszName == ' ' || *pszName == '\t' )
+                pszName++;
+            while( *pszName != ' ' && *pszName != '\t' && *pszName != '\0' )
+                pszName++;
+            
+            // skip red
+            while( *pszName == ' ' || *pszName == '\t' )
+                pszName++;
+            while( *pszName != ' ' && *pszName != '\t' && *pszName != '\0' )
+                pszName++;
+            
+            // skip green
+            while( *pszName == ' ' || *pszName == '\t' )
+                pszName++;
+            while( *pszName != ' ' && *pszName != '\t' && *pszName != '\0' )
+                pszName++;
+            
+            // skip blue
+            while( *pszName == ' ' || *pszName == '\t' )
+                pszName++;
+            while( *pszName != ' ' && *pszName != '\t' && *pszName != '\0' )
+                pszName++;
+
+            // skip pre-name white space
+            while( *pszName == ' ' || *pszName == '\t' )
+                pszName++;
+
+            poRAT->SetValue( iRow, 5, pszName );
+            
+            iRow++;
+        }
+
+        CSLDestroy( papszTokens );
+        pszLine = CPLReadLine( fp );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Attach RAT to band.                                             */
+/* -------------------------------------------------------------------- */
+    ((IDARasterBand *) GetRasterBand( 1 ))->poRAT = poRAT;
+
+/* -------------------------------------------------------------------- */
+/*      Build a conventional color table from this.                     */
+/* -------------------------------------------------------------------- */
+    ((IDARasterBand *) GetRasterBand( 1 ))->poColorTable = 
+        poRAT->TranslateToColorTable();
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -774,6 +950,12 @@ CALCULATED =200
                                          poDS->nRasterXSize ) );
 
 /* -------------------------------------------------------------------- */
+/*      Check for a color table.                                        */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->ReadColorTable();
+
+/* -------------------------------------------------------------------- */
 /*      Check for overviews.                                            */
 /* -------------------------------------------------------------------- */
     poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
@@ -781,7 +963,6 @@ CALCULATED =200
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
 /* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->TryLoadXML();
 
     return( poDS );
