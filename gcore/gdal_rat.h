@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/10/07 02:00:38  fwarmerdam
+ * added RAT translation to ColorTable, and a few other fixes
+ *
  * Revision 1.2  2005/09/28 21:29:30  fwarmerdam
  * added RAT documentation
  *
@@ -76,6 +79,8 @@ private:
     double dfRow0Min;
     double dfBinSize;
 
+    void  AnalyseColumns();
+    int   bColumnsAnalysed;
     int   nMinCol;
     int   nMaxCol;
 
@@ -126,6 +131,7 @@ public:
     CPLErr        XMLInit( CPLXMLNode *, const char * );
 
     CPLErr        InitializeFromColorTable( const GDALColorTable * );
+    GDALColorTable *TranslateToColorTable( int nEntryCount = -1 );
     
     void          DumpReadable( FILE * = NULL );
 };

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/10/07 02:00:38  fwarmerdam
+ * added RAT translation to ColorTable, and a few other fixes
+ *
  * Revision 1.7  2006/02/13 17:22:54  fwarmerdam
  * Avoid large amounts of linked list walking adding rows when
  * serializing RAT.
@@ -103,6 +106,7 @@ CPL_CVSID("$Id$");
 GDALRasterAttributeTable::GDALRasterAttributeTable()
 
 {
+    bColumnsAnalysed = FALSE;
     nMinCol = -1;
     nMaxCol = -1;
     bLinearBinning = FALSE;
@@ -156,6 +160,27 @@ GDALDestroyRasterAttributeTable( GDALRasterAttributeTableH hRAT )
 {
     if( hRAT != NULL )
         delete (GDALRasterAttributeTable *) hRAT;
+}
+
+/************************************************************************/
+/*                           AnalyseColumns()                           */
+/*                                                                      */
+/*      Internal method to work out which column to use for various     */
+/*      tasks.                                                          */
+/************************************************************************/
+
+void GDALRasterAttributeTable::AnalyseColumns()
+
+{
+    bColumnsAnalysed = TRUE;
+
+    nMinCol = GetColOfUsage( GFU_Min );
+    if( nMinCol == -1 )
+        nMinCol = GetColOfUsage( GFU_MinMax );
+
+    nMaxCol = GetColOfUsage( GFU_Max );
+    if( nMaxCol == -1 )
+        nMaxCol = GetColOfUsage( GFU_MinMax );
 }
 
 /************************************************************************/
@@ -894,6 +919,9 @@ int GDALRasterAttributeTable::GetRowOfValue( double dfValue ) const
 /* -------------------------------------------------------------------- */
     const GDALRasterAttributeField *poMin, *poMax;
 
+    if( !bColumnsAnalysed )
+        ((GDALRasterAttributeTable *) this)->AnalyseColumns();
+
     if( nMinCol == -1 && nMaxCol == -1 )
         return -1;
 
@@ -944,6 +972,19 @@ int GDALRasterAttributeTable::GetRowOfValue( double dfValue ) const
     }
 
     return -1;
+}
+
+/************************************************************************/
+/*                           GetRowOfValue()                            */
+/*                                                                      */
+/*      Int arg for now just converted to double.  Perhaps we will      */
+/*      handle this in a special way some day?                          */
+/************************************************************************/
+
+int GDALRasterAttributeTable::GetRowOfValue( int nValue ) const
+
+{
+    return GetRowOfValue( (double) nValue );
 }
 
 /************************************************************************/
@@ -1177,6 +1218,112 @@ GDALRATInitializeFromColorTable( GDALRasterAttributeTableH hRAT,
 {
     return ((GDALRasterAttributeTable *) hRAT)->
         InitializeFromColorTable( (GDALColorTable *) hCT );
+}
+
+/************************************************************************/
+/*                       TranslateToColorTable()                        */
+/************************************************************************/
+
+/**
+ * \brief Translate to a color table.
+ *
+ * This method will attempt to create a corresponding GDALColorTable from
+ * this raster attribute table. 
+ * 
+ * This method is the same as the C function GDALRATTranslateToColorTable().
+ *
+ * @param nEntryCount The number of entries to produce (0 to nEntryCount-1), or -1 to auto-determine the number of entries.
+ *
+ * @return the generated color table or NULL on failure.
+ */
+
+GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable( 
+    int nEntryCount )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Establish which fields are red, green, blue and alpha.          */
+/* -------------------------------------------------------------------- */
+    int iRed, iGreen, iBlue, iAlpha;
+
+    iRed = GetColOfUsage( GFU_Red );
+    iGreen = GetColOfUsage( GFU_Green );
+    iBlue = GetColOfUsage( GFU_Blue );
+    iAlpha = GetColOfUsage( GFU_Alpha );
+
+    if( iRed == -1 || iGreen == -1 || iBlue == -1 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      If we aren't given an explicit number of values to scan for,    */
+/*      search for the maximum "max" value.                             */
+/* -------------------------------------------------------------------- */
+    if( nEntryCount == -1 )
+    {
+        int  iRow, nRowCount = GetRowCount();
+        int  iMaxCol;
+
+        iMaxCol = GetColOfUsage( GFU_Max );
+        if( iMaxCol == -1 )
+            GetColOfUsage( GFU_MinMax );
+
+        if( iMaxCol == -1 || nRowCount == 0 )
+            return NULL;
+    
+        for( iRow = 0; iRow < nRowCount; iRow++ )
+            nEntryCount = MAX(nEntryCount,GetValueAsInt(iRow,iMaxCol)+1);
+
+        if( nEntryCount < 0 )
+            return NULL;
+
+        // restrict our number of entries to something vaguely sensible
+        nEntryCount = MIN(65535,nEntryCount);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Assign values to color table.                                   */
+/* -------------------------------------------------------------------- */
+    GDALColorTable *poCT = new GDALColorTable();
+    int iEntry;
+
+    for( iEntry = 0; iEntry < nEntryCount; iEntry++ )
+    {
+        GDALColorEntry sColor;
+        int iRow = GetRowOfValue( iEntry );
+
+        if( iRow == -1 )
+        {
+            sColor.c1 = sColor.c2 = sColor.c3 = sColor.c4 = 0;
+        }
+        else
+        {
+            sColor.c1 = GetValueAsInt( iRow, iRed );
+            sColor.c2 = GetValueAsInt( iRow, iGreen );
+            sColor.c3 = GetValueAsInt( iRow, iBlue );
+            if( iAlpha == -1 )
+                sColor.c4 = 255;
+            else
+                sColor.c4 = GetValueAsInt( iRow, iAlpha );
+        }
+        
+        poCT->SetColorEntry( iEntry, &sColor );
+    }
+
+    return poCT;
+}
+
+/************************************************************************/
+/*                  GDALRATInitializeFromColorTable()                   */
+/************************************************************************/
+
+GDALColorTableH CPL_STDCALL 
+GDALRATTranslateToColorTable( GDALRasterAttributeTableH hRAT,
+                              int nEntryCount )
+                                 
+
+{
+    return ((GDALRasterAttributeTable *) hRAT)->
+        TranslateToColorTable( nEntryCount );
 }
 
 /************************************************************************/
