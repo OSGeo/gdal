@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.105  2006/10/07 02:00:38  fwarmerdam
+ * added RAT translation to ColorTable, and a few other fixes
+ *
  * Revision 1.104  2006/09/08 15:27:05  fwarmerdam
  * fixed type of return dataset list in GDALGetOpenDatasets()
  *
@@ -702,6 +705,8 @@ int CPL_DLL CPL_STDCALL GDALRATGetLinearBinning( GDALRasterAttributeTableH,
                                                  double *, double * );
 CPLErr CPL_DLL CPL_STDCALL GDALRATInitializeFromColorTable(
     GDALRasterAttributeTableH, GDALColorTableH );
+GDALColorTableH CPL_DLL CPL_STDCALL GDALRATTranslateToColorTable( 
+    int nEntryCount );
 void CPL_DLL CPL_STDCALL GDALRATDumpReadable( GDALRasterAttributeTableH, 
                                               FILE * );
 GDALRasterAttributeTableH CPL_DLL CPL_STDCALL 
