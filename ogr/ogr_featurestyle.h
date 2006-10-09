@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/10/09 13:01:23  dron
+ * Added OGRSTypeBoolean type to the list of OGRSType types.
+ *
  * Revision 1.9  2006/09/23 15:27:52  dron
  * Added new label styles:  'w', 'st', 'h', 'm:h', 'm:a', 'p:{10,11,12}'.
  *
@@ -175,7 +178,8 @@ typedef enum ogr_style_type
 {
     OGRSTypeString,
     OGRSTypeDouble,
-    OGRSTypeInteger
+    OGRSTypeInteger,
+    OGRSTypeBoolean
 }  OGRSType;
 
 typedef struct ogr_style_param
@@ -191,7 +195,7 @@ typedef struct ogr_style_value
 {
     char            *pszValue;
     double           dfValue;
-    int              nValue;
+    int              nValue; // Used for both integer and boolean types
     GBool            bValid;
     OGRSTUnitId      eUnit;
 }OGRStyleValue;
