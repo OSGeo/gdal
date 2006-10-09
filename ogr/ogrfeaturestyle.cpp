@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/10/09 12:52:30  dron
+ * Style parsing logic in OGRStyleTool::Parse() was broken, rewrote it.
+ *
  * Revision 1.18  2006/09/27 20:20:58  fwarmerdam
  * Extend szCurrent[] buffer size.  I should use CPLString, but I can't
  * seem to form a test case to try out complex changes.  (bug 1310)
@@ -152,14 +155,14 @@ OGRStyleParamId asStyleLabel[] = {{OGRSTLabelFontName,"f",FALSE,OGRSTypeString},
                                   {OGRSTLabelDx,"dx",TRUE,OGRSTypeDouble},
                                   {OGRSTLabelDy,"dy",TRUE,OGRSTypeDouble},
                                   {OGRSTLabelPerp,"dp",TRUE,OGRSTypeDouble},
-                                  {OGRSTLabelBold,"bo",FALSE,OGRSTypeInteger},
-                                  {OGRSTLabelItalic,"it",FALSE,OGRSTypeInteger},
+                                  {OGRSTLabelBold,"bo",FALSE,OGRSTypeBoolean},
+                                  {OGRSTLabelItalic,"it",FALSE,OGRSTypeBoolean},
                                   {OGRSTLabelUnderline,"un",FALSE,
-                                   OGRSTypeInteger},
+                                   OGRSTypeBoolean},
                                   {OGRSTLabelPriority,"l",FALSE,
                                    OGRSTypeInteger},
                                   {OGRSTLabelStrikeout,"st",FALSE,
-                                   OGRSTypeInteger},
+                                   OGRSTypeBoolean},
                                   {OGRSTLabelStretch,"w",FALSE, OGRSTypeDouble},
                                   {OGRSTLabelAdjHor,"ah",FALSE,
                                    OGRSTypeString},
@@ -169,11 +172,16 @@ OGRStyleParamId asStyleLabel[] = {{OGRSTLabelFontName,"f",FALSE,OGRSTypeString},
                                  };
 
 OGRStyleParamId asStyleVector[] = {{OGRSTVectorId,"id",FALSE,OGRSTypeString},
-                                  {OGRSTVectorNotCompress,"nc",FALSE,OGRSTypeInteger},
-				  {OGRSTVectorSprain,"sp",FALSE,OGRSTypeInteger},
-				  {OGRSTVectorNotBend,"nb",FALSE,OGRSTypeInteger},
-				  {OGRSTVectorMirroring,"m",FALSE,OGRSTypeInteger},
-				  {OGRSTVectorCentering,"c",FALSE,OGRSTypeInteger},
+                                  {OGRSTVectorNotCompress,"nc",FALSE,
+                                   OGRSTypeInteger},
+                                  {OGRSTVectorSprain,"sp",FALSE,
+                                   OGRSTypeInteger},
+                                  {OGRSTVectorNotBend,"nb",FALSE,
+                                   OGRSTypeInteger},
+                                  {OGRSTVectorMirroring,"m",FALSE,
+                                   OGRSTypeInteger},
+                                  {OGRSTVectorCentering,"c",FALSE,
+                                   OGRSTypeInteger},
                                   {OGRSTVectorPriority,"l",FALSE,
                                    OGRSTypeInteger}
                                  };
@@ -768,7 +776,6 @@ OGRStyleTool::~OGRStyleTool()
 void OGRStyleTool::SetStyleString(const char *pszStyleString)
 {
     m_pszStyleString = CPLStrdup(pszStyleString);
-    // Parse();
 }
 
 /****************************************************************************/
@@ -784,7 +791,8 @@ const char *OGRStyleTool::GetStyleString( OGRStyleParamId *pasStyleParam ,
         int i;
         GBool bFound;
         const char *pszClass;
-        char szCurrent[255];
+        // FIXME: we should use CPLString instead of static buffer:
+        char szCurrent[8192];
         szCurrent[0] = '\0';
     
         CPLFree(m_pszStyleString);
@@ -823,17 +831,17 @@ const char *OGRStyleTool::GetStyleString( OGRStyleParamId *pasStyleParam ,
             bFound = TRUE;
             
             strcat(szCurrent,pasStyleParam[i].pszToken);
-            strcat(szCurrent,":");
             switch (pasStyleParam[i].eType)
             {
               case OGRSTypeString:
+                strcat(szCurrent,":");
                 strcat(szCurrent,pasStyleValue[i].pszValue);
                 break;
               case OGRSTypeDouble:
-                strcat(szCurrent,CPLSPrintf("%f",pasStyleValue[i].dfValue));
+                strcat(szCurrent,CPLSPrintf(":%f",pasStyleValue[i].dfValue));
                 break;
               case OGRSTypeInteger:
-                strcat(szCurrent,CPLSPrintf("%d",pasStyleValue[i].nValue));
+                strcat(szCurrent,CPLSPrintf(":%d",pasStyleValue[i].nValue));
                 break;
               default:
                 break;
@@ -950,8 +958,6 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
                           OGRStyleValue *pasValue,
                           int nCount)
 {
-    int i,j;
-
     char **papszToken; // Token to contains StyleString Type and content
     char **papszToken2; // Token that will contains StyleString elements
 
@@ -981,19 +987,11 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
         return FALSE;
     }
     
-    // Tokenize the content of the StyleString to get every component in it.
-    papszToken2 = CSLTokenizeString2(papszToken[1],":,",
-                                     CSLT_HONOURSTRINGS 
-                                     | CSLT_ALLOWEMPTYTOKENS );
-    
-    if (CSLCount(papszToken2) %2 != 0)
-    {
-        CSLDestroy( papszToken );
-        CSLDestroy( papszToken2 );
-        CPLError(CE_Failure, CPLE_AppDefined, 
-                 "Error in the StyleTool String %s\n",m_pszStyleString);
-        return FALSE;
-    }
+    // Tokenize the content of the StyleString to get paired components in it.
+    papszToken2 = CSLTokenizeString2( papszToken[1], ",",
+                                      CSLT_HONOURSTRINGS
+                                      | CSLT_PRESERVEQUOTES
+                                      | CSLT_PRESERVEESCAPES );
     
     // Valid that we have the right StyleString for this feature type.
     switch (GetType())
@@ -1062,8 +1060,6 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
         break;
     }
     
-    i=0;
-
     ////////////////////////////////////////////////////////////////////////
     // Here we will loop on each element in the StyleString. If it's 
     // a valid element, we will add it in the StyleTool with 
@@ -1074,7 +1070,7 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
     // See OGRStyleTool::SetParamStr().
     // There's a StyleTool unit (m_eUnit), which is the output unit, and each 
     // parameter of the style have its own unit value (the input unit). Here we
-    // set m_eUnit to the input unit and in SetParamStr(), we will use thi 
+    // set m_eUnit to the input unit and in SetParamStr(), we will use this
     // value to set the input unit. Then after the loop we will reset m_eUnit 
     // to it's original value. (Yes it's a side effect / black magic)
     //
@@ -1087,24 +1083,45 @@ GBool OGRStyleTool::Parse(OGRStyleParamId *pasStyle,
     // Save Scale and output Units because the parsing code will alter 
     // the values
     eLastUnit = m_eUnit;
-    double dSavedScale = m_dfScale;
+    double  dSavedScale = m_dfScale;
+    int     i, nElements = CSLCount(papszToken2);
 
-    while (i < CSLCount(papszToken2))
+    for ( i = 0; i < nElements; i++ )
     {
-        for (j=0;j<nCount;j++)
-          if (EQUAL(pasStyle[j].pszToken,papszToken2[i]))
-          {
-              if (pasStyle[j].bGeoref == TRUE)
-                SetInternalInputUnitFromParam(papszToken2[i+1]);
-              
-              OGRStyleTool::SetParamStr(pasStyle[j] ,
-                                        pasValue[j],
-                                        papszToken2[i+1]);
+        char    **papszStylePair =
+            CSLTokenizeString2( papszToken2[i], ":", CSLT_HONOURSTRINGS );
+        int     j, nTokens = CSLCount(papszStylePair);
 
-              break;
-          }
+        if ( nTokens < 1 || nTokens > 2 )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Error in the StyleTool String %s", m_pszStyleString );
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Malformed element #%d (\"%s\") skipped",
+                      i, papszToken2[i] );
+            CSLDestroy(papszStylePair);
+            continue;
+        }
+        
+        for ( j = 0; j < nCount; j++ )
+        {
+            if ( EQUAL(pasStyle[j].pszToken, papszStylePair[0]) )
+            {
+                if (nTokens == 2 && pasStyle[j].bGeoref == TRUE)
+                    SetInternalInputUnitFromParam(papszStylePair[1]);
 
-        i+=2;
+                // Set either the actual value of style parameter or "1"
+                // for boolean parameters which do not have values.
+                // "1" means that boolean parameter is present in the style
+                // string.
+                OGRStyleTool::SetParamStr( pasStyle[j], pasValue[j],
+                                    (nTokens == 2) ? papszStylePair[1] : "1" );
+
+                break;
+            }
+        }
+
+        CSLDestroy( papszStylePair );
     }
 
     m_eUnit = eLastUnit;
@@ -1252,12 +1269,16 @@ const char *OGRStyleTool::GetParamStr(OGRStyleParamId &sStyleParam ,
                                       GBool &bValueIsNull)
 {
 
-    Parse();
+    if (!Parse())
+    {
+        bValueIsNull = TRUE;
+        return NULL;
+    }
 
     bValueIsNull = !sStyleValue.bValid;
     
     if (bValueIsNull == TRUE)
-      return "";
+      return NULL;
 
     switch (sStyleParam.eType)
     {
@@ -1265,7 +1286,6 @@ const char *OGRStyleTool::GetParamStr(OGRStyleParamId &sStyleParam ,
         // if sStyleParam.bGeoref == TRUE , need to convert to output value;
       case OGRSTypeString:
         return sStyleValue.pszValue;
-        break;
       case OGRSTypeDouble:
         if (sStyleParam.bGeoref)
           return CPLSPrintf("%f",ComputeWithUnit(sStyleValue.dfValue,
@@ -1273,18 +1293,17 @@ const char *OGRStyleTool::GetParamStr(OGRStyleParamId &sStyleParam ,
         else
           return CPLSPrintf("%f",sStyleValue.dfValue);
                             
-        break;
       case OGRSTypeInteger:
         if (sStyleParam.bGeoref)
           return CPLSPrintf("%d",ComputeWithUnit(sStyleValue.nValue,
                                                  sStyleValue.eUnit));
-          else
+        else
           return CPLSPrintf("%d",sStyleValue.nValue);
-        break;
+      case OGRSTypeBoolean:
+        return CPLSPrintf("%d",sStyleValue.nValue);
       default:
         bValueIsNull = TRUE;
         return NULL;
-        break;
     }
 }
 
@@ -1311,7 +1330,11 @@ double OGRStyleTool::GetParamDbl(OGRStyleParamId &sStyleParam ,
                                  OGRStyleValue &sStyleValue,
                                  GBool &bValueIsNull)
 {
-    Parse();
+    if (!Parse())
+    {
+        bValueIsNull = TRUE;
+        return 0;
+    }
 
     bValueIsNull = !sStyleValue.bValid;
     
@@ -1328,25 +1351,23 @@ double OGRStyleTool::GetParamDbl(OGRStyleParamId &sStyleParam ,
                                  sStyleValue.eUnit);
         else
           return atof(sStyleValue.pszValue);
-        break;
       case OGRSTypeDouble:
         if (sStyleParam.bGeoref)
           return ComputeWithUnit(sStyleValue.dfValue,
                                       sStyleValue.eUnit);
         else
           return sStyleValue.dfValue;
-        break;
       case OGRSTypeInteger:
         if (sStyleParam.bGeoref)
           return (double)ComputeWithUnit(sStyleValue.nValue,
                                          sStyleValue.eUnit);
-          else    
-            return (double)sStyleValue.nValue;
-        break;
+        else    
+          return (double)sStyleValue.nValue;
+      case OGRSTypeBoolean:
+        return (double)sStyleValue.nValue;
       default:
         bValueIsNull = TRUE;
         return 0;
-        break;
     }
 }
 
@@ -1375,6 +1396,7 @@ void OGRStyleTool::SetParamStr(OGRStyleParamId &sStyleParam ,
         sStyleValue.dfValue = atof(pszParamString);
         break;
       case OGRSTypeInteger:
+      case OGRSTypeBoolean:
         sStyleValue.nValue  = atoi(pszParamString);
         break;
       default:
@@ -1408,6 +1430,7 @@ void OGRStyleTool::SetParamNum(OGRStyleParamId &sStyleParam ,
         sStyleValue.dfValue = (double)nParam;
         break;
       case OGRSTypeInteger:
+      case OGRSTypeBoolean:
         sStyleValue.nValue  = nParam;
         break;
       default:
@@ -1441,6 +1464,7 @@ void OGRStyleTool::SetParamDbl(OGRStyleParamId &sStyleParam ,
         sStyleValue.dfValue = dfParam;
         break;
       case OGRSTypeInteger:
+      case OGRSTypeBoolean:
         sStyleValue.nValue  = (int)dfParam;
         break;
       default:
@@ -1913,7 +1937,7 @@ void OGRStyleVector::SetParamStr(OGRSTVectorParam eParam, const char *pszParamSt
 /************************************************************************/
 void OGRStyleVector::SetParamNum(OGRSTVectorParam eParam, int nParam)
 {  
-	OGRStyleTool::SetParamNum(asStyleVector[eParam],
+        OGRStyleTool::SetParamNum(asStyleVector[eParam],
                              m_pasStyleValue[eParam],nParam);
 printf("added new value for vector: %s --- %d", asStyleVector[eParam].pszToken, nParam);
 }
