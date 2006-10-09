@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2006/10/09 15:39:48  dron
+ * Memory leak fixed.
+ *
  * Revision 1.51  2006/09/07 14:01:56  pka
  * Support for layers named "schema.table"
  *
@@ -523,6 +526,7 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
         OpenTable( papszTableNames[iRecord], papszSchemaNames[iRecord], bUpdate, FALSE );
     }
 
+    CSLDestroy( papszSchemaNames );
     CSLDestroy( papszTableNames );
 
 /* -------------------------------------------------------------------- */

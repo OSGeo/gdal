@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2006/10/09 15:40:17  dron
+ * Memory leak fixed.
+ *
  * Revision 1.38  2006/09/28 13:20:13  fwarmerdam
  * Change createlayer assertion to a regular runtime check and error.
  *
@@ -566,6 +569,8 @@ int main( int nArgc, char ** papszArgv )
     CSLDestroy(papszSelFields);
     CSLDestroy( papszArgv );
     CSLDestroy( papszLayers );
+    CSLDestroy( papszDSCO );
+    CSLDestroy( papszLCO );
 
     OGRCleanupAll();
 
