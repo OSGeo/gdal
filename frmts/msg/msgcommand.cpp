@@ -205,9 +205,9 @@ std::string MSGCommand::parse(std::string command_line)
     else
       sErr = "A folder must be filled in indicating the root of the image data folders.";
   }
-  else if (command_line.find("H-000-MSG1__-MSG1________") >= 0)
+  else if (command_line.find("H-000-MSG") >= 0)
   {
-    int iPos = command_line.find("H-000-MSG1__-MSG1________");
+    int iPos = command_line.find("H-000-MSG");
     if ((command_line.length() - iPos) == 61)
     {
       fUseTimestampFolder = false;
@@ -436,7 +436,7 @@ std::string MSGCommand::sCycle(int iCycle)
   return sRet;  
 }
 
-std::string MSGCommand::sFileName(int iSequence, int iStrip)
+std::string MSGCommand::sFileName(int iSatellite, int iSequence, int iStrip)
 {
   int iNr = iNrChannels();
   int iChannelNumber = 1 + (iSequence - 1) % iNr;;
@@ -444,20 +444,20 @@ std::string MSGCommand::sFileName(int iSequence, int iStrip)
   char sRet [4096];
   std::string siThCycle (sCycle(iCycle));
   if (fUseTimestampFolder)
-    sprintf(sRet, "%s%sH-000-MSG1__-MSG1________-%s-%.6d___-%s-C_", sRootFolder.c_str(), sTimeStampToFolder(siThCycle).c_str(), sChannel(iChannel(iChannelNumber)).c_str(), iStrip, siThCycle.c_str());
+    sprintf(sRet, "%s%sH-000-MSG%d__-MSG%d________-%s-%.6d___-%s-C_", sRootFolder.c_str(), sTimeStampToFolder(siThCycle).c_str(), iSatellite, iSatellite, sChannel(iChannel(iChannelNumber)).c_str(), iStrip, siThCycle.c_str());
   else
-    sprintf(sRet, "%sH-000-MSG1__-MSG1________-%s-%.6d___-%s-C_", sRootFolder.c_str(), sChannel(iChannel(iChannelNumber)).c_str(), iStrip, siThCycle.c_str());
+    sprintf(sRet, "%sH-000-MSG%d__-MSG%d________-%s-%.6d___-%s-C_", sRootFolder.c_str(), iSatellite, iSatellite, sChannel(iChannel(iChannelNumber)).c_str(), iStrip, siThCycle.c_str());
   return sRet;
 }
 
-std::string MSGCommand::sPrologueFileName(int iSequence)
+std::string MSGCommand::sPrologueFileName(int iSatellite, int iSequence)
 {
   int iCycle = 1 + (iSequence - 1) / iNrChannels();
   char sRet [4096];
   std::string siThCycle (sCycle(iCycle));
   if (fUseTimestampFolder)
-    sprintf(sRet, "%s%sH-000-MSG1__-MSG1________-_________-PRO______-%s-__", sRootFolder.c_str(), sTimeStampToFolder(siThCycle).c_str(), siThCycle.c_str());
+    sprintf(sRet, "%s%sH-000-MSG%d__-MSG%d________-_________-PRO______-%s-__", sRootFolder.c_str(), sTimeStampToFolder(siThCycle).c_str(), iSatellite, iSatellite, siThCycle.c_str());
   else
-    sprintf(sRet, "%sH-000-MSG1__-MSG1________-_________-PRO______-%s-__", sRootFolder.c_str(), siThCycle.c_str());
+    sprintf(sRet, "%sH-000-MSG%d__-MSG%d________-_________-PRO______-%s-__", sRootFolder.c_str(), iSatellite, iSatellite, siThCycle.c_str());
   return sRet;
 }

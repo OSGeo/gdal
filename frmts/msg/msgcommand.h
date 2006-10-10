@@ -45,8 +45,8 @@ public:
   virtual ~MSGCommand();
 
   std::string parse(std::string command_line);
-  std::string sFileName(int iSequence, int iStrip);
-  std::string sPrologueFileName(int iCycle);
+  std::string sFileName(int iSatellite, int iSequence, int iStrip);
+  std::string sPrologueFileName(int iSatellite, int iSequence);
   std::string sCycle(int iCycle);
   int iNrChannels();
   int iChannel(int iNr);
