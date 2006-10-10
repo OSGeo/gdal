@@ -22,63 +22,63 @@
 
 /* Define if you have the strerror function.  */
 #define HAVE_STRERROR
-#define strerror wce_strerror /* defined in cpl_wince.h */
+#define strerror wceex_strerror /* defined in cpl_wince.h */
 
 /* Define if you have the rewind function.  */
 #define HAVE_REWIND
-#define rewind wce_rewind /* defined in cpl_wince.h */
+#define rewind wceex_rewind /* defined in cpl_wince.h */
 
 /* Define if you have the stat function.  */
 #define HAVE_STAT
-#define stat wce_stat
+#define stat wceex_stat
 
 /* Define if you have the unlink function.  */
 #define HAVE_UNLINK
-#define unlink wce_unlink
+#define unlink wceex_unlink
 
 /* Define if you have the mkdir function.  */
 #define HAVE_MKDIR
-#define mkdir wce_mkdir
+#define mkdir wceex_mkdir
 
 /* Define if you have the rmdir function.  */
 #define HAVE_RMDIR
-#define rmdir wce_rmdir
+#define rmdir wceex_rmdir
 
 /* Define if you have the rename function.  */
 #define HAVE_RENAME
-#define rename wce_rename
+#define rename wceex_rename
 
 /* Define if you have the abort function.  */
 #define HAVE_ABORT
-#define abort wce_abort
+#define abort wceex_abort
 
 /* Define if you have the _findfirst function.  */
 #define HAVE_FINDFIRST
-#define _findfirst wce_findfirst
+#define _findfirst wceex_findfirst
 
 /* Define if you have the _findnext function.  */
 #define HAVE_FINDNEXT
-#define _findnext wce_findnext
+#define _findnext wceex_findnext
 
 /* Define if you have the _findclose function.  */
 #define HAVE_FINDNEXT
-#define _findclose wce_findclose
+#define _findclose wceex_findclose
 
 /* Define if you have the time function.  */
 #define HAVE_TIME
-#define time wce_time /* XXX - mloskot */
+#define time wceex_time /* XXX - mloskot */
 
 /* Define if you have the time function.  */
 #define HAVE_GMTIME
-#define gmtime wce_gmtime
+#define gmtime wceex_gmtime
 
 /* Define if you have the localtime function.  */
 #define HAVE_LOCALTIME
-#define localtime wce_localtime
+#define localtime wceex_localtime
 
 /* Define if you have the ctime function.  */
 #define HAVE_CTIME
-#define ctime wce_ctime
+#define ctime wceex_ctime
 
 /* Define if you have the ANSI C header files.  */
 #ifndef STDC_HEADERS
