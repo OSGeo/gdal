@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/10/10 18:00:03  fwarmerdam
+ * restructure geometry formtation to support very large geometries
+ *
  * Revision 1.6  2003/06/26 19:42:31  warmerda
  * Was starting a new feature in the middle of geometry, see place.xml
  *
@@ -65,6 +68,7 @@ GMLHandler::GMLHandler( GMLReader *poReader )
     m_poReader = poReader;
     m_pszCurField = NULL;
     m_pszGeometry = NULL;
+    m_nGeomAlloc = m_nGeomLen = 0;
 }
 
 /************************************************************************/
@@ -114,26 +118,23 @@ void GMLHandler::startElement(const XMLCh* const    uri,
         || IsGeometryElement( szElementName ) )
     {
         int nLNLen = tr_strlen( localname );
-        int nGLen;
 
         /* should save attributes too! */
 
         if( m_pszGeometry == NULL )
-        {
-            m_pszGeometry = (char *) CPLCalloc(1,nLNLen+4);
             m_nGeometryDepth = poState->m_nPathLength;
-            nGLen = 0;
-        }
-        else    
+        
+        if( m_nGeomLen + nLNLen + 4 > m_nGeomAlloc )
         {
-            nGLen = strlen(m_pszGeometry);
+            m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLen + 1000);
             m_pszGeometry = (char *) 
-                CPLRealloc( m_pszGeometry, nGLen+nLNLen+4);
+                CPLRealloc( m_pszGeometry, m_nGeomAlloc);
         }
 
-        strcat( m_pszGeometry+nGLen, "<" );
-        tr_strcpy( m_pszGeometry+nGLen+1, localname );
-        strcat( m_pszGeometry+nGLen+nLNLen, ">" );
+        strcpy( m_pszGeometry+m_nGeomLen, "<" );
+        tr_strcpy( m_pszGeometry+m_nGeomLen+1, localname );
+        strcat( m_pszGeometry+m_nGeomLen+nLNLen+1, ">" );
+        m_nGeomLen += strlen(m_pszGeometry+m_nGeomLen);
     }
     
 /* -------------------------------------------------------------------- */
@@ -196,15 +197,20 @@ void GMLHandler::endElement(const   XMLCh* const    uri,
     if( m_pszGeometry != NULL )
     {
         int nLNLen = tr_strlen( localname );
-        int nGLen;
 
-        nGLen = strlen(m_pszGeometry);
-        m_pszGeometry = (char *) 
-            CPLRealloc( m_pszGeometry, nGLen+nLNLen+4);
+        /* should save attributes too! */
 
-        strcat( m_pszGeometry+nGLen, "</" );
-        tr_strcpy( m_pszGeometry+nGLen+2, localname );
-        strcat( m_pszGeometry+nGLen+nLNLen, ">" );
+        if( m_nGeomLen + nLNLen + 4 > m_nGeomAlloc )
+        {
+            m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nLNLen + 1000);
+            m_pszGeometry = (char *) 
+                CPLRealloc( m_pszGeometry, m_nGeomAlloc);
+        }
+
+        strcat( m_pszGeometry+m_nGeomLen, "</" );
+        tr_strcpy( m_pszGeometry+m_nGeomLen+2, localname );
+        strcat( m_pszGeometry+m_nGeomLen+nLNLen+2, ">" );
+        m_nGeomLen += strlen(m_pszGeometry+m_nGeomLen);
 
         if( poState->m_nPathLength == m_nGeometryDepth+1 )
         {
@@ -214,6 +220,7 @@ void GMLHandler::endElement(const   XMLCh* const    uri,
                 CPLFree( m_pszGeometry );
 
             m_pszGeometry = NULL;
+            m_nGeomAlloc = m_nGeomLen = 0;
         }
     }
 
@@ -268,15 +275,21 @@ void GMLHandler::characters(const XMLCh* const chars_in,
     }
     else if( m_pszGeometry != NULL )
     {
-        int     nCurLength = strlen(m_pszGeometry);
-
+        // Ignore white space
         while( *chars == ' ' || *chars == 10 || *chars == 13 || *chars == '\t')
             chars++;
         
-        m_pszGeometry = (char *) 
-            CPLRealloc( m_pszGeometry, nCurLength+tr_strlen(chars)+1 );
-        
-        tr_strcpy( m_pszGeometry+nCurLength, chars );
+        int nCharsLen = tr_strlen( chars );
+
+        if( m_nGeomLen + nCharsLen + 4 > m_nGeomAlloc )
+        {
+            m_nGeomAlloc = (int) (m_nGeomAlloc * 1.3 + nCharsLen + 1000);
+            m_pszGeometry = (char *) 
+                CPLRealloc( m_pszGeometry, m_nGeomAlloc);
+        }
+
+        tr_strcpy( m_pszGeometry+m_nGeomLen, chars );
+        m_nGeomLen += strlen(m_pszGeometry+m_nGeomLen);
     }
 }
 

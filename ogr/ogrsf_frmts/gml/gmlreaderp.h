@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/10/10 18:00:03  fwarmerdam
+ * restructure geometry formtation to support very large geometries
+ *
  * Revision 1.8  2005/01/27 04:06:47  fwarmerdam
  * added ParseXSD
  *
@@ -94,7 +97,10 @@ class GMLHandler : public DefaultHandler
     GMLReader  *m_poReader;
 
     char       *m_pszCurField;
+
     char       *m_pszGeometry;
+    int        m_nGeomAlloc;
+    int        m_nGeomLen;
 
     int        m_nGeometryDepth;
     int        IsGeometryElement( const char * );
