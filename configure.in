@@ -1363,6 +1363,8 @@ else
     echo
     $CMD
     echo
+    echo cat conftest.cpp
+    cat conftest.cpp
     
     AC_MSG_ERROR([Please correct Xerces options, or don't enable Xerces.])
   fi
