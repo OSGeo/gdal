@@ -57,6 +57,8 @@ class MSGRasterBand : public GDALRasterBand
     char cScanDir;
     int iLowerShift; // nr of pixels that lower HRV image is shifted compared to upper
     int iSplitLine; // line from top where the HRV image splits
+    int iLowerWestColumnPlanned;
+    int iSatellite; // satellite number 1,2,3,4 for MSG1, MSG2, MSG3 and MSG4
     ReflectanceCalculator* m_rc;
     static const double rRTOA[12];
 };
@@ -86,6 +88,7 @@ class MSGDataset : public GDALDataset
     OGRCoordinateTransformation *poTransform;
     double rCalibrationOffset[12];
     double rCalibrationSlope[12];
+    static int iCurrentSatellite; // satellite number 1,2,3,4 for MSG1, MSG2, MSG3 and MSG4
     static const double rCentralWvl[12];
     static const double rVc[12];
     static const double rA[12];
