@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/10/10 16:59:22  ilucena
+ * Coordinate system support improvements
+ *
  * Revision 1.28  2006/06/06 18:34:01  ilucena
  * Projection system and image extent error fixed
  *
@@ -40,12 +43,19 @@
 #include "cpl_csv.h"
 #include "ogr_spatialref.h"
 #include "gdal_pam.h"
+#include "gdal_alg.h"
 
 CPL_CVSID("$Id$");
 
 CPL_C_START
 void GDALRegister_IDRISI(void);
 CPL_C_END
+
+#ifdef WIN32        
+#define PATHDELIM       '\\'
+#else
+#define PATHDELIM       '/'
+#endif 
 
 //----- Safe numeric conversion, NULL as zero
 #define atoi_nz(s) (s == NULL ? (int)      0 : atoi(s))
@@ -89,6 +99,7 @@ CPL_C_END
 
 //----- ".ref" file field names:
 #define refREF_SYSTEM   "ref. system "
+#define refREF_SYSTEM2  "ref.system  "
 #define refPROJECTION   "projection  "
 #define refDATUM        "datum       " 
 #define refDELTA_WGS84  "delta WGS84 " 
@@ -111,8 +122,8 @@ CPL_C_END
 #define rstINTEGER      "integer"
 #define rstREAL         "real"
 #define rstRGB24        "rgb24"
-#define rstDEGREE       "degree"
-#define rstMETER        "meter"
+#define rstDEGREE       "degrees"
+#define rstMETER        "meters"
 #define rstLATLONG      "latlong"
 #define rstPLANE        "plane"
 #define rstUTM          "utm-%d%c"
@@ -130,79 +141,98 @@ struct ReferenceTab {
 	char *pszName;
 };
 
-//----- USA State's reference table to EPSG PCS Code
+//----- USA State's reference table to USGS PCS Code
 static ReferenceTab aoUSStateTable[] = {
-	{101,     "AL"},
-	{201,     "AZ"},
-	{301,     "AR"},
-	{401,     "CA"},
-	{501,     "CO"},
-	{600,     "CT"},
-	{700,     "DE"},
-	{901,     "FL"},
-	{1001,    "GA"},
-	{1101,    "ID"},
-	{1201,    "IL"},
-	{1301,    "IN"},
-	{1401,    "IA"},
-	{1501,    "KS"},
-	{1601,    "KY"},
-	{1701,    "LA"},
-	{1801,    "ME"},
-	{1900,    "MD"},
-	{2001,    "MA"},
-	{2111,    "MI"},
-	{2201,    "MN"},
-	{2301,    "MS"},
-	{2401,    "MO"},
-	{2500,    "MT"},
-	{2600,    "NE"},
-	{2701,    "NV"},
-	{2800,    "NH"},
-	{2900,    "NJ"},
-	{3001,    "NM"},
-	{3101,    "NY"},
-	{3200,    "NC"},
-	{3301,    "ND"},
-	{3401,    "OH"},
-	{3501,    "OK"},
-	{3601,    "OR"},
-	{3701,    "PA"},
-	{3800,    "RI"},
-	{3900,    "SC"},
-	{4001,    "SD"},
-	{4100,    "TN"},
-	{4201,    "TX"},
-	{4301,    "UT"},
-	{4400,    "VT"},
-	{4501,    "VA"},
-	{4601,    "WA"},
-	{4701,    "WV"},
-	{4801,    "WV"},
-	{4901,    "WY"},
-	{5001,    "AK"},
-	{5101,    "HI"},
-	{5200,    "PR"}
+	{101,     "al"},
+	{201,     "az"},
+	{301,     "ar"},
+	{401,     "ca"},
+	{501,     "co"},
+	{600,     "ct"},
+	{700,     "de"},
+	{901,     "fl"},
+	{1001,    "ga"},
+	{1101,    "id"},
+	{1201,    "il"},
+	{1301,    "in"},
+	{1401,    "ia"},
+	{1501,    "ks"},
+	{1601,    "ky"},
+	{1701,    "la"},
+	{1801,    "me"},
+	{1900,    "md"},
+	{2001,    "ma"},
+	{2111,    "mi"},
+	{2201,    "mn"},
+	{2301,    "ms"},
+	{2401,    "mo"},
+	{2500,    "mt"},
+	{2600,    "ne"},
+	{2701,    "nv"},
+	{2800,    "nh"},
+	{2900,    "nj"},
+	{3001,    "nm"},
+	{3101,    "ny"},
+	{3200,    "nc"},
+	{3301,    "nd"},
+	{3401,    "oh"},
+	{3501,    "ok"},
+	{3601,    "or"},
+	{3701,    "pa"},
+	{3800,    "ri"},
+	{3900,    "sc"},
+	{4001,    "sd"},
+	{4100,    "tn"},
+	{4201,    "tx"},
+	{4301,    "ut"},
+	{4400,    "vt"},
+	{4501,    "va"},
+	{4601,    "wa"},
+	{4701,    "wv"},
+	{4801,    "wv"},
+	{4901,    "wy"},
+	{5001,    "ak"},
+	{5101,    "hi"},
+	{5200,    "pr"}
 };
 #define US_STATE_COUNT (sizeof(aoUSStateTable) / sizeof(ReferenceTab))
 
-//----- Import geo reference from Idrisi
-OGRErr CPL_DLL OSRImportFromIdrisi(OGRSpatialReferenceH hSRS, 
-								   const char *pszRefSystem, 
-								   const char *pszRefUnits, 
-								   char **papszRefFile = NULL);
+//----- Get the Code of a US State
+int GetStateCode(const char *pszState);
 
-//----- Export geo reference to Idrisi
-OGRErr CPL_DLL OSRExportToIdrisi(OGRSpatialReferenceH hSRS, 
-								 char **pszRefSystem, 
-								 char **pszRefUnit, 
-								 char ***papszRefFile);
+//----- Get the state name of a Code
+const char *GetStateName(int nCode);
 
-//----- Specialized version of SetAuthority that accept non-numeric codes
-OGRErr OSRSetAuthorityLabel( OGRSpatialReferenceH hSRS, 
-                        const char *pszTargetKey,
-                        const char *pszAuthority,
-                        const char *pszLabel );
+//----- Conversion Table definition
+struct ConvertionTab {
+	char *pszName;
+    int nDefault;
+    double dfConv;
+};
+
+//----- Linear Unit Conversion Table
+static ConvertionTab aoLinearUnitsConv[] = {
+    {"Meters",      0,  1.0},
+    {"Meter",       0,  1.0},
+    {"Metre",       0,  1.0},
+    {"M",           0,  1.0},
+    {"Feet",        4,  0.3048},
+    {"Foot",        4,  0.3048},
+    {"Ft",          4,  0.3048},
+    {"Miles",       7,  1612.9},
+    {"Mi",          7,  1612.9},
+    {"Kilometers",  9,  1000.0},
+    {"Kilometer",   9,  1000.0}, 
+    {"Kilometre",   9,  1000.0},
+    {"Km",          9,  1000.0}
+};
+#define LINEAR_UNITS_COUNT (sizeof(aoLinearUnitsConv) / sizeof(ConvertionTab))
+
+//----- Get the index of a given linear units
+int GetUnitIndex(const char *pszUnitName);
+
+//----- Get the defaut name
+const char *GetUnitDefault(const char *pszUnitName);
 
 //----- Classes pre-definition:
 class IdrisiDataset;
@@ -228,6 +258,14 @@ private:
 	char **papszCategories;
 	char *pszUnitType;
 
+    CPLErr GeoReference2Wkt(const char *pszRefSystem,
+                            const char *pszRefUnits,
+                            char **pszProjString);
+
+    CPLErr Wkt2GeoReference(const char *pszProjString,
+	                        const char **pszRefSystem, 
+	                        const char **pszRefUnit);
+
 protected:
 	GDALColorTable *poColorTable;
 
@@ -241,7 +279,7 @@ public:
 		int nYSize,
 		int nBands, 
 		GDALDataType eType,
-		char **papszParmList);
+		char **papszOptions);
 	static GDALDataset *CreateCopy(const char *pszFilename, 
 		GDALDataset *poSrcDS,
 		int bStrict,
@@ -265,7 +303,7 @@ class IdrisiRasterBand : public GDALPamRasterBand
 
 private:
 	int nRecordSize;
-	GByte *pabyScanLine; 
+	GByte *pabyScanLine;
 
 public:
 	IdrisiRasterBand(IdrisiDataset *poDS, 
@@ -329,7 +367,7 @@ IdrisiDataset::~IdrisiDataset()
 	if (papszRDC != NULL)
 	{
 		if (eAccess == GA_Update)
-		{
+		{            
 			CSLSetNameValueSeparator(papszRDC, ": ");
 			CSLSave(papszRDC, pszDocFilename);
 		}
@@ -586,7 +624,7 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename,
 								   int nYSize, 
 								   int nBands, 
 								   GDALDataType eType,
-								   char** papszOptions)
+								   char **papszOptions)
 {
 	// -------------------------------------------------------------------- 
 	//      Check input options
@@ -597,8 +635,8 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename,
 		if (! (nBands == 3 && eType == GDT_Byte))
 		{
 			CPLError(CE_Failure, CPLE_AppDefined,
-				"Attempt to create IDRISI dataset with an illegal\n"
-				"number of bands (%d) to data type (%s).\n",
+				"Attempt to create IDRISI dataset with an illegal "
+				"number of bands (%d) or data type (%s).\n",
 				nBands, GDALGetDataTypeName(eType));
 			return NULL;
 		}
@@ -626,7 +664,7 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename,
 		break;
 	default:
 		CPLError(CE_Failure, CPLE_AppDefined,
-			"Attempt to create IDRISI dataset with an illegal\n"
+			"Attempt to create IDRISI dataset with an illegal "
 			"data type (%s).\n",
 			GDALGetDataTypeName(eType));
 		return NULL;
@@ -715,8 +753,8 @@ GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
 	{
 
 		CPLError(CE_Failure, CPLE_AppDefined,
-			"Attempt IDRISI dataset with an illegal\n"
-			"number of bands (%s).\n",
+			"Attempt to create IDRISI dataset with an illegal "
+            "number of bands (%d).\n",
 			poSrcDS->GetRasterCount());
 		return NULL;
 	}
@@ -724,7 +762,8 @@ GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
 	// -------------------------------------------------------------------------
 	//      Check Data types
 	// -------------------------------------------------------------------------
-        int i;
+
+    int i;
 
 	for ( i = 1; i <= poSrcDS->GetRasterCount(); i++)
 	{
@@ -739,7 +778,7 @@ GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
 			eType != GDT_Float64)
 		{
 			CPLError(CE_Failure, CPLE_AppDefined,
-				"Attempt to create IDRISI dataset with an illegal\n"
+				"Attempt to create IDRISI dataset with an illegal "
 				"data type (%s).\n",
 				GDALGetDataTypeName(eType));
 			return NULL;
@@ -843,6 +882,18 @@ GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
 	}
 
 	// --------------------------------------------------------------------
+	//      Avoid misinterpretation with a pre-existent smp file
+	// --------------------------------------------------------------------
+
+    const char *pszPalletFName = CPLResetExtension(poDS->pszFilename, extSMP);
+
+    if ((poDS->poColorTable == NULL) && 
+        (FileExists(pszPalletFName)))
+    {
+        VSIUnlink(pszPalletFName);
+    }
+
+	// --------------------------------------------------------------------
 	//      Copy image data
 	// --------------------------------------------------------------------
 
@@ -897,13 +948,6 @@ GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
 	}
 
 	// --------------------------------------------------------------------
-	//      Save Lineage information
-	// --------------------------------------------------------------------
-
-	poDS->papszRDC = CSLSetNameValue(poDS->papszRDC, rdcLINEAGES, 
-		CPLSPrintf("Generated by GDAL, source = (%s)", poSrcDS->GetDescription()));
-
-	// --------------------------------------------------------------------
 	//      Finalize
 	// --------------------------------------------------------------------
 
@@ -947,11 +991,11 @@ CPLErr  IdrisiDataset::SetGeoTransform(double * padfGeoTransform)
 	dfMaxY   = padfGeoTransform[3];
 	dfMinY   = (dfYPixSz * nRasterYSize) + dfMaxY;
 
-	CSLSetNameValue(papszRDC, rdcMIN_X,      CPLSPrintf("%.8g", dfMinX));
-	CSLSetNameValue(papszRDC, rdcMAX_X,      CPLSPrintf("%.8g", dfMaxX));
-	CSLSetNameValue(papszRDC, rdcMIN_Y,      CPLSPrintf("%.8g", dfMinY));
-	CSLSetNameValue(papszRDC, rdcMAX_Y,      CPLSPrintf("%.8g", dfMaxY));
-	CSLSetNameValue(papszRDC, rdcRESOLUTION, CPLSPrintf("%.8g", -dfYPixSz));
+	CSLSetNameValue(papszRDC, rdcMIN_X,      CPLSPrintf("%.7f", dfMinX));
+	CSLSetNameValue(papszRDC, rdcMAX_X,      CPLSPrintf("%.7f", dfMaxX));
+	CSLSetNameValue(papszRDC, rdcMIN_Y,      CPLSPrintf("%.7f", dfMinY));
+	CSLSetNameValue(papszRDC, rdcMAX_Y,      CPLSPrintf("%.7f", dfMaxY));
+	CSLSetNameValue(papszRDC, rdcRESOLUTION, CPLSPrintf("%.7f", -dfYPixSz));
 
 	return CE_None;
 }
@@ -968,48 +1012,13 @@ const char *IdrisiDataset::GetProjectionRef(void)
 		return pszPamSRS;
 
 	if (pszProjection == NULL)
-	{    
-		const char *pszRefSystem = CSLFetchNameValue(papszRDC, rdcREF_SYSTEM);
-		const char *pszRefUnit = CSLFetchNameValue(papszRDC, rdcREF_UNITS);
-		const char *pszFName = CPLSPrintf("%s/%s.ref", CPLGetDirname(pszFilename), pszRefSystem);
-		char **papszRefFile;
+    {
+	    const char *pszRefSystem = CSLFetchNameValue(papszRDC, rdcREF_SYSTEM);
+	    const char *pszRefUnit = CSLFetchNameValue(papszRDC, rdcREF_UNITS);
 
-		// ------------------------------------------------------------------
-		//  Check if the Projection name refers to the name of a ".ref" file.
-		// ------------------------------------------------------------------
-
-		if (FileExists(pszFName) == FALSE)
-		{
-			pszFName = NULL;
-			const char *pszIdrisiDir = CPLGetConfigOption("IDRISIDIR", NULL);
-			if ((pszIdrisiDir) != NULL)
-			{
-				pszFName = CPLSPrintf("%s/georef/%s.ref", pszIdrisiDir, pszRefSystem);
-				if (FileExists(pszFName) == FALSE)
-					pszFName = NULL;
-			}
-		}
-
-		// ------------------------------------------------------------------
-		//  Reads the reference file
-		// ------------------------------------------------------------------
-
-		if (pszFName != NULL)
-		{
-			papszRefFile = CSLLoad(pszFName);
-			CSLSetNameValueSeparator(papszRefFile, ":");
-		}
-		else
-			papszRefFile = NULL;
-
-		OGRSpatialReference oSRS;
-		OSRImportFromIdrisi(&oSRS, pszRefSystem, pszRefUnit, papszRefFile);
-		oSRS.exportToWkt(&pszProjection);
-
-		CSLDestroy(papszRefFile);
-	}
-
-	return pszProjection;
+	    GeoReference2Wkt(pszRefSystem, pszRefUnit, &pszProjection);
+    }
+    return pszProjection;
 }
 
 /************************************************************************/
@@ -1018,93 +1027,20 @@ const char *IdrisiDataset::GetProjectionRef(void)
 
 CPLErr IdrisiDataset::SetProjection(const char *pszProjString)
 {   
-	OGRSpatialReference oSRS;
+    CPLFree(pszProjection);
+    pszProjection = CPLStrdup(pszProjString);
+    CPLErr eResult = CE_None;
 
-	oSRS.importFromWkt((char **) &pszProjString);
+	const char *pszRefSystem;
+	const char *pszRefUnit;
 
-	if (oSRS.IsProjected() && oSRS.GetAttrValue("PROJCS") != NULL)
-	{
-		// ------------------------------------------------------------------
-		//	Check if the input projection comes from another RST file.
-		// ------------------------------------------------------------------
+    eResult = Wkt2GeoReference(pszProjString, &pszRefSystem, &pszRefUnit);
 
-		const char *pszRefSystem = NULL;
-		const char *pszFName = NULL;
+    CSLSetNameValue(papszRDC, rdcREF_SYSTEM, pszRefSystem);
+    CSLSetNameValue(papszRDC, rdcREF_UNITS,  pszRefUnit);
 
-		if (oSRS.GetAuthorityName("PROJCS") != NULL
-			&& EQUAL(oSRS.GetAuthorityName("PROJCS"), "IDRISI"))
-		{
-			pszRefSystem = oSRS.GetAuthorityCode("PROJCS");
-			pszFName = CPLSPrintf("%s/%s.ref", CPLGetDirname(pszFilename), pszRefSystem);
-
-			if (FileExists(pszFName) == FALSE)
-			{
-				pszFName = NULL;
-				const char *pszIdrisiDir = CPLGetConfigOption("IDRISIDIR", NULL);
-				if ((pszIdrisiDir) != NULL)
-				{
-					pszFName = CPLSPrintf("%s/georef/%s.ref", pszIdrisiDir, pszRefSystem);
-					if (FileExists(pszFName) == FALSE)
-						pszFName = NULL;
-				}
-			}
-		}
-
-		if (pszFName != NULL)
-		{
-			char *pszRefUnit = CPLStrdup(oSRS.GetAttrValue("UNIT", 0));
-			if (EQUALN(pszRefUnit, "metre", 5))
-			{
-				(pszRefUnit)[3] = 'e';
-				(pszRefUnit)[4] = 'r';
-			}
-			CSLSetNameValue(papszRDC, rdcREF_SYSTEM, CPLSPrintf("%s", pszRefSystem));
-			CSLSetNameValue(papszRDC, rdcREF_UNITS,  CPLSPrintf("%s", pszRefUnit));
-			CPLFree(pszRefUnit);
-			return CE_None;
-		}
-	}
-
-	char *pszRefSystem = NULL;
-	char *pszRefUnit = NULL;
-	char **papszRefFile = NULL;
-
-	OSRExportToIdrisi(&oSRS, &pszRefSystem, &pszRefUnit, &papszRefFile);
-
-	if (papszRefFile != NULL)
-	{
-		// ------------------------------------------------------------------
-		// Save the suggested .ref file in to the documentation sections
-		// ------------------------------------------------------------------
-
-		int nLine = -1;
-                int i;
-		for (i = 0; i < CSLCount(papszRDC) && nLine == -1; i++)
-			if (EQUALN(papszRDC[i], rdcCOMMENTS, 12))
-				nLine = i;
-		if (nLine > 0)
-		{
-			papszRDC = CSLSetNameValue(papszRDC, rdcCOMMENTS, 
-				"Suggested reference file. (Delete this line and save as <name>.ref)");
-			for (int i = 0; i < CSLCount(papszRefFile); i++)
-				papszRDC = CSLInsertString(papszRDC, ++nLine, 
-				CPLSPrintf("%-.12s: %s", rdcCOMMENTS, papszRefFile[i]));
-		}
-	}
-
-	CSLSetNameValue(papszRDC, rdcREF_SYSTEM, CPLSPrintf("%s", pszRefSystem));
-	CSLSetNameValue(papszRDC, rdcREF_UNITS,  CPLSPrintf("%s", pszRefUnit));
-
-	CSLDestroy(papszRefFile);
-	CPLFree(pszRefSystem);
-	CPLFree(pszRefUnit);
-
-	return CE_None;
+	return eResult;
 }
-
-//  ------------------------------------------------------------------------  //
-//	                    Implementation of IdrisiRasterBand                    //
-//  ------------------------------------------------------------------------  //
 
 /************************************************************************/
 /*                          IdrisiRasterBand()                          */
@@ -1321,7 +1257,7 @@ CPLErr IdrisiRasterBand::SetNoDataValue(double dfNoDataValue)
 	IdrisiDataset *poGDS = (IdrisiDataset *) poDS;
 
 	poGDS->papszRDC = 
-		CSLSetNameValue(poGDS->papszRDC, rdcFLAG_VALUE, CPLSPrintf("%.8g", dfNoDataValue));
+		CSLSetNameValue(poGDS->papszRDC, rdcFLAG_VALUE, CPLSPrintf("%.7g", dfNoDataValue));
 	poGDS->papszRDC = 
 		CSLSetNameValue(poGDS->papszRDC, rdcFLAG_DEFN,  "missing data");
 
@@ -1464,9 +1400,9 @@ CPLErr IdrisiRasterBand::SetColorTable(GDALColorTable *poColorTable)
 		GByte nVersion = 11;    VSIFWriteL(&nVersion, 1, 1, fpSMP);
 		GByte nDepth = 8;       VSIFWriteL(&nDepth, 1, 1, fpSMP);
 		GByte nHeadSz = 18;     VSIFWriteL(&nHeadSz, 1, 1, fpSMP);
-		GUInt16 nCount = 255;    VSIFWriteL(&nCount, 2, 1, fpSMP);
-		GUInt16 nMix = 0;        VSIFWriteL(&nMix, 2, 1, fpSMP);
-		GUInt16 nMax = 255;      VSIFWriteL(&nMax, 2, 1, fpSMP);
+		GUInt16 nCount = 255;   VSIFWriteL(&nCount, 2, 1, fpSMP);
+		GUInt16 nMix = 0;       VSIFWriteL(&nMix, 2, 1, fpSMP);
+		GUInt16 nMax = 255;     VSIFWriteL(&nMax, 2, 1, fpSMP);
 
 		GDALColorEntry oEntry;
 		GByte aucRGB[3];
@@ -1475,18 +1411,18 @@ CPLErr IdrisiRasterBand::SetColorTable(GDALColorTable *poColorTable)
 		for (i = 0; i < poColorTable->GetColorEntryCount(); i++)
 		{
 			poColorTable->GetColorEntryAsRGB( i, &oEntry );
-			aucRGB[0] = (short) oEntry.c1;
-			aucRGB[1] = (short) oEntry.c2;
-			aucRGB[2] = (short) oEntry.c3;
+			aucRGB[0] = (GByte) oEntry.c1;
+			aucRGB[1] = (GByte) oEntry.c2;
+			aucRGB[2] = (GByte) oEntry.c3;
 			VSIFWriteL(&aucRGB, 3, 1, fpSMP);
 		}
 		/* smp files always have 256 occurences */
 		for (i = poColorTable->GetColorEntryCount(); i <= 255; i++)
 		{
 			poColorTable->GetColorEntryAsRGB( i, &oEntry );
-			aucRGB[0]= (short) 0;
-			aucRGB[1]= (short) 0;
-			aucRGB[2]= (short) 0;
+			aucRGB[0] = (GByte) 0;
+			aucRGB[1] = (GByte) 0;
+			aucRGB[2] = (GByte) 0;
 			VSIFWriteL(&aucRGB, 3, 1, fpSMP);
 		}
 		VSIFCloseL(fpSMP);
@@ -1572,499 +1508,753 @@ CPLErr IdrisiRasterBand::SetStatistics(double dfMin, double dfMax, double dfMean
 }
 
 /************************************************************************/
+/*                       GeoReference2Wkt()                             */
+/************************************************************************/
+
+/***
+ * Converts Idrisi geographic reference information to OpenGIS WKT.
+ * 
+ * The Idrisi metadata file contain two fields that describe the  
+ * geographic reference, RefSystem and RefUnit. 
+ * 
+ * RefSystem can contains the world "plane" or the name of a georeference 
+ * file <refsystem>.ref that details the geographic reference  
+ * system (coordinate system and projection parameters). RefUnits 
+ * indicates the unit of the image bounds. 
+ * 
+ * The georeference files are generally located in the product installation 
+ * folder $IDRISIDIR\Georef, but they are first looked for in the same  
+ * folder as the data file. 
+ *  
+ * If a Reference system names can be recognized by a name convention 
+ * it will be interpreted without the need to read the georeference file. 
+ * That includes "latlong" and all the UTM and State Plane zones.  
+ * 
+ * RefSystem "latlong" means that the data is not project and the coordinate 
+ * system is WGS84. RefSystem "plane" means that the there is no coordinate 
+ * system but the it is possible to calculate areas and distance by looking
+ * at the RefUnits.
+ *  
+ * If the environment variable IDRISIDIR is not set and the georeference file  
+ * need to be read then the projection string will result as unknown. 
+ ***/
+
+CPLErr IdrisiDataset::GeoReference2Wkt(const char *pszRefSystem,
+                                       const char *pszRefUnits,
+                                       char **pszProjString)
+{
+    OGRSpatialReference oSRS;
+
+	// ---------------------------------------------------------
+	//  Plane 
+ 	// ---------------------------------------------------------
+
+	if EQUAL(pszRefSystem, rstPLANE)
+    {
+        oSRS.SetLocalCS("Plane");
+        int nUnit = GetUnitIndex(GetUnitDefault(pszRefUnits));
+        if (nUnit > -1)
+        {
+            oSRS.SetLinearUnits(aoLinearUnitsConv[nUnit].pszName,
+                                aoLinearUnitsConv[nUnit].dfConv);
+        }
+        oSRS.exportToWkt(pszProjString);
+        return CE_None;
+    }
+
+	// ---------------------------------------------------------
+	//  Latlong
+ 	// ---------------------------------------------------------
+
+	if EQUAL(pszRefSystem, rstLATLONG)
+	{
+		oSRS.SetWellKnownGeogCS("WGS84");
+        oSRS.exportToWkt(pszProjString);
+        return CE_None;
+	}
+
+    // ---------------------------------------------------------
+	//  Prepare for scanning in lower case
+ 	// ---------------------------------------------------------
+
+    const char *pszRefSystemLower;
+    pszRefSystemLower = CPLStrdup(pszRefSystem);
+    strlwr((char *) pszRefSystemLower);
+
+    // ---------------------------------------------------------
+	//  UTM naming convention (ex.: utm-30n)
+ 	// ---------------------------------------------------------
+
+	if EQUALN(pszRefSystem, rstUTM, 3)
+	{
+		int	nZone;
+		char cNorth;
+		sscanf(pszRefSystemLower, rstUTM, &nZone, &cNorth);
+		oSRS.SetWellKnownGeogCS("WGS84");
+		oSRS.SetUTM(nZone, (cNorth == 'n'));
+        oSRS.exportToWkt(pszProjString);
+        return CE_None;
+	}
+
+	// ---------------------------------------------------------
+	//  State Plane naming convention (ex.: spc83ma1)
+ 	// ---------------------------------------------------------
+
+	if EQUALN(pszRefSystem, rstSPC, 3)
+	{
+		int nNAD;
+		int nZone;
+		char szState[3];
+		sscanf(pszRefSystemLower, rstSPC, &nNAD, szState, &nZone);
+        int nSPCode = GetStateCode(szState);
+		if (nSPCode != -1)
+		{
+            nZone = (nZone == 1 ? nSPCode : nSPCode + nZone - 1);
+
+            if (oSRS.SetStatePlane(nZone, (nNAD == 83)) != OGRERR_FAILURE)
+            {
+                oSRS.exportToWkt(pszProjString);
+                return CE_None;
+            }
+
+            // ----------------------------------------------------------
+            //  If SetStatePlane fails, set GeoCS as NAD Datum and let it
+            //  try to read the projection info from georeference file (*)
+            // ----------------------------------------------------------
+
+            oSRS.SetWellKnownGeogCS(CPLSPrintf("NAD%d", nNAD));
+		}
+	}
+
+	// ------------------------------------------------------------------
+	//  Search for georeference file <RefSystem>.ref
+	// ------------------------------------------------------------------
+
+	const char *pszFName = CPLSPrintf("%s%c%s.ref", 
+        CPLGetDirname(pszFilename), PATHDELIM,  pszRefSystem);
+
+    if (FileExists(pszFName) == FALSE)
+	{
+	    // ------------------------------------------------------------------
+	    //  Look at $IDRISIDIR\Georef\<RefSystem>.ref
+	    // ------------------------------------------------------------------
+
+        const char *pszIdrisiDir = CPLGetConfigOption("IDRISIDIR", NULL);
+		if ((pszIdrisiDir) != NULL)
+        {
+			pszFName = CPLSPrintf("%s%cgeoref%c%s.ref", 
+                pszIdrisiDir, PATHDELIM, PATHDELIM, pszRefSystem);
+        }
+	}
+
+	// ------------------------------------------------------------------
+	//  Cannot find georeference file
+    // ------------------------------------------------------------------
+
+    if (FileExists(pszFName) == FALSE)
+    {
+        CPLDebug("RST", "Cannot find Idrisi georeference file %d.ref", pszRefSystem);
+
+        if (oSRS.IsGeographic() == FALSE) /* see State Plane remarks (*) */
+        {
+            oSRS.SetLocalCS("Unknown");
+            int nUnit = GetUnitIndex(GetUnitDefault(pszRefUnits));
+            if (nUnit > -1)
+            {
+                oSRS.SetLinearUnits(aoLinearUnitsConv[nUnit].pszName,
+                                    aoLinearUnitsConv[nUnit].dfConv);
+            }
+        }
+        oSRS.exportToWkt(pszProjString);
+        return CE_Failure;
+    }
+
+	// ------------------------------------------------------------------
+	//  Read values from georeference file 
+    // ------------------------------------------------------------------
+
+    char **papszRef = CSLLoad(pszFName);
+	CSLSetNameValueSeparator(papszRef, ":");
+
+    const char *pszGeorefName   = CPLStrdup(CSLFetchNameValue(papszRef, refREF_SYSTEM));
+    if EQUAL(pszGeorefName, "") 
+	    pszGeorefName           = CPLStrdup(CSLFetchNameValue(papszRef, refREF_SYSTEM2));
+	const char *pszProjName     = CPLStrdup(CSLFetchNameValue(papszRef, refPROJECTION));
+	const char *pszDatum		= CPLStrdup(CSLFetchNameValue(papszRef, refDATUM));
+	const char *pszEllipsoid    = CPLStrdup(CSLFetchNameValue(papszRef, refELLIPSOID));
+	double dfCenterLat		    = atof_nz(CSLFetchNameValue(papszRef, refORIGIN_LAT));
+	double dfCenterLong	        = atof_nz(CSLFetchNameValue(papszRef, refORIGIN_LONG));
+	double dfSemiMajor		    = atof_nz(CSLFetchNameValue(papszRef, refMAJOR_SAX));
+	double dfSemiMinor		    = atof_nz(CSLFetchNameValue(papszRef, refMINOR_SAX));
+	double dfFalseEasting	    = atof_nz(CSLFetchNameValue(papszRef, refORIGIN_X));
+	double dfFalseNorthing	    = atof_nz(CSLFetchNameValue(papszRef, refORIGIN_Y));
+    int nParameters             = atoi_nz(CSLFetchNameValue(papszRef, refPARAMETERS));
+    double dfStdP1			    = atof_nz(CSLFetchNameValue(papszRef, refSTANDL_1));
+	double dfStdP2			    = atof_nz(CSLFetchNameValue(papszRef, refSTANDL_2));
+    double dfScale;
+	double adfToWGS84[3];
+
+    sscanf(CSLFetchNameValue(papszRef, refDELTA_WGS84), "%lf %lf %lf", 
+		&adfToWGS84[0], &adfToWGS84[1], &adfToWGS84[2]);
+
+	if (EQUAL(CSLFetchNameValue(papszRef, refSCALE_FAC), "na"))
+		dfScale = 1.0;
+	else
+		dfScale	= atof_nz(CSLFetchNameValue(papszRef, refSCALE_FAC));
+
+    CSLDestroy(papszRef);
+
+    // ----------------------------------------------------------------------
+	//  Set the Geographic Coordinate System
+    // ----------------------------------------------------------------------
+
+    if (oSRS.IsGeographic() == FALSE) /* see State Plane remarks (*) */
+    {
+        int nEPSG = 0;
+
+        // ----------------------------------------------------------------------
+	    //  Is it a WGS84 equivalent?
+        // ----------------------------------------------------------------------
+
+        if ((EQUALN(pszEllipsoid, "WGS", 3)) && (strstr(pszEllipsoid, "84")) &&
+            (EQUALN(pszDatum, "WGS", 3))     && (strstr(pszDatum, "84")) &&
+            (adfToWGS84[0] == 0.0) && (adfToWGS84[1] == 0.0) && (adfToWGS84[2] == 0.0))
+        {
+            nEPSG = 4326;
+        }
+
+        // ----------------------------------------------------------------------
+	    //  Match GCS's DATUM_NAME by using 'ApproxString' over Datum 
+        // ----------------------------------------------------------------------
+
+        if (nEPSG == 0)
+        {
+            nEPSG = atoi_nz(CSVGetField(CSVFilename("gcs.csv"), 
+                "DATUM_NAME", pszDatum, CC_ApproxString, "COORD_REF_SYS_CODE"));
+        }
+
+        // ----------------------------------------------------------------------
+	    //  Match GCS's COORD_REF_SYS_NAME by using 'ApproxString' over Datum 
+        // ----------------------------------------------------------------------
+
+        if (nEPSG == 0)
+        {
+            nEPSG = atoi_nz(CSVGetField(CSVFilename("gcs.csv"), 
+                "COORD_REF_SYS_NAME", pszDatum, CC_ApproxString, "COORD_REF_SYS_CODE"));
+        }
+
+        if (nEPSG != 0)
+        {
+            oSRS.importFromEPSG(nEPSG);
+        }
+        else
+        {
+            // --------------------------------------------------
+            //  Create GeogCS based on the georeference file info
+            // --------------------------------------------------
+
+            oSRS.SetGeogCS(pszRefSystem, 
+                pszDatum, 
+                pszEllipsoid, 
+                dfSemiMajor, 
+                (-1.0 / (dfSemiMinor / dfSemiMajor - 1.0)));
+        }
+
+        // ----------------------------------------------------------------------
+        //  Note: That will override EPSG info:
+        // ----------------------------------------------------------------------
+
+        oSRS.SetTOWGS84(adfToWGS84[0], adfToWGS84[1], adfToWGS84[2]);
+    }
+
+    // ----------------------------------------------------------------------
+    //  If the georeference file tells that it is a non project system:
+    // ----------------------------------------------------------------------
+
+    if EQUAL(pszProjName, "none")
+	{
+        oSRS.exportToWkt(pszProjString);
+        return CE_None;
+    }
+
+    // ----------------------------------------------------------------------
+	//  Create Projection information based on georeference file info
+	// ----------------------------------------------------------------------
+    
+    //  Idrisi user's Manual,   Supported Projection:
+    //
+    //      Mercator
+    //      Transverse Mercator
+    //      Gauss-Kruger
+    //      Lambert Conformal Conic
+    //      Plate Carrée
+    //      Hammer Aitoff
+    //      Lambert North Polar Azimuthal Equal Area
+    //      Lambert South Polar Azimuthal Equal Area
+    //      Lambert Transverse Azimuthal Equal Area
+    //      Lambert Oblique Polar Azimuthal Equal Area
+    //      North Polar Stereographic
+    //      South Polar Stereographic
+    //      Transverse Stereographic
+    //      Oblique Stereographic
+    //      Albers Equal Area Conic
+    //      Sinusoidal
+    //
+
+    if EQUAL(pszProjName, "Mercator")
+	{
+		oSRS.SetMercator(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
+	}
+	else if EQUAL(pszProjName, "Transverse Mercator")
+	{
+		oSRS.SetTM(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
+	}
+	else if EQUALN(pszProjName, "Gauss-Kruger", 9)
+	{
+		oSRS.SetTM(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
+	}
+	else if EQUAL(pszProjName, "Lambert Conformal Conic")
+	{
+		oSRS.SetLCC(dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing);
+	}
+	else if EQUALN(pszProjName, "Plate Carrée", 10)
+	{
+        oSRS.SetEquirectangular(dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing);
+	}
+	else if EQUAL(pszProjName, "Hammer Aitoff")
+	{
+        oSRS.SetProjection(pszProjName);
+		oSRS.SetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN,  dfCenterLat);
+		oSRS.SetNormProjParm(SRS_PP_CENTRAL_MERIDIAN,    dfCenterLong);
+		oSRS.SetNormProjParm(SRS_PP_FALSE_EASTING,       dfFalseEasting);
+		oSRS.SetNormProjParm(SRS_PP_FALSE_NORTHING,      dfFalseNorthing);
+	}
+	else if (EQUALN(pszProjName, "Lambert North Polar Azimuthal Equal Area", 15) ||
+             EQUALN(pszProjName, "Lambert South Polar Azimuthal Equal Area", 15) ||
+             EQUALN(pszProjName, "Lambert Transverse Azimuthal Equal Area", 15) ||
+             EQUALN(pszProjName, "Lambert Oblique Polar Azimuthal Equal Area", 15))
+	{
+		oSRS.SetLAEA(dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing);
+	}
+	else if (EQUALN(pszProjName, "North Polar Stereographic", 15) ||
+             EQUALN(pszProjName, "South Polar Stereographic", 15))
+    {
+		oSRS.SetPS(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
+	}
+	else if EQUALN(pszProjName, "Transverse Stereographic", 15)
+	{
+		oSRS.SetStereographic(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
+	}
+	else if EQUALN(pszProjName, "Oblique Stereographic", 15)
+	{
+		oSRS.SetOS(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
+	}
+	else if (EQUAL(pszProjName, "Alber's Equal Area Conic") ||
+             EQUAL(pszProjName, "Albers Equal Area Conic"))
+	{
+		oSRS.SetACEA(dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing);
+	}
+	else if EQUAL(pszProjName, "Sinusoidal")
+	{
+		oSRS.SetSinusoidal(dfCenterLong, dfFalseEasting, dfFalseNorthing);
+	}
+    else
+    {
+        CPLError(CE_Warning, CPLE_NotSupported, 
+            "Projection not listed on Idrisi User's Manual (v.15.0/2005).\n\t" 
+            "[\"%s\" in georeference file \"%s\"]",
+            pszProjName, pszFName);
+        oSRS.Clear();
+        oSRS.exportToWkt(pszProjString);
+        return CE_Warning;
+    }
+
+    // ----------------------------------------------------------------------
+    //  Set the Linear Units
+    // ----------------------------------------------------------------------
+
+    int nUnit = GetUnitIndex(GetUnitDefault(pszRefUnits));
+    if (nUnit > -1)
+    {
+        oSRS.SetLinearUnits(aoLinearUnitsConv[nUnit].pszName,
+                            aoLinearUnitsConv[nUnit].dfConv);
+    }
+
+	// ----------------------------------------------------------------------
+    //  Name ProjCS with the name on the georeference file
+    // ----------------------------------------------------------------------
+
+    oSRS.SetProjCS(pszGeorefName);
+
+    oSRS.exportToWkt(pszProjString);
+    return CE_None;
+}
+
+/************************************************************************/
+/*                        Wkt2GeoReference()                            */
+/************************************************************************/
+
+/***
+ * Converts OpenGIS WKT to Idrisi geographic reference information.
+ * 
+ * That function will fill up the two parameters RefSystem and RefUnit
+ * that goes into the Idrisi metadata. But it could also create
+ * a companying georeference file to the output if necessary.
+ *
+ * First it will try to identify the ProjString as Local, WGS84 or
+ * one of the Idrisi name convention reference systems
+ * otherwise, if the projection system is supported by Idrisi,  
+ * it will create a companying georeference files.
+ ***/
+
+CPLErr IdrisiDataset::Wkt2GeoReference(const char *pszProjString,
+                                       const char **pszRefSystem, 
+                                       const char **pszRefUnit)
+{
+    // -----------------------------------------------------
+	//  Plane with default "Meters"
+	// -----------------------------------------------------
+
+    if EQUAL(pszProjString, "")
+    {
+	    *pszRefSystem = CPLStrdup(rstPLANE);
+        *pszRefUnit   = CPLStrdup(rstMETER);
+	    return CE_None;
+    }
+
+    OGRSpatialReference oSRS;
+    oSRS.importFromWkt((char **) &pszProjString);
+
+    // -----------------------------------------------------
+	//  Local => Plane + Linear Unit
+	// -----------------------------------------------------
+
+    if (oSRS.IsLocal())
+    {
+	    *pszRefSystem = CPLStrdup(rstPLANE);
+	    *pszRefUnit   = GetUnitDefault(oSRS.GetAttrValue("UNIT"));
+	    return CE_None;
+    }
+
+    // -----------------------------------------------------
+	//  Test to identify WGS84 => Latlong + Angular Unit
+	// -----------------------------------------------------
+
+    if (oSRS.IsGeographic())
+    {
+        const char *pszSpheroid     = CPLStrdup(oSRS.GetAttrValue("SPHEROID"));
+        const char *pszAuthName     = CPLStrdup(oSRS.GetAuthorityName("GEOGCS"));
+        const char *pszDatum        = CPLStrdup(oSRS.GetAttrValue("DATUM"));
+        int nGCSCode = -1;
+        if EQUAL(pszAuthName, "EPSG")
+        {
+            nGCSCode = atoi(oSRS.GetAuthorityCode("GEOGCS"));
+        }
+        if ((nGCSCode == 4326) || (
+            (EQUALN(pszSpheroid, "WGS", 3)) && (strstr(pszSpheroid, "84")) &&
+            (EQUALN(pszDatum, "WGS", 3))    && (strstr(pszDatum, "84"))) )
+        {
+	        *pszRefSystem = CPLStrdup(rstLATLONG);
+	        *pszRefUnit   = CPLStrdup(rstDEGREE);
+            return CE_None;
+        }
+    }
+
+    // -----------------------------------------------------
+	//  Prepare to match some projections 
+	// -----------------------------------------------------
+
+    const char *pszProjection = CPLStrdup(oSRS.GetAttrValue("PROJECTION"));
+
+    // -----------------------------------------------------
+	//  Check for UTM zones
+	// -----------------------------------------------------
+
+    if EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR)
+	{
+		int nZone = oSRS.GetUTMZone();
+
+		if ((nZone != 0) && (EQUAL(oSRS.GetAttrValue("DATUM"), SRS_DN_WGS84)))
+		{
+			double dfNorth = oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING);
+			*pszRefSystem  = CPLStrdup(CPLSPrintf(rstUTM, nZone, (dfNorth == 0.0 ? 'n' : 's')));
+			*pszRefUnit    = CPLStrdup(rstMETER);
+			return CE_None;
+		}
+	}
+
+	// -----------------------------------------------------
+	//  Check for State Plane
+	// -----------------------------------------------------
+
+    if (EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) ||
+        EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR))
+    {
+        const char *pszPCSCode;
+        const char *pszID = CPLStrdup(oSRS.GetAuthorityCode("PROJCS"));
+        if (strlen(pszID) > 0)
+        {
+            pszPCSCode = CPLStrdup(CSVGetField(CSVFilename("stateplane.csv"),
+                "EPSG_PCS_CODE", pszID, CC_Integer, "ID"));
+            if (strlen(pszPCSCode) > 0)
+            {
+                int nNADYear	= 83;
+                int nZone		= pszPCSCode[strlen(pszPCSCode) - 1] - '0';
+                int nSPCode    = atoi_nz(pszPCSCode);
+
+                if (nZone == 0)
+                    nZone = 1;
+                else
+                    nSPCode = nSPCode - nZone + 1;
+
+                if (nSPCode > 10000)
+                {
+                    nNADYear = 27;
+                    nSPCode -= 10000;
+                }
+                char *pszState  = CPLStrdup(GetStateName(nSPCode));
+                if (! EQUAL(pszState, ""))
+                {
+                    *pszRefSystem	= CPLStrdup(CPLSPrintf(rstSPC, nNADYear, pszState, nZone));
+                    *pszRefUnit     = GetUnitDefault(oSRS.GetAttrValue("UNIT"));
+                    return CE_None;
+                }
+            }
+        }
+    }
+
+	const char *pszProjectionOut = NULL;
+
+    if (oSRS.IsProjected())
+    {
+        // ---------------------------------------------------------
+	    //  Check for supported projections
+	    // ---------------------------------------------------------
+
+        if EQUAL(pszProjection, SRS_PT_MERCATOR_1SP)
+        {
+            pszProjectionOut = CPLStrdup("Mercator");
+        }
+	    if EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR)         
+        {   
+            pszProjectionOut = CPLStrdup("Transverse Mercator");
+        }
+        else if EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP)
+        {
+            pszProjectionOut = CPLStrdup("Lambert Conformal Conic");
+        }
+        else if EQUAL(pszProjection, SRS_PT_EQUIRECTANGULAR)
+        {
+            pszProjectionOut = CPLStrdup("Plate Carrée");
+        }
+        else if EQUAL(pszProjection, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA)
+        {   
+    	    double dfCenterLat = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0, NULL);
+            if (dfCenterLat == 0.0)
+                pszProjectionOut = CPLStrdup("Lambert Transverse Azimuthal Equal Area"); 
+            else if (abs(dfCenterLat) == 90.0)
+                pszProjectionOut = CPLStrdup("Lambert Oblique Polar Azimuthal Equal Area");
+            else if (dfCenterLat > 0.0)
+                pszProjectionOut = CPLStrdup("Lambert North Oblique Azimuthal Equal Area"); 
+            else
+                pszProjectionOut = CPLStrdup("Lambert South Oblique Azimuthal Equal Area");
+        }
+        else if EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC)
+        {
+            if (oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0, NULL) > 0)
+                pszProjectionOut = CPLStrdup("North Polar Stereographic");
+            else
+                pszProjectionOut = CPLStrdup("South Polar Stereographic");
+        }
+        else if EQUAL(pszProjection, SRS_PT_STEREOGRAPHIC)
+        {
+            pszProjectionOut = CPLStrdup("Transverse Stereographic");
+        }
+        else if EQUAL(pszProjection, SRS_PT_OBLIQUE_STEREOGRAPHIC)
+        {
+            pszProjectionOut = CPLStrdup("Oblique Stereographic");
+        }
+        else if EQUAL(pszProjection, SRS_PT_SINUSOIDAL)
+        {
+            pszProjectionOut = CPLStrdup("Sinusoidal");
+        }
+        else if EQUAL(pszProjection, SRS_PT_ALBERS_CONIC_EQUAL_AREA)
+        {
+            pszProjectionOut = CPLStrdup("Alber's Equal Area Conic");
+        }
+
+        // ---------------------------------------------------------
+        //  Failure, Projection system not suppotted
+        // ---------------------------------------------------------
+
+        if (pszProjectionOut == NULL)
+        {
+            CPLDebug("RST", "Not support by RST driver: PROJECTION[\"%s\"]", pszProjection);
+
+            *pszRefSystem = CPLStrdup(rstPLANE);
+            *pszRefUnit   = CPLStrdup(rstMETER);
+            return CE_Failure;
+        }
+    }
+    else
+    {
+        pszProjectionOut = CPLStrdup("none");
+    }
+
+    // ---------------------------------------------------------
+    //  Prepare to write ref file
+    // ---------------------------------------------------------
+
+	const char *pszGeorefName   = CPLStrdup("Unknown");
+	const char *pszDatum        = CPLStrdup(oSRS.GetAttrValue("DATUM"));
+	const char *pszEllipsoid    = CPLStrdup(oSRS.GetAttrValue("SPHEROID"));
+	double dfSemiMajor          = oSRS.GetSemiMajor();		
+	double dfSemiMinor          = oSRS.GetSemiMinor();		
+	double adfToWGS84[3];
+    oSRS.GetTOWGS84(adfToWGS84, 3);
+
+    double dfCenterLat          = 0.0;
+	double dfCenterLong         = 0.0;	    
+	double dfFalseNorthing      = 0.0;	
+	double dfFalseEasting       = 0.0;	
+    double dfScale              = 1.0;
+    int nParameters             = 0;         
+    double dfStdP1              = 0.0;			
+	double dfStdP2              = 0.0;			
+    const char *pszUnit         = CPLStrdup(oSRS.GetAttrValue("GEOGCS|UNIT"));
+
+    if (oSRS.IsProjected())
+    {
+        pszGeorefName   = CPLStrdup(oSRS.GetAttrValue("PROJCS"));
+        dfCenterLat     = oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0, NULL);
+        dfCenterLong    = oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0, NULL);
+        dfFalseNorthing = oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0, NULL);
+        dfFalseEasting  = oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0, NULL);
+        dfScale         = oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0, NULL);
+        dfStdP1         = oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, -0.1, NULL);
+        dfStdP2         = oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, -0.1, NULL);  
+        if (dfStdP1 != -0.1)
+        {
+            nParameters = 1;
+            if (dfStdP2 != -0.1)
+                nParameters = 2;
+        }
+    }
+
+    // ---------------------------------------------------------
+    //  Create a compaining georeference file for this dataset
+    // ---------------------------------------------------------
+
+    char **papszRef = NULL;
+    papszRef = CSLAddNameValue(papszRef, refREF_SYSTEM,   pszGeorefName);  
+    papszRef = CSLAddNameValue(papszRef, refPROJECTION,   pszProjectionOut);  
+    papszRef = CSLAddNameValue(papszRef, refDATUM,        pszDatum);     
+    papszRef = CSLAddNameValue(papszRef, refDELTA_WGS84,  CPLSPrintf("%.3g %.3g %.3g", 
+                                           adfToWGS84[0], adfToWGS84[1], adfToWGS84[2]));
+    papszRef = CSLAddNameValue(papszRef, refELLIPSOID,    pszEllipsoid);
+    papszRef = CSLAddNameValue(papszRef, refMAJOR_SAX,    CPLSPrintf("%.3f", dfSemiMajor));
+    papszRef = CSLAddNameValue(papszRef, refMINOR_SAX,    CPLSPrintf("%.3f", dfSemiMinor));
+    papszRef = CSLAddNameValue(papszRef, refORIGIN_LONG,  CPLSPrintf("%.9g", dfCenterLong));
+    papszRef = CSLAddNameValue(papszRef, refORIGIN_LAT,   CPLSPrintf("%.9g", dfCenterLat));
+    papszRef = CSLAddNameValue(papszRef, refORIGIN_X,     CPLSPrintf("%.9g", dfFalseEasting));
+    papszRef = CSLAddNameValue(papszRef, refORIGIN_Y,     CPLSPrintf("%.9g", dfFalseNorthing));
+    papszRef = CSLAddNameValue(papszRef, refSCALE_FAC,    CPLSPrintf("%.9g", dfScale));
+    papszRef = CSLAddNameValue(papszRef, refUNITS,        pszUnit);
+    papszRef = CSLAddNameValue(papszRef, refPARAMETERS,   CPLSPrintf("%1d",  nParameters));
+    if (nParameters > 0)
+        papszRef = CSLAddNameValue(papszRef, refSTANDL_1, CPLSPrintf("%.9g", dfStdP1));
+    if (nParameters > 1)
+        papszRef = CSLAddNameValue(papszRef, refSTANDL_2, CPLSPrintf("%.9g", dfStdP2));
+    CSLSetNameValueSeparator(papszRef, ": ");
+    CSLSave(papszRef, CPLResetExtension(pszFilename, extREF));
+    CSLDestroy(papszRef);
+
+    *pszRefSystem = CPLStrdup(CPLGetBasename(pszFilename));
+    *pszRefUnit   = CPLStrdup(pszUnit);
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                             FileExists()                             */
 /************************************************************************/
 
 bool FileExists(const char *pszFilename)
 {
-	FILE *fp;
-
-	bool exist = ((fp = VSIFOpenL(pszFilename, "rb")) != NULL);
-
-	if (exist)
-	{
-		VSIFCloseL(fp);
-	}
-
-	return exist;
+    VSIStatBuf  sStat;
+    return bool(CPLStat(pszFilename, &sStat) == 0);
 }
 
 /************************************************************************/
-/*                        OSRImportFromIdrisi()                         */
+/*                            GetStateCode()                            */
 /************************************************************************/
 
-/**
-* \brief Import Idrisi Geo Reference
-*
-* This functions tries to interpret the "ref. system" information and
-* process the well known codifications, like UTM-30N and SPC83MA1, 
-* otherwise it tries to process the RefFile file content.
-*
-* User defined or unsupported codifications points to a ".ref" file
-* generally in the software installation folder "/Georef" or in the
-* same folder as the ".rst" file. 
-*
-* @param poSRS the Spatial Reference Object.
-* @param pszRefSystem the Idrisi Referense system name
-* @param pszRefUnits the Reference system unit
-* @param papszRefFile the StringList with the content of a reference file
-*/
-
-OGRErr CPL_DLL OSRImportFromIdrisi(OGRSpatialReferenceH hSRS, 
-								   const char *pszRefSystem, 
-								   const char *pszRefUnits, 
-								   char **papszRefFile)
+int GetStateCode(const char *pszState)
 {
-	OGRSpatialReference *poSRS = ((OGRSpatialReference *) hSRS);
+    int i;
 
-	char pszRefCode[81];
-	int i;
-
-	// ---------------------------------------------------------
-	// Lowercase the reference in order make the sscanf to works
- 	// ---------------------------------------------------------
-
-	for (i = 0; pszRefSystem[i] != '\0' && i < 80; i++)
-		pszRefCode[i] = tolower(pszRefSystem[i]);
-
-	pszRefCode[i] = '\0';
-
-	// ---------------------------------------------------------
-	// Check the well known codified reference names
- 	// ---------------------------------------------------------
-
-	if (EQUAL(pszRefSystem, rstPLANE))
-	{
-		return OGRERR_NONE;
-	}
-
-	if (EQUAL(pszRefSystem, rstLATLONG))
-	{
-		poSRS->SetWellKnownGeogCS("WGS84");
-		return OGRERR_NONE;
-	}
-
-	if (EQUALN(pszRefSystem, rstUTM, 3))
-	{
-		int	nZone;
-		char cNorth;
-
-		sscanf(pszRefCode, rstUTM, &nZone, &cNorth);
-
-		poSRS->SetWellKnownGeogCS("WGS84");
-		poSRS->SetUTM(nZone, (cNorth == 'n'));
-	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
-		return OGRERR_NONE;
-	}
-
-	if (EQUALN(pszRefSystem, rstSPC, 3))
-	{
-		int nNAD;
-		int nZone;
-		char szState[3];
-
-		sscanf(pszRefCode, rstSPC, &nNAD, szState, &nZone);
-
-		int nSPCCode = -1;
-		for (unsigned int i = 0; 
-                     (i < US_STATE_COUNT) && (nSPCCode == -1); 
-                     i++)
-		{
-			if (EQUAL(szState, aoUSStateTable[i].pszName))
-				nSPCCode = aoUSStateTable[i].nCode;
-		}
-		if (nSPCCode == -1)
-			poSRS->SetWellKnownGeogCS(CPLSPrintf("NAD%d", nNAD));
-		else
-		{
-			if (nZone == 1)
-				nZone = nSPCCode;
-			else
-				nZone = nSPCCode + nZone - 1;
-			poSRS->SetStatePlane(nZone, (nNAD == 83));
-		    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
-		}
-		return OGRERR_NONE;
-	}
-
-	if (papszRefFile == NULL)
-	{
-		// ------------------------------------------
-		// Can't identify just by the reference name
-		// Assumming a default WGS84 projection (deg)
-		// ------------------------------------------
-
-		if (EQUALN(pszRefUnits, rstDEGREE, 3))
-		  poSRS->SetWellKnownGeogCS("WGS84");
-
-		return OGRERR_NONE;
-	}
-
-	// ---------------------------------------------------------
-	//		Read the ".ref" content
-	// ---------------------------------------------------------
-
-	const char *pszProj;
-	const char *pszRefSys;
-	const char *pszDatum;
-	const char *pszEllipsoid;
-	double dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing,
-		dfSemiMajor, dfSemiMinor;
-	double dfStdP1, dfStdP2;
-
-	pszRefSys     	= CSLFetchNameValue(papszRefFile, refREF_SYSTEM);
-	pszProj			= CSLFetchNameValue(papszRefFile, refPROJECTION);
-	pszDatum		= CSLFetchNameValue(papszRefFile, refDATUM);
-	pszEllipsoid	= CSLFetchNameValue(papszRefFile, refELLIPSOID);
-	dfCenterLat		= atof_nz(CSLFetchNameValue(papszRefFile, refORIGIN_LAT));
-	dfCenterLong	= atof_nz(CSLFetchNameValue(papszRefFile, refORIGIN_LONG));
-	dfSemiMajor		= atof_nz(CSLFetchNameValue(papszRefFile, refMAJOR_SAX));
-	dfSemiMinor		= atof_nz(CSLFetchNameValue(papszRefFile, refMINOR_SAX));
-	dfFalseEasting	= atof_nz(CSLFetchNameValue(papszRefFile, refORIGIN_X));
-	dfFalseNorthing	= atof_nz(CSLFetchNameValue(papszRefFile, refORIGIN_Y));
-	dfStdP1			= atof_nz(CSLFetchNameValue(papszRefFile, refSTANDL_1));
-	dfStdP2			= atof_nz(CSLFetchNameValue(papszRefFile, refSTANDL_2));
-
-	if (EQUAL(CSLFetchNameValue(papszRefFile, refSCALE_FAC), "na"))
-		dfScale		= 1.0;
-	else
-		dfScale		= atof_nz(CSLFetchNameValue(papszRefFile, refSCALE_FAC));
-
-	if (EQUAL(pszProj,"Transverse Mercator"))
-	{
-		poSRS->SetTM(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
-	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
-	}
-	else if (EQUAL(pszProj, "Lambert Conformal Conic"))
-	{
-		poSRS->SetLCC(dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing);
-	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
-	}
-	else if (EQUAL(pszProj, "Lambert North Polar Azimuthal Equal Area"))
-	{
-		poSRS->SetLAEA(dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing);
-	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
-	}
-	else if (EQUAL(pszProj, "Lambert South Polar Azimuthal Equal Area"))
-	{
-		poSRS->SetLAEA(dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing);
-	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
-	}
-	else if (EQUAL(pszProj, "North Polar Stereographic"))
-	{
-		poSRS->SetPS(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
-	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
-	}
-	else if (EQUAL(pszProj, "South Polar Stereographic"))
-	{
-		poSRS->SetPS(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
-		poSRS->SetProjCS(pszProj);	
-	}
-	else if (EQUAL(pszProj, "Transverse Stereographic"))
-	{
-		poSRS->SetStereographic(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
-	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
-	}
-	else if (EQUAL(pszProj, "Oblique Stereographic"))
-	{
-		poSRS->SetOS(dfCenterLat, dfCenterLong, dfScale, dfFalseEasting, dfFalseNorthing);
-	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
-	}
-	else if (EQUAL(pszProj, "SetSinusoidal"))
-	{
-		poSRS->SetSinusoidal(dfCenterLong, dfFalseEasting, dfFalseNorthing);
-	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
-	}
-	else if (EQUAL(pszProj, "Alber''s Equal Area Conic"))
-	{
-		poSRS->SetACEA(dfStdP1, dfStdP2, dfCenterLat, dfCenterLong, dfFalseEasting, dfFalseNorthing);
-	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
-	}
-
-	//------------------------------------------------------------
-	//		Try to match Datum using Approximated String option
-	//------------------------------------------------------------
-
-	int nEPSG = atoi_nz(CSVGetField(CSVFilename("gcs.csv"), 
-		"COORD_REF_SYS_NAME", 
-		pszDatum, 
-		CC_ApproxString,
-		"COORD_REF_SYS_CODE"));
-
-	if (nEPSG != 0)
-	{
-		OGRSpatialReference oGCS;
-		oGCS.importFromEPSG(nEPSG);
-		poSRS->CopyGeogCSFrom(&oGCS);
-	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
-	}
-	else
-	{
-		//------------------------------------------------------------
-		//		No match
-		//------------------------------------------------------------
-
-		poSRS->SetGeogCS(
-			CPLSPrintf(
-			"Unknown datum based upon the ellipsoid %s", pszEllipsoid),
-			CPLSPrintf(
-			"Not specified (based on the spheroid %s)", pszDatum),
-			pszEllipsoid, 
-			dfSemiMajor, 
-			-1.0 / (dfSemiMinor / dfSemiMajor - 1.0));
-	    OSRSetAuthorityLabel(poSRS,"PROJCS", "IDRISI", pszRefCode);
-	}
-
-	return OGRERR_NONE;
+    for (i = 0; i < US_STATE_COUNT; i++)
+    {
+		if EQUAL(pszState, aoUSStateTable[i].pszName)
+        {
+            return aoUSStateTable[i].nCode;
+        }
+    }
+    return -1;
 }
 
 /************************************************************************/
-/*                        OSRExportToIdrisi()                           */
+/*                            GetStateCode()                            */
 /************************************************************************/
 
-/**
-* \brief Export Idrisi Geo Reference
-* 
-* Idrisi store in the RDC documentation file, field "ref. system",
-* the name of the reference file (.ref) that contains the geo reference
-* paramters. Those file are usually located at the software installation
-* folders or in the same folder as the rst file.
-*
-* @param poSRS the Spatial Reference Object.
-* @param pszRefSystem the Idrisi Referense system name
-* @param pszRefUnits the Reference system unit
-* @param papszRefFile the StringList with the content of a reference file
-*/
-
-OGRErr CPL_DLL OSRExportToIdrisi(OGRSpatialReferenceH hSRS, 
-								 char **pszRefSystem, 
-								 char **pszRefUnit, 
-								 char ***papszRefFile)
+const char *GetStateName(int nCode)
 {
-	OGRSpatialReference *poSRS = ((OGRSpatialReference *) hSRS);
+    int i;
 
-	const char *pszProjection = poSRS->GetAttrValue("PROJECTION");
-
-	CSLDestroy(*papszRefFile);
-
-	if (poSRS->IsLocal())
-	{
-		*pszRefSystem = CPLStrdup(rstPLANE);
-		*pszRefUnit   = CPLStrdup(rstMETER);
-
-		return OGRERR_NONE;
-	}
-    
-	if (pszProjection == NULL)
-	{
-#ifdef DEBUG
-		CPLDebug("RST", "Empty projection definition, considered as LatLong" );
-#endif
-		*pszRefSystem = CPLStrdup(rstLATLONG);
-		*pszRefUnit   = CPLStrdup(rstDEGREE);
-
-		return OGRERR_NONE;
-	}
-
-	// -----------------------------------------------------
-	//      Check for UTM
-	// -----------------------------------------------------
-
-	if (EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR))
-	{
-		int nZone = poSRS->GetUTMZone();
-
-		if ((nZone != 0) && (EQUAL(poSRS->GetAttrValue( "DATUM" ), SRS_DN_WGS84)))
-		{
-			double dfNorth = poSRS->GetNormProjParm(SRS_PP_FALSE_NORTHING);
-			*pszRefSystem  = CPLStrdup(CPLSPrintf(rstUTM, nZone, (dfNorth == 0.0 ? 'n' : 's')));
-			*pszRefUnit    = CPLStrdup(rstMETER);
-
-			return OGRERR_NONE;
-		}
-	}
-
-	// -----------------------------------------------------
-	//      Check for State Plane
-	// -----------------------------------------------------
-
-	if ((EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP)) ||
-		(EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP)) ||
-		(EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR)))
-	{
-		// -----------------------------------------------------------------------------
-		// This technique uses the reverse process of SetStatePlane (ogr_fromEPSG.cpp):
-		// Get the ID from [PROJCS[...AUTHORITY["EPSG","26986"]] => 26986
-		// Get the PSCode from satateplane.cvs => "2001,Massachusetts,Mainland,,,26986"
-		// -----------------------------------------------------------------------------
-
-		char *pszID;
-		char *pszPCSCode;
-
-		pszID = CPLStrdup(poSRS->GetAuthorityCode("PROJCS"));
-		if (strlen(pszID) > 0)
-		{
-
-			pszPCSCode = CPLStrdup(CSVGetField(CSVFilename("stateplane.csv"),
-				"EPSG_PCS_CODE", pszID, CC_Integer, "ID"));
-			if (strlen(pszPCSCode) > 0)
-			{
-				int nNADYear	= 83;
-				char *pszState	= NULL;
-				int nZone		= pszPCSCode[strlen(pszPCSCode) - 1] - '0';
-				int nPCSCode	= atoi_nz(pszPCSCode);
-				if (nZone == 0)
-					nZone = 1;
-				if (nPCSCode > 10000)
-				{
-					nNADYear = 27;
-					nPCSCode -= 10000;
-				}
-				for (unsigned int i = 0; (i < US_STATE_COUNT) && (pszState == NULL); i++)
-				{
-					if (nPCSCode == aoUSStateTable[i].nCode)
-						pszState = aoUSStateTable[i].pszName;
-				}
-				CPLFree(*pszRefSystem);
-				CPLFree(*pszRefUnit);
-				*pszRefSystem	= CPLStrdup(CPLSPrintf(rstSPC, nNADYear, pszState, nZone));
-				*pszRefUnit		= CPLStrdup(poSRS->GetAttrValue("UNIT", 0));
-				if (EQUALN(*pszRefUnit, "metre", 5))
-				{
-					(*pszRefUnit)[3] = 'e';
-					(*pszRefUnit)[4] = 'r';
-				}
-				CPLFree(pszPCSCode);
-				CPLFree(pszID);
-				return OGRERR_NONE;
-			}
-			CPLFree(pszPCSCode);
-		}
-		CPLFree(pszID);
-	}
-
-	// ---------------------------------------------------------
-	//		Generate the ".ref" content
-	// ---------------------------------------------------------
-
-	double padfCoef[3];
-	poSRS->GetTOWGS84(padfCoef, 3);
-
-	if (poSRS->GetAttrValue("PROJCS", 0) == NULL)
-		*papszRefFile = CSLAddNameValue(*papszRefFile, refPROJECTION, "none");
-	else
-		*papszRefFile = CSLAddNameValue(*papszRefFile, refPROJECTION, 
-			poSRS->GetAttrValue("PROJCS", 0));
-
-	*papszRefFile = CSLAddNameValue(*papszRefFile, refREF_SYSTEM, 
-		poSRS->GetAttrValue("GEOGCS", 0));
-	*papszRefFile = CSLAddNameValue(*papszRefFile, refDATUM,      
-		poSRS->GetAttrValue("DATUM",  0));
-	*papszRefFile = CSLAddNameValue(*papszRefFile, refDELTA_WGS84, 
-		CPLSPrintf("%.2g %.2g %.2g", padfCoef[0], padfCoef[1], padfCoef[2]));
-	*papszRefFile = CSLAddNameValue(*papszRefFile, refELLIPSOID,  
-		poSRS->GetAttrValue("SPHEROID", 0));
-	*papszRefFile = CSLAddNameValue(*papszRefFile, refMAJOR_SAX,  
-		CPLSPrintf("%.8g", poSRS->GetSemiMajor(NULL)));
-	*papszRefFile = CSLAddNameValue(*papszRefFile, refMINOR_SAX,  
-		CPLSPrintf("%.8g", poSRS->GetSemiMinor(NULL)));
-	*papszRefFile = CSLAddNameValue(*papszRefFile, refORIGIN_LAT, 
-		CPLSPrintf("%.8g", poSRS->GetProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0, NULL)));
-	*papszRefFile = CSLAddNameValue(*papszRefFile, refORIGIN_LONG,
-		CPLSPrintf("%.8g", poSRS->GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0, NULL)));
-	*papszRefFile = CSLAddNameValue(*papszRefFile, refORIGIN_X, 
-		CPLSPrintf("%.8g", poSRS->GetProjParm(SRS_PP_FALSE_EASTING, 0.0, NULL)));
-	*papszRefFile = CSLAddNameValue(*papszRefFile, refORIGIN_Y, 
-		CPLSPrintf("%.8g", poSRS->GetProjParm(SRS_PP_FALSE_NORTHING, 0.0, NULL)));
-	*papszRefFile = CSLAddNameValue(*papszRefFile, refSCALE_FAC, 
-		CPLSPrintf("%.8g", poSRS->GetProjParm(SRS_PP_SCALE_FACTOR, 0.0, NULL)));
-	*papszRefFile = CSLAddNameValue(*papszRefFile, refUNITS, 
-		poSRS->GetAttrValue("UNIT", 0));
-
-	double dfStdP1 = poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0, NULL);
-	double dfStdP2 = poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0, NULL);
-
-	if ((dfStdP1 == 0.0) && (dfStdP2 == 0.0))
-		*papszRefFile = CSLAddNameValue(*papszRefFile, refPARAMETERS, "0");
-	else
-	{
-		*papszRefFile = CSLAddNameValue(*papszRefFile, refPARAMETERS, "2");
-		*papszRefFile = CSLAddNameValue(*papszRefFile, refSTANDL_1,   CPLSPrintf("%.8g", dfStdP1));
-		*papszRefFile = CSLAddNameValue(*papszRefFile, refSTANDL_2,   CPLSPrintf("%.8g", dfStdP1));
-	}
-	CSLSetNameValueSeparator(*papszRefFile, ": ");
-
-	// ------------------------------------------------------------------
-	// Assumes LATLONG only when UNIT is degree, and all else are Unknown
-	// ------------------------------------------------------------------
-
-	const char* szUnit = poSRS->GetAttrValue("UNIT", 0);
-
-	if (szUnit && EQUAL(szUnit, rstDEGREE))
-	{
-		*pszRefSystem = CPLStrdup(rstLATLONG);
-		*pszRefUnit   = CPLStrdup(rstDEGREE);
-	}
-	else
-	{
-		*pszRefSystem = CPLStrdup(rstPLANE);
-		*pszRefUnit   = CPLStrdup(rstMETER);
-	}
-
-	return OGRERR_NONE;
+    for (i = 0; i < US_STATE_COUNT; i++)
+    {
+		if (nCode == aoUSStateTable[i].nCode)
+        {
+            return aoUSStateTable[i].pszName;
+        }
+    }
+    return NULL;
 }
 
 /************************************************************************/
-/*                          OSRSetAuthorityLabel()                      */
+/*                            GetUnitIndex()                            */
 /************************************************************************/
 
-/**
- * Set the authority string label for a node.
- *
- * @param pszTargetKey the partial or complete path to the node to 
- * set an authority on.  ie. "PROJCS", "GEOGCS" or "GEOGCS|UNIT".
- *
- * @param pszAuthority authority name, such as "IDRISI".
- * @param pszLabel string for value with this authority, such as "utm-30n".
- *
- * @return OGRERR_NONE on success.
- */
-
-OGRErr OSRSetAuthorityLabel(OGRSpatialReferenceH hSRS, 
-							const char *pszTargetKey,
-							const char *pszAuthority, 
-							const char *pszLabel)
+int GetUnitIndex(const char *pszUnitName)
 {
-	OGRSpatialReference *poSRS = ((OGRSpatialReference *) hSRS);
+    int i;
 
-/* -------------------------------------------------------------------- */
-/*      Find the node below which the authority should be put.          */
-/* -------------------------------------------------------------------- */
-    OGR_SRSNode  *poNode = poSRS->GetAttrNode( pszTargetKey );
+    for (i = 0; i < LINEAR_UNITS_COUNT; i++)
+    {
+        if EQUAL(pszUnitName, aoLinearUnitsConv[i].pszName)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
 
-    if( poNode == NULL )
-        return OGRERR_FAILURE;
+/************************************************************************/
+/*                            GetUnitDefault()                          */
+/************************************************************************/
 
-/* -------------------------------------------------------------------- */
-/*      If there is an existing AUTHORITY child blow it away before     */
-/*      trying to set a new one.                                        */
-/* -------------------------------------------------------------------- */
-    int iOldChild = poNode->FindChild( "AUTHORITY" );
-    if( iOldChild != -1 )
-        poNode->DestroyChild( iOldChild );
+const char *GetUnitDefault(const char *pszUnitName)
+{
+    int nIndex = GetUnitIndex(pszUnitName);
 
-/* -------------------------------------------------------------------- */
-/*      Create a new authority label.                                   */
-/* -------------------------------------------------------------------- */
-    OGR_SRSNode *poAuthNode;
-
-    poAuthNode = new OGR_SRSNode( "AUTHORITY" );
-    poAuthNode->AddChild( new OGR_SRSNode( pszAuthority ) );
-    poAuthNode->AddChild( new OGR_SRSNode( pszLabel ) );
-    
-    poNode->AddChild( poAuthNode );
-
-    return OGRERR_NONE;
+    if (nIndex == -1)
+    {
+        return CPLStrdup("Meter");
+    }
+    else
+    {
+        return CPLStrdup(aoLinearUnitsConv[aoLinearUnitsConv[nIndex].nDefault].pszName);
+    }
 }
 
 /************************************************************************/
