@@ -100,7 +100,7 @@
 #include <math.h>       /* sin()/cos() */
 #include <ctype.h>      /* toupper()/tolower() */
 
-#if defined(_WIN32) && !defined(unix)
+#if defined(_WIN32) && !defined(unix) && !defined(WIN32CE)
 #  include <mbctype.h>  /* Multibyte chars stuff */
 #endif
 
@@ -607,7 +607,7 @@ char *TABCleanFieldName(const char *pszSrcName)
                  "'%s' will be used instead.", pszSrcName, pszNewName);
     }
 
-#if defined(_WIN32) && !defined(unix)
+#if defined(_WIN32) && !defined(unix) && !defined(WIN32CE)
     /*-----------------------------------------------------------------
      * On Windows, check if we're using a double-byte codepage, and
      * if so then just keep the field name as is... 
