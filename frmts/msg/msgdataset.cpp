@@ -46,6 +46,9 @@ const double MSGDataset::rCentralWvl[12] = {0.635, 0.810, 1.640, 3.900, 6.250, 7
 const double MSGDataset::rVc[12] = {-1, -1, -1, 2569.094, 1598.566, 1362.142, 1149.083, 1034.345, 930.659, 839.661, 752.381, -1};
 const double MSGDataset::rA[12] = {-1, -1, -1, 0.9959, 0.9963, 0.9991, 0.9996, 0.9999, 0.9983, 0.9988, 0.9981, -1};
 const double MSGDataset::rB[12] = {-1, -1, -1, 3.471, 2.219, 0.485, 0.181, 0.060, 0.627, 0.397, 0.576, -1};
+int MSGDataset::iCurrentSatellite = 1; // satellite number 1,2,3,4 for MSG1, MSG2, MSG3 and MSG4
+
+#define MAX_SATELLITES 4
 
 /************************************************************************/
 /*                    MSGDataset()                                     */
@@ -143,8 +146,31 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     XRITHeaderParser xhp;
     Prologue pp;
 
-    std::string sPrologueFileName = command.sPrologueFileName(1);
-    if (access(sPrologueFileName.c_str(), 0) == 0)
+    std::string sPrologueFileName = command.sPrologueFileName(iCurrentSatellite, 1);
+    bool fPrologueExists = (access(sPrologueFileName.c_str(), 0) == 0);
+
+    // Make sure we're testing for MSG1,2,3 or 4 exactly once, start with the most recently used, and remember it in the static member for the next round.
+    if (!fPrologueExists)
+    {
+      iCurrentSatellite = 1 + iCurrentSatellite % MAX_SATELLITES;
+      sPrologueFileName = command.sPrologueFileName(iCurrentSatellite, 1);
+      fPrologueExists = (access(sPrologueFileName.c_str(), 0) == 0);
+      int iTries = 2;
+      while (!fPrologueExists && (iTries < MAX_SATELLITES))
+      {
+        iCurrentSatellite = 1 + iCurrentSatellite % MAX_SATELLITES;
+        sPrologueFileName = command.sPrologueFileName(iCurrentSatellite, 1);
+        fPrologueExists = (access(sPrologueFileName.c_str(), 0) == 0);
+        ++iTries;
+      }
+      if (!fPrologueExists) // assume missing prologue file, keep original satellite number
+      {
+        iCurrentSatellite = 1 + iCurrentSatellite % MAX_SATELLITES;
+        sPrologueFileName = command.sPrologueFileName(iCurrentSatellite, 1);
+      }
+    }
+
+    if (fPrologueExists)
     {
       std::ifstream p_file(sPrologueFileName.c_str(), std::ios::in|std::ios::binary);
       xhp.read_xrithdr(p_file);
@@ -175,17 +201,9 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Capture raster size from MSG prologue and submit it to GDAL     */
 /* -------------------------------------------------------------------- */
 
-    bool fLowerHRVShiftedRight = pp.idr()->PlannedCoverageHRV->UpperWestColumnPlanned >= pp.idr()->PlannedCoverageHRV->LowerWestColumnPlanned;
     if (command.channel[11] != 0) // the HRV band
     {
-      int iRasterXSize;
-      if (fLowerHRVShiftedRight)
-        iRasterXSize = abs(pp.idr()->PlannedCoverageHRV->UpperWestColumnPlanned - pp.idr()->PlannedCoverageHRV->LowerEastColumnPlanned) + 1;
-      else
-        iRasterXSize = abs(pp.idr()->PlannedCoverageHRV->LowerWestColumnPlanned - pp.idr()->PlannedCoverageHRV->UpperEastColumnPlanned) + 1;
-      iRasterXSize += 20; // reserve space for different x-sizes in time series
-      iRasterXSize = 100 * (1 + iRasterXSize / 100); // next multiple of 100 .. to have a more or less constant x-size over multiple runs
-      poDS->nRasterXSize = iRasterXSize;
+      poDS->nRasterXSize = pp.idr()->ReferenceGridHRV->NumberOfColumns;
       poDS->nRasterYSize = abs(pp.idr()->PlannedCoverageHRV->UpperNorthLinePlanned - pp.idr()->PlannedCoverageHRV->LowerSouthLinePlanned) + 1;
     }
     else
@@ -205,17 +223,9 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (command.channel[11] != 0)
     {
-      int iXOffset = 0;
-      if (fLowerHRVShiftedRight)
-        iXOffset = poDS->nRasterXSize - pp.idr()->PlannedCoverageHRV->UpperWestColumnPlanned + pp.idr()->PlannedCoverageHRV->LowerEastColumnPlanned - 1;
       rPixelSizeX = 1000 * pp.idr()->ReferenceGridHRV->ColumnDirGridStep;
       rPixelSizeY = 1000 * pp.idr()->ReferenceGridHRV->LineDirGridStep;
       rMinX = -rPixelSizeX * (pp.idr()->ReferenceGridHRV->NumberOfColumns / 2.0); // assumption: (0,0) falls in centre
-      if (fLowerHRVShiftedRight)
-        rMinX += rPixelSizeX * (pp.idr()->ReferenceGridHRV->NumberOfColumns - pp.idr()->PlannedCoverageHRV->UpperWestColumnPlanned);
-      else
-        rMinX += rPixelSizeX * (pp.idr()->ReferenceGridHRV->NumberOfColumns - pp.idr()->PlannedCoverageHRV->LowerWestColumnPlanned);
-      rMinX -= rPixelSizeX * iXOffset;
       rMaxY = rPixelSizeY * (pp.idr()->ReferenceGridHRV->NumberOfLines / 2.0);
     }
     else
@@ -299,10 +309,40 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
 : cScanDir('s')
 , iLowerShift(0)
 , iSplitLine(0)
+, iLowerWestColumnPlanned(0)
 
 {
     this->poDS = poDS;
     this->nBand = nBand;
+		
+    // Find if we're dealing with MSG1, MSG2, MSG3 or MSG4
+    // Doing this per band is the only way to guarantee time-series when the satellite is changed
+
+    std::string sPrologueFileName = poDS->command.sPrologueFileName(poDS->iCurrentSatellite, nBand);
+    bool fPrologueExists = (access(sPrologueFileName.c_str(), 0) == 0);
+
+    // Make sure we're testing for MSG1,2,3 or 4 exactly once, start with the most recently used, and remember it in the static member for the next round.
+    if (!fPrologueExists)
+    {
+      poDS->iCurrentSatellite = 1 + poDS->iCurrentSatellite % MAX_SATELLITES;
+      sPrologueFileName = poDS->command.sPrologueFileName(poDS->iCurrentSatellite, nBand);
+      fPrologueExists = (access(sPrologueFileName.c_str(), 0) == 0);
+      int iTries = 2;
+      while (!fPrologueExists && (iTries < MAX_SATELLITES))
+      {
+        poDS->iCurrentSatellite = 1 + poDS->iCurrentSatellite % MAX_SATELLITES;
+        sPrologueFileName = poDS->command.sPrologueFileName(poDS->iCurrentSatellite, nBand);
+        fPrologueExists = (access(sPrologueFileName.c_str(), 0) == 0);
+        ++iTries;
+      }
+      if (!fPrologueExists) // assume missing prologue file, keep original satellite number
+      {
+        poDS->iCurrentSatellite = 1 + poDS->iCurrentSatellite % MAX_SATELLITES;
+        sPrologueFileName = poDS->command.sPrologueFileName(poDS->iCurrentSatellite, nBand);
+      }
+    }
+
+    iSatellite = poDS->iCurrentSatellite; // From here on, the satellite that corresponds to this band is settled to the current satellite
 
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = poDS->GetRasterYSize();
@@ -312,9 +352,9 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
 /* -------------------------------------------------------------------- */
     int iStrip = 1;
     int iChannel = poDS->command.iChannel(1 + ((nBand - 1) % poDS->command.iNrChannels()));
-    std::string input_file = poDS->command.sFileName(nBand, iStrip);
+    std::string input_file = poDS->command.sFileName(iSatellite, nBand, iStrip);
     while ((access(input_file.c_str(), 0) != 0) && (iStrip <= poDS->command.iNrStrips(iChannel))) // compensate for missing strips
-      input_file = poDS->command.sFileName(nBand, ++iStrip);
+      input_file = poDS->command.sFileName(iSatellite, nBand, ++iStrip);
 
     if (iStrip <= poDS->command.iNrStrips(iChannel))
     {
@@ -380,8 +420,7 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
       XRITHeaderParser xhp;
       Prologue pp;
 
-      std::string sPrologueFileName = poDS->command.sPrologueFileName(nBand);
-      if (access(sPrologueFileName.c_str(), 0) == 0)
+      if (fPrologueExists)
       {
         std::ifstream p_file(sPrologueFileName.c_str(), std::ios::in|std::ios::binary);
         xhp.read_xrithdr(p_file);
@@ -391,6 +430,7 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
 
         iLowerShift = pp.idr()->PlannedCoverageHRV->UpperWestColumnPlanned - pp.idr()->PlannedCoverageHRV->LowerWestColumnPlanned;
         iSplitLine = abs(pp.idr()->PlannedCoverageHRV->UpperNorthLinePlanned - pp.idr()->PlannedCoverageHRV->LowerNorthLinePlanned) + 1; // without the "+ 1" the image of 1-Jan-2005 splits incorrectly
+        iLowerWestColumnPlanned = pp.idr()->PlannedCoverageHRV->LowerWestColumnPlanned;
       }
     }
 
@@ -401,7 +441,7 @@ MSGRasterBand::MSGRasterBand( MSGDataset *poDS, int nBand )
     int iCycle = 1 + (nBand - 1) / poDS->command.iNrChannels();
     std::string sTimeStamp = poDS->command.sCycle(iCycle);
 
-    m_rc = new ReflectanceCalculator(sTimeStamp, rRTOA[nBand-1]);
+    m_rc = new ReflectanceCalculator(sTimeStamp, rRTOA[iChannel-1]);
 }
 
 /************************************************************************/
@@ -440,7 +480,7 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     else
       strip_number = poGDS->command.iNrStrips(iChannel) - nBlockYOff;
 
-    std::string strip_input_file = poGDS->command.sFileName(nBand, strip_number);
+    std::string strip_input_file = poGDS->command.sFileName(iSatellite, nBand, strip_number);
     
 /* -------------------------------------------------------------------- */
 /*      Open the input file                                             */
@@ -470,14 +510,14 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             int iSplitBlock = iSplitLine / xhp.xrit_hdr().nl;
             fSplitStrip = (nBlockYOff == iSplitBlock); // in the split strip the "shift" only happens before the split "row"
 
-            // When iLowerShift > 0, the lower HRV image is shifted to the right and must be right-aligned in the raster.
-            // When iLowerShift < 0, the lower HRV image is shifted to the left and must be left-aligned in the raster.
+            // When iLowerShift > 0, the lower HRV image is shifted to the right
+            // When iLowerShift < 0, the lower HRV image is shifted to the left
             // The available raster may be wider than needed, so that time series don't fall outside the raster.
             
             if (nBlockYOff <= iSplitBlock)
               iShift = -iLowerShift;
-            // iShift < 0 means upper image moves to the left, and the lower image aligns to the right
-            // iShift > 0 means upper image moves to the right, and the lower image aligns to the left
+            // iShift < 0 means upper image moves to the left
+            // iShift > 0 means upper image moves to the right
           }
           
           std::auto_ptr< unsigned char > ibuf( new unsigned char[nb_ibytes]);
@@ -555,10 +595,9 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 for( int j = 0; j < chunck_height; ++j ) // assumption: nBlockYSize == chunck_height
                 { 
                   int iXOffset = j * nBlockXSize + iShift;
+                  iXOffset += nBlockXSize - iLowerWestColumnPlanned - 1; // Position the HRV part in the frame; -1 to compensate the pre-increment in the for-loop
                   if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
                     iXOffset -= iShift;
-                  if (iLowerShift > 0) // In this case right-align the lower HRV part
-                    iXOffset += nBlockXSize - chunck_width - 1;
                   for (int i = 0; i < chunck_width; ++i)
                     ((GByte *)pImage)[++iXOffset] = cimg.Get()[y+=iStep] / 4;
                 }
@@ -568,10 +607,9 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 for( int j = 0; j < chunck_height; ++j ) // assumption: nBlockYSize == chunck_height
                 { 
                   int iXOffset = j * nBlockXSize + iShift;
+                  iXOffset += nBlockXSize - iLowerWestColumnPlanned - 1; // Position the HRV part in the frame; -1 to compensate the pre-increment in the for-loop
                   if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
                     iXOffset -= iShift;
-                  if (iLowerShift > 0) // In this case right-align the lower HRV part
-                    iXOffset += nBlockXSize - chunck_width - 1;
                   for (int i = 0; i < chunck_width; ++i)
                     ((GByte *)pImage)[++iXOffset] = cimg.Get()[y+=iStep];
                 }
@@ -592,10 +630,9 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
               for( int j = 0; j < chunck_height; ++j ) // assumption: nBlockYSize == chunck_height
               {
                 int iXOffset = j * nBlockXSize + iShift;
+                iXOffset += nBlockXSize - iLowerWestColumnPlanned - 1; // Position the HRV part in the frame; -1 to compensate the pre-increment in the for-loop
                 if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
                   iXOffset -= iShift;
-                if (iLowerShift > 0) // In this case right-align the lower HRV part
-                  iXOffset += nBlockXSize - chunck_width - 1;
                 for (int i = 0; i < chunck_width; ++i)
                   ((GUInt16 *)pImage)[++iXOffset] = cimg.Get()[y+=iStep];
               }
@@ -615,22 +652,12 @@ CPLErr MSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
               for( int j = 0; j < chunck_height; ++j ) // assumption: nBlockYSize == chunck_height
               {
                 int iXOffset = j * nBlockXSize + iShift;
+                iXOffset += nBlockXSize - iLowerWestColumnPlanned - 1; // Position the HRV part in the frame; -1 to compensate the pre-increment in the for-loop
                 if (fSplitStrip && (j >= iSplitRow)) // In splitstrip, below splitline, thus do not shift!!
                   iXOffset -= iShift;
-                int iXFrom;
-                int iXTo;
-                if (iLowerShift > 0) // In this case right-align the lower HRV part
-                {
-                  iXOffset += nBlockXSize - chunck_width - 1;
-                  iXFrom = nBlockXSize - chunck_width + iShift;
-                  iXTo = nBlockXSize + iShift;
-                }
-                else // left-align the lower HRV part
-                {
-                  iXFrom = 1 + iShift;
-                  iXTo = 1 + iShift + chunck_width;
-                }
-                for (int i = iXFrom; i < iXTo; ++i) // range always equal to chunck_width .. this is only to utilize i to get iCol
+                int iXFrom = nBlockXSize - iLowerWestColumnPlanned + iShift; // i is used as the iCol parameter in rRadiometricCorrection
+                int iXTo = nBlockXSize - iLowerWestColumnPlanned + chunck_width + iShift;
+                for (int i = iXFrom; i < iXTo; ++i) // range always equal to chunck_width .. this is to utilize i to get iCol
                   ((float *)pImage)[++iXOffset] = (float)rRadiometricCorrection(cimg.Get()[y+=iStep], iChannel, nBlockYOff * nBlockYSize + j, (fSplitStrip && (j >= iSplitRow))?(i - iShift):i, poGDS);
               }
             }
