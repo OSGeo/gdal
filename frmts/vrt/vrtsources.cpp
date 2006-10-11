@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/10/11 19:04:56  fwarmerdam
+ * Subtle fix when trimming pnOut* values in GetSrcDstWindow().  This
+ * is to avoid reducing 1 pixel tall (or wide) buffers to zero due to
+ * rounding/sampling issues in the request.
+ *
  * Revision 1.6  2006/10/11 16:43:58  fwarmerdam
  * Remove old debug messages.
  *
@@ -345,21 +350,21 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 /* -------------------------------------------------------------------- */
 /*      Clamp within the bounds of the available source data.           */
 /* -------------------------------------------------------------------- */
-    int bModified = FALSE;
+    int bModifiedX = FALSE, bModifiedY = FALSE;
 
     if( *pnReqXOff < 0 )
     {
         *pnReqXSize += *pnReqXOff;
         *pnReqXOff = 0;
 
-        bModified = TRUE;
+        bModifiedX = TRUE;
     }
     
     if( *pnReqYOff < 0 )
     {
         *pnReqYSize += *pnReqYOff;
         *pnReqYOff = 0;
-        bModified = TRUE;
+        bModifiedY = TRUE;
     }
 
     if( *pnReqXSize == 0 )
@@ -370,13 +375,13 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     if( *pnReqXOff + *pnReqXSize > poRasterBand->GetXSize() )
     {
         *pnReqXSize = poRasterBand->GetXSize() - *pnReqXOff;
-        bModified = TRUE;
+        bModifiedX = TRUE;
     }
 
     if( *pnReqYOff + *pnReqYSize > poRasterBand->GetYSize() )
     {
         *pnReqYSize = poRasterBand->GetYSize() - *pnReqYOff;
-        bModified = TRUE;
+        bModifiedY = TRUE;
     }
 
 /* -------------------------------------------------------------------- */
@@ -394,7 +399,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
 /*      If we haven't had to modify the source rectangle, then the      */
 /*      destination rectangle must be the whole region.                 */
 /* -------------------------------------------------------------------- */
-    if( !bModified )
+    if( !bModifiedX && !bModifiedY )
         return TRUE;
 
 /* -------------------------------------------------------------------- */
@@ -409,22 +414,32 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
     SrcToDst( *pnReqXOff + *pnReqXSize, *pnReqYOff + *pnReqYSize, 
               dfDstLRX, dfDstLRY );
 
-    dfScaleWinToBufX = nBufXSize / (double) nXSize;
-    dfScaleWinToBufY = nBufYSize / (double) nYSize;
+    if( bModifiedX )
+    {
+        dfScaleWinToBufX = nBufXSize / (double) nXSize;
 
-    *pnOutXOff = (int) ((dfDstULX - nXOff) * dfScaleWinToBufX+0.001);
-    *pnOutYOff = (int) ((dfDstULY - nYOff) * dfScaleWinToBufY+0.001);
-    *pnOutXSize = (int) ((dfDstLRX - nXOff) * dfScaleWinToBufX+0.001) 
-        - *pnOutXOff;
-    *pnOutYSize = (int) ((dfDstLRY - nYOff) * dfScaleWinToBufY+0.001) 
-        - *pnOutYOff;
+        *pnOutXOff = (int) ((dfDstULX - nXOff) * dfScaleWinToBufX+0.001);
+        *pnOutXSize = (int) ((dfDstLRX - nXOff) * dfScaleWinToBufX+0.001) 
+            - *pnOutXOff;
 
-    *pnOutXOff = MAX(0,*pnOutXOff);
-    *pnOutYOff = MAX(0,*pnOutYOff);
-    if( *pnOutXOff + *pnOutXSize > nBufXSize )
-        *pnOutXSize = nBufXSize - *pnOutXOff;
-    if( *pnOutYOff + *pnOutYSize > nBufYSize )
-        *pnOutYSize = nBufYSize - *pnOutYOff;
+        *pnOutXOff = MAX(0,*pnOutXOff);
+        if( *pnOutXOff + *pnOutXSize > nBufXSize )
+            *pnOutXSize = nBufXSize - *pnOutXOff;
+    }
+
+    if( bModifiedY )
+    {
+        dfScaleWinToBufY = nBufYSize / (double) nYSize;
+
+        *pnOutYOff = (int) ((dfDstULY - nYOff) * dfScaleWinToBufY+0.001);
+        *pnOutYSize = (int) ((dfDstLRY - nYOff) * dfScaleWinToBufY+0.001) 
+            - *pnOutYOff;
+
+        *pnOutYOff = MAX(0,*pnOutYOff);
+        if( *pnOutYOff + *pnOutYSize > nBufYSize )
+            *pnOutYSize = nBufYSize - *pnOutYOff;
+    }
+
 
     if( *pnOutXSize < 1 || *pnOutYSize < 1 )
         return FALSE;
