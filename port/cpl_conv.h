@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2006/10/11 08:30:01  dron
+ * Added CPLStrlwr() function.
+ *
  * Revision 1.45  2006/09/07 18:11:10  dron
  * Added CPLGetCurrentDir().
  *
@@ -170,6 +173,7 @@ void CPL_DLL *CPLMalloc( size_t );
 void CPL_DLL *CPLCalloc( size_t, size_t );
 void CPL_DLL *CPLRealloc( void *, size_t );
 char CPL_DLL *CPLStrdup( const char * );
+char CPL_DLL *CPLStrlwr( char *);
 
 #define CPLFree VSIFree
 
