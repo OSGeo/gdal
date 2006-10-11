@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2006/10/11 16:43:58  fwarmerdam
+ * Remove old debug messages.
+ *
  * Revision 1.5  2004/08/11 18:46:45  warmerda
  * pass pszVRTPath through serialize methods
  *
@@ -424,21 +427,7 @@ VRTSimpleSource::GetSrcDstWindow( int nXOff, int nYOff, int nXSize, int nYSize,
         *pnOutYSize = nBufYSize - *pnOutYOff;
 
     if( *pnOutXSize < 1 || *pnOutYSize < 1 )
-    {
-        if( nYOff == 26 )						
-        {
-            printf( "adjusted outsize == 0!\n" );
-            printf( "Dst = (%.16g,%.16g,%.16g,%.16g)\n", 
-                    dfDstULX, dfDstULY, dfDstLRX, dfDstLRY );
-            printf( "Out = (%d,%d,%d,%d)\n",
-                    *pnOutXOff, 
-                    *pnOutYOff, 
-                    *pnOutXSize, 
-                    *pnOutYSize );
-        }
-
         return FALSE;
-    }
     else
         return TRUE;
 }
