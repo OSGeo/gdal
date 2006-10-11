@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2006/10/11 08:30:01  dron
+ * Added CPLStrlwr() function.
+ *
  * Revision 1.55  2006/08/23 15:09:46  fwarmerdam
  * Added --mempreload support, and VSICopyFile
  *
@@ -404,6 +407,37 @@ char *CPLStrdup( const char * pszString )
     }
     
     return( pszReturn );
+}
+
+/************************************************************************/
+/*                             CPLStrlwr()                              */
+/************************************************************************/
+
+/**
+ * Convert each characters of the string to lower case.
+ *
+ * For example, "ABcdE" will be converted to "abcde".
+ * This function is locale dependent.
+ *
+ * @param pszString input string to be converted.
+ * @return pointer to the same string, pszString.
+ */
+
+char *CPLStrlwr( char *pszString )
+
+{
+    if (pszString)
+    {
+        char *pszTemp = pszString;
+
+        while (*pszTemp)
+        {
+            *pszTemp = tolower (*pszTemp);
+            pszTemp++;
+        }
+    }
+
+    return pszString;
 }
 
 /************************************************************************/
