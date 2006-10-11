@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.30  2006/10/11 08:32:00  dron
+ * Use local CPLStrlwr() instead of unportable strlwr(); avoid warnings.
+ *
  * Revision 1.29  2006/10/10 16:59:22  ilucena
  * Coordinate system support improvements
  *
@@ -1562,53 +1565,53 @@ CPLErr IdrisiDataset::GeoReference2Wkt(const char *pszRefSystem,
         return CE_None;
     }
 
-	// ---------------------------------------------------------
-	//  Latlong
- 	// ---------------------------------------------------------
+    // ---------------------------------------------------------
+    //  Latlong
+    // ---------------------------------------------------------
 
-	if EQUAL(pszRefSystem, rstLATLONG)
-	{
-		oSRS.SetWellKnownGeogCS("WGS84");
-        oSRS.exportToWkt(pszProjString);
-        return CE_None;
-	}
+    if EQUAL(pszRefSystem, rstLATLONG)
+    {
+            oSRS.SetWellKnownGeogCS("WGS84");
+    oSRS.exportToWkt(pszProjString);
+    return CE_None;
+    }
 
     // ---------------------------------------------------------
-	//  Prepare for scanning in lower case
- 	// ---------------------------------------------------------
+    //  Prepare for scanning in lower case
+    // ---------------------------------------------------------
 
-    const char *pszRefSystemLower;
+    char *pszRefSystemLower;
     pszRefSystemLower = CPLStrdup(pszRefSystem);
-    strlwr((char *) pszRefSystemLower);
+    CPLStrlwr(pszRefSystemLower);
 
     // ---------------------------------------------------------
-	//  UTM naming convention (ex.: utm-30n)
- 	// ---------------------------------------------------------
+    //  UTM naming convention (ex.: utm-30n)
+    // ---------------------------------------------------------
 
-	if EQUALN(pszRefSystem, rstUTM, 3)
-	{
-		int	nZone;
-		char cNorth;
-		sscanf(pszRefSystemLower, rstUTM, &nZone, &cNorth);
-		oSRS.SetWellKnownGeogCS("WGS84");
-		oSRS.SetUTM(nZone, (cNorth == 'n'));
-        oSRS.exportToWkt(pszProjString);
-        return CE_None;
-	}
+    if EQUALN(pszRefSystem, rstUTM, 3)
+    {
+            int	nZone;
+            char cNorth;
+            sscanf(pszRefSystemLower, rstUTM, &nZone, &cNorth);
+            oSRS.SetWellKnownGeogCS("WGS84");
+            oSRS.SetUTM(nZone, (cNorth == 'n'));
+    oSRS.exportToWkt(pszProjString);
+    return CE_None;
+    }
 
-	// ---------------------------------------------------------
-	//  State Plane naming convention (ex.: spc83ma1)
- 	// ---------------------------------------------------------
+    // ---------------------------------------------------------
+    //  State Plane naming convention (ex.: spc83ma1)
+    // ---------------------------------------------------------
 
-	if EQUALN(pszRefSystem, rstSPC, 3)
-	{
-		int nNAD;
-		int nZone;
-		char szState[3];
-		sscanf(pszRefSystemLower, rstSPC, &nNAD, szState, &nZone);
+    if EQUALN(pszRefSystem, rstSPC, 3)
+    {
+        int nNAD;
+        int nZone;
+        char szState[3];
+        sscanf(pszRefSystemLower, rstSPC, &nNAD, szState, &nZone);
         int nSPCode = GetStateCode(szState);
-		if (nSPCode != -1)
-		{
+        if (nSPCode != -1)
+        {
             nZone = (nZone == 1 ? nSPCode : nSPCode + nZone - 1);
 
             if (oSRS.SetStatePlane(nZone, (nNAD == 83)) != OGRERR_FAILURE)
@@ -1623,37 +1626,38 @@ CPLErr IdrisiDataset::GeoReference2Wkt(const char *pszRefSystem,
             // ----------------------------------------------------------
 
             oSRS.SetWellKnownGeogCS(CPLSPrintf("NAD%d", nNAD));
-		}
-	}
+        }
+    }
 
-	// ------------------------------------------------------------------
-	//  Search for georeference file <RefSystem>.ref
-	// ------------------------------------------------------------------
+    // ------------------------------------------------------------------
+    //  Search for georeference file <RefSystem>.ref
+    // ------------------------------------------------------------------
 
-	const char *pszFName = CPLSPrintf("%s%c%s.ref", 
-        CPLGetDirname(pszFilename), PATHDELIM,  pszRefSystem);
+    const char *pszFName = CPLSPrintf("%s%c%s.ref", 
+    CPLGetDirname(pszFilename), PATHDELIM,  pszRefSystem);
 
     if (FileExists(pszFName) == FALSE)
-	{
-	    // ------------------------------------------------------------------
-	    //  Look at $IDRISIDIR\Georef\<RefSystem>.ref
-	    // ------------------------------------------------------------------
+    {
+        // ------------------------------------------------------------------
+        //  Look at $IDRISIDIR\Georef\<RefSystem>.ref
+        // ------------------------------------------------------------------
 
         const char *pszIdrisiDir = CPLGetConfigOption("IDRISIDIR", NULL);
-		if ((pszIdrisiDir) != NULL)
+        if ((pszIdrisiDir) != NULL)
         {
-			pszFName = CPLSPrintf("%s%cgeoref%c%s.ref", 
-                pszIdrisiDir, PATHDELIM, PATHDELIM, pszRefSystem);
+            pszFName = CPLSPrintf("%s%cgeoref%c%s.ref", 
+            pszIdrisiDir, PATHDELIM, PATHDELIM, pszRefSystem);
         }
-	}
+    }
 
-	// ------------------------------------------------------------------
-	//  Cannot find georeference file
+    // ------------------------------------------------------------------
+    //  Cannot find georeference file
     // ------------------------------------------------------------------
 
     if (FileExists(pszFName) == FALSE)
     {
-        CPLDebug("RST", "Cannot find Idrisi georeference file %d.ref", pszRefSystem);
+        CPLDebug("RST", "Cannot find Idrisi georeference file %d.ref",
+                 pszRefSystem);
 
         if (oSRS.IsGeographic() == FALSE) /* see State Plane remarks (*) */
         {
@@ -2052,7 +2056,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference(const char *pszProjString,
     	    double dfCenterLat = oSRS.GetProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0, NULL);
             if (dfCenterLat == 0.0)
                 pszProjectionOut = CPLStrdup("Lambert Transverse Azimuthal Equal Area"); 
-            else if (abs(dfCenterLat) == 90.0)
+            else if (fabs(dfCenterLat) == 90.0)
                 pszProjectionOut = CPLStrdup("Lambert Oblique Polar Azimuthal Equal Area");
             else if (dfCenterLat > 0.0)
                 pszProjectionOut = CPLStrdup("Lambert North Oblique Azimuthal Equal Area"); 
@@ -2191,7 +2195,7 @@ bool FileExists(const char *pszFilename)
 
 int GetStateCode(const char *pszState)
 {
-    int i;
+    unsigned int i;
 
     for (i = 0; i < US_STATE_COUNT; i++)
     {
@@ -2209,7 +2213,7 @@ int GetStateCode(const char *pszState)
 
 const char *GetStateName(int nCode)
 {
-    int i;
+    unsigned int i;
 
     for (i = 0; i < US_STATE_COUNT; i++)
     {
@@ -2227,7 +2231,7 @@ const char *GetStateName(int nCode)
 
 int GetUnitIndex(const char *pszUnitName)
 {
-    int i;
+    unsigned int i;
 
     for (i = 0; i < LINEAR_UNITS_COUNT; i++)
     {
