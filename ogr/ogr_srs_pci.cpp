@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/10/11 14:17:10  fwarmerdam
+ * Fixed bug handling geographic coordinate systems.
+ *
  * Revision 1.9  2006/03/03 18:35:40  fwarmerdam
  * Added comment.
  *
@@ -589,7 +592,8 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
 /* -------------------------------------------------------------------- */
 /*      We have an earthmodel string, look it up in the datum list.     */
 /* -------------------------------------------------------------------- */
-    if( strlen(szEarthModel) > 0 && (IsProjected() || IsGeographic()) )
+    if( strlen(szEarthModel) > 0 
+        && (poRoot == NULL || IsProjected() || IsGeographic()) )
     {
         PCIDatums   *paoDatum = aoDatums;
 
