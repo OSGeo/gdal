@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/10/12 16:27:23  hobu
+ * Report more detailed driver capabilities
+ *
  * Revision 1.1  2004/10/07 20:56:15  fwarmerdam
  * New
  *
@@ -112,12 +115,23 @@ OGRDataSource *OGRMySQLDriver::CreateDataSource( const char * pszName,
 int OGRMySQLDriver::TestCapability( const char * pszCap )
 
 {
-#ifdef notdef
-    if( EQUAL(pszCap,ODrCCreateDataSource) )
+
+    if( EQUAL(pszCap,ODsCCreateLayer) )
         return TRUE;
-    else
-#endif
-        return FALSE;
+    if( EQUAL(pszCap,ODsCDeleteLayer) )
+        return TRUE;
+    if( EQUAL(pszCap,OLCRandomRead) )
+        return TRUE;
+    if( EQUAL(pszCap,OLCRandomWrite) )
+        return TRUE;
+    if( EQUAL(pszCap,OLCCreateField) )
+        return TRUE;        
+    if( EQUAL(pszCap,ODsCDeleteLayer) )
+        return TRUE;   
+    if( EQUAL(pszCap,OLCDeleteFeature) )
+        return TRUE;  
+
+    return FALSE;
 }
 
 /************************************************************************/
