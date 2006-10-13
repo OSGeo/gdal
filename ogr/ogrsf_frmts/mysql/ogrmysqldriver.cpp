@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/10/13 14:45:48  hobu
+ * un #ifdef the CreateDataSource method to open the driver in update mode
+ *
  * Revision 1.2  2006/10/12 16:27:23  hobu
  * Report more detailed driver capabilities
  *
@@ -81,7 +84,7 @@ OGRDataSource *OGRMySQLDriver::Open( const char * pszFilename,
         return poDS;
 }
 
-#ifdef notdef
+
 /************************************************************************/
 /*                          CreateDataSource()                          */
 /************************************************************************/
@@ -99,14 +102,14 @@ OGRDataSource *OGRMySQLDriver::CreateDataSource( const char * pszName,
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined, 
-         "PostgreSQL driver doesn't currently support database creation.\n"
-                  "Please create database with the `createdb' command." );
+         "MySQL driver doesn't currently support database creation.\n"
+                  "Please create database before using." );
         return NULL;
     }
 
     return poDS;
 }
-#endif
+
 
 /************************************************************************/
 /*                           TestCapability()                           */
