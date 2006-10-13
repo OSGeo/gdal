@@ -165,12 +165,13 @@ Usage:
 \verbatim
 Usage: ogr2ogr [-skipfailures] [-append] [-update] [-f format_name]
                [-select field_list] [-where restricted_where] 
-               [-sql <sql statement>] 
+               [-sql <sql statement>] [--help-general]
                [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]
                [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
                [[-dsco NAME=VALUE] ...] dst_datasource_name
                src_datasource_name
-               [-lco NAME=VALUE] [-nln name] [-nlt type] layer [layer ...]]
+               [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]
+
 \endverbatim
 
 \if man
@@ -194,7 +195,8 @@ system or even reprojecting the features during translation.
 	 </dd>
 <dt><b>-append</b>:</dt><dd> Append to existing layer instead of creating
 new</dd>
-<dt>  <b>-update</b>:</dt><dd> Open existing output datasource in update mode</dd>
+<dt><b>-overwrite</b>:</dt><dd> Delete the output layer and recreate it empty</dd>
+<dt>  <b>-update</b>:</dt><dd> Open existing output datasource in update mode rather than trying to create a new one</dd>
 <dt> <b>-select</b><em> field_list</em>:</dt><dd> Comma-delimited list of
 fields from input layer to copy to the new layer (defaults to all)</dd>
 <dt> <b>-sql</b> <em>sql_statement</em>:</dt><dd> SQL statement to execute.
