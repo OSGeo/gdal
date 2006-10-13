@@ -1420,36 +1420,16 @@ dnl ---------------------------------------------------------------------------
 dnl Check for OCI support.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(oci,[  --with-oci=ARG        Include OCI (Oracle) support (ARG=no or path)],,)
+ORACLE_OCI_REQ_VERSION="8.1.7"
+AX_LIB_ORACLE_OCI($ORACLE_OCI_REQ_VERSION)
 
-if test "$with_oci" = "no" ; then
-
-  HAVE_OCI=no
-
-  AC_MSG_RESULT([OCI support disabled.])
-elif  test "$with_oci" = "yes" -o "$with_oci" = "" ; then
-
-  AC_CHECK_LIB(clntsh,OCIBindByName,HAVE_OCI=yes,HAVE_OCI=no,)
-
-  if test "$HAVE_OCI" = "yes" ; then
-    AC_MSG_RESULT([using pre-installed libclntsh])
-  fi
-else
-
-  HAVE_OCI=yes
-  ORACLE_HOME="$with_oci"
-  OCI_INCLUDE="-I$ORACLE_HOME/rdbms/demo -I$ORACLE_HOME/rdbms/public"
-  LIBS="-L$ORACLE_HOME/lib $LIBS"
-
-  AC_MSG_RESULT([using OCI library from $with_oci])
+if test "$HAVE_ORACLE_OCI" = "yes"; then
+    OCI_INCLUDE="$ORACLE_OCI_CFLAGS"
+    LIBS="$ORACLE_OCI_LDFLAGS $LIBS"
 fi
 
-if test "$HAVE_OCI" = "yes" ; then
-  LIBS="-lclntsh $LIBS"
-fi
-
-AC_SUBST(HAVE_OCI,$HAVE_OCI)
-AC_SUBST(OCI_INCLUDE,$OCI_INCLUDE)
+AC_SUBST([HAVE_OCI], [$HAVE_ORACLE_OCI])
+AC_SUBST([OCI_INCLUDE], $[OCI_INCLUDE])
 
 dnl ---------------------------------------------------------------------------
 dnl Check for DODS.
