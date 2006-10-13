@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/10/13 18:15:22  hobu
+ * properly return ODrCCreateDataSource  when asked
+ *
  * Revision 1.4  2006/10/13 18:03:24  hobu
  * oops, listing some wrong caps in here...
  *
@@ -126,7 +129,9 @@ int OGRMySQLDriver::TestCapability( const char * pszCap )
         return TRUE;
     if( EQUAL(pszCap,ODsCDeleteLayer) )
         return TRUE;     
-
+    if( EQUAL(pszCap,ODrCCreateDataSource) )
+        return TRUE;
+        
     return FALSE;
 }
 
