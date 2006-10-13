@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2006/10/13 02:53:48  fwarmerdam
+ * various improvements to TRE and VQ LUT support for bug 1313
+ *
  * Revision 1.41  2006/10/04 19:10:31  fwarmerdam
  * Make sure we don't crash if the VQ LUTs were not successfully loaded.
  *
@@ -174,6 +177,9 @@ static char *NITFTrimWhite( char * );
 static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
                            int nWordSkip );
 #endif
+
+static void NITFLoadLocationTable( NITFImage *psImage );
+static int NITFLoadVQTables( NITFImage *psImage );
 
 /************************************************************************/
 /*                          NITFImageAccess()                           */
@@ -549,7 +555,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /* -------------------------------------------------------------------- */
     else
     {
-        int nUserTREBytes;
+        int nUserTREBytes, nExtendedTREBytes;
 
         nOffset += 3;                   /* IDLVL */
         nOffset += 3;                   /* IALVL */
@@ -563,23 +569,44 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         nOffset += 5;
 
         if( nUserTREBytes > 0 )
+        {
+            psImage->nTREBytes = nUserTREBytes - 3;
+            psImage->pachTRE = (char *) CPLMalloc(psImage->nTREBytes);
+            memcpy( psImage->pachTRE, pachHeader + nOffset + 3,
+                    psImage->nTREBytes );
+
             nOffset += nUserTREBytes;
+        }
+        else
+        {
+            psImage->nTREBytes = 0;
+            psImage->pachTRE = NULL;
+        }
 
 /* -------------------------------------------------------------------- */
 /*      Are there managed TRE bytes to recognise?                       */
 /* -------------------------------------------------------------------- */
-        psImage->nTREBytes = atoi(NITFGetField(szTemp,pachHeader,nOffset,5));
+        nExtendedTREBytes = atoi(NITFGetField(szTemp,pachHeader,nOffset,5));
         nOffset += 5;
 
-        if( psImage->nTREBytes != 0 )
+        if( nExtendedTREBytes != 0 )
         {
-            nOffset += 3;
-            psImage->pachTRE = pachHeader + nOffset;
-            psImage->nTREBytes -= 3;
+            psImage->pachTRE = (char *) 
+                CPLRealloc( psImage->pachTRE, 
+                            psImage->nTREBytes + nExtendedTREBytes - 3 );
+            memcpy( psImage->pachTRE + psImage->nTREBytes, 
+                    pachHeader + nOffset + 3, 
+                    nExtendedTREBytes - 3 );
 
-            nOffset += psImage->nTREBytes;
+            psImage->pachTRE += (nExtendedTREBytes - 3);
+            nOffset += nExtendedTREBytes;
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Is there a location table to load?                              */
+/* -------------------------------------------------------------------- */
+    NITFLoadLocationTable( psImage );
 
 /* -------------------------------------------------------------------- */
 /*      Setup some image access values.  Some of these may not apply    */
@@ -640,10 +667,10 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     {
         GUInt32  nLocBase = psSegInfo->nSegmentStart;
 
-        for( i = 0; i < psFile->nLocCount; i++ )
+        for( i = 0; i < psImage->nLocCount; i++ )
         {
-            if( psFile->pasLocations[i].nLocId == 140 )
-                nLocBase = psFile->pasLocations[i].nLocOffset;
+            if( psImage->pasLocations[i].nLocId == LID_SpatialDataSubsection )
+                nLocBase = psImage->pasLocations[i].nLocOffset;
         }
 
         if( nLocBase == psSegInfo->nSegmentStart )
@@ -823,13 +850,13 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
 /*      If we have an RPF CoverageSectionSubheader, read the more       */
 /*      precise bounds from it.                                         */
 /* -------------------------------------------------------------------- */
-    for( i = 0; i < psFile->nLocCount; i++ )
+    for( i = 0; i < psImage->nLocCount; i++ )
     {
-        if( psFile->pasLocations[i].nLocId == LID_CoverageSectionSubheader )
+        if( psImage->pasLocations[i].nLocId == LID_CoverageSectionSubheader )
         {
             double adfTarget[8];
 
-            VSIFSeekL( psFile->fp, psFile->pasLocations[i].nLocOffset,
+            VSIFSeekL( psFile->fp, psImage->pasLocations[i].nLocOffset,
                       SEEK_SET );
             VSIFReadL( adfTarget, 8, 8, psFile->fp );
             for( i = 0; i < 8; i++ )
@@ -848,6 +875,11 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
             break;
         }
     }
+
+/* -------------------------------------------------------------------- */
+/*      Are the VQ tables to load up?                                   */
+/* -------------------------------------------------------------------- */
+    NITFLoadVQTables( psImage );
 
     return psImage;
 }
@@ -872,7 +904,12 @@ void NITFImageDeaccess( NITFImage *psImage )
     CPLFree( psImage->panBlockStart );
     CPLFree( psImage->pszComments );
     CPLFree( psImage->pachHeader );
+    CPLFree( psImage->pachTRE );
     CSLDestroy( psImage->papszMetadata );
+
+    CPLFree( psImage->pasLocations );
+    for( iBand = 0; iBand < 4; iBand++ )
+        CPLFree( psImage->apanVQLUT[iBand] );
 
     CPLFree( psImage );
 }
@@ -918,8 +955,8 @@ static void NITFUncompressVQTile( NITFImage *psImage,
             {
                 GByte *pabyTarget = pabyResult + (i+t) * 256 + j;
                 
-                memcpy( pabyTarget, psImage->psFile->apanVQLUT[t] + val1, 4 );
-                memcpy( pabyTarget+4, psImage->psFile->apanVQLUT[t] + val2, 4);
+                memcpy( pabyTarget, psImage->apanVQLUT[t] + val1, 4 );
+                memcpy( pabyTarget+4, psImage->apanVQLUT[t] + val2, 4);
             }
         }  /* for j */
     } /* for i */
@@ -1036,7 +1073,7 @@ int NITFReadImageBlock( NITFImage *psImage, int nBlockX, int nBlockY,
     {
         GByte abyVQCoded[6144];
 
-        if( psImage->psFile->apanVQLUT[0] == NULL )
+        if( psImage->apanVQLUT[0] == NULL )
         {
             CPLError( CE_Failure, CPLE_NotSupported, 
                       "File lacks VQ LUTs, unable to decode imagery." );
@@ -1828,6 +1865,227 @@ char **NITFReadUSE00A( NITFImage *psImage )
                          "NITF_USE00A_SUN_AZ" );
 
     return papszMD;
+}
+
+/************************************************************************/
+/*                       NITFLoadLocationTable()                        */
+/************************************************************************/
+
+static void NITFLoadLocationTable( NITFImage *psImage )
+
+{
+#ifdef notdef
+/* -------------------------------------------------------------------- */
+/*      Get the location table position from within the RPFHDR TRE      */
+/*      structure.                                                      */
+/*                                                                      */
+/*      This is the old approach, but since some RPFHDR segments are    */
+/*      written wrong, it is not very stable.  See bug                  */
+/*      http://bugzilla.remotesensing.org/show_bug.cgi?id=1313          */
+/* -------------------------------------------------------------------- */
+    GUInt32  nLocTableOffset;
+    GUInt16  nLocCount;
+    int      iLoc;
+    const char *pszTRE;
+
+    pszTRE= NITFFindTRE( psFile->pachTRE, psFile->nTREBytes, "RPFHDR", NULL );
+    if( pszTRE == NULL )
+        return;
+
+    memcpy( &nLocTableOffset, pszTRE + 44, 4 );
+    nLocTableOffset = CPL_MSBWORD32( nLocTableOffset );
+    
+    if( nLocTableOffset == 0 )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Read the count of entries in the location table.                */
+/* -------------------------------------------------------------------- */
+    VSIFSeekL( psFile->fp, nLocTableOffset + 6, SEEK_SET );
+    VSIFReadL( &nLocCount, 1, 2, psFile->fp );
+    nLocCount = CPL_MSBWORD16( nLocCount );
+    psFile->nLocCount = nLocCount;
+
+    psFile->pasLocations = (NITFLocation *) 
+        CPLCalloc(sizeof(NITFLocation), nLocCount);
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Get the location table out of the RPFIMG TRE on the image.      */
+/* -------------------------------------------------------------------- */
+    GUInt16  nLocCount;
+    int      iLoc;
+    const char *pszTRE;
+
+    pszTRE = NITFFindTRE(psImage->pachTRE, psImage->nTREBytes, "RPFIMG", NULL);
+    if( pszTRE == NULL )
+        return;
+
+    pszTRE += 6;
+
+    memcpy( &nLocCount, pszTRE, 2 );
+    nLocCount = CPL_MSBWORD16( nLocCount );
+
+    psImage->nLocCount = nLocCount;
+
+    psImage->pasLocations = (NITFLocation *) 
+        CPLCalloc(sizeof(NITFLocation), nLocCount);
+
+    pszTRE += 8;
+
+    
+/* -------------------------------------------------------------------- */
+/*      Process the locations.                                          */
+/* -------------------------------------------------------------------- */
+    
+    for( iLoc = 0; iLoc < nLocCount; iLoc++ )
+    {
+        unsigned char *pabyEntry = (unsigned char *) pszTRE;
+        pszTRE += 10;
+
+        psImage->pasLocations[iLoc].nLocId = pabyEntry[0] * 256 + pabyEntry[1];
+
+        CPL_MSBPTR32( pabyEntry + 2 );
+        memcpy( &(psImage->pasLocations[iLoc].nLocSize), pabyEntry + 2, 4 );
+
+        CPL_MSBPTR32( pabyEntry + 6 );
+        memcpy( &(psImage->pasLocations[iLoc].nLocOffset), pabyEntry + 6, 4 );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      It seems that sometimes (at least for bug 1313) all the         */
+/*      locations in the location table are off by a fixed amount.      */
+/*      We can establish that amount by checking if the RPFHDR TRE      */
+/*      is at the location indicated in the location table.  If not,    */
+/*      offset all locations by the difference.                         */
+/* -------------------------------------------------------------------- */
+    int nHeaderOffset = 0;
+    int i;
+
+    for( i = 0; i < psImage->nLocCount; i++ )
+    {
+        if( psImage->pasLocations[i].nLocId == LID_HeaderComponent )
+        {
+            nHeaderOffset = psImage->pasLocations[i].nLocOffset;
+            break;
+        }
+    }
+
+    if( nHeaderOffset != 0 )
+    {
+        char achHeaderChunk[1000];
+
+        VSIFSeekL( psImage->psFile->fp, nHeaderOffset - 11, SEEK_SET );
+        VSIFReadL( achHeaderChunk, 1, sizeof(achHeaderChunk), 
+                   psImage->psFile->fp );
+
+        if( !EQUALN(achHeaderChunk,"RPFHDR",6) )
+        {
+            int nOffset = 0;
+
+            for( i = 1; i < sizeof(achHeaderChunk)-6; i++ )
+            {
+                if( EQUALN(achHeaderChunk+i,"RPFHDR",6) )
+                {
+                    nOffset = i;
+                    break;
+                }
+            }
+
+            if( nOffset != 0 )
+            {
+                CPLDebug( "NITF", 
+                          "Location table offsets off by %d bytes, adjusting accordingly.",
+                          nOffset );
+                
+                for( i = 0; i < psImage->nLocCount; i++ )
+                {
+                    psImage->pasLocations[i].nLocOffset += nOffset;
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                          NITFLoadVQTables()                          */
+/************************************************************************/
+
+static int NITFLoadVQTables( NITFImage *psImage )
+
+{
+    int     i, nVQOffset=0, nVQSize=0;
+
+/* -------------------------------------------------------------------- */
+/*      Do we already have the VQ tables?                               */
+/* -------------------------------------------------------------------- */
+    if( psImage->apanVQLUT[0] != NULL )
+        return TRUE;
+
+/* -------------------------------------------------------------------- */
+/*      Do we have the location information?                            */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < psImage->nLocCount; i++ )
+    {
+        if( psImage->pasLocations[i].nLocId == LID_CompressionLookupSubsection)
+        {
+            nVQOffset = psImage->pasLocations[i].nLocOffset;
+            nVQSize = psImage->pasLocations[i].nLocSize;
+        }
+    }
+
+    if( nVQOffset == 0 )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Does it look like we have the tables properly identified?       */
+/* -------------------------------------------------------------------- */
+    GByte abyTestChunk[1000];
+    GByte abySignature[6];
+
+    abySignature[0] = 0x00;
+    abySignature[1] = 0x00;
+    abySignature[2] = 0x00;
+    abySignature[3] = 0x06;
+    abySignature[4] = 0x00;
+    abySignature[5] = 0x0E;
+
+    VSIFSeekL( psImage->psFile->fp, nVQOffset, SEEK_SET );
+    VSIFReadL( abyTestChunk, 1, sizeof(abyTestChunk), psImage->psFile->fp );
+
+    if( memcmp(abyTestChunk,abySignature,sizeof(abySignature)) != 0 )
+    {
+        for( i = 0; i < sizeof(abyTestChunk) - sizeof(abySignature); i++ )
+        {
+            if( memcmp(abyTestChunk+i,abySignature,sizeof(abySignature)) == 0 )
+            {
+                nVQOffset += i; 
+                CPLDebug( "NITF", 
+                          "VQ CompressionLookupSubsection offsets off by %d bytes, adjusting accordingly.",
+                          i );
+                break;
+            }
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Load the tables.                                                */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < 4; i++ )
+    {
+        GUInt32 nVQVector;
+
+        psImage->apanVQLUT[i] = (GUInt32 *) CPLCalloc(4096,sizeof(GUInt32));
+
+        VSIFSeekL( psImage->psFile->fp, nVQOffset + 6 + i*14 + 10, SEEK_SET );
+        VSIFReadL( &nVQVector, 1, 4, psImage->psFile->fp );
+        nVQVector = CPL_MSBWORD32( nVQVector );
+        
+        VSIFSeekL( psImage->psFile->fp, nVQOffset + nVQVector, SEEK_SET );
+        VSIFReadL( psImage->apanVQLUT[i], 4, 4096, psImage->psFile->fp );
+    }
+
+    return TRUE;
 }
 
 /************************************************************************/

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/10/13 02:53:48  fwarmerdam
+ * various improvements to TRE and VQ LUT support for bug 1313
+ *
  * Revision 1.8  2006/06/06 17:09:27  fwarmerdam
  * added various extra reporting
  *
@@ -116,23 +119,6 @@ int main( int nArgc, char ** papszArgv )
         }
 
 /* -------------------------------------------------------------------- */
-/*      Report info from location table, if found.                      */
-/* -------------------------------------------------------------------- */
-        if( psFile->nLocCount > 0 )
-        {
-            int i;
-            printf( "Location Table\n" );
-            for( i = 0; i < psFile->nLocCount; i++ )
-            {
-                printf( "  LocId=%d, Offset=%d, Size=%d\n", 
-                        psFile->pasLocations[i].nLocId,
-                        psFile->pasLocations[i].nLocOffset,
-                        psFile->pasLocations[i].nLocSize );
-            }
-            printf( "\n" );
-        }
-
-/* -------------------------------------------------------------------- */
 /*      Dump Metadata                                                   */
 /* -------------------------------------------------------------------- */
         DumpMetadata( "File Metadata:", "  ", psFile->papszMetadata );
@@ -211,6 +197,21 @@ int main( int nArgc, char ** papszArgv )
                     printf( " %6.6s(%d)", pszTREData, nThisTRESize );
                     pszTREData += nThisTRESize + 11;
                     nTREBytes -= (nThisTRESize + 11);
+                }
+                printf( "\n" );
+            }
+
+            /* Report info from location table, if found.                  */
+            if( psImage->nLocCount > 0 )
+            {
+                int i;
+                printf( "  Location Table\n" );
+                for( i = 0; i < psImage->nLocCount; i++ )
+                {
+                    printf( "    LocId=%d, Offset=%d, Size=%d\n", 
+                            psImage->pasLocations[i].nLocId,
+                            psImage->pasLocations[i].nLocOffset,
+                            psImage->pasLocations[i].nLocSize );
                 }
                 printf( "\n" );
             }
