@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/10/13 18:03:24  hobu
+ * oops, listing some wrong caps in here...
+ *
  * Revision 1.3  2006/10/13 14:45:48  hobu
  * un #ifdef the CreateDataSource method to open the driver in update mode
  *
@@ -122,17 +125,7 @@ int OGRMySQLDriver::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,ODsCCreateLayer) )
         return TRUE;
     if( EQUAL(pszCap,ODsCDeleteLayer) )
-        return TRUE;
-    if( EQUAL(pszCap,OLCRandomRead) )
-        return TRUE;
-    if( EQUAL(pszCap,OLCRandomWrite) )
-        return TRUE;
-    if( EQUAL(pszCap,OLCCreateField) )
-        return TRUE;        
-    if( EQUAL(pszCap,ODsCDeleteLayer) )
-        return TRUE;   
-    if( EQUAL(pszCap,OLCDeleteFeature) )
-        return TRUE;  
+        return TRUE;     
 
     return FALSE;
 }
