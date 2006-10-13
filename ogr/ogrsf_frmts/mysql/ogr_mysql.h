@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/10/13 15:39:12  mloskot
+ * Fixed missing declaration of OGRMySQLDriver::CreateDataSource()
+ *
  * Revision 1.20  2006/02/13 04:15:04  hobu
  * major formatting cleanup
  * Added myself as an author
@@ -325,10 +328,8 @@ class OGRMySQLDriver : public OGRSFDriver
                 
     const char *GetName();
     OGRDataSource *Open( const char *, int );
-#ifdef notdef
     virtual OGRDataSource *CreateDataSource( const char *pszName,
                                              char ** = NULL );
-#endif    
     int                 TestCapability( const char * );
 };
 
