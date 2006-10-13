@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/10/13 02:53:48  fwarmerdam
+ * various improvements to TRE and VQ LUT support for bug 1313
+ *
  * Revision 1.22  2006/05/29 19:17:19  fwarmerdam
  * NITF 2.0 can have LA (label) segments in NUMX place.  Handle appropriately.
  *
@@ -109,8 +112,6 @@ static int
 NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
                         int nHeaderLenSize, int nDataLenSize, 
                         int *pnNextData );
-static void NITFLoadLocationTable( NITFFile *psFile );
-static int NITFLoadVQTables( NITFFile *psFile );
 
 /************************************************************************/
 /*                              NITFOpen()                              */
@@ -325,12 +326,6 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
         psFile->nTREBytes -= 3;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Are the VQ tables to load up?                                   */
-/* -------------------------------------------------------------------- */
-    NITFLoadLocationTable( psFile );
-    NITFLoadVQTables( psFile );
-
     return psFile;
 }
 
@@ -341,7 +336,7 @@ NITFFile *NITFOpen( const char *pszFilename, int bUpdatable )
 void NITFClose( NITFFile *psFile )
 
 {
-    int  iSegment, i;
+    int  iSegment;
 
     for( iSegment = 0; iSegment < psFile->nSegmentCount; iSegment++ )
     {
@@ -359,10 +354,6 @@ void NITFClose( NITFFile *psFile )
     }
 
     CPLFree( psFile->pasSegmentInfo );
-    CPLFree( psFile->pasLocations );
-    for( i = 0; i < 4; i++ )
-        CPLFree( psFile->apanVQLUT[i] );
-
     if( psFile->fp != NULL )
         VSIFCloseL( psFile->fp );
     CPLFree( psFile->pachHeader );
@@ -751,113 +742,6 @@ NITFCollectSegmentInfo( NITFFile *psFile, int nOffset, char *pszType,
     CPLFree( pachSegDef );
 
     return nOffset + nSegDefSize + 3;
-}
-
-/************************************************************************/
-/*                       NITFLoadLocationTable()                        */
-/************************************************************************/
-
-static void NITFLoadLocationTable( NITFFile *psFile )
-
-{
-    GUInt32  nLocTableOffset;
-    GUInt16  nLocCount;
-    int      iLoc;
-    const char *pszTRE;
-
-/* -------------------------------------------------------------------- */
-/*      Get the location table position from within the RPFHDR TRE      */
-/*      structure.                                                      */
-/* -------------------------------------------------------------------- */
-    pszTRE= NITFFindTRE( psFile->pachTRE, psFile->nTREBytes, "RPFHDR", NULL );
-    if( pszTRE == NULL )
-        return;
-
-    memcpy( &nLocTableOffset, pszTRE + 44, 4 );
-    nLocTableOffset = CPL_MSBWORD32( nLocTableOffset );
-    
-    if( nLocTableOffset == 0 )
-        return;
-
-/* -------------------------------------------------------------------- */
-/*      Read the count of entries in the location table.                */
-/* -------------------------------------------------------------------- */
-    VSIFSeekL( psFile->fp, nLocTableOffset + 6, SEEK_SET );
-    VSIFReadL( &nLocCount, 1, 2, psFile->fp );
-    nLocCount = CPL_MSBWORD16( nLocCount );
-    psFile->nLocCount = nLocCount;
-
-    psFile->pasLocations = (NITFLocation *) 
-        CPLCalloc(sizeof(NITFLocation), nLocCount);
-    
-/* -------------------------------------------------------------------- */
-/*      Process the locations.                                          */
-/* -------------------------------------------------------------------- */
-    VSIFSeekL( psFile->fp, 6, SEEK_CUR );
-    for( iLoc = 0; iLoc < nLocCount; iLoc++ )
-    {
-        unsigned char abyEntry[10];
-        
-        VSIFReadL( abyEntry, 1, 10, psFile->fp );
-        
-        psFile->pasLocations[iLoc].nLocId = abyEntry[0] * 256 + abyEntry[1];
-
-        CPL_MSBPTR32( abyEntry + 2 );
-        memcpy( &(psFile->pasLocations[iLoc].nLocSize), abyEntry + 2, 4 );
-
-        CPL_MSBPTR32( abyEntry + 6 );
-        memcpy( &(psFile->pasLocations[iLoc].nLocOffset), abyEntry + 6, 4 );
-    }
-}
-
-/************************************************************************/
-/*                          NITFLoadVQTables()                          */
-/************************************************************************/
-
-static int NITFLoadVQTables( NITFFile *psFile )
-
-{
-    int     i, nVQOffset=0, nVQSize=0;
-
-/* -------------------------------------------------------------------- */
-/*      Do we already have the VQ tables?                               */
-/* -------------------------------------------------------------------- */
-    if( psFile->apanVQLUT[0] != NULL )
-        return TRUE;
-
-/* -------------------------------------------------------------------- */
-/*      Do we have the location information?                            */
-/* -------------------------------------------------------------------- */
-    for( i = 0; i < psFile->nLocCount; i++ )
-    {
-        if( psFile->pasLocations[i].nLocId == 132 )
-        {
-            nVQOffset = psFile->pasLocations[i].nLocOffset;
-            nVQSize = psFile->pasLocations[i].nLocSize;
-        }
-    }
-
-    if( nVQOffset == 0 )
-        return FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      Load the tables.                                                */
-/* -------------------------------------------------------------------- */
-    for( i = 0; i < 4; i++ )
-    {
-        GUInt32 nVQVector;
-
-        psFile->apanVQLUT[i] = (GUInt32 *) CPLCalloc(4096,sizeof(GUInt32));
-
-        VSIFSeekL( psFile->fp, nVQOffset + 6 + i*14 + 10, SEEK_SET );
-        VSIFReadL( &nVQVector, 1, 4, psFile->fp );
-        nVQVector = CPL_MSBWORD32( nVQVector );
-        
-        VSIFSeekL( psFile->fp, nVQOffset + nVQVector, SEEK_SET );
-        VSIFReadL( psFile->apanVQLUT[i], 4, 4096, psFile->fp );
-    }
-
-    return TRUE;
 }
 
 /************************************************************************/

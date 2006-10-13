@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/10/13 02:53:48  fwarmerdam
+ * various improvements to TRE and VQ LUT support for bug 1313
+ *
  * Revision 1.17  2005/02/18 19:28:15  fwarmerdam
  * added NITFIHFieldOffset
  *
@@ -100,13 +103,6 @@ typedef struct {
     void *hAccess;
 } NITFSegmentInfo;
 
-typedef struct { 
-    int	nLocId;
-    int nLocOffset;
-    int nLocSize;
-} NITFLocation;
-
-
 typedef struct {
     FILE    *fp;
 
@@ -119,11 +115,6 @@ typedef struct {
 
     int     nTREBytes;
     char    *pachTRE;
-
-    GUInt32 *apanVQLUT[4];
-
-    int     nLocCount;
-    NITFLocation *pasLocations;
 
     char    **papszMetadata;
     
@@ -155,6 +146,12 @@ typedef struct {
     unsigned char *pabyLUT;
 
 } NITFBandInfo;
+
+typedef struct { 
+    int	nLocId;
+    int nLocOffset;
+    int nLocSize;
+} NITFLocation;
 
 typedef struct {
     NITFFile  *psFile;
@@ -215,6 +212,11 @@ typedef struct {
 
     char       **papszMetadata;
     
+    GUInt32 *apanVQLUT[4];
+
+    int     nLocCount;
+    NITFLocation *pasLocations;
+
 } NITFImage;
 
 NITFImage CPL_DLL *NITFImageAccess( NITFFile *, int iSegment );
