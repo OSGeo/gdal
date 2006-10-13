@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.40  2006/10/13 14:07:38  fwarmerdam
+ * improve -overwrite docs
+ *
  * Revision 1.39  2006/10/09 15:40:17  dron
  * Memory leak fixed.
  *
@@ -590,13 +593,13 @@ static void Usage()
 {
     OGRSFDriverRegistrar        *poR = OGRSFDriverRegistrar::GetRegistrar();
 
-    printf( "Usage: ogr2ogr [-skipfailures] [-append] [-update] [-f format_name]\n"
+    printf( "Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]\n"
             "               [-select field_list] [-where restricted_where] \n"
-            "               [-sql <sql statement>] [--help-general]\n" 
+            "               [-sql <sql statement>] \n" 
             "               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]\n"
             "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
-            "               [[-dsco NAME=VALUE] ...] dst_datasource_name\n"
-            "               src_datasource_name\n"
+            "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] ...]\n"
+            "               dst_datasource_name src_datasource_name\n"
             "               [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]\n"
             "\n"
             " -f format_name: output file format name, possible values are:\n");
