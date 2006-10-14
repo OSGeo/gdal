@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.99  2006/10/14 01:31:14  fwarmerdam
+ * NULL target for GetAuthorityName/Code now returns for the root node.
+ *
  * Revision 1.98  2005/12/20 02:08:07  fwarmerdam
  * UTM should default to a linear units of meter.
  *
@@ -3363,6 +3366,43 @@ OGRErr OSRSetMercator( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                           SetMercator2SP()                           */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetMercator2SP( 
+    double dfStdP1, 
+    double dfCenterLat, double dfCenterLong,
+    double dfFalseEasting,
+    double dfFalseNorthing )
+
+{
+    SetProjection( SRS_PT_MERCATOR_2SP );
+    SetNormProjParm( SRS_PP_STANDARD_PARALLEL_1, dfStdP1 );
+    SetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, dfCenterLat );
+    SetNormProjParm( SRS_PP_CENTRAL_MERIDIAN, dfCenterLong );
+    SetNormProjParm( SRS_PP_FALSE_EASTING, dfFalseEasting );
+    SetNormProjParm( SRS_PP_FALSE_NORTHING, dfFalseNorthing );
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         OSRSetMercator2SP()                          */
+/************************************************************************/
+
+OGRErr OSRSetMercator2SP( OGRSpatialReferenceH hSRS, 
+                          double dfStdP1,
+                          double dfCenterLat, double dfCenterLong,
+                          double dfFalseEasting, double dfFalseNorthing )
+    
+{
+    return ((OGRSpatialReference *) hSRS)->SetMercator2SP( 
+        dfStdP1, 
+        dfCenterLat, dfCenterLong, 
+        dfFalseEasting, dfFalseNorthing );
+}
+
+/************************************************************************/
 /*                            SetMollweide()                            */
 /************************************************************************/
 
@@ -3950,7 +3990,8 @@ OGRErr OSRSetAuthority( OGRSpatialReferenceH hSRS,
  * This method is the same as the C function OSRGetAuthorityCode().
  *
  * @param pszTargetKey the partial or complete path to the node to 
- * set an authority on.  ie. "PROJCS", "GEOGCS" or "GEOGCS|UNIT".
+ * get an authority from.  ie. "PROJCS", "GEOGCS", "GEOGCS|UNIT" or NULL to 
+ * search for an authority node on the root element.
  *
  * @return value code from authority node, or NULL on failure.  The value
  * returned is internal and should not be freed or modified.
@@ -3963,8 +4004,12 @@ OGRSpatialReference::GetAuthorityCode( const char *pszTargetKey ) const
 /* -------------------------------------------------------------------- */
 /*      Find the node below which the authority should be put.          */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode  *poNode = 
-        ((OGRSpatialReference *) this)->GetAttrNode( pszTargetKey );
+    const OGR_SRSNode  *poNode;
+
+    if( pszTargetKey == NULL )
+        poNode = poRoot;
+    else
+        poNode= ((OGRSpatialReference *) this)->GetAttrNode( pszTargetKey );
 
     if( poNode == NULL )
         return NULL;
@@ -4012,7 +4057,8 @@ const char *OSRGetAuthorityCode( OGRSpatialReferenceH hSRS,
  * This method is the same as the C function OSRGetAuthorityName().
  *
  * @param pszTargetKey the partial or complete path to the node to 
- * set an authority on.  ie. "PROJCS", "GEOGCS" or "GEOGCS|UNIT".
+ * get an authority from.  ie. "PROJCS", "GEOGCS", "GEOGCS|UNIT" or NULL to 
+ * search for an authority node on the root element.
  *
  * @return value code from authority node, or NULL on failure. The value
  * returned is internal and should not be freed or modified.
@@ -4025,8 +4071,12 @@ OGRSpatialReference::GetAuthorityName( const char *pszTargetKey ) const
 /* -------------------------------------------------------------------- */
 /*      Find the node below which the authority should be put.          */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode  *poNode = 
-        ((OGRSpatialReference *) this)->GetAttrNode( pszTargetKey );
+    const OGR_SRSNode  *poNode;
+
+    if( pszTargetKey == NULL )
+        poNode = poRoot;
+    else
+        poNode= ((OGRSpatialReference *) this)->GetAttrNode( pszTargetKey );
 
     if( poNode == NULL )
         return NULL;
