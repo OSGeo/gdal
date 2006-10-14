@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.71  2006/10/14 12:15:44  mloskot
+ * Fixed missing declaration of OGRSpatialReference::SetMercator2SP().
+ *
  * Revision 1.70  2006/01/30 17:42:29  fwarmerdam
  * Reorganize data members to be less suseptable to packing oddities,
  * per suggestion from Ray Gardener.
@@ -434,6 +437,10 @@ class CPL_DLL OGRSpatialReference
     OGRErr      SetMercator( double dfCenterLat, double dfCenterLong,
                              double dfScale, 
                              double dfFalseEasting, double dfFalseNorthing );
+
+    OGRErr      SetMercator2SP( double dfStdP1,
+                                double dfCenterLat, double dfCenterLong,
+                                double dfFalseEasting, double dfFalseNorthing );
 
     /** Mollweide */
     OGRErr      SetMollweide( double dfCentralMeridian,
