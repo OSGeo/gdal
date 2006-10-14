@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2006/10/14 17:21:33  fwarmerdam
+ * fixed some c++ style declarations
+ *
  * Revision 1.42  2006/10/13 02:53:48  fwarmerdam
  * various improvements to TRE and VQ LUT support for bug 1313
  *
@@ -1916,6 +1919,8 @@ static void NITFLoadLocationTable( NITFImage *psImage )
     GUInt16  nLocCount;
     int      iLoc;
     const char *pszTRE;
+    int nHeaderOffset = 0;
+    int i;
 
     pszTRE = NITFFindTRE(psImage->pachTRE, psImage->nTREBytes, "RPFIMG", NULL);
     if( pszTRE == NULL )
@@ -1959,9 +1964,6 @@ static void NITFLoadLocationTable( NITFImage *psImage )
 /*      is at the location indicated in the location table.  If not,    */
 /*      offset all locations by the difference.                         */
 /* -------------------------------------------------------------------- */
-    int nHeaderOffset = 0;
-    int i;
-
     for( i = 0; i < psImage->nLocCount; i++ )
     {
         if( psImage->pasLocations[i].nLocId == LID_HeaderComponent )
@@ -2015,6 +2017,8 @@ static int NITFLoadVQTables( NITFImage *psImage )
 
 {
     int     i, nVQOffset=0, nVQSize=0;
+    GByte abyTestChunk[1000];
+    GByte abySignature[6];
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have the VQ tables?                               */
@@ -2040,9 +2044,6 @@ static int NITFLoadVQTables( NITFImage *psImage )
 /* -------------------------------------------------------------------- */
 /*      Does it look like we have the tables properly identified?       */
 /* -------------------------------------------------------------------- */
-    GByte abyTestChunk[1000];
-    GByte abySignature[6];
-
     abySignature[0] = 0x00;
     abySignature[1] = 0x00;
     abySignature[2] = 0x00;
