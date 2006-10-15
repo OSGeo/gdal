@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.127  2006/10/15 20:58:32  fwarmerdam
+ * Added OSRIsLocal().
+ *
  * Revision 1.126  2006/04/02 18:32:11  fwarmerdam
  * Added ofttime, oftdatetime support.
  *
@@ -1785,6 +1788,7 @@ double  OSRGetLinearUnits( OGRSpatialReferenceH, char ** );
 
 int     OSRIsGeographic( OGRSpatialReferenceH );
 int     OSRIsProjected( OGRSpatialReferenceH );
+int     OSRIsLocal( OGRSpatialReferenceH );
 int     OSRIsSameGeogCS( OGRSpatialReferenceH, OGRSpatialReferenceH );
 int     OSRIsSame( OGRSpatialReferenceH, OGRSpatialReferenceH );
 
