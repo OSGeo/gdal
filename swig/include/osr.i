@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.28  2006/10/15 20:58:07  fwarmerdam
+ * Added IsLocal() method.
+ *
  * Revision 1.27  2006/06/27 13:14:49  ajolma
  * removed throw from OSRCoordinateTransformationShadow
  *
@@ -366,6 +369,10 @@ public:
 
   int IsProjected() {
     return OSRIsProjected(self);
+  }
+
+  int IsLocal() {
+    return OSRIsLocal(self);
   }
 
   const char *GetAttrValue( const char *name, int child = 0 ) {

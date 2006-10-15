@@ -28,6 +28,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.50  2006/10/15 20:58:51  fwarmerdam
+# Added IsLocal() method.
+#
 # Revision 1.49  2005/06/10 21:51:02  fwarmerdam
 # fixed up osr.Clone() support
 #
@@ -385,6 +388,9 @@ class SpatialReference:
     
     def IsProjected(self):
         return _gdal.OSRIsProjected( self._o )
+
+    def IsLocal(self):
+        return _gdal.OSRIsLocal( self._o )
 
     def GetAttrValue(self, name, child = 0):
         return _gdal.OSRGetAttrValue(self._o, name, child)
