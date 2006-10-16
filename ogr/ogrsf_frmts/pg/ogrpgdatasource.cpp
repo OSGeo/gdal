@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2006/10/16 00:06:00  mloskot
+ * Fixed Bug 1328
+ *
  * Revision 1.52  2006/10/09 15:39:48  dron
  * Memory leak fixed.
  *
@@ -245,7 +248,13 @@ OGRPGDataSource::~OGRPGDataSource()
     CPLFree( papoLayers );
 
     if( hPGConn != NULL )
+    {
+        /* XXX - mloskot: After the connection is closed, valgrind still
+         * reports 36 bytes definitely lost, somewhere in the libpq.
+         */
         PQfinish( hPGConn );
+        hPGConn = NULL;
+    }
 
     for( i = 0; i < nKnownSRID; i++ )
     {
@@ -874,6 +883,8 @@ OGRPGDataSource::CreateLayer( const char * pszLayerNameIn,
 
             return NULL;
         }
+
+        PQclear( hResult );
     }
 
 /* -------------------------------------------------------------------- */
