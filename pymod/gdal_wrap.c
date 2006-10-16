@@ -33,7 +33,7 @@
  * and things like that.
  *
  * $Log$
- * Revision 1.120  2006/04/02 18:55:26  fwarmerdam
+ * Revision 1.121  2006/10/16 15:17:14  fwarmerdam
  * updated
  *
  ************************************************************************/
@@ -6181,6 +6181,26 @@ static PyObject *_wrap_OSRIsProjected(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OSRIsLocal(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    OGRSpatialReferenceH  _arg0;
+    char * _argc0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"s:OSRIsLocal",&_argc0)) 
+        return NULL;
+    if (_argc0) {
+        if (SWIG_GetPtr(_argc0,(void **) &_arg0,(char *) 0 )) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSRIsLocal. Expected _OGRSpatialReferenceH.");
+        return NULL;
+        }
+    }
+    _result = (int )OSRIsLocal(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OSRIsSameGeogCS(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
@@ -11880,6 +11900,7 @@ static PyMethodDef _gdalMethods[] = {
 	 { "OSRSetProjCS", _wrap_OSRSetProjCS, 1 },
 	 { "OSRIsSame", _wrap_OSRIsSame, 1 },
 	 { "OSRIsSameGeogCS", _wrap_OSRIsSameGeogCS, 1 },
+	 { "OSRIsLocal", _wrap_OSRIsLocal, 1 },
 	 { "OSRIsProjected", _wrap_OSRIsProjected, 1 },
 	 { "OSRIsGeographic", _wrap_OSRIsGeographic, 1 },
 	 { "OSRGetLinearUnits", _wrap_OSRGetLinearUnits, 1 },
