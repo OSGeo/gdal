@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/10/17 17:34:37  fwarmerdam
+ * Don't try to set spatial filter till after poSrcLayer has been selected!
+ *
  * Revision 1.19  2006/09/22 05:52:34  fwarmerdam
  * improve handling of summaries on empty datasets (bug 1298)
  *
@@ -122,9 +125,6 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
     nExtraDSCount = 0;
     papoExtraDS = NULL;
 
-    if( poSpatFilter != NULL )
-        SetSpatialFilter( poSpatFilter );
-
 /* -------------------------------------------------------------------- */
 /*      Identify all the layers involved in the SELECT.                 */
 /* -------------------------------------------------------------------- */
@@ -170,6 +170,13 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
     }
     
     poSrcLayer = papoTableLayers[0];
+
+/* -------------------------------------------------------------------- */
+/*      Now that we have poSrcLayer, we can install a spatial filter    */
+/*      if there is one.                                                */
+/* -------------------------------------------------------------------- */
+    if( poSpatFilter != NULL )
+        SetSpatialFilter( poSpatFilter );
 
 /* -------------------------------------------------------------------- */
 /*      Prepare a feature definition based on the query.                */
