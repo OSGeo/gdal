@@ -344,9 +344,11 @@ delete poDS;
 
 </ol>
 
+\htmlonly
 <p>
 $Id$
 </p>
+\endhtmlonly
 
 */
 
