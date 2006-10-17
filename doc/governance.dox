@@ -41,4 +41,10 @@ Note that discussion of proposals to the PMC take place on gdal-dev, and input
 from all subscribers is welcome.  A \link rfc_list list of past RFCs\endlink is 
 available for review. 
 
+\htmlonly
+<p>
+$Id$
+</p>
+\endhtmlonly
+
 */

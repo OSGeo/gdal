@@ -86,6 +86,10 @@ Password: *enter*
 Update access to the CVS repository can be obtained by arrangement 
 with the maintainer.<p>
 
+\htmlonly
+<p>
+$Id$
+</p>
+\endhtmlonly
+
 */
-
-

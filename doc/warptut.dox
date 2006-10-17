@@ -358,7 +358,10 @@ not yet implemented and others are implemented but poorly tested.  Other
 than per-band validity masks it is advised that these features be used with
 caution at this time. 
 
+\htmlonly
+<p>
+$Id$
+</p>
+\endhtmlonly
+
 */
-
-
-
