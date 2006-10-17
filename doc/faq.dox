@@ -8,32 +8,32 @@
 <ol>
 <!--------------------------------------------------------------------------->
 
-<li> <b>What's this OGR Stuff?</b><p>
-
-The gdal/ogr tree holds source for a vector IO library inspired by
+<li> <b>What's this OGR Stuff?</b>
+<p>The gdal/ogr tree holds source for a vector IO library inspired by
 OpenGIS Simple Features.  In theory it is separate from GDAL, but currently
 they reside in the same source tree and are somewhat entangled.  More
 information can be found at
 <a href="http://ogr.maptools.org/">http://ogr.maptools.org</a>.  It is 
 my plan to properly fold OGR into GDAL properly at some point
-in the future.  Then GDAL will be a raster and vector library. <p>
+in the future.  Then GDAL will be a raster and vector library. </p>
+</li>
 
 <!--------------------------------------------------------------------------->
-<li> <b>How do I add support for a new format?</b><p>
-
-To some extent this is now covered by the
-<a href="gdal_drivertut.html">GDAL Driver Implementation Tutorial</a>.<p>
+<li> <b>How do I add support for a new format?</b>
+<p>To some extent this is now covered by the
+<a href="gdal_drivertut.html">GDAL Driver Implementation Tutorial</a>.</p>
+</li>
 
 <!--------------------------------------------------------------------------->
-<li> <b>Can I get a MS Visual Studio Project file for GDAL?</b><p>
-
-The GDAL developers find it more convenient to build with makefiles 
+<li> <b>Can I get a MS Visual Studio Project file for GDAL?</b>
+<p>The GDAL developers find it more convenient to build with makefiles 
 and the Visual Studio NMAKE utility.  Maintaining a parallel set of project
 files for GDAL is too much work, so there are no project files directly 
 available from the maintainers.  Occasionally other users do prepare such 
 project files, and you may be able to get them by asking on the gdal-dev list.
 However, I would strongly suggest you just use the NMAKE based build system.
-With debugging enabled you can still debug into GDAL with Visual Studio.<p>
+With debugging enabled you can still debug into GDAL with Visual Studio.</p>
+</li>
 
 <!--------------------------------------------------------------------------->
 <li> <b>Can I build GDAL with MS Visual C++ 2005 Express Edition?</b>
@@ -140,40 +140,40 @@ C:\\work\\gdal> nmake /f makefile.vc
 </ul>
 
 Now, you can use these libraries in your applications developed using Visual C++ 2005 Express Edition.
-
-</p></li>
+</p>
+</li>
 
 <!--------------------------------------------------------------------------->
 <li> <b>Can I build GDAL with Cygwin or MingW?</b>
-
-GDAL should build with Cygwin using the Unix-like style build methodology.  
+<p>GDAL should build with Cygwin using the Unix-like style build methodology.  
 It is also possible to build with MingW though there are some complications. 
-The following might work:<p>
+The following might work:</p>
 
 <pre>
 ./configure --prefix=$PATH_TO_MINGW_ROOT --host=mingw32 \
 	--without-libtool --without-python $YOUR_CONFIG_OPTIONS
 </pre>
 
-Using external win32 libraries will often be problematic with either of
+<p>Using external win32 libraries will often be problematic with either of
 these environments - at the least requiring some manual hacking of the 
-GDALmake.opt file.<p>
+GDALmake.opt file.</p>
+</li>
 
 <!--------------------------------------------------------------------------->
 <li> <b>Can I build GDAL with Borland C or other C compilers?</b>
 
-These are not supported compilers for GDAL; however, GDAL is mostly pretty
+<p>These are not supported compilers for GDAL; however, GDAL is mostly pretty
 generic, so if you are willing to take on the onerous task of building an
 appropriate makefile / project file it should be possible.  You will find 
 most portability issues in the gdal/port/cpl_port.h file, and you will need
 to prepare a gdal/port/cpl_config.h file appropriate to your platform.  Using
-cpl_config.h.vc as a guide may be useful. <p>
+cpl_config.h.vc as a guide may be useful.</p>
+</li>
 
 <!--------------------------------------------------------------------------->
 
-<li> <a name="license"><b>What exactly was the license terms for GDAL?</b></a><p>
-
-The following terms are the same as X windows is released under, and is
+<li> <a name="license"><b>What exactly was the license terms for GDAL?</b></a>
+<p>The following terms are the same as X windows is released under, and is
 generally known as the "MIT License".  It is intended to give you permission
 to do whatever you want with the GDAL source, including building proprietary
 commercial software, without further permission from me, or requirement to
@@ -181,7 +181,7 @@ distribute your source code.  A few portions of GDAL under under slightly
 different terms.  For instance the libpng, libjpeg, libtiff, and libgeotiff 
 license terms may vary slightly though I don't think any of them differ
 in any significant way.  Some external libraries which can be optionally
-used by GDAL are under radically different licenses.<p>
+used by GDAL are under radically different licenses.</p>
 
 <pre>
  Copyright (c) 2000, Frank Warmerdam
@@ -204,22 +204,22 @@ used by GDAL are under radically different licenses.<p>
  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  DEALINGS IN THE SOFTWARE.
 </pre>
+</li>
 
 <!--------------------------------------------------------------------------->
 
-<li> <b>What are ``Well Known Text'' projections, and how do I use them?</b><p>
-
-OpenGIS <i>Well Known Text</i> is a textual format for defining coordinate
+<li> <b>What are ``Well Known Text'' projections, and how do I use them?</b>
+<p>OpenGIS <i>Well Known Text</i> is a textual format for defining coordinate
 systems.  It is loosely based on the EPSG coordinate systems model.  While
 GDAL itself just passes these definitions around as text strings, there is
 also an OGRSpatialReference class in gdal/ogr for manipulating them and
 a linkage to <a href="http://www.remotesensing.org/proj">PROJ.4</a> for 
-transforming between coordinate systems.  The
-OGRSpatialReference, and PROJ.4 linkaged (but not PROJ.4 itself) is
-linked into the GDAL shared library by default.  More documentation on WKT
-and OGRSpatialReference can be found in the 
-<a href="http://www.gdal.org/ogr/osr_tutorial.html">
-OGR Projections Tutorial</a>.<p>
+transforming between coordinate systems.
+The OGRSpatialReference, and PROJ.4 linkaged (but not PROJ.4 itself) is
+linked into the GDAL shared library by default.
+More documentation on WKT and OGRSpatialReference can be found in the <a href="http://www.gdal.org/ogr/osr_tutorial.html">
+OGR Projections Tutorial</a>.</p>
+</li>
 
 
 <!--------------------------------------------------------------------------->
@@ -275,18 +275,15 @@ in future versions.
 
 <!-------------------------------------------------------------------------->
 
-<li> <b>Does GDAL work in different international numeric locales?</b><p>
-
-No.  GDAL makes extensive use of sprintf() and atof() internally to translate
-numeric values.  If a locale is in effect that modifies formatting of 
+<li> <b>Does GDAL work in different international numeric locales?</b>
+<p>No. GDAL makes extensive use of sprintf() and atof() internally to translate
+numeric values. If a locale is in effect that modifies formatting of 
 numbers, altering the role of commas and periods in numbers, then PROJ.4
-will not work.  This problem is common in some European locales.
+will not work. This problem is common in some European locales.</p>
 
-On Unix-like platforms, this problem can be avoided by forcing the use
-of the default numeric locale by setting the LC_NUMERIC environment variable
-to C.
+<p>On Unix-like platforms, this problem can be avoided by forcing the use of
+the default numeric locale by setting the LC_NUMERIC environment variable to C, e.g.</p>
 
-e.g.
 <pre>
 $ export LC_NUMERIC=C
 $ gdalinfo abc.tif
@@ -294,16 +291,56 @@ $ gdalinfo abc.tif
 
 <!-------------------------------------------------------------------------->
 
-<li> <b>How do I "debug" GDAL?</b><p>
-
-Various helpful debugging information will be produced by GDAL and OGR if
+<li> <b>How do I "debug" GDAL?</b>
+<p>Various helpful debugging information will be produced by GDAL and OGR if
 the CPL_DEBUG environment variable is set to the value ON.  Review the 
 documentation for the CPLDebug() function for more information on built-in
-debugging messages.
+debugging messages.</p>
 
-On Unix operating systems GDAL can be built with the CFG environment variable
+<p>On Unix operating systems GDAL can be built with the CFG environment variable
 set to "debug" to enable debugger support with the -g compiler switch.  On
-Windows edit the nmake.opt and ensure /Zi appears in the OPTFLAGS variable. 
+Windows edit the nmake.opt and ensure /Zi appears in the OPTFLAGS variable.</p>
+</li>
+
+<!-------------------------------------------------------------------------->
+
+<li> <b>How should I deallocate resources acquainted from GDAL on Windows?</b>
+<p>The safest way to release resources allocated and returned (with ownership transfered to caller) from GDAL library is to use dedicated deallocator function. Deallocators promise to release resources on the right module side, without crossing modules boundaries what usually causes memory access violation errors.</p>
+
+<ul>
+    <li>Example of <strong>correct</strong> resource deallocation:
+<pre>
+OGRDataSource* poDS = NULL;
+
+// OGRDataSource aquisition made on side of the GDAL module
+poDS = OGRSFDriverRegistrar::Open( "point.shp", FALSE );
+
+// ...
+
+// Properly resource release using deallocator function
+OGRDataSource::DestroyDataSource( poDS );
+</pre>
+    </li>
+
+    <li>Example of <strong>incorrect</strong> resource deallocation:
+<pre>
+OGRDataSource* poDS = NULL;
+
+// OGRDataSource aquisition made on side of the GDAL module
+poDS = OGRSFDriverRegistrar::Open( "point.shp", FALSE );
+
+// ...
+
+// Deallocation across modules boundaries.
+// Here, the deallocation crosses GDAL DLL library and client's module (ie. executable module)
+delete poDS;
+</pre>
+    </li>
+</ul>
+
+<p>More detailed explanation of the problem can be found here: <a href="http://blogs.msdn.com/oldnewthing/archive/2006/09/15/755966.aspx">Allocating and freeing memory across module boundaries</a>.</p>
+
+</li>
 
 
 </ol>
