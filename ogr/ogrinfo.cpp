@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2006/10/18 21:53:25  tamas
+ * Handling NULL value returned by ExecuteSQL
+ *
  * Revision 1.36  2006/08/28 14:00:02  mloskot
  * Added stronger test of Shapefile reading failures, e.g. truncated files.
  * The problem was discovered by Tim Sutton and reported here https://svn.qgis.org/trac/ticket/200
@@ -310,7 +313,7 @@ int main( int nArgc, char ** papszArgv )
 /* -------------------------------------------------------------------- */
     if( pszSQLStatement != NULL )
     {
-        OGRLayer *poResultSet;
+        OGRLayer *poResultSet = NULL;
 
         nRepeatCount = 0;  // skip layer reporting.
 
@@ -320,11 +323,11 @@ int main( int nArgc, char ** papszArgv )
         poResultSet = poDS->ExecuteSQL( pszSQLStatement, poSpatialFilter, 
                                         pszDialect );
 
-        if( pszWHERE != NULL )
-            poResultSet->SetAttributeFilter( pszWHERE );
-
         if( poResultSet != NULL )
         {
+            if( pszWHERE != NULL )
+                poResultSet->SetAttributeFilter( pszWHERE );
+
             ReportOnLayer( poResultSet, NULL, NULL );
             poDS->ReleaseResultSet( poResultSet );
         }
