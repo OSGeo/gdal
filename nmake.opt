@@ -2,6 +2,7 @@
 # Location to install .exe, .dll and python stuff
 # Edit as required. GDAL_HOME is used for convenience here,
 # but this particular relative organization is not mandatory.
+# But the paths *should* be absolute (relative paths mess up in submakefiles).
 
 GDAL_HOME = "C:\warmerda\bld"
 BINDIR = $(GDAL_HOME)\bin
