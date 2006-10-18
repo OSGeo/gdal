@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2006/10/18 20:04:35  fwarmerdam
+ * ensure NeedsLayerInfo called before using layer info in GetFEatureCount
+ *
  * Revision 1.12  2006/10/18 19:08:27  fwarmerdam
  * Improvements from Christian Ratliff, including:
  *  o The ability to specify a single layer in the datasource string to
@@ -1226,7 +1229,8 @@ int OGRSDELayer::GetFeatureCount( int bForce )
 /*      features. The performance difference between this and manual    */
 /*      iteration is significant.                                       */
 /* -------------------------------------------------------------------- */
-    if( osAttributeFilter.empty() && m_poFilterGeom == NULL )
+    if( osAttributeFilter.empty() && m_poFilterGeom == NULL 
+        && NeedLayerInfo() )
     {
         SE_LAYER_STATS layerstats = {0};
         char szTableName[SE_QUALIFIED_TABLE_NAME];
