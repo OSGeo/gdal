@@ -13,10 +13,10 @@ relational databases.  The OGR ArcSDE driver depends on being built with the
 ESRI provided ArcSDE client libraries. <p>
 
 ArcSDE instances are accessed with a datasource name of the following
-form.  All fields are required.<p>
+form.  The server, instance, username and password fields are required. The instance is the port number of the SDE server, which generally defaults to 5151.  If the layer parameter is specified then the SDE driver is able to skip reading the summary metadata for each layer; skipping this step can be a significant time savings. <p>
 
 <pre>
-  SDE:server,instance,database,username,password
+  SDE:server,instance,database,username,password,layer
 </pre>
 
 The OGR ArcSDE driver does not support reading CAD data (treated as BLOB
