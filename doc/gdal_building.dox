@@ -289,4 +289,10 @@ than 4 GiB on FAT32. In some cases you will not get an error message during
 jumping over 4GiB barrier, but all your data will be lost.  This is not a GDAL
 bug, this is Windows problem.<p>
 
+\htmlonly
+<p>
+$Id$
+</p>
+\endhtmlonly
+
 */

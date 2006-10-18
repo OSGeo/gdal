@@ -305,6 +305,10 @@ overview levels.  This applies to some FFT encoded images, or images pulled
 through gateways (like OGDI) where downsampling can be done efficiently
 at the remote point. 
 
+\htmlonly
+<p>
+$Id$
+</p>
+\endhtmlonly
+
 */
-
-
