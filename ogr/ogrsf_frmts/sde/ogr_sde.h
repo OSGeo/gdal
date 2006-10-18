@@ -28,6 +28,14 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/10/18 19:08:27  fwarmerdam
+ * Improvements from Christian Ratliff, including:
+ *  o The ability to specify a single layer in the datasource string to
+ *    restrict the set of layers accessed.
+ *  o The ability to get layer geometry type efficiently.
+ *  o A fast implementation of GetFeatureCount()
+ *  o A fix for multiline string geometry handling.
+ *
  * Revision 1.4  2006/03/08 00:22:46  fwarmerdam
  * preliminary update to support rowid-less tables
  *
@@ -95,6 +103,10 @@ class OGRSDELayer : public OGRLayer
     OGRGeometry        *TranslateSDEGeometry( SE_SHAPE );
     int                 NeedLayerInfo();
 
+    // This process can be fairly expensive depending on the configuration
+    // of the layer in SDE. Enable this feature with OGR_SDE_GETLAYERTYPE.
+    OGRwkbGeometryType  DiscoverLayerType();
+
   public:
                         OGRSDELayer( OGRSDEDataSource * );
     virtual             ~OGRSDELayer();
@@ -147,6 +159,11 @@ class OGRSDEDataSource : public OGRDataSource
     SE_CONNECTION       GetConnection() { return hConnection; }
 
     void                IssueSDEError( int, const char * );
+
+  protected:
+    void                EnumerateSpatialTables();
+    void                OpenSpatialTable( const char* pszTableName );
+    void                CreateLayerFromRegInfo(SE_REGINFO& reginfo);
 };
 
 /************************************************************************/

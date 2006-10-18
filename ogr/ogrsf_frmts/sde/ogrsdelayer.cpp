@@ -28,6 +28,14 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/10/18 19:08:27  fwarmerdam
+ * Improvements from Christian Ratliff, including:
+ *  o The ability to specify a single layer in the datasource string to
+ *    restrict the set of layers accessed.
+ *  o The ability to get layer geometry type efficiently.
+ *  o A fast implementation of GetFeatureCount()
+ *  o A fix for multiline string geometry handling.
+ *
  * Revision 1.11  2006/04/11 02:31:32  fwarmerdam
  * added multilinestring
  *
@@ -152,6 +160,19 @@ int OGRSDELayer::Initialize( const char *pszTableName,
 
     poFeatureDefn = new OGRFeatureDefn( pszTableName );
     poFeatureDefn->Reference();
+
+/* -------------------------------------------------------------------- */
+/*  If the OGR_SDE_GETLAYERTYPE option is set to TRUE, then the layer   */
+/*  is tested to see if it contains one, and only one, type of geometry */
+/*  then that geometry type is placed into the LayerDefn.               */
+/* -------------------------------------------------------------------- */
+    const char *pszLayerType = CPLGetConfigOption( "OGR_SDE_GETLAYERTYPE", 
+                                                   "FALSE" );
+
+    if( CSLTestBoolean(pszLayerType) != FALSE )
+    {
+        poFeatureDefn->SetGeomType(DiscoverLayerType());
+    }
 
     for( iCol = 0; iCol < nColumnCount; iCol++ )
     {
@@ -299,6 +320,151 @@ int OGRSDELayer::NeedLayerInfo()
     }
 
     return TRUE;
+}
+
+/************************************************************************/
+/*                          DiscoverLayerType()                         */
+/************************************************************************/
+
+OGRwkbGeometryType OGRSDELayer::DiscoverLayerType()
+{
+    if( !NeedLayerInfo() )
+        return wkbUnknown;
+
+    int nSDEErr;
+    long nShapeTypeMask = 0;
+  
+/* -------------------------------------------------------------------- */
+/*      Check layerinfo flags to establish what geometry types may      */
+/*      occur.                                                          */
+/* -------------------------------------------------------------------- */
+    nSDEErr = SE_layerinfo_get_shape_types( hLayerInfo, &nShapeTypeMask );
+    if (nSDEErr != SE_SUCCESS)
+    {
+        CPLDebug( "OGR_SDE",
+                  "Unable to read the layer type information, defaulting to wkbUnknown:  error=%d.",
+                  nSDEErr );
+
+        return wkbUnknown;
+    }
+
+    int bIsMultipart = ( nShapeTypeMask & SE_MULTIPART_TYPE_MASK ? 1 : 0);
+    nShapeTypeMask &= ~SE_MULTIPART_TYPE_MASK;
+
+    // Since we assume that all layers can bear a NULL geometry, 
+    // throw the flag away.
+    nShapeTypeMask &= ~SE_NIL_TYPE_MASK;
+
+    int nTypeCount = 0;
+    if ( nShapeTypeMask & SE_POINT_TYPE_MASK )
+        nTypeCount++;
+    if ( nShapeTypeMask & SE_LINE_TYPE_MASK 
+         || nShapeTypeMask & SE_SIMPLE_LINE_TYPE_MASK )
+        nTypeCount++;
+
+    if ( nShapeTypeMask & SE_AREA_TYPE_MASK )
+        nTypeCount++;
+
+/* -------------------------------------------------------------------- */
+/*      When the flags indicate multiple geometry types are             */
+/*      possible, we examine the layer statistics to see if in          */
+/*      reality only one geometry type does occur.  This is somewhat    */
+/*      expensive, so we avoid it if we can.                            */
+/* -------------------------------------------------------------------- */
+    if ( nTypeCount == 0 )
+    {
+        CPLDebug( "OGR_SDE", "There is no layer type indicated for the current layer." );
+        return wkbUnknown;
+    }
+    else if ( nTypeCount > 1 )
+    {
+        CPLDebug( "OGR_SDE", "More than one layer type is indicated for this layer, gathering layer statistics are being gathered." );
+        SE_LAYER_STATS layerstats = {0};
+        char szTableName[SE_QUALIFIED_TABLE_NAME];
+        char szShapeColumn[SE_MAX_COLUMN_LEN];
+
+        szTableName[0] = '\0';
+        szShapeColumn[0] = '\0';
+
+        nSDEErr = SE_layerinfo_get_spatial_column( hLayerInfo, szTableName, 
+                                                   szShapeColumn );
+        if ( nSDEErr != SE_SUCCESS )
+        {
+            poDS->IssueSDEError( nSDEErr, "SE_layerinfo_get_spatial_column" );
+            return wkbUnknown;
+        }
+
+        nSDEErr = SE_layer_get_statistics( poDS->GetConnection(), szTableName, 
+                                           szShapeColumn,
+                                           &layerstats);
+        if( nSDEErr != SE_SUCCESS )
+        {
+            poDS->IssueSDEError( nSDEErr, "SE_layer_get_statistics" );
+            return wkbUnknown;
+        }
+
+        if ( nShapeTypeMask & SE_POINT_TYPE_MASK && 
+             ( layerstats.POINTs + layerstats.MultiPOINTs ) == 0 )
+            nShapeTypeMask &= ~SE_POINT_TYPE_MASK;
+
+        if ( nShapeTypeMask & SE_LINE_TYPE_MASK &&
+             ( layerstats.LINEs + layerstats.MultiLINEs ) == 0 )
+            nShapeTypeMask &= ~SE_LINE_TYPE_MASK;
+
+        if ( nShapeTypeMask & SE_SIMPLE_LINE_TYPE_MASK &&
+             ( layerstats.SIMPLE_LINEs + layerstats.MultiSIMPLE_LINEs ) == 0 )
+            nShapeTypeMask &= ~SE_SIMPLE_LINE_TYPE_MASK;
+
+        if ( nShapeTypeMask & SE_AREA_TYPE_MASK &&
+             ( layerstats.AREAs + layerstats.MultiAREAs ) == 0 )
+            nShapeTypeMask &= ~SE_AREA_TYPE_MASK;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Select a geometry type based on the remaining flags.  If        */
+/*      there is a mix we will fall through to the default (wkbUknown). */
+/* -------------------------------------------------------------------- */
+    OGRwkbGeometryType eGeoType;
+    char *pszTypeName;
+    switch (nShapeTypeMask)
+    {
+      case SE_POINT_TYPE_MASK:
+        if (bIsMultipart)
+            eGeoType = wkbMultiPoint;
+        else
+            eGeoType = wkbPoint;
+        pszTypeName = "point";
+        break;
+
+      case (SE_SIMPLE_LINE_TYPE_MASK | SE_LINE_TYPE_MASK):
+      case SE_SIMPLE_LINE_TYPE_MASK:
+      case SE_LINE_TYPE_MASK:
+        if (bIsMultipart)
+            eGeoType = wkbMultiLineString;
+        else
+            eGeoType = wkbLineString;
+        pszTypeName = "line";
+        break;
+      
+      case SE_AREA_TYPE_MASK:
+        if (bIsMultipart)
+            eGeoType = wkbMultiPolygon;
+        else
+            eGeoType = wkbPolygon;
+        pszTypeName = "polygon";
+        break;
+      
+      default:
+        eGeoType = wkbUnknown;
+        pszTypeName = "unknown";
+        break;
+    }
+
+    CPLDebug( "OGR_SDE", 
+              "DiscoverLayerType is returning type=%d (%s), multipart=%d.",
+              eGeoType, pszTypeName, bIsMultipart );
+
+    return eGeoType;
 }
 
 /************************************************************************/
@@ -644,7 +810,7 @@ OGRGeometry *OGRSDELayer::TranslateSDEGeometry( SE_SHAPE hShape )
               else
                   nLineVertCount = panSubParts[iPart+1] - panSubParts[iPart];
 
-              poLine->setNumPoints( nPointCount );
+              poLine->setNumPoints( nLineVertCount );
               
               for( i = 0; i < nLineVertCount; i++ )
               {
@@ -1054,6 +1220,44 @@ OGRFeature *OGRSDELayer::GetFeature( long nFeatureId )
 int OGRSDELayer::GetFeatureCount( int bForce )
 
 {
+/* -------------------------------------------------------------------- */
+/*      If there is no attribute or spatial filter in place, then       */
+/*      use the SDE function call to obtain the number of               */
+/*      features. The performance difference between this and manual    */
+/*      iteration is significant.                                       */
+/* -------------------------------------------------------------------- */
+    if( osAttributeFilter.empty() && m_poFilterGeom == NULL )
+    {
+        SE_LAYER_STATS layerstats = {0};
+        char szTableName[SE_QUALIFIED_TABLE_NAME];
+        char szShapeColumn[SE_MAX_COLUMN_LEN];
+        int nSDEErr;
+
+        szTableName[0] = '\0';
+        szShapeColumn[0] = '\0';
+      
+        nSDEErr = SE_layerinfo_get_spatial_column( hLayerInfo, szTableName, szShapeColumn );
+        if( nSDEErr != SE_SUCCESS )
+        {
+            poDS->IssueSDEError( nSDEErr, "SE_layerinfo_get_spatial_column" );
+            return -1;
+        }
+      
+        nSDEErr = SE_layer_get_statistics( poDS->GetConnection(), szTableName, szShapeColumn,
+                                           &layerstats);
+        if( nSDEErr != SE_SUCCESS )
+        {
+            poDS->IssueSDEError( nSDEErr, "SE_layer_get_statistics" );
+            return -1;
+        }
+
+        return layerstats.TotalFeatures;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise use direct reading of the result set, though we       */
+/*      skip translating into OGRFeatures at least.                     */
+/* -------------------------------------------------------------------- */
     int nSDEErr, nFeatureCount = 0;
 
     ResetReading();
@@ -1116,7 +1320,9 @@ int OGRSDELayer::TestCapability( const char * pszCap )
     if( EQUAL(pszCap,OLCRandomRead) )
         return iFIDColumn != -1;
 
-    else if( EQUAL(pszCap,OLCFastFeatureCount) )
+    else if( EQUAL(pszCap,OLCFastFeatureCount) 
+             && osAttributeFilter.empty()
+             && m_poFilterGeom == NULL )
         return TRUE;
 
     else if( EQUAL(pszCap,OLCFastSpatialFilter) )

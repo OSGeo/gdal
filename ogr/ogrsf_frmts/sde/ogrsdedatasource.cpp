@@ -28,6 +28,14 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/10/18 19:08:27  fwarmerdam
+ * Improvements from Christian Ratliff, including:
+ *  o The ability to specify a single layer in the datasource string to
+ *    restrict the set of layers accessed.
+ *  o The ability to get layer geometry type efficiently.
+ *  o A fast implementation of GetFeatureCount()
+ *  o A fix for multiline string geometry handling.
+ *
  * Revision 1.4  2006/03/08 00:22:46  fwarmerdam
  * preliminary update to support rowid-less tables
  *
@@ -120,17 +128,21 @@ int OGRSDEDataSource::Open( const char * pszNewName )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*      Parse arguments on comma.  We expect:                           */
-/*        SDE:server,instance,database,username,password                */
+/*      Parse arguments on comma.  We expect (layer is optional):       */
+/*        SDE:server,instance,database,username,password,layer          */
 /* -------------------------------------------------------------------- */
     char **papszTokens = CSLTokenizeStringComplex( pszNewName+4, ",",
                                                    TRUE, TRUE );
 
-    if( CSLCount( papszTokens ) != 5 )
+    CPLDebug( "OGR_SDE", "Open(\"%s\") revealed %d tokens.", pszNewName,
+              CSLCount( papszTokens ) );
+
+    if( CSLCount( papszTokens ) < 5 || CSLCount( papszTokens ) > 6 )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "SDE connect string had wrong number of arguments.\n"
-                  "Expected 'SDE:server,instance,database,username,password'\n"
+                  "Expected 'SDE:server,instance,database,username,password,layer'\n"
+		  "The layer name value is optional.\n"
                   "Got '%s'", 
                   pszNewName );
         return FALSE;
@@ -170,53 +182,16 @@ int OGRSDEDataSource::Open( const char * pszNewName )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Fetch list of spatial tables from SDE.                          */
+/*      Open a selected layer only, or else treat all known spatial     */
+/*      tables as layers.                                               */
 /* -------------------------------------------------------------------- */
-    SE_REGINFO *ahTableList;
-    LONG nTableListCount;
-
-    nSDEErr = SE_registration_get_info_list( hConnection, &ahTableList,
-                                             &nTableListCount );
-    if( nSDEErr != SE_SUCCESS )
+    if ( CSLCount( papszTokens ) == 6 && *papszTokens[5] != '\0' )
     {
-        IssueSDEError( nSDEErr, "SE_registration_get_info_list" );
-        return FALSE;
+        OpenSpatialTable( papszTokens[5] );
     }
-
-/* -------------------------------------------------------------------- */
-/*      Process the tables, turning any appropriate ones into layers.   */
-/* -------------------------------------------------------------------- */
-    int iTable;
-    LONG nFIDColType;
-
-    for( iTable = 0; iTable < nTableListCount; iTable++ )
+    else
     {
-        char szTableName[SE_QUALIFIED_TABLE_NAME+1];
-        char szIDColName[SE_MAX_COLUMN_LEN+1];
-
-        // Ignore non-spatial, or hidden tables. 
-        if( !SE_reginfo_has_layer( ahTableList[iTable] ) 
-            || SE_reginfo_is_hidden( ahTableList[iTable] ) )
-            continue;
-
-        nSDEErr = SE_reginfo_get_table_name( ahTableList[iTable], 
-                                            szTableName );
-        if( nSDEErr != SE_SUCCESS )
-            continue;
-
-        nSDEErr = SE_reginfo_get_rowid_column( ahTableList[iTable],
-                                               szIDColName, 
-                                               &nFIDColType );
-        
-        if( nFIDColType == SE_REGISTRATION_ROW_ID_COLUMN_TYPE_NONE
-            || strlen(szIDColName) == 0 )
-        {
-            CPLDebug( "OGR_SDE", "Unable to determine FID column for %s.", 
-                      szTableName );
-            OpenTable( szTableName, NULL, NULL );
-        }
-        else
-            OpenTable( szTableName, szIDColName, NULL );
+        EnumerateSpatialTables();
     }
  
     return nLayers > 0;
@@ -277,3 +252,105 @@ OGRLayer *OGRSDEDataSource::GetLayer( int iLayer )
         return papoLayers[iLayer];
 }
 
+/************************************************************************/
+/*                       EnumerateSpatialTables()                       */
+/************************************************************************/
+void OGRSDEDataSource::EnumerateSpatialTables()
+{
+/* -------------------------------------------------------------------- */
+/*      Fetch list of spatial tables from SDE.                          */
+/* -------------------------------------------------------------------- */
+    SE_REGINFO *ahTableList;
+    LONG nTableListCount;
+    LONG nSDEErr;
+
+    nSDEErr = SE_registration_get_info_list( hConnection, &ahTableList,
+                                             &nTableListCount );
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_registration_get_info_list" );
+        return;
+    }
+
+    CPLDebug( "OGR_SDE", "SDE::EnumerateSpatialTables() found %d tables.", nTableListCount );
+
+/* -------------------------------------------------------------------- */
+/*      Process the tables, turning any appropriate ones into layers.   */
+/* -------------------------------------------------------------------- */
+    int iTable;
+
+    for( iTable = 0; iTable < nTableListCount; iTable++ )
+    {
+        CreateLayerFromRegInfo( ahTableList[iTable] );
+    }
+
+    SE_registration_free_info_list( nTableListCount, ahTableList );
+}
+
+/************************************************************************/
+/*                          OpenSpatialTable()                          */
+/************************************************************************/
+
+void OGRSDEDataSource::OpenSpatialTable( const char* pszTableName )
+{
+    SE_REGINFO tableinfo = NULL;
+    LONG nSDEErr;
+
+    CPLDebug( "OGR_SDE", "SDE::OpenSpatialTable(\"%s\").", pszTableName );
+
+    nSDEErr = SE_reginfo_create( &tableinfo );
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_reginfo_create" );
+    }
+
+    nSDEErr = SE_registration_get_info( hConnection, pszTableName, tableinfo );
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_registration_get_info_list" );
+    }
+    else
+    {
+        CreateLayerFromRegInfo( tableinfo );
+    }
+
+    SE_reginfo_free( tableinfo );
+}
+
+/************************************************************************/
+/*                       CreateLayerFromRegInfo()                       */
+/************************************************************************/
+
+void OGRSDEDataSource::CreateLayerFromRegInfo( SE_REGINFO& reginfo )
+{
+    char szTableName[SE_QUALIFIED_TABLE_NAME+1];
+    char szIDColName[SE_MAX_COLUMN_LEN+1];
+    LONG nFIDColType;
+    LONG nSDEErr;
+
+    // Ignore non-spatial, or hidden tables. 
+    if( !SE_reginfo_has_layer( reginfo ) || SE_reginfo_is_hidden( reginfo ) )
+    {
+        return;
+    }
+
+    nSDEErr = SE_reginfo_get_table_name( reginfo, szTableName );
+    if( nSDEErr != SE_SUCCESS )
+    {
+        return;
+    }
+
+    CPLDebug( "OGR_SDE", "CreateLayerFromRegInfo() asked to load table \"%s\".", szTableName );
+
+    nSDEErr = SE_reginfo_get_rowid_column( reginfo, szIDColName, &nFIDColType );
+
+    if( nFIDColType == SE_REGISTRATION_ROW_ID_COLUMN_TYPE_NONE
+        || strlen(szIDColName) == 0 )
+    {
+        CPLDebug( "OGR_SDE", "Unable to determine FID column for %s.", 
+                  szTableName );
+        OpenTable( szTableName, NULL, NULL );
+    }
+    else
+        OpenTable( szTableName, szIDColName, NULL );
+}
