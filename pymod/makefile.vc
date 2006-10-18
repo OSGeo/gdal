@@ -28,6 +28,7 @@ $(PYGDAL_DLL):	$(OBJ)
 	
 clean:
 	-del *.obj *.dll *.lib
+	-del *.manifest
 
 install:	$(PYGDAL_DLL)
 	-mkdir $(PY_INST_DIR)
@@ -35,5 +36,6 @@ install:	$(PYGDAL_DLL)
 	-mkdir $(PY_INST_DIR)
 	for %d in ( $(PY_COMMANDS) ) do copy %d $(BINDIR)
 	copy $(PYGDAL_DLL) $(PY_INST_DIR)
-	-copy $(PYGDAL_DLL).manifest $(PY_INST_DIR)
+	-if exist $(PYGDAL_DLL).manifest xcopy /y /r /d /f $(PYGDAL_DLL).manifest $(PY_INST_DIR)
+
 
