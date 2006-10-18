@@ -62,7 +62,8 @@ clean:
 	-del *.pdb
 	-del *.ilk
 	-del *.lib
+	-del *.manifest
 
 install:	default
 	copy *.exe $(BINDIR)
-	-copy *.exe.manifest $(BINDIR)
+	-if exist gdalinfo.exe.manifest xcopy /y /r /d /f *.exe.manifest $(BINDIR)
