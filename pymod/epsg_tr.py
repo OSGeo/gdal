@@ -30,6 +30,9 @@
 #******************************************************************************
 # 
 # $Log$
+# Revision 1.15  2006/10/18 16:10:08  fwarmerdam
+# Should be vacuum'ing spatial_ref_sys.
+#
 # Revision 1.14  2006/02/28 05:36:13  fwarmerdam
 # Added some comments in proj.4 output.  Not sure how this got lost.
 #
@@ -244,6 +247,6 @@ if __name__ == '__main__':
     # Output COMMIT transaction for PostGIS
     if output_format == '-postgis':
         print 'COMMIT;'
-        print 'VACUUM ANALYZE;'
+        print 'VACUUM ANALYZE spatial_ref_sys;'
 
 
