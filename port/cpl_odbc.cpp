@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/10/19 17:22:54  dron
+ * Added GetTypeMapping() conversion function; numerous clean-ups.
+ *
  * Revision 1.33  2006/06/30 18:15:35  dron
  * Avoid warnings on win64 target.
  *
@@ -358,15 +361,14 @@ int CPLODBCSession::EstablishSession( const char *pszDSN,
     int bFailed;
     if( strstr(pszDSN,"=") != NULL )
     {
-        char szOutConnString[1024];
-        SQLSMALLINT nOutConnStringLen;
+        SQLCHAR szOutConnString[1024];
+        SQLSMALLINT nOutConnStringLen = 0;
 
         CPLDebug( "ODBC", "SQLDriverConnect(%s)", pszDSN );
         bFailed = Failed(
             SQLDriverConnect( m_hDBC, NULL, 
                               (SQLCHAR *) pszDSN, (SQLSMALLINT)strlen(pszDSN), 
-                              (SQLCHAR *) szOutConnString, 
-                              sizeof(szOutConnString), 
+                              szOutConnString, sizeof(szOutConnString), 
                               &nOutConnStringLen, SQL_DRIVER_NOPROMPT ) );
     }
     else
@@ -431,6 +433,7 @@ CPLODBCStatement::CPLODBCStatement( CPLODBCSession *poSession )
     m_nColCount = 0;
     m_papszColNames = NULL;
     m_panColType = NULL;
+    m_papszColTypeNames = NULL;
     m_panColSize = NULL;
     m_panColPrecision = NULL;
     m_panColNullable = NULL;
@@ -516,35 +519,46 @@ int CPLODBCStatement::CollectResultsInfo()
 /* -------------------------------------------------------------------- */
 /*      Allocate per column information.                                */
 /* -------------------------------------------------------------------- */
-    m_papszColNames = (char **) VSICalloc(sizeof(char *),(m_nColCount+1));
-    m_papszColValues = (char **) VSICalloc(sizeof(char *),(m_nColCount+1));
-    m_panColValueLengths = (_SQLLEN *) VSICalloc(sizeof(int),(m_nColCount+1));
+    m_papszColNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
+    m_papszColValues = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
+    m_panColValueLengths = (_SQLLEN *) CPLCalloc(sizeof(int),(m_nColCount+1));
 
-    m_panColType = (short *) VSICalloc(sizeof(short),m_nColCount);
-    m_panColSize = (_SQLULEN *) VSICalloc(sizeof(_SQLULEN),m_nColCount);
-    m_panColPrecision = (short *) VSICalloc(sizeof(short),m_nColCount);
-    m_panColNullable = (short *) VSICalloc(sizeof(short),m_nColCount);
+    m_panColType = (short *) CPLCalloc(sizeof(short),m_nColCount);
+    m_papszColTypeNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
+    m_panColSize = (_SQLULEN *) CPLCalloc(sizeof(_SQLULEN),m_nColCount);
+    m_panColPrecision = (short *) CPLCalloc(sizeof(short),m_nColCount);
+    m_panColNullable = (short *) CPLCalloc(sizeof(short),m_nColCount);
 
 /* -------------------------------------------------------------------- */
 /*      Fetch column descriptions.                                      */
 /* -------------------------------------------------------------------- */
-    for( int iCol = 0; iCol < m_nColCount; iCol++ )
+    for( SQLUSMALLINT iCol = 0; iCol < m_nColCount; iCol++ )
     {
-        char szColName[256];
-        SQLSMALLINT nNameLength;
+        SQLCHAR     szName[256];
+        SQLSMALLINT nNameLength = 0;
 
-        if( Failed( 
-                SQLDescribeCol( m_hStmt, (SQLUSMALLINT) iCol+1, 
-                                (SQLCHAR *) szColName, sizeof(szColName),
-                                &nNameLength,
-                                m_panColType + iCol,
-                                m_panColSize + iCol,
-                                m_panColPrecision + iCol,
-                                m_panColNullable + iCol )) )
+        if ( Failed( SQLDescribeCol(m_hStmt, iCol+1, 
+                                    szName, sizeof(szName), &nNameLength,
+                                    m_panColType + iCol,
+                                    m_panColSize + iCol,
+                                    m_panColPrecision + iCol,
+                                    m_panColNullable + iCol) ) )
             return FALSE;
 
-        szColName[nNameLength] = '\0';
-        m_papszColNames[iCol] = CPLStrdup(szColName);
+        szName[nNameLength] = '\0';  // Paranoid; the string should be
+                                      // null-terminated by the driver
+        m_papszColNames[iCol] = CPLStrdup((const char*)szName);
+
+        // SQLDescribeCol() fetches just a subset of column attributes.
+        // In addition to above data we need data type name.
+        if ( Failed( SQLColAttribute(m_hStmt, iCol + 1, SQL_DESC_TYPE_NAME,
+                                     szName, sizeof(szName),
+                                     &nNameLength, NULL) ) )
+            return FALSE;
+
+        szName[nNameLength] = '\0';  // Paranoid
+        m_papszColTypeNames[iCol] = CPLStrdup((const char*)szName);
+
     }
 
     return TRUE;
@@ -593,7 +607,7 @@ const char *CPLODBCStatement::GetColName( int iCol )
 /************************************************************************/
 
 /**
- * Fetch a column type.
+ * Fetch a column data type.
  *
  * The return type code is a an ODBC SQL_ code, one of SQL_UNKNOWN_TYPE, 
  * SQL_CHAR, SQL_NUMERIC, SQL_DECIMAL, SQL_INTEGER, SQL_SMALLINT, SQL_FLOAT,
@@ -612,6 +626,31 @@ short CPLODBCStatement::GetColType( int iCol )
         return -1;
     else
         return m_panColType[iCol];
+}
+
+/************************************************************************/
+/*                             GetColTypeName()                         */
+/************************************************************************/
+
+/**
+ * Fetch a column data type name.
+ *
+ * Returns data source-dependent data type name; for example, "CHAR",
+ * "VARCHAR", "MONEY", "LONG VARBINAR", or "CHAR ( ) FOR BIT DATA".
+ *
+ * @param iCol the zero based column index.
+ *
+ * @return NULL on failure (out of bounds column), or a pointer to an
+ * internal copy of the column dat type name.
+ */
+
+const char *CPLODBCStatement::GetColTypeName( int iCol )
+
+{
+    if( iCol < 0 || iCol >= m_nColCount )
+        return NULL;
+    else
+        return m_papszColTypeNames[iCol];
 }
 
 /************************************************************************/
@@ -716,47 +755,65 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 /*      SQLScrollFetch(), so we try to stick to SQLFetch() if we        */
 /*      can).                                                           */
 /* -------------------------------------------------------------------- */
+    SQLRETURN nRetCode;
+
     if( nOrientation == SQL_FETCH_NEXT && nOffset == 0 )
     {
-        if( Failed( SQLFetch( m_hStmt ) ) )
+        nRetCode = SQLFetch( m_hStmt );
+        if( Failed(nRetCode) )
+        {
+            if ( nRetCode != SQL_NO_DATA )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          m_poSession->GetLastError() );
+            }
             return FALSE;
+        }
     }
     else
     {
-        if( Failed( SQLFetchScroll( m_hStmt, (SQLSMALLINT) nOrientation, 
-                                    nOffset ) ) )
+        nRetCode = SQLFetchScroll(m_hStmt, (SQLSMALLINT) nOrientation, nOffset);
+        if( Failed(nRetCode) )
+        {
+            if ( nRetCode == SQL_NO_DATA )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          m_poSession->GetLastError() );
+            }
             return FALSE;
+        }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Pull out all the column values.                                 */
 /* -------------------------------------------------------------------- */
-    int iCol;
+    SQLSMALLINT iCol;
     
     for( iCol = 0; iCol < m_nColCount; iCol++ )
     {
         char szWrkData[512];
         _SQLLEN cbDataLen;
-        int nRetCode;
-        int nFetchType;
+        SQLSMALLINT nFetchType = GetTypeMapping( m_panColType[iCol] );
 
-        if( m_panColType[iCol] == SQL_BINARY 
-            || m_panColType[iCol] == SQL_VARBINARY 
-            || m_panColType[iCol] == SQL_LONGVARBINARY )
-        {
-            nFetchType = SQL_C_BINARY;
-        }
-        else
+        // For now we will fetch data in binary and string formats only
+        if ( nFetchType != SQL_C_BINARY )
             nFetchType = SQL_C_CHAR;
 
         szWrkData[0] = '\0';
         szWrkData[sizeof(szWrkData)-1] = '\0';
 
-        nRetCode = SQLGetData( m_hStmt, (SQLUSMALLINT) iCol+1, nFetchType,
+        nRetCode = SQLGetData( m_hStmt, iCol + 1, nFetchType,
                                szWrkData, sizeof(szWrkData)-1, 
                                &cbDataLen );
         if( Failed( nRetCode ) )
+        {
+            if ( nRetCode == SQL_NO_DATA )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined,
+                          m_poSession->GetLastError() );
+            }
             return FALSE;
+        }
 
         if( cbDataLen == SQL_NULL_DATA )
         {
@@ -767,9 +824,9 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         // assume big result: should check for state=SQLSATE 01004.
         else if( nRetCode == SQL_SUCCESS_WITH_INFO  ) 
         {
-            if( cbDataLen > (int) (sizeof(szWrkData)-1) )
+            if( cbDataLen > (_SQLLEN)(sizeof(szWrkData)-1) )
             {
-                cbDataLen = (int) (sizeof(szWrkData)-1);
+                cbDataLen = (_SQLLEN)(sizeof(szWrkData)-1);
                 if (nFetchType == SQL_C_CHAR) 
                     while ((cbDataLen > 1) && (szWrkData[cbDataLen - 1] == 0)) 
                         --cbDataLen;  // trimming the extra terminators: bug 990
@@ -792,14 +849,20 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
                     break;
 
                 if( Failed( nRetCode ) )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              m_poSession->GetLastError() );
                     return FALSE;
+                }
 
                 if( cbDataLen > (int) (sizeof(szWrkData) - 1)
                     || cbDataLen == SQL_NO_TOTAL )
                 {
                     nChunkLen = sizeof(szWrkData)-1;
                     if (nFetchType == SQL_C_CHAR) 
-                        while ((nChunkLen > 1) && (szWrkData[nChunkLen - 1] == 0)) --nChunkLen;  // trimming the extra terminators
+                        while ( (nChunkLen > 1)
+                                && (szWrkData[nChunkLen - 1] == 0) )
+                            --nChunkLen;  // trimming the extra terminators
                 }
                 else
                     nChunkLen = cbDataLen;
@@ -826,10 +889,10 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
         if( nFetchType == SQL_C_CHAR && m_papszColValues[iCol] != NULL )
         {
             char *pszTarget = m_papszColValues[iCol];
-            size_t iEnd = strlen(pszTarget) - 1;
+            size_t iEnd = strlen(pszTarget);
 
-            while( iEnd >= 0 && pszTarget[iEnd] == ' ' )
-                pszTarget[iEnd--] = '\0';
+            while ( iEnd > 0 && pszTarget[iEnd - 1] == ' ' )
+                pszTarget[--iEnd] = '\0';
         }
     }
 
@@ -932,8 +995,8 @@ int CPLODBCStatement::GetColDataLength( int iCol )
 int CPLODBCStatement::GetColId( const char *pszColName )
 
 {
-    for( int iCol = 0; iCol < m_nColCount; iCol++ )
-        if( EQUAL(pszColName,m_papszColNames[iCol]) )
+    for( SQLSMALLINT iCol = 0; iCol < m_nColCount; iCol++ )
+        if( EQUAL(pszColName, m_papszColNames[iCol]) )
             return iCol;
     
     return -1;
@@ -952,7 +1015,7 @@ void CPLODBCStatement::ClearColumnData()
         {
             if( m_papszColValues[iCol] != NULL )
             {
-                VSIFree( m_papszColValues[iCol] );
+                CPLFree( m_papszColValues[iCol] );
                 m_papszColValues[iCol] = NULL;
             }
         }
@@ -1046,7 +1109,7 @@ void CPLODBCStatement::AppendEscaped( const char *pszText )
     pszEscapedText[iOut] = '\0';
 
     Append( pszEscapedText );
-    VSIFree( pszEscapedText );
+    CPLFree( pszEscapedText );
 }
 
 /************************************************************************/
@@ -1145,7 +1208,7 @@ void CPLODBCStatement::Clear()
 
     if( m_pszStatement != NULL )
     {
-        VSIFree( m_pszStatement );
+        CPLFree( m_pszStatement );
         m_pszStatement = NULL;
     }
 
@@ -1156,6 +1219,9 @@ void CPLODBCStatement::Clear()
     {
         CPLFree( m_panColType );
         m_panColType = NULL;
+
+        CSLDestroy( m_papszColTypeNames );
+        m_papszColTypeNames = NULL;
 
         CPLFree( m_panColSize );
         m_panColSize = NULL;
@@ -1238,23 +1304,24 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
     if( nResultCount < 1 )
         m_nColCount = 500; // Hopefully lots.
     else
-        m_nColCount = (short) nResultCount;
+        m_nColCount = nResultCount;
 #endif
 
     m_nColCount = 500;
     
-    m_papszColNames = (char **) calloc(sizeof(char *),(m_nColCount+1));
-    m_papszColValues = (char **) calloc(sizeof(char *),(m_nColCount+1));
+    m_papszColNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
+    m_papszColValues = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
 
-    m_panColType = (short *) calloc(sizeof(short),m_nColCount);
-    m_panColSize = (_SQLULEN *) calloc(sizeof(_SQLULEN),m_nColCount);
-    m_panColPrecision = (short *) calloc(sizeof(short),m_nColCount);
-    m_panColNullable = (short *) calloc(sizeof(short),m_nColCount);
+    m_panColType = (short *) CPLCalloc(sizeof(short),m_nColCount);
+    m_papszColTypeNames = (char **) CPLCalloc(sizeof(char *),(m_nColCount+1));
+    m_panColSize = (_SQLULEN *) CPLCalloc(sizeof(_SQLULEN),m_nColCount);
+    m_panColPrecision = (short *) CPLCalloc(sizeof(short),m_nColCount);
+    m_panColNullable = (short *) CPLCalloc(sizeof(short),m_nColCount);
 
 /* -------------------------------------------------------------------- */
 /*      Establish columns to use for key information.                   */
 /* -------------------------------------------------------------------- */
-    int iCol;
+    SQLUSMALLINT iCol;
 
     for( iCol = 0; iCol < m_nColCount; iCol++ )
     {
@@ -1263,30 +1330,34 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
 
         if( Failed( SQLFetch( m_hStmt ) ) )
         {
-            m_nColCount = (SQLUSMALLINT) iCol;
+            m_nColCount = iCol;
             break;
         }
 
         szWrkData[0] = '\0';
 
-        SQLGetData( m_hStmt, 4, SQL_C_CHAR, szWrkData, sizeof(szWrkData)-1, 
-                    &cbDataLen );
+        SQLGetData( m_hStmt, SQLColumns_COLUMN_NAME, SQL_C_CHAR,
+                    szWrkData, sizeof(szWrkData)-1, &cbDataLen );
         m_papszColNames[iCol] = CPLStrdup(szWrkData);
 
-        SQLGetData( m_hStmt, 5, SQL_C_CHAR, szWrkData, sizeof(szWrkData)-1, 
-                    &cbDataLen );
+        SQLGetData( m_hStmt, SQLColumns_DATA_TYPE, SQL_C_CHAR,
+                    szWrkData, sizeof(szWrkData)-1, &cbDataLen );
         m_panColType[iCol] = (short) atoi(szWrkData);
 
-        SQLGetData( m_hStmt, 7, SQL_C_CHAR, szWrkData, sizeof(szWrkData)-1, 
-                    &cbDataLen );
+        SQLGetData( m_hStmt, SQLColumns_TYPE_NAME, SQL_C_CHAR,
+                    szWrkData, sizeof(szWrkData)-1, &cbDataLen );
+        m_papszColTypeNames[iCol] = CPLStrdup(szWrkData);
+
+        SQLGetData( m_hStmt, SQLColumns_COLUMN_SIZE, SQL_C_CHAR,
+                    szWrkData, sizeof(szWrkData)-1, &cbDataLen );
         m_panColSize[iCol] = atoi(szWrkData);
 
-        SQLGetData( m_hStmt, 9, SQL_C_CHAR, szWrkData, sizeof(szWrkData)-1, 
-                    &cbDataLen );
+        SQLGetData( m_hStmt, SQLColumns_DECIMAL_DIGITS, SQL_C_CHAR,
+                    szWrkData, sizeof(szWrkData)-1, &cbDataLen );
         m_panColPrecision[iCol] = (short) atoi(szWrkData);
 
-        SQLGetData( m_hStmt, 11, SQL_C_CHAR, szWrkData, sizeof(szWrkData)-1, 
-                    &cbDataLen );
+        SQLGetData( m_hStmt, SQLColumns_NULLABLE, SQL_C_CHAR,
+                    szWrkData, sizeof(szWrkData)-1, &cbDataLen );
         m_panColNullable[iCol] = atoi(szWrkData) == SQL_NULLABLE;
     }
 
@@ -1507,6 +1578,84 @@ CPLString CPLODBCStatement::GetTypeName( int nTypeCode )
         CPLString osResult;
         osResult.Printf( "UNKNOWN:%d", nTypeCode );
         return osResult;
+    }
+}
+
+/************************************************************************/
+/*                            GetTypeMapping()                          */
+/************************************************************************/
+
+/**
+ * Get appropriate C data type for SQL column type.
+ *
+ * Returns a C data type code, corresponding to the indicated SQL data
+ * type code (as returned from CPLODBCStatement::GetColType()).
+ *
+ * @param nTypeCode the SQL_ code, such as SQL_CHAR.
+ *
+ * @return data type code. The valid code is always returned. If SQL
+ * code is not recognised, SQL_C_BINARY will be returned.
+ */
+
+SQLSMALLINT CPLODBCStatement::GetTypeMapping( SQLSMALLINT nTypeCode )
+
+{
+    switch( nTypeCode )
+    {
+        case SQL_CHAR:
+        case SQL_VARCHAR:
+        case SQL_LONGVARCHAR:
+        case SQL_WCHAR:
+        case SQL_WVARCHAR:
+        case SQL_WLONGVARCHAR:
+            return SQL_C_CHAR;
+
+        case SQL_DECIMAL:
+        case SQL_NUMERIC:
+            return SQL_C_NUMERIC;
+
+        case SQL_SMALLINT:
+            return SQL_C_SSHORT;
+
+        case SQL_INTEGER:
+            return SQL_C_SLONG;
+
+        case SQL_REAL:
+            return SQL_C_FLOAT;
+
+        case SQL_FLOAT:
+        case SQL_DOUBLE:
+            return SQL_C_DOUBLE;
+
+        case SQL_BIT:
+        case SQL_TINYINT:
+        case SQL_BIGINT:
+        case SQL_TYPE_DATE:
+        case SQL_TYPE_TIME:
+        case SQL_TYPE_TIMESTAMP:
+/*        case SQL_TYPE_UTCDATETIME:
+        case SQL_TYPE_UTCTIME:*/
+        case SQL_INTERVAL_MONTH:
+        case SQL_INTERVAL_YEAR:
+        case SQL_INTERVAL_YEAR_TO_MONTH:
+        case SQL_INTERVAL_DAY:
+        case SQL_INTERVAL_HOUR:
+        case SQL_INTERVAL_MINUTE:
+        case SQL_INTERVAL_SECOND:
+        case SQL_INTERVAL_DAY_TO_HOUR:
+        case SQL_INTERVAL_DAY_TO_MINUTE:
+        case SQL_INTERVAL_DAY_TO_SECOND:
+        case SQL_INTERVAL_HOUR_TO_MINUTE:
+        case SQL_INTERVAL_HOUR_TO_SECOND:
+        case SQL_INTERVAL_MINUTE_TO_SECOND:
+        case SQL_GUID:
+            return SQL_C_CHAR;
+
+        case SQL_BINARY:
+        case SQL_VARBINARY:
+        case SQL_LONGVARBINARY:
+        default:
+            return SQL_C_BINARY;
     }
 }
 

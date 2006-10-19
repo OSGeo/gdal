@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/10/19 17:22:54  dron
+ * Added GetTypeMapping() conversion function; numerous clean-ups.
+ *
  * Revision 1.20  2006/06/30 18:15:35  dron
  * Avoid warnings on win64 target.
  *
@@ -261,19 +264,20 @@ class CPL_DLL CPLODBCStatement {
     CPLODBCSession     *m_poSession;
     HSTMT               m_hStmt;
 
-    short          m_nColCount;
+    SQLSMALLINT    m_nColCount;
     char         **m_papszColNames;
-    short         *m_panColType;
-    _SQLULEN       *m_panColSize;
-    short         *m_panColPrecision;
-    short         *m_panColNullable;
+    SQLSMALLINT   *m_panColType;
+    char         **m_papszColTypeNames;
+    _SQLULEN      *m_panColSize;
+    SQLSMALLINT   *m_panColPrecision;
+    SQLSMALLINT   *m_panColNullable;
 
     char         **m_papszColValues;
-    _SQLLEN        *m_panColValueLengths;
+    _SQLLEN       *m_panColValueLengths;
     
     int            Failed( int );
 
-    char           *m_pszStatement;
+    char          *m_pszStatement;
     size_t         m_nStatementMax;
     size_t         m_nStatementLen;
 
@@ -300,11 +304,12 @@ class CPL_DLL CPLODBCStatement {
     void           ClearColumnData();
 
     int            GetColCount();
-    const char    *GetColName(int iCol);
-    short          GetColType(int iCol);
-    short          GetColSize(int iCol);
-    short          GetColPrecision(int iCol);
-    short          GetColNullable(int iCol);
+    const char    *GetColName( int );
+    short          GetColType( int );
+    const char    *GetColTypeName( int );
+    short          GetColSize( int );
+    short          GetColPrecision( int );
+    short          GetColNullable( int );
 
     int            GetColId( const char * );
     const char    *GetColData( int, const char * = NULL );
@@ -325,6 +330,7 @@ class CPL_DLL CPLODBCStatement {
     void           DumpResult( FILE *fp, int bShowSchema = FALSE );
 
     static CPLString GetTypeName( int );
+    static SQLSMALLINT GetTypeMapping( SQLSMALLINT );
 
     int            CollectResultsInfo();
 };
