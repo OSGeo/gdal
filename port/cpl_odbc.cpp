@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2006/10/19 20:39:37  fwarmerdam
+ * Provide fallback definitions for sql column codes.
+ *
  * Revision 1.35  2006/10/19 17:54:54  dron
  * Return string type for unrecognized SQL data types in GetTypeMapping().
  *
@@ -154,6 +157,27 @@
 #ifndef WIN32CE /* ODBC is not supported on Windows CE. */
 
 CPL_CVSID("$Id$");
+
+#ifndef SQLColumns_TABLE_CAT 
+#define SQLColumns_TABLE_CAT 1
+#define SQLColumns_TABLE_SCHEM 2
+#define SQLColumns_TABLE_NAME 3
+#define SQLColumns_COLUMN_NAME 4
+#define SQLColumns_DATA_TYPE 5
+#define SQLColumns_TYPE_NAME 6
+#define SQLColumns_COLUMN_SIZE 7
+#define SQLColumns_BUFFER_LENGTH 8
+#define SQLColumns_DECIMAL_DIGITS 9
+#define SQLColumns_NUM_PREC_RADIX 10
+#define SQLColumns_NULLABLE 11
+#define SQLColumns_REMARKS 12
+#define SQLColumns_COLUMN_DEF 13
+#define SQLColumns_SQL_DATA_TYPE 14
+#define SQLColumns_SQL_DATETIME_SUB 15
+#define SQLColumns_CHAR_OCTET_LENGTH 16
+#define SQLColumns_ORDINAL_POSITION 17
+#define SQLColumns_IS_NULLABLE 18
+#endif /* ndef SQLColumns_TABLE_CAT
 
 /************************************************************************/
 /*                           CPLODBCDriverInstaller()                   */
