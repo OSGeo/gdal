@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2006/10/19 17:54:54  dron
+ * Return string type for unrecognized SQL data types in GetTypeMapping().
+ *
  * Revision 1.34  2006/10/19 17:22:54  dron
  * Added GetTypeMapping() conversion function; numerous clean-ups.
  *
@@ -1654,8 +1657,10 @@ SQLSMALLINT CPLODBCStatement::GetTypeMapping( SQLSMALLINT nTypeCode )
         case SQL_BINARY:
         case SQL_VARBINARY:
         case SQL_LONGVARBINARY:
-        default:
             return SQL_C_BINARY;
+
+        default:
+            return SQL_C_CHAR;
     }
 }
 
