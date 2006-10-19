@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.63  2006/10/19 03:21:22  fwarmerdam
+ * Added error checking in IReadBlock().
+ *
  * Revision 1.62  2006/09/05 16:44:10  dron
  * Support for 4D HDF-EOS Grid datasets.
  *
@@ -307,187 +310,209 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     switch ( poGDS->iDatasetType )
     {
-        case HDF4_SDS:
+      case HDF4_SDS:
+      {
+          int32   iSDS = SDselect( poGDS->hSD, poGDS->iDataset );
+          /* HDF rank:
+             A rank 2 dataset is an image read in scan-line order (2D). 
+             A rank 3 dataset is a series of images which are read in
+             an image at a time to form a volume.
+             A rank 4 dataset may be thought of as a series of volumes.
+
+             The "aiStart" array specifies the multi-dimensional index of the
+             starting corner of the hyperslab to read. The values are zero
+             based.
+
+             The "edge" array specifies the number of values to read along
+             each dimension of the hyperslab.
+
+             The "iStride" array allows for sub-sampling along each
+             dimension. If a iStride value is specified for a dimension,
+             that many values will be skipped over when reading along that
+             dimension. Specifying iStride = NULL in the C interface or
+             iStride = 1 in either interface specifies contiguous reading
+             of data. If the iStride values are set to 0, SDreaddata
+             returns FAIL (or -1). No matter what iStride value is
+             provided, data is always placed contiguously in buffer.
+          */
+          switch ( poGDS->iRank )
+          {
+            case 4:     // 4Dim: volume-time
+                        // FIXME: needs sample file. Does not work currently.
+              aiStart[3] = 0/* range: 0--aiDimSizes[3]-1 */;
+              aiEdges[3] = 1;
+              aiStart[2] = 0/* range: 0--aiDimSizes[2]-1 */;
+              aiEdges[2] = 1;
+              aiStart[1] = nBlockYOff; aiEdges[1] = nBlockYSize;
+              aiStart[0] = nBlockXOff; aiEdges[0] = nBlockXSize;
+              break;
+            case 3: // 3Dim: volume
+              aiStart[poGDS->iBandDim] = nBand - 1;
+              aiEdges[poGDS->iBandDim] = 1;
+                    
+              aiStart[poGDS->iYDim] = nBlockYOff;
+              aiEdges[poGDS->iYDim] = nBlockYSize;
+                    
+              aiStart[poGDS->iXDim] = nBlockXOff;
+              aiEdges[poGDS->iXDim] = nBlockXSize;
+              break;
+            case 2: // 2Dim: rows/cols
+              aiStart[poGDS->iYDim] = nBlockYOff;
+              aiEdges[poGDS->iYDim] = nBlockYSize;
+                    
+              aiStart[poGDS->iXDim] = nBlockXOff;
+              aiEdges[poGDS->iXDim] = nBlockXSize;
+              break;
+          }
+                
+          // Read HDF SDS array
+          if( SDreaddata( iSDS, aiStart, NULL, aiEdges, pImage ) < 0 )
+          {
+              CPLError( CE_Failure, CPLE_AppDefined, 
+                        "SDreaddata() failed for block." );
+              eErr = CE_Failure;
+          }
+                
+          SDendaccess( iSDS );
+      }
+      break;
+
+      case HDF4_GR:
+      {
+          int     nDataTypeSize =
+              GDALGetDataTypeSize(poGDS->GetDataType(poGDS->iNumType)) / 8;
+          GByte    *pbBuffer = (GByte *)
+              CPLMalloc(nBlockXSize*nBlockYSize*poGDS->iRank*nBlockYSize);
+          int     i, j;
+            
+          aiStart[poGDS->iYDim] = nBlockYOff;
+          aiEdges[poGDS->iYDim] = nBlockYSize;
+            
+          aiStart[poGDS->iXDim] = nBlockXOff;
+          aiEdges[poGDS->iXDim] = nBlockXSize;
+
+          if( GRreadimage(poGDS->iGR, aiStart, NULL, aiEdges, pbBuffer) < 0 )
+          {
+              CPLError( CE_Failure, CPLE_AppDefined, 
+                        "GRreaddata() failed for block." );
+              eErr = CE_Failure;
+          }
+          else
+          {
+              for ( i = 0, j = (nBand - 1) * nDataTypeSize;
+                    i < nBlockXSize * nDataTypeSize;
+                    i += nDataTypeSize, j += poGDS->nBands * nDataTypeSize )
+                  memcpy( (GByte *)pImage + i, pbBuffer + j, nDataTypeSize );
+          }
+
+          CPLFree( pbBuffer );
+      }
+      break;
+
+      case HDF4_EOS:
+      {
+          switch ( poGDS->iSubdatasetType )
+          {
+            case EOS_GRID:
             {
-                int32   iSDS = SDselect( poGDS->hSD, poGDS->iDataset );
-                /* HDF rank:
-                A rank 2 dataset is an image read in scan-line order (2D). 
-                A rank 3 dataset is a series of images which are read in
-                an image at a time to form a volume.
-                A rank 4 dataset may be thought of as a series of volumes.
+                int32   hGD;
 
-                The "aiStart" array specifies the multi-dimensional index of the
-                starting corner of the hyperslab to read. The values are zero
-                based.
-
-                The "edge" array specifies the number of values to read along
-                each dimension of the hyperslab.
-
-                The "iStride" array allows for sub-sampling along each
-                dimension. If a iStride value is specified for a dimension,
-                that many values will be skipped over when reading along that
-                dimension. Specifying iStride = NULL in the C interface or
-                iStride = 1 in either interface specifies contiguous reading
-                of data. If the iStride values are set to 0, SDreaddata
-                returns FAIL (or -1). No matter what iStride value is
-                provided, data is always placed contiguously in buffer.
-                */
+                hGD = GDattach( poGDS->hHDF4,
+                                poGDS->pszSubdatasetName );
                 switch ( poGDS->iRank )
                 {
-                    case 4:     // 4Dim: volume-time
-                        // FIXME: needs sample file. Does not work currently.
-                        aiStart[3] = 0/* range: 0--aiDimSizes[3]-1 */;
-                        aiEdges[3] = 1;
-                        aiStart[2] = 0/* range: 0--aiDimSizes[2]-1 */;
-                        aiEdges[2] = 1;
-                        aiStart[1] = nBlockYOff; aiEdges[1] = nBlockYSize;
-                        aiStart[0] = nBlockXOff; aiEdges[0] = nBlockXSize;
-                        break;
-                    case 3: // 3Dim: volume
-                        aiStart[poGDS->iBandDim] = nBand - 1;
-                        aiEdges[poGDS->iBandDim] = 1;
-                    
-                        aiStart[poGDS->iYDim] = nBlockYOff;
-                        aiEdges[poGDS->iYDim] = nBlockYSize;
-                    
-                        aiStart[poGDS->iXDim] = nBlockXOff;
-                        aiEdges[poGDS->iXDim] = nBlockXSize;
-                        break;
-                    case 2: // 2Dim: rows/cols
-                        aiStart[poGDS->iYDim] = nBlockYOff;
-                        aiEdges[poGDS->iYDim] = nBlockYSize;
-                    
-                        aiStart[poGDS->iXDim] = nBlockXOff;
-                        aiEdges[poGDS->iXDim] = nBlockXSize;
-                        break;
+                  case 4: // 4Dim: volume
+                    aiStart[poGDS->i4Dim] =
+                        (nBand - 1)
+                        / poGDS->aiDimSizes[poGDS->iBandDim];
+                    aiEdges[poGDS->i4Dim] = 1;
+
+                    aiStart[poGDS->iBandDim] =
+                        (nBand - 1)
+                        % poGDS->aiDimSizes[poGDS->iBandDim];
+                    aiEdges[poGDS->iBandDim] = 1;
+                                
+                    aiStart[poGDS->iYDim] = nBlockYOff;
+                    aiEdges[poGDS->iYDim] = nBlockYSize;
+                                
+                    aiStart[poGDS->iXDim] = nBlockXOff;
+                    aiEdges[poGDS->iXDim] = nBlockXSize;
+                    break;
+                  case 3: // 3Dim: volume
+                    aiStart[poGDS->iBandDim] = nBand - 1;
+                    aiEdges[poGDS->iBandDim] = 1;
+                                
+                    aiStart[poGDS->iYDim] = nBlockYOff;
+                    aiEdges[poGDS->iYDim] = nBlockYSize;
+                                
+                    aiStart[poGDS->iXDim] = nBlockXOff;
+                    aiEdges[poGDS->iXDim] = nBlockXSize;
+                    break;
+                  case 2: // 2Dim: rows/cols
+                    aiStart[poGDS->iYDim] = nBlockYOff;
+                    aiEdges[poGDS->iYDim] = nBlockYSize;
+                                
+                    aiStart[poGDS->iXDim] = nBlockXOff;
+                    aiEdges[poGDS->iXDim] = nBlockXSize;
+                    break;
                 }
-                
-                // Read HDF SDS array
-                SDreaddata( iSDS, aiStart, NULL, aiEdges, pImage );
-                
-                SDendaccess( iSDS );
-            }
-            break;
-
-        case HDF4_GR:
-        {
-            int     nDataTypeSize =
-                GDALGetDataTypeSize(poGDS->GetDataType(poGDS->iNumType)) / 8;
-            GByte    *pbBuffer = (GByte *)
-                CPLMalloc(nBlockXSize*nBlockYSize*poGDS->iRank*nBlockYSize);
-            int     i, j;
-            
-            aiStart[poGDS->iYDim] = nBlockYOff;
-            aiEdges[poGDS->iYDim] = nBlockYSize;
-            
-            aiStart[poGDS->iXDim] = nBlockXOff;
-            aiEdges[poGDS->iXDim] = nBlockXSize;
-
-            GRreadimage( poGDS->iGR, aiStart, NULL, aiEdges, pbBuffer );
-
-            for ( i = 0, j = (nBand - 1) * nDataTypeSize;
-                  i < nBlockXSize * nDataTypeSize;
-                  i += nDataTypeSize, j += poGDS->nBands * nDataTypeSize )
-                memcpy( (GByte *)pImage + i, pbBuffer + j, nDataTypeSize );
-
-            CPLFree( pbBuffer );
-        }
-        break;
-
-        case HDF4_EOS:
-            {
-                switch ( poGDS->iSubdatasetType )
+                if( GDreadfield( hGD, poGDS->pszFieldName,
+                                 aiStart, NULL, aiEdges, pImage ) < 0 )
                 {
-                    case EOS_GRID:
-                        {
-                            int32   hGD;
-
-                            hGD = GDattach( poGDS->hHDF4,
-                                            poGDS->pszSubdatasetName );
-                            switch ( poGDS->iRank )
-                            {
-                                case 4: // 4Dim: volume
-                                    aiStart[poGDS->i4Dim] =
-                                        (nBand - 1)
-                                        / poGDS->aiDimSizes[poGDS->iBandDim];
-                                    aiEdges[poGDS->i4Dim] = 1;
-
-                                    aiStart[poGDS->iBandDim] =
-                                        (nBand - 1)
-                                        % poGDS->aiDimSizes[poGDS->iBandDim];
-                                    aiEdges[poGDS->iBandDim] = 1;
-                                
-                                    aiStart[poGDS->iYDim] = nBlockYOff;
-                                    aiEdges[poGDS->iYDim] = nBlockYSize;
-                                
-                                    aiStart[poGDS->iXDim] = nBlockXOff;
-                                    aiEdges[poGDS->iXDim] = nBlockXSize;
-                                    break;
-                                case 3: // 3Dim: volume
-                                    aiStart[poGDS->iBandDim] = nBand - 1;
-                                    aiEdges[poGDS->iBandDim] = 1;
-                                
-                                    aiStart[poGDS->iYDim] = nBlockYOff;
-                                    aiEdges[poGDS->iYDim] = nBlockYSize;
-                                
-                                    aiStart[poGDS->iXDim] = nBlockXOff;
-                                    aiEdges[poGDS->iXDim] = nBlockXSize;
-                                    break;
-                                case 2: // 2Dim: rows/cols
-                                    aiStart[poGDS->iYDim] = nBlockYOff;
-                                    aiEdges[poGDS->iYDim] = nBlockYSize;
-                                
-                                    aiStart[poGDS->iXDim] = nBlockXOff;
-                                    aiEdges[poGDS->iXDim] = nBlockXSize;
-                                    break;
-                            }
-                            GDreadfield( hGD, poGDS->pszFieldName,
-                                         aiStart, NULL, aiEdges, pImage );
-                            GDdetach( hGD );
-                        }
-                        break;
-                    
-                    case EOS_SWATH:
-                    case EOS_SWATH_GEOL:
-                        {
-                            int32   hSW;
-
-                            hSW = SWattach( poGDS->hHDF4,
-                                            poGDS->pszSubdatasetName );
-                            switch ( poGDS->iRank )
-                            {
-                                case 3: // 3Dim: volume
-                                    aiStart[poGDS->iBandDim] = nBand - 1;
-                                    aiEdges[poGDS->iBandDim] = 1;
-                                
-                                    aiStart[poGDS->iYDim] = nBlockYOff;
-                                    aiEdges[poGDS->iYDim] = nBlockYSize;
-                                
-                                    aiStart[poGDS->iXDim] = nBlockXOff;
-                                    aiEdges[poGDS->iXDim] = nBlockXSize;
-                                    break;
-                                case 2: // 2Dim: rows/cols
-                                    aiStart[poGDS->iYDim] = nBlockYOff;
-                                    aiEdges[poGDS->iYDim] = nBlockYSize;
-                                
-                                    aiStart[poGDS->iXDim] = nBlockXOff;
-                                    aiEdges[poGDS->iXDim] = nBlockXSize;
-                                    break;
-                            }
-                            SWreadfield( hSW, poGDS->pszFieldName,
-                                         aiStart, NULL, aiEdges, pImage );
-                            SWdetach( hSW );
-                        }
-                        break;
-                    default:
-                        break;
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                              "GDreadfield() failed for block." );
+                    eErr = CE_Failure;
                 }
+                GDdetach( hGD );
             }
             break;
+                    
+            case EOS_SWATH:
+            case EOS_SWATH_GEOL:
+            {
+                int32   hSW;
 
-        default:
-            eErr = CE_Failure;
+                hSW = SWattach( poGDS->hHDF4,
+                                poGDS->pszSubdatasetName );
+                switch ( poGDS->iRank )
+                {
+                  case 3: // 3Dim: volume
+                    aiStart[poGDS->iBandDim] = nBand - 1;
+                    aiEdges[poGDS->iBandDim] = 1;
+                                
+                    aiStart[poGDS->iYDim] = nBlockYOff;
+                    aiEdges[poGDS->iYDim] = nBlockYSize;
+                                
+                    aiStart[poGDS->iXDim] = nBlockXOff;
+                    aiEdges[poGDS->iXDim] = nBlockXSize;
+                    break;
+                  case 2: // 2Dim: rows/cols
+                    aiStart[poGDS->iYDim] = nBlockYOff;
+                    aiEdges[poGDS->iYDim] = nBlockYSize;
+                                
+                    aiStart[poGDS->iXDim] = nBlockXOff;
+                    aiEdges[poGDS->iXDim] = nBlockXSize;
+                    break;
+                }
+                if( SWreadfield( hSW, poGDS->pszFieldName,
+                                 aiStart, NULL, aiEdges, pImage ) < 0 )
+                {
+                    CPLError( CE_Failure, CPLE_AppDefined, 
+                              "GDreadfield() failed for block." );
+                    eErr = CE_Failure;
+                }
+                SWdetach( hSW );
+            }
             break;
+            default:
+              break;
+          }
+      }
+      break;
+
+      default:
+        eErr = CE_Failure;
+        break;
     }
 
     return eErr;
