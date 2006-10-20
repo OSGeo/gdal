@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2006/10/20 04:33:12  fwarmerdam
+ * Removed extra newline after gdalopen debug statement.
+ *
  * Revision 1.59  2006/10/20 04:28:46  fwarmerdam
  * Remove extra newline in gdalclose debug statement.
  *
@@ -1708,7 +1711,7 @@ GDALOpen( const char * pszFilename, GDALAccess eAccess )
                 poDS->poDriver = poDriver;
 
             
-            CPLDebug( "GDAL", "GDALOpen(%s) succeeds as %s.\n",
+            CPLDebug( "GDAL", "GDALOpen(%s) succeeds as %s.",
                       pszFilename, poDriver->GetDescription() );
 
             return (GDALDatasetH) poDS;
