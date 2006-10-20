@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2006/10/20 04:28:46  fwarmerdam
+ * Remove extra newline in gdalclose debug statement.
+ *
  * Revision 1.58  2006/09/08 15:27:05  fwarmerdam
  * fixed type of return dataset list in GDALGetOpenDatasets()
  *
@@ -196,7 +199,7 @@ GDALDataset::~GDALDataset()
 {
     int         i;
 
-    CPLDebug( "GDAL", "GDALClose(%s)\n", GetDescription() );
+    CPLDebug( "GDAL", "GDALClose(%s)", GetDescription() );
 
 /* -------------------------------------------------------------------- */
 /*      Remove dataset from the "open" dataset list.                    */
