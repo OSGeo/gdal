@@ -3,7 +3,7 @@
 #endif /* DOXYGEN_SKIP */
 
 /*!
-\page rfc6_unicode RFC 6: OGR support for querying and selection by geometry 
+\page rfc6_sqlgeom RFC 6: OGR support for querying and selection by geometry 
 and feature style
 
 Author: Tamas Szekeres<br>
