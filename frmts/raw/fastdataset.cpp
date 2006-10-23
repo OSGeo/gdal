@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.22  2006/10/23 18:44:07  fwarmerdam
+ * added overview support - from Gao
+ *
  * Revision 1.21  2006/08/10 11:39:36  dron
  * Fixed problem with GAINES/BIASES field. In addition to
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=988
@@ -846,6 +849,9 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 	    0, nPixelOffset, nLineOffset, poDS->eDataType, TRUE));
 
     CPLFree( pszHeader );
+
+    // opens overviews.
+    poDS->oOvManager.Initialize(poDS, poDS->pszFilename);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize any PAM information.                                 */
