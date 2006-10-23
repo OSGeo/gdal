@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.170  2006/10/23 18:57:40  fwarmerdam
+ * Improve precision of offset/scale/nodata in text format (from Gao).
+ *
  * Revision 1.169  2006/09/27 15:27:46  fwarmerdam
  * Don't crash if there are no bands on input datasource.
  *
@@ -2503,10 +2506,10 @@ void GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *hTIFF,
         {
             char szValue[128];
 
-            sprintf( szValue, "%.16g", dfOffset );
+            sprintf( szValue, "%.18g", dfOffset );
             AppendMetadataItem( &psRoot, &psTail, "OFFSET", szValue, nBand, 
                                 "offset", "" );
-            sprintf( szValue, "%.16g", dfScale );
+            sprintf( szValue, "%.18g", dfScale );
             AppendMetadataItem( &psRoot, &psTail, "SCALE", szValue, nBand, 
                                 "scale", "" );
         }
@@ -2541,7 +2544,7 @@ void GTiffDataset::WriteNoDataValue( TIFF *hTIFF, double dfNoData )
 {
     const char *pszText;
     
-    pszText = CPLSPrintf( "%.16g", dfNoData );
+    pszText = CPLSPrintf( "%.18g", dfNoData );
     TIFFSetField( hTIFF, TIFFTAG_GDAL_NODATA, pszText );
 }
 
