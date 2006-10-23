@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.16  2006/10/23 20:10:06  dnadeau
+ * Fix the 3D array dimension not being set correctly.
+ *
  * Revision 1.15  2006/01/21 17:51:50  dnadeau
  * added find object by path where space are changed with underscore.  Fix up pszProjections problem.
  *
@@ -311,18 +314,18 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     if( poGDS->ndims == 3 ){
 	rank=3;
-	offset[2] = nBand-1;
-	count[2]  = 1;
-	col_dims[2] = 1;
+	offset[0]   = nBand-1;
+	count[0]    = 1;
+	col_dims[0] = 1;
     }
 
-    offset[0] = nBlockYOff;
-    offset[1] = nBlockXOff;
-    count[0]  = 1;
-    count[1]  = poGDS->GetRasterXSize( );
+    offset[poGDS->ndims - 2] = nBlockYOff;
+    offset[poGDS->ndims - 1] = nBlockXOff;
+    count[poGDS->ndims - 2]  = 1;
+    count[poGDS->ndims - 1]  = poGDS->GetRasterXSize( );
 
     nSizeOfData = H5Tget_size( poGDS->native );
-    memset( pImage,0,count[1]-offset[1]*nSizeOfData );
+    memset( pImage,0,count[poGDS->ndims-1]-offset[poGDS->ndims-1]*nSizeOfData );
 
 /* -------------------------------------------------------------------- */
 /*      Select 1 line                                                   */
@@ -332,13 +335,12 @@ CPLErr HDF5ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 				  offset, NULL, 
 				  count, NULL );
    
-
 /* -------------------------------------------------------------------- */
 /*      Create memory space to receive the data                         */
 /* -------------------------------------------------------------------- */
-    col_dims[0]=count[1];
-    col_dims[1]=1;
-    memspace = H5Screate_simple( rank,col_dims, NULL );
+    col_dims[poGDS->ndims-2]=1;
+    col_dims[poGDS->ndims-1]=count[poGDS->ndims-1];
+    memspace = H5Screate_simple( rank, col_dims, NULL );
 
     status = H5Dread ( poGDS->dataset_id,
 		      poGDS->native, 
@@ -460,12 +462,12 @@ GDALDataset *HDF5ImageDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->address = H5Dget_offset( poDS->dataset_id );
     poDS->native  = H5Tget_native_type( poDS->datatype, H5T_DIR_ASCEND );
 
-    poDS->nRasterYSize=poDS->dims[0];
-    poDS->nRasterXSize=poDS->dims[1];
+    poDS->nRasterYSize=poDS->dims[poDS->ndims-2];   // Y
+    poDS->nRasterXSize=poDS->dims[poDS->ndims-1];   // X alway last
 
     poDS->nBands=1;
 
-    if( poDS->ndims == 3 ) poDS->nBands=poDS->dims[poDS->ndims-1];
+    if( poDS->ndims == 3 ) poDS->nBands=poDS->dims[0];
 
 
     for(  i = 1; i <= poDS->nBands; i++ ) {
