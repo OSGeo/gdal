@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2006/10/23 18:33:59  fwarmerdam
+ * Added warning about odd numbers of bits.
+ *
  * Revision 1.59  2006/06/08 02:56:04  fwarmerdam
  * added logic to find Q level and use for jpeg compression
  *
@@ -1008,6 +1011,17 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
                            poDS->poJPEGDataset->GetRasterBand(iBand+1) );
         else
             poDS->SetBand( iBand+1, new NITFRasterBand( poDS, iBand+1 ) );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Report problems with odd bit sizes.                             */
+/* -------------------------------------------------------------------- */
+    if( psImage != NULL 
+        && (psImage->nBitsPerSample < 8 || psImage->nBitsPerSample % 8 != 0) )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Image with %d bits per sample will not be interpreted properly.", 
+                  psImage->nBitsPerSample );
     }
 
 /* -------------------------------------------------------------------- */
