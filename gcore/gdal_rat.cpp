@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/10/23 17:25:31  fwarmerdam
+ * Fixed problem with <F> element has no text child because it is empty.
+ *
  * Revision 1.8  2006/10/07 02:00:38  fwarmerdam
  * added RAT translation to ColorTable, and a few other fixes
  *
@@ -1380,7 +1383,10 @@ CPLErr GDALRasterAttributeTable::XMLInit( CPLXMLNode *psTree,
                 if( psF->eType != CXT_Element || !EQUAL(psF->pszValue,"F") )
                     continue;
 
-                SetValue( iRow, iField++, psF->psChild->pszValue );
+                if( psF->psChild != NULL && psF->psChild->eType == CXT_Text )
+                    SetValue( iRow, iField++, psF->psChild->pszValue );
+                else
+                    SetValue( iRow, iField++, "" );
             }
         }
     }
