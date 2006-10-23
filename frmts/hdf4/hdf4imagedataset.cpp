@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.64  2006/10/23 19:10:00  fwarmerdam
+ * Added HXsetdir() call so external datasets work properly.
+ *
  * Revision 1.63  2006/10/19 03:21:22  fwarmerdam
  * Added error checking in IReadBlock().
  *
@@ -308,6 +311,17 @@ CPLErr HDF4ImageRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return CE_None;
     }
 
+/* -------------------------------------------------------------------- */
+/*      HDF files with external data files, such as some landsat        */
+/*      products (eg. data/hdf/L1G) need to be told what directory      */
+/*      to look in to find the external files.  Normally this is the    */
+/*      directory holding the hdf file.                                 */
+/* -------------------------------------------------------------------- */
+    HXsetdir(CPLGetPath(poGDS->pszFilename));
+
+/* -------------------------------------------------------------------- */
+/*      Handle different configurations.                                */
+/* -------------------------------------------------------------------- */
     switch ( poGDS->iDatasetType )
     {
       case HDF4_SDS:
