@@ -60,7 +60,7 @@ AC_DEFUN([GEOS_INIT],[
   else
 
    ac_geos_config=`basename $with_geos`
-   ac_geos_config_dir=dir=`AS_DIRNAME(["$with_geos"])`
+   ac_geos_config_dir=`AS_DIRNAME(["$with_geos"])`
 
    AC_CHECK_PROG(
         GEOS_CONFIG,
