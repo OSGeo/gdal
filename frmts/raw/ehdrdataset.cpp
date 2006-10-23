@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2006/10/23 18:55:02  fwarmerdam
+ * fallback to PAM if no projection available - from Gao
+ *
  * Revision 1.41  2006/10/05 15:29:09  fwarmerdam
  * Don't depend on poOpenInfo->fp being non-NULL or else large files
  * won't work on some systems.
@@ -642,7 +645,10 @@ void EHdrDataset::RewriteColorTable( GDALColorTable *poTable )
 const char *EHdrDataset::GetProjectionRef()
 
 {
-    return pszProjection;
+    if (pszProjection && strlen(pszProjection) > 0)
+        return pszProjection;
+
+    return GDALPamDataset::GetProjectionRef();
 }
 
 /************************************************************************/
