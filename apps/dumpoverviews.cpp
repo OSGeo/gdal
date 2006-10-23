@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/10/23 15:34:12  fwarmerdam
+ * Added ability to select particular overviews.
+ *
  * Revision 1.2  2005/09/29 00:59:57  fwarmerdam
  * updated
  *
@@ -53,6 +56,8 @@ int main( int argc, char ** argv )
     const char *pszSrcFilename = NULL;
     GDALDriverH hDriver = NULL;
     int iArg;
+    int anReqOverviews[1000];
+    int nReqOverviewCount = 0;
 
     GDALAllRegister();
 
@@ -69,16 +74,20 @@ int main( int argc, char ** argv )
         {
             pszSrcFilename = argv[iArg];
         }
+        else if( atoi(argv[iArg]) > 0 || EQUAL(argv[iArg],"0") )
+        {
+            anReqOverviews[nReqOverviewCount++] = atoi(argv[iArg]);
+        }
         else
         {
-            printf( "Usage: dumpoverviews <filename>\n" );
+            printf( "Usage: dumpoverviews <filename> [overview]*\n" );
             exit( 1 );
         }
     }
 
     if( pszSrcFilename == NULL )
     {
-        printf( "Usage: dumpoverviews <filename>\n" );
+        printf( "Usage: dumpoverviews <filename> [overview]*\n" );
         exit( 1 );
     }
 
@@ -120,6 +129,23 @@ int main( int argc, char ** argv )
         for( iOverview = 0; iOverview < nOverviewCount; iOverview++ )
         {
             GDALRasterBandH hSrcOver = GDALGetOverview( hBaseBand, iOverview );
+
+/* -------------------------------------------------------------------- */
+/*      Is this a requested overview?                                   */
+/* -------------------------------------------------------------------- */
+            if( nReqOverviewCount > 0 )
+            {
+                int i; 
+
+                for( i = 0; i < nReqOverviewCount; i++ )
+                {
+                    if( anReqOverviews[i] == iOverview )
+                        break;
+                }
+                
+                if( i == nReqOverviewCount )
+                    continue;
+            }
 
 /* -------------------------------------------------------------------- */
 /*      Create matching output file.                                    */
