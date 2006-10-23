@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.44  2006/10/23 18:37:07  fwarmerdam
+ * Removed asserts in swap word function.
+ *
  * Revision 1.43  2006/10/14 17:21:33  fwarmerdam
  * fixed some c++ style declarations
  *
@@ -1595,7 +1598,6 @@ static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
         break;
 
       case 2:
-        CPLAssert( nWordSize >= 2 );
         for( i = 0; i < nWordCount; i++ )
         {
             GByte       byTemp;
@@ -1609,7 +1611,6 @@ static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
         break;
         
       case 4:
-        CPLAssert( nWordSize >= 4 );
         for( i = 0; i < nWordCount; i++ )
         {
             GByte       byTemp;
@@ -1627,7 +1628,6 @@ static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
         break;
 
       case 8:
-        CPLAssert( nWordSize >= 8 );
         for( i = 0; i < nWordCount; i++ )
         {
             GByte       byTemp;
@@ -1653,7 +1653,7 @@ static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
         break;
 
       default:
-        CPLAssert( FALSE );
+        break;
     }
 }
 
