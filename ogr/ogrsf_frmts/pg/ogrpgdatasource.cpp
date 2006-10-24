@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2006/10/24 03:16:54  fwarmerdam
+ * Fixed FetchSRS() to increment nKnownSRID after adding an
+ * entry in the table.  Fixed memory leak reported by Craig Miller.
+ *
  * Revision 1.53  2006/10/16 00:06:00  mloskot
  * Fixed Bug 1328
  *
@@ -1073,6 +1077,7 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
         CPLRealloc(papoSRS, sizeof(void*) * (nKnownSRID + 1) );
     panSRID[nKnownSRID] = nId;
     papoSRS[nKnownSRID] = poSRS;
+    nKnownSRID++;
 
     return poSRS;
 }
