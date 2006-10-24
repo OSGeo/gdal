@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.83  2006/10/24 01:46:13  fwarmerdam
+ * Added support for Bonne projection.
+ *
  * Revision 1.82  2006/10/24 01:34:41  fwarmerdam
  * Fixed default case when reading projections to properly set to LOCAL_CS.
  *
@@ -1812,6 +1815,15 @@ CPLErr HFADataset::WriteProjection()
         sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
         sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
     }
+    else if( EQUAL(pszProjName,SRS_PT_BONNE) )
+    {
+        sPro.proNumber = EPRJ_BONNE;
+        sPro.proName = "Bonne";
+        sPro.proParams[4] = oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN)*D2R;
+        sPro.proParams[2] = oSRS.GetProjParm(SRS_PP_STANDARD_PARALLEL_1)*D2R;
+        sPro.proParams[6] = oSRS.GetProjParm(SRS_PP_FALSE_EASTING);
+        sPro.proParams[7] = oSRS.GetProjParm(SRS_PP_FALSE_NORTHING);
+    }
     else
     {
         CPLError( CE_Warning, CPLE_NotSupported,
@@ -2213,6 +2225,10 @@ CPLErr HFADataset::ReadProjection()
                                psPro->proParams[6], psPro->proParams[7] );
         break;
 
+      case EPRJ_BONNE:
+        oSRS.SetBonne( psPro->proParams[2]*R2D, psPro->proParams[4]*R2D,
+                       psPro->proParams[6], psPro->proParams[7] );
+        break;
 
       default:
         if( oSRS.IsProjected() )
