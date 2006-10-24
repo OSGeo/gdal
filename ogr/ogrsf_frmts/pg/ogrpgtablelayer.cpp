@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2006/10/24 03:08:46  fwarmerdam
+ * Fixed spatial reference fetching to use f_table_schema, and only
+ * f_schema_name as a fallback (presumably this is from an older
+ * version of postgis?)
+ *
  * Revision 1.58  2006/09/07 14:01:56  pka
  * Support for layers named "schema.table"
  *
@@ -1617,7 +1622,7 @@ OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
 
         sprintf( szCommand,
                  "SELECT srid FROM geometry_columns "
-                 "WHERE f_table_name = '%s' AND f_schema_name = '%s'",
+                 "WHERE f_table_name = '%s' AND f_table_schema = '%s'",
                  pszTableName, pszSchemaName );
         hResult = PQexec(hPGConn, szCommand );
 
@@ -1627,6 +1632,24 @@ OGRSpatialReference *OGRPGTableLayer::GetSpatialRef()
         {
             nSRSId = atoi(PQgetvalue(hResult,0,0));
         }
+        else // I think perhaps an older version used f_schema_name.
+        {
+            PQclear( hResult );
+            poDS->SoftCommit();
+            poDS->SoftStartTransaction();
+            sprintf( szCommand,
+                     "SELECT srid FROM geometry_columns "
+                     "WHERE f_table_name = '%s' AND f_schema_name = '%s'",
+                     pszTableName, pszSchemaName );
+            hResult = PQexec(hPGConn, szCommand );
+            if( hResult
+                && PQresultStatus(hResult) == PGRES_TUPLES_OK
+                && PQntuples(hResult) == 1 )
+            {
+                nSRSId = atoi(PQgetvalue(hResult,0,0));
+            }
+        }
+
         PQclear( hResult );
 
         poDS->SoftCommit();
