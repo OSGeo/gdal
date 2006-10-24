@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2006/10/24 02:20:23  fwarmerdam
+ * Fixed NITF_IMAG metadata.
+ *
  * Revision 1.61  2006/10/24 02:18:06  fwarmerdam
  * added image attachment metadata
  *
@@ -1315,7 +1318,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
                 CSLSetNameValue( papszMergedMD, "NITF_ILOC_COLUMN", 
                                 CPLString().Printf("%d",psImage->nILOCColumn));
             papszMergedMD = 
-                CSLSetNameValue( papszMergedMD, "NITF_ILOC_ROW", 
+                CSLSetNameValue( papszMergedMD, "NITF_IMAG", 
                                  psImage->szIMAG );
         }
 
