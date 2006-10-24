@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.58  2006/10/24 01:54:52  fwarmerdam
+ * handle case of 1x1 pixel file gracefully (from Gao)
+ *
  * Revision 1.57  2006/06/27 01:26:44  fwarmerdam
  * When creating a .rrd file, it's dependent file should be the original
  * file, not the .aux file.
@@ -999,7 +1002,7 @@ int HFAGetGeoTransform( HFAHandle hHFA, double *padfGeoTransform )
             - psMapInfo->pixelSize.width*0.5;
         padfGeoTransform[1] = psMapInfo->pixelSize.width;
         padfGeoTransform[2] = 0.0;
-        if( psMapInfo->upperLeftCenter.y > psMapInfo->lowerRightCenter.y )
+        if( psMapInfo->upperLeftCenter.y >= psMapInfo->lowerRightCenter.y )
             padfGeoTransform[5] = - psMapInfo->pixelSize.height;
         else
             padfGeoTransform[5] = psMapInfo->pixelSize.height;
