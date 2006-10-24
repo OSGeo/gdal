@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/10/24 18:49:22  fwarmerdam
+ * avoid using CPLString in arguments and return from RAT API
+ *
  * Revision 1.3  2006/10/07 02:00:38  fwarmerdam
  * added RAT translation to ColorTable, and a few other fixes
  *
@@ -97,7 +100,7 @@ public:
     
     int           GetColumnCount() const;
 
-    CPLString     GetNameOfCol( int ) const;
+    const char   *GetNameOfCol( int ) const;
     GDALRATFieldUsage GetUsageOfCol( int ) const;
     GDALRATFieldType GetTypeOfCol( int ) const;
     
@@ -105,7 +108,7 @@ public:
 
     int           GetRowCount() const;
 
-    CPLString     GetValueAsString( int iRow, int iField ) const;
+    const char   *GetValueAsString( int iRow, int iField ) const;
     int           GetValueAsInt( int iRow, int iField ) const;
     double        GetValueAsDouble( int iRow, int iField ) const;
 
@@ -121,7 +124,7 @@ public:
     double        GetRowMin( int iRow ) const;
     double        GetRowMax( int iRow ) const;
 
-    CPLErr        CreateColumn( CPLString osFieldName, 
+    CPLErr        CreateColumn( const char *pszFieldName, 
                                 GDALRATFieldType eFieldType, 
                                 GDALRATFieldUsage eFieldUsage );
     CPLErr        SetLinearBinning( double dfRow0Min, double dfBinSize );
