@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.39  2006/10/24 17:32:49  fwarmerdam
+ * added the force_cellsize option, and a warning when dx/dy are used.
+ *
  * Revision 1.38  2006/09/26 18:15:47  fwarmerdam
  * Emit CELLSIZE when adfGeoTransform[5] is positive.
  *
@@ -772,11 +775,14 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
     double      adfGeoTransform[6];
     char        szHeader[2000];
+    const char *pszForceCellsize = 
+        CSLFetchNameValue( papszOptions, "FORCE_CELLSIZE" );
 
     poSrcDS->GetGeoTransform( adfGeoTransform );
 
     if( ABS(adfGeoTransform[1]+adfGeoTransform[5]) < 0.0000001 
-        || ABS(adfGeoTransform[1]-adfGeoTransform[5]) < 0.0000001 )
+        || ABS(adfGeoTransform[1]-adfGeoTransform[5]) < 0.0000001 
+        || (pszForceCellsize && CSLTestBoolean(pszForceCellsize)) )
         sprintf( szHeader, 
                  "ncols        %d\n" 
                  "nrows        %d\n"
@@ -788,6 +794,14 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                  adfGeoTransform[3]- nYSize * adfGeoTransform[1],
                  adfGeoTransform[1] );
     else
+    {
+        if( pszForceCellsize == NULL )
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "Producing a Golden Surfer style file with DX and DY instead\n"
+                      "of CELLSIZE since the input pixels are non-square.  Use the\n"
+                      "FORCE_CELLSIZE=TRUE creation option to force use of DX for\n"
+                      "even though this will be distorted.  Most ASCII Grid readers\n"
+                      "(ArcGIS included) do not support the DX and DY parameters.\n" );
         sprintf( szHeader, 
                  "ncols        %d\n" 
                  "nrows        %d\n"
@@ -800,6 +814,7 @@ AAIGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                  adfGeoTransform[3]- nYSize * adfGeoTransform[1],
                  adfGeoTransform[1],
                  fabs(adfGeoTransform[5]) );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Handle nodata (optionally).                                     */
@@ -1021,6 +1036,11 @@ void GDALRegister_AAIGrid()
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "asc" );
         poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
                                    "Byte UInt16 Int16 Float32" );
+
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, 
+"<CreationOptionList>\n"
+"   <Option name='FORCE_CELLSIZE' type='boolean' description='Force use of CELLSIZE, default is FALSE.'/>\n"
+"</CreationOptionList>\n" );
 
         poDriver->pfnOpen = AAIGDataset::Open;
         poDriver->pfnCreateCopy = AAIGCreateCopy;
