@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/10/24 02:18:06  fwarmerdam
+ * added image attachment metadata
+ *
  * Revision 1.9  2006/10/13 02:53:48  fwarmerdam
  * various improvements to TRE and VQ LUT support for bug 1313
  *
@@ -176,6 +179,13 @@ int main( int nArgc, char ** papszArgv )
                         psImage->dfURX, psImage->dfURY,
                         psImage->dfLLX, psImage->dfLLY,
                         psImage->dfLRX, psImage->dfLRY );
+            }
+            if( psImage->nILOCRow != 0 )
+            {
+                printf( "  IDLVL=%d, IALVL=%d, ILOC R=%d,C=%d, IMAG=%s\n",
+                        psImage->nIDLVL, psImage->nIALVL, 
+                        psImage->nILOCRow, psImage->nILOCColumn, 
+                        psImage->szIMAG );
             }
 
             printf( "  %d x %d blocks of size %d x %d\n",
