@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/10/24 18:49:22  fwarmerdam
+ * avoid using CPLString in arguments and return from RAT API
+ *
  * Revision 1.9  2006/10/23 17:25:31  fwarmerdam
  * Fixed problem with <F> element has no text child because it is empty.
  *
@@ -229,7 +232,7 @@ int CPL_STDCALL GDALRATGetColumnCount( GDALRasterAttributeTableH hRAT )
  * @return the column name or an empty string for invalid column numbers.
  */
 
-CPLString GDALRasterAttributeTable::GetNameOfCol( int iCol ) const
+const char *GDALRasterAttributeTable::GetNameOfCol( int iCol ) const
 
 {
     if( iCol < 0 || iCol >= (int) aoFields.size() )
@@ -422,7 +425,7 @@ GDALRATGetRowCount( GDALRasterAttributeTableH hRAT )
  * @return field value
  */
 
-CPLString
+const char *
 GDALRasterAttributeTable::GetValueAsString( int iRow, int iField ) const
 
 {
@@ -446,16 +449,16 @@ GDALRasterAttributeTable::GetValueAsString( int iRow, int iField ) const
     {
       case GFT_Integer:
       {
-          char szValue[100];
-          sprintf( szValue, "%d", aoFields[iField].anValues[iRow] );
-          return szValue;
+          ((GDALRasterAttributeTable *) this)->
+              osWorkingResult.Printf( "%d", aoFields[iField].anValues[iRow] );
+          return osWorkingResult;
       }
 
       case GFT_Real:
       {
-          char szValue[100];
-          sprintf( szValue, "%.16g", aoFields[iField].adfValues[iRow] );
-          return szValue;
+          ((GDALRasterAttributeTable *) this)->
+              osWorkingResult.Printf( "%.16g", aoFields[iField].adfValues[iRow]);
+          return osWorkingResult;
       }
 
       case GFT_String:
@@ -1101,14 +1104,14 @@ GDALRATGetLinearBinning( GDALRasterAttributeTableH hRAT,
  * 
  * This method is the same as the C function GDALRATCreateColumn().
  *
- * @param osFieldName the name of the field to create.
+ * @param pszFieldName the name of the field to create.
  * @param eFieldType the field type (integer, double or string).
  * @param eFieldUsage the field usage, GFU_Generic if not known.
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
  */
 
-CPLErr GDALRasterAttributeTable::CreateColumn( CPLString osFieldName, 
+CPLErr GDALRasterAttributeTable::CreateColumn( const char *pszFieldName, 
                                                GDALRATFieldType eFieldType,
                                                GDALRATFieldUsage eFieldUsage )
 
@@ -1117,7 +1120,7 @@ CPLErr GDALRasterAttributeTable::CreateColumn( CPLString osFieldName,
 
     aoFields.resize( iNewField+1 );
 
-    aoFields[iNewField].sName = osFieldName;
+    aoFields[iNewField].sName = pszFieldName;
     aoFields[iNewField].eType = eFieldType;
     aoFields[iNewField].eUsage = eFieldUsage;
 
