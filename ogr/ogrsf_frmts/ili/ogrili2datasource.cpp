@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/10/24 03:21:55  fwarmerdam
+ * Fixed memory leak of filenames[] token array.
+ *
  * Revision 1.7  2006/04/27 16:37:19  pka
  * Ili2 model reader fix
  * Support for multiple Ili2 models
@@ -120,6 +123,8 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
     if( CSLCount(filenames) > 1 )
         modelFilenames = &filenames[1];
 
+    CSLDestroy( filenames );
+
 /* -------------------------------------------------------------------- */
 /*      Open the source file.                                           */
 /* -------------------------------------------------------------------- */
@@ -170,8 +175,6 @@ int OGRILI2DataSource::Open( const char * pszNewName, int bTestOpen )
 
     if (modelFilenames)
         poReader->ReadModel( modelFilenames );
-
-    CSLDestroy( filenames );
 
     if( getenv( "ARC_DEGREES" ) != NULL ) {
       //No better way to pass arguments to the reader (it could even be an -lco arg)
