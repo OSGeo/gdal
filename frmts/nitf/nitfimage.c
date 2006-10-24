@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2006/10/24 02:18:06  fwarmerdam
+ * added image attachment metadata
+ *
  * Revision 1.44  2006/10/23 18:37:07  fwarmerdam
  * Removed asserts in swap word function.
  *
@@ -548,10 +551,17 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     if( psImage->nABPP == 0 )
         psImage->nABPP = psImage->nBitsPerSample;
 
+    psImage->nIDLVL = atoi(NITFGetField(szTemp,pachHeader, nOffset+20, 3));
+    psImage->nIALVL = atoi(NITFGetField(szTemp,pachHeader, nOffset+23, 3));
+    psImage->nILOCRow = atoi(NITFGetField(szTemp,pachHeader, nOffset+26, 5));
+    psImage->nILOCColumn = atoi(NITFGetField(szTemp,pachHeader, nOffset+31,5));
+    memcpy( psImage->szIMAG, pachHeader+nOffset+36, 4 );
+    psImage->szIMAG[4] = '\0';
+
     nOffset += 20;
 
     if( EQUALN(psFile->szVersion,"NITF01.",7) )
-    {
+   {
         psImage->nCols = psImage->nBlocksPerRow * psImage->nBlockWidth;
         psImage->nRows = psImage->nBlocksPerColumn * psImage->nBlockHeight;
     }

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/10/24 02:18:06  fwarmerdam
+ * added image attachment metadata
+ *
  * Revision 1.18  2006/10/13 02:53:48  fwarmerdam
  * various improvements to TRE and VQ LUT support for bug 1313
  *
@@ -194,6 +197,12 @@ typedef struct {
     char       szIC[3];
     char       szCOMRAT[5];
 
+    int        nILOCColumn;
+    int        nILOCRow;
+    int        nIALVL;
+    int        nIDLVL;
+    char       szIMAG[5];
+    
     int        bNoDataSet;
     int        nNoDataValue;
 

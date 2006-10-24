@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2006/10/24 02:18:06  fwarmerdam
+ * added image attachment metadata
+ *
  * Revision 1.60  2006/10/23 18:33:59  fwarmerdam
  * Added warning about odd numbers of bits.
  *
@@ -1295,7 +1298,27 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
         szIMODE[0] = psImage->chIMODE;
         szIMODE[1] = '\0';
         papszMergedMD = CSLSetNameValue( papszMergedMD, "NITF_IMODE", szIMODE );
-        
+
+        // ILOC/Attachment info
+        if( psImage->nILOCRow != 0 )
+        {
+            papszMergedMD = 
+                CSLSetNameValue( papszMergedMD, "NITF_IDLVL", 
+                                 CPLString().Printf("%d",psImage->nIDLVL) );
+            papszMergedMD = 
+                CSLSetNameValue( papszMergedMD, "NITF_IALVL", 
+                                 CPLString().Printf("%d",psImage->nIALVL) );
+            papszMergedMD = 
+                CSLSetNameValue( papszMergedMD, "NITF_ILOC_ROW", 
+                                 CPLString().Printf("%d",psImage->nILOCRow) );
+            papszMergedMD = 
+                CSLSetNameValue( papszMergedMD, "NITF_ILOC_COLUMN", 
+                                CPLString().Printf("%d",psImage->nILOCColumn));
+            papszMergedMD = 
+                CSLSetNameValue( papszMergedMD, "NITF_ILOC_ROW", 
+                                 psImage->szIMAG );
+        }
+
         // USE00A 
         papszUSE00A_MD = NITFReadUSE00A( psImage );
         if( papszUSE00A_MD != NULL )
