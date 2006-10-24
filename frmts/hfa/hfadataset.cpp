@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.82  2006/10/24 01:34:41  fwarmerdam
+ * Fixed default case when reading projections to properly set to LOCAL_CS.
+ *
  * Revision 1.81  2006/10/02 13:52:37  fwarmerdam
  * Added WGS72 support per issue 441 from Sanz, provided by Phil Barker.
  *
@@ -630,6 +633,12 @@ HFARasterBand::HFARasterBand( HFADataset *poDS, int nBand, int iOverview )
         CPLDebug( "GDAL", "Unsupported pixel type in HFARasterBand: %d.",
                   (int) nHFADataType );
         break;
+    }
+
+    if( HFAGetDataTypeBits( nHFADataType ) < 8 )
+    {
+        GDALMajorObject::SetMetadataItem( "NBITS", 
+                                          CPLString().Printf("%d", HFAGetDataTypeBits( nHFADataType ) ) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2206,7 +2215,10 @@ CPLErr HFADataset::ReadProjection()
 
 
       default:
-        oSRS.SetLocalCS( psPro->proName );
+        if( oSRS.IsProjected() )
+            oSRS.GetRoot()->SetValue( "LOCAL_CS" );
+        else
+            oSRS.SetLocalCS( psPro->proName );
         break;
     }
 
