@@ -21,9 +21,14 @@ limited.  Additional sample .prj files may be sent to the maintainer,
 <a href="mailto:warmerdam@pobox.com">warmerdam@pobox.com</a>.<p>
 
 The NODATA value for the grid read is also preserved when available.
-Grids are treated as signed 16bit integer unless the first scanline contains
-decimal values in which case the image is treated as 32bit floating point.
 <p>
+
+If pixels being written are not square (the width and height of a pixel in
+georeferenced units differ) then DX and DY parameters will be output instead
+of CELLSIZE.  Such files can be used in Golden Surfer, but not most other
+ascii grid reading programs.  For force the X pixel size to be used as CELLSIZE
+use the FORCE_CELLSIZE=YES creation option or resample the input to have 
+square pixels.<P>
 
 The <a href="#AIG">AIG</a> driver is also available
 for Arc/Info Binary Grid format.<p>
