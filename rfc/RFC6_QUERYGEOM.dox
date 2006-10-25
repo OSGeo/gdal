@@ -3,8 +3,7 @@
 #endif /* DOXYGEN_SKIP */
 
 /*!
-\page rfc6_sqlgeom RFC 6: OGR support for querying and selection by geometry 
-and feature style
+\page rfc6_sqlgeom RFC 6: Geometry and Feature Style as OGR Special Fields
 
 Author: Tamas Szekeres<br>
 Contact: szekerest@gmail.com<br>
@@ -375,11 +374,27 @@ else if ( poFDefn == NULL )
 
 </pre>
 
-\section rfc5_backward Backward Compatibility
+\section rfc6_backward Backward Compatibility
 
 The backward compatibility of the OGR library will be retained
 
-\section rfc5_references References
+\section rfc6_testing Regression Testing
+
+A new gdalautotest/ogr/ogr_sqlspecials.py script to test support for all
+special fields in the ExecuteSQL() call and with WHERE clauses. 
+
+\section rfc6_documentation Documentation
+
+The OGR SQL document will be updated to reflect the support for special fields.
+
+\section rfc6_staffing Implementation Staffing
+
+Tamas Szekeres will implement the bulk of the RFC in time for GDAL/OGR 1.3.3.
+
+Frank Warmerdam will implement OGRFeature changes (GetSpecial methods) and the 
+Python regression testing script.
+
+\section rfc6_references References
 
 <ul>
 
