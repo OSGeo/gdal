@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2006/10/25 02:26:32  fwarmerdam
+ * Various improvements for various 16bit combinations and for
+ * byte swapping on non-intel platforms.
+ *
  * Revision 1.41  2006/09/07 04:40:40  fwarmerdam
  * Generally disable most of the chatty debug messages.
  *
@@ -133,6 +137,9 @@ CPL_CVSID("$Id$");
 CPL_C_START
 void    GDALRegister_BMP(void);
 CPL_C_END
+
+// Enable if you want to see lots of BMP debugging output.
+// #define BMP_DEBUG    
 
 enum BMPType
 {
@@ -271,6 +278,31 @@ typedef struct
     GByte       bReserved;      // Must be 0
 } BMPColorEntry;
 
+/*****************************************************************/
+
+int countonbits(GUInt32 dw)
+{
+    int r = 0;
+    for(int x = 0; x < 32; x++)
+    {
+        if((dw & (1 << x)) != 0)
+            r++;
+    }
+    return r;
+}
+
+
+int findfirstonbit(GUInt32 n)
+{
+    for(int x = 0; x < 32; x++)
+    {
+        if((n & (1 << x)) != 0)
+            return x;
+    }
+    return -1;
+}
+
+
 /************************************************************************/
 /* ==================================================================== */
 /*                              BMPDataset                              */
@@ -395,7 +427,7 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if ( VSIFSeekL( poGDS->fp, iScanOffset, SEEK_SET ) < 0 )
     {
         // XXX: We will not report error here, because file just may be
-	// in update state and data for this block will be available later
+    // in update state and data for this block will be available later
         if( poGDS->eAccess == GA_Update )
         {
             memset( pImage, 0, nBlockXSize );
@@ -447,23 +479,80 @@ CPLErr BMPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
     else if ( poGDS->sInfoHeader.iBitCount == 16 )
     {
+        // rcg, oct 7/06: Byteswap if necessary, use int16
+        // references to file pixels, expand samples to
+        // 8-bit, support BMPC_BITFIELDS channel mask indicators,
+        // and generalize band handling.
+
+        GUInt16* pScan16 = (GUInt16*)pabyScan;
+#ifdef CPL_MSB
+        GDALSwapWords( pScan16, sizeof(GUInt16), nBlockXSize, 0);
+#endif
+
+        // todo: make these band members and precompute.
+        int mask[3], shift[3], size[3];
+        float fTo8bit[3];
+
+        if(poGDS->sInfoHeader.iCompression == BMPC_RGB)
+        {
+            mask[0] = 0x7c00;
+            mask[1] = 0x03e0;
+            mask[2] = 0x001f;
+        }
+        else if(poGDS->sInfoHeader.iCompression == BMPC_BITFIELDS)
+        {
+            mask[0] = poGDS->sInfoHeader.iRedMask;
+            mask[1] = poGDS->sInfoHeader.iGreenMask;
+            mask[2] = poGDS->sInfoHeader.iBlueMask;
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_FileIO,
+                      "Unknown 16-bit compression %d.",
+                      poGDS->sInfoHeader.iCompression);
+            return CE_Failure;
+        }
+
+        for(i = 0; i < 3; i++)
+        {
+            shift[i] = findfirstonbit(mask[i]);
+            size[i]  = countonbits(mask[i]);
+            if(size[i] > 14 || size[i] == 0)
+            {
+                CPLError( CE_Failure, CPLE_FileIO,
+                          "Bad 16-bit channel mask %8x.",
+                          mask[i]);
+                return CE_Failure;
+            }
+            fTo8bit[i] = 255.0f / ((1 << size[i])-1);
+        }
+
         for ( i = 0; i < nBlockXSize; i++ )
         {
+            ((GByte *) pImage)[i] = (GByte)
+                (0.5f + fTo8bit[nBand-1] * 
+                    ((pScan16[i] & mask[nBand-1]) >> shift[nBand-1]));
+#if 0
+        // original code    
             switch ( nBand )
             {
-                case 1:
+                case 1: // Red
                 ((GByte *) pImage)[i] = pabyScan[i + 1] & 0x1F;
                 break;
-                case 2:
-                ((GByte *) pImage)[i] = ((pabyScan[i] & 0x03) << 3) |
-                                        ((pabyScan[i + 1] & 0xE0) >> 5);
+
+                case 2: // Green
+                ((GByte *) pImage)[i] = 
+                    ((pabyScan[i] & 0x03) << 3) |
+                    ((pabyScan[i + 1] & 0xE0) >> 5);
                 break;
-                case 3:
+
+                case 3: // Blue
                 ((GByte *) pImage)[i] = (pabyScan[i] & 0x7c) >> 2;
                 break;
                 default:
                 break;
             }
+#endif // 0
         }
     }
     else if ( poGDS->sInfoHeader.iBitCount == 4 )
@@ -815,6 +904,11 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDS, int nBand )
             }
         }
     }
+    // rcg, release compressed buffer here.
+    if ( pabyComprBuf )
+        CPLFree( pabyComprBuf );
+    pabyComprBuf = NULL;
+
 }
 
 /************************************************************************/
@@ -1027,6 +1121,17 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
         VSIFReadL( &poDS->sInfoHeader.iYPelsPerMeter, 1, 4, poDS->fp );
         VSIFReadL( &poDS->sInfoHeader.iClrUsed, 1, 4, poDS->fp );
         VSIFReadL( &poDS->sInfoHeader.iClrImportant, 1, 4, poDS->fp );
+
+        // rcg, read win4/5 fields. If we're reading a
+        // legacy header that ends at iClrImportant, it turns 
+        // out that the three DWORD color table entries used 
+        // by the channel masks start here anyway.
+        if(poDS->sInfoHeader.iCompression == BMPC_BITFIELDS)
+        {
+            VSIFReadL( &poDS->sInfoHeader.iRedMask, 1, 4, poDS->fp );
+            VSIFReadL( &poDS->sInfoHeader.iGreenMask, 1, 4, poDS->fp );
+            VSIFReadL( &poDS->sInfoHeader.iBlueMask, 1, 4, poDS->fp );
+        }
 #ifdef CPL_MSB
         CPL_SWAP32PTR( &poDS->sInfoHeader.iWidth );
         CPL_SWAP32PTR( &poDS->sInfoHeader.iHeight );
@@ -1038,6 +1143,10 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
         CPL_SWAP32PTR( &poDS->sInfoHeader.iYPelsPerMeter );
         CPL_SWAP32PTR( &poDS->sInfoHeader.iClrUsed );
         CPL_SWAP32PTR( &poDS->sInfoHeader.iClrImportant );
+        // rcg, swap win4/5 fields.
+        CPL_SWAP32PTR( &poDS->sInfoHeader.iRedMask );
+        CPL_SWAP32PTR( &poDS->sInfoHeader.iGreenMask );
+        CPL_SWAP32PTR( &poDS->sInfoHeader.iBlueMask );
 #endif
         poDS->nColorElems = 4;
     }
