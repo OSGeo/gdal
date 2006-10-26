@@ -15,7 +15,7 @@ A list of all GDAL/OGR RFC documents, with status.
 
 <li> \link rfc5_unicode RFC 5: Unicode support in GDAL\endlink (Development)
 
-<li> \link rfc6_sqlgeom RFC 6: Geometry and Feature Style as OGR Special Fields (Development)
+<li> \link rfc6_sqlgeom RFC 6: Geometry and Feature Style as OGR Special Fields \endlink (Development)
 
 </ul>
 
