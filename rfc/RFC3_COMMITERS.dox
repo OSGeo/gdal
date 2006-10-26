@@ -147,4 +147,42 @@ to the code base, please seek more information from the project steering
 committee, or the foundation legal counsel. 
 </ul> 
 
+\section rfc3_bootstraping Bootstraping
+
+The following existing commiters will be considered authorized GDAL/OGR
+committers as long as they each review the commiter guidelines, and 
+agree to adhere to them.  The SVN administrator will be responsible for 
+checking with each person.  
+
+<ul>
+<li> Frank Warmerdam
+<li> Gillian Walter
+<li> Andrey Kiselev
+<li> Alessandro Amici
+<li> Kor de Jong
+<li> Howard Butler
+<li> Lichun Wang
+<li> Norman Vine
+<li> Ken Melero
+<li> Kevin Ruland
+<li> Marek Brudka
+<li> Pirmin Kalberer
+<li> Steve Soule
+<li> Frans van der Bergh
+<li> Denis Nadeau
+<li> Oleg Semykin
+<li> Julien-Samuel Lacroix
+<li> Daniel Wallner
+<li> Charles F. I. Savage
+<li> Mateusz Loskot
+<li> Peter Nagy
+<li> Simon Perkins
+<li> Radim Blazek
+<li> Steve Halasz
+<li> Nacho Brodin
+<li> Benjamin Collins
+<li> Ivan Lucena
+<li> Ari Jolma
+<li> Tamas Szekeres
+</ul>
 */
