@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/10/27 04:11:28  fwarmerdam
+ * Fix memory leak.
+ *
  * Revision 1.1  2006/10/27 03:36:42  fwarmerdam
  * New
  *
@@ -107,6 +110,9 @@ CPLErr GDALParseGMLCoverage( CPLXMLNode *psXML,
         *pnXSize = atoi(papszHigh[0]) - atoi(papszLow[0]) + 1;
     if( pnYSize != NULL )
         *pnYSize = atoi(papszHigh[1]) - atoi(papszLow[1]) + 1;
+
+    CSLDestroy( papszLow );
+    CSLDestroy( papszHigh );
 
 /* -------------------------------------------------------------------- */
 /*      Extract origin location.                                        */
