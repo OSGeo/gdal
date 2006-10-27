@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2006/10/27 03:34:47  fwarmerdam
+ * Avoid warnings in RemoveDriver().
+ *
  * Revision 1.36  2006/10/19 20:39:37  fwarmerdam
  * Provide fallback definitions for sql column codes.
  *
@@ -254,16 +257,14 @@ int CPLODBCDriverInstaller::RemoveDriver( const char* pszDriverName, int fRemove
 
     if ( FALSE == SQLRemoveDriver( pszDriverName, fRemoveDSN, &m_nUsageCount ) )
     {
-         const WORD nErrorNum = 1; // TODO - a function param?
+        const WORD nErrorNum = 1; // TODO - a function param?
 
         // Retrieve error code and message
-        RETCODE cRet = SQLInstallerError( nErrorNum, &m_nErrorCode,
-                        m_szError, SQL_MAX_MESSAGE_LENGTH, NULL );
-
-        CPLAssert( SQL_SUCCESS == cRet || SQL_SUCCESS_WITH_INFO == cRet );
+        SQLInstallerError( nErrorNum, &m_nErrorCode,
+                           m_szError, SQL_MAX_MESSAGE_LENGTH, NULL );
 
         return FALSE;
-   }
+    }
 
     // SUCCESS
     return TRUE;
