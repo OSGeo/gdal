@@ -1490,6 +1490,46 @@ dnl This is used by the GNUmakefile in frmts/dods (via GDALmake.opt)
 AC_SUBST(DODS_INC)
 
 dnl ---------------------------------------------------------------------------
+dnl Check for curl (ie. for wcs).
+dnl ---------------------------------------------------------------------------
+AC_CHECKING(for curl-config)
+AC_ARG_WITH(curl-config,
+[  --with-curl-config=PATH Specify path to curl-config.],,)
+
+dnl Clear some cache variables
+unset ac_cv_path_LIBCURL_CONFIG
+
+if test "`basename xx/$with_curl_config`" = "curl-config" ; then
+  LIBCURL_CONFIG="$with_curl_config"
+elif test "$with_curl_config" = "no" ; then
+  LIBCURL_CONFIG=no
+else
+  AC_PATH_PROG(LIBCURL_CONFIG, curl-config, no)
+fi
+
+if test "$LIBCURL_CONFIG" != "no" ; then
+
+  CURL_VERNUM=`$LIBCURL_CONFIG --vernum`
+  CURL_VER=`$LIBCURL_CONFIG --version | awk '{print $2}'`
+
+  AC_MSG_RESULT([        found libcurl version $CURL_VER])
+  
+  CURL_INC=`$LIBCURL_CONFIG --cflags`
+  CURL_LIB=`$LIBCURL_CONFIG --libs`
+  CURL_SETTING=yes
+
+  OPT_GDAL_FORMATS="wcs $OPT_GDAL_FORMATS"
+else
+  CURL_SETTING=no
+  CURL_INC=
+  CURL_LIB=
+fi
+
+AC_SUBST(CURL_SETTING,$CURL_SETTING)
+AC_SUBST(CURL_INC,    $CURL_INC)
+AC_SUBST(CURL_LIB,    $CURL_LIB)
+
+dnl ---------------------------------------------------------------------------
 dnl Check for SQLite.
 dnl ---------------------------------------------------------------------------
 
@@ -1929,6 +1969,7 @@ else
 fi
 LOC_MSG([  ECW support:               ${ECW_SETTING}])
 LOC_MSG([  MrSID support:             ${HAVE_MRSID}])
+LOC_MSG([  CURL support (wcs):        ${CURL_SETTING}])
 LOC_MSG([  POSTGRESQL support:        ${HAVE_PG}])
 LOC_MSG([  MySQL support:             ${HAVE_MYSQL}])
 LOC_MSG([  XERCES support:            ${HAVE_XERCES}])
