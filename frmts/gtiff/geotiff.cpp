@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.171  2006/10/27 03:35:29  fwarmerdam
+ * Avoid warnings.
+ *
  * Revision 1.170  2006/10/23 18:57:40  fwarmerdam
  * Improve precision of offset/scale/nodata in text format (from Gao).
  *
@@ -4098,7 +4101,7 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         uint32  nBlockXSize;
         uint32	nBlockYSize;
         int     nTileSize, nTilesAcross, nTilesDown, iTileX, iTileY;
-        GByte   *pabyTile;
+        GByte   *pabyTile = NULL;
         int     nTilesDone = 0, nPixelSize;
 
         if ( !TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &nBlockXSize )
@@ -4237,7 +4240,7 @@ GTiffCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         uint32  nBlockXSize;
         uint32	nBlockYSize;
         int     nTileSize, nTilesAcross, nTilesDown, iTileX, iTileY, nElemSize;
-        GByte   *pabyTile;
+        GByte   *pabyTile = NULL;
         int     nTilesDone = 0, nPixelSize;
 
         if ( !TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &nBlockXSize )
