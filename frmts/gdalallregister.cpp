@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.89  2006/10/27 04:42:34  fwarmerdam
+ * added WCS registration
+ *
  * Revision 1.88  2006/06/05 18:44:47  fwarmerdam
  * Moved RIK down near the bottom since the test appears to be weak.
  *
@@ -342,6 +345,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_rmf
     GDALRegister_RMF();
+#endif
+
+#ifdef FRMT_wcs
+    GDALRegister_WCS();
 #endif
 
 #ifdef FRMT_msgn
