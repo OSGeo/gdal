@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/10/27 04:40:58  fwarmerdam
+ * Avoid warning.
+ *
  * Revision 1.6  2006/05/25 02:35:15  fwarmerdam
  * capture maximum string length in scan pass (Peter Rushforth)
  *
@@ -433,7 +436,7 @@ CPLXMLNode *GMLFeatureClass::SerializeToXML()
     {
         GMLPropertyDefn *poPDefn = GetProperty( iProperty );
         CPLXMLNode *psPDefnNode;
-        const char *pszTypeName;
+        const char *pszTypeName = "Unknown";
 
         psPDefnNode = CPLCreateXMLNode( psRoot, CXT_Element, "PropertyDefn" );
         CPLCreateXMLElementAndValue( psPDefnNode, "Name", 
