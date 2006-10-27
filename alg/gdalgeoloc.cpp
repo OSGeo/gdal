@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/10/27 03:36:06  fwarmerdam
+ * Avoid warnings.
+ *
  * Revision 1.1  2006/08/08 03:15:48  fwarmerdam
  * New
  *
@@ -142,7 +145,7 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 /* -------------------------------------------------------------------- */
 /*      Scan forward map for lat/long extents.                          */
 /* -------------------------------------------------------------------- */
-    double dfMinX, dfMaxX, dfMinY, dfMaxY;
+    double dfMinX=0, dfMaxX=0, dfMinY=0, dfMaxY=0;
     int i, bInit = FALSE;
 
     for( i = nXSize * nYSize - 1; i >= 0; i-- )
