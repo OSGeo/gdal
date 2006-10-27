@@ -1,9 +1,23 @@
 
+Folks who have agreed to RFC 3 terms:
+
+CVS Login(s)  Name/Contact                 Area of Interest
+============  ============                 ================
+warmerda      Frank Warmerdam              all
+fwarmerdam    warmerdam@pobox.com
+
+tamas         Tamas Szekeres               c# swig bindings
+              szekerest at gmail.com
+
+dmorissette   Daniel Morissette            mitab, avc, cpl
+danmo         dmorissette at mapgears.com  
+
+
+
+Folks who have not yet agreed to RFC 3:
 
 CVS Login(s)	Name			Email / Contact			Project
 ============	====			===============			=======
-warmerda	Frank Warmerdam		warmerdam@pobox.com		all
-fwarmerdam
 
 dron		Andrey Kiselev		dron at ak4719.spb.edu		gdal
 									libtiff
@@ -70,4 +84,3 @@ ajolma          Ari Jolma               ari.jolma at tkk.fi             gdal
 
 marit		Marit Jentoft-Nilson    jentoft-nilsen at agnes.gsfc.nasa.gov geotiff
 
-tamas           Tamas Szekeres          szekerest at gmail.com          gdal
