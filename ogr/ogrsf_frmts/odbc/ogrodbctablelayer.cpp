@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/10/27 17:03:55  dron
+ * Added support for reading spatial reference table; memory leaks removed.
+ *
  * Revision 1.11  2005/11/18 16:50:46  fwarmerdam
  * added ODBC_OGR_FID config variable
  *
@@ -126,8 +129,8 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszTableName,
             CPLFree( pszFIDColumn );
             pszFIDColumn = NULL;
 
-            CPLDebug( "OGR_ODBC", "Table %s has multiple primary key fields, ignoring them all.", 
-                      pszTableName );
+            CPLDebug( "OGR_ODBC", "Table %s has multiple primary key fields, "
+                      "ignoring them all.", pszTableName );
         }
     }
 
@@ -190,9 +193,8 @@ CPLErr OGRODBCTableLayer::Initialize( const char *pszTableName,
         }
         else
         {
-            if( oGetCol.GetColType( iColumn ) == SQL_BINARY
-                || oGetCol.GetColType( iColumn ) == SQL_VARBINARY
-                || oGetCol.GetColType( iColumn ) == SQL_LONGVARBINARY )
+            if( CPLODBCStatement::GetTypeMapping(
+                    oGetCol.GetColType( iColumn )) == SQL_C_BINARY )
                 bGeomColumnWKB = TRUE;
         }
     }
@@ -407,3 +409,4 @@ OGRSpatialReference *OGRODBCTableLayer::GetSpatialRef()
 
     return OGRODBCLayer::GetSpatialRef();
 }
+

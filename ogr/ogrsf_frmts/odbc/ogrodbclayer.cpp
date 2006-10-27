@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/10/27 17:03:55  dron
+ * Added support for reading spatial reference table; memory leaks removed.
+ *
  * Revision 1.13  2005/11/18 16:50:46  fwarmerdam
  * added ODBC_OGR_FID config variable
  *
@@ -76,7 +79,6 @@
 
 CPL_CVSID("$Id$");
 
-
 /************************************************************************/
 /*                            OGRODBCLayer()                            */
 /************************************************************************/
@@ -89,6 +91,7 @@ OGRODBCLayer::OGRODBCLayer()
     bGeomColumnWKB = FALSE;
     pszGeomColumn = NULL;
     pszFIDColumn = NULL;
+    panFieldOrdinals = NULL;
 
     poStmt = NULL;
 
@@ -107,27 +110,30 @@ OGRODBCLayer::~OGRODBCLayer()
 {
     if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
     {
-        CPLDebug( "ODBC", "%d features read on layer '%s'.",
+        CPLDebug( "OGR_ODBC", "%d features read on layer '%s'.",
                   (int) m_nFeaturesRead, 
                   poFeatureDefn->GetName() );
     }
 
-    if( poStmt != NULL )
+    if( poStmt )
     {
         delete poStmt;
         poStmt = NULL;
     }
 
-    if( pszGeomColumn != NULL )
+    if( pszGeomColumn )
         CPLFree( pszGeomColumn );
 
-    if( poFeatureDefn != NULL )
+    if ( panFieldOrdinals )
+        CPLFree( panFieldOrdinals );
+
+    if( poFeatureDefn )
     {
         poFeatureDefn->Release();
         poFeatureDefn = NULL;
     }
 
-    if( poSRS != NULL )
+    if( poSRS )
         poSRS->Release();
 }
 
@@ -158,33 +164,33 @@ CPLErr OGRODBCLayer::BuildFeatureDefn( const char *pszLayerName,
         if( pszGeomColumn != NULL 
             && EQUAL(poStmt->GetColName(iCol),pszGeomColumn) )
             continue;
-        
-        switch( poStmt->GetColType(iCol) )
+       
+        switch( CPLODBCStatement::GetTypeMapping(poStmt->GetColType(iCol)) )
         {
-          case SQL_INTEGER:
-            oField.SetType( OFTInteger );
-            break;
+            case SQL_C_SSHORT:
+            case SQL_C_USHORT:
+            case SQL_C_SLONG:
+            case SQL_C_ULONG:
+                oField.SetType( OFTInteger );
+                break;
 
-          case SQL_BINARY:
-          case SQL_VARBINARY:
-          case SQL_LONGVARBINARY:
-            oField.SetType( OFTBinary );
-            break;
+            case SQL_C_BINARY:
+                oField.SetType( OFTBinary );
+                break;
 
-          case SQL_DECIMAL:
-            oField.SetType( OFTReal );
-            oField.SetPrecision( poStmt->GetColPrecision(iCol) );
-            break;
+            case SQL_C_NUMERIC:
+                oField.SetType( OFTReal );
+                oField.SetPrecision( poStmt->GetColPrecision(iCol) );
+                break;
 
-          case SQL_FLOAT:
-          case SQL_REAL:
-          case SQL_DOUBLE:
-            oField.SetType( OFTReal );
-            oField.SetWidth( 0 );
-            break;
+            case SQL_C_FLOAT:
+            case SQL_C_DOUBLE:
+                oField.SetType( OFTReal );
+                oField.SetWidth( 0 );
+                break;
 
-          default:
-            /* leave it as OFTString */;
+            default:
+                /* leave it as OFTString */;
         }
 
         poFeatureDefn->AddFieldDefn( &oField );
@@ -309,20 +315,44 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
         int iField = poStmt->GetColId( pszGeomColumn );
         const char *pszGeomText = poStmt->GetColData( iField );
         OGRGeometry *poGeom = NULL;
+        OGRErr eErr = OGRERR_NONE;
 
         if( pszGeomText != NULL && !bGeomColumnWKB )
         {
-            OGRGeometryFactory::createFromWkt( (char **) &pszGeomText,
-                                               NULL, &poGeom );
+            eErr =
+                OGRGeometryFactory::createFromWkt((char **) &pszGeomText,
+                                                  NULL, &poGeom);
         }
         else if( pszGeomText != NULL && bGeomColumnWKB )
         {
             int nLength = poStmt->GetColDataLength( iField );
 
-            OGRGeometryFactory::createFromWkb( (unsigned char *) pszGeomText,
-                                               NULL, &poGeom, nLength );
+            eErr =
+                OGRGeometryFactory::createFromWkb((unsigned char *) pszGeomText,
+                                                  NULL, &poGeom, nLength);
         }
         
+        if ( eErr != OGRERR_NONE )
+        {
+            const char *pszMessage;
+
+            switch ( eErr )
+            {
+                case OGRERR_NOT_ENOUGH_DATA:
+                    pszMessage = "Not enough data to deserialize";
+                    break;
+                case OGRERR_UNSUPPORTED_GEOMETRY_TYPE:
+                    pszMessage = "Unsupported geometry type";
+                    break;
+                case OGRERR_CORRUPT_DATA:
+                    pszMessage = "Corrupt data";
+                default:
+                    pszMessage = "Unrecognized error";
+            }
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GetNextRawFeature(): %s", pszMessage);
+        }
+
         if( poGeom != NULL )
             poFeature->SetGeometryDirectly( poGeom );
     }
@@ -374,3 +404,4 @@ OGRSpatialReference *OGRODBCLayer::GetSpatialRef()
 {
     return poSRS;
 }
+
