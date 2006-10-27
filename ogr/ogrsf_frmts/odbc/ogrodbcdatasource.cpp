@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/10/27 17:03:55  dron
+ * Added support for reading spatial reference table; memory leaks removed.
+ *
  * Revision 1.10  2005/10/24 04:36:38  fwarmerdam
  * support passing geometry column with table name in datasource name
  *
@@ -112,27 +115,59 @@ OGRODBCDataSource::~OGRODBCDataSource()
 /************************************************************************/
 
 int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
-                              int bTestOpen )
+                             int bTestOpen )
 
 {
     CPLAssert( nLayers == 0 );
+
+/* -------------------------------------------------------------------- */
+/*      Start parsing dataset name from the end of string, fetching     */
+/*      the name of spatial reference table and names for SRID and      */
+/*      SRTEXT columns first.                                           */
+/* -------------------------------------------------------------------- */
+    char *pszWrkName = CPLStrdup( pszNewName + 5 ); // Skip the 'ODBC:' part
+    char **papszTables = NULL;
+    char **papszGeomCol = NULL;
+    char *pszSRSTableName = NULL;
+    char *pszSRIDCol = NULL, *pszSRTextCol = NULL;
+    char *pszDelimiter;
+
+    if ( (pszDelimiter = strrchr( pszWrkName, ':' )) != NULL )
+    {
+        char *pszOBracket = strchr( pszDelimiter + 1, '(' );
+        if( pszOBracket == NULL )
+            pszSRSTableName = CPLStrdup( pszDelimiter + 1 );
+        else
+        {
+            char *pszCBracket = strchr( pszOBracket, ')' );
+            if( pszCBracket != NULL )
+                *pszCBracket = '\0';
+
+            char *pszComma = strchr( pszOBracket, ',' );
+            if( pszComma != NULL )
+            {
+                *pszComma = '\0';
+                pszSRIDCol = CPLStrdup( pszComma + 1 );
+            }
+            
+            *pszOBracket = '\0';
+            pszSRSTableName = CPLStrdup( pszDelimiter + 1 );
+            pszSRTextCol = CPLStrdup( pszOBracket + 1 );
+        }
+        *pszDelimiter = '\0';
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Strip off any comma delimeted set of tables names to access     */
 /*      from the end of the string first.  Also allow an optional       */
 /*      bracketed geometry column name after the table name.            */
 /* -------------------------------------------------------------------- */
-    char *pszWrkName = CPLStrdup( pszNewName );
-    char **papszTables = NULL;
-    char **papszGeomCol = NULL;
-    char *pszComma;
-
-    while( (pszComma = strrchr( pszWrkName, ',' )) != NULL )
+    while( (pszDelimiter = strrchr( pszWrkName, ',' )) != NULL )
     {
-        char *pszOBracket = strstr(pszComma+1,"(");
+        char *pszOBracket = strstr( pszDelimiter + 1, "(" );
         if( pszOBracket == NULL )
         {
-            papszTables = CSLAddString( papszTables, pszComma + 1 );
+            papszTables = CSLAddString( papszTables, pszDelimiter + 1 );
             papszGeomCol = CSLAddString( papszGeomCol, "" );
         }
         else
@@ -143,10 +178,10 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
                 *pszCBracket = '\0';
             
             *pszOBracket = '\0';
-            papszTables = CSLAddString( papszTables, pszComma + 1 );
+            papszTables = CSLAddString( papszTables, pszDelimiter + 1 );
             papszGeomCol = CSLAddString( papszGeomCol, pszOBracket+1 );
         }
-        *pszComma = '\0';
+        *pszDelimiter = '\0';
     }
 
 /* -------------------------------------------------------------------- */
@@ -158,24 +193,24 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
     char *pszPassword = NULL;
     char *pszDSN = NULL;
 
-    if( strstr(pszWrkName+5,"@") == NULL )
+    if( strstr(pszWrkName,"@") == NULL )
     {
-        pszDSN = CPLStrdup(pszWrkName+5);
+        pszDSN = CPLStrdup( pszWrkName );
     }
     else
     {
         char *pszTarget;
 
-        pszDSN = CPLStrdup(strstr(pszWrkName+5,"@")+1);
-        if( pszWrkName[5] == '/' )
+        pszDSN = CPLStrdup(strstr(pszWrkName, "@") + 1);
+        if( *pszWrkName == '/' )
         {
-            pszPassword = CPLStrdup(pszWrkName + 6);
+            pszPassword = CPLStrdup(pszWrkName + 1);
             pszTarget = strstr(pszPassword,"@");
             *pszTarget = '\0';
         }
         else
         {
-            pszUserid = CPLStrdup(pszWrkName+5);
+            pszUserid = CPLStrdup(pszWrkName);
             pszTarget = strstr(pszUserid,"@");
             *pszTarget = '\0';
 
@@ -193,8 +228,10 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 /* -------------------------------------------------------------------- */
 /*      Initialize based on the DSN.                                    */
 /* -------------------------------------------------------------------- */
-    CPLDebug( "ODBC", "EstablishSession(%s,%s,%s)", 
-              pszDSN, pszUserid, pszPassword );
+    CPLDebug( "OGR_ODBC",
+              "EstablishSession(DSN:\"%s\", userid:\"%s\", password:\"%s\")", 
+              pszDSN, pszUserid ? pszUserid : "",
+              pszPassword ? pszPassword : "" );
 
     if( !oSession.EstablishSession( pszDSN, pszUserid, pszPassword ) )
     {
@@ -202,6 +239,8 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
                   "Unable to initialize ODBC connection to DSN for %s,\n"
                   "%s", 
                   pszNewName+5, oSession.GetLastError() );
+        CSLDestroy( papszTables );
+        CSLDestroy( papszGeomCol );
         CPLFree( pszDSN );
         CPLFree( pszUserid );
         CPLFree( pszPassword );
@@ -270,7 +309,79 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
         else
             OpenTable( papszTables[iTable], NULL, bUpdate );
     }
-    
+
+    CSLDestroy( papszTables );
+    CSLDestroy( papszGeomCol );
+
+/* -------------------------------------------------------------------- */
+/*      If no explicit list of tables was given, check for a list in    */
+/*      a geometry_columns table.                                       */
+/* -------------------------------------------------------------------- */
+    if ( pszSRSTableName )
+    {
+        CPLODBCStatement oSRSList( &oSession );
+
+        if ( !pszSRTextCol )
+            pszSRTextCol = CPLStrdup( "srtext" );
+        if ( !pszSRIDCol )
+            pszSRIDCol = CPLStrdup( "srid" );
+
+        oSRSList.Append( "SELECT " );
+        oSRSList.Append( pszSRIDCol );
+        oSRSList.Append( "," );
+        oSRSList.Append( pszSRTextCol );
+        oSRSList.Append( " FROM " );
+        oSRSList.Append( pszSRSTableName );
+
+        CPLDebug( "OGR_ODBC", "ExecuteSQL(%s) to read SRS table",
+                  oSRSList.GetCommand() );
+        if ( oSRSList.ExecuteSQL() )
+        {
+            int nRows = 256;     // A reasonable number of SRIDs to start from
+            panSRID = (int *)CPLMalloc( nRows * sizeof(int) );
+            papoSRS = (OGRSpatialReference **)
+                CPLMalloc( nRows * sizeof(OGRSpatialReference*) );
+
+            while ( oSRSList.Fetch() )
+            {
+                char *pszSRID = (char *) oSRSList.GetColData( pszSRIDCol );
+                if ( !pszSRID )
+                    continue;
+
+                char *pszSRText = (char *) oSRSList.GetColData( pszSRTextCol );
+
+                if ( pszSRText )
+                {
+                    if ( nKnownSRID > nRows )
+                    {
+                        nRows *= 2;
+                        panSRID = (int *)CPLRealloc( panSRID,
+                                                     nRows * sizeof(int) );
+                        papoSRS = (OGRSpatialReference **)
+                            CPLRealloc( papoSRS,
+                            nRows * sizeof(OGRSpatialReference*) );
+                    }
+                    panSRID[nKnownSRID] = atoi( pszSRID );
+                    papoSRS[nKnownSRID] = new OGRSpatialReference();
+                    if ( papoSRS[nKnownSRID]->importFromWkt( &pszSRText )
+                         != OGRERR_NONE )
+                    {
+                        delete papoSRS[nKnownSRID];
+                        continue;
+                    }
+                    nKnownSRID++;
+                }
+            }
+        }
+    }
+
+    if ( pszSRIDCol )
+        CPLFree( pszSRIDCol );
+    if ( pszSRTextCol )
+        CPLFree( pszSRTextCol );
+    if ( pszSRSTableName )
+        CPLFree( pszSRSTableName );
+
     return TRUE;
 }
 

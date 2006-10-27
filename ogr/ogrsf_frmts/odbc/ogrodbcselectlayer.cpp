@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/10/27 17:03:55  dron
+ * Added support for reading spatial reference table; memory leaks removed.
+ *
  * Revision 1.4  2006/05/15 18:14:31  fwarmerdam
  * Use generic mechanism for SetAttributeFilter() (bug 1185)
  *
@@ -115,7 +118,7 @@ OGRErr OGRODBCSelectLayer::ResetStatement()
 
     iNextShapeId = 0;
 
-    CPLDebug( "ODBC", "Recreating statement." );
+    CPLDebug( "OGR_ODBC", "Recreating statement." );
     poStmt = new CPLODBCStatement( poDS->GetSession() );
     poStmt->Append( pszBaseStatement );
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/10/27 17:03:55  dron
+ * Added support for reading spatial reference table; memory leaks removed.
+ *
  * Revision 1.8  2006/05/15 18:14:30  fwarmerdam
  * Use generic mechanism for SetAttributeFilter() (bug 1185)
  *
@@ -62,7 +65,7 @@
 #include "cpl_error.h"
 
 /************************************************************************/
-/*                            OGRODBCLayer                                */
+/*                            OGRODBCLayer                              */
 /************************************************************************/
 
 class OGRODBCDataSource;
@@ -111,7 +114,7 @@ class OGRODBCLayer : public OGRLayer
 };
 
 /************************************************************************/
-/*                           OGRODBCTableLayer                            */
+/*                           OGRODBCTableLayer                          */
 /************************************************************************/
 
 class OGRODBCTableLayer : public OGRODBCLayer
@@ -189,7 +192,7 @@ class OGRODBCSelectLayer : public OGRODBCLayer
 };
 
 /************************************************************************/
-/*                           OGRODBCDataSource                            */
+/*                           OGRODBCDataSource                          */
 /************************************************************************/
 
 class OGRODBCDataSource : public OGRDataSource

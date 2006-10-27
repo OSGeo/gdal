@@ -14,7 +14,7 @@ support is potentially available on Unix and Windows platforms, but is
 only included in unix builds by special configuration options.<p>
 
 ODBC datasources are accessed using a datasource name of the form
-<b>ODBC:<i>userid</i>/<i>password</i>@<i>dsn</i>,<i>tablename(geometrycolname)...</i></b>.
+<b>ODBC:<i>userid</i>/<i>password</i>@<i>dsn</i>,<i>tablename(geometrycolname),...</i>:<i>srs_tablename(sridcolumn,srtextcolumn)</i></b>.
 With optional items dropped the following are also acceptable:
 
 <ul>
@@ -22,6 +22,7 @@ With optional items dropped the following are also acceptable:
 <li> <b>ODBC:<i>userid</i>@<i>dsn</i>,<i>table_list</i></b>
 <li> <b>ODBC:<i>dsn</i>,<i>table_list</i></b>
 <li> <b>ODBC:<i>dsn</i></b>
+<li> <b>ODBC:<i>dsn</i>,<i>table_list</i>:<i>srs_tablename</i></b>
 </ul>
 
 The <b><i>dsn</i></b> is the ODBC Data Source Name.  Normally ODBC datasources
