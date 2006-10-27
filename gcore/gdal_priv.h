@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.75  2006/10/27 03:39:05  fwarmerdam
+ * added GDALParseGMLCoverage
+ *
  * Revision 1.74  2006/07/13 15:27:14  fwarmerdam
  * Implement ComputeStatistics method
  *
@@ -726,6 +729,15 @@ int CPL_DLL GDALOvLevelAdjust( int nOvLevel, int nXSize );
 GDALDataset CPL_DLL *
 GDALFindAssociatedAuxFile( const char *pszBasefile, GDALAccess eAccess );
 
+/* ==================================================================== */
+/*      Misc functions.                                                 */
+/* ==================================================================== */
+
+CPLErr CPL_DLL GDALParseGMLCoverage( CPLXMLNode *psTree, 
+                                     int *pnXSize, int *pnYSize,
+                                     double *padfGeoTransform,
+                                     char **ppszProjection );
+                                  
 CPL_C_END
 
 #endif /* ndef GDAL_PRIV_H_INCLUDED */
