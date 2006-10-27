@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2006/10/27 04:39:53  fwarmerdam
+ * Close comment.
+ *
  * Revision 1.37  2006/10/27 03:34:47  fwarmerdam
  * Avoid warnings in RemoveDriver().
  *
@@ -180,7 +183,7 @@ CPL_CVSID("$Id$");
 #define SQLColumns_CHAR_OCTET_LENGTH 16
 #define SQLColumns_ORDINAL_POSITION 17
 #define SQLColumns_IS_NULLABLE 18
-#endif /* ndef SQLColumns_TABLE_CAT
+#endif /* ndef SQLColumns_TABLE_CAT */
 
 /************************************************************************/
 /*                           CPLODBCDriverInstaller()                   */
