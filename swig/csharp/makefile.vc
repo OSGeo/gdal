@@ -83,12 +83,17 @@ interface:
 
 samples:
     $(CSC) /r:gdal_ogr_csharp.dll /out:ogrinfo.exe apps\ogrinfo.cs
+    $(CSC) /r:gdal_ogr_csharp.dll /out:createdata.exe apps\createdata.cs
     $(CSC) /r:gdal_osr_csharp.dll /out:OSRTransform.exe apps\OSRTransform.cs
     
 test:
 !IFDEF MONO
-	mono OSRTransform.exe
+	mono createdata.exe Data pointlayer
+    mono ogrinfo.exe Data/pointlayer.shp
+    mono OSRTransform.exe
 !ELSE
+    createdata.exe Data pointlayer
+    ogrinfo.exe Data/pointlayer.shp
 	OSRTransform.exe
 !ENDIF
 	
