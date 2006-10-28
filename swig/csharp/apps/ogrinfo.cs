@@ -45,7 +45,8 @@ class OGRInfo {
 			Console.WriteLine("Can't get driver.");
 			System.Environment.Exit(-1);
 		}
-		Console.WriteLine("Using driver " + drv.name);
+        // TODO: drv.name is still unsafe
+		//Console.WriteLine("Using driver " + drv.name);
 		/* -------------------------------------------------------------------- */
 		/*      Iterating through the layers                                    */
 		/* -------------------------------------------------------------------- */	
