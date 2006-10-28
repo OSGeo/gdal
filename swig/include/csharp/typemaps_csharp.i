@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.11  2006/10/28 20:40:55  tamas
+ * Added typemaps for char **options
+ *
  * Revision 1.10  2006/09/09 21:06:32  tamas
  * Added preliminary SWIGTYPE *DISOWN support.
  *
@@ -107,6 +110,7 @@ OGRErrMessages( int rc ) {
 %typemap(in) (tostring argin) (string str)
 {
   /* %typemap(in) (tostring argin) */
+  $1 = ($1_ltype)$input;
 }
 
 %typemap(in) (char **ignorechange) ( char *val )
@@ -205,15 +209,44 @@ OGRErrMessages( int rc ) {
 
 OPTIONAL_POD(int,i);
 
+/******************************************************************************
+ * Marshaler for NULL terminated string arrays                                *
+ *****************************************************************************/
+
+%pragma(csharp) imclasscode=%{
+  public class StringListMarshal : IDisposable {
+    public readonly IntPtr[] _ar;
+    public StringListMarshal(string[] ar) {
+      _ar = new IntPtr[ar.Length+1];
+      for (int cx = 0; cx < ar.Length; cx++) {
+	      _ar[cx] = System.Runtime.InteropServices.Marshal.StringToHGlobalAnsi(ar[cx]);
+      }
+      _ar[ar.Length] = IntPtr.Zero;
+    }
+    public virtual void Dispose() {
+	  for (int cx = 0; cx < _ar.Length-1; cx++) {
+          System.Runtime.InteropServices.Marshal.FreeHGlobal(_ar[cx]);
+      }
+      GC.SuppressFinalize(this);
+    }
+  }
+%}
+
+
 /*
  * Typemap for char** options
  */
-%typemap(in) char **options
-{
-  /* %typemap(in) char **options */
-  /* Check if is a list */
-  $1 = ($1_ltype)$input;
+
+%typemap(imtype, out="IntPtr") char **options "IntPtr[]"
+%typemap(cstype) char **options %{string[]%}
+%typemap(in) char **options %{ $1 = ($1_ltype)$input; %}
+%typemap(out) char **options %{ $result = $1; %}
+%typemap(csin) char **options "new $modulePINVOKE.StringListMarshal($csinput)._ar"
+%typemap(csout, excode=SWIGEXCODE) char**options {
+    $excode
+    throw new System.NotSupportedException("Returning string arrays is not implemented yet.");
 }
+ 
 %typemap(freearg) char **options
 {
   /* %typemap(freearg) char **options */
