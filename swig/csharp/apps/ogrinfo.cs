@@ -1,30 +1,43 @@
 using System;
+
 using OGR;
 
+
 /**
+
  * <p>Title: GDAL C# ogrinfo example.</p>
  * <p>Description: A sample app to dump information from a spatial data source.</p>
  * @author Tamas Szekeres (szekerest@gmail.com)
  * @version 1.0
  */
 
+
+
 /// <summary>
 /// A C# based sample to dump information from a data source.
 /// </summary> 
+
 class OGRInfo {
 	
 	public static void usage() 
+
 	{ 
 		Console.WriteLine("usage: ogrinfo {data source name}");
 		System.Environment.Exit(-1);
 	}
  
 	public static void Main(string[] args) {
+
 		if (args.Length != 1) usage();
+
+        // Using early initialization of System.Console
+        Console.WriteLine("");
+
 		/* -------------------------------------------------------------------- */
 		/*      Register format(s).                                             */
 		/* -------------------------------------------------------------------- */
 		ogr.RegisterAll();
+
 		/* -------------------------------------------------------------------- */
 		/*      Open data source.                                               */
 		/* -------------------------------------------------------------------- */
@@ -45,11 +58,13 @@ class OGRInfo {
 			Console.WriteLine("Can't get driver.");
 			System.Environment.Exit(-1);
 		}
-        // TODO: drv.name is still unsafe
-		//Console.WriteLine("Using driver " + drv.name);
+        // TODO: drv.name is still unsafe with lazy initialization (Bug 1339)
+        Console.WriteLine("Using driver " + drv.name);
+
 		/* -------------------------------------------------------------------- */
 		/*      Iterating through the layers                                    */
 		/* -------------------------------------------------------------------- */	
+
 		for( int iLayer = 0; iLayer < ds.GetLayerCount(); iLayer++ )
 		{
 			Layer layer = ds.GetLayerByIndex(iLayer);
@@ -62,6 +77,7 @@ class OGRInfo {
 			ReportLayer(layer);
 		}
 	}
+
 	public static void ReportLayer(Layer layer)
 	{
 		FeatureDefn def = layer.GetLayerDefn();
