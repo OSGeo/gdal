@@ -1,46 +1,61 @@
 using System;
+
 using OGR;
 
+
 /**
+
  * <p>Title: GDAL C# ogrinfo example.</p>
  * <p>Description: A sample app to create a spatial data source and a layer.</p>
  * @author Tamas Szekeres (szekerest@gmail.com)
  * @version 1.0
  */
 
+
+
 /// <summary>
 /// A C# based sample to create a layer.
 /// </summary> 
+
 class CreateData {
 	
 	public static void usage() 
+
 	{ 
 		Console.WriteLine("usage: ogrinfo {data source name} {layername}");
 		System.Environment.Exit(-1);
 	}
  
 	public static void Main(string[] args) {
+
 		if (args.Length != 2) usage();
+
+        // Using early initialization of System.Console
+        Console.WriteLine("");
+
 		/* -------------------------------------------------------------------- */
 		/*      Register format(s).                                             */
 		/* -------------------------------------------------------------------- */
-		ogr.RegisterAll();
+        ogr.RegisterAll();
 
 		/* -------------------------------------------------------------------- */
 		/*      Get driver                                                      */
 		/* -------------------------------------------------------------------- */	
-		Driver drv = ogr.GetDriverByName("ESRI Shapefile");
+        Driver drv = ogr.GetDriverByName("ESRI Shapefile");
 
 		if (drv == null) 
 		{
 			Console.WriteLine("Can't get driver.");
-			System.Environment.Exit(-1);
+            System.Environment.Exit(-1);
 		}
-        // TODO: drv.name is still unsafe
-        //Console.WriteLine("Using driver " + drv.name);
+
+        // TODO: drv.name is still unsafe with lazy initialization (Bug 1339)
+        Console.WriteLine("Using driver " + drv.name);
+
 		/* -------------------------------------------------------------------- */
 		/*      Creating the datasource                                         */
 		/* -------------------------------------------------------------------- */	
+
         DataSource ds = drv.CreateDataSource( args[0], new string[] {} );
         if (drv == null) 
         {
@@ -98,6 +113,7 @@ class CreateData {
         
 		ReportLayer(layer);
 	}
+
 	public static void ReportLayer(Layer layer)
 	{
 		FeatureDefn def = layer.GetLayerDefn();
