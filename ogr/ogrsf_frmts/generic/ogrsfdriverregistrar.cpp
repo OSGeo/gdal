@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2006/10/30 15:14:46  hobu
+ * turn on the $HOME finding stuff in AutoLoadDrivers and
+ * make sure it looks for lib/gdalplugins.  (bug 1299)
+ *
  * Revision 1.23  2005/10/28 16:47:02  fwarmerdam
  * Added OGRCleanupAll()
  *
@@ -677,13 +681,13 @@ void OGRSFDriverRegistrar::AutoLoadDrivers()
         }
 #endif
 
-#ifdef notdef
+
         if( strlen(GetHome()) > 0 )
         {
             papszSearchPath = CSLAddString( papszSearchPath, 
-                                  CPLFormFilename( GetHome(), "lib", NULL ) );
+                                  CPLFormFilename( GetHome(), "lib/gdalplugins", NULL ) );
         }
-#endif
+
     }
 
 /* -------------------------------------------------------------------- */
