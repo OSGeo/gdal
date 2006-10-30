@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/10/30 16:06:54  hobu
+ * switch off for now until we figure out a GetHome
+ *
  * Revision 1.24  2006/10/30 15:14:46  hobu
  * turn on the $HOME finding stuff in AutoLoadDrivers and
  * make sure it looks for lib/gdalplugins.  (bug 1299)
@@ -681,13 +684,13 @@ void OGRSFDriverRegistrar::AutoLoadDrivers()
         }
 #endif
 
-
+#ifdef notdef
         if( strlen(GetHome()) > 0 )
         {
             papszSearchPath = CSLAddString( papszSearchPath, 
                                   CPLFormFilename( GetHome(), "lib/gdalplugins", NULL ) );
         }
-
+#endif
     }
 
 /* -------------------------------------------------------------------- */
