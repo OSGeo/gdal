@@ -7,7 +7,7 @@
 
 Author: Frank Warmerdam<br>
 Contact: warmerdam@pobox.com<br>
-Status: Proposed<br>
+Status: Adopted<br>
 
 \section rfc3_purpose Purpose
 
@@ -155,6 +155,7 @@ agree to adhere to them.  The SVN administrator will be responsible for
 checking with each person.  
 
 <ul>
+<li> Daniel Morissette
 <li> Frank Warmerdam
 <li> Gillian Walter
 <li> Andrey Kiselev
