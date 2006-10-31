@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/10/31 21:06:58  fwarmerdam
+ * modified to strip namespaces from features and attributes
+ *
  * Revision 1.7  2006/10/10 18:00:03  fwarmerdam
  * restructure geometry formtation to support very large geometries
  *
@@ -96,7 +99,7 @@ void GMLHandler::startElement(const XMLCh* const    uri,
     char        szElementName[MAX_TOKEN_SIZE];
     GMLReadState *poState = m_poReader->GetState();
 
-    tr_strcpy( szElementName, qname );
+    tr_strcpy( szElementName, localname );
 
 /* -------------------------------------------------------------------- */
 /*      If we are in the midst of collecting a feature attribute        */
@@ -173,7 +176,7 @@ void GMLHandler::endElement(const   XMLCh* const    uri,
     char        szElementName[MAX_TOKEN_SIZE];
     GMLReadState *poState = m_poReader->GetState();
 
-    tr_strcpy( szElementName, qname );
+    tr_strcpy( szElementName, localname );
 
 /* -------------------------------------------------------------------- */
 /*      Is this closing off an attribute value?  We assume so if        */
@@ -317,9 +320,6 @@ void GMLHandler::fatalError( const SAXParseException &exception)
 int GMLHandler::IsGeometryElement( const char *pszElement )
 
 {
-    if( EQUALN(pszElement,"gml:",4) )
-        pszElement += 4;
-
     return EQUAL(pszElement,"Polygon") 
         || EQUAL(pszElement,"MultiPolygon") 
         || EQUAL(pszElement,"MultiPoint") 
