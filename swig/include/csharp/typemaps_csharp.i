@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.14  2006/11/01 00:32:14  tamas
+ * Typemaps for 'out double' and 'out int'
+ *
  * Revision 1.13  2006/11/01 00:04:47  tamas
  * More typemaps for 'out string'
  *
@@ -371,6 +374,34 @@ OPTIONAL_POD(int,i);
 %typemap(in) (double *defaultval)
 {
   /* %typemap(in) (double inout[ANY]) */
+  $1 = ($1_ltype)$input;
+}
+
+/*
+ * Typemap for out double.
+ */
+
+%typemap(imtype) (double *val), (double *min), (double *max), (double *mean), (double *stddev) "out double"
+%typemap(cstype) (double *val), (double *min), (double *max), (double *mean), (double *stddev) "out double"
+%typemap(csin) (double *val), (double *min), (double *max), (double *mean), (double *stddev) "out $csinput"
+
+%typemap(in) (double *val), (double *min), (double *max), (double *mean), (double *stddev)
+{
+  /* %typemap(in) (double *val) */
+  $1 = ($1_ltype)$input;
+}
+
+/*
+ * Typemap for 'out int'.
+ */
+
+%typemap(imtype) (int *hasval)  "out int"
+%typemap(cstype) (int *hasval) "out int"
+%typemap(csin) (int *hasval)  "out $csinput"
+
+%typemap(in) (int *hasval)
+{
+  /* %typemap(in) (int *hasval) */
   $1 = ($1_ltype)$input;
 }
 
