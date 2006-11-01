@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2006/11/01 04:45:48  fwarmerdam
+ * Fixed erwflag error.
+ *
  * Revision 1.60  2006/10/20 04:33:12  fwarmerdam
  * Removed extra newline after gdalopen debug statement.
  *
@@ -1317,7 +1320,7 @@ CPLErr GDALDataset::IRasterIO( GDALRWFlag eRWFlag,
  *
  * This method is the same as the C GDALDatasetRasterIO() function.
  *
- * @param eRWFlag Either GF_Read to read a region of data, or GT_Write to
+ * @param eRWFlag Either GF_Read to read a region of data, or GF_Write to
  * write a region of data.
  *
  * @param nXOff The pixel offset to the top left corner of the region
