@@ -52,16 +52,26 @@ dnl switch between libtool and native build system
 AC_ARG_WITH(libtool, [  --without-libtool          Don't use libtool to build the library],,)
 
 if test "$with_libtool" = "no"; then
-  AC_PROG_RANLIB
-  AC_COMPILER_PIC
-  AC_LD_SHARED
+AC_PROG_RANLIB
+AC_COMPILER_PIC
+AC_LD_SHARED
 else
-  with_libtool=yes
+with_libtool=yes
 fi
 AC_SUBST(HAVE_LIBTOOL,$with_libtool)
 
 dnl Checks for libraries.
 AC_CHECK_LIB(dl,dlopen,,,)
+
+dnl Look for version information
+GDAL_VERSION_MAJOR=`grep "#*define.GDAL_VERSION_MAJOR.*" gcore/gdal_version.h | awk '{print $4}'`
+GDAL_VERSION_MINOR=`grep "#*define.GDAL_VERSION_MINOR.*" gcore/gdal_version.h | awk '{print $4}'`
+GDAL_VERSION_REV=`grep "#*define.GDAL_VERSION_REV.*" gcore/gdal_version.h | awk '{print $4}'`
+AC_MSG_RESULT([checking GDAL version information from gdal_version.h: '$GDAL_VERSION_MAJOR.$GDAL_VERSION_MINOR.$GDAL_VERSION_REV'])
+AC_SUBST(GDAL_VERSION_MAJOR,    "$GDAL_VERSION_MAJOR")
+AC_SUBST(GDAL_VERSION_MINOR,    "$GDAL_VERSION_MINOR")
+AC_SUBST(GDAL_VERSION_REV,    "$GDAL_VERSION_REV")
+
 
 dnl Needed on Solaris. 
 AC_CHECK_LIB(rt,nanosleep,,,)
