@@ -63,16 +63,6 @@ AC_SUBST(HAVE_LIBTOOL,$with_libtool)
 dnl Checks for libraries.
 AC_CHECK_LIB(dl,dlopen,,,)
 
-dnl Look for version information
-GDAL_VERSION_MAJOR=`grep "#*define.GDAL_VERSION_MAJOR.*" gcore/gdal_version.h | awk '{print $4}'`
-GDAL_VERSION_MINOR=`grep "#*define.GDAL_VERSION_MINOR.*" gcore/gdal_version.h | awk '{print $4}'`
-GDAL_VERSION_REV=`grep "#*define.GDAL_VERSION_REV.*" gcore/gdal_version.h | awk '{print $4}'`
-AC_MSG_RESULT([checking GDAL version information from gdal_version.h: '$GDAL_VERSION_MAJOR.$GDAL_VERSION_MINOR.$GDAL_VERSION_REV'])
-AC_SUBST(GDAL_VERSION_MAJOR,    "$GDAL_VERSION_MAJOR")
-AC_SUBST(GDAL_VERSION_MINOR,    "$GDAL_VERSION_MINOR")
-AC_SUBST(GDAL_VERSION_REV,    "$GDAL_VERSION_REV")
-
-
 dnl Needed on Solaris. 
 AC_CHECK_LIB(rt,nanosleep,,,)
 
@@ -1789,25 +1779,30 @@ dnl ---------------------------------------------------------------------------
 dnl Get/override version.
 dnl ---------------------------------------------------------------------------
 
-AC_MSG_CHECKING([GDAL version])
 
-AC_ARG_WITH(gdal-ver,[  --with-gdal-ver=ARG  Override  VERSION file],,)
+AC_ARG_WITH(gdal-ver,[  --with-gdal-ver=ARG  Override GDAL version ],,)
+GDAL_VERSION_MAJOR=`grep "#*define.GDAL_VERSION_MAJOR.*" gcore/gdal_version.h | awk '{print $4}'`
+GDAL_VERSION_MINOR=`grep "#*define.GDAL_VERSION_MINOR.*" gcore/gdal_version.h | awk '{print $4}'`
+GDAL_VERSION_REV=`grep "#*define.GDAL_VERSION_REV.*" gcore/gdal_version.h | awk '{print $4}'`
+
+AC_MSG_RESULT([checking GDAL version information from gdal_version.h: $GDAL_VERSION_MAJOR.$GDAL_VERSION_MINOR.$GDAL_VERSION_REV])
+
+AC_SUBST(GDAL_VERSION_MAJOR,    "$GDAL_VERSION_MAJOR")
+AC_SUBST(GDAL_VERSION_MINOR,    "$GDAL_VERSION_MINOR")
+AC_SUBST(GDAL_VERSION_REV,    "$GDAL_VERSION_REV")
 
 if test "x$with_gdal_ver" != "x"; then
 
   GDAL_VER=$with_gdal_ver
-
+  AC_MSG_RESULT([  overridden GDAL version: $GDAL_VER])
 else
 
-  GDAL_VER=`cat VERSION`
+  GDAL_VER=$GDAL_VERSION_MAJOR.$GDAL_VERSION_MINOR.$GDAL_VERSION_REV
 
 fi
 
-AC_MSG_RESULT($GDAL_VER)
-
-AC_SUBST(GDAL_VER)
-
-
+AC_SUBST(GDAL_VER, $GDAL_VER)
+echo $GDAL_VER > VERSION
 dnl ---------------------------------------------------------------------------
 
 AC_COMPILER_WFLAGS
