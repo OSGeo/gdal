@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2006/11/01 17:38:41  fwarmerdam
+ * Removed Register e00 commented out call.  handled via avc call.
+ *
  * Revision 1.31  2006/06/07 14:39:09  mloskot
  * Added new KML (Beta) driver to OGR. Thanks to Christopher Condit - the author of KML drvier.
  *
@@ -219,7 +222,5 @@ void OGRRegisterAll()
     RegisterOGRFME();
 #endif
     
-//    RegisterOGRE00();
-
 } /* OGRRegisterAll */
 
