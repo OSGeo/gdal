@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.79  2006/11/01 04:46:11  fwarmerdam
+ * Fixed eRWFlag problem.
+ *
  * Revision 1.78  2006/07/13 15:27:14  fwarmerdam
  * Implement ComputeStatistics method
  *
@@ -197,7 +200,7 @@ GDALRasterBand::~GDALRasterBand()
  *
  * This method is the same as the C GDALRasterIO() function.
  *
- * @param eRWFlag Either GF_Read to read a region of data, or GT_Write to
+ * @param eRWFlag Either GF_Read to read a region of data, or GF_Write to
  * write a region of data.
  *
  * @param nXOff The pixel offset to the top left corner of the region
