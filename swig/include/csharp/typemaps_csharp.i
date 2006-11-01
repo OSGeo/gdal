@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.13  2006/11/01 00:04:47  tamas
+ * More typemaps for 'out string'
+ *
  * Revision 1.12  2006/10/31 23:23:08  tamas
  * Typemaps for GIntBig
  *
@@ -212,6 +215,20 @@ OGRErrMessages( int rc ) {
 
 OPTIONAL_POD(int,i);
 
+/*
+ * Typemap for GIntBig (int64)
+ */
+
+%typemap(ctype, out="GIntBig") GIntBig  %{GIntBig%}
+%typemap(imtype, out="long") GIntBig "long"
+%typemap(cstype) GIntBig %{long%}
+%typemap(out) GIntBig %{ $result = $1; %}
+%typemap(csout, excode=SWIGEXCODE) GIntBig {
+    long res = $imcall;$excode
+    return res;
+}
+
+
 /******************************************************************************
  * Marshaler for NULL terminated string arrays                                *
  *****************************************************************************/
@@ -236,19 +253,6 @@ OPTIONAL_POD(int,i);
 %}
 
 /*
- * Typemap for GIntBig (int64)
- */
-
-%typemap(ctype, out="GIntBig") GIntBig  %{GIntBig%}
-%typemap(imtype, out="long") GIntBig "long"
-%typemap(cstype) GIntBig %{long%}
-%typemap(out) GIntBig %{ $result = $1; %}
-%typemap(csout, excode=SWIGEXCODE) GIntBig {
-    long res = $imcall;$excode
-    return res;
-}
-
-/*
  * Typemap for char** options
  */
 
@@ -271,16 +275,16 @@ OPTIONAL_POD(int,i);
 /*
  * Typemap for char **argout. 
  */
-%typemap(imtype) (char **argout) "out string"
-%typemap(cstype) (char **argout) "out string"
-%typemap(csin) (char** argout) "out $csinput"
+%typemap(imtype) (char **argout), (char **username), (char **usrname), (char **type) "out string"
+%typemap(cstype) (char **argout), (char **username), (char **usrname), (char **type) "out string"
+%typemap(csin) (char** argout), (char **username), (char **usrname), (char **type) "out $csinput"
   
-%typemap(in) (char **argout)
+%typemap(in) (char **argout), (char **username), (char **usrname), (char **type)
 {
   /* %typemap(in) (char **argout) */
 	$1 = ($1_ltype)$input;
 }
-%typemap(argout) (char **argout)
+%typemap(argout) (char **argout), (char **username), (char **usrname), (char **type)
 {
   /* %typemap(argout) (char **argout) */
   char* temp_string;
@@ -289,7 +293,7 @@ OPTIONAL_POD(int,i);
 		free(*$1);
   *$1 = temp_string;
 }
-%typemap(freearg) (char **argout)
+%typemap(freearg) (char **argout), (char **username), (char **usrname), (char **type)
 {
   /* %typemap(freearg) (char **argout) */
 }
