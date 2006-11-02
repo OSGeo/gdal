@@ -1803,7 +1803,21 @@ fi
 
 AC_SUBST(GDAL_VER, $GDAL_VER)
 echo $GDAL_VER > VERSION
+
 dnl ---------------------------------------------------------------------------
+dnl MacOS X Framework Build
+
+if test ! -z "`uname | grep Darwin`" ; then
+  AC_ARG_WITH(,[  --with-macosx-framework         Build and install GDAL as a Mac OS X Framework],,)
+  AC_MSG_CHECKING([for Mac OS X Framework build])
+  if test "$with_macosx_framework" = yes -o x"$with_macosx_framework" = x ; then
+    MACOSX_FRAMEWORK=yes
+    AC_MSG_RESULT([enabled])
+  else
+    AC_MSG_RESULT([disabled])
+  fi
+  AC_SUBST(MACOSX_FRAMEWORK, $MACOSX_FRAMEWORK)
+fi
 
 AC_COMPILER_WFLAGS
 
@@ -1989,6 +2003,9 @@ LOC_MSG([  PANORAMA GIS support:      ${HAVE_PANORAMA}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS}])
 LOC_MSG()
 LOC_MSG([  Statically link PROJ.4:    ${PROJ_STATIC}])
+if test ! -z "`uname | grep Darwin`" ; then
+  LOC_MSG([  Mac OS X Framework :       ${MACOSX_FRAMEWORK}])
+fi
 LOC_MSG()
 LOC_MSG([  Traditional Python:        ${HAVE_PYTHON}])
 LOC_MSG([  NG SWIG Bindings:          ${BINDINGS}])
