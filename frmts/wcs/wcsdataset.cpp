@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/11/02 02:39:50  fwarmerdam
+ * enable online help pointer
+ *
  * Revision 1.1  2006/10/27 02:15:56  fwarmerdam
  * New
  *
@@ -964,9 +967,9 @@ void GDALRegister_WCS()
         
         poDriver->SetDescription( "WCS" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "OGC Web Coverage Server" );
-//        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
-//                                   "frmt_wcs.html" );
+                                   "OGC Web Coverage Service" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_wcs.html" );
         
         poDriver->pfnOpen = WCSDataset::Open;
 
