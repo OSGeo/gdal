@@ -64,6 +64,10 @@ EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_fits
 EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_netcdf
 !ENDIF
 
+!IFDEF CURL_SETTING
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_wcs
+!ENDIF
+
 default:	o\gdalallregister.obj subdirs
 
 list:
