@@ -50,6 +50,9 @@ BINDINGS	=	@BINDINGS@
 HAVE_OGDI = @HAVE_OGDI@
 OGR_ENABLED = @OGR_ENABLED@
 
+OSX_FRAMEWORK_PREFIX = /Library/Frameworks/GDAL.framework
+OSX_VERSION_FRAMEWORK_PREFIX = ${OSX_FRAMEWORK_PREFIX}/Versions/@GDAL_VERSION_MAJOR@.@GDAL_VERSION_MINOR@
+
 prefix		=	@prefix@
 exec_prefix	=	@exec_prefix@
 INST_PREFIX	=	@exec_prefix@
@@ -110,9 +113,17 @@ LIBGDAL_AGE	:=	10
 # native build targets and variables
 GDAL_VER	=	@GDAL_VER@
 
+# version info
+GDAL_VERSION_MAJOR =    @GDAL_VERSION_MAJOR@
+GDAL_VERSION_MINOR =    @GDAL_VERSION_MINOR@
+GDAL_VERSION_REV   =    @GDAL_VERSION_REV@
+
 GDAL_LIB	= 	$(GDAL_ROOT)/libgdal.a
 GDAL_SLIB	=	$(GDAL_ROOT)/libgdal.$(SO_EXT)
 GDAL_SLIB_LINK	=	-L$(GDAL_ROOT) -lgdal
+
+# Mac OS X Framework definition
+MACOSX_FRAMEWORK = @MACOSX_FRAMEWORK@
 
 #
 # OGR/PostgreSQL support.
