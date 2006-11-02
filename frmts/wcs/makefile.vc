@@ -1,0 +1,15 @@
+
+OBJ	=	wcsdataset.obj cpl_http.obj
+
+EXTRAFLAGS = 	$(CURL_INCLUDE)
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+	-del *.dll
