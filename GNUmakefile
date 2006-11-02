@@ -142,7 +142,7 @@ all:	default ogr-all
 install-docs:
 	(cd ogr; $(MAKE) install-docs)
 	$(INSTALL_DIR) $(DESTDIR)$(INST_DOCS)/gdal
-	cp html/*.* $(INST_DOCS)/gdal
+	cp html/*.* $(DESTDIR)$(INST_DOCS)/gdal
 
 web-update:	docs
 	cp html/*.* $(WEB_DIR)
