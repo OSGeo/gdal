@@ -187,7 +187,12 @@ OCI_LIB =	$(ORACLE_HOME)\oci\lib\msvc\ociw32.lib \
 #SDE_INC = $(SDE_SDK)\include 
 #SDE_LIB = $(SDE_SDK)\lib\pe$(SDE_VERSION).lib \
 #          $(SDE_SDK)\lib\sde$(SDE_VERSION).lib $(SDE_SDK)\lib\sg$(SDE_VERSION).lib      
-          
+
+# Uncomment to use libcurl (for WCS)
+#CURL_DIR=C:\curl-7.15.0
+#CURL_INC = -I$(CURL_DIR)/include
+#CURL_LIB = $(CURL_DIR)/libcurl.lib
+
 # Uncomment for GEOS support
 #GEOS_CFLAGS = -Ic:/warmerda/geos/capi -DHAVE_GEOS
 #GEOS_LIB     = C:/warmerda/geos/source/geos_c_i.lib
