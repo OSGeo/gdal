@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/11/02 15:17:46  fwarmerdam
+ * Include sax2/Attributes.hpp, required with Xerces 3.0 apparently.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1343
+ *
  * Revision 1.9  2006/10/10 18:00:03  fwarmerdam
  * restructure geometry formtation to support very large geometries
  *
@@ -72,6 +76,7 @@
 #include <sax2/ContentHandler.hpp>
 #include <sax2/SAX2XMLReader.hpp>
 #include <sax2/XMLReaderFactory.hpp>
+#include <sax2/Attributes.hpp>
 
 #ifdef XERCES_CPP_NAMESPACE_USE
 XERCES_CPP_NAMESPACE_USE
