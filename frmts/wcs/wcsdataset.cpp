@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/11/03 20:14:03  fwarmerdam
+ * Support writing results to a temp file when in-memory does not work.
+ *
  * Revision 1.2  2006/11/02 02:39:50  fwarmerdam
  * enable online help pointer
  *
@@ -775,6 +778,9 @@ int WCSDataset::EstablishRasterDetails()
 
 /************************************************************************/
 /*                         FlushMemoryResult()                          */
+/*                                                                      */
+/*      This actually either cleans up the in memory /vsimem/           */
+/*      temporary file, or the on disk temporary file.                  */
 /************************************************************************/
 void WCSDataset::FlushMemoryResult()    
         
@@ -815,10 +821,6 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
                                      psResult->nDataLen, 
                                      TRUE );
 
-    // steal memory buffer from HTTP result structure
-    psResult->pabyData = NULL;
-    psResult->nDataLen = psResult->nDataAlloc = 0;
-
     if( fp == NULL )
         return NULL;
 
@@ -829,6 +831,53 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
 /* -------------------------------------------------------------------- */
     GDALDataset *poDS = (GDALDataset *) 
         GDALOpen( osResultFilename, GA_ReadOnly );
+
+/* -------------------------------------------------------------------- */
+/*      If opening it in memory didn't work, perhaps we need to         */
+/*      write to a temp file on disk?                                   */
+/* -------------------------------------------------------------------- */
+    if( poDS == NULL )
+    {
+        CPLString osTempFilename;
+        FILE *fpTemp;
+        
+        osTempFilename.Printf( "/tmp/%p_wcs.dat", this );
+                               
+        fpTemp = VSIFOpenL( osTempFilename, "wb" );
+        if( fpTemp == NULL )
+        {
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Failed to create temporary file:%s", 
+                      osTempFilename.c_str() );
+        }
+        else
+        {
+            if( VSIFWriteL( psResult->pabyData, psResult->nDataLen, 1, fpTemp )
+                != 1 )
+            {
+                CPLError( CE_Failure, CPLE_OpenFailed, 
+                          "Failed to write temporary file:%s", 
+                          osTempFilename.c_str() );
+                VSIFCloseL( fpTemp );
+                VSIUnlink( osTempFilename );
+            }
+            else
+            {
+                VSIFCloseL( fpTemp );
+                VSIUnlink( osResultFilename );
+                osResultFilename = osTempFilename;
+
+                poDS =  (GDALDataset *) 
+                    GDALOpen( osResultFilename, GA_ReadOnly );
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Steal the memory buffer from HTTP result.                       */
+/* -------------------------------------------------------------------- */
+    psResult->pabyData = NULL;
+    psResult->nDataLen = psResult->nDataAlloc = 0;
 
     if( poDS == NULL )
         FlushMemoryResult();
