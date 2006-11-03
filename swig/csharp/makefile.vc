@@ -33,15 +33,19 @@ gdal_csharp:
     link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) ogr_wrap.obj \
 		$(EXTERNAL_LIBS) ..\..\gdal.lib\
 		 /out:gdal_ogr_wrap.dll $(LINKER_FLAGS)
+	if exist gdal_ogr_wrap.dll.manifest mt -manifest gdal_ogr_wrap.dll.manifest -outputresource:gdal_ogr_wrap.dll;2
     link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) gdal_wrap.obj \
 		$(EXTERNAL_LIBS) ..\..\gdal.lib\
 		 /out:gdal_gdal_wrap.dll $(LINKER_FLAGS)
+	if exist gdal_gdal_wrap.dll.manifest mt -manifest gdal_gdal_wrap.dll.manifest -outputresource:gdal_gdal_wrap.dll;2
     link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) gdalconst_wrap.obj \
 		$(EXTERNAL_LIBS) ..\..\gdal.lib\
 		 /out:gdal_gdalconst_wrap.dll $(LINKER_FLAGS)
+	if exist gdal_gdalconst_wrap.dll.manifest mt -manifest gdal_gdalconst_wrap.dll.manifest -outputresource:gdal_ogr_wrap.dll;2
     link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) osr_wrap.obj \
 		$(EXTERNAL_LIBS) ..\..\gdal.lib\
 		 /out:gdal_osr_wrap.dll $(LINKER_FLAGS)
+	if exist gdal_osr_wrap.dll.manifest mt -manifest gdal_osr_wrap.dll.manifest -outputresource:gdal_osr_wrap.dll;2
 
 sign:
     sn -k gdal.snk
@@ -123,3 +127,5 @@ clean:
 	-del *.lib
 	-del *.mdb
 	-del *.exe
+	-del *.manifest
+	
