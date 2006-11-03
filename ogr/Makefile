@@ -70,48 +70,58 @@ ogroledb.lib:	$(OBJ_OLEDB)
 sfcdump.exe:	geometryidl.h sfcdump.obj ogr.lib ogroledb.lib
 	cl $(LINKFLAGS) sfcdump.obj ogroledb.lib $(LINKARGS) \
 		/link $(LINKER_FLAGS)
+    if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 test1.exe:	test1.obj $(OBJ_OGR) $(DEPLIBS)
 	cl $(LINKFLAGS) test1.obj $(OBJ_OGR) $(ALL_LIBS) \
 		 /link $(LINKER_FLAGS)
+    if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 test2.exe:	test2.obj $(OBJ_OGR) $(DEPLIBS)
 	cl $(LINKFLAGS) test2.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS) /link $(LINKER_FLAGS)
+    if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 test3.exe:      test3.obj $(OBJ_OGR) $(DEPLIBS)
-        cl $(LINKFLAGS) test3.obj $(OBJ_OGR) $(OGR_FRMTS) \
-			$(ALL_LIBS) /link $(LINKER_FLAGS)
+    cl $(LINKFLAGS) test3.obj $(OBJ_OGR) $(OGR_FRMTS) \
+	    $(ALL_LIBS) /link $(LINKER_FLAGS)
+    if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 test_ogrsf.exe:      test_ogrsf.obj $(OBJ_OGR) $(DEPLIBS)
-        cl $(LINKFLAGS) test_ogrsf.obj $(OBJ_OGR) $(OGR_FRMTS) \
-			$(ALL_LIBS) /link $(LINKER_FLAGS)
+    cl $(LINKFLAGS) test_ogrsf.obj $(OBJ_OGR) $(OGR_FRMTS) \
+	    $(ALL_LIBS) /link $(LINKER_FLAGS)
+    if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 test_rep.exe:      test_rep.obj $(OBJ_OGR) $(DEPLIBS)
-        cl $(LINKFLAGS) test_rep.obj $(OBJ_OGR) $(OGR_FRMTS) \
+    cl $(LINKFLAGS) test_rep.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS) /link $(LINKER_FLAGS)
+    if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 testepsg.exe:      testepsg.obj $(OBJ_OGR) $(DEPLIBS)
-        cl $(LINKFLAGS) testepsg.obj $(LINKARGS) /link $(LINKER_FLAGS)
+    cl $(LINKFLAGS) testepsg.obj $(LINKARGS) /link $(LINKER_FLAGS)
+    if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 ogrinfo.exe:      ogrinfo.obj $(OBJ_OGR) $(DEPLIBS)
-        cl $(LINKFLAGS) ogrinfo.obj $(LINKARGS) /link $(LINKER_FLAGS)
+    cl $(LINKFLAGS) ogrinfo.obj $(LINKARGS) /link $(LINKER_FLAGS)
+    if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 ogr2ogr.exe:      ogr2ogr.obj $(OBJ_OGR) $(DEPLIBS)
-        cl $(LINKFLAGS) ogr2ogr.obj $(LINKARGS) /link $(LINKER_FLAGS)
+    cl $(LINKFLAGS) ogr2ogr.obj $(LINKARGS) /link $(LINKER_FLAGS)
+    if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 ogrtindex.exe:      ogrtindex.obj $(OBJ_OGR) $(DEPLIBS)
-        cl $(LINKFLAGS) ogrtindex.obj $(SETARGV) $(LINKARGS) /link $(LINKER_FLAGS)
+    cl $(LINKFLAGS) ogrtindex.obj $(SETARGV) $(LINKARGS) /link $(LINKER_FLAGS)
+    if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 sdts2mi.exe:      sdts2mi.obj $(OBJ_OGR) $(DEPLIBS)
-        cl $(LINKFLAGS) sdts2mi.obj $(OBJ_OGR) $(OGR_FRMTS) \
+    cl $(LINKFLAGS) sdts2mi.obj $(OBJ_OGR) $(OGR_FRMTS) \
 			$(ALL_LIBS) /link $(LINKER_FLAGS)
+    if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 install:	default
 	copy ogrinfo.exe $(BINDIR)
 	copy ogr2ogr.exe $(BINDIR)
 	copy ogrtindex.exe $(BINDIR)
-	-if exist ogrinfo.exe.manifest xcopy /y /r /d /f *.exe.manifest $(BINDIR)
 
 clean:
 	-del *.obj
