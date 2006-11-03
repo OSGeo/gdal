@@ -21,40 +21,49 @@ all:	default gdalwarpsimple.exe
 gdalinfo.exe:	gdalinfo.c $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalinfo.c $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
 gdal_translate.exe:	gdal_translate.cpp $(GDALLIB) $(XTRAOBJ)
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdal_translate.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
 gdaladdo.exe:	gdaladdo.cpp $(GDALLIB) $(XTRAOBJ)
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdaladdo.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
 gdalwarpsimple.exe:	gdalwarpsimple.c $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalwarpsimple.c $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
 gdalwarp.exe:	gdalwarp.cpp $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdalwarp.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
 gdal_contour.exe:	gdal_contour.cpp $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdal_contour.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
 gdaltindex.exe:	gdaltindex.c $(GDALLIB) $(XTRAOBJ)
 	$(CC) /I$(GDAL_ROOT) $(CFLAGS) $(XTRAFLAGS) gdaltindex.c \
 		../ogr/ogrsf_frmts/shape/shpopen.c \
 		../ogr/ogrsf_frmts/shape/dbfopen.c \
 		$(XTRAOBJ) $(LIBS) /link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
 gdal_rasterize.exe:	gdal_rasterize.cpp $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) gdal_rasterize.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 multireadtest.exe:	multireadtest.cpp $(GDALLIB) $(XTRAOBJ) 
 	$(CC) $(CFLAGS) $(XTRAFLAGS) multireadtest.cpp $(XTRAOBJ) $(LIBS) \
 		/link $(LINKER_FLAGS)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 	
 clean:
 	-del *.obj
@@ -66,4 +75,3 @@ clean:
 
 install:	default
 	copy *.exe $(BINDIR)
-	-if exist gdalinfo.exe.manifest xcopy /y /r /d /f *.exe.manifest $(BINDIR)
