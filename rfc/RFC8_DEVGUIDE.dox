@@ -1,0 +1,78 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
+/*!
+\page rfc8_devguide RFC 8: Developer Guidelines
+
+Author: Frank Warmerdam<br>
+Contact: warmerdam@pobox.com<br>
+Status: draft<br>
+
+\section rfc8_purpose Purpose
+
+This document is intended to document developer practices for the GDAL/OGR 
+project.  It will be an evolving document.  
+
+\section rfc8_port Portability
+
+GDAL strives to be widely portable to 32bit and 64bit computing environments.
+It accomplishes this in a number of ways - avoid compiler specific directives, 
+avoiding new, but perhaps not widely available aspects of C++, and most 
+importantly by abstacting platform specific operations in CPL functions 
+in the gdal/port directory.  
+
+Generally speaking, where available CPL functions should be used in preference
+to operating system functions for operations like memory allocation, 
+path parsing, filesystem io, multithreading functions, and ODBC access. 
+
+\section rfc8_var Variable Naming
+
+Much of the existing GDAL and OGR code uses an adapted Hungarian naming
+convention.  Use of this convention is not manditory, but when maintaining
+code using this convention it is desirable to continue adhering to it with
+changes.  Most importantly, please avoiding using it improperly as that can
+be very confusing. 
+
+In Hungarian prefixing the prefix tells something about about the type, and
+potentially semantics of a variable.  The following are some prefixes used
+in GDAL/OGR. 
+
+<ul>
+<li> <b>p</b>: pointer
+<li> <b>a</b>: array 
+<li> <b>sz</b>: zero terminated string (eg."   char szName[100];")
+<li> <b>psz</b>: pointer to a zero terminated string. (eg. "char *pszName;")
+<li> <b>n</b>: integer number (size unspecified)
+<li> <b>i</b>: integer number used as a zero based array or loop index.
+<li> <b>f</b>: floating point value (single precision)
+<li> <b>df</b>: floating point value (double precision)
+<li> <b>o</b>: c++ object
+<li> <b>os</b>: CPLString
+<li> <b>h</b>: an opaque handle (such as GDALDatasetH). 
+</ul>
+
+Prefix can be stacked.  The following are some examples of meaningful 
+variables.
+
+<ul>
+<li> <b>char **papszTokens</b>: Pointer to an array of strings.
+<li> <b>int *panBands</b>: Pointer to an array of numbers. 
+<li> <b>double *padfScanline</b>: Pointer to an array of doubles. 
+<li> <b>double *pdfMeanRet</b>: Pointer to a single double. 
+<li> <b>GDALRasterBand *poBand</b>: Pointer to a single object.
+</ul>
+
+It may also be noted that the standard convention for variable names
+is to capitalize each word in a variable name.
+
+\section rfc8_headers Headers, and Comment Blocks
+
+\section rfc8_misc Misc. Notes
+
+<ul>
+<li> please use lower case filenames.
+<li> please use .cpp extension for C++ files (not .cc). 
+</ul>
+
+*/
