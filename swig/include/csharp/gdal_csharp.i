@@ -4,6 +4,9 @@
 
 /*
  * $Log$
+ * Revision 1.3  2006/11/04 22:12:41  tamas
+ * Added preliminary Raster R/W support
+ *
  * Revision 1.2  2006/09/07 10:26:31  tamas
  * Added default exception support
  *
@@ -50,3 +53,10 @@ char const *GDALDriverShadow_get_HelpTopic( GDALDriverShadow *h ) {
 
 
 %include typemaps_csharp.i
+
+%ignore GDALRasterBandShadow::ReadRaster;
+%ignore GDALRasterBandShadow::WriteRaster;
+
+%typemap(cscode) GDALRasterBandShadow %{
+  /* TODO: Raster R/W specializations will come here */
+%}
