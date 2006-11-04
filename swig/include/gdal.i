@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.42  2006/11/04 22:11:36  tamas
+ * include for gdal csharp specific extensions
+ *
  * Revision 1.41  2006/06/27 13:15:32  ajolma
  * removed throw from GDALAutoCreateWarpedVRT
  *
@@ -569,3 +572,13 @@ GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
   
 }
 %}
+
+//************************************************************************
+//
+// Language specific extensions
+//
+//************************************************************************
+
+#ifdef SWIGCSHARP
+%include "gdal_csharp_extend.i"
+#endif
