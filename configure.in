@@ -1815,6 +1815,14 @@ if test ! -z "`uname | grep Darwin`" ; then
     MACOSX_FRAMEWORK=yes
     AC_MSG_RESULT([enabled])
     AC_DEFINE_UNQUOTED(MACOSX_FRAMEWORK,1, [Define for Mac OSX Framework build])
+    prefix='${OSX_VERSION_FRAMEWORK_PREFIX}'
+    exec_prefix='${prefix}'
+    includedir='${prefix}/Headers'
+    datadir='${prefix}/Resources/gdal'
+    libdir='${exec_prefix}'
+    bindir='${exec_prefix}/Programs'
+    docdir='${prefix}/Resources/doc'
+    mandir='${prefix}/Resources/man'
   else
     AC_MSG_RESULT([disabled])
   fi
