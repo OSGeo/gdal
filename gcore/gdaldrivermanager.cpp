@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2006/11/04 02:05:43  hobu
+ * OSX Framework locations for plugins
+ *
  * Revision 1.32  2006/03/28 14:49:56  fwarmerdam
  * updated contact info
  *
@@ -596,7 +599,11 @@ void GDALDriverManager::AutoLoadDrivers()
     {
 #ifdef GDAL_PREFIX
         papszSearchPath = CSLAddString( papszSearchPath, 
+    #ifdef MACOSX_FRAMEWORK
+                                        GDAL_PREFIX "/PlugIns");
+    #else
                                         GDAL_PREFIX "/lib/gdalplugins" );
+    #endif
 #else
         char szExecPath[1024];
 
@@ -610,15 +617,23 @@ void GDALDriverManager::AutoLoadDrivers()
         else
         {
             papszSearchPath = CSLAddString( papszSearchPath, 
+    #ifdef MACOSX_FRAMEWORK
+                                            "/Library/Application Support/GDAL/PlugIns" );
+    #else
                                             "/usr/local/lib/gdalplugins" );
+    #endif
         }
 #endif
 
         if( strlen(GetHome()) > 0 )
         {
             papszSearchPath = CSLAddString( papszSearchPath, 
-                                  CPLFormFilename( GetHome(), 
-                                                   "lib/gdalplugins", NULL ) );
+                                  CPLFormFilename( GetHome(),
+    #ifdef MACOSX_FRAMEWORK 
+                                                    "Library/Application Support/GDAL/PlugIns", NULL ) );
+    #else
+                                                    "lib/gdalplugins", NULL ) );
+    #endif                                           
         }
     }
 

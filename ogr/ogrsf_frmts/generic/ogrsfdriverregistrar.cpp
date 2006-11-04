@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/11/04 02:04:49  hobu
+ * OSX Framework locations for plugins
+ *
  * Revision 1.25  2006/10/30 16:06:54  hobu
  * switch off for now until we figure out a GetHome
  *
@@ -665,8 +668,12 @@ void OGRSFDriverRegistrar::AutoLoadDrivers()
     else
     {
 #ifdef GDAL_PREFIX
-        papszSearchPath = CSLAddString( papszSearchPath, 
+        papszSearchPath = CSLAddString( papszSearchPath,
+    #ifdef MACOSX_FRAMEWORK
+                                        GDAL_PREFIX "/PlugIns");
+    #else
                                         GDAL_PREFIX "/lib/gdalplugins" );
+    #endif
 #else
         char szExecPath[1024];
 
@@ -680,16 +687,14 @@ void OGRSFDriverRegistrar::AutoLoadDrivers()
         else
         {
             papszSearchPath = CSLAddString( papszSearchPath, 
+    #ifdef MACOSX_FRAMEWORK
+                                            "/Library/Application Support/GDAL/PlugIns");
+    #else
                                             "/usr/local/lib/gdalplugins" );
+    #endif
         }
-#endif
 
-#ifdef notdef
-        if( strlen(GetHome()) > 0 )
-        {
-            papszSearchPath = CSLAddString( papszSearchPath, 
-                                  CPLFormFilename( GetHome(), "lib/gdalplugins", NULL ) );
-        }
+
 #endif
     }
 
