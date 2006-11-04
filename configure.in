@@ -1814,6 +1814,7 @@ if test ! -z "`uname | grep Darwin`" ; then
   if test "$with_macosx_framework" = yes ; then
     MACOSX_FRAMEWORK=yes
     AC_MSG_RESULT([enabled])
+    AC_DEFINE_UNQUOTED(MACOSX_FRAMEWORK,1, [Define for Mac OSX Framework build])
   else
     AC_MSG_RESULT([disabled])
   fi
