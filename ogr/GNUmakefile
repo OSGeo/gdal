@@ -123,6 +123,11 @@ install-full:	apps
 	$(INSTALL) ogr2ogr $(DESTDIR)$(INST_BIN)
 	$(INSTALL) ogrinfo $(DESTDIR)$(INST_BIN)
 	$(INSTALL) ogrtindex $(DESTDIR)$(INST_BIN)
+ifeq ($(MACOSX_FRAMEWORK),yes)
+	install_name_tool -change $(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).dylib ${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL $(DESTDIR)$(INST_BIN)/ogr2ogr
+	install_name_tool -change $(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).dylib ${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL $(DESTDIR)$(INST_BIN)/ogrinfo
+	install_name_tool -change $(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).dylib ${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL $(DESTDIR)$(INST_BIN)/ogrtindex
+endif
 else
 install-full:
 endif
