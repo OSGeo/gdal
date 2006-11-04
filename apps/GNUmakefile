@@ -96,5 +96,10 @@ gdal-config-inst:	gdal-config.in ../GDALmake.opt ./GNUmakefile ../VERSION
 
 install: default
 	for f in $(BIN_LIST) ; do $(INSTALL) $$f $(DESTDIR)$(INST_BIN) ; done
+ifeq ($(MACOSX_FRAMEWORK),yes)
+	for f in $(BIN_LIST) ; do \
+		install_name_tool -change $(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).dylib ${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL $(DESTDIR)$(INST_BIN)/$$f ; \
+	done
+endif
 	$(INSTALL) gdal-config-inst $(DESTDIR)$(INST_BIN)/gdal-config
 
