@@ -46,6 +46,9 @@ $(GDALMODULE).la:	$(OBJ:.o=.lo) $(EXE_DEP_LIBS)
 install:	$(GDALMODULE_SO)
 	$(INSTALL_DIR) $(DESTDIR)$(INST_PYMOD)
 	$(INSTALL_LIB) $(GDALMODULE_SO) $(DESTDIR)$(INST_PYMOD)
+ifeq ($(MACOSX_FRAMEWORK),yes)
+	install_name_tool -change $(INST_LIB)/libgdal.$(GDAL_VERSION_MAJOR).dylib ${OSX_VERSION_FRAMEWORK_PREFIX}/GDAL $(DESTDIR)$(INST_PYMOD)/$(GDALMODULE).so
+endif
 	for f in $(PY_COMMANDS) ; do $(INSTALL) $$f $(DESTDIR)$(INST_BIN) ; done
 	for f in $(PY_MODULES) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_PYMOD) ; done
 	# ugh! spurius relinking leaves a file owned by root into .libs/.
