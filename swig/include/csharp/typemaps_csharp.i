@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.15  2006/11/04 22:12:41  tamas
+ * Added preliminary Raster R/W support
+ *
  * Revision 1.14  2006/11/01 00:32:14  tamas
  * Typemaps for 'out double' and 'out int'
  *
@@ -413,4 +416,14 @@ OPTIONAL_POD(int,i);
 %}
 
 %typemap(csin) SWIGTYPE *DISOWN "$csclassname.getCPtrAndDisown($csinput)"
+
+
+/******************************************************************************
+ * GDAL raster R/W support                                                    *
+ *****************************************************************************/
+ 
+%typemap(imtype) void *buffer_ptr "IntPtr"
+%typemap(cstype) void *buffer_ptr %{IntPtr%}
+%typemap(in) void *buffer_ptr %{ $1 = ($1_ltype)$input; %}
+%typemap(csin) void *buffer_ptr "$csinput"
 
