@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/11/05 19:51:05  hobu
+ * Always search /Library/Application Support/GDAL/PlugIns for the OSX Framework case
+ *
  * Revision 1.33  2006/11/04 02:05:43  hobu
  * OSX Framework locations for plugins
  *
@@ -617,13 +620,15 @@ void GDALDriverManager::AutoLoadDrivers()
         else
         {
             papszSearchPath = CSLAddString( papszSearchPath, 
-    #ifdef MACOSX_FRAMEWORK
-                                            "/Library/Application Support/GDAL/PlugIns" );
-    #else
                                             "/usr/local/lib/gdalplugins" );
-    #endif
         }
 #endif
+
+   #ifdef MACOSX_FRAMEWORK
+     papszSearchPath = CSLAddString( papszSearchPath, 
+                                     "/Library/Application Support/GDAL/PlugIns" );
+   #endif
+
 
         if( strlen(GetHome()) > 0 )
         {
