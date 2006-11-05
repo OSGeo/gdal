@@ -4,6 +4,9 @@
 
 /*
  * $Log$
+ * Revision 1.4  2006/11/05 22:13:27  tamas
+ * Adding the C# specific ReadRaster/WriteRaster
+ *
  * Revision 1.3  2006/11/04 22:12:41  tamas
  * Added preliminary Raster R/W support
  *
@@ -53,9 +56,6 @@ char const *GDALDriverShadow_get_HelpTopic( GDALDriverShadow *h ) {
 
 
 %include typemaps_csharp.i
-
-%ignore GDALRasterBandShadow::ReadRaster;
-%ignore GDALRasterBandShadow::WriteRaster;
 
 %typemap(cscode) GDALRasterBandShadow %{
   /* TODO: Raster R/W specializations will come here */
