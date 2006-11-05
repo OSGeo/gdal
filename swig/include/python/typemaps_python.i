@@ -9,6 +9,11 @@
 
  *
  * $Log$
+ * Revision 1.44  2006/11/05 20:30:10  hobu
+ * swig no longer puts language-specific stuff in the first argument of
+ * typemaps.  We already have everything conditionalized in gdal_typemaps.i
+ * for each language anyway.  These changes just silence the warnings.
+ *
  * Revision 1.43  2005/10/11 15:20:28  kruland
  * Removed the unused IF_ERROR_RETURN_NONE typemap.
  * Removed the unnecessary $result=0 from typemaps.  These lines were to correct
@@ -216,12 +221,12 @@
  * is not set in the raster band) then Py_None is returned.  If is is != 0, then
  * the value is coerced into a long and returned.
  */
-%typemap(python,in,numinputs=0) (double *val, int*hasval) ( double tmpval, int tmphasval ) {
+%typemap(in,numinputs=0) (double *val, int*hasval) ( double tmpval, int tmphasval ) {
   /* %typemap(python,in,numinputs=0) (double *val, int*hasval) */
   $1 = &tmpval;
   $2 = &tmphasval;
 }
-%typemap(python,argout) (double *val, int*hasval) {
+%typemap(argout) (double *val, int*hasval) {
   /* %typemap(python,argout) (double *val, int*hasval) */
   PyObject *r;
   if ( !*$2 ) {
@@ -250,8 +255,8 @@
  * The out typemap prevents the default typemap for output integers from
  * applying.
  */
-%typemap(python,out) IF_FALSE_RETURN_NONE "/*%typemap(out) IF_FALSE_RETURN_NONE */"
-%typemap(python,ret) IF_FALSE_RETURN_NONE
+%typemap(out) IF_FALSE_RETURN_NONE "/*%typemap(out) IF_FALSE_RETURN_NONE */"
+%typemap(ret) IF_FALSE_RETURN_NONE
 {
  /* %typemap(ret) IF_FALSE_RETURN_NONE */
   if ($1 == 0 ) {
@@ -267,7 +272,7 @@
 
 %import "ogr_error_map.i"
 
-%typemap(python, out,fragment="OGRErrMessages") OGRErr
+%typemap(out,fragment="OGRErrMessages") OGRErr
 {
   /* %typemap(out) OGRErr */
   if ( result != 0) {
@@ -275,7 +280,7 @@
     SWIG_fail;
   }
 }
-%typemap(python, ret) OGRErr
+%typemap(ret) OGRErr
 {
   /* %typemap(ret) OGRErr */
   if (resultobj == Py_None ) {
@@ -300,35 +305,35 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
 }
 %}
 
-%typemap(python,in,numinputs=0) ( double argout[ANY]) (double argout[$dim0])
+%typemap(in,numinputs=0) ( double argout[ANY]) (double argout[$dim0])
 {
   /* %typemap(in,numinputs=0) (double argout[ANY]) */
   $1 = argout;
 }
-%typemap(python,argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double argout[ANY])
+%typemap(argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double argout[ANY])
 {
   /* %typemap(argout) (double argout[ANY]) */
   PyObject *out = CreateTupleFromDoubleArray( $1, $dim0 );
   $result = t_output_helper($result,out);
 }
 
-%typemap(python,in,numinputs=0) ( double *argout[ANY]) (double *argout)
+%typemap(in,numinputs=0) ( double *argout[ANY]) (double *argout)
 {
   /* %typemap(in,numinputs=0) (double *argout[ANY]) */
   $1 = &argout;
 }
-%typemap(python,argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double *argout[ANY])
+%typemap(argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double *argout[ANY])
 {
   /* %typemap(argout) (double *argout[ANY]) */
   PyObject *out = CreateTupleFromDoubleArray( *$1, $dim0 );
   $result = t_output_helper($result,out);
 }
-%typemap(python,freearg) (double *argout[ANY])
+%typemap(freearg) (double *argout[ANY])
 {
   /* %typemap(freearg) (double *argout[ANY]) */
   CPLFree(*$1);
 }
-%typemap(python,in) (double argin[ANY]) (double argin[$dim0])
+%typemap(in) (double argin[ANY]) (double argin[$dim0])
 {
   /* %typemap(in) (double argin[ANY]) */
   $1 = argin;
@@ -352,7 +357,7 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
 /*
  *  Typemap for counted arrays of ints <- PySequence
  */
-%typemap(python,in,numinputs=1) (int nList, int* pList)
+%typemap(in,numinputs=1) (int nList, int* pList)
 {
   /* %typemap(in,numinputs=1) (int nList, int* pList)*/
   /* check if is List */
@@ -369,7 +374,7 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
     }
   }
 }
-%typemap(python,freearg) (int nList, int* pList)
+%typemap(freearg) (int nList, int* pList)
 {
   /* %typemap(freearg) (int nList, int* pList) */
   if ($2) {
@@ -396,31 +401,31 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
  * This typemap has a typecheck also since the WriteRaster()
  * methods are overloaded.
  */
-%typemap(python,in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen = 0, char *pBuf = 0 )
+%typemap(in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen = 0, char *pBuf = 0 )
 {
   /* %typemap(in,numinputs=0) (int *nLen, char **pBuf ) */
   $1 = &nLen;
   $2 = &pBuf;
 }
-%typemap(python,argout) (int *nLen, char **pBuf )
+%typemap(argout) (int *nLen, char **pBuf )
 {
   /* %typemap(argout) (int *nLen, char **pBuf ) */
   Py_XDECREF($result);
   $result = PyString_FromStringAndSize( *$2, *$1 );
 }
-%typemap(python,freearg) (int *nLen, char **pBuf )
+%typemap(freearg) (int *nLen, char **pBuf )
 {
   /* %typemap(freearg) (int *nLen, char **pBuf ) */
   if( *$1 ) {
     free( *$2 );
   }
 }
-%typemap(python,in,numinputs=1) (int nLen, char *pBuf )
+%typemap(in,numinputs=1) (int nLen, char *pBuf )
 {
   /* %typemap(in,numinputs=1) (int nLen, char *pBuf ) */
   PyString_AsStringAndSize($input, &$2, &$1 );
 }
-%typemap(python,typecheck,precedence=SWIG_TYPECHECK_POINTER)
+%typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER)
         (int nLen, char *pBuf)
 {
   /* %typecheck(SWIG_TYPECHECK_POINTER) (int nLen, char *pBuf) */
@@ -430,13 +435,13 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 /*
  * Typemap argout of GDAL_GCP* used in Dataset::GetGCPs( )
  */
-%typemap(python,in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) (int nGCPs=0, GDAL_GCP *pGCPs=0 )
+%typemap(in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) (int nGCPs=0, GDAL_GCP *pGCPs=0 )
 {
   /* %typemap(in,numinputs=0) (int *nGCPs, GDAL_GCP const **pGCPs ) */
   $1 = &nGCPs;
   $2 = &pGCPs;
 }
-%typemap(python,argout) (int *nGCPs, GDAL_GCP const **pGCPs )
+%typemap(argout) (int *nGCPs, GDAL_GCP const **pGCPs )
 {
   /* %typemap(argout) (int *nGCPs, GDAL_GCP const **pGCPs ) */
   PyObject *dict = PyTuple_New( *$1 );
@@ -455,7 +460,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   Py_DECREF($result);
   $result = dict;
 }
-%typemap(python,in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) ( GDAL_GCP *tmpGCPList )
+%typemap(in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) ( GDAL_GCP *tmpGCPList )
 {
   /* %typemap(in,numinputs=1) (int nGCPs, GDAL_GCP const *pGCPs ) */
   /* check if is List */
@@ -477,7 +482,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     ++tmpGCPList;
   }
 }
-%typemap(python,freearg) (int nGCPs, GDAL_GCP const *pGCPs )
+%typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs )
 {
   /* %typemap(freearg) (int nGCPs, GDAL_GCP const *pGCPs ) */
   if ($2) {
@@ -488,13 +493,13 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 /*
  * Typemap for GDALColorEntry* <-> tuple
  */
-%typemap(python,out) GDALColorEntry*
+%typemap(out) GDALColorEntry*
 {
   /* %typemap(out) GDALColorEntry* */
    $result = Py_BuildValue( "(hhhh)", (*$1).c1,(*$1).c2,(*$1).c3,(*$1).c4);
 }
 
-%typemap(python,in) GDALColorEntry* (GDALColorEntry ce)
+%typemap(in) GDALColorEntry* (GDALColorEntry ce)
 {
   /* %typemap(in) GDALColorEntry* */
    ce.c4 = 255;
@@ -514,7 +519,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 /*
  * Typemap char ** -> dict
  */
-%typemap(python,out) char **dict
+%typemap(out) char **dict
 {
   /* %typemap(out) char **dict */
   char **stringarray = $1;
@@ -540,12 +545,12 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
  * Then each entry in the list must be a string and have the form:
  * "name=value" so gdal can handle it.
  */
-%typemap(python,typecheck,precedence=SWIG_TYPECHECK_POINTER) (char **dict)
+%typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (char **dict)
 {
   /* %typecheck(SWIG_TYPECHECK_POINTER) (char **dict) */
   $1 = (PyMapping_Check($input) || PySequence_Check($input) ) ? 1 : 0;
 }
-%typemap(python,in) char **dict
+%typemap(in) char **dict
 {
   /* %typemap(in) char **dict */
   $1 = NULL;
@@ -579,7 +584,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     SWIG_fail;
   }
 }
-%typemap(python,freearg) char **dict
+%typemap(freearg) char **dict
 {
   /* %typemap(freearg) char **dict */
   CSLDestroy( $1 );
@@ -588,7 +593,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 /*
  * Typemap maps char** arguments from Python Sequence Object
  */
-%typemap(python,in) char **options
+%typemap(in) char **options
 {
   /* %typemap(in) char **options */
   /* Check if is a list */
@@ -607,7 +612,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     $1 = CSLAddString( $1, pszItem );
   }
 }
-%typemap(python,freearg) char **options
+%typemap(freearg) char **options
 {
   /* %typemap(freearg) char **options */
   CSLDestroy( $1 );
@@ -617,7 +622,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
  * with the assumption that the called object maintains ownership of the
  * array of strings.
  */
-%typemap(python,out) char **options
+%typemap(out) char **options
 {
   /* %typemap(out) char ** -> ( string ) */
   char **stringarray = $1;
@@ -639,7 +644,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
  * Typemaps map mutable char ** arguments from PyStrings.  Does not
  * return the modified argument
  */
-%typemap(python,in) (char **ignorechange) ( char *val )
+%typemap(in) (char **ignorechange) ( char *val )
 {
   /* %typemap(in) (char **ignorechange) */
   PyArg_Parse( $input, "s", &val );
@@ -649,12 +654,12 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
 /*
  * Typemap for char **argout.
  */
-%typemap(python,in,numinputs=0) (char **argout) ( char *argout=0 )
+%typemap(in,numinputs=0) (char **argout) ( char *argout=0 )
 {
   /* %typemap(in,numinputs=0) (char **argout) */
   $1 = &argout;
 }
-%typemap(python,argout,fragment="t_output_helper") (char **argout)
+%typemap(argout,fragment="t_output_helper") (char **argout)
 {
   /* %typemap(argout) (char **argout) */
   PyObject *o;
@@ -667,7 +672,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   }
   $result = t_output_helper($result, o);
 }
-%typemap(python,freearg) (char **argout)
+%typemap(freearg) (char **argout)
 {
   /* %typemap(freearg) (char **argout) */
   if ( *$1 )
@@ -681,7 +686,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
  * value.
  */
 %define OPTIONAL_POD(type,argstring)
-%typemap(python,in) (type *optional_##type) ( type val )
+%typemap(in) (type *optional_##type) ( type val )
 {
   /* %typemap(in) (type *optional_##type) */
   if ( $input == Py_None ) {
@@ -695,7 +700,7 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
     SWIG_fail;
   }
 }
-%typemap(python,typecheck,precedence=0) (type *optional_##type)
+%typemap(typecheck,precedence=0) (type *optional_##type)
 {
   /* %typemap(typecheck,precedence=0) (type *optionalInt) */
   $1 = (($input==Py_None) || my_PyCheck_##type($input)) ? 1 : 0;
@@ -710,7 +715,7 @@ OPTIONAL_POD(int,i);
  * Formats the object using str and returns the string representation
  */
 
-%typemap(python,in) (tostring argin) (PyObject *str)
+%typemap(in) (tostring argin) (PyObject *str)
 {
   /* %typemap(in) (tostring argin) */
   str = PyObject_Str( $input );
@@ -721,12 +726,12 @@ OPTIONAL_POD(int,i);
  
   $1 = PyString_AsString(str); 
 }
-%typemap(python,freearg)(tostring argin)
+%typemap(freearg)(tostring argin)
 {
   /* %typemap(freearg) (tostring argin) */
   Py_DECREF(str$argnum);
 }
-%typemap(python,typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
+%typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin)
 {
   /* %typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) (tostring argin) */
   $1 = 1;
@@ -740,7 +745,7 @@ OPTIONAL_POD(int,i);
  * If UseExceptions ==0, then return the rc.
  * If UseExceptions ==1, then if rc >= CE_Failure, raise an exception.
  */
-%typemap(python,ret) CPLErr
+%typemap(ret) CPLErr
 {
   /* %typemap(ret) CPLErr */
   if ( bUseExceptions == 0 ) {
@@ -789,15 +794,15 @@ static CPLXMLNode *PyListToXMLTree( PyObject *pyList )
 }
 %}
 
-%typemap(python,in,fragment="PyListToXMLTree") (CPLXMLNode* xmlnode )
+%typemap(in,fragment="PyListToXMLTree") (CPLXMLNode* xmlnode )
 {
   /* %typemap(python,in) (CPLXMLNode* xmlnode ) */
   $1 = PyListToXMLTree( $input );
   if ( !$1 ) SWIG_fail;
 }
-%typemap(python,freearg) (CPLXMLNode *xmlnode)
+%typemap(freearg) (CPLXMLNode *xmlnode)
 {
-  /* %typemap(python,freearg) (CPLXMLNode *xmlnode) */
+  /* %typemap(freearg) (CPLXMLNode *xmlnode) */
   if ( $1 ) CPLDestroyXMLNode( $1 );
 }
 
@@ -832,13 +837,13 @@ static PyObject *XMLTreeToPyList( CPLXMLNode *psTree )
 }
 %}
 
-%typemap(python,out,fragment="XMLTreeToPyList") (CPLXMLNode*)
+%typemap(out,fragment="XMLTreeToPyList") (CPLXMLNode*)
 {
-  /* %typemap(python,out) (CPLXMLNode*) */
+  /* %typemap(out) (CPLXMLNode*) */
   $result = XMLTreeToPyList( $1 );
 }
-%typemap(python,ret) (CPLXMLNode*)
+%typemap(ret) (CPLXMLNode*)
 {
-  /* %typemap(python,ret) (CPLXMLNode*) */
+  /* %typemap(ret) (CPLXMLNode*) */
   if ( $1 ) CPLDestroyXMLNode( $1 );
 }
