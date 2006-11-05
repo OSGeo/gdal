@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.24  2006/11/05 22:12:15  tamas
+ * Hiding ReadRaster/WriteRaster from the C# interface
+ *
  * Revision 1.23  2006/08/16 14:41:01  fwarmerdam
  * Fix up GetBlockSize().
  *
@@ -234,6 +237,7 @@ public:
     return GDALFillRaster( self, real_fill, imag_fill );
   }
 
+#if !definied(SWIGCSHARP)
 %apply ( int *nLen, char **pBuf ) { (int *buf_len, char **buf ) };
 %apply ( int *optional_int ) {(int*)};
 %feature( "kwargs" ) ReadRaster;
@@ -269,6 +273,7 @@ public:
   }
 %clear (int buf_len, char *buf_string);
 %clear (int*);
+#endif /* SWIGCSHARP */
 
   void FlushCache() {
     GDALFlushRasterCache( self );
