@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/11/05 19:41:12  hobu
+ * OSX Framework location
+ *
  * Revision 1.18  2006/03/21 20:11:54  fwarmerdam
  * fixup headers a bit
  *
@@ -981,7 +984,11 @@ const char * GDALDefaultCSVFilename( const char *pszBasename )
     else
     {
 #ifdef GDAL_PREFIX
+  #ifdef MACOSX_FRAMEWORK
+        sprintf( szPath, GDAL_PREFIX "/Resources/epsg_csv/%s", pszBasename );
+  #else
         sprintf( szPath, GDAL_PREFIX "/share/epsg_csv/%s", pszBasename );
+  #endif
 #else
         sprintf( szPath, "/usr/local/share/epsg_csv/%s", pszBasename );
 #endif

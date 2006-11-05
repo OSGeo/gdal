@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2006/11/05 19:43:18  hobu
+ * OSX Framework location
+ *
  * Revision 1.12  2006/09/23 23:05:22  fwarmerdam
  * Honour GDAL_DATA when initializing finder.
  *
@@ -97,7 +100,11 @@ static void CPLFinderInit()
         else
         {
 #ifdef GDAL_PREFIX
+  #ifdef MACOSX_FRAMEWORK
+            CPLPushFinderLocation( GDAL_PREFIX "/Resources/gdal" );
+  #else
             CPLPushFinderLocation( GDAL_PREFIX "/share/gdal" );
+  #endif
 #else
             CPLPushFinderLocation( "/usr/local/share/gdal" );
 #endif
