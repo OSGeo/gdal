@@ -150,4 +150,4 @@ setup( name = 'Gdal Wrapper',
        ext_modules = [gdal_module,
                       gdalconst_module,
                       osr_module,
-                      ogr_module],debug=1 )
+                      ogr_module],debug=0 )
