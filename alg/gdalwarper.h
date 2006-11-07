@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/11/07 16:24:08  hobu
+ * silence errors about no prototype defined for a few functions with void parameters
+ *
  * Revision 1.17  2005/04/04 15:24:16  fwarmerdam
  * added CPL_STDCALL to some functions
  *
@@ -218,7 +221,7 @@ typedef struct {
 
 } GDALWarpOptions;
 
-GDALWarpOptions CPL_DLL * CPL_STDCALL GDALCreateWarpOptions();
+GDALWarpOptions CPL_DLL * CPL_STDCALL GDALCreateWarpOptions(void);
 void CPL_DLL CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions * );
 GDALWarpOptions CPL_DLL * CPL_STDCALL
 GDALCloneWarpOptions( const GDALWarpOptions * );

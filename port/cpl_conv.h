@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2006/11/07 16:24:08  hobu
+ * silence errors about no prototype defined for a few functions with void parameters
+ *
  * Revision 1.46  2006/10/11 08:30:01  dron
  * Added CPLStrlwr() function.
  *
@@ -240,7 +243,7 @@ const char CPL_DLL *CPLGetDirname( const char * );
 const char CPL_DLL *CPLGetFilename( const char * );
 const char CPL_DLL *CPLGetBasename( const char * );
 const char CPL_DLL *CPLGetExtension( const char * );
-char       CPL_DLL *CPLGetCurrentDir();
+char       CPL_DLL *CPLGetCurrentDir(void);
 const char CPL_DLL *CPLFormFilename( const char *pszPath,
                                      const char *pszBasename,
                                      const char *pszExtension );
