@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.45  2006/11/07 05:37:30  hobu
+ * an arginit typemap for the tostring typemap
+ *
  * Revision 1.44  2006/11/05 20:30:10  hobu
  * swig no longer puts language-specific stuff in the first argument of
  * typemaps.  We already have everything conditionalized in gdal_typemaps.i
@@ -714,6 +717,13 @@ OPTIONAL_POD(int,i);
  *
  * Formats the object using str and returns the string representation
  */
+
+%typemap(arginit) (tostring argin) (PyObject *str)
+{
+  /* %typemap(arginit) (tostring arginit) */
+  str = 0;
+
+}
 
 %typemap(in) (tostring argin) (PyObject *str)
 {
