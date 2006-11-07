@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.100  2006/11/07 18:55:07  fwarmerdam
+ * added OGC importFromURN()
+ *
  * Revision 1.99  2006/10/14 01:31:14  fwarmerdam
  * NULL target for GetAuthorityName/Code now returns for the root node.
  *
@@ -1426,16 +1429,16 @@ OGRErr OGRSpatialReference::SetWellKnownGeogCS( const char * pszName )
 /* -------------------------------------------------------------------- */
     char         *pszWKT = NULL;
 
-    if( EQUAL(pszName, "WGS84") )
+    if( EQUAL(pszName, "WGS84") || EQUAL(pszName,"CRS84") )
         pszWKT = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]";
 
     else if( EQUAL(pszName, "WGS72") )
         pszWKT = "GEOGCS[\"WGS 72\",DATUM[\"WGS_1972\",SPHEROID[\"WGS 72\",6378135,298.26,AUTHORITY[\"EPSG\",\"7043\"]],TOWGS84[0,0,4.5,0,0,0.554,0.2263],AUTHORITY[\"EPSG\",\"6322\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4322\"]]";
 
-    else if( EQUAL(pszName, "NAD27") )
+    else if( EQUAL(pszName, "NAD27") || EQUAL(pszName, "CRS27") )
         pszWKT = "GEOGCS[\"NAD27\",DATUM[\"North_American_Datum_1927\",SPHEROID[\"Clarke 1866\",6378206.4,294.978698213898,AUTHORITY[\"EPSG\",\"7008\"]],TOWGS84[-3,142,183,0,0,0,0],AUTHORITY[\"EPSG\",\"6267\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4267\"]]";
         
-    else if( EQUAL(pszName, "NAD83") )
+    else if( EQUAL(pszName, "NAD83") || EQUAL(pszName,"CRS83") )
         pszWKT = "GEOGCS[\"NAD83\",DATUM[\"North_American_Datum_1983\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY[\"EPSG\",\"6269\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9108\"]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",\"4269\"]]";
 
     else
@@ -1551,6 +1554,7 @@ OGRErr OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS,
  * <li> Well Known Text definition - passed on to importFromWkt().
  * <li> "EPSG:n" - number passed on to importFromEPSG(). 
  * <li> "AUTO:proj_id,unit_id,lon0,lat0" - WMS auto projections.
+ * <li> "urn:ogc:def:crs:EPSG::n" - ogc urns
  * <li> PROJ.4 definitions - passed on to importFromProj4().
  * <li> filename - file read for WKT, XML or PROJ.4 definition.
  * <li> well known name accepted by SetWellKnownGeogCS(), such as NAD27, NAD83,
@@ -1603,6 +1607,9 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 
     if( EQUALN(pszDefinition,"EPSG:",5) )
         return importFromEPSG( atoi(pszDefinition+5) );
+
+    if( EQUALN(pszDefinition,"urn:ogc:def:crs:",16) )
+        return importFromURN( pszDefinition );
 
     if( EQUALN(pszDefinition,"AUTO:",5) )
         return importFromWMSAUTO( pszDefinition );
@@ -1695,7 +1702,123 @@ OGRErr CPL_STDCALL OSRSetFromUserInput( OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
+/*                           importFromURN()                            */
+/*                                                                      */
+/*      See OGC recommendation paper 06-023r1 or later for details.     */
+/************************************************************************/
+
+/**
+ * Initialize from OGC URN. 
+ *
+ * Initializes this spatial reference from a coordinate system defined
+ * by an OGC URN prefixed with "urn:ogc:def:crs:" per recommendation 
+ * paper 06-023r1.  Currently EPSG and OGC authority values are supported, 
+ * including OGC auto codes, but not including CRS1 or CRS88 (NAVD88). 
+ *
+ * This method is also support through SetFromUserInput() which can
+ * normally be used for URNs.
+ * 
+ * @param pszURN the urn string. 
+ *
+ * @return OGRERR_NONE on success or an error code.
+ */
+
+OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
+
+{
+    if( !EQUALN(pszURN,"urn:ogc:def:crs:",16) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "URN %s not a supported format.", pszURN );
+        return OGRERR_FAILURE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find code (ignoring version) out of string like:                */
+/*                                                                      */
+/*      authority:version:code                                          */
+/* -------------------------------------------------------------------- */
+    const char *pszCur = pszURN + 16;
+
+    const char *pszAuthority = pszCur;
+
+    // skip authority
+    while( *pszCur != ':' && *pszCur )
+        pszCur++;
+    if( *pszCur == ':' )
+        pszCur++;
+
+    // skip version
+    while( *pszCur != ':' && *pszCur )
+        pszCur++;
+    if( *pszCur == ':' )
+        pszCur++;
+
+    const char *pszCode = pszCur;
+
+/* -------------------------------------------------------------------- */
+/*      Is this an EPSG code?                                           */
+/* -------------------------------------------------------------------- */
+    if( EQUALN(pszAuthority,"EPSG:",5) )
+        return importFromEPSG( atoi(pszCode) );
+
+/* -------------------------------------------------------------------- */
+/*      Is this an OGC code?                                            */
+/* -------------------------------------------------------------------- */
+    if( !EQUALN(pszAuthority,"OGC:",4) )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "URN %s has unrecognised authority.", 
+                  pszURN );
+        return OGRERR_FAILURE;
+    }
+
+    if( EQUALN(pszCode,"CRS84",5) )
+        return SetWellKnownGeogCS( pszCode );
+    else if( EQUALN(pszCode,"CRS83",5) )
+        return SetWellKnownGeogCS( pszCode );
+    else if( EQUALN(pszCode,"CRS27",5) )
+        return SetWellKnownGeogCS( pszCode );
+
+/* -------------------------------------------------------------------- */
+/*      Handle auto codes.  We need to convert from format              */
+/*      AUTO42001:99:8888 to format AUTO:42001,99,8888.                 */
+/* -------------------------------------------------------------------- */
+    else if( EQUALN(pszCode,"AUTO",4) )
+    {
+        char szWMSAuto[100];
+        int i;
+
+        if( strlen(pszCode) > sizeof(szWMSAuto)-2 )
+            return OGRERR_FAILURE;
+
+        strcpy( szWMSAuto, "AUTO:" );
+        strcpy( szWMSAuto + 5, pszCode + 4 );
+        for( i = 5; szWMSAuto[i] != '\0'; i++ )
+        {
+            if( szWMSAuto[i] == ':' )
+                szWMSAuto[i] = ',';
+        }
+
+        return importFromWMSAUTO( szWMSAuto );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Not a recognise OGC item.                                       */
+/* -------------------------------------------------------------------- */
+    CPLError( CE_Failure, CPLE_AppDefined, 
+              "URN %s value not supported.", 
+              pszURN );
+
+    return OGRERR_FAILURE;
+}
+
+/************************************************************************/
 /*                         importFromWMSAUTO()                          */
+/*                                                                      */
+/*      Note that the WMS 1.3 specification does not include the        */
+/*      units code, while apparently earlier specs do.  We try to       */
+/*      guess around this.                                              */
 /************************************************************************/
 
 OGRErr OGRSpatialReference::importFromWMSAUTO( const char * pszDefinition )
@@ -1713,19 +1836,43 @@ OGRErr OGRSpatialReference::importFromWMSAUTO( const char * pszDefinition )
 
     papszTokens = CSLTokenizeStringComplex( pszDefinition, ",", FALSE, TRUE );
 
-    if( CSLCount(papszTokens) != 4 )
+    if( CSLCount(papszTokens) == 4 )
+    {
+        nProjId = atoi(papszTokens[0]);
+        nUnitsId = atoi(papszTokens[1]);
+        dfRefLong = atof(papszTokens[2]);
+        dfRefLat = atof(papszTokens[3]);
+    }
+    else if( CSLCount(papszTokens) == 3 && atoi(papszTokens[0]) == 42005 )
+    {
+        nProjId = atoi(papszTokens[0]);
+        nUnitsId = atoi(papszTokens[1]);
+        dfRefLong = atof(papszTokens[2]);
+        dfRefLat = 0.0;
+    }
+    else if( CSLCount(papszTokens) == 3 )
+    {
+        nProjId = atoi(papszTokens[0]);
+        nUnitsId = 9001;
+        dfRefLong = atof(papszTokens[1]);
+        dfRefLat = atof(papszTokens[2]);
+
+    }
+    else if( CSLCount(papszTokens) == 2 && atoi(papszTokens[0]) == 42005 ) 
+    {
+        nProjId = atoi(papszTokens[0]);
+        nUnitsId = 9001;
+        dfRefLong = atof(papszTokens[1]);
+    }
+    else
     {
         CSLDestroy( papszTokens );
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "AUTO projection has wrong number of arguments, expected\n"
-                  "AUTO:proj_id,units_id,ref_long,ref_lat" );
+                  "AUTO:proj_id,units_id,ref_long,ref_lat or"
+                  "AUTO:proj_id,ref_long,ref_lat" );
         return OGRERR_FAILURE;
     }
-
-    nProjId = atoi(papszTokens[0]);
-    nUnitsId = atoi(papszTokens[1]);
-    dfRefLong = atof(papszTokens[2]);
-    dfRefLat = atof(papszTokens[3]);
 
     CSLDestroy( papszTokens );
 

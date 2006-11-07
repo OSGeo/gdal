@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.72  2006/11/07 18:55:07  fwarmerdam
+ * added OGC importFromURN()
+ *
  * Revision 1.71  2006/10/14 12:15:44  mloskot
  * Fixed missing declaration of OGRSpatialReference::SetMercator2SP().
  *
@@ -257,6 +260,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      importFromWMSAUTO( const char *pszAutoDef );
     OGRErr      importFromXML( const char * );
     OGRErr      importFromDict( const char *pszDict, const char *pszCode );
+    OGRErr      importFromURN( const char * );
 
     OGRErr      morphToESRI();
     OGRErr      morphFromESRI();
