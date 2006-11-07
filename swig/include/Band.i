@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.25  2006/11/07 04:04:45  hobu
+ * improper #ifndef SWIGCSHARP in a previous commit
+ *
  * Revision 1.24  2006/11/05 22:12:15  tamas
  * Hiding ReadRaster/WriteRaster from the C# interface
  *
@@ -237,7 +240,7 @@ public:
     return GDALFillRaster( self, real_fill, imag_fill );
   }
 
-#if !definied(SWIGCSHARP)
+#ifndef SWIGCSHARP
 %apply ( int *nLen, char **pBuf ) { (int *buf_len, char **buf ) };
 %apply ( int *optional_int ) {(int*)};
 %feature( "kwargs" ) ReadRaster;
