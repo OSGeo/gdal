@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/11/07 16:24:08  hobu
+ * silence errors about no prototype defined for a few functions with void parameters
+ *
  * Revision 1.20  2006/03/07 22:05:32  fwarmerdam
  * fix up docs a bit
  *
@@ -132,7 +135,7 @@ void CPL_DLL CPL_STDCALL CPLQuietErrorHandler( CPLErr, int, const char * );
 
 CPLErrorHandler CPL_DLL CPL_STDCALL CPLSetErrorHandler(CPLErrorHandler);
 void CPL_DLL CPL_STDCALL CPLPushErrorHandler( CPLErrorHandler );
-void CPL_DLL CPL_STDCALL CPLPopErrorHandler();
+void CPL_DLL CPL_STDCALL CPLPopErrorHandler(void);
 
 void CPL_DLL CPL_STDCALL CPLDebug( const char *, const char *, ... );
 void CPL_DLL CPL_STDCALL _CPLAssert( const char *, const char *, int );
