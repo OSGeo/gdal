@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/11/07 19:42:08  fwarmerdam
+ * Fixed SetOffset/SetScale per
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1349
+ *
  * Revision 1.10  2006/10/07 01:59:40  fwarmerdam
  * Added support for reading .clr file.
  *
@@ -231,7 +235,7 @@ CPLErr IDARasterBand::SetOffset( double dfNewValue )
     }
 
     poIDS->dfB = dfNewValue;
-    c2tp( dfNewValue, poIDS->abyHeader + 178 );
+    c2tp( dfNewValue, poIDS->abyHeader + 177 );
     poIDS->bHeaderDirty = TRUE;
 
     return CE_None;
@@ -269,7 +273,7 @@ CPLErr IDARasterBand::SetScale( double dfNewValue )
     }
 
     poIDS->dfM = dfNewValue;
-    c2tp( dfNewValue, poIDS->abyHeader + 172 );
+    c2tp( dfNewValue, poIDS->abyHeader + 171 );
     poIDS->bHeaderDirty = TRUE;
 
     return CE_None;
