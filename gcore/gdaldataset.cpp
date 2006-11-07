@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2006/11/07 20:35:13  fwarmerdam
+ * Avoid junk GDALClose() reports.
+ *
  * Revision 1.61  2006/11/01 04:45:48  fwarmerdam
  * Fixed erwflag error.
  *
@@ -205,7 +208,10 @@ GDALDataset::~GDALDataset()
 {
     int         i;
 
-    CPLDebug( "GDAL", "GDALClose(%s)", GetDescription() );
+    // we don't want to report destruction of datasets that 
+    // were never really open.
+    if( nBands != 0 || !EQUAL(GetDescription(),"") )
+        CPLDebug( "GDAL", "GDALClose(%s)", GetDescription() );
 
 /* -------------------------------------------------------------------- */
 /*      Remove dataset from the "open" dataset list.                    */
