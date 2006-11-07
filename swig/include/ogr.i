@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.58  2006/11/07 13:48:07  hobu
+ * remove unused rcode in Centroid
+ *
  * Revision 1.57  2006/09/09 17:52:28  tamas
  * Added OGREnvelope for the C# bindings
  *
@@ -1269,7 +1272,7 @@ public:
   %newobject Centroid;
   OGRGeometryShadow* Centroid() {
     OGRGeometryShadow *pt = new_OGRGeometryShadow( wkbPoint );
-    OGRErr rcode = OGR_G_Centroid( self, pt );
+    OGR_G_Centroid( self, pt );
     return pt;
   }
   
