@@ -37,6 +37,9 @@
  *   hostile source.
  *
  * $Log$
+ * Revision 1.45  2006/11/07 03:45:22  fwarmerdam
+ * Added support for CDATA.
+ *
  * Revision 1.44  2006/06/30 18:18:17  dron
  * Avoid warnings.
  *
@@ -233,7 +236,7 @@ static XMLTokenType ReadToken( ParseContext *psContext )
         ReadChar(psContext);
     }
 /* -------------------------------------------------------------------- */
-/*      Handle DOCTYPE or other literals.                               */
+/*      Handle DOCTYPE.                                                 */
 /* -------------------------------------------------------------------- */
     else if( chNext == '<' 
           && EQUALN(psContext->pszInput+psContext->nInputOffset,"!DOCTYPE",8) )
@@ -265,6 +268,33 @@ static XMLTokenType ReadToken( ParseContext *psContext )
 
             AddToToken( psContext, chNext );
         } while( TRUE );
+    }
+/* -------------------------------------------------------------------- */
+/*      Handle CDATA.                                                   */
+/* -------------------------------------------------------------------- */
+    else if( chNext == '<' 
+          && EQUALN(psContext->pszInput+psContext->nInputOffset,"![CDATA[",8) )
+    {
+        psContext->eTokenType = TString;
+
+        // Skip !CDATA[
+        ReadChar( psContext );
+        ReadChar( psContext );
+        ReadChar( psContext );
+        ReadChar( psContext );
+        ReadChar( psContext );
+        ReadChar( psContext );
+        ReadChar( psContext );
+        ReadChar( psContext );
+
+        while( !EQUALN(psContext->pszInput+psContext->nInputOffset,"]]>",3)
+               && (chNext = ReadChar(psContext)) != '\0' )
+            AddToToken( psContext, chNext );
+
+        // Skip "]]>" characters
+        ReadChar(psContext);
+        ReadChar(psContext);
+        ReadChar(psContext);
     }
 /* -------------------------------------------------------------------- */
 /*      Simple single tokens of interest.                               */
