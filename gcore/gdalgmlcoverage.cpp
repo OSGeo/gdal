@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/11/07 18:56:18  fwarmerdam
+ * add more complete urn support
+ *
  * Revision 1.2  2006/10/27 04:11:28  fwarmerdam
  * Fix memory leak.
  *
@@ -201,20 +204,10 @@ CPLErr GDALParseGMLCoverage( CPLXMLNode *psXML,
             if( oSRS.SetFromUserInput( pszSRSName ) == OGRERR_NONE )
                 oSRS.exportToWkt( ppszProjection );
         }
-        else if( EQUALN(pszSRSName,"urn:ogc:def:crs:EPSG::",22) )
+        else if( EQUALN(pszSRSName,"urn:ogc:def:crs:",16) )
         {
             OGRSpatialReference oSRS;
-            if( oSRS.importFromEPSG( atoi(pszSRSName + 22) ) == OGRERR_NONE )
-                oSRS.exportToWkt( ppszProjection );
-        }
-        else if( EQUALN(pszSRSName,"urn:ogc:def:crs:EPSG:",21) )
-        {
-            const char *pszCode = pszSRSName+21;
-            while( *pszCode != ':' && *pszCode != '\0' )
-                pszCode++;
-
-            OGRSpatialReference oSRS;
-            if( oSRS.importFromEPSG( atoi(pszCode+1) ) == OGRERR_NONE )
+            if( oSRS.importFromURN( pszSRSName ) == OGRERR_NONE )
                 oSRS.exportToWkt( ppszProjection );
         }
         else
