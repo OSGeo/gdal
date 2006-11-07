@@ -11,6 +11,7 @@ from distutils.sysconfig import parse_makefile,expand_makefile_vars
 
 from distutils.core import setup, Extension
 
+os.environ['CFLAGS'] = '-dynamic -g -O3 -Wall'
 # Function needed to make unique lists.
 def unique(list):
     """Stolen from MapScript setup script"""
@@ -150,4 +151,4 @@ setup( name = 'Gdal Wrapper',
        ext_modules = [gdal_module,
                       gdalconst_module,
                       osr_module,
-                      ogr_module],debug=0 )
+                      ogr_module] )
