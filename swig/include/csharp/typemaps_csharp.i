@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.16  2006/11/08 22:43:24  tamas
+ * Preliminary fix for SWIG potential problems
+ *
  * Revision 1.15  2006/11/04 22:12:41  tamas
  * Added preliminary Raster R/W support
  *
@@ -65,6 +68,8 @@
 %include "typemaps.i"
 
 /* CSHARP TYPEMAPS */
+
+%include swig_csharp_extensions.i
 
 %typemap(in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen, char *pBuf )
 {
@@ -408,22 +413,27 @@ OPTIONAL_POD(int,i);
   $1 = ($1_ltype)$input;
 }
 
-%typemap(cscode) SWIGTYPE %{
+/*%typemap(cscode) SWIGTYPE %{
   internal static HandleRef getCPtrAndDisown($csclassname obj) {
     obj.swigCMemOwn = false;
     return getCPtr(obj);
   }
 %}
 
-%typemap(csin) SWIGTYPE *DISOWN "$csclassname.getCPtrAndDisown($csinput)"
+%typemap(csin) SWIGTYPE *DISOWN "$csclassname.getCPtrAndDisown($csinput)"*/
 
 
 /******************************************************************************
  * GDAL raster R/W support                                                    *
  *****************************************************************************/
  
-%typemap(imtype) void *buffer_ptr "IntPtr"
+%typemap(imtype, out="IntPtr") void *buffer_ptr "IntPtr"
 %typemap(cstype) void *buffer_ptr %{IntPtr%}
 %typemap(in) void *buffer_ptr %{ $1 = ($1_ltype)$input; %}
+%typemap(out) void *buffer_ptr %{ $result = $1; %}
 %typemap(csin) void *buffer_ptr "$csinput"
+%typemap(csout, excode=SWIGEXCODE) void *buffer_ptr {
+      IntPtr ret = $imcall;$excode
+      return ret;
+}
 
