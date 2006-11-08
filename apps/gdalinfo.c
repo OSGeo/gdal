@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.45  2006/11/08 16:34:55  fwarmerdam
+ * Added -stats to usage message.
+ *
  * Revision 1.44  2006/06/08 16:40:53  fwarmerdam
  * Added support for reporting extra metadata domains
  *
@@ -180,7 +183,7 @@ GDALInfoReportCorner( GDALDatasetH hDataset,
 void Usage()
 
 {
-    printf( "Usage: gdalinfo [--help-general] [-mm] [-nogcp] [-nomd]\n"
+    printf( "Usage: gdalinfo [--help-general] [-mm] [-stats] [-nogcp] [-nomd]\n"
             "                [-mdd domain]* datasetname\n" );
     exit( 1 );
 }
