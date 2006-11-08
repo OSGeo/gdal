@@ -161,7 +161,8 @@ Usage:
 \endhtmlonly
 
 \verbatim
-gdalinfo [-mm] [-nogcp] [-nomd] datasetname
+gdalinfo [--help-general] [-mm] [-stats] [-nogcp] [-nomd]
+         [-mdd domain]* datasetname
 \endverbatim
 
 \if man
@@ -173,11 +174,13 @@ raster dataset.
 <dl>
 <dt> <b>-mm</b></dt><dd> Force computation of the actual min/max values for each
 band in the dataset.</dd>
+<dt> <b>-stats</b></dt><dd> Force computation and display of image statistics.</dd>
 <dt> <b>-nogcp</b></dt><dd> Suppress ground control points list printing. It may be
 useful for datasets with huge amount of GCPs, such as L1B AVHRR or HDF4 MODIS
 which contain thousands of the ones.</dd>
 <dt> <b>-nomd</b></dt><dd> Suppress metadata printing. Some datasets may contain a lot
 of metadata strings.</dd>
+<dt> <b>-mdd domain</b></dt><dd> Report metadata for the specified domain</dd>
 </dl>
 
 The gdalinfo will report all of the following (if known):
