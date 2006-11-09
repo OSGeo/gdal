@@ -1,0 +1,92 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
+/*!
+\page sponsorship Sponsoring GDAL/OGR
+
+Development and maintenance of GDAL/OGR is supported by organizations 
+contracting developers, organizations contributing improvements, users 
+contributing improvements, and volunteers.  Generally speaking this works
+well, and GDAL/OGR has improved substantially over the years.
+
+However, there are still many tasks which do not receive the attention they
+should.  Processing bug reports, writing documentation, writing test scripts, 
+evaluating test script failures and user support often receive less 
+attention than would be desired.  Some new features of broad interest are
+not implemented because they aren't important enough to any one person or
+organization.
+
+In order to provide sustained funding to support the maintenance, improvement
+and promotion of the GDAL/OGR project, the project seeks project sponsors to 
+provide financial support.  Sponsorship would be accomplished via the 
+<a href="http://wiki.osgeo.org/index.php/Project_Sponsorship">OSGeo 
+Project Sponsorship</a> program.  Funds are held by OSGeo for disposition
+on behalf of the project, and dispersed at the discretion of the GDAL/OGR
+Project Steering Committee.
+
+\section ss_uses Sponsorship Uses
+
+The primary intended use of the sponsorship funds is to hire a maintainer
+on a contract basis.  The responsibilities would include:
+
+<ul>
+<li> Addressing bug reports - reproducing then fixing or passing on to another developer.
+<li> Extending, and running the test suite. 
+<li> Improving documentation.
+<li> Other improvements to the software. 
+<li> General user support on the mailing list. 
+</ul>
+
+Sponsorship funds may also be used to contract for specific improvements to 
+GDAL, provision of resources such as web hosting, funding code sprints, 
+or funding project promotion.  Decisions on spending of sponsorship funds
+will be made by the GDAL/OGR Project Steering Committee. 
+
+\section ss_benefits Sponsorship Benefits
+
+Sponsoring GDAL/OGR provides the following benefits:
+
+<ol>
+<li> Ensures the sustainability and health of the GDAL/OGR project.
+<li> All sponsors will be listed on the project <a href="credits.html">
+Credits</a> page, ordered by contribution class (Platinum, Gold, Silver) 
+with a link back to the sponsor.  Silver sponsors and above may include a 
+logo.  Platinum sponsors may also have a logo appearing on the OSGeo main
+page. 
+<li> Sponsors will be permitted to indicate they are project sponsors 
+in web and other promotional materials, and use the GDAL/OGR logo. 
+<li> Sponsors will received a degree of priority in processing of 
+bug reports by any maintainer hired with sponsorship funds.
+<li> Sponsors will receive a detailed report annually on the use of
+sponsorship funds. 
+</ol>
+
+\section ss_levels Sponsorship Process
+
+Sponsors can sponsor GDAL for any amount of money of at least $500 USD.  
+At or above the following levels a sponsor will be designated as being one
+of the following class:
+
+<ol>
+<li> $27000+ USD: Platinum Sponsor				
+<li> $9000+ USD: Gold Sponsor
+<li> $3000+ USD: Silver Sponsor
+</ol>
+
+Sponsorships last one year, after which they may be continuing with a 
+new payment, or allowed to lapse.  OSGeo is a US 501(c)3 charity and 
+sponsorships are eligible as a charitable contribution for US taxpayers. 
+Appropriate receipts can be issued when needed.
+
+Organizations or individuals interested in sponsoring the GDAL/OGR project
+should contact Frank Warmerdam (warmerdam@pobox.com) with questions, or
+to make arrangements.  
+
+\htmlonly
+<p>
+$Id$
+</p>
+\endhtmlonly
+
+*/
