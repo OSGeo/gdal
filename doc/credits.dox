@@ -3,7 +3,7 @@
 #endif /* DOXYGEN_SKIP */
 
 /*!
-\page credits Acknowledgements and Credits
+\page credits Sponsors, Acknowledgements and Credits
 
 There are too many people who have helped since GDAL/OGR was launched in 
 late 1998 for me to thank them all.  I have received moral support, 
@@ -16,9 +16,28 @@ years.  Forgive me for all those I left out.<p>
 
 \section credits_sponsorship Sponsorship
 
-<a href="http://www.ermapper.com/">ER Mapper</a> has generously provided
-ongoing primary sponsorship for GDAL since February 2005 to support work on 
-GDAL improvement efforts not focused on any particular client project.<p>
+Sponsors help fund maintenance, development and promotion of GDAL/OGR. 
+If your organization depends on GDAL/OGR consider 
+<a href="sponsorship.html">becoming a sponsor</a>.
+
+\subsection silver_sponsors Silver Sponsors
+
+\htmlonly
+<a href="http://www.cadcorp.com/">
+<img src="cadcorp_logo.jpg" alt="" border="0" width="110" height="110">
+</a>
+\endhtmlonly
+
+\subsection past_sponsors Past Sponsors
+
+\htmlonly
+<center><a href="http://www.ermapper.com/"><img src="ERMapperlogo_small.gif" alt="ER Mapper" border="0" width="154" height="46"></a></center><br>
+\endhtmlonly
+
+<a href="http://www.ermapper.com/">ER Mapper</a> generously provided
+primary sponsorship for GDAL from February 2005 to November 2007 to support 
+work on GDAL improvement efforts not focused on any particular client project.
+<p>
 
 \section credits_personal Personal
 
@@ -56,6 +75,7 @@ the earlier version by Martin Daly.<p>
 \section credits_cooperate Corporate
 
 <ul> 
+
 <li> <b><a href="http://www.actgate.com/">Applied Coherent 
 Technologies</a></b>: Supported implementation of the GDAL contour generator, 
 as well as various improvements to HDF drivers.
@@ -88,8 +108,8 @@ OGR C API.
 <p>
 
 <li> <b><a href="http://www.osgis.nl/">OSGIS</a></b> and the 
-<b>Geo-Information and ICT Department of the Ministry of Transport, Public
-Works and Water Management</b>:
+Geo-Information and ICT Department of the Ministry of Transport, Public
+Works and Water Management:
 Funded the DWG/DXF writing driver in OGR.<p>
 
 <li> <b><a href="http://www.geosoft.com/">Geosoft</a></b>: Supported 

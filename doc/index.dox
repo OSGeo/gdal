@@ -28,21 +28,6 @@ Download:
  <a href="ftp://ftp.remotesensing.org/gdal">ftp at remotesensing.org</a>,
  <a href="https://gdal.osgeo.org/servlets/ProjectDocumentList?folderID=40&expandFolder=40&folderID=0">http at osgeo.org</a>
 
-\section index_primary_sponsor Primary Sponsor
-
-<!-- XXX: we are using this small hack to workaround Doxygen deficiency
-when processing HTML tags with arguments. -->
-\htmlonly
-<center><a href="http://www.ermapper.com/"><img src="ERMapperlogo_small.gif" alt="ER Mapper" border="0" width="154" height="46"></a></center>
-\endhtmlonly
-\latexonly
-\image latex ERMapperlogo_small.gif
-\endlatexonly
-
-<a href="http://www.ermapper.com/">ER Mapper</a> has generously provided
-ongoing primary sponsorship for GDAL since February 2005 to support work 
-on GDAL improvement efforts not focused on any particular client project.<p>
-
 \section index_userdocs User Oriented Documentation
 
 <ul>
@@ -52,7 +37,7 @@ on GDAL improvement efforts not focused on any particular client project.<p>
 <li> <a href="faq.html">GDAL FAQ</a>
 <li> <a href="gdal_datamodel.html">GDAL Data Model</a>
 <li> <a href="governance.html">GDAL/OGR Governance and Community Participation</a>
-<li> <a href="credits.html">Acknowledgements and Credits</a>
+<li> <a href="credits.html">Sponsors, Acknowledgements and Credits</a>
 </ul>
 
 \section index_devdocs Developer Oriented Documentation
