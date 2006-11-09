@@ -129,3 +129,8 @@ clean:
 	-del *.exe
 	-del *.manifest
 	
+install: gdal_csharp
+    -mkdir $(BINDIR)
+	xcopy /y /r /d /f gdal_*_wrap.dll $(BINDIR)
+	xcopy /y /r /d /f gdal_*_csharp.dll $(BINDIR)
+
