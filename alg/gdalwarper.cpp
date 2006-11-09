@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/11/09 14:56:07  fwarmerdam
+ * Added SKIP_NOSOURCE in papszWarpOptions documentation.
+ *
  * Revision 1.20  2006/08/29 22:38:29  fwarmerdam
  * Added support for saving and load papszWarpOptions.
  *
@@ -696,6 +699,12 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount, GDALDataType eType,
  * each time a block of data is read for the input buffer resulting in alot
  * of extra seeking around the disk, and reduced IO throughput.  The default
  * at this time is NO.
+ *
+ * - SKIP_NOSOURCE=YES/NO: Skip all processing for chunks for which there
+ * is no corresponding input data.  This will disable initializing the 
+ * destination (INIT_DEST) and all other processing, and so should be used
+ * careful.  Mostly useful to short circuit a lot of extra work in mosaicing 
+ * situations.
  *
  * Normally when computing the source raster data to 
  * load to generate a particular output area, the warper samples transforms
