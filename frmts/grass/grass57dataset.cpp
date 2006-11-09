@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2006/11/09 15:56:47  rblazek
+ * set also the band invalid if reopen fails
+ *
  * Revision 1.7  2006/11/09 15:30:45  rblazek
  * check if ResetReading failed
  *
@@ -412,7 +415,10 @@ CPLErr GRASSRasterBand::ResetReading ( struct Cell_head *sNewWindow )
 	 sNewWindow->ew_res != sOpenWindow.ew_res || sNewWindow->ns_res != sOpenWindow.ns_res ||
 	 sNewWindow->rows   != sOpenWindow.rows   || sNewWindow->cols   != sOpenWindow.cols )
     {
-        G_close_cell( hCell );
+	if( hCell >= 0 ) {
+            G_close_cell( hCell );
+	    hCell = -1;
+	}
 
 	/* Set window */
 	G_set_window( sNewWindow );
@@ -426,6 +432,7 @@ CPLErr GRASSRasterBand::ResetReading ( struct Cell_head *sNewWindow )
 	
 	if ( (hCell = G_open_cell_old( pszCellName, pszMapset)) < 0 ) {
 	    CPLError( CE_Warning, CPLE_AppDefined, "GRASS: Cannot open raster '%s'", pszCellName );
+            this->valid = false;
 	    return CE_Failure;
 	}
 
@@ -462,6 +469,8 @@ CPLErr GRASSRasterBand::ResetReading ( struct Cell_head *sNewWindow )
 CPLErr GRASSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage )
 
 {
+    if ( ! this->valid ) return CE_Failure;
+
     // Reset window because IRasterIO could be previosly called
     if ( ResetReading ( &(((GRASSDataset *)poDS)->sCellInfo) ) != CE_None ) {
        return CE_Failure;
@@ -513,6 +522,8 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
     /* Calculate the region */
     struct Cell_head sWindow;
     struct Cell_head *psDsWindow;
+    
+    if ( ! this->valid ) return CE_Failure;
 
     psDsWindow = &(((GRASSDataset *)poDS)->sCellInfo);
     
