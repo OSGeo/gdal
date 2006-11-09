@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/11/09 15:30:45  rblazek
+ * check if ResetReading failed
+ *
  * Revision 1.6  2006/02/13 17:39:31  rblazek
  * header files moved to grass
  *
@@ -526,7 +529,10 @@ CPLErr GRASSRasterBand::IRasterIO ( GDALRWFlag eRWFlag,
     /* Reset resolution */
     G_adjust_Cell_head ( &sWindow, 1, 1);
 
-    ResetReading ( &sWindow );
+    if ( ResetReading ( &sWindow ) != CE_None )
+    {
+        return CE_Failure;
+    }
     
     /* Read Data */
     CELL  *cbuf = NULL;
