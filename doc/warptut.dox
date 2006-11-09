@@ -142,9 +142,10 @@ being processed) may be setup with a "nodata" value for each band if you wish
 to avoid having pixels of some background value copied to the destination
 image. 
 
-<li><a name="#warpoptions"></a> GDALWarpOptions::papszOptions - This is
-a string list of NAME=VALUE options passed to the warper.  Currently
-supported options include:
+<li><a name="#warpoptions"></a> GDALWarpOptions::papszWarpOptions - This is
+a string list of NAME=VALUE options passed to the warper.  See the 
+GDALWarpOptions::papszWarpOptions docs for all options.  Supported values 
+include:
 
 <ul>
 <li> INIT_DEST=[value] or INIT_DEST=NO_DATA: This option forces the 
