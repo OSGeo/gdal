@@ -496,8 +496,8 @@ based on available GCPs.  Use this <em>instead</em> of the -order switch.</dd>
 <dt> <b>-tr</b> <em>xres yres</em>:</dt><dd> set output file resolution (in target georeferenced units)</dd>
 <dt> <b>-ts</b> <em>width height</em>:</dt><dd> set output file size in
 pixels and lines</dd>
-<dt> <b>-wo</b> <em>"NAME=VALUE"</em>:</dt><dd> Set a warp options. There is a
- <a href="warptut.html#warpoptions">list</a> of available ones. Multiple
+<dt> <b>-wo</b> <em>"NAME=VALUE"</em>:</dt><dd> Set a warp options.  The 
+GDALWarpOptions::papszWarpOptions docs show all options.  Multiple
  <b>-wo</b> options may be listed.</dd>
 <dt> <b>-ot</b> <em>type</em>:</dt><dd> For the output bands to be of the indicated
  data type.</dd>
