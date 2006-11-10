@@ -1,11 +1,7 @@
 
 GDAL_ROOT = 	..\..
 
-CURL_DIR=$(SL)\curl-7.10.7
 WINSOCK_LIB = "WSOCK32.LIB"
-
-CURL_INC = -I$(CURL_DIR)/include
-CURL_LIB = $(CURL_DIR)/lib/libcurl.lib
 
 LIBS	=	$(GDAL_ROOT)\gdal_i.lib $(CURL_LIB)
 
