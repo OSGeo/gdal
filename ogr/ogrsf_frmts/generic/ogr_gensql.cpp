@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/11/10 16:58:40  fwarmerdam
+ * Added check on primary key for null when joining.   Skip join
+ * if it is NULL.  Fixes crash Markus reported.
+ *
  * Revision 1.20  2006/10/17 17:34:37  fwarmerdam
  * Don't try to set spatial filter till after poSrcLayer has been selected!
  *
@@ -620,6 +624,10 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
 
         swq_join_def *psJoinInfo = psSelectInfo->join_defs + iJoin;
         OGRLayer *poJoinLayer = papoTableLayers[psJoinInfo->secondary_table];
+        
+        // if source key is null, we can't do join.
+        if( !poSrcFeat->IsFieldSet( psJoinInfo->primary_field ) )
+            continue;
 
         // Prepare attribute query to express fetching on the joined variable
         sprintf( szFilter, "%s = ", 
