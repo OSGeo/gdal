@@ -12,6 +12,9 @@ tamas         Tamas Szekeres               c# swig bindings
 dmorissette   Daniel Morissette            mitab, avc, cpl
 danmo         dmorissette at mapgears.com  
 
+hobu          Howard Butler                swig/python, sde
+              hobu at hobu.net             
+
 
 
 Folks who have not yet agreed to RFC 3:
@@ -31,8 +34,6 @@ andrea		Alessandro Amici 	alexamici at tiscali.it		gdal
 kdejong		Kor de Jong		k.dejong at geog.uu.nl		gdal
 
 dgilbert	Dave Gilbert		dgilbert at dclg.ca		libjpeg
-
-hobu 		Howard Butler           hobu at hobu.net                gdal
 
 lichun		Lichun Wang 		lichun at itc.nl 		gdal
 
@@ -54,7 +55,7 @@ dnadeau		Denis Nadeau		denis.nadeau@gmail.com		gdal
 
 osemykin	Oleg Semykin		oss-dev at rambler.ru		gdal
 
-jlacroix	Julien-Samuel Lacroix	jlacroix at dmsolutions.ca      gdal
+jlacroix	Julien-Samuel Lacroix	jlacroix at mapgears.com        gdal
 
 dwallner	Daniel Wallner		daniel.wallner at bredband.net	gdal
 
