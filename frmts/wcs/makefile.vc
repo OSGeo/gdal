@@ -1,7 +1,7 @@
 
 OBJ	=	wcsdataset.obj cpl_http.obj
 
-EXTRAFLAGS = 	$(CURL_INCLUDE)
+EXTRAFLAGS = 	$(CURL_INCLUDE) -DHAVE_CURL
 
 GDAL_ROOT	=	..\..
 
