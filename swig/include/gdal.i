@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.43  2006/11/11 19:33:47  tamas
+ * Controlling the owner of the objects returned by the static/non static members for the csharp binding
+ *
  * Revision 1.42  2006/11/04 22:11:36  tamas
  * include for gdal csharp specific extensions
  *
@@ -464,6 +467,9 @@ FALSE_IS_ERR GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 // GeneralCmdLineProcessor
 // TermProgress
 //
+#if defined(SWIGCSHARP)
+%static_owner
+#endif
 
 void GDALAllRegister();
 
@@ -572,6 +578,9 @@ GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
   
 }
 %}
+#if defined(SWIGCSHARP)
+%object_owner
+#endif
 
 //************************************************************************
 //
