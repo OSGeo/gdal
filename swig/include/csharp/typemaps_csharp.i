@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.17  2006/11/11 19:41:21  tamas
+ * Removed obsolete items
+ *
  * Revision 1.16  2006/11/08 22:43:24  tamas
  * Preliminary fix for SWIG potential problems
  *
@@ -412,16 +415,6 @@ OPTIONAL_POD(int,i);
   /* %typemap(in) (int *hasval) */
   $1 = ($1_ltype)$input;
 }
-
-/*%typemap(cscode) SWIGTYPE %{
-  internal static HandleRef getCPtrAndDisown($csclassname obj) {
-    obj.swigCMemOwn = false;
-    return getCPtr(obj);
-  }
-%}
-
-%typemap(csin) SWIGTYPE *DISOWN "$csclassname.getCPtrAndDisown($csinput)"*/
-
 
 /******************************************************************************
  * GDAL raster R/W support                                                    *
