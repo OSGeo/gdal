@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.59  2006/11/11 19:33:47  tamas
+ * Controlling the owner of the objects returned by the static/non static members for the csharp binding
+ *
  * Revision 1.58  2006/11/07 13:48:07  hobu
  * remove unused rcode in Centroid
  *
@@ -996,6 +999,9 @@ public:
 /* -------------------------------------------------------------------- */
 /*      Geometry factory methods.                                       */
 /* -------------------------------------------------------------------- */
+#if defined(SWIGCSHARP)
+%static_owner
+#endif
 %feature( "kwargs" ) CreateGeometryFromWkb;
 %newobject CreateGeometryFromWkb;
 %apply (int nLen, char *pBuf ) { (int len, char *bin_string)};
@@ -1045,6 +1051,9 @@ public:
   }
  
 %}
+#if defined(SWIGCSHARP)
+%object_owner
+#endif
 
 /************************************************************************/
 /*                             OGRGeometry                              */
@@ -1327,6 +1336,10 @@ OGRErr OGRSetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER);
 
 void OGRRegisterAll();
 
+#if defined(SWIGCSHARP)
+%static_owner
+#endif
+
 %inline %{
   OGRDataSourceShadow* GetOpenDS(int ds_number) {
     OGRDataSourceShadow* layer = (OGRDataSourceShadow*) OGRGetOpenDS(ds_number);
@@ -1361,4 +1374,8 @@ OGRDriverShadow* GetDriver(int driver_number) {
   return (OGRDriverShadow*) OGRGetDriver(driver_number);
 }
 %}
+
+#if defined(SWIGCSHARP)
+%object_owner
+#endif
 

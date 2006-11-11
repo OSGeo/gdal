@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.29  2006/11/11 19:33:48  tamas
+ * Controlling the owner of the objects returned by the static/non static members for the csharp binding
+ *
  * Revision 1.28  2006/10/15 20:58:07  fwarmerdam
  * Added IsLocal() method.
  *
@@ -273,6 +276,9 @@ OGRErr GetWellKnownGeogCSAsWKT( const char *name, char **argout ) {
  * exactly the same as the C api.
  * 
  */
+#if defined(SWIGCSHARP)
+%static_owner
+#endif 
 #if !defined(SWIGPYTHON)
 %rename (GetProjectionMethods) OPTGetProjectionMethods;
 char **OPTGetProjectionMethods();
@@ -283,6 +289,9 @@ char **OPTGetParameterList( char *method, char **username );
 %rename (GetProjectionMethodParamInfo) OPTGetParameterInfo;
 void OPTGetParameterInfo( char *method, char *param, char **usrname,
                           char **type, double *defaultval );
+#endif
+#if defined(SWIGCSHARP)
+%object_owner
 #endif
 
 /******************************************************************************
