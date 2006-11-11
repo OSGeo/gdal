@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2006/11/11 00:06:57  fwarmerdam
+ * Fixed problem with literal runs of u1, u2, and u4 data in
+ * UncompressBlock.  They were being expanded to 8bit, when they
+ * should have been returned packed.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1348
+ *
  * Revision 1.55  2006/06/30 21:15:57  fwarmerdam
  * Check for success of SetStringField() on RRDNamesList.
  *
@@ -593,7 +599,6 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
 
     nNumBits = pabyCData[12];
 
-
 /* ==================================================================== */
 /*      If this is not run length encoded, but just reduced             */
 /*      precision, handle it now.                                       */
@@ -665,11 +670,34 @@ static CPLErr UncompressBlock( GByte *pabyCData, int /* nSrcBytes */,
 /* -------------------------------------------------------------------- */
 /*      Now apply to the output buffer in a type specific way.          */
 /* -------------------------------------------------------------------- */
-            if( nDataType == EPT_u8 || nDataType == EPT_u4 
-                || nDataType == EPT_u2 || nDataType == EPT_u1 )
+            if( nDataType == EPT_u8 )
             {
-                CPLAssert( nDataValue < 256 );
                 ((GByte *) pabyDest)[nPixelsOutput] = (GByte) nDataValue;
+            }
+            else if( nDataType == EPT_u1 )
+            {
+                if( nDataValue == 1 )
+                    pabyDest[nPixelsOutput>>3] |= (1 << (nPixelsOutput & 0x7));
+                else
+                    pabyDest[nPixelsOutput>>3] &= ~(1<<(nPixelsOutput & 0x7));
+            }
+            else if( nDataType == EPT_u2 )
+            {
+                if( (nPixelsOutput & 0x1) == 0 )
+                    pabyDest[nPixelsOutput>>2] = (GByte) nDataValue;
+                else if( (nPixelsOutput & 0x1) == 1 )
+                    pabyDest[nPixelsOutput>>2] |= (GByte) (nDataValue<<2);
+                else if( (nPixelsOutput & 0x1) == 2 )
+                    pabyDest[nPixelsOutput>>2] |= (GByte) (nDataValue<<4);
+                else
+                    pabyDest[nPixelsOutput>>2] |= (GByte) (nDataValue<<6);
+            }
+            else if( nDataType == EPT_u4 )
+            {
+                if( (nPixelsOutput & 0x1) == 0 )
+                    pabyDest[nPixelsOutput>>1] = (GByte) nDataValue;
+                else
+                    pabyDest[nPixelsOutput>>1] |= (GByte) (nDataValue<<4);
             }
             else if( nDataType == EPT_u16 )
             {
