@@ -29,6 +29,11 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.84  2006/11/11 00:05:37  fwarmerdam
+ * The u4 and u2 unpacking to 8bit code was setting the second
+ * pixel wrong.  Seen with dataset from:
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1348
+ *
  * Revision 1.83  2006/10/24 01:46:13  fwarmerdam
  * Added support for Bonne projection.
  *
@@ -959,8 +964,8 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         for( int ii = nBlockXSize * nBlockYSize - 2; ii >= 0; ii -= 2 )
         {
             int k = ii>>1;
-            pabyData[ii]   = (pabyData[k]) & 0xf;
             pabyData[ii+1] = (pabyData[k]>>4) & 0xf;
+            pabyData[ii]   = (pabyData[k]) & 0xf;
         }
     }
     if( eErr == CE_None && nThisDataType == EPT_u2 )
@@ -970,10 +975,10 @@ CPLErr HFARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         for( int ii = nBlockXSize * nBlockYSize - 4; ii >= 0; ii -= 4 )
         {
             int k = ii>>2;
-            pabyData[ii]   = (pabyData[k]) & 0x3;
-            pabyData[ii+1] = (pabyData[k]>>2) & 0x3;
-            pabyData[ii+2] = (pabyData[k]>>4) & 0x3;
             pabyData[ii+3] = (pabyData[k]>>6) & 0x3;
+            pabyData[ii+2] = (pabyData[k]>>4) & 0x3;
+            pabyData[ii+1] = (pabyData[k]>>2) & 0x3;
+            pabyData[ii]   = (pabyData[k]) & 0x3;
         }
     }
     if( eErr == CE_None && nThisDataType == EPT_u1)
