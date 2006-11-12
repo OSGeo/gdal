@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2006/11/12 19:59:30  fwarmerdam
+ * Added PDS register function.
+ *
  * Revision 1.47  2006/10/04 17:22:42  fwarmerdam
  * Added WCS.
  *
@@ -174,6 +177,7 @@ void CPL_DLL GDALRegister_Leveller(void);
 void CPL_DLL GDALRegister_SGI(void);
 void CPL_DLL GDALRegister_DIPEx(void);
 void CPL_DLL GDALRegister_ISIS2(void);
+void CPL_DLL GDALRegister_PDS(void);
 void CPL_DLL GDALRegister_IDRISI(void);
 void CPL_DLL GDALRegister_Terragen(void);
 void CPL_DLL GDALRegister_WCS(void);
