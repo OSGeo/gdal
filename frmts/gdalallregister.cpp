@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.90  2006/11/13 18:39:46  fwarmerdam
+ * Added PDS driver
+ *
  * Revision 1.89  2006/10/27 04:42:34  fwarmerdam
  * added WCS registration
  *
@@ -312,6 +315,7 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_NDF();
     GDALRegister_DIPEx();
     GDALRegister_ISIS2();
+    GDALRegister_PDS();
 #endif
 
 #ifdef FRMT_jp2kak
