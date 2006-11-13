@@ -43,6 +43,9 @@
  *    application termination. 
  * 
  * $Log$
+ * Revision 1.38  2006/11/13 16:11:56  fwarmerdam
+ * added progress reporting, and improved error handling in createcopy.
+ *
  * Revision 1.37  2006/04/06 18:54:51  fwarmerdam
  * Added NBITS metadata item.
  *
@@ -1064,12 +1067,12 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /*      Loop over image, copying image data.                            */
 /* -------------------------------------------------------------------- */
     GByte 	*pabyScanline;
-    CPLErr      eErr;
+    CPLErr      eErr = CE_None;
     int         nWordSize = nBitDepth/8;
 
     pabyScanline = (GByte *) CPLMalloc( nBands * nXSize * nWordSize );
 
-    for( int iLine = 0; iLine < nYSize; iLine++ )
+    for( int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++ )
     {
         png_bytep       row = pabyScanline;
 
@@ -1087,7 +1090,17 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if( nBitDepth == 16 )
             GDALSwapWords( row, 2, nXSize * nBands, 2 );
 #endif
-        png_write_rows( hPNG, &row, 1 );
+        if( eErr == CE_None )
+            png_write_rows( hPNG, &row, 1 );
+
+        if( eErr == CE_None
+            && !pfnProgress( (iLine+1) / (double) nYSize,
+                             NULL, pProgressData ) )
+        {
+            eErr = CE_Failure;
+            CPLError( CE_Failure, CPLE_UserInterrupt,
+                      "User terminated CreateCopy()" );
+        }
     }
 
     CPLFree( pabyScanline );
@@ -1099,6 +1112,9 @@ PNGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     CPLFree( pabyAlpha );
     CPLFree( pasPNGColors );
+
+    if( eErr != CE_None )
+        return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Do we need a world file?                                          */
