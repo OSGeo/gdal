@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2006/11/13 17:55:49  fwarmerdam
+ * Fixed memory leak in forceToMultiLineString.
+ *
  * Revision 1.32  2006/09/05 15:54:54  fwarmerdam
  * Fixed docs on nBytes for createFromWkb().
  *
@@ -806,7 +809,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
         return poGeom;
 
     OGRMultiLineString *poMP = new OGRMultiLineString();
-    poMP->addGeometry( poGeom );
+    poMP->addGeometryDirectly( poGeom );
 
     return poMP;
 }
