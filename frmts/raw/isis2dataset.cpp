@@ -32,6 +32,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.5  2006/11/13 17:52:23  fwarmerdam
+ * moved out keyword handler (in pdsdataset.cpp)
+ *
  * Revision 1.4  2006/05/16 03:26:11  fwarmerdam
  * First pass complete.  Now using more generalized keyword handling.
  * Also fixed up some issues with the projection and the projection
@@ -57,39 +60,13 @@
 #include "rawdataset.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h" 
+#include "nasakeywordhandler.h"
 
 CPL_CVSID("$Id$");
 
 CPL_C_START
 void	GDALRegister_ISIS2(void);
 CPL_C_END
-
-/************************************************************************/
-/* ==================================================================== */
-/*                          NASAKeywordHandler                          */
-/* ==================================================================== */
-/************************************************************************/
-
-class NASAKeywordHandler
-{
-    char     **papszKeywordList;
-
-    CPLString osHeaderText;
-    const char *pszHeaderNext;
-
-    void    SkipWhite();
-    int     ReadWord( CPLString &osWord );
-    int     ReadPair( CPLString &osName, CPLString &osValue );
-    int     ReadGroup( const char *pszPathPrefix );
-
-public:
-    NASAKeywordHandler();
-    ~NASAKeywordHandler();
-
-    int     Ingest( FILE *fp, int nOffset );
-
-    const char *GetKeyword( const char *pszPath, const char *pszDefault );
-};
 
 /************************************************************************/
 /* ==================================================================== */
@@ -727,251 +704,6 @@ const char *ISIS2Dataset::GetKeywordSub( const char *pszPath,
     }
 }
 
-
-/************************************************************************/
-/* ==================================================================== */
-/*                          NASAKeywordHandler                          */
-/* ==================================================================== */
-/************************************************************************/
-
-/************************************************************************/
-/*                         NASAKeywordHandler()                         */
-/************************************************************************/
-
-NASAKeywordHandler::NASAKeywordHandler()
-
-{
-    papszKeywordList = NULL;
-}
-
-/************************************************************************/
-/*                        ~NASAKeywordHandler()                         */
-/************************************************************************/
-
-NASAKeywordHandler::~NASAKeywordHandler()
-
-{
-    CSLDestroy( papszKeywordList );
-    papszKeywordList = NULL;
-}
-
-/************************************************************************/
-/*                               Ingest()                               */
-/************************************************************************/
-
-int NASAKeywordHandler::Ingest( FILE *fp, int nOffset )
-
-{
-/* -------------------------------------------------------------------- */
-/*      Read in buffer till we find END all on it's own line.           */
-/* -------------------------------------------------------------------- */
-    if( VSIFSeekL( fp, nOffset, SEEK_SET ) != 0 )
-        return FALSE;
-
-    for( ; TRUE; ) 
-    {
-        const char *pszCheck;
-        char szChunk[513];
-
-        int nBytesRead = VSIFReadL( szChunk, 1, 512, fp );
-
-        szChunk[nBytesRead] = '\0';
-        osHeaderText += szChunk;
-
-        if( nBytesRead < 512 )
-            break;
-
-        if( osHeaderText.size() > 520 )
-            pszCheck = osHeaderText.c_str() + (osHeaderText.size() - 520);
-        else
-            pszCheck = szChunk;
-
-        if( strstr(pszCheck,"\r\nEND\r\n") != NULL 
-            || strstr(pszCheck,"\nEND\n") != NULL )
-            break;
-    }
-
-    pszHeaderNext = osHeaderText.c_str();
-
-/* -------------------------------------------------------------------- */
-/*      Process name/value pairs, keeping track of a "path stack".      */
-/* -------------------------------------------------------------------- */
-    return ReadGroup( "" );
-}
-
-/************************************************************************/
-/*                             ReadGroup()                              */
-/************************************************************************/
-
-int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix )
-
-{
-    CPLString osName, osValue;
-
-    for( ; TRUE; )
-    {
-        if( !ReadPair( osName, osValue ) )
-            return FALSE;
-
-        if( osName == "OBJECT" || osName == "GROUP" )
-        {
-            if( !ReadGroup( (CPLString(pszPathPrefix) + osValue + ".").c_str() ) )
-                return FALSE;
-        }
-        else if( EQUALN(osName.c_str(),"END",3) )
-        {
-            return TRUE;
-        }
-        else
-        {
-            osName = pszPathPrefix + osName;
-            papszKeywordList = CSLSetNameValue( papszKeywordList, 
-                                                osName, osValue );
-        }
-    }
-}
-
-/************************************************************************/
-/*                              ReadPair()                              */
-/*                                                                      */
-/*      Read a name/value pair from the input stream.  Strip off        */
-/*      white space, ignore comments, split on '='.                     */
-/************************************************************************/
-
-int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue )
-
-{
-    osName = "";
-    osValue = "";
-
-    if( !ReadWord( osName ) )
-        return FALSE;
-
-    SkipWhite();
-
-    if( EQUAL(osName,"END") )
-        return TRUE;
-
-    if( *pszHeaderNext != '=' )
-        return FALSE;
-    
-    pszHeaderNext++;
-    
-    SkipWhite();
-    
-    osValue = "";
-
-    if( *pszHeaderNext == '(' )
-    {
-        CPLString osWord;
-
-        while( ReadWord( osWord ) )
-        {
-            SkipWhite();
-
-            osValue += osWord;
-            if( osWord[strlen(osWord)-1] == ')' )
-                break;
-        }
-
-        return TRUE;
-    }
-    else
-        return ReadWord( osValue );
-}
-
-/************************************************************************/
-/*                              ReadWord()                              */
-/************************************************************************/
-
-int NASAKeywordHandler::ReadWord( CPLString &osWord )
-
-{
-    osWord = "";
-
-    SkipWhite();
-
-    if( pszHeaderNext == '\0' )
-        return FALSE;
-
-    while( *pszHeaderNext != '\0' 
-           && !isspace(*pszHeaderNext) )
-    {
-        if( *pszHeaderNext == '"' )
-        {
-            osWord += *(pszHeaderNext++);
-            while( *pszHeaderNext != '"' )
-            {
-                if( *pszHeaderNext == '\0' )
-                    return FALSE;
-
-                osWord += *(pszHeaderNext++);
-            }
-            osWord += *(pszHeaderNext++);
-        }
-        else
-        {
-            osWord += *pszHeaderNext;
-            pszHeaderNext++;
-        }
-    }
-    
-    return TRUE;
-}
-
-/************************************************************************/
-/*                             SkipWhite()                              */
-/************************************************************************/
-
-void NASAKeywordHandler::SkipWhite()
-
-{
-    for( ; TRUE; )
-    {
-        // Skip white space (newline, space, tab, etc )
-        if( isspace( *pszHeaderNext ) )
-        {
-            pszHeaderNext++; 
-            continue;
-        }
-        
-        // Skip C style comments 
-        if( *pszHeaderNext == '/' && pszHeaderNext[1] == '*' )
-        {
-            pszHeaderNext += 2;
-            
-            while( *pszHeaderNext != '\0' 
-                   && (*pszHeaderNext != '*' 
-                       || pszHeaderNext[1] != '/' ) )
-            {
-                pszHeaderNext++;
-            }
-
-            pszHeaderNext += 2;
-            continue;
-        }
-
-        // not white space, return. 
-        return;
-    }
-}
-
-/************************************************************************/
-/*                             GetKeyword()                             */
-/************************************************************************/
-
-const char *NASAKeywordHandler::GetKeyword( const char *pszPath,
-                                            const char *pszDefault )
-
-{
-    const char *pszResult;
-
-    pszResult = CSLFetchNameValue( papszKeywordList, pszPath );
-    if( pszResult == NULL )
-        return pszDefault;
-    else
-        return pszResult;
-}
 
 /************************************************************************/
 /*                         GDALRegister_ISIS2()                         */
