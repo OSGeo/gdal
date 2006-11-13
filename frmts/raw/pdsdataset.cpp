@@ -32,6 +32,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.2  2006/11/13 19:51:47  fwarmerdam
+ * Added preliminary support for external image data files.
+ *
  * Revision 1.1  2006/11/13 17:52:03  fwarmerdam
  * New
  *
@@ -56,7 +59,7 @@ CPL_C_END
 
 /************************************************************************/
 /* ==================================================================== */
-/*			PDSDataset	version2	                */
+/*			       PDSDataset	                        */
 /* ==================================================================== */
 /************************************************************************/
 
@@ -198,6 +201,8 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     // ^SPECTRAL_QUBE = 5  for multi-band images
 
     const char *pszQube = poDS->GetKeyword( "^IMAGE", "" );
+    CPLString osTargetFile = poOpenInfo->pszFilename;
+
     if (EQUAL(pszQube,"")) {
         pszQube = poDS->GetKeyword( "^SPECTRAL_QUBE" );
     }
@@ -205,7 +210,10 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( pszQube[0] == '"' )
     {
-        CPLAssert( FALSE ); // TODO
+        CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
+        CPLString osFilename = pszQube;
+        poDS->oKeywords.StripQuotes( osFilename );
+        osTargetFile = CPLFormCIFilename( osPath, osFilename, NULL );
     }
     else if( pszQube[0] == '(' )
     {
@@ -623,14 +631,15 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     
     if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+        poDS->fpImage = VSIFOpenL( osTargetFile, "rb" );
     else
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
+        poDS->fpImage = VSIFOpenL( osTargetFile, "r+b" );
 
     if( poDS->fpImage == NULL )
     {
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "Failed to open %s with write permission.\n%s", 
+                  osTargetFile.c_str(),
                   VSIStrerror( errno ) );
         delete poDS;
         return NULL;
@@ -1065,6 +1074,24 @@ const char *NASAKeywordHandler::GetKeyword( const char *pszPath,
         return pszDefault;
     else
         return pszResult;
+}
+
+/************************************************************************/
+/*                            StripQuotes()                             */
+/*                                                                      */
+/*      Remove containing quotes from the passed string if present.     */
+/*      The string is modified in place.                                */
+/************************************************************************/
+
+void NASAKeywordHandler::StripQuotes( CPLString& osArg )
+
+{
+    if( osArg.size() < 2 || osArg.at(0) != '"' 
+        || osArg.at(osArg.size()-1) != '"' )
+        return;
+
+    CPLString osSubstring = osArg.substr( 1, osArg.size() - 2 );
+    osArg = osSubstring;
 }
 
 /************************************************************************/
