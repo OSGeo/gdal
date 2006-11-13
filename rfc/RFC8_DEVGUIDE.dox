@@ -71,8 +71,12 @@ is to capitalize each word in a variable name.
 \section rfc8_misc Misc. Notes
 
 <ul>
-<li> please use lower case filenames.
-<li> please use .cpp extension for C++ files (not .cc). 
+<li> Use lower case filenames.
+<li> Use .cpp extension for C++ files (not .cc). 
+<li> Avoid spaces or other special characters in file or directory names.
+<li> Use 4 character indentation levels. 
+<li> Use spaces instead of hard tab characters in source code.
+<li> Try to keep lines to 79 characters or less.
 </ul>
 
 */
