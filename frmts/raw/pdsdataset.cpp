@@ -32,6 +32,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.3  2006/11/13 21:35:34  fwarmerdam
+ * Fixed up handling of quoted strings, particularly for projections.
+ *
  * Revision 1.2  2006/11/13 19:51:47  fwarmerdam
  * Added preliminary support for external image data files.
  *
@@ -78,7 +81,9 @@ class PDSDataset : public RawDataset
     //int parse_label(const char *file, char *keyword, char *value);
     //int strstrip(char instr[], char outstr[], int position);
 
-    CPLString   oTempResult;
+    CPLString   osTempResult;
+
+    void        CleanString( CPLString &osInput );
 
     const char *GetKeyword( const char *pszPath, 
                             const char *pszDefault = "");
@@ -210,16 +215,15 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( pszQube[0] == '"' )
     {
-        CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
+        CPLString osTPath = CPLGetPath(poOpenInfo->pszFilename);
         CPLString osFilename = pszQube;
-        poDS->oKeywords.StripQuotes( osFilename );
-        osTargetFile = CPLFormCIFilename( osPath, osFilename, NULL );
+        poDS->CleanString( osFilename );
+        osTargetFile = CPLFormCIFilename( osTPath, osFilename, NULL );
     }
     else if( pszQube[0] == '(' )
     {
         CPLAssert( FALSE ); // TODO
     }
-
 /* -------------------------------------------------------------------- */
 /*      Check if file an PDS header file?  Read a few lines of text   */
 /*      searching for something starting with nrows or ncols.           */
@@ -246,7 +250,7 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     //projection parameters
     float xulcenter = 0.0;
     float yulcenter = 0.0;
-    const char *map_proj_name;
+    CPLString map_proj_name;
     int	bProjectionSet = TRUE;
     char proj_target_name[200]; 
     char datum_name[60];  
@@ -399,11 +403,12 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
      
     /***********  Grab TARGET_NAME  ************/
     /**** This is the planets name i.e. MARS ***/
-    target_name = poDS->GetKeyword("IMAGE.TARGET_NAME");
+    target_name = poDS->GetKeyword("TARGET_NAME");
      
     /***********   Grab MAP_PROJECTION_TYPE ************/
     map_proj_name = 
         poDS->GetKeyword( "IMAGE_MAP_PROJECTION.MAP_PROJECTION_TYPE");
+    poDS->CleanString( map_proj_name );
      
     /***********   Grab SEMI-MAJOR ************/
     semi_major = 
@@ -434,9 +439,11 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     // So far we will use this fact to define a sphere or ellipse for some projections
     // Frank - may need to talk this over
     value = poDS->GetKeyword("IMAGE_MAP_PROJECTION.COORDINATE_SYSTEM_NAME");
-    if (EQUAL( value, "\"PLANETOCENTRIC\"" ))
+    
+    if (EQUAL( value, "\"PLANETOCENTRIC\"" )
+        || EQUAL( value, "PLANETOCENTRIC") )
         bIsGeographic = FALSE; 
-     
+
     //Set oSRS projection and parameters --- all PDS supported types added if apparently supported in oSRS
 /**  "AITOFF",  ** Not supported in GDAL??
      "ALBERS", 
@@ -461,80 +468,50 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
      "VAN DER GRINTEN",     ** Not supported in GDAL??
      "WERNER"     ** Not supported in GDAL?? 
 **/ 
-    if ((EQUAL( map_proj_name, "\"EQUIRECTANGULAR\"" )) ||
-        (EQUAL( map_proj_name, "\"SIMPLE CYLINDRICAL\"" )) ||
-        (EQUAL( map_proj_name, "\"EQUIDISTANT\"" )) )  {
-#ifdef DEBUG
-        printf("using projection %s\n\n", map_proj_name);
-#endif
-        oSRS.OGRSpatialReference::SetEquirectangular ( center_lat, center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"ORTHOGRAPHIC\"" )) {
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
-        oSRS.OGRSpatialReference::SetOrthographic ( center_lat, center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"SINUSOIDAL\"" )) {
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
-        oSRS.OGRSpatialReference::SetSinusoidal ( center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"MERCATOR\"" )) {
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
-        oSRS.OGRSpatialReference::SetMercator ( center_lat, center_lon, 1, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"STEREOGRAPHIC\"" )) {
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
-        oSRS.OGRSpatialReference::SetPS ( center_lat, center_lon, 1, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"TRANSVERSE MERCATOR\"" )) {
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
-        oSRS.OGRSpatialReference::SetTM ( center_lat, center_lon, 1, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"LAMBERT CONFORMAL CONIC\"" )) {
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
-        oSRS.OGRSpatialReference::SetLCC ( first_std_parallel, second_std_parallel, center_lat, center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"LAMBERT AZIMUTHAL EQUAL AREA\"" )) {
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
-//        oSRS.OGRSpatialReference::SetLAEA ( first_std_parallel, second_std_parallel, center_lat, center_lon, 0, 0 );
-        oSRS.OGRSpatialReference::SetLAEA( center_lat, center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"CYLINDRICAL EQUAL AREA\"" )) {
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
-        oSRS.OGRSpatialReference::SetCEA  ( first_std_parallel, center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"MOLLWEIDE\"" )) {
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
-        oSRS.OGRSpatialReference::SetMollweide ( center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"ALBERS\"" )) {
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
-        oSRS.OGRSpatialReference::SetACEA ( first_std_parallel, second_std_parallel, center_lat, center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"BONNE\"" )) {
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
-        oSRS.OGRSpatialReference::SetBonne ( first_std_parallel, center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"GNOMONIC\"" )) {
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
-        oSRS.OGRSpatialReference::SetGnomonic ( center_lat, center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "\"OBLIQUE CYLINDRICAL\"" )) { 
-#ifdef DEBUG
-        printf ("using projection %s\n\n", map_proj_name);
-#endif
+    if ((EQUAL( map_proj_name, "EQUIRECTANGULAR" )) ||
+        (EQUAL( map_proj_name, "SIMPLE_CYLINDRICAL" )) ||
+        (EQUAL( map_proj_name, "EQUIDISTANT" )) )  {
+        oSRS.SetEquirectangular ( center_lat, center_lon, 0, 0 );
+
+    } else if (EQUAL( map_proj_name, "ORTHOGRAPHIC" )) {
+        oSRS.SetOrthographic ( center_lat, center_lon, 0, 0 );
+
+    } else if (EQUAL( map_proj_name, "SINUSOIDAL" )) {
+        oSRS.SetSinusoidal ( center_lon, 0, 0 );
+
+    } else if (EQUAL( map_proj_name, "MERCATOR" )) {
+        oSRS.SetMercator ( center_lat, center_lon, 1, 0, 0 );
+
+    } else if (EQUAL( map_proj_name, "STEREOGRAPHIC" )) {
+        oSRS.SetPS ( center_lat, center_lon, 1, 0, 0 );
+
+    } else if (EQUAL( map_proj_name, "TRANSVERSE_MERCATOR" )) {
+        oSRS.SetTM ( center_lat, center_lon, 1, 0, 0 );
+
+    } else if (EQUAL( map_proj_name, "LAMBERT_CONFORMAL_CONIC" )) {
+        oSRS.SetLCC ( first_std_parallel, second_std_parallel, 
+                      center_lat, center_lon, 0, 0 );
+    } else if (EQUAL( map_proj_name, "LAMBERT_AZIMUTHAL_EQUAL_AREA" )) {
+        oSRS.SetLAEA( center_lat, center_lon, 0, 0 );
+
+    } else if (EQUAL( map_proj_name, "CYLINDRICAL_EQUAL_AREA" )) {
+        oSRS.SetCEA  ( first_std_parallel, center_lon, 0, 0 );
+
+    } else if (EQUAL( map_proj_name, "MOLLWEIDE" )) {
+        oSRS.SetMollweide ( center_lon, 0, 0 );
+
+    } else if (EQUAL( map_proj_name, "ALBERS" )) {
+        oSRS.SetACEA ( first_std_parallel, second_std_parallel, 
+                       center_lat, center_lon, 0, 0 );
+
+    } else if (EQUAL( map_proj_name, "BONNE" )) {
+        oSRS.SetBonne ( first_std_parallel, center_lon, 0, 0 );
+    } else if (EQUAL( map_proj_name, "GNOMONIC" )) {
+        oSRS.SetGnomonic ( center_lat, center_lon, 0, 0 );
+    } else if (EQUAL( map_proj_name, "OBLIQUE_CYLINDRICAL" )) { 
         /* hope Swiss Oblique Cylindrical is the same */
-        oSRS.OGRSpatialReference::SetSOC ( center_lat, center_lon, 0, 0 );
+        oSRS.SetSOC ( center_lat, center_lon, 0, 0 );
+
     } else {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "No projection define or supported! Are you sure this is a map projected image?" );
@@ -559,16 +536,16 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
      
         //The use of a Sphere, polar radius or ellipse here is based on how PDS 2 does it internally
         //Notice that most PDS 2 projections are spherical 
-        if ( (EQUAL( map_proj_name, "\"EQUIRECTANGULAR\"" )) ||
-	     (EQUAL( map_proj_name, "\"SIMPLE CYLINDRICAL\"" )) || 
-	     (EQUAL( map_proj_name, "\"EQUIDISTANT\"" )) || 
-	     (EQUAL( map_proj_name, "\"ORTHOGRAPHIC\"" )) || 
-	     (EQUAL( map_proj_name, "\"SINUSOIDAL\"" )) ) { //flattening = 1.0 for sphere
+        if ( (EQUAL( map_proj_name, "EQUIRECTANGULAR" )) ||
+	     (EQUAL( map_proj_name, "SIMPLE CYLINDRICAL" )) || 
+	     (EQUAL( map_proj_name, "EQUIDISTANT" )) || 
+	     (EQUAL( map_proj_name, "ORTHOGRAPHIC" )) || 
+	     (EQUAL( map_proj_name, "SINUSOIDAL" )) ) { //flattening = 1.0 for sphere
             oSRS.SetGeogCS( proj_target_name, datum_name, sphere_name,
                             semi_major*1000, 0.0, 
                             "Reference_Meridian", 0.0 );
             //Here isis2 uses the polar radius to define m/p, so we should use the polar radius for body
-        } else if  (EQUAL( map_proj_name, "\"STEREOGRAPHIC\"" )  && fabs(center_lat) > 70) { 
+        } else if  (EQUAL( map_proj_name, "STEREOGRAPHIC" )  && fabs(center_lat) > 70) { 
             oSRS.SetGeogCS( proj_target_name, datum_name, sphere_name,
                             semi_minor*1000.0, 1.0, 
                             "Reference_Meridian", 0.0 );
@@ -702,33 +679,34 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check for a .prj file. For pds I would like to keep this in   */
 /* -------------------------------------------------------------------- */
-    CPLString osPath, osName;
-
-    osPath = CPLGetPath( poOpenInfo->pszFilename );
-    osName = CPLGetBasename(poOpenInfo->pszFilename);
-    const char  *pszPrjFile = CPLFormCIFilename( osPath, osName, "prj" );
-
-    fp = VSIFOpen( pszPrjFile, "r" );
-    if( fp != NULL )
     {
-        char	**papszLines;
-        OGRSpatialReference oSRS;
+        CPLString osPath, osName;
 
-        VSIFClose( fp );
-        
-        papszLines = CSLLoad( pszPrjFile );
+        osPath = CPLGetPath( poOpenInfo->pszFilename );
+        osName = CPLGetBasename(poOpenInfo->pszFilename);
+        const char  *pszPrjFile = CPLFormCIFilename( osPath, osName, "prj" );
 
-        if( oSRS.importFromESRI( papszLines ) == OGRERR_NONE )
+        fp = VSIFOpen( pszPrjFile, "r" );
+        if( fp != NULL )
         {
-            char *pszResult = NULL;
-            oSRS.exportToWkt( &pszResult );
-            poDS->osProjection = pszResult;
-            CPLFree( pszResult );
+            char	**papszLines;
+            OGRSpatialReference oSRS;
+
+            VSIFClose( fp );
+        
+            papszLines = CSLLoad( pszPrjFile );
+
+            if( oSRS.importFromESRI( papszLines ) == OGRERR_NONE )
+            {
+                char *pszResult = NULL;
+                oSRS.exportToWkt( &pszResult );
+                poDS->osProjection = pszResult;
+                CPLFree( pszResult );
+            }
+
+            CSLDestroy( papszLines );
         }
-
-        CSLDestroy( papszLines );
     }
-
     
     if( dfULYMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0 )
     {
@@ -792,9 +770,9 @@ const char *PDSDataset::GetKeywordSub( const char *pszPath,
 
     if( iSubscript <= CSLCount(papszTokens) )
     {
-        oTempResult = papszTokens[iSubscript-1];
+        osTempResult = papszTokens[iSubscript-1];
         CSLDestroy( papszTokens );
-        return oTempResult.c_str();
+        return osTempResult.c_str();
     }
     else
     {
@@ -803,6 +781,34 @@ const char *PDSDataset::GetKeywordSub( const char *pszPath,
     }
 }
 
+/************************************************************************/
+/*                            CleanString()                             */
+/*                                                                      */
+/*      Removes double quotes, and converts spaces to underscores.      */
+/*      The change is made in-place to CPLString.                       */
+/************************************************************************/
+
+void PDSDataset::CleanString( CPLString &osInput )
+
+{
+    if( osInput.size() < 2 || osInput.at(0) != '"' 
+        || osInput.at(osInput.size()-1) != '"' )
+        return;
+
+    char *pszWrk = CPLStrdup(osInput.c_str() + 1);
+    int i;
+
+    pszWrk[strlen(pszWrk)-1] = '\0';
+    
+    for( i = 0; pszWrk[i] != '\0'; i++ )
+    {
+        if( pszWrk[i] == ' ' )
+            pszWrk[i] = '_';
+    }
+
+    osInput = pszWrk;
+    CPLFree( pszWrk );
+}
 
 /************************************************************************/
 /* ==================================================================== */
@@ -1074,24 +1080,6 @@ const char *NASAKeywordHandler::GetKeyword( const char *pszPath,
         return pszDefault;
     else
         return pszResult;
-}
-
-/************************************************************************/
-/*                            StripQuotes()                             */
-/*                                                                      */
-/*      Remove containing quotes from the passed string if present.     */
-/*      The string is modified in place.                                */
-/************************************************************************/
-
-void NASAKeywordHandler::StripQuotes( CPLString& osArg )
-
-{
-    if( osArg.size() < 2 || osArg.at(0) != '"' 
-        || osArg.at(osArg.size()-1) != '"' )
-        return;
-
-    CPLString osSubstring = osArg.substr( 1, osArg.size() - 2 );
-    osArg = osSubstring;
 }
 
 /************************************************************************/
