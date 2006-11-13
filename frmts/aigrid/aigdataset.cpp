@@ -28,6 +28,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.27  2006/11/13 18:46:23  fwarmerdam
+ * Added support for .clr file in directory above the coverage.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1311
+ *
  * Revision 1.26  2005/11/24 20:25:32  fwarmerdam
  * Test for hdf.adf and w001001x.adf in ::Open() method, so we don't
  * have to suppress error messages for AIGOpen().  Added error checking
@@ -456,23 +460,36 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     int  iFile;
     char **papszFiles = CPLReadDir( psInfo->pszCoverName );
-
+    CPLString osClrFilename;
+    CPLString osCleanPath = CPLCleanTrailingSlash( psInfo->pszCoverName );
+  
+    // first check for any .clr in coverage dir.
     for( iFile = 0; papszFiles != NULL && papszFiles[iFile] != NULL; iFile++ )
     {
-        const char *pszClrFilename;
-
         if( !EQUAL(CPLGetExtension(papszFiles[iFile]),"clr") )
             continue;
-
-        pszClrFilename = CPLFormFilename( psInfo->pszCoverName, 
-                                          papszFiles[iFile], NULL );
-
-        poDS->TranslateColorTable( pszClrFilename );
+      
+        osClrFilename = CPLFormFilename( psInfo->pszCoverName,
+                                         papszFiles[iFile], NULL );
         break;
     }
-
+  
     CSLDestroy( papszFiles );
-
+  
+    // Look in parent if we don't find a .clr in the coverage dir.
+    if( strlen(osClrFilename) == 0 )
+    {
+        osTestName.Printf( "%s/../%s.clr",
+                           psInfo->pszCoverName,
+                           CPLGetFilename( osCleanPath ) );
+      
+        if( VSIStatL( osTestName, &sStatBuf ) == 0 )
+            osClrFilename = osTestName;
+    }
+  
+    if( strlen(osClrFilename) > 0 )
+        poDS->TranslateColorTable( osClrFilename );
+  
 /* -------------------------------------------------------------------- */
 /*      Establish raster info.                                          */
 /* -------------------------------------------------------------------- */
