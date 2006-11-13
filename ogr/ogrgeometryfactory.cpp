@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/11/13 17:57:50  fwarmerdam
+ * Similar fix for multipoint and multipolygon.
+ *
  * Revision 1.33  2006/11/13 17:55:49  fwarmerdam
  * Fixed memory leak in forceToMultiLineString.
  *
@@ -685,7 +688,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
         return poGeom;
 
     OGRMultiPolygon *poMP = new OGRMultiPolygon();
-    poMP->addGeometry( poGeom );
+    poMP->addGeometryDirectly( poGeom );
 
     return poMP;
 }
@@ -747,7 +750,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPoint( OGRGeometry *poGeom )
         return poGeom;
 
     OGRMultiPoint *poMP = new OGRMultiPoint();
-    poMP->addGeometry( poGeom );
+    poMP->addGeometryDirectly( poGeom );
 
     return poMP;
 }
@@ -774,7 +777,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
 
 /* -------------------------------------------------------------------- */
 /*      Check for the case of a geometrycollection that can be          */
-/*      promoted to MultiPoint.                                         */
+/*      promoted to MultiLineString.                                    */
 /* -------------------------------------------------------------------- */
     if( wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection )
     {
