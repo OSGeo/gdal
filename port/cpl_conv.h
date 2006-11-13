@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2006/11/13 18:45:05  fwarmerdam
+ * added CPLCleanTrailingSlash() per bug 1311
+ *
  * Revision 1.47  2006/11/07 16:24:08  hobu
  * silence errors about no prototype defined for a few functions with void parameters
  *
@@ -255,6 +258,7 @@ const char CPL_DLL *CPLProjectRelativeFilename( const char *pszProjectDir,
                                             const char *pszSecondaryFilename );
 int CPL_DLL CPLIsFilenameRelative( const char *pszFilename );
 const char CPL_DLL *CPLExtractRelativePath(const char *, const char *, int *);
+const char CPL_DLL *CPLCleanTrailingSlash( const char * );
 
 /* -------------------------------------------------------------------- */
 /*      Find File Function                                              */

@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.24  2006/11/13 18:45:05  fwarmerdam
+ * added CPLCleanTrailingSlash() per bug 1311
+ *
  * Revision 1.23  2006/09/22 12:21:12  dron
  * CPLIsFilenameRelative(): on Windows forward slashes can be used in file paths.
  *
@@ -817,3 +820,45 @@ const char *CPLExtractRelativePath( const char *pszBaseDir,
     return pszTarget + nBasePathLen + 1;
 }
 
+/************************************************************************/
+/*                            CPLCleanTrailingSlash()                   */
+/************************************************************************/
+
+/**
+ * Remove trailing forward/backward slash from the path for unix/windows resp.
+ *
+ * Returns a string containing the portion of the passed path string with 
+ * trailing slash removed. If there is no path in the passed filename 
+ * an empty string will be returned (not NULL).
+ *
+ * <pre>
+ * CPLCleanTrailingSlash( "abc/def/" ) == "abc/def"
+ * CPLCleanTrailingSlash( "abc/def" ) == "abc/def"
+ * CPLCleanTrailingSlash( "c:\abc\def\" ) == "c:\abc\def"
+ * CPLCleanTrailingSlash( "c:\abc\def" ) == "c:\abc\def"
+ * CPLCleanTrailingSlash( "abc" ) == "abc"
+ * </pre>
+ *
+ * @param pszPath the path to be cleaned up
+ *
+ *  @return Path in an internal string which must not be freed.  The string
+ * may be destroyed by the next CPL filename handling call.  The returned
+ * will generally not contain a trailing path separator.
+ */
+
+const char *CPLCleanTrailingSlash( const char *pszFilename )
+
+{
+    char       *pszStaticResult = CPLGetStaticResult();
+    int        iPathLength = strlen(pszFilename);
+
+    strncpy( pszStaticResult, pszFilename, iPathLength );
+    pszStaticResult[iPathLength] = '\0';
+
+    if( iPathLength > 0 
+        && (pszStaticResult[iPathLength-1] == '\\' 
+            || pszStaticResult[iPathLength-1] == '/'))
+        pszStaticResult[iPathLength-1] = '\0';
+
+    return pszStaticResult;
+}
