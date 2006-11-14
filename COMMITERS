@@ -15,6 +15,34 @@ danmo         dmorissette at mapgears.com
 hobu          Howard Butler                swig/python, sde
               hobu at hobu.net             
 
+kdejong       Kor de Jong                  pcraster
+              k.dejong at geog.uu.nl
+
+rblazek       Radim Blazek                 grass drivers
+              radim.blazek at gmail.com    
+
+osemykin      Oleg Semykin	           postgis
+              oss-dev at rambler.ru
+
+sperkins      Simon Perkins                fits, windows builds. 
+              sy at perkins.net               
+
+kmelero	      Ken Melero		   mrsid
+              kmelero at sanz.com
+
+ajolma        Ari Jolma                    perl bindings
+              ari.jolma at tkk.fi          
+
+shalasz       Steve Halasz                 DebianGIS Packaging
+              debian at adkgis.org         
+
+mloskot	      Mateusz Loskot		   wince
+              mateusz at loskot.net        
+
+ilucena       Ivan Lucena                  idrisi
+              ivan at ilucena.net           
+
+
 
 
 Folks who have not yet agreed to RFC 3:
@@ -31,15 +59,11 @@ bfreisen	Bob Friesenhahn		bfriesen at simple.dallas.tx.us	libtiff
 
 andrea		Alessandro Amici 	alexamici at tiscali.it		gdal
 
-kdejong		Kor de Jong		k.dejong at geog.uu.nl		gdal
-
 dgilbert	Dave Gilbert		dgilbert at dclg.ca		libjpeg
 
 lichun		Lichun Wang 		lichun at itc.nl 		gdal
 
 nhv		Norman Vine		nhv at cape.com			gdal
-
-kmelero		Ken Melero		kmelero at sanz.com		gdal
 
 kruland		Kevin Ruland		kruland at ku.edu		gdal
 
@@ -47,13 +71,9 @@ mbrudka		Marek Brudka		mbrudka@aster.pl		gdal
 
 pka		Pirmin Kalberer		pka at sourcepole.ch		gdal
 
-ssoule		Steve Soule		Steve.Soule at vexcel.com	gdal
-
 fvdbergh	Frans van der Bergh	fvdbergh at csir.co.za		gdal
 
 dnadeau		Denis Nadeau		denis.nadeau@gmail.com		gdal
-
-osemykin	Oleg Semykin		oss-dev at rambler.ru		gdal
 
 jlacroix	Julien-Samuel Lacroix	jlacroix at mapgears.com        gdal
 
@@ -61,27 +81,15 @@ dwallner	Daniel Wallner		daniel.wallner at bredband.net	gdal
 
 cfis		Charles F. I. Savage	cfis at interserv dot com 	gdal
 
-mloskot		Mateusz Loskot		mateusz at loskot.net           gdal
-
 pnagy           Peter Nagy              peter.nagy at vexcel.com        gdal
 
 joris           Joris Van Damme         joris.at.lebbeke at skynet.be   libtiff
 
-sperkins        Simon Perkins           sy at perkins.net               gdal
-
-rblazek         Radim Blazek            radim.blazek at gmail.com       gdal
-
 kintel		Marius Kintel           kintel at sim.no                dgnlib
-
-shalasz         Steve Halasz            debian at adkgis.org            gdal
 
 nbrodin         Nacho Brodin            brodin_ign at gva.es            gdal
 
 collinsb	Benjamin Collins        collinsb at mitre.org		gdal
-
-ilucena         Ivan Lucena             ivan at ilucena.net             gdal
-
-ajolma          Ari Jolma               ari.jolma at tkk.fi             gdal
 
 marit		Marit Jentoft-Nilson    jentoft-nilsen at agnes.gsfc.nasa.gov geotiff
 
