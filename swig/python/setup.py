@@ -11,7 +11,7 @@ from distutils.sysconfig import parse_makefile,expand_makefile_vars
 
 from distutils.core import setup, Extension
 
-os.environ['CFLAGS'] = '-dynamic -g -O3 -Wall'
+
 # Function needed to make unique lists.
 def unique(list):
     """Stolen from MapScript setup script"""
