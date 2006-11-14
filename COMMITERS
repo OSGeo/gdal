@@ -42,6 +42,9 @@ mloskot	      Mateusz Loskot		   wince
 ilucena       Ivan Lucena                  idrisi
               ivan at ilucena.net           
 
+mbrudka	      Marek Brudka		   thread safety
+              mbrudka at aster.pl
+
 
 
 
@@ -66,8 +69,6 @@ lichun		Lichun Wang 		lichun at itc.nl 		gdal
 nhv		Norman Vine		nhv at cape.com			gdal
 
 kruland		Kevin Ruland		kruland at ku.edu		gdal
-
-mbrudka		Marek Brudka		mbrudka@aster.pl		gdal
 
 pka		Pirmin Kalberer		pka at sourcepole.ch		gdal
 
