@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.64  2006/11/14 17:04:15  fwarmerdam
+ * Added GDAL_ECW_CACHE_MAXMEM.
+ *
  * Revision 1.63  2006/06/22 01:34:46  fwarmerdam
  * use GDALJP2Metadata to prepare geotiff and gml boxes
  *
@@ -1647,6 +1650,12 @@ void ECWInitialize()
 
     NCSecwInit();
     bNCSInitialized = TRUE;
+
+    const char *pszEcwCacheSize = 
+        CPLGetConfigOption("GDAL_ECW_CACHE_MAXMEM",NULL);
+
+    if( pszEcwCacheSize != NULL )
+        NCSecwSetConfig(NCSCFG_CACHE_MAXMEM, atoi(pszEcwCacheSize) );
 }
 
 /************************************************************************/
@@ -1784,6 +1793,7 @@ void GDALRegister_JP2ECW()
     }
 #endif /* def FRMT_ecw */
 }
+
 
 
 
