@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.30  2006/11/15 21:11:57  fwarmerdam
+ * Added GetUserInputAsWKT().
+ *
  * Revision 1.29  2006/11/11 19:33:48  tamas
  * Controlling the owner of the objects returned by the static/non static members for the csharp binding
  *
@@ -258,8 +261,23 @@ typedef int OGRErr;
 %inline %{
 OGRErr GetWellKnownGeogCSAsWKT( const char *name, char **argout ) {
   OGRSpatialReferenceH srs = OSRNewSpatialReference("");
-  OSRSetWellKnownGeogCS( srs, name );
-  OGRErr rcode = OSRExportToWkt ( srs, argout );  
+  OGRErr rcode = OSRSetWellKnownGeogCS( srs, name );
+  if( rcode == OGRERR_NONE )
+      rcode = OSRExportToWkt ( srs, argout );  
+  OSRDestroySpatialReference( srs );
+  return rcode;
+}
+%}
+
+/************************************************************************/
+/*                           GetUserInputAsWKT()                        */
+/************************************************************************/
+%inline %{
+OGRErr GetUserInputAsWKT( const char *name, char **argout ) {
+  OGRSpatialReferenceH srs = OSRNewSpatialReference("");
+  OGRErr rcode = OSRSetFromUserInput( srs, name );
+  if( rcode == OGRERR_NONE )
+      rcode = OSRExportToWkt ( srs, argout );  
   OSRDestroySpatialReference( srs );
   return rcode;
 }
