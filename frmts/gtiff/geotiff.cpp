@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.172  2006/11/15 02:59:50  fwarmerdam
+ * Implemented a limited SetColorInterpretation() method so gdalwarp -dstalpha
+ * works for greyscale files.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1355
+ *
  * Revision 1.171  2006/10/27 03:35:29  fwarmerdam
  * Avoid warnings.
  *
@@ -84,99 +89,6 @@
  *
  * Revision 1.156  2006/02/12 23:52:53  fwarmerdam
  * Allow one or two GCPs if that is all the tiepoints there are.
- *
- * Revision 1.155  2005/12/21 00:36:59  fwarmerdam
- * Added compression image_structure metadata.
- *
- * Revision 1.154  2005/10/28 03:40:19  fwarmerdam
- * Fixed problems with odd-bits support of contiguous images.
- *
- * Revision 1.153  2005/10/25 18:48:22  fwarmerdam
- * make sure we handle missing blocks on read: bug 975
- *
- * Revision 1.152  2005/10/24 18:13:34  fwarmerdam
- * Fixed memory leak of pszProjection string.
- *
- * Revision 1.151  2005/10/18 13:43:53  fwarmerdam
- * Default to PLANAR_CONTIG for PROFILE=GeoTIFF too.
- *
- * Revision 1.150  2005/10/18 13:42:49  fwarmerdam
- * Force INTERLEAVE=PIXEL if PROFILE=BASELINE.
- *
- * Revision 1.149  2005/10/15 22:14:36  fwarmerdam
- * GTiffDataset::FlushBlockBuf() fixed to call SetDirectory().  Otherwise
- * sometimes the block would not be flushed out "against" the the right
- * overview.
- *
- * Revision 1.148  2005/10/13 01:20:48  fwarmerdam
- * restructured to use gdalmajorobject multidomain metadata
- *
- * Revision 1.147  2005/09/25 18:04:40  fwarmerdam
- * added JPEG_QUALITY option
- *
- * Revision 1.146  2005/09/20 18:16:53  fwarmerdam
- * enable support for NONE compress option
- *
- * Revision 1.145  2005/09/12 00:29:00  fwarmerdam
- * use VSI_TIFFOpen() instead of XTIFFOpen to get arbitrary redirection
- *
- * Revision 1.144  2005/08/11 17:27:05  fwarmerdam
- * fixed so that PAM copyinfo does not override profile option
- *
- * Revision 1.143  2005/07/26 17:53:33  fwarmerdam
- * Added error check.
- *
- * Revision 1.142  2005/07/26 15:14:00  fwarmerdam
- * Added check on geotiff size.
- *
- * Revision 1.141  2005/07/07 13:26:48  fwarmerdam
- * Fixed colormap conversion to 16bit in CreateCopy() per report from
- * Uwe Schmitz on gdal-dev.
- *
- * Revision 1.140  2005/05/22 21:00:44  fwarmerdam
- * metadata support rewritten to support multiple domains
- *
- * Revision 1.139  2005/05/22 16:58:12  dron
- * Added PlanarConfiguration parameter to the TIFF_WriteOverview().
- *
- * Revision 1.138  2005/04/23 16:38:43  fwarmerdam
- * Handle more integer datatypes (ie 2-7 bits, 17+ bits) via
- * OddBits class.
- *
- * Revision 1.137  2005/04/15 18:45:29  fwarmerdam
- * added area or point metadata
- *
- * Revision 1.136  2005/04/15 18:24:24  dron
- * Added "PREDICTOR" option (works with LZW and ZIP compression types).
- *
- * Revision 1.135  2005/04/13 15:32:20  dron
- * Added support for 16- and 24-bit floating point TIFFs (as per TechNote 3).
- *
- * Revision 1.134  2005/03/22 19:40:59  fwarmerdam
- * Added support for forcing RGB color mode with YCBCR files and JPEG
- * compression.  Added special (fast) case for 12bit to 16bit conversion
- * in the OddBits raster band class.  Fixed colorinterp reporting for
- * YCbCr files forced to RGB.
- *
- * Revision 1.133  2005/03/22 05:12:15  fwarmerdam
- * first crack at support 9-15 bit depths
- *
- * Revision 1.132  2005/03/07 14:23:49  fwarmerdam
- * Added PROFILE support in CreateCopy().
- *
- * Revision 1.131  2005/02/15 16:08:34  fwarmerdam
- * dont put out scale and offset if defaulted
- *
- * Revision 1.130  2005/02/10 04:31:11  fwarmerdam
- * added option to keep YCbCr in raw form
- *
- * Revision 1.129  2005/01/15 16:15:09  fwarmerdam
- * trimmed revision history.
- *
- * Revision 1.128  2005/01/15 16:13:17  fwarmerdam
- * Use GTiffRasterBand as base for 1bit and RGB band specialized types.
- * Generalized metadata support, include band metadata.
- * Added support for offset/scale as special metadata items.
  */
 
 #include "gdal_pam.h"
@@ -355,6 +267,7 @@ class GTiffRasterBand : public GDALPamRasterBand
     virtual CPLErr SetOffset( double dfNewValue );
     virtual double GetScale( int *pbSuccess = NULL );
     virtual CPLErr SetScale( double dfNewValue );
+    virtual CPLErr SetColorInterpretation( GDALColorInterp );
 
     virtual CPLErr  SetMetadata( char **, const char * = "" );
     virtual CPLErr  SetMetadataItem( const char*, const char*, 
@@ -849,6 +762,51 @@ GDALColorInterp GTiffRasterBand::GetColorInterpretation()
 
 {
     return eBandInterp;
+}
+
+/************************************************************************/
+/*                       SetColorInterpretation()                       */
+/************************************************************************/
+
+CPLErr GTiffRasterBand::SetColorInterpretation( GDALColorInterp eInterp )
+
+{
+    GTiffDataset	*poGDS = (GTiffDataset *) poDS;
+
+    if( eInterp == eBandInterp )
+        return CE_None;
+    
+    if( poGDS->bCrystalized )
+        return GDALPamRasterBand::SetColorInterpretation( eInterp );
+
+    /* greyscale + alpha */
+    else if( eInterp == GCI_AlphaBand 
+        && nBand == 2 
+        && poGDS->nSamplesPerPixel == 2 
+        && poGDS->nPhotometric == PHOTOMETRIC_MINISBLACK )
+    {
+        uint16 v[1] = { EXTRASAMPLE_ASSOCALPHA };
+
+        TIFFSetField(poGDS->hTIFF, TIFFTAG_EXTRASAMPLES, 1, v);
+        eBandInterp = eInterp;
+        return CE_None;
+    }
+
+    /* RGB + alpha */
+    else if( eInterp == GCI_AlphaBand 
+             && nBand == 4 
+             && poGDS->nSamplesPerPixel == 4
+             && poGDS->nPhotometric == PHOTOMETRIC_RGB )
+    {
+        uint16 v[1] = { EXTRASAMPLE_ASSOCALPHA };
+
+        TIFFSetField(poGDS->hTIFF, TIFFTAG_EXTRASAMPLES, 1, v);
+        eBandInterp = eInterp;
+        return CE_None;
+    }
+    
+    else
+        return GDALPamRasterBand::SetColorInterpretation( eInterp );
 }
 
 /************************************************************************/
