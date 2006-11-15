@@ -10,6 +10,9 @@
 
  *
  * $Log$
+ * Revision 1.3  2006/11/15 21:00:35  tamas
+ * Added support for SWIG 1.3.30
+ *
  * Revision 1.2  2006/11/11 19:28:39  tamas
  * Support for the default csout typemaps
  *
@@ -110,23 +113,27 @@
   }
 %}
 
-%typemap(csdestruct, methodname="Dispose") SWIGTYPE {
-    if(swigCPtr.Handle != IntPtr.Zero && swigCMemOwner == null) {
-      swigCMemOwner = new object();
-      $imcall;
+%typemap(csdestruct, methodname="Dispose", methodmodifiers="public") SWIGTYPE {
+  lock(this) {
+      if(swigCPtr.Handle != IntPtr.Zero && swigCMemOwner == null) {
+        swigCMemOwner = new object();
+        $imcall;
+      }
+      swigCPtr = new HandleRef(null, IntPtr.Zero);
+      GC.SuppressFinalize(this);
     }
-    swigCPtr = new HandleRef(null, IntPtr.Zero);
-    GC.SuppressFinalize(this);
   }
 
-%typemap(csdestruct_derived, methodname="Dispose") SWIGTYPE {
-    if(swigCPtr.Handle != IntPtr.Zero && swigCMemOwner == null) {
-      swigCMemOwner = new object();
-      $imcall;
+%typemap(csdestruct_derived, methodname="Dispose", methodmodifiers="public") SWIGTYPE {
+  lock(this) {
+      if(swigCPtr.Handle != IntPtr.Zero && swigCMemOwner == null) {
+        swigCMemOwner = new object();
+        $imcall;
+      }
+      swigCPtr = new HandleRef(null, IntPtr.Zero);
+      GC.SuppressFinalize(this);
+      base.Dispose();
     }
-    swigCPtr = new HandleRef(null, IntPtr.Zero);
-    GC.SuppressFinalize(this);
-    base.Dispose();
   }
   
 %typemap(csin) SWIGTYPE *DISOWN "$csclassname.getCPtrAndDisown($csinput, this)"
