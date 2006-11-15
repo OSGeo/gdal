@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.46  2006/11/15 23:09:29  hobu
+ * try testing for a given string for the tostring arginit
+ *
  * Revision 1.45  2006/11/07 05:37:30  hobu
  * an arginit typemap for the tostring typemap
  *
@@ -721,8 +724,10 @@ OPTIONAL_POD(int,i);
 %typemap(arginit) (tostring argin) (PyObject *str)
 {
   /* %typemap(arginit) (tostring arginit) */
-  str = 0;
-
+  if (!str) {
+		str = 0;
+  }
+  
 }
 
 %typemap(in) (tostring argin) (PyObject *str)
