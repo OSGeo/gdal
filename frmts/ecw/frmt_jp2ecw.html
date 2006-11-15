@@ -18,6 +18,13 @@ at OGC. <p>
 Support for the JP2ECW driver in GDAL is optional, and requires linking
 in external ECW SDK libraries provided by ERMapper.<p>
 
+By default the ECW SDK will use up to one quarter of physical RAM for 
+internal caching and work memory during decoding.  This is normally fine, 
+but the amount of memory to use can be adjusted by setting the 
+GDAL_ECW_CACHE_MAXMEM configuration variable with an amount of memory in 
+bytes.  Config variables can be set in the environment or using the --config
+commandline switch.<p>
+
 <h2>Creation Issues</h2>
 
 The free ECW compression kit only supports compression of images up to 
