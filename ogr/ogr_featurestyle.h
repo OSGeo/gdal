@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/11/16 11:58:40  dron
+ * In all classes: move data properties in private section.
+ *
  * Revision 1.10  2006/10/09 13:01:23  dron
  * Added OGRSTypeBoolean type to the list of OGRSType types.
  *
@@ -206,9 +209,10 @@ typedef struct ogr_style_value
 
 class CPL_DLL OGRStyleTable
 {
-public:
+  private:
     char **m_papszStyleTable;
 
+  public:
     OGRStyleTable();
     ~OGRStyleTable();
     GBool AddStyle(const char *pszName,const char *pszStyleString);
@@ -229,13 +233,15 @@ class OGRStyleTool;
 
 class CPL_DLL OGRStyleMgr
 {
-public:
-    char *m_pszStyleString;
-    OGRStyleTable *m_poDataSetStyleTable;
-    
-    OGRStyleMgr(OGRStyleTable *poDataSetStyleTable =NULL);
- 
+  private:
+    OGRStyleTable   *m_poDataSetStyleTable;
+    char            *m_pszStyleString;
+    OGRStyleTool    *m_poStyleTool;
+
+  public:
+    OGRStyleMgr(OGRStyleTable *poDataSetStyleTable = NULL);
     ~OGRStyleMgr();
+
     GBool SetFeatureStyleString(OGRFeature *,const char *pszStyleString=NULL,
                                 GBool bNoMatching = FALSE);
     /*it will set in the gived feature the pszStyleString with 
@@ -248,7 +254,7 @@ public:
     const char *GetStyleName(const char *pszStyleString= NULL);
     const char *GetStyleByName(const char *pszStyleName);
     
-     GBool AddStyle(const char *pszStyleName, const char *pszStyleString=NULL);
+    GBool AddStyle(const char *pszStyleName, const char *pszStyleString=NULL);
     
     const char *GetStyleString(OGRFeature * = NULL);
  
@@ -269,13 +275,16 @@ public:
 
 class CPL_DLL OGRStyleTool
 {
-public:
-    
+  private:
     GBool m_bModified;
     GBool m_bParsed;
     double m_dfScale;
     OGRSTUnitId m_eUnit;
     OGRSTClassId m_eClassId;
+    char *m_pszStyleString;
+
+  public:
+    
     OGRStyleTool(){}
     OGRStyleTool(OGRSTClassId eClassId);
     virtual ~OGRStyleTool();
@@ -289,8 +298,6 @@ public:
 
     GBool IsStyleParsed() {return m_bParsed;}
     void  StyleParsed() {m_bParsed = TRUE;}
-
-    char *m_pszStyleString;
     
     OGRSTClassId GetType();
 
@@ -348,9 +355,10 @@ extern OGRStyleParamId CPL_DLL asStylePen[];
 
 class CPL_DLL OGRStylePen : public OGRStyleTool
 {
-public:
-
+  private:
     OGRStyleValue    *m_pasStyleValue;
+
+  public:
 
     OGRStylePen();
     virtual ~OGRStylePen(); 
@@ -392,9 +400,10 @@ extern OGRStyleParamId CPL_DLL asStyleBrush[];
 
 class CPL_DLL OGRStyleBrush : public OGRStyleTool
 {
-public:
-
+  private:
     OGRStyleValue    *m_pasStyleValue;
+
+  public:
 
     OGRStyleBrush();
     virtual ~OGRStyleBrush();
@@ -435,9 +444,10 @@ extern OGRStyleParamId CPL_DLL asStyleSymbol[];
 
 class CPL_DLL OGRStyleSymbol : public OGRStyleTool
 {
-public:
-
+  private:
     OGRStyleValue    *m_pasStyleValue;
+
+  public:
 
     OGRStyleSymbol();
     virtual ~OGRStyleSymbol();
@@ -487,9 +497,10 @@ extern OGRStyleParamId CPL_DLL asStyleLabel[];
 
 class CPL_DLL OGRStyleLabel : public OGRStyleTool
 {
-public:
-
+  private:
     OGRStyleValue    *m_pasStyleValue;
+
+  public:
 
     OGRStyleLabel();
     virtual ~OGRStyleLabel();
@@ -555,9 +566,10 @@ extern OGRStyleParamId CPL_DLL asStyleVector[];
 
 class CPL_DLL OGRStyleVector : public OGRStyleTool
 {
-public:
-
+  private:
     OGRStyleValue    *m_pasStyleValue;
+
+  public:
 
     OGRStyleVector();
     virtual ~OGRStyleVector();
@@ -595,4 +607,4 @@ public:
      const char *GetStyleString();
 };
 
-#endif
+#endif /* OGR_FEATURESTYLE_INCLUDE */
