@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2006/11/16 14:58:33  mloskot
+ * Added cast from __int64 to GUIntBig on Windows.
+ *
  * Revision 1.56  2006/10/11 08:30:01  dron
  * Added CPLStrlwr() function.
  *
@@ -950,7 +953,7 @@ GUIntBig CPLScanUIntBig( const char *pszString, int nMaxLength )
 /*      Fetch out the result                                            */
 /* -------------------------------------------------------------------- */
 #if defined(WIN32) && defined(_MSC_VER)
-    iValue = _atoi64( pszValue );
+    iValue = (GUIntBig)_atoi64( pszValue );
 # elif HAVE_ATOLL
     iValue = atoll( pszValue );
 #else
