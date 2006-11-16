@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/11/16 15:23:33  mloskot
+ * Fixed CPLGetCurrentDir which on Windows CE returns NULL.
+ *
  * Revision 1.24  2006/11/13 18:45:05  fwarmerdam
  * added CPLCleanTrailingSlash() per bug 1311
  *
@@ -398,6 +401,7 @@ const char *CPLGetExtension( const char *pszFullFilename )
  * @return a pointer to buffer, containing current working directory path
  * or NULL in case of error.  User is responsible to free that buffer
  * after usage with CPLFree() function.
+ * If HAVE_GETCWD macro is not defined, the function returns NULL.
  **/
 
 char *CPLGetCurrentDir()
@@ -420,6 +424,8 @@ char *CPLGetCurrentDir()
 
 #ifdef HAVE_GETCWD
     return getcwd( pszDirPath, nPathMax );
+#else
+    return NULL;
 #endif /* HAVE_GETCWD */
 }
 
