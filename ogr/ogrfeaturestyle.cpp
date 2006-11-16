@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/11/16 18:57:24  dron
+ * Make Parse() method private.
+ *
  * Revision 1.20  2006/11/16 11:56:48  dron
  * Free the memory allocated in OGRStyleMgr::GetPart() method after usage
  * as per bug http://bugzilla.remotesensing.org/show_bug.cgi?id=1009
@@ -202,7 +205,6 @@ OGRStyleMgr::OGRStyleMgr(OGRStyleTable *poDataSetStyleTable)
 {
     m_poDataSetStyleTable = poDataSetStyleTable;
     m_pszStyleString = NULL;
-    m_poStyleTool = NULL;
 }
 
 /****************************************************************************/
@@ -213,8 +215,6 @@ OGRStyleMgr::~OGRStyleMgr()
 {
     if ( m_pszStyleString )
         CPLFree(m_pszStyleString);
-    if ( m_poStyleTool )
-        delete m_poStyleTool;
 }
 
 /****************************************************************************/
@@ -449,6 +449,7 @@ OGRStyleTool *OGRStyleMgr::GetPart(int hPartId,
     char **papszStyleString;
     const char *pszStyle;
     const char *pszString;
+    OGRStyleTool    *poStyleTool;
 
     if (pszStyleString)
       pszStyle = pszStyleString; 
@@ -467,13 +468,11 @@ OGRStyleTool *OGRStyleMgr::GetPart(int hPartId,
     
     if ( pszString || strlen(pszString) > 0 )
     {
-        if ( m_poStyleTool )
-            delete m_poStyleTool;
-        m_poStyleTool = CreateStyleToolFromStyleString(pszString);
-        if ( m_poStyleTool )
-            m_poStyleTool->SetStyleString(pszString);
+        poStyleTool = CreateStyleToolFromStyleString(pszString);
+        if ( poStyleTool )
+            poStyleTool->SetStyleString(pszString);
         CSLDestroy( papszStyleString );
-        return m_poStyleTool;
+        return poStyleTool;
     } 
     else
     {
@@ -1703,7 +1702,7 @@ OGRStyleSymbol::OGRStyleSymbol() : OGRStyleTool(OGRSTCSymbol)
 }
 
 /****************************************************************************/
-/*                      OGRStyleSymbol::~OGRStyleSymbol()                     */
+/*                      OGRStyleSymbol::~OGRStyleSymbol()                   */
 /*                                                                          */
 /****************************************************************************/
 OGRStyleSymbol::~OGRStyleSymbol()
