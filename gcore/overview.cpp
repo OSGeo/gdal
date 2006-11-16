@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2006/11/16 03:12:53  fwarmerdam
+ * Default to dummy progress if pfnProgress NULL in ComputeBandStats.
+ *
  * Revision 1.14  2006/03/28 14:49:56  fwarmerdam
  * updated contact info
  *
@@ -568,6 +571,9 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
     float       *pafData;
     double      dfSum=0.0, dfSum2=0.0;
     int         nSamples = 0;
+
+    if( pfnProgress == NULL )
+        pfnProgress = GDALDummyProgress;
 
     nWidth = poSrcBand->GetXSize();
     nHeight = poSrcBand->GetYSize();
