@@ -5,6 +5,7 @@
 *.ilk
 *.opt
 *.lo
+*.exe.manifest
 gdal_translate
 gdaladdo
 gdalinfo
