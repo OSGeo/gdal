@@ -46,6 +46,9 @@ mbrudka	      Marek Brudka		   thread safety
               mbrudka at aster.pl
 
 
+jlacroix      Julien-Samuel Lacroix	   mitab, avc
+              jlacroix at mapgears.com        
+
 
 
 Folks who have not yet agreed to RFC 3:
@@ -75,8 +78,6 @@ pka		Pirmin Kalberer		pka at sourcepole.ch		gdal
 fvdbergh	Frans van der Bergh	fvdbergh at csir.co.za		gdal
 
 dnadeau		Denis Nadeau		denis.nadeau@gmail.com		gdal
-
-jlacroix	Julien-Samuel Lacroix	jlacroix at mapgears.com        gdal
 
 dwallner	Daniel Wallner		daniel.wallner at bredband.net	gdal
 
