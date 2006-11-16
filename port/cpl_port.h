@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.54  2006/11/16 14:36:11  mloskot
+ * Disabled annoying warnings for Visual C++.
+ *
  * Revision 1.53  2006/09/07 18:11:10  dron
  * Added CPLGetCurrentDir().
  *
@@ -86,6 +89,11 @@
 
 #ifndef CPL_BASE_H_INCLUDED
 #define CPL_BASE_H_INCLUDED
+
+/* Remove annoying warnings Microsoft Visual C++ */
+#if defined(_MSC_VER)
+#  pragma warning(disable:4251 4275 4786)
+#endif
 
 /**
  * \file cpl_port.h

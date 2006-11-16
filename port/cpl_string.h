@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/11/16 14:36:11  mloskot
+ * Disabled annoying warnings for Visual C++.
+ *
  * Revision 1.25  2006/04/12 15:10:40  fwarmerdam
  * argument to InsertString should be const
  *
@@ -199,9 +202,9 @@ CPL_C_END
 # define std_string std::string
 #endif 
 
-/* Remove annoying warnings in eVC++ and VC++ 6.0 */
+/* Remove annoying warnings in Microsoft eVC++ and Microsoft Visual C++ */
 #if defined(WIN32CE)
-#  pragma warning(disable:4786)
+#  pragma warning(disable:4251 4275 4786)
 #endif
 
 
