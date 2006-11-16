@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.26  2006/11/16 03:19:38  fwarmerdam
+ * added ComputeBandStats() method
+ *
  * Revision 1.25  2006/11/07 04:04:45  hobu
  * improper #ifndef SWIGCSHARP in a previous commit
  *
@@ -234,6 +237,11 @@ public:
 
   void ComputeRasterMinMax( double argout[2], int approx_ok = 0) {
     GDALComputeRasterMinMax( self, approx_ok, argout );
+  }
+
+  void ComputeBandStats( double argout[2], int samplestep = 1) {
+    GDALComputeBandStats( self, samplestep, argout+0, argout+1, 
+                          NULL, NULL );
   }
 
   CPLErr Fill( double real_fill, double imag_fill =0.0 ) {
