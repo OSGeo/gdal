@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2006/11/16 18:57:24  dron
+ * Make Parse() method private.
+ *
  * Revision 1.11  2006/11/16 11:58:40  dron
  * In all classes: move data properties in private section.
  *
@@ -236,7 +239,6 @@ class CPL_DLL OGRStyleMgr
   private:
     OGRStyleTable   *m_poDataSetStyleTable;
     char            *m_pszStyleString;
-    OGRStyleTool    *m_poStyleTool;
 
   public:
     OGRStyleMgr(OGRStyleTable *poDataSetStyleTable = NULL);
@@ -282,6 +284,13 @@ class CPL_DLL OGRStyleTool
     OGRSTUnitId m_eUnit;
     OGRSTClassId m_eClassId;
     char *m_pszStyleString;
+
+    virtual GBool Parse() = 0;
+
+  protected:
+    GBool Parse(OGRStyleParamId* pasStyle,
+                OGRStyleValue* pasValue,
+                int nCount);
 
   public:
     
@@ -341,11 +350,6 @@ for Each style tools.*/
                      OGRStyleValue &sStyleValue,
                      double dfParam);
 
-    virtual GBool Parse() = 0;
-    GBool Parse(OGRStyleParamId* pasStyle,
-                OGRStyleValue* pasValue,
-                int nCount);
-
     double ComputeWithUnit(double, OGRSTUnitId);
     int    ComputeWithUnit(int , OGRSTUnitId);
 
@@ -356,7 +360,10 @@ extern OGRStyleParamId CPL_DLL asStylePen[];
 class CPL_DLL OGRStylePen : public OGRStyleTool
 {
   private:
+
     OGRStyleValue    *m_pasStyleValue;
+
+    GBool Parse();
 
   public:
 
@@ -386,7 +393,6 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
     
     /*****************************************************************/
     
-    GBool Parse();
     const char *GetParamStr(OGRSTPenParam eParam, GBool &bValueIsNull);
     int GetParamNum(OGRSTPenParam eParam,GBool &bValueIsNull);
     double GetParamDbl(OGRSTPenParam eParam,GBool &bValueIsNull);
@@ -401,7 +407,10 @@ extern OGRStyleParamId CPL_DLL asStyleBrush[];
 class CPL_DLL OGRStyleBrush : public OGRStyleTool
 {
   private:
+
     OGRStyleValue    *m_pasStyleValue;
+
+    GBool Parse();
 
   public:
 
@@ -430,7 +439,6 @@ class CPL_DLL OGRStyleBrush : public OGRStyleTool
 
     /*****************************************************************/
     
-     GBool Parse();
      const char *GetParamStr(OGRSTBrushParam eParam, GBool &bValueIsNull);
      int GetParamNum(OGRSTBrushParam eParam,GBool &bValueIsNull);
      double GetParamDbl(OGRSTBrushParam eParam,GBool &bValueIsNull);
@@ -445,7 +453,10 @@ extern OGRStyleParamId CPL_DLL asStyleSymbol[];
 class CPL_DLL OGRStyleSymbol : public OGRStyleTool
 {
   private:
+
     OGRStyleValue    *m_pasStyleValue;
+
+    GBool Parse();
 
   public:
 
@@ -483,7 +494,6 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
 
     /*****************************************************************/
     
-     GBool Parse();
      const char *GetParamStr(OGRSTSymbolParam eParam, GBool &bValueIsNull);
      int GetParamNum(OGRSTSymbolParam eParam,GBool &bValueIsNull);
      double GetParamDbl(OGRSTSymbolParam eParam,GBool &bValueIsNull);
@@ -498,7 +508,10 @@ extern OGRStyleParamId CPL_DLL asStyleLabel[];
 class CPL_DLL OGRStyleLabel : public OGRStyleTool
 {
   private:
+
     OGRStyleValue    *m_pasStyleValue;
+
+    GBool Parse();
 
   public:
 
@@ -552,7 +565,6 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     
     /*****************************************************************/
     
-     GBool Parse();
      const char *GetParamStr(OGRSTLabelParam eParam, GBool &bValueIsNull);
      int GetParamNum(OGRSTLabelParam eParam,GBool &bValueIsNull);
      double GetParamDbl(OGRSTLabelParam eParam,GBool &bValueIsNull);
@@ -567,7 +579,10 @@ extern OGRStyleParamId CPL_DLL asStyleVector[];
 class CPL_DLL OGRStyleVector : public OGRStyleTool
 {
   private:
+    
     OGRStyleValue    *m_pasStyleValue;
+
+    GBool Parse();
 
   public:
 
@@ -597,7 +612,6 @@ class CPL_DLL OGRStyleVector : public OGRStyleTool
 
     /*****************************************************************/
     
-     GBool Parse();
      const char *GetParamStr(OGRSTVectorParam eParam, GBool &bValueIsNull);
      int GetParamNum(OGRSTVectorParam eParam,GBool &bValueIsNull);
      double GetParamDbl(OGRSTVectorParam eParam,GBool &bValueIsNull);
