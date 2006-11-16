@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/11/16 00:06:34  hobu
+ * updates to work with new numpy stuff
+ *
  * Revision 1.1  2005/02/14 20:37:58  fwarmerdam
  * New
  *
@@ -64,43 +67,12 @@
  */
 
 #include "gdal_priv.h"
-#include "../frmts/mem/memdataset.h"
-#include "gdal_py.h"
+#include "gdal_array.h"
 
 CPL_CVSID("$Id$");
 
-/************************************************************************/
-/*				NUMPYDataset				*/
-/************************************************************************/
 
-class NUMPYDataset : public GDALDataset
-{
-    PyArrayObject *psArray;
 
-    double	  adfGeoTransform[6];
-    char	  *pszProjection;
-
-    int           nGCPCount;
-    GDAL_GCP      *pasGCPList;
-    char          *pszGCPProjection;
-
-  public:
-                 NUMPYDataset();
-                 ~NUMPYDataset();
-
-    virtual const char *GetProjectionRef(void);
-    virtual CPLErr SetProjection( const char * );
-    virtual CPLErr GetGeoTransform( double * );
-    virtual CPLErr SetGeoTransform( double * );
-
-    virtual int    GetGCPCount();
-    virtual const char *GetGCPProjection();
-    virtual const GDAL_GCP *GetGCPs();
-    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection );
-
-    static GDALDataset *Open( GDALOpenInfo * );
-};
 
 /************************************************************************/
 /*                            NUMPYDataset()                            */
@@ -403,25 +375,3 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
     return poDS;
 }
 
-/************************************************************************/
-/*                          GDALRegister_NUMPY()                        */
-/************************************************************************/
-
-void GDALRegister_NUMPY()
-
-{
-    GDALDriver	*poDriver;
-
-    if( GDALGetDriverByName( "NUMPY" ) == NULL )
-    {
-        poDriver = new GDALDriver();
-        
-        poDriver->SetDescription( "NUMPY" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
-                                   "Numeric Python Array" );
-        
-        poDriver->pfnOpen = NUMPYDataset::Open;
-
-        GetGDALDriverManager()->RegisterDriver( poDriver );
-    }
-}
