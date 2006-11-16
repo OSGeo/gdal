@@ -11,6 +11,28 @@ from distutils.sysconfig import parse_makefile,expand_makefile_vars
 
 from distutils.core import setup, Extension
 
+# Function to find numpy's include directory
+def get_numpy_include():
+    for directory in sys.path:
+        d = os.walk(directory)
+        for i in d:
+            if 'numpy' in i[0]:
+                if 'core' in i[0]:
+                    if 'include' in i[0]:
+                        return i[0]
+    return '.'
+
+HAVE_NUMPY=False
+
+try:
+    import numpy
+    HAVE_NUMPY=True
+    print 'numpy include', get_numpy_include()
+    if get_numpy_include() =='.':
+        print "numpy headers were not found!  Array support will not be enabled"
+        HAVE_NUMPY=False
+except ImportError:
+    pass
 
 # Function needed to make unique lists.
 def unique(list):
@@ -24,7 +46,8 @@ def unique(list):
 include_dirs = ['../../port',
                 '../../gcore',
                 '../../alg',
-                '../../ogr']
+                '../../ogr',
+                get_numpy_include()]
 
 
 # Put your build libraries and lib link directories here
@@ -143,12 +166,31 @@ ogr_module = Extension('_ogr',
                     extra_link_args = extra_link_args)
 
 
+array_module = Extension('_gdal_array',
+                    sources=['_gdal_array.cpp','numpydataset.cpp'],
+                    include_dirs = include_dirs,
+                    libraries = libraries,
+                    library_dirs = library_dirs,
+                    extra_link_args = extra_link_args)
+
+ext_modules = [gdal_module,
+              gdalconst_module,
+              osr_module,
+              ogr_module]
+
+py_modules = ['gdal',
+              'ogr',
+              'osr',
+              'gdalconst']
+              
+if HAVE_NUMPY:
+    ext_modules.append(array_module)
+    py_modules.append('gdal_array')
+    py_modules.append('gdalnumeric')
+    
 setup( name = 'Gdal Wrapper',
        version = 'ng using swig 1.3',
        description = 'Swig 1.3 wrapper over gdal',
-       py_modules = ['gdal', 'osr', 'ogr','gdalconst'],
+       py_modules = py_modules,
        url="http://www.gdal.org",
-       ext_modules = [gdal_module,
-                      gdalconst_module,
-                      osr_module,
-                      ogr_module] )
+       ext_modules = ext_modules )
