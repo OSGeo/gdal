@@ -26,3 +26,4 @@ sdts2mi
 epsgtest
 sfcdump*
 *.opt
+*.exe.manifest
