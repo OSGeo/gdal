@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/11/16 11:56:48  dron
+ * Free the memory allocated in OGRStyleMgr::GetPart() method after usage
+ * as per bug http://bugzilla.remotesensing.org/show_bug.cgi?id=1009
+ *
  * Revision 1.19  2006/10/09 12:52:30  dron
  * Style parsing logic in OGRStyleTool::Parse() was broken, rewrote it.
  *
@@ -198,6 +202,7 @@ OGRStyleMgr::OGRStyleMgr(OGRStyleTable *poDataSetStyleTable)
 {
     m_poDataSetStyleTable = poDataSetStyleTable;
     m_pszStyleString = NULL;
+    m_poStyleTool = NULL;
 }
 
 /****************************************************************************/
@@ -206,8 +211,10 @@ OGRStyleMgr::OGRStyleMgr(OGRStyleTable *poDataSetStyleTable)
 /****************************************************************************/
 OGRStyleMgr::~OGRStyleMgr()
 {
-    if (m_pszStyleString)
-      CPLFree(m_pszStyleString);
+    if ( m_pszStyleString )
+        CPLFree(m_pszStyleString);
+    if ( m_poStyleTool )
+        delete m_poStyleTool;
 }
 
 /****************************************************************************/
@@ -443,8 +450,6 @@ OGRStyleTool *OGRStyleMgr::GetPart(int hPartId,
     const char *pszStyle;
     const char *pszString;
 
-    OGRStyleTool *poStyleTool = NULL;
-
     if (pszStyleString)
       pszStyle = pszStyleString; 
     else
@@ -458,15 +463,17 @@ OGRStyleTool *OGRStyleMgr::GetPart(int hPartId,
                                           | CSLT_PRESERVEQUOTES
                                           | CSLT_PRESERVEESCAPES );
 
-    pszString = CSLGetField(papszStyleString,hPartId);
+    pszString = CSLGetField( papszStyleString, hPartId );
     
-    if (pszString || strlen(pszString) >0)
+    if ( pszString || strlen(pszString) > 0 )
     {
-        poStyleTool = CreateStyleToolFromStyleString(pszString);
-        if (poStyleTool)
-          poStyleTool->SetStyleString(pszString);
-        CSLDestroy(papszStyleString);
-        return poStyleTool;
+        if ( m_poStyleTool )
+            delete m_poStyleTool;
+        m_poStyleTool = CreateStyleToolFromStyleString(pszString);
+        if ( m_poStyleTool )
+            m_poStyleTool->SetStyleString(pszString);
+        CSLDestroy( papszStyleString );
+        return m_poStyleTool;
     } 
     else
     {
