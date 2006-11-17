@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2006/11/17 17:01:23  fwarmerdam
+ * Yikes!  Fixed a couple issues with TRE handling.
+ *
  * Revision 1.45  2006/10/24 02:18:06  fwarmerdam
  * added image attachment metadata
  *
@@ -533,50 +536,81 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     }								
 
 /* -------------------------------------------------------------------- */
+/*      Some files (ie NSIF datasets) have truncated image              */
+/*      headers.  This has been observed with jpeg compressed           */
+/*      files.  In this case guess reasonable values for these          */
+/*      fields.                                                         */
+/* -------------------------------------------------------------------- */
+    if( nOffset + 40 > psSegInfo->nSegmentHeaderSize )
+    {
+        psImage->chIMODE = 'B';
+        psImage->nBlocksPerRow = 1;
+        psImage->nBlocksPerColumn = 1;
+        psImage->nBlockWidth = psImage->nCols;
+        psImage->nBlockHeight = psImage->nRows;
+        psImage->nBitsPerSample = psImage->nABPP;
+        psImage->nIDLVL = 0;
+        psImage->nIALVL = 0;
+        psImage->nILOCRow = 0;
+        psImage->nILOCColumn = 0;
+        psImage->szIMAG[0] = '\0';
+
+        nOffset += 40;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Read more header fields.                                        */
 /* -------------------------------------------------------------------- */
-    psImage->chIMODE = pachHeader[nOffset + 1];
+    else
+    {
+        psImage->chIMODE = pachHeader[nOffset + 1];
+        
+        psImage->nBlocksPerRow = 
+            atoi(NITFGetField(szTemp, pachHeader, nOffset+2, 4));
+        psImage->nBlocksPerColumn = 
+            atoi(NITFGetField(szTemp, pachHeader, nOffset+6, 4));
+        psImage->nBlockWidth = 
+            atoi(NITFGetField(szTemp, pachHeader, nOffset+10, 4));
+        psImage->nBlockHeight = 
+            atoi(NITFGetField(szTemp, pachHeader, nOffset+14, 4));
+        psImage->nBitsPerSample = 
+            atoi(NITFGetField(szTemp, pachHeader, nOffset+18, 2));
+        
+        nOffset += 20;
 
-    psImage->nBlocksPerRow = 
-        atoi(NITFGetField(szTemp, pachHeader, nOffset+2, 4));
-    psImage->nBlocksPerColumn = 
-        atoi(NITFGetField(szTemp, pachHeader, nOffset+6, 4));
-    psImage->nBlockWidth = 
-        atoi(NITFGetField(szTemp, pachHeader, nOffset+10, 4));
-    psImage->nBlockHeight = 
-        atoi(NITFGetField(szTemp, pachHeader, nOffset+14, 4));
-    psImage->nBitsPerSample = 
-        atoi(NITFGetField(szTemp, pachHeader, nOffset+18, 2));
+        if( psImage->nABPP == 0 )
+            psImage->nABPP = psImage->nBitsPerSample;
 
-    if( psImage->nABPP == 0 )
-        psImage->nABPP = psImage->nBitsPerSample;
+        psImage->nIDLVL = atoi(NITFGetField(szTemp,pachHeader, nOffset+20, 3));
+        psImage->nIALVL = atoi(NITFGetField(szTemp,pachHeader, nOffset+23, 3));
+        psImage->nILOCRow = atoi(NITFGetField(szTemp,pachHeader,nOffset+26,5));
+        psImage->nILOCColumn = 
+            atoi(NITFGetField(szTemp,pachHeader, nOffset+31,5));
 
-    psImage->nIDLVL = atoi(NITFGetField(szTemp,pachHeader, nOffset+20, 3));
-    psImage->nIALVL = atoi(NITFGetField(szTemp,pachHeader, nOffset+23, 3));
-    psImage->nILOCRow = atoi(NITFGetField(szTemp,pachHeader, nOffset+26, 5));
-    psImage->nILOCColumn = atoi(NITFGetField(szTemp,pachHeader, nOffset+31,5));
-    memcpy( psImage->szIMAG, pachHeader+nOffset+36, 4 );
-    psImage->szIMAG[4] = '\0';
+        memcpy( psImage->szIMAG, pachHeader+nOffset+36, 4 );
+        psImage->szIMAG[4] = '\0';
+        
+        nOffset += 3;                   /* IDLVL */
+        nOffset += 3;                   /* IALVL */
+        nOffset += 10;                  /* ILOC */
+        nOffset += 4;                   /* IMAG */
+    }
 
-    nOffset += 20;
-
+/* -------------------------------------------------------------------- */
+/*      Override nCols and nRows for NITF 1.1 (not sure why!)           */
+/* -------------------------------------------------------------------- */
     if( EQUALN(psFile->szVersion,"NITF01.",7) )
-   {
+    {
         psImage->nCols = psImage->nBlocksPerRow * psImage->nBlockWidth;
         psImage->nRows = psImage->nBlocksPerColumn * psImage->nBlockHeight;
     }
 
 /* -------------------------------------------------------------------- */
-/*      Skip some unused fields.                                        */
+/*      Read TREs if we have them.                                      */
 /* -------------------------------------------------------------------- */
-    else
+    else if( nOffset+10 <= psSegInfo->nSegmentHeaderSize )
     {
         int nUserTREBytes, nExtendedTREBytes;
-
-        nOffset += 3;                   /* IDLVL */
-        nOffset += 3;                   /* IALVL */
-        nOffset += 10;                  /* ILOC */
-        nOffset += 4;                   /* IMAG */
         
 /* -------------------------------------------------------------------- */
 /*      Are there user TRE bytes to skip?                               */
@@ -614,7 +648,7 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                     pachHeader + nOffset + 3, 
                     nExtendedTREBytes - 3 );
 
-            psImage->pachTRE += (nExtendedTREBytes - 3);
+            psImage->nTREBytes += (nExtendedTREBytes - 3);
             nOffset += nExtendedTREBytes;
         }
     }
