@@ -5,6 +5,10 @@ EXTRAFLAGS =	-I$(MSDASDK)\inc \
 		-I. -Iogrsf_frmts -I..\frmts\gtiff\libgeotiff \
 		$(PROJ_FLAGS) $(PROJ_INCLUDE) $(GEOS_CFLAGS)
 
+!IFDEF INCLUDE_OGR_FRMTS
+EXTRAFLAGS = $(EXTRAFLAGS) -DOGR_ENABLED
+!ENDIF
+
 GDAL_ROOT = 	..
 
 !INCLUDE ..\nmake.opt
