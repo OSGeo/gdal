@@ -49,6 +49,9 @@ mbrudka	      Marek Brudka		   thread safety
 jlacroix      Julien-Samuel Lacroix	   mitab, avc
               jlacroix at mapgears.com        
 
+dnadeau	      Denis Nadeau                 netcdf, hdf, opendap
+              denis.nadeau@gmail.com
+
 
 
 Folks who have not yet agreed to RFC 3:
@@ -76,8 +79,6 @@ kruland		Kevin Ruland		kruland at ku.edu		gdal
 pka		Pirmin Kalberer		pka at sourcepole.ch		gdal
 
 fvdbergh	Frans van der Bergh	fvdbergh at csir.co.za		gdal
-
-dnadeau		Denis Nadeau		denis.nadeau@gmail.com		gdal
 
 dwallner	Daniel Wallner		daniel.wallner at bredband.net	gdal
 
