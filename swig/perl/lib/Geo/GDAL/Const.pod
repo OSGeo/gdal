@@ -1,10 +1,10 @@
 =head1 NAME
 
-gdalconst - A part of the Perl interface to the GDAL library.
+Geo::GDAL::Const - A part of the Perl interface to the GDAL library.
 
 =head1 SYNOPSIS
 
-  use gdalconst;
+  use Geo::GDAL;
 
 =head1 ABSTRACT
 
@@ -26,7 +26,7 @@ perhaps there is another way of doing what you want to do.
 
 =head1 CONSTANTS
 
-Access as $gdalconst::<constant>
+Access as $Geo::GDAL::Const::<constant>
 
 =over
 
@@ -182,7 +182,7 @@ These constants should be exportable.
 
 =head1 SEE ALSO
 
-L<perl>(1), L<gdal>(3pm), L<osr>(3pm), L<ogr>(3pm).
+L<Geo::GDAL>(3pm), L<Geo::OGR>(3pm), L<Geo::OSR>(3pm).
 
 http://www.gdal.org
 

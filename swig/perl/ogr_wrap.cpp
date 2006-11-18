@@ -1412,10 +1412,10 @@ static swig_module_info swig_module = {swig_types, 14, 0, 0, 0, 0};
 
 /* -------- TYPES TABLE (END) -------- */
 
-#define SWIG_init    boot_ogr
+#define SWIG_init    boot_Geo__OGR
 
-#define SWIG_name   "ogrc::boot_ogr"
-#define SWIG_prefix "ogrc::"
+#define SWIG_name   "Geo::OGRc::boot_Geo__OGR"
+#define SWIG_prefix "Geo::OGRc::"
 
 #define SWIGVERSION 0x010329 
 
@@ -1987,13 +1987,21 @@ SWIGINTERN void OGRFeatureShadow_UnsetField__SWIG_0(OGRFeatureShadow *self,int i
     OGR_F_UnsetField(self, id);
   }
 SWIGINTERN void OGRFeatureShadow_UnsetField__SWIG_1(OGRFeatureShadow *self,char const *name){
-    OGR_F_UnsetField(self, OGR_F_GetFieldIndex(self, name));
+    int i = OGR_F_GetFieldIndex(self, name);
+    if (i == -1)
+        CPLError(CE_Failure, 1, "No such field: '%s'", name);
+    else
+        OGR_F_UnsetField(self, i);
   }
 SWIGINTERN void OGRFeatureShadow_SetField__SWIG_0(OGRFeatureShadow *self,int id,char const *value){
     OGR_F_SetFieldString(self, id, value);
   }
 SWIGINTERN void OGRFeatureShadow_SetField__SWIG_1(OGRFeatureShadow *self,char const *name,char const *value){
-    OGR_F_SetFieldString(self, OGR_F_GetFieldIndex(self, name), value);
+    int i = OGR_F_GetFieldIndex(self, name);
+    if (i == -1)
+        CPLError(CE_Failure, 1, "No such field: '%s'", name);
+    else
+        OGR_F_SetFieldString(self, i, value);
   }
 SWIGINTERN OGRErr OGRFeatureShadow_SetFrom(OGRFeatureShadow *self,OGRFeatureShadow *other,int forgiving=1){
     return OGR_F_SetFrom(self, other, forgiving);
@@ -2272,7 +2280,7 @@ SWIGINTERN void OGRGeometryShadow_GetEnvelope(OGRGeometryShadow *self,double arg
   }
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_Centroid(OGRGeometryShadow *self){
     OGRGeometryShadow *pt = new_OGRGeometryShadow( wkbPoint );
-    OGRErr rcode = OGR_G_Centroid( self, pt );
+    OGR_G_Centroid( self, pt );
     return pt;
   }
 SWIGINTERN int OGRGeometryShadow_WkbSize(OGRGeometryShadow *self){
@@ -2332,8 +2340,8 @@ OGRDriverShadow* GetDriver(int driver_number) {
 }
 
 #ifdef PERL_OBJECT
-#define MAGIC_CLASS _wrap_ogr_var::
-class _wrap_ogr_var : public CPerlObj {
+#define MAGIC_CLASS _wrap_Geo::OGR_var::
+class _wrap_Geo::OGR_var : public CPerlObj {
 public:
 #else
 #define MAGIC_CLASS
@@ -10693,15 +10701,15 @@ XS(_wrap_GetDriver) {
 /* -------- TYPE CONVERSION AND EQUIVALENCE RULES (BEGIN) -------- */
 
 static swig_type_info _swigt__p_GIntBig = {"_p_GIntBig", "GIntBig *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_OGRDataSourceShadow = {"_p_OGRDataSourceShadow", "OGRDataSourceShadow *", 0, 0, (void*)"ogr::DataSource", 0};
-static swig_type_info _swigt__p_OGRDriverShadow = {"_p_OGRDriverShadow", "OGRDriverShadow *", 0, 0, (void*)"ogr::Driver", 0};
-static swig_type_info _swigt__p_OGRFeatureDefnShadow = {"_p_OGRFeatureDefnShadow", "OGRFeatureDefnShadow *", 0, 0, (void*)"ogr::FeatureDefn", 0};
-static swig_type_info _swigt__p_OGRFeatureShadow = {"_p_OGRFeatureShadow", "OGRFeatureShadow *", 0, 0, (void*)"ogr::Feature", 0};
-static swig_type_info _swigt__p_OGRFieldDefnShadow = {"_p_OGRFieldDefnShadow", "OGRFieldDefnShadow *", 0, 0, (void*)"ogr::FieldDefn", 0};
-static swig_type_info _swigt__p_OGRGeometryShadow = {"_p_OGRGeometryShadow", "OGRGeometryShadow *", 0, 0, (void*)"ogr::Geometry", 0};
-static swig_type_info _swigt__p_OGRLayerShadow = {"_p_OGRLayerShadow", "OGRLayerShadow *", 0, 0, (void*)"ogr::Layer", 0};
-static swig_type_info _swigt__p_OSRCoordinateTransformationShadow = {"_p_OSRCoordinateTransformationShadow", "OSRCoordinateTransformationShadow *", 0, 0, (void*)"osr::CoordinateTransformation", 0};
-static swig_type_info _swigt__p_OSRSpatialReferenceShadow = {"_p_OSRSpatialReferenceShadow", "OSRSpatialReferenceShadow *", 0, 0, (void*)"osr::SpatialReference", 0};
+static swig_type_info _swigt__p_OGRDataSourceShadow = {"_p_OGRDataSourceShadow", "OGRDataSourceShadow *", 0, 0, (void*)"Geo::OGR::DataSource", 0};
+static swig_type_info _swigt__p_OGRDriverShadow = {"_p_OGRDriverShadow", "OGRDriverShadow *", 0, 0, (void*)"Geo::OGR::Driver", 0};
+static swig_type_info _swigt__p_OGRFeatureDefnShadow = {"_p_OGRFeatureDefnShadow", "OGRFeatureDefnShadow *", 0, 0, (void*)"Geo::OGR::FeatureDefn", 0};
+static swig_type_info _swigt__p_OGRFeatureShadow = {"_p_OGRFeatureShadow", "OGRFeatureShadow *", 0, 0, (void*)"Geo::OGR::Feature", 0};
+static swig_type_info _swigt__p_OGRFieldDefnShadow = {"_p_OGRFieldDefnShadow", "OGRFieldDefnShadow *", 0, 0, (void*)"Geo::OGR::FieldDefn", 0};
+static swig_type_info _swigt__p_OGRGeometryShadow = {"_p_OGRGeometryShadow", "OGRGeometryShadow *", 0, 0, (void*)"Geo::OGR::Geometry", 0};
+static swig_type_info _swigt__p_OGRLayerShadow = {"_p_OGRLayerShadow", "OGRLayerShadow *", 0, 0, (void*)"Geo::OGR::Layer", 0};
+static swig_type_info _swigt__p_OSRCoordinateTransformationShadow = {"_p_OSRCoordinateTransformationShadow", "OSRCoordinateTransformationShadow *", 0, 0, (void*)"Geo::OSR::CoordinateTransformation", 0};
+static swig_type_info _swigt__p_OSRSpatialReferenceShadow = {"_p_OSRSpatialReferenceShadow", "OSRSpatialReferenceShadow *", 0, 0, (void*)"Geo::OSR::SpatialReference", 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_double = {"_p_double", "double *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_int = {"_p_int", "int *", 0, 0, (void*)0, 0};
@@ -10769,162 +10777,162 @@ static swig_variable_info swig_variables[] = {
 {0,0,0,0}
 };
 static swig_command_info swig_commands[] = {
-{"ogrc::UseExceptions", _wrap_UseExceptions},
-{"ogrc::DontUseExceptions", _wrap_DontUseExceptions},
-{"ogrc::Driver_name_get", _wrap_Driver_name_get},
-{"ogrc::Driver_CreateDataSource", _wrap_Driver_CreateDataSource},
-{"ogrc::Driver_CopyDataSource", _wrap_Driver_CopyDataSource},
-{"ogrc::Driver_Open", _wrap_Driver_Open},
-{"ogrc::Driver_DeleteDataSource", _wrap_Driver_DeleteDataSource},
-{"ogrc::Driver_TestCapability", _wrap_Driver_TestCapability},
-{"ogrc::Driver_GetName", _wrap_Driver_GetName},
-{"ogrc::DataSource_name_get", _wrap_DataSource_name_get},
-{"ogrc::delete_DataSource", _wrap_delete_DataSource},
-{"ogrc::DataSource_GetRefCount", _wrap_DataSource_GetRefCount},
-{"ogrc::DataSource_GetSummaryRefCount", _wrap_DataSource_GetSummaryRefCount},
-{"ogrc::DataSource_GetLayerCount", _wrap_DataSource_GetLayerCount},
-{"ogrc::DataSource_GetDriver", _wrap_DataSource_GetDriver},
-{"ogrc::DataSource_GetName", _wrap_DataSource_GetName},
-{"ogrc::DataSource_DeleteLayer", _wrap_DataSource_DeleteLayer},
-{"ogrc::DataSource_CreateLayer", _wrap_DataSource_CreateLayer},
-{"ogrc::DataSource_CopyLayer", _wrap_DataSource_CopyLayer},
-{"ogrc::DataSource_GetLayerByIndex", _wrap_DataSource_GetLayerByIndex},
-{"ogrc::DataSource_GetLayerByName", _wrap_DataSource_GetLayerByName},
-{"ogrc::DataSource_TestCapability", _wrap_DataSource_TestCapability},
-{"ogrc::DataSource_ExecuteSQL", _wrap_DataSource_ExecuteSQL},
-{"ogrc::DataSource_ReleaseResultSet", _wrap_DataSource_ReleaseResultSet},
-{"ogrc::Layer_GetRefCount", _wrap_Layer_GetRefCount},
-{"ogrc::Layer_SetSpatialFilter", _wrap_Layer_SetSpatialFilter},
-{"ogrc::Layer_SetSpatialFilterRect", _wrap_Layer_SetSpatialFilterRect},
-{"ogrc::Layer_GetSpatialFilter", _wrap_Layer_GetSpatialFilter},
-{"ogrc::Layer_SetAttributeFilter", _wrap_Layer_SetAttributeFilter},
-{"ogrc::Layer_ResetReading", _wrap_Layer_ResetReading},
-{"ogrc::Layer_GetName", _wrap_Layer_GetName},
-{"ogrc::Layer_GetFeature", _wrap_Layer_GetFeature},
-{"ogrc::Layer_GetNextFeature", _wrap_Layer_GetNextFeature},
-{"ogrc::Layer_SetNextByIndex", _wrap_Layer_SetNextByIndex},
-{"ogrc::Layer_SetFeature", _wrap_Layer_SetFeature},
-{"ogrc::Layer_CreateFeature", _wrap_Layer_CreateFeature},
-{"ogrc::Layer_DeleteFeature", _wrap_Layer_DeleteFeature},
-{"ogrc::Layer_SyncToDisk", _wrap_Layer_SyncToDisk},
-{"ogrc::Layer_GetLayerDefn", _wrap_Layer_GetLayerDefn},
-{"ogrc::Layer_GetFeatureCount", _wrap_Layer_GetFeatureCount},
-{"ogrc::Layer_GetExtent", _wrap_Layer_GetExtent},
-{"ogrc::Layer_TestCapability", _wrap_Layer_TestCapability},
-{"ogrc::Layer_CreateField", _wrap_Layer_CreateField},
-{"ogrc::Layer_StartTransaction", _wrap_Layer_StartTransaction},
-{"ogrc::Layer_CommitTransaction", _wrap_Layer_CommitTransaction},
-{"ogrc::Layer_RollbackTransaction", _wrap_Layer_RollbackTransaction},
-{"ogrc::Layer_GetSpatialRef", _wrap_Layer_GetSpatialRef},
-{"ogrc::Layer_GetFeatureRead", _wrap_Layer_GetFeatureRead},
-{"ogrc::delete_Feature", _wrap_delete_Feature},
-{"ogrc::new_Feature", _wrap_new_Feature},
-{"ogrc::Feature_GetDefnRef", _wrap_Feature_GetDefnRef},
-{"ogrc::Feature_SetGeometry", _wrap_Feature_SetGeometry},
-{"ogrc::Feature_SetGeometryDirectly", _wrap_Feature_SetGeometryDirectly},
-{"ogrc::Feature_GetGeometryRef", _wrap_Feature_GetGeometryRef},
-{"ogrc::Feature_Clone", _wrap_Feature_Clone},
-{"ogrc::Feature_Equal", _wrap_Feature_Equal},
-{"ogrc::Feature_GetFieldCount", _wrap_Feature_GetFieldCount},
-{"ogrc::Feature_GetFieldDefnRef", _wrap_Feature_GetFieldDefnRef},
-{"ogrc::Feature_GetFieldAsString", _wrap_Feature_GetFieldAsString},
-{"ogrc::Feature_GetFieldAsInteger", _wrap_Feature_GetFieldAsInteger},
-{"ogrc::Feature_GetFieldAsDouble", _wrap_Feature_GetFieldAsDouble},
-{"ogrc::Feature_IsFieldSet", _wrap_Feature_IsFieldSet},
-{"ogrc::Feature_GetFieldIndex", _wrap_Feature_GetFieldIndex},
-{"ogrc::Feature_GetFID", _wrap_Feature_GetFID},
-{"ogrc::Feature_SetFID", _wrap_Feature_SetFID},
-{"ogrc::Feature_DumpReadable", _wrap_Feature_DumpReadable},
-{"ogrc::Feature_UnsetField", _wrap_Feature_UnsetField},
-{"ogrc::Feature_SetField", _wrap_Feature_SetField},
-{"ogrc::Feature_SetFrom", _wrap_Feature_SetFrom},
-{"ogrc::Feature_GetStyleString", _wrap_Feature_GetStyleString},
-{"ogrc::Feature_SetStyleString", _wrap_Feature_SetStyleString},
-{"ogrc::Feature_GetFieldType", _wrap_Feature_GetFieldType},
-{"ogrc::delete_FeatureDefn", _wrap_delete_FeatureDefn},
-{"ogrc::new_FeatureDefn", _wrap_new_FeatureDefn},
-{"ogrc::FeatureDefn_GetName", _wrap_FeatureDefn_GetName},
-{"ogrc::FeatureDefn_GetFieldCount", _wrap_FeatureDefn_GetFieldCount},
-{"ogrc::FeatureDefn_GetFieldDefn", _wrap_FeatureDefn_GetFieldDefn},
-{"ogrc::FeatureDefn_GetFieldIndex", _wrap_FeatureDefn_GetFieldIndex},
-{"ogrc::FeatureDefn_AddFieldDefn", _wrap_FeatureDefn_AddFieldDefn},
-{"ogrc::FeatureDefn_GetGeomType", _wrap_FeatureDefn_GetGeomType},
-{"ogrc::FeatureDefn_SetGeomType", _wrap_FeatureDefn_SetGeomType},
-{"ogrc::FeatureDefn_GetReferenceCount", _wrap_FeatureDefn_GetReferenceCount},
-{"ogrc::delete_FieldDefn", _wrap_delete_FieldDefn},
-{"ogrc::new_FieldDefn", _wrap_new_FieldDefn},
-{"ogrc::FieldDefn_GetName", _wrap_FieldDefn_GetName},
-{"ogrc::FieldDefn_GetNameRef", _wrap_FieldDefn_GetNameRef},
-{"ogrc::FieldDefn_SetName", _wrap_FieldDefn_SetName},
-{"ogrc::FieldDefn_GetType", _wrap_FieldDefn_GetType},
-{"ogrc::FieldDefn_SetType", _wrap_FieldDefn_SetType},
-{"ogrc::FieldDefn_GetJustify", _wrap_FieldDefn_GetJustify},
-{"ogrc::FieldDefn_SetJustify", _wrap_FieldDefn_SetJustify},
-{"ogrc::FieldDefn_GetWidth", _wrap_FieldDefn_GetWidth},
-{"ogrc::FieldDefn_SetWidth", _wrap_FieldDefn_SetWidth},
-{"ogrc::FieldDefn_GetPrecision", _wrap_FieldDefn_GetPrecision},
-{"ogrc::FieldDefn_SetPrecision", _wrap_FieldDefn_SetPrecision},
-{"ogrc::FieldDefn_GetFieldTypeName", _wrap_FieldDefn_GetFieldTypeName},
-{"ogrc::CreateGeometryFromWkb", _wrap_CreateGeometryFromWkb},
-{"ogrc::CreateGeometryFromWkt", _wrap_CreateGeometryFromWkt},
-{"ogrc::CreateGeometryFromGML", _wrap_CreateGeometryFromGML},
-{"ogrc::delete_Geometry", _wrap_delete_Geometry},
-{"ogrc::new_Geometry", _wrap_new_Geometry},
-{"ogrc::Geometry_ExportToWkt", _wrap_Geometry_ExportToWkt},
-{"ogrc::Geometry_ExportToWkb", _wrap_Geometry_ExportToWkb},
-{"ogrc::Geometry_ExportToGML", _wrap_Geometry_ExportToGML},
-{"ogrc::Geometry_AddPoint", _wrap_Geometry_AddPoint},
-{"ogrc::Geometry_AddGeometryDirectly", _wrap_Geometry_AddGeometryDirectly},
-{"ogrc::Geometry_AddGeometry", _wrap_Geometry_AddGeometry},
-{"ogrc::Geometry_Clone", _wrap_Geometry_Clone},
-{"ogrc::Geometry_GetGeometryType", _wrap_Geometry_GetGeometryType},
-{"ogrc::Geometry_GetGeometryName", _wrap_Geometry_GetGeometryName},
-{"ogrc::Geometry_GetArea", _wrap_Geometry_GetArea},
-{"ogrc::Geometry_GetPointCount", _wrap_Geometry_GetPointCount},
-{"ogrc::Geometry_GetX", _wrap_Geometry_GetX},
-{"ogrc::Geometry_GetY", _wrap_Geometry_GetY},
-{"ogrc::Geometry_GetZ", _wrap_Geometry_GetZ},
-{"ogrc::Geometry_GetGeometryCount", _wrap_Geometry_GetGeometryCount},
-{"ogrc::Geometry_SetPoint", _wrap_Geometry_SetPoint},
-{"ogrc::Geometry_GetGeometryRef", _wrap_Geometry_GetGeometryRef},
-{"ogrc::Geometry_GetBoundary", _wrap_Geometry_GetBoundary},
-{"ogrc::Geometry_ConvexHull", _wrap_Geometry_ConvexHull},
-{"ogrc::Geometry_Buffer", _wrap_Geometry_Buffer},
-{"ogrc::Geometry_Intersection", _wrap_Geometry_Intersection},
-{"ogrc::Geometry_Union", _wrap_Geometry_Union},
-{"ogrc::Geometry_Difference", _wrap_Geometry_Difference},
-{"ogrc::Geometry_SymmetricDifference", _wrap_Geometry_SymmetricDifference},
-{"ogrc::Geometry_Distance", _wrap_Geometry_Distance},
-{"ogrc::Geometry_Empty", _wrap_Geometry_Empty},
-{"ogrc::Geometry_Intersect", _wrap_Geometry_Intersect},
-{"ogrc::Geometry_Equal", _wrap_Geometry_Equal},
-{"ogrc::Geometry_Disjoint", _wrap_Geometry_Disjoint},
-{"ogrc::Geometry_Touches", _wrap_Geometry_Touches},
-{"ogrc::Geometry_Crosses", _wrap_Geometry_Crosses},
-{"ogrc::Geometry_Within", _wrap_Geometry_Within},
-{"ogrc::Geometry_Contains", _wrap_Geometry_Contains},
-{"ogrc::Geometry_Overlaps", _wrap_Geometry_Overlaps},
-{"ogrc::Geometry_TransformTo", _wrap_Geometry_TransformTo},
-{"ogrc::Geometry_Transform", _wrap_Geometry_Transform},
-{"ogrc::Geometry_GetSpatialReference", _wrap_Geometry_GetSpatialReference},
-{"ogrc::Geometry_AssignSpatialReference", _wrap_Geometry_AssignSpatialReference},
-{"ogrc::Geometry_CloseRings", _wrap_Geometry_CloseRings},
-{"ogrc::Geometry_FlattenTo2D", _wrap_Geometry_FlattenTo2D},
-{"ogrc::Geometry_GetEnvelope", _wrap_Geometry_GetEnvelope},
-{"ogrc::Geometry_Centroid", _wrap_Geometry_Centroid},
-{"ogrc::Geometry_WkbSize", _wrap_Geometry_WkbSize},
-{"ogrc::Geometry_GetCoordinateDimension", _wrap_Geometry_GetCoordinateDimension},
-{"ogrc::Geometry_SetCoordinateDimension", _wrap_Geometry_SetCoordinateDimension},
-{"ogrc::Geometry_GetDimension", _wrap_Geometry_GetDimension},
-{"ogrc::GetDriverCount", _wrap_GetDriverCount},
-{"ogrc::GetOpenDSCount", _wrap_GetOpenDSCount},
-{"ogrc::SetGenerate_DB2_V72_BYTE_ORDER", _wrap_SetGenerate_DB2_V72_BYTE_ORDER},
-{"ogrc::RegisterAll", _wrap_RegisterAll},
-{"ogrc::GetOpenDS", _wrap_GetOpenDS},
-{"ogrc::Open", _wrap_Open},
-{"ogrc::OpenShared", _wrap_OpenShared},
-{"ogrc::GetDriverByName", _wrap_GetDriverByName},
-{"ogrc::GetDriver", _wrap_GetDriver},
+{"Geo::OGRc::UseExceptions", _wrap_UseExceptions},
+{"Geo::OGRc::DontUseExceptions", _wrap_DontUseExceptions},
+{"Geo::OGRc::Driver_name_get", _wrap_Driver_name_get},
+{"Geo::OGRc::Driver_CreateDataSource", _wrap_Driver_CreateDataSource},
+{"Geo::OGRc::Driver_CopyDataSource", _wrap_Driver_CopyDataSource},
+{"Geo::OGRc::Driver_Open", _wrap_Driver_Open},
+{"Geo::OGRc::Driver_DeleteDataSource", _wrap_Driver_DeleteDataSource},
+{"Geo::OGRc::Driver_TestCapability", _wrap_Driver_TestCapability},
+{"Geo::OGRc::Driver_GetName", _wrap_Driver_GetName},
+{"Geo::OGRc::DataSource_name_get", _wrap_DataSource_name_get},
+{"Geo::OGRc::delete_DataSource", _wrap_delete_DataSource},
+{"Geo::OGRc::DataSource_GetRefCount", _wrap_DataSource_GetRefCount},
+{"Geo::OGRc::DataSource_GetSummaryRefCount", _wrap_DataSource_GetSummaryRefCount},
+{"Geo::OGRc::DataSource_GetLayerCount", _wrap_DataSource_GetLayerCount},
+{"Geo::OGRc::DataSource_GetDriver", _wrap_DataSource_GetDriver},
+{"Geo::OGRc::DataSource_GetName", _wrap_DataSource_GetName},
+{"Geo::OGRc::DataSource_DeleteLayer", _wrap_DataSource_DeleteLayer},
+{"Geo::OGRc::DataSource_CreateLayer", _wrap_DataSource_CreateLayer},
+{"Geo::OGRc::DataSource_CopyLayer", _wrap_DataSource_CopyLayer},
+{"Geo::OGRc::DataSource_GetLayerByIndex", _wrap_DataSource_GetLayerByIndex},
+{"Geo::OGRc::DataSource_GetLayerByName", _wrap_DataSource_GetLayerByName},
+{"Geo::OGRc::DataSource_TestCapability", _wrap_DataSource_TestCapability},
+{"Geo::OGRc::DataSource_ExecuteSQL", _wrap_DataSource_ExecuteSQL},
+{"Geo::OGRc::DataSource_ReleaseResultSet", _wrap_DataSource_ReleaseResultSet},
+{"Geo::OGRc::Layer_GetRefCount", _wrap_Layer_GetRefCount},
+{"Geo::OGRc::Layer_SetSpatialFilter", _wrap_Layer_SetSpatialFilter},
+{"Geo::OGRc::Layer_SetSpatialFilterRect", _wrap_Layer_SetSpatialFilterRect},
+{"Geo::OGRc::Layer_GetSpatialFilter", _wrap_Layer_GetSpatialFilter},
+{"Geo::OGRc::Layer_SetAttributeFilter", _wrap_Layer_SetAttributeFilter},
+{"Geo::OGRc::Layer_ResetReading", _wrap_Layer_ResetReading},
+{"Geo::OGRc::Layer_GetName", _wrap_Layer_GetName},
+{"Geo::OGRc::Layer_GetFeature", _wrap_Layer_GetFeature},
+{"Geo::OGRc::Layer_GetNextFeature", _wrap_Layer_GetNextFeature},
+{"Geo::OGRc::Layer_SetNextByIndex", _wrap_Layer_SetNextByIndex},
+{"Geo::OGRc::Layer_SetFeature", _wrap_Layer_SetFeature},
+{"Geo::OGRc::Layer_CreateFeature", _wrap_Layer_CreateFeature},
+{"Geo::OGRc::Layer_DeleteFeature", _wrap_Layer_DeleteFeature},
+{"Geo::OGRc::Layer_SyncToDisk", _wrap_Layer_SyncToDisk},
+{"Geo::OGRc::Layer_GetLayerDefn", _wrap_Layer_GetLayerDefn},
+{"Geo::OGRc::Layer_GetFeatureCount", _wrap_Layer_GetFeatureCount},
+{"Geo::OGRc::Layer_GetExtent", _wrap_Layer_GetExtent},
+{"Geo::OGRc::Layer_TestCapability", _wrap_Layer_TestCapability},
+{"Geo::OGRc::Layer_CreateField", _wrap_Layer_CreateField},
+{"Geo::OGRc::Layer_StartTransaction", _wrap_Layer_StartTransaction},
+{"Geo::OGRc::Layer_CommitTransaction", _wrap_Layer_CommitTransaction},
+{"Geo::OGRc::Layer_RollbackTransaction", _wrap_Layer_RollbackTransaction},
+{"Geo::OGRc::Layer_GetSpatialRef", _wrap_Layer_GetSpatialRef},
+{"Geo::OGRc::Layer_GetFeatureRead", _wrap_Layer_GetFeatureRead},
+{"Geo::OGRc::delete_Feature", _wrap_delete_Feature},
+{"Geo::OGRc::new_Feature", _wrap_new_Feature},
+{"Geo::OGRc::Feature_GetDefnRef", _wrap_Feature_GetDefnRef},
+{"Geo::OGRc::Feature_SetGeometry", _wrap_Feature_SetGeometry},
+{"Geo::OGRc::Feature_SetGeometryDirectly", _wrap_Feature_SetGeometryDirectly},
+{"Geo::OGRc::Feature_GetGeometryRef", _wrap_Feature_GetGeometryRef},
+{"Geo::OGRc::Feature_Clone", _wrap_Feature_Clone},
+{"Geo::OGRc::Feature_Equal", _wrap_Feature_Equal},
+{"Geo::OGRc::Feature_GetFieldCount", _wrap_Feature_GetFieldCount},
+{"Geo::OGRc::Feature_GetFieldDefnRef", _wrap_Feature_GetFieldDefnRef},
+{"Geo::OGRc::Feature_GetFieldAsString", _wrap_Feature_GetFieldAsString},
+{"Geo::OGRc::Feature_GetFieldAsInteger", _wrap_Feature_GetFieldAsInteger},
+{"Geo::OGRc::Feature_GetFieldAsDouble", _wrap_Feature_GetFieldAsDouble},
+{"Geo::OGRc::Feature_IsFieldSet", _wrap_Feature_IsFieldSet},
+{"Geo::OGRc::Feature_GetFieldIndex", _wrap_Feature_GetFieldIndex},
+{"Geo::OGRc::Feature_GetFID", _wrap_Feature_GetFID},
+{"Geo::OGRc::Feature_SetFID", _wrap_Feature_SetFID},
+{"Geo::OGRc::Feature_DumpReadable", _wrap_Feature_DumpReadable},
+{"Geo::OGRc::Feature_UnsetField", _wrap_Feature_UnsetField},
+{"Geo::OGRc::Feature_SetField", _wrap_Feature_SetField},
+{"Geo::OGRc::Feature_SetFrom", _wrap_Feature_SetFrom},
+{"Geo::OGRc::Feature_GetStyleString", _wrap_Feature_GetStyleString},
+{"Geo::OGRc::Feature_SetStyleString", _wrap_Feature_SetStyleString},
+{"Geo::OGRc::Feature_GetFieldType", _wrap_Feature_GetFieldType},
+{"Geo::OGRc::delete_FeatureDefn", _wrap_delete_FeatureDefn},
+{"Geo::OGRc::new_FeatureDefn", _wrap_new_FeatureDefn},
+{"Geo::OGRc::FeatureDefn_GetName", _wrap_FeatureDefn_GetName},
+{"Geo::OGRc::FeatureDefn_GetFieldCount", _wrap_FeatureDefn_GetFieldCount},
+{"Geo::OGRc::FeatureDefn_GetFieldDefn", _wrap_FeatureDefn_GetFieldDefn},
+{"Geo::OGRc::FeatureDefn_GetFieldIndex", _wrap_FeatureDefn_GetFieldIndex},
+{"Geo::OGRc::FeatureDefn_AddFieldDefn", _wrap_FeatureDefn_AddFieldDefn},
+{"Geo::OGRc::FeatureDefn_GetGeomType", _wrap_FeatureDefn_GetGeomType},
+{"Geo::OGRc::FeatureDefn_SetGeomType", _wrap_FeatureDefn_SetGeomType},
+{"Geo::OGRc::FeatureDefn_GetReferenceCount", _wrap_FeatureDefn_GetReferenceCount},
+{"Geo::OGRc::delete_FieldDefn", _wrap_delete_FieldDefn},
+{"Geo::OGRc::new_FieldDefn", _wrap_new_FieldDefn},
+{"Geo::OGRc::FieldDefn_GetName", _wrap_FieldDefn_GetName},
+{"Geo::OGRc::FieldDefn_GetNameRef", _wrap_FieldDefn_GetNameRef},
+{"Geo::OGRc::FieldDefn_SetName", _wrap_FieldDefn_SetName},
+{"Geo::OGRc::FieldDefn_GetType", _wrap_FieldDefn_GetType},
+{"Geo::OGRc::FieldDefn_SetType", _wrap_FieldDefn_SetType},
+{"Geo::OGRc::FieldDefn_GetJustify", _wrap_FieldDefn_GetJustify},
+{"Geo::OGRc::FieldDefn_SetJustify", _wrap_FieldDefn_SetJustify},
+{"Geo::OGRc::FieldDefn_GetWidth", _wrap_FieldDefn_GetWidth},
+{"Geo::OGRc::FieldDefn_SetWidth", _wrap_FieldDefn_SetWidth},
+{"Geo::OGRc::FieldDefn_GetPrecision", _wrap_FieldDefn_GetPrecision},
+{"Geo::OGRc::FieldDefn_SetPrecision", _wrap_FieldDefn_SetPrecision},
+{"Geo::OGRc::FieldDefn_GetFieldTypeName", _wrap_FieldDefn_GetFieldTypeName},
+{"Geo::OGRc::CreateGeometryFromWkb", _wrap_CreateGeometryFromWkb},
+{"Geo::OGRc::CreateGeometryFromWkt", _wrap_CreateGeometryFromWkt},
+{"Geo::OGRc::CreateGeometryFromGML", _wrap_CreateGeometryFromGML},
+{"Geo::OGRc::delete_Geometry", _wrap_delete_Geometry},
+{"Geo::OGRc::new_Geometry", _wrap_new_Geometry},
+{"Geo::OGRc::Geometry_ExportToWkt", _wrap_Geometry_ExportToWkt},
+{"Geo::OGRc::Geometry_ExportToWkb", _wrap_Geometry_ExportToWkb},
+{"Geo::OGRc::Geometry_ExportToGML", _wrap_Geometry_ExportToGML},
+{"Geo::OGRc::Geometry_AddPoint", _wrap_Geometry_AddPoint},
+{"Geo::OGRc::Geometry_AddGeometryDirectly", _wrap_Geometry_AddGeometryDirectly},
+{"Geo::OGRc::Geometry_AddGeometry", _wrap_Geometry_AddGeometry},
+{"Geo::OGRc::Geometry_Clone", _wrap_Geometry_Clone},
+{"Geo::OGRc::Geometry_GetGeometryType", _wrap_Geometry_GetGeometryType},
+{"Geo::OGRc::Geometry_GetGeometryName", _wrap_Geometry_GetGeometryName},
+{"Geo::OGRc::Geometry_GetArea", _wrap_Geometry_GetArea},
+{"Geo::OGRc::Geometry_GetPointCount", _wrap_Geometry_GetPointCount},
+{"Geo::OGRc::Geometry_GetX", _wrap_Geometry_GetX},
+{"Geo::OGRc::Geometry_GetY", _wrap_Geometry_GetY},
+{"Geo::OGRc::Geometry_GetZ", _wrap_Geometry_GetZ},
+{"Geo::OGRc::Geometry_GetGeometryCount", _wrap_Geometry_GetGeometryCount},
+{"Geo::OGRc::Geometry_SetPoint", _wrap_Geometry_SetPoint},
+{"Geo::OGRc::Geometry_GetGeometryRef", _wrap_Geometry_GetGeometryRef},
+{"Geo::OGRc::Geometry_GetBoundary", _wrap_Geometry_GetBoundary},
+{"Geo::OGRc::Geometry_ConvexHull", _wrap_Geometry_ConvexHull},
+{"Geo::OGRc::Geometry_Buffer", _wrap_Geometry_Buffer},
+{"Geo::OGRc::Geometry_Intersection", _wrap_Geometry_Intersection},
+{"Geo::OGRc::Geometry_Union", _wrap_Geometry_Union},
+{"Geo::OGRc::Geometry_Difference", _wrap_Geometry_Difference},
+{"Geo::OGRc::Geometry_SymmetricDifference", _wrap_Geometry_SymmetricDifference},
+{"Geo::OGRc::Geometry_Distance", _wrap_Geometry_Distance},
+{"Geo::OGRc::Geometry_Empty", _wrap_Geometry_Empty},
+{"Geo::OGRc::Geometry_Intersect", _wrap_Geometry_Intersect},
+{"Geo::OGRc::Geometry_Equal", _wrap_Geometry_Equal},
+{"Geo::OGRc::Geometry_Disjoint", _wrap_Geometry_Disjoint},
+{"Geo::OGRc::Geometry_Touches", _wrap_Geometry_Touches},
+{"Geo::OGRc::Geometry_Crosses", _wrap_Geometry_Crosses},
+{"Geo::OGRc::Geometry_Within", _wrap_Geometry_Within},
+{"Geo::OGRc::Geometry_Contains", _wrap_Geometry_Contains},
+{"Geo::OGRc::Geometry_Overlaps", _wrap_Geometry_Overlaps},
+{"Geo::OGRc::Geometry_TransformTo", _wrap_Geometry_TransformTo},
+{"Geo::OGRc::Geometry_Transform", _wrap_Geometry_Transform},
+{"Geo::OGRc::Geometry_GetSpatialReference", _wrap_Geometry_GetSpatialReference},
+{"Geo::OGRc::Geometry_AssignSpatialReference", _wrap_Geometry_AssignSpatialReference},
+{"Geo::OGRc::Geometry_CloseRings", _wrap_Geometry_CloseRings},
+{"Geo::OGRc::Geometry_FlattenTo2D", _wrap_Geometry_FlattenTo2D},
+{"Geo::OGRc::Geometry_GetEnvelope", _wrap_Geometry_GetEnvelope},
+{"Geo::OGRc::Geometry_Centroid", _wrap_Geometry_Centroid},
+{"Geo::OGRc::Geometry_WkbSize", _wrap_Geometry_WkbSize},
+{"Geo::OGRc::Geometry_GetCoordinateDimension", _wrap_Geometry_GetCoordinateDimension},
+{"Geo::OGRc::Geometry_SetCoordinateDimension", _wrap_Geometry_SetCoordinateDimension},
+{"Geo::OGRc::Geometry_GetDimension", _wrap_Geometry_GetDimension},
+{"Geo::OGRc::GetDriverCount", _wrap_GetDriverCount},
+{"Geo::OGRc::GetOpenDSCount", _wrap_GetOpenDSCount},
+{"Geo::OGRc::SetGenerate_DB2_V72_BYTE_ORDER", _wrap_SetGenerate_DB2_V72_BYTE_ORDER},
+{"Geo::OGRc::RegisterAll", _wrap_RegisterAll},
+{"Geo::OGRc::GetOpenDS", _wrap_GetOpenDS},
+{"Geo::OGRc::Open", _wrap_Open},
+{"Geo::OGRc::OpenShared", _wrap_OpenShared},
+{"Geo::OGRc::GetDriverByName", _wrap_GetDriverByName},
+{"Geo::OGRc::GetDriver", _wrap_GetDriver},
 {0,0}
 };
 /* -----------------------------------------------------------------------------
@@ -11446,13 +11454,13 @@ XS(SWIG_init) {
   }
   
   
-  SWIG_TypeClientData(SWIGTYPE_p_OGRDriverShadow, (void*) "ogr::Driver");
-  SWIG_TypeClientData(SWIGTYPE_p_OGRDataSourceShadow, (void*) "ogr::DataSource");
-  SWIG_TypeClientData(SWIGTYPE_p_OGRLayerShadow, (void*) "ogr::Layer");
-  SWIG_TypeClientData(SWIGTYPE_p_OGRFeatureShadow, (void*) "ogr::Feature");
-  SWIG_TypeClientData(SWIGTYPE_p_OGRFeatureDefnShadow, (void*) "ogr::FeatureDefn");
-  SWIG_TypeClientData(SWIGTYPE_p_OGRFieldDefnShadow, (void*) "ogr::FieldDefn");
-  SWIG_TypeClientData(SWIGTYPE_p_OGRGeometryShadow, (void*) "ogr::Geometry");
+  SWIG_TypeClientData(SWIGTYPE_p_OGRDriverShadow, (void*) "Geo::OGR::Driver");
+  SWIG_TypeClientData(SWIGTYPE_p_OGRDataSourceShadow, (void*) "Geo::OGR::DataSource");
+  SWIG_TypeClientData(SWIGTYPE_p_OGRLayerShadow, (void*) "Geo::OGR::Layer");
+  SWIG_TypeClientData(SWIGTYPE_p_OGRFeatureShadow, (void*) "Geo::OGR::Feature");
+  SWIG_TypeClientData(SWIGTYPE_p_OGRFeatureDefnShadow, (void*) "Geo::OGR::FeatureDefn");
+  SWIG_TypeClientData(SWIGTYPE_p_OGRFieldDefnShadow, (void*) "Geo::OGR::FieldDefn");
+  SWIG_TypeClientData(SWIGTYPE_p_OGRGeometryShadow, (void*) "Geo::OGR::Geometry");
   ST(0) = &PL_sv_yes;
   XSRETURN(1);
 }

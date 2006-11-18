@@ -1,10 +1,10 @@
 =head1 NAME
 
-ogr - A part of the Perl interface to the GDAL library.
+Geo::OGR - A part of the Perl interface to the GDAL library.
 
 =head1 SYNOPSIS
 
-  use ogr;
+  use Geo::GDAL;
 
 =head1 ABSTRACT
 
@@ -58,7 +58,7 @@ arg2 is optional and if left off, will get the value 4 (in this case)
 
 =item Open
 
-  $datasource = ogr::Open('directory', $update = 0);
+  $datasource = Geo::OGR::Open('directory', $update = 0);
 
 =item OpenShared
 
@@ -70,7 +70,7 @@ arg2 is optional and if left off, will get the value 4 (in this case)
 
 =head1 CONSTANTS
 
-Access as $ogr::<constant>
+Access as $Geo::OGR::<constant>
 
 =over
 
@@ -170,7 +170,7 @@ Access as $ogr::<constant>
 
 =head1 CLASSES
 
-=head2 ogr::Driver
+=head2 Geo::OGR::Driver
 
 =over
 
@@ -195,7 +195,7 @@ Access as $ogr::<constant>
 
 =back
 
-=head2 ogr::DataSource
+=head2 Geo::OGR::DataSource
 
 =over
 
@@ -215,7 +215,7 @@ Access as $ogr::<constant>
 
   $layer = $datasource->CreateLayer('layer_name', 
     $spatial_reference = undef, 
-    $geom_type = $ogr::wkbUnknown, $options = []);
+    $geom_type = $Geo::OGR::wkbUnknown, $options = []);
 
 layer_name is typically a filename without directory and extension or
 table name.
@@ -250,7 +250,7 @@ Do this for all layers that have been obtained with ExecuteSQL.
 
 =back
 
-=head2 ogr::Layer
+=head2 Geo::OGR::Layer
 
 =over
 
@@ -312,8 +312,8 @@ Do this for all layers that have been obtained with ExecuteSQL.
 
 =item CreateField
   
-  $column = new ogr::FieldDefn('my_field', 
-    $ogr::OFTInteger); # an example
+  $column = new Geo::OGR::FieldDefn('my_field', 
+    $Geo::OGR::OFTInteger); # an example
   $layer->CreateField($column);
 
 =item StartTransaction
@@ -328,9 +328,9 @@ Do this for all layers that have been obtained with ExecuteSQL.
 
 =back
 
-=head2 ogr::Feature
+=head2 Geo::OGR::Feature
 
-  $feature = new ogr::Feature($schema);
+  $feature = new Geo::OGR::Feature($schema);
 
 =over
 
@@ -402,7 +402,7 @@ or
 
 =back
 
-=head2 ogr::FeatureDefn (Schema)
+=head2 Geo::OGR::FeatureDefn (Schema)
 
 =over
 
@@ -428,9 +428,9 @@ or
 
 =back
 
-=head2 ogr::FieldDefn (Column)
+=head2 Geo::OGR::FieldDefn (Column)
 
-  $column = new ogr::FieldDefn('name', $ogr::OFTxxxx);
+  $column = new Geo::OGR::FieldDefn('name', $Geo::OGR::OFTxxxx);
 
 =over
 
@@ -460,10 +460,10 @@ or
 
 =back
 
-=head2 ogr::Geometry
+=head2 Geo::OGR::Geometry
 
-  $type = $ogr::wkbPolygon; # an example
-  $geom = new ogr::Geometry($type);
+  $type = $Geo::OGR::wkbPolygon; # an example
+  $geom = new Geo::OGR::Geometry($type);
 
 =over
 
@@ -585,7 +585,7 @@ give undefined/uninitialized variables to methods.
 
 =head1 SEE ALSO
 
-L<perl>(1), L<gdalconst>(3pm), L<gdal>(3pm), L<osr>(3pm).
+L<Geo::GDAL>(3pm), L<Geo::GDAL::Const>(3pm), L<Geo::OSR>(3pm).
 
 http://www.gdal.org
 

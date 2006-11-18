@@ -1,11 +1,10 @@
-
-
-include ../../GDALmake.opt
-
-all: 
-
 BINDING = perl
+SWIGDEFINES = -DPERL_CPAN_NAMESPACE
+
+include ../../GDALmake.opt 
 include ../SWIGmake.base
+
+all:
 
 clean:
 	-rm -f gdal.bs gdal_wrap.o
@@ -14,39 +13,43 @@ clean:
 	-rm -f osr.bs osr_wrap.o
 	-rm -rf blib
 	-rm -f pm_to_blib
-	-rm -f Makefile_gdal Makefile_gdalconst Makefile_ogr Makefile_osr
+	-rm -f Makefile_Geo__GDAL Makefile_Geo__GDAL__Const Makefile_Geo__OGR Makefile_Geo__OSR
 
 veryclean: clean
 	-rm -f ${WRAPPERS} 
 	-rm -f gdal.pm gdalconst.pm osr.pm ogr.pm
 
 generate: ${WRAPPERS}
+	echo "Please move GDAL.pm, OGR.pm and OSR.pm to lib/Geo and Const.pm to lib/Geo/GDAL. Then edit lib/Geo/GDAL.pm to contain 'use Geo::GDAL::Const; use Geo::OGR; use Geo::OSR; our (dollar)VERSION = 0.20;'"
 
-Makefile_gdal: Makefile.PL ${GDAL_ROOT}/GDALmake.opt
+Makefile_Geo__GDAL:
 	PREFIX=${INST_PREFIX} perl Makefile.PL
 
-build:  Makefile_gdal
-	make -f Makefile_gdal
-	make -f Makefile_gdalconst
-	make -f Makefile_ogr
-	make -f Makefile_osr
+build: Makefile_Geo__GDAL
+	make -f Makefile_Geo__GDAL
+	make -f Makefile_Geo__GDAL__Const
+	make -f Makefile_Geo__OGR
+	make -f Makefile_Geo__OSR
 
-install: Makefile_gdal build
-	make -f Makefile_gdal install
+install: build
+	make -f Makefile_Geo__GDAL install
+	make -f Makefile_Geo__GDAL__Const install
+	make -f Makefile_Geo__OGR install
+	make -f Makefile_Geo__OSR install
 
-test: Makefile_gdal
-	make -f Makefile_gdal test
+test: build
+	make -f Makefile_Geo__GDAL test
 
-gdal.pod.html: gdal.pod
-	pod2html gdal.pod > gdal.pod.html
+Geo-GDAL.html: lib/Geo/GDAL.pod
+	pod2html lib/Geo/GDAL.pod > Geo-GDAL.html
 
-gdalconst.pod.html: gdalconst.pod
-	pod2html gdalconst.pod > gdalconst.pod.html
+Geo-GDAL-Const.html: lib/Geo/GDAL/Const.pod
+	pod2html lib/Geo/GDAL/Const.pod > Geo-GDAL-Const.html
 
-ogr.pod.html: ogr.pod
-	pod2html ogr.pod > ogr.pod.html
+Geo-OGR.html: lib/Geo/OGR.pod
+	pod2html lib/Geo/OGR.pod > Geo-OGR.html
 
-osr.pod.html: osr.pod
-	pod2html osr.pod > osr.pod.html
+Geo-OSR.html: lib/Geo/OSR.pod
+	pod2html lib/Geo/OSR.pod > Geo-OSR.html
 
-pod2html: gdal.pod.html gdalconst.pod.html ogr.pod.html osr.pod.html
+doc: Geo-GDAL.html Geo-GDAL-Const.html Geo-OGR.html Geo-OSR.html
