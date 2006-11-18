@@ -1,11 +1,10 @@
 =head1 NAME
 
-gdal - A part of the Perl interface to the GDAL library.
+Geo::GDAL - A part of the Perl interface to the GDAL library.
 
 =head1 SYNOPSIS
 
-  use gdalconst;
-  use gdal;
+  use Geo::GDAL;
 
 =head1 ABSTRACT
 
@@ -119,22 +118,22 @@ arg2 is optional and if left off, will get the value 4 (in this case)
 
 =item GetDriverCount
 
-  $n = gdal::GetDriverCount();
+  $n = Geo::GDAL::GetDriverCount();
 
 =item GetDriverByName
 
-  $driver = gdal::GetDriverByName('driver name');
+  $driver = Geo::GDAL::GetDriverByName('driver name');
 
 The driver name is the $driver->{ShortName}, but that is a chicken and
 an egg problem!
 
 =item GetDriver
 
-  $driver = gdal::GetDriver($i);
+  $driver = Geo::GDAL::GetDriver($i);
 
 =item Open
 
-  $dataset = gdal::Open('filename', 
+  $dataset = Geo::GDAL::Open('filename', 
     $access = $gdalconst::GA_ReadOnly);
 
   $access = $gdalconst::GA_ReadOnly | $gdalconst::GA_Update
@@ -147,9 +146,9 @@ an egg problem!
 
 =head1 CLASSES
 
-=head2 gdal::MajorObject
+=head2 Geo::GDAL::MajorObject
 
-Superclass of gdal::Driver, gdal::Dataset, and gdal::Band
+Superclass of Geo::GDAL::Driver, Geo::GDAL::Dataset, and Geo::GDAL::Band
 
 =over
 
@@ -165,7 +164,7 @@ Superclass of gdal::Driver, gdal::Dataset, and gdal::Band
 
 =back
 
-=head2 gdal::Driver
+=head2 Geo::GDAL::Driver
 
 =over
 
@@ -195,7 +194,7 @@ Superclass of gdal::Driver, gdal::Dataset, and gdal::Band
 
 =back
 
-=head2 gdal::Dataset
+=head2 Geo::GDAL::Dataset
 
 =over
 
@@ -263,8 +262,8 @@ An example:
 An example:
 
   my @gcps = ();
-  push @gcps,new gdal::GCP($x1, $y1);
-  push @gcps,new gdal::GCP($x2, $y2);
+  push @gcps,new Geo::GDAL::GCP($x1, $y1);
+  push @gcps,new Geo::GDAL::GCP($x2, $y2);
   $dataset->SetGCPs(\@gcps, "some projection");
 
 =item FlushCache
@@ -275,7 +274,7 @@ An example:
 
 =back
 
-=head2 gdal::Band
+=head2 Geo::GDAL::Band
 
 =over
 
@@ -359,9 +358,9 @@ See also the example below.
 
 =back
 
-=head2 gdal::ColorTable
+=head2 Geo::GDAL::ColorTable
 
-  $colortable = new gdal::ColorTable(
+  $colortable = new Geo::GDAL::ColorTable(
     $palette_interpretation = $gdalconst::GPI_RGB);
 
 =over
@@ -388,7 +387,7 @@ See also the example below.
 
 =back
 
-=head2 gdal::GCP
+=head2 Geo::GDAL::GCP
 
 =over
 
@@ -430,7 +429,7 @@ give undefined/uninitialized variables to methods.
 
 =head1 SEE ALSO
 
-L<perl>(1), L<perlfunc>(1), L<gdalconst>(3pm), L<osr>(3pm), L<ogr>(3pm).
+L<Geo::GDAL::Const>(3pm), L<Geo::OGR>(3pm), L<Geo::OSR>(3pm).
 
 http://www.gdal.org
 

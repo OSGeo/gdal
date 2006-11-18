@@ -1,10 +1,10 @@
 =head1 NAME
 
-osr - A part of the Perl interface to the GDAL library.
+Geo::OSR - A part of the Perl interface to the GDAL library.
 
 =head1 SYNOPSIS
 
-  use osr;
+  use Geo::GDAL;
 
 =head1 ABSTRACT
 
@@ -40,7 +40,7 @@ perhaps there is another way of doing what you want to do.
 
 =head1 CONSTANTS
 
-Access as $osr::<constant>
+Access as $Geo::OSR::<constant>
 
 =over
 
@@ -214,9 +214,9 @@ Access as $osr::<constant>
 
 =head1 CLASSES
 
-=head2 osr::SpatialReference
+=head2 Geo::OSR::SpatialReference
 
-  $srs = new osr::SpatialReference;
+  $srs = new Geo::OSR::SpatialReference;
 
 =over
 
@@ -344,9 +344,9 @@ Access as $osr::<constant>
 
 =back
 
-=head2 osr::CoordinateTransformation
+=head2 Geo::OSR::CoordinateTransformation
 
-  $transf = new osr::CoordinateTransformation($srs_from, $srs_to);
+  $transf = new Geo::OSR::CoordinateTransformation($srs_from, $srs_to);
 
 =over
 
@@ -364,7 +364,7 @@ give undefined/uninitialized variables to methods.
 
 =head1 SEE ALSO
 
-L<perl>(1), L<gdalconst>(3pm), L<gdal>(3pm), L<ogr>(3pm).
+L<Geo::GDAL>(3pm), L<Geo::GDAL::Const>(3pm), L<Geo::OGR>(3pm).
 
 http://www.gdal.org
 

@@ -1413,10 +1413,10 @@ static swig_module_info swig_module = {swig_types, 15, 0, 0, 0, 0};
 
 /* -------- TYPES TABLE (END) -------- */
 
-#define SWIG_init    boot_gdal
+#define SWIG_init    boot_Geo__GDAL
 
-#define SWIG_name   "gdalc::boot_gdal"
-#define SWIG_prefix "gdalc::"
+#define SWIG_name   "Geo::GDALc::boot_Geo__GDAL"
+#define SWIG_prefix "Geo::GDALc::"
 
 #define SWIGVERSION 0x010329 
 
@@ -2045,6 +2045,9 @@ CPLErr WriteRaster_internal( GDALRasterBandShadow *obj,
 		        (void *) buffer, buf_xsize, buf_ysize, buf_type, 0, 0 );
 }
 
+SWIGINTERN void GDALRasterBandShadow_GetBlockSize(GDALRasterBandShadow *self,int *pnBlockXSize,int *pnBlockYSize){
+      GDALGetBlockSize(self, pnBlockXSize, pnBlockYSize);
+  }
 SWIGINTERN GDALColorInterp GDALRasterBandShadow_GetRasterColorInterpretation(GDALRasterBandShadow *self){
     return GDALGetRasterColorInterpretation( self );
   }
@@ -2069,6 +2072,13 @@ SWIGINTERN void GDALRasterBandShadow_GetOffset(GDALRasterBandShadow *self,double
 SWIGINTERN void GDALRasterBandShadow_GetScale(GDALRasterBandShadow *self,double *val,int *hasval){
     *val = GDALGetRasterScale( self, hasval );
   }
+SWIGINTERN CPLErr GDALRasterBandShadow_GetStatistics(GDALRasterBandShadow *self,int approx_ok,int force,double *min,double *max,double *mean,double *stddev){
+    return GDALGetRasterStatistics( self, approx_ok, force, 
+				    min, max, mean, stddev );
+  }
+SWIGINTERN CPLErr GDALRasterBandShadow_SetStatistics(GDALRasterBandShadow *self,double min,double max,double mean,double stddev){
+    return GDALSetRasterStatistics( self, min, max, mean, stddev );
+  }
 SWIGINTERN int GDALRasterBandShadow_GetOverviewCount(GDALRasterBandShadow *self){
     return GDALGetOverviewCount( self );
   }
@@ -2082,6 +2092,10 @@ SWIGINTERN int GDALRasterBandShadow_Checksum(GDALRasterBandShadow *self,int xoff
   }
 SWIGINTERN void GDALRasterBandShadow_ComputeRasterMinMax(GDALRasterBandShadow *self,double argout[2],int approx_ok=0){
     GDALComputeRasterMinMax( self, approx_ok, argout );
+  }
+SWIGINTERN void GDALRasterBandShadow_ComputeBandStats(GDALRasterBandShadow *self,double argout[2],int samplestep=1){
+    GDALComputeBandStats( self, samplestep, argout+0, argout+1, 
+                          NULL, NULL );
   }
 SWIGINTERN CPLErr GDALRasterBandShadow_Fill(GDALRasterBandShadow *self,double real_fill,double imag_fill=0.0){
     return GDALFillRaster( self, real_fill, imag_fill );
@@ -2230,8 +2244,8 @@ GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
 }
 
 #ifdef PERL_OBJECT
-#define MAGIC_CLASS _wrap_gdal_var::
-class _wrap_gdal_var : public CPerlObj {
+#define MAGIC_CLASS _wrap_Geo::GDAL_var::
+class _wrap_Geo::GDAL_var : public CPerlObj {
 public:
 #else
 #define MAGIC_CLASS
@@ -7038,6 +7052,67 @@ XS(_wrap_Band_DataType_get) {
 }
 
 
+XS(_wrap_Band_GetBlockSize) {
+  {
+    GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+    int *arg2 = (int *) 0 ;
+    int *arg3 = (int *) 0 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int temp2 ;
+    int res2 = SWIG_TMPOBJ ;
+    int temp3 ;
+    int res3 = SWIG_TMPOBJ ;
+    int argvi = 0;
+    dXSARGS;
+    
+    arg2 = &temp2;
+    arg3 = &temp3;
+    if ((items < 1) || (items > 1)) {
+      SWIG_croak("Usage: Band_GetBlockSize(self);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_GetBlockSize" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+    {
+      CPLErrorReset();
+      GDALRasterBandShadow_GetBlockSize(arg1,arg2,arg3);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    
+    if (SWIG_IsTmpObj(res2)) {
+      if (argvi >= items) EXTEND(sp,1);  ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1((*arg2)); argvi++  ;
+    } else {
+      int new_flags = SWIG_IsNewObj(res2) ? (SWIG_POINTER_OWN | 0) : 0;
+      if (argvi >= items) EXTEND(sp,1);  ST(argvi) = SWIG_NewPointerObj((void*)(arg2), SWIGTYPE_p_int, new_flags); argvi++  ;
+    }
+    if (SWIG_IsTmpObj(res3)) {
+      if (argvi >= items) EXTEND(sp,1);  ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1((*arg3)); argvi++  ;
+    } else {
+      int new_flags = SWIG_IsNewObj(res3) ? (SWIG_POINTER_OWN | 0) : 0;
+      if (argvi >= items) EXTEND(sp,1);  ST(argvi) = SWIG_NewPointerObj((void*)(arg3), SWIGTYPE_p_int, new_flags); argvi++  ;
+    }
+    
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
 XS(_wrap_Band_GetRasterColorInterpretation) {
   {
     GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
@@ -7445,6 +7520,190 @@ XS(_wrap_Band_GetScale) {
 }
 
 
+XS(_wrap_Band_GetStatistics) {
+  {
+    GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+    int arg2 ;
+    int arg3 ;
+    double *arg4 = (double *) 0 ;
+    double *arg5 = (double *) 0 ;
+    double *arg6 = (double *) 0 ;
+    double *arg7 = (double *) 0 ;
+    CPLErr result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    int val3 ;
+    int ecode3 = 0 ;
+    void *argp4 = 0 ;
+    int res4 = 0 ;
+    void *argp5 = 0 ;
+    int res5 = 0 ;
+    void *argp6 = 0 ;
+    int res6 = 0 ;
+    void *argp7 = 0 ;
+    int res7 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 7) || (items > 7)) {
+      SWIG_croak("Usage: Band_GetStatistics(self,approx_ok,force,min,max,mean,stddev);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_GetStatistics" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Band_GetStatistics" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+    ecode3 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(2), &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Band_GetStatistics" "', argument " "3"" of type '" "int""'");
+    } 
+    arg3 = static_cast< int >(val3);
+    res4 = SWIG_ConvertPtr(ST(3), &argp4,SWIGTYPE_p_double, 0 |  0 );
+    if (!SWIG_IsOK(res4)) {
+      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "Band_GetStatistics" "', argument " "4"" of type '" "double *""'"); 
+    }
+    arg4 = reinterpret_cast< double * >(argp4);
+    res5 = SWIG_ConvertPtr(ST(4), &argp5,SWIGTYPE_p_double, 0 |  0 );
+    if (!SWIG_IsOK(res5)) {
+      SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "Band_GetStatistics" "', argument " "5"" of type '" "double *""'"); 
+    }
+    arg5 = reinterpret_cast< double * >(argp5);
+    res6 = SWIG_ConvertPtr(ST(5), &argp6,SWIGTYPE_p_double, 0 |  0 );
+    if (!SWIG_IsOK(res6)) {
+      SWIG_exception_fail(SWIG_ArgError(res6), "in method '" "Band_GetStatistics" "', argument " "6"" of type '" "double *""'"); 
+    }
+    arg6 = reinterpret_cast< double * >(argp6);
+    res7 = SWIG_ConvertPtr(ST(6), &argp7,SWIGTYPE_p_double, 0 |  0 );
+    if (!SWIG_IsOK(res7)) {
+      SWIG_exception_fail(SWIG_ArgError(res7), "in method '" "Band_GetStatistics" "', argument " "7"" of type '" "double *""'"); 
+    }
+    arg7 = reinterpret_cast< double * >(argp7);
+    {
+      CPLErrorReset();
+      result = (CPLErr)GDALRasterBandShadow_GetStatistics(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    {
+      /* %typemap(out) CPLErr */
+      ST(argvi) = sv_2mortal(newSViv(result));
+      argvi++;
+    }
+    
+    
+    
+    
+    
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    
+    
+    
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_Band_SetStatistics) {
+  {
+    GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+    double arg2 ;
+    double arg3 ;
+    double arg4 ;
+    double arg5 ;
+    CPLErr result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    double val2 ;
+    int ecode2 = 0 ;
+    double val3 ;
+    int ecode3 = 0 ;
+    double val4 ;
+    int ecode4 = 0 ;
+    double val5 ;
+    int ecode5 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 5) || (items > 5)) {
+      SWIG_croak("Usage: Band_SetStatistics(self,min,max,mean,stddev);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_SetStatistics" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+    ecode2 = SWIG_AsVal_double SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Band_SetStatistics" "', argument " "2"" of type '" "double""'");
+    } 
+    arg2 = static_cast< double >(val2);
+    ecode3 = SWIG_AsVal_double SWIG_PERL_CALL_ARGS_2(ST(2), &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Band_SetStatistics" "', argument " "3"" of type '" "double""'");
+    } 
+    arg3 = static_cast< double >(val3);
+    ecode4 = SWIG_AsVal_double SWIG_PERL_CALL_ARGS_2(ST(3), &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Band_SetStatistics" "', argument " "4"" of type '" "double""'");
+    } 
+    arg4 = static_cast< double >(val4);
+    ecode5 = SWIG_AsVal_double SWIG_PERL_CALL_ARGS_2(ST(4), &val5);
+    if (!SWIG_IsOK(ecode5)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "Band_SetStatistics" "', argument " "5"" of type '" "double""'");
+    } 
+    arg5 = static_cast< double >(val5);
+    {
+      CPLErrorReset();
+      result = (CPLErr)GDALRasterBandShadow_SetStatistics(arg1,arg2,arg3,arg4,arg5);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    {
+      /* %typemap(out) CPLErr */
+      ST(argvi) = sv_2mortal(newSViv(result));
+      argvi++;
+    }
+    
+    
+    
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
 XS(_wrap_Band_GetOverviewCount) {
   {
     GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
@@ -7660,6 +7919,68 @@ XS(_wrap_Band_ComputeRasterMinMax) {
     {
       CPLErrorReset();
       GDALRasterBandShadow_ComputeRasterMinMax(arg1,arg2,arg3);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    
+    {
+      /* %typemap(argout) (double argout[ANY]) */
+      ST(argvi) = CreateArrayFromDoubleArray( arg2, 2 );
+      argvi++;
+    }
+    
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_Band_ComputeBandStats) {
+  {
+    GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
+    double *arg2 ;
+    int arg3 = (int) 1 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    double argout2[2] ;
+    int val3 ;
+    int ecode3 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    {
+      /* %typemap(in,numinputs=0) (double argout2[ANY]) */
+      arg2 = argout2;
+    }
+    if ((items < 1) || (items > 2)) {
+      SWIG_croak("Usage: Band_ComputeBandStats(self,samplestep);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Band_ComputeBandStats" "', argument " "1"" of type '" "GDALRasterBandShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALRasterBandShadow * >(argp1);
+    if (items > 1) {
+      ecode3 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val3);
+      if (!SWIG_IsOK(ecode3)) {
+        SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Band_ComputeBandStats" "', argument " "3"" of type '" "int""'");
+      } 
+      arg3 = static_cast< int >(val3);
+    }
+    {
+      CPLErrorReset();
+      GDALRasterBandShadow_ComputeBandStats(arg1,arg2,arg3);
       CPLErr eclass = CPLGetLastErrorType();
       if ( eclass == CE_Failure || eclass == CE_Fatal ) {
         SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
@@ -9463,12 +9784,12 @@ static swig_type_info _swigt__p_CPLErrorHandler = {"_p_CPLErrorHandler", "CPLErr
 static swig_type_info _swigt__p_CPLXMLNode = {"_p_CPLXMLNode", "CPLXMLNode *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GByte = {"_p_GByte", "GByte *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALColorEntry = {"_p_GDALColorEntry", "GDALColorEntry *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_GDALColorTable = {"_p_GDALColorTable", "GDALColorTable *", 0, 0, (void*)"gdal::ColorTable", 0};
-static swig_type_info _swigt__p_GDALDatasetShadow = {"_p_GDALDatasetShadow", "GDALDatasetShadow *", 0, 0, (void*)"gdal::Dataset", 0};
-static swig_type_info _swigt__p_GDALDriverShadow = {"_p_GDALDriverShadow", "GDALDriverShadow *", 0, 0, (void*)"gdal::Driver", 0};
-static swig_type_info _swigt__p_GDALMajorObjectShadow = {"_p_GDALMajorObjectShadow", "GDALMajorObjectShadow *", 0, 0, (void*)"gdal::MajorObject", 0};
-static swig_type_info _swigt__p_GDALRasterBandShadow = {"_p_GDALRasterBandShadow", "GDALRasterBandShadow *", 0, 0, (void*)"gdal::Band", 0};
-static swig_type_info _swigt__p_GDAL_GCP = {"_p_GDAL_GCP", "GDAL_GCP *", 0, 0, (void*)"gdal::GCP", 0};
+static swig_type_info _swigt__p_GDALColorTable = {"_p_GDALColorTable", "GDALColorTable *", 0, 0, (void*)"Geo::GDAL::ColorTable", 0};
+static swig_type_info _swigt__p_GDALDatasetShadow = {"_p_GDALDatasetShadow", "GDALDatasetShadow *", 0, 0, (void*)"Geo::GDAL::Dataset", 0};
+static swig_type_info _swigt__p_GDALDriverShadow = {"_p_GDALDriverShadow", "GDALDriverShadow *", 0, 0, (void*)"Geo::GDAL::Driver", 0};
+static swig_type_info _swigt__p_GDALMajorObjectShadow = {"_p_GDALMajorObjectShadow", "GDALMajorObjectShadow *", 0, 0, (void*)"Geo::GDAL::MajorObject", 0};
+static swig_type_info _swigt__p_GDALRasterBandShadow = {"_p_GDALRasterBandShadow", "GDALRasterBandShadow *", 0, 0, (void*)"Geo::GDAL::Band", 0};
+static swig_type_info _swigt__p_GDAL_GCP = {"_p_GDAL_GCP", "GDAL_GCP *", 0, 0, (void*)"Geo::GDAL::GCP", 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_double = {"_p_double", "double *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_int = {"_p_int", "int *|GDALPaletteInterp *", 0, 0, (void*)0, 0};
@@ -9540,148 +9861,152 @@ static swig_variable_info swig_variables[] = {
 {0,0,0,0}
 };
 static swig_command_info swig_commands[] = {
-{"gdalc::UseExceptions", _wrap_UseExceptions},
-{"gdalc::DontUseExceptions", _wrap_DontUseExceptions},
-{"gdalc::Debug", _wrap_Debug},
-{"gdalc::Error", _wrap_Error},
-{"gdalc::PushErrorHandler", _wrap_PushErrorHandler},
-{"gdalc::PopErrorHandler", _wrap_PopErrorHandler},
-{"gdalc::ErrorReset", _wrap_ErrorReset},
-{"gdalc::GetLastErrorNo", _wrap_GetLastErrorNo},
-{"gdalc::GetLastErrorType", _wrap_GetLastErrorType},
-{"gdalc::GetLastErrorMsg", _wrap_GetLastErrorMsg},
-{"gdalc::PushFinderLocation", _wrap_PushFinderLocation},
-{"gdalc::PopFinderLocation", _wrap_PopFinderLocation},
-{"gdalc::FinderClean", _wrap_FinderClean},
-{"gdalc::FindFile", _wrap_FindFile},
-{"gdalc::SetConfigOption", _wrap_SetConfigOption},
-{"gdalc::GetConfigOption", _wrap_GetConfigOption},
-{"gdalc::CPLBinaryToHex", _wrap_CPLBinaryToHex},
-{"gdalc::CPLHexToBinary", _wrap_CPLHexToBinary},
-{"gdalc::MajorObject_GetDescription", _wrap_MajorObject_GetDescription},
-{"gdalc::MajorObject_SetDescription", _wrap_MajorObject_SetDescription},
-{"gdalc::MajorObject_GetMetadata", _wrap_MajorObject_GetMetadata},
-{"gdalc::MajorObject_SetMetadata", _wrap_MajorObject_SetMetadata},
-{"gdalc::Driver_ShortName_get", _wrap_Driver_ShortName_get},
-{"gdalc::Driver_LongName_get", _wrap_Driver_LongName_get},
-{"gdalc::Driver_HelpTopic_get", _wrap_Driver_HelpTopic_get},
-{"gdalc::Driver_Create", _wrap_Driver_Create},
-{"gdalc::Driver_CreateCopy", _wrap_Driver_CreateCopy},
-{"gdalc::Driver_Delete", _wrap_Driver_Delete},
-{"gdalc::GCP_GCPX_set", _wrap_GCP_GCPX_set},
-{"gdalc::GCP_GCPX_get", _wrap_GCP_GCPX_get},
-{"gdalc::GCP_GCPY_set", _wrap_GCP_GCPY_set},
-{"gdalc::GCP_GCPY_get", _wrap_GCP_GCPY_get},
-{"gdalc::GCP_GCPZ_set", _wrap_GCP_GCPZ_set},
-{"gdalc::GCP_GCPZ_get", _wrap_GCP_GCPZ_get},
-{"gdalc::GCP_GCPPixel_set", _wrap_GCP_GCPPixel_set},
-{"gdalc::GCP_GCPPixel_get", _wrap_GCP_GCPPixel_get},
-{"gdalc::GCP_GCPLine_set", _wrap_GCP_GCPLine_set},
-{"gdalc::GCP_GCPLine_get", _wrap_GCP_GCPLine_get},
-{"gdalc::GCP_Info_set", _wrap_GCP_Info_set},
-{"gdalc::GCP_Info_get", _wrap_GCP_Info_get},
-{"gdalc::GCP_Id_set", _wrap_GCP_Id_set},
-{"gdalc::GCP_Id_get", _wrap_GCP_Id_get},
-{"gdalc::new_GCP", _wrap_new_GCP},
-{"gdalc::delete_GCP", _wrap_delete_GCP},
-{"gdalc::GDAL_GCP_GCPX_get", _wrap_GDAL_GCP_GCPX_get},
-{"gdalc::GDAL_GCP_GCPX_set", _wrap_GDAL_GCP_GCPX_set},
-{"gdalc::GDAL_GCP_GCPY_get", _wrap_GDAL_GCP_GCPY_get},
-{"gdalc::GDAL_GCP_GCPY_set", _wrap_GDAL_GCP_GCPY_set},
-{"gdalc::GDAL_GCP_GCPZ_get", _wrap_GDAL_GCP_GCPZ_get},
-{"gdalc::GDAL_GCP_GCPZ_set", _wrap_GDAL_GCP_GCPZ_set},
-{"gdalc::GDAL_GCP_GCPPixel_get", _wrap_GDAL_GCP_GCPPixel_get},
-{"gdalc::GDAL_GCP_GCPPixel_set", _wrap_GDAL_GCP_GCPPixel_set},
-{"gdalc::GDAL_GCP_GCPLine_get", _wrap_GDAL_GCP_GCPLine_get},
-{"gdalc::GDAL_GCP_GCPLine_set", _wrap_GDAL_GCP_GCPLine_set},
-{"gdalc::GDAL_GCP_Info_get", _wrap_GDAL_GCP_Info_get},
-{"gdalc::GDAL_GCP_Info_set", _wrap_GDAL_GCP_Info_set},
-{"gdalc::GDAL_GCP_Id_get", _wrap_GDAL_GCP_Id_get},
-{"gdalc::GDAL_GCP_Id_set", _wrap_GDAL_GCP_Id_set},
-{"gdalc::GDAL_GCP_get_GCPX", _wrap_GDAL_GCP_get_GCPX},
-{"gdalc::GDAL_GCP_set_GCPX", _wrap_GDAL_GCP_set_GCPX},
-{"gdalc::GDAL_GCP_get_GCPY", _wrap_GDAL_GCP_get_GCPY},
-{"gdalc::GDAL_GCP_set_GCPY", _wrap_GDAL_GCP_set_GCPY},
-{"gdalc::GDAL_GCP_get_GCPZ", _wrap_GDAL_GCP_get_GCPZ},
-{"gdalc::GDAL_GCP_set_GCPZ", _wrap_GDAL_GCP_set_GCPZ},
-{"gdalc::GDAL_GCP_get_GCPPixel", _wrap_GDAL_GCP_get_GCPPixel},
-{"gdalc::GDAL_GCP_set_GCPPixel", _wrap_GDAL_GCP_set_GCPPixel},
-{"gdalc::GDAL_GCP_get_GCPLine", _wrap_GDAL_GCP_get_GCPLine},
-{"gdalc::GDAL_GCP_set_GCPLine", _wrap_GDAL_GCP_set_GCPLine},
-{"gdalc::GDAL_GCP_get_Info", _wrap_GDAL_GCP_get_Info},
-{"gdalc::GDAL_GCP_set_Info", _wrap_GDAL_GCP_set_Info},
-{"gdalc::GDAL_GCP_get_Id", _wrap_GDAL_GCP_get_Id},
-{"gdalc::GDAL_GCP_set_Id", _wrap_GDAL_GCP_set_Id},
-{"gdalc::GCPsToGeoTransform", _wrap_GCPsToGeoTransform},
-{"gdalc::Dataset_RasterXSize_get", _wrap_Dataset_RasterXSize_get},
-{"gdalc::Dataset_RasterYSize_get", _wrap_Dataset_RasterYSize_get},
-{"gdalc::Dataset_RasterCount_get", _wrap_Dataset_RasterCount_get},
-{"gdalc::delete_Dataset", _wrap_delete_Dataset},
-{"gdalc::Dataset_GetDriver", _wrap_Dataset_GetDriver},
-{"gdalc::Dataset_GetRasterBand", _wrap_Dataset_GetRasterBand},
-{"gdalc::Dataset_GetProjection", _wrap_Dataset_GetProjection},
-{"gdalc::Dataset_GetProjectionRef", _wrap_Dataset_GetProjectionRef},
-{"gdalc::Dataset_SetProjection", _wrap_Dataset_SetProjection},
-{"gdalc::Dataset_GetGeoTransform", _wrap_Dataset_GetGeoTransform},
-{"gdalc::Dataset_SetGeoTransform", _wrap_Dataset_SetGeoTransform},
-{"gdalc::Dataset_BuildOverviews", _wrap_Dataset_BuildOverviews},
-{"gdalc::Dataset_GetGCPCount", _wrap_Dataset_GetGCPCount},
-{"gdalc::Dataset_GetGCPProjection", _wrap_Dataset_GetGCPProjection},
-{"gdalc::Dataset_GetGCPs", _wrap_Dataset_GetGCPs},
-{"gdalc::Dataset_SetGCPs", _wrap_Dataset_SetGCPs},
-{"gdalc::Dataset_FlushCache", _wrap_Dataset_FlushCache},
-{"gdalc::Dataset_AddBand", _wrap_Dataset_AddBand},
-{"gdalc::Dataset_WriteRaster", _wrap_Dataset_WriteRaster},
-{"gdalc::Band_XSize_get", _wrap_Band_XSize_get},
-{"gdalc::Band_YSize_get", _wrap_Band_YSize_get},
-{"gdalc::Band_DataType_get", _wrap_Band_DataType_get},
-{"gdalc::Band_GetRasterColorInterpretation", _wrap_Band_GetRasterColorInterpretation},
-{"gdalc::Band_SetRasterColorInterpretation", _wrap_Band_SetRasterColorInterpretation},
-{"gdalc::Band_GetNoDataValue", _wrap_Band_GetNoDataValue},
-{"gdalc::Band_SetNoDataValue", _wrap_Band_SetNoDataValue},
-{"gdalc::Band_GetMinimum", _wrap_Band_GetMinimum},
-{"gdalc::Band_GetMaximum", _wrap_Band_GetMaximum},
-{"gdalc::Band_GetOffset", _wrap_Band_GetOffset},
-{"gdalc::Band_GetScale", _wrap_Band_GetScale},
-{"gdalc::Band_GetOverviewCount", _wrap_Band_GetOverviewCount},
-{"gdalc::Band_GetOverview", _wrap_Band_GetOverview},
-{"gdalc::Band_Checksum", _wrap_Band_Checksum},
-{"gdalc::Band_ComputeRasterMinMax", _wrap_Band_ComputeRasterMinMax},
-{"gdalc::Band_Fill", _wrap_Band_Fill},
-{"gdalc::Band_ReadRaster", _wrap_Band_ReadRaster},
-{"gdalc::Band_WriteRaster", _wrap_Band_WriteRaster},
-{"gdalc::Band_FlushCache", _wrap_Band_FlushCache},
-{"gdalc::Band_GetRasterColorTable", _wrap_Band_GetRasterColorTable},
-{"gdalc::Band_SetRasterColorTable", _wrap_Band_SetRasterColorTable},
-{"gdalc::new_ColorTable", _wrap_new_ColorTable},
-{"gdalc::delete_ColorTable", _wrap_delete_ColorTable},
-{"gdalc::ColorTable_Clone", _wrap_ColorTable_Clone},
-{"gdalc::ColorTable_GetPaletteInterpretation", _wrap_ColorTable_GetPaletteInterpretation},
-{"gdalc::ColorTable_GetCount", _wrap_ColorTable_GetCount},
-{"gdalc::ColorTable_GetColorEntry", _wrap_ColorTable_GetColorEntry},
-{"gdalc::ColorTable_GetColorEntryAsRGB", _wrap_ColorTable_GetColorEntryAsRGB},
-{"gdalc::ColorTable_SetColorEntry", _wrap_ColorTable_SetColorEntry},
-{"gdalc::AllRegister", _wrap_AllRegister},
-{"gdalc::GetCacheMax", _wrap_GetCacheMax},
-{"gdalc::SetCacheMax", _wrap_SetCacheMax},
-{"gdalc::GetCacheUsed", _wrap_GetCacheUsed},
-{"gdalc::GetDataTypeSize", _wrap_GetDataTypeSize},
-{"gdalc::DataTypeIsComplex", _wrap_DataTypeIsComplex},
-{"gdalc::GetDataTypeName", _wrap_GetDataTypeName},
-{"gdalc::GetDataTypeByName", _wrap_GetDataTypeByName},
-{"gdalc::GetColorInterpretationName", _wrap_GetColorInterpretationName},
-{"gdalc::GetPaletteInterpretationName", _wrap_GetPaletteInterpretationName},
-{"gdalc::DecToDMS", _wrap_DecToDMS},
-{"gdalc::PackedDMSToDec", _wrap_PackedDMSToDec},
-{"gdalc::DecToPackedDMS", _wrap_DecToPackedDMS},
-{"gdalc::ParseXMLString", _wrap_ParseXMLString},
-{"gdalc::SerializeXMLTree", _wrap_SerializeXMLTree},
-{"gdalc::GetDriverCount", _wrap_GetDriverCount},
-{"gdalc::GetDriverByName", _wrap_GetDriverByName},
-{"gdalc::GetDriver", _wrap_GetDriver},
-{"gdalc::Open", _wrap_Open},
-{"gdalc::OpenShared", _wrap_OpenShared},
-{"gdalc::AutoCreateWarpedVRT", _wrap_AutoCreateWarpedVRT},
+{"Geo::GDALc::UseExceptions", _wrap_UseExceptions},
+{"Geo::GDALc::DontUseExceptions", _wrap_DontUseExceptions},
+{"Geo::GDALc::Debug", _wrap_Debug},
+{"Geo::GDALc::Error", _wrap_Error},
+{"Geo::GDALc::PushErrorHandler", _wrap_PushErrorHandler},
+{"Geo::GDALc::PopErrorHandler", _wrap_PopErrorHandler},
+{"Geo::GDALc::ErrorReset", _wrap_ErrorReset},
+{"Geo::GDALc::GetLastErrorNo", _wrap_GetLastErrorNo},
+{"Geo::GDALc::GetLastErrorType", _wrap_GetLastErrorType},
+{"Geo::GDALc::GetLastErrorMsg", _wrap_GetLastErrorMsg},
+{"Geo::GDALc::PushFinderLocation", _wrap_PushFinderLocation},
+{"Geo::GDALc::PopFinderLocation", _wrap_PopFinderLocation},
+{"Geo::GDALc::FinderClean", _wrap_FinderClean},
+{"Geo::GDALc::FindFile", _wrap_FindFile},
+{"Geo::GDALc::SetConfigOption", _wrap_SetConfigOption},
+{"Geo::GDALc::GetConfigOption", _wrap_GetConfigOption},
+{"Geo::GDALc::CPLBinaryToHex", _wrap_CPLBinaryToHex},
+{"Geo::GDALc::CPLHexToBinary", _wrap_CPLHexToBinary},
+{"Geo::GDALc::MajorObject_GetDescription", _wrap_MajorObject_GetDescription},
+{"Geo::GDALc::MajorObject_SetDescription", _wrap_MajorObject_SetDescription},
+{"Geo::GDALc::MajorObject_GetMetadata", _wrap_MajorObject_GetMetadata},
+{"Geo::GDALc::MajorObject_SetMetadata", _wrap_MajorObject_SetMetadata},
+{"Geo::GDALc::Driver_ShortName_get", _wrap_Driver_ShortName_get},
+{"Geo::GDALc::Driver_LongName_get", _wrap_Driver_LongName_get},
+{"Geo::GDALc::Driver_HelpTopic_get", _wrap_Driver_HelpTopic_get},
+{"Geo::GDALc::Driver_Create", _wrap_Driver_Create},
+{"Geo::GDALc::Driver_CreateCopy", _wrap_Driver_CreateCopy},
+{"Geo::GDALc::Driver_Delete", _wrap_Driver_Delete},
+{"Geo::GDALc::GCP_GCPX_set", _wrap_GCP_GCPX_set},
+{"Geo::GDALc::GCP_GCPX_get", _wrap_GCP_GCPX_get},
+{"Geo::GDALc::GCP_GCPY_set", _wrap_GCP_GCPY_set},
+{"Geo::GDALc::GCP_GCPY_get", _wrap_GCP_GCPY_get},
+{"Geo::GDALc::GCP_GCPZ_set", _wrap_GCP_GCPZ_set},
+{"Geo::GDALc::GCP_GCPZ_get", _wrap_GCP_GCPZ_get},
+{"Geo::GDALc::GCP_GCPPixel_set", _wrap_GCP_GCPPixel_set},
+{"Geo::GDALc::GCP_GCPPixel_get", _wrap_GCP_GCPPixel_get},
+{"Geo::GDALc::GCP_GCPLine_set", _wrap_GCP_GCPLine_set},
+{"Geo::GDALc::GCP_GCPLine_get", _wrap_GCP_GCPLine_get},
+{"Geo::GDALc::GCP_Info_set", _wrap_GCP_Info_set},
+{"Geo::GDALc::GCP_Info_get", _wrap_GCP_Info_get},
+{"Geo::GDALc::GCP_Id_set", _wrap_GCP_Id_set},
+{"Geo::GDALc::GCP_Id_get", _wrap_GCP_Id_get},
+{"Geo::GDALc::new_GCP", _wrap_new_GCP},
+{"Geo::GDALc::delete_GCP", _wrap_delete_GCP},
+{"Geo::GDALc::GDAL_GCP_GCPX_get", _wrap_GDAL_GCP_GCPX_get},
+{"Geo::GDALc::GDAL_GCP_GCPX_set", _wrap_GDAL_GCP_GCPX_set},
+{"Geo::GDALc::GDAL_GCP_GCPY_get", _wrap_GDAL_GCP_GCPY_get},
+{"Geo::GDALc::GDAL_GCP_GCPY_set", _wrap_GDAL_GCP_GCPY_set},
+{"Geo::GDALc::GDAL_GCP_GCPZ_get", _wrap_GDAL_GCP_GCPZ_get},
+{"Geo::GDALc::GDAL_GCP_GCPZ_set", _wrap_GDAL_GCP_GCPZ_set},
+{"Geo::GDALc::GDAL_GCP_GCPPixel_get", _wrap_GDAL_GCP_GCPPixel_get},
+{"Geo::GDALc::GDAL_GCP_GCPPixel_set", _wrap_GDAL_GCP_GCPPixel_set},
+{"Geo::GDALc::GDAL_GCP_GCPLine_get", _wrap_GDAL_GCP_GCPLine_get},
+{"Geo::GDALc::GDAL_GCP_GCPLine_set", _wrap_GDAL_GCP_GCPLine_set},
+{"Geo::GDALc::GDAL_GCP_Info_get", _wrap_GDAL_GCP_Info_get},
+{"Geo::GDALc::GDAL_GCP_Info_set", _wrap_GDAL_GCP_Info_set},
+{"Geo::GDALc::GDAL_GCP_Id_get", _wrap_GDAL_GCP_Id_get},
+{"Geo::GDALc::GDAL_GCP_Id_set", _wrap_GDAL_GCP_Id_set},
+{"Geo::GDALc::GDAL_GCP_get_GCPX", _wrap_GDAL_GCP_get_GCPX},
+{"Geo::GDALc::GDAL_GCP_set_GCPX", _wrap_GDAL_GCP_set_GCPX},
+{"Geo::GDALc::GDAL_GCP_get_GCPY", _wrap_GDAL_GCP_get_GCPY},
+{"Geo::GDALc::GDAL_GCP_set_GCPY", _wrap_GDAL_GCP_set_GCPY},
+{"Geo::GDALc::GDAL_GCP_get_GCPZ", _wrap_GDAL_GCP_get_GCPZ},
+{"Geo::GDALc::GDAL_GCP_set_GCPZ", _wrap_GDAL_GCP_set_GCPZ},
+{"Geo::GDALc::GDAL_GCP_get_GCPPixel", _wrap_GDAL_GCP_get_GCPPixel},
+{"Geo::GDALc::GDAL_GCP_set_GCPPixel", _wrap_GDAL_GCP_set_GCPPixel},
+{"Geo::GDALc::GDAL_GCP_get_GCPLine", _wrap_GDAL_GCP_get_GCPLine},
+{"Geo::GDALc::GDAL_GCP_set_GCPLine", _wrap_GDAL_GCP_set_GCPLine},
+{"Geo::GDALc::GDAL_GCP_get_Info", _wrap_GDAL_GCP_get_Info},
+{"Geo::GDALc::GDAL_GCP_set_Info", _wrap_GDAL_GCP_set_Info},
+{"Geo::GDALc::GDAL_GCP_get_Id", _wrap_GDAL_GCP_get_Id},
+{"Geo::GDALc::GDAL_GCP_set_Id", _wrap_GDAL_GCP_set_Id},
+{"Geo::GDALc::GCPsToGeoTransform", _wrap_GCPsToGeoTransform},
+{"Geo::GDALc::Dataset_RasterXSize_get", _wrap_Dataset_RasterXSize_get},
+{"Geo::GDALc::Dataset_RasterYSize_get", _wrap_Dataset_RasterYSize_get},
+{"Geo::GDALc::Dataset_RasterCount_get", _wrap_Dataset_RasterCount_get},
+{"Geo::GDALc::delete_Dataset", _wrap_delete_Dataset},
+{"Geo::GDALc::Dataset_GetDriver", _wrap_Dataset_GetDriver},
+{"Geo::GDALc::Dataset_GetRasterBand", _wrap_Dataset_GetRasterBand},
+{"Geo::GDALc::Dataset_GetProjection", _wrap_Dataset_GetProjection},
+{"Geo::GDALc::Dataset_GetProjectionRef", _wrap_Dataset_GetProjectionRef},
+{"Geo::GDALc::Dataset_SetProjection", _wrap_Dataset_SetProjection},
+{"Geo::GDALc::Dataset_GetGeoTransform", _wrap_Dataset_GetGeoTransform},
+{"Geo::GDALc::Dataset_SetGeoTransform", _wrap_Dataset_SetGeoTransform},
+{"Geo::GDALc::Dataset_BuildOverviews", _wrap_Dataset_BuildOverviews},
+{"Geo::GDALc::Dataset_GetGCPCount", _wrap_Dataset_GetGCPCount},
+{"Geo::GDALc::Dataset_GetGCPProjection", _wrap_Dataset_GetGCPProjection},
+{"Geo::GDALc::Dataset_GetGCPs", _wrap_Dataset_GetGCPs},
+{"Geo::GDALc::Dataset_SetGCPs", _wrap_Dataset_SetGCPs},
+{"Geo::GDALc::Dataset_FlushCache", _wrap_Dataset_FlushCache},
+{"Geo::GDALc::Dataset_AddBand", _wrap_Dataset_AddBand},
+{"Geo::GDALc::Dataset_WriteRaster", _wrap_Dataset_WriteRaster},
+{"Geo::GDALc::Band_XSize_get", _wrap_Band_XSize_get},
+{"Geo::GDALc::Band_YSize_get", _wrap_Band_YSize_get},
+{"Geo::GDALc::Band_DataType_get", _wrap_Band_DataType_get},
+{"Geo::GDALc::Band_GetBlockSize", _wrap_Band_GetBlockSize},
+{"Geo::GDALc::Band_GetRasterColorInterpretation", _wrap_Band_GetRasterColorInterpretation},
+{"Geo::GDALc::Band_SetRasterColorInterpretation", _wrap_Band_SetRasterColorInterpretation},
+{"Geo::GDALc::Band_GetNoDataValue", _wrap_Band_GetNoDataValue},
+{"Geo::GDALc::Band_SetNoDataValue", _wrap_Band_SetNoDataValue},
+{"Geo::GDALc::Band_GetMinimum", _wrap_Band_GetMinimum},
+{"Geo::GDALc::Band_GetMaximum", _wrap_Band_GetMaximum},
+{"Geo::GDALc::Band_GetOffset", _wrap_Band_GetOffset},
+{"Geo::GDALc::Band_GetScale", _wrap_Band_GetScale},
+{"Geo::GDALc::Band_GetStatistics", _wrap_Band_GetStatistics},
+{"Geo::GDALc::Band_SetStatistics", _wrap_Band_SetStatistics},
+{"Geo::GDALc::Band_GetOverviewCount", _wrap_Band_GetOverviewCount},
+{"Geo::GDALc::Band_GetOverview", _wrap_Band_GetOverview},
+{"Geo::GDALc::Band_Checksum", _wrap_Band_Checksum},
+{"Geo::GDALc::Band_ComputeRasterMinMax", _wrap_Band_ComputeRasterMinMax},
+{"Geo::GDALc::Band_ComputeBandStats", _wrap_Band_ComputeBandStats},
+{"Geo::GDALc::Band_Fill", _wrap_Band_Fill},
+{"Geo::GDALc::Band_ReadRaster", _wrap_Band_ReadRaster},
+{"Geo::GDALc::Band_WriteRaster", _wrap_Band_WriteRaster},
+{"Geo::GDALc::Band_FlushCache", _wrap_Band_FlushCache},
+{"Geo::GDALc::Band_GetRasterColorTable", _wrap_Band_GetRasterColorTable},
+{"Geo::GDALc::Band_SetRasterColorTable", _wrap_Band_SetRasterColorTable},
+{"Geo::GDALc::new_ColorTable", _wrap_new_ColorTable},
+{"Geo::GDALc::delete_ColorTable", _wrap_delete_ColorTable},
+{"Geo::GDALc::ColorTable_Clone", _wrap_ColorTable_Clone},
+{"Geo::GDALc::ColorTable_GetPaletteInterpretation", _wrap_ColorTable_GetPaletteInterpretation},
+{"Geo::GDALc::ColorTable_GetCount", _wrap_ColorTable_GetCount},
+{"Geo::GDALc::ColorTable_GetColorEntry", _wrap_ColorTable_GetColorEntry},
+{"Geo::GDALc::ColorTable_GetColorEntryAsRGB", _wrap_ColorTable_GetColorEntryAsRGB},
+{"Geo::GDALc::ColorTable_SetColorEntry", _wrap_ColorTable_SetColorEntry},
+{"Geo::GDALc::AllRegister", _wrap_AllRegister},
+{"Geo::GDALc::GetCacheMax", _wrap_GetCacheMax},
+{"Geo::GDALc::SetCacheMax", _wrap_SetCacheMax},
+{"Geo::GDALc::GetCacheUsed", _wrap_GetCacheUsed},
+{"Geo::GDALc::GetDataTypeSize", _wrap_GetDataTypeSize},
+{"Geo::GDALc::DataTypeIsComplex", _wrap_DataTypeIsComplex},
+{"Geo::GDALc::GetDataTypeName", _wrap_GetDataTypeName},
+{"Geo::GDALc::GetDataTypeByName", _wrap_GetDataTypeByName},
+{"Geo::GDALc::GetColorInterpretationName", _wrap_GetColorInterpretationName},
+{"Geo::GDALc::GetPaletteInterpretationName", _wrap_GetPaletteInterpretationName},
+{"Geo::GDALc::DecToDMS", _wrap_DecToDMS},
+{"Geo::GDALc::PackedDMSToDec", _wrap_PackedDMSToDec},
+{"Geo::GDALc::DecToPackedDMS", _wrap_DecToPackedDMS},
+{"Geo::GDALc::ParseXMLString", _wrap_ParseXMLString},
+{"Geo::GDALc::SerializeXMLTree", _wrap_SerializeXMLTree},
+{"Geo::GDALc::GetDriverCount", _wrap_GetDriverCount},
+{"Geo::GDALc::GetDriverByName", _wrap_GetDriverByName},
+{"Geo::GDALc::GetDriver", _wrap_GetDriver},
+{"Geo::GDALc::Open", _wrap_Open},
+{"Geo::GDALc::OpenShared", _wrap_OpenShared},
+{"Geo::GDALc::AutoCreateWarpedVRT", _wrap_AutoCreateWarpedVRT},
 {0,0}
 };
 /* -----------------------------------------------------------------------------
@@ -9957,12 +10282,12 @@ XS(SWIG_init) {
     GDALAllRegister();
   }
   
-  SWIG_TypeClientData(SWIGTYPE_p_GDALMajorObjectShadow, (void*) "gdal::MajorObject");
-  SWIG_TypeClientData(SWIGTYPE_p_GDALDriverShadow, (void*) "gdal::Driver");
-  SWIG_TypeClientData(SWIGTYPE_p_GDAL_GCP, (void*) "gdal::GCP");
-  SWIG_TypeClientData(SWIGTYPE_p_GDALDatasetShadow, (void*) "gdal::Dataset");
-  SWIG_TypeClientData(SWIGTYPE_p_GDALRasterBandShadow, (void*) "gdal::Band");
-  SWIG_TypeClientData(SWIGTYPE_p_GDALColorTable, (void*) "gdal::ColorTable");
+  SWIG_TypeClientData(SWIGTYPE_p_GDALMajorObjectShadow, (void*) "Geo::GDAL::MajorObject");
+  SWIG_TypeClientData(SWIGTYPE_p_GDALDriverShadow, (void*) "Geo::GDAL::Driver");
+  SWIG_TypeClientData(SWIGTYPE_p_GDAL_GCP, (void*) "Geo::GDAL::GCP");
+  SWIG_TypeClientData(SWIGTYPE_p_GDALDatasetShadow, (void*) "Geo::GDAL::Dataset");
+  SWIG_TypeClientData(SWIGTYPE_p_GDALRasterBandShadow, (void*) "Geo::GDAL::Band");
+  SWIG_TypeClientData(SWIGTYPE_p_GDALColorTable, (void*) "Geo::GDAL::ColorTable");
   ST(0) = &PL_sv_yes;
   XSRETURN(1);
 }

@@ -1403,10 +1403,10 @@ static swig_module_info swig_module = {swig_types, 8, 0, 0, 0, 0};
 
 /* -------- TYPES TABLE (END) -------- */
 
-#define SWIG_init    boot_osr
+#define SWIG_init    boot_Geo__OSR
 
-#define SWIG_name   "osrc::boot_osr"
-#define SWIG_prefix "osrc::"
+#define SWIG_name   "Geo::OSRc::boot_Geo__OSR"
+#define SWIG_prefix "Geo::OSRc::"
 
 #define SWIGVERSION 0x010329 
 
@@ -1484,8 +1484,9 @@ typedef void OSRCoordinateTransformationShadow;
 
 OGRErr GetWellKnownGeogCSAsWKT( const char *name, char **argout ) {
   OGRSpatialReferenceH srs = OSRNewSpatialReference("");
-  OSRSetWellKnownGeogCS( srs, name );
-  OGRErr rcode = OSRExportToWkt ( srs, argout );  
+  OGRErr rcode = OSRSetWellKnownGeogCS( srs, name );
+  if( rcode == OGRERR_NONE )
+      rcode = OSRExportToWkt ( srs, argout );  
   OSRDestroySpatialReference( srs );
   return rcode;
 }
@@ -1567,6 +1568,16 @@ OGRErrMessages( int rc ) {
   }
 }
 
+
+OGRErr GetUserInputAsWKT( const char *name, char **argout ) {
+  OGRSpatialReferenceH srs = OSRNewSpatialReference("");
+  OGRErr rcode = OSRSetFromUserInput( srs, name );
+  if( rcode == OGRERR_NONE )
+      rcode = OSRExportToWkt ( srs, argout );  
+  OSRDestroySpatialReference( srs );
+  return rcode;
+}
+
 SWIGINTERN OSRSpatialReferenceShadow *new_OSRSpatialReferenceShadow(char const *wkt=""){
     OSRSpatialReferenceShadow *sr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(wkt);
     if (sr) {
@@ -1611,6 +1622,9 @@ SWIGINTERN int OSRSpatialReferenceShadow_IsGeographic(OSRSpatialReferenceShadow 
   }
 SWIGINTERN int OSRSpatialReferenceShadow_IsProjected(OSRSpatialReferenceShadow *self){
     return OSRIsProjected(self);
+  }
+SWIGINTERN int OSRSpatialReferenceShadow_IsLocal(OSRSpatialReferenceShadow *self){
+    return OSRIsLocal(self);
   }
 
 #include <limits.h>
@@ -1948,8 +1962,8 @@ SWIGINTERN void OSRCoordinateTransformationShadow_TransformPoint__SWIG_1(OSRCoor
     OCTTransform( self, 1, &argout[0], &argout[1], &argout[2] );
   }
 #ifdef PERL_OBJECT
-#define MAGIC_CLASS _wrap_osr_var::
-class _wrap_osr_var : public CPerlObj {
+#define MAGIC_CLASS _wrap_Geo::OSR_var::
+class _wrap_Geo::OSR_var : public CPerlObj {
 public:
 #else
 #define MAGIC_CLASS
@@ -1993,6 +2007,64 @@ XS(_wrap_GetWellKnownGeogCSAsWKT) {
     }
     arg1 = buf1;
     result = (OGRErr)GetWellKnownGeogCSAsWKT((char const *)arg1,arg2);
+    {
+      /* %typemap(out) OGRErr */
+      if ( result != 0 ) {
+        if (CPLGetLastErrorMsg()) croak( CPLGetLastErrorMsg() ); /* this is usually better */
+        croak( OGRErrMessages(result) );
+      }
+    }
+    {
+      /* %typemap(argout) (char **argout) */
+      ST(argvi) = sv_newmortal();
+      if ( arg2 )
+      sv_setpv(ST(argvi), *arg2);
+      argvi++;
+    }
+    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+    {
+      /* %typemap(freearg) (char **argout) */
+      if ( *arg2 )
+      CPLFree( *arg2 );
+    }
+    XSRETURN(argvi);
+  fail:
+    if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
+    {
+      /* %typemap(freearg) (char **argout) */
+      if ( *arg2 )
+      CPLFree( *arg2 );
+    }
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_GetUserInputAsWKT) {
+  {
+    char *arg1 = (char *) 0 ;
+    char **arg2 = (char **) 0 ;
+    OGRErr result;
+    int res1 ;
+    char *buf1 = 0 ;
+    int alloc1 = 0 ;
+    char *argout2 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    {
+      /* %typemap(in,numinputs=0) (char **argout2) */
+      arg2 = &argout2;
+    }
+    if ((items < 1) || (items > 1)) {
+      SWIG_croak("Usage: GetUserInputAsWKT(name);");
+    }
+    res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GetUserInputAsWKT" "', argument " "1"" of type '" "char const *""'");
+    }
+    arg1 = buf1;
+    result = (OGRErr)GetUserInputAsWKT((char const *)arg1,arg2);
     {
       /* %typemap(out) OGRErr */
       if ( result != 0 ) {
@@ -2362,6 +2434,34 @@ XS(_wrap_SpatialReference_IsProjected) {
     }
     arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
     result = (int)OSRSpatialReferenceShadow_IsProjected(arg1);
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
+    
+    XSRETURN(argvi);
+  fail:
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_SpatialReference_IsLocal) {
+  {
+    OSRSpatialReferenceShadow *arg1 = (OSRSpatialReferenceShadow *) 0 ;
+    int result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 1) || (items > 1)) {
+      SWIG_croak("Usage: SpatialReference_IsLocal(self);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_OSRSpatialReferenceShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpatialReference_IsLocal" "', argument " "1"" of type '" "OSRSpatialReferenceShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< OSRSpatialReferenceShadow * >(argp1);
+    result = (int)OSRSpatialReferenceShadow_IsLocal(arg1);
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
     
     XSRETURN(argvi);
@@ -5699,8 +5799,8 @@ XS(_wrap_CoordinateTransformation_TransformPoint) {
 
 /* -------- TYPE CONVERSION AND EQUIVALENCE RULES (BEGIN) -------- */
 
-static swig_type_info _swigt__p_OSRCoordinateTransformationShadow = {"_p_OSRCoordinateTransformationShadow", "OSRCoordinateTransformationShadow *", 0, 0, (void*)"osr::CoordinateTransformation", 0};
-static swig_type_info _swigt__p_OSRSpatialReferenceShadow = {"_p_OSRSpatialReferenceShadow", "OSRSpatialReferenceShadow *", 0, 0, (void*)"osr::SpatialReference", 0};
+static swig_type_info _swigt__p_OSRCoordinateTransformationShadow = {"_p_OSRCoordinateTransformationShadow", "OSRCoordinateTransformationShadow *", 0, 0, (void*)"Geo::OSR::CoordinateTransformation", 0};
+static swig_type_info _swigt__p_OSRSpatialReferenceShadow = {"_p_OSRSpatialReferenceShadow", "OSRSpatialReferenceShadow *", 0, 0, (void*)"Geo::OSR::SpatialReference", 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_double = {"_p_double", "double *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_int = {"_p_int", "int *|OGRErr *", 0, 0, (void*)0, 0};
@@ -5752,73 +5852,75 @@ static swig_variable_info swig_variables[] = {
 {0,0,0,0}
 };
 static swig_command_info swig_commands[] = {
-{"osrc::GetWellKnownGeogCSAsWKT", _wrap_GetWellKnownGeogCSAsWKT},
-{"osrc::GetProjectionMethods", _wrap_GetProjectionMethods},
-{"osrc::GetProjectionMethodParameterList", _wrap_GetProjectionMethodParameterList},
-{"osrc::GetProjectionMethodParamInfo", _wrap_GetProjectionMethodParamInfo},
-{"osrc::new_SpatialReference", _wrap_new_SpatialReference},
-{"osrc::delete_SpatialReference", _wrap_delete_SpatialReference},
-{"osrc::SpatialReference___str__", _wrap_SpatialReference___str__},
-{"osrc::SpatialReference_IsSame", _wrap_SpatialReference_IsSame},
-{"osrc::SpatialReference_IsSameGeogCS", _wrap_SpatialReference_IsSameGeogCS},
-{"osrc::SpatialReference_IsGeographic", _wrap_SpatialReference_IsGeographic},
-{"osrc::SpatialReference_IsProjected", _wrap_SpatialReference_IsProjected},
-{"osrc::SpatialReference_GetAttrValue", _wrap_SpatialReference_GetAttrValue},
-{"osrc::SpatialReference_SetAttrValue", _wrap_SpatialReference_SetAttrValue},
-{"osrc::SpatialReference_SetAngularUnits", _wrap_SpatialReference_SetAngularUnits},
-{"osrc::SpatialReference_GetAngularUnits", _wrap_SpatialReference_GetAngularUnits},
-{"osrc::SpatialReference_SetLinearUnits", _wrap_SpatialReference_SetLinearUnits},
-{"osrc::SpatialReference_GetLinearUnits", _wrap_SpatialReference_GetLinearUnits},
-{"osrc::SpatialReference_GetLinearUnitsName", _wrap_SpatialReference_GetLinearUnitsName},
-{"osrc::SpatialReference_GetAuthorityCode", _wrap_SpatialReference_GetAuthorityCode},
-{"osrc::SpatialReference_GetAuthorityName", _wrap_SpatialReference_GetAuthorityName},
-{"osrc::SpatialReference_SetUTM", _wrap_SpatialReference_SetUTM},
-{"osrc::SpatialReference_SetStatePlane", _wrap_SpatialReference_SetStatePlane},
-{"osrc::SpatialReference_AutoIdentifyEPSG", _wrap_SpatialReference_AutoIdentifyEPSG},
-{"osrc::SpatialReference_SetProjection", _wrap_SpatialReference_SetProjection},
-{"osrc::SpatialReference_SetProjParm", _wrap_SpatialReference_SetProjParm},
-{"osrc::SpatialReference_GetProjParm", _wrap_SpatialReference_GetProjParm},
-{"osrc::SpatialReference_SetNormProjParm", _wrap_SpatialReference_SetNormProjParm},
-{"osrc::SpatialReference_GetNormProjParm", _wrap_SpatialReference_GetNormProjParm},
-{"osrc::SpatialReference_SetACEA", _wrap_SpatialReference_SetACEA},
-{"osrc::SpatialReference_SetAE", _wrap_SpatialReference_SetAE},
-{"osrc::SpatialReference_SetCS", _wrap_SpatialReference_SetCS},
-{"osrc::SpatialReference_SetBonne", _wrap_SpatialReference_SetBonne},
-{"osrc::SpatialReference_SetEC", _wrap_SpatialReference_SetEC},
-{"osrc::SpatialReference_SetEckertIV", _wrap_SpatialReference_SetEckertIV},
-{"osrc::SpatialReference_SetEckertVI", _wrap_SpatialReference_SetEckertVI},
-{"osrc::SpatialReference_SetEquirectangular", _wrap_SpatialReference_SetEquirectangular},
-{"osrc::SpatialReference_SetGS", _wrap_SpatialReference_SetGS},
-{"osrc::SpatialReference_SetWellKnownGeogCS", _wrap_SpatialReference_SetWellKnownGeogCS},
-{"osrc::SpatialReference_SetFromUserInput", _wrap_SpatialReference_SetFromUserInput},
-{"osrc::SpatialReference_CopyGeogCSFrom", _wrap_SpatialReference_CopyGeogCSFrom},
-{"osrc::SpatialReference_SetTOWGS84", _wrap_SpatialReference_SetTOWGS84},
-{"osrc::SpatialReference_GetTOWGS84", _wrap_SpatialReference_GetTOWGS84},
-{"osrc::SpatialReference_SetGeogCS", _wrap_SpatialReference_SetGeogCS},
-{"osrc::SpatialReference_SetProjCS", _wrap_SpatialReference_SetProjCS},
-{"osrc::SpatialReference_ImportFromWkt", _wrap_SpatialReference_ImportFromWkt},
-{"osrc::SpatialReference_ImportFromProj4", _wrap_SpatialReference_ImportFromProj4},
-{"osrc::SpatialReference_ImportFromESRI", _wrap_SpatialReference_ImportFromESRI},
-{"osrc::SpatialReference_ImportFromEPSG", _wrap_SpatialReference_ImportFromEPSG},
-{"osrc::SpatialReference_ImportFromPCI", _wrap_SpatialReference_ImportFromPCI},
-{"osrc::SpatialReference_ImportFromUSGS", _wrap_SpatialReference_ImportFromUSGS},
-{"osrc::SpatialReference_ImportFromXML", _wrap_SpatialReference_ImportFromXML},
-{"osrc::SpatialReference_ExportToWkt", _wrap_SpatialReference_ExportToWkt},
-{"osrc::SpatialReference_ExportToPrettyWkt", _wrap_SpatialReference_ExportToPrettyWkt},
-{"osrc::SpatialReference_ExportToProj4", _wrap_SpatialReference_ExportToProj4},
-{"osrc::SpatialReference_ExportToPCI", _wrap_SpatialReference_ExportToPCI},
-{"osrc::SpatialReference_ExportToUSGS", _wrap_SpatialReference_ExportToUSGS},
-{"osrc::SpatialReference_ExportToXML", _wrap_SpatialReference_ExportToXML},
-{"osrc::SpatialReference_CloneGeogCS", _wrap_SpatialReference_CloneGeogCS},
-{"osrc::SpatialReference_Validate", _wrap_SpatialReference_Validate},
-{"osrc::SpatialReference_StripCTParms", _wrap_SpatialReference_StripCTParms},
-{"osrc::SpatialReference_FixupOrdering", _wrap_SpatialReference_FixupOrdering},
-{"osrc::SpatialReference_Fixup", _wrap_SpatialReference_Fixup},
-{"osrc::SpatialReference_MorphToESRI", _wrap_SpatialReference_MorphToESRI},
-{"osrc::SpatialReference_MorphFromESRI", _wrap_SpatialReference_MorphFromESRI},
-{"osrc::new_CoordinateTransformation", _wrap_new_CoordinateTransformation},
-{"osrc::delete_CoordinateTransformation", _wrap_delete_CoordinateTransformation},
-{"osrc::CoordinateTransformation_TransformPoint", _wrap_CoordinateTransformation_TransformPoint},
+{"Geo::OSRc::GetWellKnownGeogCSAsWKT", _wrap_GetWellKnownGeogCSAsWKT},
+{"Geo::OSRc::GetUserInputAsWKT", _wrap_GetUserInputAsWKT},
+{"Geo::OSRc::GetProjectionMethods", _wrap_GetProjectionMethods},
+{"Geo::OSRc::GetProjectionMethodParameterList", _wrap_GetProjectionMethodParameterList},
+{"Geo::OSRc::GetProjectionMethodParamInfo", _wrap_GetProjectionMethodParamInfo},
+{"Geo::OSRc::new_SpatialReference", _wrap_new_SpatialReference},
+{"Geo::OSRc::delete_SpatialReference", _wrap_delete_SpatialReference},
+{"Geo::OSRc::SpatialReference___str__", _wrap_SpatialReference___str__},
+{"Geo::OSRc::SpatialReference_IsSame", _wrap_SpatialReference_IsSame},
+{"Geo::OSRc::SpatialReference_IsSameGeogCS", _wrap_SpatialReference_IsSameGeogCS},
+{"Geo::OSRc::SpatialReference_IsGeographic", _wrap_SpatialReference_IsGeographic},
+{"Geo::OSRc::SpatialReference_IsProjected", _wrap_SpatialReference_IsProjected},
+{"Geo::OSRc::SpatialReference_IsLocal", _wrap_SpatialReference_IsLocal},
+{"Geo::OSRc::SpatialReference_GetAttrValue", _wrap_SpatialReference_GetAttrValue},
+{"Geo::OSRc::SpatialReference_SetAttrValue", _wrap_SpatialReference_SetAttrValue},
+{"Geo::OSRc::SpatialReference_SetAngularUnits", _wrap_SpatialReference_SetAngularUnits},
+{"Geo::OSRc::SpatialReference_GetAngularUnits", _wrap_SpatialReference_GetAngularUnits},
+{"Geo::OSRc::SpatialReference_SetLinearUnits", _wrap_SpatialReference_SetLinearUnits},
+{"Geo::OSRc::SpatialReference_GetLinearUnits", _wrap_SpatialReference_GetLinearUnits},
+{"Geo::OSRc::SpatialReference_GetLinearUnitsName", _wrap_SpatialReference_GetLinearUnitsName},
+{"Geo::OSRc::SpatialReference_GetAuthorityCode", _wrap_SpatialReference_GetAuthorityCode},
+{"Geo::OSRc::SpatialReference_GetAuthorityName", _wrap_SpatialReference_GetAuthorityName},
+{"Geo::OSRc::SpatialReference_SetUTM", _wrap_SpatialReference_SetUTM},
+{"Geo::OSRc::SpatialReference_SetStatePlane", _wrap_SpatialReference_SetStatePlane},
+{"Geo::OSRc::SpatialReference_AutoIdentifyEPSG", _wrap_SpatialReference_AutoIdentifyEPSG},
+{"Geo::OSRc::SpatialReference_SetProjection", _wrap_SpatialReference_SetProjection},
+{"Geo::OSRc::SpatialReference_SetProjParm", _wrap_SpatialReference_SetProjParm},
+{"Geo::OSRc::SpatialReference_GetProjParm", _wrap_SpatialReference_GetProjParm},
+{"Geo::OSRc::SpatialReference_SetNormProjParm", _wrap_SpatialReference_SetNormProjParm},
+{"Geo::OSRc::SpatialReference_GetNormProjParm", _wrap_SpatialReference_GetNormProjParm},
+{"Geo::OSRc::SpatialReference_SetACEA", _wrap_SpatialReference_SetACEA},
+{"Geo::OSRc::SpatialReference_SetAE", _wrap_SpatialReference_SetAE},
+{"Geo::OSRc::SpatialReference_SetCS", _wrap_SpatialReference_SetCS},
+{"Geo::OSRc::SpatialReference_SetBonne", _wrap_SpatialReference_SetBonne},
+{"Geo::OSRc::SpatialReference_SetEC", _wrap_SpatialReference_SetEC},
+{"Geo::OSRc::SpatialReference_SetEckertIV", _wrap_SpatialReference_SetEckertIV},
+{"Geo::OSRc::SpatialReference_SetEckertVI", _wrap_SpatialReference_SetEckertVI},
+{"Geo::OSRc::SpatialReference_SetEquirectangular", _wrap_SpatialReference_SetEquirectangular},
+{"Geo::OSRc::SpatialReference_SetGS", _wrap_SpatialReference_SetGS},
+{"Geo::OSRc::SpatialReference_SetWellKnownGeogCS", _wrap_SpatialReference_SetWellKnownGeogCS},
+{"Geo::OSRc::SpatialReference_SetFromUserInput", _wrap_SpatialReference_SetFromUserInput},
+{"Geo::OSRc::SpatialReference_CopyGeogCSFrom", _wrap_SpatialReference_CopyGeogCSFrom},
+{"Geo::OSRc::SpatialReference_SetTOWGS84", _wrap_SpatialReference_SetTOWGS84},
+{"Geo::OSRc::SpatialReference_GetTOWGS84", _wrap_SpatialReference_GetTOWGS84},
+{"Geo::OSRc::SpatialReference_SetGeogCS", _wrap_SpatialReference_SetGeogCS},
+{"Geo::OSRc::SpatialReference_SetProjCS", _wrap_SpatialReference_SetProjCS},
+{"Geo::OSRc::SpatialReference_ImportFromWkt", _wrap_SpatialReference_ImportFromWkt},
+{"Geo::OSRc::SpatialReference_ImportFromProj4", _wrap_SpatialReference_ImportFromProj4},
+{"Geo::OSRc::SpatialReference_ImportFromESRI", _wrap_SpatialReference_ImportFromESRI},
+{"Geo::OSRc::SpatialReference_ImportFromEPSG", _wrap_SpatialReference_ImportFromEPSG},
+{"Geo::OSRc::SpatialReference_ImportFromPCI", _wrap_SpatialReference_ImportFromPCI},
+{"Geo::OSRc::SpatialReference_ImportFromUSGS", _wrap_SpatialReference_ImportFromUSGS},
+{"Geo::OSRc::SpatialReference_ImportFromXML", _wrap_SpatialReference_ImportFromXML},
+{"Geo::OSRc::SpatialReference_ExportToWkt", _wrap_SpatialReference_ExportToWkt},
+{"Geo::OSRc::SpatialReference_ExportToPrettyWkt", _wrap_SpatialReference_ExportToPrettyWkt},
+{"Geo::OSRc::SpatialReference_ExportToProj4", _wrap_SpatialReference_ExportToProj4},
+{"Geo::OSRc::SpatialReference_ExportToPCI", _wrap_SpatialReference_ExportToPCI},
+{"Geo::OSRc::SpatialReference_ExportToUSGS", _wrap_SpatialReference_ExportToUSGS},
+{"Geo::OSRc::SpatialReference_ExportToXML", _wrap_SpatialReference_ExportToXML},
+{"Geo::OSRc::SpatialReference_CloneGeogCS", _wrap_SpatialReference_CloneGeogCS},
+{"Geo::OSRc::SpatialReference_Validate", _wrap_SpatialReference_Validate},
+{"Geo::OSRc::SpatialReference_StripCTParms", _wrap_SpatialReference_StripCTParms},
+{"Geo::OSRc::SpatialReference_FixupOrdering", _wrap_SpatialReference_FixupOrdering},
+{"Geo::OSRc::SpatialReference_Fixup", _wrap_SpatialReference_Fixup},
+{"Geo::OSRc::SpatialReference_MorphToESRI", _wrap_SpatialReference_MorphToESRI},
+{"Geo::OSRc::SpatialReference_MorphFromESRI", _wrap_SpatialReference_MorphFromESRI},
+{"Geo::OSRc::new_CoordinateTransformation", _wrap_new_CoordinateTransformation},
+{"Geo::OSRc::delete_CoordinateTransformation", _wrap_delete_CoordinateTransformation},
+{"Geo::OSRc::CoordinateTransformation_TransformPoint", _wrap_CoordinateTransformation_TransformPoint},
 {0,0}
 };
 /* -----------------------------------------------------------------------------
@@ -6502,8 +6604,8 @@ XS(SWIG_init) {
     sv_setsv(sv, SWIG_From_double  SWIG_PERL_CALL_ARGS_1(static_cast< double >(SRS_WGS84_INVFLATTENING)));
     SvREADONLY_on(sv);
   } while(0) /*@SWIG@*/;
-  SWIG_TypeClientData(SWIGTYPE_p_OSRSpatialReferenceShadow, (void*) "osr::SpatialReference");
-  SWIG_TypeClientData(SWIGTYPE_p_OSRCoordinateTransformationShadow, (void*) "osr::CoordinateTransformation");
+  SWIG_TypeClientData(SWIGTYPE_p_OSRSpatialReferenceShadow, (void*) "Geo::OSR::SpatialReference");
+  SWIG_TypeClientData(SWIGTYPE_p_OSRCoordinateTransformationShadow, (void*) "Geo::OSR::CoordinateTransformation");
   ST(0) = &PL_sv_yes;
   XSRETURN(1);
 }

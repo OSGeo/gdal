@@ -1,19 +1,24 @@
 use ExtUtils::MakeMaker;
 
-$ExtUtils::MakeMaker::Verbose = 0;
+$libdir = $ENV{'PREFIX'} ? "-L$ENV{'PREFIX'}/lib" : '';
 
-$libdir='';
+$ext = $^O eq 'MSWin32' ? '.dll' : ''; # works with MinGW but probably not with ActivePerl
 
-$libdir = "-L$ENV{'PREFIX'}/lib" if ($ENV{'PREFIX'});
+# for old-style, use gdal, gdalconst,ogr, and osr as keys
 
-for my $lib ('gdal','gdalconst','ogr','osr') {
-    WriteMakefile( NAME => $lib,
-		   FIRST_MAKEFILE => 'Makefile_'.$lib,
-		   LD => "g++",
-		   MAKEFILE => 'Makefile_'.$lib,
-		   LIBS => "$libdir -L../../.libs -lgdal",
-		   #CCFLAGS => "-fpic", # needed for SELinux, but using overrides default behavior
+%object = ( 'Geo::GDAL' => 'gdal_wrap.o',
+	    'Geo::GDAL::Const' => 'gdalconst_wrap.o',
+	    'Geo::OGR' => 'ogr_wrap.o',
+	    'Geo::OSR' => 'osr_wrap.o' );
+
+for my $module (keys %object) {
+    my $add = $module;
+    $add =~ s/:/_/g;
+    WriteMakefile( NAME => $module,
+		   VERSION_FROM => 'lib/Geo/GDAL.pm',
+		   MAKEFILE => 'Makefile_'.$add,
+		   LIBS => "$libdir -L../../.libs -lgdal$ext -lgeos$ext -lgeos_c$ext",
 		   INC => '-I../../gcore -I../../alg -I../../ogr -I../../port',
-		   OBJECT => $lib.'_wrap.o'
+		   OBJECT => $object{$module}
 		   );
 }

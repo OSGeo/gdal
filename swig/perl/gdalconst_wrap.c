@@ -1379,10 +1379,10 @@ static swig_module_info swig_module = {swig_types, 1, 0, 0, 0, 0};
 
 /* -------- TYPES TABLE (END) -------- */
 
-#define SWIG_init    boot_gdalconst
+#define SWIG_init    boot_Geo__GDAL__Const
 
-#define SWIG_name   "gdalconstc::boot_gdalconst"
-#define SWIG_prefix "gdalconstc::"
+#define SWIG_name   "Geo::GDAL::Constc::boot_Geo__GDAL__Const"
+#define SWIG_prefix "Geo::GDAL::Constc::"
 
 #define SWIGVERSION 0x010329 
 
@@ -1455,8 +1455,8 @@ SWIG_FromCharPtr(const char *cptr)
 }
 
 #ifdef PERL_OBJECT
-#define MAGIC_CLASS _wrap_gdalconst_var::
-class _wrap_gdalconst_var : public CPerlObj {
+#define MAGIC_CLASS _wrap_Geo::GDAL::Const_var::
+class _wrap_Geo::GDAL::Const_var : public CPerlObj {
 public:
 #else
 #define MAGIC_CLASS
