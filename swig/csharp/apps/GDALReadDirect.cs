@@ -8,7 +8,7 @@ using GDAL;
 /**
 
  * <p>Title: GDAL C# GDALRead example.</p>
- * <p>Description: A sample app to dump information from a spatial data source.</p>
+ * <p>Description: A sample app to read GDAL raster data directly to a C# bitmap.</p>
  * @author Tamas Szekeres (szekerest@gmail.com)
  * @version 1.0
  */
@@ -16,7 +16,7 @@ using GDAL;
 
 
 /// <summary>
-/// A C# based sample to dump information from a data source.
+/// A C# based sample to read GDAL raster data directly to a C# bitmap.
 /// </summary> 
 
 class GDALReadDirect {

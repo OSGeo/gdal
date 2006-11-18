@@ -8,7 +8,7 @@ using GDAL;
 /**
 
  * <p>Title: GDAL C# GDALRead example.</p>
- * <p>Description: A sample app read GDAL raster data.</p>
+ * <p>Description: A sample app to read GDAL raster data.</p>
  * @author Tamas Szekeres (szekerest@gmail.com)
  * @version 1.0
  */
