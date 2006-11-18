@@ -80,6 +80,11 @@
 #define HAVE_CTIME
 #define ctime wceex_ctime
 
+/* Define if you have the ctime function.  */
+/* wceex_setlocale provides ONLY dummy implementation. */
+#define HAVE_SETLOCALE
+#define setlocale wceex_setlocale
+
 /* Define if you have the ANSI C header files.  */
 #ifndef STDC_HEADERS
 #  define STDC_HEADERS
@@ -118,4 +123,3 @@
 
 /* #define CPL_DISABLE_DLL */
 /* #define CPL_DISABLE_STDCALL */
-
