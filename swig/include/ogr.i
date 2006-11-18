@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.60  2006/11/18 09:05:01  ajolma
+ * Versions of SetField and UnsetField, which use field name fail now with a sensible error message (previously the error was caught with CPLAssert later)
+ *
  * Revision 1.59  2006/11/11 19:33:47  tamas
  * Controlling the owner of the objects returned by the static/non static members for the csharp binding
  *
@@ -813,7 +816,11 @@ public:
 
 
   void UnsetField(const char* name) {
-    OGR_F_UnsetField(self, OGR_F_GetFieldIndex(self, name));
+    int i = OGR_F_GetFieldIndex(self, name);
+    if (i == -1)
+        CPLError(CE_Failure, 1, "No such field: '%s'", name);
+    else
+        OGR_F_UnsetField(self, i);
   }
 
   /* ---- SetField ----------------------------- */
@@ -824,7 +831,11 @@ public:
   }
 
   void SetField(const char* name, const char* value) {
-    OGR_F_SetFieldString(self, OGR_F_GetFieldIndex(self, name), value);
+    int i = OGR_F_GetFieldIndex(self, name);
+    if (i == -1)
+        CPLError(CE_Failure, 1, "No such field: '%s'", name);
+    else
+        OGR_F_SetFieldString(self, i, value);
   }
   %clear (const char* value );
 
