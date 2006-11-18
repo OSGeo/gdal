@@ -5,7 +5,7 @@ using OGR;
 
 /**
 
- * <p>Title: GDAL C# ogrinfo example.</p>
+ * <p>Title: GDAL C# createdata example.</p>
  * <p>Description: A sample app to create a spatial data source and a layer.</p>
  * @author Tamas Szekeres (szekerest@gmail.com)
  * @version 1.0
@@ -22,7 +22,7 @@ class CreateData {
 	public static void usage() 
 
 	{ 
-		Console.WriteLine("usage: ogrinfo {data source name} {layername}");
+		Console.WriteLine("usage: createdata {data source name} {layername}");
 		System.Environment.Exit(-1);
 	}
  
