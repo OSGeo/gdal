@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/11/18 20:52:16  mloskot
+ * Added visible cast between int and GByte types.
+ *
  * Revision 1.33  2006/03/28 14:49:56  fwarmerdam
  * updated contact info
  *
@@ -673,7 +676,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
                     if( nVal > 255 )
                         byVal = 255;
                     else
-                        byVal = nVal;
+                        byVal = static_cast<GByte>(nVal);
                     *static_cast<GByte *>(pDstWord) = byVal;
                     continue;
                 }
@@ -724,7 +727,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
                     else if (nVal < 0)
                         byVal = 0;
                     else
-                        byVal = nVal;
+                        byVal = static_cast<GByte>(nVal);
                     *static_cast<GByte *>(pDstWord) = byVal;
                     continue;
                 }
@@ -894,7 +897,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
                     else if (nVal < 0)
                         byVal = 0;
                     else
-                        byVal = nVal;
+                        byVal = static_cast<GByte>(nVal);
                     *static_cast<GByte *>(pDstWord) = byVal;
                     continue;
                 }
@@ -1116,7 +1119,7 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
 
           case GDT_Float32:
           {
-              *static_cast<float *>(pDstWord) = dfPixelValue;
+              *static_cast<float *>(pDstWord) = static_cast<float>(dfPixelValue);
           }
           break;
 
@@ -1181,8 +1184,8 @@ GDALCopyWords( void * pSrcData, GDALDataType eSrcType, int nSrcPixelOffset,
           case GDT_CFloat32:
           {
               float *pafDstWord = static_cast<float *>(pDstWord);
-              pafDstWord[0] = dfPixelValue;
-              pafDstWord[1] = dfPixelValueI;
+              pafDstWord[0] = static_cast<float>(dfPixelValue);
+              pafDstWord[1] = static_cast<float>(dfPixelValueI);
           }
           break;
 
