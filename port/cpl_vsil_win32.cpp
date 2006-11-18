@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/11/18 20:42:08  mloskot
+ * Added cast between LONGLONG and vsi_l_offset to CPL.
+ *
  * Revision 1.18  2006/03/27 15:24:41  fwarmerdam
  * buffer in FWrite is const
  *
@@ -198,7 +201,7 @@ vsi_l_offset VSIWin32Handle::Tell()
     li.LowPart = SetFilePointer( hFile, 0, (PLONG) &(li.HighPart), 
                                  FILE_CURRENT );
 
-    return li.QuadPart;
+    return (static_cast<vsi_l_offset>(li.QuadPart));
 }
 
 /************************************************************************/
