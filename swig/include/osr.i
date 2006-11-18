@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.31  2006/11/18 09:25:53  ajolma
+ * make it possible to switch to CPAN namespace with symbol PERL_CPAN_NAMESPACE
+ *
  * Revision 1.30  2006/11/15 21:11:57  fwarmerdam
  * Added GetUserInputAsWKT().
  *
@@ -123,8 +126,8 @@
  *
 */
 
-#ifdef SWIGPERL_USE_THIS_LATER
-%module "Geo::GDAL::osr"
+#ifdef PERL_CPAN_NAMESPACE
+%module "Geo::OSR"
 #else
 %module osr
 #endif

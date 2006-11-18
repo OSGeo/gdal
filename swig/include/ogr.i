@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.61  2006/11/18 09:25:53  ajolma
+ * make it possible to switch to CPAN namespace with symbol PERL_CPAN_NAMESPACE
+ *
  * Revision 1.60  2006/11/18 09:05:01  ajolma
  * Versions of SetField and UnsetField, which use field name fail now with a sensible error message (previously the error was caught with CPLAssert later)
  *
@@ -265,7 +268,11 @@
 
 %include "exception.i"
 
+#ifdef PERL_CPAN_NAMESPACE
+%module "Geo::OGR"
+#else
 %module ogr
+#endif
 
 %feature("compactdefaultargs");
 %feature("autodoc");

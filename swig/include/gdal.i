@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.44  2006/11/18 09:25:53  ajolma
+ * make it possible to switch to CPAN namespace with symbol PERL_CPAN_NAMESPACE
+ *
  * Revision 1.43  2006/11/11 19:33:47  tamas
  * Controlling the owner of the objects returned by the static/non static members for the csharp binding
  *
@@ -164,7 +167,11 @@
  *
 */
 
+#ifdef PERL_CPAN_NAMESPACE
+%module "Geo::GDAL"
+#else
 %module gdal
+#endif
 
 %feature ("compactdefaultargs");
 

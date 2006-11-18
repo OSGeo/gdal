@@ -1,4 +1,8 @@
+#ifdef PERL_CPAN_NAMESPACE
+%module "Geo::GDAL::Const"
+#else
 %module gdalconst 
+#endif
 
 #if defined(SWIGJAVA)
 %include gdalconst_java.i
