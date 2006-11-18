@@ -89,6 +89,9 @@ samples:
     $(CSC) /r:gdal_ogr_csharp.dll /out:ogrinfo.exe apps\ogrinfo.cs
     $(CSC) /r:gdal_ogr_csharp.dll /out:createdata.exe apps\createdata.cs
     $(CSC) /r:gdal_osr_csharp.dll /out:OSRTransform.exe apps\OSRTransform.cs
+    $(CSC) /r:gdal_gdal_csharp.dll /r:System.Drawing.dll /out:GDALRead.exe apps\GDALRead.cs
+    $(CSC) /r:gdal_gdal_csharp.dll /r:System.Drawing.dll /out:GDALReadDirect.exe apps\GDALReadDirect.cs
+    $(CSC) /r:gdal_gdal_csharp.dll /r:gdal_gdalconst_csharp.dll /out:GDALWrite.exe apps\GDALWrite.cs
     
 test:
 !IFDEF MONO
