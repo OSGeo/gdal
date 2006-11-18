@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2006/11/18 20:58:23  mloskot
+ * Removed WIN32CE ifdef around CPLLocaleC.
+ *
  * Revision 1.57  2006/11/16 14:58:33  mloskot
  * Added cast from __int64 to GUIntBig on Windows.
  *
@@ -2201,7 +2204,6 @@ int CPLCopyFile( const char *pszNewPath, const char *pszOldPath )
 /*                              CPLLocaleC                              */
 /* ==================================================================== */
 /************************************************************************/
-#ifndef WIN32CE
 
 #include <locale.h>
 
@@ -2230,6 +2232,4 @@ CPLLocaleC::~CPLLocaleC()
         CPLFree( pszOldLocale );
     }
 }
-
-#endif /* ndef WIN32CE */
 

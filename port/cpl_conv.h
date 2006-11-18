@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2006/11/18 20:58:23  mloskot
+ * Removed WIN32CE ifdef around CPLLocaleC.
+ *
  * Revision 1.48  2006/11/13 18:45:05  fwarmerdam
  * added CPLCleanTrailingSlash() per bug 1311
  *
@@ -320,7 +323,6 @@ CPL_C_END
 /* -------------------------------------------------------------------- */
 /*      C++ object for temporariliy forcing a LC_NUMERIC locale to "C". */
 /* -------------------------------------------------------------------- */
-#ifndef WIN32CE
 
 #ifdef __cplusplus
 
@@ -336,6 +338,5 @@ class CPLLocaleC
 
 #endif /* def __cplusplus */
 
-#endif /* ndef WIN32CE */
 
 #endif /* ndef CPL_CONV_H_INCLUDED */
