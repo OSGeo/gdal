@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2006/11/18 20:43:28  mloskot
+ * Added visible casts from long to GByte in OGRParseDate function.
+ *
  * Revision 1.27  2006/08/25 18:27:29  fwarmerdam
  * Use /vsimem/ prefix for memory filesystem.
  *
@@ -856,7 +859,7 @@ int OGRParseDate( const char *pszInput, OGRField *psField, int nOptions )
                  && atoi(pszInput+3) % 15 == 0 )
         {
             psField->Date.TZFlag = 100 
-                + CPLScanLong(pszInput+1,2) * 4
+                + static_cast<GByte>(CPLScanLong(pszInput+1,2)) * 4
                 + (atoi(pszInput+3) / 15);
 
             if( pszInput[0] == '-' )
@@ -866,7 +869,7 @@ int OGRParseDate( const char *pszInput, OGRField *psField, int nOptions )
                  && atoi(pszInput+2) % 15 == 0 )
         {
             psField->Date.TZFlag = 100 
-                + CPLScanLong(pszInput+1,1) * 4
+                + static_cast<GByte>(CPLScanLong(pszInput+1,1)) * 4
                 + (atoi(pszInput+2) / 15);
 
             if( pszInput[0] == '-' )
