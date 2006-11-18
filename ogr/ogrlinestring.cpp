@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2006/11/18 20:04:08  mloskot
+ * Changed type of buffer size testers from size_t to int.
+ *
  * Revision 1.61  2006/10/03 09:23:55  dron
  * Removed too verbosive debug output.
  *
@@ -919,8 +922,8 @@ OGRErr OGRLineString::importFromWkb( unsigned char * pabyData,
      * fetched number of points.
      * 16 or 24 - size of point structure
      */
-    size_t nPointSize = (bIs3D ? 24 : 16);
-    size_t nBufferMinSize = nPointSize * nNewNumPoints;
+    int nPointSize = (bIs3D ? 24 : 16);
+    int nBufferMinSize = nPointSize * nNewNumPoints;
 
     if( nBufferMinSize > nBytesAvailable && nBytesAvailable > 0 )
     {

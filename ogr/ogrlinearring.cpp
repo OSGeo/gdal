@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2006/11/18 20:03:53  mloskot
+ * Changed type of buffer size testers from size_t to int.
+ *
  * Revision 1.26  2006/10/03 09:23:55  dron
  * Removed too verbosive debug output.
  *
@@ -241,8 +244,8 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int b3D,
      * fetched number of points.
      * 16 or 24 - size of point structure
      */
-    size_t nPointSize = (b3D ? 24 : 16);
-    size_t nBufferMinSize = nPointSize * nNewNumPoints;
+    int nPointSize = (b3D ? 24 : 16);
+    int nBufferMinSize = nPointSize * nNewNumPoints;
    
     if( nBufferMinSize > nBytesAvailable && nBytesAvailable > 0 )
     {
