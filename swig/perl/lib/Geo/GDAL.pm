@@ -4,7 +4,7 @@ package Geo::GDAL;
 use Geo::GDAL::Const; 
 use Geo::OGR; 
 use Geo::OSR; 
-our $VERSION = 0.20;
+our $VERSION = '0.20';
 require Exporter;
 require DynaLoader;
 @ISA = qw(Exporter DynaLoader);

@@ -20,7 +20,7 @@ veryclean: clean
 	-rm -f gdal.pm gdalconst.pm osr.pm ogr.pm
 
 generate: ${WRAPPERS}
-	echo "Please move GDAL.pm, OGR.pm and OSR.pm to lib/Geo and Const.pm to lib/Geo/GDAL. Then edit lib/Geo/GDAL.pm to contain 'use Geo::GDAL::Const; use Geo::OGR; use Geo::OSR; our (dollar)VERSION = 0.20;'"
+	echo "Please move GDAL.pm, OGR.pm and OSR.pm to lib/Geo and Const.pm to lib/Geo/GDAL. Then edit lib/Geo/GDAL.pm to contain 'use Geo::GDAL::Const; use Geo::OGR; use Geo::OSR; our (dollar)VERSION = '0.20';'"
 
 Makefile_Geo__GDAL:
 	PREFIX=${INST_PREFIX} perl Makefile.PL
@@ -39,6 +39,9 @@ install: build
 
 test: build
 	make -f Makefile_Geo__GDAL test
+
+dist: build
+	make -f Makefile_Geo__GDAL dist
 
 Geo-GDAL.html: lib/Geo/GDAL.pod
 	pod2html lib/Geo/GDAL.pod > Geo-GDAL.html
