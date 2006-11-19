@@ -354,23 +354,11 @@ Do this for all layers that have been obtained with ExecuteSQL.
 
 =item GetFieldDefnRef
 
-=item GetFieldAsString
+=item GetField
 
-  $value = $feature->GetFieldAsString($field);
-
-$field is either name or index.
-
-=item GetFieldAsInteger
-
-  $value = $feature->GetFieldAsInteger($field);
+  $value = $feature->GetField($field);
 
 $field is either name or index.
-
-=item GetFieldAsDouble
-
-  $value = $feature->GetFieldAsDouble($field);
-
-$field is either name or index
 
 =item IsFieldSet
 
@@ -386,11 +374,9 @@ $field is either name or index
 
 =item SetField
 
-  $feature->SetField($field_name, $value);
+  $feature->SetField($field, $value);
 
-or 
-
-  $feature->SetField($field_number, $value);
+$field is either name or index.
 
 =item SetFrom
 
