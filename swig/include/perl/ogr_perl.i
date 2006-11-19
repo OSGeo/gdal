@@ -6,6 +6,9 @@
 
 /*
  * $Log$
+ * Revision 1.6  2006/11/19 20:07:35  ajolma
+ * instead of renaming, create GetField as a copy of GetFieldAsString
+ *
  * Revision 1.5  2006/11/19 17:42:24  ajolma
  * There is no sense in having typed versions of GetField in Perl, renamed GetFieldAsString to GetField
  *
@@ -35,10 +38,30 @@
 
 %include cpl_exceptions.i
 
-%rename (GetField) GetFieldAsString;
 %rename (GetDriverCount) OGRGetDriverCount;
 %rename (GetOpenDSCount) OGRGetOpenDSCount;
 %rename (SetGenerate_DB2_V72_BYTE_ORDER) OGRSetGenerate_DB2_V72_BYTE_ORDER;
 %rename (RegisterAll) OGRRegisterAll();
 
 %import typemaps_perl.i
+
+%extend OGRFeatureShadow {
+
+  const char* GetField(int id) {
+    return (const char *) OGR_F_GetFieldAsString(self, id);
+  }
+
+  const char* GetField(const char* name) {
+    if (name == NULL)
+        CPLError(CE_Failure, 1, "Undefined field name in GetField");
+    else {
+        int i = OGR_F_GetFieldIndex(self, name);
+        if (i == -1)
+            CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        else
+            return (const char *) OGR_F_GetFieldAsString(self, i);
+    }
+    return NULL;
+  }
+
+}
