@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.62  2006/11/19 17:45:05  ajolma
+ * In all cases where GetFieldIndex is used, added check for non-null name, and check for the return value. This prevents countless segfaults and quiet fails at least in Perl.
+ *
  * Revision 1.61  2006/11/18 09:25:53  ajolma
  * make it possible to switch to CPAN namespace with symbol PERL_CPAN_NAMESPACE
  *
@@ -752,7 +755,16 @@ public:
   }
 
   OGRFieldDefnShadow *GetFieldDefnRef(const char* name) {
-    return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, OGR_F_GetFieldIndex(self, name));
+    if (name == NULL)
+        CPLError(CE_Failure, 1, "Undefined field name in GetFieldDefnRef");
+    else {
+        int i = OGR_F_GetFieldIndex(self, name);
+        if (i == -1)
+            CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        else
+            return (OGRFieldDefnShadow *) OGR_F_GetFieldDefnRef(self, i);
+    }
+    return NULL;
   }
   /* ------------------------------------------- */
 
@@ -763,7 +775,16 @@ public:
   }
 
   const char* GetFieldAsString(const char* name) {
-    return (const char *) OGR_F_GetFieldAsString(self, OGR_F_GetFieldIndex(self, name));
+    if (name == NULL)
+        CPLError(CE_Failure, 1, "Undefined field name in GetFieldAsString");
+    else {
+        int i = OGR_F_GetFieldIndex(self, name);
+        if (i == -1)
+            CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        else
+            return (const char *) OGR_F_GetFieldAsString(self, i);
+    }
+    return NULL;
   }
   /* ------------------------------------------- */
 
@@ -774,7 +795,16 @@ public:
   }
 
   int GetFieldAsInteger(const char* name) {
-    return OGR_F_GetFieldAsInteger(self, OGR_F_GetFieldIndex(self, name));
+    if (name == NULL)
+        CPLError(CE_Failure, 1, "Undefined field name in GetFieldAsInteger");
+    else {
+        int i = OGR_F_GetFieldIndex(self, name);
+        if (i == -1)
+            CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        else
+            return OGR_F_GetFieldAsInteger(self, i);
+    }
+    return 0;
   }
   /* ------------------------------------------- */  
 
@@ -785,7 +815,16 @@ public:
   }
 
   double GetFieldAsDouble(const char* name) {
-    return OGR_F_GetFieldAsDouble(self, OGR_F_GetFieldIndex(self, name));
+    if (name == NULL)
+        CPLError(CE_Failure, 1, "Undefined field name in GetFieldAsDouble");
+    else {
+        int i = OGR_F_GetFieldIndex(self, name);
+        if (i == -1)
+            CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        else
+            return OGR_F_GetFieldAsDouble(self, i);
+    }
+    return 0;
   }
   /* ------------------------------------------- */  
 
@@ -797,12 +836,25 @@ public:
   }
 
   bool IsFieldSet(const char* name) {
-    return OGR_F_IsFieldSet(self, OGR_F_GetFieldIndex(self, name));
+    if (name == NULL)
+        CPLError(CE_Failure, 1, "Undefined field name in IsFieldSet");
+    else {
+        int i = OGR_F_GetFieldIndex(self, name);
+        if (i == -1)
+            CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        else
+            return OGR_F_IsFieldSet(self, i);
+    }
+    return (bool)0;
   }
   /* ------------------------------------------- */  
       
   int GetFieldIndex(const char* name) {
-    return OGR_F_GetFieldIndex(self, name);
+    if (name == NULL)
+        CPLError(CE_Failure, 1, "Undefined field name in GetFieldIndex");
+    else
+        return OGR_F_GetFieldIndex(self, name);
+    return 0;
   }
 
   int GetFID() {
@@ -823,11 +875,15 @@ public:
 
 
   void UnsetField(const char* name) {
-    int i = OGR_F_GetFieldIndex(self, name);
-    if (i == -1)
-        CPLError(CE_Failure, 1, "No such field: '%s'", name);
-    else
-        OGR_F_UnsetField(self, i);
+    if (name == NULL)
+        CPLError(CE_Failure, 1, "Undefined field name in UnsetField");
+    else {
+        int i = OGR_F_GetFieldIndex(self, name);
+        if (i == -1)
+            CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        else
+            OGR_F_UnsetField(self, i);
+    }
   }
 
   /* ---- SetField ----------------------------- */
@@ -838,11 +894,15 @@ public:
   }
 
   void SetField(const char* name, const char* value) {
-    int i = OGR_F_GetFieldIndex(self, name);
-    if (i == -1)
-        CPLError(CE_Failure, 1, "No such field: '%s'", name);
-    else
-        OGR_F_SetFieldString(self, i, value);
+    if (name == NULL)
+        CPLError(CE_Failure, 1, "Undefined field name in SetField");
+    else {
+        int i = OGR_F_GetFieldIndex(self, name);
+        if (i == -1)
+            CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        else
+            OGR_F_SetFieldString(self, i, value);
+    }
   }
   %clear (const char* value );
 
@@ -866,14 +926,20 @@ public:
     return (OGRFieldType) OGR_Fld_GetType( OGR_F_GetFieldDefnRef( self, id));
   }
   
-  OGRFieldType GetFieldType(const char* name, const char* value) {
-    return (OGRFieldType) OGR_Fld_GetType( 
-                            OGR_F_GetFieldDefnRef( self,  
-                                                   OGR_F_GetFieldIndex(self, 
-                                                                       name)
-                                                  )
+  OGRFieldType GetFieldType(const char* name) {
+    if (name == NULL) {
+        CPLError(CE_Failure, 1, "Undefined field name in GetFieldType");
+	return (OGRFieldType)0;
+    } else {
+        int i = OGR_F_GetFieldIndex(self, name);
+        if (i == -1) {
+            CPLError(CE_Failure, 1, "No such field: '%s'", name);
+            return (OGRFieldType)0;
+        } else
+            return (OGRFieldType) OGR_Fld_GetType( 
+                            OGR_F_GetFieldDefnRef( self,  i )
                                           );
-    
+    }
   }
   /* ------------------------------------------- */  
   
@@ -915,7 +981,11 @@ public:
   }
 
   int GetFieldIndex(const char* name) {
-    return OGR_FD_GetFieldIndex(self, name);
+    if (name == NULL) {
+        CPLError(CE_Failure, 1, "Undefined field name in GetFieldIndex");
+	return 0;
+    } else
+	return OGR_FD_GetFieldIndex(self, name);
   }
   
   void AddFieldDefn(OGRFieldDefnShadow* defn) {
