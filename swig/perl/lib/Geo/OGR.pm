@@ -211,7 +211,7 @@ sub new {
 *Equal = *Geo::OGRc::Feature_Equal;
 *GetFieldCount = *Geo::OGRc::Feature_GetFieldCount;
 *GetFieldDefnRef = *Geo::OGRc::Feature_GetFieldDefnRef;
-*GetField = *Geo::OGRc::Feature_GetField;
+*GetFieldAsString = *Geo::OGRc::Feature_GetFieldAsString;
 *GetFieldAsInteger = *Geo::OGRc::Feature_GetFieldAsInteger;
 *GetFieldAsDouble = *Geo::OGRc::Feature_GetFieldAsDouble;
 *IsFieldSet = *Geo::OGRc::Feature_IsFieldSet;
@@ -225,6 +225,7 @@ sub new {
 *GetStyleString = *Geo::OGRc::Feature_GetStyleString;
 *SetStyleString = *Geo::OGRc::Feature_SetStyleString;
 *GetFieldType = *Geo::OGRc::Feature_GetFieldType;
+*GetField = *Geo::OGRc::Feature_GetField;
 sub DISOWN {
     my $self = shift;
     my $ptr = tied(%$self);
