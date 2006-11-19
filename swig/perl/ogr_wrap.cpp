@@ -2087,6 +2087,21 @@ SWIGINTERN OGRFieldType OGRFeatureShadow_GetFieldType__SWIG_1(OGRFeatureShadow *
                                           );
     }
   }
+SWIGINTERN char const *OGRFeatureShadow_GetField__SWIG_0(OGRFeatureShadow *self,int id){
+    return (const char *) OGR_F_GetFieldAsString(self, id);
+  }
+SWIGINTERN char const *OGRFeatureShadow_GetField__SWIG_1(OGRFeatureShadow *self,char const *name){
+    if (name == NULL)
+        CPLError(CE_Failure, 1, "Undefined field name in GetFieldAsString");
+    else {
+        int i = OGR_F_GetFieldIndex(self, name);
+        if (i == -1)
+            CPLError(CE_Failure, 1, "No such field: '%s'", name);
+        else
+            return (const char *) OGR_F_GetFieldAsString(self, i);
+    }
+    return NULL;
+  }
 SWIGINTERN void delete_OGRFeatureDefnShadow(OGRFeatureDefnShadow *self){
     OGR_FD_Destroy(self);
   }
@@ -5332,7 +5347,7 @@ XS(_wrap_Feature_GetFieldDefnRef) {
 }
 
 
-XS(_wrap_Feature_GetField__SWIG_0) {
+XS(_wrap_Feature_GetFieldAsString__SWIG_0) {
   {
     OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
     int arg2 ;
@@ -5345,16 +5360,16 @@ XS(_wrap_Feature_GetField__SWIG_0) {
     dXSARGS;
     
     if ((items < 2) || (items > 2)) {
-      SWIG_croak("Usage: Feature_GetField(self,id);");
+      SWIG_croak("Usage: Feature_GetFieldAsString(self,id);");
     }
     res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Feature_GetField" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Feature_GetFieldAsString" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
     }
     arg1 = reinterpret_cast< OGRFeatureShadow * >(argp1);
     ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
     if (!SWIG_IsOK(ecode2)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Feature_GetField" "', argument " "2"" of type '" "int""'");
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Feature_GetFieldAsString" "', argument " "2"" of type '" "int""'");
     } 
     arg2 = static_cast< int >(val2);
     {
@@ -5380,7 +5395,7 @@ XS(_wrap_Feature_GetField__SWIG_0) {
 }
 
 
-XS(_wrap_Feature_GetField__SWIG_1) {
+XS(_wrap_Feature_GetFieldAsString__SWIG_1) {
   {
     OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
     char *arg2 = (char *) 0 ;
@@ -5394,16 +5409,16 @@ XS(_wrap_Feature_GetField__SWIG_1) {
     dXSARGS;
     
     if ((items < 2) || (items > 2)) {
-      SWIG_croak("Usage: Feature_GetField(self,name);");
+      SWIG_croak("Usage: Feature_GetFieldAsString(self,name);");
     }
     res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Feature_GetField" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Feature_GetFieldAsString" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
     }
     arg1 = reinterpret_cast< OGRFeatureShadow * >(argp1);
     res2 = SWIG_AsCharPtrAndSize(ST(1), &buf2, NULL, &alloc2);
     if (!SWIG_IsOK(res2)) {
-      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_GetField" "', argument " "2"" of type '" "char const *""'");
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_GetFieldAsString" "', argument " "2"" of type '" "char const *""'");
     }
     arg2 = buf2;
     {
@@ -5429,7 +5444,7 @@ XS(_wrap_Feature_GetField__SWIG_1) {
 }
 
 
-XS(_wrap_Feature_GetField) {
+XS(_wrap_Feature_GetFieldAsString) {
   dXSARGS;
   
   {
@@ -5498,13 +5513,13 @@ XS(_wrap_Feature_GetField) {
   dispatch:
     switch(_index) {
     case 1:
-      ++PL_markstack_ptr; SWIG_CALLXS(_wrap_Feature_GetField__SWIG_0); return;
+      ++PL_markstack_ptr; SWIG_CALLXS(_wrap_Feature_GetFieldAsString__SWIG_0); return;
     case 2:
-      ++PL_markstack_ptr; SWIG_CALLXS(_wrap_Feature_GetField__SWIG_1); return;
+      ++PL_markstack_ptr; SWIG_CALLXS(_wrap_Feature_GetFieldAsString__SWIG_1); return;
     }
   }
   
-  croak("No matching function for overloaded 'Feature_GetField'");
+  croak("No matching function for overloaded 'Feature_GetFieldAsString'");
   XSRETURN(0);
 }
 
@@ -6923,6 +6938,183 @@ XS(_wrap_Feature_GetFieldType) {
   }
   
   croak("No matching function for overloaded 'Feature_GetFieldType'");
+  XSRETURN(0);
+}
+
+
+XS(_wrap_Feature_GetField__SWIG_0) {
+  {
+    OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
+    int arg2 ;
+    char *result = 0 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 2) || (items > 2)) {
+      SWIG_croak("Usage: Feature_GetField(self,id);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Feature_GetField" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< OGRFeatureShadow * >(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Feature_GetField" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+    {
+      CPLErrorReset();
+      result = (char *)OGRFeatureShadow_GetField__SWIG_0(arg1,arg2);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_FromCharPtr(result); argvi++ ;
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_Feature_GetField__SWIG_1) {
+  {
+    OGRFeatureShadow *arg1 = (OGRFeatureShadow *) 0 ;
+    char *arg2 = (char *) 0 ;
+    char *result = 0 ;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int res2 ;
+    char *buf2 = 0 ;
+    int alloc2 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 2) || (items > 2)) {
+      SWIG_croak("Usage: Feature_GetField(self,name);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Feature_GetField" "', argument " "1"" of type '" "OGRFeatureShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< OGRFeatureShadow * >(argp1);
+    res2 = SWIG_AsCharPtrAndSize(ST(1), &buf2, NULL, &alloc2);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Feature_GetField" "', argument " "2"" of type '" "char const *""'");
+    }
+    arg2 = buf2;
+    {
+      CPLErrorReset();
+      result = (char *)OGRFeatureShadow_GetField__SWIG_1(arg1,(char const *)arg2);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    ST(argvi) = SWIG_FromCharPtr(result); argvi++ ;
+    
+    if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+    XSRETURN(argvi);
+  fail:
+    
+    if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_Feature_GetField) {
+  dXSARGS;
+  
+  {
+    unsigned long _index = 0;
+    SWIG_TypeRank _rank = 0; 
+    if (items == 2) {
+      SWIG_TypeRank _ranki = 0;
+      SWIG_TypeRank _rankm = 0;
+      SWIG_TypeRank _pi = 1;
+      int _v = 0;
+      {
+        void *vptr = 0;
+        int res = SWIG_ConvertPtr(ST(0), &vptr, SWIGTYPE_p_OGRFeatureShadow, 0);
+        _v = SWIG_CheckState(res);
+      }
+      if (!_v) goto check_1;
+      _ranki += _v*_pi;
+      _rankm += _pi;
+      _pi *= SWIG_MAXCASTRANK;
+      {
+        {
+          int res = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), NULL);
+          _v = SWIG_CheckState(res);
+        }
+      }
+      if (!_v) goto check_1;
+      _ranki += _v*_pi;
+      _rankm += _pi;
+      _pi *= SWIG_MAXCASTRANK;
+      if (!_index || (_ranki < _rank)) {
+        _rank = _ranki; _index = 1;
+        if (_rank == _rankm) goto dispatch;
+      }
+    }
+  check_1:
+    
+    if (items == 2) {
+      SWIG_TypeRank _ranki = 0;
+      SWIG_TypeRank _rankm = 0;
+      SWIG_TypeRank _pi = 1;
+      int _v = 0;
+      {
+        void *vptr = 0;
+        int res = SWIG_ConvertPtr(ST(0), &vptr, SWIGTYPE_p_OGRFeatureShadow, 0);
+        _v = SWIG_CheckState(res);
+      }
+      if (!_v) goto check_2;
+      _ranki += _v*_pi;
+      _rankm += _pi;
+      _pi *= SWIG_MAXCASTRANK;
+      {
+        int res = SWIG_AsCharPtrAndSize(ST(1), 0, NULL, 0);
+        _v = SWIG_CheckState(res);
+      }
+      if (!_v) goto check_2;
+      _ranki += _v*_pi;
+      _rankm += _pi;
+      _pi *= SWIG_MAXCASTRANK;
+      if (!_index || (_ranki < _rank)) {
+        _rank = _ranki; _index = 2;
+        if (_rank == _rankm) goto dispatch;
+      }
+    }
+  check_2:
+    
+  dispatch:
+    switch(_index) {
+    case 1:
+      ++PL_markstack_ptr; SWIG_CALLXS(_wrap_Feature_GetField__SWIG_0); return;
+    case 2:
+      ++PL_markstack_ptr; SWIG_CALLXS(_wrap_Feature_GetField__SWIG_1); return;
+    }
+  }
+  
+  croak("No matching function for overloaded 'Feature_GetField'");
   XSRETURN(0);
 }
 
@@ -10883,7 +11075,7 @@ static swig_command_info swig_commands[] = {
 {"Geo::OGRc::Feature_Equal", _wrap_Feature_Equal},
 {"Geo::OGRc::Feature_GetFieldCount", _wrap_Feature_GetFieldCount},
 {"Geo::OGRc::Feature_GetFieldDefnRef", _wrap_Feature_GetFieldDefnRef},
-{"Geo::OGRc::Feature_GetField", _wrap_Feature_GetField},
+{"Geo::OGRc::Feature_GetFieldAsString", _wrap_Feature_GetFieldAsString},
 {"Geo::OGRc::Feature_GetFieldAsInteger", _wrap_Feature_GetFieldAsInteger},
 {"Geo::OGRc::Feature_GetFieldAsDouble", _wrap_Feature_GetFieldAsDouble},
 {"Geo::OGRc::Feature_IsFieldSet", _wrap_Feature_IsFieldSet},
@@ -10897,6 +11089,7 @@ static swig_command_info swig_commands[] = {
 {"Geo::OGRc::Feature_GetStyleString", _wrap_Feature_GetStyleString},
 {"Geo::OGRc::Feature_SetStyleString", _wrap_Feature_SetStyleString},
 {"Geo::OGRc::Feature_GetFieldType", _wrap_Feature_GetFieldType},
+{"Geo::OGRc::Feature_GetField", _wrap_Feature_GetField},
 {"Geo::OGRc::delete_FeatureDefn", _wrap_delete_FeatureDefn},
 {"Geo::OGRc::new_FeatureDefn", _wrap_new_FeatureDefn},
 {"Geo::OGRc::FeatureDefn_GetName", _wrap_FeatureDefn_GetName},
