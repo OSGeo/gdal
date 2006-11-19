@@ -211,7 +211,7 @@ sub new {
 *Equal = *Geo::OGRc::Feature_Equal;
 *GetFieldCount = *Geo::OGRc::Feature_GetFieldCount;
 *GetFieldDefnRef = *Geo::OGRc::Feature_GetFieldDefnRef;
-*GetFieldAsString = *Geo::OGRc::Feature_GetFieldAsString;
+*GetField = *Geo::OGRc::Feature_GetField;
 *GetFieldAsInteger = *Geo::OGRc::Feature_GetFieldAsInteger;
 *GetFieldAsDouble = *Geo::OGRc::Feature_GetFieldAsDouble;
 *IsFieldSet = *Geo::OGRc::Feature_IsFieldSet;

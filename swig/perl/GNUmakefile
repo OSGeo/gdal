@@ -20,7 +20,11 @@ veryclean: clean
 	-rm -f gdal.pm gdalconst.pm osr.pm ogr.pm
 
 generate: ${WRAPPERS}
-	echo "Please move GDAL.pm, OGR.pm and OSR.pm to lib/Geo and Const.pm to lib/Geo/GDAL. Then edit lib/Geo/GDAL.pm to contain 'use Geo::GDAL::Const; use Geo::OGR; use Geo::OSR; our (dollar)VERSION = '0.20';'"
+	if [ -f GDAL.pm ]; then mv GDAL.pm lib/Geo; fi
+	if [ -f Const.pm ]; then mv Const.pm lib/Geo/GDAL; fi
+	if [ -f OGR.pm ]; then mv OGR.pm lib/Geo; fi
+	if [ -f OSR.pm ]; then mv OSR.pm lib/Geo; fi
+	echo "Please edit lib/Geo/GDAL.pm to contain 'use Geo::GDAL::Const; use Geo::OGR; use Geo::OSR; our (dollar)VERSION = '0.20';'"
 
 Makefile_Geo__GDAL:
 	PREFIX=${INST_PREFIX} perl Makefile.PL

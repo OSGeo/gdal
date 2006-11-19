@@ -291,13 +291,13 @@ sub ogr_tests {
 			    #$feature->SetField($i++,2);
 			    my $f;
 			    if ($ft eq 'OFTString') {
-				$f = $feature->GetFieldAsString($i);
-				mytest($f eq 'kaksi',"$f ne 'kaksi'",$name,$type,'GetFieldAsString');
+				$f = $feature->GetField($i);
+				mytest($f eq 'kaksi',"$f ne 'kaksi'",$name,$type,'GetField');
 			    } else {
-				$f = $feature->GetFieldAsInteger($i);
-				mytest($f == 2,"$f != 2",$name,$type,'GetFieldAsInteger');
-				$f = $feature->GetFieldAsDouble($i);
-				mytest($f == 2,"$f != 2",$name,$type,'GetFieldAsDouble');
+				$f = $feature->GetField($i);
+				mytest($f == 2,"$f != 2",$name,$type,'GetField');
+				$f = $feature->GetField($i);
+				mytest($f == 2,"$f != 2",$name,$type,'GetField');
 			    }
 			    $i++;
 			}
