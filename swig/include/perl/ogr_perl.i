@@ -6,6 +6,9 @@
 
 /*
  * $Log$
+ * Revision 1.5  2006/11/19 17:42:24  ajolma
+ * There is no sense in having typed versions of GetField in Perl, renamed GetFieldAsString to GetField
+ *
  * Revision 1.4  2005/09/21 19:04:12  kruland
  * Need to %include cpl_exceptions.i
  *
@@ -32,6 +35,7 @@
 
 %include cpl_exceptions.i
 
+%rename (GetField) GetFieldAsString;
 %rename (GetDriverCount) OGRGetDriverCount;
 %rename (GetOpenDSCount) OGRGetOpenDSCount;
 %rename (SetGenerate_DB2_V72_BYTE_ORDER) OGRSetGenerate_DB2_V72_BYTE_ORDER;
