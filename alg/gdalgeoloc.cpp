@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/11/20 06:17:18  mloskot
+ * Added casts between double and float types.
+ *
  * Revision 1.2  2006/10/27 03:36:06  fwarmerdam
  * Avoid warnings.
  *
@@ -247,9 +250,9 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
                 continue;
 
             psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] = 
-                iX * psTransform->dfPIXEL_STEP + psTransform->dfPIXEL_OFFSET;
+                (float)(iX * psTransform->dfPIXEL_STEP + psTransform->dfPIXEL_OFFSET);
             psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] = 
-                iY * psTransform->dfLINE_STEP + psTransform->dfLINE_OFFSET;
+                (float)(iY * psTransform->dfLINE_STEP + psTransform->dfLINE_OFFSET);
 
             pabyValidFlag[iBMX + iBMY * nBMXSize] = 1;
 
@@ -303,8 +306,8 @@ static int GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 
             if( nCount > 0 )
             {
-                psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] = dfXSum/nCount;
-                psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] = dfYSum/nCount;
+                psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] = (float)(dfXSum/nCount);
+                psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] = (float)(dfYSum/nCount);
             }
         }
     }
