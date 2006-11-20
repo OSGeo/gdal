@@ -31,6 +31,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2006/11/20 14:55:25  fwarmerdam
+ * Add ability to scan forward for start of jpeg datastream.  The file
+ * jpeg_nsif.nsf seems to have extra "stuff" before the data stream.
+ *
  * Revision 1.62  2006/10/24 02:20:23  fwarmerdam
  * Fixed NITF_IMAG metadata.
  *
@@ -197,7 +201,7 @@ class NITFDataset : public GDALPamDataset
     GByte       *pabyJPEGBlock;
     int          nQLevel;
 
-    int          ScanJPEGQLevel( void );
+    int          ScanJPEGQLevel( GUInt32 *pnDataStart );
     CPLErr       ScanJPEGBlocks( void );
     CPLErr       ReadJPEGBlock( int, int );
 
@@ -948,13 +952,16 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
              && psImage->nBlocksPerRow == 1
              && psImage->nBlocksPerColumn == 1 )
     {
-        poDS->nQLevel = poDS->ScanJPEGQLevel();
+        GUInt32 nJPEGStart = psFile->pasSegmentInfo[iSegment].nSegmentStart;
+
+        poDS->nQLevel = poDS->ScanJPEGQLevel( &nJPEGStart );
 
         char *pszDSName = CPLStrdup( 
             CPLSPrintf( "JPEG_SUBFILE:Q%d,%d,%d,%s", 
                         poDS->nQLevel,
-                        psFile->pasSegmentInfo[iSegment].nSegmentStart,
-                        psFile->pasSegmentInfo[iSegment].nSegmentSize,
+                        nJPEGStart,
+                        psFile->pasSegmentInfo[iSegment].nSegmentSize
+                        - (nJPEGStart - psFile->pasSegmentInfo[iSegment].nSegmentStart),
                         pszFilename ) );
 
         CPLDebug( "GDAL", 
@@ -1879,13 +1886,12 @@ const GDAL_GCP *NITFDataset::GetGCPs()
 /*      they are inline).                                               */
 /************************************************************************/
 
-int NITFDataset::ScanJPEGQLevel()
+int NITFDataset::ScanJPEGQLevel( GUInt32 *pnDataStart )
 
 {
-    GByte abyHeader[40];
+    GByte abyHeader[100];
 
-    if( VSIFSeekL( psFile->fp, 
-                   psFile->pasSegmentInfo[psImage->iSegment].nSegmentStart,
+    if( VSIFSeekL( psFile->fp, *pnDataStart,
                    SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO, 
@@ -1901,10 +1907,34 @@ int NITFDataset::ScanJPEGQLevel()
         return 0;
     }
 
-    if( !EQUAL((char *)abyHeader+6,"NITF") )
+/* -------------------------------------------------------------------- */
+/*      Scan ahead for jpeg magic code.  In some files (eg. NSIF)       */
+/*      there seems to be some extra junk before the image data stream. */
+/* -------------------------------------------------------------------- */
+    GUInt32 nOffset = 0;
+    while( nOffset < sizeof(abyHeader) - 23 
+           && (abyHeader[nOffset+0] != 0xff
+               || abyHeader[nOffset+1] != 0xd8
+               || abyHeader[nOffset+2] != 0xff) )
+        nOffset++;
+
+    if( nOffset >= sizeof(abyHeader) - 23 )
         return 0;
 
-    return abyHeader[22];
+    *pnDataStart += nOffset;
+
+    if( nOffset > 0 )
+        CPLDebug( "NITF", 
+                  "JPEG data stream at offset %d from start of data segement, NSIF?", 
+                  nOffset );
+
+/* -------------------------------------------------------------------- */
+/*      Do we have an NITF app tag?  If so, pull out the Q level.       */
+/* -------------------------------------------------------------------- */
+    if( !EQUAL((char *)abyHeader+nOffset+6,"NITF") )
+        return 0;
+
+    return abyHeader[22+nOffset];
 }
 
 /************************************************************************/
@@ -1915,8 +1945,10 @@ CPLErr NITFDataset::ScanJPEGBlocks()
 
 {
     int iBlock;
+    GUInt32 nJPEGStart = 
+        psFile->pasSegmentInfo[psImage->iSegment].nSegmentStart;
 
-    nQLevel = ScanJPEGQLevel();
+    nQLevel = ScanJPEGQLevel( &nJPEGStart );
 
 /* -------------------------------------------------------------------- */
 /*      Allocate offset array                                           */
@@ -1924,8 +1956,8 @@ CPLErr NITFDataset::ScanJPEGBlocks()
     panJPEGBlockOffset = (int *) 
         CPLCalloc(sizeof(int),
                   psImage->nBlocksPerRow*psImage->nBlocksPerColumn+1);
-    panJPEGBlockOffset[0] = 
-        psFile->pasSegmentInfo[psImage->iSegment].nSegmentStart;
+    panJPEGBlockOffset[0] = nJPEGStart;
+
     for( iBlock = psImage->nBlocksPerRow * psImage->nBlocksPerColumn - 1;
          iBlock > 0; iBlock-- )
         panJPEGBlockOffset[iBlock] = -1;
@@ -1938,7 +1970,8 @@ CPLErr NITFDataset::ScanJPEGBlocks()
 /* -------------------------------------------------------------------- */
     int iNextBlock = 1;
     int iSegOffset = 2;
-    int iSegSize = psFile->pasSegmentInfo[psImage->iSegment].nSegmentSize;
+    int iSegSize = psFile->pasSegmentInfo[psImage->iSegment].nSegmentSize
+        - (nJPEGStart - psFile->pasSegmentInfo[psImage->iSegment].nSegmentStart);
     GByte abyBlock[512];
 
     while( iSegOffset < iSegSize-1 )
