@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/11/20 18:30:02  fwarmerdam
+ * Use %.15g for BBOX values.
+ *
  * Revision 1.3  2006/11/03 20:14:03  fwarmerdam
  * Support writing results to a temp file when in-memory does not work.
  *
@@ -251,7 +254,7 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     osRequest.Printf( 
         "%sSERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&COVERAGE=%s"
-        "&FORMAT=%s&BBOX=%g,%g,%g,%g&WIDTH=%d&HEIGHT=%d&CRS=%s",
+        "&FORMAT=%s&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=%d&HEIGHT=%d&CRS=%s",
         CPLGetXMLValue( poODS->psService, "ServiceURL", "" ),
         CPLGetXMLValue( poODS->psService, "CoverageName", "" ),
         CPLGetXMLValue( poODS->psService, "PreferredFormat", "" ),
@@ -721,7 +724,7 @@ int WCSDataset::EstablishRasterDetails()
 
     osRequest.Printf( 
         "%sSERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&COVERAGE=%s"
-        "&FORMAT=%s&BBOX=%g,%g,%g,%g&WIDTH=2&HEIGHT=2&CRS=%s",
+        "&FORMAT=%s&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=2&HEIGHT=2&CRS=%s",
         CPLGetXMLValue( psService, "ServiceURL", "" ),
         CPLGetXMLValue( psService, "CoverageName", "" ),
         CPLGetXMLValue( psService, "PreferredFormat", "" ),
