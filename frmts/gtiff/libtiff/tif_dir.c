@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.73 2006/03/25 03:09:24 joris Exp $ */
+/* $Id: tif_dir.c,v 1.74 2006/10/12 16:50:55 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -121,7 +121,8 @@ static int
 _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 {
 	static const char module[] = "_TIFFVSetField";
-	
+
+	const TIFFFieldInfo* fip = _TIFFFindFieldInfo(tif, tag, TIFF_ANY);
 	TIFFDirectory* td = &tif->tif_dir;
 	int status = 1;
 	uint32 v32, i, v;
@@ -192,14 +193,11 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 			goto badvalue;
 		td->td_fillorder = (uint16) v;
 		break;
-		break;
 	case TIFFTAG_ORIENTATION:
 		v = va_arg(ap, uint32);
-		if (v < ORIENTATION_TOPLEFT || ORIENTATION_LEFTBOT < v) {
-			TIFFWarningExt(tif->tif_clientdata, tif->tif_name,
-			    "Bad value %lu for \"%s\" tag ignored",
-			    v, _TIFFFieldWithTag(tif, tag)->field_name);
-		} else
+		if (v < ORIENTATION_TOPLEFT || ORIENTATION_LEFTBOT < v)
+			goto badvalue;
+		else
 			td->td_orientation = (uint16) v;
 		break;
 	case TIFFTAG_SAMPLESPERPIXEL:
@@ -374,7 +372,6 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		}
 		break;
         default: {
-            const TIFFFieldInfo* fip = _TIFFFindFieldInfo(tif, tag, TIFF_ANY);
             TIFFTagValue *tv;
             int tv_size, iCustom;
 
@@ -389,9 +386,9 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
              */
             if(fip == NULL || fip->field_bit != FIELD_CUSTOM) {
 		TIFFErrorExt(tif->tif_clientdata, module,
-		    "%s: Invalid %stag \"%s\" (not supported by codec)",
-		    tif->tif_name, isPseudoTag(tag) ? "pseudo-" : "",
-		    _TIFFFieldWithTag(tif, tag)->field_name);
+			     "%s: Invalid %stag \"%s\" (not supported by codec)",
+			     tif->tif_name, isPseudoTag(tag) ? "pseudo-" : "",
+			     fip ? fip->field_name : "Unknown");
 		status = 0;
 		break;
             }
@@ -468,7 +465,8 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
 	    if (fip->field_type == TIFF_ASCII)
 		    _TIFFsetString((char **)&tv->value, va_arg(ap, char *));
 	    else {
-                tv->value = _TIFFmalloc(tv_size * tv->count);
+		tv->value = _TIFFCheckMalloc(tif, tv_size, tv->count,
+					     "Tag Value");
 		if (!tv->value) {
 		    status = 0;
 		    goto end;
@@ -563,7 +561,7 @@ _TIFFVSetField(TIFF* tif, ttag_t tag, va_list ap)
           }
 	}
 	if (status) {
-		TIFFSetFieldBit(tif, _TIFFFieldWithTag(tif, tag)->field_bit);
+		TIFFSetFieldBit(tif, fip->field_bit);
 		tif->tif_flags |= TIFF_DIRTYDIRECT;
 	}
 
@@ -571,13 +569,15 @@ end:
 	va_end(ap);
 	return (status);
 badvalue:
-	TIFFErrorExt(tif->tif_clientdata, module, "%s: Bad value %d for \"%s\"",
-		  tif->tif_name, v, _TIFFFieldWithTag(tif, tag)->field_name);
+	TIFFErrorExt(tif->tif_clientdata, module,
+		     "%s: Bad value %d for \"%s\" tag",
+		     tif->tif_name, v, fip ? fip->field_name : "Unknown");
 	va_end(ap);
 	return (0);
 badvalue32:
-	TIFFErrorExt(tif->tif_clientdata, module, "%s: Bad value %ld for \"%s\"",
-		   tif->tif_name, v32, _TIFFFieldWithTag(tif, tag)->field_name);
+	TIFFErrorExt(tif->tif_clientdata, module,
+		     "%s: Bad value %ld for \"%s\" tag",
+		     tif->tif_name, v32, fip ? fip->field_name : "Unknown");
 	va_end(ap);
 	return (0);
 }
@@ -806,21 +806,22 @@ _TIFFVGetField(TIFF* tif, ttag_t tag, va_list ap)
             int           i;
             
             /*
-             * This can happen if multiple images are open with
-             * different codecs which have private tags.  The
-             * global tag information table may then have tags
-             * that are valid for one file but not the other. 
-             * If the client tries to get a tag that is not valid
-             * for the image's codec then we'll arrive here.
+	     * This can happen if multiple images are open with different
+	     * codecs which have private tags.  The global tag information
+	     * table may then have tags that are valid for one file but not
+	     * the other. If the client tries to get a tag that is not valid
+	     * for the image's codec then we'll arrive here.
              */
             if( fip == NULL || fip->field_bit != FIELD_CUSTOM )
             {
-				TIFFErrorExt(tif->tif_clientdata, "_TIFFVGetField",
-                          "%s: Invalid %stag \"%s\" (not supported by codec)",
-                          tif->tif_name, isPseudoTag(tag) ? "pseudo-" : "",
-                          _TIFFFieldWithTag(tif, tag)->field_name);
-                ret_val = 0;
-                break;
+		    TIFFErrorExt(tif->tif_clientdata, "_TIFFVGetField",
+				 "%s: Invalid %stag \"%s\" "
+				 "(not supported by codec)",
+				 tif->tif_name,
+				 isPseudoTag(tag) ? "pseudo-" : "",
+				 fip ? fip->field_name : "Unknown");
+		    ret_val = 0;
+		    break;
             }
 
             /*

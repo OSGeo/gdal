@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.48 2006/03/29 22:24:44 fwarmerdam Exp $ */
+/* $Id: tif_jpeg.c,v 1.50 2006/10/12 18:02:52 dron Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -152,6 +152,7 @@ typedef	struct {
 
 	TIFFVGetMethod	vgetparent;	/* super-class method */
 	TIFFVSetMethod	vsetparent;	/* super-class method */
+	TIFFPrintMethod printdir;	/* super-class method */
 	TIFFStripMethod	defsparent;	/* super-class method */
 	TIFFTileMethod	deftparent;	/* super-class method */
 					/* pseudo-tag fields */
@@ -722,14 +723,29 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 		segment_width = TIFFhowmany(segment_width, sp->h_sampling);
 		segment_height = TIFFhowmany(segment_height, sp->v_sampling);
 	}
-	if (sp->cinfo.d.image_width != segment_width ||
-	    sp->cinfo.d.image_height != segment_height) {
+	if (sp->cinfo.d.image_width < segment_width ||
+	    sp->cinfo.d.image_height < segment_height) {
 		TIFFWarningExt(tif->tif_clientdata, module,
-                 "Improper JPEG strip/tile size, expected %dx%d, got %dx%d",
-                          segment_width, 
-                          segment_height,
-                          sp->cinfo.d.image_width, 
-                          sp->cinfo.d.image_height);
+			       "Improper JPEG strip/tile size, "
+			       "expected %dx%d, got %dx%d",
+			       segment_width, segment_height,
+			       sp->cinfo.d.image_width,
+			       sp->cinfo.d.image_height);
+	} 
+	if (sp->cinfo.d.image_width > segment_width ||
+	    sp->cinfo.d.image_height > segment_height) {
+		/*
+		 * This case could be dangerous, if the strip or tile size has
+		 * been reported as less than the amount of data jpeg will
+		 * return, some potential security issues arise. Catch this
+		 * case and error out.
+		 */
+		TIFFErrorExt(tif->tif_clientdata, module,
+			     "JPEG strip/tile size exceeds expected dimensions,"
+			     " expected %dx%d, got %dx%d",
+			     segment_width, segment_height,
+			     sp->cinfo.d.image_width, sp->cinfo.d.image_height);
+		return (0);
 	}
 	if (sp->cinfo.d.num_components !=
 	    (td->td_planarconfig == PLANARCONFIG_CONTIG ?
@@ -760,6 +776,24 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
                                     sp->cinfo.d.comp_info[0].h_samp_factor,
                                     sp->cinfo.d.comp_info[0].v_samp_factor,
                                     sp->h_sampling, sp->v_sampling);
+
+				/*
+				 * There are potential security issues here
+				 * for decoders that have already allocated
+				 * buffers based on the expected sampling
+				 * factors. Lets check the sampling factors
+				 * dont exceed what we were expecting.
+				 */
+				if (sp->cinfo.d.comp_info[0].h_samp_factor
+					> sp->h_sampling
+				    || sp->cinfo.d.comp_info[0].v_samp_factor
+					> sp->v_sampling) {
+					TIFFErrorExt(tif->tif_clientdata,
+						     module,
+					"Cannot honour JPEG sampling factors"
+					" that exceed those specified.");
+					return (0);
+				}
 
 			    /*
 			     * XXX: Files written by the Intergraph software
@@ -1534,6 +1568,7 @@ JPEGCleanup(TIFF* tif)
 
 	tif->tif_tagmethods.vgetfield = sp->vgetparent;
 	tif->tif_tagmethods.vsetfield = sp->vsetparent;
+	tif->tif_tagmethods.printdir = sp->printdir;
 
 	if( sp->cinfo_initialized )
 	    TIFFjpeg_destroy(sp);	/* release libjpeg resources */
@@ -1548,41 +1583,40 @@ JPEGCleanup(TIFF* tif)
 static void 
 JPEGResetUpsampled( TIFF* tif )
 {
-    JPEGState* sp = JState(tif);
-    TIFFDirectory* td = &tif->tif_dir;
+	JPEGState* sp = JState(tif);
+	TIFFDirectory* td = &tif->tif_dir;
 
-    /*
-     * Mark whether returned data is up-sampled or not
-     * so TIFFStripSize and TIFFTileSize return values
-     * that reflect the true amount of data.
-     */
-    tif->tif_flags &= ~TIFF_UPSAMPLED;
-    if (td->td_planarconfig == PLANARCONFIG_CONTIG) {
-        if (td->td_photometric == PHOTOMETRIC_YCBCR &&
-            sp->jpegcolormode == JPEGCOLORMODE_RGB) {
-            tif->tif_flags |= TIFF_UPSAMPLED;
-        } else {
+	/*
+	 * Mark whether returned data is up-sampled or not so TIFFStripSize
+	 * and TIFFTileSize return values that reflect the true amount of
+	 * data.
+	 */
+	tif->tif_flags &= ~TIFF_UPSAMPLED;
+	if (td->td_planarconfig == PLANARCONFIG_CONTIG) {
+		if (td->td_photometric == PHOTOMETRIC_YCBCR &&
+		    sp->jpegcolormode == JPEGCOLORMODE_RGB) {
+			tif->tif_flags |= TIFF_UPSAMPLED;
+		} else {
 #ifdef notdef
-            if (td->td_ycbcrsubsampling[0] != 1 ||
-                td->td_ycbcrsubsampling[1] != 1)
-                ; /* XXX what about up-sampling? */
+			if (td->td_ycbcrsubsampling[0] != 1 ||
+			    td->td_ycbcrsubsampling[1] != 1)
+				; /* XXX what about up-sampling? */
 #endif
-        }
-    }
+		}
+	}
 
-    /*
-     * Must recalculate cached tile size
-     * in case sampling state changed.
-     *
-     * Should we really be doing this now if image size isn't set? 
-     */
-    tif->tif_tilesize = isTiled(tif) ? TIFFTileSize(tif) : (tsize_t) -1;
+	/*
+	 * Must recalculate cached tile size in case sampling state changed.
+	 * Should we really be doing this now if image size isn't set? 
+	 */
+	tif->tif_tilesize = isTiled(tif) ? TIFFTileSize(tif) : (tsize_t) -1;
 }
 
 static int
 JPEGVSetField(TIFF* tif, ttag_t tag, va_list ap)
 {
 	JPEGState* sp = JState(tif);
+	const TIFFFieldInfo* fip;
 	uint32 v32;
 
 	assert(sp != NULL);
@@ -1635,7 +1669,13 @@ JPEGVSetField(TIFF* tif, ttag_t tag, va_list ap)
 	default:
 		return (*sp->vsetparent)(tif, tag, ap);
 	}
-	TIFFSetFieldBit(tif, _TIFFFieldWithTag(tif, tag)->field_bit);
+
+	if ((fip = _TIFFFieldWithTag(tif, tag))) {
+		TIFFSetFieldBit(tif, fip->field_bit);
+	} else {
+		return (0);
+	}
+
 	tif->tif_flags |= TIFF_DIRTYDIRECT;
 	return (1);
 }
@@ -1824,7 +1864,7 @@ static int JPEGInitializeLibJPEG( TIFF * tif, int force_encode, int force_decode
     int     data_is_empty = TRUE;
     int     decompress;
 
-    if( sp->cinfo_initialized )
+    if(sp->cinfo_initialized)
         return 1;
 
     /*
@@ -1886,7 +1926,8 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 	tif->tif_data = (tidata_t) _TIFFmalloc(sizeof (JPEGState));
 
 	if (tif->tif_data == NULL) {
-		TIFFErrorExt(tif->tif_clientdata, "TIFFInitJPEG", "No space for JPEG state block");
+		TIFFErrorExt(tif->tif_clientdata,
+			     "TIFFInitJPEG", "No space for JPEG state block");
 		return (0);
 	}
         _TIFFmemset( tif->tif_data, 0, sizeof(JPEGState));
@@ -1903,6 +1944,7 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 	tif->tif_tagmethods.vgetfield = JPEGVGetField; /* hook for codec tags */
 	sp->vsetparent = tif->tif_tagmethods.vsetfield;
 	tif->tif_tagmethods.vsetfield = JPEGVSetField; /* hook for codec tags */
+	sp->printdir = tif->tif_tagmethods.printdir;
 	tif->tif_tagmethods.printdir = JPEGPrintDir;   /* hook for codec tags */
 
 	/* Default values for codec-specific fields */
@@ -1968,3 +2010,4 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 #endif /* JPEG_SUPPORT */
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
+

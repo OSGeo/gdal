@@ -1,4 +1,4 @@
-/* $Id: tif_next.c,v 1.6 2005/12/21 12:23:13 joris Exp $ */
+/* $Id: tif_next.c,v 1.8 2006/10/12 15:00:49 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -48,11 +48,10 @@
 static int
 NeXTDecode(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
 {
-	register unsigned char *bp, *op;
-	register tsize_t cc;
-	register int n;
+	unsigned char *bp, *op;
+	tsize_t cc;
 	tidata_t row;
-	tsize_t scanline;
+	tsize_t scanline, n;
 
 	(void) s;
 	/*
@@ -66,7 +65,7 @@ NeXTDecode(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
 	bp = (unsigned char *)tif->tif_rawcp;
 	cc = tif->tif_rawcc;
 	scanline = tif->tif_scanlinesize;
-	for (row = buf; (long)occ > 0; occ -= scanline, row += scanline) {
+	for (row = buf; occ > 0; occ -= scanline, row += scanline) {
 		n = *bp++, cc--;
 		switch (n) {
 		case LITERALROW:
@@ -80,10 +79,10 @@ NeXTDecode(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
 			cc -= scanline;
 			break;
 		case LITERALSPAN: {
-			int off;
+			tsize_t off;
 			/*
-			 * The scanline has a literal span
-			 * that begins at some offset.
+			 * The scanline has a literal span that begins at some
+			 * offset.
 			 */
 			off = (bp[0] * 256) + bp[1];
 			n = (bp[2] * 256) + bp[3];
@@ -95,23 +94,27 @@ NeXTDecode(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
 			break;
 		}
 		default: {
-			register int npixels = 0, grey;
-			unsigned long imagewidth = tif->tif_dir.td_imagewidth;
+			uint32 npixels = 0, grey;
+			uint32 imagewidth = tif->tif_dir.td_imagewidth;
 
 			/*
-			 * The scanline is composed of a sequence
-			 * of constant color ``runs''.  We shift
-			 * into ``run mode'' and interpret bytes
-			 * as codes of the form <color><npixels>
-			 * until we've filled the scanline.
+			 * The scanline is composed of a sequence of constant
+			 * color ``runs''.  We shift into ``run mode'' and
+			 * interpret bytes as codes of the form
+			 * <color><npixels> until we've filled the scanline.
 			 */
 			op = row;
 			for (;;) {
 				grey = (n>>6) & 0x3;
 				n &= 0x3f;
-				while (n-- > 0)
+				/*
+				 * Ensure the run does not exceed the scanline
+				 * bounds, potentially resulting in a security
+				 * issue.
+				 */
+				while (n-- > 0 && npixels < imagewidth)
 					SETPIXEL(op, grey);
-				if (npixels >= (int) imagewidth)
+				if (npixels >= imagewidth)
 					break;
 				if (cc == 0)
 					goto bad;

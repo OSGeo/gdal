@@ -1,4 +1,4 @@
-/* $Id: tiff.h,v 1.42 2005/12/23 15:10:45 dron Exp $ */
+/* $Id: tiff.h,v 1.43 2006/10/05 15:20:40 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -43,7 +43,7 @@
  *    (http://partners.adobe.com/asn/developer/PDFS/TN/TIFF6.pdf)
  *
  * For Big TIFF design notes see the following link
- *    http://gdal.maptools.org/twiki/bin/view/libtiff/BigTIFFDesign
+ *    http://www.remotesensing.org/libtiff/bigtiffdesign.html
  */
 #define	TIFF_VERSION	        42
 #define TIFF_BIGTIFF_VERSION    43

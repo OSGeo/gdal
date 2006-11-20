@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.14 2006/03/16 12:38:24 dron Exp $ */
+/* $Id: tif_pixarlog.c,v 1.15 2006/09/28 16:26:03 dron Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -327,7 +327,7 @@ horizontalAccumulate11(uint16 *wp, int n, int stride, uint16 *op)
 	    while (n > 0) {
 		REPEAT(stride,
 		    wp[stride] += *wp; *op = *wp&mask; wp++; op++)
-	    	n -= stride;
+		n -= stride;
 	    }
 	}
     }
@@ -768,6 +768,18 @@ PixarLogDecode(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 	if (tif->tif_flags & TIFF_SWAB)
 		TIFFSwabArrayOfShort(up, nsamples);
 
+	/* 
+	 * if llen is not an exact multiple of nsamples, the decode operation
+	 * may overflow the output buffer, so truncate it enough to prevent
+	 * that but still salvage as much data as possible.
+	 */
+	if (nsamples % llen) { 
+		TIFFWarningExt(tif->tif_clientdata, module,
+			"%s: stride %lu is not a multiple of sample count, "
+			"%lu, data truncated.", tif->tif_name, llen, nsamples);
+		nsamples -= nsamples % llen;
+	}
+
 	for (i = 0; i < nsamples; i += llen, up += llen) {
 		switch (sp->user_datafmt)  {
 		case PIXARLOGDATAFMT_FLOAT:
@@ -1036,7 +1048,7 @@ PixarLogEncode(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 	TIFFDirectory *td = &tif->tif_dir;
 	PixarLogState *sp = EncoderState(tif);
 	static const char module[] = "PixarLogEncode";
-	int 	i, n, llen;
+	int	i, n, llen;
 	unsigned short * up;
 
 	(void) s;

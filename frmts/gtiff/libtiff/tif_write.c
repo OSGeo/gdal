@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.21 2006/02/27 14:29:20 dron Exp $ */
+/* $Id: tif_write.c,v 1.22 2006/11/20 02:11:41 fwarmerdam Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -625,66 +625,67 @@ TIFFGrowStrips(TIFF* tif, int delta, const char* module)
 static int
 TIFFAppendToStrip(TIFF* tif, tstrip_t strip, tidata_t data, tsize_t cc)
 {
-	TIFFDirectory *td = &tif->tif_dir;
-	static const char module[] = "TIFFAppendToStrip";
+    TIFFDirectory *td = &tif->tif_dir;
+    static const char module[] = "TIFFAppendToStrip";
 
-	if (td->td_stripoffset[strip] == 0 || tif->tif_curoff == 0) {
-		/*
-		 * No current offset, set the current strip.
-		 */
-		assert(td->td_nstrips > 0);
-		if (td->td_stripoffset[strip] != 0) {
-			/*
-			 * Prevent overlapping of the data chunks. We need
-                         * this to enable in place updating of the compressed
-                         * images. Larger blocks will be moved at the end of
-                         * the file without any optimization of the spare
-                         * space, so such scheme is not too much effective.
-			 */
-			if (td->td_stripbytecountsorted) {
-				if (strip == td->td_nstrips - 1
-				    || td->td_stripoffset[strip + 1] <
-					td->td_stripoffset[strip] + cc) {
-					td->td_stripoffset[strip] =
-						TIFFSeekFile(tif, (toff_t)0,
-							     SEEK_END);
-				}
-			} else {
-				tstrip_t i;
-				for (i = 0; i < td->td_nstrips; i++) {
-					if (td->td_stripoffset[i] > 
-						td->td_stripoffset[strip]
-					    && td->td_stripoffset[i] <
-						td->td_stripoffset[strip] + cc) {
-						td->td_stripoffset[strip] =
-							TIFFSeekFile(tif,
-								     (toff_t)0,
-								     SEEK_END);
-					}
-				}
-			}
+    if (td->td_stripoffset[strip] == 0 || tif->tif_curoff == 0) {
+        /*
+         * No current offset, set the current strip.
+         */
+        assert(td->td_nstrips > 0);
+        if (td->td_stripoffset[strip] != 0) {
+            /*
+             * Prevent overlapping of the data chunks. We need
+             * this to enable in place updating of the compressed
+             * images. Larger blocks will be moved at the end of
+             * the file without any optimization of the spare
+             * space, so such scheme is not too much effective.
+             */
+            if (td->td_stripbytecountsorted) {
+                if (strip == td->td_nstrips - 1
+                    || td->td_stripoffset[strip + 1] <
+                    td->td_stripoffset[strip] + cc) {
+                    td->td_stripoffset[strip] =
+                        TIFFSeekFile(tif, (toff_t)0,
+                                     SEEK_END);
+                    td->td_stripbytecountsorted = 0;
+                }
+            } else {
+                tstrip_t i;
+                for (i = 0; i < td->td_nstrips; i++) {
+                    if (td->td_stripoffset[i] > 
+                        td->td_stripoffset[strip]
+                        && td->td_stripoffset[i] <
+                        td->td_stripoffset[strip] + cc) {
+                        td->td_stripoffset[strip] =
+                            TIFFSeekFile(tif,
+                                         (toff_t)0,
+                                         SEEK_END);
+                    }
+                }
+            }
 
-			if (!SeekOK(tif, td->td_stripoffset[strip])) {
-				TIFFErrorExt(tif->tif_clientdata, module,
-					  "%s: Seek error at scanline %lu",
-					  tif->tif_name,
-					  (unsigned long)tif->tif_row);
-				return (0);
-			}
-		} else
-			td->td_stripoffset[strip] =
-			    TIFFSeekFile(tif, (toff_t) 0, SEEK_END);
-		tif->tif_curoff = td->td_stripoffset[strip];
-	}
+            if (!SeekOK(tif, td->td_stripoffset[strip])) {
+                TIFFErrorExt(tif->tif_clientdata, module,
+                             "%s: Seek error at scanline %lu",
+                             tif->tif_name,
+                             (unsigned long)tif->tif_row);
+                return (0);
+            }
+        } else
+            td->td_stripoffset[strip] =
+                TIFFSeekFile(tif, (toff_t) 0, SEEK_END);
+        tif->tif_curoff = td->td_stripoffset[strip];
+    }
 
-	if (!WriteOK(tif, data, cc)) {
-		TIFFErrorExt(tif->tif_clientdata, module, "%s: Write error at scanline %lu",
-		    tif->tif_name, (unsigned long) tif->tif_row);
-		return (0);
-	}
-	tif->tif_curoff += cc;
-	td->td_stripbytecount[strip] += cc;
-	return (1);
+    if (!WriteOK(tif, data, cc)) {
+        TIFFErrorExt(tif->tif_clientdata, module, "%s: Write error at scanline %lu",
+                     tif->tif_name, (unsigned long) tif->tif_row);
+        return (0);
+    }
+    tif->tif_curoff += cc;
+    td->td_stripbytecount[strip] += cc;
+    return (1);
 }
 
 /*
