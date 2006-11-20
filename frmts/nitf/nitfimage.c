@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2006/11/20 15:06:36  fwarmerdam
+ * Support for ICORDS='D' from Reiner Beck.
+ *
  * Revision 1.46  2006/11/17 17:01:23  fwarmerdam
  * Yikes!  Fixed a couple issues with TRE handling.
  *
@@ -403,6 +406,13 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
                 if( pszCoordPair[14] == 'w' || pszCoordPair[14] == 'W' )
                     psIGEOLOGCPs[iCoord].dfGCPX *= -1;
             }
+            else if( psImage->chICORDS == 'D' )
+            {  /* 'D' is Decimal Degrees */
+                psIGEOLOGCPs[iCoord].dfGCPY =
+                    atof(NITFGetField( szTemp, pszCoordPair, 0, 7 ));
+                psIGEOLOGCPs[iCoord].dfGCPX =
+                    atof(NITFGetField( szTemp, pszCoordPair, 7, 8 ));
+            }      
             else if( psImage->chICORDS == 'U' )
             {
                 int err;
