@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.45  2006/11/20 12:58:12  tamas
+ * Added GDALColorEntry for the SWIG C# binding
+ *
  * Revision 1.44  2006/11/18 09:25:53  ajolma
  * make it possible to switch to CPAN namespace with symbol PERL_CPAN_NAMESPACE
  *
@@ -289,6 +292,25 @@ typedef int GDALResampleAlg;
 %rename (SerializeXMLTree) CPLSerializeXMLTree;
 #endif
 
+//************************************************************************
+//
+// GDALColorEntry
+//
+//************************************************************************
+#if defined(SWIGCSHARP)
+%rename (ColorEntry) GDALColorEntry;
+typedef struct
+{
+    /*! gray, red, cyan or hue */
+    short      c1;      
+    /*! green, magenta, or lightness */    
+    short      c2;      
+    /*! blue, yellow, or saturation */
+    short      c3;      
+    /*! alpha or blackband */
+    short      c4;      
+} GDALColorEntry;
+#endif
 
 //************************************************************************
 //
