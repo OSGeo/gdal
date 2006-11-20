@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2006/11/20 15:08:10  fwarmerdam
+ * Added support for ICORDS='D'.
+ *
  * Revision 1.63  2006/11/20 14:55:25  fwarmerdam
  * Add ability to scan forward for start of jpeg datastream.  The file
  * jpeg_nsif.nsf seems to have extra "stuff" before the data stream.
@@ -1046,7 +1049,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         /* nothing */
     }
-    else if( psImage->chICORDS == 'G'  )
+    else if( psImage->chICORDS == 'G'  || psImage->chICORDS == 'D' )
     {
         CPLFree( poDS->pszProjection );
         poDS->pszProjection = NULL;
