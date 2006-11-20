@@ -52,6 +52,9 @@ jlacroix      Julien-Samuel Lacroix	   mitab, avc
 dnadeau	      Denis Nadeau                 netcdf, hdf, opendap
               denis.nadeau@gmail.com
 
+cfis          Charles F. I. Savage         ruby
+              cfis at interserv dot com
+
 
 
 Folks who have not yet agreed to RFC 3:
@@ -81,8 +84,6 @@ pka		Pirmin Kalberer		pka at sourcepole.ch		gdal
 fvdbergh	Frans van der Bergh	fvdbergh at csir.co.za		gdal
 
 dwallner	Daniel Wallner		daniel.wallner at bredband.net	gdal
-
-cfis		Charles F. I. Savage	cfis at interserv dot com 	gdal
 
 pnagy           Peter Nagy              peter.nagy at vexcel.com        gdal
 
