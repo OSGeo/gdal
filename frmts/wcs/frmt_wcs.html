@@ -1,4 +1,4 @@
-<html>
+,<html>
 <head>
 <title>WCS -- OGC Web Coverage Service</title>
 </head>
@@ -13,13 +13,13 @@ raster dataset.  GDAL acts as a client to the WCS server.<p>
 Accessing a WCS server is accomplished by creating a local service description
 xml file looking something like the following, with the coverage server url, 
 and the name of the coverage to access.  It is important that there be no
-spaces or other content before the <tt>&lt;GDAL_WCS&gt;</tt> element.<p>
+spaces or other content before the <tt>&lt;WCS_GDAL&gt;</tt> element.<p>
 
 <pre>
-&lt;GDAL_WCS&gt;
+&lt;WCS_GDAL&gt;
   &lt;ServiceURL&gt;http://maps.gdal.org/cgi-bin/mapserv_dem?&lt;/ServiceURL&gt;
   &lt;CoverageName&gt;srtmplus_raw&lt;/CoverageName&gt;
-&lt;/GDAL_WCS&gt;
+&lt;/WCS_GDAL&gt;
 </pre>
 
 When first opened, GDAL will fetch the coverage description, and a small test
@@ -36,7 +36,7 @@ from the DescribeCoverage result, and are expected to be in the form of
 <tt>EPSG:n</tt> in the <tt>&gt;supportedCRSs&lt;</tt> element. <p>
 
 The service description file has the following additional elements as 
-immediate children of the <tt>GDAL_WCS</tt> element that may be optionally
+immediate children of the <tt>WCS_GDAL</tt> element that may be optionally
 set.<p>
 
 <ul>
