@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.63 2006/06/03 15:28:33 bfriesen Exp $ */
+/* $Id: tif_dirinfo.c,v 1.64 2006/06/24 13:30:50 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -449,6 +449,8 @@ exifFieldInfo[] = {
       1,	0,	"SubSecTimeDigitized" },
     { EXIFTAG_FLASHPIXVERSION,	4, 4,		TIFF_UNDEFINED,	FIELD_CUSTOM,
       1,	0,	"FlashpixVersion" },
+    { EXIFTAG_COLORSPACE,	1, 1,		TIFF_SHORT,	FIELD_CUSTOM,
+      1,	0,	"ColorSpace" },
     { EXIFTAG_PIXELXDIMENSION,	1, 1,		TIFF_LONG,	FIELD_CUSTOM,
       1,	0,	"PixelXDimension" },
     { EXIFTAG_PIXELXDIMENSION,	1, 1,		TIFF_SHORT,	FIELD_CUSTOM,
@@ -835,7 +837,8 @@ _TIFFCreateAnonFieldInfo(TIFF *tif, ttag_t tag, TIFFDataType field_type)
 	    return NULL;
 	}
 
-	/* note that this name is a special sign to TIFFClose() and
+	/* 
+	 * note that this name is a special sign to TIFFClose() and
 	 * _TIFFSetupFieldInfo() to free the field
 	 */
 	sprintf(fld->field_name, "Tag %d", (int) tag);

@@ -1,4 +1,4 @@
-/* $Id: tif_fax3.c,v 1.41 2006/06/08 11:33:00 dron Exp $ */
+/* $Id: tif_fax3.c,v 1.43 2006/10/12 18:11:30 dron Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -63,6 +63,7 @@ typedef struct {
 	char*	faxdcs;			/* Table 2/T.30 encoded session params */
 	TIFFVGetMethod vgetparent;	/* super-class method */
 	TIFFVSetMethod vsetparent;	/* super-class method */
+	TIFFPrintMethod printdir;	/* super-class method */
 } Fax3BaseState;
 #define	Fax3State(tif)		((Fax3BaseState*) (tif)->tif_data)
 
@@ -1076,6 +1077,7 @@ Fax3Cleanup(TIFF* tif)
 
 	tif->tif_tagmethods.vgetfield = sp->b.vgetparent;
 	tif->tif_tagmethods.vsetfield = sp->b.vsetparent;
+	tif->tif_tagmethods.printdir = sp->b.printdir;
 
 	if (sp->runs)
 		_TIFFfree(sp->runs);
@@ -1138,6 +1140,7 @@ static int
 Fax3VSetField(TIFF* tif, ttag_t tag, va_list ap)
 {
 	Fax3BaseState* sp = Fax3State(tif);
+	const TIFFFieldInfo* fip;
 
 	assert(sp != 0);
 	assert(sp->vsetparent != 0);
@@ -1145,10 +1148,10 @@ Fax3VSetField(TIFF* tif, ttag_t tag, va_list ap)
 	switch (tag) {
 	case TIFFTAG_FAXMODE:
 		sp->mode = va_arg(ap, int);
-		return (1);			/* NB: pseudo tag */
+		return 1;			/* NB: pseudo tag */
 	case TIFFTAG_FAXFILLFUNC:
 		DecoderState(tif)->fill = va_arg(ap, TIFFFaxFillFunc);
-		return (1);			/* NB: pseudo tag */
+		return 1;			/* NB: pseudo tag */
 	case TIFFTAG_GROUP3OPTIONS:
 		/* XXX: avoid reading options if compression mismatches. */
 		if (tif->tif_dir.td_compression == COMPRESSION_CCITTFAX3)
@@ -1183,15 +1186,22 @@ Fax3VSetField(TIFF* tif, ttag_t tag, va_list ap)
 	default:
 		return (*sp->vsetparent)(tif, tag, ap);
 	}
-	TIFFSetFieldBit(tif, _TIFFFieldWithTag(tif, tag)->field_bit);
+	
+	if ((fip = _TIFFFieldWithTag(tif, tag)))
+		TIFFSetFieldBit(tif, fip->field_bit);
+	else
+		return 0;
+
 	tif->tif_flags |= TIFF_DIRTYDIRECT;
-	return (1);
+	return 1;
 }
 
 static int
 Fax3VGetField(TIFF* tif, ttag_t tag, va_list ap)
 {
 	Fax3BaseState* sp = Fax3State(tif);
+
+	assert(sp != 0);
 
 	switch (tag) {
 	case TIFFTAG_FAXMODE:
@@ -1235,6 +1245,8 @@ static void
 Fax3PrintDir(TIFF* tif, FILE* fd, long flags)
 {
 	Fax3BaseState* sp = Fax3State(tif);
+
+	assert(sp != 0);
 
 	(void) flags;
 	if (TIFFFieldSet(tif,FIELD_OPTIONS)) {
@@ -1320,6 +1332,7 @@ InitCCITTFax3(TIFF* tif)
 	tif->tif_tagmethods.vgetfield = Fax3VGetField; /* hook for codec tags */
 	sp->vsetparent = tif->tif_tagmethods.vsetfield;
 	tif->tif_tagmethods.vsetfield = Fax3VSetField; /* hook for codec tags */
+	sp->printdir = tif->tif_tagmethods.printdir;
 	tif->tif_tagmethods.printdir = Fax3PrintDir;   /* hook for codec tags */
 	sp->groupoptions = 0;	
 	sp->recvparams = 0;

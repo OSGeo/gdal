@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.14 2006/03/25 03:09:24 joris Exp $ */
+/* $Id: tif_read.c,v 1.15 2006/10/12 15:01:30 dron Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -243,24 +243,23 @@ TIFFReadRawStrip(TIFF* tif, tstrip_t strip, tdata_t buf, tsize_t size)
 }
 
 /*
- * Read the specified strip and setup for decoding.
- * The data buffer is expanded, as necessary, to
- * hold the strip's data.
+ * Read the specified strip and setup for decoding. The data buffer is
+ * expanded, as necessary, to hold the strip's data.
  */
 int
 TIFFFillStrip(TIFF* tif, tstrip_t strip)
 {
 	static const char module[] = "TIFFFillStrip";
 	TIFFDirectory *td = &tif->tif_dir;
-	tsize_t bytecount;
 
 	if ((tif->tif_flags&TIFF_NOREADRAW)==0)
 	{
-		bytecount = td->td_stripbytecount[strip];
+		tsize_t bytecount = td->td_stripbytecount[strip];
 		if (bytecount <= 0) {
-			TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
-			    "%lu: Invalid strip byte count, strip %lu",
-			    (unsigned long) bytecount, (unsigned long) strip);
+			TIFFErrorExt(tif->tif_clientdata, module,
+			    "%s: Invalid strip byte count %lu, strip %lu",
+			    tif->tif_name, (unsigned long) bytecount,
+			    (unsigned long) strip);
 			return (0);
 		}
 		if (isMapped(tif) &&
@@ -268,29 +267,41 @@ TIFFFillStrip(TIFF* tif, tstrip_t strip)
 		    || (tif->tif_flags & TIFF_NOBITREV))) {
 			/*
 			 * The image is mapped into memory and we either don't
-			 * need to flip bits or the compression routine is going
-			 * to handle this operation itself.  In this case, avoid
-			 * copying the raw data and instead just reference the
-			 * data from the memory mapped file image.  This assumes
-			 * that the decompression routines do not modify the
-			 * contents of the raw data buffer (if they try to,
-			 * the application will get a fault since the file is
-			 * mapped read-only).
+			 * need to flip bits or the compression routine is
+			 * going to handle this operation itself.  In this
+			 * case, avoid copying the raw data and instead just
+			 * reference the data from the memory mapped file
+			 * image.  This assumes that the decompression
+			 * routines do not modify the contents of the raw data
+			 * buffer (if they try to, the application will get a
+			 * fault since the file is mapped read-only).
 			 */
 			if ((tif->tif_flags & TIFF_MYBUFFER) && tif->tif_rawdata)
 				_TIFFfree(tif->tif_rawdata);
 			tif->tif_flags &= ~TIFF_MYBUFFER;
-			if ( td->td_stripoffset[strip] + bytecount > tif->tif_size) {
+			/*
+			 * We must check for overflow, potentially causing
+			 * an OOB read. Instead of simple
+			 *
+			 *  td->td_stripoffset[strip]+bytecount > tif->tif_size
+			 *
+			 * comparison (which can overflow) we do the following
+			 * two comparisons:
+			 */
+			if (bytecount > tif->tif_size ||
+			    td->td_stripoffset[strip] > tif->tif_size - bytecount) {
 				/*
-				 * This error message might seem strange, but it's
-				 * what would happen if a read were done instead.
+				 * This error message might seem strange, but
+				 * it's what would happen if a read were done
+				 * instead.
 				 */
 				TIFFErrorExt(tif->tif_clientdata, module,
-			    "%s: Read error on strip %lu; got %lu bytes, expected %lu",
-				    tif->tif_name,
-				    (unsigned long) strip,
-				    (unsigned long) tif->tif_size - td->td_stripoffset[strip],
-				    (unsigned long) bytecount);
+
+					"%s: Read error on strip %lu; "
+					"got %lu bytes, expected %lu",
+					tif->tif_name, (unsigned long) strip,
+					(unsigned long) tif->tif_size - td->td_stripoffset[strip],
+					(unsigned long) bytecount);
 				tif->tif_curstrip = NOSTRIP;
 				return (0);
 			}
@@ -298,10 +309,9 @@ TIFFFillStrip(TIFF* tif, tstrip_t strip)
 			tif->tif_rawdata = tif->tif_base + td->td_stripoffset[strip];
 		} else {
 			/*
-			 * Expand raw data buffer, if needed, to
-			 * hold data strip coming from file
-			 * (perhaps should set upper bound on
-			 *  the size of a buffer we'll use?).
+			 * Expand raw data buffer, if needed, to hold data
+			 * strip coming from file (perhaps should set upper
+			 * bound on the size of a buffer we'll use?).
 			 */
 			if (bytecount > tif->tif_rawdatasize) {
 				tif->tif_curstrip = NOSTRIP;
@@ -315,8 +325,9 @@ TIFFFillStrip(TIFF* tif, tstrip_t strip)
 				    TIFFroundup(bytecount, 1024)))
 					return (0);
 			}
-			if (TIFFReadRawStrip1(tif, strip, (unsigned char *)tif->tif_rawdata,
-			    bytecount, module) != bytecount)
+			if (TIFFReadRawStrip1(tif, strip,
+					      (unsigned char *)tif->tif_rawdata,
+					      bytecount, module) != bytecount)
 				return (0);
 			if (!isFillOrder(tif, td->td_fillorder) &&
 			    (tif->tif_flags & TIFF_NOBITREV) == 0)
@@ -450,20 +461,18 @@ TIFFReadRawTile(TIFF* tif, ttile_t tile, tdata_t buf, tsize_t size)
 }
 
 /*
- * Read the specified tile and setup for decoding. 
- * The data buffer is expanded, as necessary, to
- * hold the tile's data.
+ * Read the specified tile and setup for decoding. The data buffer is
+ * expanded, as necessary, to hold the tile's data.
  */
 int
 TIFFFillTile(TIFF* tif, ttile_t tile)
 {
 	static const char module[] = "TIFFFillTile";
 	TIFFDirectory *td = &tif->tif_dir;
-	tsize_t bytecount;
 
 	if ((tif->tif_flags&TIFF_NOREADRAW)==0)
 	{
-		bytecount = td->td_stripbytecount[tile];
+		tsize_t bytecount = td->td_stripbytecount[tile];
 		if (bytecount <= 0) {
 			TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
 			    "%lu: Invalid tile byte count, tile %lu",
@@ -475,19 +484,29 @@ TIFFFillTile(TIFF* tif, ttile_t tile)
 		     || (tif->tif_flags & TIFF_NOBITREV))) {
 			/*
 			 * The image is mapped into memory and we either don't
-			 * need to flip bits or the compression routine is going
-			 * to handle this operation itself.  In this case, avoid
-			 * copying the raw data and instead just reference the
-			 * data from the memory mapped file image.  This assumes
-			 * that the decompression routines do not modify the
-			 * contents of the raw data buffer (if they try to,
-			 * the application will get a fault since the file is
-			 * mapped read-only).
+			 * need to flip bits or the compression routine is
+			 * going to handle this operation itself.  In this
+			 * case, avoid copying the raw data and instead just
+			 * reference the data from the memory mapped file
+			 * image.  This assumes that the decompression
+			 * routines do not modify the contents of the raw data
+			 * buffer (if they try to, the application will get a
+			 * fault since the file is mapped read-only).
 			 */
 			if ((tif->tif_flags & TIFF_MYBUFFER) && tif->tif_rawdata)
 				_TIFFfree(tif->tif_rawdata);
 			tif->tif_flags &= ~TIFF_MYBUFFER;
-			if ( td->td_stripoffset[tile] + bytecount > tif->tif_size) {
+			/*
+			 * We must check for overflow, potentially causing
+			 * an OOB read. Instead of simple
+			 *
+			 *  td->td_stripoffset[tile]+bytecount > tif->tif_size
+			 *
+			 * comparison (which can overflow) we do the following
+			 * two comparisons:
+			 */
+			if (bytecount > tif->tif_size ||
+			    td->td_stripoffset[tile] > tif->tif_size - bytecount) {
 				tif->tif_curtile = NOTILE;
 				return (0);
 			}
@@ -495,10 +514,9 @@ TIFFFillTile(TIFF* tif, ttile_t tile)
 			tif->tif_rawdata = tif->tif_base + td->td_stripoffset[tile];
 		} else {
 			/*
-			 * Expand raw data buffer, if needed, to
-			 * hold data tile coming from file
-			 * (perhaps should set upper bound on
-			 *  the size of a buffer we'll use?).
+			 * Expand raw data buffer, if needed, to hold data
+			 * tile coming from file (perhaps should set upper
+			 * bound on the size of a buffer we'll use?).
 			 */
 			if (bytecount > tif->tif_rawdatasize) {
 				tif->tif_curtile = NOTILE;
