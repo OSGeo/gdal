@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/11/20 03:46:33  fwarmerdam
+ * Fixed serious double free in SetAttributeFilter() per report from Stephan Holl.
+ *
  * Revision 1.22  2006/05/15 18:04:32  fwarmerdam
  * added 'secret' useSpatialSubquery attribute on GeometryField
  *
@@ -826,14 +829,9 @@ OGRErr OGRVRTLayer::SetAttributeFilter( const char *pszNewQuery )
 {
     CPLFree( pszAttrFilter );
     if( pszNewQuery == NULL || strlen(pszNewQuery) == 0 )
-    {
         pszAttrFilter = NULL;
-    }
     else
-    {
-        CPLFree( pszAttrFilter );
         pszAttrFilter = CPLStrdup( pszNewQuery );
-    }
 
     ResetReading();
     return OGRERR_NONE;
