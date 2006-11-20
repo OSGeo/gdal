@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2006/11/20 15:06:04  fwarmerdam
+ * Comment out no-action PLACE statements to avoid compiler warnings.
+ *
  * Revision 1.23  2006/10/13 02:53:48  fwarmerdam
  * various improvements to TRE and VQ LUT support for bug 1313
  *
@@ -581,9 +584,9 @@ int NITFCreate( const char *pszFilename,
         }
 
         PLACE(pachIMHDR+nOffset+ 0, IREPBANDn, pszIREPBAND                 );
-        PLACE(pachIMHDR+nOffset+ 2, ISUBCATn, ""                           );
+//      PLACE(pachIMHDR+nOffset+ 2, ISUBCATn, ""                           );
         PLACE(pachIMHDR+nOffset+ 8, IFCn  , "N"                            );
-        PLACE(pachIMHDR+nOffset+ 9, IMFLTn, ""                             );
+//      PLACE(pachIMHDR+nOffset+ 9, IMFLTn, ""                             );
 
         if( !EQUAL(pszIREP,"RGB/LUT") )
         {
