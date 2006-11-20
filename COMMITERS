@@ -55,6 +55,9 @@ dnadeau	      Denis Nadeau                 netcdf, hdf, opendap
 cfis          Charles F. I. Savage         ruby
               cfis at interserv dot com
 
+lichun	      Lichun Wang                  ilwis
+              lichun at itc.nl 		
+
 
 
 Folks who have not yet agreed to RFC 3:
@@ -72,8 +75,6 @@ bfreisen	Bob Friesenhahn		bfriesen at simple.dallas.tx.us	libtiff
 andrea		Alessandro Amici 	alexamici at tiscali.it		gdal
 
 dgilbert	Dave Gilbert		dgilbert at dclg.ca		libjpeg
-
-lichun		Lichun Wang 		lichun at itc.nl 		gdal
 
 nhv		Norman Vine		nhv at cape.com			gdal
 
