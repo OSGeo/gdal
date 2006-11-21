@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.101  2006/11/21 21:25:27  fwarmerdam
+ * Applied ESRI:: modifier to dictionary lookups if requested.
+ *
  * Revision 1.100  2006/11/07 18:55:07  fwarmerdam
  * added OGC importFromURN()
  *
@@ -1624,6 +1627,9 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
 
         err = importFromDict( pszFile, pszCode );
         CPLFree( pszFile );
+
+        if( err == OGRERR_NONE && bESRI )
+            err = morphFromESRI();
 
         return err;
     }
