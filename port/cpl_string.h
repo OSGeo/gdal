@@ -29,6 +29,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.27  2006/11/22 18:17:49  fwarmerdam
+ * changed frmt to const char in CPLSPrintf
+ *
  * Revision 1.26  2006/11/16 14:36:11  mloskot
  * Disabled annoying warnings for Visual C++.
  *
@@ -134,7 +137,7 @@ int CPL_DLL CSLTestBoolean( const char *pszValue );
 int CPL_DLL CSLFetchBoolean( char **papszStrList, const char *pszKey, 
                              int bDefault );
 
-const char CPL_DLL *CPLSPrintf(char *fmt, ...);
+const char CPL_DLL *CPLSPrintf(const char *fmt, ...);
 char CPL_DLL **CSLAppendPrintf(char **papszStrList, char *fmt, ...);
 
 const char CPL_DLL *

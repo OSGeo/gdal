@@ -44,6 +44,9 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.57  2006/11/22 18:17:49  fwarmerdam
+ * changed frmt to const char in CPLSPrintf
+ *
  * Revision 1.56  2006/06/30 14:58:22  dron
  * Avoid warnings on win/64.
  *
@@ -916,7 +919,7 @@ char ** CSLTokenizeString2( const char * pszString,
 static CPL_THREADLOCAL char gszCPLSPrintfBuffer[CPLSPrintf_BUF_Count][CPLSPrintf_BUF_SIZE];
 static CPL_THREADLOCAL int gnCPLSPrintfBuffer = 0;
 
-const char *CPLSPrintf(char *fmt, ...)
+const char *CPLSPrintf(const char *fmt, ...)
 {
     va_list args;
 
