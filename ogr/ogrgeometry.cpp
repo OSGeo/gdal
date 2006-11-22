@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2006/11/22 11:15:02  dron
+ * Properly initialize GEOS warning/error message handlers in initGEOS().
+ *
  * Revision 1.40  2006/07/07 05:05:57  fwarmerdam
  * use GEOSGeom_destroy() in Distance()
  *
@@ -160,6 +163,24 @@
 CPL_CVSID("$Id$");
 
 int OGRGeometry::bGenerate_DB2_V72_BYTE_ORDER = FALSE;
+
+static void _GEOSErrorHandler(const char *fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    CPLErrorV( CE_Failure, CPLE_AppDefined, fmt, args );
+    va_end(args);
+}
+
+static void _GEOSWarningHandler(const char *fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    CPLErrorV( CE_Warning, CPLE_AppDefined, fmt, args );
+    va_end(args);
+}
 
 /************************************************************************/
 /*                            OGRGeometry()                             */
@@ -1351,7 +1372,7 @@ GEOSGeom OGRGeometry::exportToGEOS() const
     if( !bGEOSInitialized )
     {
         bGEOSInitialized = TRUE;
-        initGEOS( NULL, NULL );
+        initGEOS( _GEOSWarningHandler, _GEOSErrorHandler );
     }
 
     GEOSGeom hGeom = NULL;
