@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/11/22 21:18:01  fwarmerdam
+ * on solaris errno==79 occurs for fopen on large files
+ *
  * Revision 1.2  2005/09/11 16:33:34  fwarmerdam
  * Get header info with large file API if ENOENT.  This is intended to
  * provide access to in-memory and other virtual filesystem objects.
@@ -105,7 +108,8 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, GDALAccess eAccessIn )
                 VSIRewind( fp );
             } 
             else if( errno == 27 /* "File to large" */ 
-                     || errno == ENOENT )
+                     || errno == ENOENT 
+                     || errno == 79 /* EOVERFLOW - value too large */ )
             {
                 fp = VSIFOpenL( pszFilename, "rb" );
                 if( fp != NULL )
