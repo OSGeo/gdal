@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2006/11/22 18:20:00  fwarmerdam
+ * apply std:: prefix to exception to build on sun compiler
+ *
  * Revision 1.15  2005/09/14 13:37:18  dron
  * Avoid warnings.
  *
@@ -1823,7 +1826,7 @@ void ValueRange::init(double rRaw0)
         else
             iRawUndef = 0;
     }
-    catch (exception*) {
+    catch (std::exception*) {
         st = stReal;
         _r0 = 0;
         _rStep = 0.0001;
