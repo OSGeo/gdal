@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/11/22 15:22:01  fwarmerdam
+ * Allow NULL hDstDS in validate.
+ *
  * Revision 1.25  2005/12/23 18:16:04  fwarmerdam
  * added SKIP_NOSOURCE option
  *
@@ -311,14 +314,6 @@ int GDALWarpOperation::ValidateOptions()
         return FALSE;
     }
 
-    if( psOptions->hDstDS == NULL )
-    {
-        CPLError( CE_Failure, CPLE_IllegalArg, 
-                  "GDALWarpOptions.Validate()\n"
-                  "  hDstDS is not set." );
-        return FALSE;
-    }
-
     if( psOptions->nBandCount == 0 )
     {
         CPLError( CE_Failure, CPLE_IllegalArg, 
@@ -327,11 +322,19 @@ int GDALWarpOperation::ValidateOptions()
         return FALSE;
     }
 
-    if( psOptions->panSrcBands == NULL || psOptions->panDstBands == NULL )
+    if( psOptions->panSrcBands == NULL )
     {
         CPLError( CE_Failure, CPLE_IllegalArg, 
                   "GDALWarpOptions.Validate()\n"
-                  "  Either panSrcBands or panDstBands is NULL." );
+                  "  panSrcBands is NULL." );
+        return FALSE;
+    }
+
+    if( psOptions->hDstDS != NULL && psOptions->panDstBands == NULL )
+    {
+        CPLError( CE_Failure, CPLE_IllegalArg, 
+                  "GDALWarpOptions.Validate()\n"
+                  "  panDstBands is NULL." );
         return FALSE;
     }
 
@@ -346,9 +349,10 @@ int GDALWarpOperation::ValidateOptions()
                       iBand, psOptions->panSrcBands[iBand] );
             return FALSE;
         }
-        if( psOptions->panDstBands[iBand] < 1 
-            || psOptions->panDstBands[iBand]
-            > GDALGetRasterCount( psOptions->hDstDS ) )
+        if( psOptions->hDstDS != NULL
+            && (psOptions->panDstBands[iBand] < 1 
+                || psOptions->panDstBands[iBand]
+                > GDALGetRasterCount( psOptions->hDstDS ) ) )
         {
             CPLError( CE_Failure, CPLE_IllegalArg,
                       "panDstBands[%d] = %d ... out of range for dataset.",
@@ -356,9 +360,10 @@ int GDALWarpOperation::ValidateOptions()
             return FALSE;
         }
 
-        if( GDALGetRasterAccess( 
+        if( psOptions->hDstDS != NULL
+            && GDALGetRasterAccess( 
                 GDALGetRasterBand(psOptions->hDstDS,
-                                  psOptions->panDstBands[iBand]) )
+                                  psOptions->panDstBands[iBand]))
             == GA_ReadOnly )
         {
             CPLError( CE_Failure, CPLE_IllegalArg,
@@ -402,7 +407,7 @@ int GDALWarpOperation::ValidateOptions()
     }
 
     if( CSLFetchNameValue( psOptions->papszWarpOptions, 
-                         "SAMPLE_STEPS" ) != NULL )
+                           "SAMPLE_STEPS" ) != NULL )
     {
         if( atoi(CSLFetchNameValue( psOptions->papszWarpOptions, 
                                     "SAMPLE_STEPS" )) < 2 )
