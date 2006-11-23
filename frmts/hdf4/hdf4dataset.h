@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.18  2006/11/23 13:23:56  dron
+ * Added more logic to guess HDF-EOS datasets.
+ *
  * Revision 1.17  2006/08/03 11:47:38  dron
  * Added EOS_SWATH_GEOL subdataset type.
  *
@@ -118,6 +121,8 @@ class HDF4Dataset : public GDALDataset
 {
 
   private:
+
+    int         bIsHDFEOS;
 
     char        **HDF4EOSTokenizeAttrs( const char *pszString ) const;
     char        **HDF4EOSGetObject( char **papszAttrList, char **ppszAttrName,

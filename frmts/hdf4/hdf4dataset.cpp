@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.33  2006/11/23 13:23:56  dron
+ * Added more logic to guess HDF-EOS datasets.
+ *
  * Revision 1.32  2005/04/25 20:05:27  dron
  * Memory leak fixed.
  *
@@ -165,6 +168,7 @@ HDF4Dataset::HDF4Dataset()
     hGR = 0;
     papszGlobalMetadata = NULL;
     papszSubDatasets = NULL;
+    bIsHDFEOS = 0;
 }
 
 /************************************************************************/
@@ -680,12 +684,13 @@ CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler )
     if ( SDfileinfo( hSD, &nDatasets, &nAttributes ) != 0 )
 	return CE_Failure;
 
-    // Loop trough the all attributes
+    // Loop through the all attributes
     for ( iAttribute = 0; iAttribute < nAttributes; iAttribute++ )
     {
         // Get information about the attribute. Note that the first
         // parameter is an SD interface identifier.
         SDattrinfo( iHandler, iAttribute, szAttrName, &iNumType, &nValues );
+
         if ( EQUALN( szAttrName, "coremetadata.", 13 )    ||
 	     EQUALN( szAttrName, "archivemetadata.", 16 ) ||
 	     EQUALN( szAttrName, "productmetadata.", 16 ) ||
@@ -700,17 +705,26 @@ CPLErr HDF4Dataset::ReadGlobalAttributes( int32 iHandler )
 	     EQUALN( szAttrName, "etst_specific", 13 ) ||
 	     EQUALN( szAttrName, "level_1_carryover", 17 ) )
         {
+            bIsHDFEOS = 1;
             papszGlobalMetadata = TranslateHDF4EOSAttributes( iHandler,
 		iAttribute, nValues, papszGlobalMetadata );
         }
+
+        // Skip "StructMetadata.N" records. We will fetch information
+        // from them using HDF-EOS API
 	else if ( EQUALN( szAttrName, "structmetadata.", 15 ) )
+        {
+            bIsHDFEOS = 1;
             continue;
+        }
+
         else
         {
 	    papszGlobalMetadata = TranslateHDF4Attributes( iHandler,
 		iAttribute, szAttrName,	iNumType, nValues, papszGlobalMetadata );
         }
     }
+
     return CE_None;
 }
 
@@ -831,7 +845,11 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     int32	aiDimSizes[MAX_VAR_DIMS];
     int32	iRank, iNumType, nAttrs;
 
-    if ( CSLFetchNameValue(poDS->papszGlobalMetadata, "HDFEOSVersion") )
+    // Sometimes "HDFEOSVersion" attribute is not defined and we will
+    // determine HDF-EOS datasets using other records
+    // (see ReadGlobalAttributes() method).
+    if ( poDS->bIsHDFEOS
+         || CSLFetchNameValue(poDS->papszGlobalMetadata, "HDFEOSVersion") )
     {
         int32   nSubDatasets, nStrBufSize;
 
@@ -920,10 +938,10 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                     sprintf( szTemp, "SUBDATASET_%d_NAME", nCount + 1 );
 	            // We will use the field index as an identificator.
                     poDS->papszSubDatasets =
-                        CSLSetNameValue(poDS->papszSubDatasets, szTemp,
-                                CPLSPrintf( "HDF4_EOS:EOS_SWATH:\"%s\":%s:%s",
-                                            poOpenInfo->pszFilename,
-                                            papszSwaths[i], papszFields[j]));
+                        CSLSetNameValue( poDS->papszSubDatasets, szTemp,
+                                CPLSPrintf("HDF4_EOS:EOS_SWATH:\"%s\":%s:%s",
+                                           poOpenInfo->pszFilename,
+                                           papszSwaths[i], papszFields[j]) );
 
                     sprintf( szTemp, "SUBDATASET_%d_DESC", nCount + 1 );
                     pszString = SPrintArray( GDT_UInt32, aiDimSizes,
@@ -931,8 +949,8 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
                     poDS->papszSubDatasets =
                         CSLSetNameValue( poDS->papszSubDatasets, szTemp,
                                          CPLSPrintf( "[%s] %s (%s)", pszString,
-                                            papszFields[j],
-                                            poDS->GetDataTypeName(iNumType) ) );
+                                         papszFields[j],
+                                         poDS->GetDataTypeName(iNumType) ) );
                     CPLFree( pszString );
                 }
 
