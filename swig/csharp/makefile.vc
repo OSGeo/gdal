@@ -93,6 +93,7 @@ samples:
     $(CSC) /r:gdal_gdal_csharp.dll /r:System.Drawing.dll /out:GDALReadDirect.exe apps\GDALReadDirect.cs
     $(CSC) /r:gdal_gdal_csharp.dll /r:gdal_gdalconst_csharp.dll /out:GDALWrite.exe apps\GDALWrite.cs
     $(CSC) /r:gdal_gdal_csharp.dll /r:gdal_gdalconst_csharp.dll /out:GDALColorTable.exe apps\GDALColorTable.cs
+    $(CSC) /r:gdal_ogr_csharp.dll /out:WKT2WKB.exe apps\WKT2WKB.cs
     
 test:
 !IFDEF MONO
