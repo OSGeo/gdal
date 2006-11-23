@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.46  2006/11/23 16:02:42  fwarmerdam
+ * Use .15g for reporting most numeric values.
+ *
  * Revision 1.45  2006/11/08 16:34:55  fwarmerdam
  * Added -stats to usage message.
  *
@@ -309,10 +312,10 @@ int main( int argc, char ** argv )
     {
         if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0 )
         {
-            printf( "Origin = (%.6f,%.6f)\n",
+            printf( "Origin = (%.15f,%.15f)\n",
                     adfGeoTransform[0], adfGeoTransform[3] );
 
-            printf( "Pixel Size = (%.8f,%.8f)\n",
+            printf( "Pixel Size = (%.15f,%.15f)\n",
                     adfGeoTransform[1], adfGeoTransform[5] );
         }
         else
@@ -340,7 +343,7 @@ int main( int argc, char ** argv )
             psGCP = GDALGetGCPs( hDataset ) + i;
 
             printf( "GCP[%3d]: Id=%s, Info=%s\n"
-                    "          (%g,%g) -> (%g,%g,%g)\n", 
+                    "          (%.15g,%.15g) -> (%.15g,%.15g,%.15g)\n", 
                     i, psGCP->pszId, psGCP->pszInfo, 
                     psGCP->dfGCPPixel, psGCP->dfGCPLine, 
                     psGCP->dfGCPX, psGCP->dfGCPY, psGCP->dfGCPZ );
@@ -482,7 +485,7 @@ int main( int argc, char ** argv )
         dfNoData = GDALGetRasterNoDataValue( hBand, &bGotNodata );
         if( bGotNodata )
         {
-            printf( "  NoData Value=%g\n", dfNoData );
+            printf( "  NoData Value=%.15g\n", dfNoData );
         }
 
         if( GDALGetOverviewCount(hBand) > 0 )
@@ -529,7 +532,7 @@ int main( int argc, char ** argv )
 
         if( GDALGetRasterScale( hBand, &bSuccess ) != 1.0 
             || GDALGetRasterOffset( hBand, &bSuccess ) != 0.0 )
-            printf( "  Offset: %g,   Scale:%g\n",
+            printf( "  Offset: %.15g,   Scale:%.15g\n",
                     GDALGetRasterOffset( hBand, &bSuccess ),
                     GDALGetRasterScale( hBand, &bSuccess ) );
 
