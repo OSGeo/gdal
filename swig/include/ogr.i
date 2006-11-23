@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.63  2006/11/23 22:51:35  tamas
+ * C# ExportToWkb support
+ *
  * Revision 1.62  2006/11/19 17:45:05  ajolma
  * In all cases where GetFieldIndex is used, added check for non-null name, and check for the return value. This prevents countless segfaults and quiet fails at least in Perl.
  *
@@ -1179,12 +1182,14 @@ public:
     return OGR_G_ExportToWkt(self, argout);
   }
 
+#ifndef SWIGCSHARP
   %feature("kwargs") ExportToWkb;
   OGRErr ExportToWkb( int *nLen, char **pBuf, OGRwkbByteOrder byte_order=wkbXDR ) {
     *nLen = OGR_G_WkbSize( self );
     *pBuf = (char *) malloc( *nLen * sizeof(unsigned char) );
     return OGR_G_ExportToWkb(self, byte_order, (unsigned char*) *pBuf );
   }
+#endif
 
   const char * ExportToGML() {
     return (const char *) OGR_G_ExportToGML(self);
@@ -1467,3 +1472,13 @@ OGRDriverShadow* GetDriver(int driver_number) {
 %object_owner
 #endif
 
+
+//************************************************************************
+//
+// Language specific extensions
+//
+//************************************************************************
+
+#ifdef SWIGCSHARP
+%include "ogr_csharp_extend.i"
+#endif
