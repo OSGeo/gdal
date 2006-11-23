@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.46  2006/11/23 18:36:35  fwarmerdam
+ * added GeneralCmdLineProcessor
+ *
  * Revision 1.45  2006/11/20 12:58:12  tamas
  * Added GDALColorEntry for the SWIG C# binding
  *
@@ -610,6 +613,17 @@ GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
 #if defined(SWIGCSHARP)
 %object_owner
 #endif
+
+%newobject AutoCreateWarpedVRT;
+%apply (char **options) {char **};
+%inline %{
+  char **GeneralCmdLineProcessor( char **papszArgv, int nOptions = 0 ) {
+    GDALGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, nOptions ); 
+    return papszArgv;
+  }
+%}
+%clear char **;
+
 
 //************************************************************************
 //
