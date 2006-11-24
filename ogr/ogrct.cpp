@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2006/11/24 18:01:11  fwarmerdam
+ * Use new extension methods.
+ *
  * Revision 1.36  2006/06/23 02:01:07  mloskot
  * Fixed 2 memory leaks in ogr2ogr.cpp and ogrct.cpp files. Updated OGRCreateCoordinateTransformation docs.
  *
@@ -531,7 +534,7 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
 /* -------------------------------------------------------------------- */
 /*      Preliminary logic to setup wrapping.                            */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode *poExt;
+    const char *pszCENTER_LONG;
 
     if( CPLGetConfigOption( "CENTER_LONG", NULL ) != NULL )
     {
@@ -541,29 +544,18 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
         CPLDebug( "OGRCT", "Wrap at %g.", dfSourceWrapLong );
     }
 
-    
-    poExt = poSRSSource->GetAttrNode( "GEOGCS|EXTENSION" );
-    if( poExt )
+    pszCENTER_LONG = poSRSSource->GetExtension( "GEOGCS", "CENTER_LONG" );
+    if( pszCENTER_LONG != NULL )
     {
-        if( poExt->GetChildCount() == 2 
-            && EQUAL(poExt->GetChild(0)->GetValue(),"CENTER_LONG") )
-        {
-            bSourceWrap = TRUE;
-            dfSourceWrapLong = atof(poExt->GetChild(1)->GetValue());
-            CPLDebug( "OGRCT", "Wrap source at %g.", dfSourceWrapLong );
-        }
+        dfSourceWrapLong = atof(pszCENTER_LONG);
+        CPLDebug( "OGRCT", "Wrap source at %g.", dfSourceWrapLong );
     }
 
-    poExt = poSRSTarget->GetAttrNode( "GEOGCS|EXTENSION" );
-    if( poExt )
+    pszCENTER_LONG = poSRSTarget->GetExtension( "GEOGCS", "CENTER_LONG" );
+    if( pszCENTER_LONG != NULL )
     {
-        if( poExt->GetChildCount() == 2 
-            && EQUAL(poExt->GetChild(0)->GetValue(),"CENTER_LONG") )
-        {
-            bTargetWrap = TRUE;
-            dfTargetWrapLong = atof(poExt->GetChild(1)->GetValue());
-            CPLDebug( "OGRCT", "Wrap target at %g.", dfTargetWrapLong );
-        }
+        dfTargetWrapLong = atof(pszCENTER_LONG);
+        CPLDebug( "OGRCT", "Wrap target at %g.", dfTargetWrapLong );
     }
 
 /* -------------------------------------------------------------------- */
