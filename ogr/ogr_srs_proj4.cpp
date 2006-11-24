@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.66  2006/11/24 17:58:30  fwarmerdam
+ * added support for +wktext / PROJ4 EXTENSION hackery
+ *
  * Revision 1.65  2006/11/01 04:37:39  fwarmerdam
  * fixed two point equidistant, preliminary mercator2sp support
  *
@@ -318,7 +321,16 @@ char **OSRProj4Tokenize( const char *pszFull )
             if( i == 0 || pszFullWrk[i-1] == '\0' )
             {
                 if( pszStart != NULL )
-                    papszTokens = CSLAddString( papszTokens, pszStart );
+                {
+                    if( strstr(pszStart,"=") != NULL )
+                        papszTokens = CSLAddString( papszTokens, pszStart );
+                    else
+                    {
+                        CPLString osAsBoolean = pszStart;
+                        osAsBoolean += "=yes";
+                        papszTokens = CSLAddString( papszTokens, osAsBoolean );
+                    }
+                }
                 pszStart = pszFullWrk + i + 1;
             }
             break;
@@ -1088,6 +1100,12 @@ OGRErr OGRSpatialReference::importFromProj4( const char * pszProj4 )
         }        
     }
 
+
+/* -------------------------------------------------------------------- */
+/*      do we want to insert a PROJ.4 EXTENSION item?                   */
+/* -------------------------------------------------------------------- */
+    if( strstr(pszProj4,"wktext") != NULL )
+        SetExtension( GetRoot()->GetValue(), "PROJ4", pszProj4 );
         
     CSLDestroy( papszNV );
     
@@ -1137,6 +1155,17 @@ OGRErr OGRSpatialReference::exportToProj4( char ** ppszProj4 ) const
     const char *pszProjection = GetAttrValue("PROJECTION");
 
     szProj4[0] = '\0';
+
+/* -------------------------------------------------------------------- */
+/*      Do we have a PROJ.4 override definition?                        */
+/* -------------------------------------------------------------------- */
+    const char *pszPredefProj4 = GetExtension( GetRoot()->GetValue(), 
+                                               "PROJ4", NULL );
+    if( pszPredefProj4 != NULL )
+    {
+        *ppszProj4 = CPLStrdup( pszPredefProj4 );
+        return OGRERR_NONE;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Get the prime meridian info.                                    */
