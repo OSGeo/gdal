@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2006/11/24 16:50:52  fwarmerdam
+ * Don't define error handlers if we don't have geos - avoid warning.
+ *
  * Revision 1.41  2006/11/22 11:15:02  dron
  * Properly initialize GEOS warning/error message handlers in initGEOS().
  *
@@ -164,6 +167,7 @@ CPL_CVSID("$Id$");
 
 int OGRGeometry::bGenerate_DB2_V72_BYTE_ORDER = FALSE;
 
+#ifdef HAVE_GEOS
 static void _GEOSErrorHandler(const char *fmt, ...)
 {
     va_list args;
@@ -181,6 +185,7 @@ static void _GEOSWarningHandler(const char *fmt, ...)
     CPLErrorV( CE_Warning, CPLE_AppDefined, fmt, args );
     va_end(args);
 }
+#endif
 
 /************************************************************************/
 /*                            OGRGeometry()                             */
