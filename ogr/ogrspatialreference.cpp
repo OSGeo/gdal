@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.102  2006/11/24 17:58:15  fwarmerdam
+ * added extension management methods
+ *
  * Revision 1.101  2006/11/21 21:25:27  fwarmerdam
  * Applied ESRI:: modifier to dictionary lookups if requested.
  *
@@ -593,6 +596,7 @@ OGRErr OGRSpatialReference::exportToPrettyWkt( char ** ppszResult,
 
         poSimpleClone->GetRoot()->StripNodes( "AXIS" );
         poSimpleClone->GetRoot()->StripNodes( "AUTHORITY" );
+        poSimpleClone->GetRoot()->StripNodes( "EXTENSION" );
         eErr = poSimpleClone->GetRoot()->exportToPrettyWkt( ppszResult, 1 );
         delete poSimpleClone;
         return eErr;
@@ -4946,6 +4950,112 @@ OGRErr OSRFixup( OGRSpatialReferenceH hSRS )
     return ((OGRSpatialReference *) hSRS)->Fixup();
 }
 
+/************************************************************************/
+/*                            GetExtension()                            */
+/************************************************************************/
+
+/**
+ * Fetch extension value.
+ *
+ * Fetch the value of the named EXTENSION item for the identified
+ * target node.
+ *
+ * @param pszTargetKey the name or path to the parent node of the EXTENSION.
+ * @param pszName the name of the extension being fetched.
+ * @param pszDefault the value to return if the extension is not found.
+ *
+ * @return node value if successful or pszDefault on failure.
+ */
+
+const char *OGRSpatialReference::GetExtension( const char *pszTargetKey, 
+                                               const char *pszName, 
+                                               const char *pszDefault ) const
+
+{
+/* -------------------------------------------------------------------- */
+/*      Find the target node.                                           */
+/* -------------------------------------------------------------------- */
+    const OGR_SRSNode  *poNode;
+
+    if( pszTargetKey == NULL )
+        poNode = poRoot;
+    else
+        poNode= ((OGRSpatialReference *) this)->GetAttrNode( pszTargetKey );
+
+    if( poNode == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch matching EXTENSION if there is one.                       */
+/* -------------------------------------------------------------------- */
+    for( int i = poNode->GetChildCount()-1; i >= 0; i-- )
+    {
+        const OGR_SRSNode *poChild = poNode->GetChild(i);
+
+        if( EQUAL(poChild->GetValue(),"EXTENSION") 
+            && poChild->GetChildCount() >= 2 )
+        {
+            if( EQUAL(poChild->GetChild(0)->GetValue(),pszName) )
+                return poChild->GetChild(1)->GetValue();
+        }
+    }
+
+    return pszDefault;
+}
+
+/************************************************************************/
+/*                            SetExtension()                            */
+/************************************************************************/
+
+OGRErr OGRSpatialReference::SetExtension( const char *pszTargetKey, 
+                                          const char *pszName, 
+                                          const char *pszValue )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Find the target node.                                           */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode  *poNode;
+
+    if( pszTargetKey == NULL )
+        poNode = poRoot;
+    else
+        poNode= ((OGRSpatialReference *) this)->GetAttrNode( pszTargetKey );
+
+    if( poNode == NULL )
+        return OGRERR_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch matching EXTENSION if there is one.                       */
+/* -------------------------------------------------------------------- */
+    for( int i = poNode->GetChildCount()-1; i >= 0; i-- )
+    {
+        OGR_SRSNode *poChild = poNode->GetChild(i);
+        
+        if( EQUAL(poChild->GetValue(),"EXTENSION") 
+            && poChild->GetChildCount() >= 2 )
+        {
+            if( EQUAL(poChild->GetChild(0)->GetValue(),pszName) )
+            {
+                poChild->GetChild(1)->SetValue( pszValue );
+                return OGRERR_NONE;
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create a new EXTENSION node.                                    */
+/* -------------------------------------------------------------------- */
+    OGR_SRSNode *poAuthNode;
+
+    poAuthNode = new OGR_SRSNode( "EXTENSION" );
+    poAuthNode->AddChild( new OGR_SRSNode( pszName ) );
+    poAuthNode->AddChild( new OGR_SRSNode( pszValue ) );
+    
+    poNode->AddChild( poAuthNode );
+
+    return OGRERR_NONE;
+}
 
 /************************************************************************/
 /*                             OSRCleanup()                             */

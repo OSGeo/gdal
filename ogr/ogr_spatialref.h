@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.73  2006/11/24 17:58:15  fwarmerdam
+ * added extension management methods
+ *
  * Revision 1.72  2006/11/07 18:55:07  fwarmerdam
  * added OGC importFromURN()
  *
@@ -332,6 +335,13 @@ class CPL_DLL OGRSpatialReference
 
     const char *GetAuthorityCode( const char * pszTargetKey ) const;
     const char *GetAuthorityName( const char * pszTargetKey ) const;
+
+    const char *GetExtension( const char *pszTargetKey, 
+                              const char *pszName,
+                              const char *pszDefault = NULL ) const;
+    OGRErr      SetExtension( const char *pszTargetKey, 
+                              const char *pszName, 
+                              const char *pszValue );
                            
     OGRErr      SetProjParm( const char *, double );
     double      GetProjParm( const char *, double =0.0, OGRErr* = NULL ) const;
