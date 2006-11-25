@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.47  2006/11/25 21:24:25  tamas
+ * Added XMLNode support for C#
+ *
  * Revision 1.46  2006/11/23 18:36:35  fwarmerdam
  * added GeneralCmdLineProcessor
  *
@@ -234,6 +237,15 @@ typedef int GDALResampleAlg;
 //
 //************************************************************************
 %include "cpl.i"
+
+//************************************************************************
+//
+// Define the XMLNode object
+//
+//************************************************************************
+#if defined(SWIGCSHARP)
+%include "XMLNode.i"
+#endif
 
 //************************************************************************
 //
@@ -529,6 +541,9 @@ double GDALPackedDMSToDec( double );
 
 double GDALDecToPackedDMS( double );
 
+#if defined(SWIGCSHARP)
+%newobject CPLParseXMLString;
+#endif
 CPLXMLNode *CPLParseXMLString( char * );
 
 char *CPLSerializeXMLTree( CPLXMLNode *xmlnode );
