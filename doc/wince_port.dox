@@ -44,6 +44,8 @@ The GDAL port was tested with following compiler for Windows CE devices (see \re
     <li>Microsoft Visual C++ 2005</li>
 </ul>
 
+\note GDAL for Windows CE has not been compiled for and tested on x86 emulator for Pocket PC 2002/203 platforms. So, this target is considered as <b>UNSUPPORTED</b>. If anyone has used it on x86 emulator, please let me know.
+
 \subsection wince_wince About Windows CE
 
 <a href="http://www.microsoft.com/windows/embedded/default.mspx">Windows CE</a> is one of two embedded operating systems create by Microsoft. The second is <a href="http://msdn.microsoft.com/embedded/windowsxpembedded/default.aspx">Windows XP Embedded</a>. The GDAL port is dedicated to the first one - Windows CE system. It may work on Windows XP Embedded as well but I have not tested it. (If you're interested in differences between those two systems, look at the <a href="http://www.embeddedtechnologyjournal.com/articles_2005/20051004_msft.htm">Comparing Windows CE and Windows XP Embedded</a> by Mike Hall.)
