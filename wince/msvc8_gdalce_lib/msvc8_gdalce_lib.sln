@@ -3,6 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "msvc8_gdalce_lib", "msvc8_gdalce_lib.vcproj", "{FDED31AC-CC53-425F-80D0-D71918F299A0}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BE47FF25-E83B-45D7-BE96-FB46B9ECC190}"
+	ProjectSection(SolutionItems) = preProject
+		..\README = ..\README
+		..\TODO = ..\TODO
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Pocket PC 2003 (ARMV4) = Debug|Pocket PC 2003 (ARMV4)
