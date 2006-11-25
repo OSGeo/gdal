@@ -48,6 +48,10 @@ AC_DEFUN([AX_LIB_ORACLE_OCI],
             else
                 oracle_home_dir=""
             fi 
+        elif test -d "$withval"; then
+            oracle_home_dir="$withval"
+        else
+            oracle_home_dir=""
         fi
         ],
         [
