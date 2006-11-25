@@ -65,9 +65,16 @@ Content of gdal\wince directory:
 Building GDAL/OGR for Windows CE .NET:
 =============================================================================
 
-Note: Windows CE .NET is a version 4.0 - 4.2 and it's only a name, so 
+NOTE: Windows CE .NET is a version 4.0 - 4.2 and it's only a name, so 
 there is no .NET Framework dependency! Starting from Windows CE 5.0,
 Microsoft has removed .NET from the name of the system.
+
+NOTE SDK: GDAL on Windows CE has been tested using SDK for following systems:
+1. Pocket PC 2003 - here, I ONLY tested using ARM configuration and target device but I've
+   not used it with x86 emulator, so I'd say emulator target os UNSUPPORTED
+2. Windows Mobile 5.0
+3. Windwos CE 5.0
+
 
 Requirements:
 =============
