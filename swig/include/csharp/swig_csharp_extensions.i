@@ -10,6 +10,9 @@
 
  *
  * $Log$
+ * Revision 1.4  2006/11/25 21:23:02  tamas
+ * Added default csout, csvarout typemaps
+ *
  * Revision 1.3  2006/11/15 21:00:35  tamas
  * Added support for SWIG 1.3.30
  *
@@ -41,6 +44,22 @@
     $csclassname ret = (cPtr == IntPtr.Zero) ? null : new $csclassname(cPtr, $owner? null : OWNER);$excode
     return ret;
   }
+%typemap(csvarout, excode=SWIGEXCODE2) TYPE & %{
+    get {
+      $csclassname ret = new $csclassname($imcall, $owner? null : OWNER);$excode
+      return ret;
+    } %}
+%typemap(csvarout, excode=SWIGEXCODE2) TYPE *, TYPE [], TYPE (CLASS::*) %{
+    get {
+      IntPtr cPtr = $imcall;
+      $csclassname ret = (cPtr == IntPtr.Zero) ? null : new $csclassname(cPtr, $owner? null : OWNER);$excode
+      return ret;
+    } %}
+%typemap(csout, excode=SWIGEXCODE) TYPE *& {
+    IntPtr cPtr = $imcall;
+    $*csclassname ret = (cPtr == IntPtr.Zero) ? null : new $*csclassname(cPtr, $owner? null : OWNER);$excode
+    return ret;
+  }    
 %enddef
 
 #define %object_owner %owner(this, SWIGTYPE)
