@@ -1327,7 +1327,7 @@ else
   fi
 
   if test "$with_xerces_lib" != "" ; then
-    LIBS="-L$with_xerces_lib $LIBS"
+    LIBS="$with_xerces_lib $LIBS"
   else
     if test -f $with_xerces/lib/libxerces-c.so ; then
       LIBS="-L$with_xerces/lib -lxerces-c -lpthread $LIBS"
