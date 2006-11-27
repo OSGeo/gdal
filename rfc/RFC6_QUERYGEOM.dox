@@ -7,7 +7,7 @@
 
 Author: Tamas Szekeres<br>
 Contact: szekerest@gmail.com<br>
-Status: Proposed<br>
+Status: Adopted<br>
 
 \section rfc6_summary Summary
 
@@ -501,6 +501,13 @@ http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1129</a>
 http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1438</a>
 
 </ul>
+
+\section rfc6_voting Voting History
+
+Frank Warmerdam +1
+Daniel Morissette +1
+Howard Butler +0
+Andrey Kiselev +1
 
 */
  
