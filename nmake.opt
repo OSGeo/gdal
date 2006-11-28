@@ -260,17 +260,8 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(OCI_LIB) $(PG_LIB) $(ODBCLIB) \
 		$(ECWLIB) $(HDF4_LIB) $(FME_LIB) $(JASPER_LIB) $(MRSID_ELIB) \
 		$(FITS_LIB) $(JPEG_LIB) $(PNG_LIB) $(NETCDF_LIB) $(PROJ4_LIB) \
 		$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
-<<<<<<< nmake.opt
 		$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB) $(SDE_LIB) $(DWG_LIB) \
-		$(ADD_LIBS)
-=======
-		$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB) $(SDE_LIB) $(DWG_LIB) \
-<<<<<<< nmake.opt
-		$(CURL_LIBS) $(ADD_LIBS)
->>>>>>> 1.94
-=======
 		$(CURL_LIB) $(ADD_LIBS)
->>>>>>> 1.95
 
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
