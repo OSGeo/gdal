@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/11/28 12:57:51  mloskot
+ * Excluded HFAAuxBuildOverviews usage for Windows CE.
+ *
  * Revision 1.18  2006/03/28 14:49:16  fwarmerdam
  * reopen overview file in update mode if needed when building overviews
  *
@@ -384,6 +387,9 @@ GDALDefaultOverviews::BuildOverviews(
 /*      regeneration, since HFAAuxBuildOverviews() doesn't actually     */
 /*      produce the imagery.                                            */
 /* -------------------------------------------------------------------- */
+
+#ifndef WIN32CE
+
     if( bOvrIsAux )
     {
         eErr = HFAAuxBuildOverviews( osOvrFilename, poDS, &poODS,
@@ -406,6 +412,7 @@ GDALDefaultOverviews::BuildOverviews(
 /*      operate on it.                                                  */
 /* -------------------------------------------------------------------- */
     else
+#endif /* WIN32CE */
     {
         if( poODS != NULL )
         {
