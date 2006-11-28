@@ -15,6 +15,7 @@ SUBDIRS-$(HAVE_GRASS)	+= grass
 SUBDIRS-$(HAVE_XERCES)	+= ili
 SUBDIRS-$(HAVE_DWGDIRECT) += dxfdwg
 SUBDIRS-$(HAVE_SDE)     += sde
+SUBDIRS-$(HAVE_IDB)	+= idb
 
 default:	$(foreach d,$(SUBDIRS-yes),$(d)-target)
 

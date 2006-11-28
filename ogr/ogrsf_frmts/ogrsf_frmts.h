@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2006/11/28 15:34:41  osemykin
+ * Added new Informix DataBlade driver (IDB)
+ *
  * Revision 1.58  2006/06/07 14:39:09  mloskot
  * Added new KML (Beta) driver to OGR. Thanks to Christopher Condit - the author of KML drvier.
  *
@@ -362,6 +365,7 @@ void CPL_DLL RegisterOGRGRASS();
 void CPL_DLL RegisterOGRPGeo();
 void CPL_DLL RegisterOGRDXFDWG();
 void CPL_DLL RegisterOGRSDE();
+void CPL_DLL RegisterOGRIDB();
 
 CPL_C_END
 
