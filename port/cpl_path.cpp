@@ -28,6 +28,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/11/28 12:54:40  mloskot
+ * Added WIN32CE macro for path Win-style separator.
+ *
  * Revision 1.25  2006/11/16 15:23:33  mloskot
  * Fixed CPLGetCurrentDir which on Windows CE returns NULL.
  *
@@ -116,7 +119,7 @@ CPL_CVSID("$Id$");
 /* should be size of larged possible filename */
 #define CPL_PATH_BUF_SIZE 2048
 
-#ifdef WIN32        
+#if defined(WIN32) || defined(WIN32CE)
 #define SEP_CHAR '\\'
 #define SEP_STRING "\\"
 #else
@@ -579,7 +582,7 @@ const char *CPLFormCIFilename( const char * pszPath,
                                const char * pszExtension )
 
 {
-#ifdef WIN32
+#if defined(WIN32) || defined(WIN32CE)
     return CPLFormFilename( pszPath, pszBasename, pszExtension );
 #else
     const char  *pszAddedExtSep = "";
