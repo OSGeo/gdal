@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.76  2006/11/28 12:56:53  mloskot
+ * Excluded HFAAuxBuildOverviews function for Windows CE.
+ *
  * Revision 1.75  2006/10/27 03:39:05  fwarmerdam
  * added GDALParseGMLCoverage
  *
@@ -697,6 +700,8 @@ CPL_C_END
 
 CPL_C_START
 
+#ifndef WIN32CE
+
 CPLErr CPL_DLL
 HFAAuxBuildOverviews( const char *pszOvrFilename, GDALDataset *poParentDS,
                       GDALDataset **ppoDS,
@@ -705,6 +710,9 @@ HFAAuxBuildOverviews( const char *pszOvrFilename, GDALDataset *poParentDS,
                       const char *pszResampling, 
                       GDALProgressFunc pfnProgress, 
                       void *pProgressData );
+
+#endif /* WIN32CE */
+
 CPLErr CPL_DLL 
 GTIFFBuildOverviews( const char * pszFilename,
                      int nBands, GDALRasterBand **papoBandList, 
