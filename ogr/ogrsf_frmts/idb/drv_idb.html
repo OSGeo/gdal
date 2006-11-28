@@ -7,179 +7,44 @@
 
 <h1>IDB</h1>
 
-This driver implements support for access to spatial tables in 
-PostgreSQL extended with the 
-<a href="http://postgis.refractions.net/">PostGIS</a> spatial data support. 
-Some support exists in the driver for use with PostgreSQL without PostGIS
-but this has not been recently tested and is likely decayed.<p>
+<p>This driver implements support for access to spatial tables in 
+IBM Informix extended with the DataBlade spatial module.
 
-When opening a database, it's name should be specified in the form
-"PG:dbname=<databasename>".  We use PQconnectdb() to make the connection, so 
-any other options and defaults
-that would apply to it, apply to the name here.  The PG: prefix is used
-to mark the name as a postgres connection string.<p>
+<p>When opening a database, it's name should be specified in the form
 
-If the <i>geometry_columns</i> table exists, then all listed tables and
+<pre>"IDB:dbname={dbname} server={host} user={login} pass={pass} table={layertable}".</pre>
+
+<p>The IDB: prefix is used to mark the name as a IDB connection string.
+
+<p>If the <i>geometry_columns</i> table exists, then all listed tables and
 named views will be treated as OGR layers.  Otherwise all regular user tables
-will be treated as layers.<p>
+will be treated as layers.
 
-Regular (non-spatial) tables can be accessed, and will return features with
-attributes, but not geometry.  If the table has a "wkb_geometry" field, it will
-be treated as a spatial table.  The type of the field is inspected to 
-determine how to read it.  It can be a PostGIS <b>geometry</b> field, which
-is assumed to come back in OGC WKT, or type BYTEA or OID in which case it
-is used as a source of OGC WKB geometry.<p>
+<p>Regular (non-spatial) tables can be accessed, and will return features with
+attributes, but not geometry.  If the table has a "st_*" field, it will
+be treated as a spatial table. The type of the field is inspected to 
+determine how to read it.
 
-If there is an "ogc_fid" field, it will be used to set the feature id of
-the features, and not treated as a regular field. <p>
-
-The layer name may be of the form "schema.table". The schema must exist, and the 
-user needs to have write permissions for the target and the public schema.<p>
-
-The PostgreSQL driver passes SQL statements directly to PostgreSQL rather
-than evaluating them internally when using the ExecuteSQL() call on the
-OGRDataSource, or the -sql command option to ogr2ogr.  Attribute query
-expressions are also passed through to PostgreSQL.  The PostgreSQL
-driver in OGR supports the OGRDataSource::StartTrasaction(), 
-OGRDataSource::CommitTransaction() and OGRDataSource::RollbackTransaction()
-calls in the normal SQL sense.<p>
-
-<h2>Caveats</h2>
-
-<ul>
-
-<li> The type recognition logic is currently somewhat impoverished.  
-The types "INT*" and "NUMERIC(width,0)" are mapped to integer, the types
-"FLOAT*" and "NUMERIC(width,precision>0)" are mapped to real, date, time, 
-timestamp and datetime are handled as date types and all other
-types are just treated as strings. <p>
-
-<li> A sequence object called <tablename>_ogc_fid_seq is created for new
-tables (layer)<p>
-
-<li> Sequential reading is done within a single transaction.  Any attempts
-to write to a layer within a sequential read will likely result in a "BEGIN"
-while already within a transaction type of error message.<p>
-
-</ul>
-
-<h2>Creation Issues</h2>
-
-The PostgreSQL driver does not support creation of new datasets (a database
-within PostgreSQL), but it does allow creation of new layers within an
-existing database.<P>
-
-As mentioned above the type system is impoverished, and many OGR types
-are not appropriate mapped into PostgreSQL.<p>
-
-If the database has PostGIS types loaded (ie. the geometry type) newly
-created layers will be created with the PostGIS Geometry type.  Otherwise
-they will use OID.  
-
-By default it is assumed that text being sent to Postgres is in the UTF-8
-encoding.  This is fine for plain ASCII, but can result in errors for
-extended characters (ASCII 155+ for instance).  Whle OGR provides no direct
-control over this, you can set the PGCLIENTENCODING environment variable 
-to indicate the format being provided.  For instance, if you text is 
-LATIN1 you could set the environment variable to LATIN1 before using OGR
-and input would be assumed to be LATIN1 instead of UTF-8. <p>
-
-<h3>Dataset Creation Options</h3>
-
-None<p>
-
-<h3>Layer Creation Options</h3>
-
-<ul>
-<li>
-<b>GEOM_TYPE</b>: The GEOM_TYPE layer creation option can be set to 
-one of "Geometry", "BYTEA" or "OID" to force the type of geometry used for
-a table. <p>
-<li> <b>OVERWRITE</b>: This may be "YES" to force an existing layer of the
-desired name to be destroyed before creating the requested layer.<p>
-<li> <b>LAUNDER</b>: This may be "YES" to force new fields created on this
-layer to have their field names "laundered" into a form more compatible with
-PostgreSQL.  This converts to lower case and converts some special characters
-like "-" and "#" to "_".  If "NO" exact names are preserved.  The default value is "YES".<p>
-<li> <b>PRECISION</b>: This may be "YES" to force new fields created on this
-layer to try and represent the width and precision information, if available
-using NUMERIC(width,precision) or CHAR(width) types.  If "NO" then the types
-FLOAT8, INTEGER and VARCHAR will be used instead.  The default is "YES".<p>
-<li> <b>DIM={2,3}</b>: Control the dimension of the layer.  Defaults to 3. 
-Important to set to 2 for 2D layers with PostGIS 1.0+ as it has constraints
-on the geometry dimension during loading.<p>
-<li> <b>GEOMETRY_NAME</b>: Set name of geometry column in new table.  If 
-omitted it defaults to wkb_geometry.<p>
-<li> <b>SCHEMA</b>: Set name of schema for new table.
-Using the same layer name in different schemas ist supported, but not in the public schema and others.<p>
-</ul>
+<p>Driver supports automatic FID detection.
 
 <h3>Environment variables</h3>
-
 <ul>
-<li><b>PG_USE_COPY</b>: This may be "YES" for using COPY for inserting data to Postgresql.
-COPY is less robust than INSERT, but signficantly faster.</li><p>
-<li><b>PGSQL_OGR_FID</b>: Set name of primary key instead of 'ogc_fid'.</li><p>
+<li><b>INFORMIXDIR</b>: It should be set to Informix client SDK install dir
+<li><b>INFORMIXSERVER</b>: Default Informix server name
+<li><b>DB_LOCALE</b>: Locale of Informix database
+<li><b>CLIENT_LOCALE</b>: Client locale
+<li><b>IDB_OGR_FID</b>: Set name of primary key instead of 'ogc_fid'.
 </ul>
 
-<h3>Example</h3>
+<p>For more information about Informix variables read documentation of
+Informix Client SDK
 
-Simple translation of a shapefile into PostgreSQL.  The table 'abc' will
-be created with the features from abc.shp and attributes from abc.dbf. 
-The database instance (warmerda) must already exist, and the table abc must
-not already exist. <p>
-
-<pre>
-% ogr2ogr -f PostgreSQL PG:dbname=warmerda abc.shp
-</pre>
-
-<p>
-This second example loads a political boundaries layer from VPF (via the
-<a href="drv_ogdi.html">OGDI driver</a>), and renames the layer from the
-cryptic OGDI layer name to something more sensible.  If an existing table
-of the desired name exists it is overwritten.<p>
+<h3> Example </h3>
+<p>This example shows using ogrinfo to list Informix DataBlade layers on a different host.
 
 <pre>
-% ogr2ogr -f PostgreSQL PG:dbname=warmerda \
-        gltp:/vrf/usr4/mpp1/v0eur/vmaplv0/eurnasia \
-        -lco OVERWRITE=yes -nln polbndl_bnd 'polbndl@bnd(*)_line'
+ogrinfo -ro IDB:'server=demo_on user=informix dbname=frames'
 </pre>
-
-<p>
-In this example we merge tiger line data from two different directories of
-tiger files into one table.  Note that the second invocation uses -append
-and no OVERWRITE=yes. <p>
-
-<pre>
-% ogr2ogr -f PostgreSQL PG:dbname=warmerda tiger_michigan \
-     -lco OVERWRITE=yes CompleteChain
-% ogr2ogr -update -append -f PostgreSQL PG:dbname=warmerda tiger_ohio \
-     CompleteChain
-</pre>
-
-<p>
-This example shows using ogrinfo to evaluate an SQL query statement 
-within PostgreSQL.  More sophisticated PostGIS specific queries may also be
-used via the -sql commandline switch to ogrinfo.<p>
-
-<pre>
-ogrinfo -ro PG:dbname=warmerda -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
-</pre>
-
-<p>
-This example shows using ogrinfo to list PostgreSQL/PostGIS layers on a different host.<p>
-
-<pre>
-ogrinfo -ro PG:'host=myserver.velocet.ca user=postgres dbname=warmerda'
-</pre>
-
-<h3>See Also</h3>
-
-<ul>
-<li> <a href="http://www.postgresql.org/">PostgreSQL Home Page</a><p>
-<li> <a href="http://postgis.refractions.net/">PostGIS</a><p>
-<li> <a href="http://postgis.refractions.net/support/wiki/index.php?OGR%20Examples">PostGIS / OGR Wiki Examples Page</a><p>
-</ul>
 
 </body>
 </html>
