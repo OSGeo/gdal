@@ -155,6 +155,13 @@ JPEG_SUPPORTED = 1
 #SQLITE_INC=-IN:\pkg\sqlite-win32
 #SQLITE_LIB=N:\pkg\sqlite-win32\sqlite3_i.lib
 
+# Informix Data Blade
+#INFORMIXDIR="C:\Program Files\IBM\Informix\Client-SDK"
+#IDB_INC=-I$(INFORMIXDIR)\incl\cpp -I$(INFORMIXDIR)\incl\dmi \
+#	-I$(INFORMIXDIR)\incl\esql
+#IDB_LIB=$(INFORMIXDIR)\lib\cpp\libthc++.lib \
+#	$(INFORMIXDIR)\lib\dmi\libthdmi.lib $(INFORMIXDIR)\lib\isqlt09a.lib
+
 # Uncomment the following and update to enable FME support.
 #FME_DIR =	d:\Software\fme
 
@@ -261,7 +268,7 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(OCI_LIB) $(PG_LIB) $(ODBCLIB) \
 		$(FITS_LIB) $(JPEG_LIB) $(PNG_LIB) $(NETCDF_LIB) $(PROJ4_LIB) \
 		$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
 		$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB) $(SDE_LIB) $(DWG_LIB) \
-		$(CURL_LIB) $(ADD_LIBS)
+		$(IDB_LIB) $(CURL_LIB) $(ADD_LIBS)
 
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c
