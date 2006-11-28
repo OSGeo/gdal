@@ -1624,7 +1624,7 @@ dnl Select Informix DataBlade support
 dnl ---------------------------------------------------------------------------
 
 HAVE_IDB=no
-AC_ARG_WITH(idb,[  --with-idb  Include Informix DataBlade support (over ODBC)],,)
+AC_ARG_WITH(idb,[  --with-idb=DIR        Include Informix DataBlade support (DIR points to Informix root)],,)
 
 if test "$with_idb" = "no" ; then
   AC_MSG_NOTICE(["IBM Informix DataBlade support disabled.])
@@ -1644,7 +1644,7 @@ dnl  if test "$ODBC_SETTING" = "yes"  ; then
     IDB_INC="-I$with_idb/incl/ -I$with_idb/incl/dmi -I$with_idb/incl/c++"
     IDB_LIB="$LIBS_DIRS $LIBS_ESQL $LIBS_LIBMI $LIBS_CPPIF"
     AC_MSG_NOTICE([using Informix C++ client library from $with_idb.])
-dnl    AC_MSG_NOTICE([IBM Informix DataBlade support enabled over ODBC.])
+dnl    AC_MSG_NOTICE([IBM Informix DataBlade support enabled.])
   else
     AC_MSG_NOTICE([IBM Informix DataBlade not supported.])
   fi
@@ -2045,7 +2045,7 @@ LOC_MSG([  DODS support:              ${HAVE_DODS}])
 LOC_MSG([  SQLite support:            ${HAVE_SQLITE}])
 LOC_MSG([  DWGdirect support          ${HAVE_DWGDIRECT}])
 LOC_MSG([  PANORAMA GIS support:      ${HAVE_PANORAMA}])
-LOC_MSG([  Informix DataBlade support:${HAVE_IDB}])
+LOC_MSG([  INFORMIX DataBlade support:${HAVE_IDB}])
 LOC_MSG([  GEOS support:              ${HAVE_GEOS}])
 LOC_MSG()
 LOC_MSG([  Statically link PROJ.4:    ${PROJ_STATIC}])
