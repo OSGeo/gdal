@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/11/28 03:23:51  fwarmerdam
+ * various improvements to error trapping
+ *
  * Revision 1.4  2006/11/20 18:30:02  fwarmerdam
  * Use %.15g for BBOX values.
  *
@@ -75,6 +78,7 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     int         ExtractGridInfo();
     int         EstablishRasterDetails();
 
+    int         ProcessError( CPLHTTPResult *psResult );
     GDALDataset *GDALOpenResult( CPLHTTPResult *psResult );
     void        FlushMemoryResult();
     CPLString   osResultFilename;
@@ -276,12 +280,8 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     
     CPLHTTPResult *psResult = CPLHTTPFetch( osRequest, apszOptions );
 
-    if( psResult == NULL || psResult->nDataLen == 0
-        || CPLGetLastErrorNo() != 0 )
-    {
-        CPLHTTPDestroyResult( psResult );
+    if( poODS->ProcessError( psResult ) )
         return CE_Failure;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Try and open result as a dataseat.                               */
@@ -463,13 +463,12 @@ int WCSDataset::DescribeCoverage()
         CPLGetXMLValue( psService, "ServiceURL", "" ),
         CPLGetXMLValue( psService, "CoverageName", "" ) );
 
+    CPLErrorReset();
+    
     CPLHTTPResult *psResult = CPLHTTPFetch( osRequest, NULL );
 
-    if( psResult == NULL || psResult->nDataLen == 0 )
-    {
-        CPLHTTPDestroyResult( psResult );
-        return FALSE;
-    }
+    if( ProcessError( psResult ) )
+        return CE_Failure;
     
 /* -------------------------------------------------------------------- */
 /*      Parse result.                                                   */
@@ -701,6 +700,59 @@ int WCSDataset::ExtractGridInfo()
 }
 
 /************************************************************************/
+/*                            ProcessError()                            */
+/*                                                                      */
+/*      Process an HTTP error, reporting it via CPL, and destroying     */
+/*      the HTTP result object.  Returns TRUE if there was an error,    */
+/*      or FALSE if the result seems ok.                                */
+/************************************************************************/
+
+int WCSDataset::ProcessError( CPLHTTPResult *psResult )
+
+{
+/* -------------------------------------------------------------------- */
+/*      In this case we can presume the error was already issued by     */
+/*      CPLHTTPFetch().                                                 */
+/* -------------------------------------------------------------------- */
+    if( psResult == NULL || psResult->nDataLen == 0 
+        || CPLGetLastErrorNo() != 0 )
+    {
+        CPLHTTPDestroyResult( psResult );
+        return TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Does this look like a service exception?  We would like to      */
+/*      check based on the Content-type, but this seems quite           */
+/*      undependable, even from MapServer!                              */
+/* -------------------------------------------------------------------- */
+    if( strstr((const char *)psResult->pabyData, "<ServiceException") )
+    {
+        CPLXMLNode *psTree = CPLParseXMLString( (const char *) 
+                                                psResult->pabyData );
+        const char *pszMsg = NULL;
+
+        if( psTree != NULL )
+            pszMsg = CPLGetXMLValue(psTree,
+                                    "=ServiceExceptionReport.ServiceException",
+                                    NULL );
+        if( pszMsg )
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "%s", pszMsg );
+        else
+            CPLError( CE_Failure, CPLE_AppDefined, 
+                      "Corrupt Service Exception:\n%s",
+                      (const char *) psResult->pabyData );
+        
+        CPLDestroyXMLNode( psTree );
+        CPLHTTPDestroyResult( psResult );
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/************************************************************************/
 /*                       EstablishRasterDetails()                       */
 /*                                                                      */
 /*      Do a "test" coverage query to work out the number of bands,     */
@@ -737,13 +789,12 @@ int WCSDataset::EstablishRasterDetails()
 /* -------------------------------------------------------------------- */
 /*      Fetch the result.                                               */
 /* -------------------------------------------------------------------- */
+    CPLErrorReset();
+
     CPLHTTPResult *psResult = CPLHTTPFetch( osRequest, NULL );
 
-    if( psResult == NULL || psResult->nDataLen == 0 )
-    {
-        CPLHTTPDestroyResult( psResult );
+    if( ProcessError( psResult ) )
         return FALSE;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Try and open result as a dataseat.                               */
