@@ -1,11 +1,11 @@
 /*
  * $Id$
  *
- * Global errno variable.
+ * fcntl.h - wrapper on wce_fcntl.h header
  *
  * Created by Mateusz Loskot (mateusz@loskot.net)
  *
- * Copyright (c) 2006 Taxus SI Ltd.
+ * Copyright (c) 2006 Mateusz Loskot (mateusz@loskot.net)
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the "Software"),
@@ -28,15 +28,21 @@
  * MIT License:
  * http://opensource.org/licenses/mit-license.php
  *
- * Contact:
- * Taxus SI Ltd.
- * http://www.taxussi.com.pl
- *
  */
+#ifndef WCEEX_FCNTL_WRAPPER_H
+#define WCEEX_FCNTL_WRAPPER_H	1
 
 /*
- * XXX - mloskot - errno is required to be thread-safe
+ * Windows CE SDK does not provide fcntl.h file.
+ * In order to simplify usage of wce_fcntl.h extension, this header is provided.
+ * It directly includes wce_fcntl.h file.
  */
 
-int errno;
+#if !defined(_WIN32_WCE)
+# error "Only Winddows CE target is supported!"
+#else
+# include "wce_fcntl.h"
+#endif
 
+
+#endif /* #ifndef WCEEX_FCNTL_WRAPPER_H */

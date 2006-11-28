@@ -1,9 +1,9 @@
 /*
  * $Id$
  *
- * Equivalent of <io.h> - file handling functions.
+ * io.h - file handling functions
  *
- * Created by Mateusz Loskot, mloskot@taxussi.com.pl
+ * Created by Mateusz Loskot (mateusz@loskot.net)
  *
  * Copyright (c) 2006 Taxus SI Ltd.
  *

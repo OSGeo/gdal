@@ -1,9 +1,9 @@
 /*
  * $Id$
  *
- * Equivalent of <sys/stat.h> - data returned by the stat() function.
+ * sys/stat.h - data returned by the stat() function
  *
- * Created by Mateusz Loskot, mloskot@taxussi.com.pl
+ * Created by Mateusz Loskot (mateusz@loskot.net)
  *
  * Copyright (c) 2006 Taxus SI Ltd.
  *
