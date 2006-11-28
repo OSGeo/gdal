@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/11/28 00:00:35  tamas
+ * RFC 6: Geometry and Feature Style as OGR Special Fields
+ *
  * Revision 1.10  2006/03/31 17:44:20  fwarmerdam
  * header updates
  *
@@ -99,5 +102,20 @@ void CPL_DLL OGRMakeWktCoordinate( char *, double, double, double, int );
 /* General utility option processing. */
 int CPL_DLL OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions );
 
+/************************************************************************/
+/*     Support for special attributes (feature query and selection)     */
+/************************************************************************/
+CPL_C_START
+#include "swq.h"
+CPL_C_END
+
+#define SPF_FID 0
+#define SPF_OGR_GEOMETRY 1
+#define SPF_OGR_STYLE 2
+#define SPF_OGR_GEOM_WKT 3
+#define SPECIAL_FIELD_COUNT 4
+
+extern char* SpecialFieldNames[SPECIAL_FIELD_COUNT];
+extern swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
 
 #endif /* ndef _OGR_P_H_INCLUDED */

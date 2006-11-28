@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/11/27 23:59:40  tamas
+ * RFC 6: Geometry and Feature Style as OGR Special Fields
+ *
  * Revision 1.24  2005/12/02 11:02:52  osemykin
  * check input parameter with NULL in GetLayerByName()
  *
@@ -108,10 +111,6 @@
 #include "ogr_p.h"
 #include "ogr_gensql.h"
 #include "ogr_attrind.h"
-
-CPL_C_START
-#include "swq.h"
-CPL_C_END
 
 CPL_CVSID("$Id$");
 
@@ -717,7 +716,7 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
 /*      Validate that all the source tables are recognised, count       */
 /*      fields.                                                         */
 /* -------------------------------------------------------------------- */
-    int  nFieldCount = 0, iTable;
+    int  nFieldCount = 0, iTable, iField;
 
     for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
     {
@@ -771,21 +770,20 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
     sFieldList.table_defs = psSelectInfo->table_defs;
 
     sFieldList.count = 0;
-    sFieldList.names = (char **) CPLMalloc( sizeof(char *) * (nFieldCount+1) );
+    sFieldList.names = (char **) CPLMalloc( sizeof(char *) * (nFieldCount+SPECIAL_FIELD_COUNT) );
     sFieldList.types = (swq_field_type *)  
-        CPLMalloc( sizeof(swq_field_type) * (nFieldCount+1) );
+        CPLMalloc( sizeof(swq_field_type) * (nFieldCount+SPECIAL_FIELD_COUNT) );
     sFieldList.table_ids = (int *) 
-        CPLMalloc( sizeof(int) * (nFieldCount+1) );
+        CPLMalloc( sizeof(int) * (nFieldCount+SPECIAL_FIELD_COUNT) );
     sFieldList.ids = (int *) 
-        CPLMalloc( sizeof(int) * (nFieldCount+1) );
+        CPLMalloc( sizeof(int) * (nFieldCount+SPECIAL_FIELD_COUNT) );
     
     for( iTable = 0; iTable < psSelectInfo->table_count; iTable++ )
     {
         swq_table_def *psTableDef = psSelectInfo->table_defs + iTable;
         OGRDataSource *poTableDS = this;
         OGRLayer *poSrcLayer;
-        int      iField;
-
+        
         if( psTableDef->data_source != NULL )
         {
             poTableDS = (OGRDataSource *) 
@@ -821,8 +819,7 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Expand '*' in 'SELECT *' now before we add the pseudo field     */
-/*      'FID'.                                                          */
+/*      Expand '*' in 'SELECT *' now before we add the pseudo fields    */
 /* -------------------------------------------------------------------- */
     pszError = 
         swq_select_expand_wildcard( psSelectInfo, &sFieldList );
@@ -834,13 +831,15 @@ OGRLayer * OGRDataSource::ExecuteSQL( const char *pszStatement,
         return NULL;
     }
 
-    sFieldList.names[sFieldList.count] = "FID";
-    sFieldList.types[sFieldList.count] = SWQ_INTEGER;
-    sFieldList.table_ids[sFieldList.count] = 0;
-    sFieldList.ids[sFieldList.count] = nFIDIndex;
+    for (iField = 0; iField < SPECIAL_FIELD_COUNT; iField++)
+    {
+        sFieldList.names[sFieldList.count] = SpecialFieldNames[iField];
+        sFieldList.types[sFieldList.count] = SpecialFieldTypes[iField];
+        sFieldList.table_ids[sFieldList.count] = 0;
+        sFieldList.ids[sFieldList.count] = nFIDIndex + iField;
+        sFieldList.count++;
+    }
     
-    sFieldList.count++;
-
 /* -------------------------------------------------------------------- */
 /*      Finish the parse operation.                                     */
 /* -------------------------------------------------------------------- */
