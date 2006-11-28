@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/11/28 00:00:36  tamas
+ * RFC 6: Geometry and Feature Style as OGR Special Fields
+ *
  * Revision 1.10  2006/01/07 17:16:36  dron
  * Do not include ogrsf_frmts.h.
  *
@@ -69,9 +72,14 @@
 
 CPL_CVSID("$Id$");
 
-CPL_C_START
-#include "swq.h"
-CPL_C_END
+/************************************************************************/
+/*     Support for special attributes (feature query and selection)     */
+/************************************************************************/
+
+char* SpecialFieldNames[SPECIAL_FIELD_COUNT] 
+    = {"FID", "OGR_GEOMETRY", "OGR_STYLE", "OGR_GEOM_WKT"};
+swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT] 
+    = {SWQ_INTEGER, SWQ_STRING, SWQ_STRING, SWQ_STRING};
 
 /************************************************************************/
 /*                          OGRFeatureQuery()                           */
@@ -115,7 +123,7 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
     char        **papszFieldNames;
     swq_field_type *paeFieldTypes;
     int         iField;
-    int         nFieldCount = poDefn->GetFieldCount()+1;
+    int         nFieldCount = poDefn->GetFieldCount() + SPECIAL_FIELD_COUNT;
 
     papszFieldNames = (char **) 
         CPLMalloc(sizeof(char *) * nFieldCount );
@@ -148,8 +156,13 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
         }
     }
 
-    papszFieldNames[nFieldCount-1] = "FID";
-    paeFieldTypes[nFieldCount-1] = SWQ_INTEGER;
+    iField = 0;
+    while (iField < SPECIAL_FIELD_COUNT)
+    {
+        papszFieldNames[poDefn->GetFieldCount() + iField] = SpecialFieldNames[iField];
+        paeFieldTypes[poDefn->GetFieldCount() + iField] = SpecialFieldTypes[iField];
+        ++iField;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try to parse.                                                   */
@@ -183,13 +196,28 @@ OGRErr OGRFeatureQuery::Compile( OGRFeatureDefn *poDefn,
 static int OGRFeatureQueryEvaluator( swq_field_op *op, OGRFeature *poFeature )
 
 {
-    OGRField sFID;
+    OGRField sField;
     OGRField *psField;
 
-    if( op->field_index == poFeature->GetDefnRef()->GetFieldCount() )
+    int iSpecialField = op->field_index - poFeature->GetDefnRef()->GetFieldCount();
+    if( iSpecialField >= 0 )
     {
-        sFID.Integer = poFeature->GetFID();
-        psField = &sFID;
+        if ( iSpecialField < SPECIAL_FIELD_COUNT )
+        {
+            switch ( SpecialFieldTypes[iSpecialField] )
+            {
+            case SWQ_INTEGER:
+                sField.Integer = poFeature->GetFieldAsInteger( op->field_index );
+            case SWQ_STRING:
+                sField.String = (char*) poFeature->GetFieldAsString( op->field_index );
+            }      
+        }
+        else
+        {
+            CPLDebug( "OGRFeatureQuery", "Illegal special field index.");
+            return FALSE;
+        }
+        psField = &sField;
     }
     else
         psField = poFeature->GetRawFieldRef( op->field_index );
@@ -462,8 +490,9 @@ char **OGRFeatureQuery::FieldCollector( void *pBareOp,
 /* -------------------------------------------------------------------- */
     const char *pszFieldName;
 
-    if( op->field_index == poTargetDefn->GetFieldCount() ) 
-        pszFieldName = "FID";
+    if( op->field_index >= poTargetDefn->GetFieldCount()
+        && op->field_index < poTargetDefn->GetFieldCount() + SPECIAL_FIELD_COUNT) 
+        pszFieldName = SpecialFieldNames[op->field_index];
     else if( op->field_index >= 0 
              && op->field_index < poTargetDefn->GetFieldCount() )
         pszFieldName = 

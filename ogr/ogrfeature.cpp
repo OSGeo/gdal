@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2006/11/28 00:00:35  tamas
+ * RFC 6: Geometry and Feature Style as OGR Special Fields
+ *
  * Revision 1.44  2006/09/20 13:01:51  osemykin
  * Make the functions GetFieldAsStringList(...) and IsFieldSet(...) const
  *
@@ -132,6 +135,7 @@ OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn )
 {
     m_pszStyleString = NULL;
     m_poStyleTable = NULL;
+    m_pszTmpFieldValue = NULL;
     poDefnIn->Reference();
     poDefn = poDefnIn;
 
@@ -225,6 +229,7 @@ OGRFeature::~OGRFeature()
 
     CPLFree( pauFields );
     CPLFree(m_pszStyleString);
+    CPLFree(m_pszTmpFieldValue);
 }
 
 /************************************************************************/
@@ -853,6 +858,19 @@ OGRField *OGR_F_GetRawFieldRef( OGRFeatureH hFeat, int iField )
 int OGRFeature::GetFieldAsInteger( int iField )
 
 {
+    int iSpecialField = iField - poDefn->GetFieldCount();
+    if (iSpecialField >= 0)
+    {
+    // special field value accessors
+        switch (iSpecialField)
+        {
+        case SPF_FID:
+            return GetFID();
+        default:
+            return 0;
+        }
+    }
+    
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
     
     CPLAssert( poFDefn != NULL || iField == -1 );
@@ -923,6 +941,19 @@ int OGR_F_GetFieldAsInteger( OGRFeatureH hFeat, int iField )
 double OGRFeature::GetFieldAsDouble( int iField )
 
 {
+    int iSpecialField = iField - poDefn->GetFieldCount();
+    if (iSpecialField >= 0)
+    {
+    // special field value accessors
+        switch (iSpecialField)
+        {
+        case SPF_FID:
+            return GetFID();
+        default:
+            return 0.0;
+        }
+    }
+    
     OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
     
     CPLAssert( poFDefn != NULL || iField == -1 );
@@ -994,9 +1025,38 @@ double OGR_F_GetFieldAsDouble( OGRFeatureH hFeat, int iField )
 const char *OGRFeature::GetFieldAsString( int iField )
 
 {
-    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
-    static char         szTempBuffer[80];
+    char         szTempBuffer[80];
 
+    CPLFree(m_pszTmpFieldValue);
+    m_pszTmpFieldValue = NULL;            
+
+    int iSpecialField = iField - poDefn->GetFieldCount();
+    if (iSpecialField >= 0)
+    {
+    // special field value accessors
+        switch (iSpecialField)
+        {
+        case SPF_FID:
+            sprintf( szTempBuffer, "%d", GetFID() );
+            return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
+        case SPF_OGR_GEOMETRY:
+            return poGeometry->getGeometryName();
+        case SPF_OGR_STYLE:
+            return GetStyleString();
+        case SPF_OGR_GEOM_WKT:
+            {
+                if (poGeometry->exportToWkt( &m_pszTmpFieldValue ) == OGRERR_NONE )
+                    return m_pszTmpFieldValue;
+                else
+                    return "";
+            }
+        default:
+            return "";
+        }
+    }
+    
+    OGRFieldDefn        *poFDefn = poDefn->GetFieldDefn( iField );
+    
     CPLAssert( poFDefn != NULL || iField == -1 );
     if( poFDefn == NULL )
         return "";
@@ -1014,7 +1074,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
     else if( poFDefn->GetType() == OFTInteger )
     {
         sprintf( szTempBuffer, "%d", pauFields[iField].Integer );
-        return szTempBuffer;
+        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
     }
     else if( poFDefn->GetType() == OFTReal )
     {
@@ -1030,7 +1090,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
         
         sprintf( szTempBuffer, szFormat, pauFields[iField].Real );
         
-        return szTempBuffer;
+        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
     }
     else if( poFDefn->GetType() == OFTDateTime )
     {
@@ -1064,7 +1124,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
                          "%02d%02d", nHours, nMinutes );
         }
 
-        return szTempBuffer;
+        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
     }
     else if( poFDefn->GetType() == OFTDate )
     {
@@ -1073,7 +1133,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
                  pauFields[iField].Date.Month,
                  pauFields[iField].Date.Day );
 
-        return szTempBuffer;
+        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
     }
     else if( poFDefn->GetType() == OFTTime )
     {
@@ -1082,7 +1142,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
                  pauFields[iField].Date.Minute,
                  pauFields[iField].Date.Second );
         
-        return szTempBuffer;
+        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
     }
     else if( poFDefn->GetType() == OFTIntegerList )
     {
@@ -1110,7 +1170,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
         else
             strcat( szTempBuffer, ")" );
         
-        return szTempBuffer;
+        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
     }
     else if( poFDefn->GetType() == OFTRealList )
     {
@@ -1147,7 +1207,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
         else
             strcat( szTempBuffer, ")" );
         
-        return szTempBuffer;
+        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
     }
     else if( poFDefn->GetType() == OFTStringList )
     {
@@ -1175,7 +1235,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
         else
             strcat( szTempBuffer, ")" );
         
-        return szTempBuffer;
+        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
     }
     else if( poFDefn->GetType() == OFTBinary )
     {
@@ -1194,7 +1254,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
 
         CPLFree( pszHex );
 
-        return szTempBuffer;
+        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
     }
     else
         return "";

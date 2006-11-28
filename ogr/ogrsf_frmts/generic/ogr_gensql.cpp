@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/11/27 23:59:40  tamas
+ * RFC 6: Geometry and Feature Style as OGR Special Fields
+ *
  * Revision 1.21  2006/11/10 16:58:40  fwarmerdam
  * Added check on primary key for null when joining.   Skip join
  * if it is NULL.  Fixes crash Markus reported.
@@ -101,10 +104,6 @@
 #include "ogr_p.h"
 #include "ogr_gensql.h"
 #include "cpl_string.h"
-
-CPL_C_START
-#include "swq.h"
-CPL_C_END
 
 CPL_CVSID("$Id$");
 
@@ -190,6 +189,8 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
     poDefn = new OGRFeatureDefn( psSelectInfo->table_defs[0].table_alias );
     poDefn->Reference();
 
+    iFIDFieldIndex = poSrcDefn->GetFieldCount();
+
     for( int iField = 0; iField < psSelectInfo->result_columns; iField++ )
     {
         swq_col_def *psColDef = psSelectInfo->column_defs + iField;
@@ -216,13 +217,26 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
             oFDefn.SetWidth( poSrcFDefn->GetWidth() );
             oFDefn.SetPrecision( poSrcFDefn->GetPrecision() );
         }
+        else if ( psColDef->field_index >= iFIDFieldIndex )
+        {
+            switch ( SpecialFieldTypes[psColDef->field_index - iFIDFieldIndex] )
+            {
+            case SWQ_INTEGER:
+                oFDefn.SetType( OFTInteger );
+                break;
+            case SWQ_STRING:
+                oFDefn.SetType( OFTString );
+                break;
+            case SWQ_FLOAT:
+                oFDefn.SetType( OFTReal );
+                break;
+            }
+        }
 
         poDefn->AddFieldDefn( &oFDefn );
     }
 
     poDefn->SetGeomType( poSrcLayer->GetLayerDefn()->GetGeomType() );
-
-    iFIDFieldIndex = poSrcDefn->GetFieldCount();
 
 /* -------------------------------------------------------------------- */
 /*      If an ORDER BY is in effect, apply it now.                      */
@@ -499,21 +513,9 @@ int OGRGenSQLResultsLayer::PrepareSummary()
         {
             swq_col_def *psColDef = psSelectInfo->column_defs + iField;
 
-            if( EQUALN(psColDef->field_name, "FID", 3) )
-            {
-                // Special case where the column is "FID"
-                char szBuffer[255];
-                sprintf( szBuffer, "%ld", poSrcFeature->GetFID() );
-                pszError = 
-                    swq_select_summarize( psSelectInfo, iField, szBuffer);
-            }
-            else
-            {
-                pszError = 
-                    swq_select_summarize( psSelectInfo, iField, 
+            pszError = swq_select_summarize( psSelectInfo, iField, 
                                           poSrcFeature->GetFieldAsString( 
                                               psColDef->field_index ) );
-            }
             
             if( pszError != NULL )
             {
@@ -606,8 +608,17 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
     {
         swq_col_def *psColDef = psSelectInfo->column_defs + iField;
 
-        if( psColDef->field_index == iFIDFieldIndex )
-            poDstFeat->SetField( iField, (int) poSrcFeat->GetFID() );
+        if ( psColDef->field_index >= iFIDFieldIndex &&
+            psColDef->field_index < iFIDFieldIndex + SPECIAL_FIELD_COUNT )
+        {
+            switch (SpecialFieldTypes[psColDef->field_index - iFIDFieldIndex])
+            {
+            case SWQ_INTEGER:
+                poDstFeat->SetField( iField, poSrcFeat->GetFieldAsInteger(psColDef->field_index) );
+            case SWQ_STRING:
+                poDstFeat->SetField( iField, poSrcFeat->GetFieldAsString(psColDef->field_index) );
+            }
+        }
         else if( psColDef->table_index == 0 )
             poDstFeat->SetField( iField,
                          poSrcFeat->GetRawFieldRef( psColDef->field_index ) );
@@ -889,12 +900,21 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 
             psDstField = pasIndexFields + iFeature * nOrderItems + iKey;
 
-            if( psKeyDef->field_index == iFIDFieldIndex )
+            if ( psKeyDef->field_index >= iFIDFieldIndex)
             {
-                psDstField->Integer = poSrcFeat->GetFID();
+                if ( psKeyDef->field_index < iFIDFieldIndex + SPECIAL_FIELD_COUNT )
+                {
+                    switch (SpecialFieldTypes[psKeyDef->field_index - iFIDFieldIndex])
+                    {
+                    case SWQ_INTEGER:
+                        psDstField->Integer = poSrcFeat->GetFieldAsInteger(psKeyDef->field_index);
+                    case SWQ_STRING:
+                        psDstField->String = CPLStrdup( poSrcFeat->GetFieldAsString(psKeyDef->field_index) );
+                    }
+                }
                 continue;
             }
-
+            
             poFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( 
                 psKeyDef->field_index );
 
@@ -941,8 +961,20 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
         swq_order_def *psKeyDef = psSelectInfo->order_defs + iKey;
         OGRFieldDefn *poFDefn;
 
-        if( psKeyDef->field_index == iFIDFieldIndex )
+        if ( psKeyDef->field_index >= iFIDFieldIndex &&
+            psKeyDef->field_index < iFIDFieldIndex + SPECIAL_FIELD_COUNT )
+        {
+            /* warning: only special fields of type string should be deallocated */
+            if (SpecialFieldTypes[psKeyDef->field_index - iFIDFieldIndex] == SWQ_STRING)
+            {
+                for( i = 0; i < nIndexSize; i++ )
+                {
+                    OGRField *psField = pasIndexFields + iKey + i * nOrderItems;
+                    CPLFree( psField->String );
+                }
+            }
             continue;
+        }
 
         poFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( 
             psKeyDef->field_index );
@@ -1039,7 +1071,7 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
         swq_order_def *psKeyDef = psSelectInfo->order_defs + iKey;
         OGRFieldDefn *poFDefn;
 
-        if( psKeyDef->field_index == iFIDFieldIndex )
+        if( psKeyDef->field_index >= iFIDFieldIndex )
             poFDefn = NULL;
         else
             poFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( 
@@ -1050,7 +1082,23 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
             || (pasSecondTuple[iKey].Set.nMarker1 == OGRUnsetMarker 
                 && pasSecondTuple[iKey].Set.nMarker2 == OGRUnsetMarker) )
             nResult = 0;
-        else if( poFDefn == NULL || poFDefn->GetType() == OFTInteger )
+        else if ( poFDefn == NULL )
+        {
+            switch (SpecialFieldTypes[psKeyDef->field_index - iFIDFieldIndex])
+            {
+            case SWQ_INTEGER:
+                if( pasFirstTuple[iKey].Integer < pasSecondTuple[iKey].Integer )
+                    nResult = -1;
+                else if( pasFirstTuple[iKey].Integer > pasSecondTuple[iKey].Integer )
+                    nResult = 1;
+                break;
+            case SWQ_STRING:
+                nResult = strcmp(pasFirstTuple[iKey].String,
+                             pasSecondTuple[iKey].String);
+                break;
+            }
+        }
+        else if( poFDefn->GetType() == OFTInteger )
         {
             if( pasFirstTuple[iKey].Integer < pasSecondTuple[iKey].Integer )
                 nResult = -1;

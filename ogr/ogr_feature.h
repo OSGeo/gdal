@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.35  2006/11/28 00:00:35  tamas
+ * RFC 6: Geometry and Feature Style as OGR Special Fields
+ *
  * Revision 1.34  2006/09/20 13:01:51  osemykin
  * Make the functions GetFieldAsStringList(...) and IsFieldSet(...) const
  *
@@ -275,7 +278,7 @@ class CPL_DLL OGRFeature
   protected: 
     char *              m_pszStyleString;
     OGRStyleTable       *m_poStyleTable;
-    
+    char *              m_pszTmpFieldValue;
     
   public:
                         OGRFeature( OGRFeatureDefn * );
