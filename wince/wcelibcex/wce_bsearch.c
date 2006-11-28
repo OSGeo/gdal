@@ -1,11 +1,11 @@
 /*
  * $Id$
  *
- * Defines mkdir() function.
+ * Defines bsearch() function.
  *
  * Created by Mateusz Loskot (mateusz@loskot.net)
  *
- * Copyright (c) 2006 Taxus SI Ltd.
+ * Copyright (c) 2006 Mateusz Loskot
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the "Software"),
@@ -28,56 +28,63 @@
  * MIT License:
  * http://opensource.org/licenses/mit-license.php
  *
- * Contact:
- * Taxus SI Ltd.
- * http://www.taxussi.com.pl
- *
  */
 
-#include <windows.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <wce_types.h>
 
 /*******************************************************************************
-* wceex_mkdir - Make a directory.
+* wceex_bsearch - TODO
 *
 * Description:
 *
-*   The mkdir() function shall create a new directory with name path. 
-*   Internally, mkdir() function wraps CreateDirectory call from 
-*   Windows CE API.
-*
 * Return:
 *
-*   Upon successful completion, mkdir() shall return 0.
-*   Otherwise, -1 shall be returned, no directory shall be created,
-*   and errno shall be set to indicate the error.
-*
-*   XXX - mloskot - errno is not set - todo.
 *       
 * Reference:
 *   IEEE 1003.1, 2004 Edition
 *******************************************************************************/
-int wceex_mkdir(const char *filename)
+
+void* wceex_bsearch(const void *key, const void *base, size_t num, size_t width,
+                    int (*compare)(const void *, const void *))
 {
-    int res;    
-    size_t len;
-    wchar_t *widestr;
+    size_t left;
+    size_t middle;
+    size_t right;
+    int res;
 
-    /* Covert filename buffer to Unicode. */
-    len = MultiByteToWideChar (CP_ACP, 0, filename, -1, NULL, 0) ;
-	widestr  = (wchar_t*)malloc(sizeof(wchar_t) * len);
+    /* input parameters validation */
+    assert(key != NULL);
+    assert(base != NULL);
+    assert(compare != NULL);
 
-    MultiByteToWideChar( CP_ACP, 0, filename, -1, widestr, len);
-	
-    /* Delete file using Win32 CE API call */
-    res = CreateDirectory(widestr, NULL);
-	
-    /* Free wide-char string */
-    free(widestr);
+    res = 0;
+    left = 0;
+    right = num - 1;
 
-    if (res)
-	    return 0; /* success */
-    else
-        return -1;
+    while (left <= right)
+    {
+        middle = (left + right) / 2;
+
+        res = compare(((char*) base + (width * middle)), key);
+        if (res > 0)
+        {
+            /* search from middle to left */
+            right = middle - 1;
+        }
+        else if (res < 0)
+        {
+            /* search from middle to right */
+            left = middle + 1;
+        }
+        else if (res == 0)
+        {
+            /* middle points to the key element. */
+            return ((char*) base + (width * middle));
+        }
+    }
+
+    /* key not found */
+    return NULL;
 }
-
-

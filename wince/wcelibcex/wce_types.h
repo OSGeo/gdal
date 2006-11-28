@@ -1,9 +1,9 @@
 /*
  * $Id$
  *
- * Equivalent of <sys/types.h> with data types declaration.
+ * sys/types.h - data types
  *
- * Created by Mateusz Loskot, mloskot@taxussi.com.pl
+ * Created by Mateusz Loskot (mateusz@loskot.net)
  *
  * Copyright (c) 2006 Taxus SI Ltd.
  *
@@ -45,8 +45,13 @@ extern "C" {
 
 
 #ifndef _TIME_T_DEFINED
-typedef long    time_t;		/* Time value as number of seconds of the Epoch. */
+typedef long    time_t;             /* Used for time in seconds. */
 # define _TIME_T_DEFINED
+#endif
+
+#ifndef _SIZE_T_DEFINED
+typedef unsigned int    size_t;     /* Used for sizes of objects. */
+# define _SIZE_T_DEFINED
 #endif
 
 

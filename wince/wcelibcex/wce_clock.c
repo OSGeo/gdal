@@ -1,11 +1,11 @@
 /*
  * $Id$
  *
- * Defines mkdir() function.
+ * Defines clock() function.
  *
- * Created by Mateusz Loskot (mateusz@loskot.net)
+ * Created by hav (TODO: Full name of hav)
  *
- * Copyright (c) 2006 Taxus SI Ltd.
+ * Copyright (c) 2006 (TODO: Full name of hav)
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the "Software"),
@@ -28,56 +28,60 @@
  * MIT License:
  * http://opensource.org/licenses/mit-license.php
  *
- * Contact:
- * Taxus SI Ltd.
- * http://www.taxussi.com.pl
- *
  */
 
-#include <windows.h>
+#include <time.h>
+#include <winbase.h>
 
 /*******************************************************************************
-* wceex_mkdir - Make a directory.
+* wceex_clock - report CPU time used
 *
 * Description:
 *
-*   The mkdir() function shall create a new directory with name path. 
-*   Internally, mkdir() function wraps CreateDirectory call from 
-*   Windows CE API.
+*   The clock() function shall return the implementation's best approximation to
+*   the processor time used by the process since the beginning of
+*   an implementation-defined era related only to the process invocation.
 *
-* Return:
+*   Windows CE specific:
+*      CLOCKS_PER_SEC is defined in <time.h> available in Windows CE SDK.
 *
-*   Upon successful completion, mkdir() shall return 0.
-*   Otherwise, -1 shall be returned, no directory shall be created,
-*   and errno shall be set to indicate the error.
+* Return value:
 *
-*   XXX - mloskot - errno is not set - todo.
-*       
+*   To determine the time in seconds, the value returned by clock() should be
+*   divided by the value of the macro CLOCKS_PER_SEC.
+*   CLOCKS_PER_SEC is defined to be one million in <time.h>.
+*   If the processor time used is not available or its value cannot be represented,
+*   the function shall return the value ( clock_t)-1.
+* 
 * Reference:
-*   IEEE 1003.1, 2004 Edition
+*
+*   IEEE Std 1003.1-2001
+*   The GNU C Library Manual
+* 
 *******************************************************************************/
-int wceex_mkdir(const char *filename)
+
+
+
+clock_t wceex_clock()
 {
-    int res;    
-    size_t len;
-    wchar_t *widestr;
-
-    /* Covert filename buffer to Unicode. */
-    len = MultiByteToWideChar (CP_ACP, 0, filename, -1, NULL, 0) ;
-	widestr  = (wchar_t*)malloc(sizeof(wchar_t) * len);
-
-    MultiByteToWideChar( CP_ACP, 0, filename, -1, widestr, len);
-	
-    /* Delete file using Win32 CE API call */
-    res = CreateDirectory(widestr, NULL);
-	
-    /* Free wide-char string */
-    free(widestr);
-
-    if (res)
-	    return 0; /* success */
+    __int64 ticks;
+    SYSTEMTIME stCurrent;
+    FILETIME   ftCurrent;
+    
+    GetSystemTime(&stCurrent);
+    
+    if (SystemTimeToFileTime(&stCurrent, &ftCurrent))
+    {
+        ticks = *(__int64*)&ftCurrent;
+    }
     else
-        return -1;
+    {
+        /* The processor time used is not available or
+         * its value cannot be represented.
+         */
+        ticks = -1;
+    }
+ 
+   return (clock_t)ticks;
 }
-
-
+ 

@@ -3,7 +3,7 @@
  *
  * Defines unlink() function.
  *
- * Created by Mateusz Loskot, mloskot@taxussi.com.pl
+ * Created by Mateusz Loskot (mateusz@loskot.net)
  *
  * Copyright (c) 2006 Taxus SI Ltd.
  *

@@ -1,11 +1,11 @@
 /*
  * $Id$
  *
- * Global errno variable.
+ * Defines setlocale() function with dummy implementation.
  *
- * Created by Mateusz Loskot (mateusz@loskot.net)
+ * Created by Mateusz Loskot (mloskot@loskot.net)
  *
- * Copyright (c) 2006 Taxus SI Ltd.
+ * Copyright (c) 2006 Mateusz Loskot (mloskot@loskot.net)
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the "Software"),
@@ -28,15 +28,29 @@
  * MIT License:
  * http://opensource.org/licenses/mit-license.php
  *
- * Contact:
- * Taxus SI Ltd.
- * http://www.taxussi.com.pl
- *
  */
 
-/*
- * XXX - mloskot - errno is required to be thread-safe
- */
 
-int errno;
+/*******************************************************************************
+* wceex_setlocale - dummy setlocale() function
+*
+* Description:
+*
+*   C library on Windows CE includes <locale.h> file with prototype of
+*   setlocale() function but no implementation is available.
+*
+*   Currently, wceex_setlocale() function does not provide any implementation.
+*   It does ALWAYS return empty string.
+*
+*   TODO: Consider to implement working version of setlocale() based on
+*         GetLocaleInfo and SetLocaleInfo() calls from Windows CE API.
+* Return:
+*
+*   The wceex_setlocale() function ALWAYS returns empty string.*
+*       
+*******************************************************************************/
 
+char* wceex_setlocale(int category, const char* locale)
+{
+    return "";
+}

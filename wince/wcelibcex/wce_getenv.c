@@ -1,11 +1,11 @@
 /*
  * $Id$
  *
- * Global errno variable.
+ * Defines getenv() function with dummy implementation.
  *
- * Created by Mateusz Loskot (mateusz@loskot.net)
+ * Created by Mateusz Loskot (mloskot@loskot.net)
  *
- * Copyright (c) 2006 Taxus SI Ltd.
+ * Copyright (c) 2006 Mateusz Loskot (mloskot@loskot.net)
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the "Software"),
@@ -28,15 +28,26 @@
  * MIT License:
  * http://opensource.org/licenses/mit-license.php
  *
- * Contact:
- * Taxus SI Ltd.
- * http://www.taxussi.com.pl
- *
  */
 
-/*
- * XXX - mloskot - errno is required to be thread-safe
- */
 
-int errno;
+/*******************************************************************************
+* wceex_getenv - dummy getenv() function
+*
+* Description:
+*
+*   There is no concept of environment variable in Windows CE operating system.
+*   This function acts as a dummy compilation enabler and ALWAYS returns NULL.
+*
+* Return:
+*
+*   The wceex_getenv() function ALWAYS returns NULL.*
+*       
+*******************************************************************************/
 
+#include <stdlib.h>
+
+char* wceex_getenv(const char* varname)
+{
+    return NULL;
+}
