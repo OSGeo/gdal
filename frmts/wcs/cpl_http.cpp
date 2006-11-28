@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/11/28 03:23:06  fwarmerdam
+ * capture content type
+ *
  * Revision 1.1  2006/10/27 02:15:56  fwarmerdam
  * New
  *
@@ -41,9 +44,6 @@
 #endif
 
 CPL_CVSID("$Id$");
-
-typedef struct {
-} CPLHTTPInfo;							  
 
 /************************************************************************/
 /*                            CPLWriteFct()                             */
@@ -138,7 +138,16 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 
     psResult->nStatus = (int) curl_easy_perform( http_handle );
 
-    curl_easy_cleanup( http_handle );
+/* -------------------------------------------------------------------- */
+/*      Fetch content-type if possible.                                 */
+/* -------------------------------------------------------------------- */
+    CURLcode err;
+
+    psResult->pszContentType = NULL;
+    err = curl_easy_getinfo( http_handle, CURLINFO_CONTENT_TYPE, 
+                             &(psResult->pszContentType) );
+    if( psResult->pszContentType != NULL )
+        psResult->pszContentType = CPLStrdup(psResult->pszContentType);
 
 /* -------------------------------------------------------------------- */
 /*      Have we encountered some sort of error?                         */
@@ -149,6 +158,8 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "%s", szCurlErrBuf );
     }
+
+    curl_easy_cleanup( http_handle );
 
     return psResult;
 #endif /* def HAVE_CURL */
@@ -190,6 +201,7 @@ void CPLHTTPDestroyResult( CPLHTTPResult *psResult )
     {
         CPLFree( psResult->pabyData );
         CPLFree( psResult->pszErrBuf );
+        CPLFree( psResult->pszContentType );
         CPLFree( psResult );
     }
 }
