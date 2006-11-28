@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2006/11/28 15:34:41  osemykin
+ * Added new Informix DataBlade driver (IDB)
+ *
  * Revision 1.32  2006/11/01 17:38:41  fwarmerdam
  * Removed Register e00 commented out call.  handled via avc call.
  *
@@ -221,6 +224,8 @@ void OGRRegisterAll()
 #ifdef FME_ENABLED
     RegisterOGRFME();
 #endif
-    
+#ifdef IDB_ENABLED
+    RegisterOGRIDB();
+#endif
 } /* OGRRegisterAll */
 
