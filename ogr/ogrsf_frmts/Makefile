@@ -4,7 +4,7 @@ DIRLIST		=	generic shape ntf sdts tiger s57 dgn mitab gml kml avc \
 			rec mem vrt csv \
 			$(OGDIDIR) $(FMEDIR) $(OCIDIR) $(PG_DIR) $(DWGDIR) \
 			$(ODBCDIR) $(SQLITE_DIR) $(MYSQL_DIR) $(ILI_DIR) \
-			$(SDE_DIR)
+			$(SDE_DIR) $(IDB_DIR)
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
@@ -58,6 +58,11 @@ ILI_DIR = ili
 ILI_OBJ = ili\*.obj ili\iom\*.obj
 !ENDIF
 
+!IFDEF INFORMIXDIR
+IDB_DIR = idb
+IDB_OBJ = idb\*.obj
+!ENDIF
+
 default:
 	for %d in ( $(DIRLIST) ) do \
 		cd %d \
@@ -70,7 +75,7 @@ default:
 				 vrt\*.obj csv\*.obj rec\*.obj kml\*.obj \
 				$(OGDIOBJ) $(ODBCOBJ) $(SQLITE_OBJ) \
 				$(FMEOBJ) $(OCIOBJ) $(PG_OBJ) $(MYSQL_OBJ) \
-				$(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ)
+				$(ILI_OBJ) $(DWG_OBJ) $(SDE_OBJ) $(IDB_OBJ)
 	lib /out:ogrsf_frmts_sup.lib \
 				 ..\..\frmts\iso8211\*.obj \
 				 ..\..\frmts\sdts\sdtsattrreader.obj \
