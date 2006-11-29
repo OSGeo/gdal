@@ -25,9 +25,15 @@ If your organization depends on GDAL/OGR consider
 \htmlonly
 <table border="0" cellspacing="4" cellpadding="4">
 <tr><td><a href="http://www.cadcorp.com/">
-<img src="cadcorp_logo.jpg" alt="Cadcorp" border="0" width="110" height="110">
+<img src="cadcorp_logo.jpg" alt="" border="0" width="110" height="110">
 </a></td>
-<td></td>
+<td><a href="http://www.cadcorp.com/">Cadcorp</a> 
+is a leading UK developer of digital mapping and GIS software.
+With offices in the UK and the USA, Cadcorp's distribution and VAR
+network stretches worldwide. Cadcorp also plays a pivotal technical role
+in the Open Geospatial Consortium, Inc.(r) (OGC(r)), and the Cadcorp SIS
+- Spatial Information System product family is OGC certified compliant
+for several specifications.</td>
 </tr>
 
 <tr><td>
