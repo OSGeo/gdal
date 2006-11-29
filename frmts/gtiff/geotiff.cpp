@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.173  2006/11/29 05:42:11  fwarmerdam
+ * Fixed problem that was scrubbing GCP projections on write.
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1354
+ *
  * Revision 1.172  2006/11/15 02:59:50  fwarmerdam
  * Implemented a limited SetColorInterpretation() method so gdalwarp -dstalpha
  * works for greyscale files.
@@ -2251,9 +2255,6 @@ void GTiffDataset::WriteGeoTIFFInfo()
 	TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 
 		      6 * GetGCPCount(), padfTiePoints );
 	CPLFree( padfTiePoints );
-	
-        CPLFree( pszProjection );
-	pszProjection = CPLStrdup( GetGCPProjection() );
     }
 
 /* -------------------------------------------------------------------- */
