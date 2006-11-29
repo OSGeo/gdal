@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.64  2006/11/29 03:31:48  hobu
+ * we need a newline to close of the #ifdef for SWIGCSHARP at the end of the file
+ *
  * Revision 1.63  2006/11/23 22:51:35  tamas
  * C# ExportToWkb support
  *
