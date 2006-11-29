@@ -58,6 +58,9 @@ cfis          Charles F. I. Savage         ruby
 lichun	      Lichun Wang                  ilwis
               lichun at itc.nl 		
 
+dron          Andrey Kiselev               HDF, geotiff, informix, 
+              dron at ak4719.spb.edu
+
 
 
 Folks who have not yet agreed to RFC 3:
@@ -65,8 +68,6 @@ Folks who have not yet agreed to RFC 3:
 CVS Login(s)	Name			Email / Contact			Project
 ============	====			===============			=======
 
-dron		Andrey Kiselev		dron at ak4719.spb.edu		gdal
-									libtiff
 
 gwalter		Gillian Walter		gillian.walter at vexcel.com	gdal
 
