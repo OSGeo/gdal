@@ -23,21 +23,35 @@ If your organization depends on GDAL/OGR consider
 \subsection silver_sponsors Silver Sponsors
 
 \htmlonly
-<a href="http://www.cadcorp.com/">
-<img src="cadcorp_logo.jpg" alt="" border="0" width="110" height="110">
-</a>
+<table border="0" cellspacing="4" cellpadding="4">
+<tr><td><a href="http://www.cadcorp.com/">
+<img src="cadcorp_logo.jpg" alt="Cadcorp" border="0" width="110" height="110">
+</a></td>
+<td></td>
+</tr>
+
+<tr><td>
+<a href="http://www.safe.com/">
+<img src="safe-logo.png" alt="" border="0" width="132" height="54"></a></td>
+<td><a href="http://www.safe.com/">Safe Software</a> is the leading developer of Spatial ETL (Extract, Transform, and Load) technology, providing spatial data transformation solutions and professional services. Safe's FME software delivers seamless translation of 160 GIS, CAD, raster, and database formats, and allows users to easily manage feature geometry and attribute restructuring, database loading, merging multiple data sources, web-based data distribution, and coordinate system conversion.
+</td>
+</tr></table>
 \endhtmlonly
 
 \subsection past_sponsors Past Sponsors
 
 \htmlonly
-<center><a href="http://www.ermapper.com/"><img src="ERMapperlogo_small.gif" alt="ER Mapper" border="0" width="154" height="46"></a></center><br>
-\endhtmlonly
+<table border="0" cellspacing="4" cellpadding="4">
 
-<a href="http://www.ermapper.com/">ER Mapper</a> generously provided
+<tr><td><a href="http://www.ermapper.com/"><img src="ERMapperlogo_small.gif" alt="ER Mapper" border="0" width="154" height="46"></a></td>
+
+<td><a href="http://www.ermapper.com/">ER Mapper</a> generously provided
 primary sponsorship for GDAL from February 2005 to November 2007 to support 
 work on GDAL improvement efforts not focused on any particular client project.
-<p>
+</td></tr>
+
+</table>
+\endhtmlonly
 
 \section credits_personal Personal
 
