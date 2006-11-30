@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2006/11/30 04:19:18  hobu
+ * remap typecodes to use numpy enums (array->desc->type_num)
+ *
  * Revision 1.2  2006/11/16 00:06:34  hobu
  * updates to work with new numpy stuff
  *
@@ -232,7 +235,7 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
 
     psArray = NULL;
-    sscanf( poOpenInfo->pszFilename+8, "%p", &psArray );
+    sscanf( poOpenInfo->pszFilename+8, "%p", &(psArray) );
     if( psArray == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -260,6 +263,7 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Is this a directly mappable Python array?  Verify rank, and     */
 /*      data type.                                                      */
 /* -------------------------------------------------------------------- */
+
     if( psArray->nd < 2 || psArray->nd > 3 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
@@ -268,42 +272,44 @@ GDALDataset *NUMPYDataset::Open( GDALOpenInfo * poOpenInfo )
         return NULL;
     }
 
-    switch( psArray->descr->type )
+    switch( psArray->descr->type_num )
     {
-      case 'D':
+      case NPY_CDOUBLE:
         eType = GDT_CFloat64;
         break;
 
-      case 'F':
+      case NPY_CFLOAT:
         eType = GDT_CFloat32;
         break;
 
-      case 'd':
+      case NPY_DOUBLE:
         eType = GDT_Float64;
         break;
 
-      case 'f':
+      case NPY_FLOAT:
         eType = GDT_Float32;
         break;
 
-      case 'l':
-      case 'i':
+      case NPY_INT:
+      case NPY_LONG:
         eType = GDT_Int32;
         break;
 
-      case 'u':
+      case NPY_UINT:
+      case NPY_ULONG:
         eType = GDT_UInt32;
         break;
 
-      case 's':
+      case NPY_SHORT:
         eType = GDT_Int16;
         break;
 
-      case 'w':
+      case NPY_USHORT:
         eType = GDT_UInt16;
         break;
 
-      case 'b':
+      case NPY_BYTE:
+      case NPY_UBYTE:
         eType = GDT_Byte;
         break;
 
