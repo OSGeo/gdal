@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.103  2006/11/30 17:48:32  fwarmerdam
+ * Avoid uninitialized variable warning.
+ *
  * Revision 1.102  2006/11/24 17:58:15  fwarmerdam
  * added extension management methods
  *
@@ -1836,7 +1839,7 @@ OGRErr OGRSpatialReference::importFromWMSAUTO( const char * pszDefinition )
 {
     char **papszTokens;
     int nProjId, nUnitsId;
-    double dfRefLong, dfRefLat;
+    double dfRefLong, dfRefLat = 0.0;
     
 /* -------------------------------------------------------------------- */
 /*      Tokenize                                                        */
