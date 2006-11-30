@@ -8,6 +8,9 @@ import _gdal_array
 
 import gdalconst
 import gdal
+gdal.AllRegister()
+_gdal_array.GDALRegister_NUMPY()
+
 codes = {   gdalconst.GDT_Byte      :   numpy.uint8,
             gdalconst.GDT_UInt16    :   numpy.uint16,
             gdalconst.GDT_Int16     :   numpy.int16,
@@ -25,7 +28,9 @@ def GetArrayFilename( array ):
     return _gdal_array.GetArrayFilename(array)
     
 def OpenArray( array, prototype_ds = None ):
+
     ds = gdal.Open( GetArrayFilename(array) )
+
     if ds is not None and prototype_ds is not None:
         if type(prototype_ds).__name__ == 'str':
             prototype_ds = gdal.Open( prototype_ds )
@@ -95,7 +100,7 @@ def DatasetReadAsArray( ds, xoff=0, yoff=0, xsize=None, ysize=None ):
                                       xoff, yoff, xsize, ysize)
         array_list.append( reshape( band_array, [1,ysize,xsize] ) )
 
-    return concatenate( array_list )
+    return numpy.concatenate( array_list )
             
 def BandReadAsArray( band, xoff, yoff, win_xsize, win_ysize,
                      buf_xsize=None, buf_ysize=None, buf_obj=None ):
@@ -124,8 +129,12 @@ def BandReadAsArray( band, xoff, yoff, win_xsize, win_ysize,
     if not buf_obj:
         buf_obj = numpy.zeros( shape, typecode )
 
-    return gdal.ReadRaster( band._o, xoff, yoff, win_xsize, win_ysize,
-                                 buf_xsize, buf_ysize, datatype, buf_obj )
+    band_str = band.ReadRaster( xoff, yoff, win_xsize, win_ysize,
+                                 buf_xsize, buf_ysize, datatype )
+    ar = numpy.fromstring(band_str,dtype=typecode)
+    ar = numpy.reshape(ar, [1,win_xsize,win_ysize])
+    
+    return ar
 
 def BandWriteArray( band, array, xoff=0, yoff=0 ):
     """Pure python implementation of writing a chunk of a GDAL file
