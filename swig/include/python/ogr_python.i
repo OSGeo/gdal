@@ -6,6 +6,9 @@
 
 /*
  * $Log$
+ * Revision 1.4  2006/11/30 21:45:32  fwarmerdam
+ * Improve __getattr__ and GetField() methods on feature.
+ *
  * Revision 1.3  2005/10/16 20:39:56  hobu
  * fix a typo
  *
@@ -177,15 +180,10 @@ layer[0:4] would return a list of the first four features."""
     def __getattr__(self, name):
         """Returns the values of fields by the given name"""
         try:
-            names = []
-            for i in range(self.GetFieldCount()):
-                names.append(self.GetFieldDefnRef_ByID(i).GetName())
-            if name in names:
-                return self.GetField(name)
-            else:
-                raise
+            return self.GetField(name)
         except:
             raise AttributeError, name
+
     def GetField(self, fld_index):
         import types
         if isinstance(fld_index, types.StringType):
@@ -199,8 +197,7 @@ layer[0:4] would return a list of the first four features."""
             return self.GetFieldAsInteger(fld_index)
         if fld_type == OFTReal:
             return self.GetFieldAsDouble(fld_index)
-        if fld_type == OFTString:
-            return self.GetFieldAsString(fld_index)
+        return self.GetFieldAsString(fld_index)
         
 }
 
