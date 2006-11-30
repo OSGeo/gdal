@@ -46,7 +46,8 @@ PyObject* GetArrayFilename(PyObject *self, PyObject *args){
     char      szString[128];
     
     PyObject  *psArray;
-    
+
+
     if(!PyArg_ParseTuple(args,"O:GetArrayFilename",&psArray) ) {
         PyErr_SetString(GDALArrayError, "Unable to read in array!");
         return NULL;
@@ -101,6 +102,7 @@ init_gdal_array(void)
     PyObject* module;
     module = Py_InitModule3("_gdal_array", GDALPythonArrayMethods,
                        "GDAL numpy helper module");
+    import_array();
     if (module == NULL)
       return;
     GDALArrayError = PyErr_NewException("_gdal_array.GDALArrayError", NULL, NULL);
