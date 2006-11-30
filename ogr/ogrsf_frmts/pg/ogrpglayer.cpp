@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2006/11/30 05:01:43  fwarmerdam
+ * Added support for EWKB (the default geometry format) in HEXToGeometry().
+ *
  * Revision 1.31  2006/04/05 03:15:13  fwarmerdam
  * use CPLString for command buffer to handle large commands
  *
@@ -720,6 +723,9 @@ OGRGeometry *OGRPGLayer::HEXToGeometry( const char *pszBytea )
     if( pszBytea == NULL )
         return NULL;
 
+/* -------------------------------------------------------------------- */
+/*      Convert hex to binary.                                          */
+/* -------------------------------------------------------------------- */
     pabyWKB = (GByte *) CPLMalloc(strlen(pszBytea)+1);
     while( pszBytea[iSrc] != '\0' )
     {
@@ -749,6 +755,25 @@ OGRGeometry *OGRPGLayer::HEXToGeometry( const char *pszBytea )
         iDst++;
     }
 
+/* -------------------------------------------------------------------- */
+/*      PostGIS EWKB format includes an  SRID, but this won't be        */
+/*      understood by OGR, so if the SRID flag is set, we remove the    */
+/*      SRID (bytes at offset 5 to 8).                                  */
+/* -------------------------------------------------------------------- */
+    if( (pabyWKB[0] == 0 /* big endian */ && (pabyWKB[1] & 0x20) )
+        || (pabyWKB[0] != 0 /* little endian */ && (pabyWKB[4] & 0x20)) )
+    {
+        memmove( pabyWKB+5, pabyWKB+9, iDst-9 );
+        iDst -= 4;
+        if( pabyWKB[0] == 0 )
+            pabyWKB[1] &= (~0x20);
+        else
+            pabyWKB[4] &= (~0x20);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to ingest the geometry.                                     */
+/* -------------------------------------------------------------------- */
     poGeometry = NULL;
     OGRGeometryFactory::createFromWkb( pabyWKB, NULL, &poGeometry, iDst );
 
