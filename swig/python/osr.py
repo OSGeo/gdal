@@ -1,19 +1,19 @@
-# This file was created automatically by SWIG 1.3.27.
+# This file was created automatically by SWIG 1.3.29.
 # Don't modify this file, modify the SWIG interface instead.
+# This file is compatible with both classic and new-style classes.
 
 import _osr
-
-# This file is compatible with both classic and new-style classes.
+import new
+new_instancemethod = new.instancemethod
 def _swig_setattr_nondynamic(self,class_type,name,value,static=1):
+    if (name == "thisown"): return self.this.own(value)
     if (name == "this"):
-        if isinstance(value, class_type):
-            self.__dict__[name] = value.this
-            if hasattr(value,"thisown"): self.__dict__["thisown"] = value.thisown
-            del value.thisown
+        if type(value).__name__ == 'PySwigObject':
+            self.__dict__[name] = value
             return
     method = class_type.__swig_setmethods__.get(name,None)
     if method: return method(self,value)
-    if (not static) or hasattr(self,name) or (name == "thisown"):
+    if (not static) or hasattr(self,name):
         self.__dict__[name] = value
     else:
         raise AttributeError("You cannot add attributes to %s" % self)
@@ -22,9 +22,15 @@ def _swig_setattr(self,class_type,name,value):
     return _swig_setattr_nondynamic(self,class_type,name,value,0)
 
 def _swig_getattr(self,class_type,name):
+    if (name == "thisown"): return self.this.own()
     method = class_type.__swig_getmethods__.get(name,None)
     if method: return method(self)
     raise AttributeError,name
+
+def _swig_repr(self):
+    try: strthis = "proxy of " + self.this.__repr__()
+    except: strthis = ""
+    return "<%s.%s; %s >" % (self.__class__.__module__, self.__class__.__name__, strthis,)
 
 import types
 try:
@@ -121,26 +127,26 @@ SRS_WGS84_SEMIMAJOR = _osr.SRS_WGS84_SEMIMAJOR
 SRS_WGS84_INVFLATTENING = _osr.SRS_WGS84_INVFLATTENING
 
 def GetWellKnownGeogCSAsWKT(*args):
-    """GetWellKnownGeogCSAsWKT(char name, char argout) -> OGRErr"""
-    return _osr.GetWellKnownGeogCSAsWKT(*args)
+  """GetWellKnownGeogCSAsWKT(char name, char argout) -> OGRErr"""
+  return _osr.GetWellKnownGeogCSAsWKT(*args)
+
+def GetUserInputAsWKT(*args):
+  """GetUserInputAsWKT(char name, char argout) -> OGRErr"""
+  return _osr.GetUserInputAsWKT(*args)
 class SpatialReference(_object):
     """Proxy of C++ SpatialReference class"""
     __swig_setmethods__ = {}
     __setattr__ = lambda self, name, value: _swig_setattr(self, SpatialReference, name, value)
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, SpatialReference, name)
-    def __repr__(self):
-        return "<%s.%s; proxy of C++ OSRSpatialReferenceShadow instance at %s>" % (self.__class__.__module__, self.__class__.__name__, self.this,)
-    def __init__(self, *args, **kwargs):
+    __repr__ = _swig_repr
+    def __init__(self, *args, **kwargs): 
         """__init__(self, char wkt="") -> SpatialReference"""
-        _swig_setattr(self, SpatialReference, 'this', _osr.new_SpatialReference(*args, **kwargs))
-        _swig_setattr(self, SpatialReference, 'thisown', 1)
-    def __del__(self, destroy=_osr.delete_SpatialReference):
-        """__del__(self)"""
-        try:
-            if self.thisown: destroy(self)
-        except: pass
-
+        this = _osr.new_SpatialReference(*args, **kwargs)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _osr.delete_SpatialReference
+    __del__ = lambda self : None;
     def __str__(*args):
         """__str__(self) -> char"""
         return _osr.SpatialReference___str__(*args)
@@ -160,6 +166,10 @@ class SpatialReference(_object):
     def IsProjected(*args):
         """IsProjected(self) -> int"""
         return _osr.SpatialReference_IsProjected(*args)
+
+    def IsLocal(*args):
+        """IsLocal(self) -> int"""
+        return _osr.SpatialReference_IsLocal(*args)
 
     def GetAttrValue(*args):
         """GetAttrValue(self, char name, int child=0) -> char"""
@@ -387,15 +397,9 @@ class SpatialReference(_object):
         """MorphFromESRI(self) -> OGRErr"""
         return _osr.SpatialReference_MorphFromESRI(*args)
 
-
-class SpatialReferencePtr(SpatialReference):
-    def __init__(self, this):
-        _swig_setattr(self, SpatialReference, 'this', this)
-        if not hasattr(self,"thisown"): _swig_setattr(self, SpatialReference, 'thisown', 0)
-        self.__class__ = SpatialReference
-_osr.SpatialReference_swigregister(SpatialReferencePtr)
+SpatialReference_swigregister = _osr.SpatialReference_swigregister
+SpatialReference_swigregister(SpatialReference)
 GetProjectionMethods = _osr.GetProjectionMethods
-
 
 class CoordinateTransformation(_object):
     """Proxy of C++ CoordinateTransformation class"""
@@ -403,18 +407,14 @@ class CoordinateTransformation(_object):
     __setattr__ = lambda self, name, value: _swig_setattr(self, CoordinateTransformation, name, value)
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, CoordinateTransformation, name)
-    def __repr__(self):
-        return "<%s.%s; proxy of C++ OSRCoordinateTransformationShadow instance at %s>" % (self.__class__.__module__, self.__class__.__name__, self.this,)
-    def __init__(self, *args):
+    __repr__ = _swig_repr
+    def __init__(self, *args): 
         """__init__(self, SpatialReference src, SpatialReference dst) -> CoordinateTransformation"""
-        _swig_setattr(self, CoordinateTransformation, 'this', _osr.new_CoordinateTransformation(*args))
-        _swig_setattr(self, CoordinateTransformation, 'thisown', 1)
-    def __del__(self, destroy=_osr.delete_CoordinateTransformation):
-        """__del__(self)"""
-        try:
-            if self.thisown: destroy(self)
-        except: pass
-
+        this = _osr.new_CoordinateTransformation(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    __swig_destroy__ = _osr.delete_CoordinateTransformation
+    __del__ = lambda self : None;
     def TransformPoint(*args):
         """
         TransformPoint(self, double inout)
@@ -422,13 +422,8 @@ class CoordinateTransformation(_object):
         """
         return _osr.CoordinateTransformation_TransformPoint(*args)
 
-
-class CoordinateTransformationPtr(CoordinateTransformation):
-    def __init__(self, this):
-        _swig_setattr(self, CoordinateTransformation, 'this', this)
-        if not hasattr(self,"thisown"): _swig_setattr(self, CoordinateTransformation, 'thisown', 0)
-        self.__class__ = CoordinateTransformation
-_osr.CoordinateTransformation_swigregister(CoordinateTransformationPtr)
+CoordinateTransformation_swigregister = _osr.CoordinateTransformation_swigregister
+CoordinateTransformation_swigregister(CoordinateTransformation)
 
 
 
