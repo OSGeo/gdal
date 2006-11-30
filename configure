@@ -1077,7 +1077,7 @@ Optional Packages:
   --with-oci-lib=[DIR]
                           use Oracle OCI API libraries from given path
   --with-dods-root=ARG  Include DODS support (ARG=no or absolute path)
-  --with-curl-config=PATH Specify path to curl-config.
+  --with-curl=ARG     Include curl for WCS (ARG=path to curl-config.)
   --with-sqlite=ARG     Include SQLite support (ARG=no or absolute path)
   --with-dwgdirect=path Include DWG direct support
   --with-dwg-plt=platform DWGdirect Platform, defaults to lnxX86
@@ -26124,20 +26124,18 @@ fi
 
 
 
-{ echo "$as_me:$LINENO: checking for curl-config..." >&5
-echo "$as_me: checking for curl-config..." >&6;}
 
-# Check whether --with-curl-config or --without-curl-config was given.
-if test "${with_curl_config+set}" = set; then
-  withval="$with_curl_config"
+# Check whether --with-curl or --without-curl was given.
+if test "${with_curl+set}" = set; then
+  withval="$with_curl"
 
 fi;
 
-unset ac_cv_path_LIBCURL_CONFIG
+unset ac_cv_path_LIBCURL
 
-if test "`basename xx/$with_curl_config`" = "curl-config" ; then
-  LIBCURL_CONFIG="$with_curl_config"
-elif test "$with_curl_config" = "no" ; then
+if test "`basename xx/$with_curl`" = "curl-config" ; then
+  LIBCURL_CONFIG="$with_curl"
+elif test "$with_curl" = "no" ; then
   LIBCURL_CONFIG=no
 else
   # Extract the first word of "curl-config", so it can be a program name with args.
