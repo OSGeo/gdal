@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/12/01 11:04:31  osemykin
+ * Changed cursor opening params to ReadOnly for all readonly queries
+ *
  * Revision 1.1  2006/11/28 15:34:42  osemykin
  * Added new Informix DataBlade driver (IDB)
  *
@@ -295,7 +298,7 @@ OGRErr OGRIDBTableLayer::ResetQuery()
 
     CPLDebug( "OGR_IDB", "Exec(%s)", sql.c_str() );
     if( poCurr->Prepare( sql.c_str() ) &&
-        poCurr->Open() )
+        poCurr->Open(ITCursor::ReadOnly) )
     {
         return OGRERR_NONE;
     }
@@ -367,7 +370,7 @@ OGRFeature *OGRIDBTableLayer::GetFeature( long nFeatureId )
 
     CPLDebug( "OGR_IDB", "ExecuteSQL(%s)", sql.c_str() );
     if( !poCurr->Prepare( sql.c_str() ) ||
-        !poCurr->Open() )
+        !poCurr->Open(ITCursor::ReadOnly) )
     {
         delete poCurr;
         poCurr = NULL;

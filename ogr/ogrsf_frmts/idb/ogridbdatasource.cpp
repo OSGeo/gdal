@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2006/12/01 11:04:31  osemykin
+ * Changed cursor opening params to ReadOnly for all readonly queries
+ *
  * Revision 1.1  2006/11/28 15:34:42  osemykin
  * Added new Informix DataBlade driver (IDB)
  *
@@ -156,7 +159,7 @@ int OGRIDBDataSource::Open( const char * pszNewName, int bUpdate,
 
         if( oCurr.Prepare(" SELECT f_table_name, f_geometry_column,"
                           " geometry_type FROM geometry_columns" ) &&
-            oCurr.Open() )
+            oCurr.Open(ITCursor::ReadOnly) )
         {
             ITRow * row = 0;
             while( (row = oCurr.NextRow()) )
@@ -179,7 +182,7 @@ int OGRIDBDataSource::Open( const char * pszNewName, int bUpdate,
         ITCursor oTableList( *poConn );
 
         if ( oTableList.Prepare("select tabname from systables where tabtype='T' and tabid > 99") &&
-             oTableList.Open() )
+             oTableList.Open(ITCursor::ReadOnly) )
         {
             ITRow * row = 0;
             while( (row = oTableList.NextRow()) )
@@ -298,7 +301,7 @@ OGRLayer * OGRIDBDataSource::ExecuteSQL( const char *pszSQLCommand,
     ITCursor *poCurr = new ITCursor( *poConn );
 
     poCurr->Prepare( pszSQLCommand );
-    if( !poCurr->Open() )
+    if( !poCurr->Open(ITCursor::ReadOnly) )
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "Error execute SQL: %s", pszSQLCommand );
