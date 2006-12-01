@@ -6,6 +6,9 @@
 
 /*
  * $Log$
+ * Revision 1.5  2006/12/01 05:24:54  fwarmerdam
+ * reimplement Destroy, Release, Reference and Dereference
+ *
  * Revision 1.4  2006/11/30 21:45:32  fwarmerdam
  * Improve __getattr__ and GetField() methods on feature.
  *
@@ -43,21 +46,21 @@
   %pythoncode {
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
-      self.__del__()
+      _ogr.delete_DataSource( self )
       self.thisown = 0
 
     def Release(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
-      self.__del__()
+      _ogr.delete_DataSource( self )
       self.thisown = 0
 
     def Reference(self):
       "For backwards compatibility only."
-      pass
+      return self.Reference()
   
     def Dereference(self):
       "For backwards compatibility only."
-      pass
+      self.Dereference()
 
     def __len__(self):
         """Returns the number of layers on the datasource"""
@@ -167,7 +170,7 @@ layer[0:4] would return a list of the first four features."""
 
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
-      self.__del__()
+      _ogr.delete_Feature( self )
       self.thisown = 0
 
     def __cmp__(self, other):
@@ -197,6 +200,7 @@ layer[0:4] would return a list of the first four features."""
             return self.GetFieldAsInteger(fld_index)
         if fld_type == OFTReal:
             return self.GetFieldAsDouble(fld_index)
+        # default to returning as a string.  Should we add more types?
         return self.GetFieldAsString(fld_index)
         
 }
