@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab.h,v 1.83 2006/02/16 15:13:38 dmorissette Exp $
+ * $Id: mitab.h,v 1.85 2006/07/25 13:24:47 dmorissette Exp $
  *
  * Name:     mitab.h
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log: mitab.h,v $
+ * Revision 1.85  2006/07/25 13:24:47  dmorissette
+ * Updated for 1.5.1 release
+ *
+ * Revision 1.84  2006/07/25 13:22:58  dmorissette
+ * Fixed initialization of MBR of TABCollection members (bug 1520)
+ *
  * Revision 1.83  2006/02/16 15:13:38  dmorissette
  * Updated for 1.5.0 release
  *
@@ -96,8 +102,8 @@
 /*---------------------------------------------------------------------
  * Current version of the MITAB library... always useful!
  *--------------------------------------------------------------------*/
-#define MITAB_VERSION      "1.5.0 (2006-02-16)"
-#define MITAB_VERSION_INT  1005000  /* version x.y.z -> xxxyyyzzz */
+#define MITAB_VERSION      "1.5.1 (2006-07-25)"
+#define MITAB_VERSION_INT  1005001  /* version x.y.z -> xxxyyyzzz */
 
 #ifndef PI
 #  define PI 3.14159265358979323846
@@ -1018,7 +1024,9 @@ class TABFeature: public OGRFeature
     virtual int WriteGeometryToMAPFile(TABMAPFile *poMapFile, TABMAPObjHdr *);
     GBool       ValidateCoordType(TABMAPFile * poMapFile);
     void        ForceCoordTypeAndOrigin(int nMapInfoType, GBool bCompr,
-                                        GInt32 nComprOrgX, GInt32 nComprOrgY);
+                                        GInt32 nComprOrgX, GInt32 nComprOrgY,
+                                        GInt32 nXMin, GInt32 nYMin, 
+                                        GInt32 nXMax, GInt32 nYMax);
 
     /*-----------------------------------------------------------------
      * Mid/Mif Support
@@ -1040,6 +1048,8 @@ class TABFeature: public OGRFeature
                        double dXMax, double dYMax);
     void        GetMBR(double &dXMin, double &dYMin, 
                        double &dXMax, double &dYMax);
+    void        GetIntMBR(GInt32 &nXMin, GInt32 &nYMin, 
+                          GInt32 &nXMax, GInt32 &nYMax);
 
     virtual void DumpMID(FILE *fpOut = NULL);
     virtual void DumpMIF(FILE *fpOut = NULL);
