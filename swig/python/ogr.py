@@ -198,21 +198,21 @@ class DataSource(_object):
 
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
-      self.__del__()
+      _ogr.delete_DataSource( self )
       self.thisown = 0
 
     def Release(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
-      self.__del__()
+      _ogr.delete_DataSource( self )
       self.thisown = 0
 
     def Reference(self):
       "For backwards compatibility only."
-      pass
+      return self.Reference()
 
     def Dereference(self):
       "For backwards compatibility only."
-      pass
+      self.Dereference()
 
     def __len__(self):
         """Returns the number of layers on the datasource"""
@@ -549,7 +549,7 @@ class Feature(_object):
 
     def Destroy(self):
       "Once called, self has effectively been destroyed.  Do not access. For backwards compatiblity only"
-      self.__del__()
+      _ogr.delete_Feature( self )
       self.thisown = 0
 
     def __cmp__(self, other):
@@ -562,15 +562,10 @@ class Feature(_object):
     def __getattr__(self, name):
         """Returns the values of fields by the given name"""
         try:
-            names = []
-            for i in range(self.GetFieldCount()):
-                names.append(self.GetFieldDefnRef_ByID(i).GetName())
-            if name in names:
-                return self.GetField(name)
-            else:
-                raise
+            return self.GetField(name)
         except:
             raise AttributeError, name
+
     def GetField(self, fld_index):
         import types
         if isinstance(fld_index, types.StringType):
@@ -584,8 +579,8 @@ class Feature(_object):
             return self.GetFieldAsInteger(fld_index)
         if fld_type == OFTReal:
             return self.GetFieldAsDouble(fld_index)
-        if fld_type == OFTString:
-            return self.GetFieldAsString(fld_index)
+        
+        return self.GetFieldAsString(fld_index)
         
 
 Feature_swigregister = _ogr.Feature_swigregister
