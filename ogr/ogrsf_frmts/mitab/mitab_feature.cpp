@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id: mitab_feature.cpp,v 1.64 2006/06/29 19:49:35 dmorissette Exp $
+ * $Id: mitab_feature.cpp,v 1.65 2006/07/25 13:22:58 dmorissette Exp $
  *
  * Name:     mitab_feature.cpp
  * Project:  MapInfo TAB Read/Write library
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log: mitab_feature.cpp,v $
+ * Revision 1.65  2006/07/25 13:22:58  dmorissette
+ * Fixed initialization of MBR of TABCollection members (bug 1520)
+ *
  * Revision 1.64  2006/06/29 19:49:35  dmorissette
  * Fixed problem writing PLINE MULTIPLE to TAB format introduced in
  * MITAB 1.5.0 (bug 1466).
@@ -304,6 +307,20 @@ void TABFeature::GetMBR(double &dXMin, double &dYMin,
 }
 
 /**********************************************************************
+ *                   TABFeature::GetIntMBR()
+ *
+ * Return the integer coordinates values of the MBR of this feature.
+ **********************************************************************/
+void TABFeature::GetIntMBR(GInt32 &nXMin, GInt32 &nYMin, 
+                           GInt32 &nXMax, GInt32 &nYMax)
+{
+    nXMin = m_nXMin;
+    nYMin = m_nYMin;
+    nXMax = m_nXMax;
+    nYMax = m_nYMax;
+}
+
+/**********************************************************************
  *                   TABFeature::ReadRecordFromDATFile()
  *
  * Fill the fields part of the feature from the contents of the 
@@ -484,7 +501,8 @@ int TABFeature::ReadGeometryFromMAPFile(TABMAPFile * /*poMapFile*/,
  *
  * Checks the feature envelope to establish if the feature should be
  * written using Compressed coordinates or not and adjust m_nMapInfoType
- * accordingly.
+ * accordingly. Calling this method also sets (initializes) m_nXMin, m_nYMin, 
+ * m_nXMax, m_nYMax
  *
  * This function should be used only by the ValidateMapInfoType() 
  * implementations.
@@ -536,7 +554,9 @@ GBool TABFeature::ValidateCoordType(TABMAPFile * poMapFile)
  * specific case)
  **********************************************************************/
 void TABFeature::ForceCoordTypeAndOrigin(int nMapInfoType, GBool bCompr,
-                                         GInt32 nComprOrgX, GInt32 nComprOrgY)
+                                         GInt32 nComprOrgX, GInt32 nComprOrgY,
+                                         GInt32 nXMin, GInt32 nYMin, 
+                                         GInt32 nXMax, GInt32 nYMax)
 {
     /*-------------------------------------------------------------
      * Set Compressed Origin and adjust native type
@@ -550,6 +570,11 @@ void TABFeature::ForceCoordTypeAndOrigin(int nMapInfoType, GBool bCompr,
         m_nMapInfoType--;  // compr = 1, 4, 7, ...
     else if (!bCompr && ((m_nMapInfoType%3) == 1))
         m_nMapInfoType++;  // non-compr = 2, 5, 8, ...
+
+    m_nXMin = nXMin;
+    m_nYMin = nYMin;
+    m_nXMax = nXMax;
+    m_nYMax = nYMax;
 }
 
 /**********************************************************************
@@ -6272,26 +6297,44 @@ int  TABCollection::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
      *----------------------------------------------------------------*/
     if (m_poRegion)
     {
+        m_poRegion->ValidateCoordType(poMapFile);
         if (m_poRegion->ValidateMapInfoType(poMapFile) !=  TAB_GEOM_NONE)
+        {
+            GInt32 nXMin=0, nYMin=0, nXMax=0, nYMax=0;
+            m_poRegion->GetIntMBR(nXMin, nYMin, nXMax, nYMax);
             m_poRegion->ForceCoordTypeAndOrigin(TAB_GEOM_V450_REGION,
                                                 bComprCoord,
-                                                m_nComprOrgX, m_nComprOrgY);
+                                                m_nComprOrgX, m_nComprOrgY,
+                                                nXMin, nYMin, nXMax, nYMax);
+        }
     }
 
     if (m_poPline)
     {
-         if (m_poPline->ValidateMapInfoType(poMapFile) !=  TAB_GEOM_NONE)
-             m_poPline->ForceCoordTypeAndOrigin(TAB_GEOM_V450_MULTIPLINE,
-                                                bComprCoord,
-                                                m_nComprOrgX, m_nComprOrgY);
+        m_poPline->ValidateCoordType(poMapFile);
+        if (m_poPline->ValidateMapInfoType(poMapFile) !=  TAB_GEOM_NONE)
+        {
+            GInt32 nXMin, nYMin, nXMax, nYMax;
+            m_poPline->GetIntMBR(nXMin, nYMin, nXMax, nYMax);
+            m_poPline->ForceCoordTypeAndOrigin(TAB_GEOM_V450_MULTIPLINE,
+                                               bComprCoord,
+                                               m_nComprOrgX, m_nComprOrgY,
+                                               nXMin, nYMin, nXMax, nYMax);
+        }
     }
 
     if (m_poMpoint)
     {
-         if (m_poMpoint->ValidateMapInfoType(poMapFile) !=  TAB_GEOM_NONE)
-             m_poMpoint->ForceCoordTypeAndOrigin(TAB_GEOM_MULTIPOINT,
-                                                 bComprCoord,
-                                                 m_nComprOrgX, m_nComprOrgY);
+        m_poMpoint->ValidateCoordType(poMapFile);
+        if (m_poMpoint->ValidateMapInfoType(poMapFile) !=  TAB_GEOM_NONE)
+        {
+            GInt32 nXMin, nYMin, nXMax, nYMax;
+            m_poMpoint->GetIntMBR(nXMin, nYMin, nXMax, nYMax);
+            m_poMpoint->ForceCoordTypeAndOrigin(TAB_GEOM_MULTIPOINT,
+                                                bComprCoord,
+                                                m_nComprOrgX, m_nComprOrgY,
+                                                nXMin, nYMin, nXMax, nYMax);
+        }
     }
 
     return m_nMapInfoType;
