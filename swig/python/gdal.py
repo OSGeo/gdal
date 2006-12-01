@@ -452,12 +452,6 @@ class Dataset(MajorObject):
         """
         return _gdal.Dataset_WriteRaster(*args, **kwargs)
 
-    def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
-                  buf_xsize=None, buf_ysize=None, buf_obj=None):
-        import gdalnumeric
-        return gdalnumeric.DatasetReadAsArray( self, xoff, yoff, xsize, ysize )
-
-
 Dataset_swigregister = _gdal.Dataset_swigregister
 Dataset_swigregister(Dataset)
 

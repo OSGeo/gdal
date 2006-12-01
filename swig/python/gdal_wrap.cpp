@@ -3269,7 +3269,6 @@ SWIGINTERN CPLErr GDALRasterBandShadow_WriteRaster(GDALRasterBandShadow *self,in
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
                                         : (GDALDataType)*buf_type;
-    
     return WriteRaster_internal( self, xoff, yoff, xsize, ysize,
                                  nxsize, nysize, ntype, buf_len, buf_string );
   }
