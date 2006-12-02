@@ -3065,6 +3065,33 @@ CreateTupleFromDoubleArray( double *first, unsigned int size ) {
   return out;
 }
 
+
+
+
+static
+CPLErr DSReadRaster_internal( GDALDatasetShadow *obj, 
+                            int xoff, int yoff, int xsize, int ysize,
+                            int buf_xsize, int buf_ysize,
+                            GDALDataType buf_type,
+                            int *buf_size, char **buf,
+                            int band_list, int *pband_list )
+{
+
+    
+  *buf_size = buf_xsize * buf_ysize * GDALGetDataTypeSize( buf_type ) / 8;
+  *buf = (char*) malloc( *buf_size );
+
+  CPLErr result = GDALDatasetRasterIO(obj, GF_Read, xoff, yoff, xsize, ysize,
+                                (void*) *buf, buf_xsize, buf_ysize, buf_type,
+                                band_list, pband_list, 0, 0, 0 );
+  if ( result != CE_None ) {
+    free( *buf );
+    *buf = 0;
+    *buf_size = 0;
+  }
+  return result;
+}
+
 SWIGINTERN void delete_GDALDatasetShadow(GDALDatasetShadow *self){
     if ( GDALDereferenceDataset( self ) <= 0 ) {
       GDALClose(self);
@@ -3153,6 +3180,43 @@ SWIGINTERN CPLErr GDALDatasetShadow_WriteRaster(GDALDatasetShadow *self,int xoff
        CPLFree( pBandList );
     }
   }
+SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster(GDALDatasetShadow *self,int xoff,int yoff,int xsize,int ysize,int *buf_len,char **buf,int *buf_xsize=0,int *buf_ysize=0,GDALDataType *buf_type=0,int band_list=0,int *pband_list=0){
+
+    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
+    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
+    GDALDataType ntype;
+    if ( buf_type != 0 ) {
+      ntype = (GDALDataType) *buf_type;
+    } else {
+      int lastband = GDALGetRasterCount( self ) - 1;
+      ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
+    }
+    bool myBandList = false;
+    int nBandCount;
+    int *pBandList;
+    if ( band_list != 0 ) {
+      myBandList = false;
+      nBandCount = band_list;
+      pBandList = pband_list;
+    }
+    else {
+      myBandList = true;
+      nBandCount = GDALGetRasterCount( self );
+      pBandList = (int*) CPLMalloc( sizeof(int) * nBandCount );
+      for( int i = 0; i< nBandCount; ++i ) {
+        pBandList[i] = i;
+      }
+    }
+                            
+    return DSReadRaster_internal( self, xoff, yoff, xsize, ysize,
+                                nxsize, nysize, ntype,
+                                buf_len, buf, 
+                                nBandCount, pBandList);
+    if ( myBandList ) {
+       CPLFree( pBandList );
+    }
+
+}
 
 int GDALDatasetShadow_RasterXSize_get( GDALDatasetShadow *h ) {
   return GDALGetRasterXSize( h );
@@ -3269,6 +3333,7 @@ SWIGINTERN CPLErr GDALRasterBandShadow_WriteRaster(GDALRasterBandShadow *self,in
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
                                         : (GDALDataType)*buf_type;
+    
     return WriteRaster_internal( self, xoff, yoff, xsize, ysize,
                                  nxsize, nysize, ntype, buf_len, buf_string );
   }
@@ -7573,6 +7638,199 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Dataset_ReadRaster(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0;
+  GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+  int arg2 ;
+  int arg3 ;
+  int arg4 ;
+  int arg5 ;
+  int *arg6 = (int *) 0 ;
+  char **arg7 = (char **) 0 ;
+  int *arg8 = (int *) 0 ;
+  int *arg9 = (int *) 0 ;
+  GDALDataType *arg10 = (GDALDataType *) 0 ;
+  int arg11 = (int) 0 ;
+  int *arg12 = (int *) 0 ;
+  CPLErr result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  int val5 ;
+  int ecode5 = 0 ;
+  int nLen6 = 0 ;
+  char *pBuf6 = 0 ;
+  int val8 ;
+  int val9 ;
+  int val10 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  PyObject * obj7 = 0 ;
+  PyObject * obj8 = 0 ;
+  char *  kwnames[] = {
+    (char *) "self",(char *) "xoff",(char *) "yoff",(char *) "xsize",(char *) "ysize",(char *) "buf_xsize",(char *) "buf_ysize",(char *) "buf_type",(char *) "band_list", NULL 
+  };
+  
+  {
+    /* %typemap(in,numinputs=0) (int *nLen6, char **pBuf6 ) */
+    arg6 = &nLen6;
+    arg7 = &pBuf6;
+  }
+  if (!PyArg_ParseTupleAndKeywords(args,kwargs,(char *)"OOOOO|OOOO:Dataset_ReadRaster",kwnames,&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6,&obj7,&obj8)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_ReadRaster" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Dataset_ReadRaster" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  ecode3 = SWIG_AsVal_int(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Dataset_ReadRaster" "', argument " "3"" of type '" "int""'");
+  } 
+  arg3 = static_cast< int >(val3);
+  ecode4 = SWIG_AsVal_int(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Dataset_ReadRaster" "', argument " "4"" of type '" "int""'");
+  } 
+  arg4 = static_cast< int >(val4);
+  ecode5 = SWIG_AsVal_int(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "Dataset_ReadRaster" "', argument " "5"" of type '" "int""'");
+  } 
+  arg5 = static_cast< int >(val5);
+  if (obj5) {
+    {
+      /* %typemap(in) (int *optional_##int) */
+      if ( obj5 == Py_None ) {
+        arg8 = 0;
+      }
+      else if ( PyArg_Parse( obj5,"i" ,&val8 ) ) {
+        arg8 = (int *) &val8;
+      }
+      else {
+        PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
+        SWIG_fail;
+      }
+    }
+  }
+  if (obj6) {
+    {
+      /* %typemap(in) (int *optional_##int) */
+      if ( obj6 == Py_None ) {
+        arg9 = 0;
+      }
+      else if ( PyArg_Parse( obj6,"i" ,&val9 ) ) {
+        arg9 = (int *) &val9;
+      }
+      else {
+        PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
+        SWIG_fail;
+      }
+    }
+  }
+  if (obj7) {
+    {
+      /* %typemap(in) (int *optional_##int) */
+      if ( obj7 == Py_None ) {
+        arg10 = 0;
+      }
+      else if ( PyArg_Parse( obj7,"i" ,&val10 ) ) {
+        arg10 = (GDALDataType *) &val10;
+      }
+      else {
+        PyErr_SetString( PyExc_TypeError, "Invalid Parameter" );
+        SWIG_fail;
+      }
+    }
+  }
+  if (obj8) {
+    {
+      /* %typemap(in,numinputs=1) (int nList, int* pList)*/
+      /* check if is List */
+      if ( !PySequence_Check(obj8) ) {
+        PyErr_SetString(PyExc_TypeError, "not a sequence");
+        SWIG_fail;
+      }
+      arg11 = PySequence_Size(obj8);
+      arg12 = (int*) malloc(arg11*sizeof(int));
+      for( int i = 0; i<arg11; i++ ) {
+        PyObject *o = PySequence_GetItem(obj8,i);
+        if ( !PyArg_Parse(o,"i",&arg12[i]) ) {
+          SWIG_fail;
+        }
+      }
+    }
+  }
+  {
+    CPLErrorReset();
+    result = (CPLErr)GDALDatasetShadow_ReadRaster(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(argout) (int *nLen, char **pBuf ) */
+    Py_XDECREF(resultobj);
+    resultobj = PyString_FromStringAndSize( *arg7, *arg6 );
+  }
+  {
+    /* %typemap(freearg) (int *nLen, char **pBuf ) */
+    if( *arg6 ) {
+      free( *arg7 );
+    }
+  }
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    if (arg12) {
+      free((void*) arg12);
+    }
+  }
+  {
+    /* %typemap(ret) CPLErr */
+    if ( bUseExceptions == 0 ) {
+      /* We're not using exceptions.  And no error has occurred */
+      if ( resultobj == 0 ) {
+        /* No other return values set so return ErrorCode */
+        resultobj = PyInt_FromLong(result);
+      }
+    }
+  }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (int *nLen, char **pBuf ) */
+    if( *arg6 ) {
+      free( *arg7 );
+    }
+  }
+  {
+    /* %typemap(freearg) (int nList, int* pList) */
+    if (arg12) {
+      free((void*) arg12);
+    }
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *Dataset_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *obj;
   if (!PyArg_ParseTuple(args,(char*)"O|swigregister", &obj)) return NULL;
@@ -10254,6 +10512,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Dataset_FlushCache", _wrap_Dataset_FlushCache, METH_VARARGS, NULL},
 	 { (char *)"Dataset_AddBand", (PyCFunction) _wrap_Dataset_AddBand, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Dataset_WriteRaster", (PyCFunction) _wrap_Dataset_WriteRaster, METH_VARARGS | METH_KEYWORDS, NULL},
+	 { (char *)"Dataset_ReadRaster", (PyCFunction) _wrap_Dataset_ReadRaster, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Dataset_swigregister", Dataset_swigregister, METH_VARARGS, NULL},
 	 { (char *)"Band_XSize_get", _wrap_Band_XSize_get, METH_VARARGS, NULL},
 	 { (char *)"Band_YSize_get", _wrap_Band_YSize_get, METH_VARARGS, NULL},
