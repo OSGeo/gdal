@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2006/12/02 00:48:45  fwarmerdam
+ * added preliminary support for mapping localcs to meter/feet
+ *
  * Revision 1.10  2006/10/11 14:17:10  fwarmerdam
  * Fixed bug handling geographic coordinate systems.
  *
@@ -412,6 +415,20 @@ OGRErr OGRSpatialReference::importFromPCI( const char *pszProj,
     {
     }
     
+    else if( EQUALN( pszProj, "METER", 5 ) 
+             || EQUALN( pszProj, "METRE", 5 ) )
+    {
+        SetLocalCS( "METER" );
+        SetLinearUnits( "METER", 1.0 );
+    }
+
+    else if( EQUALN( pszProj, "FEET", 4 ) 
+             || EQUALN( pszProj, "FOOT", 4 ) )
+    {
+        SetLocalCS( "FEET" );
+        SetLinearUnits( "FEET", atof(SRS_UL_FOOT_CONV) );
+    }
+
     else if( EQUALN( pszProj, "ACEA", 4 ) )
     {
         SetACEA( padfPrjParams[4], padfPrjParams[5],
@@ -817,8 +834,10 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 
     if( IsLocal() )
     {
-        CPLPrintStringFill( szProj, "PIXEL", 17 );
-        return OGRERR_NONE;
+        if( GetLinearUnits() > 0.30479999 && GetLinearUnits() < 0.3048010 )
+            CPLPrintStringFill( szProj, "FEET", 17 );
+        else
+            CPLPrintStringFill( szProj, "METER", 17 );
     }
 
     else if( pszProjection == NULL )
@@ -1041,7 +1060,9 @@ OGRErr OGRSpatialReference::exportToPCI( char **ppszProj, char **ppszUnits,
 /* -------------------------------------------------------------------- */
     const char  *pszDatum = GetAttrValue( "DATUM" );
 
-    if( EQUAL( pszDatum, SRS_DN_NAD27 ) )
+    if( pszDatum == NULL || strlen(pszDatum) == 0 )
+        /* do nothing */;
+    else if( EQUAL( pszDatum, SRS_DN_NAD27 ) )
         CPLPrintStringFill( szProj + 12, "D-01", 4 );
 
     else if( EQUAL( pszDatum, SRS_DN_NAD83 ) )
