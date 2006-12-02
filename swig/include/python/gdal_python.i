@@ -6,6 +6,9 @@
 
 /*
  * $Log$
+ * Revision 1.5  2006/12/02 05:16:12  hobu
+ * Dataset.WriteRaster Dataset.ReadRaster
+ *
  * Revision 1.4  2005/09/30 20:19:19  kruland
  * Moved cpl_exceptions.i code into gdal_python so the other languages can
  * have a common mechanism.
@@ -35,6 +38,21 @@
 
 %pythoncode %{
   from gdalconst import *
+  import gdalconst
+
+  import sys
+  byteorders = {"little": "<",
+                "big": ">"}
+  array_modes = { gdalconst.GDT_Int16:    ("%si2" % byteorders[sys.byteorder]),
+                  gdalconst.GDT_UInt16:   ("%su2" % byteorders[sys.byteorder]),
+                  gdalconst.GDT_Int32:    ("%si4" % byteorders[sys.byteorder]),
+                  gdalconst.GDT_UInt32:   ("%su4" % byteorders[sys.byteorder]),
+                  gdalconst.GDT_Float32:  ("%sf4" % byteorders[sys.byteorder]),
+                  gdalconst.GDT_Float64:  ("%sf8" % byteorders[sys.byteorder]),
+                  gdalconst.GDT_CFloat32: ("%sf4" % byteorders[sys.byteorder]),
+                  gdalconst.GDT_CFloat64: ("%sf8" % byteorders[sys.byteorder]),
+                  gdalconst.GDT_Byte:     ("%st8" % byteorders[sys.byteorder]),
+  }
 %}
 
 /*
@@ -121,6 +139,56 @@ void DontUseExceptions() {
 
       return gdalnumeric.BandWriteArray( self, array, xoff, yoff )
 
+  def __get_array_interface__(self):
+      shape = [1, self.XSize, self.YSize]
+      
+}
+}
+
+%extend GDALDatasetShadow {
+%pythoncode {
+    def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
+                  buf_xsize=None, buf_ysize=None, buf_obj=None):
+        import gdalnumeric
+        return gdalnumeric.DatasetReadAsArray( self, xoff, yoff, xsize, ysize )
+    def WriteRaster(self, xoff, yoff, xsize, ysize,
+                    buf_string,
+                    buf_xsize = None, buf_ysize = None, buf_type = None,
+                    band_list = None ):
+
+        if buf_xsize is None:
+            buf_xsize = xsize;
+        if buf_ysize is None:
+            buf_ysize = ysize;
+        if band_list is None:
+            band_list = range(1,self.RasterCount+1)
+        if buf_type is None:
+            buf_type = self._band[band_list[0]-1].DataType;
+
+        if len(buf_string) < buf_xsize * buf_ysize * len(band_list) \
+           * (_gdal.GetDataTypeSize(buf_type) / 8):
+            raise ValueError, "raster buffer too small in WriteRaster"
+        else:    
+            return _gdal.Dataset_WriteRaster(self,
+                 xoff, yoff, xsize, ysize,
+                buf_string, buf_xsize, buf_ysize, buf_type, band_list )
+
+    def ReadRaster(self, xoff, yoff, xsize, ysize,
+                   buf_xsize = None, buf_ysize = None, buf_type = None,
+                   band_list = None ):
+
+        if band_list is None:
+            band_list = range(1,self.RasterCount+1)
+        if buf_xsize is None:
+            buf_xsize = xsize;
+        if buf_ysize is None:
+            buf_ysize = ysize;
+
+        if buf_type is None:
+            buf_type = self.GetRasterBand(0).DataType;
+        return _gdal.Dataset_ReadRaster(self, xoff, yoff, xsize, ysize,
+                                           buf_xsize, buf_ysize, buf_type,
+                                           band_list)
 }
 }
 
