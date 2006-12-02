@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.16  2006/12/02 05:15:30  hobu
+ * Dataset.ReadRaster
+ *
  * Revision 1.15  2005/09/02 16:19:23  kruland
  * Major reorganization to accomodate multiple language bindings.
  * Each language binding can define renames and supplemental code without
@@ -76,6 +79,33 @@
  *
 */
 
+%{
+
+
+static
+CPLErr DSReadRaster_internal( GDALDatasetShadow *obj, 
+                            int xoff, int yoff, int xsize, int ysize,
+                            int buf_xsize, int buf_ysize,
+                            GDALDataType buf_type,
+                            int *buf_size, char **buf,
+                            int band_list, int *pband_list )
+{
+
+    
+  *buf_size = buf_xsize * buf_ysize * GDALGetDataTypeSize( buf_type ) / 8;
+  *buf = (char*) malloc( *buf_size );
+
+  CPLErr result = GDALDatasetRasterIO(obj, GF_Read, xoff, yoff, xsize, ysize,
+                                (void*) *buf, buf_xsize, buf_ysize, buf_type,
+                                band_list, pband_list, 0, 0, 0 );
+  if ( result != CE_None ) {
+    free( *buf );
+    *buf = 0;
+    *buf_size = 0;
+  }
+  return result;
+}
+%}
 //************************************************************************
 //
 // Define the extensions for Dataset (nee GDALDatasetShadow)
@@ -223,6 +253,60 @@ public:
 %clear (GDALDataType *buf_type);
 %clear (int*);
 %clear (int buf_len, char *buf_string);
+
+
+
+%feature("kwargs") ReadRaster;
+%apply (int *optional_int) { (GDALDataType *buf_type) };
+%apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
+%apply ( int *nLen, char **pBuf ) { (int *buf_len, char **buf ) };
+%apply ( int *optional_int ) {(int*)};                            
+CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
+	              int *buf_len, char **buf,
+                      int *buf_xsize = 0, int *buf_ysize = 0,
+                      GDALDataType *buf_type = 0,
+                      int band_list = 0, int *pband_list = 0  )
+{
+
+    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
+    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
+    GDALDataType ntype;
+    if ( buf_type != 0 ) {
+      ntype = (GDALDataType) *buf_type;
+    } else {
+      int lastband = GDALGetRasterCount( self ) - 1;
+      ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
+    }
+    bool myBandList = false;
+    int nBandCount;
+    int *pBandList;
+    if ( band_list != 0 ) {
+      myBandList = false;
+      nBandCount = band_list;
+      pBandList = pband_list;
+    }
+    else {
+      myBandList = true;
+      nBandCount = GDALGetRasterCount( self );
+      pBandList = (int*) CPLMalloc( sizeof(int) * nBandCount );
+      for( int i = 0; i< nBandCount; ++i ) {
+        pBandList[i] = i;
+      }
+    }
+                            
+    return DSReadRaster_internal( self, xoff, yoff, xsize, ysize,
+                                nxsize, nysize, ntype,
+                                buf_len, buf, 
+                                nBandCount, pBandList);
+    if ( myBandList ) {
+       CPLFree( pBandList );
+    }
+
+}
+  
+%clear (int *buf_len, char **buf );
+%clear (int*);
+
 
 /* NEEDED */
 /* GetSubDatasets */
