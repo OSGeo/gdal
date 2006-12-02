@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/12/02 00:49:39  fwarmerdam
+ * added preliminary support for mapping localcs to meter/feet
+ *
  * Revision 1.20  2006/09/24 05:10:04  fwarmerdam
  * We must never create pcidsk files with other than big endian
  * order for image data.  It turns out the byte swapping flag is
@@ -851,8 +854,7 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                     VSIFSeekL( poDS->fp, nGeoDataOffset + 32, SEEK_SET );
                     VSIFReadL( szProj, 1, 16, poDS->fp );
                     szProj[16] = '\0';
-                    if ( EQUALN( szProj, "PIXEL", 5 )
-                         || EQUALN( szProj, "METRE", 5 ) )
+                    if ( EQUALN( szProj, "PIXEL", 5 ) )
                         break;
 
                     // Read number of transform coefficients
