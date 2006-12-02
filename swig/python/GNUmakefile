@@ -17,6 +17,7 @@ clean:
 
 veryclean: clean
 	-rm -f ${WRAPPERS} ${PY_MODULES}
+	-rm -f *.pyc
 
 generate: ${WRAPPERS}
 
