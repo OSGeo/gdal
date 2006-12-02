@@ -167,7 +167,7 @@ ogr_module = Extension('_ogr',
 
 
 array_module = Extension('_gdal_array',
-                    sources=['_gdal_array.cpp','numpydataset.cpp'],
+                    sources=['_gdal_array.cpp'],
                     include_dirs = include_dirs,
                     libraries = libraries,
                     library_dirs = library_dirs,
