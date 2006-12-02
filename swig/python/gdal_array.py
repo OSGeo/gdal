@@ -146,7 +146,8 @@ def BandWriteArray( band, array, xoff=0, yoff=0 ):
     if xsize + xoff > band.XSize or ysize + yoff > band.YSize:
         raise ValueError, "array larger than output file, or offset off edge"
 
-    datatype = NumericTypeCodeToGDALTypeCode( array.typecode() )
+    datatype = NumericTypeCodeToGDALTypeCode( array.dtype.type )
+
     if not datatype:
         raise ValueError, "array does not have corresponding GDAL data type"
 
