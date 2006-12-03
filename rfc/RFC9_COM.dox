@@ -1,11 +1,11 @@
 /*!
-\page refc_com RFC 9: ATL Based COM Interface
+\page rfc9_com RFC 9: ATL Based COM Interface
 
 Author: Ivan Lucena<br>
 Contact: ivan@ilucena.net<br>
 Status: Proposed<br>
 
-\section summary Summary
+\section rfc9_summary Summary
 
 It is proposed to include a COM Interface to GDAL by adding a source 
 tree containing the Microsoft Visual Studio solution and its related 
@@ -17,7 +17,7 @@ that support Component Object Model (COM).
 Sub-folders with examples of use, test suit and documentation will
 be included under the same source tree. 
 
-\section details Details
+\section rfc9_details Details
 
 <ol>
 
@@ -38,19 +38,19 @@ different programming languages.
 
 </ol>
 
-\section notes Notes
+\section rfc9_notes Notes
 
 The GDAL-COM Interface exposes GDAL to every programming or 
 scripting environment that support COM and because the .Net 
 Framework can interface unmanaged COM libraries, the GDAL-COM 
 Interface is also accessible through .NET programming environment.
 
-\section usage Usage
+\section rfc9_usage Usage
 
 The following pieces of code exemplify the use of GDAL-COM 
 Interface:
 
-\section delphi Delphi
+\section rfc9_delphi Delphi
 
 \verbatim
 Uses GDALLib_TLB;
@@ -70,7 +70,7 @@ Begin
 End;
 \endverbatim
 
-\section csharp CSharp
+\section rfc9_csharp CSharp
 
 \verbatim
 using GDALLib;
@@ -84,7 +84,7 @@ using GDALLib;
 }
 \endverbatim
 
-\section pythonWin PythonWin
+\section rfc9_pythonWin PythonWin
 
 \verbatim
 From GDALLib import *
@@ -98,7 +98,7 @@ Notes: The interface was generated automatically by “makepy.py”
 and it does not provide sufficient support to pointers and 
 arrays in function arguments.
 
-\section vb VB.NET
+\section rfc9_vb VB.NET
 
 \verbatim
 Imports GDALLib
