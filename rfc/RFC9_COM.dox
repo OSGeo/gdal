@@ -98,7 +98,7 @@ Notes: The interface was generated automatically by “makepy.py”
 and it does not provide sufficient support to pointers and 
 arrays in function arguments.
 
-\section vb.net VB.NET
+\section vb VB.NET
 
 \verbatim
 Imports GDALLib
