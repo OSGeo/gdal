@@ -29,6 +29,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.65  2006/12/04 23:39:49  fwarmerdam
+ * support case where geolocation info is not available for swaths
+ *
  * Revision 1.64  2006/10/23 19:10:00  fwarmerdam
  * Added HXsetdir() call so external datasets work properly.
  *
@@ -1519,8 +1522,8 @@ int HDF4ImageDataset::ProcessSwathGeolocation(
     memset( paiOffset, 0, nDimMaps * sizeof(int32) );
     paiIncrement = (int32 *)CPLMalloc( nDimMaps * sizeof(int32) );
     memset( paiIncrement, 0, nDimMaps * sizeof(int32) );
-    if ( nDimMaps !=
-         SWinqmaps(hSW, pszDimMaps, paiOffset, paiIncrement) )
+    if ( nDimMaps == 0 
+         || nDimMaps != SWinqmaps(hSW, pszDimMaps, paiOffset, paiIncrement) )
     {
         CPLDebug( "HDF4Image",
                   "Can't get the list of geolocation maps in swath %s",
@@ -2076,8 +2079,8 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
             case EOS_SWATH_GEOL:
             {
                 int32   hHDF4, hSW, nDimensions, nStrBufSize;
-                char    **papszDimList = NULL, **papszDimMap = NULL;
-                char    *pszDimList = NULL, *pszDimMaps = NULL;
+                char    **papszDimList = NULL;
+                char    *pszDimList = NULL;
                 int     nDimCount;
                     
                 if( poOpenInfo->eAccess == GA_ReadOnly )
@@ -2197,14 +2200,15 @@ GDALDataset *HDF4ImageDataset::Open( GDALOpenInfo * poOpenInfo )
                 if( poDS->iSubdatasetType == EOS_SWATH ) /* Not SWATH_GEOL */
                 {
                     if( !poDS->ProcessSwathGeolocation( hSW, papszDimList ) )
-                        return NULL;
+                    {
+                        CPLDebug( "HDF4Image", 
+                                  "No geolocation available for this swath." );
+                    }
                 }
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
-                CSLDestroy( papszDimMap );
-                CPLFree( pszDimMaps );
                 CPLFree( pszDimList );
 
                 CSLDestroy( papszDimList );
