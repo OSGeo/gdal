@@ -6,3 +6,6 @@
 
 #Uncomment the following line if you want to compile with MONO on windows
 #MONO = YES
+
+#Comment the following line out if you want to link against the gdal dll
+CSHARP_STATIC_LINKAGE = YES

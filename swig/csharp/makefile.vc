@@ -11,8 +11,17 @@
 # $Id$
 #
 
-!INCLUDE ../../nmake.opt
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
 !INCLUDE csharp.opt
+
+!IFDEF CSHARP_STATIC_LINKAGE
+GDALLIB	= $(GDAL_ROOT)\gdal.lib
+!ELSE
+GDALLIB	= $(GDAL_ROOT)\gdal_i.lib
+!ENDIF
 
 !IFDEF MONO
 CSC = mcs
@@ -31,19 +40,19 @@ gdal_csharp:
     $(CSC) /debug:full /target:library /out:gdal_gdalconst_csharp.dll const\*.cs
     $(CSC) /debug:full /target:library /out:gdal_osr_csharp.dll osr\*.cs 
     link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) ogr_wrap.obj \
-		$(EXTERNAL_LIBS) ..\..\gdal.lib\
+		$(EXTERNAL_LIBS) $(GDALLIB)\
 		 /out:gdal_ogr_wrap.dll $(LINKER_FLAGS)
 	if exist gdal_ogr_wrap.dll.manifest mt -manifest gdal_ogr_wrap.dll.manifest -outputresource:gdal_ogr_wrap.dll;2
     link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) gdal_wrap.obj \
-		$(EXTERNAL_LIBS) ..\..\gdal.lib\
+		$(EXTERNAL_LIBS) $(GDALLIB)\
 		 /out:gdal_gdal_wrap.dll $(LINKER_FLAGS)
 	if exist gdal_gdal_wrap.dll.manifest mt -manifest gdal_gdal_wrap.dll.manifest -outputresource:gdal_gdal_wrap.dll;2
     link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) gdalconst_wrap.obj \
-		$(EXTERNAL_LIBS) ..\..\gdal.lib\
+		$(EXTERNAL_LIBS) $(GDALLIB)\
 		 /out:gdal_gdalconst_wrap.dll $(LINKER_FLAGS)
 	if exist gdal_gdalconst_wrap.dll.manifest mt -manifest gdal_gdalconst_wrap.dll.manifest -outputresource:gdal_ogr_wrap.dll;2
     link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) osr_wrap.obj \
-		$(EXTERNAL_LIBS) ..\..\gdal.lib\
+		$(EXTERNAL_LIBS) $(GDALLIB)\
 		 /out:gdal_osr_wrap.dll $(LINKER_FLAGS)
 	if exist gdal_osr_wrap.dll.manifest mt -manifest gdal_osr_wrap.dll.manifest -outputresource:gdal_osr_wrap.dll;2
 
