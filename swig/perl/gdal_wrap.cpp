@@ -1909,6 +1909,33 @@ CreateArrayFromDoubleArray( double *first, unsigned int size ) {
   return newRV_noinc((SV*)av);
 }
 
+
+
+
+static
+CPLErr DSReadRaster_internal( GDALDatasetShadow *obj, 
+                            int xoff, int yoff, int xsize, int ysize,
+                            int buf_xsize, int buf_ysize,
+                            GDALDataType buf_type,
+                            int *buf_size, char **buf,
+                            int band_list, int *pband_list )
+{
+
+    
+  *buf_size = buf_xsize * buf_ysize * GDALGetDataTypeSize( buf_type ) / 8;
+  *buf = (char*) malloc( *buf_size );
+
+  CPLErr result = GDALDatasetRasterIO(obj, GF_Read, xoff, yoff, xsize, ysize,
+                                (void*) *buf, buf_xsize, buf_ysize, buf_type,
+                                band_list, pband_list, 0, 0, 0 );
+  if ( result != CE_None ) {
+    free( *buf );
+    *buf = 0;
+    *buf_size = 0;
+  }
+  return result;
+}
+
 SWIGINTERN void delete_GDALDatasetShadow(GDALDatasetShadow *self){
     if ( GDALDereferenceDataset( self ) <= 0 ) {
       GDALClose(self);
@@ -1997,6 +2024,43 @@ SWIGINTERN CPLErr GDALDatasetShadow_WriteRaster(GDALDatasetShadow *self,int xoff
        CPLFree( pBandList );
     }
   }
+SWIGINTERN CPLErr GDALDatasetShadow_ReadRaster(GDALDatasetShadow *self,int xoff,int yoff,int xsize,int ysize,int *buf_len,char **buf,int *buf_xsize=0,int *buf_ysize=0,GDALDataType *buf_type=0,int band_list=0,int *pband_list=0){
+
+    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
+    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
+    GDALDataType ntype;
+    if ( buf_type != 0 ) {
+      ntype = (GDALDataType) *buf_type;
+    } else {
+      int lastband = GDALGetRasterCount( self ) - 1;
+      ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
+    }
+    bool myBandList = false;
+    int nBandCount;
+    int *pBandList;
+    if ( band_list != 0 ) {
+      myBandList = false;
+      nBandCount = band_list;
+      pBandList = pband_list;
+    }
+    else {
+      myBandList = true;
+      nBandCount = GDALGetRasterCount( self );
+      pBandList = (int*) CPLMalloc( sizeof(int) * nBandCount );
+      for( int i = 0; i< nBandCount; ++i ) {
+        pBandList[i] = i;
+      }
+    }
+                            
+    return DSReadRaster_internal( self, xoff, yoff, xsize, ysize,
+                                nxsize, nysize, ntype,
+                                buf_len, buf, 
+                                nBandCount, pBandList);
+    if ( myBandList ) {
+       CPLFree( pBandList );
+    }
+
+}
 
 int GDALDatasetShadow_RasterXSize_get( GDALDatasetShadow *h ) {
   return GDALGetRasterXSize( h );
@@ -2242,6 +2306,12 @@ GDALDatasetShadow *AutoCreateWarpedVRT( GDALDatasetShadow *src_ds,
   return ds;
   
 }
+
+
+  char **GeneralCmdLineProcessor( char **papszArgv, int nOptions = 0 ) {
+    GDALGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, nOptions ); 
+    return papszArgv;
+  }
 
 #ifdef PERL_OBJECT
 #define MAGIC_CLASS _wrap_Geo::GDAL_var::
@@ -6938,6 +7008,192 @@ XS(_wrap_Dataset_WriteRaster) {
 }
 
 
+XS(_wrap_Dataset_ReadRaster) {
+  {
+    GDALDatasetShadow *arg1 = (GDALDatasetShadow *) 0 ;
+    int arg2 ;
+    int arg3 ;
+    int arg4 ;
+    int arg5 ;
+    int *arg6 = (int *) 0 ;
+    char **arg7 = (char **) 0 ;
+    int *arg8 = (int *) 0 ;
+    int *arg9 = (int *) 0 ;
+    GDALDataType *arg10 = (GDALDataType *) 0 ;
+    int arg11 = (int) 0 ;
+    int *arg12 = (int *) 0 ;
+    CPLErr result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    int val3 ;
+    int ecode3 = 0 ;
+    int val4 ;
+    int ecode4 = 0 ;
+    int val5 ;
+    int ecode5 = 0 ;
+    int nLen6 = 0 ;
+    char *pBuf6 = 0 ;
+    int val8 ;
+    int val9 ;
+    int val10 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    {
+      /* %typemap(in,numinputs=0) (int *nLen6, char **pBuf6 ) */
+      arg6 = &nLen6;
+      arg7 = &pBuf6;
+    }
+    if ((items < 5) || (items > 9)) {
+      SWIG_croak("Usage: Dataset_ReadRaster(self,xoff,yoff,xsize,ysize,buf_xsize,buf_ysize,buf_type,band_list,pband_list);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALDatasetShadow, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Dataset_ReadRaster" "', argument " "1"" of type '" "GDALDatasetShadow *""'"); 
+    }
+    arg1 = reinterpret_cast< GDALDatasetShadow * >(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Dataset_ReadRaster" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = static_cast< int >(val2);
+    ecode3 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(2), &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Dataset_ReadRaster" "', argument " "3"" of type '" "int""'");
+    } 
+    arg3 = static_cast< int >(val3);
+    ecode4 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(3), &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Dataset_ReadRaster" "', argument " "4"" of type '" "int""'");
+    } 
+    arg4 = static_cast< int >(val4);
+    ecode5 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(4), &val5);
+    if (!SWIG_IsOK(ecode5)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "Dataset_ReadRaster" "', argument " "5"" of type '" "int""'");
+    } 
+    arg5 = static_cast< int >(val5);
+    if (items > 5) {
+      {
+        /* %typemap(in) (int *optional_int) */
+        if ( !SvOK(ST(5)) ) {
+          arg8 = 0;
+        }
+        else {
+          val8 = SvIV(ST(5));
+          arg8 = (int *)&val8;
+        }
+      }
+    }
+    if (items > 6) {
+      {
+        /* %typemap(in) (int *optional_int) */
+        if ( !SvOK(ST(6)) ) {
+          arg9 = 0;
+        }
+        else {
+          val9 = SvIV(ST(6));
+          arg9 = (int *)&val9;
+        }
+      }
+    }
+    if (items > 7) {
+      {
+        /* %typemap(in) (int *optional_int) */
+        if ( !SvOK(ST(7)) ) {
+          arg10 = 0;
+        }
+        else {
+          val10 = SvIV(ST(7));
+          arg10 = (GDALDataType *)&val10;
+        }
+      }
+    }
+    if (items > 8) {
+      {
+        /* %typemap(in,numinputs=1) (int nList, int* pList) */
+        if (! (SvROK(ST(8)) && (SvTYPE(SvRV(ST(8)))==SVt_PVAV))) {
+          croak("argument is not an array ref");
+          SWIG_fail;
+        }
+        AV *av = (AV*)(SvRV(ST(8)));
+        arg11 = av_len(av)-1;
+        arg12 = (int*) malloc(arg11*sizeof(int));
+        for( int i = 0; i<arg11; i++ ) {
+          SV **sv = av_fetch(av, i, 0);
+          arg12[i] =  SvIV(*sv);
+        }
+      }
+    }
+    {
+      CPLErrorReset();
+      result = (CPLErr)GDALDatasetShadow_ReadRaster(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    {
+      /* %typemap(out) CPLErr */
+      ST(argvi) = sv_2mortal(newSViv(result));
+      argvi++;
+    }
+    {
+      /* %typemap(argout) (int *nLen, char **pBuf ) */
+      ST(argvi) = sv_2mortal(newSVpv( *arg7, *arg6 ));
+      argvi++;
+    }
+    
+    
+    
+    
+    
+    {
+      /* %typemap(freearg) (int *nLen, char **pBuf ) */
+      if( *arg6 ) {
+        free( *arg7 );
+      }
+    }
+    
+    
+    
+    {
+      /* %typemap(freearg) (int nList, int* pList) */
+      if (arg12) {
+        free((void*) arg12);
+      }
+    }
+    XSRETURN(argvi);
+  fail:
+    
+    
+    
+    
+    
+    {
+      /* %typemap(freearg) (int *nLen, char **pBuf ) */
+      if( *arg6 ) {
+        free( *arg7 );
+      }
+    }
+    
+    
+    
+    {
+      /* %typemap(freearg) (int nList, int* pList) */
+      if (arg12) {
+        free((void*) arg12);
+      }
+    }
+    SWIG_croak_null();
+  }
+}
+
+
 XS(_wrap_Band_XSize_get) {
   {
     GDALRasterBandShadow *arg1 = (GDALRasterBandShadow *) 0 ;
@@ -9768,6 +10024,78 @@ XS(_wrap_AutoCreateWarpedVRT) {
 }
 
 
+XS(_wrap_GeneralCmdLineProcessor) {
+  {
+    char **arg1 = (char **) 0 ;
+    int arg2 = (int) 0 ;
+    char **result = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 1) || (items > 2)) {
+      SWIG_croak("Usage: GeneralCmdLineProcessor(papszArgv,nOptions);");
+    }
+    {
+      /* %typemap(in) char **options */
+      if ( ! (SvROK(ST(0)) && (SvTYPE(SvRV(ST(0)))==SVt_PVAV)) ) {
+        croak("argument is not an array ref");
+        SWIG_fail;
+      }
+      AV *av = (AV*)(SvRV(ST(0)));
+      for (int i = 0; i < av_len(av)-1; i++) {
+        char *pszItem = SvPV_nolen(*(av_fetch(av, i, 0)));
+        arg1 = CSLAddString( arg1, pszItem );
+      }
+    }
+    if (items > 1) {
+      ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+      if (!SWIG_IsOK(ecode2)) {
+        SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "GeneralCmdLineProcessor" "', argument " "2"" of type '" "int""'");
+      } 
+      arg2 = static_cast< int >(val2);
+    }
+    {
+      CPLErrorReset();
+      result = (char **)GeneralCmdLineProcessor(arg1,arg2);
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception_fail( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+        
+        
+        
+      }
+    }
+    {
+      /* %typemap(out) char ** -> ( string ) */
+      AV* av = (AV*)sv_2mortal((SV*)newAV());
+      char **stringarray = result;
+      if ( stringarray != NULL ) {
+        for ( int i = 0; i < CSLCount( stringarray ); ++i, ++stringarray ) {
+          av_store(av, i, newSVpv(*stringarray, strlen(*stringarray)));
+        }
+      }
+      ST(argvi) = newRV_noinc((SV*)av);
+      argvi++;
+    }
+    {
+      /* %typemap(freearg) char **options */
+      CSLDestroy( arg1 );
+    }
+    
+    XSRETURN(argvi);
+  fail:
+    {
+      /* %typemap(freearg) char **options */
+      CSLDestroy( arg1 );
+    }
+    
+    SWIG_croak_null();
+  }
+}
+
+
 
 /* -------- TYPE CONVERSION AND EQUIVALENCE RULES (BEGIN) -------- */
 
@@ -9953,6 +10281,7 @@ static swig_command_info swig_commands[] = {
 {"Geo::GDALc::Dataset_FlushCache", _wrap_Dataset_FlushCache},
 {"Geo::GDALc::Dataset_AddBand", _wrap_Dataset_AddBand},
 {"Geo::GDALc::Dataset_WriteRaster", _wrap_Dataset_WriteRaster},
+{"Geo::GDALc::Dataset_ReadRaster", _wrap_Dataset_ReadRaster},
 {"Geo::GDALc::Band_XSize_get", _wrap_Band_XSize_get},
 {"Geo::GDALc::Band_YSize_get", _wrap_Band_YSize_get},
 {"Geo::GDALc::Band_DataType_get", _wrap_Band_DataType_get},
@@ -10007,6 +10336,7 @@ static swig_command_info swig_commands[] = {
 {"Geo::GDALc::Open", _wrap_Open},
 {"Geo::GDALc::OpenShared", _wrap_OpenShared},
 {"Geo::GDALc::AutoCreateWarpedVRT", _wrap_AutoCreateWarpedVRT},
+{"Geo::GDALc::GeneralCmdLineProcessor", _wrap_GeneralCmdLineProcessor},
 {0,0}
 };
 /* -----------------------------------------------------------------------------
