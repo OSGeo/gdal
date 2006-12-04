@@ -2092,7 +2092,7 @@ SWIGINTERN char const *OGRFeatureShadow_GetField__SWIG_0(OGRFeatureShadow *self,
   }
 SWIGINTERN char const *OGRFeatureShadow_GetField__SWIG_1(OGRFeatureShadow *self,char const *name){
     if (name == NULL)
-        CPLError(CE_Failure, 1, "Undefined field name in GetFieldAsString");
+        CPLError(CE_Failure, 1, "Undefined field name in GetField");
     else {
         int i = OGR_F_GetFieldIndex(self, name);
         if (i == -1)

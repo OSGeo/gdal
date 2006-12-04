@@ -1,10 +1,6 @@
 # This file was created automatically by SWIG 1.3.29.
 # Don't modify this file, modify the SWIG interface instead.
 package Geo::GDAL;
-use Geo::GDAL::Const; 
-use Geo::OGR; 
-use Geo::OSR; 
-our $VERSION = '0.20';
 require Exporter;
 require DynaLoader;
 @ISA = qw(Exporter DynaLoader);
@@ -118,6 +114,7 @@ package Geo::GDAL;
 *Open = *Geo::GDALc::Open;
 *OpenShared = *Geo::GDALc::OpenShared;
 *AutoCreateWarpedVRT = *Geo::GDALc::AutoCreateWarpedVRT;
+*GeneralCmdLineProcessor = *Geo::GDALc::GeneralCmdLineProcessor;
 
 ############# Class : Geo::GDAL::MajorObject ##############
 
@@ -261,6 +258,7 @@ sub DESTROY {
 *FlushCache = *Geo::GDALc::Dataset_FlushCache;
 *AddBand = *Geo::GDALc::Dataset_AddBand;
 *WriteRaster = *Geo::GDALc::Dataset_WriteRaster;
+*ReadRaster = *Geo::GDALc::Dataset_ReadRaster;
 sub DISOWN {
     my $self = shift;
     my $ptr = tied(%$self);
