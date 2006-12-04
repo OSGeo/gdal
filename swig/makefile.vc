@@ -59,7 +59,10 @@ ruby: gdalvars
         $(SWIG) -c++ -ruby -I../include/ruby -o ogr_wrap.cpp -autorename -prefix "gdal::" ../include/ogr.i
         nmake /f makefile.vc build
         nmake /f makefile.vc install 
-
+        
+test: gdalvars
+				cd $(GDAL_HOME)\..\gdalautotest
+				$(PYDIR)/python.exe run_all.py
 clean:
         -del setup.ini
         cd csharp
