@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/12/04 01:21:00  fwarmerdam
+ * Put in reasonable default cases for some special field logic.
+ *
  * Revision 1.22  2006/11/27 23:59:40  tamas
  * RFC 6: Geometry and Feature Style as OGR Special Fields
  *
@@ -219,16 +222,16 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( OGRDataSource *poSrcDS,
         }
         else if ( psColDef->field_index >= iFIDFieldIndex )
         {
-            switch ( SpecialFieldTypes[psColDef->field_index - iFIDFieldIndex] )
+            switch ( SpecialFieldTypes[psColDef->field_index-iFIDFieldIndex] )
             {
-            case SWQ_INTEGER:
+              case SWQ_INTEGER:
                 oFDefn.SetType( OFTInteger );
                 break;
-            case SWQ_STRING:
-                oFDefn.SetType( OFTString );
-                break;
-            case SWQ_FLOAT:
+              case SWQ_FLOAT:
                 oFDefn.SetType( OFTReal );
+                break;
+              default:
+                oFDefn.SetType( OFTString );
                 break;
             }
         }
@@ -613,9 +616,9 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
         {
             switch (SpecialFieldTypes[psColDef->field_index - iFIDFieldIndex])
             {
-            case SWQ_INTEGER:
+              case SWQ_INTEGER:
                 poDstFeat->SetField( iField, poSrcFeat->GetFieldAsInteger(psColDef->field_index) );
-            case SWQ_STRING:
+              default:
                 poDstFeat->SetField( iField, poSrcFeat->GetFieldAsString(psColDef->field_index) );
             }
         }
@@ -906,10 +909,13 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
                 {
                     switch (SpecialFieldTypes[psKeyDef->field_index - iFIDFieldIndex])
                     {
-                    case SWQ_INTEGER:
+                      case SWQ_INTEGER:
                         psDstField->Integer = poSrcFeat->GetFieldAsInteger(psKeyDef->field_index);
-                    case SWQ_STRING:
+                        break;
+
+                      default:
                         psDstField->String = CPLStrdup( poSrcFeat->GetFieldAsString(psKeyDef->field_index) );
+                        break;
                     }
                 }
                 continue;
@@ -1086,16 +1092,20 @@ int OGRGenSQLResultsLayer::Compare( OGRField *pasFirstTuple,
         {
             switch (SpecialFieldTypes[psKeyDef->field_index - iFIDFieldIndex])
             {
-            case SWQ_INTEGER:
+              case SWQ_INTEGER:
                 if( pasFirstTuple[iKey].Integer < pasSecondTuple[iKey].Integer )
                     nResult = -1;
                 else if( pasFirstTuple[iKey].Integer > pasSecondTuple[iKey].Integer )
                     nResult = 1;
                 break;
-            case SWQ_STRING:
+              case SWQ_STRING:
                 nResult = strcmp(pasFirstTuple[iKey].String,
-                             pasSecondTuple[iKey].String);
+                                 pasSecondTuple[iKey].String);
                 break;
+
+              default:
+                CPLAssert( FALSE );
+                nResult = 0;
             }
         }
         else if( poFDefn->GetType() == OFTInteger )
