@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2006/12/04 13:25:06  tamas
+ * Added a missing break to a switch-case
+ *
  * Revision 1.23  2006/12/04 01:21:00  fwarmerdam
  * Put in reasonable default cases for some special field logic.
  *
@@ -618,6 +621,7 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature( OGRFeature *poSrcFeat )
             {
               case SWQ_INTEGER:
                 poDstFeat->SetField( iField, poSrcFeat->GetFieldAsInteger(psColDef->field_index) );
+                break;
               default:
                 poDstFeat->SetField( iField, poSrcFeat->GetFieldAsString(psColDef->field_index) );
             }
