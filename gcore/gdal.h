@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.106  2006/12/04 16:43:38  fwarmerdam
+ * Removed GDALGetRasterMetadata() - should be using GDALGetMetadata()
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1375
+ *
  * Revision 1.105  2006/10/07 02:00:38  fwarmerdam
  * added RAT translation to ColorTable, and a few other fixes
  *
@@ -468,7 +472,6 @@ CPLErr CPL_DLL CPL_STDCALL GDALReadBlock( GDALRasterBandH, int, int, void * );
 CPLErr CPL_DLL CPL_STDCALL GDALWriteBlock( GDALRasterBandH, int, int, void * );
 int CPL_DLL CPL_STDCALL GDALGetRasterBandXSize( GDALRasterBandH );
 int CPL_DLL CPL_STDCALL GDALGetRasterBandYSize( GDALRasterBandH );
-char CPL_DLL ** CPL_STDCALL GDALGetRasterMetadata( GDALRasterBandH );
 GDALAccess CPL_DLL CPL_STDCALL GDALGetRasterAccess( GDALRasterBandH );
 int CPL_DLL CPL_STDCALL GDALGetBandNumber( GDALRasterBandH );
 GDALDatasetH CPL_DLL CPL_STDCALL GDALGetBandDataset( GDALRasterBandH );
