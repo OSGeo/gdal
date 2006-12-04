@@ -43,9 +43,8 @@ include those for GRASS, FITS, OGDI, HDF4, JPEG2000 and ECW.
 <li> The shared library building is pretty specific to the GNU tool chain. 
 If you are using something different than GNU C++, then you will likely 
 finding that the .so files isn't built successfully.  You could just link 
-against the static libraries (normally gdal/gdal.a gdal/ogr/ogr.a 
-gdal/frmts/o/ *.a gdal/gdal.a gdal/port/cpl.a) or you could hack LD_SHARED 
-command in gdal/GDALmake.opt to work on your platform.  For the SGI
+against the static libraries (normally gdal/gdal.a) or you could hack 
+LD_SHARED command in gdal/GDALmake.opt to work on your platform.  For the SGI
 a value of <i>c++ -shared -all</i> is often suitable.<p>
 
 <li> GDAL, and it's utilities should now build on Cygwin and other platforms
