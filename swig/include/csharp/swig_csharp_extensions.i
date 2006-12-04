@@ -10,6 +10,9 @@
 
  *
  * $Log$
+ * Revision 1.5  2006/12/04 09:48:07  tamas
+ * Replacing $imclassname to $modulePINVOKE for supporting SWIG 1.3.27
+ *
  * Revision 1.4  2006/11/25 21:23:02  tamas
  * Added default csout, csvarout typemaps
  *
@@ -92,7 +95,7 @@
 %typemap(csbody_derived) SWIGTYPE %{
   private HandleRef swigCPtr;
 
-  internal $csclassname(IntPtr cPtr, object cMemoryOwner) : base($imclassname.$csclassnameUpcast(cPtr), cMemoryOwner) {
+  internal $csclassname(IntPtr cPtr, object cMemoryOwner) : base($modulePINVOKE.$csclassnameUpcast(cPtr), cMemoryOwner) {
     swigCPtr = new HandleRef(this, cPtr);
   }
 
