@@ -28,6 +28,9 @@
  * ****************************************************************************
  *
  * $Log$
+ * Revision 1.47  2006/12/04 20:33:47  fwarmerdam
+ * added default reporting of geolocation metadata.
+ *
  * Revision 1.46  2006/11/23 16:02:42  fwarmerdam
  * Use .15g for reporting most numeric values.
  *
@@ -396,6 +399,19 @@ int main( int argc, char ** argv )
     if( CSLCount(papszMetadata) > 0 )
     {
         printf( "Subdatasets:\n" );
+        for( i = 0; papszMetadata[i] != NULL; i++ )
+        {
+            printf( "  %s\n", papszMetadata[i] );
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Report geolocation.                                             */
+/* -------------------------------------------------------------------- */
+    papszMetadata = GDALGetMetadata( hDataset, "GEOLOCATION" );
+    if( CSLCount(papszMetadata) > 0 )
+    {
+        printf( "Geolocation:\n" );
         for( i = 0; papszMetadata[i] != NULL; i++ )
         {
             printf( "  %s\n", papszMetadata[i] );
