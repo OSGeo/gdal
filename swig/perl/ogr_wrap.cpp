@@ -1377,6 +1377,12 @@ SWIG_Perl_SetModule(swig_module_info *module) {
 #ifdef check
   #undef check
 #endif
+#ifdef seekdir
+  #undef seekdir
+#endif
+#ifdef open
+  #undef open
+#endif
 
 
 
