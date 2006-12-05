@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.13  2006/12/05 02:02:33  fwarmerdam
+ * fix options support for CreateCopy()
+ *
  * Revision 1.12  2005/09/02 16:19:23  kruland
  * Major reorganization to accomodate multiple language bindings.
  * Each language binding can define renames and supplemental code without
@@ -88,7 +91,7 @@ public:
 %newobject CreateCopy;
 %feature( "kwargs" ) CreateCopy;
   GDALDatasetShadow *CreateCopy( const char *name, GDALDatasetShadow* src, int strict =1, char **options = 0 ) {
-    GDALDatasetShadow *ds = (GDALDatasetShadow*) GDALCreateCopy(self, name, src, strict, 0, 0, 0 );
+    GDALDatasetShadow *ds = (GDALDatasetShadow*) GDALCreateCopy(self, name, src, strict, options, 0, 0 );
     return ds;
   }
 
