@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/12/05 19:01:50  mloskot
+ * Added CPLGetSymbol for Windows CE.
+ *
  * Revision 1.16  2006/03/21 20:11:54  fwarmerdam
  * fixup headers a bit
  *
@@ -175,15 +178,11 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 /* ==================================================================== */
 /*                 Windows Implementation                               */
 /* ==================================================================== */
-#ifdef WIN32
+#if defined(WIN32) && !defined(WIN32CE)
 
 #define GOT_GETSYMBOL
 
-#if defined(WIN32CE)
-#  include "cpl_win32ce_api.h"
-#else
-#  include <windows.h>
-#endif
+#include <windows.h>
 
 /************************************************************************/
 /*                            CPLGetSymbol()                            */
@@ -217,6 +216,46 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
 #endif /* def _WIN32 */
 
+/* ==================================================================== */
+/*                 Windows CE Implementation                               */
+/* ==================================================================== */
+#if defined(WIN32CE)
+
+#define GOT_GETSYMBOL
+
+#include "cpl_win32ce_api.h"
+
+/************************************************************************/
+/*                            CPLGetSymbol()                            */
+/************************************************************************/
+
+void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
+
+{
+    void        *pLibrary;
+    void        *pSymbol;
+
+    pLibrary = CE_LoadLibraryA(pszLibrary);
+    if( pLibrary == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Can't load requested DLL: %s", pszLibrary );
+        return NULL;
+    }
+
+    pSymbol = (void *) CE_GetProcAddressA( (HINSTANCE) pLibrary, pszSymbolName );
+
+    if( pSymbol == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Can't find requested entry point: %s\n", pszSymbolName );
+        return NULL;
+    }
+    
+    return( pSymbol );
+}
+
+#endif /* def WIN32CE */
 
 /* ==================================================================== */
 /*      Dummy implementation.                                           */
