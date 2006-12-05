@@ -2910,7 +2910,7 @@ SWIGINTERN GDALDatasetShadow *GDALDriverShadow_Create(GDALDriverShadow *self,cha
     return ds;
   }
 SWIGINTERN GDALDatasetShadow *GDALDriverShadow_CreateCopy(GDALDriverShadow *self,char const *name,GDALDatasetShadow *src,int strict=1,char **options=0){
-    GDALDatasetShadow *ds = (GDALDatasetShadow*) GDALCreateCopy(self, name, src, strict, 0, 0, 0 );
+    GDALDatasetShadow *ds = (GDALDatasetShadow*) GDALCreateCopy(self, name, src, strict, options, 0, 0 );
     return ds;
   }
 SWIGINTERN int GDALDriverShadow_Delete(GDALDriverShadow *self,char const *name){
@@ -3333,7 +3333,6 @@ SWIGINTERN CPLErr GDALRasterBandShadow_WriteRaster(GDALRasterBandShadow *self,in
     int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
                                         : (GDALDataType)*buf_type;
-    
     return WriteRaster_internal( self, xoff, yoff, xsize, ysize,
                                  nxsize, nysize, ntype, buf_len, buf_string );
   }
