@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.14  2006/12/05 05:28:27  fwarmerdam
+ * implement Register and Deregister
+ *
  * Revision 1.13  2006/12/05 02:02:33  fwarmerdam
  * fix options support for CreateCopy()
  *
@@ -99,9 +102,13 @@ public:
     return GDALDeleteDataset( self, name );
   }
 
-// NEEDED
-// Register
-// Deregister
+  int Register() {
+    return GDALRegisterDriver( self );
+  }
+
+  void Deregister() {
+    return GDALDeregisterDriver( self );
+  }
 
 }
 };
