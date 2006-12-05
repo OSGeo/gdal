@@ -23,14 +23,17 @@ In MinGW it is
 
    perl Makefile.PL
    make.bat 
-   dmake test
-   dmake install
+   dmake -f Makefile_Geo__GDAL test
+   dmake -f Makefile_Geo__GDAL install
 
-The test codes are known to fail 3+12 tests out of 967+334 tests.
+You may need to edit the Makefile.PL to add the path to the GEOS
+DLL's.
+
+The test codes are known to fail 3+12 tests out of 966+335 tests.
 
 DEPENDENCIES
 
-This module requires the GDAL and GEOS libraries:
+This module requires the GDAL and GEOS libraries.
 
 COPYRIGHT AND LICENCE
 

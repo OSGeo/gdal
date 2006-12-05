@@ -1377,6 +1377,12 @@ SWIG_Perl_SetModule(swig_module_info *module) {
 #ifdef check
   #undef check
 #endif
+#ifdef seekdir
+  #undef seekdir
+#endif
+#ifdef open
+  #undef open
+#endif
 
 
 
@@ -10621,4 +10627,5 @@ XS(SWIG_init) {
   ST(0) = &PL_sv_yes;
   XSRETURN(1);
 }
+
 

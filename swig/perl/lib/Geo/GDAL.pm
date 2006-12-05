@@ -1,6 +1,10 @@
 # This file was created automatically by SWIG 1.3.29.
 # Don't modify this file, modify the SWIG interface instead.
 package Geo::GDAL;
+use Geo::GDAL::Const; 
+use Geo::OGR; 
+use Geo::OSR; 
+our $VERSION = '0.20';
 require Exporter;
 require DynaLoader;
 @ISA = qw(Exporter DynaLoader);
