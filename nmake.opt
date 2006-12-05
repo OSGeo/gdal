@@ -34,7 +34,7 @@ OPTFLAGS=	/nologo /MD /EHsc /Zi /Fd$(GDAL_ROOT)\gdal.pdb
 STDCALL=YES
 
 # Version number embedded in DLL name. 
-VERSION =	13
+VERSION =	14
 
 # Uncomment the following to link OGR utilities against main GDAL DLL
 # instead of statically linking against OGR libraries.
