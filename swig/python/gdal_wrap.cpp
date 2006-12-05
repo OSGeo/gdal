@@ -2916,6 +2916,12 @@ SWIGINTERN GDALDatasetShadow *GDALDriverShadow_CreateCopy(GDALDriverShadow *self
 SWIGINTERN int GDALDriverShadow_Delete(GDALDriverShadow *self,char const *name){
     return GDALDeleteDataset( self, name );
   }
+SWIGINTERN int GDALDriverShadow_Register(GDALDriverShadow *self){
+    return GDALRegisterDriver( self );
+  }
+SWIGINTERN void GDALDriverShadow_Deregister(GDALDriverShadow *self){
+    return GDALDeregisterDriver( self );
+  }
 
 char const *GDALDriverShadow_ShortName_get( GDALDriverShadow *h ) {
   return GDALGetDriverShortName( h );
@@ -4902,6 +4908,67 @@ SWIGINTERN PyObject *_wrap_Driver_Delete(PyObject *SWIGUNUSEDPARM(self), PyObjec
   return resultobj;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Driver_Register(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALDriverShadow *arg1 = (GDALDriverShadow *) 0 ;
+  int result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Driver_Register",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Driver_Register" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDriverShadow * >(argp1);
+  {
+    CPLErrorReset();
+    result = (int)GDALDriverShadow_Register(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_From_int(static_cast< int >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Driver_Deregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  GDALDriverShadow *arg1 = (GDALDriverShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Driver_Deregister",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Driver_Deregister" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDriverShadow * >(argp1);
+  {
+    CPLErrorReset();
+    GDALDriverShadow_Deregister(arg1);
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+  }
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
   return NULL;
 }
 
@@ -10445,6 +10512,8 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Driver_Create", (PyCFunction) _wrap_Driver_Create, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Driver_CreateCopy", (PyCFunction) _wrap_Driver_CreateCopy, METH_VARARGS | METH_KEYWORDS, NULL},
 	 { (char *)"Driver_Delete", _wrap_Driver_Delete, METH_VARARGS, NULL},
+	 { (char *)"Driver_Register", _wrap_Driver_Register, METH_VARARGS, NULL},
+	 { (char *)"Driver_Deregister", _wrap_Driver_Deregister, METH_VARARGS, NULL},
 	 { (char *)"Driver_swigregister", Driver_swigregister, METH_VARARGS, NULL},
 	 { (char *)"GCP_GCPX_set", _wrap_GCP_GCPX_set, METH_VARARGS, NULL},
 	 { (char *)"GCP_GCPX_get", _wrap_GCP_GCPX_get, METH_VARARGS, NULL},
