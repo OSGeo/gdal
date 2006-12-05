@@ -204,6 +204,14 @@ class Driver(MajorObject):
         """Delete(self, char name) -> int"""
         return _gdal.Driver_Delete(*args)
 
+    def Register(*args):
+        """Register(self) -> int"""
+        return _gdal.Driver_Register(*args)
+
+    def Deregister(*args):
+        """Deregister(self)"""
+        return _gdal.Driver_Deregister(*args)
+
 Driver_swigregister = _gdal.Driver_swigregister
 Driver_swigregister(Driver)
 
