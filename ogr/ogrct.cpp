@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2006/12/05 04:20:02  fwarmerdam
+ * fixed setting of bSourceWrap and bTargetWrap
+ *
  * Revision 1.37  2006/11/24 18:01:11  fwarmerdam
  * Use new extension methods.
  *
@@ -548,6 +551,7 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
     if( pszCENTER_LONG != NULL )
     {
         dfSourceWrapLong = atof(pszCENTER_LONG);
+        bSourceWrap = TRUE;
         CPLDebug( "OGRCT", "Wrap source at %g.", dfSourceWrapLong );
     }
 
@@ -555,6 +559,7 @@ int OGRProj4CT::Initialize( OGRSpatialReference * poSourceIn,
     if( pszCENTER_LONG != NULL )
     {
         dfTargetWrapLong = atof(pszCENTER_LONG);
+        bTargetWrap = TRUE;
         CPLDebug( "OGRCT", "Wrap target at %g.", dfTargetWrapLong );
     }
 
