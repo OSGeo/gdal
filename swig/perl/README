@@ -29,7 +29,7 @@ In MinGW it is
 You may need to edit the Makefile.PL to add the path to the GEOS
 DLL's.
 
-The test codes are known to fail 3+12 tests out of 966+335 tests.
+The test codes are known to fail 3+1 tests out of 966+335 tests.
 
 DEPENDENCIES
 
