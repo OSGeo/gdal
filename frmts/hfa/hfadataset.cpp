@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.85  2006/12/06 06:47:06  fwarmerdam
+ * preliminary support for creating aux files in CreateCopy
+ *
  * Revision 1.84  2006/11/11 00:05:37  fwarmerdam
  * The u4 and u2 unpacking to 8bit code was setting the second
  * pixel wrong.  Seen with dataset from:
@@ -153,70 +156,6 @@
  *
  * Revision 1.46  2005/01/10 17:41:27  fwarmerdam
  * added HFA compression support: bug 664
- *
- * Revision 1.45  2004/11/05 04:08:01  fwarmerdam
- * Don't crash if access to the histogram table files for some reason.
- *
- * Revision 1.44  2004/10/27 18:06:45  fwarmerdam
- * Avoid use of auto-sized arrays ... not really C++ standard.
- *
- * Revision 1.43  2004/10/26 22:47:23  fwarmerdam
- * Fixed at least one botch in SetColorTable().
- *
- * Revision 1.42  2004/10/26 17:42:02  fwarmerdam
- * support writing color tables with other than 256 entries
- *
- * Revision 1.41  2004/08/27 03:22:28  warmerda
- * hack to support IGNOREUTM option: bug 597
- *
- * Revision 1.40  2004/07/16 20:40:32  warmerda
- * Added a series of patches from Andreas Wimmer which:
- *  o Add lots of improved support for metadata.
- *  o Use USE_SPILL only, instead of SPILL_FILE extra creation option.
- *  o Added ability to control block sizes.
- *
- * Revision 1.39  2004/05/17 14:28:28  warmerda
- * Added min/max support, and harvesting of other auxilary metadata
- * from statistics node.
- *
- * Revision 1.38  2004/05/11 21:38:34  warmerda
- * Handle NAD27 better.
- *
- * Revision 1.37  2004/05/10 16:59:54  warmerda
- * improve EPSG info in coordinate system
- *
- * Revision 1.36  2003/06/10 16:58:57  warmerda
- * Added check on failiure of Create in CreateCopy()
- *
- * Revision 1.35  2003/05/30 17:30:46  warmerda
- * Avoid use of goto.
- *
- * Revision 1.34  2003/05/30 15:40:35  warmerda
- * improved state plane handling with unusual units
- *
- * Revision 1.33  2003/05/21 17:04:57  warmerda
- * significant improvements to reading and writing mapinfo units
- *
- * Revision 1.32  2003/05/13 19:32:10  warmerda
- * support for reading and writing opacity provided by Diana Esch-Mosher
- *
- * Revision 1.30  2003/04/28 20:50:18  warmerda
- * implement dataset level IO, and attempt to optimization createcopy()
- *
- * Revision 1.29  2003/04/22 19:40:36  warmerda
- * fixed email address
- *
- * Revision 1.28  2003/04/21 15:50:29  warmerda
- * fixup generic overview reading support
- *
- * Revision 1.27  2003/04/14 19:06:02  warmerda
- * Don't override a meaningful SRS name with the psPro->proName.
- *
- * Revision 1.26  2003/03/18 21:07:02  dron
- * Added HFADataset::Delete() method.
- *
- * Revision 1.25  2003/02/20 14:43:14  warmerda
- * fixed quirks in handling ungeoreferenced images
  */
 
 #include "gdal_pam.h"
@@ -2697,14 +2636,17 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     int          iBand;
     int          nBandCount = poSrcDS->GetRasterCount();
 
-    (void) bStrict;
-
-    if( !pfnProgress( 0.0, NULL, pProgressData ) )
-        return NULL;
+/* -------------------------------------------------------------------- */
+/*      Do we really just want to create an .aux file?                  */
+/* -------------------------------------------------------------------- */
+    int bCreateAux = CSLFetchBoolean( papszOptions, "AUX", FALSE );
 
 /* -------------------------------------------------------------------- */
 /*      Create the basic dataset.                                       */
 /* -------------------------------------------------------------------- */
+    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+        return NULL;
+
     for( iBand = 0; iBand < nBandCount; iBand++ )
     {
         GDALRasterBand *poBand = poSrcDS->GetRasterBand( iBand+1 );
@@ -2803,7 +2745,7 @@ HFADataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         * nBandCount;
 
     nBlocksDone = 0;
-    for( iBand = 0; iBand < nBandCount; iBand++ )
+    for( iBand = 0; iBand < nBandCount && !bCreateAux; iBand++ )
     {
         GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
         GDALRasterBand *poDstBand = poDS->GetRasterBand( iBand+1 );
@@ -2912,6 +2854,47 @@ xx
         CPLFree( pData );
     }
 
+/* -------------------------------------------------------------------- */
+/*      Do we want to generate statistics?                              */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchBoolean( papszOptions, "STATISTICS", FALSE ) )
+    {
+        for( iBand = 0; iBand < nBandCount; iBand++ )
+        {
+            GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
+            double dfMin, dfMax, dfMean, dfStdDev;
+
+            if( poSrcBand->GetStatistics( TRUE, FALSE, &dfMin, &dfMax, 
+                                          &dfMean, &dfStdDev ) == CE_None
+                || poSrcBand->ComputeStatistics( TRUE, &dfMin, &dfMax, 
+                                                 &dfMean, &dfStdDev, 
+                                                 pfnProgress, pProgressData )
+                == CE_None )
+            {
+                char **papszStatsMD = NULL;
+                CPLString osValue;
+                
+                papszStatsMD = 
+                    CSLSetNameValue( papszStatsMD, "STATISTICS_MINIMUM", 
+                                     osValue.Printf( "%.15g", dfMin ) );
+                papszStatsMD = 
+                    CSLSetNameValue( papszStatsMD, "STATISTICS_MAXIMUM", 
+                                     osValue.Printf( "%.15g", dfMax ) );
+                papszStatsMD = 
+                    CSLSetNameValue( papszStatsMD, "STATISTICS_MEAN", 
+                                     osValue.Printf( "%.15g", dfMean ) );
+                papszStatsMD = 
+                    CSLSetNameValue( papszStatsMD, "STATISTICS_STDDEV", 
+                                     osValue.Printf( "%.15g", dfStdDev ) );
+                HFASetMetadata( poDS->hHFA, iBand+1, papszStatsMD );
+                CSLDestroy( papszStatsMD );
+            }
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      All report completion.                                          */
+/* -------------------------------------------------------------------- */
     if( !pfnProgress( 1.0, NULL, pProgressData ) )
     {
         CPLError( CE_Failure, CPLE_UserInterrupt,
@@ -2938,7 +2921,6 @@ CPLErr HFADataset::Delete( const char *pszFilename )
 {
     return HFADelete( pszFilename );
 }
-
 
 /************************************************************************/
 /*                          GDALRegister_HFA()                          */
