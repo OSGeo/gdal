@@ -145,6 +145,7 @@ sub ogr_tests {
 	    for my $ft (@field_types) {
 		
 		my $column = new Geo::OGR::FieldDefn($ft, $field_types{$ft});
+		$column->SetWidth(5) if $field_types{$ft} == $Geo::OGR::OFTInteger;
 		
 		$layer->CreateField($column);
 		
