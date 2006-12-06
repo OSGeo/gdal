@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/12/06 06:46:13  fwarmerdam
+ * added support for writing dependent aux files
+ *
  * Revision 1.19  2006/04/03 04:34:19  fwarmerdam
  * added support for reading affine polynomial transforms as geotransform
  *
@@ -242,6 +245,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
                 const char *pszLayerName,
                 int bOverview, int nBlockSize, 
                 int bCreateCompressed, int bCreateLargeRaster,
+                int bDependentLayer,
                 int nXSize, int nYSize, int nDataType, 
                 char **papszOptions,
                 
