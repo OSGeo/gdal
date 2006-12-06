@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.59  2006/12/06 06:46:13  fwarmerdam
+ * added support for writing dependent aux files
+ *
  * Revision 1.58  2006/10/24 01:54:52  fwarmerdam
  * handle case of 1x1 pixel file gracefully (from Gao)
  *
@@ -1753,7 +1756,8 @@ int
 HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
                 const char *pszLayerName,
                 int bOverview, int nBlockSize, 
-                int bCreateCompressed, int bCreateLargeRaster,
+                int bCreateCompressed, int bCreateLargeRaster, 
+                int bDependentLayer,
                 int nXSize, int nYSize, int nDataType, 
                 char **papszOptions,
                 
@@ -1802,7 +1806,7 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
 /*      ourselves rather than trying to have the HFA type management    */
 /*      system do it for us (since this would be hard to implement).    */
 /* -------------------------------------------------------------------- */
-    if ( !bCreateLargeRaster )
+    if ( !bCreateLargeRaster && !bDependentLayer )
     {
         int	nDmsSize;
         HFAEntry *poEdms_State;
@@ -1903,11 +1907,11 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
         }
 
     }
-    else
-    {
 /* -------------------------------------------------------------------- */
 /*      Create ExternalRasterDMS object.                                */
 /* -------------------------------------------------------------------- */
+    else if( bCreateLargeRaster )
+    {
         HFAEntry *poEdms_State;
 
         poEdms_State =
@@ -1929,6 +1933,22 @@ HFACreateLayer( HFAHandle psInfo, HFAEntry *poParent,
                                    (int) (nStackDataOffset >> 32 ) );
         poEdms_State->SetIntField( "layerStackCount", nStackCount );
         poEdms_State->SetIntField( "layerStackIndex", nStackIndex );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Dependent...                                                    */
+/* -------------------------------------------------------------------- */
+    else if( bDependentLayer )
+    {
+        HFAEntry *poDepLayerName;
+
+        poDepLayerName = 
+            new HFAEntry( psInfo, "DependentLayerName",
+                          "Eimg_DependentLayerName", poEimg_Layer );
+        poDepLayerName->MakeData( 8 + strlen(pszLayerName) + 2 );
+
+        poDepLayerName->SetStringField( "ImageLayerName.string", 
+                                        pszLayerName );
     }
 
 /* -------------------------------------------------------------------- */
@@ -2018,6 +2038,8 @@ HFAHandle HFACreate( const char * pszFilename,
     int bCreateCompressed = 
         CSLFetchBoolean(papszOptions,"COMPRESS", FALSE)
         || CSLFetchBoolean(papszOptions,"COMPRESSED", FALSE);
+    int bCreateAux = CSLFetchBoolean(papszOptions,"AUX", FALSE);
+
     char *pszFullFilename = NULL, *pszRawFilename = NULL;
 
 /* -------------------------------------------------------------------- */
@@ -2072,24 +2094,26 @@ HFAHandle HFACreate( const char * pszFilename,
     double dfApproxSize = (double)nBytesPerBlock * (double)nBlocks *
         (double)nBands + 10000000.0;
 
-    if( dfApproxSize > 2147483648.0 )
+    if( dfApproxSize > 2147483648.0 && !bCreateAux )
         bCreateLargeRaster = TRUE;
 
-    // erdas imagine always creates this entry no matter if an external
-    // spill file is used or not
-    HFAEntry *poImgFormat;
-    poImgFormat = new HFAEntry( psInfo, "IMGFormatInfo",
-                                "ImgFormatInfo831", psInfo->poRoot );
-    poImgFormat->MakeData();
-    if ( bCreateLargeRaster )
+    // erdas imagine creates this entry even if an external spill file is used
+    if( !bCreateAux )
     {
-        poImgFormat->SetIntField( "spaceUsedForRasterData", 0 );
-        bCreateCompressed = FALSE;	// Can't be compressed if we are creating a spillfile
-    }
-    else
-    {
-        poImgFormat->SetIntField( "spaceUsedForRasterData",
-                                  nBytesPerBlock*nBlocks*nBands );
+        HFAEntry *poImgFormat;
+        poImgFormat = new HFAEntry( psInfo, "IMGFormatInfo",
+                                    "ImgFormatInfo831", psInfo->poRoot );
+        poImgFormat->MakeData();
+        if ( bCreateLargeRaster )
+        {
+            poImgFormat->SetIntField( "spaceUsedForRasterData", 0 );
+            bCreateCompressed = FALSE;	// Can't be compressed if we are creating a spillfile
+        }
+        else
+        {
+            poImgFormat->SetIntField( "spaceUsedForRasterData",
+                                      nBytesPerBlock*nBlocks*nBands );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -2121,7 +2145,7 @@ HFAHandle HFACreate( const char * pszFilename,
         sprintf( szName, "Layer_%d", iBand + 1 );
 
         if( !HFACreateLayer( psInfo, psInfo->poRoot, szName, FALSE, nBlockSize,
-                             bCreateCompressed, bCreateLargeRaster, 
+                             bCreateCompressed, bCreateLargeRaster, bCreateAux,
                              nXSize, nYSize, nDataType, papszOptions,
                              nValidFlagsOffset, nDataOffset,
                              nBands, iBand ) )
@@ -2668,3 +2692,4 @@ int HFACreateSpillStack( HFAInfo_t *psInfo, int nXSize, int nYSize,
 
     return TRUE;
 }
+

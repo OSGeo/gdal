@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2006/12/06 06:46:13  fwarmerdam
+ * added support for writing dependent aux files
+ *
  * Revision 1.56  2006/11/11 00:06:57  fwarmerdam
  * Fixed problem with literal runs of u1, u2, and u4 data in
  * UncompressBlock.  They were being expanded to 8bit, when they
@@ -1694,7 +1697,7 @@ int HFABand::CreateOverview( int nOverviewLevel )
     osLayerName.Printf( "_ss_%d_", nOverviewLevel );
 
     if( !HFACreateLayer( psRRDInfo, poParent, osLayerName, 
-                         TRUE, 64, FALSE, bCreateLargeRaster,	
+                         TRUE, 64, FALSE, bCreateLargeRaster, FALSE,
                          nOXSize, nOYSize, nDataType, NULL,
                          nValidFlagsOffset, nDataOffset, 1, 0 ) )
         return -1;
