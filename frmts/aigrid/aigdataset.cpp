@@ -28,6 +28,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.28  2006/12/08 20:53:24  dreamil
+ * Added support for all uppercase name of coverage
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1358
+ *
  * Revision 1.27  2006/11/13 18:46:23  fwarmerdam
  * Added support for .clr file in directory above the coverage.
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=1311
@@ -424,15 +428,30 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
     
     osTestName.Printf( "%s/hdr.adf", osCoverName.c_str() );
     if( VSIStatL( osTestName, &sStatBuf ) != 0 )
-        return NULL;
+
+    {
+        osTestName.Printf( "%s/HDR.ADF", osCoverName.c_str() );
+        if( VSIStatL( osTestName, &sStatBuf ) != 0 )
+            return NULL;
+    }
 
     osTestName.Printf( "%s/w001001x.adf", osCoverName.c_str() );
     if( VSIStatL( osTestName, &sStatBuf ) != 0 )
-        return NULL;
+
+    {
+        osTestName.Printf( "%s/W001001X.ADF", osCoverName.c_str() );
+        if( VSIStatL( osTestName, &sStatBuf ) != 0 )
+            return NULL;
+    }
 
     osTestName.Printf( "%s/w001001.adf", osCoverName.c_str() );
     if( VSIStatL( osTestName, &sStatBuf ) != 0 )
-        return NULL;
+
+    {
+            osTestName.Printf( "%s/W001001.ADF", osCoverName.c_str() );
+            if( VSIStatL( osTestName, &sStatBuf ) != 0 )
+                return NULL;
+    }
     
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
@@ -466,7 +485,7 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
     // first check for any .clr in coverage dir.
     for( iFile = 0; papszFiles != NULL && papszFiles[iFile] != NULL; iFile++ )
     {
-        if( !EQUAL(CPLGetExtension(papszFiles[iFile]),"clr") )
+        if( !EQUAL(CPLGetExtension(papszFiles[iFile]),"clr") && !EQUAL(CPLGetExtension(papszFiles[iFile]),"CLR"))
             continue;
       
         osClrFilename = CPLFormFilename( psInfo->pszCoverName,
@@ -483,9 +502,20 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
                            psInfo->pszCoverName,
                            CPLGetFilename( osCleanPath ) );
       
-        if( VSIStatL( osTestName, &sStatBuf ) == 0 )
+        if( VSIStatL( osTestName, &sStatBuf ) != 0 )
+
+	{
+            osTestName.Printf( "%s/../%s.CLR",
+                               psInfo->pszCoverName,
+                               CPLGetFilename( osCleanPath ) );
+      
+            if( !VSIStatL( osTestName, &sStatBuf ) )
+                osClrFilename = osTestName;
+        }
+        else
             osClrFilename = osTestName;
     }
+    
   
     if( strlen(osClrFilename) > 0 )
         poDS->TranslateColorTable( osClrFilename );
