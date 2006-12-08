@@ -52,12 +52,12 @@ static void DumpMagic( AIGInfo_t * psInfo, int bVerbose )
         if( psInfo->panBlockSize[i] == 0 )
             continue;
 
-        VSIFSeek( psInfo->fpGrid, psInfo->panBlockOffset[i], SEEK_SET );
-        VSIFRead( abyBlockSize, 2, 1, psInfo->fpGrid );
+        VSIFSeekL( psInfo->fpGrid, psInfo->panBlockOffset[i], SEEK_SET );
+        VSIFReadL( abyBlockSize, 2, 1, psInfo->fpGrid );
 
         if( psInfo->nCellType == AIG_CELLTYPE_INT )
         {
-            VSIFRead( &byMagic, 1, 1, psInfo->fpGrid );
+            VSIFReadL( &byMagic, 1, 1, psInfo->fpGrid );
 
             if( byMagic != 0 && byMagic != 0x43 && byMagic != 0x04
                 && byMagic != 0x08 && byMagic != 0x10 && byMagic != 0xd7 
