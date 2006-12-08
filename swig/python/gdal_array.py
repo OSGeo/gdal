@@ -132,7 +132,7 @@ def BandReadAsArray( band, xoff, yoff, win_xsize, win_ysize,
     band_str = band.ReadRaster( xoff, yoff, win_xsize, win_ysize,
                                  buf_xsize, buf_ysize, datatype )
     ar = numpy.fromstring(band_str,dtype=typecode)
-    ar = numpy.reshape(ar, [1,win_xsize,win_ysize])
+    ar = numpy.reshape(ar, [1,win_ysize,win_xsize])
     
     return ar
 
