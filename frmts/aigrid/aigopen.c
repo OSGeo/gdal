@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/12/08 04:03:14  fwarmerdam
+ * Some datasets (ie. "ChicagoProblem") have less blocks in the block map
+ * than are required to cover the dataset region.  It seems the missing
+ * blocks should be treated as nodata.  The code now treats it this way,
+ * and not as an error, though a debug message is emitted.
+ *
  * Revision 1.18  2005/10/31 04:51:55  fwarmerdam
  * upgraded to use large file API and GUInt32 for block offsets
  *
@@ -221,19 +227,41 @@ CPLErr AIGReadTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
     int		nBlockID;
     CPLErr	eErr;
 
+/* -------------------------------------------------------------------- */
+/*      validate block id.                                              */
+/* -------------------------------------------------------------------- */
     nBlockID = nBlockXOff + nBlockYOff * psInfo->nBlocksPerRow;
-    if( nBlockID < 0 || nBlockID >= psInfo->nBlocks )
+    if( nBlockID < 0 
+        || nBlockID >= psInfo->nBlocksPerRow * psInfo->nBlocksPerColumn )
     {
-        CPLAssert( FALSE );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Illegal block requested." );
         return CE_Failure;
     }
+
+    if( nBlockID >= psInfo->nBlocks )
+    {
+        int i;
+        CPLDebug( "AIG", 
+                  "Request legal block, but from beyond end of block map.\n"
+                  "Assuming all nodata." );
+        for( i = psInfo->nBlockXSize * psInfo->nBlockYSize - 1; i >= 0; i-- )
+            panData[i] = ESRI_GRID_NO_DATA;
+        return CE_None;
+    }
     
+/* -------------------------------------------------------------------- */
+/*      Read block.                                                     */
+/* -------------------------------------------------------------------- */
     eErr = AIGReadBlock( psInfo->fpGrid,
                          psInfo->panBlockOffset[nBlockID],
                          psInfo->panBlockSize[nBlockID],
                          psInfo->nBlockXSize, psInfo->nBlockYSize,
                          panData, psInfo->nCellType );
 
+/* -------------------------------------------------------------------- */
+/*      Apply floating point post-processing.                           */
+/* -------------------------------------------------------------------- */
     if( eErr == CE_None && psInfo->nCellType == AIG_CELLTYPE_FLOAT )
     {
         float	*pafData = (float *) panData;
@@ -259,19 +287,41 @@ CPLErr AIGReadFloatTile( AIGInfo_t * psInfo, int nBlockXOff, int nBlockYOff,
     int		nBlockID;
     CPLErr	eErr;
 
+/* -------------------------------------------------------------------- */
+/*      validate block id.                                              */
+/* -------------------------------------------------------------------- */
     nBlockID = nBlockXOff + nBlockYOff * psInfo->nBlocksPerRow;
-    if( nBlockID < 0 || nBlockID >= psInfo->nBlocks )
+    if( nBlockID < 0 
+        || nBlockID >= psInfo->nBlocksPerRow * psInfo->nBlocksPerColumn )
     {
-        CPLAssert( FALSE );
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Illegal block requested." );
         return CE_Failure;
     }
+
+    if( nBlockID >= psInfo->nBlocks )
+    {
+        int i;
+        CPLDebug( "AIG", 
+                  "Request legal block, but from beyond end of block map.\n"
+                  "Assuming all nodata." );
+        for( i = psInfo->nBlockXSize * psInfo->nBlockYSize - 1; i >= 0; i-- )
+            pafData[i] = ESRI_GRID_FLOAT_NO_DATA;
+        return CE_None;
+    }
     
+/* -------------------------------------------------------------------- */
+/*      Read block.                                                     */
+/* -------------------------------------------------------------------- */
     eErr = AIGReadBlock( psInfo->fpGrid,
                          psInfo->panBlockOffset[nBlockID],
                          psInfo->panBlockSize[nBlockID],
                          psInfo->nBlockXSize, psInfo->nBlockYSize,
                          (GInt32 *) pafData, psInfo->nCellType );
 
+/* -------------------------------------------------------------------- */
+/*      Perform integer post processing.                                */
+/* -------------------------------------------------------------------- */
     if( eErr == CE_None && psInfo->nCellType == AIG_CELLTYPE_INT )
     {
         GUInt32	*panData = (GUInt32 *) pafData;
