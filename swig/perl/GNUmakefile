@@ -24,7 +24,6 @@ generate: ${WRAPPERS}
 	if [ -f Const.pm ]; then mv Const.pm lib/Geo/GDAL; fi
 	if [ -f OGR.pm ]; then mv OGR.pm lib/Geo; fi
 	if [ -f OSR.pm ]; then mv OSR.pm lib/Geo; fi
-	echo "Please edit lib/Geo/GDAL.pm to contain 'use Geo::GDAL::Const; use Geo::OGR; use Geo::OSR; our (dollar)VERSION = '0.20';'"
 
 Makefile_Geo__GDAL:
 	PREFIX=${INST_PREFIX} perl Makefile.PL
