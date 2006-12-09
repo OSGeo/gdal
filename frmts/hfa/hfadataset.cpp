@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.86  2006/12/09 01:23:59  fwarmerdam
+ * flesh out aux statistics generation
+ *
  * Revision 1.85  2006/12/06 06:47:06  fwarmerdam
  * preliminary support for creating aux files in CreateCopy
  *
@@ -2855,7 +2858,7 @@ xx
     }
 
 /* -------------------------------------------------------------------- */
-/*      Do we want to generate statistics?                              */
+/*      Do we want to generate statistics and a histogram?              */
 /* -------------------------------------------------------------------- */
     if( CSLFetchBoolean( papszOptions, "STATISTICS", FALSE ) )
     {
@@ -2863,6 +2866,11 @@ xx
         {
             GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( iBand+1 );
             double dfMin, dfMax, dfMean, dfStdDev;
+            char **papszStatsMD = NULL;
+
+            // -----------------------------------------------------------
+            // Statistics
+            // -----------------------------------------------------------
 
             if( poSrcBand->GetStatistics( TRUE, FALSE, &dfMin, &dfMax, 
                                           &dfMean, &dfStdDev ) == CE_None
@@ -2871,7 +2879,6 @@ xx
                                                  pfnProgress, pProgressData )
                 == CE_None )
             {
-                char **papszStatsMD = NULL;
                 CPLString osValue;
                 
                 papszStatsMD = 
@@ -2886,9 +2893,53 @@ xx
                 papszStatsMD = 
                     CSLSetNameValue( papszStatsMD, "STATISTICS_STDDEV", 
                                      osValue.Printf( "%.15g", dfStdDev ) );
-                HFASetMetadata( poDS->hHFA, iBand+1, papszStatsMD );
-                CSLDestroy( papszStatsMD );
             }
+
+            // -----------------------------------------------------------
+            // Histogram
+            // -----------------------------------------------------------
+
+            int nBuckets, *panHistogram = NULL;
+
+            if( poSrcBand->GetDefaultHistogram( &dfMin, &dfMax, 
+                                                &nBuckets, &panHistogram, 
+                                                TRUE, 
+                                                pfnProgress, pProgressData )
+                == CE_None )
+            {
+                CPLString osValue;
+                char *pszBinValues = (char *) CPLCalloc(12,nBuckets+1);
+                int iBin, nBinValuesLen = 0;;
+                
+                papszStatsMD = 
+                    CSLSetNameValue( papszStatsMD, "STATISTICS_HISTOMIN", 
+                                     osValue.Printf( "%.15g", dfMin ) );
+                papszStatsMD = 
+                    CSLSetNameValue( papszStatsMD, "STATISTICS_HISTOMAX", 
+                                     osValue.Printf( "%.15g", dfMax ) );
+                papszStatsMD = 
+                    CSLSetNameValue( papszStatsMD, "STATISTICS_HISTONUMBINS", 
+                                     osValue.Printf( "%d", nBuckets ) );
+
+                
+                for( iBin = 0; iBin < nBuckets; iBin++ )
+                {
+                    
+                    strcat( pszBinValues+nBinValuesLen, 
+                            osValue.Printf( "%d", panHistogram[iBin]) );
+                    strcat( pszBinValues+nBinValuesLen, "|" );
+                    nBinValuesLen += strlen(pszBinValues+nBinValuesLen);
+                }
+                papszStatsMD = 
+                    CSLSetNameValue( papszStatsMD, "STATISTICS_HISTOBINVALUES",
+                                     pszBinValues );
+                CPLFree( pszBinValues );
+            }
+
+            if( CSLCount(papszStatsMD) > 0 )
+                HFASetMetadata( poDS->hHFA, iBand+1, papszStatsMD );
+
+            CSLDestroy( papszStatsMD );
         }
     }
 

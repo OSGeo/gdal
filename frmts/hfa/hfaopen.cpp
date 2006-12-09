@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.60  2006/12/09 01:23:59  fwarmerdam
+ * flesh out aux statistics generation
+ *
  * Revision 1.59  2006/12/06 06:46:13  fwarmerdam
  * added support for writing dependent aux files
  *
@@ -2379,6 +2382,7 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
 /* -------------------------------------------------------------------- */
     char * pszBinValues = NULL;
     int bCreatedHistogramParameters = FALSE;
+    int bCreatedStatistics = FALSE;
     char ** pszAuxMetaData = GetHFAAuxMetaDataList();
     // check each metadata item
     for( int iColumn = 0; papszMD[iColumn] != NULL; iColumn++ )
@@ -2412,6 +2416,10 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
                 // child does not yet exist --> create it
                 poEntry = new HFAEntry( hHFA, pszAuxMetaData[i], pszAuxMetaData[i+3],
                                         poNode );
+
+                if ( EQUALN( "Statistics", pszAuxMetaData[i], 10 ) )
+                    bCreatedStatistics = TRUE;
+                
                 if ( EQUALN( "HistogramParameters", pszAuxMetaData[i], 19 ) )
                 {
                     // this is a bit nasty I need to set the string field for the object
@@ -2516,6 +2524,23 @@ CPLErr HFASetMetadata( HFAHandle hHFA, int nBand, char **papszMD )
             }
             free( pszBinValues );
         }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we created a statistics node then try to create a            */
+/*      StatisticsParameters node too.                                  */
+/* -------------------------------------------------------------------- */
+    if( bCreatedStatistics )
+    {
+        HFAEntry *poEntry = 
+            new HFAEntry( hHFA, "StatisticsParameters", 
+                          "Eimg_StatisticsParameters830", poNode );
+        
+        poEntry->MakeData( 70 );
+        //poEntry->SetStringField( "BinFunction.binFunctionType", "linear" );
+
+        poEntry->SetIntField( "SkipFactorX", 1 );
+        poEntry->SetIntField( "SkipFactorY", 1 );
     }
 
 /* -------------------------------------------------------------------- */
