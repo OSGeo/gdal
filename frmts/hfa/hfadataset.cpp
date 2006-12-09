@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.87  2006/12/09 04:59:39  fwarmerdam
+ * Adjust our computed histogram min/max to match what erdas expects.
+ *
  * Revision 1.86  2006/12/09 01:23:59  fwarmerdam
  * flesh out aux statistics generation
  *
@@ -2909,19 +2912,19 @@ xx
             {
                 CPLString osValue;
                 char *pszBinValues = (char *) CPLCalloc(12,nBuckets+1);
-                int iBin, nBinValuesLen = 0;;
+                int iBin, nBinValuesLen = 0;
+                double dfBinWidth = (dfMax - dfMin) / nBuckets;
                 
-                papszStatsMD = 
-                    CSLSetNameValue( papszStatsMD, "STATISTICS_HISTOMIN", 
-                                     osValue.Printf( "%.15g", dfMin ) );
-                papszStatsMD = 
-                    CSLSetNameValue( papszStatsMD, "STATISTICS_HISTOMAX", 
-                                     osValue.Printf( "%.15g", dfMax ) );
+                papszStatsMD = CSLSetNameValue( 
+                    papszStatsMD, "STATISTICS_HISTOMIN", 
+                    osValue.Printf( "%.15g", dfMin+dfBinWidth*0.5 ) );
+                papszStatsMD = CSLSetNameValue( 
+                    papszStatsMD, "STATISTICS_HISTOMAX", 
+                    osValue.Printf( "%.15g", dfMax-dfBinWidth*0.5 ) );
                 papszStatsMD = 
                     CSLSetNameValue( papszStatsMD, "STATISTICS_HISTONUMBINS", 
                                      osValue.Printf( "%d", nBuckets ) );
 
-                
                 for( iBin = 0; iBin < nBuckets; iBin++ )
                 {
                     
