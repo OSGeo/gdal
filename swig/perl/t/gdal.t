@@ -1,7 +1,7 @@
 use Test::More qw(no_plan);
 BEGIN { use_ok('Geo::GDAL') };
 
-use vars qw/%known_driver $loaded $verbose @types %pack_types %types @fails/;
+use vars qw/%known_driver $loaded $verbose @types %types @fails/;
 
 $loaded = 1;
 
@@ -40,13 +40,6 @@ system "rm -rf tmp_ds_*" unless $^O eq 'MSWin32';
 
 @types = ('GDT_Byte','GDT_UInt16','GDT_Int16','GDT_UInt32','GDT_Int32',
 	  'GDT_Float32','GDT_Float64','GDT_CInt16','GDT_CInt32','GDT_CFloat32','GDT_CFloat64');
-
-%pack_types = ('GDT_Byte'=>'c',
-	       'GDT_Int16'=>'s',
-	       'GDT_Int32'=>'i',
-	       'GDT_Float32'=>'f',
-	       'GDT_Float64'=>'d',
-	       );
 
 for (@types) {$types{$_} = eval "\$Geo::GDAL::Const::$_"};
 
@@ -191,7 +184,10 @@ sub gdal_tests {
 		       $rgba[3] == $rgba2[3],"colors do not match",$name,$type,'Colortable');
 	    }
 	    
-	    my $pc = $pack_types{"GDT_$type"};
+	    my $pc;
+	    eval {
+		$pc = Geo::GDAL::PackCharacter($band->{DataType});
+	    };
 	    
 	    if ($driver->{ShortName} eq 'VRT') 
 	    {

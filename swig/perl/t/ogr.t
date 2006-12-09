@@ -47,7 +47,7 @@ for (@types) {$types{$_} = eval "\$Geo::OGR::$_"};
 ogr_tests(Geo::OGR::GetDriverCount(),$osr);
 
 if (@fails) {
-    print STDERR "unexpected failures: (shapefile integer type error is bug #933)\n",@fails;
+    print STDERR "unexpected failures:\n",@fails;
     print STDERR "all other tests ok.\n";
 } else {
     print STDERR "all tests ok.\n";
@@ -80,7 +80,7 @@ sub ogr_tests {
 	    next;
 	}
 	
-	if ($name eq 'S57' or $name eq 'CSV' or $name eq 'GML' or $name eq 'PostgreSQL') {
+	if ($name eq 'KML' or $name eq 'S57' or $name eq 'CSV' or $name eq 'GML' or $name eq 'PostgreSQL') {
 	    mytest('skipped: apparently no capability',undef,$name,'datasource create');
 	    next;
 	}

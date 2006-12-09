@@ -1,10 +1,6 @@
 # This file was created automatically by SWIG 1.3.29.
 # Don't modify this file, modify the SWIG interface instead.
 package Geo::GDAL;
-use Geo::GDAL::Const; 
-use Geo::OGR; 
-use Geo::OSR; 
-our $VERSION = '0.20';
 require Exporter;
 require DynaLoader;
 @ISA = qw(Exporter DynaLoader);
@@ -371,4 +367,21 @@ sub ACQUIRE {
 
 package Geo::GDAL;
 
+
+    use Carp;
+    use Geo::GDAL::Const;
+    use Geo::OGR;
+    use Geo::OSR;
+    our $VERSION = '0.21';
+    sub PackCharacter {
+	$_ = shift;
+	if ($_ == $Geo::GDAL::Const::GDT_Byte) { return 'C'; }
+	if ($_ == $Geo::GDAL::Const::GDT_UInt16) { return 'n'; }
+	if ($_ == $Geo::GDAL::Const::GDT_Int16) { return 's'; }
+	if ($_ == $Geo::GDAL::Const::GDT_UInt32) { return 'N'; }
+	if ($_ == $Geo::GDAL::Const::GDT_Int32) { return 'l'; }
+	if ($_ == $Geo::GDAL::Const::GDT_Float32) { return 'f'; }
+	if ($_ == $Geo::GDAL::Const::GDT_Float64) { return 'd'; }
+	croak "unsupported data type: $_";
+    }
 1;
