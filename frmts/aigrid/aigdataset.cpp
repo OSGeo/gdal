@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/12/09 06:25:10  dreamil
+ * Fixed indentation
+ *
  * Revision 1.28  2006/12/08 20:53:24  dreamil
  * Added support for all uppercase name of coverage
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=1358
@@ -448,9 +451,9 @@ GDALDataset *AIGDataset::Open( GDALOpenInfo * poOpenInfo )
     if( VSIStatL( osTestName, &sStatBuf ) != 0 )
 
     {
-            osTestName.Printf( "%s/W001001.ADF", osCoverName.c_str() );
-            if( VSIStatL( osTestName, &sStatBuf ) != 0 )
-                return NULL;
+        osTestName.Printf( "%s/W001001.ADF", osCoverName.c_str() );
+        if( VSIStatL( osTestName, &sStatBuf ) != 0 )
+            return NULL;
     }
     
 /* -------------------------------------------------------------------- */
