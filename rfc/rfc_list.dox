@@ -21,8 +21,6 @@ A list of all GDAL/OGR RFC documents, with status.
 
 <li> \link rfc8_devguide RFC 8: Developer Guidelines\endlink (Development)
 
-<li> \link rfc9_com RFC 9: ATL Based COM Interface\endlink (Development)
-
 </ul>
 
 */
