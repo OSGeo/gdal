@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2006/12/10 04:59:51  fwarmerdam
+ * added blocka support from Reiner Beck
+ *
  * Revision 1.47  2006/11/20 15:06:36  fwarmerdam
  * Support for ICORDS='D' from Reiner Beck.
  *
@@ -195,6 +198,10 @@ static void NITFSwapWords( void *pData, int nWordSize, int nWordCount,
 
 static void NITFLoadLocationTable( NITFImage *psImage );
 static int NITFLoadVQTables( NITFImage *psImage );
+
+void NITFGetGCP ( const char* pachCoord, GDAL_GCP *psIGEOLOGCPs, int iCoord );
+int NITFReadBLOCKA_GCPs ( NITFImage *psImage, GDAL_GCP *psIGEOLOGCPs );
+
 
 /************************************************************************/
 /*                          NITFImageAccess()                           */
@@ -867,9 +874,19 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
     }
 
 /* -------------------------------------------------------------------- */
+/*  We override the coordinates found in IGEOLO in case a BLOCKA is     */
+/*  present. According to the BLOCKA specification, it repeats earth    */
+/*  coordinates image corner locations described by IGEOLO in the NITF  */
+/*  image subheader, but provide higher precision.                      */
+/* -------------------------------------------------------------------- */
+
+    NITFReadBLOCKA_GCPs( psImage, psIGEOLOGCPs );
+
+/* -------------------------------------------------------------------- */
 /*      We can't set dfGCPPixel and dfGCPPixel until we know            */
 /*      psImage->nRows and psImage->nCols.                              */
 /* -------------------------------------------------------------------- */
+
     if( psImage->chICORDS != ' ' )
     {
         psIGEOLOGCPs[0].dfGCPPixel = 0.5;
@@ -1923,6 +1940,215 @@ char **NITFReadUSE00A( NITFImage *psImage )
 
     return papszMD;
 }
+
+/************************************************************************/
+/*                           NITFReadBLOCKA()                           */
+/*                                                                      */
+/*      Read a BLOCKA SDE and return contents as metadata strings.      */
+/************************************************************************/
+
+char **NITFReadBLOCKA( NITFImage *psImage )
+
+{
+    const char *pachTRE;
+    int  nTRESize;
+    char **papszMD = NULL;
+    int nBlockaCount = 0;
+    char szTemp[128];
+
+    while ( TRUE )
+    {
+/* -------------------------------------------------------------------- */
+/*      Do we have the TRE?                                             */
+/* -------------------------------------------------------------------- */
+        pachTRE = NITFFindTREByIndex( psImage->pachTRE, psImage->nTREBytes, 
+                                      "BLOCKA", nBlockaCount,
+                                      &nTRESize );
+
+        if( pachTRE == NULL )
+            break;
+
+        if( nTRESize != 123 )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, 
+                      "BLOCKA TRE wrong size, ignoring." );
+            break;
+        }
+
+        nBlockaCount++;
+
+/* -------------------------------------------------------------------- */
+/*      Parse out field values.                                         */
+/* -------------------------------------------------------------------- */
+        sprintf( szTemp, "NITF_BLOCKA_BLOCK_INSTANCE_%02d", nBlockaCount );
+        NITFExtractMetadata( &papszMD, pachTRE,   0,   2, szTemp );
+        sprintf( szTemp, "NITF_BLOCKA_N_GRAY_%02d", nBlockaCount );
+        NITFExtractMetadata( &papszMD, pachTRE,   2,   5, szTemp );
+        sprintf( szTemp, "NITF_BLOCKA_L_LINES_%02d",      nBlockaCount );
+        NITFExtractMetadata( &papszMD, pachTRE,   7,   5, szTemp );
+        sprintf( szTemp, "NITF_BLOCKA_LAYOVER_ANGLE_%02d",nBlockaCount );
+        NITFExtractMetadata( &papszMD, pachTRE,  12,   3, szTemp );
+        sprintf( szTemp, "NITF_BLOCKA_SHADOW_ANGLE_%02d", nBlockaCount );
+        NITFExtractMetadata( &papszMD, pachTRE,  15,   3, szTemp );
+        /* reserved: 16 */
+        sprintf( szTemp, "NITF_BLOCKA_FRLC_LOC_%02d",     nBlockaCount );
+        NITFExtractMetadata( &papszMD, pachTRE,  34,  21, szTemp );
+        sprintf( szTemp, "NITF_BLOCKA_LRLC_LOC_%02d",     nBlockaCount );
+        NITFExtractMetadata( &papszMD, pachTRE,  55,  21, szTemp );
+        sprintf( szTemp, "NITF_BLOCKA_LRFC_LOC_%02d",     nBlockaCount );
+        NITFExtractMetadata( &papszMD, pachTRE,  76,  21, szTemp );
+        sprintf( szTemp, "NITF_BLOCKA_FRFC_LOC_%02d",     nBlockaCount );
+        NITFExtractMetadata( &papszMD, pachTRE,  97,  21, szTemp );
+        /* reserved: 5 -> 97 + 21 + 5 = 123 -> OK */
+    }
+
+    if ( nBlockaCount > 0 )
+    {
+        sprintf( szTemp, "%02d", nBlockaCount );
+        papszMD = CSLSetNameValue( papszMD, "NITF_BLOCKA_BLOCK_COUNT", szTemp );
+    }
+
+    return papszMD;
+}
+
+
+/************************************************************************/
+/*                           NITFGetGCP()                               */
+/*                                                                      */
+/* Reads a geographical coordinate (lat, long) from the provided        */
+/* buffer.                                                              */
+/************************************************************************/
+
+void NITFGetGCP ( const char* pachCoord, GDAL_GCP *psIGEOLOGCPs, int iCoord )
+{
+    char szTemp[128];
+
+    if( pachCoord[0] == 'N' || pachCoord[0] == 'n' || 
+        pachCoord[0] == 'S' || pachCoord[0] == 's' )
+    {	
+        /* ------------------------------------------------------------ */
+        /*                             0....+....1....+....2            */
+        /* Coordinates are in the form Xddmmss.ssYdddmmss.ss:           */
+        /* The format Xddmmss.cc represents degrees (00 to 89), minutes */
+        /* (00 to 59), seconds (00 to 59), and hundredths of seconds    */
+        /* (00 to 99) of latitude, with X = N for north or S for south, */
+        /* and Ydddmmss.cc represents degrees (000 to 179), minutes     */
+        /* (00 to 59), seconds (00 to 59), and hundredths of seconds    */
+        /* (00 to 99) of longitude, with Y = E for east or W for west.  */
+        /* ------------------------------------------------------------ */
+
+        psIGEOLOGCPs[iCoord].dfGCPY = 
+            atof(NITFGetField( szTemp, pachCoord, 1, 2 )) 
+          + atof(NITFGetField( szTemp, pachCoord, 3, 2 )) / 60.0
+          + atof(NITFGetField( szTemp, pachCoord, 5, 5 )) / 3600.0;
+
+        if( pachCoord[0] == 's' || pachCoord[0] == 'S' )
+            psIGEOLOGCPs[iCoord].dfGCPY *= -1;
+
+        psIGEOLOGCPs[iCoord].dfGCPX = 
+            atof(NITFGetField( szTemp, pachCoord,11, 3 )) 
+          + atof(NITFGetField( szTemp, pachCoord,14, 2 )) / 60.0
+          + atof(NITFGetField( szTemp, pachCoord,16, 5 )) / 3600.0;
+
+        if( pachCoord[10] == 'w' || pachCoord[10] == 'W' )
+            psIGEOLOGCPs[iCoord].dfGCPX *= -1;
+    }
+    else
+    {
+        /* ------------------------------------------------------------ */
+        /*                             0....+....1....+....2            */
+        /* Coordinates are in the form ±dd.dddddd±ddd.dddddd:           */
+        /* The format ±dd.dddddd indicates degrees of latitude (north   */
+        /* is positive), and ±ddd.dddddd represents degrees of          */
+        /* longitude (east is positive).                                */
+        /* ------------------------------------------------------------ */
+
+        psIGEOLOGCPs[iCoord].dfGCPY = 
+            atof(NITFGetField( szTemp, pachCoord, 0, 10 ));
+        psIGEOLOGCPs[iCoord].dfGCPX = 
+            atof(NITFGetField( szTemp, pachCoord,10, 11 ));
+    }
+}
+
+/************************************************************************/
+/*                           NITFReadBLOCKA_GCPs()                      */
+/*                                                                      */
+/* The BLOCKA repeat earth coordinates image corner locations described */
+/* by IGEOLO in the NITF image subheader, but provide higher precision. */
+/************************************************************************/
+
+int NITFReadBLOCKA_GCPs( NITFImage *psImage, GDAL_GCP *psIGEOLOGCPs )
+{
+    const char *pachTRE;
+    int        nTRESize;
+    int        nBlockaLines;
+    char       szTemp[128];
+
+/* -------------------------------------------------------------------- */
+/*      Do we have the TRE?                                             */
+/* -------------------------------------------------------------------- */
+    pachTRE = NITFFindTRE( psImage->pachTRE, psImage->nTREBytes, 
+                           "BLOCKA", &nTRESize );
+
+    if( pachTRE == NULL )
+        return FALSE;
+
+    if( nTRESize != 123 )
+    {
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Parse out field values.                                         */
+/* -------------------------------------------------------------------- */
+
+    /* ---------------------------------------------------------------- */
+    /* Make sure the BLOCKA geo coordinates are set. Spaces indicate    */
+    /* the value of a coordinate is unavailable or inapplicable.        */
+    /* ---------------------------------------------------------------- */
+    if( pachTRE[34] == ' ' || pachTRE[55] == ' ' || 
+        pachTRE[76] == ' ' || pachTRE[97] == ' ' )
+    {
+        return FALSE;
+    }
+
+    /* ---------------------------------------------------------------- */
+    /* Extract the L_LINES field of BLOCKA and see if this instance     */
+    /* covers the whole image. This is the case if L_LINES is equal to  */
+    /* the no of rows of this image.                                    */
+    /* We use the BLOCKA only in that case!                             */
+    /* ---------------------------------------------------------------- */
+    nBlockaLines = atoi(NITFGetField( szTemp, pachTRE, 7, 5 ));
+    if( psImage->nRows != nBlockaLines )
+    {
+        return FALSE;
+    }
+
+    /* ---------------------------------------------------------------- */
+    /* Note that the order of these coordinates is different from       */
+    /* IGEOLO.                                                          */
+    /*                   IGEOLO            BLOCKA                       */
+    /* psIGEOLOGCPs[0]   0, 0              0, MaxCol                    */
+    /* psIGEOLOGCPs[1]   0, MaxCol         MaxRow, MaxCol               */
+    /* psIGEOLOGCPs[2]   MaxRow, MaxCol    MaxRow, 0                    */
+    /* psIGEOLOGCPs[3]   MaxRow, 0         0, 0                         */
+    /* ---------------------------------------------------------------- */
+
+    NITFGetGCP ( pachTRE + 34, psIGEOLOGCPs, 1 );
+    NITFGetGCP ( pachTRE + 55, psIGEOLOGCPs, 2 );
+    NITFGetGCP ( pachTRE + 76, psIGEOLOGCPs, 3 );
+    NITFGetGCP ( pachTRE + 97, psIGEOLOGCPs, 0 );
+
+    /* ---------------------------------------------------------------- */
+    /* Regardless of the former value of ICORDS, the values are now in  */
+    /* decimal degrees.                                                 */
+    /* ---------------------------------------------------------------- */
+
+    psImage->chICORDS = 'D';
+
+    return TRUE;
+}
+
 
 /************************************************************************/
 /*                       NITFLoadLocationTable()                        */
