@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2006/12/10 04:59:19  fwarmerdam
+ * Removed extra OGRFME register function.
+ *
  * Revision 1.59  2006/11/28 15:34:41  osemykin
  * Added new Informix DataBlade driver (IDB)
  *
@@ -352,7 +355,6 @@ void CPL_DLL RegisterOGRGML();
 void CPL_DLL RegisterOGRKML();
 void CPL_DLL RegisterOGRAVCBin();
 void CPL_DLL RegisterOGRAVCE00();
-void CPL_DLL RegisterOGRFME();
 void CPL_DLL RegisterOGRREC();
 void CPL_DLL RegisterOGRMEM();
 void CPL_DLL RegisterOGRVRT();
