@@ -9,11 +9,10 @@
 
 GDAL supports reading of several subtypes of NITF image files, and writing
 simple uncompressed NITF 2.1 files.  NITF 1.1, NITF 2.0 and NITF 2.1
-files with uncomprssed or VQ compressed images should be readable.  
-JPEG2000 compressed images are also supported, but only if GDAL also has
-the JP2KAK driver enabled.  Other compression mechanisms are not supported 
-at this time.  The read support test has been tested on CIB and CADRG RPF 
-products.<p>
+files with uncomprssed, jpeg compressed, jpeg2000 (with Kakadu or ECW SDKs)
+or VQ compressed images should be readable.  Other compression mechanisms are 
+not supported at this time.  The read support test has been tested on CIB and 
+CADRG RPF products.<p>
 
 NITF files can contain several images as well as other layers such as 
 graphics (CGM) and text.  Currently GDAL defaults to reading the first image,
@@ -23,12 +22,19 @@ CGM data is made available as special format metadata in the CGM metadata
 domain.  All other auxilary information is ignored.<p>
 
 Color tables for pseudocolored images are read.  In some cases nodata values
-may be identified.  Lat/Long extents are read from the IGEOLO information in 
-the image header if available.  Other coordinates systems (such as MGRS) are
-ignored at this time.   If high precision lat/long georeferencing information
-is available in RPF auxilary data it will be used in preference to the low
-precision IGEOLO information. In theory all input pixel types except 1bit are 
-supported, but only 8bit types have actually been tested.<p>
+may be identified.  In theory all input pixel types 
+except 1bit are supported, but only 8bit and 16bit types have actually been 
+tested.<p>
+
+Lat/Long extents are read from the IGEOLO information in 
+the image header if available.  If high precision lat/long georeferencing 
+information is available in RPF auxilary data it will be used in preference 
+to the low precision IGEOLO information.  In case a BLOCKA instance is found, 
+the higher precision coordinates of BLOCKA are used if the block data covers 
+the complete image - that is the L_LINES field with the row count for that 
+block is equal to the row count of the image. Additionally, all BLOCKA 
+instances are returned as metadata.
+<P>
 
 Most file header and image header fields are returned as dataset level
 metadata.<p>
@@ -79,11 +85,13 @@ file (.tfw).<p>
 
 </ul>
 
+
 <h2>Credit</h2>
 
 The author wishes to thank <a href="http://www.augsignals.com/">AUG
 Signals</a> and the <a href="http://geoconnections.org/">GeoConnections</a>
-program for supporting development of this driver.<p>
+program for supporting development of this driver, and to thank 
+Steve Rawlinson (JPEG), Reiner Beck (BLOCKA) for assistance adding features.<p>
 
 See Also: <p>
 <ul>
