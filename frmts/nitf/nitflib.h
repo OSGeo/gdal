@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2006/12/10 16:26:28  hobu
+ * add NITFReadBLOCKA prototype
+ *
  * Revision 1.19  2006/10/24 02:18:06  fwarmerdam
  * added image attachment metadata
  *
@@ -249,6 +252,7 @@ int       CPL_DLL  NITFWriteIGEOLO( NITFImage *psImage, char chICORDS,
                                     double dfLLX, double dfLLY );
 char      CPL_DLL **NITFReadUSE00A( NITFImage *psImage );
 char      CPL_DLL **NITFReadSTDIDC( NITFImage *psImage );
+char      CPL_DLL **NITFReadBLOCKA( NITFImage *psImage );
 
 GUInt32   CPL_DLL NITFIHFieldOffset( NITFImage *psImage, 
                                      const char *pszFieldName );
