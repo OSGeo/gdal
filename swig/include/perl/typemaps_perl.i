@@ -4,6 +4,9 @@
 
 /*
  * $Log$
+ * Revision 1.14  2006/12/10 19:06:27  ajolma
+ * IF_ERROR_RETURN_NONE, which skips returning the error code
+ *
  * Revision 1.13  2006/06/07 16:06:49  ajolma
  * prefer CPLGetLastErrorMsg() in OGRErr
  *
@@ -95,6 +98,10 @@
      */
     ST(argvi-1) = sv_newmortal();
   }
+}
+%typemap(out) IF_ERROR_RETURN_NONE
+{
+  /* %typemap(out) IF_ERROR_RETURN_NONE */
 }
 
 /*
