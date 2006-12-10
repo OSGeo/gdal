@@ -7798,19 +7798,23 @@ XS(_wrap_Band_GetStatistics) {
     int ecode2 = 0 ;
     int val3 ;
     int ecode3 = 0 ;
-    void *argp4 = 0 ;
-    int res4 = 0 ;
-    void *argp5 = 0 ;
-    int res5 = 0 ;
-    void *argp6 = 0 ;
-    int res6 = 0 ;
-    void *argp7 = 0 ;
-    int res7 = 0 ;
+    double temp4 ;
+    int res4 = SWIG_TMPOBJ ;
+    double temp5 ;
+    int res5 = SWIG_TMPOBJ ;
+    double temp6 ;
+    int res6 = SWIG_TMPOBJ ;
+    double temp7 ;
+    int res7 = SWIG_TMPOBJ ;
     int argvi = 0;
     dXSARGS;
     
-    if ((items < 7) || (items > 7)) {
-      SWIG_croak("Usage: Band_GetStatistics(self,approx_ok,force,min,max,mean,stddev);");
+    arg4 = &temp4;
+    arg5 = &temp5;
+    arg6 = &temp6;
+    arg7 = &temp7;
+    if ((items < 3) || (items > 3)) {
+      SWIG_croak("Usage: Band_GetStatistics(self,approx_ok,force);");
     }
     res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_GDALRasterBandShadow, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
@@ -7827,26 +7831,6 @@ XS(_wrap_Band_GetStatistics) {
       SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Band_GetStatistics" "', argument " "3"" of type '" "int""'");
     } 
     arg3 = static_cast< int >(val3);
-    res4 = SWIG_ConvertPtr(ST(3), &argp4,SWIGTYPE_p_double, 0 |  0 );
-    if (!SWIG_IsOK(res4)) {
-      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "Band_GetStatistics" "', argument " "4"" of type '" "double *""'"); 
-    }
-    arg4 = reinterpret_cast< double * >(argp4);
-    res5 = SWIG_ConvertPtr(ST(4), &argp5,SWIGTYPE_p_double, 0 |  0 );
-    if (!SWIG_IsOK(res5)) {
-      SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "Band_GetStatistics" "', argument " "5"" of type '" "double *""'"); 
-    }
-    arg5 = reinterpret_cast< double * >(argp5);
-    res6 = SWIG_ConvertPtr(ST(5), &argp6,SWIGTYPE_p_double, 0 |  0 );
-    if (!SWIG_IsOK(res6)) {
-      SWIG_exception_fail(SWIG_ArgError(res6), "in method '" "Band_GetStatistics" "', argument " "6"" of type '" "double *""'"); 
-    }
-    arg6 = reinterpret_cast< double * >(argp6);
-    res7 = SWIG_ConvertPtr(ST(6), &argp7,SWIGTYPE_p_double, 0 |  0 );
-    if (!SWIG_IsOK(res7)) {
-      SWIG_exception_fail(SWIG_ArgError(res7), "in method '" "Band_GetStatistics" "', argument " "7"" of type '" "double *""'"); 
-    }
-    arg7 = reinterpret_cast< double * >(argp7);
     {
       CPLErrorReset();
       result = (CPLErr)GDALRasterBandShadow_GetStatistics(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
@@ -7859,9 +7843,31 @@ XS(_wrap_Band_GetStatistics) {
       }
     }
     {
-      /* %typemap(out) CPLErr */
-      ST(argvi) = sv_2mortal(newSViv(result));
-      argvi++;
+      /* %typemap(out) IF_ERROR_RETURN_NONE */
+    }
+    if (SWIG_IsTmpObj(res4)) {
+      if (argvi >= items) EXTEND(sp,1);  ST(argvi) = SWIG_From_double  SWIG_PERL_CALL_ARGS_1((*arg4)); argvi++  ;
+    } else {
+      int new_flags = SWIG_IsNewObj(res4) ? (SWIG_POINTER_OWN | 0) : 0;
+      if (argvi >= items) EXTEND(sp,1);  ST(argvi) = SWIG_NewPointerObj((void*)(arg4), SWIGTYPE_p_double, new_flags); argvi++  ;
+    }
+    if (SWIG_IsTmpObj(res5)) {
+      if (argvi >= items) EXTEND(sp,1);  ST(argvi) = SWIG_From_double  SWIG_PERL_CALL_ARGS_1((*arg5)); argvi++  ;
+    } else {
+      int new_flags = SWIG_IsNewObj(res5) ? (SWIG_POINTER_OWN | 0) : 0;
+      if (argvi >= items) EXTEND(sp,1);  ST(argvi) = SWIG_NewPointerObj((void*)(arg5), SWIGTYPE_p_double, new_flags); argvi++  ;
+    }
+    if (SWIG_IsTmpObj(res6)) {
+      if (argvi >= items) EXTEND(sp,1);  ST(argvi) = SWIG_From_double  SWIG_PERL_CALL_ARGS_1((*arg6)); argvi++  ;
+    } else {
+      int new_flags = SWIG_IsNewObj(res6) ? (SWIG_POINTER_OWN | 0) : 0;
+      if (argvi >= items) EXTEND(sp,1);  ST(argvi) = SWIG_NewPointerObj((void*)(arg6), SWIGTYPE_p_double, new_flags); argvi++  ;
+    }
+    if (SWIG_IsTmpObj(res7)) {
+      if (argvi >= items) EXTEND(sp,1);  ST(argvi) = SWIG_From_double  SWIG_PERL_CALL_ARGS_1((*arg7)); argvi++  ;
+    } else {
+      int new_flags = SWIG_IsNewObj(res7) ? (SWIG_POINTER_OWN | 0) : 0;
+      if (argvi >= items) EXTEND(sp,1);  ST(argvi) = SWIG_NewPointerObj((void*)(arg7), SWIGTYPE_p_double, new_flags); argvi++  ;
     }
     
     
@@ -7944,11 +7950,7 @@ XS(_wrap_Band_SetStatistics) {
         
       }
     }
-    {
-      /* %typemap(out) CPLErr */
-      ST(argvi) = sv_2mortal(newSViv(result));
-      argvi++;
-    }
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
     
     
     
@@ -8316,11 +8318,7 @@ XS(_wrap_Band_Fill) {
         
       }
     }
-    {
-      /* %typemap(out) CPLErr */
-      ST(argvi) = sv_2mortal(newSViv(result));
-      argvi++;
-    }
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
     
     
     
@@ -8445,11 +8443,7 @@ XS(_wrap_Band_ReadRaster) {
         
       }
     }
-    {
-      /* %typemap(out) CPLErr */
-      ST(argvi) = sv_2mortal(newSViv(result));
-      argvi++;
-    }
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
     {
       /* %typemap(argout) (int *nLen, char **pBuf ) */
       ST(argvi) = sv_2mortal(newSVpv( *arg7, *arg6 ));
@@ -8604,11 +8598,7 @@ XS(_wrap_Band_WriteRaster) {
         
       }
     }
-    {
-      /* %typemap(out) CPLErr */
-      ST(argvi) = sv_2mortal(newSViv(result));
-      argvi++;
-    }
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1(static_cast< int >(result)); argvi++ ;
     
     
     
