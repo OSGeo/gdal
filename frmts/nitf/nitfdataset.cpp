@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.65  2006/12/10 04:59:51  fwarmerdam
+ * added blocka support from Reiner Beck
+ *
  * Revision 1.64  2006/11/20 15:08:10  fwarmerdam
  * Added support for ICORDS='D'.
  *
@@ -1049,7 +1052,7 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         /* nothing */
     }
-    else if( psImage->chICORDS == 'G'  || psImage->chICORDS == 'D' )
+    else if( psImage->chICORDS == 'G' || psImage->chICORDS == 'D' )
     {
         CPLFree( poDS->pszProjection );
         poDS->pszProjection = NULL;
@@ -1334,6 +1337,16 @@ GDALDataset *NITFDataset::Open( GDALOpenInfo * poOpenInfo )
 
         // USE00A 
         papszUSE00A_MD = NITFReadUSE00A( psImage );
+        if( papszUSE00A_MD != NULL )
+        {
+            papszMergedMD = CSLInsertStrings( papszMergedMD, 
+                                              CSLCount( papszUSE00A_MD ),
+                                              papszUSE00A_MD );
+            CSLDestroy( papszUSE00A_MD );
+        }
+        
+        // BLOCKA 
+        papszUSE00A_MD = NITFReadBLOCKA( psImage );
         if( papszUSE00A_MD != NULL )
         {
             papszMergedMD = CSLInsertStrings( papszMergedMD, 

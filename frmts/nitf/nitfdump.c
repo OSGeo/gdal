@@ -28,8 +28,8 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.11  2006/12/06 02:45:31  fwarmerdam
- * Fixed column/row reporting.
+ * Revision 1.12  2006/12/10 04:59:51  fwarmerdam
+ * added blocka support from Reiner Beck
  *
  * Revision 1.10  2006/10/24 02:18:06  fwarmerdam
  * added image attachment metadata
@@ -169,8 +169,8 @@ int main( int nArgc, char ** papszArgv )
             }
 
             printf( "Image Segment %d, %dPx%dLx%dB x %dbits:\n", 
-                    iSegment, psImage->nCols, psImage->nRows, psImage->nBands,
-                    psImage->nBitsPerSample );
+                    iSegment, psImage->nColumns, psImage->nRows, 
+                    psImage->nBands, psImage->nBitsPerSample );
             printf( "  PVTYPE=%s, IREP=%s, ICAT=%s, IMODE=%c, IC=%s, COMRAT=%s, ICORDS=%c\n", 
                     psImage->szPVType, psImage->szIREP, psImage->szICAT,
                     psImage->chIMODE, psImage->szIC, psImage->szCOMRAT,
@@ -250,6 +250,13 @@ int main( int nArgc, char ** papszArgv )
             if( papszMD != NULL )
             {
                 DumpMetadata( "  USE00A TRE:", "    ", papszMD );
+                CSLDestroy( papszMD );
+            }
+
+            papszMD = NITFReadBLOCKA( psImage );
+            if( papszMD != NULL )
+            {
+                DumpMetadata( "  BLOCKA TRE:", "    ", papszMD );
                 CSLDestroy( papszMD );
             }
 

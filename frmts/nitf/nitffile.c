@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2006/12/10 04:59:51  fwarmerdam
+ * added blocka support from Reiner Beck
+ *
  * Revision 1.24  2006/11/20 15:06:04  fwarmerdam
  * Comment out no-action PLACE statements to avoid compiler warnings.
  *
@@ -784,6 +787,42 @@ const char *NITFFindTRE( const char *pszTREData, int nTREBytes,
                 *pnFoundTRESize = nThisTRESize;
 
             return pszTREData + 11;
+        }
+
+        nTREBytes -= (nThisTRESize + 11);
+        pszTREData += (nThisTRESize + 11);
+    }
+
+    return NULL;
+}
+
+/************************************************************************/
+/*                     NITFFindTREByIndex()                             */
+/************************************************************************/
+
+const char *NITFFindTREByIndex( const char *pszTREData, int nTREBytes,
+                                const char *pszTag, int nTreIndex,
+                                int *pnFoundTRESize )
+
+{
+    char szTemp[100];
+
+    while( nTREBytes >= 11 )
+    {
+        int nThisTRESize = atoi(NITFGetField(szTemp, pszTREData, 6, 5 ));
+
+        if( EQUALN(pszTREData,pszTag,6) )
+        {
+            if ( nTreIndex <= 0)
+            {
+                if( pnFoundTRESize != NULL )
+                    *pnFoundTRESize = nThisTRESize;
+
+                return pszTREData + 11;
+            }
+
+            /* Found a prevoius one - skip it ... */
+            nTreIndex--;
         }
 
         nTREBytes -= (nThisTRESize + 11);
