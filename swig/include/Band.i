@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.27  2006/12/10 19:05:19  ajolma
+ * Make stats in GetStatistics output variables, also a new pattern IF_ERROR_RETURN_NONE to not to return the error code
+ *
  * Revision 1.26  2006/11/16 03:19:38  fwarmerdam
  * added ComputeBandStats() method
  *
@@ -208,11 +211,14 @@ public:
     *val = GDALGetRasterScale( self, hasval );
   }
 
+%apply (double *OUTPUT){double *min, double *max, double *mean, double *stddev};
+%apply (IF_ERROR_RETURN_NONE) { (CPLErr) };
   CPLErr GetStatistics( int approx_ok, int force, 
                       double *min, double *max, double *mean, double *stddev ){
     return GDALGetRasterStatistics( self, approx_ok, force, 
 				    min, max, mean, stddev );
   }
+%clear (CPLErr);
 
   CPLErr SetStatistics( double min, double max, double mean, double stddev ) {
     return GDALSetRasterStatistics( self, min, max, mean, stddev );
