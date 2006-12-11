@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.32  2006/12/11 20:46:35  ajolma
+ * apply some typemaps for GetProjectionMethod* methods (only for SWIGPERL now)
+ *
  * Revision 1.31  2006/11/18 09:25:53  ajolma
  * make it possible to switch to CPAN namespace with symbol PERL_CPAN_NAMESPACE
  *
@@ -302,14 +305,38 @@ OGRErr GetUserInputAsWKT( const char *name, char **argout ) {
 #endif 
 #if !defined(SWIGPYTHON)
 %rename (GetProjectionMethods) OPTGetProjectionMethods;
+#if defined(SWIGPERL)
+%apply (char **CSL) {(char **)};
+#endif
 char **OPTGetProjectionMethods();
+#if defined(SWIGPERL)
+%clear (char **);
+#endif
 
 %rename (GetProjectionMethodParameterList) OPTGetParameterList;
+#if defined(SWIGPERL)
+%apply (char **free) {(char **)};
+%apply (char **argout) {(char **username)};
+#endif
 char **OPTGetParameterList( char *method, char **username );
+#if defined(SWIGPERL)
+%clear (char **);
+%clear (char **username);
+#endif
 
 %rename (GetProjectionMethodParamInfo) OPTGetParameterInfo;
+#if defined(SWIGPERL)
+%apply (char **argout) {(char **usrname)};
+%apply (char **argout) {(char **type)};
+%apply (double *OUTPUT){(double *defaultval)};
+#endif
 void OPTGetParameterInfo( char *method, char *param, char **usrname,
                           char **type, double *defaultval );
+#if defined(SWIGPERL)
+%clear (double *defaultval);
+%clear (char **type);
+%clear (char **usrname);
+#endif
 #endif
 #if defined(SWIGCSHARP)
 %object_owner
