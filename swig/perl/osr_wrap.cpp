@@ -2114,7 +2114,19 @@ XS(_wrap_GetProjectionMethods) {
       SWIG_croak("Usage: GetProjectionMethods();");
     }
     result = (char **)OPTGetProjectionMethods();
-    ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_p_char, 0 | 0); argvi++ ;
+    {
+      /* %typemap(out) char **CSL */
+      AV *av = (AV*)sv_2mortal((SV*)newAV());
+      if (result) {
+        int i;
+        for (i = 0; result[i]; i++) {
+          av_store(av, i, newSVpv(result[0], 0));
+        }
+        CSLDestroy(result);
+      }
+      ST(argvi) = newRV_noinc((SV*)av);
+      argvi++;
+    }
     XSRETURN(argvi);
   fail:
     SWIG_croak_null();
@@ -2130,32 +2142,57 @@ XS(_wrap_GetProjectionMethodParameterList) {
     int res1 ;
     char *buf1 = 0 ;
     int alloc1 = 0 ;
-    void *argp2 = 0 ;
-    int res2 = 0 ;
+    char *argout2 = 0 ;
     int argvi = 0;
     dXSARGS;
     
-    if ((items < 2) || (items > 2)) {
-      SWIG_croak("Usage: GetProjectionMethodParameterList(method,username);");
+    {
+      /* %typemap(in,numinputs=0) (char **argout2) */
+      arg2 = &argout2;
+    }
+    if ((items < 1) || (items > 1)) {
+      SWIG_croak("Usage: GetProjectionMethodParameterList(method);");
     }
     res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
     if (!SWIG_IsOK(res1)) {
       SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "GetProjectionMethodParameterList" "', argument " "1"" of type '" "char *""'");
     }
     arg1 = buf1;
-    res2 = SWIG_ConvertPtr(ST(1), &argp2,SWIGTYPE_p_p_char, 0 |  0 );
-    if (!SWIG_IsOK(res2)) {
-      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "GetProjectionMethodParameterList" "', argument " "2"" of type '" "char **""'"); 
-    }
-    arg2 = reinterpret_cast< char ** >(argp2);
     result = (char **)OPTGetParameterList(arg1,arg2);
-    ST(argvi) = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_p_char, 0 | 0); argvi++ ;
+    {
+      /* %typemap(out) char **free */
+      AV *av = (AV*)sv_2mortal((SV*)newAV());
+      if (result) {
+        int i;
+        for (i = 0; result[i]; i++) {
+          av_store(av, i, newSVpv(result[0], 0));
+        }
+        CPLFree(result);
+      }
+      ST(argvi) = newRV_noinc((SV*)av);
+      argvi++;
+    }
+    {
+      /* %typemap(argout) (char **argout) */
+      ST(argvi) = sv_newmortal();
+      if ( arg2 )
+      sv_setpv(ST(argvi), *arg2);
+      argvi++;
+    }
     if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
-    
+    {
+      /* %typemap(freearg) (char **argout) */
+      if ( *arg2 )
+      CPLFree( *arg2 );
+    }
     XSRETURN(argvi);
   fail:
     if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
-    
+    {
+      /* %typemap(freearg) (char **argout) */
+      if ( *arg2 )
+      CPLFree( *arg2 );
+    }
     SWIG_croak_null();
   }
 }
@@ -2174,17 +2211,24 @@ XS(_wrap_GetProjectionMethodParamInfo) {
     int res2 ;
     char *buf2 = 0 ;
     int alloc2 = 0 ;
-    void *argp3 = 0 ;
-    int res3 = 0 ;
-    void *argp4 = 0 ;
-    int res4 = 0 ;
-    void *argp5 = 0 ;
-    int res5 = 0 ;
+    char *argout3 = 0 ;
+    char *argout4 = 0 ;
+    double temp5 ;
+    int res5 = SWIG_TMPOBJ ;
     int argvi = 0;
     dXSARGS;
     
-    if ((items < 5) || (items > 5)) {
-      SWIG_croak("Usage: GetProjectionMethodParamInfo(method,param,usrname,type,defaultval);");
+    {
+      /* %typemap(in,numinputs=0) (char **argout3) */
+      arg3 = &argout3;
+    }
+    {
+      /* %typemap(in,numinputs=0) (char **argout4) */
+      arg4 = &argout4;
+    }
+    arg5 = &temp5;
+    if ((items < 2) || (items > 2)) {
+      SWIG_croak("Usage: GetProjectionMethodParamInfo(method,param);");
     }
     res1 = SWIG_AsCharPtrAndSize(ST(0), &buf1, NULL, &alloc1);
     if (!SWIG_IsOK(res1)) {
@@ -2196,34 +2240,55 @@ XS(_wrap_GetProjectionMethodParamInfo) {
       SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "GetProjectionMethodParamInfo" "', argument " "2"" of type '" "char *""'");
     }
     arg2 = buf2;
-    res3 = SWIG_ConvertPtr(ST(2), &argp3,SWIGTYPE_p_p_char, 0 |  0 );
-    if (!SWIG_IsOK(res3)) {
-      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "GetProjectionMethodParamInfo" "', argument " "3"" of type '" "char **""'"); 
-    }
-    arg3 = reinterpret_cast< char ** >(argp3);
-    res4 = SWIG_ConvertPtr(ST(3), &argp4,SWIGTYPE_p_p_char, 0 |  0 );
-    if (!SWIG_IsOK(res4)) {
-      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "GetProjectionMethodParamInfo" "', argument " "4"" of type '" "char **""'"); 
-    }
-    arg4 = reinterpret_cast< char ** >(argp4);
-    res5 = SWIG_ConvertPtr(ST(4), &argp5,SWIGTYPE_p_double, 0 |  0 );
-    if (!SWIG_IsOK(res5)) {
-      SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "GetProjectionMethodParamInfo" "', argument " "5"" of type '" "double *""'"); 
-    }
-    arg5 = reinterpret_cast< double * >(argp5);
     OPTGetParameterInfo(arg1,arg2,arg3,arg4,arg5);
     
+    {
+      /* %typemap(argout) (char **argout) */
+      ST(argvi) = sv_newmortal();
+      if ( arg3 )
+      sv_setpv(ST(argvi), *arg3);
+      argvi++;
+    }
+    {
+      /* %typemap(argout) (char **argout) */
+      ST(argvi) = sv_newmortal();
+      if ( arg4 )
+      sv_setpv(ST(argvi), *arg4);
+      argvi++;
+    }
+    if (SWIG_IsTmpObj(res5)) {
+      if (argvi >= items) EXTEND(sp,1);  ST(argvi) = SWIG_From_double  SWIG_PERL_CALL_ARGS_1((*arg5)); argvi++  ;
+    } else {
+      int new_flags = SWIG_IsNewObj(res5) ? (SWIG_POINTER_OWN | 0) : 0;
+      if (argvi >= items) EXTEND(sp,1);  ST(argvi) = SWIG_NewPointerObj((void*)(arg5), SWIGTYPE_p_double, new_flags); argvi++  ;
+    }
     if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-    
-    
+    {
+      /* %typemap(freearg) (char **argout) */
+      if ( *arg3 )
+      CPLFree( *arg3 );
+    }
+    {
+      /* %typemap(freearg) (char **argout) */
+      if ( *arg4 )
+      CPLFree( *arg4 );
+    }
     
     XSRETURN(argvi);
   fail:
     if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
     if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
-    
-    
+    {
+      /* %typemap(freearg) (char **argout) */
+      if ( *arg3 )
+      CPLFree( *arg3 );
+    }
+    {
+      /* %typemap(freearg) (char **argout) */
+      if ( *arg4 )
+      CPLFree( *arg4 );
+    }
     
     SWIG_croak_null();
   }

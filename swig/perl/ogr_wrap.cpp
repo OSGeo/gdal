@@ -1397,22 +1397,21 @@ SWIG_Perl_SetModule(swig_module_info *module) {
 
 /* -------- TYPES TABLE (BEGIN) -------- */
 
-#define SWIGTYPE_p_GIntBig swig_types[0]
-#define SWIGTYPE_p_OGRDataSourceShadow swig_types[1]
-#define SWIGTYPE_p_OGRDriverShadow swig_types[2]
-#define SWIGTYPE_p_OGRFeatureDefnShadow swig_types[3]
-#define SWIGTYPE_p_OGRFeatureShadow swig_types[4]
-#define SWIGTYPE_p_OGRFieldDefnShadow swig_types[5]
-#define SWIGTYPE_p_OGRGeometryShadow swig_types[6]
-#define SWIGTYPE_p_OGRLayerShadow swig_types[7]
-#define SWIGTYPE_p_OSRCoordinateTransformationShadow swig_types[8]
-#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[9]
-#define SWIGTYPE_p_char swig_types[10]
-#define SWIGTYPE_p_double swig_types[11]
-#define SWIGTYPE_p_int swig_types[12]
-#define SWIGTYPE_p_p_char swig_types[13]
-static swig_type_info *swig_types[15];
-static swig_module_info swig_module = {swig_types, 14, 0, 0, 0, 0};
+#define SWIGTYPE_p_OGRDataSourceShadow swig_types[0]
+#define SWIGTYPE_p_OGRDriverShadow swig_types[1]
+#define SWIGTYPE_p_OGRFeatureDefnShadow swig_types[2]
+#define SWIGTYPE_p_OGRFeatureShadow swig_types[3]
+#define SWIGTYPE_p_OGRFieldDefnShadow swig_types[4]
+#define SWIGTYPE_p_OGRGeometryShadow swig_types[5]
+#define SWIGTYPE_p_OGRLayerShadow swig_types[6]
+#define SWIGTYPE_p_OSRCoordinateTransformationShadow swig_types[7]
+#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[8]
+#define SWIGTYPE_p_char swig_types[9]
+#define SWIGTYPE_p_double swig_types[10]
+#define SWIGTYPE_p_int swig_types[11]
+#define SWIGTYPE_p_p_char swig_types[12]
+static swig_type_info *swig_types[14];
+static swig_module_info swig_module = {swig_types, 13, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -4782,7 +4781,12 @@ XS(_wrap_Layer_GetFeatureRead) {
         
       }
     }
-    ST(argvi) = SWIG_NewPointerObj((new GIntBig(static_cast< const GIntBig& >(result))), SWIGTYPE_p_GIntBig, SWIG_POINTER_OWN | 0); argvi++ ;
+    {
+      /* %typemap(out) GIntBig */
+      ST(argvi) = sv_newmortal();
+      sv_setiv(ST(argvi), (IV) result);
+      argvi++;
+    }
     
     XSRETURN(argvi);
   fail:
@@ -10946,7 +10950,6 @@ XS(_wrap_GetDriver) {
 
 /* -------- TYPE CONVERSION AND EQUIVALENCE RULES (BEGIN) -------- */
 
-static swig_type_info _swigt__p_GIntBig = {"_p_GIntBig", "GIntBig *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OGRDataSourceShadow = {"_p_OGRDataSourceShadow", "OGRDataSourceShadow *", 0, 0, (void*)"Geo::OGR::DataSource", 0};
 static swig_type_info _swigt__p_OGRDriverShadow = {"_p_OGRDriverShadow", "OGRDriverShadow *", 0, 0, (void*)"Geo::OGR::Driver", 0};
 static swig_type_info _swigt__p_OGRFeatureDefnShadow = {"_p_OGRFeatureDefnShadow", "OGRFeatureDefnShadow *", 0, 0, (void*)"Geo::OGR::FeatureDefn", 0};
@@ -10962,7 +10965,6 @@ static swig_type_info _swigt__p_int = {"_p_int", "int *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
-  &_swigt__p_GIntBig,
   &_swigt__p_OGRDataSourceShadow,
   &_swigt__p_OGRDriverShadow,
   &_swigt__p_OGRFeatureDefnShadow,
@@ -10978,7 +10980,6 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_p_char,
 };
 
-static swig_cast_info _swigc__p_GIntBig[] = {  {&_swigt__p_GIntBig, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OGRDataSourceShadow[] = {  {&_swigt__p_OGRDataSourceShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OGRDriverShadow[] = {  {&_swigt__p_OGRDriverShadow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OGRFeatureDefnShadow[] = {  {&_swigt__p_OGRFeatureDefnShadow, 0, 0, 0},{0, 0, 0, 0}};
@@ -10994,7 +10995,6 @@ static swig_cast_info _swigc__p_int[] = {  {&_swigt__p_int, 0, 0, 0},{0, 0, 0, 0
 static swig_cast_info _swigc__p_p_char[] = {  {&_swigt__p_p_char, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
-  _swigc__p_GIntBig,
   _swigc__p_OGRDataSourceShadow,
   _swigc__p_OGRDriverShadow,
   _swigc__p_OGRFeatureDefnShadow,
