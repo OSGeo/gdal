@@ -4,8 +4,8 @@
 
 /*
  * $Log$
- * Revision 1.14  2006/12/10 19:06:27  ajolma
- * IF_ERROR_RETURN_NONE, which skips returning the error code
+ * Revision 1.15  2006/12/11 20:32:28  ajolma
+ * typemaps for GIntBig and char **CSL
  *
  * Revision 1.13  2006/06/07 16:06:49  ajolma
  * prefer CPLGetLastErrorMsg() in OGRErr
@@ -81,6 +81,27 @@
   $result = sv_newmortal();
   if ( *$2 )
     sv_setnv($result, *$1);
+  argvi++;
+}
+%typemap(out) GIntBig
+{
+  /* %typemap(out) GIntBig */
+  $result = sv_newmortal();
+  sv_setiv($result, (IV) $1);
+  argvi++;
+}
+%typemap(out) (char **CSL)
+{
+  /* %typemap(out) char **CSL */
+  AV *av = (AV*)sv_2mortal((SV*)newAV());
+  if ($1) {
+    int i;
+    for (i = 0; $1[i]; i++) {
+      av_store(av, i, newSVpv($1[0], 0));
+    }
+    CSLDestroy($1);
+  }
+  $result = newRV_noinc((SV*)av);
   argvi++;
 }
 /* if the call to the fct failed, return an undef */
