@@ -4,6 +4,9 @@
 
 /*
  * $Log$
+ * Revision 1.16  2006/12/11 20:42:24  ajolma
+ * typemap(out) char **free for GetParameterList
+ *
  * Revision 1.15  2006/12/11 20:32:28  ajolma
  * typemaps for GIntBig and char **CSL
  *
@@ -100,6 +103,20 @@
       av_store(av, i, newSVpv($1[0], 0));
     }
     CSLDestroy($1);
+  }
+  $result = newRV_noinc((SV*)av);
+  argvi++;
+}
+%typemap(out) (char **free)
+{
+  /* %typemap(out) char **free */
+  AV *av = (AV*)sv_2mortal((SV*)newAV());
+  if ($1) {
+    int i;
+    for (i = 0; $1[i]; i++) {
+      av_store(av, i, newSVpv($1[0], 0));
+    }
+    CPLFree($1);
   }
   $result = newRV_noinc((SV*)av);
   argvi++;
