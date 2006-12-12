@@ -1,0 +1,156 @@
+## @ignore Geo::GDAL::Constc
+
+## @class Geo::GDAL::Const
+
+## @ignore TIEHASH
+## @ignore CLEAR
+## @ignore FIRSTKEY
+## @ignore NEXTKEY
+## @ignore FETCH
+## @ignore STORE
+## @ignore this
+
+## @attr GDT_Unknown
+# scalar
+## @attr GDT_Byte
+# scalar
+## @attr GDT_UInt16
+# scalar
+## @attr GDT_Int16
+# scalar
+## @attr GDT_UInt32
+# scalar
+## @attr GDT_Int32
+# scalar
+## @attr GDT_Float32
+# scalar
+## @attr GDT_Float64
+# scalar
+## @attr GDT_CInt16
+# scalar
+## @attr GDT_CInt32
+# scalar
+## @attr GDT_CFloat32
+# scalar
+## @attr GDT_CFloat64
+# scalar
+## @attr GDT_TypeCount
+# scalar
+## @attr GA_ReadOnly
+# scalar
+## @attr GA_Update
+# scalar
+## @attr GF_Read
+# scalar
+## @attr GF_Write
+# scalar
+## @attr GCI_Undefined
+# scalar
+## @attr GCI_GrayIndex
+# scalar
+## @attr GCI_PaletteIndex
+# scalar
+## @attr GCI_RedBand
+# scalar
+## @attr GCI_GreenBand
+# scalar
+## @attr GCI_BlueBand
+# scalar
+## @attr GCI_AlphaBand
+# scalar
+## @attr GCI_HueBand
+# scalar
+## @attr GCI_SaturationBand
+# scalar
+## @attr GCI_LightnessBand
+# scalar
+## @attr GCI_CyanBand
+# scalar
+## @attr GCI_MagentaBand
+# scalar
+## @attr GCI_YellowBand
+# scalar
+## @attr GCI_BlackBand
+# scalar
+## @attr GRA_NearestNeighbour
+# scalar
+## @attr GRA_Bilinear
+# scalar
+## @attr GRA_Cubic
+# scalar
+## @attr GRA_CubicSpline
+# scalar
+## @attr GPI_Gray
+# scalar
+## @attr GPI_RGB
+# scalar
+## @attr GPI_CMYK
+# scalar
+## @attr GPI_HLS
+# scalar
+## @attr CXT_Element
+# scalar
+## @attr CXT_Text
+# scalar
+## @attr CXT_Attribute
+# scalar
+## @attr CXT_Comment
+# scalar
+## @attr CXT_Literal
+# scalar
+## @attr CE_None
+# scalar
+## @attr CE_Debug
+# scalar
+## @attr CE_Warning
+# scalar
+## @attr CE_Failure
+# scalar
+## @attr CE_Fatal
+# scalar
+## @attr CPLE_None
+# scalar
+## @attr CPLE_AppDefined
+# scalar
+## @attr CPLE_OutOfMemory
+# scalar
+## @attr CPLE_FileIO
+# scalar
+## @attr CPLE_OpenFailed
+# scalar
+## @attr CPLE_IllegalArg
+# scalar
+## @attr CPLE_NotSupported
+# scalar
+## @attr CPLE_AssertionFailed
+# scalar
+## @attr CPLE_NoWriteAccess
+# scalar
+## @attr CPLE_UserInterrupt
+# scalar
+## @attr DMD_LONGNAME
+# scalar
+## @attr DMD_HELPTOPIC
+# scalar
+## @attr DMD_MIMETYPE
+# scalar
+## @attr DMD_EXTENSION
+# scalar
+## @attr DMD_CREATIONOPTIONLIST
+# scalar
+## @attr DMD_CREATIONDATATYPES
+# scalar
+## @attr DCAP_CREATE
+# scalar
+## @attr DCAP_CREATECOPY
+# scalar
+## @attr CPLES_BackslashQuotable
+# scalar
+## @attr CPLES_XML
+# scalar
+## @attr CPLES_URL
+# scalar
+## @attr CPLES_SQL
+# scalar
+## @attr CPLES_CSV
+# scalar
