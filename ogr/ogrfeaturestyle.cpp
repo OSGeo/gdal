@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/12/12 17:14:29  dron
+ * Fixed method names in OGRStyleVector interface.
+ *
  * Revision 1.21  2006/11/16 18:57:24  dron
  * Make Parse() method private.
  *
@@ -179,11 +182,11 @@ OGRStyleParamId asStyleLabel[] = {{OGRSTLabelFontName,"f",FALSE,OGRSTypeString},
                                  };
 
 OGRStyleParamId asStyleVector[] = {{OGRSTVectorId,"id",FALSE,OGRSTypeString},
-                                  {OGRSTVectorNotCompress,"nc",FALSE,
+                                  {OGRSTVectorNoCompress,"nc",FALSE,
                                    OGRSTypeInteger},
                                   {OGRSTVectorSprain,"sp",FALSE,
                                    OGRSTypeInteger},
-                                  {OGRSTVectorNotBend,"nb",FALSE,
+                                  {OGRSTVectorNoSlope,"ns",FALSE,
                                    OGRSTypeInteger},
                                   {OGRSTVectorMirroring,"m",FALSE,
                                    OGRSTypeInteger},
@@ -898,6 +901,7 @@ GBool OGRStyleTool::GetRGBFromString(const char *pszColor, int &nRed,
    
    nTransparance = 255;
 
+   // FIXME: should we really use sscanf here?
    nCount  = sscanf(pszColor,"#%2x%2x%2x%2x",&nRed,&nGreen,&nBlue, 
                     &nTransparance);
    
@@ -1943,9 +1947,8 @@ void OGRStyleVector::SetParamStr(OGRSTVectorParam eParam, const char *pszParamSt
 /************************************************************************/
 void OGRStyleVector::SetParamNum(OGRSTVectorParam eParam, int nParam)
 {  
-        OGRStyleTool::SetParamNum(asStyleVector[eParam],
-                             m_pasStyleValue[eParam],nParam);
-printf("added new value for vector: %s --- %d", asStyleVector[eParam].pszToken, nParam);
+    OGRStyleTool::SetParamNum(asStyleVector[eParam],
+                              m_pasStyleValue[eParam],nParam);
 }
 
 /************************************************************************/

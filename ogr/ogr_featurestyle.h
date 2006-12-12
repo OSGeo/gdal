@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2006/12/12 17:14:29  dron
+ * Fixed method names in OGRStyleVector interface.
+ *
  * Revision 1.12  2006/11/16 18:57:24  dron
  * Make Parse() method private.
  *
@@ -170,9 +173,9 @@ typedef enum ogr_style_tool_param_label_id
 typedef enum ogr_style_tool_param_vector_id
 {  
     OGRSTVectorId = 0,
-    OGRSTVectorNotCompress,
+    OGRSTVectorNoCompress,
     OGRSTVectorSprain,
-    OGRSTVectorNotBend,
+    OGRSTVectorNoSlope,
     OGRSTVectorMirroring,
     OGRSTVectorCentering,
     OGRSTVectorPriority,
@@ -371,7 +374,7 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
     virtual ~OGRStylePen(); 
 
     /**********************************************************************/
-    /* Explicite fct for all parameters defined in the Drawing tools  Pen */
+    /* Explicit fct for all parameters defined in the Drawing tools  Pen  */
     /**********************************************************************/
      
     const char *Color(GBool &bDefault){return GetParamStr(OGRSTPenColor,bDefault);}
@@ -417,7 +420,7 @@ class CPL_DLL OGRStyleBrush : public OGRStyleTool
     OGRStyleBrush();
     virtual ~OGRStyleBrush();
 
-    /*a Explicite fct for all parameters defined in the Drawing tools Brush */
+    /* Explicit fct for all parameters defined in the Drawing tools Brush */
 
     const char *ForeColor(GBool &bDefault){return GetParamStr(OGRSTBrushFColor,bDefault);}
     void SetForeColor(const char *pszColor){SetParamStr(OGRSTBrushFColor,pszColor);}
@@ -464,7 +467,7 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
     virtual ~OGRStyleSymbol();
 
     /*****************************************************************/
-    /* Explicite fct for all parameters defined in the Drawing tools */
+    /* Explicit fct for all parameters defined in the Drawing tools  */
     /*****************************************************************/
     
     const char *Id(GBool &bDefault){return GetParamStr(OGRSTSymbolId,bDefault);}
@@ -519,7 +522,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     virtual ~OGRStyleLabel();
 
     /*****************************************************************/
-    /* Explicite fct for all parameters defined in the Drawing tools */
+    /* Explicit fct for all parameters defined in the Drawing tools  */
     /*****************************************************************/
     
     const char *FontName(GBool &bDefault){return GetParamStr(OGRSTLabelFontName,bDefault);}
@@ -590,7 +593,7 @@ class CPL_DLL OGRStyleVector : public OGRStyleTool
     virtual ~OGRStyleVector();
 
     /*****************************************************************/
-    /* Explicite fct for all parameters defined in the Drawing tools */
+    /* Explicit fct for all parameters defined in the Drawing tools  */
     /*****************************************************************/
     
     const char *Id(GBool &bDefault){return GetParamStr(OGRSTVectorId,bDefault);}
@@ -599,12 +602,12 @@ class CPL_DLL OGRStyleVector : public OGRStyleTool
     void SetPriority(int nPriority){SetParamNum(OGRSTVectorPriority,nPriority);}
     
 
-    GBool NotCompress(GBool &bDefault){return GetParamNum(OGRSTVectorNotCompress,bDefault);}
-    void SetNotCompress(GBool bNotCompress){SetParamNum(OGRSTVectorNotCompress,bNotCompress);}
+    GBool NoCompress(GBool &bDefault){return GetParamNum(OGRSTVectorNoCompress,bDefault);}
+    void SetNoCompress(GBool bNoCompress){SetParamNum(OGRSTVectorNoCompress,bNoCompress);}
     GBool Sprain(GBool &bDefault){return GetParamNum(OGRSTVectorSprain,bDefault);}
     void SetSprain(GBool bSprain){SetParamNum(OGRSTVectorSprain,bSprain);}
-    GBool NotBend(GBool &bDefault){return GetParamNum(OGRSTVectorNotBend,bDefault);}
-    void SetNotBend(GBool bNotBend){SetParamNum(OGRSTVectorNotBend,bNotBend);}
+    GBool NoSlope(GBool &bDefault){return GetParamNum(OGRSTVectorNoSlope,bDefault);}
+    void SetNoSlope(GBool bNoSlope){SetParamNum(OGRSTVectorNoSlope,bNoSlope);}
     GBool Mirroring(GBool &bDefault){return GetParamNum(OGRSTVectorMirroring,bDefault);}
     void SetMirroring(GBool bMirroring){SetParamNum(OGRSTVectorMirroring,bMirroring);}
     GBool Centering(GBool &bDefault){return GetParamNum(OGRSTVectorCentering,bDefault);}
