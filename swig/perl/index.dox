@@ -1,0 +1,25 @@
+/*! \mainpage Geo::GDAL
+
+\section index_intro Introduction
+
+The Geo::GDAL modules are the Perl bindings to the GDAL/OGR
+library. The modules allow you to access and manipulate from Perl all
+geospatial data that the installed GDAL library is configured to
+read/write.
+
+This documentation covers mainly the syntax of the bindings. For more
+in-depth documentation see the main documentation of <a
+href="http://www.gdal.org/">GDAL</a> and <a
+href="http://www.gdal.org/ogr/">OGR</a>.
+
+Some arguments are optional and have a default value. This is
+illustrated like this:
+
+SomeMethod(arg1, arg2 = 4);
+
+arg1 is a required argument and an example or a variable with
+illustrative name is given
+
+arg2 is optional and if left off, will get the value 4 (in this case)
+
+*/

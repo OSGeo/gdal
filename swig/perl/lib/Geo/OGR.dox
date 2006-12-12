@@ -1,0 +1,633 @@
+## @ignore Geo::OGRc
+
+## @class Geo::OGR
+
+## @ignore TIEHASH
+## @ignore CLEAR
+## @ignore FIRSTKEY
+## @ignore NEXTKEY
+## @ignore FETCH
+## @ignore STORE
+## @ignore this
+
+## @cmethod UseExceptions()
+## @cmethod DontUseExceptions()
+
+## @fn CreateGeometryFromWkb($bin_string, $reference = undef)
+# @param $reference Geo::OSR::SpatialReference object
+# @return Geo::OGR::Geometry object
+
+## @fn CreateGeometryFromWkt($string, $reference = undef)
+# @param $reference Geo::OSR::SpatialReference object
+# @return Geo::OGR::Geometry object
+
+## @fn CreateGeometryFromGML($string)
+# @return Geo::OGR::Geometry object
+
+## @cmethod GetDriverCount()
+# @return scalar (int)
+
+## @cmethod GetOpenDSCount()
+# @return scalar (int)
+
+## @cmethod SetGenerate_DB2_V72_BYTE_ORDER($Generate_DB2_V72_BYTE_ORDER)
+# @return scalar (OGRErr)
+
+## @cmethod RegisterAll()
+
+## @cmethod GetOpenDS($ds_number)
+# @return Geo::OGR::DataSource object
+
+## @fn Open($filename, $update = 0)
+# @return Geo::OGR::DataSource object
+
+## @fn OpenShared($filename, $update = 0)
+# @return Geo::OGR::DataSource object
+
+## @cmethod GetDriverByName($name)
+# @return Geo::OGR::Driver object
+
+## @cmethod GetDriver($driver_number)
+# @return Geo::OGR::Driver object
+
+## @attr wkb25Bit
+# scalar
+## @attr wkbUnknown
+# scalar
+## @attr wkbPoint
+# scalar
+## @attr wkbLineString
+# scalar
+## @attr wkbPolygon
+# scalar
+## @attr wkbMultiPoint
+# scalar
+## @attr wkbMultiLineString
+# scalar
+## @attr wkbMultiPolygon
+# scalar
+## @attr wkbGeometryCollection
+# scalar
+## @attr wkbNone
+# scalar
+## @attr wkbLinearRing
+# scalar
+## @attr wkbPoint25D
+# scalar
+## @attr wkbLineString25D
+# scalar
+## @attr wkbPolygon25D
+# scalar
+## @attr wkbMultiPoint25D
+# scalar
+## @attr wkbMultiLineString25D
+# scalar
+## @attr wkbMultiPolygon25D
+# scalar
+## @attr wkbGeometryCollection25D
+# scalar
+## @attr OFTInteger
+# scalar
+## @attr OFTIntegerList
+# scalar
+## @attr OFTReal
+# scalar
+## @attr OFTRealList
+# scalar
+## @attr OFTString
+# scalar
+## @attr OFTStringList
+# scalar
+## @attr OFTWideString
+# scalar
+## @attr OFTWideStringList
+# scalar
+## @attr OFTBinary
+# scalar
+## @attr OFTDate
+# scalar
+## @attr OFTTime
+# scalar
+## @attr OFTDateTime
+# scalar
+## @attr OJUndefined
+# scalar
+## @attr OJLeft
+# scalar
+## @attr OJRight
+# scalar
+## @attr wkbXDR
+# scalar
+## @attr wkbNDR
+# scalar
+## @attr OLCRandomRead
+# scalar
+## @attr OLCSequentialWrite
+# scalar
+## @attr OLCRandomWrite
+# scalar
+## @attr OLCFastSpatialFilter
+# scalar
+## @attr OLCFastFeatureCount
+# scalar
+## @attr OLCFastGetExtent
+# scalar
+## @attr OLCCreateField
+# scalar
+## @attr OLCTransactions
+# scalar
+## @attr OLCDeleteFeature
+# scalar
+## @attr OLCFastSetNextByIndex
+# scalar
+## @attr ODsCCreateLayer
+# scalar
+## @attr ODsCDeleteLayer
+# scalar
+## @attr ODrCCreateDataSource
+# scalar
+## @attr ODrCDeleteDataSource
+# scalar
+
+
+## @class Geo::OGR::Driver
+
+## @ignore DISOWN
+## @ignore ACQUIRE
+
+## @attr name
+# scalar (access as $driver->{name})
+
+## @method CreateDataSource($name, \@options = undef )
+# @return Geo::OGR::Datasource object
+
+## @method CopyDataSource($copy_ds, $name, \@options = undef)
+# @param $copy_ds Geo::OGR::Datasource object
+# @return Geo::OGR::Datasource object
+
+## @method Open($name, $update = 0)
+# @return Geo::OGR::Datasource object
+
+## @method DeleteDataSource($name)
+# @return scalar (int)
+
+## @method TestCapability($cap)
+# @param $cap string
+# @return scalar (int)
+
+## @method GetName()
+# @return scalar (string)
+
+
+## @class Geo::OGR::DataSource
+
+## @ignore DISOWN
+## @ignore ACQUIRE
+
+## @attr name
+# scalar (access as $datasource->{name})
+
+## @method GetRefCount()
+# @return scalar (int)
+
+## @method GetSummaryRefCount()
+# @return scalar (int)
+
+## @method GetLayerCount()
+# @return scalar (int)
+
+## @method GetDriver()
+# @return Geo::OGR::Driver object
+
+## @method GetName()
+# @return scalar (string)
+
+## @method DeleteLayer($index)
+# @return scalar (OGRErr)
+
+## @method CreateLayer($name, $reference = undef, $geom_type = $Geo::OGR::wkbUnknown, \@options = undef)
+# @param $reference Geo::OSR::SpatialReference object
+# @param $geom_type one of $Geo::OGR::wkb*
+# @return Geo::OGR::Layer object
+
+## @method CopyLayer($src_layer, $new_name, \@options = undef)
+# @param $src_layer Geo::OGR::Layer object
+# @return Geo::OGR::Layer object
+
+## @method GetLayerByIndex($index = 0)
+# @return Geo::OGR::Layer object
+
+## @method GetLayerByName($name)
+# @return Geo::OGR::Layer object
+
+## @method TestCapability($cap)
+# @return scalar (int)
+
+## @method ExecuteSQL($statement, $geom = undef, $dialect = "")
+# @param $geom Geo::OGR::Geometry object
+# @return Geo::OGR::Layer object
+
+## @method ReleaseResultSet()
+
+
+## @class Geo::OGR::Layer
+
+## @ignore DISOWN
+## @ignore ACQUIRE
+
+## @method GetRefCount()
+# @return scalar (int)
+
+## @method SetSpatialFilter($filter)
+# @param $filter Geo::OGR::Geometry object
+
+## @method SetSpatialFilterRect($minx, $miny, $maxx, $maxy)
+
+## @method GetSpatialFilter()
+# @return Geo::OGR::Geometry object
+
+## @method SetAttributeFilter($filter_string)
+# @return scalar (OGRErr)
+
+## @method ResetReading()
+
+## @method GetNextFeature()
+# @return Geo::OGR::Feature object
+
+## @method GetName()
+# @return scalar (string)
+
+## @method GetFeature($fid)
+# @return Geo::OGR::Feature object
+
+## @method SetNextByIndex($new_index)
+# @return scalar (OGRErr)
+
+## @method SetFeature($feature)
+# @param $feature Geo::OGR::Feature object
+# @return scalar (OGRErr)
+
+## @method CreateFeature($feature)
+# @param $feature Geo::OGR::Feature object
+# @return scalar (OGRErr)
+
+## @method DeleteFeature($fid)
+# @return scalar (OGRErr)
+
+## @method SyncToDisk()
+# @return scalar (OGRErr)
+
+## @method GetLayerDefn()
+# @return Geo::OGR::FeatureDefn object
+
+## @method GetFeatureCount($force = 1)
+# @return scalar (int)
+
+## @method GetExtent($force = 1)
+# @return arrayref Extent = ($minx, $miny, $maxx, $maxy)
+
+## @method TestCapability($cap)
+# @return scalar (int)
+
+## @method CreateField($field_def, $approx_ok = 1)
+# @param $field_def Geo::OGR::FieldDefn
+# @return scalar (OGRErr)
+
+## @method StartTransaction()
+# @return scalar (OGRErr)
+
+## @method CommitTransaction()
+# @return scalar (OGRErr)
+
+## @method RollbackTransaction()
+# @return scalar (OGRErr)
+
+## @method GetSpatialRef()
+# @return Geo::OSR::SpatialReference
+
+## @method GetFeatureRead()
+# @return scalar (int)
+
+
+## @class Geo::OGR::Feature
+
+## @ignore DISOWN
+## @ignore ACQUIRE
+
+## @cmethod new($feature_def = undef)
+# @param $feature_def Geo::OGR::FeatureDefn object
+# @return Geo::OGR::Feature object
+
+## @method GetDefnRef()
+# @return Geo::OGR::FeatureDefn object
+
+## @method SetGeometry($geom)
+# @param $geom Geo::OGR::Geometry object
+# @return scalar (OGRErr)
+
+## @method SetGeometryDirectly($geom)
+# @param $geom Geo::OGR::Geometry object
+# @return scalar (OGRErr)
+
+## @method GetGeometryRef()
+# @return Geo::OGR::Geometry object
+
+## @method Clone()
+# @return Geo::OGR::Feature object
+
+## @method Equal($feature)
+# @param $feature Geo::OGR::Feature object
+# @return scalar (int)
+
+## @method GetFieldCount()
+# @return scalar (int)
+
+## @method GetFieldDefnRef($param)
+# @param $param scalar (index or name of a field)
+# @return Geo::OGR::FieldDefn object
+
+## @method GetFieldAsString($param)
+# @param $param scalar (index or name of a field)
+# @return scalar (string)
+
+## @method GetFieldAsInteger($param)
+# @param $param scalar (index or name of a field)
+# @return scalar (int)
+
+## @method GetFieldAsDouble($param)
+# @param $param scalar (index or name of a field)
+# @return scalar (double)
+
+## @method GetField($param)
+# @param $param scalar (index or name of a field)
+# @return scalar
+
+## @method IsFieldSet($param)
+# @param $param scalar (index or name of a field)
+# @return scalar (int)
+
+## @method GetFieldIndex($name)
+# @param $name field name
+# @return scalar (int)
+
+## @method GetFID()
+# @return scalar (int)
+
+## @method SetFID($fid)
+# @return scalar (OGRErr)
+
+## @method DumpReadable()
+
+## @method UnsetField($param)
+# @param $param scalar (index or name of a field)
+
+## @method SetField($param, $value)
+# @param $param scalar (index or name of a field)
+
+## @method SetFrom($other, $forgiving = 1)
+# @param $other Geo::OGR::Feature object
+# @return scalar (OGRErr)
+
+## @method GetStyleString()
+# @return scalar (string)
+
+## @method SetStyleString($style_string)
+
+## @method GetFieldType($param)
+# @param $param scalar (index or name of a field)
+# @return one of Geo::OGR::OFT*
+
+
+## @class Geo::OGR::FeatureDefn
+
+## @ignore DISOWN
+## @ignore ACQUIRE
+
+## @cmethod new($name = undef)
+# @return Geo::OGR::FeatureDefn object
+
+## @method GetName()
+# @return scalar (string)
+
+## @method GetFieldCount()
+# @return scalar (int)
+
+## @method GetFieldDefn($index)
+# @return Geo::OGR::FieldDefn
+
+## @method GetFieldIndex($name)
+# @return scalar (int) (-1 if no such field)
+
+## @method AddFieldDefn($defn)
+# @param $defn Geo::OGR::FieldDefn object
+
+## @method GetGeomType()
+# @return one of $Geo::OGR::wkb*
+
+## @method SetGeomType($geom_type)
+# @param $geom_type one of $Geo::OGR::wkb*
+
+## @method GetReferenceCount()
+# @return scalar (int)
+
+
+## @class Geo::OGR::FieldDefn
+
+## @ignore DISOWN
+## @ignore ACQUIRE
+
+## @cmethod new($name = "unnamed", $field_type = $Geo::OGR::OFTString)
+# @return Geo::OGR::FieldDefn object
+
+## @method GetName()
+# @return scalar (string)
+
+## @method GetNameRef()
+# @return scalar (string)
+
+## @method SetName($name)
+
+## @method GetType()
+# @return one of $Geo::OGR::OFT*
+
+## @method SetType($type)
+# @param $type one of $Geo::OGR::OFT*
+
+## @method GetJustify()
+# @return one of $Geo::OGR::OJ*
+
+## @method SetJustify($justification)
+# @param $justification one of $Geo::OGR::OJ*
+
+## @method GetWidth()
+# @return scalar (int)
+
+## @method SetWidth($width)
+
+## @method GetPrecision()
+# @return scalar (int)
+
+## @method SetPrecision($precision)
+# @param $precision scalar (int)
+
+## @cmethod GetFieldTypeName($type)
+# @return scalar (string)
+
+## @class Geo::OGR::Geometry
+
+## @ignore DISOWN
+## @ignore ACQUIRE
+
+## @cmethod new($type = $Geo::OGR::wkbUnknown, $wkt = undef, $wkb = undef, $gml = undef)
+# @param $type one of Geo::OGR::wkb*
+# @return Geo::OGR::Geometry object
+
+## @method ExportToWkt()
+# @return scalar (WKT string)
+
+## @method ExportToWkb($byte_order = $Geo::OGR::wkbXDR)
+# @return scalar (WKB binary string)
+
+## @method ExportToGML()
+# @return scalar (GML string)
+
+## @method AddPoint($x, $y, $z = 0)
+
+## @method AddGeometryDirectly($other)
+# @param $other Geo::OGR::Geometry object
+# @return scalar (OGRErr)
+
+## @method AddGeometry($other)
+# @param $other Geo::OGR::Geometry object
+# @return scalar (OGRErr)
+
+## @method Clone()
+# @return Geo::OGR::Geometry object
+
+## @method GetGeometryType()
+# @return one of Geo::OGR::wkb*
+
+## @method GetGeometryName()
+# @return scalar (string)
+
+## @method GetArea()
+# @return scalar (double)
+
+## @method GetPointCount()
+# @return scalar (int)
+
+## @method GetX($point = 0)
+# @return scalar (double)
+
+## @method GetY($point = 0)
+# @return scalar (double)
+
+## @method GetZ($point = 0)
+# @return scalar (double)
+
+## @method GetGeometryCount()
+# @return scalar (int)
+
+## @method SetPoint($point, $x, $y, $z = 0)
+
+## @method GetGeometryRef($geom)
+# @param $geom scalar (int)
+# @return Geo::OGR::Geometry object
+
+## @method GetBoundary()
+# @return Geo::OGR::Geometry object
+
+## @method ConvexHull()
+# @return Geo::OGR::Geometry object
+
+## @method Buffer($distance, $quadsecs = 30)
+# @return Geo::OGR::Geometry object
+
+## @method Intersection($other)
+# @param $other Geo::OGR::Geometry object
+# @return Geo::OGR::Geometry object
+
+## @method Union($other)
+# @param $other Geo::OGR::Geometry object
+# @return Geo::OGR::Geometry object
+
+## @method Difference($other)
+# @param $other Geo::OGR::Geometry object
+# @return Geo::OGR::Geometry object
+
+## @method SymmetricDifference($other)
+# @param $other Geo::OGR::Geometry object
+# @return Geo::OGR::Geometry object
+
+## @method Distance($other)
+# @param $other Geo::OGR::Geometry object
+# @return Geo::OGR::Geometry object
+
+## @method Empty()
+
+## @method Intersect($other)
+# @param $other Geo::OGR::Geometry object
+# @return scalar (int)
+
+## @method Equal($other)
+# @param $other Geo::OGR::Geometry object
+# @return scalar (int)
+
+## @method Disjoint($other)
+# @param $other Geo::OGR::Geometry object
+# @return scalar (int)
+
+## @method Touches($other)
+# @param $other Geo::OGR::Geometry object
+# @return scalar (int)
+
+## @method Crosses($other)
+# @param $other Geo::OGR::Geometry object
+# @return scalar (int)
+
+## @method Within($other)
+# @param $other Geo::OGR::Geometry object
+# @return scalar (int)
+
+## @method Contains($other)
+# @param $other Geo::OGR::Geometry object
+# @return scalar (int)
+
+## @method Overlaps($other)
+# @param $other Geo::OGR::Geometry object
+# @return scalar (int)
+
+## @method TransformTo($reference)
+# @param $reference Geo::OSR::SpatialReference object
+# @return scalar (OGRErr)
+
+## @method Transform($trans)
+# @param $trans Geo::OSR::CoordinateTransformation object
+# @return scalar (OGRErr)
+
+## @method GetSpatialReference()
+# @return Geo::OSR::SpatialReference object
+
+## @method AssignSpatialReference($reference)
+# @param $reference Geo::OSR::SpatialReference object
+
+## @method CloseRings()
+
+## @method FlattenTo2D()
+
+## @method GetEnvelope()
+# @return arrayref = [$minx, $maxx, $miny, $maxy]
+
+## @method Centroid()
+# @return Geo::OGR::Geometry object
+
+## @method WkbSize()
+# @return scalar (int)
+
+## @method GetCoordinateDimension()
+# @return scalar (int)
+
+## @method SetCoordinateDimension($dimension)
+
+## @method GetDimension()
+# @return scalar (int)

@@ -1,0 +1,58 @@
+/*! \page create_raster Creating a raster dataset
+
+The code here does not have any warranty. It is recommended that
+before using any of this code, you look into it and try to understand
+what it does, what input it needs, etc. Do not blindly execute
+anything!
+
+This example will create a raster dataset with one band and with cell
+value of type Float32. The raster will be stored as a !GeoTiff and it
+will have undefined SRS. The coordinates of the upper left vertex are
+known and the size of each pixel. Pixels are not squares.
+
+
+\code
+use Geo::GDAL;
+
+# information that we need:
+$name = "raster";     # name (without extension) for the new raster
+$datatype = $Geo::GDAL::Const::GDT_Float32; # datatype for the values in pixels
+$width = 100;         # number of pixels in x direction
+$height = 100;        # number of pixels in y direction
+$minx = 12.3;         # x of the left border of leftmost pixel
+$dx = 0.1;            # width of pixels
+$maxy = 14.5;         # y of the top border of topmost pixel
+$dy = -0.2;           # height of pixels, negative means miny < maxy
+$nodata = -1;         # nodata value
+%data = ();           # pixel values, stored in this example in a hash
+
+$datatype_char = Geo::GDAL::PackCharacter($datatype);
+
+# note: things that are hardcoded:
+# We create a GTiff and set the extension to '.tiff'.
+# We add only one band to the raster.
+# We write one scanline at a time.
+
+$driver = gdal::GetDriverByName('GTiff');
+$dataset = $driver->Create($name.'.tiff', $width, $height, 1, $datatype, []);
+$transform = [$minx, $dx, 0, $maxy, 0, -$dy];
+$dataset->SetGeoTransform($transform);
+$band = $dataset->GetRasterBand(1);
+$band->SetNoDataValue($nodata);
+
+for $y (0..$height-1) {
+    @data = ();
+    for $x (0..$width-1) {
+        $data[$x] = defined $data{$x}{$y} ? $data{$x}{$y} : $nodata;
+    }
+    $buf = pack($datatype_char."[$width]", @data);
+    $band->WriteRaster(0, $y, $width, 1, $buf);
+}
+
+$band->FlushCache;
+$dataset->FlushCache;
+
+undef $dataset;
+\endcode
+
+*/
