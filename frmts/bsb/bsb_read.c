@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2006/12/12 03:58:34  fwarmerdam
+ * Ensure saved character gets properly initialized.
+ *
  * Revision 1.14  2006/08/23 17:29:46  fwarmerdam
  * added virtual io api support
  *
@@ -285,6 +288,7 @@ BSBInfo *BSBOpen( const char *pszFilename )
     psInfo->pabyBuffer = (GByte *) CPLMalloc(psInfo->nBufferAllocation);
     psInfo->nBufferSize = 0; 
     psInfo->nBufferOffset = 0;
+    psInfo->nSavedCharacter = -1000;
 
 /* -------------------------------------------------------------------- */
 /*      Rewind, and read line by line.                                  */
