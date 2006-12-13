@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2006/12/13 18:34:25  dron
+ * Added SetStyleStringDirectly(), GetStyleTable() and SetStyleTableDirectly()
+ * methods.
+ *
  * Revision 1.35  2006/11/28 00:00:35  tamas
  * RFC 6: Geometry and Feature Style as OGR Special Fields
  *
@@ -141,8 +145,7 @@
 #define _OGR_FEATURE_H_INCLUDED
 
 #include "ogr_geometry.h"
-
-class OGRStyleTable;
+#include "ogr_featurestyle.h"
 
 /**
  * \file ogr_feature.h
@@ -386,8 +389,13 @@ class CPL_DLL OGRFeature
                                      int *panRemapSource );
 
     virtual const char *GetStyleString();
-    virtual void        SetStyleString(const char *);
+    virtual void        SetStyleString( const char * );
+    virtual void        SetStyleStringDirectly( char * );
+    virtual OGRStyleTable *GetStyleTable() { return m_poStyleTable; }
     virtual void        SetStyleTable(OGRStyleTable *poStyleTable);
+    virtual void        SetStyleTableDirectly(OGRStyleTable *poStyleTable)
+                            { if ( m_poStyleTable ) delete m_poStyleTable;
+                              m_poStyleTable = poStyleTable; }
 
     static OGRFeature  *CreateFeature( OGRFeatureDefn * );
     static void         DestroyFeature( OGRFeature * );
