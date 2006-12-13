@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2006/12/13 18:34:25  dron
+ * Added SetStyleStringDirectly(), GetStyleTable() and SetStyleTableDirectly()
+ * methods.
+ *
  * Revision 1.45  2006/11/28 00:00:35  tamas
  * RFC 6: Geometry and Feature Style as OGR Special Fields
  *
@@ -1025,7 +1029,8 @@ double OGR_F_GetFieldAsDouble( OGRFeatureH hFeat, int iField )
 const char *OGRFeature::GetFieldAsString( int iField )
 
 {
-    char         szTempBuffer[80];
+#define TEMP_BUFFER_SIZE 80
+    char         szTempBuffer[TEMP_BUFFER_SIZE];
 
     CPLFree(m_pszTmpFieldValue);
     m_pszTmpFieldValue = NULL;            
@@ -1037,7 +1042,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
         switch (iSpecialField)
         {
         case SPF_FID:
-            sprintf( szTempBuffer, "%d", GetFID() );
+            snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "%ld", GetFID() );
             return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
         case SPF_OGR_GEOMETRY:
             return poGeometry->getGeometryName();
@@ -1073,7 +1078,8 @@ const char *OGRFeature::GetFieldAsString( int iField )
     }
     else if( poFDefn->GetType() == OFTInteger )
     {
-        sprintf( szTempBuffer, "%d", pauFields[iField].Integer );
+        snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
+                  "%d", pauFields[iField].Integer );
         return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
     }
     else if( poFDefn->GetType() == OFTReal )
@@ -1082,25 +1088,27 @@ const char *OGRFeature::GetFieldAsString( int iField )
 
         if( poFDefn->GetWidth() != 0 )
         {
-            sprintf( szFormat, "%%%d.%df",
+            snprintf( szFormat, TEMP_BUFFER_SIZE, "%%%d.%df",
                      poFDefn->GetWidth(), poFDefn->GetPrecision() );
         }
         else
             strcpy( szFormat, "%.15g" );
         
-        sprintf( szTempBuffer, szFormat, pauFields[iField].Real );
+        snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
+                  szFormat, pauFields[iField].Real );
         
         return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
     }
     else if( poFDefn->GetType() == OFTDateTime )
     {
-        sprintf( szTempBuffer, "%04d/%02d/%02d %2d:%02d:%02d", 
-                 pauFields[iField].Date.Year,
-                 pauFields[iField].Date.Month,
-                 pauFields[iField].Date.Day,
-                 pauFields[iField].Date.Hour,
-                 pauFields[iField].Date.Minute,
-                 pauFields[iField].Date.Second );
+        snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
+                  "%04d/%02d/%02d %2d:%02d:%02d", 
+                  pauFields[iField].Date.Year,
+                  pauFields[iField].Date.Month,
+                  pauFields[iField].Date.Day,
+                  pauFields[iField].Date.Hour,
+                  pauFields[iField].Date.Minute,
+                  pauFields[iField].Date.Second );
         
         if( pauFields[iField].Date.TZFlag > 1 )
         {
@@ -1117,18 +1125,18 @@ const char *OGRFeature::GetFieldAsString( int iField )
                 strcat( szTempBuffer, "+" );
 
             if( nMinutes == 0 )
-                sprintf( szTempBuffer+strlen(szTempBuffer), 
-                         "%02d", nHours );
+                snprintf( szTempBuffer+strlen(szTempBuffer), 
+                         TEMP_BUFFER_SIZE, "%02d", nHours );
             else
-                sprintf( szTempBuffer+strlen(szTempBuffer), 
-                         "%02d%02d", nHours, nMinutes );
+                snprintf( szTempBuffer+strlen(szTempBuffer), 
+                         TEMP_BUFFER_SIZE, "%02d%02d", nHours, nMinutes );
         }
 
         return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
     }
     else if( poFDefn->GetType() == OFTDate )
     {
-        sprintf( szTempBuffer, "%04d/%02d/%02d", 
+        snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "%04d/%02d/%02d",
                  pauFields[iField].Date.Year,
                  pauFields[iField].Date.Month,
                  pauFields[iField].Date.Day );
@@ -1137,7 +1145,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
     }
     else if( poFDefn->GetType() == OFTTime )
     {
-        sprintf( szTempBuffer, "%2d:%02d:%02d", 
+        snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "%2d:%02d:%02d", 
                  pauFields[iField].Date.Hour,
                  pauFields[iField].Date.Minute,
                  pauFields[iField].Date.Second );
@@ -1149,10 +1157,11 @@ const char *OGRFeature::GetFieldAsString( int iField )
         char    szItem[32];
         int     i, nCount = pauFields[iField].IntegerList.nCount;
 
-        sprintf( szTempBuffer, "(%d:", nCount );
+        snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "(%d:", nCount );
         for( i = 0; i < nCount; i++ )
         {
-            sprintf( szItem, "%d", pauFields[iField].IntegerList.paList[i] );
+            snprintf( szItem, TEMP_BUFFER_SIZE, "%d",
+                      pauFields[iField].IntegerList.paList[i] );
             if( strlen(szTempBuffer) + strlen(szItem) + 6
                 > sizeof(szTempBuffer) )
             {
@@ -1180,16 +1189,17 @@ const char *OGRFeature::GetFieldAsString( int iField )
 
         if( poFDefn->GetWidth() != 0 )
         {
-            sprintf( szFormat, "%%%d.%df",
-                     poFDefn->GetWidth(), poFDefn->GetPrecision() );
+            snprintf( szFormat, TEMP_BUFFER_SIZE, "%%%d.%df",
+                      poFDefn->GetWidth(), poFDefn->GetPrecision() );
         }
         else
             strcpy( szFormat, "%.16g" );
         
-        sprintf( szTempBuffer, "(%d:", nCount );
+        snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "(%d:", nCount );
         for( i = 0; i < nCount; i++ )
         {
-            sprintf( szItem, szFormat, pauFields[iField].RealList.paList[i] );
+            snprintf( szItem, TEMP_BUFFER_SIZE, szFormat,
+                      pauFields[iField].RealList.paList[i] );
             if( strlen(szTempBuffer) + strlen(szItem) + 6
                 > sizeof(szTempBuffer) )
             {
@@ -1213,7 +1223,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
     {
         int     i, nCount = pauFields[iField].StringList.nCount;
 
-        sprintf( szTempBuffer, "(%d:", nCount );
+        snprintf( szTempBuffer, TEMP_BUFFER_SIZE, "(%d:", nCount );
         for( i = 0; i < nCount; i++ )
         {
             const char  *pszItem = pauFields[iField].StringList.paList[i];
@@ -1258,6 +1268,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
     }
     else
         return "";
+#undef TEMP_BUFFER_SIZE
 }
 
 /************************************************************************/
@@ -2788,7 +2799,9 @@ const char *OGR_F_GetStyleString( OGRFeatureH hFeat )
 /************************************************************************/
 
 /**
- * Set feature style string.
+ * Set feature style string. This method operate exactly as
+ * OGRFeature::SetStyleStringDirectly() except that it does not assume
+ * ownership of the passed string, but instead makes a copy of it.
  *
  * This method is the same as the C function OGR_F_SetStyleString().
  *
@@ -2812,7 +2825,9 @@ void OGRFeature::SetStyleString(const char *pszString)
 /************************************************************************/
 
 /**
- * Set feature style string.
+ * Set feature style string. This method operate exactly as
+ * OGR_F_SetStyleStringDirectly() except that it does not assume ownership
+ * of the passed string, but instead makes a copy of it.
  *
  * This function is the same as the C++ method OGRFeature::SetStyleString().
  *
@@ -2827,11 +2842,56 @@ void OGR_F_SetStyleString( OGRFeatureH hFeat, const char *pszStyle )
 }
 
 /************************************************************************/
+/*                       SetStyleStringDirectly()                       */
+/************************************************************************/
+
+/**
+ * Set feature style string. This method operate exactly as
+ * OGRFeature::SetStyleString() except that it assumes ownership of the passed
+ * string.
+ *
+ * This method is the same as the C function OGR_F_SetStyleStringDirectly().
+ *
+ * @param pszString the style string to apply to this feature, cannot be NULL.
+ */
+
+void OGRFeature::SetStyleStringDirectly(char *pszString)
+{
+    if (m_pszStyleString)
+        CPLFree(m_pszStyleString);
+    m_pszStyleString = pszString;
+}
+
+/************************************************************************/
+/*                     OGR_F_SetStyleStringDirectly()                   */
+/************************************************************************/
+
+/**
+ * Set feature style string. This method operate exactly as
+ * OGR_F_SetStyleString() except that it assumes ownership of the passed
+ * string.
+ *
+ * This function is the same as the C++ method
+ * OGRFeature::SetStyleStringDirectly().
+ *
+ * @param hFeat handle to the feature to set style to.
+ * @param pszStyle the style string to apply to this feature, cannot be NULL.
+ */
+
+void OGR_F_SetStyleStringDirectly( OGRFeatureH hFeat, char *pszStyle )
+
+{
+    ((OGRFeature *)hFeat)->SetStyleStringDirectly( pszStyle );
+}
+
+//************************************************************************/
 /*                           SetStyleTable()                            */
 /************************************************************************/
 void OGRFeature::SetStyleTable(OGRStyleTable *poStyleTable)
 {
-    m_poStyleTable = poStyleTable;
+    if ( m_poStyleTable )
+        delete m_poStyleTable;
+    m_poStyleTable = ( poStyleTable ) ? poStyleTable->Clone() : NULL;
 }
 
 /************************************************************************/
