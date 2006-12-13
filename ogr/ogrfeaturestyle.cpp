@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2006/12/13 18:53:29  dron
+ * Added OGRStyleTable::Clone() method.
+ *
  * Revision 1.22  2006/12/12 17:14:29  dron
  * Fixed method names in OGRStyleVector interface.
  *
@@ -754,6 +757,31 @@ int OGRStyleTable::IsExist(const char *pszName)
 
     return -1;
 }    
+
+/************************************************************************/
+/*                               Clone()                                */
+/************************************************************************/
+
+/**
+ * Duplicate style table.
+ *
+ * The newly created style table is owned by the caller, and will have it's
+ * own reference to the OGRStyleTable.
+ *
+ * This method is the same as the C function OGR_F_Clone().
+ *
+ * @return new feature, exactly matching this feature.
+ */
+
+OGRStyleTable *OGRStyleTable::Clone()
+
+{
+    OGRStyleTable *poNew = new OGRStyleTable();
+
+    poNew->m_papszStyleTable = CSLDuplicate( m_papszStyleTable );
+
+    return poNew;
+}
 
 /****************************************************************************/
 /*                          OGRStyleTool::OGRStyleTool()                    */
