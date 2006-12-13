@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/12/13 18:05:45  dron
+ * Clear style table in destructor.
+ *
  * Revision 1.25  2006/11/27 23:59:40  tamas
  * RFC 6: Geometry and Feature Style as OGR Special Fields
  *
@@ -133,6 +136,11 @@ OGRDataSource::OGRDataSource()
 OGRDataSource::~OGRDataSource()
 
 {
+    if ( m_poStyleTable )
+    {
+        delete m_poStyleTable;
+        m_poStyleTable = NULL;
+    }
 }
 
 /************************************************************************/

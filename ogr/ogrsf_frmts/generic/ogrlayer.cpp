@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/12/13 18:05:45  dron
+ * Clear style table in destructor.
+ *
  * Revision 1.25  2006/01/27 00:09:59  fwarmerdam
  * added Get{FID,Geometry}Column() support
  *
@@ -138,6 +141,12 @@ OGRLayer::OGRLayer()
 OGRLayer::~OGRLayer()
 
 {
+    if ( m_poStyleTable )
+    {
+        delete m_poStyleTable;
+        m_poStyleTable = NULL;
+    }
+
     if( m_poAttrIndex != NULL )
     {
         delete m_poAttrIndex;
