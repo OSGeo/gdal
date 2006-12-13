@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2006/12/13 18:53:29  dron
+ * Added OGRStyleTable::Clone() method.
+ *
  * Revision 1.13  2006/12/12 17:14:29  dron
  * Fixed method names in OGRStyleVector interface.
  *
@@ -232,6 +235,7 @@ class CPL_DLL OGRStyleTable
     const char *GetStyleName(const char *pszName);
     void  Print(FILE *fpOut);
     void  Clear();
+    OGRStyleTable   *Clone();
 };
 
 
