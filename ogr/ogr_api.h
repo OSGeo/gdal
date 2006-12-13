@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2006/12/13 18:35:06  dron
+ * Added OGR_F_SetStyleStringDirectly() declaration.
+ *
  * Revision 1.33  2006/04/02 18:25:59  fwarmerdam
  * added OFTDateTime, and OFTTime support
  *
@@ -352,6 +355,7 @@ OGRErr CPL_DLL OGR_F_SetFrom( OGRFeatureH, OGRFeatureH, int );
 
 const char CPL_DLL *OGR_F_GetStyleString( OGRFeatureH );
 void   CPL_DLL OGR_F_SetStyleString( OGRFeatureH, const char * );
+void   CPL_DLL OGR_F_SetStyleStringDirectly( OGRFeatureH, char * );
 
 /* -------------------------------------------------------------------- */
 /*      ogrsf_frmts.h                                                   */
