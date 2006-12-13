@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2006/12/13 18:24:45  dron
+ * Added OGRLayer::SetStyleTableDirectly(), OGRDataSource::SetStyleTable()
+ * and OGRDataSource::SetStyleTablDirectly() methods.
+ *
  * Revision 1.60  2006/12/10 04:59:19  fwarmerdam
  * Removed extra OGRFME register function.
  *
@@ -35,7 +39,8 @@
  * Added new Informix DataBlade driver (IDB)
  *
  * Revision 1.58  2006/06/07 14:39:09  mloskot
- * Added new KML (Beta) driver to OGR. Thanks to Christopher Condit - the author of KML drvier.
+ * Added new KML (Beta) driver to OGR. Thanks to Christopher Condit - the
+ * author of KML drvier.
  *
  * Revision 1.57  2006/01/27 00:09:07  fwarmerdam
  * added Get{FID,Geometry}Column() support
@@ -90,6 +95,7 @@
 #define _OGRSF_FRMTS_H_INCLUDED
 
 #include "ogr_feature.h"
+#include "ogr_featurestyle.h"
 
 /**
  * \file ogrsf_frmts.h
@@ -154,12 +160,20 @@ class CPL_DLL OGRLayer
 
     virtual OGRErr      SyncToDisk();
 
-    OGRStyleTable       *GetStyleTable(){return m_poStyleTable;}
-    void                 SetStyleTable(OGRStyleTable *poStyleTable){m_poStyleTable = poStyleTable;}
+    OGRStyleTable       *GetStyleTable(){ return m_poStyleTable; }
+    void                SetStyleTableDirectly( OGRStyleTable *poStyleTable )
+                            { if ( m_poStyleTable ) delete m_poStyleTable;
+                              m_poStyleTable = poStyleTable; }
+    void                SetStyleTable(OGRStyleTable *poStyleTable)
+                            {
+                                if ( m_poStyleTable ) delete m_poStyleTable;
+                                if ( poStyleTable )
+                                    m_poStyleTable = poStyleTable->Clone();
+                            }
 
-    virtual OGRErr       StartTransaction();
-    virtual OGRErr       CommitTransaction();
-    virtual OGRErr       RollbackTransaction();
+    virtual OGRErr      StartTransaction();
+    virtual OGRErr      CommitTransaction();
+    virtual OGRErr      RollbackTransaction();
 
     virtual const char *GetFIDColumn();
     virtual const char *GetGeometryColumn();
@@ -225,7 +239,17 @@ class CPL_DLL OGRDataSource
     virtual OGRLayer   *CopyLayer( OGRLayer *poSrcLayer, 
                                    const char *pszNewName, 
                                    char **papszOptions = NULL );
-    OGRStyleTable       *GetStyleTable(){return m_poStyleTable;}
+
+    OGRStyleTable       *GetStyleTable(){ return m_poStyleTable; }
+    void                SetStyleTableDirectly( OGRStyleTable *poStyleTable )
+                            { if ( m_poStyleTable ) delete m_poStyleTable;
+                              m_poStyleTable = poStyleTable; }
+    void                SetStyleTable(OGRStyleTable *poStyleTable)
+                            {
+                                if ( m_poStyleTable ) delete m_poStyleTable;
+                                if ( poStyleTable )
+                                    m_poStyleTable = poStyleTable->Clone();
+                            }
 
     virtual OGRLayer *  ExecuteSQL( const char *pszStatement,
                                     OGRGeometry *poSpatialFilter,
