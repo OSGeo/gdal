@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2006/12/13 18:17:54  dron
+ * Added documentation for style table methods.
+ *
  * Revision 1.28  2006/08/16 16:04:43  hobu
  * typo
  *
@@ -638,6 +641,45 @@ success.
 
  @return OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting
  layers is not supported for this datasource.
+
+*/
+
+/**
+ \fn  void OGRDataSource::GetStyleTable();
+
+ Returns data source style table.
+ 
+ This method is the same as the C function OGR_DS_GetStyleTable().
+ 
+ @return pointer to a style table which should not be modified or freed by the
+ caller.
+*/
+
+/**
+ \fn  void OGRDataSource::SetStyleTable(OGRStyleTable *poStyleTable);
+
+ Set data source style table.
+ 
+ This method operate exactly as OGRDataSource::SetStyleTableDirectly() except
+ that it does not assume ownership of the passed table.
+ 
+ This method is the same as the C function OGR_DS_SetStyleTable().
+ 
+ @param poStyleTable pointer to style table to set
+
+*/
+
+/**
+ \fn  void OGRDataSource::SetStyleTableDirectly(OGRStyleTable *poStyleTable);
+
+ Set data source style table.
+ 
+ This method operate exactly as OGRDataSource::SetStyleTable() except that it
+ assumes ownership of the passed table.
+ 
+ This method is the same as the C function OGR_DS_SetStyleTableDirectly().
+ 
+ @param poStyleTable pointer to style table to set
 
 */
 
@@ -1840,6 +1882,45 @@ used by a layer directly.
 form depending on the limitations of the format driver.
 
  @return OGRERR_NONE on success.
+
+*/
+
+/**
+ \fn  void OGRLayer::GetStyleTable();
+
+ Returns layer style table.
+ 
+ This method is the same as the C function OGR_L_GetStyleTable().
+ 
+ @return pointer to a style table which should not be modified or freed by the
+ caller.
+*/
+
+/**
+ \fn  void OGRLayer::SetStyleTable(OGRStyleTable *poStyleTable);
+
+ Set layer style table.
+ 
+ This method operate exactly as OGRLayer::SetStyleTableDirectly() except
+ that it does not assume ownership of the passed table.
+ 
+ This method is the same as the C function OGR_L_SetStyleTable().
+ 
+ @param poStyleTable pointer to style table to set
+
+*/
+
+/**
+ \fn  void OGRLayer::SetStyleTableDirectly(OGRStyleTable *poStyleTable);
+
+ Set layer style table.
+ 
+ This method operate exactly as OGRLayer::SetStyleTable() except that it
+ assumes ownership of the passed table.
+ 
+ This method is the same as the C function OGR_L_SetStyleTableDirectly().
+ 
+ @param poStyleTable pointer to style table to set
 
 */
 
