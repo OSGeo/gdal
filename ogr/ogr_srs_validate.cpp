@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2006/12/15 05:56:46  fwarmerdam
+ * added Oblique Stereographic
+ *
  * Revision 1.8  2005/12/01 04:59:46  fwarmerdam
  * added two point equidistant support
  *
@@ -380,6 +383,14 @@ static char *papszProjWithParms[] = {
     SRS_PT_SWISS_OBLIQUE_CYLINDRICAL,
     SRS_PP_LATITUDE_OF_CENTER,
     SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_FALSE_EASTING,
+    SRS_PP_FALSE_NORTHING,
+    NULL,
+
+    SRS_PT_OBLIQUE_STEREOGRAPHIC,
+    SRS_PP_LATITUDE_OF_ORIGIN,
+    SRS_PP_CENTRAL_MERIDIAN,
+    SRS_PP_SCALE_FACTOR,
     SRS_PP_FALSE_EASTING,
     SRS_PP_FALSE_NORTHING,
     NULL,
