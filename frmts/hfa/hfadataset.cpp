@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.88  2006/12/17 23:36:43  fwarmerdam
+ * added support for reading PE strings in ProjectionX blocks
+ *
  * Revision 1.87  2006/12/09 04:59:39  fwarmerdam
  * Adjust our computed histogram min/max to match what erdas expects.
  *
@@ -1897,7 +1900,30 @@ CPLErr HFADataset::ReadProjection()
     const Eprj_ProParameters  *psPro;
     const Eprj_MapInfo        *psMapInfo;
     OGRSpatialReference        oSRS;
+    char *pszPE_COORDSYS;
 
+/* -------------------------------------------------------------------- */
+/*      Special logic for PE string in ProjectionX node.                */
+/* -------------------------------------------------------------------- */
+    pszPE_COORDSYS = HFAGetPEString( hHFA );
+    if( pszPE_COORDSYS != NULL 
+        && oSRS.SetFromUserInput( pszPE_COORDSYS ) == OGRERR_NONE )
+    {
+        CPLFree( pszPE_COORDSYS );
+
+        oSRS.morphFromESRI();
+        oSRS.Fixup();
+
+        CPLFree( pszProjection );
+        pszProjection = NULL;
+        oSRS.exportToWkt( &pszProjection );
+        
+        return CE_None;
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      General case for Erdas style projections.                       */
+/* -------------------------------------------------------------------- */
     psDatum = HFAGetDatum( hHFA );
     psPro = HFAGetProParameters( hHFA );
     psMapInfo = HFAGetMapInfo( hHFA );

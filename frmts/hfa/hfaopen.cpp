@@ -35,6 +35,9 @@
  * of the GDAL core, but dependent on the Common Portability Library.
  *
  * $Log$
+ * Revision 1.61  2006/12/17 23:36:43  fwarmerdam
+ * added support for reading PE strings in ProjectionX blocks
+ *
  * Revision 1.60  2006/12/09 01:23:59  fwarmerdam
  * flesh out aux statistics generation
  *
@@ -1141,6 +1144,55 @@ CPLErr HFASetMapInfo( HFAHandle hHFA, const Eprj_MapInfo *poMapInfo )
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                           HFAGetPEString()                           */
+/*                                                                      */
+/*      Some files have a ProjectionX node contining the ESRI style     */
+/*      PE_STRING.  This function allows fetching from it.              */
+/************************************************************************/
+
+char *HFAGetPEString( HFAHandle hHFA )
+ 
+{
+/* -------------------------------------------------------------------- */
+/*      Get the HFA node.                                               */
+/* -------------------------------------------------------------------- */
+    HFAEntry *poProX;
+
+    poProX = hHFA->papoBand[0]->poNode->GetNamedChild( "ProjectionX" );
+    if( poProX == NULL )
+        return NULL;
+
+    const char *pszType = poProX->GetStringField( "projection.type.string" );
+    if( pszType == NULL || !EQUAL(pszType,"PE_COORDSYS") )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Use a gross hack to scan ahead to the actual projection         */
+/*      string. We do it this way because we don't have general         */
+/*      handling for MIFObjects.                                        */
+/* -------------------------------------------------------------------- */
+    GByte *pabyData = poProX->GetData();
+    int    nDataSize = poProX->GetDataSize();
+
+    while( nDataSize > 10 
+           && !EQUALN((const char *) pabyData,"PE_COORDSYS,.",13) ) {
+        pabyData++;
+        nDataSize--;
+    }
+
+    if( nDataSize < 31 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Skip ahead to the actual string.                                */
+/* -------------------------------------------------------------------- */
+    pabyData += 30;
+    nDataSize -= 30;
+
+    return CPLStrdup( (const char *) pabyData );
 }
 
 /************************************************************************/
