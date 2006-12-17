@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2006/12/17 23:36:43  fwarmerdam
+ * added support for reading PE strings in ProjectionX blocks
+ *
  * Revision 1.20  2006/12/06 06:46:13  fwarmerdam
  * added support for writing dependent aux files
  *
@@ -205,6 +208,7 @@ CPLErr CPL_DLL HFASetMapInfo( HFAHandle, const Eprj_MapInfo * );
 const Eprj_Datum CPL_DLL *HFAGetDatum( HFAHandle );
 CPLErr CPL_DLL HFASetDatum( HFAHandle, const Eprj_Datum * );
 const Eprj_ProParameters CPL_DLL *HFAGetProParameters( HFAHandle );
+char CPL_DLL *HFAGetPEString( HFAHandle );
 CPLErr CPL_DLL HFASetProParameters( HFAHandle, const Eprj_ProParameters * );
 
 CPLErr CPL_DLL HFAGetRasterInfo( HFAHandle hHFA, int *pnXSize, int *pnYSize,

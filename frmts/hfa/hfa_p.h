@@ -30,6 +30,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2006/12/17 23:36:43  fwarmerdam
+ * added support for reading PE strings in ProjectionX blocks
+ *
  * Revision 1.25  2006/05/07 04:04:02  fwarmerdam
  * fixed serious multithreading issue with ExtractInstValue (bug 1132)
  *
@@ -316,6 +319,7 @@ public:
     
     const char  *GetType() { return szType; }
 
+    GByte      *GetData() { LoadData(); return pabyData; }
     GUInt32	GetDataPos() { return nDataPos; }
     GUInt32	GetDataSize() { return nDataSize; }
 
