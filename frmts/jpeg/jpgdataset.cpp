@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.46  2006/12/17 23:37:56  fwarmerdam
+ * support JPEG files with multiple header chunks
+ *
  * Revision 1.45  2006/06/08 02:55:19  fwarmerdam
  * provide for selecting Q1-5 in JPEG_SUBFILE names
  *
@@ -390,8 +393,6 @@ void JPGDataset::EXIFPrintData(char* pszData, GUInt16 type,
   }
   }
 }
-
-
 
 /************************************************************************/
 /*                        EXIFInit()                                    */
@@ -1275,30 +1276,39 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
         || pabyHeader[2] != 0xff )
         return NULL;
 
-    if( pabyHeader[3] == 0xe0
-        && pabyHeader[6] == 'J'
-        && pabyHeader[7] == 'F'
-        && pabyHeader[8] == 'I'
-        && pabyHeader[9] == 'F' )
-        /* OK */;
-    else if( pabyHeader[3] == 0xe1
-             && pabyHeader[6] == 'E'
-             && pabyHeader[7] == 'x'
-             && pabyHeader[8] == 'i'
-             && pabyHeader[9] == 'f' )
-        /* OK */;
-    else if( pabyHeader[3] == 0xe6
-             && pabyHeader[6] == 'N'
-             && pabyHeader[7] == 'I'
-             && pabyHeader[8] == 'T'
-             && pabyHeader[9] == 'F' )
-        /* OK */;
-    else if( subfile_offset != 0 )
-        /* ok - we don't require app segment on "subfiles" which 
-           can be just part of a multi-image stream - ie. in nitf files */;
-    else
-        return NULL;
+    int iChunkOff;
 
+    for( iChunkOff = 2; 
+         iChunkOff < nHeaderBytes-10; 
+         iChunkOff += 10 ) 
+    {
+        if( pabyHeader[0+iChunkOff] != 0xff
+            || (pabyHeader[1+iChunkOff] & 0xf0) < 0xe0 )
+            return NULL;
+
+        if( pabyHeader[1+iChunkOff] == 0xe0
+            && pabyHeader[4+iChunkOff] == 'J'
+            && pabyHeader[5+iChunkOff] == 'F'
+            && pabyHeader[6+iChunkOff] == 'I'
+            && pabyHeader[7+iChunkOff] == 'F' )
+            break;
+        else if( pabyHeader[1+iChunkOff] == 0xe1
+                 && pabyHeader[4+iChunkOff] == 'E'
+                 && pabyHeader[5+iChunkOff] == 'x'
+                 && pabyHeader[6+iChunkOff] == 'i'
+                 && pabyHeader[7+iChunkOff] == 'f' )
+            break;
+        else if( pabyHeader[1+iChunkOff] == 0xe6
+                 && pabyHeader[4+iChunkOff] == 'N'
+                 && pabyHeader[5+iChunkOff] == 'I'
+                 && pabyHeader[6+iChunkOff] == 'T'
+                 && pabyHeader[7+iChunkOff] == 'F' )
+            break;
+        else if( subfile_offset != 0 )
+            /* ok - we don't require app segment on "subfiles" which 
+               can be just part of a multi-image stream - ie. in nitf files */;
+
+    } /* next chunk */
     if( poOpenInfo->eAccess == GA_Update )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
