@@ -25,4 +25,4 @@ build:
 	python setup.py build
 
 install:
-	python setup.py install --prefix=$(prefix)
+	python setup.py install --prefix=$(DESTDIR)$(prefix)
