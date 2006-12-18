@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2006/12/18 17:49:04  dreamil
+ * Modified CPLReadLineL() to fix
+ * http://bugzilla.remotesensing.org/show_bug.cgi?id=1374
+ *
  * Revision 1.58  2006/11/18 20:58:23  mloskot
  * Removed WIN32CE ifdef around CPLLocaleC.
  *
@@ -762,7 +766,7 @@ const char *CPLReadLineL( FILE * fp )
 /* -------------------------------------------------------------------- */
         int bBreak = FALSE;
         nChunkBytesConsumed = 0;
-        while( nChunkBytesConsumed < nChunkBytesRead-1 && !bBreak )
+        while( nChunkBytesConsumed <= nChunkBytesRead-1 && !bBreak )
         {
             if( (szChunk[nChunkBytesConsumed] == 13
                  && szChunk[nChunkBytesConsumed+1] == 10)
