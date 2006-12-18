@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2006/12/18 03:49:24  fwarmerdam
+ * Avoid really big memory leak in readblock.
+ *
  * Revision 1.16  2006/11/22 18:20:00  fwarmerdam
  * apply std:: prefix to exception to build on sun compiler
  *
@@ -1490,6 +1493,9 @@ CPLErr ILWISRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             ((double *) pImage)[i] = ((double *) pBuffer)[i];
         break;
     }
+
+    CPLFree( pBuffer );
+
     return CE_None;
 }
 
