@@ -32,6 +32,9 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
  * $Log$
+ * Revision 1.6  2006/12/18 02:20:59  fwarmerdam
+ * avoid leak of fpQube FILE *.
+ *
  * Revision 1.5  2006/11/13 17:52:23  fwarmerdam
  * moved out keyword handler (in pdsdataset.cpp)
  *
@@ -192,13 +195,15 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
     ISIS2Dataset 	*poDS;
 
     poDS = new ISIS2Dataset();
-    poDS->fpImage = fpQube;
 
     if( ! poDS->oKeywords.Ingest( fpQube, 0 ) )
     {
+        VSIFCloseL( fpQube );
         delete poDS;
         return NULL;
     }
+    
+    VSIFCloseL( fpQube );
 
 /* -------------------------------------------------------------------- */
 /*	We assume the user is pointing to the label (ie. .lab) file.  	*/
