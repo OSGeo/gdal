@@ -39,10 +39,10 @@ veryclean: clean
 	rm -frd $(INSTALL_DIR)
 
 $(INSTALL_DIR):
-	mkdir -v $(INSTALL_DIR)
+	mkdir -v $(DESTDIR)$(INSTALL_DIR)
 
 install: $(INSTALL_DIR)
-	$(INSTALL) $(RUBY_MODULES) $(INSTALL_DIR) 
+	$(INSTALL) $(RUBY_MODULES) $(DESTDIR)$(INSTALL_DIR) 
 
 $(RUBY_MODULES): %.so: %_wrap.o
 	$(LD) $(LDFLAGS) $(LIBS) $(GDAL_SLIB_LINK) $(RUBY_LIB) $< -o $@
