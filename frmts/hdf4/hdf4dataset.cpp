@@ -30,6 +30,10 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.35  2006/12/18 18:00:58  fwarmerdam
+ * Make sure error stack is cleared before HEshutdown() or else later
+ * requests will crash it.
+ *
  * Revision 1.34  2006/12/18 02:17:17  fwarmerdam
  * call HEshutdown() to clear error stack.
  *
@@ -746,6 +750,7 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
     // We have special routine in the HDF library for format checking!
     if ( !Hishdf(poOpenInfo->pszFilename) )
     {
+        HEPclear();
         HEshutdown();
 	return NULL;
     }
