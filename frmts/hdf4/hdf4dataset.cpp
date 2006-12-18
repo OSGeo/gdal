@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.34  2006/12/18 02:17:17  fwarmerdam
+ * call HEshutdown() to clear error stack.
+ *
  * Revision 1.33  2006/11/23 13:23:56  dron
  * Added more logic to guess HDF-EOS datasets.
  *
@@ -742,7 +745,10 @@ GDALDataset *HDF4Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     // We have special routine in the HDF library for format checking!
     if ( !Hishdf(poOpenInfo->pszFilename) )
+    {
+        HEshutdown();
 	return NULL;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
