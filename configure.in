@@ -279,7 +279,7 @@ else
   
   if test "${HAVE_PG}" = "yes" ; then
     LIBS="-L`$PG_CONFIG --libdir` -lpq $LIBS"
-    PG_INC="-I`$PG_CONFIG --includedir`"
+    PG_INC="-I`$PG_CONFIG --includedir` -I`$PG_CONFIG --includedir-server`"
 
     PG_EXTRA_DEC=""
     AC_CHECK_LIB(pq,PQputCopyData,,PG_EXTRA_DEC=-DPG_PRE74,)
