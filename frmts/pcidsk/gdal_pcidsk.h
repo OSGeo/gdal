@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2006/12/18 03:42:53  fwarmerdam
+ * avoid leak of external band file handles
+ *
  * Revision 1.3  2005/06/09 19:01:40  fwarmerdam
  * added support for tiled primary bands
  *
@@ -94,6 +97,9 @@ class PCIDSKDataset : public RawDataset
     char        **papszSegName;
     vsi_l_offset *panSegOffset;
     vsi_l_offset *panSegSize;
+
+    int         nBandFileCount;
+    FILE        **pafpBandFiles;
 
   public:
                 PCIDSKDataset();

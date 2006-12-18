@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2006/12/18 03:42:53  fwarmerdam
+ * avoid leak of external band file handles
+ *
  * Revision 1.21  2006/12/02 00:49:39  fwarmerdam
  * added preliminary support for mapping localcs to meter/feet
  *
@@ -138,6 +141,9 @@ PCIDSKDataset::PCIDSKDataset()
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
+
+    nBandFileCount = 0;
+    pafpBandFiles = NULL;
 }
 
 /************************************************************************/
@@ -179,6 +185,10 @@ PCIDSKDataset::~PCIDSKDataset()
         if( papszSegName[i] != NULL )
             CPLFree( papszSegName[i] );
     CPLFree( papszSegName );
+
+    for( i = 0; i < nBandFileCount; i++ )
+        VSIFCloseL( pafpBandFiles[i] );
+    CPLFree( pafpBandFiles );
 }
 
 /************************************************************************/
@@ -717,6 +727,12 @@ GDALDataset *PCIDSKDataset::Open( GDALOpenInfo * poOpenInfo )
                       CPLFree( pszFilename );
                       continue;
                   }
+
+                  poDS->nBandFileCount++;
+                  poDS->pafpBandFiles = (FILE **)
+                      CPLRealloc( poDS->pafpBandFiles,
+                                  poDS->nBandFileCount * sizeof(FILE*) );
+                  poDS->pafpBandFiles[poDS->nBandFileCount-1] = fp;
               }
 
               pszString = CPLScanString( szTemp + 168, 16, TRUE, FALSE );
