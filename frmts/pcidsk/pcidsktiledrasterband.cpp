@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2006/12/18 03:42:28  fwarmerdam
+ * avoid leak of pachTileInfo
+ *
  * Revision 1.4  2005/06/09 19:01:40  fwarmerdam
  * added support for tiled primary bands
  *
@@ -227,7 +230,10 @@ int PCIDSKTiledRasterBand::BuildTileMap()
 
     char *pachTileInfo = (char *) CPLMalloc(20 * nTileCount);
     if( !SysRead( 128, 20 * nTileCount, pachTileInfo ) )
+    {
+        CPLFree( pachTileInfo );
         return FALSE;
+    }
 
     for( int iTile = 0; iTile < nTileCount; iTile++ )
     {
@@ -236,6 +242,8 @@ int PCIDSKTiledRasterBand::BuildTileMap()
         panTileSize[iTile] = (int)
             CPLScanLong( pachTileInfo+12*nTileCount+8*iTile, 8 );
     }
+
+    CPLFree( pachTileInfo );
 
     return TRUE;
 }
