@@ -30,6 +30,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.29  2006/12/18 02:17:58  fwarmerdam
+ * avoid gcp related memory leak
+ *
  * Revision 1.28  2006/08/03 17:30:27  dron
  * Few clean-ups and preparations for geolocation arrays support.
  *
@@ -455,14 +458,7 @@ L1BDataset::~L1BDataset()
 
     if( nGCPCount > 0 )
     {
-        for( int i = 0; i < nGCPCount; i++ )
-        {
-            if ( pasGCPList[i].pszId )
-                CPLFree( pasGCPList[i].pszId );
-            if ( pasGCPList[i].pszInfo )
-                CPLFree( pasGCPList[i].pszInfo );
-        }
-
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
         CPLFree( pasGCPList );
     }
     if ( pszGCPProjection )
@@ -735,6 +731,12 @@ void L1BDataset::ProcessRecordHeaders()
         }
 
         nGCPCount = nOrigGCPs + nDesiredGCPsPerLine;
+    }
+
+    if( nGCPCount < nTargetLines * nGCPsPerLine )
+    {
+        GDALDeinitGCPs( nTargetLines * nGCPsPerLine - nGCPCount, 
+                        pasGCPList + nGCPCount );
     }
 
     CPLFree( piRecordHeader );
