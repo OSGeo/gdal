@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.104  2006/12/18 16:22:51  fwarmerdam
+ * added support for x-ogc as well as ogc namespace
+ *
  * Revision 1.103  2006/11/30 17:48:32  fwarmerdam
  * Avoid uninitialized variable warning.
  *
@@ -1618,7 +1621,8 @@ OGRErr OGRSpatialReference::SetFromUserInput( const char * pszDefinition )
     if( EQUALN(pszDefinition,"EPSG:",5) )
         return importFromEPSG( atoi(pszDefinition+5) );
 
-    if( EQUALN(pszDefinition,"urn:ogc:def:crs:",16) )
+    if( EQUALN(pszDefinition,"urn:ogc:def:crs:",16) 
+        || EQUALN(pszDefinition,"urn:x-ogc:def:crs:",18) )
         return importFromURN( pszDefinition );
 
     if( EQUALN(pszDefinition,"AUTO:",5) )
@@ -1739,7 +1743,13 @@ OGRErr CPL_STDCALL OSRSetFromUserInput( OGRSpatialReferenceH hSRS,
 OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
 
 {
-    if( !EQUALN(pszURN,"urn:ogc:def:crs:",16) )
+    const char *pszCur = pszURN + 16;
+
+    if( EQUALN(pszURN,"urn:ogc:def:crs:",16) )
+        pszCur = pszURN + 16;
+    else if( EQUALN(pszURN,"urn:x-ogc:def:crs:",18) )
+        pszCur = pszURN + 18;
+    else
     {
         CPLError( CE_Failure, CPLE_AppDefined, 
                   "URN %s not a supported format.", pszURN );
@@ -1751,8 +1761,6 @@ OGRErr OGRSpatialReference::importFromURN( const char *pszURN )
 /*                                                                      */
 /*      authority:version:code                                          */
 /* -------------------------------------------------------------------- */
-    const char *pszCur = pszURN + 16;
-
     const char *pszAuthority = pszCur;
 
     // skip authority
