@@ -9,6 +9,9 @@
 
  *
  * $Log$
+ * Revision 1.48  2006/12/18 21:27:49  hobu
+ * add back the  IF_ERROR_RETURN_NONE typemap because we're using it for GetStatistics
+ *
  * Revision 1.47  2006/11/15 23:40:01  hobu
  * dump the tostring arginit typemap
  *
@@ -278,6 +281,13 @@
     Py_INCREF($result);
   }
 }
+
+
+%typemap(out) IF_ERROR_RETURN_NONE
+{
+  /* %typemap(out) IF_ERROR_RETURN_NONE */
+}
+
 
 %import "ogr_error_map.i"
 
