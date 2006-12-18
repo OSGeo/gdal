@@ -51,6 +51,9 @@
  ***************************************************************************
  *
  * $Log$
+ * Revision 1.10  2006/12/18 21:35:01  hobu
+ * Apply Schuyler's patch for bug 1392
+ *
  * Revision 1.9  2006/05/10 19:24:46  fwarmerdam
  * avoid processing HUGE_VAL coordinates
  *
@@ -110,6 +113,15 @@ static int CRS_georef(double, double, double *, double *,
 static int CRS_compute_georef_equations(struct Control_Points *,
     double [], double [], double [], double [], int);
 
+
+static char *CRS_error_message[] = {
+    "Failed to compute GCP transform: Not enough points available",
+    "Failed to compute GCP transform: Transform is not solvable",
+    "Failed to compute GCP transform: Not enough memory"
+    "Failed to compute GCP transform: Parameter error",
+    "Failed to compute GCP transform: Internal error"
+};
+
 typedef struct
 {
     GDALTransformerInfo sTI;
@@ -167,6 +179,7 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
     GCPTransformInfo *psInfo;
     double *padfGeoX, *padfGeoY, *padfRasterX, *padfRasterY;
     int    *panStatus, iGCP;
+    int    nCRSresult;
     struct Control_Points sPoints;
 
     if( nReqOrder == 0 )
@@ -220,14 +233,13 @@ void *GDALCreateGCPTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
 /* -------------------------------------------------------------------- */
 /*      Compute the forward and reverse polynomials.                    */
 /* -------------------------------------------------------------------- */
-    if( CRS_compute_georef_equations( &sPoints,
+    nCRSresult = CRS_compute_georef_equations( &sPoints,
                                       psInfo->adfToGeoX, psInfo->adfToGeoY,
                                       psInfo->adfFromGeoX, psInfo->adfFromGeoY,
-                                      nReqOrder ) != 1 )
+                                      nReqOrder );
+    if (nCRSresult != 1)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to compute polynomial equations of desired order\n"
-                  "for provided control points." );
+        CPLError( CE_Failure, CPLE_AppDefined, CRS_error_message[-nCRSresult]);
         goto CleanupAfterError;
     }
     
