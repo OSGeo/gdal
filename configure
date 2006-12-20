@@ -1035,7 +1035,7 @@ Optional Packages:
                           both]
   --with-tags[=TAGS]
                           include additional configurations [automatic]
-  --without-libtool          Don't use libtool to build the library
+  --without-libtool     Don't use libtool to build the library
   --without-ld-shared   Disable shared library support
   --with-unix-stdio-64=ARG Utilize 64 stdio api (yes/no)
   --with-local=dir      Include /usr/local or other local tree for INCLUDE/LIBS
@@ -1077,7 +1077,7 @@ Optional Packages:
   --with-oci-lib=[DIR]
                           use Oracle OCI API libraries from given path
   --with-dods-root=ARG  Include DODS support (ARG=no or absolute path)
-  --with-curl=ARG     Include curl for WCS (ARG=path to curl-config.)
+  --with-curl=ARG       Include curl for WCS (ARG=path to curl-config.)
   --with-sqlite=ARG     Include SQLite support (ARG=no or absolute path)
   --with-dwgdirect=path Include DWG direct support
   --with-dwg-plt=platform DWGdirect Platform, defaults to lnxX86
@@ -1087,7 +1087,7 @@ Optional Packages:
   --with-sde-version=VERSION NUMBER  Set ESRI SDE version number (Default is 80).
   --with-geos=ARG       Include GEOS support (ARG=yes, no or geos-config path)
   --with-static-proj4=ARG Compile with PROJ.4 statically (ARG=no or path)
-  --with-gdal-ver=ARG  Override GDAL version
+  --with-gdal-ver=ARG   Override GDAL version
   --with-macosx-framework         Build and install GDAL as a Mac OS X Framework
   --with-perl           Enable perl bindings
   --with-php            Enable php bindings

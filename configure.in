@@ -49,7 +49,7 @@ AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
 
 dnl switch between libtool and native build system
-AC_ARG_WITH(libtool, [  --without-libtool          Don't use libtool to build the library],,)
+AC_ARG_WITH(libtool, [  --without-libtool     Don't use libtool to build the library],,)
 
 if test "$with_libtool" = "no"; then
 AC_PROG_RANLIB
@@ -1493,7 +1493,7 @@ dnl ---------------------------------------------------------------------------
 dnl Check for curl (ie. for wcs).
 dnl ---------------------------------------------------------------------------
 AC_ARG_WITH(curl,
-    [  --with-curl[=ARG]     Include curl for WCS (ARG=path to curl-config.)],,,)
+    [  --with-curl[=ARG]       Include curl for WCS (ARG=path to curl-config.)],,,)
 
 dnl Clear some cache variables
 unset ac_cv_path_LIBCURL
@@ -1814,7 +1814,7 @@ dnl Get/override version.
 dnl ---------------------------------------------------------------------------
 
 
-AC_ARG_WITH(gdal-ver,[  --with-gdal-ver=ARG  Override GDAL version ],,)
+AC_ARG_WITH(gdal-ver,[  --with-gdal-ver=ARG   Override GDAL version ],,)
 GDAL_VERSION_MAJOR=`grep "#*define.GDAL_VERSION_MAJOR.*" gcore/gdal_version.h | awk '{print $4}'`
 GDAL_VERSION_MINOR=`grep "#*define.GDAL_VERSION_MINOR.*" gcore/gdal_version.h | awk '{print $4}'`
 GDAL_VERSION_REV=`grep "#*define.GDAL_VERSION_REV.*" gcore/gdal_version.h | awk '{print $4}'`
