@@ -1,3 +1,135 @@
+GDAL/OGR 1.4.0 - General Changes
+--------------------------------
+
+Perl Bindings: 
+ - Added doxygen based documentation.
+
+NG Python Bindings: 
+ - Implemented numpy support.
+
+CSharp Bindings: 
+ - Now mostly operational.
+
+WinCE Porting:
+ - CPL 
+ - base OGR, OSR and mitab and shape drivers.
+ - GDAL, including GeoTIFF, DTED, AAIGrid drivers
+ - Added test suite (gdalautotest/cpp)
+
+Mac OSX Port:
+ - Added framework support (--with-macosx-framework)
+
+
+
+GDAL 1.4.0 - Overview Of Changes
+--------------------------------
+
+WCS Driver:
+ - New
+
+PDS (Planetary Data Set) Driver:
+ - New
+
+ISIS (Mars Qubes) Driver:
+ - New
+
+HFA (.img) Driver:
+ - Support reading ProjectionX PE strings.
+ - Support producing .aux files with statistics.
+ - Fix serious bugs with u1, u2 and u4 compressed data.
+
+NITF Driver:
+ - Added BLOCKA reading support.
+ - Added ICORDS='D'
+ - Added jpeg compression support (readonly)
+ - Support multiple images as subdatasets.
+ - Support CGM data (as metadata)
+
+AIGrid Driver:
+ - Use VSI*L API (large files, in memory, etc)
+ - Support upper case filenames.
+ - Support .clr file above coverage.
+
+HDF4 Driver:
+ - Added support for access to geolocation arrays (see RFC 4).
+ - External raw raster bands supported.
+
+PCIDSK (.pix) Driver:
+ - Support METER/FEET as LOCAL_CS. 
+ - Fix serious byte swapping error on creation.
+
+BMP Driver: 
+ - Various fixes, including 16bit combinations, and non-intel byte swapping.
+
+GeoTIFF Driver:
+ - Fixed in place update for LZW and Deflated compressed images.
+
+JP2KAK (JPEG2000) Driver:
+ - Added support for reading and writing gmljp2 headers. 
+ - Read xml boxes as metadata. 
+ - Accelerate YCbCr handling. 
+
+JP2MrSID (JPEG2000) Driver: 
+ - Added support for reading gmljp2 headers. 
+
+EHDR (ESRI BIL) Driver:
+ - Support 1-7 bit data. 
+ - Added statistics support.
+
+
+OGR 1.4.0 - Overview of Changes
+-------------------------------
+
+OGR SQL:
+ - RFC 6: Added support for SQL/attribute filter access to geometry, and 
+   style strings. 
+
+OGRSpatialReference: 
+ - Support for OGC SRS URNs. 
+ - Support for +wktext/EXTENSION stuff for preserving PROJ.4 string in WKT.
+ - Added Two Point Equidistant projection.
+ - Added Krovak projection.
+ - Updated support files to EPSG 6.11.
+
+OGRCoordinateTransformation: 
+ - Support source and destination longitude wrapping control.
+
+OGRFeatureStyle: 
+ - Various extensions and improvements. 
+
+INFORMIX Driver: 
+ - New
+
+KML Driver: 
+ - New (write only)
+
+E00 Driver:
+ - New (read only) 
+ - Polygon (PAL) likely not working properly.
+
+Postgres/PostGIS Driver:
+ - Updated to support new EWKB results (PostGIS 1.1?)
+ - Fixed serious bug with writing SRSes.
+ - Added schema support.
+
+GML Driver: 
+ - Strip namespaces off field names. 
+ - Handle very large geometries gracefully.
+
+ODBC Driver: 
+ - Added support for spatial_ref_sys table.
+
+SDE Driver: 
+ - Added logic to speed things up while actually detecting layer geometry types
+
+PGeo Driver: 
+ - Added support for MDB Tools ODBC driver on linux/unix.
+
+VRT Driver:
+ - Added useSpatialSubquery support.
+
+
+===============================================================================
 
 GDAL/OGR 1.3.2 - General Changes
 --------------------------------
