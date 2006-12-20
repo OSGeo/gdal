@@ -23359,7 +23359,7 @@ fi
   fi
 
   if test "$GEOTIFF_SETTING" = "external" ; then
-    LIBS="-lgeotiff $LIBS"
+    LIBS="-L$with-geotiff/lib -lgeotiff $LIBS"
     echo "using pre-installed libgeotiff."
   else
     echo "using internal GeoTIFF code."
