@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2006/12/20 14:33:15  lichun
+ * Solved one warning for some compilers: an unsigned value was compared with a signed value.
+ *
  * Revision 1.17  2006/12/18 03:49:24  fwarmerdam
  * Avoid really big memory leak in readblock.
  *
@@ -61,8 +64,8 @@ string TrimSpaces(const string& input)
     if ( input.empty()) 
         return string();
 
-    unsigned int iFirstNonSpace = input.find_first_not_of(' ');
-    unsigned int iFindLastSpace = input.find_last_not_of(' ');
+    int iFirstNonSpace = input.find_first_not_of(' ');
+    int iFindLastSpace = input.find_last_not_of(' ');
     if (iFirstNonSpace == string::npos || iFindLastSpace == string::npos)
         return string();
 
@@ -193,7 +196,7 @@ void IniFile::Load()
 
             if (s[0] == '[')
             {
-                unsigned int iLast = s.find_first_of(']');
+                int iLast = s.find_first_of(']');
                 if (iLast != string::npos)
                 {
                     section = s.substr(1, iLast - 1);
@@ -207,7 +210,7 @@ void IniFile::Load()
             s = GetLine(filIni); // fall through (no break)
           case FindKey:
           {
-              unsigned int iEqu = s.find_first_of('=');
+              int iEqu = s.find_first_of('=');
               if (iEqu != string::npos)
               {
                   key = s.substr(0, iEqu);
@@ -325,7 +328,7 @@ bool WriteElement(string sSection, string sEntry,
 static CPLErr GetRowCol(string str,int &Row, int &Col)
 {
     string delimStr = " ,;";
-    unsigned int iPos = str.find_first_of(delimStr);
+    int iPos = str.find_first_of(delimStr);
     if (iPos != string::npos)
     {
         Row = atoi(str.substr(0, iPos).c_str());
