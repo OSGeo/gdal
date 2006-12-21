@@ -27,24 +27,24 @@ csharp: gdalvars
 
 java: gdalvars
         cd java
-        mkdir org\gdal\gdal
+        if not exist org\gdal\gdal mkdir org\gdal\gdal
         cd gdal
         $(SWIG) -java -c++ -package org.gdal.gdal -outdir ../org/gdal/gdal -I../../include/java -o gdal_wrap.cpp ../../../include/gdal.i
         cd ..
         cd org\gdal
-        mkdir ogr
+        if not exist ogr mkdir ogr
         cd ../../
         cd ogr
         $(SWIG) -java -c++ -package org.gdal.ogr -outdir ../org/gdal/ogr -I../../include/java -o ogr_wrap.cpp ../../../include/ogr.i
         cd ..
         cd org\gdal
-        mkdir osr
+        if not exist osr mkdir osr
         cd ../../
         cd osr
         $(SWIG) -java -c++ -package org.gdal.osr -outdir ../org/gdal/osr -I../../include/java -o osr_wrap.cpp ../../../include/osr.i
         cd ..
         cd org\gdal
-        mkdir gdalconst
+        if not exist gdalconst mkdir gdalconst
         cd ../../
         cd const
         $(SWIG) -java -c++ -package org.gdal.gdalconst -outdir ../org/gdal/gdalconst -I../../include/java -o gdalconst_wrap.cpp ../../../include/gdalconst.i
