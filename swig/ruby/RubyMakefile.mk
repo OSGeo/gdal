@@ -39,7 +39,7 @@ veryclean: clean
 	rm -frd $(INSTALL_DIR)
 
 $(INSTALL_DIR):
-	mkdir -v $(DESTDIR)$(INSTALL_DIR)
+	mkdir -p $(DESTDIR)$(INSTALL_DIR)
 
 install: $(INSTALL_DIR)
 	$(INSTALL) $(RUBY_MODULES) $(DESTDIR)$(INSTALL_DIR) 
