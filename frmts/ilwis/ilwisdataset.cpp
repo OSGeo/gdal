@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2006/12/21 14:25:22  lichun
+ * solved memory leaks bug by removing CPLStrdup calls everywhere used for construct a STL string
+ *
  * Revision 1.18  2006/12/20 14:33:15  lichun
  * Solved one warning for some compilers: an unsigned value was compared with a signed value.
  *
@@ -506,8 +509,8 @@ void ILWISDataset::CollectTransformCoef(string &pszRefName)
     if( (georef.length() != 0) && !EQUAL(georef.c_str(),"none"))
     {
         //Form the geo-referencing name
-        string pszBaseName = string(CPLStrdup( CPLGetBasename(georef.c_str()) ));
-        string pszPath = string(CPLStrdup(CPLGetPath( pszFileName )));
+        string pszBaseName = string(CPLGetBasename(georef.c_str()) );
+        string pszPath = string(CPLGetPath( pszFileName ));
         pszRefName = string(CPLFormFilename(pszPath.c_str(),
                                             pszBaseName.c_str(),"grf" ));
 
@@ -594,8 +597,8 @@ CPLErr ILWISDataset::WriteGeoReference()
 
             //Re-write the GeoRef property to raster ODF
             //Form band file name  
-            string sBaseName = string(CPLStrdup( CPLGetBasename(pszFileName) ));
-            string sPath = string(CPLStrdup(CPLGetPath(pszFileName)));
+            string sBaseName = string(CPLGetBasename(pszFileName) );
+            string sPath = string(CPLGetPath(pszFileName));
             if (nBands == 1) 
             {
                 WriteElement("Map", "GeoRef", pszFileName, sBaseName + ".grf");
@@ -702,8 +705,8 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
     int    iBandCount;
     string mapsize;
     string maptype = ReadElement("BaseMap", "Type", poOpenInfo->pszFilename);
-    string sBaseName = string(CPLStrdup( CPLGetBasename(poOpenInfo->pszFilename) ));
-    string sPath = string(CPLStrdup(CPLGetPath( poOpenInfo->pszFilename)));
+    string sBaseName = string(CPLGetBasename(poOpenInfo->pszFilename) );
+    string sPath = string(CPLGetPath( poOpenInfo->pszFilename));
 							
     //Verify whether it is a map list or a map
     if( EQUAL(ilwistype.c_str(),"MapList") )
@@ -718,8 +721,8 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
             char cBandName[45];
             sprintf( cBandName, "Map%d", iBand);
             string sBandName = ReadElement("MapList", string(cBandName), poOpenInfo->pszFilename);
-            string pszBandBaseName = string(CPLStrdup( CPLGetBasename(sBandName.c_str()) ));
-            string pszBandPath = string(CPLStrdup(CPLGetPath( sBandName.c_str())));
+            string pszBandBaseName = string(CPLGetBasename(sBandName.c_str()) );
+            string pszBandPath = string(CPLGetPath( sBandName.c_str()));
             if ( 0 == pszBandPath.length() )
             { 
                 sBandName = string(CPLFormFilename(sPath.c_str(),
@@ -815,8 +818,8 @@ GDALDataset *ILWISDataset::Open( GDALOpenInfo * poOpenInfo )
             if( !(EQUALN( csy.c_str(), "latlon.csy", 10 )) && 
                 !(EQUALN( csy.c_str(), "LatlonWGS84.csy", 15 )))			
             {
-                string pszBaseName = string(CPLStrdup( CPLGetBasename(csy.c_str()) ));
-                string pszPath = string(CPLStrdup(CPLGetPath( poDS->pszFileName )));
+                string pszBaseName = string(CPLGetBasename(csy.c_str()) );
+                string pszPath = string(CPLGetPath( poDS->pszFileName ));
                 csy = string(CPLFormFilename(pszPath.c_str(),
                                              pszBaseName.c_str(),"csy" ));
                 pszProj = ReadElement("CoordSystem", "Type", csy);
@@ -900,8 +903,8 @@ GDALDataset *ILWISDataset::Create(const char* pszFilename,
 		else if( EQUAL(sStoreType.c_str(),"Real") || EQUAL(sStoreType.c_str(),"float"))
 			stepsize = 0;
 
-    string pszBaseName = string(CPLStrdup( CPLGetBasename( pszFilename )));
-    string pszPath = string(CPLStrdup( CPLGetPath( pszFilename )));
+    string pszBaseName = string(CPLGetBasename( pszFilename ));
+    string pszPath = string(CPLGetPath( pszFilename ));
 		
 /* -------------------------------------------------------------------- */
 /*      Write out object definition file for each band                    */
@@ -1050,8 +1053,8 @@ ILWISDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     if( poDS == NULL )
         return NULL;
-    string pszBaseName = string(CPLStrdup( CPLGetBasename( pszFilename )));
-    string pszPath = string(CPLStrdup( CPLGetPath( pszFilename )));
+    string pszBaseName = string(CPLGetBasename( pszFilename ));
+    string pszPath = string(CPLGetPath( pszFilename ));
 				
 /* -------------------------------------------------------------------- */
 /*  Copy and geo-transform and projection information.                                    */
@@ -1253,9 +1256,9 @@ ILWISRasterBand::ILWISRasterBand( ILWISDataset *poDS, int nBand )
         char cBandName[45];
         sprintf( cBandName, "Map%d", nBand-1);
         sBandName = ReadElement("MapList", string(cBandName), string(poDS->pszFileName));
-        string sInputPath = string(CPLStrdup(CPLGetPath( poDS->pszFileName)));	
-        string sBandPath = string(CPLStrdup(CPLGetPath( sBandName.c_str())));
-        string sBandBaseName = string(CPLStrdup(CPLGetBasename( sBandName.c_str())));
+        string sInputPath = string(CPLGetPath( poDS->pszFileName));	
+        string sBandPath = string(CPLGetPath( sBandName.c_str()));
+        string sBandBaseName = string(CPLGetBasename( sBandName.c_str()));
         if ( 0==sBandPath.length() )
             sBandName = string(CPLFormFilename(sInputPath.c_str(),sBandBaseName.c_str(),"mpr" ));		
         else
@@ -1319,9 +1322,9 @@ void ILWISRasterBand::ILWISOpen(  string pszFileName)
 CPLErr ILWISRasterBand::GetILWISInfo(string pszFileName)
 {
     string domName = ReadElement("BaseMap", "Domain", pszFileName.c_str());
-    string pszBaseName = string(CPLStrdup( CPLGetBasename( domName.c_str()) ));
+    string pszBaseName = string(CPLGetBasename( domName.c_str() ));
     transform(pszBaseName.begin(), pszBaseName.end(), pszBaseName.begin(), tolower);
-    string pszPath = string(CPLStrdup( CPLGetPath( pszFileName.c_str()) ));
+    string pszPath = string(CPLGetPath( pszFileName.c_str() ));
 		
     if (GetStoreType(pszFileName, psInfo.stStoreType) != CE_None)
     {
