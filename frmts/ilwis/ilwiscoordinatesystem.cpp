@@ -26,6 +26,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2006/12/21 14:25:22  lichun
+ * solved memory leaks bug by removing CPLStrdup calls everywhere used for construct a STL string
+ *
  * Revision 1.6  2006/04/04 03:34:52  fwarmerdam
  * fixed up header after review of log history
  *
@@ -1017,8 +1020,8 @@ CPLErr ILWISDataset::WriteProjection()
 		char		*pszP = pszProjection;
 		
 		string csFileName = CPLResetExtension(pszFileName, "csy" );
-		string pszBaseName = string(CPLStrdup( CPLGetBasename( pszFileName )));
-		string pszPath = string(CPLStrdup( CPLGetPath( pszFileName )));
+		string pszBaseName = string(CPLGetBasename( pszFileName ));
+		string pszPath = string(CPLGetPath( pszFileName ));
 		bool fProjection = ((strlen(pszProjection)>0) && (pszProjection != NULL));
 		if( fProjection && (oSRS.importFromWkt( &pszP ) == OGRERR_NONE) )
 		{
