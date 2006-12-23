@@ -89,7 +89,7 @@ The following bindings of GDAL in other languages are available:
 by Timothy H. Keitt.
 <li> Ruby (no docs, but see gdalautotest/ruby for examples)
 <li> Java (no docs ...)
-<li> C# (not really working fully yet)
+<li> C# (mostly operational, see /swig/csharp/apps for examples)
 </ul>
 
 \section index_projects Projects Using GDAL
