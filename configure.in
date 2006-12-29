@@ -617,14 +617,21 @@ else
   GEOTIFF_SETTING=external
 
   dnl We now require libgeotiff 1.2.1 (for XTIFFClientOpen). 
-  AC_CHECK_LIB(geotiff,XTIFFClientOpen,GEOTIFF_SETTING=external,AC_MSG_ERROR([We require at least GeoTIFF 1.2.1. Consider using the one supplied with GDAL]),-L$with_geotiff/lib)
+  dnl first check if $with_geotiff/lib has the library:
+  AC_CHECK_LIB(geotiff,XTIFFClientOpen,GEOTIFF_SETTING=external,GEOTIFF_SETTING=not_found,-L$with_geotiff/lib)
 
-  if test -r $with_geotiff/lib/libgeotiff.a ; then
+  if test $GEOTIFF_SETTING = "external" ; then
     LIBS="-L$with_geotiff/lib -lgeotiff $LIBS"
-    EXTRA_INCLUDES="-I$with_geotiff/include $EXTRA_INCLUDES"
+    if test  -d $with_geotiff/include ; then
+      EXTRA_INCLUDES="-I$with_geotiff/include $EXTRA_INCLUDES"
+    fi
   else
-    LIBS="-L$with_geotiff/lib -lgeotiff $LIBS"
-    EXTRA_INCLUDES="-I$with_geotiff/include $EXTRA_INCLUDES"
+    dnl check if $with_geotiff itself contains the header and library (e.g. as an uninstalled build directory would)
+    AC_CHECK_LIB(geotiff,XTIFFClientOpen,GEOTIFF_SETTING=external,AC_MSG_ERROR([We require at least GeoTIFF 1.2.1. Consider using the one supplied with GDAL]),-L$with_geotiff)
+    if test $GEOTIFF_SETTING = "external" ; then
+      LIBS="-L$with_geotiff -lgeotiff $LIBS"
+      EXTRA_INCLUDES="-I$with_geotiff $EXTRA_INCLUDES"
+    fi
   fi
 
   echo "using libgeotiff from $with_geotiff."
