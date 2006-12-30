@@ -19,7 +19,7 @@ project.  It will be an evolving document.
 GDAL strives to be widely portable to 32bit and 64bit computing environments.
 It accomplishes this in a number of ways - avoid compiler specific directives, 
 avoiding new, but perhaps not widely available aspects of C++, and most 
-importantly by abstacting platform specific operations in CPL functions 
+importantly by abstracting platform specific operations in CPL functions 
 in the gdal/port directory.  
 
 Generally speaking, where available CPL functions should be used in preference
