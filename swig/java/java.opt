@@ -1,9 +1,0 @@
-#
-# Java Stuff
-JAVA_HOME = "/usr/java/j2sdk1.4.2_10"
-JAVADOC=$(JAVA_HOME)\bin\javadoc
-JAVAC=$(JAVA_HOME)\bin\javac
-JAVA=$(JAVA_HOME)\bin\java
-JAR=$(JAVA_HOME)\bin\jar
-JAVA_INCLUDE=-I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux
-
