@@ -1871,6 +1871,12 @@ SWIGINTERN GDALDatasetShadow *GDALDriverShadow_CreateCopy(GDALDriverShadow *self
 SWIGINTERN int GDALDriverShadow_Delete(GDALDriverShadow *self,char const *name){
     return GDALDeleteDataset( self, name );
   }
+SWIGINTERN int GDALDriverShadow_Register(GDALDriverShadow *self){
+    return GDALRegisterDriver( self );
+  }
+SWIGINTERN void GDALDriverShadow_Deregister(GDALDriverShadow *self){
+    return GDALDeregisterDriver( self );
+  }
 
 char const *GDALDriverShadow_ShortName_get( GDALDriverShadow *h ) {
   return GDALGetDriverShortName( h );
@@ -3775,6 +3781,67 @@ _wrap_Driver_delete(int argc, VALUE *argv, VALUE self) {
   return vresult;
 fail:
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_Driver_register(int argc, VALUE *argv, VALUE self) {
+  GDALDriverShadow *arg1 = (GDALDriverShadow *) 0 ;
+  int result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  VALUE vresult = Qnil;
+  
+  if ((argc < 0) || (argc > 0)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Register" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDriverShadow * >(argp1);
+  {
+    CPLErrorReset();
+    result = (int)GDALDriverShadow_Register(arg1);
+    CPLErr eclass = CPLGetLastErrorType();
+    if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+      SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      
+    }
+  }
+  vresult = SWIG_From_int(static_cast< int >(result));
+  return vresult;
+fail:
+  return Qnil;
+}
+
+
+SWIGINTERN VALUE
+_wrap_Driver_deregister(int argc, VALUE *argv, VALUE self) {
+  GDALDriverShadow *arg1 = (GDALDriverShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  
+  if ((argc < 0) || (argc > 0)) {
+    rb_raise(rb_eArgError, "wrong # of arguments(%d for 0)",argc); SWIG_fail;
+  }
+  res1 = SWIG_ConvertPtr(self, &argp1,SWIGTYPE_p_GDALDriverShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Deregister" "', argument " "1"" of type '" "GDALDriverShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< GDALDriverShadow * >(argp1);
+  {
+    CPLErrorReset();
+    GDALDriverShadow_Deregister(arg1);
+    CPLErr eclass = CPLGetLastErrorType();
+    if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+      SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      
+    }
+  }
+  return Qnil;
+fail:
   return Qnil;
 }
 
@@ -9351,6 +9418,8 @@ SWIGEXPORT void Init_gdal(void) {
   rb_define_method(cDriver.klass, "create", VALUEFUNC(_wrap_Driver_create), -1);
   rb_define_method(cDriver.klass, "create_copy", VALUEFUNC(_wrap_Driver_create_copy), -1);
   rb_define_method(cDriver.klass, "delete", VALUEFUNC(_wrap_Driver_delete), -1);
+  rb_define_method(cDriver.klass, "register", VALUEFUNC(_wrap_Driver_register), -1);
+  rb_define_method(cDriver.klass, "deregister", VALUEFUNC(_wrap_Driver_deregister), -1);
   cDriver.mark = 0;
   cDriver.trackObjects = 0;
   
