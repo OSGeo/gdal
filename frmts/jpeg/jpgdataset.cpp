@@ -31,6 +31,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.47  2007/01/02 03:35:28  fwarmerdam
+ * Added config based support for simple jpeg files.
+ *
  * Revision 1.46  2006/12/17 23:37:56  fwarmerdam
  * support JPEG files with multiple header chunks
  *
@@ -1306,9 +1309,14 @@ GDALDataset *JPGDataset::Open( GDALOpenInfo * poOpenInfo )
             break;
         else if( subfile_offset != 0 )
             /* ok - we don't require app segment on "subfiles" which 
-               can be just part of a multi-image stream - ie. in nitf files */;
-
+               can be just part of a multi-image stream - ie. in nitf files */
+            break;
+        else if( CSLTestBoolean(
+                     CPLGetConfigOption( "SIMPLE_JPEG_MAGIC", "NO" ) ) )
+            /* Explicit request to allow non-app segment files */
+            break;
     } /* next chunk */
+
     if( poOpenInfo->eAccess == GA_Update )
     {
         CPLError( CE_Failure, CPLE_NotSupported, 
