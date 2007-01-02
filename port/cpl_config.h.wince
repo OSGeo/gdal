@@ -10,6 +10,10 @@
 /* Define if you don't have vprintf but do have _doprnt.  */
 #undef HAVE_DOPRNT
 
+/* Define if you have the snprintf function.  */
+#define HAVE_SNPRINTF
+#define snprintf _snprintf
+
 /* Define if you have the vprintf function.  */
 #define HAVE_VPRINTF
 #define HAVE_VSNPRINTF
