@@ -19,8 +19,8 @@
 
    % cvs2cl.pl > AutoChangeLog
 
-5) Update the GDAL doc/index_raw.html to refer to the 
-   newly to be created version, and commit. 
+5) Update the GDAL doc/index.doc to refer to the newly to be created version, 
+   and commit. 
 
 6) Tag the release set in CVS: 
 
@@ -43,7 +43,8 @@
  % cd 
  % zip -r ~/gdal-web/dl/gdalXXXdoc.zip gdal-web/*.* gdal-web/ogr
 
-8) Publish the resulting files on www.gdal.org/gdal-web/dl.
+8) Publish the resulting files on www.gdal.org/gdal-web/dl and 
+   download.osgeo.org in /osgeo/download/gdal.
 
 9) Announce release to the gdal-dev@lists.maptools.org, and freegis@freegis.org
 
