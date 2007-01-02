@@ -4,6 +4,26 @@ GDAL/OGR port for Window CE
 Mateusz Loskot, mateusz@loskot.net
 =============================================================================
 
+
+
+*** IMPORTANT ***
+
+Following instructions are being rewriting, so please don't use them ATM.
+Final version will be available in a few days!
+
+*****************
+
+
+
+
+
+
+
+
+
+
+
+
 GDAL/OGR for Windows CE features:
 - all base OGR API and modules (port, ogr)
 - subset of OGR drivers (ogr\ogrsf_frmts): generic, mitab, shape
