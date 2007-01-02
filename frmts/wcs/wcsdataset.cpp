@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.7  2007/01/02 14:44:20  fwarmerdam
+ * Added support for service description in the url.
+ *
  * Revision 1.6  2007/01/02 05:44:23  fwarmerdam
  * Added "optimized" RasterIO() method implementations.
  *
@@ -458,7 +461,7 @@ WCSDataset::~WCSDataset()
 
 {
     // perhaps this should be moved into a FlushCache() method.
-    if( bServiceDirty )
+    if( bServiceDirty && !EQUALN(GetDescription(),"<WCS_GDAL>",10) )
     {
         CPLSerializeXMLTreeToFile( psService, GetDescription() );
         bServiceDirty = FALSE;
@@ -1106,16 +1109,24 @@ GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
 /* -------------------------------------------------------------------- */
-/*      Is this a WCS_GDAL service description file?                    */
+/*      Is this a WCS_GDAL service description file or "in url"         */
+/*      equivelent?                                                     */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 10
-        || !EQUALN((const char *) poOpenInfo->pabyHeader,"<WCS_GDAL>",10) )
+    CPLXMLNode *psService = NULL;
+
+    if( poOpenInfo->nHeaderBytes == 0 
+        && EQUALN((const char *) poOpenInfo->pszFilename,"<WCS_GDAL>",10) )
+    {
+        psService = CPLParseXMLString( poOpenInfo->pszFilename );
+    }
+    else if( poOpenInfo->nHeaderBytes >= 10
+             && EQUALN((const char *) poOpenInfo->pabyHeader,"<WCS_GDAL>",10) )
+    {
+        psService = CPLParseXMLFile( poOpenInfo->pszFilename );
+    }
+    else
         return NULL;
 
-/* -------------------------------------------------------------------- */
-/*      Read and parse the service description file.                    */
-/* -------------------------------------------------------------------- */
-    CPLXMLNode *psService = CPLParseXMLFile( poOpenInfo->pszFilename );
     if( psService == NULL )
         return NULL;
 
