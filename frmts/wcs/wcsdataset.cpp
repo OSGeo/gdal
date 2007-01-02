@@ -28,6 +28,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.6  2007/01/02 05:44:23  fwarmerdam
+ * Added "optimized" RasterIO() method implementations.
+ *
  * Revision 1.5  2006/11/28 03:23:51  fwarmerdam
  * various improvements to error trapping
  *
@@ -74,6 +77,10 @@ class CPL_DLL WCSDataset : public GDALPamDataset
     char        *pszProjection;
     double      adfGeoTransform[6];
 
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              int, int *, int, int, int );
+
     int		DescribeCoverage();
     int         ExtractGridInfo();
     int         EstablishRasterDetails();
@@ -112,6 +119,10 @@ class WCSRasterBand : public GDALPamRasterBand
     int            nOverviewCount;
     WCSRasterBand **papoOverviews;
     
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                              void *, int, int, GDALDataType,
+                              int, int );
+
   public:
 
                    WCSRasterBand( WCSDataset *, int nBand, int iOverview );
@@ -353,6 +364,24 @@ CPLErr WCSRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr WCSRasterBand::IRasterIO( GDALRWFlag eRWFlag,
+                                 int nXOff, int nYOff, int nXSize, int nYSize,
+                                 void * pData, int nBufXSize, int nBufYSize,
+                                 GDALDataType eBufType,
+                                 int nPixelSpace, int nLineSpace )
+    
+{
+    // Try optimized paths through dataset level rasterio.
+
+    return poDS->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, 
+                           nBufXSize, nBufYSize, eBufType, 
+                           1, &nBand, nPixelSpace, nLineSpace, 0 );
+}
+
+/************************************************************************/
 /*                           GetNoDataValue()                           */
 /************************************************************************/
 
@@ -441,6 +470,136 @@ WCSDataset::~WCSDataset()
     pszProjection = NULL;
 
     FlushMemoryResult();
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr WCSDataset::IRasterIO( GDALRWFlag eRWFlag,
+                              int nXOff, int nYOff, int nXSize, int nYSize,
+                              void * pData, int nBufXSize, int nBufYSize,
+                              GDALDataType eBufType, 
+                              int nBandCount, int *panBandMap,
+                              int nPixelSpace, int nLineSpace, int nBandSpace)
+
+{
+/* -------------------------------------------------------------------- */
+/*      We need various criteria to skip out to block based methods.    */
+/* -------------------------------------------------------------------- */
+    int bUseBlockedIO = bForceCachedIO;
+
+    if( nYSize == 1 || nXSize * ((double) nYSize) < 100.0 )
+        bUseBlockedIO = TRUE;
+
+    if( nBufYSize == 1 || nBufXSize * ((double) nBufYSize) < 100.0 )
+        bUseBlockedIO = TRUE;
+
+    if( CSLTestBoolean( CPLGetConfigOption( "GDAL_ONE_BIG_READ", "NO") ) )
+        bUseBlockedIO = FALSE;
+
+    if( bUseBlockedIO )
+        return GDALDataset::BlockBasedRasterIO( 
+            eRWFlag, nXOff, nYOff, nXSize, nYSize,
+            pData, nBufXSize, nBufYSize, eBufType, 
+            nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace );
+
+/* -------------------------------------------------------------------- */
+/*      Figure out the georeferenced extents.                           */
+/* -------------------------------------------------------------------- */
+    double dfMinX, dfMaxX, dfMinY, dfMaxY;
+    
+    dfMinX = adfGeoTransform[0] + 
+        (nXOff + 0.5) * adfGeoTransform[1];
+    dfMaxX = adfGeoTransform[0] + 
+        (nXOff+nXSize + 0.5) * adfGeoTransform[1];
+    dfMaxY = adfGeoTransform[3] + 
+        (nYOff + 0.5) * adfGeoTransform[5];
+    dfMinY = adfGeoTransform[3] + 
+        (nYOff + nYSize + 0.5) * adfGeoTransform[5];
+
+/* -------------------------------------------------------------------- */
+/*      Construct a simple GetCoverage request.                         */
+/* -------------------------------------------------------------------- */
+    CPLString osRequest;
+
+    osRequest.Printf( 
+        "%sSERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&COVERAGE=%s"
+        "&FORMAT=%s&BBOX=%.15g,%.15g,%.15g,%.15g&WIDTH=%d&HEIGHT=%d&CRS=%s",
+        CPLGetXMLValue( psService, "ServiceURL", "" ),
+        CPLGetXMLValue( psService, "CoverageName", "" ),
+        CPLGetXMLValue( psService, "PreferredFormat", "" ),
+        dfMinX, dfMinY, dfMaxX, dfMaxY,
+        nBufXSize, nBufYSize,
+        osCRS.c_str() ); 
+
+/* -------------------------------------------------------------------- */
+/*      Fetch the result.                                               */
+/* -------------------------------------------------------------------- */
+    CPLString osTimeout = "TIMEOUT=";
+    osTimeout += CPLGetXMLValue( psService, "Timeout", "30" );
+    char *apszOptions[] = { 
+        (char *) osTimeout.c_str(),
+        NULL 
+    };
+
+    CPLErrorReset();
+    
+    CPLHTTPResult *psResult = CPLHTTPFetch( osRequest, apszOptions );
+
+    if( ProcessError( psResult ) )
+        return CE_Failure;
+
+/* -------------------------------------------------------------------- */
+/*      Try and open result as a dataseat.                               */
+/* -------------------------------------------------------------------- */
+    GDALDataset *poTileDS = GDALOpenResult( psResult );
+
+    if( poTileDS == NULL )
+        return CE_Failure;
+
+/* -------------------------------------------------------------------- */
+/*      Verify configuration.                                           */
+/* -------------------------------------------------------------------- */
+    if( poTileDS->GetRasterCount() != GetRasterCount()
+        || poTileDS->GetRasterXSize() != nBufXSize
+        || poTileDS->GetRasterYSize() != nBufYSize )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "Returned tile does not match expected configuration." );
+        return CE_Failure;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Process all bands of memory result, copying into pBuffer, or    */
+/*      pushing into cache for other bands.                             */
+/* -------------------------------------------------------------------- */
+    int iBand;
+    CPLErr eErr = CE_None;
+    
+    for( iBand = 0; 
+         iBand < nBandCount && eErr == CE_None; 
+         iBand++ )
+    {
+        GDALRasterBand *poTileBand = 
+            poTileDS->GetRasterBand( panBandMap[iBand] );
+
+        eErr = poTileBand->RasterIO( GF_Read, 
+                                     0, 0, nBufXSize, nBufYSize,
+                                     ((GByte *) pData) + 
+                                     (panBandMap[iBand]-1) * nBandSpace, 
+                                     nBufXSize, nBufYSize, 
+                                     eBufType, nPixelSpace, nLineSpace );
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Cleanup                                                         */
+/* -------------------------------------------------------------------- */
+    delete poTileDS;
+    
+    FlushMemoryResult();
+
+    return eErr;
 }
 
 /************************************************************************/
