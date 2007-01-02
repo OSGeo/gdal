@@ -22,7 +22,7 @@ The related <a href="ogr">OGR</a> library (which lives within the GDAL source tr
 provides a similar capability for simple features vector data.
 
 Master: http://www.gdal.org<br>
-Mirrors: http://gdal.osgeo.org, http://gdal.maptools.org<br>
+Mirrors: <a href="http://gdal.osgeo.org">http://gdal.osgeo.org</a>, http://gdal.maptools.org<br>
 Download: 
  <a href="http://www.gdal.org/dl">http at gdal.org</a>,
  <a href="ftp://ftp.remotesensing.org/gdal">ftp at remotesensing.org</a>,
