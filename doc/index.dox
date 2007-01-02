@@ -16,7 +16,7 @@ Geospatial Foundation</a>.  As a library, it presents a
 to the calling application for all supported formats.  It also comes with a variety
 of useful \link gdal_utilities.html commandline utilities\endlink
 for data translation and processing.  The \link NEWS.html NEWS\endlink 
-page describes the Dec 2006 GDAL 1.4.0 release.
+page describes the January 2007 GDAL 1.4.0 release.
 
 The related <a href="ogr">OGR</a> library (which lives within the GDAL source tree) 
 provides a similar capability for simple features vector data.
