@@ -16,17 +16,17 @@ Geospatial Foundation</a>.  As a library, it presents a
 to the calling application for all supported formats.  It also comes with a variety
 of useful \link gdal_utilities.html commandline utilities\endlink
 for data translation and processing.  The \link NEWS.html NEWS\endlink 
-page describes the Dec 2006 GDAL 1.4.0 release.
+page describes the January 2007 GDAL 1.4.0 release.
 
 The related <a href="ogr">OGR</a> library (which lives within the GDAL source tree) 
 provides a similar capability for simple features vector data.
 
 Master: http://www.gdal.org<br>
-Mirrors: http://gdal.osgeo.org, http://gdal.maptools.org<br>
+Mirror: http://gdal.maptools.org<br>
 Download: 
  <a href="http://www.gdal.org/dl">http at gdal.org</a>,
  <a href="ftp://ftp.remotesensing.org/gdal">ftp at remotesensing.org</a>,
- <a href="https://gdal.osgeo.org/servlets/ProjectDocumentList?folderID=40&expandFolder=40&folderID=0">http at osgeo.org</a>
+ <a href="http://download.osgeo.org/gdal">http at osgeo.org</a>
 
 \section index_userdocs User Oriented Documentation
 
