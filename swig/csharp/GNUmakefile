@@ -36,7 +36,7 @@ $(CSHARP_MODULES): lib%csharp.$(SO_EXT): %_wrap.o
 	$(LD_SHARED) $(LDFLAGS) $(CONFIG_LIBS) $< -o $@
 	rm -rf $*_csharp.dll.config
 	echo "<configuration>" >> $*_csharp.dll.config
-	echo "<dllmap dll=\""$*"_wrap\" target=\"./"$@"\">" >> $*_csharp.dll.config
+	echo "<dllmap dll=\""$*"_wrap\" target=\""$@"\">" >> $*_csharp.dll.config
 	echo "</configuration>" >> $*_csharp.dll.config
 
 %.o: %.cpp
@@ -66,6 +66,5 @@ samples:
 	$(CSC) /r:gdal_csharp.dll /out:ReadXML.exe apps/ReadXML.cs
 
 test:
-	LC_ALL=C mono createdata.exe Data pointlayer
-	LC_ALL=C mono ogrinfo.exe Data/pointlayer.shp
-	LC_ALL=C mono OSRTransform.exe
+	LC_ALL=C LD_LIBRARY_PATH=$(GDAL_ROOT) mono createdata.exe Data pointlayer
+	LC_ALL=C LD_LIBRARY_PATH=$(GDAL_ROOT) mono ogrinfo.exe Data/pointlayer.shp
