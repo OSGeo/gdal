@@ -36,7 +36,7 @@ $(CSHARP_MODULES): lib%csharp.$(SO_EXT): %_wrap.o
 	$(LD_SHARED) $(LDFLAGS) $(CONFIG_LIBS) $< -o $@
 	rm -rf $*_csharp.dll.config
 	echo "<configuration>" >> $*_csharp.dll.config
-	echo "<dllmap dll=\""$*"_wrap\" target=\""$@"\">" >> $*_csharp.dll.config
+	echo "<dllmap dll=\""$*"_wrap\" target=\"./"$@"\">" >> $*_csharp.dll.config
 	echo "</configuration>" >> $*_csharp.dll.config
 
 %.o: %.cpp
