@@ -66,5 +66,6 @@ samples:
 	$(CSC) /r:gdal_csharp.dll /out:ReadXML.exe apps/ReadXML.cs
 
 test:
-	LC_ALL=C LD_LIBRARY_PATH=$(GDAL_ROOT) mono createdata.exe Data pointlayer
-	LC_ALL=C LD_LIBRARY_PATH=$(GDAL_ROOT) mono ogrinfo.exe Data/pointlayer.shp
+	LC_ALL=C mono createdata.exe Data pointlayer
+	LC_ALL=C mono ogrinfo.exe Data/pointlayer.shp
+	LC_ALL=C mono OSRTransform.exe
