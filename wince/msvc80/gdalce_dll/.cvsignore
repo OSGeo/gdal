@@ -1,0 +1,15 @@
+*~
+*.dll
+*.dll.manifest 
+*.exe
+*.exe.manifest 
+*.exp
+*.ilk
+*.lib
+*.ncb
+*.obj
+*.pdb
+*.suo
+*.swp
+*.vcproj.*.user
+*ARMV4*
