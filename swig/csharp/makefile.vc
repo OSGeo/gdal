@@ -50,7 +50,7 @@ gdal_csharp:
     link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) gdalconst_wrap.obj \
 		$(EXTERNAL_LIBS) $(GDALLIB)\
 		 /out:gdal_gdalconst_wrap.dll $(LINKER_FLAGS)
-	if exist gdal_gdalconst_wrap.dll.manifest mt -manifest gdal_gdalconst_wrap.dll.manifest -outputresource:gdal_ogr_wrap.dll;2
+	if exist gdal_gdalconst_wrap.dll.manifest mt -manifest gdal_gdalconst_wrap.dll.manifest -outputresource:gdal_gdalconst_wrap.dll;2
     link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) osr_wrap.obj \
 		$(EXTERNAL_LIBS) $(GDALLIB)\
 		 /out:gdal_osr_wrap.dll $(LINKER_FLAGS)
