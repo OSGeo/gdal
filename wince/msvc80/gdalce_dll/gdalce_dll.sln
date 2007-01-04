@@ -5,7 +5,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gdalce_dll", "gdalce_dll.vc
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{88953934-D658-4765-9710-A22237DEEBB1}"
 	ProjectSection(SolutionItems) = preProject
-		..\..\.cvsignore = ..\..\.cvsignore
 		..\..\README = ..\..\README
 		..\..\TODO = ..\..\TODO
 	EndProjectSection
