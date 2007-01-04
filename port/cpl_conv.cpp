@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2007/01/04 21:31:44  fwarmerdam
+ * Ensure that CPLReadLineL() returns NULL at end of file.
+ *
  * Revision 1.59  2006/12/18 17:49:04  dreamil
  * Modified CPLReadLineL() to fix
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=1374
@@ -758,7 +761,7 @@ const char *CPLReadLineL( FILE * fp )
             // fresh read.
             nChunkBytesRead = VSIFReadL( szChunk, 1, nChunkSize, fp );
             if( nChunkBytesRead == 0 )
-                break;
+                return NULL;
         }
         
 /* -------------------------------------------------------------------- */
