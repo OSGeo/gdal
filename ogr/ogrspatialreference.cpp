@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.105  2007/01/05 21:34:50  fwarmerdam
+ * Added note about ESRI:: support in SetFromUserInput().
+ *
  * Revision 1.104  2006/12/18 16:22:51  fwarmerdam
  * added support for x-ogc as well as ogc namespace
  *
@@ -1572,6 +1575,8 @@ OGRErr OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS,
  * <li> filename - file read for WKT, XML or PROJ.4 definition.
  * <li> well known name accepted by SetWellKnownGeogCS(), such as NAD27, NAD83,
  * WGS84 or WGS72. 
+ * <li> WKT (directly or in a file) in ESRI format should be prefixed with
+ * ESRI:: to trigger an automatic morphFromESRI().
  * </ol>
  *
  * It is expected that this method will be extended in the future to support
