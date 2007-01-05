@@ -1,0 +1,74 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
+/*!
+\page rfc9_maintainer RFC 9: GDAL Paid Maintainer Guidelines
+
+Author: Frank Warmerdam<br>
+Contact: warmerdam@pobox.com<br>
+Status: Draft<br>
+
+\section rfc9_purpose Purpose
+
+To formalize guidelines for the work of maintainers paid out of GDAL project
+sponsorship funds.
+
+\section rfc9_responsibilities Responsibilities
+
+<ol>
+<li> Analyse and where possible fix bugs reported against GDAL.
+<li> Run, review and extend the test suite (via buildbot, etc). 
+<li> Maintain and extend documentation.
+<li> Assist integrating new contributed features.
+<li> Help maintain project infrastructure (mailing lists, buildbot, source 
+control, etc)
+<li> Provide user support on the project mailing lists, and in other venues.
+<li> Develop new capabilities.
+</ol>
+
+Bug fixing and maintenance should be focused on GDAL/OGR, but will as
+needed extend into sub-projects such as libtiff, libgeotiff, Shapelib and
+MITAB as long it is to serve a need of the GDAL/OGR project.
+
+\section rfc9_direction Direction
+
+The maintainer is generally subject to the project PSC.  However, for day 
+to day decisions one PSC member will be designated as the supervisor for
+the maintainer.  This supervisor will prioritize work via email, bug 
+assignments, and IRC discussions.
+
+The supervisor will try to keep the following in mind when prioritizing tasks.
+
+<ul>
+<li> Bug reports, and support needs of Sponsors should be given higher 
+priority than other tasks. 
+<li> Areas of focus identified by the PSC (ie. multi-threading, SWIG scripting)
+should be given higher priority than other tasks.
+<li> Bugs or needs that affect many users should have higher priority.
+<li> The maintainer should be used to take care of work that no one else
+is willing and able to do (ie. fill the holes, rather than displacing 
+volunteers)
+<li> Try to avoid tieing up the maintainer on one big task for many weeks
+unless directed by the PSC.  
+<li> The maintainer should not be directed to do work for which someone else
+is getting paid. 
+</ul>
+
+Substantial new development projects will only be taken on by the maintainer
+with the direction of a PSC motion (or possibly an RFC designating the 
+maintainer to work on a change).
+
+Note that the maintainer and the maintainer supervisor are subject to the
+normal RFC process for any substantial change to GDAL. 
+
+\section rfc9_reporting Reporting
+
+The maintainer will produce a brief weekly report to the gdal-dev list 
+indicating tasks worked on with time spent on the tasks. 
+
+This is intended to provide visibility into status, accomplishments, and
+time allocation.  It also gives an opportunity for the PSC to request a
+"course correction" fairly promptly.
+
+*/
