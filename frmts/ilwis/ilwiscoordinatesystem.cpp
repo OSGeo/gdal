@@ -26,6 +26,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2007/01/05 16:02:59  lichun
+ * Improved Lambert Conformal Conic projection handling from GDAL to ILWIS
+ *
  * Revision 1.7  2006/12/21 14:25:22  lichun
  * solved memory leaks bug by removing CPLStrdup calls everywhere used for construct a STL string
  *
@@ -898,6 +901,21 @@ void WriteLambertConformalConic(string csFileName, OGRSpatialReference oSRS)
 				WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000"); 
 }
 
+void WriteLambertConformalConic2SP(string csFileName, OGRSpatialReference oSRS)
+{
+	      WriteProjectionName(csFileName, "Lambert Conformal Conic");
+				WriteFalseEastNorth(csFileName, oSRS);
+				WriteElement("Projection", ILW_Central_Meridian, csFileName, 
+											oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
+				WriteElement("Projection", ILW_Central_Parallel, csFileName, 
+											oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
+				WriteElement("Projection", ILW_Scale_Factor, csFileName, "1.0000000000"); 
+				WriteElement("Projection", ILW_Standard_Parallel_1, csFileName, 
+											oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0)); 
+				WriteElement("Projection", ILW_Standard_Parallel_2, csFileName, 
+											oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0));
+}
+
 void WriteLambertAzimuthalEqualArea(string csFileName, OGRSpatialReference oSRS)
 {
 	      WriteProjectionName(csFileName, "Lambert Azimuthal EqualArea");
@@ -1138,6 +1156,14 @@ CPLErr ILWISDataset::WriteProjection()
 		else if( EQUAL(pszProjName,"Lambert_Conformal_Conic") )
     {
 				WriteLambertConformalConic(csFileName, oSRS);
+		}
+		else if( EQUAL(pszProjName,SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP) )
+    {
+				WriteLambertConformalConic(csFileName, oSRS);
+		}
+		else if( EQUAL(pszProjName,SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
+    {
+				WriteLambertConformalConic2SP(csFileName, oSRS);
 		}
 		else if( EQUAL(pszProjName,SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA) )
     {
