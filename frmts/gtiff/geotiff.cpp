@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.174  2007/01/05 03:54:02  fwarmerdam
+ * handle tiff files with improper color table scaling (bug 1384)
+ *
  * Revision 1.173  2006/11/29 05:42:11  fwarmerdam
  * Fixed problem that was scrubbing GCP projections on write.
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=1354
@@ -2893,7 +2896,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
     }
     else
     {
-        int	nColorCount;
+        int	nColorCount, nMaxColor = 0;
         GDALColorEntry oEntry;
 
         poColorTable = new GDALColorTable();
@@ -2908,6 +2911,28 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn, uint32 nDirOffsetIn,
             oEntry.c4 = 255;
 
             poColorTable->SetColorEntry( iColor, &oEntry );
+
+            nMaxColor = MAX(nMaxColor,panRed[iColor]);
+            nMaxColor = MAX(nMaxColor,panGreen[iColor]);
+            nMaxColor = MAX(nMaxColor,panBlue[iColor]);
+        }
+
+        // Bug 1384 - Some TIFF files are generated with color map entry
+        // values in range 0-255 instead of 0-65535 - try to handle these
+        // gracefully.
+        if( nMaxColor > 0 && nMaxColor < 256 )
+        {
+            CPLDebug( "GTiff", "TIFF ColorTable seems to be improperly scaled, fixing up." );
+            
+            for( int iColor = nColorCount - 1; iColor >= 0; iColor-- )
+            {
+                oEntry.c1 = panRed[iColor];
+                oEntry.c2 = panGreen[iColor];
+                oEntry.c3 = panBlue[iColor];
+                oEntry.c4 = 255;
+                
+                poColorTable->SetColorEntry( iColor, &oEntry );
+            }
         }
     }
     
