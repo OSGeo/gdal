@@ -52,14 +52,21 @@ binaries</a> and
 
 \section download_sources Source
 
-GDAL source releases are available in tar.gz and zip from from the
-GDAL primary ftp site, and http mirror site:
+The latest stable release source (1.4.0) is available at:<p>
 
-<a href="http://www.gdal.org/dl">http://www.gdal.org/dl</a><p>
-<a href="http://download.osgeo.org/gdal/">http://download.osgeo.org/gdal</a><p>
+<a href="http://www.gdal.org/dl/gdal-1.4.0.tar.gz">gdal-1.4.0.tar.gz</a> (source)<br>
+<a href="http://www.gdal.org/dl/gdal140.zip">gdal140.zip</a> (source)<br>
+<a href="http://www.gdal.org/dl/gdal140doc.zip">gdal140doc.zip</a> (html docs)<br>
+<a href="http://www.gdal.org/dl/gdalautotest-1.4.0.tar.gz">gdalautotest-1.4.0.tar.gz</a> (python test suite)<p>
 
 The <a href="NEWS.html">NEWS</a> file describes features added up to the
 most recent public release.<p>
+
+Past GDAL source releases, and other files are available from from the
+GDAL primary site, and the mirror site:
+
+<a href="http://www.gdal.org/dl">http://www.gdal.org/dl</a><br>
+<a href="http://download.osgeo.org/gdal/">http://download.osgeo.org/gdal</a><p>
 
 Late each night a development snapshot is captured from CVS and made available.
 These snapshots are not stable releases, and might (on a bad night) not even
