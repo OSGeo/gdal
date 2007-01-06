@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2007/01/06 17:03:35  fwarmerdam
+ * Fixed last fix.  It was returning NULL in other conditions such as
+ * a file with no terminating newline (gdalautotest/gdrivers/aaigrid.py).
+ *
  * Revision 1.60  2007/01/04 21:31:44  fwarmerdam
  * Ensure that CPLReadLineL() returns NULL at end of file.
  *
@@ -761,7 +765,12 @@ const char *CPLReadLineL( FILE * fp )
             // fresh read.
             nChunkBytesRead = VSIFReadL( szChunk, 1, nChunkSize, fp );
             if( nChunkBytesRead == 0 )
-                return NULL;
+            {
+                if( nBufLength == 0 )
+                    return NULL;
+                else
+                    break;
+            }
         }
         
 /* -------------------------------------------------------------------- */
