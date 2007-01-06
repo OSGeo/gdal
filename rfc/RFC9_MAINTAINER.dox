@@ -27,9 +27,14 @@ control, etc)
 <li> Develop new capabilities.
 </ol>
 
-Bug fixing and maintenance should be focused on GDAL/OGR, but will as
-needed extend into sub-projects such as libtiff, libgeotiff, Shapelib and
+Bug fixing and maintenance should be focused on GDAL/OGR, but as
+needed will extend into sub-projects such as libtiff, libgeotiff, Shapelib and
 MITAB as long it is to serve a need of the GDAL/OGR project.
+
+In order to provide reasonable response times the maintainer is expected spend
+some time each week addressing new bugs and user support.  If the maintainer
+will be unavailable for an extended period of time (vacation, etc) then 
+the supervisor should be notified.
 
 \section rfc9_direction Direction
 
@@ -64,7 +69,7 @@ normal RFC process for any substantial change to GDAL.
 
 \section rfc9_reporting Reporting
 
-The maintainer will produce a brief weekly report to the gdal-dev list 
+The maintainer will produce a brief bi-weekly report to the gdal-dev list 
 indicating tasks worked on with time spent on the tasks. 
 
 This is intended to provide visibility into status, accomplishments, and
