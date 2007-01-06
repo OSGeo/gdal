@@ -9,6 +9,7 @@ man
 *.pdb
 *.dll
 *.dll.manifest 
+*.dylib
 *.exp
 *.ilk
 *~
