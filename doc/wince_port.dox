@@ -5,6 +5,17 @@
 /*!
 \page wince GDAL for Windows CE
 
+
+<center>
+<p><b>IMPORTANT</b></p>
+<p><b>
+Following instructions are under reconstruction and the final version will be available before 8th Januray 2007.<br>
+If you're looking for instructions for GDAL 1.4.0, please wait a day or two, when this guide is updated.<br>
+I appologize for inconvenience! 
+</b></p>
+</center>
+
+
 \section wince_overview Overview
 
 This document is devoted to give some overview of the GDAL port for Windows CE operating system. The OGR port is the first attempt to get GDAL library working on Windows CE.
