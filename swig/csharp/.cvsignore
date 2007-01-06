@@ -1,0 +1,7 @@
+*~
+*.dll
+*.dll.*
+*.exe
+*.o
+*.so
+Data
