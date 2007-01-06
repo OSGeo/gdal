@@ -20,7 +20,8 @@
    % cvs2cl.pl > AutoChangeLog
 
 5) Update the GDAL doc/index.doc to refer to the newly to be created version, 
-   and commit. 
+   and commit.  Update the doc/download.dox to point to the newest release
+   (there should be 4 lines / 8 items to change)
 
 6) Tag the release set in CVS: 
 
@@ -42,6 +43,8 @@
  % gdalhtmlupdate.sh
  % cd 
  % zip -r ~/gdal-web/dl/gdalXXXdoc.zip gdal-web/*.* gdal-web/ogr
+
+7.6) Create a snapshot of gdalautotest. 
 
 8) Publish the resulting files on www.gdal.org/gdal-web/dl and 
    download.osgeo.org in /osgeo/download/gdal.
