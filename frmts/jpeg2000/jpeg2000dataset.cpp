@@ -28,8 +28,11 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.23  2007/01/07 16:14:55  dron
+ * Properly duplicate the GCP list instead of copying the array pointer.
+ *
  * Revision 1.22  2007/01/07 15:45:53  dron
- * Updated to the latest JasPer (1.900.1).
+ * Updated to the latest JasPer (1.900.0).
  *
  * Revision 1.21  2006/04/07 05:37:51  fwarmerdam
  * modify to use GDALJP2Metadata class
@@ -505,10 +508,7 @@ JPEG2000Dataset::~JPEG2000Dataset()
         CPLFree( pszProjection );
     if( nGCPCount > 0 )
     {
-        for( int i = 0; i < nGCPCount; i++ )
-            if ( pasGCPList[i].pszId )
-                CPLFree( pasGCPList[i].pszId );
-
+        GDALDeinitGCPs( nGCPCount, pasGCPList );
         CPLFree( pasGCPList );
     }
     if( fp != NULL )
@@ -772,8 +772,8 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
         memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform, 
                 sizeof(double) * 6 );
         poDS->nGCPCount = oJP2Geo.nGCPCount;
-        poDS->pasGCPList = oJP2Geo.pasGCPList;
-        oJP2Geo.pasGCPList = NULL;
+        poDS->pasGCPList =
+            GDALDuplicateGCPs( oJP2Geo.nGCPCount, oJP2Geo.pasGCPList );
     }
 
 /* -------------------------------------------------------------------- */
