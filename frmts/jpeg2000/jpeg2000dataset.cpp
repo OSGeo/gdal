@@ -28,6 +28,9 @@
  ******************************************************************************
  * 
  * $Log$
+ * Revision 1.22  2007/01/07 15:45:53  dron
+ * Updated to the latest JasPer (1.900.1).
+ *
  * Revision 1.21  2006/04/07 05:37:51  fwarmerdam
  * modify to use GDALJP2Metadata class
  *
@@ -103,16 +106,10 @@ CPL_CVSID("$Id$");
 
 CPL_C_START
 void    GDALRegister_JPEG2000(void);
-#ifdef HAVE_JASPER_UUID
-CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT, 
-                                  const double *padfGeoTransform,
-                                  int nGCPCount, const GDAL_GCP *pasGCPList,
-                                  int *pnSize, unsigned char **ppabyBuffer );
-#endif
 CPL_C_END
 
 // XXX: Part of code below extracted from the JasPer internal headers and
-// must be in sync with JasPer version (this one works with JasPer 1.700.2)
+// must be in sync with JasPer version (this one works with JasPer 1.900.0)
 #define JP2_FTYP_MAXCOMPATCODES 32
 #define JP2_BOX_IHDR    0x69686472      /* Image Header */
 #define JP2_BOX_BPCC    0x62706363      /* Bits Per Component */
@@ -177,7 +174,7 @@ typedef struct {
 
 #ifdef HAVE_JASPER_UUID
 typedef struct {
-        uint_fast32_t data_len;
+        uint_fast32_t datalen;
         uint_fast8_t uuid[16];
         uint_fast8_t *data;
 } jp2_uuid_t;
@@ -190,10 +187,12 @@ typedef struct {
         struct jp2_boxinfo_s *info;
 
         uint_fast32_t type;
+
+        /* The length of the box including the (variable-length) header. */
         uint_fast32_t len;
-#ifdef HAVE_JASPER_UUID
-        uint_fast32_t data_len;
-#endif
+
+        /* The length of the box data. */
+        uint_fast32_t datalen;
 
         union {
                 jp2_jp_t jp;
@@ -210,6 +209,7 @@ typedef struct {
         } data;
 
 } jp2_box_t;
+
 typedef struct jp2_boxops_s {
         void (*init)(jp2_box_t *box);
         void (*destroy)(jp2_box_t *box);
@@ -228,13 +228,6 @@ int jp2_encode_uuid(jas_image_t *image, jas_stream_t *out,
 #endif
 }
 // XXX: End of JasPer header.
-
-#ifdef HAVE_JASPER_UUID
-// Magick sequence for GeoJP2 box
-static unsigned char msi_uuid2[16] =
-        {0xb1,0x4b,0xf8,0xbd,0x08,0x3d,0x4b,0x43,
-         0xa5,0xae,0x8c,0xd7,0xd5,0xa6,0xce,0x03}; 
-#endif
 
 /************************************************************************/
 /* ==================================================================== */
@@ -495,7 +488,7 @@ JPEG2000Dataset::JPEG2000Dataset()
 }
 
 /************************************************************************/
-/*                            ~JPEG2000Dataset()                         */
+/*                            ~JPEG2000Dataset()                        */
 /************************************************************************/
 
 JPEG2000Dataset::~JPEG2000Dataset()
@@ -666,6 +659,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
                     }
                 }
                 break;
+
                 case JP2_BOX_BPCC:
                 CPLDebug( "JPEG2000", "BPCC box found. Dump:" );
                 if ( !paiDepth && !pabSignedness )
@@ -684,6 +678,7 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
                     }
                 }
                 break;
+
                 case JP2_BOX_PCLR:
                 CPLDebug( "JPEG2000",
                           "PCLR box found. Dump: number of LUT entries=%d, "
@@ -770,6 +765,8 @@ GDALDataset *JPEG2000Dataset::Open( GDALOpenInfo * poOpenInfo )
     
     if( oJP2Geo.ReadAndParse( poOpenInfo->pszFilename ) )
     {
+        if ( poDS->pszProjection )
+            CPLFree( poDS->pszProjection );
         poDS->pszProjection = CPLStrdup(oJP2Geo.pszProjection);
         poDS->bGeoTransformValid = oJP2Geo.bHaveGeoTransform;
         memcpy( poDS->adfGeoTransform, oJP2Geo.adfGeoTransform, 
@@ -1036,26 +1033,27 @@ JPEG2000CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                      || ABS(adfGeoTransform[5]) != 1.0))
                 || poSrcDS->GetGCPCount() > 0) )
         {
-            // Prepare the memory buffer containing the degenerate GeoTIFF file.
-            const char  *pszWKT;
-            int         nGTBufSize = 0;
-            unsigned char *pabyGTBuf = NULL;
-            jp2_box_t   *box = jp2_box_create( JP2_BOX_UUID );
+            GDALJP2Metadata oJP2Geo;
 
-            if( GDALGetGCPCount( poSrcDS ) > 0 )
-                pszWKT = poSrcDS->GetGCPProjection();
+            if( poSrcDS->GetGCPCount() > 0 )
+            {
+                oJP2Geo.SetProjection( poSrcDS->GetGCPProjection() );
+                oJP2Geo.SetGCPs( poSrcDS->GetGCPCount(), poSrcDS->GetGCPs() );
+            }
             else
-                pszWKT = poSrcDS->GetProjectionRef();
+            {
+                oJP2Geo.SetProjection( poSrcDS->GetProjectionRef() );
+                oJP2Geo.SetGeoTransform( adfGeoTransform );
+            }
 
-            GTIFMemBufFromWkt( pszWKT, adfGeoTransform,
-                               poSrcDS->GetGCPCount(), poSrcDS->GetGCPs(),
-                               &nGTBufSize, &pabyGTBuf );
- 
-            memcpy( box->data.uuid.uuid, msi_uuid2, sizeof(msi_uuid2) );
-            box->data.uuid.data_len = nGTBufSize;
-            box->data.uuid.data = (uint_fast8_t *)jas_malloc( nGTBufSize );
-            memcpy( box->data.uuid.data, pabyGTBuf, nGTBufSize );
-            CPLFree( pabyGTBuf );
+            GDALJP2Box *poBox = oJP2Geo.CreateJP2GeoTIFF();
+            jp2_box_t  *box = jp2_box_create( JP2_BOX_UUID );
+            memcpy( box->data.uuid.uuid, poBox->GetUUID(), 16 );
+            box->data.uuid.datalen = poBox->GetDataLength() - 16;
+            box->data.uuid.data =
+                (uint_fast8_t *)jas_malloc( poBox->GetDataLength() - 16 );
+            memcpy( box->data.uuid.data, poBox->GetWritableData() + 16,
+                    poBox->GetDataLength() - 16 );
             if ( jp2_encode_uuid( psImage, psStream, pszOptionBuf, box) < 0 )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
