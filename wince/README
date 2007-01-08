@@ -193,7 +193,7 @@ e) Configure path to WCELIBCEX source:
 
    - Go to View -> Property Manager to open property manager window.
    - Expand tree below projce_dll -> Debug -> projce_common.
-   - Right-click on gdalce_common and select Properties.
+   - Right-click on projce_common and select Properties.
    - In Property Pages dialog, under Common Properties, go to User Macros
    - In macros list, double-click on macro named as WCELIBCEX_DIR
    - Change the macro value to C:\dev\wcelibcex-1.0\src
