@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2007/01/08 21:05:39  fwarmerdam
+ * added NITFFindTREByIndex() prototype to avoid warnings.
+ *
  * Revision 1.20  2006/12/10 16:26:28  hobu
  * add NITFReadBLOCKA prototype
  *
@@ -139,6 +142,9 @@ int      CPL_DLL  NITFCreate( const char *pszFilename,
 
 const char CPL_DLL *NITFFindTRE( const char *pszTREData, int nTREBytes, 
                                  const char *pszTag, int *pnFoundTRESize );
+const char *NITFFindTREByIndex( const char *pszTREData, int nTREBytes,
+                                const char *pszTag, int nTreIndex,
+                                int *pnFoundTRESize );
 
 /* -------------------------------------------------------------------- */
 /*      Image level access.                                             */
