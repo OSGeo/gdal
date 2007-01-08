@@ -1,4 +1,3 @@
-- Fix issue with building DLL using makefile
-- Port OGR driver for CSV
+- Add project files for eVC++ 4.0
 - Port OGR driver for GML
 - Port OGR driver for SQLite
