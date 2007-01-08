@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2007/01/08 21:06:14  fwarmerdam
+ * Export NITFFindTREByIndex() from the DLL.
+ *
  * Revision 1.21  2007/01/08 21:05:39  fwarmerdam
  * added NITFFindTREByIndex() prototype to avoid warnings.
  *
@@ -142,7 +145,7 @@ int      CPL_DLL  NITFCreate( const char *pszFilename,
 
 const char CPL_DLL *NITFFindTRE( const char *pszTREData, int nTREBytes, 
                                  const char *pszTag, int *pnFoundTRESize );
-const char *NITFFindTREByIndex( const char *pszTREData, int nTREBytes,
+const char CPL_DLL *NITFFindTREByIndex( const char *pszTREData, int nTREBytes,
                                 const char *pszTag, int nTreIndex,
                                 int *pnFoundTRESize );
 
