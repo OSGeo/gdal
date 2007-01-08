@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2007/01/08 21:08:32  fwarmerdam
+ * correct location of IDLVL related fields (Bug 1427)
+ *
  * Revision 1.48  2006/12/10 04:59:51  fwarmerdam
  * added blocka support from Reiner Beck
  *
@@ -593,18 +596,20 @@ NITFImage *NITFImageAccess( NITFFile *psFile, int iSegment )
         psImage->nBitsPerSample = 
             atoi(NITFGetField(szTemp, pachHeader, nOffset+18, 2));
         
-        nOffset += 20;
-
         if( psImage->nABPP == 0 )
             psImage->nABPP = psImage->nBitsPerSample;
 
-        psImage->nIDLVL = atoi(NITFGetField(szTemp,pachHeader, nOffset+20, 3));
-        psImage->nIALVL = atoi(NITFGetField(szTemp,pachHeader, nOffset+23, 3));
-        psImage->nILOCRow = atoi(NITFGetField(szTemp,pachHeader,nOffset+26,5));
-        psImage->nILOCColumn = 
-            atoi(NITFGetField(szTemp,pachHeader, nOffset+31,5));
+        nOffset += 20;
 
-        memcpy( psImage->szIMAG, pachHeader+nOffset+36, 4 );
+        /* capture image inset information */
+
+        psImage->nIDLVL = atoi(NITFGetField(szTemp,pachHeader, nOffset+0, 3));
+        psImage->nIALVL = atoi(NITFGetField(szTemp,pachHeader, nOffset+3, 3));
+        psImage->nILOCRow = atoi(NITFGetField(szTemp,pachHeader,nOffset+6,5));
+        psImage->nILOCColumn = 
+            atoi(NITFGetField(szTemp,pachHeader, nOffset+11,5));
+
+        memcpy( psImage->szIMAG, pachHeader+nOffset+16, 4 );
         psImage->szIMAG[4] = '\0';
         
         nOffset += 3;                   /* IDLVL */
