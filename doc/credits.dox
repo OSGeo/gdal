@@ -24,24 +24,37 @@ If your organization depends on GDAL/OGR consider
 
 \htmlonly
 <table border="0" cellspacing="4" cellpadding="4">
-<tr><td><a href="http://www.cadcorp.com/">
+
+<tr><td><a href="http://www.cadcorp.com/"><center>
 <img src="cadcorp_logo.jpg" alt="" border="0" width="110" height="110">
-</a></td>
+</center></a></td>
+
 <td><a href="http://www.cadcorp.com/">Cadcorp</a> 
 is a leading UK developer of digital mapping and GIS software.
 With offices in the UK and the USA, Cadcorp's distribution and VAR
 network stretches worldwide. Cadcorp also plays a pivotal technical role
 in the Open Geospatial Consortium, Inc.(r) (OGC(r)), and the Cadcorp SIS
 - Spatial Information System product family is OGC certified compliant
-for several specifications.</td>
-</tr>
+for several specifications.</td></tr>
 
 <tr><td>
-<a href="http://www.safe.com/">
-<img src="safe-logo.png" alt="" border="0" width="132" height="54"></a></td>
+
+<a href="http://www.safe.com/"><center>
+<img src="safe-logo.png" alt="" border="0" width="132" height="54">
+</center></a></td>
+
 <td><a href="http://www.safe.com/">Safe Software</a> is the leading developer of Spatial ETL (Extract, Transform, and Load) technology, providing spatial data transformation solutions and professional services. Safe's FME software delivers seamless translation of 160 GIS, CAD, raster, and database formats, and allows users to easily manage feature geometry and attribute restructuring, database loading, merging multiple data sources, web-based data distribution, and coordinate system conversion.
-</td>
-</tr></table>
+</td></tr>
+
+<tr><td>
+<a href="http://extendthereach.com/"><center>
+<img src="src-logo.png" alt="" border="0" width="189" height="62">
+</center></a></td>
+
+<td>To be decided...
+</td></tr>
+
+</table>
 \endhtmlonly
 
 \subsection past_sponsors Past Sponsors
@@ -52,7 +65,7 @@ for several specifications.</td>
 <tr><td><a href="http://www.ermapper.com/"><img src="ERMapperlogo_small.gif" alt="ER Mapper" border="0" width="154" height="46"></a></td>
 
 <td><a href="http://www.ermapper.com/">ER Mapper</a> generously provided
-primary sponsorship for GDAL from February 2005 to November 2007 to support 
+primary sponsorship for GDAL from February 2005 to November 2006 to support 
 work on GDAL improvement efforts not focused on any particular client project.
 </td></tr>
 
