@@ -2,8 +2,8 @@
  * $Id$
  *
  * Project:  Raster Matrix Format
- * Purpose:  Read/write raster files used in GIS "Integration"
- *           (also known as "Panorama" GIS). 
+ * Purpose:  Read/write raster files used in GIS "Integratsia"
+ *           (also known as "Panorama" GIS).
  * Author:   Andrey Kiselev, dron@ak4719.spb.edu
  *
  ******************************************************************************
@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2007/01/09 14:22:16  dron
+ * Added support for LZW decompression;
+ * moved class declarations in separate header file.
+ *
  * Revision 1.14  2006/07/13 15:58:13  dron
  * Properly set the resolution field depending on pixel size in SetGeoTransform().
  *
@@ -74,9 +78,10 @@
  *
  */
 
-#include "gdal_priv.h"
 #include "ogr_spatialref.h"
 #include "cpl_string.h"
+
+#include "rmfdataset.h"
 
 CPL_CVSID("$Id$");
 
@@ -84,146 +89,14 @@ CPL_C_START
 void    GDALRegister_RMF(void);
 CPL_C_END
 
-enum RMFType
-{
-    RMFT_RSW,       // Raster map
-    RMFT_MTW        // Digital elevation model
-};
-
 #define RMF_DEFAULT_BLOCKXSIZE 256
 #define RMF_DEFAULT_BLOCKYSIZE 256
-
-typedef struct
-{
-#define RMF_SIGNATURE_SIZE 4
-    char        szSignature[RMF_SIGNATURE_SIZE];    // "RSW" for raster
-                                                // map or "MTW" for DEM
-    GUInt32     iVersion;
-    GUInt32     nSize;                          // File size in bytes
-    GUInt32     nOvrOffset;                     // Offset to overview
-    GUInt32     iUserID;
-#define RMF_NAME_SIZE 32
-    GByte       byName[RMF_NAME_SIZE];
-    GUInt32     nBitDepth;                      // Number of bits per pixel
-    GUInt32     nHeight;                        // Image length
-    GUInt32     nWidth;                         // Image width
-    GUInt32     nXTiles;                        // Number of tiles in line
-    GUInt32     nYTiles;                        // Number of tiles in column
-    GUInt32     nTileHeight;
-    GUInt32     nTileWidth;
-    GUInt32     nLastTileHeight;
-    GUInt32     nLastTileWidth;
-    GUInt32     nROIOffset;
-    GUInt32     nROISize;
-    GUInt32     nClrTblOffset;                  // Position and size
-    GUInt32     nClrTblSize;                    // of the colour table
-    GUInt32     nTileTblOffset;                 // Position and size of the
-    GUInt32     nTileTblSize;                   // tile offsets/sizes table 
-    GInt32      iMapType;
-    GInt32      iProjection;
-    double      dfScale;
-    double      dfResolution;
-    double      dfPixelSize;
-    double      dfLLX;
-    double      dfLLY;
-    double      dfStdP1;
-    double      dfStdP2;
-    double      dfCenterLong;
-    double      dfCenterLat;
-    GByte       iCompression;
-    GByte       iMaskType;
-    GByte       iMaskStep;
-    GByte       iFrameFlag;
-    GUInt32     nFlagsTblOffset;
-    GUInt32     nFlagsTblSize;
-    GUInt32     nFileSize0;
-    GUInt32     nFileSize1;
-    GByte       iUnknown;
-    GByte       iGeorefFlag;
-    GByte       iInverse;
-#define RMF_INVISIBLE_COLORS_SIZE 32
-    GByte       abyInvisibleColors[RMF_INVISIBLE_COLORS_SIZE];
-    double      dfElevMinMax[2];
-    double      dfNoData;
-    GUInt32     iElevationUnit;
-    GByte       iElevationType;
-} RMFHeader;
-
-/************************************************************************/
-/* ==================================================================== */
-/*                              RMFDataset                              */
-/* ==================================================================== */
-/************************************************************************/
-
-class RMFDataset : public GDALDataset
-{
-    friend class RMFRasterBand;
-
-#define RMF_HEADER_SIZE 320
-    GByte           abyHeader[RMF_HEADER_SIZE];
-    RMFHeader       sHeader;
-    RMFType         eRMFType;
-    GUInt32         nXTiles;
-    GUInt32         nYTiles;
-    GUInt32         *paiTiles;
-    
-    GUInt32         nColorTableSize;
-    GByte           *pabyColorTable;
-    GDALColorTable  *poColorTable;
-    double          adfGeoTransform[6];
-    char            *pszProjection;
-
-    int             bHeaderDirty;
-
-    const char      *pszFilename;
-    FILE            *fp;
-
-  protected:
-    CPLErr              WriteHeader();
-
-  public:
-                RMFDataset();
-                ~RMFDataset();
-
-    static GDALDataset  *Open( GDALOpenInfo * );
-    static GDALDataset  *Create( const char *, int, int, int,
-                                 GDALDataType, char ** );
-    virtual void        FlushCache( void );
-
-    virtual CPLErr      GetGeoTransform( double * padfTransform );
-    virtual CPLErr      SetGeoTransform( double * );
-    virtual const char  *GetProjectionRef();
-    virtual CPLErr      SetProjection( const char * );
-};
 
 /************************************************************************/
 /* ==================================================================== */
 /*                            RMFRasterBand                             */
 /* ==================================================================== */
 /************************************************************************/
-
-class RMFRasterBand : public GDALRasterBand
-{
-    friend class RMFDataset;
-
-  protected:
-
-    GUInt32     nBytesPerPixel;
-    GUInt32     nBlockSize, nBlockBytes;
-    GUInt32     nLastTileXBytes;
-    GUInt32     nDataSize;
-
-  public:
-
-                RMFRasterBand( RMFDataset *, int, GDALDataType );
-                ~RMFRasterBand();
-
-    virtual CPLErr          IReadBlock( int, int, void * );
-    virtual CPLErr          IWriteBlock( int, int, void * );
-    virtual GDALColorInterp GetColorInterpretation();
-    virtual GDALColorTable  *GetColorTable();
-    CPLErr                  SetColorTable( GDALColorTable * );
-};
 
 /************************************************************************/
 /*                           RMFRasterBand()                            */
@@ -244,6 +117,7 @@ RMFRasterBand::RMFRasterBand( RMFDataset *poDS, int nBand,
     nBlockBytes = nBlockSize * nDataSize;
     nLastTileXBytes =
         (poDS->GetRasterXSize() % poDS->sHeader.nTileWidth) * nDataSize;
+    nLastTileHeight = poDS->GetRasterYSize() % poDS->sHeader.nTileHeight;
 
 #if DEBUG
     CPLDebug( "RMF",
@@ -373,6 +247,40 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             }
         }
 
+/* -------------------------------------------------------------------- */
+/*  If buffer was compressed, decompress it first.                      */
+/* -------------------------------------------------------------------- */
+        GUInt32 nRawBytes;
+        if ( nLastTileXBytes && (GUInt32) nBlockXOff == poGDS->nXTiles - 1 )
+        {
+            nRawBytes = nLastTileXBytes;
+            if (nLastTileHeight && (GUInt32) nBlockYOff == poGDS->nYTiles - 1)
+                nRawBytes *= nLastTileHeight;
+            else
+                nRawBytes *= nBlockYSize;
+        }
+        else
+        {
+            nRawBytes = poGDS->nBands * nBlockXSize * nDataSize;
+            if (nLastTileHeight && (GUInt32) nBlockYOff == poGDS->nYTiles - 1)
+                nRawBytes *= nLastTileHeight;
+            else
+                nRawBytes *= nBlockYSize;
+        }
+
+        if (poGDS->Decompress && nRawBytes > nTileBytes)
+        {
+            GByte *pszRawBuf = (GByte *)CPLMalloc(nRawBytes);
+
+            (*poGDS->Decompress)(pabyTile, nTileBytes, pszRawBuf, nRawBytes);
+            CPLFree(pabyTile);
+            pabyTile = pszRawBuf;
+            nTileBytes = nRawBytes;
+        }
+
+/* -------------------------------------------------------------------- */
+/*  Deinterleave pixels from input buffer.                              */
+/* -------------------------------------------------------------------- */
         if ( poGDS->sHeader.nBitDepth == 24 || poGDS->sHeader.nBitDepth == 32 )
         {
             GUInt32 nTileSize = nTileBytes / nBytesPerPixel;
@@ -404,16 +312,19 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 switch ( nBand )
                 {
                     case 1:
-                    ((GByte *) pImage)[i] = (GByte)((((GUInt16*)pabyTile)[i] & 0x7c00) >> 7);
-                    break;
+                        ((GByte *) pImage)[i] =
+                            (GByte)((((GUInt16*)pabyTile)[i] & 0x7c00) >> 7);
+                        break;
                     case 2:
-                    ((GByte *) pImage)[i] = (GByte)((((GUInt16*)pabyTile)[i] & 0x03e0) >> 2);
-                    break;
+                        ((GByte *) pImage)[i] =
+                            (GByte)((((GUInt16*)pabyTile)[i] & 0x03e0) >> 2);
+                        break;
                     case 3:
-                    ((GByte *) pImage)[i] = (GByte)(((GUInt16*)pabyTile)[i] & 0x1F) << 3;
-                    break;
+                        ((GByte *) pImage)[i] =
+                            (GByte)(((GUInt16*)pabyTile)[i] & 0x1F) << 3;
+                        break;
                     default:
-                    break;
+                        break;
                 }
             }
         }
@@ -441,31 +352,31 @@ CPLErr RMFRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 switch ( i & 0x7 )
                 {
                     case 0:
-                    ((GByte *) pImage)[i] = (*pabyTemp & 0x80) >> 7;
-                    break;
+                        ((GByte *) pImage)[i] = (*pabyTemp & 0x80) >> 7;
+                        break;
                     case 1:
-                    ((GByte *) pImage)[i] = (*pabyTemp & 0x40) >> 6;
-                    break;
+                        ((GByte *) pImage)[i] = (*pabyTemp & 0x40) >> 6;
+                        break;
                     case 2:
-                    ((GByte *) pImage)[i] = (*pabyTemp & 0x20) >> 5;
-                    break;
+                        ((GByte *) pImage)[i] = (*pabyTemp & 0x20) >> 5;
+                        break;
                     case 3:
-                    ((GByte *) pImage)[i] = (*pabyTemp & 0x10) >> 4;
-                    break;
+                        ((GByte *) pImage)[i] = (*pabyTemp & 0x10) >> 4;
+                        break;
                     case 4:
-                    ((GByte *) pImage)[i] = (*pabyTemp & 0x08) >> 3;
-                    break;
+                        ((GByte *) pImage)[i] = (*pabyTemp & 0x08) >> 3;
+                        break;
                     case 5:
-                    ((GByte *) pImage)[i] = (*pabyTemp & 0x04) >> 2;
-                    break;
+                        ((GByte *) pImage)[i] = (*pabyTemp & 0x04) >> 2;
+                        break;
                     case 6:
-                    ((GByte *) pImage)[i] = (*pabyTemp & 0x02) >> 1;
-                    break;
+                        ((GByte *) pImage)[i] = (*pabyTemp & 0x02) >> 1;
+                        break;
                     case 7:
-                    ((GByte *) pImage)[i] = *pabyTemp++ & 0x01;
-                    break;
+                        ((GByte *) pImage)[i] = *pabyTemp++ & 0x01;
+                        break;
                     default:
-                    break;
+                        break;
                 }
             }
         }
@@ -725,6 +636,12 @@ GDALColorInterp RMFRasterBand::GetColorInterpretation()
             return GCI_Undefined;
     }
 }
+
+/************************************************************************/
+/* ==================================================================== */
+/*                              RMFDataset                              */
+/* ==================================================================== */
+/************************************************************************/
 
 /************************************************************************/
 /*                           RMFDataset()                               */
@@ -1223,6 +1140,14 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLDebug( "RMF", "Image is %d tiles wide, %d tiles long",
               poDS->nXTiles, poDS->nYTiles );
 #endif
+
+/* -------------------------------------------------------------------- */
+/*  Choose compression scheme.                                          */
+/* -------------------------------------------------------------------- */
+    if (poDS->sHeader.iCompression == 1)
+        poDS->Decompress = &LZWDecompress;
+    else
+        poDS->Decompress = NULL;
 
 /* -------------------------------------------------------------------- */
 /*  Create band information objects.                                    */
