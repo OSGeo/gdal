@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	rmfdataset.o
+OBJ	=	rmfdataset.o rmflzw.o
 
 CPPFLAGS	:=	$(GDAL_INCLUDE) $(CPPFLAGS)
 
