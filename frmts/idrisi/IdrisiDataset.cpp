@@ -28,6 +28,10 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.31  2007/01/10 23:30:21  fwarmerdam
+ * Avoid crashing if the version string is not found in the .rdc file.
+ * For instance, if the .rdc file isn't found.
+ *
  * Revision 1.30  2006/10/11 08:32:00  dron
  * Use local CPLStrlwr() instead of unportable strlwr(); avoid warnings.
  *
@@ -412,7 +416,7 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
 
 	const char *pszVersion = CSLFetchNameValue(papszLRDC, rdcFILE_FORMAT);
 
-	if (EQUAL(pszVersion, rstVERSION) == FALSE)
+	if( pszVersion == NULL || !EQUAL(pszVersion, rstVERSION) )
 	{
 		CSLDestroy(papszLRDC);
 		return NULL;
@@ -1692,7 +1696,6 @@ CPLErr IdrisiDataset::GeoReference2Wkt(const char *pszRefSystem,
 	double dfSemiMinor		    = atof_nz(CSLFetchNameValue(papszRef, refMINOR_SAX));
 	double dfFalseEasting	    = atof_nz(CSLFetchNameValue(papszRef, refORIGIN_X));
 	double dfFalseNorthing	    = atof_nz(CSLFetchNameValue(papszRef, refORIGIN_Y));
-    int nParameters             = atoi_nz(CSLFetchNameValue(papszRef, refPARAMETERS));
     double dfStdP1			    = atof_nz(CSLFetchNameValue(papszRef, refSTANDL_1));
 	double dfStdP2			    = atof_nz(CSLFetchNameValue(papszRef, refSTANDL_2));
     double dfScale;
@@ -2124,7 +2127,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference(const char *pszProjString,
     double dfScale              = 1.0;
     int nParameters             = 0;         
     double dfStdP1              = 0.0;			
-	double dfStdP2              = 0.0;			
+    double dfStdP2              = 0.0;			
     const char *pszUnit         = CPLStrdup(oSRS.GetAttrValue("GEOGCS|UNIT"));
 
     if (oSRS.IsProjected())
