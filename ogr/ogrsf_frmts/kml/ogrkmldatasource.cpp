@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2007/01/10 19:03:26  dmorissette
+ * CPLStrdup() the value assigned to pszNameField (bug 1432)
+ *
  * Revision 1.4  2006/08/04 19:36:03  fwarmerdam
  * Initialize pszNameField.
  *
@@ -160,7 +163,7 @@ int OGRKMLDataSource::Create( const char *pszFilename,
         return FALSE;
     }
 
-    pszNameField = (char *)CSLFetchNameValue(papszOptions, "NameField");
+    pszNameField = CPLStrdup(CSLFetchNameValue(papszOptions, "NameField"));
     CPLDebug("KML", "Using the field '%s' for name element", pszNameField);
     
 /* -------------------------------------------------------------------- */
