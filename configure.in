@@ -1673,6 +1673,9 @@ AC_ARG_WITH(sde,
 AC_ARG_WITH(sde-version,
 [  --with-sde-version[=VERSION NUMBER]  Set ESRI SDE version number (Default is 80).],SDE_VERSION=$with_sde_version,SDE_VERSION=80)
 
+if test -z "$SDE_VERSION" -o `expr "$SDE_VERSION" \>\= 92` = 1; then
+SDE_VERSION=""
+fi
 if test "$with_sde" = "yes" ; then
 
   AC_CHECK_LIB(sde$SDE_VERSION,SE_connection_create,SDE_ENABLED=yes,,,)
