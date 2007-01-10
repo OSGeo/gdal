@@ -26555,6 +26555,9 @@ else
   SDE_VERSION=80
 fi;
 
+if test -z "$SDE_VERSION" -o `expr "$SDE_VERSION" \>\= 92` = 1; then
+SDE_VERSION=""
+fi
 if test "$with_sde" = "yes" ; then
 
   as_ac_Lib=`echo "ac_cv_lib_sde$SDE_VERSION''_SE_connection_create" | $as_tr_sh`
