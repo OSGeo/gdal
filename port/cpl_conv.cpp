@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2007/01/11 05:32:58  fwarmerdam
+ * Fixed CPLReadLineL()'s weird error condition (bug 1374).
+ *
  * Revision 1.61  2007/01/06 17:03:35  fwarmerdam
  * Fixed last fix.  It was returning NULL in other conditions such as
  * a file with no terminating newline (gdalautotest/gdrivers/aaigrid.py).
@@ -68,153 +71,6 @@
  *
  * Revision 1.49  2006/02/09 05:54:15  fwarmerdam
  * use ll in format for long long on mac, not L
- *
- * Revision 1.48  2005/11/24 19:22:54  fwarmerdam
- * Added silly-value checks in CPLMalloc/Realloc.
- *
- * Revision 1.47  2005/10/17 23:33:51  fwarmerdam
- * CPLFGets() - be very wary about reads ending in the middle of CRLF.
- * Was causing problems with world.mif/world.mid reading.
- *
- * Revision 1.46  2005/09/11 21:08:59  fwarmerdam
- * properly manage TLS ReadLine buffer, added CPLReadLineL()
- *
- * Revision 1.45  2005/07/11 16:41:31  fwarmerdam
- * Protect config list and shared file list with mutex.
- *
- * Revision 1.44  2005/05/23 03:57:57  fwarmerdam
- * make make static buffers threadlocal
- *
- * Revision 1.43  2005/04/04 15:23:30  fwarmerdam
- * some functions now CPL_STDCALL
- *
- * Revision 1.42  2004/11/17 22:57:21  fwarmerdam
- * added CPLScanPointer() and CPLPrintPointer()
- *
- * Revision 1.41  2004/08/16 20:24:07  warmerda
- * added CPLUnlinkTree
- *
- * Revision 1.40  2004/07/31 04:51:36  warmerda
- * added shared file open support
- *
- * Revision 1.39  2004/06/01 20:40:02  warmerda
- * expanded tabs
- *
- * Revision 1.38  2004/03/28 16:22:02  warmerda
- * const correctness changes in scan functions
- *
- * Revision 1.37  2004/03/24 09:01:17  dron
- * Added CPLPrintUIntBig().
- *
- * Revision 1.36  2004/02/25 09:02:25  dron
- * Fixed bug in CPLPackedDMSToDec().
- *
- * Revision 1.35  2004/02/21 10:08:54  dron
- * Fixes in various string handling functions.
- *
- * Revision 1.34  2004/02/07 14:03:30  dron
- * CPLDecToPackedDMS() added.
- *
- * Revision 1.33  2004/02/01 08:37:55  dron
- * Added CPLPackedDMSToDec().
- *
- * Revision 1.32  2003/12/28 17:24:43  warmerda
- * added CPLFreeConfig
- *
- * Revision 1.31  2003/10/17 07:06:06  dron
- * Added locale selection option to CPLScanDouble() and CPLPrintDOuble().
- *
- * Revision 1.30  2003/09/28 14:14:16  dron
- * Added CPLScanString().
- *
- * Revision 1.29  2003/09/12 20:49:24  warmerda
- * reimplement CPLFGets() to avoid textmode problems
- *
- * Revision 1.28  2003/09/08 12:54:42  dron
- * Fixed warnings.
- *
- * Revision 1.27  2003/09/08 11:09:53  dron
- * Added CPLPrintDouble() and CPLPrintTime().
- *
- * Revision 1.26  2003/09/07 14:38:43  dron
- * Added CPLPrintString(), CPLPrintStringFill(), CPLPrintInt32(), CPLPrintUIntBig().
- *
- * Revision 1.25  2003/09/03 13:07:26  warmerda
- * Cleaned up CPLScanLong() a bit to avoid warnings, and
- * unnecessary conversion to/from double.
- *
- * Revision 1.24  2003/08/31 14:48:05  dron
- * Added CPLScanLong() and CPLScanDouble().
- *
- * Revision 1.23  2003/08/25 20:01:58  dron
- * Added CPLFGets() helper function.
- *
- * Revision 1.22  2003/05/08 21:51:14  warmerda
- * added CPL{G,S}etConfigOption() usage
- *
- * Revision 1.21  2003/03/05 16:46:54  warmerda
- * Cast strchr() result for Sun (patch from Graeme).
- *
- * Revision 1.20  2003/03/02 04:44:38  warmerda
- * added CPLStringToComplex
- *
- * Revision 1.19  2003/02/14 22:12:07  warmerda
- * expand tabs
- *
- * Revision 1.18  2002/12/18 20:22:53  warmerda
- * fiddle with roundoff issues in DecToDMS
- *
- * Revision 1.17  2002/12/10 19:46:04  warmerda
- * modified CPLReadLine() to seek back if it overreads past a CR or LF
- *
- * Revision 1.16  2002/12/09 18:52:51  warmerda
- * added DMS conversion
- *
- * Revision 1.15  2002/03/05 14:26:57  warmerda
- * expanded tabs
- *
- * Revision 1.14  2001/12/12 17:06:57  warmerda
- * added CPLStat
- *
- * Revision 1.13  2001/07/18 04:00:49  warmerda
- * added CPL_CVSID
- *
- * Revision 1.12  2001/03/09 03:19:24  danmo
- * Set pszRLBuffer=NULL after freeing it to avoid reallocating an invalid ptr
- *
- * Revision 1.11  2001/03/05 03:37:19  warmerda
- * Improve support for recovering CPLReadLine() working buffer.
- *
- * Revision 1.10  2001/01/19 21:16:41  warmerda
- * expanded tabs
- *
- * Revision 1.9  2000/04/17 15:56:11  warmerda
- * make configuration tests always happen
- *
- * Revision 1.8  2000/04/05 21:02:47  warmerda
- * Added CPLVerifyConfiguration()
- *
- * Revision 1.7  1999/08/27 12:55:39  danmo
- * Support 0 bytes allocations in CPLRealloc()
- *
- * Revision 1.6  1999/06/25 04:38:03  warmerda
- * Fixed CPLReadLine() to work for long lines.
- *
- * Revision 1.5  1999/05/20 02:54:37  warmerda
- * Added API documentation
- *
- * Revision 1.4  1999/01/02 20:29:53  warmerda
- * Allow zero length allocations
- *
- * Revision 1.3  1998/12/15 19:01:07  warmerda
- * Added CPLReadLine().
- *
- * Revision 1.2  1998/12/03 18:30:04  warmerda
- * Use CPLError() instead of GPSError().
- *
- * Revision 1.1  1998/12/02 19:33:23  warmerda
- * New
- *
  */
 
 #include "cpl_conv.h"
@@ -754,14 +610,17 @@ const char *CPLReadLineL( FILE * fp )
 
         if( nChunkBytesRead == nChunkBytesConsumed + 1 )
         {
+
             // case where one character is left over from last read.
             szChunk[0] = szChunk[nChunkBytesConsumed];
+
+            nChunkBytesConsumed = 0;
             nChunkBytesRead = VSIFReadL( szChunk+1, 1, nChunkSize-1, fp ) + 1;
-            if( nChunkBytesRead == 1 )
-                break;
         }
         else
         {
+            nChunkBytesConsumed = 0;
+
             // fresh read.
             nChunkBytesRead = VSIFReadL( szChunk, 1, nChunkSize, fp );
             if( nChunkBytesRead == 0 )
@@ -777,8 +636,7 @@ const char *CPLReadLineL( FILE * fp )
 /*      copy over characters watching for end-of-line.                  */
 /* -------------------------------------------------------------------- */
         int bBreak = FALSE;
-        nChunkBytesConsumed = 0;
-        while( nChunkBytesConsumed <= nChunkBytesRead-1 && !bBreak )
+        while( nChunkBytesConsumed < nChunkBytesRead-1 && !bBreak )
         {
             if( (szChunk[nChunkBytesConsumed] == 13
                  && szChunk[nChunkBytesConsumed+1] == 10)
