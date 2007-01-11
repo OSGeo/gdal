@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2007/01/11 05:49:51  fwarmerdam
+ * Fixed bug in CPLReadLine() found with test harnass in bug 1374.
+ *
  * Revision 1.62  2007/01/11 05:32:58  fwarmerdam
  * Fixed CPLReadLineL()'s weird error condition (bug 1374).
  *
@@ -550,7 +553,8 @@ const char *CPLReadLine( FILE * fp )
 /* -------------------------------------------------------------------- */
 /*      Do the actual read.                                             */
 /* -------------------------------------------------------------------- */
-        if( CPLFGets( pszRLBuffer+nReadSoFar, 128, fp ) == NULL )
+        if( CPLFGets( pszRLBuffer+nReadSoFar, 128, fp ) == NULL 
+            && nReadSoFar == 0 )
             return NULL;
 
         nBytesReadThisTime = strlen(pszRLBuffer+nReadSoFar);
