@@ -44,6 +44,10 @@
  *   without vsnprintf(). 
  *
  * $Log$
+ * Revision 1.58  2007/01/11 00:16:13  fwarmerdam
+ * Ensure CSLSetNameValueSeparator() doesn't crash if the name and value
+ * can't be extracted.
+ *
  * Revision 1.57  2006/11/22 18:17:49  fwarmerdam
  * changed frmt to const char in CPLSPrintf
  *
@@ -1309,6 +1313,8 @@ void CSLSetNameValueSeparator( char ** papszList, const char *pszSeparator )
         char        *pszNewLine;
 
         pszValue = CPLParseNameValue( papszList[iLine], &pszKey );
+        if( pszValue == NULL || pszKey == NULL )
+            continue;
         
         pszNewLine = (char *) CPLMalloc( strlen(pszValue) + strlen(pszKey)
                                          + strlen(pszSeparator) + 1 );
