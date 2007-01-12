@@ -138,7 +138,8 @@ clean:
 	$(MAKE) /f makefile.vc clean
 	cd ..	
 	-del gdal.lib
-	-del *.dll
+	-del gdal_*_wrap.dll
+	-del gdal_*_csharp.dll
 	-del *.obj
 	-del *.exp
 	-del *.ilk
