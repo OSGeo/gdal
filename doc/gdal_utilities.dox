@@ -878,7 +878,7 @@ Band to convert to RGB, defaults to 1.</dd>
 created.</dd>
 </dl>
 
-NOTE: rgb2pct.py is a Python script, and will only work if GDAL was built
+NOTE: pct2rgb.py is a Python script, and will only work if GDAL was built
 with Python support.
 
 \if man
