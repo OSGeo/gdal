@@ -26,7 +26,15 @@ GDALLIB	= $(GDAL_ROOT)\gdal_i.lib
 !IFDEF MONO
 CSC = mcs
 !ELSE
+!IF $(MSVC_VER) == 1400
+!IFDEF WIN64
+CSC = csc /platform:anycpu
+!ELSE
+CSC = csc /platform:x86
+!ENDIF
+!ELSE
 CSC = csc
+!ENDIF
 !ENDIF
 
 OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
