@@ -4,7 +4,9 @@
 # but this particular relative organization is not mandatory.
 # But the paths *should* be absolute (relative paths mess up in submakefiles).
 
+!IFNDEF GDAL_HOME
 GDAL_HOME = "C:\warmerda\bld"
+!ENDIF
 BINDIR = $(GDAL_HOME)\bin
 PY_INST_DIR = $(GDAL_HOME)\pymod
 LIBDIR = $(GDAL_HOME)\lib
@@ -13,15 +15,34 @@ DATADIR = $(GDAL_HOME)\data
 HTMLDIR = $(GDAL_HOME)\html
 
 # Set this to the installed directory containing python.  If you don't
-# have python just let it point to a directory that does not exist (as now). 
+# have python just let it point to a directory that does not exist (as now).
+!IFNDEF PYDIR 
 PYDIR   =	"C:\Software\Python24"
+!ENDIF
 
 # Set the location of your SWIG installation
-SWIG = D:\swig\swig-1.3.25\swig.exe
+!IFNDEF SWIG
+SWIG = swig.exe
+!ENDIF
 
+# Check compiler version given in command line
+# nmake -f makefile.vc MSVC_VER=xxxx
+# 1310 = 7.1 (2003)   1400 = 8.0 (2005)
+#
+!IFNDEF MSVC_VER
+#assume msvc 7.1
+MSVC_VER=1310
+!ENDIF
+
+!IF $(MSVC_VER) == 1400
+# Uncomment the first for an optimized build or the second for a debug build.
+#OPTFLAGS=	/nologo /MD /EHsc /Ox /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
+OPTFLAGS=	/nologo /MD /EHsc /Zi /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /Fd$(GDAL_ROOT)\gdal.pdb
+!ELSE
 # Uncomment the first for an optimized build or the second for a debug build.
 #OPTFLAGS=	/nologo /MD /EHsc /Ox
 OPTFLAGS=	/nologo /MD /EHsc /Zi /Fd$(GDAL_ROOT)\gdal.pdb
+!ENDIF
 
 # Uncomment the following if you are building for 64-bit windows
 # (x64). You'll need to have PATH, INCLUDE and LIB set up for 64-bit
