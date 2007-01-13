@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2007/01/13 05:26:29  fwarmerdam
+ * Fixed 32bit overflow bug corrupting files created larger than 250MB.
+ * Bug 1438.
+ *
  * Revision 1.22  2006/12/18 03:42:53  fwarmerdam
  * avoid leak of external band file handles
  *
@@ -1268,8 +1272,8 @@ GDALDataset *PCIDSKDataset::Create( const char * pszFilename,
     nImgHdrBlocks = nBands * 2;
     nSegPointersStart = 2 + nImgHdrBlocks;
     nImageStart = nSegPointersStart + nSegBlocks;
-    nImageBlocks = (vsi_l_offset)
-        (nXSize * nYSize * nBands * GDALGetDataTypeSize(eType) / 8 + 512) / 512;
+    nImageBlocks = 
+        (nXSize * ((vsi_l_offset)nYSize) * nBands * (GDALGetDataTypeSize(eType)/8) + 512) / 512;
  
 /* -------------------------------------------------------------------- */
 /*      Fill the File Identification.                                   */
