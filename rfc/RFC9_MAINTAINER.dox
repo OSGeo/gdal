@@ -7,7 +7,7 @@
 
 Author: Frank Warmerdam<br>
 Contact: warmerdam@pobox.com<br>
-Status: Draft<br>
+Status: Proposed<br>
 
 \section rfc9_purpose Purpose
 
@@ -70,7 +70,7 @@ normal RFC process for any substantial change to GDAL.
 \section rfc9_reporting Reporting
 
 The maintainer will produce a brief bi-weekly report to the gdal-dev list 
-indicating tasks worked on with time spent on the tasks. 
+indicating tasks worked on, and a more detailed timesheet for the supervisor.
 
 This is intended to provide visibility into status, accomplishments, and
 time allocation.  It also gives an opportunity for the PSC to request a
