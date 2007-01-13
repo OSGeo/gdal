@@ -1,0 +1,11 @@
+*~
+*.dll
+*.dll.*
+*.dylib
+*.exe
+*.o
+*.so
+gdalconst.cs
+gdalconstPINVOKE.cs
+gdalconst_wrap.c
+
