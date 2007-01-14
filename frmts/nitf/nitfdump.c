@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2007/01/14 17:22:41  fwarmerdam
+ * fix column/row reporting
+ *
  * Revision 1.12  2006/12/10 04:59:51  fwarmerdam
  * added blocka support from Reiner Beck
  *
@@ -169,7 +172,7 @@ int main( int nArgc, char ** papszArgv )
             }
 
             printf( "Image Segment %d, %dPx%dLx%dB x %dbits:\n", 
-                    iSegment, psImage->nColumns, psImage->nRows, 
+                    iSegment, psImage->nCols, psImage->nRows, 
                     psImage->nBands, psImage->nBitsPerSample );
             printf( "  PVTYPE=%s, IREP=%s, ICAT=%s, IMODE=%c, IC=%s, COMRAT=%s, ICORDS=%c\n", 
                     psImage->szPVType, psImage->szIREP, psImage->szICAT,
