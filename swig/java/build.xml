@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<project name="gdal" default="archive">
+
+	<description>Builds the Java SWIG bindings-proxy classes for GDAL/OGR</description>
+	
+	<target name="compile" description="Compile the source files.">
+		<mkdir dir="build/classes"/>
+		<javac srcdir="org" destdir="build/classes" 
+		       debug="on" source="1.4" target="1.4"
+		       includeantruntime="false" deprecation="true">
+		</javac>
+		<echo>compilation complete</echo>
+	</target>
+
+	<target name="archive" depends="compile" description="Build a jar.">
+		<jar destfile="gdal.jar">
+			<fileset dir="build/classes">
+				<include name="**/*.class"/>
+			</fileset>
+		</jar>
+	</target>
+
+	<target name="clean" description="Cleans up old files.">
+		<delete dir="build"/>
+	</target>
+
+</project>

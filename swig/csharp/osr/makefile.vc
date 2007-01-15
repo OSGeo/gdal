@@ -1,0 +1,14 @@
+OBJ	=	osr_wrap.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..
+
+clean:
+	-del *.obj
+	-del *.cs
+	-del *.cpp
+

@@ -1,0 +1,160 @@
+#
+# makefile.vc - MSVC++ makefile for the C#/GDAL extension
+#
+# This VC++ makefile will build the GDAL C# interface assemblies 
+#
+# To use the makefile:
+#  - Open a DOS prompt window
+#  - Run the VCVARS32.BAT script to initialize the VC++ environment variables
+#  - Start the build with:  nmake /f makefile.vc
+#
+# $Id$
+#
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!INCLUDE csharp.opt
+
+!IFDEF CSHARP_STATIC_LINKAGE
+GDALLIB	= $(GDAL_ROOT)\gdal.lib
+!ELSE
+GDALLIB	= $(GDAL_ROOT)\gdal_i.lib
+!ENDIF
+
+!IFDEF MONO
+CSC = mcs
+!ELSE
+!IF $(MSVC_VER) == 1400
+!IFDEF WIN64
+CSC = csc /platform:anycpu
+!ELSE
+CSC = csc /platform:x86
+!ENDIF
+!ELSE
+CSC = csc
+!ENDIF
+!ENDIF
+
+OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
+
+
+all: sign ogr_dir gdal_dir osr_dir const_dir gdal_csharp samples
+
+gdal_csharp:
+    $(CSC) /debug:full /target:library /out:gdal_ogr_csharp.dll ogr\*.cs
+    $(CSC) /debug:full /target:library /out:gdal_gdal_csharp.dll gdal\*.cs 
+    $(CSC) /debug:full /target:library /out:gdal_gdalconst_csharp.dll const\*.cs
+    $(CSC) /debug:full /target:library /out:gdal_osr_csharp.dll osr\*.cs 
+    link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) ogr_wrap.obj \
+		$(EXTERNAL_LIBS) $(GDALLIB)\
+		 /out:gdal_ogr_wrap.dll $(LINKER_FLAGS)
+	if exist gdal_ogr_wrap.dll.manifest mt -manifest gdal_ogr_wrap.dll.manifest -outputresource:gdal_ogr_wrap.dll;2
+    link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) gdal_wrap.obj \
+		$(EXTERNAL_LIBS) $(GDALLIB)\
+		 /out:gdal_gdal_wrap.dll $(LINKER_FLAGS)
+	if exist gdal_gdal_wrap.dll.manifest mt -manifest gdal_gdal_wrap.dll.manifest -outputresource:gdal_gdal_wrap.dll;2
+    link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) gdalconst_wrap.obj \
+		$(EXTERNAL_LIBS) $(GDALLIB)\
+		 /out:gdal_gdalconst_wrap.dll $(LINKER_FLAGS)
+	if exist gdal_gdalconst_wrap.dll.manifest mt -manifest gdal_gdalconst_wrap.dll.manifest -outputresource:gdal_gdalconst_wrap.dll;2
+    link /dll /debug $(OGR_INCLUDE) $(BASE_INCLUDE) osr_wrap.obj \
+		$(EXTERNAL_LIBS) $(GDALLIB)\
+		 /out:gdal_osr_wrap.dll $(LINKER_FLAGS)
+	if exist gdal_osr_wrap.dll.manifest mt -manifest gdal_osr_wrap.dll.manifest -outputresource:gdal_osr_wrap.dll;2
+
+sign:
+    sn -k gdal.snk
+    
+ogr_dir:
+	cd ogr
+	$(MAKE) /f makefile.vc
+	cd ..
+
+gdal_dir:
+	cd gdal
+	$(MAKE) /f makefile.vc
+	cd ..
+
+const_dir:
+	cd const
+	$(MAKE) /f makefile.vc
+	cd ..
+
+osr_dir:
+	cd osr
+	$(MAKE) /f makefile.vc
+	cd ..
+	
+interface:
+	cd const
+    $(SWIG) -csharp -namespace GDAL -dllimport gdal_gdalconst_wrap -o gdalconst_wrap.c ../../include/gdalconst.i
+	cd ..
+	cd gdal
+	$(SWIG) -c++ -csharp -namespace GDAL  -dllimport gdal_gdal_wrap -I../../include/csharp -o gdal_wrap.cpp ../../include/gdal.i
+	cd ..
+	cd osr
+	$(SWIG) -c++ -csharp -namespace OSR  -dllimport gdal_osr_wrap -I../../include/csharp -o osr_wrap.cpp ../../include/osr.i
+	cd ..
+	cd ogr
+	$(SWIG) -c++ -csharp -namespace OGR  -dllimport gdal_osr_wrap -I../../include/csharp -o osr_wrap.cpp ../../include/osr.i
+	$(SWIG) -c++ -csharp -namespace OGR -dllimport gdal_ogr_wrap -I../../include/csharp -o ogr_wrap.cpp ../../include/ogr.i	
+	cd ..
+
+samples:
+    $(CSC) /r:gdal_ogr_csharp.dll /out:ogrinfo.exe apps\ogrinfo.cs
+    $(CSC) /r:gdal_ogr_csharp.dll /out:createdata.exe apps\createdata.cs
+    $(CSC) /r:gdal_osr_csharp.dll /out:OSRTransform.exe apps\OSRTransform.cs
+    $(CSC) /r:gdal_gdal_csharp.dll /r:System.Drawing.dll /out:GDALRead.exe apps\GDALRead.cs
+    $(CSC) /r:gdal_gdal_csharp.dll /r:System.Drawing.dll /out:GDALReadDirect.exe apps\GDALReadDirect.cs
+    $(CSC) /r:gdal_gdal_csharp.dll /r:gdal_gdalconst_csharp.dll /out:GDALWrite.exe apps\GDALWrite.cs
+    $(CSC) /r:gdal_gdal_csharp.dll /r:gdal_gdalconst_csharp.dll /out:GDALColorTable.exe apps\GDALColorTable.cs
+    $(CSC) /r:gdal_ogr_csharp.dll /out:WKT2WKB.exe apps\WKT2WKB.cs
+    $(CSC) /r:gdal_gdal_csharp.dll /out:ReadXML.exe apps\ReadXML.cs
+    
+test:
+!IFDEF MONO
+	mono createdata.exe Data pointlayer
+    mono ogrinfo.exe Data/pointlayer.shp
+    mono OSRTransform.exe
+!ELSE
+    createdata.exe Data pointlayer
+    ogrinfo.exe Data/pointlayer.shp
+	OSRTransform.exe
+!ENDIF
+	
+clean:	
+	cd gdal
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd ogr
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd const
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd osr
+	$(MAKE) /f makefile.vc clean
+	cd ..	
+	-del gdal.lib
+	-del gdal_*_wrap.dll
+	-del gdal_*_csharp.dll
+	-del *.obj
+	-del *.exp
+	-del *.ilk
+	-del *.pdb
+	-del *.tlb
+	-del *.snk
+	-del *.cs
+	-del *.cpp
+	-del *.lib
+	-del *.mdb
+	-del *.exe
+	-del *.manifest
+	
+install: gdal_csharp
+    -mkdir $(BINDIR)
+	xcopy /y /r /d /f gdal_*_wrap.dll $(BINDIR)
+	xcopy /y /r /d /f gdal_*_csharp.dll $(BINDIR)
+

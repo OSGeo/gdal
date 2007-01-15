@@ -1,0 +1,17 @@
+GNUmakefile
+MANIFEST
+README
+lib/Geo/GDAL/Const.pm
+lib/Geo/GDAL.pm
+lib/Geo/OGR.pm
+lib/Geo/OSR.pm
+t/gdal.t
+t/ogr.t
+Makefile.PL
+clean.bat
+make.bat
+gdalconst_wrap.c
+gdal_wrap.cpp
+ogr_wrap.cpp
+osr_wrap.cpp
+META.yml                                 Module meta-data (added by MakeMaker)

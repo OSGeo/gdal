@@ -1,0 +1,66 @@
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+!IFDEF DLLBUILD
+GDALLIB	=    $(GDAL_ROOT)\gdal_i.lib
+!ELSE
+GDALLIB	=    $(GDAL_ROOT)\gdal.lib
+!ENDIF
+
+OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
+
+all:  ogr_dir gdal_dir const_dir osr_dir
+	ant
+
+    
+ogr_dir:
+	cd ogr
+	$(MAKE) /f makefile.vc
+	cd ..
+	link ogr_wrap.obj $(GDALLIB) /out:ogrjni.dll /DLL
+
+gdal_dir:
+	cd gdal
+	$(MAKE) /f makefile.vc
+	cd ..
+	link gdal_wrap.obj $(GDALLIB) /out:gdaljni.dll /DLL
+
+const_dir:
+	cd const
+	$(MAKE) /f makefile.vc
+	cd ..
+	link gdalconst_wrap.obj $(GDALLIB) /out:gdalconstjni.dll /DLL
+
+osr_dir:
+	cd osr
+	$(MAKE) /f makefile.vc
+	cd ..
+	link osr_wrap.obj $(GDALLIB) /out:osrjni.dll /DLL
+	
+	
+clean:
+    rmdir /s /q org
+	cd gdal
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd ogr
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd const
+	$(MAKE) /f makefile.vc clean
+	cd ..
+	cd osr
+	$(MAKE) /f makefile.vc clean
+	cd ..	
+	-del gdal.lib
+	-del *.dll
+	-del *.obj
+	-del *.exp
+	-del *.ilk
+	-del *.pdb
+	-del *.tlb
+	-del *.snk
+	-del *.cs
+	-del *.cpp
+	-del *.lib

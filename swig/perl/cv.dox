@@ -1,0 +1,61 @@
+/*! \page create_vector Creating a vector dataset
+
+The code here does not have any warranty. It is recommended that
+before using any of this code, you look into it and try to understand
+what it does, what input it needs, etc. Do not blindly execute
+anything!
+
+This example creates a new layer to a named datasource. The layer will
+contain polygon features and each feature will contain an integer as
+an attribute value. The name of the attribute will be 'key'. Each
+polygon will have four vertices. The SRS is explicitly set to WGS84.
+
+
+\code
+use Geo::GDAL;
+
+# information that we need:
+$dsname = "./";          # name of the datasource (in this case a directory)
+$lname = "boxes";        # name of the layer
+@data;                   # array which contains the data as hashref items,
+                         # each item comprises items 'points' and 'key'
+                         # 'points' is in this case an array of four points
+                         # which are refs to arrays (x,y)
+                         # 'key' is an integer which is stored as each
+                         # feature's attribute data
+
+$datasource = Geo::OGR::Open($dsname, 1) or die;
+
+$osr = new Geo::OSR::SpatialReference;
+$osr->SetWellKnownGeogCS('WGS84');
+
+$layer = $datasource->CreateLayer($lname, $osr, $ogr::wkbPolygon);
+$column = new Geo::OSR::FieldDefn('key', $ogr::OFTInteger);
+$layer->CreateField($column);
+
+$schema = $layer->GetLayerDefn();
+
+# make sure the cells share the points
+
+for $item (@data) {
+
+    $f = new Geo::OGR::Feature($schema);
+    $g = new Geo::OGR::Geometry($ogr::wkbPolygon);
+    $r = new Geo::OGR::Geometry($ogr::wkbLinearRing);
+
+    $r->AddPoint(@{$item->{points}[0]});
+    $r->AddPoint(@{$item->{points}[1]});
+    $r->AddPoint(@{$item->{points}[2]});
+    $r->AddPoint(@{$item->{points}[3]});
+
+    $g->AddGeometry($r);
+    $g->CloseRings;
+    $f->SetGeometry($g);
+    $f->SetField(0, $item->{key});
+    $layer->CreateFeature($f);
+}
+
+$layer->SyncToDisk;
+\endcode
+
+*/
