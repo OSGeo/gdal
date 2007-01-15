@@ -28,54 +28,6 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
-# 
-# $Log$
-# Revision 1.15  2006/10/18 16:10:08  fwarmerdam
-# Should be vacuum'ing spatial_ref_sys.
-#
-# Revision 1.14  2006/02/28 05:36:13  fwarmerdam
-# Added some comments in proj.4 output.  Not sure how this got lost.
-#
-# Revision 1.13  2004/11/01 17:25:39  fwarmerdam
-# ensure SQL and PROJ.4 strings are SQL escaped for PostGIS
-#
-# Revision 1.12  2004/05/10 17:09:30  warmerda
-# improve PostGIS output
-#
-# Revision 1.11  2004/05/03 20:00:54  warmerda
-# Don't double up no_defs.
-#
-# Revision 1.10  2004/05/03 19:58:56  warmerda
-# Fixed up PROJ.4 error handling.
-#
-# Revision 1.9  2004/04/29 13:47:33  warmerda
-# improve handling of untranslatable codes
-#
-# Revision 1.8  2004/03/10 19:08:42  warmerda
-# added -list to usage
-#
-# Revision 1.7  2003/03/21 22:23:27  warmerda
-# added xml support
-#
-# Revision 1.6  2002/12/13 06:36:18  warmerda
-# added postgis output
-#
-# Revision 1.5  2002/12/03 04:43:11  warmerda
-# remove time checking!
-#
-# Revision 1.4  2001/03/23 03:41:16  warmerda
-# fixed bug in print statement
-#
-# Revision 1.3  2001/03/21 02:28:21  warmerda
-# fixed proj.4 catalog output
-#
-# Revision 1.2  2001/03/15 03:20:12  warmerda
-# various improvements
-#
-# Revision 1.1  2001/03/14 20:38:51  warmerda
-# New
-#
-#
 
 import osr
 import sys
