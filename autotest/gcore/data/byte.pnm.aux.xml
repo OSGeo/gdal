@@ -1,0 +1,10 @@
+<PAMDataset>
+  <Metadata domain="xml:test" format="xml">
+    <?xml version="2.0"?>
+    <TestXML>Value</TestXML>
+  </Metadata>
+  <Metadata>
+    <MDI key="other">red</MDI>
+    <MDI key="key">value</MDI>
+  </Metadata>
+</PAMDataset>

@@ -1,0 +1,35 @@
+<VRTDataset rasterXSize="50" rasterYSize="50">
+  <GCPList Projection="WGS84">
+    <GCP Id="1" Pixel="0" Line="0" X="0" Y="0"/>
+    <GCP Id="2" Pixel="0" Line="50" X="0" Y="50"/>
+    <GCP Id="3" Pixel="50" Line="50" X="50" Y="50"/>
+    <GCP Id="4" Pixel="50" Line="0" X="50" Y="0"/>
+  </GCPList>
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Red</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">rgbsmall.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+      <DstRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2">
+    <ColorInterp>Green</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">rgbsmall.tif</SourceFilename>
+      <SourceBand>2</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+      <DstRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="3">
+    <ColorInterp>Blue</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">rgbsmall.tif</SourceFilename>
+      <SourceBand>3</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+      <DstRect xOff="0" yOff="0" xSize="50" ySize="50"/>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>

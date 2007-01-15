@@ -1,0 +1,122 @@
+# $Id: makefile.vc,v 1.5 2006/12/06 15:38:16 mloskot Exp $
+#
+# Makefile to build GDAL C++ Unit Tests (subset of Python tests)
+#
+# These tests are dedicated to Windows CE platform and cover features
+# supported by Windows CE port of GDAL.
+# Also, compilable and runnable on Windows 2000/XP.
+#
+#############################################################################
+# CONFIGURATION
+
+GDAL_VERSION = 14
+
+# GDAL library
+GDAL_ROOT = ..\..\gdal
+GDAL_LIB = $(GDAL_ROOT)\gdal_i.lib
+
+# GEOS sources location, DLL and Import library
+GEOS_ROOT = D:\dev\geos\_svn\geos
+GEOS_LIB = $(GEOS_ROOT)\source\geos_c_i.lib
+GEOS_DLL = geos_c.dll
+
+# PROJ.4 sources location, DLL and Import library
+PROJ4_ROOT = D:\dev\proj\_cvs\proj
+PROJ4_LIB = $(PROJ4_ROOT)\src\proj_i.lib
+PROJ4_DLL = proj.dll
+
+# Specification of enabled GDAL drivers
+GDAL_SUPPORT = \
+    -DHAVE_GEOS \
+    -DOGR_ENABLED \
+    -DSHAPE_ENABLED \
+    -DFRMT_aaigrid \
+    -DFRMT_dted \
+    -DFRMT_gtiff
+
+# END OF CONFIGURATION
+#############################################################################
+INCLUDE_DIR = \
+    -I. \
+    -Itut \
+    -I$(GDAL_ROOT)\port \
+    -I$(GDAL_ROOT)\alg \
+    -I$(GDAL_ROOT)\gcore \
+    -I$(GDAL_ROOT)\ogr \
+    -I$(GDAL_ROOT)\ogr/ogrsf_frmts \
+    -I$(GEOS_ROOT)\capi \
+    -I$(PROJ4_ROOT)\src
+
+OBJ = \
+    test_gdal.obj \
+    test_gdal_aaigrid.obj \
+    test_gdal_dted.obj \
+    test_gdal_gtiff.obj \
+    test_ogr.obj \
+    test_ogr_geos.obj \
+    test_ogr_shape.obj \
+    test_osr.obj \
+    test_osr_ct.obj \
+    test_osr_pci.obj \
+    test_osr_proj4.obj \
+    tut/tut_gdal.obj
+
+# Commands
+RM = -del
+
+# Always compile tests in debug mode
+OPTFLAGS = /nologo /MDd /EHsc /W3 /Od /Zi
+
+# Preprocessor definitions
+CPPFLAGS = /D "WIN32" /D "_DEBUG" /D "UNICODE" /D "_UNICODE" /D "_CONSOLE" \
+    $(GDAL_SUPPORT)
+
+# Complete set of compilation flags
+CFLAGS = $(OPTFLAGS) $(CPPFLAGS) $(INCLUDE_DIR)
+
+GDAL_DLL = gdal$(GDAL_VERSION).dll
+GDAL_TEST_EXE = gdal_unit_test.exe
+
+default: $(GDAL_TEST_EXE)
+
+$(GDAL_TEST_EXE): gdal_unit_test.cpp copy-gdal-dll copy-geos-dll copy-proj4-dll $(OBJ)
+	$(CC) gdal_unit_test.cpp $(CFLAGS) $(OBJ) $(GDAL_LIB) $(GEOS_LIB) $(PROJ4_LIB)
+    if exist $(GDAL_TEST_EXE).manifest mt -manifest $(GDAL_TEST_EXE).manifest -outputresource:$(GDAL_TEST_EXE);1
+
+copy-gdal-dll:
+    copy $(GDAL_ROOT)\$(GDAL_DLL) .
+
+copy-geos-dll:
+    copy $(GEOS_ROOT)\source\$(GEOS_DLL) .
+
+copy-proj4-dll:
+    copy $(PROJ4_ROOT)\src\$(PROJ4_DLL) .
+    
+$(GDAL_DLL):
+    cd $(GDAL_ROOT)
+    nmake /f makefile.vc
+    cd ..
+
+.cpp.obj:
+	$(CC) $(CFLAGS) /c $*.cpp /Fo$@
+
+.c.obj:
+	$(CC) $(CFLAGS) /c $*.c /Fo$@
+
+clean:
+	$(RM) *~
+	$(RM) *.dll
+	$(RM) *.exe
+	$(RM) *.exp
+	$(RM) *.ilk
+	$(RM) *.lib
+	$(RM) *.manifest
+	$(RM) *.obj
+	$(RM) *.pdb
+	$(RM) tmp\*.dbf
+	$(RM) tmp\*.dt0
+	$(RM) tmp\*.grd
+	$(RM) tmp\*.shp
+	$(RM) tmp\*.shx
+	$(RM) tut\*.obj
+

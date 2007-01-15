@@ -1,0 +1,27 @@
+<OGRVRTDataSource>
+
+    <OGRVRTLayer name="test2">
+        <SrcDataSource relativeToVRT="1">flat.dbf</SrcDataSource> 
+ 	<SrcLayer>flat</SrcLayer> 
+	<GeometryType>wkbPoint</GeometryType> 
+	<GeometryField encoding="PointFromColumns" x="x" y="y" z="z"/> 
+    </OGRVRTLayer>
+
+    <OGRVRTLayer name="test3">
+        <SrcDataSource>data/flat.dbf</SrcDataSource> 
+ 	<SrcLayer>flat</SrcLayer> 
+        <LayerSRS>WGS84</LayerSRS>
+	<FID>fid</FID>
+	<GeometryType>wkbPoint</GeometryType> 
+	<GeometryField encoding="WKT" field="wkt"/> 
+    </OGRVRTLayer>
+
+    <OGRVRTLayer name="test4">
+        <SrcDataSource>data/flat.dbf</SrcDataSource> 
+ 	<SrcSQL>SELECT * FROM flat</SrcSQL> 
+	<FID>fid</FID>
+	<GeometryType>wkbPoint</GeometryType> 
+	<GeometryField encoding="WKT" field="wkt"/> 
+    </OGRVRTLayer>
+
+</OGRVRTDataSource>
