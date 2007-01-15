@@ -1,6 +1,0 @@
-test.py
-*.pyc
-gdal_wrap.doc
-*.dll
-*.exp
-*.lib
