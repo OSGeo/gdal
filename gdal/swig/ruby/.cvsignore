@@ -1,9 +1,0 @@
-*.lo
-*.so
-*.obj
-*.o
-*.pdb
-*.ilk
-*.lib
-*.exp
-*.libs
