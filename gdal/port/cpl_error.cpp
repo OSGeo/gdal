@@ -25,56 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log$
- * Revision 1.38  2006/06/30 15:03:49  dron
- * Avoid warnings on win/64.
- *
- * Revision 1.37  2006/06/29 20:02:40  fwarmerdam
- * Use va_copy when re-using va_args multiple times.  Needed on AMD64 Linux.
- *
- * Revision 1.36  2006/03/07 22:05:32  fwarmerdam
- * fix up docs a bit
- *
- * Revision 1.35  2006/02/27 23:24:13  fwarmerdam
- * Removed printf about growing error buffer.
- *
- * Revision 1.34  2006/02/27 02:40:11  fwarmerdam
- * Dynamically grow error buffer.
- *
- * Revision 1.33  2006/02/19 21:54:34  mloskot
- * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
- *
- * Revision 1.32  2005/07/25 18:09:10  fwarmerdam
- * Made pfnErrorHandler static.
- *
- * Revision 1.31  2005/07/25 17:56:34  fwarmerdam
- * Altered so that CPLSetErrorHandler sets a handler global to all threads, but
- * that the error handler stack takes precidence over it.
- *
- * Revision 1.30  2005/07/08 14:35:56  fwarmerdam
- * restructured to use error context and TLS
- *
- * Revision 1.29  2005/05/23 03:58:51  fwarmerdam
- * make handler stack threadlocal
- *
- * Revision 1.28  2005/04/04 15:23:31  fwarmerdam
- * some functions now CPL_STDCALL
- *
- * Revision 1.27  2003/05/27 20:44:16  warmerda
- * use VSI time services
- * 
- * Revision 1.26  2003/05/08 21:51:14  warmerda
- * added CPL{G,S}etConfigOption() usage
- *
- * Revision 1.25  2003/04/04 14:57:38  dron
- * _vsnprintf() hack moved to the cpl_config.h.vc.
- *
- * Revision 1.24  2003/04/04 14:16:07  dron
- * Use _vsnprintf() in Windows environment.
- */
+ ****************************************************************************/
 
 #include "cpl_error.h"
 #include "cpl_vsi.h"

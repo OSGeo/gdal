@@ -25,26 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2006/02/15 18:04:45  fwarmerdam
- * implemented DSID feature support
- *
- * Revision 1.4  2005/09/21 00:54:43  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.3  2005/07/30 18:26:38  fwarmerdam
- * accept one character primitives like we get in AML classes
- *
- * Revision 1.2  2003/11/17 20:10:46  warmerda
- * added support for writing FFPT linkages
- *
- * Revision 1.1  2003/11/12 21:24:41  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "s57.h"
 #include "ogr_api.h"

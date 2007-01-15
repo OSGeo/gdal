@@ -35,52 +35,6 @@
  *   Completed security audit.  I believe that this module may be safely used 
  *   to parse, arbitrary GML potentially provided by a hostile source without
  *   compromising the system.
- *
- * $Log$
- * Revision 1.10  2005/07/20 02:33:24  fwarmerdam
- * fix up dimension support
- *
- * Revision 1.9  2005/03/08 19:51:15  fwarmerdam
- * added gml:pos support
- *
- * Revision 1.8  2004/01/06 18:40:06  warmerda
- * do not crash if polygon fails to parse during multipolygon assembly
- *
- * Revision 1.7  2003/09/22 05:34:46  warmerda
- * implemented support for various kinds of geometry collections
- *
- * Revision 1.6  2003/04/17 08:23:07  dron
- * Completed security audit, few fixes in error format strings.
- *
- * Revision 1.5  2003/03/28 05:46:43  warmerda
- * completed security audit, fix error report risk
- *
- * Revision 1.4  2003/03/12 20:52:07  warmerda
- * implemented support for gml:Box
- *
- * Revision 1.3  2003/03/07 21:30:15  warmerda
- * expand tabs
- *
- * Revision 1.2  2003/03/07 14:52:40  warmerda
- * fixed type casting issing
- *
- * Revision 1.1  2003/03/06 20:28:38  warmerda
- * Migrated to here (gdal/ogr) from gdal/ogr/ogrsf_frmts/gml.
- * Changed to implement the C API entry points (OGR_G_*).
- * Added API to take/return CPLXMLNode's directly.
- *
- * Revision 1.4  2002/03/11 17:09:42  warmerda
- * added multipolygon support
- *
- * Revision 1.3  2002/03/07 22:37:10  warmerda
- * use ogr_gml_geom.h
- *
- * Revision 1.2  2002/03/06 20:07:12  warmerda
- * fixed point reading
- *
- * Revision 1.1  2002/01/24 17:39:22  warmerda
- * New
- *
  */
 
 #include "cpl_minixml.h"

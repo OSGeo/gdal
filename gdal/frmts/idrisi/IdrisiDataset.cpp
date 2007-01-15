@@ -24,28 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- *****************************************************************************
- *
- * $Log$
- * Revision 1.32  2007/01/11 00:22:08  fwarmerdam
- * Various cosmetic (code formatting) changes.
- *
- * Revision 1.31  2007/01/10 23:30:21  fwarmerdam
- * Avoid crashing if the version string is not found in the .rdc file.
- * For instance, if the .rdc file isn't found.
- *
- * Revision 1.30  2006/10/11 08:32:00  dron
- * Use local CPLStrlwr() instead of unportable strlwr(); avoid warnings.
- *
- * Revision 1.29  2006/10/10 16:59:22  ilucena
- * Coordinate system support improvements
- *
- * Revision 1.28  2006/06/06 18:34:01  ilucena
- * Projection system and image extent error fixed
- *
- *
- */
+ ****************************************************************************/
 
 #include "gdal_priv.h"
 #include "cpl_conv.h"

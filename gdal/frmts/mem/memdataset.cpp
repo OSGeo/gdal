@@ -24,77 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.22  2006/04/04 04:42:39  fwarmerdam
- * update contact info
- *
- * Revision 1.21  2005/03/08 16:35:05  fwarmerdam
- * Fixed memory leak.
- *
- * Revision 1.20  2005/03/08 16:31:08  fwarmerdam
- * Added handling of DATATYPE as a name, not just a number.
- *
- * Revision 1.19  2004/11/21 22:13:29  fwarmerdam
- * use new pointer encode/decode functions
- *
- * Revision 1.18  2004/08/30 18:50:27  warmerda
- * Fixed so that SetProjection() succeeds.
- *
- * Revision 1.17  2004/04/15 18:54:10  warmerda
- * added UnitType, Offset, Scale and CategoryNames support
- *
- * Revision 1.16  2003/04/16 14:37:54  warmerda
- * Comment out debug messages ... too noisy.
- *
- * Revision 1.15  2003/02/03 17:57:30  warmerda
- * Fix for last fix.
- *
- * Revision 1.14  2003/02/03 16:28:35  warmerda
- * fixed fatal bug with nWordSize for unpacked arrays in read/write block
- *
- * Revision 1.13  2002/12/21 21:13:04  warmerda
- * fixed memory leak of colortable
- *
- * Revision 1.12  2002/11/23 18:54:17  warmerda
- * added CREATIONDATATYPES metadata for drivers
- *
- * Revision 1.11  2002/11/20 05:18:09  warmerda
- * added AddBand() implementation
- *
- * Revision 1.10  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.9  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.8  2002/06/10 21:31:57  warmerda
- * preserve projection and geotransform
- *
- * Revision 1.7  2002/05/29 16:01:54  warmerda
- * fixed SetColorInterpretation
- *
- * Revision 1.6  2002/04/12 17:37:31  warmerda
- * added colortable support
- *
- * Revision 1.5  2002/03/01 16:45:53  warmerda
- * added support for retaining nodata value
- *
- * Revision 1.4  2001/10/26 20:03:28  warmerda
- * added C entry point for creating MEMRasterBand
- *
- * Revision 1.3  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.2  2000/07/19 19:07:04  warmerda
- * break linkage between MEMDataset and MEMRasterBand
- *
- * Revision 1.1  2000/07/19 15:55:11  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "memdataset.h"
 #include "cpl_string.h"

@@ -24,32 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.9  2002/05/08 20:27:48  warmerda
- * added support for caching OGRDataSources
- *
- * Revision 1.8  2002/01/13 01:41:21  warmerda
- * included date in startup debug
- *
- * Revision 1.7  2001/11/09 19:05:34  warmerda
- * added debuggin
- *
- * Revision 1.6  2001/11/01 16:46:15  warmerda
- * use default CPLLoggingErrorHandler now
- *
- * Revision 1.5  2001/10/22 21:28:25  warmerda
- * updated logging rules
- *
- * Revision 1.4  2001/05/28 19:34:41  warmerda
- * override error handler
- *
- * Revision 1.3  2000/01/31 16:26:21  warmerda
- * added header
- *
- */
+ ****************************************************************************/
 
 #include "stdafx.h"
 #include "resource.h"

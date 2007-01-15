@@ -24,41 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.10  2005/11/03 21:06:41  fwarmerdam
- * Fixed last change.
- *
- * Revision 1.9  2005/11/03 14:22:48  fwarmerdam
- * Use large file API to stat file.
- *
- * Revision 1.8  2005/09/21 01:01:01  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.7  2005/06/20 17:54:04  fwarmerdam
- * added support for external csvt file
- *
- * Revision 1.6  2004/08/17 21:03:03  warmerda
- * Avoid leak of papoLayers array.
- *
- * Revision 1.5  2004/08/17 15:40:40  warmerda
- * track capabilities and update mode better
- *
- * Revision 1.4  2004/08/16 21:29:48  warmerda
- * added output support
- *
- * Revision 1.3  2004/07/31 04:50:22  warmerda
- * started write support
- *
- * Revision 1.2  2004/07/20 20:53:26  warmerda
- * added support for reading directories of CSV files
- *
- * Revision 1.1  2004/07/20 19:18:23  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_csv.h"
 #include "cpl_conv.h"

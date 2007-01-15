@@ -36,55 +36,6 @@
  *   to generate GML from arbitrary but well formed OGRGeomety objects that
  *   come from a potentially hostile source, but through a trusted OGR importer
  *   without compromising the system.
- *
- * $Log$
- * Revision 1.10  2006/06/23 00:34:54  mloskot
- * Added SRS export to GML in form of srsName attribute of geometry GML elements. srsName attribute stores EPSG code, if exported geometry has assigned SRS with authority of EPSG.
- *
- * Revision 1.9  2005/07/29 15:54:07  fwarmerdam
- * ogrmakewktcoordinate defined in ogr_p.h
- *
- * Revision 1.8  2005/07/29 04:13:39  fwarmerdam
- * use OGR WKT encoding function for GML coordinates too
- *
- * Revision 1.7  2003/09/22 05:34:46  warmerda
- * implemented support for various kinds of geometry collections
- *
- * Revision 1.6  2003/04/17 08:22:06  dron
- * Completed secutity audit, fix in MakeGMLCoordinate().
- *
- * Revision 1.5  2003/03/28 06:00:14  warmerda
- * Completed security audit.  Fixed issue with very large coordinate values
- * potentially causing a buffer overrun.
- *
- * Revision 1.4  2003/03/18 17:13:03  warmerda
- * Improve precision (and use %g) for latlong coordinates.
- *
- * Revision 1.3  2003/03/12 20:52:07  warmerda
- * implemented support for gml:Box
- *
- * Revision 1.2  2003/03/07 21:30:15  warmerda
- * expand tabs
- *
- * Revision 1.1  2003/03/06 20:28:38  warmerda
- * Migrated to here (gdal/ogr) from gdal/ogr/ogrsf_frmts/gml.
- * Changed to implement the C API entry points (OGR_G_*).
- * Added API to take/return CPLXMLNode's directly.
- *
- * Revision 1.5  2002/03/11 22:34:08  warmerda
- * Avoid multiple defining iMember.
- *
- * Revision 1.4  2002/03/11 17:29:04  warmerda
- * added multipolygon support
- *
- * Revision 1.3  2002/03/07 22:38:04  warmerda
- * use ogr_gml_geom.h
- *
- * Revision 1.2  2002/01/25 21:00:31  warmerda
- * fix some small bugs found by MS VC++
- *
- * Revision 1.1  2002/01/25 20:37:02  warmerda
- * New
  */
 
 #include "cpl_minixml.h"

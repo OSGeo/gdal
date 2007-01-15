@@ -24,50 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.13  2006/04/04 04:42:39  fwarmerdam
- * update contact info
- *
- * Revision 1.12  2005/05/19 20:39:54  dron
- * Derive the MEMRasterBand from GDALPamRasterBand.
- *
- * Revision 1.11  2005/04/19 19:56:11  fwarmerdam
- * Explicitly mark destructor as virtual.
- *
- * Revision 1.10  2004/04/15 18:54:10  warmerda
- * added UnitType, Offset, Scale and CategoryNames support
- *
- * Revision 1.9  2002/11/20 05:18:09  warmerda
- * added AddBand() implementation
- *
- * Revision 1.8  2002/06/10 21:31:57  warmerda
- * preserve projection and geotransform
- *
- * Revision 1.7  2002/05/29 16:01:54  warmerda
- * fixed SetColorInterpretation
- *
- * Revision 1.6  2002/04/12 17:37:31  warmerda
- * added colortable support
- *
- * Revision 1.5  2002/03/01 16:45:53  warmerda
- * added support for retaining nodata value
- *
- * Revision 1.4  2001/10/26 20:03:28  warmerda
- * added C entry point for creating MEMRasterBand
- *
- * Revision 1.3  2000/07/20 13:38:48  warmerda
- * make classes public with CPL_DLL
- *
- * Revision 1.2  2000/07/19 19:07:04  warmerda
- * break linkage between MEMDataset and MEMRasterBand
- *
- * Revision 1.1  2000/07/19 15:55:11  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef MEMDATASET_H_INCLUDED
 #define MEMDATASET_H_INCLUDED

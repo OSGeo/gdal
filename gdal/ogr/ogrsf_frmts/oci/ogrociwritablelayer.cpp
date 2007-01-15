@@ -26,30 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2005/10/12 15:09:13  fwarmerdam
- * Added support for OCI_DEFAULT_DIM to control default table dimension.
- *
- * Revision 1.5  2005/08/10 21:15:03  hobu
- * Use VARCHAR2 for OFTString fields
- *
- * Revision 1.4  2003/09/17 16:36:34  warmerda
- * fixed setting of dimension for point objects
- *
- * Revision 1.3  2003/08/05 01:59:09  warmerda
- * Default unsized string fields to 2047 instead of 4000 to avoid problem reading
- * fields of width 2048 or more as reported by Ned.
- *
- * Revision 1.2  2003/05/21 03:54:01  warmerda
- * expand tabs
- *
- * Revision 1.1  2003/04/04 06:17:47  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_oci.h"
 #include "cpl_conv.h"

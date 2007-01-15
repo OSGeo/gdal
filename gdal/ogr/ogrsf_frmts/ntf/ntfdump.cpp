@@ -24,35 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2006/03/28 22:59:55  fwarmerdam
- * updated contact info
- *
- * Revision 1.7  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.6  2001/01/19 20:31:12  warmerda
- * expand tabs
- *
- * Revision 1.5  2001/01/17 19:08:37  warmerda
- * added CODELIST support
- *
- * Revision 1.4  1999/10/04 13:28:43  warmerda
- * added DEM_SAMPLE support
- *
- * Revision 1.3  1999/10/01 14:47:51  warmerda
- * major upgrade: generic, string feature codes, etc
- *
- * Revision 1.2  1999/08/30 16:48:40  warmerda
- * cleanup features
- *
- * Revision 1.1  1999/08/28 03:13:35  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ntf.h"
 #include "cpl_vsi.h"

@@ -24,50 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.13  2006/03/27 17:58:12  fwarmerdam
- * Fixed last change.
- *
- * Revision 1.12  2006/03/27 17:57:31  fwarmerdam
- * Added check for static keyword.  Ivan encountered "XPM" in a raw image.
- *
- * Revision 1.11  2005/05/05 15:54:49  fwarmerdam
- * PAM Enabled
- *
- * Revision 1.10  2004/11/11 17:07:19  fwarmerdam
- * Avoid warnings about using char as a subscript.
- *
- * Revision 1.9  2003/07/08 21:15:55  warmerda
- * avoid warnings
- *
- * Revision 1.8  2003/04/10 10:24:16  dron
- * More leaks fixed.
- *
- * Revision 1.7  2003/04/09 21:32:02  dron
- * Memory leak fixed.
- *
- * Revision 1.6  2002/11/23 18:54:17  warmerda
- * added CREATIONDATATYPES metadata for drivers
- *
- * Revision 1.5  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.4  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.3  2002/04/16 17:46:47  warmerda
- * changed path to memdataset.h
- *
- * Revision 1.2  2002/04/16 16:12:53  warmerda
- * Fixed help topic.
- *
- * Revision 1.1  2002/04/12 20:13:01  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_pam.h"
 #include "cpl_string.h"

@@ -24,38 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2006/08/23 19:17:37  fwarmerdam
- * use VSI-L api for virtual access
- *
- * Revision 1.7  2006/04/04 04:24:06  fwarmerdam
- * update contact info
- *
- * Revision 1.6  2003/11/11 20:53:53  warmerda
- * Report file offset before each record dumped.
- *
- * Revision 1.5  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.4  2000/06/16 18:02:08  warmerda
- * added SetRepeatingFlag hack support
- *
- * Revision 1.3  1999/11/18 19:03:04  warmerda
- * expanded tabs
- *
- * Revision 1.2  1999/05/08 20:15:19  warmerda
- * Added malloc_dump to watch for memory leaks
- *
- * Revision 1.1  1999/04/27 18:45:54  warmerda
- * New
- *
- * Revision 1.1  1999/03/23 13:56:13  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include <stdio.h>
 #include "iso8211.h"

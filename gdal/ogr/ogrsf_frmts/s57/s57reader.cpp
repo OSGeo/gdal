@@ -24,48 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.57  2006/03/07 07:00:47  fwarmerdam
- * added preliminary logic to interpolate arcs in area boundaries
- *
- * Revision 1.56  2006/02/20 17:58:28  fwarmerdam
- * Update DSID_UPDN to reflect the updates applied.  Other DSID fields are not
- * updated.
- *
- * Revision 1.55  2006/02/15 18:04:45  fwarmerdam
- * implemented DSID feature support
- *
- * Revision 1.54  2005/12/06 22:02:45  fwarmerdam
- * dont create 3d points in AssemblePoint, bug 1010
- *
- * Revision 1.53  2005/08/07 13:58:17  fwarmerdam
- * avoid use of std::sprintf in favor of plain sprintf
- *
- * Revision 1.52  2005/08/06 04:41:42  fwarmerdam
- * Incorporated support for finding update files using the catalog file
- * as per bug 840.
- *
- * Revision 1.51  2005/08/06 04:23:51  fwarmerdam
- * Bug 840: allow linestrings with zero vertices between end nodes.
- *
- * Revision 1.50  2005/06/23 18:22:48  fwarmerdam
- * Fixed ReadNextFeature(poTarget=NULL) support.
- *
- * Revision 1.49  2004/08/30 20:10:38  warmerda
- * implemented FetchLine() with optimized access
- *
- * Revision 1.48  2004/08/27 20:23:11  warmerda
- * fixed up a bit of formatting
- *
- * Revision 1.47  2004/06/24 00:37:12  warmerda
- * fixed S57M_OPTIONS logic, support deleting attributes
- *
- * Revision 1.46  2004/06/23 19:46:51  warmerda
- * fixed logic of APPLY updates logic
- */
+ ****************************************************************************/
 
 #include "s57.h"
 #include "ogr_api.h"

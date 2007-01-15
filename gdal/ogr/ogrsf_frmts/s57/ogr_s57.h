@@ -25,44 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2006/04/02 18:48:26  fwarmerdam
- * contact info updated
- *
- * Revision 1.10  2005/02/22 12:53:12  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.9  2004/08/30 20:12:00  warmerda
- * keep the S57ClassRegistrar on the driver, not the datasource
- *
- * Revision 1.8  2003/11/15 21:50:52  warmerda
- * Added limited creation support
- *
- * Revision 1.7  2003/09/05 19:12:05  warmerda
- * added RETURN_PRIMITIVES support to get low level prims
- *
- * Revision 1.6  2002/03/05 14:25:43  warmerda
- * expanded tabs
- *
- * Revision 1.5  2001/12/17 22:34:16  warmerda
- * added GetFeature() method on OGRS57Layer
- *
- * Revision 1.4  2001/12/14 19:40:18  warmerda
- * added optimized feature counting, and extents collection
- *
- * Revision 1.3  1999/11/18 19:01:25  warmerda
- * expanded tabs
- *
- * Revision 1.2  1999/11/08 22:23:00  warmerda
- * added object class support
- *
- * Revision 1.1  1999/11/03 22:12:43  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _OGR_S57_H_INCLUDED
 #define _OGR_S57_H_INCLUDED

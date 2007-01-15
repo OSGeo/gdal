@@ -24,62 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.17  2006/08/23 19:17:37  fwarmerdam
- * use VSI-L api for virtual access
- *
- * Revision 1.16  2005/10/13 22:02:39  fwarmerdam
- * dont add fields that fail to initialize
- *
- * Revision 1.15  2004/02/18 14:09:42  warmerda
- * doc fixups
- *
- * Revision 1.14  2003/07/03 15:38:46  warmerda
- * some write capabilities added
- *
- * Revision 1.13  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.12  2000/09/19 14:08:51  warmerda
- * keep and report _extendedCharSet
- *
- * Revision 1.11  1999/11/18 19:03:04  warmerda
- * expanded tabs
- *
- * Revision 1.10  1999/11/18 19:02:38  warmerda
- * added failquietly to open
- *
- * Revision 1.9  1999/09/03 14:14:39  warmerda
- * fix cloning
- *
- * Revision 1.8  1999/09/02 03:10:01  warmerda
- * fixed subtle problem with rewinding modules with reusable headers
- *
- * Revision 1.7  1999/08/16 15:44:29  warmerda
- * Fixed bug in FindFieldDefn().
- *
- * Revision 1.6  1999/08/13 03:26:14  warmerda
- * added Rewind()
- *
- * Revision 1.5  1999/05/08 20:15:59  warmerda
- * added validity checking, and better cleanup on error
- *
- * Revision 1.4  1999/05/07 14:11:49  warmerda
- * added support for tracking record clones
- *
- * Revision 1.3  1999/05/06 15:39:45  warmerda
- * avoid redeclaring variable i
- *
- * Revision 1.2  1999/05/06 14:23:10  warmerda
- * added Close(), and minor optimizations
- *
- * Revision 1.1  1999/04/27 18:45:05  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "iso8211.h"
 #include "cpl_conv.h"

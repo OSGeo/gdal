@@ -24,22 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2003/09/11 22:47:53  aamici
- * add class constructors and destructors where needed in order to
- * let the mingw/cygwin binutils produce sensible partially linked objet files
- * with 'ld -r'.
- *
- * Revision 1.4  2003/01/11 15:29:55  warmerda
- * expanded tabs
- *
- * Revision 1.3  2003/01/09 18:27:40  warmerda
- * added headers/function headers
- *
- */
+ ****************************************************************************/
 
 #include "ogr_tiger.h"
 #include "cpl_conv.h"

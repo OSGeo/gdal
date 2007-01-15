@@ -25,74 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log$
- * Revision 1.21  2006/11/07 16:24:08  hobu
- * silence errors about no prototype defined for a few functions with void parameters
- *
- * Revision 1.20  2006/03/07 22:05:32  fwarmerdam
- * fix up docs a bit
- *
- * Revision 1.19  2005/08/31 03:32:13  fwarmerdam
- * fixed void arg list
- *
- * Revision 1.18  2005/08/25 18:05:36  fwarmerdam
- * Added void in empty arg lists.
- *
- * Revision 1.17  2005/04/04 15:23:31  fwarmerdam
- * some functions now CPL_STDCALL
- *
- * Revision 1.16  2001/11/02 22:07:58  warmerda
- * added logging error handler
- *
- * Revision 1.15  2001/01/19 21:16:41  warmerda
- * expanded tabs
- *
- * Revision 1.14  2000/11/30 17:30:10  warmerda
- * added CPLGetLastErrorType
- *
- * Revision 1.13  2000/08/24 18:08:17  warmerda
- * made default and quiet error handlers public on windows
- *
- * Revision 1.12  2000/06/26 21:44:07  warmerda
- * added CPLE_UserInterrupt for progress terminations
- *
- * Revision 1.11  2000/03/31 14:11:55  warmerda
- * added CPLErrorV
- *
- * Revision 1.10  2000/01/10 17:35:45  warmerda
- * added push down stack of error handlers
- *
- * Revision 1.9  1999/07/23 14:27:47  warmerda
- * CPLSetErrorHandler returns old handler
- *
- * Revision 1.8  1999/05/20 14:59:05  warmerda
- * added CPLDebug()
- *
- * Revision 1.7  1999/05/20 02:54:38  warmerda
- * Added API documentation
- *
- * Revision 1.6  1999/02/17 05:40:47  danmo
- * Fixed CPLAssert() macro to work with EGCS.
- *
- * Revision 1.5  1999/01/11 15:34:29  warmerda
- * added reserved range comment
- *
- * Revision 1.4  1998/12/15 19:02:27  warmerda
- * Avoid use of errno as a variable
- *
- * Revision 1.3  1998/12/06 22:20:42  warmerda
- * Added error code.
- *
- * Revision 1.2  1998/12/06 02:52:52  warmerda
- * Implement assert support
- *
- * Revision 1.1  1998/12/03 18:26:02  warmerda
- * New
- *
- **********************************************************************/
+ ****************************************************************************/
 
 #ifndef _CPL_ERROR_H_INCLUDED_
 #define _CPL_ERROR_H_INCLUDED_

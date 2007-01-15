@@ -24,20 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- * ****************************************************************************
- *
- * $Log$
- * Revision 1.3  2006/10/23 15:34:12  fwarmerdam
- * Added ability to select particular overviews.
- *
- * Revision 1.2  2005/09/29 00:59:57  fwarmerdam
- * updated
- *
- * Revision 1.1  2005/09/16 00:13:12  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "cpl_conv.h"
 #include "cpl_string.h"

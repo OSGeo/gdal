@@ -24,36 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log$
- * Revision 1.8  2006/10/31 21:06:58  fwarmerdam
- * modified to strip namespaces from features and attributes
- *
- * Revision 1.7  2006/10/10 18:00:03  fwarmerdam
- * restructure geometry formtation to support very large geometries
- *
- * Revision 1.6  2003/06/26 19:42:31  warmerda
- * Was starting a new feature in the middle of geometry, see place.xml
- *
- * Revision 1.5  2003/05/21 03:48:35  warmerda
- * Expand tabs
- *
- * Revision 1.4  2002/04/01 17:51:33  warmerda
- * allow geometry tags without gml: qualifier
- *
- * Revision 1.3  2002/01/25 20:38:49  warmerda
- * report fatal errors, add to geometry type list
- *
- * Revision 1.2  2002/01/24 17:37:57  warmerda
- * added geometry support, rewrite TrString use
- *
- * Revision 1.1  2002/01/04 19:46:30  warmerda
- * New
- *
- *
- **********************************************************************/
+ ****************************************************************************/
 
 #include <ctype.h>
 #include "gmlreaderp.h"

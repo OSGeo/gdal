@@ -24,62 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.32  2006/03/03 18:37:46  fwarmerdam
- * PCI2WKT changed to use OGRSpatialReference::ImportFromPCI().
- *
- * Revision 1.31  2005/10/06 16:32:37  fwarmerdam
- * Bug 947: Don't issue an error if there is no RawDefinition in .aux,
- * just ignore it.
- *
- * Revision 1.30  2005/05/05 13:55:42  fwarmerdam
- * PAM Enable
- *
- * Revision 1.29  2004/04/23 22:23:59  warmerda
- * Fixed memory leak of pszAuxFilename.
- *
- * Revision 1.28  2004/03/24 09:02:07  dron
- * Use CPL* functions for large integers parsing/printing.
- *
- * Revision 1.27  2004/03/23 15:03:25  dron
- * Fixed problems with large (>4GB) multiband datasets.
- *
- * Revision 1.26  2004/01/18 14:10:56  dron
- * Don't crash on broken auxilary files.
- *
- * Revision 1.25  2003/07/08 21:10:19  warmerda
- * avoid warnings
- *
- * Revision 1.24  2003/06/26 19:05:03  warmerda
- * fixed leak of pszTarget
- *
- * Revision 1.23  2003/02/03 05:10:18  warmerda
- * fix expectation that GDALOpenInfo.fp is set, not necessarily for large files
- *
- * Revision 1.22  2002/11/23 18:54:17  warmerda
- * added CREATIONDATATYPES metadata for drivers
- *
- * Revision 1.21  2002/10/07 19:27:02  warmerda
- * Fixed small memory leak in ::Open().
- *
- * Revision 1.20  2002/09/11 14:18:17  warmerda
- * added channel description support
- *
- * Revision 1.19  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.18  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.17  2002/02/01 20:20:40  warmerda
- * Added delete support.
- *
- * Revision 1.16  2001/12/12 18:15:46  warmerda
- * preliminary update for large raw file support
- */
+ ****************************************************************************/
 
 #include "rawdataset.h"
 #include "cpl_string.h"

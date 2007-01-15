@@ -25,35 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2006/06/30 15:05:46  dron
- * Avoid macro redefinition.
- *
- * Revision 1.7  2006/04/21 14:43:52  dron
- * Added test for copysignf() presence.
- *
- * Revision 1.6  2006/04/21 12:50:09  dron
- * Eliminated all the code related to long double floats.
- *
- * Revision 1.5  2006/04/04 16:11:06  fwarmerdam
- * temporarily avoid use of long double math funcs not on macos 10.3
- *
- * Revision 1.4  2006/04/02 14:45:38  fwarmerdam
- * Avoid VS8 problem with const char * / char *.
- *
- * Revision 1.3  2006/03/29 14:30:13  dron
- * Added forgotten extern "C" statements.
- *
- * Revision 1.2  2006/03/29 10:58:30  dron
- * Declare nan/nanf/nanl functions if not declared in system headers.
- *
- * Revision 1.1  2006/03/18 16:35:35  dron
- * New.
- *
- */
+ ****************************************************************************/
 
 /* strtold.c - code for the atof, strtod, strtof, and strtold functions
 

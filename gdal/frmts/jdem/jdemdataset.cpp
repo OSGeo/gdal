@@ -24,38 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.9  2005/05/05 15:54:48  fwarmerdam
- * PAM Enabled
- *
- * Revision 1.8  2003/07/08 21:21:56  warmerda
- * avoid warnings
- *
- * Revision 1.7  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.6  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.5  2001/11/11 23:51:00  warmerda
- * added required class keyword to friend declarations
- *
- * Revision 1.4  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.3  2001/06/21 19:59:51  warmerda
- * added help link
- *
- * Revision 1.2  2000/11/28 02:28:54  warmerda
- * Added error checks, GetGeoTransform and GetProjection
- *
- * Revision 1.1  2000/11/27 19:03:26  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_pam.h"
 

@@ -25,18 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log$
- * Revision 1.2  2003/06/27 16:14:05  warmerda
- * regularized CPLList declaration
- *
- * Revision 1.1  2003/06/25 07:45:57  dron
- * New.
- *
- *
- **********************************************************************/
+ ****************************************************************************/
 
 #ifndef _CPL_LIST_H_INCLUDED
 #define _CPL_LIST_H_INCLUDED

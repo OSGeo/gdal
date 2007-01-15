@@ -24,38 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.9  2006/03/21 20:56:00  fwarmerdam
- * cleanup headers
- *
- * Revision 1.8  2005/04/04 15:24:16  fwarmerdam
- * added CPL_STDCALL to some functions
- *
- * Revision 1.7  2003/07/08 15:33:04  warmerda
- * avoid warnings
- *
- * Revision 1.6  2003/02/24 17:30:58  warmerda
- * added REMAP support
- *
- * Revision 1.5  2003/02/06 04:56:35  warmerda
- * added documentation
- *
- * Revision 1.4  2002/12/07 22:58:42  warmerda
- * added initialization support for simple warper
- *
- * Revision 1.3  2002/12/06 21:43:28  warmerda
- * removed luts
- *
- * Revision 1.2  2002/12/05 21:44:19  warmerda
- * initial implementation
- *
- * Revision 1.1  2002/12/05 05:43:23  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_priv.h"
 #include "gdal_alg.h"

@@ -24,74 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.43  2005/10/12 19:52:56  fwarmerdam
- * Use SetMetadataItem() for CEOS_BEAM_TYPE.
- *
- * Revision 1.42  2005/05/05 14:01:36  fwarmerdam
- * PAM Enable
- *
- * Revision 1.41  2005/02/17 02:29:03  gwalter
- * Check for more extensions.
- *
- * Revision 1.40  2004/11/15 19:56:06  gwalter
- * Updated PALSAR band reading.
- *
- * Revision 1.39  2004/11/11 21:25:37  fwarmerdam
- * Return PALSAR in proper covariance matrix format.
- *
- * Revision 1.38  2004/11/11 00:16:01  gwalter
- * Polarmetric->Polarimetric.
- *
- * Revision 1.37  2004/11/01 18:22:07  fwarmerdam
- * added PALSAR support
- *
- * Revision 1.36  2004/08/26 18:55:27  warmerda
- * Optimized SIRC decoding to avoid redoing pow() alot.
- *
- * Revision 1.35  2004/08/26 18:30:47  warmerda
- * added preliminary SIR-C support
- *
- * Revision 1.34  2004/07/06 15:43:01  gwalter
- * Updated to extract more metadata and
- * recognize more sar ceos files.
- *
- * Revision 1.33  2003/12/11 22:11:35  warmerda
- * clean up recipes when dataset destroyed to avoid memory noise
- *
- * Revision 1.32  2003/12/10 18:02:21  warmerda
- * fixed some minor memory leaks
- *
- * Revision 1.31  2003/07/08 21:28:22  warmerda
- * avoid warnings
- *
- * Revision 1.30  2003/02/28 18:45:20  gpotts
- * Prefixed CreateLink with ceos2 since there are multiple symbol conflict on static build under mac. Garrett Potts (gpotts@imagelinks.com)
- *
- * Revision 1.29  2002/09/04 06:50:36  warmerda
- * avoid static driver pointers
- *
- * Revision 1.28  2002/07/18 20:16:11  gwalter
- * Fix to recognize esrin pri's gcps.
- *
- * Revision 1.27  2002/06/12 21:12:24  warmerda
- * update to metadata based driver info
- *
- * Revision 1.26  2002/06/07 14:19:07  warmerda
- * avoid paths in include directives
- *
- * Revision 1.25  2002/04/26 14:52:50  warmerda
- * added EscapedRecord for metadata
- *
- * Revision 1.24  2002/04/16 17:51:08  warmerda
- * Avoid unitialized variable warnings.
- *
- * Revision 1.23  2002/04/03 22:12:49  warmerda
- * Added special metadata access to raw record data
- */
+ ****************************************************************************/
 
 #include "ceos.h"
 #include "gdal_priv.h"

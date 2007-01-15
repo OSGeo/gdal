@@ -26,18 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.2  2006/06/28 13:32:44  fwarmerdam
- * make sure James is listed as an author
- *
- * Revision 1.1  2006/06/28 13:30:20  fwarmerdam
- * New
- *
- *
- */
+ ****************************************************************************/
 
 #include "ogr_avc.h"
 #include "cpl_conv.h"

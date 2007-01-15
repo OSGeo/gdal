@@ -24,23 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2003/12/03 15:11:05  warmerda
- * added iField to IndexAllFeature, and default to -1
- *
- * Revision 1.3  2003/03/21 02:58:00  warmerda
- * added drop index support
- *
- * Revision 1.2  2003/03/07 18:24:12  warmerda
- * expand tabs
- *
- * Revision 1.1  2003/03/04 14:16:10  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _OGR_ATTRIND_H_INCLUDED
 #define _OGR_ATTRIND_H_INCLUDED

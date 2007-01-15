@@ -33,49 +33,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.17  2006/06/17 00:27:26  fwarmerdam
- * updated
- *
- * Revision 1.33  2006/02/15 01:14:30  fwarmerdam
- * added DBFAddNativeFieldType
- *
- * Revision 1.32  2006/01/26 15:07:32  fwarmerdam
- * add bMeasureIsUsed flag from Craig Bruce: Bug 1249
- *
- * Revision 1.31  2006/01/05 01:27:27  fwarmerdam
- * added dbf deletion mark/fetch
- *
- * Revision 1.30  2005/01/03 22:30:13  fwarmerdam
- * added support for saved quadtrees
- *
- * Revision 1.29  2004/09/26 20:09:35  fwarmerdam
- * avoid rcsid warnings
- *
- * Revision 1.28  2003/12/29 06:02:18  fwarmerdam
- * added cpl_error.h option
- *
- * Revision 1.27  2003/04/21 18:30:37  warmerda
- * added header write/update public methods
- *
- * Revision 1.26  2002/09/29 00:00:08  warmerda
- * added FTLogical and logical attribute read/write calls
- *
- * Revision 1.25  2002/05/07 13:46:30  warmerda
- * added DBFWriteAttributeDirectly().
- *
- * Revision 1.24  2002/04/10 16:59:54  warmerda
- * added SHPRewindObject
- *
- * Revision 1.23  2002/01/15 14:36:07  warmerda
- * updated email address
- *
- * Revision 1.22  2002/01/15 14:32:00  warmerda
- * try to improve SHPAPI_CALL docs
- */
+ ****************************************************************************/
 
 #include <stdio.h>
 

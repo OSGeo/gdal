@@ -24,41 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.10  2006/03/29 01:08:34  fwarmerdam
- * added validation and xml reporting (optional)
- *
- * Revision 1.9  2004/09/23 16:11:14  fwarmerdam
- * Cleanup memory at end.
- *
- * Revision 1.8  2002/12/13 06:36:01  warmerda
- * report PROJ.4 form
- *
- * Revision 1.7  2002/11/29 22:11:05  warmerda
- * added ESRIified reporting, and ifdef out xml for now
- *
- * Revision 1.6  2002/01/25 20:47:36  warmerda
- * added simplified WKT output
- *
- * Revision 1.5  2002/01/18 15:30:57  warmerda
- * add usage reporting
- *
- * Revision 1.4  2001/12/06 18:18:47  warmerda
- * added preliminary xml srs support
- *
- * Revision 1.3  2001/01/19 21:10:47  warmerda
- * replaced tabs
- *
- * Revision 1.2  2000/03/20 14:57:27  warmerda
- * added -t for transform
- *
- * Revision 1.1  2000/03/16 19:05:07  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_spatialref.h"
 #include "cpl_conv.h"

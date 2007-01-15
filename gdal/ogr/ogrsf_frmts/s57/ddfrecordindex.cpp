@@ -26,45 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2006/04/02 18:48:26  fwarmerdam
- * contact info updated
- *
- * Revision 1.10  2004/08/30 20:08:34  warmerda
- * added support for client info stored with records
- *
- * Revision 1.9  2004/08/27 19:58:38  warmerda
- * Don't delete clone records in Clear() method.  Leave this for the
- * DDFModule destructor to do (re: DMSG Bug 3025).
- *
- * Revision 1.8  2004/06/01 14:51:19  warmerda
- * expand tabs
- *
- * Revision 1.7  2003/08/21 21:25:30  warmerda
- * Rodney Jensen: Addd FindRecordByObjl()
- *
- * Revision 1.6  2002/04/16 17:55:33  warmerda
- * Initialize variables.
- *
- * Revision 1.5  2001/08/30 21:06:55  warmerda
- * expand tabs
- *
- * Revision 1.4  2001/08/30 03:49:13  warmerda
- * reimplement to use qsort(), added delete
- *
- * Revision 1.3  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.2  1999/11/18 19:01:25  warmerda
- * expanded tabs
- *
- * Revision 1.1  1999/11/03 22:12:43  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "s57.h"
 #include "cpl_conv.h"

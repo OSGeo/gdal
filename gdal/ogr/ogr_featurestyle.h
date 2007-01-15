@@ -24,54 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.14  2006/12/13 18:53:29  dron
- * Added OGRStyleTable::Clone() method.
- *
- * Revision 1.13  2006/12/12 17:14:29  dron
- * Fixed method names in OGRStyleVector interface.
- *
- * Revision 1.12  2006/11/16 18:57:24  dron
- * Make Parse() method private.
- *
- * Revision 1.11  2006/11/16 11:58:40  dron
- * In all classes: move data properties in private section.
- *
- * Revision 1.10  2006/10/09 13:01:23  dron
- * Added OGRSTypeBoolean type to the list of OGRSType types.
- *
- * Revision 1.9  2006/09/23 15:27:52  dron
- * Added new label styles:  'w', 'st', 'h', 'm:h', 'm:a', 'p:{10,11,12}'.
- *
- * Revision 1.8  2004/12/02 18:24:12  fwarmerdam
- * added support for fontname on symbol, per bug 684
- *
- * Revision 1.7  2004/05/11 00:39:43  warmerda
- * make asStyle*[] using methods non-inline
- *
- * Revision 1.6  2002/06/25 14:47:31  warmerda
- * CPL_DLL export style api
- *
- * Revision 1.5  2001/03/17 01:43:53  warmerda
- * Don't leave in trailing comma in enum (as submitted by Dale).
- *
- * Revision 1.4  2001/01/19 21:10:47  warmerda
- * replaced tabs
- *
- * Revision 1.3  2000/12/07 03:42:37  danmo
- * REmoved stray comma in OGRSType enum defn
- *
- * Revision 1.2  2000/08/28 20:26:18  svillene
- * Add missing virtual ~()
- *
- * Revision 1.1  2000/08/18 21:26:01  svillene
- * OGR Representation
- *
- *
- */
+ ****************************************************************************/
 
 #ifndef OGR_FEATURESTYLE_INCLUDE
 #define OGR_FEATURESTYLE_INCLUDE

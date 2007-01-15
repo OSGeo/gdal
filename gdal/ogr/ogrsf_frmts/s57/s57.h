@@ -26,49 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.34  2006/04/02 18:48:26  fwarmerdam
- * contact info updated
- *
- * Revision 1.33  2006/02/21 04:14:15  fwarmerdam
- * szUPDN addition
- *
- * Revision 1.32  2006/02/15 18:04:45  fwarmerdam
- * implemented DSID feature support
- *
- * Revision 1.31  2005/07/30 17:22:52  fwarmerdam
- * added profile to LoadInfo
- *
- * Revision 1.30  2004/08/30 20:12:21  warmerda
- * various optimizations
- *
- * Revision 1.29  2004/06/01 14:51:19  warmerda
- * expand tabs
- *
- * Revision 1.28  2004/05/11 18:17:34  warmerda
- * export various classes
- *
- * Revision 1.27  2003/11/17 20:10:46  warmerda
- * added support for writing FFPT linkages
- *
- * Revision 1.26  2003/11/12 21:24:23  warmerda
- * updates to new featuredefn generators
- *
- * Revision 1.25  2003/09/15 20:53:06  warmerda
- * fleshed out feature writing
- *
- * Revision 1.24  2003/09/09 16:43:02  warmerda
- * added writer class
- *
- * Revision 1.23  2003/09/05 19:12:05  warmerda
- * added RETURN_PRIMITIVES support to get low level prims
- *
- * Revision 1.22  2003/08/21 21:25:30  warmerda
- * Rodney Jensen: Addd FindRecordByObjl()
- */
+ ****************************************************************************/
 
 #ifndef _S57_H_INCLUDED
 #define _S57_H_INCLUDED

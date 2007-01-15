@@ -24,62 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.16  2004/02/20 22:58:00  warmerda
- * Revert last change ... doesn't work with libgrass (CVS).  See further info
- * in bug report (bug 408).
- *
- * Revision 1.15  2003/10/06 13:35:27  warmerda
- * Fixed GrassErrorHandler typedef as per:
- * http://bugzilla.remotesensing.org/show_bug.cgi?id=408
- *
- * Revision 1.14  2002/12/03 14:05:36  warmerda
- * Modified to try and map byte nodata values outside the min/max range.
- *
- * Revision 1.13  2002/12/03 05:24:31  warmerda
- * implement nodata support for all pixel types
- *
- * Revision 1.12  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.11  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.10  2002/01/24 15:50:23  warmerda
- * Improved nodata handling.  Still may be problems with integer cells
- * where all zeros will be considered to be nodata values.
- *
- * Revision 1.9  2002/01/23 14:56:27  warmerda
- * Added link to help.
- *
- * Revision 1.8  2001/11/11 23:50:59  warmerda
- * added required class keyword to friend declarations
- *
- * Revision 1.7  2001/07/18 04:51:56  warmerda
- * added CPL_CVSID
- *
- * Revision 1.6  2000/09/26 20:30:04  warmerda
- * added support for imagery groups
- *
- * Revision 1.5  2000/09/23 02:22:29  warmerda
- * added geotransform support
- *
- * Revision 1.4  2000/09/22 03:20:06  warmerda
- * added projection support, and error handling
- *
- * Revision 1.3  2000/09/20 17:03:21  warmerda
- * Added colortable support.
- *
- * Revision 1.2  2000/09/14 21:07:33  warmerda
- * modified to use new G_check_cell() function
- *
- * Revision 1.1  2000/09/11 13:31:52  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include <libgrass.h>
 

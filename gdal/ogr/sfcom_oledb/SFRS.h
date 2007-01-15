@@ -24,71 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.21  2002/08/09 21:33:33  warmerda
- * minor .net hack
- *
- * Revision 1.20  2002/08/08 22:02:51  warmerda
- * mark as multithreaded
- *
- * Revision 1.19  2002/04/29 20:43:18  warmerda
- * Ensure that ExecuteSQL() prepared layers are cleaned up
- *
- * Revision 1.18  2002/04/29 20:31:57  warmerda
- * allow ExecuteSQL() to handle FID
- *
- * Revision 1.17  2002/04/25 20:15:26  warmerda
- * upgraded to use ExecuteSQL()
- *
- * Revision 1.16  2002/04/25 17:39:31  warmerda
- * added ICommandPrepare, and IRowsetChange interfaces
- *
- * Revision 1.15  2002/04/17 19:53:17  warmerda
- * added SELECT COUNT(*) support
- *
- * Revision 1.14  2002/04/16 21:02:18  warmerda
- * copy columninfo to CSFCommand from rowset after executing a command
- *
- * Revision 1.13  2002/02/05 20:44:17  warmerda
- * added CheckRows() and feature caching to OGRVirtualArray
- *
- * Revision 1.12  2002/01/31 16:48:15  warmerda
- * removed need for getting feature count for a rowset
- *
- * Revision 1.11  2001/11/21 16:27:22  warmerda
- * added MAXOPENROWS at Bruces request
- *
- * Revision 1.10  2001/10/24 17:20:08  warmerda
- * added destructor debug output
- *
- * Revision 1.9  2001/10/22 21:29:50  warmerda
- * reworked to allow selecting a subset of fields
- *
- * Revision 1.8  2001/09/06 03:26:10  warmerda
- * converted to use SFAccessorImpl.h
- *
- * Revision 1.7  2001/08/17 14:25:49  warmerda
- * added ICommandWithParameters implmentation
- *
- * Revision 1.6  2001/06/01 18:04:17  warmerda
- * added mnBufferSize to CVirtualArray
- *
- * Revision 1.5  2001/05/28 19:41:58  warmerda
- * lots of changes
- *
- * Revision 1.4  1999/07/23 19:20:27  kshih
- * Modifications for errors etc...
- *
- * Revision 1.3  1999/07/20 17:11:11  kshih
- * Use OGR code
- *
- * Revision 1.2  1999/06/04 15:17:27  warmerda
- * Added copyright header.
- *
- */
+ ****************************************************************************/
 
 // SFRS.h : Declaration of the CSFRowset
 #ifndef __CSFRowset_H_

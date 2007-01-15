@@ -24,31 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.7  2006/03/29 00:46:20  fwarmerdam
- * update contact info
- *
- * Revision 1.6  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.5  2001/07/04 23:25:32  warmerda
- * first round implementation of writer
- *
- * Revision 1.4  2001/01/19 21:15:20  warmerda
- * expanded tabs
- *
- * Revision 1.3  1999/12/22 15:38:15  warmerda
- * major update
- *
- * Revision 1.2  1999/11/04 21:14:31  warmerda
- * various improvements, and TestCapability()
- *
- * Revision 1.1  1999/10/07 18:19:21  warmerda
- * New
- */
+ ****************************************************************************/
 
 #include "ogr_tiger.h"
 #include "cpl_conv.h"

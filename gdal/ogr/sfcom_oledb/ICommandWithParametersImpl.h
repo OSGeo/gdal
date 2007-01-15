@@ -28,20 +28,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.3  2001/10/15 13:38:11  warmerda
- * change to unix text format
- *
- * Revision 1.2  2001/08/17 19:58:21  warmerda
- * remove LFs
- *
- * Revision 1.1  2001/08/17 14:23:43  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef __I_COMMAND_WITH_PARAMETERS_IMPL__INCLUDED__
 #define __I_COMMAND_WITH_PARAMETERS_IMPL__INCLUDED__

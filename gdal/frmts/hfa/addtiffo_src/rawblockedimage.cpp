@@ -25,20 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.1  1999/11/29 21:33:22  warmerda
- * New
- *
- * Revision 1.1  1999/08/17 01:47:59  warmerda
- * New
- *
- * Revision 1.2  1999/03/12 17:29:34  warmerda
- * Use _WIN32 rather than WIN32.
- *
- */
+ ****************************************************************************/
 
 #include <assert.h>
 #include <string.h>

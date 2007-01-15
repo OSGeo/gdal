@@ -27,17 +27,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.2  2004/12/26 16:12:21  fwarmerdam
- * thin plate spline support now implemented
- *
- * Revision 1.1  2004/11/14 04:16:44  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_alg.h"
 #include "cpl_conv.h"

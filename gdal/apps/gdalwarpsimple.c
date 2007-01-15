@@ -26,38 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.1  2003/09/19 17:40:00  warmerda
- * New
- *
- * Revision 1.8  2003/05/20 18:34:56  warmerda
- * added error reporting if SRS import fails
- *
- * Revision 1.7  2003/03/18 17:33:00  warmerda
- * Copy colortable if there is one on the source file.
- *
- * Revision 1.6  2002/12/17 18:23:19  warmerda
- * copy GCP projection if the main projection isn't set meaningfully
- *
- * Revision 1.5  2002/12/13 04:57:15  warmerda
- * implementing remaining commandline options
- *
- * Revision 1.4  2002/12/09 16:08:57  warmerda
- * added approximating transformer
- *
- * Revision 1.3  2002/12/07 22:58:09  warmerda
- * pass initialization warp option
- *
- * Revision 1.2  2002/12/07 17:09:13  warmerda
- * added -order flag
- *
- * Revision 1.1  2002/12/07 16:13:38  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_alg.h"
 #include "cpl_string.h"

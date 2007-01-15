@@ -26,29 +26,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2006/03/01 14:10:50  fwarmerdam
- * Removed optimization in GetNextFeature() that was breaking things in some
- * cases, such as when an attribute restriction was in place.
- *
- * Revision 1.10  2005/09/21 00:55:42  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.9  2005/02/22 13:08:54  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.8  2005/02/02 20:54:27  fwarmerdam
- * track m_nFeaturesRead
- *
- * Revision 1.7  2003/08/11 14:17:22  warmerda
- * Trim leading spaces from attributes values.  Attributes from OGDI
- * that were quoted (such as { FA001 } from NOAMER/VRF) were exceeding the
- * field width.  I kind of wonder if the VRF driver was behaving improperly
- * in returning the extra quoted spaces, but in any event it seems prudent
- * to trim them.
- *
  * http://bugzilla.remotesensing.org/show_bug.cgi?id=372
  *
  * Revision 1.6  2003/05/21 03:58:49  warmerda

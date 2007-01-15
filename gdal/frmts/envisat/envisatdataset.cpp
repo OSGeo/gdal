@@ -24,68 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.19  2005/05/05 14:02:58  fwarmerdam
- * PAM Enable
- *
- * Revision 1.18  2003/03/24 14:16:38  warmerda
- * added fallback case for unrecognised products
- *
- * Revision 1.17  2002/12/04 21:15:19  warmerda
- * Hacked to support AATSR TOA Level 1 data.
- *
- * Revision 1.16  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.15  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.14  2002/06/07 14:21:55  warmerda
- * avoid paths in include directives
- *
- * Revision 1.13  2002/05/29 16:38:35  warmerda
- * dont use variable sized buffer on stack
- *
- * Revision 1.12  2002/05/21 21:29:58  warmerda
- * added support for MERIS tiepoints, and capture DS name as band desc
- *
- * Revision 1.11  2002/05/16 03:29:50  warmerda
- * ensure fpImage is closed on cleanup
- *
- * Revision 1.10  2002/04/26 14:53:22  warmerda
- * added EscapedRecord for metadata
- *
- * Revision 1.9  2002/04/16 17:53:33  warmerda
- * Initialize variables.
- *
- * Revision 1.8  2002/04/08 17:33:25  warmerda
- * now you can get dataset records via metadata api
- *
- * Revision 1.7  2001/09/26 19:23:27  warmerda
- * added CollectDSDMetadata
- *
- * Revision 1.6  2001/09/24 18:40:17  warmerda
- * Added MDS2 support, and metadata support
- *
- * Revision 1.5  2001/07/18 04:51:56  warmerda
- * added CPL_CVSID
- *
- * Revision 1.4  2001/06/15 17:15:29  warmerda
- * use CPL_MSBWORD32 instead of CPL_SWAP32 to be cross platform
- *
- * Revision 1.3  2001/02/28 21:58:45  warmerda
- * added GCP collection
- *
- * Revision 1.2  2001/02/15 22:32:03  warmerda
- * Added FLT32 support.
- *
- * Revision 1.1  2001/02/13 18:29:04  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "rawdataset.h"
 #include "cpl_string.h"

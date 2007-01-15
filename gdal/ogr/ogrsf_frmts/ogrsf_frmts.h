@@ -24,72 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.61  2006/12/13 18:24:45  dron
- * Added OGRLayer::SetStyleTableDirectly(), OGRDataSource::SetStyleTable()
- * and OGRDataSource::SetStyleTablDirectly() methods.
- *
- * Revision 1.60  2006/12/10 04:59:19  fwarmerdam
- * Removed extra OGRFME register function.
- *
- * Revision 1.59  2006/11/28 15:34:41  osemykin
- * Added new Informix DataBlade driver (IDB)
- *
- * Revision 1.58  2006/06/07 14:39:09  mloskot
- * Added new KML (Beta) driver to OGR. Thanks to Christopher Condit - the
- * author of KML drvier.
- *
- * Revision 1.57  2006/01/27 00:09:07  fwarmerdam
- * added Get{FID,Geometry}Column() support
- *
- * Revision 1.56  2005/11/22 17:01:09  fwarmerdam
- * added SDE support
- *
- * Revision 1.55  2005/11/10 21:37:28  fwarmerdam
- * added DXF/DWG support
- *
- * Revision 1.54  2005/10/25 19:58:53  fwarmerdam
- * added driver tracking on datasource
- *
- * Revision 1.53  2005/09/05 19:31:45  fwarmerdam
- * Added PGeo driver.
- *
- * Revision 1.52  2005/08/05 15:34:34  fwarmerdam
- * added grass
- *
- * Revision 1.51  2005/07/08 22:10:56  pka
- * Initial import of OGR Interlis driver
- *
- * Revision 1.50  2005/02/22 12:40:37  fwarmerdam
- * added base OGRLayer spatial filter support
- *
- * Revision 1.49  2005/02/02 20:00:01  fwarmerdam
- * added SetNextByIndex support
- *
- * Revision 1.48  2005/01/19 20:29:10  fwarmerdam
- * added autoloaddrivers on ogrsfdriverregistrar
- *
- * Revision 1.47  2005/01/03 22:16:44  fwarmerdam
- * added OGRLayer::SetSpatialFilterRect()
- *
- * Revision 1.46  2004/11/21 22:08:49  fwarmerdam
- * added Release() and DestroyDataSource() methods on OGRDataSource
- *
- * Revision 1.45  2004/10/06 19:49:14  fwarmerdam
- * Added Mysql registration function.
- *
- * Revision 1.44  2004/07/20 19:18:44  warmerda
- * added CSV
- *
- * Revision 1.43  2004/07/10 05:03:24  warmerda
- * added SQLite
- *
- * Revision 1.42  2004/02/11 18:03:15  warmerda
- * added RegisterOGRDODS()
- */
+ ****************************************************************************/
 
 #ifndef _OGRSF_FRMTS_H_INCLUDED
 #define _OGRSF_FRMTS_H_INCLUDED

@@ -24,53 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.42  2006/05/24 22:25:33  fwarmerdam
- * split off DefaultCreateCopy() method.
- *
- * Revision 1.41  2006/03/28 14:49:56  fwarmerdam
- * updated contact info
- *
- * Revision 1.40  2006/03/03 19:44:45  fwarmerdam
- * force C numeric locale in select locations
- *
- * Revision 1.39  2006/02/07 19:07:07  fwarmerdam
- * applied some strategic improved outofmemory checking
- *
- * Revision 1.38  2006/02/07 18:13:25  fwarmerdam
- * Perform graceful error recovery if line buffer allocation fails.
- *
- * Revision 1.37  2005/10/13 01:38:29  fwarmerdam
- * Ensure "large file" stat is used in GDALDriver::Delete() so it works
- * on in-memory stuff.
- *
- * Revision 1.36  2005/10/13 00:46:19  fwarmerdam
- * Avoid trying to set scale and offset if they are the defaults.
- *
- * Revision 1.35  2005/05/24 18:13:15  dron
- * Added GDALGetDriverCreationOptionList() function.
- *
- * Revision 1.34  2005/05/17 15:13:06  fwarmerdam
- * Added nodata support for bands
- *
- * Revision 1.33  2005/04/04 15:24:48  fwarmerdam
- * Most C entry points now CPL_STDCALL
- *
- * Revision 1.32  2005/03/16 11:01:10  lichun
- * in CreateCopy() the category names are copied as well
- *
- * Revision 1.31  2005/01/15 16:10:10  fwarmerdam
- * added offset, scale and colorinterp to default createcopy
- *
- * Revision 1.30  2003/05/23 20:42:24  sperkins
- * default CreateCopy() now copies metadata
- *
- * Revision 1.29  2003/04/30 17:13:48  warmerda
- * added docs for many C functions
- */
+ ****************************************************************************/
 
 #include "gdal_priv.h"
 

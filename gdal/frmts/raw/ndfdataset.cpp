@@ -24,23 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2005/05/05 13:55:42  fwarmerdam
- * PAM Enable
- *
- * Revision 1.3  2005/03/05 17:27:00  fwarmerdam
- * updated to support NDF1 and rotated datasets
- *
- * Revision 1.2  2005/03/05 17:07:30  fwarmerdam
- * Fixed up an off-by-half-a-pixel error in geotransform.
- *
- * Revision 1.1  2005/01/06 20:27:22  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "rawdataset.h"
 #include "ogr_spatialref.h"

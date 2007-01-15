@@ -24,17 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.2  2002/07/19 20:32:41  warmerda
- * report failed reads
- *
- * Revision 1.1  2001/12/08 04:35:16  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "cpl_error.h"
 #include "cpl_vsi.h"

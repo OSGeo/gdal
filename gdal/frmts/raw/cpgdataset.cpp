@@ -24,40 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2005/10/21 14:22:08  gwalter
- * Updated to support more types of convair datasets.
- *
- * Revision 1.7  2005/05/05 13:55:41  fwarmerdam
- * PAM Enable
- *
- * Revision 1.6  2004/12/17 22:45:55  gwalter
- * Added support for sirc-style convair flat
- * binary datasets.
- *
- * Revision 1.5  2004/11/11 00:16:01  gwalter
- * Polarmetric->Polarimetric.
- *
- * Revision 1.4  2004/10/21 18:15:25  gwalter
- * Added gcp id's- the lack of them
- * was causing weird export problems.
- *
- * Revision 1.3  2004/10/20 23:27:45  gwalter
- * Added geocoding.
- *
- * Revision 1.2  2004/09/07 15:36:58  gwalter
- * Updated to recognize more convair
- * file naming conventions; change
- * band ordering from hh,hv,vh,vv to
- * hh,hv,vv,vh.
- *
- * Revision 1.1  2004/09/03 19:07:25  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "rawdataset.h"
 #include "ogr_spatialref.h"

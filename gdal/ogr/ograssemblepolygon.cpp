@@ -24,65 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.12  2005/10/14 15:12:07  fwarmerdam
- * Fixup docs a bit.
- *
- * Revision 1.11  2005/03/25 06:31:27  fwarmerdam
- * use addSubLineString() to speed up adding edge to ring.
- *
- * Revision 1.10  2003/05/28 19:16:42  warmerda
- * fixed up argument names and stuff for docs
- *
- * Revision 1.9  2003/05/21 04:49:17  warmerda
- * avoid warnings
- *
- * Revision 1.8  2003/04/03 23:39:11  danmo
- * Small updates to C API docs (Normand S.)
- *
- * Revision 1.7  2003/04/01 14:46:46  warmerda
- * Reintroduce rev 1.5 migration of main entry point to C API.
- *
- * Revision 1.6  2003/03/31 15:55:42  danmo
- * Added C API function docs
- *
- * Revision 1.4  2002/03/05 15:15:07  warmerda
- * fixed zero tolerance problems
- *
- * Revision 1.3  2002/03/05 14:25:14  warmerda
- * expand tabs
- *
- * Revision 1.2  2002/02/22 22:23:38  warmerda
- * added tolerances when assembling polygons
- *
- * Revision 1.1  2002/02/13 19:58:29  warmerda
- * New
- *
- * Revision 1.7  2001/12/19 22:07:17  warmerda
- * avoid warnings by initializing variables
- *
- * Revision 1.6  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.5  2000/06/16 18:01:26  warmerda
- * added debug output in case of assembly failure
- *
- * Revision 1.4  1999/11/18 19:01:25  warmerda
- * expanded tabs
- *
- * Revision 1.3  1999/11/18 18:57:28  warmerda
- * Added error reporting
- *
- * Revision 1.2  1999/11/10 14:17:26  warmerda
- * Fixed defaulting of peErr parameter.
- *
- * Revision 1.1  1999/11/04 21:18:46  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_geometry.h"
 #include "ogr_api.h"

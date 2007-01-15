@@ -24,59 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.16  2006/02/15 18:04:45  fwarmerdam
- * implemented DSID feature support
- *
- * Revision 1.15  2005/09/21 00:54:43  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.14  2005/02/22 12:53:12  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.13  2005/02/02 20:54:27  fwarmerdam
- * track m_nFeaturesRead
- *
- * Revision 1.12  2003/11/15 21:50:52  warmerda
- * Added limited creation support
- *
- * Revision 1.11  2003/09/09 16:42:51  warmerda
- * fixed email
- *
- * Revision 1.10  2003/09/05 19:12:05  warmerda
- * added RETURN_PRIMITIVES support to get low level prims
- *
- * Revision 1.9  2002/03/05 14:25:43  warmerda
- * expanded tabs
- *
- * Revision 1.8  2001/12/19 22:04:48  warmerda
- * ensure setting spatial filter resets reading
- *
- * Revision 1.7  2001/12/17 22:36:35  warmerda
- * implement GetFeature() method
- *
- * Revision 1.6  2001/12/14 19:40:18  warmerda
- * added optimized feature counting, and extents collection
- *
- * Revision 1.5  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.4  2001/06/19 15:50:23  warmerda
- * added feature attribute query support
- *
- * Revision 1.3  1999/11/26 03:07:08  warmerda
- * set spatial reference on features
- *
- * Revision 1.2  1999/11/18 19:01:25  warmerda
- * expanded tabs
- *
- * Revision 1.1  1999/11/03 22:12:43  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_s57.h"
 #include "cpl_conv.h"

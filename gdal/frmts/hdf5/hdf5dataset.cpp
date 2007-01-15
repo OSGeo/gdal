@@ -26,34 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.11  2006/01/21 17:50:45  dnadeau
- * added find object by path where space are changed with underscore.  Create SUBSETDATA with HDF5 Path.  Dataset sometimes have the same name.
- *
- * Revision 1.10  2005/09/15 02:37:10  fwarmerdam
- * improved file header pre-test
- *
- * Revision 1.9  2005/09/15 00:51:36  fwarmerdam
- * fixed memory leak of poDS
- *
- * Revision 1.8  2005/09/13 02:33:07  fwarmerdam
- * Clean up more carefully on failed opens to avoid leaks.
- *
- * Revision 1.7  2005/08/24 22:08:28  fwarmerdam
- * fixed header attribution
- *
- * Revision 1.6  2005/08/23 19:45:17  dnadeau
- * HDF5 add Metadata
- *
- * Revision 1.5  2005/07/27 16:42:55  dnadeau
- * change variable to hdf5imagedataset class
- *
- * Revision 1.4  2005/07/27 02:02:41  dnadeau
- * correct memory leak problem.
- */
+ ****************************************************************************/
 
 #include "hdf5.h"
 

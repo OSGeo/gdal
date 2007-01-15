@@ -24,43 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.10  2006/03/28 23:22:08  fwarmerdam
- * update contact info
- *
- * Revision 1.9  2005/01/04 03:42:54  fwarmerdam
- * cleanup qix files
- *
- * Revision 1.8  2003/05/21 04:03:54  warmerda
- * expand tabs
- *
- * Revision 1.7  2003/03/20 19:11:05  warmerda
- * ensure delete cleans up indexes
- *
- * Revision 1.6  2003/03/03 05:06:46  warmerda
- * implemented DeleteDataSource
- *
- * Revision 1.5  2002/03/27 21:04:38  warmerda
- * Added support for reading, and creating lone .dbf files for wkbNone geometry
- * layers. Added support for creating a single .shp file instead of a directory
- * if a path ending in .shp is passed to the data source create method.
- *
- * Revision 1.4  2001/12/12 17:24:08  warmerda
- * use CPLStat, not VSIStat
- *
- * Revision 1.3  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.2  2000/01/26 22:06:32  warmerda
- * add directory creation, fix open of empty dir
- *
- * Revision 1.1  1999/11/04 21:16:11  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogrshape.h"
 #include "cpl_conv.h"

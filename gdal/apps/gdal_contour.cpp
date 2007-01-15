@@ -24,41 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.10  2005/02/03 17:28:37  fwarmerdam
- * Removed <interval> from end of usage message, use -i instead.
- *
- * Revision 1.9  2004/09/03 14:36:28  warmerda
- * fix warning about exit value
- *
- * Revision 1.8  2004/04/02 17:33:22  warmerda
- * added GDALGeneralCmdLineProcessor()
- *
- * Revision 1.7  2003/10/16 16:54:23  warmerda
- * added support for fixed levels
- *
- * Revision 1.6  2003/10/15 20:58:43  warmerda
- * ensure dfNoData is initialized
- *
- * Revision 1.5  2003/10/14 15:26:03  warmerda
- * added format setting
- *
- * Revision 1.4  2003/10/10 19:05:46  warmerda
- * implementation migrated to gdal/alg
- *
- * Revision 1.3  2003/10/09 20:08:38  warmerda
- * complete nodata support
- *
- * Revision 1.2  2003/10/09 18:29:27  warmerda
- * basics working now
- *
- * Revision 1.1  2003/09/30 18:11:33  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal.h"
 #include "gdal_alg.h"

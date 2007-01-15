@@ -24,62 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.17  2005/05/05 15:52:48  fwarmerdam
- * PAM Enabled
- *
- * Revision 1.16  2004/11/03 01:17:58  fwarmerdam
- * added extra testing to avoid mis-identification
- *
- * Revision 1.15  2004/04/06 19:23:48  warmerda
- * Don't forget to close the dataset!
- *
- * Revision 1.14  2003/10/06 20:50:45  warmerda
- * fixed author email
- *
- * Revision 1.13  2003/07/08 21:20:21  warmerda
- * avoid warnings
- *
- * Revision 1.12  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.11  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.10  2001/11/11 23:51:00  warmerda
- * added required class keyword to friend declarations
- *
- * Revision 1.9  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.8  2000/11/16 14:56:16  warmerda
- * fail testopen on zero char, reduce min header size
- *
- * Revision 1.7  2000/02/28 16:33:49  warmerda
- * use SetBand method
- *
- * Revision 1.6  2000/02/14 16:24:57  warmerda
- * Fixed comment.
- *
- * Revision 1.5  1999/10/29 17:30:23  warmerda
- * read OGC rather than PROJ.4 definition
- *
- * Revision 1.4  1999/10/27 20:21:45  warmerda
- * added projection/transform support
- *
- * Revision 1.3  1999/01/11 15:32:12  warmerda
- * Added testing of file to verify it is GXF.
- *
- * Revision 1.2  1998/12/15 19:06:49  warmerda
- * IReadBlock(), and GXFGetRawInfo()
- *
- * Revision 1.1  1998/12/06 02:53:22  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gxfopen.h"
 #include "gdal_pam.h"

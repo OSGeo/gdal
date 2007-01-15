@@ -24,73 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.20  2005/05/06 14:03:37  fwarmerdam
- * Fixed gdal_pam include.
- *
- * Revision 1.19  2005/05/05 14:02:58  fwarmerdam
- * PAM Enable
- *
- * Revision 1.18  2003/05/06 05:20:38  sperkins
- * cleaned up comments
- *
- * Revision 1.17  2003/05/06 05:14:11  sperkins
- * Minor tidying up.
- *
- * Revision 1.16  2003/05/05 23:31:53  sperkins
- * Removed dodgy "value type guessing" code from FITS metadata write routine.
- *
- * Revision 1.15  2002/11/23 18:54:17  warmerda
- * added CREATIONDATATYPES metadata for drivers
- *
- * Revision 1.14  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.13  2002/07/02 22:40:46  sperkins
- * Backpedalling... Special creation options for b-scaled FITS files
- * eliminated to reduce weirdness.
- *
- * Revision 1.12  2002/07/02 01:20:24  sperkins
- * * frmts/fits/fitsdataset.cpp: Modified creation options for FITS
- * driver and handling of "b-scaled" files. See docs for details.
- *
- * Revision 1.11  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.10  2002/01/22 02:12:17  sperkins
- * Minor formatting change.
- *
- * Revision 1.9  2002/01/22 01:36:54  sperkins
- * Silently truncate when writing values to FITS files outside valid range.
- *
- * Revision 1.8  2001/12/06 19:25:12  warmerda
- * updated as per submission by Diana Esch-Mosher
- *
- * Revision 1.7  2001/11/11 23:50:59  warmerda
- * added required class keyword to friend declarations
- *
- * Revision 1.6  2001/09/14 17:05:39  warmerda
- * Used strrchr() instead of rindex().
- *
- * Revision 1.5  2001/07/18 04:51:56  warmerda
- * added CPL_CVSID
- *
- * Revision 1.4  2001/03/11 22:31:03  sperkins
- * Added FITS support for "byte scaled" files.
- *
- * Revision 1.3  2001/03/09 01:57:48  sperkins
- * Added support for reading and writing metadata to FITS files.
- *
- * Revision 1.2  2001/03/06 23:06:01  sperkins
- * Fixed bug in situation where we attempt to read from a newly created band.
- *
- * Revision 1.1  2001/03/06 03:53:44  sperkins
- * Added FITS format support.
- *
- */
+ ****************************************************************************/
 
 
 

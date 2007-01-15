@@ -24,39 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log$
- * Revision 1.19  2006/11/18 20:42:08  mloskot
- * Added cast between LONGLONG and vsi_l_offset to CPL.
- *
- * Revision 1.18  2006/03/27 15:24:41  fwarmerdam
- * buffer in FWrite is const
- *
- * Revision 1.17  2006/02/21 20:32:45  fwarmerdam
- * use CPLString instead of string
- *
- * Revision 1.16  2006/02/19 21:54:34  mloskot
- * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
- *
- * Revision 1.15  2006/01/19 13:09:06  fwarmerdam
- * Move CPL_CVSID definition outside WIN32 #ifdef so the module
- * won't be completely empty on non-win32 platforms.
- *
- * Revision 1.14  2006/01/11 16:04:08  fwarmerdam
- * added Rename() operator
- *
- * Revision 1.13  2005/09/29 03:24:56  fwarmerdam
- * Don't blow a gasket if nSize is 0 in read or write.
- *
- * Revision 1.12  2005/09/11 18:32:42  fwarmerdam
- * Fixed up a few problems, works now
- *
- * Revision 1.11  2005/09/11 18:01:28  fwarmerdam
- * preliminary implementatin of fully virtualized large file api
- *
- */
+ ****************************************************************************/
 
 #include "cpl_vsi_private.h"
 

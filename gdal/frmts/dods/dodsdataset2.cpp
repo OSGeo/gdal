@@ -25,37 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * $Log$
- * Revision 1.9  2006/05/02 17:46:32  fwarmerdam
- * Added [-x] and [-y] clues for x/y flipping.
- *
- * Revision 1.8  2006/05/01 16:21:26  fwarmerdam
- * update to work with libdap 1.6.2
- *
- * Revision 1.7  2006/02/19 16:22:20  fwarmerdam
- * Added nodata support
- *
- * Revision 1.6  2005/07/18 14:13:12  fwarmerdam
- * bug 891: added DEFAULT_BASETYPE_FACTORY define for 3.5.x compatability
- *
- * Revision 1.5  2005/04/09 00:34:35  fwarmerdam
- * Added prototype Grid Map support for deriving geotransform.
- *
- * Revision 1.4  2005/01/14 22:51:18  fwarmerdam
- * implemented better url constrains, flipping, and transposing
- *
- * Revision 1.3  2004/10/18 17:31:11  fwarmerdam
- * minor tweaks to work with older DAP version
- *
- * Revision 1.2  2004/10/15 20:31:24  fwarmerdam
- * Added most of the DAS information parsing support.
- *
- * Revision 1.1  2004/10/14 20:54:23  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include <string>
 #include <sstream>

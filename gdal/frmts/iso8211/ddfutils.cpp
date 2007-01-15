@@ -24,32 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.7  2006/04/04 04:24:07  fwarmerdam
- * update contact info
- *
- * Revision 1.6  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.5  1999/11/18 19:03:04  warmerda
- * expanded tabs
- *
- * Revision 1.4  1999/09/20 19:29:16  warmerda
- * make forgiving of UNIT/FIELD terminator mixup in Tiger SDTS files
- *
- * Revision 1.3  1999/05/06 14:41:03  warmerda
- * Removed unused variable.
- *
- * Revision 1.2  1999/05/06 14:23:49  warmerda
- * optimised DDFScanInt()
- *
- * Revision 1.1  1999/04/27 18:45:05  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "iso8211.h"
 #include "cpl_conv.h"

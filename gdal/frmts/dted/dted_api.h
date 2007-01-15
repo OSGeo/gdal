@@ -24,45 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2006/04/04 01:00:44  fwarmerdam
- * updated contact info
- *
- * Revision 1.10  2004/04/14 19:47:29  warmerda
- * added better boundary support, and trimming
- *
- * Revision 1.9  2004/01/29 23:35:22  gwalter
- * Add a few more metadata fields, make sure that
- * nodata value is recognized.
- *
- * Revision 1.8  2002/03/05 14:26:01  warmerda
- * expanded tabs
- *
- * Revision 1.7  2002/01/28 18:18:07  warmerda
- * Added DTEDPtStreamSetMetadata
- *
- * Revision 1.6  2002/01/26 05:51:40  warmerda
- * added metadata read/write support
- *
- * Revision 1.5  2001/11/23 16:43:47  warmerda
- * added nodata constant
- *
- * Revision 1.4  2001/11/21 19:55:49  warmerda
- * added pt stream api
- *
- * Revision 1.3  2001/11/13 15:43:41  warmerda
- * preliminary dted creation working
- *
- * Revision 1.2  2000/07/07 14:20:57  warmerda
- * fixed AVOID_CPL support
- *
- * Revision 1.1  1999/12/07 18:01:28  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _DTED_API_H_INCLUDED
 #define _DTED_API_H_INCLUDED

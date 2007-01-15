@@ -25,23 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2006/05/09 22:48:15  mloskot
- * Fixed Bug 1144 in ogrtindex utility.
- *
- * Revision 1.3  2005/07/15 15:06:52  fwarmerdam
- * Set default location field width to 200.
- *
- * Revision 1.2  2002/04/25 20:56:29  warmerda
- * expanded tabs
- *
- * Revision 1.1  2002/03/27 18:34:43  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"

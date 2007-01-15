@@ -22,26 +22,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2007/01/05 16:02:59  lichun
- * Improved Lambert Conformal Conic projection handling from GDAL to ILWIS
- *
- * Revision 1.7  2006/12/21 14:25:22  lichun
- * solved memory leaks bug by removing CPLStrdup calls everywhere used for construct a STL string
- *
- * Revision 1.6  2006/04/04 03:34:52  fwarmerdam
- * fixed up header after review of log history
- *
- * Revision 1.5  2005/09/14 13:37:18  dron
- * Avoid warnings.
- *
- * Revision 1.4  2005/08/04 15:26:53  fwarmerdam
- * added log headers
- *
- */
+ ****************************************************************************/
 #include "cpl_conv.h"
 #include "ilwisdataset.h"
 

@@ -24,20 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.3  2003/02/28 18:45:20  gpotts
- * Prefixed CreateLink with ceos2 since there are multiple symbol conflict on static build under mac. Garrett Potts (gpotts@imagelinks.com)
- *
- * Revision 1.2  2001/07/18 04:51:56  warmerda
- * added CPL_CVSID
- *
- * Revision 1.1  2000/03/31 13:35:03  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ceos.h"
 

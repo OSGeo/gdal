@@ -24,50 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.13  2005/09/10 15:51:47  fwarmerdam
- * cleanup VRT overviews
- *
- * Revision 1.12  2005/08/02 22:21:47  fwarmerdam
- * fixed a whopper of a memory leak in ProcessBlock
- *
- * Revision 1.11  2005/05/23 06:58:46  fwarmerdam
- * updated to locked blockref api
- *
- * Revision 1.10  2005/05/10 04:50:42  fwarmerdam
- * GDALOvLevelAdjust now global
- *
- * Revision 1.9  2005/04/25 22:26:46  fwarmerdam
- * avoid extra copy if we are loading into the cache block in IReadBlock
- *
- * Revision 1.8  2005/04/11 17:36:26  fwarmerdam
- * make sure we cleanup up transformer(s) too
- *
- * Revision 1.7  2005/04/04 15:25:59  fwarmerdam
- * some functions now CPL_STDCALL
- *
- * Revision 1.6  2004/09/29 13:21:08  fwarmerdam
- * Don't try and use relative include paths.
- *
- * Revision 1.5  2004/08/24 20:30:28  warmerda
- * fixed size passed into GDALCopyWords() - irvine.pix bug
- *
- * Revision 1.4  2004/08/13 16:15:08  warmerda
- * added some docs
- *
- * Revision 1.3  2004/08/12 08:24:26  warmerda
- * added overview support
- *
- * Revision 1.2  2004/08/11 20:10:54  warmerda
- * fixed issue with intializing blocksizes
- *
- * Revision 1.1  2004/08/11 18:42:40  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "vrtdataset.h"
 #include "cpl_minixml.h"

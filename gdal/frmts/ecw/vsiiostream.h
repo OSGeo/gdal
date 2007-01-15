@@ -24,41 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- *****************************************************************************
- *
- * $Log$
- * Revision 1.10  2005/04/12 03:58:34  fwarmerdam
- * turn ownership of fpVSIL over to vsiiostream
- *
- * Revision 1.9  2005/04/11 13:52:50  fwarmerdam
- * added proper handling of iostream cleanup from David Carter
- *
- * Revision 1.8  2005/04/04 14:13:54  fwarmerdam
- * Return true for 0 byte reads.
- *
- * Revision 1.7  2005/04/02 21:17:01  fwarmerdam
- * add extra include files
- *
- * Revision 1.6  2005/03/10 14:48:42  fwarmerdam
- * Return false on read requests of zero bytes, at David's suggestion.
- *
- * Revision 1.5  2005/02/24 15:11:42  fwarmerdam
- * fixed debug arguments in Read()
- *
- * Revision 1.4  2005/02/07 22:53:54  fwarmerdam
- * added preliminary Create support for JP2ECW driver
- *
- * Revision 1.3  2004/12/21 16:11:11  fwarmerdam
- * hacked Read() method error reporting to avoid NPJE issue
- *
- * Revision 1.2  2004/12/20 22:17:57  fwarmerdam
- * adjusted for two create copy entry points
- *
- * Revision 1.1  2004/12/10 19:15:34  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef VSIIOSTREAM_H_INCLUDED
 #define VSIIOSTREAM_H_INCLUDED

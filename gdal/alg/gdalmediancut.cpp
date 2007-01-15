@@ -33,29 +33,6 @@
  *
  *      "Color  Image Quantization for Frame Buffer Display", Paul
  *      Heckbert, SIGGRAPH proceedings, 1982, pp. 297-307.
- * 
- * $Log$
- * Revision 1.7  2006/06/22 18:45:06  fwarmerdam
- * Made sure alpha is set to 255.
- *
- * Revision 1.6  2005/04/04 15:24:16  fwarmerdam
- * added CPL_STDCALL to some functions
- *
- * Revision 1.5  2003/07/08 15:28:32  warmerda
- * avoid warnings
- *
- * Revision 1.4  2003/02/06 04:56:35  warmerda
- * added documentation
- *
- * Revision 1.3  2002/04/16 17:48:36  warmerda
- * Ensure everything is initialized.
- *
- * Revision 1.2  2001/07/18 04:43:13  warmerda
- * added CPL_CVSID
- *
- * Revision 1.1  2001/01/22 22:30:59  warmerda
- * New
- *
  */
 
 #include "gdal_priv.h"

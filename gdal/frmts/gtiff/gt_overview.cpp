@@ -25,53 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.14  2006/04/05 00:06:14  fwarmerdam
- * fix contact info
- *
- * Revision 1.13  2005/05/22 16:58:12  dron
- * Added PlanarConfiguration parameter to the TIFF_WriteOverview().
- *
- * Revision 1.12  2004/09/09 18:59:21  fwarmerdam
- * Adjusted to properly support colormaps with up to 65536 entries.
- *
- * Revision 1.11  2004/04/14 09:51:36  dron
- * Added support for COMPRESS_OVERVIEW option.
- *
- * Revision 1.10  2002/07/20 12:27:13  dron
- * Fixed building with externally preinstalled TIFF library.
- *
- * Revision 1.9  2001/10/12 15:06:05  warmerda
- * various build improvements to avoid internal/external conflicts
- *
- * Revision 1.8  2001/07/18 04:51:56  warmerda
- * added CPL_CVSID
- *
- * Revision 1.7  2001/06/25 14:44:15  warmerda
- * Fixed to return success if no bands requested to be processed.
- *
- * Revision 1.6  2000/09/25 21:16:24  warmerda
- * Avoid initialization warnings.
- *
- * Revision 1.5  2000/08/14 18:37:24  warmerda
- * added (untested) support for writing palettes to overviews
- *
- * Revision 1.4  2000/07/17 17:09:30  warmerda
- * added support for complex data
- *
- * Revision 1.3  2000/06/26 22:18:33  warmerda
- * added scaled progress support
- *
- * Revision 1.2  2000/06/19 18:47:24  warmerda
- * fixed header
- *
- * Revision 1.1  2000/04/21 21:53:15  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_priv.h"
 #define CPL_SERV_H_INCLUDED

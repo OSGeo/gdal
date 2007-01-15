@@ -24,53 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.16  2006/10/23 20:10:06  dnadeau
- * Fix the 3D array dimension not being set correctly.
- *
- * Revision 1.15  2006/01/21 17:51:50  dnadeau
- * added find object by path where space are changed with underscore.  Fix up pszProjections problem.
- *
- * Revision 1.14  2005/10/12 20:16:10  fwarmerdam
- * use SetMetadata()
- *
- * Revision 1.13  2005/09/13 02:34:58  fwarmerdam
- * Cleanup more carefully in ::Open() to avoid leaks.
- *
- * Revision 1.12  2005/08/25 15:35:57  fwarmerdam
- * Handle offset type to hyperslab based on lib version
- *
- * Revision 1.11  2005/08/24 22:08:28  fwarmerdam
- * fixed header attribution
- *
- * Revision 1.10  2005/08/24 15:53:52  dron
- * The type of start offset array fixed again (goes away in the last commit).
- *
- * Revision 1.9  2005/08/23 20:11:30  dnadeau
- * HDF5 add Metadata
- *
- * Revision 1.8  2005/08/19 15:03:20  dron
- * Fixed type of start offset array in IReadBlock().
- *
- * Revision 1.7  2005/08/13 02:22:01  dnadeau
- * check for windows drive letter in filename
- *
- * Revision 1.6  2005/08/12 23:39:50  dnadeau
- * add GCPs and projection class members
- *
- * Revision 1.5  2005/07/29 15:44:01  fwarmerdam
- * minor formatting change
- *
- * Revision 1.4  2005/07/27 16:41:46  dnadeau
- * take care of memory leak
- *
- * Revision 1.3  2005/07/20 21:16:10  dnadeau
- * fix commit problem with file
- *
- */
+ ****************************************************************************/
 #include "hdf5.h"
 
 #include "gdal_pam.h"

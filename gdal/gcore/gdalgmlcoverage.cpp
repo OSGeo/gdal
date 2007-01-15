@@ -24,20 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- *****************************************************************************
- *
- * $Log$
- * Revision 1.3  2006/11/07 18:56:18  fwarmerdam
- * add more complete urn support
- *
- * Revision 1.2  2006/10/27 04:11:28  fwarmerdam
- * Fix memory leak.
- *
- * Revision 1.1  2006/10/27 03:36:42  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_priv.h"
 #include "cpl_string.h"

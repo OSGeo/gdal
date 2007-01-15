@@ -29,16 +29,7 @@
  *
  * gcc -g ogr_capi_test.c `gdal-config --libs` `gdal-config --cflags` \
  *     -o ogr_capi_test
- *
- **********************************************************************
- * $Log$
- * Revision 1.3  2006/03/29 00:59:39  fwarmerdam
- * Added copyright message.
- *
- * Revision 1.2  2003/02/19 03:43:11  danmo
- * Added cvs log, etc.
- *
- */
+ ****************************************************************************/
 
 #include "ogr_api.h"
 

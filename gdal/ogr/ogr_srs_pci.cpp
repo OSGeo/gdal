@@ -25,46 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2006/12/02 00:48:45  fwarmerdam
- * added preliminary support for mapping localcs to meter/feet
- *
- * Revision 1.10  2006/10/11 14:17:10  fwarmerdam
- * Fixed bug handling geographic coordinate systems.
- *
- * Revision 1.9  2006/03/03 18:35:40  fwarmerdam
- * Added comment.
- *
- * Revision 1.8  2006/03/03 18:34:17  fwarmerdam
- * Don't require pszUnits to be passed in, and don't assume METER if it isn't.
- *
- * Revision 1.7  2006/03/03 18:30:37  fwarmerdam
- * Added ellipsoid definition to ellipsoid tables so we can support
- * those without EPSG equivs (ie. E019).
- * Support "Geosys" values without the earth model pre-formatted properly
- * such as "SIN E019" instead of "SIN         E019".
- *
- * Revision 1.6  2004/01/31 09:51:40  dron
- * Fixed projection parameters number mismatch; more datums added.
- *
- * Revision 1.5  2004/01/29 15:21:46  dron
- * More datums added.
- *
- * Revision 1.4  2003/10/08 07:59:39  dron
- * More datums and ellipsoids added.
- *
- * Revision 1.3  2003/09/11 19:47:48  warmerda
- * it seems Visual C++ doesnt like having a const int field in PCIDatums
- *
- * Revision 1.2  2003/09/09 07:49:18  dron
- * Added exportToPCI() method.
- *
- * Revision 1.1  2003/08/31 14:49:37  dron
- * New.
- */
+ ****************************************************************************/
 
 #include "ogr_spatialref.h"
 #include "cpl_conv.h"

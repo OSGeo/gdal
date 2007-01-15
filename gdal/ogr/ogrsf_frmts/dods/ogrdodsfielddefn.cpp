@@ -25,20 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.3  2004/03/12 22:13:07  warmerda
- * major upgrade with normalized sequen nested sequence support
- *
- * Revision 1.2  2004/01/29 21:01:03  warmerda
- * added sequences within sequences support
- *
- * Revision 1.1  2004/01/21 20:08:29  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_dods.h"
 #include "cpl_conv.h"

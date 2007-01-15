@@ -24,75 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.21  2006/10/19 17:22:54  dron
- * Added GetTypeMapping() conversion function; numerous clean-ups.
- *
- * Revision 1.20  2006/06/30 18:15:35  dron
- * Avoid warnings on win64 target.
- *
- * Revision 1.19  2006/06/30 18:00:20  dron
- * Do not define MISSING_SQLULEN on MSVC/x64 target.
- *
- * Revision 1.18  2006/06/01 12:15:39  mloskot
- * Added CPLODBCDriverInstaller utility class to CPL.
- *
- * Revision 1.17  2006/05/12 15:22:23  fwarmerdam
- * on MSVC 6 we sometimes dont have SQLULEN
- *
- * Revision 1.16  2006/04/03 23:08:58  fwarmerdam
- * Use SQLULEN by default now.
- *
- * Revision 1.15  2006/02/19 21:54:34  mloskot
- * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
- *
- * Revision 1.14  2005/09/05 20:18:43  fwarmerdam
- * added binary column support
- *
- * Revision 1.13  2005/08/31 03:32:41  fwarmerdam
- * GetTypeName now returns CPLString
- *
- * Revision 1.12  2005/06/29 01:01:01  ssoule
- * Changed return type of CPLODBCStatement::GetTypeName from const char * to
- * std::string.
- *
- * Revision 1.11  2005/01/13 03:24:54  fwarmerdam
- * changed type of m_panColSize, per ODBC 3.52 requirements
- *
- * Revision 1.10  2004/06/23 16:11:30  warmerda
- * just testing cvs commits
- *
- * Revision 1.9  2004/06/01 20:40:02  warmerda
- * expanded tabs
- *
- * Revision 1.8  2003/11/24 20:45:00  warmerda
- * make CollectResultsInfo() public
- *
- * Revision 1.7  2003/10/29 17:56:57  warmerda
- * Added PrimaryKeys() support
- *
- * Revision 1.6  2003/10/06 20:04:08  warmerda
- * added escaping support
- *
- * Revision 1.5  2003/10/06 17:16:18  warmerda
- * added windows.h for windows, and fixed m_panColSize type
- *
- * Revision 1.4  2003/09/26 20:02:41  warmerda
- * update GetColData()
- *
- * Revision 1.3  2003/09/26 13:51:02  warmerda
- * Add documentation
- *
- * Revision 1.2  2003/09/25 17:09:49  warmerda
- * added some more methods
- *
- * Revision 1.1  2003/09/24 15:39:14  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef CPL_ODBC_H_INCLUDED
 #define CPL_ODBC_H_INCLUDED

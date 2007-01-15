@@ -24,23 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2006/06/01 14:49:06  mloskot
- * Added automatic installation of the MDB Tools driver for PGeo. The driver is installed before opening PGeo dataset.
- *
- * Revision 1.3  2006/05/15 18:54:43  fwarmerdam
- * support SetAttributeFilter on ExecuteSQL resultset
- *
- * Revision 1.2  2005/12/16 01:32:26  fwarmerdam
- * removed custom GetExtent on select layer
- *
- * Revision 1.1  2005/09/05 19:34:17  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _OGR_ODBC_H_INCLUDED
 #define _OGR_ODBC_H_INLLUDED

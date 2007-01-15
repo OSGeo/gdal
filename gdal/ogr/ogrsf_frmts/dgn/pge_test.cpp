@@ -9,23 +9,7 @@
  * Copyright (c) 2002, Pacific Gas and Electric Co, San Franciso, CA, USA.
  *
  * All rights reserved.  Not to be used, reproduced or disclosed without
- * permission.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2003/05/21 03:42:01  warmerda
- * Expanded tabs
- *
- * Revision 1.3  2002/03/15 16:08:42  warmerda
- * update to use strings lists for read/write function args
- *
- * Revision 1.2  2002/03/15 15:07:06  warmerda
- * use dgn_pge.h
- *
- * Revision 1.1  2002/03/14 21:40:37  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "dgn_pge.h"
 #include "cpl_string.h"

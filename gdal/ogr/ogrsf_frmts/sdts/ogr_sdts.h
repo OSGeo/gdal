@@ -25,32 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2006/03/28 23:17:06  fwarmerdam
- * updated contact info
- *
- * Revision 1.5  2005/02/22 12:53:19  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.4  2001/01/19 21:14:22  warmerda
- * expanded tabs
- *
- * Revision 1.3  2000/02/20 21:17:56  warmerda
- * added projection support
- *
- * Revision 1.2  1999/11/04 21:12:31  warmerda
- * added TestCapability() support
- *
- * Revision 1.1  1999/09/22 13:32:16  warmerda
- * New
- *
- * Revision 1.1  1999/09/22 03:05:40  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _OGR_SDTS_H_INCLUDED
 #define _OGR_SDTS_H_INLLUDED

@@ -29,14 +29,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.1  2002/10/08 23:00:27  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef TIF_MEMIO_H_INCLUDED
 #define TIF_MEMIO_H_INCLUDED

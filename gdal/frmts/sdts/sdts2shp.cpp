@@ -24,59 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.16  2006/04/10 16:34:18  fwarmerdam
- * updated contact info
- *
- * Revision 1.15  2003/10/06 14:35:21  warmerda
- * added support for secondary attribute tables.
- *
- * Revision 1.14  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.13  2001/01/19 21:20:29  warmerda
- * expanded tabs
- *
- * Revision 1.12  2000/08/24 18:49:04  warmerda
- * More error checking.
- *
- * Revision 1.11  2000/08/24 18:44:40  warmerda
- * Made a little less case sensitive.
- *
- * Revision 1.10  1999/11/04 22:52:52  warmerda
- * added dynamic ATID support
- *
- * Revision 1.9  1999/09/22 13:34:51  warmerda
- * use new SDTSPolygonReader::AssembleRings() method
- *
- * Revision 1.8  1999/09/03 19:04:13  warmerda
- * made comment blocks doxygen compatible
- *
- * Revision 1.7  1999/09/03 14:16:36  warmerda
- * Fixed other memory leaks.
- *
- * Revision 1.6  1999/09/03 14:13:15  warmerda
- * fix memory leaks
- *
- * Revision 1.5  1999/09/03 13:34:12  warmerda
- * cleanup properly
- *
- * Revision 1.4  1999/09/03 13:01:16  warmerda
- * rewrote attribute writing to simplify
- *
- * Revision 1.3  1999/09/02 12:00:28  warmerda
- * write related attributes for points, and lines
- *
- * Revision 1.2  1999/09/02 03:40:03  warmerda
- * added indexed readers
- *
- * Revision 1.1  1999/05/07 13:44:57  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "sdts_al.h"
 #include "shapefil.h"

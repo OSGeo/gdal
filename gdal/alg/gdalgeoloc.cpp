@@ -24,20 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.3  2006/11/20 06:17:18  mloskot
- * Added casts between double and float types.
- *
- * Revision 1.2  2006/10/27 03:36:06  fwarmerdam
- * Avoid warnings.
- *
- * Revision 1.1  2006/08/08 03:15:48  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_priv.h"
 #include "gdal_alg.h"

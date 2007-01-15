@@ -24,61 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.16  2006/03/29 00:46:20  fwarmerdam
- * update contact info
- *
- * Revision 1.15  2005/09/21 00:53:19  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.14  2005/04/06 15:04:23  fwarmerdam
- * added TIGER2004 support
- *
- * Revision 1.13  2003/08/27 02:26:03  warmerda
- * fixed bug with UGA, BLKGRP and VTF fields in 2002 RTS redistricting format
- *
- * Revision 1.12  2003/08/18 14:47:53  warmerda
- * upgraded with *untested* TIGER 2003 support
- *
- * Revision 1.11  2003/01/14 01:35:30  mbp
- * Corrected a few field lengths
- *
- * Revision 1.10  2003/01/11 15:29:55  warmerda
- * expanded tabs
- *
- * Revision 1.9  2003/01/04 23:21:56  mbp
- * Minor bug fixes and field definition changes.  Cleaned
- * up and commented code written for TIGER 2002 support.
- *
- * Revision 1.8  2002/12/26 00:20:19  mbp
- * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
- * first round implementation of TIGER_2002 support
- *
- * Revision 1.7  2001/07/19 16:05:49  warmerda
- * clear out tabs
- *
- * Revision 1.6  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.5  2001/07/04 23:25:32  warmerda
- * first round implementation of writer
- *
- * Revision 1.4  2001/07/04 05:40:35  warmerda
- * upgraded to support FILE, and Tiger2000 schema
- *
- * Revision 1.3  2001/01/19 21:15:20  warmerda
- * expanded tabs
- *
- * Revision 1.2  2000/01/13 05:18:11  warmerda
- * added support for multiple versions
- *
- * Revision 1.1  1999/12/22 15:37:59  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_tiger.h"
 #include "cpl_conv.h"

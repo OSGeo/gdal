@@ -24,21 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.4  2005/07/05 17:10:52  fwarmerdam
- * give swap funcs unique names
- *
- * Revision 1.3  2004/03/22 23:45:41  aubin
- * wrap endian swapping functions in namespace to limit scope
- *
- * Revision 1.2  2001/07/06 18:46:25  nemec
- * Cleanup files - improve Windows build, make proper copyright notice
- *
- *
- */
+ ****************************************************************************/
 
 #ifndef _gstEndian_h_
 #define _gstEndian_h_

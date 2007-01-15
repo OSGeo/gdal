@@ -24,66 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.18  2006/11/23 13:23:56  dron
- * Added more logic to guess HDF-EOS datasets.
- *
- * Revision 1.17  2006/08/03 11:47:38  dron
- * Added EOS_SWATH_GEOL subdataset type.
- *
- * Revision 1.16  2005/04/25 20:04:43  dron
- * Make more functions constant.
- *
- * Revision 1.15  2005/03/29 12:42:53  dron
- * Added AnyTypeToDouble() method.
- *
- * Revision 1.14  2004/06/19 21:37:31  dron
- * Use HDF-EOS library for appropriate datasets; major cpde rewrite.
- *
- * Revision 1.13  2003/11/07 15:49:14  dron
- * Added GetDataType() and GetDataTypeName().
- *
- * Revision 1.12  2003/06/26 20:42:31  dron
- * Support for Hyperion Level 1 data product.
- *
- * Revision 1.11  2003/06/25 08:26:18  dron
- * Support for Aster Level 1A/1B/2 products.
- *
- * Revision 1.10  2003/06/12 15:07:34  dron
- * Value for MODIS Level 2 added.
- *
- * Revision 1.9  2003/06/10 09:33:48  dron
- * Added support for MODIS Level 3 products.
- *
- * Revision 1.8  2003/05/21 14:11:43  dron
- * MODIS Level 1B earth-view (EV) product now supported.
- *
- * Revision 1.7  2002/11/08 17:57:43  dron
- * Type of pszDataType changet to const char*.
- *
- * Revision 1.6  2002/11/06 15:47:14  dron
- * Added support for 3D datasets creation
- *
- * Revision 1.5  2002/10/25 14:28:54  dron
- * Initial support for HDF4 creation.
- *
- * Revision 1.4  2002/09/06 10:42:23  dron
- * Georeferencing for ASTER Level 1b datasets and ASTER DEMs.
- *
- * Revision 1.3  2002/07/23 12:27:58  dron
- * General Raster Interface support added.
- *
- * Revision 1.2  2002/07/17 16:24:31  dron
- * MODIS support improved a bit.
- *
- * Revision 1.1  2002/07/16 11:04:11  dron
- * New driver: HDF4 datasets. Initial version.
- *
- *
- */
+ ****************************************************************************/
 
 #ifndef _HDF4DATASET_H_INCLUDED_
 #define _HDF4DATASET_H_INCLUDED_

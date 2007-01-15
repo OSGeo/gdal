@@ -24,26 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2003/05/21 03:54:01  warmerda
- * expand tabs
- *
- * Revision 1.4  2003/01/20 20:57:44  warmerda
- * Create() now opens DB in update mode
- *
- * Revision 1.3  2002/12/29 03:20:25  warmerda
- * CreateDataSource should test true now
- *
- * Revision 1.2  2002/12/28 04:38:36  warmerda
- * converted to unix file conventions
- *
- * Revision 1.1  2002/12/28 04:07:27  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_oci.h"
 

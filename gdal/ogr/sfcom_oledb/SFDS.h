@@ -24,75 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.22  2002/08/30 15:24:29  warmerda
- * moved FinalConstruct into SFDS.cpp
- *
- * Revision 1.21  2002/08/29 18:55:35  warmerda
- * restructured to put SRS and OGRDataSource in CSFSource
- *
- * Revision 1.20  2002/08/13 13:59:42  warmerda
- * removed MEDC related property page stuff
- *
- * Revision 1.19  2002/08/13 13:44:10  warmerda
- * removed custom MEDC property pages
- *
- * Revision 1.18  2002/08/12 18:06:32  warmerda
- * added IDataSourceKey support from Autodesk
- *
- * Revision 1.17  2002/05/08 20:27:48  warmerda
- * added support for caching OGRDataSources
- *
- * Revision 1.16  2002/05/06 15:12:39  warmerda
- * improve IErrorInfo support
- *
- * Revision 1.15  2002/04/25 17:38:28  warmerda
- * added custom connection tabs
- *
- * Revision 1.14  2001/11/09 19:06:07  warmerda
- * disable various DS properties, added debugging
- *
- * Revision 1.13  2001/10/24 16:02:02  warmerda
- * added debug call
- *
- * Revision 1.12  2001/10/02 14:25:45  warmerda
- * Added MAXTABLESINSELECT and SQLSUPPORT properties for MapGuide
- *
- * Revision 1.11  2001/06/07 15:50:14  warmerda
- * implement DBMSNAME property for ESRI compatibility
- *
- * Revision 1.10  2001/05/28 19:35:31  warmerda
- * added ROSETCONVERSIONSONCOMMAND property
- *
- * Revision 1.9  1999/11/22 17:17:18  warmerda
- * reformat
- *
- * Revision 1.8  1999/07/23 19:20:27  kshih
- * Modifications for errors etc...
- *
- * Revision 1.7  1999/07/21 13:25:50  warmerda
- * Remoted extra include of sfutil.h.
- *
- * Revision 1.6  1999/07/20 17:11:11  kshih
- * Use OGR code
- *
- * Revision 1.5  1999/06/22 16:17:31  warmerda
- * added debug statement
- *
- * Revision 1.4  1999/06/22 15:52:56  kshih
- * Added Initialize error return for invalid data set.
- *
- * Revision 1.3  1999/06/12 17:15:42  kshih
- * Make use of datasource property
- * Add schema rowsets
- *
- * Revision 1.2  1999/06/04 15:18:32  warmerda
- * Added copyright header.
- *
- */
+ ****************************************************************************/
 
 #ifndef __CSFSource_H_
 #define __CSFSource_H_

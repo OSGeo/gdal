@@ -24,42 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.10  2005/12/14 20:03:57  fwarmerdam
- * Corrected byte swapping decision for 16bit images per report from Maciek.
- *
- * Revision 1.9  2005/09/27 18:13:04  fwarmerdam
- * Only return 16 colors for 4bit files.
- *
- * Revision 1.8  2005/09/27 17:40:05  fwarmerdam
- * Make sure we notify RawRasterBand we are using large file api.
- *
- * Revision 1.7  2005/09/27 17:37:20  fwarmerdam
- * Derived 4bit band from GDALPamRasterBand, and added colortable support.
- * Also use large file API consistently for file access.
- *
- * Revision 1.6  2005/05/05 13:55:42  fwarmerdam
- * PAM Enable
- *
- * Revision 1.5  2004/05/28 18:15:58  warmerda
- * added .TRL colortable support
- *
- * Revision 1.4  2004/05/28 16:06:27  warmerda
- * added pre7.4 handling and world file support
- *
- * Revision 1.3  2004/05/26 20:25:05  warmerda
- * Added 4bit support.
- *
- * Revision 1.2  2004/05/26 18:19:15  warmerda
- * Implement
- *
- * Revision 1.1  2004/05/26 17:45:16  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "rawdataset.h"
 #include "cpl_string.h"

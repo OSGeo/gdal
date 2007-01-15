@@ -25,42 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.10  2005/09/12 20:55:41  fwarmerdam
- * Fixed OGR_G_AddGeometry() to support 2D or 2.5D linestrings being
- * added to a polygon.
- *
- * Revision 1.9  2005/07/20 02:33:51  fwarmerdam
- * fixed up dimension test for adding to polygons
- *
- * Revision 1.8  2005/07/20 01:43:51  fwarmerdam
- * upgraded OGR geometry dimension handling
- *
- * Revision 1.7  2004/09/17 15:05:36  fwarmerdam
- * added get_Area() support
- *
- * Revision 1.6  2003/05/28 19:16:42  warmerda
- * fixed up argument names and stuff for docs
- *
- * Revision 1.5  2003/04/14 17:33:35  warmerda
- * Fixed GetPoint's y value for points as per bug 319.
- *
- * Revision 1.4  2003/03/31 15:55:42  danmo
- * Added C API function docs
- *
- * Revision 1.3  2003/01/07 16:44:27  warmerda
- * added removeGeometry
- *
- * Revision 1.2  2002/10/19 16:22:32  warmerda
- * fixed bug with OGR_G_GetGeometryRef() for interior rings of polygons
- *
- * Revision 1.1  2002/09/26 18:11:51  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_geometry.h"
 #include "ogr_api.h"

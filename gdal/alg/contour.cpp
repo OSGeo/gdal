@@ -25,29 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2006/03/03 03:49:38  fwarmerdam
- * Do not perterb nodata values even if they fall on a contour interval.
- *
- * Revision 1.5  2003/10/16 17:47:06  warmerda
- * Added algorithm details to GDALContourGenerate().
- *
- * Revision 1.4  2003/10/16 17:41:13  warmerda
- * Added docs for GDALContourGenerate()
- *
- * Revision 1.3  2003/10/16 16:44:05  warmerda
- * added support for fixed levels
- *
- * Revision 1.2  2003/10/15 20:40:58  warmerda
- * reworked to avoid quadratic behavior in the number of contours
- *
- * Revision 1.1  2003/10/10 19:44:46  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_priv.h"
 #include "gdal_alg.h"

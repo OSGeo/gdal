@@ -24,67 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.33  2006/04/05 20:34:57  fwarmerdam
- * ensure only-dbf errors are cleared: Bug 1115
- *
- * Revision 1.32  2006/03/28 23:22:08  fwarmerdam
- * update contact info
- *
- * Revision 1.31  2006/01/11 03:03:19  fwarmerdam
- * Assign .prj filename to temporary string.
- *
- * Revision 1.30  2006/01/10 16:37:57  fwarmerdam
- * implemented REPACK support
- *
- * Revision 1.29  2006/01/06 19:07:37  fwarmerdam
- * Pass wkbNone to OGRShapeLayer as the requested type when opening
- * existing files so their type won't get reset by the "first feature"
- * logic in CreateFeature() when appending to empty shapefiles.
- *
- * Revision 1.28  2005/12/14 16:17:52  fwarmerdam
- * Fixed wkbMultiPolygon to map to POLYGON, not POLYGONZ.
- *
- * Revision 1.27  2005/11/07 17:05:26  fwarmerdam
- * Ensure morphToESRI() is used on spatial reference before writing .prj file.
- *
- * Revision 1.26  2005/01/04 03:43:22  fwarmerdam
- * added support for create/destroy spatial index sql commands
- *
- * Revision 1.25  2005/01/03 22:26:21  fwarmerdam
- * updated to use spatial indexing
- *
- * Revision 1.24  2004/03/01 18:41:00  warmerda
- * added fix for bug 493: ignore pc arcinfo coverages
- *
- * Revision 1.23  2003/07/13 23:06:28  warmerda
- * Added case for wkbMultiPoint25D to SHPT_MULTIPOINTZ.
- *
- * Revision 1.22  2003/05/27 21:39:53  warmerda
- * added support for writing MULTILINESTRINGs as ARCs
- *
- * Revision 1.21  2003/05/21 04:03:54  warmerda
- * expand tabs
- *
- * Revision 1.20  2003/03/27 22:12:14  warmerda
- * Yow ... fix to second last fix.
- *
- * Revision 1.19  2003/03/27 22:11:39  warmerda
- * Fixed similar bug to the last.
- *
- * Revision 1.18  2003/03/27 22:09:43  warmerda
- * fixed shallow copy problem with return result from CPLGetBasename()
- * as per http://bugzilla.remotesensing.org/show_bug.cgi?id=310.
- *
- * Revision 1.17  2003/03/20 19:11:30  warmerda
- * free pszBasename after it is used
- *
- * Revision 1.16  2003/03/04 05:49:05  warmerda
- * added attribute indexing support
- */
+ ****************************************************************************/
 
 #include "ogrshape.h"
 #include "cpl_conv.h"

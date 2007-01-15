@@ -24,45 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2006/10/27 17:03:55  dron
- * Added support for reading spatial reference table; memory leaks removed.
- *
- * Revision 1.10  2005/10/24 04:36:38  fwarmerdam
- * support passing geometry column with table name in datasource name
- *
- * Revision 1.9  2005/09/21 00:56:55  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.8  2004/10/17 04:22:19  fwarmerdam
- * Slightly improve error message.
- *
- * Revision 1.7  2004/08/17 21:08:27  warmerda
- * Avoid calling OpenTable() while still processing a transaction to get
- * a list of tables.  As suggested by John Erik Ekberg (cowi.dk).
- *
- * Revision 1.6  2004/07/09 07:06:43  warmerda
- * Added OGRSQL support in ExecuteSQL().
- *
- * Revision 1.5  2004/01/05 22:38:17  warmerda
- * stripped out some junk
- *
- * Revision 1.4  2004/01/05 22:23:40  warmerda
- * added ExecuteSQL implementation via OGRODBCSelectLayer
- *
- * Revision 1.3  2003/11/10 20:08:50  warmerda
- * support explicit tables list, or GetTables() fallback
- *
- * Revision 1.2  2003/10/06 19:18:30  warmerda
- * Added userid/password support
- *
- * Revision 1.1  2003/09/25 17:08:37  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_odbc.h"
 #include "cpl_conv.h"

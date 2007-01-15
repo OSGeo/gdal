@@ -26,65 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.18  2006/07/13 15:28:28  fwarmerdam
- * Increase size of histogram encoding buffer for very large images.
- *
- * Revision 1.17  2006/04/13 19:03:26  fwarmerdam
- * fixed a flaw in yesterdays fix
- *
- * Revision 1.16  2006/04/13 03:16:01  fwarmerdam
- * keep track if an object is PAM enabled, bug 1135
- *
- * Revision 1.15  2006/02/08 06:03:40  fwarmerdam
- * expose some PAM histo stuff for VRT, fixed InitFromXML() hist bug
- *
- * Revision 1.14  2005/10/13 01:19:58  fwarmerdam
- * moved GDALMultiDomainMetadata into GDALMajorObject
- *
- * Revision 1.13  2005/09/24 19:02:15  fwarmerdam
- * added RasterAttributeTable support
- *
- * Revision 1.12  2005/09/23 20:55:19  fwarmerdam
- * avoid unimplemented errors if PAM disabled
- *
- * Revision 1.11  2005/09/15 18:45:16  fwarmerdam
- * Fixed reentrancy issue with PamInitialize.
- *
- * Revision 1.10  2005/09/11 18:04:24  fwarmerdam
- * clearup multidomain metadata
- *
- * Revision 1.9  2005/08/31 03:34:23  fwarmerdam
- * use CPLString.Printf instead of CSPrintf()
- *
- * Revision 1.8  2005/06/08 14:04:58  fwarmerdam
- * fixed last fix in handling of histograms
- *
- * Revision 1.7  2005/05/22 08:13:40  fwarmerdam
- * added multidomain metadata support
- *
- * Revision 1.6  2005/05/17 18:30:51  fwarmerdam
- * initialize nodatavalue to -1e10, fix copying
- *
- * Revision 1.5  2005/05/17 15:13:28  fwarmerdam
- * ensure pam info initialize on any set operation
- *
- * Revision 1.4  2005/05/13 18:56:52  fwarmerdam
- * fixed SetDefaultHistogram
- *
- * Revision 1.3  2005/05/13 18:18:46  fwarmerdam
- * reworked histogram support, SetHistogram prototype
- *
- * Revision 1.2  2005/05/11 14:04:08  fwarmerdam
- * added getdefaulthistogram
- *
- * Revision 1.1  2005/04/27 16:27:44  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_pam.h"
 #include "gdal_rat.h"

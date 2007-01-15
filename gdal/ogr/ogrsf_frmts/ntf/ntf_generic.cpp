@@ -24,74 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.20  2006/03/28 22:59:55  fwarmerdam
- * updated contact info
- *
- * Revision 1.19  2002/10/29 03:28:59  warmerda
- * fixed 2.5D flag
- *
- * Revision 1.18  2002/10/02 20:48:39  warmerda
- * Added support for GENERIC_CPOLY layer
- *
- * Revision 1.17  2002/08/26 20:15:56  warmerda
- * fixed _LIST if attributes split over multiple records for one feature
- *
- * Revision 1.16  2002/02/08 20:43:06  warmerda
- * improved error checking and propagation
- *
- * Revision 1.15  2001/12/11 20:37:49  warmerda
- * add option to avoid caching indexed records on multiple readers
- *
- * Revision 1.14  2001/08/28 20:50:03  warmerda
- * expand tabs
- *
- * Revision 1.13  2001/08/23 14:47:31  warmerda
- * Added support for adding an _LIST attribute to the OGRFeatures in
- * cases of GENERIC features for which an attribute appears more than
- * once per features.  This has occured with the SAMPE1250.NTF Irish
- * dataset which has multiple feature codes for some line features.
- *
- * Revision 1.12  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.11  2001/05/01 15:09:33  warmerda
- * raised MAX_LINK from 200 to 5000, added error reporting
- *
- * Revision 1.10  2001/05/01 13:47:36  warmerda
- * keep track if generic geometry is 3D
- *
- * Revision 1.9  2001/04/30 15:10:43  warmerda
- * added support for 3D geometry
- *
- * Revision 1.8  2001/02/06 14:30:48  warmerda
- * don't crash if polygons missing point geometry
- *
- * Revision 1.7  2001/01/19 20:31:12  warmerda
- * expand tabs
- *
- * Revision 1.6  2001/01/17 19:08:37  warmerda
- * added CODELIST support
- *
- * Revision 1.5  1999/10/04 18:17:16  warmerda
- * Fixed redeclaration of for loop variables.
- *
- * Revision 1.4  1999/10/04 03:07:34  warmerda
- * added text_ht_ground and rename TX TEXT and FC FEAT_CODE
- *
- * Revision 1.3  1999/10/03 01:12:50  warmerda
- * ensure generic translators are attached to all files in a set
- *
- * Revision 1.2  1999/10/03 01:02:56  warmerda
- * added NAMEREC and COLLECT handling
- *
- * Revision 1.1  1999/10/01 14:45:42  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include <stdarg.h>
 #include "ntf.h"

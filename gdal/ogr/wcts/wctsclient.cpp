@@ -25,20 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.3  2003/03/27 21:40:20  warmerda
- * added post support, and GMLDATA support
- *
- * Revision 1.2  2003/03/27 18:42:55  warmerda
- * support GMLURL (FileURL) request
- *
- * Revision 1.1  2003/03/27 18:34:23  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include <assert.h>
 #include <curl/curl.h>

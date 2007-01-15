@@ -24,32 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- *****************************************************************************
- *
- * $Log$
- * Revision 1.7  2007/01/02 14:44:20  fwarmerdam
- * Added support for service description in the url.
- *
- * Revision 1.6  2007/01/02 05:44:23  fwarmerdam
- * Added "optimized" RasterIO() method implementations.
- *
- * Revision 1.5  2006/11/28 03:23:51  fwarmerdam
- * various improvements to error trapping
- *
- * Revision 1.4  2006/11/20 18:30:02  fwarmerdam
- * Use %.15g for BBOX values.
- *
- * Revision 1.3  2006/11/03 20:14:03  fwarmerdam
- * Support writing results to a temp file when in-memory does not work.
- *
- * Revision 1.2  2006/11/02 02:39:50  fwarmerdam
- * enable online help pointer
- *
- * Revision 1.1  2006/10/27 02:15:56  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_pam.h"
 #include "cpl_string.h"

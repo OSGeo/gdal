@@ -44,29 +44,6 @@
  *  but I have no idea who the credit really belongs to.
  *  -- 
  *					    Lou Steinberg
- *
- * $Log$
- * Revision 1.7  2005/04/04 15:24:16  fwarmerdam
- * added CPL_STDCALL to some functions
- *
- * Revision 1.6  2004/04/27 13:38:07  warmerda
- * Fixed typo in docs.
- *
- * Revision 1.5  2003/07/08 15:27:47  warmerda
- * avoid warnings
- *
- * Revision 1.4  2003/03/02 05:24:53  warmerda
- * fixed comment
- *
- * Revision 1.3  2003/02/06 04:56:35  warmerda
- * added documentation
- *
- * Revision 1.2  2001/07/18 04:43:13  warmerda
- * added CPL_CVSID
- *
- * Revision 1.1  2001/01/22 22:30:59  warmerda
- * New
- *
  */
 
 #include "gdal_priv.h"

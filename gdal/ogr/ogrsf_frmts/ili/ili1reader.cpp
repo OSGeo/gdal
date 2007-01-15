@@ -24,68 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.16  2006/07/07 00:05:46  mloskot
- * Removed GEOS C++ API usage from OGR and autotools.
- *
- * Revision 1.15  2006/06/06 17:01:52  pka
- * Join surface layer geometry to data layer
- * Improved arc interpolation
- *
- * Revision 1.14  2006/04/27 16:37:19  pka
- * Ili2 model reader fix
- * Support for multiple Ili2 models
- *
- * Revision 1.13  2006/04/24 16:49:48  pka
- * Fixed polyline feature with coordinate attribute
- * Float support for ARC_DEGREES
- *
- * Revision 1.12  2006/04/04 15:31:30  pka
- * No copy of original geometry on windows (file position errors)
- *
- * Revision 1.11  2006/03/24 17:51:00  fwarmerdam
- * Fixed syntax error with GEOS_C_API case.
- *
- * Revision 1.10  2006/03/23 18:04:39  pka
- * Add polygon geometry to area layer
- * Performance improvement area polygonizer
- *
- * Revision 1.9  2006/02/13 18:18:53  pka
- * Interlis 2: Support for nested attributes
- * Interlis 2: Arc interpolation
- *
- * Revision 1.8  2005/12/19 17:33:21  pka
- * Interlis 1: Support for 100 columns (unlimited, if model given)
- * Interlis 1: Fixes for output
- * Interlis: Examples in driver documentation
- *
- * Revision 1.7  2005/11/21 14:56:31  pka
- * Fix for call of GetNextFeature without ResetReading (Interlis 2)
- * Fix for polygonizer crash on Linux with GEOS 2.1.3 (Interlis 1)
- *
- * Revision 1.6  2005/11/18 23:40:53  fwarmerdam
- * enable support with GEOS_C_API
- *
- * Revision 1.5  2005/11/02 16:24:57  fwarmerdam
- * Implement C API based version of polygonize, and fix support for C++ API.
- *
- * Revision 1.4  2005/10/13 14:30:40  pka
- * Explicit point geometry type
- * ARC_DEGREES environment variable (Default 1 degree)
- *
- * Revision 1.3  2005/10/09 22:59:57  pka
- * ARC interpolation (Interlis 1)
- *
- * Revision 1.2  2005/08/06 22:21:53  pka
- * Area polygonizer added
- *
- * Revision 1.1  2005/07/08 22:10:57  pka
- * Initial import of OGR Interlis driver
- *
- */
+ ****************************************************************************/
 
 #include "ogr_ili1.h"
 #include "cpl_conv.h"

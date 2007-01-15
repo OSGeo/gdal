@@ -25,28 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2006/05/15 18:48:21  fwarmerdam
- * support SetAttributeFilter() on ExecuteSQL resultsets
- *
- * Revision 1.5  2006/03/21 18:50:56  fwarmerdam
- * dont report SetAttributeFilter error if clearing
- *
- * Revision 1.4  2005/02/22 12:50:31  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.3  2004/08/20 21:43:12  warmerda
- * avoid doing alot of work in GetExtent() if we have no geometry
- *
- * Revision 1.2  2004/07/11 19:23:51  warmerda
- * read implementation working well
- *
- * Revision 1.1  2004/07/09 06:25:05  warmerda
- * New
- */
+ ****************************************************************************/
 
 #include "cpl_conv.h"
 #include "ogr_sqlite.h"

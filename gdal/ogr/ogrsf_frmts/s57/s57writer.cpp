@@ -24,35 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2004/06/02 18:53:31  warmerda
- * Do empty number marker stuff for real fields too.
- *
- * Revision 1.7  2004/06/02 18:45:11  warmerda
- * Added special logic for EMPTY_NUMBER_MARKER.
- *
- * Revision 1.6  2004/01/06 19:04:15  warmerda
- * some iso8211.h enums changed names
- *
- * Revision 1.5  2003/11/17 20:10:46  warmerda
- * added support for writing FFPT linkages
- *
- * Revision 1.4  2003/11/12 21:23:40  warmerda
- * updates to new featuredefn generators
- *
- * Revision 1.3  2003/09/17 21:13:44  warmerda
- * write ATTF ahead of FSPT, dont write explicit FIELD_TERMINATOR
- *
- * Revision 1.2  2003/09/15 20:53:06  warmerda
- * fleshed out feature writing
- *
- * Revision 1.1  2003/09/09 16:47:06  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "s57.h"
 #include "ogr_api.h"

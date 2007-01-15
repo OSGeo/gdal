@@ -24,31 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.7  2005/09/21 00:54:43  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.6  2004/10/30 05:13:10  fwarmerdam
- * ensure we shut the database on exit!
- *
- * Revision 1.5  2004/07/13 15:11:19  warmerda
- * implemented SetFeature, transaction support
- *
- * Revision 1.4  2004/07/12 21:50:59  warmerda
- * fixed up SQL escaping
- *
- * Revision 1.3  2004/07/12 20:50:46  warmerda
- * table/database creation now implemented
- *
- * Revision 1.2  2004/07/11 19:23:51  warmerda
- * read implementation working well
- *
- * Revision 1.1  2004/07/09 06:25:04  warmerda
- * New
- */
+ ****************************************************************************/
 
 #include "ogr_sqlite.h"
 #include "cpl_conv.h"

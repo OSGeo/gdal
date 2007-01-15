@@ -24,23 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2006/06/05 20:37:42  mloskot
- * Added guards to not to run ODBC driver installation for PGeo on Win32 platforms.
- *
- * Revision 1.3  2006/06/01 14:49:06  mloskot
- * Added automatic installation of the MDB Tools driver for PGeo. The driver is installed before opening PGeo dataset.
- *
- * Revision 1.2  2005/09/24 04:59:55  fwarmerdam
- * support DSN-less connection directly to .mdb files
- *
- * Revision 1.1  2005/09/05 19:34:17  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_pgeo.h"
 #include "cpl_conv.h"

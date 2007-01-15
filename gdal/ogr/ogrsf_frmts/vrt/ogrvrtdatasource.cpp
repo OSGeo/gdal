@@ -24,17 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.2  2003/11/07 21:55:12  warmerda
- * complete fid support, relative dsname, fixes
- *
- * Revision 1.1  2003/11/07 17:50:36  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_vrt.h"
 #include "cpl_conv.h"

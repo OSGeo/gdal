@@ -24,26 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2003/05/21 03:42:01  warmerda
- * Expanded tabs
- *
- * Revision 1.4  2002/11/11 20:35:42  warmerda
- * added support for converting to vax floating point
- *
- * Revision 1.3  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.2  2001/03/07 13:56:44  warmerda
- * updated copyright to be held by Avenza Systems
- *
- * Revision 1.1  2000/12/14 17:11:05  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "dgnlibp.h"
 
