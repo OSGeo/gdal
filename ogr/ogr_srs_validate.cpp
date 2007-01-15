@@ -25,38 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.9  2006/12/15 05:56:46  fwarmerdam
- * added Oblique Stereographic
- *
- * Revision 1.8  2005/12/01 04:59:46  fwarmerdam
- * added two point equidistant support
- *
- * Revision 1.7  2005/10/03 17:34:19  fwarmerdam
- * Added a bunch of missing definitions as per 937.
- *
- * Revision 1.6  2004/11/11 18:28:45  fwarmerdam
- * added Bonne projection support
- *
- * Revision 1.5  2004/02/06 07:42:14  dron
- * Support for HOM projection, specified by two points on centerline.
- *
- * Revision 1.4  2002/03/05 14:25:14  warmerda
- * expand tabs
- *
- * Revision 1.3  2001/11/23 17:02:04  warmerda
- * add CT support to PROJCS children
- *
- * Revision 1.2  2001/11/21 03:43:00  warmerda
- * a variety of fixes to validate to allow for CT style parms
- *
- * Revision 1.1  2001/10/11 19:23:49  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_spatialref.h"
 #include "ogr_p.h"

@@ -21,47 +21,7 @@
  * the Software, Safe Software Incorporated does not warrant the
  * accuracy or completeness of the Software. In no event will Safe Software 
  * Incorporated be liable for damages, including loss of profits or 
- * consequential damages, arising out of the use of the Software.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2005/09/21 01:00:22  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.4  2005/02/22 12:57:19  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.3  2005/02/02 20:54:26  fwarmerdam
- * track m_nFeaturesRead
- *
- * Revision 1.2  2002/11/08 21:20:58  warmerda
- * ensure a query is issued if resetreading never called
- *
- * Revision 1.1  2002/05/24 06:23:57  warmerda
- * New
- *
- * Revision 1.7  2002/05/24 06:17:01  warmerda
- * clean up dependencies on strimp.h, and fme2ogrspatialref func
- *
- * Revision 1.6  2002/05/24 03:59:56  warmerda
- * added support for cache index and related stuff
- *
- * Revision 1.5  2002/05/06 14:06:37  warmerda
- * override coordsys from cached features if needed
- *
- * Revision 1.4  2002/04/10 20:10:38  warmerda
- * Added support for getting geometry extents
- *
- * Revision 1.3  2001/11/19 22:12:14  warmerda
- * avoid small memory leak
- *
- * Revision 1.2  2001/11/01 21:52:39  warmerda
- * added mutex to protect access to session
- *
- * Revision 1.1  2001/09/07 15:53:39  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "fme2ogr.h"
 #include "cpl_conv.h"

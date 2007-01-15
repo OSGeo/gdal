@@ -27,26 +27,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2005/03/15 08:04:39  fwarmerdam
- * Define FLT_MAX/MIN if not found elsewhere.
- *
- * Revision 1.4  2004/12/31 02:12:40  fwarmerdam
- * Avoid warnings.
- *
- * Revision 1.3  2004/12/31 02:02:31  fwarmerdam
- * added check of HAVE_FLOAT_H and HAVE_VALUES_H
- *
- * Revision 1.2  2004/12/26 16:12:21  fwarmerdam
- * thin plate spline support now implemented
- *
- * Revision 1.1  2004/11/14 04:16:44  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "thinplatespline.h"
 

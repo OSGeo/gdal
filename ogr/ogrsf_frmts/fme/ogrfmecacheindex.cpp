@@ -20,26 +20,7 @@
  * the Software, Safe Software Incorporated does not warrant the
  * accuracy or completeness of the Software. In no event will Safe Software 
  * Incorporated be liable for damages, including loss of profits or 
- * consequential damages, arising out of the use of the Software.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.3  2003/02/06 05:02:42  warmerda
- * added rec to clean list
- *
- * Revision 1.2  2002/07/11 16:07:27  warmerda
- * added CreationTime support, test against FMECACHE_MAX_RETENTION
- *
- * Revision 1.1  2002/05/24 06:23:57  warmerda
- * New
- *
- * Revision 1.2  2002/05/24 05:14:05  warmerda
- * removed stuff moved to minixml in cpl
- *
- * Revision 1.1  2002/05/24 03:59:00  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "fme2ogr.h"
 #include "cpl_multiproc.h"

@@ -24,71 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.34  2006/11/05 19:51:05  hobu
- * Always search /Library/Application Support/GDAL/PlugIns for the OSX Framework case
- *
- * Revision 1.33  2006/11/04 02:05:43  hobu
- * OSX Framework locations for plugins
- *
- * Revision 1.32  2006/03/28 14:49:56  fwarmerdam
- * updated contact info
- *
- * Revision 1.31  2005/09/15 18:39:43  fwarmerdam
- * cleanup TLS and VSI with driver manager
- *
- * Revision 1.30  2005/07/11 17:29:48  fwarmerdam
- * More use of mutex in some "read" cases.
- *
- * Revision 1.29  2005/07/11 17:25:49  fwarmerdam
- * Fixed minior race condition in GDALDriverManager creation.
- *
- * Revision 1.28  2005/07/11 17:17:21  fwarmerdam
- * Added note on thread un-safety of GDALDestroyDriverManager.
- *
- * Revision 1.27  2005/07/11 17:15:32  fwarmerdam
- * Grab mutex to create drive manager
- *
- * Revision 1.26  2005/06/10 15:37:35  fwarmerdam
- * avoid use of MAX_PATH
- *
- * Revision 1.25  2005/06/10 14:59:12  fwarmerdam
- * Added option to search under executable directory for plugins on win32.
- *
- * Revision 1.24  2005/05/23 06:46:24  fwarmerdam
- * added mutex to protect driver manager
- *
- * Revision 1.23  2005/04/04 15:24:48  fwarmerdam
- * Most C entry points now CPL_STDCALL
- *
- * Revision 1.22  2005/01/19 20:27:17  fwarmerdam
- * Search in lib/gdalplugins instead of directly in lib directory.
- * Only try files endning in .dll, .so or .dylib.  see bug 746
- *
- * Revision 1.21  2004/11/22 16:01:29  fwarmerdam
- * added GDAL_PREFIX
- *
- * Revision 1.20  2004/09/23 16:21:32  fwarmerdam
- * added call to OSRCleanup()
- *
- * Revision 1.19  2004/04/29 19:14:27  warmerda
- * Avoid extra newline when autoregistering.
- *
- * Revision 1.18  2004/04/16 06:23:46  warmerda
- * Use CPLGetConfigOption() instead of getenv().
- *
- * Revision 1.17  2003/12/28 17:27:36  warmerda
- * added call to CPLFreeConfig()
- *
- * Revision 1.16  2003/05/20 19:10:36  warmerda
- * added GDAL_DATA and CPLGetConfigOptions support
- *
- * Revision 1.15  2003/04/30 17:13:48  warmerda
- * added docs for many C functions
- */
+ ****************************************************************************/
 
 #include "gdal_priv.h"
 #include "cpl_string.h"

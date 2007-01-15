@@ -25,47 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.12  2003/09/13 03:47:24  warmerda
- * Added paeInd to BindScalar
- *
- * Revision 1.11  2003/05/21 03:54:01  warmerda
- * expand tabs
- *
- * Revision 1.10  2003/04/11 16:28:23  warmerda
- * fixed nMode handling, add indicators for binders
- *
- * Revision 1.9  2003/04/10 17:53:17  warmerda
- * added bindscalar and bindobject
- *
- * Revision 1.8  2003/04/07 19:26:51  warmerda
- * use the OCI_ATTR_STMT_TYPE attribute to determine if statement is SELECT
- *
- * Revision 1.7  2003/02/06 21:16:04  warmerda
- * fixed panFieldMap memory leak
- *
- * Revision 1.6  2003/01/10 22:29:56  warmerda
- * Added separate Prepare step
- *
- * Revision 1.5  2003/01/06 17:59:26  warmerda
- * fiddle with maximum buffer widths
- *
- * Revision 1.4  2003/01/02 21:50:31  warmerda
- * various fixes
- *
- * Revision 1.3  2002/12/29 03:20:50  warmerda
- * initialize new fields
- *
- * Revision 1.2  2002/12/28 04:38:36  warmerda
- * converted to unix file conventions
- *
- * Revision 1.1  2002/12/28 04:07:27  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_oci.h"
 #include "cpl_conv.h"

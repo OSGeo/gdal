@@ -24,44 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2004/03/10 18:18:54  warmerda
- * Avoid warning.
- *
- * Revision 1.10  2004/03/10 18:18:29  warmerda
- * Avoid warning.
- *
- * Revision 1.9  2002/06/07 14:08:35  warmerda
- * Fixed last fix.
- *
- * Revision 1.8  2002/06/07 14:07:49  warmerda
- * Default to doing a GDAL rather than APP build.
- *
- * Revision 1.7  2002/05/24 21:29:26  warmerda
- * avoid warnings
- *
- * Revision 1.6  2002/05/18 22:57:54  warmerda
- * allow long lines
- *
- * Revision 1.5  2001/07/18 04:51:56  warmerda
- * added CPL_CVSID
- *
- * Revision 1.4  2001/03/26 18:44:03  warmerda
- * removed debugging statements
- *
- * Revision 1.3  2001/03/26 18:43:05  warmerda
- * fixed bug in EnvisatFile_Close
- *
- * Revision 1.2  2001/02/27 22:34:33  warmerda
- * added EnvisatFile_ReadDatasetRecord
- *
- * Revision 1.1  2001/02/24 14:20:48  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef APP_BUILD
 #  define GDAL_BUILD

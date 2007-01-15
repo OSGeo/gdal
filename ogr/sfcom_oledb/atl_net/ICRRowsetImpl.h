@@ -30,26 +30,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.3  2002/08/28 20:07:45  warmerda
- * Get the pSrcData from m_rgRowData[] in GetDBStatus()
- *
- * Revision 1.2  2002/08/28 17:42:07  warmerda
- * changed to unix text format
- *
- * Revision 1.1  2002/08/09 21:36:39  warmerda
- * New
- *
- * Revision 1.3  2002/01/31 16:47:41  warmerda
- * fix up docs a bit
- *
- * Revision 1.2  2001/10/15 15:21:07  warmerda
- * pass raw data points to GetRCDBStatus
- *
- */
+ ****************************************************************************/
 
 #ifndef _ICRRowsetImpl_INCLUDED
 #define _ICRRowsetImpl_INCLUDED

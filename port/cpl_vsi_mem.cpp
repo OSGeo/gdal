@@ -24,48 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.12  2006/06/30 14:25:24  dron
- * Avoid warnings on win/64.
- *
- * Revision 1.11  2006/03/27 15:24:41  fwarmerdam
- * buffer in FWrite is const
- *
- * Revision 1.10  2006/02/24 23:06:18  mloskot
- * Fix missing namespace in string type usage
- * Bug reported by Thom DeCarlo in the [Gdal-dev] problem compiling with VS.NET post on the list.
- *
- * Revision 1.9  2006/02/19 21:54:34  mloskot
- * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
- *
- * Revision 1.8  2006/01/19 23:54:07  fwarmerdam
- * Protect access to oFileList in VSIGetMemFileBuffer() and VSIFileFromMemBuffer().
- *
- * Revision 1.7  2006/01/11 02:35:56  fwarmerdam
- * Fixed mutex cleanup.
- *
- * Revision 1.6  2006/01/11 00:39:40  fwarmerdam
- * protect oFileList with a mutex (bug 1031)
- *
- * Revision 1.5  2005/10/07 00:26:27  fwarmerdam
- * add documentation
- *
- * Revision 1.4  2005/09/12 16:50:37  fwarmerdam
- * added VSIMemFile buffer fetcher
- *
- * Revision 1.3  2005/09/12 00:37:55  fwarmerdam
- * fixed ownership in buffer to file function
- *
- * Revision 1.2  2005/09/11 18:32:07  fwarmerdam
- * tweak bigint expression to avoid vc6 problems
- *
- * Revision 1.1  2005/09/11 18:00:30  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 /* Remove annoying warnings in eVC++ and VC++ 6.0 */
 #if defined(WIN32CE)

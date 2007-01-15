@@ -24,56 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.15  2006/04/10 16:34:19  fwarmerdam
- * updated contact info
- *
- * Revision 1.14  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.13  2001/01/19 21:20:29  warmerda
- * expanded tabs
- *
- * Revision 1.12  2000/02/04 16:36:46  warmerda
- * Added raster support to GetBounds().
- *
- * Revision 1.11  2000/02/03 19:44:52  warmerda
- * added method for getting bounds of transfer
- *
- * Revision 1.10  1999/09/27 11:24:11  warmerda
- * Fixed SLTRaster type spelling.
- *
- * Revision 1.9  1999/09/03 19:04:38  warmerda
- * added more help
- *
- * Revision 1.8  1999/09/03 13:01:39  warmerda
- * added docs
- *
- * Revision 1.7  1999/09/02 03:40:03  warmerda
- * added indexed readers
- *
- * Revision 1.6  1999/08/16 19:25:05  warmerda
- * added GetLayerPolygonReader() method
- *
- * Revision 1.5  1999/06/03 21:13:39  warmerda
- * pass IREF to SDTSRasterReader
- *
- * Revision 1.4  1999/06/03 14:03:10  warmerda
- * Added raster layer support
- *
- * Revision 1.3  1999/05/13 15:32:30  warmerda
- * added SLTPoly as an interesting layer
- *
- * Revision 1.2  1999/05/11 14:06:20  warmerda
- * added GetLayerModuleReader()
- *
- * Revision 1.1  1999/05/11 12:55:31  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "sdts_al.h"
 

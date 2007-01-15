@@ -24,20 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.3  2006/06/06 12:23:32  fwarmerdam
- * Fixed real_filename "skip comma" logic.
- *
- * Revision 1.2  2004/07/29 16:37:56  warmerda
- * fixed parsing of subfile definition to handle spaces properly
- *
- * Revision 1.1  2004/07/23 19:14:00  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "kdu_file_io.h"
 #include "cpl_error.h"

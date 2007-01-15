@@ -24,77 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.21  2006/11/09 14:56:07  fwarmerdam
- * Added SKIP_NOSOURCE in papszWarpOptions documentation.
- *
- * Revision 1.20  2006/08/29 22:38:29  fwarmerdam
- * Added support for saving and load papszWarpOptions.
- *
- * Revision 1.19  2005/04/11 17:20:40  fwarmerdam
- * ensure dstnodata is duplicate in clonewarpoptions: bug 821
- *
- * Revision 1.18  2005/04/04 15:24:16  fwarmerdam
- * added CPL_STDCALL to some functions
- *
- * Revision 1.17  2004/12/31 02:11:20  fwarmerdam
- * Avoid warning.
- *
- * Revision 1.16  2004/10/07 15:50:18  fwarmerdam
- * added preliminary alpha band support
- *
- * Revision 1.15  2004/08/11 21:20:47  warmerda
- * avoid crash if transformer does not serialize
- *
- * Revision 1.14  2004/08/09 14:38:27  warmerda
- * added serialize/deserialize support for warpoptions and transformers
- *
- * Revision 1.13  2004/04/01 18:58:41  warmerda
- * fixed GDALReprojectImage() -- pass on eResampleAlg
- *
- * Revision 1.12  2004/03/28 21:20:39  warmerda
- * fixed initialization of nodata values
- *
- * Revision 1.11  2004/03/19 15:54:42  warmerda
- * Fixed another place where "2" was used instead of 0 as the default
- * polynomial order.
- *
- * Revision 1.10  2004/03/19 05:06:00  warmerda
- * Pass 0 for order to GDALCreateGenImgProjTransformer() from
- * GDALCreateAndReprojectImage() so that the default will be to figure
- * out the best order instead of defaulting to 2nd order.
- *
- * Revision 1.9  2004/02/25 19:51:00  warmerda
- * Fixed nodata check in GDT_Int16 case (from Manuel Massing).
- *
- * Revision 1.8  2003/07/26 17:32:16  warmerda
- * Added info on new warp options.
- *
- * Revision 1.7  2003/05/06 18:31:35  warmerda
- * added WRITE_FLUSH comment
- *
- * Revision 1.6  2003/04/22 19:41:24  dron
- * Fixed problem in GDALWarpNoDataMasker(): missed breaks in switch.
- *
- * Revision 1.5  2003/03/02 05:25:26  warmerda
- * added GDALWarpNoDataMasker
- *
- * Revision 1.4  2003/02/22 02:04:11  warmerda
- * added dfMaxError to reproject function
- *
- * Revision 1.3  2003/02/21 15:41:55  warmerda
- * rename data member
- *
- * Revision 1.2  2003/02/20 21:53:06  warmerda
- * partial implementation
- *
- * Revision 1.1  2003/02/18 17:25:50  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdalwarper.h"
 #include "cpl_string.h"

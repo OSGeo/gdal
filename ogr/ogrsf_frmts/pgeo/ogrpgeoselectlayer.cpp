@@ -25,23 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2006/05/15 18:54:57  fwarmerdam
- * support SetAttributeFilter on ExecuteSQL resultset
- *
- * Revision 1.3  2006/03/21 18:50:56  fwarmerdam
- * dont report SetAttributeFilter error if clearing
- *
- * Revision 1.2  2005/12/16 01:32:26  fwarmerdam
- * removed custom GetExtent on select layer
- *
- * Revision 1.1  2005/09/05 19:34:17  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "cpl_conv.h"
 #include "ogr_pgeo.h"

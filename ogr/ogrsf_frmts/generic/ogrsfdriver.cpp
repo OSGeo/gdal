@@ -24,32 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.7  2006/04/03 01:48:28  fwarmerdam
- * fixup contact info
- *
- * Revision 1.6  2003/05/21 04:54:29  warmerda
- * avoid warnings about unused formal parameters and possibly uninit variables
- *
- * Revision 1.5  2003/04/08 19:31:58  warmerda
- * added CopyLayer and CopyDataSource entry points
- *
- * Revision 1.4  2003/03/03 05:06:27  warmerda
- * added support for DeleteDataSource and DeleteLayer
- *
- * Revision 1.3  2002/09/26 18:16:19  warmerda
- * added C entry points
- *
- * Revision 1.2  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.1  1999/11/04 21:10:51  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogrsf_frmts.h"
 #include "ogr_api.h"

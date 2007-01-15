@@ -24,44 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2006/05/01 16:27:33  fwarmerdam
- * updated to work with libdap 1.6.2
- *
- * Revision 1.10  2005/07/18 14:12:59  fwarmerdam
- * bug 891: added DEFAULT_BASETYPE_FACTORY define for 3.5.x compatability
- *
- * Revision 1.9  2005/02/22 12:57:39  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.8  2004/03/17 18:15:57  warmerda
- * added floating point test prototypes
- *
- * Revision 1.7  2004/03/12 22:13:07  warmerda
- * major upgrade with normalized sequen nested sequence support
- *
- * Revision 1.6  2004/02/19 13:58:26  warmerda
- * complete extra_containers support for grids
- *
- * Revision 1.5  2004/02/17 18:47:05  warmerda
- * added geometry support
- *
- * Revision 1.4  2004/02/17 05:46:43  warmerda
- * Added grid/array support
- *
- * Revision 1.3  2004/01/29 21:01:03  warmerda
- * added sequences within sequences support
- *
- * Revision 1.2  2004/01/22 21:15:36  warmerda
- * parse url into components
- *
- * Revision 1.1  2004/01/21 20:08:29  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _OGR_DODS_H_INCLUDED
 #define _OGR_DODS_H_INLLUDED

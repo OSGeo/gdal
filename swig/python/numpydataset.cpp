@@ -24,50 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.3  2006/11/30 04:19:18  hobu
- * remap typecodes to use numpy enums (array->desc->type_num)
- *
- * Revision 1.2  2006/11/16 00:06:34  hobu
- * updates to work with new numpy stuff
- *
- * Revision 1.1  2005/02/14 20:37:58  fwarmerdam
- * New
- *
- * Revision 1.10  2003/12/11 17:20:44  gwalter
- * Added UInt16 and UInt32 to list of recognized NumPy types.
- *
- * Revision 1.9  2003/09/26 15:59:51  warmerda
- * warn if opening an array with internal definitions
- *
- * Revision 1.8  2002/09/04 06:59:44  warmerda
- * get rid of static driver pointer
- *
- * Revision 1.7  2002/06/12 21:08:28  warmerda
- * update to metadata based driver info
- *
- * Revision 1.6  2001/10/26 20:02:54  warmerda
- * use indirect allocation for MEMRasterBand
- *
- * Revision 1.5  2001/10/19 15:44:59  warmerda
- * added get/set gcps support
- *
- * Revision 1.4  2001/07/18 04:45:29  warmerda
- * added CPL_CVSID
- *
- * Revision 1.3  2001/03/08 18:42:06  warmerda
- * implement projection, and geotransform holding support
- *
- * Revision 1.2  2001/02/06 16:16:28  warmerda
- * fixed numpydataset.cpp to use sscanf to parse pointer
- *
- * Revision 1.1  2000/07/20 00:33:37  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_priv.h"
 #include "gdal_array.h"

@@ -27,75 +27,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.64  2006/06/30 19:23:18  fwarmerdam
- * install error handlers for in-memory geotiff handling (bug 1216)
- *
- * Revision 1.63  2006/04/28 04:21:57  fwarmerdam
- * make sure pszInfo is dynamically allocated in gcps
- *
- * Revision 1.62  2006/04/21 12:31:29  fwarmerdam
- * Ensure all of adfParms[] is initialized per:
- * http://bugzilla.remotesensing.org/show_bug.cgi?id=1164
- *
- * Revision 1.61  2006/04/05 00:06:14  fwarmerdam
- * fix contact info
- *
- * Revision 1.60  2005/12/22 04:14:59  fwarmerdam
- * Added special method to massage citations coming from Imagine.
- *
- * Revision 1.59  2005/09/13 23:55:00  fwarmerdam
- * fixed VSIUnlink prototype
- *
- * Revision 1.58  2005/09/12 17:06:28  fwarmerdam
- * avoid dependence on tif_vsi.h
- *
- * Revision 1.57  2005/09/12 16:56:44  fwarmerdam
- * fixup to avoid depending on cpl_vsi.h
- *
- * Revision 1.56  2005/09/12 00:28:28  fwarmerdam
- * use vsi memory io instead of memio module
- *
- * Revision 1.55  2005/06/08 18:07:35  fwarmerdam
- * Fixed for memory allocation mixup in GTIFGetOGISDefn() return value.
- *
- * Revision 1.54  2005/05/22 21:00:15  fwarmerdam
- * ensure false easting/northing written out in meters
- *
- * Revision 1.53  2005/03/15 16:04:47  fwarmerdam
- * Emit semimajor+semiminor if inv flattening is zero (sphere) instead of
- * semimajor + 0 inv flattening.
- *
- * Revision 1.52  2005/03/09 17:04:44  fwarmerdam
- * added CEA support
- *
- * Revision 1.51  2005/02/17 21:58:08  fwarmerdam
- * Avoid leak of pszGeogName.
- *
- * Revision 1.50  2005/02/07 13:30:30  dron
- * Memory leak removed.
- *
- * Revision 1.49  2004/10/18 21:12:44  fwarmerdam
- * Always emit angular units as degrees.
- *
- * Revision 1.48  2004/07/10 05:02:57  warmerda
- * Fixed improper projection parameters for false easting/northing for LCC.
- *
- * Revision 1.47  2004/04/29 19:58:43  warmerda
- * export GTIFGetOGISDefn, and GTIFSetFromOGISDefn
- *
- * Revision 1.46  2004/04/29 18:10:35  warmerda
- * try not to crash if GTIF is NULL
- *
- * Revision 1.45  2004/04/21 13:59:15  warmerda
- * try to preserve PROJCS and GEOGCS names in citations
- *
- * Revision 1.44  2004/03/18 09:58:07  dron
- * Use auxiliary functions from the libgeotiff instead of the ones from CPL.
- */
+ ****************************************************************************/
 
 #include "cpl_serv.h"
 #include "geo_tiffp.h"

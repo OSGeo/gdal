@@ -27,23 +27,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2006/03/31 17:57:32  fwarmerdam
- * header updates
- *
- * Revision 1.3  2001/11/01 17:06:31  warmerda
- * convert use of CRestrictions to deriving from CSchemaRowset
- *
- * Revision 1.2  1999/11/18 19:02:20  warmerda
- * expanded tabs
- *
- * Revision 1.1  1999/06/10 19:34:33  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef SFCSCHEMAROWSETS_H_INCLUDED
 #define SFCSCHEMAROWSETS_H_INCLUDED

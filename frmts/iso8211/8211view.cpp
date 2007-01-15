@@ -24,38 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2006/04/04 04:24:06  fwarmerdam
- * update contact info
- *
- * Revision 1.7  2003/08/21 21:22:46  warmerda
- * Special reporting facilities for the S-57 LNAM and NAME bitfields (provided
- * by Rodney Jensen).
- * Report DDFInt fields as unsigned if they come from an unsigned binary
- * field.
- *
- * Revision 1.6  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.5  2000/06/16 18:02:08  warmerda
- * added SetRepeatingFlag hack support
- *
- * Revision 1.4  1999/11/18 19:03:04  warmerda
- * expanded tabs
- *
- * Revision 1.3  1999/05/06 14:25:15  warmerda
- * added support for binary strings
- *
- * Revision 1.2  1999/04/28 05:16:47  warmerda
- * added usage
- *
- * Revision 1.1  1999/04/27 22:09:30  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include <stdio.h>
 #include "iso8211.h"

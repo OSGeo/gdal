@@ -25,66 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.16  2006/04/04 17:25:27  fwarmerdam
- * updated contact info
- *
- * Revision 1.15  2004/08/23 14:24:14  warmerda
- * Added GXFClose() on failed open to recover resources.
- *
- * Revision 1.14  2004/04/27 14:30:55  warmerda
- * Cast CPLErr properly.
- *
- * Revision 1.13  2004/04/07 13:08:56  warmerda
- * fixed write past end of scanline offset array
- *
- * Revision 1.12  2004/04/07 02:04:14  warmerda
- * ensure CPLReadLine() buffer is cleared on close
- *
- * Revision 1.11  2003/09/22 14:57:18  warmerda
- * Fixed bug recognising #MAP_PROJECTION when a #MAP_TRANSFORM was in
- * the file (see 1133_resmag.gxf).  Also fixed a bug with the allocation of
- * the scanline offset buffer which can cause memory corruption for files
- * longer than they are wide.
- * http://bugzilla.remotesensing.org/show_bug.cgi?id=395
- *
- * Revision 1.10  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.9  2000/11/16 14:55:55  warmerda
- * ensure correct operation if no title available
- *
- * Revision 1.8  2000/07/28 16:33:07  warmerda
- * Fixed mixup between RawXSize and RawYSize in GXFGetRawScanline().
- * See http://bugzilla.remotesensing.org/show_bug.cgi?id=5
- * Thanks to msalazar@schaferdc.com.
- *
- * Revision 1.7  1999/10/27 20:22:33  warmerda
- * Added Doxygen style documentation.
- * Added GXFGetPosition() function.
- *
- * Revision 1.6  1999/01/22 05:27:28  warmerda
- * Fixed some problems with oblique and polar stereographic projection
- * support.
- *
- * Revision 1.5  1999/01/11 15:32:54  warmerda
- * Added support for PROJ4 adjusted positions, and better proj support
- *
- * Revision 1.4  1998/12/15 19:07:40  warmerda
- * Add Close, move Readline, add zmin/max, add readscanline
- *
- * Revision 1.3  1998/12/14 04:52:06  warmerda
- * Added projection support, fixed bugs in compressed image support.
- *
- * Revision 1.2  1998/12/06 02:54:10  warmerda
- * Raw read access now working.
- *
- * Revision 1.1  1998/12/02 19:37:04  warmerda
- * New
- */
+ ****************************************************************************/
 
 #include <ctype.h>
 #include "gxfopen.h"

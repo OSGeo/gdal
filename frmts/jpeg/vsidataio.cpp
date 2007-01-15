@@ -25,20 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.3  2005/09/14 14:19:55  dron
- * Use sizeof() function instead of SIZEOF macro.
- *
- * Revision 1.2  2005/09/11 17:59:01  fwarmerdam
- * Fixed use of ferror().
- *
- * Revision 1.1  2005/09/11 17:15:16  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "cpl_vsi.h"
 

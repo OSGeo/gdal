@@ -25,26 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2006/10/27 17:03:55  dron
- * Added support for reading spatial reference table; memory leaks removed.
- *
- * Revision 1.4  2006/05/15 18:14:31  fwarmerdam
- * Use generic mechanism for SetAttributeFilter() (bug 1185)
- *
- * Revision 1.3  2006/03/21 18:50:56  fwarmerdam
- * dont report SetAttributeFilter error if clearing
- *
- * Revision 1.2  2005/02/22 12:53:56  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.1  2004/01/05 22:23:32  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "cpl_conv.h"
 #include "ogr_odbc.h"

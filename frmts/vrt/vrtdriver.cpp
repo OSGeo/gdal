@@ -24,35 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2006/09/09 04:19:10  fwarmerdam
- * improve error reporting when parsing VRT sources
- *
- * Revision 1.7  2004/08/11 18:45:56  warmerda
- * Use CopyCommonInfoFrom method
- *
- * Revision 1.6  2004/07/28 16:56:36  warmerda
- * updated to use VRTSourcedRasterBand
- *
- * Revision 1.5  2004/04/15 18:54:38  warmerda
- * added UnitType, Offset, Scale and CategoryNames support
- *
- * Revision 1.4  2004/04/02 17:20:06  warmerda
- * Added defaulte extension, and point help topic to VRT tutorial.
- *
- * Revision 1.3  2004/03/16 18:34:35  warmerda
- * added support for relativeToVRT attribute on SourceFilename
- *
- * Revision 1.2  2003/07/27 11:16:06  dron
- * Check NULL pointer in GetMetadata()/SetMetadata().
- *
- * Revision 1.1  2003/07/17 20:27:18  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "vrtdataset.h"
 #include "cpl_minixml.h"

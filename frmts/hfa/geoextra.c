@@ -8,27 +8,6 @@
  *
  *  Permission granted to use this software, so long as this copyright
  *  notice accompanies any products derived therefrom.
- *
- * $Log$
- * Revision 1.1  1999/01/22 17:40:43  warmerda
- * New
- *
- * Revision 60.5  1996/10/31 15:43:43  warmerda
- * Fixed computing of SPCS zone when reading.
- *
- * Revision 60.4  1996/10/15 03:14:49  warmerda
- * Avoid pci.h for CCL.
- *
- * Revision 60.3  1996/01/31 14:20:09  lim
- * MacOS: Fixed compiler errors.
- *
- * Revision 60.2  1995/12/01  16:31:42  wilson
- * Correct assignment found in boolean expression
- *
- * Revision 60.1  1995/11/17  18:50:40  warmerda
- * Initial revision.
- *
- *
  **********************************************************************/
 
 #include "geotiff.h"

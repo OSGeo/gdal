@@ -24,29 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2006/04/03 18:08:42  fwarmerdam
- * Preinitialize working buffer for filtering to zero.
- *
- * Revision 1.5  2004/08/11 18:46:45  warmerda
- * pass pszVRTPath through serialize methods
- *
- * Revision 1.4  2004/03/16 18:34:35  warmerda
- * added support for relativeToVRT attribute on SourceFilename
- *
- * Revision 1.3  2003/09/11 19:53:32  warmerda
- * avoid type casting warnings
- *
- * Revision 1.2  2003/08/07 17:11:21  warmerda
- * added normalized flag for kernel based filters
- *
- * Revision 1.1  2003/07/17 20:27:18  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "vrtdataset.h"
 #include "cpl_minixml.h"

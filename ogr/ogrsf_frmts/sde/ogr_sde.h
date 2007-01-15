@@ -24,31 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2006/10/18 19:08:27  fwarmerdam
- * Improvements from Christian Ratliff, including:
- *  o The ability to specify a single layer in the datasource string to
- *    restrict the set of layers accessed.
- *  o The ability to get layer geometry type efficiently.
- *  o A fast implementation of GetFeatureCount()
- *  o A fix for multiline string geometry handling.
- *
- * Revision 1.4  2006/03/08 00:22:46  fwarmerdam
- * preliminary update to support rowid-less tables
- *
- * Revision 1.3  2005/11/25 18:55:15  fwarmerdam
- * layer implementation essentially complete
- *
- * Revision 1.2  2005/11/25 05:58:27  fwarmerdam
- * preliminary operation of feature reading
- *
- * Revision 1.1  2005/11/22 17:01:48  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _OGR_SDE_H_INCLUDED
 #define _OGR_SDE_H_INLLUDED

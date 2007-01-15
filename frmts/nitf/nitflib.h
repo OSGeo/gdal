@@ -24,77 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.22  2007/01/08 21:06:14  fwarmerdam
- * Export NITFFindTREByIndex() from the DLL.
- *
- * Revision 1.21  2007/01/08 21:05:39  fwarmerdam
- * added NITFFindTREByIndex() prototype to avoid warnings.
- *
- * Revision 1.20  2006/12/10 16:26:28  hobu
- * add NITFReadBLOCKA prototype
- *
- * Revision 1.19  2006/10/24 02:18:06  fwarmerdam
- * added image attachment metadata
- *
- * Revision 1.18  2006/10/13 02:53:48  fwarmerdam
- * various improvements to TRE and VQ LUT support for bug 1313
- *
- * Revision 1.17  2005/02/18 19:28:15  fwarmerdam
- * added NITFIHFieldOffset
- *
- * Revision 1.16  2004/12/21 04:57:36  fwarmerdam
- * added support for writing UTM ICORDS/IGEOLO values
- *
- * Revision 1.15  2004/12/10 21:35:00  fwarmerdam
- * preliminary support for writing JPEG2000 compressed data
- *
- * Revision 1.14  2004/12/10 21:27:24  fwarmerdam
- * Added ICHIPB support
- *
- * Revision 1.13  2004/05/06 14:58:06  warmerda
- * added USE00A and STDIDC parsing and reporting as metadata
- *
- * Revision 1.12  2004/04/28 15:19:00  warmerda
- * added geocentric to geodetic conversion
- *
- * Revision 1.11  2004/04/16 15:26:04  warmerda
- * completed metadata support
- *
- * Revision 1.10  2004/04/15 20:52:53  warmerda
- * added metadata support
- *
- * Revision 1.9  2004/04/02 20:44:37  warmerda
- * preserve APBB (actual bits per pixel) field as metadata
- *
- * Revision 1.8  2003/05/29 19:50:57  warmerda
- * added TRE in image, and RPC00B support
- *
- * Revision 1.7  2002/12/18 20:16:04  warmerda
- * support writing IGEOLO
- *
- * Revision 1.6  2002/12/18 06:35:15  warmerda
- * implement nodata support for mapped data
- *
- * Revision 1.5  2002/12/17 21:23:15  warmerda
- * implement LUT reading and writing
- *
- * Revision 1.4  2002/12/17 20:03:08  warmerda
- * added rudimentary NITF 1.1 support
- *
- * Revision 1.3  2002/12/17 05:26:26  warmerda
- * implement basic write support
- *
- * Revision 1.2  2002/12/03 04:43:54  warmerda
- * lots of work
- *
- * Revision 1.1  2002/12/02 06:09:29  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef NITFLIB_H_INCLUDED
 #define NITFLIB_H_INCLUDED

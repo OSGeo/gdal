@@ -24,47 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.12  2006/10/27 17:03:55  dron
- * Added support for reading spatial reference table; memory leaks removed.
- *
- * Revision 1.11  2005/11/18 16:50:46  fwarmerdam
- * added ODBC_OGR_FID config variable
- *
- * Revision 1.10  2005/11/18 14:40:10  fwarmerdam
- * More debug info.
- *
- * Revision 1.9  2005/11/18 14:36:11  fwarmerdam
- * More debug info on FID.
- *
- * Revision 1.8  2005/11/18 14:32:20  fwarmerdam
- * added debug message about fid.
- *
- * Revision 1.7  2005/11/02 21:58:26  fwarmerdam
- * preliminary support for ODBC spatial querying
- *
- * Revision 1.6  2005/09/09 05:02:12  fwarmerdam
- * added wkb support
- *
- * Revision 1.5  2005/02/22 12:53:56  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.4  2003/12/29 22:48:45  warmerda
- * added error check on whether any columns found
- *
- * Revision 1.3  2003/10/29 17:47:38  warmerda
- * Added FIDcolumn (based on primary key) support
- *
- * Revision 1.2  2003/09/26 18:22:41  warmerda
- * Fixed SetAttributeFilter().
- *
- * Revision 1.1  2003/09/25 17:08:37  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "cpl_conv.h"
 #include "ogr_odbc.h"

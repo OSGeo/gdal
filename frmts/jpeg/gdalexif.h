@@ -24,33 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.7  2006/02/02 01:08:02  fwarmerdam
- * Removed TIFFHEADER value ... it isn't a constant.
- *
- * Revision 1.6  2005/09/29 01:00:48  fwarmerdam
- * enable MakerNote
- *
- * Revision 1.5  2005/09/22 15:00:28  fwarmerdam
- * Reformat things more neatly.
- *
- * Revision 1.4  2005/09/21 00:19:04  fwarmerdam
- * set names to be more similar to the specification
- *
- * Revision 1.3  2005/08/10 20:54:01  dnadeau
- * do not print EXIF Offset tags
- *
- * Revision 1.2  2005/08/09 20:19:02  dnadeau
- * add EXIF GPS IFD Tags
- *
- * Revision 1.1  2005/07/19 19:35:32  fwarmerdam
- * New
- *
- *
- */
+ ****************************************************************************/
 
 #define	ord(e)	((int)e)
 #define EXIFOFFSETTAG 0x8769

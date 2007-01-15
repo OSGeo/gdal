@@ -24,48 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2006/03/02 05:38:41  fwarmerdam
- * Added support for writing geometry collections
- *
- * Revision 1.10  2005/02/22 12:54:50  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.9  2004/02/23 21:45:03  warmerda
- * added support for various link formats
- *
- * Revision 1.8  2003/05/21 03:42:01  warmerda
- * Expanded tabs
- *
- * Revision 1.7  2002/11/11 20:35:05  warmerda
- * added create support
- *
- * Revision 1.6  2002/10/29 19:45:29  warmerda
- * OGR driver now always builds an index if any features are to be read.  This
- * is primarily done to ensure that color tables appearing late in the file
- * will still affect feature elements occuring before them ... such as with
- * the m_epoche.dgn file.  Also implement fast feature counting and spatial
- * extents support based on the index.
- *
- * Revision 1.5  2002/05/31 19:03:46  warmerda
- * removed old CollectLines code
- *
- * Revision 1.4  2002/03/27 21:36:50  warmerda
- * added implementation of GetFeature()
- *
- * Revision 1.3  2002/02/22 22:18:44  warmerda
- * added support for commplex shapes
- *
- * Revision 1.2  2000/12/28 21:27:11  warmerda
- * updated email address
- *
- * Revision 1.1  2000/11/28 19:03:53  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _OGR_DGN_H_INCLUDED
 #define _OGR_DGN_H_INLLUDED

@@ -24,29 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2005/11/18 21:26:25  fwarmerdam
- * added geometry collection type support
- *
- * Revision 1.5  2005/11/16 01:59:06  fwarmerdam
- * minor updates
- *
- * Revision 1.4  2005/11/15 23:23:38  fwarmerdam
- * update extents, preliminary point support
- *
- * Revision 1.3  2005/11/15 14:57:20  fwarmerdam
- * various test updates
- *
- * Revision 1.2  2005/11/10 21:31:48  fwarmerdam
- * preliminary version
- *
- * Revision 1.1  2005/11/07 04:43:24  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_dwg.h"
 #include "cpl_conv.h"

@@ -24,68 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.19  2005/05/05 13:55:41  fwarmerdam
- * PAM Enable
- *
- * Revision 1.18  2003/08/12 14:57:41  warmerda
- * dont use CPLReadLine to preread the first line
- *
- * Revision 1.17  2002/10/07 19:31:47  warmerda
- * Flush CPLReadLine() internal buffer.
- *
- * Revision 1.16  2002/09/17 13:09:28  warmerda
- * fix zone in WKT description - bugzilla 199
- *
- * Revision 1.15  2002/09/16 16:17:53  warmerda
- * XY_ORIGIN is the top left corner of pixel!
- *
- * Revision 1.14  2002/09/16 14:16:28  warmerda
- * XY_ORIGIN is center of pixel, not top left corner.
- *
- * Revision 1.13  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.12  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.11  2001/09/21 16:40:08  warmerda
- * fixed case with one band
- *
- * Revision 1.10  2001/09/19 20:56:19  warmerda
- * handle multiple BAND_CONTENT fields, improve metadata handling
- *
- * Revision 1.9  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.8  2000/09/25 21:20:13  warmerda
- * avoid initialization warnings
- *
- * Revision 1.7  2000/08/15 19:28:26  warmerda
- * added help topic
- *
- * Revision 1.6  2000/02/28 16:32:20  warmerda
- * use SetBand method
- *
- * Revision 1.5  2000/01/24 05:54:00  shadow
- * fix minor logic bug
- *
- * Revision 1.4  2000/01/24 03:08:16  shadow
- * add description reading
- *
- * Revision 1.3  2000/01/17 08:16:41  shadow
- * stupid errors
- *
- * Revision 1.2  2000/01/17 08:07:41  shadow
- * check just for the string, not the whole line
- *
- * Revision 1.1  2000/01/17 08:01:16  shadow
- * first cut - untested
- *
- */
+ ****************************************************************************/
 
 #include "rawdataset.h"
 #include "cpl_string.h"

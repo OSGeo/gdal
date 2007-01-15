@@ -25,29 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2005/11/10 09:19:20  osemykin
- * fixed ReadResultDefinition() for text/wkt geometry column detecting
- *
- * Revision 1.5  2005/09/21 00:55:42  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.4  2004/05/08 02:14:49  warmerda
- * added GetFeature() on table, generalize FID support a bit
- *
- * Revision 1.3  2003/05/21 03:59:42  warmerda
- * expand tabs
- *
- * Revision 1.2  2003/02/01 07:55:48  warmerda
- * avoid dependence on libpq-fs.h
- *
- * Revision 1.1  2002/05/09 16:03:46  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "cpl_conv.h"
 #include "ogr_pg.h"

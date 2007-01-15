@@ -24,21 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log$
- * Revision 1.3  2006/02/19 21:54:34  mloskot
- * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
- *
- * Revision 1.2  2005/11/11 14:20:59  fwarmerdam
- * Use lower case for windows.h to allow cross compilation for windows
- * on linux (per email from Radim).
- *
- * Revision 1.1  2005/06/10 15:00:07  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "cpl_conv.h"
 

@@ -29,19 +29,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * $Log$
- * Revision 1.3  2006/11/13 21:35:34  fwarmerdam
- * Fixed up handling of quoted strings, particularly for projections.
- *
- * Revision 1.2  2006/11/13 19:51:47  fwarmerdam
- * Added preliminary support for external image data files.
- *
- * Revision 1.1  2006/11/13 17:52:03  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 // Set up PDS NULL values
 #define NULL1 0

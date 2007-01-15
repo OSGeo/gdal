@@ -27,65 +27,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.18  2005/10/20 17:28:20  fwarmerdam
- * Added overview support.
- *
- * Revision 1.17  2005/05/05 15:54:49  fwarmerdam
- * PAM Enabled
- *
- * Revision 1.16  2005/04/15 19:28:57  fwarmerdam
- * added AREA_OR_POINT=Point metadata
- *
- * Revision 1.15  2004/04/08 12:59:10  warmerda
- * fixed sides of polygon fixed value
- *
- * Revision 1.14  2004/04/01 21:03:40  warmerda
- * added new creation options to listing
- *
- * Revision 1.13  2004/03/27 17:03:12  warmerda
- * added preliminary creation support
- *
- * Revision 1.12  2004/03/10 18:07:00  warmerda
- * Avoid double/float casting warning.
- *
- * Revision 1.11  2004/02/24 21:43:39  warmerda
- * apply elevation offset as well as fVRes
- *
- * Revision 1.10  2004/02/14 23:26:45  warmerda
- * Added extension metadata.
- *
- * Revision 1.9  2003/09/19 19:19:37  warmerda
- * Fixed nodata value (-32767), and avoid transforming nodata with fVRes.
- *
- * Revision 1.8  2003/07/08 21:30:45  warmerda
- * avoid warnings
- *
- * Revision 1.7  2002/11/25 15:27:00  warmerda
- * relax testopen restrictions to work with adams.dem - PA NED data
- *
- * Revision 1.6  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.5  2002/08/26 06:45:54  warmerda
- * removed use of bool
- *
- * Revision 1.4  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.3  2001/11/27 16:09:26  warmerda
- * Added credit notes
- *
- * Revision 1.2  2001/11/27 15:16:53  warmerda
- * Added header check before trying to open.
- *
- * Revision 1.1  2001/11/27 14:45:18  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"

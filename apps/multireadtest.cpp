@@ -24,20 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2006/05/06 16:42:12  fwarmerdam
- * Ensure checksum error is reported more loudly.
- *
- * Revision 1.4  2006/05/01 13:37:11  fwarmerdam
- * Cleanup on exit to facility leak and corruption testing.
- *
- * Revision 1.3  2006/03/21 21:34:43  fwarmerdam
- * cleanup headers
- *
- */
+ ****************************************************************************/
 
 #include "gdal.h"
 #include "gdal_alg.h"

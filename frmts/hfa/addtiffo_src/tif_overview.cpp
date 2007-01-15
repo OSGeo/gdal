@@ -49,41 +49,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.2  2006/05/15 19:18:14  fwarmerdam
- * include string.h
- *
- * Revision 1.1  1999/11/29 21:33:22  warmerda
- * New
- *
- * Revision 1.1  1999/08/17 01:47:59  warmerda
- * New
- *
- * Revision 1.7  1999/03/12 17:47:26  warmerda
- * made independent of CPL
- *
- * Revision 1.6  1999/02/24 16:24:00  warmerda
- * Don't include cpl_string.h
- *
- * Revision 1.5  1999/02/11 22:27:12  warmerda
- * Added multi-sample support
- *
- * Revision 1.4  1999/02/11 19:23:39  warmerda
- * Only fix on multiples of 16 in block size if it is a tiled file.
- *
- * Revision 1.3  1999/02/11 19:21:14  warmerda
- * Limit tile sizes to multiples of 16
- *
- * Revision 1.2  1999/02/11 18:37:43  warmerda
- * Removed debugging malloc stuff.
- *
- * Revision 1.1  1999/02/11 18:12:30  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include <stdio.h>
 #include <assert.h>

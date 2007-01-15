@@ -24,35 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.7  2006/04/24 16:49:48  pka
- * Fixed polyline feature with coordinate attribute
- * Float support for ARC_DEGREES
- *
- * Revision 1.6  2005/12/20 16:47:04  pka
- * Interlis 1 output without model
- *
- * Revision 1.5  2005/10/13 14:30:40  pka
- * Explicit point geometry type
- * ARC_DEGREES environment variable (Default 1 degree)
- *
- * Revision 1.4  2005/10/09 22:59:57  pka
- * ARC interpolation (Interlis 1)
- *
- * Revision 1.3  2005/08/30 23:50:43  fwarmerdam
- * Fixed some memory leaks (and an error condition) related to parsing
- * the name from the modelfilename.
- *
- * Revision 1.2  2005/08/06 22:21:53  pka
- * Area polygonizer added
- *
- * Revision 1.1  2005/07/08 22:10:57  pka
- * Initial import of OGR Interlis driver
- *
- */
+ ****************************************************************************/
 
 #include "ogr_ili1.h"
 #include "cpl_conv.h"

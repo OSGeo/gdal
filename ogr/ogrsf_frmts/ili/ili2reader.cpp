@@ -24,40 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2006/04/27 16:37:19  pka
- * Ili2 model reader fix
- * Support for multiple Ili2 models
- *
- * Revision 1.7  2006/03/28 16:07:14  pka
- * Optional model file for Interlis 2 reader
- *
- * Revision 1.6  2006/02/16 14:29:12  fwarmerdam
- * applied some portability fixes for VC6
- *
- * Revision 1.5  2006/02/13 18:18:53  pka
- * Interlis 2: Support for nested attributes
- * Interlis 2: Arc interpolation
- *
- * Revision 1.4  2006/01/11 17:36:19  pka
- * Fix for white space trimming
- * Fix in layer search
- * flattenTo2D
- * Fix for recursive geometry element search
- *
- * Revision 1.3  2005/11/21 17:06:24  fwarmerdam
- * avoid const iterator for VC6 compatibility
- *
- * Revision 1.2  2005/08/06 22:21:53  pka
- * Area polygonizer added
- *
- * Revision 1.1  2005/07/08 22:10:57  pka
- * Initial import of OGR Interlis driver
- *
- */
+ ****************************************************************************/
 
 #include "ogr_ili2.h"
 #include "cpl_conv.h"

@@ -29,17 +29,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.1  2002/08/09 21:36:17  warmerda
- * New
- *
- * Revision 1.1  2001/10/15 15:15:40  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _CCRRowsetImpl_INCLUDED
 #define _CCRRowsetImpl_INCLUDED

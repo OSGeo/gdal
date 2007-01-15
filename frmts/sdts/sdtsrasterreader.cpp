@@ -24,48 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.12  2006/04/10 16:34:19  fwarmerdam
- * updated contact info
- *
- * Revision 1.11  2003/02/06 03:19:21  warmerda
- * dont bomb if FMT, UNIT or ATLB missing
- *
- * Revision 1.10  2001/11/30 05:00:17  warmerda
- * added error detection in GetBlock() to avoid infinite recursion
- *
- * Revision 1.9  2001/09/10 19:27:36  warmerda
- * added GetMinMax() and raster data types
- *
- * Revision 1.8  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.7  2001/01/19 21:20:29  warmerda
- * expanded tabs
- *
- * Revision 1.6  1999/10/12 19:08:33  warmerda
- * Undo last change.
- *
- * Revision 1.5  1999/10/12 19:02:41  warmerda
- * The SADR for the raster represents the center of the top left pixel, not
- * it's top left corner.
- *
- * Revision 1.4  1999/09/21 17:25:04  warmerda
- * Read raster data type from DDSH
- *
- * Revision 1.3  1999/09/03 13:01:39  warmerda
- * added docs
- *
- * Revision 1.2  1999/06/03 21:13:18  warmerda
- * Added transform support.
- *
- * Revision 1.1  1999/06/03 14:02:28  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "sdts_al.h"
 

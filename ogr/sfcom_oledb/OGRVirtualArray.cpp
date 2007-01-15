@@ -25,32 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2002/09/06 14:28:48  warmerda
- * update debug output a bit
- *
- * Revision 1.7  2002/08/09 21:31:54  warmerda
- * short circuit a case where the cache is already loaded in CheckRows
- *
- * Revision 1.6  2002/05/08 20:34:24  warmerda
- * don't increment lastfeature when GetFeature() fails
- *
- * Revision 1.5  2002/05/02 19:50:52  warmerda
- * added SUPPORT_2D_FLATTEN to ensure 2D geometries
- *
- * Revision 1.4  2002/04/30 19:47:36  warmerda
- * dont lose last character off strings as long as the field width
- *
- * Revision 1.3  2002/04/25 20:15:26  warmerda
- * upgraded to use ExecuteSQL()
- *
- * Revision 1.1  2002/02/05 20:41:50  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include <assert.h>
 #include "cpl_error.h"

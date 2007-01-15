@@ -24,30 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2006/07/20 23:22:22  mloskot
- * Fixed Bug 1247 reported by John Johnson. Thanks to John.
- *
- * Revision 1.5  2006/06/06 17:49:07  pka
- * STL compatibility (Bug 1178)
- *
- * Revision 1.4  2005/11/21 14:56:31  pka
- * Fix for call of GetNextFeature without ResetReading (Interlis 2)
- * Fix for polygonizer crash on Linux with GEOS 2.1.3 (Interlis 1)
- *
- * Revision 1.3  2005/09/21 00:59:36  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.2  2005/08/06 22:21:53  pka
- * Area polygonizer added
- *
- * Revision 1.1  2005/07/08 22:10:57  pka
- * Initial import of OGR Interlis driver
- *
- */
+ ****************************************************************************/
 
 #include "ogr_ili2.h"
 #include "cpl_conv.h"

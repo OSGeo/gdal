@@ -24,23 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2006/02/09 05:38:56  fwarmerdam
- * Added SRID support.
- *
- * Revision 1.3  2006/02/07 21:44:43  fwarmerdam
- * DIPX->DIPEx
- *
- * Revision 1.2  2006/02/07 01:22:57  fwarmerdam
- * Switch XOffset and YOffset per email from Drew.
- *
- * Revision 1.1  2006/02/01 17:22:34  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "rawdataset.h"
 #include "cpl_string.h"

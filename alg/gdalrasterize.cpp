@@ -24,17 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.2  2005/10/28 18:30:28  fwarmerdam
- * added progress func for rasterize
- *
- * Revision 1.1  2005/10/28 17:46:08  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_alg.h"
 #include "gdal_priv.h"

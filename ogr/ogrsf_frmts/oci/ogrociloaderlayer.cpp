@@ -25,28 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2005/08/09 21:01:00  hobu
- * Allow OGROCILoaderLayer to grab the OCI_FID from the
- * environment if it is available and substitute it into the loader
- * file.
- *
- * Revision 1.4  2005/02/10 15:46:02  fwarmerdam
- * added GEOMETRY_NAME layer creation option
- *
- * Revision 1.3  2003/04/11 18:20:57  warmerda
- * added external dat file in VARIABLE mode
- *
- * Revision 1.2  2003/04/04 22:04:28  warmerda
- * added incomplete support for variable mode
- *
- * Revision 1.1  2003/04/04 06:17:47  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_oci.h"
 #include "cpl_conv.h"

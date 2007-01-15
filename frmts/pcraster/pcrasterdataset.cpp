@@ -24,42 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.10  2006/10/03 14:07:44  dron
- * Rename open() function to mapOpen() to avoid clashing with system functions.
- *
- * Revision 1.9  2005/05/05 15:54:49  fwarmerdam
- * PAM Enabled
- *
- * Revision 1.8  2004/11/25 15:00:41  kdejong
- * Replace and by &&, moved free out of std namespace
- *
- * Revision 1.7  2004/11/22 10:40:23  kdejong
- * Added PCRasterRasterBand::Minimum and Maximum. Improved documentation, layout. Removed unused code. Layout.
- *
- * Revision 1.6  2004/11/13 19:00:55  fwarmerdam
- * Don't blow an assertion if we don't have enough header data, just
- * return NULL (in mapOpen()).
- *
- * Revision 1.5  2004/11/13 12:08:44  kdejong
- * Reading files with other cell representations than UINT1, INT4 or REAL4 will keep their original cell representation in memory.
- *
- * Revision 1.4  2004/11/11 15:50:36  kdejong
- * Added write support, docs, improvements.
- *
- * Revision 1.3  2004/11/10 10:21:42  kdejong
- * *** empty log message ***
- *
- * Revision 1.2  2004/11/10 10:09:19  kdejong
- * Initial versions. Read only driver.
- *
- * Revision 1.1  2004/10/22 14:19:27  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_pam.h"
 

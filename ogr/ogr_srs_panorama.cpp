@@ -25,20 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.3  2006/03/09 10:46:48  dron
- * Typo fixed.
- *
- * Revision 1.2  2005/10/19 16:32:20  dron
- * Export projection info in newly created datasets.
- *
- * Revision 1.1  2005/10/10 14:43:22  dron
- * New.
- *
- */
+ ****************************************************************************/
 
 #include "ogr_spatialref.h"
 #include "cpl_conv.h"

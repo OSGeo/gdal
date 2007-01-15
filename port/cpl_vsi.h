@@ -25,58 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.31  2006/03/27 15:24:41  fwarmerdam
- * buffer in FWrite is const
- *
- * Revision 1.30  2006/03/21 20:11:54  fwarmerdam
- * fixup headers a bit
- *
- * Revision 1.29  2006/02/19 21:54:34  mloskot
- * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
- *
- * Revision 1.28  2006/01/10 17:03:56  fwarmerdam
- * added VSI Rename support
- *
- * Revision 1.27  2005/10/07 00:26:27  fwarmerdam
- * add documentation
- *
- * Revision 1.26  2005/10/03 18:56:40  fwarmerdam
- * always define large file api - cygwin fix
- *
- * Revision 1.25  2005/09/15 18:32:35  fwarmerdam
- * added VSICleanupFileManager
- *
- * Revision 1.24  2005/09/12 16:53:33  fwarmerdam
- * fixed VSIGetMemFileBuffer declaration
- *
- * Revision 1.23  2005/09/12 16:50:37  fwarmerdam
- * added VSIMemFile buffer fetcher
- *
- * Revision 1.22  2005/09/11 18:31:41  fwarmerdam
- * ensure a distinct VSIStatL() exists on win32
- *
- * Revision 1.21  2005/09/11 18:01:28  fwarmerdam
- * preliminary implementatin of fully virtualized large file api
- *
- * Revision 1.20  2005/04/12 03:51:11  fwarmerdam
- * Fixed stat64 problem.
- *
- * Revision 1.19  2005/04/12 00:27:39  fwarmerdam
- * added macos large file support
- *
- * Revision 1.18  2003/09/10 19:44:36  warmerda
- * added VSIStrerrno()
- *
- * Revision 1.17  2003/09/08 08:11:40  dron
- * Added VSIGMTime() and VSILocalTime().
- *
- * Revision 1.16  2003/05/27 20:44:40  warmerda
- * added VSI io debugging macros
- */
+ ****************************************************************************/
 
 #ifndef CPL_VSI_H_INCLUDED
 #define CPL_VSI_H_INCLUDED

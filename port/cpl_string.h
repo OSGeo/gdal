@@ -25,55 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log$
- * Revision 1.27  2006/11/22 18:17:49  fwarmerdam
- * changed frmt to const char in CPLSPrintf
- *
- * Revision 1.26  2006/11/16 14:36:11  mloskot
- * Disabled annoying warnings for Visual C++.
- *
- * Revision 1.25  2006/04/12 15:10:40  fwarmerdam
- * argument to InsertString should be const
- *
- * Revision 1.24  2006/03/21 20:11:54  fwarmerdam
- * fixup headers a bit
- *
- * Revision 1.23  2006/02/19 21:54:34  mloskot
- * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
- *
- * Revision 1.22  2005/10/13 01:20:16  fwarmerdam
- * added CSLMerge()
- *
- * Revision 1.21  2005/09/14 19:21:17  fwarmerdam
- * binary pointer is const in binarytohex
- *
- * Revision 1.20  2005/08/31 05:08:01  fwarmerdam
- * fixed up std::string use for vc6 compatability
- *
- * Revision 1.19  2005/08/31 03:30:51  fwarmerdam
- * added binarytohex/hextobinary, CPLString
- *
- * Revision 1.18  2005/04/04 15:23:31  fwarmerdam
- * some functions now CPL_STDCALL
- *
- * Revision 1.17  2004/08/16 20:23:46  warmerda
- * added .csv escaping
- *
- * Revision 1.16  2004/07/12 21:50:38  warmerda
- * Added SQL escaping style
- *
- * Revision 1.15  2003/07/17 10:15:40  dron
- * CSLTestBoolean() added.
- *
- * Revision 1.14  2003/03/11 21:33:03  warmerda
- * added URL encode/decode support, untested
- *
- * Revision 1.13  2003/01/30 19:15:55  warmerda
- * added some docs
- **********************************************************************/
+ ****************************************************************************/
 
 #ifndef _CPL_STRING_H_INCLUDED
 #define _CPL_STRING_H_INCLUDED

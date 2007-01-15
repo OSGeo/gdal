@@ -24,47 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.12  2005/11/18 17:09:09  fwarmerdam
- * types can go up to 128.
- *
- * Revision 1.11  2003/05/21 03:42:01  warmerda
- * Expanded tabs
- *
- * Revision 1.10  2002/11/11 20:33:56  warmerda
- * add support for reporting extents
- *
- * Revision 1.9  2002/03/14 21:38:27  warmerda
- * pass update arg to DGNOpen
- *
- * Revision 1.8  2002/01/21 20:49:52  warmerda
- * added spatial search option
- *
- * Revision 1.7  2001/08/21 03:01:39  warmerda
- * added raw_data support
- *
- * Revision 1.6  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.5  2001/03/07 13:56:44  warmerda
- * updated copyright to be held by Avenza Systems
- *
- * Revision 1.4  2001/03/07 13:49:37  warmerda
- * removed attribute dumping, handled by DGNDumpElement()
- *
- * Revision 1.3  2001/01/10 16:10:57  warmerda
- * Added extents reporting
- *
- * Revision 1.2  2000/12/28 21:27:38  warmerda
- * added summary report
- *
- * Revision 1.1  2000/12/14 17:11:18  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "dgnlibp.h"
 

@@ -25,20 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- *****************************************************************************
- *
- * $Log$
- * Revision 1.3  2005/09/23 14:53:48  fwarmerdam
- * Bug 928: Fix initialization size of m_pCounts and m_pValues.
- *
- * Revision 1.2  2005/08/20 23:46:28  fwarmerdam
- * bug 858: fix for double compression
- *
- * Revision 1.1  2005/01/10 17:40:40  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "hfa_p.h"
 

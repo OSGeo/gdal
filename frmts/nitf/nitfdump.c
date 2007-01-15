@@ -24,47 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.13  2007/01/14 17:22:41  fwarmerdam
- * fix column/row reporting
- *
- * Revision 1.12  2006/12/10 04:59:51  fwarmerdam
- * added blocka support from Reiner Beck
- *
- * Revision 1.10  2006/10/24 02:18:06  fwarmerdam
- * added image attachment metadata
- *
- * Revision 1.9  2006/10/13 02:53:48  fwarmerdam
- * various improvements to TRE and VQ LUT support for bug 1313
- *
- * Revision 1.8  2006/06/06 17:09:27  fwarmerdam
- * added various extra reporting
- *
- * Revision 1.7  2004/05/06 14:58:06  warmerda
- * added USE00A and STDIDC parsing and reporting as metadata
- *
- * Revision 1.6  2003/05/29 19:50:10  warmerda
- * added RPC (and more general TRE) reporting
- *
- * Revision 1.5  2002/12/18 21:18:38  warmerda
- * report corners more sensibly
- *
- * Revision 1.4  2002/12/17 05:26:26  warmerda
- * implement basic write support
- *
- * Revision 1.3  2002/12/03 18:07:40  warmerda
- * added VQLUT reporting
- *
- * Revision 1.2  2002/12/03 04:43:54  warmerda
- * lots of work
- *
- * Revision 1.1  2002/12/02 06:09:29  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "nitflib.h"
 #include "cpl_string.h"

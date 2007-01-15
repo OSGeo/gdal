@@ -24,43 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2006/04/02 18:25:59  fwarmerdam
- * added OFTDateTime, and OFTTime support
- *
- * Revision 1.10  2006/02/15 04:25:37  fwarmerdam
- * added date support
- *
- * Revision 1.9  2003/05/28 19:16:42  warmerda
- * fixed up argument names and stuff for docs
- *
- * Revision 1.8  2003/04/03 23:39:11  danmo
- * Small updates to C API docs (Normand S.)
- *
- * Revision 1.7  2003/03/31 15:55:42  danmo
- * Added C API function docs
- *
- * Revision 1.6  2002/09/26 18:12:38  warmerda
- * added C support
- *
- * Revision 1.5  2001/07/18 05:03:05  warmerda
- * added CPL_CVSID
- *
- * Revision 1.4  1999/11/18 19:02:19  warmerda
- * expanded tabs
- *
- * Revision 1.3  1999/11/04 21:07:09  warmerda
- * Added the Set() method.
- *
- * Revision 1.2  1999/07/05 17:19:52  warmerda
- * added docs
- *
- * Revision 1.1  1999/06/11 19:21:02  warmerda
- * New
- */
+ ****************************************************************************/
 
 #include "ogr_feature.h"
 #include "ogr_api.h"

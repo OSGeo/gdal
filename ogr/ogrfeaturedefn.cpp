@@ -24,52 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.14  2006/03/31 17:57:32  fwarmerdam
- * header updates
- *
- * Revision 1.13  2005/09/21 00:51:59  fwarmerdam
- * Added Release
- *
- * Revision 1.12  2003/09/18 21:31:34  warmerda
- * Fixed docs for GetGeomType().
- *
- * Revision 1.11  2003/05/28 19:16:42  warmerda
- * fixed up argument names and stuff for docs
- *
- * Revision 1.10  2003/04/08 20:57:06  warmerda
- * added Clone
- *
- * Revision 1.9  2003/04/03 23:39:11  danmo
- * Small updates to C API docs (Normand S.)
- *
- * Revision 1.8  2003/03/31 15:55:42  danmo
- * Added C API function docs
- *
- * Revision 1.7  2002/09/26 18:12:38  warmerda
- * added C support
- *
- * Revision 1.6  2002/08/07 21:37:47  warmerda
- * added indirect OGRFeaturedefn constructor/destructor
- *
- * Revision 1.5  2001/07/18 05:03:05  warmerda
- * added CPL_CVSID
- *
- * Revision 1.4  1999/10/01 14:46:38  warmerda
- * don't blow assertion trying to get non-existant fields
- *
- * Revision 1.3  1999/08/28 03:12:06  warmerda
- * Improve debug message for left over reference count message.
- *
- * Revision 1.2  1999/07/05 17:19:52  warmerda
- * added docs
- *
- * Revision 1.1  1999/06/11 19:21:02  warmerda
- * New
- */
+ ****************************************************************************/
 
 #include "ogr_feature.h"
 #include "ogr_api.h"

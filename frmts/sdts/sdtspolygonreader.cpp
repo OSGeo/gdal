@@ -24,53 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.14  2006/04/10 16:34:19  fwarmerdam
- * updated contact info
- *
- * Revision 1.13  2004/04/29 13:45:48  warmerda
- * fixed bug with assembling polygons if edges not read
- *
- * Revision 1.12  2002/04/16 17:51:57  warmerda
- * Avoid warnings.
- *
- * Revision 1.11  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.10  2001/01/19 21:20:29  warmerda
- * expanded tabs
- *
- * Revision 1.9  1999/11/04 22:52:53  warmerda
- * added dynamic ATID support
- *
- * Revision 1.8  1999/09/22 13:35:31  warmerda
- * added SDTSPolygonReader::AssembleRings()
- *
- * Revision 1.7  1999/09/21 02:23:25  warmerda
- * added logic to put outer ring first, and set ring direction
- *
- * Revision 1.6  1999/09/03 13:35:05  warmerda
- * cleanup array in assemblerings
- *
- * Revision 1.5  1999/09/03 13:01:39  warmerda
- * added docs
- *
- * Revision 1.4  1999/09/02 03:40:03  warmerda
- * added indexed readers
- *
- * Revision 1.3  1999/08/10 02:52:13  warmerda
- * introduce use of SDTSApplyModIdList to capture multi-attributes
- *
- * Revision 1.2  1999/07/30 19:15:56  warmerda
- * added module reference counting
- *
- * Revision 1.1  1999/05/11 14:04:42  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "sdts_al.h"
 

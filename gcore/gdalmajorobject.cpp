@@ -24,45 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2005/10/13 01:19:57  fwarmerdam
- * moved GDALMultiDomainMetadata into GDALMajorObject
- *
- * Revision 1.10  2005/09/23 20:52:21  fwarmerdam
- * added the GMO flags on GDALMajorObject
- *
- * Revision 1.9  2005/07/25 19:52:43  ssoule
- * Changed GDALMajorObject's char *pszDescription to std::string sDescription.
- *
- * Revision 1.8  2005/04/04 15:24:48  fwarmerdam
- * Most C entry points now CPL_STDCALL
- *
- * Revision 1.7  2003/07/26 01:36:28  warmerda
- * Implement support for forwarding non-default domains to the SetMetadata()
- * method in SetMetadataItem().
- *
- * Revision 1.6  2003/04/30 17:13:48  warmerda
- * added docs for many C functions
- *
- * Revision 1.5  2002/09/11 14:17:38  warmerda
- * added C GDALSetDescription()
- *
- * Revision 1.4  2001/09/25 15:56:37  warmerda
- * implemented rest of C entry points for metadata, document C++ methods
- *
- * Revision 1.3  2001/07/18 04:04:30  warmerda
- * added CPL_CVSID
- *
- * Revision 1.2  2000/06/26 15:26:21  warmerda
- * added GDALGetDescription
- *
- * Revision 1.1  2000/04/20 20:52:03  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_priv.h"
 #include "cpl_string.h"

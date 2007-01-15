@@ -29,23 +29,7 @@
  * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
  * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF 
  * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
- * OF THIS SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2002/10/31 03:55:46  warmerda
- * make some more stuff static
- *
- * Revision 1.3  2002/10/31 03:53:22  warmerda
- * fixed special types
- *
- * Revision 1.2  2002/10/31 03:24:49  warmerda
- * fixed assert
- *
- * Revision 1.1  2002/10/31 03:07:58  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include <assert.h>
 #include "aigrid.h"

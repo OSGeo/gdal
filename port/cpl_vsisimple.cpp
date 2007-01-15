@@ -24,61 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.22  2006/04/09 16:48:18  mloskot
- * [WCE] Changed names of all WCECLIBEX functions
- * according to following pattern: wce_xxx -> wceex_xxx.
- * Reason: MFC on WCE includes functions named as wce_time, etc.
- * Preparation to renamed WCECLIBEX files.
- *
- * Revision 1.21  2006/03/27 15:24:41  fwarmerdam
- * buffer in FWrite is const
- *
- * Revision 1.20  2006/03/21 20:11:54  fwarmerdam
- * fixup headers a bit
- *
- * Revision 1.19  2006/02/19 21:54:34  mloskot
- * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
- *
- * Revision 1.18  2005/09/11 18:01:28  fwarmerdam
- * preliminary implementatin of fully virtualized large file api
- *
- * Revision 1.17  2003/09/10 19:44:36  warmerda
- * added VSIStrerrno()
- *
- * Revision 1.16  2003/09/08 08:11:40  dron
- * Added VSIGMTime() and VSILocalTime().
- *
- * Revision 1.15  2003/05/27 20:46:18  warmerda
- * added VSI IO debugging stuff
- *
- * Revision 1.14  2003/05/21 04:20:30  warmerda
- * avoid warnings
- *
- * Revision 1.13  2002/06/17 14:00:16  warmerda
- * segregate VSIStatL() and VSIStatBufL.
- *
- * Revision 1.12  2002/06/15 03:10:22  aubin
- * remove debug test for 64bit compile
- *
- * Revision 1.11  2002/06/15 00:07:23  aubin
- * mods to enable 64bit file i/o
- *
- * Revision 1.10  2001/07/18 04:00:49  warmerda
- * added CPL_CVSID
- *
- * Revision 1.9  2001/04/30 18:19:06  warmerda
- * avoid stat on macos_pre10
- *
- * Revision 1.8  2001/01/19 21:16:41  warmerda
- * expanded tabs
- *
- * Revision 1.7  2001/01/03 05:33:17  warmerda
- * added VSIFlush
- */
+ ****************************************************************************/
 
 #include "cpl_config.h"
 #include "cpl_port.h"

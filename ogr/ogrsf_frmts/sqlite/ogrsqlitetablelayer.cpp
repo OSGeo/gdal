@@ -24,39 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.9  2005/05/16 19:56:05  fwarmerdam
- * in new versions _rowid_ is ogc_fid, handle gracefully
- *
- * Revision 1.8  2005/02/22 12:50:31  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.7  2004/07/13 15:47:34  warmerda
- * fixed similar quoting bug in GetFeature()
- *
- * Revision 1.6  2004/07/13 15:38:44  warmerda
- * Fixed quoting in DELETE statement.  Don't use single quotes on field
- * names in the WHERE clause.
- *
- * Revision 1.5  2004/07/13 15:11:19  warmerda
- * implemented SetFeature, transaction support
- *
- * Revision 1.4  2004/07/12 21:50:59  warmerda
- * fixed up SQL escaping
- *
- * Revision 1.3  2004/07/12 20:50:46  warmerda
- * table/database creation now implemented
- *
- * Revision 1.2  2004/07/11 19:23:51  warmerda
- * read implementation working well
- *
- * Revision 1.1  2004/07/09 06:25:05  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "cpl_conv.h"
 #include "cpl_string.h"

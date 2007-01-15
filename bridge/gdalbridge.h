@@ -26,38 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.13  2003/07/17 03:33:15  sperkins
- * added GDALFILLRaster()
- *
- * Revision 1.12  2001/11/18 00:48:24  warmerda
- * substantial upgrade
- *
- * Revision 1.11  2001/09/06 14:03:21  warmerda
- * upgrade bridge error reporting
- *
- * Revision 1.8  2000/11/09 16:25:30  warmerda
- * added various srs defines
- *
- * Revision 1.7  2000/09/26 15:20:32  warmerda
- * added GDALGetRasterBand{X,Y}Size
- *
- * Revision 1.6  2000/08/28 20:16:14  warmerda
- * added lots of OGRSpatialReference stuff
- *
- * Revision 1.5  2000/08/25 20:03:40  warmerda
- * added more entry points
- *
- * Revision 1.4  1999/09/17 03:18:37  warmerda
- * added name indirection for function pointer names for libtool
- *
- * Revision 1.3  1999/04/22 13:36:43  warmerda
- * Added copyright header.
- *
- */
+ ****************************************************************************/
 
 #ifndef GDALBRIDGE_H_INCLUDED
 #define GDALBRIDGE_H_INCLUDED

@@ -25,41 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.10  2006/03/31 17:57:32  fwarmerdam
- * header updates
- *
- * Revision 1.9  2001/11/01 17:05:01  warmerda
- * various old additions
- *
- * Revision 1.8  1999/12/30 16:53:48  warmerda
- * provide app access to poSRS
- *
- * Revision 1.7  1999/11/18 19:02:20  warmerda
- * expanded tabs
- *
- * Revision 1.6  1999/07/08 20:26:48  warmerda
- * Added concept of an OGRFeatureDefn being associated with SFCTable.
- *
- * Revision 1.5  1999/06/26 05:34:17  warmerda
- * Added support for poSRS, and use creating geometry
- *
- * Revision 1.4  1999/06/10 19:18:22  warmerda
- * added support for the spatial ref schema rowset
- *
- * Revision 1.3  1999/06/08 16:04:25  warmerda
- * Remove short method help because it was overriding the full help.
- *
- * Revision 1.2  1999/06/08 15:41:16  warmerda
- * added working blob/geometry support
- *
- * Revision 1.1  1999/06/08 03:50:43  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef SFCTABLE_H_INCLUDED
 #define SFCTABLE_H_INCLUDED

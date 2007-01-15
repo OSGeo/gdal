@@ -25,17 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.2  2006/12/01 11:04:31  osemykin
- * Changed cursor opening params to ReadOnly for all readonly queries
- *
- * Revision 1.1  2006/11/28 15:34:42  osemykin
- * Added new Informix DataBlade driver (IDB)
- *
- */
+ ****************************************************************************/
 
 #include "ogr_idb.h"
 #include "cpl_conv.h"

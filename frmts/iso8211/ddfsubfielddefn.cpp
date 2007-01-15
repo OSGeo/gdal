@@ -24,53 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.14  2006/04/04 04:24:07  fwarmerdam
- * update contact info
- *
- * Revision 1.13  2004/01/06 19:07:14  warmerda
- * Added braces within complex case in switch for HP/UX compatibility.
- *
- * Revision 1.12  2003/12/15 20:24:58  warmerda
- * expand tabs
- *
- * Revision 1.11  2003/11/12 21:22:14  warmerda
- * fixed some docs
- *
- * Revision 1.10  2003/09/05 19:13:45  warmerda
- * added format support for binary ints
- *
- * Revision 1.9  2003/09/03 20:36:26  warmerda
- * added subfield writing support
- *
- * Revision 1.8  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.7  2000/09/19 14:09:34  warmerda
- * avoid checking for field terminators in multi-byte strings
- *
- * Revision 1.6  2000/06/13 13:39:27  warmerda
- * added warnings, and better handlng of short data for subfields
- *
- * Revision 1.5  1999/11/18 19:03:04  warmerda
- * expanded tabs
- *
- * Revision 1.4  1999/05/10 17:36:23  warmerda
- * Strip trailing spaces off subfield names.
- *
- * Revision 1.3  1999/05/06 15:15:07  warmerda
- * Removed extra break;
- *
- * Revision 1.2  1999/05/06 14:25:43  warmerda
- * added DDFBinaryString, and a bit of optimization
- *
- * Revision 1.1  1999/04/27 18:45:05  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "iso8211.h"
 #include "cpl_conv.h"

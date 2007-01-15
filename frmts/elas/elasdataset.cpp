@@ -24,44 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2005/05/05 14:02:58  fwarmerdam
- * PAM Enable
- *
- * Revision 1.10  2003/07/08 15:37:05  warmerda
- * avoid warnings
- *
- * Revision 1.9  2002/11/23 18:54:17  warmerda
- * added CREATIONDATATYPES metadata for drivers
- *
- * Revision 1.8  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.7  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.6  2001/11/11 23:50:59  warmerda
- * added required class keyword to friend declarations
- *
- * Revision 1.5  2001/07/18 04:51:56  warmerda
- * added CPL_CVSID
- *
- * Revision 1.4  2000/02/28 16:32:20  warmerda
- * use SetBand method
- *
- * Revision 1.3  1999/05/17 17:18:14  warmerda
- * Use CPL_MSBPTR32() instead of CPL_SWAPPTR32().
- *
- * Revision 1.2  1999/05/17 01:36:42  warmerda
- * Added support for georeferencing values ... added ELASHeader.
- *
- * Revision 1.1  1999/05/13 19:17:48  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_pam.h"
 

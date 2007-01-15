@@ -25,35 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2006/05/01 16:27:33  fwarmerdam
- * updated to work with libdap 1.6.2
- *
- * Revision 1.7  2005/09/21 01:00:29  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.6  2005/02/02 20:54:26  fwarmerdam
- * track m_nFeaturesRead
- *
- * Revision 1.5  2004/03/17 18:16:30  warmerda
- * added support for linestring from nested seq, and floating point validity tests
- *
- * Revision 1.4  2004/03/12 22:13:07  warmerda
- * major upgrade with normalized sequen nested sequence support
- *
- * Revision 1.3  2004/01/29 21:01:03  warmerda
- * added sequences within sequences support
- *
- * Revision 1.2  2004/01/22 21:16:06  warmerda
- * fixed up auto-lat/lon support
- *
- * Revision 1.1  2004/01/21 20:08:29  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "cpl_conv.h"
 #include "ogr_dods.h"

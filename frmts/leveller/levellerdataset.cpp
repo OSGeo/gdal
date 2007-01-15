@@ -27,23 +27,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.4  2006/02/02 22:30:49  fwarmerdam
- * byte swapping fix for mac
- *
- * Revision 1.3  2005/10/21 00:03:41  fwarmerdam
- * added coordinate system support from Ray
- *
- * Revision 1.2  2005/10/20 20:18:14  fwarmerdam
- * Applied some patches from Ray.
- *
- * Revision 1.1  2005/10/20 13:44:29  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 
 #include "gdal_pam.h"

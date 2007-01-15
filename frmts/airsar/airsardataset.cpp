@@ -24,29 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.6  2005/05/05 15:52:48  fwarmerdam
- * PAM Enabled
- *
- * Revision 1.5  2004/11/11 00:16:01  gwalter
- * Polarmetric->Polarimetric.
- *
- * Revision 1.4  2004/10/12 15:42:25  fwarmerdam
- * Change all bands to be complex so that overviews will build properly
- *
- * Revision 1.3  2004/10/08 12:22:09  fwarmerdam
- * Cast bytes passed to fabs(): Martin Daly
- *
- * Revision 1.2  2004/10/05 18:25:45  fwarmerdam
- * Added help pointer.
- *
- * Revision 1.1  2004/10/05 18:12:26  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_pam.h"
 #include "cpl_string.h"

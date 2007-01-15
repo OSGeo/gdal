@@ -24,29 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2006/06/28 13:31:32  fwarmerdam
- * added E00 support (James E. Flemer <jflemer@alum.rpi.edu>)
- *
- * Revision 1.5  2005/09/21 01:00:55  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.4  2005/02/22 12:55:03  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.3  2002/02/18 20:36:27  warmerda
- * added spatial query, nNextFID, nTableAttrIndex
- *
- * Revision 1.2  2002/02/14 23:01:04  warmerda
- * added region and attribute support
- *
- * Revision 1.1  2002/02/13 20:48:18  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _OGR_AVC_H_INCLUDED
 #define _OGR_AVC_H_INCLUDED

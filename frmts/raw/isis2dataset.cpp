@@ -29,30 +29,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * $Log$
- * Revision 1.6  2006/12/18 02:20:59  fwarmerdam
- * avoid leak of fpQube FILE *.
- *
- * Revision 1.5  2006/11/13 17:52:23  fwarmerdam
- * moved out keyword handler (in pdsdataset.cpp)
- *
- * Revision 1.4  2006/05/16 03:26:11  fwarmerdam
- * First pass complete.  Now using more generalized keyword handling.
- * Also fixed up some issues with the projection and the projection
- * put into place.
- *
- * Revision 1.3  2006/04/13 16:39:35  fwarmerdam
- * added more notes on copyright
- *
- * Revision 1.2  2006/04/04 04:34:12  fwarmerdam
- * Fixed copyright date.
- *
- * Revision 1.1  2006/04/04 04:33:29  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #define NULL1 0
 #define NULL2 -32768

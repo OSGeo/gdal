@@ -26,26 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2006/02/19 22:33:20  fwarmerdam
- * undo last change, needs to be handled elsewhere
- *
- * Revision 1.4  2006/02/19 22:29:37  fwarmerdam
- * added sys/errno.h for macos x
- *
- * Revision 1.3  2005/10/13 19:44:25  fwarmerdam
- * Improve open error reporting.
- *
- * Revision 1.2  2005/09/12 17:06:17  fwarmerdam
- * avoid dependence on xtiffio.h
- *
- * Revision 1.1  2005/09/12 00:28:35  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 /*
  * TIFF Library UNIX-specific Routines.

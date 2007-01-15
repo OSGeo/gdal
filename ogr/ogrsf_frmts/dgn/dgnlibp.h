@@ -25,66 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.18  2003/06/27 14:50:53  warmerda
- * avoid warnings
- *
- * Revision 1.17  2003/05/21 03:42:01  warmerda
- * Expanded tabs
- *
- * Revision 1.16  2003/01/20 20:07:19  warmerda
- * added ascii to rad50 prototype
- *
- * Revision 1.15  2002/11/12 19:44:51  warmerda
- * fixed up DGN_WRITE_INT32 macro
- *
- * Revision 1.14  2002/11/11 20:37:07  warmerda
- * added write related stuff
- *
- * Revision 1.13  2002/03/14 21:39:09  warmerda
- * added DGNLoadRawElement, max_element_count
- *
- * Revision 1.12  2002/02/22 22:17:42  warmerda
- * Ensure that components of complex chain/shapes are spatially selected
- * based on the decision made for their owner (header).
- *
- * Revision 1.11  2002/02/06 20:32:33  warmerda
- * handle improbably large elements
- *
- * Revision 1.10  2002/01/21 20:52:45  warmerda
- * added spatial filter support
- *
- * Revision 1.9  2002/01/15 06:39:08  warmerda
- * added default PI value
- *
- * Revision 1.8  2001/12/19 15:29:56  warmerda
- * added preliminary cell header support
- *
- * Revision 1.7  2001/08/21 03:01:39  warmerda
- * added raw_data support
- *
- * Revision 1.6  2001/03/07 13:56:44  warmerda
- * updated copyright to be held by Avenza Systems
- *
- * Revision 1.5  2001/01/16 18:12:18  warmerda
- * keep color table in DGNInfo
- *
- * Revision 1.4  2001/01/10 16:12:18  warmerda
- * added extents capture
- *
- * Revision 1.3  2000/12/28 21:28:43  warmerda
- * added element index support
- *
- * Revision 1.2  2000/12/14 17:10:57  warmerda
- * implemented TCB, Ellipse, TEXT
- *
- * Revision 1.1  2000/11/28 19:03:47  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _DGNLIBP_H_INCLUDED
 #define _DGNLIBP_H_INCLUDED

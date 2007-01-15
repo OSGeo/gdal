@@ -21,76 +21,7 @@
  * the Software, Safe Software Incorporated does not warrant the
  * accuracy or completeness of the Software. In no event will Safe Software 
  * Incorporated be liable for damages, including loss of profits or 
- * consequential damages, arising out of the use of the Software.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2005/09/21 01:00:22  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.4  2005/02/22 12:57:19  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.3  2005/02/02 20:54:27  fwarmerdam
- * track m_nFeaturesRead
- *
- * Revision 1.2  2002/10/29 03:28:34  warmerda
- * fixed 2.5D flag value
- *
- * Revision 1.1  2002/05/24 06:23:57  warmerda
- * New
- *
- * Revision 1.13  2002/05/24 06:17:01  warmerda
- * clean up dependencies on strimp.h, and fme2ogrspatialref func
- *
- * Revision 1.12  2002/05/06 14:06:37  warmerda
- * override coordsys from cached features if needed
- *
- * Revision 1.11  2002/04/25 21:29:03  warmerda
- * removed noisy debug statement
- *
- * Revision 1.10  2002/04/10 20:10:46  warmerda
- * filled out geometry type mappings
- *
- * Revision 1.9  2002/04/08 14:26:33  warmerda
- * add support for harvesting the geometry type from schema
- *
- * Revision 1.8  2001/11/26 18:37:34  warmerda
- * filter out fme_geomattr attributes
- *
- * Revision 1.7  2001/11/21 15:45:25  warmerda
- * allow SRS to be passed in
- *
- * Revision 1.6  2001/11/19 22:11:51  warmerda
- * avoid leaking string, or spatialref
- *
- * Revision 1.5  2001/09/07 15:54:14  warmerda
- * now just a subclass of DB and Cached specific implementations
- *
- * Revision 1.4  2001/07/27 17:27:06  warmerda
- * added CVSID
- *
- * Revision 1.3  2001/07/27 17:24:45  warmerda
- * First phase rewrite for MapGuide
- *
- * Revision 1.2  1999/11/23 15:39:51  warmerda
- * tab expantion
- *
- * Revision 1.1  1999/11/23 15:22:58  warmerda
- * New
- *
- * Revision 1.4  1999/11/22 22:10:49  warmerda
- * added GetSpatialRef(), and fme_real64 support
- *
- * Revision 1.3  1999/11/10 14:04:44  warmerda
- * updated to new fmeobjects kit
- *
- * Revision 1.2  1999/09/09 21:05:34  warmerda
- * further fleshed out
- *
- * Revision 1.1  1999/09/09 20:40:56  warmerda
- * New
- */
+ ****************************************************************************/
 
 #include "fme2ogr.h"
 #include "cpl_conv.h"

@@ -25,44 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2006/05/07 04:04:03  fwarmerdam
- * fixed serious multithreading issue with ExtractInstValue (bug 1132)
- *
- * Revision 1.10  2005/05/13 02:45:16  fwarmerdam
- * fixed GetInstCount() error return
- *
- * Revision 1.9  2005/05/10 00:55:30  fwarmerdam
- * Added GetInstCount method
- *
- * Revision 1.8  2004/01/26 18:28:51  warmerda
- * added error recover after corrupt/unrecognised entries - bug 411
- *
- * Revision 1.7  2003/04/22 19:40:36  warmerda
- * fixed email address
- *
- * Revision 1.6  2003/02/21 15:40:58  dron
- * Added support for writing large (>4 GB) Erdas Imagine files.
- *
- * Revision 1.5  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.4  2000/12/29 16:37:32  warmerda
- * Use GUInt32 for all file offsets
- *
- * Revision 1.3  2000/09/29 21:42:38  warmerda
- * preliminary write support implemented
- *
- * Revision 1.2  1999/01/22 17:36:47  warmerda
- * Added GetInstBytes(), track unknown sizes properly
- *
- * Revision 1.1  1999/01/04 22:52:10  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "hfa_p.h"
 

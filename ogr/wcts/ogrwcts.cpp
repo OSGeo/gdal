@@ -50,57 +50,6 @@
  *   support as this code is in flux, so any audit will be rapidly outdated.
  *   This may be accomplished by compiling with DISABLE_USER_DEFINED_CRS
  *   defined in the GNUmakefile (the default).
- *
- * $Log$
- * Revision 1.16  2003/10/07 04:32:36  warmerda
- * added AUTO code space support
- *
- * Revision 1.15  2003/04/17 08:29:26  dron
- * Security audit completed.
- *
- * Revision 1.14  2003/04/01 13:13:12  dron
- * Few memory leaks fixed.
- *
- * Revision 1.13  2003/03/31 20:00:55  dron
- * Added string field width for CPLSPrintf() in WCTSGetCapabilities().
- *
- * Revision 1.12  2003/03/28 17:51:13  warmerda
- * Only allow http, https and ftp in FileURL urls.
- * Added support for DISABLE_USER_DEFINED_CRS.
- *
- * Revision 1.11  2003/03/28 06:12:45  warmerda
- * completed security audit.  Avoid passinglong strings to CPLSPrintf()
- *
- * Revision 1.10  2003/03/27 17:20:20  warmerda
- * improved request error
- *
- * Revision 1.9  2003/03/27 17:18:07  warmerda
- * added inline CRS defs, and -debug
- *
- * Revision 1.8  2003/03/24 21:49:49  warmerda
- * Added support for FileURL in Transform
- *
- * Revision 1.7  2003/03/12 20:51:39  warmerda
- * integrated special handling for bounding box
- *
- * Revision 1.6  2003/03/11 21:48:38  warmerda
- * Fixed test/xml to be text/xml.
- *
- * Revision 1.5  2003/03/11 21:32:09  warmerda
- * Added preliminary KVP support
- *
- * Revision 1.4  2003/03/11 17:28:49  warmerda
- * Changed where we look for capabilities.
- *
- * Revision 1.3  2003/03/11 15:40:44  warmerda
- * initial minimally working implementation
- *
- * Revision 1.2  2003/03/05 22:11:10  warmerda
- * implement istransformable
- *
- * Revision 1.1  2003/03/05 21:07:31  warmerda
- * New
- *
  */
 
 #include <assert.h>

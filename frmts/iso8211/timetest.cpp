@@ -24,23 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.2  1999/11/18 19:03:04  warmerda
- * expanded tabs
- *
- * Revision 1.1  1999/05/06 14:26:33  warmerda
- * New
- *
- * Revision 1.2  1999/04/28 05:16:47  warmerda
- * added usage
- *
- * Revision 1.1  1999/04/27 22:09:30  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include <stdio.h>
 #include "iso8211.h"

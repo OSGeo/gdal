@@ -24,24 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2006/07/31 15:49:30  fwarmerdam
- * Try and enable datetime support per email from Markus.  Not tested yet.
- *
- * Revision 1.3  2006/02/14 13:01:49  rblazek
- * dont kill on win
- *
- * Revision 1.2  2005/09/21 00:59:36  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.1  2005/08/05 15:32:43  fwarmerdam
- * New
- *
- *
- */
+ ****************************************************************************/
 
 #include <signal.h>
 #include "ogrgrass.h"

@@ -24,21 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2007/01/10 19:03:26  dmorissette
- * CPLStrdup() the value assigned to pszNameField (bug 1432)
- *
- * Revision 1.4  2006/08/04 19:36:03  fwarmerdam
- * Initialize pszNameField.
- *
- * Revision 1.3  2006/07/27 19:53:01  mloskot
- * Added common file header to KML driver source files.
- *
- *
- */
+ ****************************************************************************/
 #include "ogr_kml.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"

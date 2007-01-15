@@ -24,70 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.19  2006/08/15 19:53:17  fwarmerdam
- * DTED elevations are apparently always in meters.  Return this as the units.
- * Per suggestion from Ray Gardener.
- *
- * Revision 1.18  2006/04/04 01:00:44  fwarmerdam
- * updated contact info
- *
- * Revision 1.17  2006/03/27 14:52:46  fwarmerdam
- * Added overview support.
- *
- * Revision 1.16  2005/05/05 14:01:36  fwarmerdam
- * PAM Enable
- *
- * Revision 1.15  2005/04/15 19:28:57  fwarmerdam
- * added AREA_OR_POINT=Point metadata
- *
- * Revision 1.14  2004/01/30 18:27:25  gwalter
- * Fixed bug in tile sizing.
- *
- * Revision 1.13  2004/01/29 23:35:22  gwalter
- * Add a few more metadata fields, make sure that
- * nodata value is recognized.
- *
- * Revision 1.12  2003/05/30 16:17:21  warmerda
- * fix warnings with casting and unused parameters
- *
- * Revision 1.11  2002/11/23 18:54:17  warmerda
- * added CREATIONDATATYPES metadata for drivers
- *
- * Revision 1.10  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.9  2002/06/12 21:12:24  warmerda
- * update to metadata based driver info
- *
- * Revision 1.8  2002/03/05 14:26:01  warmerda
- * expanded tabs
- *
- * Revision 1.7  2002/01/26 05:51:40  warmerda
- * added metadata read/write support
- *
- * Revision 1.6  2001/11/13 15:43:41  warmerda
- * preliminary dted creation working
- *
- * Revision 1.5  2001/11/11 23:50:59  warmerda
- * added required class keyword to friend declarations
- *
- * Revision 1.4  2001/07/18 04:51:56  warmerda
- * added CPL_CVSID
- *
- * Revision 1.3  2000/02/28 16:32:20  warmerda
- * use SetBand method
- *
- * Revision 1.2  2000/01/12 19:43:17  warmerda
- * Don't open dataset twice in Open().
- *
- * Revision 1.1  1999/12/07 18:01:28  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "dted_api.h"
 #include "gdal_pam.h"

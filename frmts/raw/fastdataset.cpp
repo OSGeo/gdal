@@ -24,57 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.22  2006/10/23 18:44:07  fwarmerdam
- * added overview support - from Gao
- *
- * Revision 1.21  2006/08/10 11:39:36  dron
- * Fixed problem with GAINES/BIASES field. In addition to
- * http://bugzilla.remotesensing.org/show_bug.cgi?id=988
- *
- * Revision 1.20  2006/08/09 12:13:21  dron
- * Fixes to handle more non-standard datasets as per bug
- * http://bugzilla.remotesensing.org/show_bug.cgi?id=988
- *
- * Revision 1.19  2005/12/20 20:07:30  dron
- * Added support for 16-bit data.
- *
- * Revision 1.18  2005/09/14 13:18:32  dron
- * Avoid warnings.
- *
- * Revision 1.17  2005/05/05 13:55:42  fwarmerdam
- * PAM Enable
- *
- * Revision 1.16  2004/07/12 18:24:23  gwalter
- * Fixed geotransform calculation.
- *
- * Revision 1.15  2004/04/27 14:25:41  warmerda
- * Cast to avoid warning on Solaris.
- *
- * Revision 1.14  2004/03/16 18:27:39  dron
- * Fixes in projection parameters parsing code.
- *
- * Revision 1.13  2004/02/18 20:22:10  dron
- * Create RawRasterBand objects in "large" mode; more datums and ellipsoids.
- *
- * Revision 1.12  2004/02/17 08:05:45  dron
- * Do not calculate projection definition if corner coordinates are not set.
- *
- * Revision 1.11  2004/02/03 20:38:50  dron
- * Fixes in coordinate hadling; recognize more projections.
- *
- * Revision 1.10  2004/02/01 17:29:34  dron
- * Format parsing logic completely rewritten. Start using importFromUSGS().
- *
- * Revision 1.9  2003/10/17 07:08:21  dron
- * Use locale selection option in CPLScanDouble().
- *
- * Revision 1.8  2003/10/05 15:31:00  dron
- * TM projection support implemented.
- */
+ ****************************************************************************/
 
 #include "cpl_string.h"
 #include "cpl_conv.h"

@@ -24,23 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2006/04/04 17:25:27  fwarmerdam
- * updated contact info
- *
- * Revision 1.3  2004/04/07 02:08:11  warmerda
- * SPHEROID belongs inside DATUM
- *
- * Revision 1.2  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.1  1999/10/29 17:26:48  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gxfopen.h"
 

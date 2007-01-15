@@ -24,26 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2006/03/28 23:17:06  fwarmerdam
- * updated contact info
- *
- * Revision 1.4  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.3  2001/01/19 21:14:22  warmerda
- * expanded tabs
- *
- * Revision 1.2  1999/11/04 21:12:31  warmerda
- * added TestCapability() support
- *
- * Revision 1.1  1999/09/22 13:32:16  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_sdts.h"
 #include "cpl_conv.h"

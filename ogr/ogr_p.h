@@ -24,44 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2006/11/28 00:00:35  tamas
- * RFC 6: Geometry and Feature Style as OGR Special Fields
- *
- * Revision 1.10  2006/03/31 17:44:20  fwarmerdam
- * header updates
- *
- * Revision 1.9  2005/10/16 01:59:06  cfis
- * Added declaration for OGRGeneralCmdLineProcessor to ogr_p.h, and included it into ogr2ogr.  Also changed call to CPL_DLL from CPL_STDCALL
- *
- * Revision 1.8  2005/07/20 01:43:51  fwarmerdam
- * upgraded OGR geometry dimension handling
- *
- * Revision 1.7  2001/11/01 17:01:28  warmerda
- * pass output buffer into OGRMakeWktCoordinate
- *
- * Revision 1.6  1999/11/18 19:02:20  warmerda
- * expanded tabs
- *
- * Revision 1.5  1999/09/13 02:27:33  warmerda
- * incorporated limited 2.5d support
- *
- * Revision 1.4  1999/07/29 17:30:38  warmerda
- * avoid geometry dependent stuff if ogr_geometry.h not included
- *
- * Revision 1.3  1999/07/07 04:23:07  danmo
- * Fixed typo in  #define _OGR_..._H_INCLUDED  line
- *
- * Revision 1.2  1999/05/20 14:36:04  warmerda
- * added well known text parsing prototypes
- *
- * Revision 1.1  1999/03/29 21:21:10  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _OGR_P_H_INCLUDED
 #define _OGR_P_H_INCLUDED

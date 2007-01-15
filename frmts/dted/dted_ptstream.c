@@ -24,35 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2004/04/14 19:47:29  warmerda
- * added better boundary support, and trimming
- *
- * Revision 1.7  2003/05/30 16:17:21  warmerda
- * fix warnings with casting and unused parameters
- *
- * Revision 1.6  2002/03/05 14:26:01  warmerda
- * expanded tabs
- *
- * Revision 1.5  2002/02/15 18:26:44  warmerda
- * create output directory if necessary
- *
- * Revision 1.4  2002/01/28 19:11:34  warmerda
- * avoid warning
- *
- * Revision 1.3  2002/01/28 18:18:48  warmerda
- * Added DTEDPtStreamSetMetadata
- *
- * Revision 1.2  2001/11/23 16:43:34  warmerda
- * rough interpolate implementation
- *
- * Revision 1.1  2001/11/21 19:51:34  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "dted_api.h"
 

@@ -24,53 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.14  2006/03/28 22:59:55  fwarmerdam
- * updated contact info
- *
- * Revision 1.13  2005/09/21 00:59:55  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.12  2005/02/22 12:54:16  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.11  2005/02/02 20:54:27  fwarmerdam
- * track m_nFeaturesRead
- *
- * Revision 1.10  2003/01/07 16:46:28  warmerda
- * Added support for forming polygons by caching line geometries
- *
- * Revision 1.9  2001/12/11 20:37:49  warmerda
- * add option to avoid caching indexed records on multiple readers
- *
- * Revision 1.8  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.7  2001/06/19 15:50:23  warmerda
- * added feature attribute query support
- *
- * Revision 1.6  2001/01/19 20:31:12  warmerda
- * expand tabs
- *
- * Revision 1.5  2000/12/06 19:31:43  warmerda
- * initialize all members variables
- *
- * Revision 1.4  1999/09/29 16:44:08  warmerda
- * added spatial ref handling
- *
- * Revision 1.3  1999/09/09 16:28:14  warmerda
- * Removed ifdef'ed out methods.
- *
- * Revision 1.2  1999/08/28 18:24:42  warmerda
- * added TestForLayer() optimization
- *
- * Revision 1.1  1999/08/28 03:13:35  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ntf.h"
 #include "cpl_conv.h"

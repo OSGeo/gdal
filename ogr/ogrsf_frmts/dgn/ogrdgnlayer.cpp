@@ -24,52 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.37  2006/03/02 05:38:41  fwarmerdam
- * Added support for writing geometry collections
- *
- * Revision 1.36  2006/01/20 17:45:40  fwarmerdam
- * Updated to new DGNCreateComplexHeaderFromGroup arg list.
- *
- * Revision 1.35  2005/09/21 01:00:46  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.34  2005/07/20 02:33:03  fwarmerdam
- * Set feature geometry dimension based on source file.
- *
- * Revision 1.33  2005/02/22 12:54:50  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.32  2005/02/02 21:09:44  fwarmerdam
- * track m_nFeaturesRead
- *
- * Revision 1.31  2004/02/24 14:24:08  warmerda
- * Fixed a bug where 0/0 linkages terminated all other linkages on an element.
- *
- * Revision 1.30  2004/02/23 21:45:03  warmerda
- * added support for various link formats
- *
- * Revision 1.29  2003/11/27 14:15:20  warmerda
- * added surface type in createcomplexheaderfromgroup call
- *
- * Revision 1.28  2003/09/29 14:25:30  warmerda
- * Fixed memory leak as reported by Steve Brooks.
- *
- * Revision 1.27  2003/05/21 03:42:01  warmerda
- * Expanded tabs
- *
- * Revision 1.26  2003/05/15 14:47:24  warmerda
- * implement quaternion support on write
- *
- * Revision 1.25  2003/05/12 18:48:57  warmerda
- * added preliminary 3D write support
- *
- * Revision 1.24  2003/01/02 21:45:23  warmerda
- * move OGRBuildPolygonsFromEdges into C API
- */
+ ****************************************************************************/
 
 #include "ogr_dgn.h"
 #include "cpl_conv.h"

@@ -24,29 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2005/12/22 08:18:15  fwarmerdam
- * write attributes as extended data (DXF 1000) in ACAD app
- *
- * Revision 1.5  2005/11/18 21:26:25  fwarmerdam
- * added geometry collection type support
- *
- * Revision 1.4  2005/11/15 23:23:38  fwarmerdam
- * update extents, preliminary point support
- *
- * Revision 1.3  2005/11/15 15:02:42  fwarmerdam
- * Added ODRX_USING_HEAP_OPERATORS() definition for OGRServices.
- *
- * Revision 1.2  2005/11/10 21:31:48  fwarmerdam
- * preliminary version
- *
- * Revision 1.1  2005/11/07 04:43:05  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _OGR_DWG_H_INCLUDED
 #define _OGR_DWG_H_INLLUDED

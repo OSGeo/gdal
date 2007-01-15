@@ -24,29 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2005/09/21 00:59:36  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.5  2005/02/22 12:54:34  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.4  2005/02/02 20:12:41  fwarmerdam
- * added SetNextByIndex support
- *
- * Revision 1.3  2003/10/09 15:30:23  warmerda
- * added OGRLayer::DeleteFeature() support
- *
- * Revision 1.2  2003/04/08 20:58:16  warmerda
- * added support for adding fields when existing features exist
- *
- * Revision 1.1  2003/04/08 19:32:47  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_mem.h"
 #include "cpl_conv.h"

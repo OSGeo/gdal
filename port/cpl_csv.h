@@ -25,23 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2006/03/21 20:11:54  fwarmerdam
- * fixup headers a bit
- *
- * Revision 1.3  2005/11/08 15:29:11  fwarmerdam
- * DLL export CSVGetField.
- *
- * Revision 1.2  2003/06/27 16:14:22  warmerda
- * export CSV functions with CPL_DLL
- *
- * Revision 1.1  2000/04/05 21:55:59  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef CPL_CSV_H_INCLUDED
 #define CPL_CSV_H_INCLUDED

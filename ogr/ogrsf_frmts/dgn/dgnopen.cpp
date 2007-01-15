@@ -24,63 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.17  2003/06/12 17:33:17  warmerda
- * improved DNGO_CAPTURE_RAW_DATA flag documnentation
- *
- * Revision 1.16  2003/05/21 03:42:01  warmerda
- * Expanded tabs
- *
- * Revision 1.15  2003/05/12 18:48:57  warmerda
- * added preliminary 3D write support
- *
- * Revision 1.14  2002/04/22 20:44:41  warmerda
- * added (partial) cell library support
- *
- * Revision 1.13  2002/03/14 21:39:27  warmerda
- * added bUpdate to DGNOpen()
- *
- * Revision 1.12  2002/02/22 22:17:42  warmerda
- * Ensure that components of complex chain/shapes are spatially selected
- * based on the decision made for their owner (header).
- *
- * Revision 1.11  2002/01/21 20:52:11  warmerda
- * added SetSpatialFilter function
- *
- * Revision 1.10  2001/09/27 14:28:44  warmerda
- * first hack at 3D support
- *
- * Revision 1.9  2001/08/21 03:01:39  warmerda
- * added raw_data support
- *
- * Revision 1.8  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.7  2001/06/27 16:14:21  warmerda
- * Free the element index on close (patch c/o Tom Parker, avs.com).
- *
- * Revision 1.6  2001/03/18 16:54:39  warmerda
- * added use of DGNTestOpen, remove extention test
- *
- * Revision 1.5  2001/03/07 13:56:44  warmerda
- * updated copyright to be held by Avenza Systems
- *
- * Revision 1.4  2001/01/10 16:13:09  warmerda
- * added documentation
- *
- * Revision 1.3  2000/12/28 21:28:59  warmerda
- * added element index support
- *
- * Revision 1.2  2000/12/14 17:10:57  warmerda
- * implemented TCB, Ellipse, TEXT
- *
- * Revision 1.1  2000/11/28 19:03:47  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "dgnlibp.h"
 

@@ -24,26 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2006/03/28 23:06:57  fwarmerdam
- * fixed contact info
- *
- * Revision 1.4  2003/05/21 03:59:42  warmerda
- * expand tabs
- *
- * Revision 1.3  2002/05/09 16:03:19  warmerda
- * major upgrade to support SRS better and add ExecuteSQL
- *
- * Revision 1.2  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.1  2000/10/17 17:46:51  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_pg.h"
 #include "cpl_conv.h"

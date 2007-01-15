@@ -24,57 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.63  2007/01/11 05:49:51  fwarmerdam
- * Fixed bug in CPLReadLine() found with test harnass in bug 1374.
- *
- * Revision 1.62  2007/01/11 05:32:58  fwarmerdam
- * Fixed CPLReadLineL()'s weird error condition (bug 1374).
- *
- * Revision 1.61  2007/01/06 17:03:35  fwarmerdam
- * Fixed last fix.  It was returning NULL in other conditions such as
- * a file with no terminating newline (gdalautotest/gdrivers/aaigrid.py).
- *
- * Revision 1.60  2007/01/04 21:31:44  fwarmerdam
- * Ensure that CPLReadLineL() returns NULL at end of file.
- *
- * Revision 1.59  2006/12/18 17:49:04  dreamil
- * Modified CPLReadLineL() to fix
- * http://bugzilla.remotesensing.org/show_bug.cgi?id=1374
- *
- * Revision 1.58  2006/11/18 20:58:23  mloskot
- * Removed WIN32CE ifdef around CPLLocaleC.
- *
- * Revision 1.57  2006/11/16 14:58:33  mloskot
- * Added cast from __int64 to GUIntBig on Windows.
- *
- * Revision 1.56  2006/10/11 08:30:01  dron
- * Added CPLStrlwr() function.
- *
- * Revision 1.55  2006/08/23 15:09:46  fwarmerdam
- * Added --mempreload support, and VSICopyFile
- *
- * Revision 1.54  2006/06/30 18:18:17  dron
- * Avoid warnings.
- *
- * Revision 1.53  2006/06/30 14:55:10  dron
- * Avoid some warnings on win/64.
- *
- * Revision 1.52  2006/03/04 00:46:43  mloskot
- * [WCE] CPLLocaleC class excluded from compilation for Windows CE
- *
- * Revision 1.51  2006/03/03 19:40:53  fwarmerdam
- * added CPLLocaleC class
- *
- * Revision 1.50  2006/02/19 21:54:34  mloskot
- * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
- *
- * Revision 1.49  2006/02/09 05:54:15  fwarmerdam
- * use ll in format for long long on mac, not L
- */
+ ****************************************************************************/
 
 #include "cpl_conv.h"
 #include "cpl_string.h"

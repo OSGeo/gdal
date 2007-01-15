@@ -24,35 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2006/01/20 16:58:28  kintel
- * Changed DGNCreateComplex*() to only create complex chains/shapes, added new functions, DGNCreateSolid*() for creating 3D solids/surfaces
- *
- * Revision 1.7  2004/03/23 16:19:28  warmerda
- * restore regular form, set color info for shape header
- *
- * Revision 1.6  2003/11/25 15:47:56  warmerda
- * Added surface type for complex headers: Marius
- *
- * Revision 1.5  2003/11/04 14:23:46  warmerda
- * added check after create
- *
- * Revision 1.4  2003/05/15 14:47:24  warmerda
- * implement quaternion support on write
- *
- * Revision 1.3  2003/05/12 18:48:57  warmerda
- * added preliminary 3D write support
- *
- * Revision 1.2  2003/01/20 20:05:07  warmerda
- * added cell header test, and make c clean for windows build
- *
- * Revision 1.1  2002/11/11 20:40:33  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "dgnlib.h"
 

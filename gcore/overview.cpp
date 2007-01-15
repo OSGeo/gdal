@@ -24,56 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.15  2006/11/16 03:12:53  fwarmerdam
- * Default to dummy progress if pfnProgress NULL in ComputeBandStats.
- *
- * Revision 1.14  2006/03/28 14:49:56  fwarmerdam
- * updated contact info
- *
- * Revision 1.13  2006/02/07 19:11:36  fwarmerdam
- * applied some strategic improved outofmemory checking
- *
- * Revision 1.12  2005/04/04 15:24:48  fwarmerdam
- * Most C entry points now CPL_STDCALL
- *
- * Revision 1.11  2003/05/21 04:24:38  warmerda
- * avoid warnings with cast
- *
- * Revision 1.10  2002/07/09 20:33:12  warmerda
- * expand tabs
- *
- * Revision 1.9  2002/04/16 17:49:29  warmerda
- * Ensure dfRatio is assigned a value.
- *
- * Revision 1.8  2001/07/18 04:04:30  warmerda
- * added CPL_CVSID
- *
- * Revision 1.7  2001/07/16 15:21:46  warmerda
- * added AVERAGE_MAGPHASE option for complex images
- *
- * Revision 1.6  2001/01/30 22:32:42  warmerda
- * added AVERAGE_MP (magnitude preserving averaging) overview resampling type
- *
- * Revision 1.5  2000/11/22 18:41:45  warmerda
- * fixed bug in complex overview generation
- *
- * Revision 1.4  2000/08/18 15:25:06  warmerda
- * added cascading overview regeneration to speed up averaged overviews
- *
- * Revision 1.3  2000/07/17 17:08:45  warmerda
- * added support for complex data
- *
- * Revision 1.2  2000/06/26 22:17:58  warmerda
- * added scaled progress support
- *
- * Revision 1.1  2000/04/21 21:54:05  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_priv.h"
 

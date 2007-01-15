@@ -41,14 +41,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- ******************************************************************************
- *
- * $Log$
- * Revision 1.1  2005/04/13 15:32:20  dron
- * Added support for 16- and 24-bit floating point TIFFs (as per TechNote 3).
- *
- */
+ ****************************************************************************/
 
 #include "cpl_port.h"
 

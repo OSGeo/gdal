@@ -25,43 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.10  2003/08/03 02:39:40  warmerda
- * Fixed problem with byPrecision actually being a short in Ned's experience,
- * instead of a short.   Tried to work around this in a way that isn't likely
- * to break even if Oracle's behaviour changes to what is documented.
- *
- * Revision 1.9  2003/05/21 03:54:01  warmerda
- * expand tabs
- *
- * Revision 1.8  2003/04/10 17:54:08  warmerda
- * added PinTDO method
- *
- * Revision 1.7  2003/02/06 21:15:45  warmerda
- * Get hElemInfoTDO, improve initial session error chequing
- *
- * Revision 1.6  2003/01/14 16:58:39  warmerda
- * treat very long string fields as having no set width
- *
- * Revision 1.5  2003/01/10 22:30:40  warmerda
- * collect type info for SDO_ORDINATE_ARRAY and added CleanName()
- *
- * Revision 1.4  2003/01/09 21:47:34  warmerda
- * avoid debug info on schema
- *
- * Revision 1.3  2003/01/09 21:19:12  warmerda
- * improved data type support, get/set precision
- *
- * Revision 1.2  2002/12/28 04:38:36  warmerda
- * converted to unix file conventions
- *
- * Revision 1.1  2002/12/28 04:07:27  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_oci.h"
 #include "cpl_conv.h"

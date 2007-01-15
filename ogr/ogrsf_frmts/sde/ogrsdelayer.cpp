@@ -24,55 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.13  2006/10/18 20:04:35  fwarmerdam
- * ensure NeedsLayerInfo called before using layer info in GetFEatureCount
- *
- * Revision 1.12  2006/10/18 19:08:27  fwarmerdam
- * Improvements from Christian Ratliff, including:
- *  o The ability to specify a single layer in the datasource string to
- *    restrict the set of layers accessed.
- *  o The ability to get layer geometry type efficiently.
- *  o A fast implementation of GetFeatureCount()
- *  o A fix for multiline string geometry handling.
- *
- * Revision 1.11  2006/04/11 02:31:32  fwarmerdam
- * added multilinestring
- *
- * Revision 1.10  2006/04/11 01:37:53  fwarmerdam
- * fixed up typos
- *
- * Revision 1.9  2006/04/11 01:26:10  fwarmerdam
- * First draft multipoint support, fixing multipolygons.
- *
- * Revision 1.8  2006/03/09 22:50:43  fwarmerdam
- * Added  support for multipolygons
- *
- * Revision 1.7  2006/03/08 00:22:46  fwarmerdam
- * preliminary update to support rowid-less tables
- *
- * Revision 1.6  2005/11/30 01:53:31  fwarmerdam
- * added OGR_SDE_SEARCHORDER config option
- *
- * Revision 1.5  2005/11/30 01:34:02  fwarmerdam
- * Ensure layerinfo is loaded for GetSpatialRef().
- *
- * Revision 1.4  2005/11/25 18:55:15  fwarmerdam
- * layer implementation essentially complete
- *
- * Revision 1.3  2005/11/25 05:58:27  fwarmerdam
- * preliminary operation of feature reading
- *
- * Revision 1.2  2005/11/22 17:09:17  fwarmerdam
- * Preinitalize poFeature in GetNextFeature().
- *
- * Revision 1.1  2005/11/22 17:01:48  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_sde.h"
 #include "cpl_conv.h"

@@ -25,63 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.34  2006/11/18 20:52:16  mloskot
- * Added visible cast between int and GByte types.
- *
- * Revision 1.33  2006/03/28 14:49:56  fwarmerdam
- * updated contact info
- *
- * Revision 1.32  2005/06/26 00:16:51  fwarmerdam
- * Performance improvements to GDALCopyWords() from Steve Sproule (Vexcel).
- *
- * Revision 1.31  2005/05/23 06:43:10  fwarmerdam
- * Updated for locking of block refs
- *
- * Revision 1.30  2005/04/04 15:24:48  fwarmerdam
- * Most C entry points now CPL_STDCALL
- *
- * Revision 1.29  2005/02/17 22:12:39  fwarmerdam
- * ensure that GDALDataset::BlockRasterIO() calls blocking band RasterIO
- *
- * Revision 1.28  2003/05/21 04:40:13  warmerda
- * avoid warnings
- *
- * Revision 1.27  2003/05/07 19:11:48  warmerda
- * fixed bug in one case of bJustInitialize setting
- *
- * Revision 1.26  2003/04/30 17:13:48  warmerda
- * added docs for many C functions
- *
- * Revision 1.25  2003/04/28 20:47:09  warmerda
- * block oriented dataset io now working well
- *
- * Revision 1.24  2003/04/25 19:57:14  warmerda
- * Avoid warning.
- *
- * Revision 1.23  2003/04/25 19:45:41  warmerda
- * Use special case for full res operations that involve a buffer that is
- * not packaged (ie. its pixel interleaved).
- * First implementation of GDALDataset::BlockBasedRasterIO() also added.
- *
- * Revision 1.22  2003/03/13 16:34:20  warmerda
- * another fix in special case rasterio logic
- *
- * Revision 1.21  2003/03/13 15:36:59  warmerda
- * fixed number of words copied in recent IRasterIO() special case
- *
- * Revision 1.20  2003/03/09 10:09:15  dron
- * Speed up improvements in IRasterIO().
- *
- * Revision 1.19  2003/02/08 09:33:03  dron
- * Patch for batch casting removed due to problems.
- *
- * Revision 1.18  2003/02/07 16:44:25  dron
- * IRasterIO() improved to cast several pixels per time.
- */
+ ****************************************************************************/
 
 #include "gdal_priv.h"
 

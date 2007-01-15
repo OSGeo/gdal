@@ -24,32 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.7  2006/03/27 15:24:41  fwarmerdam
- * buffer in FWrite is const
- *
- * Revision 1.6  2006/02/19 21:54:34  mloskot
- * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
- *
- * Revision 1.5  2006/01/10 17:03:56  fwarmerdam
- * added VSI Rename support
- *
- * Revision 1.4  2005/09/15 18:39:00  fwarmerdam
- * fixedup filemanager cleanup
- *
- * Revision 1.3  2005/09/13 15:17:52  dron
- * Unneeded semicolon removed.
- *
- * Revision 1.2  2005/09/13 15:16:44  dron
- * Added virtual destructor to VSIVirtualHandle and VSIFilesystemHandler classes.
- *
- * Revision 1.1  2005/09/11 18:00:49  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef CPL_VSI_VIRTUAL_H_INCLUDED
 #define CPL_VSI_VIRTUAL_H_INCLUDED

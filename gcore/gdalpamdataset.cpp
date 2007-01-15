@@ -25,72 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.20  2006/06/22 20:02:50  fwarmerdam
- * removed old pam metadata (de)serialize funcs
- *
- * Revision 1.19  2006/04/13 03:16:01  fwarmerdam
- * keep track if an object is PAM enabled, bug 1135
- *
- * Revision 1.18  2006/04/07 13:12:16  fwarmerdam
- * Fix merging of band metadata.
- *
- * Revision 1.17  2006/03/31 14:25:10  fwarmerdam
- * avoiding cloning from missing source bands
- *
- * Revision 1.16  2005/10/14 21:10:16  fwarmerdam
- * avoid error if .aux.xml file does not exist
- *
- * Revision 1.15  2005/10/13 01:19:57  fwarmerdam
- * moved GDALMultiDomainMetadata into GDALMajorObject
- *
- * Revision 1.14  2005/10/12 15:35:23  fwarmerdam
- * mark pam info clean at end of TryLoadAux
- *
- * Revision 1.13  2005/09/27 22:12:19  fwarmerdam
- * added RAT support when cloning
- *
- * Revision 1.12  2005/09/26 15:52:03  fwarmerdam
- * centralized .aux opening logic
- *
- * Revision 1.11  2005/09/23 20:55:19  fwarmerdam
- * avoid unimplemented errors if PAM disabled
- *
- * Revision 1.10  2005/09/11 18:04:24  fwarmerdam
- * clearup multidomain metadata
- *
- * Revision 1.9  2005/08/31 03:34:23  fwarmerdam
- * use CPLString.Printf instead of CSPrintf()
- *
- * Revision 1.8  2005/07/22 13:50:13  fwarmerdam
- * Default PAM support to off.
- *
- * Revision 1.7  2005/06/09 15:43:02  fwarmerdam
- * Clear dirty flag in TryLoadXML() so we don't end up writing out
- * a pam file for metadata set within the callers Open() method.
- *
- * Revision 1.6  2005/06/08 14:04:38  fwarmerdam
- * use .aux.xml as the default extension instead of .pam
- *
- * Revision 1.5  2005/05/22 08:13:40  fwarmerdam
- * added multidomain metadata support
- *
- * Revision 1.4  2005/05/17 15:13:28  fwarmerdam
- * ensure pam info initialize on any set operation
- *
- * Revision 1.3  2005/05/16 21:36:23  fwarmerdam
- * prototype support for reading aux file
- *
- * Revision 1.2  2005/05/11 14:03:08  fwarmerdam
- * added option to disable pam, and quiet failed .pam opens
- *
- * Revision 1.1  2005/04/27 16:27:44  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_pam.h"
 #include "cpl_string.h"

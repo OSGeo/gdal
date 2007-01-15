@@ -24,25 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.6  2006/04/04 03:27:19  fwarmerdam
- * Fixed copyright holder line.
- *
- * Revision 1.5  2006/01/23 14:16:31  dnadeau
- * Add pszUnderscorePath variable to HDF5Dataset class
- *
- * Revision 1.4  2005/08/23 20:11:46  dnadeau
- * HDF5 add Metadata
- *
- * Revision 1.3  2005/07/27 16:42:13  dnadeau
- * change variable to hdf5imagedataset class
- *
- *
- *
- */
+ ****************************************************************************/
 
 #ifndef _HDF5DATASET_H_INCLUDED_
 #define _HDF5DATASET_H_INCLUDED_

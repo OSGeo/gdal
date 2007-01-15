@@ -24,65 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.18  2006/08/23 19:12:08  fwarmerdam
- * Don't require a valid file handle.
- *
- * Revision 1.17  2006/04/10 16:34:18  fwarmerdam
- * updated contact info
- *
- * Revision 1.16  2005/05/05 15:54:49  fwarmerdam
- * PAM Enabled
- *
- * Revision 1.15  2003/02/06 03:18:49  warmerda
- * use Fixup() on SRS to set linear units
- *
- * Revision 1.14  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.13  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.12  2002/04/12 20:20:29  warmerda
- * make vector sdts transfers just a warning
- *
- * Revision 1.11  2001/11/11 23:51:00  warmerda
- * added required class keyword to friend declarations
- *
- * Revision 1.10  2001/09/10 19:27:36  warmerda
- * added GetMinMax() and raster data types
- *
- * Revision 1.9  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.8  2001/07/09 18:14:45  warmerda
- * upgraded projection support to use WKT
- *
- * Revision 1.7  2001/07/05 13:12:40  warmerda
- * added UnitType support
- *
- * Revision 1.6  2001/01/19 21:20:29  warmerda
- * expanded tabs
- *
- * Revision 1.5  2000/08/22 17:58:04  warmerda
- * added floating point, and nodata support
- *
- * Revision 1.4  2000/08/15 19:28:26  warmerda
- * added help topic
- *
- * Revision 1.3  1999/09/03 13:01:39  warmerda
- * added docs
- *
- * Revision 1.2  1999/06/03 21:14:01  warmerda
- * added GetGeoTransform() and GetProjectionRef() support
- *
- * Revision 1.1  1999/06/03 13:46:07  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "sdts_al.h"
 #include "gdal_pam.h"
