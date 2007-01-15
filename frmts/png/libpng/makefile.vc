@@ -1,0 +1,22 @@
+
+OBJ	=	\
+	png.obj pngerror.obj pnggccrd.obj pngget.obj pngmem.obj \
+	pngpread.obj pngread.obj pngrio.obj pngrtran.obj pngrutil.obj \
+	pngset.obj pngtrans.obj pngvcrd.obj pngwio.obj pngwrite.obj \
+	pngwtran.obj pngwutil.obj
+
+GDAL_ROOT	=	..\..\..
+
+EXTRAFLAGS = 	-I..\..\zlib
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\..\o
+
+libpng.lib:	$(OBJ)
+	LIB /OUT:libpng.lib $(OBJ)
+
+clean:
+	-del *.obj
+

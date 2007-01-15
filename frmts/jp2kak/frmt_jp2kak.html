@@ -1,0 +1,111 @@
+<html>
+<head>
+<title>JP2KAK -- JPEG-2000 (based on Kakadu)</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>JP2KAK -- JPEG-2000 (based on Kakadu)</h1>
+
+Most forms of JPEG2000 JP2 and JPC compressed images (ISO/IEC 15444-1) can be 
+read with GDAL using a driver based on the Kakadu library.  As well, new images
+can be written.  Existing images cannot be updated in place.<p>
+
+The JPEG2000 file format supports lossy and lossless compression of 
+8bit and 16bit images with 1 or more bands (components).  Via the 
+<a href="http://www.mappingscience.com/msi.html">GeoJP2 (tm)</a> mechanism,
+GeoTIFF style coordinate system and georeferencing information can be embedded
+within the JP2 file.  JPEG2000 files use a substantially different format and
+compression mechanism than the traditional JPEG compression and JPEG JFIF 
+format.  They are distinct compression mechanisms produced by the same
+group.  JPEG2000 is based on wavelet compression.<p>
+
+The JPEG2000 driver documented on this page (the JP2KAK driver) is implemented
+on top of the commercial <a href="http://www.kakadusoftware.com/">Kakadu</a>
+library.  This is a high quality and high performance JPEG2000 library in wide
+used in the geospatial and general imaging community.  However, it is not free,
+and so normally builds of GDAL from source will not include support for this
+driver unless the builder purchases a license for the library and configures
+accordingly.  GDAL includes <a href="frmt_jpeg2000.html">another JPEG2000 driver</a>
+based on the free JasPer library.<p>
+
+When reading images this driver will represent the bands as being 
+Byte (8bit unsigned), 16 bit signed or 16 bit unsigned.  Georeferencing
+and coordinate system information will be available if the file is a 
+GeoJP2 (tm) file.  Files color encoded in YCbCr color space will be 
+automatically translated to RGB.  Paletted images are also supported.<P>
+
+<h2>Creation Issues</h2>
+
+JPEG2000 files can only be created using the CreateCopy mechanism to
+copy from an existing dataset.<p>
+
+JPEG2000 overviews are maintained as part of the mathematical description of
+the image.  Overviews cannot be built as a separate process, but on read the
+image will generally be represented as having overview levels at various 
+power of two factors.<p>
+
+Creation Options:<p>
+
+<ul>
+
+<li> <b>QUALITY=n</b>: Set the compressed size ratio as a percentage
+of the size of the uncompressed image.  The default is 20 indicating that
+the resulting image should be 20% of the size of the uncompressed image. 
+A value of 100 will result in use of the lossless compression algorithm . 
+Actual final image size may not exactly match that requested depending on 
+various factors.<P>
+
+<li> <b>BLOCKXSIZE=n</b>: Set the tile width to use.  Defaults to 20000.
+<p>
+
+<li> <b>BLOCKYSIZE=n</b>: Set the tile height to use.  Defaults to image height.
+<p>
+
+<li> <b>GMLJP2=YES/NO</b>: Indicates whether a GML box conforming to the OGC GML in JPEG2000 specification should be included in the file.  Defaults to YES.<p>
+
+<li> <b>GeoJP2=YES/NO</b>: Indicates whether a GML box conforming to the GeoJP2 (GeoTIFF in JPEG2000) specification should be included in the file.  Defaults to YES.<p>
+
+<li> <b>LAYERS=n</b>: Control the number of layers produced.  These are 
+sort of like resolution layers, but not exactly.  The default value is
+12 and this works well in most situations.<p>
+
+<li> <b>ROI=xoff,yoff,xsize,ysize</b>: Selects a region to be a region of
+interest to process with higher data quality.  The various "R" flags below may
+be used to control the amount better.  For example the settings 
+"ROI=0,0,100,100", "Rweight=7" would encode the top left 100x100 area of
+the image with considerable higher quality compared to the rest of the image.
+<p>
+
+</ul>
+
+The following creation options are tightly tied to the Kakadu library, and
+are considered to be for advanced use only.  Consult Kakadu documentation
+to better understand their meaning.<p>
+
+<ul>
+<li> <b>Corder</b>: Defaults to "PRCL". 
+<li> <b>Cprecincts</b>: Defaults to "{512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}".
+<li> <b>ORGgen_plt</b>: Defaults to "yes". 
+<li> <b>Cmodes</b>: Kakadu library default used.
+<li> <b>Clevels</b>: Kakadu library default used.
+<li> <b>Rshift</b>: Kakadu library default used.
+<li> <b>Rlevels</b>: Kakadu library default used.
+<li> <b>Rweight</b>: Kakadu library default used.
+</ul>
+
+See Also:<p>
+
+<ul>
+
+<li> Implemented as <tt>gdal/frmts/jp2kak/jp2kakdataset.cpp</tt>.<p>
+
+<li> <a href="http://www.remotesensing.org/jpeg2000/">JPEG2000 for Geospatial
+Applications</a> page, includes GeoJP2(tm) discussion.<p>
+
+<li> Alternate <a href="frmt_jpeg2000.html">JPEG200 driver</a>.<p>
+
+</ul>
+
+</body>
+</html>

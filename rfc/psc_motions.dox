@@ -1,0 +1,37 @@
+/*!
+\page psc_motions Motions of the GDAL/OGR Project Management Committee
+
+
+\section motion_2006 Motions of 2006
+
+<ul>
+
+<li> <b>Mailing List Changes</b> (approved)<p>
+
+On Dec 29, 2006, Frank Warmerdam motions to:<P>
+<ol>
+<li> To create a gdal-announce@lists.osgeo.org mailing list which is moderated
+    and only used for infrequent GDAL/OGR related announcements such as
+    releases, major bugs, and other major events. 
+<li> To migrate the gdal-dev@lists.maptools.org mailing list to lists.osgeo.org
+    in such a way to preserve existing members, and hopefully preserve
+    settings. 
+<li> To create a gdal-commits@lists.osgeo.org mailing list which will be used
+    for SVN commit messages once the SVN transition is complete. 
+<li> To appoint Frank Warmerdam as lists administrator for the GDAL/OGR mailing
+    lists.
+</ol>
+
+Motion passed Jan 4, 2007.  FrankW(+1), HowardB(+1), DanielM(+1).<p>
+
+<li> <b>Project Sponsorship</b> (approved)<p>
+
+On Nov 6, 2006, Frank Warmerdam motions for "GDAL/OGR to join the OSGeo Project 
+Sponsorship Program."
+
+Motion passed Nov 9, 2006.  FrankW(+1), HowardB(+1), DanielM(-0).
+
+</ul>
+
+*/
+ 

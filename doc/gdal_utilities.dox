@@ -1,0 +1,1015 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
+/*! 
+\page gdal_utilities GDAL Utilities
+
+The following utility programs are distributed with GDAL. 
+
+<ul>
+<li> \ref gdalinfo - report information about a file.
+<li> \ref gdal_translate - Copy a raster file, with control of output format.
+<li> \ref gdaladdo - Add overviews to a file.
+<li> \ref gdalwarp - Warp an image into a new coordinate system.
+<li> \ref gdaltindex - Build a MapServer raster tileindex.
+<li> \ref gdal_contour - Contours from DEM.
+<li> \ref rgb2pct - Convert a 24bit RGB image to 8bit paletted.
+<li> \ref pct2rgb - Convert an 8bit paletted image to 24bit RGB.
+<li> \ref gdal_merge - Build a quick mosaic from a set of images.
+<li> \ref gdal_rasterize - Rasterize vectors into raster file.
+<li> \ref gdal-config - Get options required to build software using GDAL.
+</ul>
+
+\section gdal_utilities_creating Creating New Files
+
+Access an existing file to read it is generally quite simple.  Just
+indicate the name of the file or dataset on the commandline.  However, 
+creating a file is more complicated.  It may be necessary to indicate the
+the format to create, various creation options affecting how it will
+be created and perhaps a coordinate system to be assigned.  Many of 
+these options are handled similarly by different GDAL utilities, and are
+introduced here. <p>
+
+<dl>
+<dt> <b>-of</b> <i>format</i></dt><dd> 
+Select the format to create the new file as.  The formats are assigned short 
+names such as GTiff (for GeoTIFF) or HFA (for Erdas Imagine).  The list of 
+all format codes can be listed with the <b>--formats</b> switch.  Only
+formats list as "(rw)" (read-write) can be written.<p>
+Many utilities default
+to creating GeoTIFF files if a format is not specified.  File extensions
+are not used to guess output format, nor are extensions generally added
+by GDAL if not indicated in the filename by the user. 
+</dd>
+
+<dt> <b>-co</b> <i>NAME=VALUE</i></dt><dd> 
+Many formats have one or more optional creation options that can be used
+to control particulars about the file created.  For instance, the GeoTIFF
+driver supports creation options to control compression, and whether the file
+should be tiled.<p>
+The creation options available vary by format driver, and some simple 
+formats have no creation options at all.  A list of options supported
+for a format can be listed with the "--format <format>" commandline
+option but the web page for the format is the definitive source of 
+information on driver creation options.<p>
+</dd>
+
+<dt> <b>-a_srs</b> <i>SRS</i></dt><dd> 
+Several utilities, (gdal_translate and gdalwarp) include the ability
+to specify coordinate systems with commandline options like
+<b>-a_srs</b> (assign SRS to output), <b>-s_srs</b> (source SRS) and
+<b>-t_srs</b> (target SRS).<p>
+These utilities allow the coordinate system (SRS = spatial reference system)
+to be assigned in a variety of formats.<p>
+
+<ul>
+<li> <b>NAD27</b>/<b>NAD83</b>/<b>WGS84</b>/<b>WGS72</b>: 
+These common geographic (lat/long) coordinate
+systems can be used directly by these names. 
+
+<li> <b>EPSG:</b><i>n</i>: Coordinate systems (projected or geographic) can
+be selected based on their EPSG codes, for instance EPSG:27700 is the British
+National Grid.  A list of EPSG coordinate systems can be found in the GDAL 
+data files gcs.csv and pcs.csv. 
+
+<li> <i>PROJ.4 Definitions</i>: A PROJ.4 definition string can be used
+as a coordinate system.  For instance "+proj=utm +zone=11 +datum=WGS84".  
+Take care to keep the proj.4 string together as a single argument to the
+command (usually by double quoting). <p>
+
+<li> <i>OpenGIS Well Known Text</i>: The Open GIS Consortium has defined
+a textual format for describing coordinate systems as part of the Simple
+Features specifications.  This format is the internal working format
+for coordinate systems used in GDAL.  The name of a file containing a 
+WKT coordinate system definition may be used a coordinate system argument,
+or the entire coordinate system itself may be used as a commandline
+option (though escaping all the quotes in WKT is quite challenging). <p>
+
+<li> <i>ESRI Well Known Text</i>: ESRI uses a slight variation on OGC WKT
+format in their ArcGIS product (ArcGIS .prj files), and these may be used
+in a similar manner to WKT files, but the filename should be prefixed with
+<b>ESRI::</b>.  For example <b>"ESRI::NAD 1927 StatePlane Wyoming West FIPS 4904.prj"</b>. <p>
+</ul>
+</dd>
+</dl>
+
+\section gdal_utilities_switches General Command Line Switches
+All GDAL command line utility programs support the following 
+"general" options.<p>
+
+<dl>
+<dt> <b>--version</b></dt><dd> Report the version of GDAL and exit.</dd>
+
+<dt> <b>--formats</b></dt><dd> List all raster formats supported by this
+GDAL build (read-only and read-write) and exit. The format support is indicated
+ as follows: 'ro' is read-only driver; 
+'rw' is read or write (ie. supports CreateCopy);
+'rw+' is read, write and update (ie. supports Create).</dd>
+
+<dt> <b>--format</b> <i>format</i></dt><dd>
+List detailed information about a single format driver.  The <i>format</i> 
+should be the short name reported in the <b>--formats</b> list, such as 
+GTiff.</dd>
+
+<dt> <b>--optfile</b> <i>file</i></dt><dd>
+Read the named file and substitute the contents into the commandline
+options list.  Lines beginning with # will be ignored.  Multi-word arguments
+may be kept together with double quotes. 
+</dd>
+
+<dt> <b>--config</b> <i>key value</i></dt><dd>
+Sets the named configuration keyword to the given value, as opposed to 
+setting them as environment variables.  Some common configuration keywords
+are GDAL_CACHEMAX (memory used internally for caching in megabytes)
+and GDAL_DATA (path of the GDAL "data" directory).  Individual drivers may
+be influenced by other configuration options. 
+</dd>
+
+<dt> <b>--debug</b> <i>value</i></dt><dd>
+Control what debugging messages are emitted.  A value of <i>ON</i> will
+enable all debug messages.  A value of <i>OFF</i> will disable all debug
+messages.  Another value will select only debug messages containing that
+string in the debug prefix code. 
+</dd>
+
+<dt> <b>--help-general</b></dt><dd>
+Gives a brief usage message for the generic GDAL commandline options 
+and exit.
+</dd>
+
+</dl>
+
+\htmlonly
+<p>
+$Id$
+</p>
+\endhtmlonly
+*/
+
+*******************************************************************************
+/*! \page gdalinfo gdalinfo
+
+lists information about a raster dataset
+
+\if man
+\section synopsis SYNOPSIS
+\endif
+
+\htmlonly
+Usage:
+\endhtmlonly
+
+\verbatim
+gdalinfo [--help-general] [-mm] [-stats] [-nogcp] [-nomd]
+         [-mdd domain]* datasetname
+\endverbatim
+
+\if man
+\section description DESCRIPTION
+\endif
+
+The gdalinfo program lists various information about a GDAL supported
+raster dataset. 
+<dl>
+<dt> <b>-mm</b></dt><dd> Force computation of the actual min/max values for each
+band in the dataset.</dd>
+<dt> <b>-stats</b></dt><dd> Force computation and display of image statistics.</dd>
+<dt> <b>-nogcp</b></dt><dd> Suppress ground control points list printing. It may be
+useful for datasets with huge amount of GCPs, such as L1B AVHRR or HDF4 MODIS
+which contain thousands of the ones.</dd>
+<dt> <b>-nomd</b></dt><dd> Suppress metadata printing. Some datasets may contain a lot
+of metadata strings.</dd>
+<dt> <b>-mdd domain</b></dt><dd> Report metadata for the specified domain</dd>
+</dl>
+
+The gdalinfo will report all of the following (if known):
+
+<ul>
+<li> The format driver used to access the file. 
+<li> Raster size (in pixels and lines).
+<li> The coordinate system for the file (in OGC WKT).
+<li> The geotransform associated with the file (rotational coefficients are
+currently not reported).  
+<li> Corner coordinates in georeferenced, and if possible lat/long based on
+the full geotransform (but not GCPs). 
+<li> Ground control points.
+<li> File wide (including subdatasets) metadata. 
+<li> Band data types.
+<li> Band color interpretations.
+<li> Band block size.
+<li> Band descriptions. 
+<li> Band min/max values (internally known and possibly computed).
+<li> Band NODATA value.
+<li> Band overview resolutions available. 
+<li> Band unit type (i.e.. "meters" or "feet" for elevation bands). 
+<li> Band pseudo-color tables. 
+</ul>
+
+\if man
+\section example EXAMPLE
+\endif
+
+\htmlonly
+Example:
+\endhtmlonly
+
+\verbatim
+gdalinfo ~/openev/utm.tif 
+Driver: GTiff/GeoTIFF
+Size is 512, 512
+Coordinate System is:
+PROJCS["NAD27 / UTM zone 11N",
+    GEOGCS["NAD27",
+        DATUM["North_American_Datum_1927",
+            SPHEROID["Clarke 1866",6378206.4,294.978698213901]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",-117],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1]]
+Origin = (440720.000000,3751320.000000)
+Pixel Size = (60.000000,-60.000000)
+Corner Coordinates:
+Upper Left  (  440720.000, 3751320.000) (117d38'28.21"W, 33d54'8.47"N)
+Lower Left  (  440720.000, 3720600.000) (117d38'20.79"W, 33d37'31.04"N)
+Upper Right (  471440.000, 3751320.000) (117d18'32.07"W, 33d54'13.08"N)
+Lower Right (  471440.000, 3720600.000) (117d18'28.50"W, 33d37'35.61"N)
+Center      (  456080.000, 3735960.000) (117d28'27.39"W, 33d45'52.46"N)
+Band 1 Block=512x16 Type=Byte, ColorInterp=Gray
+\endverbatim
+
+\if man
+\section author AUTHORS
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
+*/
+
+*******************************************************************************
+/*! \page gdal_translate gdal_translate
+
+converts raster data between different formats
+
+\if man
+\section tsynopsis SYNOPSIS
+\endif
+
+\htmlonly
+Usage:
+\endhtmlonly
+
+\verbatim
+gdal_translate [--help-general]
+       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
+             CInt16/CInt32/CFloat32/CFloat64}] [-not_strict]
+       [-of format] [-b band] [-outsize xsize[%] ysize[%]]
+       [-scale [src_min src_max [dst_min dst_max]]]
+       [-srcwin xoff yoff xsize ysize] [-projwin ulx uly lrx lry]
+       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
+       [-gcp pixel line easting northing]*
+       [-mo "META-TAG=VALUE"]* [-quiet] [-sds]
+       [-co "NAME=VALUE"]*
+       src_dataset dst_dataset
+\endverbatim
+
+\if man
+\section tdescription DESCRIPTION
+\endif
+
+The gdal_translate utility can be used to convert raster data between 
+different formats, potentially performing some operations like subsettings, 
+resampling, and rescaling pixels in the process.
+
+<dl>
+<dt> <b>-ot</b>: <i>type</i></dt><dd> For the output bands to be of the
+indicated data type.</dd>
+<dt> <b>-not_strict</b>:</dt><dd> Be forgiving of mismatches and lost data
+when
+translating to the output format.</dd>
+<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format.  The default is 
+GeoTIFF (GTiff).  Use the short format name.</dd>
+<dt> <b>-b</b> <i>band</i>:</dt><dd> Select an input band <i>band</i> for
+output. Bands are numbered from 1 Multiple <b>-b</b> switches may be used
+to select a set of input bands to write to the output file, or to reorder
+bands.</dd>
+<dt> <b>-outsize</b> <i>xsize[%] ysize[%]</i>:</dt><dd> Set the size of the output
+file.  Outsize is in pixels and lines unless '%' is attached in which case it
+is as a fraction of the input image size.</dd>
+<dt> <b>-scale</b> <i>[src_min src_max [dst_min dst_max]]</i>:</dt><dd> Rescale the
+input pixels values from the range <i>src_min</i> to <i>src_max</i> to
+the range <i>dst_min</i> to <i>dst_max</i>.  If omitted the output range is
+0 to 255.  If omitted the input range is automatically computed from the
+source data.</dd>
+<dt> <b>-srcwin</b> <i>xoff yoff xsize ysize</i>:</dt><dd> Selects a subwindow
+from the source image for copying based on pixel/line location.  </dd>
+<dt> <b>-projwin</b> <i>ulx uly lrx lry</i>:</dt><dd> Selects a subwindow from
+the source image for copying (like <b>-srcwin</b>) but with the corners given
+in georeferenced coordinates. </dd>
+<dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> Override the projection for the
+output file.  The <i>srs_def</i> may be any of the usual GDAL/OGR forms,
+complete WKT, PROJ.4, EPSG:n or a file containing the WKT. </dd>
+<dt> <b>-a_ullr</b> <i>ulx uly lrx lry</i>:</dt><dd>
+Assign/override the georeferenced bounds of the output file.  This assigns 
+georeferenced bounds to the output file, ignoring what would have been derived 
+from the source file.</dd>
+<dt> <b>-a_nodata</b> <i>value</i>:</dt><dd>
+Assign a specified nodata value to output bands.</dd>
+<dt> <b>-mo</b> <i>"META-TAG=VALUE"</i>:</dt><dd> Passes a metadata key and
+value to set on the output dataset if possible.</dd>
+<dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> Passes a creation option to the
+output format driver.  Multiple <b>-co</b> options may be listed.  See format 
+specific documentation for legal creation options for each format.</dd>
+<dt> <b>-gcp</b> <i>pixel line easting northing</i>:</dt><dd>
+Add the indicated ground control point to the output dataset.  This option 
+may be provided multiple times to provide a set of GCPs. 
+</dd>
+<dt> <b>-quiet</b>:</dt><dd> Suppress progress monitor and other non-error
+output.</dd>
+<dt> <b>-sds</b>:</dt><dd> Copy all subdatasets of this file to individual 
+output files.  Use with formats like HDF or OGDI that have subdatasets.</dd>
+<dt> <i>src_dataset</i>:</dt><dd> The source file name.</dd>
+<dt> <i>dst_dataset</i>:</dt><dd> The destination file name.</dd>
+</dl>
+
+\if man
+\section texample EXAMPLE
+\endif
+
+\htmlonly
+Example:
+\endhtmlonly
+
+\verbatim
+gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
+\endverbatim
+
+\if man
+\section tauthor AUTHORS
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
+*/
+
+*******************************************************************************
+/*! \page gdaladdo gdaladdo
+
+builds or rebuilds overview images
+
+\if man
+\section asynopsis SYNOPSIS
+\endif
+
+\htmlonly
+Usage: 
+\endhtmlonly
+
+\verbatim
+gdaladdo [-r {nearest,average,average_mp,average_magphase,mode}]
+                filename levels
+\endverbatim
+
+\if man
+\section adescription DESCRIPTION
+\endif
+
+The gdaladdo utility can be used to build or rebuild overview images for
+most supported file formats with one over several downsampling algorithms. 
+
+<dl>
+<dt> <b>-r</b>
+<i>{nearest,average,average_mp,average_magphase,mode}</i>:</dt><dd>
+Select a resampling algorithm.</dd>
+<dt> <i>filename</i>:</dt><dd> The file to build overviews for. </dd>
+<dt> <i>levels</i>:</dt><dd> A list of integral overview levels to build.  </dd>
+</dl>
+
+<i>Mode</i> is not actually implemented, and <i>average_mp</i> is unsuitable 
+for use.  <i>Average_magphase</i> averages complex data in mag/phase space.  
+<i>Nearest</i> and <i>average</i> are applicable to normal image data.  
+<i>Nearest</i> applies a nearest neighbour (simple sampling) resampler, while
+<i>average</i> computes the average of all non-NODATA contributing pixels.
+
+Selecting a level value like <i>2</i> causes an overview level that is 1/2
+the resolution (in each dimension) of the base layer to be computed.  If
+the file has existing overview levels at a level selected, those levels will
+be recomputed and rewritten in place.
+
+Some format drivers do not support overviews at all.  Many format drivers
+store overviews in a secondary file with the extension .ovr that is actually
+in TIFF format.  The GeoTIFF driver stores overviews internally to the file 
+operated on. 
+
+Overviews created in TIFF format may be compressed using the COMPRESS_OVERVIEW 
+configuration option.  All compression methods, supported by the GeoTIFF 
+driver, available here. (eg --config COMPRESS_OVERVIEW DEFLATE)
+
+Most drivers also support an alternate overview format using Erdas Imagine 
+format.  To trigger this use the USE_RRD=YES configuration option.  This will 
+place the overviews in an associated .aux file suitable for direct use with 
+Imagine or ArcGIS as well as GDAL applications.  (eg --config USE_RRD YES)
+
+\if man
+\section aexample EXAMPLE
+\endif
+
+\htmlonly
+Example:
+\endhtmlonly
+
+Create overviews, embedded in the supplied TIFF file:
+
+\verbatim
+gdaladdo -r average abc.tif 2 4 8 16
+\endverbatim
+
+Create an external compressed GeoTIFF overview file from the ERDAS .IMG file:
+
+\verbatim
+gdaladdo --config COMPRESS_OVERVIEW DEFLATE erdas.img 2 4 8 16
+\endverbatim
+
+Create an Erdas Imagine format overviews for the indicated JPEG file:
+
+\verbatim
+gdaladdo --config USE_RRD YES airphoto.jpg 3 9 27 81
+\endverbatim
+
+\if man
+\section aauthor AUTHORS
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
+*/
+
+*******************************************************************************
+/*! \page gdalwarp gdalwarp
+
+simple image reprojection and warping utility
+
+\if man
+\section wsynopsis SYNOPSIS
+\endif
+
+\htmlonly
+Usage: 
+\endhtmlonly
+
+\verbatim
+gdalwarp 
+    [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]
+    [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]
+    [-wo "NAME=VALUE"] [-ot Byte/Int16/...] [-wt Byte/Int16]
+    [-srcnodata "value [value...]"] [-dstnodata "value [value...]"]
+    [-rn] [-rb] [-rc] [-rcs] [-wm memory_in_mb] [-multi] [-q]
+    [-of format] [-co "NAME=VALUE"]* srcfile dstfile
+\endverbatim
+
+\if man
+\section wdescription DESCRIPTION
+\endif
+
+<p>
+The gdalwarp utility is a simple image reprojection and warping
+utility. The program can reproject to any support projection,
+and can also apply GCPs stored with the image if the image is "raw"
+with control information.
+
+<p>
+<dl>
+<dt> <b>-s_srs</b> <em>srs def</em>:</dt><dd> source spatial reference
+ set. The coordinate systems that can be passed are anything supported
+ by the OGRSpatialReference.SetFromUserInput() call, which includes
+ EPSG PCS and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above),
+ or the name of a .prf file containing well known text.</dd>
+<dt> <b>-t_srs</b> <em>srs_def</em>:</dt><dd> target spatial reference set. The
+coordinate systems that can be passed are anything supported by the
+OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS
+and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above), or the name
+of a .prf file containing well known text.</dd>
+<dt> <b>-order</b> <em>n</em>:</dt><dd> order of polynomial used for warping (1 to 3). The default is to select a polynomial order based on the number of GCPs.</dd>
+<dt> <b>-tps</b></dt><dd>Enable use of thin plate spline transformer 
+based on available GCPs.  Use this <em>instead</em> of the -order switch.</dd>
+<dt> <b>-et</b> <em>err_threshold</em>:</dt><dd> error threshold for transformation approximation (in pixel units - defaults to 0.125).</dd>
+<dt> <b>-te</b> <em>xmin ymin xmax ymax</em>:</dt><dd> set georeferenced extents of output file to be created.</dd>
+<dt> <b>-tr</b> <em>xres yres</em>:</dt><dd> set output file resolution (in target georeferenced units)</dd>
+<dt> <b>-ts</b> <em>width height</em>:</dt><dd> set output file size in
+pixels and lines</dd>
+<dt> <b>-wo</b> <em>"NAME=VALUE"</em>:</dt><dd> Set a warp options.  The 
+GDALWarpOptions::papszWarpOptions docs show all options.  Multiple
+ <b>-wo</b> options may be listed.</dd>
+<dt> <b>-ot</b> <em>type</em>:</dt><dd> For the output bands to be of the indicated
+ data type.</dd>
+<dt> <b>-wt</b> <em>type</em>:</dt><dd> Working pixel data type. The data type of
+ pixels in the source image and destination image buffers.</dd>
+<dt> <b>-rn</b>:</dt><dd> Use nearest neighbour resampling (default, fastest algorithm, worst
+ interpolation quality).</dd>
+<dt> <b>-rb</b>:</dt><dd> Use bilinear resampling.</dd>
+<dt> <b>-rc</b>:</dt><dd> Use cubic resampling.</dd>
+<dt> <b>-rcs</b>:</dt><dd> Use cubic spline resampling (slowest
+algorithm).</dd>
+<dt> <b>-srcnodata</b> <em>value [value...]</em>:</dt><dd> Set nodata masking
+values for input bands (different values can be supplied for each band).  If 
+more than one value is supplied all values should be quoted to keep them 
+together as a single operating system argument.  Masked values will not be 
+used in interpolation.</dd>
+<dt> <b>-dstnodata</b> <em>value [value...]</em>:</dt><dd> Set nodata values for output bands (different values can be supplied for each band).  If 
+more than one value is supplied all values should be quoted to keep them 
+together as a single operating system argument.  New files
+will be initialized to this value and if possible the nodata value will be
+recorded in the output file.</dd>
+<dt> <b>-wm</b> <em>memory_in_mb</em>:</dt><dd> Set the amount of memory (in megabytes) that the warp API is allowed to use for caching.</dd>
+<dt> <b>-multi</b>:</dt><dd> Use multithreaded warping implementation.
+ Multiple threads will be used to process chunks of image and perform
+ input/output operation simultaneously.</dd>
+<dt> <b>-q</b>:</dt><dd> Be quiet.</dd>
+<dt> <b>-of</b> <em>format</em>:</dt><dd> Select the output format. The default is GeoTIFF (GTiff). Use the short format name. </dd>
+<dt> <b>-co</b> <em>"NAME=VALUE"</em>:</dt><dd> passes a creation
+ option to the output format driver. Multiple <b>-co</b> options may be
+ listed. See format specific documentation for legal creation options
+ for each format. </dd>
+<dt> <em>srcfile</em>:</dt><dd> The source file name. </dd>
+<dt> <em>dstfile</em>:</dt><dd> The destination file name. </dd>
+</dl>
+
+Mosaicing into an existing output file is supported if the output file 
+already exists. 
+
+<p>
+\if man
+\section wexample EXAMPLE
+\endif
+
+\htmlonly
+Example:
+\endhtmlonly
+
+For instance, an eight bit spot scene stored in GeoTIFF with
+control points mapping the corners to lat/long could be warped to a UTM
+projection with a command like this:<p>
+
+\verbatim
+gdalwarp -t_srs '+proj=utm +zone=11 +datum=WGS84' raw_spot.tif utm11.tif
+\endverbatim
+
+For instance, the second channel of an ASTER image stored in HDF with
+control points mapping the corners to lat/long could be warped to a UTM
+projection with a command like this:<p>
+
+\verbatim
+gdalwarp HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 pg-PR1B0000-2002031402_100_001_2.tif
+\endverbatim
+
+\if man
+\section wauthor AUTHORS
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
+*/
+
+*******************************************************************************
+/*! \page gdaltindex gdaltindex
+
+builds a shapefile as a raster tileindex
+
+\if man
+\section isynopsis SYNOPSIS
+\endif
+
+\htmlonly
+Usage: 
+\endhtmlonly
+
+\verbatim
+gdaltindex [-tileindex field_name] index_file [gdal_file]*
+\endverbatim
+
+
+\if man
+\section idescription DESCRIPTION
+\endif
+
+This program builds a shapefile with a record for each input raster file, 
+an attribute containing the filename, and a polygon geometry outlining the
+raster.  This output is suitable for use with UMN MapServer as a raster 
+tileindex. 
+
+<ul>
+<li> The shapefile (index_file) will be created if it doesn't already exist, 
+otherwise it will append to the existing file.
+<li> The default tile index field is 'location'.
+<li> Raster filenames will be put in the file exactly as they are specified
+on the commandline.
+<li> Simple rectangular polygons are generated in the same
+coordinate system as the rasters.
+</ul>
+
+\if man
+\section iexample EXAMPLE
+\endif
+
+\htmlonly
+Example:
+\endhtmlonly
+
+\verbatim
+gdaltindex doq_index.shp doq/*.tif
+\endverbatim
+
+\if man
+\section wauthor AUTHOR
+Frank Warmerdam <warmerdam@pobox.com>
+\endif
+*/
+
+*******************************************************************************
+/*! \page gdal_contour gdal_contour
+
+builds vector contour lines from a raster elevation model
+
+\if man
+\section isynopsis SYNOPSIS
+\endif
+
+\htmlonly
+Usage: 
+\endhtmlonly
+
+\verbatim
+Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]
+                    [-snodata n] [-f <formatname>] [-i <interval>]
+                    [-off <offset>] [-fl <level> <level>...]
+                    <src_filename> <dst_filename> 
+\endverbatim
+
+
+\if man
+\section idescription DESCRIPTION
+\endif
+
+This program generates a vector contour file from the input raster elevation
+model (DEM). 
+
+<dl>
+<dt> <b>-s_srs</b> <em>srs def</em>:</dt><dd> source spatial reference
+ set. The coordinate systems that can be passed are anything supported
+ by the OGRSpatialReference.SetFromUserInput() call, which includes
+ EPSG PCS and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above),
+ or the name of a .prf file containing well known text.</dd>
+</dl
+
+<dt> <b>-b</b> <em>band</em>:</dt><dd> picks a particular band to get the DEM from.  Defaults to band 1.</dd>
+
+<dt> <b>-a</b> <em>name</em>:</dt><dd>provides a name for the attribute in which to put the elevation. If not provided no elevation attribute is attached. </dd>
+<dt> <b>-3d</b>:</dt> <dd>
+      Force production of 3D vectors instead of 2D.  Includes elevation at
+      every vertex.</dd>
+
+<dt> <b>-inodata</b>:</dt> <dd> Ignore any nodata value implied in the dataset - treat all values as valid.</dd>
+
+<dt> <b>-snodata</b> <em>value</em>:</dt><dd>
+ Input pixel value to treat as "nodata". </dd>
+
+<dt> <b>-f</b> <em>format</em>:</dt> <dd>
+create output in a particular format, default is shapefiles.</dd>
+
+<dt> <b>-i</b> <em>interval</em>:</dt><dd>
+ elevation interval between contours.</dd>
+
+<dt> <b>-off</b> <em>offset</em>:</dt><dd>
+ Offset from zero relative to which to interpret intervals.</dd>
+
+<dt> <b>-fl</b> <em>level</em>:</dt>
+<dd> Name one or more "fixed levels" to extract.</dd>
+</dl>
+
+\if man
+\section iexample EXAMPLE
+\endif
+
+\htmlonly
+Example:
+\endhtmlonly
+
+This would create 10meter contours from the DEM data in dem.tif and produce
+a shapefile in contour.shp/shx/dbf with the contour elevations in the "elev"
+attribute.
+
+\verbatim
+gdal_contour -a elev dem.tif contour.shp -i 10.0
+\endverbatim
+
+\if man
+\section iauthor AUTHORS
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
+*/
+
+*******************************************************************************
+/*! \page gdal_rasterize gdal_rasterize
+
+burns vector polygons into a raster
+
+\if man
+\section isynopsis SYNOPSIS
+\endif
+
+\htmlonly
+Usage: 
+\endhtmlonly
+
+\verbatim
+Usage: gdal_rasterize [-b band]
+       [-burn value] | [-a attribute_name] | [-3d]
+       [-l layername]* [-where expression] [-sql select_statement]
+       <src_datasource> <dst_filename>
+\endverbatim
+
+\if man
+\section idescription DESCRIPTION
+\endif
+
+This program burns vector polygons into the raster band(s) of a raster
+image.  Vectors are read from OGR supported vector formats. 
+
+<dl>
+<dt> <b>-b</b> <em>band</em>: </dt><dd> 
+The band(s) to burn values into.  Multiple -b arguments may be used to burn 
+into a list of bands.  The default is to burn into band 1.</dd>
+
+<dt> <b>-burn</b> <em>value</em>: </dt><dd> 
+A fixed value to burn into a band for all objects.  A list of -burn options 
+can be supplied, one per band being written to.</dd>
+
+<dt> <b>-a</b> <em>attribute_name</em>: </dt><dd> 
+Identifies an attribute field on the features to be used for a burn in value.
+The value will be burned into all output bands.</dd>
+
+<dt> <b>-3d</b>: </dt><dd> 
+Indicates that a burn value should be extracted from the "Z" values of the 
+feature (not yet implemented).</dd>
+
+<dt> <b>-l</b> <em>layername</em>: </dt><dd> 
+Indicates the layer(s) from the datasource that will be used for input 
+features.  May be specified multiple times, but at least one layer name or a -sql option must be specified.</dd>
+
+<dt> <b>-where</b> <em>expression</em>: </dt><dd> 
+An optional SQL WHERE style query expression to be applied to select features 
+to burn in from the input layer(s). </dd>
+
+<dt> <b>-sql</b> <em>select_statement</em>: </dt><dd> 
+An SQL statement to be evaluated against the datasource to produce a
+virtual layer of features to be burned in.</dd>
+
+<dt> <em>src_datasource</em>: </dt><dd> 
+Any OGR supported readable datasource.</dd>
+
+<dt> <em>dst_filename</em>: </dt><dd> 
+The GDAL supported output file.  Must support update mode access.  Currently 
+gdal_rasterize cannot create new output files though that may be added eventually.</dd>
+
+</dl>
+
+\if man
+\section iexample EXAMPLE
+\endif
+
+\htmlonly
+Example:
+\endhtmlonly
+
+The following would burn all polygons from mask.shp into the RGB TIFF
+file work.tif with the color red (RGB = 255,0,0).  
+
+\verbatim
+gdal_rasterize -b 1 -b 2 -b 3 -burn 255 -burn 0 -burn 0 -l mask mask.shp work.tif
+\endverbatim
+
+The following would burn all "class A" buildings into the output elevation
+file, pulling the top elevation from the ROOF_H attribute.
+
+\verbatim
+gdal_rasterize -a ROOF_H -where 'class="A"' -l footprints footprints.shp city_dem.tif
+\endverbatim
+
+\if man
+\section iauthor AUTHORS
+Frank Warmerdam <warmerdam@pobox.com>
+\endif
+*/
+
+*******************************************************************************
+/*! \page rgb2pct rgb2pct.py
+
+converts an image into a pseudo-colored image
+
+\if man
+\section rsynopsis SYNOPSIS
+\endif
+
+\htmlonly
+Usage: 
+\endhtmlonly
+
+\verbatim
+rgb2pct.py [-n colors] [-of format] source_file dest_file
+\endverbatim
+
+\if man
+\section rdescription DESCRIPTION
+\endif
+
+This utility will compute an optimal pseudo-color table for a given RGB image
+using a median cut algorithm on a downsampled RGB histogram.   Then it 
+converts the image into a pseudo-colored image using the color table.
+This conversion utilizes Floyd-Steinberg dithering (error diffusion) to 
+maximize output image visual quality. 
+
+<dl>
+<dt> <b>-n</b> <i>colors</i>:</dt><dd> Select the number of colors in the generated
+color table.  Defaults to 256.  Must be between 2 and 256. </dd>
+<dt> <b>-of</b> <i>format</i>:</dt><dd> Format to generated (defaults to GeoTIFF).  Same
+semantics as the <b>-of</b> flag for gdal_translate.  Only output formats
+supporting pseudocolor tables should be used. </dd>
+<dt> <i>source_file</i>:</dt><dd> The input RGB file. </dd>
+<dt> <i>dest_file</i>:</dt><dd> The output pseudo-colored file that will be
+created.</dd>
+</dl>
+
+NOTE: rgb2pct.py is a Python script, and will only work if GDAL was built
+with Python support.  
+
+\if man
+\section iauthor AUTHOR
+Frank Warmerdam <warmerdam@pobox.com>
+\endif
+*/
+
+*******************************************************************************
+/*! \page pct2rgb pct2rgb.py
+
+converts an image into a pseudo-colored image
+
+\if man
+\section rsynopsis SYNOPSIS
+\endif
+
+\htmlonly
+Usage: 
+\endhtmlonly
+
+\verbatim
+pct2rgb.py [-of format] [-b band] source_file dest_file
+\endverbatim
+
+\if man
+\section rdescription DESCRIPTION
+\endif
+
+This utility will convert a pseudocolor band on the input file into an output
+RGB file of the desired format. 
+
+<dl>
+<dt> <b>-of</b> <i>format</i>:</dt><dd> Format to generated (defaults to GeoTIFF).</dd>
+<dt> <b>-b</b> <i>band</i>:</dt><dd> 
+Band to convert to RGB, defaults to 1.</dd>
+<dt> <i>source_file</i>:</dt><dd> The input file. </dd>
+<dt> <i>dest_file</i>:</dt><dd> The output RGB file that will be
+created.</dd>
+</dl>
+
+NOTE: pct2rgb.py is a Python script, and will only work if GDAL was built
+with Python support.
+
+\if man
+\section rauthor AUTHORS
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
+*/
+
+*******************************************************************************
+/*! \page gdal_merge gdal_merge.py
+
+mosaics a set of images
+
+\if man
+\section msynopsis SYNOPSIS
+\endif
+
+\htmlonly
+Usage:
+\endhtmlonly
+
+\verbatim
+gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*
+                     [-ps pixelsize_x pixelsize_y] [-separate] [-v] [-pct]
+                     [-ul_lr ulx uly lrx lry] [-n nodata_value] [-init value]
+                     [-ot datatype] [-createonly] input_files
+\endverbatim
+\if man
+\section mdescription DESCRIPTION
+\endif
+
+This utility will automatically mosaic a set of images.  All the images must
+be in the same coordinate system and have a matching number of bands, but 
+they may be overlapping, and at different resolutions.
+
+<dl>
+<dt> <b>-o</b> <i>out_filename</i>:</dt><dd> The name of the output file to be
+created.</dd>
+<dt> <b>-of</b> <i>format</i>:</dt><dd> 
+Output format, defaults to GeoTIFF (GTiff). 
+</dd>
+<dt> <b>-co</b> <i>NAME=VALUE</i>:</dt><dd> 
+Creation option for output file.  Multiple options can be specified.
+</dd>
+<dt> <b>-ot</b> <i>datatype</i>:</dt><dd> 
+Force the output image bands to have a specific type. Use type names (ie. Byte, Int16,...)
+</dd>
+<dt> <b>-ps</b> <i>pixelsize_x pixelsize_y</i>:</dt><dd> Pixel size to be used for the
+output file.  If not specified the resolution of the first input file will
+be used.</dd>
+<dt> <b>-ul_lr</b> <i>ulx uly lrx lry</i>:</dt><dd> The extents of the output file. 
+If not specified the aggregate extents of all input files will be
+used.</dd>
+<dt>
+<dt> <b>-v</b>:</dt><dd> Generate verbose output of mosaicing operations as they are done.</dd>
+<dt> <b>-separate</b>:</dt><dd> 
+Place each input file into a separate <i>stacked</i> band. 
+</dd>
+<dt> <b>-pct</b>:</dt><dd> 
+Grab a pseudocolor table from the first input image, and use it for the output.
+Merging pseudocolored images this way assumes that all input files use the same
+color table.
+</dd>
+<dt> <b>-n</b> <i>nodata_value</i>:</dt><dd> 
+Ignore pixels from files being merged in with this pixel value. 
+</dd>
+<dt> <b>-init</b> <i>value</i>:</dt><dd> 
+Pre-initialize the output file with this value.  However, it is not marked
+as the nodata value in the output file. 
+</dd>
+<dt> <b>-createonly</b>:</dt><dd> 
+The output file is created (and potentially pre-initialized) but no input
+image data is copied into it.  
+</dd>
+</dl>
+
+NOTE: gdal_merge.py is a Python script, and will only work if GDAL was built
+with Python support.
+
+\if man
+\section mauthor AUTHORS
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
+*/
+
+*******************************************************************************
+/*! \page gdal-config gdal-config
+
+determines various information about a GDAL installation
+
+\if man
+\section csynopsis SYNOPSIS
+\endif
+
+\htmlonly
+Usage:
+\endhtmlonly
+
+\verbatim
+gdal-config [OPTIONS]
+Options:
+        [--prefix[=DIR]]
+        [--libs]
+        [--cflags]
+        [--version]
+        [--ogr-enabled]
+        [--formats]
+\endverbatim
+
+\if man
+\section cdescription DESCRIPTION
+\endif
+
+This utility script (available on Unix systems) can be used to determine
+various information about a GDAL installation.  It is normally just used
+by configure scripts for applications using GDAL but can be queried by an
+end user. 
+
+<dl>
+<dt> <b>--prefix</b>:</dt><dd> the top level directory for the GDAL
+installation.</dd>
+<dt> <b>--libs</b>:</dt><dd> The libraries and link directives required to
+use GDAL.</dd>
+<dt> <b>--cflags</b>:</dt><dd> The include and macro definition required to compiled
+modules using GDAL.</dd>
+<dt> <b>--version</b>:</dt><dd> Reports the GDAL version.</dd>
+<dt> <b>--ogr-enabled</b>:</dt><dd> Reports "yes" or "no" to standard output depending
+on whether OGR is built into GDAL.</dd>
+<dt> <b>--formats</b>:</dt><dd> Reports which formats are configured into GDAL 
+to stdout.  
+</dd>
+</dl>
+
+*/

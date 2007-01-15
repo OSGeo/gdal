@@ -1,0 +1,12 @@
+*ARMV4*
+*Rel
+*Dbg
+*.dll
+*.exp
+*.ilk
+*.lib
+*.pdb
+*.swp
+*.vcb
+*.vcl
+*.vco

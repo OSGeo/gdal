@@ -1,0 +1,156 @@
+#ifndef DOXYGEN_SKIP                                                            
+/* $Id$ */               
+#endif /* DOXYGEN_SKIP */                                                       
+
+/*! \mainpage GDAL - Geospatial Data Abstraction Library
+
+<center><b>Select language</b>: [English]<a href="index_ru.html">[Russian]</a></center>
+
+\htmlonly<img src="gdalicon.png" alt="GDAL">\endhtmlonly \latexonly GDAL \endlatexonly
+is a translator library for raster geospatial data formats
+that is released under an <a href="faq.html#license">X/MIT</a> style 
+<a href="http://www.opensource.org/">
+Open Source</a> license by the <a href="http://www.osgeo.org/">Open Source
+Geospatial Foundation</a>.  As a library, it presents a
+\link gdal_datamodel.html single abstract data model\endlink 
+to the calling application for all supported formats.  It also comes with a variety
+of useful \link gdal_utilities.html commandline utilities\endlink
+for data translation and processing.  The \link NEWS.html NEWS\endlink 
+page describes the January 2007 GDAL 1.4.0 release.
+
+The related <a href="ogr">OGR</a> library (which lives within the GDAL source tree) 
+provides a similar capability for simple features vector data.
+
+Master: http://www.gdal.org<br>
+Mirror: http://gdal.maptools.org<br>
+Download: 
+ <a href="http://www.gdal.org/dl">http at gdal.org</a>,
+ <a href="ftp://ftp.remotesensing.org/gdal">ftp at remotesensing.org</a>,
+ <a href="http://download.osgeo.org/gdal">http at osgeo.org</a>
+
+\section index_userdocs User Oriented Documentation
+
+<ul>
+<li> <a href="download.html">Downloads</a> - Source and Binaries
+<li> <a href="formats_list.html">Supported Formats</a>
+<li> <a href="gdal_utilities.html">GDAL Utility Programs</a>
+<li> <a href="faq.html">GDAL FAQ</a>
+<li> <a href="gdal_datamodel.html">GDAL Data Model</a>
+<li> <a href="governance.html">GDAL/OGR Governance and Community Participation</a>
+<li> <a href="credits.html">Sponsors, Acknowledgements and Credits</a>
+</ul>
+
+\section index_devdocs Developer Oriented Documentation
+
+<ul>
+<li> <a href="gdal_building.html">Building GDAL From Source</a>
+<li> <a href="hierarchy.html">API Reference Documentation</a>
+<li> <a href="gdal_tutorial.html">GDAL API Tutorial</a>
+<li> <a href="gdal_drivertut.html">GDAL Driver Implementation Tutorial</a>
+<li> <a href="warptut.html">GDAL Warp API Tutorial</a>
+<li> <a href="ogr/osr_tutorial.html">OGRSpatialReference Tutorial</a>
+<li> <a href="gdal_8h.html">GDAL C API</a>
+<li> <a href="classGDALDataset.html">GDALDataset</a>
+<li> <a href="classGDALRasterBand.html">GDALRasterBand</a>
+<li> <a href="wince.html">GDAL for Windows CE</a>
+</ul>
+
+\section index_maillist Mailing List
+
+A gdal-announce mailing list <a href="http://lists.osgeo.org/mailman/listinfo/gdal-announce">subscription</a> is a low volume way of keeping track of major
+developments with the GDAL project.
+
+The <a href="mailto:gdal-dev@lists.maptools.org">gdal-dev@lists.maptools.org</a>
+mailing list can be used for discussion of development and user issues related
+to GDAL and related technologies.  Subscriptions can be done, and archives 
+reviewed <a href="http://lists.maptools.org/mailman/listinfo/gdal-dev/">on 
+the web</a>.  The mailing list is also available in read-only format by NNTP at
+<a href="news://news.gmane.org/gmane.comp.gis.gdal.devel">news://news.gmane.org/gmane.comp.gis.gdal.devel</a>
+and by HTTP at
+<a href="http://news.gmane.org/gmane.comp.gis.gdal.devel">http://news.gmane.org/gmane.comp.gis.gdal.devel</a>.<p>
+
+Some GDAL/OGR users and developers can also often be found in the 
+<a href="irc://irc.freenode.net/#gdal">#gdal</a> IRC channel on irc.freenode.net.<p>
+
+\section index_bugs Bug Reporting
+
+GDAL bugs 
+<a href="http://bugzilla.remotesensing.org/enter_bug.cgi?product=GDAL">can 
+be reported</a>, and 
+<a href="http://bugzilla.remotesensing.org/buglist.cgi?product=GDAL">can be 
+listed</a> using BugZilla.<p>
+
+\section index_bindings GDAL In Other Languages
+
+The following bindings of GDAL in other languages are available:
+
+<ul>
+<li> <a href="http://map.hut.fi/gdal-perl/">Perl</a>
+<li> <a href="gdal_tutorial.html">Python</a> (examples in standard tutorial)
+<li> <a href="vb6_tutorial.html">VB6 Bindings</a> (not using SWIG)
+<li> <a href="http://rgdal.sourceforge.net/">GDAL Bindings into R</a>
+by Timothy H. Keitt.
+<li> Ruby (no docs, but see gdalautotest/ruby for examples)
+<li> Java (no docs ...)
+<li> C# (mostly operational, see /swig/csharp/apps for examples)
+</ul>
+
+\section index_projects Projects Using GDAL
+
+<ul>
+<li> <a href="http://grass.itc.it/index.html">GRASS</a>: A raster/vector
+open source GIS uses GDAL for raster import (via r.in.gdal).
+<li> <a href="http://openev.sourceforge.net">OpenEV</a>: An OpenGL/GTK/Python
+based graphical viewer which exclusively uses GDAL for raster access.
+<li> <a href="http://www.ossim.org">OSSIM</a>: 
+Another geospatial viewing and analysis environment which uses GDAL as one
+of several plugins.
+<li> <a href="http://mapserver.gis.umn.edu/index.html">UMN MapServer</a>: 
+A popular web mapping application with GDAL support.
+<li> <a href="http://www.vterrain.org">Virtual Terrain Project</a>: 
+The VTP libraries now use GDAL.
+<li> <a href="http://thuban.intevation.org">Thuban</a>: 
+A multi-platform interactive geographic data viewer.
+<li> <a href="http://qgis.sourceforge.net">Quantum GIS (QGIS)</a>: 
+A Geographic Information System (GIS) built for Linux/Unix. 
+QGIS supports vector, raster, and database formats.
+<li> <a href="http://www.terrainengine.com">Demeter</a>: 
+A another OpenGL based terrain engine somewhat similar to VTP.
+<li> <a href="http://www.cadcorp.com/">Cadcorp SIS</a>: A Windows GIS with
+a GDAL plugin.
+<li> <a href="http://www.safe.com/">FME</a>: A GIS translator package
+includes a GDAL plugin.
+<li> <a href="http://www.ionicsoft.com/">IONIC Red Spider</a>: an OGC Web Services platform includes a GDAL plugin.
+<li> <a href="http://www.esri.com/">ESRI ArcGIS 9.2+</a>: A popular GIS platform.
+<li> <a href="http://www.scanex.ru/software/scanmagic/">ScanMagic</a>: 
+Commercial Win32 application for visualization, analysis and processing of
+remote sensing data (lite version for free).
+<li> <a href="http://www.msmacrosystem.nl/Ilwis/index.html">MS MacroSystem</a>: 3D DEM Viewer.
+<li> <a href="http://www.gstat.org/">gstat</a>: a geostatistical modelling
+package.
+<li> <a href="http://flighttrack.sourceforge.net/">flighttrack</a>: 
+GPS track viewing and downloading software for Mac. 
+<li> <a href="http://starspan.casil.ucdavis.edu/?StarSpan">StarSpan</a>: raster/vector analysis. 
+<li> <a href="http://www.gvsig.gva.es/">gvSIG</a>: Desktop GIS Client.
+<li> <a href="http://libral.sourceforge.net/">libral</a>: A raster algebra 
+implementation and an experimental GUI+CLI GIS with Perl and GTK+.
+<li> <a href="http://earth.google.com/">Google Earth</a>: A 3D world viewer.
+<li> <a href="http://www.vrco.com/vGeo/OverviewvGeo.html">vGeo</a>: 
+Interactive data fusion and visual analysis tool.
+<li> <a href="http://www.itc.nl/ilwis/">ILWIS</a>: Remote Sensing and GIS 
+Desktop Package.
+<li> <a href="http://www.spaceyes.com/">SpaceEyes3D</a>: Commercial 
+3D visualization software for cartographic data.
+<li> <a href="http://www.mapwindow.org/">MapWindow</a>: open source
+ActiveX control with GIS functionality.
+<li> GeoMatrix Toolkit, and GeoPlayerPro from <a href="http://www.geofusion.com/">GeoFusion</a>: 3D visualization.
+<li> <a href="http://www.spatialace.com">SpatialAce</a>: A GIS Rapid Application Development environment.
+</ul>
+
+\htmlonly
+<p>
+$Id$
+</p>
+\endhtmlonly
+
+*/

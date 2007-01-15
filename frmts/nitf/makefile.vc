@@ -1,0 +1,22 @@
+
+GDAL_OBJ	=	nitfdataset.obj
+NITFLIB_OBJ	=	nitffile.obj nitfimage.obj mgrs.obj
+
+OBJ = $(GDAL_OBJ) $(NITFLIB_OBJ)
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+
+nitfdump.exe:	nitfdump.obj $(NITFLIB_OBJ)
+	cl nitfdump.obj $(NITFLIB_OBJ) ..\..\port\cpl.lib ..\..\gdal.lib
+
+
+
+

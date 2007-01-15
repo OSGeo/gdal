@@ -1,0 +1,246 @@
+gdal (1.3.2-1) UNRELEASED; urgency=low
+
+  * New upstream release. 
+    As stated previously, changed package name for
+    a smooth C++ transition in case of (undocumented) API/ABI changes.
+    Changed control and other files as consequence for 1.3.1 -> 1.3.2 transition.
+    - Patch revised:
+    	libname.dpatch
+    - Patches removed:
+        351372_mipsel_ftbfs.dpatch (applied upstream)
+        357189_gcc4.1_ftbfs.dpatch (idem)
+        360389_amd64_ftbfs.dpatch  (better done by upstream)
+    - New patch: 
+    	ogrili2layer.cpp.dpatch (gcc 4.1 STL compatibility)
+  * Policy bumped to 3.7.2. No changes.
+  * Removed a couple of old *.docs and *.files files in debian dir.
+  * Added mysql support
+
+ -- Francesco Paolo Lovergine <frankie@debian.org>  Tue, 20 Jun 2006 15:06:13 +0200
+
+gdal (1.3.1-6) UNRELEASED; urgency=low
+
+  * Switch from libxerces26-dev to libxerces27-dev (Closes: #368914)
+
+ -- Paul Wise <pabs3@bonedaddy.net>  Sat, 27 May 2006 12:55:30 +0800
+
+gdal (1.3.1-5) unstable; urgency=low
+
+  [ Paul Wise ]
+  * Fix GCC 4.1 FTBFS with patch from Martin Michlmayr. Closes: #357189 
+
+  [ Francesco Paolo Lovergine ]
+  * Fix Unix ODBC FTBS with patch by me. Closes: #360389
+  * Added versioned build-dep on unixodbc-dev for safety, just in case.
+
+ -- Francesco Paolo Lovergine <frankie@debian.org>  Tue,  4 Apr 2006 00:14:56 +0200
+
+gdal (1.3.1-4) unstable; urgency=low
+
+  [ Paul Wise ]
+  * Fix FTBFS on mipsel with patch from upstream. Closes: #351372
+
+  [ Petter Reinholdtsen ]
+  * Add myself as uploader.
+  * Acknowledge NMU. (Closes: #321587)
+
+ -- Petter Reinholdtsen <pere@debian.org>  Fri, 10 Feb 2006 22:46:34 +0100
+
+gdal (1.3.1-3) unstable; urgency=high
+
+  [ Francesco Paolo Lovergine ]
+  * Revised rules to use binary-indep for its -doc package.
+  * Rebuilt to link the correct netcdf packages, which apparently did break
+    something and renders libgdal and all its rdepends uninstallable.
+    Sigh, netcdfg3 moved to libnetcdf3 but I would appreciate notifications
+    to all interested parties or proper mass bug filling...
+
+ -- Francesco Paolo Lovergine <frankie@debian.org>  Wed,  1 Feb 2006 15:08:30 +0100
+
+gdal (1.3.1-2) unstable; urgency=low
+
+  [ Petter Reinholdtsen ]
+  * Add Francesco Paolo Lovergine as uploader, to make sure the next
+    upload isn't seen as a non-maintainer upload.
+
+  [ Francesco Paolo Lovergine ]
+  * Missed patched reverting, anyway moving to dpatch which is more robust for
+    patch management in case of build failures and re-builds.
+    (closes: #349562). Changed control and rules files as consequence.
+
+ -- Francesco Paolo Lovergine <frankie@debian.org>  Tue, 24 Jan 2006 10:56:55 +0100
+
+gdal (1.3.1-1) unstable; urgency=low
+
+  [ Steve Halasz ]
+  * Switch to team maintenance by the Debian GIS Project.
+    This is _not_ hijacking, Silke is no more active on this package
+    and passed the package to the team.
+  * New upstream release
+    - Don't crash on shapefiles without features (Closes: #309165)
+  * Build-dep on libpq-dev | postgresql-dev for postgresql transition
+  * Remove build-dep on postgresql-client
+  * Make libgdal-dev depend on a number of -dev packages so that
+    packages depending on libgdal-dev don't have to depend on them
+  * Change library package names to libgdal1-1.3.1 / libgdal1-1.3.1-dev
+    to reflect C++ ABI change that will be expected with every new
+    version. The C API is stable (SONAME 1), but unfortunately both
+    C and C++ API are merged in the same library by upstream.
+    See http://lists.alioth.debian.org/pipermail/pkg-grass-general/2005-December/001565.html
+    for a few details about the C++ API and ABI saga.
+
+  [ Paul Wise ]
+  * Add homepages to the package descriptions
+
+  [ Francesco Paolo Lovergine ]
+  * Added 02_libname.patch to add the version to the lib name. This will
+    allow cohexistence of more version of the library without glitches.
+
+ -- Francesco Paolo Lovergine <frankie@debian.org>  Sat, 21 Jan 2006 13:14:06 +0100
+
+gdal (1.2.6-1.3) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Medium-urgency upload for RC bugfix.
+  * Change package name from libgdal1c2 to libgdal1c2a for the C++ mt
+    allocator ABI change, and conflict/replace libgdal1c2 accordingly.
+    Closes: #339163.
+  * Build-depend on libgeos-dev (>= 2.1.4-2) to get the matching ABI.
+
+ -- Steve Langasek <vorlon@debian.org>  Tue, 29 Nov 2005 05:06:47 -0800
+
+gdal (1.2.6-1.2) unstable; urgency=low
+
+  * Fix broken library building introduced by my last NMU. (Closes: #322664)
+  * Moved GCC 4 patch into debian/patches/01_gcc4.patch, based on
+    patch from Stephan Hermann and Ubuntu.  Updated rules to use it.
+  * Add Conflicts and Replaces on libgdal1 for libgdal1c2 to ease upgrades.
+
+ -- Petter Reinholdtsen <pere@debian.org>  Fri, 12 Aug 2005 08:11:40 +0200
+
+gdal (1.2.6-1.1) unstable; urgency=low
+
+  * Non-maintainer upload to move to new C++ ABI. (Closes: #321587)
+  * Rename library package from libgdal1 to libgdal1c2.
+  * Add forward declaration of ILWISDataset in
+    frmts/ilwis/ilwisdataset.h to make GCC 4.0 happy.
+
+ -- Petter Reinholdtsen <pere@debian.org>  Sat,  6 Aug 2005 11:57:48 +0200
+
+gdal (1.2.6-1) unstable; urgency=high
+
+  * New upstream release
+  * Made python-gdal explicitly dependend on current gdal-version
+    (Closes: #291361)
+  * Added pct2rgb.py and gdal_merge.py to python-gdal
+  * Changed xerces dependency from libxerces21 to libxerces26
+    (Closes: #301710 and Closes: #301650)
+  * Added link from /usr/include/gdal to /usr/include (Closes:#286709).
+  * Already in 1.2.5.-1: Added geos-support
+
+ -- Silke Reimer <silke.reimer@intevation.de>  Mon,  4 Apr 2005 19:04:21 +0200
+
+gdal (1.2.5-1) unstable; urgency=low
+
+  * New upstream release (Closes: #280343)
+  * Added gdaltindex and gdal_contour in debian/gdal-bin.files 
+    (Closes: #278539)
+
+ -- Silke Reimer <silke.reimer@intevation.de>  Thu, 25 Nov 2004 18:06:07 +0100
+
+gdal (1.2.1-1) unstable; urgency=low
+
+  * New upstream release (Closes: #258367)
+  * Added flag -V'libgdal1 (>=1.2.0) to solve incompatibility between
+    libgdal1-1.2.x and libgdal-1.2+cvs031111 (Closes: #254344)
+  * Add support for jpeg2000 (jasper), netcdf and sqlite.
+  * Move tiff support to external library (finally added to debian!)(Thanks
+    Alessandro for your hint!)
+  * debian/control
+  * debian/changelog
+
+ -- Silke Reimer <silke.reimer@intevation.de>  Thu, 25 Nov 2004 18:05:53 +0100
+
+gdal (1.2.0-1) unstable; urgency=low
+
+  * New upstream release
+  * Use manpages from upstream
+  * Changed package requirements for libgdal1-dev: added virtual package
+    libgdal-dev, added dependency on libc6-dev and unixodbc-dev
+
+ -- Silke Reimer (MoinMoin) <silke@intevation.de>  Mon,  8 Mar 2004 18:05:58 +0100
+
+gdal (1.2+cvs.031111-1) unstable; urgency=low
+
+  * New upstream cvs snapshot. This should fix the building failure 
+    on arm, powerpc, mipsel and s390 due to "invalid conversion from 
+    `int8*' to `const char*'"
+  * add odbc support to debian package.
+  * switch on xerces support.
+
+
+ -- Silke Reimer (MoinMoin) <silke@intevation.de>  Wed, 12 Nov 2003 10:21:13 +0100
+
+gdal (1.2+cvs.031016-1) unstable; urgency=low
+
+  * Take maintainership
+  * added man pages
+  * added libtool patch to debian/rules to avoid linking with rpath
+  * changed last line of pymod/GNUmakefile because otherwise all 
+    files within pymod would be deleted when building package with 
+    fakeroot
+
+ -- Silke Reimer (MoinMoin) <silke@intevation.de>  Fri, 17 Oct 2003 11:14:34 +0200
+
+gdal (1.2+0pre1) unstable; urgency=low
+
+  * New upstream cvs snapshot with proper soname versioning.
+    Getting ready for the upcoming 1.2.0.
+  * Add xerces support.
+  * Get the package generally in shape for being sponsored into Debian.
+  * Hand package maintainership over to Silke.
+
+ -- Alessandro Amici (devel) <alexamici@tiscali.it>  Fri, 26 Sep 2003 00:43:14 +0200
+
+gdal (1.1.9-1) unstable; urgency=low
+
+  * New upstream release with a lot of new formats and features.
+  * Fix the --libs option of the installed gdal-config.
+  * Many correctness and style fixes to debian/rules. The aim is to have
+    the source package to build cleanly on woody as well.
+  * Change the build dependencies to present a woody alternative to sid-only
+    packages.
+
+ -- Alessandro Amici (devel) <alexamici@tiscali.it>  Mon, 28 Jul 2003 23:18:55 +0200
+
+gdal (1.1.8+030610-1) unstable; urgency=low
+
+  * New cvs snapshot with improved handling of html documentation.
+  * Split libgdal-doc out of libgdal1-dev.
+  * Add html documentation for ogr.
+  * Add postgresql support.
+  * Set python dependencies to python2.2 (and add python2.2-numeric)
+  * Recommend proj (accessed via dlopen).
+
+ -- Alessandro Amici (devel) <alexamici@tiscali.it>  Tue, 10 Jun 2003 16:18:17 +0200
+
+gdal (1.1.8+030521-1) unstable; urgency=low
+
+  * New cvs snapshot with support for custom shared library soname.
+  * Build the gdal shared library with debian compliant file name and soname.
+    See the README.Debian for reasons and caveats.
+  * Rename the main packages to libgdal1 (OK, I learned the hard way how
+    important package names are!).
+  * Change the upstream version definition to $(version)+$(cvsdate).
+
+ -- Alessandro Amici (devel) <alexamici@tiscali.it>  Thu, 22 May 2003 19:33:54 +0200
+
+gdal (1.1.8-030518+1) unstable; urgency=low
+
+  * Initial release.
+  * libgdal.1.1.so is not a standard shared library.
+  * Man pages are missing.
+  * A few files are missing from the html documentation.
+
+ -- Alessandro Amici (devel) <alexamici@tiscali.it>  Sun, 18 May 2003 18:05:12 +0200
+

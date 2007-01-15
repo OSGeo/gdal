@@ -1,0 +1,46 @@
+.TH "ogrtindex" 1 "28 Jun 2006" "GDAL" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ogrtindex \- ogrtindex
+creates a tileindex
+.SH "SYNOPSIS"
+.PP
+.PP
+.PP
+.nf
+ogrtindex [-lnum n]... [-lname name]... [-f output_format]
+                 output_dataset src_dataset...
+.fi
+.PP
+.SH "DESCRIPTION"
+.PP
+The ogrtindex program can be used to create a tileindex - a file containing a list of the identities of a bunch of other files along with there spatial extents. This is primarily intended to be used with the \fCUMN MapServer\fP for tiled access to layers using the OGR connection type.
+.PP
+.IP "\fB\fB-lnum\fP \fIn\fP:\fP" 1c
+Add layer number 'n' from each source file in the tile index. 
+.IP "\fB\fB-lname\fP \fIname\fP:\fP" 1c
+Add the layer named 'name' from each source file in the tile index. 
+.IP "\fB\fB-f\fP \fIoutput_format\fP:\fP" 1c
+Select an output format name. The default is to create a shapefile. 
+.IP "\fB\fB-tileindex\fP \fIfield_name\fP:\fP" 1c
+The name to use for the dataset name. Defaults to LOCATION. 
+.PP
+.PP
+If no -lnum or -lname arguments are given it is assumed that all layers in source datasets should be added to the tile index as independent records.
+.PP
+If the tile index already exists it will be appended to, otherwise it will be created.
+.PP
+It is a flaw of the current ogrtindex program that no attempt is made to copy the coordinate system definition from the source datasets to the tile index (as is expected by MapServer when PROJECTION AUTO is in use).
+.SH "EXAMPLE"
+.PP
+This example would create a shapefile (tindex.shp) containing a tile index of the BL2000_LINK layers in all the NTF files in the wrk directory: 
+.PP
+.nf
+% ogrtindex tindex.shp wrk/*.NTF
+
+.fi
+.PP
+.SH "AUTHORS"
+.PP
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de> 

@@ -1,0 +1,16 @@
+
+OBJ     =       shape2ogr.obj shpopen.obj dbfopen.obj ogrshapedriver.obj \
+		ogrshapedatasource.obj ogrshapelayer.obj shptree.obj
+EXTRAFLAGS =	-I.. -I..\.. /DSHAPELIB_DLLEXPORT -DUSE_CPL
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+
+

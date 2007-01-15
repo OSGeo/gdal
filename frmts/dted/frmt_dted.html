@@ -1,0 +1,30 @@
+<html>
+<head>
+<title>DTED -- Military Elevation Data</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>DTED -- Military Elevation Data</h1>
+
+GDAL supports DTED Levels 0, 1, and 2 elevation data for read access.  
+Elevation data is returned as 16 bit signed integer.  Appropriate 
+projection (always WGS84) and georeferencing information is also returned.   
+A variety of header fields are returned dataset level metadata.
+<p>
+
+<h2>Creation Issues</h2>
+
+The DTED driver does support creating new files, but the input data
+must be exactly formatted as a Level 0, 1 or 2 cell.  That is the size,
+and bounds must be appropriate for a cell.<P>
+
+<h2>See Also:</h2>
+
+<ul>
+<li> Implemented as <tt>gdal/frmts/dted/dteddataset.cpp</tt>.<p>
+
+</ul>
+
+</body>
+</html>

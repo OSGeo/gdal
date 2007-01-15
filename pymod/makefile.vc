@@ -1,0 +1,41 @@
+
+OBJ	=	gdal_wrap.obj gdalnumeric.obj numpydataset.obj
+PYGDAL_DLL	=	_gdal.dll
+
+GDAL_ROOT	=	..
+
+PY_COMMANDS	=	epsg_tr.py gdalchksum.py gdal2xyz.py gcps2wld.py \
+			gdalimport.py gdal_merge.py pct2rgb.py rgb2pct.py \
+			gcps2vec.py
+PY_MODULES	=	gdal.py ogr.py osr.py gdalconst.py gdalnumeric.py
+
+!INCLUDE ..\nmake.opt
+
+!IFDEF HAVE_NUMPY
+NUMPY_DEF = -DHAVE_NUMPY
+!ELSE
+NUMPY_DEF =
+!ENDIF
+
+EXTRAFLAGS =	-I$(PYDIR)/include $(NUMPY_DEF)
+
+
+default:	$(PYGDAL_DLL)
+
+$(PYGDAL_DLL):	$(OBJ)
+	link /dll /def:_gdal.def $(OBJ) ../gdal_i.lib /LIBPATH:$(PYDIR)/libs \
+		/out:$(PYGDAL_DLL)
+	
+clean:
+	-del *.obj *.dll *.lib
+	-del *.manifest
+
+install:	$(PYGDAL_DLL)
+	-mkdir $(PY_INST_DIR)
+	for %d in ( $(PY_MODULES) ) do copy %d $(PY_INST_DIR)
+	-mkdir $(PY_INST_DIR)
+	for %d in ( $(PY_COMMANDS) ) do copy %d $(BINDIR)
+	copy $(PYGDAL_DLL) $(PY_INST_DIR)
+	-if exist $(PYGDAL_DLL).manifest xcopy /y /r /d /f $(PYGDAL_DLL).manifest $(PY_INST_DIR)
+
+

@@ -1,0 +1,299 @@
+
+# Location to install .exe, .dll and python stuff
+# Edit as required. GDAL_HOME is used for convenience here,
+# but this particular relative organization is not mandatory.
+# But the paths *should* be absolute (relative paths mess up in submakefiles).
+
+!IFNDEF GDAL_HOME
+GDAL_HOME = "C:\warmerda\bld"
+!ENDIF
+BINDIR = $(GDAL_HOME)\bin
+PY_INST_DIR = $(GDAL_HOME)\pymod
+LIBDIR = $(GDAL_HOME)\lib
+INCDIR = $(GDAL_HOME)\include
+DATADIR = $(GDAL_HOME)\data
+HTMLDIR = $(GDAL_HOME)\html
+
+# Set this to the installed directory containing python.  If you don't
+# have python just let it point to a directory that does not exist (as now).
+!IFNDEF PYDIR 
+PYDIR   =	"C:\Software\Python24"
+!ENDIF
+
+# Set the location of your SWIG installation
+!IFNDEF SWIG
+SWIG = swig.exe
+!ENDIF
+
+# Check compiler version given in command line
+# nmake -f makefile.vc MSVC_VER=xxxx
+# 1310 = 7.1 (2003)   1400 = 8.0 (2005)
+#
+!IFNDEF MSVC_VER
+#assume msvc 7.1
+MSVC_VER=1310
+!ENDIF
+
+!IF $(MSVC_VER) == 1400
+# Uncomment the first for an optimized build or the second for a debug build.
+#OPTFLAGS=	/nologo /MD /EHsc /Ox /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
+OPTFLAGS=	/nologo /MD /EHsc /Zi /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /Fd$(GDAL_ROOT)\gdal.pdb
+!ELSE
+# Uncomment the first for an optimized build or the second for a debug build.
+#OPTFLAGS=	/nologo /MD /EHsc /Ox
+OPTFLAGS=	/nologo /MD /EHsc /Zi /Fd$(GDAL_ROOT)\gdal.pdb
+!ENDIF
+
+# Uncomment the following if you are building for 64-bit windows
+# (x64). You'll need to have PATH, INCLUDE and LIB set up for 64-bit
+# compiles.
+#WIN64=YES
+
+# If you don't want some entry points to have STDCALL conventions, 
+# comment out the following and add -DCPL_DISABLE_STDCALL in OPTFLAGS.
+# This option has no effect on 64-bit windows.
+STDCALL=YES
+
+# Version number embedded in DLL name. 
+VERSION =	14
+
+# Uncomment the following to link OGR utilities against main GDAL DLL
+# instead of statically linking against OGR libraries.
+DLLBUILD=1
+
+# Enable all OGR formats, or only raster formats?  Comment out to disable
+# vector formats. 
+INCLUDE_OGR_FRMTS = YES
+
+# Location of Visual C++ directory (only required for following SETARGV stuff)
+VCDIR   = 	D:\Software\VStudio\VC98
+
+# Enable the following if VCDIR set properly, and you want the utility
+# programs to be able to expand wildcards. 
+#SETARGV =	"$(VCDIR)\lib\setargv.obj"
+
+# Comment out the following to disable BSB support.
+BSB_SUPPORTED = 1
+
+# Comment out the following to disable ODBC support.
+ODBC_SUPPORTED = 1
+
+# Comment out the following to disable JPEG support.
+JPEG_SUPPORTED = 1
+
+#if using an external jpeg library uncomment the follwing lines
+#JPEG_EXTERNAL_LIB = 1
+#JPEGDIR = c:/projects/jpeg-6b
+#JPEG_LIB = $(JPEGDIR)/libjpeg.lib
+
+#if using an external png library uncomment the follwing lines
+#PNG_EXTERNAL_LIB = 1
+#PNGDIR = c:/projects/libpng-1.0.8
+#PNG_LIB = $(PNGDIR)/libpng.lib
+
+# if using an external libtiff library
+#TIFF_INC =	-Ic:/warmerda/libtiff/libtiff
+#TIFF_LIB =	c:/warmerda/libtiff/libtiff/libtiff_i.lib
+
+# if using an external libgeotiff library
+#GEOTIFF_INC =   -Ic:/warmerda/libgeotiff -Ic:/warmerda/libgeotiff/libxtiff
+#GEOTIFF_LIB =   C:/warmerda/libgeotiff/geotiff_i.lib
+
+# Uncomment the following and update to enable ECW support.
+#ECWDIR  = 	C:\warmerda\libecwj2-3.3
+#ECWLIB  = 	$(ECWDIR)\Source\NCSBuildQmake\Debug\libecwj2.lib
+
+# DWG/DXF support via DWGdirect from Open Design Alliance
+
+#DWGDIRECT=C:\warmerda\DWGdirect
+#DWG_LIB_DIR=$(DWGDIRECT)\lib\VC6MD
+#DWG_LIB=$(DWG_LIB_DIR)\DD_AcisBuilder_dll.lib $(DWG_LIB_DIR)\DD_AcisRenderer_dll.lib $(DWG_LIB_DIR)\DD_Alloc_dll.lib $(DWG_LIB_DIR)\DD_BmpExport_dll.lib $(DWG_LIB_DIR)\DD_Br_dll.lib $(DWG_LIB_DIR)\DD_Db_dll.lib $(DWG_LIB_DIR)\DD_DwfExport_dll.lib $(DWG_LIB_DIR)\DD_DwfImport_dll.lib $(DWG_LIB_DIR)\DD_Ge_dll.lib $(DWG_LIB_DIR)\DD_Gi_dll.lib $(DWG_LIB_DIR)\DD_Gs_dll.lib $(DWG_LIB_DIR)\DD_ModelerGeometry_dll.lib $(DWG_LIB_DIR)\DD_Root_dll.lib $(DWG_LIB_DIR)\DD_Sm_dll.lib $(DWG_LIB_DIR)\DD_SpatialIndex_dll.lib $(DWG_LIB_DIR)\DD_VC6MD_OleDataAccess_dll.lib
+
+# Uncomment the following and update to enable OGDI support.
+#OGDIDIR =	D:\warmerda\iii\devdir
+#OGDIVER =	31
+#OGDILIB =	$(OGDIDIR)\lib\$(TARGET)\ogdi$(OGDIVER).lib \
+#		$(OGDIDIR)\lib\$(TARGET)\zlib_ogdi$(OGDIVER).lib
+
+# Uncomment for Xerces based GML support.
+#XERCES_DIR =	c:\warmerda\supportlibs\xerces-c_2_6_0
+#XERCES_INCLUDE = -I$(XERCES_DIR)/include -I$(XERCES_DIR)/include/xercesc
+#XERCES_LIB = $(XERCES_DIR)/lib/xerces-c_2.lib
+
+# Uncomment the following for Interlis support.  Note that a Xercex 2.x
+# is also required (see above).  Also, Interlis support only works with
+# Visual Studio.NET or newer, not VC6.
+#ILI_ENABLED = YES
+
+# Uncomment for JasPer based JPEG2000 support
+#JASPER_DIR = d:\projects\jasper-1.700.2.uuid
+#JASPER_INCLUDE = -I$(JASPER_DIR)\src\libjasper\include -DJAS_WIN_MSVC_BUILD
+#JASPER_LIB = $(JASPER_DIR)\src\msvc\Win32_Release\libjasper.lib
+# Uncomment the following line if you have patched UUID-enabled version
+# of JasPer from ftp://ftp.remotesensing.org/gdal/
+#JASPER_INCLUDE = $(JASPER_INCLUDE) -DHAVE_JASPER_UUID
+
+# Uncommment if you have Kakadu 4.0 or newer
+#KAKDIR =	D:\warmerda\jp2\kakadu
+
+# Uncomment the following and update to enable NCSA HDF Release 4 support.
+#HDF4_DIR =	D:\warmerda\HDF41r5
+#HDF4_LIB =	/LIBPATH:$(HDF4_DIR)\lib Ws2_32.lib
+
+# Uncomment the following and update to enable NCSA HDF Release 5 support.
+#HDF5_DIR =	c:\warmerda\supportlibs\hdf5\5-164-win
+#SZIP_DIR =      c:\warmerda\supportlibs\hdf5\szip20
+#HDF5_LIB =	$(HDF5_DIR)\dll\hdf5dll.lib \
+#		$(SZIP_DIR)\dll\szlibdll.lib
+
+# Uncomment the following for MrSID support.
+# You will likely require /MD and /EHsc in OPTFLAGS. 
+#MRSID_DIR =	d:\projects\mrsid
+#MRSID_INCLUDE = -I$(MRSID_DIR)\include\base -I$(MRSID_DIR)\include\support \
+#		-I$(MRSID_DIR)\include\metadata \
+#		-I$(MRSID_DIR)\include\mrsid_readers \
+#		-I$(MRSID_DIR)\include\j2k_readers
+#MRSID_LIB =	$(MRSID_DIR)\lib\Release_md\lti_dsdk_dll.lib advapi32.lib user32.lib
+# Enable these, if you have the MrSID Encoding SDK and want
+# to create MrSID files
+#MRSID_FLAGS =	-DMRSID_ESDK $(MRSID_FLAGS)
+#MRSID_INCLUDE = -I$(MRSID_DIR)\include\mrsid_writers \
+#		-I$(MRSID_DIR)\include\j2k_writers $(MRSID_INCLUDE)
+#MRSID_LIB =	$(MRSID_DIR)\lib\Release_md\lti_esdk_dll.lib $(MRSID_LIB)
+# Enable the following if you prefer to build MrSID support as a plugin.
+#MRSID_PLUGIN = YES
+
+# PostGIS Libraries
+#PG_INC_DIR = n:\pkg\libpq_win32\include
+#PG_LIB = n:\pkg\libpq_win32\lib\libpqdll.lib wsock32.lib
+
+# MySQL Libraries
+# NOTE: Need /MT instead of /MD, also enable /EHsc switch. 
+#MYSQL_INC_DIR = D:\Software\MySQLServer4.1\include
+#MYSQL_LIB = D:\Software\MySQLServer4.1\lib\opt\libmysql.lib advapi32.lib
+
+# SQLite Libraries
+#SQLITE_INC=-IN:\pkg\sqlite-win32
+#SQLITE_LIB=N:\pkg\sqlite-win32\sqlite3_i.lib
+
+# Informix Data Blade
+#INFORMIXDIR="C:\Program Files\IBM\Informix\Client-SDK"
+#IDB_INC=-I$(INFORMIXDIR)\incl\cpp -I$(INFORMIXDIR)\incl\dmi \
+#	-I$(INFORMIXDIR)\incl\esql
+#IDB_LIB=$(INFORMIXDIR)\lib\cpp\libthc++.lib \
+#	$(INFORMIXDIR)\lib\dmi\libthdmi.lib $(INFORMIXDIR)\lib\isqlt09a.lib
+
+# Uncomment the following and update to enable FME support.
+#FME_DIR =	d:\Software\fme
+
+# Uncomment the following to enable FITS format support
+#FITS_INC_DIR =	c:\dev32\usr\include\cfitsio
+#FITS_LIB =	c:\dev32\usr\lib\cfitsio.lib
+
+# Uncomment the following to enable NetCDF format.
+#NETCDF_SETTING=yes
+#NETCDF_LIB=C:\Software\netcdf\lib\netcdf.lib
+#NETCDF_INC_DIR=C:\Software\netcdf\include
+# PROJ.4 stuff
+# Uncomment the following lines to link PROJ.4 library statically. Otherwise
+# it will be linked dynamically during runtime.
+#PROJ_FLAGS = -DPROJ_STATIC
+#PROJ_INCLUDE = -Id:\projects\proj.4\src
+#PROJ_LIBRARY = d:\projects\proj.4\src\proj_i.lib
+
+# Add ORACLE support.
+
+#ORACLE_HOME =	C:/Software/Oracle/Product/10.1.0/db_1
+#OCI_PLUGIN = YES
+
+!IFDEF ORACLE_HOME
+OCI_LIB =	$(ORACLE_HOME)\oci\lib\msvc\ociw32.lib \
+		$(ORACLE_HOME)\oci\lib\msvc\oci.lib
+!ENDIF
+
+#SDE_ENABLED = YES
+#SDE_VERSION=90
+#SDE_PLUGIN = YES
+#SDE_SDK = C:\arcgis\arcsde
+#SDE_INC = $(SDE_SDK)\include 
+#SDE_LIB = $(SDE_SDK)\lib\pe$(SDE_VERSION).lib \
+#          $(SDE_SDK)\lib\sde$(SDE_VERSION).lib $(SDE_SDK)\lib\sg$(SDE_VERSION).lib      
+
+# Uncomment to use libcurl (for WCS)
+#CURL_DIR=C:\curl-7.15.0
+#CURL_INC = -I$(CURL_DIR)/include
+#CURL_LIB = $(CURL_DIR)/libcurl.lib
+
+# Uncomment for GEOS support
+#GEOS_CFLAGS = -Ic:/warmerda/geos/capi -DHAVE_GEOS
+#GEOS_LIB     = C:/warmerda/geos/source/geos_c_i.lib
+
+# Uncomment for Panorama GIS support
+#PANORAMA_INC =	z:/panorama/include
+
+# Any extra libraries needed on this platform?
+ADD_LIBS	=
+
+# Comment out the following if you want to build with Python support, but
+# you don't have Numeric Python installed (with include files).  Numeric
+# integration may not work.
+#HAVE_NUMPY=1
+
+########### END OF STUFF THAT NORMALLY NEEDS TO BE UPDATED ##################
+
+
+# Location of MS Data Access SDK (not really needed anymore I think)
+#MSDASDK =	D:\Software\MDAC_2.6
+
+GDAL_DLL =	gdal$(VERSION).dll
+
+INC	=	-I$(GDAL_ROOT)\port -I$(GDAL_ROOT)\ogr -I$(GDAL_ROOT)\gcore \
+		-I$(GDAL_ROOT)\alg
+
+#LINKER_FLAGS =	/NODEFAULTLIB:LIBC 
+#LINKER_FLAGS = /debug
+
+CFLAGS	=	$(OPTFLAGS) $(INC) $(EXTRAFLAGS)
+MAKE	=	nmake /nologo
+
+CC	=	cl
+
+CPLLIB	=    $(GDAL_ROOT)/port/cpl.lib
+
+!IFDEF DLLBUILD
+GDALLIB	=    $(GDAL_ROOT)/gdal_i.lib
+!ELSE
+GDALLIB	=    $(GDAL_ROOT)/gdal.lib
+!ENDIF
+
+!IFDEF ODBC_SUPPORTED
+ODBCLIB = odbc32.lib odbccp32.lib user32.lib
+!ENDIF
+
+!IFDEF MRSID_DIR
+!IFNDEF MRSID_PLUGIN
+MRSID_ELIB = $(MRSID_LIB)
+!ENDIF
+!ENDIF
+
+# Under win64, symbols for function names lack the underscore prefix
+# present on win32. Also the STDCALL calling convention is not used.
+!IFDEF WIN64
+!UNDEF STDCALL
+!ELSE
+SYM_PREFIX=_
+!ENDIF
+
+EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(OCI_LIB) $(PG_LIB) $(ODBCLIB) \
+		$(ECWLIB) $(HDF4_LIB) $(FME_LIB) $(JASPER_LIB) $(MRSID_ELIB) \
+		$(FITS_LIB) $(JPEG_LIB) $(PNG_LIB) $(NETCDF_LIB) $(PROJ4_LIB) \
+		$(GEOTIFF_LIB) $(TIFF_LIB) $(PROJ_LIBRARY) $(SQLITE_LIB) \
+		$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB) $(SDE_LIB) $(DWG_LIB) \
+		$(IDB_LIB) $(CURL_LIB) $(ADD_LIBS)
+
+.c.obj:	
+	$(CC) $(CFLAGS) /c $*.c
+
+.cpp.obj:	
+	$(CC) $(CFLAGS) /c $*.cpp
+

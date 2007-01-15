@@ -1,0 +1,212 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>OGR WCTS Interactive Form</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link href="popup.css" rel="stylesheet" type="text/css">
+<style type="text/css">
+<!--
+.bigTitle {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 18px;
+  font-weight: bold;
+}
+-->
+</style>
+
+<script name="javascript">
+
+function setAction(action)
+{
+  if(action == "TransformPoint")
+	{
+    document.forms[0].Request.value="Transform";
+    document.forms[0].GMLDATA.value="";
+    document.forms[0].GMLURL.value="";
+	}
+  else
+  {
+	  document.forms[0].Request.value=action;
+	}
+	document.forms[0].submit();
+}
+
+</script>
+
+</head>
+
+<body>
+<form action="http://maps.gdal.org/cgi-bin/wctsclient" method="post">
+
+<input name="Request" type="hidden" value="">
+
+<table width="600" border="0" cellpadding="1" cellspacing="10">
+  <tr>
+    <td width="140">&nbsp;</td>
+    <td width="430"><p class="bigTitle">OGR WCTS - <br>
+      Web Coordinate Transformation Service</p>
+    <p class="text">The Web Coordinate Transformation Service enables the transformation<br>
+    of geometries between different coordinate reference systems (CRS).</p>
+    <p class="text">&nbsp;</p></td>
+  </tr>
+  <tr>
+    <td valign="top">&nbsp;</td>
+    <td class="layoutTable">
+      <table class="titleArea" width="100%" border="0" cellpadding="4" cellspacing="0">
+        <tr>
+          <td><a name="top"></a><span class="title">WCTS Server</span></td>
+        </tr>
+      </table>
+      <table class="contentArea" width="100%" border="0" cellpadding="4" cellspacing="0">
+        <tr>
+          <td align="center"><p class="helpArea">Provide the WCTS server.</p>
+          </td>
+        </tr>
+      </table>
+      <table class="contentArea" border="0" cellspacing="0" cellpadding="4" width="100%">
+        <tr>
+          <td width="15%" valign="top"><p class="text"><strong>Server</strong></p>
+          </td>
+          <td width="85%"><input name="WCTSServer" type="text" value="http://maps.gdal.org/cgi-bin/ogrwcts" size="45">
+            </td>
+        </tr>
+        <tr>
+          <td valign="top">&nbsp;</td>
+          <td align="right"><input type="button" name="SubmitGetCapabilities" value="GetCapabilities" onClick="setAction('GetCapabilities');"></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">&nbsp;</td>
+    <td class="layoutTable">
+      <table class="titleArea" width="100%" border="0" cellpadding="4" cellspacing="0">
+        <tr>
+          <td><a name="crs"></a><span class="title">Coordinate Reference Systems (CRS)</span></td>
+        </tr>
+      </table>
+      <table class="contentArea" width="100%" border="0" cellpadding="4" cellspacing="0">
+        <tr>
+          <td align="center"><p class="helpArea">
+            Provide the original and target coordinate reference system (CRS) as EPSG PCS or GCS codes. Some examples are: <br>
+            &#8226; 4326: Lat/Long WGS84<br>
+            &#8226; 4269: Lat/Long NAD83<br>
+            &#8226; 4267: Lat/Long NAD27<br>
+            &#8226; 32611: UTM 11 WGS84<br>
+            &#8226; 26911: UTM 11 NAD83<br>
+            &#8226; 26711: UTM 11 NAD27</p>
+          </td>
+        </tr>
+      </table>
+      <table class="contentArea" border="0" cellspacing="0" cellpadding="4" width="100%">
+        <tr valign="top">
+          <td width="15%"><p class="text"><strong>Source</strong></p></td>
+          <td><span class="text">CRS / Projection</span>
+            <!-- <span class="nnInputWrap">
+            <select class="inputList" name="select">
+              <option class="inputList" selected>EPSG 4326</option>
+            </select>
+            </span>
+            <span class="text">or </span> -->
+              <input class="inputBox" name="SourceCRS" value="4326" type="text" size="15">
+          </td>
+        </tr>
+        <tr valign="top">
+          <td><p class="text"><strong>Target</strong></p>
+          </td>
+          <td><span class="text">CRS / Projection</span>
+            <!-- <span class="nnInputWrap">
+            <select class="inputList" name="select">
+              <option class="inputList" selected>EPSG 4326</option>
+            </select>
+            </span>
+            <span class="text">or </span> -->
+            <input class="inputBox" name="TargetCRS" value="32611" type="text" size="15">
+          </td>
+        </tr>
+        <tr align="right" valign="top">
+          <td colspan="2">            <input type="button" name="SubmitIsTransformable" value="IsTransformable" onClick="setAction('IsTransformable');">
+            <input type="button" name="SubmitDescribeTransformation" value="DescribeTransformation" onClick="setAction('DescribeTransformation');">
+            </td>
+          </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">&nbsp;</td>
+    <td class="layoutTable">
+      <table class="titleArea" width="100%" border="0" cellpadding="4" cellspacing="0">
+        <tr>
+          <td><a name="point"></a><span class="title">Point / Location</span></td>
+        </tr>
+      </table>
+      <table class="contentArea" width="100%" border="0" cellpadding="4" cellspacing="0">
+        <tr>
+          <td align="center"><p class="helpArea">
+            Provide the X and Y coordinates for the point / location in decimal degrees. An example is: -117 44</p>
+          </td>
+        </tr>
+      </table>
+      <table class="contentArea" border="0" cellspacing="0" cellpadding="4" width="100%">
+        <tr valign="top">
+          <td width="15%"><p class="text"><strong>Source</strong></p></td>
+          <td width="35%" align="right"><span class="text">X / Longitude / Easting</span></td>
+          <td width="50%"><input name="InputX" type="text" class="inputBox" value="-75" size="20"></td>
+        </tr>
+        <tr valign="top">
+          <td>&nbsp;</td>
+          <td align="right"><span class="text">Y / Latitude / Northing</span></td>
+          <td><input name="InputY" type="text" class="inputBox" value="49" size="20"></td>
+        </tr>
+        <tr valign="top">
+          <td>&nbsp;</td>
+          <td align="right">&nbsp;</td>
+          <td align="right"><input type="button" name="SubmitPointTransform" value="Transform" onClick="setAction('TransformPoint');"></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">&nbsp;</td>
+    <td class="layoutTable">
+      <table class="titleArea" width="100%" border="0" cellpadding="4" cellspacing="0">
+        <tr>
+          <td><a name="gml"></a><span class="title">GML Dataset</span></td>
+        </tr>
+      </table>
+      <table class="contentArea" width="100%" border="0" cellpadding="4" cellspacing="0">
+        <tr>
+          <td align="center">
+            <p class="helpArea">Provide a URL to the GML dataset, or paste the GML directly into the textbox.</p>
+          </td>
+        </tr>
+      </table>
+      <table class="contentArea" border="0" cellspacing="0" cellpadding="4" width="100%">
+        <tr valign="top">
+          <td width="15%"><p class="text"><strong>Source</strong></p></td>
+          <td width="85%"><span class="text">URL:</span>
+            <input class="inputBox" name="GMLURL" type="text" size="40">
+          </td>
+        </tr>
+        <!-- <tr valign="top">
+          <td>&nbsp;</td>
+          <td><input name="file" type="file" size="35"></td>
+        </tr> -->
+        <tr valign="top">
+          <td>&nbsp;</td>
+          <td><span class="text">GML:</span>
+            <textarea name="GMLDATA" cols="60" rows="10" class="inputBox"></textarea>
+          </td>
+        </tr>
+        <tr valign="top">
+          <td>&nbsp;</td>
+          <td align="right"><input type="button" name="SubmitPointTransform" value="Transform" onClick="setAction('Transform');">
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</form>
+</body>
+</html>

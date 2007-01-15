@@ -1,0 +1,46 @@
+#
+# CPL (Common Portability Library) makefile
+#
+
+OBJ	=	cpl_conv.obj \
+		cpl_error.obj \
+		cpl_string.obj \
+		cplstring.obj \
+		cpl_strtod.obj \
+		cpl_vsisimple.obj \
+		cplgetsymbol.obj \
+		cpl_dir.obj \
+		cpl_path.obj \
+		cpl_csv.obj \
+		cpl_findfile.obj \
+		cpl_vsil_win32.obj \
+		cpl_minixml.obj \
+		cpl_multiproc.obj \
+		cpl_list.obj \
+		cpl_getexecpath.obj \
+		cpl_vsil.obj \
+		cpl_vsi_mem.obj \
+		$(ODBC_OBJ)
+
+LIB	=	cpl.lib
+
+GDAL_ROOT = ..
+
+!INCLUDE ..\nmake.opt
+
+!IFDEF ODBC_SUPPORTED
+ODBC_OBJ = 	cpl_odbc.obj
+!ENDIF
+
+default:	cpl_config.h $(LIB)
+
+$(LIB):	$(OBJ)
+	lib /out:cpl.lib *.obj
+
+clean:
+	-del *.obj *.lib
+
+cpl_config.h:	cpl_config.h.vc
+	copy cpl_config.h.vc cpl_config.h
+
+

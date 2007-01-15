@@ -1,0 +1,58 @@
+<html>
+<head>
+<title>JPEG -- JPEG JFIF File Format</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>JPEG -- JPEG JFIF File Format</h1>
+
+The JPEG JFIF format is supported for reading, and batch writing, but not
+update in place.  JPEG files are represented as one band (greyscale) or three 
+band (RGB) datasets with Byte valued bands.<p>
+
+There is currently no support for georeferencing information or metadata for
+JPEG files. But if an ESRI world file exists with the .wld or .jgw suffixes,
+it will be read and used to establish the geotransform for the image. Overviews
+can be built for JPEG files as an external .ovr file.<p>
+
+The GDAL JPEG Driver is built using the Independent JPEG Group's jpeg
+library.  Also note that the GeoTIFF driver supports tiled TIFF with JPEG
+compressed tiles.<p>
+
+<h2>Creation Options</h2>
+
+JPEG files are created using the "JPEG" driver code.  Only Byte band types
+are supported, and only 1 and 3 band configurations.  JPEG file creation
+is implemented by the batch (CreateCopy) method.  
+
+<ul>
+
+<li> <b>WORLDFILE=YES</b>: Force the generation of an associated ESRI world
+file (with the extension .wld).
+  <p>
+
+<li> <b>QUALITY=n</b>: By default the quality flag is set to 75, but this
+option can be used to select other values.  Values must be in the
+range 10-100.  Low values result in higher compression ratios, but poorer
+image quality.  Values above 95 are not meaningfully better quality but
+can but substantially larger.<p>
+
+<li> <b>PROGRESSIVE=ON</b>: Enabled generation of progressive jpegs.  In some
+cases these will display a reduced resolution image in viewers such as
+Netscape, and Internet Explorer, before the full file has been downloaded.
+However, some applications cannot read progressive jpegs at all. GDAL can
+read progressive jpegs, but takes no advantage of their progressive nature.<p>
+
+</ul>
+
+See Also:
+<p>
+
+<ul>
+<li> <a href="http://www.ijg.org/">Independent JPEG Group</a>
+</ul>
+
+</body>
+</html>
+

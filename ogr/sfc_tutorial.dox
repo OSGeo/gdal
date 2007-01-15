@@ -1,0 +1,290 @@
+/*! \page sfc_tutorial Simple Features Client Tutorial
+
+\section sfc_tutorial_intro Introduction
+
+The Simple Features Client API is a set of classes, and support functions
+that simplify access to OpenGIS SF OLE DB providers. <p>
+
+Most of the classes are based on the ATL OLE DB consumer templates.  To fully
+understand the classes it is critical to also review the Microsoft provided
+information on these classes.  It can be accessed in the <a
+href="http://msdn.microsoft.com/">MSDN Online Library</a>. <p>
+
+In general terms, the OpenGIS SF COM interface specification requires 
+geographic data providers to make their datasets look like a database.  
+A <b>data source</b> (usually a single data file, or group of related data
+files) can contain one or more spatial tables which roughly correspond to
+what be called layers in most systems.  Each table has a schema defining the
+set of attributes (table fields) that apply to each feature in that table
+(layer).  Each record in the table corresponds to a features, with a
+set of attributes, and some geometry.  The geometry is stored in one field
+of the table as a BLOB (binary large object) encoded in a particular format
+(OpenGIS SF Well Known Binary Format). <p>
+
+The Simple Features Client classes help model the different parts of this
+data model:<p>
+
+<ul>
+
+<li> SFCEnumerator: This class allows the application to look through all 
+the OLE DB drivers installed on this system, including the ability to identify
+which of these claim to be OpenGIS data providers.<p>
+
+<li> SFCDataSource: This class allows a file to be opened with a data provider
+(driver) selected from the SFCEnumerator.   It also provides a method to
+instantiate an SFCTable for a particular table (layer) in that data source.
+Eventually it will include methods to identify all the tables in the data 
+source, and to identify which of these is spatially enabled.  Some other 
+metadata about the datastore will also be available from this class.<p>
+
+<li> SFCTable: This class allows a table (layer) in a data source to be read.
+It includes SF COM related methods for extracting the geometry column and
+translating them into in memory geometry objects using the 
+OGRGeometryFactory.
+
+<li> OGRGeometry: This is the base class for all types of simple features
+geometry.   Geometry objects returned from an SFCTable will be of a class
+derived from OGRGeometry, and be queried with a variety of methods.  
+Review the <a href="hierarchy.html">class hierarchy</a> to learn more about
+the possible geometry types.
+
+</ul>
+
+\section sfc_tutorial_example Example Client
+
+The console program SFCDUMP is intended to be an example of how to use
+the client api (as well as being a useful debugging tool in it's own
+right).  The full source should be available in 
+<a href="http://gdal.velocet.ca/projects/opengis/src/sfcdump.cpp">
+gdal/ogr/sfcdump.cpp</a>.<p>
+
+
+\subsection sfc_tutorial_enum SFCEnumerator: Finding a Provider
+
+The SFCEnumerator class is used to identify all the installed OLE DB
+providers (drivers) installed on a system.  It essentially makes the
+list of OLE DB providers appear to be a table.  The following code
+sequence demonstrates how to create an SFCEnumerator, loop through all
+the records, and print out some information for each record.<p>
+
+<pre>
+static void SFCDumpProviders()
+
+{
+    SFCEnumerator      oEnum;
+
+    printf( "Available OLE DB Providers\n" );
+    printf( "==========================\n" );
+
+    if( FAILED(oEnum.Open()) )
+    {
+        printf( "Failed to initialize SFCEnumerator.\n" );
+        return;
+    }
+
+    while( oEnum.MoveNext() == S_OK )
+    {
+        printf( "%S: %S\n", 
+                oEnum.m_szName, oEnum.m_szDescription );
+
+        if( oEnum.IsOGISProvider() )
+            printf( "    (OGISDataProvider)\n" );
+
+        printf( "\n" );
+    }
+}
+</pre>
+
+Some things to note are that:
+
+<ul>
+<li> The m_szName, and m_szDescription data members are unicode strings,
+so we have to use %S instead of %s to display them. <p>
+
+<li> The MoveNext() method is used to go from record to record.  This is
+the same method used to read records in an SFCTable. <p>
+
+<li> The IsOGISProvider() method will query the registry to see if the
+provider claims to be an OGISDataProvider.  Generic databases such as
+MS Access can still be used to store spatial data, but they will generally 
+be less completely configured, and less capable than a OGIS data provider.<p>
+
+<li> The SFCEnumerator hides all the COM machinery such as
+instantiating COM objects, querying for interfaces and maintaining reference
+counts.<p>
+
+</ul>
+
+\subsection sfc_tutorial_open Opening a Simple Features File
+
+In order to open a file with OGIS simple features information in it, the
+following steps should be followed.  First, it is necessary to identify the
+provider to use.  In this example the user gives the provider name as a
+string, perhaps after having reviewed a list of possible providers from
+SFCDumpProviders().  Second, the filename is needed for the creation of
+an SFCDataStore.<p>
+
+<pre>
+static SFCDataSource * SFCOpenDataSource( const char * pszProvider, 
+                                          const char * pszDataSource )
+
+{
+    SFCEnumerator      oEnumerator;
+
+    if( FAILED(oEnumerator.Open()) )
+    {
+        printf( "Can't open ole db enumerator.\n" );
+        return NULL;
+    }
+
+    if( !oEnumerator.Find((char*) pszProvider) )
+    {
+        printf( "Can't find OLE DB provider `%s'.\n", pszProvider );
+        return NULL;
+    }
+
+    SFCDataSource *poDS;
+
+    poDS = new SFCDataSource;
+
+    if( FAILED(poDS->Open( oEnumerator, pszDataSource  )) )
+    {
+        delete poDS;
+        printf( "Attempt to access datasource %s failed.\n", 
+                pszDataSource );
+        return NULL;
+    }
+    else
+        return poDS;
+}
+</pre>
+
+Some interesting things to note are that:<p>
+
+<ul>
+<li> We open the SFCEnumerator the same as in the previous example, but 
+use the Find() method to find the record with a particular m_pszName.  We
+could have read through record by record and stopped on the record we wanted
+instead.<p>
+
+<li> The SFCDataSource::Open() method takes in an enumerator.  The data
+source is created based on the provider of the currently selected row in
+the passed enumerator.  The other argument is the filename to open.<p>
+
+<li> The SFCEnumerator isn't needed after the SFCDataSource has been 
+created, so we let it fall out of scope and be destroyed at the end of
+the function.<p>
+
+<li> The provider and data source strings are all passed as simple C
+strings.  The classes take care of internally translating to unicode when
+needed.<p>
+
+</ul>
+
+\subsection sfc_tutorial_access Accessing an SFCTable
+
+The SFCDataSource that we opened could have a number of spatial, and non
+spatial tables in it.  Eventually the SFCDataSource will include methods for
+identifying these.  For the time being it is necessary to know apriori what
+the table (layer) to access is called.  The following code shows how to 
+instantiate an SFCTable from within a data store.<p>
+
+<pre>
+    SFCDataSource      *poDS;
+
+    poDS = SFCOpenDataSource( pszProvider, pszDataSource );
+    if( poDS == NULL )
+        goto CleanupAndExit;
+
+    SFCTable      *poTable;
+
+    poTable = poDS->CreateSFCTable( pszTable );
+
+    delete poDS;
+
+    if( poTable == NULL )
+    {
+        printf( "Failed to open table %s.\n",  pszTable );
+        goto CleanupAndExit;
+    }
+</pre>
+
+Things to note are:
+
+<ul>
+<li> After creating the SFCTable we no longer need the SFCDataSource, so
+we delete it.  The underlying data source/file remains open because the
+SFCTable is using it, but the SFCDataSource object no longer exists holding
+a reference on the data source.<p>
+
+<li> There is little information provided about what error occured if 
+things go wrong within the CreateSFCTable() method or others.  Eventually the
+SFC classes may through exceptions with more information when things go 
+wrong. <p>
+
+</ul>
+
+\subsection sfc_tutorial_read Reading the Features
+
+The following example shows reading through all the records in a
+simple features table, and reading back just the geometry column.
+It is instantiated into a geometry object, which is then dumped
+to stdout. <p>
+
+<pre>
+static void SFCDumpTableGeometry( SFCTable * poTable )
+
+{
+    HRESULT      hr;
+
+    while( !FAILED((hr = poTable->MoveNext())) )
+    {
+        OGRGeometry * poGeom;
+
+        poGeom = poTable->GetOGRGeometry();
+        poTable->ReleaseIUnknowns();
+
+        if( poGeom == NULL )
+        {
+            printf( "Failed to reconstitute geometry!\n" );
+            break;
+        }
+        else
+        {
+            poGeom->dumpReadable( stdout ); 
+            delete poGeom;
+        }
+    }
+}
+</pre>
+
+Things to note:
+
+<ul>
+<li> The MoveNext() method is used to read records.
+<li> The SFCTable keeps track of which column contains the geometry.
+<li> It is necessary to call SFCTable::ReleaseIUnknowns() for every
+record read in an SFCTable!  Failure to do so may cause serious
+problems.  Calling it twice for the same record is likely to 
+result in a crash. 
+<li> The OGRGeometry object created by GetOGRGeometry() is now the
+responsibility of the caller which must delete it.<p>
+<li> While note shown here, there is also a GetWKBGeometry() method on 
+the SFCTable for applications that want the binary form of the 
+geometry for their own purposes. <p>
+<li> All the other fields in this table are also available; however, this
+example doesn't show how to access them.<p>
+</ul>
+
+<hr>
+
+Items to add:
+
+<ol>
+<li> Information on getting the schema.<p>
+<li> Information on accessing other attribute fields.<p>
+<li> Rewrite error handling when error handling semantics worked out.<p>
+<li> Rewrite table selection when table selection semantics are available.<p>
+</ol>
+
+*/

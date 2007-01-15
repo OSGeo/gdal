@@ -1,0 +1,96 @@
+<html>
+<head>
+<title>JP2ECW -- ERMapper JPEG2000 (.jp2)</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>JP2ECW -- ERMapper JPEG2000 (.jp2)</h1>
+
+GDAL supports reading and writing JPEG2000 files using the ECW SDK from 
+ERMapper.<p>
+
+Coordinate system and georeferencing transformations are read, and 
+some degree of support is included for GeoJP2 (tm) (GeoTIFF-in-JPEG2000), 
+ERMapper GML-in-JPEG2000, and the new GML-in-JPEG2000 specification developed
+at OGC. <p>
+
+Support for the JP2ECW driver in GDAL is optional, and requires linking
+in external ECW SDK libraries provided by ERMapper.<p>
+
+By default the ECW SDK will use up to one quarter of physical RAM for 
+internal caching and work memory during decoding.  This is normally fine, 
+but the amount of memory to use can be adjusted by setting the 
+GDAL_ECW_CACHE_MAXMEM configuration variable with an amount of memory in 
+bytes.  Config variables can be set in the environment or using the --config
+commandline switch.<p>
+
+<h2>Creation Issues</h2>
+
+The free ECW compression kit only supports compression of images up to 
+500MB.  To compress very large images it is necessary to license ECW
+technology from ERMapper. Creation of 8 bit, and 16bit signed or unsigned
+values is supported.<p>
+
+Creation Options:<p>
+
+<ul>
+
+<li> <b>TARGET=percent</b>: Set the target size reduction as a percentage of 
+the original.  If not provided defaults to 75 for an 75% reduction.<p>
+
+<li> <b>PROJ=name</b>: Name of the ERMapper projection string to use. 
+Common examples are NUTM11, or GEODETIC.<p>
+
+<li> <b>DATUM=name</b>: Name of the ERMapper datum string to use. 
+Common examples are WGS84 or NAD83.<p>
+
+<li> <b>LARGE_OK=YES/NO</b>: Under some circumstances this option can be set
+to allow compressing files larger than 500MB.  It is the users responsibility
+to ensure that ERMapper licensing requirments for large file compression
+are being adhered to.<p>
+
+<li> <b>GMLJP2=YES/NO</b>: Indicates whether a GML box conforming to the OGC GML in JPEG2000 specification should be included in the file.  Defaults to YES.<p>
+
+<li> <b>GeoJP2=YES/NO</b>: Indicates whether a GML box conforming to the GeoJP2 (GeoTIFF in JPEG2000) specification should be included in the file.  Defaults to YES.<p>
+
+<li> <b>PROFILE=profile</b>: One of BASELINE_0, BASELINE_1, BASELINE_2, 
+NPJE or EPJE.  Review the ECW SDK documentation for details on profile 
+meanings.<p>
+
+<li> <b>PROGRESSION=LRCP/RLCP/RPCL</b>: Set the progression order with
+which the JPEG2000 codestream is written.<p>
+
+<li> <b>CODESTREAM_ONLY=YES/NO</b>: If set to YES, only the compressed
+imagery code stream will be written.  If NO (the default) a JP2 package
+will be written around the code stream including a variety of meta
+information.<p>
+
+<li> <b>LEVELS=n</b>: See ECW SDK for details.<p>
+<li> <b>LAYERS=n</b>: See ECW SDK for details.<p>
+<li> <b>PRECINCT_WIDTH=n</b>: See ECW SDK for details.<p>
+<li> <b>PRECINCT_HEIGHT=n</b>: See ECW SDK for details.<p>
+<li> <b>TILE_WIDTH=n</b>: See ECW SDK for details.<p>
+<li> <b>TILE_HEIGHT=n</b>: See ECW SDK for details.<p>
+<li> <b>INCLUDE_SOP=YES/NO</b>: See ECW SDK for details.<p>
+<li> <b>INCLUDE_EPH=YES/NO</b>: See ECW SDK for details.<p>
+<li> <b>DECOMPRESS_LAYERS=n</b>: See ECW SDK for details.<p>
+<li> <b>DECOMPRESS_RECONSTRUCTION_PARAMETER=n</b>: See ECW SDK for details.<p>
+
+</ul>
+
+JPEG2000 format does not support creation of overviews since the format 
+is already considered to be optimized for "arbitrary overviews". <P>
+
+See Also:<p>
+
+<ul>
+<li> Implemented as <tt>gdal/frmts/ecw/ecwdataset.cpp</tt>.<p>
+
+<li> <a href="http://www.ermapper.com/products/ecw/ecw_body.htm">ECW Page</a>
+at <a href="http://www.ermapper.com/">www.ermapper.com.</a><p>
+
+</ul>
+
+</body>
+</html>

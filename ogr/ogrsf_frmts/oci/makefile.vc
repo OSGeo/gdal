@@ -1,0 +1,38 @@
+
+LL_OBJ	=	oci_utils.obj ogrocisession.obj ogrocistatement.obj
+OGR_OBJ	=	ogrocidriver.obj ogrocidatasource.obj ogrocilayer.obj \
+		ogrocitablelayer.obj ogrociselectlayer.obj ogrocistringbuf.obj\
+		ogrociwritablelayer.obj ogrociloaderlayer.obj
+
+
+OBJ	=	$(LL_OBJ) $(OGR_OBJ)
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+
+EXTRAFLAGS = -I.. -I..\.. -I$(ORACLE_HOME)\oci\include
+
+default:	$(OBJ)
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb
+	-del *.exe
+
+ogr_OCI.dll:	$(OBJ)
+	link /dll /out:ogr_OCI.dll $(OBJ) \
+		$(GDAL_ROOT)/gdal_i.lib $(OCI_LIB)
+
+ocitest.exe:	$(LL_OBJ) ocitest.obj
+	cl /Zi ocitest.obj $(LL_OBJ) \
+		../../ogr.lib ../ogrsf_frmts.lib ../ogrsf_frmts_sup.lib \
+		$(GDAL_ROOT)/port/cpl.lib $(OCI_LIB) $(LIBS)
+
+fastload.exe:	$(LL_OBJ) fastload.obj
+	cl /Zi fastload.obj $(LL_OBJ) \
+		../../ogr.lib ../ogrsf_frmts.lib ../ogrsf_frmts_sup.lib \
+		$(GDAL_ROOT)/port/cpl.lib $(OCI_LIB) $(LIBS)
+
+

@@ -1,0 +1,104 @@
+
+Folks who have agreed to RFC 3 terms:
+
+CVS Login(s)  Name/Contact                 Area of Interest
+============  ============                 ================
+warmerda      Frank Warmerdam              all
+fwarmerdam    warmerdam@pobox.com
+
+tamas         Tamas Szekeres               c# swig bindings
+              szekerest at gmail.com
+
+dmorissette   Daniel Morissette            mitab, avc, cpl
+danmo         dmorissette at mapgears.com  
+
+hobu          Howard Butler                swig/python, sde
+              hobu at hobu.net             
+
+kdejong       Kor de Jong                  pcraster
+              k.dejong at geog.uu.nl
+
+rblazek       Radim Blazek                 grass drivers
+              radim.blazek at gmail.com    
+
+osemykin      Oleg Semykin	           postgis, informix
+              oss-dev at rambler.ru
+
+sperkins      Simon Perkins                fits, windows builds. 
+              sy at perkins.net               
+
+kmelero	      Ken Melero		   mrsid
+              kmelero at sanz.com
+
+ajolma        Ari Jolma                    perl bindings
+              ari.jolma at tkk.fi          
+
+shalasz       Steve Halasz                 DebianGIS Packaging
+              debian at adkgis.org         
+
+mloskot	      Mateusz Loskot		   wince
+              mateusz at loskot.net        
+
+ilucena       Ivan Lucena                  idrisi
+              ivan at ilucena.net           
+
+mbrudka	      Marek Brudka		   thread safety
+              mbrudka at aster.pl
+
+
+jlacroix      Julien-Samuel Lacroix	   mitab, avc
+              jlacroix at mapgears.com        
+
+dnadeau	      Denis Nadeau                 netcdf, hdf, opendap
+              denis.nadeau@gmail.com
+
+cfis          Charles F. I. Savage         ruby
+              cfis at savagexi.com
+
+lichun	      Lichun Wang                  ilwis
+              lichun at itc.nl 		
+
+dron          Andrey Kiselev               HDF, geotiff, informix, 
+              dron at ak4719.spb.edu
+
+dreamil       Swapnil Harjare              
+              dreamil at gmail.com 
+
+
+
+Folks who have not yet agreed to RFC 3:
+
+CVS Login(s)	Name			Email / Contact			Project
+============	====			===============			=======
+
+
+gwalter		Gillian Walter		gillian.walter at vexcel.com	gdal
+
+bfreisen	Bob Friesenhahn		bfriesen at simple.dallas.tx.us	libtiff
+
+andrea		Alessandro Amici 	alexamici at tiscali.it		gdal
+
+dgilbert	Dave Gilbert		dgilbert at dclg.ca		libjpeg
+
+nhv		Norman Vine		nhv at cape.com			gdal
+
+kruland		Kevin Ruland		kruland at ku.edu		gdal
+
+pka		Pirmin Kalberer		pka at sourcepole.ch		gdal
+
+fvdbergh	Frans van der Bergh	fvdbergh at csir.co.za		gdal
+
+dwallner	Daniel Wallner		daniel.wallner at bredband.net	gdal
+
+pnagy           Peter Nagy              peter.nagy at vexcel.com        gdal
+
+joris           Joris Van Damme         joris.at.lebbeke at skynet.be   libtiff
+
+kintel		Marius Kintel           kintel at sim.no                dgnlib
+
+nbrodin         Nacho Brodin            brodin_ign at gva.es            gdal
+
+collinsb	Benjamin Collins        collinsb at mitre.org		gdal
+
+marit		Marit Jentoft-Nilson    jentoft-nilsen at agnes.gsfc.nasa.gov geotiff
+

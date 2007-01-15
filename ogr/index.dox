@@ -1,0 +1,163 @@
+/*! \mainpage OGR Simple Feature Library
+
+The OGR Simple Features Library is a C++ open source library (and commandline 
+tools) providing read (and sometimes write) access to a variety of vector file 
+formats including ESRI Shapefiles, S-57, SDTS, PostGIS, Oracle Spatial, 
+and Mapinfo mid/mif and TAB formats.<p>
+
+OGR is a part of the <a href="http://www.gdal.org/">GDAL</a> library.<p>
+
+<h2>Resources</h2>
+
+<ul>
+
+<li> <a href="ogr_formats.html">OGR Supported Formats</a>
+
+<li> <a href="ogr_utilities.html">OGR Utility Programs</a>
+
+<li> <a href="hierarchy.html">OGR Class Documentation</a>
+
+<li> <a href="ogr_apitut.html">OGR C++ API Read/Write Tutorial</a>
+
+<li> <a href="ogr__api_8h.html">ogr_api.h</a>: OGR C API
+
+<li> <a href="osr_tutorial.html">OGR Projections Tutorial</a>
+
+<li> <a href="ogr_arch.html">OGR Architecture</a>
+
+<li> <a href="ogr_sql.html">OGR SQL</a>
+
+<li> <a href="ogr_feature_style.html">OGR - Feature Style Specification</a>
+
+<li> <a href="sfc_tutorial.html">SFC (OLE DB client side API) 
+Tutorial</a>
+
+<li> <a href="http://pobox.com/~warmerdam/projects/opengis/twohalfdsf.html">Adam's 2.5 D Simple Features Proposal (OGC 99-402r2)</a>
+
+<li> Adam's SRS WKT Clarification Proposal in <a href="http://pobox.com/~warmerdam/projects/opengis/wkt_prop.html">html</a>
+or <a href="http://pobox.com/~warmerdam/projects/opengis/wkt_prop.doc">doc</a> format.
+
+</ul>
+
+<h2>Download</h2>
+
+<h3>Ready to Use Executables</h3>
+
+The best way to get OGR <a href="ogr_utilities.html">utilities</a>
+in ready-to-use form is to download the latest 
+<a href="http://fwtools.maptools.org/">FWTools</a> kit
+for your platform.  While large, these include builds of the OGR utilities
+with lots of optional components built-in.  Once downloaded follow the 
+included instructions to setup your path and other environment variables
+correctly, and then you can use the various OGR utilities from the command 
+line.  The kits also include <a href="http://openev.sf.net/">OpenEV</a>, 
+a viewer that will display OGR supported vector files.<p>
+
+<h3>Source</h3>
+
+The source code for this effort is intended to be available as OpenSource
+using an X Consortium style license.  The OGR library is currently a 
+loosely coupled subcomponent of the 
+<a href="http://www.gdal.org/">GDAL</a> library, so you get all
+of GDAL for the price of OGR, though you can build and use just the OGR 
+components.  See the <a href="http://www.gdal.org/">GDAL</a> 
+page for the most recently released source including 
+<a href="http://gdal.maptools.org/dl/daily">nightly CVS snapshots</a>. 
+<p>
+
+<h2>Bug Reporting</h2>
+
+OGR bugs <a href="http://bugzilla.remotesensing.org/enter_bug.cgi?product=GDAL&component=OGR_SF">can  be entered</a>, and  <a href="http://bugzilla.remotesensing.org/buglist.cgi?product=GDAL">can be  listed</a> using BugZilla.
+<p>
+
+<h2>Mailing List</h2>
+
+The <a href="mailto:gdal-dev@lists.maptools.org">gdal-dev@lists.maptools.org</a> 
+mailing list can be used for discussion of development and user issues related 
+to OGR and related technologies. Subscriptions can be done, and archives 
+reviewed <a href="http://lists.maptools.org/mailman/listinfo/gdal-dev/">on
+the web</a>.<p>
+
+<h2>Alternative Bindings for the OGR API</h2>
+
+In addition to the C++ API primarily addressed in the online documentation,
+there is also a slightly less complete C API implemented on top of the C++
+API, and access available from Python.<p>
+
+The C API is primarily intended to provide a less fragile API since slight
+changes in the C++ API (such as const correctness changes) can cause changes
+in method and class signatures that prevent use of new DLLs with older clients.
+The C API is also generally easy to call from other languages which allow call
+out to DLLs functions, such as Visual Basic, or Delphi. The API can be
+explored in the <a href="ogr__api_8h.html">ogr_api.h</a> include file.  
+The gdal/ogr/ogr_capi_test.c is a small sample program demonstrating use
+of the C API.<p>
+
+The Python API isn't really well documented at this time, but parallels the
+C/C++ APIs.  The interface classes can be browsed in the pymod/ogr.py
+(simple features) and pymod/osr.py
+(coordinate systems) python modules.  The pymod/samples/assemblepoly.py
+sample script is one demonstration of using the python API.<p>
+
+<h2>OGR and OpenGIS Simple Features for OLE DB</h2>
+
+With the support of <a href="http://www.softmaptech.com/">SoftMap</a> and
+<a href="http://www.safe.com/">Safe Software</a> some
+associates and I have implemented an OLE DB provider on top of OGR, attempting
+to adhere to the OpenGIS Simple Features for COM specification to the
+extent possible.  This implementation is not certified as compliant with 
+the OpenGIS specification.<p>
+
+While OGR can be used via the OLE DB interface, it can also just be called
+directly as a C++ library.  OGR attempts to provide an OpenGIS Simple 
+Features inspired terminology and view of datasets even when used in this 
+fashion.  Note that there is no OpenGIS specification for a C or C++ 
+interface.<p>
+
+OGR stands for "OGR"... its meaning is irrelevant today.  The original
+name for the lib was "OpenGIS Simple Features Reference Implementation"
+and that's where OGR comes from.  However, since OGR is not fully
+compliant with the Simple Feature specification and is not approved as a
+reference implementation of the spec the name was changed to "OGR Simple
+Features Library" ... and the only meaning of OGR in this name is
+historical.  "OGR" is also the prefix used everywhere in the source of
+the library for class names, filenames, etc.<p>
+
+<h2>Acknowledgements</h2>
+
+I would like to thank the following individuals and organizations for their
+contributions.<p>
+
+<ul>
+
+<li> <a href="http://www.softmaptech.com/">SoftMap</a> for their funding for
+the implementation of most work so far.<P>
+
+<li> <a href="http://www.safe.com/">Safe Software</a> for their funding for
+the client side classes as part of implementing a simple features reader
+for FME, and supporting implmentaton of the S-57, TIGER/Line, SDTS and NTF 
+drivers.<p>
+
+<li> Ned Harding of <a href="http://www.extendthereach.com/">SRC</a> for
+funding the Oracle Spatial driver.<p>
+
+<li> Adam Gawne-Cain, and Martin Daly of
+<a href="http://www.cadcorp.co.uk">Cadcorp</a>
+whose groundbreaking SFCOM implementation made mine possible, and
+for answering so many of my annoying questions.<p>
+
+<li> <a href="http://pages.infinit.net/danmo/">Daniel Morissette</a> for 
+his key contributions to CPL library, and development of the Mapinfo TAB
+translator.<p>
+
+<li> Ken Shih for the vast bulk of the implementation of the OLE DB provider.
+<p>
+
+<li> Stephane Villeneuve for development of the Mapinfo MIF translator.<p>
+
+<li> Hartmut Kaiser of Deutsche PhoneSat AG for making me realize that
+ATL can be my friend.<p>
+
+</ul>
+
+*/

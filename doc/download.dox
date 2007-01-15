@@ -1,0 +1,102 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
+/*!
+\page download GDAL Downloads
+
+\section download_binaries Binary Packages
+
+\subsection download_binaries_fwtools FWTools
+
+The FWTools binary releases for Linux and Windows systems include the
+full set of GDAL libraries, utilities, python support and documentation 
+along with lots of other stuff (including the OpenEV viewer).  More 
+information is available at:
+
+<a href="http://fwtools.maptools.org/">http://fwtools.maptools.org/</a>
+
+The FWTools binaries for Linux should work on pretty much any modern
+Intel Linux system.<p>
+
+\subsection download_binaries_other Other Binary Packages
+
+<ol>
+
+<li> RPMs suitable for Fedora Core are maintained by Schuyler Erle on
+the <a href="http://mappinghacks.com">Mapping Hacks</a> site at
+<a href="http://mappinghacks.com/rpm/">http://mappinghacks.com/rpm/</a>.
+FC4 RPMs are also available from 
+<a href="http://www.gdal.org/dl/fc4-rpms">Intevation</a>.<p>
+
+<li> RPMs suitable for SuSe and Mandriva are maintained by GDF Hannover Germany site at
+<a href="http://www.gdf-hannover.de/software">http://www.gdf-hannover.de/software</a>.<p>
+
+<li> Packages for Debian users are available in the official repository
+<a href="http://packages.debian.org/libgdal1">http://packages.debian.org/libgdal1</a>.<p>
+
+<li> Packages for MacOS X are available via Fink from the <a href="http://fink.sourceforge.net/pdb/package.php/gdal">Fink repository</a>.
+
+<li> For the fink adverse, there is also a build of GDAL distributed as
+part of the easy-to-install 
+<a href="http://wwwamb.bologna.enea.it/forgrass/download.htm">GRASS GIS ON MAC
+OS X</a> package by Lorenzo Moretti, and a standalone <a href="http://www.gdal.org/dl/GDAL-1.2.6.dmg">GDAL 1.2.6 installer</a> which includes a Framework 
+version of the GDAL library.<p>
+
+<li> For the fink and framework adverse another option is William Kyngesburye's
+GISLibs package, <a href="http://www.kyngchaos.com/macosx/downloads.php">
+binaries</a> and 
+<a href="http://www.kyngchaos.com/macosx/index.php">build instructions</a>.<p>
+
+</ol>
+
+\section download_sources Source
+
+The latest stable release source (1.4.0) is available at:<p>
+
+<a href="http://www.gdal.org/dl/gdal-1.4.0.tar.gz">gdal-1.4.0.tar.gz</a> (source)<br>
+<a href="http://www.gdal.org/dl/gdal140.zip">gdal140.zip</a> (source)<br>
+<a href="http://www.gdal.org/dl/gdal140doc.zip">gdal140doc.zip</a> (html docs)<br>
+<a href="http://www.gdal.org/dl/gdalautotest-1.4.0.tar.gz">gdalautotest-1.4.0.tar.gz</a> (python test suite)<p>
+
+The <a href="NEWS.html">NEWS</a> file describes features added up to the
+most recent public release.<p>
+
+Past GDAL source releases, and other files are available from from the
+GDAL primary site, and the mirror site:
+
+<a href="http://www.gdal.org/dl">http://www.gdal.org/dl</a><br>
+<a href="http://download.osgeo.org/gdal/">http://download.osgeo.org/gdal</a><p>
+
+Late each night a development snapshot is captured from CVS and made available.
+These snapshots are not stable releases, and might (on a bad night) not even
+build.  However, they do contain essentially the latest code.  They can be
+downloaded from:
+
+<a href="http://gdal.maptools.org/dl/daily">http://gdal.maptools.org/dl/daily</a><p>
+
+Refer to the <a href="gdal_building.html">build instructions</a> for how to
+build GDAL from source.<p>
+
+\subsection download_sources_cvs CVS
+
+The GDAL source is available by anonymous CVS from the cvs.maptools.org
+server:
+
+<pre>
+% export CVSROOT=:pserver:cvsanon@cvs.maptools.org:/cvs/maptools/cvsroot
+% cvs login
+Password: *enter*
+% cvs checkout gdal
+</pre>
+
+Update access to the CVS repository can be obtained by arrangement 
+with the maintainer.<p>
+
+\htmlonly
+<p>
+$Id$
+</p>
+\endhtmlonly
+
+*/

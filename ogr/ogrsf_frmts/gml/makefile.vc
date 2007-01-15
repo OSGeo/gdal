@@ -1,0 +1,39 @@
+
+LL_OBJ	=	gmlpropertydefn.obj gmlfeatureclass.obj gmlfeature.obj \
+		gmlreader.obj parsexsd.obj $(X_OBJ)
+OGR_OBJ	=	ogrgmldriver.obj ogrgmldatasource.obj ogrgmllayer.obj
+
+OBJ	=	$(LL_OBJ) $(OGR_OBJ)
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+# By default, XML validation is disabled.  Uncomment the following line to
+# enable XML schema validation in the parser.
+#OGR_GML_VALIDATION = -DOGR_GML_VALIDATION=1
+
+!IFDEF XERCES_DIR
+X_OBJ =		gmlreadstate.obj gmlhandler.obj trstring.obj
+EXTRAFLAGS =	-I.. -I..\.. $(XERCES_INCLUDE) -DHAVE_XERCES=1 \
+                $(OGR_GML_VALIDATION)
+!ELSE
+EXTRAFLAGS =	-I.. -I..\..  -DHAVE_XERCES=0
+!ENDIF
+
+# By default, XML validation is disabled.  Uncomment the following line to
+# enable XML schema validation in the parser.
+#ALL_C_FLAGS :=  -DOGR_GML_VALIDATION=1 $(ALL_C_FLAGS)
+
+
+default:	$(OBJ)
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb
+
+gmlview.exe:	$(LL_OBJ) gmlview.obj
+	cl /Zi gmlview.obj $(LL_OBJ) \
+		../../ogr.lib ../ogrsf_frmts.lib ../ogrsf_frmts_sup.lib \
+		$(GDAL_ROOT)/port/cpl.lib $(XERCES_LIB) $(LIBS)
+

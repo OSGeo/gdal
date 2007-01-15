@@ -1,0 +1,15 @@
+
+OBJ	=	fitsdataset.obj
+
+EXTRAFLAGS = 	-I$(FITS_INC_DIR) -DFRMT_fits 
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+

@@ -1,0 +1,17 @@
+
+OBJ	=	hfaband.obj hfadataset.obj hfadictionary.obj hfaentry.obj \
+		hfafield.obj hfaopen.obj hfatype.obj hfacompress.obj \
+		hfa_overviews.obj
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+
+hfatest.exe:	hfatest.cpp $(GDALLIB) 
+	$(CC) $(CFLAGS) hfatest.cpp $(OBJ) $(GDALLIB) 

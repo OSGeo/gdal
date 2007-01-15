@@ -1,0 +1,112 @@
+<html>
+<head>
+<title>GTiff -- GeoTIFF File Format</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>GTiff -- GeoTIFF File Format</h1>
+
+Most forms of TIFF and GeoTIFF files are supported by GDAL for reading, and
+somewhat less varieties can be written.<p>
+
+Currently band types of Byte, UInt16, Int16, UInt32, Int32, Float32, Float64, 
+CInt16, CInt32, CFloat32 and CFloat64 are supported for
+reading and writing.  
+Paletted images will return palette information associated with
+the band.  The compression formats listed below should be supported for
+reading as well. <p>
+
+As well, one bit files, and some other unusual formulations of GeoTIFF file,
+such as YCbCr color model files, are automatically translated into RGBA
+(red, green, blue, alpha) form, and treated as four eight bit bands. <p>
+
+<h2>Georeferencing</h2>
+
+Most GeoTIFF projections should be supported, with the caveat that in order
+to translate uncommon Projected, and Geographic coordinate systems into 
+OGC WKT it is necessary to have the EPSG .csv files avalable.  They must
+be found at the location pointed to by the GEOTIFF_CSV environment variable.
+<p>
+
+Georeferencing from GeoTIFF is supported in the form of one tiepoint and
+pixel size, a transformation matrix, or a list of GCPs.<p>
+
+If no georeferencing
+information is available in the TIFF file itself, GDAL will also check for,
+and use an ESRI <a href="frmt_various.html#WLD">world file</a> with the
+extention .tfw, .tiffw or .wld, as well as a MapInfo .tab file (only control
+points used, Coordsys ignored).<P>
+
+<h2>Creation Issues</h2>
+
+GeoTIFF files can be created with any GDAL defined band type, including
+the complex types.  Created files may have any number of bands.  Files 
+with exactly 3 bands will be
+given a photometric interpretation of RGB, files with exactly four bands
+will have a photometric interpretation of RGBA, while all other combinations 
+will have a photometric interpretation of MIN_IS_WHITE.  Files with
+pseudo-color tables, or GCPs can currently only be created when creating from 
+an existing GDAL dataset with those objects (GDALDriver::CreateCopy()).<p>
+
+Creation Options:<p>
+
+<ul>
+
+<li> <b>TFW=YES</b>: Force the generation of an associated ESRI world
+file (.tfw).See a <a href="frmt_various.html#WLD">World Files</a> section
+for details.<p>
+
+<li> <b>INTERLEAVE=[BAND,PIXEL]</b>: By default TIFF files with band
+interleaving (PLANARCONFIG_SEPARATE in TIFF terminology) are created.  These
+are slightly more efficient for some purposes, but some applications only 
+support pixel interleaved TIFF files.  In these cases pass INTERLEAVE=PIXEL
+to produce pixel interleaved TIFF files (PLANARCONFIG_CONTIG in TIFF
+terminology).<p>
+
+<li> <b>TILED=YES</b>: By default stripped TIFF files are created.  This
+option can be used to force creation of tiled TIFF files.<p>
+
+<li> <b>BLOCKXSIZE=n</b>: Sets tile width, defaults to 256.<p>
+
+<li> <b>BLOCKYSIZE=n</b>: Set tile or strip height.  Tile height defaults to
+256, strip height defaults to a value such that one strip is 8K or less. <p>
+
+<li> <b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/NONE]</b>: Set the compression
+to use.  JPEG should only be used with Byte data.  None is the default.<p>
+
+<li> <b>PREDICTOR=[0/1/2]</b>: Set the predictor for LZW or DEFLATE compression. The default is 0 (no predictor), 1 is horizontal differencing and 2 is floating point prediction.<p>
+
+<li> <b>JPEG_QUALITY=[1-100]</b>:  Set the JPEG quality when using JPEG compression.  A value of 100 is best quality (least compression), and 1 is worst quality (best compression).  The default is 75.<p>
+
+<li> <b>PROFILE=[GDALGeoTIFF/GeoTIFF/BASELINE]</b>: Control what non-baseline
+tags are emitted by GDAL.  With <tt>GDALGeoTIFF</tt> (the default) various 
+GDAL custom tags may be written.  With <tt>GeoTIFF</tt> only GeoTIFF tags
+will be added to the baseline.  With <tt>BASELINE</tt> no GDAL or GeoTIFF
+tags will be written.  BASELINE is occationally useful when writing files to
+be read by applications intolerant of unrecognised tags.<p>
+
+<li>
+<b>PHOTOMETRIC=[MINISBLACK/MINISWHITE/RGB/CMYK/YCBCR/CIELAB/ICCLAB/ITULAB]</b>: 
+Set the photometric interpretation tag. Default is MINISBLACK, but if the
+input image has 3 or 4 bands of Byte type, then RGB will be selected. You can
+override default photometric using this option.<p>
+
+<li> <b>ALPHA=YES</b>: The first "extrasample" is marked as being alpha if
+there are any extra samples.  This is necessary if you want to produce
+a greyscale TIFF file with an alpha band (for instance). <p>
+
+</ul>
+
+GeoTIFF supports internal creation of overviews (with gdaladdo for instance).
+
+See Also:<p>
+
+<ul>
+<li> <a href="http://www.remotesensing.org/geotiff/geotiff.html">GeoTIFF Information Page</a>
+<li> <a href="http://www.remotesensing.org/libtiff/">libtiff Page</a>
+
+</ul>
+
+</body>
+</html>

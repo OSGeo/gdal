@@ -1,0 +1,255 @@
+<html>
+<head>
+<title>JPEG2000 --- Implementation of the JPEG-2000 part 1
+(ISO/IEC 15444-1) standard</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>JPEG2000 --- Implementation of the JPEG-2000 part 1</h1>
+
+This implementation based on JasPer software (see below).
+
+<h2>Creation Options</h2>
+<ul>
+	<li> <b>WORLDFILE=ON</b>: Force the generation of an associated
+	ESRI world file (.wld).<p>
+
+	<li> <b>FORMAT=JP2|JPC</b>: Specify output file format.<p>
+
+	<li> Encoding parameters, directly delivered to the JasPer library
+	described in the JasPer documentation. Quoted from the docs:<p>
+
+	``The following options are supported by the encoder:
+	<table>
+	<tr>
+		<td>imgareatlx=x</td>
+		<td> Set the x-coordinate of the top-left corner
+			of the image area to x.</td>
+	</tr>
+
+	<tr>
+		<td>imgareatly=y</td>
+		<td>Set the y-coordinate of the top-left corner
+			of the image area to y.</td>
+	</tr>
+
+	<tr>
+		<td>tilegrdtlx=x</td>
+		<td>Set the x-coordinate of the top-left corner
+			of the tiling grid to x.</td>
+	</tr>
+
+	<tr>
+		<td>tilegrdtly=y</td>
+		<td>Set the y-coordinate of the top-left corner
+			of the tiling grid to y.</td>
+	</tr>
+
+	<tr>
+		<td>tilewidth=w</td>
+		<td>Set the nominal tile width to w.</td>
+	</tr>
+
+	<tr>
+		<td>tileheight=h</td>
+		<td>Set the nominal tile height to h.</td>
+	</tr>
+
+	<tr>
+		<td>prcwidth=w</td>
+		<td>Set the precinct width to w. The argument w must be an
+			integer power of two. The default value is 32768.</td>
+	</tr>
+
+	<tr>
+		<td>prcheight=h</td>
+		<td>Set the precinct height to h. The argument h must be an
+			integer power of two. The default value is 32768.</td>
+	</tr>
+
+	<tr>
+		<td>cblkwidth=w</td>
+		<td>Set the nominal code block width to w. The argument
+			w must be an integer power of two.
+			The default value is 64.</td>
+	</tr>
+
+	<tr>
+		<td>cblkheight=h</td>
+		<td>Set the nominal code block height to h. The argument
+			h must be an integer power of two.
+			The default value is 64.</td>
+	</tr>
+
+	<tr>
+		<td>mode=m</td>
+		<td>Set the coding mode to m. The argument m must have
+			one of the following values:
+			<center><table border>
+			<tr>
+				<th>Value</th>	<th>Description</th>
+			</tr>
+
+			<tr>
+				<td>int</td>	<td>integer mode</td>
+			</tr>
+			<tr>
+				<td>real</td>	<td>real mode</td>
+			</tr>
+			</table></center>
+		If lossless coding is desired, the integer mode must
+		be used. By default, the integer mode is employed. The
+		choice of mode also determines which multicomponent
+		and wavelet transforms (if any) are employed.</td>
+	</tr>
+
+	<tr>
+		<td>rate=r</td>
+		<td>Specify the target rate. The argument r is a positive
+			real number. Since a rate of one corresponds
+			to no compression, one should never need
+			to explicitly specify a rate greater than one.
+			By default, the target rate is considered
+			to be infinite.</td>
+	</tr>
+
+	<tr>
+		<td>ilyrrates=[, ,. . . ,      ]</td>
+		
+		<td>Specify the rates for any intermediate layers.
+			The argument to this option is a comma separated
+			list of N rates. Each rate is a positive real number.
+			The rates must increase monotonically. The last	rate
+			in the list should be less than or equal to the
+			overall rate (as specified with the rate option).</td>
+	</tr>
+	
+	<tr>
+		<td>prg=p</td>
+		<td>Set the progression order to p. The argument
+			p must have one of the following values:
+			<center><table border>
+			<tr>
+				<th>Value</th>	<th>Description</th>
+			</tr>
+
+			<tr>
+				<td>lrcp</td>
+				<td>layer-resolution-component-position	(LRCP)
+				progressive (i.e., rate scalable)</td>
+			</tr>
+			<tr>
+				<td>rlcp</td>
+				<td>resolution-layer-component-position	(RLCP)
+				progressive (i.e., resolution scalable)</td>
+			</tr>
+			<tr>
+				<td>rpcl</td>
+				<td>resolution-position-component-layer (RPCL)
+					progressive</td>
+			</tr>
+			<tr>
+				<td>pcrl</td>
+				<td>position-component-resolution-layer (PCRL)
+					progressive</td>
+			</tr>
+			<tr>
+				<td>cprl</td>
+				<td>component-position-resolution-layer (CPRL)
+					progressive</td>
+			</tr>
+			</table></center>
+		By default, LRCP progressive ordering is employed.
+		Note that the RPCL and PCRL progressions are not valid
+		for all possible image geometries.
+		(See standard for more details.)</td>
+	</tr>
+	
+	<tr>
+		<td>nomct</td>
+		<td>Disallow the use of any multicomponent transform.</td>
+	</tr>
+
+	<tr>
+		<td>numrlvls=n</td>
+		<td>Set the number of resolution levels to n. The argument
+			n must be an integer that is greater than or equal
+			to one. The default value is 6.</td>
+	</tr>
+
+	<tr>
+		<td>sop</td>
+		<td>Generate SOP marker segments.</td>
+	</tr>
+
+	<tr>
+		<td>eph</td>
+		<td>Generate EPH marker segments.</td>
+	</tr>
+
+	<tr>
+		<td>lazy</td>
+		<td>Enable lazy coding mode (a.k.a. arithmetic coding
+			bypass).</td>
+	</tr>
+
+	<tr>
+		<td>termall</td>
+		<td>Terminate all coding passes.</td>
+	</tr>
+
+	<tr>
+		<td>segsym</td>
+		<td>Use segmentation symbols.</td>
+	</tr>
+
+	<tr>
+		<td>vcausal</td>
+		<td>Use vertically stripe causal contexts.</td>
+	</tr>
+
+	<tr>
+		<td>pterm</td>
+		<td>Use predictable termination.</td>
+	</tr>
+
+	<tr>
+		<td>resetprob</td>
+		<td>Reset the probability models after each coding pass.<td>
+	</tr>
+	
+	<tr>
+		<td>numgbits=n</td>
+		<td>Set the number of guard bits to n.''</td>
+	</tr>
+
+	</table>
+
+</ul>
+
+<h2>See Also:</h2>
+
+<ul>
+<li> Implemented as <tt>gdal/frmts/jpeg2000/jpeg2000dataset.cpp</tt>.<p>
+
+<li> You need modified JasPer library to build this driver with GeoJP2 support
+enabled. Modified version can be downloaded from
+<a href="ftp://ftp.remotesensing.org/gdal/jasper-1.900.0.uuid.tar.gz">
+ftp://ftp.remotesensing.org/gdal/jasper-1.701.0.uuid.tar.gz</a><p>
+
+<li> <a href="http://www.jpeg.org/JPEG2000.html">
+Official JPEG-2000 page 
+<a><p>
+
+<li> <a href="http://www.ece.uvic.ca/~mdadams/jasper/">
+The JasPer Project Home Page
+</a><p>
+
+<li> Another implementation of the JPEG-2000 standard:
+<a href="http://j2000.org/">J2000</a><p>
+
+</ul>
+
+</body>
+</html>

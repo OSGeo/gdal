@@ -1,0 +1,107 @@
+<html>
+<head>
+<title>NITF -- National Imagery Transmission Format</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>NITF -- National Imagery Transmission Format</h1>
+
+GDAL supports reading of several subtypes of NITF image files, and writing
+simple uncompressed NITF 2.1 files.  NITF 1.1, NITF 2.0 and NITF 2.1
+files with uncomprssed, jpeg compressed, jpeg2000 (with Kakadu or ECW SDKs)
+or VQ compressed images should be readable.  Other compression mechanisms are 
+not supported at this time.  The read support test has been tested on CIB and 
+CADRG RPF products.<p>
+
+NITF files can contain several images as well as other layers such as 
+graphics (CGM) and text.  Currently GDAL defaults to reading the first image,
+but additional images will be made available as sub-datasets (see the 
+<a href="gdal_datamodel.html">GDAL Data Model</a> for details).  
+CGM data is made available as special format metadata in the CGM metadata
+domain.  All other auxilary information is ignored.<p>
+
+Color tables for pseudocolored images are read.  In some cases nodata values
+may be identified.  In theory all input pixel types 
+except 1bit are supported, but only 8bit and 16bit types have actually been 
+tested.<p>
+
+Lat/Long extents are read from the IGEOLO information in 
+the image header if available.  If high precision lat/long georeferencing 
+information is available in RPF auxilary data it will be used in preference 
+to the low precision IGEOLO information.  In case a BLOCKA instance is found, 
+the higher precision coordinates of BLOCKA are used if the block data covers 
+the complete image - that is the L_LINES field with the row count for that 
+block is equal to the row count of the image. Additionally, all BLOCKA 
+instances are returned as metadata.
+<P>
+
+Most file header and image header fields are returned as dataset level
+metadata.<p>
+
+<h2>Creation Issues</h2>
+
+On export NITF files are always written as NITF 2.1 with one uncompressed image
+and no other auxilary layers.  Georeferencing can only be written for 
+images using a geographic coordinate system.  Coordinates are implicitly 
+treated as WGS84 even if they are actually in a different geographic coordinate
+system.  Pseudo-color tables may be written for 8bit images.<P>
+
+In addition to the export oriented CreateCopy() API, it is also possible to
+create a blank NITF file using Create() and write imagery on demand.  However,
+using this methology writing of pseudocolor tables and georeferencing is
+not supported unless appropriate IREP and ICORDS creation options are supplied.
+<p>
+
+Creation Options:<p>
+
+<ul>
+
+<li> Most file header, and imagery header metadata and security fields can
+be set with appropriate creation options.  For instance setting 
+<tt>"FTITLE=Image of abandoned missle silo south west of Karsk"</tt> in the
+creation option list would result in setting of the FTITLE field in the NITF
+file header.  Use the official field names from the NITF specification 
+document.<p>
+
+<li> <b>ICORDS</b>: Set to "G" to ensure that space will be reserved for
+geographic corner coordinates to be set later via SetGeoTransform().  (Only 
+needed for Create() method, not CopyCreate()).<p>
+
+<li> <b>IREP</b>: Set to "RGB/LUT" to reserve space for a color table for
+each output band. (Only needed for
+Create() method, not CopyCreate()).<p>
+
+<li> <b>LUT_SIZE</b>: Set to control the size of pseudocolor tables for
+RGB/LUT bands.  A value of 256 assumed if not present. (Only needed for
+Create() method, not CopyCreate()).<p>
+
+<li> <b>TFW=YES</b>: Force the generation of an associated ESRI world
+file (.tfw).<p>
+
+<li> <b>BLOCKXSIZE=n</b>: Set the block width.<p>
+
+<li> <b>BLOCKYSIZE=n</b>: Set the block height.<p>
+
+</ul>
+
+
+<h2>Credit</h2>
+
+The author wishes to thank <a href="http://www.augsignals.com/">AUG
+Signals</a> and the <a href="http://geoconnections.org/">GeoConnections</a>
+program for supporting development of this driver, and to thank 
+Steve Rawlinson (JPEG), Reiner Beck (BLOCKA) for assistance adding features.<p>
+
+See Also: <p>
+<ul>
+<li> <a href="http://164.214.2.51/ntb/">NITFS Technical Board Public Page</a>
+<li> The <a href="frmt_ogdi.html">OGDI</a> driver support many NITF based RPF
+products including CIB and ADRG.<p>
+</ul>
+
+</body>
+</html>
+
+
+

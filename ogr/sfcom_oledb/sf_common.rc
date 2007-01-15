@@ -1,0 +1,319 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "winres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""winres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "1 TYPELIB ""SF.tlb""\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "\0"
+            VALUE "CompanyName", "\0"
+            VALUE "FileDescription", "SF Module\0"
+            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "InternalName", "SF\0"
+            VALUE "LegalCopyright", "Copyright 1999\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OLESelfRegister", "\0"
+            VALUE "OriginalFilename", "SF.DLL\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "SF Module\0"
+            VALUE "ProductVersion", "1, 0, 0, 1\0"
+            VALUE "SpecialBuild", "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_PROJNAME            "SF"
+    IDS_DBPROP_ACTIVESESSIONS "Active Sessions"
+    IDS_DBPROP_ASYNCTXNCOMMIT "Asynchable Commit"
+    IDS_DBPROP_BYREFACCESSORS "Pass By Ref Accessors"
+    IDS_DBPROP_CATALOGLOCATION "Catalog Location"
+    IDS_DBPROP_CATALOGTERM  "Catalog Term"
+    IDS_DBPROP_CATALOGUSAGE "Catalog Usage"
+    IDS_DBPROP_COLUMNDEFINITION "Column Definition"
+    IDS_DBPROP_CONCATNULLBEHAVIOR "NULL Concatenation Behavior"
+    IDS_DBPROP_DATASOURCENAME "Data Source Name"
+    IDS_DBPROP_DATASOURCEREADONLY "Read-Only Data Source"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (Canada) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENC)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_CAN
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_DBPROP_DBMSNAME     "DBMS Name"
+    IDS_DBPROP_DBMSVER      "DBMS Version"
+    IDS_DBPROP_PROCEDURETERM "Procedure Term"
+    IDS_DBPROP_PROVIDEROLEDBVER "OLE DB Version"
+    IDS_DBPROP_PROVIDERNAME "Provider Name"
+    IDS_DBPROP_PROVIDERVER  "Provider Version"
+    IDS_DBPROP_QUOTEDIDENTIFIERCASE "Quoted Identifier Sensitivity"
+    IDS_DBPROP_SCHEMATERM   "Schema Term"
+    IDS_DBPROP_SCHEMAUSAGE  "Schema Usage"
+    IDS_DBPROP_SQLSUPPORT   "SQL Support"
+    IDS_DBPROP_STRUCTUREDSTORAGE "Structured Storage"
+    IDS_DBPROP_SUBQUERIES   "Subquery Support"
+    IDS_DBPROP_SUPPORTEDTXNISOLEVELS "Isolation Levels"
+    IDS_DBPROP_SUPPORTEDTXNISORETAIN "Isolation Retention"
+    IDS_DBPROP_TABLETERM    "Table Term"
+    IDS_DBPROP_USERNAME     "User Name"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_DBPROP_SUPPORTEDTXNDDL "Transaction DDL"
+    IDS_DBPROP_ASYNCTXNABORT "Asynchable Abort"
+    IDS_DBPROP_DSOTHREADMODEL "Data Source Object Threading Model"
+    IDS_DBPROP_MULTIPLEPARAMSETS "Multiple Parameter Sets"
+    IDS_DBPROP_OUTPUTPARAMETERAVAILABILITY "Output Parameter Availability"
+    IDS_DBPROP_PERSISTENTIDTYPE "Persistent ID Type"
+    IDS_DBPROP_NOTIFYCOLUMNSET "Column Set Notification"
+    IDS_DBPROP_NOTIFYROWDELETE "Row Delete Notification"
+    IDS_DBPROP_NOTIFYROWFIRSTCHANGE "Row First Change Notification"
+    IDS_DBPROP_NOTIFYROWINSERT "Row Insert Notification"
+    IDS_DBPROP_NOTIFYROWRESYNCH "Row Resynchronization Notification"
+    IDS_DBPROP_NOTIFYROWSETRELEASE "Rowset Release Notification"
+    IDS_DBPROP_NOTIFYROWSETFETCHPOSITIONCHANGE 
+                            "Rowset Fetch Position Change Notification"
+    IDS_DBPROP_NOTIFYROWUNDOCHANGE "Row Undo Change Notification"
+    IDS_DBPROP_NOTIFYROWUNDODELETE "Row Undo Delete Notification"
+    IDS_DBPROP_GROUPBY      "GROUP BY Support"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_DBPROP_HETEROGENEOUSTABLES "Heterogeneous Table Support"
+    IDS_DBPROP_IDENTIFIERCASE "Identifier Case Sensitivity"
+    IDS_DBPROP_LOCKMODES    "Lock Modes"
+    IDS_DBPROP_MAXINDEXSIZE "Maximum Index Size"
+    IDS_DBPROP_MAXROWSIZE   "Maximum Row Size"
+    IDS_DBPROP_MAXROWSIZEINCLUDESBLOB "Maximum Row Size Includes BLOB"
+    IDS_DBPROP_MAXTABLESINSELECT "Maximum Tables in SELECT"
+    IDS_DBPROP_MULTIPLESTORAGEOBJECTS "Multiple Storage Objects"
+    IDS_DBPROP_MULTITABLEUPDATE "Multi-Table Update"
+    IDS_DBPROP_NOTIFICATIONPHASES "Notification Phases"
+    IDS_DBPROP_NULLCOLLATION "NULL Collation Order"
+    IDS_DBPROP_OLEOBJECTS   "OLE Object Support"
+    IDS_DBPROP_ORDERBYCOLUMNSINSELECT "ORDER BY Columns in Select List"
+    IDS_DBPROP_PREPARECOMMITBEHAVIOR "Prepare Commit Behavior"
+    IDS_DBPROP_PREPAREABORTBEHAVIOR "Prepare Abort Behavior"
+    IDS_DBPROP_NOTIFYROWUNDOINSERT "Row Undo Insert Notification"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_DBPROP_NOTIFYROWUPDATE "Row Update Notification"
+    IDS_DBPROP_ROWSETCONVERSIONSONCOMMAND "Rowset Conversions on Command"
+    IDS_DBPROP_MULTIPLERESULTS "Multiple Results"
+    IDS_DBPROP_ISequentialStream "ISequentialStream"
+    IDS_DBPROP_ABORTPRESERVE "Preserve on Abort"
+    IDS_DBPROP_BLOCKINGSTORAGEOBJECTS "Blocking Storage Objects"
+    IDS_DBPROP_IRowsetScroll "IRowsetScroll"
+    IDS_DBPROP_IRowsetUpdate "IRowsetUpdate"
+    IDS_DBPROP_ISupportErrorInfo "ISupportErrorInfo"
+    IDS_DBPROP_CHANGEINSERTEDROWS "Change Inserted Rows"
+    IDS_DBPROP_RETURNPENDINGINSERTS "Return Pending Inserts"
+    IDS_DBPROP_IConvertType "IConvertType"
+    IDS_DBPROP_AUTH_CACHE_AUTHINFO "Cache Authentication"
+    IDS_DBPROP_AUTH_ENCRYPT_PASSWORD "Encrypt Password"
+    IDS_DBPROP_AUTH_INTEGRATED "Integrated Security"
+    IDS_DBPROP_AUTH_MASK_PASSWORD "Mask Password"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_DBPROP_AUTH_PASSWORD "Password"
+    IDS_DBPROP_AUTH_PERSIST_ENCRYPTED "Persist Encrypted"
+    IDS_DBPROP_AUTH_PERSIST_SENSITIVE_AUTHINFO "Persist Security Info"
+    IDS_DBPROP_AUTH_USERID  "User ID"
+    IDS_DBPROP_INIT_DATASOURCE "Data Source"
+    IDS_DBPROP_INIT_HWND    "Window Handle"
+    IDS_DBPROP_INIT_IMPERSONATION_LEVEL "Impersonation Level"
+    IDS_DBPROP_INIT_LOCATION "Location"
+    IDS_DBPROP_INIT_MODE    "Mode"
+    IDS_DBPROP_INIT_PROMPT  "Prompt"
+    IDS_DBPROP_INIT_PROTECTION_LEVEL "Protection Level"
+    IDS_DBPROP_INIT_TIMEOUT "Connect Timeout"
+    IDS_DBPROP_INIT_LCID    "Locale Identifier"
+    IDS_DBPROP_INIT_PROVIDERSTRING "Extended Properties"
+    IDS_DBPROP_SESS_AUTOCOMMITISOLEVELS "Autocommit Isolation Levels"
+    IDS_DBPROP_SERVERCURSOR "Server Cursor"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_DBPROP_TRANSACTEDOBJECT "Objects Transacted"
+    IDS_DBPROP_UPDATABILITY "Updatability"
+    IDS_DBPROP_STRONGIDENTITY "Strong Row Identity"
+    IDS_DBPROP_IAccessor    "IAccessor"
+    IDS_DBPROP_IColumnsInfo "IColumnsInfo"
+    IDS_DBPROP_IColumnsRowset "IColumnsRowset"
+    IDS_DBPROP_IConnectionPointContainer "IConnectionPointContainer"
+    IDS_DBPROP_IProvideMoniker "IProvideMoniker"
+    IDS_DBPROP_IRowset      "IRowset"
+    IDS_DBPROP_IRowsetChange "IRowsetChange"
+    IDS_DBPROP_IRowsetIdentity "IRowsetIdentity"
+    IDS_DBPROP_IRowsetInfo  "IRowsetInfo"
+    IDS_DBPROP_IRowsetLocate "IRowsetLocate"
+    IDS_DBPROP_IRowsetResynch "IRowsetResynch"
+    IDS_DBPROP_BOOKMARKS    "Use Bookmarks"
+    IDS_DBPROP_BOOKMARKSKIPPED "Skip Deleted Bookmarks"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_DBPROP_BOOKMARKTYPE "Bookmark Type"
+    IDS_DBPROP_CANFETCHBACKWARDS "Fetch Backwards"
+    IDS_DBPROP_CANHOLDROWS  "Hold Rows"
+    IDS_DBPROP_APPENDONLY   "Append-Only Rowset"
+    IDS_DBPROP_CANSCROLLBACKWARDS "Scroll Backwards"
+    IDS_DBPROP_COLUMNRESTRICT "Column Privileges"
+    IDS_DBPROP_COMMANDTIMEOUT "Command Time Out"
+    IDS_DBPROP_COMMITPRESERVE "Preserve on Commit"
+    IDS_DBPROP_DELAYSTORAGEOBJECTS "Delay Storage Object Updates"
+    IDS_DBPROP_IMMOBILEROWS "Immobile Rows"
+    IDS_DBPROP_LITERALBOOKMARKS "Literal Bookmarks"
+    IDS_DBPROP_LITERALIDENTITY "Literal Row Identity"
+    IDS_DBPROP_MAXOPENROWS  "Maximum Open Rows"
+    IDS_DBPROP_MAXPENDINGROWS "Maximum Pending Rows"
+    IDS_DBPROP_MAXROWS      "Maximum Rows"
+    IDS_DBPROP_OTHERINSERT  "Others' Inserts Visible"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_DBPROP_OTHERUPDATEDELETE "Others' Changes Visible"
+    IDS_DBPROP_OWNINSERT    "Own Inserts Visible"
+    IDS_DBPROP_OWNUPDATEDELETE "Own Changes Visible"
+    IDS_DBPROP_QUICKRESTART "Quick Restart"
+    IDS_DBPROP_REENTRANTEVENTS "Reentrant Events"
+    IDS_DBPROP_REMOVEDELETED "Remove Deleted Rows"
+    IDS_DBPROP_REPORTMULTIPLECHANGES "Report Multiple Changes"
+    IDS_DBPROP_ROWRESTRICT  "Row Privileges"
+    IDS_DBPROP_ROWTHREADMODEL "Row Threading Model"
+    IDS_DBPROP_ORDEREDBOOKMARKS "Bookmarks Ordered"
+    IDS_IFILEFORMATINFO_DESC "IFileFormatInfo Class"
+    IDS_NATIVEDATASOURCE_DESC "NativeDataSource Class"
+    IDS_DBPROP_OGIS_TOUCHES "Touches"
+    IDS_DBPROP_OGIS_WITHIN  "Within"
+    IDS_DBPROP_OGIS_CONTAINS "Contains"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_DBPROP_OGIS_CROSSES "Crosses"
+    IDS_DBPROP_OGIS_OVERLAPS "Overlaps"
+    IDS_DBPROP_OGIS_DISJOINT "Disjoint"
+    IDS_DBPROP_OGIS_INTERSECT "Intersect"
+    IDS_DBPROP_OGIS_ENVELOPE_INTERSECTS "Envelope Intersects"
+    IDS_DBPROP_OGIS_INDEX_INTERSECTS "Index Intersects"
+END
+
+#endif    // English (Canada) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+1 TYPELIB "SF.tlb"
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

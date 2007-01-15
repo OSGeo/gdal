@@ -1,0 +1,52 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
+/*!
+\page rfc7_vsilapi RFC 7: Use VSILFILE for VSI*L Functions
+
+Author: Eric D&ouml;nges<br>
+Contact: Eric.Doenges@gmx.net<br>
+Status: Proposed<br>
+
+\section rfc7_purpose Purpose
+
+To change the API for the VSI*L family of functions to use a new data-type
+VSILFILE instead of the current FILE.
+
+\section rfc7_background Background, Rationale
+
+Currently, GDAL offers two APIs to abstract file access functions (referred to
+as VSI* and VSI*L in this document). Both APIs claim to operate on FILE
+pointers; however, the VSI*L functions can only operate on FILE pointers
+created by the VSIFOpenL function. This is because VSIFOpenL returns a pointer
+to an internal C++ class typecast to a FILE pointer, not an actual FILE pointer.
+This makes it impossible for the compiler to warn when the VSI* and VSI*L
+functions are inappropriately mixed.
+
+\section rfc7_proposal Proposed Fix
+
+A new opaque data-type VSILFILE shall be declared. All VSI*L functions shall
+be changed to use this new type instead of FILE. Additionally, any GDAL code
+that uses the VSI*L functions must be changed to use this data-type as well.
+
+\section rfc7_compatibility Compatibility Issues, Transition timeline
+
+In order to allow the compiler to detect inappropriate parameters passed to
+any of the VSI*L functions, VSILFILE would have to be declared with the help
+of an empty forward declaration, i.e.
+<pre>
+typedef struct VSILFILE VSILFILE
+</pre>
+with the struct VSILFILE itself left undefined. However, this would break
+source compatibility for any existing code using the VSI*L API.
+
+Therefore, VSILFILE* will be declared as a void pointer for now, and the change
+to a distinct pointer type deferred to a future release of gdal that is not
+constrained with backward compatibility issues. While this will not solve the
+primary issue (no warnings/errors from the compiler), looking at the
+declarations of the VSI*L functions will at least make it immediately clear
+that these functions cannot be expected to work if passed a FILE pointer.
+
+*/
+ 

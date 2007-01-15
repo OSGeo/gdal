@@ -1,0 +1,37 @@
+OBJ =	ogrgeometryfactory.o \
+	ogrpoint.o \
+	ogrcurve.o \
+	ogrlinestring.o \
+	ogrlinearring.o \
+	ogrpolygon.o \
+	ogrutils.o \
+	ogrgeometry.o \
+	ogrgeometrycollection.o \
+	ogrmultipolygon.o \
+	ogrsurface.o \
+	ogrmultipoint.o \
+	ogrmultilinestring.o \
+	ogr_api.o \
+	ogrfeature.o \
+	ogrfeaturedefn.o \
+	ogrfeaturequery.o\
+	ogrfeaturestyle.o \
+	ogrfielddefn.o \
+	ogrspatialreference.o \
+	ogr_srsnode.o \
+	ogr_srs_proj4.o \
+	ogr_fromepsg.o \
+	ogrct.o \
+	ogr_opt.o \
+	ogr_srs_esri.o \
+	ogr_srs_pci.o \
+	ogr_srs_usgs.o \
+	ogr_srs_dict.o \
+	ogr_srs_panorama.o \
+	swq.o \
+	ogr_srs_validate.o \
+	ogr_srs_xml.o \
+	ograssemblepolygon.o \
+	ogr2gmlgeometry.o \
+	gml2ogrgeometry.o
+	

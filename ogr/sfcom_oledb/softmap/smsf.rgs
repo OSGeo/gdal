@@ -1,0 +1,34 @@
+HKCR
+{
+	Softmap.SF.Shape.1 = s 'Softmap.SF.Shape'
+	{
+		CLSID = s '{C9BD5075-0D6D-11D3-94FF-00104B238935}'
+	}
+	Softmap.SF.Shape = s 'Softmap.SF.Shape'
+	{
+		CLSID = s '{C9BD5075-0D6D-11D3-94FF-00104B238935}'
+		CurVer = s 'Softmap.SF.Shape.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {C9BD5075-0D6D-11D3-94FF-00104B238935} = s 'Softmap.SF.Shape'
+		{
+			ProgID = s 'Softmap.SF.Shape.1'
+			VersionIndependentProgID = s 'Softmap.SF.Shape'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Both'
+			}
+			'Implemented Categories' = s ''
+			{
+				{A0690A28-FAF5-11D1-BAF5-080036DB0B03} = s ''
+				{
+				}
+			}
+			'OLE DB Provider' = s 'Softmap OLE DB Provider for OpenGIS Simple Features from Shapefiles'
+			val OLEDB_SERVICES = d '4294967295'
+			// val OLEDB_SERVICES = d '0'
+			'TypeLib' = s '{C9BD5066-0D6D-11D3-94FF-00104B238935}'
+		}
+	}
+}

@@ -1,0 +1,18 @@
+
+OBJ	=	ogrogdidriver.obj ogrogdidatasource.obj ogrogdilayer.obj
+
+EXTRAFLAGS =	-I.. -I..\.. \
+		-I$(OGDIDIR)/ogdi/include -I$(OGDIDIR)/include/win32 \
+		-I$(OGDIDIR)/proj -DWIN32 -D_WINDOWS
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+
+

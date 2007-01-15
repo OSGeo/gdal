@@ -1,0 +1,31 @@
+
+GDAL_ROOT = 	..\..
+
+WINSOCK_LIB = "WSOCK32.LIB"
+
+LIBS	=	$(GDAL_ROOT)\gdal_i.lib $(CURL_LIB)
+
+XTRAFLAGS =	-I$(GDAL_ROOT)\ogr\ogrsf_frmts $(CURL_INC)
+
+!INCLUDE ..\..\nmake.opt
+
+default:	ogrwcts.exe wctsclient.exe
+
+ogrwcts.exe:	ogrwcts.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) ogrwcts.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	
+wctsclient.exe:	wctsclient.cpp $(GDALLIB) $(XTRAOBJ) 
+	$(CC) $(CFLAGS) $(XTRAFLAGS) wctsclient.cpp $(XTRAOBJ) $(LIBS) \
+		/link $(LINKER_FLAGS)
+	
+clean:
+	-del *.obj
+	-del *.exe
+	-del *.pdb
+	-del *.ilk
+	-del *.lib
+
+install:	default
+	copy *.exe $(BINDIR)
+	-copy *.exe.manifest $(BINDIR)

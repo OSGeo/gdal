@@ -1,0 +1,37 @@
+// SF.idl : IDL source for SF.dll
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (SF.tlb) and marshalling code.
+
+import "oaidl.idl";
+import "ocidl.idl";
+	
+[
+	uuid(C9BD5066-0D6D-11D3-94FF-00104B238935),
+	version(1.0),
+	helpstring("SF 1.0 Type Library")
+]
+library SFLib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+	[
+		object,
+		uuid(E3023002-F731-46E2-AF00-C3E835F0C68E),
+	]
+	interface IDataSourceKey : IUnknown
+	{
+		HRESULT GetKey([out] ULONG* nKey);
+	};
+
+	[
+		uuid(C9BD5075-0D6D-11D3-94FF-00104B238935),
+		helpstring("SF OLE DB Provider")
+	]
+	coclass SF
+	{
+		interface IUnknown;
+	};
+};

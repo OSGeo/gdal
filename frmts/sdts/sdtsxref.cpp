@@ -1,0 +1,114 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  SDTS Translator
+ * Purpose:  Implementation of SDTS_XREF class for reading XREF module.
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *
+ ******************************************************************************
+ * Copyright (c) 1999, Frank Warmerdam
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ******************************************************************************
+ *
+ * $Log$
+ * Revision 1.4  2006/04/10 16:34:19  fwarmerdam
+ * updated contact info
+ *
+ * Revision 1.3  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
+ * Revision 1.2  2001/01/19 21:20:29  warmerda
+ * expanded tabs
+ *
+ * Revision 1.1  1999/06/03 14:02:36  warmerda
+ * New
+ *
+ */
+
+#include "sdts_al.h"
+
+CPL_CVSID("$Id$");
+
+/************************************************************************/
+/*                             SDTS_XREF()                              */
+/************************************************************************/
+
+SDTS_XREF::SDTS_XREF()
+
+{
+    pszSystemName = CPLStrdup( "" );
+    pszDatum = CPLStrdup( "" );
+    nZone = 0;
+}
+
+/************************************************************************/
+/*                             ~SDTS_XREF()                             */
+/************************************************************************/
+
+SDTS_XREF::~SDTS_XREF()
+{
+    CPLFree( pszSystemName );
+    CPLFree( pszDatum );
+}
+
+/************************************************************************/
+/*                                Read()                                */
+/*                                                                      */
+/*      Read the named file to initialize this structure.               */
+/************************************************************************/
+
+int SDTS_XREF::Read( const char * pszFilename )
+
+{
+    DDFModule   oXREFFile;
+    DDFRecord   *poRecord;
+
+/* -------------------------------------------------------------------- */
+/*      Open the file, and read the header.                             */
+/* -------------------------------------------------------------------- */
+    if( !oXREFFile.Open( pszFilename ) )
+        return FALSE;
+    
+/* -------------------------------------------------------------------- */
+/*      Read the first record, and verify that this is an XREF record.  */
+/* -------------------------------------------------------------------- */
+    poRecord = oXREFFile.ReadRecord();
+    if( poRecord == NULL )
+        return FALSE;
+
+    if( poRecord->GetStringSubfield( "XREF", 0, "MODN", 0 ) == NULL )
+        return FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Read fields of interest.                                        */
+/* -------------------------------------------------------------------- */
+
+    CPLFree( pszSystemName );
+    pszSystemName = 
+        CPLStrdup( poRecord->GetStringSubfield( "XREF", 0, "RSNM", 0 ) );
+
+    CPLFree( pszDatum );
+    pszDatum = 
+        CPLStrdup( poRecord->GetStringSubfield( "XREF", 0, "HDAT", 0 ) );
+
+    nZone = poRecord->GetIntSubfield( "XREF", 0, "ZONE", 0 );
+
+    return TRUE;
+}

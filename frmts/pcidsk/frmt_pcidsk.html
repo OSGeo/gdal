@@ -1,0 +1,89 @@
+<html>
+<head>
+	<title>PCIDSK --- PCI Geomatics Database File</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>PCIDSK --- PCI Geomatics Database File</h1>
+
+PCIDSK database file used by PCI EASI/PACE software for image analysis.
+It is supported for reading, and writing by GDAL.  All pixel data types, and
+data organizations (pixel interleaved, band interleaved, file interleaved
+and tiled) should be supported, but compressed PCIDSK files are not 
+supported.  Currently LUT and PCT segments are ignored.  Overall file, 
+and band specific metadata should be correctly associated with the image
+or bands.<P>
+
+Georeferencing is supported though there may be some limitations
+in support of datums and ellipsoids.   If GCP segments are present, the
+first will be used, and the rest ignored.<p>
+
+Internal overview (pyramid) images will also be correctly read though newly
+requested overviews will be built externally as an .ovr file.<p>
+
+Vector segments are not supported by GDAL or OGR at this time. <p>
+
+<h2>Metadata</h2>
+
+Dataset:<p>
+
+<ul>
+	<li> <b>SOFTWARE</b>: Identifies the software system, and its
+	current version, that generated the PCIDSK database.<p>
+
+	<li> <b>FILE_ID</b>: Descriptive field identifying the file. Usually
+	supplied by the user at file creation time.<p>
+
+	<li> <b>GENERATING_FACILITY</b>: Descriptive field used to identify
+	which facility or institution produced this file.<p>
+
+	<li> <b>DESCRIPTION1</b>, <b>DESCRIPTION2</b>: Descriptive fields,
+	usually supplied by the user at file creation time, identifying the
+	contents of the file.<p>
+
+	<li> <b>DATE_OF_CREATION</b>, <b>DATE_OF_UPDATE</b>: Dates and times
+	of the file creation and last update. Formatted as 'hh:mmdd-mmm-yy'.<p>
+
+	<li> <b>GENERATING_FACILITY</b>: Descriptive field used to identify
+	which facility or institution produced this file.<p>
+</ul>
+
+Band:<p>
+<ul>
+	<li> <b>DATE_OF_CREATION</b>, <b>DATE_OF_UPDATE</b>: Dates and times
+	of the file creation and last update. Formatted as 'hh:mmdd-mmm-yy'.<p>
+
+	<li> <b>UNITS</b>: Data measurement units.<p>
+
+	<li> <b>HISTORYn</b> (<b>n</b>=1--8): Image channel history records.<p>
+</ul>
+
+<h2>Creation Options</h2>
+
+Note that PCIDSK files are always produced pixel interleaved, even though 
+other organizations are supported for read.<p>
+
+<ul>
+	<li> <b>FILEDESC1="description"</b>, <b>FILEDESC2="description"</b>:
+	The first and second lines of descriptive text identifying the file,
+	each one should be maximum 64 character in size.<p>
+
+	<li> <b>BANDDESCn="description"</b>: Text (maximum 64 character in
+	size) describing contents of the specified band <B>n</B>. If no
+	description for band supplied by user, "Image band n" string will
+	be used by default. Band numbers start from 1.<p>
+</ul>
+
+<h2>See Also:</h2>
+
+<ul>
+<li> Implemented as <tt>gdal/frmts/pcidsk/pcidskdataset.cpp</tt>.<p>
+
+<li> <a href="">PCIDSK SDK</a>, including PCIDSK Database Reference Manual.<p>
+
+</ul>
+
+</body>
+</html>
+

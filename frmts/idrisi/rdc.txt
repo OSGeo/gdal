@@ -1,0 +1,126 @@
+Image Documentation File (.rdc) -- File Structure
+
+Use
+
+Image Documentation files contain important information about their corresponding Image data files (i.e., its metadata, or header information). Whenever an IDRISI module accesses an Image file, it also accesses the accompanying Image Documentation file. Metadata may be used to examine Image Documentation files.
+
+File Contents
+
+Following are the fields that are stored in Image Documentation files. They may be broken down into four major groups:
+
+Information about the image as a whole:
+
+file format: The format and version of the file format.
+
+file title: A descriptive name of the file. It is this text that appears with the title option enabled on display.
+
+data type: The type of numbers stored in the file. Allowable entries are byte, integer, real, RGB8 and RGB24. (See the description for Image files.)
+
+file type: The format in which the Image file is stored. Allowable entries are ASCII, Binary and Packed Binary (See Image files.) 
+
+columns: The number of columns in the image. This is extremely important as it tells IDRISI modules how to construct the rectangular image from the stored values. (See Image files.)
+
+rows: The number of rows in the image. 
+
+
+Information about the georeferencing system of the file:
+
+ref. system: The name of the geographic referencing system used with the file. This may be Plane, Lat/Long, or a specific referencing system defined by a Reference System Parameter file.
+
+ref. units: The unit of measure used in the specified reference system. Allowable entries are m, ft, mi, km, deg and radians.
+
+unit dist.: The scaling factor between the given coordinates and actual measurements on the ground. This will almost always be 1. The unit distance answers the question, "If I move one unit in the reference system described here, how far have I moved on the ground, measuring in reference units?"
+
+min X: The minimum X coordinate (left edge) of the image.
+
+max X: The maximum X coordinate (right edge) of the image.
+
+min Y: The minimum Y coordinate (bottom edge) of the image.
+
+max Y: The maximum Y coordinate (top edge) of the image.
+
+pos'n error: A measure of the accuracy of the positions in the image. This field can be used to record the RMS (Root Mean Square) error of locational positions in the reference system. At present, this field is not analytical, but rather is for informational purposes only. (See RESAMPLE Note 5.)
+
+resolution: The inherent resolution of the image. In most cases, this should correspond to the result of dividing the range of reference coordinates in X by the number of columns in the image. However, there are some rare instances where it might differ from this result. An example is the case of LANDSAT Band 6 (Thermal) imagery. The resolution of those data is actually 120 meters, and would be recorded as such in this field. However, the data is distributed in an apparent 30 meter format to make them physically match the dimensions of the other bands of the scene. The resolution field is a way of correctly indicating the underlying resolution of these data.
+
+Information about the values stored in the file:
+
+min value: The minimum value in the image. If the file is of RGB24 type minimum values for the red, green and blue bands of the composite are listed in that order.
+
+max value: The maximum value in the image. If the file is of RGB24 type maximum values for the red, green and blue bands of the composite are listed in that order.
+
+display min: The value in the image to display with the first palette color and legend box.
+
+display max: The value in the image to display with the last palette color and legend box.
+
+value units: The unit of measure of the values in the image. It is suggested that the term classes be used for all qualitative data sets, and that whenever standard linear units are appropriate, that the same abbreviations that are used for reference units should also be used (m, ft, mi, km, deg, rad).
+
+value error: This field is very important and should be filled out whenever possible. It records the error in the data values that appear in image cells. For qualitative data, this should be recorded as a proportional error. For quantitative data, the value here should be an RMS error figure. For example, for a DEM, an RMS error of 3 would indicate 68% of all values will be within ± 3 meters of the stated elevation, that approximately 95% will be within ± 6 meters, and so on. This field is analytical for some modules (e.g., PCLASS) and it is intended that it will become more so in the future.
+
+flag value: Any value in the image that is not a data value, but rather has a special meaning. If there is no flag value, this entry should remain blank.
+
+flag def'n: Definition of the above flag value. The most common data flags are those used to indicate background cells and missing data cells. This field is analytical for some modules (e.g., SURFACE, Geostatistics) and will become more so in the future. The key words background and missing data are specifically recognized by some modules. Other terms are only informational in this version. If there is no flag value, this entry should remain blank.
+
+legend cats: The number of legend categories present. Legend entries are optional. If there is no legend, 0 should be entered in this field. If legend categories do exist, there will be as many lines following as there are legend categories. If no legend categories exist, these lines are not necessary. (See the example below.)
+
+Other information about the file:
+
+The following four entries are optional, and any number of each may be entered at the end of the file Metadata can be used to enter this information or they can be entered manually so long as each has the correct term in the 14 character descriptive field to the left. These are all text fields and are included to facilitate complete documentation of the Image file. At present, these last fields are for information only and are not read by IDRISI modules (although some modules will write them).
+
+comment: Any additional information about the data may be recorded here.
+lineage: Description of the history by which the values were recorded/derived.
+completeness: The degree to which the values describe the subject matter indicated.
+consistency: The logical consistency of the file.
+
+Note that the lineage, consistency and completeness fields are intended to meet the recommendations of the U.S. National Committee for Digital Cartographic Data Standards (NCDCDS). Along with the pos'n error and value error fields, they provide a means of adhering to the proposed standards for reporting digital cartographic data quality. For further information about the NCDCDS standard, refer to the January 1988 issue of The American Cartographer, 15(1). 
+
+Creation
+
+Documentation files may be created using the module METADATA. They are created automatically by any IDRISI module that produces an Image file.
+
+Structure
+
+Image Documentation files are stored in ASCII format. The first 14 characters of each line describe the contents of the line, while the remaining characters contain the actual information. 
+
+Example
+
+For example, the documentation file for a soils image might look like this:
+
+file format	: IDRISI Raster A.1
+
+file title		: Major Soils Groups
+data type	: byte
+file type		: binary
+columns	: 512
+rows		: 480
+ref. system	: plane
+ref. units	: m
+unit dist.	: 1
+min. X		: 0
+max. X		: 15360
+min. Y		: 0
+max. Y		: 14400
+pos'n error	: unknown
+resolution	: 30
+min. value	: 0
+max. value	: 3
+display min	: 0
+display max	: 3
+value units	: classes
+value error	: 0.15
+flag value	: 0
+flag def'n	: background
+legend cats	: 3
+code 1		: Podzol Soils
+
+code 2		: Brown Podzolic Soils
+code 3		: Gray-Brown Podzolic Soils
+lineage		: Soil polygons derived from 1:5000 scale color air photography
+lineage		: and ground truth, with the final compilation being adjusted to
+lineage		: the map base by hand.
+comment	: Value error determined by statistical accuracy assessment 
+comment	: based on a stratified random sample of 37 points.
+
+Note
+
+In versions of IDRISI prior to idrisi32, these files had a .DOC extension. The format has also changed. To convert images from earlier versions to idrisi32, or to convert an idrisi32 image to an earlier version, use IDRISI Conversion Tools from the File menu.

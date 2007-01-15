@@ -1,0 +1,39 @@
+.TH "gdaltindex" 1 "28 Jun 2006" "GDAL" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+gdaltindex \- gdaltindex
+builds a shapefile as a raster tileindex
+.SH "SYNOPSIS"
+.PP
+.PP
+.PP
+.nf
+gdaltindex [-tileindex field_name] index_file [gdal_file]*
+.fi
+.PP
+.SH "DESCRIPTION"
+.PP
+This program builds a shapefile with a record for each input raster file, an attribute containing the filename, and a polygon geometry outlining the raster. This output is suitable for use with UMN MapServer as a raster tileindex.
+.PP
+.PD 0
+.IP "\(bu" 2
+The shapefile (index_file) will be created if it doesn't already exist. 
+.IP "\(bu" 2
+The default tile index field is 'location'. 
+.IP "\(bu" 2
+Raster filenames will be put in the file exactly as they are specified on the commandline. 
+.IP "\(bu" 2
+Simple rectangular polygons are generated in the same coordinate system as the rasters. 
+.PP
+.SH "EXAMPLE"
+.PP
+.PP
+.PP
+.nf
+gdaltindex doq_index.shp doq/*.tif
+.fi
+.PP
+.SH "AUTHORS"
+.PP
+Frank Warmerdam <warmerdam@pobox.com> 

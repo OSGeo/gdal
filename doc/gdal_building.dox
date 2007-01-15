@@ -1,0 +1,297 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
+/*!
+\page gdal_building Building GDAL From Source
+
+\section gdal_building_unix Building on Unix
+
+GDAL has been successfully built on Linux, IRIX, Solaris, BSD, and MacOS X.  
+On Unix platforms you might be able to build it as follows (assuming it is
+unpacked or checked out of CVS as <b>gdal</b>):
+
+<pre>
+% cd gdal
+% ./configure
+% make
+% su
+Password: ********
+# make install
+# exit
+</pre>
+
+In order to run GDAL after installing it is necessary for the shared
+library to be findable.  This can often be accomplished by setting 
+LD_LIBRARY_PATH to include /usr/local/lib.<p>
+
+Some caveats are:<p>
+<ul>
+
+<li> I depend on GNUmake on Unix platforms.  Just get and install it if
+you don't already have it.<p>
+
+<li> GDAL shouldn't have many pre-requisite packages.  It includes 
+built-in versions of libz, libtiff, libgeotiff, libpng, libgif, and libjpeg 
+if pre-installed versions are not available (or not desirable).  
+
+<li> There are quite a few optional drivers that depend on
+\ref gdal_building_libraries "external libraries".
+Use <i>configure --help</i> to see the configure options.  Some optional libraries
+include those for GRASS, FITS, OGDI, HDF4, JPEG2000 and ECW.
+
+<li> The shared library building is pretty specific to the GNU tool chain. 
+If you are using something different than GNU C++, then you will likely 
+finding that the .so files isn't built successfully.  You could just link 
+against the static libraries (normally gdal/gdal.a) or you could hack 
+LD_SHARED command in gdal/GDALmake.opt to work on your platform.  For the SGI
+a value of <i>c++ -shared -all</i> is often suitable.<p>
+
+<li> GDAL, and it's utilities should now build on Cygwin and other platforms
+where shared libraries are not supported.  However, to build your own 
+applications against it, you will need to link against a more extensive
+set of libraries.  The <i>gdal-config --libs</i> command can be used to 
+determine the library set.<p>
+
+<li> My "autoconf" logic that checks for libtiff, libpng and libjpeg isn't too
+savvy about versions.  If it is using pre-installed versions of these 
+libraries and this support isn't working, rerun <i>configure</i> with 
+``--with-png=internal'', ``--with-jpeg=internal'', ``--with-geotiff=internal''
+or ``--with-libtiff=internal'' instead. <p>
+
+<li> To build on IRIX it is generally necessary to hand modify the
+GDALmake.opt file resulting from configure, and change "ld -shared"
+to "ld -shared -all".<p>
+
+<li> If you find build problems with one of the format drivers that you
+don't care about, just remove the format from the GDAL_FORMATS line
+at the bottom of gdal/GDALmake.opt, do a <i>make clean</i>, and <i>make</i>.
+This will drop it from the build and default runtime registration. <p>
+
+<li> If you are trying to install as other than root (to your own tree
+set with --prefix) you will likely have problems with the python since it
+always tries to install under the site-packages directory for the installed
+python tree.  If you don't need python support you can suppress it at
+configure using --without-python, or override the python module output
+directory at configure time with the --with-pymodir=&lt;directory&gt;
+
+</ul>
+
+\section gdal_building_win Building on Windows
+
+GDAL can be built on Win32 platforms using MS VC++ 6.x and MS Visual Studio 
+.NET (C++). 
+The source distribution includes NMAKE compatible makefiles for use from
+the command shell.   For those wanting Visual Studio 7.1 Solution files 
+(instead of the command line nmake files), Ben Discoe normally makes them 
+available on the <a href="http://vterrain.org/Distrib/gdal.html">VTerrain
+site</a>.  Only the nmake file approach is directly supported by the GDAL
+maintainer.<p>
+
+Windows CE is also supported by an alternate set of build files. See 
+<a href="wince.html">GDAL for Windows CE</a> for details.
+
+For command line builds you will normally have to have run 
+the VCVAR32.BAT script that comes with the compiler.  For VC 6.x this might be
+found at:
+
+<pre>
+C:\\Program Files\\Microsoft Visual Studio\\VC98\\bin\\VCVARS32.BAT
+</pre>
+
+Once the environment is setup, you can cd to the GDAL root directory
+and do the following:<p>
+
+<pre>
+C:\\GDAL> nmake /f makefile.vc
+</pre>
+
+Once the build has completed successfully, you can also install the required
+GDAL files for using GDAL utilities using the install makefile target. 
+Ensure that BINDIR, and DATADIR are set appropriately in the nmake.opt file
+before doing this. 
+
+<pre>
+C:\\GDAL> nmake /f makefile.vc install
+</pre>
+
+If you wish to build your own applications using GDAL you can use the following
+command to install all the required libraries, and include files as well.
+Ensure that LIBDIR and INCDIR are properly set in the nmake.opt file. 
+
+<pre>
+C:\\GDAL> nmake /f makefile.vc devinstall
+</pre>
+
+Projects linking against GDAL should include the directory specified in
+INCDIR in the include path, and the directory specified in LIBDIR in their
+/LIBPATH.  To use gdal link against the gdal_i.lib stub library.  
+
+\subsection gdal_building_win_basic Basic Options
+
+There are lots of options that can be tweaked by hand in the nmake.opt
+file in the GDAL root directory.  
+
+<ul>
+<li> <b>BINDIR</b>: Directory in which to install executables, and DLLs if 
+you use the "nmake /f makefile.vc install" command.
+
+<li> <b>LIBDIR</b>: Directory in which to install stub library (gdal_i.lib).
+
+<li> <b>INCDIR</b>: Directory in which to install GDAL/OGR include files.
+
+<li> <b>DATADIR</b>: Directory in which to install GDAL required data files.
+
+<li> <b>OPTFLAGS</b>: Set this to contain the desired compiler flags for
+compiling.  The default is a debug build but there is usually a suitable
+alternative for optimized builds commented out in the template file. Please,
+note that if you will build GDAL against the third-party libraries
+(installed from precompiled binaries or compiled by yourself) you should keep
+the run-time linking options for that libraries and for GDAL the same. For
+example, if you will use /MD option in <b>OPTFLAGS</b> string (link against
+multithreaded dynamic library), the same should be used to build other
+libraries, such as HDF4 or JasPer. If you don't have library sources then read
+the documentation, supplied with library, to figure out how it was compiled
+and set up the same linking option in <b>OPTFLAGS</b>. Mixing different
+linking options or release/debug flags will result in build failures or in
+crashes during run time.
+
+</ul>
+
+\subsection gdal_building_win_advanced Advanced Options
+
+<ul>
+
+<li> <b>PY_INST_DIR</b>: Directory to install python modules in.  Only
+required if Python support is being built. 
+
+<li> <b>PYDIR</b>: The directory where your python tree is installed.
+Used to find python include files.  If this is set to a directory that
+does not exist then python support will be omitted from the build.
+
+<li> <b>DLLBUILD</b>: Define this (to "1") to force all the OGR utilities
+to link against the GDAL DLL instead of building built statically.
+
+<li> <b>INCLUDE_OGR_FRMTS</b>: Set to "YES" to build OGR formats into
+the GDAL dll, or comment out to omit OGR formats from build.
+
+<li> <b>SETARGV</b>:  Point this to the setargv.obj file distributed with
+Visual Studio to get wildcard expansion for command line arguments or
+leave commented out to omit this.
+
+<li> <b>ECWDIR/ECWLIB</b>: Uncomment these to enable building with ECW
+support, correcting ECWDIR to point to the install location on your system.
+
+<li> <b>OGDIDIR/OGDIVER/OGDILIB</b>: Uncomment these to enable OGDI 
+support, correcting the OGDIDIR and OGDIVER values as needed.
+
+<li> <b>HDF4_DIR</b>: Uncomment, and correct path to enable support for
+NCSA HDF Release 4. 
+
+<li> <b>JASPER_DIR/JASPER_INCLUDE/JASPER_LIB</b>: This variables should be
+pointed to appropriate directories where JasPer library was installed. JasPer
+toolkit needed for JPEG2000 support.
+
+<li> <b>XERCES_DIR/XERCES_INCLUDE/XERCES_LIB</b>: Uncomment these and
+correct XERCES_DIR to enable Xerces XML parser support for GML read support.
+
+<li> <b>FME_DIR</b>: Uncomment, and correct path to enable support for
+FMEObject vector access. 
+
+<li> <b>JPEG_EXTERNAL_LIB/JPEGDIR/JPEG_LIB</b>: Used to be able to link
+gdal with an external JPEG library. Uncomment these lines and correct the 
+paths.
+
+<li> <b>PNG_EXTERNAL_LIB/PNGDIR/PNG_LIB</b>: Used to be able to link
+gdal with an external PNG library. Uncomment these lines and correct the 
+paths.
+
+</ul>
+
+I frequently forget to update the Windows makefiles when I add new files,
+so if something comes up missing consider comparing the file lists in the
+appropriate makefile.vc against the GNUmakefile or just contact me. <p>
+
+\section gdal_building_libraries External Libraries
+
+Several drivers require additional libraries to be installed in your system.
+These are:
+
+<ul>
+	<li> NCSA HDF library can be downloaded from the
+	<a href="http://hdf.ncsa.uiuc.edu/">The NCSA HDF Home Page</a>
+	at the <a href="http://www.ncsa.uiuc.edu/">
+	National Center for Supercomputing Applications</a>.<p>
+
+	If your OS distribution already contains prebuilt HDF library you can
+	use one from the distribution.<p>
+
+	Please note, that NCSA HDF library compiled with several defaults which is
+	defined in <i>hlimits.h</i> file. For example, <i>hlimits.h</i> defines
+	the maximum number of opened files:
+
+<pre>
+#   define MAX_FILE   32
+</pre>
+
+	If you need open more HDF4 files simultaneously you should change this value
+	and rebuild HDF4 library (there is no need to rebuild GDAL if it is already
+	compiled with HDF4 support).
+
+	<li> JPEG2000 support based on JasPer toolkit which can be accessed
+	from the <a href="http://www.ece.uvic.ca/~mdadams/jasper/">
+	The JasPer Project Home Page</a>.<p>
+
+	JasPer itself is a bridge for working with several image file formats.
+	Only JP2 and JPC parts of JasPer used in GDAL.<p>
+
+	You need modified JasPer library to build this driver with GeoJP2
+	support enabled. Modified version can be downloaded from
+	<a href="ftp://ftp.remotesensing.org/gdal/jasper-1.900.0.uuid.tar.gz">
+	ftp://ftp.remotesensing.org/gdal/jasper-1.900.0.uuid.tar.gz</a>
+
+	<li> MrSID driver needs LizardTech decoding software development kit
+	(DSDK). It is not free software, but you can download it without
+	charge here: <a href="http://developer.lizardtech.com/">
+	http://developer.lizardtech.com/</a>. To enable file creation
+	capability you need encoding SDK (ESDK). You should contact
+	<a href="http://www.lizardtech.com">LizardTech</a> to obtain it.
+	DSDK distributed in binary form and if you are using GCC, please,
+	ensure that you have the same compiler as was used for DSDK
+	compilation. It is C++ library, so you may get incompatibilities in
+	C++ name mangling among different GCC versions (2.95.x and 3.x).
+
+<li> NetCDF support requires the 
+<a href="http://www.unidata.ucar.edu/packages/netcdf/">netCDF library</a>. 
+Once it is built and installed, use the "--with-netcdf=<path to install tree>"
+option to configure and build GDAL.  Link conflicts have been observed with
+the netCDF libraries, and the HDF libraries ... coexistence may not be 
+practical.  NetCDF support has not been built or tested on Windows. <p>
+
+</ul>
+
+\section gdal_building_lfs Large File Support
+
+GDAL supports reading and writing large files (> 2GiB) if it is possible in your
+operating system. Notes about large file support on Linux available here: <a
+href="http://www.suse.de/~aj/linux_lfs.html">http://www.suse.de/~aj/linux_lfs.html</a>.
+In short: if you have kernel 2.4.x and glibc 2.2.x you are in luck. Maximum
+file size depends on cluster size. For ext2 filesystem with 1 KiB clusters it is 16448
+MiB, for ext2 with 4 KiB clusters it is 2048 GiB. Other filesystems can handle
+even larger files.<p>
+
+Information about large file support in Windows could be obtained at <a
+href="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/fileio/base/supported_file_systems.asp">
+MSDN</a>. In short, maximum file size at NTFS is limited by (2^64 - 1) bytes, at
+FAT32 and FAT16 it is (2^32 - 1) bytes. So don't try create files larger
+than 4 GiB on FAT32. In some cases you will not get an error message during
+jumping over 4GiB barrier, but all your data will be lost.  This is not a GDAL
+bug, this is Windows problem.<p>
+
+\htmlonly
+<p>
+$Id$
+</p>
+\endhtmlonly
+
+*/

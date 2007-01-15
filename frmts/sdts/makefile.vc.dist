@@ -1,0 +1,47 @@
+CFLAGS =	/W3
+CXXFLAGS = 	/W3
+
+LIBNAME	=	sdts_al.lib
+
+OBJ =	sdtsiref.obj sdtscatd.obj sdtslinereader.obj sdtslib.obj \
+	sdtspointreader.obj sdtsattrreader.obj sdtstransfer.obj \
+	sdtspolygonreader.obj sdtsxref.obj sdtsrasterreader.obj \
+	sdtsindexedreader.obj \
+	\
+	ddfmodule.obj ddfutils.obj ddffielddefn.obj ddfrecord.obj \
+	ddffield.obj ddfsubfielddefn.obj \
+	\
+	shpopen.obj dbfopen.obj \
+	\
+	cpl_error.obj cpl_vsisimple.obj cpl_string.obj cpl_conv.obj \
+	cpl_path.obj
+
+
+default:	$(LIBNAME) sdts2shp.exe 8211view.exe 8211dump.exe
+
+clean:
+	del *.obj $(LIBNAME)
+
+.c.obj:	
+	$(CC) $(CFLAGS) /c $*.c
+
+.cpp.obj:	
+	$(CXX) $(CXXFLAGS) /c $*.cpp
+
+$(LIBNAME): $(OBJ)
+	if exist $(LIBNAME) del $(LIBNAME)
+	lib /out:$(LIBNAME) $(OBJ)
+
+#
+#	Mainlines
+#
+sdts2shp.exe:	sdts2shp.cpp $(LIBNAME)
+	$(CXX) sdts2shp.cpp $(LIBNAME)
+
+8211view.exe:	8211view.cpp $(LIBNAME)
+	$(CXX) 8211view.cpp $(LIBNAME)
+
+8211dump.exe:	8211dump.cpp $(LIBNAME)
+	$(CXX) 8211dump.cpp $(LIBNAME)
+
+

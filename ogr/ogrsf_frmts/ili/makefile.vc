@@ -1,0 +1,24 @@
+
+OBJ =	ili1reader.obj ili2reader.obj ili2handler.obj \
+	iomhelper.obj ogrili1driver.obj ogrili1datasource.obj \
+	ogrili1layer.obj ogrili2driver.obj ogrili2datasource.obj \
+	ogrili2layer.obj ilihelper.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS =	-I. -Iiom -I.. -I..\.. $(XERCES_INCLUDE) $(GEOS_CFLAGS)
+
+default:	$(OBJ)
+	cd iom
+	nmake /f makefile.vc
+	cd ..
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb
+	cd iom
+	nmake /f makefile.vc clean
+	cd ..
+

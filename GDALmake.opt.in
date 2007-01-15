@@ -1,0 +1,378 @@
+GDAL_ROOT	=	@abs_top_builddir@
+top_builddir	=	$(GDAL_ROOT)
+
+#
+# the library can be built by the native build or with the help of libtool
+#
+HAVE_LIBTOOL	=	@HAVE_LIBTOOL@
+LIBTOOL	=	@LIBTOOL@
+ifeq ($(HAVE_LIBTOOL),yes)
+LIBTOOL_COMPILE	=	$(LIBTOOL) --mode=compile
+LIBTOOL_LINK	=	$(LIBTOOL) --mode=link
+LIBTOOL_INSTALL	=	$(LIBTOOL) --mode=install
+LIBTOOL_FINISH	=	$(LIBTOOL) --mode=finish --silent
+LIBTOOL_CLEAN	=	$(LIBTOOL) --mode=clean
+else
+LIBTOOL_FINISH	=	@BINTRUE@
+endif
+
+CC	=	$(LIBTOOL_COMPILE) @CC@
+CXX	=	$(LIBTOOL_COMPILE) @CXX@
+LD	=	$(LIBTOOL_LINK)	@CXX@
+RM	=	$(LIBTOOL_CLEAN) /bin/rm -f *.lo
+INSTALL = 	$(LIBTOOL_INSTALL) $(GDAL_ROOT)/install-sh -c
+INSTALL_LIB 	=	$(LIBTOOL_INSTALL) $(GDAL_ROOT)/install-sh -c
+INSTALL_DATA	= 	$(GDAL_ROOT)/install-sh -c -m 0644
+INSTALL_DIR	= 	$(GDAL_ROOT)/install-sh -d
+
+#Flags to build optimized relese version
+CXX_OPTFLAGS =	@CXXFLAGS@
+C_OPTFLAGS =	@CFLAGS@
+# Flags to build debug version
+CXX_DBGFLAGS =	-g -DDEBUG 
+C_DBGFLAGS =	-g -DDEBUG 
+# Flags to build profiling version
+CXX_PROFFLAGS =	-g3 -pg -DDEBUG 
+C_PROFFLAGS =	-g3 -pg -DDEBUG 
+
+LIBS	=	@LIBS@ $(DWG_LIBS) $(SDE_LIB) $(CURL_LIB) $(IDB_LIB)
+
+PYTHON_INCLUDES = @PYTHON_INCLUDES@
+PYTHON_LIBS = @PYTHON_LIBS@
+PYTHON_CFLAGS = @PYTHON_CFLAGS@ @NUMPY_FLAG@
+PYTHON = @PYTHON@
+PY_LD_SHARED = @PY_LD_SHARED@
+PY_SO_EXT = @PY_SO_EXT@
+
+# Next Generation SWIG bindings
+BINDINGS	=	@BINDINGS@
+
+HAVE_OGDI = @HAVE_OGDI@
+OGR_ENABLED = @OGR_ENABLED@
+
+OSX_FRAMEWORK_PREFIX = /Library/Frameworks/GDAL.framework
+OSX_VERSION_FRAMEWORK_PREFIX = ${OSX_FRAMEWORK_PREFIX}/Versions/@GDAL_VERSION_MAJOR@.@GDAL_VERSION_MINOR@
+
+prefix		=	@prefix@
+exec_prefix	=	@exec_prefix@
+INST_PREFIX	=	@exec_prefix@
+INST_INCLUDE	=	@includedir@
+INST_DATA 	=	@datadir@
+INST_LIB	=	@libdir@
+INST_BIN	=	@bindir@
+INST_PYMOD      =       @pymoddir@
+INST_DOCS	=	@exec_prefix@/doc
+INST_MAN	=	@mandir@
+
+#
+#	Whether we use debug flags, or optimization is determined by
+#	the CFG environment variable.  Set to debug for debug builds.
+#	This is similar to the OGDI builds. 
+#
+ifneq (,$(findstring debug,$(CFG)))
+C_ODFLAGS 	= $(C_DBGFLAGS)
+CXX_ODFLAGS 	= $(CXX_DBGFLAGS)
+endif
+
+ifneq (,$(findstring gprof,$(CFG)))
+C_ODFLAGS =	$(CXX_PROFFLAGS)
+CXX_ODFLAGS =	$(C_PROFFLAGS)
+LNK_FLAGS =	-pg
+endif
+
+ifeq ($(CFG),)
+C_ODFLAGS =	$(C_OPTFLAGS)
+CXX_ODFLAGS =	$(CXX_OPTFLAGS)
+endif
+
+CPPFLAGS	= @CPPFLAGS@ -I$(GDAL_ROOT)/port @EXTRA_INCLUDES@
+CFLAGS		= @C_WFLAGS@ @C_PIC@ $(C_ODFLAGS) $(USER_DEFS)
+CXXFLAGS	= @CXX_WFLAGS@ @CXX_PIC@ $(CXX_ODFLAGS) $(USER_DEFS)
+
+RANLIB		=	@RANLIB@
+SO_EXT		=	@SO_EXT@
+LD_SHARED	=	@LD_SHARED@
+EXE		=       @EXE_EXT@
+
+ifeq ($(notdir $(LD_SHARED)),true)
+HAVE_LD_SHARED  =	no
+else
+HAVE_LD_SHARED  =	yes
+endif
+
+GDAL_INCLUDE	=	-I$(GDAL_ROOT)/port -I$(GDAL_ROOT)/gcore \
+			-I$(GDAL_ROOT)/alg \
+			-I$(GDAL_ROOT)/ogr -I$(GDAL_ROOT)/ogr/ogrsf_frmts
+
+# libtool targets and help variables
+LIBGDAL	:=		libgdal.la
+LIBGDAL_CURRENT	:=	12
+LIBGDAL_REVISION	:=	0
+LIBGDAL_AGE	:=	11
+
+# native build targets and variables
+GDAL_VER	=	@GDAL_VER@
+
+# version info
+GDAL_VERSION_MAJOR =    @GDAL_VERSION_MAJOR@
+GDAL_VERSION_MINOR =    @GDAL_VERSION_MINOR@
+GDAL_VERSION_REV   =    @GDAL_VERSION_REV@
+
+GDAL_LIB	= 	$(GDAL_ROOT)/libgdal.a
+GDAL_SLIB	=	$(GDAL_ROOT)/libgdal.$(SO_EXT)
+GDAL_SLIB_LINK	=	-L$(GDAL_ROOT) -lgdal
+
+# Mac OS X Framework definition
+MACOSX_FRAMEWORK = @MACOSX_FRAMEWORK@
+
+#
+# OGR/PostgreSQL support.
+#
+HAVE_OGR_PG     = @HAVE_PG@
+PG_INC	=	@PG_INC@
+
+#
+# MySQL support.
+#
+HAVE_MYSQL =	@HAVE_MYSQL@
+MYSQL_LIB  =	@MYSQL_LIB@
+MYSQL_INC  =	@MYSQL_INC@
+LIBS	   +=	$(MYSQL_LIB)
+
+#
+# HDF4 Support.
+#
+HDF4_INCLUDE  = @HDF4_INCLUDE@ -I$(GDAL_ROOT)/ogr
+
+#
+# HDF5 Support.
+#
+HAVE_HDF5     = @HAVE_HDF5@
+HDF5_INCLUDE  = @HDF5_INCLUDE@ 
+
+#
+# DODS Include file location
+#
+DODS_INC = @DODS_INC@
+ifeq ($(DODS_INC),)
+HAVE_DODS = no
+else
+HAVE_DODS = yes
+endif
+
+#
+# SQLite 
+#
+SQLITE_INC = @SQLITE_INC@
+HAVE_SQLITE = @HAVE_SQLITE@
+
+#
+# JPEG2000 via Kakadu Support.
+#
+KAKDIR = @KAKDIR@
+
+#
+# JPEG-2000 Support via JasPer library.
+#
+HAVE_JASPER     = @HAVE_JASPER@
+JASPER_INCLUDE  = -I../libjasper/include
+JASPER_FLAGS	= @JASPER_FLAGS@
+
+#
+# MrSID support via LizardTech's DSDK
+#
+MRSID_FLAGS	= @MRSID_FLAGS@
+MRSID_INCLUDE	= @MRSID_INCLUDE@
+
+#
+# Xerces C++ XML Parser for GML.
+#
+HAVE_XERCES	= @HAVE_XERCES@
+XERCES_INCLUDE	= @XERCES_INCLUDE@
+
+#
+# Oracle Spatial Support
+#
+HAVE_OCI	= @HAVE_OCI@
+OCI_INCLUDE	= @OCI_INCLUDE@
+
+# GEOS Support
+
+HAVE_GEOS       =       @HAVE_GEOS@
+GEOS_CFLAGS     =       @GEOS_CFLAGS@
+
+# GRASS Support
+
+GRASS_SETTING	=	@GRASS_SETTING@
+GRASS_INCLUDE	=	@GRASS_INCLUDE@
+GRASS_GISBASE	=	@GRASS_GISBASE@
+HAVE_GRASS	=	@HAVE_GRASS@
+
+# 
+# SDE
+#
+HAVE_SDE = @SDE_ENABLED@
+SDE_LIB	= @SDE_LIB@
+SDE_INC = @SDE_INC@
+
+#
+# Curl
+#
+CURL_SETTING 	=	@CURL_SETTING@
+CURL_LIB	=	@CURL_LIB@
+CURL_INC	=	@CURL_INC@
+
+# 
+# DWGdirect Library
+#
+DWGDIRECT =	@DWGDIRECT@
+DWG_PLT = @DWG_PLT@
+
+ifneq ($(DWGDIRECT),)
+DWG_LIBDIR =	$(DWGDIRECT)/lib/$(DWG_PLT)
+DWG_LIBS = $(DWG_LIBDIR)/DD_$(DWG_PLT)_ModelerGeometry.a \
+	$(DWG_LIBDIR)/DD_$(DWG_PLT)_AcisRenderer.a \
+	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Br.a \
+	$(DWG_LIBDIR)/DD_$(DWG_PLT)_AcisBuilder.a \
+	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Db.a \
+	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Gs.a \
+	$(DWG_LIBDIR)/DD_$(DWG_PLT)_SpatialIndex.a \
+	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Gi.a \
+	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Ge.a \
+	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Root.a \
+	$(DWG_LIBDIR)/DD_$(DWG_PLT)_FT.a \
+	$(DWG_LIBDIR)/DD_$(DWG_PLT)_Alloc.a 
+HAVE_DWGDIRECT = yes
+else
+DWG_LIBS =	
+HAVE_DWGDIRECT = no
+endif
+
+#
+# "Panorama" GIS support.
+#
+HAVE_PANORAMA   = @HAVE_PANORAMA@
+PANORAMA_INC	= @PANORAMA_INC@
+
+#
+# Informix DataBlade support
+#
+HAVE_IDB	= @HAVE_IDB@
+IDB_INC		= @IDB_INC@
+IDB_LIB		= @IDB_LIB@
+
+#
+# FMEObjects
+#
+ifeq (@X_FME_HOME@,)
+HAVE_FME        =       no
+FME_INCLUDE	=	
+else
+HAVE_FME        =       yes
+FME_INCLUDE	=	-I@X_FME_HOME@/fmeobjects/cpp
+endif
+
+# PCRaster support
+PCRASTER_SETTING	=	@PCRASTER_SETTING@
+
+OGDI_INCLUDE	=	@OGDI_INCLUDE@
+
+PNG_SETTING     =	@PNG_SETTING@
+JPEG_SETTING	=	@JPEG_SETTING@
+TIFF_SETTING	=	@TIFF_SETTING@
+GEOTIFF_SETTING	=	@GEOTIFF_SETTING@
+GIF_SETTING	    =	@GIF_SETTING@
+FITS_SETTING    =   @FITS_SETTING@
+OGDI_SETTING	=	@HAVE_OGDI@
+ODBC_SETTING    =   @ODBC_SETTING@
+# PGeo driver is built-in when ODBC is available
+PGEO_SETTING    =   @ODBC_SETTING@
+NETCDF_SETTING  =   @NETCDF_SETTING@
+LIBZ_SETTING	=	@LIBZ_SETTING@
+
+#
+# PROJ.4 stuff
+#
+PROJ_STATIC	=	@PROJ_STATIC@
+ifeq ($(PROJ_STATIC),yes)
+PROJ_FLAGS = -DPROJ_STATIC
+endif
+PROJ_INCLUDE	=	@PROJ_INCLUDE@
+
+GDAL_LIBS	=	$(GDAL_LIB)
+
+ifeq ($(OGR_ENABLED),yes)
+GDAL_LIBS	:= $(GDAL_LIB) $(OCI_LIB) $(GDAL_LIBS)
+CPPFLAGS	:= -DOGR_ENABLED $(CPPFLAGS)
+endif
+
+#
+#	Note these codes have to exactly match the format directory names, 
+#	and their uppercase form should be the format portion of the
+#	format registration entry point.  eg. gdb -> GDALRegister_GDB().
+#
+GDAL_FORMATS = 	gxf gtiff hfa aigrid aaigrid ceos ceos2 iso8211 xpm \
+		sdts raw dted mem jdem envisat elas fit vrt usgsdem l1b \
+		nitf bmp pcidsk airsar rs2 ilwis rmf rik leveller sgi \
+		idrisi \
+		@OPT_GDAL_FORMATS@
+
+#
+# CONFIG_LIBS is what local program should link against, and CONFIG_LIBS_INS
+# is what will be emitted into the gdal-config script that is installed
+# globally.
+#
+
+ifeq ($(HAVE_LIBTOOL), yes)
+CONFIG_LIBS	=	$(GDAL_ROOT)/$(LIBGDAL)
+CONFIG_LIBS_INS	=	-L$(INST_LIB) -lgdal
+EXE_DEP_LIBS	=	$(GDAL_ROOT)/$(LIBGDAL)
+SO_EXT		=	la
+else
+
+ifeq ($(HAVE_LD_SHARED),yes)
+CONFIG_LIBS	=	$(GDAL_SLIB_LINK) $(LIBS)
+CONFIG_LIBS_INS	=	-L$(INST_LIB) -lgdal
+EXE_DEP_LIBS	=	$(GDAL_SLIB)
+else
+CONFIG_LIBS	=	$(GDAL_LIBS) $(LIBS)
+CONFIG_LIBS_INS	=	$(foreach LF,$(GDAL_LIBS),$(INST_LIB)/$(notdir $(LF)))\
+			 $(LIBS)
+EXE_DEP_LIBS	=	$(GDAL_LIB)
+endif
+
+endif # HAVE_LIBTOOL
+
+
+#
+# generic library rules
+#
+
+#
+# gdal and ogr low level drivers use the following default rules in order to
+# populate the ../o/ directory with all object and library object files
+#
+
+O_OBJ =	$(foreach file,$(OBJ),../o/$(file))
+
+../o/%.o:	%.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+
+../o/%.o:	%.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
+
+%.o:	%.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+
+%.o:	%.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
+
+#
+# default rules for handling subdirectories
+#
+
+%-target:
+	$(MAKE) -C $*
+
+%-clean:
+	$(MAKE) -C $* clean

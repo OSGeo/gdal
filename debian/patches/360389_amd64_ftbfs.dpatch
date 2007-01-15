@@ -1,0 +1,27 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 360389_amd64_ftbfs.dpatch by Francesco Paolo Lovergine <frankie@debian.org>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad gdal-1.3.1~/port/cpl_odbc.h gdal-1.3.1/port/cpl_odbc.h
+--- gdal-1.3.1~/port/cpl_odbc.h	2005-09-05 22:18:43.000000000 +0200
++++ gdal-1.3.1/port/cpl_odbc.h	2006-04-04 00:13:29.000000000 +0200
+@@ -95,14 +95,8 @@
+ class CPLODBCStatement;
+ 
+ 
+-#ifdef SQLULEN
+-/* ODBC types to support 64 bit compilation */
+-#  define _SQLULEN SQLULEN
+-#  define _SQLLEN  SQLLEN
+-#else
+-#  define _SQLULEN SQLUINTEGER
+-#  define _SQLLEN  SQLINTEGER
+-#endif	/* ifdef SQLULEN */
++#define _SQLULEN SQLULEN
++#define _SQLLEN  SQLLEN
+ 
+ 
+ /**

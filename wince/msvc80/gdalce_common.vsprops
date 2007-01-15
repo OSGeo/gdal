@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="windows-1250"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="gdalce_common"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories="$(WCELIBCEX_DIR)"
+		PreprocessorDefinitions="OGR_ENABLED;SHAPE_ENABLED;FRMT_aaigrid;FRMT_dted;FRMT_gtiff"
+	/>
+	<Tool
+		Name="VCPreBuildEventTool"
+		Description=""
+		CommandLine=""
+	/>
+	<UserMacro
+		Name="WCELIBCEX_DIR"
+		Value="D:\dev\wcelibcex\_svn\wcelibcex\trunk\src"
+	/>
+	<UserMacro
+		Name="PROJ_DIR"
+		Value=""
+	/>
+	<UserMacro
+		Name="GEOS_DIR"
+		Value=""
+	/>
+	<UserMacro
+		Name="GDAL_DIR"
+		Value="..\..\.."
+	/>
+	<UserMacro
+		Name="CPL_CONFIG_H"
+		Value="cpl_config.h"
+	/>
+	<UserMacro
+		Name="TIF_CONFIG_H"
+		Value="tif_config.h"
+	/>
+</VisualStudioPropertySheet>

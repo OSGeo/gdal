@@ -1,0 +1,95 @@
+<html>
+<head>
+<title>GML - Geography Markup Language</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>GML - Geography Markup Language</h1>
+
+OGR has limited support for GML reading and writing. Update of existing
+files is not currently supported. OGR is based on GML 2.0. The reading only
+works if OGR is built with Xerces linked in.  XML validation is disabled by
+default.  GML writing is always supported, even without Xerces.<p>
+
+The GML driver has no coordinate system support at this time.<p>
+
+In contrast to most GML readers, the OGR GML reader makes no effort to read
+the format XML Schema definition of the feature classes in a GML file.
+Instead it attempts to automatically discover them and their associated
+properties by scanning the file and looking for "known" gml objects in the
+gml namespace to determine the organization.  While this approach is error
+prone, it has the advantage of working for GML files even if the associated
+schema (.xsd) file has been lost.<p>
+
+The first time a GML file is opened it is completely scanned in order to
+determine the set of featuretypes, the attributes associated with each and
+other dataset level information.  This information is stored in a .gfs file
+with the same basename as the target gml file.  Subsequent accesses to the
+same GML file will use the .gfs file to predefine dataset level information
+accelerating access.  To a limited extent the .gfs file can be manually edited
+to alter how the GML file will be parsed.  Be warned that the .gfs file will
+be automatically regenerated if the associated .gml file has a newer timestamp.
+<p>
+
+When prescanning the GML file to determine the list of feature types, and
+fields, the contents of fields are scanned to try and determine the type
+of the field.  In some applications it is easier if all fields are just treated
+as string fields.  This can be accomplished by setting the configuration
+option <b>GML_FIELDTYPES</b> to the value <b>ALWAYS_STRING</b>.  Configuration
+options can be set via the CPLSetConfigOption() function or as environment
+variables.<p>
+
+<h2>Creation Issues</h2>
+
+On export all layers are written to a single GML file all in a single
+feature collection.  Each layer's name is used as the element name for
+objects from that layer.  Geometries are always written as the 
+ogr:geometryProperty property on the feature.<p>
+
+The GML writer supports the following creation options:
+
+<ul>
+<li> <B>XSISCHEMAURI</B>: If provided, this URI will be inserted as the
+schema location.  Note that the schema file isn't actually accessed by OGR, so
+it is up to the user to ensure it will match the schema of the OGR produced 
+GML data file.<p>
+
+<li> <B>XSISCHEMA</B>: This can be EXTERNAL, INTERNAL or OFF and defaults to
+EXTERNAL.  This (attempts) to write a BXML compatible GML schema file to
+a corresponding .xsd file (with the same basename).  The generated schema is
+still experimental. If INTERNAL is used the schema is written within the GML
+file, but this is even more experimental and almost certainly not valid XML.
+OFF disables schema generation (and is implicit if XSISCHEMAURI is used). 
+<p>
+
+</ul>
+
+<h2>Example</h2>
+
+The ogr2ogr utility can be used to dump the results of a Oracle query to
+GML:
+
+<pre>
+ogr2ogr -f GML output.gml OCI:usr/pwd@db my_feature -where "id = 0"
+</pre>
+
+<P>
+The ogr2ogr utility can be used to dump the results of a PostGIS query to
+GML:
+
+<pre>
+ogr2ogr -f GML output.gml PG:'host=myserver dbname=warmerda' -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
+
+</pre>
+
+
+<h2>See Also</h2>
+
+<ul>
+<li> <a href="http://www.opengis.net/gml/">GML Specifications</a><p>
+<li> <a href="http://xml.apache.org/xerces2-j/index.html">Xerces</a><p>
+</ul>
+
+</body>
+</html>

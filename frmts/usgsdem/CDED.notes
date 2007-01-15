@@ -1,0 +1,106 @@
+
+
+Field Map
+=========
+
+
+Offset Length Name                    Notes
+------ ------ ----                    -----
+
+    0    40   Filename                Generated from output filename.
+
+   40    60   Producer of Data        Template or blank.
+
+  100     9   Filler                  Blank
+
+  109    26   SW Geographic Corner    Generated. 
+
+  135     1   Process Code            Template or blank. 
+
+  136     1   Filler                  Blank
+
+  137     3   Sectional Indicator     Template or blank.
+
+  140     4   Origin Code             Template or blank.
+
+  144     6   DEM Level Code          Template or blank. 
+	                              "1" for PRODUCT=CDED50K
+
+  150     6   Elevation Pattern       Hardcoded to "1" (regular)
+
+  156     6   Horizontal Reference    Hardcoded to "0" (Geographic)
+              System
+
+  162     6   UTM/SP Zone             Harcoded to "0".
+
+  168   360   Projection Parameters   Each hardcoded to 0.0.
+
+  528     6   Horz. Unit of Measure   Hardcoded to "3" (arc seconds)
+ 
+  534     6   Vert. Unit of Measure   Hardcoded to "2" (meters)
+
+  540     6   Cov. Polygon Sides      Hardcoded to "4".
+
+  546   192   Corner Coordinates      Generated
+
+  738    24   Minimum Elevation       Generated
+
+  762    24   Maximum Elevation       Generated
+
+  786    24   Rotation Angle          Hardcoded to "0".
+
+  810     6   Accurancy Code          Hardcoded to "0" 
+
+  816    36   Spatial Resolution      X/Y generated, Z hardcoded to 1.0. 
+
+  852    6    Rows of Profiles        Hardcoded to "1".
+
+  858    6    Columns of Profiles     Generated (height of dem in pixels)
+
+  864   12    Largest/Smallest Primary      Blank
+              Contour Intervals and Units
+
+  876    4    Data source data        Template or blank.
+
+  880    4    Data inspection or      Template or blank.
+              revision date
+
+  884    1    Inspect. Revision Flag  Template or blank.
+
+  885    1    Data Validation Flag    Template or blank.
+
+  886    2    Suspect/Void Flag       Generated (0=none,2=void area)
+
+  888    2    Vertical Datum          Template or "1" (MSL).
+
+  890    2    Horizontal Datum        Template or "4" (NAD83). 
+
+  892    4    Data edition/version    Template or blank. 
+              Spec edition/version    "1020" for PRODUCT=CDED50K
+
+  896    4    Percent Void            Generated.
+
+  900    8    Edge Matching Flags     Template or blank.
+
+  908    7    Vertical Datum Shift    Hardcoded to "0.0". 
+
+
+
+CDED Production Issues
+======================
+
+The following fields should be addressed in a template file. 
+
+Offset Length Name                    Notes
+------ ------ ----                    -----
+
+   40    60   Producer of Data        
+
+  135     1   Process Code            The CDED spec lists options as 
+                                         "8" = ANUDEM
+                                         "9" = FME for LINUX, Build 842
+                                         "A" = TopoGrid
+
+  140     4   Origin Code             Should be "YT" in Yukon I believe. 
+
+

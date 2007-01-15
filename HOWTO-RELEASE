@@ -1,0 +1,56 @@
+	Notes on Preparing a GDAL Source Release
+	========================================
+
+1) Update the release date, and number information in gcore/gdal_version.h.
+
+2) Update the VERSION file.
+
+3) Update LIBGDAL_CURRENT/REVISION/AGE macros in GDALmake.opt.in.
+   - For a release with no interface changes just bump REVISION. 
+   - Adding interfaces, bump CURRENT/AGE, set REVISION to 0. 
+   - Deleting interfaces / compatibility issues - bump CURRENT, others to zero.
+
+4) Prepare release overview in the NEWS file.  The cvs2cl.pl script can be 
+   useful for collecting a full listing of all CVS log entries.  It can be
+   useful to perform this and some of the other cvs intensive steps on 
+   remotesensing.org if possible, to minimize CVS latency. 
+
+   eg. 
+
+   % cvs2cl.pl > AutoChangeLog
+
+5) Update the GDAL doc/index.doc to refer to the newly to be created version, 
+   and commit.  Update the doc/download.dox to point to the newest release
+   (there should be 4 lines / 8 items to change)
+
+6) Tag the release set in CVS: 
+
+   eg. 
+   % cvs tag -F gdal_1_1_6 
+
+6.5) Also tag the "autotest" tree as above.
+
+7) Create the source distributions using the mkgdaldist.sh script.  The
+   argument should be the version number (ie. 1.1.6).  Hit enter when 
+   prompted for a CVS password.
+
+   eg.
+   % mkgdaldist.sh 1.1.6
+
+7.5) Create a snapshot of the documentation.
+
+ ie. On www.gdal.org:
+ % gdalhtmlupdate.sh
+ % cd 
+ % zip -r ~/gdal-web/dl/gdalXXXdoc.zip gdal-web/*.* gdal-web/ogr
+
+7.6) Create a snapshot of gdalautotest. 
+
+8) Publish the resulting files on www.gdal.org/gdal-web/dl and 
+   download.osgeo.org in /osgeo/download/gdal.
+
+9) Announce release to the gdal-dev@lists.maptools.org, and freegis@freegis.org
+
+10) Update the freshmeat.net entry for GDAL. 
+
+11) Update the freegis.org entry for GDAL.

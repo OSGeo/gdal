@@ -1,0 +1,103 @@
+<html>
+<head>
+<title>Comma Separated Value (.csv)</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>Comma Separated Value (.csv)</h1>
+
+OGR supports reading and writing non-spatial tabular data stored in
+text CSV files.  CSV files are a common interchange format between 
+software packages supporting tabular data and are also easily produced
+manually with a text editor or with end-user written scripts or programs.<p>
+
+While in theory .csv files could have any extension, in order to
+auto-recognise the format OGR only supports CSV files ending with the
+extention ".csv".  The datasource name may be either a single CSV file
+or to a directory.  For a directory to be recognised as a .csv datasource
+at least half the files in the directory need to have the extension .csv.
+One layer (table) is produced from each .csv file accessed.<p>
+
+The OGR CSV driver supports reading and writing.  Because the CSV format 
+has variable length text lines, reading is done sequentially.  Reading 
+features in random order will generally be very slow.  OGR CSV layer never
+have any geometry on features, nor do they have an associated coordinate
+system.  The OGR CSV driver returns all attribute columns with a  type of
+string if no field type information file (with .csvt extension) is
+available.<p>
+
+Limited type recognition can be done for Integer, Real and String
+columns through a descriptive file with same name as the CSV file,
+but .csvt extension. In a single line the types for each column
+have to be listed: double quoted and comma
+separated (e.g., "Integer","String"). The driver will then use these types
+as specified for the csv columns.<p>
+
+<h2>Format</h2>
+
+CSV files have one line for each feature (record) in the layer (table).  
+The attribute field values are separated by commas.  At least two fields
+per line must be present.  Lines may be terminated by a DOS (CR/LF) or
+Unix (LF) style line terminators.  Each record should have the same number
+of fields.<p>
+
+Complex attribute values (such as those containing commas, quotes or newlines) 
+may be placed in double quotes.  Any occurances of double quotes within 
+the quoted string should be doubled up to "escape" them.<p>
+
+The driver attempts to treat the first line of the file as a list of field 
+names for all the fields.  However, if one or more of the names is all 
+numeric it is assumed that the first line is actually data values and
+dummy field names are generated internally (field_1 through field_n) and
+the first record is treated as a feature. <p>
+
+Example (employee.csv):
+<pre>
+ID,Salary,Name,Comments
+132,55000.0,John Walker,"The ""big"" cheese."
+133,11000.0,Jane Lake,Cleaning Staff
+</pre>
+
+Note that the Comments value for the first data record is placed in 
+double quotes because the value contains quotes, and those quotes have
+to be doubled up so we know we haven't reached the end of the quoted string
+yet. <p>
+
+Many variations of textual input are sometimes called Comma Separated
+Value files, including files without commas, but fixed column widths,
+those using tabs as seperators or those with other auxilary data defining
+field types or structure.  This driver does not attempt to support all 
+such files, but instead to support simple .csv files that can be 
+auto-recognised.  Scripts or other mechanisms can generally be used to convert
+other variations into a form that is compatible with the OGR CSV driver. <p>
+
+<h2>Creation Issues</h2>
+
+The driver supports creating new databases (as a directory
+of .csv files), adding new .csv files to an existing directory or .csv
+files or appending features to an existing .csv table.  Deleting or
+replacing existing features is not supported.<p>
+
+Creation options:
+
+<ul>
+
+<li> <b>LINEFORMAT</b>:
+By default when creating new .csv files they are created with the line
+termination conventions of the local platform (CR/LF on win32 or 
+LF on all other systems).  This may be overridden through use of the
+LINEFORMAT layer creation option which may have a value of <b>CRLF</b>
+(DOS format) or <b>LF</b> (Unix format). <p>
+
+</ul>
+
+<h2>Other Notes</h2>
+<ul>
+<li> Development of the OGR CSV driver was supported by 
+<a href="http://www.dmsolutions.ca/">DM Solutions Group</a> and 
+<a href="http://www.gomoos.org/">GoMOOS</a>.<p>
+</ul>
+
+</body>
+</html>

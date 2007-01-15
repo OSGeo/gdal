@@ -1,0 +1,146 @@
+<html>
+<head>
+<title>ESRI Shapefile</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>ESRI Shapefile</h1>
+
+All varieties of ESRI Shapefiles should be available for reading, and
+simple 3D files can be created.<p>
+
+Normally the OGR Shapefile driver treats a whole directory of shapefiles
+as a dataset, and a single shapefile within that directory as a layer.  In
+this case the directory name should be used as the dataset name.  However,
+it is also possible to use one of the files (.shp, .shx or .dbf) in a
+shapefile set as the dataset name, and then it will be treated as a dataset
+with one layer.<p>
+
+Currently the shapefile driver always returns polygons, rather than
+multipolygons, even for polygons with multiple outer rings.  This is a
+violation of the OGR (and Simple Features) data model, and will be corrected
+at some point in the future.  The new ESRI measure values are discarded
+if encountered. <p>
+
+If a .prj files in old Arc/Info style or new ESRI OGC WKT style is present,
+it will be read and used to associate a projection with features.<p>
+
+<h2>Spatial and Attribute Indexing</h2>
+
+The OGR Shapefile driver supports spatial indexing and a limited form of
+attribute indexing.<p>
+
+The spatial indexing uses the same .qix quadtree spatial index files that
+are used by UMN MapServer.  It does not support the ESRI spatial index
+files (.sbn / .sbx).  Spatial indexing can accelerate spatially filtered
+passes through large datasets to pick out a small area quite dramatically.
+<p>
+
+To create a spatial index, issue a SQL command of the form "CREATE SPATIAL 
+INDEX ON tablename".  To delete a spatial index issue a command of the
+form "DROP SPATIAL INDEX ON tablename".<p>
+
+Currently the OGR Shapefile driver only supports attribute indexes for 
+looking up specific values in a unique key column.  To create a spatial
+index for a column issue an SQL command of the form "CREATE INDEX ON tablename
+USING fieldname".  To drop the attribute indexes issue a command of the
+form "DROP INDEX ON tablename".  The attribute index will accelerate
+WHERE clause searches of the form "fieldname = value".  The attribute
+index is actually stored as a mapinfo format index and is not compatible
+with any other shapefile applications.<p>
+
+<h2>Creation Issues</h2>
+
+The Shapefile driver treats a directory as a dataset, and each Shapefile
+set (.shp, .shx, and .dbf) as a layer.  The dataset name will be treated
+as a directory name.  If the directory already exists it is used and 
+existing files in the directory are ignored.  If the directory does not
+exist it will be created.<p>
+
+As a special case attempts to create a new dataset with the extension .shp
+will result in a single file set being created instead of a directory.<p>
+
+ESRI shapefiles can only store one kind of geometry per layer (shapefile). 
+On creation this is may be set based on the source file (if a uniform geometry
+type is known from the source driver), or it may be set directly by the
+user with the layer creation option SHPT (shown below).  If not set the
+layer creation will fail.  If geometries of incompatible types are written
+to the layer, the output will be terminated with an error.<p>
+
+Note that this can make it very difficult to translate a mixed geometry layer
+from another format into Shapefile format using ogr2ogr, since ogr2ogr has
+no support for separating out geometries from a source layer.<p>
+
+Shapefile feature attributes are stored in an associated .dbf file, and so
+attributes suffer a number of limitations:<P>
+
+<ul>
+<li> Attribute names can only be up to 12 characters long.  Longer names will
+be silently truncated.  This may result in non-unique column names, which 
+will definately cause problems later. <p>
+
+<li> Only Integer, Real and String field types are supported.  The various
+list, and binary field types cannot be created.<p>
+
+<li> The field width and precision are directly used to establish storage 
+size in the .dbf file.  This means that strings longer than the field
+width, or numbers that don't fit into the indicated field format will suffer
+truncation.<p>
+
+<li> Integer fields without an explicit width are treated as width 11.<p>
+
+<li> Real (floating point) fields without an explicit width are treated as
+width 24 with 15 decimal places of precision.<p>
+
+<li> String fields without an assigned width are treated as 80 characters.<p>
+
+</ul>
+
+Also, .dbf files are required to have at least one field.  If none are created
+by the application an "FID" field will be automatically created and populated
+with the record number.<p>
+
+The OGR shapefile driver supports rewriting existing shapes in a shapefile
+as well as deleting shapes.  Deleted shapes are marked for deletion in 
+the .dbf file, and then ignored by OGR.  To actually remove them permanently
+(resulting in renumbering of FIDs) invoke the SQL 'REPACK <tablename>' via
+the datasource ExecuteSQL() method.<p>
+
+<h3>Dataset Creation Options</h3>
+
+None<p>
+
+<h3>Layer Creation Options</h3>
+
+
+<b>SHPT=type</b>: Override the type of shapefile created.  Can be one of
+NULL for a simple .dbf file with no .shp file, 
+ POINT, ARC, POLYGON or MULTIPOINT for 2D, or 
+POINTZ, ARCZ, POLYGONZ or MULTIPOINTZ for 3D.  Shapefiles with <i>measure</i>
+values are not supported, nor are MULTIPATCH files.<p>
+
+<h3>Examples</h3>
+
+A merge of two shapefiles 'file1.shp' and 'file2.shp' into a new file
+'file_merged.shp' is performed like this:
+
+<pre>
+% ogr2ogr file_merged.shp file1.shp
+% ogr2ogr -update -append file_merged.shp file2.shp -nln file_merged
+</pre>
+
+The second command is opening file_merged.shp in update mode, and trying to
+find existing layers and append the features being copied.
+<br>
+The -nln option sets the name of the layer to be copied to.
+
+
+<h3>See Also</h3>
+
+<ul>
+<li> <a href="http://shapelib.maptools.org/">Shapelib Page</a><p>
+</ul>
+
+</body>
+</html>

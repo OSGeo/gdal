@@ -1,0 +1,70 @@
+.TH "gdal_rasterize" 1 "28 Jun 2006" "GDAL" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+gdal_rasterize \- gdal_rasterize
+burns vector polygons into a raster
+.SH "SYNOPSIS"
+.PP
+.PP
+.PP
+.nf
+Usage: gdal_rasterize [-b band]
+       [-burn value] | [-a attribute_name] | [-3d]
+       [-l layername]* [-where expression] [-sql select_statement]
+       <src_datasource> <dst_filename>
+.fi
+.PP
+.SH "DESCRIPTION"
+.PP
+This program burns vector polygons into the raster band(s) of a raster image. Vectors are read from OGR supported vector formats.
+.PP
+.IP "\fB\fB-b\fP \fIband\fP: \fP" 1c
+The band(s) to burn values into. Multiple -b arguments may be used to burn into a list of bands. The default is to burn into band 1.
+.PP
+.IP "\fB\fB-burn\fP \fIvalue\fP: \fP" 1c
+A fixed value to burn into a band for all objects. A list of -burn options can be supplied, one per band being written to.
+.PP
+.IP "\fB\fB-a\fP \fIattribute_name\fP: \fP" 1c
+Identifies an attribute field on the features to be used for a burn in value. The value will be burned into all output bands.
+.PP
+.IP "\fB\fB-3d\fP: \fP" 1c
+Indicates that a burn value should be extracted from the 'Z' values of the feature (not yet implemented).
+.PP
+.IP "\fB\fB-l\fP \fIlayername\fP: \fP" 1c
+Indicates the layer(s) from the datasource that will be used for input features. May be specified multiple times, but at least one layer name or a -sql option must be specified.
+.PP
+.IP "\fB\fB-where\fP \fIexpression\fP: \fP" 1c
+An optional SQL WHERE style query expression to be applied to select features to burn in from the input layer(s). 
+.PP
+.IP "\fB\fB-sql\fP \fIselect_statement\fP: \fP" 1c
+An SQL statement to be evaluated against the datasource to produce a virtual layer of features to be burned in.
+.PP
+.IP "\fB\fIsrc_datasource\fP: \fP" 1c
+Any OGR supported readable datasource.
+.PP
+.IP "\fB\fIdst_filename\fP: \fP" 1c
+The GDAL supported output file. Must support update mode access. Currently gdal_rasterize cannot create new output files though that may be added eventually.
+.PP
+.PP
+.SH "EXAMPLE"
+.PP
+.PP
+The following would burn all polygons from mask.shp into the RGB TIFF file work.tif with the color red (RGB = 255,0,0).
+.PP
+.PP
+.nf
+gdal_rasterize -b 1 -b 2 -b 3 -burn 255 -burn 0 -burn 0 -l mask mask.shp work.tif
+.fi
+.PP
+.PP
+The following would burn all 'class A' buildings into the output elevation file, pulling the top elevation from the ROOF_H attribute.
+.PP
+.PP
+.nf
+gdal_rasterize -a ROOF_H -where 'class="A"' -l footprints footprints.shp city_dem.tif
+.fi
+.PP
+.SH "AUTHORS"
+.PP
+Frank Warmerdam <warmerdam@pobox.com> 

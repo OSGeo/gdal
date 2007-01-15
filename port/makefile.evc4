@@ -1,0 +1,49 @@
+# $Id$
+# 
+# CPL (Common Portability Library) makefile for Windows CE build
+#
+
+OBJ = cpl_conv.obj \
+      cpl_csv.obj \
+      cpl_dir.obj \
+      cpl_error.obj \
+      cpl_findfile.obj \
+      cpl_getexecpath.obj \
+      cpl_list.obj \
+      cpl_minixml.obj \
+      cpl_multiproc.obj \
+      cpl_path.obj \
+      cpl_string.obj \
+      cpl_vsi_mem.obj \
+      cpl_vsil.obj \
+      cpl_vsil_win32.obj \
+      cpl_vsisimple.obj \
+      cpl_win32ce_api.obj \
+      cplgetsymbol.obj \
+      cplstring.obj
+		
+LIBNAME = cpl.lib
+
+GDAL_ROOT = ..
+
+!INCLUDE $(GDAL_ROOT)\nmake-wince.opt
+
+default:	cpl_config.h $(LIBNAME)
+
+$(LIBNAME):	$(OBJ)
+	lib /out:$(LIBNAME) $(OBJ)
+
+cpl_config.h:	cpl_config.h.evc4
+	copy cpl_config.h.evc4 cpl_config.h
+
+.cpp.obj:
+	$(CC) $(CFLAGS) /c $*.cpp /Fo$@
+
+.c.obj:
+	$(CC) $(CFLAGS) /c $*.c /Fo$@
+
+clean:
+	del $(OBJ)
+	del $(LIBNAME)
+	del *.pdb
+

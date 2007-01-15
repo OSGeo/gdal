@@ -1,0 +1,25 @@
+
+OBJ	=	gdalopeninfo.obj gdaldrivermanager.obj gdaldriver.obj \
+		gdaldataset.obj gdalrasterband.obj gdal_misc.obj \
+		rasterio.obj gdalrasterblock.obj gdal_rat.obj \
+		gdalcolortable.obj overview.obj gdaldefaultoverviews.obj \
+		gdalmajorobject.obj gdalpamdataset.obj gdalpamrasterband.obj \
+		gdaljp2metadata.obj gdaljp2box.obj gdalgmlcoverage.obj \
+		gdalmultidomainmetadata.obj
+		
+
+RES	=	Version.res
+
+GDAL_ROOT	=	..
+
+!INCLUDE ..\nmake.opt
+
+default:	$(OBJ) $(RES)
+
+clean:
+	-del *.obj *.res
+
+Version.res:	
+	rc -fo Version.res -r -I..\port Version.rc
+
+gdal_misc.obj:	gdal_misc.cpp gdal_version.h

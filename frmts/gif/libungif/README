@@ -1,0 +1,14 @@
+This code is from libungif 4.1.0
+
+In theory it comes from:
+  http://prtr-13.ucsc.edu/~badger/software/libungif.shtml
+
+But I don't think this works any more. I generally dig up 
+source RPMs to dig up the code.  
+
+Changes:
+ o Select only lib files needed.
+ o Fix a few warnings about unused variables. 
+ o Hack private include file to avoid VersionString warnings.
+ o Hacked in O_BINARY support whereever O_BINARY is defined.
+

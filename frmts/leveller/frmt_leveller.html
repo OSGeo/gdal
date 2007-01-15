@@ -1,0 +1,33 @@
+<html>
+<head>
+	<title>Leveller --- Daylon Leveller heightfield</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>Leveller --- Daylon Leveller Heightfield</h1>
+
+This driver implements read-only access to Leveller heightfields. 
+Leveller heightfields store 32-bit elevation values with 
+optional simple geospatial measures (but not positioning).
+Format versions 4 through 6 are supported, which do not 
+have full georeferencing. The file extension for Leveller heightfields is "TER" (which 
+is the same as Terragen, but the driver only recognizes Leveller files).<p>
+
+Although format versions 4 and 5 use 16.16 fixed-point storage,
+the driver autoconverts them to floating-point so that GDAL 
+always sees pixels of type Float32.<p>
+
+<h2>See Also:</h2>
+
+<ul>
+<li> Implemented as <tt>gdal/frmts/leveller/levellerdataset.cpp</tt>.<p>
+
+<li> <a href="http://www.daylongraphics.com/products/leveller/dev/index.htm">
+Leveller SDK</a>, which documents the Leveller format.<p>
+
+</ul>
+
+</body>
+</html>
+

@@ -1,0 +1,107 @@
+<html>
+<head>
+<title>L1B -- NOAA Polar Orbiter Level 1b Data Set (AVHRR)</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>L1B -- NOAA Polar Orbiter Level 1b Data Set (AVHRR)</h1>
+
+GDAL supports NOAA Polar Orbiter Level 1b Data Set format for reading. Now it can
+read NOAA-9(F) --- NOAA-17(M) datasets. NOTE: only AVHRR instrument supported
+now, if you want read data from other instruments, write to me (Andrey Kiselev, 
+<a href=mailto:dron@ak4719.spb.edu>dron@ak4719.spb.edu</a>). AVHRR
+LAC/HRPT (1 km resolution) and GAC (4 km resolution) should be processed
+correctly.
+
+<h2>Georeference</h2>
+
+Note, that GDAL simple affine georeference model completely unsuitable for
+the NOAA data. So you should not rely on it. It is recommended to use the
+thin plate spline warper (tps). Automatic image rectification can be done with
+ground control points (GCPs) from the input file.
+
+NOAA stores 51 GCPs per scanline both in the LAC and GAC datasets. In fact
+you may get less than 51 GCPs, especially at end of scanlines. Another approach
+to rectification is manual selection of the GCPs using external source of
+georeference information.
+<br>
+Precision of the GCPs determination depends from the satellite type. In the
+NOAA-9 -- NOAA-14 datasets geographic coordinates of the GCPs stored in
+integer values as a 128th of a degree. So we can't determine positions more
+precise than 1/128=0.0078125 of degree (~28"). In NOAA-15 -- NOAA-17 datasets
+we have much more precise positions, they are stored as 10000th of degree.
+<br>
+Image will be always returned with most northern scanline located at the top of
+image. If you want determine actual direction of the satellite moving you
+should look at <b>LOCATION</b> metadata record.
+
+<h2>Data</h2>
+
+In case of NOAA-10 in channel 5 you will get repeated channel 4 data.
+<br>
+AVHRR/3 instrument (NOAA-15 -- NOAA-17) is a six channel radiometer, but only
+five channels are transmitted to the ground at any given time. Channels 3A and
+3B cannot operate simultaneously. Look at channel description field reported
+by <tt>gdalinfo</tt> to determine what kind of channel contained in processed file.
+
+<h2>Metadata</h2>
+
+Several parameters, obtained from the dataset stored as metadata records. <p>
+
+Metadata records:<p>
+
+<ul>
+
+<li> <b>SATELLITE</b>: Satellite name<p>
+
+<li> <b>DATA_TYPE</b>: Type of the data, stored in the Level 1b dataset (AVHRR
+HRPT/LAC/GAC). <p>
+
+<li> <b>REVOLUTION</b>: Orbit number. Note that it can be 1 to 2 off the
+correct orbit number (according to documentation).<p>
+
+<li> <b>SOURCE</b>: Receiving station name.<p>
+
+<li> <b>PROCESSING_CENTER</b>: Name of data processing center.<p>
+
+<li> <b>START</b>: Time of first scanline acquisition (year, day of year,
+millisecond of day).<p>
+
+<li> <b>STOP</b>: Time of last scanline acquisition (year, day of year,
+millisecond of day).<p>
+
+<li> <b>LOCATION</b>: AVHRR Earth location indication. Will be <b>Ascending</b>
+when satellite moves from low latitudes to high latitudes and <b>Descending</b>
+in other case.<p>
+
+</ul>
+
+<h2>See Also:</h2>
+
+<ul>
+<li> Implemented as <tt>gdal/frmts/l1b/l1bdataset.cpp</tt>.<p>
+
+<li>  NOAA Polar Orbiter Level 1b Data Set documented in the ``POD User's
+Guide'' (TIROS-N -- NOAA-14 satellites) and in the ``NOAA KLM User's Guide''
+(NOAA-15 -- NOAA-16 satellites). You can find this manuals at
+<a href="http://www2.ncdc.noaa.gov/docs/intro.htm">
+NOAA Technical Documentation Introduction Page
+</a><p>
+
+<li>  Excellent and complete review contained in the printed book ``The
+Advanced Very High Resolution Radiometer (AVHRR)'' by Arthur P. Cracknell,
+Taylor and Francis Ltd., 1997, ISBN 0-7484-0209-8.
+</a><p>
+
+<li> NOAA data can be downloaded from the 
+<a href="http://www.class.noaa.gov/">Comprehensive Large Array-data Stewardship System (CLASS)</a>
+(former SAA). Actually it is only source of Level 1b datasets for me, so my implementation
+tested with that files only. <p>
+
+<li> <a href="http://www.oso.noaa.gov/poesstatus/">NOAA spacecrafts status page</a>
+
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,1029 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
+/*!
+\page gdal_drivertut GDAL Driver Implementation Tutorial
+
+\section gdal_drivertut_overall Overall Approach
+
+In general new formats are added to GDAL by implementing format specific
+drivers as subclasses of GDALDataset, and band accessors as subclasses
+of GDALRasterBand.  As well, a GDALDriver instance is created for the 
+format, and registered with the GDALDriverManager, to ensure that the system
+<i>knows</i> about the format.
+
+This tutorial will start with implementing a simple read-only driver
+(based on the JDEM driver), and then proceed to utilizing the RawRasterBand
+helper class, implementing creatable and updatable formats, and some 
+esoteric issues.
+
+It is strongly advised that the <a href="gdal_datamodel.html">GDAL Data Model
+</a> description be reviewed and understood before attempting to implement a
+GDAL driver.
+
+\section gdal_drivertut_toc Contents
+
+<ol>
+<li> \ref gdal_drivertut_dataset
+<li> \ref gdal_drivertut_rasterband
+<li> \ref gdal_drivertut_driver
+<li> \ref gdal_drivertut_addingdriver
+<li> \ref gdal_drivertut_georef
+<li> \ref gdal_drivertut_overviews
+<li> \ref gdal_drivertut_creation
+<li> \ref gdal_drivertut_raw
+<li> \ref gdal_drivertut_metadata
+</ol>
+
+\section gdal_drivertut_dataset Implementing the Dataset
+
+We will start showing minimal implementation of a read-only driver for
+the Japanese DEM format (<a href="jdemdataset.cpp.html">jdemdataset.cpp</a>).  
+First we declare a format
+specific dataset class, JDEMDataset in this case.
+
+\code
+class JDEMDataset : public GDALDataset
+{
+    FILE	*fp;
+    GByte	abyHeader[1012];
+
+  public:
+		~JDEMDataset();
+    
+    static GDALDataset *Open( GDALOpenInfo * );
+};
+\endcode
+
+In general we provide capabilities for a driver, by overriding the various
+virtual methods on the GDALDataset base class.  However, the Open() method
+is special.  This is not a virtual method on the base class, and we will
+need a freestanding function for this operation, so we declare it static. 
+Implementing it as a method in the JDEMDataset class is convenient because
+we have privileged access to modify the contents of the database object. 
+
+The open method itself may look something like this:
+
+\verbatim
+GDALDataset *JDEMDataset::Open( GDALOpenInfo * poOpenInfo )
+
+{
+// -------------------------------------------------------------------- 
+//      Before trying JDEMOpen() we first verify that there is at       
+//      least one "\n#keyword" type signature in the first chunk of     
+//      the file.                                                       
+// -------------------------------------------------------------------- 
+    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 50 )
+        return NULL;
+
+    // check if century values seem reasonable 
+    if( (!EQUALN((char *)poOpenInfo->pabyHeader+11,"19",2)
+          && !EQUALN((char *)poOpenInfo->pabyHeader+11,"20",2))
+        || (!EQUALN((char *)poOpenInfo->pabyHeader+15,"19",2)
+             && !EQUALN((char *)poOpenInfo->pabyHeader+15,"20",2))
+        || (!EQUALN((char *)poOpenInfo->pabyHeader+19,"19",2)
+             && !EQUALN((char *)poOpenInfo->pabyHeader+19,"20",2)) )
+    {
+        return NULL;
+    }
+    
+// -------------------------------------------------------------------- 
+//      Create a corresponding GDALDataset.                             
+// -------------------------------------------------------------------- 
+    JDEMDataset 	*poDS;
+
+    poDS = new JDEMDataset();
+
+    poDS->fp = poOpenInfo->fp;
+    poOpenInfo->fp = NULL;
+    
+// -------------------------------------------------------------------- 
+//      Read the header.                                                
+// -------------------------------------------------------------------- 
+    VSIFSeek( poDS->fp, 0, SEEK_SET );
+    VSIFRead( poDS->abyHeader, 1, 1012, poDS->fp );
+
+    poDS->nRasterXSize = JDEMGetField( (char *) poDS->abyHeader + 23, 3 );
+    poDS->nRasterYSize = JDEMGetField( (char *) poDS->abyHeader + 26, 3 );
+
+// -------------------------------------------------------------------- 
+//      Create band information objects.                                
+// -------------------------------------------------------------------- 
+    poDS->nBands = 1;
+    poDS->SetBand( 1, new JDEMRasterBand( poDS, 1 ));
+
+    return( poDS );
+}
+\endverbatim
+
+The first step in any database Open function is to verify that the file
+being passed is in fact of the type this driver is for.  It is important
+to realize that each driver's Open function is called in turn till one
+succeeds.  Drivers must quietly return NULL if the passed file is not of
+their format.  They should only produce an error if the file does appear to
+be of their supported format, but is for some reason unsupported or corrupt. 
+
+The information on the file to be opened is passed in contained in a
+GDALOpenInfo object.  The GDALOpenInfo includes the following public 
+data members:
+
+\code
+    char	*pszFilename;
+
+    GDALAccess	eAccess; // GA_ReadOnly or GA_Update
+
+    GBool	bStatOK;
+    VSIStatBuf	sStat;
+    
+    FILE	*fp;
+
+    int		nHeaderBytes;
+    GByte	*pabyHeader;
+\endcode
+
+The driver can inspect these to establish if the file is supported.  If the
+pszFilename refers to an object in the file system, the <b>bStatOK</b> flag 
+will be set, and the <b>sStat</b> structure will contain normal stat() 
+information about the object (be it directory, file, device).  If the object 
+is a regular readable file, the <b>fp</b> will be non-NULL, and can be used
+for reads on the file (please use the VSI stdio functions from 
+cpl_vsi.h).  As well, if the file was successfully opened, the first kilobyte
+or so is read in, and put in <b>pabyHeader</b>, with the exact size in 
+<b>nHeaderBytes</b>.
+
+In this typical testing example it is verified that the file was successfully
+opened, that we have at least enough header information to perform our test,
+and that various parts of the header are as expected for this format.  In
+this case, there are no <i>magic</i> numbers for JDEM format so we check
+various date fields to ensure they have reasonable century values.  If the
+test fails, we quietly return NULL indicating this file isn't of our supported
+format. 
+
+\code
+    if( poOpenInfo->fp == NULL || poOpenInfo->nHeaderBytes < 50 )
+        return NULL;
+
+    // check if century values seem reasonable
+    if( (!EQUALN((char *)poOpenInfo->pabyHeader+11,"19",2)
+          && !EQUALN((char *)poOpenInfo->pabyHeader+11,"20",2))
+        || (!EQUALN((char *)poOpenInfo->pabyHeader+15,"19",2)
+             && !EQUALN((char *)poOpenInfo->pabyHeader+15,"20",2))
+        || (!EQUALN((char *)poOpenInfo->pabyHeader+19,"19",2)
+             && !EQUALN((char *)poOpenInfo->pabyHeader+19,"20",2)) )
+    {
+        return NULL;
+    }
+\endcode
+
+It is important to make the <i>is this my format</i> test as stringent as
+possible.  In this particular case the test is weak, and a file that happened
+to have 19s or 20s at a few locations could be erroneously recognized as
+JDEM format, causing it to not be handled properly.
+
+Once we are satisfied that the file is of our format, we need to create
+an instance of the database class in which we will set various information
+of interest.
+
+\code
+    JDEMDataset 	*poDS;
+
+    poDS = new JDEMDataset();
+
+    poDS->fp = poOpenInfo->fp;
+    poOpenInfo->fp = NULL;
+\endcode
+
+Generally at this point we would open the file, to acquire a file handle
+for the dataset; however, if read-only access is sufficient it is permitted
+to <b>assume ownership</b> of the FILE * from the GDALOpenInfo object.  
+Just ensure that it is set to NULL in the GDALOpenInfo to avoid having it
+get closed twice.  It is also important to note that the state of the 
+FILE * adopted is indeterminate.  Ensure that the current location is reset
+with VSIFSeek() before assuming you can read from it.   This is accomplished
+in the following statements which reset the file and read the header.
+
+\code
+    VSIFSeek( poDS->fp, 0, SEEK_SET );
+    VSIFRead( poDS->abyHeader, 1, 1012, poDS->fp );
+\endcode
+
+Next the X and Y size are extracted from the header. The nRasterXSize and
+nRasterYSize are data fields inherited from the GDALDataset base class, and
+must be set by the Open() method.
+
+\code
+    poDS->nRasterXSize = JDEMGetField( (char *) poDS->abyHeader + 23, 3 );
+    poDS->nRasterYSize = JDEMGetField( (char *) poDS->abyHeader + 26, 3 );
+\endcode
+
+Finally, all the bands related to this dataset must be attached using
+the SetBand() method.  We will explore the JDEMRasterBand() class shortly. 
+
+\code
+    poDS->SetBand( 1, new JDEMRasterBand( poDS, 1 ));
+
+    return( poDS );
+\endcode
+
+\section gdal_drivertut_rasterband Implementing the RasterBand
+
+Similar to the customized JDEMDataset class subclassed from GDALDataset, 
+we also need to declare and implement a customized JDEMRasterBand derived
+from GDALRasterBand for access to the band(s) of the JDEM file.  For
+JDEMRasterBand the declaration looks like this:
+
+\code
+class JDEMRasterBand : public GDALRasterBand
+{
+  public:
+    		JDEMRasterBand( JDEMDataset *, int );
+    virtual CPLErr IReadBlock( int, int, void * );
+};
+\endcode
+
+The constructor may have any signature, and is only called from the Open()
+method.  Other virtual methods, such as IReadBlock() must be exactly 
+matched to the method signature in gdal_priv.h.  
+
+The constructor implementation looks like this:
+
+\code
+JDEMRasterBand::JDEMRasterBand( JDEMDataset *poDS, int nBand )
+
+{
+    this->poDS = poDS;
+    this->nBand = nBand;
+    
+    eDataType = GDT_Float32;
+
+    nBlockXSize = poDS->GetRasterXSize();
+    nBlockYSize = 1;
+}
+\endcode
+
+The following data members are inherited from GDALRasterBand, and should
+generally be set in the band constructor. 
+
+<ul>
+<li> <b>poDS</b>: Pointer to the parent GDALDataset. 
+<li> <b>nBand</b>: The band number within the dataset. 
+<li> <b>eDataType</b>: The data type of pixels in this band. 
+<li> <b>nBlockXSize</b>: The width of one block in this band. 
+<li> <b>nBlockYSize</b>: The height of one block in this band. 
+</ul>
+
+The full set of possible GDALDataType values are declared in gdal.h, and 
+include GDT_Byte, GDT_UInt16, GDT_Int16, and GDT_Float32.  The block size is 
+used to establish a <i>natural</i> or efficient block size to access the data
+with.  For tiled datasets this will be the size of a tile, while for most 
+other datasets it will be one scanline, as in this case. 
+
+Next we see the implementation of the code that actually reads the image
+data, IReadBlock(). 
+
+\code
+CPLErr JDEMRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
+                                  void * pImage )
+
+{
+    JDEMDataset *poGDS = (JDEMDataset *) poDS;
+    char	*pszRecord;
+    int		nRecordSize = nBlockXSize*5 + 9 + 2;
+    int		i;
+
+    VSIFSeek( poGDS->fp, 1011 + nRecordSize*nBlockYOff, SEEK_SET );
+
+    pszRecord = (char *) CPLMalloc(nRecordSize);
+    VSIFRead( pszRecord, 1, nRecordSize, poGDS->fp );
+
+    if( !EQUALN((char *) poGDS->abyHeader,pszRecord,6) )
+    {
+        CPLFree( pszRecord );
+
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "JDEM Scanline corrupt.  Perhaps file was not transferred\n"
+                  "in binary mode?" );
+        return CE_Failure;
+    }
+    
+    if( JDEMGetField( pszRecord + 6, 3 ) != nBlockYOff + 1 )
+    {
+        CPLFree( pszRecord );
+
+        CPLError( CE_Failure, CPLE_AppDefined, 
+                  "JDEM scanline out of order, JDEM driver does not\n"
+                  "currently support partial datasets." );
+        return CE_Failure;
+    }
+
+    for( i = 0; i < nBlockXSize; i++ )
+        ((float *) pImage)[i] = JDEMGetField( pszRecord + 9 + 5 * i, 5) * 0.1;
+
+    return CE_None;
+}
+\endcode
+
+Key items to note are:
+
+<ul>
+<li> It is typical to cast the GDALRasterBand::poDS member to the derived 
+type of the owning dataset.  If your RasterBand class will need privileged
+access to the owning dataset object, ensure it is declared as a friend (omitted
+above for brevity). 
+
+<li> If an error occurs, report it with CPLError(), and return CE_Failure. 
+Otherwise return CE_None.  
+
+<li> The pImage buffer should be filled with one block of data.  The block
+is the size declared in nBlockXSize and nBlockYSize for the raster band.  The
+type of the data within pImage should match the type declared in 
+eDataType in the raster band object. 
+
+<li> The nBlockXOff and nBlockYOff are block offsets, so with 128x128 tiled 
+datasets values of 1 and 1 would indicate the block going from (128,128) to 
+(255,255) should be loaded.
+
+</ul>
+
+\section gdal_drivertut_driver The Driver
+
+While the JDEMDataset and JDEMRasterBand are now ready to use to read image
+data, it still isn't clear how the GDAL system knows about the new driver.
+This is accomplished via the GDALDriverManager.  To register our format we
+implement a registration function:
+
+\code
+CPL_C_START
+void	GDALRegister_JDEM(void);
+CPL_C_END
+
+...
+
+void GDALRegister_JDEM()
+
+{
+    GDALDriver	*poDriver;
+
+    if( GDALGetDriverByName( "JDEM" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+        
+        poDriver->SetDescription( "JDEM" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+                                   "Japanese DEM (.mem)" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+                                   "frmt_various.html#JDEM" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mem" );
+
+        poDriver->pfnOpen = JDEMDataset::Open;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
+}
+\endcode
+
+The registration function will create an instance of a GDALDriver object
+when first called, and register it with the GDALDriverManager.  The
+following fields can be set in the driver before 
+registering it with the GDALDriverManager().
+
+<ul>
+<li> The description is the short name for the format.  This is a unique 
+name for this format, often used to identity the driver in scripts and 
+commandline programs.  Normally 3-5 characters in length, and matching the 
+prefix of the format classes. (mandatory)
+
+<li> GDAL_DMD_LONGNAME: A longer descriptive name for the file format,
+but still no longer than 50-60 characters. (mandatory)
+
+<li> GDAL_DMD_HELPTOPIC: The name of a help topic to display for this driver, 
+if any.  In this case JDEM format is contained within the various format 
+web page held in gdal/html.  (optional)
+
+<li> GDAL_DMD_EXTENSION: The extension used for files of this type.  If more
+than one pick the primary extension, or none at all. (optional)
+
+<li> GDAL_DMD_MIMETYPE: The standard mime type for this file format, such as
+"image/png". (optional)
+
+<li> GDAL_DMD_CREATIONOPTIONLIST: There is evolving work on mechanisms
+to describe creation options.  See the geotiff driver for an example of
+this.  (optional)
+
+<li> GDAL_DMD_CREATIONDATATYPES: A list of space separated data types
+supported by this create when creating new datasets.  If a Create() method
+exists, these will be will supported.  If a CreateCopy() method exists, this
+will be a list of types that can be losslessly exported but it may include
+weaker data types than the type eventually written.  For instance, a format
+with a CreateCopy() method, and that always writes Float32 might also list
+Byte, Int16, and UInt16 since they can losslessly translated to Float32.  An
+example value might be "Byte Int16 UInt16". (required - if creation supported)
+
+<li> pfnOpen: The function to call to try opening files of this format. 
+(optional) 
+
+<li> pfnCreate: The function to call to create new updatable datasets of this
+format. (optional)
+
+<li> pfnCreateCopy: The function to call to create a new dataset of this format
+copied from another source, but not necessary updatable.  (optional)
+
+<li> pfnDelete: The function to call to delete a dataset of this format.
+(optional)
+
+<li> pfnUnloadDriver: A function called only when the driver is destroyed.
+Could be used to cleanup data at the driver level.  Rarely used.  (optional)
+
+</ul>
+
+\section gdal_drivertut_addingdriver Adding Driver to GDAL Tree
+
+Note that the GDALRegister_JDEM() method must be called by the higher
+level program in order to have access to the JDEM driver.  Normal practice
+when writing new drivers is to:
+
+<ol>
+<li> Add a driver directory under gdal/frmts, with the directory name the same
+as the short name.
+
+<li> Add a GNUmakefile and makefile.vc in that directory modelled on those
+from other similar directories (ie. the jdem directory). 
+
+<li> Add the module with the dataset, and rasterband implementation.  
+Generally this is called <short_name>dataset.cpp, with all the GDAL specific
+code in one file, though that is not required.
+
+<li> Add the registration entry point declaration (ie. GDALRegister_JDEM()) to
+gdal/gcore/gdal_frmts.h.
+
+<li> Add a call to the registration function to frmts/gdalallregister.c,
+protected by an appropriate #ifdef.  
+
+<li> Add the format short name to the GDAL_FORMATS macro in 
+GDALmake.opt.in (and to GDALmake.opt). 
+
+<li> Add a format specific item to the EXTRAFLAGS macro in frmts/makefile.vc. 
+</ol>
+
+Once this is all done, it should be possible to rebuild GDAL, and have
+the new format available in all the utilities.  The gdalinfo utility can be
+used to test that opening and reporting on the format is working, and the
+gdal_translate utility can be used to test image reading. 
+
+\section gdal_drivertut_georef Adding Georeferencing
+
+Now we will take the example a step forward, adding georeferencing support. 
+We add the following two virtual method overrides to JDEMDataset, taking
+care to exactly match the signature of the method on the GDALRasterDataset
+base class.
+
+\code
+    CPLErr 	GetGeoTransform( double * padfTransform );
+    const char *GetProjectionRef();
+\endcode
+
+The implementation of GetGeoTransform() just copies the usual geotransform
+matrix into the supplied buffer.  Note that GetGeoTransform() may be called
+a lot, so it isn't generally wise to do a lot of computation in it.  In many
+cases the Open() will collect the geotransform, and this method will just
+copy it over.  Also note that the geotransform return is based on an 
+anchor point at the top left corner of the top left pixel, not the center
+of pixel approach used in some packages.
+
+\code
+CPLErr JDEMDataset::GetGeoTransform( double * padfTransform )
+
+{
+    double	dfLLLat, dfLLLong, dfURLat, dfURLong;
+
+    dfLLLat = JDEMGetAngle( (char *) abyHeader + 29 );
+    dfLLLong = JDEMGetAngle( (char *) abyHeader + 36 );
+    dfURLat = JDEMGetAngle( (char *) abyHeader + 43 );
+    dfURLong = JDEMGetAngle( (char *) abyHeader + 50 );
+    
+    padfTransform[0] = dfLLLong;
+    padfTransform[3] = dfURLat;
+    padfTransform[1] = (dfURLong - dfLLLong) / GetRasterXSize();
+    padfTransform[2] = 0.0;
+        
+    padfTransform[4] = 0.0;
+    padfTransform[5] = -1 * (dfURLat - dfLLLat) / GetRasterYSize();
+
+
+    return CE_None;
+}
+\endcode
+
+The GetProjectionRef() method returns a pointer to an internal string 
+containing a coordinate system definition in OGC WKT format.  In this case
+the coordinate system is fixed for all files of this format, but in more
+complex cases a definition may need to be composed on the fly, in which case
+it may be helpful to use the OGRSpatialReference class to help build the
+definition.
+
+\code
+const char *JDEMDataset::GetProjectionRef()
+
+{
+    return( "GEOGCS[\"Tokyo\",DATUM[\"Tokyo\",SPHEROID[\"Bessel 1841\","
+	"6377397.155,299.1528128,AUTHORITY[\"EPSG\",7004]],TOWGS84[-148,"
+	"507,685,0,0,0,0],AUTHORITY[\"EPSG\",6301]],PRIMEM[\"Greenwich\","
+	"0,AUTHORITY[\"EPSG\",8901]],UNIT[\"DMSH\",0.0174532925199433,"
+	"AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],"
+	"AUTHORITY[\"EPSG\",4301]]" );
+}
+\endcode
+
+This completes explanation of the features of the JDEM driver.  The full
+source for <a href="jdemdataset.cpp.html">jdemdataset.cpp</a> can be reviewed 
+as needed.
+
+\section gdal_drivertut_overviews Overviews
+
+GDAL allows file formats to make pre-built overviews available to applications
+via the GDALRasterBand::GetOverview() and related methods.  However, 
+implementing this is pretty involved, and goes beyond the scope of this 
+document for now.  The GeoTIFF driver (gdal/frmts/gtiff/geotiff.cpp) and
+related source can be reviewed for an example of a file format implementing
+overview reporting and creation support. 
+
+Formats can also report that they have arbitrary overviews, by overriding
+the HasArbitraryOverviews() method on the GDALRasterBand, returning TRUE. 
+In this case the raster band object is expected to override the RasterIO()
+method itself, to implement efficient access to imagery with resampling. 
+This is also involved, and there are a lot of requirements for correct
+implementation of the RasterIO() method.  An example of this can be found
+in the OGDI and ECW formats. 
+
+However, by far the most common approach to implementing overviews is to 
+use the default support in GDAL for external overviews stored in TIFF files
+with the same name as the dataset, but the extension .ovr appended.  In 
+order to enable reading and creation of this style of overviews it is necessary
+for the GDALDataset to initialize the oOvManager object within itself.  This
+is typically accomplished with a call like the following near the end of the
+Open() method. 
+
+\code
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+\endcode
+
+This will enable default implementations for reading and creating overviews for
+the format.  It is advised that this be enabled for all simple file system
+based formats unless there is a custom overview mechanism to be tied into.
+
+\section gdal_drivertut_creation File Creation
+
+There are two approaches to file creation.  The first method is called the
+CreateCopy() method, and involves implementing a function that can write a
+file in the output format, pulling all imagery and other information needed
+from a source GDALDataset.  The second method, the dynamic creation method,
+involves implementing a Create method to create the shell of the file, and
+then the application writes various information by calls to set methods. 
+
+The benefits of the first method are that that all the information is available
+at the point the output file is being created.  This can be especially
+important when implementing file formats using external libraries which 
+require information like colormaps, and georeferencing information at the
+point the file is created.  The other advantage of this method is that the
+CreateCopy() method can read some kinds of information, such as min/max, 
+scaling, description and GCPs for which there are no equivalent set methods.
+
+The benefits of the second method are that applications can create an
+empty new file, and write results to it as they become available.  A complete
+image of the desired data does not have to be available in advance.  
+
+For very important formats both methods may be implemented, otherwise do 
+whichever is simpler, or provides the required capabilities. 
+
+\subsection gdal_drivertut_creation_createcopy CreateCopy
+
+The GDALDriver::CreateCopy() method call is passed through directly, so 
+that method should be consulted for details of arguments.  However, some 
+things to keep in mind are:
+
+<ul>
+<li> If the bStrict flag is FALSE the driver should try to do something
+reasonable when it cannot exactly represent the source dataset, transforming
+data types on the fly, dropping georeferencing and so forth. 
+
+<li> Implementing progress reporting correctly is somewhat involved.  The
+return result of the progress function needs always to be checked for
+cancellation, and progress should be reported at reasonable intervals.  The
+JPEGCreateCopy() method demonstrates good handling of the progress function.
+
+<li> Special creation options should be documented in the online help.
+If the options take the format "NAME=VALUE" the papszOptions list can be
+manipulated with CPLFetchNameValue() as demonstrated in the handling of
+the QUALITY and PROGRESSIVE flags for JPEGCreateCopy(). 
+
+<li> The returned GDALDataset handle can be in ReadOnly or Update mode.  
+Return it in Update mode if practical, otherwise in ReadOnly mode is fine. 
+
+</ul>
+
+The full implementation of the CreateCopy function for JPEG (which is
+assigned to pfnCreateCopy in the GDALDriver object) is here.
+
+\verbatim
+static GDALDataset *
+JPEGCreateCopy( const char * pszFilename, GDALDataset *poSrcDS, 
+                int bStrict, char ** papszOptions, 
+                GDALProgressFunc pfnProgress, void * pProgressData )
+
+{
+    int  nBands = poSrcDS->GetRasterCount();
+    int  nXSize = poSrcDS->GetRasterXSize();
+    int  nYSize = poSrcDS->GetRasterYSize();
+    int  nQuality = 75;
+    int  bProgressive = FALSE;
+
+// -------------------------------------------------------------------- 
+//      Some some rudimentary checks                                    
+// -------------------------------------------------------------------- 
+    if( nBands != 1 && nBands != 3 )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "JPEG driver doesn't support %d bands.  Must be 1 (grey) "
+                  "or 3 (RGB) bands.\n", nBands );
+
+        return NULL;
+    }
+
+    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Byte && bStrict )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported, 
+                  "JPEG driver doesn't support data type %s. "
+                  "Only eight bit byte bands supported.\n", 
+                  GDALGetDataTypeName( 
+                      poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
+
+        return NULL;
+    }
+
+// -------------------------------------------------------------------- 
+//      What options has the user selected?                             
+// -------------------------------------------------------------------- 
+    if( CSLFetchNameValue(papszOptions,"QUALITY") != NULL )
+    {
+        nQuality = atoi(CSLFetchNameValue(papszOptions,"QUALITY"));
+        if( nQuality < 10 || nQuality > 100 )
+        {
+            CPLError( CE_Failure, CPLE_IllegalArg,
+                      "QUALITY=%s is not a legal value in the range 10-100.",
+                      CSLFetchNameValue(papszOptions,"QUALITY") );
+            return NULL;
+        }
+    }
+
+    if( CSLFetchNameValue(papszOptions,"PROGRESSIVE") != NULL )
+    {
+        bProgressive = TRUE;
+    }
+
+// -------------------------------------------------------------------- 
+//      Create the dataset.                                             
+// -------------------------------------------------------------------- 
+    FILE	*fpImage;
+
+    fpImage = VSIFOpen( pszFilename, "wb" );
+    if( fpImage == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Unable to create jpeg file %s.\n", 
+                  pszFilename );
+        return NULL;
+    }
+
+// -------------------------------------------------------------------- 
+//      Initialize JPG access to the file.                              
+// -------------------------------------------------------------------- 
+    struct jpeg_compress_struct sCInfo;
+    struct jpeg_error_mgr sJErr;
+    
+    sCInfo.err = jpeg_std_error( &sJErr );
+    jpeg_create_compress( &sCInfo );
+    
+    jpeg_stdio_dest( &sCInfo, fpImage );
+    
+    sCInfo.image_width = nXSize;
+    sCInfo.image_height = nYSize;
+    sCInfo.input_components = nBands;
+
+    if( nBands == 1 )
+    {
+        sCInfo.in_color_space = JCS_GRAYSCALE;
+    }
+    else
+    {
+        sCInfo.in_color_space = JCS_RGB;
+    }
+
+    jpeg_set_defaults( &sCInfo );
+    
+    jpeg_set_quality( &sCInfo, nQuality, TRUE );
+
+    if( bProgressive )
+        jpeg_simple_progression( &sCInfo );
+
+    jpeg_start_compress( &sCInfo, TRUE );
+
+// -------------------------------------------------------------------- 
+//      Loop over image, copying image data.                            
+// -------------------------------------------------------------------- 
+    GByte 	*pabyScanline;
+    CPLErr      eErr;
+
+    pabyScanline = (GByte *) CPLMalloc( nBands * nXSize );
+
+    for( int iLine = 0; iLine < nYSize; iLine++ )
+    {
+        JSAMPLE      *ppSamples;
+
+        for( int iBand = 0; iBand < nBands; iBand++ )
+        {
+            GDALRasterBand * poBand = poSrcDS->GetRasterBand( iBand+1 );
+            eErr = poBand->RasterIO( GF_Read, 0, iLine, nXSize, 1, 
+                                     pabyScanline + iBand, nXSize, 1, GDT_Byte,
+                                     nBands, nBands * nXSize );
+        }
+
+        ppSamples = pabyScanline;
+        jpeg_write_scanlines( &sCInfo, &ppSamples, 1 );
+    }
+
+    CPLFree( pabyScanline );
+
+    jpeg_finish_compress( &sCInfo );
+    jpeg_destroy_compress( &sCInfo );
+
+    VSIFClose( fpImage );
+
+    return (GDALDataset *) GDALOpen( pszFilename, GA_ReadOnly );
+}
+\endverbatim
+
+\subsection gdal_drivertut_creation_create Dynamic Creation
+
+In the case of dynamic creation, there is no source dataset.  Instead the
+size, number of bands, and pixel data type of the desired file is provided
+but other information (such as georeferencing, and imagery data) would be
+supplied later via other method calls on the resulting GDALDataset.  
+
+The following sample implement PCI .aux labelled raw raster creation.  It
+follows a common approach of creating a blank, but valid file using non-GDAL
+calls, and then calling GDALOpen(,GA_Update) at the end to return a writable
+file handle.  This avoids having to duplicate the various setup actions in
+the Open() function. 
+
+\verbatim
+GDALDataset *PAuxDataset::Create( const char * pszFilename,
+                                  int nXSize, int nYSize, int nBands,
+                                  GDALDataType eType,
+                                  char ** // papszParmList  )
+
+{
+    char	*pszAuxFilename;
+
+// -------------------------------------------------------------------- 
+//      Verify input options.                                           
+// -------------------------------------------------------------------- 
+    if( eType != GDT_Byte && eType != GDT_Float32 && eType != GDT_UInt16
+        && eType != GDT_Int16 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+              "Attempt to create PCI .Aux labelled dataset with an illegal\n"
+              "data type (%s).\n",
+              GDALGetDataTypeName(eType) );
+
+        return NULL;
+    }
+
+// -------------------------------------------------------------------- 
+//      Try to create the file.                                         
+// -------------------------------------------------------------------- 
+    FILE	*fp;
+
+    fp = VSIFOpen( pszFilename, "w" );
+
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Attempt to create file `%s' failed.\n",
+                  pszFilename );
+        return NULL;
+    }
+
+// -------------------------------------------------------------------- 
+//      Just write out a couple of bytes to establish the binary        
+//      file, and then close it.                                        
+// -------------------------------------------------------------------- 
+    VSIFWrite( (void *) "\0\0", 2, 1, fp );
+    VSIFClose( fp );
+
+// -------------------------------------------------------------------- 
+//      Create the aux filename.                                        
+// -------------------------------------------------------------------- 
+    pszAuxFilename = (char *) CPLMalloc(strlen(pszFilename)+5);
+    strcpy( pszAuxFilename, pszFilename );;
+
+    for( int i = strlen(pszAuxFilename)-1; i > 0; i-- )
+    {
+        if( pszAuxFilename[i] == '.' )
+        {
+            pszAuxFilename[i] = '\0';
+            break;
+        }
+    }
+
+    strcat( pszAuxFilename, ".aux" );
+
+// -------------------------------------------------------------------- 
+//      Open the file.                                                  
+// -------------------------------------------------------------------- 
+    fp = VSIFOpen( pszAuxFilename, "wt" );
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Attempt to create file `%s' failed.\n",
+                  pszAuxFilename );
+        return NULL;
+    }
+    
+// -------------------------------------------------------------------- 
+//      We need to write out the original filename but without any      
+//      path components in the AuxilaryTarget line.  Do so now.         
+// -------------------------------------------------------------------- 
+    int		iStart;
+
+    iStart = strlen(pszFilename)-1;
+    while( iStart > 0 && pszFilename[iStart-1] != '/'
+           && pszFilename[iStart-1] != '\\' )
+        iStart--;
+
+    VSIFPrintf( fp, "AuxilaryTarget: %s\n", pszFilename + iStart );
+
+// -------------------------------------------------------------------- 
+//      Write out the raw definition for the dataset as a whole.        
+// -------------------------------------------------------------------- 
+    VSIFPrintf( fp, "RawDefinition: %d %d %d\n",
+                nXSize, nYSize, nBands );
+
+// -------------------------------------------------------------------- 
+//      Write out a definition for each band.  We always write band     
+//      sequential files for now as these are pretty efficiently        
+//      handled by GDAL.                                                
+// -------------------------------------------------------------------- 
+    int		nImgOffset = 0;
+    
+    for( int iBand = 0; iBand < nBands; iBand++ )
+    {
+        const char * pszTypeName;
+        int	     nPixelOffset;
+        int	     nLineOffset;
+
+        nPixelOffset = GDALGetDataTypeSize(eType)/8;
+        nLineOffset = nXSize * nPixelOffset;
+
+        if( eType == GDT_Float32 )
+            pszTypeName = "32R";
+        else if( eType == GDT_Int16 )
+            pszTypeName = "16S";
+        else if( eType == GDT_UInt16 )
+            pszTypeName = "16U";
+        else
+            pszTypeName = "8U";
+
+        VSIFPrintf( fp, "ChanDefinition-%d: %s %d %d %d %s\n",
+                    iBand+1, pszTypeName,
+                    nImgOffset, nPixelOffset, nLineOffset,
+#ifdef CPL_LSB
+                    "Swapped"
+#else
+                    "Unswapped"
+#endif
+                    );
+
+        nImgOffset += nYSize * nLineOffset;
+    }
+
+// -------------------------------------------------------------------- 
+//      Cleanup                                                         
+// -------------------------------------------------------------------- 
+    VSIFClose( fp );
+
+    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+}
+\endverbatim
+
+File formats supporting dynamic creation, or even just update-in-place
+access also need to implement an IWriteBlock() method
+on the raster band class.  It has semantics similar to IReadBlock().  
+As well, for various esoteric reasons, it is critical that a FlushCache()
+method be implemented in the raster band destructor.  This is to ensure that
+any write cache blocks for the band be flushed out before the destructor
+is called.  
+
+\section gdal_drivertut_raw RawDataset/RawRasterBand Helper Classes
+
+Many file formats have the actual imagery data stored in a regular,
+binary, scanline oriented format.  Rather than re-implement the access 
+semantics for this for each formats, there are provided RawDataset and
+RawRasterBand classes declared in gdal/frmts/raw that can be utilized to
+implement efficient and convenient access.
+
+In these cases the format specific band class may not be required, or if
+required it can be derived from RawRasterBand.  The dataset class should
+be derived from RawDataset. 
+
+The Open() method for the dataset then instantiates raster bands passing
+all the layout information to the constructor.  For instance, the PNM driver
+uses the following calls to create it's raster bands.
+
+\code
+    if( poOpenInfo->pabyHeader[1] == '5' )
+    {
+        poDS->SetBand( 
+            1, new RawRasterBand( poDS, 1, poDS->fpImage,
+                                  iIn, 1, nWidth, GDT_Byte, TRUE ));
+    }
+    else 
+    {
+        poDS->SetBand( 
+            1, new RawRasterBand( poDS, 1, poDS->fpImage,
+                                  iIn, 3, nWidth*3, GDT_Byte, TRUE ));
+        poDS->SetBand( 
+            2, new RawRasterBand( poDS, 2, poDS->fpImage,
+                                  iIn+1, 3, nWidth*3, GDT_Byte, TRUE ));
+        poDS->SetBand( 
+            3, new RawRasterBand( poDS, 3, poDS->fpImage,
+                                  iIn+2, 3, nWidth*3, GDT_Byte, TRUE ));
+    }
+\endcode
+
+The RawRasterBand takes the following arguments. 
+
+<ul>
+<li> <b>poDS</b>: The GDALDataset this band will be a child of.   This
+dataset must be of a class derived from RawRasterDataset. 
+<li> <b>nBand</b>: The band it is on that dataset, 1 based. 
+<li> <b>fpRaw</b>: The FILE * handle to the file containing the raster data.
+<li> <b>nImgOffset</b>: The byte offset to the first pixel of raster data for 
+the first scanline. 
+<li> <b>nPixelOffset</b>: The byte offset from the start of one pixel to the 
+start of the next within the scanline. 
+<li> <b>nLineOffset</b>: The byte offset from the start of one scanline to
+the start of the next. 
+<li> <b>eDataType</b>: The GDALDataType code for the type of the data on disk.
+<li> <b>bNativeOrder</b>: FALSE if the data is not in the same endianness as
+the machine GDAL is running on.  The data will be automatically byte swapped.
+</ul>
+
+Simple file formats utilizing the Raw services are normally placed all within
+one file in the gdal/frmts/raw directory.  There are numerous examples there
+of format implementation.<p>
+
+\section gdal_drivertut_metadata Metadata, and Other Exotic Extensions
+
+There are various other items in the GDAL data model, for which virtual 
+methods exist on the GDALDataset and GDALRasterBand.  They include:
+
+<ul>
+<li> <b>Metadata</b>: Name/value text values about a dataset or band.  The
+GDALMajorObject (base class for GDALRasterBand and GDALDataset) has built-in
+support for holding metadata, so for read access it only needs to be
+set with calls to SetMetadataItem() during the Open().  The SAR_CEOS 
+(frmts/ceos2/sar_ceosdataset.cpp) and GeoTIFF drivers are examples of drivers
+implementing readable metadata.
+
+<li> <b>ColorTables</b>: GDT_Byte raster bands can have color tables associated
+with them.  The frmts/png/pngdataset.cpp driver contains an example of a
+format that supports colortables. 
+
+<li> <b>ColorInterpretation</b>: The PNG driver contains an example of a
+driver that returns an indication of whether a band should be treated as
+a Red, Green, Blue, Alpha or Greyscale band. 
+
+<li> <b>GCPs</b>: GDALDatasets can have a set of ground control points 
+associated with them (as opposed to an explicit affine transform returned by
+GetGeotransform()) relating the raster to georeferenced coordinates.  The
+MFF2 (gdal/frmts/raw/hkvdataset.cpp) format is a simple example of a format
+supporting GCPs.
+
+<li> <b>NoDataValue</b>: Bands with known "nodata" values can implement
+the GetNoDataValue() method.  See the PAux (frmts/raw/pauxdataset.cpp) for
+an example of this. 
+
+<li> <b>Category Names</b>: Classified images with names for each class can
+return them using the GetCategoryNames() method though no formats currently
+implement this.
+
+</ul> 
+
+\htmlonly
+<p>
+$Id$
+</p>
+\endhtmlonly
+
+*/

@@ -1,0 +1,1470 @@
+GDAL/OGR 1.4.0 - General Changes
+--------------------------------
+
+Perl Bindings: 
+ - Added doxygen based documentation.
+
+NG Python Bindings: 
+ - Implemented numpy support.
+
+CSharp Bindings: 
+ - Now mostly operational.
+
+WinCE Porting:
+ - CPL 
+ - base OGR, OSR and mitab and shape drivers.
+ - GDAL, including GeoTIFF, DTED, AAIGrid drivers
+ - Added test suite (gdalautotest/cpp)
+
+Mac OSX Port:
+ - Added framework support (--with-macosx-framework)
+
+
+
+GDAL 1.4.0 - Overview Of Changes
+--------------------------------
+
+WCS Driver:
+ - New
+
+PDS (Planetary Data Set) Driver:
+ - New
+
+ISIS (Mars Qubes) Driver:
+ - New
+
+HFA (.img) Driver:
+ - Support reading ProjectionX PE strings.
+ - Support producing .aux files with statistics.
+ - Fix serious bugs with u1, u2 and u4 compressed data.
+
+NITF Driver:
+ - Added BLOCKA reading support.
+ - Added ICORDS='D'
+ - Added jpeg compression support (readonly)
+ - Support multiple images as subdatasets.
+ - Support CGM data (as metadata)
+
+AIGrid Driver:
+ - Use VSI*L API (large files, in memory, etc)
+ - Support upper case filenames.
+ - Support .clr file above coverage.
+
+HDF4 Driver:
+ - Added support for access to geolocation arrays (see RFC 4).
+ - External raw raster bands supported.
+
+PCIDSK (.pix) Driver:
+ - Support METER/FEET as LOCAL_CS. 
+ - Fix serious byte swapping error on creation.
+
+BMP Driver: 
+ - Various fixes, including 16bit combinations, and non-intel byte swapping.
+
+GeoTIFF Driver:
+ - Fixed in place update for LZW and Deflated compressed images.
+
+JP2KAK (JPEG2000) Driver:
+ - Added support for reading and writing gmljp2 headers. 
+ - Read xml boxes as metadata. 
+ - Accelerate YCbCr handling. 
+
+JP2MrSID (JPEG2000) Driver: 
+ - Added support for reading gmljp2 headers. 
+
+EHDR (ESRI BIL) Driver:
+ - Support 1-7 bit data. 
+ - Added statistics support.
+
+
+OGR 1.4.0 - Overview of Changes
+-------------------------------
+
+OGR SQL:
+ - RFC 6: Added support for SQL/attribute filter access to geometry, and 
+   style strings. 
+
+OGRSpatialReference: 
+ - Support for OGC SRS URNs. 
+ - Support for +wktext/EXTENSION stuff for preserving PROJ.4 string in WKT.
+ - Added Two Point Equidistant projection.
+ - Added Krovak projection.
+ - Updated support files to EPSG 6.11.
+
+OGRCoordinateTransformation: 
+ - Support source and destination longitude wrapping control.
+
+OGRFeatureStyle: 
+ - Various extensions and improvements. 
+
+INFORMIX Driver: 
+ - New
+
+KML Driver: 
+ - New (write only)
+
+E00 Driver:
+ - New (read only) 
+ - Polygon (PAL) likely not working properly.
+
+Postgres/PostGIS Driver:
+ - Updated to support new EWKB results (PostGIS 1.1?)
+ - Fixed serious bug with writing SRSes.
+ - Added schema support.
+
+GML Driver: 
+ - Strip namespaces off field names. 
+ - Handle very large geometries gracefully.
+
+ODBC Driver: 
+ - Added support for spatial_ref_sys table.
+
+SDE Driver: 
+ - Added logic to speed things up while actually detecting layer geometry types
+
+PGeo Driver: 
+ - Added support for MDB Tools ODBC driver on linux/unix.
+
+VRT Driver:
+ - Added useSpatialSubquery support.
+
+
+===============================================================================
+
+GDAL/OGR 1.3.2 - General Changes
+--------------------------------
+
+WinCE Porting:
+ - Support for MS WinCE new for this release.
+
+Java SWIG Bindings: 
+ - Preliminary support implemented.
+
+
+GDAL 1.3.2 - Overview of Changes
+--------------------------------
+
+Locale: 
+ - Force numeric locale to "C" at a few strategic points.
+
+Idrisi Driver:
+ - New for 1.3.2. 
+ - Includes reading and writing. 
+ - Limited coordinate system support.
+
+DIPEx Driver: 
+ - New for GDAL 1.3.2 (related to ELAS format).
+
+Leveller Driver:
+ - New for GDAL 1.3.2. 
+
+NetCDF Driver:
+ - Improved autoidentification of x, y dimensions.
+ - Improved CF support.
+
+JPEG2000 (JasPer) Driver:
+ - Use GDALJP2Metadata to support various kinds of georeferencing. 
+
+JPEG2000 (JP2KAK) Driver:
+ - Support writing tiles outputs so that very large images can be written.
+
+GeoTIFF Driver:
+ - Report error when attempting to create >4GB uncompressed file.
+ - Updated to latest libtiff, now supports "old jpeg" fairly well. 
+ - Improved support for subsampled YCbCr images. 
+
+Imagine (HFA) Driver:
+ - Support reading affine polynomial transforms as geotransform. 
+ - Support overviews of different type than base band.
+ - Support reading RDO style "nodata" indicator.
+
+PCI Aux Driver:
+ - Support projections requiring parameters. 
+
+MrSID Driver;
+ - Fixed problem with writing files other than 1 or 3 bands.
+ - Support ESDK 6.x. 
+
+BMP Driver:
+ - Added support for 32bit images with bitfields compression.
+
+DODS Driver:
+ - Upgraded to support libdap 3.6.x. 
+ - Upgraded to support [-x][-y] to flip image.
+
+gdal_rasterize Utility:
+ - New for GDAL 1.3.2. 
+ - Rasterize OGR polygons into a raster. 
+
+
+
+OGR 1.3.2 - Overview of Changes
+-------------------------------
+
+OGRFeature:
+ - Added support for OFTDate, OFTTime and OFTDateTime field types. 
+ - Also applied to a few drivers (shapefile, mysql, postgres)
+
+OGRLayer:
+ - GetFIDColumn() and GetGeometryColumn() added.
+
+Generic OGR SQL:
+ - Proper support for spatial and attribute filters installed on 
+   OGR SQL resultsets. 
+
+OGRSpatialReference:
+ - Upgraded data files to EPSG 6.9
+
+PostGIS Driver:
+ - Include proj4text in new spatial_ref_sys entries.
+ - Fixed support for very large queries.
+ - Fixed DeleteLayer() implementation.
+ - Added COPY support for accerated loading.
+
+MySQL Driver:
+ - Added read and write support for Spatial types. 
+ - Support spatial_ref_sys and geometry_columns tables.
+ - Various other improvements (dates, smallint, tinyint, etc)
+ - More robust auto-detection of column types for layers
+   created from SQL statements
+   
+ArcSDE Driver:
+ - New for 1.3.2. 
+ - Read-only support for all geometry types. 
+ - Supports coordinate systems.
+ - Requires SDE C API from ESRI.
+
+Shapefile Driver:
+ - Avoid posting errors when .dbf's without .shps are opened.
+ - Added pseudo-SQL REPACK command after deleting features.
+ - Implement DeleteFeature()
+
+S-57 Driver:
+ - Added support for Arcs. 
+ - Added special DSID_DSSI feature class to capture header info.
+
+DGN Driver:
+ - Support writing geometry collections.
+
+DWG/DXF Driver:
+ - New for OGR 1.3.2
+ - Only supports writing DWG and DXF.
+ - Depends on DWGdirect library.
+
+
+===============================================================================
+
+GDAL 1.3.1 - Overview of Changes
+--------------------------------
+
+Next Generation SWIG Wrappers (GDAL and OGR):
+ - Python, Perl and Ruby bindings considered to be ready to use. 
+ - C#, Java, PHP are at best initial prototypes.
+ - Added configure options for most NG options. 
+
+PCRaster Driver: 
+ - libcsf is now included as part of GDAL.
+ - PCRaster enabled by default on win32. 
+ - --with-pcraster=internal option now supported on unix (but not yet default)
+
+VSI Virtualization:
+ - The "large file API" (VSI*L) has been re-engineered to allow installing
+   additional file handlers at runtime.  
+ - Added "in memory" VSI handler so that now any driver using VSI*L 
+   functions for data access can operate on in-memory files. 
+ - PNG, JPEG and GeoTIFF drivers upgraded to work with in-memory support.
+
+Raster Attribute Tables:
+ - Implemented new Raster Attribute Tables support.  See the 
+   GDALRasterAttributeTable class for more information. 
+
+Erdas Imagine Overviews:
+ - Erdas Imagine driver upgraded to support building internal overviews. 
+ - Generic overview handler updated to support overviews in Erdas Imagine
+   format for any file format.  Set USE_RRD config option to YES to enable.
+
+gdalwarp:
+ - Added proper support for "unified source nodata", so the -srcnodata
+   switch works well. 
+
+RIK Driver: 
+ - New Swedish format driver implemented by Daniel Wallner.
+
+JPEG Driver:
+ - Substantial improvements to EXIF support.  
+
+MrSID Driver:
+ - Updated with proper JPEG2000 support as JP2MRSID driver, including 
+   encoding with ESDK.
+ - Updated to support MrSID Version 5.x SDKs.
+
+PNG Driver:
+ - Fixed serious bugs with 16bit file support. 
+ - Added NODATA_VALUES to identify RGB sets that indicate a nodata pixel.
+
+
+OGR 1.3.1 - Overview of Changes
+-------------------------------
+
+Reference Counting:
+ - OGRSpatialReference and OGRFeatureDefn now honour reference counting 
+   semantics.
+ - Note that, especially for the OGRFeatureDefn, it is now critical that
+   all drivers be careful with reference counting.  Any OGR drivers not in
+   the core distribution will likely crash if not updated.
+
+ESRI Personal Geodatabase Driver:
+ - New driver implemented for ESRI Personal Geodatabase (.mdb) files. 
+ - Uses ODBC, enabled by default on win32. 
+
+ODBC Driver:
+ - Updated to support binary fields. 
+ - Updated to support WKB geometry fields. 
+ - Updated to support DSN-less connections. 
+
+S57 Driver:
+ - Added support for Inland Waterways, and Additional Military Layers profiles
+
+
+===============================================================================
+
+GDAL 1.3.0 - Overview of Changes
+--------------------------------
+
+Multithreading:
+ - Lots of work done to implement support for multiple threads reading
+   from distinct GDALDataset objects at the same time. 
+
+GDALRasterBand / Persistant Auxilary Metadata (PAM):
+ - Support for preserving a variety of metadata in a supporting XML file. 
+ - GDALRasterBand now supports "remembering" histograms, and has a concept
+   of the default histogram. 
+ - GDALRasterBand now supports remembering image statistics.
+ - Disabled by default (set GDAL_PAM_ENABLED=YES to turn on). 
+ - Supported by *most* drivers with some caveats.
+
+GDALCopyWords(): 
+ - This function is a low level work horse for copying and converting pixel 
+   data in GDAL.  It has been substantially optimized by Steve Soule (Vexcel).
+
+Next Generation Bindings:
+ - Kevin Ruland and Howard Butler are working on reworked support for 
+   SWIG to generate Python, PHP, Java, C# and other language bindings for GDAL
+   and OGR. 
+
+VB6 Bindings: 
+ - Now substantially complete, see VB6 directory.
+
+HDF5 Driver: 
+ - New HDF5 driver implemented by Denis Nadeau. 
+
+RMF Driver: 
+ - New driver for Raster Matrix Format by Andrey Kislev. 
+
+MSGN (Meteosat Second Generation Native) Driver:
+ - New driver implemented by Frans van der Bergh.
+
+VRT Driver:
+ - Fixed whopper of a memory leak in warped raster case.
+
+NetCDF Driver: 
+ - Preliminary CF conventions support by Denis Nadeau.
+
+NITF Driver:
+ - NITF files between 2 and 4 GB in size can now be read and written.
+
+JPEG Driver: 
+ - Added support for reading EXIF as metadata by Denis Nadeau.
+
+DODS Driver:
+ - Fixed up libdap 3.5.x compatibility.
+
+JP2ECW (JPEG2000 ECW SDK) Driver:
+ - Implemented support for new GML-in-JPEG2000 specification.
+ - Implemented support for old MSI "worldfile" box. 
+
+JP2KAK (JPEG2000 Kakadu) Driver:
+ - Implemented support for new GML-in-JPEG2000 specification.
+ - Implemented support for old MSI "worldfile" box. 
+
+PCIDSK Driver: 
+ - tiled files now supported for reading.
+ - overviews now supported for reading.
+
+HFA (Imagine) Driver:
+ - Supports creating internal overviews in very large files. 
+ - Support reading class names. 
+ - Support creating compressed files. 
+
+GeoTIFF Driver:
+ - Support reading files with odd bit depths (ie. 3, 12, etc). 
+ - Support 16/24bit floating point TIFFs (per Technote 3) (Andrey).
+ - Support 12bit jpeg compressed imagery using libjpeg "MK1" library.
+
+HDF4 Driver:
+ - Added support for ASTER Level 1A, 1B and 2 products (Andrey). 
+
+
+OGR 1.3.0 - Overview of Changes
+-------------------------------
+
+OGRGeometry:
+ - WKT (and GML) encoding now attempts to preserve pretty much full double
+   precision. 
+ - geometries are now "coordinate dimension preserving" rather than dynamically
+   figuring out dimension depending on whether Z is set.  So a geometry can
+   now be 3D even if all z values are zero.  
+ - Fixed up proper EMPTY geometry support per standard.
+
+GRASS Driver:  
+ - New driver for GRASS 6 vector data written by Radim Blazek. 
+
+Interlis Driver: 
+ - New driver for Swiss Interlis format from Permin Kalberer (SourcePole).
+
+Shape Driver:
+ - Fixed logic for degenerate polygons (Baumann Konstantin).
+ 
+PostgreSQL/PostGIS Driver:
+ - Implemented fast GetExtent() method (Oleg Semykin).
+ - Implemented layer type from geometry_columns (Oleg Semykin).
+ - Handle PostGIS 1.0 requirements for coordinate dimemsion exactness.
+ - Handle EWKT type in PostGIS 1.0.
+ - Generally PostGIS 0.x and 1.0 should now be supported fairly gracefully.
+ - Added PostGIS "binary cursor" mode for faster geometry access.
+
+VRT Driver:
+ - Pass through attribute queries to underlying driver. 
+ - Pass through spatial queries as attribute filters on the underlying layer.
+
+S57 Driver:
+ - Added concept of supporting different profiles. 
+ - Added prototype AML profile support. 
+
+MySQL Driver:
+ - Fixed for FID recognition (eg. mediumint). 
+
+GML Driver: 
+ - Various fixes for generated GML correctness (Tom Kralidis).
+
+TIGER/Line Driver:
+ - Added Tiger 2004 support.
+
+Oracle Driver:
+ - Use VARCHAR2 for fixed size string fields. 
+ - Use OCI_FID config variable when creating layers, and reading select results
+
+
+
+
+===============================================================================
+
+GDAL 1.2.6 - Overview of Changes
+--------------------------------
+
+gdal_translate: 
+ - Added -sds switch to copy all subdatasets. 
+
+gdalwarp: 
+ - Added Thin Plate Spline support (-tps switch). 
+
+GDALRasterBand:
+ - Now uses two level block cache allowing efficient access to files
+   with a very large number of tiles. 
+ - Added support for YCbCr color space for raster band color interpretations.
+ - Added AdviseRead() method - currently only used by ECW driver and OGDI 
+   drivers. 
+
+ILWIS Driver:
+ - New driver for the raster format of the ILWIS software. 
+
+ECW Driver:
+ - Updated to use ECW SDK 3.1 (older ECW SDK no longer supported!)
+
+ECWJP2 Driver:
+ - Added JPEG2000 support driver based on ECW/JPEG2000 SDK with a variety
+   of features. 
+
+NITF Driver: 
+ - Added support for reading *and* writing JPEG2000 compressed NITF files 
+   using the ECW/JPEG2000 SDK. 
+ - Added ICHIPB support. 
+
+HDF Driver:
+ - Add support for georeferencing from some additional metadata formats. 
+ - Fixed bug with multi-band HDF-EOS datasets. 
+
+MrSID Driver:
+ - Driver can now be built as a plugin on win32. 
+ - Split out MrSID 3.x SDK support - not readily buildable now. 
+ - Implemented accelerated IO cases for MrSID 4.x SDK. 
+ - Support for writing MrSID files added (improved?)
+
+Imagine Driver: 
+ - Fixed bug reading some large multiband Imagine files. 
+ - Added support for writing compressed files. 
+
+Win32 Builds:
+ - Added versioning information to GDAL DLL.
+
+L1B Driver:
+ - Only return a reduced grid of control points. 
+
+IDA (WinDisp4) Driver:
+ - New read/write driver for the Image Display and Analysis raster format 
+   used by WinDisp 4. 
+
+NDF (NLAPS) Driver:
+ - Added NDF/NLAPS read driver for version 1 and 2. 
+
+MSG Driver: 
+ - Added support for the Metosat Second Generation raw file format.
+
+GTiff Driver:
+ - Added support for offset/scale being saved and loaded (special metadata). 
+ - Added Cylindrical Equal Area.
+ - Added PROFILE creation option to limit extra tags.
+
+PNG Driver: 
+ - Updated internal code for libpng to libpng 1.2.8.
+
+
+OGR 1.2.6 - Overview of Changes
+-------------------------------
+
+OGRSFDriverRegistrar:
+ - Added support for autoloading plugin drivers from ogr_<driver>.so. 
+
+ogr.py:
+ - Geometry, and Feature now take care of their own reference counting and
+   will delete themselves when unreferenced.  Care must still be taken to
+   unreference all features before destroying the corresponding 
+   layer/datasource.
+ - ogr.Feature fields can now be fetched and set directly as attributes. 
+ - Geometry contructor can now take various formats (wkt, gml, and wkb). 
+ - Added docstrings. 
+ - Added better __str__ methods on several objects. 
+ - Various other improvements. 
+
+OGRLayer:
+ - Re-wrote generic spatial search support to be faster in case of rectangular
+   filters. 
+ - Intersects() method now really uses GEOS.  This also affects all OGR 
+   layer spatial filtering (with non-rectangular filters). 
+ - Added SetNextByIndex() method on OGRLayer.  
+
+OGRSpatialReference:
+ - Automatically generate +towgs84 from EPSG tables when translating to
+   PROJ.4 if available and TOWGS84 not specified in source WKT. 
+ - Updated GML CRS translation to follow OGC 05-011 more closely.  Still
+   incomplete but operational for some projections. 
+ - Added support for FIPSZONE State Plane processing for old ESRI .prjs. 
+ - Added Goode Homolosine support. 
+ - Added GEOS (Geostationary Satellite) support.
+
+OCI (Oracle) Driver:
+ - Added GEOMETRY_NAME creation option to control the name of the field to
+   hold the geometry.
+
+PostGIS Driver:
+ - Fixed some problems with truncation for integer and float list fields. 
+
+Shapefile Driver: 
+ - Added support for MapServer style spatial index (.qix). 
+
+GML Driver: 
+ - Improved support for 3L0 (GML 3 - Level 0 profile) reading and writing. 
+   On read we can now use the .xsd instead of needing to build a .gfs file. 
+
+
+===============================================================================
+
+GDAL 1.2.5 - Overview of Changes
+--------------------------------
+
+gdalwarp Utility:
+ - Added "proper" source and destination alpha support. 
+
+PCRaster Driver: 
+ - added write support, now consider ready for regular use.
+
+MrSID Driver:
+ - Initial support for writing to MrSID with encoding SDK. 
+
+GeoTIFF Driver:
+ - Updated internal copy of libtiff to fix overview building ... really!
+ - Fixed bug when writing south-up images.
+
+
+OGR 1.2.5 - Overview of Changes
+-------------------------------
+
+OGRSpatialReference:
+ - Added Bonne projection. 
+
+Docs:
+ - Added OGR C++ API Tutorial (reading and writing). 
+
+PostGIS Driver:
+ - Implemented SetFeature() and DeleteFeature() methods for in-place updates.
+
+Oracle (OCI) Driver:
+ - Fixed support for writing into Oracle 10g. 
+ - Fixed serious memory leak of geometries. 
+ - Fixed bug with 3D multipolygons. 
+ - Added support for selecting tables in the datasource name.
+
+===============================================================================
+
+GDAL 1.2.4 - Overview of Changes
+--------------------------------
+
+gdalwarp: 
+  - Fixed some issues with only partially transformable regions. 
+  - Added Alpha mask generation support (-dstalpha switch).
+
+HFA/Imagine Driver:
+  - bug fix in histogram handling.
+  - improved support for large colormaps. 
+
+Envi Driver:
+  - Capture category names and colormaps when reading.
+
+SAR CEOS Driver:
+  - Added support for PALSAR/ALOS Polarimetric Datasets. 
+
+RadarSat 2 Driver:
+  - New.  Reads RadarSat 2 Polarimetric datasets with a "product.xml" and 
+    imagery in TIFF files. 
+
+OGDI Driver:
+  - Important bug fix for downsampled access.
+
+GeoTIFF Driver:
+  - Lots of libtiff upgrades, including some quite serious bug fixes.
+  - Added better support for 16bit colormaps. 
+  - Write projection information even if we don't have a geotransform or GCPs.
+  - Improved alpha support.
+  - Generate graceful error message for BigTIFF files. 
+
+DODS Driver:
+  - Almost completely reimplemented.   Uses chunk-by-chunk access.  Supports
+    reading several bands from seperate objects.  Some new limitations too.
+
+NetCDF Driver:
+  - Seperated out a GMT NetCDF driver and a more generic but partially broken
+    NetCDF driver (Radim).
+
+JP2KAK Driver:
+  - Added alpha support, including greyscale+alpha. 
+
+AirSAR Driver:
+  - New, reads AirSAR Polarimetric Radar format. 
+
+
+
+OGR 1.2.4 - Overview of Changes
+-------------------------------
+
+epsg_tr.py: 
+  - Added escaping rules when generating PostGIS output.
+
+tigerpoly.py:
+  - Discard dangles and degenerate rings. 
+
+VRT Driver:
+  - Fixed serious error in handling cleanup of VRT datasources, was often 
+   causing a crash.
+
+SQLLite Driver:
+  - Fixed substantial memory leaks. 
+
+MySQL Driver:
+  - New readonly non-spatial MySQL driver implemented.
+
+MITAB Driver:
+  - Updated from upstream, several fixes.
+
+TIGER/Line Driver:
+  - Fixed serious bug with handling "full" records at end of .RT2 file. 
+
+OCI/Oracle Driver:
+  - Added OCI_FID environment support to control FID selection.
+
+OGRGeometry:
+  - Added Centroid() implementation (from GEOS?)
+
+ =============================================================================
+
+GDAL 1.2.3 - Overview of Changes
+--------------------------------
+
+GeoTIFF Driver:
+    - Fixed many missing compression codecs when built with the internal 
+      libtiff.
+    - Modified driver metadata to only list available compression types.
+
+DODS Driver:
+    - Added support for OPeNDAP version after 3.4.x (use of opendap-config).
+
+GRASS Driver:
+    - Fixed support for building with grass57.
+
+MrSID Driver:
+    - Fixed support for MrSID Encoding SDK. 
+
+NITF Driver:
+    - Fixed serious bug with non-square output files.
+
+
+OGR 1.2.3 - Overview of Changes
+-------------------------------
+
+OGRSpatialReference:
+    - Corrected memory leaks - OSRCleanup() cleans up temporary tables.
+    - Fixed build problem with ogrct.cpp on Solaris. 
+
+TIGER Driver:
+    - Improved generality of support for GDT files.
+
+OGRGeometry:
+    - Added getArea() method for rings, polygons and multipolygons. 
+
+ =============================================================================
+
+GDAL 1.2.2 - Overview of Changes
+--------------------------------
+
+GRASS Driver: 
+    - Add Radim's version of the driver submitted by Radim.  This version
+      uses GRASS 5.7 libraries directly instead of using libgrass. 
+
+DODS Driver:
+    - Added support for spatial_ref, FlipX and FlipY .das info.
+
+CPG Driver:
+    - added new driver for Convair Polarimetric format. 
+
+HDF Driver:
+    - Significant bugs fixed. 
+
+USGS DEM Driver:
+    - Support writing UTM projected files.
+
+PNG Driver:
+    - Upgraded to libpng 1.2.6. 
+
+MrSID Driver:
+    - Substantial performance improvements. 
+    - Support for DSDK 4.x 
+    - Support JPEG2000 files via MrSID SDK. 
+
+NITF Driver:
+    - Support JPEG2000 compressed files (with Kakadu support)
+
+ESRI BIL:
+    - Support .clr color files.
+
+VRT Driver:
+    - Added support for describing raw files with VRTRawRasterBand. 
+    - Added support for virtual warped files with VRTWarpedRasterBand.
+
+GeoTIFF Driver:
+    - Fix support for 16bit image color tables. 
+    - Write ExtraSamples tag for files with more samples than expected
+      in photometric interpretation. 
+    - External overviews now built for read-only files. 
+
+Erdas Imagine Driver:
+    - Fixed support for compressed floating point layers. 
+    - Various other fixes for compatible with newer Imagine versions.
+    - improved metadata handling.
+
+gdal_merge.py:
+    - sets projection on output file.
+
+
+OGR 1.2.2 - Overview of Changes
+-------------------------------
+
+SQLite Driver:
+    - New read/write driver implemented for SQLite databases.
+
+CSV Driver:
+    - New read/write driver implemented for comma seperated value files.
+
+S-57 Driver:
+    - Substantial performance improvements.
+
+ODBC Driver:
+    - Arbitrary length field values now supported. 
+
+GEOS:
+    - Integration a series of methods utilizing GEOS when available.  Note
+      that Intersect() is still just an envelope comparison.
+
+OGRSpatialReference:
+    - Fixed Swiss Oblique Mercator support. 
+
+ =============================================================================
+
+GDAL 1.2.1 - Overview of Changes
+--------------------------------
+
+gdal_contour:
+    - Now build and installed by default.
+
+HDF4 Driver:
+    - Added some degree of HDF-EOS support.  HDFEOS layer now part of GDAL.
+
+DODS Driver:
+    - Substantial fixes, support for flipped datasets.  
+
+HFA (Erdas Imagine) Driver:
+    - Fixed bug with files between 2 and 4GB.
+    - Capture statistics as metadata.
+
+Erdas 7.x LAN/GIS Driver:
+    - Newly implemented.
+
+USGS DEM Driver:
+    - Various fixes to creation support / CDED product.
+
+NITF Driver:
+    - Capture USE001 and STDIDC TREs as metadata.
+    - Capture all sorts of header information as metadata.
+    - Support geocentric corner coordinate specification.
+
+MrSID Driver:
+    - Support added for DSDK 4.0.x.
+
+ECW Driver:
+    - Added preliminary support for using 3.0 SDK for JPEG2000 support. 
+    - Fix oversampling assertion problem.
+
+ArcInfo Binary Grids:
+    - Added support for 0x01 and 0x20 block type.
+
+
+OGR 1.2.1 - Overview of Changes
+-------------------------------
+
+OGRSpatialReference:
+    - Various fixes related to prime meridians.
+
+PostgreSQL/PostGIS Driver:
+    - Added layer name laundering. 
+    - Launder names on by default.
+    - Clean stale entries in geometry_columns table when creating a layer.
+    - Support treating names views as layers.
+    - Handle long command strings.
+
+S57 Driver:
+    - Fixed serious bugs with support for auto-applying update files.
+    - Improvements to S57 writing support.
+  
+ =============================================================================
+
+GDAL 1.2.0 - Overview of Changes
+--------------------------------
+
+Configuration:
+    - Libtool used by default with Unix style builds.  Use --without-libtool
+      to avoid this. 
+    - PROJ.4 can now be linked statically using --with-static-proj4.
+    - Added --without-bsb option for those averse to legal risk.
+
+DODS/OPeNDAP Driver:
+    - Preliminary DODS (OPeNDAP) driver implemented (James Gallagher @ URI).
+
+PCIDSK Driver:
+    - PCIDSK read/write raster driver implemented (Andrey).
+
+Erdas Imagine / HFA Driver: 
+    - Support recent Imagine versions (data dictionary changes).
+    - Better logic to search for .rrd file locally.
+    - Support creating files in the 2GB to 4GB size range.
+
+GIF Driver: 
+    - Updated to libungif 4.1.0. 
+    - Various hacks to try and identify transparent colors better.
+
+BMP Driver: 
+    - Handle 32bit BMPs properly.
+
+HDF4 Driver:
+    - Added proper support for multi-sample GR datasets. 
+    - Various fixes and improvements for specific product types.
+
+GeoTIFF Driver: 
+    - Added PHOTOMETRIC option to control photometric interp of new files.
+
+JPEG2000/Kakadu Driver: 
+    - Support reading/creating lossless 16bit files. 
+    - Updated to support Kakadu 4.1 library.
+
+NITF Driver: 
+    - Implement support for IGEOLO="U" (MGRS/UTM) coordinates. 
+    - Added overview (as external GeoTIFF file) support.
+
+MrSID Driver: 
+    - Support DSDK 4.2.x. 
+
+PNG Driver:
+    - Support required byte swapping of 16bit PNG data. 
+
+FAST Driver:
+    - lots of fixes, supports more datums and ellipsoids. 
+
+NetCDF Driver: 
+    - New driver implemented for netCDF support. 
+    - Pretty much tied to form of netCDF used in GMT for now. 
+
+VTerrain .bt Driver: 
+    - New driver for VTerrain .bt elevation format.
+
+ECW Driver:
+    - support supersampled reads efficiently. 
+    - special case for dataset level RasterIO() implemented for much better
+      performance in some applications. 
+
+ESRI BIL (EHdr) Driver:
+    - Support world files.
+
+VRT Driver: 
+    - Implement filtering support. 
+
+GIO (Arc/Info Binary Grid via avgridio.dll): 
+   - Driver disabled ... to undependable. 
+
+
+Python:
+    - Preliminary support for numarray in addition to numpy (Numeric). 
+
+Contouring:
+    - New gdal_contour utility program implementing contour generation.  
+    - Underlying algorithm in gdal/alg.  
+
+Warping:
+    - Improved support in GDALSuggestedWarpOutput() for "world" sized
+      files that are only partially transformable. 
+    - Bicubic resampler improved. 
+    - What was gdalwarptest is now gdalwarp, and the old gdalwarp is now
+      gdalwarpsimple.  The sophisticated warper is now the default.
+
+Man Pages: 
+    - Man pages for GDAL utilities now being maintained and installed (Silke).
+
+ 
+
+OGR 1.2.0 - Overview of Changes
+-------------------------------
+
+OGRSpatialReference:
+   - Added methods for converting to/from GCTP representation.
+   - Added HOM 2 points on centerline variant. 
+
+DODS (OPeNDAP) Driver:
+   - Preliminary implementation.
+
+TIGER/Line Driver: 
+   - Added support for GDT ASCII TIGER-like format. 
+   - Support TIGER/Line 2003 format. 
+
+S-57 Driver:
+   - Preliminary export support implemented. 
+   - Support capture of FFPT (feature to feature) linkages.
+   - Support capture of TOPI from VRPT.
+   - Support capture of primitives as additional layers. 
+
+Shapefile Driver:
+   - gdal/frmts/shapelib removed from GDAL source tree, now just a 
+     copy of required shapelib files are kept in gdal/ogr/ogrsf_frmts/shape. 
+   - Attempt identify polygons that are really multi-polygons and convert them 
+     into multi-polygons properly (Radim Blazek).
+   - Create FID attribute in .dbf file if no attribute added by application.
+
+GML Driver:
+   - Lots of fixes and improvements for reading and writing. 
+   - Now writes a schema file by default. 
+   - Field types are set now when reading based on data found on first pass.
+   - Added support for the various kinds of geometry collections.
+
+DGN Driver:
+   - Now using dgnlib 1.9 - this carries with it various new element types
+     and some important bug fixes.
+
+ODBC Driver:
+   - New ODBC driver implemented.  Build by default on Windows, and buildable
+     on Unix (with unixodbc). 
+
+VRT Driver: 
+   - New "virtual" OGR Datasource format implemented.  
+   - Configuration stored in XML control file. 
+
+Oracle (OCI) Driver:
+   - support reading views. 
+
+OGR Core:
+   - Added support for WKT EMPTY geometry objects (like "MULTIPOINT(EMPTY)").
+   - Added DeleteFeature() method on OGRLayer class.  
+
+NTF Driver: 
+   - Support CHG_TYPE attribute for landline plus product. 
+
+
+
+ ==============================================================================
+
+GDAL 1.1.9 - Overview of Changes
+--------------------------------
+
+ o MrSID Driver: New for 1.1.9, read-only, includes good coordiante system
+   support, and should be high performance. 
+
+ o ECW Driver: Now reads coordinate system information (but doesn't write). 
+
+ o HDF Driver: Added support for Hyperion Level 1, Aster Level 1A/1B/2, MODIS 
+   Level 1B(earth-view)/2/3, SeaWIFS Level 3. 
+
+ o L1B Driver: Now reads GCPs for georeferencing.
+
+ o NITF Driver: Support for reading RPC, variety of bugs fixes for reading and
+   writing.  Also some general RPC infrastructure added to GDAL.
+
+ o JP2KAK Driver: Can be used with Kakadu 4.0.2 now.  Compatibility fixes
+   for internal geotiff to improve compatibility with Mapping Science tools.
+   Added palette support. 
+
+ o HFA (Imagine) Driver: Added read/write support for color table opacity.
+   Added write support for large (spill) files. 
+
+ o "core" directory renamed to "gcore" to avoid confusing configure script.
+
+ o Added support for GDAL_DATA environment variable to point to GDAL support
+   data files (those in gdal/data directory).
+
+ o Added GDALDataset::RasterIO() for more efficient reading of multiple bands
+   in one request (in some cases anyways). 
+
+ o High performance warp api considered to be complete now, and substantially
+   optimized.
+
+ o gdal_merge.py: supported multiple bands, copying PCT. 
+
+
+OGR 1.1.9 - Overview of Changes
+-------------------------------
+
+ o Oracle Spatial: New generic read/write, and implemented highly optimized
+   loading support. 
+
+ o Tiger driver: added support for TIGER/Line 2002 product.
+
+ o GML driver:  now supports Xerces versions from 1.6 up to 2.3.  Lots of
+   bugs fixes and improvements.   GML Geometry now in OGR core. 
+
+ o Improved support for translating to and from ESRI WKT, including a complete
+   mapping between EPSG related ESRI datum names and OGR's expected names. 
+
+ o Improved support for alternate prime meridians in coordinate system code.
+
+ o Shapefiles: Can write features with NULL geometry, 
+
+ o DGN: added 3d write support. 
+
+ o Implemented generic attribute indexing support (only used for shapefile
+   at this point).  Use in SQL where clauses and ExecuteSQL(). 
+
+ o WKT MULTIPOINT in/out formatting fixed.
+
+ o Added SynToDisk() method on OGRDataset and OGRLayer. 
+
+ o Implemented "Web Coordinate Transformation Service" (ogr/wcts). 
+
+ o Implemented "in memory" format driver. 
+
+ o C API documented.
+
+
+
+
+ ==============================================================================
+
+GDAL 1.1.8 - Overview of Changes
+--------------------------------
+
+ o Implemented HDF 4 read/write support. This includes HDF EOS reading.
+
+ o Implemented Windows BMP read/write support. 
+
+ o Implemented NITF read/write support. 
+
+ o Implemented NOAA Polar Orbiter L1B format driver. 
+
+ o Implemented EOSAT FAST format driver. 
+
+ o Implemented a JasPer based JPEG2000 driver (several limitations).
+
+ o Implemented a Kakadu based JPEG2000/GeoJP2(tm) driver (full featured, but 
+   Kakadu is not open source). 
+
+ o Implemented new 'gdalwarp' application for projection and GCP based image
+   warping.  See gdal/alg for underlying algorithms.  Currently gdalwarp only
+   supports 8 bit images and holds the whole source image in memory.
+
+ o Implemented write support for ESRI ASCII Grids. 
+
+ o Lots of improvements to GeoTIFF driver.  Metadata writing, update of
+   georeferencing, and support for writing PCS codes based on AUTHORITY fields
+   in WKT.  
+
+ o Implemented support for uncompressed 1bit data in Erdas Imagine files,
+   as well as generic metadata.
+
+ o Fixed 0xFF compression support in the Arc/Info Binary Grid (AIG) driver.
+
+ o Lots of improvements to BSB drive, including preliminary uncompressed 
+   output support, support for reading BSB 3.0 and GEO/NOS.
+
+ o Lots of work on VRT format.  
+
+ o ECW: Fixed bug with reading a more than full resultion.
+
+ o Envisat driver now supports AATSR TOA and MERIS data.
+
+ o Fixes for nodata support in GRASS driver.
+
+ o Added the --version and --formats options to many utility programs.
+
+ o gdal_translate: 
+    - added -projwin flag to copy a window specified in projection coordinates.
+    - added the -a_srs option to assign a user supplied SRS to output file.
+    - translation with subsetting to any format now support (uses VRT inside).
+
+ o Lots of metadata now attached to driver objects describing their 
+   capabilities. 
+
+ o Implemented GDALDestroyDriverManager() to ensure full memory cleanup of
+   GDAL related resources.
+
+ o Added a 'devinstall' target on Windows to support easy installation of
+   include files and stub libraries on Windows.  Also many other improvements
+   to Windows build.  Most options can be easily turned on and off from the
+   nmake.opt file now.
+
+
+OGR 1.1.8 - Overview of Changes
+-------------------------------
+
+ o Implemented support for writing 2D DGN files.   Added support for MSLINK
+   and Text values available as attributes.
+
+ o Implemented FMEObjects based read driver. 
+
+ o Implemented ExecuteSQL() method on OGRDataSource.  Generic code supports
+   fairly full featured SELECT statements. 
+
+ o Various fixes to 3D shapefile support. 
+
+ o Fixes to binary representation for 2.5D geometries.  Fixed MULTIPOINT WKT
+   geometry representation.
+
+ o Upgraded OGRSpatialReference.importFromEPSG() to use the new EPSG 6.2.2
+   tables instead of the old EPSG 4.x tables.
+
+ o Many fixes to PostGIS driver, including special creation options for
+   "laundering" field names to save tokens.
+
+ o Many improvements to standards conformance of OGRSpatialReference WKT
+   representation to the OGC Coordinate Transformations specification.  Still
+   some quirks related to prime meridians and coordinate systems with units
+   other than degrees.
+
+ o Implemented support for Meridian 2 NTF files in NTF driver.  Better
+   support for GENERIC_CPOLY geometries.
+
+ o  Added support for [NOT] IN, [NOT] LIKE and IS [NOT] NULL predicates in 
+   WHERE clauses.
+
+ o Implemented a C API for accessing OGR.
+
+ o Implemented support for building OLE DB Provider with Visual Studio.NET
+   (many changes in ATL templates).  Lots of other OLE DB improvements for
+   better MapGuide compatibility.
+
+
+GDAL 1.1.7 - Overview of Changes
+--------------------------------
+
+ o Add XPM (X11 Pixmap) format.
+
+ o Added rough ENVI raster format read support.
+
+ o Added --version support (and supporting GDALVersionInfo() function).
+
+ o Special hooks for getting raw record data from sar ceos files and Envisat
+   via the metadata api.
+
+ o Upgraded TIFF/GeoTIFF support to CVS version ... includes new extension
+   API and removes need for private libtiff include files entirely.
+
+ o gdal_translate now has scaling option (-scale). 
+
+ o Added utility documentation.
+
+OGR 1.1.7 - Overview of Changes
+-------------------------------
+
+ o Added Arc/Info binary coverage format read support.
+
+ o Added ogrtindex for building MapServer compatible OGR tile indexes.
+
+ o Added default implementation of GetFeature(fid) method on OGRLayer.
+
+ o Shape driver now supports reading and creating free standing .dbf files
+   for layers without geometry.
+
+ o Added utility documentation.
+
+ o Fixed major memory/file handle leak in SDTS access.
+
+ o Added ADSK_GEOM_EXTENT support for OLE DB provider.
+
+ o Ensure shapefiles written with correct polygon ring winding direction
+   plus various other shapefile support fixes.
+
+ o GML read/write working reasonable well, including use of .gfs files.
+
+
+GDAL 1.1.6 - Overview of Changes
+--------------------------------
+
+ o Add > 2GB file support on Linux 2.4.
+
+ o Implemented USGS DEM reading.
+
+ o Implemented BSB Format (Nautical Chart Format) read support.
+
+ o Preliminary implementation of Virtual Datasets (gdal/frmts/vrt). 
+
+ o Support for writing DTED files. 
+
+ o Some raw formats (ie. PAux, HKV) support files larger than 2GB.
+
+ o Add the AddBand() method on GDALDataset.
+
+ o PAux: Added color table read support. 
+
+ o Various fixes to OGDI driver.
+
+ o Stripped out the GDALProjDef related capabilities.  Superceeded by
+   OGRSpatialReference, and OGRCoordinateTransformation functionality.
+
+ o Improved CEOS support, notable for ESA LANDSAT files, D-PAF ERS-1 and
+   Telaviv ERS data. 
+
+ o geotiff: upgraded libtiff support to approximately libtiff 3.5.7.
+
+ o DGN: Added support for complex shapes, shapes assembled from many elements.
+   Various other improvements.
+
+
+OGR 1.1.6 - Overview of Changes
+-------------------------------
+
+ o Fixed OGDI driver so that gltp urls with drive letters work properly on 
+   windows.
+
+ o Many improvements to OLE DB provider during the process of making it 
+   compatible with the MapGuide (SDP) client.  These include implementing
+   restrictions for schema rowsets, treating missing information like WKT
+   coordinate systems as NULL fields, and setting ISLONG on geometry fields.
+   Also made thread safe. 
+
+ o DGN: Threat SHAPE elements as polygons.  Set style information for text.
+   Added 3D support for most elements. 
+
+ o Fixed bugs in WKT format for some OGR geometry types (ie. multipoint).
+
+ o Added support for morphing to/from ESRI WKT format for OGRSpatialReference.
+
+ o NTF: Don't try to cache all the records from multiple files at once.
+
+ o Added experimental XML SRS support ... not the final schema.  Added
+   supporting "minixml" support to CPL.			
+
+ o PostGIS: Upgraded to PostGIS 0.6.  Added "soft transaction" semantics.  
+   Many create feature calls can now be part of one transaction.  Transactions
+   are now a general OGR concept although only implemented for PostGIS. 
+
+ o Added transform() and transformTo() methods for reprojecting geometries and
+   added user options for this in ogr2ogr.
+
+ o Very preliminary GML read/write support.  Needs Xerces C++ XML parser for
+   read support. 
+
+==============================================================================
+
+GDAL 1.1.5 New Features
+-----------------------
+
+o AIGrid:
+- Return nodata value.
+
+o OGDI:
+- Added format user documentation.
+- Added Sub Dataset support.
+- Utilize OGDI 3.1 style capabilities metadata.
+
+o SAR_CEOS:
+- Added support for Alaska SAR Toolbox naming convention.
+- Read map projection record for corner GCPs.
+
+o PNG Driver:
+- read/write support for transparency via colortable and nodata value.
+
+o Erdas Imagine (HFA) Driver:
+- Added support for reading external large image files.
+- Added support for uncompressed, but reduced precision blocks.
+
+o GIF Driver:
+- Added .wld world file support.
+- Added transparency read support.
+- Upgraded to libungif 4.x.
+
+o JPEG Driver:
+- Added .wld world file support.
+
+o PAux Driver:
+- Added limited gcp and projection read support.
+
+o GeoTIFF Driver:
+- Added specialized support for 1 bit files.
+- Upgraded world file reading (added .wld files), use
+GDALReadWorldFile().
+
+o JDEM Driver is new (Japanese DEM format).
+
+o FujiBAS Driver is new.
+
+o ERMapper ECW Driver is new.
+
+o GDAL Bridge: upgraded to include new entry points, like GCP access and
+nodata api.
+
+o gdal_translate: added the -not_scrict option.
+
+o GDALGetRandomRasterSample(): Return magnitude for random samples.
+
+o Added use of CPL_CVSID macro in most source files. Running the RCS ident
+command on any GDAL executable or shared library should now give a listing
+of most object file versions from which it was built.
+
+o Various improvements so that static builds will work under Cygwin.
+
+o Various improvements so that builds can be done on MacOS X.
+
+o Overviews: Implement AVERAGE_MAGPHASE option for complex image overviews.
+
+o Added support for sub datasets to gdalinfo, core api and OGDI raster driver.
+
+o The size of the GDAL cache can now be overridden with the GDAL_CACHEMAX
+environment variable (measured in MB).
+
+o Added Driver implementation tutorial to documentation.
+
+o Added apps/gdaltindex.c - application for building tile indexed raster
+datasets suitable for use with UMN MapServer.
+
+
+GDAL 1.1.5 Significant Bug Fixes
+--------------------------------
+
+o SAR_CEOS:
+- Don't try to get GCPs from scanlines with no prefix data.
+
+o GeoTIFF:
+- Fixed handling of RGBA band ordering on big endian systems.
+- Fixed bugs in overview generation, especially when updating in place.
+
+o gdal-config should work properly in all situations now.
+
+o JPEG Driver: improved magic number tested to avoid ignoring some jpeg files.
+
+o FITS Driver: lots of fixes and improvements.
+
+
+OGR 1.1.5 New Features
+----------------------
+
+o Implemented support for attribute query filters (SetAttributeFilter())
+on OGRLayer, provided SWQ based implementation, plugged into all
+drivers and added hooks to ogrinfo.
+
+o MapInfo Driver:
+- Added accelerated spatial query support.
+- Upgraded to current MITAB source as of GDAL release date.
+
+o S-57 Driver:
+- Added support for applying S-57 updates automatically.
+
+o SDTS Driver:
+- Added ENID and SNID to line features.
+- Return coordinate system in WKT instead of PROJ.4 format.
+
+o Shapefile Driver:
+- Auto determine shapefile type from first object written.
+- Added good support for NULL shapes, and NULL attribute fields.
+- Added support for .prj files (read and write).
+
+o PostgreSQL Driver:
+- Added PostGIS support.
+- Pass attribute queries through to PostgreSQL.
+
+o NTF Driver:
+- Added support for GTYPE 5 geometries (a type of arc).
+- Added support for GEOMETRY3D records in indexed (generic) datasets.
+
+o TIGER/Line Driver:
+- Added write support.
+- Improved read support for TIGER 2000.
+
+o OLE DB Provider:
+- Added support for spatial queries via ICommand parameters.
+- Added support for attribute queries by parsing out WHERE clause.
+- In general substantial rework and extentions were made to make it
+work with ESRI and AutoDesk clients.
+
+o Added gdal/data/stateplane.txt - a test file with one line per state plane
+zone for applications wanting to present options to users.
+
+o Install ogrsf_frmts.a on install if building with OGR support enabled.
+
+o Reports layer extents in ogrinfo.
+
+OGR 1.1.5 Significant Bug Fixes
+-------------------------------
+
+o OGRSpatialReference:
+- Fix bug with extracting linear units from EPSG derived definitions.
+- Fixed bug translating LCC from EPSG to WKT (importFromEPSG()).
+- Improved IsSame() test for GEOGCS now.
+- Fixed crash if PROJECTION missing from PROJCS definition.
+
+o S-57:
+- Improve recovery from corrupt line geometries.
+- Read objects as generic if the object class is not recognised.
+- Handle LIST attributes as a string, instead of as a single int.
+
+o NTF:
+- Fixed circle conversion to polylines to close the circle properly.
+- Upped MAX_LINK to 5000 to handle much more complex geometries.
+
+o DGN:
+- Don't include elements with the complex bit set in extents
+computations.
+
+o OGRGeometry:
+- Fixed WKT format (import and export) for various container types.
+- WKT import fixed for coordinates, and Z coordinates.

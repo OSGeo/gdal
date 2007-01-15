@@ -1,0 +1,307 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  KML Driver
+ * Purpose:  Implementation of OGRKMLDataSource class.
+ * Author:   Christopher Condit, condit@sdsc.edu
+ *
+ ******************************************************************************
+ * Copyright (c) 2006, Christopher Condit
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ******************************************************************************
+ *
+ * $Log$
+ * Revision 1.5  2007/01/10 19:03:26  dmorissette
+ * CPLStrdup() the value assigned to pszNameField (bug 1432)
+ *
+ * Revision 1.4  2006/08/04 19:36:03  fwarmerdam
+ * Initialize pszNameField.
+ *
+ * Revision 1.3  2006/07/27 19:53:01  mloskot
+ * Added common file header to KML driver source files.
+ *
+ *
+ */
+#include "ogr_kml.h"
+#include "cpl_conv.h"
+#include "cpl_string.h"
+#include "cpl_error.h"
+
+/************************************************************************/
+/*                         OGRKMLDataSource()                         */
+/************************************************************************/
+OGRKMLDataSource::OGRKMLDataSource()
+{
+    pszName = NULL;
+    pszNameField = NULL;
+    papoLayers = NULL;
+    nLayers = 0;
+    
+    fpOutput = NULL;
+
+    papszCreateOptions = NULL;
+}
+
+/************************************************************************/
+/*                        ~OGRKMLDataSource()                         */
+/************************************************************************/
+OGRKMLDataSource::~OGRKMLDataSource()
+{
+    if( fpOutput != NULL )
+    {
+        VSIFPrintf( fpOutput, "%s", 
+                    "</Folder></Document></kml>\n" );
+        
+        if( fpOutput != stdout )
+            VSIFClose( fpOutput );
+    }
+
+    CSLDestroy( papszCreateOptions );
+    CPLFree( pszName );
+    CPLFree( pszNameField );
+
+    for( int i = 0; i < nLayers; i++ )
+    {
+        delete papoLayers[i];
+    }
+    
+    CPLFree( papoLayers );
+    
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+int OGRKMLDataSource::Open( const char * pszNewName, int bTestOpen )
+{
+    FILE        *fp;
+    char        szHeader[1000];	
+	
+    CPLAssert( NULL != pszNewName );
+
+/* -------------------------------------------------------------------- */
+/*      Open the source file.                                           */
+/* -------------------------------------------------------------------- */
+    fp = VSIFOpen( pszNewName, "r" );
+    if( fp == NULL )
+    {
+        if( !bTestOpen )
+            CPLError( CE_Failure, CPLE_OpenFailed, 
+                      "Failed to open KML file `%s'.", 
+                      pszNewName );
+
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we aren't sure it is KML, load a header chunk and check      */
+/*      for signs it is KML                                             */
+/* -------------------------------------------------------------------- */
+    if( bTestOpen )
+    {
+        VSIFRead( szHeader, 1, sizeof(szHeader), fp );
+        szHeader[sizeof(szHeader)-1] = '\0';
+			
+        if( szHeader[0] != '<' 
+            || strstr(szHeader, "http://earth.google.com/kml/2.0") == NULL )
+        {			
+            VSIFClose( fp );
+            return FALSE;
+        }
+    }
+    
+	VSIFClose( fp );
+	
+	CPLError( CE_Failure, CPLE_AppDefined, 
+              "Reading KML files is not currently supported\n");
+
+    return TRUE;	
+}
+
+/************************************************************************/
+/*                         TranslateKMLSchema()                         */
+/************************************************************************/
+OGRKMLLayer *OGRKMLDataSource::TranslateKMLSchema( KMLFeatureClass *poClass )
+{
+    CPLAssert( NULL != poClass );
+
+    OGRKMLLayer *poLayer;
+    poLayer = new OGRKMLLayer( poClass->GetName(), NULL, FALSE, 
+                               wkbUnknown, this );
+
+    return poLayer;
+}
+
+/************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
+int OGRKMLDataSource::Create( const char *pszFilename, 
+                              char **papszOptions )
+{
+    CPLAssert( NULL != pszFilename );
+
+    if( fpOutput != NULL )
+    {
+        CPLAssert( FALSE );
+        return FALSE;
+    }
+
+    pszNameField = CPLStrdup(CSLFetchNameValue(papszOptions, "NameField"));
+    CPLDebug("KML", "Using the field '%s' for name element", pszNameField);
+    
+/* -------------------------------------------------------------------- */
+/*      Create the output file.                                         */
+/* -------------------------------------------------------------------- */
+    pszName = CPLStrdup( pszFilename );
+
+    
+    if( EQUAL(pszFilename,"stdout") )
+        fpOutput = stdout;
+    else
+        fpOutput = VSIFOpen( pszFilename, "wt+" );
+
+    if( fpOutput == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed, 
+                  "Failed to create KML file %s.", 
+                  pszFilename );
+        return FALSE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write out "standard" header.                                    */
+/* -------------------------------------------------------------------- */
+    VSIFPrintf( fpOutput, "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" );	
+
+    nSchemaInsertLocation = VSIFTell( fpOutput );
+    
+    VSIFPrintf( fpOutput, "<kml xmlns=\"http://earth.google.com/kml/2.0\">\n<Document>" );
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                            CreateLayer()                             */
+/************************************************************************/
+
+OGRLayer *
+OGRKMLDataSource::CreateLayer( const char * pszLayerName,
+                               OGRSpatialReference *poSRS,
+                               OGRwkbGeometryType eType,
+                               char ** papszOptions )
+{
+    CPLAssert( NULL != pszLayerName);
+
+/* -------------------------------------------------------------------- */
+/*      Verify we are in update mode.                                   */
+/* -------------------------------------------------------------------- */
+    if( fpOutput == NULL )
+    {
+        CPLError( CE_Failure, CPLE_NoWriteAccess,
+                  "Data source %s opened for read access.\n"
+                  "New layer %s cannot be created.\n",
+                  pszName, pszLayerName );
+
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Close the previous layer (if there is one open)         */
+/* -------------------------------------------------------------------- */
+    if (GetLayerCount() > 0)
+        VSIFPrintf( fpOutput, "</Folder>\n");
+
+    
+/* -------------------------------------------------------------------- */
+/*      Ensure name is safe as an element name.                         */
+/* -------------------------------------------------------------------- */
+    char *pszCleanLayerName = CPLStrdup( pszLayerName );
+
+    CPLCleanXMLElementName( pszCleanLayerName );
+    if( strcmp(pszCleanLayerName, pszLayerName) != 0 )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, 
+                  "Layer name '%s' adjusted to '%s' for XML validity.",
+                  pszLayerName, pszCleanLayerName );
+    }
+    VSIFPrintf( fpOutput, "<Folder><name>%s</name>\n", pszCleanLayerName);
+    
+/* -------------------------------------------------------------------- */
+/*      Create the layer object.                                        */
+/* -------------------------------------------------------------------- */
+    OGRKMLLayer *poLayer;
+    poLayer = new OGRKMLLayer( pszCleanLayerName, poSRS, TRUE, eType, this );
+    CPLFree( pszCleanLayerName );
+
+/* -------------------------------------------------------------------- */
+/*      Add layer to data source layer list.                            */
+/* -------------------------------------------------------------------- */
+    papoLayers = (OGRKMLLayer **)
+        CPLRealloc( papoLayers,  sizeof(OGRKMLLayer *) * (nLayers+1) );
+    
+    papoLayers[nLayers++] = poLayer;
+
+    return poLayer;
+}
+
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+int OGRKMLDataSource::TestCapability( const char * pszCap )
+
+{
+    if( EQUAL(pszCap,ODsCCreateLayer) )
+        return TRUE;
+    else
+        return FALSE;
+}
+
+/************************************************************************/
+/*                              GetLayer()                              */
+/************************************************************************/
+OGRLayer *OGRKMLDataSource::GetLayer( int iLayer )
+{
+    if( iLayer < 0 || iLayer >= nLayers )
+        return NULL;
+    else
+        return papoLayers[iLayer];
+}
+
+/************************************************************************/
+/*                            GrowExtents()                             */
+/************************************************************************/
+void OGRKMLDataSource::GrowExtents( OGREnvelope *psGeomBounds )
+{
+    CPLAssert( NULL != psGeomBounds );
+
+    sBoundingRect.Merge( *psGeomBounds );
+}
+
+/************************************************************************/
+/*                            InsertHeader()                            */
+/*                                                                      */
+/*      This method is used to update boundedby info for a              */
+/*      dataset, and insert schema descriptions depending on            */
+/*      selection options in effect.                                    */
+/************************************************************************/
+void OGRKMLDataSource::InsertHeader()
+{    
+        return;
+}

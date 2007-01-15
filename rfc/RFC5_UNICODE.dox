@@ -1,0 +1,210 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
+/*!
+\page rfc5_unicode RFC 5: Unicode support in GDAL
+
+Author: Andrey Kiselev<br>
+Contact: dron@ak4719.spb.edu<br>
+Status: Development<br>
+
+\section rfc5_summary Summary
+
+This document contains proposal on how to make GDAL core locale independent
+preserving support for native character sets.
+
+\section rfc5_main Main concepts
+
+GDAL should be modified in a way to support three following main ideas:
+
+<ol>
+
+<li> Users work in localized environment using their native languages. That
+means we can not assume ASCII character set when working with string data
+passed to GDAL.
+
+<li> GDAL uses UTF-8 encoding internally when working with strings.
+
+<li> GDAL uses Unicode version of third-party APIs when it is possible.
+
+</ol>
+
+So all strings, used in GDAL, are in UTF-8, not in plain ASCII. That means we
+should convert user's input from the local encoding to UTF-8 during
+interactive sessions. The opposite should be done for GDAL output. For
+example, when user passes a filename as a command-line parameter to GDAL
+utilities, that filename should be immediately converted to UTF-8 and only
+afetrwards passed to functions like GDALOpen() or OGROpen(). All functions,
+wich take character strings as parameters, assume UTF-8 (with except of
+several ones, which will do the conversion between different encodings, see
+\ref rfc5_implementation). The same is valid for output functions. Output
+functions (CPLError/CPLDebug), embedded in GDAL, should convert all strings
+from UTF-8 to local encoding just before printing them. Custom error handlers
+should be aware of UTF-8 issue and do the proper transformation of strings
+passed to them.
+
+The string encoding pops up again when GDAL needs to call the third-party API.
+UTF-8 should be converted to encoding suitable for that API. In particular,
+that means we should convert UTF-8 to UTF-16 before calling CreateFile()
+function in Windows implementation of VSIFOpenL(). Another example is a
+PostgreSQL API. PostgreSQL stores strings in UTF-8 encoding internally, so we
+should notify server that passed string is already in UTF-8 and it will be
+stored as is without any conversions and losses.
+
+For file format drivers the string representation should be worked out on
+per-driver basis. Not all file formats support non-ASCII characters. For
+example, various .HDR labeled rasters are just 7-bit ASCII text files and it
+is not a good idea to write 8-bit strings in such a files. When we need to
+pass strings, extracted from such file outside the driver (e.g., in
+SetMetadata() call), we should convert them to UTF-8. If you just want to use
+extracted strings internally in driver, there is no need in any conversions.
+
+In some cases the file encoding can differ from the local system encoding and
+we do not have a way to know the file encoding other than ask a user (for
+example, imagine a case when someone added a 8-bit non-ASCII string field to
+mentioned above plain text .HDR file). That means we can't use conversion form
+the local encoding to UTF-8, but from the file encoding to UTF-8. So we need a
+way to get file encoding in some way on per datasource basis. The natural
+solution of the problem is to introduce optional open parameter "ENCODING" to
+GDALOpen/OGROpen functions.  Unfortunately, those functions do not accept
+options.  That should be introduced in another RFC. Fortunately, tehre is no
+need to add encoding parameter immediately, because it is independent from the
+general i18n process. We can add UTF-8 support as it is defined in this RFC
+and add support for forcing per-datasource encoding later, when the open
+options will be introduced.
+
+\section rfc5_implementation Implementation
+
+<ul>
+
+<li> New character conversion functions will be introduced in CPLString
+class. Objects of that class always contain UTF-8 string internally.
+
+<pre>
+
+// Get string in local encoding from the internal UTF-8 encoded string.
+// Out-of-range characters replaced with '?' in output string.
+// nEncoding A codename of encoding. If 0 the local system
+// encoding will be used.
+char* CPLString::recode( int nEncoding = 0 );
+
+// Construct UTF-8 string object from string in other encoding
+// nEncoding A codename of encoding. If 0 the local system
+// encoding will be used.
+CPLString::CPLString( const char*, int nEncoding );
+
+// Construct UTF-8 string object from array of wchar_t elements.
+// Source encoding is system specific.
+CPLString::CPLString( wchar_t* );
+
+// Get string from UTF-8 encoding into array of wchar_t elements.
+// Destination encoding is system specific.
+operator wchar_t* (void) const;
+
+</pre>
+
+<li> In order to use non-ASCII characters in user input every application
+should call setlocale(LC_ALL,  "") function right after the entry point.
+
+<li> Code example. Let's look how the gdal utilities and core code should be
+changed in regard to Unicode.
+
+For input instead of
+
+<pre>
+
+pszFilename = argv[i];
+if( pszFilename )
+	hDataset = GDALOpen( pszFilename, GA_ReadOnly );
+
+</pre>
+
+we should do
+
+<pre>
+
+CPLString oFilename(argv[i], 0); // <-- Conversion from local encoding to UTF-8
+hDataset = GDALOpen( oFilename.c_str(), GA_ReadOnly );
+
+</pre>
+
+For output instead of
+
+<pre>
+
+printf( "Description = %s\n", GDALGetDescription(hBand) );
+
+</pre>
+
+we should do
+
+<pre>
+
+CPLString oDescription( GDALGetDescription(hBand) );
+printf( "Description = %s\n", oDescription.recode( 0 ) ); // <-- Conversion
+							// from UTF-8 to local
+
+</pre>
+
+The filename passed to GDALOpen() in UTF-8 encoding in the code snippet
+above will be further processed in the GDAL core. On Windows instead of
+
+<pre>
+
+hFile = CreateFile( pszFilename, dwDesiredAccess,
+	FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, dwCreationDisposition,
+	dwFlagsAndAttributes, NULL );
+
+</pre>
+
+we do
+
+<pre>
+
+CPLString oFilename( pszFilename );
+// I am prefer call the wide character version explicitly
+// rather than specify _UNICODE switch.
+hFile = CreateFileW( (wchar_t *)oFilename, dwDesiredAccess,
+        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+        dwCreationDisposition,  dwFlagsAndAttributes, NULL );
+
+</pre>
+
+<li> The actual implementation of the character conversion functions does
+not specified in this document yet. It needs additional discussion. The main
+problem is that we need not only local<->UTF-8 encoding conversions, but
+<b>arbitrary</b><->UTF-8 ones. That requires significant support on software
+part.
+
+</ul>
+
+\section rfc5_backward Backward Compatibility
+
+The GDAL/OGR backward compatibility will be broken by this new functionality
+in the way how 8-bit characters handled. Before users may rely on that all
+8-bit character strings will be passed throgh the GDAL/OGR without change and
+will contain exact the same data all the way. Now it is only true for 7-bit
+ASCII and 8-bit UTF-8 encoded strings. Note, that if you used only ASCII
+subset with GDAL, you are not affected by these changes.
+
+\section rfc5_references References
+
+<ul>
+
+<li> FAQ on how to use Unicode in software:
+
+<a href="http://www.cl.cam.ac.uk/~mgk25/unicode.html">
+http://www.cl.cam.ac.uk/~mgk25/unicode.html</a>
+
+<li> FLTK implementation of string conversion functions:
+
+<a href="http://svn.easysw.com/public/fltk/fltk/trunk/src/utf.c">
+http://svn.easysw.com/public/fltk/fltk/trunk/src/utf.c</a>
+<a href="http://www.easysw.com/~mike/fltk/doc-2.0/html/utf_8h.html">
+http://www.easysw.com/~mike/fltk/doc-2.0/html/utf_8h.html</a>
+
+</ul>
+
+*/
+ 

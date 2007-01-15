@@ -1,0 +1,10 @@
+Module1 = 44, 58, 825, 705, C
+frmMain = 198, 29, 955, 713, , 46, 121, 827, 768, C
+GDALDataset = 82, 83, 928, 730, C
+GDALCore = 93, 68, 816, 715, 
+GDALRasterBand = 138, -7, 895, 640, 
+GDAL = 96, 167, 853, 814, 
+GDALDriver = 163, 117, 920, 764, 
+GDALColorTable = 107, 56, 867, 703, 
+OGRSpatialReference = 143, 65, 903, 712, 
+OGRCoordinateTransformation = 171, 77, 931, 724, 

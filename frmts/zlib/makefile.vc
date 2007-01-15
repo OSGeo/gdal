@@ -1,0 +1,16 @@
+
+OBJ	=	\
+	adler32.obj compress.obj crc32.obj deflate.obj gzio.obj \
+	infblock.obj infcodes.obj inffast.obj inflate.obj \
+	infutil.obj inftrees.obj trees.obj uncompr.obj zutil.obj 
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+

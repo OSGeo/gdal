@@ -1,0 +1,34 @@
+
+BOBJ	=	sdtsiref.obj sdtscatd.obj sdtslinereader.obj sdtslib.obj \
+		sdtspointreader.obj sdtsattrreader.obj sdtstransfer.obj \
+		sdtspolygonreader.obj sdtsxref.obj sdtsrasterreader.obj \
+		sdtsindexedreader.obj 
+OBJ 	=	sdtsdataset.obj $(BOBJ)
+
+EXTRAFLAGS = 	-I..\iso8211
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+base:	    $(BOBJ)
+
+clean:
+	-del *.obj
+	-del *.exe
+	-del *.lib
+
+sdts2shp.exe:	sdts2shp.cpp $(BOBJ)
+	$(CC) $(CFLAGS) /I..\shapelib sdts2shp.cpp $(BOBJ) \
+		..\iso8211\ddfmodule.cpp \
+		..\iso8211\ddfutils.cpp \
+		..\iso8211\ddffielddefn.cpp \
+		..\iso8211\ddfrecord.cpp \
+		..\iso8211\ddffield.cpp \
+		..\iso8211\ddfsubfielddefn.cpp \
+		..\shapelib\shpopen.c ..\shapelib\dbfopen.c \
+			$(GDAL_ROOT)\port\cpl.lib $(LIBS) 
+

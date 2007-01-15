@@ -1,0 +1,16 @@
+
+OBJ	=	ogrmysqldriver.obj ogrmysqldatasource.obj ogrmysqllayer.obj \
+		ogrmysqltablelayer.obj ogrmysqlresultlayer.obj
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+EXTRAFLAGS = -I.. -I..\.. -I$(MYSQL_INC_DIR)
+
+default:	$(OBJ)
+
+clean:
+	-del *.lib
+	-del *.obj *.pdb
+	-del *.exe

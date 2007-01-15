@@ -1,0 +1,185 @@
+<html>
+<head>
+<title>DODS -- OPeNDAP Grid Client</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>DODS -- OPeNDAP Grid Client</h1>
+
+GDAL optionally includes read support for 2D grids and arrays via the OPeNDAP
+(DODS) protocol. <p>
+
+<h2>Dataset Naming</h2>
+
+The full dataset name specification consists of the OPeNDAP dataset
+url, the full path to the desired array or grid variable, and an indicator
+of the array indices to be accessed.<p>
+
+For instance, if the url http://maps.gdal.org/daac-bin/nph-hdf/3B42.HDF.dds 
+returns a DDS definition like this:<p>
+
+<pre>
+Dataset {
+  Structure {
+    Structure {
+      Float64 percipitate[scan = 5][longitude = 360][latitude = 80];
+      Float64 relError[scan = 5][longitude = 360][latitude = 80];
+    } PlanetaryGrid;
+  } DATA_GRANULE;
+} 3B42.HDF;
+</pre>
+<p>
+
+then the percipitate grid can be accessed using the following GDAL 
+dataset name:<p>
+
+http://maps.gdal.org/daac-bin/nph-hdf/3B42.HDF?DATA_GRANULE.PlanetaryGrid.percipitate[0][x][y]
+<p>
+
+The full path to the grid or array to be accessed needs to be specified (not
+counting the outer Dataset name).  GDAL needs to know which indices of 
+the array to treat as x (longitude or easting) and y (latitude or northing).
+Any other dimensions need to be restricted to a single value.<p>
+
+In cases of data servers with only 2D arrays and grids as immediate
+children of the Dataset it may not be necessary to name the grid or array
+variable. <p>
+
+In cases where there are a number of 2D arrays or grids at the dataset
+level, they may be each automatically treated as seperate bands.<p>
+
+<h2>Specialized AIS/DAS Metadata</h2>
+
+A variety of information will be transported via the DAS describing
+the dataset.  Some DODS drivers (such as the GDAL based one!) already
+return the following DAS information, but in other cases it can be
+supplied locally using the AIX mechanism.  See the DODS documentation
+for details of how the AIS mechanism works. <p>
+
+<pre>
+Attributes {
+
+    GLOBAL { 
+        Float64 Northernmost_Northing 71.1722;
+	Float64 Southernmost_Northing  4.8278;
+	Float64	Easternmost_Easting  -27.8897;
+	Float64	Westernmost_Easting -112.11;
+        Float64 GeoTransform "71.1722 0.001 0.0 -112.11 0.0 -0.001";
+	String spatial_ref "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]";
+        Metadata { 
+          String TIFFTAG_XRESOLUTION "400";
+          String TIFFTAG_YRESOLUTION "400";
+          String TIFFTAG_RESOLUTIONUNIT "2 (pixels/inch)";
+        }
+    }
+
+    band_1 {
+        String Description "...";
+        String 
+    }
+}
+</pre>
+
+<h3>Dataset</h3>
+
+There will be an object in the DAS named GLOBAL containing
+attributes of the dataset as a whole. <p>
+
+It will have the following subitems:<p>
+
+<ul>
+
+<li> <b>Northernmost_Northing</b>: The latitude or northing of the north edge of the image. <p>
+<li> <b>Southernmost_Northing</b>: The latitude or northing of the south edge of the image. <p>
+<li> <b>Easternmost_Easting</b>: The longitude or easting of the east edge of the image. <p>
+<li> <b>Westernmost_Easting</b>: The longitude or easting of the west edge of the image.<p>
+
+<li> <b>GeoTransform</b>: The six parameters defining the affine transformation
+between pixel/line space and georeferenced space if applicable.  Stored
+as a single string with values seperated by sapces.  Note this 
+allows for rotated or sheared images. (optional) <p>
+
+<li> <b>SpatialRef</b>: The OpenGIS WKT description of the coordinate system.
+If not provided it will be assumed that the coordinate system is WGS84.
+(optional) <p>
+
+<li> <b>Metadata</b>: a container with a list of string attributes for
+each available metadata item.  The metadata item keyword name will be used
+as the attribute name.  Metadata values will always be strings. (optional)
+
+<li> <i>address GCPs</i><p>
+
+</ul>
+
+Note that the edge northing and easting values can be computed based
+on the grid size and the geotransform. They are included primarily as
+extra documentation that is easier to interprete by a user than the
+GeoTransform.  They will also be used to compute a GeoTransform internally
+if one is note provided, but if both are provided the GeoTransform will
+take precidence.<p>
+
+<h3>Band</h3>
+
+There will be an object in the DAS named after each band containing
+attribute of the specific band.   <p>
+
+It will have the following subitems:<p>
+
+<ul>
+
+<li> <b>Metadata</b>: a container with a list of string attributes for
+each available metadata item.  The metadata item keyword name will be used
+as the attribute name.  Metadata values will always be strings. (optional)<p>
+
+<li> <b>PhotometricInterpretation</b>: Will have a string value that is
+one of "Undefined", "GrayIndex", "PaletteIndex", "Red", "Green",
+"Blue", "Alpha", "Hue", "Saturation", "Lightness", "Cyan", "Magenta",
+"Yellow" or "Black".  (optional)<p>
+
+<li> <b>units</b>: name of units (one of "ft" or "m" for elevation data).
+(optional)<p>
+
+<li> <b>add_offset</b>: Offset to be applied to pixel values (after 
+scale_factor) to compute a "real" pixel value.  Defaults to 0.0. (optional)<p>
+
+<li> <b>scale_factor</b>: Scale to be applied to pixel values (before
+add_offset) to compute "real" pixel value.  Defaults to 1.0. (optional)<p>
+
+<li> <b>Description</b>: Descriptive text about the band. (optional)<p>
+
+<li> <b>missing_value</b>: The nodata value for the raster. (optional)<p>
+
+<li> <b>Colormap</b>: A container with a subcontainer for each color in
+the color table, looking like the following.  The alpha component is
+optional and assumed to be 255 (opaque) if not provided.<p>
+<pre>									
+    Colormap { 
+      Color_0 { 
+        Byte red 0;
+        Byte green 0;
+        Byte blue 0;
+        Byte alpha 255;
+      }
+      Color_1 { 
+        Byte red 255;
+        Byte green 255;
+        Byte blue 255;
+        Byte alpha 255;
+      }
+      ...
+    }
+</pre>
+
+</ul>
+
+<hr>
+
+See Also:<p>
+
+<ul>
+<li> <a href="http://www.opendap.org/">OPeNDAP Website</a>
+</ul>
+
+</body>
+</html>

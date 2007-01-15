@@ -1,0 +1,82 @@
+.TH "ogr2ogr" 1 "28 Jun 2006" "GDAL" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ogr2ogr \- ogr2ogr
+converts simple features data between file formats
+.SH "SYNOPSIS"
+.PP
+.PP
+.PP
+.nf
+Usage: ogr2ogr [-skipfailures] [-append] [-update] [-f format_name]
+               [-select field_list] [-where restricted_where] 
+               [-sql <sql statement>] 
+               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]
+               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
+               [[-dsco NAME=VALUE] ...] dst_datasource_name
+               src_datasource_name
+               [-lco NAME=VALUE] [-nln name] [-nlt type] layer [layer ...]]
+.fi
+.PP
+.SH "DESCRIPTION"
+.PP
+This program can be used to convert simple features data between file formats performing various operations during the process such as spatial or attribute selections, reducing the set of attributes, setting the output coordinate system or even reprojecting the features during translation.
+.PP
+.IP "\fB\fB -f\fP\fI format_name\fP:\fP" 1c
+output file format name, some possible values are: 
+.PP
+.nf
+     -f "ESRI Shapefile"
+     -f "TIGER"
+     -f "MapInfo File"
+     -f "GML"
+     -f "PostgreSQL"
+	 
+.fi
+.PP
+  
+.IP "\fB\fB-append\fP:\fP" 1c
+Append to existing layer instead of creating new 
+.IP "\fB\fB-update\fP:\fP" 1c
+Open existing output datasource in update mode 
+.IP "\fB\fB-select\fP\fI field_list\fP:\fP" 1c
+Comma-delimited list of fields from input layer to copy to the new layer (defaults to all) 
+.IP "\fB\fB-sql\fP \fIsql_statement\fP:\fP" 1c
+SQL statement to execute. The resulting table/layer will be saved to the output. 
+.IP "\fB\fB-where\fP\fI restricted_where\fP:\fP" 1c
+Attribute query (like SQL WHERE) 
+.IP "\fB\fB-spat\fP\fI xmin ymin xmax ymax\fP:\fP" 1c
+spatial query extents 
+.IP "\fB\fB-dsco\fP \fINAME=VALUE\fP:\fP" 1c
+Dataset creation option (format specific) 
+.IP "\fB\fB-lco\fP\fI NAME=VALUE\fP:\fP" 1c
+Layer creation option (format specific) 
+.IP "\fB\fB-nln\fP\fI name\fP:\fP" 1c
+Assign an alternate name to the new layer 
+.IP "\fB\fB-nlt\fP\fI type\fP:\fP" 1c
+Define the geometry type for the created layer. One of NONE, GEOMETRY, POINT, LINESTRING, POLYGON, GEOMETRYCOLLECTION, MULTIPOINT, MULTILINE, MULTIPOLYGON or MULTILINESTRING. Add '25D' to the name to get 2.5D versions. 
+.IP "\fB\fB-a_srs\fP\fI srs_def\fP:\fP" 1c
+Assign an output SRS 
+.IP "\fB\fB-t_srs\fP\fI srs_def\fP:\fP" 1c
+Reproject/transform to this SRS on output 
+.IP "\fB\fB-s_srs\fP\fI srs_def\fP:\fP" 1c
+Override source SRS 
+.IP "\fB\fB-fid\fP \fIfid\fP:\fP" 1c
+If provided, only the feature with this feature id will be reported. Operates exclusive of the spatial or attribute queries. 
+.PP
+.PP
+Srs_def can be a full WKT definition (hard to escape properly), or a well known definition (ie. EPSG:4326) or a file with a WKT definition.
+.PP
+Example appending to an existing layer (both flags need to be used):
+.PP
+.PP
+.nf
+% ogr2ogr -update -append -f PostgreSQL PG:dbname=warmerda abc.tab
+.fi
+.PP
+.PP
+More examples are given in the individual format pages.
+.SH "AUTHORS"
+.PP
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de> 

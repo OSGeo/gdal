@@ -1,0 +1,453 @@
+<html>
+<head>
+<title>GDAL Raster Formats</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>GDAL Raster Formats</h1>
+
+<table border>
+
+<tr>
+<th>Long Format Name</th>
+<th>Code</th>
+<th>Creation</th>
+<th>Georeferencing</th>
+<th>Maximum file size<sup><a href="#footnote1">1</a></sup></th>
+</tr>
+
+<tr><td> <a href="frmt_various.html#AAIGrid">Arc/Info ASCII Grid</a>
+</td><td> AAIGrid
+</td><td> Yes
+</td><td> Yes
+</td><td> 2GB
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#AIG">Arc/Info Binary Grid (.adf)</a>
+</td><td> AIG
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_airsar.html">AIRSAR Polarimetric</a>
+</td><td> AIRSAR
+</td><td> No
+</td><td> No
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_bmp.html">Microsoft Windows Device Independent Bitmap (.bmp)</a>
+</td><td> BMP
+</td><td> Yes
+</td><td> Yes
+</td><td> 4GiB
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#BSB">BSB Nautical Chart Format (.kap)</a>
+</td><td> BSB
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#BT">VTP Binary Terrain Format (.bt)</a>
+</td><td> BT
+</td><td> Yes
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#CEOS">CEOS (Spot for instance)</a>
+</td><td> CEOS
+</td><td> No
+</td><td> No
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#DOQ1">First Generation USGS DOQ (.doq)</a>
+</td><td> DOQ1
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_dods.html">DODS / OPeNDAP</a>
+</td><td> DODS
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#DOQ2">New Labelled USGS DOQ (.doq)</a>
+</td><td> DOQ2
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_dted.html">Military Elevation Data (.dt0, .dt1)</a>
+</td><td> DTED
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_ecw.html">ERMapper Compressed Wavelets (.ecw)</a>
+</td><td> ECW
+</td><td> Yes
+</td><td> Yes
+</td><td>
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#EHdr">ESRI .hdr Labelled</a>
+</td><td> EHdr
+</td><td> Yes
+</td><td> Yes
+</td><td> No limits
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#ENVI">ENVI .hdr Labelled Raster</a>
+</td><td> ENVI
+</td><td> Yes
+</td><td> Yes
+</td><td> No limits
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#Envisat">Envisat Image Product (.n1)</a>
+</td><td> Envisat
+</td><td> No
+</td><td> No
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_fast.html">EOSAT FAST Format</a>
+</td><td> FAST
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#FITS">FITS (.fits)</a>
+</td><td> FITS
+</td><td> Yes
+</td><td> No
+</td><td>
+</td></tr>
+
+<tr><td> <a href="frmt_gif.html">Graphics Interchange Format (.gif)</a>
+</td><td> GIF
+</td><td> Yes
+</td><td> No
+</td><td> 2GB
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#GMT">GMT Compatible netCDF</a>
+</td><td> GMT
+</td><td> Yes
+</td><td> Yes
+</td><td> 2GB
+</td></tr>
+
+<tr><td> <a href="frmt_grass.html">GRASS Rasters</a>
+</td><td> GRASS
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_gtiff.html">TIFF / GeoTIFF (.tif)</a>
+</td><td> GTiff
+</td><td> Yes
+</td><td> Yes
+</td><td> 4GiB
+</td></tr>
+
+<tr><td> <a href="frmt_hdf4.html">Hierarchical Data Format Release 4 (HDF4)</a>
+</td><td> HDF4
+</td><td> Yes
+</td><td> Yes
+</td><td> 2GiB
+</td></tr>
+
+<tr><td> <a href="frmt_hdf4.html">Hierarchical Data Format Release 5 (HDF5)</a>
+</td><td> HDF5
+</td><td> Yes
+</td><td> Yes
+</td><td> 2GiB
+</td></tr>
+
+<tr><td> <a href="frmt_hfa.html">Erdas Imagine (.img)</a>
+</td><td> HFA
+</td><td> Yes
+</td><td> Yes
+</td><td> No limits<sup><a href="#footnote2">2</a></sup>
+</td></tr>
+
+<tr><td> <a href="frmt_mff2.html">Vexcel MFF2</a>
+</td><td> HKV
+</td><td> Yes
+</td><td> Yes
+</td><td> No limits
+</td></tr>
+
+<tr><td> <a href="frmt_Idrisi.html">Idrisi Raster</a>
+</td><td> RST
+</td><td> Yes
+</td><td> Yes
+</td><td> No limits
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#IDA">Image Display and Analysis (WinDisp)</a>
+</td><td> IDA
+</td><td> Yes
+</td><td> Yes
+</td><td> 2GB
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#ILWIS">ILWIS Raster Map (.mpr,.mpl)</a>
+</td><td> ILWIS
+</td><td> Yes
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#JDEM">Japanese DEM (.mem)</a>
+</td><td> JDEM
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_jpeg.html">JPEG JFIF (.jpg)</a>
+</td><td> JPEG
+</td><td> Yes
+</td><td> Yes
+</td><td> 4GiB (max dimentions 65500x65500)
+</td></tr>
+
+<tr><td> <a href="frmt_jpeg2000.html">JPEG2000 (.jp2, .j2k)</a>
+</td><td> JPEG2000
+</td><td> Yes
+</td><td> Yes
+</td><td> 2GiB
+</td></tr>
+
+<tr><td> <a href="frmt_jp2kak.html">JPEG2000 (.jp2, .j2k)</a>
+</td><td> JP2KAK
+</td><td> Yes
+</td><td> Yes
+</td><td> No limits
+</td></tr>
+
+<tr><td> <a href="frmt_jp2ecw.html">JPEG2000 (.jp2, .j2k)</a>
+</td><td> JP2ECW
+</td><td> Yes
+</td><td> Yes
+</td><td> 500MB
+</td></tr>
+
+<tr><td> <a href="frmt_jp2mrsid.html">JPEG2000 (.jp2, .j2k)</a>
+</td><td> JP2MrSID
+</td><td> Yes
+</td><td> Yes
+</td><td> 
+</td></tr>
+
+<tr><td> <a href="frmt_l1b.html">NOAA Polar Orbiter Level 1b Data Set (AVHRR)</a>
+</td><td> L1B
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#LAN">Erdas 7.x .LAN and .GIS</a>
+</td><td> LAN
+</td><td> No
+</td><td> Yes
+</td><td> 2GB
+</td></tr>
+
+<tr><td> <a href="frmt_leveller.html">Daylon Leveller Heightfield</a>
+</td><td> Leveller
+</td><td> Yes
+</td><td> No
+</td><td> 
+</td></tr>
+
+<tr><td> <a href="frmt_mem.html">In Memory Raster</a>
+</td><td> MEM
+</td><td> Yes
+</td><td> Yes
+</td><td> 2GiB
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#MFF">Vexcel MFF</a>
+</td><td> MFF
+</td><td> Yes
+</td><td> Yes
+</td><td> No limits
+</td></tr>
+
+<tr><td> <a href="frmt_mrsid.html">Multi-resolution Seamless Image Database</a>
+</td><td> MrSID
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_msg.html">Meteosat Second Generation</a>
+</td><td> MSG
+</td><td> No
+</td><td> Yes
+</td><td> 
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#NDF">NDF</a>
+</td><td> NLAPS Data Format
+</td><td> No
+</td><td> Yes
+</td><td> No limits
+</td></tr>
+
+<tr><td> <a href="frmt_nitf.html">NITF</a>
+</td><td> NITF
+</td><td> Yes
+</td><td> Yes
+</td><td> 4GB
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#netCDF">NetCDF</a>
+</td><td> netCDF
+</td><td> Yes
+</td><td> Yes
+</td><td> 2GB
+</td></tr>
+
+<tr><td> <a href="frmt_ogdi.html">OGDI Bridge</a>
+</td><td> OGDI
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#PAux">PCI .aux Labelled</a>
+</td><td> PAux
+</td><td> Yes
+</td><td> No
+</td><td> No limits
+</td></tr>
+
+<tr><td> <a href="frmt_pcidsk.html">PCI Geomatics Database File</a>
+</td><td> PCIDSK
+</td><td> Yes
+</td><td> Yes
+</td><td> No limits
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#PNG">Portable Network Graphics (.png)</a>
+</td><td> PNG
+</td><td> Yes
+</td><td> No
+</td><td>
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#PCRaster">PCRaster (.map)</a>
+</td><td> PCRaster
+</td><td> Yes
+</td><td> Yes
+</td><td>
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#PNM">Netpbm (.ppm,.pgm)</a>
+</td><td> PNM
+</td><td> Yes
+</td><td> No
+</td><td> No limits
+</td></tr>
+
+<tr><td> <a href="frmt_rik.html">Swedish Grid RIK (.rik)</a>
+</td><td> RIK
+</td><td> No
+</td><td> Yes
+</td><td> 4GB
+</td></tr>
+
+<tr><td> <a href="frmt_rs2.html">RadarSat2 XML (product.xml)</a>
+</td><td> RS2
+</td><td> No
+</td><td> Yes
+</td><td> 4GB
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#SDTS">USGS SDTS DEM (*CATD.DDF)</a>
+</td><td> SDTS
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_rmf.html">Raster Matrix Format (*.rsw, .mtw)</a>
+</td><td> RMF
+</td><td> Yes
+</td><td> Yes
+</td><td> 4GB
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#SAR_CEOS">SAR CEOS</a>
+</td><td> SAR_CEOS
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#SGI">SGI Image Format</a>
+</td><td> SGI
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_usgsdem.html">USGS ASCII DEM (.dem)</a>
+</td><td> USGSDEM
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_wcs.html">OGC Web Coverage Server</a>
+</td><td> WCS
+</td><td> No
+</td><td> Yes
+</td><td> --
+</td></tr>
+
+<tr><td> <a href="frmt_various.html#XPM">X11 Pixmap (.xpm)</a>
+</td><td> XPM
+</td><td> Yes
+</td><td> No
+</td><td>
+</td></tr>
+
+</table>
+
+<p>
+<a name="#footnote1"><sup>1</sup>Maximum file size does not only determined by
+	the file format itself, but operating system/file system capabilities
+	as well. Look <a href="gdal_building.html#gdal_building_lfs">here</a>
+	for details.</a>
+</p>
+
+<p>
+<a name="#footnote2"><sup>2</sup>ERDAS Imagine has different file format for
+	large files, where 32-bit pointers cannot be used. Look for details
+	<a href="frmt_hfa.html">here</a>.
+</p>
+
+<p>
+$Id$
+</p>
+
+</body>
+</html>

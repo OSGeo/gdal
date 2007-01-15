@@ -1,0 +1,65 @@
+<html>
+<head>
+<title>HFA -- Erdas Imagine .img</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>HFA -- Erdas Imagine .img</h1>
+
+GDAL supports Erdas Imagine .img format for read access and write.  The
+driver supports reading overviews, palettes, and georeferencing.  It 
+supports the erdas band types 
+u8, s8, u16, s16, u32, s32, f32, f64, c64 and c128.<p>
+
+Compressed and missing tiles in Erdas files should be handled properly on read.
+Files between 2GiB and 4GiB in size should work on Windows NT, and may work
+on some Unix platforms. Files with external spill files (needed for datasets
+larger than 2GiB) are also support for reading and writing.<p>
+
+Metadata reading and writing is supported at the dataset level, and for
+bands, but this is GDAL specific metadata - not metadata in an Imagine
+recognised form.  The metadata is stored in a table called GDAL_MetaData with
+each column being a metadata item.  The title is the key and the row 1 value
+is the value.<p>
+
+<h2>Creation Issues</h2>
+
+Erdas Imagine files can be created with any GDAL defined band type, including
+the complex types.  Created files may have any number of bands.  Pseudo-Color
+tables will be written if using the GDALDriver::CreateCopy() methodology.
+Most projections should be supported though translation of unusual datums
+(other than WGS84, WGS72, NAD83, and NAD27) may be problematic. <p>
+
+If overviews are generated, they will be in an external .ovr (GeoTIFF file)
+recognised only by GDAL, not in the .rrd format produced by Imagine.<p>
+
+Creation Options:<p>
+
+<ul>
+	<li> <b>SPILL_FILE=YES</b>: Force the generation of a spill file
+	(by default spill file created for images larger 2GiB only).<p>
+	<li> <b>COMPRESS=YES</b>: Create file as compressed. Use of spill file disables compression.<p>
+</ul>
+
+Erdas Imagine supports external creation of overviews (with gdaladdo for 
+instance).  To force them to be created in an .rrd file (rather than inside
+the original .img) set the global config option HFA_USE_RRD=YES).<p>
+
+Layer names can be set and retrieved with the GDALSetDescription/GDALGetDescription calls on the Raster Band objects. <p>
+
+See Also:<p>
+
+<ul>
+<li> Implemented as <tt>gdal/frmts/hfa/hfadataset.cpp</tt>.<p>
+
+<li> More information, and other tools are available on the
+<a href="http://home.gdal.org/projects/imagine/hfa_index.html">
+Imagine (.img) Reader</a> page.<p>
+
+<li> <a href="http://www.erdas.com/">Erdas.com</a><p>
+
+</ul>
+
+</body>
+</html>

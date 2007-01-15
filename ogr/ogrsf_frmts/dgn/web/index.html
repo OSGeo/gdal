@@ -1,0 +1,229 @@
+<html>
+<head>
+<title>DGNLib: Microstation DGN (ISFF) Reader</title>
+<link href="http://www.maptools.org/maptools.css" rel="stylesheet" type="text/css">
+</head>
+<body bgcolor="#ffffff">
+
+<h1>DGNLib: a Microstation DGN (ISFF) Reader</h1>
+
+I (<a href="http://pobox.com/~warmerdam">Frank Warmerdam</a>) 
+have implemented a Microstation DGN reading library on contract to 
+<a href="http://www.avenza.com/">Avenza Systems Inc.</a>, makers of 
+MAPublisher.  The library will be OpenSource (under my usual X/MIT license), 
+portable and callable from C/C++.  While it has been incorporated into my 
+<a href="http://gdal.maptools.org/ogr">OGR Simple Features</a> library, it is 
+also be usable standalone with minimal overhead.  The dgnlib library, and this
+page of DGN related information are primarily hosted at 
+<a href="http://dgnlib.maptools.org/">http://dgnlib.maptools.org</a>.<p>
+
+<h2>DGNLib</h2>
+
+DGNLib is a small C/C++ library for reading and writing DGN files.  
+
+<ul>
+
+<li> <b>Where can I get the source code?</b><p>
+
+<a href="dl/dgnlib-1.11.zip">dgnlib-1.11.zip</a>: Current standalone source
+with <i>dgndump</i> example mainline.<p>
+
+<li> <b>Does DGNLib support all DGN elements?</b><p>
+
+No, but it does support most 2D and 3D elements.  Some of the more esoteric
+elements are read in "raw data mode", but not interpreted.  It does support 
+lines, line strings, curves, bsplines, ellipses, 
+arcs, and text elements, as well as extracting color tables, and master
+coordinate information.<p>
+
+<li> <b>Does DGNLib support Microstation V8 DGN Files?</b><p>
+
+No, they are a substantially different format, and are not recognised at
+all.  The DGNdirect library from the <a href="http://www.opendwg.org">OpenDWG
+Alliance</a> does support DGN v8.<p>
+
+<li> <b>Is it portable?</b><p>
+
+Yes, fairly, though as distributed it may be necessary to tweak the 
+cpl_port.h and cpl_config.h files for different platforms.  It was developed
+on Linux for a client deploying on MacOS, and Windows.<p>
+
+<li> <b>Does it require alot of memory?</b><p>
+
+Generally speaking no.  Only one element at a time is kept in memory.  If
+the file is "indexed" an additional 12 bytes per element is kept in memory
+after a pre-scan, but this isn't required.<P>
+
+<li> <b>Does DGNLib include code to draw DGN elements?</b><p>
+
+No, but there is a <a href="representation.html">document</a> that tries to
+indicate how to properly draw DGN elements given the structures returned by
+DGNLib.  The OGR layer re-interprets the drawing information into 
+<a href="http://www.gdal.org/ogr/ogr_feature_style.html">OGR Feature Style</a>
+format which is understood by some applications such as 
+<a href="http://mapserver.gis.umn.edu/">UMN MapServer</a>.
+<p>
+
+<li> <b>What is the license?</b><p>
+
+DGNLib is under my usual MIT/X style open source license.  Thus is can be
+easily used in commercial, and free products with no concern about licensing
+issues.  See the header of any source file for the full license text. <p>
+
+<li> <b>Is there support for writing DGN files?</b><p>
+
+Yes, there is preliminary support for writing 2D and 3D DGN files in 
+recent releases.<p>
+
+<li> <b>Is there documentation?</b><p>
+
+There is a detailed <a href="libhtml/dgnlib_8h.html">DGN Library API Reference
+</a> available.  There is currently no tutorial style information on how to
+use the library, but the dgndump.c utility can serve as a limited example.<p>
+
+<li> <b>Is further work going on to improve the library?</b><p>
+
+The initial project is complete, but I am interested in fixing
+bugs and adding minor features.  Improvements are welcome.<p>
+
+</ul>
+
+<h2>DGN Related Information</h2>
+
+<ul>
+
+<li> <a href="dgn.html">ISFF/DGN File Format</a>: I have taken the venerable
+<a href="isff.txt">isff.txt</a> description, and am reformatting it in 
+HTML and filling in missing information.<P>
+
+<li> <a href="dl/ref18.pdf">Microstation 95/ISFF Description (pdf)</a>: 
+Information on the ISFF/DGN file format as distributed with Microstation 95.
+<P>
+
+<li> The most recently 
+<a href="http://www.gdal.org/srctree/ogr/ogrsf_frmts/dgn/">committed code</a> 
+is available in <a href="http://www.gdal.org/">GDAL</a> CVS tree.<p>
+
+
+<li> <a href="libhtml/dgnlib_8h.html">DGN Library API Documentation</a>
+<p>
+
+<li> <a href="representation.html">DGN Feature Representation</a>: info on
+drawing DGN elements properly.<p>
+
+<li> <a href="http://www.intergraph.com/gis/support/technotes/db_link.asp">
+Intergraph Notes on Database Linkages</a> 
+(also <a href="dl/db_link.doc">db_link.doc</a> in MS Word format)<p>
+
+<li> The <a href="mailto:dgnlib@yahoogroups.com">dgnlib@yahoogroups.com</a> mailing list is for discussion of general DGN issues as well as dgnlib in 
+particular.  The group includes an <a href="http://groups.yahoo.com/group/dgnlib/">email archive</a> and can be subscribed from the following subscribe box. 
+Please confirm your interest with <a href="mailto:warmerdam@pobox.com">me</a>
+by email if you are using a relatively anonymous email service so I can 
+verify you aren't a spammer.<p>
+
+<form method=GET action="http://groups.yahoo.com/subscribe/dgnlib">
+                   <table cellspacing=0 cellpadding=2 border=0 bgcolor=#FFFFCC>
+                     <tr>
+                       <td colspan=2 align=center>
+                         <b>Subscribe to dgnlib</b>
+                       </td>
+                     </tr>
+                     <tr> 
+                       <td> 
+                         <input type=text name="user" value="enter email address" size=20>
+                       </td>
+                       <td> 
+                         <input type=image border=0 alt="Click here to join dgnlib"
+                          name="Click here to join dgnlib" src="http://groups.yahoo.com/img/ui/join.gif">
+                       </td>
+                     </tr>
+                   </table>
+                   </form>
+
+</ul>
+
+<h2>Other DGN Viewers/Libraries</h2>
+
+<ul>
+
+<li> DGNdirect is a library from the <a href="http://www.opendwg.org/">
+Open Design  Alliance</a> that supports reading (and to some extent) writing DGN
+v8 files.  It also supports reading DGN v7 files.  The Open Design Alliance 
+offers it under quite reasonable (but not Open Source) licensing terms.<p>
+
+<li> Bentley itself offers DGN libraries, and tools as part of their
+<a href="http://www.bentley.com/opendgn/">OpenDGN</a> program.<p>
+
+<li> <A href="http://www.graphstore.com">GraphStore</a> has a product called
+eCADLite that can be used in demo mode as a DGN viewer.<p>
+
+<li> <A href="http://columbus.arup.com">Columbus</a> is a free
+document viewer which includes DGN support.<p>
+
+<li> <A href="http://www.cimmetry.com/">AutoVue</a> from Cimmetry.<p>
+
+<li> <a href="http://www.safe.com/">Safe Software's</a> FME product has
+excellent DGN read and write support, and can be used as a standalone product,
+or FMEObjects acts as a library.<p>
+
+<li> My own <A href="http://openev.sf.net/">OpenEV</a> uses dgnlib for DGN 
+support.<p>
+
+</ul>
+
+<h2>Sample Datasets</h2>
+
+<ul>
+<li> <a href="dl/dgnsamp.zip">dgnsamp.zip</a>: DGN Samples from Cybertal<p>
+<li> <a href="http://www.dot.state.oh.us/techservsite/downlds/downloads.htm">
+Ohio DOT Downloads Page</a><p>
+<li> <a href="http://www.odot.state.or.us/tdmappingpublic/microhelp.htm">
+Oregon DOT</a><p>
+</ul>
+
+<h2>Credits</h2>
+
+I would like to thank:<p>
+
+<ul>
+<li> Dennis Christopher (and <a href="http://www.avenza.com/">Avenza Systems 
+Inc</a>) for funding this development, and allowing me to release it as
+open source.<p>
+
+<li> Rodney Jenson who gave me some hints, and moral support.<p>
+
+<li> Patrick van Dijk, for information and code related to Quaternion 
+handling.<p>
+
+<li> Cybertal Components, whose's OpenDGN based dumping program was helpful to 
+me in testing.  Unfortunately, Cybertal does not appear to still be in 
+business.<p>
+
+<li> Ason Kang who provided a sample multi-byte text file and code to 
+handle it properly.<p>
+
+<li> The various US DOTs and other government organizations who are progressive
+enough to provide mapping information directly in DGN format on the web.  It's
+a great store of sample data. <p>
+
+<li> Mike Cane for held with Radix50 names, and support for cell headers.<p>
+
+<li> Jeff Smith (Geographic Software Specialists) who funded DGN write 
+support.<p>
+
+<li> Jamie Cecchetto (<a href="http://www.centurysystems.net">Century 
+Systems</a>) for funding 3D write support. <p>
+
+<li> <a href="http://www.dmsolutions.ca/">DM Solutions Group</a> for 
+providing the <a href="http://maptools.org">maptools.org</a> site to 
+host this on, and for funding (also thanks to Tyler Mitchell of 
+<a href="http://www.lignum.com">Lignum</a>) integration into
+OGR.<p>
+
+<li> Marius Kintel (<a href="http://www.sim.no">Systems In Motion</a>) for
+adding support for reading 3D cone (23), 3D surface (18) and 3D solid (19) 
+elements.<p>
+</ul>
+
+</BODY>
+</html>

@@ -1,0 +1,203 @@
+/* port/cpl_config.h.in.  Generated from configure.in by autoheader.  */
+
+/* Define if you want to use pthreads based multiprocessing support */
+#undef CPL_MULTIPROC_PTHREAD
+
+/* --prefix directory for GDAL install */
+#undef GDAL_PREFIX
+
+/* Define to 1 if you have the <assert.h> header file. */
+#undef HAVE_ASSERT_H
+
+/* Define to 1 if you have the `atoll' function. */
+#undef HAVE_ATOLL
+
+/* Define to 1 if you have the `copysign' function. */
+#undef HAVE_COPYSIGN
+
+/* Define to 1 if you have the `copysignf' function. */
+#undef HAVE_COPYSIGNF
+
+/* Define to 1 if you have the <csf.h> header file. */
+#undef HAVE_CSF_H
+
+/* Define to 1 if you have the <dbmalloc.h> header file. */
+#undef HAVE_DBMALLOC_H
+
+/* Define to 1 if you have the declaration of `nan', and to 0 if you don't. */
+#undef HAVE_DECL_NAN
+
+/* Define to 1 if you have the declaration of `nanf', and to 0 if you don't.
+   */
+#undef HAVE_DECL_NANF
+
+/* Define to 1 if you have the <direct.h> header file. */
+#undef HAVE_DIRECT_H
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
+#undef HAVE_DOPRNT
+
+/* Define to 1 if you have the <errno.h> header file. */
+#undef HAVE_ERRNO_H
+
+/* Define to 1 if you have the <fcntl.h> header file. */
+#undef HAVE_FCNTL_H
+
+/* Define to 1 if you have the <float.h> header file. */
+#undef HAVE_FLOAT_H
+
+/* Define to 1 if you have the `getcwd' function. */
+#undef HAVE_GETCWD
+
+/* Define as 0 or 1 according to the floating point format suported by the
+   machine */
+#undef HAVE_IEEEFP
+
+/* Define to 1 if the system has the type `int16'. */
+#undef HAVE_INT16
+
+/* Define to 1 if the system has the type `int32'. */
+#undef HAVE_INT32
+
+/* Define to 1 if the system has the type `int8'. */
+#undef HAVE_INT8
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the <jpeglib.h> header file. */
+#undef HAVE_JPEGLIB_H
+
+/* Define to 1 if you have the `dl' library (-ldl). */
+#undef HAVE_LIBDL
+
+/* Define to 1 if you have the `m' library (-lm). */
+#undef HAVE_LIBM
+
+/* Define to 1 if you have the `pq' library (-lpq). */
+#undef HAVE_LIBPQ
+
+/* Define to 1 if you have the `rt' library (-lrt). */
+#undef HAVE_LIBRT
+
+/* Define to 1 if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
+
+/* Define to 1 if you have the <locale.h> header file. */
+#undef HAVE_LOCALE_H
+
+/* Define to 1, if your compiler supports long long data type */
+#undef HAVE_LONG_LONG
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `nan' function. */
+#undef HAVE_NAN
+
+/* Define to 1 if you have the `nanf' function. */
+#undef HAVE_NANF
+
+/* Define to 1 if you have the <png.h> header file. */
+#undef HAVE_PNG_H
+
+/* Define to 1 if you have the `snprintf' function. */
+#undef HAVE_SNPRINTF
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strtof' function. */
+#undef HAVE_STRTOF
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the <values.h> header file. */
+#undef HAVE_VALUES_H
+
+/* Define to 1 if you have the `vprintf' function. */
+#undef HAVE_VPRINTF
+
+/* Define to 1 if you have the `vsnprintf' function. */
+#undef HAVE_VSNPRINTF
+
+/* Set the native cpu bit order (FILLORDER_LSB2MSB or FILLORDER_MSB2LSB) */
+#undef HOST_FILLORDER
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* The size of a `int', as computed by sizeof. */
+#undef SIZEOF_INT
+
+/* The size of a `long', as computed by sizeof. */
+#undef SIZEOF_LONG
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Define to 1 if you have fseek64, ftell64 */
+#undef UNIX_STDIO_64
+
+/* Define to 1, if you have GNU C compiler */
+#undef USE_GNUCC
+
+/* Define to name of 64bit fopen function */
+#undef VSI_FOPEN64
+
+/* Define to name of 64bit fseek func */
+#undef VSI_FSEEK64
+
+/* Define to name of 64bit ftell func */
+#undef VSI_FTELL64
+
+/* Define to 1, if you have 64 bit STDIO API */
+#undef VSI_LARGE_API_SUPPORTED
+
+/* Define to 1, if you have LARGEFILE64_SOURCE */
+#undef VSI_NEED_LARGEFILE64_SOURCE
+
+/* Define to name of 64bit stat function */
+#undef VSI_STAT64
+
+/* Define to name of 64bit stat structure */
+#undef VSI_STAT64_T
+
+/* Define to 1 if your processor stores words with the most significant byte
+   first (like Motorola and SPARC, unlike Intel and VAX). */
+#undef WORDS_BIGENDIAN
+
+/* enable Mac OS X Framework build */
+#undef MACOSX_FRAMEWORK
+

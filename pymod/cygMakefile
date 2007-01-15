@@ -1,0 +1,36 @@
+GDAL_ROOT	=	..
+
+GDALMODULE	=	_gdalmodule.dll
+OBJ        	=       gdal_wrap.o numpydataset.o gdalnumeric.o
+PY_VER = python2.1
+PYTHON_LIB = -L/usr/local/lib/$(PY_VER)/config -l$(PY_VER).dll
+
+include ../GDALmake.opt
+
+default:	$(GDALMODULE)
+
+clean:
+	rm -f *.o *.so
+
+%.o:	%.c
+	$(CC) -c -I. $(GDAL_INCLUDE) $(PYTHON_INCLUDES)\
+		$(CFLAGS) -DUSE_DL_IMPORT $(NUMPY_FLAG) $*.c -o $*.o
+
+%.o:	%.cpp
+	$(CXX) -c -I. $(GDAL_INCLUDE) $(PYTHON_INCLUDES) \
+		 $(CXXFLAGS) -DUSE_DL_IMPORT $(NUMPY_FLAG) $*.cpp -o $*.o
+
+
+gdal_wrap.c:	gdal.i
+	-swig -python gdal.i
+
+$(GDAL_SLIB):
+
+$(GDALMODULE):	$(OBJ) $(GDAL_LIB)
+	$(LD_SHARED) $(OBJ) \
+		$(GDAL_LIBS) $(LIBS) $(PYTHON_LIB) -o $(GDALMODULE)
+
+
+install:
+	$(INSTALL_DIR) $(INST_PYMOD)
+	for f in *.py $(GDALMODULE) ; do $(INSTALL_DATA) $$f $(INST_PYMOD) ; done

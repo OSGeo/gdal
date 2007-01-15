@@ -1,0 +1,73 @@
+<html>
+<head>
+<title>ECW -- ERMapper Compress Wavelets (.ecw)</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>ECW -- ERMapper Compress Wavelets (.ecw)</h1>
+
+GDAL supports .ecw format for read access and write.  The current 
+implementation reads any number of bands but returns only as eight bit
+image data.  Coordinate system and georeferencing transformations are read,
+but in some cases coordinate systems may not translate.<p>
+
+Support for the ECW driver in GDAL is optional, and requires linking
+in external ECW SDK libraries provided by ERMapper.<p>
+
+By default the ECW SDK will use up to one quarter of physical RAM for 
+internal caching and work memory during decoding.  This is normally fine, 
+but the amount of memory to use can be adjusted by setting the 
+GDAL_ECW_CACHE_MAXMEM configuration variable with an amount of memory in 
+bytes.  Config variables can be set in the environment or using the --config
+commandline switch.<p>
+
+<h2>Creation Issues</h2>
+
+The free ECW compression kit only supports compression of images up to 
+500MB.  To compress very large images it is necessary to license ECW
+technology from ERMapper.  Files to be compressed into ECW format must also
+be at least 128x128.  Non-eight bit source data will be rescaled by
+the ECW SDK in some manner that I don't understand ... the resulting image
+is effectively eight bit.<p>
+
+When writing coordinate system information to ECW files, many less
+common coordinate systems are not mapped properly.  If you know the 
+ERMapper name for the coordinate system you can force it to be set at
+creation time with the PROJ and DATUM creation options. <p>
+
+Creation Options:<p>
+
+<ul>
+
+<li> <b>TARGET=percent</b>: Set the target size reduction as a percentage of 
+the original.  If not provided defaults to 75 for an 75% reduction.<p>
+
+<li> <b>PROJ=name</b>: Name of the ERMapper projection string to use. 
+Common examples are NUTM11, or GEODETIC.<p>
+
+<li> <b>DATUM=name</b>: Name of the ERMapper datum string to use. 
+Common examples are WGS84 or NAD83.<p>
+
+<li> <b>LARGE_OK=YES</b>: Under some circumstances this option can be set
+to allow compressing files larger than 500MB.  It is the users responsibility
+to ensure that ERMapper licensing requirments for large file compression
+are being adhered to.<p>
+
+</ul>
+
+ECW format does not support creation of overviews since the ECW format 
+is already considered to be optimized for "arbitrary overviews". <P>
+
+See Also:<p>
+
+<ul>
+<li> Implemented as <tt>gdal/frmts/ecw/ecwdataset.cpp</tt>.<p>
+
+<li> <a href="http://www.ermapper.com/products/ecw/ecw_body.htm">ECW Page</a>
+at <a href="http://www.ermapper.com/">www.ermapper.com.</a><p>
+
+</ul>
+
+</body>
+</html>

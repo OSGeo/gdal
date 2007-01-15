@@ -1,0 +1,23 @@
+
+OBJ	=	\
+	gifdataset.obj
+
+GDAL_ROOT	=	..\..
+
+EXTRAFLAGS = 	-Ilibungif
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+	cd libungif
+	$(MAKE) /f makefile.vc
+	cd ..
+
+clean:
+	-del *.obj
+	cd libungif
+	$(MAKE) /f makefile.vc clean
+	cd ..
+
+

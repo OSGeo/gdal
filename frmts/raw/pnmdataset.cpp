@@ -1,0 +1,445 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  PNM Driver
+ * Purpose:  Portable anymap file format imlementation
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *
+ ******************************************************************************
+ * Copyright (c) 2001, Frank Warmerdam
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ******************************************************************************
+ *
+ * $Log$
+ * Revision 1.17  2005/05/05 13:55:42  fwarmerdam
+ * PAM Enable
+ *
+ * Revision 1.16  2004/02/04 21:47:31  warmerda
+ * use VSIFClose() to close openinfo file, not VSIFCloseL()
+ *
+ * Revision 1.15  2003/10/24 14:22:49  warmerda
+ * Added worldfile read support (but not write/export).
+ *
+ * Revision 1.14  2003/03/27 11:34:25  dron
+ * Fixes for large file support.
+ *
+ * Revision 1.13  2003/03/25 13:52:18  dron
+ * CREATIONOPTIONLIST added, fixed problem with MIMETYPE.
+ *
+ * Revision 1.12  2003/02/13 22:00:26  dron
+ * Added creation option MAXVAL.
+ *
+ *
+ * Revision 1.10  2003/02/06 20:27:09  dron
+ * More PNM standard complience in header reading.
+ *
+ * Revision 1.9  2003/02/03 11:14:24  dron
+ * Added support for reading and writing 16-bit images.
+ *
+ * Revision 1.8  2002/11/23 18:54:17  warmerda
+ * added CREATIONDATATYPES metadata for drivers
+ *
+ * Revision 1.7  2002/09/19 21:10:02  warmerda
+ * Fixed GetDriverByName call.
+ *
+ * Revision 1.6  2002/09/04 06:50:37  warmerda
+ * avoid static driver pointers
+ *
+ * Revision 1.5  2002/06/12 21:12:25  warmerda
+ * update to metadata based driver info
+ *
+ * Revision 1.4  2002/04/16 17:52:35  warmerda
+ * Initialize variables.
+ *
+ * Revision 1.3  2001/07/18 19:04:10  warmerda
+ * Removed debug printf.
+ *
+ * Revision 1.2  2001/07/18 04:51:57  warmerda
+ * added CPL_CVSID
+ *
+ * Revision 1.1  2001/01/03 18:53:36  warmerda
+ * New
+ *
+ */
+
+#include "rawdataset.h"
+#include "cpl_string.h"
+#include <ctype.h>
+
+CPL_CVSID("$Id$");
+
+CPL_C_START
+void    GDALRegister_PNM(void);
+CPL_C_END
+
+/************************************************************************/
+/* ==================================================================== */
+/*                              PNMDataset                              */
+/* ==================================================================== */
+/************************************************************************/
+
+class PNMDataset : public RawDataset
+{
+    FILE        *fpImage;       // image data file.
+
+    int         bGeoTransformValid;
+    double      adfGeoTransform[6];
+
+  public:
+                PNMDataset();
+                ~PNMDataset();
+
+    virtual CPLErr GetGeoTransform( double * );
+
+    static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Create( const char * pszFilename,
+                                int nXSize, int nYSize, int nBands,
+                                GDALDataType eType, char ** papszOptions );
+};
+
+/************************************************************************/
+/*                            PNMDataset()                             */
+/************************************************************************/
+
+PNMDataset::PNMDataset()
+{
+    fpImage = NULL;
+    bGeoTransformValid = FALSE;
+    adfGeoTransform[0] = 0.0;
+    adfGeoTransform[1] = 1.0;
+    adfGeoTransform[2] = 0.0;
+    adfGeoTransform[3] = 0.0;
+    adfGeoTransform[4] = 0.0;
+    adfGeoTransform[5] = 1.0;
+}
+
+/************************************************************************/
+/*                            ~PNMDataset()                            */
+/************************************************************************/
+
+PNMDataset::~PNMDataset()
+
+{
+    FlushCache();
+    if( fpImage != NULL )
+        VSIFCloseL( fpImage );
+}
+
+/************************************************************************/
+/*                          GetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr PNMDataset::GetGeoTransform( double * padfTransform )
+
+{
+
+    if( bGeoTransformValid )
+    {
+        memcpy( padfTransform, adfGeoTransform, sizeof(double)*6 );
+        return CE_None;
+    }
+    else
+        return CE_Failure;
+}
+
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
+
+GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Verify that this is a _raw_ ppm or pgm file.  Note, we don't    */
+/*      support ascii files, or pbm (1bit) files.                       */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->nHeaderBytes < 10 || poOpenInfo->fp == NULL )
+        return NULL;
+
+    if( poOpenInfo->pabyHeader[0] != 'P'  &&
+        (poOpenInfo->pabyHeader[2] != ' '  ||    // XXX: Magick number
+         poOpenInfo->pabyHeader[2] != '\t' ||    // may be followed
+         poOpenInfo->pabyHeader[2] != '\n' ||    // any of the blank
+         poOpenInfo->pabyHeader[2] != '\r') )    // characters
+        return NULL;
+
+    if( poOpenInfo->pabyHeader[1] != '5'
+        && poOpenInfo->pabyHeader[1] != '6' )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Parse out the tokens from the header.                           */
+/* -------------------------------------------------------------------- */
+    const char  *pszSrc = (const char *) poOpenInfo->pabyHeader;
+    char        szToken[512];
+    int         iIn, iOut, iToken = 0, nWidth =-1, nHeight=-1, nMaxValue=-1;
+
+    iIn = 2;
+    while( iIn < poOpenInfo->nHeaderBytes && iToken < 3 )
+    {
+        iOut = 0;
+        szToken[0] = '\0';
+        while( iIn < poOpenInfo->nHeaderBytes )
+        {
+            if( pszSrc[iIn] == '#' )
+            {
+                while( pszSrc[iIn] != 10 && pszSrc[iIn] != 13
+                       && iIn < poOpenInfo->nHeaderBytes - 1 )
+                    iIn++;
+            }
+
+            if( iOut != 0 && isspace(pszSrc[iIn]) )
+            {
+                szToken[iOut] = '\0';
+
+                if( iToken == 0 )
+                    nWidth = atoi(szToken);
+                else if( iToken == 1 )
+                    nHeight = atoi(szToken);
+                else if( iToken == 2 )
+                    nMaxValue = atoi(szToken);
+
+                iToken++;
+                iIn++;
+                break;
+            }
+
+            else if( !isspace(pszSrc[iIn]) )
+            {
+                szToken[iOut++] = pszSrc[iIn];
+            }
+
+            iIn++;
+        }
+    }
+
+    CPLDebug( "PNM", "PNM header contains: width=%d, height=%d, maxval=%d",
+              nWidth, nHeight, nMaxValue );
+
+    if( iToken != 3 || nWidth < 1 || nHeight < 1 || nMaxValue < 1 )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Create a corresponding GDALDataset.                             */
+/* -------------------------------------------------------------------- */
+    PNMDataset  *poDS;
+
+    poDS = new PNMDataset();
+
+/* -------------------------------------------------------------------- */
+/*      Capture some information from the file that is of interest.     */
+/* -------------------------------------------------------------------- */
+    poDS->nRasterXSize = nWidth;
+    poDS->nRasterYSize = nHeight;
+
+/* -------------------------------------------------------------------- */
+/*      Assume ownership of the file handled from the GDALOpenInfo.     */
+/* -------------------------------------------------------------------- */
+    VSIFClose( poOpenInfo->fp );
+    poOpenInfo->fp = NULL;
+
+    if( poOpenInfo->eAccess == GA_Update )
+        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
+    else
+        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
+
+    if( poDS->fpImage == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Failed to re-open %s within PNM driver.\n",
+                  poOpenInfo->pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create band information objects.                                */
+/* -------------------------------------------------------------------- */
+    int         bMSBFirst = TRUE, iPixelSize;
+    GDALDataType eDataType;
+
+#ifdef CPL_LSB
+    bMSBFirst = FALSE;
+#endif
+
+    if ( nMaxValue < 256 )
+        eDataType = GDT_Byte;
+    else
+        eDataType = GDT_UInt16;
+
+    iPixelSize = GDALGetDataTypeSize( eDataType ) / 8;
+
+    if( poOpenInfo->pabyHeader[1] == '5' )
+    {
+        poDS->SetBand(
+            1, new RawRasterBand( poDS, 1, poDS->fpImage, iIn, iPixelSize,
+                                  nWidth*iPixelSize, eDataType, bMSBFirst, TRUE ));
+    }
+    else
+    {
+        poDS->SetBand(
+            1, new RawRasterBand( poDS, 1, poDS->fpImage, iIn, 3*iPixelSize,
+                                  nWidth*3*iPixelSize, eDataType, bMSBFirst, TRUE ));
+        poDS->SetBand(
+            2, new RawRasterBand( poDS, 2, poDS->fpImage, iIn+iPixelSize,
+                                  3*iPixelSize, nWidth*3*iPixelSize,
+                                  eDataType, bMSBFirst, TRUE ));
+        poDS->SetBand(
+            3, new RawRasterBand( poDS, 3, poDS->fpImage, iIn+2*iPixelSize,
+                                  3*iPixelSize, nWidth*3*iPixelSize,
+                                  eDataType, bMSBFirst, TRUE ));
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Check for overviews.                                            */
+/* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+
+/* -------------------------------------------------------------------- */
+/*      Initialize any PAM information.                                 */
+/* -------------------------------------------------------------------- */
+    poDS->SetDescription( poOpenInfo->pszFilename );
+    poDS->TryLoadXML();
+
+    poDS->bGeoTransformValid = 
+        GDALReadWorldFile( poOpenInfo->pszFilename, ".wld", 
+                           poDS->adfGeoTransform );
+    return( poDS );
+}
+
+/************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
+
+GDALDataset *PNMDataset::Create( const char * pszFilename,
+                                 int nXSize, int nYSize, int nBands,
+                                 GDALDataType eType,
+                                 char ** papszOptions )
+
+{
+/* -------------------------------------------------------------------- */
+/*      Verify input options.                                           */
+/* -------------------------------------------------------------------- */
+    if( eType != GDT_Byte && eType != GDT_UInt16 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+              "Attempt to create PNM dataset with an illegal\n"
+              "data type (%s), only Byte and UInt16 supported.\n",
+              GDALGetDataTypeName(eType) );
+
+        return NULL;
+    }
+
+    if( nBands != 1 && nBands != 3 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Attempt to create PNM dataset with an illegal number\n"
+                  "of bands (%d).  Must be 1 (greyscale) or 3 (RGB).\n",
+                  nBands );
+
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try to create the file.                                         */
+/* -------------------------------------------------------------------- */
+    FILE        *fp;
+
+    fp = VSIFOpenL( pszFilename, "wb" );
+
+    if( fp == NULL )
+    {
+        CPLError( CE_Failure, CPLE_OpenFailed,
+                  "Attempt to create file `%s' failed.\n",
+                  pszFilename );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Write out the header.                                           */
+/* -------------------------------------------------------------------- */
+    char        szHeader[500];
+    const char  *pszMaxValue = NULL;
+    int         nMaxValue = 0;
+
+    pszMaxValue = CSLFetchNameValue( papszOptions, "MAXVAL" );
+    if ( pszMaxValue )
+    {
+        nMaxValue = atoi( pszMaxValue );
+        if ( eType == GDT_Byte && (nMaxValue > 255 || nMaxValue < 0) )
+            nMaxValue = 255;
+        else if ( nMaxValue > 65535 || nMaxValue < 0 )
+            nMaxValue = 65535;
+    }
+    else
+    {
+        if ( eType == GDT_Byte )
+            nMaxValue = 255;
+        else
+            nMaxValue = 65535;
+    }
+
+
+    memset( szHeader, 0, sizeof(szHeader) );
+
+    if( nBands == 3 )
+        sprintf( szHeader, "P6\n%d %d\n%d\n", nXSize, nYSize, nMaxValue );
+    else
+        sprintf( szHeader, "P5\n%d %d\n%d\n", nXSize, nYSize, nMaxValue );
+
+    VSIFWriteL( (void *) szHeader, strlen(szHeader) + 2, 1, fp );
+    VSIFCloseL( fp );
+
+    return (GDALDataset *) GDALOpen( pszFilename, GA_Update );
+}
+
+/************************************************************************/
+/*                         GDALRegister_PNM()                          */
+/************************************************************************/
+
+void GDALRegister_PNM()
+
+{
+    GDALDriver  *poDriver;
+
+    if( GDALGetDriverByName( "PNM" ) == NULL )
+    {
+        poDriver = new GDALDriver();
+
+        poDriver->SetDescription( "PNM" );
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
+                                   "Portable Pixmap Format (netpbm)" );
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
+                                   "frmt_various.html#PNM" );
+        poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pnm" );
+        poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE,
+                                   "image/x-portable-anymap" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
+                                   "Byte UInt16" );
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+"<CreationOptionList>"
+"   <Option name='MAXVAL' type='unsigned int' description='Maximum color value'/>"
+"</CreationOptionList>" );
+
+        poDriver->pfnOpen = PNMDataset::Open;
+        poDriver->pfnCreate = PNMDataset::Create;
+
+        GetGDALDriverManager()->RegisterDriver( poDriver );
+    }
+}

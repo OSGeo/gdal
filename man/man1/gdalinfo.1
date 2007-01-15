@@ -1,0 +1,97 @@
+.TH "gdalinfo" 1 "28 Jun 2006" "GDAL" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+gdalinfo \- gdalinfo
+lists information about a raster dataset
+.SH "SYNOPSIS"
+.PP
+.PP
+.PP
+.nf
+gdalinfo [-mm] [-nogcp] [-nomd] datasetname
+.fi
+.PP
+.SH "DESCRIPTION"
+.PP
+The gdalinfo program lists various information about a GDAL supported raster dataset. 
+.IP "\fB\fB-mm\fP\fP" 1c
+Force computation of the actual min/max values for each band in the dataset. 
+.IP "\fB\fB-nogcp\fP\fP" 1c
+Suppress ground control points list printing. It may be useful for datasets with huge amount of GCPs, such as L1B AVHRR or HDF4 MODIS which contain thousands of the ones. 
+.IP "\fB\fB-nomd\fP\fP" 1c
+Suppress metadata printing. Some datasets may contain a lot of metadata strings. 
+.PP
+.PP
+The gdalinfo will report all of the following (if known):
+.PP
+.PD 0
+.IP "\(bu" 2
+The format driver used to access the file. 
+.IP "\(bu" 2
+Raster size (in pixels and lines). 
+.IP "\(bu" 2
+The coordinate system for the file (in OGC WKT). 
+.IP "\(bu" 2
+The geotransform associated with the file (rotational coefficients are currently not reported). 
+.IP "\(bu" 2
+Corner coordinates in georeferenced, and if possible lat/long based on the full geotransform (but not GCPs). 
+.IP "\(bu" 2
+Ground control points. 
+.IP "\(bu" 2
+File wide (including subdatasets) metadata. 
+.IP "\(bu" 2
+Band data types. 
+.IP "\(bu" 2
+Band color interpretations. 
+.IP "\(bu" 2
+Band block size. 
+.IP "\(bu" 2
+Band descriptions. 
+.IP "\(bu" 2
+Band min/max values (internally known and possibly computed). 
+.IP "\(bu" 2
+Band NODATA value. 
+.IP "\(bu" 2
+Band overview resolutions available. 
+.IP "\(bu" 2
+Band unit type (i.e.. 'meters' or 'feet' for elevation bands). 
+.IP "\(bu" 2
+Band pseudo-color tables. 
+.PP
+.SH "EXAMPLE"
+.PP
+.PP
+.PP
+.nf
+gdalinfo ~/openev/utm.tif 
+Driver: GTiff/GeoTIFF
+Size is 512, 512
+Coordinate System is:
+PROJCS["NAD27 / UTM zone 11N",
+    GEOGCS["NAD27",
+        DATUM["North_American_Datum_1927",
+            SPHEROID["Clarke 1866",6378206.4,294.978698213901]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",-117],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1]]
+Origin = (440720.000000,3751320.000000)
+Pixel Size = (60.000000,-60.000000)
+Corner Coordinates:
+Upper Left  (  440720.000, 3751320.000) (117d38'28.21"W, 33d54'8.47"N)
+Lower Left  (  440720.000, 3720600.000) (117d38'20.79"W, 33d37'31.04"N)
+Upper Right (  471440.000, 3751320.000) (117d18'32.07"W, 33d54'13.08"N)
+Lower Right (  471440.000, 3720600.000) (117d18'28.50"W, 33d37'35.61"N)
+Center      (  456080.000, 3735960.000) (117d28'27.39"W, 33d45'52.46"N)
+Band 1 Block=512x16 Type=Byte, ColorInterp=Gray
+.fi
+.PP
+.SH "AUTHORS"
+.PP
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de> 

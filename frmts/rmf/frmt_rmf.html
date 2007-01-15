@@ -1,0 +1,41 @@
+<html>
+<head>
+	<title>RMF --- Raster Matrix Format</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>RMF --- Raster Matrix Format</h1>
+
+RMF is a simple tiled raster format used in the GIS "Integration" and
+"Panorama" GIS. The format itself has very poor capabilities.<p>
+
+There are two flavours of RMF called MTW and RSW. MTW supports 16-bit integer
+and 32/64-bit floating point data in a single channel and aimed to store DEM
+data. RSW is a general purpose raster, it supports single channel colormapped
+or three channel RGB images. Only 8-bit data can be stored in RSW. Simple
+georeferencing can be provided for both image types.<p>
+
+<h2>Creation Options</h2>
+<ul>
+	<li> <b>MTW=ON</b>: Force the generation of MTW matrix (RSW will be
+	created by default).<p>
+
+	<li> <b>BLOCKXSIZE=n</b>: Sets tile width, defaults to 256.<p>
+
+	<li> <b>BLOCKYSIZE=n</b>: Set tile height.  Tile height defaults to 256.<p>
+
+</ul>
+
+<h2>See Also:</h2>
+
+<ul>
+<li> Implemented as <tt>gdal/frmts/rmf/rmfdataset.cpp</tt>.<p>
+
+<li> <a href="http://www.gisinfo.ru/index_en.htm">"Panorama" GIS homepage</a><p>
+
+</ul>
+
+</body>
+</html>
+

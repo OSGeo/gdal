@@ -1,0 +1,46 @@
+# $Id$
+#
+# OGR Generic Format makefile
+#
+
+GDAL_ROOT =	..\..\..
+
+OBJ = ogr_attrind.obj \
+      ogr_gensql.obj \
+      ogr_miattrind.obj \
+      ogrdatasource.obj \
+      ogrlayer.obj \
+      ogrregisterall.obj \
+      ogrsfdriver.obj \
+      ogrsfdriverregistrar.obj
+
+EXTRAFLAGS = -I.. -I..\.. \
+	     $(OGDIDEF) \
+	     $(SQLITEDEF) \
+	     $(SHAPEDEF) \
+	     $(TABDEF)
+
+!INCLUDE $(GDAL_ROOT)\nmake-wince.opt
+
+!IFDEF SHAPE_SUPPORTED
+SHAPEDEF = -DSHAPE_ENABLED
+!ENDIF
+
+!IFDEF TAB_SUPPORTED
+TABDEF = -DTAB_ENABLED
+!ENDIF
+
+!IFDEF OGDIDIR
+OGDIDEF = -DOGDI_ENABLED
+!ENDIF
+
+!IFDEF SQLITE_LIB
+SQLITEDEF = -DSQLITE_ENABLED
+!ENDIF
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+

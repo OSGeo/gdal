@@ -1,0 +1,29 @@
+/*!
+\page rfc_list RFC List
+
+A list of all GDAL/OGR RFC documents, with status. 
+
+<ul>
+
+<li> \link rfc1_pmc RFC 1: Project Management Committee Guidelines\endlink (Adopted)
+
+<li> \link rfc2_svn RFC 2: Migration to OSGeo Subversion Repository\endlink (Implementation)
+
+<li> \link rfc3_commiters RFC 3: GDAL Commiter Guidelines\endlink (Adopted)
+
+<li> \link rfc4_geolocate RFC 4: Geolocation Arrays\endlink (Development)
+
+<li> \link rfc5_unicode RFC 5: Unicode support in GDAL\endlink (Development)
+
+<li> \link rfc6_sqlgeom RFC 6: Geometry and Feature Style as OGR Special Fields \endlink (Adopted)
+
+<li> \link rfc7_vsilapi RFC 7: Use VSILFILE for VSI*L Functions\endlink (Proposed)
+
+<li> \link rfc8_devguide RFC 8: Developer Guidelines\endlink (Development)
+
+<li> \link rfc9_maintainer RFC 9: GDAL Paid Maintainer Guidelines\endlink (Proposed)
+
+</ul>
+
+*/
+ 

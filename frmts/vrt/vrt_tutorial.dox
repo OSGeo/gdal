@@ -1,0 +1,613 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
+/*!
+
+\page gdal_vrttut GDAL Virtual Format Tutorial
+
+\section gdal_vrttut_intro Introduction
+
+The VRT driver is a format driver for GDAL that allows a virtual GDAL dataset
+to be composed from other GDAL datasets with repositioning, and algorithms
+potentially applied as well as various kinds of metadata altered or added.
+VRT descriptions of datasets can be saved in an XML format normally given the
+extension .vrt.<p>
+
+An example of a simple .vrt file referring to a 512x512 dataset with one band
+loaded from utm.tif might look like this:
+
+\code
+<VRTDataset rasterXSize="512" rasterYSize="512">
+  <GeoTransform>440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0</GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="512" ySize="512"/>
+      <DstRect xOff="0" yOff="0" xSize="512" ySize="512"/>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
+\endcode
+
+VRT files can be produced by translating to VRT format.  The resulting file can
+then be edited to modify mappings, add metadata or other purposes.  VRT files
+can also be produced programmatically by various means.<p>
+
+This tutorial will cover the .vrt file format (suitable for users editing 
+.vrt files), and how .vrt files may be created and manipulated programmatically
+for developers.<p>
+
+\section gdal_vrttut_format .vrt Format
+
+Virtual files stored on disk are kept in an XML format with the following
+elements.<p>
+
+<ul>
+<li> 
+<b>VRTDataset</b>: This is the root element for the whole GDAL dataset. 
+It must have the attributes rasterXSize and rasterYSize describing the width 
+and height of the dataset in pixels.  It may have SRS, GeoTransform, 
+GCPList, Metadata, and VRTRasterBand subelements.
+
+\code
+<VRTDataset rasterXSize="512" rasterYSize="512">
+\endcode
+
+<li> <b>SRS</b>: This element contains the spatial reference system (coordinate 
+system) in OGC WKT format.  Note that this must be appropriately escaped for
+XML, so items like quotes will have the ampersand escape sequences substituted.
+As as well WKT, and valid input to the SetFromUserInput() method (such as well
+known GEOGCS names, and PROJ.4 format) is also allowed in the SRS element.
+
+\code
+  <SRS>PROJCS[&quot;NAD27 / UTM zone 11N&quot;,GEOGCS[&quot;NAD27&quot;,DATUM[&quot;North_American_Datum_1927&quot;,SPHEROID[&quot;Clarke 1866&quot;,6378206.4,294.9786982139006,AUTHORITY[&quot;EPSG&quot;,&quot;7008&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6267&quot;]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433],AUTHORITY[&quot;EPSG&quot;,&quot;4267&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,-117],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;26711&quot;]]</SRS>
+\endcode
+
+<li> <b>GeoTransform</b>: This element contains a six value affine 
+geotransformation for the dataset, mapping between pixel/line coordinates 
+and georeferenced coordinates.  The list of values is the data of the SRS 
+element, and the values are separated by commas.
+<P>
+The parameter order is as follows:
+    [0] top left x;
+    [1] w-e pixel resolution;
+    [2] rotation, 0 if image is "north up";
+    [3] top left y;
+    [4] rotation, 0 if image is "north up";
+    [5] n-s pixel resolution.
+
+\code
+  <GeoTransform>440720.0,  60,  0.0,  3751320.0,  0.0, -60.0</GeoTransform>
+\endcode
+
+<li> <b>Metadata</b>: This element contains a list of metadata name/value 
+pairs associated with the VRTDataset as a whole, or a VRTRasterBand.   It has
+<MDI> (metadata item) subelements which have a "key" attribute and the value
+as the data of the element.  
+
+\code
+  <Metadata>
+    <MDI key="md_key">Metadata value</MDI>
+  </Metadata>
+\endcode
+
+<li> <b>VRTRasterBand</b>: This represents one band of a dataset.  It will
+have a dataType attribute with the type of the pixel data associated with
+this band (use names Byte, UInt16, Int16, UInt32, Int32, Float32, Float64, 
+CInt16, CInt32, CFloat32 or CFloat64) and the band this element represents
+(1 based).  This element may have Metadata, ColorInterp, NoDataValue, 
+ColorTable, and Description subelements as well as the various kinds of 
+source elements such as SimpleSource.  A raster band may have many "sources"
+indicating where the actual raster data should be fetched from, and how it
+should be mapped into the raster bands pixel space. 
+
+<li> <b>ColorInterp</b>: The data of this element should be the name of
+a color interpretation type.  One of Gray, Palette, Red, Green, Blue, Alpha,
+Hue, Saturation, Lightness, Cyan, Magenta, Yellow, Black, or Unknown.<p>
+
+\code
+  <ColorInterp>Gray</ColorInterp>: 
+\endcode
+
+<li> <b>NoDataValue</b>: If this element exists a raster band has a 
+nodata value associated with, of the value given as data in the element.
+
+\code
+  <NoDataValue>-100.0</NoDataValue>
+\endcode
+
+<li> <b>ColorTable</b>: This element is parent to a set of Entry 
+elements defining the entries in a color table.  Currently only RGBA
+color tables are supported with c1 being red, c2 being green, c3 being
+blue and c4 being alpha.  The entries are ordered and will be assumed
+to start from color table entry 0. 
+
+\code
+    <ColorTable>
+      <Entry c1="0" c2="0" c3="0" c4="255"/>
+      <Entry c1="145" c2="78" c3="224" c4="255"/>
+    </ColorTable>
+\endcode
+
+<li> <b>Description</b>: This element contains the optional description
+of a raster band as it's text value.
+
+\code
+  <Description>Crop Classification Layer</Description>
+\endcode
+
+<li> <b>UnitType</b>: This optional element contains the vertical units for
+elevation band data.  One of "m" for meters or "ft" for feet. Default 
+assumption is meters.<p>
+
+\code
+  <UnitType>ft</UnitType>
+\endcode
+
+<li> <b>Offset</b>: This optional element contains the offset that should be
+applied when computing "real" pixel values from scaled pixel values on 
+a raster band.   The default is 0.0.<p>
+
+\code
+  <Offset>0.0</Offset>
+\endcode
+
+<li> <b>Scale</b>: This optional element contains the scale that should be
+applied when computing "real" pixel values from scaled pixel values on a
+raster band.   The default is 1.0.<p>
+
+\code
+  <Scale>0.0</Scale>
+\endcode
+
+<li> <b>CategoryNames</b>: This optional element contains a list of Category
+subelements with the names of the categories for classified raster band. <p>
+
+\code
+  <CategoryNames>
+    <Category>Missing</Category>
+    <Category>Non-Crop</Category>
+    <Category>Wheat</Category>
+    <Category>Corn</Category>
+    <Category>Soybeans</Category>
+  </CategoryNames>
+\endcode
+
+<li> <b>SimpleSource</b>: The SimpleSource indicates that raster data
+should be read from a separate dataset, indicating the dataset, and band to be
+read from, and how the data should map into this bands raster space.  
+The SimpleSource may have the SourceFilename, SourceBand, SrcRect, and DstRect
+subelements.  The SrcRect element will indicate what rectangle on the indicated
+source file should be read, and the DstRect element indicates how that 
+rectangle of source data should be mapped into the VRTRasterBands space.  
+
+The relativeToVRT attribute on the SourceFilename indicates whether the
+filename should be interpreted as relative to the .vrt file (value is 1)
+or not relative to the .vrt file (value is 0).  The default is 0.
+
+\code
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="512" ySize="512"/>
+      <DstRect xOff="0" yOff="0" xSize="512" ySize="512"/>
+    </SimpleSource>
+\endcode
+
+<li> <b>KernelFilteredSource</b>: This is a pixel source derived from the
+Simple Source (so it shares the SourceFilename, SourceBand, SrcRect and 
+DestRect elements, but it also passes the data through a simple filtering 
+kernel specified with the Kernel element.  The Kernel element should have
+two child elements, Size and Coefs and optionally the boolean attribute
+normalized (defaults to false=0).  The size must always be an odd number,
+and the Coefs must have Size * Size entries separated by spaces.
+
+\code
+    <KernelFilteredSource>
+      <SourceFilename>/debian/home/warmerda/openev/utm.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <Kernel normalized="1">
+        <Size>3</Size>
+        <Coefs>0.11111111 0.11111111 0.11111111 0.11111111 0.11111111 0.11111111 0.11111111 0.11111111 0.11111111</Coefs>
+      </Kernel>
+    </KernelFilteredSource>
+\endcode
+
+</ul>
+
+\section gdal_vrttut_vrt .vrt Descriptions for Raw Files
+
+So far we have described how to derive new virtual datasets from existing
+files supports by GDAL.  However, it is also common to need to utilize 
+raw binary raster files for which the regular layout of the data is known
+but for which no format specific driver exists.  This can be accomplished
+by writing a .vrt file describing the raw file.  
+
+For example, the following .vrt describes a raw raster file containing
+floating point complex pixels in a file called l2p3hhsso.img.  The image
+data starts from the first byte (ImageOffset=0).  The byte offset between
+pixels is 8 (PixelOffset=8), the size of a CFloat32.  The byte offset
+from the start of one line to the start of the next is 9376 bytes 
+(LineOffset=9376) which is the width (1172) times the size of a pixel (8). 
+
+\code
+<VRTDataset rasterXSize="1172" rasterYSize="1864">
+  <VRTRasterBand dataType="CFloat32" band="1" subClass="VRTRawRasterBand">
+    <SourceFilename relativetoVRT="1">l2p3hhsso.img</SourceFilename>
+    <ImageOffset>0</ImageOffset>
+    <PixelOffset>8</PixelOffset>
+    <LineOffset>9376</LineOffset>
+    <ByteOrder>MSB</ByteOrder>
+  </VRTRasterBand>
+</VRTDataset>
+\endcode
+
+Some things to note are that the VRTRasterBand has a subClass specifier
+of "VRTRawRasterBand".  Also, the VRTRasterBand contains a number of 
+previously unseen elements but no "source" information.  VRTRawRasterBands
+may never have sources (ie. SimpleSource), but should contain the following
+elements in addition to all the normal "metadata" elements previously 
+described which are still supported. 
+
+<ul>
+
+<li> <b>SourceFilename</b>: The name of the raw file containing the
+data for this band.  The relativeToVRT attribute can be used to indicate
+if the SourceFilename is relative to the .vrt file (1) or not (0).
+
+<li> <b>ImageOffset</b>: The offset in bytes to the beginning of the first
+pixel of data of this image band.   Defaults to zero. 
+
+<li> <b>PixelOffset</b>: The offset in bytes from the beginning of one
+pixel and the next on the same line.  In packed single band data this will
+be the size of the <b>dataType</b> in bytes.
+
+<li> <b>LineOffset</b>: The offset in bytes from the beginning of one
+scanline of data and the next scanline of data.  In packed single band
+data this will be PixelOffset * rasterXSize. 
+
+<li> <b>ByteOrder</b>: Defines the byte order of the data on disk.  
+Either LSB (Least Significant Byte first) such as the natural byte order
+on Intel x86 systems or MSB (Most Significant Byte first) such as the natural
+byte order on Motorola or Sparc systems.  Defaults to being the local machine
+order. 
+
+</ul>
+
+A few other notes:
+
+<ul>
+
+<li> The image data on disk is assumed to be of the same data type as
+the band <b>dataType</b> of the VRTRawRasterBand. 
+
+<li> All the non-source attributes of the VRTRasterBand are supported, 
+including color tables, metadata, nodata values, and color interpretation.
+
+<li> The VRTRawRasterBand supports in place update of the raster, whereas
+the source based VRTRasterBand is always read-only.
+
+<li> The OpenEV tool includes a File menu option to input parameters
+describing a raw raster file in a GUI and create the corresponding .vrt
+file. 
+
+<li> Multiple bands in the one .vrt file can come from the same raw file. 
+Just ensure that the ImageOffset, PixelOffset, and LineOffset definition
+for each band is appropriate for the pixels of that particular band.  
+
+</ul>
+
+Another example, in this case a 400x300 RGB pixel interleaved image. 
+
+\code
+<VRTDataset rasterXSize="400" rasterYSize="300">
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTRawRasterBand">
+    <ColorInterp>Red</ColorInterp>
+    <SourceFilename relativetoVRT="1">rgb.raw</SourceFilename>
+    <ImageOffset>0</ImageOffset>
+    <PixelOffset>3</PixelOffset>
+    <LineOffset>1200</LineOffset>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2" subClass="VRTRawRasterBand">
+    <ColorInterp>Green</ColorInterp>
+    <SourceFilename relativetoVRT="1">rgb.raw</SourceFilename>
+    <ImageOffset>1</ImageOffset>
+    <PixelOffset>3</PixelOffset>
+    <LineOffset>1200</LineOffset>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="3" subClass="VRTRawRasterBand">
+    <ColorInterp>Blue</ColorInterp>
+    <SourceFilename relativetoVRT="1">rgb.raw</SourceFilename>
+    <ImageOffset>2</ImageOffset>
+    <PixelOffset>3</PixelOffset>
+    <LineOffset>1200</LineOffset>
+  </VRTRasterBand>
+</VRTDataset>
+\endcode
+
+\section gdal_vrttut_creation Programatic Creation of VRT Datasets
+
+The VRT driver supports several methods of creating VRT datasets.  As of
+GDAL 1.2.0 the vrtdataset.h include file should be installed with the core
+GDAL include files, allowing direct access to the VRT classes.  However, 
+even without that most capabilities remain available through standard GDAL
+interfaces.<p>
+
+To create a VRT dataset that is a clone of an existing dataset use the
+CreateCopy() method.  For example to clone utm.tif into a wrk.vrt file in
+C++ the following could be used:
+
+\code
+  GDALDriver *poDriver = (GDALDriver *) GDALGetDriverByName( "VRT" );
+  GDALDataset *poSrcDS, *poVRTDS;
+
+  poSrcDS = (GDALDataset *) GDALOpenShared( "utm.tif", GA_ReadOnly );
+
+  poVRTDS = 
+    poDriver->CreateCopy( "wrk.vrt", poSrcDS, FALSE, NULL, NULL, NULL );
+  delete poVRTDS;
+  delete poSrcDS;
+\endcode
+
+To create a virtual copy of a dataset with some attributes added or changed
+such as metadata or coordinate system that are often hard to change on other
+formats, you might do the following.  In this case, the virtual dataset is
+created "in memory" only by virtual of creating it with an empty filename, and
+then used as a modified source to pass to a CreateCopy() written out in TIFF
+format. 
+
+\code
+  poVRTDS = poDriver->CreateCopy( "", poSrcDS, FALSE, NULL, NULL, NULL );
+
+  poVRTDS->SetMetadataItem( "SourceAgency", "United States Geological Survey");
+  poVRTDS->SetMetadataItem( "SourceDate", "July 21, 2003" );
+
+  poVRTDS->GetRasterBand( 1 )->SetNoDataValue( -999.0 );
+
+  GDALDriver *poTIFFDriver = (GDALDriver *) GDALGetDriverByName( "GTiff" );
+  GDALDataset *poTiffDS;
+
+  poTiffDS = 
+    poTIFFDriver->CreateCopy( "wrk.tif", poVRTDS, FALSE, NULL, NULL, NULL );
+  delete poTiffDS;
+\endcode
+
+In this example a virtual dataset is created with the Create() method, and 
+adding bands and sources programmatically, but still via the "generic" API. 
+A special attribute of VRT datasets is that sources can be added to the bands
+by passing the XML describing the source into SetMetadata() on the special
+domain target "new_vrt_sources".  The domain target "vrt_sources" may also be
+used, in which case any existing sources will be discarded before adding the
+new ones.  In this example we construct a simple averaging filter source
+instead of using the simple source. 
+
+\code
+  // construct XML for simple 3x3 average filter kernel source.
+  const char *pszFilterSourceXML  =
+"<KernelFilteredSource>"
+"  <SourceFilename>utm.tif</SourceFilename>1<SourceBand>1</SourceBand>"
+"  <Kernel>"
+"    <Size>3</Size>"
+"    <Coefs>0.111 0.111 0.111 0.111 0.111 0.111 0.111 0.111 0.111</Coefs>"
+"  </Kernel>"
+"</KernelFilteredSource>";
+
+  // Create the virtual dataset. 
+  poVRTDS = poDriver->Create( "", 512, 512, 1, GDT_Byte, NULL );
+  poVRTDS->GetRasterBand(1)->SetMetadataItem("source_0",pszFilterSourceXML",
+                                             "new_vrt_sources");
+\endcode
+
+A more general form of this that will produce a 3x3 average filtered clone
+of any input datasource might look like the following.  In this case we
+deliberately set the filtered datasource as in the "vrt_sources" domain 
+to override the SimpleSource created by the CreateCopy() method.  The fact
+that we used CreateCopy() ensures that all the other metadata, georeferencing
+and so forth is preserved from the source dataset ... the only thing we are
+changing is the data source for each band.
+
+\code
+  int   nBand;
+  GDALDriver *poDriver = (GDALDriver *) GDALGetDriverByName( "VRT" );
+  GDALDataset *poSrcDS, *poVRTDS;
+
+  poSrcDS = (GDALDataset *) GDALOpenShared( pszSourceFilename, GA_ReadOnly );
+
+  poVRTDS = poDriver->CreateCopy( "", poSrcDS, FALSE, NULL, NULL, NULL );
+
+  for( nBand = 1; nBand <= poVRTDS->GetRasterCount(); nBand++ )
+  {
+      char szFilterSourceXML[10000];
+
+      GDALRasterBand *poBand = poVRTDS->GetRasterBand( nBand );
+
+      sprintf( szFilterSourceXML, 
+	"<KernelFilteredSource>"
+	"  <SourceFilename>%s</SourceFilename>1<SourceBand>%d</SourceBand>"
+	"  <Kernel>"
+	"    <Size>3</Size>"
+	"    <Coefs>0.111 0.111 0.111 0.111 0.111 0.111 0.111 0.111 0.111</Coefs>"
+	"  </Kernel>"
+	"</KernelFilteredSource>", 
+	pszSourceFilename, nBand );
+	
+      poBand->SetMetadataItem( "source_0", szFilterSourceXML, "vrt_sources" );
+  }
+\endcode
+
+<h2>Using Derived Bands</h2>
+
+A specialized type of band is a 'derived' band which derives its pixel
+information from its source bands.  With this type of band you must also
+specify a pixel function, which has the responsibility of generating the
+output raster.  Pixel functions are created by an application and then
+registered with GDAL using a unique key.
+
+Using derived bands you can create VRT datasets that manipulate bands on
+the fly without having to create new band files on disk.  For example, you
+might want to generate a band using four source bands from a nine band input
+dataset (x0, x3, x4, and x8):
+
+\code
+  band_value = sqrt((x3*x3+x4*x4)/(x0*x8));
+\endcode
+
+You could write the pixel function to compute this value and then register
+it with GDAL with the name "MyFirstFunction".  Then, the following VRT XML
+could be used to display this derived band:
+
+\code
+<VRTDataset rasterXSize="1000" rasterYSize="1000">
+  <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">>
+    <Description>Magnitude</Description>
+    <PixelFunctionType>MyFirstFunction</PixelFunctionType>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">nine_band.dat</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
+      <DstRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">nine_band.dat</SourceFilename>
+      <SourceBand>4</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
+      <DstRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">nine_band.dat</SourceFilename>
+      <SourceBand>5</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
+      <DstRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="1">nine_band.dat</SourceFilename>
+      <SourceBand>9</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
+      <DstRect xOff="0" yOff="0" xSize="1000" ySize="1000"/>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
+\endcode
+
+In addition to the subclass specification (VRTDerivedRasterBand) and
+the PixelFunctionType value, there is another new parameter that can come
+in handy: SourceTransferType.  Typically the source rasters are obtained
+using the data type of the derived band.  There might be times,
+however, when you want the pixel function to have access to
+higher resolution source data than the data type being generated.
+For example, you might have a derived band of type "Float", which takes
+a single source of type "CFloat32" or "CFloat64", and returns the imaginary
+portion.  To accomplish this, set the SourceTransferType to "CFloat64".
+Otherwise the source would be converted to "Float" prior to
+calling the pixel function, and the imaginary portion would be lost.
+
+\code
+<VRTDataset rasterXSize="1000" rasterYSize="1000">
+  <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">>
+    <Description>Magnitude</Description>
+    <PixelFunctionType>MyFirstFunction</PixelFunctionType>
+    <SourceTransferType>"CFloat64"</SourceTransferType>
+    ...
+\endcode
+
+<h3>Writing Pixel Functions</h3>
+
+To register this function with GDAL (prior to accessing any VRT datasets
+with derived bands that use this function), an application calls
+GDALAddDerivedBandPixelFunc with a key and a GDALDerivedPixelFunc:
+ 
+\code
+    GDALAddDerivedBandPixelFunc("MyFirstFunction", TestFunction);
+\endcode
+
+A good time to do this is at the beginning of an application when the
+GDAL drivers are registered.
+
+GDALDerivedPixelFunc is defined with a signature similar to IRasterIO:
+
+@param papoSources A pointer to packed rasters; one per source.  The
+datatype of all will be the same, specified in the eSrcType parameter.
+
+@param nSources The number of source rasters.
+
+@param pData The buffer into which the data should be read, or from which
+it should be written.  This buffer must contain at least nBufXSize *
+nBufYSize words of type eBufType.  It is organized in left to right,
+top to bottom pixel order.  Spacing is controlled by the nPixelSpace,
+and nLineSpace parameters.
+
+@param nBufXSize The width of the buffer image into which the desired
+region is to be read, or from which it is to be written.
+
+@param nBufYSize The height of the buffer image into which the desired
+region is to be read, or from which it is to be written.
+
+@param eSrcType The type of the pixel values in the papoSources raster
+array.
+
+@param eBufType The type of the pixel values that the pixel function must
+generate in the pData data buffer.
+
+@param nPixelSpace The byte offset from the start of one pixel value in
+pData to the start of the next pixel value within a scanline.  If
+defaulted (0) the size of the datatype eBufType is used.
+
+@param nLineSpace The byte offset from the start of one scanline in
+pData to the start of the next.
+
+@return CE_Failure on failure, otherwise CE_None.
+
+\code
+typedef CPLErr
+(*GDALDerivedPixelFunc)(void **papoSources, int nSources, void *pData,
+			int nXSize, int nYSize,
+			GDALDataType eSrcType, GDALDataType eBufType,
+                        int nPixelSpace, int nLineSpace);
+\endcode
+
+The following is an implementation of the pixel function:
+
+\code
+#include "gdal.h"
+
+CPLErr TestFunction(void **papoSources, int nSources, void *pData,
+		    int nXSize, int nYSize,
+		    GDALDataType eSrcType, GDALDataType eBufType,
+		    int nPixelSpace, int nLineSpace)
+{
+
+    int ii, iLine, iCol;
+    double pix_val;
+    double x0, x3, x4, x8;
+
+    /* ---- Init ---- */
+    if (nSources != 4) return CE_Failure;
+
+    /* ---- Set pixels ---- */
+    for( iLine = 0; iLine < nYSize; iLine++ ) {
+	for( iCol = 0; iCol < nXSize; iCol++ ) {
+	    ii = iLine * nXSize + iCol;
+
+            /* Source raster pixels may be obtained with SRCVAL macro */
+            x0 = SRCVAL(papoSources[0], eSrcType, ii);
+            x3 = SRCVAL(papoSources[1], eSrcType, ii);
+            x4 = SRCVAL(papoSources[2], eSrcType, ii);
+            x8 = SRCVAL(papoSources[3], eSrcType, ii);
+
+	    pix_val = sqrt((x3*x3+x4*x4)/(x0*x8));
+
+	    GDALCopyWords(&pix_val, GDT_Float64, 0,
+			  ((GByte *)pData) + nLineSpace * iLine +
+			  iCol * nPixelSpace, eBufType, nPixelSpace, 1);
+	}
+    }
+
+    /* ---- Return success ---- */
+    return CE_None;
+}
+\endcode
+
+*/

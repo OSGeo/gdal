@@ -1,0 +1,5 @@
+cpl_config.h
+*.bak
+*.lib
+*.lo
+*.obj

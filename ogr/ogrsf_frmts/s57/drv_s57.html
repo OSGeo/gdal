@@ -1,0 +1,191 @@
+<html>
+<head>
+<title>IHO S-57 (ENC)</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>IHO S-57 (ENC)</h1>
+
+IHO S-57 datasets are supported for read access.<p>
+
+The S-57 driver module produces features for all S-57 features in one
+or more related S-57 data files.  An S-57 dataset can be a directory (in
+which case all S-57 files in the directory are selected), an S-57 catalog
+file (in which case all files referred to from the catalog are selected)
+or an individual S-57 data file.  <p>
+
+S-57 feature objects are translated into features.  S-57 geometry
+objects are automatically collected and formed into geometries on the 
+features.<P>
+
+The S-57 reader depends on having two supporting files, s57objectclasses.csv,
+and s57attributes.csv available at runtime in order to translate features
+in an object class specific manner.  These should be in the directory pointed
+to by the encironment variable S57_CSV, or in the current working directory.
+<p>
+
+S-57 update files contain information on how to update a distributed S-57 
+base data file.  The base files normally have the extension .000 while the
+update files have extensions like .001, .002 and so on.  The S-57 reader 
+will normally read and apply all updates files to the in memory version of
+the base file on the fly.  The feature data provided to the application 
+therefore includes all the updates. <p>
+
+<h3>Feature Translation</h3>
+
+Normally all features read from S-57 are assigned to a layer based on
+the name of the object class (OBJL) to which they belong.  For instance,
+with an OBJL value of 2, the feature is an "Airport / airfield" and has
+a short name of "AIRARE" which is used as the layer name.  A typical
+S-57 transfer will have in excess of 100 layers.<p>
+
+Each feature type has a predefined set of attributes as defined by the
+S-57 standard.  For instance, the airport (AIRARE) object class can
+have the AIRARE, CATAIR, CONDTN, CONVIS, NOBJNM, OBJNAM, STATUS, INFORM,
+NINFOM, NTXTDS, PICREP, SCAMAX, SCAMIN, TXTDSC, ,RECDAT, RECIND, SORDAT,
+and SORIND attributes.  These short names can be related to longer, more
+meaningful names using an S-57 object/attribute catalog such as the
+S-57 standard document itself, or the catalog files (s57attributes.csv,
+and s57objectclasses.csv).  
+Such a catalog can also be used to establish all the available object classes,
+and their attributes.<p>
+
+The following are some common attributes, including generic attributes 
+which appear on all feature, regardless of object class.
+is turned on. <p>
+
+<pre>
+  Attribute Name  Description                            Defined On
+  --------------  -----------                            ----------
+
+  GRUP            Group number.			         All features
+
+  OBJL            Object label code.  This number	 All features
+	          indicates the object class of the 
+                  feature. 
+
+  RVER            Record version.
+
+  AGEN            Numeric agency code, such as 50 for    All features
+                  the Canadian Hydrographic Service.
+		  A potentially outdated list is 
+		  available in agencode.txt.
+
+  FIDN            Feature identification number.         All features
+
+  FIDS            Feature identification subdivision.    All features
+
+  DSNM            Dataset name.  The name of the file    All features
+                  the feature came from.  Used with
+                  LNAM to form a unique dataset wide
+		  identifier for a feature.
+
+  INFORM          Informational text.                    Some features
+
+  NINFOM	  Informational text in national         Some features
+                  language. 
+
+  OBJNAM          Object name				 Some features
+
+  NOBJNM          Object name in national		 Some features
+                  language.
+                         
+  SCAMAX          Maximum scale for display              Some features
+ 
+  SCAMIN          Minimum scale for display              Some features
+  
+  SORDAT          Source date                            Some features
+</pre>
+
+The following are present if LNAM_REFS is enabled:
+<pre>
+  LNAM            Long name.  An encoding of AGEN,       All features
+                  FIDN and FIDS used to uniquely 
+                  identify this features within an
+                  S-57 file.  
+
+  LNAM_REFS       List of long names of related features All Features
+
+  FFPT_RIND       Relationship indicators for each of    All Features
+                  the LNAM_REFS relationships. 
+
+</pre>
+
+<h3>Soundings</h3>
+
+Depth soundings are handled somewhat specially in S-57 format, in order
+to efficiently represent the many available data points.  In S-57 one
+sounding feature can have many sounding points.  The S-57 reader
+splits each of these out into it's own feature type `SOUNDG' feature
+with an s57_type of `s57_point3d'.  All the soundings from a single
+feature record will have the same AGEN, FIDN, FIDS and LNAM value.<p>
+
+<h3>S57 Control Options</h3>
+
+There are several control options which can be used to alter the behavior of
+the S-57 reader.  Users can set these by appending them in the 
+OGR_S57_OPTIONS environment variable. 
+
+<ul>
+
+<li> <b>UPDATES</b>=APPLY/IGNORE: Should update files be incorporated into the
+base data on the fly.  Default is APPLY.<p>
+
+<li> <b>SPLIT_MULITPOINT</b>=ON/OFF: Should multipoint soundings be split
+into many single point sounding features.  Multipoint geometries are not well
+handle by many formats, so it can be convenient to split single sounding features with many points into many single point features.  Default is OFF. <p>
+
+<li> <b>ADD_SOUNDG_DEPTH</b>=ON/OFF: Should a DEPTH attribute be added on
+SOUNDG features and assign the depth of the sounding.  This should only be
+enabled with SPLIT_MULTIPOINT is also enabled.  
+Default is OFF. <p>
+
+<li> <b>RETURN_PRIMITIVES</b>=ON/OFF: Should all the low level geometry 
+primitives be returned as special IsolatedNode, ConnectedNode, Edge and
+Face layers.  Default is OFF. <p>
+
+<li> <b>PRESERVE_EMPTY_NUMBERS</b>=ON/OFF: If enabled, numeric attributes
+assigned an empty string as a value will be preserved as a special numeric
+value.  This option should not generally be needed, but may be useful 
+when translated S-57 to S-57 losslessly.  Default is OFF. <p>
+
+<li> <b>LNAM_REFS</b>=ON/OFF: Should LNAM and LNAM_REFS fields be 
+attached to features capturing the feature to feature relationships in the
+FFPT group of the S-57 file.  Default is OFF.<p>
+
+<li> <b>RETURN_LINKAGES</b>=ON/OFF: Should additional attributes 
+relating features to their underlying geometric primtives be attached.  These
+are the values of the FSPT group, and are primarily needed when doing 
+S-57 to S-57 translations.  Default is OFF.<p>
+
+</ul>
+
+Example:
+
+<pre>
+set OGR_S57_OPTIONS = "RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON"
+</pre>
+
+<h3>S-57 Export</h3>
+
+Preliminary S-57 export capability has been added in GDAL/OGR 1.2.0 but
+is intended only for specialized use, and is not properly documented at
+this time.  Setting the following options is a minimum required to 
+support S-57 to S-57 conversion via OGR.<p>
+
+<pre>
+set OGR_S57_OPTIONS = "RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON"
+</pre>
+
+<h3>See Also</h3>
+
+<ul>
+
+<li> <a href="http://home.gdal.org/projects/s57/index.html">Frank's S-57
+Page</a>: Links to other resources, and sample datasts.<p>
+
+</ul>
+
+</body>
+</html>

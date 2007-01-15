@@ -1,0 +1,3 @@
+*.lib
+*.obj
+list-ranlib

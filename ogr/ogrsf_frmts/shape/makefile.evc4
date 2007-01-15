@@ -1,0 +1,25 @@
+# $Id$
+#
+# OGR Shapefile Driver makefile
+#
+
+OBJ = dbfopen.obj \
+      ogrshapedatasource.obj \
+      ogrshapedriver.obj \
+      ogrshapelayer.obj \
+      shape2ogr.obj \
+      shpopen.obj \
+      shptree.obj
+
+EXTRAFLAGS = -I.. -I..\.. /DSHAPELIB_DLLEXPORT -DUSE_CPL
+
+GDAL_ROOT = ..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake-wince.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+

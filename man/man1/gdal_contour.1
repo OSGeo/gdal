@@ -1,0 +1,63 @@
+.TH "gdal_contour" 1 "28 Jun 2006" "GDAL" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+gdal_contour \- gdal_contour
+builds vector contour lines from a raster elevation model
+.SH "SYNOPSIS"
+.PP
+.PP
+.PP
+.nf
+Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-3d] [-inodata]
+                    [-snodata n] [-f <formatname>] [-i <interval>]
+                    [-off <offset>] [-fl <level> <level>...]
+                    <src_filename> <dst_filename> 
+.fi
+.PP
+.SH "DESCRIPTION"
+.PP
+This program generates a vector contour file from the input raster elevation model (DEM).
+.PP
+.IP "\fB\fB-s_srs\fP \fIsrs def\fP:\fP" 1c
+source spatial reference set. The coordinate systems that can be passed are anything supported by the OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes (ie. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prf file containing well known text. </dl
+.PP
+.IP "\fB\fB-b\fP \fIband\fP:\fP" 1c
+picks a particular band to get the DEM from. Defaults to band 1.
+.PP
+.IP "\fB\fB-a\fP \fIname\fP:\fP" 1c
+provides a name for the attribute in which to put the elevation. If not provided no elevation attribute is attached.  
+.IP "\fB\fB-3d\fP: \fP" 1c
+Force production of 3D vectors instead of 2D. Includes elevation at every vertex.
+.PP
+.IP "\fB\fB-inodata\fP: \fP" 1c
+Ignore any nodata value implied in the dataset - treat all values as valid.
+.PP
+.IP "\fB\fB-snodata\fP \fIvalue\fP:\fP" 1c
+Input pixel value to treat as 'nodata'. 
+.PP
+.IP "\fB\fB-f\fP \fIformat\fP: \fP" 1c
+create output in a particular format, default is shapefiles.
+.PP
+.IP "\fB\fB-i\fP \fIinterval\fP:\fP" 1c
+elevation interval between contours.
+.PP
+.IP "\fB\fB-off\fP \fIoffset\fP:\fP" 1c
+Offset from zero relative to which to interpret intervals.
+.PP
+.IP "\fB\fB-fl\fP \fIlevel\fP: \fP" 1c
+Name one or more 'fixed levels' to extract. 
+.PP
+.SH "EXAMPLE"
+.PP
+.PP
+This would create 10meter contours from the DEM data in dem.tif and produce a shapefile in contour.shp/shx/dbf with the contour elevations in the 'elev' attribute.
+.PP
+.PP
+.nf
+gdal_contour -a elev dem.tif contour.shp 10.0
+.fi
+.PP
+.SH "AUTHORS"
+.PP
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de> 

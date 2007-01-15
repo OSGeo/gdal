@@ -1,0 +1,353 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
+/*!
+\page faq GDAL FAQ
+
+<ol>
+<!--------------------------------------------------------------------------->
+
+<li> <b>What's this OGR Stuff?</b>
+<p>The gdal/ogr tree holds source for a vector IO library inspired by
+OpenGIS Simple Features.  In theory it is separate from GDAL, but currently
+they reside in the same source tree and are somewhat entangled.  More
+information can be found at
+<a href="http://ogr.maptools.org/">http://ogr.maptools.org</a>.  It is 
+my plan to properly fold OGR into GDAL properly at some point
+in the future.  Then GDAL will be a raster and vector library. </p>
+</li>
+
+<!--------------------------------------------------------------------------->
+<li> <b>How do I add support for a new format?</b>
+<p>To some extent this is now covered by the
+<a href="gdal_drivertut.html">GDAL Driver Implementation Tutorial</a>.</p>
+</li>
+
+<!--------------------------------------------------------------------------->
+<li> <b>Can I get a MS Visual Studio Project file for GDAL?</b>
+<p>The GDAL developers find it more convenient to build with makefiles 
+and the Visual Studio NMAKE utility.  Maintaining a parallel set of project
+files for GDAL is too much work, so there are no project files directly 
+available from the maintainers.  Occasionally other users do prepare such 
+project files, and you may be able to get them by asking on the gdal-dev list.
+However, I would strongly suggest you just use the NMAKE based build system.
+With debugging enabled you can still debug into GDAL with Visual Studio.</p>
+</li>
+
+<!--------------------------------------------------------------------------->
+<li> <b>Can I build GDAL with MS Visual C++ 2005 Express Edition?</b>
+<p>
+Yes, you can. It's also possible to use GDAL libraries in applications developed using <a href="http://msdn.microsoft.com/vstudio/express/visualc/">MS Visual C++ 2005 Express Edition</a>.
+
+<ul>
+<li><p>Download and install Visual C++ 2005 Express Edition. Follow instructions presented on this website:</p><p>http://msdn.microsoft.com/vstudio/express/visualc/download/</p></li>
+
+<li><p>Download and install Microsoft Platform SDK</p>. Also, follow these instructions carefully without omitting any of steps presented there:</p><p>http://msdn.microsoft.com/vstudio/express/visualc/usingpsdk/</p></li>
+
+<li>Add following two paths to <em>Include files</em> in the Visual C++ IDE settings. Do it the same way as presented in <a href="http://msdn.microsoft.com/vstudio/express/visualc/usingpsdk/">Step 3</a> from the website above.
+
+<pre>
+C:\\Program Files\\Microsoft Platform SDK\\Include\\atl
+C:\\Program Files\\Microsoft Platform SDK\\Include\\mfc
+</pre>
+</li>
+
+<li>Since you will build GDAL from command line using nmake tool, you also need to set or update <em>INCLUDE</em> and <em>LIB</em> environment variables manually. You can do it in two ways:
+
+<ol>
+<li>using the System applet available in the Control Panel</li>
+<li>by editing vsvars32.bat script located in <pre>C:\\Program Files\\Microsoft Visual Studio 8\\Common7\\Tools\\vsvars32.bat</pre></li>
+</ol>
+
+These variables should have following values assigned:
+
+<pre>
+INCLUDE=C:\\Program Files\\Microsoft Visual Studio 8\\VC\\Include;
+        C:\\Program Files\\Microsoft Platform SDK\\Include;
+        C:\\Program Files\\Microsoft Platform SDK\\Include\\mfc;
+        C:\\Program Files\\Microsoft Platform SDK\\Include\\atl;%INCLUDE%
+</pre>
+
+<pre>
+LIB=C:\\Program Files\\Microsoft Visual Studio 8\\VC\\Lib;
+    C:\\Program Files\\Microsoft Visual Studio 8\\SDK\\v2.0\\lib;
+    C:\\Program Files\\Microsoft Platform SDK\\lib;%LIB%
+</pre>
+
+<strong>NOTE:</strong> If you have edited system-wide <em>INCLUDE</em> and <em>LIB</em> variables, using <em>System</em> applet, every Console (cmd.exe) will have it properly set. But if you have edited them through <em>vsvars32.bat</em> script, you will need to run this script in the Console before every compilation.
+</li>
+
+<li><p>Patch atlwin.h header</p>
+<p>At line 1725 add <em>int i;</em> declaration, so it looks as follows:</p>
+<pre>
+---------------------------------------------------------------
+BOOL SetChainEntry(DWORD dwChainID, CMessageMap* pObject, DWORD dwMsgMapID = 0)
+{
+    int i;
+    // first search for an existing entry
+
+    for(i = 0; i < m_aChainEntry.GetSize(); i++)
+---------------------------------------------------------------
+</pre>
+</li>
+
+<li><p>Patch atlbase.h header</p>
+<p>At line 287, comment AllocStdCallThunk and FreeStdCallThunk functions and add macros replacements:</p>
+<pre>
+---------------------------------------------------------------
+/***************************************************
+PVOID __stdcall __AllocStdCallThunk(VOID);
+VOID __stdcall __FreeStdCallThunk(PVOID);
+
+#define AllocStdCallThunk() __AllocStdCallThunk()
+#define FreeStdCallThunk(p) __FreeStdCallThunk(p)
+
+#pragma comment(lib, "atlthunk.lib")
+***************************************************/
+
+/* NEW MACROS */
+#define AllocStdCallThunk() HeapAlloc(GetProcessHeap(),0,sizeof(_stdcallthunk))
+#define FreeStdCallThunk(p) HeapFree(GetProcessHeap(), 0, p)
+---------------------------------------------------------------
+</pre>
+</li>
+
+<li><p>Building GDAL</p>
+    <ul>
+    <li>Open console windows (Start -&gt; Run -&gt; cmd.exe -&gt; OK)</li>
+
+    <li>If you have edited vsvars32.bat script, you need to run it using full path:
+    <pre>
+C:\\> "C:\\Program Files\\Microsoft Visual Studio 8\\Common7\\Tools\\vsvars32.bat"
+Setting environment for using Microsoft Visual Studio 2005 x86 tools
+    </pre></li>
+
+    <li>Go do GDAL sources root directory, for example:
+    <pre>
+C:\\> cd work\\gdal
+    </pre></li>
+
+    <li>Run nmake to compile
+    <pre>
+C:\\work\\gdal> nmake /f makefile.vc
+    </pre></li>
+    
+    <li>If no errors occur, after a few minutes you should see GDAL libraries in <em>C:\\work\\gdal</em>.</li>
+    </ul>
+</li>
+
+</ul>
+
+Now, you can use these libraries in your applications developed using Visual C++ 2005 Express Edition.
+</p>
+</li>
+
+<!--------------------------------------------------------------------------->
+<li> <b>Can I build GDAL with Cygwin or MingW?</b>
+<p>GDAL should build with Cygwin using the Unix-like style build methodology.  
+It is also possible to build with MingW though there are some complications. 
+The following might work:</p>
+
+<pre>
+./configure --prefix=$PATH_TO_MINGW_ROOT --host=mingw32 \
+	--without-libtool --without-python $YOUR_CONFIG_OPTIONS
+</pre>
+
+<p>Using external win32 libraries will often be problematic with either of
+these environments - at the least requiring some manual hacking of the 
+GDALmake.opt file.</p>
+</li>
+
+<!--------------------------------------------------------------------------->
+<li> <b>Can I build GDAL with Borland C or other C compilers?</b>
+
+<p>These are not supported compilers for GDAL; however, GDAL is mostly pretty
+generic, so if you are willing to take on the onerous task of building an
+appropriate makefile / project file it should be possible.  You will find 
+most portability issues in the gdal/port/cpl_port.h file, and you will need
+to prepare a gdal/port/cpl_config.h file appropriate to your platform.  Using
+cpl_config.h.vc as a guide may be useful.</p>
+</li>
+
+<!--------------------------------------------------------------------------->
+
+<li> <a name="license"><b>What exactly was the license terms for GDAL?</b></a>
+<p>The following terms are the same as X windows is released under, and is
+generally known as the "MIT License".  It is intended to give you permission
+to do whatever you want with the GDAL source, including building proprietary
+commercial software, without further permission from me, or requirement to
+distribute your source code.  A few portions of GDAL under under slightly
+different terms.  For instance the libpng, libjpeg, libtiff, and libgeotiff 
+license terms may vary slightly though I don't think any of them differ
+in any significant way.  Some external libraries which can be optionally
+used by GDAL are under radically different licenses.</p>
+
+<pre>
+ Copyright (c) 2000, Frank Warmerdam
+
+ Permission is hereby granted, free of charge, to any person obtaining a
+ copy of this software and associated documentation files (the "Software"),
+ to deal in the Software without restriction, including without limitation
+ the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ and/or sell copies of the Software, and to permit persons to whom the
+ Software is furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included
+ in all copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ DEALINGS IN THE SOFTWARE.
+</pre>
+</li>
+
+<!--------------------------------------------------------------------------->
+
+<li> <b>What are ``Well Known Text'' projections, and how do I use them?</b>
+<p>OpenGIS <i>Well Known Text</i> is a textual format for defining coordinate
+systems.  It is loosely based on the EPSG coordinate systems model.  While
+GDAL itself just passes these definitions around as text strings, there is
+also an OGRSpatialReference class in gdal/ogr for manipulating them and
+a linkage to <a href="http://www.remotesensing.org/proj">PROJ.4</a> for 
+transforming between coordinate systems.
+The OGRSpatialReference, and PROJ.4 linkaged (but not PROJ.4 itself) is
+linked into the GDAL shared library by default.
+More documentation on WKT and OGRSpatialReference can be found in the <a href="http://www.gdal.org/ogr/osr_tutorial.html">
+OGR Projections Tutorial</a>.</p>
+</li>
+
+
+<!--------------------------------------------------------------------------->
+
+<li> <b>Can I reproject rasters with GDAL?</b><p>
+
+Yes, you can use the <a href="gdal_utilities.html#gdalwarp">gdalwarp</a> 
+utility program or programmatically use the GDALWarpOperation class described
+in the <a href="warptut.html">Warp API Tutorial</a>.
+
+<!--------------------------------------------------------------------------->
+
+<li> <b>Why won't gdalwarp or gdal_merge write to most formats?</b><p>
+
+GDAL supports many raster formats for reading, but significantly less formats
+for writing.  Of the ones supported for writing most are only supported in
+<i>create copy</i> mode.  Essentially this means they have to be written
+sequentially from a provided input copy of the image to be written.  
+Programs like gdal_merge.py or gdalwarp that write chunks of imagery 
+non-sequentially cannot easily write to these sequential write formats. 
+Generally speaking formats that are compressed, such as PNG, JPEG and GIF
+are sequential write.  Also some formats require information such as the
+coordinate system and color table to be known at creation time and so these
+are also sequential write formats.<p>
+
+When you encounter this problem it is generally a good idea to first write
+the result to GeoTIFF format, and then translate to the desired target
+format.<p>
+
+To determine which formats support which capabilities, use the --formats
+switch with pretty much any GDAL utility.  Each driver will include either
+<b>rw</b> (read-only), <b>rw</b> (read or sequential write) or <b>rw+</b>
+(read, sequential write or random write).<p>
+
+<!--------------------------------------------------------------------------->
+
+<li> <b>Is the GDAL library thread-safe?</b><p>
+
+No, GDAL is not completely thread safe.  
+
+However for GDAL 1.3.0 much work has been done on making some common
+scenarios thread safe.  In particular for the situation where many
+threads are reading from GDAL datasets at once should work as long as
+no two threads access the same GDALDataset object at the same time.  
+However, in this scenario, no threads can be writing to GDAL while others
+are reading or chaos may ensue. 
+
+Also, while the GDAL core infrastructure is now thread-safe for this specific
+case, only a few drivers have been vetted to be thread safe.  
+
+It is intended that work will continue on improving GDAL's thread safety
+in future versions.
+
+<!-------------------------------------------------------------------------->
+
+<li> <b>Does GDAL work in different international numeric locales?</b>
+<p>No. GDAL makes extensive use of sprintf() and atof() internally to translate
+numeric values. If a locale is in effect that modifies formatting of 
+numbers, altering the role of commas and periods in numbers, then PROJ.4
+will not work. This problem is common in some European locales.</p>
+
+<p>On Unix-like platforms, this problem can be avoided by forcing the use of
+the default numeric locale by setting the LC_NUMERIC environment variable to C, e.g.</p>
+
+<pre>
+$ export LC_NUMERIC=C
+$ gdalinfo abc.tif
+</pre>
+
+<!-------------------------------------------------------------------------->
+
+<li> <b>How do I "debug" GDAL?</b>
+<p>Various helpful debugging information will be produced by GDAL and OGR if
+the CPL_DEBUG environment variable is set to the value ON.  Review the 
+documentation for the CPLDebug() function for more information on built-in
+debugging messages.</p>
+
+<p>On Unix operating systems GDAL can be built with the CFG environment variable
+set to "debug" to enable debugger support with the -g compiler switch.  On
+Windows edit the nmake.opt and ensure /Zi appears in the OPTFLAGS variable.</p>
+</li>
+
+<!-------------------------------------------------------------------------->
+
+<li> <b>How should I deallocate resources acquainted from GDAL on Windows?</b>
+<p>The safest way to release resources allocated and returned (with ownership transfered to caller) from GDAL library is to use dedicated deallocator function. Deallocators promise to release resources on the right module side, without crossing modules boundaries what usually causes memory access violation errors.</p>
+
+<ul>
+    <li>Example of <strong>correct</strong> resource deallocation:
+<pre>
+OGRDataSource* poDS = NULL;
+
+// OGRDataSource aquisition made on side of the GDAL module
+poDS = OGRSFDriverRegistrar::Open( "point.shp", FALSE );
+
+// ...
+
+// Properly resource release using deallocator function
+OGRDataSource::DestroyDataSource( poDS );
+</pre>
+    </li>
+
+    <li>Example of <strong>incorrect</strong> resource deallocation:
+<pre>
+OGRDataSource* poDS = NULL;
+
+// OGRDataSource aquisition made on side of the GDAL module
+poDS = OGRSFDriverRegistrar::Open( "point.shp", FALSE );
+
+// ...
+
+// Deallocation across modules boundaries.
+// Here, the deallocation crosses GDAL DLL library and client's module (ie. executable module)
+delete poDS;
+</pre>
+    </li>
+</ul>
+
+<p>More detailed explanation of the problem can be found here: <a href="http://blogs.msdn.com/oldnewthing/archive/2006/09/15/755966.aspx">Allocating and freeing memory across module boundaries</a>.</p>
+
+</li>
+
+</ol>
+
+\htmlonly
+<p>
+$Id$
+</p>
+\endhtmlonly
+
+*/

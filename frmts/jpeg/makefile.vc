@@ -1,0 +1,28 @@
+GDAL_ROOT	=	..\..
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+
+OBJ	=    jpgdataset.obj vsidataio.obj
+
+
+!IFDEF JPEG_EXTERNAL_LIB
+EXTRAFLAGS      = -I$(JPEGDIR)
+!ELSE
+EXTRAFLAGS = 	-Ilibjpeg
+!ENDIF
+
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+!IFNDEF JPEG_EXTERNAL_LIB
+	cd libjpeg
+	$(MAKE) /f makefile.vc
+	cd ..
+!ENDIF
+
+clean:
+	-del *.obj
+        cd libjpeg
+	$(MAKE) /f makefile.vc clean
+	cd ..
+

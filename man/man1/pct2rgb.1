@@ -1,0 +1,32 @@
+.TH "pct2rgb" 1 "28 Jun 2006" "GDAL" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+pct2rgb \- pct2rgb.py
+converts an image into a pseudo-colored image
+.SH "SYNOPSIS"
+.PP
+.PP
+.PP
+.nf
+pct2rgb.py [-of format] [-b band] source_file dest_file
+.fi
+.PP
+.SH "DESCRIPTION"
+.PP
+This utility will convert a pseudocolor band on the input file into an output RGB file of the desired format.
+.PP
+.IP "\fB\fB-of\fP \fIformat\fP:\fP" 1c
+Format to generated (defaults to GeoTIFF). 
+.IP "\fB\fB-b\fP \fIband\fP:\fP" 1c
+Band to convert to RGB, defaults to 1. 
+.IP "\fB\fIsource_file\fP:\fP" 1c
+The input file.  
+.IP "\fB\fIdest_file\fP:\fP" 1c
+The output RGB file that will be created. 
+.PP
+.PP
+NOTE: rgb2pct.py is a Python script, and will only work if GDAL was built with Python support.
+.SH "AUTHORS"
+.PP
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de> 

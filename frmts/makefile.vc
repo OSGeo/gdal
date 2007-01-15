@@ -1,0 +1,99 @@
+
+GDAL_ROOT = ..
+
+EXTRAFLAGS =	-DFRMT_ceos -DFRMT_aigrid -DFRMT_elas -DFRMT_hfa -DFRMT_gtiff\
+		-DFRMT_sdts -DFRMT_raw -DFRMT_gxf -DFRMT_ceos2 -DFRMT_png \
+		-DFRMT_dted -DFRMT_mem -DFRMT_jdem -DFRMT_gif \
+		-DFRMT_envisat -DFRMT_aaigrid -DFRMT_usgsdem -DFRMT_l1b \
+		-DFRMT_fit -DFRMT_vrt -DFRMT_xpm -DFRMT_bmp -DFRMT_rmf \
+		-DFRMT_nitf -DFRMT_pcidsk -DFRMT_airsar -DFRMT_rs2 \
+		-DFRMT_ilwis -DFRMT_msgn -DFRMT_rik -DFRMT_pcraster \
+		-DFRMT_leveller -DFRMT_sgi -DFRMT_idrisi
+
+MOREEXTRA =	
+
+DIRLIST =	$(EXTRAFLAGS:-DFRMT_=)
+
+!INCLUDE $(GDAL_ROOT)/nmake.opt
+
+!IFDEF JPEG_SUPPORTED
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_jpeg
+!ENDIF
+
+!IFDEF BSB_SUPPORTED
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_bsb
+!ENDIF
+
+!IFDEF OGDIDIR
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_ogdi
+!ELSE
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_zlib
+!ENDIF
+
+!IFDEF JASPER_DIR
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_jpeg2000
+!ENDIF
+
+!IFDEF KAKDIR
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_jp2kak
+!ENDIF
+
+!IFDEF ECWDIR
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_ecw
+!ENDIF
+
+!IFDEF HDF4_DIR
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_hdf4
+!ENDIF
+
+!IFDEF HDF5_DIR
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_hdf5
+!ENDIF
+
+!IFDEF MRSID_DIR
+!IFNDEF MRSID_PLUGIN
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_mrsid
+!ENDIF
+!ENDIF
+
+!IFDEF FITS_INC_DIR
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_fits
+!ENDIF
+
+!IFDEF NETCDF_SETTING
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_netcdf
+!ENDIF
+
+!IFDEF CURL_DIR
+EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_wcs
+!ENDIF
+
+default:	o\gdalallregister.obj subdirs
+
+list:
+	echo $(DIRLIST)
+
+subdirs:
+	for %d in ( $(DIRLIST) ) do \
+		cd %d \
+		&& nmake /NOLOGO /f makefile.vc \
+		&& cd ..
+
+o\gdalallregister.obj:	gdalallregister.cpp ..\nmake.opt
+	$(CC) $(CFLAGS) $(MOREEXTRA) /c gdalallregister.cpp
+	copy gdalallregister.obj o
+
+clean:
+	-del o\*.obj *.obj
+	for %d in ( $(DIRLIST) ) do \
+		cd %d \
+		&& nmake /NOLOGO /f makefile.vc clean \
+		&& cd ..
+	cd iso8211
+	nmake /NOLOGO /f makefile.vc clean
+
+
+html-install:
+	copy *.html $(HTMLDIR)
+	-for %d in ( $(DIRLIST) ) do \
+		copy %d\frmt_*.html $(HTMLDIR)

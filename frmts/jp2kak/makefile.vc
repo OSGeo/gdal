@@ -1,0 +1,17 @@
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+OBJ	=	jp2kakdataset.obj
+EXTRAFLAGS = 	-I$(KAKDIR) /DKDU_PENTIUM_MSVC /GX
+
+default:	$(OBJ) kakinstall
+	xcopy /D  /Y *.obj ..\o
+
+kakinstall:
+	copy $(KAKDIR)\*.obj ..\o
+
+clean:
+	-del *.obj
+

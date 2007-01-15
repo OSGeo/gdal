@@ -1,0 +1,19 @@
+
+OBJ	=	aigdataset.obj aigopen.obj gridlib.obj aigccitt.obj
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+all:	$(OBJ) aitest.exe 
+
+aitest.exe:	$(OBJ) aitest.c
+	$(CC) $(CFLAGS) aitest.c aigopen.obj gridlib.obj \
+			$(GDAL_ROOT)/port/cpl.lib
+	
+clean:
+	-del *.obj
+

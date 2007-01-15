@@ -1,0 +1,89 @@
+<html>
+<head>
+<title>INTERLIS</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>INTERLIS</h1>
+
+OGR has support for INTERLIS reading and writing.<br>
+<a href="http://www.interlis.ch/">INTERLIS</a> is a standard which has been especially composed in order to fulfil the requirements of modelling and the integration of geodata into contemporary and future geographic information systems.
+
+The current version is INTERLIS version 2. INTERLIS version 1 remains a Swiss standard.
+
+With the usage of unified, documented geodata and the flexible exchange possibilities the following advantage may occur:
+<ul>
+<li>the standardized documentation 
+<li>the compatible data exchange 
+<li>the comprehensive integration of geodata e.g. from different data owners. 
+<li>the quality proofing 
+<li>the long term data storage 
+<li>the contract-proof security and the availability of the software 
+</ul>
+
+<h2>Model</h2>
+
+Data is read and written into transfer files which have different formats in INTERLIS 1 (.itf) and INTERLIS 2 (.xml).
+For using the INTERLIS model (.ili) a Java interpreter is needed at runtime.
+The model file can be added to the transfer file seperated by a comma.<p>
+Some possible transformations using <a href="http://www.gdal.org/ogr/ogr2ogr.html">ogr2ogr</a>.<p>
+<ul>
+<li>
+Interlis 1 -> Shape:
+<pre>
+ogr2ogr -f "ESRI Shapefile" shpdir ili-bsp.itf,ili-bsp.ili
+</pre>
+</li>
+
+<li>
+Interlis 2 -> Shape:
+<pre>
+ogr2ogr -f "ESRI Shapefile" shpdir RoadsExdm2ien.xml,RoadsExdm2ben.ili,RoadsExdm2ien.ili
+</pre>
+or without model:
+<pre>
+ogr2ogr -f "ESRI Shapefile" shpdir RoadsExdm2ien.xml
+</pre>
+</li>
+
+<li>
+Shape -> Interlis 1:
+<pre>
+ogr2ogr -f "Interlis 1" ili-bsp.itf Bodenbedeckung__BoFlaechen_Form.shp
+</pre>
+</li>
+
+<li>
+Shape -> Interlis 2:
+<pre>
+ogr2ogr -f "Interlis 2" LandCover.xml,RoadsExdm2ben.ili RoadsExdm2ben_10.Roads.LandCover.shp
+</pre>
+</li>
+
+<li>
+Incremental import from Interlis 1 into PostGIS:
+<pre>
+ogr2ogr -f PostgreSQL PG:dbname=warmerda av_fixpunkte_ohne_LFPNachfuehrung.itf,av.ili -lco OVERWRITE=yes
+ogr2ogr -f PostgreSQL PG:dbname=warmerda av_fixpunkte_mit_LFPNachfuehrung.itf,av.ili -append
+</pre>
+</li>
+</ul>
+
+<p>
+
+<h3>Arc interpolation</h3>
+INTERLIS arc geometries are converted to polygons.<br></br>
+The interpolation angle can be changed with the environment variable ARC_DEGREES (Default: 1 degree).<br></br>
+
+
+<h2>Other Notes</h2>
+<ul>
+<li> Development of the OGR INTERLIS driver was supported by 
+<a href="http://www.kogis.ch/">Swiss Federal Administration</a>,  
+<a href="http://www.so.ch/de/pub/departemente/bjd/gis.htm">Canton Solothurn</a> and 
+<a href="http://www.geoinformation.tg.ch/">Canton Thurgovia</a>.<p>
+</ul>
+
+</body>
+</html>

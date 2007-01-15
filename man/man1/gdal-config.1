@@ -1,0 +1,39 @@
+.TH "gdal-config" 1 "28 Jun 2006" "GDAL" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+gdal-config \- gdal-config
+determines various information about a GDAL installation
+.SH "SYNOPSIS"
+.PP
+.PP
+.PP
+.nf
+gdal-config [OPTIONS]
+Options:
+        [--prefix[=DIR]]
+        [--libs]
+        [--cflags]
+        [--version]
+        [--ogr-enabled]
+        [--formats]
+.fi
+.PP
+.SH "DESCRIPTION"
+.PP
+This utility script (available on Unix systems) can be used to determine various information about a GDAL installation. It is normally just used by configure scripts for applications using GDAL but can be queried by an end user.
+.PP
+.IP "\fB\fB--prefix\fP:\fP" 1c
+the top level directory for the GDAL installation. 
+.IP "\fB\fB--libs\fP:\fP" 1c
+The libraries and link directives required to use GDAL. 
+.IP "\fB\fB--cflags\fP:\fP" 1c
+The include and macro definition required to compiled modules using GDAL. 
+.IP "\fB\fB--version\fP:\fP" 1c
+Reports the GDAL version. 
+.IP "\fB\fB--ogr-enabled\fP:\fP" 1c
+Reports 'yes' or 'no' to standard output depending on whether OGR is built into GDAL. 
+.IP "\fB\fB--formats\fP:\fP" 1c
+Reports which formats are configured into GDAL to stdout. 
+.PP
+

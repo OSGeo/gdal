@@ -1,0 +1,27 @@
+
+EXTRAFLAGS = 	-I$(ECWDIR)\include -I$(ECWDIR)/Source/include \
+		/D_MBCS /D_UNICODE /DUNICODE /D_WINDOWS \
+		/DLIBECWJ2 /DWIN32 /D_WINDLL -DFRMT_ecw -DNO_X86_MMI
+
+OBJ	=	ecwdataset.obj ecwcreatecopy.obj jp2userbox.obj
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+all:	default testecw.exe
+
+clean:
+	-del *.obj
+	-del *.exe
+
+testecw.exe:	testecw.cpp
+	$(CC) /Zi /MD $(EXTRAFLAGS) testecw.cpp $(ECWLIB)
+
+ecw_example1.exe:	ecw_example1.c
+	$(CC) /MD $(EXTRAFLAGS) ecw_example1.c $(ECWLIB)
+	
+

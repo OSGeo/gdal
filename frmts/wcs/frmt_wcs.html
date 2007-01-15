@@ -1,0 +1,60 @@
+,<html>
+<head>
+<title>WCS -- OGC Web Coverage Service</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>WCS -- OGC Web Coverage Service</h1>
+
+The optional GDAL WCS driver allows use of a coverage in a WCS server as a 
+raster dataset.  GDAL acts as a client to the WCS server.<p>
+
+Accessing a WCS server is accomplished by creating a local service description
+xml file looking something like the following, with the coverage server url, 
+and the name of the coverage to access.  It is important that there be no
+spaces or other content before the <tt>&lt;WCS_GDAL&gt;</tt> element.<p>
+
+<pre>
+&lt;WCS_GDAL&gt;
+  &lt;ServiceURL&gt;http://maps.gdal.org/cgi-bin/mapserv_dem?&lt;/ServiceURL&gt;
+  &lt;CoverageName&gt;srtmplus_raw&lt;/CoverageName&gt;
+&lt;/WCS_GDAL&gt;
+</pre>
+
+When first opened, GDAL will fetch the coverage description, and a small test
+image to establish details about the raster.  This information will be cached
+in the service description file to make future opens faster - no server access
+should be required till imagery is read for future opens.<p>
+
+The WCS driver should support WCS 1.0.0 servers.  It is planned to add 
+WCS 1.1.0 support soon, but WCS 0.7 servers are not supported.  Any return
+format that is a single file, and is in a format supported by GDAL should
+work.  The driver will prefer a format with "tiff" in the name, otherwise
+it will fallback to the first offered format.   Coordinate systems are read
+from the DescribeCoverage result, and are expected to be in the form of 
+<tt>EPSG:n</tt> in the <tt>&gt;supportedCRSs&lt;</tt> element. <p>
+
+The service description file has the following additional elements as 
+immediate children of the <tt>WCS_GDAL</tt> element that may be optionally
+set.<p>
+
+<ul>
+<li> <b>PreferredFormat</b>: the format to use for GetCoverage calls.<p>
+<li> <b>BandCount</b>: Number of bands in the dataset, normally captured from the sample request. 
+<li> <b>BandType</b>: The pixel data type to use.  Normally established from the sample request.
+<li> <b>BlockXSize</b>: The block width to use for block cached remote access.
+<li> <b>BlockYSize</b>: The block height to use for block cached remote access.
+<li> <b>NoDataValue</b>: The nodata value to use for all the bands (blank for none).  Normally defaulted from CoverageOffering info.
+<li> <b>Timeout</b>: The timeout to use for remote service requests.  If not provided, the libcurl default is used.
+<li> <b>OverviewCount</b>: The number of overviews to represent bands as having.  Defaults to a number such that the top overview is fairly smaller (less than 1K x 1K or so).b
+</ul>
+
+See Also:<p>
+
+<ul>
+<li> <a href="http://www.opengeospatial.org/standards/wcs">OGC WCS Standards</a>
+</ul>
+
+</body>
+</html>

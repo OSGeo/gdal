@@ -1,0 +1,133 @@
+
+OBJ =	sdtsiref.o sdtscatd.o sdtslinereader.o sdtslib.o \
+	sdtspointreader.o sdtsattrreader.o sdtstransfer.o \
+	sdtspolygonreader.o sdtsxref.o sdtsrasterreader.o \
+	sdtsindexedreader.o \
+	\
+	ddfmodule.o ddfutils.o ddffielddefn.o ddfrecord.o ddffield.o \
+	ddfsubfielddefn.o \
+	\
+	shpopen.o dbfopen.o \
+	\
+	cpl_error.o cpl_vsisimple.o cpl_string.o cpl_conv.o cpl_path.o
+
+CXXFLAGS = @CXXFLAGS@ @CXX_WFLAGS@
+LIBS 	= @LIBS@ -lm
+CXX	= @CXX@
+
+
+default:	sdts2shp 8211view
+
+libsdts_al.a:	$(OBJ)
+	ar r libsdts_al.a $(OBJ)
+
+
+#
+#	SDTS library 
+#
+sdtsiref.o:	sdtsiref.cpp
+	$(CXX) -c $(CXXFLAGS) sdtsiref.cpp 
+
+sdtscatd.o:	sdtscatd.cpp
+	$(CXX) -c $(CXXFLAGS) sdtscatd.cpp 
+
+sdtslinereader.o:	sdtslinereader.cpp
+	$(CXX) -c $(CXXFLAGS) sdtslinereader.cpp 
+
+sdtslib.o:	sdtslib.cpp
+	$(CXX) -c $(CXXFLAGS) sdtslib.cpp 
+
+sdtspointreader.o:	sdtspointreader.cpp
+	$(CXX) -c $(CXXFLAGS) sdtspointreader.cpp 
+
+sdtsattrreader.o:	sdtsattrreader.cpp
+	$(CXX) -c $(CXXFLAGS) sdtsattrreader.cpp 
+
+sdtstransfer.o:	sdtstransfer.cpp
+	$(CXX) -c $(CXXFLAGS) sdtstransfer.cpp 
+
+sdtspolygonreader.o:	sdtspolygonreader.cpp
+	$(CXX) -c $(CXXFLAGS) sdtspolygonreader.cpp 
+
+sdtsxref.o:	sdtsxref.cpp
+	$(CXX) -c $(CXXFLAGS) sdtsxref.cpp 
+
+sdtsrasterreader.o:	sdtsrasterreader.cpp
+	$(CXX) -c $(CXXFLAGS) sdtsrasterreader.cpp 
+
+sdtsindexedreader.o:	sdtsindexedreader.cpp
+	$(CXX) -c $(CXXFLAGS) sdtsindexedreader.cpp 
+
+#
+# 	from iso8211 library
+#
+
+ddfmodule.o:	ddfmodule.cpp
+	$(CXX) -c $(CXXFLAGS) ddfmodule.cpp 
+
+ddfutils.o:	ddfutils.cpp
+	$(CXX) -c $(CXXFLAGS) ddfutils.cpp 
+
+ddffielddefn.o:	ddffielddefn.cpp
+	$(CXX) -c $(CXXFLAGS) ddffielddefn.cpp 
+
+ddfrecord.o:	ddfrecord.cpp
+	$(CXX) -c $(CXXFLAGS) ddfrecord.cpp 
+
+ddffield.o:	ddffield.cpp
+	$(CXX) -c $(CXXFLAGS) ddffield.cpp 
+
+ddfsubfielddefn.o:	ddfsubfielddefn.cpp
+	$(CXX) -c $(CXXFLAGS) ddfsubfielddefn.cpp 
+
+#
+#	Common Portability Library
+#
+
+cpl_error.o:	cpl_error.cpp
+	$(CXX) -c $(CXXFLAGS) cpl_error.cpp 
+
+cpl_string.o:	cpl_string.cpp
+	$(CXX) -c $(CXXFLAGS) cpl_string.cpp 
+
+cpl_conv.o:	cpl_conv.cpp
+	$(CXX) -c $(CXXFLAGS) cpl_conv.cpp 
+
+cpl_vsisimple.o:	cpl_vsisimple.cpp
+	$(CXX) -c $(CXXFLAGS) cpl_vsisimple.cpp 
+
+cpl_path.o:	cpl_path.cpp
+	$(CXX) -c $(CXXFLAGS) cpl_path.cpp 
+
+#
+#	Shapefile access
+#
+shpopen.o:	shpopen.c
+	$(CXX) -c $(CXXFLAGS) shpopen.c
+
+dbfopen.o:	dbfopen.c
+	$(CXX) -c $(CXXFLAGS) dbfopen.c
+
+#
+#	Mainlines
+#
+
+sdts2shp.o:	sdts2shp.cpp
+	$(CXX) -c $(CXXFLAGS) sdts2shp.cpp 
+
+8211view.o:	8211view.cpp
+	$(CXX) -c $(CXXFLAGS) 8211view.cpp 
+
+8211dump.o:	8211dump.cpp
+	$(CXX) -c $(CXXFLAGS) 8211dump.cpp 
+
+sdts2shp:	sdts2shp.o libsdts_al.a
+	$(CXX) $(CXXFLAGS) sdts2shp.o libsdts_al.a $(LIBS) -o sdts2shp
+
+8211view:	8211view.o libsdts_al.a
+	$(CXX) $(CXXFLAGS) 8211view.o libsdts_al.a $(LIBS) -o 8211view
+
+8211dump:	8211dump.o libsdts_al.a
+	$(CXX) $(CXXFLAGS) 8211dump.o libsdts_al.a $(LIBS) -o 8211dump
+
+

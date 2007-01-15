@@ -1,0 +1,53 @@
+<html>
+<head>
+<title>SQLite RDBMS</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>SQLite RDBMS</h1>
+
+OGR optionally supports spatial and non-spatial tables stored in SQLite 3.x
+database files.  SQLite is a "light weight" single file based RDBMS engine
+with fairly complete SQL semantics and respectible performance. <p>
+
+Each table is treated as a layer.  Layers with a WKT_GEOMETRY
+field will be treated as spatial tables, and the WKT_GEOMETRY column will be
+read as Well Known Text geometry. <p>
+
+Currently the SQLite driver has no support for coordinate systems.<p>
+
+The SQLite database is essentially typeless, but the SQLite driver will
+attempt to classify attributes field as text, integer or floating point
+based on the contents of the first record in a table.  None of the list
+attribute field types existing in SQLite. <p>
+
+SQLite databases often due not work well over NFS, or some other networked
+file system protocols due to the poor support for locking.  It is safest
+to operate only on SQLite files on a physical disk of the local system.<p>
+
+SQLite is an optionally compiled in driver.  It is not compiled in by default.
+<p>
+
+While the SQLite driver supports reading spatial data from records, there is
+not support for spatial indexing, so spatial queries will tend to be slow.
+Attributes queries may be fast, especially if indexes are built for 
+appropriate attribute columns using the "CREATE INDEX <indexname> 
+ON <tablename> ( <columnname> )" SQL command.<p>
+
+<h2>Creation Issues</h2>
+
+The SQLite driver supports creating new SQLite database files, or adding
+tables to existing ones.  Note that a new database file cannot be
+created over an existing file. <p>
+
+<h2>Other Notes</h2>
+<ul>
+<li> Development of the OGR SQLite driver was supported by 
+<a href="http://www.dmsolutions.ca/">DM Solutions Group</a> and 
+<a href="http://www.gomoos.org/">GoMOOS</a>.<p>
+<li> <a href="http://www.sqlite.org/">http://www.sqlite.org</a>: Main SQLite page.<p>
+</ul>
+
+</body>
+</html>

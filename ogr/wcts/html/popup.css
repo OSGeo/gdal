@@ -1,0 +1,177 @@
+.page
+/* Defines the page style.
+   - Basic usage sets the background colour. */
+{
+	background-color: #ffffff;
+}
+
+.layoutTable
+/* Defines the style of the main layout table.
+   - Basic usage sets the background colour, which acts as an outline.
+	 - Every popup must use a table with 1 column and as many rows as are 
+	   needed for the popup. Basic popups with an OK or CANCEL button would 
+	   use a layout table with 2 rows, while more advanced popups like the 
+	   SEARCH popup use 3 rows, one for the search, one for the results, 
+	   and one for the OK, CANCEL buttons */
+{
+	background-color: #666666;
+}
+
+.titleArea
+/* Defines the style for the title table.
+   - Every popup has a title table as the first table within the layout table*/
+{
+	background-color: #BBBBBB;
+}
+
+.title
+/* Defines the style for the title text.
+   - Every popup has a title this sets the font, size, colour etc.*/
+{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 15px;
+	font-weight: bold;
+	color: #000000;
+	vertical-align: middle;
+	text-align: left;
+}
+
+.contentArea
+/* Defines the style of content layout tables.
+   - Basic usage sets the background colour of the content areas.
+	 - Every popup must use at least 1 content layout table, but often use 2,
+	   one for the help text, and one to layout the popup's input elements.
+	 - For best results this table should have cellspacing="0" otherwise the 
+	   colour of the page or layoutTable will show through. */
+{
+	background-color: #E9E9E9;
+}
+
+.subLayoutTable
+/* Defines the style of secondary (nested) layout tables.
+   - Basic usage sets the background colour, which acts as an outline;
+	   similar in usage to layoutTable.
+	 - This allows for more advanced designs like the layer browser dialogue. */
+{
+	background-color: #666666;
+}
+
+.subContentArea1
+/* Defines the style of tables or cells in secondary layout tables.
+   - Basic usage sets the background colour of a sub content areas.
+	 - This allows for more advanced designs and is intended to be used
+	   with subLayoutTable (either styling cells, or nested-tables). */
+{
+	background-color: #ffffff;
+}
+
+.subContentArea2
+/* Defines an alternate style of tables or cells in secondary layout tables.
+   - Used in the same way as subContentArea1. */
+{
+	background-color: #e3f0f0;
+}
+
+.helpArea
+/* Defines the style of the help area.
+   - Basic useage sets the styling of the <p> that surrounds the help text. */
+{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	color: #666666;
+	background-color: #FFFFFF;
+	border: 1px solid #666666;
+	width: 400px;
+	text-align: left;
+}
+
+.label
+/* Defines the style of text labels.
+   - Basic useage sets the size, colour and font of any labels of input
+	   elements. */
+{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	color: #000000;
+}
+
+.note
+/* Defines the style of text notes.
+   - Basic useage sets the size, colour and font of any small notes
+	   Also used in the legend for small text. */
+{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 9px;
+	color: #333333;
+}
+
+.text
+/* Defines the style of text blocks.
+   - Basic useage sets the size, colour and font of <p>, <span> or 
+	   <div> tags. */
+{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 13px;
+	color: #000000;
+}
+
+.list
+/* Defines the style of ordered and unordered lists.
+   - Basic useage sets the size, colour and font of any <ul>, <ol> tag. */
+{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	color: #000000;
+}
+
+.listItem
+/* Defines the style of list items.
+   - Basic useage sets the size, colour and font of any <li> tag.
+	   Normally would be the same as list, but more advanced techniques
+		 can be used as well.*/
+{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	color: #000000;
+}
+
+.inputBox
+/* Defines the style of text input elements.
+   - Basic useage sets the font and size of any input elements' text.
+	 - More advanced useage sets the styling of the input area as well. */
+{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	color: #000000;
+	background-color: #FFFFFF;
+}
+
+.inputList
+/* Defines the style of list input elements.
+   - Basic useage sets the font and size of any input elements' text.
+	 - More advanced useage sets the styling of the input area as well. */
+{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	color: #000000;
+	background-color: #FFFFFF;
+}
+
+.nnInputWrap
+/* Workaround to define the style of input elements for nn4.x.
+   - Sets the font and size of input elements' text. */
+{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	color: #000000;
+}
+
+/* .inputBox
+{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	color: #000000;
+	background-color: #FFFFFF;
+	padding: 3px;
+	border: 1px solid #666666;
+} */

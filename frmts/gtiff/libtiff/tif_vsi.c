@@ -1,0 +1,235 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Project:  GeoTIFF Driver
+ * Purpose:  Implement system hook functions for libtiff on top of CPL/VSI,
+ *           including > 2GB support.  Based on tif_unix.c from libtiff
+ *           distribution.
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *
+ ******************************************************************************
+ * Copyright (c) 2000, Frank Warmerdam, warmerdam@pobox.com
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ******************************************************************************
+ *
+ * $Log$
+ * Revision 1.8  2005/10/13 18:38:36  fwarmerdam
+ * Try to report system level errors on open in TIFFOpen.
+ *
+ * Revision 1.7  2005/03/18 20:30:57  fwarmerdam
+ * ensure we close the underlying file if the open fails.
+ *
+ * Revision 1.6  2003/07/17 22:45:58  warmerda
+ * avoid casting warning
+ *
+ * Revision 1.5  2003/07/08 19:49:30  warmerda
+ * avoid warning
+ *
+ * Revision 1.4  2001/09/24 15:54:41  warmerda
+ * implement SizeProc properly
+ *
+ * Revision 1.3  2001/07/20 03:29:45  warmerda
+ * updated
+ *
+ * Revision 1.2  2001/02/15 15:33:18  warmerda
+ * don't access through tif pointer if open fails
+ *
+ * Revision 1.1  2001/01/03 17:03:41  warmerda
+ * *** empty log message ***
+ *
+ */
+
+/*
+ * TIFF Library UNIX-specific Routines.
+ */
+#include "tiffiop.h"
+#include "cpl_vsi.h"
+
+static tsize_t
+_tiffReadProc(thandle_t fd, tdata_t buf, tsize_t size)
+{
+    return VSIFReadL( buf, 1, size, (FILE *) fd );
+}
+
+static tsize_t
+_tiffWriteProc(thandle_t fd, tdata_t buf, tsize_t size)
+{
+    return VSIFWriteL( buf, 1, size, (FILE *) fd );
+}
+
+static toff_t
+_tiffSeekProc(thandle_t fd, toff_t off, int whence)
+{
+    if( VSIFSeekL( (FILE *) fd, off, whence ) == 0 )
+        return (toff_t) VSIFTellL( (FILE *) fd );
+    else
+        return (toff_t) -1;
+}
+
+static int
+_tiffCloseProc(thandle_t fd)
+{
+    return VSIFCloseL( (FILE *) fd );
+}
+
+static toff_t
+_tiffSizeProc(thandle_t fd)
+{
+    vsi_l_offset  old_off;
+    toff_t        file_size;
+
+    old_off = VSIFTellL( (FILE *) fd );
+    VSIFSeekL( (FILE *) fd, 0, SEEK_END );
+    
+    file_size = (toff_t) VSIFTellL( (FILE *) fd );
+    VSIFSeekL( (FILE *) fd, old_off, SEEK_SET );
+
+    return file_size;
+}
+
+static int
+_tiffMapProc(thandle_t fd, tdata_t* pbase, toff_t* psize)
+{
+	(void) fd; (void) pbase; (void) psize;
+	return (0);
+}
+
+static void
+_tiffUnmapProc(thandle_t fd, tdata_t base, toff_t size)
+{
+	(void) fd; (void) base; (void) size;
+}
+
+/*
+ * Open a TIFF file descriptor for read/writing.
+ */
+TIFF*
+TIFFFdOpen(int fd, const char* name, const char* mode)
+{
+	return NULL;
+}
+
+/*
+ * Open a TIFF file for read/writing.
+ */
+TIFF*
+TIFFOpen(const char* name, const char* mode)
+{
+	static const char module[] = "TIFFOpen";
+	int           i, a_out;
+        char          access[32];
+        FILE          *fp;
+        TIFF          *tif;
+
+        a_out = 0;
+        access[0] = '\0';
+        for( i = 0; mode[i] != '\0'; i++ )
+        {
+            if( mode[i] == 'r'
+                || mode[i] == 'w'
+                || mode[i] == '+'
+                || mode[i] == 'a' )
+            {
+                access[a_out++] = mode[i];
+                access[a_out] = '\0';
+            }
+        }
+
+        strcat( access, "b" );
+                    
+        fp = VSIFOpenL( name, access );
+	if (fp == NULL) {
+            if( errno >= 0 )
+                TIFFError(module,"%s: %s", name, VSIStrerror( errno ) );
+            else
+		TIFFError(module, "%s: Cannot open", name);
+            return ((TIFF *)0);
+	}
+
+	tif = TIFFClientOpen(name, mode,
+	    (thandle_t) fp,
+	    _tiffReadProc, _tiffWriteProc,
+	    _tiffSeekProc, _tiffCloseProc, _tiffSizeProc,
+	    _tiffMapProc, _tiffUnmapProc);
+
+        if( tif != NULL )
+            tif->tif_fd = 0;
+        else
+            VSIFCloseL( fp );
+        
+	return tif;
+}
+
+void*
+_TIFFmalloc(tsize_t s)
+{
+    return VSIMalloc((size_t) s);
+}
+
+void
+_TIFFfree(tdata_t p)
+{
+    VSIFree( p );
+}
+
+void*
+_TIFFrealloc(tdata_t p, tsize_t s)
+{
+    return VSIRealloc( p, s );
+}
+
+void
+_TIFFmemset(tdata_t p, int v, tsize_t c)
+{
+	memset(p, v, (size_t) c);
+}
+
+void
+_TIFFmemcpy(tdata_t d, const tdata_t s, tsize_t c)
+{
+	memcpy(d, s, (size_t) c);
+}
+
+int
+_TIFFmemcmp(const tdata_t p1, const tdata_t p2, tsize_t c)
+{
+	return (memcmp(p1, p2, (size_t) c));
+}
+
+static void
+unixWarningHandler(const char* module, const char* fmt, va_list ap)
+{
+	if (module != NULL)
+		fprintf(stderr, "%s: ", module);
+	fprintf(stderr, "Warning, ");
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, ".\n");
+}
+TIFFErrorHandler _TIFFwarningHandler = unixWarningHandler;
+
+static void
+unixErrorHandler(const char* module, const char* fmt, va_list ap)
+{
+	if (module != NULL)
+		fprintf(stderr, "%s: ", module);
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, ".\n");
+}
+TIFFErrorHandler _TIFFerrorHandler = unixErrorHandler;

@@ -1,0 +1,15 @@
+
+OBJ	=	ilwisdataset.obj ilwiscoordinatesystem.obj
+
+EXTRAFLAGS = 	-I..\iso8211
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+clean:
+	-del *.obj
+

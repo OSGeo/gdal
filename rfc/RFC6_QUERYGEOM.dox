@@ -1,0 +1,513 @@
+#ifndef DOXYGEN_SKIP
+/* $Id$ */
+#endif /* DOXYGEN_SKIP */
+
+/*!
+\page rfc6_sqlgeom RFC 6: Geometry and Feature Style as OGR Special Fields
+
+Author: Tamas Szekeres<br>
+Contact: szekerest@gmail.com<br>
+Status: Adopted<br>
+
+\section rfc6_summary Summary
+
+This proposal addresses and issue have been discovered long ago, and OGR provides
+no equivalent solution so far.
+
+Some of the supported formats like Mapinfo.tab may contain multiple geometry types
+and style information. In order to hanlde this kind of data sources properly a
+support for selecting the layers by geometry type or by the style info would be
+highly required. For more details see the following MapServer related bugs later
+in this document.
+
+All of the proposed changes can be found at the tracking bug of this RFC 
+referenced later in this document.
+
+\section rfc6_main Main concepts
+
+The most reasonable way to support this feature is to extend the currently
+existing 'special field' approach to allow specifying more than one fields.
+Along with the already definied 'FID' field we will add the following ones:
+
+<ul>
+
+<li> 'OGR_GEOMETRY' containing the geometry type like 'POINT' or 'POLYGON'.
+
+<li> 'OGR_STYLE' containing the style string.
+
+<li> 'OGR_GEOM_WKT' containing the full WKT of the geometry.
+
+</ul>
+
+By providing the aforementioned fields one can make for example
+the following selections:
+
+<ul>
+
+<li> select FID, OGR_GEOMETRY, OGR_STYLE, OGR_GEOM_WKT, * from MyTable
+where OGR_GEOMETRY='POINT' OR OGR_GEOMETRY='POLYGON'
+
+<li> select FID, OGR_GEOMETRY, OGR_STYLE, OGR_GEOM_WKT, * from MyTable
+where OGR_STYLE LIKE '%BRUSH%'
+
+<li> select FID, OGR_GEOMETRY, OGR_STYLE, OGR_GEOM_WKT, * from MyTable
+where OGR_GEOM_WKT LIKE 'POLYGON%'
+
+<li> select distinct OGR_GEOMETRY from MyTable order by OGR_GEOMETRY desc
+
+</ul> 
+
+\section rfc5_implementation Implementation
+
+There are two distinct areas where this feature plays a role
+
+<ul>
+
+<li> Feature query implemented at ogrfeaturequery.cpp
+
+<li> SQL based selection implemented at ogr_gensql.cpp and ogrdatasource.cpp
+
+</ul>
+
+To specify arbitrary number of special fields we will declare an
+array for the field names and types in ogrfeaturequery.cpp as
+
+<pre>
+
+char* SpecialFieldNames[SPECIAL_FIELD_COUNT] 
+    = {"FID", "OGR_GEOMETRY", "OGR_STYLE", "OGR_GEOM_WKT"};
+swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT] 
+    = {SWQ_INTEGER, SWQ_STRING, SWQ_STRING, SWQ_STRING};
+
+</pre>
+
+So as to make this array accessible to the other files the followings
+will be added to ogr_p.h
+
+<pre>
+
+CPL_C_START
+#include "swq.h"
+CPL_C_END
+
+#define SPF_FID 0
+#define SPF_OGR_GEOMETRY 1
+#define SPF_OGR_STYLE 2
+#define SPF_OGR_GEOM_WKT 3
+#define SPECIAL_FIELD_COUNT 4
+
+extern char* SpecialFieldNames[SPECIAL_FIELD_COUNT];
+extern swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
+
+</pre>
+
+In ogrfeature.cpp the field accessor functions (GetFieldAsString, 
+GetFieldAsInteger, GetFieldAsDouble) will be modified providing
+the values of the special fields by the field index
+
+The following code will be added to the beginning of OGRFeature::GetFieldAsInteger:
+
+<pre>
+
+int iSpecialField = iField - poDefn->GetFieldCount();
+if (iSpecialField >= 0)
+{
+// special field value accessors
+    switch (iSpecialField)
+    {
+    case SPF_FID:
+        return GetFID();
+    default:
+        return 0;
+    }
+}
+
+</pre>
+
+The following code will be added to the beginning of OGRFeature::GetFieldAsDouble:
+
+<pre>
+
+int iSpecialField = iField - poDefn->GetFieldCount();
+if (iSpecialField >= 0)
+{
+// special field value accessors
+    switch (iSpecialField)
+    {
+    case SPF_FID:
+        return GetFID();
+    default:
+        return 0.0;
+    }
+}
+
+</pre>
+
+The following code will be added to the beginning of OGRFeature::GetFieldAsString:
+
+<pre>
+
+int iSpecialField = iField - poDefn->GetFieldCount();
+if (iSpecialField >= 0)
+{
+// special field value accessors
+    switch (iSpecialField)
+    {
+    case SPF_FID:
+        sprintf( szTempBuffer, "%d", GetFID() );
+        return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );
+    case SPF_OGR_GEOMETRY:
+        return poGeometry->getGeometryName();
+    case SPF_OGR_STYLE:
+        return GetStyleString();
+    case SPF_OGR_GEOM_WKT:
+        {
+            if (poGeometry->exportToWkt( &m_pszTmpFieldValue ) == OGRERR_NONE )
+                return m_pszTmpFieldValue;
+            else
+                return "";
+        }
+    default:
+        return "";
+    }
+}
+
+</pre>
+
+The current implementation of OGRFeature::GetFieldAsString uses a static string to
+hold the const char* return value that is highly avoidable and makes the code
+thread unsafe. In this regard the 'static char szTempBuffer[80]' will be changed to
+non static and a new member will be added to OGRFeature in ogrfeature.h as:
+
+<pre>
+
+char * m_pszTmpFieldValue; 
+
+</pre>
+
+This member will be initialized to NULL at the constructor, and will be freed using 
+CPLFree() at the destructor of OGRFeature.
+
+In OGRFeature::GetFieldAsString all of the occurrences of 'return szTempBuffer;'
+will be changed to 'return m_pszTmpFieldValue = CPLStrdup( szTempBuffer );'
+
+OGRFeature::GetFieldAsString is responsible to destroy the old value of 
+m_pszTmpFieldValue at the beginning of the function:
+
+<pre>
+
+CPLFree(m_pszTmpFieldValue);
+m_pszTmpFieldValue = NULL; 
+
+</pre> 
+
+In ogrfeaturequery.cpp we should change OGRFeatureQuery::Compile to add the
+special fields like:
+
+<pre>
+
+iField = 0;
+while (iField < SPECIAL_FIELD_COUNT)
+{
+    papszFieldNames[poDefn->GetFieldCount() + iField] = SpecialFieldNames[iField];
+    paeFieldTypes[poDefn->GetFieldCount() + iField] = SpecialFieldTypes[iField];
+    ++iField;
+}
+
+</pre>
+
+In ogrfeaturequery.cpp OGRFeatureQueryEvaluator() should be modifyed according to
+the field specific actions like
+
+<pre>
+
+int iSpecialField = op->field_index - poFeature->GetDefnRef()->GetFieldCount();
+if( iSpecialField >= 0 )
+{
+    if ( iSpecialField < SPECIAL_FIELD_COUNT )
+    {
+        switch ( SpecialFieldTypes[iSpecialField] )
+        {
+        case SWQ_INTEGER:
+            sField.Integer = poFeature->GetFieldAsInteger( op->field_index );
+        case SWQ_STRING:
+            sField.String = (char*) poFeature->GetFieldAsString( op->field_index );
+        }      
+    }
+    else
+    {
+        CPLDebug( "OGRFeatureQuery", "Illegal special field index.");
+        return FALSE;
+    }
+    psField = &sField;
+}
+else
+    psField = poFeature->GetRawFieldRef( op->field_index );
+
+</pre>
+
+In ogrfeaturequery.cpp OGRFeatureQuery::FieldCollector should be modifyed to
+add the field names like:
+
+<pre>
+
+if( op->field_index >= poTargetDefn->GetFieldCount()
+        && op->field_index < poTargetDefn->GetFieldCount() + SPECIAL_FIELD_COUNT) 
+        pszFieldName = SpecialFieldNames[op->field_index];
+
+</pre>
+
+In ogrdatasource.cpp ExecuteSQL() will allocate the arrays according to the
+number of the special fields:
+
+<pre>
+
+sFieldList.names = (char **) 
+        CPLMalloc( sizeof(char *) * (nFieldCount+SPECIAL_FIELD_COUNT) );
+sFieldList.types = (swq_field_type *)  
+        CPLMalloc( sizeof(swq_field_type) * (nFieldCount+SPECIAL_FIELD_COUNT) );
+sFieldList.table_ids = (int *) 
+        CPLMalloc( sizeof(int) * (nFieldCount+SPECIAL_FIELD_COUNT) );
+sFieldList.ids = (int *) 
+        CPLMalloc( sizeof(int) * (nFieldCount+SPECIAL_FIELD_COUNT) );
+
+</pre>
+
+And the fields will be added as
+
+<pre>
+
+for (iField = 0; iField < SPECIAL_FIELD_COUNT; iField++)
+{
+    sFieldList.names[sFieldList.count] = SpecialFieldNames[iField];
+    sFieldList.types[sFieldList.count] = SpecialFieldTypes[iField];
+    sFieldList.table_ids[sFieldList.count] = 0;
+    sFieldList.ids[sFieldList.count] = nFIDIndex + iField;
+    sFieldList.count++;
+}
+    
+</pre>
+
+For supporting the SQL based queries we should also modify the constructor of
+OGRGenSQLResultsLayer in ogr_gensql.cpp and set the field type properly:
+
+<pre>
+
+else if ( psColDef->field_index >= iFIDFieldIndex )
+{
+    switch ( SpecialFieldTypes[psColDef->field_index - iFIDFieldIndex] )
+    {
+    case SWQ_INTEGER:
+        oFDefn.SetType( OFTInteger );
+        break;
+    case SWQ_STRING:
+        oFDefn.SetType( OFTString );
+        break;
+    case SWQ_FLOAT:
+        oFDefn.SetType( OFTReal );
+        break;
+    }
+}
+
+</pre> 
+
+Some of the queries will require to modify OGRGenSQLResultsLayer::PrepareSummary
+in ogr_gensql.cpp will be simplified 
+(GetFieldAsString will be used in all cases to access the field values): 
+
+<pre>
+
+pszError = swq_select_summarize( psSelectInfo, iField, 
+poSrcFeature->GetFieldAsString( psColDef->field_index ) );
+
+</pre>
+
+OGRGenSQLResultsLayer::TranslateFeature should also be modifyed when
+copying the fields from primary record to the destination feature
+
+<pre>
+
+ if ( psColDef->field_index >= iFIDFieldIndex &&
+            psColDef->field_index < iFIDFieldIndex + SPECIAL_FIELD_COUNT )
+{
+    switch (SpecialFieldTypes[psColDef->field_index - iFIDFieldIndex])
+    {
+    case SWQ_INTEGER:
+        poDstFeat->SetField( iField, poSrcFeat->GetFieldAsInteger(psColDef->field_index) );
+    case SWQ_STRING:
+        poDstFeat->SetField( iField, poSrcFeat->GetFieldAsString(psColDef->field_index) );
+    }
+}
+
+</pre>
+
+For supporting the 'order by' queries we should also modify 
+OGRGenSQLResultsLayer::CreateOrderByIndex() as:
+
+<pre>
+
+if ( psKeyDef->field_index >= iFIDFieldIndex)
+{
+    if ( psKeyDef->field_index < iFIDFieldIndex + SPECIAL_FIELD_COUNT )
+    {
+        switch (SpecialFieldTypes[psKeyDef->field_index - iFIDFieldIndex])
+        {
+        case SWQ_INTEGER:
+            psDstField->Integer = poSrcFeat->GetFieldAsInteger(psKeyDef->field_index);
+        case SWQ_STRING:
+            psDstField->String = CPLStrdup( poSrcFeat->GetFieldAsString(psKeyDef->field_index) );
+        }
+    }
+    continue;
+}
+
+</pre>
+
+All of the strings allocated previously should be deallocated later in
+the same function as:
+
+<pre>
+
+if ( psKeyDef->field_index >= iFIDFieldIndex )
+{
+    /* warning: only special fields of type string should be deallocated */
+    if (SpecialFieldTypes[psKeyDef->field_index - iFIDFieldIndex] == SWQ_STRING)
+    {
+        for( i = 0; i < nIndexSize; i++ )
+        {
+            OGRField *psField = pasIndexFields + iKey + i * nOrderItems;
+            CPLFree( psField->String );
+        }
+    }
+    continue;
+}
+
+</pre>
+
+When ordering by the field values the OGRGenSQLResultsLayer::Compare
+should also be modifyed:
+
+<pre>
+
+if( psKeyDef->field_index >= iFIDFieldIndex )
+    poFDefn = NULL;
+else
+    poFDefn = poSrcLayer->GetLayerDefn()->GetFieldDefn( 
+        psKeyDef->field_index );
+
+if( (pasFirstTuple[iKey].Set.nMarker1 == OGRUnsetMarker 
+        && pasFirstTuple[iKey].Set.nMarker2 == OGRUnsetMarker)
+    || (pasSecondTuple[iKey].Set.nMarker1 == OGRUnsetMarker 
+        && pasSecondTuple[iKey].Set.nMarker2 == OGRUnsetMarker) )
+    nResult = 0;
+else if ( poFDefn == NULL )
+{
+    switch (SpecialFieldTypes[psKeyDef->field_index - iFIDFieldIndex])
+    {
+    case SWQ_INTEGER:
+        if( pasFirstTuple[iKey].Integer < pasSecondTuple[iKey].Integer )
+            nResult = -1;
+        else if( pasFirstTuple[iKey].Integer > pasSecondTuple[iKey].Integer )
+            nResult = 1;
+        break;
+    case SWQ_STRING:
+        nResult = strcmp(pasFirstTuple[iKey].String,
+                        pasSecondTuple[iKey].String);
+        break;
+    }
+}
+
+</pre>
+
+\section rfc6_addingnewspecial Adding New Special Fields
+
+Adding a new special field in a subsequent development phase is fairly
+straightforward and the following steps should be made:
+
+1. In ogr_p.h a new constant should be added with the value of the
+SPECIAL_FIELD_COUNT and SPECIAL_FIELD_COUNT should be incremented by one.
+
+2. In ogrfeaturequery.cpp the special field string and the type should
+be added to SpecialFieldNames and SpecialFieldTypes respectively
+
+3. The field value accessors (OGRFeature::GetFieldAsString, 
+OGRFeature::GetFieldAsInteger, OGRFeature::GetFieldAsDouble) should be 
+modifyed to provide the value of the new special field. All of these
+functions provide const return values so GetFieldAsString should
+retain the value in the m_pszTmpFieldValue member.   
+
+4. When adding a new value with a type other than SWQ_INTEGER and
+SWQ_STRING the following functions might also be modified accordingly:
+
+<ul>
+
+<li> OGRGenSQLResultsLayer::OGRGenSQLResultsLayer
+
+<li> OGRGenSQLResultsLayer::TranslateFeature
+
+<li> OGRGenSQLResultsLayer::CreateOrderByIndex
+
+<li> OGRGenSQLResultsLayer::Compare
+
+<li> OGRFeatureQueryEvaluator
+
+</ul> 
+
+\section rfc6_backward Backward Compatibility
+
+In most cases the backward compatibility of the OGR library will be retained.
+However the special fields will potentially conflict with regard fields with 
+the given names. When accessing the field values the special fields will 
+take pecedence over the other fields with the same names.
+
+When using OGRFeature::GetFieldAsString the returned value will be stored as
+a member variable instead of a static variable. The string will be deallocated
+and will no longer be usable after the destruction of the feature.
+
+\section rfc6_testing Regression Testing
+
+A new gdalautotest/ogr/ogr_sqlspecials.py script to test support for all
+special fields in the ExecuteSQL() call and with WHERE clauses. 
+
+\section rfc6_documentation Documentation
+
+The OGR SQL document will be updated to reflect the support for special fields.
+
+\section rfc6_staffing Implementation Staffing
+
+Tamas Szekeres will implement the bulk of the RFC in time for GDAL/OGR 1.4.0.
+
+Frank Warmerdam will consider how the backward compatibility issues
+(with special regard to the modified lifespan of the GetFieldAsString returned value)
+will affect the other parts of the OGR project and will write the 
+Python regression testing script.
+
+\section rfc6_references References
+
+<ul>
+
+<li> Tracking bug for this feature (containing all of the proposed 
+code changes):
+
+<a href="http://bugzilla.remotesensing.org/show_bug.cgi?id=1333">
+http://bugzilla.remotesensing.org/show_bug.cgi?id=1333</a>
+
+<li> MapServer related bugs:
+
+<a href="http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1129">
+http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1129</a>
+
+<a href="http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1438">
+http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1438</a>
+
+</ul>
+
+\section rfc6_voting Voting History
+
+Frank Warmerdam +1
+Daniel Morissette +1
+Howard Butler +0
+Andrey Kiselev +1
+
+*/
+ 

@@ -1,0 +1,303 @@
+/*! \page ogr_utilities OGR Utility Programs
+
+The following utilities are distributed as part of the OGR Simple Features
+toolkit:
+
+<ul>
+<li> \ref ogrinfo
+<li> \ref ogr2ogr
+<li> \ref ogrtindex
+</ul>
+
+*/
+
+/*! \page ogrinfo ogrinfo
+
+lists information about an OGR supported data source
+
+\if man
+\section synopsis SYNOPSIS
+\endif
+
+\htmlonly
+Usage:
+\endhtmlonly
+
+\verbatim
+ogrinfo [-ro] [-q] [-where restricted_where]
+               [-spat xmin ymin xmax ymax] [-fid fid]
+               [-sql statement] [-al] [-so] [--formats]
+               datasource_name [layer [layer ...]]
+\endverbatim
+
+\if man
+\section description DESCRIPTION
+\endif
+
+The ogrinfo program lists various information about an OGR supported data
+source to stdout (the terminal). 
+
+<dl>
+<dt> <b>-ro</b>:</dt><dd> Open the data source in read-only mode.  </dd>
+<dt> <b>-al</b>:</dt><dd> List all features of all layers (used instead of having to
+give layer names as arguments).</dd>
+<dt> <b>-so</b>:</dt><dd> Summary Only: supress listing of features, show only the 
+summary information like projection, schema, feature count and
+extents.</dd>
+<dt> <b>-q</b>:</dt><dd> Quiet verbose reporting of various information, including
+coordinate system, layer schema, extents, and feature count. </dd>
+<dt> <b>-where</b> <i>restricted_where</i>:</dt><dd> An attribute query in a restricted
+form of the queries used in the SQL WHERE statement.   Only features matching
+the attribute query will be reported.</dd>
+<dt> <b>-sql</b> <i>statement</i>:</dt><dd> Execute the indicated statement
+and return the result.</dd>
+<dt> <b>-spat</b> <i>xmin ymin xmax ymax</i>:</dt><dd> The area of interest.  Only
+features within the rectangle will be reported.</dd>
+<dt> <b>-fid</b> <i>fid</i>:</dt><dd> If provided, only the feature with this feature
+id will be reported.  Operates exclusive of the spatial or attribute 
+queries.</dd>
+<dt> <b>--formats</b>:</dt><dd> List the format drivers that are
+enabled.</dd>
+<dt> <i>datasource_name</i>:</dt><dd> The data source to open.  May be a filename, 
+directory or other virtual name.  See the <a href="ogr_formats.html">OGR Vector
+Formats</a> list for supported datasources.</dd>
+<dt> <i>layer</i>:</dt><dd> One or more layer names may be reported.</dd>
+</dl>
+
+If no layer names are passed then ogrinfo will report a list of available
+layers (and their layerwide geometry type).  If layer name(s) are given then
+their extents, coordinate system, feature count, geometry type, schema and
+all features matching query parameters will be reported to the terminal. 
+If no query parameters are provided, all features are reported.  
+
+Geometries are reported in OGC WKT format.
+
+\if man
+\section example EXAMPLE
+\endif
+
+Example reporting all layers in an NTF file:
+\verbatim
+% ogrinfo wrk/SHETLAND_ISLANDS.NTF
+INFO: Open of `wrk/SHETLAND_ISLANDS.NTF'
+using driver `UK .NTF' successful.
+1: BL2000_LINK (Line String)
+2: BL2000_POLY (None)
+3: BL2000_COLLECTIONS (None)
+4: FEATURE_CLASSES (None)
+\endverbatim
+
+Example using an attribute query is used to restrict the output of the 
+features in a layer:
+\verbatim
+% ogrinfo -ro -where 'GLOBAL_LINK_ID=185878' wrk/SHETLAND_ISLANDS.NTF BL2000_LINK
+INFO: Open of `wrk/SHETLAND_ISLANDS.NTF'
+using driver `UK .NTF' successful.
+
+Layer name: BL2000_LINK
+Geometry: Line String
+Feature Count: 1
+Extent: (419794.100000, 1069031.000000) - (419927.900000, 1069153.500000)
+Layer SRS WKT:
+PROJCS["OSGB 1936 / British National Grid",
+    GEOGCS["OSGB 1936",
+        DATUM["OSGB_1936",
+            SPHEROID["Airy 1830",6377563.396,299.3249646]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",49],
+    PARAMETER["central_meridian",-2],
+    PARAMETER["scale_factor",0.999601272],
+    PARAMETER["false_easting",400000],
+    PARAMETER["false_northing",-100000],
+    UNIT["metre",1]]
+LINE_ID: Integer (6.0)
+GEOM_ID: Integer (6.0)
+FEAT_CODE: String (4.0)
+GLOBAL_LINK_ID: Integer (10.0)
+TILE_REF: String (10.0)
+OGRFeature(BL2000_LINK):2
+  LINE_ID (Integer) = 2
+  GEOM_ID (Integer) = 2
+  FEAT_CODE (String) = (null)
+  GLOBAL_LINK_ID (Integer) = 185878
+  TILE_REF (String) = SHETLAND I
+  LINESTRING (419832.100 1069046.300,419820.100 1069043.800,419808.300
+  1069048.800,419805.100 1069046.000,419805.000 1069040.600,419809.400
+  1069037.400,419827.400 1069035.600,419842 1069031,419859.000
+  1069032.800,419879.500 1069049.500,419886.700 1069061.400,419890.100
+  1069070.500,419890.900 1069081.800,419896.500 1069086.800,419898.400
+  1069092.900,419896.700 1069094.800,419892.500 1069094.300,419878.100
+  1069085.600,419875.400 1069087.300,419875.100 1069091.100,419872.200
+  1069094.600,419890.400 1069106.400,419907.600 1069112.800,419924.600
+  1069133.800,419927.900 1069146.300,419927.600 1069152.400,419922.600
+  1069153.500,419917.100 1069153.500,419911.500 1069153.000,419908.700
+  1069152.500,419903.400 1069150.800,419898.800 1069149.400,419894.800
+  1069149.300,419890.700 1069149.400,419890.600 1069149.400,419880.800
+  1069149.800,419876.900 1069148.900,419873.100 1069147.500,419870.200
+  1069146.400,419862.100 1069143.000,419860 1069142,419854.900
+  1069138.600,419850 1069135,419848.800 1069134.100,419843
+  1069130,419836.200 1069127.600,419824.600 1069123.800,419820.200
+  1069126.900,419815.500 1069126.900,419808.200 1069116.500,419798.700
+  1069117.600,419794.100 1069115.100,419796.300 1069109.100,419801.800
+  1069106.800,419805.000  1069107.300)
+\endverbatim
+
+\if man
+\section author AUTHORS
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
+*/
+
+/*! \page ogr2ogr ogr2ogr
+
+converts simple features data between file formats
+
+\if man
+\section synopsis SYNOPSIS
+\endif
+
+\htmlonly
+Usage:
+\endhtmlonly
+
+\verbatim
+Usage: ogr2ogr [-skipfailures] [-append] [-update] [-f format_name]
+               [-select field_list] [-where restricted_where] 
+               [-sql <sql statement>] [--help-general]
+               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]
+               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
+               [[-dsco NAME=VALUE] ...] dst_datasource_name
+               src_datasource_name
+               [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]
+
+\endverbatim
+
+\if man
+\section description DESCRIPTION
+\endif
+
+This program can be used to convert simple features data between file formats
+performing various operations during the process such as spatial or attribute
+selections, reducing the set of attributes, setting the output coordinate 
+system or even reprojecting the features during translation.
+
+<dl>
+<dt><b> -f</b><em> format_name</em>:</dt><dd> output file format name, some possible values are:
+	 \verbatim
+     -f "ESRI Shapefile"
+     -f "TIGER"
+     -f "MapInfo File"
+     -f "GML"
+     -f "PostgreSQL"
+	 \endverbatim
+	 </dd>
+<dt><b>-append</b>:</dt><dd> Append to existing layer instead of creating
+new</dd>
+<dt><b>-overwrite</b>:</dt><dd> Delete the output layer and recreate it empty</dd>
+<dt>  <b>-update</b>:</dt><dd> Open existing output datasource in update mode rather than trying to create a new one</dd>
+<dt> <b>-select</b><em> field_list</em>:</dt><dd> Comma-delimited list of
+fields from input layer to copy to the new layer (defaults to all)</dd>
+<dt> <b>-sql</b> <em>sql_statement</em>:</dt><dd> SQL statement to execute.
+The resulting table/layer will be saved to the output.</dd>
+<dt> <b>-where</b><em> restricted_where</em>:</dt><dd> Attribute query (like SQL WHERE)</dd>
+<dt> <b>-spat</b><em> xmin ymin xmax ymax</em>:</dt><dd> spatial query extents</dd>
+<dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option (format specific)</dd>
+<dt> <b>-lco</b><em>  NAME=VALUE</em>:</dt><dd> Layer creation option (format specific)</dd>
+<dt> <b>-nln</b><em> name</em>:</dt><dd> Assign an alternate name to the new layer</dd>
+<dt> <b>-nlt</b><em> type</em>:</dt><dd> Define the geometry type for the 
+created layer.  One of NONE, GEOMETRY, POINT, LINESTRING, POLYGON, 
+GEOMETRYCOLLECTION, MULTIPOINT, MULTILINE, MULTIPOLYGON or MULTILINESTRING. 
+Add "25D" to the name to get 2.5D versions.</dd>
+<dt> <b>-a_srs</b><em> srs_def</em>:</dt><dd> Assign an output SRS</dd>
+<dt> <b>-t_srs</b><em> srs_def</em>:</dt><dd> Reproject/transform to this SRS on output</dd>
+<dt> <b>-s_srs</b><em> srs_def</em>:</dt><dd> Override source SRS</dd>
+<dt> <b>-fid</b> <i>fid</i>:</dt><dd> If provided, only the feature with this feature
+id will be reported.  Operates exclusive of the spatial or attribute 
+queries.</dd>
+</dl>
+
+Srs_def can be a full WKT definition (hard to escape properly), or a well
+known definition (ie. EPSG:4326) or a file with a WKT definition.
+
+Example appending to an existing layer (both flags need to be used):
+
+\verbatim
+% ogr2ogr -update -append -f PostgreSQL PG:dbname=warmerda abc.tab
+\endverbatim
+
+More examples are given in the individual format pages.
+
+\if man
+\section author AUTHOR
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+\endif
+*/
+
+/*! \page ogrtindex ogrtindex
+
+creates a tileindex
+
+\if man
+\section synopsis SYNOPSIS
+\endif
+
+\htmlonly
+Usage:
+\endhtmlonly
+
+\verbatim
+ogrtindex [-lnum n]... [-lname name]... [-f output_format]
+                 output_dataset src_dataset...
+\endverbatim
+
+\if man
+\section description DESCRIPTION
+\endif
+
+The ogrtindex program can be used to create a tileindex - a file containing
+a list of the identities of a bunch of other files along with there spatial
+extents.  This is primarily intended to be used with the 
+<a href="http://mapserver.gis.umn.edu/">UMN MapServer</a> for tiled access
+to layers using the OGR connection type. 
+
+<dl>
+<dt><b>-lnum</b> <em>n</em>:</dt><dd> Add layer number 'n' from each source
+		file in the tile index.</dd>
+<dt><b>-lname</b> <em>name</em>:</dt><dd> Add the layer named 'name' from each source file
+        in the tile index.</dd>
+<dt><b>-f</b> <em>output_format</em>:</dt><dd> Select an output format name.  The default
+        is to create a shapefile.</dd>
+<dt><b>-tileindex</b> <em>field_name</em>:</dt><dd> The name to use for the dataset name.
+        Defaults to LOCATION.</dd>
+</dl>
+
+If no -lnum or -lname arguments are given it is assumed that
+all layers in source datasets should be added to the tile index
+as independent records.
+
+If the tile index already exists it will be appended to, otherwise it will
+be created.  
+
+It is a flaw of the current ogrtindex program that no attempt is made to
+copy the coordinate system definition from the source datasets to the tile
+index (as is expected by MapServer when PROJECTION AUTO is in use).   
+
+\if man
+\section example EXAMPLE
+\endif
+
+This example would create a shapefile (tindex.shp) containing a tile index
+of the BL2000_LINK layers in all the NTF files in the wrk directory:
+\verbatim
+% ogrtindex tindex.shp wrk/*.NTF
+\endverbatim
+
+\if man
+\section author AUTHORS
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+
+\endif
+
+*/

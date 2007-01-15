@@ -1,0 +1,301 @@
+// The idl is organized into these sections:
+//
+// Enumerations and structures
+// Geometry object interfaces
+// Operator interfaces
+// Import/Export interfaces
+// geometry support objects and class objects
+
+import "ocidl.idl", "SpatialReferenceIdl.idl";
+
+/* Forward declare */
+
+interface IGeometry;
+interface IPoint;
+interface IPointZ;
+interface ICurve;
+interface ILineString;
+interface ILinearRing;
+interface ISurface;
+interface IPolygon;
+interface IGeometryCollection;
+interface IMultiSurface;
+interface IMultiCurve;
+interface IMultiPoint;
+
+//
+// Geometry interfaces
+//
+[ object, uuid(6A124031-FE38-11d0-BECE-00805F7C4268) ]
+interface IGeometry : IUnknown
+{
+  [propget] HRESULT Dimension([out, retval] long * dimension);
+  [propget] HRESULT SpatialReference([out, retval] ISpatialReference** spatialRef);
+  [propputref] HRESULT SpatialReference([in] ISpatialReference* spatialRef);
+  [propget] HRESULT IsEmpty([out, retval] VARIANT_BOOL * isEmpty);
+  HRESULT SetEmpty();
+  [propget] HRESULT IsSimple([out, retval] VARIANT_BOOL * isSimple);
+  HRESULT Envelope([out, retval] IGeometry** envelope);
+  HRESULT Clone([out, retval] IGeometry ** newShape);
+  HRESULT Project([in] ISpatialReference * newSystem, [out, retval] IGeometry **result);
+  HRESULT Extent2D([out] double* minX, [out] double* minY, [out] double* maxX, [out] double* maxY);
+};
+
+ 
+[ object, uuid(6A124032-FE38-11d0-BECE-00805F7C4268) ]
+interface IWks : IUnknown
+{
+  HRESULT ExportToWKB([out, retval] VARIANT* wkb); 
+  HRESULT ExportToWKT([out, retval] BSTR* wkt); 
+  HRESULT ImportFromWKB([in] VARIANT wkb, [in] ISpatialReference* spatialRef);
+  HRESULT ImportFromWKT([in] BSTR wkt, [in] ISpatialReference* spatialRef);
+};
+
+[ object, uuid(6A124033-FE38-11d0-BECE-00805F7C4268) ]
+interface IGeometryFactory : IUnknown
+{
+  HRESULT CreateFromWKB([in] VARIANT wkb, [in] ISpatialReference* spatialRef, [out, retval] IGeometry** geometry);
+  HRESULT CreateFromWKT([in] BSTR wkt, [in] ISpatialReference* spatialRef, [out, retval] IGeometry** geometry);
+}
+
+[ object, uuid(6A124035-FE38-11d0-BECE-00805F7C4268) ]
+interface IPoint : IGeometry
+{
+ HRESULT Coords([out] double* x, [out] double * y);
+ [propget] HRESULT X([out, retval] double * x);  // for OLE Automation Clients
+ [propget] HRESULT Y([out, retval] double * y); // for Automation Clients
+};
+
+[ object, uuid(D4579E2D-1D2B-11d3-80BE-00C04F680FFF) ]
+interface IPointZ : IPoint
+{
+ [propget] HRESULT Z([out, retval] double * z);
+};
+
+[ object, uuid(6A124036-FE38-11d0-BECE-00805F7C4268) ]
+interface ICurve : IGeometry
+{
+  [propget] HRESULT Length([out, retval] double* value);
+  HRESULT StartPoint([out, retval] IPoint** sp);            
+  HRESULT EndPoint([out, retval] IPoint** ep);
+  [propget] HRESULT IsClosed([out, retval] VARIANT_BOOL * isClosed);
+  HRESULT Value([in] double t, [out, retval] IPoint** p);
+};
+
+[ object, uuid(6A124037-FE38-11d0-BECE-00805F7C4268) ]
+interface ILineString : ICurve
+{
+  [propget] HRESULT NumPoints  ([out, retval] long * numPoints);
+  HRESULT Point ([in] long index, [out, retval] IPoint ** point);
+};
+
+[ object, uuid(6A124038-FE38-11d0-BECE-00805F7C4268) ]  
+interface ILinearRing : ILineString
+{
+};
+
+[ object, uuid(6A124039-FE38-11d0-BECE-00805F7C4268) ]
+interface ISurface : IGeometry
+{
+  [propget] HRESULT Area   ([out, retval] double* area);
+  HRESULT Centroid ([out, retval] IPoint** result);
+  HRESULT PointOnSurface  ([out, retval] IPoint** result);
+};
+
+[ object, uuid(6A12403A-FE38-11d0-BECE-00805F7C4268) ]
+interface IGeometryCollection : IGeometry
+{
+  [propget] HRESULT NumGeometries ([out, retval] long*   numberOf);
+  HRESULT   Geometry ([in] long index, [out, retval] IGeometry** geometry);
+}
+
+
+[ object, uuid(6A12403C-FE38-11d0-BECE-00805F7C4268) ]
+interface IPolygon : ISurface
+{
+  HRESULT ExteriorRing([out, retval] ILinearRing ** exteriorRing);
+  [propget] HRESULT NumInteriorRings([out, retval] long * count);
+  HRESULT InteriorRing([in] long index, [out, retval] ILinearRing ** interiorRing);
+}
+
+[ object, uuid(6A12403D-FE38-11d0-BECE-00805F7C4268) ]
+interface IMultiCurve : IGeometryCollection
+{
+  [propget] HRESULT Length   ([out, retval] double* length);
+  [propget] HRESULT IsClosed([out, retval] VARIANT_BOOL * isClosed);
+};
+
+[ object, uuid(6A12403F-FE38-11d0-BECE-00805F7C4268) ]
+interface IMultiSurface : IGeometryCollection
+{
+  [propget] HRESULT Area   ([out, retval] double* area);
+  HRESULT Centroid ([out, retval] IPoint** result);
+  HRESULT PointOnSurface  ([out, retval] IPoint** result);
+};
+
+
+// implementors may choose to implement one or both of the Spatial Relation interfaces.
+
+[ object, uuid(6A124040-FE38-11d0-BECE-00805F7C4268) ]
+interface ISpatialRelation : IUnknown
+{
+  HRESULT Equals  ([in] IGeometry* other, [out, retval] VARIANT_BOOL * equals);
+  HRESULT Touches ([in] IGeometry* other, [out, retval] VARIANT_BOOL * touches);
+  HRESULT Contains([in] IGeometry* other, [out, retval] VARIANT_BOOL * contains);
+  HRESULT Within  ([in] IGeometry* other, [out, retval] VARIANT_BOOL * within);
+  HRESULT Disjoint([in] IGeometry* other, [out, retval] VARIANT_BOOL * disjoint);
+  HRESULT Crosses ([in] IGeometry* other, [out, retval] VARIANT_BOOL * crosses);
+  HRESULT Overlaps([in] IGeometry* other, [out, retval] VARIANT_BOOL * overlaps);
+  HRESULT Intersects([in] IGeometry* other, [out, retval] VARIANT_BOOL * overlaps);
+}
+
+[ object, uuid(6A124041-FE38-11d0-BECE-00805F7C4268) ]
+interface ISpatialRelation2 : IUnknown
+{
+  HRESULT Relate ([in] IGeometry* other, 
+                  [in] BSTR patternMatrix, [out, retval] VARIANT_BOOL* isRelated);
+};
+
+// The ISpatialOperator interface groups the commonly used and agreed upon operators 
+// into a single interface. Operators that are less commonly used can be moved into a 
+// separate ISpatialOperator2 interface.
+// The goal has been to minimize the number of interfaces that clients deal with.
+
+[ object, uuid(6A124042-FE38-11d0-BECE-00805F7C4268) ]
+interface ISpatialOperator : IUnknown
+{
+  // Proximity Operators
+
+  HRESULT Distance([in] IGeometry* other, [out, retval] double* distance);
+
+  // Topological Operators
+
+  HRESULT Boundary([out, retval] IGeometry ** boundary);
+
+  // Analysis - Constructive Operators
+
+  HRESULT Buffer([in] double distance, [out, retval] IGeometry** result);
+  HRESULT ConvexHull([out, retval] IGeometry ** result);
+
+  // Set Theoretic Operators
+
+  HRESULT Intersection ([in] IGeometry* other, [out, retval] IGeometry ** result);
+  HRESULT Union([in] IGeometry* other,  [out, retval] IGeometry ** result);
+  HRESULT Difference([in] IGeometry* other, [out, retval] IGeometry ** result);
+  HRESULT SymmetricDifference([in] IGeometry* other, [out, retval] IGeometry ** result);
+
+};
+
+
+
+#if defined(_GEOMETRY_)
+
+// example of a specific geometry library implementation
+
+[   uuid(6A124045-FE38-11d0-BECE-00805F7C4268),
+    lcid(0x0000),
+    version(1.0)
+]
+
+library Geometry
+{
+
+// COM Classes would be defined here. CoTypes are shown instead :
+
+/*************************************************************************  
+    coType Point
+    {
+        [mandatory] interface IGeometry;
+        [mandatory] interface IPoint;
+        [mandatory] interface IWks;
+
+        [optional]  interface ISpatialRelation;
+        [optional]  interface ISpatialRelation2;
+        [optional]  interface ISpatialOperator;
+
+    };
+
+    coType LineString
+    {
+        [mandatory] interface IGeometry;
+        [mandatory] interface ICurve;
+        [mandatory] interface ILineString;
+        [mandatory] interface IWks; 
+
+        [optional]  interface ISpatialRelation;
+        [optional]  interface ISpatialRelation2;
+        [optional]  interface ISpatialOperator;
+
+    };
+
+    coType Polygon   
+    {
+        [mandatory] interface IGeometry;
+        [mandatory] interface ISurface;
+        [mandatory] interface IPolygon;   
+        [mandatory] interface IWks;
+
+        [optional]  interface ISpatialRelation;
+        [optional]  interface ISpatialRelation2;
+        [optional]  interface ISpatialOperator;
+    };
+
+
+    coType MultiPoint
+    {
+        [mandatory] interface IGeometry;
+        [mandatory] interface IGeometryCollection;   
+        [mandatory] interface IWks;
+
+        [optional]  interface ISpatialRelation;
+        [optional]  interface ISpatialRelation2;
+        [optional]  interface ISpatialOperator;
+    };
+
+
+    coType MultiLineString
+    {
+        [mandatory] interface IGeometry;
+        [mandatory] interface IGeometryCollection;
+        [mandatory] interface IMultiCurve;
+        [mandatory] interface IWks;
+
+        [optional]  interface ISpatialRelation;
+        [optional]  interface ISpatialRelation2;
+        [optional]  interface ISpatialOperator;
+    };
+
+
+
+    coType MultiPolygon 
+    {
+        [mandatory] interface IGeometry;
+        [mandatory] interface IGeometryCollection;
+        [mandatory] interface IMultiSurface;
+        [mandatory] interface IWks;
+
+        [optional]  interface ISpatialRelation;
+        [optional]  interface ISpatialRelation2;
+        [optional]  interface ISpatialOperator;
+    };
+    
+    coType GeometryCollection
+    {
+        [mandatory] interface IGeometry;
+        [mandatory] interface IGeometryCollection;  
+        [mandatory] interface IWks;
+
+        [optional]  interface ISpatialRelation;
+        [optional]  interface ISpatialRelation2;
+        [optional]  interface ISpatialOperator;
+    };
+
+    coType GeometryFactory
+    {
+        [mandatory] interface IGeometryFactory;
+    }
+
+************************************************************/
+}
+
+#endif

@@ -1,0 +1,18 @@
+
+OBJ	=	ogrs57driver.obj ogrs57datasource.obj ogrs57layer.obj \
+		s57classregistrar.obj s57reader.obj ddfrecordindex.obj \
+		assemblepolygon.obj
+
+EXTRAFLAGS =	-I.. -I..\.. -I$(GDAL_ROOT)/frmts/iso8211
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+
+

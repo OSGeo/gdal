@@ -1,0 +1,24 @@
+<html>
+<head>
+
+<title>MSGN -- Meteosat Second Generation (MSG) Native Archive Format (.nat)</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>MSGN -- Meteosat Second Generation (MSG) Native Archive Format (.nat)</h1>
+
+GDAL supports reading only of MSG native files. These files may have
+nything from 1 to 12 bands, all at 10-bit resolution.<p>
+
+Currently the driver ignores the 12th band (HRV) because it does not have
+the same resolution as the others, so it can not be accommodated within the
+same dataset. Adding support for this band would be straightforward, though.<p>
+
+Georeferencing is currently supported, but the results may not be
+acceptable, depending on your requirements. The current workaround is to
+implement the CGMS Geostationary projection directly.<p>
+
+</body>
+</html>
+

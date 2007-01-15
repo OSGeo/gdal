@@ -1,0 +1,314 @@
+/* $Id$ */
+
+/*!
+\page gdal_datamodel GDAL Data Model
+
+This document attempts to describe the GDAL data model.  That is the
+types of information that a GDAL data store can contain, and their 
+semantics.<p>
+
+\section gdal_datamodel_dataset Dataset
+
+A dataset (represented by the GDALDataset class) is an assembly of 
+related raster bands and some information common to them all.  In particular
+the dataset has a concept of the raster size (in pixels and lines) that
+applies to all the bands.  The dataset is also responsible for the 
+georeferencing transform and coordinate system definition of all bands.  The
+dataset itself can also have associated metadata, a list of name/value
+pairs in string form. 
+
+Note that the GDAL dataset, and raster band data model is loosely 
+based on the OpenGIS Grid Coverages specification. 
+
+\subsection gdal_datamodel_dataset_cs Coordinate System
+
+Dataset coordinate systems are represented as OpenGIS Well Known Text
+strings.  This can contain:
+
+<ul>
+<li> An overall coordinate system name. 
+<li> A geographic coordinate system name. 
+<li> A datum identifier. 
+<li> An ellipsoid name, semi-major axis, and inverse flattening. 
+<li> A prime meridian name and offset from Greenwich. 
+<li> A projection method type (ie. Transverse Mercator). 
+<li> A list of projection parameters (ie. central_meridian). 
+<li> A units name, and conversion factor to meters or radians. 
+<li> Names and ordering for the axes. 
+<li> Codes for most of the above in terms of predefined coordinate systems
+from authorities such as EPSG. 
+</ul>
+
+For more information on OpenGIS WKT coordinate system definitions, and 
+mechanisms to manipulate them, refer to the <a href="ogr/osr_tutorial.html">
+osr_tutorial</a> document and/or the OGRSpatialReference class documentation.
+
+The coordinate system returned by GDALDataset::GetProjectionRef() 
+describes the georeferenced coordinates implied by the affine georeferencing
+transform returned by GDALDataset::GetGeoTransform().  The coordinate
+system returned by GDALDataset::GetGCPProjection() describes the 
+georeferenced coordinates of the GCPs returned by GDALDataset::GetGCPs().
+
+Note that a returned coordinate system strings of "" indicates nothing
+is known about the georeferencing coordinate system.  
+
+\subsection gdal_datamodel_dataset_gtm Affine GeoTransform
+
+GDAL datasets have two ways of describing the relationship between
+raster positions (in pixel/line coordinates) and georeferenced coordinates.
+The first, and most commonly used is the affine transform (the other is
+GCPs).  
+
+The affine transform consists of six coefficients returned by 
+GDALDataset::GetGeoTransform() which map pixel/line coordinates into 
+georeferenced space using the following relationship:
+
+<pre>
+    Xgeo = GT(0) + Xpixel*GT(1) + Yline*GT(2)
+    Ygeo = GT(3) + Xpixel*GT(4) + Yline*GT(5)
+</pre>
+
+In case of north up images, the GT(2) and GT(4) coefficients are zero, and
+the GT(1) is pixel width, and GT(5) is pixel height.  The (GT(0),GT(3))
+position is the top left corner of the top left pixel of the raster.
+
+Note that the pixel/line coordinates in the above are from (0.0,0.0) at the
+top left corner of the top left pixel to (width_in_pixels,height_in_pixels)
+at the bottom right corner of the bottom right pixel.  The pixel/line location
+of the center of the top left pixel would therefore be (0.5,0.5). 
+
+\subsection gdal_datamodel_dataset_gcp GCPs
+
+A dataset can have a set of control points relating one or more positions
+on the raster to georeferenced coordinates.  All GCPs share a georeferencing
+coordinate system (returned by GDALDataset::GetGCPProjection()).  Each GCP
+(represented as the GDAL_GCP class) contains the following:
+
+<pre>
+typedef struct
+{
+    char	*pszId; 
+    char	*pszInfo;
+    double 	dfGCPPixel;
+    double	dfGCPLine;
+    double	dfGCPX;
+    double	dfGCPY;
+    double	dfGCPZ;
+} GDAL_GCP;
+</pre>
+
+The pszId string is intended to be a unique (and often, but not always
+numerical) identifier for the GCP within the set of GCPs on this dataset.
+The pszInfo is usually an empty string, but can contain any user defined
+text associated with the GCP.  Potentially this can also contain machine 
+parsable information on GCP status though that isn't done at this time.
+
+The (Pixel,Line) position is the GCP location on the raster.  The (X,Y,Z)
+position is the associated georeferenced location with the Z often being
+zero. 
+
+The GDAL data model does not imply a transformation mechanism that must
+be generated from the GCPs ... this is left to the application.  However
+1st to 5th order polynomials are common. 
+
+Normally a dataset will contain either an affine geotransform, GCPs or
+neither.  It is uncommon to have both, and it is undefined which is 
+authoritative.
+
+\subsection gdal_datamodel_dataset_metadata Metadata
+
+GDAL metadata is auxiliary format and application specific textual data
+kept as a list of name/value pairs.  The names are required to be well 
+behaved tokens (no spaces, or odd characters).  The values can be of
+any length, and contain anything except an embedded null (ASCII zero).  
+
+The metadata handling system is not well tuned to handling very large bodies
+of metadata.  Handling of more than 100K of metadata for a dataset is likely
+to lead to performance degradation. 
+
+Over time there will be some well known names defined with established
+semantics; however, that has not occurred at this time. 
+
+Some formats will support generic (user defined) metadata, while other
+format drivers will map specific format fields to metadata names.  For
+instance the TIFF driver returns a few information tags as metadata
+including the date/time field which is returned as:
+
+<pre>
+TIFFTAG_DATETIME=1999:05:11 11:29:56
+</pre>
+
+Metadata is split into named groups called domains, with the default
+domain having no name (NULL or "").  Some specific domains exist for 
+special purposes.  Note that currently there is no way to enumerate all
+the domains available for a given object, but applications can "test" for
+any domains they know how to interprete. 
+
+\subsubsection gdal_datamodel_subdatasets SUBDATASETS Domain
+
+The SUBDATASETS domain holds a list of child datasets.  Normally this is
+used to provide pointers to a list of images stored within a single multi
+image file (such as HDF or NITF).  For instance, an NITF with four images
+might have the following subdataset list. 
+
+<pre>
+  SUBDATASET_1_NAME=NITF_IM:0:multi_1b.ntf
+  SUBDATASET_1_DESC=Image 1 of multi_1b.ntf
+  SUBDATASET_2_NAME=NITF_IM:1:multi_1b.ntf
+  SUBDATASET_2_DESC=Image 2 of multi_1b.ntf
+  SUBDATASET_3_NAME=NITF_IM:2:multi_1b.ntf
+  SUBDATASET_3_DESC=Image 3 of multi_1b.ntf
+  SUBDATASET_4_NAME=NITF_IM:3:multi_1b.ntf
+  SUBDATASET_4_DESC=Image 4 of multi_1b.ntf
+  SUBDATASET_5_NAME=NITF_IM:4:multi_1b.ntf
+  SUBDATASET_5_DESC=Image 5 of multi_1b.ntf
+</pre>
+
+The value of the _NAME is the string that can be passed to GDALOpen() to 
+access the file.  The _DESC value is intended to be a more user friendly
+string that can be displayed to the user in a selector. 
+
+\subsubsection gdal_datamodel_image_structure IMAGE_STRUCTURE Domain
+
+Metadata in the default domain is intended to be related to the 
+image, and not particularly related to the way the image is stored on
+disk.  That is, it is suitable for copying with the dataset when it is
+copied to a new format.  Some information of interest is closely tied
+to a particular file format and storage mechanism.  In order to prevent
+this getting copied along with datasets it is placed in a special domain
+called IMAGE_STRUCTURE that should not normally be copied to new formats. 
+
+One item that appears in the IMAGE_STRUCTURE domain is the compression
+scheme used for a fromat.  The metadata item name is COMPRESSION but the
+value can be format specific.
+
+\subsubsection gdal_datamodel_xml xml: Domains
+
+Any domain name prefixed with "xml:" is not normal name/value metadata. 
+It is a single XML document stored in one big string. 
+
+
+\section gdal_datamodel_rasterband Raster Band
+
+A raster band is represented in GDAL with the GDALRasterBand class.  It 
+represents a single raster band/channel/layer.  It does not necessarily
+represent a whole image.  For instance, a 24bit RGB image would normally
+be represented as a dataset with three bands, one for red, one for green
+and one for blue. 
+
+A raster band has the following properties:
+
+<ul>
+
+<li> A width and height in pixels and lines.  This is the same as that 
+defined for the dataset, if this is a full resolution band. 
+
+<li> A datatype (GDALDataType).  One of Byte, UInt16, Int16, UInt32, Int32, 
+Float32, Float64, and the complex types CInt16, CInt32, CFloat32, and CFloat64.
+
+<li> A block size.  This is a preferred (efficient) access chunk size.  For 
+tiled images this will be one tile.  For scanline oriented images this will 
+normally be one scanline. 
+
+<li> A list of name/value pair metadata in the same format as the dataset,
+but of information that is potentially specific to this band.
+
+<li> An optional description string. 
+
+<li> An optional list of category names (effectively class names in a 
+thematic image).  
+
+<li> An optional minimum and maximum value. 
+
+<li> An optional offset and scale for transforming raster values into meaning
+full values (ie translate height to meters) 
+
+<li> An optional raster unit name.  For instance, this might indicate linear 
+units for elevation data.
+
+<li> A color interpretation for the band.  This is one of:
+
+  <ul> 
+  <li> GCI_Undefined: the default, nothing is known.
+  <li> GCI_GrayIndex: this is an independent grayscale image
+  <li> GCI_PaletteIndex: this raster acts as an index into a color table
+  <li> GCI_RedBand: this raster is the red portion of an RGB or RGBA image
+  <li> GCI_GreenBand: this raster is the green portion of an RGB or RGBA image
+  <li> GCI_BlueBand: this raster is the blue portion of an RGB or RGBA image
+  <li> GCI_AlphaBand: this raster is the alpha portion of an RGBA image
+  <li> GCI_HueBand: this raster is the hue of an HLS image
+  <li> GCI_SaturationBand: this raster is the saturation of an HLS image
+  <li> GCI_LightnessBand: this raster is the hue of an HLS image
+  <li> GCI_CyanBand: this band is the cyan portion of a CMY or CMYK image
+  <li> GCI_MagentaBand: this band is the magenta portion of a CMY or CMYK image
+  <li> GCI_YellowBand: this band is the yellow portion of a CMY or CMYK image
+  <li> GCI_BlackBand: this band is the black portion of a CMYK image. 
+  </ul>
+
+<li> A color table, described in more detail later. 
+
+<li> Knowledge of reduced resolution overviews (pyramids) if available. 
+
+</ul>
+
+\section gdal_datamodel_rasterband_ct Color Table
+
+A color table consists of zero or more color entries described in C by the
+following structure:
+
+<pre>
+typedef struct
+{
+    /- gray, red, cyan or hue -/
+    short      c1;      
+
+    /- green, magenta, or lightness -/    
+    short      c2;      
+
+    /- blue, yellow, or saturation -/
+    short      c3;      
+
+    /- alpha or blackband -/
+    short      c4;      
+} GDALColorEntry;
+</pre>
+
+The color table also has a palette interpretation value (GDALPaletteInterp)
+which is one of the following values, and indicates how the c1/c2/c3/c4 values
+of a color entry should be interpreted. 
+
+<ul>
+<li> GPI_Gray: Use c1 as grayscale value. 
+<li> GPI_RGB: Use c1 as red, c2 as green, c3 as blue and c4 as alpha.
+<li> GPI_CMYK: Use c1 as cyan, c2 as magenta, c3 as yellow and c4 as black. 
+<li> GPI_HLS: Use c1 as hue, c2 as lightness, and c3 as saturation. 
+</ul>
+
+To associate a color with a raster pixel, the pixel value is used as a
+subscript into the color table.  That means that the colors are always
+applied starting at zero and ascending.  There is no provision for indicating
+a prescaling mechanism before looking up in the color table. 
+
+\section gdal_datamodel_rasterband_overviews Overviews
+
+A band may have zero or more overviews.  Each overview is represented as
+a "free standing" GDALRasterBand.  The size (in pixels and lines) of the 
+overview will be different than the underlying raster, but the geographic
+region covered by overviews is the same as the full resolution band.  
+
+The overviews are used to display reduced resolution overviews more quickly
+than could be done by reading all the full resolution data and downsampling. 
+
+Bands also have a HasArbitraryOverviews property which is TRUE if the
+raster can be read at any resolution efficiently but with no distinct
+overview levels.  This applies to some FFT encoded images, or images pulled
+through gateways (like OGDI) where downsampling can be done efficiently
+at the remote point. 
+
+\htmlonly
+<p>
+$Id$
+</p>
+\endhtmlonly
+
+*/
