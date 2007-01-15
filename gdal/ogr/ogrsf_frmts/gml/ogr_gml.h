@@ -25,43 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.10  2005/02/22 12:56:28  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.9  2003/05/21 03:48:35  warmerda
- * Expand tabs
- *
- * Revision 1.8  2003/04/03 16:23:49  warmerda
- * Added support for XSISCHEMA creation option which may be INTERNAL, EXTERNAL
- * or OFF.  EXTERNAL (write an associated .xsd file) is the default.
- *
- * Revision 1.7  2003/03/07 14:53:21  warmerda
- * implement preliminary BXFS write support
- *
- * Revision 1.6  2003/03/06 20:30:28  warmerda
- * use GML/OGR geometry translations from ogr_geometry.h now
- *
- * Revision 1.5  2003/01/17 20:39:29  warmerda
- * added bounding rectangle support
- *
- * Revision 1.4  2002/03/07 22:39:01  warmerda
- * include ogr_gml_geom.h
- *
- * Revision 1.3  2002/03/06 20:08:24  warmerda
- * add accelerated GetFeatureCount and GetExtent
- *
- * Revision 1.2  2002/01/25 20:37:23  warmerda
- * added driver and related classes
- *
- * Revision 1.1  2002/01/24 17:39:22  warmerda
- * New
- *
- *
- */
+ ****************************************************************************/
 
 #ifndef _OGR_GML_H_INCLUDED
 #define _OGR_GML_H_INCLUDED

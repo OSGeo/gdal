@@ -25,67 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.54  2006/11/16 14:36:11  mloskot
- * Disabled annoying warnings for Visual C++.
- *
- * Revision 1.53  2006/09/07 18:11:10  dron
- * Added CPLGetCurrentDir().
- *
- * Revision 1.52  2006/04/19 01:59:18  fwarmerdam
- * move deprecate declarations before system include files
- *
- * Revision 1.51  2006/03/21 20:11:54  fwarmerdam
- * fixup headers a bit
- *
- * Revision 1.50  2006/03/13 20:58:32  mloskot
- * Test if macros _CRT_SECURE_NO_DEPRECATE and  _CRT_NONSTDC_NO_DEPRECATE
- * are already defined, to get rid of warnings
- *
- * Revision 1.49  2006/02/20 01:03:01  fwarmerdam
- * Fixed last change.
- *
- * Revision 1.48  2006/02/20 00:59:58  fwarmerdam
- * Avoid deprecation of some common functions with VS8.
- * http://bugzilla.remotesensing.org/show_bug.cgi?id=1083
- *
- * Revision 1.47  2006/02/19 21:54:34  mloskot
- * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
- *
- * Revision 1.46  2005/12/08 20:21:10  fwarmerdam
- * added CPL_ODLL declaration
- *
- * Revision 1.45  2005/06/15 09:47:40  dron
- * Fixed typo.
- *
- * Revision 1.44  2005/06/15 09:11:58  dron
- * Added CPLIsEqual() macro.
- *
- * Revision 1.43  2005/05/23 03:57:08  fwarmerdam
- * added default definition of CPL_THREADLOCAL
- *
- * Revision 1.42  2005/04/04 15:22:36  fwarmerdam
- * added CPL_STDCALL declaration
- *
- * Revision 1.41  2005/03/17 04:20:24  fwarmerdam
- * added FORCE_CDECL
- *
- * Revision 1.40  2005/03/11 14:59:07  fwarmerdam
- * Default to assuming nothing is infinite if isinf() macro not defined.
- * Per http://bugzilla.remotesensing.org/show_bug.cgi?id=795
- *
- * Revision 1.39  2005/03/01 21:22:07  fwarmerdam
- * added CPLIsFinite()
- *
- * Revision 1.38  2005/03/01 20:44:38  fwarmerdam
- * Check for _MSC_VER instead of WIN32.
- *
- * Revision 1.37  2005/03/01 19:57:55  fwarmerdam
- * Added CPLIsNan and CPLIsInf macros.
- */
+ ****************************************************************************/
 
 #ifndef CPL_BASE_H_INCLUDED
 #define CPL_BASE_H_INCLUDED

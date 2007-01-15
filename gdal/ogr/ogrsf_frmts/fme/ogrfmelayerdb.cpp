@@ -22,44 +22,7 @@
  * the Software, Safe Software Incorporated does not warrant the
  * accuracy or completeness of the Software. In no event will Safe Software 
  * Incorporated be liable for damages, including loss of profits or 
- * consequential damages, arising out of the use of the Software.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.3  2005/02/22 12:57:19  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.2  2005/02/02 20:54:27  fwarmerdam
- * track m_nFeaturesRead
- *
- * Revision 1.1  2002/05/24 06:23:57  warmerda
- * New
- *
- * Revision 1.8  2002/05/24 06:17:01  warmerda
- * clean up dependencies on strimp.h, and fme2ogrspatialref func
- *
- * Revision 1.7  2002/01/31 17:00:06  warmerda
- * added debug statement about first feature in layer
- *
- * Revision 1.6  2001/11/26 23:36:43  warmerda
- * override SetAttributeFilter on OGRFMELayerDB to avoid parsing
- *
- * Revision 1.5  2001/11/26 18:37:58  warmerda
- * Use WHERE instead of WHERE_CLAUSE for SDE
- *
- * Revision 1.4  2001/11/15 21:44:34  warmerda
- * add macros support for SDE
- *
- * Revision 1.3  2001/11/01 21:52:39  warmerda
- * added mutex to protect access to session
- *
- * Revision 1.2  2001/09/27 17:02:33  warmerda
- * updated to fME2002 dir structure
- *
- * Revision 1.1  2001/09/07 15:53:39  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "fme2ogr.h"
 #include "cpl_conv.h"

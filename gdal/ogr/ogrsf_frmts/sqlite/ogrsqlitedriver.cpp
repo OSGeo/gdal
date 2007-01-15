@@ -24,20 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.3  2004/10/08 20:05:24  fwarmerdam
- * Avoid leaking uninitialized OGRSQLiteDataSource.
- *
- * Revision 1.2  2004/07/12 20:50:46  warmerda
- * table/database creation now implemented
- *
- * Revision 1.1  2004/07/09 06:25:04  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_sqlite.h"
 #include "cpl_conv.h"

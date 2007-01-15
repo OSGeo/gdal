@@ -25,29 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2006/06/06 16:25:22  mloskot
- * Fixed memory 4-5 leaks in CPL ODBC and OGR drivers.
- *
- * Revision 1.5  2006/06/05 19:06:38  fwarmerdam
- * fixed problem with handling ofz for lines
- *
- * Revision 1.4  2005/09/29 19:49:48  fwarmerdam
- * dont try to translate GUID SRTEXT entries
- *
- * Revision 1.3  2005/09/21 00:55:42  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.2  2005/09/05 20:30:06  fwarmerdam
- * removed unused variable
- *
- * Revision 1.1  2005/09/05 19:34:17  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "cpl_conv.h"
 #include "ogr_pgeo.h"

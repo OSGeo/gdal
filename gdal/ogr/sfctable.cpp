@@ -26,62 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.16  2006/03/31 17:44:20  fwarmerdam
- * header updates
- *
- * Revision 1.15  2002/08/07 21:38:10  warmerda
- * avoid local new/delete on OGRFeatureDefn
- *
- * Revision 1.14  2001/11/20 16:41:43  warmerda
- * added extra Release() in ~SFCTable() to avoid leak
- *
- * Revision 1.13  2001/11/01 17:05:01  warmerda
- * various old additions
- *
- * Revision 1.12  1999/09/09 21:03:49  warmerda
- * added pIUnknown check
- *
- * Revision 1.11  1999/09/07 14:05:06  warmerda
- * Ignore bPrecision for real/double fields as it's interpretation is
- * unclear.  Use it as the field width for integers.  Note many types are
- * missing from the type interpreation switch statement.
- *
- * Revision 1.10  1999/09/01 12:08:34  warmerda
- * Ensure the geometry type gets set on the OGRFeatureDefn.
- *
- * Revision 1.9  1999/07/09 13:05:01  warmerda
- * figure out geometry column before building OGRFeatureDefn
- *
- * Revision 1.8  1999/07/08 20:27:25  warmerda
- * Implemented creation on an OGRFeatureDefn for the layer, and
- * implemented GetOGRFeature().
- *
- * Revision 1.7  1999/06/26 05:34:17  warmerda
- * Added support for poSRS, and use creating geometry
- *
- * Revision 1.6  1999/06/10 19:21:20  warmerda
- * Fixed doc typo.
- *
- * Revision 1.5  1999/06/10 19:18:22  warmerda
- * added support for the spatial ref schema rowset
- *
- * Revision 1.4  1999/06/10 14:00:15  warmerda
- * Add request for IStream from IUnknowns that don't give an ISequentialStream.
- *
- * Revision 1.3  1999/06/08 17:50:20  warmerda
- * Fixed some off-by-one errors, and updated bytes|byref case.
- *
- * Revision 1.2  1999/06/08 15:41:16  warmerda
- * added working blob/geometry support
- *
- * Revision 1.1  1999/06/08 03:50:43  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "sfctable.h"
 #include "sfcschemarowsets.h"

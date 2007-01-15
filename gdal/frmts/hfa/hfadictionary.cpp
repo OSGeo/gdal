@@ -26,35 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2005/09/27 18:01:37  fwarmerdam
- * Ensure Edsc_Table is defined, fixed default def support
- *
- * Revision 1.7  2004/01/26 18:28:32  warmerda
- * provide default types if not defined in file
- *
- * Revision 1.6  2003/04/22 19:40:36  warmerda
- * fixed email address
- *
- * Revision 1.5  2003/02/25 18:03:47  warmerda
- * added support to auto-define Edsc_Column as the defn is sometimes missing
- *
- * Revision 1.4  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.3  1999/01/22 17:36:13  warmerda
- * fixed return value
- *
- * Revision 1.2  1999/01/04 22:52:47  warmerda
- * field access working
- *
- * Revision 1.1  1999/01/04 05:28:12  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "hfa_p.h"
 #include "cpl_conv.h"

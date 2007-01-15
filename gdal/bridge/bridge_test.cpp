@@ -25,26 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2003/09/26 02:18:41  warmerda
- * Added missing include files
- *
- * Revision 1.4  2001/11/18 00:48:24  warmerda
- * substantial upgrade
- *
- * Revision 1.3  2001/09/06 14:03:21  warmerda
- * upgrade bridge error reporting
- *
- * Revision 1.2  2000/08/25 20:03:40  warmerda
- * added more entry points
- *
- * Revision 1.1  1999/04/21 23:01:31  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>

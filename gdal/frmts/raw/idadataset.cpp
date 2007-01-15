@@ -24,45 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2006/11/07 19:42:08  fwarmerdam
- * Fixed SetOffset/SetScale per
- * http://bugzilla.remotesensing.org/show_bug.cgi?id=1349
- *
- * Revision 1.10  2006/10/07 01:59:40  fwarmerdam
- * Added support for reading .clr file.
- *
- * Revision 1.9  2005/09/14 01:12:00  fwarmerdam
- * Fixed creation data types and help link.
- *
- * Revision 1.8  2005/08/23 16:21:25  fwarmerdam
- * Fixed help link, dont barf in open if fp null.
- *
- * Revision 1.7  2005/05/05 13:55:42  fwarmerdam
- * PAM Enable
- *
- * Revision 1.6  2005/02/08 20:22:39  fwarmerdam
- * Added SetProjection support.
- *
- * Revision 1.5  2005/01/15 16:11:12  fwarmerdam
- * lots of work on create support
- *
- * Revision 1.4  2005/01/04 22:14:33  fwarmerdam
- * Nailed down open checking fairly closely.
- *
- * Revision 1.3  2004/12/26 21:25:36  fwarmerdam
- * avoid spurious opens
- *
- * Revision 1.2  2004/12/26 17:37:46  fwarmerdam
- * fix unix/dos format
- *
- * Revision 1.1  2004/12/26 16:17:00  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "rawdataset.h"
 #include "ogr_spatialref.h"

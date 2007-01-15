@@ -25,14 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.1  2006/11/28 15:34:42  osemykin
- * Added new Informix DataBlade driver (IDB)
- *
- */
+ ****************************************************************************/
 
 #ifndef _OGR_IDB_H_INCLUDED_
 #define _OGR_IDB_H_INLLUDED_

@@ -24,44 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2005/02/22 12:50:22  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.10  2005/02/15 02:24:45  fwarmerdam
- * fixed GetFeatureCount() when filters in place
- *
- * Revision 1.9  2005/02/02 20:54:27  fwarmerdam
- * track m_nFeaturesRead
- *
- * Revision 1.8  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.7  2001/07/04 23:25:32  warmerda
- * first round implementation of writer
- *
- * Revision 1.6  2001/07/04 03:08:54  warmerda
- * fixed bug in GetNextFeature
- *
- * Revision 1.5  2001/06/19 15:50:23  warmerda
- * added feature attribute query support
- *
- * Revision 1.4  2001/01/19 21:15:20  warmerda
- * expanded tabs
- *
- * Revision 1.3  2000/01/13 05:18:11  warmerda
- * added support for multiple versions
- *
- * Revision 1.2  1999/12/22 15:38:15  warmerda
- * major update
- *
- * Revision 1.1  1999/10/07 18:19:21  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_tiger.h"
 

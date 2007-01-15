@@ -24,38 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.9  2006/10/27 17:03:55  dron
- * Added support for reading spatial reference table; memory leaks removed.
- *
- * Revision 1.8  2006/05/15 18:14:30  fwarmerdam
- * Use generic mechanism for SetAttributeFilter() (bug 1185)
- *
- * Revision 1.7  2005/11/02 21:58:26  fwarmerdam
- * preliminary support for ODBC spatial querying
- *
- * Revision 1.6  2005/09/09 05:02:12  fwarmerdam
- * added wkb support
- *
- * Revision 1.5  2005/02/22 12:53:56  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.4  2004/01/05 22:38:17  warmerda
- * stripped out some junk
- *
- * Revision 1.3  2004/01/05 22:23:40  warmerda
- * added ExecuteSQL implementation via OGRODBCSelectLayer
- *
- * Revision 1.2  2003/10/29 17:47:38  warmerda
- * Added FIDcolumn (based on primary key) support
- *
- * Revision 1.1  2003/09/25 17:08:37  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _OGR_ODBC_H_INCLUDED
 #define _OGR_ODBC_H_INLLUDED

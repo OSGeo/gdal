@@ -24,44 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2006/04/04 00:34:39  fwarmerdam
- * updated contact info
- *
- * Revision 1.10  2005/05/05 14:01:36  fwarmerdam
- * PAM Enable
- *
- * Revision 1.9  2002/09/04 06:50:36  warmerda
- * avoid static driver pointers
- *
- * Revision 1.8  2002/06/12 21:12:24  warmerda
- * update to metadata based driver info
- *
- * Revision 1.7  2001/11/11 23:50:59  warmerda
- * added required class keyword to friend declarations
- *
- * Revision 1.6  2001/07/18 04:51:56  warmerda
- * added CPL_CVSID
- *
- * Revision 1.5  2000/08/15 19:28:26  warmerda
- * added help topic
- *
- * Revision 1.4  2000/06/20 17:35:58  warmerda
- * added overview support
- *
- * Revision 1.3  2000/02/28 16:32:20  warmerda
- * use SetBand method
- *
- * Revision 1.2  1999/05/17 01:52:55  warmerda
- * Removed unused variable.
- *
- * Revision 1.1  1999/05/05 17:32:38  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ceosopen.h"
 #include "gdal_pam.h"

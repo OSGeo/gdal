@@ -24,32 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.7  2005/09/21 00:55:42  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.6  2005/02/02 20:54:27  fwarmerdam
- * track m_nFeaturesRead
- *
- * Revision 1.5  2003/07/11 13:28:20  warmerda
- * use external RECGetField
- *
- * Revision 1.4  2003/02/17 15:19:04  warmerda
- * Fixed support for deleted records.
- *
- * Revision 1.3  2003/02/04 21:40:38  warmerda
- * Fixed handling of Cntl-Z.
- *
- * Revision 1.2  2003/02/04 20:42:45  warmerda
- * skip zero length fields, improve type handling
- *
- * Revision 1.1  2003/02/03 21:11:35  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_rec.h"
 #include "cpl_conv.h"

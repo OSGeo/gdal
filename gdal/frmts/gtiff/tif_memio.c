@@ -32,20 +32,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.3  2003/07/08 15:49:24  warmerda
- * avoid warnings
- *
- * Revision 1.2  2003/05/12 13:26:43  warmerda
- * Added string.h.
- *
- * Revision 1.1  2002/10/08 23:00:27  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include <string.h>
 #include "tif_memio.h"

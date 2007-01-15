@@ -24,26 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2005/04/04 15:24:16  fwarmerdam
- * added CPL_STDCALL to some functions
- *
- * Revision 1.4  2004/12/30 20:40:54  fwarmerdam
- * Added documentation.
- *
- * Revision 1.3  2003/05/02 16:02:06  dron
- * Memory leak fixed.
- *
- * Revision 1.2  2003/03/13 16:47:20  warmerda
- * fixed bug in non-complex case
- *
- * Revision 1.1  2003/03/02 03:56:21  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_alg.h"
 #include "cpl_conv.h"

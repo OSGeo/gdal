@@ -24,32 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.7  2006/04/10 16:34:19  fwarmerdam
- * updated contact info
- *
- * Revision 1.6  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.5  2001/01/19 21:20:29  warmerda
- * expanded tabs
- *
- * Revision 1.4  1999/09/21 17:26:31  warmerda
- * generalized SADR reading
- *
- * Revision 1.3  1999/06/03 14:03:34  warmerda
- * Added offset/res info from iref
- *
- * Revision 1.2  1999/05/07 13:45:01  warmerda
- * major upgrade to use iso8211lib
- *
- * Revision 1.1  1999/03/23 13:56:13  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "sdts_al.h"
 

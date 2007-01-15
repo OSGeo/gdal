@@ -24,65 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- *****************************************************************************
- *
- * $Log$
- * Revision 1.19  2004/11/17 17:17:31  fwarmerdam
- * added GML_FIELDTYPES config option
- *
- * Revision 1.18  2004/10/05 20:53:00  fwarmerdam
- * Added try around some setup stuff to try and recover somewhat gracefully.
- *
- * Revision 1.17  2004/01/19 16:54:44  warmerda
- * added logic to capture field types
- *
- * Revision 1.16  2003/05/21 03:48:35  warmerda
- * Expand tabs
- *
- * Revision 1.15  2003/05/12 16:09:37  warmerda
- * Write classes file in binary mode.
- *
- * Revision 1.14  2003/05/12 16:07:15  warmerda
- * Open classes file in binary mode to avoid problem reported in
- * http://bugzilla.remotesensing.org/show_bug.cgi?id=335
- *
- * Revision 1.13  2003/05/05 15:36:33  warmerda
- * Treat any element ending in "member" as a feature container.
- *
- * Revision 1.12  2003/03/06 20:30:28  warmerda
- * use GML/OGR geometry translations from ogr_geometry.h now
- *
- * Revision 1.11  2002/12/18 21:36:12  danmo
- * Disabled XML validation by default, -DOGR_GML_VALIDATION=1 can turn it on
- *
- * Revision 1.10  2002/12/03 04:24:21  warmerda
- * Fixed leak of geometry in PrescanForSchema() ... fix from Duncan.
- *
- * Revision 1.9  2002/04/01 17:51:59  warmerda
- * allow featureMember with or without gml: namespace tag
- *
- * Revision 1.8  2002/03/08 20:20:09  warmerda
- * initialized class locked flag
- *
- * Revision 1.6  2002/03/06 20:08:02  warmerda
- * added tracking of extents, feature count and extrainfo
- *
- * Revision 1.5  2002/01/25 21:23:21  warmerda
- * handle IGMLReader destructor properly in gmlreader.cpp
- *
- * Revision 1.4  2002/01/25 21:00:00  warmerda
- * fix build without Xerces
- *
- * Revision 1.3  2002/01/25 20:39:19  warmerda
- * added prescan, and resetreading.  Provide stub if Xerces missing
- *
- * Revision 1.2  2002/01/24 17:37:33  warmerda
- * added to/from XML support
- *
- * Revision 1.1  2002/01/04 19:46:30  warmerda
- * New
- */
+ ****************************************************************************/
 
 #include "gmlreader.h"
 #include "cpl_error.h"

@@ -24,64 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.17  2006/04/04 04:24:06  fwarmerdam
- * update contact info
- *
- * Revision 1.16  2003/07/03 15:38:46  warmerda
- * some write capabilities added
- *
- * Revision 1.15  2001/08/30 21:08:19  warmerda
- * expand tabs
- *
- * Revision 1.14  2001/08/30 02:14:50  warmerda
- * Provide for control of max number of field instances dumped via environment.
- *
- * Revision 1.13  2001/08/27 19:09:00  warmerda
- * added GetInstanceData() method on DDFField
- *
- * Revision 1.12  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.11  2000/09/19 14:09:11  warmerda
- * fixed dump of binary info
- *
- * Revision 1.10  2000/06/13 13:38:39  warmerda
- * Improved reporting of binary data in Dump method.
- * Fixed GetRepeatCount() so that short field data can be properly detected.
- *
- * Revision 1.9  1999/11/18 19:03:04  warmerda
- * expanded tabs
- *
- * Revision 1.8  1999/11/03 14:04:57  warmerda
- * Made use of GetSubfieldData() with repeated fixed length
- * fields much more efficient.
- *
- * Revision 1.7  1999/09/21 16:25:32  warmerda
- * Fixed bug with repeating variable length fields and running out of data.
- *
- * Revision 1.6  1999/06/23 02:14:08  warmerda
- * added support for variable width repeaters to GetRepeatCount()
- *
- * Revision 1.5  1999/06/01 19:10:38  warmerda
- * don't assert on variable length repeating fields
- *
- * Revision 1.4  1999/05/07 14:10:49  warmerda
- * added maxbytes to getsubfielddata()
- *
- * Revision 1.3  1999/05/06 15:39:26  warmerda
- * avoid printing non-ASCII characters
- *
- * Revision 1.2  1999/04/27 22:09:50  warmerda
- * updated docs
- *
- * Revision 1.1  1999/04/27 18:45:05  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "iso8211.h"
 #include "cpl_conv.h"

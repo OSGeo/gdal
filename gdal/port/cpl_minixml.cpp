@@ -35,62 +35,6 @@
  *   Completed security audit.  I believe that this module may be safely used 
  *   to parse, and serialize arbitrary documents provided by a potentially 
  *   hostile source.
- *
- * $Log$
- * Revision 1.45  2006/11/07 03:45:22  fwarmerdam
- * Added support for CDATA.
- *
- * Revision 1.44  2006/06/30 18:18:17  dron
- * Avoid warnings.
- *
- * Revision 1.43  2006/06/30 14:25:24  dron
- * Avoid warnings on win/64.
- *
- * Revision 1.42  2006/04/19 02:00:20  fwarmerdam
- * moved ctype.h after cpl include files for VS2005
- *
- * Revision 1.41  2006/02/20 00:42:35  fwarmerdam
- * Trim.
- *
- * Revision 1.40  2006/02/19 21:54:34  mloskot
- * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
- *
- * Revision 1.39  2005/10/07 00:03:29  fwarmerdam
- * improve documentation
- *
- * Revision 1.38  2005/09/11 19:30:12  fwarmerdam
- * Try to write in text mode through large file API.
- *
- * Revision 1.37  2005/09/11 19:14:54  fwarmerdam
- * Use largefile API for virtualization support.  Note that XML files are
- * no longer produced in machine-local text format.
- *
- * Revision 1.36  2005/05/22 08:17:07  fwarmerdam
- * allow CPLAddXMLChild() to support siblings
- *
- * Revision 1.35  2005/05/13 18:17:48  fwarmerdam
- * added CPLRemoveXMLChild
- *
- * Revision 1.34  2005/03/09 17:07:25  fwarmerdam
- * added CPLSearchXMLNode
- *
- * Revision 1.33  2005/01/17 17:01:56  fwarmerdam
- * ensure that namespace stripping apply to attributes
- *
- * Revision 1.32  2004/10/21 18:59:00  fwarmerdam
- * Ensure that an empty path in CPLGetXMLValue() means the current node.
- *
- * Revision 1.31  2004/08/11 18:42:00  warmerda
- * fix quirks with CPLSetXMLValue()
- *
- * Revision 1.30  2004/03/31 17:11:41  warmerda
- * fixed return value of CPLCreateXMLElementAndValue()
- *
- * Revision 1.29  2004/01/29 17:01:51  warmerda
- * Added reference to spec.
- *
- * Revision 1.28  2004/01/29 15:29:28  warmerda
- * Added CPLCleanXMLElementName
  */
 
 #include "cpl_minixml.h"

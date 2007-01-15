@@ -24,28 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2005/09/21 00:53:19  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.4  2003/12/10 04:26:10  warmerda
- * updated RTE format based on 2003 spec and sample data
- *
- * Revision 1.3  2003/01/11 15:29:55  warmerda
- * expanded tabs
- *
- * Revision 1.2  2003/01/04 23:21:56  mbp
- * Minor bug fixes and field definition changes.  Cleaned
- * up and commented code written for TIGER 2002 support.
- *
- * Revision 1.1  2002/12/26 00:20:19  mbp
- * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
- * first round implementation of TIGER_2002 support
- *
- */
+ ****************************************************************************/
 
 #include "ogr_tiger.h"
 #include "cpl_conv.h"

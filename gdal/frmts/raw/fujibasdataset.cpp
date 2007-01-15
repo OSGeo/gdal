@@ -24,26 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2005/05/05 13:55:42  fwarmerdam
- * PAM Enable
- *
- * Revision 1.4  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.3  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.2  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.1  2001/05/15 13:20:45  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "rawdataset.h"
 #include "cpl_string.h"

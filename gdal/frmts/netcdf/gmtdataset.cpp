@@ -24,21 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.3  2005/11/18 22:31:01  fwarmerdam
- * Fixed problem with add_offset=0 "pixel-is-point" datasets (bug 796).
- * Added support for attaching scale and offset to band.
- *
- * Revision 1.2  2005/05/05 15:54:49  fwarmerdam
- * PAM Enabled
- *
- * Revision 1.1  2004/10/16 14:56:34  fwarmerdam
- * split off GMT version as gmtdataset.cpp
- *
- */
+ ****************************************************************************/
 
 #include "gdal_pam.h"
 #include "gdal_frmts.h"

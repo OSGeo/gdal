@@ -24,63 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.16  2006/04/04 01:00:44  fwarmerdam
- * updated contact info
- *
- * Revision 1.15  2004/01/29 23:35:22  gwalter
- * Add a few more metadata fields, make sure that
- * nodata value is recognized.
- *
- * Revision 1.14  2003/10/15 15:51:53  warmerda
- * Fixed C++ style comments.
- *
- * Revision 1.13  2003/08/04 18:23:07  warmerda
- * added warning when twos complement hack applied
- *
- * Revision 1.12  2003/05/30 16:17:21  warmerda
- * fix warnings with casting and unused parameters
- *
- * Revision 1.11  2003/02/26 15:30:41  warmerda
- * Modified reading code to treat any large negative values as if negative
- * values are being stored in twos complement form, as per
- * http://bugzilla.remotesensing.org/show_bug.cgi?id=286.
- *
- * Revision 1.10  2002/03/05 14:26:01  warmerda
- * expanded tabs
- *
- * Revision 1.9  2002/02/15 18:26:29  warmerda
- * fixed error code
- *
- * Revision 1.8  2002/01/28 18:17:33  warmerda
- * fixed setting of nUHLOffset
- *
- * Revision 1.7  2002/01/26 05:51:40  warmerda
- * added metadata read/write support
- *
- * Revision 1.6  2001/11/13 15:43:41  warmerda
- * preliminary dted creation working
- *
- * Revision 1.5  2001/07/18 04:51:56  warmerda
- * added CPL_CVSID
- *
- * Revision 1.4  2000/07/07 14:20:57  warmerda
- * fixed AVOID_CPL support
- *
- * Revision 1.3  2000/01/24 13:58:25  warmerda
- * support rb access
- *
- * Revision 1.2  2000/01/12 19:25:57  warmerda
- * Dale Lutz provided fixes to avoid calling DTEDGetField() more than
- * onces within an expression, and to ensure values evaluated with
- * atoi() don't have leading zeros to avoid treatment as octal.
- *
- * Revision 1.1  1999/12/07 18:01:28  warmerda
- * New
- */
+ ****************************************************************************/
 
 #include "dted_api.h"
 

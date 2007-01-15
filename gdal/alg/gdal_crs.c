@@ -47,41 +47,7 @@
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
     DEALINGS IN THE SOFTWARE.
-
- ***************************************************************************
- *
- * $Log$
- * Revision 1.10  2006/12/18 21:35:01  hobu
- * Apply Schuyler's patch for bug 1392
- *
- * Revision 1.9  2006/05/10 19:24:46  fwarmerdam
- * avoid processing HUGE_VAL coordinates
- *
- * Revision 1.8  2004/12/26 16:12:21  fwarmerdam
- * thin plate spline support now implemented
- *
- * Revision 1.7  2004/08/11 19:01:56  warmerda
- * default to 2nd order if we have enough points for 3rd order but 0 requested
- *
- * Revision 1.6  2004/08/09 14:38:27  warmerda
- * added serialize/deserialize support for warpoptions and transformers
- *
- * Revision 1.5  2004/03/19 15:22:02  warmerda
- * Fixed double free of padfRasterX. Submitted by Scott Reynolds.
- *
- * Revision 1.4  2002/12/07 17:09:50  warmerda
- * re-enable 3rd order even though unstable
- *
- * Revision 1.3  2002/12/06 17:58:00  warmerda
- * fix a few bugs
- *
- * Revision 1.2  2002/12/05 05:46:08  warmerda
- * fixed linkage problem
- *
- * Revision 1.1  2002/12/05 05:43:23  warmerda
- * New
- * 
- */
+ ****************************************************************************/
 
 #include "gdal_alg.h"
 #include "cpl_conv.h"

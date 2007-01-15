@@ -24,64 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.17  2006/08/23 17:29:46  fwarmerdam
- * added virtual io api support
- *
- * Revision 1.16  2005/10/15 19:51:37  fwarmerdam
- * added NOS/GEO GCP support c/o Karl Palsson
- *
- * Revision 1.15  2005/05/05 14:01:36  fwarmerdam
- * PAM Enable
- *
- * Revision 1.14  2004/04/02 16:38:38  warmerda
- * Also disable creation type metadata.
- *
- * Revision 1.13  2004/04/02 15:17:49  warmerda
- * Disable BSB creation.
- *
- * Revision 1.12  2003/10/20 17:26:01  warmerda
- * Fixed memory leak when scanning for GCPs.
- *
- * Revision 1.11  2003/07/08 20:28:09  warmerda
- * avoid warings
- *
- * Revision 1.10  2002/12/04 15:55:27  warmerda
- * Remap BSB 1 based pixel values to 0 based when reading, and the corresponding
- * shift up when writing.  Merge duplicate colors in color table when writing.
- * Merge even more "close" colors on write if needed to get PCT size below 128.
- *
- * Revision 1.9  2002/11/23 18:54:17  warmerda
- * added CREATIONDATATYPES metadata for drivers
- *
- * Revision 1.8  2002/11/04 04:26:45  warmerda
- * preliminary work on write support
- *
- * Revision 1.7  2002/09/04 06:50:36  warmerda
- * avoid static driver pointers
- *
- * Revision 1.6  2002/07/19 22:05:15  warmerda
- * added support for NO1 (encrypted) files
- *
- * Revision 1.5  2002/07/11 13:09:43  warmerda
- * Added support for GCP to Geotransform conversion.
- *
- * Revision 1.4  2002/06/12 21:12:24  warmerda
- * update to metadata based driver info
- *
- * Revision 1.3  2002/05/07 13:59:08  warmerda
- * added support for NOS files
- *
- * Revision 1.2  2001/12/08 21:58:27  warmerda
- * added gcps
- *
- * Revision 1.1  2001/12/08 04:35:16  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_pam.h"
 #include "bsb_read.h"

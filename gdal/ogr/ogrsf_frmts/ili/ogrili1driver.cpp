@@ -24,17 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.2  2005/08/06 22:21:53  pka
- * Area polygonizer added
- *
- * Revision 1.1  2005/07/08 22:10:57  pka
- * Initial import of OGR Interlis driver
- *
- */
+ ****************************************************************************/
 
 #include "ogr_ili1.h"
 #include "cpl_conv.h"

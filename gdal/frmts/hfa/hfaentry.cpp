@@ -31,54 +31,6 @@
  * hfaentry.cpp
  *
  * Implementation of the HFAEntry class.
- *
- * $Log$
- * Revision 1.14  2006/05/07 04:04:03  fwarmerdam
- * fixed serious multithreading issue with ExtractInstValue (bug 1132)
- *
- * Revision 1.13  2005/08/19 02:14:11  fwarmerdam
- * bug 857: add ability to set layer names
- *
- * Revision 1.12  2005/05/10 00:55:46  fwarmerdam
- * Added GetFieldCount method
- *
- * Revision 1.11  2005/02/22 21:34:47  fwarmerdam
- * added GetBigIntField method
- *
- * Revision 1.10  2004/10/26 17:49:31  fwarmerdam
- * Changed GetNamedChild() so that if there are multiple children with a
- * search for a given child node will be applied to each till a match is found.
- * This resolves the problem reading the histogram values for a file that
- * also has a color table preceeding it and they are both called
- * Descriptor_Table.
- *
- * Revision 1.9  2003/07/29 10:08:24  dron
- * Fixed definition for GetIntField() method.
- *
- * Revision 1.8  2003/04/22 19:40:36  warmerda
- * fixed email address
- *
- * Revision 1.7  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.6  2001/01/03 16:20:10  warmerda
- * Converted to large file API
- *
- * Revision 1.5  2000/10/12 19:30:32  warmerda
- * substantially improved write support
- *
- * Revision 1.4  2000/09/29 21:42:38  warmerda
- * preliminary write support implemented
- *
- * Revision 1.3  1999/01/22 17:37:30  warmerda
- * fixed types in GetFieldValue() calls
- *
- * Revision 1.2  1999/01/04 22:52:47  warmerda
- * field access working
- *
- * Revision 1.1  1999/01/04 05:28:12  warmerda
- * New
- *
  */
 
 #include "hfa_p.h"

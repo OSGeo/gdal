@@ -24,35 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2006/03/31 17:44:20  fwarmerdam
- * header updates
- *
- * Revision 1.7  1999/11/18 19:02:20  warmerda
- * expanded tabs
- *
- * Revision 1.6  1999/05/25 19:46:28  warmerda
- * hardcode_jet_clsid
- *
- * Revision 1.5  1999/05/24 01:08:33  warmerda
- * Added CLSID_SFProvider for Ken's provider.
- *
- * Revision 1.4  1999/05/14 13:32:50  warmerda
- * added CLSID_OGRComClassFactory
- *
- * Revision 1.3  1999/04/19 19:12:51  warmerda
- * added cadcorp spatial reference factory class
- *
- * Revision 1.2  1999/04/07 11:57:34  warmerda
- * Added geometry classids.
- *
- * Revision 1.1  1999/03/31 15:05:48  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _SFCLSID_H_INCLUDED
 #define _SFCLSID_H_INCLUDED

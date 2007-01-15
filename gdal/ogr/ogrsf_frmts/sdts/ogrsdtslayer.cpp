@@ -24,53 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.14  2006/03/28 23:17:06  fwarmerdam
- * updated contact info
- *
- * Revision 1.13  2005/09/21 00:54:43  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.12  2005/02/22 12:53:19  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.11  2005/02/02 20:54:27  fwarmerdam
- * track m_nFeaturesRead
- *
- * Revision 1.10  2003/12/11 21:11:00  warmerda
- * fixed leak of ATIDRefs list
- *
- * Revision 1.9  2003/10/06 16:21:33  warmerda
- * ensure we get the attributes properly for primary and secondary records
- *
- * Revision 1.8  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.7  2001/07/16 03:47:49  warmerda
- * added ENID and SNID to line features
- *
- * Revision 1.6  2001/06/19 15:50:23  warmerda
- * added feature attribute query support
- *
- * Revision 1.5  2001/01/19 21:14:22  warmerda
- * expanded tabs
- *
- * Revision 1.4  2000/02/20 21:17:56  warmerda
- * added projection support
- *
- * Revision 1.3  2000/02/15 13:59:30  warmerda
- * Actually lookup and copy attributes
- *
- * Revision 1.2  1999/09/29 16:48:02  warmerda
- * added (perhaps incomplete) attribute handling.
- *
- * Revision 1.1  1999/09/22 13:32:16  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_sdts.h"
 #include "cpl_conv.h"

@@ -26,41 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.15  2003/07/17 03:33:15  sperkins
- * added GDALFILLRaster()
- *
- * Revision 1.14  2001/11/18 00:48:24  warmerda
- * substantial upgrade
- *
- * Revision 1.13  2001/09/06 14:03:21  warmerda
- * upgrade bridge error reporting
- *
- * Revision 1.10  2000/09/26 15:20:32  warmerda
- * added GDALGetRasterBand{X,Y}Size
- *
- * Revision 1.9  2000/09/01 19:12:09  warmerda
- * fixed const mismatch
- *
- * Revision 1.8  2000/08/28 20:16:14  warmerda
- * added lots of OGRSpatialReference stuff
- *
- * Revision 1.7  2000/08/25 20:03:40  warmerda
- * added more entry points
- *
- * Revision 1.6  1999/09/17 03:18:08  warmerda
- * change to search for a list of GDAL .so/.dll files
- *
- * Revision 1.5  1999/05/07 14:08:49  warmerda
- * change .so name
- *
- * Revision 1.4  1999/04/22 13:35:11  warmerda
- * Fixed copyright header.
- *
- */
+ ****************************************************************************/
 
 /* ==================================================================== */
 /*      We #define GDAL_ENTRY to nothing so that when the include 	*/

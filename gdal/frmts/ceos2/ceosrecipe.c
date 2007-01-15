@@ -24,66 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.19  2005/02/24 13:49:35  gwalter
- * Recognize another ERS 1/2 ceos variant.
- *
- * Revision 1.18  2004/11/11 00:16:01  gwalter
- * Polarmetric->Polarimetric.
- *
- * Revision 1.17  2004/11/01 18:22:07  fwarmerdam
- * added PALSAR support
- *
- * Revision 1.16  2004/08/26 18:30:47  warmerda
- * added preliminary SIR-C support
- *
- * Revision 1.15  2004/07/06 15:43:01  gwalter
- * Updated to extract more metadata and
- * recognize more sar ceos files.
- *
- * Revision 1.14  2004/01/05 20:13:36  warmerda
- * check guessed record length
- *
- * Revision 1.13  2003/12/12 15:30:56  warmerda
- * Fixed yet another memory leak in the recipe stuff.
- *
- * Revision 1.12  2003/12/11 22:11:35  warmerda
- * clean up recipes when dataset destroyed to avoid memory noise
- *
- * Revision 1.11  2003/02/28 18:45:20  gpotts
- * Prefixed CreateLink with ceos2 since there are multiple symbol conflict on static build under mac. Garrett Potts (gpotts@imagelinks.com)
- *
- * Revision 1.10  2001/11/02 17:58:06  warmerda
- * more hacks to handle ESA LANDSAT dataset from Markus
- *
- * Revision 1.9  2001/10/23 14:26:52  warmerda
- * D-PAF ERS-1: allow CIS4 as alias for CI*4
- *
- * Revision 1.8  2001/10/18 17:04:09  warmerda
- * added hacks to determine record length and pd pixels/line for Telaviv ERS data
- *
- * Revision 1.7  2001/08/22 16:54:08  warmerda
- * fixed use of prefix field.  Zero prefix bytes(ie ERS-SLC) now believed.
- *
- * Revision 1.6  2001/07/18 04:51:56  warmerda
- * added CPL_CVSID
- *
- * Revision 1.5  2001/06/27 20:50:22  warmerda
- * added UI2 and UI1 data types
- *
- * Revision 1.4  2001/02/05 15:46:14  warmerda
- * added R*4 support
- *
- * Revision 1.3  2000/04/04 15:10:32  warmerda
- * add code to compute BytesPerRecord
- *
- * Revision 1.2  2000/03/31 13:34:20  warmerda
- * ported to gdal
- *
- */
+ ****************************************************************************/
 
 #include "ceos.h"
 

@@ -24,26 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2006/10/13 18:15:22  hobu
- * properly return ODrCCreateDataSource  when asked
- *
- * Revision 1.4  2006/10/13 18:03:24  hobu
- * oops, listing some wrong caps in here...
- *
- * Revision 1.3  2006/10/13 14:45:48  hobu
- * un #ifdef the CreateDataSource method to open the driver in update mode
- *
- * Revision 1.2  2006/10/12 16:27:23  hobu
- * Report more detailed driver capabilities
- *
- * Revision 1.1  2004/10/07 20:56:15  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_mysql.h"
 #include "cpl_conv.h"

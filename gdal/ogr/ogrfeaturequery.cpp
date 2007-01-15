@@ -25,45 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2006/11/28 00:00:36  tamas
- * RFC 6: Geometry and Feature Style as OGR Special Fields
- *
- * Revision 1.10  2006/01/07 17:16:36  dron
- * Do not include ogrsf_frmts.h.
- *
- * Revision 1.9  2005/04/03 21:05:39  fwarmerdam
- * Fixed IN operator for Reals.
- *
- * Revision 1.8  2004/02/23 21:48:19  warmerda
- * Fixed bug with support for IS NULL and IS NOT NULL on list fields.
- * Added preliminary (untested) support for GetUsedFields().
- *
- * Revision 1.7  2003/03/04 05:46:31  warmerda
- * added EvaluateAgainstIndices for OGRFeatureQuery
- *
- * Revision 1.6  2002/04/29 19:31:55  warmerda
- * added support for FID field
- *
- * Revision 1.5  2002/04/19 20:46:06  warmerda
- * added [NOT] IN, [NOT] LIKE and IS [NOT] NULL support
- *
- * Revision 1.4  2001/10/25 16:41:01  danmo
- * Fixed OGRFeatureQueryEvaluator() crash with string fields with unset value
- *
- * Revision 1.3  2001/07/19 18:25:07  warmerda
- * expanded tabs
- *
- * Revision 1.2  2001/07/18 05:03:05  warmerda
- * added CPL_CVSID
- *
- * Revision 1.1  2001/06/19 15:46:41  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include <assert.h>
 #include "ogr_feature.h"

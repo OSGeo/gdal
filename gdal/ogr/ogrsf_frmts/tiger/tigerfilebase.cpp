@@ -25,74 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.20  2006/03/29 00:46:20  fwarmerdam
- * update contact info
- *
- * Revision 1.19  2005/09/21 00:53:19  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.18  2005/04/06 14:34:37  fwarmerdam
- * Added TIGER_LFIELD_AS_STRING configuration option to force "L" numeric
- * fields to be treated as strings to preserve leading zeros.
- *
- * Revision 1.17  2003/10/15 19:09:23  warmerda
- * fix featuredefn memory leak
- *
- * Revision 1.16  2003/10/15 19:04:21  warmerda
- * ensure primary file gets closed - bug 414
- *
- * Revision 1.15  2003/01/11 15:29:55  warmerda
- * expanded tabs
- *
- * Revision 1.14  2003/01/09 18:27:40  warmerda
- * added headers/function headers
- *
- * Revision 1.13  2003/01/04 23:21:56  mbp
- * Minor bug fixes and field definition changes.  Cleaned
- * up and commented code written for TIGER 2002 support.
- *
- * Revision 1.12  2002/12/26 00:20:19  mbp
- * re-organized code to hold TIGER-version details in TigerRecordInfo structs;
- * first round implementation of TIGER_2002 support
- *
- * Revision 1.11  2001/07/24 18:04:43  warmerda
- * Avoid crash if fp is NULL in establish record length.
- *
- * Revision 1.10  2001/07/19 16:05:49  warmerda
- * clear out tabs
- *
- * Revision 1.9  2001/07/19 16:03:11  warmerda
- * allow VERSION override on write
- *
- * Revision 1.8  2001/07/19 13:26:32  warmerda
- * enable override of existing modules
- *
- * Revision 1.7  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.6  2001/07/04 23:25:32  warmerda
- * first round implementation of writer
- *
- * Revision 1.5  2001/07/04 05:40:35  warmerda
- * upgraded to support FILE, and Tiger2000 schema
- *
- * Revision 1.4  2001/01/19 21:15:20  warmerda
- * expanded tabs
- *
- * Revision 1.3  2000/01/13 05:18:11  warmerda
- * added support for multiple versions
- *
- * Revision 1.2  1999/12/22 15:38:15  warmerda
- * major update
- *
- * Revision 1.1  1999/10/07 18:19:21  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_tiger.h"
 #include "cpl_conv.h"

@@ -9,32 +9,7 @@
  * Copyright (c) 2002, Pacific Gas and Electric Co, San Franciso, CA, USA.
  *
  * All rights reserved.  Not to be used, reproduced or disclosed without
- * permission.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.7  2003/05/21 03:42:01  warmerda
- * Expanded tabs
- *
- * Revision 1.6  2002/04/11 14:22:31  warmerda
- * skip tags without tagsets
- *
- * Revision 1.5  2002/03/25 17:12:30  warmerda
- * allow wildcarded tagsets
- *
- * Revision 1.4  2002/03/15 20:13:23  warmerda
- * added error reporting.
- *
- * Revision 1.3  2002/03/15 16:08:42  warmerda
- * update to use strings lists for read/write function args
- *
- * Revision 1.2  2002/03/15 15:07:06  warmerda
- * use dgn_pge.h
- *
- * Revision 1.1  2002/03/14 21:40:37  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "dgn_pge.h"
 #include "dgnlib.h"

@@ -24,76 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.21  2006/03/31 17:44:20  fwarmerdam
- * header updates
- *
- * Revision 1.20  2005/07/20 01:43:51  fwarmerdam
- * upgraded OGR geometry dimension handling
- *
- * Revision 1.19  2005/07/12 17:34:00  fwarmerdam
- * updated to produce proper empty syntax and consume either
- *
- * Revision 1.18  2004/02/21 15:36:14  warmerda
- * const correctness updates for geometry: bug 289
- *
- * Revision 1.17  2004/01/16 21:57:16  warmerda
- * fixed up EMPTY support
- *
- * Revision 1.16  2004/01/16 21:20:00  warmerda
- * Added EMPTY support
- *
- * Revision 1.15  2003/09/11 22:47:54  aamici
- * add class constructors and destructors where needed in order to
- * let the mingw/cygwin binutils produce sensible partially linked objet files
- * with 'ld -r'.
- *
- * Revision 1.14  2003/05/28 19:16:43  warmerda
- * fixed up argument names and stuff for docs
- *
- * Revision 1.13  2003/04/28 15:28:53  warmerda
- * Ryan Proulx fixed WKT MULTIPOINT format
- *
- * Revision 1.12  2002/10/25 15:20:50  warmerda
- * fixed MULTIPOINT WKT format
- *
- * Revision 1.11  2002/09/11 13:47:17  warmerda
- * preliminary set of fixes for 3D WKB enum
- *
- * Revision 1.10  2002/08/06 21:16:41  warmerda
- * fixed possible overrun error in exportToWkt()
- *
- * Revision 1.9  2001/12/19 22:44:14  warmerda
- * fixed bug in conversion to WKT
- *
- * Revision 1.8  2001/11/01 17:01:28  warmerda
- * pass output buffer into OGRMakeWktCoordinate
- *
- * Revision 1.7  2001/07/19 18:25:07  warmerda
- * expanded tabs
- *
- * Revision 1.6  2001/07/18 05:03:05  warmerda
- * added CPL_CVSID
- *
- * Revision 1.5  2001/05/29 02:24:33  warmerda
- * fixed bracket count on import
- *
- * Revision 1.4  2001/05/24 18:05:18  warmerda
- * substantial fixes to WKT support for MULTIPOINT/LINE/POLYGON
- *
- * Revision 1.3  1999/11/18 19:02:19  warmerda
- * expanded tabs
- *
- * Revision 1.2  1999/06/25 20:44:43  warmerda
- * implemented assignSpatialReference, carry properly
- *
- * Revision 1.1  1999/05/31 20:42:05  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_geometry.h"
 #include "ogr_p.h"

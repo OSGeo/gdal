@@ -25,29 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.5  2006/04/09 16:48:18  mloskot
- * [WCE] Changed names of all WCECLIBEX functions
- * according to following pattern: wce_xxx -> wceex_xxx.
- * Reason: MFC on WCE includes functions named as wce_time, etc.
- * Preparation to renamed WCECLIBEX files.
- *
- * Revision 1.4  2006/03/21 20:11:54  fwarmerdam
- * fixup headers a bit
- *
- * Revision 1.3  2006/02/21 19:48:43  mloskot
- * [WCE] Added copyright note
- *
- * Revision 1.2  2006/02/21 19:37:06  mloskot
- * [WCE] Small fixes related to char <-> wide-char string conversions
- *
- * Revision 1.1  2006/02/19 21:50:56  mloskot
- * [WCE] non-Unicode wrappers around Unicode-only Windows CE API
- *
- ******************************************************************************/
+ ****************************************************************************/
 #include "cpl_port.h"
 #include "cpl_win32ce_api.h"
 

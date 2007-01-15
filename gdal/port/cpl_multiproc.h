@@ -24,41 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log$
- * Revision 1.10  2006/01/25 19:52:25  fwarmerdam
- * default to avoiding as much mutex overhead as opposed if MUTEX_NONE defined
- *
- * Revision 1.9  2005/08/24 22:19:27  fwarmerdam
- * added CPLCleanupTLS
- *
- * Revision 1.8  2005/07/08 18:17:52  fwarmerdam
- * complete TLS implementation for win32
- *
- * Revision 1.7  2005/07/08 14:35:26  fwarmerdam
- * preliminary TLS support
- *
- * Revision 1.6  2005/05/23 06:39:49  fwarmerdam
- * added CPLMutexHolder stuff
- *
- * Revision 1.5  2005/05/20 19:19:00  fwarmerdam
- * added CPLCreateOrAcquireMutex()
- *
- * Revision 1.4  2005/04/26 20:52:10  fwarmerdam
- * use a typedef type for thread mains (for Sun port)
- *
- * Revision 1.3  2003/04/23 04:36:55  warmerda
- * pthreads based implementation
- *
- * Revision 1.2  2002/05/24 04:09:24  warmerda
- * fixed CPL_DLL declarations
- *
- * Revision 1.1  2002/05/24 04:01:01  warmerda
- * New
- *
- **********************************************************************/
+ ****************************************************************************/
 
 #ifndef _CPL_MULTIPROC_H_INCLUDED_
 #define _CPL_MULTIPROC_H_INCLUDED_

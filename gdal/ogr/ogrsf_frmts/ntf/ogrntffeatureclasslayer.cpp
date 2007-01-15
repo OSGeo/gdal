@@ -24,29 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2006/03/28 22:59:55  fwarmerdam
- * updated contact info
- *
- * Revision 1.5  2005/09/21 00:59:55  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.4  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.3  2001/01/19 20:31:12  warmerda
- * expand tabs
- *
- * Revision 1.2  1999/10/01 14:47:51  warmerda
- * major upgrade: generic, string feature codes, etc
- *
- * Revision 1.1  1999/08/30 16:50:11  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ntf.h"
 #include "cpl_conv.h"

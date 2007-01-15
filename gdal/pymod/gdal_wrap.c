@@ -31,11 +31,6 @@
  *
  * Also contains supporting code for building python under Windows
  * and things like that.
- *
- * $Log$
- * Revision 1.121  2006/10/16 15:17:14  fwarmerdam
- * updated
- *
  ************************************************************************/
 
 #ifdef __cplusplus

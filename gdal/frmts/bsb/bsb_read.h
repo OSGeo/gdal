@@ -24,29 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2006/08/23 17:29:46  fwarmerdam
- * added virtual io api support
- *
- * Revision 1.5  2002/11/04 04:26:45  warmerda
- * preliminary work on write support
- *
- * Revision 1.4  2002/07/19 22:05:15  warmerda
- * added support for NO1 (encrypted) files
- *
- * Revision 1.3  2002/07/19 20:32:57  warmerda
- * added nVersion to structure.
- *
- * Revision 1.2  2001/12/08 21:58:32  warmerda
- * save header
- *
- * Revision 1.1  2001/12/08 04:35:16  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _BSBREAD_H_INCLUDED
 #define _BSBREAD_H_INCLUDED

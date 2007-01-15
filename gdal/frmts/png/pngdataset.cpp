@@ -41,57 +41,6 @@
  *  o I should install setjmp()/longjmp() based error trapping for PNG calls.
  *    Currently a failure in png libraries will result in a complete
  *    application termination. 
- * 
- * $Log$
- * Revision 1.38  2006/11/13 16:11:56  fwarmerdam
- * added progress reporting, and improved error handling in createcopy.
- *
- * Revision 1.37  2006/04/06 18:54:51  fwarmerdam
- * Added NBITS metadata item.
- *
- * Revision 1.36  2006/03/23 20:38:44  fwarmerdam
- * Don't try to destroy NULL png struct.
- * http://bugzilla.remotesensing.org/show_bug.cgi?id=1136
- *
- * Revision 1.35  2005/11/07 20:37:03  fwarmerdam
- * use setjmp/longjump for error trapping
- *
- * Revision 1.34  2005/09/15 02:37:48  fwarmerdam
- * added support NODATA_VALUES for RGB images (read and write)
- *
- * Revision 1.33  2005/09/12 18:55:10  fwarmerdam
- * Fixed serious bug with reading multi-band 16bit files, and with
- * writing 16bit files on LSB systems.
- *
- * Revision 1.32  2005/09/11 19:11:59  fwarmerdam
- * Redirect IO through VSI.
- *
- * Revision 1.31  2005/05/17 19:05:52  fwarmerdam
- * Allow flowthrough to pam for geotransform & nodata.
- *
- * Revision 1.30  2005/04/27 16:35:45  fwarmerdam
- * PAM enable
- *
- * Revision 1.29  2004/08/26 21:20:08  warmerda
- * Adjusted so png_access_version_number() is not called for old libpng
- * versions (pre 1.2).
- *
- * Revision 1.28  2004/08/25 13:42:37  warmerda
- * Added png version checking after png_create_read_struct() as per suggestion from
- * Ben Discoe.
- *
- * Revision 1.27  2004/05/28 16:05:54  warmerda
- * fix bug in bGeoTransformValid setting reading worldfiles
- *
- * Revision 1.26  2004/01/29 18:48:01  warmerda
- * Changed to do the swapping ourseleves.  The png_set_swap() function didn't
- * seem to be having the desired effect
- *
- * Revision 1.25  2004/01/29 14:55:26  warmerda
- * ensure 16bit files are byte swapped as needed
- *
- * Revision 1.24  2003/09/15 20:45:00  warmerda
- * add pngw and pgw support
  */
 
 #include "gdal_pam.h"

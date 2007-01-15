@@ -24,26 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2003/12/10 18:02:21  warmerda
- * fixed some minor memory leaks
- *
- * Revision 1.5  2003/02/28 18:45:20  gpotts
- * Prefixed CreateLink with ceos2 since there are multiple symbol conflict on static build under mac. Garrett Potts (gpotts@imagelinks.com)
- *
- * Revision 1.4  2001/10/18 17:03:21  warmerda
- * use DetermineCeosRecordBodyLength internally
- *
- * Revision 1.3  2001/07/18 04:51:56  warmerda
- * added CPL_CVSID
- *
- * Revision 1.2  2000/03/31 13:33:34  warmerda
- * ported to GDAL, replace headers
- *
- */
+ ****************************************************************************/
 
 #include "ceos.h"
 

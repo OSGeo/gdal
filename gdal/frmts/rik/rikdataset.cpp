@@ -24,59 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.15  2006/01/26 17:20:01  fwarmerdam
- * Changed to include <zlib.h> instead of "zlib.h" as suggested by
- * Markus N.
- *
- * Revision 1.14  2005/11/15 01:19:30  dwallner
- * Allow zero block offsets
- *
- * Revision 1.13  2005/09/20 12:26:59  dwallner
- * added missing TOWGS84 in wkt
- *
- * Revision 1.12  2005/09/11 04:12:42  fwarmerdam
- * The large file API can't be used on poOpenInfo->fp which is produced
- * by the small file API.
- *
- * Revision 1.11  2005/09/09 04:54:21  fwarmerdam
- * avoid use of dynamic array sizes, fails on VC6
- *
- * Revision 1.10  2005/09/06 21:58:11  dwallner
- * zlib/rik3 support
- *
- * Revision 1.9  2005/09/06 03:06:01  dwallner
- * lzw image distortion resolved
- *
- * Revision 1.8  2005/09/06 02:01:58  dwallner
- * lzw read alignment problems fixed
- *
- * Revision 1.7  2005/09/04 09:43:03  dwallner
- * recognize all compression codes
- *
- * Revision 1.6  2005/08/25 22:36:30  dwallner
- * print header type in debug output
- *
- * Revision 1.5  2005/08/25 21:35:03  dwallner
- * GetProjectionRef was completely wrong
- *
- * Revision 1.4  2005/08/18 21:06:52  dwallner
- * RIK3 header support
- *
- * Revision 1.3  2005/08/17 16:11:18  dwallner
- * old and new ANSI compability fix
- *
- * Revision 1.2  2005/08/17 15:44:23  fwarmerdam
- * patch up for win32/vc6 compatibility
- *
- * Revision 1.1  2005/08/17 07:20:55  dwallner
- * Import
- *
- *
- */
+ ****************************************************************************/
 
 #include <float.h>
 #include <zlib.h>

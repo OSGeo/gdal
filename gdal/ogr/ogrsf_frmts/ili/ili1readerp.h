@@ -24,32 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2006/06/06 17:01:52  pka
- * Join surface layer geometry to data layer
- * Improved arc interpolation
- *
- * Revision 1.5  2006/03/23 18:04:39  pka
- * Add polygon geometry to area layer
- * Performance improvement area polygonizer
- *
- * Revision 1.4  2006/02/13 18:18:53  pka
- * Interlis 2: Support for nested attributes
- * Interlis 2: Arc interpolation
- *
- * Revision 1.3  2005/10/09 22:59:57  pka
- * ARC interpolation (Interlis 1)
- *
- * Revision 1.2  2005/08/06 22:21:53  pka
- * Area polygonizer added
- *
- * Revision 1.1  2005/07/08 22:10:57  pka
- * Initial import of OGR Interlis driver
- *
- */
+ ****************************************************************************/
 
 #ifndef _CPL_ILI1READERP_H_INCLUDED
 #define _CPL_ILI1READERP_H_INCLUDED

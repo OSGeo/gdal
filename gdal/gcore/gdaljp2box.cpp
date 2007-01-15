@@ -24,35 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- *****************************************************************************
- *
- * $Log$
- * Revision 1.7  2006/06/22 01:33:40  fwarmerdam
- * added support for preparing writable gml and geotiff boxes
- *
- * Revision 1.6  2006/06/08 18:47:42  fwarmerdam
- * Fixed nBoxLength sizeof test, should be 8 bytes, not 64 bits.
- * http://bugzilla.remotesensing.org/show_bug.cgi?id=1199
- *
- * Revision 1.5  2006/01/11 06:30:18  fwarmerdam
- * Fixed bug in ReadBox() with boxes where LBox is 1 and the length
- * is read from the XLBox (such as GeoJP2 UUID Boxes from Erdas Imagine).
- * http://bugzilla.remotesensing.org/show_bug.cgi?id=1032
- *
- * Revision 1.4  2005/09/14 19:26:50  fwarmerdam
- * added better debug output
- *
- * Revision 1.3  2005/09/14 13:13:17  dron
- * Avoid warnings in DumpReadable().
- *
- * Revision 1.2  2005/05/09 14:42:33  fwarmerdam
- * Fixed to use VSFReadL() instead of VSIFRead().
- *
- * Revision 1.1  2005/05/03 21:10:59  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdaljp2metadata.h"
 #include "cpl_string.h"

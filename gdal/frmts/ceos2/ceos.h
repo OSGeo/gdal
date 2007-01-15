@@ -24,35 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.9  2004/11/01 18:22:07  fwarmerdam
- * added PALSAR support
- *
- * Revision 1.8  2004/08/26 18:30:47  warmerda
- * added preliminary SIR-C support
- *
- * Revision 1.7  2003/12/11 22:11:35  warmerda
- * clean up recipes when dataset destroyed to avoid memory noise
- *
- * Revision 1.6  2003/02/28 18:45:20  gpotts
- * Prefixed CreateLink with ceos2 since there are multiple symbol conflict on static build under mac. Garrett Potts (gpotts@imagelinks.com)
- *
- * Revision 1.5  2001/10/18 17:04:09  warmerda
- * added hacks to determine record length and pd pixels/line for Telaviv ERS data
- *
- * Revision 1.4  2000/04/05 21:40:33  warmerda
- * fixed CCL_MSB to CPL_MSB
- *
- * Revision 1.3  2000/04/04 15:09:03  warmerda
- * Added calibration info.
- *
- * Revision 1.2  2000/03/31 13:33:51  warmerda
- * ported to gdal
- *
- */
+ ****************************************************************************/
 
 
 #ifndef __CEOS_H

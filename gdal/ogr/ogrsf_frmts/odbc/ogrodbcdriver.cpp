@@ -24,17 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.2  2003/10/06 15:38:47  warmerda
- * Improve testing of incoming name.
- *
- * Revision 1.1  2003/09/25 17:08:37  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_odbc.h"
 #include "cpl_conv.h"

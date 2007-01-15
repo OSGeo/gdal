@@ -24,24 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2005/09/28 20:03:25  fwarmerdam
- * Quietly give up if first SELECT from GDB_GeomColumns fails.  This must not
- * be a personal geodatabase even though it is an .mdb file.
- *
- * Revision 1.3  2005/09/24 04:59:43  fwarmerdam
- * support DSN-less connection directly to .mdb files
- *
- * Revision 1.2  2005/09/05 20:30:20  fwarmerdam
- * fixed warning
- *
- * Revision 1.1  2005/09/05 19:34:17  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_pgeo.h"
 #include "cpl_conv.h"

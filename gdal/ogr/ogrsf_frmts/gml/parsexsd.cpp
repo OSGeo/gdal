@@ -24,14 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- *****************************************************************************
- *
- * $Log$
- * Revision 1.1  2005/01/27 04:05:43  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gmlreader.h"
 #include "cpl_error.h"

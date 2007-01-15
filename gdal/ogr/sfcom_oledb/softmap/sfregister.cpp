@@ -24,17 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.2  2001/05/28 19:44:32  warmerda
- * added debugging code
- *
- * Revision 1.1  1999/11/22 15:13:18  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogrsf_frmts.h"
 #include "cpl_error.h"

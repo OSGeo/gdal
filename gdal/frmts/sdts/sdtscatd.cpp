@@ -25,61 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.16  2006/04/10 16:34:18  fwarmerdam
- * updated contact info
- *
- * Revision 1.15  2006/02/24 15:57:11  fwarmerdam
- * Added CATD open check to make sure this is a CATD file before reading
- * any records.  Mainly intended to avoid problems with ADRG files.
- *
- * Revision 1.14  2003/02/06 03:18:34  warmerda
- * fixed memory leak of pszFullPath
- *
- * Revision 1.13  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.12  2001/02/24 01:54:52  warmerda
- * use CPLFormCIFilename so case mixups in CATD filenames will be fixed up
- *
- * Revision 1.11  2001/01/19 21:20:29  warmerda
- * expanded tabs
- *
- * Revision 1.10  1999/12/23 14:17:58  warmerda
- * Don't treat Lineage modules as being the same as Line modules.
- *
- * Revision 1.9  1999/11/30 21:44:33  warmerda
- * Test for "Line" not "Line ".  TYPE is not always padded, for instance
- * coming out of Arc/Info's SDTSEXPORT command.
- *
- * Revision 1.8  1999/08/16 13:58:30  warmerda
- * added support for secondary attribute modules
- *
- * Revision 1.7  1999/08/11 20:49:38  warmerda
- * Initialize pszPrefixPath in case Open() isn't called.
- *
- * Revision 1.6  1999/06/03 14:03:01  warmerda
- * Added raster layer support
- *
- * Revision 1.5  1999/05/11 14:08:26  warmerda
- * added SLTPoly
- *
- * Revision 1.4  1999/05/11 12:55:17  warmerda
- * added concept of entry types for vector layer identification
- *
- * Revision 1.3  1999/05/07 13:45:01  warmerda
- * major upgrade to use iso8211lib
- *
- * Revision 1.2  1999/03/23 16:01:16  warmerda
- * added storage of type and fetch methods
- *
- * Revision 1.1  1999/03/23 13:56:13  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "sdts_al.h"
 

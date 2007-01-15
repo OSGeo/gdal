@@ -24,53 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.14  2006/03/31 17:44:20  fwarmerdam
- * header updates
- *
- * Revision 1.13  2002/08/07 21:38:33  warmerda
- * improve usage message
- *
- * Revision 1.12  2002/01/13 01:45:54  warmerda
- * improve cleanup
- *
- * Revision 1.11  2001/11/20 16:42:47  warmerda
- * added repeat count flag for stress testing
- *
- * Revision 1.10  2001/11/01 17:04:13  warmerda
- * various changes, including multithread support
- *
- * Revision 1.9  1999/09/07 14:03:47  warmerda
- * improved usage message, default to dumpfeat
- *
- * Revision 1.8  1999/07/09 13:05:19  warmerda
- * type safe fix
- *
- * Revision 1.7  1999/07/08 20:27:52  warmerda
- * added SFCDumpTableFeatures()
- *
- * Revision 1.6  1999/07/07 19:38:57  warmerda
- * added -provider any support
- *
- * Revision 1.5  1999/06/10 19:18:22  warmerda
- * added support for the spatial ref schema rowset
- *
- * Revision 1.4  1999/06/10 14:37:45  warmerda
- * added oledbgis.h
- *
- * Revision 1.3  1999/06/09 21:00:10  warmerda
- * added support for spatial table identification
- *
- * Revision 1.2  1999/06/08 17:51:16  warmerda
- * cleaned up using SFC classes
- *
- * Revision 1.1  1999/06/08 15:41:55  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #define INITGUID
 #define DBINITCONSTANTS

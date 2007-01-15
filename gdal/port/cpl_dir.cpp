@@ -25,29 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log$
- * Revision 1.6  2006/02/19 21:54:34  mloskot
- * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
- *
- * Revision 1.5  2002/03/28 14:52:32  warmerda
- * moved docs to non-WIN32 section
- *
- * Revision 1.4  2001/07/18 04:00:49  warmerda
- * added CPL_CVSID
- *
- * Revision 1.3  2000/09/25 19:59:03  warmerda
- * look for WIN32 not _WIN32
- *
- * Revision 1.2  1999/05/20 02:54:38  warmerda
- * Added API documentation
- *
- * Revision 1.1  1999/02/25 04:52:00  danmo
- * *** empty log message ***
- *
- **********************************************************************/
+ ****************************************************************************/
 
 #include "cpl_conv.h"
 #include "cpl_string.h"

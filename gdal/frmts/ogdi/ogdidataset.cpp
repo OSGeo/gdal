@@ -25,77 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- *****************************************************************************
- *
- * $Log$
- * Revision 1.22  2006/04/04 05:03:38  fwarmerdam
- * Update contact info.
- *
- * Revision 1.21  2006/03/28 15:03:47  fwarmerdam
- * make sure we reset the region if currentindex is not zero
- *
- * Revision 1.20  2004/12/02 20:31:03  fwarmerdam
- * upgraded with support for advise api
- *
- * Revision 1.19  2004/10/30 15:51:48  fwarmerdam
- * undid the last change, breaks things if buf/win sizes differ
- *
- * Revision 1.18  2004/03/25 18:00:11  aubin
- * request is satisfied based on nYSize, not destination buffer size
- *
- * Revision 1.17  2002/09/04 06:50:37  warmerda
- * avoid static driver pointers
- *
- * Revision 1.16  2002/06/12 21:12:25  warmerda
- * update to metadata based driver info
- *
- * Revision 1.15  2002/01/13 01:44:44  warmerda
- * cleanup debugs a bit
- *
- * Revision 1.14  2001/11/02 22:21:25  warmerda
- * fixed memory leaks
- *
- * Revision 1.13  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.12  2001/06/29 18:29:30  warmerda
- * don't refree pszURL when failing with non-raster datastores.
- *
- * Revision 1.11  2001/06/28 19:18:35  warmerda
- * allow double quotes to be used in filename toprotect colons
- *
- * Revision 1.10  2001/06/23 22:40:53  warmerda
- * added SUBDATASETS support
- *
- * Revision 1.9  2001/06/20 16:09:40  warmerda
- * utilize capabilities data
- *
- * Revision 1.8  2001/04/18 17:58:41  warmerda
- * fixed raster size calculation
- *
- * Revision 1.7  2001/04/17 21:46:04  warmerda
- * complete Image support, utilize cln_GetLayerCapabilities()
- *
- * Revision 1.6  2000/08/28 21:30:17  warmerda
- * restructure to use cln_GetNextObject
- *
- * Revision 1.5  2000/08/28 20:15:07  warmerda
- * added projection translation
- *
- * Revision 1.4  2000/08/25 21:31:04  warmerda
- * added colortable support
- *
- * Revision 1.3  2000/08/25 14:28:04  warmerda
- * preliminary support with IRasterIO
- *
- * Revision 1.2  2000/02/28 16:32:20  warmerda
- * use SetBand method
- *
- * Revision 1.1  1999/01/11 15:29:16  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include <math.h>
 #include "ecs.h"

@@ -24,61 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.17  2006/03/28 22:59:55  fwarmerdam
- * updated contact info
- *
- * Revision 1.16  2005/09/21 00:59:55  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.15  2002/12/10 04:08:17  warmerda
- * updated British National Grid WKT
- *
- * Revision 1.14  2002/07/08 16:18:52  warmerda
- * fix initialization of szCandidateName
- *
- * Revision 1.13  2002/07/08 14:49:44  warmerda
- * added TILE_REF uniquification support
- *
- * Revision 1.12  2001/12/12 17:22:15  warmerda
- * Use CPLStat() instead of VSIStat().
- *
- * Revision 1.11  2001/12/12 02:50:00  warmerda
- * avoid leaks, and UMC
- *
- * Revision 1.10  2001/12/11 20:37:49  warmerda
- * add option to avoid caching indexed records on multiple readers
- *
- * Revision 1.9  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.8  2001/01/19 20:31:12  warmerda
- * expand tabs
- *
- * Revision 1.7  1999/11/04 21:11:37  warmerda
- * Added TestCapability().
- *
- * Revision 1.6  1999/10/04 03:08:52  warmerda
- * added raster support
- *
- * Revision 1.5  1999/10/01 14:47:51  warmerda
- * major upgrade: generic, string feature codes, etc
- *
- * Revision 1.4  1999/09/29 16:43:43  warmerda
- * added spatial ref, improved test open for non-os files
- *
- * Revision 1.3  1999/09/08 00:58:40  warmerda
- * Added limiting list of files for FME.
- *
- * Revision 1.2  1999/08/30 16:49:26  warmerda
- * added feature class layer support
- *
- * Revision 1.1  1999/08/28 03:13:35  warmerda
- * New
- */
+ ****************************************************************************/
 
 #include "ntf.h"
 #include "cpl_conv.h"

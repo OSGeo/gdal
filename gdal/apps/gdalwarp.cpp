@@ -25,65 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.27  2006/09/27 13:06:13  dron
- * Memory leak fixed.
- *
- * Revision 1.26  2006/07/06 20:30:11  fwarmerdam
- * use GDALSuggestedWarpOutput2() to avoid approximation implicit in using gt
- *
- * Revision 1.25  2006/06/29 21:10:29  fwarmerdam
- * Avoid a few memory leaks.
- *
- * Revision 1.24  2006/06/02 17:31:49  fwarmerdam
- * Modified -ts to allow width or height to be zero meaning, it should
- * be computed to retain square pixels.
- *
- * Revision 1.23  2006/05/29 17:32:15  fwarmerdam
- * added preliminary support for controlling longitude wrapping on input dataset
- *
- * Revision 1.22  2006/04/25 14:28:33  fwarmerdam
- * Check for no usable sources, avoid warning.
- *
- * Revision 1.21  2006/03/21 21:34:43  fwarmerdam
- * cleanup headers
- *
- * Revision 1.20  2006/01/05 19:51:10  fwarmerdam
- * fixed checking of targetsrs
- *
- * Revision 1.19  2005/12/19 20:20:00  fwarmerdam
- * preliminary support for multiple input files
- *
- * Revision 1.18  2005/09/13 01:57:31  fwarmerdam
- * Fixed usage message.
- *
- * Revision 1.17  2005/09/13 01:24:45  fwarmerdam
- * Set UNIFIED_SRC_NODATA by default for -srcnodata switch.
- *
- * Revision 1.16  2005/09/12 18:06:25  fwarmerdam
- * Added quotes around -srcnodata and -dstnodata in usage message.
- *
- * Revision 1.15  2004/12/26 16:14:53  fwarmerdam
- * added -tps flag
- *
- * Revision 1.14  2004/11/29 15:01:55  fwarmerdam
- * Fixed typo in printf as per Bug 691.
- *
- * Revision 1.13  2004/11/14 04:57:04  fwarmerdam
- * added -srcalpha switch, and automatic alpha detection
- *
- * Revision 1.12  2004/11/05 06:15:08  fwarmerdam
- * Don't double free the warpoptions array.
- *
- * Revision 1.11  2004/11/05 05:53:43  fwarmerdam
- * Avoid various memory leaks.
- *
- * Revision 1.10  2004/10/07 15:53:42  fwarmerdam
- * added preliminary alpha band support
- */
+ ****************************************************************************/
 
 #include "gdalwarper.h"
 #include "cpl_string.h"

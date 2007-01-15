@@ -24,67 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.20  2003/05/13 19:32:10  warmerda
- * support for reading and writing opacity provided by Diana Esch-Mosher
- *
- * Revision 1.19  2002/07/19 15:37:43  warmerda
- * Fixed type of nRowsPerstrip as per bug report from Pete (qaz7@mindspring.com)
- *
- * Revision 1.18  2001/07/25 15:36:34  warmerda
- * fixed bug with last band when writing one file per band
- *
- * Revision 1.17  2001/07/25 14:26:44  warmerda
- * various source dist related changes
- *
- * Revision 1.16  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.15  1999/12/30 02:41:21  warmerda
- * Added support for generating TIFF files of other than 1 or 3 bands.
- *
- * Revision 1.14  1999/06/01 12:49:04  warmerda
- * Add error check of tile size, abort if not multiple of 16.
- *
- * Revision 1.13  1999/04/21 04:18:32  warmerda
- * updated usage
- *
- * Revision 1.12  1999/03/21 21:32:45  warmerda
- * added -s strip support
- *
- * Revision 1.11  1999/03/15 20:18:29  warmerda
- * Fixed data range function.
- *
- * Revision 1.10  1999/03/15 20:06:36  warmerda
- * Changed TIFF_BuildOverviews() to TIFFBuildOverviews().
- *
- * Revision 1.9  1999/03/11 20:56:34  warmerda
- * Patched up Usage a bit.
- *
- * Revision 1.8  1999/03/08 19:22:31  warmerda
- * Added support to set TIFFTAG_SAMPLEFORMAT.  Removed all byte swapping logic.
- *
- * Revision 1.7  1999/03/02 16:19:06  warmerda
- * Fixed bug with -v list termination, and added support for ``-v 0''.
- *
- * Revision 1.6  1999/03/02 14:18:32  warmerda
- * Fixed bug with writing min/max sample value
- *
- * Revision 1.5  1999/02/15 19:33:05  warmerda
- * Added reporting, and logic to -v 98 and -v 99.
- *
- * Revision 1.3  1999/01/28 16:25:46  warmerda
- * Added compression, usage message, error checking and other cleanup.
- *
- * Revision 1.2  1999/01/27 16:22:19  warmerda
- * Added RGB Support
- *
- * Revision 1.1  1999/01/22 17:45:13  warmerda
- * New
- */
+ ****************************************************************************/
 
 #include "hfa_p.h"
 

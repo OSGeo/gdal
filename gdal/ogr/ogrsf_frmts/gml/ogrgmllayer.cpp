@@ -24,71 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.20  2005/12/12 21:33:07  fwarmerdam
- * remove ogr: prefix from field names: bug 1016
- *
- * Revision 1.19  2005/09/21 00:59:36  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.18  2005/06/30 02:16:41  fwarmerdam
- * more efforts to produce valid GML
- *
- * Revision 1.17  2005/05/04 19:34:07  fwarmerdam
- * delete reader in datasource destructor, not layer
- *
- * Revision 1.16  2005/02/22 12:56:28  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.15  2005/02/02 20:54:27  fwarmerdam
- * track m_nFeaturesRead
- *
- * Revision 1.14  2004/10/05 19:56:51  fwarmerdam
- * If a reader has been instantiated, delete it in ~OGRGMLLayer().
- *
- * Revision 1.13  2004/07/20 17:32:03  warmerda
- * restructure GetNextFeature() to apply spatial and attribute queries
- *
- * Revision 1.12  2004/01/29 15:30:40  warmerda
- * cleanup layer and field names
- *
- * Revision 1.11  2004/01/27 21:22:04  warmerda
- * Escape strings written to GML file.
- *
- * Revision 1.10  2003/12/02 18:43:03  warmerda
- * Removed unused variable.
- *
- * Revision 1.9  2003/05/21 03:48:35  warmerda
- * Expand tabs
- *
- * Revision 1.8  2003/03/07 14:53:21  warmerda
- * implement preliminary BXFS write support
- *
- * Revision 1.7  2003/03/06 20:30:28  warmerda
- * use GML/OGR geometry translations from ogr_geometry.h now
- *
- * Revision 1.6  2003/01/17 20:39:40  warmerda
- * added bounding rectangle support
- *
- * Revision 1.5  2003/01/10 16:23:11  warmerda
- * assign FIDs if not provided in CreateFeature()
- *
- * Revision 1.4  2002/04/24 19:32:07  warmerda
- * Make a copy of the passed OGRSpatialReference in the constructor.
- *
- * Revision 1.3  2002/03/06 20:08:24  warmerda
- * add accelerated GetFeatureCount and GetExtent
- *
- * Revision 1.2  2002/01/25 21:00:31  warmerda
- * fix some small bugs found by MS VC++
- *
- * Revision 1.1  2002/01/25 20:37:02  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_gml.h"
 #include "cpl_conv.h"

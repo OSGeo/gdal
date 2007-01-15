@@ -24,39 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2005/02/22 12:55:03  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.7  2003/01/03 15:43:29  warmerda
- * completed OGRBuildPolygonFromEdges() changes
- *
- * Revision 1.6  2003/01/02 21:45:23  warmerda
- * move OGRBuildPolygonsFromEdges into C API
- *
- * Revision 1.5  2002/06/18 18:59:00  warmerda
- * fixed bug 163, problem with assembling polygons with *bridges*
- *
- * Revision 1.4  2002/02/22 22:23:38  warmerda
- * added tolerances when assembling polygons
- *
- * Revision 1.3  2002/02/18 20:38:18  warmerda
- * Added spatial filtering.
- * Added Attribute query.
- * Set LAB FID based on sequence number rather than nValue field.
- * Use either LAB FID or PolyID for table lookup.
- * Add attributes to arcs and LABs.
- *
- * Revision 1.2  2002/02/14 23:01:04  warmerda
- * added region and attribute support
- *
- * Revision 1.1  2002/02/13 20:48:18  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_avc.h"
 #include "ogr_api.h"

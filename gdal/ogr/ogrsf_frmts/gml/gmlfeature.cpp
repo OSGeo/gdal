@@ -24,21 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log$
- * Revision 1.3  2005/05/04 19:51:26  fwarmerdam
- * Avoid leaking in SetProperty() if the property is already set.
- *
- * Revision 1.2  2002/01/24 17:37:06  warmerda
- * added SetGeometryDirectly
- *
- * Revision 1.1  2002/01/04 19:46:30  warmerda
- * New
- *
- *
- **********************************************************************/
+ ****************************************************************************/
 
 #include "gmlreader.h"
 #include "cpl_conv.h"

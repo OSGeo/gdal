@@ -25,44 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log$
- * Revision 1.11  2006/03/27 15:24:41  fwarmerdam
- * buffer in FWrite is const
- *
- * Revision 1.10  2006/02/19 21:54:34  mloskot
- * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
- *
- * Revision 1.9  2006/01/10 17:03:56  fwarmerdam
- * added VSI Rename support
- *
- * Revision 1.8  2005/09/11 18:01:28  fwarmerdam
- * preliminary implementatin of fully virtualized large file api
- *
- * Revision 1.7  2005/04/12 00:27:39  fwarmerdam
- * added macos large file support
- *
- * Revision 1.6  2002/06/17 14:00:16  warmerda
- * segregate VSIStatL() and VSIStatBufL.
- *
- * Revision 1.5  2002/06/15 00:07:23  aubin
- * mods to enable 64bit file i/o
- *
- * Revision 1.4  2001/12/15 17:12:08  warmerda
- * pass 64bit seek/tell functions via VSI_F{SEEK,TELL}64 macros
- *
- * Revision 1.3  2001/07/18 04:00:49  warmerda
- * added CPL_CVSID
- *
- * Revision 1.2  2001/06/21 21:39:32  warmerda
- * Fixed typo with rewind.
- *
- * Revision 1.1  2001/06/21 21:17:15  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "cpl_port.h"
 

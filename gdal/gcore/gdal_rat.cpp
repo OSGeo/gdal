@@ -24,42 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.10  2006/10/24 18:49:22  fwarmerdam
- * avoid using CPLString in arguments and return from RAT API
- *
- * Revision 1.9  2006/10/23 17:25:31  fwarmerdam
- * Fixed problem with <F> element has no text child because it is empty.
- *
- * Revision 1.8  2006/10/07 02:00:38  fwarmerdam
- * added RAT translation to ColorTable, and a few other fixes
- *
- * Revision 1.7  2006/02/13 17:22:54  fwarmerdam
- * Avoid large amounts of linked list walking adding rows when
- * serializing RAT.
- *
- * Revision 1.6  2005/11/01 22:16:36  fwarmerdam
- * fix comments (bug 985)
- *
- * Revision 1.5  2005/09/29 00:50:36  fwarmerdam
- * Added doc note.
- *
- * Revision 1.4  2005/09/28 21:29:30  fwarmerdam
- * added RAT documentation
- *
- * Revision 1.3  2005/09/27 22:12:44  fwarmerdam
- * fixed bug creating string columns
- *
- * Revision 1.2  2005/09/27 14:05:47  fwarmerdam
- * fixed various C wrappers returning void
- *
- * Revision 1.1  2005/09/24 19:00:53  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_priv.h"
 #include "gdal_rat.h"

@@ -24,23 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2006/01/06 22:21:05  gwalter
- * Make sure overviews are read for raw raster bands if available.
- *
- * Revision 1.3  2004/09/29 13:25:12  fwarmerdam
- * Don't use relative path ... handle in makefile.
- *
- * Revision 1.2  2004/08/11 18:46:45  warmerda
- * pass pszVRTPath through serialize methods
- *
- * Revision 1.1  2004/07/30 21:50:24  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "vrtdataset.h"
 #include "cpl_minixml.h"

@@ -24,29 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2004/12/31 02:01:58  fwarmerdam
- * Removed unused variables.
- *
- * Revision 1.5  2004/12/30 21:18:12  fwarmerdam
- * Updated credits.
- *
- * Revision 1.4  2004/12/30 20:29:43  fwarmerdam
- * Added a credit.
- *
- * Revision 1.3  2004/12/30 20:28:20  fwarmerdam
- * Added some documentation.
- *
- * Revision 1.2  2004/12/30 20:21:13  fwarmerdam
- * dos to unix
- *
- * Revision 1.1  2004/12/26 16:12:58  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "thinplatespline.h"
 #include "gdal_alg.h"

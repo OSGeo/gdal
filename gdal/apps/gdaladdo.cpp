@@ -24,47 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.12  2006/03/21 21:34:43  fwarmerdam
- * cleanup headers
- *
- * Revision 1.11  2005/09/15 18:28:47  fwarmerdam
- * Cleanup on exit more carefully.
- *
- * Revision 1.10  2004/07/28 17:56:00  warmerda
- * use return instead of exit() to avoid lame warnings on windows
- *
- * Revision 1.9  2004/07/26 14:15:22  warmerda
- * Avoid return type warning.
- *
- * Revision 1.8  2004/04/02 17:33:22  warmerda
- * added GDALGeneralCmdLineProcessor()
- *
- * Revision 1.7  2002/04/16 14:00:25  warmerda
- * added GDALVersionInfo
- *
- * Revision 1.6  2001/07/18 05:05:12  warmerda
- * added CPL_CSVID
- *
- * Revision 1.5  2001/07/16 15:12:05  warmerda
- * Added AVERAGE_MAGPHASE option.
- *
- * Revision 1.4  2001/01/30 22:32:42  warmerda
- * added AVERAGE_MP (magnitude preserving averaging) overview resampling type
- *
- * Revision 1.3  2000/08/18 15:24:32  warmerda
- * use terminal progress monitor
- *
- * Revision 1.2  2000/07/07 15:19:30  warmerda
- * try with read-only access if update fails
- *
- * Revision 1.1  2000/04/21 21:57:21  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_priv.h"
 #include "cpl_string.h"

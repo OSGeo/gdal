@@ -24,39 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.9  2004/06/02 15:53:00  warmerda
- * improve divide by zero error checking
- *
- * Revision 1.8  2003/05/21 03:42:01  warmerda
- * Expanded tabs
- *
- * Revision 1.7  2002/04/29 19:52:29  warmerda
- * clean up memory after stroking curve
- *
- * Revision 1.6  2002/01/15 06:40:21  warmerda
- * default PI
- *
- * Revision 1.5  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.4  2001/03/08 18:07:01  warmerda
- * Corrected computation of padfM*[k] in case where denominator of the
- * general equations goes to zero.
- *
- * Revision 1.3  2001/03/07 19:29:46  warmerda
- * added support for stroking curves
- *
- * Revision 1.2  2001/03/07 13:56:44  warmerda
- * updated copyright to be held by Avenza Systems
- *
- * Revision 1.1  2001/01/22 14:54:51  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "dgnlibp.h"
 #include <math.h>

@@ -25,64 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.17  2006/02/16 17:21:53  fwarmerdam
- * improve initialization
- *
- * Revision 1.16  2006/02/16 16:53:57  fwarmerdam
- * Remove debug statement for null attributes,  it is way overkill.
- *
- * Revision 1.15  2006/02/13 04:15:04  hobu
- * major formatting cleanup
- * Added myself as an author
- *
- * Revision 1.14  2006/02/11 18:08:34  hobu
- * Moved FetchSRS to happen on the datasource like PG
- * Implemented CreateField for TableLayer
- *
- * Revision 1.13  2006/02/07 18:17:15  hobu
- * Always return geometries as "native"
- *
- * Revision 1.12  2006/02/02 01:24:17  hobu
- * make sure we properly sett hResultSet to NULL after all frees.
- *
- * Revision 1.11  2006/02/01 01:40:09  hobu
- * separate fetching of SRID
- *
- * Revision 1.10  2006/01/31 06:17:08  hobu
- * move SRS fetching to mysqllayer.cpp
- *
- * Revision 1.9  2006/01/31 05:35:02  hobu
- * move SRS fetching to mysqllayer.cpp
- *
- * Revision 1.8  2006/01/31 02:48:09  fwarmerdam
- * Added heuristic to determine whether we have WKB or SRID+WKB.
- *
- * Revision 1.7  2006/01/27 01:27:49  fwarmerdam
- * added GetFIDColumn and GetGeometryColumn support
- *
- * Revision 1.6  2006/01/16 16:05:38  hobu
- * Handle geometry column
- *
- * Revision 1.5  2005/09/21 01:00:01  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.4  2005/08/30 23:53:16  fwarmerdam
- * implement binary field support
- *
- * Revision 1.3  2005/02/22 12:54:27  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.2  2005/02/02 20:54:27  fwarmerdam
- * track m_nFeaturesRead
- *
- * Revision 1.1  2004/10/07 20:56:15  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_mysql.h"
 #include "cpl_conv.h"

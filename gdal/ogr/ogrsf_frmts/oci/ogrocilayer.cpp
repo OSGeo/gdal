@@ -26,57 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.15  2006/08/18 14:52:57  fwarmerdam
- * don't try to fetch features if we have no statement.  It likely means
- * we ran out of features already.
- *
- * Revision 1.14  2006/01/27 15:47:36  fwarmerdam
- * preliminary Get{FID/Geometry}Column support
- *
- * Revision 1.13  2005/09/21 00:59:36  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.12  2005/02/22 12:57:51  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.11  2005/02/02 20:54:27  fwarmerdam
- * track m_nFeaturesRead
- *
- * Revision 1.10  2004/11/22 19:24:15  fwarmerdam
- * added support for a list of tables in the datasource name
- *
- * Revision 1.9  2004/11/22 17:19:14  fwarmerdam
- * fixed missing case for 3d multipolygons: bug 618
- *
- * Revision 1.8  2004/11/10 20:17:14  fwarmerdam
- * fixed memory leak of geometry objects
- *
- * Revision 1.7  2003/05/21 03:54:01  warmerda
- * expand tabs
- *
- * Revision 1.6  2003/01/07 21:13:35  warmerda
- * executequery() now takes query as input, getfeature moved
- *
- * Revision 1.5  2003/01/07 18:16:26  warmerda
- * fixed some egrarious errors in geometry support
- *
- * Revision 1.4  2003/01/06 17:58:50  warmerda
- * restructure geometry translation, add FID support
- *
- * Revision 1.3  2002/12/29 19:43:59  warmerda
- * avoid some warnings
- *
- * Revision 1.2  2002/12/28 04:38:36  warmerda
- * converted to unix file conventions
- *
- * Revision 1.1  2002/12/28 04:07:27  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_oci.h"
 #include "cpl_conv.h"

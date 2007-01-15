@@ -25,35 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2006/09/21 07:55:22  dron
- * Fixed typo in documentation.
- *
- * Revision 1.7  2006/03/27 18:36:17  fwarmerdam
- * VSIFWriteL has const buffer now
- *
- * Revision 1.6  2006/01/11 00:29:54  fwarmerdam
- * added brief not on multithreading
- *
- * Revision 1.5  2006/01/10 17:03:56  fwarmerdam
- * added VSI Rename support
- *
- * Revision 1.4  2005/10/07 00:26:27  fwarmerdam
- * add documentation
- *
- * Revision 1.3  2005/09/15 18:39:00  fwarmerdam
- * fixedup filemanager cleanup
- *
- * Revision 1.2  2005/09/15 18:32:35  fwarmerdam
- * added VSICleanupFileManager
- *
- * Revision 1.1  2005/09/11 18:00:55  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "cpl_vsi_private.h"
 

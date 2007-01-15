@@ -24,21 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log$
- * Revision 1.3  2006/05/25 02:35:15  fwarmerdam
- * capture maximum string length in scan pass (Peter Rushforth)
- *
- * Revision 1.2  2004/01/19 16:54:44  warmerda
- * added logic to capture field types
- *
- * Revision 1.1  2002/01/04 19:46:30  warmerda
- * New
- *
- *
- **********************************************************************/
+ ****************************************************************************/
 
 #include "gmlreader.h"
 #include "cpl_conv.h"

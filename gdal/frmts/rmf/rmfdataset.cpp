@@ -25,58 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.15  2007/01/09 14:22:16  dron
- * Added support for LZW decompression;
- * moved class declarations in separate header file.
- *
- * Revision 1.14  2006/07/13 15:58:13  dron
- * Properly set the resolution field depending on pixel size in SetGeoTransform().
- *
- * Revision 1.13  2006/06/23 12:28:24  dron
- * Use Pulkovo, 1942 datum and Krassovsky ellipsoid when reading projection
- * from RMF file.
- *
- * Revision 1.12  2006/06/19 12:31:00  dron
- * Fixed handling 16-bit packed images; fixes in multiband last-tile writing.
- *
- * Revision 1.11  2006/03/09 10:41:15  dron
- * Fixed problem with writing incomplete last blocks.
- *
- * Revision 1.10  2006/03/08 21:53:40  dron
- * Mark header dirty when color table changed.
- *
- * Revision 1.9  2006/03/08 21:50:14  dron
- * Do not forget to mark header dirty when changed.
- *
- * Revision 1.8  2005/10/19 16:39:31  dron
- * Export projection info in newly created datasets.
- *
- * Revision 1.7  2005/10/12 12:07:46  dron
- * Remove old projection handling code.
- *
- * Revision 1.6  2005/10/12 11:36:20  dron
- * Fetch prohjection definition using the "Panorama" OSR interface.
- *
- * Revision 1.5  2005/08/12 13:22:46  fwarmerdam
- * avoid initialization warning.
- *
- * Revision 1.4  2005/08/12 13:21:10  fwarmerdam
- * Avoid warning about unused variable.
- *
- * Revision 1.3  2005/06/09 19:32:01  dron
- * Fixed compilation on big-endian arch.
- *
- * Revision 1.2  2005/05/20 19:25:11  dron
- * Fixed problem with the last line of tiles.
- *
- * Revision 1.1  2005/05/19 20:42:03  dron
- * New.
- *
- */
+ ****************************************************************************/
 
 #include "ogr_spatialref.h"
 #include "cpl_string.h"

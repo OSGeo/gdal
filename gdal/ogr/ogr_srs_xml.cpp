@@ -24,43 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.10  2006/07/27 19:03:23  fwarmerdam
- * Modified to place code in xml:href instead of element value per
- * email from Sean Forde.
- *
- * Revision 1.9  2006/07/27 13:40:47  fwarmerdam
- * Handle method/parameter values encoded directly in the urn.
- * Allow usesValue as well as usesParameterValue.
- *
- * Revision 1.8  2006/02/26 05:29:12  fwarmerdam
- * added LCC1SP
- *
- * Revision 1.7  2005/05/11 14:37:25  fwarmerdam
- * add id on projectedcrs
- *
- * Revision 1.6  2005/01/17 17:04:24  fwarmerdam
- * major overhaul to more-or-less GML 3 CRS support
- *
- * Revision 1.5  2003/05/21 04:49:17  warmerda
- * avoid warnings
- *
- * Revision 1.4  2003/03/28 17:43:52  warmerda
- * rewrote to use new URN and projections proposal
- *
- * Revision 1.3  2003/03/21 22:14:43  warmerda
- * first pass re-implementation using GML 3 schemas
- *
- * Revision 1.2  2002/04/18 14:22:45  warmerda
- * made OGRSpatialReference and co 'const correct'
- *
- * Revision 1.1  2001/12/06 18:16:17  warmerda
- * new
- *
- */
+ ****************************************************************************/
 
 #include "ogr_spatialref.h"
 #include "ogr_p.h"

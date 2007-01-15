@@ -24,20 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2006/10/24 18:49:22  fwarmerdam
- * avoid using CPLString in arguments and return from RAT API
- *
- * Revision 1.3  2006/10/07 02:00:38  fwarmerdam
- * added RAT translation to ColorTable, and a few other fixes
- *
- * Revision 1.2  2005/09/28 21:29:30  fwarmerdam
- * added RAT documentation
- *
- */
+ ****************************************************************************/
 
 #ifndef GDAL_RAT_H_INCLUDED
 #define GDAL_RAT_H_INCLUDED

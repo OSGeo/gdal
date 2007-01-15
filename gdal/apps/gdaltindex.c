@@ -24,33 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.7  2005/04/06 13:05:19  fwarmerdam
- * Print out "creating new index" message to help unconfuse people who
- * see the error message about failing to open the index file.
- *
- * Revision 1.6  2004/04/02 17:33:22  warmerda
- * added GDALGeneralCmdLineProcessor()
- *
- * Revision 1.5  2003/12/02 16:54:18  warmerda
- * fixed include paths now that shapelib is gone
- *
- * Revision 1.4  2003/10/24 13:33:38  warmerda
- * Changed include path again, so it will work on unix and windows.
- *
- * Revision 1.3  2003/10/24 13:32:28  warmerda
- * Fixed include path to work with GNUmakefile.
- *
- * Revision 1.2  2001/07/18 05:05:12  warmerda
- * added CPL_CSVID
- *
- * Revision 1.1  2001/04/25 17:30:19  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogrsf_frmts/shape/shapefil.h"
 #include "gdal.h"

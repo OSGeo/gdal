@@ -27,20 +27,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.1  2002/08/09 21:36:17  warmerda
- * New
- *
- * Revision 1.2  2001/10/15 15:21:45  warmerda
- * switch to unix text mode
- *
- * Revision 1.1  2001/09/06 03:24:16  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 // It is assumed that ATLDB.H has already been included.
 

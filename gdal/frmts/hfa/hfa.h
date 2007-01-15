@@ -26,74 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.21  2006/12/17 23:36:43  fwarmerdam
- * added support for reading PE strings in ProjectionX blocks
- *
- * Revision 1.20  2006/12/06 06:46:13  fwarmerdam
- * added support for writing dependent aux files
- *
- * Revision 1.19  2006/04/03 04:34:19  fwarmerdam
- * added support for reading affine polynomial transforms as geotransform
- *
- * Revision 1.18  2006/03/29 14:24:04  fwarmerdam
- * added preliminary nodata support (readonly)
- *
- * Revision 1.17  2005/12/21 05:30:45  fwarmerdam
- * return compression type as metadata
- *
- * Revision 1.16  2005/08/19 02:14:11  fwarmerdam
- * bug 857: add ability to set layer names
- *
- * Revision 1.15  2005/05/13 04:57:28  fwarmerdam
- * fix handling of large offsets in ige file for HFACreateLayer()
- *
- * Revision 1.14  2005/05/13 02:05:54  fwarmerdam
- * adjusted CreateLayer
- *
- * Revision 1.13  2005/05/10 00:57:40  fwarmerdam
- * added HFACreateLayer, HFACreateOverview
- *
- * Revision 1.12  2005/04/04 13:14:00  fwarmerdam
- * Added HFAGetClassNames() (bug 819).
- *
- * Revision 1.11  2003/05/13 19:32:10  warmerda
- * support for reading and writing opacity provided by Diana Esch-Mosher
- *
- * Revision 1.10  2003/04/22 19:40:36  warmerda
- * fixed email address
- *
- * Revision 1.9  2003/03/18 21:06:07  dron
- * Added HFADelete() function.
- *
- * Revision 1.8  2002/05/21 15:09:12  warmerda
- * read/write support for GDAL_MetaData table now supported
- *
- * Revision 1.7  2000/10/20 04:18:15  warmerda
- * added overviews, stateplane, and u4
- *
- * Revision 1.6  2000/10/13 21:14:08  warmerda
- * added more projection codes
- *
- * Revision 1.5  2000/10/12 19:30:31  warmerda
- * substantially improved write support
- *
- * Revision 1.4  2000/09/29 21:42:38  warmerda
- * preliminary write support implemented
- *
- * Revision 1.3  1999/01/22 17:39:09  warmerda
- * Added projections structures, and various other calls
- *
- * Revision 1.2  1999/01/04 22:52:47  warmerda
- * field access working
- *
- * Revision 1.1  1999/01/04 05:28:13  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _HFAOPEN_H_INCLUDED
 #define _HFAOPEN_H_INCLUDED

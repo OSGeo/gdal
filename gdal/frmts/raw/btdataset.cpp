@@ -25,40 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.9  2006/04/11 00:33:15  fwarmerdam
- * Added SetUnitType(), contributed by Ray Gardener.
- *
- * Revision 1.8  2006/04/09 04:22:28  fwarmerdam
- * Implement GetUnitType() support when reading, from Ray Gardner.
- *
- * Revision 1.7  2005/05/05 13:55:41  fwarmerdam
- * PAM Enable
- *
- * Revision 1.6  2004/05/11 17:27:33  warmerda
- * Set eAccess properly in Open().
- *
- * Revision 1.5  2004/03/02 15:14:07  warmerda
- * Fixed CPL_MSB case.
- *
- * Revision 1.4  2004/03/01 17:55:10  warmerda
- * rewrote to *not* use raw layer
- *
- * Revision 1.3  2004/01/08 20:13:33  warmerda
- * Fixed bugs with georeferencing (on read), and with imagery access
- * (was diagonally flipped).  Note, that BT imagery is column organized,
- * like USGS DEMs, not row oriented as the raw driver is optimized for.
- *
- * Revision 1.2  2003/12/11 22:44:11  warmerda
- * ensure external .prj flag gets set
- *
- * Revision 1.1  2003/12/11 06:18:18  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "rawdataset.h"
 #include "ogr_spatialref.h"

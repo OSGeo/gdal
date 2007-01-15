@@ -24,40 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.9  2003/01/07 16:46:47  warmerda
- * improve long line check
- *
- * Revision 1.8  2002/02/18 21:40:03  warmerda
- * Fixed error message.
- *
- * Revision 1.7  2002/02/11 17:04:45  warmerda
- * cleanup tabs
- *
- * Revision 1.6  2002/02/11 17:04:03  warmerda
- * tolerate somewhat longer lines, irish data has long lines
- *
- * Revision 1.5  2002/02/11 16:54:47  warmerda
- * Use internal code to read records, ensuring that "zero" bytes or other
- * binary garbage are survivable.   Added implicit assumption that records
- * are no more than 80 data bytes.
- *
- * Revision 1.4  2002/02/08 20:43:06  warmerda
- * improved error checking and propagation
- *
- * Revision 1.3  2001/12/12 02:48:43  warmerda
- * ensure cplreadline buffer freed
- *
- * Revision 1.2  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.1  1999/08/28 03:13:35  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ntf.h"
 #include "cpl_conv.h"

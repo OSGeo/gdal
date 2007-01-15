@@ -24,47 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.12  2006/03/31 17:44:20  fwarmerdam
- * header updates
- *
- * Revision 1.11  2001/11/09 19:09:03  warmerda
- * added VARIANTToString... does not appear to work
- *
- * Revision 1.10  2001/07/18 18:01:00  warmerda
- * removed CPL_CVSID
- *
- * Revision 1.9  2001/07/18 05:03:05  warmerda
- * added CPL_CVSID
- *
- * Revision 1.8  2001/06/01 14:33:41  warmerda
- * improve error reporting
- *
- * Revision 1.7  1999/11/18 19:02:19  warmerda
- * expanded tabs
- *
- * Revision 1.6  1999/09/07 12:05:59  warmerda
- * trimmed out some old oledbsup related stuff
- *
- * Revision 1.5  1999/05/21 02:38:06  warmerda
- * added AnsiToBSTR()
- *
- * Revision 1.4  1999/04/07 11:52:44  warmerda
- * Added PrintColumn().
- *
- * Revision 1.3  1999/04/01 17:52:58  warmerda
- * added reporting of column info
- *
- * Revision 1.2  1999/03/31 15:11:16  warmerda
- * Use char * instead of LPWSTR, better multi-provider support
- *
- * Revision 1.1  1999/03/30 19:07:59  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "oledb_sup.h"
 

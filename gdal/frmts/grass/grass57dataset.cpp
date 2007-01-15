@@ -27,36 +27,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2006/11/09 15:56:47  rblazek
- * set also the band invalid if reopen fails
- *
- * Revision 1.7  2006/11/09 15:30:45  rblazek
- * check if ResetReading failed
- *
- * Revision 1.6  2006/02/13 17:39:31  rblazek
- * header files moved to grass
- *
- * Revision 1.5  2005/09/30 21:07:57  fwarmerdam
- * applied patches from bug 822, add georef support
- *
- * Revision 1.4  2005/05/06 18:21:14  fwarmerdam
- * Applied patch from Radim.  Better logic to reset the region.
- *
- * Revision 1.3  2004/09/24 14:28:49  fwarmerdam
- * fixed some typos with floating point (from Radim)
- *
- * Revision 1.2  2004/09/22 20:39:15  fwarmerdam
- * some updates to reduce spurious error reports
- *
- * Revision 1.1  2004/09/13 18:18:26  fwarmerdam
- * Variant code from Radim that works with GRASS 5.7 libraries directly.
- * Currently coordinate system support is broken with this version.
- *
- */
+ ****************************************************************************/
 
 #include <stdlib.h>
 

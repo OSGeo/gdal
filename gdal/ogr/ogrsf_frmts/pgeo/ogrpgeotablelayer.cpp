@@ -24,20 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.3  2006/01/17 13:57:58  fwarmerdam
- * Fixed extent recording.  Y values were reversed.
- *
- * Revision 1.2  2005/12/01 17:40:37  fwarmerdam
- * dont try to set geometry type for layer
- *
- * Revision 1.1  2005/09/05 19:34:17  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "cpl_conv.h"
 #include "ogr_pgeo.h"

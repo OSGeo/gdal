@@ -24,44 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2006/03/31 17:44:20  fwarmerdam
- * header updates
- *
- * Revision 1.10  2001/07/18 05:03:05  warmerda
- * added CPL_CVSID
- *
- * Revision 1.9  1999/11/26 02:15:36  warmerda
- * Fixed report of SRS problems.
- *
- * Revision 1.8  1999/11/18 19:02:19  warmerda
- * expanded tabs
- *
- * Revision 1.7  1999/11/04 21:07:35  warmerda
- * Changed to use OGRRegisterAll().
- *
- * Revision 1.6  1999/09/29 16:36:41  warmerda
- * added srs reporting
- *
- * Revision 1.5  1999/09/22 13:31:04  warmerda
- * added SDTS
- *
- * Revision 1.4  1999/08/30 14:52:55  warmerda
- * fixed error report
- *
- * Revision 1.3  1999/08/28 03:11:29  warmerda
- * Register NTF format.  Improve error reporting.
- *
- * Revision 1.2  1999/07/27 01:52:51  warmerda
- * close datasource when done
- *
- * Revision 1.1  1999/07/27 00:47:03  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"

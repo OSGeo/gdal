@@ -26,32 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.7  2006/04/02 18:48:26  fwarmerdam
- * contact info updated
- *
- * Revision 1.6  2002/02/08 16:18:41  warmerda
- * ensure that catalog logic knows about ENC_ROOT directories
- *
- * Revision 1.5  2001/12/12 17:23:26  warmerda
- * Use CPLStat() instead of VSIStat().
- *
- * Revision 1.4  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.3  1999/12/01 20:00:08  warmerda
- * Don't depend on S-57 data files not having a definition of the CATD field.
- *
- * Revision 1.2  1999/11/18 19:01:25  warmerda
- * expanded tabs
- *
- * Revision 1.1  1999/11/18 18:57:13  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "s57.h"
 #include "cpl_conv.h"

@@ -25,56 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.14  2006/04/03 01:48:53  fwarmerdam
- * improve date support
- *
- * Revision 1.13  2006/02/16 17:22:31  fwarmerdam
- * added date support
- *
- * Revision 1.12  2006/02/13 04:15:04  hobu
- * major formatting cleanup
- * Added myself as an author
- *
- * Revision 1.11  2006/02/11 18:08:34  hobu
- * Moved FetchSRS to happen on the datasource like PG
- * Implemented CreateField for TableLayer
- *
- * Revision 1.10  2006/02/02 01:24:17  hobu
- * make sure we properly sett hResultSet to NULL after all frees.
- *
- * Revision 1.9  2006/02/01 01:40:09  hobu
- * separate fetching of SRID
- *
- * Revision 1.8  2006/01/31 06:17:22  hobu
- * move SRS fetching to mysqllayer.cpp
- *
- * Revision 1.7  2006/01/31 05:34:54  hobu
- * move SRS fetching to mysqllayer.cpp
- *
- * Revision 1.6  2006/01/31 03:15:42  hobu
- * Ensure that we have an integer-like column for the FID.
- *
- * Revision 1.5  2006/01/31 02:35:52  fwarmerdam
- * Fixed up missing SRS handling.
- *
- * Revision 1.4  2006/01/30 13:36:28  fwarmerdam
- * _NEWDECIMAL type missing on older systems
- *
- * Revision 1.3  2006/01/30 03:51:10  hobu
- * some god-awful hackery, but we can do a good job of reading field definitions 
- * from a select query as well as get a spatial reference.
- *
- * Revision 1.2  2005/09/21 01:00:01  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.1  2004/10/08 20:48:12  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "cpl_conv.h"
 #include "ogr_mysql.h"

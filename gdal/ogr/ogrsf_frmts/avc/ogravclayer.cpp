@@ -27,41 +27,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.10  2006/06/28 13:31:32  fwarmerdam
- * added E00 support (James E. Flemer <jflemer@alum.rpi.edu>)
- *
- * Revision 1.9  2005/09/21 01:00:55  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.8  2005/02/22 12:55:03  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.7  2005/02/02 21:09:44  fwarmerdam
- * track m_nFeaturesRead
- *
- * Revision 1.6  2004/10/19 22:05:03  dmorissette
- * Remove trailing spaces in string attribute fields (MapServer bug 184)
- *
- * Revision 1.5  2002/12/21 19:48:05  warmerda
- * rearrange code a bit to workaround VStudio.NET bug
- *
- * Revision 1.4  2002/02/18 20:36:50  warmerda
- * added attribute query
- *
- * Revision 1.3  2002/02/15 02:35:16  warmerda
- * added preliminary text support
- *
- * Revision 1.2  2002/02/14 23:01:04  warmerda
- * added region and attribute support
- *
- * Revision 1.1  2002/02/13 20:48:18  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_avc.h"
 #include "cpl_conv.h"

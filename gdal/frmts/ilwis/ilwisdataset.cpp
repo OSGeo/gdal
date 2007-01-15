@@ -23,29 +23,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.19  2006/12/21 14:25:22  lichun
- * solved memory leaks bug by removing CPLStrdup calls everywhere used for construct a STL string
- *
- * Revision 1.18  2006/12/20 14:33:15  lichun
- * Solved one warning for some compilers: an unsigned value was compared with a signed value.
- *
- * Revision 1.17  2006/12/18 03:49:24  fwarmerdam
- * Avoid really big memory leak in readblock.
- *
- * Revision 1.16  2006/11/22 18:20:00  fwarmerdam
- * apply std:: prefix to exception to build on sun compiler
- *
- * Revision 1.15  2005/09/14 13:37:18  dron
- * Avoid warnings.
- *
- * Revision 1.14  2005/08/04 15:26:53  fwarmerdam
- * added log headers
- *
- */
+ ****************************************************************************/
 
 
 #include "ilwisdataset.h"

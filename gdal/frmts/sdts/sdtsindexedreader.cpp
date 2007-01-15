@@ -27,30 +27,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.6  2006/04/10 16:34:18  fwarmerdam
- * updated contact info
- *
- * Revision 1.5  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.4  2001/01/19 21:20:29  warmerda
- * expanded tabs
- *
- * Revision 1.3  1999/09/07 00:42:42  warmerda
- * Grow index based on iRecordId rather than previous index max in
- * FillIndex().
- *
- * Revision 1.2  1999/09/03 13:01:39  warmerda
- * added docs
- *
- * Revision 1.1  1999/09/02 03:39:40  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "sdts_al.h"
 

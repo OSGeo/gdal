@@ -25,32 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.7  2006/05/01 13:45:18  fwarmerdam
- * fixed memory leak in SetMetadata
- *
- * Revision 1.6  2005/10/13 01:19:57  fwarmerdam
- * moved GDALMultiDomainMetadata into GDALMajorObject
- *
- * Revision 1.5  2005/09/11 18:03:05  fwarmerdam
- * added clear() method
- *
- * Revision 1.4  2005/06/28 22:13:43  fwarmerdam
- * Removed debug printf()
- *
- * Revision 1.3  2005/06/28 20:22:40  fwarmerdam
- * treat xml: domains as a special inline XML format
- *
- * Revision 1.2  2005/05/23 06:45:59  fwarmerdam
- * fixed flaw in walking papszMD
- *
- * Revision 1.1  2005/05/22 08:13:53  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_pam.h"
 #include "cpl_string.h"

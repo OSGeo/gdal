@@ -25,53 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.14  2006/10/27 17:03:55  dron
- * Added support for reading spatial reference table; memory leaks removed.
- *
- * Revision 1.13  2005/11/18 16:50:46  fwarmerdam
- * added ODBC_OGR_FID config variable
- *
- * Revision 1.12  2005/09/21 00:56:55  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.11  2005/09/09 05:02:12  fwarmerdam
- * added wkb support
- *
- * Revision 1.10  2005/09/05 19:56:42  fwarmerdam
- * added binary field support
- *
- * Revision 1.9  2005/03/21 20:36:31  fwarmerdam
- * set precision for decimal fields - MS bug 1255
- *
- * Revision 1.8  2005/02/22 12:53:56  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.7  2005/02/02 20:54:27  fwarmerdam
- * track m_nFeaturesRead
- *
- * Revision 1.6  2004/03/04 17:16:05  warmerda
- * Cleanup featuredefn on exit.
- *
- * Revision 1.5  2004/01/05 22:38:17  warmerda
- * stripped out some junk
- *
- * Revision 1.4  2003/10/29 16:47:38  warmerda
- * Improved width/precision handling for real numbers.
- *
- * Revision 1.3  2003/10/08 16:00:16  warmerda
- * provide default GetFeature(int) implementation
- *
- * Revision 1.2  2003/09/26 20:03:03  warmerda
- * initialize pszFIDColumn
- *
- * Revision 1.1  2003/09/25 17:08:37  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "cpl_conv.h"
 #include "ogr_odbc.h"

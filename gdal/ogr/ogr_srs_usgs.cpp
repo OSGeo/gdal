@@ -25,38 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.9  2005/10/16 01:14:32  fwarmerdam
- * Avoid signed/unsigned warnings.
- *
- * Revision 1.8  2005/10/10 10:37:44  dron
- * Typos fixed.
- *
- * Revision 1.7  2005/09/29 11:50:37  dron
- * Calculate ellipsoid array size dynamically.
- *
- * Revision 1.6  2005/04/19 12:13:36  dron
- * Do not fetch zone code from the projection parameters if the one supplied.
- *
- * Revision 1.5  2005/01/27 16:57:24  fwarmerdam
- * provide fallback if EPSG lookup fails
- *
- * Revision 1.4  2004/02/25 08:14:55  dron
- * Fixed datum setting in exportToUSGS().
- *
- * Revision 1.3  2004/02/22 10:22:26  dron
- * Few fixes.
- *
- * Revision 1.2  2004/02/07 17:31:21  dron
- * Added OSRExportToUSGS() method.
- *
- * Revision 1.1  2004/02/01 14:22:51  dron
- * Added OSRImportFromUSGS().
- *
- */
+ ****************************************************************************/
 
 #include "ogr_spatialref.h"
 #include "cpl_conv.h"

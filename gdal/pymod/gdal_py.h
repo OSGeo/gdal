@@ -25,23 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2006/03/21 21:54:00  fwarmerdam
- * fixup headers
- *
- * Revision 1.3  2003/09/26 15:58:58  warmerda
- * keep track if we used internal defs
- *
- * Revision 1.2  2000/12/23 02:11:50  warmerda
- * moved Python.h include outside CPL_C_START brackets
- *
- * Revision 1.1  2000/07/19 19:42:54  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 
 #ifndef _GDAL_PY_INCLUDED

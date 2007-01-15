@@ -24,30 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- *****************************************************************************
- *
- * $Log$
- * Revision 1.6  2006/07/12 04:24:14  fwarmerdam
- * More fixes in vPrintf().
- *
- * Revision 1.5  2006/06/29 19:03:50  fwarmerdam
- * Fix subtle problem with varargs and re-using args on the amd64
- * platform (and in general posix environment).
- *
- * Revision 1.4  2006/06/06 12:13:11  fwarmerdam
- * Cast CPLMalloc() result.
- *
- * Revision 1.3  2006/02/14 22:45:47  fwarmerdam
- * fixed up vsnprintf handling for win32, returns -1 on overrun
- *
- * Revision 1.2  2005/09/15 00:29:11  fwarmerdam
- * fixed typo.
- *
- * Revision 1.1  2005/08/31 03:31:46  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "cpl_string.h"
 

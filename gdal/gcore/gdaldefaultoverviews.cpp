@@ -24,69 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.19  2006/11/28 12:57:51  mloskot
- * Excluded HFAAuxBuildOverviews usage for Windows CE.
- *
- * Revision 1.18  2006/03/28 14:49:16  fwarmerdam
- * reopen overview file in update mode if needed when building overviews
- *
- * Revision 1.17  2005/11/17 22:02:32  fwarmerdam
- * avoid overwriting existing .aux file, overview filename now CPLString
- *
- * Revision 1.16  2005/10/14 21:11:28  fwarmerdam
- * avoid all-bands test for imagine files
- *
- * Revision 1.15  2005/10/12 18:21:57  fwarmerdam
- * use GDALClose instead of delete in case dataset opened shared
- *
- * Revision 1.14  2005/09/26 15:52:03  fwarmerdam
- * centralized .aux opening logic
- *
- * Revision 1.13  2005/09/17 03:46:18  fwarmerdam
- * added USE_RRD support to create overviews
- *
- * Revision 1.12  2005/09/16 20:32:44  fwarmerdam
- * added preliminary .aux support (read only)
- *
- * Revision 1.11  2005/05/10 04:48:42  fwarmerdam
- * GDALOvLevelAdjust now public
- *
- * Revision 1.10  2004/07/26 22:32:30  warmerda
- * Support .OVR files as well as .ovr
- *
- * Revision 1.9  2002/07/09 20:33:12  warmerda
- * expand tabs
- *
- * Revision 1.8  2001/10/18 14:35:22  warmerda
- * avoid conflicts between parameters and member data
- *
- * Revision 1.7  2001/07/18 04:04:30  warmerda
- * added CPL_CVSID
- *
- * Revision 1.6  2001/06/22 21:00:38  warmerda
- * fixed several problems with regenerating existing overviews
- *
- * Revision 1.5  2001/06/22 13:52:03  warmerda
- * fixed bug when refreshing overviews during build
- *
- * Revision 1.4  2001/06/20 16:08:54  warmerda
- * GDALDefaultOverviews now remembers ovr filename, and allows explicit setting
- *
- * Revision 1.3  2000/06/19 18:48:49  warmerda
- * fixed message
- *
- * Revision 1.2  2000/06/19 14:42:27  warmerda
- * Don't close old overviews till after we have identified which already
- * exist, otherwise multiple copies of overviews may be created.
- *
- * Revision 1.1  2000/04/21 21:54:05  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal_priv.h"
 #include "cpl_string.h"

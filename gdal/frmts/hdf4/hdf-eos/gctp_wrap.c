@@ -25,21 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- * 
- * $Log$
- * Revision 1.4  2006/05/11 17:42:26  dron
- * Avoid warnings.
- *
- * Revision 1.3  2006/04/20 13:45:13  dron
- * Definitions for for_init() and inv_init() changed to be fully compatible
- * with HDF-EOS code.
- *
- * Revision 1.2  2006/04/06 14:22:02  dron
- * Added explicit copyright statement.
- *
- */
+ ****************************************************************************/
 
 #include "ogr_srs_api.h"
 #include "mfhdf.h"

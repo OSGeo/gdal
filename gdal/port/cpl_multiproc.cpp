@@ -24,68 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log$
- * Revision 1.19  2006/03/02 11:31:35  dron
- * CPLCreateOrAcquireMutex() should return a value.
- *
- * Revision 1.18  2006/02/19 21:54:34  mloskot
- * [WINCE] Changes related to Windows CE port of CPL. Most changes are #ifdef wrappers.
- *
- * Revision 1.17  2006/01/25 19:52:25  fwarmerdam
- * default to avoiding as much mutex overhead as opposed if MUTEX_NONE defined
- *
- * Revision 1.16  2005/08/31 01:00:51  fwarmerdam
- * Fixed assert limits.
- *
- * Revision 1.15  2005/08/24 21:51:06  fwarmerdam
- * added CPLCleanupTLS
- *
- * Revision 1.14  2005/08/01 18:58:42  fwarmerdam
- * Fixed problem with _NP mutex initializer.
- *
- * Revision 1.13  2005/07/31 02:14:49  fwarmerdam
- * improved recursive mutex creation for pthreads, works on macosx now
- *
- * Revision 1.12  2005/07/18 15:34:11  fwarmerdam
- * Fixed papTLSList sizing.
- *
- * Revision 1.11  2005/07/08 18:17:52  fwarmerdam
- * complete TLS implementation for win32
- *
- * Revision 1.10  2005/07/08 16:30:25  fwarmerdam
- * real implementation of TLS for pthreads
- *
- * Revision 1.9  2005/07/08 14:35:26  fwarmerdam
- * preliminary TLS support
- *
- * Revision 1.8  2005/05/23 16:00:33  fwarmerdam
- * Make sure that stub implementation of mutex support recursive holds.
- *
- * Revision 1.7  2005/05/23 06:40:40  fwarmerdam
- * fixed flaw in CPLCreateOrAcquireMutex, added mutex holder
- *
- * Revision 1.6  2005/05/20 19:19:00  fwarmerdam
- * added CPLCreateOrAcquireMutex()
- *
- * Revision 1.5  2005/04/26 20:52:10  fwarmerdam
- * use a typedef type for thread mains (for Sun port)
- *
- * Revision 1.4  2003/05/06 18:30:54  warmerda
- * fix unix createmutex to implicitly acquire it
- *
- * Revision 1.3  2003/04/23 04:36:54  warmerda
- * pthreads based implementation
- *
- * Revision 1.2  2002/07/11 19:36:34  warmerda
- * CPLCreateMutex() should implicitly acquire it, fix stub version
- *
- * Revision 1.1  2002/05/24 04:01:01  warmerda
- * New
- *
- **********************************************************************/
+ ****************************************************************************/
 
 #include "cpl_multiproc.h"
 #include "cpl_conv.h"

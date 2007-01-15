@@ -24,51 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.13  2006/08/08 03:04:14  fwarmerdam
- * Don't write EOF1 record, it only belongs on tapes.
- *
- * Revision 1.12  2006/04/04 01:00:44  fwarmerdam
- * updated contact info
- *
- * Revision 1.11  2004/05/13 00:28:57  gwalter
- * Fix latitude/longitude mixup in header.
- *
- * Revision 1.10  2004/01/30 18:27:25  gwalter
- * Fixed bug in tile sizing.
- *
- * Revision 1.9  2004/01/29 23:35:22  gwalter
- * Add a few more metadata fields, make sure that
- * nodata value is recognized.
- *
- * Revision 1.8  2003/05/30 16:17:21  warmerda
- * fix warnings with casting and unused parameters
- *
- * Revision 1.7  2003/05/30 16:08:07  warmerda
- * fixed setting of SE corner in DSI record
- *
- * Revision 1.6  2002/10/10 17:00:16  warmerda
- * fixed bug in formatting some latitudes in DSI record
- *
- * Revision 1.5  2002/03/05 14:26:01  warmerda
- * expanded tabs
- *
- * Revision 1.4  2002/01/28 18:19:42  warmerda
- * fix setting of metadata fields
- *
- * Revision 1.3  2001/11/21 19:55:01  warmerda
- * initialize data portion of new records
- *
- * Revision 1.2  2001/11/13 15:43:41  warmerda
- * preliminary dted creation working
- *
- * Revision 1.1  2001/11/13 03:34:59  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "dted_api.h"
 #include <assert.h>

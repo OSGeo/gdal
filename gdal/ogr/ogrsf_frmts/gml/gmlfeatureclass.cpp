@@ -24,33 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- **********************************************************************
- *
- * $Log$
- * Revision 1.7  2006/10/27 04:40:58  fwarmerdam
- * Avoid warning.
- *
- * Revision 1.6  2006/05/25 02:35:15  fwarmerdam
- * capture maximum string length in scan pass (Peter Rushforth)
- *
- * Revision 1.5  2003/09/11 20:01:21  warmerda
- * removed unused variable
- *
- * Revision 1.4  2003/05/21 03:48:35  warmerda
- * Expand tabs
- *
- * Revision 1.3  2002/03/06 20:07:35  warmerda
- * added tracking of extents, feature count and extrainfo
- *
- * Revision 1.2  2002/01/24 17:37:33  warmerda
- * added to/from XML support
- *
- * Revision 1.1  2002/01/04 19:46:30  warmerda
- * New
- *
- *
- **********************************************************************/
+ ****************************************************************************/
 
 #include "gmlreader.h"
 #include "cpl_conv.h"

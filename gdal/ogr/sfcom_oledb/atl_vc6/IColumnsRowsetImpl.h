@@ -27,26 +27,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.1  2002/08/09 21:36:17  warmerda
- * New
- *
- * Revision 1.4  2001/10/15 15:21:07  warmerda
- * pass raw data points to GetRCDBStatus
- *
- * Revision 1.3  2001/05/31 02:55:30  warmerda
- * return NULL values for OGC IColumnRowset fields on non-spatial fields
- *
- * Revision 1.2  2001/05/30 20:27:51  warmerda
- * strip LFs
- *
- * Revision 1.1  2001/05/28 19:34:13  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef __I_COLUMNS_ROWSET_IMPL__INCLUDED__
 #define __I_COLUMNS_ROWSET_IMPL__INCLUDED__

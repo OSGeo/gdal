@@ -25,44 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.11  2006/03/31 17:44:20  fwarmerdam
- * header updates
- *
- * Revision 1.10  2001/11/01 17:07:30  warmerda
- * lots of changes, including support for executing commands
- *
- * Revision 1.9  1999/11/18 19:02:20  warmerda
- * expanded tabs
- *
- * Revision 1.8  1999/06/26 05:27:08  warmerda
- * Separate out GetWKTFromSRSId static method for use of SFCTable
- *
- * Revision 1.7  1999/06/10 19:18:22  warmerda
- * added support for the spatial ref schema rowset
- *
- * Revision 1.6  1999/06/10 14:39:25  warmerda
- * Added use of OGIS Features Tables schema rowset
- *
- * Revision 1.5  1999/06/09 21:09:36  warmerda
- * updated docs
- *
- * Revision 1.4  1999/06/09 21:00:10  warmerda
- * added support for spatial table identification
- *
- * Revision 1.3  1999/06/08 19:05:27  warmerda
- * fixed up documentation
- *
- * Revision 1.2  1999/06/08 16:07:10  warmerda
- * Removed short doc for CreateSFCTable.
- *
- * Revision 1.1  1999/06/08 03:50:25  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef SFCDATASOURCE_H_INCLUDED
 #define SFCDATASOURCE_H_INCLUDED

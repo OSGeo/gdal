@@ -24,74 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.19  2006/11/05 19:41:12  hobu
- * OSX Framework location
- *
- * Revision 1.18  2006/03/21 20:11:54  fwarmerdam
- * fixup headers a bit
- *
- * Revision 1.17  2006/01/31 12:46:35  fwarmerdam
- * Change name of bFinderInitialized.
- *
- * Revision 1.16  2006/01/18 16:31:24  fwarmerdam
- * make csv table stuff thread local
- *
- * Revision 1.15  2005/12/23 04:44:04  fwarmerdam
- * protect CSVAccess using funcs with a mutex
- *
- * Revision 1.14  2005/08/31 03:33:35  fwarmerdam
- * dont bother trying to make szPath in CSVFileOverride() threadlocal
- *
- * Revision 1.13  2005/05/23 03:58:15  fwarmerdam
- * make make static buffers threadlocal
- *
- * Revision 1.12  2004/11/22 16:01:05  fwarmerdam
- * added GDAL_PREFIX
- *
- * Revision 1.11  2004/08/17 14:58:01  warmerda
- * preserve newlines in CSVReadParseLine()
- *
- * Revision 1.10  2004/04/27 14:28:49  warmerda
- * Avoid Solaris C++ problems with SetCSVFilenameHook().
- *
- * Revision 1.9  2003/07/18 12:45:18  warmerda
- * added GDALDefaultCSVFilename
- *
- * Revision 1.8  2003/05/21 03:04:14  warmerda
- * fixed bFinderInitialized
- *
- * Revision 1.7  2003/05/20 19:13:31  warmerda
- * reorganize default file search rules, use GDAL_DATA and CPLGetConfigOptions
- *
- * Revision 1.6  2002/11/30 16:56:31  warmerda
- * fixed up to support quoted newlines properly
- *
- * Revision 1.5  2002/11/27 19:09:40  warmerda
- * implement in-memory caching of whole CSV file
- *
- * Revision 1.4  2002/09/04 06:16:32  warmerda
- * added CPLReadLine(NULL) to cleanup
- *
- * Revision 1.3  2001/07/18 04:00:49  warmerda
- * added CPL_CVSID
- *
- * Revision 1.2  2001/01/19 21:16:41  warmerda
- * expanded tabs
- *
- * Revision 1.1  2000/10/06 15:20:45  warmerda
- * New
- *
- * Revision 1.2  2000/08/29 21:08:08  warmerda
- * fallback to use CPLFindFile()
- *
- * Revision 1.1  2000/04/05 21:55:59  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "cpl_csv.h"
 #include "cpl_conv.h"

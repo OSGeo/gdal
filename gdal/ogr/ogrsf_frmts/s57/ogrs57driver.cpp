@@ -24,38 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.9  2006/04/02 18:48:26  fwarmerdam
- * contact info updated
- *
- * Revision 1.8  2005/07/30 17:23:05  fwarmerdam
- * added profile to LoadInfo
- *
- * Revision 1.7  2004/08/30 20:11:51  warmerda
- * keep the S57ClassRegistrar on the driver, not the datasource
- *
- * Revision 1.6  2003/11/15 21:50:52  warmerda
- * Added limited creation support
- *
- * Revision 1.5  2002/01/21 20:36:35  warmerda
- * Don't mention warning about not supporting update if open fails.
- *
- * Revision 1.4  2001/11/21 14:35:25  warmerda
- * dont do open if update requested
- *
- * Revision 1.3  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.2  1999/11/18 19:01:25  warmerda
- * expanded tabs
- *
- * Revision 1.1  1999/11/03 22:12:43  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_s57.h"
 #include "cpl_conv.h"

@@ -24,71 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.20  2005/12/08 20:22:24  fwarmerdam
- * use CPL_ODLL to optionally export ISO8211lib api
- *
- * Revision 1.19  2004/01/06 18:59:18  warmerda
- * make enum identifiers more unique
- *
- * Revision 1.18  2004/01/06 18:53:41  warmerda
- * made data_type_code and data_struct_code global for HP C++ builds
- *
- * Revision 1.17  2003/09/03 20:36:26  warmerda
- * added subfield writing support
- *
- * Revision 1.16  2003/08/21 21:21:44  warmerda
- * expose the binary format type for a subfield defn
- *
- * Revision 1.15  2003/07/03 15:38:46  warmerda
- * some write capabilities added
- *
- * Revision 1.14  2001/08/29 17:47:33  warmerda
- * added GetInstanceData
- *
- * Revision 1.13  2001/08/24 19:41:19  warmerda
- * fixed cloning problems
- *
- * Revision 1.12  2001/08/24 16:30:55  warmerda
- * added DDFRecord update in place methods for S57 updating
- *
- * Revision 1.11  2000/09/19 14:08:51  warmerda
- * keep and report _extendedCharSet
- *
- * Revision 1.10  2000/06/16 18:02:08  warmerda
- * added SetRepeatingFlag hack support
- *
- * Revision 1.9  2000/01/31 18:03:39  warmerda
- * completely rewrote format expansion to make more general
- *
- * Revision 1.8  1999/11/18 19:03:04  warmerda
- * expanded tabs
- *
- * Revision 1.7  1999/11/18 19:02:38  warmerda
- * added failquietly to open
- *
- * Revision 1.6  1999/09/20 19:29:30  warmerda
- * make forgiving of UNIT/FIELD terminator mixup in Tiger SDTS files
- *
- * Revision 1.5  1999/08/13 03:26:29  warmerda
- * added Rewind()
- *
- * Revision 1.4  1999/05/07 14:11:22  warmerda
- * added subfield value fetches on record, and other odds and ends.
- *
- * Revision 1.3  1999/05/06 14:23:32  warmerda
- * added DDFBinaryString
- *
- * Revision 1.2  1999/04/27 22:09:50  warmerda
- * updated docs
- *
- * Revision 1.1  1999/04/27 18:45:09  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _ISO8211_H_INCLUDED
 #define _ISO8211_H_INCLUDED

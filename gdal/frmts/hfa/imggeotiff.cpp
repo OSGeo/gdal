@@ -24,32 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.1  2006/05/15 15:23:47  fwarmerdam
- * New
- *
- * Revision 1.6  2006/04/04 03:31:13  fwarmerdam
- * Fixed contact info.
- *
- * Revision 1.5  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.4  1999/06/01 12:29:51  warmerda
- * Ensure ImagineToGeoTIFFProjection() has C linkaged even if compiled with c++.
- *
- * Revision 1.3  1999/03/02 14:18:09  warmerda
- * Don't write geotiff info if no mapinfo
- *
- * Revision 1.2  1999/01/28 16:21:24  warmerda
- * defined PI if needed
- *
- * Revision 1.1  1999/01/22 17:40:43  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "hfa_p.h"
 

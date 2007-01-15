@@ -26,35 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2005/10/13 18:38:36  fwarmerdam
- * Try to report system level errors on open in TIFFOpen.
- *
- * Revision 1.7  2005/03/18 20:30:57  fwarmerdam
- * ensure we close the underlying file if the open fails.
- *
- * Revision 1.6  2003/07/17 22:45:58  warmerda
- * avoid casting warning
- *
- * Revision 1.5  2003/07/08 19:49:30  warmerda
- * avoid warning
- *
- * Revision 1.4  2001/09/24 15:54:41  warmerda
- * implement SizeProc properly
- *
- * Revision 1.3  2001/07/20 03:29:45  warmerda
- * updated
- *
- * Revision 1.2  2001/02/15 15:33:18  warmerda
- * don't access through tif pointer if open fails
- *
- * Revision 1.1  2001/01/03 17:03:41  warmerda
- * *** empty log message ***
- *
- */
+ ****************************************************************************/
 
 /*
  * TIFF Library UNIX-specific Routines.

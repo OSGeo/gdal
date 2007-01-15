@@ -24,48 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.12  2006/03/31 17:44:20  fwarmerdam
- * header updates
- *
- * Revision 1.11  2001/11/09 19:09:03  warmerda
- * added VARIANTToString... does not appear to work
- *
- * Revision 1.10  1999/11/18 19:02:20  warmerda
- * expanded tabs
- *
- * Revision 1.9  1999/09/07 12:05:59  warmerda
- * trimmed out some old oledbsup related stuff
- *
- * Revision 1.8  1999/06/09 21:03:58  warmerda
- * Removed OledbSupRowset documentation ... this class will be decommisioned
- * soon.
- *
- * Revision 1.7  1999/06/02 16:28:17  warmerda
- * added docs
- *
- * Revision 1.6  1999/05/21 02:38:32  warmerda
- * added AnsiToBSTR()
- *
- * Revision 1.5  1999/04/07 11:54:16  warmerda
- * Added dumping stuff.
- *
- * Revision 1.4  1999/04/01 20:49:41  warmerda
- * make class internals protected so OledbSFTable can have access
- *
- * Revision 1.3  1999/04/01 17:53:46  warmerda
- * added getnumcolumns, and oledbsupWritecolumninfo
- *
- * Revision 1.2  1999/03/31 15:11:16  warmerda
- * Use char * instead of LPWSTR, better multi-provider support
- *
- * Revision 1.1  1999/03/30 19:07:59  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef OLEDB_SUP_H_INCLUDED
 #define OLEDB_SUP_H_INCLUDED

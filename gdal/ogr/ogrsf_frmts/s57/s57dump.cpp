@@ -24,68 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.19  2006/04/02 18:48:26  fwarmerdam
- * contact info updated
- *
- * Revision 1.18  2006/02/15 18:04:45  fwarmerdam
- * implemented DSID feature support
- *
- * Revision 1.17  2006/02/14 19:11:10  fwarmerdam
- * fixup build
- *
- * Revision 1.16  2003/11/12 21:23:12  warmerda
- * updates to new featuredefn generators
- *
- * Revision 1.15  2003/09/15 20:53:06  warmerda
- * fleshed out feature writing
- *
- * Revision 1.14  2003/09/05 19:12:05  warmerda
- * added RETURN_PRIMITIVES support to get low level prims
- *
- * Revision 1.13  2002/05/14 21:33:30  warmerda
- * use macros for options, pass PRESERVE_EMPTY_NUMBERS opt
- *
- * Revision 1.12  2001/08/30 21:06:55  warmerda
- * expand tabs
- *
- * Revision 1.11  2001/08/30 21:05:32  warmerda
- * added support for generic object if not recognised
- *
- * Revision 1.10  2001/08/30 03:48:43  warmerda
- * preliminary implementation of S57 Update Support
- *
- * Revision 1.9  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.8  2000/06/16 18:10:05  warmerda
- * expanded tabs
- *
- * Revision 1.7  1999/11/26 15:17:01  warmerda
- * fixed lname to lnam
- *
- * Revision 1.6  1999/11/26 15:08:38  warmerda
- * added setoptions, and LNAM support
- *
- * Revision 1.5  1999/11/18 19:01:25  warmerda
- * expanded tabs
- *
- * Revision 1.4  1999/11/18 18:57:45  warmerda
- * utilize s57filecollector
- *
- * Revision 1.3  1999/11/16 21:47:32  warmerda
- * updated class occurance collection
- *
- * Revision 1.2  1999/11/08 22:23:00  warmerda
- * added object class support
- *
- * Revision 1.1  1999/11/03 22:12:43  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "s57.h"
 #include "cpl_conv.h"

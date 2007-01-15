@@ -29,58 +29,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.15  2006/12/12 03:58:34  fwarmerdam
- * Ensure saved character gets properly initialized.
- *
- * Revision 1.14  2006/08/23 17:29:46  fwarmerdam
- * added virtual io api support
- *
- * Revision 1.13  2003/10/15 15:51:17  warmerda
- * Avoid C++ comments.
- *
- * Revision 1.12  2003/07/08 20:28:09  warmerda
- * avoid warings
- *
- * Revision 1.11  2003/02/19 03:50:59  warmerda
- * hacks to support two apparently corrupt BSB files supplied by optech
- *
- * Revision 1.10  2002/12/04 15:54:23  warmerda
- * improved error reporting, remap 0 pixel values on write
- *
- * Revision 1.9  2002/12/04 14:52:54  warmerda
- * Added binary flag writing.
- *
- * Revision 1.8  2002/11/04 04:26:45  warmerda
- * preliminary work on write support
- *
- * Revision 1.7  2002/07/19 22:05:15  warmerda
- * added support for NO1 (encrypted) files
- *
- * Revision 1.6  2002/07/19 20:57:32  warmerda
- * nos files are VER/1 but have ver2 style line markers
- *
- * Revision 1.5  2002/07/19 20:33:55  warmerda
- * Fixed for BSB 1.1 and 3.0 issues:
- *  o Allow for longer lines.
- *  o In BSB 1.1 the scanline marker is zero based.
- *
- * Revision 1.4  2002/03/19 20:58:24  warmerda
- * Changes from Olle Soderholm that should allow for NOS files as well.
- *
- * Revision 1.3  2001/12/08 21:58:32  warmerda
- * save header
- *
- * Revision 1.2  2001/12/08 15:58:45  warmerda
- * fixed VSIFSeek() arguments as per Chris Schaefer
- *
- * Revision 1.1  2001/12/08 04:35:16  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "bsb_read.h"
 #include "cpl_conv.h"

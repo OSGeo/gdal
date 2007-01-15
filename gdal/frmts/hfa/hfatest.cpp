@@ -24,41 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.10  2006/02/22 14:48:46  fwarmerdam
- * Added compression type to HFAGetBandInfo
- *
- * Revision 1.9  2003/09/15 20:48:40  warmerda
- * added demonstration of direct access
- *
- * Revision 1.8  2003/05/13 19:32:10  warmerda
- * support for reading and writing opacity provided by Diana Esch-Mosher
- *
- * Revision 1.7  2003/04/22 19:40:36  warmerda
- * fixed email address
- *
- * Revision 1.6  2001/07/18 04:51:57  warmerda
- * added CPL_CVSID
- *
- * Revision 1.5  2000/10/20 04:18:15  warmerda
- * added overviews, stateplane, and u4
- *
- * Revision 1.4  2000/10/12 19:31:01  warmerda
- * fixed usage
- *
- * Revision 1.3  1999/01/22 17:40:05  warmerda
- * Added projections, moved debugging stuff out
- *
- * Revision 1.2  1999/01/04 22:52:47  warmerda
- * field access working
- *
- * Revision 1.1  1999/01/04 05:28:13  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "hfa_p.h"
 

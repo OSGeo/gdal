@@ -24,38 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.9  2006/05/15 18:04:32  fwarmerdam
- * added 'secret' useSpatialSubquery attribute on GeometryField
- *
- * Revision 1.8  2006/04/13 16:41:03  fwarmerdam
- * improved success reporting, preliminary srcrect support
- *
- * Revision 1.7  2005/09/05 19:35:10  fwarmerdam
- * Added shape support
- *
- * Revision 1.6  2005/08/16 00:08:52  fwarmerdam
- * Added bSrcLayerFromSQL
- *
- * Revision 1.5  2005/08/02 20:17:26  fwarmerdam
- * pass attribute filter to sublayer
- *
- * Revision 1.4  2005/05/16 20:09:46  fwarmerdam
- * added spatial query on x/y columns
- *
- * Revision 1.3  2005/02/22 12:50:10  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.2  2003/11/07 21:55:12  warmerda
- * complete fid support, relative dsname, fixes
- *
- * Revision 1.1  2003/11/07 17:50:09  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _OGR_VRT_H_INCLUDED
 #define _OGR_VRT_H_INLLUDED

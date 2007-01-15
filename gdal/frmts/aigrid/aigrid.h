@@ -24,50 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.13  2005/10/31 04:51:55  fwarmerdam
- * upgraded to use large file API and GUInt32 for block offsets
- *
- * Revision 1.12  2002/11/11 18:29:03  warmerda
- * added AIGLLOpen() to support upper case names too
- *
- * Revision 1.11  2002/11/05 03:19:08  warmerda
- * avoid nodata remapping in gridlib, use GInt32 not GUInt for image data
- *
- * Revision 1.10  2002/10/31 03:09:11  warmerda
- * added new CCITTRLE decompress func
- *
- * Revision 1.9  2002/02/21 15:38:32  warmerda
- * fixed nodata value for floats
- *
- * Revision 1.8  2000/11/09 06:22:40  warmerda
- * save cover name
- *
- * Revision 1.7  2000/07/18 13:58:58  warmerda
- * no RTileType for float tiles
- *
- * Revision 1.6  2000/04/20 14:05:02  warmerda
- * added more raw float magic codes
- *
- * Revision 1.5  2000/02/18 05:04:50  warmerda
- * added bHasWarned
- *
- * Revision 1.4  1999/08/12 19:10:54  warmerda
- * added ESRI_GRID_NO_DATA
- *
- * Revision 1.3  1999/04/21 16:51:30  warmerda
- * fixed up floating point support
- *
- * Revision 1.2  1999/02/04 22:15:33  warmerda
- * fleshed out implementation
- *
- * Revision 1.1  1999/02/03 14:12:56  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _AIGRID_H_INCLUDED
 #define _AIGRID_H_INCLUDED

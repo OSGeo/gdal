@@ -24,33 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.7  2006/09/26 00:47:48  fwarmerdam
- * Don't try to parse non-element children in XMLInit().  Forgive me Matt!
- *
- * Revision 1.6  2006/09/09 04:18:36  fwarmerdam
- * implement SetMetadataItem() support for sources
- *
- * Revision 1.5  2005/10/28 16:59:51  pnagy
- * Added VRTDerivedBand support
- *
- * Revision 1.4  2005/06/28 14:51:05  fwarmerdam
- * added error reporting if there are no sources
- *
- * Revision 1.3  2004/08/25 14:21:00  warmerda
- * Added support for overviews in sourced band RasterIO() contributed
- * by Sebasien Grignard.
- *
- * Revision 1.2  2004/08/11 18:46:45  warmerda
- * pass pszVRTPath through serialize methods
- *
- * Revision 1.1  2004/07/28 16:56:56  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "vrtdataset.h"
 #include "cpl_minixml.h"

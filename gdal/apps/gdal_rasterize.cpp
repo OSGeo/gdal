@@ -24,23 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.4  2006/02/21 20:26:59  fwarmerdam
- * Fixed last fix.
- *
- * Revision 1.3  2006/02/21 15:14:28  fwarmerdam
- * Don't crash if less -burn options provided than -b options.
- *
- * Revision 1.2  2005/10/28 18:31:09  fwarmerdam
- * added -where and progress func
- *
- * Revision 1.1  2005/10/28 17:47:50  fwarmerdam
- * New
- *
- */
+ ****************************************************************************/
 
 #include "gdal.h"
 #include "gdal_alg.h"

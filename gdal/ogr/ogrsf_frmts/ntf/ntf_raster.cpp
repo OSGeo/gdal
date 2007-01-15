@@ -26,59 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.14  2005/09/21 00:59:55  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.13  2003/07/08 15:23:58  warmerda
- * avoid casting warning
- *
- * Revision 1.12  2003/04/14 14:14:40  warmerda
- * fixed problem with Y origin for Landranger DTM
- *
- * Revision 1.11  2003/02/27 21:09:47  warmerda
- * Apply ZMult to LANDFORM_PROFILE_DTM data to scale to meters.
- * adfGeoTransform[5] is left positive to correct coordinates ... the first
- * entry in the first profile column is the *south* west corner, not the
- * north west corner.  See also: FME bug RT3887.
- * Note: adfGeoTransform[] change applied to LANDRANGER and LANDFORM products
- * but only check on LANDFORM products.
- *
- * Revision 1.10  2001/07/18 04:55:16  warmerda
- * added CPL_CSVID
- *
- * Revision 1.9  2001/01/19 20:31:12  warmerda
- * expand tabs
- *
- * Revision 1.8  1999/11/03 19:27:21  warmerda
- * Pass column in SetFPPos() as the feature id to ensure that the seek
- * isn't arbitrarily ignored.
- *
- * Revision 1.7  1999/11/03 19:07:58  warmerda
- * open raster file if not open when trying to read
- *
- * Revision 1.6  1999/10/04 18:19:22  warmerda
- * Avoid type conversion warnings.
- *
- * Revision 1.5  1999/10/04 13:38:39  warmerda
- * Fixed handling for filling holes in the column offset array.
- *
- * Revision 1.4  1999/10/04 13:28:43  warmerda
- * added DEM_SAMPLE support
- *
- * Revision 1.3  1999/10/04 12:52:22  warmerda
- * Added DTM_ as a prefix to raster layer names.
- *
- * Revision 1.2  1999/10/04 11:36:53  warmerda
- * Added HEIGHT attribute.
- *
- * Revision 1.1  1999/10/04 03:07:49  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ntf.h"
 

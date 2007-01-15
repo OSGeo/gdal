@@ -24,38 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.9  2006/05/01 16:27:33  fwarmerdam
- * updated to work with libdap 1.6.2
- *
- * Revision 1.8  2005/09/21 01:00:29  fwarmerdam
- * fixup OGRFeatureDefn and OGRSpatialReference refcount handling
- *
- * Revision 1.7  2005/02/22 12:57:39  fwarmerdam
- * use OGRLayer base spatial filter support
- *
- * Revision 1.6  2005/02/02 20:54:26  fwarmerdam
- * track m_nFeaturesRead
- *
- * Revision 1.5  2004/03/12 22:13:07  warmerda
- * major upgrade with normalized sequen nested sequence support
- *
- * Revision 1.4  2004/02/19 13:56:53  warmerda
- * implement spatial and attribute filtering in GetNextFeature
- *
- * Revision 1.3  2004/01/29 21:01:03  warmerda
- * added sequences within sequences support
- *
- * Revision 1.2  2004/01/22 21:15:50  warmerda
- * parse url into components
- *
- * Revision 1.1  2004/01/21 20:08:29  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #include "ogr_dods.h"
 #include "cpl_conv.h"

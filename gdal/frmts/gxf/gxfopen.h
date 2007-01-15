@@ -25,36 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- ******************************************************************************
- *
- * $Log$
- * Revision 1.8  2006/04/04 17:25:27  fwarmerdam
- * updated contact info
- *
- * Revision 1.7  1999/10/29 17:30:40  warmerda
- * added prototype
- *
- * Revision 1.6  1999/10/27 20:22:33  warmerda
- * Added Doxygen style documentation.
- * Added GXFGetPosition() function.
- *
- * Revision 1.5  1999/01/11 15:33:06  warmerda
- * Added function
- *
- * Revision 1.4  1998/12/15 19:07:40  warmerda
- * Add Close, move Readline, add zmin/max, add readscanline
- *
- * Revision 1.3  1998/12/14 04:51:30  warmerda
- * Added some functions, clarified raw vs. not raw.
- *
- * Revision 1.2  1998/12/06 02:54:26  warmerda
- * new functions
- *
- * Revision 1.1  1998/12/02 19:37:04  warmerda
- * New
- *
- */
+ ****************************************************************************/
 
 #ifndef _GXFOPEN_H_INCLUDED
 #define _GXFOPEN_H_INCLUDED
