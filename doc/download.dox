@@ -73,21 +73,17 @@ These snapshots are not stable releases, and might (on a bad night) not even
 build.  However, they do contain essentially the latest code.  They can be
 downloaded from:
 
-<a href="http://gdal.maptools.org/dl/daily">http://gdal.maptools.org/dl/daily</a><p>
+<a href="http://www.gdal.org/dl/daily">http://www.gdal.org/dl/daily</a><p>
 
 Refer to the <a href="gdal_building.html">build instructions</a> for how to
 build GDAL from source.<p>
 
-\subsection download_sources_cvs CVS
+\subsection download_sources_cvs Subversion
 
-The GDAL source is available by anonymous CVS from the cvs.maptools.org
-server:
+The GDAL source is available anonymously from Subversion:
 
 <pre>
-% export CVSROOT=:pserver:cvsanon@cvs.maptools.org:/cvs/maptools/cvsroot
-% cvs login
-Password: *enter*
-% cvs checkout gdal
+% svn checkout http://svn.osgeo.org/svn/gdal/trunk/gdal gdal 
 </pre>
 
 Update access to the CVS repository can be obtained by arrangement 
