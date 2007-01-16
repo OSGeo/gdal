@@ -1,9 +1,9 @@
 #!/bin/sh
 
 if [ $# -lt 1 ] ; then
-  echo "Usage: mkgdaldist version [-date date] [-install] [-nologin]"
+  echo "Usage: mkgdaldist.sh version [-date date] [-install] [-nologin]"
   echo
-  echo "Example: mkgdaldist 1.1.4"
+  echo "Example: mkgdaldist.sh 1.1.4"
   exit
 fi
 
@@ -13,7 +13,7 @@ COMPRESSED_VERSION=`echo $GDAL_VERSION | tr -d .`
 if test "$GDAL_VERSION" != "`cat VERSION`" ; then
   echo
   echo "NOTE: local VERSION file (`cat VERSION`) does not match supplied version ($GDAL_VERSION)."
-  echo "      Consider updating local VERSION file, and commiting to CVS." 
+  echo "      Consider updating local VERSION file, and commiting to SVN." 
   echo
 fi
 
@@ -29,19 +29,10 @@ rm -rf dist_wrk
 mkdir dist_wrk
 cd dist_wrk
 
-export CVSROOT=:pserver:cvsanon@cvs.maptools.org:/cvs/maptools/cvsroot
-
-if test "$2" = "-nologin" -o "$3" = "-nologin" ; then
-  echo "Skipping login"
-else
-  echo "Please type anonymous if prompted for a password."
-  cvs login
-fi
-
-cvs -Q checkout gdal
+svn checkout http://svn.osgeo.org/svn/gdal/trunk/gdal gdal 
 
 if [ \! -d gdal ] ; then
-  echo "cvs checkout reported an error ... abandoning mkgdaldist"
+    echo "svn checkout reported an error ... abandoning mkgdaldist"
   cd ..
   rm -rf dist_wrk
   exit
@@ -54,7 +45,7 @@ if test "$forcedate" != "no" ; then
   mv gdal/gcore/gdal_new.h gdal/gcore/gdal.h
 fi
 
-find gdal -name CVS -exec rm -rf {} \;
+find gdal -name .svn -exec rm -rf {} \;
 
 rm -rf gdal/viewer
 rm -rf gdal/dist_docs
