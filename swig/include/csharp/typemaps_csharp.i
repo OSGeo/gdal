@@ -6,66 +6,6 @@
  * Purpose:  Typemaps for C# bindings
  * Author:   Howard Butler, Tamas Szekeres
  *
-
- *
- * $Log$
- * Revision 1.17  2006/11/11 19:41:21  tamas
- * Removed obsolete items
- *
- * Revision 1.16  2006/11/08 22:43:24  tamas
- * Preliminary fix for SWIG potential problems
- *
- * Revision 1.15  2006/11/04 22:12:41  tamas
- * Added preliminary Raster R/W support
- *
- * Revision 1.14  2006/11/01 00:32:14  tamas
- * Typemaps for 'out double' and 'out int'
- *
- * Revision 1.13  2006/11/01 00:04:47  tamas
- * More typemaps for 'out string'
- *
- * Revision 1.12  2006/10/31 23:23:08  tamas
- * Typemaps for GIntBig
- *
- * Revision 1.11  2006/10/28 20:40:55  tamas
- * Added typemaps for char **options
- *
- * Revision 1.10  2006/09/09 21:06:32  tamas
- * Added preliminary SWIGTYPE *DISOWN support.
- *
- * Revision 1.9  2006/09/09 17:54:37  tamas
- * Typemaps for double arrays
- *
- * Revision 1.8  2006/09/08 16:31:42  tamas
- * Typemap for char **argout
- *
- * Revision 1.7  2006/09/07 10:25:45  tamas
- * Corrected default typemaps to eliminate warnings at the interface creation
- *
- * Revision 1.6  2005/08/19 13:42:39  kruland
- * Fix problem in a double[ANY] typemap which prevented compilation of wrapper.
- *
- * Revision 1.5  2005/08/06 20:51:58  kruland
- * Instead of using double_## defines and SWIG macros, use typemaps with
- * [ANY] specified and use $dim0 to extract the dimension.  This makes the
- * code quite a bit more readable.
- *
- * Revision 1.4  2005/08/05 18:49:26  hobu
- * Add some more dummy typemaps to get us closer to where
- * Kevin is with python
- *
- * Revision 1.3  2005/06/22 18:41:30  kruland
- * Renamed type for OGRErr typemap to use OGRErr instead of the made up
- * THROW_OGR_ERROR.
- *
- * Revision 1.2  2005/03/10 17:12:55  hobu
- * dummy typemaps for csharp.  Nothing here yet, but the names
- * are there
- *
- * Revision 1.1  2005/02/24 17:42:03  kruland
- * C# typemap file started.  Code taken from gdal_typemaps.i
- *
- *
 */
 
 %include "typemaps.i"
