@@ -25,6 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
 #include "ogr_spatialref.h"
@@ -46,7 +47,7 @@ CPL_CVSID("$Id$");
 #define STEREO  5L      // Stereographic
 #define AE      6L      // Azimuthal Equidistant (Postel)
 #define MERCAT  8L      // Mercator
-#define POLYC   11L      // Polyconic
+#define POLYC   11L     // Polyconic
 #define PS      13L     // Polar Stereographic
 #define GNOMON  15L     // Gnomonic
 #define UTM     17L     // Universal Transverse Mercator (UTM)
@@ -271,7 +272,22 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  *
  * This function is the equivalent of the C function OSRImportFromPanorama().
  *
- * @param iProjSys Input projection system code, used in GCTP.
+ * @param iProjSys Input projection system code, used in GIS "Panorama".
+ *
+ *      <h4>Supported Projections</h4>
+ * <pre>
+ *      1:  Gauss-Kruger (Transverse Mercator)
+ *      4:  Lambert Azimuthal Equal Area
+ *      5:  Stereographic
+ *      6:  Azimuthal Equidistant (Postel)
+ *      8:  Mercator
+ *      11: Polyconic
+ *      13: Polar Stereographic
+ *      15: Gnomonic
+ *      17: Universal Transverse Mercator (UTM)
+ *      19: Mollweide
+ *      20: Equidistant Conic
+ * </pre>
  *
  * @param iDatum Input coordinate system.
  *
