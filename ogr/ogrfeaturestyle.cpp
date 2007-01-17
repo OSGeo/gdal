@@ -24,6 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
 #include "cpl_conv.h"
@@ -108,17 +109,23 @@ OGRStyleParamId asStyleLabel[] = {{OGRSTLabelFontName,"f",FALSE,OGRSTypeString},
 
 OGRStyleParamId asStyleVector[] = {{OGRSTVectorId,"id",FALSE,OGRSTypeString},
                                   {OGRSTVectorNoCompress,"nc",FALSE,
-                                   OGRSTypeInteger},
+                                   OGRSTypeBoolean},
                                   {OGRSTVectorSprain,"sp",FALSE,
-                                   OGRSTypeInteger},
+                                   OGRSTypeBoolean},
                                   {OGRSTVectorNoSlope,"ns",FALSE,
-                                   OGRSTypeInteger},
+                                   OGRSTypeBoolean},
                                   {OGRSTVectorMirroring,"m",FALSE,
-                                   OGRSTypeInteger},
+                                   OGRSTypeBoolean},
                                   {OGRSTVectorCentering,"c",FALSE,
-                                   OGRSTypeInteger},
+                                   OGRSTypeBoolean},
                                   {OGRSTVectorPriority,"l",FALSE,
-                                   OGRSTypeInteger}
+                                   OGRSTypeInteger},
+                                  {OGRSTVectorPlacement,"p",FALSE,
+                                   OGRSTypeString},
+                                  {OGRSTVectorLength,"len",TRUE,
+                                   OGRSTypeDouble},
+                                  {OGRSTVectorEven,"e",FALSE,
+                                   OGRSTypeBoolean}
                                  };
 
 /* ======================================================================== */
