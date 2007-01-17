@@ -7,25 +7,6 @@
  * Purpose:  Temporary fix for the SWIG Interface problems
  * Author:   Tamas Szekeres
  *
-
- *
- * $Log$
- * Revision 1.5  2006/12/04 09:48:07  tamas
- * Replacing $imclassname to $modulePINVOKE for supporting SWIG 1.3.27
- *
- * Revision 1.4  2006/11/25 21:23:02  tamas
- * Added default csout, csvarout typemaps
- *
- * Revision 1.3  2006/11/15 21:00:35  tamas
- * Added support for SWIG 1.3.30
- *
- * Revision 1.2  2006/11/11 19:28:39  tamas
- * Support for the default csout typemaps
- *
- * Revision 1.1  2006/11/08 22:41:21  tamas
- * Preliminary fix for SWIG potential problems
- *
- *
 */
 
 // Comment out the following line to revert to the original SWIG behaviour
