@@ -1,27 +1,6 @@
 /*
  * $Id$
  */
-
-/*
- * $Log$
- * Revision 1.5  2006/11/08 22:47:24  tamas
- * Added typesafe ReadRaster/WriteRaster overloads
- *
- * Revision 1.4  2006/11/05 22:13:27  tamas
- * Adding the C# specific ReadRaster/WriteRaster
- *
- * Revision 1.3  2006/11/04 22:12:41  tamas
- * Added preliminary Raster R/W support
- *
- * Revision 1.2  2006/09/07 10:26:31  tamas
- * Added default exception support
- *
- * Revision 1.1  2005/09/02 16:19:23  kruland
- * Major reorganization to accomodate multiple language bindings.
- * Each language binding can define renames and supplemental code without
- * having to have a lot of conditionals in the main interface definition files.
- *
- */
  
 %include cpl_exceptions.i
 
