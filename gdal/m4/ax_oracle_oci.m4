@@ -142,7 +142,7 @@ Please, locate Oracle directories using --with-oci or \
         dnl -lnnz10 flag might be removed for older Oracle < 10.x
         saved_LDFLAGS="$LDFLAGS"
         oci_ldflags="-L$oracle_lib_dir -lclntsh"
-        LDFLAGS="$LDFLAGS $oci_ldflags -lnnz10"
+        LDFLAGS="$LDFLAGS $oci_ldflags"
 
         dnl
         dnl Check OCI headers
