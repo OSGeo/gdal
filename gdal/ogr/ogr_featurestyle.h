@@ -24,6 +24,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
 #ifndef OGR_FEATURESTYLE_INCLUDE
@@ -135,6 +136,9 @@ typedef enum ogr_style_tool_param_vector_id
     OGRSTVectorMirroring,
     OGRSTVectorCentering,
     OGRSTVectorPriority,
+    OGRSTVectorPlacement,
+    OGRSTVectorLength,
+    OGRSTVectorEven,
     OGRSTVectorLast
               
 } OGRSTVectorParam;
@@ -569,6 +573,12 @@ class CPL_DLL OGRStyleVector : public OGRStyleTool
     void SetMirroring(GBool bMirroring){SetParamNum(OGRSTVectorMirroring,bMirroring);}
     GBool Centering(GBool &bDefault){return GetParamNum(OGRSTVectorCentering,bDefault);}
     void SetCentering(GBool bCentering){SetParamNum(OGRSTVectorCentering,bCentering);}
+    const char *Placement(GBool &bDefault){return GetParamStr(OGRSTVectorPlacement,bDefault);}
+    void SetPlacement(const char *pszPlacement){SetParamStr(OGRSTVectorPlacement,pszPlacement);}
+    double Length(GBool &bDefault){return GetParamNum(OGRSTVectorLength,bDefault);}
+    void SetLength(double dfLength){SetParamDbl(OGRSTVectorLength,dfLength);}
+    GBool Even(GBool &bDefault){return GetParamNum(OGRSTVectorEven,bDefault);}
+    void SetEven(GBool bEven){SetParamNum(OGRSTVectorEven,bEven);}
 
     /*****************************************************************/
     
