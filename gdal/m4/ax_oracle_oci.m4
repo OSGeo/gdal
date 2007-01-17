@@ -91,7 +91,14 @@ AC_DEFUN([AX_LIB_ORACLE_OCI],
 
         if test "$oracle_home_dir" != "no" -a "$oracle_home_dir" != "yes"; then
             dnl ORACLE_HOME path provided
+            
+            dnl Primary path to OCI headers, available in Oracle>=10
             oracle_include_dir="$oracle_home_dir/rdbms/public"
+            
+            dnl Secondary path to OCI headers used by older versions
+            oracle_include_dir2="$oracle_home_dir/rdbms/demo"
+
+            dnl Library path
             oracle_lib_dir="$oracle_home_dir/lib"
         elif test "$oracle_home_dir" = "yes"; then
             want_oracle_but_no_path="yes"
@@ -126,11 +133,16 @@ Please, locate Oracle directories using --with-oci or \
         saved_CPPFLAGS="$CPPFLAGS"
         CPPFLAGS="$CPPFLAGS -I$oracle_include_dir"
 
+        dnl Additional path for older Oracle installations 
+        if test -n "$oracle_include_dir2"; then
+            CPPFLAGS="$CPPFLAGS -I$oracle_include_dir2"
+        fi
+
         dnl Depending on later Oracle version detection,
         dnl -lnnz10 flag might be removed for older Oracle < 10.x
         saved_LDFLAGS="$LDFLAGS"
         oci_ldflags="-L$oracle_lib_dir -lclntsh"
-        LDFLAGS="$LDFLAGS $oci_ldflags -lnnz10"
+        LDFLAGS="$LDFLAGS $oci_ldflags"
 
         dnl
         dnl Check OCI headers
@@ -155,6 +167,11 @@ Please, locate Oracle directories using --with-oci or \
             )],
             [
             ORACLE_OCI_CFLAGS="-I$oracle_include_dir"
+
+            if test -n "$oracle_include_dir2"; then
+                ORACLE_OCI_CFLAGS="$ORACLE_OCI_CFLAGS -I$oracle_include_dir2"
+            fi
+
             oci_header_found="yes"
             AC_MSG_RESULT([yes])
             ],
