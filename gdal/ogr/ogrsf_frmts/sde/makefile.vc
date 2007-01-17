@@ -12,4 +12,4 @@ clean:
 
 ogr_SDE.dll:	$(OBJ)
 	link /dll /out:ogr_SDE.dll $(OBJ) \
-		$(GDAL_ROOT)\$(GDAL_EXP) $(SDE_LIB)
+		$(GDALLIB) $(SDE_LIB)
