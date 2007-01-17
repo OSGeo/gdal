@@ -25,6 +25,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
 #include "ogr_spatialref.h"
@@ -960,6 +961,9 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLDebug( "RMF", "Map type %d, projection %d, scale %f, resolution %f, ",
               poDS->sHeader.iMapType, poDS->sHeader.iProjection,
               poDS->sHeader.dfScale, poDS->sHeader.dfResolution );
+    CPLDebug( "RMF", "Georeferencing: pixel size %f, LLX %f, LLY %f",
+              poDS->sHeader.dfPixelSize,
+              poDS->sHeader.dfLLX, poDS->sHeader.dfLLY );
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -1108,14 +1112,22 @@ GDALDataset *RMFDataset::Open( GDALOpenInfo * poOpenInfo )
 
 /* -------------------------------------------------------------------- */
 /*  Set up projection.                                                  */
+/*                                                                      */
+/*  XXX: If projection value is not specified, but image still have     */
+/*  georeferencing information, assume Gauss-Kruger projection.         */
 /* -------------------------------------------------------------------- */
-    if( poDS->sHeader.iProjection > 0 )
+    if( poDS->sHeader.iProjection > 0 ||
+        (poDS->sHeader.dfPixelSize != 0.0 &&
+         poDS->sHeader.dfLLX != 0.0 &&
+         poDS->sHeader.dfLLY != 0.0) )
     {
         OGRSpatialReference oSRS;
+        GInt32  nProj =
+            (poDS->sHeader.iProjection) ? poDS->sHeader.iProjection : 1L;
 
         // XXX: Ellipsoid and datum are not specified in RMF file, but they
         // are always Krassovsky/Pulkovo, 1942.
-        oSRS.importFromPanorama( poDS->sHeader.iProjection, 1, 1, 0,
+        oSRS.importFromPanorama( nProj, 1, 1, 0,
                                  poDS->sHeader.dfStdP1, poDS->sHeader.dfStdP2,
                                  poDS->sHeader.dfCenterLat,
                                  poDS->sHeader.dfCenterLong );
