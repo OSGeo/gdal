@@ -1,0 +1,26 @@
+
+EXTRAFLAGS = 	-I$(SDE_INC)\include \
+		/D_MBCS /DWIN32 /D_WIN32 -DFRMT_sde 
+
+OBJ	=	sdedataset.obj
+
+GDAL_ROOT	=	..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+	xcopy /D  /Y *.obj ..\o
+
+all:	default 
+
+clean:
+	-del *.obj
+	-del *.exe
+
+#testecw.exe:	testecw.cpp
+#	$(CC) /Zi /MD $(EXTRAFLAGS) testecw.cpp $(ECWLIB)
+
+#ecw_example1.exe:	ecw_example1.c
+#	$(CC) /MD $(EXTRAFLAGS) ecw_example1.c $(ECWLIB)
+	
+
