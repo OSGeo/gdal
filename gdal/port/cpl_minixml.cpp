@@ -35,6 +35,7 @@
  *   Completed security audit.  I believe that this module may be safely used 
  *   to parse, and serialize arbitrary documents provided by a potentially 
  *   hostile source.
+ *
  */
 
 #include "cpl_minixml.h"

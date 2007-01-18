@@ -42,6 +42,7 @@
  *   CPLSPrintf() and CSLAppendPrintf() may not be safely invoked on 
  *   arbitrary length inputs since it has a fixed size output buffer on system 
  *   without vsnprintf(). 
+ *
  **********************************************************************/
 
 #include "cpl_string.h"
