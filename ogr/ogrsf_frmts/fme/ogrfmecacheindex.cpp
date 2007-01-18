@@ -20,6 +20,7 @@
  * the Software, Safe Software Incorporated does not warrant the
  * accuracy or completeness of the Software. In no event will Safe Software 
  * Incorporated be liable for damages, including loss of profits or 
+ * consequential damages, arising out of the use of the Software.
  ****************************************************************************/
 
 #include "fme2ogr.h"

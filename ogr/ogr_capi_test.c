@@ -29,6 +29,7 @@
  *
  * gcc -g ogr_capi_test.c `gdal-config --libs` `gdal-config --cflags` \
  *     -o ogr_capi_test
+ *
  ****************************************************************************/
 
 #include "ogr_api.h"

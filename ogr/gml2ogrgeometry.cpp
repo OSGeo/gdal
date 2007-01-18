@@ -35,6 +35,7 @@
  *   Completed security audit.  I believe that this module may be safely used 
  *   to parse, arbitrary GML potentially provided by a hostile source without
  *   compromising the system.
+ *
  */
 
 #include "cpl_minixml.h"

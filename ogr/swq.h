@@ -14,6 +14,7 @@
  * in advertising or publicity pertaining to distribution of the software 
  * without specific, written prior permission.  3i makes no
  * representations about the suitability of this software for any purpose.
+ * It is provided "as is" without express or implied warranty.
  ****************************************************************************/
 
 #ifndef _SWQ_H_INCLUDED_
