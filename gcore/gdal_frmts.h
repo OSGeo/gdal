@@ -107,6 +107,7 @@ void CPL_DLL GDALRegister_PDS(void);
 void CPL_DLL GDALRegister_IDRISI(void);
 void CPL_DLL GDALRegister_Terragen(void);
 void CPL_DLL GDALRegister_WCS(void);
+void CPL_DLL GDALRegister_SDE(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */
