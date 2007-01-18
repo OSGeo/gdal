@@ -236,7 +236,8 @@ ADD_LIBS	=
 
 # Comment out the following if you want to build with Python support, but
 # you don't have Numeric Python installed (with include files).  Numeric
-# integration may not work.
+# integration may not work.  This only appears to the old generation 
+# bindings. 
 #HAVE_NUMPY=1
 
 ########### END OF STUFF THAT NORMALLY NEEDS TO BE UPDATED ##################
