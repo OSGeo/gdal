@@ -68,6 +68,10 @@ EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_netcdf
 EXTRAFLAGS	=	$(EXTRAFLAGS) -DFRMT_wcs
 !ENDIF
 
+!IFDEF SDE_INC
+EXTRAFLAGS  = $(EXTRAFLAGS) -DFRMT_sde
+!ENDIF
+
 default:	o\gdalallregister.obj subdirs
 
 list:
