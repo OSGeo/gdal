@@ -2747,14 +2747,17 @@ LT_STATUS MrSIDDummyImageReader::initialize()
 
 LT_STATUS MrSIDDummyImageReader::decodeStrip(LTISceneBuffer& stripData,
                                              const LTIScene& stripScene)
+
 {
     const lt_int32  nXOff = stripScene.getUpperLeftCol();
     const lt_int32  nYOff = stripScene.getUpperLeftRow();
     const lt_int32  nBufXSize = stripScene.getNumCols();
     const lt_int32  nBufYSize = stripScene.getNumRows();
+    const lt_int32  nDataBufXSize = stripData.getTotalNumCols();
+    const lt_int32  nDataBufYSize = stripData.getTotalNumRows();
     const lt_uint16 nBands = poPixel->getNumBands();
 
-    void    *pData = CPLMalloc(nBufXSize * nBufYSize * poPixel->getNumBytes());
+    void *pData = CPLMalloc(nDataBufXSize * nDataBufYSize * poPixel->getNumBytes());
     if ( !pData )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -2766,13 +2769,11 @@ LT_STATUS MrSIDDummyImageReader::decodeStrip(LTISceneBuffer& stripData,
     poDS->RasterIO( GF_Read, nXOff, nYOff, nBufXSize, nBufYSize, 
                     pData, nBufXSize, nBufYSize, eDataType, nBands, NULL, 
                     0, 0, 0 );
+
     stripData.importDataBSQ( pData );
-
     CPLFree( pData );
-
     return LT_STS_Success;
 }
-
 
 /************************************************************************/
 /*                             FlushCache()                             */
