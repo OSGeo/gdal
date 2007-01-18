@@ -41,6 +41,7 @@
  *  o I should install setjmp()/longjmp() based error trapping for PNG calls.
  *    Currently a failure in png libraries will result in a complete
  *    application termination. 
+ * 
  */
 
 #include "gdal_pam.h"

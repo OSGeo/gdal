@@ -36,6 +36,7 @@
  *   to generate GML from arbitrary but well formed OGRGeomety objects that
  *   come from a potentially hostile source, but through a trusted OGR importer
  *   without compromising the system.
+ *
  */
 
 #include "cpl_minixml.h"

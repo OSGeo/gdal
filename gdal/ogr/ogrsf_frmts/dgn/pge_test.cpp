@@ -9,6 +9,7 @@
  * Copyright (c) 2002, Pacific Gas and Electric Co, San Franciso, CA, USA.
  *
  * All rights reserved.  Not to be used, reproduced or disclosed without
+ * permission.
  ****************************************************************************/
 
 #include "dgn_pge.h"

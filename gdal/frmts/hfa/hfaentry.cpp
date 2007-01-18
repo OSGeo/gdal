@@ -31,6 +31,7 @@
  * hfaentry.cpp
  *
  * Implementation of the HFAEntry class.
+ *
  */
 
 #include "hfa_p.h"

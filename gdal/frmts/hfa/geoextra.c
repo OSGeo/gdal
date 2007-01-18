@@ -8,6 +8,7 @@
  *
  *  Permission granted to use this software, so long as this copyright
  *  notice accompanies any products derived therefrom.
+ *
  **********************************************************************/
 
 #include "geotiff.h"
