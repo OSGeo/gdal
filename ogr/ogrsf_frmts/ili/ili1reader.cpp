@@ -43,7 +43,9 @@
 #endif
 
 #ifndef POLYGONIZE_AREAS
-#  warning Interlis 1 Area polygonizing disabled. Needs GEOS >= 2.1.0
+#  if defined(__GNUC_PREREQ)
+#    warning Interlis 1 Area polygonizing disabled. Needs GEOS >= 2.1.0
+#  endif
 #endif
 
 CPL_CVSID("$Id$");
