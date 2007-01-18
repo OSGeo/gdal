@@ -31,6 +31,7 @@
  *
  * Also contains supporting code for building python under Windows
  * and things like that.
+ *
  ************************************************************************/
 
 #ifdef __cplusplus

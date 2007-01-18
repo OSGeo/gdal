@@ -33,6 +33,7 @@
  * Supporting routines for reading Erdas Imagine (.imf) Heirarchical
  * File Architecture files.  This is intended to be a library independent
  * of the GDAL core, but dependent on the Common Portability Library.
+ *
  */
 
 #include "hfa_p.h"

@@ -44,6 +44,7 @@
  *  but I have no idea who the credit really belongs to.
  *  -- 
  *					    Lou Steinberg
+ *
  */
 
 #include "gdal_priv.h"
