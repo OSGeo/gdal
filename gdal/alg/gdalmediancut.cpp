@@ -33,6 +33,7 @@
  *
  *      "Color  Image Quantization for Frame Buffer Display", Paul
  *      Heckbert, SIGGRAPH proceedings, 1982, pp. 297-307.
+ * 
  */
 
 #include "gdal_priv.h"
