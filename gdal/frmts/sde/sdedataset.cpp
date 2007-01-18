@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: jdemdataset.cpp 10645 2007-01-18 02:22:39Z warmerdam $
+ * $Id$
  *
  * Project:  ESRI ArcSDE Raster reader
  * Purpose:  Dataset implementaion for ESRI ArcSDE Rasters
@@ -29,7 +29,7 @@
 
 #include "gdal_pam.h"
 
-CPL_CVSID("$Id: jdemdataset.cpp 10645 2007-01-18 02:22:39Z warmerdam $");
+CPL_CVSID("$Id$");
 
 CPL_C_START
 void	GDALRegister_SDE(void);
