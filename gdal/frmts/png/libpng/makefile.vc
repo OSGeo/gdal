@@ -1,9 +1,25 @@
-
-OBJ	=	\
-	png.obj pngerror.obj pnggccrd.obj pngget.obj pngmem.obj \
-	pngpread.obj pngread.obj pngrio.obj pngrtran.obj pngrutil.obj \
-	pngset.obj pngtrans.obj pngvcrd.obj pngwio.obj pngwrite.obj \
-	pngwtran.obj pngwutil.obj
+# $Id$
+#
+# Makefile to build libpng using NMAKE and Visual C++ compiler.
+#
+OBJ = \
+    png.obj \
+    pngerror.obj \
+    pnggccrd.obj \
+    pngget.obj \
+    pngmem.obj \
+    pngpread.obj \
+    pngread.obj \
+    pngrio.obj \
+    pngrtran.obj \
+    pngrutil.obj \
+    pngset.obj \
+    pngtrans.obj \
+    pngvcrd.obj \
+    pngwio.obj \
+    pngwrite.obj \
+    pngwtran.obj \
+    pngwutil.obj
 
 GDAL_ROOT	=	..\..\..
 

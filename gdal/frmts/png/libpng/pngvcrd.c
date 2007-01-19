@@ -1,8 +1,9 @@
+
 /* pngvcrd.c - mixed C/assembler version of utilities to read a PNG file
  *
  * For Intel x86 CPU and Microsoft Visual C++ compiler
  *
- * libpng version 1.2.8 - December 3, 2004
+ * Last changed in libpng 1.2.6 - August 15, 2004
  * For conditions of distribution and use, see copyright notice in png.h
  * Copyright (c) 1998-2004 Glenn Randers-Pehrson
  * Copyright (c) 1998, Intel Corporation

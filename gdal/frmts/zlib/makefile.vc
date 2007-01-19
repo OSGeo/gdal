@@ -1,8 +1,20 @@
-
-OBJ	=	\
-	adler32.obj compress.obj crc32.obj deflate.obj gzio.obj \
-	infblock.obj infcodes.obj inffast.obj inflate.obj \
-	infutil.obj inftrees.obj trees.obj uncompr.obj zutil.obj 
+# $Id$
+#
+# Makefile to build zlib using NMAKE and Visual C++ compiler.
+#
+OBJ = \
+    adler32.obj \
+    compress.obj \
+    crc32.obj \
+    deflate.obj \
+    gzio.obj \
+    infback.obj \
+    inffast.obj \
+    inflate.obj \
+    inftrees.obj \
+    trees.obj \
+    uncompr.obj \
+    zutil.obj
 
 GDAL_ROOT	=	..\..
 
