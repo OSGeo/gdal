@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "makegdal", "makegdal.vcproj", "{6DD9DAE4-E7A3-415C-BA8B-8D064B6703FF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6DD9DAE4-E7A3-415C-BA8B-8D064B6703FF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6DD9DAE4-E7A3-415C-BA8B-8D064B6703FF}.Debug|Win32.Build.0 = Debug|Win32
+		{6DD9DAE4-E7A3-415C-BA8B-8D064B6703FF}.Release|Win32.ActiveCfg = Release|Win32
+		{6DD9DAE4-E7A3-415C-BA8B-8D064B6703FF}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
