@@ -67,7 +67,7 @@ int main( int argc, char ** argv )
     char		**papszMetadata;
     int                 bComputeMinMax = FALSE, bSample = FALSE;
     int                 bShowGCPs = TRUE, bShowMetadata = TRUE ;
-    int                 bStats = FALSE, iMDD;
+    int                 bStats = FALSE, bApproxStats = FALSE, iMDD;
     const char          *pszFilename = NULL;
     char              **papszExtraMDDomains = NULL;
 
@@ -86,6 +86,11 @@ int main( int argc, char ** argv )
             bComputeMinMax = TRUE;
         else if( EQUAL(argv[i], "-stats") )
             bStats = TRUE;
+        else if( EQUAL(argv[i], "-approx_stats") )
+        {
+            bStats = TRUE;
+            bApproxStats = TRUE;
+        }
         else if( EQUAL(argv[i], "-sample") )
             bSample = TRUE;
         else if( EQUAL(argv[i], "-nogcp") )
@@ -348,7 +353,7 @@ int main( int argc, char ** argv )
             printf( "\n" );
         }
 
-        eErr = GDALGetRasterStatistics( hBand, FALSE, bStats, 
+        eErr = GDALGetRasterStatistics( hBand, bApproxStats, bStats, 
                                         &dfMin, &dfMax, &dfMean, &dfStdDev );
         if( eErr == CE_None )
         {
