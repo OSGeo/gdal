@@ -67,7 +67,7 @@ int main( int argc, char ** argv )
     char		**papszMetadata;
     int                 bComputeMinMax = FALSE, bSample = FALSE;
     int                 bShowGCPs = TRUE, bShowMetadata = TRUE ;
-    int                 bStats = FALSE, bApproxStats = FALSE, iMDD;
+    int                 bStats = FALSE, bApproxStats = TRUE, iMDD;
     const char          *pszFilename = NULL;
     char              **papszExtraMDDomains = NULL;
 
@@ -85,7 +85,10 @@ int main( int argc, char ** argv )
         if( EQUAL(argv[i], "-mm") )
             bComputeMinMax = TRUE;
         else if( EQUAL(argv[i], "-stats") )
+        {
             bStats = TRUE;
+            bApproxStats = FALSE;
+        }
         else if( EQUAL(argv[i], "-approx_stats") )
         {
             bStats = TRUE;
