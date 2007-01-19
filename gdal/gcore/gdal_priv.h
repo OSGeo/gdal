@@ -442,7 +442,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                   double *pdfMean, double *padfStdDev );
     virtual CPLErr ComputeStatistics( int bApproxOK, 
                                       double *pdfMin, double *pdfMax, 
-                                      double *pdfMean, double *padfStdDev,
+                                      double *pdfMean, double *pdfStdDev,
                                       GDALProgressFunc, void *pProgressData );
     virtual CPLErr SetStatistics( double dfMin, double dfMax, 
                                   double dfMean, double dfStdDev );
