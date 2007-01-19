@@ -1,9 +1,9 @@
 
 /* pngerror.c - stub functions for i/o and memory allocation
  *
- * libpng version 1.2.8 - December 3, 2004
+ * Last changed in libpng 1.2.13 November 13, 2006
  * For conditions of distribution and use, see copyright notice in png.h
- * Copyright (c) 1998-2004 Glenn Randers-Pehrson
+ * Copyright (c) 1998-2006 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
@@ -16,6 +16,7 @@
 #define PNG_INTERNAL
 #include "png.h"
 
+#if defined(PNG_READ_SUPPORTED) || defined(PNG_WRITE_SUPPORTED)
 static void /* PRIVATE */
 png_default_error PNGARG((png_structp png_ptr,
   png_const_charp error_message));
@@ -33,33 +34,37 @@ png_error(png_structp png_ptr, png_const_charp error_message)
 {
 #ifdef PNG_ERROR_NUMBERS_SUPPORTED
    char msg[16];
-   if (png_ptr->flags&(PNG_FLAG_STRIP_ERROR_NUMBERS|PNG_FLAG_STRIP_ERROR_TEXT))
+   if (png_ptr != NULL)
    {
-     if (*error_message == '#')
+     if (png_ptr->flags&
+       (PNG_FLAG_STRIP_ERROR_NUMBERS|PNG_FLAG_STRIP_ERROR_TEXT))
      {
-         int offset;
-         for (offset=1; offset<15; offset++)
-            if (*(error_message+offset) == ' ')
-                break;
-         if (png_ptr->flags&PNG_FLAG_STRIP_ERROR_TEXT)
-         {
-            int i;
-            for (i=0; i<offset-1; i++)
-               msg[i]=error_message[i+1];
-            msg[i]='\0';
-            error_message=msg;
-         }
-         else
-            error_message+=offset;
-     }
-     else
-     {
-         if (png_ptr->flags&PNG_FLAG_STRIP_ERROR_TEXT)
-         {
-            msg[0]='0';        
-            msg[1]='\0';
-            error_message=msg;
-         }
+       if (*error_message == '#')
+       {
+           int offset;
+           for (offset=1; offset<15; offset++)
+              if (*(error_message+offset) == ' ')
+                  break;
+           if (png_ptr->flags&PNG_FLAG_STRIP_ERROR_TEXT)
+           {
+              int i;
+              for (i=0; i<offset-1; i++)
+                 msg[i]=error_message[i+1];
+              msg[i]='\0';
+              error_message=msg;
+           }
+           else
+              error_message+=offset;
+       }
+       else
+       {
+           if (png_ptr->flags&PNG_FLAG_STRIP_ERROR_TEXT)
+           {
+              msg[0]='0';
+              msg[1]='\0';
+              error_message=msg;
+           }
+       }
      }
    }
 #endif
@@ -80,19 +85,23 @@ void PNGAPI
 png_warning(png_structp png_ptr, png_const_charp warning_message)
 {
    int offset = 0;
-#ifdef PNG_ERROR_NUMBERS_SUPPORTED
-   if (png_ptr->flags&(PNG_FLAG_STRIP_ERROR_NUMBERS|PNG_FLAG_STRIP_ERROR_TEXT))
-#endif
+   if (png_ptr != NULL)
    {
-     if (*warning_message == '#')
+#ifdef PNG_ERROR_NUMBERS_SUPPORTED
+   if (png_ptr->flags&
+     (PNG_FLAG_STRIP_ERROR_NUMBERS|PNG_FLAG_STRIP_ERROR_TEXT))
+#endif
      {
-         for (offset=1; offset<15; offset++)
-            if (*(warning_message+offset) == ' ')
-                break;
+       if (*warning_message == '#')
+       {
+           for (offset=1; offset<15; offset++)
+              if (*(warning_message+offset) == ' ')
+                  break;
+       }
      }
+     if (png_ptr != NULL && png_ptr->warning_fn != NULL)
+        (*(png_ptr->warning_fn))(png_ptr, warning_message+offset);
    }
-   if (png_ptr != NULL && png_ptr->warning_fn != NULL)
-      (*(png_ptr->warning_fn))(png_ptr, warning_message+offset);
    else
       png_default_warning(png_ptr, warning_message+offset);
 }
@@ -146,16 +155,26 @@ void PNGAPI
 png_chunk_error(png_structp png_ptr, png_const_charp error_message)
 {
    char msg[18+64];
-   png_format_buffer(png_ptr, msg, error_message);
-   png_error(png_ptr, msg);
+   if (png_ptr == NULL)
+     png_error(png_ptr, error_message);
+   else
+   {
+     png_format_buffer(png_ptr, msg, error_message);
+     png_error(png_ptr, msg);
+   }
 }
 
 void PNGAPI
 png_chunk_warning(png_structp png_ptr, png_const_charp warning_message)
 {
    char msg[18+64];
-   png_format_buffer(png_ptr, msg, warning_message);
-   png_warning(png_ptr, msg);
+   if (png_ptr == NULL)
+     png_warning(png_ptr, warning_message);
+   else
+   {
+     png_format_buffer(png_ptr, msg, warning_message);
+     png_warning(png_ptr, msg);
+   }
 }
 
 /* This is the default error handling function.  Note that replacements for
@@ -193,6 +212,8 @@ png_default_error(png_structp png_ptr, png_const_charp error_message)
 #endif
 
 #ifdef PNG_SETJMP_SUPPORTED
+   if (png_ptr)
+   {
 #  ifdef USE_FAR_KEYWORD
    {
       jmp_buf jmpbuf;
@@ -201,10 +222,9 @@ png_default_error(png_structp png_ptr, png_const_charp error_message)
    }
 #  else
    longjmp(png_ptr->jmpbuf, 1);
-# endif
+#  endif
+   }
 #else
-   /* make compiler happy */ ;
-   if (png_ptr)
    PNG_ABORT();
 #endif
 #ifdef PNG_NO_CONSOLE_IO
@@ -265,6 +285,8 @@ void PNGAPI
 png_set_error_fn(png_structp png_ptr, png_voidp error_ptr,
    png_error_ptr error_fn, png_error_ptr warning_fn)
 {
+   if (png_ptr == NULL)
+      return;
    png_ptr->error_ptr = error_ptr;
    png_ptr->error_fn = error_fn;
    png_ptr->warning_fn = warning_fn;
@@ -278,6 +300,8 @@ png_set_error_fn(png_structp png_ptr, png_voidp error_ptr,
 png_voidp PNGAPI
 png_get_error_ptr(png_structp png_ptr)
 {
+   if (png_ptr == NULL)
+      return NULL;
    return ((png_voidp)png_ptr->error_ptr);
 }
 
@@ -293,3 +317,4 @@ png_set_strip_error_numbers(png_structp png_ptr, png_uint_32 strip_mode)
    }
 }
 #endif
+#endif /* PNG_READ_SUPPORTED || PNG_WRITE_SUPPORTED */
