@@ -251,6 +251,10 @@ class MrSIDRasterBand : public GDALPamRasterBand
     virtual int             GetOverviewCount();
     virtual GDALRasterBand  *GetOverview( int );
 
+    virtual CPLErr GetStatistics( int bApproxOK, int bForce,
+                                  double *pdfMin, double *pdfMax, 
+                                  double *pdfMean, double *pdfStdDev );
+
 #ifdef MRSID_ESDK
     virtual CPLErr          IWriteBlock( int, int, void * );
 #endif
@@ -563,6 +567,28 @@ GDALColorInterp MrSIDRasterBand::GetColorInterpretation()
             return GCI_Undefined;
     }
 
+}
+
+/************************************************************************/
+/*                           GetStatistics()                            */
+/*                                                                      */
+/*      We override this method so that we can force generation of      */
+/*      statistics if approx ok is true since we know that a small      */
+/*      overview is always available, and that computing statistics     */
+/*      from it is very fast.                                           */
+/************************************************************************/
+
+CPLErr MrSIDRasterBand::GetStatistics( int bApproxOK, int bForce,
+                                       double *pdfMin, double *pdfMax, 
+                                       double *pdfMean, double *pdfStdDev )
+
+{
+    if( bApproxOK )
+        bForce = TRUE;
+
+    return GDALPamRasterBand::GetStatistics( bApproxOK, bForce, 
+                                             pdfMin, pdfMax, 
+                                             pdfMean, pdfStdDev );
 }
 
 /************************************************************************/
