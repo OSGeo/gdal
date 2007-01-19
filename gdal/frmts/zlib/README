@@ -1,5 +1,7 @@
-zlib 1.1.3 is a general purpose data compression library.  All the code
-is thread safe.  The data format used by the zlib library
+$Id$
+
+zlib 1.2.3 is a general purpose data compression library.
+All the code is thread safe. The data format used by the zlib library
 is described by RFCs (Request for Comments) 1950 to 1952 in the files 
 ftp://ds.internic.net/rfc/rfc1950.txt (zlib format), rfc1951.txt (deflate
 format) and rfc1952.txt (gzip format). These documents are also available in
