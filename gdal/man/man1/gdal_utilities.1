@@ -1,4 +1,4 @@
-.TH "gdal_utilities" 1 "28 Jun 2006" "GDAL" \" -*- nroff -*-
+.TH "gdal_utilities" 1 "18 Jan 2007" "GDAL" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -83,7 +83,7 @@ All GDAL command line utility programs support the following 'general' options.
 Report the version of GDAL and exit.
 .PP
 .IP "\fB\fB--formats\fP\fP" 1c
-List all raster formats supported by this GDAL build (read-only and read-write) and exit.
+List all raster formats supported by this GDAL build (read-only and read-write) and exit. The format support is indicated as follows: 'ro' is read-only driver; 'rw' is read or write (ie. supports CreateCopy); 'rw+' is read, write and update (ie. supports Create).
 .PP
 .IP "\fB\fB--format\fP \fIformat\fP\fP" 1c
 List detailed information about a single format driver. The \fIformat\fP should be the short name reported in the \fB--formats\fP list, such as GTiff.
@@ -101,4 +101,5 @@ Control what debugging messages are emitted. A value of \fION\fP will enable all
 Gives a brief usage message for the generic GDAL commandline options and exit. 
 .PP
 .PP
-
+.PP
+ 

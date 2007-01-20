@@ -1,4 +1,4 @@
-.TH "gdalinfo" 1 "28 Jun 2006" "GDAL" \" -*- nroff -*-
+.TH "gdalinfo" 1 "18 Jan 2007" "GDAL" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -9,7 +9,9 @@ lists information about a raster dataset
 .PP
 .PP
 .nf
-gdalinfo [-mm] [-nogcp] [-nomd] datasetname
+
+gdalinfo [--help-general] [-mm] [-stats] [-nogcp] [-nomd]
+         [-mdd domain]* datasetname
 .fi
 .PP
 .SH "DESCRIPTION"
@@ -17,10 +19,14 @@ gdalinfo [-mm] [-nogcp] [-nomd] datasetname
 The gdalinfo program lists various information about a GDAL supported raster dataset. 
 .IP "\fB\fB-mm\fP\fP" 1c
 Force computation of the actual min/max values for each band in the dataset. 
+.IP "\fB\fB-stats\fP\fP" 1c
+Force computation and display of image statistics. 
 .IP "\fB\fB-nogcp\fP\fP" 1c
 Suppress ground control points list printing. It may be useful for datasets with huge amount of GCPs, such as L1B AVHRR or HDF4 MODIS which contain thousands of the ones. 
 .IP "\fB\fB-nomd\fP\fP" 1c
 Suppress metadata printing. Some datasets may contain a lot of metadata strings. 
+.IP "\fB\fB-mdd domain\fP\fP" 1c
+Report metadata for the specified domain 
 .PP
 .PP
 The gdalinfo will report all of the following (if known):
@@ -64,6 +70,7 @@ Band pseudo-color tables.
 .PP
 .PP
 .nf
+
 gdalinfo ~/openev/utm.tif 
 Driver: GTiff/GeoTIFF
 Size is 512, 512
