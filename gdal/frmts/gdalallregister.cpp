@@ -264,6 +264,7 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_wcs
     GDALRegister_WCS();
+    GDALRegister_HTTP();
 #endif
 
 #ifdef FRMT_sde
