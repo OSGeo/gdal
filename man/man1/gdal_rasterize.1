@@ -1,4 +1,4 @@
-.TH "gdal_rasterize" 1 "28 Jun 2006" "GDAL" \" -*- nroff -*-
+.TH "gdal_rasterize" 1 "18 Jan 2007" "GDAL" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -9,6 +9,7 @@ burns vector polygons into a raster
 .PP
 .PP
 .nf
+
 Usage: gdal_rasterize [-b band]
        [-burn value] | [-a attribute_name] | [-3d]
        [-l layername]* [-where expression] [-sql select_statement]
@@ -54,6 +55,7 @@ The following would burn all polygons from mask.shp into the RGB TIFF file work.
 .PP
 .PP
 .nf
+
 gdal_rasterize -b 1 -b 2 -b 3 -burn 255 -burn 0 -burn 0 -l mask mask.shp work.tif
 .fi
 .PP
@@ -62,6 +64,7 @@ The following would burn all 'class A' buildings into the output elevation file,
 .PP
 .PP
 .nf
+
 gdal_rasterize -a ROOF_H -where 'class="A"' -l footprints footprints.shp city_dem.tif
 .fi
 .PP
