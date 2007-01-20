@@ -1,4 +1,4 @@
-.TH "ogr2ogr" 1 "28 Jun 2006" "GDAL" \" -*- nroff -*-
+.TH "ogr2ogr" 1 "18 Jan 2007" "GDAL" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -9,14 +9,16 @@ converts simple features data between file formats
 .PP
 .PP
 .nf
+
 Usage: ogr2ogr [-skipfailures] [-append] [-update] [-f format_name]
                [-select field_list] [-where restricted_where] 
-               [-sql <sql statement>] 
+               [-sql <sql statement>] [--help-general]
                [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid FID]
                [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]
                [[-dsco NAME=VALUE] ...] dst_datasource_name
                src_datasource_name
-               [-lco NAME=VALUE] [-nln name] [-nlt type] layer [layer ...]]
+               [-lco NAME=VALUE] [-nln name] [-nlt type] [layer [layer ...]]
+
 .fi
 .PP
 .SH "DESCRIPTION"
@@ -27,6 +29,7 @@ This program can be used to convert simple features data between file formats pe
 output file format name, some possible values are: 
 .PP
 .nf
+
      -f "ESRI Shapefile"
      -f "TIGER"
      -f "MapInfo File"
@@ -38,8 +41,10 @@ output file format name, some possible values are:
   
 .IP "\fB\fB-append\fP:\fP" 1c
 Append to existing layer instead of creating new 
+.IP "\fB\fB-overwrite\fP:\fP" 1c
+Delete the output layer and recreate it empty 
 .IP "\fB\fB-update\fP:\fP" 1c
-Open existing output datasource in update mode 
+Open existing output datasource in update mode rather than trying to create a new one 
 .IP "\fB\fB-select\fP\fI field_list\fP:\fP" 1c
 Comma-delimited list of fields from input layer to copy to the new layer (defaults to all) 
 .IP "\fB\fB-sql\fP \fIsql_statement\fP:\fP" 1c
@@ -72,6 +77,7 @@ Example appending to an existing layer (both flags need to be used):
 .PP
 .PP
 .nf
+
 % ogr2ogr -update -append -f PostgreSQL PG:dbname=warmerda abc.tab
 .fi
 .PP

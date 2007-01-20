@@ -1,4 +1,4 @@
-.TH "gdal_translate" 1 "28 Jun 2006" "GDAL" \" -*- nroff -*-
+.TH "gdal_translate" 1 "18 Jan 2007" "GDAL" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -9,6 +9,7 @@ converts raster data between different formats
 .PP
 .PP
 .nf
+
 gdal_translate [--help-general]
        [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
              CInt16/CInt32/CFloat32/CFloat64}] [-not_strict]
@@ -68,6 +69,7 @@ The destination file name.
 .PP
 .PP
 .nf
+
 gdal_translate -of GTiff -co "TILED=YES" utm.tif utm_tiled.tif
 .fi
 .PP
