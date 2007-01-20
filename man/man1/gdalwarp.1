@@ -1,4 +1,4 @@
-.TH "gdalwarp" 1 "28 Jun 2006" "GDAL" \" -*- nroff -*-
+.TH "gdalwarp" 1 "18 Jan 2007" "GDAL" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -9,6 +9,7 @@ simple image reprojection and warping utility
 .PP
 .PP
 .nf
+
 gdalwarp 
     [-s_srs srs_def] [-t_srs srs_def] [-order n] [-et err_threshold]
     [-te xmin ymin xmax ymax] [-tr xres yres] [-ts width height]
@@ -39,7 +40,7 @@ set output file resolution (in target georeferenced units)
 .IP "\fB\fB-ts\fP \fIwidth height\fP:\fP" 1c
 set output file size in pixels and lines 
 .IP "\fB\fB-wo\fP \fI'NAME=VALUE'\fP:\fP" 1c
-Set a warp options. There is a \fClist\fP of available ones. Multiple \fB-wo\fP options may be listed. 
+Set a warp options. The GDALWarpOptions::papszWarpOptions docs show all options. Multiple \fB-wo\fP options may be listed. 
 .IP "\fB\fB-ot\fP \fItype\fP:\fP" 1c
 For the output bands to be of the indicated data type. 
 .IP "\fB\fB-wt\fP \fItype\fP:\fP" 1c
@@ -80,6 +81,7 @@ For instance, an eight bit spot scene stored in GeoTIFF with control points mapp
 .PP
 .PP
 .nf
+
 gdalwarp -t_srs '+proj=utm +zone=11 +datum=WGS84' raw_spot.tif utm11.tif
 .fi
 .PP
@@ -88,6 +90,7 @@ For instance, the second channel of an ASTER image stored in HDF with control po
 .PP
 .PP
 .nf
+
 gdalwarp HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 pg-PR1B0000-2002031402_100_001_2.tif
 .fi
 .PP

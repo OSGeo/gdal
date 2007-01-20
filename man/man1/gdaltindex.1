@@ -1,4 +1,4 @@
-.TH "gdaltindex" 1 "28 Jun 2006" "GDAL" \" -*- nroff -*-
+.TH "gdaltindex" 1 "18 Jan 2007" "GDAL" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -9,6 +9,7 @@ builds a shapefile as a raster tileindex
 .PP
 .PP
 .nf
+
 gdaltindex [-tileindex field_name] index_file [gdal_file]*
 .fi
 .PP
@@ -18,7 +19,7 @@ This program builds a shapefile with a record for each input raster file, an att
 .PP
 .PD 0
 .IP "\(bu" 2
-The shapefile (index_file) will be created if it doesn't already exist. 
+The shapefile (index_file) will be created if it doesn't already exist, otherwise it will append to the existing file. 
 .IP "\(bu" 2
 The default tile index field is 'location'. 
 .IP "\(bu" 2
@@ -31,6 +32,7 @@ Simple rectangular polygons are generated in the same coordinate system as the r
 .PP
 .PP
 .nf
+
 gdaltindex doq_index.shp doq/*.tif
 .fi
 .PP

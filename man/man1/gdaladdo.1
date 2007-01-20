@@ -1,4 +1,4 @@
-.TH "gdaladdo" 1 "28 Jun 2006" "GDAL" \" -*- nroff -*-
+.TH "gdaladdo" 1 "18 Jan 2007" "GDAL" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -9,6 +9,7 @@ builds or rebuilds overview images
 .PP
 .PP
 .nf
+
 gdaladdo [-r {nearest,average,average_mp,average_magphase,mode}]
                 filename levels
 .fi
@@ -41,6 +42,7 @@ Create overviews, embedded in the supplied TIFF file:
 .PP
 .PP
 .nf
+
 gdaladdo -r average abc.tif 2 4 8 16
 .fi
 .PP
@@ -49,6 +51,7 @@ Create an external compressed GeoTIFF overview file from the ERDAS .IMG file:
 .PP
 .PP
 .nf
+
 gdaladdo --config COMPRESS_OVERVIEW DEFLATE erdas.img 2 4 8 16
 .fi
 .PP
@@ -57,6 +60,7 @@ Create an Erdas Imagine format overviews for the indicated JPEG file:
 .PP
 .PP
 .nf
+
 gdaladdo --config USE_RRD YES airphoto.jpg 3 9 27 81
 .fi
 .PP

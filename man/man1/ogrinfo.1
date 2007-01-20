@@ -1,4 +1,4 @@
-.TH "ogrinfo" 1 "28 Jun 2006" "GDAL" \" -*- nroff -*-
+.TH "ogrinfo" 1 "18 Jan 2007" "GDAL" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -9,6 +9,7 @@ lists information about an OGR supported data source
 .PP
 .PP
 .nf
+
 ogrinfo [-ro] [-q] [-where restricted_where]
                [-spat xmin ymin xmax ymax] [-fid fid]
                [-sql statement] [-al] [-so] [--formats]
@@ -51,6 +52,7 @@ Geometries are reported in OGC WKT format.
 Example reporting all layers in an NTF file: 
 .PP
 .nf
+
 % ogrinfo wrk/SHETLAND_ISLANDS.NTF
 INFO: Open of `wrk/SHETLAND_ISLANDS.NTF'
 using driver `UK .NTF' successful.
@@ -65,6 +67,7 @@ using driver `UK .NTF' successful.
 Example using an attribute query is used to restrict the output of the features in a layer: 
 .PP
 .nf
+
 % ogrinfo -ro -where 'GLOBAL_LINK_ID=185878' wrk/SHETLAND_ISLANDS.NTF BL2000_LINK
 INFO: Open of `wrk/SHETLAND_ISLANDS.NTF'
 using driver `UK .NTF' successful.
