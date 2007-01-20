@@ -1,5 +1,5 @@
 
-EXTRAFLAGS = 	-I$(SDE_INC)\include \
+EXTRAFLAGS = 	-I$(SDE_INC) \
 		/D_MBCS /DWIN32 /D_WIN32 -DFRMT_sde 
 
 OBJ	=	sdedataset.obj
