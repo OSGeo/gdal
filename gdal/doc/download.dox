@@ -83,7 +83,7 @@ build GDAL from source.<p>
 The GDAL source is available anonymously from Subversion:
 
 <pre>
-% svn checkout http://svn.osgeo.org/svn/gdal/trunk/gdal gdal 
+% svn checkout https://svn.osgeo.org/svn/gdal/trunk/gdal gdal 
 </pre>
 
 Update access to the CVS repository can be obtained by arrangement 
