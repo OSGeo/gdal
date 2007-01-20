@@ -1,5 +1,5 @@
 
-OBJ	=	wcsdataset.obj cpl_http.obj
+OBJ	=	wcsdataset.obj cpl_http.obj httpdriver.obj
 
 EXTRAFLAGS = 	$(CURL_INC) -DHAVE_CURL
 
