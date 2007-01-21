@@ -68,7 +68,7 @@ GDAL primary site, and the mirror site:
 <a href="http://www.gdal.org/dl">http://www.gdal.org/dl</a><br>
 <a href="http://download.osgeo.org/gdal/">http://download.osgeo.org/gdal</a><p>
 
-Late each night a development snapshot is captured from CVS and made available.
+Late each night a development snapshot is captured from Subversion and made available.
 These snapshots are not stable releases, and might (on a bad night) not even
 build.  However, they do contain essentially the latest code.  They can be
 downloaded from:
@@ -78,7 +78,7 @@ downloaded from:
 Refer to the <a href="gdal_building.html">build instructions</a> for how to
 build GDAL from source.<p>
 
-\subsection download_sources_cvs Subversion
+\subsection download_sources_svn Subversion
 
 The GDAL source is available anonymously from Subversion:
 
@@ -86,7 +86,7 @@ The GDAL source is available anonymously from Subversion:
 % svn checkout https://svn.osgeo.org/svn/gdal/trunk/gdal gdal 
 </pre>
 
-Update access to the CVS repository can be obtained by arrangement 
+Update access to the Subversion repository can be obtained by arrangement 
 with the maintainer.<p>
 
 \htmlonly
