@@ -126,6 +126,116 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     return CE_None;
 }
 
+
+/************************************************************************/
+/*                          GetRastercount()                            */
+/************************************************************************/
+
+int SDEDataset::GetRasterCount( void )
+
+{
+    if (nBands != 0)
+        return nBands;
+    
+    ComputeRasterInfo();
+    return nBands;
+}    
+
+/************************************************************************/
+/*                          GetRasterXSize()                            */
+/************************************************************************/
+
+int SDEDataset::GetRasterXSize( void )
+
+{
+    if (nRasterXSize != 0)
+        return nRasterXSize;
+    
+    ComputeRasterInfo();
+    return nRasterXSize;
+}  
+
+/************************************************************************/
+/*                          GetRasterYSize()                            */
+/************************************************************************/
+
+int SDEDataset::GetRasterYSize( void )
+
+{
+    if (nRasterYSize != 0)
+        return nRasterYSize;
+    
+    ComputeRasterInfo();
+    return nRasterYSize;
+}  
+/************************************************************************/
+/*                          ComputeRasterInfo()                         */
+/************************************************************************/
+CPLErr SDEDataset::ComputeRasterInfo() {
+    long nSDEErr;
+    SE_RASTERINFO raster;
+    SE_RASBANDINFO *bands;
+    
+    nSDEErr = SE_rasterinfo_create(&raster);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rasterinfo_create" );
+        return CE_Fatal;
+    }
+    
+    long nRasterColumnId = 0;
+
+    nSDEErr = SE_rascolinfo_get_id(hRasterColumn, &nRasterColumnId);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rascolinfo_get_id" );
+        return CE_Fatal;
+    }        
+
+    nSDEErr = SE_raster_get_info_by_id(*hConnection, nRasterColumnId, 1, raster);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rascolinfo_get_id" );
+        return CE_Fatal;
+    }
+    nSDEErr = SE_raster_get_bands(*hConnection, raster, &bands, &nBands);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_raster_get_bands" );
+        return CE_Fatal;
+    }
+    
+    SE_RASBANDINFO band;
+    
+    // grab our other stuff from the first band and hope for the best
+    band = bands[0];
+    
+    
+    nSDEErr = SE_rasbandinfo_get_band_size(band, &nRasterXSize, &nRasterYSize);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rasbandinfo_get_band_size" );
+        return CE_Fatal;
+    }
+    
+    SE_ENVELOPE extent;
+    nSDEErr = SE_rasbandinfo_get_extent(band, &extent);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rasbandinfo_get_extent" );
+        return CE_Fatal;
+    }
+    dfMinX = extent.minx;
+    dfMinY = extent.miny;
+    dfMaxX = extent.maxx;
+    dfMaxY = extent.maxy;
+    
+    SE_rasterinfo_free(raster);
+    SE_rasterband_free_info_list(nBands, bands);
+
+    return CE_None;
+}
+
 /************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
@@ -133,22 +243,18 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 CPLErr SDEDataset::GetGeoTransform( double * padfTransform )
 
 {
-//    double  dfLLLat, dfLLLong, dfURLat, dfURLong;
-//
-//    dfLLLat = JDEMGetAngle( (char *) abyHeader + 29 );
-//    dfLLLong = JDEMGetAngle( (char *) abyHeader + 36 );
-//    dfURLat = JDEMGetAngle( (char *) abyHeader + 43 );
-//    dfURLong = JDEMGetAngle( (char *) abyHeader + 50 );
-//    
-//    padfTransform[0] = dfLLLong;
-//    padfTransform[3] = dfURLat;
-//    padfTransform[1] = (dfURLong - dfLLLong) / GetRasterXSize();
-//    padfTransform[2] = 0.0;
-//        
-//    padfTransform[4] = 0.0;
-//    padfTransform[5] = -1 * (dfURLat - dfLLLat) / GetRasterYSize();
-
-
+    
+    if (dfMinX == 0.0 && dfMinY == 0.0 && dfMaxX == 0.0 && dfMaxY == 0.0)
+        return CE_Fatal;
+ 
+    padfTransform[0] = dfMinX;
+    padfTransform[3] = dfMaxY;
+    padfTransform[1] = (dfMaxX - dfMinX) / GetRasterXSize();
+    padfTransform[2] = 0.0;
+        
+    padfTransform[4] = 0.0;
+    padfTransform[5] = -1 * (dfMaxY - dfMinY) / GetRasterYSize();
+    
     return CE_None;
 }
 
@@ -169,13 +275,13 @@ const char *SDEDataset::GetProjectionRef()
         return FALSE;
     }
     
-    if (!pohSDERasterColumn){
+    if (!hRasterColumn){
         CPLError ( CE_Failure, CPLE_AppDefined,
                    "Raster Column not defined");        
         return ("");   
     }
     
-    nSDEErr = SE_rascolinfo_get_coordref(pohSDERasterColumn, coordref);
+    nSDEErr = SE_rascolinfo_get_coordref(hRasterColumn, coordref);
 
     if (nSDEErr == SE_NO_COORDREF) {
         return ("");
@@ -215,8 +321,16 @@ SDEDataset::SDEDataset( SE_CONNECTION* connection )
     pszLayerName        = NULL;
     pszColumnName       = NULL;
     paohSDERasterColumns  = NULL;
-    pohSDERasterColumn  = NULL;
-    SE_rascolinfo_create(&pohSDERasterColumn);
+    hRasterColumn       = NULL;
+    nBands              = 0;
+    nRasterXSize        = 0;
+    nRasterYSize        = 0;
+    
+    dfMinX              = 0.0;
+    dfMinY              = 0.0;
+    dfMaxX              = 0.0;
+    dfMaxY              = 0.0;
+    SE_rascolinfo_create(&hRasterColumn);
 
 }
 
@@ -232,8 +346,8 @@ SDEDataset::~SDEDataset()
 //    if (paohSDERasterColumns != NULL)
 //        SE_rastercolumn_free_info_list(nSubDataCount,
 //                                   paohSDERasterColumns);
-    if (pohSDERasterColumn)
-        SE_rascolinfo_free(pohSDERasterColumn);
+    if (hRasterColumn)
+        SE_rascolinfo_free(hRasterColumn);
 }
 
 
@@ -336,7 +450,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
         nSDEErr = SE_rastercolumn_get_info_by_name(*(poDS->hConnection), 
                                                     poDS->pszLayerName, 
                                                     poDS->pszColumnName, 
-                                                    poDS->pohSDERasterColumn);
+                                                    poDS->hRasterColumn);
         if( nSDEErr != SE_SUCCESS )
         {
             IssueSDEError( nSDEErr, "SE_rastercolumn_get_info_by_name" );
@@ -375,6 +489,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 //            }
 //        }
 //
+    return FALSE;
     }
     
     return( poDS );
