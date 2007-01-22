@@ -45,11 +45,18 @@ class SDEDataset : public GDALPamDataset
         char                *pszLayerName;
         char                *pszColumnName;
         long                nSubDataCount;
+        long                nBands;
+        long                nRasterXSize;
+        long                nRasterYSize;
+        
+        double              dfMinX, dfMaxX, dfMinY, dfMaxY;
         SE_RASCOLINFO* paohSDERasterColumns;
-        SE_RASCOLINFO pohSDERasterColumn;
+        SE_RASCOLINFO hRasterColumn;
 
         
         GDALColorTable *poCT;
+        
+        CPLErr                ComputeRasterInfo(void);
 
     public:
         SDEDataset(SE_CONNECTION* connection);
@@ -58,6 +65,10 @@ class SDEDataset : public GDALPamDataset
         static GDALDataset *Open( GDALOpenInfo * );
         
         CPLErr  GetGeoTransform( double * padfTransform );
+        int     GetRasterCount(void);
+        int     GetRasterXSize(void);
+        int     GetRasterYSize(void);
+        
         const char *GetProjectionRef();
 };
 
