@@ -159,7 +159,48 @@ CPLErr SDEDataset::GetGeoTransform( double * padfTransform )
 const char *SDEDataset::GetProjectionRef()
 
 {
-    return( "GEOGCS[\"Tokyo\",DATUM[\"Tokyo\",SPHEROID[\"Bessel 1841\",6377397.155,299.1528128,AUTHORITY[\"EPSG\",7004]],TOWGS84[-148,507,685,0,0,0,0],AUTHORITY[\"EPSG\",6301]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],UNIT[\"DMSH\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST],AUTHORITY[\"EPSG\",4301]]" );
+    long nSDEErr;
+    SE_COORDREF coordref;
+    nSDEErr = SE_coordref_create(&coordref);
+
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_coordref_create" );
+        return FALSE;
+    }
+    
+    if (!pohSDERasterColumn){
+        CPLError ( CE_Failure, CPLE_AppDefined,
+                   "Raster Column not defined");        
+        return ("");   
+    }
+    
+    nSDEErr = SE_rascolinfo_get_coordref(pohSDERasterColumn, coordref);
+
+    if (nSDEErr == SE_NO_COORDREF) {
+        return ("");
+    }
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rascolinfo_get_coordref" );
+      //  return FALSE;
+    }    
+    
+    char szWKT[SE_MAX_SPATIALREF_SRTEXT_LEN];
+    nSDEErr = SE_coordref_get_description(coordref, szWKT);
+    if (nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_coordref_get_description");
+    }
+    SE_coordref_free(coordref);
+
+    OGRSpatialReference *poSRS;
+    poSRS = new OGRSpatialReference(szWKT);
+    poSRS->morphFromESRI();
+    char* pszWKT;
+    poSRS->exportToWkt(&pszWKT);
+    poSRS->Release();
+    return CPLStrdup(pszWKT);
 }
 
 /************************************************************************/
@@ -173,7 +214,9 @@ SDEDataset::SDEDataset( SE_CONNECTION* connection )
     nSubDataCount       = 0;
     pszLayerName        = NULL;
     pszColumnName       = NULL;
-    poSDERasterColumns  = NULL;
+    paohSDERasterColumns  = NULL;
+    pohSDERasterColumn  = NULL;
+    SE_rascolinfo_create(&pohSDERasterColumn);
 
 }
 
@@ -186,7 +229,11 @@ SDEDataset::SDEDataset( SE_CONNECTION* connection )
 SDEDataset::~SDEDataset()
 
 {
-
+//    if (paohSDERasterColumns != NULL)
+//        SE_rastercolumn_free_info_list(nSubDataCount,
+//                                   paohSDERasterColumns);
+    if (pohSDERasterColumn)
+        SE_rascolinfo_free(pohSDERasterColumn);
 }
 
 
@@ -198,9 +245,6 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     
-/* -------------------------------------------------------------------- */
-/*      Create a corresponding GDALDataset.                             */
-/* -------------------------------------------------------------------- */
 
 
 /* -------------------------------------------------------------------- */
@@ -264,6 +308,10 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
         return FALSE;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Create a corresponding GDALDataset.                             */
+/* -------------------------------------------------------------------- */
+
     SDEDataset *poDS;
 
     poDS = new SDEDataset(&connection);
@@ -275,49 +323,58 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 
 
     if (CSLCount( papszTokens ) == 6 ) {
-
+//
         poDS->pszLayerName = CPLStrdup( papszTokens[5] );
-        
-        // FIXME this needs to be a configuration option or allow it to
-        // come in via the arguments
+//        
+//        // FIXME this needs to be a configuration option or allow it to
+//        // come in via the arguments
         poDS->pszColumnName = CPLStrdup( "RASTER" );
-        CPLDebug( "SDERASTER", "'%s' raster layer specified... using it directly with '%s' as the raster column name.", 
+        CPLDebug( "SDERASTER", "'%s' raster layer specified... "\
+                               "using it directly with '%s' as the raster column name.", 
                   poDS->pszLayerName,
                   poDS->pszColumnName);
-    } else {
-
-    	SE_RASCOLINFO* columns;
-      	nSDEErr = SE_rastercolumn_get_info_list(connection, 
-      	                                        &columns, 
-      	                                        &(poDS->nSubDataCount));
-      	
-        CPLDebug( "SDERASTER", "No layername specified, %d subdatasets available.", 
-                  poDS->nSubDataCount);
+        nSDEErr = SE_rastercolumn_get_info_by_name(*(poDS->hConnection), 
+                                                    poDS->pszLayerName, 
+                                                    poDS->pszColumnName, 
+                                                    poDS->pohSDERasterColumn);
         if( nSDEErr != SE_SUCCESS )
         {
-            IssueSDEError( nSDEErr, "SE_rascolinfo_get_info_list" );
+            IssueSDEError( nSDEErr, "SE_rastercolumn_get_info_by_name" );
             return FALSE;
         }
-    
-        /* Allocate an array of column information */
-    	poDS->poSDERasterColumns =  (SDERasterColumns*) \
-    	                            CPLMalloc( (poDS->nSubDataCount) * 
-    	                                       sizeof( SDERasterColumns ));
-    	                                       
-        for (int i = 0; i < poDS->nSubDataCount; i++) {
-            nSDEErr = SE_rascolinfo_get_raster_column (columns[i], 
-                                                       poDS->poSDERasterColumns[i].szTableName, 
-                                                       poDS->poSDERasterColumns[i].szColumnName); 
-            if( nSDEErr != SE_SUCCESS )
-            {
-                IssueSDEError( nSDEErr, "SE_rascolinfo_get_raster_column" );
-                return FALSE;
-            }
-        }
-        
-        SE_rastercolumn_free_info_list(poDS->nSubDataCount,
-                                       columns);
 
+    } else {
+//
+//    	SE_RASCOLINFO* columns;
+//      	nSDEErr = SE_rastercolumn_get_info_list(connection, 
+//      	                                        &(poDS->paohSDERasterColumns), 
+//      	                                        &(poDS->nSubDataCount));
+//        if( nSDEErr != SE_SUCCESS )
+//        {
+//            IssueSDEError( nSDEErr, "SE_rascolinfo_get_info_list" );
+//            return FALSE;
+//        }
+//
+//        CPLDebug( "SDERASTER", "No layername specified, %d subdatasets available.", 
+//                  poDS->nSubDataCount);
+//                  
+//
+//        for (int i = 0; i < poDS->nSubDataCount; i++) {
+//
+//              char         szTableName[SE_QUALIFIED_TABLE_NAME+1];
+//              char         szColumnName[SE_MAX_COLUMN_LEN+1];
+//            nSDEErr = SE_rascolinfo_get_raster_column (poDS->paohSDERasterColumns[i], 
+//                                                       szTableName, 
+//                                                       szColumnName); 
+//            CPLDebug("SDERASTER", "Layer '%s' with column '%s' found.", szTableName, szColumnName);
+//
+//            if( nSDEErr != SE_SUCCESS )
+//            {
+//                IssueSDEError( nSDEErr, "SE_rascolinfo_get_raster_column" );
+//                return FALSE;
+//            }
+//        }
+//
     }
     
     return( poDS );

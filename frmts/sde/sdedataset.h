@@ -13,6 +13,8 @@ CPL_C_END
 #include <sdeerno.h>
 #include <sderaster.h>
 
+#include "cpl_string.h"
+#include "ogr_spatialref.h"
 
 
 
@@ -26,6 +28,7 @@ CPL_C_END
 typedef struct SDERasterColumns {
   char         szTableName[SE_QUALIFIED_TABLE_NAME+1];
   char         szColumnName[SE_MAX_COLUMN_LEN+1];
+  SE_RASCOLINFO* hSDERasterColumn;
 } SDERasterColumns;
 
 
@@ -42,7 +45,9 @@ class SDEDataset : public GDALPamDataset
         char                *pszLayerName;
         char                *pszColumnName;
         long                nSubDataCount;
-        SDERasterColumns    *poSDERasterColumns;
+        SE_RASCOLINFO* paohSDERasterColumns;
+        SE_RASCOLINFO pohSDERasterColumn;
+
         
         GDALColorTable *poCT;
 
