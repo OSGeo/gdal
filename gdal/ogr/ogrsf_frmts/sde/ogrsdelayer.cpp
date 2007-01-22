@@ -261,7 +261,7 @@ int OGRSDELayer::NeedLayerInfo()
     }
     else
     {
-        char szWKT[4000];
+        char szWKT[SE_MAX_SPATIALREF_SRTEXT_LEN];
 
         nSDEErr = SE_coordref_get_description( hCoordRef, szWKT );
         if( nSDEErr != SE_SUCCESS )
