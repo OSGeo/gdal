@@ -371,6 +371,8 @@ OGRFeature *OGRShapeLayer::GetFeature( long nFeatureId )
 OGRErr OGRShapeLayer::SetFeature( OGRFeature *poFeature )
 
 {
+    bHeaderDirty = TRUE;
+
     return SHPWriteOGRFeature( hSHP, hDBF, poFeatureDefn, poFeature );
 }
 
@@ -410,6 +412,8 @@ OGRErr OGRShapeLayer::DeleteFeature( long nFID )
 
     if( !DBFMarkRecordDeleted( hDBF, nFID, TRUE ) )
         return OGRERR_FAILURE;
+
+    bHeaderDirty = TRUE;
 
     return OGRERR_NONE;
 }
