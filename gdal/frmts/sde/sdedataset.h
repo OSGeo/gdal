@@ -50,13 +50,16 @@ class SDEDataset : public GDALPamDataset
         long                nRasterYSize;
         
         double              dfMinX, dfMaxX, dfMinY, dfMaxY;
+        
+        GDALDataType        eDataType;
         SE_RASCOLINFO* paohSDERasterColumns;
         SE_RASCOLINFO hRasterColumn;
 
         
         GDALColorTable *poCT;
         
-        CPLErr                ComputeRasterInfo(void);
+        CPLErr                  ComputeRasterInfo(void);
+        GDALDataType            MorphESRIRasterType(int gtype);
 
     public:
         SDEDataset(SE_CONNECTION* connection);
