@@ -36,7 +36,7 @@
 
 /************************************************************************/
 /*                           IssueSDEError()                            */
-/* from ogrsdedatasource.cpp											*/
+/* from ogrsdedatasource.cpp                                            */
 /************************************************************************/
 
 void IssueSDEError( int nErrorCode, 
@@ -134,10 +134,6 @@ CPLErr SDERasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 int SDEDataset::GetRasterCount( void )
 
 {
-    if (nBands != 0)
-        return nBands;
-    
-    ComputeRasterInfo();
     return nBands;
 }    
 
@@ -148,10 +144,6 @@ int SDEDataset::GetRasterCount( void )
 int SDEDataset::GetRasterXSize( void )
 
 {
-    if (nRasterXSize != 0)
-        return nRasterXSize;
-    
-    ComputeRasterInfo();
     return nRasterXSize;
 }  
 
@@ -162,10 +154,6 @@ int SDEDataset::GetRasterXSize( void )
 int SDEDataset::GetRasterYSize( void )
 
 {
-    if (nRasterYSize != 0)
-        return nRasterYSize;
-    
-    ComputeRasterInfo();
     return nRasterYSize;
 }  
 /************************************************************************/
@@ -175,6 +163,7 @@ CPLErr SDEDataset::ComputeRasterInfo() {
     long nSDEErr;
     SE_RASTERINFO raster;
     SE_RASBANDINFO *bands;
+    SE_RASTERATTR attributes;
     
     nSDEErr = SE_rasterinfo_create(&raster);
     if( nSDEErr != SE_SUCCESS )
@@ -230,12 +219,128 @@ CPLErr SDEDataset::ComputeRasterInfo() {
     dfMaxX = extent.maxx;
     dfMaxY = extent.maxy;
     
+    nSDEErr = SE_rasterattr_create(&attributes, false);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rasterattr_create" );
+        return CE_Fatal;
+    }
+
+    SE_SQL_CONSTRUCT   *sqlc;
+    SE_QUERYINFO query;
+    char ** paszTables = (char**) CPLMalloc((SE_MAX_TABLE_LEN+1)*sizeof(char*));
+
+    nSDEErr = SE_queryinfo_create(&query);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_queryinfo_create" );
+        return CE_Fatal;
+    }
+        
+    nSDEErr = SE_queryinfo_set_tables(query, 1, (const char**) &pszLayerName, NULL);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_queryinfo_set_tables" );
+        return CE_Fatal;
+    }
+
+    nSDEErr = SE_queryinfo_set_where_clause(query, (const char*) "");
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_queryinfo_set_where" );
+        return CE_Fatal;
+    }
+
+    nSDEErr = SE_queryinfo_set_columns(query, 1, (const char**) &pszColumnName);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_queryinfo_set_where" );
+        return CE_Fatal;
+    }
+
+    SE_STREAM stream;
+    nSDEErr = SE_stream_create(*hConnection, &stream);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_stream_create" );
+        return CE_Fatal;
+    }
+
+    nSDEErr = SE_stream_query_with_info(stream, query);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_stream_query_with_info" );
+        return CE_Fatal;
+    }
+
+    nSDEErr = SE_stream_execute (stream);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_stream_execute" );
+        return CE_Fatal;
+    }
+    nSDEErr = SE_stream_fetch (stream);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_stream_fetch" );
+        return CE_Fatal;
+    }
+
+    nSDEErr = SE_stream_get_raster (stream, 1, attributes);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_stream_fetch" );
+        return CE_Fatal;
+    }
+
+    eDataType = GDT_UInt16;
+    long pixel_type;
+    nSDEErr = SE_rasterattr_get_pixel_type (attributes, &pixel_type);
+    if( nSDEErr != SE_SUCCESS )
+    {
+        IssueSDEError( nSDEErr, "SE_rasterattr_get_pixel_type" );
+        return CE_Fatal;
+    }
+    CPLDebug("SDERASTER", "pixel type from sde: %d", pixel_type);
+    
+    eDataType = MorphESRIRasterType(pixel_type);
+    
+    SE_queryinfo_free(query);
+    SE_stream_free(stream);
+    
     SE_rasterinfo_free(raster);
     SE_rasterband_free_info_list(nBands, bands);
 
     return CE_None;
 }
 
+GDALDataType SDEDataset::MorphESRIRasterType(int gtype) {
+    
+    switch (gtype) {
+        case SE_PIXEL_TYPE_1BIT:
+            return GDT_Byte;
+        case SE_PIXEL_TYPE_4BIT:
+            return GDT_Byte;
+        case SE_PIXEL_TYPE_8BIT_U:
+            return GDT_Byte;
+        case SE_PIXEL_TYPE_8BIT_S:
+            return GDT_Byte;
+        case SE_PIXEL_TYPE_16BIT_U:
+            return GDT_UInt16;
+        case SE_PIXEL_TYPE_16BIT_S:
+            return GDT_Int16;
+        case SE_PIXEL_TYPE_32BIT_U:
+            return GDT_UInt32;
+        case SE_PIXEL_TYPE_32BIT_S:
+            return GDT_Int32;
+        case SE_PIXEL_TYPE_32BIT_REAL:
+            return GDT_Float32;
+        case SE_PIXEL_TYPE_64BIT_REAL:
+            return GDT_Float64;
+        default:
+            return GDT_UInt16;
+        }
+}
 /************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
@@ -382,7 +487,7 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed, 
                   "SDE connect string had wrong number of arguments.\n"
                   "Expected 'SDE:server,instance,database,username,password,layer'\n"
-		          "The layer name value is optional.\n"
+                  "The layer name value is optional.\n"
                   "Got '%s'", 
                   poOpenInfo->pszFilename );
         return FALSE;
@@ -391,11 +496,11 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try to establish connection.                                    */
 /* -------------------------------------------------------------------- */
-    int 	    nSDEErr;
+    int         nSDEErr;
     SE_ERROR    sSDEErrorInfo;
 
-	SE_CONNECTION connection = NULL;
-		
+    SE_CONNECTION connection = NULL;
+        
     nSDEErr = SE_connection_create( papszTokens[0], 
                                     papszTokens[1], 
                                     papszTokens[2], 
@@ -456,13 +561,13 @@ GDALDataset *SDEDataset::Open( GDALOpenInfo * poOpenInfo )
             IssueSDEError( nSDEErr, "SE_rastercolumn_get_info_by_name" );
             return FALSE;
         }
-
+        poDS->ComputeRasterInfo();
     } else {
 //
-//    	SE_RASCOLINFO* columns;
-//      	nSDEErr = SE_rastercolumn_get_info_list(connection, 
-//      	                                        &(poDS->paohSDERasterColumns), 
-//      	                                        &(poDS->nSubDataCount));
+//      SE_RASCOLINFO* columns;
+//          nSDEErr = SE_rastercolumn_get_info_list(connection, 
+//                                                  &(poDS->paohSDERasterColumns), 
+//                                                  &(poDS->nSubDataCount));
 //        if( nSDEErr != SE_SUCCESS )
 //        {
 //            IssueSDEError( nSDEErr, "SE_rascolinfo_get_info_list" );
