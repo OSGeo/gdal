@@ -60,7 +60,7 @@ class SDEDataset : public GDALPamDataset
         
         CPLErr                  ComputeRasterInfo(void);
         GDALDataType            MorphESRIRasterType(int gtype);
-
+        GDALColorTable*         ComputeColorTable(SE_RASBANDINFO& band);
     public:
         SDEDataset(SE_CONNECTION* connection);
         ~SDEDataset();
