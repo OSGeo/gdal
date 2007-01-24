@@ -193,6 +193,8 @@ GDALColorTable* SDEDataset::ComputeColorTable(SE_RASBANDINFO& band) {
     
     int nEntries;
     int red, green, blue, alpha;
+    
+    CPLDebug("SDERASTER", "%d colormap entries specified", nCMapEntries);
     switch (eCMap_DataType) {
         case SE_COLORMAP_DATA_BYTE:
             switch (eCMap_Type){
@@ -209,8 +211,9 @@ GDALColorTable* SDEDataset::ComputeColorTable(SE_RASBANDINFO& band) {
                         
                         // sColor is copied
                         poCT->SetColorEntry(i,&sColor);
-                        CPLDebug ("SDERASTER", "Colormap Entry: %d %d %d", red, blue, green);
+                        CPLDebug ("SDERASTER", "SE_COLORMAP_DATA_BYTE SE_COLORMAP_RGB Colormap Entry: %d %d %d", red, blue, green);
                     }
+                    break;
                 case SE_COLORMAP_RGBA:
                     for (int i = 0; i < (nCMapEntries*4); i++) {
                         red = puszSDECMapData[4*i];
@@ -225,11 +228,14 @@ GDALColorTable* SDEDataset::ComputeColorTable(SE_RASBANDINFO& band) {
                         
                         // sColor is copied
                         poCT->SetColorEntry(i,&sColor);
-                        CPLDebug ("SDERASTER", "Colormap Entry: %d %d %d %d", red, blue, green, alpha);
-                    }                    
+                        CPLDebug ("SDERASTER", "SE_COLORMAP_DATA_BYTE SE_COLORMAP_RGBA Colormap Entry: %d %d %d %d", red, blue, green, alpha);
+                    }
+                    break;               
             }
+            break;
         case SE_COLORMAP_DATA_SHORT:
             switch (eCMap_Type) {
+                case SE_COLORMAP_RGB:
                     for (int i = 0; i < (nCMapEntries*3); i++) {
                         red = pushSDECMapData[3*i];
                         blue = pushSDECMapData[(3*i)+1];
@@ -242,8 +248,9 @@ GDALColorTable* SDEDataset::ComputeColorTable(SE_RASBANDINFO& band) {
                         
                         // sColor is copied
                         poCT->SetColorEntry(i,&sColor);
-                        CPLDebug ("SDERASTER", "Colormap Entry: %d %d %d", red, blue, green);
+                        CPLDebug ("SDERASTER", "SE_COLORMAP_DATA_SHORT  SE_COLORMAP_RGB Colormap Entry: %d %d %d", red, blue, green);
                     }
+                    break;
                 case SE_COLORMAP_RGBA:
                     for (int i = 0; i < (nCMapEntries*4); i++) {
                         red = pushSDECMapData[4*i];
@@ -258,9 +265,11 @@ GDALColorTable* SDEDataset::ComputeColorTable(SE_RASBANDINFO& band) {
                         
                         // sColor is copied
                         poCT->SetColorEntry(i,&sColor);
-                        CPLDebug ("SDERASTER", "Colormap Entry: %d %d %d %d", red, blue, green, alpha);
-                    }   
+                        CPLDebug ("SDERASTER", "SE_COLORMAP_DATA_SHORT SE_COLORMAP_RGBA Colormap Entry: %d %d %d %d", red, blue, green, alpha);
+                    }
+                    break;
             }
+            break;
     }
     GDALColorEntry sColor;
     return poCT;
