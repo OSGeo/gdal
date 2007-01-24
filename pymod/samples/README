@@ -4,22 +4,52 @@ Python interface may be used in your applications.
 Script list:
 ------------------------------------------------------------------------------
 
+assemblepoly.py		Script demonstrates how to assemble polygons from
+			arcs.  Demonstrates various aspects of OGR Python API.
+
+attachpct.py		Simple command line program for translating ESRI .prj files 
+			into WKT.
+
 fft.py			Script to perform forward and inverse two-dimensional
 			fast Fourier transform.
 
 gdal2grd.py		Script to write out ASCII GRD rasters (used in Golden
 			Software Surfer) from any source supported by GDAL.
 
-val_repl.py		Script to replace specified values from the input
-			raster file with the new ones. May be useful in cases
-			when you don't like value, used for NoData indication
-			and want replace it with other value. Input file
-			remains unchanged, results stored in other file.
+gdal_vrtmerge.py	Similar to gdal_merge.py, but produces a VRT file. 
 
-assemblepoly.py         Script demonstrates how to assemble polygons from
-			arcs.  Demonstrates various aspects of OGR Python API.
+gdalcopyproj.py		Duplicate the geotransform and projection metadata from
+			one raster dataset to another, which can be useful after
+			performing image manipulations with other software that
+			ignores or discards georeferencing metadata.
 
-tigerpoly.py            Script demonstrating how to assemble polygons from
+gdalfilter.py		Example script for applying kernel based filters to
+			an image using GDAL.  Demonstrates use of virtual
+			files as an intermediate representation.
+
+get_soundg.py		Script to copy the SOUNDG layer from an S-57 file to
+			a Shapefile, splitting up features with MULTIPOINT
+			geometries into many POINT feature, and appending
+			the point elevations as an attribute.
+
+get_world_zip.py	This little script is basically curl or wget, with the added 
+			benefit of dumping the contents of the url right out to the 
+			filesystem. This is useful if you want to roll curl-like 
+			functionality your python script using the ZipURL class. 
+
+histrep.py		Module to extract data from many rasters into one output.
+
+load2mysql.py		Load an OGR layer into a MySQL datastore.  Uses direct SQL 
+			since the MySQL driver is read-only for OGR.  Derived from 
+			load2odbc.py
+
+load2odbc.py		Load ODBC table to an ODBC datastore.  Uses direct SQL 
+			since the ODBC driver is read-only for OGR.
+
+rel.py			Script to produce a shaded relief image from the
+			elevation data.
+
+tigerpoly.py		Script demonstrating how to assemble polygons from
 			arcs in TIGER/Line datasource, writing results to
 			a newly created shapefile. 
 
@@ -27,24 +57,15 @@ tolatlong.py		Script to read coordinate system and geotransformation
 			matrix from input file and report latitude/longitude
 			coordinates for the specified pixel.
 
-get_soundg.py           Script to copy the SOUNDG layer from an S-57 file to
-                        a Shapefile, splitting up features with MULTIPOINT
-                        geometries into many POINT feature, and appending
-                        the point elevations as an attribute. 
+val_repl.py		Script to replace specified values from the input
+			raster file with the new ones. May be useful in cases
+			when you don't like value, used for NoData indication
+			and want replace it with other value. Input file
+			remains unchanged, results stored in other file.
 
-gdalfilter.py           Example script for applying kernel based filters to
-                        an image using GDAL.  Demonstrates use of virtual
-                        files as an intermediate representation. 
+vec_tr.py		Example of applying some algorithm to all the 
+			geometries in the file, such as a fixed offset.
 
-rel.py			Script to produce a shaded relief image from the
-			elevation data.
-
-gdal_vrtmerge.py        Similar to gdal_merge.py, but produces a VRT file. 
-
-vec_tr.py               Example of applying some algorithm to all the 
-                        geometries in the file, such as a fixed offset.
-
-vec_tr_spat.py          Example of using Intersect() to filter based on 
-                        only those features that truely intersect a given
-                        rectangle.  Easily extended to general polygon!
-
+vec_tr_spat.py		Example of using Intersect() to filter based on 
+			only those features that truely intersect a given
+			rectangle.  Easily extended to general polygon!
