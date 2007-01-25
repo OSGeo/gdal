@@ -199,10 +199,11 @@ GDALColorTable* SDEDataset::ComputeColorTable(SE_RASBANDINFO& band) {
         case SE_COLORMAP_DATA_BYTE:
             switch (eCMap_Type){
                 case SE_COLORMAP_RGB:
-                    for (int i = 0; i < (nCMapEntries*3); i++) {
-                        red = puszSDECMapData[3*i];
-                        blue = puszSDECMapData[(3*i)+1];
-                        green = puszSDECMapData[(3*i)+2];
+                    for (int i = 0; i < (nCMapEntries); i++) {
+                        int j = i*3;
+                        red = puszSDECMapData[j];
+                        blue = puszSDECMapData[j+1];
+                        green = puszSDECMapData[j+2];
                         GDALColorEntry sColor;
                         sColor.c1 = red;
                         sColor.c2 = green;
@@ -215,11 +216,12 @@ GDALColorTable* SDEDataset::ComputeColorTable(SE_RASBANDINFO& band) {
                     }
                     break;
                 case SE_COLORMAP_RGBA:
-                    for (int i = 0; i < (nCMapEntries*4); i++) {
-                        red = puszSDECMapData[4*i];
-                        blue = puszSDECMapData[(4*i)+1];
-                        green = puszSDECMapData[(4*i)+2];
-                        alpha = puszSDECMapData[(4*i)+3];
+                    for (int i = 0; i < (nCMapEntries); i++) {
+                        int j = i*4;
+                        red = puszSDECMapData[j];
+                        blue = puszSDECMapData[j+1];
+                        green = puszSDECMapData[j+2];
+                        alpha = puszSDECMapData[j+3];
                         GDALColorEntry sColor;
                         sColor.c1 = red;
                         sColor.c2 = green;
@@ -236,10 +238,11 @@ GDALColorTable* SDEDataset::ComputeColorTable(SE_RASBANDINFO& band) {
         case SE_COLORMAP_DATA_SHORT:
             switch (eCMap_Type) {
                 case SE_COLORMAP_RGB:
-                    for (int i = 0; i < (nCMapEntries*3); i++) {
-                        red = pushSDECMapData[3*i];
-                        blue = pushSDECMapData[(3*i)+1];
-                        green = pushSDECMapData[(3*i)+2];
+                    for (int i = 0; i < (nCMapEntries); i++) {
+                        int j = i*3;
+                        red = pushSDECMapData[j];
+                        blue = pushSDECMapData[j+1];
+                        green = pushSDECMapData[j+2];
                         GDALColorEntry sColor;
                         sColor.c1 = red;
                         sColor.c2 = green;
@@ -252,11 +255,12 @@ GDALColorTable* SDEDataset::ComputeColorTable(SE_RASBANDINFO& band) {
                     }
                     break;
                 case SE_COLORMAP_RGBA:
-                    for (int i = 0; i < (nCMapEntries*4); i++) {
-                        red = pushSDECMapData[4*i];
-                        blue = pushSDECMapData[(4*i)+1];
-                        green = pushSDECMapData[(4*i)+2];
-                        alpha = pushSDECMapData[(4*i)+3];
+                    for (int i = 0; i < (nCMapEntries); i++) {
+                        int j = i*4;
+                        red = pushSDECMapData[j];
+                        blue = pushSDECMapData[j+1];
+                        green = pushSDECMapData[j+2];
+                        alpha = pushSDECMapData[j+3];
                         GDALColorEntry sColor;
                         sColor.c1 = red;
                         sColor.c2 = green;
